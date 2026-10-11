@@ -220,6 +220,17 @@ layer stacks, and Escape in a dropdown also closes the dialog under it. What the
 consumer sees and how to fix it is in [getting-started.en.md](docs/getting-started.en.md#common-problems),
 "Common problems".
 
+### Install scripts
+
+npm 11 blocks dependency install scripts unless `allowScripts` in `package.json`
+covers them. `esbuild`, `@parcel/watcher` and `fsevents` are denied: their
+native binaries arrive prebuilt, as platform packages (`@esbuild/<platform>`,
+`@parcel/watcher-<platform>`) or inside the package itself (`fsevents.node`),
+and the build, the showcase and the tests pass without the scripts. When an install reports a new package with an install
+script, read what the script does and record `npm install-scripts deny <pkg>`,
+or `approve <pkg>` if the package can't work without it. Never
+`approve --all`: it runs code nobody reviewed on every `npm ci`.
+
 ### Contrast
 
 `npm run contrast` calculates contrast directly from the tokens in `styles.css`
