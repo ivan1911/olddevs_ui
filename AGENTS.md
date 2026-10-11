@@ -231,6 +231,16 @@ script, read what the script does and record `npm install-scripts deny <pkg>`,
 or `approve <pkg>` if the package can't work without it. Never
 `approve --all`: it runs code nobody reviewed on every `npm ci`.
 
+### Overrides
+
+`overrides` in `package.json` lifts a transitive dev dependency that its parent
+pins to a vulnerable version. `@parcel/watcher` `^2.6.0`: `@tailwindcss/cli`
+(used by the CSS tests) pins 2.5.1, which pulls in `micromatch` and `braces`
+with denial-of-service advisories; 2.6.0 switched to `picomatch`. Remove the
+entry once `@tailwindcss/cli` depends on 2.6 or later. `npm audit` stays at
+zero: an advisory in a dev tool is fixed by a version bump or an override, and
+only an entry nobody can reach is left with its reason written here.
+
 ### Contrast
 
 `npm run contrast` calculates contrast directly from the tokens in `styles.css`

@@ -172,6 +172,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "overrides": {
+    "@parcel/watcher": "^2.6.0"
+  },
   "allowScripts": {
     "esbuild": false,
     "@parcel/watcher": false,
