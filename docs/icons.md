@@ -146,8 +146,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 Primer). Это навигация (`BackIcon`, `HomeIcon`, `SidebarIcon`), правка
 (`UndoIcon`, `PasteIcon`, `SortIcon`), файлы и общение (`AttachmentIcon`,
 `CommentIcon`), люди и доступ (`TeamIcon`, `LockIcon`, `LoginIcon`), время,
-место и вид данных. Решение и критерий отбора — ADR-0049
-(`olddevs_ui_docs/adr/0049-icon-baseline-set.md` (ADR-0049)).
+место и вид данных. Решение и критерий отбора — ADR-0049.
 
 Всё, чего в словаре нет, по-прежнему добавляется **заявкой**: с экраном и
 сравнением с похожими иконками словаря. Брать «что-то похожее» из `lucide-react` в обход

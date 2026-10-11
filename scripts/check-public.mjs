@@ -65,10 +65,11 @@ const RULES = [
     test: (line) => /wallpaper|@wpp\/|\bwpp-ui\b/i.test(line),
   },
   {
-    // Репозиторий решений закрыт: относительный путь в него битый и с GitHub, и
-    // из `node_modules`. Само название в тексте — не ссылка, его не трогаем.
+    // Репозиторий решений закрыт: путь в него — относительная ссылка или имя
+    // файла `olddevs_ui_docs/…` — битый и с GitHub, и из `node_modules`. Само
+    // название в тексте — не путь, его не трогаем.
     name: "private-docs-link",
-    test: (line) => /(?:\.\.\/)+olddevs_ui_docs\b/.test(line),
+    test: (line) => /(?:\.\.\/)+olddevs_ui_docs\b|\bolddevs_ui_docs\//.test(line),
   },
 ];
 

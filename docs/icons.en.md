@@ -2,7 +2,7 @@
 entrypoint: "@olddevs/ui/icons"
 source: src/icons.ts
 status: stable
-sourceHash: 8278117a8e97
+sourceHash: d5e61db56b70
 ---
 
 # Icons `@olddevs/ui/icons`
@@ -147,8 +147,7 @@ almost all major systems (Material Symbols, Carbon, Atlassian, Polaris, Fluent,
 Primer). These are navigation (`BackIcon`, `HomeIcon`, `SidebarIcon`), editing
 (`UndoIcon`, `PasteIcon`, `SortIcon`), files and communication (`AttachmentIcon`,
 `CommentIcon`), people and access (`TeamIcon`, `LockIcon`, `LoginIcon`), time,
-place and data view. The decision and the selection criterion are in ADR-0049
-(`olddevs_ui_docs/adr/0049-icon-baseline-set.md` (ADR-0049)).
+place and data view. The decision and the selection criterion are in ADR-0049.
 
 Anything the vocabulary lacks is still added **by request**: with a screen and
 a comparison with similar existing icons. Taking "something similar" from `lucide-react` bypassing the

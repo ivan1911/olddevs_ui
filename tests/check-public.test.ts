@@ -117,6 +117,13 @@ describe("links into the private documentation repository", () => {
       [2, "private-docs-link"],
     ]);
   });
+
+  test("a path into it is reported even without a link: a file name points nowhere public", () => {
+    const found = findViolations(
+      files({ "docs/icons.md": `The criterion is in ADR-0049 (\`${docs}/adr/0049-icons.md\`).` })
+    );
+    expect(found).toEqual([{ path: "docs/icons.md", line: 1, rule: "private-docs-link" }]);
+  });
 });
 
 describe("what the gate reads", () => {
