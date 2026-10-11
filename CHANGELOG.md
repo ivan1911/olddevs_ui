@@ -1,5 +1,12 @@
 # @olddevs/ui
 
+## 4.0.2
+
+### Patch Changes
+
+- a59ec03: The icons page no longer names a file in the maintainers' private decisions repository; it cites the decision as ADR-0049.
+- 787065f: The README links the Storybook showcase on GitHub Pages: every component's stories in each theme, built from the latest release.
+
 ## 4.0.1
 
 ### Patch Changes
