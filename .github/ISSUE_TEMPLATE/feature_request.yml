@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest a new component, prop or other improvement.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Check the [documentation](https://ui.olddevs.ru) and existing issues first. The feature may already exist.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way? Describe the problem rather than the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should change? A code sketch of the API you would like to write is welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Other approaches you considered, including workarounds you use today.
+    validations:
+      required: false

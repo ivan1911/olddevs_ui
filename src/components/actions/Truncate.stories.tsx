@@ -1,0 +1,65 @@
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { TooltipProvider } from "../overlays/Tooltip.js";
+import { Truncate, type TruncateProps } from "./Truncate.js";
+
+const meta = {
+  title: "Actions/Truncate",
+  component: Truncate,
+  parameters: { layout: "padded" },
+  tags: ["periphery"],
+  decorators: [
+    (Story) => (
+      <TooltipProvider>
+        <Story />
+      </TooltipProvider>
+    ),
+  ],
+} satisfies Meta<TruncateProps>;
+
+export default meta;
+type Story = StoryObj<TruncateProps>;
+
+const LONG_TEXT = "A very long file name that does not fit the table column and gets truncated";
+
+/**
+ * Наведите или пройдите Tab: подсказка появляется только у **обрезанного**
+ * текста. Второй строке она не нужна, и её там нет.
+ */
+export const Playground: Story = {
+  render: () => (
+    <div className="flex w-[280px] flex-col gap-2">
+      <div className="bg-bg-2 border-line-soft rounded border px-2 py-1.5 text-[13px]">
+        <Truncate>{LONG_TEXT}</Truncate>
+      </div>
+      <div className="bg-bg-2 border-line-soft rounded border px-2 py-1.5 text-[13px]">
+        <Truncate>Short name</Truncate>
+      </div>
+    </div>
+  ),
+};
+
+/** Несколько строк: обрезка по числу строк, а не по ширине. */
+export const MultipleLines: Story = {
+  render: () => (
+    <div className="bg-bg-2 border-line-soft w-[280px] rounded border px-2 py-1.5 text-[13px]">
+      <Truncate lines={2}>{`${LONG_TEXT} ${LONG_TEXT}`}</Truncate>
+    </div>
+  ),
+};
+
+/** В узкой колонке обрезается больше — замер повторяется при смене размера. */
+export const NarrowColumn: Story = {
+  render: () => (
+    <div className="flex items-start gap-3">
+      {[120, 200, 320].map((w) => (
+        <div
+          key={w}
+          className="bg-bg-2 border-line-soft rounded border px-2 py-1.5 text-[13px]"
+          style={{ width: w }}
+        >
+          <Truncate>{LONG_TEXT}</Truncate>
+        </div>
+      ))}
+    </div>
+  ),
+};

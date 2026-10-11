@@ -1,0 +1,9 @@
+/*
+ * Storybook — такой же потребитель пакета, как и фронт, и подключается так же:
+ * Tailwind импортируется здесь, а не в styles.css, иначе получилось бы два
+ * preflight. Разница только в @source: здесь сканируем собственный src
+ * (Storybook собирает пакет из исходников), а фронт сканирует node_modules/@olddevs/ui/dist.
+ */
+@import "tailwindcss";
+@import "../styles.css";
+@source "../src";

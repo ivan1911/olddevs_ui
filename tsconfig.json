@@ -1,0 +1,56 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    // NodeNext, а не bundler: tsc никогда не переписывает специфаеры импортов,
+    // поэтому при "bundler" в dist уезжают импорты без расширения — бандлер Next
+    // их проглотит, а Node ESM упадёт с ERR_MODULE_NOT_FOUND. NodeNext требует
+    // явное ".js" на этапе компиляции, превращая рантайм-сюрприз в ошибку сборки.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
+
+    // Пакет ships source, не бандл: tsc только транспилирует и выпускает типы.
+    // Бандлер здесь был бы вреден — Tailwind-классы должны дойти до потребителя
+    // строками, чтобы их скомпилировал его Tailwind.
+    "declaration": true,
+
+    /*
+      КАРТЫ ВЫПУСКАЮТСЯ, И ВМЕСТЕ С НИМИ ЕДЕТ `src` — одно без другого мертво.
+
+      Карта ссылается на исходник относительным путём (`../src/color.ts`), и
+      пока в `files` лежал только `dist`, все 276 карт указывали в пустоту:
+      отладчик молча показывал скомпилированный файл, то есть ровно то же, что
+      и без карты. Публикация `src` — единственный вариант, который чинит ОБА
+      вида карт: в `.d.ts.map` TypeScript исходники не встраивает вовсе, и
+      `inlineSources` там бессилен, поэтому «перейти к определению» работает
+      только при наличии настоящих файлов рядом.
+
+      Разбор — ADR-0042 и раздел «Что лежит в пакете» в docs/getting-started.md.
+    */
+    "declarationMap": true,
+    "sourceMap": true,
+
+    // Этот конфиг — только для проверки типов: он покрывает истории, .storybook
+    // и тесты. Выпуск делает tsconfig.build.json — там же живут outDir и rootDir,
+    // потому что вне emit они бессмысленны и лишь мешают включить тесты в проверку.
+    "noEmit": true,
+
+    // Пакет новый, слабых мест наследовать не от кого — включаем строгость сразу.
+    // (Во фронте strict: false, но там это следствие истории, а не решение.)
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  // `.storybook/**/*` — с явным глобом, и это НЕ придирка к стилю. Каталоги,
+  // начинающиеся с точки, TypeScript в include-паттернах пропускает: запись
+  // `".storybook"` выглядела рабочей, а в программу давала НОЛЬ файлов, то есть
+  // `preview.tsx` и `main.ts` не проверялись вовсе. Проверяется через
+  // `npx tsc --showConfig -p tsconfig.json` — в поле `files` их просто не было.
+  "include": ["src", ".storybook/**/*", "tests", "tests-visual", "*.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}

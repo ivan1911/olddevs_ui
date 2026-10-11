@@ -1,0 +1,63 @@
+name: Bug report
+description: Something in @olddevs/ui doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Check the [documentation](https://ui.olddevs.ru) and existing issues first.
+        For security problems, don't use this form. See [SECURITY.md](https://github.com/ivan1911/olddevs_ui/blob/main/SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: "@olddevs/ui version"
+      description: Run `npm ls @olddevs/ui` to check.
+      placeholder: 4.0.0
+    validations:
+      required: true
+  - type: input
+    id: react
+    attributes:
+      label: React version
+      placeholder: 19.2.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      placeholder: Safari 26 on macOS 26
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps, starting from a clean page, help the most.
+      placeholder: |
+        1. Render `<Select searchable ... />`
+        2. Open the list and type "a"
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happens instead. Add error messages or screenshots if they help.
+    validations:
+      required: true
+  - type: input
+    id: reproduction
+    attributes:
+      label: Link to a minimal example
+      description: A CodeSandbox, StackBlitz or repository link. Optional, but it speeds up the fix.
+      placeholder: https://
+    validations:
+      required: false

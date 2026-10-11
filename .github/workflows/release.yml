@@ -1,0 +1,93 @@
+name: Release
+
+# Publishes @olddevs/ui to npm when a version tag is pushed.
+#
+# The workflow only builds and publishes. Tests, types, lint, build and the
+# consumer build run locally in `npm run release:check` before the tag is
+# created; the browser checks (visual snapshots, accessibility, interactions)
+# run separately, also locally. Visual snapshots depend on the platform, so a
+# CI re-run would not be a reliable second opinion.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  # Lets npm exchange the workflow's OIDC identity for a short-lived publish
+  # token. There is no NPM_TOKEN and no NODE_AUTH_TOKEN anywhere in this file.
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish to npm
+    # npm trusted publishing works only from GitHub-hosted runners.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # Node 24 ships npm >= 11.5.1, the first release that can publish
+          # through trusted publishing.
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          # A restored cache is attacker-reachable state in a job that holds
+          # a publish identity, so this workflow never caches.
+          package-manager-cache: false
+
+      - name: Check npm supports trusted publishing
+        run: |
+          required=11.5.1
+          current=$(npm --version)
+          if [ "$(printf '%s\n%s\n' "$required" "$current" | sort -V | head -n 1)" != "$required" ]; then
+            echo "::error::npm $current is older than $required, which trusted publishing needs."
+            exit 1
+          fi
+          echo "npm $current"
+
+      - name: Check the tag matches package.json
+        id: package
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          if [ "${TAG#v}" != "$version" ]; then
+            echo "::error::Tag $TAG does not match version $version in package.json. Delete the tag, fix the version and tag again."
+            exit 1
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # A version already on the registry is skipped, so a tag pushed after a
+      # manual publish does not fail the workflow. The registry would refuse
+      # a duplicate anyway.
+      - name: Look the version up on npm
+        id: registry
+        env:
+          NAME: ${{ steps.package.outputs.name }}
+          VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          published=$(npm view "$NAME@$VERSION" version 2>/dev/null || true)
+          if [ "$published" = "$VERSION" ]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "$NAME@$VERSION is already on npm, nothing to publish."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.registry.outputs.published != 'true'
+        run: npm ci
+
+      - name: Build
+        if: steps.registry.outputs.published != 'true'
+        run: npm run build
+
+      # Provenance is attached automatically when a public package is
+      # published from a public repository through trusted publishing,
+      # so no --provenance flag.
+      - name: Publish
+        if: steps.registry.outputs.published != 'true'
+        run: npm publish --access public

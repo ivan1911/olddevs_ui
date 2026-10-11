@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+storybook-static/
+
+# Auth — никогда не коммитить: содержит токен реестра
+.npmrc
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors
+.vscode/
+.idea/
+.zed/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+tasks/
+# Рабочие копии параллельных задач (`.claude/worktrees/<KEY>`): у каждой свой checkout и node_modules
+worktrees/
+# Локальные настройки запуска превью
+.claude/launch.json
+
+# Временные папки теста покрытия классов и замера размера
+.tmp-coverage-*
+.tmp-size-*
+
+# Снимки витрины, которые снимает внешний скрипт съёмки
+.wiki-shots/
+
+# Артефакты прогонов Playwright (снимки-бейзлайн коммитятся, эти — нет)
+test-results/
+playwright-report/
+
+# Артефакты фикстуры-потребителя: тарбол и сборка Next.js
+fixtures/consumer/olddevs-ui.tgz
+fixtures/consumer/.next/
+fixtures/consumer/next-env.d.ts

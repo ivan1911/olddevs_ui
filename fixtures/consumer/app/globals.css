@@ -1,0 +1,4 @@
+/* Три строки из docs/getting-started.md, дословно. Расхождение ловит сборка. */
+@import "tailwindcss";
+@import "@olddevs/ui/styles.css";
+@source "../node_modules/@olddevs/ui/dist";

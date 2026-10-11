@@ -1,0 +1,175 @@
+{
+  "name": "@olddevs/ui",
+  "version": "4.0.0",
+  "description": "Olddevs UI — design system: tokens, themes and accessible UI primitives",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./icons": {
+      "types": "./dist/icons.d.ts",
+      "default": "./dist/icons.js"
+    },
+    "./color": {
+      "types": "./dist/color.d.ts",
+      "default": "./dist/color.js"
+    },
+    "./editor": {
+      "types": "./dist/editor/index.d.ts",
+      "default": "./dist/editor/index.js"
+    },
+    "./editor/schema": {
+      "types": "./dist/editor/schema-entry.d.ts",
+      "default": "./dist/editor/schema-entry.js"
+    },
+    "./editor/highlight": {
+      "types": "./dist/editor/highlight-entry.d.ts",
+      "default": "./dist/editor/highlight-entry.js"
+    },
+    "./locales/ru": {
+      "types": "./dist/locales/ru.d.ts",
+      "default": "./dist/locales/ru.js"
+    },
+    "./locales/en": {
+      "types": "./dist/locales/en.d.ts",
+      "default": "./dist/locales/en.js"
+    },
+    "./styles.css": "./styles.css"
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.stories.tsx",
+    "styles.css",
+    "docs",
+    "llms.txt",
+    "CHANGELOG.md",
+    "NOTICE"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json --emitDeclarationOnly && tsc -p tsconfig.build.json --removeComments --declaration false --declarationMap false",
+    "check:dist": "node scripts/check-dist.mjs",
+    "check:consumer": "node scripts/check-consumer.mjs",
+    "check:public": "node scripts/check-public.mjs",
+    "size": "node scripts/bundle-size.mjs",
+    "changeset": "changeset",
+    "release:version": "changeset version",
+    "release:check": "node scripts/release-check.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepublishOnly": "npm run build",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build",
+    "test": "vitest run",
+    "contrast": "node scripts/contrast.mjs",
+    "llms": "node scripts/llms.mjs",
+    "llms:check": "node scripts/llms.mjs --check",
+    "docs:translations": "node scripts/docs-translations.mjs",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:a11y": "playwright test tests-visual/a11y.spec.ts",
+    "test:interactions": "playwright test tests-visual/interactions.spec.ts"
+  },
+  "dependencies": {
+    "tailwindcss-react-aria-components": "^2.2.0"
+  },
+  "peerDependencies": {
+    "@internationalized/date": "^3.12.1",
+    "@radix-ui/react-context-menu": "^2.2.0",
+    "@radix-ui/react-dialog": "^1.1.0",
+    "@radix-ui/react-popover": "^1.1.0",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@radix-ui/react-tooltip": "^1.2.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.27.0",
+    "react": "^19.0.0",
+    "react-aria-components": "^1.19.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@changesets/cli": "^2.31.1",
+    "@eslint/js": "^9.0.0",
+    "@internationalized/date": "^3.12.2",
+    "@playwright/test": "^1.61.1",
+    "@radix-ui/react-context-menu": "^2.3.7",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-popover": "^1.1.23",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@radix-ui/react-tooltip": "^1.2.16",
+    "@storybook/addon-a11y": "^10.5.6",
+    "@storybook/react-vite": "^10.5.6",
+    "@tailwindcss/cli": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@tiptap/core": "^3.31.4",
+    "@tiptap/extension-blockquote": "^3.31.4",
+    "@tiptap/extension-code-block-lowlight": "^3.31.4",
+    "@tiptap/extension-highlight": "^3.31.4",
+    "@tiptap/extension-horizontal-rule": "^3.31.4",
+    "@tiptap/extension-link": "^3.31.4",
+    "@tiptap/extension-list": "^3.31.4",
+    "@tiptap/extension-subscript": "^3.31.4",
+    "@tiptap/extension-superscript": "^3.31.4",
+    "@tiptap/extension-table": "^3.31.4",
+    "@tiptap/extension-text-align": "^3.31.4",
+    "@tiptap/extension-text-style": "^3.31.4",
+    "@tiptap/extensions": "^3.31.4",
+    "@tiptap/markdown": "^3.31.4",
+    "@tiptap/pm": "^3.31.4",
+    "@tiptap/react": "^3.31.4",
+    "@tiptap/starter-kit": "^3.31.4",
+    "@tiptap/suggestion": "^3.31.4",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "axe-core": "^4.12.1",
+    "clsx": "^2.1.1",
+    "dompurify": "^3.4.16",
+    "eslint": "^9.0.0",
+    "eslint-plugin-storybook": "^10.5.6",
+    "highlight.js": "~11.11.1",
+    "http-server": "^14.1.1",
+    "jsdom": "^29.1.1",
+    "lowlight": "^3.3.0",
+    "lucide-react": "^1.27.0",
+    "marked": "^17.0.6",
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "react": "^19.2.6",
+    "react-aria-components": "^1.19.0",
+    "react-dom": "^19.2.8",
+    "sonner": "^2.0.7",
+    "storybook": "^10.5.6",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.59.3",
+    "vite": "^7.3.6",
+    "vitest": "^3.2.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivan1911/olddevs_ui.git"
+  },
+  "homepage": "https://ui.olddevs.ru",
+  "bugs": {
+    "url": "https://github.com/ivan1911/olddevs_ui/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

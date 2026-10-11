@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://ui.olddevs.ru
+    about: Reference, guides and examples. Check here before opening an issue.
+  - name: Questions
+    url: https://github.com/ivan1911/olddevs_ui/discussions
+    about: Ask how to use @olddevs/ui or talk an idea over. Issues are for bugs and feature requests.
+  - name: Report a security vulnerability
+    url: https://github.com/ivan1911/olddevs_ui/security/advisories/new
+    about: Don't open a public issue. Report it privately, as described in SECURITY.md.

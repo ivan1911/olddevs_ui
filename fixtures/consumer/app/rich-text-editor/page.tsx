@@ -1,0 +1,24 @@
+import { RichTextEditor } from "@olddevs/ui/editor";
+
+/**
+ * `RichTextEditor` с пресетом `full` прямо из серверного компонента (ADR-0058, п. 11.7): директиву несёт сам компонент, обёртки потребителю не нужно.
+ *
+ * Страница проверяет, что ленивые чанки `codeBlock` и `table` собираются
+ * сборщиком Next.js из `dist` пакета (динамический `import()` внутри кита), а
+ * `First Load JS` держит свой бюджет: чанки едут после загрузки страницы, до них
+ * Редактор показывает Скелет. Блок кода и таблица в документе — затем, чтобы
+ * Скелету и движку было что разбирать.
+ */
+const DOCUMENT =
+  "<h2>Release notes</h2><p>Text with <strong>bold</strong>.</p>" +
+  '<pre><code class="language-python">def greet(name):\n    return f"hi {name}"</code></pre>' +
+  "<table><tbody><tr><th><p>Name</p></th><th><p>Role</p></th></tr>" +
+  "<tr><td><p>Ada</p></td><td><p>Author</p></td></tr></tbody></table>";
+
+export default function RichTextEditorPage() {
+  return (
+    <main className="p-6">
+      <RichTextEditor aria-label="Release notes" preset="full" defaultValue={DOCUMENT} />
+    </main>
+  );
+}

@@ -1,0 +1,144 @@
+# @olddevs/ui
+
+> Дизайн-система: токены, темы и доступные UI-примитивы для React. Этот файл —
+> индекс справочника, который едет вместе с пакетом.
+
+Ссылки ниже относительные и ведут внутрь пакета: читать их надо от его корня, то
+есть от `node_modules/@olddevs/ui/`. Там лежит Справочник именно той версии, что
+установлена у вас. Сайт документации — https://ui.olddevs.ru.
+
+Файл собран скриптом `scripts/llms.mjs` из `docs/`. Править надо страницы, а не
+его: расхождение роняет `npm run llms:check`.
+
+## Начать здесь
+
+- [Справочник `@olddevs/ui`](docs/index.md): Этот справочник — контракт для разработчиков и AI-агентов, которые используют публичный API пакета.
+- [Подключение `@olddevs/ui`](docs/getting-started.md): Всё после `@olddevs/ui` — его обязательные peer-зависимости (ADR-0004): кит их не приносит, потребитель держит их в своём `package.json`.
+- [Как выбрать компонент](docs/component-selection.md): Выбирайте по смыслу действия и состоянию, а не по форме, которую проще собрать.
+- [Общие соглашения `@olddevs/ui`](docs/conventions.md): Публичный API — экспорты времени выполнения из `src/index.ts`, типы, описанные в документации входы и `styles.css`.
+- [Словарь `@olddevs/ui`](docs/glossary.md): Термины кита.
+- [Доступность: обязательный контракт](docs/accessibility.md): Доступность — часть публичного поведения компонента.
+- [Темы, токены и бренды](docs/theming.md): Страница отвечает на три вопроса: как устроены цвета кита, что из этого можно переопределять у себя и как завести собственный бренд.
+- [Палитра](docs/palette.md): Страница показывает значения цветов кита: какие примитивы палитры (кроме меток) объявлены и какой роли каждый из них присвоен в каждой теме.
+- [Локализация: провайдер и каталог сообщений](docs/i18n.md): С 2.0.0 кит говорит по-английски по умолчанию и знает про другие языки.
+- [Каталог компонентов](docs/components/index.md): Каталог перечисляет компоненты кита по группам: у каждого есть ссылка на страницу, экспорты и пояснение, что это за компонент и для чего он нужен.
+
+## Правила для AI
+
+- [Словарь `@olddevs/ui`](docs/glossary.md): Термины кита.
+
+## Действия и обратная связь
+
+- [Button](docs/components/actions/button.md): `Button` запускает действие.
+- [Chip](docs/components/actions/chip.md): `Chip` — компактная кнопка-фильтр.
+- [SplitButton](docs/components/actions/split-button.md): `SplitButton` — главное действие и раскрыватель его вариантов рядом, **двумя отдельными кнопками**.
+- [Toolbar](docs/components/actions/toolbar.md): Панель действий с ролью `toolbar` и одной остановкой табуляции: Tab входит в неё и выходит из неё, внутри ходят стрелки, `Home` и `End` ведут к краям, а возврат на панель ставит фокус на последнее исп
+- [Toggle, Segmented, ToggleGroup и ButtonGroup](docs/components/actions/toggles.md): Выбирайте компонент по смыслу состояния:
+- [Alert, Banner, Progress, Spinner, Toaster, toast и StatusBadge](docs/components/actions/feedback.md): Выбирайте по типу информации:
+- [CopyButton и Truncate](docs/components/actions/copy-and-truncate.md): Две мелочи, которые пишут заново в каждом проекте: копирование значения в буфер с внятным ответом и обрезка текста с подсказкой полного значения.
+
+## Поля ввода
+
+- [TextControl](docs/components/inputs/text-control.md): `TextControl` — базовое текстовое поле или textarea с общей оболочкой формы.
+- [RichTextEditor](docs/components/inputs/rich-text-editor.md): `RichTextEditor` — поле форматированного текста на Tiptap v3 (ProseMirror).
+- [API расширения Редактора](docs/api/editor-extension.md): Карта того, чем продукт расширяет `RichTextEditor` из `@olddevs/ui/editor`, и граница стабильности этого API.
+- [NumberInput](docs/components/inputs/number-input.md): `NumberInput` — управляемое числовое поле с кнопками шага.
+- [Checkbox, CheckboxGroup, Radio и RadioGroup](docs/components/inputs/choice-controls.md): `Checkbox` выбирает независимое «да/нет», `CheckboxGroup` — несколько значений, `RadioGroup` — один ответ на общий вопрос.
+- [Select](docs/components/inputs/select.md): `Select` выбирает значение только из закрытого списка `items`.
+- [Combobox](docs/components/inputs/combobox.md): `Combobox` сочетает свободный текстовый ввод со списком вариантов.
+- [TagInput](docs/components/inputs/tag-input.md): `TagInput` — управляемый набор строк.
+- [Transfer](docs/components/inputs/transfer.md): `Transfer` — две колонки и перенос между ними: слева то, что можно выбрать, справа — выбранное.
+- [TreeSelect](docs/components/inputs/tree-select.md): `TreeSelect` — поле, выбирающее узел иерархии: `TreeView` внутри `Popover`.
+- [ColorPicker](docs/components/inputs/color-picker.md): `ColorPicker` — выбор произвольного цвета: область насыщенности, полоса тона, поле формата и необязательные заготовки.
+- [SwatchGroup](docs/components/inputs/swatch-group.md): Выбор одного значения из закрытого набора, где вариант показан **образцом цвета**, а не текстом.
+- [Rating](docs/components/inputs/rating.md): `Rating` — оценка звёздами.
+- [Slider и RangeSlider](docs/components/inputs/slider.md): `Slider` задаёт одно число, `RangeSlider` — границы `[min, max]`.
+- [SearchControl](docs/components/inputs/search-control.md): `SearchControl` — управляемое поле поиска поверх `TextControl`: лупа, доступное имя, очистка и необязательная экранная клавиатура.
+- [FileDropzone](docs/components/inputs/file-dropzone.md): `FileDropzone` принимает файлы через drag-and-drop или кнопку выбора.
+- [UploadQueue](docs/components/inputs/upload-queue.md): Менеджер загрузок: что уже отправлено, что идёт и что упало.
+- [PasswordInput](docs/components/inputs/password-input.md): Поле пароля на слотах `TextControl`: кнопка показа в `trailing`, предупреждение о Caps Lock под полем.
+- [MaskedInput](docs/components/inputs/masked-input.md): Поле с маской ввода на `TextControl`.
+- [PhoneInput](docs/components/inputs/phone-input.md): `MaskedInput` с телефонной маской, `inputMode="tel"` и `autocomplete="tel"`.
+- [PinInput](docs/components/inputs/pin-input.md): Ввод кода подтверждения: N полей по цифре, значение — **одна строка**.
+- [InlineEdit](docs/components/inputs/inline-edit.md): Правка значения по месту: кнопка-значение → поле → подтверждение.
+- [Form и FormField](docs/components/inputs/form.md): `Form` стандартизирует submit и блокировку на время запроса, но не создаёт систему валидации.
+- [FormLayout и FieldRow](docs/components/inputs/form-layout.md): Раскладка формы: `columns` (1 или 2) и `labels` (`top` или `side`), плюс `FieldRow` для поля во всю ширину.
+
+## Дата и время
+
+- [Calendar](docs/components/date-time/calendar.md): `Calendar` — низкоуровневый controlled building block для выбора одной `DateValue` из React Aria.
+- [RangeCalendar](docs/components/date-time/range-calendar.md): `RangeCalendar` — building block для одного непрерывного диапазона React Aria `DateValue`.
+- [DatePicker](docs/components/date-time/date-picker.md): `DatePicker` — готовый триггер + поповер для одной календарной даты.
+- [DateRangePicker](docs/components/date-time/date-range-picker.md): `DateRangePicker` — готовый выбор периода: триггер, `RangeCalendar`, относительные пресеты и отдельная очистка.
+- [DateTimePicker](docs/components/date-time/date-time-picker.md): `DateTimePicker` собран из `DatePicker` и `TimePicker`.
+- [TimePicker](docs/components/date-time/time-picker.md): `TimePicker` — поле времени с маской и списком ближайших слотов.
+
+## Оверлеи
+
+- [Dialog, ModalHeader и ModalOverlay](docs/components/overlays/dialog.md): Используйте `Dialog` для модального окна с известным заголовком: он создаёт модальность, доступное имя, ловушку фокуса, портал и возврат фокуса.
+- [ConfirmDialog](docs/components/overlays/confirm-dialog.md): `ConfirmDialog` подтверждает значимое или необратимое действие.
+- [ShortcutsHelp](docs/components/overlays/shortcuts-help.md): Это модальное окно со сводом сочетаний клавиш на `Dialog`.
+- [Drawer](docs/components/overlays/drawer.md): `Drawer` — модальная панель, выезжающая справа, слева или снизу.
+- [Popover](docs/components/overlays/popover.md): `Popover` — составной примитив для панели, привязанной к элементу.
+- [HoverCard](docs/components/overlays/hover-card.md): `HoverCard` — карточка-превью: при наведении на имя или ссылку, а также при фокусе на них с клавиатуры рядом всплывает панель с подробностями.
+- [Tooltip и HelpTooltip](docs/components/overlays/tooltip.md): `Tooltip` добавляет краткое пояснение к одному элементу при hover и focus.
+- [Menu](docs/components/overlays/menu.md): `Menu` — составное меню действий, открываемое `MenuTrigger`.
+- [ContextMenu](docs/components/overlays/context-menu.md): `ContextMenu` — меню действий для правого клика и клавиши контекстного меню.
+- [CommandPalette](docs/components/overlays/command-palette.md): `CommandPalette` — controlled modal search по действиям приложения.
+
+## Таблица
+
+- [DataTable](docs/components/table/data-table.md): Прикладная таблица с готовым поведением поверх низкоуровневой `Table`: видимость и порядок колонок, плотность, состояния загрузки и ошибки, слот полосы над таблицей (`toolbar`).
+- [TableToolbar и TablePreferences](docs/components/table/toolbar.md): `TableToolbar` — полоса над таблицей: заголовок, счётчик, действия, слот фильтров и слот настроек.
+- [FilterBar и FilterBarAdd](docs/components/table/filter-bar.md): `FilterBar` показывает применённые фильтры снимаемыми токенами; `FilterBarAdd` — кнопка добавления с выбором поля и значения либо границ диапазона (сумма, дата).
+- [SavedViews](docs/components/table/saved-views.md): `SavedViews` — переключатель именованных снимков состояния.
+
+## Оболочка приложения
+
+- [AppShell](docs/components/app-shell/app-shell.md): Каркас приложения: навигация слева, шапка сверху, содержимое в `<main>`, опциональные правая область и нижняя панель.
+- [SideNav, NavGroup и NavItem](docs/components/app-shell/side-nav.md): `SideNav` — боковая навигация приложения: landmark с именем, слоты шапки и подвала, разделы `NavGroup` с пунктами `NavItem`.
+- [MobileTabBar и MobileTabBarItem](docs/components/app-shell/mobile-tab-bar.md): `MobileTabBar` — нижняя панель главных разделов для телефона: `<nav>` с именем (умолчание из каталога сообщений) и пунктами `MobileTabBarItem` в ряд, поровну.
+- [TopBar](docs/components/app-shell/top-bar.md): Шапка приложения: слоты бренда, поиска и действий, липкость, полупрозрачная подложка на токене темы.
+- [SplitPanel](docs/components/app-shell/split-panel.md): `SplitPanel` — две области с изменяемой границей: содержимое и панель деталей.
+
+## Навигация
+
+- [Tabs](docs/components/navigation/tabs.md): `Tabs` — controlled-only лента вкладок; компонент рендерит только tablist, не панели.
+- [Accordion](docs/components/navigation/accordion.md): `Accordion` — набор раскрываемых секций на react-aria.
+- [Breadcrumbs](docs/components/navigation/breadcrumbs.md): `Breadcrumbs` показывает путь до текущей страницы.
+- [Pagination](docs/components/navigation/pagination.md): `Pagination` — controlled pagination для уже разбитой на страницы коллекции.
+- [Stepper](docs/components/navigation/stepper.md): `Stepper` показывает порядок шагов мастера; текущий индекс задаёт родитель (controlled).
+- [TreeView](docs/components/navigation/tree-view.md): Иерархия с раскрытием, выбором и клавиатурой на `Tree` из react-aria.
+- [SelectionBar и useStickyOffset](docs/components/navigation/selection-bar.md): `SelectionBar` — полоса массовых действий: «Выбрано 12» и что с этим можно сделать.
+- [ContextualSaveBar](docs/components/navigation/contextual-save-bar.md): Полоса несохранённых изменений: появляется с первой правкой формы, показывает «есть несохранённые изменения» (или их число) и две кнопки — сохранить и отменить.
+- [PageHeader](docs/components/navigation/page-header.md): `PageHeader` — единственная шапка страницы с `h1`, опциональным пояснением и узлами действий.
+- [SectionHeader](docs/components/navigation/section-header.md): `SectionHeader` — heading внутри section или card: title слева, вспомогательный узел `right` справа.
+
+## Содержимое
+
+- [Typography: `Text`, `Heading`, `Link`](docs/components/content/typography.md): Используйте `Heading` для структуры документа, `Text` для абзацев и служебных строк, `Link` для навигации.
+- [Card](docs/components/content/card.md): `Card` — визуальная панель с фоном, границей, тенью, внутренним отступом и скруглением.
+- [Image](docs/components/content/image.md): `Image` — картинка со всеми тремя состояниями: грузится, загрузилась, не загрузилась.
+- [Timeline](docs/components/content/timeline.md): `Timeline` — лента шагов процесса: что уже произошло и чем закончилось.
+- [CodeView](docs/components/content/code-view.md): `CodeView` показывает код: JSON ответа, YAML конфига, тело вебхука.
+- [NotificationItem, NotificationList и NotificationCenter](docs/components/content/notifications.md): Список событий: что произошло, когда и прочитано ли.
+- [MediaCard](docs/components/content/media-card.md): Плитка с изображением: превью в заданной пропорции, действия поверх него, бейджи и выбор.
+- [SortableList](docs/components/content/sortable-list.md): Список, порядок которого задаёт пользователь перетаскиванием.
+- [EditableList](docs/components/content/editable-list.md): Список, в котором строки правят по месту и переставляют перетаскиванием, а новые добавляют снизу.
+- [RichTextView](docs/components/content/rich-text-view.md): `RichTextView` — показ сохранённого HTML `RichTextEditor` с той же типографикой, что внутри Редактора.
+- [VirtualGrid](docs/components/content/virtual-grid.md): Сетка карточек с виртуализацией: в DOM живут видимые ячейки и небольшой запас вокруг.
+- [Avatar и AvatarGroup](docs/components/content/avatar.md): `Avatar` показывает фотографию по `src` или, если её нет или она не загрузилась, инициалы и стабильный градиент, вычисленные из имени.
+- [Data display: `Badge`, `Stat`, `DescriptionList`, `Table`](docs/components/content/data-display.md): Выбирайте компонент по форме и смыслу данных: `Badge` отвечает на «сколько» или «есть ли новое», `Stat` — на один показатель с контекстом, `DescriptionList` — на пары «свойство — значение», `Table` — 
+- [EmptyState, ErrorState и Skeleton](docs/components/content/empty-and-loading.md): Три состояния экрана, у которых нет содержимого, и они не взаимозаменяемы: `Skeleton` показывают, пока результат неизвестен; `EmptyState`, когда запрос удался и вернул пусто; `ErrorState`, когда запро
+- [Layout primitives: `Separator`, `ScrollArea`, `AspectRatio`, `Kbd`](docs/components/content/layout-primitives.md): Это низкоуровневые строительные блоки, а не полноценная система раскладки.
+- [Grid](docs/components/content/grid.md): Адаптивная сетка равных колонок на утилитах Tailwind.
+- [TagGroup и Tag](docs/components/content/tag-group.md): Набор меток **для показа**: категории записи, проекты, ярлыки.
+- [Carousel](docs/components/content/carousel.md): Лента слайдов на нативной прокрутке с CSS scroll-snap: листают кнопки «назад» и «вперёд», колесо мыши, тачпад, свайп и стрелки клавиатуры; слайд после жеста встаёт ровно.
+- [Keyboard и VisuallyHidden](docs/components/content/keyboard.md): `Keyboard` — контролируемая экранная клавиатура для уже существующего текстового поля: она редактирует строку и выделение через обработчики, а не получает DOM-ref поля.
+- [Иконки `@olddevs/ui/icons`](docs/icons.md): Импортируйте иконки только из `@olddevs/ui/icons`, выбирая имя по смыслу действия или сущности: `DeleteIcon`, а не геометрию вроде `Trash`.
+
+## Остальные страницы
+
+- [Каталог сообщений `UiMessages`](docs/api/messages.md): Публичный контракт: имена ключей и форма значения.
+- [Совместимость и заметки о миграции](docs/api/migration-notes.md): Публичный контракт `@olddevs/ui` — это входы из `exports` пакета (`@olddevs/ui`, `/icons`, `/color`, `/editor`, `/editor/schema`, `/editor/highlight`, `/locales/ru`, `/locales/en`), их runtime exports
+- [Общий API: утилиты, токены, константы и типы](docs/api/utilities.md): `@olddevs/ui` экспортирует несколько программных API помимо компонентов.

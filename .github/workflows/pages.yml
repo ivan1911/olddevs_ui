@@ -1,0 +1,55 @@
+name: Storybook
+
+# Builds the Storybook showcase and deploys it to GitHub Pages when a version
+# tag is pushed, so the public showcase always matches the latest release.
+# Run it by hand to redeploy without a new tag.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+# One deployment at a time; a running deployment is finished, not canceled,
+# so Pages never ends up half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Storybook
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # Storybook 10 is ESM-only and needs Node 20.16+, 22.19+ or 24+.
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build-storybook
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: storybook-static
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      # Lets deploy-pages verify that the deployment comes from this workflow.
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

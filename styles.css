@@ -1,0 +1,1650 @@
+/*
+ * Токены, темы и базовые стили дизайн-системы @olddevs/ui.
+ *
+ * ВАЖНО: здесь НЕТ `@import "tailwindcss"` — и это намеренно.
+ * Tailwind импортирует потребитель, у себя, один раз:
+ *
+ *     @import "tailwindcss";
+ *     @import "@olddevs/ui/styles.css";
+ *
+ * Tailwind 4 обрабатывает `@theme` из импортированных файлов, поэтому мост
+ * токенов работает. Если бы Tailwind импортировался и отсюда, у потребителя
+ * оказалось бы два preflight и задвоенные утилиты.
+ *
+ * Что сюда НЕ входит и остаётся у потребителя: стили конкретных экранов —
+ * фоновые блобы дашборда, оформление собственного сёрчбара, safe-area
+ * мобильного таб-бара. Это прикладной слой, а не система.
+ *
+ * В 2.0.0 отсюда убраны 22 токена прежнего продукта (`--gsb-*`, `--thumb-*`,
+ * `--favorite*`, `--mobile-nav-*`, `--image-chrome*`, `--overlay-scrim-strong`):
+ * их не читал ни один компонент кита — только CSS его приложения. Список и
+ * действие для потребителя — в `docs/api/migration-notes.md`.
+ */
+
+/*
+ * Варианты состояний react-aria-components.
+ *
+ * Строка стоит ЗДЕСЬ, а не у потребителя, и это проверено: Tailwind 4
+ * обрабатывает `@plugin` из импортированного файла так же, как `@theme`, —
+ * потребителю по-прежнему достаточно двух строк, `@import "tailwindcss"` и
+ * `@import "@olddevs/ui/styles.css"`. Пакет плагина лежит в обычных
+ * `dependencies`, поэтому резолвится от этого файла в любой раскладке
+ * node_modules.
+ *
+ * Плагин не добавляет новых имён поверх штатных, а ПЕРЕОПРЕДЕЛЯЕТ их на
+ * двойной селектор:
+ *
+ *     .hover\:bg-x:is(:where([data-rac])[data-hovered], :where(:not([data-rac])):hover)
+ *
+ * Отсюда главное следствие для словаря тонов: `hover:`, `focus-visible:`,
+ * `disabled:`, `invalid:`, `indeterminate:` и `open:` из `TONE_TOKENS`
+ * работают и на нативных элементах, и на элементах RAC — а те сплошь и рядом
+ * отрисованы дивами с ролью (`MenuItem`, `ListBoxItem`, `Row`), где ни
+ * `:hover`, ни `:disabled` не сработали бы. Дублировать словарь в форме
+ * `data-*` не нужно.
+ *
+ * Пишется `hover:`, а не `hovered:` — имя варианта штатное, атрибут
+ * `data-hovered`. Собственные имена есть только у состояний без
+ * CSS-эквивалента: `selected:`, `pressed:`, `entering:`/`exiting:`,
+ * `placement-*:`.
+ */
+@plugin "tailwindcss-react-aria-components";
+
+@theme {
+  --color-surface-app: var(--surface-app);
+  --color-surface-panel: var(--surface-panel);
+  --color-surface-panel-hover: var(--surface-panel-hover);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-contrast: var(--surface-contrast);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-surface-inverse-hover: var(--surface-inverse-hover);
+  --color-surface-inverse-pressed: var(--surface-inverse-pressed);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-accent: var(--text-on-accent);
+  --color-text-on-inverse: var(--text-on-inverse);
+  --color-text-on-warning: var(--text-on-warning);
+  --color-text-on-success: var(--text-on-success);
+
+  --color-border-default: var(--border-default);
+  --color-border-soft: var(--border-soft);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-on-inverse: var(--accent-on-inverse);
+
+  /*
+   * Тона под полными именами — целевой словарь. Заливка (`--success`) и её
+   * «читаемый» вариант под текст, рамки и индикаторы (`--success-strong`):
+   * две несовместимые роли одного тона, см. комментарий у переменных ниже.
+   *
+   * Исторические алиасы `ok`/`warn`/`err`/`tg` объявлены дальше и остаются
+   * рабочими, но примитивы пакета ими больше не пользуются.
+   */
+  --color-accent-strong: var(--accent-strong);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-strong: var(--success-strong);
+
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-strong: var(--warning-strong);
+
+  /* Звезда `Rating` — компонентный слой: смысл принадлежит одному компоненту,
+     а не системе (ADR-0040). Стоит после семантических групп, рядом с
+     остальными компонентными токенами, а не внутри `warning`: цвет сегодня тот
+     же, но правка предупреждения не должна перекрашивать оценки. */
+  --color-rating-star: var(--rating-star);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-strong: var(--danger-strong);
+
+  --color-draft: var(--draft);
+  --color-draft-soft: var(--draft-soft);
+  --color-draft-strong: var(--draft-strong);
+
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-bg-3: var(--bg-3);
+  --color-bg-4: var(--bg-4);
+
+  --color-fg-0: var(--fg-0);
+  --color-fg-1: var(--fg-1);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-fg-4: var(--fg-4);
+
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+
+  /*
+   * Исторические алиасы. Держатся ради фронта, где их ещё десятки; примитивы
+   * пакета на них не ссылаются, и новый код тоже не должен — только полные
+   * имена выше. Удаляются, когда потребитель выйдет на ноль по ним.
+   */
+  --color-tg-2: var(--tg-2);
+  --color-tg: var(--tg);
+  --color-tg-soft: var(--tg-soft);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
+  --color-err: var(--err);
+  --color-err-soft: var(--err-soft);
+
+  /* Метки пользователя: утилиты `bg-label-blue`, `text-label-blue`, `border-label-blue`. */
+  --color-label-blue: var(--label-blue);
+  --color-label-violet: var(--label-violet);
+  --color-label-teal: var(--label-teal);
+  --color-label-green: var(--label-green);
+  --color-label-amber: var(--label-amber);
+  --color-label-red: var(--label-red);
+  --color-label-pink: var(--label-pink);
+  --color-label-steel: var(--label-steel);
+
+  --color-purple: var(--purple);
+  --color-purple-soft: var(--purple-soft);
+
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-control: var(--r-control);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+
+  /*
+   * `--font-inter` ставит потребитель — или не ставит. Без запасного значения
+   * ссылка на неё делала недействительным весь токен, и `font-sans` молча
+   * наследовал шрифт предка: в шапке блока кода и в знаках `Kbd` это
+   * моноширинный.
+   */
+  --font-sans: var(--font-inter, Inter), system-ui, sans-serif;
+  /*
+   * Моноширинный — системный стек: SF Mono на Apple, Consolas на Windows,
+   * Liberation/DejaVu Mono на Linux. Кит своих файлов шрифта не грузит.
+   * Потребитель подставляет свой шрифт переменной `--font-code` (как
+   * `--font-inter` для основного, например из `next/font`).
+   *
+   * Раньше здесь стояло `var(--font-mono)` — ссылка токена на самого себя.
+   * Цикл делает переменную недействительной целиком, и `font-mono` во всём
+   * ките (CodeView, Kbd, блок кода Редактора) молча рисовался Inter.
+   */
+  --font-mono:
+    var(--font-code, ui-monospace), "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+    monospace;
+
+  /*
+   * Типографическая шкала.
+   *
+   * Выведена из фактически используемого, а не изобретена: до неё размеры
+   * стояли восемью значениями, три из которых произвольные (`text-[13px]`,
+   * `text-[11px]`, `text-[26px]`). Семь ступеней покрывают все восемь.
+   *
+   * СТРОЧНЫЙ БОКС ЗАДАН У КАЖДОЙ СТУПЕНИ, и это не украшение. Во-первых, без
+   * него высота выводится из множителя `1.5` и получается дробной — ровно так
+   * триггер `Select` разошёлся с полем на 2.5px. Во-вторых, `--text-sm` здесь
+   * ПЕРЕОПРЕДЕЛЯЕТ штатные 14/20 Tailwind на 13/20, и без явного бокса
+   * переопределение утащило бы за собой ещё и высоту строки.
+   *
+   * Числа боксов взяты у Tailwind, чтобы ступени совпадали с привычными:
+   * 12/16, 14/20, 16/24, 20/28 — его же пары. Своих два: `caption` 11/16 и
+   * `2xl` 26/32.
+   *
+   * `--text-md` — ступень, которой у Tailwind нет (у него `base`). Заведена,
+   * потому что шкала кита начинается ниже: рабочий размер здесь 13px, и
+   * называть 14px «базовым» значило бы врать про то, что чаще всего стоит.
+   */
+  --text-caption: 11px;
+  --text-caption--line-height: 16px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-md: 14px;
+  --text-md--line-height: 20px;
+  --text-lg: 16px;
+  --text-lg--line-height: 24px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 26px;
+  --text-2xl--line-height: 32px;
+
+  /*
+   * ШКАЛА ДВИЖЕНИЯ: ступени длительности и кривые — ADR-0047.
+   *
+   * Стоит ПЕРЕД токенами анимаций намеренно: они на неё ссылаются, и читатель
+   * файла встречает объявление раньше ссылки. Для CSS порядок здесь безразличен,
+   * для человека — нет.
+   *
+   * Обе шкалы ЗАКРЫТЫ: четыре ступени и три кривые, и это сторожит
+   * `tests/motion.test.ts`. Пятая ступень — разбор в ADR, а не строка здесь;
+   * приём взят у белого списка исключений `reduce`.
+   *
+   * Имена по роли, а не по значению: `--duration-fast`, не `--duration-100`.
+   * Смена значения ступени тогда не требует переименования, и вызов в
+   * компоненте продолжает сообщать, ЗАЧЕМ выбрана эта ступень.
+   */
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+  --duration-moderate: 250ms;
+  /*
+   * Без потребителя сегодня — и заведена намеренно. Шкала это не только выбор,
+   * но и граница: медленнее 400ms кит не двигает ничего. Не будь верхней
+   * ступени, первая же шторка во весь экран принесла бы 500ms «как исключение».
+   */
+  --duration-slow: 400ms;
+
+  /*
+   * Кривые. `enter` и `exit` численно совпадают со штатными `--ease-out` и
+   * `--ease-in` Tailwind, и объявлены всё равно — по тому же доводу, что и
+   * `--animate-spin` ниже: имя обязано нести роль, а связь — быть видимой в
+   * файле кита, а не держаться на совпадении с дефолтной темой. Утилиты
+   * `ease-in` / `ease-out` в компонентах кита после этого не используются:
+   * «вход» и «выход» — это про оверлей, а не про направление кривой.
+   */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /*
+   * Умолчание переходов Tailwind переводится на шкалу — половина смысла всей
+   * работы. Без этих двух строк `transition-colors` без явного класса
+   * длительности продолжал бы идти зашитые 150ms: число, совпадающее со
+   * ступенью случайно, а не по ссылке. Потребитель, переопределивший
+   * `--duration-base`, не сдвинул бы ни один такой переход — а их в ките
+   * тридцать с лишним.
+   *
+   * Следствие для компонента: длительность называется ТОЛЬКО там, где она
+   * отличается от умолчания. `transition-colors duration-base` — лишнее слово.
+   */
+  --default-transition-duration: var(--duration-base);
+  --default-transition-timing-function: var(--ease-standard);
+
+  /*
+   * Подложка окна. `standard`, а не `enter`: затемнение не «приходит на место»,
+   * оно меняет состояние всего экрана.
+   *
+   * Было 0.4s — самая медленная анимация кита, и заметно медленная для
+   * подложки: фон дотемневал ПОЗЖЕ, чем появлялось само окно (0.3s), то есть
+   * порядок читался задом наперёд. Теперь обе на `moderate`, и подложка не
+   * отстаёт от окна.
+   */
+  --animate-fadein: fadein var(--duration-moderate) var(--ease-standard);
+  --animate-sheetin: sheetin var(--duration-moderate) var(--ease-enter);
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  /* Бегущая треть полосы при неизвестном прогрессе. Едет положение, а не
+     ширина: анимация ширины дёргала бы полосу на каждом кадре. */
+  --animate-progress-indeterminate: progressIndeterminate 1.2s ease-in-out infinite;
+  --animate-imgFadeIn: imgFadeIn var(--duration-moderate) var(--ease-enter);
+  /*
+   * Кастомная кривая `cubic-bezier(0.32, 0.72, 0, 1)` здесь была, и её не
+   * заменили на похожую — её сняли. Четвёртого имени она не заслужила: токен не
+   * читает ни один компонент, а «почти `enter`, но своя» — это не роль.
+   */
+  --animate-modalExpand: modalExpand var(--duration-moderate) var(--ease-enter);
+  --animate-tooltipIn: tooltipIn var(--duration-base) var(--ease-enter);
+
+  /* Вход якорной панели: `Popover`. Заведён по образцу `tooltipIn`, но
+     не равен ему — панель крупнее подсказки, поэтому смещение вдвое больше, а
+     сжатие вдвое меньше: сильный `scale` на большой поверхности читается как
+     колыхание, а не как появление. Прежде панель входила общим `fadein` (0.4s),
+     и для якорной панели это заметно медленно.
+
+     По ВРЕМЕНИ панель и подсказка теперь равны — обе `base`. Прежние 0.16 против
+     0.14 не были решением: разницу в 20 миллисекунд не различает ни глаз, ни
+     ревьюер, а объяснения ей не было ни в комментарии, ни в ADR. Панель
+     отличается от подсказки формой входа, и этого достаточно. */
+  --animate-popoverIn: popoverIn var(--duration-base) var(--ease-enter);
+
+  /*
+   * ВЫХОД ОВЕРЛЕЕВ — зеркала входа, но не покадровые.
+   *
+   * Каждый короче своего входа на ступень: 250→150 у подложки и окна, 150→100 у
+   * подсказки и панели. Правило «выход короче входа» берётся у Carbon и M3, и на
+   * шкалу оно легло без новой ступени — довод в пользу её состава, а не
+   * совпадение.
+   *
+   * Кривая у всех `exit`: уход ускоряется прочь, тогда как вход замедлялся к
+   * месту. До этой волны `--ease-exit` не читал никто.
+   *
+   * Смещение при уходе ВДВОЕ МЕНЬШЕ, чем при входе, и в ту же сторону, откуда
+   * панель пришла. Полное зеркало читается как отскок: элемент словно
+   * отталкивается от места, на котором только что стоял.
+   */
+  --animate-fadeout: fadeout var(--duration-base) var(--ease-exit);
+  --animate-sheetout: sheetout var(--duration-base) var(--ease-exit);
+  --animate-tooltipOut: tooltipOut var(--duration-fast) var(--ease-exit);
+  --animate-popoverOut: popoverOut var(--duration-fast) var(--ease-exit);
+
+  /*
+   * УХОД СТРОКИ СПИСКА — тот же уход, но со смыканием соседей.
+   *
+   * У оверлея место не освобождается: он лежит над содержимым. У строки —
+   * наоборот, и в этом вся цена резкого исчезновения: соседние строки смыкаются
+   * в один кадр, а вместе с ними подпрыгивает всё, что ниже. Поэтому высота,
+   * отступы и линия разделителя схлопываются ТЕМ ЖЕ движением, а не после него.
+   *
+   * Высота приходит переменной `--row-exit-h`, и иначе быть не может: `height`
+   * не интерполируется от `auto`, а высота строки зависит от содержимого
+   * потребителя — списку задач с флажком и списку с аватаром она разная.
+   * Ставит её компонент, замерив строку в момент пропажи.
+   */
+  --animate-rowout: rowout var(--duration-base) var(--ease-exit);
+
+  @keyframes fadein {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes sheetin {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes progressIndeterminate {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: -400px 0;
+    }
+    100% {
+      background-position: 400px 0;
+    }
+  }
+  @keyframes imgFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes modalExpand {
+    from {
+      transform: translate(var(--mx, 0px), var(--my, 0px)) scale(var(--ms, 0.92));
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  /*
+   * НАМЕРЕННО переопределяет дефолтный `pulse` Tailwind: наш вариант добавляет
+   * scale(0.85) к штатному миганию прозрачности. Токен объявлен явно (тайминг —
+   * штатный tailwind-овский), чтобы связь `animate-pulse` → эти keyframes была
+   * видна здесь, а не держалась на совпадении имён с дефолтной темой.
+   */
+  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  /*
+   * Объявлен по той же причине, что и `pulse`, но ради другого: `spin` —
+   * ИСКЛЮЧЕНИЕ из правила `prefers-reduced-motion` (ADR-0043). Спиннер
+   * продолжает вращаться при `reduce`, потому что это единственное, чем кит
+   * сообщает «идёт работа»: остановленный кружок выглядит не спокойнее, а
+   * сломанным.
+   *
+   * Исключение, которого нет в файле, проверить нечем — гейт читает `styles.css`
+   * и о дефолтной теме Tailwind не знает. Значение и кейфреймы штатные, то есть
+   * поведение не меняется ни на кадр; меняется то, что теперь это видно.
+   */
+  --animate-spin: spin 1s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(0.85);
+    }
+  }
+  @keyframes tooltipIn {
+    from {
+      opacity: 0;
+      transform: translateY(2px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes popoverIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fadeout {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(2px);
+    }
+  }
+  @keyframes sheetout {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes rowout {
+    from {
+      opacity: 1;
+      height: var(--row-exit-h);
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-bottom-width: 0;
+      transform: translateY(2px);
+    }
+  }
+  @keyframes tooltipOut {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(1px) scale(0.98);
+    }
+  }
+  @keyframes popoverOut {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(2px) scale(0.99);
+    }
+  }
+}
+
+/*
+ * Утилиты ступеней длительности — ADR-0047.
+ *
+ * Объявлены руками, потому что у Tailwind 4 НЕТ пространства имён `--duration-*`:
+ * `--ease-*` он читает из темы и заводит `ease-standard` сам, а `duration-*`
+ * принимает только числа (`duration-150`) и произвольные значения. Без этих
+ * четырёх правил ступень писалась бы как `duration-(--duration-fast)` — длиннее,
+ * без подсказок редактора и без единого места, где её можно было бы найти.
+ *
+ * `@utility` из ИМПОРТИРОВАННОГО файла работает — проверено сборкой, как в своё
+ * время `@plugin` и `@theme` (комментарий в начале файла). Потребителю
+ * по-прежнему хватает двух строк импорта.
+ *
+ * `--tw-duration` ставится наравне с `transition-duration` — ровно так устроены
+ * штатные `duration-*`. Через эту переменную `transition-*` читает длительность,
+ * и без неё ступень зависела бы от того, в каком порядке Tailwind разложил
+ * утилиты в собранном файле.
+ */
+@utility duration-fast {
+  --tw-duration: var(--duration-fast);
+  transition-duration: var(--duration-fast);
+}
+@utility duration-base {
+  --tw-duration: var(--duration-base);
+  transition-duration: var(--duration-base);
+}
+@utility duration-moderate {
+  --tw-duration: var(--duration-moderate);
+  transition-duration: var(--duration-moderate);
+}
+@utility duration-slow {
+  --tw-duration: var(--duration-slow);
+  transition-duration: var(--duration-slow);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+/*
+ * ── Слой 1: примитивы ────────────────────────────────────────────────────────
+ *
+ * Палитра: цвет как значение, без роли и без темы. Здесь НЕТ семантики —
+ * `--od-slate-1` не знает, что он фон приложения; это знает слой 2.
+ *
+ * Устройство ramp'ов. Их три, по одному на тему, и это не дублирование:
+ * нейтрали каждой темы подобраны руками под свою подложку (тёмная холодно-серая,
+ * светлая с голубой нотой, сумрак сине-стальной), и свести их к одной шкале
+ * значило бы перекрасить две темы из трёх. Внутри ramp'а шаг растёт по
+ * светлоте: 1 — самый тёмный, 12 — самый светлый. У тонов та же логика, шагов
+ * меньше — ровно столько, сколько реально используется.
+ *
+ * Полупрозрачный примитив называется `--od-<семья>-<шаг базы>-a<альфа>`:
+ * `--od-blue-4-a16` — четвёртый шаг синего с альфой 0.16. Альфа не вычисляется
+ * из сплошного цвета через `color-mix`, а зашита в значение, и это осознанно:
+ * `scripts/contrast.mjs` разбирает `var(--x)` и готовые цвета, но не
+ * вычисляемые выражения. Считай кит `*-soft` через `color-mix` — гейт контраста
+ * ослеп бы ровно на тех токенах, ради которых написан.
+ *
+ * Два шага объявлены только как база для полупрозрачных и сплошными не
+ * используются — `--od-blue-4` (#1f7ae0) и `--od-red-4` (#e0594b). Они на
+ * полтона отличаются от соседних `--od-blue-3` (#1e76da) и `--od-red-2`
+ * (#da3c2b), которыми покрашены сами тона. Расхождение историческое: заливка и
+ * её полупрозрачная версия калибровались в разные заходы. Здесь оно не
+ * чинится — правка сдвинула бы контраст, а волна 16 обещает не менять ни
+ * одного вычисляемого значения; см. `tasks/plan.md`, Task 6.
+ *
+ * Чего в этом слое НЕТ и почему. Радиусы, кегли и анимации остаются там, где
+ * лежали: они и так примитивны и от темы не зависят, второе имя для них было бы
+ * обрядом. Тени и градиенты — композиции из геометрии и цвета, а не палитра:
+ * они остаются литеральными на слое 2.
+ *
+ * Потребителю переопределять примитивы не нужно и не поддерживается: точка
+ * правки — семантика и блок бренда, см. `docs/theming.md`.
+ */
+:root {
+  /* Нейтрали тёмной темы */
+  --od-slate-1: #26272d;
+  --od-slate-1-a72: rgba(38, 39, 45, 0.72);
+  --od-slate-2: #2e2f36;
+  --od-slate-3: #363740;
+  --od-slate-4: #3c3d46;
+  --od-slate-5: #41424c;
+  --od-slate-6: #494a55;
+  --od-slate-7: #4d4e59;
+  --od-slate-8: #5a5c66;
+  --od-slate-9: #aeb0b9;
+  --od-slate-10: #afb0b7;
+  --od-slate-11: #dadce4;
+  --od-slate-12: #f4f5f8;
+
+  /* Нейтрали светлой темы */
+  --od-cloud-1: #17212b;
+  --od-cloud-2: #45515f;
+  --od-cloud-3: #545f6e;
+  --od-cloud-4: #636e7a;
+  --od-cloud-5: #9aa6b2;
+  --od-cloud-6: #d9e2ec;
+  --od-cloud-7: #e3ebf4;
+  --od-cloud-8: #e7edf3;
+  --od-cloud-9: #edf2f7;
+  --od-cloud-10: #f4f7fa;
+  --od-cloud-10-a84: rgba(244, 247, 250, 0.84);
+  --od-cloud-11: #f8fafc;
+  --od-cloud-12: #ffffff;
+
+  /* Нейтрали сумрака */
+  --od-navy-1: #15202b;
+  --od-navy-1-a72: rgba(21, 32, 43, 0.72);
+  --od-navy-2: #1e2732;
+  --od-navy-3: #253341;
+  --od-navy-4: #2d3a44;
+  --od-navy-5: #2f3e4f;
+  --od-navy-6: #38444d;
+  --od-navy-7: #3a4d5f;
+  --od-navy-8: #3f5066;
+  --od-navy-9: #9faab2;
+  --od-navy-10: #9babb8;
+  --od-navy-11: #afb8c1;
+  --od-navy-12: #f7f9f9;
+
+  /* Синий — акцент по умолчанию */
+  --od-blue-1: #1767c2;
+  --od-blue-2: #1c6cc6;
+  --od-blue-3: #1e76da;
+  --od-blue-4: #1f7ae0;
+  --od-blue-4-a16: rgba(31, 122, 224, 0.16);
+  --od-blue-4-a18: rgba(31, 122, 224, 0.18);
+  --od-blue-4-a20: rgba(31, 122, 224, 0.2);
+  --od-blue-4-a35: rgba(31, 122, 224, 0.35);
+  --od-blue-5: #3290f4;
+  --od-blue-5-a45: rgba(50, 144, 244, 0.45);
+  --od-blue-6: #7fc1ff;
+  --od-blue-7: #e8f1ff;
+
+  /* Зелёный — тон success */
+  --od-green-1: #17724c;
+  --od-green-2: #1f9d68;
+  --od-green-2-a12: rgba(31, 157, 104, 0.12);
+  --od-green-3: #3fb47f;
+  --od-green-3-a12: rgba(63, 180, 127, 0.12);
+  --od-green-4: #7ad1a9;
+
+  /* Янтарный — тон warning */
+  --od-amber-1: #895a0d;
+  --od-amber-2: #c98512;
+  --od-amber-2-a14: rgba(201, 133, 18, 0.14);
+  --od-amber-3: #f0b341;
+  --od-amber-3-a13: rgba(240, 179, 65, 0.13);
+  --od-amber-4: #f2bf5f;
+
+  /* Красный — тон danger */
+  --od-red-1: #b82d2d;
+  --od-red-2: #da3c2b;
+  --od-red-3: #d14343;
+  --od-red-3-a12: rgba(209, 67, 67, 0.12);
+  --od-red-4: #e0594b;
+  --od-red-4-a12: rgba(224, 89, 75, 0.12);
+  --od-red-5: #eea8a0;
+
+  /* Фиолетовый — второй акцент */
+  --od-violet-1: #5947e0;
+  --od-violet-2: #5744e9;
+  --od-violet-3: #6d5df0;
+  --od-violet-3-a14: rgba(109, 93, 240, 0.14);
+  --od-violet-3-a20: rgba(109, 93, 240, 0.2);
+  --od-violet-3-a32: rgba(109, 93, 240, 0.32);
+  --od-violet-4: #b8b2f8;
+  --od-violet-4-a30: rgba(184, 178, 248, 0.3);
+
+  /* Индиго — дополнительный тон (`accent-alt`) */
+  --od-indigo-1: #4f7be8;
+  --od-indigo-1-a14: rgba(79, 123, 232, 0.14);
+  --od-indigo-2: #7d63ef;
+  --od-indigo-2-a14: rgba(125, 99, 239, 0.14);
+
+  /* Лаймовый — тон draft */
+  /*
+   * Оттенки пользовательских меток.
+   *
+   * СВОИ СТУПЕНИ, А НЕ ПЕРЕИСПОЛЬЗОВАННЫЕ СТУПЕНИ ТОНОВ, и это решение.
+   * Заявка просит зелёный, янтарный и красный — то есть ровно те оттенки,
+   * которыми кит обозначает успех, предупреждение и ошибку. Возьми метка
+   * значение тона буквально — и кружок рядом с проектом прочитается как
+   * статус. Поэтому ступени сдвинуты: метка узнаётся как метка по месту и
+   * форме, а по цвету не совпадает со смыслом ни в одной теме.
+   */
+  --od-label-blue-d: #4c9aff;
+  --od-label-violet-d: #9b8cff;
+  --od-label-teal-d: #2dd4bf;
+  --od-label-green-d: #34c98a;
+  --od-label-amber-d: #e0a63a;
+  --od-label-red-d: #f0766a;
+  --od-label-pink-d: #f472b6;
+  --od-label-steel-d: #8aa6c0;
+
+  --od-label-blue-l: #1767c2;
+  --od-label-violet-l: #5947e0;
+  --od-label-teal-l: #0f766e;
+  --od-label-green-l: #17724c;
+  --od-label-amber-l: #895a0d;
+  --od-label-red-l: #b82d2d;
+  --od-label-pink-l: #be185d;
+  --od-label-steel-l: #4b6b8a;
+
+  /*
+   * Подложки маркера Редактора. Яркие — `yellow`, `green`, `pink`:
+   * как у настоящего текстовыделителя, одни и те же во всех темах, HSL со
+   * светлотой 75 % и насыщенностью 100 % (оттенки 50°, 100°, 330°), а текст на
+   * них всегда тёмный — `--od-marker-text`. Остальные шесть — прежние названия
+   * цвета, как в Notion, «читаемые»: Схема и показ их понимают, меню
+   * не предлагает, а значения не менялись. Суффикс `-d` — тёмные приглушённые
+   * (под `fg-0` светлого текста), `-l` — пастель (под `fg-0` тёмного). Читает их
+   * токен `--marker-<имя>` компонентного слоя.
+   */
+  --od-marker-yellow: #ffea80;
+  --od-marker-green: #aaff80;
+  --od-marker-pink: #ff80bf;
+  --od-marker-text: #1a1a1a;
+
+  --od-marker-gray-d: #5a5a5a;
+  --od-marker-brown-d: #603b2c;
+  --od-marker-orange-d: #854c1d;
+  --od-marker-blue-d: #28456c;
+  --od-marker-purple-d: #492f64;
+  --od-marker-red-d: #6e3630;
+
+  --od-marker-gray-l: #e3e2e0;
+  --od-marker-brown-l: #eee0da;
+  --od-marker-orange-l: #fadec9;
+  --od-marker-blue-l: #d3e5ef;
+  --od-marker-purple-l: #e8deee;
+  --od-marker-red-l: #ffe2dd;
+
+  --od-lime-1: #3f6212;
+  --od-lime-2: #4d7c0f;
+  --od-lime-2-a10: rgba(77, 124, 15, 0.1);
+  --od-lime-3: #a3e635;
+  --od-lime-3-a14: rgba(163, 230, 53, 0.14);
+  --od-lime-4: #d9f99d;
+
+  /*
+   * Тушь — нейтральная тёмная подложка инверсной поверхности в светлой теме.
+   * Своя ступень, а не `cloud-1`: тот синеват и читается как
+   * цвет текста, а плашке над выделением нужен чистый тёмно-серый, как у
+   * меню выделения Notion и Google Docs.
+   */
+  --od-ink-1: #1f1f1f;
+  --od-ink-2: #333333;
+  --od-ink-3: #4a4a4a;
+
+  /* Подложка оверлеев */
+  --od-scrim-dark: rgba(6, 7, 9, 0.78);
+  --od-scrim-light: rgba(236, 242, 248, 0.78);
+
+  /*
+   * ── Слой 2: семантика ──────────────────────────────────────────────────────
+   *
+   * Роль как значение: что чем красится. Каждый токен — присвоение примитива
+   * роли, и только здесь тема имеет смысл. Блоки ниже (`[data-theme]`,
+   * `[data-accent]`) переопределяют те же роли другими примитивами.
+   *
+   * Слои живут в ОДНОМ блоке `:root`, а не в двух, и это не небрежность:
+   * `scripts/contrast.mjs` собирает базовые значения по ПЕРВОМУ совпадению
+   * селектора `:root`. Раздели слои на два блока — и гейт контраста прочитал
+   * бы палитру вместо ролей, упав на первом же токене. Разделение остаётся
+   * комментарием, а не селектором.
+   *
+   * По той же причине в комментариях этого файла не пишется открывающая
+   * фигурная скобка: разбор в скрипте считает скобки в тексте, не отличая
+   * комментарий от кода, и одна лишняя уводит счётчик в бесконечный цикл.
+   * Проверено дорого — на этой самой правке.
+   */
+  --surface-app: var(--od-slate-1);
+  --surface-panel: var(--od-slate-2);
+  --surface-panel-hover: var(--od-slate-3);
+  --surface-elevated: var(--od-slate-5);
+  --surface-contrast: var(--od-slate-7);
+
+  /*
+   * Инверсная поверхность — плашка, которая обязана отличаться от
+   * всего вокруг: меню выделения Редактора над текстом. Светлая в тёмных
+   * темах, тёмная в светлой. Четыре роли: подложка, текст и значки на ней,
+   * наведение и нажатие; пятая — `--accent-on-inverse` ниже, контур фокуса.
+   *
+   * СВОЯ ГРУППА, А НЕ `surface-contrast`. Тот — ступень той же шкалы
+   * подложек (полоса прокрутки, `bg-4`) и отличается от панели на шаг, а не
+   * знаком. Плашка над текстом шагом не обходится: она стоит прямо на
+   * Документе, и одна ступень яркости слилась бы с ним.
+   *
+   * Сумрак не переопределяет: светлая плашка годится обеим тёмным темам.
+   * Бренд и акцент меняют только контур фокуса — подложка нейтральна.
+   * Пары контраста — `scripts/contrast.mjs`; решение — ADR-0055.
+   */
+  --surface-inverse: var(--od-cloud-11);
+  --surface-inverse-hover: var(--od-cloud-8);
+  --surface-inverse-pressed: var(--od-cloud-6);
+  --text-on-inverse: var(--od-cloud-1);
+
+  /*
+   * Шкала подписей держит три ступени контраста в каждой теме: secondary ≥ 7.5,
+   * muted ≥ 6.0, muted-2 ≥ 4.5 (по худшей из подложек `--surface-app` /
+   * `--surface-panel`). Нижняя ступень — это AA для текста; две верхние взяты
+   * с запасом не ради нормы, а чтобы ступени остались различимы. Подтянуть
+   * только muted-2 было дешевле, но тогда в `light` и `dim` он сравнялся бы
+   * с muted (4.51 против 4.52), и три уровня иерархии превратились бы в два.
+   */
+  --text-primary: var(--od-slate-12);
+  --text-secondary: var(--od-slate-11);
+  --text-muted: var(--od-slate-9);
+  --text-muted-2: var(--od-slate-10);
+  --text-disabled: var(--od-slate-8);
+  --text-on-accent: var(--od-cloud-12);
+
+  /*
+   * Текст на заливках `warning` и `success`. Белый на них недостижим: на жёлтом
+   * он даёт 1.87 при требуемых 4.5, и подбором оттенка это не чинится — чтобы
+   * дотянуть, жёлтый пришлось бы затемнить до коричневого. Поэтому у этих двух
+   * тонов `solid` устроен иначе, чем у остальных: тёмный текст вместо
+   * `--text-on-accent`. Отступление осознанное, см. docs/palette.md.
+   *
+   * Объявлены один раз и не переопределяются по темам: значение проходит 4.5:1
+   * против обеих заливок во всех трёх темах (5.31–8.71).
+   */
+  --text-on-warning: var(--od-cloud-1);
+  --text-on-success: var(--od-cloud-1);
+
+  --border-default: var(--od-slate-6);
+  --border-soft: var(--od-slate-4);
+
+  /*
+   * У каждого тона два токена, потому что у него две несовместимые роли.
+   *
+   *   --tone         заливка `solid`: под белым текстом, поэтому ТЕМНЕЕ
+   *   --tone-strong  тот же тон как текст, рамка и индикатор: на подложке,
+   *                  поэтому в тёмных темах СВЕТЛЕЕ, в светлой темнее
+   *
+   * Одним значением обе роли не закрыть: `#e0594b` даёт 3.68 под белым текстом
+   * (нужно темнее) и 3.18 как текст на панели (нужно светлее). Пара `accent` /
+   * `accent-strong` жила так с самого начала — остальные тона просто приведены
+   * к тому же устройству.
+   */
+  --accent: var(--od-blue-3);
+  --accent-hover: var(--od-blue-5);
+  --accent-soft: var(--od-blue-4-a16);
+  --accent-strong: var(--od-blue-6);
+  --focus-ring: var(--od-blue-4-a20);
+  /*
+   * Акцент НА инверсной поверхности — контур фокуса в меню выделения. Это
+   * `accent-strong` противоположной темы: плашка в тёмной теме светлая, и
+   * ей нужен тёмный синий, как светлой теме. Поэтому у бренда и акцента он
+   * переопределяется зеркально к `accent-strong`.
+   */
+  --accent-on-inverse: var(--od-blue-2);
+  /*
+   * Заливка выделенного текста: глобальный `::selection` и роль
+   * `--rte-selection` Редактора. Раньше это был `accent-soft`, и выделение
+   * терялось во всех темах: 14–16 % альфы давали 1.1–1.3:1 к подложке, а в
+   * светлой `#e8f1ff` на `#edf2f7` не отличался от фона вовсе.
+   *
+   * СВОЙ ТОКЕН, А НЕ ПЛОТНЕЕ `accent-soft`: на том держатся тона, плашки и
+   * выбранные пункты, и правка затронула бы их все.
+   *
+   * 3:1 к подложке здесь НЕ ЦЕЛЬ, и это не уступка. В тёмной теме заливка,
+   * отличная от фона на 3:1, уже не держит 4.5:1 светлого текста поверх, а
+   * читаемость выделенного текста важнее. Ориентир — системные выделения:
+   * VS Code тёмный 1.96:1, macOS и VS Code светлые 1.5:1. Отсюда:
+   * в тёмных темах — светлая ступень акцента (1.7–2.0:1, текст ≥ 5.2),
+   * в светлой — насыщенная (1.5–1.6:1, текст ≥ 9.3). Текст поверх меряет
+   * `npm run contrast`.
+   *
+   * `--selection-light` — светлый вариант ПРИ ЛЮБОЙ теме приложения: его
+   * берёт белый лист Редактора (`surface="paper"`) в тёмном приложении, где
+   * `--selection` тёмный. Светлая тема присваивает его `--selection`, поэтому
+   * значение у них одно и рассинхрониться не может.
+   *
+   * `--selection-dark` — зеркально: тёмный вариант ПРИ ЛЮБОЙ теме. Его берёт
+   * поле HTML-режима Редактора, тёмное и в светлой теме: светлое
+   * выделение с тёмным текстом светлой темы читалось на нём тёмным по
+   * тёмно-синему. Тёмные темы присваивают его `--selection`.
+   */
+  --selection-dark: var(--od-blue-5-a45);
+  --selection: var(--selection-dark);
+  --selection-light: var(--od-blue-4-a35);
+
+  --success: var(--od-green-3);
+  --success-soft: var(--od-green-3-a12);
+  --success-strong: var(--od-green-4);
+
+  --warning: var(--od-amber-3);
+  --rating-star: var(--od-amber-3);
+  --warning-soft: var(--od-amber-3-a13);
+  --warning-strong: var(--od-amber-4);
+
+  --danger: var(--od-red-2);
+  --danger-soft: var(--od-red-4-a12);
+  --danger-strong: var(--od-red-5);
+
+  /*
+   * Несохранённые правки: «здесь тебя ждут», а не «здесь ошибка».
+   *
+   * Отдельный тон, а не `accent`, `warning` или `danger`, и каждое «не» —
+   * купленное. `accent` — цвет кнопки, которая эту пометку снимает: пометка и
+   * действие сливались бы в одно пятно. `warning` — янтарный, и на экране
+   * кампаний он уже занят живой валидацией («выберите день недели»); два
+   * тёплых тона с разным смыслом рядом не различаются. `danger` обещает, что
+   * что-то сломано, а несохранённый черновик — нормальное состояние работы.
+   *
+   * ПОЧЕМУ ЛАЙМ. Круг оттенков занят почти целиком: красный 6°, янтарь 39°,
+   * зелёный 153°, бренд teal 173°, акцент 212°, индиго и ось violet 247–251°.
+   * Свободных промежутков два, и лайм (83°) стоит посередине большего: 57° до
+   * янтаря, 70° до зелёного, 116° до акцента. Пурпурный промежуток шире по
+   * числам, но упирается в ось `data-accent="violet"` — 20° при включённом
+   * фиолетовом акценте.
+   *
+   * Прежде тон держала маджента (#f472b6): 117° до акцента против 116° у лайма,
+   * то есть по разносу с акцентом замена равноценна — разменяны 37° до красного
+   * на 57° до янтаря. Контраст замена улучшает вдвое: худшая пара тона была 3.76
+   * (`draft` как рамка в dark), стала 6.61.
+   *
+   * Возражение против жёлтого, из-за которого пара «синий + жёлтый» отклонена,
+   * лайма не касается: оно было про соседство с живой валидацией на одном
+   * экране, а не про тёплые оттенки вообще. От янтаря валидации лайм отделён и
+   * оттенком, и насыщенностью.
+   *
+   * От алой пометки «в избранном» (#fb7185, жила в прикладном слое) отличается
+   * теперь настолько, что спутать их нельзя вовсе: сердечки в библиотеке и
+   * пометка правок не должны читаться как одно.
+   */
+  --draft: var(--od-lime-3);
+  --draft-soft: var(--od-lime-3-a14);
+  --draft-strong: var(--od-lime-4);
+
+  /*
+   * ── Метки пользователя ─────────────────────────────────────────────────────
+   *
+   * Закрытый набор оттенков под то, что красит сам человек: проект, ярлык,
+   * категорию. Смысловые тоны для этого занимать нельзя — метка цвета
+   * `danger` читалась бы как ошибка, а тон перестал бы значить то, что значит.
+   *
+   * НЕ ЗАВИСЯТ НИ ОТ АКЦЕНТА, НИ ОТ БРЕНДА. Оба оверлея переопределяют только
+   * `--accent*`, а метки смотрят прямо в примитивы: переключив акцент с синего
+   * на фиолетовый, пользователь не должен обнаружить, что все его проекты
+   * сменили цвет. Поэтому здесь `var(--od-label-…)`, а не `var(--accent)` —
+   * ссылка на роль внесла бы сюда чужую ось.
+   *
+   * Имена по оттенку, а не по назначению (`label-1`, `project-a`): имя уезжает
+   * в базу потребителя ключом и переживает смену значений, а назначение у
+   * каждого потребителя своё.
+   *
+   * Сумрак их не переопределяет: подложки у него темнее тёмной темы, и
+   * оттенки, прошедшие порог на ней, проходят и здесь. Проверяет `npm run contrast`.
+   */
+  --label-blue: var(--od-label-blue-d);
+  --label-violet: var(--od-label-violet-d);
+  --label-teal: var(--od-label-teal-d);
+  --label-green: var(--od-label-green-d);
+  --label-amber: var(--od-label-amber-d);
+  --label-red: var(--od-label-red-d);
+  --label-pink: var(--od-label-pink-d);
+  --label-steel: var(--od-label-steel-d);
+
+  --accent-alt: var(--od-indigo-2);
+  --accent-alt-soft: var(--od-indigo-2-a14);
+
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+
+  /*
+   * ── Слой 3: компонентные токены ────────────────────────────────────────────
+   *
+   * Единственные точки правки вида, специфичные для семьи компонентов, а не
+   * для системы. Список закрытый и намеренно короткий: компонентный токен
+   * заводится тогда, когда у семьи есть НАСТОЯЩАЯ причина отличаться от
+   * семантики, а не «на всякий случай». Токен без читателя не заводится вовсе.
+   *
+   * Кто их читает:
+   *   --overlay-scrim   Dialog, Drawer, CommandPalette, ModalOverlay (подложка)
+   *   --modal-shadow    Dialog (тень модальной поверхности)
+   *   --topbar-bg       SelectionBar в прилипшем состоянии; с волны 17 — TopBar
+   *   --sidenav-w       SideNav и сетка AppShell (развёрнутая ширина)
+   *   --sidenav-w-collapsed  они же в иконочном режиме
+   *
+   * `--topbar-bg` назван по роли, а не по единственному сегодняшнему читателю:
+   * это полупрозрачный фон поверхности уровня шапки. Переименовывать его в
+   * `--sticky-bar-bg` под текущего потребителя было бы правдой ровно до волны
+   * 17, где приезжает собственный `TopBar`.
+   *
+   * Что компонентным токеном НЕ является. `--shadow-1` и `--shadow-2` — шкала
+   * высоты уровня системы, их читают восемь семей и мост `@theme`; они лежат
+   * на слое 2. `--topbar-h` вообще не объявляется здесь: её публикует
+   * ПРИЛОЖЕНИЕ, а кит читает (`useStickyOffset`, ADR-0016) — это входящий
+   * контракт, а не токен кита. Радиусы и кегли — общая шкала, см. слой 1.
+   */
+  --overlay-scrim: var(--od-scrim-dark);
+  --topbar-bg: var(--od-slate-1-a72);
+  --modal-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+
+  /*
+   * Ширины сайдбара — переменные, а НЕ пропы, и причина та же, по которой
+   * `--topbar-h` не пробрасывается через React (ADR-0016): значение нужно
+   * одновременно сайдбару и сетке `AppShell`, а раскладку мобильного режима
+   * переключает CSS, а не JavaScript (ADR-0018). Число, идущее пропом в два
+   * компонента, — это ререндер ради того, что CSS умеет прочитать сам.
+   *
+   * От темы не зависят и в блоках тем не повторяются: ширина не цвет.
+   * Значения — замер прежней оболочки во фронте, где они стояли инлайном.
+   */
+  --sidenav-w: 240px;
+  --sidenav-w-collapsed: 72px;
+
+  /*
+    Шкала радиусов покрывает то, что действительно рисуется, а не то, что
+    хотелось бы. Две ступени добавлены задним числом, когда выяснилось, что
+    половина кита живёт мимо шкалы: `rounded-[10px]` встречался 21 раз, а
+    `rounded-[6px]` — семь, и ни того ни другого в ряду 8/12/16/20 не было.
+
+    `--r-control` названа по роли, а не по размеру, и это осознанно: 10px —
+    не «ступень между sm и md», а высота скругления самих контролов. Её носят
+    кнопка, оболочка поля, триггер Select, сегмент и тултип; менять её значит
+    менять вид всего продукта разом, и имя должно об этом говорить.
+  */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-control: 10px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  /* compatibility tokens for the current Tailwind utility layer */
+  --bg-0: var(--surface-app);
+  --bg-1: var(--surface-panel);
+  --bg-2: var(--surface-panel-hover);
+  --bg-3: var(--surface-elevated);
+  --bg-4: var(--surface-contrast);
+
+  --fg-0: var(--text-primary);
+  --fg-1: var(--text-secondary);
+  --fg-2: var(--text-muted);
+  --fg-3: var(--text-muted-2);
+  --fg-4: var(--text-disabled);
+
+  --line: var(--border-default);
+  --line-soft: var(--border-soft);
+
+  --tg: var(--accent);
+  --tg-2: var(--accent-strong);
+  --tg-soft: var(--accent-soft);
+
+  --ok: var(--success);
+  --ok-soft: var(--success-soft);
+
+  --warn: var(--warning);
+  --warn-soft: var(--warning-soft);
+
+  --err: var(--danger);
+  --err-soft: var(--danger-soft);
+
+  --purple: var(--accent-alt);
+  --purple-soft: var(--accent-alt-soft);
+}
+
+:root[data-theme="light"] {
+  --surface-app: var(--od-cloud-10);
+  --surface-panel: var(--od-cloud-12);
+  --surface-panel-hover: var(--od-cloud-9);
+  --surface-elevated: var(--od-cloud-11);
+  --surface-contrast: var(--od-cloud-7);
+  --surface-inverse: var(--od-ink-1);
+  --surface-inverse-hover: var(--od-ink-2);
+  --surface-inverse-pressed: var(--od-ink-3);
+  --text-on-inverse: var(--od-cloud-12);
+
+  --text-primary: var(--od-cloud-1);
+  --text-secondary: var(--od-cloud-2);
+  --text-muted: var(--od-cloud-3);
+  --text-muted-2: var(--od-cloud-4);
+  --text-disabled: var(--od-cloud-5);
+  --text-on-accent: var(--od-cloud-12);
+
+  --border-default: var(--od-cloud-6);
+  --border-soft: var(--od-cloud-8);
+
+  --accent: var(--od-blue-3);
+  --accent-hover: var(--od-blue-1);
+  --accent-soft: var(--od-blue-7);
+  --accent-strong: var(--od-blue-2);
+  --focus-ring: var(--od-blue-4-a18);
+  --accent-on-inverse: var(--od-blue-6);
+  --selection: var(--selection-light);
+
+  --success: var(--od-green-2);
+  --success-soft: var(--od-green-2-a12);
+  --success-strong: var(--od-green-1);
+
+  --warning: var(--od-amber-2);
+  --rating-star: var(--od-amber-2);
+  --warning-soft: var(--od-amber-2-a14);
+  --warning-strong: var(--od-amber-1);
+
+  --danger: var(--od-red-3);
+  --danger-soft: var(--od-red-3-a12);
+  --danger-strong: var(--od-red-1);
+
+  --draft: var(--od-lime-2);
+  --draft-soft: var(--od-lime-2-a10);
+  --draft-strong: var(--od-lime-1);
+
+  /* Метки: на светлых подложках те же оттенки берутся глубокими ступенями. */
+  --label-blue: var(--od-label-blue-l);
+  --label-violet: var(--od-label-violet-l);
+  --label-teal: var(--od-label-teal-l);
+  --label-green: var(--od-label-green-l);
+  --label-amber: var(--od-label-amber-l);
+  --label-red: var(--od-label-red-l);
+  --label-pink: var(--od-label-pink-l);
+  --label-steel: var(--od-label-steel-l);
+
+  --accent-alt: var(--od-indigo-1);
+  --accent-alt-soft: var(--od-indigo-1-a14);
+
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.72) inset, 0 1px 2px rgba(23, 33, 43, 0.06);
+  --shadow-2: 0 18px 44px rgba(23, 33, 43, 0.1), 0 4px 10px rgba(23, 33, 43, 0.06);
+
+  /* Слой 3 — компонентные токены темы */
+  --overlay-scrim: var(--od-scrim-light);
+  --topbar-bg: var(--od-cloud-10-a84);
+  --modal-shadow: 0 24px 60px rgba(23, 33, 43, 0.16);
+}
+
+:root[data-theme="dim"] {
+  --surface-app: var(--od-navy-1);
+  --surface-panel: var(--od-navy-2);
+  --surface-panel-hover: var(--od-navy-3);
+  --surface-elevated: var(--od-navy-5);
+  --surface-contrast: var(--od-navy-7);
+
+  --text-primary: var(--od-navy-12);
+  --text-secondary: var(--od-navy-11);
+  --text-muted: var(--od-navy-9);
+  --text-muted-2: var(--od-navy-10);
+  --text-disabled: var(--od-navy-8);
+  --text-on-accent: var(--od-cloud-12);
+
+  --border-default: var(--od-navy-6);
+  --border-soft: var(--od-navy-4);
+
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 12px 40px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.45);
+
+  /*
+   * Слой 3 — компонентные токены темы. `--overlay-scrim` сумрак не
+   * переопределяет: тёмная подложка модалки годится обеим тёмным темам.
+   */
+  --topbar-bg: var(--od-navy-1-a72);
+  --modal-shadow: 0 30px 80px rgba(0, 0, 0, 0.75);
+}
+
+/*
+ * Слой 3 — токены маркера Редактора (`--marker-<имя>`).
+ *
+ * ОБЪЯВЛЕНЫ НА `[data-theme]` ЛЮБОГО ЭЛЕМЕНТА, а не на `:root[data-theme]`, как
+ * остальные темы, и это нужно вложенной теме: область документа с
+ * `surface="paper"` оборачивается в `data-theme="light"` внутри тёмного
+ * приложения, и маркер в ней обязан взять светлое значение. Переменная
+ * наследуется от ближайшего предка с темой, поэтому правил под каждую тему
+ * потомком (`[data-theme] mark`) нет — проза читает только `var(--marker-…)`.
+ *
+ * Тёмный блок назван «любая тема, кроме светлой», а не по именам `dark` и
+ * `dim`: так значения возвращаются и тёмной обёртке внутри светлой, а реестр
+ * тем (`tests/themes.test.ts`) по-прежнему видит блок только у тех тем, у
+ * которых он есть, — у тёмной его нет.
+ *
+ * Моста `@theme` (`--color-marker-*`) у них нет намеренно: мост объявлен на
+ * корне, и `var()` в нём подставляется там, то есть вложенная тема его не
+ * меняет. Сумрак маркерам своих значений не даёт: тёмные подложки годятся
+ * обеим тёмным темам, как у `--overlay-scrim`. Порядок значим: светлый блок
+ * стоит ниже и перекрывает тёмный на корне с `data-theme="light"`. Блок ярких
+ * маркеров темы не различает и от порядка не зависит: имён в тёмном и светлом
+ * блоках у него нет.
+ */
+:root,
+[data-theme]:not([data-theme="light"]) {
+  --marker-gray: var(--od-marker-gray-d);
+  --marker-brown: var(--od-marker-brown-d);
+  --marker-orange: var(--od-marker-orange-d);
+  --marker-blue: var(--od-marker-blue-d);
+  --marker-purple: var(--od-marker-purple-d);
+  --marker-red: var(--od-marker-red-d);
+}
+
+/*
+ * Яркие маркеры (`yellow`, `green`, `pink`) и тёмный текст на них — ОДНО
+ * значение во всех темах: блок без `:not(light)` и без светлой
+ * пары, а значит, и в обёртке `surface="paper"`, и в тёмной вложенной теме.
+ * Читаются прямой ссылкой `var(--marker-…)`, как остальные.
+ */
+:root,
+[data-theme] {
+  --marker-yellow: var(--od-marker-yellow);
+  --marker-green: var(--od-marker-green);
+  --marker-pink: var(--od-marker-pink);
+  --marker-text: var(--od-marker-text);
+}
+
+[data-theme="light"] {
+  --marker-gray: var(--od-marker-gray-l);
+  --marker-brown: var(--od-marker-brown-l);
+  --marker-orange: var(--od-marker-orange-l);
+  --marker-blue: var(--od-marker-blue-l);
+  --marker-purple: var(--od-marker-purple-l);
+  --marker-red: var(--od-marker-red-l);
+}
+
+:root[data-accent="violet"] {
+  --accent: var(--od-violet-3);
+  --accent-hover: var(--od-violet-1);
+  --accent-soft: var(--od-violet-3-a14);
+  --accent-strong: var(--od-violet-4);
+  --focus-ring: var(--od-violet-3-a20);
+  --accent-on-inverse: var(--od-violet-2);
+  --selection-dark: var(--od-violet-4-a30);
+  --selection: var(--selection-dark);
+  --selection-light: var(--od-violet-3-a32);
+}
+
+/*
+ * Единственное место, где тема и акцент не независимы.
+ *
+ * `--accent-strong` читается на подложке, а «читается» значит разное в тёмной
+ * теме и в светлой: тёмной нужен светлый фиолетовый, светлой — тёмный. Одним
+ * значением обе не закрыть, поэтому светлая тема переопределяет его отдельно.
+ * Селектор из двух атрибутов специфичнее блока выше и стоит после него —
+ * порядок здесь значим.
+ */
+:root[data-theme="light"][data-accent="violet"] {
+  --accent-strong: var(--od-violet-2);
+  --accent-on-inverse: var(--od-violet-4);
+  /* Блок акцента стоит ниже светлой темы и вернул бы тёмное выделение. */
+  --selection: var(--selection-light);
+}
+
+/*
+ * ── Слой 4: бренд ────────────────────────────────────────────────────────────
+ *
+ * Оверлей `[data-brand="…"]` — способ одеть кит в чужие цвета, не трогая ни
+ * одного компонента. Блок ниже показывает механику целиком: он единственный,
+ * что нужно написать, чтобы завести бренд.
+ *
+ * ПОРЯДОК В ФАЙЛЕ ЗНАЧИМ, и это не стиль, а работающее правило каскада.
+ * `:root[data-brand]` и `:root[data-accent]` имеют ОДИНАКОВУЮ специфичность
+ * (0,2,0) — при равной специфичности побеждает тот, кто ниже. Поэтому бренд
+ * стоит после акцента: заданный бренд отменяет ось акцента целиком, а не
+ * смешивается с ней. Для тем, где бренду нужно своё значение, селектор берёт
+ * два атрибута (0,3,0) и стоит после парного блока темы с акцентом — по той же
+ * причине. Сторожит `tests/token-layers.test.ts`.
+ *
+ * КАК ЗАВЕСТИ СВОЙ БРЕНД. Скопируйте два блока ниже, замените имя и значения.
+ * Правило одно: бренд объявляет СВОИ примитивы внутри своего блока и
+ * присваивает их семантике. Не переопределяйте чужие примитивы — `--od-blue-3`
+ * принадлежит палитре кита, и его правка задела бы всё, что на нём стоит.
+ * Полный разбор — `docs/theming.md`.
+ *
+ * `teal` живёт в пакете как доказательство механики и как образец для копии.
+ * Гейт контраста проверяет его наравне с базовым: бренд, не проходящий по
+ * контрасту, — это бренд, которого нет.
+ */
+:root[data-brand="teal"] {
+  /* Примитивы бренда: собственные, а не правка палитры кита. */
+  --od-teal-1: #115e59;
+  --od-teal-2: #0f766e;
+  --od-teal-3: #14b8a6;
+  --od-teal-4: #5eead4;
+  --od-teal-3-a16: rgba(20, 184, 166, 0.16);
+  --od-teal-3-a20: rgba(20, 184, 166, 0.2);
+  --od-teal-3-a35: rgba(20, 184, 166, 0.35);
+  --od-teal-2-a30: rgba(15, 118, 110, 0.3);
+
+  /* Семантика: те же роли, другие примитивы. */
+  --accent: var(--od-teal-2);
+  --accent-hover: var(--od-teal-1);
+  --accent-soft: var(--od-teal-3-a16);
+  --accent-strong: var(--od-teal-4);
+  --focus-ring: var(--od-teal-3-a20);
+  /* Контур фокуса на инверсной плашке — зеркально к `accent-strong`. */
+  --accent-on-inverse: var(--od-teal-1);
+  --selection-dark: var(--od-teal-3-a35);
+  --selection: var(--selection-dark);
+  --selection-light: var(--od-teal-2-a30);
+}
+
+/*
+ * Светлая тема ломает независимость бренда ровно там же, где ломала её у
+ * фиолетового акцента: `--accent-strong` читается НА подложке, и светлому
+ * фону нужен тёмный бирюзовый вместо светлого.
+ *
+ * Взят самый тёмный шаг, а не второй: на `--accent-soft` поверх
+ * `surface-panel-hover` второй давал 4.26 при требуемых 4.5 — гейт это и
+ * показал. Пример не подогнан задним числом: бренд проходит контраст так же,
+ * как его обязан проходить любой другой.
+ */
+:root[data-theme="light"][data-brand="teal"] {
+  --accent-strong: var(--od-teal-1);
+  --accent-on-inverse: var(--od-teal-4);
+  /* Блок бренда стоит ниже светлой темы и вернул бы тёмное выделение. */
+  --selection: var(--selection-light);
+}
+
+/*
+ * Тема подсветки блока кода Редактора (ADR-0051): GitHub Dark в
+ * `dark` и `dim`, GitHub Light в `light`. Цвета взяты из `styles/github*.css`
+ * highlight.js (BSD-3-Clause, NOTICE); `--rte-hl-variable` светлой темы —
+ * `#953800` вместо `#e36209`, у которого 3.49:1 на белом.
+ *
+ * ВТОРАЯ СИСТЕМА ЦВЕТА, И ОНА ОТДЕЛЬНО ОТ ТОКЕНОВ. Значения — литералы, а не
+ * примитивы `--od-*`: это чужая готовая тема, и ни один токен кита на неё не
+ * ссылается. Правила `.hljs-*` живут классами на контейнере Документа
+ * (`src/editor/styles/codeTheme.ts`) и читают только эти переменные.
+ *
+ * ПЕРЕМЕННЫЕ — НА ЭЛЕМЕНТЕ С `data-theme`, А НЕ ПРАВИЛА ПОД НИМ. Блок кода
+ * наследует их от БЛИЖАЙШЕГО предка с темой: Документ в светлой «бумаге»
+ * (`data-theme="light"` внутри тёмного приложения) получает GitHub Light, а
+ * тёмный остров внутри светлой страницы — GitHub Dark. Правила вида
+ * «тёмная тема → `.hljs-keyword` под ней» так не умеют: при вложенных темах они
+ * спорят порядком в файле, и светлая бумага показала бы тёмные токены.
+ * Живой каскад сторожит `tests-visual/interactions.spec.ts` («code theme»),
+ * порядок блоков — `tests/rich-text-view.test.tsx`.
+ *
+ * `:where` держит специфичность нулевой: на `<html data-theme="light">`
+ * совпадают оба блока, и светлый побеждает тем, что стоит ниже, — а
+ * потребитель перекрывает любую переменную без борьбы за специфичность.
+ * Тёмный блок назван «любая тема, кроме светлой», а не `dark` и `dim`
+ * поимённо: `dark` — умолчание оси и своего блока не имеет
+ * (`tests/themes.test.ts`), `dim` берёт GitHub Dark, а без атрибута — тёмная
+ * тема, как у токенов кита.
+ */
+:where(:root, [data-theme]:not([data-theme="light"])) {
+  --rte-code-block-background: #0d1117;
+  --rte-code-block-foreground: #c9d1d9;
+  --rte-hl-keyword: #ff7b72;
+  --rte-hl-title: #d2a8ff;
+  --rte-hl-constant: #79c0ff;
+  --rte-hl-string: #a5d6ff;
+  --rte-hl-variable: #ffa657;
+  --rte-hl-comment: #8b949e;
+  --rte-hl-tag: #7ee787;
+  --rte-hl-bullet: #f2cc60;
+}
+
+:where([data-theme="light"]) {
+  --rte-code-block-background: #ffffff;
+  --rte-code-block-foreground: #24292e;
+  --rte-hl-keyword: #d73a49;
+  --rte-hl-title: #6f42c1;
+  --rte-hl-constant: #005cc5;
+  --rte-hl-string: #032f62;
+  --rte-hl-variable: #953800;
+  --rte-hl-comment: #6a737d;
+  --rte-hl-tag: #22863a;
+  --rte-hl-bullet: #735c0f;
+}
+
+/*
+ * Поле HTML-режима Редактора — ВСЕГДА ТЁМНОЕ, ЦВЕТОМ КИТА. Решение
+ * владельца: режим читается как «код», и поле тёмное в любой теме, но не
+ * чужой GitHub-палитрой Блока кода, а своей. В тёмных темах — самая глубокая
+ * подложка текущей темы (`slate` у `dark`, `navy` у `dim`) с её текстом и
+ * рамкой; в светлой теме и на листе `paper` — те же значения тёмной темы кита,
+ * примитивами `slate`, потому что светлая тема своих тёмных подложек не имеет.
+ * Ссылки на семантику вычисляются на элементе с `data-theme`, поэтому `dim`
+ * получает свой `navy`, а вложенная светлая тема — тёмный `slate`. Новых пар
+ * цвета нет: это текст тёмной темы на её подложке, их уже меряет гейт
+ * контраста (`scripts/contrast.mjs`, `surface-app`).
+ */
+:where(:root, [data-theme]:not([data-theme="light"])) {
+  --rte-source-background: var(--surface-app);
+  --rte-source-foreground: var(--text-primary);
+  --rte-source-border: var(--border-default);
+  --rte-source-selection: var(--selection);
+}
+
+:where([data-theme="light"]) {
+  --rte-source-background: var(--od-slate-1);
+  --rte-source-foreground: var(--od-slate-12);
+  --rte-source-border: var(--od-slate-6);
+  /* Выделение тёмной темы текущего акцента: поле тёмное, светлое выделение на нём тонуло. */
+  --rte-source-selection: var(--selection-dark);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--surface-app);
+    color: var(--text-primary);
+    font-family: var(--font-inter, Inter, system-ui, sans-serif);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body.scroll-locked {
+    overflow: hidden !important;
+  }
+
+  button {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  /*
+    Оверлей react-aria принимает указатель и внутри модального слоя Radix.
+
+    Модальный `Dialog`/`Drawer` ставит `<body>` инлайновое `pointer-events: none`
+    и возвращает указатель только своим слоям. Панель `Menu` и список `Combobox`
+    живут в портале react-aria прямо под `<body>`, наследовали `none` и
+    выбирались только с клавиатуры. Селектор — тот же, по которому
+    `src/lib/overlay-layer.ts` узнаёт чужой слой (`ARIA_OVERLAY_SELECTOR`);
+    связку сторожит `tests/overlay-layers.test.tsx`.
+
+    Вне модального слоя правило ничего не меняет: `auto` там и так наследуется.
+    Слой `base` — чтобы утилитарный `pointer-events-none` по-прежнему побеждал.
+  */
+  [data-rac][data-placement] {
+    pointer-events: auto;
+  }
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dim"] {
+  color-scheme: dark;
+}
+
+.mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: -0.01em;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-elevated);
+  border-radius: 8px;
+  border: 2px solid var(--surface-app);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-contrast);
+}
+
+/* Выделение — в слое base: вне слоя правило побеждало любую утилиту
+   `selection:` — каскад ставит неслоёное CSS выше слоёв при любой специфичности.
+   Редактор красит выделение своими ролями (`--rte-selection`, плотнее — поверх
+   маркера), и без слоя они молча не применялись: на маркере выделение было не
+   видно, а на светлом листе в тёмном приложении текст выделения шёл светлым. */
+@layer base {
+  ::selection {
+    background: var(--selection);
+    color: var(--text-primary);
+  }
+}
+
+:focus-visible {
+  /* Индикатор фокуса — не-текст под порогом 3:1, поэтому читаемый вариант тона,
+     а не заливка: `--accent` рассчитан на белый текст поверх и на подложке тусклее. */
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+[data-disable-focus-ring="true"]:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-2) 0%, var(--bg-3) 50%, var(--bg-2) 100%);
+  background-size: 800px 100%;
+  /* Через токен, а не строкой: иначе блик не подчиняется блоку
+     `prefers-reduced-motion` выше — тот переопределяет `--animate-shimmer`, и
+     правило, не читающее переменную, просто продолжает бежать (ADR-0043).
+     Значение токена совпадает с прежней строкой один в один. */
+  animation: var(--animate-shimmer);
+  border-radius: var(--r-md);
+}
+
+/*
+ * ВНИМАНИЕ: блок обязан лежать в конце файла, после `:root` со смысловым слоем.
+ * `tests/token-layers.test.ts` берёт ТЕКСТОМ первый `:root {` в файле; блок,
+ * поставленный выше, подменял бы собой словарь ролей, и проверка слоёв падала
+ * на бренде с сообщением про необъявленный `--accent`. Проверено — падала.
+ */
+/*
+ * Движение при `prefers-reduced-motion: reduce` — ADR-0043.
+ *
+ * Переопределяются СОБСТВЕННЫЕ токены кита, а не всё подряд. Глобального сброса
+ * `*, ::before, ::after { animation-duration: 0.01ms !important }` здесь нет и
+ * не будет: кит владеет своими компонентами, а не документом, в который его
+ * поставили, — таким правилом он погасил бы анимации приложения и чужих
+ * библиотек на той же странице, и снять это потребитель не смог бы ничем.
+ *
+ * Движение снимается, появление — нет. `animation: none` у входной анимации дал
+ * бы не покой, а рывок: элемент возникал бы мгновенно там, где секунду назад
+ * ничего не было. Поэтому перемещающие кейфреймы заменяются на `fadeOnly` — та
+ * же длительность, та же кривая, только прозрачность.
+ *
+ * Два токена НЕ гасятся, и это исключение названо в ADR-0043:
+ * `--animate-progress-indeterminate` и `--animate-spin`. Оба сообщают «идёт
+ * работа», и оба остановленными читаются как поломка, а не как тишина. W3C
+ * выводит существенное движение из-под правила — здесь оно существенное.
+ *
+ * Не трогаются и переходы цвета (`transition-colors`, `transition-shadow`,
+ * `transition-opacity`): правило про движение, а смена цвета ничего не
+ * перемещает. Мгновенное переключение наведения — ухудшение, а не улучшение.
+ * Перемещающие переходы гасятся вариантом `motion-reduce:` по месту: за ними
+ * стоят зашитые значения Tailwind, а не переменная кита, и переопределить их
+ * отсюда нечем.
+ */
+@keyframes fadeOnly {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOutOnly {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes pulseOpacity {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    /*
+     * Меняются ТОЛЬКО кейфреймы. Ступень и кривая повторяют объявление в
+     * `@theme` — и теперь это не обещание в комментарии, а ссылка: разойтись
+     * они могут только вместе, и `tests/motion.test.ts` сверяет обе стороны.
+     *
+     * Прежде здесь стояли те же числа, скопированные руками, и сверить их можно
+     * было только глазами по двум концам файла.
+     */
+    --animate-fadein: fadeOnly var(--duration-moderate) var(--ease-standard);
+    --animate-sheetin: fadeOnly var(--duration-moderate) var(--ease-enter);
+    --animate-tooltipIn: fadeOnly var(--duration-base) var(--ease-enter);
+    --animate-popoverIn: fadeOnly var(--duration-base) var(--ease-enter);
+    --animate-imgFadeIn: fadeOnly var(--duration-moderate) var(--ease-enter);
+    --animate-modalExpand: fadeOnly var(--duration-moderate) var(--ease-enter);
+
+    /*
+     * Выход гасится так же, как вход: снимается перемещение, а не само
+     * событие. `animation: none` убрал бы исчезновение вовсе — панель
+     * пропадала бы в кадр, то есть резче, чем без правила.
+     *
+     * Ступень и кривая повторяют объявление в `@theme` — это сверяет гейт.
+     */
+    --animate-fadeout: fadeOutOnly var(--duration-base) var(--ease-exit);
+    --animate-sheetout: fadeOutOnly var(--duration-base) var(--ease-exit);
+    --animate-tooltipOut: fadeOutOnly var(--duration-fast) var(--ease-exit);
+    --animate-popoverOut: fadeOutOnly var(--duration-fast) var(--ease-exit);
+
+    /*
+     * У строки списка гасится СМЫКАНИЕ, а не сам уход: остаётся прозрачность,
+     * место освобождается в один кадр, когда строка снимается.
+     *
+     * Смыкание — это движение всего, что ниже строки, то есть ровно то, от чего
+     * настройка и защищает. Прозрачность при этом остаётся по общему доводу
+     * ADR-0043: `animation: none` дал бы не покой, а рывок.
+     */
+    --animate-rowout: fadeOutOnly var(--duration-base) var(--ease-exit);
+
+    /* Бесконечный блик по скелетону — украшение без сообщения. Гасится совсем:
+       форму держит сам скелетон, а не его блик. */
+    --animate-shimmer: none;
+
+    /* Мигание остаётся, сжатие уходит: «что-то грузится» сообщает прозрачность,
+       а масштаб только добавляет к этому движение. */
+    --animate-pulse: pulseOpacity 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
