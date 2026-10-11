@@ -1,8 +1,9 @@
 name: Release
 
-# Publishes @olddevs/ui to npm when a version tag is pushed.
+# Stages @olddevs/ui on npm when a version tag is pushed; a maintainer then
+# approves the staged version on npmjs.com to publish it.
 #
-# The workflow only builds and publishes. Tests, types, lint, build and the
+# The workflow only builds and stages. Tests, types, lint, build and the
 # consumer build run locally in `npm run release:check` before the tag is
 # created; the browser checks (visual snapshots, accessibility, interactions)
 # run separately, also locally. Visual snapshots depend on the platform, so a
@@ -28,20 +29,20 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          # Node 24 ships npm >= 11.5.1, the first release that can publish
-          # through trusted publishing.
+          # Node 24 ships an npm recent enough for trusted publishing and for
+          # staging (`npm stage publish`, npm 11.15.0 and later).
           node-version: 24
           registry-url: https://registry.npmjs.org
           # A restored cache is attacker-reachable state in a job that holds
           # a publish identity, so this workflow never caches.
           package-manager-cache: false
 
-      - name: Check npm supports trusted publishing
+      - name: Check npm supports trusted publishing and staging
         run: |
-          required=11.5.1
+          required=11.15.0
           current=$(npm --version)
           if [ "$(printf '%s\n%s\n' "$required" "$current" | sort -V | head -n 1)" != "$required" ]; then
-            echo "::error::npm $current is older than $required, which trusted publishing needs."
+            echo "::error::npm $current is older than $required, which staged trusted publishing needs."
             exit 1
           fi
           echo "npm $current"
@@ -85,9 +86,18 @@ jobs:
         if: steps.registry.outputs.published != 'true'
         run: npm run build
 
-      # Provenance is attached automatically when a public package is
-      # published from a public repository through trusted publishing,
-      # so no --provenance flag.
-      - name: Publish
+      # The workflow stages the version; it goes public only after a maintainer
+      # approves it on npmjs.com (Staged Packages) with two-factor
+      # authentication. The trusted publisher on npm is allowed to stage only,
+      # so a stolen tag or a tampered workflow cannot release anything alone.
+      # A prerelease (4.1.0-beta.0) goes to the `next` dist-tag: npm refuses
+      # one without an explicit tag, and `latest` must stay stable.
+      - name: Stage for approval
         if: steps.registry.outputs.published != 'true'
-        run: npm publish --access public
+        env:
+          VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          case "$VERSION" in
+            *-*) npm stage publish --access public --provenance --tag next ;;
+            *) npm stage publish --access public --provenance ;;
+          esac

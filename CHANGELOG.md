@@ -1,5 +1,11 @@
 # @olddevs/ui
 
+## 4.0.1
+
+### Patch Changes
+
+- The first release built in GitHub Actions, with npm provenance: the package page links the build to the commit and the workflow that produced it. Releases are staged by the workflow and approved by the maintainer on npmjs.com. No changes to the code or the API.
+
 ## 4.0.0
 
 ### Major Changes
