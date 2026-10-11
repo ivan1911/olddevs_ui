@@ -7,7 +7,7 @@ English · [Русский](README.ru.md)
 
 Olddevs UI is a design system for React: design tokens, themes and accessible components, built for admin interfaces and other data-heavy products. Behavior comes from [React Aria Components](https://react-aria.adobe.com/) and [Radix UI](https://www.radix-ui.com/); styling is [Tailwind CSS](https://tailwindcss.com/) 4. Your app's Tailwind build compiles the component classes.
 
-Documentation: **[ui.olddevs.ru](https://ui.olddevs.ru)**
+Documentation: **[ui.olddevs.ru](https://ui.olddevs.ru)** · Showcase: **[Storybook](https://ivan1911.github.io/olddevs_ui/)**
 
 ## Requirements
 
@@ -125,6 +125,7 @@ See [Themes, tokens and brands](docs/theming.en.md) and [Localization](docs/i18n
 ## Documentation
 
 - [ui.olddevs.ru](https://ui.olddevs.ru): the documentation site
+- [Storybook](https://ivan1911.github.io/olddevs_ui/): the showcase, every component's stories in each theme, built from the latest release
 - [docs/index.md](docs/index.md) (in Russian): the Reference, the `docs/` folder in the package, with one page per component and "When to use" and "When not to use" sections
 - [docs/components/index.en.md](docs/components/index.en.md): the component catalog
 - [docs/accessibility.en.md](docs/accessibility.en.md): the accessibility contract
