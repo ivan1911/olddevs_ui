@@ -74,6 +74,24 @@ export const NavGroup = forwardRef<HTMLDivElement, NavGroupProps>(function NavGr
   );
 });
 
+/**
+ * Схлопнута ли навигация — для содержимого слотов `header` и `footer`.
+ *
+ * Пункты и разделы кита подстраиваются под иконочный режим сами, а слоты
+ * принадлежат потребителю, и кит не знает, что в них лежит. Блоку пользователя
+ * в подвале нужно знать ширину колонки: в иконочном режиме место есть только
+ * для аватара, а имя и роль, оставленные как есть, переносятся по словам и
+ * вылезают за край.
+ *
+ * Хук, а не render-проп у слота: слот остаётся обычным `ReactNode`, и тот же
+ * компонент пользователя работает и вне `SideNav`. Там хук возвращает `false`
+ * — развёрнутое состояние по умолчанию, как у `NavItem`. В ящике мобильного
+ * режима навигация всегда развёрнута, и хук это повторяет.
+ *
+ * Для подстройки чистым CSS у `<nav>` есть атрибут `data-collapsed`.
+ */
+export const useNavCollapsed = (): boolean => useContext(NavCollapsedContext);
+
 export interface SideNavProps extends Omit<ComponentPropsWithoutRef<"nav">, "children"> {
   /** Содержимое колонки между шапкой и подвалом: `NavGroup` и `NavItem`; прокручивается, если не помещается. */
   children: ReactNode;
@@ -181,12 +199,19 @@ export const SideNav = forwardRef<HTMLElement, SideNavProps>(function SideNav(
         )}
         {...rest}
       >
-        {header != null ? <div className="shrink-0">{header}</div> : null}
+        {/*
+         * Шапка и подвал обрезают лишнее по ширине: слот потребителя может не
+         * знать про иконочный режим, и без обрезки его текст лёг бы поверх
+         * содержимого страницы. Обрезка только по горизонтали (`clip`, а не
+         * `hidden`): по вертикали слот растёт сам, а `hidden` по одной оси
+         * сделал бы другую прокручиваемой.
+         */}
+        {header != null ? <div className="shrink-0 overflow-x-clip">{header}</div> : null}
 
         <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 py-1">{children}</div>
 
         {footer != null || showToggle ? (
-          <div className="border-line-soft shrink-0 border-t p-2.5">
+          <div className="border-line-soft shrink-0 overflow-x-clip border-t p-2.5">
             {footer}
             {showToggle ? (
               <div className={cn("flex", isCollapsed ? "justify-center" : "justify-end")}>

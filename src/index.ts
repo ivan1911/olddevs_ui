@@ -208,7 +208,7 @@ export type {
   MobileTabBarProps,
 } from "./components/app-shell/MobileTabBar.js";
 
-export { NavGroup, SideNav } from "./components/app-shell/SideNav.js";
+export { NavGroup, SideNav, useNavCollapsed } from "./components/app-shell/SideNav.js";
 export type { NavGroupProps, SideNavProps } from "./components/app-shell/SideNav.js";
 
 export { DataTable } from "./components/table/DataTable.js";

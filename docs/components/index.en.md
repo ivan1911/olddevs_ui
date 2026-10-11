@@ -1,5 +1,5 @@
 ---
-sourceHash: 27c68d4dc26c
+sourceHash: ea33794d5c6f
 ---
 
 # Component catalog
@@ -110,7 +110,7 @@ Ready-made components for entity lists, built on top of the low-level `Table`.
 Components built from primitives: the page frame, its navigation and header.
 
 - [AppShell](app-shell/app-shell.md): `AppShell`, `useAppShell` — the frame of an app page: side navigation on the left, a header on top, content in the middle; it handles the mobile mode, focus on screen change and the "skip to content" link on its own
-- [SideNav](app-shell/side-nav.md): `SideNav`, `NavGroup`, `NavItem` — the app's side menu: sections with link items, the current item highlighted; the menu can be collapsed to icons
+- [SideNav](app-shell/side-nav.md): `SideNav`, `NavGroup`, `NavItem`, `useNavCollapsed` — the app's side menu: sections with link items, the current item highlighted; the menu can be collapsed to icons
 - [MobileTabBar](app-shell/mobile-tab-bar.md): `MobileTabBar`, `MobileTabBarItem` — a bottom bar with the main sections for a phone (up to five items): navigation in one tap; on a wide screen it is replaced by `SideNav`
 - [TopBar](app-shell/top-bar.md): `TopBar` — the app header with a logo, search and actions (notifications, profile); different from `PageHeader`, which sets the title of the page itself
 - [SplitPanel](app-shell/split-panel.md): `SplitPanel`, `useMediaQuery` — two areas side by side or one above the other with a divider the user drags: for example, a list and the details of the selected row

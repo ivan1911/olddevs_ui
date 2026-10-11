@@ -1,11 +1,11 @@
 ---
 component: SideNav
-exports: [SideNav, NavGroup, NavItem]
+exports: [SideNav, NavGroup, NavItem, useNavCollapsed]
 category: app-shell
 status: stable
 source: src/components/app-shell/SideNav.tsx, src/components/app-shell/NavItem.tsx
 story: src/components/app-shell/SideNav.stories.tsx, src/components/app-shell/NavItem.stories.tsx
-sourceHash: 7af78e06b543
+sourceHash: 78497178ede5
 ---
 
 # SideNav, NavGroup and NavItem
@@ -18,7 +18,8 @@ footer slots, and `NavGroup` sections with `NavItem` items. It holds the collaps
 **persisting** it is the consumer's job. `NavItem` knows nothing about the router:
 the link target comes from the child element passed with `asChild` (or from `href`), and the current item is set by the
 `active` prop. In collapsed mode the labels are visually hidden but remain accessible
-names, and section headings are replaced by a divider line.
+names, and section headings are replaced by a divider line. Content in the `header`
+and `footer` slots adapts to the mode on its own through the `useNavCollapsed()` hook.
 
 There is no mobile mode here: below `md`, `AppShell` moves the navigation into a `Drawer`.
 `SideNav` itself is just a column, and it can be placed inside a drawer.
@@ -95,6 +96,50 @@ through `Slottable`. `Button` works the same way.
 
 The other props go to the element — including `href` for the case without `asChild`.
 
+## Header and footer in icon mode
+
+Items and sections adapt to the collapsed state on their own, but the `header`
+and `footer` slots belong to the consumer: the kit doesn't know what's in them.
+In icon mode the column is as wide as an icon, and a user block with a name and
+a role doesn't fit. Slot content reads the mode with the `useNavCollapsed()` hook:
+
+```tsx
+import { Avatar, useNavCollapsed } from "@olddevs/ui";
+
+function CurrentUser() {
+  const collapsed = useNavCollapsed();
+  if (collapsed) {
+    return (
+      <div className="flex justify-center">
+        <Avatar name={user.name} />
+        <span className="sr-only">{user.name}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2.5">
+      <Avatar name={user.name} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-xs font-semibold">{user.name}</div>
+        <div className="text-fg-3 truncate text-[11px]">{user.role}</div>
+      </div>
+    </div>
+  );
+}
+```
+
+Outside `SideNav` the hook returns `false`, so the same component works anywhere
+else in the app. In the mobile-mode drawer the navigation is always expanded, and
+the hook returns `false` there too.
+
+When CSS is enough, `<nav>` carries a `data-collapsed` attribute: in Tailwind,
+the `in-data-collapsed:hidden` class hides a label.
+
+The header and the footer clip anything too wide for the column. This is a safety
+net, not a way to adapt: text left as is gets cut off mid-word. Clipping also
+catches the focus ring of an element flush against the header's edge: the header
+has no padding of its own, the slot content sets it. The footer brings its own.
+
 ## Decisions visible in the API
 
 **Active state is a prop, not a computation.** The kit knows neither the router nor
@@ -147,7 +192,8 @@ and so no requirement.
 - Implementation: `src/components/app-shell/SideNav.tsx`, `src/components/app-shell/NavItem.tsx`.
 - Tests: `tests/nav-item.test.tsx` — active state, `asChild`, the accessible name in
   collapsed mode; `tests/side-nav.test.tsx` — the landmark and its name from the message catalog,
-  both modes of collapsed-state ownership, the group name with a hidden heading;
+  both modes of collapsed-state ownership, the group name with a hidden heading,
+  the mode in slots through `useNavCollapsed`, and header and footer clipping;
   `tests/app-shell.test.tsx` — behavior in the drawer.
 - Stories: `src/components/app-shell/SideNav.stories.tsx`,
   `src/components/app-shell/NavItem.stories.tsx`.

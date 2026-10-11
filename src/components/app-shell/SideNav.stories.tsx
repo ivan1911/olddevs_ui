@@ -10,7 +10,7 @@ import {
 import { Avatar } from "../content/Avatar.js";
 import { Badge } from "../content/Badge.js";
 import { NavItem } from "./NavItem.js";
-import { NavGroup, SideNav } from "./SideNav.js";
+import { NavGroup, SideNav, useNavCollapsed } from "./SideNav.js";
 import { TooltipProvider } from "../overlays/Tooltip.js";
 
 const meta = {
@@ -41,15 +41,24 @@ const BrandSlot = () => (
   </div>
 );
 
-const UserSlot = () => (
-  <div className="bg-bg-2 mb-2 flex items-center gap-2.5 rounded-[9px] px-2.5 py-2">
-    <Avatar name="AL" />
-    <div className="min-w-0 flex-1">
-      <div className="truncate text-xs font-semibold">Ada Lovelace</div>
-      <div className="text-fg-3 text-[11px]">Full access</div>
+// В иконочном режиме колонке хватает места только на аватар: имя и роль,
+// оставленные как есть, переносились по словам и вылезали за край. Имя уходит
+// с экрана, но не из доступного текста — так же, как подпись пункта.
+const UserSlot = () =>
+  useNavCollapsed() ? (
+    <div className="mb-2 flex justify-center">
+      <Avatar name="AL" />
+      <span className="sr-only">Ada Lovelace</span>
     </div>
-  </div>
-);
+  ) : (
+    <div className="bg-bg-2 mb-2 flex items-center gap-2.5 rounded-[9px] px-2.5 py-2">
+      <Avatar name="AL" />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-xs font-semibold">Ada Lovelace</div>
+        <div className="text-fg-3 truncate text-[11px]">Full access</div>
+      </div>
+    </div>
+  );
 
 const NavSections = (
   <>

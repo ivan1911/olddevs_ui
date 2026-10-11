@@ -1,6 +1,6 @@
 ---
 component: SideNav
-exports: [SideNav, NavGroup, NavItem]
+exports: [SideNav, NavGroup, NavItem, useNavCollapsed]
 category: app-shell
 status: stable
 source: src/components/app-shell/SideNav.tsx, src/components/app-shell/NavItem.tsx
@@ -17,7 +17,8 @@ story: src/components/app-shell/SideNav.stories.tsx, src/components/app-shell/Na
 **сохранять** её — дело потребителя. `NavItem` о маршрутизаторе не знает ничего:
 ссылку задаёт дочерний элемент при `asChild` (или проп `href`), текущий пункт — пропом
 `active`. В схлопнутом режиме подписи прячутся от глаз, но остаются доступными
-именами, а заголовки разделов заменяются чертой.
+именами, а заголовки разделов заменяются чертой. Содержимое слотов `header` и
+`footer` подстраивается под режим само через хук `useNavCollapsed()`.
 
 Мобильного режима здесь нет: ниже `md` навигацию убирает в `Drawer` сам `AppShell`.
 Сама `SideNav` — просто колонка, и её можно положить внутрь ящика.
@@ -94,6 +95,50 @@ import Link from "next/link";
 
 Остальные пропы уходят на элемент — включая `href` для случая без `asChild`.
 
+## Шапка и подвал в иконочном режиме
+
+Пункты и разделы подстраиваются под схлопнутость сами, а слоты `header` и
+`footer` принадлежат потребителю: что в них лежит, кит не знает. Колонка в
+иконочном режиме шириной с иконку, и блок пользователя с именем и ролью в неё не
+помещается. Содержимое слота узнаёт режим хуком `useNavCollapsed()`:
+
+```tsx
+import { Avatar, useNavCollapsed } from "@olddevs/ui";
+
+function CurrentUser() {
+  const collapsed = useNavCollapsed();
+  if (collapsed) {
+    return (
+      <div className="flex justify-center">
+        <Avatar name={user.name} />
+        <span className="sr-only">{user.name}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2.5">
+      <Avatar name={user.name} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-xs font-semibold">{user.name}</div>
+        <div className="text-fg-3 truncate text-[11px]">{user.role}</div>
+      </div>
+    </div>
+  );
+}
+```
+
+Вне `SideNav` хук возвращает `false`, поэтому тот же компонент работает и в
+другом месте приложения. В ящике мобильного режима навигация всегда развёрнута,
+и хук возвращает `false` и там.
+
+Если хватает CSS, у `<nav>` есть атрибут `data-collapsed`: в Tailwind подпись
+прячет класс `in-data-collapsed:hidden`.
+
+Шапка и подвал обрезают по ширине всё, что в колонку не помещается. Это
+страховка, а не способ подстройки: текст, оставленный как есть, будет обрезан
+посередине. Обрезка заденет и кольцо фокуса у элемента вплотную к краю шапки:
+у шапки своих отступов нет, их задаёт содержимое слота. Подвал отступ даёт сам.
+
 ## Решения, которые видно в API
 
 **Активность — проп, а не вычисление.** Кит не знает ни маршрутизатора, ни
@@ -146,7 +191,8 @@ ADR-0018.
 - Реализация: `src/components/app-shell/SideNav.tsx`, `src/components/app-shell/NavItem.tsx`.
 - Тесты: `tests/nav-item.test.tsx` — активность, `asChild`, доступное имя в
   схлопнутом режиме; `tests/side-nav.test.tsx` — landmark и его имя из каталога,
-  оба режима владения схлопнутостью, имя группы при спрятанном заголовке;
+  оба режима владения схлопнутостью, имя группы при спрятанном заголовке,
+  режим в слотах через `useNavCollapsed` и обрезка шапки и подвала;
   `tests/app-shell.test.tsx` — поведение в ящике.
 - Истории: `src/components/app-shell/SideNav.stories.tsx`,
   `src/components/app-shell/NavItem.stories.tsx`.

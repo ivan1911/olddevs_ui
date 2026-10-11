@@ -5,7 +5,7 @@ import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { NavItem } from "../src/components/app-shell/NavItem.js";
-import { NavGroup, SideNav } from "../src/components/app-shell/SideNav.js";
+import { NavGroup, SideNav, useNavCollapsed } from "../src/components/app-shell/SideNav.js";
 
 afterEach(cleanup);
 
@@ -103,5 +103,43 @@ describe("NavGroup", () => {
     shell(<SideNav defaultCollapsed>{items}</SideNav>);
     expect(screen.getByRole("group", { name: "Work" })).toBeTruthy();
     expect(screen.queryByText("Work")).toBeNull();
+  });
+});
+
+describe("SideNav: slots follow the mode", () => {
+  /** Показывает режим словом: так тест читает то, что увидел бы потребитель. */
+  const Mode = () => <span>{useNavCollapsed() ? "icons" : "full"}</span>;
+
+  test("slot content reads the collapsed state", async () => {
+    const user = userEvent.setup();
+    shell(
+      <SideNav header={<Mode />} footer={<Mode />}>
+        {items}
+      </SideNav>
+    );
+
+    expect(screen.getAllByText("full")).toHaveLength(2);
+    await user.click(screen.getByRole("button", { name: "Collapse navigation" }));
+    expect(screen.getAllByText("icons")).toHaveLength(2);
+  });
+
+  test("outside SideNav the hook reports the expanded state", () => {
+    shell(<Mode />);
+    expect(screen.getByText("full")).toBeTruthy();
+  });
+
+  /**
+   * Колонка сужается до иконки, а слот потребителя о ширине может не знать.
+   * Без обрезки его текст вылезает поверх содержимого страницы.
+   */
+  test("header and footer clip what does not fit", () => {
+    shell(
+      <SideNav defaultCollapsed header={<span>Brand</span>} footer={<span>Ada</span>}>
+        {items}
+      </SideNav>
+    );
+
+    expect(screen.getByText("Brand").parentElement!.className).toContain("overflow-x-clip");
+    expect(screen.getByText("Ada").parentElement!.className).toContain("overflow-x-clip");
   });
 });

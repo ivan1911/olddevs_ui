@@ -5,7 +5,7 @@ import { StrictMode, useState } from "react";
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 import { AppShell, useAppShell } from "../src/components/app-shell/AppShell.js";
 import { NavItem } from "../src/components/app-shell/NavItem.js";
-import { NavGroup, SideNav } from "../src/components/app-shell/SideNav.js";
+import { NavGroup, SideNav, useNavCollapsed } from "../src/components/app-shell/SideNav.js";
 import { TooltipProvider } from "../src/components/overlays/Tooltip.js";
 import { TopBar } from "../src/components/app-shell/TopBar.js";
 
@@ -248,6 +248,21 @@ describe("SideNav inside the drawer", () => {
     await openDrawer(nav({ defaultCollapsed: true }));
     const drawer = screen.getByRole("dialog", { name: "Main navigation" });
     expect(within(drawer).getByText("Dashboard").className).not.toContain("sr-only");
+  });
+
+  // Слоты потребителя видят тот же развёрнутый режим, что и пункты: иначе в
+  // ящике подвал рисовал бы один аватар рядом с подписанными пунктами.
+  test("slot content inside the drawer reads the expanded state", async () => {
+    const Mode = () => <span>{useNavCollapsed() ? "icons" : "full"}</span>;
+    await openDrawer(
+      <SideNav collapsed footer={<Mode />}>
+        <NavGroup label="Work">
+          <NavItem label="Dashboard" href="/dashboard" active />
+        </NavGroup>
+      </SideNav>
+    );
+    const drawer = screen.getByRole("dialog", { name: "Main navigation" });
+    expect(within(drawer).getByText("full")).toBeTruthy();
   });
 
   test("the column outside the drawer still collapses", () => {
