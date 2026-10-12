@@ -171,6 +171,16 @@ major version and is removed in the next. Removing something without a preceding
 alias is allowed only in a major version, with an entry in
 [docs/api/migration-notes.en.md](docs/api/migration-notes.en.md).
 
+## Commits
+
+Conventional Commits, one line, in English. A maintainer's commit message ends
+with the key of the internal issue tracker in parentheses:
+`fix(keyboard): keep the caret after a layout switch (OLDSUI-<number>)`. The key
+is required: the private repository links a commit to its task only through the
+key, so a commit without one doesn't show up in the task. The same key goes into
+the branch name (`fix/OLDSUI-<number>-<slug>`) and the pull request title. An
+outside contribution doesn't need a key (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+
 ## Checks
 
 ```bash
