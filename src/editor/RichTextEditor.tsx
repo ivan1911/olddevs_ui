@@ -67,7 +67,7 @@ import {
 } from "./core/jsonDocument.js";
 import { markdownOf } from "./core/atomText.js";
 import { countCharacters, EXTERNAL_CHANGE } from "./core/maxLength.js";
-import { proseClass } from "./styles/prose.js";
+import { PAPER_SHEET_CLASS, proseClass } from "./styles/prose.js";
 import { SELECTION_BUBBLE_KEY, SelectionBubble } from "./ui/SelectionBubble.js";
 import { useSlashMenu } from "./ui/SlashMenu.js";
 import { useTriggerMenu } from "./ui/TriggerMenu.js";
@@ -1543,8 +1543,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 {...surfaceAttributes(surface)}
                 className={cn(
                   "grid",
-                  surface === "paper" ? EDITOR_PAPER_TOKENS_CLASS : EDITOR_TOKENS_CLASS,
-                  surface === "paper" ? "my-3" : "py-2.5"
+                  // На листе светлый лист остаётся под тёмным полем: смена режима
+                  // меняет содержимое листа, а не сам лист.
+                  surface === "paper"
+                    ? cn(EDITOR_PAPER_TOKENS_CLASS, PAPER_SHEET_CLASS, "my-3")
+                    : cn(EDITOR_TOKENS_CLASS, "py-2.5")
                 )}
                 style={{ minHeight: source.minHeight }}
               >

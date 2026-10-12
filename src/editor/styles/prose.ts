@@ -415,7 +415,7 @@ export const PROSE_CLASS = EDITOR_TOKENS_CLASS + " " + PROSE_RULES;
  * видны на тёмной подложке так же, как на светлой. `scheme-light` — родной
  * флажок чек-листа и полосы прокрутки рисуются светлыми.
  */
-const PAPER_SHEET_CLASS =
+export const PAPER_SHEET_CLASS =
   "rounded-(--r-sm) border border-(--line) bg-(--rte-background) px-4 py-3 " +
   "shadow-[var(--shadow-1)] scheme-light";
 
