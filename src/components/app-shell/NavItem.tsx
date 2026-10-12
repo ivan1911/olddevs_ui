@@ -72,7 +72,8 @@ const BASE =
   // Недоступный пункт красится по `aria-disabled`, как у `Button`: у ссылки нет
   // родного `disabled`, и без этого правила пункт, выключенный атрибутом ARIA,
   // выглядел бы рабочим — с тем же цветом и курсором-указателем.
-  "aria-disabled:opacity-50 aria-disabled:cursor-default";
+  "aria-disabled:opacity-50 aria-disabled:cursor-default " +
+  "aria-disabled:hover:bg-transparent aria-disabled:hover:text-fg-1";
 
 const STATE = {
   active: "border-line bg-bg-3 text-fg-0 font-semibold",

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, expect, test } from "vitest";
 import { Toggle } from "../src/components/actions/Toggle.js";
 import { Checkbox } from "../src/components/inputs/Checkbox.js";
+import { CheckboxCard } from "../src/components/inputs/CheckboxCard.js";
 import { CheckboxGroup } from "../src/components/inputs/CheckboxGroup.js";
 import { Radio, RadioGroup } from "../src/components/inputs/RadioGroup.js";
 import { RangeSlider, Slider } from "../src/components/inputs/Slider.js";
@@ -16,7 +17,7 @@ afterEach(cleanup);
   react-aria: те знают только о собственном `isDisabled`. Поэтому `disabled:`
   на их корне не срабатывает, и контрол остаётся «живым» на вид, будучи
   неработающим. Нативное состояние видит только псевдокласс `:disabled` на
-  скрытом `input` внутри — отсюда `has-disabled:`.
+  скрытом `input` внутри — отсюда `has-[input:disabled]:`.
 
   В jsdom нет вычисленных стилей Tailwind, поэтому проверяются два факта: что
   `input` действительно выключен предком и что у его обёртки есть класс,
@@ -25,7 +26,7 @@ afterEach(cleanup);
 const inDisabledFieldset = (ui: ReactNode) => render(<fieldset disabled>{ui}</fieldset>);
 
 const dimsOnDisabledDescendant = (el: Element | null) =>
-  el?.className.split(" ").includes("has-disabled:opacity-50");
+  el?.className.split(" ").includes("has-[input:disabled]:opacity-50");
 
 test("a checkbox inside a disabled fieldset is dimmed", () => {
   inDisabledFieldset(<Checkbox>Pin</Checkbox>);
@@ -99,6 +100,22 @@ test("a switch caption inside a disabled fieldset is dimmed together with the tr
     screen
       .getByText("Notifications")
       .parentElement?.className.split(" ")
-      .includes("group-has-disabled/toggle:opacity-50")
+      .includes("group-has-[[role=switch]:disabled]/toggle:opacity-50")
   ).toBe(true);
+});
+
+test("a disabled node in the description does not dim a working card", () => {
+  // Голый `has-disabled` ловил любой выключенный узел внутри и гасил рабочую
+  // карточку из-за кнопки в описании. Условие сужено до скрытого `input`.
+  render(
+    <CheckboxCard tone="accent" description={<button disabled>Upgrade</button>}>
+      Analytics
+    </CheckboxCard>
+  );
+  const input = screen.getByRole("checkbox");
+  const card = input.closest("[class*='has-[input:disabled]']");
+  expect(card).not.toBeNull();
+  expect(input.matches(":disabled")).toBe(false);
+  expect(card?.matches(":has(input:disabled)")).toBe(false);
+  expect(card?.matches(":has(:disabled)")).toBe(true);
 });
