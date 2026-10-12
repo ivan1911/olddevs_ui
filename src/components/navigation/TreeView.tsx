@@ -184,9 +184,13 @@ export function TreeView({
                   // шеврон в `Accordion`.
                   //
                   // Приглушение — не на всём `div`, а на частях (см. `dim` ниже).
-                  isSelected ? "bg-accent-soft text-fg-0" : "hover:bg-bg-2",
+                  //
                   // Текущий узел — подложка и вес шрифта, как у `NavItem` с `active`.
+                  // Стоит ДО выбора: `cn` оставляет последнюю подложку, и у узла,
+                  // который и текущий, и выбран, видна подложка выбора — как было,
+                  // пока порядок решал каскад вариантов.
                   current && "bg-bg-3 text-fg-0 font-semibold",
+                  isSelected ? "bg-accent-soft text-fg-0" : "hover:bg-bg-2",
                   "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:-outline-offset-2"
                 )}
                 // Уровень вложенности берётся у react-aria: она кладёт его в
