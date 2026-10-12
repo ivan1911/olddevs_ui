@@ -182,7 +182,7 @@ test("the checked tone row keeps the swatch's own colours instead of the selecte
   expect(swatch.className.split(" ")).toContain("text-fg-0");
   expect(swatch.className).toContain("bg-(--warning-soft)");
   // Прозрачная подложка тона не смешивается с подложкой строки: под образцом непрозрачная основа.
-  expect(swatch.parentElement!.className).toContain("bg-surface-elevated");
+  expect(swatch.parentElement!.className).toContain("in-[[aria-checked=true]]:bg-surface-elevated");
 });
 
 test("choosing a tone writes it in one undo step and the caret stays in its text", async () => {
