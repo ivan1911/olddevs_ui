@@ -63,19 +63,19 @@ const UserSlot = () =>
 const NavSections = (
   <>
     <NavGroup label="Work">
-      <NavItem label="Dashboard" href="#dashboard" icon={<DashboardIcon />} active />
-      <NavItem label="Documents" href="#docs" icon={<FolderIcon />} />
-      <NavItem label="Uploads" href="#upload" icon={<UploadIcon />} />
+      <NavItem label="Dashboard" href="#dashboard" icon={<DashboardIcon size={20} />} active />
+      <NavItem label="Documents" href="#docs" icon={<FolderIcon size={20} />} />
+      <NavItem label="Uploads" href="#upload" icon={<UploadIcon size={20} />} />
     </NavGroup>
     <NavGroup label="Other">
       <NavItem
         label="Activity"
         href="#events"
-        icon={<BellIcon />}
+        icon={<BellIcon size={20} />}
         badge={<Badge tone="danger">7</Badge>}
       />
-      <NavItem label="Archive" href="#archive" icon={<ArchiveIcon />} />
-      <NavItem label="Settings" href="#settings" icon={<SettingsIcon />} />
+      <NavItem label="Archive" href="#archive" icon={<ArchiveIcon size={20} />} />
+      <NavItem label="Settings" href="#settings" icon={<SettingsIcon size={20} />} />
     </NavGroup>
   </>
 );

@@ -47,15 +47,15 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const SECTIONS = [
-  { id: "dashboard", label: "Dashboard", icon: <DashboardIcon /> },
-  { id: "docs", label: "Documents", icon: <FolderIcon /> },
-  { id: "upload", label: "Uploads", icon: <UploadIcon /> },
+  { id: "dashboard", label: "Dashboard", icon: <DashboardIcon size={20} /> },
+  { id: "docs", label: "Documents", icon: <FolderIcon size={20} /> },
+  { id: "upload", label: "Uploads", icon: <UploadIcon size={20} /> },
 ];
 
 const REST = [
-  { id: "events", label: "Activity", icon: <BellIcon />, badge: 7 },
-  { id: "archive", label: "Archive", icon: <ArchiveIcon /> },
-  { id: "settings", label: "Settings", icon: <SettingsIcon /> },
+  { id: "events", label: "Activity", icon: <BellIcon size={20} />, badge: 7 },
+  { id: "archive", label: "Archive", icon: <ArchiveIcon size={20} /> },
+  { id: "settings", label: "Settings", icon: <SettingsIcon size={20} /> },
 ];
 
 const COLUMNS = [
