@@ -113,7 +113,8 @@ export const SectionsAndSubmenus: Story = {
  * Матрица тонов и состояний пункта.
  *
  * Меню открыто принудительно (`isOpen`), иначе снимок показал бы только кнопку.
- * Панель рисуется в портале, поэтому история и центрируется по месту.
+ * Панель рисуется в портале, поэтому история резервирует под неё место высотой кадра
+ * (`layout: "padded"`, не по центру).
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -174,8 +175,13 @@ export const MenuInsideDialog: Story = {
     return (
       <div className="h-[420px]">
         <Button onClick={() => setOpen(true)}>Open the window</Button>
-        <Dialog open={open} onClose={() => setOpen(false)} title="Collection settings">
-          <div className="flex flex-col gap-4">
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          title="Collection settings"
+          className="w-full max-w-[420px]"
+        >
+          <div className="flex flex-col gap-4 px-5 py-4">
             <FormField label="Name" htmlFor="md-name">
               <TextControl
                 id="md-name"

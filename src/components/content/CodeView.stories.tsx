@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
 import { CodeView } from "./CodeView.js";
 
 const BODY = `{
@@ -65,15 +65,24 @@ export const Highlighted: Story = {
   ),
 };
 
+/** Рамка уже строки: иначе в широком кадре она помещается и ни прокрутки, ни переноса не видно. */
+const narrowFrame: Decorator = (Story) => (
+  <div className="max-w-md">
+    <Story />
+  </div>
+);
+
 /**
  * Длинная строка без переноса даёт прокрутку, а не обрезку: обрезанная строка
  * кода молча теряет то, ради чего её открыли.
  */
 export const LongLine: Story = {
   args: { code: LONG, title: "request.sh", copyable: true },
+  decorators: [narrowFrame],
 };
 
-/** Та же строка с переносом. */
+/** Та же строка в той же узкой рамке, но с переносом. */
 export const Wrapped: Story = {
   args: { code: LONG, title: "request.sh", copyable: true, wrap: true },
+  decorators: [narrowFrame],
 };

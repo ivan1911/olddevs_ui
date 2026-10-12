@@ -27,10 +27,13 @@ export const Playground: Story = {
   },
 };
 
-/** Другой формат — пропом: умолчание это выбор, а не истина. */
+/**
+ * Другой формат — пропом: умолчание это выбор, а не истина. Американский номер
+ * `+1 (212) 555-0123`: в значении 11 цифр, по одной на каждую позицию маски, включая код страны.
+ */
 export const ForeignFormat: Story = {
   render: function Render() {
-    const [value, setValue] = useState("2125550123");
+    const [value, setValue] = useState("12125550123");
     return (
       <div className="w-[360px]">
         <FormField label="Phone (US)" htmlFor="ph-us">

@@ -137,7 +137,13 @@ export const SizesAndStates: Story = {
             with icon
           </Button>
         ))}
-        <Button variant="solid" tone="accent" icon={<span>★</span>} aria-label="Icon only" />
+        <Button
+          variant="solid"
+          tone="accent"
+          iconOnly
+          icon={<span>★</span>}
+          aria-label="Icon only"
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

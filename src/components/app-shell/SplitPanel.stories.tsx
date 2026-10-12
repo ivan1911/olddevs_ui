@@ -74,7 +74,7 @@ export const Side: Story = {
  * разница ровно в оси раскладки.
  */
 export const Bottom: Story = {
-  args: { position: "bottom", defaultSize: 120, minSize: 80, maxSize: 200 },
+  args: { position: "bottom", defaultSize: 170, minSize: 80, maxSize: 200 },
 };
 
 /**

@@ -98,7 +98,10 @@ export const Playground: Story = { render: () => <KeyboardPlayground /> };
 export const Matrix: Story = {
   parameters: { layout: "padded" },
   render: () => (
-    <div className="grid w-full max-w-[60rem] grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-x-8">
+    // Один столбец шириной с прежнюю колонку: в двух колонках открытые панели
+    // налезали друг на друга, а растянутое на весь кадр поле уводило панель,
+    // привязанную к кнопке клавиатуры, за правый край.
+    <div className="grid w-full max-w-[30rem] grid-cols-1 gap-y-6">
       <KeyboardScenario
         title="open · Russian · query"
         initialValue="sunset"

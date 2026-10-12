@@ -136,7 +136,7 @@ export const Vertical: Story = {
 export const Wrapping: Story = {
   args: { "aria-label": "Document tools" },
   render: (args: ToolbarProps) => (
-    <div className="border-line-soft w-72 rounded-lg border p-2" data-testid="narrow">
+    <div className="border-line-soft w-[22rem] rounded-lg border p-2" data-testid="narrow">
       <Toolbar {...args}>
         <Actions />
       </Toolbar>

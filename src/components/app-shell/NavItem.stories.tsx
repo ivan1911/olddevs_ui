@@ -11,8 +11,13 @@ const meta = {
   parameters: { layout: "padded" },
   args: { label: "Dashboard", href: "#", icon: <DashboardIcon /> },
   decorators: [
-    (Story) => (
-      <div className="border-line-soft bg-bg-1 w-[var(--sidenav-w)] rounded-lg border p-2.5">
+    // Декораторы meta оборачивают и декоратор истории, поэтому ширину рамки история
+    // задаёт параметром `frameWidth`, а не второй рамкой внутри.
+    (Story, { parameters }) => (
+      <div
+        className="border-line-soft bg-bg-1 rounded-lg border p-2.5"
+        style={{ width: parameters.frameWidth ?? "var(--sidenav-w)" }}
+      >
         <Story />
       </div>
     ),
@@ -58,12 +63,11 @@ export const States: Story = {
  * и без провайдера Radix бросает. Требование к потребителю, а не к витрине.
  */
 export const Collapsed: Story = {
+  parameters: { frameWidth: "var(--sidenav-w-collapsed)" },
   decorators: [
     (Story) => (
       <TooltipProvider delayDuration={0}>
-        <div className="border-line-soft bg-bg-1 w-[var(--sidenav-w-collapsed)] rounded-lg border p-2.5">
-          <Story />
-        </div>
+        <Story />
       </TooltipProvider>
     ),
   ],
