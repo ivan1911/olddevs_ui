@@ -102,7 +102,7 @@ export const Truncation: Story = {
   ),
 };
 
-/** `as` меняет тег, но не вид: строка внутри абзаца и абзац выглядят одинаково. */
+/** Матрица размер × уровень: три уровня цвета и жирное начертание на каждом размере. */
 export const Matrix: Story = {
   render: (args) => (
     <div className="flex flex-col gap-6">
