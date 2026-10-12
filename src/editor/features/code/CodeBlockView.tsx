@@ -219,7 +219,7 @@ export function CodeBlockView({ editor, node, getPos, extension }: NodeViewProps
             </Menu>
           </MenuTrigger>
         ) : (
-          <span className={CODE_LABEL_CLASS}>{label}</span>
+          <span className={CODE_LABEL_CLASS}>{language?.label}</span>
         )}
         <CodeCopyButton
           code={node.textContent}

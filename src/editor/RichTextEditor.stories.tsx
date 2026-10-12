@@ -1233,7 +1233,11 @@ export const CodeBlocks: Story = {
   args: { defaultValue: CODE_BLOCKS },
 };
 
-/** Только чтение: вместо кнопки языка — подпись, менять нечего; «Копировать» остаётся. */
+/**
+ * Только чтение: вместо кнопки языка — подпись, менять нечего; «Копировать» остаётся.
+ * У блока без языка подписи нет: «Обычный текст» — имя пункта меню, а не языка,
+ * и серверный `RichTextView` такой блок тоже не подписывает.
+ */
 export const CodeBlocksReadOnly: Story = {
   args: { defaultValue: CODE_BLOCKS, readOnly: true },
 };

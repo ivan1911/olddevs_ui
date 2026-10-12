@@ -361,14 +361,6 @@ test("a read-only editor shows the language as text, without a button", async ()
   expect(screen.getByRole("button", { name: "Language: YAML" })).toBeTruthy();
 });
 
-test("a read-only block without a language is labelled with the plain-text caption", async () => {
-  const { ref } = renderEditor({ readOnly: true, defaultValue: "<pre><code>a: 1</code></pre>" });
-  await settle();
-
-  expect(screen.queryByRole("button", { name: /Language/ })).toBeNull();
-  expect(ref.current!.editor!.view.dom.textContent).toContain("Plain text");
-});
-
 test("the language button speaks Russian with the Russian catalog", async () => {
   render(
     <UiProvider messages={ru}>
