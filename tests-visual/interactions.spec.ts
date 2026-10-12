@@ -194,14 +194,22 @@ test("Keyboard: the matrix shows both closed and immediately open search scenari
   ).toHaveCount(2);
 
   await page.setViewportSize({ width: 768, height: 1000 });
-  const russianKeyboard = await page
-    .getByRole("dialog", { name: "Russian keyboard" })
-    .boundingBox();
-  const englishKeyboard = await page
-    .getByRole("dialog", { name: "English keyboard" })
-    .boundingBox();
-  if (russianKeyboard == null || englishKeyboard == null) throw new Error("keyboard has no bounds");
-  expect(englishKeyboard.y).toBeGreaterThan(russianKeyboard.y + russianKeyboard.height);
+  // Поповеры переезжают за полем не в момент смены ширины, а на следующем
+  // кадре: floating-ui пересчитывает позицию асинхронно. Разовый замер под
+  // нагрузкой ловил старую раскладку в две колонки, где панели стоят в одном
+  // ряду, — поэтому зазор опрашивается, пока раскладка не устоится.
+  await expect
+    .poll(async () => {
+      const russianKeyboard = await page
+        .getByRole("dialog", { name: "Russian keyboard" })
+        .boundingBox();
+      const englishKeyboard = await page
+        .getByRole("dialog", { name: "English keyboard" })
+        .boundingBox();
+      if (russianKeyboard == null || englishKeyboard == null) return null;
+      return englishKeyboard.y - (russianKeyboard.y + russianKeyboard.height);
+    })
+    .toBeGreaterThan(0);
 
   await page
     .getByRole("dialog", { name: "Russian keyboard" })
