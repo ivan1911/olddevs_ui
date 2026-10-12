@@ -68,10 +68,12 @@ export function Truncate({ children, lines = 1, side = "top", className, ...rest
       // клавиатурой не нужен и мешал бы.
       tabIndex={truncated ? 0 : undefined}
       className={cn(
-        "focus-visible:outline-accent-strong block min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2",
+        "focus-visible:outline-accent-strong min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2",
         lines === 1
-          ? "truncate"
-          : // Многострочная обрезка: `line-clamp` считает строки сам, и число
+          ? "block truncate"
+          : // `block` сюда нельзя: в CSS он стоит позже `[display:-webkit-box]`,
+            // перебивает его, и `line-clamp` молча не работает.
+            // Многострочная обрезка: `line-clamp` считает строки сам, и число
             // приходит переменной — иначе класс собирался бы конкатенацией, а
             // такого текста в исходниках нет и Tailwind его не увидит.
             "[display:-webkit-box] overflow-hidden [-webkit-box-orient:vertical]",
