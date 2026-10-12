@@ -48,13 +48,13 @@ import Link from "next/link";
   <NavGroup label="Работа">
     <NavItem
       label="Дашборд"
-      icon={<DashboardIcon />}
+      icon={<DashboardIcon size={20} />}
       active={pathname.startsWith("/dashboard")}
       asChild
     >
       <Link href="/dashboard" />
     </NavItem>
-    <NavItem label="Документы" icon={<FolderIcon />} asChild>
+    <NavItem label="Документы" icon={<FolderIcon size={20} />} asChild>
       <Link href="/docs" />
     </NavItem>
   </NavGroup>
@@ -94,6 +94,10 @@ import Link from "next/link";
 | `asChild`  | `false`   | Отрисовать пункт элементом потребителя: `next/link`, `<Link>` роутера; стили, пропы и `ref` пункта переходят на него. |
 
 Остальные пропы уходят на элемент — включая `href` для случая без `asChild`.
+
+**Недоступный пункт** выключается атрибутом `aria-disabled="true"`: у ссылки нет родного `disabled`. Пункт гаснет
+и получает обычный курсор — так же, как `Button`. Атрибут только объявляет пункт недоступным: переход по `href`
+он не отменяет, поэтому потребитель либо не передаёт `href`, либо гасит переход сам.
 
 ## Шапка и подвал в иконочном режиме
 

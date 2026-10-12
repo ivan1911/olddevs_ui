@@ -194,10 +194,17 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle
     оно обёрнуто в свой `<label for>`.
   */
   return (
-    <div className={cn("flex items-center justify-between gap-4", className)}>
+    <div className={cn("group/toggle flex items-center justify-between gap-4", className)}>
       {/* Приглушается только текст: дорожка приглушает себя сама (`disabled:opacity-50`),
-          и общая прозрачность строки дала бы ей 25 % вместо 50 % — иначе, чем без подписи. */}
-      <div className={cn("flex min-w-0 flex-col", disabled && "opacity-50")}>
+          и общая прозрачность строки дала бы ей 25 % вместо 50 % — иначе, чем без подписи.
+          `group-has-[[role=switch]:disabled]/toggle:` — для кнопки, выключенной предком-`fieldset`:
+          свойство `disabled` у неё при этом ложно, и одно оно текст не погасило бы. */}
+      <div
+        className={cn(
+          "flex min-w-0 flex-col group-has-[[role=switch]:disabled]/toggle:opacity-50",
+          disabled && "opacity-50"
+        )}
+      >
         <label
           id={labelId}
           htmlFor={switchId}

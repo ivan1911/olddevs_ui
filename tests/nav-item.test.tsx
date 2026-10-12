@@ -31,6 +31,19 @@ describe("NavItem", () => {
     expect(screen.getByRole("link", { name: "Reports" }).getAttribute("aria-current")).toBeNull();
   });
 
+  test("an item disabled only by aria-disabled is painted as unavailable", () => {
+    render(<NavItem label="Archive" href="/archive" aria-disabled="true" />);
+    const link = screen.getByRole("link", { name: "Archive" });
+
+    // В jsdom нет вычисленных стилей Tailwind, поэтому проверяются классы:
+    // без них пункт с `aria-disabled` выглядел полностью рабочим — `:disabled`
+    // на ссылке не бывает, а вид был завязан только на `active`. Правило то же,
+    // что у `Button` (`lib/button.ts`).
+    expect(link.getAttribute("aria-disabled")).toBe("true");
+    expect(link.classList.contains("aria-disabled:opacity-50")).toBe(true);
+    expect(link.classList.contains("aria-disabled:cursor-default")).toBe(true);
+  });
+
   test("asChild gives the appearance to the consumer element and does not lose its href", () => {
     render(
       <NavItem label="Documents" active asChild>

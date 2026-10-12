@@ -69,6 +69,14 @@ export const WithApply: Story = {
 
 /** Длинный список переносится по строкам, а не режется и не скроллится. */
 export const ManyViews: Story = {
+  // Узкая рамка: в широком кадре все виды помещаются в одну строку и перенос не виден.
+  decorators: [
+    (Story) => (
+      <div className="max-w-sm">
+        <Story />
+      </div>
+    ),
+  ],
   args: {
     views: [
       ...views,

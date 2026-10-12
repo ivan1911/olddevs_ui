@@ -711,3 +711,25 @@ test("the HTML field selects with its own dark-surface selection and text colour
   expect(classes).toContain("selection:bg-(--rte-source-selection)");
   expect(classes).toContain("selection:text-(--rte-source-foreground)");
 });
+
+test("on the paper surface the light sheet stays under the dark HTML field", async () => {
+  const user = userEvent.setup();
+  renderEditor({ surface: "paper", defaultValue: "<p>text</p>" });
+  await user.click(sourceButton()!);
+  const sheet = sourceField()!.parentElement!;
+  const classes = sheet.className.split(/\s+/);
+  expect(classes).toContain("bg-(--rte-background)");
+  expect(classes).toContain("border");
+  expect(classes).toContain("scheme-light");
+  // Само поле остаётся тёмным.
+  expect(sourceField()!.className).toContain("bg-(--rte-source-background)");
+});
+
+test("without the paper surface the HTML field has no sheet around it", async () => {
+  const user = userEvent.setup();
+  renderEditor({ defaultValue: "<p>text</p>" });
+  await user.click(sourceButton()!);
+  expect(sourceField()!.parentElement!.className.split(/\s+/)).not.toContain(
+    "bg-(--rte-background)"
+  );
+});

@@ -509,7 +509,17 @@ export function VirtualGrid({
               className="focus-visible:outline-accent-strong rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {/* `gridcell` у react-aria — `display: contents`: высоту держит обёртка. */}
-              <div className="h-full" style={{ minHeight: minItemHeight }}>
+              {/* Обёртка — сетка из одной строки, а не блок с `min-height`: процентная высота
+                  вложенного узла (`h-full`) от `min-height` не считается и схлопывается до
+                  содержимого, а от строки сетки — считается. `items-start` оставляет ячейку без
+                  `h-full` её естественной высоты. */}
+              <div
+                className="grid h-full grid-cols-1 items-start"
+                style={{
+                  minHeight: minItemHeight,
+                  gridTemplateRows: `minmax(${minItemHeight}px, 1fr)`,
+                }}
+              >
                 {item.contextMenu != null ? (
                   <CellContextMenu
                     menu={item.contextMenu}

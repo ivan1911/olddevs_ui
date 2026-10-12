@@ -96,8 +96,14 @@ function InsideModal({ args, layer }: { args: ComboboxProps; layer: "dialog" | "
     </div>
   );
   return layer === "dialog" ? (
-    <Dialog open={open} onClose={() => setOpen(false)} title="Collection settings">
-      {body}
+    // Ширина и отступы тела — как в историях Dialog: у самого `Dialog` умолчаний нет.
+    <Dialog
+      open={open}
+      onClose={() => setOpen(false)}
+      title="Collection settings"
+      className="w-full max-w-[420px]"
+    >
+      <div className="px-5 py-4">{body}</div>
     </Dialog>
   ) : (
     <Drawer open={open} onClose={() => setOpen(false)} title="Collection settings">

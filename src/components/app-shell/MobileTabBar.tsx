@@ -263,7 +263,15 @@ export const MobileTabBarItem = forwardRef<HTMLAnchorElement, MobileTabBarItemPr
             {custom ? (
               <span className="absolute top-[-2px] -right-1.5 flex">{custom}</span>
             ) : shown ? (
-              <Badge overlay dot={dot} className="top-[-2px] -right-1.5">
+              // Значок держится ЛЕВОЙ кромкой у правого верхнего угла иконки и растёт
+              // вправо: привязка правой кромкой (`-right-1.5`) растила широкий «99+» или
+              // «Beta» влево, на иконку. Сдвиг `-ml-*` повторяет прежнее положение точки
+              // (8px) и короткого числа (16px): они выглядят как раньше.
+              <Badge
+                overlay
+                dot={dot}
+                className={cn("top-[-2px] right-auto left-full", dot ? "-ml-0.5" : "-ml-2.5")}
+              >
                 {count ?? text}
               </Badge>
             ) : null}

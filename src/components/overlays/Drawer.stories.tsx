@@ -71,7 +71,7 @@ export const OverForeignOverlay: Story = {
   render: (args) => (
     <>
       <div
-        className="bg-bg-2 border-line fixed inset-x-20 inset-y-16 z-95 flex items-center justify-center rounded-2xl border"
+        className="bg-bg-2 border-line fixed inset-x-20 inset-y-16 z-95 flex items-start justify-center rounded-2xl border pt-6"
         aria-hidden
       >
         <Text level={3}>A foreign application overlay, layer z-95</Text>

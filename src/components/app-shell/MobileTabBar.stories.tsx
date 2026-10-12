@@ -23,10 +23,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const SECTIONS = [
-  { id: "home", label: "Dashboard", icon: <DashboardIcon /> },
-  { id: "docs", label: "Documents", icon: <FolderIcon /> },
-  { id: "upload", label: "Uploads", icon: <UploadIcon /> },
-  { id: "settings", label: "Settings", icon: <SettingsIcon /> },
+  { id: "home", label: "Dashboard", icon: <DashboardIcon size={20} /> },
+  { id: "docs", label: "Documents", icon: <FolderIcon size={20} /> },
+  { id: "upload", label: "Uploads", icon: <UploadIcon size={20} /> },
+  { id: "settings", label: "Settings", icon: <SettingsIcon size={20} /> },
 ];
 
 /** Полоса с переключаемым текущим разделом — нажмите на пункт. */
@@ -58,20 +58,25 @@ export const Playground: Story = {
 export const Badges: Story = {
   render: () => (
     <MobileTabBar>
-      <MobileTabBarItem label="Dashboard" icon={<DashboardIcon />} href="#home" active />
-      <MobileTabBarItem label="Activity" icon={<BellIcon />} href="#activity" badge={7} />
-      <MobileTabBarItem label="Documents" icon={<FolderIcon />} href="#docs" badge />
+      <MobileTabBarItem label="Dashboard" icon={<DashboardIcon size={20} />} href="#home" active />
+      <MobileTabBarItem label="Activity" icon={<BellIcon size={20} />} href="#activity" badge={7} />
+      <MobileTabBarItem label="Documents" icon={<FolderIcon size={20} />} href="#docs" badge />
       <MobileTabBarItem
         label="Uploads"
-        icon={<UploadIcon />}
+        icon={<UploadIcon size={20} />}
         href="#upload"
         badge={240}
         badgeLabel="240 files waiting"
       />
-      <MobileTabBarItem label="Reports" icon={<FolderIcon />} href="#reports" badge="Beta" />
+      <MobileTabBarItem
+        label="Reports"
+        icon={<FolderIcon size={20} />}
+        href="#reports"
+        badge="Beta"
+      />
       <MobileTabBarItem
         label="Billing"
-        icon={<DashboardIcon />}
+        icon={<DashboardIcon size={20} />}
         href="#billing"
         badge={<Badge tone="warning" dot />}
         badgeLabel="Payment overdue"
@@ -109,15 +114,20 @@ export const BadgesWithoutIcon: Story = {
 export const LongLabels: Story = {
   render: () => (
     <MobileTabBar data-testid="long-labels">
-      <MobileTabBarItem label="Dashboard" icon={<DashboardIcon />} href="#home" active />
-      <MobileTabBarItem label="Documents" icon={<FolderIcon />} href="#docs" />
+      <MobileTabBarItem label="Dashboard" icon={<DashboardIcon size={20} />} href="#home" active />
+      <MobileTabBarItem label="Documents" icon={<FolderIcon size={20} />} href="#docs" />
       <MobileTabBarItem
         label="Scheduled uploads and reminders"
-        icon={<UploadIcon />}
+        icon={<UploadIcon size={20} />}
         href="#upload"
       />
-      <MobileTabBarItem label="Notifications" icon={<BellIcon />} href="#activity" badge={3} />
-      <MobileTabBarItem label="Preferences" icon={<SettingsIcon />} href="#settings" />
+      <MobileTabBarItem
+        label="Notifications"
+        icon={<BellIcon size={20} />}
+        href="#activity"
+        badge={3}
+      />
+      <MobileTabBarItem label="Preferences" icon={<SettingsIcon size={20} />} href="#settings" />
     </MobileTabBar>
   ),
 };

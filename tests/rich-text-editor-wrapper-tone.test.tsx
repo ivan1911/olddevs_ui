@@ -165,6 +165,26 @@ test("the handle of a block in a wrapper has Tone ›: radio items in words, Non
   expect(checkedName(tone)).toEqual(["None"]);
 });
 
+test("the checked tone row keeps the swatch's own colours instead of the selected-row ones", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: toned("warning", "<p>One</p>") });
+  focusAt(editor, "One");
+
+  const tone = await openToneMenu(user, "Warning");
+  const row = within(tone).getByRole("menuitemradio", { name: "Warning" });
+  expect(row.getAttribute("aria-checked")).toBe("true");
+  // Галочка и подложка строки — от пункта меню.
+  expect(row.querySelector("svg")).not.toBeNull();
+  expect(row.className).toContain("selected:bg-accent-soft");
+
+  // Образец носит свои цвета и не наследует голубой текст выбранной строки.
+  const swatch = within(row).getByText("Warning");
+  expect(swatch.className.split(" ")).toContain("text-fg-0");
+  expect(swatch.className).toContain("bg-(--warning-soft)");
+  // Прозрачная подложка тона не смешивается с подложкой строки: под образцом непрозрачная основа.
+  expect(swatch.parentElement!.className).toContain("in-[[aria-checked=true]]:bg-surface-elevated");
+});
+
 test("choosing a tone writes it in one undo step and the caret stays in its text", async () => {
   const user = userEvent.setup();
   const html = `<p>Above</p>${wrapper("<p>One</p>", "<p>Two</p>")}`;

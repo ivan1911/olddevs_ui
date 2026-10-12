@@ -165,57 +165,78 @@ export function TreeView({
         className="outline-none [--tree-indent:1.25rem]"
       >
         <TreeItemContent>
-          {({ isExpanded, hasChildItems }) => (
-            <div
-              ref={(content) => markCurrent(content, current)}
-              className={cn(
-                "text-fg-1 flex items-center gap-2 rounded-xs py-1.5 pr-2 text-[13px] leading-5",
-                "hover:bg-bg-2 selected:bg-accent-soft selected:text-fg-0",
-                // Текущий узел — подложка и вес шрифта, как у `NavItem` с `active`.
-                current && "bg-bg-3 text-fg-0 font-semibold",
-                "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:-outline-offset-2",
-                "disabled:opacity-50"
-              )}
-              // Уровень вложенности берётся у react-aria: она кладёт его в
-              // `--tree-item-level` на строке, и считать глубину самим не нужно
-              // — иначе у нас была бы вторая копия того же числа.
-              style={{
-                paddingLeft: "calc((var(--tree-item-level) - 1) * var(--tree-indent) + 0.25rem)",
-              }}
-            >
-              {hasChildItems ? (
-                <Button
-                  slot="chevron"
-                  aria-label={isExpanded ? messages.treeView.collapse : messages.treeView.expand}
-                  className={cn(
-                    "text-fg-3 hover:text-fg-0 flex cursor-pointer items-center rounded-xs",
-                    "transition-colors",
-                    "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2"
-                  )}
-                >
-                  <ChevronRightIcon
-                    size={14}
-                    aria-hidden
+          {({ isExpanded, hasChildItems, isSelected, isDisabled }) => {
+            // Гасятся шеврон, иконка и подпись по отдельности, а не весь `div`:
+            // флажок выбора получает блокировку от строки сам и гасится собственным
+            // `disabled:opacity-50`, так что приглушение всего ряда дало бы ему
+            // двойное — 25% вместо 50%.
+            const dim = isDisabled && "opacity-50";
+            return (
+              <div
+                ref={(content) => markCurrent(content, current)}
+                className={cn(
+                  "text-fg-1 flex items-center gap-2 rounded-xs py-1.5 pr-2 text-[13px] leading-5",
+                  // Выбор и блокировка берутся из рендер-пропа, а не вариантами
+                  // `selected:` и `disabled:`: `data-selected` и `data-disabled`
+                  // react-aria ставит на строку (`row`), а красится её содержимое —
+                  // вариант на нём не срабатывал, и ни выбранный узел не
+                  // подсвечивался, ни заблокированный не гас. Тот же случай, что
+                  // шеврон в `Accordion`.
+                  //
+                  // Приглушение — не на всём `div`, а на частях (см. `dim` ниже).
+                  //
+                  // Текущий узел — подложка и вес шрифта, как у `NavItem` с `active`.
+                  // Стоит ДО выбора: `cn` оставляет последнюю подложку, и у узла,
+                  // который и текущий, и выбран, видна подложка выбора — как было,
+                  // пока порядок решал каскад вариантов.
+                  current && "bg-bg-3 text-fg-0 font-semibold",
+                  isSelected ? "bg-accent-soft text-fg-0" : !isDisabled && "hover:bg-bg-2",
+                  "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:-outline-offset-2"
+                )}
+                // Уровень вложенности берётся у react-aria: она кладёт его в
+                // `--tree-item-level` на строке, и считать глубину самим не нужно
+                // — иначе у нас была бы вторая копия того же числа.
+                style={{
+                  paddingLeft: "calc((var(--tree-item-level) - 1) * var(--tree-indent) + 0.25rem)",
+                }}
+              >
+                {hasChildItems ? (
+                  <Button
+                    slot="chevron"
+                    aria-label={isExpanded ? messages.treeView.collapse : messages.treeView.expand}
                     className={cn(
-                      "transition-transform motion-reduce:transition-none",
-                      isExpanded && "rotate-90"
+                      "text-fg-3 hover:text-fg-0 flex cursor-pointer items-center rounded-xs",
+                      "transition-colors",
+                      dim,
+                      "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2"
                     )}
-                  />
-                </Button>
-              ) : (
-                // Место раскрывателя занято всегда: без него подписи листьев
-                // разъезжаются с подписями узлов на том же уровне.
-                <span aria-hidden className="w-[14px] shrink-0" />
-              )}
-              {selectionMode ? (
-                <Checkbox slot="selection" label={messages.treeView.select} />
-              ) : null}
-              {node.icon != null && (
-                <span className="text-fg-3 flex shrink-0 items-center">{node.icon}</span>
-              )}
-              <span className="min-w-0 truncate">{node.label}</span>
-            </div>
-          )}
+                  >
+                    <ChevronRightIcon
+                      size={14}
+                      aria-hidden
+                      className={cn(
+                        "transition-transform motion-reduce:transition-none",
+                        isExpanded && "rotate-90"
+                      )}
+                    />
+                  </Button>
+                ) : (
+                  // Место раскрывателя занято всегда: без него подписи листьев
+                  // разъезжаются с подписями узлов на том же уровне.
+                  <span aria-hidden className="w-[14px] shrink-0" />
+                )}
+                {selectionMode ? (
+                  <Checkbox slot="selection" label={messages.treeView.select} />
+                ) : null}
+                {node.icon != null && (
+                  <span className={cn("text-fg-3 flex shrink-0 items-center", dim)}>
+                    {node.icon}
+                  </span>
+                )}
+                <span className={cn("min-w-0 truncate", dim)}>{node.label}</span>
+              </div>
+            );
+          }}
         </TreeItemContent>
         {node.children != null && node.children.length > 0 ? (
           <Collection items={node.children}>{renderNode}</Collection>

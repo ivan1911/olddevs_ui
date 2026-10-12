@@ -9,10 +9,15 @@ const meta = {
   title: "App shell/NavItem",
   component: NavItem,
   parameters: { layout: "padded" },
-  args: { label: "Dashboard", href: "#", icon: <DashboardIcon /> },
+  args: { label: "Dashboard", href: "#", icon: <DashboardIcon size={20} /> },
   decorators: [
-    (Story) => (
-      <div className="border-line-soft bg-bg-1 w-[var(--sidenav-w)] rounded-lg border p-2.5">
+    // Декораторы meta оборачивают и декоратор истории, поэтому ширину рамки история
+    // задаёт параметром `frameWidth`, а не второй рамкой внутри.
+    (Story, { parameters }) => (
+      <div
+        className="border-line-soft bg-bg-1 rounded-lg border p-2.5"
+        style={{ width: parameters.frameWidth ?? "var(--sidenav-w)" }}
+      >
         <Story />
       </div>
     ),
@@ -35,16 +40,16 @@ export const Playground: Story = {
 export const States: Story = {
   render: (args) => (
     <nav className="flex flex-col gap-0.5">
-      <NavItem {...args} label="Dashboard" icon={<DashboardIcon />} active />
-      <NavItem {...args} label="Sections" icon={<FolderIcon />} />
+      <NavItem {...args} label="Dashboard" icon={<DashboardIcon size={20} />} active />
+      <NavItem {...args} label="Sections" icon={<FolderIcon size={20} />} />
       <NavItem
         {...args}
         label="Activity"
-        icon={<BellIcon />}
+        icon={<BellIcon size={20} />}
         badge={<Badge tone="danger">7</Badge>}
       />
-      <NavItem {...args} label="Uploads" icon={<UploadIcon />} shortcut={<Kbd>⌘U</Kbd>} />
-      <NavItem {...args} label="Archive" icon={<ArchiveIcon />} aria-disabled="true" />
+      <NavItem {...args} label="Uploads" icon={<UploadIcon size={20} />} shortcut={<Kbd>⌘U</Kbd>} />
+      <NavItem {...args} label="Archive" icon={<ArchiveIcon size={20} />} aria-disabled="true" />
     </nav>
   ),
 };
@@ -58,21 +63,20 @@ export const States: Story = {
  * и без провайдера Radix бросает. Требование к потребителю, а не к витрине.
  */
 export const Collapsed: Story = {
+  parameters: { frameWidth: "var(--sidenav-w-collapsed)" },
   decorators: [
     (Story) => (
       <TooltipProvider delayDuration={0}>
-        <div className="border-line-soft bg-bg-1 w-[var(--sidenav-w-collapsed)] rounded-lg border p-2.5">
-          <Story />
-        </div>
+        <Story />
       </TooltipProvider>
     ),
   ],
   render: (args) => (
     <NavCollapsedProvider value={true}>
       <nav className="flex flex-col gap-0.5">
-        <NavItem {...args} label="Dashboard" icon={<DashboardIcon />} active />
-        <NavItem {...args} label="Sections" icon={<FolderIcon />} />
-        <NavItem {...args} label="Uploads" icon={<UploadIcon />} />
+        <NavItem {...args} label="Dashboard" icon={<DashboardIcon size={20} />} active />
+        <NavItem {...args} label="Sections" icon={<FolderIcon size={20} />} />
+        <NavItem {...args} label="Uploads" icon={<UploadIcon size={20} />} />
       </nav>
     </NavCollapsedProvider>
   ),
@@ -86,10 +90,10 @@ export const Collapsed: Story = {
 export const AsChild: Story = {
   render: (args) => (
     <nav className="flex flex-col gap-0.5">
-      <NavItem {...args} label="Documents" icon={<FolderIcon />} active asChild>
+      <NavItem {...args} label="Documents" icon={<FolderIcon size={20} />} active asChild>
         <a href="#docs" />
       </NavItem>
-      <NavItem {...args} label="Archive" icon={<ArchiveIcon />} asChild>
+      <NavItem {...args} label="Archive" icon={<ArchiveIcon size={20} />} asChild>
         <a href="#archive" />
       </NavItem>
     </nav>

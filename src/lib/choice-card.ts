@@ -50,6 +50,23 @@ export const CHOICE_CARD_INVALID_BORDER = "border-danger-strong";
  */
 export const CHOICE_CARD_BASE = "flex flex-col rounded-lg border bg-bg-2 transition-colors";
 
+/**
+ * Выключенность от `<fieldset disabled>` (так `Form` с `pending` гасит поля).
+ *
+ * React-aria о таком предке не знает: `isDisabled` ложен, `data-disabled` не
+ * ставится, и `disabled:` не срабатывает. Нативное состояние видит только
+ * скрытый `input` контрола — поэтому `has-[input:disabled]`, а не голый
+ * `has-disabled`: тот ловил бы любой выключенный узел внутри, например кнопку в
+ * описании карточки, и гасил бы рабочий контрол. Hover гасится вместе с видом:
+ * выключенный контрол не должен отзываться на указатель.
+ */
+export const DIMMED_IN_DISABLED_FIELDSET =
+  "has-[input:disabled]:cursor-default has-[input:disabled]:opacity-50 has-[input:disabled]:hover:bg-transparent";
+
+/** То же для карточки: её подложка `bg-bg-2` при наведении не меняется. */
+export const CHOICE_CARD_DIMMED_IN_DISABLED_FIELDSET =
+  "has-[input:disabled]:opacity-50 has-[input:disabled]:hover:bg-bg-2";
+
 /** Раскладка карточки в строке с переносом: растёт, но не уезжает в полосу. */
 export const CHOICE_CARD_ROW = "max-w-xs flex-1 basis-48";
 

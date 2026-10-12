@@ -43,10 +43,12 @@ export const Playground: Story = {
  * Матрицы у панели нет по той же причине, что и у `ModalOverlay`: содержимое
  * живёт в портале поверх всей страницы, и две открытые панели в одном кадре
  * перекрывают друг друга. Здесь — одна, привязанная к нижнему краю.
+ * Якорь стоит у правого края кадра: правый край панели (`align="end"`) совпадает
+ * с правым краем кнопки, и слева для неё есть место.
  */
 export const BelowTrigger: Story = {
   render: () => (
-    <div className="flex h-[280px] items-start">
+    <div className="flex h-[280px] items-start justify-end">
       <Popover defaultOpen>
         <PopoverTrigger asChild>
           <Button variant="outline">Anchor</Button>
