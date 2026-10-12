@@ -91,7 +91,10 @@ export function AccordionItem({ id, title, disabled, className, children }: Acco
               />
             </AriaButton>
           </AriaHeading>
-          <DisclosurePanel className="text-fg-1 pb-3 text-sm">{children}</DisclosurePanel>
+          {/* Отступ только у раскрытой панели: свёрнутая остаётся в потоке, и её `pb-3` добавлял 12px. */}
+          <DisclosurePanel className={cn("text-fg-1 text-sm", isExpanded && "pb-3")}>
+            {children}
+          </DisclosurePanel>
         </>
       )}
     </Disclosure>
