@@ -107,9 +107,18 @@ export const AboveBottomBar: Story = {
           className="min-h-full"
           bottomBar={
             <MobileTabBar>
-              <MobileTabBarItem label="Dashboard" icon={<DashboardIcon />} href="#home" active />
-              <MobileTabBarItem label="Documents" icon={<FolderIcon />} href="#docs" />
-              <MobileTabBarItem label="Settings" icon={<SettingsIcon />} href="#settings" />
+              <MobileTabBarItem
+                label="Dashboard"
+                icon={<DashboardIcon size={20} />}
+                href="#home"
+                active
+              />
+              <MobileTabBarItem label="Documents" icon={<FolderIcon size={20} />} href="#docs" />
+              <MobileTabBarItem
+                label="Settings"
+                icon={<SettingsIcon size={20} />}
+                href="#settings"
+              />
             </MobileTabBar>
           }
         >

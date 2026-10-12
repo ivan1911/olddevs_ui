@@ -52,13 +52,13 @@ import Link from "next/link";
     <MobileTabBar>
       <MobileTabBarItem
         label="Дашборд"
-        icon={<DashboardIcon />}
+        icon={<DashboardIcon size={20} />}
         active={pathname.startsWith("/dashboard")}
         asChild
       >
         <Link href="/dashboard" />
       </MobileTabBarItem>
-      <MobileTabBarItem label="Документы" icon={<FolderIcon />} badge={3} asChild>
+      <MobileTabBarItem label="Документы" icon={<FolderIcon size={20} />} badge={3} asChild>
         <Link href="/docs" />
       </MobileTabBarItem>
     </MobileTabBar>

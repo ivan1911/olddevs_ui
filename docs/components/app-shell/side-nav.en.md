@@ -5,7 +5,7 @@ category: app-shell
 status: stable
 source: src/components/app-shell/SideNav.tsx, src/components/app-shell/NavItem.tsx
 story: src/components/app-shell/SideNav.stories.tsx, src/components/app-shell/NavItem.stories.tsx
-sourceHash: fdb43131af8d
+sourceHash: ce0078eb8974
 ---
 
 # SideNav, NavGroup and NavItem
@@ -49,13 +49,13 @@ import Link from "next/link";
   <NavGroup label="Work">
     <NavItem
       label="Dashboard"
-      icon={<DashboardIcon />}
+      icon={<DashboardIcon size={20} />}
       active={pathname.startsWith("/dashboard")}
       asChild
     >
       <Link href="/dashboard" />
     </NavItem>
-    <NavItem label="Documents" icon={<FolderIcon />} asChild>
+    <NavItem label="Documents" icon={<FolderIcon size={20} />} asChild>
       <Link href="/docs" />
     </NavItem>
   </NavGroup>

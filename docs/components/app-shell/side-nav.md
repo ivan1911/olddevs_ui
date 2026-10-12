@@ -48,13 +48,13 @@ import Link from "next/link";
   <NavGroup label="Работа">
     <NavItem
       label="Дашборд"
-      icon={<DashboardIcon />}
+      icon={<DashboardIcon size={20} />}
       active={pathname.startsWith("/dashboard")}
       asChild
     >
       <Link href="/dashboard" />
     </NavItem>
-    <NavItem label="Документы" icon={<FolderIcon />} asChild>
+    <NavItem label="Документы" icon={<FolderIcon size={20} />} asChild>
       <Link href="/docs" />
     </NavItem>
   </NavGroup>

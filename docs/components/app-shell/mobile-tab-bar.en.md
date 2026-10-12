@@ -5,7 +5,7 @@ category: app-shell
 status: stable
 source: src/components/app-shell/MobileTabBar.tsx
 story: src/components/app-shell/MobileTabBar.stories.tsx
-sourceHash: 2aa4a3681282
+sourceHash: 5bbd39302c9f
 ---
 
 # MobileTabBar and MobileTabBarItem
@@ -52,13 +52,13 @@ import Link from "next/link";
     <MobileTabBar>
       <MobileTabBarItem
         label="Dashboard"
-        icon={<DashboardIcon />}
+        icon={<DashboardIcon size={20} />}
         active={pathname.startsWith("/dashboard")}
         asChild
       >
         <Link href="/dashboard" />
       </MobileTabBarItem>
-      <MobileTabBarItem label="Documents" icon={<FolderIcon />} badge={3} asChild>
+      <MobileTabBarItem label="Documents" icon={<FolderIcon size={20} />} badge={3} asChild>
         <Link href="/docs" />
       </MobileTabBarItem>
     </MobileTabBar>
