@@ -298,6 +298,13 @@ export function Table<T extends { id: Key }>({
   /** Сколько ячеек в строке — столько же обязана занять детальная. */
   const span = columns.length + (selectable ? 1 : 0) + (expandable ? 1 : 0);
 
+  /*
+    Ширина служебных колонок (выбор, раскрытие) идёт тем же путём, что и
+    `column.width`: `width` действует только внутри `ResizableTableContainer`,
+    вне его колонка растягивается наравне с данными, поэтому нужен CSS-стиль.
+  */
+  const serviceWidth = resizable ? { width: 40 } : { style: { width: 40 } };
+
   const table = (
     <AriaTable
       {...rest}
@@ -339,7 +346,7 @@ export function Table<T extends { id: Key }>({
         {selectable ? (
           <Column
             className="border-line-soft bg-bg-1 text-fg-2 border-b px-3 py-2 text-left font-semibold"
-            width={40}
+            {...serviceWidth}
           >
             {/*
               Флажок «выделить всё» — родной RAC (`slot="selection"`), а не наш
@@ -354,7 +361,7 @@ export function Table<T extends { id: Key }>({
         {expandable ? (
           <Column
             id={`${COLUMN_KEY}od-expander`}
-            width={40}
+            {...serviceWidth}
             className="border-line-soft bg-bg-1 border-b px-3 py-2"
           >
             {/*
@@ -401,7 +408,12 @@ export function Table<T extends { id: Key }>({
                   />
                 ) : null}
                 {resizable ? (
-                  <ColumnResizer className="bg-line-soft hover:bg-accent-strong ml-auto w-px cursor-col-resize" />
+                  <ColumnResizer
+                    className={cn(
+                      "bg-line-soft hover:bg-accent-strong w-px cursor-col-resize",
+                      column.align !== "end" && "ml-auto"
+                    )}
+                  />
                 ) : null}
               </span>
             )}
