@@ -170,6 +170,41 @@ describe("MobileTabBarItem", () => {
   });
 });
 
+describe("MobileTabBarItem badge placement", () => {
+  // Раскладку jsdom не считает: проверяются классы привязки. Как это выглядит,
+  // смотрят глазами: App shell → MobileTabBar → Badges («99+», «Beta», точка, «7»).
+  const badgeOf = (text: string | null) => {
+    const icon = screen.getByTestId("icon").parentElement!;
+    return icon.querySelector(text === null ? "span.size-2" : "span.absolute")!;
+  };
+
+  test.each([
+    ["99+", 99_999],
+    ["Beta", "Beta"],
+  ])(
+    "wide badge %s is pinned by its left edge to the icon corner and grows to the right",
+    (_text, badge) => {
+      render(
+        <MobileTabBarItem label="Inbox" href="/" icon={<svg data-testid="icon" />} badge={badge} />
+      );
+      const cls = badgeOf("x").classList;
+      expect(cls.contains("left-full")).toBe(true);
+      expect(cls.contains("right-auto")).toBe(true);
+      expect([...cls].some((c) => /^-?right-/.test(c) && c !== "right-auto")).toBe(false);
+    }
+  );
+
+  test("the dot keeps its old place at the corner of the icon", () => {
+    render(<MobileTabBarItem label="Inbox" href="/" icon={<svg data-testid="icon" />} badge />);
+    expect(badgeOf(null).classList.contains("-ml-0.5")).toBe(true);
+  });
+
+  test("a short number overlaps the icon by the same 10px as before", () => {
+    render(<MobileTabBarItem label="Inbox" href="/" icon={<svg data-testid="icon" />} badge={7} />);
+    expect(badgeOf("7").classList.contains("-ml-2.5")).toBe(true);
+  });
+});
+
 describe("MobileTabBarItem badge", () => {
   test("a number is shown and named for a screen reader with the real count", () => {
     render(<MobileTabBarItem label="Inbox" href="/inbox" badge={3} />);
