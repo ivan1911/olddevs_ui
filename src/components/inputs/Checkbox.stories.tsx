@@ -87,7 +87,16 @@ export const Matrix: Story = {
               <Checkbox tone={tone} checked label={`${tone}, checked`} />
             </td>
             <td>
-              <Checkbox tone={tone} indeterminate label={`${tone}, indeterminate`} />
+              {/* Обе ячейки: чёрточка при неотмеченном и при отмеченном флажке. */}
+              <div className="flex items-center gap-2">
+                <Checkbox tone={tone} indeterminate label={`${tone}, indeterminate`} />
+                <Checkbox
+                  tone={tone}
+                  checked
+                  indeterminate
+                  label={`${tone}, checked and indeterminate`}
+                />
+              </div>
             </td>
             <td>
               <Checkbox tone={tone} checked disabled label={`${tone}, disabled`} />

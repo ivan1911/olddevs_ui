@@ -25,9 +25,14 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = { args: { size: "md" } };
 
+// Оттенок считается по первому символу имени, поэтому разные имена здесь начинаются
+// на разные буквы, а одинаковое — повторено.
+const MATRIX_NAMES = ["Ada Lovelace", "Grace Hopper", "Grace Hopper", "Zoe Quinn", "Mary Jackson"];
+
 /**
  * Матрица размер × имя. Второй столбец — смысл компонента: оттенок обязан
- * различаться у разных имён и совпадать у одинаковых.
+ * различаться у имён на разные буквы и совпадать у одинаковых имён: считается он
+ * по первому символу.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -38,7 +43,7 @@ export const Matrix: Story = {
           <th>
             <span className="sr-only">Size</span>
           </th>
-          {["Ada Lovelace", "Ada Byron", "Ada Byron", "Zoe Quinn", "@ada1911"].map((n, i) => (
+          {MATRIX_NAMES.map((n, i) => (
             <th key={i} className="text-fg-2 font-mono text-xs font-semibold">
               {n}
             </th>
@@ -49,7 +54,7 @@ export const Matrix: Story = {
         {(["md", "lg"] as const).map((size) => (
           <tr key={size}>
             <td className="text-fg-2 pr-2 text-right font-mono text-xs">{size}</td>
-            {["Ada Lovelace", "Ada Byron", "Ada Byron", "Zoe Quinn", "@ada1911"].map((n, i) => (
+            {MATRIX_NAMES.map((n, i) => (
               <td key={i}>
                 <Avatar name={n} size={size} />
               </td>

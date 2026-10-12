@@ -94,7 +94,7 @@ export const SingleChoice: Story = {
 /**
  * ДВА МЕНЮ РЯДОМ — главная проверка обоих компонентов.
  *
- * Слева `Menu` на react-aria, справа `ContextMenu` на Radix. Библиотеки разные,
+ * Слева `ContextMenu` на Radix, справа `Menu` на react-aria. Библиотеки разные,
  * а выглядеть они обязаны одинаково: пользователь не должен видеть «другое»
  * меню оттого, что открыл его правой кнопкой мыши. Общая таблица вида в
  * `lib/menu.ts` — единственное, что их удерживает, и удерживает она только
@@ -110,7 +110,8 @@ export const TwoMenusSideBySide: Story = {
     // Панели рисуются в порталах и раскладке не подчиняются: меню react-aria
     // якорится к своей кнопке, меню Radix без указателя встаёт в угол экрана.
     // Поэтому кнопка отодвинута вправо — так обе панели видны рядом, а не одна
-    // поверх другой.
+    // поверх другой. Фокус при открытии react-aria отключён: у Radix без
+    // указателя ни один пункт не подсвечен, и панели должны быть в одном состоянии.
     <div className="h-[420px]">
       <MenuTrigger isOpen>
         <MenuButton
@@ -119,7 +120,7 @@ export const TwoMenusSideBySide: Story = {
           aria-label="react-aria menu"
           className="ml-[300px]"
         />
-        <Menu>
+        <Menu autoFocus={false}>
           <MenuSection label="Actions">
             <MenuItem icon={<EditIcon size={14} />}>Rename</MenuItem>
             <MenuItem icon={<CopyIcon size={14} />} shortcut="⌘D">
