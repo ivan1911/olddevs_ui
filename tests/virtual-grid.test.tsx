@@ -415,6 +415,17 @@ test("minItemHeight is a real minimum: the cell is never lower", () => {
   expect(cell.style.minHeight).toBe("140px");
 });
 
+test("the cell wrapper gives its content a definite height, so `h-full` content fills the row", () => {
+  render(
+    <VirtualGrid items={cells} aria-label="Frames" minItemHeight={140} className="h-[300px]" />
+  );
+  const cell = screen.getAllByRole("gridcell")[0]!.firstElementChild as HTMLElement;
+  // Процентная высота вложенного узла не считается от `min-height`, а от строки
+  // сетки — считается: поэтому обёртка — сетка с одной строкой не ниже минимума.
+  expect(cell.classList.contains("grid")).toBe(true);
+  expect(cell.style.gridTemplateRows).toBe("minmax(140px, 1fr)");
+});
+
 test("edgeGap={false} puts the outer cells flush with the edges", () => {
   render(
     <VirtualGrid
