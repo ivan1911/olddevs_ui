@@ -82,6 +82,9 @@ export const CheckboxCard: CheckboxCardComponent = forwardRef<
               ? CHOICE_CARD_SELECTED_BORDER[tone]
               : CHOICE_CARD_IDLE_BORDER,
           isDisabled ? "opacity-50" : "hover:bg-bg-3",
+          // Выключенность от `<fieldset disabled>` RAC не знает (`isDisabled` ложен);
+          // её видит только скрытый `input` внутри — см. `Checkbox`.
+          "has-disabled:opacity-50",
           orientation === "horizontal" && CHOICE_CARD_ROW,
           className
         )

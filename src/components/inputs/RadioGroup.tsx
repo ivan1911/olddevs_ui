@@ -214,6 +214,9 @@ export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio(
                 ? CHOICE_CARD_SELECTED_BORDER[tone]
                 : CHOICE_CARD_IDLE_BORDER,
             isDisabled ? "opacity-50" : "hover:bg-bg-3",
+            // Выключенность от `<fieldset disabled>` RAC не знает (`isDisabled` ложен);
+            // её видит только скрытый `input` внутри — см. `Checkbox`.
+            "has-disabled:opacity-50",
             orientation === "horizontal" && CHOICE_CARD_ROW,
             className
           )
@@ -247,7 +250,13 @@ export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio(
       isDisabled={disabled}
       className={cn("flex flex-col", className)}
     >
-      <RadioButton className="hover:bg-bg-2 flex w-fit cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 transition-colors disabled:cursor-default disabled:opacity-50">
+      <RadioButton
+        className={
+          "hover:bg-bg-2 flex w-fit cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 transition-colors " +
+          // `has-disabled:` — для выключенного `<fieldset disabled>`, см. `Checkbox`.
+          "disabled:cursor-default disabled:opacity-50 has-disabled:cursor-default has-disabled:opacity-50"
+        }
+      >
         {({ isSelected, isInvalid, isFocusVisible }) => (
           <>
             <RadioBox selected={isSelected} invalid={isInvalid} focusVisible={isFocusVisible} />

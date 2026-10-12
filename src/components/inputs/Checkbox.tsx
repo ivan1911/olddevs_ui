@@ -239,6 +239,10 @@ export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Check
         className={
           "hover:bg-bg-2 relative flex w-fit cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 " +
           "transition-colors disabled:cursor-default disabled:opacity-50 " +
+          // `disabled:` ловит только `data-disabled` самой метки, то есть собственный
+          // `isDisabled`. Выключенность от `<fieldset disabled>` (так гасит поля
+          // `Form` с `pending`) RAC не знает — её видит лишь скрытый `input` внутри.
+          "has-disabled:cursor-default has-disabled:opacity-50 " +
           "before:absolute before:inset-x-0 before:bottom-full before:h-0.5 before:content-[''] after:absolute after:inset-x-0 after:top-full after:h-0.5 after:content-['']"
         }
       >

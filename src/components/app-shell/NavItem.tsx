@@ -68,7 +68,11 @@ export interface NavItemProps extends Omit<ComponentPropsWithoutRef<"a">, "child
 const BASE =
   "focus-visible:outline-accent-strong flex items-center gap-3 rounded-control border " +
   "px-3 py-[9px] text-[13px] leading-5 no-underline transition-colors " +
-  "focus-visible:outline-2 focus-visible:outline-offset-2";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 " +
+  // Недоступный пункт красится по `aria-disabled`, как у `Button`: у ссылки нет
+  // родного `disabled`, и без этого правила пункт, выключенный атрибутом ARIA,
+  // выглядел бы рабочим — с тем же цветом и курсором-указателем.
+  "aria-disabled:opacity-50 aria-disabled:cursor-default";
 
 const STATE = {
   active: "border-line bg-bg-3 text-fg-0 font-semibold",

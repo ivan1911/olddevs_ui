@@ -5,7 +5,7 @@ category: inputs
 status: stable
 source: src/components/inputs/Form.tsx
 story: src/components/inputs/Form.stories.tsx
-sourceHash: aea08fad91f4
+sourceHash: 933e813b29f4
 ---
 
 # Form and FormField
@@ -38,7 +38,7 @@ sourceHash: aea08fad91f4
 ## Public API
 
 - `Form.onSubmit` is required; the component prevents native submit and does not call the callback while `pending`.
-- `pending` disables the children through a fieldset, including fields added later. A `RichTextEditor` inside `<fieldset disabled>` (including one set by the consumer, not only `Form pending`) is disabled the same way as a native field.
+- `pending` disables the children through a fieldset, including fields added later. A `RichTextEditor` inside `<fieldset disabled>` (including one set by the consumer, not only `Form pending`) is disabled the same way as a native field. A `Checkbox`, `Radio`, `Toggle` and `Slider` inside such a fieldset are dimmed the same way as with their own `disabled`.
 - `Form` sets `noValidate` (`validationBehavior="aria"`): the browser's native validation does not work in it, and a required `RichTextEditor`, like a native `required`, does not block submission — the consumer shows the error through `FormField error`.
 - `FormField`: `label` is required, `htmlFor` ties it to the control's `id`, `error` replaces `hint`, `required` renders only a visual asterisk. `hintPersistent` keeps a rule hint ("8–64 characters, a digit and a letter") under the field even with an error. The error goes under it, and both describe the field; an explanatory hint ("how should we address you") is still replaced by the error (ADR-0065).
 - `error` is carried all the way **to the field**: kit fields read the invalid flag from context and set `aria-invalid` themselves, so the border turns red too, not only the text under the field. An explicit `aria-invalid` on the field wins — the consumer knows more about their field than the form does.

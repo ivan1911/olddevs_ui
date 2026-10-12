@@ -239,3 +239,68 @@ test("without onAction a click on a folder row expands it", async () => {
 
   expect(onExpandedChange).toHaveBeenCalledWith(new Set(["nature"]));
 });
+
+/*
+  В jsdom нет вычисленных стилей Tailwind, поэтому проверяется то, что
+  возвращает рендер: у крашеного элемента лежит ЛИТЕРАЛЬНЫЙ класс состояния.
+  Варианты `disabled:` и `selected:` на внутреннем `div` не срабатывали никогда
+  — react-aria ставит `data-disabled` и `data-selected` на строку `row`, а не
+  на содержимое, — и по классам такой дефект не отличить от рабочего кода, если
+  искать вариант. Поэтому ищется класс без префикса варианта.
+*/
+const labelBox = (name: string) => screen.getByText(name).parentElement!;
+const label = (name: string) => screen.getByText(name);
+
+test("a selected row carries the highlight on the element that is painted", () => {
+  render(
+    <TreeView
+      items={TREE}
+      aria-label="Categories"
+      defaultExpandedKeys={["nature"]}
+      selectionMode="multiple"
+      selectedKeys={new Set(["forest"])}
+    />
+  );
+
+  // Состояние есть на строке, а краска должна лежать на содержимом.
+  expect(screen.getByRole("row", { name: /Forest/ }).hasAttribute("data-selected")).toBe(true);
+  expect(labelBox("Forest").classList.contains("bg-accent-soft")).toBe(true);
+  expect(labelBox("Sea").classList.contains("bg-accent-soft")).toBe(false);
+});
+
+test("a disabled row is dimmed on the element that is painted", () => {
+  render(
+    <TreeView
+      items={[
+        { id: "city", label: "City", disabled: true },
+        { id: "sea", label: "Sea" },
+      ]}
+      aria-label="Categories"
+    />
+  );
+
+  expect(screen.getByRole("row", { name: /City/ }).hasAttribute("data-disabled")).toBe(true);
+  expect(label("City").classList.contains("opacity-50")).toBe(true);
+  expect(label("Sea").classList.contains("opacity-50")).toBe(false);
+});
+
+test("a key from disabledKeys dims the row the same way as the node field", () => {
+  render(<TreeView items={TREE} aria-label="Categories" disabledKeys={["city"]} />);
+
+  expect(label("City").classList.contains("opacity-50")).toBe(true);
+});
+
+test("a disabled row with a selection checkbox is not dimmed twice", () => {
+  render(
+    <TreeView
+      items={[{ id: "city", label: "City", disabled: true }]}
+      aria-label="Categories"
+      selectionMode="multiple"
+    />
+  );
+
+  // Флажок гасится собственным `disabled:opacity-50` (блокировку он получает от
+  // строки), поэтому на самом ряду приглушения быть не должно — иначе 25%.
+  expect(labelBox("City").classList.contains("opacity-50")).toBe(false);
+  expect(screen.getByRole("checkbox").matches(":disabled")).toBe(true);
+});

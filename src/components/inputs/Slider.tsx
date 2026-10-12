@@ -64,15 +64,19 @@ export type RangeSliderProps = SliderLookProps &
   `State=disabled` в Figma. `disabled:` здесь срабатывает на `data-disabled`,
   который react-aria ставит на корень. Раньше вида не было вовсе —
   отличался только курсор над бегунком.
+
+  `has-disabled:` — для ползунка внутри `<fieldset disabled>` (так `Form` с
+  `pending` гасит поля): react-aria о таком предке не знает и `data-disabled`
+  на корне не ставит, а нативное состояние видит только скрытый `input` бегунка.
 */
-const DIMMED_WHEN_DISABLED = "disabled:opacity-50";
+const DIMMED_WHEN_DISABLED = "disabled:opacity-50 has-disabled:opacity-50";
 const ROOT_CLASS = `flex w-full flex-col gap-2 ${DIMMED_WHEN_DISABLED}`;
 const TRACK_CLASS = "bg-bg-3 relative h-1.5 w-full rounded-full";
 const FILL_CLASS = "bg-accent absolute h-full rounded-full";
 const THUMB_BASE_CLASS =
   "border-accent bg-bg-1 size-4 cursor-grab rounded-full border-2 shadow-[var(--shadow-1)] transition-shadow " +
   "dragging:cursor-grabbing focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 " +
-  "disabled:cursor-not-allowed";
+  "disabled:cursor-not-allowed has-disabled:cursor-not-allowed";
 // Вдоль оси бегунок ставит react-aria (`left` или `top`), поперёк — мы.
 const THUMB_CLASS = `${THUMB_BASE_CLASS} top-1/2`;
 

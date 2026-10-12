@@ -5,7 +5,7 @@ category: app-shell
 status: stable
 source: src/components/app-shell/SideNav.tsx, src/components/app-shell/NavItem.tsx
 story: src/components/app-shell/SideNav.stories.tsx, src/components/app-shell/NavItem.stories.tsx
-sourceHash: 78497178ede5
+sourceHash: fdb43131af8d
 ---
 
 # SideNav, NavGroup and NavItem
@@ -95,6 +95,10 @@ through `Slottable`. `Button` works the same way.
 | `asChild`  | `false` | Render the item as the consumer's element: `next/link`, the router's `<Link>`; the item's styles, props and `ref` pass to it. |
 
 The other props go to the element — including `href` for the case without `asChild`.
+
+**An unavailable item** is switched off with the `aria-disabled="true"` attribute: a link has no native `disabled`. The item is dimmed
+and gets the default cursor, the same as `Button`. The attribute only declares the item unavailable: it does not cancel navigation
+through `href`, so the consumer either omits `href` or cancels the navigation itself.
 
 ## Header and footer in icon mode
 
