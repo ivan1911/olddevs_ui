@@ -7,3 +7,5 @@
 `Accordion` sections no longer carry 12px of extra height when collapsed.
 
 `AvatarGroup` in size `md` overlaps its circles less, so initials and the "+N" remainder are no longer clipped.
+
+`Select` opens its panel 4px below the whole trigger pill instead of overlapping its bottom edge.
