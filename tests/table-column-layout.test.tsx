@@ -17,7 +17,7 @@ const COLUMNS = [
   { id: "size", header: "Size", align: "end" as const, cell: (r: Row) => r.size },
 ];
 
-test("при resizable ручка не получает ml-auto у колонки align end", () => {
+test("with resizable, the handle of an end-aligned column does not push the header left", () => {
   render(<Table aria-label="Files" columns={COLUMNS} items={ROWS} resizable />);
   const resizers = document.querySelectorAll(".cursor-col-resize");
   expect(resizers).toHaveLength(2);
@@ -25,7 +25,7 @@ test("при resizable ручка не получает ml-auto у колонк�
   expect(resizers[1]?.classList.contains("ml-auto")).toBe(false);
 });
 
-test("без resizable служебные колонки получают ширину стилем", () => {
+test("without resizable, the selection and expand columns get their width as a style", () => {
   render(
     <Table
       aria-label="Files"
