@@ -162,6 +162,22 @@ test("a photo in a group takes the same member slot as initials", () => {
   for (const member of members) expect(member.getAttribute("aria-hidden")).toBe("true");
 });
 
+test("the overlap in a group scales with the circle: md overlaps less than lg", () => {
+  // Круг md — 28px: перекрытие в 8px плюс кольцо срезали инициалы и плюс у «+N».
+  // Сколько срезано на экране, jsdom не видит — смотреть глазами: Content/AvatarGroup →
+  // Avatars и AvatarsWithPhotos.
+  const overlap = (size: "md" | "lg") => {
+    const group = render(
+      <AvatarGroup names={["Ada Lovelace", "Grace Hopper", "Al Turing"]} max={2} size={size} />
+    ).getByRole("img");
+    const circles = [...group.children].slice(1);
+    cleanup();
+    return circles.map((c) => [...c.classList].find((cls) => /^-ml-/.test(cls)));
+  };
+  expect(overlap("md")).toEqual(["-ml-1", "-ml-1"]);
+  expect(overlap("lg")).toEqual(["-ml-2", "-ml-2"]);
+});
+
 test("a broken photo in a group falls back to initials", () => {
   const { container } = render(
     <AvatarGroup names={[{ name: "Ada Lovelace", src: "/none.png" }, "Grace Hopper"]} />

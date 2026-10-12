@@ -56,6 +56,9 @@ export function AvatarGroup({
   const members = names.map((entry) => (typeof entry === "string" ? { name: entry } : entry));
   const shown = members.slice(0, max);
   const rest = members.length - shown.length;
+  // Перекрытие по размеру круга: на 28px прежние 8px плюс кольцо срезали
+  // инициалы слева и плюс у «+N»; на 64px они не мешают.
+  const overlap = size === "lg" ? "-ml-2" : "-ml-1";
 
   return (
     <span
@@ -67,7 +70,7 @@ export function AvatarGroup({
         <span
           key={`${name}-${index}`}
           aria-hidden
-          className={cn("ring-bg-1 relative rounded-full ring-2", index > 0 && "-ml-2")}
+          className={cn("ring-bg-1 relative rounded-full ring-2", index > 0 && overlap)}
           style={{ zIndex: shown.length - index }}
         >
           {/* `alt=""`: круг скрыт, имя объявляет группа — подпись у фото была бы вторым чтением. */}
@@ -80,7 +83,8 @@ export function AvatarGroup({
           className={cn(
             // `text-fg-1`, а не `fg-2`: на подложке `bg-3` вторая ступень не держит 4.5 —
             // поймал аудит axe. Остаток «+N» это содержимое, а не подсказка.
-            "bg-bg-3 text-fg-1 ring-bg-1 relative -ml-2 flex items-center justify-center rounded-full font-semibold ring-2",
+            "bg-bg-3 text-fg-1 ring-bg-1 relative flex items-center justify-center rounded-full font-semibold ring-2",
+            overlap,
             size === "lg" ? "text-md h-16 w-16" : "text-caption h-7 w-7"
           )}
         >

@@ -15,7 +15,7 @@ import { LISTBOX_ITEM_CLASS } from "../../lib/menu.js";
 import { FIELD_CLEAR_CLASS } from "../../lib/field.js";
 import { useMessages } from "../../i18n/useMessages.js";
 import { CheckIcon, CloseIcon, SelectIcon } from "../../icons.js";
-import { Popover, PopoverContent, PopoverTrigger } from "../overlays/Popover.js";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "../overlays/Popover.js";
 import { VisuallyHidden } from "../content/VisuallyHidden.js";
 
 /** Минимум, который список требует от элемента. Остальные поля — ваши. */
@@ -502,41 +502,47 @@ export function Select<T extends SelectItem>(props: SelectProps<T>) {
         Кольцо фокуса рисуется на псевдоэлементе, а не на кнопке: обводить надо
         пилюлю целиком, иначе она у`же собственного контура.
       */}
-      <span
-        className={cn(
-          "relative inline-flex items-center gap-2 rounded-full border px-3 py-[7px]",
-          // `leading-5` задаёт высоту, а не наследует её: строчный бокс в 20px
-          // плюс отступы дают ровно 36 — рост `Button` размера `md`, рядом с
-          // которым пилюля и стоит в панели фильтров. С отступами формы
-          // (`py-2.5` от потребителя) те же 20 дают 42 — рост `TextControl`
-          // и `NumberInput` (см. `lib/field.ts`).
-          //
-          // Картинка выбранного значения тоже 20, и это условие, а не совпадение:
-          // содержимое выше строчного бокса растягивало бы триггер. Пока она
-          // была 22, пилюля с картинкой вырастала до 38, а триггер формы — до 44,
-          // и контрол расходился и с соседним полем, и сам с собой в пустом
-          // состоянии.
-          // `transition-colors`, а не `transition-all`: на этом боксе меняются
-          // только рамка, фон и цвет подписи — по ветке `hasSelection`. `all`
-          // обещал переход всему, чего на пилюле нет, и заодно тому, что
-          // потребитель пришлёт через `triggerClassName`. Заменено в волне 27
-          // при ревизии движения: класс выглядел перемещающим, а перемещать
-          // здесь нечего.
-          "text-[13px] leading-5 font-semibold transition-colors",
-          hasSelection && highlightSelected
-            ? "border-accent-strong bg-accent-soft text-fg-0"
-            : "border-line-soft text-fg-1 hover:border-line hover:bg-bg-2 bg-transparent",
-          // Выбранное значение читается тёмным даже без акцентной подсветки:
-          // подпись — это содержимое контрола, а не подсказка.
-          hasSelection && !highlightSelected && "text-fg-0",
-          // Гаснет ПИЛЮЛЯ, а не кнопка внутри неё: рамка и фон нарисованы здесь,
-          // и приглушённая подпись рядом с яркой рамкой выглядела бы сбоем
-          // отрисовки, а не выключенным полем.
-          disabled && "cursor-not-allowed opacity-50",
-          triggerClassName
-        )}
-      >
-        {/*
+      {/*
+        Якорь панели — вся пилюля, а не кнопка-триггер внутри неё: кнопка отступает
+        от нижней кромки на рамку и `py-[7px]`, и панель с `sideOffset` в 4px
+        заходила на пилюлю вместо зазора.
+      */}
+      <PopoverAnchor asChild>
+        <span
+          className={cn(
+            "relative inline-flex items-center gap-2 rounded-full border px-3 py-[7px]",
+            // `leading-5` задаёт высоту, а не наследует её: строчный бокс в 20px
+            // плюс отступы дают ровно 36 — рост `Button` размера `md`, рядом с
+            // которым пилюля и стоит в панели фильтров. С отступами формы
+            // (`py-2.5` от потребителя) те же 20 дают 42 — рост `TextControl`
+            // и `NumberInput` (см. `lib/field.ts`).
+            //
+            // Картинка выбранного значения тоже 20, и это условие, а не совпадение:
+            // содержимое выше строчного бокса растягивало бы триггер. Пока она
+            // была 22, пилюля с картинкой вырастала до 38, а триггер формы — до 44,
+            // и контрол расходился и с соседним полем, и сам с собой в пустом
+            // состоянии.
+            // `transition-colors`, а не `transition-all`: на этом боксе меняются
+            // только рамка, фон и цвет подписи — по ветке `hasSelection`. `all`
+            // обещал переход всему, чего на пилюле нет, и заодно тому, что
+            // потребитель пришлёт через `triggerClassName`. Заменено в волне 27
+            // при ревизии движения: класс выглядел перемещающим, а перемещать
+            // здесь нечего.
+            "text-[13px] leading-5 font-semibold transition-colors",
+            hasSelection && highlightSelected
+              ? "border-accent-strong bg-accent-soft text-fg-0"
+              : "border-line-soft text-fg-1 hover:border-line hover:bg-bg-2 bg-transparent",
+            // Выбранное значение читается тёмным даже без акцентной подсветки:
+            // подпись — это содержимое контрола, а не подсказка.
+            hasSelection && !highlightSelected && "text-fg-0",
+            // Гаснет ПИЛЮЛЯ, а не кнопка внутри неё: рамка и фон нарисованы здесь,
+            // и приглушённая подпись рядом с яркой рамкой выглядела бы сбоем
+            // отрисовки, а не выключенным полем.
+            disabled && "cursor-not-allowed opacity-50",
+            triggerClassName
+          )}
+        >
+          {/*
           Подпись видна только скринридеру и стоит ВНЕ кнопки: внутри неё она
           попала бы в содержимое, то есть прочиталась бы дважды — один раз как
           имя, второй как значение.
@@ -544,46 +550,46 @@ export function Select<T extends SelectItem>(props: SelectProps<T>) {
           `elementType="span"`: по умолчанию react-aria рисует `<div>`, а здесь
           он оказался бы внутри строчной пилюли.
         */}
-        {ariaLabel && !ariaLabelledBy ? (
-          <VisuallyHidden elementType="span" id={labelId}>
-            {ariaLabel}
-          </VisuallyHidden>
-        ) : null}
+          {ariaLabel && !ariaLabelledBy ? (
+            <VisuallyHidden elementType="span" id={labelId}>
+              {ariaLabel}
+            </VisuallyHidden>
+          ) : null}
 
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            disabled={disabled}
-            aria-haspopup="listbox"
-            aria-expanded={open && !disabled}
-            aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
-            aria-describedby={describedBy}
-            className={cn(
-              // `grow` + `justify-between`: когда потребитель растягивает пилюлю
-              // (`w-full`, `min-w`), кнопка занимает всю ширину, и его
-              // `justify-between` разводит иконку и подпись — как было до выноса.
-              // На пилюле по размеру содержимого свободного места нет, и оба
-              // класса ничего не меняют.
-              "inline-flex min-w-0 grow cursor-pointer items-center justify-between gap-2 text-left",
-              "disabled:cursor-not-allowed",
-              "after:absolute after:inset-0 after:rounded-[inherit]",
-              "focus-visible:after:outline-accent-strong focus-visible:after:outline-2 focus-visible:after:outline-offset-2",
-              // Место под крестик — на кнопке, а не на пилюле: пилюля уже несёт
-              // отступы потребителя, и добавка к ним сместила бы рамку.
-              hasSelection && clearable && !disabled && "pr-6"
-            )}
-          >
-            {/*
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              disabled={disabled}
+              aria-haspopup="listbox"
+              aria-expanded={open && !disabled}
+              aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
+              aria-describedby={describedBy}
+              className={cn(
+                // `grow` + `justify-between`: когда потребитель растягивает пилюлю
+                // (`w-full`, `min-w`), кнопка занимает всю ширину, и его
+                // `justify-between` разводит иконку и подпись — как было до выноса.
+                // На пилюле по размеру содержимого свободного места нет, и оба
+                // класса ничего не меняют.
+                "inline-flex min-w-0 grow cursor-pointer items-center justify-between gap-2 text-left",
+                "disabled:cursor-not-allowed",
+                "after:absolute after:inset-0 after:rounded-[inherit]",
+                "focus-visible:after:outline-accent-strong focus-visible:after:outline-2 focus-visible:after:outline-offset-2",
+                // Место под крестик — на кнопке, а не на пилюле: пилюля уже несёт
+                // отступы потребителя, и добавка к ним сместила бы рамку.
+                hasSelection && clearable && !disabled && "pr-6"
+              )}
+            >
+              {/*
               Содержимое собрано в одну группу, а не выложено соседями кнопки.
               Иначе `justify-between` разводит по краям именно их: в пилюле по
               ширине содержимого это незаметно, а в широком триггере (`w-full`
               в форме) картинка прилипает к левому краю, подпись — к правому,
               и между ними дыра во всю строку.
             */}
-            {selected ? (
-              <span id={valueId} className="inline-flex min-w-0 items-center gap-2">
-                {renderMedia?.(selected, 20)}
-                {/*
+              {selected ? (
+                <span id={valueId} className="inline-flex min-w-0 items-center gap-2">
+                  {renderMedia?.(selected, 20)}
+                  {/*
                   Ширина подписи ограничена переменной, а не жёстким числом.
                   В пилюле фильтра предел нужен: она растёт по содержимому, и
                   «Абстрактные градиенты» растолкали бы соседние фильтры. В
@@ -592,10 +598,10 @@ export function Select<T extends SelectItem>(props: SelectProps<T>) {
                   Снимается это классом на триггере:
                   `triggerClassName="[--select-label-max:none]"`.
                 */}
-                <span className={LABEL_CLASS}>{selected.label}</span>
-              </span>
-            ) : hasSelection && props.multiple ? (
-              /*
+                  <span className={LABEL_CLASS}>{selected.label}</span>
+                </span>
+              ) : hasSelection && props.multiple ? (
+                /*
                 Счётчик — СТРОГО за множественным выбором.
 
                 Ветка ловила и одиночный `Select`, у которого значение есть, а
@@ -605,13 +611,13 @@ export function Select<T extends SelectItem>(props: SelectProps<T>) {
                 нечего. Одиночный случай уходит теперь в ветку ниже и
                 показывает сам ключ, как это делает `captionOf` в `TreeSelect`.
               */
-              <span id={valueId} className={LABEL_CLASS}>
-                {countLabel
-                  ? countLabel(selectedIds.length)
-                  : `${placeholder}: ${selectedIds.length}`}
-              </span>
-            ) : hasSelection ? (
-              /*
+                <span id={valueId} className={LABEL_CLASS}>
+                  {countLabel
+                    ? countLabel(selectedIds.length)
+                    : `${placeholder}: ${selectedIds.length}`}
+                </span>
+              ) : hasSelection ? (
+                /*
                 Одиночный выбор, которому не нашлось элемента.
 
                 Ключ ЧЕСТНЕЕ плейсхолдера, когда он человекочитаем
@@ -622,36 +628,37 @@ export function Select<T extends SelectItem>(props: SelectProps<T>) {
                 умолчанию показывается ключ, как это делает `captionOf` в
                 `TreeSelect`.
               */
-              <span id={valueId} className={LABEL_CLASS}>
-                {missingLabel ? missingLabel(selectedIds[0]!) : selectedIds[0]}
-              </span>
-            ) : (
-              /*
+                <span id={valueId} className={LABEL_CLASS}>
+                  {missingLabel ? missingLabel(selectedIds[0]!) : selectedIds[0]}
+                </span>
+              ) : (
+                /*
                 `id` значения стоит на КОРНЕ КАЖДОЙ ветки, а не на общей обёртке
                 вокруг них: обёртка — лишний бокс во флексе триггера, и она
                 сместила бы содержимое там, где менять его никто не просил.
               */
-              <span id={valueId} className="inline-flex min-w-0 items-center gap-2">
-                <span aria-hidden className="inline-flex shrink-0 items-center opacity-60">
-                  {icon ?? <SelectIcon size={14} />}
+                <span id={valueId} className="inline-flex min-w-0 items-center gap-2">
+                  <span aria-hidden className="inline-flex shrink-0 items-center opacity-60">
+                    {icon ?? <SelectIcon size={14} />}
+                  </span>
+                  <span className="truncate">{placeholder}</span>
                 </span>
-                <span className="truncate">{placeholder}</span>
-              </span>
-            )}
-          </button>
-        </PopoverTrigger>
+              )}
+            </button>
+          </PopoverTrigger>
 
-        {hasSelection && clearable && !disabled ? (
-          <button
-            type="button"
-            aria-label={clearLabel ?? messages.common.clear}
-            onClick={clear}
-            className={FIELD_CLEAR_CLASS}
-          >
-            <CloseIcon size={10} aria-hidden />
-          </button>
-        ) : null}
-      </span>
+          {hasSelection && clearable && !disabled ? (
+            <button
+              type="button"
+              aria-label={clearLabel ?? messages.common.clear}
+              onClick={clear}
+              className={FIELD_CLEAR_CLASS}
+            >
+              <CloseIcon size={10} aria-hidden />
+            </button>
+          ) : null}
+        </span>
+      </PopoverAnchor>
 
       <PopoverContent
         className={cn("w-[260px]", contentClassName)}

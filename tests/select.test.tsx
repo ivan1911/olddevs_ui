@@ -429,3 +429,38 @@ describe("disabled with a controlled panel", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 });
+
+describe("panel anchor", () => {
+  test("the panel is anchored to the whole pill, not to the button inside it", async () => {
+    // Кнопка лежит внутри пилюли с рамкой и отступами: от её нижней кромки панель
+    // заходила на пилюлю. jsdom не раскладывает, поэтому размеры подменены, а
+    // якорь узнаётся по ширине, которую Radix кладёт в `--radix-popper-anchor-width`.
+    // Как выглядит зазор, смотрят глазами: Inputs/Select → Open.
+    const user = userEvent.setup();
+    const spy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: Element
+    ) {
+      const w = this.matches("button[aria-haspopup]")
+        ? 100
+        : this.matches("span.rounded-full")
+          ? 200
+          : 0;
+      return {
+        x: 0,
+        y: 0,
+        top: 0,
+        left: 0,
+        right: w,
+        bottom: 36,
+        width: w,
+        height: 36,
+        toJSON() {},
+      };
+    });
+    render(<Select items={ITEMS} placeholder="Category" value={null} onChange={() => {}} />);
+    await open(user);
+    const wrapper = document.querySelector("[data-radix-popper-content-wrapper]") as HTMLElement;
+    expect(wrapper.style.getPropertyValue("--radix-popper-anchor-width")).toBe("200px");
+    spy.mockRestore();
+  });
+});
