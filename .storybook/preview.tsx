@@ -1,4 +1,5 @@
 import type { Decorator, Preview } from "@storybook/react-vite";
+import { LucideProvider } from "lucide-react";
 import "./preview.css";
 
 /**
@@ -46,8 +47,25 @@ const withThemeAndAccent: Decorator = (Story, context) => {
   return <Story />;
 };
 
+/**
+ * Размер иконок по умолчанию — как у типичного потребителя.
+ *
+ * Словарь иконок размер не задаёт: это работа `LucideProvider` у потребителя
+ * (docs/icons.md). Без провайдера витрина рисовала иконку без `size` в 24px —
+ * умолчании lucide — и в маленьких кнопках иконка выходила крупнее подписи
+ * (аудит OLDSUI-243). 16 — размер, который кит сам ставит в кнопках и полях.
+ *
+ * Толщина линии не задаётся: своей у кита нет, иконки рисуются с толщиной
+ * lucide по умолчанию, и явные `size` в историях провайдер не перебивает.
+ */
+const withIconDefaults: Decorator = (Story) => (
+  <LucideProvider size={16}>
+    <Story />
+  </LucideProvider>
+);
+
 const preview: Preview = {
-  decorators: [withThemeAndAccent],
+  decorators: [withThemeAndAccent, withIconDefaults],
   globalTypes: {
     theme: {
       description: "Colour theme",
