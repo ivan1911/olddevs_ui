@@ -79,6 +79,8 @@ test("one line is truncated with an ellipsis, several by line count", () => {
   );
   const multi = screen.getByText("Value");
   expect(multi.className).toContain("[display:-webkit-box]");
+  // `block` стоит в CSS позже и перебил бы `-webkit-box`: строки не обрезались бы.
+  expect(multi.classList.contains("block")).toBe(false);
   expect(multi.style.webkitLineClamp).toBe("3");
 });
 
