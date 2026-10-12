@@ -6,6 +6,7 @@ import { CheckIcon, MinusIcon } from "../../icons.js";
 import { cn } from "../../lib/cn.js";
 import {
   CHOICE_CARD_BASE,
+  CHOICE_CARD_DIMMED_IN_DISABLED_FIELDSET,
   CHOICE_CARD_FOCUS_RING,
   CHOICE_CARD_IDLE_BORDER,
   CHOICE_CARD_INVALID_BORDER,
@@ -82,6 +83,7 @@ export const CheckboxCard: CheckboxCardComponent = forwardRef<
               ? CHOICE_CARD_SELECTED_BORDER[tone]
               : CHOICE_CARD_IDLE_BORDER,
           isDisabled ? "opacity-50" : "hover:bg-bg-3",
+          CHOICE_CARD_DIMMED_IN_DISABLED_FIELDSET,
           orientation === "horizontal" && CHOICE_CARD_ROW,
           className
         )

@@ -14,6 +14,8 @@ import { hasContent } from "../../lib/empty.js";
 import { ChoiceCardBody } from "./ChoiceCardBody.js";
 import {
   CHOICE_CARD_BASE,
+  DIMMED_IN_DISABLED_FIELDSET,
+  CHOICE_CARD_DIMMED_IN_DISABLED_FIELDSET,
   CHOICE_CARD_FOCUS_RING,
   CHOICE_CARD_IDLE_BORDER,
   CHOICE_CARD_INVALID_BORDER,
@@ -214,6 +216,7 @@ export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio(
                 ? CHOICE_CARD_SELECTED_BORDER[tone]
                 : CHOICE_CARD_IDLE_BORDER,
             isDisabled ? "opacity-50" : "hover:bg-bg-3",
+            CHOICE_CARD_DIMMED_IN_DISABLED_FIELDSET,
             orientation === "horizontal" && CHOICE_CARD_ROW,
             className
           )
@@ -247,7 +250,13 @@ export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio(
       isDisabled={disabled}
       className={cn("flex flex-col", className)}
     >
-      <RadioButton className="hover:bg-bg-2 flex w-fit cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 transition-colors disabled:cursor-default disabled:opacity-50">
+      <RadioButton
+        className={
+          "hover:bg-bg-2 flex w-fit cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 transition-colors " +
+          "disabled:cursor-default disabled:opacity-50 " +
+          DIMMED_IN_DISABLED_FIELDSET
+        }
+      >
         {({ isSelected, isInvalid, isFocusVisible }) => (
           <>
             <RadioBox selected={isSelected} invalid={isInvalid} focusVisible={isFocusVisible} />
