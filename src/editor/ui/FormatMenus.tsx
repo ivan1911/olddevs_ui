@@ -13,6 +13,7 @@ import {
 } from "../../components/overlays/Menu.js";
 import { Tooltip } from "../../components/overlays/Tooltip.js";
 import type { UiMessages } from "../../i18n/messages.js";
+import { cn } from "../../lib/cn.js";
 import { useMessages, useUiLocale } from "../../i18n/useMessages.js";
 import {
   AlignCenterIcon,
@@ -227,7 +228,19 @@ export function formatMenuSections(
               icon={ItemIcon ? <ItemIcon size={14} aria-hidden /> : undefined}
               shortcut={item.keys ? shortcut(item.keys) : undefined}
             >
-              {item.swatch ? <span className={item.swatch}>{item.label}</span> : item.label}
+              {item.swatch ? (
+                /*
+                  Образец не должен брать вид выбранной строки: её голубой текст
+                  и подложка перекрашивали цвета тона. Текст задан образцу
+                  самому, а непрозрачная основа под ним не даёт полупрозрачной
+                  подложке тона смешаться с подложкой строки.
+                */
+                <span className="bg-surface-elevated rounded-xs">
+                  <span className={cn(item.swatch, "text-fg-0")}>{item.label}</span>
+                </span>
+              ) : (
+                item.label
+              )}
             </MenuItem>
           );
           if (!item.submenu || item.disabled) return entry;

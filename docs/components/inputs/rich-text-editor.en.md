@@ -37,7 +37,7 @@ category: inputs
 status: stable
 source: src/editor/RichTextEditor.tsx
 story: src/editor/RichTextEditor.stories.tsx
-sourceHash: 8547e036784f
+sourceHash: 95badb4a657c
 ---
 
 # RichTextEditor
@@ -1124,7 +1124,7 @@ The `source` Tool (present in `full`, not in `basic`) is the "HTML" toggle butto
 
 **What is visible.** The HTML is formatted: a top-level Block on its own line, the children of Block containers (list items, table rows and cells, Layout columns, parts of a `figure`, a checklist item) indented by two spaces, a Block's content on its tag's line (text whitespace is unchanged), the content of `pre` as is. The formatting is lossless: applying unchanged text produces the same Document. An empty Document opens as an empty field, not as `<p></p>`. There is no syntax highlighting.
 
-**Look.** The field is **always dark, using the kit's colors**, not the code block's syntax highlighting palette: in `dark` and `dim`, the theme's deepest background with its text and border; in `light` and on the Paper (`paper`), the same values of the dark theme (the variables `--rte-source-background`, `--rte-source-foreground`, `--rte-source-border`, which can be overridden). The corner radius is as for code, the font is monospace 13 px, as in `CodeView`; the padding is as for the Document area. On entry the height is at least the Document's height, then the field grows with its content and can be stretched vertically by hand. With `maxHeight` or `resizable` the field lives in the same scroll area as the Document (see the "Field height" section). Text selection in the field also comes from the dark theme for the current accent (`--selection-dark`), with the field's light text: the light theme's light selection was unreadable on the dark field.
+**Look.** The field is **always dark, using the kit's colors**, not the code block's syntax highlighting palette: in `dark` and `dim`, the theme's deepest background with its text and border; in `light` and on the Paper (`paper`), the same values of the dark theme (the variables `--rte-source-background`, `--rte-source-foreground`, `--rte-source-border`, which can be overridden). On the Paper (`paper`), the light sheet stays under the dark field: the sheet's contents change, not the sheet itself. The corner radius is as for code, the font is monospace 13 px, as in `CodeView`; the padding is as for the Document area. On entry the height is at least the Document's height, then the field grows with its content and can be stretched vertically by hand. With `maxHeight` or `resizable` the field lives in the same scroll area as the Document (see the "Field height" section). Text selection in the field also comes from the dark theme for the current accent (`--selection-dark`), with the field's light text: the light theme's light selection was unreadable on the dark field.
 
 **Applying — on exit, on losing focus and on reads.** The field's text goes through the Schema with the same parsing as an incoming `value` (everything not in the Schema is dropped — `script`, `on*` handlers, arbitrary `style` and `class`, `javascript:`; markup of disabled Tools is stripped, the text stays), and replaces the Document in **one edit** — one `Ctrl/⌘+Z` undo in the Document returns it to the state before applying. Applying is triggered by:
 
