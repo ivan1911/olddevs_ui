@@ -5,7 +5,7 @@ category: overlays
 status: stable
 source: src/components/overlays/Menu.tsx
 story: src/components/overlays/Menu.stories.tsx
-sourceHash: cedb4db63593
+sourceHash: 66a7a1f76ebc
 ---
 
 # Menu
@@ -15,7 +15,11 @@ sourceHash: cedb4db63593
 `Menu` is a compound action menu opened by `MenuTrigger`. Inside `MenuTrigger`,
 use the dedicated `MenuButton`, not a regular `Button`: only it reads react-aria's
 `ButtonContext`. The menu suits heterogeneous commands, sections, selected modes
-and submenus; it is not for choosing a field value.
+and submenus; it is not for choosing a field value. A nested `Menu` inside
+`SubmenuTrigger` opens beside its item on its own, and below it on a narrow
+screen: you do not need to set `placement`. The "aim" (protection that keeps a
+submenu from closing while the pointer travels toward it) comes from react-aria;
+do not write your own.
 
 ## When to use
 
@@ -52,14 +56,27 @@ the props that set the button's look, `icon`, `children`, `disabled`, `aria-labe
 and `className`; `aria-label` is required if the button has no text, and with
 `iconOnly` it never does. `Menu` accepts the usual `AriaMenuProps`, plus `offset`,
 the gap between the panel and the button in pixels (default 6), and `placement`,
-the side where the panel opens (default `bottom start`; also `bottom end`,
-`top start`, `top end`, `right top` and `left top`).
+the side where the panel opens (default for the root menu `bottom start`; also
+`bottom end`, `top start`, `top end`, `right top` and `left top`; the submenu
+default is described below).
 
 `MenuItem` accepts the `AriaMenuItem` props, `icon`, `shortcut`, `tone`,
 `disabled` and `className`; pass the action in `onAction`. `MenuSection` accepts
 `label` and the react-aria selection props. For toggles, set `selectionMode`,
 `selectedKeys` and `onSelectionChange` on the section, not `checked` on the item.
 `MenuSeparator` separates groups.
+
+A submenu, a `Menu` inside a `SubmenuTrigger`, opens to the right of its item by
+default, with its top edge level with the item. When there is not enough room on
+the right, react-aria flips it to the left. On a narrow screen (up to 639px wide)
+there is no room on either side, so the submenu opens below its item, over the
+parent menu. An explicit `placement` on the nested `Menu` wins over the default,
+phones included. The root menu opens as before, at `bottom start`. The Editor's
+submenus follow the same rule.
+
+Moving the pointer diagonally toward a submenu neither closes it nor switches to a
+neighboring item: this "aim" is handled by react-aria's `SubmenuTrigger`. The kit
+does not replace it and adds none of its own, so do not write one on top of it.
 
 react-aria sets the menu panel's height from the visible area. Items that do
 not fit scroll inside the panel (`overflow-y: auto`, the scroll does not leak to

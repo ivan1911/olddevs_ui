@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { renderHook } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
-import { useSubmenuPlacement } from "../src/editor/hooks/useSubmenuPlacement.js";
+import { useSubmenuPlacement } from "../src/hooks/useSubmenuPlacement.js";
 
 /*
   Подменю Редактора на узком экране (OLDSUI-147). Сбоку от пункта на телефоне

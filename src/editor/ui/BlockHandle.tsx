@@ -42,7 +42,7 @@ import { ariaShortcut, findShortcutKeys, isApple, shortcutLabel } from "../core/
 import { blockActionsOf, blockActionVisible, type ToolList } from "../core/toolDescriptor.js";
 import { WRAPPER_NODE } from "../features/wrapper/wrapper.js";
 import { EDITOR_WRAPPER_TONES, wrapperToneFrom } from "../features/wrapper/wrapperTones.js";
-import { useSubmenuPlacement } from "../hooks/useSubmenuPlacement.js";
+import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
 import { GLASS_MENU_CLASS } from "../styles/glass.js";
 
 /** Размер ручки и зазор до текста, px: ручка `h-6 w-5` стоит в левом поле Документа. */
