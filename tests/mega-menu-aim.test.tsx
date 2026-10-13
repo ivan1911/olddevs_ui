@@ -9,11 +9,11 @@ import {
 } from "../src/components/navigation/MegaMenu.js";
 
 /*
-  Прицел мегаменю (OLDSUI-256): курсор, идущий наискосок к открытой Витрине,
+  Прицел мегаменю (OLDSUI-256): курсор, идущий наискосок к открытой Полке,
   не отдаёт её соседней Категории, которую задевает по пути.
 
-  Геометрия jsdom пустая, поэтому прямоугольник Витрины подменён: Столбец —
-  x 0…250, Витрина — x 260…900, y 0…400. Время — поддельное: и прореживание
+  Геометрия jsdom пустая, поэтому прямоугольник Полки подменён: Столбец —
+  x 0…250, Полка — x 260…900, y 0…400. Время — поддельное: и прореживание
   шагов, и остановка курсора считаются по нему. События — напрямую, без
   user-event (его обёртка ждёт настоящий `setTimeout`, см. `hover-card`).
 */
@@ -86,7 +86,7 @@ test("cutting diagonally across a neighbor towards the showcase keeps the open c
   enter(category("Alpha"));
   expect(expanded("Alpha")).toBe(true);
 
-  // Вправо и чуть вниз — в сектор к углам ближнего края Витрины.
+  // Вправо и чуть вниз — в сектор к углам ближнего края Полки.
   move(100, 20);
   move(130, 30);
   move(160, 40);
@@ -191,7 +191,7 @@ test("touch and pen do not aim: their moves never defer a switch", () => {
 test("near the end edge of the window the showcase flips, and the arrow towards it flips too", () => {
   vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(640);
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 1400 });
-  // Столбец у правого края: справа 150px, слева — 1000; Витрине нужно 652.
+  // Столбец у правого края: справа 150px, слева — 1000; Полке нужно 652.
   vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(function (
     this: HTMLElement
   ) {
@@ -225,7 +225,7 @@ test("a deferred switch that unmounts the focused showcase hands focus to its ca
   move(100, 20);
   move(130, 30);
   enter(category("Beta"));
-  // Пока смена отложена, пользователь ушёл Tab'ом в открытую Витрину.
+  // Пока смена отложена, пользователь ушёл Tab'ом в открытую Полку.
   act(() => {
     screen.getByRole("link", { name: "Alpha link" }).focus();
   });

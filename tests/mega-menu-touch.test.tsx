@@ -17,7 +17,7 @@ import { messages as ru } from "../src/locales/ru.js";
 
   Касание (и перо) открывает Категорию сразу, без Прицела; повторное касание
   открытой Категории её не закрывает. На узком экране (тот же брейкпойнт, что
-  у подменю кита) открытая Категория ЗАМЕНЯЕТ Столбец своей Витриной со строкой
+  у подменю кита) открытая Категория ЗАМЕНЯЕТ Столбец своей Полкой со строкой
   «Назад»; «Назад» и Escape возвращают Столбец и фокус на исходную Категорию.
   Ширина подменяется через `matchMedia`, как в `submenu-placement`.
 */
@@ -280,4 +280,55 @@ test("the catalog renders on the server, where the screen width is unknown", () 
   // Сервер ширины не знает: рисует широкий вид, Столбец на месте.
   expect(html).toContain("Electronics");
   expect(html).not.toContain("Back");
+});
+
+/*
+  Категории, которых Столбец не видит среди прямых детей (OLDSUI-262):
+  обёрнутые компонентом потребителя или пришедшие из серверного компонента
+  Next.js, где тип элемента на клиенте — ленивая обёртка, а не сама функция.
+  Спуск обязан опираться на то, что Категории сообщают о себе сами.
+*/
+
+function Wrapped({ id, label, href }: { id: string; label: string; href?: string }) {
+  if (href) return <MegaMenuCategory id={id} label={label} href={href} />;
+  return (
+    <MegaMenuCategory id={id} label={label}>
+      <MegaMenuLink href={`/${id}`}>{`${label} link`}</MegaMenuLink>
+    </MegaMenuCategory>
+  );
+}
+
+test("wrapped categories: a value naming a link-only category leaves the column in place", () => {
+  mockWidth(true);
+  render(
+    <MegaMenu aria-label="Catalog" value="sale">
+      <Wrapped id="books" label="Books" />
+      <Wrapped id="sale" label="Sale" href="/sale" />
+    </MegaMenu>
+  );
+  // Раньше Столбец прятался целиком, а спускаться было некуда: пустой каталог.
+  expect(screen.getByRole("button", { name: "Books" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Sale" })).toBeTruthy();
+});
+
+test("wrapped categories: an unknown value leaves the column in place", () => {
+  mockWidth(true);
+  render(
+    <MegaMenu aria-label="Catalog" value="missing">
+      <Wrapped id="books" label="Books" />
+    </MegaMenu>
+  );
+  expect(screen.getByRole("button", { name: "Books" })).toBeTruthy();
+});
+
+test("wrapped categories still drill down on a narrow screen", () => {
+  mockWidth(true);
+  render(
+    <MegaMenu aria-label="Catalog" defaultValue="books">
+      <Wrapped id="electronics" label="Electronics" />
+      <Wrapped id="books" label="Books" />
+    </MegaMenu>
+  );
+  expect(screen.queryByRole("button", { name: "Electronics" })).toBeNull();
+  expect(screen.getByRole("link", { name: "Books link" })).toBeTruthy();
 });
