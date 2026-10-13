@@ -26,7 +26,9 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { ChevronRightIcon } from "../../icons.js";
+import { useNarrowScreen } from "../../hooks/useSubmenuPlacement.js";
+import { useMessages } from "../../i18n/useMessages.js";
+import { BackIcon, ChevronRightIcon } from "../../icons.js";
 import { buttonClasses, type ButtonLookOptions } from "../../lib/button.js";
 import { cn } from "../../lib/cn.js";
 import { OVERLAY_LAYER } from "../../lib/overlay-layer.js";
@@ -45,6 +47,13 @@ import { useMenuAim } from "./useMenuAim.js";
 
   Поведение своё, а не react-aria: готового «раскрывающегося каталога» у неё
   нет, а `Menu` на её основе — ровно та роль `menu`, от которой мы уходим.
+
+  КАСАНИЕ И УЗКИЙ ЭКРАН. Касание наведения не знает: Категорию открывает
+  `click`, а `pointerType` «touch» и «pen» в наведении и уходе указателя
+  отбрасываются — Прицел им не нужен. На узком экране (граница та же, что у
+  подменю кита) Витрине некуда встать сбоку, и она ЗАМЕНЯЕТ Столбец: «спуск»
+  в Категорию со строкой «Назад». Прицела там тоже нет: заменять Столбец под
+  курсором по наведению значило бы вырывать его из-под руки.
 */
 
 /** Задержка закрытия, когда курсор ушёл и со Столбца, и с Витрины. */
@@ -67,11 +76,19 @@ interface MegaMenuContextValue {
   hoverCategory: (target: string | null) => void;
   /** Витрина перевёрнута на другую сторону: со стороны конца строки ей не хватило места. */
   flipped: boolean;
+  /** Узкий экран: Витрина заменяет Столбец, а не встаёт сбоку. */
+  narrow: boolean;
+  /** Категория, чья Витрина сейчас заменяет Столбец; `null` — Столбец на месте. */
+  drilledId: string | null;
+  /** Вернуться из Витрины к Столбцу и поставить фокус на исходную Категорию. */
+  back: (id: string) => void;
   onCategoryKeyDown: (event: KeyboardEvent<HTMLElement>, id: string, hasShowcase: boolean) => void;
   onShowcaseKeyDown: (event: KeyboardEvent<HTMLElement>, id: string) => void;
   onCategoryFocus: (id: string) => void;
   /** Категория хочет перевести фокус в свою Витрину, как только та смонтируется. */
   pendingFocus: MutableRefObject<string | null>;
+  /** Категория, на которую вернуть фокус, когда её кнопку снова покажут. */
+  returnFocus: MutableRefObject<string | null>;
 }
 
 const MegaMenuContext = createContext<MegaMenuContextValue | null>(null);
@@ -180,6 +197,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   const value = controlled ? valueProp : innerValue;
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const pendingFocus = useRef<string | null>(null);
+  const returnFocus = useRef<string | null>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const categories = categoryChildren(children);
@@ -225,6 +243,19 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     }),
     [baseId, value]
   );
+  const narrow = useNarrowScreen();
+  const narrowRef = useRef(narrow);
+  narrowRef.current = narrow;
+  // Спуск возможен лишь в Категорию с Витриной: `value` с чужим ключом или
+  // Категория без детей Столбец не прячут — иначе не осталось бы ничего.
+  const drilledId =
+    narrow && value !== null
+      ? (categories.find(
+          (category) =>
+            category.props.id === value && Children.toArray(category.props.children).length > 0
+        )?.props.id ?? null)
+      : null;
+
   const aim = useMenuAim({ value, showcaseRef, commit: setValue });
   const { cancel: cancelAim, request: requestAim } = aim;
 
@@ -275,10 +306,13 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   const context = useMemo<MegaMenuContextValue>(() => {
     const openCategory = (id: string, focusShowcase = false) => {
       cancelAim();
-      if (focusShowcase) pendingFocus.current = id;
+      // На узком экране кнопка Категории исчезает вместе со Столбцом: фокус,
+      // оставшийся на ней, упал бы на `body`, поэтому он идёт в Витрину всегда.
+      const intoShowcase = focusShowcase || narrowRef.current;
+      if (intoShowcase) pendingFocus.current = id;
       // Уже открыта наведением — значение не меняется, и эффект Категории,
       // который переводит фокус в Витрину, не сработает. Переводим сами.
-      if (focusShowcase && valueRef.current === id) {
+      if (intoShowcase && valueRef.current === id) {
         pendingFocus.current = null;
         document
           .getElementById(domId(baseId, "showcase", id))
@@ -349,9 +383,25 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       }
     };
 
+    // Закрытие и возврат фокуса — в таком порядке и через эффект Категории:
+    // пока Витрина заменяет Столбец, кнопка Категории скрыта, и сфокусировать
+    // её можно только после того, как Столбец вернулся на место.
+    const back = (id: string) => {
+      returnFocus.current = id;
+      close();
+    };
+
     const onShowcaseKeyDown = (event: KeyboardEvent<HTMLElement>, id: string) => {
       if (isTextEntry(event.target)) return;
-      const back =
+      if (narrowRef.current) {
+        // Стрелки «к Столбцу» тут не при чём: Столбца рядом нет. Escape — «Назад».
+        if (event.key === "Escape") {
+          event.preventDefault();
+          back(id);
+        }
+        return;
+      }
+      const backKey =
         forwardKey(event.currentTarget, flipped) === "ArrowRight" ? "ArrowLeft" : "ArrowRight";
       if (event.key === "Escape") {
         event.preventDefault();
@@ -359,7 +409,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
         // фокус упал бы на `body`.
         focusCategory(id);
         close();
-      } else if (event.key === back) {
+      } else if (event.key === backKey) {
         event.preventDefault();
         focusCategory(id);
       }
@@ -371,18 +421,25 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       tabStop,
       openCategory,
       close,
-      hoverCategory: requestAim,
+      // Прицела на узком экране нет: Витрину открывает только щелчок или касание.
+      hoverCategory: narrow ? () => {} : requestAim,
       flipped,
+      narrow,
+      drilledId,
+      back,
       onCategoryKeyDown,
       onShowcaseKeyDown,
       onCategoryFocus: setFocusedId,
       pendingFocus,
+      returnFocus,
     };
   }, [
     baseId,
     value,
     tabStop,
     flipped,
+    narrow,
+    drilledId,
     setValue,
     categoryNodes,
     focusCategory,
@@ -410,7 +467,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
           if (typeof forwardedRef === "function") forwardedRef(node);
           else if (forwardedRef) forwardedRef.current = node;
         }}
-        className={cn("relative w-64 text-[13px]", className)}
+        className={cn("relative w-64 text-[13px] max-sm:w-full", className)}
         style={{ "--mega-menu-showcase-w": cssLength(showcaseWidth), ...style } as CSSProperties}
         onPointerEnter={(event: PointerEvent<HTMLElement>) => {
           cancelLeave();
@@ -423,6 +480,9 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
           // Столбца, не должен сбрасывать каталог.
           cancelLeave();
           leaveTimer.current = setTimeout(() => {
+            // Спуск на узком экране — шаг навигации, а не наведение: уход мыши
+            // его не отменяет, возвращает «Назад».
+            if (narrowRef.current) return;
             cancelAim();
             setValue(null);
           }, LEAVE_GRACE_MS);
@@ -486,11 +546,28 @@ const SHOWCASE_CLASS =
 /** Сторона Витрины: со стороны конца строки или, перевёрнутая у края, — начала. */
 const SHOWCASE_SIDE = { end: "start-full ms-1", start: "end-full me-1" } as const;
 
+/**
+ * Витрина вместо Столбца на узком экране: обычный блок на всю ширину, без
+ * собственной поверхности. Рамка и фон — у Столбца, внутри которого она стоит.
+ */
+const SHOWCASE_DRILLED_CLASS = "w-full p-3";
+
+/** Строка «Назад» с именем Категории: шаг назад по Столбцу, как в меню телефона. */
+const BACK_ROW_CLASS = "border-line -mx-3 mb-3 flex items-center gap-1 border-b px-1 pb-2";
+
+const BACK_BUTTON_CLASS =
+  "text-fg-1 hover:text-fg-0 hover:bg-bg-2 flex shrink-0 cursor-pointer items-center gap-1.5 " +
+  "rounded-sm border-0 bg-transparent px-2 py-1.5 text-[13px] leading-5 " +
+  "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:-outline-offset-2";
+
 const SHOWCASE_HEADING_CLASS =
   "text-fg-0 hover:text-accent-strong mb-3 inline-flex items-center gap-1 text-[15px] " +
   "font-semibold no-underline";
 
 const SHOWCASE_GRID_CLASS = "grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-x-6 gap-y-5";
+
+/** Колонки ссылок в заменившей Столбец Витрине идут одна под другой: рядом им тесно. */
+const SHOWCASE_GRID_DRILLED_CLASS = "grid grid-cols-1 gap-y-5";
 
 export interface MegaMenuCategoryProps {
   /** Ключ Категории — им же её открывают через `value`. */
@@ -541,14 +618,26 @@ export function MegaMenuCategory({
   const categoryId = domId(menu.baseId, "category", id);
   const showcaseId = domId(menu.baseId, "showcase", id);
   const showcaseRef = useRef<HTMLElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const messages = useMessages();
+  // Эта Категория заменила Столбец / Столбец заменён другой Категорией.
+  const drilled = menu.drilledId === id;
+  const coveredByOther = menu.drilledId !== null && !drilled;
 
-  // Переход в Витрину с клавиатуры: фокус на её первый фокусируемый элемент,
+  // Переход в Витрину с клавиатуры или касанием: фокус на её первый фокусируемый элемент,
   // как только содержимое смонтировалось.
   useEffect(() => {
     if (!open || menu.pendingFocus.current !== id) return;
     menu.pendingFocus.current = null;
     showcaseRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
   }, [open, id, menu.pendingFocus]);
+
+  // «Назад»: Столбец вернулся, кнопка Категории снова видна — фокус ей.
+  useEffect(() => {
+    if (open || menu.returnFocus.current !== id) return;
+    menu.returnFocus.current = null;
+    buttonRef.current?.focus();
+  }, [open, id, menu.returnFocus]);
 
   const shared = {
     id: categoryId,
@@ -581,7 +670,7 @@ export function MegaMenuCategory({
   if (!hasShowcase) {
     const Comp = link ? Slot : "a";
     return (
-      <li>
+      <li hidden={coveredByOther}>
         <Comp
           {...shared}
           href={link ? undefined : href}
@@ -595,9 +684,13 @@ export function MegaMenuCategory({
   }
 
   return (
-    <li>
+    <li hidden={coveredByOther}>
       <button
         {...shared}
+        ref={buttonRef}
+        // Скрыта, пока Витрина занимает её место: `aria-expanded` и
+        // `aria-controls` остаются в DOM, а имя региону даёт `aria-labelledby`.
+        hidden={drilled}
         type="button"
         aria-expanded={open}
         aria-controls={showcaseId}
@@ -618,17 +711,34 @@ export function MegaMenuCategory({
         id={showcaseId}
         aria-labelledby={categoryId}
         hidden={!open}
-        className={cn(SHOWCASE_CLASS, SHOWCASE_SIDE[menu.flipped ? "start" : "end"])}
+        className={
+          drilled
+            ? SHOWCASE_DRILLED_CLASS
+            : cn(SHOWCASE_CLASS, SHOWCASE_SIDE[menu.flipped ? "start" : "end"])
+        }
         onKeyDown={(event) => menu.onShowcaseKeyDown(event, id)}
       >
         {open && (
           <>
+            {drilled && (
+              <div className={BACK_ROW_CLASS}>
+                <button type="button" className={BACK_BUTTON_CLASS} onClick={() => menu.back(id)}>
+                  <span aria-hidden className="flex rtl:rotate-180">
+                    <BackIcon size={16} />
+                  </span>
+                  {messages.megaMenu.back}
+                </button>
+                <span className="text-fg-0 min-w-0 flex-1 font-semibold break-words">{label}</span>
+              </div>
+            )}
             {(href != null || link != null) && (
               <ShowcaseHeading href={href} link={link}>
                 {label}
               </ShowcaseHeading>
             )}
-            <div className={SHOWCASE_GRID_CLASS}>{children}</div>
+            <div className={drilled ? SHOWCASE_GRID_DRILLED_CLASS : SHOWCASE_GRID_CLASS}>
+              {children}
+            </div>
           </>
         )}
       </section>

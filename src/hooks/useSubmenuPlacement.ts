@@ -6,6 +6,17 @@ import { useMediaQuery } from "./useMediaQuery.js";
 const NARROW_QUERY = "(max-width: 639px)";
 
 /**
+ * Узкий ли экран по правилу кита — граница одна на подменю и мегаменю.
+ *
+ * Внутренний хук, как и `useSubmenuPlacement`. До гидратации и без `matchMedia`
+ * — `false`, то есть широкий: серверной ширины нет, а угадывать значило бы
+ * получить расхождение разметки (ADR-0018, см. `useMediaQuery`).
+ */
+export function useNarrowScreen(): boolean {
+  return useMediaQuery(NARROW_QUERY);
+}
+
+/**
  * Где открыть подменю: сбоку от пункта или под ним.
  *
  * Правило одно на весь кит: его применяет вложенный `Menu` и подменю Редактора.
@@ -28,5 +39,5 @@ const NARROW_QUERY = "(max-width: 639px)";
  * проп `placement` у `Menu`, а умолчание для вложенного меню уже здесь.
  */
 export function useSubmenuPlacement(): "bottom start" | "right top" {
-  return useMediaQuery(NARROW_QUERY) ? "bottom start" : "right top";
+  return useNarrowScreen() ? "bottom start" : "right top";
 }
