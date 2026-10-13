@@ -1,5 +1,5 @@
 ---
-sourceHash: 7b328de94ead
+sourceHash: 2524e6589eaa
 ---
 
 # Glossary of `@olddevs/ui`
@@ -124,6 +124,11 @@ search for a single word.
 | **tag**               | `Tag` in `TagGroup` and `TagInput`: a compact element with text and an optional remove button                              | The Editor's Mark and a field label                                                                    |
 | **close button**      | The button with an "×" that closes a dialog, drawer, popover or notification; in a search field it is the **clear button** | A "Cancel" button. Do not write: cross                                                                 |
 | **shortcut list**     | `ShortcutsHelp`: a dialog with a list of keyboard shortcuts                                                                | The Editor's Shortcuts reference: that one opens from the Toolbar and describes the Editor's shortcuts |
+| **mega menu**         | `MegaMenu`: a category column and the showcase of the hovered category, an Amazon-style catalog                            | `Menu`: that one is for commands, not navigation. Do not write: mega dropdown                          |
+| **category**          | `MegaMenuCategory`: a row of the category column with a label, an icon and its own showcase                                | A menu item (`MenuItem`)                                                                               |
+| **category column**   | The vertical list of categories in a mega menu                                                                             | `SideNav`: that one expands branches in place                                                          |
+| **showcase**          | The area next to the category column with the open category's content: link columns, promos                                | The Editor toolbar, a popover                                                                          |
+| **aim**               | Deferring the category switch while the pointer cuts diagonally toward the open showcase                                   | An opening delay: aim never slows down a direct hover                                                  |
 
 ## Editor
 
