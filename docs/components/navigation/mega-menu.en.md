@@ -5,7 +5,7 @@ category: navigation
 status: stable
 source: src/components/navigation/MegaMenu.tsx
 story: src/components/navigation/MegaMenu.stories.tsx
-sourceHash: 731dae1c43c3
+sourceHash: ab0520cb06d7
 ---
 
 # MegaMenu
@@ -176,6 +176,11 @@ lose the submenu, and worked out why. The menu watches direction, not time: at e
 triangle with corners at the pointer itself and at the top and bottom corners of the submenu. If the next position is
 inside the triangle, the user is heading for the submenu, and items brushed on the way don't take it over. Once the
 pointer leaves the triangle, the submenu switches immediately. Kamens published his analysis on 6 March 2013.
+
+![Amazon's menu: the triangle from the pointer to the top and bottom corners of the submenu](https://habrastorage.org/getpro/habr/post_images/469/486/113/469486113d62e4bf471135e20e9b0a63.gif)
+
+_Animation from [Ben Kamens's post](https://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown), as
+reproduced in the Habr retelling._
 
 **The plugin and the math.** Kamens turned the idea into a jQuery plugin, `jQuery-menu-aim`, and used it in Khan
 Academy's new "Learn" menu. Whether a point lies inside a triangle can be checked with cross products, and Sophie
