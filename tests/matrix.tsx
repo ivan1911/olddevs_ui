@@ -95,6 +95,12 @@ import { Pagination } from "../src/components/navigation/Pagination.js";
 import { RangeSlider, Slider } from "../src/components/inputs/Slider.js";
 import { Stat } from "../src/components/content/Stat.js";
 import { Stepper } from "../src/components/navigation/Stepper.js";
+import {
+  MegaMenu,
+  MegaMenuCategory,
+  MegaMenuGroup,
+  MegaMenuLink,
+} from "../src/components/navigation/MegaMenu.js";
 import { DataTable } from "../src/components/table/DataTable.js";
 import { FilterBar } from "../src/components/table/FilterBar.js";
 import { DEFAULT_TABLE_STATE } from "../src/lib/table-state.js";
@@ -1198,6 +1204,25 @@ export function renderMatrix(): ReactElement {
         { id: "c", label: "Schedule" },
       ],
     })
+  );
+  // Открытая Категория — чтобы классы Витрины, колонки и ссылок попали в
+  // разметку; ссылка-Категория и выключенная — свои классы строки.
+  els.push(
+    h(
+      MegaMenu,
+      { key: "mm", "aria-label": "Catalog", defaultValue: "books" },
+      h(
+        MegaMenuCategory,
+        { id: "books", label: "Books", href: "#", icon: h("span") },
+        h(
+          MegaMenuGroup,
+          { title: "Fiction", href: "#" },
+          h(MegaMenuLink, { href: "#", current: true, icon: h("span") }, "Novels")
+        )
+      ),
+      h(MegaMenuCategory, { id: "sale", label: "Sale", href: "#" }),
+      h(MegaMenuCategory, { id: "off", label: "Off", disabled: true }, h("span"))
+    )
   );
   for (const tone of TONES)
     els.push(

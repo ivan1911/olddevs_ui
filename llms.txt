@@ -108,6 +108,7 @@
 - [Breadcrumbs](docs/components/navigation/breadcrumbs.md): `Breadcrumbs` показывает путь до текущей страницы.
 - [Pagination](docs/components/navigation/pagination.md): `Pagination` — controlled pagination для уже разбитой на страницы коллекции.
 - [Stepper](docs/components/navigation/stepper.md): `Stepper` показывает порядок шагов мастера; текущий индекс задаёт родитель (controlled).
+- [MegaMenu](docs/components/navigation/mega-menu.md): `MegaMenu` — каталог магазина в духе Amazon: слева Столбец категорий, справа от наведённой Категории — её Витрина с колонками ссылок и любым своим содержимым.
 - [TreeView](docs/components/navigation/tree-view.md): Иерархия с раскрытием, выбором и клавиатурой на `Tree` из react-aria.
 - [SelectionBar и useStickyOffset](docs/components/navigation/selection-bar.md): `SelectionBar` — полоса массовых действий: «Выбрано 12» и что с этим можно сделать.
 - [ContextualSaveBar](docs/components/navigation/contextual-save-bar.md): Полоса несохранённых изменений: появляется с первой правкой формы, показывает «есть несохранённые изменения» (или их число) и две кнопки — сохранить и отменить.
