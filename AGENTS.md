@@ -1,8 +1,8 @@
 # AGENTS.md — `@olddevs/ui`
 
 Instructions for agents and developers working in this repository. Read them
-before the code. Then read [README.md](README.md), [docs/index.md](docs/index.md)
-(in Russian) and the page for the component you are working on.
+before the code. Then read [README.md](README.md), [docs/index.en.md](docs/index.en.md)
+and the page for the component you are working on.
 
 `@olddevs/ui` is a design system: tokens, themes and accessible UI primitives for
 several products, mainly admin interfaces. The public API is the set of entry
@@ -57,8 +57,8 @@ Unless a component page says otherwise, three independent axes apply: `size`
 (`solid|soft|outline|ghost`). States are named positively: `selected`,
 `disabled`, `loading`. Alternatives (`kind`, `status`) and negative boolean props
 are not introduced without a separate public decision. Such decisions are
-recorded in the vocabulary in [`docs/conventions.md`](docs/conventions.md) (in
-Russian): `active` marks only the current navigation item, `appearance` is the
+recorded in the vocabulary in [`docs/conventions.en.md`](docs/conventions.en.md):
+`active` marks only the current navigation item, `appearance` is the
 shape of a variant, `level` is a heading level.
 
 An axis is turned on by an **explicit prop**: a component that supports every
@@ -72,7 +72,7 @@ stays in code only where it is the text itself: in strings, comments and
 documentation. This holds everywhere, including story exports and showcase
 sections.
 
-For which language goes where, see ADR-0034 and [`docs/conventions.md`](docs/conventions.md).
+For which language goes where, see ADR-0034 and [`docs/conventions.en.md`](docs/conventions.en.md).
 In short: comments, the Originals in `docs/` and ADRs are in Russian; the
 showcase, tests and scripts are in English. `AGENTS.md`, `README.md` and the
 community files (`CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, the
