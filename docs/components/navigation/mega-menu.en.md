@@ -5,7 +5,7 @@ category: navigation
 status: stable
 source: src/components/navigation/MegaMenu.tsx
 story: src/components/navigation/MegaMenu.stories.tsx
-sourceHash: 7d34d72a80b4
+sourceHash: 8e166f4b1ab7
 ---
 
 # MegaMenu
@@ -144,7 +144,8 @@ out of reach. Aim watches where the pointer is heading: while it moves toward th
 category does not take over the hover.
 
 - The direction of the pointer's last step is compared with the wedge from its previous position to the two corners
-  of the showcase's near edge. A step into the wedge means the pointer is aiming.
+  of the showcase's near edge: Kamens's triangle from "Where it comes from". A step into the wedge means the pointer
+  is aiming.
 - One movement off course is forgiven; two in a row are not, and then the category under the pointer opens.
 - If the pointer stops for 300 ms, the category under it opens even if it was aiming. The menu does not get stuck.
 - When the pointer reaches the showcase, the deferred switch is canceled.
@@ -155,14 +156,14 @@ category does not take over the hover.
 The model is the same as for react-aria submenus (`Menu` with `SubmenuTrigger`), so that the two menus of the kit
 behave alike. There are two differences. The category switch is deferred, not suppressed with `pointer-events: none`
 on the category column, since that would lose the highlight under the pointer and the click on a neighboring category.
-And the stop time is 300 ms, as in Kamens's plugin, not a second, as in react-aria: its submenu is short, while the
+And the stop time is 300 ms, as in Kamens's plugin (more on it in "Where it comes from"), not a second, as in react-aria: its submenu is short, while the
 category column of a catalog gets scrolled through.
 
 ## Where it comes from
 
-Amazon came up with the technique. By 2013 the "Shop by Department" menu on amazon.com already worked like this: a
+The technique comes from Amazon. By 2013 the "Shop by Department" menu on amazon.com already worked like this: a
 column of departments on the left, a large panel on the right, and switching with no delay at all, while the pointer
-could cut diagonally toward the panel without knocking it away. For a long time nobody explained how.
+could cut diagonally toward the panel without knocking it away. Ben Kamens worked out how it does that.
 
 - **6 March 2013**: Ben Kamens, a developer at Khan Academy, publishes the analysis "Breaking down Amazon's mega
   dropdown". He shows that Amazon does not slow the opening down with a delay, as most dropdown menus do, but
@@ -245,8 +246,8 @@ into one. `MegaMenuButton` accepts the kit's button look (`variant`, `tone`, `si
 - **Screen reader.** The button is a disclosure with `aria-expanded` and `aria-controls` and no `aria-haspopup`: the
   overlay is neither a menu nor a dialog, but the same navigation with links. The overlay has no `dialog` role.
 - **Layers.** The overlay sits on the `popover` layer: above the scrim of an open `Dialog`, below the confirmation.
-  Inside a dialog, the first Escape closes the catalog and the next one closes the dialog. If something is open in the
-  showcase, it closes first.
+  Inside a dialog, the first Escape closes the catalog and the next one closes the dialog. If focus is in an open
+  showcase, the very first Escape closes only the showcase and returns focus to its category.
 - **Height.** The overlay is no taller than the visible area from the button to the edge of the window. The category
   column and the showcase each scroll within themselves (`overscroll-contain`), not the overlay as a whole: otherwise the
   overlay's frame would clip the showcase, which stands beside the category column. On iOS the height is capped at
