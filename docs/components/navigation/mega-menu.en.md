@@ -5,7 +5,7 @@ category: navigation
 status: stable
 source: src/components/navigation/MegaMenu.tsx
 story: src/components/navigation/MegaMenu.stories.tsx
-sourceHash: 8e166f4b1ab7
+sourceHash: 731dae1c43c3
 ---
 
 # MegaMenu
@@ -162,20 +162,38 @@ category column of a catalog gets scrolled through.
 ## Where it comes from
 
 The technique comes from Amazon. By 2013 the "Shop by Department" menu on amazon.com already worked like this: a
-column of departments on the left, a large panel on the right, and switching with no delay at all, while the pointer
-could cut diagonally toward the panel without knocking it away. Ben Kamens worked out how it does that.
+column of departments on the left, a large panel on the right, switching with no delay at all, and yet the pointer
+could cut diagonally toward the panel without knocking it away.
 
-- **6 March 2013**: Ben Kamens, a developer at Khan Academy, publishes the analysis "Breaking down Amazon's mega
-  dropdown". He shows that Amazon does not slow the opening down with a delay, as most dropdown menus do, but
-  follows the direction of the pointer: while it stays inside the triangle between the pointer and the corners of the
-  panel, the submenu does not change. Khan Academy puts the technique into its new "Learn" menu.
-- **March 2013**: Kamens publishes the `jQuery-menu-aim` plugin on GitHub: the triangle, a tolerance near the corners
-  and a 300 ms delay for a pointer that has stopped.
-- **7 March 2013**: a retelling of the article appears on Habr, from which the technique spread across the Russian-speaking web.
-- **After that**: the technique moves into libraries: the "safe polygon" `safePolygon()` in Floating UI, the "grace
-  area" of submenus in Radix, the "safe triangle" `useSafelyMouseToSubmenu` in react-aria. Submenus shipped in
-  react-aria as an alpha on 13 February 2024 (v1.1.0) and became stable on 1 May 2024 (v1.2.0).
-- **2026**: `MegaMenu` in `@olddevs/ui`: the react-aria model and Kamens's pause.
+**The trap that menus closed with a delay.** If a submenu switches at once, the pointer brushes a neighboring item on
+its way there, the submenu changes, and the link you were heading for is gone: a game you can't win. Bootstrap's
+dropdowns behaved like this, for example. The usual fix is a delay before switching items, known as menu hysteresis,
+as in Khan Academy's own earlier menu. It closes the trap but makes the menu sluggish: every move between items waits
+for a timer.
+
+**What Ben Kamens noticed.** The Khan Academy developer saw that Amazon's menu switches instantly and still doesn't
+lose the submenu, and worked out why. The menu watches direction, not time: at each pointer position it builds a
+triangle with corners at the pointer itself and at the top and bottom corners of the submenu. If the next position is
+inside the triangle, the user is heading for the submenu, and items brushed on the way don't take it over. Once the
+pointer leaves the triangle, the submenu switches immediately. Kamens published his analysis on 6 March 2013.
+
+**The plugin and the math.** Kamens turned the idea into a jQuery plugin, `jQuery-menu-aim`, and used it in Khan
+Academy's new "Learn" menu. Whether a point lies inside a triangle can be checked with cross products, and Sophie
+Alpert helped him with that bit of linear algebra, but in the plugin Kamens went with something simpler: comparing
+the slopes of lines. A pointer that entered the triangle and stopped still opens the item under it, after 300 ms.
+Kamens was happy to admit he had copied Amazon, and suspected the problem had been solved and forgotten many times
+before.
+
+**The response.** The next day, 7 March 2013, a retelling titled "The riddle of Amazon's dropdown" appeared on Habr,
+and the technique spread across the Russian-speaking web: as of October 2026 the article has more than 550 votes and
+two thousand bookmarks. The retelling also notes that the idea isn't new: it had been invented, forgotten and
+rediscovered before.
+
+**What came next.** The technique moved into libraries: the "safe polygon" `safePolygon()` in Floating UI, the "grace
+area" of submenus in Radix, the "safe triangle" `useSafelyMouseToSubmenu` in react-aria. Submenus shipped in
+react-aria as an alpha on 13 February 2024 (v1.1.0) and became stable on 1 May 2024 (v1.2.0). The kit's `MegaMenu`
+(2026) checks the wedge with cross products, following react-aria's model, and takes its pause from Kamens: the same
+300 ms.
 
 Primary sources:
 [Ben Kamens's article](https://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown),
