@@ -618,3 +618,25 @@ test("wrapped categories render a tab stop on the server, before hydration", () 
     /data-mega-category="a"[^>]*tabindex="0"|tabindex="0"[^>]*data-mega-category="a"/
   );
 });
+
+test("a space in the middle of typing is part of the label, not a key that opens the category", () => {
+  render(
+    <MegaMenu aria-label="Catalog">
+      <MegaMenuCategory id="home" label="Home and garden">
+        <MegaMenuLink href="/home">Cookware</MegaMenuLink>
+      </MegaMenuCategory>
+      <MegaMenuCategory id="appliances" label="Home appliances">
+        <MegaMenuLink href="/appliances">Kettles</MegaMenuLink>
+      </MegaMenuCategory>
+    </MegaMenu>
+  );
+  category("Home and garden").focus();
+
+  act(() => {
+    for (const key of ["h", "o", "m", "e", " ", "a", "p"])
+      fireEvent.keyDown(document.activeElement as Element, { key });
+  });
+
+  expect(document.activeElement).toBe(category("Home appliances"));
+  expect(category("Home and garden").getAttribute("aria-expanded")).toBe("false");
+});

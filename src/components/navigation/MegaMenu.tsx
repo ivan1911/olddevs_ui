@@ -464,6 +464,13 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       const node = event.currentTarget;
       const enabled = categoryNodes();
       const index = enabled.indexOf(node);
+      // У ссылки-Категории Enter — переход, Пробел — прокрутка страницы:
+      // обе роли браузерные, отнимать их незачем.
+      const openFromKey = () => {
+        if (!hasShowcase || node.getAttribute("aria-disabled") === "true") return;
+        event.preventDefault();
+        openCategory(id, true);
+      };
       let target: HTMLElement | undefined;
       switch (event.key) {
         case "ArrowDown":
@@ -484,13 +491,20 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
             close();
           }
           return;
-        case "Enter":
         case " ":
-          // У ссылки-Категории Enter — переход, Пробел — прокрутка страницы:
-          // обе роли браузерные, отнимать их незачем.
-          if (!hasShowcase || node.getAttribute("aria-disabled") === "true") return;
+          // Пробел посреди набранного — часть подписи («Home and garden»), а
+          // не открытие Категории.
+          if (typeahead.current.text === "") {
+            openFromKey();
+            return;
+          }
+          // Не открываем и без совпадения: кнопка сработала бы на отпускании.
           event.preventDefault();
-          openCategory(id, true);
+          target = matchTypeahead(event, enabled, index);
+          if (!target) return;
+          break;
+        case "Enter":
+          openFromKey();
           return;
         default:
           if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -1109,14 +1123,20 @@ const DropdownPortal = withoutToolbarAxis(PopoverPrimitive.Portal);
 const DROPDOWN_CONTENT_CLASS =
   `${OVERLAY_LAYER.popover} outline-none ` +
   /*
-    Узкий экран — на всю ширину окна без отступов по краям (`collisionPadding`).
+    Узкий экран — на всю ширину окна за вычетом отступов по 8px с краёв
+    (`collisionPadding`).
     Обёртка Radix меряет оверлей по содержимому (`min-width: max-content`), и
     без явной ширины каталог на телефоне сжимался до самой длинной подписи:
     уже Столбца на десктопе, разный у каждой Категории при спуске, а длинная
     подпись без пробелов выталкивала его за край. Граница та же, что у
     `useNarrowScreen`: `sm` — 640px.
+
+    `100vw` считает и полосу прокрутки, если она не накладная (окно настольного
+    браузера, суженное ниже 640px), — тогда оверлей вылез бы за край на её
+    ширину. Потолок — ширина, которую Radix считает по видимой области:
+    `available-width`.
   */
-  "max-sm:w-[calc(100vw-1rem)] " +
+  "max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[var(--radix-popover-content-available-width)] " +
   // Появление и уход — токены, видимые гейту `prefers-reduced-motion` (ADR-0043, ADR-0047).
   "data-[state=open]:animate-fadein data-[state=closed]:animate-fadeout";
 

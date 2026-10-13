@@ -5,7 +5,7 @@ category: navigation
 status: stable
 source: src/components/navigation/MegaMenu.tsx
 story: src/components/navigation/MegaMenu.stories.tsx
-sourceHash: 5e8b721746c0
+sourceHash: 42179963266b
 ---
 
 # MegaMenu
@@ -226,7 +226,8 @@ Primary sources:
   time, on the open one, otherwise on the current section (`active`), otherwise on the first one.
 - Typing a letter on a category moves focus to the next category whose label starts with it, wrapping around; the
   same letter again moves to the one after. Letters typed in quick succession match the start of a label, and a
-  half-second pause clears them. A letter with Ctrl, Cmd or Alt is a keyboard shortcut, and the catalog leaves it alone.
+  half-second pause clears them. A Space in the middle of typing is part of the label ("Home and garden"), not a
+  key that opens the category. A letter with Ctrl, Cmd or Alt is a keyboard shortcut, and the catalog leaves it alone.
 - Enter, Space and the arrow toward the flyout open it and put focus on the first link. On a category that is a
   link, Enter follows it.
 - Inside the flyout, plain Tab works. The arrow toward the category column returns focus to the category, and so
