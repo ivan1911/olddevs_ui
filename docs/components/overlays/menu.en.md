@@ -5,7 +5,7 @@ category: overlays
 status: stable
 source: src/components/overlays/Menu.tsx
 story: src/components/overlays/Menu.stories.tsx
-sourceHash: 66a7a1f76ebc
+sourceHash: 473c4ffa0e0a
 ---
 
 # Menu
@@ -68,7 +68,8 @@ default is described below).
 
 A submenu, a `Menu` inside a `SubmenuTrigger`, opens to the right of its item by
 default, with its top edge level with the item. When there is not enough room on
-the right, react-aria flips it to the left. On a narrow screen (up to 639px wide)
+the right, react-aria flips it to the left. In a right-to-left layout everything is
+mirrored: the submenu opens to the left of its item. On a narrow screen (up to 639px wide)
 there is no room on either side, so the submenu opens below its item, over the
 parent menu. An explicit `placement` on the nested `Menu` wins over the default,
 phones included. The root menu opens as before, at `bottom start`. The Editor's

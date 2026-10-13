@@ -128,8 +128,10 @@ export interface MenuItemProps extends Omit<AriaMenuItemProps, "children" | "cla
  * умолчание кита `bottom start` — как раз явный проп: вложенное меню без
  * особого случая раскрывалось бы под пунктом. Поэтому `Menu` узнаёт подменю по
  * контексту (`trigger: "SubmenuTrigger"`, публичное поле `PopoverContext`) и
- * берёт место из общего хука `useSubmenuPlacement` — того же, что в Редакторе:
- * сбоку на широком экране, под пунктом на телефоне. Переворот у края экрана
+ * спрашивает общий хук `useSubmenuPlacement` — тот же, что в Редакторе: на
+ * телефоне подменю встаёт под пунктом, на широком экране кит своего места не
+ * передаёт, и действует `end top` react-aria — сбоку, с учётом направления
+ * письма. Переворот у края экрана
  * (`shouldFlip`) и «Прицел» — движение курсора к подменю по диагонали не
  * закрывает его — остаются у react-aria, кит их не трогает.
  *
@@ -157,7 +159,16 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
     "trigger" in popoverContext &&
     popoverContext.trigger === "SubmenuTrigger";
   const submenuPlacement = useSubmenuPlacement();
-  const resolvedPlacement = placement ?? (isSubmenu ? submenuPlacement : "bottom start");
+  // Широкий экран — место не передаётся вовсе: тогда действует `end top` из
+  // контекста `SubmenuTrigger`. Оно логическое, и при письме справа налево
+  // подменю раскрывается слева, а `right top` хука уводило бы его вправо.
+  const resolvedPlacement =
+    placement ??
+    (isSubmenu
+      ? submenuPlacement === "bottom start"
+        ? submenuPlacement
+        : undefined
+      : "bottom start");
 
   return (
     <Popover
