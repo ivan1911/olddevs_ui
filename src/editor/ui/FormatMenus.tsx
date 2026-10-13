@@ -45,7 +45,7 @@ import { DEFAULT_ALIGNMENT, EDITOR_ALIGNMENTS, type EditorAlignment } from "../s
 import { findShortcutKeys } from "../core/shortcuts.js";
 import type { ToolList } from "../core/toolDescriptor.js";
 import type { Tool } from "../core/tools.js";
-import { useSubmenuPlacement } from "../hooks/useSubmenuPlacement.js";
+import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
 import { GLASS_MENU_CLASS } from "../styles/glass.js";
 
 type EditorMessages = UiMessages["editor"];

@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, type ReactNode } from "react";
+import { forwardRef, useContext, type ReactNode } from "react";
 import {
   Button as AriaButton,
   Menu as AriaMenu,
@@ -8,6 +8,7 @@ import {
   MenuSection as AriaMenuSection,
   Header,
   Popover,
+  PopoverContext,
   Separator,
   type MenuItemProps as AriaMenuItemProps,
   type MenuProps as AriaMenuProps,
@@ -15,6 +16,7 @@ import {
 } from "react-aria-components";
 import { CheckIcon, ChevronRightIcon } from "../../icons.js";
 import { buttonClasses, type ButtonLookOptions } from "../../lib/button.js";
+import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
 import { cn } from "../../lib/cn.js";
 import {
   MENU_ITEM_CLASS,
@@ -83,7 +85,12 @@ export const MenuButton = forwardRef<HTMLButtonElement, MenuButtonProps>(functio
 export interface MenuProps<T extends object = object> extends AriaMenuProps<T> {
   /** Отступ панели от кнопки, в пикселях. */
   offset?: number;
-  /** Сторона, с которой панель раскрывается. */
+  /**
+   * Сторона, с которой панель раскрывается. Корневое меню по умолчанию — под
+   * кнопкой слева (`bottom start`); вложенное, внутри `SubmenuTrigger`, —
+   * сбоку от своего пункта, а на узком экране под ним. Явное значение
+   * побеждает оба умолчания.
+   */
   placement?: "bottom start" | "bottom end" | "top start" | "top end" | "right top" | "left top";
 }
 
@@ -115,6 +122,19 @@ export interface MenuItemProps extends Omit<AriaMenuItemProps, "children" | "cla
  * меню руками. Это же делает работоспособным `SubmenuTrigger`: он ждёт вторым
  * ребёнком именно попоувер.
  *
+ * ПОДМЕНЮ раскрывается сбоку от своего пункта, и это умолчание нужно
+ * выставлять самим. `SubmenuTrigger` отдаёт вложенному поповеру место
+ * `end top` через контекст, но явный проп поповера важнее контекста, а корневое
+ * умолчание кита `bottom start` — как раз явный проп: вложенное меню без
+ * особого случая раскрывалось бы под пунктом. Поэтому `Menu` узнаёт подменю по
+ * контексту (`trigger: "SubmenuTrigger"`, публичное поле `PopoverContext`) и
+ * спрашивает общий хук `useSubmenuPlacement` — тот же, что в Редакторе: на
+ * телефоне подменю встаёт под пунктом, на широком экране кит своего места не
+ * передаёт, и действует `end top` react-aria — сбоку, с учётом направления
+ * письма. Переворот у края экрана
+ * (`shouldFlip`) и «Прицел» — движение курсора к подменю по диагонали не
+ * закрывает его — остаются у react-aria, кит их не трогает.
+ *
  * ПЕРЕКЛЮЧАТЕЛИ — через выбор на разделе, а не через `checked` у пункта:
  *
  *     <MenuSection label="Вид" selectionMode="multiple"
@@ -128,11 +148,34 @@ export interface MenuItemProps extends Omit<AriaMenuItemProps, "children" | "cla
  * чужую работу и расходиться с ней при первом же обновлении.
  */
 export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
-  { offset = 6, placement = "bottom start", className, ...rest },
+  { offset = 6, placement, className, ...rest },
   ref
 ) {
+  const popoverContext = useContext(PopoverContext);
+  // Контекст бывает пустым, со слотами или с самими пропами поповера; «подменю»
+  // говорит только последнее.
+  const isSubmenu =
+    popoverContext != null &&
+    "trigger" in popoverContext &&
+    popoverContext.trigger === "SubmenuTrigger";
+  const submenuPlacement = useSubmenuPlacement();
+  // Широкий экран — место не передаётся вовсе: тогда действует `end top` из
+  // контекста `SubmenuTrigger`. Оно логическое, и при письме справа налево
+  // подменю раскрывается слева, а `right top` хука уводило бы его вправо.
+  const resolvedPlacement =
+    placement ??
+    (isSubmenu
+      ? submenuPlacement === "bottom start"
+        ? submenuPlacement
+        : undefined
+      : "bottom start");
+
   return (
-    <Popover offset={offset} placement={placement} className={cn(MENU_PANEL_CLASS, className)}>
+    <Popover
+      offset={offset}
+      placement={resolvedPlacement}
+      className={cn(MENU_PANEL_CLASS, className)}
+    >
       {/*
         `data-disable-focus-ring` — механизм пакета, тот же, что у `TextControl`.
         Глобальное правило `:focus-visible` в styles.css рисует контур вокруг
