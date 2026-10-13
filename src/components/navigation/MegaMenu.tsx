@@ -739,7 +739,16 @@ export function MegaMenuCategory({
                   </span>
                   {messages.megaMenu.back}
                 </button>
-                <span className="text-fg-0 min-w-0 flex-1 font-semibold break-words">{label}</span>
+                {/*
+                  Имя Категории — здесь, только если у неё нет своей ссылки:
+                  иначе его строкой ниже покажет заголовок-ссылка, и имя на
+                  телефоне стояло бы дважды подряд.
+                */}
+                {href == null && link == null && (
+                  <span className="text-fg-0 min-w-0 flex-1 font-semibold break-words">
+                    {label}
+                  </span>
+                )}
               </div>
             )}
             {(href != null || link != null) && (

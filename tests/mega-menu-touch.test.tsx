@@ -125,10 +125,23 @@ test("a narrow screen replaces the column with the category's showcase and a Bac
   const region = screen.getByRole("region", { name: "Electronics" });
   expect(region.hidden).toBe(false);
   expect(screen.getByRole("link", { name: "Phone A" })).toBeTruthy();
-  // Строка «Назад» показывает и имя Категории.
+  // У Категории со ссылкой имя показывает заголовок-ссылка под строкой
+  // «Назад» — и только он: дважды подряд имя на телефоне не стоит.
   const back = screen.getByRole("button", { name: "Back" });
   expect(region.contains(back)).toBe(true);
-  expect(back.parentElement?.textContent).toContain("Electronics");
+  expect(back.parentElement?.textContent).not.toContain("Electronics");
+  expect(screen.getByRole("link", { name: "Electronics" }).getAttribute("href")).toBe(
+    "/electronics"
+  );
+});
+
+test("without a link of its own, the category name stands in the Back row", () => {
+  mockWidth(true);
+  render(<Catalog />);
+  tap(category("Books"));
+
+  const back = screen.getByRole("button", { name: "Back" });
+  expect(back.parentElement?.textContent).toContain("Books");
 });
 
 test("the category button keeps the disclosure semantics while the column is replaced", () => {
