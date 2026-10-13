@@ -11,6 +11,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -26,6 +27,7 @@ import {
 import { ChevronRightIcon } from "../../icons.js";
 import { cn } from "../../lib/cn.js";
 import { OVERLAY_LAYER } from "../../lib/overlay-layer.js";
+import { useMenuAim } from "./useMenuAim.js";
 
 /*
   МЕГАМЕНЮ — НАВИГАЦИЯ, А НЕ МЕНЮ КОМАНД.
@@ -54,8 +56,13 @@ interface MegaMenuContextValue {
   value: string | null;
   /** Категория — единственная остановка Tab в Столбце (roving tabindex). */
   tabStop: string | null;
+  /** Открыть Категорию щелчком или с клавиатуры — сразу, мимо Прицела. */
   openCategory: (id: string, focusShowcase?: boolean) => void;
   close: () => void;
+  /** Курсор наведён на строку Столбца: решает Прицел. `null` — строка без Витрины. */
+  hoverCategory: (target: string | null) => void;
+  /** Витрина перевёрнута на другую сторону: со стороны конца строки ей не хватило места. */
+  flipped: boolean;
   onCategoryKeyDown: (event: KeyboardEvent<HTMLElement>, id: string, hasShowcase: boolean) => void;
   onShowcaseKeyDown: (event: KeyboardEvent<HTMLElement>, id: string) => void;
   onCategoryFocus: (id: string) => void;
@@ -90,10 +97,18 @@ function categoryChildren(children: ReactNode): ReactElement<MegaMenuCategoryPro
   return result;
 }
 
-/** Направление «к Витрине»: при письме справа налево она слева. */
-function forwardKey(node: HTMLElement): "ArrowRight" | "ArrowLeft" {
-  return getComputedStyle(node).direction === "rtl" ? "ArrowLeft" : "ArrowRight";
+/**
+ * Стрелка «к Витрине» — по тому, где Витрина стоит на экране: при письме справа
+ * налево она слева, а перевёрнутая у края — на другой стороне.
+ */
+function forwardKey(node: HTMLElement, flipped: boolean): "ArrowRight" | "ArrowLeft" {
+  const rtl = getComputedStyle(node).direction === "rtl";
+  return rtl === flipped ? "ArrowRight" : "ArrowLeft";
 }
+
+/** Зазор между Столбцом и Витриной (`ms-1`) и запас до края окна, пиксели. */
+const SHOWCASE_GAP = 4;
+const VIEWPORT_MARGIN = 8;
 
 /** Клавиши, которые поле ввода в Витрине (поиск, промо с формой) обязано оставить себе. */
 function isTextEntry(target: EventTarget): boolean {
@@ -197,6 +212,54 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     );
   }, []);
 
+  // Прицелу нужна открытая Витрина; ищется по id, а не ref'ом: её рисует Категория.
+  const showcaseRef = useMemo(
+    () => ({
+      get current(): HTMLElement | null {
+        return value === null ? null : document.getElementById(domId(baseId, "showcase", value));
+      },
+    }),
+    [baseId, value]
+  );
+  const aim = useMenuAim({ value, showcaseRef, commit: setValue });
+  const { cancel: cancelAim, request: requestAim } = aim;
+
+  /*
+    ПЕРЕВОРОТ У КРАЯ. Витрина встаёт со стороны конца строки; если там не
+    хватает места, а с другой стороны хватает — она переходит туда. Не хватает
+    ни там, ни там — остаётся на своей стороне: `max-w` её ужмёт.
+
+    Меряется ДО открытия, на монтировании и при смене размера окна, а не по
+    открытой Витрине: стрелка «к Витрине» должна знать сторону уже при первом
+    открытии с клавиатуры. Ширину даёт зонд с той же длиной, что у Витрины, —
+    длина приходит строкой CSS (`40rem`, `min(…)`), и посчитать её может только
+    браузер.
+  */
+  const [flipped, setFlipped] = useState(false);
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const measure = () => {
+      const probe = document.createElement("div");
+      probe.style.position = "absolute";
+      probe.style.visibility = "hidden";
+      probe.style.pointerEvents = "none";
+      probe.style.width = "var(--mega-menu-showcase-w)";
+      root.appendChild(probe);
+      const showcase = Math.min(probe.offsetWidth, window.innerWidth - 32);
+      probe.remove();
+      const need = showcase + SHOWCASE_GAP + VIEWPORT_MARGIN;
+      const rect = root.getBoundingClientRect();
+      const rtl = getComputedStyle(root).direction === "rtl";
+      const endRoom = rtl ? rect.left : window.innerWidth - rect.right;
+      const startRoom = rtl ? window.innerWidth - rect.right : rect.left;
+      setFlipped(endRoom < need && startRoom >= need);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [showcaseWidth]);
+
   const focusCategory = useCallback(
     (id: string) => {
       const node = categoryNodes(true).find((candidate) => candidate.dataset.megaCategory === id);
@@ -207,10 +270,14 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
 
   const context = useMemo<MegaMenuContextValue>(() => {
     const openCategory = (id: string, focusShowcase = false) => {
+      cancelAim();
       if (focusShowcase) pendingFocus.current = id;
       setValue(id);
     };
-    const close = () => setValue(null);
+    const close = () => {
+      cancelAim();
+      setValue(null);
+    };
 
     const onCategoryKeyDown = (
       event: KeyboardEvent<HTMLElement>,
@@ -249,7 +316,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
           openCategory(id, true);
           return;
         default:
-          if (event.key === forwardKey(node) && hasShowcase) {
+          if (event.key === forwardKey(node, flipped) && hasShowcase) {
             if (node.getAttribute("aria-disabled") === "true") return;
             event.preventDefault();
             openCategory(id, true);
@@ -263,13 +330,15 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       // иначе подсвечена одна Категория, а открыта другая.
       if (valueRef.current !== null) {
         const targetId = target.dataset.megaCategory ?? null;
+        cancelAim();
         setValue(target.dataset.megaShowcase === "true" ? targetId : null);
       }
     };
 
     const onShowcaseKeyDown = (event: KeyboardEvent<HTMLElement>, id: string) => {
       if (isTextEntry(event.target)) return;
-      const back = forwardKey(event.currentTarget) === "ArrowRight" ? "ArrowLeft" : "ArrowRight";
+      const back =
+        forwardKey(event.currentTarget, flipped) === "ArrowRight" ? "ArrowLeft" : "ArrowRight";
       if (event.key === "Escape") {
         event.preventDefault();
         // Фокус — до закрытия: закрытие размонтирует ссылку под фокусом, и
@@ -288,12 +357,24 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       tabStop,
       openCategory,
       close,
+      hoverCategory: requestAim,
+      flipped,
       onCategoryKeyDown,
       onShowcaseKeyDown,
       onCategoryFocus: setFocusedId,
       pendingFocus,
     };
-  }, [baseId, value, tabStop, setValue, categoryNodes, focusCategory]);
+  }, [
+    baseId,
+    value,
+    tabStop,
+    flipped,
+    setValue,
+    categoryNodes,
+    focusCategory,
+    cancelAim,
+    requestAim,
+  ]);
 
   // Щелчок или касание вне каталога закрывают Витрину. Уход указателя этого
   // не покрывает: у касания ухода нет.
@@ -327,7 +408,10 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
           // Не сразу: курсор, на миг вышедший за край Витрины или в зазор у
           // Столбца, не должен сбрасывать каталог.
           cancelLeave();
-          leaveTimer.current = setTimeout(() => setValue(null), LEAVE_GRACE_MS);
+          leaveTimer.current = setTimeout(() => {
+            cancelAim();
+            setValue(null);
+          }, LEAVE_GRACE_MS);
         }}
         onBlur={(event: FocusEvent<HTMLElement>) => {
           onBlur?.(event);
@@ -381,9 +465,12 @@ const CATEGORY_CHEVRON_CLASS = "text-fg-3 flex shrink-0 rtl:rotate-180";
  * должны читаться одной системой.
  */
 const SHOWCASE_CLASS =
-  "bg-surface-elevated border-line absolute start-full top-0 ms-1 min-h-full " +
+  "bg-surface-elevated border-line absolute top-0 min-h-full " +
   "w-[var(--mega-menu-showcase-w)] max-w-[calc(100vw-2rem)] rounded-md border p-4 " +
   `shadow-[var(--shadow-2)] ${OVERLAY_LAYER.popover}`;
+
+/** Сторона Витрины: со стороны конца строки или, перевёрнутая у края, — начала. */
+const SHOWCASE_SIDE = { end: "start-full ms-1", start: "end-full me-1" } as const;
 
 const SHOWCASE_HEADING_CLASS =
   "text-fg-0 hover:text-accent-strong mb-3 inline-flex items-center gap-1 text-[15px] " +
@@ -460,8 +547,9 @@ export function MegaMenuCategory({
       menu.onCategoryKeyDown(event, id, hasShowcase),
     onPointerEnter: (event: PointerEvent<HTMLElement>) => {
       if (disabled || event.pointerType === "touch" || event.pointerType === "pen") return;
-      if (hasShowcase) menu.openCategory(id);
-      else menu.close();
+      // Решает Прицел: курсор, идущий к открытой Витрине наискосок, задевает
+      // соседние строки — они не должны её перехватывать.
+      menu.hoverCategory(hasShowcase ? id : null);
     },
   };
 
@@ -516,7 +604,7 @@ export function MegaMenuCategory({
         id={showcaseId}
         aria-labelledby={categoryId}
         hidden={!open}
-        className={SHOWCASE_CLASS}
+        className={cn(SHOWCASE_CLASS, SHOWCASE_SIDE[menu.flipped ? "start" : "end"])}
         onKeyDown={(event) => menu.onShowcaseKeyDown(event, id)}
       >
         {open && (
