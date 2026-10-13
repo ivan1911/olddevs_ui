@@ -76,6 +76,8 @@ interface MegaMenuContextValue {
   hoverCategory: (target: string | null) => void;
   /** Витрина перевёрнута на другую сторону: со стороны конца строки ей не хватило места. */
   flipped: boolean;
+  /** Мегаменю в оверлее `MegaMenuTrigger`: Столбец и Витрина прокручиваются сами. */
+  inOverlay: boolean;
   /** Узкий экран: Витрина заменяет Столбец, а не встаёт сбоку. */
   narrow: boolean;
   /** Категория, чья Витрина сейчас заменяет Столбец; `null` — Столбец на месте. */
@@ -192,6 +194,8 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
 ) {
   const baseId = useId();
   const rootRef = useRef<HTMLElement | null>(null);
+  // Внутри `MegaMenuTrigger` Столбец и Витрина прокручиваются в оверлее сами.
+  const inOverlay = useContext(MegaMenuTriggerContext) !== null;
   const [innerValue, setInnerValue] = useState<string | null>(defaultValue);
   const controlled = valueProp !== undefined;
   const value = controlled ? valueProp : innerValue;
@@ -217,6 +221,24 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       onValueChangeRef.current?.(next);
     },
     [controlled]
+  );
+
+  /*
+    Смена или закрытие по указателю (уход мыши, отложенная смена Прицела) не
+    должны терять фокус: если он внутри уходящей Витрины, её содержимое
+    размонтируется, и фокус упал бы на `body` посреди работы с клавиатуры. Тогда
+    он возвращается на Категорию этой Витрины — через тот же эффект, что у «Назад».
+  */
+  const switchByPointer = useCallback(
+    (next: string | null) => {
+      const current = valueRef.current;
+      if (current !== null && next !== current) {
+        const showcase = document.getElementById(domId(baseId, "showcase", current));
+        if (showcase?.contains(document.activeElement)) returnFocus.current = current;
+      }
+      setValue(next);
+    },
+    [baseId, setValue]
   );
 
   const cancelLeave = () => {
@@ -248,15 +270,19 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   narrowRef.current = narrow;
   // Спуск возможен лишь в Категорию с Витриной: `value` с чужим ключом или
   // Категория без детей Столбец не прячут — иначе не осталось бы ничего.
+  // Категории, обёрнутые своим компонентом, отсюда не видны — тогда спуск
+  // доверяет `value`: открыть можно только Категорию с Витриной.
   const drilledId =
     narrow && value !== null
-      ? (categories.find(
-          (category) =>
-            category.props.id === value && Children.toArray(category.props.children).length > 0
-        )?.props.id ?? null)
+      ? categories.length === 0
+        ? value
+        : (categories.find(
+            (category) =>
+              category.props.id === value && Children.toArray(category.props.children).length > 0
+          )?.props.id ?? null)
       : null;
 
-  const aim = useMenuAim({ value, showcaseRef, commit: setValue });
+  const aim = useMenuAim({ value, showcaseRef, commit: switchByPointer });
   const { cancel: cancelAim, request: requestAim } = aim;
 
   /*
@@ -301,7 +327,25 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     measureFlip();
     window.addEventListener("resize", measureFlip);
     return () => window.removeEventListener("resize", measureFlip);
-  }, [measureFlip, showcaseWidth, value]);
+    // Перемер — при открытии каталога, а не на каждой смене Категории: сторона
+    // от смены не зависит, а зонд и чтение раскладки на каждое наведение — лишняя
+    // работа на горячем пути.
+  }, [measureFlip, showcaseWidth, value === null]);
+
+  /*
+    Столбец обязан остаться остановкой Tab. Расчёт выше видит только прямых
+    детей и доверяет `value`, а `value` бывает чужим ключом (устаревший адрес),
+    запомненная Категория — убранной из списка, Категории — обёрнутыми своим
+    компонентом. Тогда ни у одной строки нет `tabIndex=0`, и Tab молча
+    перепрыгивает каталог. Проверка — по DOM после отрисовки, остановка
+    переезжает на первую доступную строку.
+  */
+  useLayoutEffect(() => {
+    const nodes = categoryNodes(true);
+    if (nodes.length === 0 || nodes.some((node) => node.tabIndex === 0)) return;
+    const first = nodes.find((node) => node.getAttribute("aria-disabled") !== "true");
+    if (first?.dataset.megaCategory) setFocusedId(first.dataset.megaCategory);
+  });
 
   const focusCategory = useCallback(
     (id: string) => {
@@ -372,7 +416,11 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
           openCategory(id, true);
           return;
         default:
-          if (event.key === forwardKey(node, measureFlip()) && hasShowcase) {
+          if (
+            hasShowcase &&
+            (event.key === "ArrowLeft" || event.key === "ArrowRight") &&
+            event.key === forwardKey(node, measureFlip())
+          ) {
             if (node.getAttribute("aria-disabled") === "true") return;
             event.preventDefault();
             openCategory(id, true);
@@ -409,17 +457,18 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
         }
         return;
       }
-      const backKey =
-        forwardKey(event.currentTarget, measureFlip()) === "ArrowRight"
-          ? "ArrowLeft"
-          : "ArrowRight";
       if (event.key === "Escape") {
         event.preventDefault();
         // Фокус — до закрытия: закрытие размонтирует ссылку под фокусом, и
         // фокус упал бы на `body`.
         focusCategory(id);
         close();
-      } else if (event.key === backKey) {
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        const backKey =
+          forwardKey(event.currentTarget, measureFlip()) === "ArrowRight"
+            ? "ArrowLeft"
+            : "ArrowRight";
+        if (event.key !== backKey) return;
         event.preventDefault();
         focusCategory(id);
       }
@@ -436,6 +485,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       flipped,
       narrow,
       drilledId,
+      inOverlay,
       back,
       onCategoryKeyDown,
       onShowcaseKeyDown,
@@ -450,6 +500,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     flipped,
     narrow,
     drilledId,
+    inOverlay,
     setValue,
     categoryNodes,
     focusCategory,
@@ -495,7 +546,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
             // его не отменяет, возвращает «Назад».
             if (narrowRef.current) return;
             cancelAim();
-            setValue(null);
+            switchByPointer(null);
           }, LEAVE_GRACE_MS);
         }}
         onBlur={(event: FocusEvent<HTMLElement>) => {
@@ -508,7 +559,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
         }}
         {...rest}
       >
-        <ul className={COLUMN_CLASS}>{children}</ul>
+        <ul className={cn(COLUMN_CLASS, inOverlay && OVERLAY_SCROLL_CLASS)}>{children}</ul>
       </nav>
     </MegaMenuContext.Provider>
   );
@@ -679,16 +730,21 @@ export function MegaMenuCategory({
   );
 
   if (!hasShowcase) {
-    const Comp = link ? Slot : "a";
+    // Выключенная — не переход, и ссылку роутера она не рисует вовсе: `Slot`
+    // зовёт обработчик потомка раньше своего, и роутер успел бы перейти до
+    // любого `preventDefault`. Остаётся `a` без адреса — `aria-disabled` у
+    // ссылки лишь объявляет недоступность, а не отменяет её.
+    const routed = link != null && !disabled;
+    const Comp = routed ? Slot : "a";
     return (
       <li hidden={coveredByOther}>
         <Comp
           {...shared}
-          href={link ? undefined : href}
+          href={routed || disabled ? undefined : href}
           className={cn(CATEGORY_CLASS, !disabled && CATEGORY_LINK_CLASS, className)}
         >
           {content}
-          {link ? <Slottable>{link}</Slottable> : null}
+          {routed ? <Slottable>{link}</Slottable> : null}
         </Comp>
       </li>
     );
@@ -722,10 +778,15 @@ export function MegaMenuCategory({
         id={showcaseId}
         aria-labelledby={categoryId}
         hidden={!open}
+        data-mega-showcase-region=""
         className={
           drilled
             ? SHOWCASE_DRILLED_CLASS
-            : cn(SHOWCASE_CLASS, SHOWCASE_SIDE[menu.flipped ? "start" : "end"])
+            : cn(
+                SHOWCASE_CLASS,
+                SHOWCASE_SIDE[menu.flipped ? "start" : "end"],
+                menu.inOverlay && OVERLAY_SCROLL_CLASS
+              )
         }
         onKeyDown={(event) => menu.onShowcaseKeyDown(event, id)}
       >
@@ -909,34 +970,33 @@ const DropdownPortal = withoutToolbarAxis(PopoverPrimitive.Portal);
  * ПРОКРУТКА — У СТОЛБЦА И У ВИТРИНЫ ПО ОТДЕЛЬНОСТИ, а не у оверлея целиком.
  * Витрина — `absolute` от `nav`, рядом со Столбцом. `overflow: auto` на самом
  * оверлее обрезал бы её по его рамке, и от Витрины осталась бы полоска шириной
- * в зазор. Поэтому ограничены высотой два прямых потомка: `ul` Столбца и
- * `section` Витрины. `ul` не позиционирован, и содержащий блок Витрины — `nav`
- * выше него, так что `overflow` на `ul` Витрину не режет.
- *
- * Высота — `available-height` из Radix (место до края окна от кнопки). Селекторы
- * потомков, а не классы внутри `MegaMenu`: вид встроенного мегаменю остаётся
- * как был, а зависимость от разметки (`nav > ul > li > section`) записана здесь
- * одним местом.
+ * в зазор. Поэтому высотой ограничены `ul` Столбца и `section` Витрины — классом
+ * `OVERLAY_SCROLL_CLASS`, который ставит сам `MegaMenu`. `ul` не позиционирован,
+ * и содержащий блок Витрины — `nav` выше него, так что `overflow` на `ul`
+ * Витрину не режет.
  */
 const DROPDOWN_CONTENT_CLASS =
   `${OVERLAY_LAYER.popover} outline-none ` +
   // Появление и уход — токены, видимые гейту `prefers-reduced-motion` (ADR-0043, ADR-0047).
-  "data-[state=open]:animate-fadein data-[state=closed]:animate-fadeout " +
-  "[&>nav>ul]:max-h-[var(--radix-popover-content-available-height)] " +
-  "[&>nav>ul]:overflow-y-auto [&>nav>ul]:overscroll-contain " +
-  "[&>nav>ul>li>section]:max-h-[var(--radix-popover-content-available-height)] " +
-  "[&>nav>ul>li>section]:overflow-y-auto [&>nav>ul>li>section]:overscroll-contain " +
-  /*
-    Обход высоты на iOS — как у `MENU_PANEL_CLASS`: в Safari на iOS 27
-    `available-height` бывает близок к нулю, и от Столбца остаётся полоска.
-    24rem или 60 % динамической высоты экрана — что меньше; `!` перебивает
-    правило выше. `-webkit-touch-callout` понимает только WebKit на iOS.
-  */
-  "[&>nav>ul]:[@supports(-webkit-touch-callout:none)]:max-h-[min(24rem,60dvh)]! " +
-  "[&>nav>ul>li>section]:[@supports(-webkit-touch-callout:none)]:max-h-[min(24rem,60dvh)]!";
+  "data-[state=open]:animate-fadein data-[state=closed]:animate-fadeout";
+
+/**
+ * Прокрутка Столбца и Витрины в оверлее: высота до края окна от кнопки
+ * (`available-height` Radix). Классы ставит сам `MegaMenu`, узнав оверлей по
+ * контексту, — а не оверлей селекторами по чужой разметке, которые молча
+ * отвалились бы при первой её правке.
+ *
+ * Обход высоты на iOS — как у `MENU_PANEL_CLASS`: в Safari на iOS 27
+ * `available-height` бывает близок к нулю, и от Столбца остаётся полоска.
+ * 24rem или 60 % динамической высоты экрана — что меньше; `!` перебивает
+ * правило выше. `-webkit-touch-callout` понимает только WebKit на iOS.
+ */
+const OVERLAY_SCROLL_CLASS =
+  "max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain " +
+  "[@supports(-webkit-touch-callout:none)]:max-h-[min(24rem,60dvh)]!";
 
 /** Поле ввода внутри Витрины Escape оставляет себе — иначе закрываем оверлей. */
-const SHOWCASE_SELECTOR = "nav li > section";
+const SHOWCASE_SELECTOR = "[data-mega-showcase-region]";
 
 /** Остановки Tab внутри оверлея: Столбец — одна, плюс ссылки открытой Витрины. */
 function tabStops(root: HTMLElement): HTMLElement[] {

@@ -329,3 +329,91 @@ test("the catalog renders on the server", () => {
   expect(html).toContain("Novels");
   expect(html).toContain('aria-label="Catalog"');
 });
+
+/*
+  Находки ревью ветки эпика (OLDSUI-259): фокус при закрытии указателем,
+  выключенная ссылка-Категория, остановка Tab при чужом `value` и при обёрнутых
+  Категориях.
+*/
+
+test("when the pointer leaves while keyboard focus is in the showcase, focus returns to its category", () => {
+  vi.useFakeTimers();
+  render(<Catalog />);
+  const nav = screen.getByRole("navigation", { name: "Catalog" });
+
+  act(() => {
+    fireEvent.pointerEnter(nav, { pointerType: "mouse" });
+    category("Books").focus();
+    fireEvent.keyDown(category("Books"), { key: "Enter" });
+  });
+  expect(document.activeElement).toBe(screen.getByRole("link", { name: "Novels" }));
+
+  act(() => {
+    fireEvent.pointerLeave(nav, { pointerType: "mouse" });
+  });
+  act(() => vi.advanceTimersByTime(200));
+
+  expect(category("Books").getAttribute("aria-expanded")).toBe("false");
+  expect(document.activeElement).toBe(category("Books"));
+});
+
+test("a disabled link category does not navigate", () => {
+  const onRouterClick = vi.fn();
+  render(
+    <MegaMenu aria-label="Catalog">
+      <MegaMenuCategory id="sale" label="Sale" href="/sale" disabled />
+      <MegaMenuCategory
+        id="deals"
+        label="Deals"
+        disabled
+        link={<RouterLink href="/deals" onClick={onRouterClick} />}
+      />
+    </MegaMenu>
+  );
+
+  // Без адреса у `a` нет роли ссылки — ищем по тексту.
+  expect(screen.getByText("Sale").closest("a")?.hasAttribute("href")).toBe(false);
+  // Ссылку роутера выключенная Категория не рисует: её обработчик перешёл бы
+  // раньше любой отмены.
+  const deals = screen.getByText("Deals").closest("a");
+  expect(deals?.hasAttribute("data-router")).toBe(false);
+  expect(deals?.hasAttribute("href")).toBe(false);
+  fireEvent.click(screen.getByText("Deals"));
+  expect(onRouterClick).not.toHaveBeenCalled();
+});
+
+test("an unknown controlled value still leaves the column a tab stop", async () => {
+  const user = userEvent.setup();
+  render(<Catalog value="no-such-category" onValueChange={() => {}} />);
+
+  await user.click(screen.getByRole("button", { name: "before" }));
+  await user.tab();
+  expect(document.activeElement).toBe(category("Electronics"));
+});
+
+function WrappedCategory({ id, label }: { id: string; label: string }) {
+  return (
+    <MegaMenuCategory id={id} label={label}>
+      <MegaMenuGroup title={`${label} group`}>
+        <MegaMenuLink href={`/${id}`}>{`${label} link`}</MegaMenuLink>
+      </MegaMenuGroup>
+    </MegaMenuCategory>
+  );
+}
+
+test("categories wrapped in the consumer's own component still get a tab stop", async () => {
+  const user = userEvent.setup();
+  render(
+    <>
+      <button type="button">before</button>
+      <MegaMenu aria-label="Catalog">
+        <WrappedCategory id="a" label="Alpha" />
+        <WrappedCategory id="b" label="Beta" />
+      </MegaMenu>
+    </>
+  );
+
+  await user.click(screen.getByRole("button", { name: "before" }));
+  await user.tab();
+  expect(document.activeElement).toBe(category("Alpha"));
+});

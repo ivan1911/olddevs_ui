@@ -218,3 +218,19 @@ test("near the end edge of the window the showcase flips, and the arrow towards 
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
   }
 });
+
+test("a deferred switch that unmounts the focused showcase hands focus to its category", () => {
+  render(<Catalog />);
+  enter(category("Alpha"));
+  move(100, 20);
+  move(130, 30);
+  enter(category("Beta"));
+  // Пока смена отложена, пользователь ушёл Tab'ом в открытую Витрину.
+  act(() => {
+    screen.getByRole("link", { name: "Alpha link" }).focus();
+  });
+  tick(310);
+
+  expect(expanded("Beta")).toBe(true);
+  expect(document.activeElement).toBe(category("Alpha"));
+});
