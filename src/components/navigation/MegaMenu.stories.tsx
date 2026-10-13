@@ -1,17 +1,28 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ReactNode } from "react";
 import {
+  BellIcon,
   DesktopIcon,
   GameIcon,
   HealthIcon,
   HomeIcon,
+  ListIcon,
   MobileIcon,
   PaletteIcon,
   PurchaseIcon,
   ReadingIcon,
   TripIcon,
 } from "../../icons.js";
-import { MegaMenu, MegaMenuCategory, MegaMenuGroup, MegaMenuLink } from "./MegaMenu.js";
+import { TopBar } from "../app-shell/TopBar.js";
+import { Button } from "../actions/Button.js";
+import {
+  MegaMenu,
+  MegaMenuButton,
+  MegaMenuCategory,
+  MegaMenuGroup,
+  MegaMenuLink,
+  MegaMenuTrigger,
+} from "./MegaMenu.js";
 
 const meta = {
   title: "Navigation/MegaMenu",
@@ -105,6 +116,33 @@ export const Open: Story = {
   render: () => (
     <div className="min-h-[480px]">
       <StoreCatalog defaultValue="computers" />
+    </div>
+  ),
+};
+
+/**
+ * Выпадающий вид: кнопка «Catalog» в шапке открывает ту же разметку в оверлее
+ * под собой. Щелчок или Enter, Пробел, стрелка вниз; наведение не открывает.
+ * Escape, щелчок снаружи, второй щелчок по кнопке и переход по ссылке закрывают.
+ */
+export const DropdownInTopBar: Story = {
+  parameters: { layout: "fullscreen" },
+  render: () => (
+    <div className="min-h-[560px]">
+      <TopBar
+        brand={
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-bold tracking-tight">Shop</span>
+            <MegaMenuTrigger>
+              <MegaMenuButton variant="soft" icon={<ListIcon size={16} />}>
+                Catalog
+              </MegaMenuButton>
+              <StoreCatalog />
+            </MegaMenuTrigger>
+          </div>
+        }
+        actions={<Button variant="ghost" iconOnly icon={<BellIcon />} aria-label="Notifications" />}
+      />
     </div>
   ),
 };

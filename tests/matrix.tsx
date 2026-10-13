@@ -97,9 +97,11 @@ import { Stat } from "../src/components/content/Stat.js";
 import { Stepper } from "../src/components/navigation/Stepper.js";
 import {
   MegaMenu,
+  MegaMenuButton,
   MegaMenuCategory,
   MegaMenuGroup,
   MegaMenuLink,
+  MegaMenuTrigger,
 } from "../src/components/navigation/MegaMenu.js";
 import { DataTable } from "../src/components/table/DataTable.js";
 import { FilterBar } from "../src/components/table/FilterBar.js";
@@ -1223,6 +1225,17 @@ export function renderMatrix(): ReactElement {
       h(MegaMenuCategory, { id: "sale", label: "Sale", href: "#" }),
       h(MegaMenuCategory, { id: "off", label: "Off", disabled: true }, h("span"))
     )
+  );
+  // Выпадающий вид: на сервере виден только закрытый Раскрыватель — оверлей в
+  // портале монтируется после гидратации, и его классы матрица не видит.
+  els.push(
+    h(MegaMenuTrigger, {
+      key: "mmt",
+      children: [
+        h(MegaMenuButton, { key: "button", icon: h("span") }, "Catalog"),
+        h(MegaMenu, { key: "menu", "aria-label": "Catalog" }),
+      ],
+    })
   );
   for (const tone of TONES)
     els.push(

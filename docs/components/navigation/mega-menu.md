@@ -1,6 +1,6 @@
 ---
 component: MegaMenu
-exports: [MegaMenu, MegaMenuCategory, MegaMenuGroup, MegaMenuLink]
+exports: [MegaMenu, MegaMenuCategory, MegaMenuGroup, MegaMenuLink, MegaMenuTrigger, MegaMenuButton]
 category: navigation
 status: stable
 source: src/components/navigation/MegaMenu.tsx
@@ -14,7 +14,8 @@ story: src/components/navigation/MegaMenu.stories.tsx
 `MegaMenu` — каталог магазина в духе Amazon: слева Столбец категорий, справа от наведённой Категории — её
 Витрина с колонками ссылок и любым своим содержимым. Это навигация по ссылкам, а не меню команд: разметка по
 шаблону WAI-ARIA Disclosure Navigation (`nav`, кнопки с `aria-expanded`, настоящие `a`). Категории —
-`MegaMenuCategory` прямыми детьми, колонки — `MegaMenuGroup`, ссылки — `MegaMenuLink`.
+`MegaMenuCategory` прямыми детьми, колонки — `MegaMenuGroup`, ссылки — `MegaMenuLink`. Тот же каталог
+открывается выпадающим оверлеем от кнопки: `MegaMenuTrigger` с `MegaMenuButton` и неизменным `MegaMenu`.
 
 ## Когда использовать
 
@@ -101,6 +102,61 @@ import { MegaMenu, MegaMenuCategory, MegaMenuGroup, MegaMenuLink } from "@olddev
 - Скринридер слышит навигацию с именем из `aria-label`, Категории — кнопками «развёрнуто / свёрнуто», Витрину
   — регионом с именем Категории, колонку — списком с именем заголовка.
 
+## Выпадающий вид
+
+Каталог в шапке открывают кнопкой «Каталог», а не держат на странице. Разметка Категорий та же, что во встроенном
+виде, меняется только обёртка: `MegaMenu` кладут в `MegaMenuTrigger` вторым после кнопки `MegaMenuButton`.
+
+```tsx
+import {
+  MegaMenu,
+  MegaMenuButton,
+  MegaMenuCategory,
+  MegaMenuGroup,
+  MegaMenuLink,
+  MegaMenuTrigger,
+} from "@olddevs/ui";
+import { ListIcon } from "@olddevs/ui/icons";
+
+<MegaMenuTrigger>
+  <MegaMenuButton icon={<ListIcon size={16} />}>Каталог</MegaMenuButton>
+  <MegaMenu aria-label="Каталог">
+    <MegaMenuCategory id="computers" label="Компьютеры" href="/computers">
+      <MegaMenuGroup title="Ноутбуки">
+        <MegaMenuLink href="/computers/laptops/gaming">Игровые</MegaMenuLink>
+      </MegaMenuGroup>
+    </MegaMenuCategory>
+  </MegaMenu>
+</MegaMenuTrigger>;
+```
+
+`MegaMenuTrigger`: `open`, `defaultOpen` и `onOpenChange` — открытость, управляемо или нет, как у других
+оверлеев кита. Первый ребёнок — кнопка, все остальные уходят в оверлей; разбор идёт по позиции, поэтому кнопку
+можно обернуть своим компонентом, а `MegaMenu` — вынести в свой. `MegaMenuButton` принимает вид кнопки кита
+(`variant`, `tone`, `size`, `iconOnly`, `selected`), `icon`, `disabled`, `aria-label` и `className`; вид тот же, что у
+`MenuButton`.
+
+- **Открытие.** Щелчок, Enter, Пробел и стрелка вниз на кнопке. Наведение каталог не открывает: он не должен
+  выпрыгивать от случайного движения мыши.
+- **Фокус.** При открытии фокус встаёт на первую доступную Категорию (если одна из них уже открыта через `value` или
+  `defaultValue` — на неё), Витрина закрыта до выбора. Дальше Столбец и Витрина работают как во встроенном виде.
+- **Закрытие.** Escape на Категории, нажатие вне каталога, повторный щелчок по кнопке, переход по любой ссылке
+  (Категория, заголовок колонки, `MegaMenuLink`, в том числе ссылки роутера) и Tab за последним элементом.
+  Первый Escape внутри Витрины закрывает только Витрину и возвращает фокус на её Категорию; оверлей закрывает
+  следующий.
+- **Возврат фокуса.** На кнопку фокус возвращается при Escape и при повторном щелчке. После Tab за последним
+  элементом фокус идёт дальше по странице, за кнопкой; Shift+Tab перед первым элементом возвращает на кнопку. После
+  нажатия вне каталога фокус остаётся там, куда нажал пользователь.
+- **Скринридер.** Кнопка — раскрыватель с `aria-expanded` и `aria-controls`, без `aria-haspopup`: оверлей — не
+  меню и не диалог, а та же навигация с ссылками. Роли `dialog` у оверлея нет.
+- **Слои.** Оверлей лежит на слое `popover`: выше затемнения открытого `Dialog`, ниже подтверждения. Внутри окна
+  первый Escape закрывает каталог, следующий — окно. Если в Витрине открыт показ, сначала закрывается он.
+- **Высота.** Оверлей не выше видимой области от кнопки до края окна. Столбец и Витрина прокручиваются каждый
+  внутри себя (`overscroll-contain`), а не оверлей целиком: иначе рамка оверлея обрезала бы Витрину, которая
+  стоит рядом со Столбцом. На iOS высота ограничена `min(24rem, 60dvh)`, как у панели `Menu`.
+- **Появление.** Плавное, по шкале движения кита; при `prefers-reduced-motion` без анимации.
+- **Сервер.** На сервере рисуется закрытая кнопка; оверлей монтируется в портале после открытия.
+
 ## Связанные исходники и проверка
 
 - Реализация: `src/components/navigation/MegaMenu.tsx`.
@@ -108,4 +164,7 @@ import { MegaMenu, MegaMenuCategory, MegaMenuGroup, MegaMenuLink } from "@olddev
   Витрины, закрытие с задержкой, roving tabindex, Enter, Escape и стрелки, Tab за последней ссылкой,
   Категория-ссылка, выключенная Категория, `current`, `asChild` и `link`, управляемое значение, нажатие вне
   каталога, рендер на сервере.
-- История: `src/components/navigation/MegaMenu.stories.tsx`.
+- Выпадающий вид: `tests/mega-menu-dropdown.test.tsx` — открытие щелчком и клавишами с фокусом на первой
+  Категории, все пути закрытия и возврат фокуса, Escape в Витрине, `open` / `defaultOpen` / `onOpenChange`, слой
+  `popover`, порядок Escape внутри `Dialog`, рендер на сервере.
+- История: `src/components/navigation/MegaMenu.stories.tsx` — в том числе `DropdownInTopBar`, мегаменю в шапке.
