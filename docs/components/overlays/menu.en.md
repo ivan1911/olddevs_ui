@@ -5,7 +5,7 @@ category: overlays
 status: stable
 source: src/components/overlays/Menu.tsx
 story: src/components/overlays/Menu.stories.tsx
-sourceHash: 473c4ffa0e0a
+sourceHash: e6bb9a14d118
 ---
 
 # Menu
@@ -57,8 +57,11 @@ and `className`; `aria-label` is required if the button has no text, and with
 `iconOnly` it never does. `Menu` accepts the usual `AriaMenuProps`, plus `offset`,
 the gap between the panel and the button in pixels (default 6), and `placement`,
 the side where the panel opens (default for the root menu `bottom start`; also
-`bottom end`, `top start`, `top end`, `right top` and `left top`; the submenu
-default is described below).
+`bottom end`, `top start`, `top end`, `end top`, `start top`, `right top` and
+`left top`; the submenu default is described below). `end top` and `start top`
+open beside the panel at the end or the start of the line, so they swap sides in
+right-to-left writing; `right top` and `left top` don't depend on the writing
+direction.
 
 `MenuItem` accepts the `AriaMenuItem` props, `icon`, `shortcut`, `tone`,
 `disabled` and `className`; pass the action in `onAction`. `MenuSection` accepts
@@ -72,7 +75,8 @@ the right, react-aria flips it to the left. In a right-to-left layout everything
 mirrored: the submenu opens to the left of its item. On a narrow screen (up to 639px wide)
 there is no room on either side, so the submenu opens below its item, over the
 parent menu. An explicit `placement` on the nested `Menu` wins over the default,
-phones included. The root menu opens as before, at `bottom start`. The Editor's
+phones included; to pick the side yourself without breaking right-to-left
+writing, use `end top` or `start top`. The root menu opens as before, at `bottom start`. The Editor's
 submenus follow the same rule.
 
 Moving the pointer diagonally toward a submenu neither closes it nor switches to a
