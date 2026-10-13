@@ -74,3 +74,31 @@ test("moving straight down the column switches categories without waiting", asyn
     "true"
   );
 });
+
+/*
+  Выпадающий вид у правого края окна (OLDSUI-257): Витрина переходит на другую
+  сторону Столбца и остаётся в окне. Сторона меряется при открытии Категории, а
+  не на монтировании: в этот момент Radix ещё не расставил оверлей.
+*/
+test("in the dropdown near the right edge the showcase flips and stays in the viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(
+    "/iframe.html?id=navigation-megamenu--dropdown-in-top-bar&globals=theme:light;accent:blue"
+  );
+  const button = page.getByRole("button", { name: "Catalog" });
+  // Кнопка — к правому краю окна, как в шапке с каталогом справа.
+  await button.evaluate((node) => {
+    Object.assign((node as HTMLElement).style, { position: "fixed", right: "8px", top: "8px" });
+  });
+  await button.click();
+  await page.getByRole("button", { name: "Computers" }).hover();
+
+  const showcase = await page.getByRole("region", { name: "Computers" }).boundingBox();
+  const column = await page.getByRole("button", { name: "Computers" }).boundingBox();
+  if (!showcase || !column) throw new Error("no boxes");
+  expect(showcase.x).toBeGreaterThanOrEqual(0);
+  expect(showcase.x + showcase.width).toBeLessThanOrEqual(1280);
+  expect(showcase.x + showcase.width).toBeLessThanOrEqual(column.x + 4);
+});

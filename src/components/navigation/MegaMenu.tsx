@@ -271,29 +271,37 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     браузер.
   */
   const [flipped, setFlipped] = useState(false);
-  useLayoutEffect(() => {
+  /*
+    Замер — функция, а не только эффект: в выпадающем виде `nav` монтируется
+    раньше, чем Radix расставит оверлей, и замер на монтировании видит его не
+    там, где он окажется. Поэтому сторона перемеряется ещё и при открытии
+    Категории и прямо перед решением, какая стрелка ведёт к Витрине.
+  */
+  const measureFlip = useCallback((): boolean => {
     const root = rootRef.current;
-    if (!root) return;
-    const measure = () => {
-      const probe = document.createElement("div");
-      probe.style.position = "absolute";
-      probe.style.visibility = "hidden";
-      probe.style.pointerEvents = "none";
-      probe.style.width = "var(--mega-menu-showcase-w)";
-      root.appendChild(probe);
-      const showcase = Math.min(probe.offsetWidth, window.innerWidth - 32);
-      probe.remove();
-      const need = showcase + SHOWCASE_GAP + VIEWPORT_MARGIN;
-      const rect = root.getBoundingClientRect();
-      const rtl = getComputedStyle(root).direction === "rtl";
-      const endRoom = rtl ? rect.left : window.innerWidth - rect.right;
-      const startRoom = rtl ? window.innerWidth - rect.right : rect.left;
-      setFlipped(endRoom < need && startRoom >= need);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [showcaseWidth]);
+    if (!root) return false;
+    const probe = document.createElement("div");
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.pointerEvents = "none";
+    probe.style.width = "var(--mega-menu-showcase-w)";
+    root.appendChild(probe);
+    const showcase = Math.min(probe.offsetWidth, window.innerWidth - 32);
+    probe.remove();
+    const need = showcase + SHOWCASE_GAP + VIEWPORT_MARGIN;
+    const rect = root.getBoundingClientRect();
+    const rtl = getComputedStyle(root).direction === "rtl";
+    const endRoom = rtl ? rect.left : window.innerWidth - rect.right;
+    const startRoom = rtl ? window.innerWidth - rect.right : rect.left;
+    const next = endRoom < need && startRoom >= need;
+    setFlipped(next);
+    return next;
+  }, []);
+  useLayoutEffect(() => {
+    measureFlip();
+    window.addEventListener("resize", measureFlip);
+    return () => window.removeEventListener("resize", measureFlip);
+  }, [measureFlip, showcaseWidth, value]);
 
   const focusCategory = useCallback(
     (id: string) => {
@@ -364,7 +372,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
           openCategory(id, true);
           return;
         default:
-          if (event.key === forwardKey(node, flipped) && hasShowcase) {
+          if (event.key === forwardKey(node, measureFlip()) && hasShowcase) {
             if (node.getAttribute("aria-disabled") === "true") return;
             event.preventDefault();
             openCategory(id, true);
@@ -402,7 +410,9 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
         return;
       }
       const backKey =
-        forwardKey(event.currentTarget, flipped) === "ArrowRight" ? "ArrowLeft" : "ArrowRight";
+        forwardKey(event.currentTarget, measureFlip()) === "ArrowRight"
+          ? "ArrowLeft"
+          : "ArrowRight";
       if (event.key === "Escape") {
         event.preventDefault();
         // Фокус — до закрытия: закрытие размонтирует ссылку под фокусом, и
@@ -445,6 +455,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     focusCategory,
     cancelAim,
     requestAim,
+    measureFlip,
   ]);
 
   // Щелчок или касание вне каталога закрывают Витрину. Уход указателя этого
