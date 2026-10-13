@@ -166,7 +166,7 @@ import { MegaMenu, MegaMenuCategory, MegaMenuGroup, MegaMenuLink } from "@olddev
 внутри треугольника значит, что человек ведёт курсор к подменю, и пункты, задетые по пути, его не перехватывают.
 Курсор вышел из треугольника — подменю меняется сразу. Свой разбор Каменс опубликовал 6 марта 2013 года.
 
-![Меню Amazon: треугольник от курсора к верхнему и нижнему углам подменю](https://habrastorage.org/getpro/habr/post_images/469/486/113/469486113d62e4bf471135e20e9b0a63.gif)
+![Меню Amazon: треугольник от курсора к верхнему и нижнему углам подменю](https://ui.olddevs.ru/images/mega-menu/amazon-triangle.gif)
 
 _Анимация из [поста Бена Каменса](https://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown), в
 пересказе на Хабре._
