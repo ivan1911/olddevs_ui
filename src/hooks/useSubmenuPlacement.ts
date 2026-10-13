@@ -1,24 +1,25 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useMediaQuery } from "./useMediaQuery.js";
 
 /** Уже `sm` (640): на такой ширине подменю сбоку от пункта не помещается. */
-const QUERY = "(max-width: 639px)";
+const NARROW_QUERY = "(max-width: 639px)";
 
-function subscribe(onChange: () => void): () => void {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return () => {};
-  const list = window.matchMedia(QUERY);
-  list.addEventListener("change", onChange);
-  return () => list.removeEventListener("change", onChange);
-}
-
-function snapshot(): boolean {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
-  return window.matchMedia(QUERY).matches;
+/**
+ * Узкий ли экран по правилу кита — граница одна на подменю и мегаменю.
+ *
+ * Внутренний хук, как и `useSubmenuPlacement`. До гидратации и без `matchMedia`
+ * — `false`, то есть широкий: серверной ширины нет, а угадывать значило бы
+ * получить расхождение разметки (ADR-0018, см. `useMediaQuery`).
+ */
+export function useNarrowScreen(): boolean {
+  return useMediaQuery(NARROW_QUERY);
 }
 
 /**
- * Где открыть подменю Редактора: сбоку от пункта или под ним.
+ * Где открыть подменю: сбоку от пункта или под ним.
+ *
+ * Правило одно на весь кит: его применяет вложенный `Menu` и подменю Редактора.
  *
  * Сбоку — привычно на десктопе. На телефоне места нет ни справа, ни слева:
  * меню само занимает середину экрана, и react-aria, перевернув подменю на
@@ -33,8 +34,10 @@ function snapshot(): boolean {
  * JS, а не CSS: место подменю — проп поповера, а не класс. Подписка — экран
  * поворачивают на лету. На сервере и без `matchMedia` — сбоку: подменю
  * открывается только в браузере, по действию пользователя.
+ *
+ * Внутренний хук: наружу не экспортируется. Потребитель кита решает за себя
+ * проп `placement` у `Menu`, а умолчание для вложенного меню уже здесь.
  */
 export function useSubmenuPlacement(): "bottom start" | "right top" {
-  const narrow = useSyncExternalStore(subscribe, snapshot, () => false);
-  return narrow ? "bottom start" : "right top";
+  return useNarrowScreen() ? "bottom start" : "right top";
 }

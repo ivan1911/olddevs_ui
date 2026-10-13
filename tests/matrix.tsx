@@ -95,6 +95,14 @@ import { Pagination } from "../src/components/navigation/Pagination.js";
 import { RangeSlider, Slider } from "../src/components/inputs/Slider.js";
 import { Stat } from "../src/components/content/Stat.js";
 import { Stepper } from "../src/components/navigation/Stepper.js";
+import {
+  MegaMenu,
+  MegaMenuButton,
+  MegaMenuCategory,
+  MegaMenuGroup,
+  MegaMenuLink,
+  MegaMenuTrigger,
+} from "../src/components/navigation/MegaMenu.js";
 import { DataTable } from "../src/components/table/DataTable.js";
 import { FilterBar } from "../src/components/table/FilterBar.js";
 import { DEFAULT_TABLE_STATE } from "../src/lib/table-state.js";
@@ -1196,6 +1204,36 @@ export function renderMatrix(): ReactElement {
         { id: "a", label: "Files", hint: "12 photos" },
         { id: "b", label: "Description" },
         { id: "c", label: "Schedule" },
+      ],
+    })
+  );
+  // Открытая Категория — чтобы классы Витрины, колонки и ссылок попали в
+  // разметку; ссылка-Категория и выключенная — свои классы строки.
+  els.push(
+    h(
+      MegaMenu,
+      { key: "mm", "aria-label": "Catalog", defaultValue: "books" },
+      h(
+        MegaMenuCategory,
+        { id: "books", label: "Books", href: "#", icon: h("span") },
+        h(
+          MegaMenuGroup,
+          { title: "Fiction", href: "#" },
+          h(MegaMenuLink, { href: "#", current: true, icon: h("span") }, "Novels")
+        )
+      ),
+      h(MegaMenuCategory, { id: "sale", label: "Sale", href: "#" }),
+      h(MegaMenuCategory, { id: "off", label: "Off", disabled: true }, h("span"))
+    )
+  );
+  // Выпадающий вид: на сервере виден только закрытый Раскрыватель — оверлей в
+  // портале монтируется после гидратации, и его классы матрица не видит.
+  els.push(
+    h(MegaMenuTrigger, {
+      key: "mmt",
+      children: [
+        h(MegaMenuButton, { key: "button", icon: h("span") }, "Catalog"),
+        h(MegaMenu, { key: "menu", "aria-label": "Catalog" }),
       ],
     })
   );

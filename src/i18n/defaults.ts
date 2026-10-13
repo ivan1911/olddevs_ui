@@ -347,6 +347,10 @@ export const DEFAULT_MESSAGES: UiMessages = {
     slide: ({ index, total }) => `${index} of ${total}`,
   },
 
+  megaMenu: {
+    back: "Back",
+  },
+
   shortcutsHelp: {
     title: "Keyboard shortcuts",
     list: "Shortcuts",

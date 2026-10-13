@@ -1,0 +1,273 @@
+---
+component: MegaMenu
+exports: [MegaMenu, MegaMenuCategory, MegaMenuGroup, MegaMenuLink, MegaMenuTrigger, MegaMenuButton]
+category: navigation
+status: stable
+source: src/components/navigation/MegaMenu.tsx
+story: src/components/navigation/MegaMenu.stories.tsx
+sourceHash: 8e166f4b1ab7
+---
+
+# MegaMenu
+
+## Summary for AI
+
+`MegaMenu` is an Amazon-style store catalog: a category column on the left and, next to the hovered
+category, its showcase with columns of links and any content of your own. It is link navigation, not a command
+menu: the markup follows the WAI-ARIA Disclosure Navigation pattern (`nav`, buttons with `aria-expanded`, real
+`a` elements). Categories are `MegaMenuCategory` as direct children, columns are `MegaMenuGroup`, links are
+`MegaMenuLink`. The same catalog opens as a dropdown overlay from a button: `MegaMenuTrigger` with
+`MegaMenuButton` and an unchanged `MegaMenu`.
+
+## When to use
+
+- A catalog with ten or more sections, each with subsections in columns: a store, a marketplace, a help portal.
+- The sections should be visible at once and the subsections should appear on hover, without taking the user
+  off the page.
+- The showcase needs content of its own next to the links: a promo card, an image, a selection.
+
+## When not to use
+
+- For commands on an object ("Rename", "Delete"), use `Menu`: it holds actions, not navigation.
+- For application navigation with a current section, use `SideNav`.
+- For a deep hierarchy that expands in place, use `TreeView`.
+- For two or three links with no subsections, use a plain list of links or `Tabs`.
+
+## Minimal example
+
+```tsx
+import { MegaMenu, MegaMenuCategory, MegaMenuGroup, MegaMenuLink } from "@olddevs/ui";
+
+<MegaMenu aria-label="Catalog">
+  <MegaMenuCategory id="computers" label="Computers" href="/computers">
+    <MegaMenuGroup title="Laptops" href="/computers/laptops">
+      <MegaMenuLink href="/computers/laptops/gaming">Gaming</MegaMenuLink>
+      <MegaMenuLink href="/computers/laptops/ultrabooks" current>
+        Ultrabooks
+      </MegaMenuLink>
+    </MegaMenuGroup>
+  </MegaMenuCategory>
+  <MegaMenuCategory id="deals" label="Deals of the day" href="/deals" />
+</MegaMenu>;
+```
+
+## Props
+
+`MegaMenu`:
+
+| Prop                                       | Default   | Meaning                                                                                                           |
+| ------------------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `aria-label`                               | —         | The accessible name of the navigation. Required: on a page with several `nav` elements, the name tells them apart |
+| `value` / `defaultValue` / `onValueChange` | `null`    | The open category (its `id`) or `null`, controlled or uncontrolled                                                |
+| `showcaseWidth`                            | `"40rem"` | The width of the showcase, shared by all categories so that the catalog does not jump between them                |
+| `className`                                | —         | Classes for the `nav`; the default width of the category column is `w-64`                                         |
+
+`MegaMenuCategory`: `id` is the key for `value`; `label` is the text in the category column and the name of the
+showcase; `icon`; `href` or `link` is the address of the whole section; `disabled`; the children are the content of
+the showcase. For a category with a showcase, the address becomes a title link at the top of the showcase; for a
+category without children, the row in the category column is itself the link. `link` is a router link passed as an
+empty element (`link={<Link href="/x" />}`), and the label moves inside it. It is a separate prop rather than
+`asChild` because the children of a category are its showcase.
+
+`MegaMenuGroup`: `title` is the title of the column and the name of its list; `href` turns the title into a link;
+the children are `MegaMenuLink` elements, and each one is placed in its own list item.
+
+`MegaMenuLink`: the usual `a` props, `icon`, `current` and `asChild`. `current` sets `aria-current="page"` and the
+look of the current link. The kit does not work out the current page itself, because every router compares
+addresses by its own rules. `asChild` renders the link as a router element:
+`<MegaMenuLink asChild><Link href="/x">Label</Link></MegaMenuLink>`.
+
+## Hover and the showcase
+
+Hovering a category with the mouse opens its showcase at once, with no delay. Exactly one category is highlighted,
+the one whose showcase is open: the highlight follows `aria-expanded`, not `:hover`. Hovering a category without a
+showcase closes the open one, with the same caveat about aim as below.
+
+The showcase closes 150 ms after the pointer has left both the category column and the showcase, so a brief
+excursion past the edge does not reset the catalog. It also closes on a pointer press outside the catalog and when
+focus leaves the catalog.
+
+The content of a showcase is mounted only for the open category, so a catalog of a hundred links and images does
+not load everything at once. The region itself is always there, hidden: the button's `aria-controls` points to it.
+
+The showcase is a DOM descendant of its category, not a portal. That is why the Tab order runs "category, its
+links, then on down the page", and why the showcase sits flush against the category column without any position
+calculation. An ancestor with `overflow: hidden` clips it, so put the catalog where there is room beside it.
+
+The showcase sits on the end side of the line: on the right, or on the left in right-to-left writing. If there is
+not enough room there and there is enough on the other side, it moves to the other side. The kit measures the side
+ahead of time and again when the window is resized, so the arrow key that points "toward the showcase" already
+points to where the showcase will appear.
+
+## Touch and narrow screens
+
+Touch has no hover, so the touch itself (`click`) opens a category, without aim. A pointer whose `pointerType` is
+"touch" or "pen" neither opens a category on hover nor closes the showcase when it leaves: a pen behaves like a
+finger. Touching an open category again neither closes it nor goes anywhere. The showcase closes on a touch outside
+the catalog or on Escape.
+
+The mouse behaves as before: hover, aim and closing after 150 ms all remain while the screen is wide.
+
+On a narrow screen, under 640px (the same breakpoint as `Menu` submenus and Editor submenus), there is no room beside
+the category column for the showcase: the edge of the window would cut it off on the right. So the catalog works as a
+drill-down:
+
+- The category column takes the full width, and category labels wrap instead of being truncated.
+- An open category (by touch, click, Enter or Space) replaces the category column with its showcase. The showcase
+  starts with a "Back" row that shows the category name. If the category has a link of its own, the link shows the
+  name, on the row below, instead of the "Back" row. Below that, the columns of links follow, one under another.
+- "Back" returns the category column and puts focus on the category the person came from. Escape inside the showcase
+  works like "Back".
+- When you drill down, focus moves to "Back": the category button is hidden along with the category column, and focus
+  left on it would be lost. In the showcase on a narrow screen, the arrow key toward the category column does
+  nothing, because the column is not beside it.
+- There is no aim on a narrow screen: hovering with the mouse does not open a category, and moving the mouse away does
+  not cancel the drill-down. Replacing the column under the cursor would pull it out from under the person's hand.
+- The markup stays on the disclosure pattern: the category button keeps `aria-expanded` and `aria-controls` pointing
+  to the region on screen (the button itself is hidden during the drill-down), and the region is named after the
+  category.
+
+The "Back" label comes from the message catalog: the key is `megaMenu.back`, with the default "Back"; the Russian
+catalog supplies "Назад".
+
+The kit reads the width through `matchMedia`, not through CSS, because the width determines the contents of the
+markup (the category column is hidden), not just the look. Before hydration and on the server, the hook reports a wide
+screen (ADR-0018): the server does not know the width, and the markup it produces is always the regular one. On a phone,
+after hydration, a showcase opened by `defaultValue` is re-rendered once as a drill-down. On a phone the `nav` takes
+the full width through the `max-sm:w-full` class; a `w-*` class from `className` applies on a wide screen.
+
+## Aim
+
+On its way from a category to its showcase, the pointer cuts diagonally and brushes against the neighboring
+categories. If hover opened them at once, the showcase would change under the person's hand, and the links would be
+out of reach. Aim watches where the pointer is heading: while it moves toward the open showcase, a neighboring
+category does not take over the hover.
+
+- The direction of the pointer's last step is compared with the wedge from its previous position to the two corners
+  of the showcase's near edge: Kamens's triangle from "Where it comes from". A step into the wedge means the pointer
+  is aiming.
+- One movement off course is forgiven; two in a row are not, and then the category under the pointer opens.
+- If the pointer stops for 300 ms, the category under it opens even if it was aiming. The menu does not get stuck.
+- When the pointer reaches the showcase, the deferred switch is canceled.
+- Clicking a category opens it at once, bypassing aim. The keyboard knows nothing about aim.
+- Mouse only, and only on a wide screen: touch and pen open a category at once, and a narrow screen has no aim at all.
+- The first hover, while there is no showcase yet, opens the category with no delay at all: there is nothing to aim at.
+
+The model is the same as for react-aria submenus (`Menu` with `SubmenuTrigger`), so that the two menus of the kit
+behave alike. There are two differences. The category switch is deferred, not suppressed with `pointer-events: none`
+on the category column, since that would lose the highlight under the pointer and the click on a neighboring category.
+And the stop time is 300 ms, as in Kamens's plugin (more on it in "Where it comes from"), not a second, as in react-aria: its submenu is short, while the
+category column of a catalog gets scrolled through.
+
+## Where it comes from
+
+The technique comes from Amazon. By 2013 the "Shop by Department" menu on amazon.com already worked like this: a
+column of departments on the left, a large panel on the right, and switching with no delay at all, while the pointer
+could cut diagonally toward the panel without knocking it away. Ben Kamens worked out how it does that.
+
+- **6 March 2013**: Ben Kamens, a developer at Khan Academy, publishes the analysis "Breaking down Amazon's mega
+  dropdown". He shows that Amazon does not slow the opening down with a delay, as most dropdown menus do, but
+  follows the direction of the pointer: while it stays inside the triangle between the pointer and the corners of the
+  panel, the submenu does not change. Khan Academy puts the technique into its new "Learn" menu.
+- **March 2013**: Kamens publishes the `jQuery-menu-aim` plugin on GitHub: the triangle, a tolerance near the corners
+  and a 300 ms delay for a pointer that has stopped.
+- **7 March 2013**: a retelling of the article appears on Habr, from which the technique spread across the Russian-speaking web.
+- **After that**: the technique moves into libraries: the "safe polygon" `safePolygon()` in Floating UI, the "grace
+  area" of submenus in Radix, the "safe triangle" `useSafelyMouseToSubmenu` in react-aria. Submenus shipped in
+  react-aria as an alpha on 13 February 2024 (v1.1.0) and became stable on 1 May 2024 (v1.2.0).
+- **2026**: `MegaMenu` in `@olddevs/ui`: the react-aria model and Kamens's pause.
+
+Primary sources:
+[Ben Kamens's article](https://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown),
+[the `jQuery-menu-aim` repository](https://github.com/kamens/jQuery-menu-aim),
+[a retelling on Habr, in Russian](https://habr.com/ru/articles/171905/).
+
+## Keyboard and names
+
+- The category column is a single Tab stop. The Up and Down arrows, Home and End move through the categories;
+  disabled ones are skipped. When the user comes back with Tab, they land on the category they were on.
+- Enter, Space and the arrow toward the showcase open it and put focus on the first link. On a category that is a
+  link, Enter follows it.
+- Inside the showcase, plain Tab works. The arrow toward the category column returns focus to the category, and so
+  does Escape, which also closes the showcase. Tab past the last link moves on down the page and closes the showcase.
+- While the showcase is open, it follows the arrow-key focus the way it follows hover.
+- The arrow "toward the showcase" is the one that points to where the showcase sits: in right-to-left writing and at
+  the edge of the screen, the arrows swap places.
+- A screen reader hears a navigation with the name from `aria-label`, the categories as expand/collapse buttons, the
+  showcase as a region named after the category, and a column as a list named after its title.
+
+## Dropdown mode
+
+A catalog in a page header is opened with a "Catalog" button rather than kept on the page. The markup of the
+categories is the same as in the embedded mode; only the wrapper changes: put `MegaMenu` into `MegaMenuTrigger`
+as the second child, after the `MegaMenuButton`.
+
+```tsx
+import {
+  MegaMenu,
+  MegaMenuButton,
+  MegaMenuCategory,
+  MegaMenuGroup,
+  MegaMenuLink,
+  MegaMenuTrigger,
+} from "@olddevs/ui";
+import { ListIcon } from "@olddevs/ui/icons";
+
+<MegaMenuTrigger>
+  <MegaMenuButton icon={<ListIcon size={16} />}>Catalog</MegaMenuButton>
+  <MegaMenu aria-label="Catalog">
+    <MegaMenuCategory id="computers" label="Computers" href="/computers">
+      <MegaMenuGroup title="Laptops">
+        <MegaMenuLink href="/computers/laptops/gaming">Gaming</MegaMenuLink>
+      </MegaMenuGroup>
+    </MegaMenuCategory>
+  </MegaMenu>
+</MegaMenuTrigger>;
+```
+
+`MegaMenuTrigger`: `open`, `defaultOpen` and `onOpenChange` control whether the overlay is open, controlled or
+uncontrolled, as with other overlays of the kit. The first child is the button, and all the others go into the
+overlay. Children are sorted by position, so you can wrap the button in a component of your own and move `MegaMenu`
+into one. `MegaMenuButton` accepts the kit's button look (`variant`, `tone`, `size`, `iconOnly`, `selected`), `icon`,
+`disabled`, `aria-label` and `className`; the look is the same as for `MenuButton`.
+
+- **Opening.** Click, Enter, Space and the Down arrow on the button. Hover does not open the catalog: it should not
+  jump out at a stray mouse movement.
+- **Focus.** On opening, focus goes to the first available category (or, if one is already open through `value` or
+  `defaultValue`, to that one), and the showcase stays closed until a category is chosen. After that the category column
+  and the showcase work as in the embedded mode.
+- **Closing.** Escape on a category, a press outside the catalog, a second click on the button, following any link (a
+  category, a column title, a `MegaMenuLink`, router links included) and Tab past the last element.
+  The first Escape inside a showcase closes only the showcase and returns focus to its category; the next one closes
+  the overlay.
+- **Returning focus.** Focus returns to the button on Escape and on a second click. After Tab past the last element,
+  focus moves on down the page, past the button; Shift+Tab before the first element returns it to the button. After a
+  press outside the catalog, focus stays where the user pressed.
+- **Screen reader.** The button is a disclosure with `aria-expanded` and `aria-controls` and no `aria-haspopup`: the
+  overlay is neither a menu nor a dialog, but the same navigation with links. The overlay has no `dialog` role.
+- **Layers.** The overlay sits on the `popover` layer: above the scrim of an open `Dialog`, below the confirmation.
+  Inside a dialog, the first Escape closes the catalog and the next one closes the dialog. If focus is in an open
+  showcase, the very first Escape closes only the showcase and returns focus to its category.
+- **Height.** The overlay is no taller than the visible area from the button to the edge of the window. The category
+  column and the showcase each scroll within themselves (`overscroll-contain`), not the overlay as a whole: otherwise the
+  overlay's frame would clip the showcase, which stands beside the category column. On iOS the height is capped at
+  `min(24rem, 60dvh)`, like the `Menu` panel.
+- **Appearance.** Smooth, on the kit's motion scale; with `prefers-reduced-motion`, no animation.
+- **Server.** The server renders a closed button; the overlay is mounted in a portal after opening.
+
+## Related sources and tests
+
+- Implementation: `src/components/navigation/MegaMenu.tsx`; aim is in `src/components/navigation/useMenuAim.ts`.
+- Tests: `tests/mega-menu.test.tsx` covers roles and `aria-controls`, hover and mounting only the open
+  showcase, closing with a delay, roving tabindex, Enter, Escape and the arrows, Tab past the last link,
+  a category that is a link, a disabled category, `current`, `asChild` and `link`, the controlled value, a press
+  outside the catalog and server rendering; `tests/mega-menu-aim.test.tsx` covers aim on mocked geometry and fake
+  time, and the flip at the edge; `tests/mega-menu-touch.test.tsx` covers touch and pen, a mocked `matchMedia`,
+  the drill-down in place of the category column, "Back" and focus, Escape, labels from the message catalog and server
+  rendering; the browser test `tests-visual/mega-menu.spec.ts` uses a real mouse moving diagonally and down
+  the category column.
+- Dropdown mode: `tests/mega-menu-dropdown.test.tsx` covers opening by click and keys with focus on the first
+  category, every way of closing and returning focus, Escape in the showcase, `open` / `defaultOpen` / `onOpenChange`, the
+  `popover` layer, the order of Escape inside a `Dialog` and server rendering.
+- Story: `src/components/navigation/MegaMenu.stories.tsx`, including `DropdownInTopBar`, a mega menu in a top bar; at phone
+  width, `PhoneColumn` and `PhoneDrillDown`.

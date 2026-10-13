@@ -56,7 +56,7 @@ import {
   type TableAction,
 } from "./tableActions.js";
 import { TableSizeGrid } from "./TableSizeGrid.js";
-import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
+import { useSubmenuPlacement } from "../../../hooks/useSubmenuPlacement.js";
 import { GLASS_MENU_CLASS } from "../../styles/glass.js";
 
 export interface TableMenuButtonProps {

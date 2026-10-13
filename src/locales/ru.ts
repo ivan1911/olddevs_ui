@@ -376,6 +376,10 @@ export const messages: UiMessages = {
     slide: ({ index, total }) => `${index} из ${total}`,
   },
 
+  megaMenu: {
+    back: "Назад",
+  },
+
   shortcutsHelp: {
     title: "Горячие клавиши",
     list: "Сочетания клавиш",

@@ -1,0 +1,105 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
+import { afterEach, expect, test } from "vitest";
+import {
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuTrigger,
+  SubmenuTrigger,
+} from "../src/components/overlays/Menu.js";
+
+/*
+  Место подменю `Menu` (OLDSUI-254). Положение в jsdom не посчитать, зато
+  react-aria пишет итоговое место на поповер атрибутом `data-placement`, а
+  `data-trigger` говорит, корневой это поповер или подменю — этого хватает,
+  чтобы увидеть умолчание глазами потребителя. Настоящая геометрия, включая
+  переворот у края, проверяется в `tests-visual/menu-submenu.spec.ts`.
+*/
+
+// Шим `CSS.escape`: см. `tests/menu.test.tsx`.
+if (typeof globalThis.CSS === "undefined")
+  (globalThis as unknown as { CSS: { escape: (v: string) => string } }).CSS = {
+    escape: (value: string) => String(value).replace(/[^a-zA-Z0-9_-]/g, (c) => `\\${c}`),
+  };
+
+function mockWidth(narrow: boolean) {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: (query: string) => ({
+      matches: query === "(max-width: 639px)" ? narrow : false,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }),
+  });
+}
+
+afterEach(() => {
+  cleanup();
+  Reflect.deleteProperty(window, "matchMedia");
+});
+
+function Nested({ placement }: { placement?: "bottom end" | "left top" }) {
+  return (
+    <MenuTrigger>
+      <MenuButton>Actions</MenuButton>
+      <Menu>
+        <SubmenuTrigger>
+          <MenuItem>Move to…</MenuItem>
+          <Menu placement={placement}>
+            <MenuItem>Nature</MenuItem>
+          </Menu>
+        </SubmenuTrigger>
+      </Menu>
+    </MenuTrigger>
+  );
+}
+
+/** Открывает корневое меню и подменю с клавиатуры; возвращает оба поповера. */
+async function openBoth() {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "Actions" }));
+  await user.keyboard("{ArrowDown}");
+  await user.keyboard("{ArrowRight}");
+  const root = document.querySelector<HTMLElement>('[data-trigger="MenuTrigger"]');
+  const submenu = document.querySelector<HTMLElement>('[data-trigger="SubmenuTrigger"]');
+  if (!root || !submenu) throw new Error("the menu and the submenu are expected to be open");
+  return { root, submenu };
+}
+
+test("a nested menu without placement opens beside its item", async () => {
+  mockWidth(false);
+  render(<Nested />);
+  const { submenu } = await openBoth();
+  expect(submenu.getAttribute("data-placement")).toBe("right");
+});
+
+test("the root menu keeps opening below its button", async () => {
+  mockWidth(false);
+  render(<Nested />);
+  const { root } = await openBoth();
+  expect(root.getAttribute("data-placement")).toBe("bottom");
+});
+
+test("an explicit placement wins over the submenu default", async () => {
+  mockWidth(false);
+  render(<Nested placement="left top" />);
+  const { submenu } = await openBoth();
+  expect(submenu.getAttribute("data-placement")).toBe("left");
+});
+
+test("on a narrow screen a nested menu without placement opens below its item", async () => {
+  mockWidth(true);
+  render(<Nested />);
+  const { submenu } = await openBoth();
+  expect(submenu.getAttribute("data-placement")).toBe("bottom");
+});
+
+test("on a narrow screen an explicit placement still wins", async () => {
+  mockWidth(true);
+  render(<Nested placement="left top" />);
+  const { submenu } = await openBoth();
+  expect(submenu.getAttribute("data-placement")).toBe("left");
+});
