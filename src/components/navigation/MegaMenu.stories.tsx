@@ -108,3 +108,32 @@ export const Open: Story = {
     </div>
   ),
 };
+
+/**
+ * Столбец на ширине телефона: на всю ширину, подписи переносятся, а не обрезаются.
+ *
+ * Метка `viewport-phone`: визуальный тест снимает историю на 375px, где
+ * узкое правило и работает. В обычном окне сузьте его ниже 640px.
+ */
+export const PhoneColumn: Story = {
+  tags: ["viewport-phone"],
+  render: () => (
+    <div className="min-h-[480px]">
+      <StoreCatalog />
+    </div>
+  ),
+};
+
+/**
+ * Узкий экран: касание Категории заменяет Столбец её Витриной со строкой «Назад»
+ * и именем Категории. Здесь Витрина открыта сразу, для снимка; в живой истории
+ * коснитесь «Computers».
+ */
+export const PhoneDrillDown: Story = {
+  tags: ["viewport-phone"],
+  render: () => (
+    <div className="min-h-[480px]">
+      <StoreCatalog defaultValue="computers" />
+    </div>
+  ),
+};
