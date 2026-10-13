@@ -5,7 +5,7 @@ import { expect, test, type Page } from "@playwright/test";
  *
  * jsdom геометрии не знает, и Прицел там проверяется на подменённых
  * прямоугольниках. Здесь — настоящая раскладка истории и настоящий указатель:
- * курсор идёт к Витрине наискосок через соседнюю Категорию, затем — прямо вниз
+ * курсор идёт к Полке наискосок через соседнюю Категорию, затем — прямо вниз
  * по Столбцу.
  *
  * Шаги — по одному на кадр с паузой: `mouse.move` со `steps` шлёт события
@@ -46,7 +46,7 @@ test("cutting diagonally across a neighbor to the showcase keeps the showcase", 
   if (!showcase) throw new Error("the showcase has no box");
   const phones = await page.getByRole("button", { name: "Phones" }).boundingBox();
   if (!phones) throw new Error("no box for Phones");
-  // Цель — точка в Витрине, путь к которой пересекает край Столбца на высоте
+  // Цель — точка в Полке, путь к которой пересекает край Столбца на высоте
   // строки «Phones»: курсор её заденет.
   const target = { x: showcase.x + 120, y: phones.y + phones.height / 2 + 60 };
   await glide(page, start, target);
@@ -69,14 +69,14 @@ test("moving straight down the column switches categories without waiting", asyn
   const books = await center(page, "Books");
   await glide(page, start, books);
 
-  // Сразу, без ожидания остановки: путь вниз — не к Витрине, Прицел не включался.
+  // Сразу, без ожидания остановки: путь вниз — не к Полке, Прицел не включался.
   expect(await page.getByRole("button", { name: "Books" }).getAttribute("aria-expanded")).toBe(
     "true"
   );
 });
 
 /*
-  Выпадающий вид у правого края окна (OLDSUI-257): Витрина переходит на другую
+  Выпадающий вид у правого края окна (OLDSUI-257): Полка переходит на другую
   сторону Столбца и остаётся в окне. Сторона меряется при открытии Категории, а
   не на монтировании: в этот момент Radix ещё не расставил оверлей.
 */
@@ -101,4 +101,42 @@ test("in the dropdown near the right edge the showcase flips and stays in the vi
   expect(showcase.x).toBeGreaterThanOrEqual(0);
   expect(showcase.x + showcase.width).toBeLessThanOrEqual(1280);
   expect(showcase.x + showcase.width).toBeLessThanOrEqual(column.x + 4);
+});
+
+/*
+  Выпадающий вид на ширине телефона (OLDSUI-262). Обёртка Radix меряет оверлей
+  по содержимому, и без явной ширины каталог сжимался до самой длинной подписи,
+  менял ширину при спуске в Категорию, а подпись без пробелов выталкивала его
+  за край окна. Теперь оверлей — во всю ширину окна без отступов по краям.
+*/
+test("on a phone the dropdown spans the viewport and keeps its width when drilling down", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(
+    "/iframe.html?id=navigation-megamenu--dropdown-in-top-bar&globals=theme:light;accent:blue"
+  );
+  await page.getByRole("button", { name: "Catalog" }).click();
+  const nav = page.getByRole("navigation", { name: "Catalog" });
+
+  // Длинная подпись без пробелов: прежде она выталкивала оверлей за край.
+  await page
+    .getByRole("button", { name: "Health" })
+    .locator("[data-mega-label]")
+    .evaluate((node) => {
+      node.textContent = "Supercalifragilisticexpialidocious-health-and-personal-care";
+    });
+
+  const column = await nav.boundingBox();
+  if (!column) throw new Error("no box for the column");
+  expect(column.x).toBeGreaterThanOrEqual(8 - 1);
+  expect(column.x + column.width).toBeLessThanOrEqual(375 - 8 + 1);
+  expect(column.width).toBeGreaterThan(375 - 16 - 2);
+
+  await page.getByRole("button", { name: "Computers" }).click();
+  await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
+  const drilled = await nav.boundingBox();
+  if (!drilled) throw new Error("no box for the drilled view");
+  expect(drilled.width).toBeCloseTo(column.width, 0);
+  expect(drilled.x).toBeCloseTo(column.x, 0);
 });

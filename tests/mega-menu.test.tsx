@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { forwardRef, useState, type AnchorHTMLAttributes } from "react";
 import { renderToString } from "react-dom/server";
@@ -13,7 +13,7 @@ import {
 
 /*
   Мегаменю — навигация по шаблону WAI-ARIA Disclosure Navigation: Категория
-  с Витриной — кнопка, раскрывающая регион ссылок, а не пункт меню команд.
+  с Полкой — кнопка, раскрывающая регион ссылок, а не пункт меню команд.
   Тесты смотрят только на то, что видно снаружи: роли, атрибуты, фокус,
   смонтированное содержимое.
 */
@@ -65,7 +65,7 @@ test("the catalog is a navigation landmark of disclosure buttons, each controlli
   // Регион существует и закрытым: `aria-controls` не должен указывать в пустоту.
   expect(panel).not.toBeNull();
   expect(panel?.hidden).toBe(true);
-  // Содержимое закрытой Витрины не смонтировано: каталог из сотни ссылок не
+  // Содержимое закрытой Полки не смонтировано: каталог из сотни ссылок не
   // грузит всё сразу.
   expect(screen.queryByRole("link", { name: "Phone A" })).toBeNull();
 });
@@ -178,7 +178,7 @@ test("the arrow towards the showcase opens it, the arrow back returns to the cat
 
   category("Electronics").focus();
   await user.keyboard("{ArrowRight}");
-  // Первой в Витрине стоит ссылка самой Категории — у неё есть `href`.
+  // Первой в Полке стоит ссылка самой Категории — у неё есть `href`.
   expect(document.activeElement).toBe(screen.getByRole("link", { name: "Electronics" }));
 
   await user.keyboard("{ArrowLeft}");
@@ -416,4 +416,227 @@ test("categories wrapped in the consumer's own component still get a tab stop", 
   await user.click(screen.getByRole("button", { name: "before" }));
   await user.tab();
   expect(document.activeElement).toBe(category("Alpha"));
+});
+
+/*
+  Доработки 4.3.0 (OLDSUI-262): ссылка роутера у заголовка колонки, фрагменты
+  в колонке, текущий раздел (`active`), поиск по первой букве и Категории,
+  которые Столбец не видит среди прямых детей (обёрнутые или пришедшие из
+  серверного компонента).
+*/
+
+test("a group title renders as the router's element through its link prop", () => {
+  render(
+    <MegaMenu aria-label="Catalog" defaultValue="books">
+      <MegaMenuCategory id="books" label="Books">
+        <MegaMenuGroup title="Fiction" link={<RouterLink href="/books/fiction" />}>
+          <MegaMenuLink href="/books/novels">Novels</MegaMenuLink>
+        </MegaMenuGroup>
+      </MegaMenuCategory>
+    </MegaMenu>
+  );
+
+  const title = screen.getByRole("link", { name: "Fiction" });
+  expect(title.hasAttribute("data-router")).toBe(true);
+  expect(title.getAttribute("href")).toBe("/books/fiction");
+  // Заголовок-ссылка по-прежнему подписывает список колонки.
+  expect(screen.getByRole("list", { name: "Fiction" })).toBeTruthy();
+});
+
+test("links passed in a fragment each get their own list item", () => {
+  render(
+    <MegaMenu aria-label="Catalog" defaultValue="books">
+      <MegaMenuCategory id="books" label="Books">
+        <MegaMenuGroup title="Fiction">
+          <>
+            <MegaMenuLink href="/books/novels">Novels</MegaMenuLink>
+            <MegaMenuLink href="/books/poetry">Poetry</MegaMenuLink>
+          </>
+        </MegaMenuGroup>
+      </MegaMenuCategory>
+    </MegaMenu>
+  );
+
+  const list = screen.getByRole("list", { name: "Fiction" });
+  expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+});
+
+test("an active link is the current page; current stays as a deprecated alias", async () => {
+  const user = userEvent.setup();
+  render(
+    <MegaMenu aria-label="Catalog">
+      <MegaMenuCategory id="books" label="Books">
+        <MegaMenuGroup title="Fiction">
+          <MegaMenuLink href="/books/novels" active>
+            Novels
+          </MegaMenuLink>
+          <MegaMenuLink href="/books/poetry">Poetry</MegaMenuLink>
+        </MegaMenuGroup>
+      </MegaMenuCategory>
+    </MegaMenu>
+  );
+
+  await user.hover(category("Books"));
+  expect(screen.getByRole("link", { name: "Novels" }).getAttribute("aria-current")).toBe("page");
+  expect(screen.getByRole("link", { name: "Poetry" }).getAttribute("aria-current")).toBeNull();
+});
+
+test("an active category is marked as the current section, whether or not it is open", async () => {
+  const user = userEvent.setup();
+  render(
+    <MegaMenu aria-label="Catalog">
+      <MegaMenuCategory id="electronics" label="Electronics">
+        <MegaMenuLink href="/phones">Phones</MegaMenuLink>
+      </MegaMenuCategory>
+      <MegaMenuCategory id="books" label="Books" active>
+        <MegaMenuLink href="/novels">Novels</MegaMenuLink>
+      </MegaMenuCategory>
+      <MegaMenuCategory id="sale" label="Sale" href="/sale" active />
+    </MegaMenu>
+  );
+
+  expect(category("Books").getAttribute("aria-current")).toBe("true");
+  expect(category("Electronics").getAttribute("aria-current")).toBeNull();
+  // Категория-ссылка — тоже.
+  expect(screen.getByRole("link", { name: "Sale" }).getAttribute("aria-current")).toBe("true");
+
+  // Открытие другой Категории отметку не снимает: текущий раздел задаёт маршрут.
+  await user.hover(category("Electronics"));
+  expect(category("Books").getAttribute("aria-current")).toBe("true");
+});
+
+test("with nothing open, the column's tab stop is the active category", async () => {
+  const user = userEvent.setup();
+  render(
+    <>
+      <button type="button">before</button>
+      <MegaMenu aria-label="Catalog">
+        <MegaMenuCategory id="electronics" label="Electronics">
+          <MegaMenuLink href="/phones">Phones</MegaMenuLink>
+        </MegaMenuCategory>
+        <MegaMenuCategory id="books" label="Books" active>
+          <MegaMenuLink href="/novels">Novels</MegaMenuLink>
+        </MegaMenuCategory>
+      </MegaMenu>
+    </>
+  );
+
+  await user.click(screen.getByRole("button", { name: "before" }));
+  await user.tab();
+  expect(document.activeElement).toBe(category("Books"));
+});
+
+function LetterCatalog() {
+  return (
+    <MegaMenu aria-label="Catalog">
+      <MegaMenuCategory id="apparel" label="Apparel">
+        <MegaMenuLink href="/apparel">Shirts</MegaMenuLink>
+      </MegaMenuCategory>
+      <MegaMenuCategory id="books" label="Books">
+        <MegaMenuLink href="/books">Novels</MegaMenuLink>
+      </MegaMenuCategory>
+      <MegaMenuCategory id="baby" label="Baby" disabled>
+        <MegaMenuLink href="/baby">Toys</MegaMenuLink>
+      </MegaMenuCategory>
+      <MegaMenuCategory id="beauty" label="Beauty">
+        <MegaMenuLink href="/beauty">Perfume</MegaMenuLink>
+      </MegaMenuCategory>
+      <MegaMenuCategory id="garden" label="Garden" href="/garden" />
+    </MegaMenu>
+  );
+}
+
+test("typing a letter moves focus to the next category starting with it, skipping disabled ones", async () => {
+  const user = userEvent.setup();
+  render(<LetterCatalog />);
+  category("Apparel").focus();
+
+  await user.keyboard("b");
+  expect(document.activeElement).toBe(category("Books"));
+  // Та же буква ещё раз — следующая на неё, выключенная пропускается.
+  await user.keyboard("b");
+  expect(document.activeElement).toBe(category("Beauty"));
+  // По кругу — снова первая.
+  await user.keyboard("b");
+  expect(document.activeElement).toBe(category("Books"));
+  // Категория-ссылка находится так же.
+  await user.keyboard("g");
+  expect(document.activeElement).toBe(screen.getByRole("link", { name: "Garden" }));
+});
+
+test("several letters typed quickly match the start of a label", () => {
+  vi.useFakeTimers();
+  render(<LetterCatalog />);
+  category("Apparel").focus();
+
+  act(() => {
+    fireEvent.keyDown(document.activeElement as Element, { key: "b" });
+    fireEvent.keyDown(document.activeElement as Element, { key: "e" });
+  });
+  expect(document.activeElement).toBe(category("Beauty"));
+
+  // Пауза сбрасывает набранное: «b» снова ищет с начала слова.
+  act(() => vi.advanceTimersByTime(1000));
+  act(() => {
+    fireEvent.keyDown(document.activeElement as Element, { key: "b" });
+  });
+  expect(document.activeElement).toBe(category("Books"));
+});
+
+test("with a showcase open, the showcase follows the letter like it follows the arrows", async () => {
+  const user = userEvent.setup();
+  render(<LetterCatalog />);
+
+  await user.hover(category("Apparel"));
+  category("Apparel").focus();
+  await user.keyboard("b");
+
+  expect(document.activeElement).toBe(category("Books"));
+  expect(category("Books").getAttribute("aria-expanded")).toBe("true");
+  expect(category("Apparel").getAttribute("aria-expanded")).toBe("false");
+});
+
+test("a letter with a modifier is left to the browser", async () => {
+  const user = userEvent.setup();
+  render(<LetterCatalog />);
+  category("Apparel").focus();
+
+  await user.keyboard("{Control>}b{/Control}");
+  expect(document.activeElement).toBe(category("Apparel"));
+});
+
+test("wrapped categories render a tab stop on the server, before hydration", () => {
+  const html = renderToString(
+    <MegaMenu aria-label="Catalog">
+      <WrappedCategory id="a" label="Alpha" />
+      <WrappedCategory id="b" label="Beta" />
+    </MegaMenu>
+  );
+  // До гидратации Столбцу не на что опереться, кроме самих строк: без остановки
+  // Tab клавиатура проскочила бы каталог, пока не загрузится клиент.
+  expect(html).toMatch(
+    /data-mega-category="a"[^>]*tabindex="0"|tabindex="0"[^>]*data-mega-category="a"/
+  );
+});
+
+test("a space in the middle of typing is part of the label, not a key that opens the category", () => {
+  render(
+    <MegaMenu aria-label="Catalog">
+      <MegaMenuCategory id="home" label="Home and garden">
+        <MegaMenuLink href="/home">Cookware</MegaMenuLink>
+      </MegaMenuCategory>
+      <MegaMenuCategory id="appliances" label="Home appliances">
+        <MegaMenuLink href="/appliances">Kettles</MegaMenuLink>
+      </MegaMenuCategory>
+    </MegaMenu>
+  );
+  category("Home and garden").focus();
+
+  act(() => {
+    for (const key of ["h", "o", "m", "e", " ", "a", "p"])
+      fireEvent.keyDown(document.activeElement as Element, { key });
+  });
+
+  expect(document.activeElement).toBe(category("Home appliances"));
+  expect(category("Home and garden").getAttribute("aria-expanded")).toBe("false");
 });

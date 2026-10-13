@@ -37,7 +37,7 @@ function Group({ title, links }: { title: string; links: string[] }) {
   return (
     <MegaMenuGroup title={title} href="#">
       {links.map((link) => (
-        <MegaMenuLink key={link} href="#" current={link === "Laptops"}>
+        <MegaMenuLink key={link} href="#" active={link === "Laptops"}>
           {link}
         </MegaMenuLink>
       ))}
@@ -45,7 +45,7 @@ function Group({ title, links }: { title: string; links: string[] }) {
   );
 }
 
-/** Промо-карточка — своё содержимое Витрины рядом с колонками. */
+/** Промо-карточка — своё содержимое Полки рядом с колонками. */
 function Promo({ children }: { children: ReactNode }) {
   return (
     <div className="bg-accent-soft text-accent-strong rounded-md p-3 text-[13px]">
@@ -55,11 +55,21 @@ function Promo({ children }: { children: ReactNode }) {
   );
 }
 
-/** Каталог магазина: десяток Категорий, колонки ссылок, промо, ссылка без Витрины, выключенная. */
+/**
+ * Каталог магазина: десяток Категорий, колонки ссылок, промо, ссылка без Полки,
+ * выключенная. Текущая страница — «Laptops», поэтому «Computers» отмечена как
+ * текущий раздел (`active`).
+ */
 function StoreCatalog(props: { defaultValue?: string | null }) {
   return (
     <MegaMenu aria-label="Catalog" {...props}>
-      <MegaMenuCategory id="computers" label="Computers" icon={<DesktopIcon size={16} />} href="#">
+      <MegaMenuCategory
+        id="computers"
+        label="Computers"
+        icon={<DesktopIcon size={16} />}
+        href="#"
+        active
+      >
         <Group title="Computers" links={["Laptops", "Desktops", "Monitors", "Tablets"]} />
         <Group title="Components" links={["Graphics cards", "Processors", "Memory", "Storage"]} />
         <Group title="Accessories" links={["Keyboards", "Mice", "Webcams", "Headsets"]} />
@@ -102,7 +112,7 @@ function StoreCatalog(props: { defaultValue?: string | null }) {
   );
 }
 
-/** Наведите курсор на Категорию: Витрина открывается сразу. */
+/** Наведите курсор на Категорию: Полка открывается сразу. */
 export const Catalog: Story = {
   render: () => (
     <div className="min-h-[480px]">
@@ -111,7 +121,7 @@ export const Catalog: Story = {
   ),
 };
 
-/** Открытая Витрина — для снимков и обзора вида. */
+/** Открытая Полка — для снимков и обзора вида. */
 export const Open: Story = {
   render: () => (
     <div className="min-h-[480px]">
@@ -127,24 +137,46 @@ export const Open: Story = {
  */
 export const DropdownInTopBar: Story = {
   parameters: { layout: "fullscreen" },
-  render: () => (
+  render: () => <ShopTopBar />,
+};
+
+function ShopTopBar(props: { defaultOpen?: boolean; defaultValue?: string | null }) {
+  return (
     <div className="min-h-[560px]">
       <TopBar
         brand={
           <div className="flex items-center gap-4">
             <span className="text-sm font-bold tracking-tight">Shop</span>
-            <MegaMenuTrigger>
+            <MegaMenuTrigger defaultOpen={props.defaultOpen}>
               <MegaMenuButton variant="soft" icon={<ListIcon size={16} />}>
                 Catalog
               </MegaMenuButton>
-              <StoreCatalog />
+              <StoreCatalog defaultValue={props.defaultValue} />
             </MegaMenuTrigger>
           </div>
         }
         actions={<Button variant="ghost" iconOnly icon={<BellIcon />} aria-label="Notifications" />}
       />
     </div>
-  ),
+  );
+}
+
+/**
+ * Выпадающий вид на ширине телефона: оверлей на всю ширину окна, а не по
+ * содержимому — подписи переносятся, а ширина не прыгает при спуске.
+ * Метка `viewport-phone`: снимок на 375px.
+ */
+export const PhoneDropdown: Story = {
+  tags: ["viewport-phone"],
+  parameters: { layout: "fullscreen" },
+  render: () => <ShopTopBar defaultOpen />,
+};
+
+/** Выпадающий вид на телефоне после касания Категории: её Полка вместо Столбца, внутри оверлея. */
+export const PhoneDropdownDrillDown: Story = {
+  tags: ["viewport-phone"],
+  parameters: { layout: "fullscreen" },
+  render: () => <ShopTopBar defaultOpen defaultValue="computers" />,
 };
 
 /**
@@ -163,8 +195,8 @@ export const PhoneColumn: Story = {
 };
 
 /**
- * Узкий экран: касание Категории заменяет Столбец её Витриной со строкой «Назад»
- * и именем Категории. Здесь Витрина открыта сразу, для снимка; в живой истории
+ * Узкий экран: касание Категории заменяет Столбец её Полкой со строкой «Назад»
+ * и именем Категории. Здесь Полка открыта сразу, для снимка; в живой истории
  * коснитесь «Computers».
  */
 export const PhoneDrillDown: Story = {

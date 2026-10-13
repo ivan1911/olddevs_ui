@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { renderToString } from "react-dom/server";
-import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Dialog } from "../src/components/overlays/Dialog.js";
 import {
   MegaMenu,
@@ -448,4 +448,78 @@ test("a disabled button never opens the catalog", async () => {
   await user.click(trigger());
 
   expect(menu()).toBeNull();
+});
+
+/*
+  Выпадающий вид на узком экране (OLDSUI-262): спуск в Категорию идёт внутри
+  оверлея, «Назад» и Escape возвращают Столбец, не закрывая каталог. Ширину
+  оверлея jsdom не посчитает — её проверяет `tests-visual/mega-menu.spec.ts`.
+*/
+
+describe("on a narrow screen", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: (query: string) => ({
+        matches: query === "(max-width: 639px)",
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }),
+    });
+    return () => Reflect.deleteProperty(window, "matchMedia");
+  });
+
+  test("a category drills down inside the overlay, focus lands on Back", async () => {
+    const user = userEvent.setup();
+    render(<Dropdown />);
+
+    await user.click(trigger());
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    expect(menu()).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Electronics" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Novels" })).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Back" }));
+  });
+
+  test("Back returns to the column inside the overlay and focuses the category", async () => {
+    const user = userEvent.setup();
+    render(<Dropdown />);
+
+    await user.click(trigger());
+    await user.keyboard("{ArrowDown}{Enter}");
+    await user.click(screen.getByRole("button", { name: "Back" }));
+
+    expect(menu()).not.toBeNull();
+    expect(document.activeElement).toBe(category("Books"));
+    expect(category("Books").getAttribute("aria-expanded")).toBe("false");
+  });
+
+  test("Escape steps back first, then closes the catalog onto the button", async () => {
+    const user = userEvent.setup();
+    render(<Dropdown />);
+
+    await user.click(trigger());
+    await user.keyboard("{ArrowDown}{Enter}");
+    await user.keyboard("{Escape}");
+
+    expect(menu()).not.toBeNull();
+    expect(document.activeElement).toBe(category("Books"));
+
+    await user.keyboard("{Escape}");
+    expect(menu()).toBeNull();
+    expect(document.activeElement).toBe(trigger());
+  });
+
+  test("a link in the drilled showcase closes the catalog", async () => {
+    const user = userEvent.setup();
+    render(<Dropdown />);
+
+    await user.click(trigger());
+    await user.keyboard("{ArrowDown}{Enter}");
+    await user.click(screen.getByRole("link", { name: "Novels" }));
+
+    expect(menu()).toBeNull();
+  });
 });

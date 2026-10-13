@@ -89,9 +89,19 @@ export interface MenuProps<T extends object = object> extends AriaMenuProps<T> {
    * Сторона, с которой панель раскрывается. Корневое меню по умолчанию — под
    * кнопкой слева (`bottom start`); вложенное, внутри `SubmenuTrigger`, —
    * сбоку от своего пункта, а на узком экране под ним. Явное значение
-   * побеждает оба умолчания.
+   * побеждает оба умолчания. `end top` и `start top` — сбоку по концу или
+   * началу строки: при письме справа налево они меняются местами, а
+   * `right top` и `left top` — нет.
    */
-  placement?: "bottom start" | "bottom end" | "top start" | "top end" | "right top" | "left top";
+  placement?:
+    | "bottom start"
+    | "bottom end"
+    | "top start"
+    | "top end"
+    | "end top"
+    | "start top"
+    | "right top"
+    | "left top";
 }
 
 export interface MenuItemProps extends Omit<AriaMenuItemProps, "children" | "className"> {

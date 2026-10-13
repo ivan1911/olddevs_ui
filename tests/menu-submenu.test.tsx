@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { I18nProvider } from "react-aria-components";
 import { afterEach, expect, test } from "vitest";
 import {
   Menu,
@@ -102,4 +103,48 @@ test("on a narrow screen an explicit placement still wins", async () => {
   render(<Nested placement="left top" />);
   const { submenu } = await openBoth();
   expect(submenu.getAttribute("data-placement")).toBe("left");
+});
+
+/*
+  Логические стороны в явном `placement` (OLDSUI-262): «сбоку по концу строки»
+  — то же умолчание, что у подменю кита, — можно задать и самому, и при письме
+  справа налево оно встаёт слева.
+*/
+
+function NestedLogical({ placement }: { placement: "end top" | "start top" }) {
+  return (
+    <MenuTrigger>
+      <MenuButton>Actions</MenuButton>
+      <Menu>
+        <SubmenuTrigger>
+          <MenuItem>Move to…</MenuItem>
+          <Menu placement={placement}>
+            <MenuItem>Nature</MenuItem>
+          </Menu>
+        </SubmenuTrigger>
+      </Menu>
+    </MenuTrigger>
+  );
+}
+
+test("an explicit logical placement is accepted: start top opens on the start side", async () => {
+  mockWidth(false);
+  render(<NestedLogical placement="start top" />);
+  const { submenu } = await openBoth();
+  expect(submenu.getAttribute("data-placement")).toBe("left");
+});
+
+test("an explicit end top follows the writing direction", async () => {
+  mockWidth(false);
+  render(
+    <I18nProvider locale="he-IL">
+      <NestedLogical placement="end top" />
+    </I18nProvider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "Actions" }));
+  await user.keyboard("{ArrowDown}");
+  await user.keyboard("{ArrowLeft}");
+  const submenu = document.querySelector<HTMLElement>('[data-trigger="SubmenuTrigger"]');
+  expect(submenu?.getAttribute("data-placement")).toBe("left");
 });
