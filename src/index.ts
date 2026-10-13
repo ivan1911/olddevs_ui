@@ -430,15 +430,19 @@ export type { StepperProps, Step } from "./components/navigation/Stepper.js";
 
 export {
   MegaMenu,
+  MegaMenuButton,
   MegaMenuCategory,
   MegaMenuGroup,
   MegaMenuLink,
+  MegaMenuTrigger,
 } from "./components/navigation/MegaMenu.js";
 export type {
   MegaMenuProps,
+  MegaMenuButtonProps,
   MegaMenuCategoryProps,
   MegaMenuGroupProps,
   MegaMenuLinkProps,
+  MegaMenuTriggerProps,
 } from "./components/navigation/MegaMenu.js";
 
 export { ToggleGroup } from "./components/actions/ToggleGroup.js";

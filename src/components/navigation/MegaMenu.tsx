@@ -1,5 +1,6 @@
 "use client";
 
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import {
   Children,
@@ -23,10 +24,13 @@ import {
   type PointerEvent,
   type ReactElement,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { ChevronRightIcon } from "../../icons.js";
+import { buttonClasses, type ButtonLookOptions } from "../../lib/button.js";
 import { cn } from "../../lib/cn.js";
 import { OVERLAY_LAYER } from "../../lib/overlay-layer.js";
+import { withoutToolbarAxis } from "../../lib/toolbar-axis.js";
 import { useMenuAim } from "./useMenuAim.js";
 
 /*
@@ -272,6 +276,16 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     const openCategory = (id: string, focusShowcase = false) => {
       cancelAim();
       if (focusShowcase) pendingFocus.current = id;
+      // Уже открыта наведением — значение не меняется, и эффект Категории,
+      // который переводит фокус в Витрину, не сработает. Переводим сами.
+      if (focusShowcase && valueRef.current === id) {
+        pendingFocus.current = null;
+        document
+          .getElementById(domId(baseId, "showcase", id))
+          ?.querySelector<HTMLElement>(FOCUSABLE)
+          ?.focus();
+        return;
+      }
       setValue(id);
     };
     const close = () => {
@@ -731,3 +745,289 @@ export const MegaMenuLink = forwardRef<HTMLAnchorElement, MegaMenuLinkProps>(fun
     </Comp>
   );
 });
+
+/*
+  ВЫПАДАЮЩИЙ ВИД — ТА ЖЕ РАЗМЕТКА, ДРУГАЯ ОБЁРТКА.
+
+  `MegaMenu` внутри `MegaMenuTrigger` не меняется ни в одной строке: Столбец,
+  Витрина, roving tabindex, Escape в Витрине — всё то же. Обёртка добавляет
+  только то, чего у встроенного вида нет: кнопку, оверлей под ней и закрытие.
+
+  ОВЕРЛЕЙ — RADIX `Popover`, а не react-aria, как у `Menu`. Причин три.
+  Во-первых, это не меню: react-aria ради `Menu` вешает роль `menu` и
+  типизированный поиск по пунктам, а нам нужна навигация со ссылками.
+  Во-вторых, стек слоёв Radix сам решает «кому Escape» среди своих слоёв:
+  `Dialog` кита тоже Radix, поэтому мегаменю внутри окна закрывается первым
+  Escape, а окно — вторым, без заслонов (ADR-0041). В-третьих, портал,
+  переворот у края экрана и `available-height` для прокрутки уже есть.
+*/
+
+interface MegaMenuTriggerContextValue {
+  /** Кнопка-Раскрыватель — чтобы вернуть ей фокус при закрытии. */
+  triggerRef: RefObject<HTMLButtonElement | null>;
+  setOpen: (open: boolean) => void;
+}
+
+const MegaMenuTriggerContext = createContext<MegaMenuTriggerContextValue | null>(null);
+
+/** Портал оверлея: ось `Toolbar`, из которой открыта кнопка, внутрь не проходит. */
+const DropdownPortal = withoutToolbarAxis(PopoverPrimitive.Portal);
+
+/**
+ * Оверлей: слой `popover`, появление по шкале движения кита, прокрутка внутри.
+ *
+ * ПРОКРУТКА — У СТОЛБЦА И У ВИТРИНЫ ПО ОТДЕЛЬНОСТИ, а не у оверлея целиком.
+ * Витрина — `absolute` от `nav`, рядом со Столбцом. `overflow: auto` на самом
+ * оверлее обрезал бы её по его рамке, и от Витрины осталась бы полоска шириной
+ * в зазор. Поэтому ограничены высотой два прямых потомка: `ul` Столбца и
+ * `section` Витрины. `ul` не позиционирован, и содержащий блок Витрины — `nav`
+ * выше него, так что `overflow` на `ul` Витрину не режет.
+ *
+ * Высота — `available-height` из Radix (место до края окна от кнопки). Селекторы
+ * потомков, а не классы внутри `MegaMenu`: вид встроенного мегаменю остаётся
+ * как был, а зависимость от разметки (`nav > ul > li > section`) записана здесь
+ * одним местом.
+ */
+const DROPDOWN_CONTENT_CLASS =
+  `${OVERLAY_LAYER.popover} outline-none ` +
+  // Появление и уход — токены, видимые гейту `prefers-reduced-motion` (ADR-0043, ADR-0047).
+  "data-[state=open]:animate-fadein data-[state=closed]:animate-fadeout " +
+  "[&>nav>ul]:max-h-[var(--radix-popover-content-available-height)] " +
+  "[&>nav>ul]:overflow-y-auto [&>nav>ul]:overscroll-contain " +
+  "[&>nav>ul>li>section]:max-h-[var(--radix-popover-content-available-height)] " +
+  "[&>nav>ul>li>section]:overflow-y-auto [&>nav>ul>li>section]:overscroll-contain " +
+  /*
+    Обход высоты на iOS — как у `MENU_PANEL_CLASS`: в Safari на iOS 27
+    `available-height` бывает близок к нулю, и от Столбца остаётся полоска.
+    24rem или 60 % динамической высоты экрана — что меньше; `!` перебивает
+    правило выше. `-webkit-touch-callout` понимает только WebKit на iOS.
+  */
+  "[&>nav>ul]:[@supports(-webkit-touch-callout:none)]:max-h-[min(24rem,60dvh)]! " +
+  "[&>nav>ul>li>section]:[@supports(-webkit-touch-callout:none)]:max-h-[min(24rem,60dvh)]!";
+
+/** Поле ввода внутри Витрины Escape оставляет себе — иначе закрываем оверлей. */
+const SHOWCASE_SELECTOR = "nav li > section";
+
+/** Остановки Tab внутри оверлея: Столбец — одна, плюс ссылки открытой Витрины. */
+function tabStops(root: HTMLElement): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+    (node) => node.tabIndex >= 0 && !node.closest("[hidden]")
+  );
+}
+
+/** Куда ставить фокус при открытии: открытая Категория или первая доступная. */
+function entryCategory(root: HTMLElement): HTMLElement | null {
+  const enabled = Array.from(root.querySelectorAll<HTMLElement>("[data-mega-category]")).filter(
+    (node) => node.getAttribute("aria-disabled") !== "true"
+  );
+  // Остановка Tab у Столбца — как раз открытая Категория, иначе первая.
+  return enabled.find((node) => node.tabIndex === 0) ?? enabled[0] ?? null;
+}
+
+export interface MegaMenuTriggerProps {
+  /** Открыто ли мегаменю — управляемо. */
+  open?: boolean;
+  /** Открыто ли мегаменю при монтировании, без управления. */
+  defaultOpen?: boolean;
+  /** Мегаменю открылось или закрылось: щелчком, клавишей, переходом по ссылке. */
+  onOpenChange?: (open: boolean) => void;
+  /**
+   * Первый ребёнок — `MegaMenuButton`, остальные — `MegaMenu`; они рисуются в
+   * оверлее под кнопкой.
+   */
+  children: ReactNode;
+}
+
+/**
+ * Выпадающее мегаменю: кнопка и под ней `MegaMenu` в оверлее.
+ *
+ *     <MegaMenuTrigger>
+ *       <MegaMenuButton>Каталог</MegaMenuButton>
+ *       <MegaMenu aria-label="Каталог">…</MegaMenu>
+ *     </MegaMenuTrigger>
+ *
+ * Открывается щелчком и клавишами (Enter, Пробел, стрелка вниз), наведением —
+ * нет: мегаменю не должно выпрыгивать от случайного движения мыши. Закрывается
+ * по Escape на Категории, щелчку снаружи, повторному щелчку по кнопке,
+ * переходу по любой ссылке и по Tab за последним элементом. На кнопку фокус
+ * возвращается при Escape и повторном щелчке.
+ *
+ * ПЕРВЫЙ РЕБЁНОК — КНОПКА, ОСТАЛЬНЫЕ — ОВЕРЛЕЙ, и разбор идёт по позиции, а не
+ * по типу: так кнопку можно обернуть своим компонентом (подсказка, счётчик), а
+ * `MegaMenu` — вынести в свой, и ничто не отправит оверлей молча в шапку.
+ */
+export function MegaMenuTrigger({
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
+  children,
+}: MegaMenuTriggerProps) {
+  const [innerOpen, setInnerOpen] = useState(defaultOpen);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : innerOpen;
+  const openRef = useRef(open);
+  openRef.current = open;
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  /** Tab увёл фокус дальше по странице: возвращать его на кнопку нельзя. */
+  const tabbedAway = useRef(false);
+
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (next === openRef.current) return;
+      if (!controlled) setInnerOpen(next);
+      onOpenChangeRef.current?.(next);
+    },
+    [controlled]
+  );
+
+  const context = useMemo(() => ({ triggerRef, setOpen }), [setOpen]);
+  const [button, ...overlay] = Children.toArray(children);
+
+  return (
+    <MegaMenuTriggerContext.Provider value={context}>
+      <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+        {button}
+        <DropdownPortal>
+          <PopoverPrimitive.Content
+            ref={contentRef}
+            // Роль `dialog` Radix ставит по умолчанию, а это навигация: `nav`
+            // внутри `div` без роли, как в APG Disclosure Navigation.
+            role={undefined}
+            align="start"
+            sideOffset={4}
+            collisionPadding={8}
+            className={DROPDOWN_CONTENT_CLASS}
+            onOpenAutoFocus={(event) => {
+              tabbedAway.current = false;
+              // Фокус — на Категорию, а не на первый фокусируемый (им была бы
+              // она же, но только пока Витрина закрыта).
+              event.preventDefault();
+              const root = contentRef.current;
+              (root && entryCategory(root))?.focus({ preventScroll: true });
+            }}
+            onCloseAutoFocus={(event) => {
+              // Возврат фокуса — свой: Radix не возвращает его после щелчка по
+              // самой кнопке (тот считается щелчком снаружи), а нам нужно.
+              event.preventDefault();
+              if (tabbedAway.current) {
+                tabbedAway.current = false;
+                return;
+              }
+              const active = document.activeElement;
+              // Фокус ушёл на другой элемент (щелчок по полю) — не отнимаем его.
+              if (!active || active === document.body || contentRef.current?.contains(active))
+                triggerRef.current?.focus();
+            }}
+            onEscapeKeyDown={(event) => {
+              // Escape в Витрине — её собственный: вернуть фокус на Категорию и
+              // закрыть Витрину (обработчик в `MegaMenuCategory`). Оверлей при
+              // этом остаётся. В поле ввода Escape оверлею отдаём: иначе в
+              // Витрине с поиском он не закрыл бы ничего.
+              const target = event.target;
+              if (
+                target instanceof Element &&
+                target.closest(SHOWCASE_SELECTOR) &&
+                !isTextEntry(target)
+              )
+                event.preventDefault();
+            }}
+            onKeyDownCapture={(event) => {
+              if (event.key !== "Tab") return;
+              const stops = tabStops(event.currentTarget);
+              const edge = event.shiftKey ? stops[0] : stops[stops.length - 1];
+              if (!edge || event.target !== edge) return;
+              // Оверлей лежит в портале в конце `body`: «дальше по Tab» от него
+              // — не следующий элемент страницы. Поэтому фокус сначала встаёт
+              // на кнопку, и браузер продолжает Tab от неё. Назад (Shift+Tab)
+              // кнопка и есть предыдущая остановка — на ней и остаёмся.
+              triggerRef.current?.focus();
+              if (event.shiftKey) event.preventDefault();
+              else tabbedAway.current = true;
+              setOpen(false);
+            }}
+            onClick={(event) => {
+              // Переход по ссылке закрывает мегаменю: после навигации оно не
+              // должно висеть поверх новой страницы. Роутерные ссылки тоже
+              // `a`, а их `preventDefault` закрытию не мешает. Щелчок с
+              // модификатором (Cmd/Ctrl, Shift — новая вкладка или окно) и
+              // средняя кнопка страницу не меняют: каталог остаётся открытым,
+              // чтобы можно было открыть в фоне несколько разделов подряд.
+              const modified =
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey ||
+                event.button !== 0;
+              if (!modified && event.target instanceof Element && event.target.closest("a")) {
+                setOpen(false);
+              }
+            }}
+          >
+            {overlay}
+          </PopoverPrimitive.Content>
+        </DropdownPortal>
+      </PopoverPrimitive.Root>
+    </MegaMenuTriggerContext.Provider>
+  );
+}
+
+export interface MegaMenuButtonProps extends ButtonLookOptions {
+  /** Подпись кнопки. С `iconOnly` не показывается. */
+  children?: ReactNode;
+  /** Иконка слева. С `iconOnly` — единственное содержимое. */
+  icon?: ReactNode;
+  /** Кнопка заблокирована: мегаменю не открывается. */
+  disabled?: boolean;
+  /** Доступное имя. Обязательно, когда подписи нет. */
+  "aria-label"?: string;
+  /** Классы на кнопку. */
+  className?: string;
+}
+
+/**
+ * Кнопка, открывающая мегаменю, — первый ребёнок `MegaMenuTrigger`.
+ *
+ * Вид тот же, что у `MenuButton` (`lib/button.ts`). Семантика — раскрыватель:
+ * `aria-expanded` и `aria-controls`, без `aria-haspopup`. Radix по умолчанию
+ * объявляет `aria-haspopup="dialog"`, а оверлей — не диалог, а навигация, и
+ * скринридер не должен обещать диалог.
+ */
+export const MegaMenuButton = forwardRef<HTMLButtonElement, MegaMenuButtonProps>(
+  function MegaMenuButton(
+    { children, icon, disabled, variant, tone, size, iconOnly, selected, className, ...rest },
+    forwardedRef
+  ) {
+    const trigger = useContext(MegaMenuTriggerContext);
+    if (!trigger) throw new Error("MegaMenuButton must be rendered inside MegaMenuTrigger");
+    return (
+      <PopoverPrimitive.Trigger asChild>
+        <button
+          ref={(node) => {
+            trigger.triggerRef.current = node;
+            if (typeof forwardedRef === "function") forwardedRef(node);
+            else if (forwardedRef) forwardedRef.current = node;
+          }}
+          type="button"
+          disabled={disabled}
+          aria-haspopup={undefined}
+          className={cn(buttonClasses({ variant, tone, size, iconOnly, selected }), className)}
+          onKeyDown={(event) => {
+            // Щелчок, Enter и Пробел открывают сами (Radix); стрелка вниз — по
+            // привычке к выпадающим спискам.
+            if (event.key !== "ArrowDown") return;
+            event.preventDefault();
+            trigger.setOpen(true);
+          }}
+          {...rest}
+        >
+          {icon}
+          {children != null && !iconOnly ? <span>{children}</span> : null}
+        </button>
+      </PopoverPrimitive.Trigger>
+    );
+  }
+);

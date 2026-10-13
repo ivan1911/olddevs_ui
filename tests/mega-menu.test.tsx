@@ -161,6 +161,17 @@ test("Enter opens the showcase and moves focus to its first link; Escape brings 
   expect(category("Books").getAttribute("aria-expanded")).toBe("false");
 });
 
+test("Enter on a category already opened by hover moves focus into its showcase", async () => {
+  const user = userEvent.setup();
+  render(<Catalog />);
+
+  await user.hover(category("Books"));
+  category("Books").focus();
+  await user.keyboard("{Enter}");
+
+  expect(document.activeElement).toBe(screen.getByRole("link", { name: "Novels" }));
+});
+
 test("the arrow towards the showcase opens it, the arrow back returns to the category and keeps it open", async () => {
   const user = userEvent.setup();
   render(<Catalog />);
