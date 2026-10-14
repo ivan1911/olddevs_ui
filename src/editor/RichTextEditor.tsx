@@ -1013,10 +1013,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       observer.observe(toolbarShell);
       return () => observer.disconnect();
     }, [toolbarShell]);
-    /** Нижний край липкого верха поля для подсветки и перехода в окне. */
+    /*
+      Нижний край липкого верха поля: шапка приложения и Панель над Документом.
+      Не `null` никогда, даже без шапки: иначе переход ушёл бы в `scrollIntoView`,
+      а тот двигает и страницу вокруг поля с `maxHeight`. В прокручиваемом поле
+      подсветка и переход считают от верха области и этот край не используют.
+    */
     const tocStickyTop = useCallback(
-      () => (stickyOffset("--topbar-h") ?? 0) + (toolbarShell?.offsetHeight ?? 0),
-      [toolbarShell]
+      () => (stickyOffset("--topbar-h") ?? 0) + toolbarHeight,
+      [toolbarHeight]
     );
     /*
       Переход в правке ставит каретку в конец заголовка, как структура документа
@@ -1573,7 +1578,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 {editor && !sourceOpen && (
                   <TocCore
                     target={tocTarget}
-                    stickyTop={scrolls ? undefined : tocStickyTop}
+                    stickyTop={tocStickyTop}
                     focusHeading={tocFocusHeading}
                     alignToFirstHeading
                     data-toc-gutter=""
