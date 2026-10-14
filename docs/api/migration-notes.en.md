@@ -2,7 +2,7 @@
 category: api
 status: stable
 source: src/index.ts
-sourceHash: c4fb48f4fa84
+sourceHash: 902814b6f802
 ---
 
 # Compatibility and migration notes
@@ -84,7 +84,7 @@ A concrete check or codemod.
 
 ## 4.5.0 — `handle.openSearch()` → `handle.tool("search")?.open()`
 
-**Status:** deprecation — minor. The method works until 5.0 and is removed in 5.0 (ADR-0058, item 12.7; ADR-0069).
+**Status:** deprecation — minor. The method works throughout all 4.x releases and is removed in 5.0 (ADR-0058, item 12.7; ADR-0069).
 
 ### What changed
 
@@ -95,7 +95,7 @@ New commands of built-in Tools go through `handle.tool()`, not through new Handl
 
 ### Who is affected
 
-Everyone who calls `ref.current.openSearch(…)`: a "Find" button in the screen header, a "find mentions" link.
+Everyone who calls `ref.current.openSearch(…)`, for example from a "Find" button in the screen header or a "find mentions" link.
 
 ### Before → after
 
@@ -114,8 +114,8 @@ without the `search` Tool in `tools` and before the engine exists, so a call thr
 
 ### Action before updating
 
-Nothing is required before 5.0. Search the code for `openSearch(` and replace it; the development console warning
-will point at every screen where the call remains.
+Nothing is required before 5.0. Search the code for `openSearch(` and replace the call. The development console
+warning appears once per session, so it alone will not find every screen with the call.
 
 ## 4.0.0 — first public release
 

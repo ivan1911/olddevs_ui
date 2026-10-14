@@ -5,7 +5,7 @@ category: content
 status: stable
 source: src/editor/features/toc/RichTextToc.tsx
 story: src/editor/features/toc/RichTextToc.stories.tsx
-sourceHash: 72c052c55b3c
+sourceHash: ece0addcd8ea
 ---
 
 # RichTextToc
