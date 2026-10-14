@@ -74,7 +74,7 @@ export interface ToolDescriptor {
   /** Признаки Блока по имени узла; кит переносит их в spec узла. Нет — обычный Блок. */
   blocks?: Readonly<Record<string, BlockTraits>>;
 
-  /* Опции (OLDSUI-268). */
+  /* Опции. */
 
   /**
    * Умолчания Опций встроенного Инструмента: полный набор полей, из которого
@@ -139,7 +139,7 @@ export interface ToolDescriptor {
    */
   shortcuts?: readonly ShortcutCommand[];
 
-  /* Команды (OLDSUI-268). */
+  /* Команды. */
 
   /**
    * Команды Инструмента: то, что `handle.tool(name)` отдаёт экрану. Зовётся при
@@ -149,7 +149,7 @@ export interface ToolDescriptor {
    */
   commands?: (context: ToolCommandsContext) => object;
 
-  /* Состояние (OLDSUI-268). */
+  /* Состояние. */
 
   /**
    * Состояние Инструмента: снимок для `useRichTextToolState(ref, name)`. Хук

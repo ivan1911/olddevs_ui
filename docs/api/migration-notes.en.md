@@ -2,7 +2,7 @@
 category: api
 status: stable
 source: src/index.ts
-sourceHash: 0d3ab7842785
+sourceHash: c4fb48f4fa84
 ---
 
 # Compatibility and migration notes
@@ -81,6 +81,41 @@ A concrete check or codemod.
    the replacement can be done in stages, describe the removal date/version and the warning.
 5. Add or update a test for the previous boundary and the new contract; for
    interaction, check focus, the keyboard and accessible names.
+
+## 4.5.0 — `handle.openSearch()` → `handle.tool("search")?.open()`
+
+**Status:** deprecation — minor. The method works until 5.0 and is removed in 5.0 (ADR-0058, item 12.7; ADR-0069).
+
+### What changed
+
+The `RichTextEditor` Handle gets `tool(name)`, a single entry point to a Tool's commands. The `open` command of the
+`search` Tool does what `openSearch` does and accepts more: `open({ replace?, query? })`, where `query` sets the
+query at once. `handle.openSearch(options)` is marked `@deprecated` and warns once in the console in development.
+New commands of built-in Tools go through `handle.tool()`, not through new Handle methods.
+
+### Who is affected
+
+Everyone who calls `ref.current.openSearch(…)`: a "Find" button in the screen header, a "find mentions" link.
+
+### Before → after
+
+```tsx
+// before
+ref.current?.openSearch({ replace: true });
+// after
+ref.current?.tool("search")?.open({ replace: true });
+```
+
+### Semantics and accessibility
+
+Unchanged: the same panel, the same focus, the same shortcuts. The differences are small: `tool("search")` is `null`
+without the `search` Tool in `tools` and before the engine exists, so a call through `?.` does nothing, just as
+`openSearch` did; `open` returns a `boolean` (`false` in HTML mode) instead of `void`.
+
+### Action before updating
+
+Nothing is required before 5.0. Search the code for `openSearch(` and replace it; the development console warning
+will point at every screen where the call remains.
 
 ## 4.0.0 — first public release
 
