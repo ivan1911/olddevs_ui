@@ -606,3 +606,61 @@ test("the opened list of a long Document scrolls to the current item", async () 
   expect(calls.length).toBeGreaterThan(0);
   expect(calls.at(-1)!.args).toEqual([{ block: "nearest" }]);
 });
+
+test("the section chosen by a jump stays current while the jump scrolls, even at the end of the Document", async () => {
+  const user = userEvent.setup();
+  render(<Screen html={ARTICLE} />);
+
+  // Документ докручен до конца, все заголовки в окне: правило конца отдало бы
+  // подсветку последнему.
+  Object.defineProperty(document.documentElement, "scrollHeight", {
+    value: 600,
+    configurable: true,
+  });
+  const headings = [...screen.getByTestId("view").querySelectorAll("h2, h3, h4")];
+  [-50, 100, 200, 300].forEach((top, index) => {
+    headings[index]!.getBoundingClientRect = () => ({ top }) as DOMRect;
+  });
+  const scroll = () =>
+    act(async () => {
+      fireEvent.scroll(document);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+  await scroll();
+  const items = await openList(user);
+  expect(items[3]!.getAttribute("aria-current")).toBe("location");
+
+  await user.click(items[1]!);
+  expect(items[1]!.getAttribute("aria-current")).toBe("location");
+  // Прокрутка от самого перехода подсветку не трогает.
+  await scroll();
+  await scroll();
+  expect(items[1]!.getAttribute("aria-current")).toBe("location");
+
+  // Переход улёгся, читатель прокрутил сам — подсветка снова считается.
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
+  await scroll();
+  expect(items[3]!.getAttribute("aria-current")).toBe("location");
+});
+
+test("after a mouse jump in an editable Editor the list does not hold focus, so leaving it closes it", async () => {
+  const user = userEvent.setup();
+  function Editable() {
+    const editor = useRef<RichTextEditorHandle>(null);
+    return (
+      <div>
+        <RichTextToc target={editor} />
+        <RichTextEditor ref={editor} aria-label="Body" defaultValue={ARTICLE} />
+      </div>
+    );
+  }
+  render(<Editable />);
+  await waitFor(() => expect(strip()).toBeTruthy());
+
+  const items = await openList(user);
+  await user.click(items[2]!);
+  const nav = screen.getByRole("navigation", { name: "Table of contents" });
+  expect(nav.contains(document.activeElement)).toBe(false);
+});

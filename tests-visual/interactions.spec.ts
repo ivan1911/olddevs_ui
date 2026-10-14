@@ -4104,6 +4104,9 @@ test.describe("VirtualGrid library on a touch screen", () => {
  * на раскладке, прокрутке и pointer-событиях — в jsdom их нет.
  */
 test.describe("RichTextToc", () => {
+  // Окно ниже штатного: история должна прокручиваться дальше последнего заголовка,
+  // иначе страница упирается в конец и подсветка с переходом проверяют не то.
+  test.use({ viewport: { width: 1280, height: 480 } });
   const strip = (page: Page) => page.getByRole("button", { name: "Table of contents" });
   const list = (page: Page) => page.getByRole("navigation", { name: "Table of contents" });
 

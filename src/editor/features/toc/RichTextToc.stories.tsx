@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "../../../components/actions/Button.js";
 import type { RichTextSurface } from "../../styles/surface.js";
 import { RichTextEditor, type RichTextEditorHandle } from "../../RichTextEditor.js";
 import { RichTextToc } from "./RichTextToc.js";
@@ -96,21 +97,55 @@ function Screen({ html, surface, listWidth }: ScreenProps) {
   );
 }
 
+interface EditorScreenProps extends ScreenProps {
+  /** Редактор только для чтения. По умолчанию `true`: это поддерживаемый режим. */
+  readOnly?: boolean;
+  toolbar?: "fixed" | "floating" | "bubble" | "none";
+  /** Высота поля: Документ прокручивается внутри Редактора, а не страницей. */
+  maxHeight?: number | string;
+  /** Кнопка над Редактором, которая переключает `readOnly`. */
+  toggle?: boolean;
+}
+
 /** То же, что `Screen`, но цель — Редактор: его Хэндл, а не элемент Просмотра. */
-function EditorScreen({ html }: ScreenProps) {
+function EditorScreen({
+  html,
+  surface,
+  listWidth,
+  readOnly = true,
+  toolbar,
+  maxHeight,
+  toggle = false,
+}: EditorScreenProps) {
   const editor = useRef<RichTextEditorHandle>(null);
+  const [locked, setLocked] = useState(readOnly);
   return (
-    <div className="flex items-start gap-6">
-      <div className="sticky top-[calc(var(--topbar-h,0px)+16px)] w-10 shrink-0">
-        <RichTextToc target={editor} />
+    <div className="flex flex-col gap-3">
+      {toggle && (
+        <div className="flex items-center gap-3 pl-16">
+          <Button size="sm" variant="outline" onClick={() => setLocked((value) => !value)}>
+            {locked ? "Edit" : "Done"}
+          </Button>
+          <span className="text-fg-2 text-[13px]">
+            {locked ? "Read only" : "Editing: add or rename a heading and watch the strip"}
+          </span>
+        </div>
+      )}
+      <div className="flex items-start gap-6">
+        <div className="sticky top-[calc(var(--topbar-h,0px)+16px)] w-10 shrink-0">
+          <RichTextToc target={editor} listWidth={listWidth} />
+        </div>
+        <RichTextEditor
+          ref={editor}
+          aria-label="Document"
+          defaultValue={html}
+          readOnly={locked}
+          surface={surface}
+          toolbar={toolbar}
+          maxHeight={maxHeight}
+          className="max-w-[640px] min-w-0 flex-1"
+        />
       </div>
-      <RichTextEditor
-        ref={editor}
-        aria-label="Document"
-        defaultValue={html}
-        readOnly
-        className="max-w-[640px] min-w-0 flex-1"
-      />
     </div>
   );
 }
@@ -159,6 +194,43 @@ function MarginScreen({ html, surface }: ScreenProps) {
 /** Редактор в `readOnly`: Оглавление берёт заголовки из его Документа, как у Просмотра. */
 export const ReadOnlyEditor: Story = {
   render: (args) => <EditorScreen {...args} />,
+};
+
+/**
+ * Редактор в правке. Добавьте заголовок или переименуйте существующий: полоса и
+ * список пересоберутся через мгновение. Переход прокручивает к заголовку, но
+ * каретку не трогает. Этот режим работает, но контрактом не обещан.
+ */
+export const EditableEditor: Story = {
+  render: (args) => <EditorScreen {...args} readOnly={false} />,
+};
+
+/** Кнопка над Редактором переключает `readOnly`: Оглавление работает в обоих режимах. */
+export const EditorReadOnlyToggle: Story = {
+  render: (args) => <EditorScreen {...args} toggle />,
+};
+
+/** Редактор на светлом Листе: Оглавление остаётся в теме приложения, вне Листа. */
+export const EditorPaper: Story = {
+  render: (args) => <EditorScreen {...args} surface="paper" />,
+};
+
+/**
+ * Поле с `maxHeight`: Документ прокручивается внутри Редактора. Подсветка
+ * следит за этой прокруткой, переход прокручивает поле, а не страницу.
+ */
+export const EditorScrollingField: Story = {
+  render: (args) => <EditorScreen {...args} readOnly={false} maxHeight={360} />,
+};
+
+/** Плавающая Панель: она появляется над выделением и Оглавлению не мешает. */
+export const EditorFloatingToolbar: Story = {
+  render: (args) => <EditorScreen {...args} readOnly={false} toolbar="floating" />,
+};
+
+/** Длинный Документ в Редакторе `readOnly`: штрих на заголовок, список прокручивается. */
+export const EditorLongDocument: Story = {
+  render: (args) => <EditorScreen {...args} html={LONG} />,
 };
 
 /**

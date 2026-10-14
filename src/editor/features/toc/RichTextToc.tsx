@@ -89,6 +89,9 @@ const STRIP_CELL = 3;
 const STRIP_PADDING = 8;
 const STRIP_MARGIN = 16;
 
+/** Сколько прокрутка от перехода должна молчать, чтобы считаться законченной. */
+const PIN_SETTLE = 150;
+
 /** Запас под строкой отсчёта: заголовок, вставший вплотную под шапку, уже текущий. */
 const SPY_SLACK = 8;
 
@@ -362,6 +365,26 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
     };
   }, [headings.length, offsetVar]);
 
+  /*
+    Раздел, выбранный переходом, держится подсвеченным, пока идёт прокрутка от
+    самого перехода. Иначе у конца Документа правило «докручено до конца —
+    текущий последний видимый» отдавало подсветку соседнему заголовку, и
+    читатель, выбравший «Поверхности», видел подсвеченным «Что дальше».
+    Пересчёт возвращается со следующей прокрутки после того, как переход
+    улёгся (`settled`).
+  */
+  const pinned = useRef<{ index: number; settled: boolean; timer: number } | null>(null);
+  const pin = (index: number) => {
+    if (pinned.current) window.clearTimeout(pinned.current.timer);
+    const settle = () =>
+      window.setTimeout(() => {
+        if (pinned.current) pinned.current.settled = true;
+      }, PIN_SETTLE);
+    pinned.current = { index, settled: false, timer: 0 };
+    pinned.current.timer = settle();
+    setCurrent(index);
+  };
+
   // Подсветка текущего раздела. Слушатель прокрутки — на документе с захватом:
   // так его достигает прокрутка и окна, и любого контейнера вокруг цели.
   useEffect(() => {
@@ -372,6 +395,16 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
       setCurrent(currentIndex(headings, offsetVar));
     };
     const schedule = () => {
+      const lock = pinned.current;
+      if (lock && !lock.settled) {
+        // Прокрутка самого перехода: ждём, пока она уляжется.
+        window.clearTimeout(lock.timer);
+        lock.timer = window.setTimeout(() => {
+          lock.settled = true;
+        }, PIN_SETTLE);
+        return;
+      }
+      pinned.current = null;
       if (!frame) frame = requestAnimationFrame(update);
     };
     update();
@@ -383,6 +416,9 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
       window.removeEventListener("resize", schedule);
     };
   }, [headings, offsetVar]);
+
+  // Уборка таймера выбранного раздела при размонтировании.
+  useEffect(() => () => window.clearTimeout(pinned.current?.timer), []);
 
   // Места слева нет — Оглавление прячется само (ADR-0066). `visibility`, а не
   // размонтирование: полоса продолжает занимать своё место, и замер остаётся
@@ -539,7 +575,19 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
                       "hover:bg-bg-2 focus-visible:bg-bg-2 flex w-full cursor-pointer items-center gap-2.5 rounded-sm py-0.5 pr-2 pl-1.5 text-left text-[13px] leading-[18px] outline-none",
                       index === current ? "bg-bg-2 text-fg-0" : "text-fg-2 hover:text-fg-0"
                     )}
-                    onClick={() => jumpTo(heading.element, offsetVar)}
+                    onClick={(event) => {
+                      pin(index);
+                      jumpTo(heading.element, offsetVar);
+                      /*
+                        В Редакторе в правке фокус на заголовок не переходит и
+                        остаётся на пункте, а фокус в списке держит его открытым:
+                        уход курсора его бы не закрыл. После клика мышью пункт
+                        фокус отпускает; с клавиатуры (`detail === 0`) фокус
+                        остаётся в списке — по нему ещё ходят стрелками.
+                      */
+                      const item = event.currentTarget;
+                      if (event.detail > 0 && document.activeElement === item) item.blur();
+                    }}
                   >
                     {/* Штрихи стоят в колонке одной ширины: текст пунктов начинается ровно, а отступ даёт глубина. */}
                     <span aria-hidden className="flex w-4 shrink-0 items-center">
