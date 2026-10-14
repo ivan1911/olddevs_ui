@@ -1,5 +1,28 @@
 # @olddevs/ui
 
+## 4.4.0
+
+### Minor Changes
+
+- b9fd75b: `RichTextToc` in `@olddevs/ui/editor` is a table of contents for a long Document next to `RichTextView` or a `readOnly` `RichTextEditor`:
+
+  - Collapsed, it is a strip of strokes, one per heading, with the current section highlighted while the page scrolls. Hovering the strip opens the list of headings; a click scrolls to the heading and moves focus to it, and the list stays open until the pointer leaves.
+  - Headings come from the DOM of `target`, a ref to the View or the Editor's handle: `h1`–`h4` at the top level and inside Wrappers, not in Layout columns or custom Blocks. With fewer than two headings nothing renders.
+  - No anchors: the address does not change and the Document gets no `id`s. `offsetVar` (default `--topbar-h`) puts the heading under a sticky header, as in ADR-0016.
+  - `listWidth` sets the width of the list (default 240px); long titles end with an ellipsis. When there is no room to the left of the text, the strip hides itself.
+  - New message `editor.toc`: "Table of contents", «Оглавление» in `ru`.
+
+- 08eb808: `RichTextEditor` gets the `toc` Tool: the table of contents of `RichTextToc` in the Editor's left gutter.
+
+  - Switch it on by name, `tools={[...RICH_TEXT_PRESETS.full, "toc"]}`. It is in neither Preset, so no existing screen changes its layout; `RICH_TEXT_PRESETS.full` is now every built-in Tool except `toc`.
+  - The gutter appears with the second heading and goes away with it. The strip lines up with the first heading and sticks under the fixed Toolbar, or to the top of a field with `maxHeight`.
+  - A jump while editing puts the caret at the end of the heading; in `readOnly` it focuses the heading, as `RichTextToc` does.
+
+### Patch Changes
+
+- 31abbbe: `RichTextEditor` with `name` keeps the value of its hidden form field when the owner re-renders. Before, any re-render after the engine had written the field reset it to the incoming string, because React rewrites `defaultValue` of an `input type="hidden"` on every update, so a form could submit a stale Document.
+- 51fcc79: The last four Reference pages now have English Translations: the Reference index, the shared conventions, the `UiMessages` catalog and the utilities API (`docs/index.en.md`, `docs/conventions.en.md`, `docs/api/messages.en.md`, `docs/api/utilities.en.md`). Every page in `docs/` now has an English version.
+
 ## 4.3.0
 
 ### Minor Changes
