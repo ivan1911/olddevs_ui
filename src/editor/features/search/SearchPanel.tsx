@@ -12,7 +12,7 @@ import { useMessages } from "../../../i18n/useMessages.js";
 import { cn } from "../../../lib/cn.js";
 import { GLASS_PANEL_CLASS } from "../../styles/glass.js";
 import type { SearchOptions } from "./searchMatch.js";
-import { revealCurrentMatch } from "./revealMatch.js";
+import { cancelRevealMatch, registerSearchOverlays, scheduleRevealMatch } from "./revealMatch.js";
 import { searchState } from "./searchPlugin.js";
 
 const NO_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: false };
@@ -99,15 +99,18 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
     разложена и её край можно учесть. Панель и её липкий родитель (Панель
     Редактора) лежат поверх Документа: совпадение под ними не считается видимым.
   */
-  const revealFrame = useRef(0);
-  const reveal = () => {
-    cancelAnimationFrame(revealFrame.current);
-    revealFrame.current = requestAnimationFrame(() => {
-      const panel = panelRef.current;
-      revealCurrentMatch(editor.view.dom, [panel, panel?.parentElement]);
-    });
-  };
-  useEffect(() => () => cancelAnimationFrame(revealFrame.current), []);
+  const reveal = () => scheduleRevealMatch(editor);
+  // Команды Инструмента показывают совпадение тем же путём и обходят эту же панель.
+  useEffect(() => {
+    const unregister = registerSearchOverlays(editor, () => [
+      panelRef.current,
+      panelRef.current?.parentElement,
+    ]);
+    return () => {
+      unregister();
+      cancelRevealMatch(editor);
+    };
+  }, [editor]);
 
   useEffect(() => {
     editor.commands.setSearch(query, options);
