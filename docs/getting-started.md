@@ -130,11 +130,11 @@ peer-зависимости внешние, метрика gzip:
 | одна `Button`                                                                                               | 1,6 кБ   |
 | `DataTable`                                                                                                 | 9,0 кБ   |
 | весь кит целиком (`import *`)                                                                               | 77,1 кБ  |
-| `RichTextEditor` из `@olddevs/ui/editor`, без движка, «старт»                                               | 71,3 кБ  |
-| `RichTextEditor` вместе с движком Tiptap, «старт» (статический граф, `basic`)                               | 296 кБ   |
-| `RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)                      | 344,2 кБ |
-| `RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён                                       | 12,0 кБ  |
-| `sanitizeRichText` и `richTextSanitizeConfig` из `@olddevs/ui/editor/schema`, движок Tiptap в замер включён | 3,6 кБ   |
+| `RichTextEditor` из `@olddevs/ui/editor`, без движка, «старт»                                               | 72,7 кБ  |
+| `RichTextEditor` вместе с движком Tiptap, «старт» (статический граф, `basic`)                               | 297,5 кБ |
+| `RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)                      | 346,6 кБ |
+| `RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён                                       | 12,3 кБ  |
+| `sanitizeRichText` и `richTextSanitizeConfig` из `@olddevs/ui/editor/schema`, движок Tiptap в замер включён | 3,9 кБ   |
 | `highlightCodeBlocks` из `@olddevs/ui/editor/highlight`, вместе с lowlight                                  | 22,6 кБ  |
 | `highlightCodeNodes` из `@olddevs/ui/editor/highlight`, вместе с lowlight                                   | 22,6 кБ  |
 
@@ -155,7 +155,7 @@ peer-зависимости внешние, метрика gzip:
 У `RichTextView` Tiptap и lowlight внесены в замер ради проверки. В его строку входят только
 типографика и Остров кнопки «Копировать» у Блоков кода (кнопка и подсказка кита, каталог сообщений),
 и замер доказывает, что в графе нет ни движка, ни подсветчика. Так же меряется лёгкий вход
-`@olddevs/ui/editor/schema` (3,6 кБ): Схема, `richTextSchema`, очистка `sanitizeRichText` с хуками для
+`@olddevs/ui/editor/schema` (3,9 кБ): Схема, `richTextSchema`, очистка `sanitizeRichText` с хуками для
 DOMPurify, в том числе по правилам своих Инструментов, и `markRange`.
 
 Серверная подсветка `@olddevs/ui/editor/highlight` (22,6 кБ — почти целиком ядро highlight.js и

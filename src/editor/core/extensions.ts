@@ -268,7 +268,8 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     (`codeBlockTool.ts`): его расширение здесь, после `ToolbarFocus`, и
     опрашивается раньше.
   */
-  for (const descriptor of described) extensions.push(...(descriptor.engine?.(options) ?? []));
+  for (const descriptor of described)
+    extensions.push(...(descriptor.engine?.(options, descriptor.options) ?? []));
   // Сочетания кнопок описаний вешает кит: поле записи — их единственный источник.
   const buttons = described.flatMap((descriptor) => descriptor.buttons ?? []);
   // Поповер пункта вставки и Действия открывает та же команда, что у кнопки.

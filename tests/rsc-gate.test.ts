@@ -72,11 +72,53 @@ const SERVER_SAFE = [
       "the description of a custom tool to sanitise with the same rules.",
   },
   {
+    file: "editor/core/toolOptions.ts",
+    why:
+      "tool() and the RichTextTools map (OLDSUI-268): a Configured Tool is plain data, and the " +
+      "helper is a function over it. One type-only import, no React and no Tiptap — a server " +
+      "module that assembles `tools` imports it next to the custom tool descriptions.",
+  },
+  {
+    file: "editor/core/toolDefinition.ts",
+    why:
+      "defineTool() (OLDSUI-268): the definition of a custom tool is data and functions, like " +
+      "CustomTool, and the module only spreads and merges it. Tiptap is a type-only import, no " +
+      "React — a server module that builds `tools`, and `richTextSchema`, import it.",
+  },
+  {
+    file: "editor/core/toolCommands.ts",
+    why:
+      "The types of the Commands of a tool (OLDSUI-268): interfaces and one conditional type " +
+      "over the RichTextTools map, with type-only imports, so nothing is left in the build. " +
+      "It sits in the graph of `toolOptions.ts`, which a server module imports.",
+  },
+  {
     file: "editor/core/handleWatchers.ts",
     why:
-      "Subscribers to the Editor handle's engine (watchHandleEditor, notifyHandleEditor): a WeakMap " +
-      "and two functions, no React and no Tiptap. Split from handle.ts so that RichTextToc can wait " +
-      "for the engine without importing Tiptap (OLDSUI-264).",
+      "Subscribers to the Editor handle's engine (watchHandleEditor, notifyHandleEditor) and the " +
+      "tool signals next to them: two WeakMaps and a few functions, no React and no Tiptap. Split " +
+      "from handle.ts so that RichTextToc can wait for the engine without importing Tiptap (OLDSUI-264).",
+  },
+  {
+    file: "editor/core/toolState.ts",
+    why:
+      "The snapshots of the built-in tools' State (OLDSUI-268) as interfaces: nothing but types, " +
+      "one type-only import. The RichTextTools map refers to them, and a server module that " +
+      "declares its own tool in the map imports that map.",
+  },
+  {
+    file: "editor/core/nodeNames.ts",
+    why:
+      "The name of the Wrapper node (OLDSUI-268): one constant, no imports. It is split off " +
+      "containers.ts so that the Document headings walk of the Table of contents can read it " +
+      "without the Tiptap runtime that containers.ts imports.",
+  },
+  {
+    file: "editor/features/toc/documentHeadings.ts",
+    why:
+      "The headings of a Document for the toc tool (OLDSUI-268): a walk over a ProseMirror node it " +
+      "is given. Tiptap appears only as a type, erased in the build, so RichTextToc.tsx keeps " +
+      "the engine out of its graph. The client files that import it carry their own directive.",
   },
   {
     file: "editor/features/toc/headings.ts",

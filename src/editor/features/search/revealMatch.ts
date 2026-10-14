@@ -1,5 +1,7 @@
 "use client";
 
+import type { Editor } from "@tiptap/core";
+
 interface Band {
   top: number;
   bottom: number;
@@ -66,4 +68,47 @@ export function revealCurrentMatch(
     scroller.scrollTop = before + delta;
     delta -= scroller.scrollTop - before;
   }
+}
+
+/** Что лежит поверх Документа у каждого поля: панель поиска, пока она открыта. */
+const overlayProviders = new WeakMap<Editor, () => readonly (Element | null | undefined)[]>();
+const frames = new WeakMap<Editor, number>();
+
+/**
+ * Панель поиска сообщает, что лежит поверх Документа, пока открыта. Команды
+ * Инструмента (`next`, `previous`, `setQuery`) живут вне панели, но должны
+ * обходить её так же. Возвращает снятие регистрации.
+ */
+export function registerSearchOverlays(
+  editor: Editor,
+  overlays: () => readonly (Element | null | undefined)[]
+): () => void {
+  overlayProviders.set(editor, overlays);
+  return () => {
+    if (overlayProviders.get(editor) === overlays) overlayProviders.delete(editor);
+  };
+}
+
+/**
+ * Показать текущее совпадение кадром позже, когда панель уже разложена. Вызовы
+ * одного поля в пределах кадра сливаются в одну прокрутку: панель и команда
+ * Инструмента, сработавшие на один переход, не прокручивают дважды. Фокус не
+ * трогает.
+ */
+export function scheduleRevealMatch(editor: Editor): void {
+  cancelAnimationFrame(frames.get(editor) ?? 0);
+  frames.set(
+    editor,
+    requestAnimationFrame(() => {
+      frames.delete(editor);
+      if (editor.isDestroyed) return;
+      revealCurrentMatch(editor.view.dom, overlayProviders.get(editor)?.() ?? []);
+    })
+  );
+}
+
+/** Отменить отложенную прокрутку (панель закрылась или поле разобрано). */
+export function cancelRevealMatch(editor: Editor): void {
+  cancelAnimationFrame(frames.get(editor) ?? 0);
+  frames.delete(editor);
 }

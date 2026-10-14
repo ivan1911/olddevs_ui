@@ -1,4 +1,4 @@
-import { Mark, Node } from "@tiptap/core";
+import { Mark, Node, type Editor } from "@tiptap/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { Button } from "../components/actions/Button.js";
@@ -18,6 +18,9 @@ import { markRange, type CustomTool } from "./core/customTool.js";
 import { FLOATING_TOOLBAR_KEY } from "./ui/FloatingToolbar.js";
 import { SELECTION_BUBBLE_KEY } from "./ui/SelectionBubble.js";
 import { TableSizeGrid as SizeGrid } from "./features/table/TableSizeGrid.js";
+import { defineTool } from "./core/toolDefinition.js";
+import { tool } from "./core/toolOptions.js";
+import { useRichTextToolState } from "./hooks/useRichTextToolState.js";
 import { RICH_TEXT_PRESETS, TOOLS } from "./core/tools.js";
 
 /*
@@ -180,6 +183,14 @@ const SORT_SAMPLE =
   '<td data-align="center"><p>draft</p></td></tr>' +
   "</tbody></table><p>Put the caret in a column and choose Table › Sort.</p>";
 
+/** Часть ключа перемонтирования для записи `tools`: имя, у `tool()` — ещё и опции. */
+const toolKey = (entry: NonNullable<RichTextEditorProps["tools"]>[number]) =>
+  typeof entry === "string"
+    ? entry
+    : "configured" in entry
+      ? `${entry.name}${JSON.stringify(entry.options)}`
+      : entry.name;
+
 const meta = {
   title: "Inputs/RichTextEditor",
   component: RichTextEditor,
@@ -189,7 +200,7 @@ const meta = {
     <div className="max-w-[640px]">
       {/* Набор инструментов читается при создании движка: смена пресета в
           панели управления пересоздаёт поле ключом. */}
-      <RichTextEditor key={`${args.preset}-${args.tools?.join()}`} {...args} />
+      <RichTextEditor key={`${args.preset}-${args.tools?.map(toolKey).join()}`} {...args} />
     </div>
   ),
 } satisfies Meta<typeof RichTextEditor>;
@@ -2121,8 +2132,31 @@ const SEARCH_SAMPLE =
   "heading, a match in a list, a ma<em>tch</em> across marks.</p>" +
   "<ul><li><p>Next match: Enter</p></li><li><p>Previous match: Shift+Enter</p></li></ul>";
 
+/**
+ * Строка статуса экрана из Состояния Поиска: «2 of 4», пока панель открыта.
+ * Хук читает снимок по тому же `ref`, что получает поле.
+ */
+function SearchStatus({ target }: { target: RefObject<RichTextEditorHandle | null> }) {
+  const search = useRichTextToolState(target, "search");
+  const text = !search?.open
+    ? "Search is closed"
+    : search.error
+      ? "Invalid regular expression"
+      : search.total === 0
+        ? "No matches"
+        : `${search.current + 1} of ${search.total}`;
+  return (
+    <p role="status" className="text-fg-2 mt-2 text-[13px]">
+      {text}
+    </p>
+  );
+}
+
 /** Открыть поиск по первому «match», как только движок готов: оно и станет текущим. */
-function OpenedSearch(props: Partial<RichTextEditorProps>) {
+function OpenedSearch({
+  status = false,
+  ...props
+}: Partial<RichTextEditorProps> & { status?: boolean }) {
   const ref = useRef<RichTextEditorHandle>(null);
   return (
     <div className="max-w-[640px]">
@@ -2142,10 +2176,11 @@ function OpenedSearch(props: Partial<RichTextEditorProps>) {
             return false;
           });
           editor.commands.setTextSelection({ from, to: from + "match".length });
-          handle.openSearch();
+          handle.tool("search")?.open();
         }}
         {...props}
       />
+      {status && <SearchStatus target={ref} />}
     </div>
   );
 }
@@ -2166,6 +2201,17 @@ export const Search: Story = {
 /** Поиск в `basic`: кнопка «Поиск» есть и в коротком наборе. */
 export const SearchBasic: Story = {
   render: () => <OpenedSearch preset="basic" />,
+  tags: ["network-idle"],
+};
+
+/**
+ * Состояние Поиска на экране: строка под полем читает его хуком
+ * `useRichTextToolState(ref, "search")` и пишет «1 of 4». Переходите по
+ * совпадениям, меняйте запрос и флажки — строка следует за панелью; закройте
+ * панель — строка скажет, что поиск закрыт.
+ */
+export const SearchStatusLine: Story = {
+  render: () => <OpenedSearch status />,
   tags: ["network-idle"],
 };
 
@@ -2775,11 +2821,15 @@ const TOC_TOOLS = [...RICH_TEXT_PRESETS.full, "toc"] as const;
  */
 export const TableOfContents: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /** `readOnly`: Панели нет, полоса липнет к краю окна, переход ставит фокус на заголовок. */
 export const TableOfContentsReadOnly: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, readOnly: true },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /**
@@ -2788,14 +2838,280 @@ export const TableOfContentsReadOnly: Story = {
  */
 export const TableOfContentsScrollingField: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, maxHeight: 360 },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /** Светлый Лист: Оглавление стоит в поле Редактора слева от Листа, в теме приложения. */
 export const TableOfContentsPaper: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, surface: "paper" },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /** Плавающая Панель: над полем ничего не липнет, полоса — к краю окна. */
 export const TableOfContentsFloatingToolbar: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, toolbar: "floating" },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
+};
+
+/**
+ * Оглавление, настроенное записью `tool("toc", …)`: только уровни H2–H3 и
+ * шапка экрана, чья высота лежит в своей переменной `--header-h`, а не в
+ * `--topbar-h`. Запись сама включает Инструмент, имя `"toc"` в `tools` не нужно.
+ * Прокрутите страницу и нажмите пункт списка: заголовок встанет под шапку, а
+ * H1 и H4 в полосе и списке нет.
+ */
+export const TableOfContentsOptions: Story = {
+  args: {
+    tools: [...RICH_TEXT_PRESETS.full, tool("toc", { offsetVar: "--header-h", levels: [2, 3] })],
+    defaultValue: TOC_ARTICLE,
+    toolbar: "floating",
+  },
+  render: (args) => <WithAppHeader {...args} />,
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
+};
+
+function WithAppHeader(props: RichTextEditorProps) {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--header-h", "56px");
+    return () => {
+      root.style.removeProperty("--header-h");
+    };
+  }, []);
+  return (
+    <div>
+      <div className="border-line-soft bg-bg-1 text-fg-2 sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex h-14 items-center border-b px-4 text-[13px] font-semibold">
+        Application header
+      </div>
+      <RichTextEditor aria-label="Body" {...props} />
+    </div>
+  );
+}
+
+/*
+  Внешняя навигация по Состоянию Оглавления: список заголовков и текущий раздел
+  читаются хуком `useRichTextToolState(ref, "toc")`, а не из DOM Документа.
+*/
+function ReadingPosition({ target }: { target: RefObject<RichTextEditorHandle | null> }) {
+  const toc = useRichTextToolState(target, "toc");
+  if (!toc) return null;
+  return (
+    <nav
+      aria-label="Reading position"
+      className="border-line-soft sticky top-4 hidden w-56 shrink-0 self-start border-l pl-3 text-[13px] md:block"
+    >
+      <ul className="space-y-1">
+        {toc.headings.map((heading) => (
+          <li
+            key={heading.index}
+            aria-current={heading.index === toc.current ? "location" : undefined}
+            className={
+              heading.index === toc.current ? "text-fg-0 font-semibold" : "text-fg-2 font-normal"
+            }
+            style={{ paddingLeft: (heading.level - 1) * 12 }}
+          >
+            {heading.text}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function WithReadingPosition(props: RichTextEditorProps) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  return (
+    <div className="flex items-start gap-6">
+      <div className="max-w-[640px] min-w-0 flex-1">
+        <RichTextEditor ref={ref} aria-label="Body" {...props} />
+      </div>
+      <ReadingPosition target={ref} />
+    </div>
+  );
+}
+
+/**
+ * Состояние Оглавления на экране: справа от поля внешняя навигация из заголовков
+ * `useRichTextToolState(ref, "toc")`; текущий раздел идёт за прокруткой. Правьте
+ * заголовки — список меняется сразу, не дожидаясь ленивого ядра Оглавления.
+ */
+export const TableOfContentsExternalNavigation: Story = {
+  args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE },
+  render: (args) => <WithReadingPosition {...args} />,
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
+};
+
+/**
+ * Команды Инструмента из кода экрана: кнопки шапки зовут `handle.tool("search")` и
+ * `handle.tool("toc")`, а не внутренности Редактора. «Найти „tone“» открывает панель
+ * Поиска сразу с запросом, «Дальше» ведёт к следующему совпадению, «К заголовку»
+ * переходит по списку Оглавления: заголовок встаёт под шапку экрана и под
+ * фиксированную Панель, как при клике по пункту списка. В списке только H2–H3
+ * (`levels`), поэтому индекс 0 — «How to read».
+ */
+export const ToolCommands: Story = {
+  args: {
+    tools: [...RICH_TEXT_PRESETS.full, tool("toc", { offsetVar: "--header-h", levels: [2, 3] })],
+    defaultValue: TOC_ARTICLE,
+  },
+  render: (args) => <WithToolCommands {...args} />,
+  // Панель поиска — ленивый чанк.
+  tags: ["network-idle"],
+};
+
+function WithToolCommands(props: RichTextEditorProps) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    // Шапка экрана и Панель Редактора липнут одна под другой: обе читают высоту шапки.
+    const root = document.documentElement;
+    root.style.setProperty("--header-h", "56px");
+    root.style.setProperty("--topbar-h", "56px");
+    return () => {
+      root.style.removeProperty("--header-h");
+      root.style.removeProperty("--topbar-h");
+    };
+  }, []);
+  return (
+    <div>
+      <div className="border-line-soft bg-bg-1 sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex h-14 items-center gap-2 border-b px-4">
+        <Button
+          size="sm"
+          variant="soft"
+          onClick={() => ref.current?.tool("search")?.open({ query: "tone" })}
+        >
+          Find “tone”
+        </Button>
+        <Button size="sm" variant="soft" onClick={() => ref.current?.tool("search")?.next()}>
+          Next match
+        </Button>
+        <Button size="sm" variant="soft" onClick={() => ref.current?.tool("toc")?.jumpTo(0)}>
+          Go to “How to read”
+        </Button>
+      </div>
+      <RichTextEditor ref={ref} aria-label="Body" {...props} />
+    </div>
+  );
+}
+
+/* ── Свой Инструмент с опциями: defineTool ───────── */
+
+/*
+  Заметка на полях на нейтральных данных: Инструмент с подписями и пределом в
+  Опциях, Состоянием «сколько заметок» и Командой «добавить». Автор дописывает его
+  в карту `RichTextTools`, и хук с `handle.tool()` получают типы.
+*/
+declare module "@olddevs/ui/editor" {
+  interface RichTextTools {
+    acme_remark: {
+      options: { labels: { insert: string }; limit: number };
+      state: { count: number; limit: number };
+      commands: { add(text: string): boolean };
+    };
+  }
+}
+
+const Remark = Node.create({ name: "acme_remark", content: "inline*" });
+
+const countRemarks = (editor: Editor) => {
+  let count = 0;
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === "acme_remark") count += 1;
+  });
+  return count;
+};
+
+const remarkTool = defineTool({
+  name: "acme_remark",
+  defaults: { labels: { insert: "Remark" }, limit: 3 },
+  create: (options) => ({
+    engine: [Remark],
+    blocks: { acme_remark: { kind: "block" } },
+    insertItems: [
+      {
+        section: "insert",
+        label: options.labels.insert,
+        icon: PinIcon,
+        aliases: ["note"],
+        run: (chain) => chain.insertContent({ type: "acme_remark" }),
+      },
+    ],
+    buttons: [
+      {
+        id: "remark",
+        label: options.labels.insert,
+        icon: PinIcon,
+        can: (editor) => countRemarks(editor) < options.limit,
+        run: (editor) => void editor.chain().focus().insertContent({ type: "acme_remark" }).run(),
+      },
+    ],
+  }),
+  state: ({ editor, options }) => ({ count: countRemarks(editor), limit: options.limit }),
+  commands: ({ editor, options }) => ({
+    add: (text: string) =>
+      countRemarks(editor) < options.limit &&
+      editor
+        .chain()
+        .focus("end")
+        .insertContent({ type: "acme_remark", content: [{ type: "text", text }] })
+        .run(),
+  }),
+});
+
+const REMARK_SAMPLE =
+  "<p>Remarks are the paragraphs below; the status line counts them using the Tool state.</p>" +
+  '<div data-block="acme_remark">First remark</div>';
+
+/** Строка статуса и кнопка экрана: читают Состояние и зовут Команду своего Инструмента. */
+function RemarkScreen(props: RichTextEditorProps) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  const remarks = useRichTextToolState(ref, "acme_remark");
+  return (
+    <div className="max-w-[640px]">
+      <div className="mb-2 flex items-center gap-3">
+        <Button
+          size="sm"
+          variant="soft"
+          onClick={() => ref.current?.tool("acme_remark")?.add("Added from the screen")}
+        >
+          Add a remark
+        </Button>
+        <p role="status" className="text-fg-2 text-[13px]">
+          {remarks ? `${remarks.count} of ${remarks.limit} remarks` : "Loading"}
+        </p>
+      </div>
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={REMARK_SAMPLE} {...props} />
+    </div>
+  );
+}
+
+/**
+ * Свой Инструмент через `defineTool` с умолчаниями: подпись кнопки и пункта
+ * «Remark» и предел в три заметки — из `defaults`. Строка статуса над полем читает
+ * Состояние Инструмента хуком `useRichTextToolState`, кнопка «Add a remark» зовёт
+ * его Команду `handle.tool("acme_remark")?.add(…)`; на пределе кнопка Панели
+ * выключается, а Команда возвращает `false`.
+ */
+export const DefinedTool: Story = {
+  render: () => <RemarkScreen tools={[...RICH_TEXT_PRESETS.full, remarkTool]} />,
+};
+
+/**
+ * Тот же Инструмент, настроенный экраном: `tool(remark, { labels: { insert:
+ * "Comment" }, limit: 2 })` меняет подпись кнопки и пункта «Comment» и предел, а
+ * остальные умолчания остаются, вложенные подписи сливаются с ними.
+ */
+export const DefinedToolConfigured: Story = {
+  render: () => (
+    <RemarkScreen
+      tools={[
+        ...RICH_TEXT_PRESETS.full,
+        tool(remarkTool, { labels: { insert: "Comment" }, limit: 2 }),
+      ]}
+    />
+  ),
 };

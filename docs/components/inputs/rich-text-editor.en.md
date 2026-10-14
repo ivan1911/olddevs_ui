@@ -7,6 +7,24 @@ exports:
     RichTextEditorHandle,
     RichTextDocument,
     useRichTextEditorState,
+    useRichTextToolState,
+    RichTextToolState,
+    tool,
+    defineTool,
+    ConfiguredTool,
+    ToolDefinition,
+    ToolDefinitionInput,
+    ToolDefinitionContext,
+    CustomToolBody,
+    RichTextTools,
+    SearchToolOptions,
+    TocToolOptions,
+    TocLevel,
+    SearchToolCommands,
+    TocToolCommands,
+    SearchToolState,
+    TocToolState,
+    TocToolHeading,
     Tool,
     ToolName,
     RichTextEditorPreset,
@@ -37,7 +55,7 @@ category: inputs
 status: stable
 source: src/editor/RichTextEditor.tsx
 story: src/editor/RichTextEditor.stories.tsx
-sourceHash: 3eaf71d10511
+sourceHash: b5a4f8fde844
 ---
 
 # RichTextEditor
@@ -55,7 +73,8 @@ sourceHash: 3eaf71d10511
 - **Code block.** It has a header (language on the left, "Copy" on the right), a language (Python, TypeScript, JavaScript, Go, HTML, JSON, YAML, Markdown or plain text) and lowlight highlighting. Only `class="language-…"` is written into the Document, and for `RichTextView` the server helper from `@olddevs/ui/editor/highlight` highlights the Blocks.
 - **HTML mode.** The "HTML" button of the fixed Toolbar (the `source` Tool) swaps the Document for a field with its source HTML; leaving the mode, `blur`, form submission and `getHTML()` apply the edit through the Schema, like an incoming `value`.
 - **Feature set.** `preset="full" | "basic"` or an exact `tools` list; a disabled Tool removes both its button and its markup from the Schema.
-- **Handle (`ref`).** The screen drives the field through `ref`: `insertHTML`, `insertText`, `getText`, `getSelectedText`, `isEmpty`, `focus(position?)`, `blur`, `undo`, `redo`, `openSearch`; `getJSON()`/`setJSON()` export and load the Document as a lossless JSON envelope (see the "JSON" section), and `defaultValue` accepts the envelope too. The screen builds its own toolbar with the `useRichTextEditorState(ref, selector)` hook. Before Readiness (on the server, before mount, while Tool Loaders are running) the methods are silent: see the "Handle (`ref`) and a custom toolbar outside the field" section.
+- **Tool options, state and commands.** The built-in `search` and `toc` Tools have options: a `tool("toc", { offsetVar: "--header-h", levels: [2, 3] })` entry sits in `tools` next to the names, switches the Tool on and configures it (for Search, the starting flags `matchCase`, `wholeWord` and `regex`; for the Table of contents, `offsetVar`, `levels` and `listWidth`). The `useRichTextToolState(ref, "search")` hook reads the state: for Search, whether the find panel is open, the query, the number of matches and the number of the current one; for the Table of contents, the headings and the current section. The hook returns `null` before mount, on the server, after the Editor unmounts and when the Tool is not in the set. Commands are called through the Handle: `ref.current?.tool("search")?.open()`, `ref.current?.tool("toc")?.jumpTo(2)`; each returns a `boolean`. Options are read once, when the engine is created. A custom Tool with the same three parts is described with `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
+- **Handle (`ref`).** The screen drives the field through `ref`: `insertHTML`, `insertText`, `getText`, `getSelectedText`, `isEmpty`, `focus(position?)`, `blur`, `undo`, `redo`, `tool(name)`; `getJSON()`/`setJSON()` export and load the Document as a lossless JSON envelope (see the "JSON" section), and `defaultValue` accepts the envelope too. The screen builds its own toolbar with the `useRichTextEditorState(ref, selector)` hook. `openSearch` is deprecated (removed in 5.0): use `tool("search")?.open()` instead. Before Readiness (on the server, before mount, while Tool Loaders are running) the methods are silent: see the "Handle (`ref`) and a custom toolbar outside the field" section.
 - **Events.** The screen learns about field events through the `onReady()`, `onFocus()` and `onBlur()` callbacks (see the "Events" section).
 - **Skeleton and Loader.** Until Readiness the field shows a Skeleton: the frame and the Document as static HTML without input, with no height jump. The Skeleton's Document is `value` cleaned by the Schema, and only in the browser; on the server the Skeleton is a frame without a Document. The Engine part of a custom Tool can be passed as a Loader (`engine: () => import(…)`); if it fails, the result is a field error with "Retry".
 - **Status line and Field notice.** Below the field, inside the frame, are the Status line (`status`: the screen's React node at the start, the kit's counter at the end, no `role`) and the Field notice: the engine command `showNotice({ tone: "status" | "error", text })` / `showNotice(null)`. `status` is only announced, `error` is shown as a `role="alert"` line until the next edit; image messages go through the same channel.
@@ -305,7 +324,7 @@ The `link` Tool: the "Link" button on the Toolbar and `Ctrl/⌘+K` open a popove
 
 ## Tools and Presets
 
-`preset="full"` (default) is everything in the release except the Table of contents `toc`: it changes the layout of the field, so it is switched on only explicitly. `preset="basic"` is for comments and short descriptions. `tools` is an exact list and takes precedence over a Preset; descriptions of custom Tools can be mixed in with the kit's names (see the "Custom Tool" section). The type of a `tools` element is `Tool` (a kit name or a `CustomTool`), the type of a kit name is `ToolName`; both are exported from `@olddevs/ui/editor`.
+`preset="full"` (default) is everything in the release except the Table of contents `toc`: it changes the layout of the field, so it is switched on only explicitly. `preset="basic"` is for comments and short descriptions. `tools` is an exact list and takes precedence over a Preset; descriptions of custom Tools can be mixed in with the kit's names (see the "Custom Tool" section). The type of a `tools` element is `Tool` (a kit name, a Configured Tool from `tool(…)`, a `defineTool(…)` definition or a `CustomTool`), the type of a kit name is `ToolName`; both are exported from `@olddevs/ui/editor`.
 
 Presets are also exported as arrays of names — `RICH_TEXT_PRESETS.full` and `RICH_TEXT_PRESETS.basic` — so that you can assemble your own set from them: `tools={[...RICH_TEXT_PRESETS.full, mergeTagTool]}`. The arrays are frozen. A Preset's content is "what the kit considers the full set", not a frozen list: a new built-in Tool arrives in a Preset in a minor version. If you need a stable set, pass an exact list of names.
 
@@ -353,6 +372,34 @@ Earlier, "no H1 in the Document" was a kit decision (the page heading sits outsi
 A name enters the `Tool` type together with the Tool itself, not earlier: widening the input type does not break the consumer, whereas a name without an implementation would compile and do nothing. That is how `link` arrived — straight into the `basic` Preset too — and `color`, `highlight`, `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `source`, `toc`; there are no reserved names now. Unknown names in `tools` (from JS without types) are dropped silently.
 
 `preset` and `tools` are read **when the engine is created**: the Schema of a live ProseMirror cannot be changed. To change the set on a mounted field, remount it with a key (`key`) — the edit history is lost in the process.
+
+### Options of a built-in Tool: `tool()`
+
+Two built-in Tools have options: `search` and `toc`. You set them with the `tool(name, options)` helper, which returns a Configured Tool: an entry for `tools` that sits next to the names and the descriptions of custom Tools (ADR-0069).
+
+```tsx
+import { RICH_TEXT_PRESETS, RichTextEditor, tool } from "@olddevs/ui/editor";
+
+// Build the set once per module, not in a render: `tools` is read when the engine is created.
+const tools = [
+  ...RICH_TEXT_PRESETS.full,
+  tool("toc", { offsetVar: "--header-h", levels: [2, 3] }),
+  tool("search", { matchCase: true }),
+];
+
+<RichTextEditor tools={tools} defaultValue={html} />;
+```
+
+- **An entry switches the Tool on.** `tool("toc", …)` enables `toc` without the `"toc"` string. If `tools` also holds the bare name (for example, `search` from `full`), the Configured Tool wins: there is still one Find button and one find panel.
+- **Pass only what you change.** The remaining options come from the kit's defaults. Nested objects are merged and arrays are replaced whole: `levels: [2, 3]` means exactly these levels, not an addition to the default.
+- **The position in the UI does not change.** A configured built-in Tool sits where it would sit by name; a custom Tool sits in `tools` order.
+- **Types infer the options from the name.** `tool("toc", { matchCase: true })` and `tool("bold", {})` do not compile: `tool()` accepts only Tools that have options, which today means `search` and `toc`.
+- **Two `tool()` entries with the same name** are a set error, like two custom Tools with the same name: a field error ("The editor couldn't start") and a `console.error` in development.
+- **A wrong value** (from JS without types: `levels: [5]`, `offsetVar: "header"`) is replaced with the default, with a single `console.error` per Tool in development; the field keeps working.
+- **Options are read once**, together with the `tools` set, when the engine is created. To change them on a mounted field, remount it with a key (`key`) — the edit history is lost in the process.
+- **Server.** `tool()` pulls neither Tiptap nor React into the module, so a `tools` set that uses it can be built in a server module. A configured built-in Tool is made of data, and if its options are data, you can pass it to a client component as a prop.
+
+The options of each Tool are described in its own section: "Find and replace" and "Table of contents". The options of a custom Tool are set by `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
 
 ## Custom Tool
 
@@ -443,7 +490,7 @@ An attribute cannot contain HTML: a value with `<` does not pass any rule, and t
 
 On an error the engine is not created: under the field's frame there is a `role="alert"` line "The editor couldn't start. The document is unchanged." (`editor.toolsFailed`), the hidden form field and `getHTML()` return the incoming value, `onChange` stays silent, and `ref.current.editor` is `null`. The cause is in `console.error` in development mode, with the Tool's name. This way data loss is visible before the first save, not on the server. **An unknown string in `tools` is still dropped silently**: the error applies only to descriptions of custom Tools.
 
-Buttons, Insert menu items, Block actions and Text cards are described in the sections below; a Tool can report an error to the author with the `showNotice` command (see the "Status line and Field notice" section). The whole extension API and the boundary of its stability (what falls under semver, what counts as breaking) are described on the [Editor extension API](../../api/editor-extension.md) page.
+Buttons, Insert menu items, Block actions and Text cards are described in the sections below; a Tool can report an error to the author with the `showNotice` command (see the "Status line and Field notice" section). The whole extension API and the boundary of its stability (what falls under semver, what counts as breaking) are described on the [Editor extension API](../../api/editor-extension.md) page. If a Tool has settings and the screen needs its state and commands, describe it with `defineTool`: ["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды).
 
 ### Engine part Loader
 
@@ -1152,7 +1199,7 @@ The `required` check in the mode is evaluated against **the field's text** on ev
 
 ## Find and replace
 
-The `search` Tool (present in `full` and in `basic`) is find and replace over the Document. The "Find" button (a magnifying glass icon) sits at the right edge of the fixed Toolbar, before the Shortcuts reference; `Ctrl/⌘+F` with focus in the Document opens the find panel (outside the field the browser's find works), `Ctrl/⌘+Alt+F` opens it with focus in the replace field, and `openSearch({ replace? })` on the Handle opens it from screen code.
+The `search` Tool (present in `full` and in `basic`) is find and replace over the Document. The "Find" button (a magnifying glass icon) sits at the right edge of the fixed Toolbar, before the Shortcuts reference; `Ctrl/⌘+F` with focus in the Document opens the find panel (outside the field the browser's find works), `Ctrl/⌘+Alt+F` opens it with focus in the replace field, and the `open` command of the Tool (`ref.current?.tool("search")?.open()`) opens it from screen code.
 
 ```tsx
 <RichTextEditor preset="basic" /> // the "Find" button and Ctrl/⌘+F are already there
@@ -1171,6 +1218,74 @@ The `search` Tool (present in `full` and in `basic`) is find and replace over th
 
 Message catalog strings: `editor.search` (the button and the `Ctrl/⌘+F` Shortcuts reference row), `searchReplace` (`Ctrl/⌘+Alt+F`), `searchPanel`, `searchField`, `replaceField`, `searchPrevious`, `searchNext`, `searchClose`, `searchMatchCase`, `searchWholeWord`, `searchRegex`, `replaceOne`, `replaceAll`, `searchCount({ current, total })`, `searchNoMatches`, `searchInvalid`.
 
+### Find options
+
+A `tool("search", options)` entry sets the **starting flags**: the panel opens with them, and the commands use them until the search is closed. The flags stay switchable in the panel, and the kit does not remember them between openings: closing the panel returns them to the starting values.
+
+| Option      | Meaning                                      | Default |
+| ----------- | -------------------------------------------- | ------- |
+| `matchCase` | The panel opens with "Match case" on         | `false` |
+| `wholeWord` | The panel opens with "Whole words" on        | `false` |
+| `regex`     | The panel opens with "Regular expression" on | `false` |
+
+```tsx
+// Searching code in Documents: case matters, so nobody has to switch the flag on each time.
+<RichTextEditor tools={[...RICH_TEXT_PRESETS.full, tool("search", { matchCase: true })]} />
+```
+
+### Find state and commands
+
+The state is read with `useRichTextToolState(ref, "search")`, and the commands are called on `ref.current?.tool("search")`. The general rules for both are in the "Handle (`ref`) and your own toolbar outside the field" section.
+
+| State field | Meaning                                                                                                                                                              |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `open`      | The find panel is open.                                                                                                                                              |
+| `query`     | The query. Closing the panel removes the query and the highlighting; without a panel, the `setQuery` command sets it.                                                |
+| `flags`     | The flags `{ matchCase, wholeWord, regex }`. Closing the panel returns them to the starting values from the options.                                                 |
+| `total`     | How many matches of the query are in the Document.                                                                                                                   |
+| `current`   | The index of the current match, from 0; `-1` means no matches.                                                                                                       |
+| `error`     | The error text if the query is an invalid regular expression (the JavaScript engine's message, not localized); otherwise `null`. With an error there are no matches. |
+
+The state has no match positions.
+
+| Command                      | What it does                                                                                                                                                                                                                                                                              |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `open({ replace?, query? })` | Opens the panel, like the "Find" button and `Ctrl/⌘+F`. `query` puts the query in the field and in the Document highlighting at once; without it, the text selected within one Block becomes the query. `replace: true` puts focus in the replace field. `false` in HTML mode.            |
+| `close()`                    | Closes the panel and removes the highlighting. Focus and the caret stay where they were, unlike `Escape` in the panel. A panel that is already closed is not an error.                                                                                                                    |
+| `setQuery(query, flags?)`    | Sets the query. Flags not named in `flags` (and flags set to `undefined`) come from the open panel, or from the options when there is none. A non-empty query scrolls to the first match after the caret. `true` means the query was applied, even with no matches; `false` in HTML mode. |
+| `next()`, `previous()`       | They select the next or previous match, wrapping around at either end, and scroll the field's scroll area or the window to it, even when focus is outside the Document; they do not take focus. `false` means no matches.                                                                 |
+| `replace(text)`              | Replaces the current match: one edit, one undo; the next match becomes current. `false` means no matches or a field the author cannot edit.                                                                                                                                               |
+| `replaceAll(text)`           | Replaces all matches: one edit, one undo. The conditions are the same as for `replace`.                                                                                                                                                                                                   |
+
+The query and the flags live in the engine, so `setQuery`, `next` and `replace` work without an open panel: you can build your own find interface on them. The panel and the commands share one search, so a replacement made from code shows up in the panel. Scrolling after `next`, `previous` and `setQuery` arrives a moment after the call: its code loads on first use and is not part of the Editor's starting chunk.
+
+**A counter in the Status line.** While the find panel is open, the screen can show "3 of 12" next to the character counter. Closing the panel removes the query, and the counter disappears.
+
+```tsx
+import { useRef } from "react";
+import { RichTextEditor, useRichTextToolState } from "@olddevs/ui/editor";
+import type { RichTextEditorHandle } from "@olddevs/ui/editor";
+
+function ArticleBody({ html }: { html: string }) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  // `null` before mount and on the server, so the screen renders the same in both places.
+  const search = useRichTextToolState(ref, "search");
+
+  return (
+    <RichTextEditor
+      ref={ref}
+      aria-label="Article body"
+      defaultValue={html}
+      status={
+        search?.open && search.query ? (
+          <span>{search.total ? `${search.current + 1} of ${search.total}` : "No matches"}</span>
+        ) : null
+      }
+    />
+  );
+}
+```
+
 ## Table of contents
 
 The `toc` Tool puts the Table of contents of the Document in the Editor's left gutter: the same strip of strokes and the same list as [`RichTextToc`](../content/rich-text-toc.md), but the Editor holds the place itself (ADR-0068). It is in neither Preset, `full` or `basic`: the Table of contents moves the text, and a kit update does not change the layout of screens that did not ask for it. Switch it on by name:
@@ -1178,6 +1293,8 @@ The `toc` Tool puts the Table of contents of the Document in the Editor's left g
 ```tsx
 <RichTextEditor tools={[...RICH_TEXT_PRESETS.full, "toc"]} defaultValue={html} />
 ```
+
+A `tool("toc", options)` entry also switches the Tool on and configures it at the same time (see "Table of contents options" below).
 
 - **Place.** A column to the left of the Document, inside the field frame. It exists only while there is a strip, from two `h1`–`h4` headings at the top level and in Wrappers: with the second heading the text moves right; without it the text stays at the edge, as without the Tool. The first stroke is level with the first line of the first heading.
 - **Stickiness.** The strip sticks under the fixed Toolbar (and under the app header: `--topbar-h`, ADR-0016); without a Toolbar, to the edge of the window. In a field with `maxHeight` or `resizable` it sticks to the top of the scrolling area, and the highlight and the jump count from there; the page does not scroll.
@@ -1187,6 +1304,70 @@ The `toc` Tool puts the Table of contents of the Document in the Editor's left g
 - **No Toolbar button.** To show or hide the Table of contents, the screen changes `tools` (and remounts the field with a `key`, as for any set of Tools).
 
 Message catalog string: `editor.toc` ("Table of contents"), the name of the strip and the label of the list.
+
+### Table of contents options
+
+A `tool("toc", options)` entry switches the Tool on and configures it. The standalone [`RichTextToc`](../content/rich-text-toc.md#public-api) takes the same `offsetVar`, `levels` and `listWidth`: the two share one core.
+
+| Option      | Meaning                                                                                                                                                                                                                                                                                                                                                               | Default        |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| `offsetVar` | The name of the CSS variable that holds the height of the screen's sticky header (ADR-0016), written in full with the two leading dashes: `--header-h`. A jump puts the heading under the header, and the highlight treats a section as current from the header's bottom edge. It does not move the Editor's own sticky Toolbar, which still sits under `--topbar-h`. | `--topbar-h`   |
+| `levels`    | The heading levels in the Table of contents: a subset of 1–4. A heading of any other level is in neither the strip nor the list, and item indentation is counted from the largest remaining level. An empty array and invalid values are replaced by the default. With fewer than two headings left, there is no gutter.                                              | `[1, 2, 3, 4]` |
+| `listWidth` | The list width: pixels or a CSS length. Fixed rather than sized to the longest heading.                                                                                                                                                                                                                                                                               | `240`          |
+
+```tsx
+// The screen's header publishes its height in `--header-h`; the Table of contents needs only H2 and H3.
+<RichTextEditor
+  tools={[...RICH_TEXT_PRESETS.full, tool("toc", { offsetVar: "--header-h", levels: [2, 3] })]}
+  defaultValue={html}
+/>
+```
+
+### Table of contents state and commands
+
+The state is read with `useRichTextToolState(ref, "toc")`, and the command is called on `ref.current?.tool("toc")`.
+
+| State field | Meaning                                                                                                                                                                                                                                                                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `headings`  | The headings in reading order, the same as in the strip and the list: top level and Wrappers, only the levels from `levels`, no empty ones. Each is `{ level, text, index }`: a level 1–4, the text without markup, and the index of the list item, from 0. The list is returned even with one heading, although there is no gutter then. |
+| `current`   | The index of the current section in `headings`, from 0; `-1` means no headings. It follows scrolling. After the Document is edited, `headings` changes at once, while `current` catches up with a delay while the list is rebuilt.                                                                                                        |
+
+The headings are read from the Document, not from the DOM: the list is ready on the first frame without waiting for the lazy Table of contents UI, and it changes together with the edit. The state has no DOM nodes or ProseMirror positions.
+
+There is one command, `jumpTo(index)`: go to a heading of the list, like a click on an item. The index is counted in the same list (with `levels` applied, from 0, empty headings skipped) and is taken from the state snapshot: right after the Document is edited, it leads to the heading that the snapshot names, even though the Table of contents UI rebuilds its list with a delay. While editing, the caret goes to the end of the heading; in `readOnly`, the heading itself gets focus; scrolling puts it under the sticky header (`offsetVar`) and the Toolbar, and the heading's highlight fades. `false` means there is no heading with that index, the Table of contents UI has not loaded yet, or HTML mode is on. Fewer than two headings is not a reason to refuse: there is no gutter, but the list exists, and the jump works.
+
+**External navigation.** The screen builds breadcrumbs, a minimap or a list of sections next to the field from the state, instead of parsing the Document's DOM a second time.
+
+```tsx
+import type { RefObject } from "react";
+import { useRichTextToolState } from "@olddevs/ui/editor";
+import type { RichTextEditorHandle } from "@olddevs/ui/editor";
+
+function SectionNav({ target }: { target: RefObject<RichTextEditorHandle | null> }) {
+  const toc = useRichTextToolState(target, "toc");
+  if (!toc) return null;
+
+  return (
+    <nav aria-label="Sections">
+      <ul>
+        {toc.headings.map((heading) => (
+          <li
+            key={heading.index}
+            aria-current={heading.index === toc.current ? "location" : undefined}
+          >
+            <button
+              type="button"
+              onClick={() => target.current?.tool("toc")?.jumpTo(heading.index)}
+            >
+              {heading.text}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+```
 
 ## Status line and Field notice
 
@@ -1294,7 +1475,8 @@ import type { RichTextEditorHandle } from "@olddevs/ui/editor";
 | `focus(position?)`                                         | `"end"` (the default), `"start"` or `"restore"`: return focus to where the selection was, for example after your own dialog or menu.                                                                                                                                              |
 | `blur()`                                                   | Remove focus from the Document.                                                                                                                                                                                                                                                   |
 | `undo()`, `redo()`                                         | Undo and redo an edit; they work with the `history` Tool enabled.                                                                                                                                                                                                                 |
-| `openSearch({ replace? })`                                 | Open the "Find and replace" panel, like the "Find" button and `Ctrl/⌘+F`; `replace: true` puts focus in the replace field. Does nothing without the `search` Tool, in HTML mode and before mount.                                                                                 |
+| `tool(name)`                                               | The commands of a Tool: `tool("search")?.open()`, `tool("toc")?.jumpTo(2)`. `null` means the Tool is not in the set, has no commands, or the engine has not been created yet. See "Tool commands: `handle.tool()`".                                                               |
+| `openSearch({ replace? })`                                 | **Deprecated**, removed in 5.0: the same as `tool("search")?.open({ replace })`; warns once in development.                                                                                                                                                                       |
 | `canUndo()`, `canRedo()`                                   | Whether `undo` and `redo` are available: `false` without `history`.                                                                                                                                                                                                               |
 | `getHTML()`, `getMarkdown()`, `setMarkdown(md)`, `clear()` | See "Public API" and "Markdown".                                                                                                                                                                                                                                                  |
 | `getJSON()`, `setJSON(document): boolean`                  | The Document as a lossless JSON envelope, and replacing the Document with an envelope; `false` means the envelope was rejected. See "JSON".                                                                                                                                       |
@@ -1362,6 +1544,35 @@ function Screen() {
 
 **History with an external toolbar.** The Handle provides `undo()` and `redo()` and their availability. For the `disabled` state of an "Undo" button, get availability from the hook's slice — `editor.can().undo?.() === true`: the slice re-renders the toolbar right after an edit. `ref.current.canUndo()` is a one-off read in a handler, and it is not subscribed to re-rendering. Without the `history` Tool the engine has no `undo` command (hence the `?.`), and both buttons stay unavailable.
 
+### Tool state: `useRichTextToolState`
+
+`useRichTextToolState(ref, name, selector?)` gives the screen the state of a Tool: a "3 of 12" counter from Find in the Status line, or external navigation built from the headings of the Table of contents. The hook sits next to `useRichTextEditorState` and follows the Handle's engine in the same way, but it returns not a slice of the Tiptap engine but a typed snapshot of the kit's contract. The state fields of the built-in Tools are in the "Find and replace" and "Table of contents" sections.
+
+- **Name and type.** `name` is a Tool from the `tools` set; the snapshot type is inferred from the `RichTextTools` map: `search` returns `SearchToolState`, `toc` returns `TocToolState`. A name outside the map (a custom Tool without typing) gives `unknown`.
+- **Re-renders only when the snapshot changes.** The snapshot is recomputed on every engine transaction and on kit signals that the engine does not have: the find panel opening and closing, and the current section of the Table of contents changing on scroll. The screen re-renders when the result becomes different (plain data — primitives, arrays and plain objects — is compared by value, like `useRichTextEditorState`; `Date`, `Map`, `Set` and class instances are compared by reference), so typing that does not change the snapshot does not touch it. A custom Tool's `state` that creates such values anew on every call re-renders the screen on every transaction.
+- **A selector.** The third argument subscribes the screen to a slice: `useRichTextToolState(ref, "search", (state) => state.total)` re-renders it only when the number of matches changes. With `null`, the selector is not called.
+- **`null`** is what the hook returns before mount and in the screen's first render, on the server, after the Editor unmounts, and when the Tool is not in the set: Presets do not include `toc`, so you enable it by name or with a `tool("toc")` entry. This way the screen renders the same on the server and in the browser.
+- **A snapshot is data**: no DOM nodes, functions or ProseMirror positions. Do not mutate it.
+- **Cost.** The hook is not part of the `RichTextEditor` starting graph: only a screen that imports it pays for it.
+
+The state of a custom Tool is declared with `defineTool` (the `state` field) and read with the same hook: ["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды).
+
+### Tool commands: `handle.tool()`
+
+`ref.current?.tool(name)` returns the commands object of a Tool: `tool("search")?.open({ query: "TODO" })`, `tool("toc")?.jumpTo(2)`. The commands of the built-in Tools are described in the "Find and replace" and "Table of contents" sections.
+
+```tsx
+<button type="button" onClick={() => ref.current?.tool("search")?.open({ query: "TODO" })}>
+  Find TODO
+</button>
+```
+
+- **The type is inferred from the `RichTextTools` map**, by the Tool's name. A name outside the map gives `unknown`.
+- **`null`** when the Tool is not in `tools`, has no commands, or the engine has not been created yet. That is why the commands of a disabled Tool are unavailable both in types (`?.`) and at run time.
+- **Every command returns a `boolean`:** done or not (HTML mode, no matches, no such heading, a field that cannot be edited). A refusal is `false`, as with `insertHTML`, not an exception.
+- **Take the object on every call** instead of keeping it between renders: it is cheap, and this way you always work with the live engine.
+- **The Handle gets no new method for each command.** The commands of the built-in Tools go through `tool(name)`, not through new methods; `openSearch` remains for compatibility only. Commands of Marks, Blocks and anything a Tool has not declared are still called through `ref.current.editor`.
+
 ## Events
 
 The screen learns about the Editor through callback props; there is no event bus. The decision is recorded in ADR-0058, section 9.
@@ -1423,9 +1634,10 @@ export const pdfTool: CustomTool = { name: "acme_pdfDrop", engine: [PdfDrop] };
 - `maxHeight` — the height limit of the Document area (a number is pixels, a string is a CSS length), beyond it the Document scrolls inside the frame; `resizable` — a height handle at the area's bottom edge (a slider for keyboard users), and `maxHeight` with it is the starting height. See "Field height".
 - `surface` — `"theme"` (default) or `"paper"`: a light Paper in any theme, see "Surface". The type is `RichTextSurface`.
 - `status` — a React node of the Status line inside the field's frame, at the start of the counter row; the kit does not announce it. The engine command `showNotice({ tone, text } | null)` is the Field notice. Both are in "Status line and Field notice"; they follow the kit's semver.
-- `tools` — kit names and descriptions of custom Tools (`CustomTool`, including their `buttons`, `insertItems`, `blockActions`, `textCards` and `trigger`), Presets as arrays — `RICH_TEXT_PRESETS`; see "Tools and Presets" and "Custom Tool". A description with an error is a field error.
-- `ref` (`RichTextEditorHandle`): `getHTML()` — the current HTML, without waiting for the delay and without `onChange` (in HTML mode it first applies the field's edit — then `onChange` is called if the Document changed; the same for `getMarkdown()`); `getMarkdown()` and `setMarkdown(md)` — see "Markdown"; `getJSON()` and `setJSON(document)` — see "JSON"; `clear()` — clear the Document, and `onChange("")` notifies the screen; `focus(position?)`, `blur()`, `insertHTML`, `insertText`, `getText`, `getSelectedText`, `isEmpty`, `undo`, `redo`, `canUndo`, `canRedo` — see "Handle (`ref`) and your own toolbar outside the field"; `openSearch({ replace? })` — open the find panel, see "Find and replace"; `editor` — the underlying Tiptap `Editor`, its API **follows Tiptap's major version**, and before mount and on the server it is `null`. `focus()` without an argument puts the caret at the end of the Document (in HTML mode, in the HTML field).
+- `tools` — kit names, Configured Tools `tool(name, options)` for `search` and `toc`, `defineTool(…)` definitions and descriptions of custom Tools (`CustomTool`, including their `buttons`, `insertItems`, `blockActions`, `textCards` and `trigger`), Presets as arrays — `RICH_TEXT_PRESETS`; see "Tools and Presets" and "Custom Tool". A description with an error is a field error.
+- `ref` (`RichTextEditorHandle`): `getHTML()` — the current HTML, without waiting for the delay and without `onChange` (in HTML mode it first applies the field's edit — then `onChange` is called if the Document changed; the same for `getMarkdown()`); `getMarkdown()` and `setMarkdown(md)` — see "Markdown"; `getJSON()` and `setJSON(document)` — see "JSON"; `clear()` — clear the Document, and `onChange("")` notifies the screen; `focus(position?)`, `blur()`, `insertHTML`, `insertText`, `getText`, `getSelectedText`, `isEmpty`, `undo`, `redo`, `canUndo`, `canRedo` — see "Handle (`ref`) and your own toolbar outside the field"; `tool(name)` — the commands of a Tool, see "Tool commands: `handle.tool()`"; `openSearch({ replace? })` — deprecated, removed in 5.0, replaced by `tool("search")?.open({ replace })`; `editor` — the underlying Tiptap `Editor`, its API **follows Tiptap's major version**, and before mount and on the server it is `null`. `focus()` without an argument puts the caret at the end of the Document (in HTML mode, in the HTML field).
 - `useRichTextEditorState(ref, selector)` — a hook for your own toolbar outside the field, see "Handle (`ref`) and your own toolbar outside the field".
+- `useRichTextToolState(ref, name, selector?)` — the hook for Tool state (`search`, `toc` and custom Tools with `defineTool`): a data snapshot, `null` before mount, after unmount and without the Tool; see "Tool state: `useRichTextToolState`". It follows the kit's semver, as do `tool()`, `defineTool()`, `handle.tool()` and the `RichTextTools` map.
 - SSR: the engine is created only in the browser (`immediatelyRender: false`). On the server it renders a Skeleton without a Document — the frame and the space reserved for the Toolbar — and a hidden field with the incoming value. After hydration the Skeleton shows the Document cleaned by the Schema, and the editable area takes its place after the Loaders, without a height jump. The exception is a JSON envelope in `defaultValue`: only the engine builds its HTML, so with it the Skeleton is a frame without a Document, the hidden field is empty until Readiness, and the height changes once when the Document appears.
 
 ## Markdown
@@ -1546,12 +1758,16 @@ There are no other classes, no `style` (except the author's color), no `aria-*` 
 - Changing `tools` on a mounted field expecting the Schema to be rebuilt: the set is read when the engine is created.
 - Conveying the meaning of a note by the Wrapper tone alone: a screen reader cannot see the background, a color-blind person cannot tell the tones apart, and in Markdown without alert support only a quote remains. Write it in words — "Warning: …" (WCAG 1.4.1).
 - Coloring text inside a Wrapper that has a tone with a palette color or a custom color: on a colored background its contrast may fall below 4.5:1 — the gate checks the Document's main and secondary text, not the author's color.
+- Changing `tool(…)` on a mounted field expecting new options: they are read when the engine is created, like `tools`. To change options, remount the field with a key.
+- Taking the number of Find matches or the headings of the Table of contents from `ref.current.editor`, from the Document's DOM or from internal plugin keys: that is not the kit's contract and it follows the Tiptap major. Use `useRichTextToolState` for this.
+- Calling `openSearch()` in new code: the method is deprecated and will disappear in 5.0. Use `tool("search")?.open()`.
+- Writing `tool("bold", …)` or options the Tool does not have in `tools`: the compiler stops it, and in JS without types the extra option is dropped with a `console.error`.
 
 ## Links
 
-- Source: `src/editor/RichTextEditor.tsx`; the Toolbar is `src/editor/ui/EditorToolbar.tsx`, the formatting menus ("¶", "…", "Alignment", "Lists") are `src/editor/ui/FormatMenus.tsx` and `src/editor/core/blockTypes.ts`, the floating one is `src/editor/ui/FloatingToolbar.tsx`, the Selection menu is `src/editor/ui/SelectionBubble.tsx`, the shared display condition and position are `src/editor/ui/selectionMenu.ts`; the link is `src/editor/features/link/link.ts`, the Tool description `src/editor/features/link/linkTool.tsx` and the URL form `src/editor/features/link/LinkPopover.tsx`; emoji are the Tool description `src/editor/features/emoji/emojiTool.tsx` and the grid `src/editor/features/emoji/EmojiGrid.tsx`; buttons from Tool descriptions and the frame of their popovers are `src/editor/ui/ToolButtonView.tsx`, their shortcuts are `src/editor/core/toolButtons.ts`, the shortcuts of their Insert items and Block actions are `src/editor/core/toolEntryShortcuts.ts`; the image is `src/editor/features/image/image.ts` (node, upload, file paste), `src/editor/features/image/ImagePopover.tsx`, `src/editor/features/image/ImageToolbar.tsx`; the Field notice is the command `src/editor/core/fieldNotice.ts`, the file texts `src/editor/features/image/imageNotice.ts`, the live region, the error line and the Status line `src/editor/ui/FieldStatus.tsx`; a custom Tool is the public form `src/editor/core/customTool.ts`, the engine and set validation `src/editor/core/customToolEngine.ts`, the `tools` expansion `src/editor/features/builtins.ts`; the table is `src/editor/features/table/tables.ts` (nodes, merging, alignment, Markdown), `src/editor/features/table/tableActions.ts` (menu commands, sorting, size memory), `src/editor/features/table/TableMenuButton.tsx` (the "Table" menu), `src/editor/features/table/TableSizeGrid.tsx` and `src/editor/features/table/TableInsertDialog.tsx`; the Layout is `src/editor/features/layout/layout.ts` (nodes, commands, keyboard) and `src/editor/features/layout/columnLayouts.ts` (variants as data); the Wrapper is `src/editor/features/wrapper/wrapper.ts` (node, insertion, unwrapping, tone, keyboard, Markdown) and `src/editor/features/wrapper/wrapperTones.ts` (tones and GitHub alerts labels as data); the Document with Block containers is `src/editor/core/document.ts`; the Handle is `src/editor/core/handle.ts`, the hook is `src/editor/hooks/useRichTextEditorState.ts`; HTML mode is the state and applying in `src/editor/RichTextEditor.tsx`, HTML formatting in `src/editor/core/sourceFormat.ts`; Tools and Presets are `src/editor/core/tools.ts`; Block commands are `src/editor/core/blockCommands.ts`; the Block handle is `src/editor/ui/BlockHandle.tsx`; the shortcut table and labels are `src/editor/core/shortcuts.ts`, the Shortcuts reference is `src/editor/ui/ShortcutsButton.tsx`; the Glass of popup surfaces is `src/editor/styles/glass.ts`; the Insert menu is `src/editor/core/insertItems.ts` (the item registry), `src/editor/ui/SlashMenu.tsx`, `src/editor/ui/InsertMenuButton.tsx`, `src/editor/core/slashCommand.ts`; the Schema as data is `src/editor/core/schema.ts`; the palette and alignments are `src/editor/styles/palette.ts`, the color extensions are `src/editor/features/color/styleExtensions.ts`; the author's color is the form and parsing `src/editor/features/color/customColor.ts`, contrast `src/editor/features/color/contrast.ts`, the popover `src/editor/features/color/CustomColorPopover.tsx`; typography is `src/editor/styles/prose.ts`; the code block is `src/editor/features/code/codeBlock.ts` (extension, aliases, `Alt+F10`), `src/editor/features/code/CodeBlockView.tsx` (the header: language and "Copy"), `src/editor/features/code/CodeCopyButton.tsx` (the button with a tooltip), `src/editor/features/code/codeHeader.ts` (header classes shared with the View), the Paper (`surface="paper"`) is `src/editor/styles/surface.ts` and `src/editor/styles/tokens.ts`, `src/editor/features/code/codeLanguages.ts` (languages as data), `src/editor/features/code/lowlight.ts` (grammars), `src/editor/styles/codeTheme.ts` (the syntax highlighting theme), the server helper is `src/editor/features/code/highlight.ts`; find and replace is `src/editor/features/search/searchTool.ts` (the Tool), `src/editor/features/search/searchPlugin.ts` and `src/editor/features/search/SearchPanel.tsx`; JSON is `src/editor/core/jsonDocument.ts`; Field height is the resize handle `src/editor/ui/FieldResizer.tsx`; emoji (the set's data) is `src/editor/features/emoji/emoji.ts`; the character limit is `src/editor/core/maxLength.ts`; Markdown is `src/editor/core/markdown.ts`.
-- Tests: `tests/rich-text-editor-text-card.test.tsx` (Text card), `tests/rich-text-editor.test.tsx`, `tests/rich-text-editor-handle.test.tsx` and `tests/rich-text-editor-handle-ssr.test.tsx` (Handle and hook), `tests/rich-text-editor-toolbar.test.tsx`, `tests/rich-text-editor-block-menu.test.tsx`, `tests/rich-text-editor-more-menu.test.tsx`, `tests/rich-text-editor-align-list-menus.test.tsx`, `tests/rich-text-editor-insert-menu.test.tsx`, `tests/rich-text-editor-schema.test.tsx`, `tests/rich-text-editor-markdown.test.tsx`, `tests/rich-text-editor-color.test.tsx`, `tests/rich-text-editor-custom-color.test.tsx`, `tests/rich-text-editor-link.test.tsx`, `tests/rich-text-editor-floating.test.tsx`, `tests/rich-text-editor-bubble.test.tsx`, `tests/rich-text-editor-glass.test.tsx`, `tests/rich-text-editor-table.test.tsx`, `tests/rich-text-editor-lazy-builtins.test.tsx` (lazy code block and table: `basic` does not load them, `full` shows a Skeleton until the chunks load), `tests/rich-text-editor-image.test.tsx`, `tests/rich-text-editor-notice.test.tsx`, `tests/rich-text-editor-code-block.test.tsx`, `tests/rich-text-editor-block-commands.test.tsx`, `tests/rich-text-editor-block-handle.test.tsx`, `tests/rich-text-editor-shortcuts.test.tsx`, `tests/rich-text-editor-layout.test.tsx`, `tests/rich-text-editor-wrapper.test.tsx`, `tests/rich-text-editor-wrapper-tone.test.tsx`, `tests/rich-text-editor-source.test.tsx`, `tests/rich-text-editor-custom-tool.test.tsx` (a custom Tool; test Tools are in `tests/editor-test-tools.ts`), `tests/rich-text-editor-custom-ui.test.tsx` (Insert items and Block actions of a custom Tool), `tests/rich-text-editor-trigger.test.tsx` (a custom Trigger character: opening, picking, the query, asynchronous items, set errors), `tests/rich-text-editor-custom-button.test.tsx` (buttons of a custom Tool), `tests/rich-text-editor-custom-markdown.test.tsx` (Markdown of a custom Block by default and by its own rules), `tests/rich-text-editor-atom-text.test.tsx` (Atom text, weight in `maxLength`, emptiness), `tests/rich-text-editor-empty-table.test.tsx` (an empty table is content), `tests/rich-text-editor-max-height.test.tsx` (`maxHeight` and `resizable`: what is inside the scroll area, the position of the Block handle during scrolling), `tests/rich-text-editor-events.test.tsx` (`onReady`, `onFocus`, `onBlur`, paste and drop order), `tests/rich-text-editor-loaders.test.tsx` (Engine part Loaders, "Retry"), `tests/rich-text-editor-skeleton.test.tsx` (Skeleton), `tests/rich-text-editor-emoji.test.tsx` (emoji), `tests/rich-text-editor-json.test.tsx` (JSON), `tests/editor-search.test.tsx`, `tests/editor-search-panel.test.tsx` and `tests/editor-search-replace.test.tsx` (find and replace), `tests/rich-text-paper.test.tsx`, `tests/rich-text-paper-css.test.tsx`, `tests/editor-entry.test.ts`, `tests/editor-schema-entry.test.ts`, `tests/editor-highlight-entry.test.ts`; in the browser — `tests-visual/interactions.spec.ts` ("RichTextEditor inside Dialog" — Escape in the style list, in the Insert menu, in the link popover and in the code block language menu; "RichTextEditor inside-dialog" and "inside-drawer" — the "…" menu and the color popovers with mouse and keyboard; "RichTextEditor insert menu"; "RichTextEditor block commands" — real `⌥⇧↑/↓`, `⌘]`, `⌘[` and `⌘⇧D`), `tests-visual/rich-text-editor-image.spec.ts` (file drag and width handles), `tests-visual/rich-text-editor-bubble.spec.ts` (the Selection menu in `Dialog`, `Drawer` and a scroll container, at the viewport edge, the inverse surface in three themes), `tests-visual/rich-text-editor-layout.spec.ts` (Layout in a `Dialog`: columns side by side and Tab across them, arrow keys, a stack on a phone), `tests-visual/rich-text-editor-wrapper.spec.ts` (Wrapper: a dashed outline in the Editor and no frame in `RichTextView`, the tone looks the same in both, exit with Enter, `↑` out of a Wrapper), `tests-visual/rich-text-editor-block-handle.spec.ts` (the handle menu in a `Dialog`: `Ctrl/⌘+/`, Escape by levels; the handle's position at the Block's first line), `tests-visual/rich-text-editor-trigger.spec.ts` (a custom Trigger character: the list at the caret, real typing of `@`, picking by mouse and Enter, `a@b` inside a word, axe in three themes), `tests-visual/rich-text-editor-source.spec.ts` (HTML mode: field height, growth with content, focus on entry and exit), `tests-visual/rich-text-editor-height.spec.ts` (Field height), `tests-visual/rich-text-editor-emoji.spec.ts` (emoji), `tests-visual/rich-text-editor-skeleton.spec.ts` (Skeleton).
+- Source: `src/editor/RichTextEditor.tsx`; the Toolbar is `src/editor/ui/EditorToolbar.tsx`, the formatting menus ("¶", "…", "Alignment", "Lists") are `src/editor/ui/FormatMenus.tsx` and `src/editor/core/blockTypes.ts`, the floating one is `src/editor/ui/FloatingToolbar.tsx`, the Selection menu is `src/editor/ui/SelectionBubble.tsx`, the shared display condition and position are `src/editor/ui/selectionMenu.ts`; the link is `src/editor/features/link/link.ts`, the Tool description `src/editor/features/link/linkTool.tsx` and the URL form `src/editor/features/link/LinkPopover.tsx`; emoji are the Tool description `src/editor/features/emoji/emojiTool.tsx` and the grid `src/editor/features/emoji/EmojiGrid.tsx`; buttons from Tool descriptions and the frame of their popovers are `src/editor/ui/ToolButtonView.tsx`, their shortcuts are `src/editor/core/toolButtons.ts`, the shortcuts of their Insert items and Block actions are `src/editor/core/toolEntryShortcuts.ts`; the image is `src/editor/features/image/image.ts` (node, upload, file paste), `src/editor/features/image/ImagePopover.tsx`, `src/editor/features/image/ImageToolbar.tsx`; the Field notice is the command `src/editor/core/fieldNotice.ts`, the file texts `src/editor/features/image/imageNotice.ts`, the live region, the error line and the Status line `src/editor/ui/FieldStatus.tsx`; a custom Tool is the public form `src/editor/core/customTool.ts`, the engine and set validation `src/editor/core/customToolEngine.ts`, the `tools` expansion and the options of built-in Tools `src/editor/features/builtins.ts`; `tool()` and the `RichTextTools` map `src/editor/core/toolOptions.ts`, the command types `src/editor/core/toolCommands.ts`, the state types `src/editor/core/toolState.ts`, the state hook `src/editor/hooks/useRichTextToolState.ts`, the Find and Table of contents descriptions `src/editor/features/search/searchTool.ts` and `src/editor/features/toc/tocTool.ts`; the table is `src/editor/features/table/tables.ts` (nodes, merging, alignment, Markdown), `src/editor/features/table/tableActions.ts` (menu commands, sorting, size memory), `src/editor/features/table/TableMenuButton.tsx` (the "Table" menu), `src/editor/features/table/TableSizeGrid.tsx` and `src/editor/features/table/TableInsertDialog.tsx`; the Layout is `src/editor/features/layout/layout.ts` (nodes, commands, keyboard) and `src/editor/features/layout/columnLayouts.ts` (variants as data); the Wrapper is `src/editor/features/wrapper/wrapper.ts` (node, insertion, unwrapping, tone, keyboard, Markdown) and `src/editor/features/wrapper/wrapperTones.ts` (tones and GitHub alerts labels as data); the Document with Block containers is `src/editor/core/document.ts`; the Handle is `src/editor/core/handle.ts`, the hook is `src/editor/hooks/useRichTextEditorState.ts`; HTML mode is the state and applying in `src/editor/RichTextEditor.tsx`, HTML formatting in `src/editor/core/sourceFormat.ts`; Tools and Presets are `src/editor/core/tools.ts`; Block commands are `src/editor/core/blockCommands.ts`; the Block handle is `src/editor/ui/BlockHandle.tsx`; the shortcut table and labels are `src/editor/core/shortcuts.ts`, the Shortcuts reference is `src/editor/ui/ShortcutsButton.tsx`; the Glass of popup surfaces is `src/editor/styles/glass.ts`; the Insert menu is `src/editor/core/insertItems.ts` (the item registry), `src/editor/ui/SlashMenu.tsx`, `src/editor/ui/InsertMenuButton.tsx`, `src/editor/core/slashCommand.ts`; the Schema as data is `src/editor/core/schema.ts`; the palette and alignments are `src/editor/styles/palette.ts`, the color extensions are `src/editor/features/color/styleExtensions.ts`; the author's color is the form and parsing `src/editor/features/color/customColor.ts`, contrast `src/editor/features/color/contrast.ts`, the popover `src/editor/features/color/CustomColorPopover.tsx`; typography is `src/editor/styles/prose.ts`; the code block is `src/editor/features/code/codeBlock.ts` (extension, aliases, `Alt+F10`), `src/editor/features/code/CodeBlockView.tsx` (the header: language and "Copy"), `src/editor/features/code/CodeCopyButton.tsx` (the button with a tooltip), `src/editor/features/code/codeHeader.ts` (header classes shared with the View), the Paper (`surface="paper"`) is `src/editor/styles/surface.ts` and `src/editor/styles/tokens.ts`, `src/editor/features/code/codeLanguages.ts` (languages as data), `src/editor/features/code/lowlight.ts` (grammars), `src/editor/styles/codeTheme.ts` (the syntax highlighting theme), the server helper is `src/editor/features/code/highlight.ts`; find and replace is `src/editor/features/search/searchTool.ts` (the Tool), `src/editor/features/search/searchPlugin.ts` and `src/editor/features/search/SearchPanel.tsx`; JSON is `src/editor/core/jsonDocument.ts`; Field height is the resize handle `src/editor/ui/FieldResizer.tsx`; emoji (the set's data) is `src/editor/features/emoji/emoji.ts`; the character limit is `src/editor/core/maxLength.ts`; Markdown is `src/editor/core/markdown.ts`.
+- Tests: `tests/rich-text-editor-text-card.test.tsx` (Text card), `tests/rich-text-editor.test.tsx`, `tests/rich-text-editor-handle.test.tsx` and `tests/rich-text-editor-handle-ssr.test.tsx` (Handle and hook), `tests/rich-text-editor-toolbar.test.tsx`, `tests/rich-text-editor-block-menu.test.tsx`, `tests/rich-text-editor-more-menu.test.tsx`, `tests/rich-text-editor-align-list-menus.test.tsx`, `tests/rich-text-editor-insert-menu.test.tsx`, `tests/rich-text-editor-schema.test.tsx`, `tests/rich-text-editor-markdown.test.tsx`, `tests/rich-text-editor-color.test.tsx`, `tests/rich-text-editor-custom-color.test.tsx`, `tests/rich-text-editor-link.test.tsx`, `tests/rich-text-editor-floating.test.tsx`, `tests/rich-text-editor-bubble.test.tsx`, `tests/rich-text-editor-glass.test.tsx`, `tests/rich-text-editor-table.test.tsx`, `tests/rich-text-editor-lazy-builtins.test.tsx` (lazy code block and table: `basic` does not load them, `full` shows a Skeleton until the chunks load), `tests/rich-text-editor-image.test.tsx`, `tests/rich-text-editor-notice.test.tsx`, `tests/rich-text-editor-code-block.test.tsx`, `tests/rich-text-editor-block-commands.test.tsx`, `tests/rich-text-editor-block-handle.test.tsx`, `tests/rich-text-editor-shortcuts.test.tsx`, `tests/rich-text-editor-layout.test.tsx`, `tests/rich-text-editor-wrapper.test.tsx`, `tests/rich-text-editor-wrapper-tone.test.tsx`, `tests/rich-text-editor-source.test.tsx`, `tests/rich-text-editor-custom-tool.test.tsx` (a custom Tool; test Tools are in `tests/editor-test-tools.ts`), `tests/rich-text-editor-custom-ui.test.tsx` (Insert items and Block actions of a custom Tool), `tests/rich-text-editor-trigger.test.tsx` (a custom Trigger character: opening, picking, the query, asynchronous items, set errors), `tests/rich-text-editor-custom-button.test.tsx` (buttons of a custom Tool), `tests/rich-text-editor-custom-markdown.test.tsx` (Markdown of a custom Block by default and by its own rules), `tests/rich-text-editor-atom-text.test.tsx` (Atom text, weight in `maxLength`, emptiness), `tests/rich-text-editor-empty-table.test.tsx` (an empty table is content), `tests/rich-text-editor-max-height.test.tsx` (`maxHeight` and `resizable`: what is inside the scroll area, the position of the Block handle during scrolling), `tests/rich-text-editor-events.test.tsx` (`onReady`, `onFocus`, `onBlur`, paste and drop order), `tests/rich-text-editor-loaders.test.tsx` (Engine part Loaders, "Retry"), `tests/rich-text-editor-skeleton.test.tsx` (Skeleton), `tests/rich-text-editor-emoji.test.tsx` (emoji), `tests/rich-text-editor-json.test.tsx` (JSON), `tests/editor-search.test.tsx`, `tests/editor-search-panel.test.tsx` and `tests/editor-search-replace.test.tsx` (find and replace), `tests/rich-text-editor-tool-options.test.tsx` and `tests/editor-tool-options-types.test.ts` (`tool()` options), `tests/rich-text-editor-tool-state.test.tsx`, `tests/rich-text-editor-tool-state-ssr.test.tsx` and `tests/editor-tool-state-types.test.ts` (state), `tests/rich-text-editor-tool-commands.test.tsx`, `tests/editor-search-commands-reveal.test.tsx` and `tests/editor-tool-commands-types.test.ts` (`handle.tool()` commands), `tests/rich-text-editor-define-tool.test.tsx`, `tests/editor-define-tool-types.test.ts` and `tests/editor-define-tool-server.test.tsx` (`defineTool`), `tests/rich-text-paper.test.tsx`, `tests/rich-text-paper-css.test.tsx`, `tests/editor-entry.test.ts`, `tests/editor-schema-entry.test.ts`, `tests/editor-highlight-entry.test.ts`; in the browser — `tests-visual/interactions.spec.ts` ("RichTextEditor inside Dialog" — Escape in the style list, in the Insert menu, in the link popover and in the code block language menu; "RichTextEditor inside-dialog" and "inside-drawer" — the "…" menu and the color popovers with mouse and keyboard; "RichTextEditor insert menu"; "RichTextEditor block commands" — real `⌥⇧↑/↓`, `⌘]`, `⌘[` and `⌘⇧D`), `tests-visual/rich-text-editor-image.spec.ts` (file drag and width handles), `tests-visual/rich-text-editor-bubble.spec.ts` (the Selection menu in `Dialog`, `Drawer` and a scroll container, at the viewport edge, the inverse surface in three themes), `tests-visual/rich-text-editor-layout.spec.ts` (Layout in a `Dialog`: columns side by side and Tab across them, arrow keys, a stack on a phone), `tests-visual/rich-text-editor-wrapper.spec.ts` (Wrapper: a dashed outline in the Editor and no frame in `RichTextView`, the tone looks the same in both, exit with Enter, `↑` out of a Wrapper), `tests-visual/rich-text-editor-block-handle.spec.ts` (the handle menu in a `Dialog`: `Ctrl/⌘+/`, Escape by levels; the handle's position at the Block's first line), `tests-visual/rich-text-editor-trigger.spec.ts` (a custom Trigger character: the list at the caret, real typing of `@`, picking by mouse and Enter, `a@b` inside a word, axe in three themes), `tests-visual/rich-text-editor-source.spec.ts` (HTML mode: field height, growth with content, focus on entry and exit), `tests-visual/rich-text-editor-height.spec.ts` (Field height), `tests-visual/rich-text-editor-emoji.spec.ts` (emoji), `tests-visual/rich-text-editor-skeleton.spec.ts` (Skeleton).
 - The extension API at a glance, "Stability" and recipes — [Editor extension API](../../api/editor-extension.md).
 - Viewing without editing — [RichTextView](../content/rich-text-view.md).
-- Storybook: `Inputs/RichTextEditor`.
+- Storybook: `Inputs/RichTextEditor` (the `SearchStatusLine`, `TableOfContentsOptions`, `TableOfContentsExternalNavigation`, `ToolCommands`, `DefinedTool` and `DefinedToolConfigured` stories).
 - Code origin: minimal-tiptap (MIT); syntax highlighting theme colors — highlight.js (BSD-3-Clause); licenses are in the package `NOTICE`.

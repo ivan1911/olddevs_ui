@@ -34,6 +34,7 @@ import {
   type ToolLabel,
   type ToolList,
 } from "./toolDescriptor.js";
+import { resolveDefinition, type ToolDefinition } from "./toolDefinition.js";
 import { markdownFallback } from "./customMarkdown.js";
 import { CUSTOM_ATTRIBUTE_NAME, CUSTOM_NAME, customElement } from "./schema.js";
 import { loaded } from "./toolLoader.js";
@@ -238,6 +239,22 @@ export function describeCustomTool(tool: CustomTool): ToolDescriptor {
 }
 
 /**
+ * Внутреннее описание Инструмента из определения (`defineTool`): тело из
+ * `create` и имя определения собираются в обычный `CustomTool` и идут тем же
+ * путём, а Опции этого Редактора — умолчания, слитые с `tool()`, — достаются
+ * `create`, `state` и `commands`.
+ */
+export function describeDefinition(definition: ToolDefinition, given: object = {}): ToolDescriptor {
+  const { options, tool } = resolveDefinition(definition, given);
+  return {
+    ...describeCustomTool(tool),
+    options,
+    state: definition.state && ((editor) => definition.state!({ editor, options })),
+    commands: definition.commands && (({ editor }) => definition.commands!({ editor, options })),
+  };
+}
+
+/**
  * Набор движка, который `RichTextEditor` собирает при ошибке набора: движок
  * нужен хуку `useEditor` в любом случае, но наружу он не выходит.
  */
@@ -311,7 +328,7 @@ export interface CustomToolsError {
 }
 
 /**
- * Ошибка сборки набора своих Инструментов или `null` (ADR-0058, п. 1.5, 2.4).
+ * Ошибка сборки набора Инструментов или `null` (ADR-0058, п. 1.5, 2.4).
  *
  * Имя без Префикса потребителя, совпадение имён, Node или Mark Части для
  * движка без правил Схемы (и правило без них), атрибут, которого нет в
@@ -325,6 +342,8 @@ export interface CustomToolsError {
  * Исключение движка — отдельно, в `cause`: текст — ключ «один раз» у `devError`.
  */
 export function customToolsError(tools: ToolList, extensions: Extensions): CustomToolsError | null {
+  // Ошибка, найденная при развороте `tools` (две записи `tool()` с одним именем), идёт тем же путём.
+  if (tools.error) return { message: tools.error };
   const custom = tools.descriptors.flatMap((descriptor) => descriptor.custom ?? []);
   if (custom.length === 0) return null;
   // Имена Инструментов и имена Блоков и Меток — разные пространства: Инструмент

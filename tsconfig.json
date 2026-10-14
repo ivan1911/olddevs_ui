@@ -44,7 +44,17 @@
 
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    /*
+      ИМЯ ПАКЕТА В ТЕСТАХ ТИПОВ. Потребитель расширяет карту Инструментов
+      Редактора через `declare module "@olddevs/ui/editor"`, и тест типов обязан
+      писать ровно эту строку. Без `paths` TypeScript не находит модуль:
+      самоссылка NodeNext ведёт в `dist/editor/index.d.ts`, а `dist` в рабочей
+      копии нет. Отображение работает только на проверку типов; рантайм тестов
+      имя пакета не импортирует, а `tsconfig.build.json` исходники не меняет.
+    */
+    "paths": { "@olddevs/ui/editor": ["./src/editor/index.ts"] }
   },
   // `.storybook/**/*` — с явным глобом, и это НЕ придирка к стилю. Каталоги,
   // начинающиеся с точки, TypeScript в include-паттернах пропускает: запись

@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
-import type { CustomIslandProps, CustomTool, ToolEntry } from "./customTool.js";
+import type { CustomIslandProps, ToolEntry } from "./customTool.js";
+import { customToolOf } from "./toolDefinition.js";
 
 /*
   Острова своих Блоков в Просмотре (ADR-0058, п. 3.3).
@@ -26,9 +27,9 @@ export interface ViewIsland {
  * или Блока нет в Документе — пустой список, и клиентского острова нет вовсе.
  */
 export function islandsFor(tools: readonly ToolEntry[] | undefined, html: string): ViewIsland[] {
-  // Строка из `tools` — имя Инструмента кита: поля `blocks` у неё нет, и она отсеивается сама.
-  return (tools ?? []).flatMap((tool) =>
-    Object.entries((tool as CustomTool).blocks ?? {}).flatMap(([block, { island, attributes }]) =>
+  // Строка из `tools` — имя Инструмента кита, Настроенный встроенный — его опции: блоков у них нет.
+  return (tools ?? []).flatMap((entry) =>
+    Object.entries(customToolOf(entry)?.blocks ?? {}).flatMap(([block, { island, attributes }]) =>
       island && html.includes(`data-block="${block}"`) ? [{ block, island, attributes }] : []
     )
   );

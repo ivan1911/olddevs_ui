@@ -13,6 +13,7 @@ import type {
 import type { EditorExtensionOptions } from "./extensions.js";
 import type { InsertItem } from "./insertItems.js";
 import type { ShortcutCommand, ShortcutGroup } from "./shortcuts.js";
+import type { ConfigurableToolName, RichTextTools } from "./toolOptions.js";
 import type { ToolLoader } from "./toolLoader.js";
 import type { Tool } from "./tools.js";
 
@@ -55,8 +56,9 @@ export interface ToolDescriptor {
    * Часть для движка: расширения Tiptap Инструмента — Node, Mark, Extension,
    * плагины ProseMirror. Функция от контекста — привилегия кита: встроенным
    * нужны мосты `RichTextEditor` (поповер ссылки, Меню вставки, `Alt+F10`).
+   * Второй аргумент — Опции этого Редактора (`options`), если они есть.
    */
-  engine?: (context: ToolEngineContext) => Extensions;
+  engine?: (context: ToolEngineContext, options?: object) => Extensions;
   /**
    * Загрузчик Части для движка (`toolLoader.ts`): движок создаётся после
    * загрузчиков всех описаний списка, и `engine` читает отданное `loaded`.
@@ -71,6 +73,27 @@ export interface ToolDescriptor {
   skeleton?: () => Extensions;
   /** Признаки Блока по имени узла; кит переносит их в spec узла. Нет — обычный Блок. */
   blocks?: Readonly<Record<string, BlockTraits>>;
+
+  /* Опции. */
+
+  /**
+   * Умолчания Опций встроенного Инструмента: полный набор полей, из которого
+   * `tool()` меняет нужные. Нет — у Инструмента нет Опций. Поле — надформа:
+   * публичные Опции своего Инструмента задаёт `defineTool` (`defaults`).
+   */
+  defaults?: object;
+  /**
+   * Проверки значений Опций по имени поля — по одной на каждое поле `defaults`.
+   * Значение, не прошедшее проверку, заменяется умолчанием (`expandTools`):
+   * потребитель на JS обходит типы карты `RichTextTools`.
+   */
+  checks?: Readonly<Record<string, (value: unknown) => boolean>>;
+  /**
+   * Опции этого Редактора: умолчания, слитые с `tool()`. Ставит `expandTools`
+   * при сборке набора, поэтому описание в реестре — общее на все Редакторы, а
+   * это поле — своё в списке каждого. Читаются один раз, вместе с набором.
+   */
+  options?: object;
 
   /* UI-записи. */
 
@@ -115,6 +138,52 @@ export interface ToolDescriptor {
    * (`shortcuts.ts`): у записи сочетание — её поле, а у Метки из движка — нет.
    */
   shortcuts?: readonly ShortcutCommand[];
+
+  /* Команды. */
+
+  /**
+   * Команды Инструмента: то, что `handle.tool(name)` отдаёт экрану. Зовётся при
+   * каждом обращении к Хэндлу и обязана быть дешёвой: только обёртки над движком
+   * и мостом, без подписок и состояния. Нет — у Инструмента нет Команд, и
+   * `handle.tool(name)` отдаёт `null`.
+   */
+  commands?: (context: ToolCommandsContext) => object;
+
+  /* Состояние. */
+
+  /**
+   * Состояние Инструмента: снимок для `useRichTextToolState(ref, name)`. Хук
+   * зовёт её на каждую транзакцию и каждое чтение, поэтому она быстрая и без
+   * побочных эффектов. Есть только у своего Инструмента (`defineTool`): снимки
+   * встроенных хук держит у себя (`SNAPSHOTS`), чтобы Поиск и Оглавление не
+   * тянули их код в стартовый кусок Редактора. Нет — Состояния у Инструмента нет.
+   */
+  state?: (editor: Editor) => unknown;
+}
+
+/** Что функция Команд получает от `RichTextEditor`. */
+export interface ToolCommandsContext {
+  /** Живой движок: функцию зовут, только когда он создан и не уничтожен. */
+  editor: Editor;
+  /** Мост к тому, что держит сам `RichTextEditor`: панели и ленивый UI. */
+  bridge: ToolBridge;
+}
+
+/**
+ * Что Команды встроенных берут у `RichTextEditor`: панель Поиска и ядро
+ * Оглавления живут в его React-дереве, а не в движке. Все методы возвращают
+ * `false`, когда сделать нельзя (HTML-режим, UI ещё не загружен). Привилегия
+ * кита: свой Инструмент моста не получает.
+ */
+export interface ToolBridge {
+  /** Открыть панель Поиска; `query` — сразу в поле, без него — выделенный текст. */
+  openSearch: (replace: boolean, query?: string) => boolean;
+  /** Закрыть панель Поиска и убрать подсветку, не трогая фокус. */
+  closeSearch: () => boolean;
+  /** Открыт ли HTML-режим: Документа на экране нет, искать и заменять в нём нельзя. */
+  sourceOpen: () => boolean;
+  /** Перейти к заголовку Оглавления с индексом списка. */
+  jumpToc: (index: number) => boolean;
 }
 
 /** Символ-триггер Инструмента в списке описаний: публичная запись и имя владельца для сообщений. */
@@ -275,6 +344,12 @@ export interface TextCardRecord {
  */
 export interface ToolList extends ReadonlySet<Tool> {
   /**
+   * Ошибка сборки набора, найденная до движка: две записи `tool()` с одним
+   * именем. Редактор показывает её тем же путём, что ошибки своих Инструментов
+   * (`customToolsError`): строкой поля и `console.error` в разработке.
+   */
+  readonly error?: string;
+  /**
    * Описания включённых Инструментов: встроенные в порядке кита (у не
    * переехавших — заглушки `legacy`), за ними свои в порядке `tools`.
    */
@@ -285,8 +360,24 @@ export interface ToolList extends ReadonlySet<Tool> {
  * Набор из имён кита и списка описаний — единственный способ его собрать:
  * развернуть `tools` (`expandTools`) или сузить готовый (Скелет).
  */
-export function toolList(names: Iterable<Tool>, descriptors: readonly ToolDescriptor[]): ToolList {
-  return Object.assign(new Set(names), { descriptors });
+export function toolList(
+  names: Iterable<Tool>,
+  descriptors: readonly ToolDescriptor[],
+  error?: string
+): ToolList {
+  return Object.assign(new Set(names), { descriptors, ...(error !== undefined && { error }) });
+}
+
+/**
+ * Опции встроенного Инструмента этого Редактора: умолчания кита, слитые с
+ * `tool()`. Инструмента нет в наборе или у него нет Опций — `undefined`.
+ */
+export function toolOptions<Name extends ConfigurableToolName>(
+  tools: ToolList,
+  name: Name
+): RichTextTools[Name]["options"] | undefined {
+  const descriptor = tools.descriptors.find((candidate) => candidate.name === name);
+  return descriptor?.options as RichTextTools[Name]["options"] | undefined;
 }
 
 /** Описания переехавших Инструментов набора — в порядке списка. */

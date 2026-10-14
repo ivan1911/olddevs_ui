@@ -12,8 +12,11 @@ import { useMessages } from "../../../i18n/useMessages.js";
 import { cn } from "../../../lib/cn.js";
 import { GLASS_PANEL_CLASS } from "../../styles/glass.js";
 import type { SearchOptions } from "./searchMatch.js";
-import { revealCurrentMatch } from "./revealMatch.js";
+import { cancelRevealMatch, registerSearchOverlays, scheduleRevealMatch } from "./revealMatch.js";
 import { searchState } from "./searchPlugin.js";
+
+const NO_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: false };
+const FLAGS = ["matchCase", "wholeWord", "regex"] as const;
 
 export interface SearchPanelProps {
   editor: Editor;
@@ -26,8 +29,6 @@ export interface SearchPanelProps {
   onClose: () => void;
   className?: string;
 }
-
-const NO_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: false };
 
 /**
  * Панель «Поиск и замена»: немодальная, в углу поля. Состояние
@@ -44,9 +45,14 @@ const NO_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: f
  */
 export function SearchPanel({ editor, focus, onClose, className }: SearchPanelProps) {
   const messages = useMessages().editor;
-  const [query, setQuery] = useState(focus.query);
+  /*
+    Запрос и флажки панели — зеркало поиска в движке: на открытии она берёт
+    то, что в нём уже есть (стартовые флажки — Опции Инструмента, запрос — если
+    экран задал его командой), а позже подхватывает такие же правки снаружи.
+  */
+  const [query, setQuery] = useState(() => focus.query || searchState(editor.state)?.query || "");
   const [replacement, setReplacement] = useState("");
-  const [options, setOptions] = useState(NO_OPTIONS);
+  const [options, setOptions] = useState(() => searchState(editor.state)?.options ?? NO_OPTIONS);
   const searchRef = useRef<HTMLInputElement>(null);
   const replaceRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -60,6 +66,8 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
         current: state?.current ?? -1,
         total: state?.total ?? 0,
         error: state?.error,
+        engineQuery: state?.query ?? "",
+        engineOptions: state?.options ?? NO_OPTIONS,
         editable: current.isEditable,
       };
     },
@@ -91,15 +99,18 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
     разложена и её край можно учесть. Панель и её липкий родитель (Панель
     Редактора) лежат поверх Документа: совпадение под ними не считается видимым.
   */
-  const revealFrame = useRef(0);
-  const reveal = () => {
-    cancelAnimationFrame(revealFrame.current);
-    revealFrame.current = requestAnimationFrame(() => {
-      const panel = panelRef.current;
-      revealCurrentMatch(editor.view.dom, [panel, panel?.parentElement]);
-    });
-  };
-  useEffect(() => () => cancelAnimationFrame(revealFrame.current), []);
+  const reveal = () => scheduleRevealMatch(editor);
+  // Команды Инструмента показывают совпадение тем же путём и обходят эту же панель.
+  useEffect(() => {
+    const unregister = registerSearchOverlays(editor, () => [
+      panelRef.current,
+      panelRef.current?.parentElement,
+    ]);
+    return () => {
+      unregister();
+      cancelRevealMatch(editor);
+    };
+  }, [editor]);
 
   useEffect(() => {
     editor.commands.setSearch(query, options);
@@ -108,6 +119,19 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
     reveal();
     // `reveal` — новая на каждый рендер, но читает только рефы и `editor`.
   }, [editor, query, options]);
+
+  /*
+    Запрос и флажки, заданные в движке мимо панели (команда `setQuery`), встают
+    в поля. Сверка с движком «вживую», а не по снимку `search`: эффект выше уже
+    протолкнул набранное в этом же коммите, и устаревший снимок откатил бы его.
+  */
+  useEffect(() => {
+    const live = searchState(editor.state);
+    if (!live) return;
+    if (live.query !== query) setQuery(live.query);
+    if (FLAGS.some((flag) => live.options[flag] !== options[flag])) setOptions(live.options);
+    // Только на смену поиска в движке; набор в полях уходит в движок эффектом выше.
+  }, [search.engineQuery, search.engineOptions]);
 
   const step = (direction: 1 | -1) => {
     editor.commands.searchStep(direction);

@@ -5,14 +5,14 @@ category: content
 status: stable
 source: src/editor/features/toc/RichTextToc.tsx
 story: src/editor/features/toc/RichTextToc.stories.tsx
-sourceHash: 5eed0e4804e0
+sourceHash: ece0addcd8ea
 ---
 
 # RichTextToc
 
 ## Summary for AI
 
-`RichTextToc` is the Table of contents of a Document, placed next to the View (`RichTextView`) or an Editor in `readOnly`. Collapsed, it is a strip of strokes, one per heading, with the stroke of the current section highlighted. Hovering the strip expands a list of headings; clicking an item scrolls to the heading and moves focus to it. The component is client-side and opt-in: the screen puts it in its own column and passes `target`, a ref to the View or to the Editor's Handle. Headings are read from the target's DOM; the Document has no anchors or `id` attributes, and the page address does not change. It lives in the `@olddevs/ui/editor` entry point. Decision: ADR-0066.
+`RichTextToc` is the Table of contents of a Document, placed next to the View (`RichTextView`) or an Editor in `readOnly`. Collapsed, it is a strip of strokes, one per heading, with the stroke of the current section highlighted. Hovering the strip expands a list of headings; clicking an item scrolls to the heading and moves focus to it. The component is client-side and opt-in: the screen puts it in its own column and passes `target`, a ref to the View or to the Editor's Handle. Headings are read from the target's DOM; the Document has no anchors or `id` attributes, and the page address does not change. The `levels` prop keeps only the heading levels you need out of `h1`–`h4`. It lives in the `@olddevs/ui/editor` entry point. Decision: ADR-0066.
 
 ```tsx
 import { RichTextToc, RichTextView } from "@olddevs/ui/editor";
@@ -29,7 +29,7 @@ import { RichTextToc, RichTextView } from "@olddevs/ui/editor";
 - Navigation between application pages or sections of a site: use `SideNav` or `Tabs`, not the Table of contents of a Document.
 - A link to a section that can be shared: the Table of contents goes to a heading without an anchor (`#slug`), and the page address does not change. A link to a section would need its own ADR about `id` in the Schema.
 - A Table of contents as part of the Document itself, a Block inside the text: the Schema has no such Block.
-- The Table of contents belongs inside the Editor field and the screen has no column for it: use the Editor's `toc` Tool, the same strip in the left gutter of the frame, sticky under the Toolbar and in a field with `maxHeight` (the `RichTextEditor` page, "Table of contents" section).
+- The Table of contents belongs inside the Editor field and the screen has no column for it: use the Editor's `toc` Tool, the same strip in the left gutter of the frame, sticky under the Toolbar and in a field with `maxHeight` (the `RichTextEditor` page, "Table of contents" section). There, a `tool("toc", options)` entry sets the same `offsetVar`, `levels` and `listWidth`, and the screen reads the headings and the current section with the `useRichTextToolState` hook. The standalone `RichTextToc` has no state or commands: it has no Handle.
 
 ## Minimal example
 
@@ -56,20 +56,22 @@ export function Article({ html }: { html: string }) {
 
 ## Public API
 
-| Prop        | Meaning                                                                                                                                                                                                                                    |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `target`    | Required. A ref to a `RichTextView` or to the Handle of a `RichTextEditor` whose headings the Table of contents shows. Headings are read after mounting, so there is no strip before hydration.                                            |
-| `offsetVar` | The name of the CSS variable with the height of the screen's sticky header, `--topbar-h` by default (`TopBar` publishes it). A jump places the heading below the header, and the highlight counts a section from the header's bottom edge. |
-| `listWidth` | The width of the list: a CSS length or pixels, `240` by default. It is fixed rather than sized to the longest heading; a heading that does not fit is truncated with an ellipsis.                                                          |
-| `className` | Classes for the root. The remaining `div` props go to the root.                                                                                                                                                                            |
+| Prop        | Meaning                                                                                                                                                                                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target`    | Required. A ref to a `RichTextView` or to the Handle of a `RichTextEditor` whose headings the Table of contents shows. Headings are read after mounting, so there is no strip before hydration.                                                                                                                       |
+| `offsetVar` | The name of the CSS variable with the height of the screen's sticky header, `--topbar-h` by default (`TopBar` publishes it). A jump places the heading below the header, and the highlight counts a section from the header's bottom edge.                                                                            |
+| `listWidth` | The width of the list: a CSS length or pixels, `240` by default. It is fixed rather than sized to the longest heading; a heading that does not fit is truncated with an ellipsis.                                                                                                                                     |
+| `levels`    | The heading levels that go into the Table of contents: a subset of `1`–`4`, all four by default. A heading of any other level is in neither the strip nor the list, and item indentation is counted from the largest remaining level. The set is read on every rebuild of the list, so changing it rebuilds the list. |
+| `className` | Classes for the root. The remaining `div` props go to the root.                                                                                                                                                                                                                                                       |
 
 ### Which headings are included
 
 - `h1`–`h4` at the top level of the Document and inside a Wrapper.
 - Headings in the columns of a Layout are not included: two headings at the same height in neighboring columns confuse the highlight of the current section. Headings inside custom Blocks and their Islands are not included either: their content is part of the Block, not of the Document's structure.
-- With fewer than two headings the component renders nothing, and the screen's column stays empty.
+- The `levels` prop narrows the set: `levels={[2, 3]}` keeps only `h2` and `h3`. Other levels are in neither the strip nor the list; an empty array leaves no headings at all.
+- With fewer than two headings (after `levels`) the component renders nothing, and the screen's column stays empty.
 
-The indent of an item and the length of its stroke depend on the level **relative to the largest heading in the Document**: if the Document starts with `h2`, then `h2` has no indent and the longest stroke. The deeper the level, the shorter the stroke.
+The indent of an item and the length of its stroke depend on the level **relative to the largest heading that made it into the Table of contents**: if the Document starts with `h2`, then `h2` has no indent and the longest stroke. The deeper the level, the shorter the stroke.
 
 ### A live Document
 

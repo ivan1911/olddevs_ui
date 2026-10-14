@@ -1,5 +1,6 @@
 "use client";
 
+import type { Editor } from "@tiptap/core";
 import {
   forwardRef,
   useCallback,
@@ -8,6 +9,7 @@ import {
   useState,
   type HTMLAttributes,
   type KeyboardEvent,
+  type MutableRefObject,
   type RefObject,
 } from "react";
 import {
@@ -19,6 +21,7 @@ import { useMessages } from "../../../i18n/useMessages.js";
 import { cn } from "../../../lib/cn.js";
 import { watchHandleEditor } from "../../core/handleWatchers.js";
 import type { RichTextEditorHandle } from "../../RichTextEditor.js";
+import { tocDocumentHeadings } from "./documentHeadings.js";
 import { collectHeadings, documentRoot, type TocHeading } from "./headings.js";
 import { stickyOffset } from "./stickyOffset.js";
 
@@ -50,6 +53,13 @@ export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "
    * По умолчанию 240px.
    */
   listWidth?: number | string;
+  /**
+   * Уровни заголовков, которые попадают в Оглавление: подмножество 1–4. Заголовка
+   * другого уровня нет ни в полосе, ни в списке, а отступ пунктов считается от
+   * самого крупного из оставшихся. Читается при каждой сборке списка, поэтому
+   * смена набора уровней пересобирает его. По умолчанию все четыре.
+   */
+  levels?: readonly (1 | 2 | 3 | 4)[];
 }
 
 /**
@@ -76,6 +86,9 @@ const itemIndent = (depth: number) => ITEM_INDENT[Math.min(depth, ITEM_INDENT.le
 */
 const OPEN_DELAY = 200;
 const CLOSE_DELAY = 300;
+
+/** Все уровни заголовков: Оглавление без `levels`. */
+const ALL_LEVELS = [1, 2, 3, 4] as const;
 
 /** Пауза после последней правки Документа, по которой список пересобирается. */
 const REBUILD_DELAY = 150;
@@ -320,6 +333,26 @@ export interface TocCoreProps extends RichTextTocProps {
    * уровня, а не полоса выше текста.
    */
   alignToFirstHeading?: boolean;
+  /**
+   * Текущий раздел сменился (в том числе при первом показе): Редактор кладёт
+   * индекс в Состояние Инструмента `toc`. Индекс считается по списку, который
+   * видит `TocCore`; пока заголовков меньше двух, он остаётся прежним.
+   */
+  onCurrentChange?: (index: number) => void;
+  /**
+   * Движок Редактора. Нужен команде `jumpTo` (`jumpRef`): индекс команды — это
+   * индекс заголовка в снимке Состояния `toc`, а снимок читает Документ движка
+   * на каждой транзакции. Список ядра пересобирается из DOM с задержкой
+   * (`REBUILD_DELAY`), и сразу после правки индексы двух списков расходились бы.
+   * Без движка `jumpTo` считает по списку ядра.
+   */
+  editor?: Editor;
+  /**
+   * Куда ядро кладёт переход к заголовку по индексу снимка Состояния (команда
+   * `jumpTo` Инструмента): ведёт себя как клик по пункту. Пока ядро смонтировано,
+   * там функция, после — `null`. Нет заголовка с таким индексом — `false`.
+   */
+  jumpRef?: MutableRefObject<((index: number) => boolean) | null>;
 }
 
 export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore(
@@ -327,9 +360,13 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     target,
     offsetVar = "--topbar-h",
     listWidth = 240,
+    levels,
     stickyTop,
     focusHeading,
     alignToFirstHeading = false,
+    onCurrentChange,
+    editor,
+    jumpRef,
     className,
     style,
     ...rest
@@ -338,10 +375,12 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
 ) {
   // Настройки хозяина читаются в обработчиках прокрутки: последние значения —
   // через ссылку, чтобы новая функция на каждом рендере не пересоздавала слушателей.
-  const latest = useRef({ stickyTop, focusHeading, offsetVar });
+  const latest = useRef({ stickyTop, focusHeading, offsetVar, levels, onCurrentChange, editor });
   useEffect(() => {
-    latest.current = { stickyTop, focusHeading, offsetVar };
+    latest.current = { stickyTop, focusHeading, offsetVar, levels, onCurrentChange, editor };
   });
+  // Набор уровней сравнивается по значению: массив-литерал новый на каждом рендере.
+  const levelsKey = levels ? levels.join(",") : "";
   const offsetNow = useCallback(() => {
     const own = latest.current;
     return own.stickyTop ? own.stickyTop() : stickyOffset(own.offsetVar);
@@ -351,6 +390,10 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
   const [headings, setHeadings] = useState<TocHeading[]>([]);
   const [gap, setGap] = useState(STRIP_GAP);
   const [current, setCurrent] = useState(0);
+  // Текущий раздел — в Состояние Инструмента (`useRichTextToolState`).
+  useEffect(() => {
+    latest.current.onCurrentChange?.(current);
+  }, [current]);
   const [open, setOpen] = useState(false);
   const [fits, setFits] = useState(true);
   const stripRef = useRef<HTMLButtonElement>(null);
@@ -379,7 +422,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
       return;
     }
     const read = () => {
-      const next = collectHeadings(element);
+      const next = collectHeadings(element, latest.current.levels);
       setHeadings((prev) => (sameHeadings(prev, next) ? prev : next));
     };
     read();
@@ -397,7 +440,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
       clearTimeout(timer);
       observer.disconnect();
     };
-  }, [element]);
+  }, [element, levelsKey]);
 
   // Шаг полосы зависит от высоты окна и числа заголовков.
   useEffect(() => {
@@ -426,7 +469,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     Пересчёт возвращается со следующей прокрутки после того, как переход
     улёгся (`settled`).
   */
-  const pinned = useRef<{ index: number; settled: boolean; timer: number } | null>(null);
+  const pinned = useRef<{ heading: HTMLElement; settled: boolean; timer: number } | null>(null);
   /** (Пере)запустить ожидание: прокрутка перехода молчит `PIN_SETTLE` — переход улёгся. */
   const settle = (lock: { settled: boolean; timer: number }) => {
     window.clearTimeout(lock.timer);
@@ -434,12 +477,62 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
       lock.settled = true;
     }, PIN_SETTLE);
   };
-  const pin = (index: number) => {
+  /*
+    Раздел перехода помнится узлом, а не индексом: список может пересобраться,
+    пока идёт прокрутка (правка моложе `REBUILD_DELAY`), и индекс повёл бы к
+    соседнему заголовку.
+  */
+  const pin = (index: number, heading: HTMLElement) => {
     if (pinned.current) window.clearTimeout(pinned.current.timer);
-    pinned.current = { index, settled: false, timer: 0 };
+    pinned.current = { heading, settled: false, timer: 0 };
     settle(pinned.current);
     setCurrent(index);
   };
+  /*
+    Переход к пункту списка: клик и команда `jumpTo` Инструмента идут одним
+    путём. Заголовок, уже вышедший из Документа (правка моложе `REBUILD_DELAY`),
+    не пункт: список вот-вот пересоберётся.
+  */
+  const go = (index: number): boolean => {
+    const heading = headings[index];
+    if (!heading?.element.isConnected) return false;
+    pin(index, heading.element);
+    jumpTo(heading.element, offsetNow(), latest.current.focusHeading);
+    return true;
+  };
+  /*
+    Команда `jumpTo(index)`: индекс — из снимка Состояния, а снимок читает
+    Документ движка (`tocDocumentHeadings`, тот же обход), поэтому заголовок
+    берётся оттуда: `view.nodeDOM` отдаёт его узел, ProseMirror обновляет DOM
+    синхронно с транзакцией. Список ядра при этом может отставать до
+    `REBUILD_DELAY`, поэтому читается заново, а не из состояния: от него нужен
+    только индекс пункта для подсветки.
+  */
+  const goToSnapshotIndex = (index: number): boolean => {
+    const { editor: engine, levels: shown } = latest.current;
+    if (!engine) return go(index);
+    if (engine.isDestroyed) return false;
+    const found = tocDocumentHeadings(engine, { levels: shown ?? ALL_LEVELS })[index];
+    const node = found && engine.view.nodeDOM(found.pos);
+    if (!(node instanceof HTMLElement) || !node.isConnected || !element) return false;
+    const fresh = collectHeadings(element, shown);
+    setHeadings((prev) => (sameHeadings(prev, fresh) ? prev : fresh));
+    const listed = fresh.findIndex((heading) => heading.element === node);
+    if (listed >= 0) pin(listed, node);
+    jumpTo(node, offsetNow(), latest.current.focusHeading);
+    return true;
+  };
+  const goRef = useRef(goToSnapshotIndex);
+  useEffect(() => {
+    goRef.current = goToSnapshotIndex;
+  });
+  useEffect(() => {
+    if (!jumpRef) return;
+    jumpRef.current = (index) => goRef.current(index);
+    return () => {
+      jumpRef.current = null;
+    };
+  }, [jumpRef]);
 
   // Подсветка текущего раздела. Слушатель прокрутки — на документе с захватом:
   // так его достигает прокрутка и окна, и любого контейнера вокруг цели.
@@ -448,7 +541,13 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     let frame = 0;
     const update = () => {
       frame = 0;
-      setCurrent(currentIndex(headings, offsetNow()));
+      // Список пересобрался, пока идёт прокрутка перехода: раздел перехода тот
+      // же заголовок, но под новым индексом. Замер посреди прокрутки назвал бы
+      // соседний, и он остался бы текущим, когда прокрутка уляжется.
+      const lock = pinned.current;
+      const held =
+        lock && !lock.settled ? headings.findIndex((h) => h.element === lock.heading) : -1;
+      setCurrent(held >= 0 ? held : currentIndex(headings, offsetNow()));
     };
     const schedule = (event?: Event) => {
       // Считается только прокрутка, которая двигает Документ: окна или
@@ -670,8 +769,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
                       index === current ? "bg-bg-2 text-fg-0" : "text-fg-2 hover:text-fg-0"
                     )}
                     onClick={(event) => {
-                      pin(index);
-                      jumpTo(heading.element, offsetNow(), latest.current.focusHeading);
+                      go(index);
                       /*
                         В Редакторе в правке фокус на заголовок не переходит и
                         остаётся на пункте, а фокус в списке держит его открытым:
