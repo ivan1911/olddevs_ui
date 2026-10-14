@@ -4,9 +4,10 @@ import { createNodeFromContent, type JSONContent } from "@tiptap/core";
 import { closeHistory } from "@tiptap/pm/history";
 import type { Fragment } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import type { RefObject } from "react";
 import { textBetween } from "./atomText.js";
 import { isRichTextDocument, type RichTextDocument } from "./jsonDocument.js";
+
+export { notifyHandleEditor, watchHandleEditor } from "./handleWatchers.js";
 
 /**
  * Плоские методы Хэндла (ADR-0058, раздел 8): то, что экран делает с Редактором
@@ -286,26 +287,4 @@ export function createHandleMethods(host: HandleHost): RichTextEditorHandleMetho
     canUndo: () => available("undo"),
     canRedo: () => available("redo"),
   };
-}
-
-/*
-  Хук-селектор не знает, когда у `ref` появится движок: Редактор создаёт его
-  после первого рендера экрана и перерисовывается сам, а экран — нет. Поэтому
-  подписки живут по самому объекту `ref`, который есть с первого рендера, и
-  Редактор сообщает об смене движка по нему.
-*/
-const watchers = new WeakMap<object, Set<() => void>>();
-
-/** Подписка хука на смену движка у Редактора, привязанного к этому `ref`. */
-export function watchHandleEditor(ref: RefObject<unknown>, listener: () => void): () => void {
-  let set = watchers.get(ref);
-  if (!set) watchers.set(ref, (set = new Set()));
-  set.add(listener);
-  return () => void set.delete(listener);
-}
-
-/** Редактор сообщает: движок у `ref` появился или сменился. */
-export function notifyHandleEditor(ref: unknown): void {
-  if (typeof ref !== "object" || ref === null) return;
-  watchers.get(ref)?.forEach((listener) => listener());
 }

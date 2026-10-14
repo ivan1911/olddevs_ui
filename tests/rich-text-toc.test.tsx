@@ -1,15 +1,24 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { useRef } from "react";
-import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { RichTextToc, RichTextView } from "../src/editor/index.js";
+import { createRef, useRef } from "react";
+import { afterEach, beforeAll, beforeEach, expect, test, vi } from "vitest";
+import {
+  RichTextEditor,
+  RichTextToc,
+  RichTextView,
+  type RichTextEditorHandle,
+} from "../src/editor/index.js";
+import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 /**
  * Оглавление Документа (OLDSUI-264, ADR-0066). Проверки идут через публичную
  * пару компонентов: экран ставит `RichTextToc` рядом с `RichTextView` и отдаёт
  * ему ref Просмотра — ровно так, как это сделает потребитель.
  */
+
+// Ленивые встроенные Редактора (OLDSUI-111): после загрузки чанков движок создаётся прямо в `render`.
+beforeAll(loadLazyBuiltins);
 
 beforeEach(() => {
   // В jsdom прокрутки нет: переход проверяется по фокусу, а вызов только
@@ -314,4 +323,233 @@ test("the strip hides itself when it would overlap the text or leave the window"
     await new Promise((resolve) => requestAnimationFrame(resolve));
   });
   expect(root.className).not.toMatch(/\binvisible\b/);
+});
+
+const strokes = () => strip().querySelectorAll("[data-toc-stroke]").length;
+
+test("the list is rebuilt when the View gets a new html, in both directions", async () => {
+  const view = render(<Screen html="<h2>Only one</h2><p>Text</p>" />);
+  expect(screen.queryByRole("button", { name: "Table of contents" })).toBeNull();
+
+  // Второй заголовок пришёл — полоса появилась.
+  view.rerender(<Screen html="<h2>Only one</h2><h3>Second</h3><p>Text</p>" />);
+  await waitFor(() => expect(strokes()).toBe(2));
+
+  view.rerender(<Screen html={ARTICLE} />);
+  await waitFor(() => expect(strokes()).toBe(4));
+
+  // Остался один — полоса исчезла.
+  view.rerender(<Screen html="<h2>Only one</h2>" />);
+  await waitFor(() =>
+    expect(screen.queryByRole("button", { name: "Table of contents" })).toBeNull()
+  );
+});
+
+test("a burst of changes is rebuilt once, after a pause", async () => {
+  vi.useFakeTimers();
+  try {
+    const view = render(<Screen html={ARTICLE} />);
+    await act(async () => {});
+    expect(strokes()).toBe(4);
+
+    view.rerender(<Screen html="<h2>A</h2><h2>B</h2>" />);
+    // Наблюдатель DOM отвечает микрозадачей — дать ему отработать до таймера.
+    await act(async () => {});
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+    // Пауза ещё не прошла: список прежний.
+    expect(strokes()).toBe(4);
+
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(strokes()).toBe(2);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("the jump itself does not rebuild the list", async () => {
+  const user = userEvent.setup();
+  render(<Screen html={ARTICLE} />);
+
+  const items = await openList(user);
+  await user.click(items[2]!);
+  const heading = screen.getByTestId("view").querySelector("h4")!;
+  expect(heading.getAttribute("tabindex")).toBe("-1");
+
+  // Метка `tabindex` ставится и снимается на переходе; пересборка по ней
+  // подменила бы узлы пунктов и сбросила бы фокус в списке.
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  expect(document.activeElement).toBe(heading);
+  expect(
+    screen.getByRole("navigation", { name: "Table of contents" }).querySelectorAll("button")
+  ).toHaveLength(4);
+});
+
+// --- Редактор как цель -------------------------------------------------------
+
+function EditorScreen({
+  html,
+  readOnly,
+  handle,
+}: {
+  html: string;
+  readOnly?: boolean;
+  handle?: React.RefObject<RichTextEditorHandle | null>;
+}) {
+  const own = useRef<RichTextEditorHandle>(null);
+  const editor = handle ?? own;
+  return (
+    <div>
+      <RichTextToc target={editor} />
+      <RichTextEditor ref={editor} aria-label="Body" defaultValue={html} readOnly={readOnly} />
+    </div>
+  );
+}
+
+test("a read-only Editor lists its headings like a View does", async () => {
+  const user = userEvent.setup();
+  render(<EditorScreen html={ARTICLE} readOnly />);
+
+  expect(strokes()).toBe(4);
+  const items = await openList(user);
+  expect(items.map((item) => item.textContent)).toEqual([
+    "Palette",
+    "How to read",
+    "Neutrals",
+    "What's next",
+  ]);
+
+  await user.click(items[2]!);
+  const heading = screen.getByRole("textbox", { name: "Body" }).querySelector("h4")!;
+  expect(document.activeElement).toBe(heading);
+  expect(heading.scrollIntoView).toHaveBeenCalled();
+});
+
+test("the list is rebuilt after the Editor content is replaced from outside", async () => {
+  const handle = createRef<RichTextEditorHandle>();
+  render(<EditorScreen html="<h2>Only one</h2><p>Text</p>" handle={handle} />);
+  expect(screen.queryByRole("button", { name: "Table of contents" })).toBeNull();
+
+  act(() => {
+    handle.current!.editor!.commands.setContent(ARTICLE);
+  });
+  await waitFor(() => expect(strokes()).toBe(4));
+});
+
+test("editing an editable Editor rebuilds the list, a new heading and a changed text alike", async () => {
+  const user = userEvent.setup();
+  const handle = createRef<RichTextEditorHandle>();
+  render(<EditorScreen html="<h2>First</h2><p>Text</p>" handle={handle} />);
+  expect(screen.queryByRole("button", { name: "Table of contents" })).toBeNull();
+
+  act(() => {
+    handle.current!.insertHTML("<h3>Second</h3>");
+  });
+  await waitFor(() => expect(strokes()).toBe(2));
+
+  const items = await openList(user);
+  expect(items.map((item) => item.textContent)).toEqual(["Second", "First"]);
+
+  // Набор внутри заголовка — меняется пункт, а число штрихов остаётся.
+  act(() => {
+    handle.current!.editor!.commands.insertContentAt(1, "New ");
+  });
+  await waitFor(() =>
+    expect(
+      within(screen.getByRole("navigation", { name: "Table of contents" }))
+        .getAllByRole("button")
+        .map((item) => item.textContent)
+    ).toEqual(["New Second", "First"])
+  );
+});
+
+test("a jump in an editable Editor leaves the selection where it was", async () => {
+  const user = userEvent.setup();
+  const handle = createRef<RichTextEditorHandle>();
+  render(<EditorScreen html={ARTICLE} handle={handle} />);
+
+  const editor = handle.current!.editor!;
+  act(() => void editor.commands.setTextSelection(10));
+  const before = editor.state.selection.toJSON();
+
+  const items = await openList(user);
+  await user.click(items[3]!);
+
+  const heading = screen.getByRole("textbox", { name: "Body" }).querySelectorAll("h2")[1]!;
+  // Каретка осталась в Документе, а заголовок не обзавёлся меткой фокуса.
+  expect(heading.hasAttribute("tabindex")).toBe(false);
+  expect(heading.scrollIntoView).toHaveBeenCalled();
+  expect(editor.state.selection.toJSON()).toEqual(before);
+  expect(editor.getHTML()).not.toContain("tabindex");
+});
+
+// --- Длинный Документ --------------------------------------------------------
+
+const longArticle = (count: number) =>
+  Array.from(
+    { length: count },
+    (_, index) => `<h${(index % 3) + 2}>Section ${index}</h${(index % 3) + 2}><p>Text</p>`
+  ).join("");
+
+test("the strip gap shrinks so that a long Document fits the window", async () => {
+  const height = window.innerHeight;
+  try {
+    window.innerHeight = 300;
+    const view = render(<Screen html={longArticle(8)} />);
+    // Мало заголовков — обычный шаг.
+    expect(strip().style.rowGap).toBe("6px");
+
+    view.rerender(<Screen html={longArticle(60)} />);
+    await waitFor(() => expect(strokes()).toBe(60));
+    const gap = parseFloat(strip().style.rowGap);
+    expect(gap).toBeGreaterThan(0);
+    expect(gap).toBeLessThan(6);
+
+    // Совсем много — шаг не уходит ниже нуля, штрих остаётся на каждый заголовок.
+    view.rerender(<Screen html={longArticle(150)} />);
+    await waitFor(() => expect(strokes()).toBe(150));
+    expect(parseFloat(strip().style.rowGap)).toBe(0);
+
+    // Окно выросло — шаг вернулся.
+    window.innerHeight = 2000;
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+    expect(strip().style.rowGap).toBe("6px");
+  } finally {
+    window.innerHeight = height;
+  }
+});
+
+test("the opened list of a long Document scrolls to the current item", async () => {
+  const user = userEvent.setup();
+  render(<Screen html={longArticle(40)} />);
+
+  // Двадцать пять заголовков ушли выше края окна — текущий двадцать пятый.
+  const headings = [...screen.getByTestId("view").querySelectorAll("h2, h3, h4")];
+  headings.forEach((heading, index) => {
+    heading.getBoundingClientRect = () => ({ top: (index - 24) * 100 }) as DOMRect;
+  });
+  Object.defineProperty(document.documentElement, "scrollHeight", {
+    value: 90000,
+    configurable: true,
+  });
+  await act(async () => {
+    fireEvent.scroll(document);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  });
+
+  const items = await openList(user);
+  expect(items[24]!.getAttribute("aria-current")).toBe("location");
+
+  const scrollIntoView = vi.mocked(Element.prototype.scrollIntoView);
+  const calls = scrollIntoView.mock.contexts
+    .map((context, index) => ({ context, args: scrollIntoView.mock.calls[index] }))
+    .filter(({ context }) => context === items[24]);
+  expect(calls.length).toBeGreaterThan(0);
+  expect(calls.at(-1)!.args).toEqual([{ block: "nearest" }]);
 });
