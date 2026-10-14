@@ -15,12 +15,12 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../../../components/overlays/HoverCard.js";
-import { toPixels } from "../../../hooks/useStickyOffset.js";
 import { useMessages } from "../../../i18n/useMessages.js";
 import { cn } from "../../../lib/cn.js";
 import { watchHandleEditor } from "../../core/handleWatchers.js";
 import type { RichTextEditorHandle } from "../../RichTextEditor.js";
 import { collectHeadings, documentRoot, type TocHeading } from "./headings.js";
+import { stickyOffset } from "./stickyOffset.js";
 
 export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /**
@@ -112,24 +112,6 @@ function scrollParent(node: HTMLElement): HTMLElement | null {
     }
   }
   return null;
-}
-
-/**
- * Последний замер шапки. Подсветка читает отступ на каждом кадре прокрутки, а
- * `toPixels` для значения не в пикселях (`4rem`) меряет зонд — две раскладки.
- * Замер повторяется только при смене сырого значения, как в `useStickyOffset`.
- */
-let measured: { raw: string; px: number | null } = { raw: "", px: null };
-
-/** Высота липкой шапки в пикселях; переменной нет — `null`. */
-export function stickyOffset(offsetVar: string): number | null {
-  const raw = getComputedStyle(document.documentElement).getPropertyValue(offsetVar).trim();
-  if (!raw) return null;
-  if (raw !== measured.raw) {
-    const px = parseFloat(toPixels(raw, "0px"));
-    measured = { raw, px: Number.isFinite(px) && px > 0 ? px : null };
-  }
-  return measured.px;
 }
 
 /** Сколько гаснет подсветка заголовка после перехода. */

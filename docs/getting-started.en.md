@@ -1,5 +1,5 @@
 ---
-sourceHash: fdfa8cd8c38b
+sourceHash: d61bd1f3cca7
 ---
 
 # Setting up `@olddevs/ui`
@@ -133,9 +133,9 @@ peer dependencies are treated as external, and the metric is gzip:
 | one `Button`                                                                                             | 1.6 kB   |
 | `DataTable`                                                                                              | 9.0 kB   |
 | the whole kit (`import *`)                                                                               | 77.1 kB  |
-| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 70.6 kB  |
-| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 295.3 kB |
-| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 339.1 kB |
+| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 71.3 kB  |
+| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 296 kB   |
+| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 344.2 kB |
 | `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 12.0 kB  |
 | `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 3.6 kB   |
 | `highlightCodeBlocks` from `@olddevs/ui/editor/highlight`, with lowlight                                 | 22.6 kB  |

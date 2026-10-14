@@ -59,7 +59,7 @@ import type { ToolPopoverRequest } from "./core/toolButtons.js";
 import type { TextCardControl } from "./ui/TextCard.js";
 import { SelectionPopover } from "./ui/ToolButtonView.js";
 import { tableChunk } from "./features/table/tableTool.js";
-import { stickyOffset, TocCore } from "./features/toc/RichTextToc.js";
+import { stickyOffset } from "./features/toc/stickyOffset.js";
 import { replaceWithMarkdown } from "./core/markdown.js";
 import {
   documentFromJSON,
@@ -109,6 +109,15 @@ const TextCard = lazy(() =>
  * `basic`, который меряется бюджетом «старта». Плагин подсветки и сочетания
  * маленькие и стоят в движке сразу.
  */
+/*
+  Ядро Оглавления (Инструмент `toc`) — ленивым чанком: его включают единицы, а
+  полоса со списком и `HoverCard` стоили бы каждому Редактору ~5 kB gzip на
+  старте. Чанк приходит, только когда Инструмент включён и движок готов.
+*/
+const TocCore = lazy(() =>
+  import("./features/toc/RichTextToc.js").then((module) => ({ default: module.TocCore }))
+);
+
 const SearchPanel = lazy(() =>
   import("./features/search/SearchPanel.js").then((module) => ({ default: module.SearchPanel }))
 );
@@ -1576,19 +1585,21 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               */
               <div className="flex items-start">
                 {editor && !sourceOpen && (
-                  <TocCore
-                    target={tocTarget}
-                    stickyTop={tocStickyTop}
-                    focusHeading={tocFocusHeading}
-                    alignToFirstHeading
-                    data-toc-gutter=""
-                    className="sticky mr-3 shrink-0"
-                    style={{
-                      top: scrolls
-                        ? "0.5rem"
-                        : `calc(var(--topbar-h, 0px) + ${toolbarHeight}px + 0.5rem)`,
-                    }}
-                  />
+                  <Suspense fallback={null}>
+                    <TocCore
+                      target={tocTarget}
+                      stickyTop={tocStickyTop}
+                      focusHeading={tocFocusHeading}
+                      alignToFirstHeading
+                      data-toc-gutter=""
+                      className="sticky mr-3 shrink-0"
+                      style={{
+                        top: scrolls
+                          ? "0.5rem"
+                          : `calc(var(--topbar-h, 0px) + ${toolbarHeight}px + 0.5rem)`,
+                      }}
+                    />
+                  </Suspense>
                 )}
                 <div className="min-w-0 flex-1">
                   <EditorContent editor={editor} hidden={sourceOpen} />

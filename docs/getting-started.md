@@ -130,9 +130,9 @@ peer-зависимости внешние, метрика gzip:
 | одна `Button`                                                                                               | 1,6 кБ   |
 | `DataTable`                                                                                                 | 9,0 кБ   |
 | весь кит целиком (`import *`)                                                                               | 77,1 кБ  |
-| `RichTextEditor` из `@olddevs/ui/editor`, без движка, «старт»                                               | 70,6 кБ  |
-| `RichTextEditor` вместе с движком Tiptap, «старт» (статический граф, `basic`)                               | 295,3 кБ |
-| `RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)                      | 339,1 кБ |
+| `RichTextEditor` из `@olddevs/ui/editor`, без движка, «старт»                                               | 71,3 кБ  |
+| `RichTextEditor` вместе с движком Tiptap, «старт» (статический граф, `basic`)                               | 296 кБ   |
+| `RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)                      | 344,2 кБ |
 | `RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён                                       | 12,0 кБ  |
 | `sanitizeRichText` и `richTextSanitizeConfig` из `@olddevs/ui/editor/schema`, движок Tiptap в замер включён | 3,6 кБ   |
 | `highlightCodeBlocks` из `@olddevs/ui/editor/highlight`, вместе с lowlight                                  | 22,6 кБ  |
