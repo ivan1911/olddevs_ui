@@ -1080,6 +1080,11 @@ export interface UiMessages {
     blockMoveDown: string;
     blockDuplicate: string;
     blockDelete: string;
+    /**
+     * Оглавление Документа (`RichTextToc`): имя кнопки-полосы и подпись
+     * `nav` со списком заголовков — одно слово на оба, это одна вещь.
+     */
+    toc: string;
   };
 }
 

@@ -654,6 +654,7 @@ export const DEFAULT_MESSAGES: UiMessages = {
     blockMoveDown: "Move down",
     blockDuplicate: "Duplicate",
     blockDelete: "Delete",
+    toc: "Table of contents",
   },
 };
 

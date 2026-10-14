@@ -693,6 +693,7 @@ export const messages: UiMessages = {
     blockMoveDown: "Вниз",
     blockDuplicate: "Дублировать",
     blockDelete: "Удалить",
+    toc: "Оглавление",
   },
 };
 
