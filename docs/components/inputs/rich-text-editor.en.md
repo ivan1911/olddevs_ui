@@ -17,6 +17,11 @@ exports:
     ToolDefinitionContext,
     CustomToolBody,
     RichTextTools,
+    SearchToolOptions,
+    TocToolOptions,
+    TocLevel,
+    SearchToolCommands,
+    TocToolCommands,
     SearchToolState,
     TocToolState,
     TocToolHeading,
@@ -50,7 +55,7 @@ category: inputs
 status: stable
 source: src/editor/RichTextEditor.tsx
 story: src/editor/RichTextEditor.stories.tsx
-sourceHash: d5e5ddfcc640
+sourceHash: bdbfb1079b23
 ---
 
 # RichTextEditor
