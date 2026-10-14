@@ -350,6 +350,48 @@ test("the list has a fixed width that listWidth changes; long titles are cut wit
   expect(title.className).toMatch(/\btruncate\b/);
 });
 
+test("levels leaves only those levels in the strip and the list; the indent counts from the largest left", async () => {
+  const user = userEvent.setup();
+  function Narrow() {
+    const view = useRef<HTMLDivElement>(null);
+    return (
+      <div>
+        <RichTextToc target={view} levels={[3, 4]} />
+        <RichTextView ref={view} html={ARTICLE} />
+      </div>
+    );
+  }
+  render(<Narrow />);
+
+  expect(strip().querySelectorAll("[data-toc-stroke]")).toHaveLength(2);
+  const items = await openList(user);
+  expect(items.map((item) => item.textContent)).toEqual(["How to read", "Neutrals"]);
+  // H3 теперь самый крупный: глубина считается от него.
+  expect(items.map((item) => item.getAttribute("data-depth"))).toEqual(["0", "1"]);
+});
+
+test("without levels every level is listed, and a change of levels rebuilds the list", async () => {
+  const user = userEvent.setup();
+  function Switch({ levels }: { levels?: readonly (1 | 2 | 3 | 4)[] }) {
+    const view = useRef<HTMLDivElement>(null);
+    return (
+      <div>
+        <RichTextToc target={view} levels={levels} />
+        <RichTextView ref={view} html={ARTICLE} />
+      </div>
+    );
+  }
+  const { rerender } = render(<Switch />);
+  expect(strip().querySelectorAll("[data-toc-stroke]")).toHaveLength(4);
+
+  rerender(<Switch levels={[2]} />);
+  await waitFor(() => expect(strip().querySelectorAll("[data-toc-stroke]")).toHaveLength(2));
+  expect((await openList(user)).map((item) => item.textContent)).toEqual([
+    "Palette",
+    "What's next",
+  ]);
+});
+
 test("the list is 240px wide by default", async () => {
   const user = userEvent.setup();
   render(<Screen html={ARTICLE} />);

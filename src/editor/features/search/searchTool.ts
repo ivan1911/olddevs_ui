@@ -1,6 +1,7 @@
 "use client";
 
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
+import type { SearchToolOptions } from "../../core/toolOptions.js";
 import { SearchExtension } from "./searchPlugin.js";
 
 /**
@@ -14,8 +15,19 @@ import { SearchExtension } from "./searchPlugin.js";
 /** Сочетание кнопки «Поиск»: строка справочника и подсказка кнопки — из одной записи. */
 export const SEARCH_KEYS = ["mod", "F"] as const;
 
+/** Стартовые флажки панели: все выключены. */
+export const SEARCH_DEFAULTS: SearchToolOptions = {
+  matchCase: false,
+  wholeWord: false,
+  regex: false,
+};
+
+const isFlag = (value: unknown) => typeof value === "boolean";
+
 export const SEARCH_TOOL: ToolDescriptor = {
   name: "search",
+  defaults: SEARCH_DEFAULTS,
+  checks: { matchCase: isFlag, wholeWord: isFlag, regex: isFlag },
   engine: (context) => [SearchExtension.configure({ open: context.openSearch ?? (() => false) })],
   shortcuts: [
     { id: "search", group: "search", tool: "search", keys: SEARCH_KEYS, label: (m) => m.search },

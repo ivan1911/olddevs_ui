@@ -36,6 +36,8 @@ export type {
 } from "./core/schema.js";
 export { RICH_TEXT_PRESETS } from "./core/tools.js";
 export type { RichTextEditorPreset } from "./core/tools.js";
+export { tool } from "./core/toolOptions.js";
+export type { ConfiguredTool, RichTextTools } from "./core/toolOptions.js";
 export { markRange } from "./core/customTool.js";
 export type {
   TextCardRange,

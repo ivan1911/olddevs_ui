@@ -93,6 +93,19 @@ test("the custom tool API is part of the editor entry, not of the barrel", async
   expect(names).toContain("bold");
 });
 
+test("tool() is part of the editor entry, not of the barrel", async () => {
+  const editor = await import("../src/editor/index.js");
+
+  expect(Object.keys(editor)).toContain("tool");
+  expect(Object.keys(barrel)).not.toContain("tool");
+  // Запись `tools` — Настроенный Инструмент: данные, без функций.
+  expect(editor.tool("toc", { levels: [2, 3] })).toEqual({
+    configured: true,
+    name: "toc",
+    options: { levels: [2, 3] },
+  });
+});
+
 test("the schema for custom tools is part of the editor entry, not of the barrel", async () => {
   const editor = await import("../src/editor/index.js");
 

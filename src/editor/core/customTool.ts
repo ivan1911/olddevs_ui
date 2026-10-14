@@ -3,6 +3,7 @@ import type { Mark } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
 import type { ComponentType, ReactNode } from "react";
 import type { IconProps } from "../../icons.js";
+import type { ConfiguredTool } from "./toolOptions.js";
 import type { Tool as ToolName } from "./tools.js";
 
 /*
@@ -428,8 +429,11 @@ export type CustomToolButton = CustomToolButtonFields &
       }
   );
 
-/** Элемент `tools`: имя Инструмента кита или описание своего. */
-export type ToolEntry = ToolName | CustomTool;
+/**
+ * Элемент `tools`: имя Инструмента кита, Настроенный Инструмент (`tool()`) или
+ * описание своего Инструмента.
+ */
+export type ToolEntry = ToolName | ConfiguredTool | CustomTool;
 
 /**
  * Годится ли значение атрибута по его виду (`CustomAttribute`). Живёт в
