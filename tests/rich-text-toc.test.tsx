@@ -315,3 +315,33 @@ test("the strip hides itself when it would overlap the text or leave the window"
   });
   expect(root.className).not.toMatch(/\binvisible\b/);
 });
+
+test("the list has a fixed width that listWidth changes; long titles are cut with an ellipsis", async () => {
+  const user = userEvent.setup();
+  const long = "A heading so long that it can never fit into the list of the table of contents";
+  function Wide() {
+    const view = useRef<HTMLDivElement>(null);
+    return (
+      <div>
+        <RichTextToc target={view} listWidth="20rem" />
+        <RichTextView ref={view} html={`<h2>${long}</h2><h2>Short</h2>`} />
+      </div>
+    );
+  }
+  render(<Wide />);
+
+  const [first] = await openList(user);
+  const panel = screen.getByRole("navigation", { name: "Table of contents" }).parentElement!;
+  expect(panel.style.width).toBe("20rem");
+  const title = first!.querySelector("[title]")!;
+  expect(title.getAttribute("title")).toBe(long);
+  expect(title.className).toMatch(/\btruncate\b/);
+});
+
+test("the list is 240px wide by default", async () => {
+  const user = userEvent.setup();
+  render(<Screen html={ARTICLE} />);
+  await openList(user);
+  const panel = screen.getByRole("navigation", { name: "Table of contents" }).parentElement!;
+  expect(panel.style.width).toBe("240px");
+});

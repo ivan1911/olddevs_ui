@@ -31,6 +31,8 @@ const ARTICLE =
   paragraph("the surfaces") +
   "<h3>Text</h3>" +
   paragraph("the text roles") +
+  "<h3>Component tokens that a theme overrides for one family of controls</h3>" +
+  paragraph("the component tokens") +
   "<h2>What's next</h2>" +
   paragraph("what comes next");
 
@@ -51,6 +53,8 @@ const BLOCKS =
 interface ScreenProps {
   html: string;
   surface?: RichTextSurface;
+  /** Ширина списка Оглавления (`listWidth`). */
+  listWidth?: number | string;
 }
 
 /**
@@ -58,7 +62,7 @@ interface ScreenProps {
  * своим `sticky`, Просмотр — справа. Колонку и липкость задаёт экран, не
  * компонент.
  */
-function Screen({ html, surface }: ScreenProps) {
+function Screen({ html, surface, listWidth }: ScreenProps) {
   const view = useRef<HTMLDivElement>(null);
   return (
     <div className="flex items-start gap-6">
@@ -93,6 +97,28 @@ export const Paper: Story = { args: { surface: "paper" } };
 
 /** Обёртка и Раскладка: заголовок в Обёртке есть в списке, заголовков колонок нет. */
 export const WrapperAndLayout: Story = { args: { html: BLOCKS } };
+
+/**
+ * Оглавление в поле страницы: колонка текста по центру, полоса — в поле слева
+ * от неё. Сузьте окно: когда поле станет уже полосы, Оглавление спрячется само.
+ */
+export const Margin: Story = {
+  render: (args) => <MarginScreen {...args} />,
+};
+
+function MarginScreen({ html, surface }: ScreenProps) {
+  const view = useRef<HTMLDivElement>(null);
+  return (
+    <div className="relative mx-auto max-w-[640px]">
+      <div className="absolute top-0 right-full mr-8 h-full">
+        <div className="sticky top-[calc(var(--topbar-h,0px)+16px)]">
+          <RichTextToc target={view} />
+        </div>
+      </div>
+      <RichTextView ref={view} html={html} surface={surface} />
+    </div>
+  );
+}
 
 /** Меньше двух заголовков — Оглавления нет вовсе, колонка экрана пуста. */
 export const SingleHeading: Story = {

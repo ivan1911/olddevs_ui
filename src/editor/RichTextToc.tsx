@@ -29,6 +29,13 @@ export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "
    * `scroll-margin-top` заголовка. По умолчанию `--topbar-h`: её публикует `TopBar`.
    */
   offsetVar?: string;
+  /**
+   * Ширина списка — длина CSS или пиксели. Постоянная, а не по самому длинному
+   * заголовку: список не меняет размер от Документа к Документу. Заголовок, что
+   * не помещается, обрезается многоточием, полный текст — в подсказке пункта.
+   * По умолчанию 240px.
+   */
+  listWidth?: number | string;
 }
 
 /**
@@ -42,7 +49,7 @@ const STROKE_WIDTH = ["w-3.5", "w-3", "w-2.5", "w-2"] as const;
  */
 const CURRENT_STROKE = "bg-accent-strong h-[3px] w-4";
 /** Отступ текста пункта по глубине. */
-const ITEM_INDENT = ["pl-0", "pl-3", "pl-6", "pl-9"] as const;
+const ITEM_INDENT = ["pl-0", "pl-2.5", "pl-5", "pl-7.5"] as const;
 
 const strokeWidth = (depth: number) => STROKE_WIDTH[Math.min(depth, STROKE_WIDTH.length - 1)];
 const itemIndent = (depth: number) => ITEM_INDENT[Math.min(depth, ITEM_INDENT.length - 1)];
@@ -165,7 +172,7 @@ function fitsBeside(strip: HTMLElement, target: HTMLElement): boolean {
  * решает вёрстка экрана. Меньше двух заголовков — компонент ничего не рисует.
  */
 export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function RichTextToc(
-  { target, offsetVar = "--topbar-h", className, ...rest },
+  { target, offsetVar = "--topbar-h", listWidth = 240, className, ...rest },
   ref
 ) {
   const messages = useMessages();
@@ -326,7 +333,8 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
           side="right"
           align="start"
           sideOffset={8}
-          className="w-max max-w-72 p-1"
+          className="p-1"
+          style={{ width: listWidth }}
           onEscapeKeyDown={() => stripRef.current?.focus()}
           onFocusOutside={(event) => {
             // Переход ставит фокус на заголовок, а список остаётся открытым:
@@ -366,7 +374,10 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
                         )}
                       />
                     </span>
-                    <span className={cn("min-w-0 truncate", itemIndent(heading.depth))}>
+                    <span
+                      className={cn("min-w-0 truncate", itemIndent(heading.depth))}
+                      title={heading.text}
+                    >
                       {heading.text}
                     </span>
                   </button>
