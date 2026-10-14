@@ -4251,7 +4251,10 @@ test.describe("RichTextEditor with the toc tool", () => {
     await expect(strip(page)).toBeVisible();
     await page.getByRole("button", { name: "Go to “How to read”" }).click();
     const heading = page.getByRole("heading", { name: "How to read" });
-    const toolbar = (await page.getByRole("toolbar").first().boundingBox())!;
+    // Край — низ оболочки Панели, а не самой `toolbar`: от оболочки (с её рамкой)
+    // Редактор меряет высоту Панели для перехода и липкой полосы.
+    const shell = page.getByRole("toolbar").first().locator("xpath=..");
+    const toolbar = (await shell.boundingBox())!;
     const edge = toolbar.y + toolbar.height;
     // Прокрутка плавная: ждём, пока заголовок встанет вплотную под нижний край Панели.
     await expect
@@ -4295,11 +4298,12 @@ test.describe("RichTextEditor with the toc tool", () => {
       .locator('[aria-current="location"]');
     await expect(current).toHaveText("Palette");
 
-    // Заголовок встал под липкую Панель — он и есть текущий раздел.
-    await page.getByRole("heading", { name: "Layer 2 — roles by theme" }).evaluate((heading) => {
+    // Заголовок встал под липкую Панель — он и есть текущий раздел. Берётся раздел
+    // из середины: до заголовков у конца прокрутка не доезжает, там текущий — последний.
+    await page.getByRole("heading", { name: "Layer 1 — primitives" }).evaluate((heading) => {
       window.scrollTo(0, window.scrollY + heading.getBoundingClientRect().top - 30);
     });
-    await expect(current).toHaveText("Layer 2 — roles by theme");
+    await expect(current).toHaveText("Layer 1 — primitives");
 
     // Документ докручен до конца: текущий — последний раздел, хотя он короткий.
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
