@@ -32,7 +32,7 @@ import { BlockHandle } from "./ui/BlockHandle.js";
 import { expandTools } from "./features/builtins.js";
 import {
   createHandleMethods,
-  notifyHandleEditor,
+  publishToolSignals,
   type RichTextEditorHandleMethods,
 } from "./core/handle.js";
 import { EditorToolbar, ToolbarSkeleton } from "./ui/EditorToolbar.js";
@@ -1422,8 +1422,16 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       }),
       [editor, editable, throttle]
     );
-    // Хук `useRichTextEditorState` не видит смену движка у `ref` сам — сообщаем.
-    useEffect(() => notifyHandleEditor(ref), [ref, editor]);
+    /*
+      Хуки `useRichTextEditorState` и `useRichTextToolState` не видят смену
+      движка у `ref` сами — сообщаем. Тем же сообщением идут сигналы кита для
+      Состояния Инструмента: набор Инструментов и открытость панели Поиска.
+    */
+    const searchOpen = searchPanel !== null;
+    useEffect(
+      () => publishToolSignals(ref, { tools: enabledTools, searchOpen }),
+      [ref, editor, enabledTools, searchOpen]
+    );
 
     /*
       Готовность (спека, словарь): один раз за монтаж, когда движок создан.
@@ -1601,6 +1609,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                       stickyTop={tocStickyTop}
                       focusHeading={tocFocusHeading}
                       alignToFirstHeading
+                      onCurrentChange={(tocAt) => publishToolSignals(ref, { tocAt })}
                       data-toc-gutter=""
                       className="sticky mr-3 shrink-0"
                       style={{

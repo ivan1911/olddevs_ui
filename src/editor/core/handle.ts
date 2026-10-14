@@ -7,7 +7,7 @@ import type { Editor } from "@tiptap/react";
 import { textBetween } from "./atomText.js";
 import { isRichTextDocument, type RichTextDocument } from "./jsonDocument.js";
 
-export { notifyHandleEditor, watchHandleEditor } from "./handleWatchers.js";
+export { notifyHandleEditor, publishToolSignals, watchHandleEditor } from "./handleWatchers.js";
 
 /**
  * Плоские методы Хэндла (ADR-0058, раздел 8): то, что экран делает с Редактором

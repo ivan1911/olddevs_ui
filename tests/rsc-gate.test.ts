@@ -81,9 +81,16 @@ const SERVER_SAFE = [
   {
     file: "editor/core/handleWatchers.ts",
     why:
-      "Subscribers to the Editor handle's engine (watchHandleEditor, notifyHandleEditor): a WeakMap " +
-      "and two functions, no React and no Tiptap. Split from handle.ts so that RichTextToc can wait " +
-      "for the engine without importing Tiptap (OLDSUI-264).",
+      "Subscribers to the Editor handle's engine (watchHandleEditor, notifyHandleEditor) and the " +
+      "tool signals next to them: two WeakMaps and a few functions, no React and no Tiptap. Split " +
+      "from handle.ts so that RichTextToc can wait for the engine without importing Tiptap (OLDSUI-264).",
+  },
+  {
+    file: "editor/core/toolState.ts",
+    why:
+      "The snapshots of the built-in tools' State (OLDSUI-268) as interfaces: nothing but types, " +
+      "one type-only import. The RichTextTools map refers to them, and a server module that " +
+      "declares its own tool in the map imports that map.",
   },
   {
     file: "editor/features/toc/headings.ts",
