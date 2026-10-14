@@ -2741,7 +2741,7 @@ export const MentionTriggerNothingFound: Story = {
   render: () => <MentionTriggerStory command="@zzz" />,
 };
 
-/* ── Оглавление: Инструмент `toc` (OLDSUI-271, ADR-0068) ──────────────────── */
+/* ── Оглавление: Инструмент `toc` (ADR-0068) ──────────────────── */
 
 const tocSection = (topic: string) =>
   `<p>This section describes ${topic}. It has enough text to give the field some height, ` +
