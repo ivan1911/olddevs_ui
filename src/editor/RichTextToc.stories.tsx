@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useRef } from "react";
 import type { RichTextSurface } from "./styles/surface.js";
+import { RichTextEditor, type RichTextEditorHandle } from "./RichTextEditor.js";
 import { RichTextToc } from "./RichTextToc.js";
 import { RichTextView } from "./RichTextView.js";
 
@@ -50,6 +51,22 @@ const BLOCKS =
   "<h3>Known issues</h3>" +
   paragraph("the known issues");
 
+/** Длинный Документ: сорок заголовков трёх уровней, чтобы полоса упёрлась в высоту окна. */
+const LONG =
+  "<h1>Handbook</h1>" +
+  paragraph("the handbook") +
+  Array.from({ length: 13 }, (_, index) => {
+    const chapter = index + 1;
+    return (
+      `<h2>Chapter ${chapter}</h2>` +
+      paragraph(`chapter ${chapter}`) +
+      `<h3>Chapter ${chapter}, part one</h3>` +
+      paragraph(`the first part of chapter ${chapter}`) +
+      `<h4>Chapter ${chapter}, notes</h4>` +
+      paragraph(`the notes to chapter ${chapter}`)
+    );
+  }).join("");
+
 interface ScreenProps {
   html: string;
   surface?: RichTextSurface;
@@ -73,6 +90,25 @@ function Screen({ html, surface, listWidth }: ScreenProps) {
         ref={view}
         html={html}
         surface={surface}
+        className="max-w-[640px] min-w-0 flex-1"
+      />
+    </div>
+  );
+}
+
+/** То же, что `Screen`, но цель — Редактор: его Хэндл, а не элемент Просмотра. */
+function EditorScreen({ html }: ScreenProps) {
+  const editor = useRef<RichTextEditorHandle>(null);
+  return (
+    <div className="flex items-start gap-6">
+      <div className="sticky top-[calc(var(--topbar-h,0px)+16px)] w-10 shrink-0">
+        <RichTextToc target={editor} />
+      </div>
+      <RichTextEditor
+        ref={editor}
+        aria-label="Document"
+        defaultValue={html}
+        readOnly
         className="max-w-[640px] min-w-0 flex-1"
       />
     </div>
@@ -119,6 +155,18 @@ function MarginScreen({ html, surface }: ScreenProps) {
     </div>
   );
 }
+
+/** Редактор в `readOnly`: Оглавление берёт заголовки из его Документа, как у Просмотра. */
+export const ReadOnlyEditor: Story = {
+  render: (args) => <EditorScreen {...args} />,
+};
+
+/**
+ * Длинный Документ: на каждый заголовок свой штрих, полоса не выше окна — при
+ * нехватке места шаг между штрихами сжимается. Список прокручивается, текущий
+ * пункт держится в его видимой части.
+ */
+export const LongDocument: Story = { args: { html: LONG } };
 
 /** Меньше двух заголовков — Оглавления нет вовсе, колонка экрана пуста. */
 export const SingleHeading: Story = {

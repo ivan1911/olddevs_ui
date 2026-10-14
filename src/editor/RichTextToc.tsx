@@ -14,14 +14,24 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "../components/ove
 import { toPixels } from "../hooks/useStickyOffset.js";
 import { useMessages } from "../i18n/useMessages.js";
 import { cn } from "../lib/cn.js";
+import { watchHandleEditor } from "./core/handleWatchers.js";
+import type { RichTextEditorHandle } from "./RichTextEditor.js";
 import { collectHeadings, documentRoot, type TocHeading } from "./features/toc/headings.js";
 
 export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /**
-   * Ref на Просмотр (`RichTextView`), чьи заголовки показывает Оглавление.
-   * Заголовки читаются из DOM цели после монтирования: до гидратации полосы нет.
+   * Ref на Просмотр (`RichTextView`) или на Хэндл Редактора (`RichTextEditor`),
+   * чьи заголовки показывает Оглавление. Заголовки читаются из DOM цели после
+   * монтирования: до гидратации полосы нет.
+   *
+   * Список следит за Документом: новый `html` Просмотра, новое значение
+   * Редактора и правка в нём пересобирают его с короткой задержкой. Редактор
+   * в `readOnly` работает так же, как Просмотр. Редактор в правке тоже
+   * поддержан — список пересобирается, а переход не двигает каретку, — но
+   * контрактом этот режим не обещан. Движок Редактора появляется после
+   * монтирования, и Оглавление ждёт его само.
    */
-  target: RefObject<HTMLElement | null>;
+  target: RefObject<HTMLElement | RichTextEditorHandle | null>;
   /**
    * Имя CSS-переменной с высотой липкой шапки экрана ([ADR-0016]). Переход
    * ставит заголовок под шапку, а не за неё, и подсветка считает раздел
@@ -62,6 +72,18 @@ const itemIndent = (depth: number) => ITEM_INDENT[Math.min(depth, ITEM_INDENT.le
 */
 const OPEN_DELAY = 200;
 const CLOSE_DELAY = 300;
+
+/** Пауза после последней правки Документа, по которой список пересобирается. */
+const REBUILD_DELAY = 150;
+
+/**
+ * Шаг между штрихами полосы и его границы. Ячейка штриха — 3px (см. полосу),
+ * `p-1` даёт по 4px сверху и снизу; запас оставляет воздух над и под полосой.
+ */
+const STRIP_GAP = 6;
+const STRIP_CELL = 3;
+const STRIP_PADDING = 8;
+const STRIP_MARGIN = 16;
 
 /** Запас под строкой отсчёта: заголовок, вставший вплотную под шапку, уже текущий. */
 const SPY_SLACK = 8;
@@ -130,11 +152,21 @@ function flash(heading: HTMLElement) {
  * фокуса: в Документе после ухода фокуса не остаётся следа.
  */
 function jumpTo(heading: HTMLElement, offsetVar: string) {
-  if (!heading.hasAttribute("tabindex")) {
-    heading.setAttribute("tabindex", "-1");
-    heading.addEventListener("blur", () => heading.removeAttribute("tabindex"), { once: true });
+  /*
+    В Редакторе в правке заголовок лежит внутри `contenteditable`, и ProseMirror
+    следит за его DOM: чужой `tabindex` он счёл бы правкой, перерисовал заголовок
+    без атрибута, и фокус пропал бы вместе с ним. Фокус на заголовок здесь и не
+    нужен: поставить его, не тронув каретку, нельзя, а каретка остаётся там, где
+    её оставил автор. Прокрутка работает как обычно.
+  */
+  if (!heading.parentElement?.closest('[contenteditable="true"]')) {
+    if (!heading.hasAttribute("tabindex")) {
+      heading.setAttribute("tabindex", "-1");
+      heading.addEventListener("blur", () => heading.removeAttribute("tabindex"), { once: true });
+    }
+    heading.focus({ preventScroll: true });
   }
-  heading.focus({ preventScroll: true });
+  // Подсветка — анимацией, без следа в DOM: годится и Редактору в правке.
   flash(heading);
 
   const behavior: ScrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
@@ -181,6 +213,50 @@ function currentIndex(headings: TocHeading[], offsetVar: string): number {
 }
 
 /**
+ * Элемент Документа по ref цели. Просмотр — сам элемент; Редактор — корень
+ * ProseMirror его движка: Панель и строка статуса вокруг в Документ не входят.
+ * Движка ещё нет (или он уничтожен) — `null`.
+ */
+function resolveTarget(target: RefObject<HTMLElement | RichTextEditorHandle | null>) {
+  const value = target.current;
+  if (!value) return null;
+  if (!("editor" in value)) return value;
+  const { editor } = value;
+  return editor && !editor.isDestroyed ? editor.view.dom : null;
+}
+
+/** Тот же набор заголовков: правка текста вне заголовков не должна ничего перерисовывать. */
+function sameHeadings(a: TocHeading[], b: TocHeading[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every(
+      (heading, index) =>
+        heading.element === b[index]!.element &&
+        heading.text === b[index]!.text &&
+        heading.depth === b[index]!.depth
+    )
+  );
+}
+
+/**
+ * Шаг между штрихами, при котором полоса не выше окна. Хватает места — обычный
+ * шаг; не хватает — он сжимается вплоть до нуля. Ячейки остаются постоянного
+ * размера, меняется только промежуток между ними, и считается он лишь от
+ * размера окна и числа заголовков, но не от текущего раздела: полоса не
+ * вздрагивает при прокрутке.
+ */
+function stripGap(count: number, offsetVar: string): number {
+  if (count < 2) return STRIP_GAP;
+  const room =
+    window.innerHeight -
+    (stickyOffset(offsetVar) ?? 0) -
+    STRIP_MARGIN * 2 -
+    STRIP_PADDING -
+    count * STRIP_CELL;
+  return Math.max(0, Math.min(STRIP_GAP, room / (count - 1)));
+}
+
+/**
  * Помещается ли полоса слева от текста: целиком в окне и не заходит на
  * Документ. Колонка под Оглавление бывает полем страницы, которое сужается
  * вместе с окном, — тогда полоса наползла бы на текст или ушла за край.
@@ -205,7 +281,9 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
   ref
 ) {
   const messages = useMessages();
+  const [element, setElement] = useState<HTMLElement | null>(null);
   const [headings, setHeadings] = useState<TocHeading[]>([]);
+  const [gap, setGap] = useState(STRIP_GAP);
   const [current, setCurrent] = useState(0);
   const [open, setOpen] = useState(false);
   const [fits, setFits] = useState(true);
@@ -214,10 +292,63 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
   const focusOnOpen = useRef(false);
   const navRef = useRef<HTMLElement | null>(null);
 
+  // Элемент цели. У Редактора движок появляется после монтирования (и лениво),
+  // поэтому на его смену подписка: Редактор сообщает по тому же `ref`.
   useEffect(() => {
-    const node = target.current;
-    setHeadings(node ? collectHeadings(node) : []);
+    const resolve = () => setElement(resolveTarget(target));
+    resolve();
+    return watchHandleEditor(target, resolve);
   }, [target]);
+
+  // Заголовки следуют за Документом. Наблюдатель стоит на корне Документа и не
+  // зависит от того, нарисована ли полоса: меньше двух заголовков она не
+  // рисуется, а появиться должна, когда пришёл второй. Атрибуты не наблюдаются:
+  // переход сам ставит и снимает `tabindex` на заголовке, и пересборка по нему
+  // подменила бы узлы списка под рукой.
+  useEffect(() => {
+    if (!element) {
+      setHeadings((prev) => (prev.length ? [] : prev));
+      return;
+    }
+    const read = () => {
+      const next = collectHeadings(element);
+      setHeadings((prev) => (sameHeadings(prev, next) ? prev : next));
+    };
+    read();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const observer = new MutationObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(read, REBUILD_DELAY);
+    });
+    observer.observe(documentRoot(element), {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [element]);
+
+  // Шаг полосы зависит от высоты окна и числа заголовков.
+  useEffect(() => {
+    if (headings.length < 2) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setGap(stripGap(headings.length, offsetVar));
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [headings.length, offsetVar]);
 
   // Подсветка текущего раздела. Слушатель прокрутки — на документе с захватом:
   // так его достигает прокрутка и окна, и любого контейнера вокруг цели.
@@ -246,7 +377,7 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
   // верным, когда место появится снова.
   useEffect(() => {
     const strip = stripRef.current;
-    const node = target.current;
+    const node = element;
     if (!strip || !node) return;
     let frame = 0;
     const measure = () => {
@@ -268,14 +399,19 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
       window.removeEventListener("resize", schedule);
       observer?.disconnect();
     };
-  }, [target, headings.length]);
+  }, [element, headings.length]);
 
   const listRef = useCallback(
     (node: HTMLElement | null) => {
       navRef.current = node;
-      if (!node || !focusOnOpen.current) return;
-      focusOnOpen.current = false;
+      if (!node) return;
       const items = node.querySelectorAll<HTMLButtonElement>("button");
+      // Длинный список прокручивается: текущий пункт держится в видимой части
+      // списка, когда он открылся и когда раздел сменился при открытом списке.
+      // `nearest` не двигает то, что уже видно, а страницу — не двигает вовсе.
+      items[current]?.scrollIntoView({ block: "nearest" });
+      if (!focusOnOpen.current) return;
+      focusOnOpen.current = false;
       (items[current] ?? items[0])?.focus();
     },
     [current]
@@ -336,7 +472,8 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
               setOpen(true);
             }}
             onKeyDown={onStripKeyDown}
-            className="focus-visible:outline-accent-strong flex cursor-pointer flex-col items-start gap-1.5 rounded-sm p-1 outline-offset-2 focus-visible:outline-2"
+            style={{ rowGap: gap }}
+            className="focus-visible:outline-accent-strong flex cursor-pointer flex-col items-start rounded-sm p-1 outline-offset-2 focus-visible:outline-2"
           >
             {/* Ячейка штриха постоянного размера: толщина и длина текущего
                 анимируются, а габариты полосы — нет. Иначе список, привязанный
@@ -362,14 +499,14 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
           side="right"
           align="start"
           sideOffset={8}
-          className="p-1"
+          className="max-h-[min(70dvh,32rem)] overflow-y-auto overscroll-contain p-1"
           style={{ width: listWidth }}
           onEscapeKeyDown={() => stripRef.current?.focus()}
           onFocusOutside={(event) => {
             // Переход ставит фокус на заголовок, а список остаётся открытым:
             // его закрывает уход курсора, а не выбор пункта. С клавиатуры фокус
             // в списке больше не держит его, и он закрывается тем же таймером.
-            if (target.current?.contains(event.target as Node)) event.preventDefault();
+            if (element?.contains(event.target as Node)) event.preventDefault();
           }}
           onPointerDownOutside={(event) => {
             // Полоса — якорь, а не триггер Radix: без этого нажатие на неё при
