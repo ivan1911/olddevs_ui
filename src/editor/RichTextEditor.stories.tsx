@@ -181,6 +181,14 @@ const SORT_SAMPLE =
   '<td data-align="center"><p>draft</p></td></tr>' +
   "</tbody></table><p>Put the caret in a column and choose Table › Sort.</p>";
 
+/** Часть ключа перемонтирования для записи `tools`: имя, у `tool()` — ещё и опции. */
+const toolKey = (entry: NonNullable<RichTextEditorProps["tools"]>[number]) =>
+  typeof entry === "string"
+    ? entry
+    : "configured" in entry
+      ? `${entry.name}${JSON.stringify(entry.options)}`
+      : entry.name;
+
 const meta = {
   title: "Inputs/RichTextEditor",
   component: RichTextEditor,
@@ -190,7 +198,7 @@ const meta = {
     <div className="max-w-[640px]">
       {/* Набор инструментов читается при создании движка: смена пресета в
           панели управления пересоздаёт поле ключом. */}
-      <RichTextEditor key={`${args.preset}-${args.tools?.join()}`} {...args} />
+      <RichTextEditor key={`${args.preset}-${args.tools?.map(toolKey).join()}`} {...args} />
     </div>
   ),
 } satisfies Meta<typeof RichTextEditor>;
