@@ -1,4 +1,4 @@
-import { Mark, Node } from "@tiptap/core";
+import { Mark, Node, type Editor } from "@tiptap/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { Button } from "../components/actions/Button.js";
@@ -18,6 +18,7 @@ import { markRange, type CustomTool } from "./core/customTool.js";
 import { FLOATING_TOOLBAR_KEY } from "./ui/FloatingToolbar.js";
 import { SELECTION_BUBBLE_KEY } from "./ui/SelectionBubble.js";
 import { TableSizeGrid as SizeGrid } from "./features/table/TableSizeGrid.js";
+import { defineTool } from "./core/defineTool.js";
 import { tool } from "./core/toolOptions.js";
 import { useRichTextToolState } from "./hooks/useRichTextToolState.js";
 import { RICH_TEXT_PRESETS, TOOLS } from "./core/tools.js";
@@ -2982,3 +2983,121 @@ function WithToolCommands(props: RichTextEditorProps) {
     </div>
   );
 }
+
+/* ── Свой Инструмент с опциями: defineTool (OLDSUI-268) ───────── */
+
+/*
+  Заметка на полях на нейтральных данных: Инструмент с подписями и пределом в
+  Опциях, Состоянием «сколько заметок» и Командой «добавить». Автор дописывает его
+  в карту `RichTextTools`, и хук с `handle.tool()` получают типы.
+*/
+declare module "@olddevs/ui/editor" {
+  interface RichTextTools {
+    acme_remark: {
+      options: { labels: { insert: string }; limit: number };
+      state: { count: number; limit: number };
+      commands: { add(text: string): boolean };
+    };
+  }
+}
+
+const Remark = Node.create({ name: "acme_remark", content: "inline*" });
+
+const countRemarks = (editor: Editor) => {
+  let count = 0;
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === "acme_remark") count += 1;
+  });
+  return count;
+};
+
+const remarkTool = defineTool({
+  name: "acme_remark",
+  defaults: { labels: { insert: "Remark" }, limit: 3 },
+  create: (options) => ({
+    engine: [Remark],
+    blocks: { acme_remark: { kind: "block" } },
+    insertItems: [
+      {
+        section: "insert",
+        label: options.labels.insert,
+        icon: PinIcon,
+        aliases: ["note"],
+        run: (chain) => chain.insertContent({ type: "acme_remark" }),
+      },
+    ],
+    buttons: [
+      {
+        id: "remark",
+        label: options.labels.insert,
+        icon: PinIcon,
+        can: (editor) => countRemarks(editor) < options.limit,
+        run: (editor) => void editor.chain().focus().insertContent({ type: "acme_remark" }).run(),
+      },
+    ],
+  }),
+  state: ({ editor, options }) => ({ count: countRemarks(editor), limit: options.limit }),
+  commands: ({ editor, options }) => ({
+    add: (text: string) =>
+      countRemarks(editor) < options.limit &&
+      editor
+        .chain()
+        .focus("end")
+        .insertContent({ type: "acme_remark", content: [{ type: "text", text }] })
+        .run(),
+  }),
+});
+
+const REMARK_SAMPLE =
+  "<p>Remarks are the paragraphs below; the status line counts them from the State of the tool.</p>" +
+  '<div data-block="acme_remark">First remark</div>';
+
+/** Строка статуса и кнопка экрана: читают Состояние и зовут Команду своего Инструмента. */
+function RemarkScreen(props: RichTextEditorProps) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  const remarks = useRichTextToolState(ref, "acme_remark");
+  return (
+    <div className="max-w-[640px]">
+      <div className="mb-2 flex items-center gap-3">
+        <Button
+          size="sm"
+          variant="soft"
+          onClick={() => ref.current?.tool("acme_remark")?.add("Added from the screen")}
+        >
+          Add a remark
+        </Button>
+        <p role="status" className="text-fg-2 text-[13px]">
+          {remarks ? `${remarks.count} of ${remarks.limit} remarks` : "Loading"}
+        </p>
+      </div>
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={REMARK_SAMPLE} {...props} />
+    </div>
+  );
+}
+
+/**
+ * Свой Инструмент через `defineTool` с умолчаниями: подпись кнопки и пункта
+ * «Remark» и предел в три заметки — из `defaults`. Строка статуса над полем читает
+ * Состояние Инструмента хуком `useRichTextToolState`, кнопка «Add a remark» зовёт
+ * его Команду `handle.tool("acme_remark")?.add(…)`; на пределе кнопка Панели
+ * выключается, а Команда возвращает `false`.
+ */
+export const DefinedTool: Story = {
+  render: () => <RemarkScreen tools={[...RICH_TEXT_PRESETS.full, remarkTool]} />,
+};
+
+/**
+ * Тот же Инструмент, настроенный экраном: `tool(remark, { labels: { insert:
+ * "Comment" }, limit: 2 })` меняет подпись кнопки и пункта «Comment» и предел, а
+ * остальные умолчания остаются, вложенные подписи сливаются с ними.
+ */
+export const DefinedToolConfigured: Story = {
+  render: () => (
+    <RemarkScreen
+      tools={[
+        ...RICH_TEXT_PRESETS.full,
+        tool(remarkTool, { labels: { insert: "Comment" }, limit: 2 }),
+      ]}
+    />
+  ),
+};

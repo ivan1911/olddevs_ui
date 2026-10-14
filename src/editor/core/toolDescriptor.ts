@@ -148,6 +148,17 @@ export interface ToolDescriptor {
    * `handle.tool(name)` отдаёт `null`.
    */
   commands?: (context: ToolCommandsContext) => object;
+
+  /* Состояние (OLDSUI-268). */
+
+  /**
+   * Состояние Инструмента: снимок для `useRichTextToolState(ref, name)`. Хук
+   * зовёт её на каждую транзакцию и каждое чтение, поэтому она быстрая и без
+   * побочных эффектов. Есть только у своего Инструмента (`defineTool`): снимки
+   * встроенных хук держит у себя (`SNAPSHOTS`), чтобы Поиск и Оглавление не
+   * тянули их код в стартовый кусок Редактора. Нет — Состояния у Инструмента нет.
+   */
+  state?: (editor: Editor) => unknown;
 }
 
 /** Что функция Команд получает от `RichTextEditor`. */
