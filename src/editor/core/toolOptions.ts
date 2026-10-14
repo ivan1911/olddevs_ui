@@ -79,8 +79,16 @@ type Pending = Record<string, never>;
  * добровольна.
  */
 export interface RichTextTools {
-  search: { options: SearchToolOptions; state: Pending; commands: Pending };
-  toc: { options: TocToolOptions; state: Pending; commands: Pending };
+  search: {
+    options: SearchToolOptions;
+    state: Pending;
+    commands: Pending;
+  };
+  toc: {
+    options: TocToolOptions;
+    state: Pending;
+    commands: Pending;
+  };
 }
 
 /**
