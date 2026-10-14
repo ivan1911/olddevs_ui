@@ -54,8 +54,10 @@ function isStructural(heading: Element, root: HTMLElement): boolean {
 /** Заголовки Документа в порядке чтения. */
 export function collectHeadings(target: HTMLElement): TocHeading[] {
   const root = documentRoot(target);
-  const found = [...root.querySelectorAll<HTMLElement>(HEADING)].filter((heading) =>
-    isStructural(heading, root)
+  // Пустой заголовок (автор только начал его в Редакторе) — не пункт: у
+  // кнопки без текста не было бы имени, а у полосы — лишний штрих.
+  const found = [...root.querySelectorAll<HTMLElement>(HEADING)].filter(
+    (heading) => isStructural(heading, root) && heading.textContent?.trim()
   );
   const levels = found.map((heading) => Number(heading.tagName[1]));
   const top = Math.min(...levels);

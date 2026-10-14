@@ -26,7 +26,10 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 function Screen({ html }: { html: string }) {
   const view = useRef<HTMLDivElement>(null);
@@ -596,15 +599,70 @@ test("the opened list of a long Document scrolls to the current item", async () 
     await new Promise((resolve) => requestAnimationFrame(resolve));
   });
 
+  // Строки списка по 22px, видимая часть списка — 300px: двадцать пятый пункт
+  // ниже её края.
+  const original = HTMLElement.prototype.getBoundingClientRect;
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLElement
+  ) {
+    const row = this.closest("li");
+    if (this.tagName === "BUTTON" && row) {
+      const index = [...row.parentElement!.children].indexOf(row);
+      const top = index * 22 - (row.closest("nav")!.parentElement!.scrollTop ?? 0);
+      return { top, bottom: top + 22 } as DOMRect;
+    }
+    if (this.querySelector(":scope > nav")) return { top: 0, bottom: 300 } as DOMRect;
+    return original.call(this);
+  });
+
   const items = await openList(user);
   expect(items[24]!.getAttribute("aria-current")).toBe("location");
+  const box = items[24]!.closest("nav")!.parentElement!;
+  // Прокручен ровно сам список, чтобы пункт встал к его нижнему краю.
+  expect(box.scrollTop).toBe(25 * 22 - 300);
+  // Страницу (scrollIntoView предков) Оглавление не двигает.
+  expect(vi.mocked(Element.prototype.scrollIntoView)).not.toHaveBeenCalled();
+});
 
-  const scrollIntoView = vi.mocked(Element.prototype.scrollIntoView);
-  const calls = scrollIntoView.mock.contexts
-    .map((context, index) => ({ context, args: scrollIntoView.mock.calls[index] }))
-    .filter(({ context }) => context === items[24]);
-  expect(calls.length).toBeGreaterThan(0);
-  expect(calls.at(-1)!.args).toEqual([{ block: "nearest" }]);
+test("a screen reader click without a key (detail 0) opens the list and moves focus into it", async () => {
+  render(<Screen html={ARTICLE} />);
+  await act(async () => {
+    fireEvent.click(strip(), { detail: 0 });
+  });
+  const nav = screen.getByRole("navigation", { name: "Table of contents" });
+  expect(nav.contains(document.activeElement)).toBe(true);
+});
+
+test("empty headings are not items", async () => {
+  const user = userEvent.setup();
+  render(<Screen html="<h2>One</h2><h2> </h2><h3></h3><h2>Two</h2>" />);
+  const items = await openList(user);
+  expect(items.map((item) => item.textContent)).toEqual(["One", "Two"]);
+});
+
+test("scrolling the list itself neither recomputes the highlight nor drops the jumped section", async () => {
+  const user = userEvent.setup();
+  render(<Screen html={ARTICLE} />);
+  Object.defineProperty(document.documentElement, "scrollHeight", {
+    value: 600,
+    configurable: true,
+  });
+  const headings = [...screen.getByTestId("view").querySelectorAll("h2, h3, h4")];
+  [-50, 100, 200, 300].forEach((top, index) => {
+    headings[index]!.getBoundingClientRect = () => ({ top }) as DOMRect;
+  });
+  const items = await openList(user);
+  await user.click(items[1]!);
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
+  // Колесо над списком: прокручивается он, а не Документ.
+  const list = screen.getByRole("navigation", { name: "Table of contents" }).parentElement!;
+  await act(async () => {
+    fireEvent.scroll(list);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  });
+  expect(items[1]!.getAttribute("aria-current")).toBe("location");
 });
 
 test("the section chosen by a jump stays current while the jump scrolls, even at the end of the Document", async () => {

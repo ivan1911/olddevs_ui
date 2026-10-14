@@ -114,12 +114,22 @@ function scrollParent(node: HTMLElement): HTMLElement | null {
   return null;
 }
 
+/**
+ * Последний замер шапки. Подсветка читает отступ на каждом кадре прокрутки, а
+ * `toPixels` для значения не в пикселях (`4rem`) меряет зонд — две раскладки.
+ * Замер повторяется только при смене сырого значения, как в `useStickyOffset`.
+ */
+let measured: { raw: string; px: number | null } = { raw: "", px: null };
+
 /** Высота липкой шапки в пикселях; переменной нет — `null`. */
 function stickyOffset(offsetVar: string): number | null {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(offsetVar).trim();
   if (!raw) return null;
-  const px = parseFloat(toPixels(raw, "0px"));
-  return Number.isFinite(px) && px > 0 ? px : null;
+  if (raw !== measured.raw) {
+    const px = parseFloat(toPixels(raw, "0px"));
+    measured = { raw, px: Number.isFinite(px) && px > 0 ? px : null };
+  }
+  return measured.px;
 }
 
 /** Сколько гаснет подсветка заголовка после перехода. */
@@ -227,6 +237,15 @@ function currentIndex(headings: TocHeading[], offsetVar: string): number {
   return current;
 }
 
+/** Прокрутить `box` ровно настолько, чтобы `item` был виден целиком. */
+function keepVisible(item: HTMLElement | undefined, box: HTMLElement | null) {
+  if (!item || !box) return;
+  const itemRect = item.getBoundingClientRect();
+  const boxRect = box.getBoundingClientRect();
+  if (itemRect.top < boxRect.top) box.scrollTop -= boxRect.top - itemRect.top;
+  else if (itemRect.bottom > boxRect.bottom) box.scrollTop += itemRect.bottom - boxRect.bottom;
+}
+
 /**
  * Элемент Документа по ref цели. Просмотр — сам элемент; Редактор — корень
  * ProseMirror его движка: Панель и строка статуса вокруг в Документ не входят.
@@ -306,6 +325,8 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
   /** Список открыт с клавиатуры: фокус уходит в него, на текущий пункт. */
   const focusOnOpen = useRef(false);
   const navRef = useRef<HTMLElement | null>(null);
+  /** Enter или Space уже открыли список: следующий за ними клик — их же эхо. */
+  const keyHandled = useRef(false);
 
   // Элемент цели. У Редактора движок появляется после монтирования (и лениво),
   // поэтому на его смену подписка: Редактор сообщает по тому же `ref`.
@@ -374,14 +395,17 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
     улёгся (`settled`).
   */
   const pinned = useRef<{ index: number; settled: boolean; timer: number } | null>(null);
+  /** (Пере)запустить ожидание: прокрутка перехода молчит `PIN_SETTLE` — переход улёгся. */
+  const settle = (lock: { settled: boolean; timer: number }) => {
+    window.clearTimeout(lock.timer);
+    lock.timer = window.setTimeout(() => {
+      lock.settled = true;
+    }, PIN_SETTLE);
+  };
   const pin = (index: number) => {
     if (pinned.current) window.clearTimeout(pinned.current.timer);
-    const settle = () =>
-      window.setTimeout(() => {
-        if (pinned.current) pinned.current.settled = true;
-      }, PIN_SETTLE);
     pinned.current = { index, settled: false, timer: 0 };
-    pinned.current.timer = settle();
+    settle(pinned.current);
     setCurrent(index);
   };
 
@@ -394,14 +418,18 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
       frame = 0;
       setCurrent(currentIndex(headings, offsetVar));
     };
-    const schedule = () => {
+    const schedule = (event?: Event) => {
+      // Считается только прокрутка, которая двигает Документ: окна или
+      // контейнера вокруг него. Прокрутка самого списка или чужой карусели на
+      // странице подсветку не трогает — и не снимает раздел перехода.
+      const scrolled = event?.target;
+      if (scrolled instanceof Element && !scrolled.contains(headings[0]!.element)) {
+        return;
+      }
       const lock = pinned.current;
       if (lock && !lock.settled) {
         // Прокрутка самого перехода: ждём, пока она уляжется.
-        window.clearTimeout(lock.timer);
-        lock.timer = window.setTimeout(() => {
-          lock.settled = true;
-        }, PIN_SETTLE);
+        settle(lock);
         return;
       }
       pinned.current = null;
@@ -456,8 +484,8 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
       const items = node.querySelectorAll<HTMLButtonElement>("button");
       // Длинный список прокручивается: текущий пункт держится в видимой части
       // списка, когда он открылся и когда раздел сменился при открытом списке.
-      // `nearest` не двигает то, что уже видно, а страницу — не двигает вовсе.
-      items[current]?.scrollIntoView({ block: "nearest" });
+      // Прокручивается только сам список: `scrollIntoView` двигал бы и страницу.
+      keepVisible(items[current], node.parentElement);
       if (!focusOnOpen.current) return;
       focusOnOpen.current = false;
       (items[current] ?? items[0])?.focus();
@@ -472,6 +500,7 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
   const onStripKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
+    keyHandled.current = true;
     if (open && navRef.current) {
       // Список уже открыт наведением: фокус переводится в него сразу.
       const items = navRef.current.querySelectorAll<HTMLButtonElement>("button");
@@ -514,9 +543,19 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
             type="button"
             aria-label={label}
             aria-expanded={open}
-            onClick={(event) => {
-              // Enter и Space разобраны выше; сюда доходят мышь и касание.
-              if (event.detail === 0) return;
+            onClick={() => {
+              // Enter и Space уже разобраны в `onKeyDown`; их клик пропускается.
+              if (keyHandled.current) {
+                keyHandled.current = false;
+                return;
+              }
+              /*
+                Мышь, касание — и скринридер: NVDA, JAWS и VoiceOver нажимают
+                кнопку синтетическим кликом без клавиши (`detail === 0`). Для
+                него фокус уходит в список, как с клавиатуры: иначе открытый
+                список остался бы ему недоступен.
+              */
+              if (!open) focusOnOpen.current = true;
               setOpen(true);
             }}
             onKeyDown={onStripKeyDown}
