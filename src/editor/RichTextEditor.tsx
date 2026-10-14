@@ -1641,6 +1641,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                       focusHeading={tocFocusHeading}
                       alignToFirstHeading
                       onCurrentChange={(tocAt) => publishToolSignals(ref, { tocAt })}
+                      editor={editor}
                       jumpRef={tocJumpRef}
                       data-toc-gutter=""
                       className="sticky mr-3 shrink-0"

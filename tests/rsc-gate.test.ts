@@ -107,6 +107,20 @@ const SERVER_SAFE = [
       "declares its own tool in the map imports that map.",
   },
   {
+    file: "editor/core/nodeNames.ts",
+    why:
+      "The name of the Wrapper node (OLDSUI-268): one constant, no imports. It is split off " +
+      "containers.ts so that the Document headings walk of the Table of contents can read it " +
+      "without the Tiptap runtime that containers.ts imports.",
+  },
+  {
+    file: "editor/features/toc/documentHeadings.ts",
+    why:
+      "The headings of a Document for the toc tool (OLDSUI-268): a walk over a ProseMirror node it " +
+      "is given. Tiptap appears only as a type, erased in the build, so RichTextToc.tsx keeps " +
+      "the engine out of its graph. The client files that import it carry their own directive.",
+  },
+  {
     file: "editor/features/toc/headings.ts",
     why:
       "Collects the headings of a Document for RichTextToc: a DOM walk over a node it is given, " +
