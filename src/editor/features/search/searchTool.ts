@@ -1,5 +1,6 @@
 "use client";
 
+import type { Editor } from "@tiptap/core";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import type { SearchToolCommands } from "../../core/toolCommands.js";
 import type { SearchToolOptions } from "../../core/toolOptions.js";
@@ -25,6 +26,19 @@ export const SEARCH_DEFAULTS: SearchToolOptions = {
 
 const isFlag = (value: unknown) => typeof value === "boolean";
 
+/*
+  Показать текущее совпадение после команды. ProseMirror прокручивает только
+  при фокусе в Документе, а команды зовут и с кнопки экрана. Код прокрутки
+  (`revealMatch.ts`) лежит в ленивом куске панели и в старт не входит:
+  грузится при первом вызове, поэтому прокрутка приходит на микрозадачу и кадр
+  позже. Открытая панель уже подгрузила его, и её переходы сливаются с этим
+  вызовом в одну прокрутку.
+*/
+const reveal = (editor: Editor, done: boolean) => {
+  if (done) void import("./revealMatch.js").then((module) => module.scheduleRevealMatch(editor));
+  return done;
+};
+
 export const SEARCH_TOOL: ToolDescriptor = {
   name: "search",
   defaults: SEARCH_DEFAULTS,
@@ -38,9 +52,12 @@ export const SEARCH_TOOL: ToolDescriptor = {
   commands: ({ editor, bridge }): SearchToolCommands => ({
     open: (options) => bridge.openSearch(options?.replace === true, options?.query),
     close: bridge.closeSearch,
-    setQuery: (query, flags) => !bridge.sourceOpen() && editor.commands.setSearch(query, flags),
-    next: () => editor.commands.searchStep(1),
-    previous: () => editor.commands.searchStep(-1),
+    setQuery: (query, flags) =>
+      !bridge.sourceOpen() &&
+      editor.commands.setSearch(query, flags) &&
+      (reveal(editor, query !== ""), true),
+    next: () => reveal(editor, editor.commands.searchStep(1)),
+    previous: () => reveal(editor, editor.commands.searchStep(-1)),
     replace: (text) => editor.commands.replaceMatch(text),
     replaceAll: (text) => editor.commands.replaceAllMatches(text),
   }),
