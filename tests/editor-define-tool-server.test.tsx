@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import createDOMPurify from "dompurify";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { createElement, useState } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, expect, test } from "vitest";
-import { defineTool, RichTextView, tool } from "../src/editor/index.js";
+import { defineTool, RichTextView, tool, type CustomIslandProps } from "../src/editor/index.js";
 import { richTextSchema, sanitizeRichText } from "../src/editor/schema-entry.js";
 import { testPlayerNode, testPlayerTool } from "./editor-test-tools.js";
 
@@ -72,4 +73,79 @@ test("the island of a definition comes alive in RichTextView, and the server mar
 
   render(<RichTextView html={html} tools={[tool(withIsland)]} />);
   expect((await screen.findByTestId("player")).textContent).toBe("Play First 0");
+});
+
+/**
+ * `create` отдаёт Остров замыканием над Опциями: функция каждый раз новая. Клиентский
+ * родитель перерисовывает `RichTextView` с теми же `tools`, и Остров не должен
+ * размонтироваться — React сравнивает тип компонента по ссылке.
+ */
+function counterDefinition(created: { count: number }) {
+  return defineTool({
+    name: "test_player",
+    defaults: { label: "Count" },
+    create: (options) => {
+      created.count += 1;
+      return {
+        engine: testPlayerTool.engine,
+        blocks: {
+          test_player: {
+            kind: "block",
+            island: function Counter(_: CustomIslandProps) {
+              const [clicks, setClicks] = useState(0);
+              return createElement(
+                "button",
+                { type: "button", "data-testid": "counter", onClick: () => setClicks(clicks + 1) },
+                `${options.label} ${clicks}`
+              );
+            },
+          },
+        },
+      };
+    },
+  });
+}
+
+test("a client parent that re-renders RichTextView with the same tools keeps the island mounted", () => {
+  const created = { count: 0 };
+  const entry = tool(counterDefinition(created), { label: "Clicks" });
+  const html = `<div data-block="test_player">First</div>`;
+  let rerender: () => void = () => {};
+  function Parent() {
+    const [, setTick] = useState(0);
+    rerender = () => setTick((tick) => tick + 1);
+    return <RichTextView html={html} tools={[entry]} />;
+  }
+
+  render(<Parent />);
+  fireEvent.click(screen.getByTestId("counter"));
+  expect(screen.getByTestId("counter").textContent).toBe("Clicks 1");
+
+  act(() => rerender());
+  act(() => rerender());
+  // Состояние Острова пережило перерисовки родителя: тип компонента тот же.
+  expect(screen.getByTestId("counter").textContent).toBe("Clicks 1");
+  expect(created.count).toBe(1);
+});
+
+test("a definition without tool() is resolved once too, and each tool() record has its own options", () => {
+  const created = { count: 0 };
+  const definition = counterDefinition(created);
+  const html = `<div data-block="test_player">First</div>`;
+
+  const first = render(<RichTextView html={html} tools={[definition]} />);
+  first.rerender(<RichTextView html={html} tools={[definition]} />);
+  expect(created.count).toBe(1);
+  first.unmount();
+
+  // Другая запись `tool()` — другие Опции и свой результат; запись остаётся при себе.
+  const a = tool(definition, { label: "A" });
+  const b = tool(definition, { label: "B" });
+  const view = render(<RichTextView html={html} tools={[a]} />);
+  expect(screen.getByTestId("counter").textContent).toBe("A 0");
+  view.rerender(<RichTextView html={html} tools={[b]} />);
+  expect(screen.getByTestId("counter").textContent).toBe("B 0");
+  view.rerender(<RichTextView html={html} tools={[a]} />);
+  expect(screen.getByTestId("counter").textContent).toBe("A 0");
+  expect(created.count).toBe(3);
 });
