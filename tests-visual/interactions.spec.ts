@@ -4242,6 +4242,28 @@ test.describe("RichTextEditor with the toc tool", () => {
     await expect.poll(async () => (await strip(page).boundingBox())!.y).toBe(first);
   });
 
+  test("jumpTo from the screen stops the heading under the header and the fixed toolbar", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/iframe.html?id=inputs-richtexteditor--tool-commands&globals=theme:dark;accent:blue"
+    );
+    await expect(strip(page)).toBeVisible();
+    await page.getByRole("button", { name: "Go to “How to read”" }).click();
+    const heading = page.getByRole("heading", { name: "How to read" });
+    const toolbar = (await page.getByRole("toolbar").first().boundingBox())!;
+    const edge = toolbar.y + toolbar.height;
+    // Прокрутка плавная: ждём, пока заголовок встанет вплотную под нижний край Панели.
+    await expect
+      .poll(async () => Math.round((await heading.boundingBox())!.y - edge), { timeout: 5000 })
+      .toBeLessThanOrEqual(2);
+    // И не под ней: заголовок целиком ниже Панели и шапки.
+    expect((await heading.boundingBox())!.y).toBeGreaterThanOrEqual(edge - 1);
+    // Кнопка вне поля, а каретка в конце заголовка: как после клика по пункту.
+    await page.keyboard.type("!");
+    await expect(page.getByRole("heading", { name: "How to read!" })).toBeVisible();
+  });
+
   test("in a field with maxHeight the jump scrolls the field, not the page", async ({ page }) => {
     await page.goto(
       "/iframe.html?id=inputs-richtexteditor--table-of-contents-scrolling-field&globals=theme:dark;accent:blue"

@@ -23,7 +23,7 @@ interface SearchPluginState {
 }
 
 type SearchMeta =
-  | { type: "set"; query: string; options: SearchOptions }
+  | { type: "set"; query: string; options?: Partial<SearchOptions> }
   | { type: "select"; index: number }
   | { type: "clear" };
 
@@ -85,16 +85,20 @@ function build(
   };
 }
 
-function searchPlugin() {
+/**
+ * @param flags флажки без запроса: до первого `setSearch` и после `clearSearch`
+ * (Опции Инструмента). Поиск, который идёт, держит свои.
+ */
+function searchPlugin(flags: SearchOptions) {
   return new Plugin<SearchPluginState>({
     key: SEARCH_KEY,
     state: {
-      init: (_, state) => build(state, "", EMPTY_OPTIONS, () => -1),
+      init: (_, state) => build(state, "", flags, () => -1),
       apply(tr: Transaction, previous, _old, state) {
         const meta = tr.getMeta(SEARCH_KEY) as SearchMeta | undefined;
-        if (meta?.type === "clear") return build(state, "", previous.options, () => -1);
+        if (meta?.type === "clear") return build(state, "", flags, () => -1);
         if (meta?.type === "set") {
-          return build(state, meta.query, meta.options, (matches) =>
+          return build(state, meta.query, { ...previous.options, ...meta.options }, (matches) =>
             indexFrom(matches, state.selection.from)
           );
         }
@@ -151,8 +155,11 @@ function replaceRange(tr: Transaction, { from, to }: SearchMatch, text: string) 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     search: {
-      /** Новый запрос или опции: совпадения пересчитываются, текущее — первое после каретки. */
-      setSearch: (query: string, options: SearchOptions) => ReturnType;
+      /**
+       * Новый запрос или флажки: совпадения пересчитываются, текущее — первое после
+       * каретки. Не названные флажки остаются как были.
+       */
+      setSearch: (query: string, options?: Partial<SearchOptions>) => ReturnType;
       /**
        * Следующее (`1`) или предыдущее (`-1`) совпадение по кругу; выделяет его.
        * Прокрутка ProseMirror срабатывает, только когда фокус в Документе; из
@@ -163,13 +170,15 @@ declare module "@tiptap/core" {
       replaceMatch: (replacement: string) => ReturnType;
       /** Заменить все совпадения — одна транзакция, одна отмена. */
       replaceAllMatches: (replacement: string) => ReturnType;
-      /** Убрать запрос и подсветку. */
+      /** Убрать запрос и подсветку; флажки вернутся к Опциям Инструмента. */
       clearSearch: () => ReturnType;
     };
   }
 }
 
 export interface SearchExtensionOptions {
+  /** Флажки, с которых стартует поиск и к которым он возвращается: Опции Инструмента. */
+  flags: SearchOptions;
   /**
    * Открыть панель поиска (`replace` — с фокусом в поле замены). Панель держит
    * `RichTextEditor`; `false` — панели нет, и `Mod+F` уходит браузеру.
@@ -186,8 +195,10 @@ export interface SearchExtensionOptions {
  */
 export const SearchExtension = Extension.create<SearchExtensionOptions>({
   name: "search",
-  addOptions: () => ({ open: () => false }),
-  addProseMirrorPlugins: () => [searchPlugin()],
+  addOptions: () => ({ open: () => false, flags: EMPTY_OPTIONS }),
+  addProseMirrorPlugins() {
+    return [searchPlugin(this.options.flags)];
+  },
   addKeyboardShortcuts() {
     return {
       "Mod-f": () => this.options.open(false),

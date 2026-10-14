@@ -6,6 +6,8 @@ import type { Fragment } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { textBetween } from "./atomText.js";
 import { isRichTextDocument, type RichTextDocument } from "./jsonDocument.js";
+import type { ToolCommandsOf } from "./toolCommands.js";
+import type { RichTextTools } from "./toolOptions.js";
 
 export { notifyHandleEditor, publishToolSignals, watchHandleEditor } from "./handleWatchers.js";
 
@@ -81,6 +83,19 @@ export interface RichTextEditorHandleMethods {
   canUndo(): boolean;
   /** Есть ли что повторить. Без Инструмента `history` и до монтажа — `false`. */
   canRedo(): boolean;
+  /**
+   * Команды Инструмента: `handle.tool("search")?.open({ query: "TODO" })`,
+   * `handle.tool("toc")?.jumpTo(2)`. Тип Команд выводится из имени по карте
+   * `RichTextTools`. `null`, если Инструмента нет в наборе `tools`, у него нет
+   * Команд или движок ещё не создан, — поэтому Команды выключенного Инструмента
+   * недоступны и в типах (`?.`), и во время работы.
+   *
+   * Каждая Команда возвращает `boolean`: выполнена или нет (HTML-режим, нет
+   * совпадений, нет заголовка, поле нельзя править) — как `insertHTML`. Имя вне
+   * карты (свой Инструмент без типизации) даёт `unknown`.
+   */
+  tool<Name extends keyof RichTextTools>(name: Name): ToolCommandsOf<Name> | null;
+  tool(name: string): unknown;
 }
 
 /** Что Хэндлу нужно от Редактора: движок и то, что знает только он. */
@@ -109,6 +124,8 @@ export interface HandleHost {
   rewriteSource: (editor: Editor) => void;
   /** Пуст ли Документ по правилу кита, с учётом неприменённой правки поля HTML. */
   fieldEmpty: (editor: Editor) => boolean;
+  /** Команды Инструмента набора; `null` — Инструмента или Команд нет (`ToolDescriptor.commands`). */
+  commands: (name: string) => object | null;
 }
 
 /** Тег целиком; комментарий и содержимое `script`/`style`/`template` разбор Схемой не видит. */
@@ -286,5 +303,7 @@ export function createHandleMethods(host: HandleHost): RichTextEditorHandleMetho
     redo: () => history("redo"),
     canUndo: () => available("undo"),
     canRedo: () => available("redo"),
+    // Типы Команд выводятся из карты, а реализация знает только имя.
+    tool: host.commands as RichTextEditorHandleMethods["tool"],
   };
 }

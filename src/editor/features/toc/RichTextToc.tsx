@@ -8,6 +8,7 @@ import {
   useState,
   type HTMLAttributes,
   type KeyboardEvent,
+  type MutableRefObject,
   type RefObject,
 } from "react";
 import {
@@ -333,6 +334,12 @@ export interface TocCoreProps extends RichTextTocProps {
    * видит `TocCore`; пока заголовков меньше двух, он остаётся прежним.
    */
   onCurrentChange?: (index: number) => void;
+  /**
+   * Куда ядро кладёт переход к заголовку по индексу списка (команда `jumpTo`
+   * Инструмента): ведёт себя как клик по пункту. Пока ядро смонтировано, там
+   * функция, после — `null`. Нет заголовка с таким индексом — `false`.
+   */
+  jumpRef?: MutableRefObject<((index: number) => boolean) | null>;
 }
 
 export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore(
@@ -345,6 +352,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     focusHeading,
     alignToFirstHeading = false,
     onCurrentChange,
+    jumpRef,
     className,
     style,
     ...rest
@@ -461,6 +469,29 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     settle(pinned.current);
     setCurrent(index);
   };
+  /*
+    Переход к пункту списка: клик и команда `jumpTo` Инструмента идут одним
+    путём. Заголовок, уже вышедший из Документа (правка моложе `REBUILD_DELAY`),
+    не пункт: список вот-вот пересоберётся.
+  */
+  const go = (index: number): boolean => {
+    const heading = headings[index];
+    if (!heading?.element.isConnected) return false;
+    pin(index);
+    jumpTo(heading.element, offsetNow(), latest.current.focusHeading);
+    return true;
+  };
+  const goRef = useRef(go);
+  useEffect(() => {
+    goRef.current = go;
+  });
+  useEffect(() => {
+    if (!jumpRef) return;
+    jumpRef.current = (index) => goRef.current(index);
+    return () => {
+      jumpRef.current = null;
+    };
+  }, [jumpRef]);
 
   // Подсветка текущего раздела. Слушатель прокрутки — на документе с захватом:
   // так его достигает прокрутка и окна, и любого контейнера вокруг цели.
@@ -691,8 +722,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
                       index === current ? "bg-bg-2 text-fg-0" : "text-fg-2 hover:text-fg-0"
                     )}
                     onClick={(event) => {
-                      pin(index);
-                      jumpTo(heading.element, offsetNow(), latest.current.focusHeading);
+                      go(index);
                       /*
                         В Редакторе в правке фокус на заголовок не переходит и
                         остаётся на пункте, а фокус в списке держит его открытым:

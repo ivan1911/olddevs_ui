@@ -1,6 +1,7 @@
 "use client";
 
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
+import type { TocToolCommands } from "../../core/toolCommands.js";
 import type { TocLevel, TocToolOptions } from "../../core/toolOptions.js";
 
 /**
@@ -35,4 +36,6 @@ export const TOC_TOOL: ToolDescriptor = {
       (typeof value === "number" && Number.isFinite(value) && value > 0) ||
       (typeof value === "string" && value.trim() !== ""),
   },
+  // Переход живёт в ленивом ядре Оглавления: мост зовёт его, пока оно смонтировано.
+  commands: ({ bridge }): TocToolCommands => ({ jumpTo: bridge.jumpToc }),
 };

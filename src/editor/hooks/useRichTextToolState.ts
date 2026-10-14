@@ -26,8 +26,7 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
     "search",
     (editor, ref) => {
       const { tools, searchOpen } = toolSignals(ref);
-      const start = tools && toolOptions(tools, "search");
-      return start && searchSnapshot(editor, searchOpen === true, start);
+      return tools?.has("search") ? searchSnapshot(editor, searchOpen === true) : null;
     },
   ],
   [
