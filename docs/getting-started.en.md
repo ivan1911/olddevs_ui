@@ -1,5 +1,5 @@
 ---
-sourceHash: ecaf9168b838
+sourceHash: 340e1ec512cb
 ---
 
 # Setting up `@olddevs/ui`
@@ -133,11 +133,11 @@ peer dependencies are treated as external, and the metric is gzip:
 | one `Button`                                                                                             | 1.6 kB   |
 | `DataTable`                                                                                              | 9.0 kB   |
 | the whole kit (`import *`)                                                                               | 77.1 kB  |
-| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 72.6 kB  |
-| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 297.3 kB |
-| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 346.1 kB |
+| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 72.7 kB  |
+| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 297.5 kB |
+| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 346.6 kB |
 | `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 12.3 kB  |
-| `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 3.8 kB   |
+| `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 3.9 kB   |
 | `highlightCodeBlocks` from `@olddevs/ui/editor/highlight`, with lowlight                                 | 22.6 kB  |
 | `highlightCodeNodes` from `@olddevs/ui/editor/highlight`, with lowlight                                  | 22.6 kB  |
 
@@ -158,7 +158,7 @@ an app bundler with full minification produced about 133 kB (measured before the
 For `RichTextView`, Tiptap and lowlight are included in the measurement as a check. Its row contains only
 typography and the Island of the "Copy" button on code Blocks (the kit's button and tooltip, the message catalog),
 and the measurement proves that its graph contains neither the engine nor a highlighter. The lightweight
-`@olddevs/ui/editor/schema` entry point is measured the same way (3.8 kB): the Schema, `richTextSchema`, the
+`@olddevs/ui/editor/schema` entry point is measured the same way (3.9 kB): the Schema, `richTextSchema`, the
 `sanitizeRichText` sanitizer with hooks for DOMPurify, including for the rules of custom Tools, and `markRange`.
 
 Server-side highlighting in `@olddevs/ui/editor/highlight` (22.6 kB — almost entirely the highlight.js core and
