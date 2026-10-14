@@ -107,6 +107,25 @@ test("the custom tool description module is as light as the entry", () => {
   expect(entry).not.toContain(join(SRC, "editor", "core", "customToolEngine.ts"));
 });
 
+/*
+  Настроенный Инструмент на сервере (OLDSUI-268): `tool()` вызывают в серверном
+  модуле, где собирается `tools`, и модуль помощника не тянет ни Tiptap, ни React.
+*/
+test("the tool() module is as light as the entry, and the schema skips a Configured Tool", () => {
+  const { files, packages } = moduleGraph(join(SRC, "editor", "core", "toolOptions.ts"));
+
+  expect(packages).toEqual([]);
+  expect(
+    files.filter((file) => readFileSync(file, "utf8").trimStart().startsWith('"use client"'))
+  ).toEqual([]);
+  // Он же — часть графа лёгкого входа: `schema.ts` отличает им запись `tools` от своего Инструмента.
+  expect(moduleGraph(join(SRC, "editor", "schema-entry.ts")).files).toContain(files[0]);
+
+  const schema = schemaEntry.richTextSchema([editor.tool("toc", { levels: [2] })]);
+  expect(schema.customBlocks).toEqual({});
+  expect(schema.customMarks).toEqual({});
+});
+
 test("the server reads only the schema rules of a description, never its engine part", () => {
   const description = {
     name: "acme_card",

@@ -72,6 +72,13 @@ const SERVER_SAFE = [
       "the description of a custom tool to sanitise with the same rules.",
   },
   {
+    file: "editor/core/toolOptions.ts",
+    why:
+      "tool() and the RichTextTools map (OLDSUI-268): a Configured Tool is plain data, and the " +
+      "helper is a function over it. One type-only import, no React and no Tiptap — a server " +
+      "module that assembles `tools` imports it next to the custom tool descriptions.",
+  },
+  {
     file: "editor/core/handleWatchers.ts",
     why:
       "Subscribers to the Editor handle's engine (watchHandleEditor, notifyHandleEditor): a WeakMap " +

@@ -311,7 +311,7 @@ export interface CustomToolsError {
 }
 
 /**
- * Ошибка сборки набора своих Инструментов или `null` (ADR-0058, п. 1.5, 2.4).
+ * Ошибка сборки набора Инструментов или `null` (ADR-0058, п. 1.5, 2.4).
  *
  * Имя без Префикса потребителя, совпадение имён, Node или Mark Части для
  * движка без правил Схемы (и правило без них), атрибут, которого нет в
@@ -325,6 +325,8 @@ export interface CustomToolsError {
  * Исключение движка — отдельно, в `cause`: текст — ключ «один раз» у `devError`.
  */
 export function customToolsError(tools: ToolList, extensions: Extensions): CustomToolsError | null {
+  // Ошибка, найденная при развороте `tools` (две записи `tool()` с одним именем), идёт тем же путём.
+  if (tools.error) return { message: tools.error };
   const custom = tools.descriptors.flatMap((descriptor) => descriptor.custom ?? []);
   if (custom.length === 0) return null;
   // Имена Инструментов и имена Блоков и Меток — разные пространства: Инструмент

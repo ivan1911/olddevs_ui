@@ -50,6 +50,13 @@ export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "
    * По умолчанию 240px.
    */
   listWidth?: number | string;
+  /**
+   * Уровни заголовков, которые попадают в Оглавление: подмножество 1–4. Заголовок
+   * другого уровня нет ни в полосе, ни в списке, а отступ пунктов считается от
+   * самого крупного из оставшихся. Читается при каждой сборке списка, поэтому
+   * смена набора уровней пересобирает его. По умолчанию все четыре.
+   */
+  levels?: readonly (1 | 2 | 3 | 4)[];
 }
 
 /**
@@ -327,6 +334,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     target,
     offsetVar = "--topbar-h",
     listWidth = 240,
+    levels,
     stickyTop,
     focusHeading,
     alignToFirstHeading = false,
@@ -338,10 +346,12 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
 ) {
   // Настройки хозяина читаются в обработчиках прокрутки: последние значения —
   // через ссылку, чтобы новая функция на каждом рендере не пересоздавала слушателей.
-  const latest = useRef({ stickyTop, focusHeading, offsetVar });
+  const latest = useRef({ stickyTop, focusHeading, offsetVar, levels });
   useEffect(() => {
-    latest.current = { stickyTop, focusHeading, offsetVar };
+    latest.current = { stickyTop, focusHeading, offsetVar, levels };
   });
+  // Набор уровней сравнивается по значению: массив-литерал новый на каждом рендере.
+  const levelsKey = levels ? levels.join(",") : "";
   const offsetNow = useCallback(() => {
     const own = latest.current;
     return own.stickyTop ? own.stickyTop() : stickyOffset(own.offsetVar);
@@ -379,7 +389,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
       return;
     }
     const read = () => {
-      const next = collectHeadings(element);
+      const next = collectHeadings(element, latest.current.levels);
       setHeadings((prev) => (sameHeadings(prev, next) ? prev : next));
     };
     read();
@@ -397,7 +407,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
       clearTimeout(timer);
       observer.disconnect();
     };
-  }, [element]);
+  }, [element, levelsKey]);
 
   // Шаг полосы зависит от высоты окна и числа заголовков.
   useEffect(() => {

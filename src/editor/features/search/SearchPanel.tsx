@@ -23,6 +23,12 @@ export interface SearchPanelProps {
    * при открытой панели выделяет текст поля поиска.
    */
   focus: { token: number; replace: boolean; query: string };
+  /**
+   * Стартовые флажки (Опции Инструмента `search`). Читаются при открытии
+   * панели; закрытая панель размонтируется, и следующее открытие снова
+   * начинает с них, а не с того, что автор переключил в прошлый раз.
+   */
+  initialOptions?: SearchOptions;
   onClose: () => void;
   className?: string;
 }
@@ -42,11 +48,17 @@ const NO_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: f
  * переключатель не ложатся на «старт» Редактора, а плагин подсветки маленький и
  * стоит в нём.
  */
-export function SearchPanel({ editor, focus, onClose, className }: SearchPanelProps) {
+export function SearchPanel({
+  editor,
+  focus,
+  initialOptions = NO_OPTIONS,
+  onClose,
+  className,
+}: SearchPanelProps) {
   const messages = useMessages().editor;
   const [query, setQuery] = useState(focus.query);
   const [replacement, setReplacement] = useState("");
-  const [options, setOptions] = useState(NO_OPTIONS);
+  const [options, setOptions] = useState(initialOptions);
   const searchRef = useRef<HTMLInputElement>(null);
   const replaceRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLElement>(null);

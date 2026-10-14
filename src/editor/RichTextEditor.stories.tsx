@@ -18,6 +18,7 @@ import { markRange, type CustomTool } from "./core/customTool.js";
 import { FLOATING_TOOLBAR_KEY } from "./ui/FloatingToolbar.js";
 import { SELECTION_BUBBLE_KEY } from "./ui/SelectionBubble.js";
 import { TableSizeGrid as SizeGrid } from "./features/table/TableSizeGrid.js";
+import { tool } from "./core/toolOptions.js";
 import { RICH_TEXT_PRESETS, TOOLS } from "./core/tools.js";
 
 /*
@@ -180,6 +181,14 @@ const SORT_SAMPLE =
   '<td data-align="center"><p>draft</p></td></tr>' +
   "</tbody></table><p>Put the caret in a column and choose Table › Sort.</p>";
 
+/** Часть ключа перемонтирования для записи `tools`: имя, у `tool()` — ещё и опции. */
+const toolKey = (entry: NonNullable<RichTextEditorProps["tools"]>[number]) =>
+  typeof entry === "string"
+    ? entry
+    : "configured" in entry
+      ? `${entry.name}${JSON.stringify(entry.options)}`
+      : entry.name;
+
 const meta = {
   title: "Inputs/RichTextEditor",
   component: RichTextEditor,
@@ -189,7 +198,7 @@ const meta = {
     <div className="max-w-[640px]">
       {/* Набор инструментов читается при создании движка: смена пресета в
           панели управления пересоздаёт поле ключом. */}
-      <RichTextEditor key={`${args.preset}-${args.tools?.join()}`} {...args} />
+      <RichTextEditor key={`${args.preset}-${args.tools?.map(toolKey).join()}`} {...args} />
     </div>
   ),
 } satisfies Meta<typeof RichTextEditor>;
@@ -2799,3 +2808,37 @@ export const TableOfContentsPaper: Story = {
 export const TableOfContentsFloatingToolbar: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, toolbar: "floating" },
 };
+
+/**
+ * Оглавление, настроенное записью `tool("toc", …)`: только уровни H2–H3 и
+ * шапка экрана, чья высота лежит в своей переменной `--header-h`, а не в
+ * `--topbar-h`. Запись сама включает Инструмент, имя `"toc"` в `tools` не нужно.
+ * Прокрутите страницу и нажмите пункт списка: заголовок встанет под шапку, а
+ * H1 и H4 в полосе и списке нет.
+ */
+export const TableOfContentsOptions: Story = {
+  args: {
+    tools: [...RICH_TEXT_PRESETS.full, tool("toc", { offsetVar: "--header-h", levels: [2, 3] })],
+    defaultValue: TOC_ARTICLE,
+    toolbar: "floating",
+  },
+  render: (args) => <WithAppHeader {...args} />,
+};
+
+function WithAppHeader(props: RichTextEditorProps) {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--header-h", "56px");
+    return () => {
+      root.style.removeProperty("--header-h");
+    };
+  }, []);
+  return (
+    <div>
+      <div className="border-line-soft bg-bg-1 text-fg-2 sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex h-14 items-center border-b px-4 text-[13px] font-semibold">
+        Application header
+      </div>
+      <RichTextEditor aria-label="Body" {...props} />
+    </div>
+  );
+}

@@ -26,7 +26,7 @@ export interface ViewIsland {
  * или Блока нет в Документе — пустой список, и клиентского острова нет вовсе.
  */
 export function islandsFor(tools: readonly ToolEntry[] | undefined, html: string): ViewIsland[] {
-  // Строка из `tools` — имя Инструмента кита: поля `blocks` у неё нет, и она отсеивается сама.
+  // Строка из `tools` — имя Инструмента кита, Настроенный Инструмент — его опции: поля `blocks` у них нет, и они отсеиваются сами.
   return (tools ?? []).flatMap((tool) =>
     Object.entries((tool as CustomTool).blocks ?? {}).flatMap(([block, { island, attributes }]) =>
       island && html.includes(`data-block="${block}"`) ? [{ block, island, attributes }] : []

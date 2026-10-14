@@ -13,6 +13,7 @@ import type {
 import type { EditorExtensionOptions } from "./extensions.js";
 import type { InsertItem } from "./insertItems.js";
 import type { ShortcutCommand, ShortcutGroup } from "./shortcuts.js";
+import type { ConfigurableToolName, RichTextTools } from "./toolOptions.js";
 import type { ToolLoader } from "./toolLoader.js";
 import type { Tool } from "./tools.js";
 
@@ -71,6 +72,27 @@ export interface ToolDescriptor {
   skeleton?: () => Extensions;
   /** Признаки Блока по имени узла; кит переносит их в spec узла. Нет — обычный Блок. */
   blocks?: Readonly<Record<string, BlockTraits>>;
+
+  /* Опции (OLDSUI-268). */
+
+  /**
+   * Умолчания Опций встроенного Инструмента: полный набор полей, из которого
+   * `tool()` меняет нужные. Нет — у Инструмента нет Опций. Поле — надформа:
+   * публичные Опции своего Инструмента задаёт `defineTool` (`defaults`).
+   */
+  defaults?: object;
+  /**
+   * Проверки значений Опций по имени поля — по одной на каждое поле `defaults`.
+   * Значение, не прошедшее проверку, заменяется умолчанием (`expandTools`):
+   * потребитель на JS обходит типы карты `RichTextTools`.
+   */
+  checks?: Readonly<Record<string, (value: unknown) => boolean>>;
+  /**
+   * Опции этого Редактора: умолчания, слитые с `tool()`. Ставит `expandTools`
+   * при сборке набора, поэтому описание в реестре — общее на все Редакторы, а
+   * это поле — своё в списке каждого. Читаются один раз, вместе с набором.
+   */
+  options?: object;
 
   /* UI-записи. */
 
@@ -275,6 +297,12 @@ export interface TextCardRecord {
  */
 export interface ToolList extends ReadonlySet<Tool> {
   /**
+   * Ошибка сборки набора, найденная до движка: две записи `tool()` с одним
+   * именем. Редактор показывает её тем же путём, что ошибки своих Инструментов
+   * (`customToolsError`): строкой поля и `console.error` в разработке.
+   */
+  readonly error?: string;
+  /**
    * Описания включённых Инструментов: встроенные в порядке кита (у не
    * переехавших — заглушки `legacy`), за ними свои в порядке `tools`.
    */
@@ -285,8 +313,24 @@ export interface ToolList extends ReadonlySet<Tool> {
  * Набор из имён кита и списка описаний — единственный способ его собрать:
  * развернуть `tools` (`expandTools`) или сузить готовый (Скелет).
  */
-export function toolList(names: Iterable<Tool>, descriptors: readonly ToolDescriptor[]): ToolList {
-  return Object.assign(new Set(names), { descriptors });
+export function toolList(
+  names: Iterable<Tool>,
+  descriptors: readonly ToolDescriptor[],
+  error?: string
+): ToolList {
+  return Object.assign(new Set(names), { descriptors, ...(error !== undefined && { error }) });
+}
+
+/**
+ * Опции встроенного Инструмента этого Редактора: умолчания кита, слитые с
+ * `tool()`. Инструмента нет в наборе или у него нет Опций — `undefined`.
+ */
+export function toolOptions<Name extends ConfigurableToolName>(
+  tools: ToolList,
+  name: Name
+): RichTextTools[Name]["options"] | undefined {
+  const descriptor = tools.descriptors.find((candidate) => candidate.name === name);
+  return descriptor?.options as RichTextTools[Name]["options"] | undefined;
 }
 
 /** Описания переехавших Инструментов набора — в порядке списка. */

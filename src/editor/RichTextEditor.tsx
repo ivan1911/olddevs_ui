@@ -54,7 +54,7 @@ import type { CustomColorKind } from "./features/color/customColor.js";
 import { isImageSelection } from "./features/image/image.js";
 import { ImagePopover } from "./features/image/ImagePopover.js";
 import { ImageToolbar } from "./features/image/ImageToolbar.js";
-import { textCardsOf, triggersOf } from "./core/toolDescriptor.js";
+import { textCardsOf, toolOptions, triggersOf } from "./core/toolDescriptor.js";
 import type { ToolPopoverRequest } from "./core/toolButtons.js";
 import type { TextCardControl } from "./ui/TextCard.js";
 import { SelectionPopover } from "./ui/ToolButtonView.js";
@@ -254,14 +254,18 @@ export interface RichTextEditorProps {
    * клавиш, ни markdown-шорткатом, ни вставкой.
    *
    * Вперемешку с именами кита — описания своих Инструментов (`CustomTool`):
-   * `[...RICH_TEXT_PRESETS.full, mergeTagTool]`. Неизвестное имя отбрасывается
+   * `[...RICH_TEXT_PRESETS.full, mergeTagTool]`. Встроенный Инструмент с
+   * Опциями (`search`, `toc`) настраивается записью `tool()`:
+   * `[...RICH_TEXT_PRESETS.full, tool("toc", { levels: [2, 3] })]` — запись
+   * включает Инструмент и без имени, а имя из пресета уступает ей; две записи
+   * `tool()` с одним именем — ошибка поля. Неизвестное имя отбрасывается
    * молча; описание с ошибкой (имя без Префикса потребителя, совпадение имён,
    * Часть для движка мимо правил Схемы) — ошибка поля: движок не создаётся,
    * значение формы остаётся входящим, причина — в консоли разработчика.
    *
-   * `preset` и `tools` читаются при создании движка: Схема ProseMirror после
-   * этого не меняется. Чтобы сменить набор у живого поля, перемонтируйте его
-   * (`key`) — история правок при этом теряется.
+   * `preset` и `tools`, а с ними и Опции Инструментов, читаются при создании
+   * движка: Схема ProseMirror после этого не меняется. Чтобы сменить набор у
+   * живого поля, перемонтируйте его (`key`) — история правок при этом теряется.
    */
   tools?: readonly ToolEntry[];
   /**
@@ -1010,7 +1014,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       фиксированной Панелью: её высота меряется, потому что Панель переносит
       ряд кнопок на узком поле. В прокручиваемом поле край — верх области.
     */
-    const tocOn = enabledTools.has("toc");
+    const tocOptions = toolOptions(enabledTools, "toc");
+    const tocOn = enabledTools.has("toc") && tocOptions !== undefined;
+    const tocOffsetVar = tocOptions?.offsetVar ?? "--topbar-h";
     const [toolbarShell, setToolbarShell] = useState<HTMLDivElement | null>(null);
     const [toolbarHeight, setToolbarHeight] = useState(0);
     useEffect(() => {
@@ -1029,8 +1035,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       подсветка и переход считают от верха области и этот край не используют.
     */
     const tocStickyTop = useCallback(
-      () => (stickyOffset("--topbar-h") ?? 0) + toolbarHeight,
-      [toolbarHeight]
+      () => (stickyOffset(tocOffsetVar) ?? 0) + toolbarHeight,
+      [tocOffsetVar, toolbarHeight]
     );
     /*
       Переход в правке ставит каретку в конец заголовка, как структура документа
@@ -1468,6 +1474,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           <SearchPanel
             editor={editor}
             focus={searchPanel}
+            initialOptions={toolOptions(enabledTools, "search")}
             onClose={() => closeSearch(true)}
             className={className}
           />
@@ -1588,6 +1595,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                   <Suspense fallback={null}>
                     <TocCore
                       target={tocTarget}
+                      offsetVar={tocOptions.offsetVar}
+                      levels={tocOptions.levels}
+                      listWidth={tocOptions.listWidth}
                       stickyTop={tocStickyTop}
                       focusHeading={tocFocusHeading}
                       alignToFirstHeading
@@ -1596,7 +1606,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                       style={{
                         top: scrolls
                           ? "0.5rem"
-                          : `calc(var(--topbar-h, 0px) + ${toolbarHeight}px + 0.5rem)`,
+                          : `calc(var(${tocOffsetVar}, 0px) + ${toolbarHeight}px + 0.5rem)`,
                       }}
                     />
                   </Suspense>
