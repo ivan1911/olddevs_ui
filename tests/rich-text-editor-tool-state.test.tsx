@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { useRef, type ComponentProps, type RefObject } from "react";
+import { memo, useRef, useState, type ComponentProps, type RefObject } from "react";
 import { afterEach, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import {
   RICH_TEXT_PRESETS,
@@ -23,13 +23,35 @@ beforeAll(loadLazyBuiltins);
 // Панель Поиска — ленивый чанк: прогреваем, чтобы `findBy` не ждал сеть.
 beforeAll(() => import("../src/editor/features/search/SearchPanel.js"));
 
+/**
+ * Геометрия Документа для подсветки раздела. В jsdom у всего нулевой прямоугольник и
+ * нулевая высота страницы, и ядро Оглавления считает страницу докрученной до конца:
+ * текущим становится последний заголовок. Здесь заголовки стоят в столбик, а
+ * `scrolledTo` — какой из них стоит у верхнего края (строки отсчёта).
+ */
+const page = { scrolledTo: 0 };
+const nativeRect = Element.prototype.getBoundingClientRect;
+
 beforeEach(() => {
+  page.scrolledTo = 0;
   Element.prototype.scrollIntoView = vi.fn();
+  Object.defineProperty(document.documentElement, "scrollHeight", {
+    configurable: true,
+    value: 10_000,
+  });
+  Element.prototype.getBoundingClientRect = function (this: Element) {
+    const root = /^H[1-4]$/.test(this.tagName) ? this.closest(".ProseMirror") : null;
+    if (!root) return nativeRect.call(this);
+    const index = [...root.querySelectorAll("h1, h2, h3, h4")].indexOf(this);
+    return { top: (index - page.scrolledTo) * 200, bottom: 0, left: 0, right: 0 } as DOMRect;
+  };
 });
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  Element.prototype.getBoundingClientRect = nativeRect;
+  delete (document.documentElement as { scrollHeight?: number }).scrollHeight;
 });
 
 type EditorProps = Partial<ComponentProps<typeof RichTextEditor>>;
@@ -219,6 +241,71 @@ test("a name outside the map is null: an unknown tool has no state yet", () => {
     defaultValue: "<p>x</p>",
   });
   expect(screenResult.last()).toBeNull();
+});
+
+test("the hook gives null after the Editor unmounts, even in a component that does not re-render", async () => {
+  let setShow: (show: boolean) => void = () => {};
+  let ref!: RefObject<RichTextEditorHandle | null>;
+  // `memo` без пропов: родитель его не перерисует, о размонтировании он узнаёт только от хука.
+  const Counter = memo(function Counter({
+    source,
+  }: {
+    source: RefObject<RichTextEditorHandle | null>;
+  }) {
+    const total = useRichTextToolState(source, "search", (state) => state.total);
+    return <output aria-label="Total">{total === null ? "none" : String(total)}</output>;
+  });
+  function Screen() {
+    const [show, set] = useState(true);
+    setShow = set;
+    ref = useRef<RichTextEditorHandle>(null);
+    return (
+      <>
+        {show && <RichTextEditor ref={ref} aria-label="Body" defaultValue="<p>cat cat</p>" />}
+        <Counter source={ref} />
+      </>
+    );
+  }
+  render(<Screen />);
+  const total = () => screen.getByLabelText("Total").textContent;
+  expect(total()).toBe("0");
+
+  act(() => void ref.current!.tool("search")!.setQuery("cat"));
+  expect(total()).toBe("2");
+
+  act(() => setShow(false));
+  expect(total()).toBe("none");
+});
+
+test("a new mount under the same ref starts from its own signals, not the section of the old Editor", async () => {
+  const user = userEvent.setup();
+  let setShow: (show: boolean) => void = () => {};
+  const seen: (number | null)[] = [];
+  function Screen() {
+    const [show, set] = useState(true);
+    setShow = set;
+    const ref = useRef<RichTextEditorHandle>(null);
+    seen.push(useRichTextToolState(ref, "toc", (state) => state.current));
+    return show ? (
+      <RichTextEditor ref={ref} aria-label="Body" tools={WITH_TOC} defaultValue={ARTICLE} />
+    ) : null;
+  }
+  render(<Screen />);
+  await waitFor(() => expect(strip()).not.toBeNull());
+  const items = await openList(user);
+  await user.click(items[3]!);
+  expect(seen.at(-1)).toBe(3);
+
+  act(() => setShow(false));
+  expect(seen.at(-1)).toBeNull();
+
+  // Тот же `ref`, новый Редактор: «текущий раздел» старого в его снимок не попадает.
+  const before = seen.length;
+  act(() => setShow(true));
+  await waitFor(() => expect(strip()).not.toBeNull());
+  const fresh = seen.slice(before).filter((value) => value !== null);
+  expect(fresh.length).toBeGreaterThan(0);
+  expect(fresh).not.toContain(3);
 });
 
 // --- Оглавление ---------------------------------------------------------------------------

@@ -32,6 +32,7 @@ import { BlockHandle } from "./ui/BlockHandle.js";
 import { expandTools } from "./features/builtins.js";
 import {
   createHandleMethods,
+  clearToolSignals,
   publishToolSignals,
   type RichTextEditorHandleMethods,
 } from "./core/handle.js";
@@ -1464,6 +1465,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       () => publishToolSignals(ref, { tools: enabledTools, searchOpen }),
       [ref, editor, enabledTools, searchOpen]
     );
+    // Размонтирование (и смена `ref`) забирает сигналы: хук экрана отдаёт `null`.
+    useEffect(() => () => clearToolSignals(ref), [ref]);
 
     /*
       Готовность (спека, словарь): один раз за монтаж, когда движок создан.
