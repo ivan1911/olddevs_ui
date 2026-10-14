@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import type { CustomIslandProps, ToolEntry } from "./customTool.js";
-import { customToolOf } from "./defineTool.js";
+import { customToolOf } from "./toolDefinition.js";
 
 /*
   Острова своих Блоков в Просмотре (ADR-0058, п. 3.3).

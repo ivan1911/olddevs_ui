@@ -3,7 +3,7 @@ import type { Mark } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
 import type { ComponentType, ReactNode } from "react";
 import type { IconProps } from "../../icons.js";
-import type { ToolDefinition } from "./defineTool.js";
+import type { ToolDefinition } from "./toolDefinition.js";
 import type { ConfiguredTool } from "./toolOptions.js";
 import type { Tool as ToolName } from "./tools.js";
 

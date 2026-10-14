@@ -3,7 +3,7 @@ import { EDITOR_LAYOUTS } from "../features/layout/columnLayouts.js";
 import { CUSTOM_COLOR_STYLE_PATTERN } from "../features/color/customColor.js";
 import { devWarn } from "../../lib/dev-warn.js";
 import type { CustomAttribute, PrefixedName, ToolEntry } from "./customTool.js";
-import { customToolOf } from "./defineTool.js";
+import { customToolOf } from "./toolDefinition.js";
 import {
   EDITOR_ALIGNMENTS,
   EDITOR_MARKER_NAMES,

@@ -34,7 +34,7 @@ import {
   type ToolLabel,
   type ToolList,
 } from "./toolDescriptor.js";
-import { resolveDefinition, type ToolDefinition } from "./defineTool.js";
+import { resolveDefinition, type ToolDefinition } from "./toolDefinition.js";
 import { markdownFallback } from "./customMarkdown.js";
 import { CUSTOM_ATTRIBUTE_NAME, CUSTOM_NAME, customElement } from "./schema.js";
 import { loaded } from "./toolLoader.js";

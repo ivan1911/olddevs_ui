@@ -1,5 +1,5 @@
 import type { PrefixedName } from "./customTool.js";
-import type { ToolDefinition } from "./defineTool.js";
+import type { ToolDefinition } from "./toolDefinition.js";
 import type { SearchToolState, TocToolState } from "./toolState.js";
 import type { SearchToolCommands, TocToolCommands } from "./toolCommands.js";
 import type { Tool as ToolName } from "./tools.js";

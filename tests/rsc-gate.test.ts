@@ -79,7 +79,7 @@ const SERVER_SAFE = [
       "module that assembles `tools` imports it next to the custom tool descriptions.",
   },
   {
-    file: "editor/core/defineTool.ts",
+    file: "editor/core/toolDefinition.ts",
     why:
       "defineTool() (OLDSUI-268): the definition of a custom tool is data and functions, like " +
       "CustomTool, and the module only spreads and merges it. Tiptap is a type-only import, no " +

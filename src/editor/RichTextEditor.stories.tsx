@@ -18,7 +18,7 @@ import { markRange, type CustomTool } from "./core/customTool.js";
 import { FLOATING_TOOLBAR_KEY } from "./ui/FloatingToolbar.js";
 import { SELECTION_BUBBLE_KEY } from "./ui/SelectionBubble.js";
 import { TableSizeGrid as SizeGrid } from "./features/table/TableSizeGrid.js";
-import { defineTool } from "./core/defineTool.js";
+import { defineTool } from "./core/toolDefinition.js";
 import { tool } from "./core/toolOptions.js";
 import { useRichTextToolState } from "./hooks/useRichTextToolState.js";
 import { RICH_TEXT_PRESETS, TOOLS } from "./core/tools.js";
