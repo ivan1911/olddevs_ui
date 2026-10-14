@@ -5,7 +5,7 @@ category: content
 status: stable
 source: src/editor/features/toc/RichTextToc.tsx
 story: src/editor/features/toc/RichTextToc.stories.tsx
-sourceHash: 52e52fdc8172
+sourceHash: 5eed0e4804e0
 ---
 
 # RichTextToc
@@ -29,6 +29,7 @@ import { RichTextToc, RichTextView } from "@olddevs/ui/editor";
 - Navigation between application pages or sections of a site: use `SideNav` or `Tabs`, not the Table of contents of a Document.
 - A link to a section that can be shared: the Table of contents goes to a heading without an anchor (`#slug`), and the page address does not change. A link to a section would need its own ADR about `id` in the Schema.
 - A Table of contents as part of the Document itself, a Block inside the text: the Schema has no such Block.
+- The Table of contents belongs inside the Editor field and the screen has no column for it: use the Editor's `toc` Tool, the same strip in the left gutter of the frame, sticky under the Toolbar and in a field with `maxHeight` (the `RichTextEditor` page, "Table of contents" section).
 
 ## Minimal example
 
