@@ -2151,7 +2151,7 @@ function OpenedSearch(props: Partial<RichTextEditorProps>) {
             return false;
           });
           editor.commands.setTextSelection({ from, to: from + "match".length });
-          handle.openSearch();
+          handle.tool("search")?.open();
         }}
         {...props}
       />
@@ -2839,6 +2839,58 @@ function WithAppHeader(props: RichTextEditorProps) {
         Application header
       </div>
       <RichTextEditor aria-label="Body" {...props} />
+    </div>
+  );
+}
+
+/**
+ * Команды Инструмента из кода экрана: кнопки шапки зовут `handle.tool("search")` и
+ * `handle.tool("toc")`, а не внутренности Редактора. «Найти „tone“» открывает панель
+ * Поиска сразу с запросом, «Дальше» ведёт к следующему совпадению, «К заголовку»
+ * переходит по списку Оглавления: заголовок встаёт под шапку экрана и под
+ * фиксированную Панель, как при клике по пункту списка. В списке только H2–H3
+ * (`levels`), поэтому индекс 0 — «How to read».
+ */
+export const ToolCommands: Story = {
+  args: {
+    tools: [...RICH_TEXT_PRESETS.full, tool("toc", { offsetVar: "--header-h", levels: [2, 3] })],
+    defaultValue: TOC_ARTICLE,
+  },
+  render: (args) => <WithToolCommands {...args} />,
+  // Панель поиска — ленивый чанк.
+  tags: ["network-idle"],
+};
+
+function WithToolCommands(props: RichTextEditorProps) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    // Шапка экрана и Панель Редактора липнут одна под другой: обе читают высоту шапки.
+    const root = document.documentElement;
+    root.style.setProperty("--header-h", "56px");
+    root.style.setProperty("--topbar-h", "56px");
+    return () => {
+      root.style.removeProperty("--header-h");
+      root.style.removeProperty("--topbar-h");
+    };
+  }, []);
+  return (
+    <div>
+      <div className="border-line-soft bg-bg-1 sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex h-14 items-center gap-2 border-b px-4">
+        <Button
+          size="sm"
+          variant="soft"
+          onClick={() => ref.current?.tool("search")?.open({ query: "tone" })}
+        >
+          Find “tone”
+        </Button>
+        <Button size="sm" variant="soft" onClick={() => ref.current?.tool("search")?.next()}>
+          Next match
+        </Button>
+        <Button size="sm" variant="soft" onClick={() => ref.current?.tool("toc")?.jumpTo(0)}>
+          Go to “How to read”
+        </Button>
+      </div>
+      <RichTextEditor ref={ref} aria-label="Body" {...props} />
     </div>
   );
 }
