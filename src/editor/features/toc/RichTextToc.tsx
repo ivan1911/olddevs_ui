@@ -122,7 +122,7 @@ function scrollParent(node: HTMLElement): HTMLElement | null {
 let measured: { raw: string; px: number | null } = { raw: "", px: null };
 
 /** Высота липкой шапки в пикселях; переменной нет — `null`. */
-function stickyOffset(offsetVar: string): number | null {
+export function stickyOffset(offsetVar: string): number | null {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(offsetVar).trim();
   if (!raw) return null;
   if (raw !== measured.raw) {
@@ -176,7 +176,11 @@ function flash(heading: HTMLElement) {
  * заголовка, а не от Оглавления. `tabindex="-1"` ставится только на время
  * фокуса: в Документе после ухода фокуса не остаётся следа.
  */
-function jumpTo(heading: HTMLElement, offsetVar: string) {
+function jumpTo(
+  heading: HTMLElement,
+  offset: number | null,
+  focusHeading?: (heading: HTMLElement) => boolean
+) {
   /*
     В Редакторе в правке заголовок лежит внутри `contenteditable`, и ProseMirror
     следит за его DOM: чужой `tabindex` он счёл бы правкой, перерисовал заголовок
@@ -184,7 +188,11 @@ function jumpTo(heading: HTMLElement, offsetVar: string) {
     нужен: поставить его, не тронув каретку, нельзя, а каретка остаётся там, где
     её оставил автор. Прокрутка работает как обычно.
   */
-  if (!heading.parentElement?.closest('[contenteditable="true"]')) {
+  // Хозяин поля (Инструмент `toc` Редактора) может поставить фокус сам — каретку
+  // в заголовок; иначе — фокус на сам заголовок, если он не в правке.
+  if (focusHeading?.(heading)) {
+    // Фокус поставлен.
+  } else if (!heading.parentElement?.closest('[contenteditable="true"]')) {
     if (!heading.hasAttribute("tabindex")) {
       heading.setAttribute("tabindex", "-1");
       heading.addEventListener("blur", () => heading.removeAttribute("tabindex"), { once: true });
@@ -195,7 +203,6 @@ function jumpTo(heading: HTMLElement, offsetVar: string) {
   flash(heading);
 
   const behavior: ScrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
-  const offset = stickyOffset(offsetVar);
   // Без шапки браузер сам учтёт `scroll-margin-top` заголовка.
   if (offset === null) {
     heading.scrollIntoView({ behavior, block: "start" });
@@ -217,11 +224,11 @@ function jumpTo(heading: HTMLElement, offsetVar: string) {
  * текущий первый. Документ докручен до конца — текущий последний видимый:
  * короткие последние разделы до строки отсчёта не доезжают никогда.
  */
-function currentIndex(headings: TocHeading[], offsetVar: string): number {
+function currentIndex(headings: TocHeading[], offset: number | null): number {
   const first = headings[0];
   if (!first) return -1;
   const scroller = scrollParent(first.element);
-  const edge = scroller ? scroller.getBoundingClientRect().top : (stickyOffset(offsetVar) ?? 0);
+  const edge = scroller ? scroller.getBoundingClientRect().top : (offset ?? 0);
   const line = edge + SPY_SLACK;
 
   const atEnd = scroller
@@ -279,14 +286,10 @@ function sameHeadings(a: TocHeading[], b: TocHeading[]): boolean {
  * размера окна и числа заголовков, но не от текущего раздела: полоса не
  * вздрагивает при прокрутке.
  */
-function stripGap(count: number, offsetVar: string): number {
+function stripGap(count: number, offset: number | null): number {
   if (count < 2) return STRIP_GAP;
   const room =
-    window.innerHeight -
-    (stickyOffset(offsetVar) ?? 0) -
-    STRIP_MARGIN * 2 -
-    STRIP_PADDING -
-    count * STRIP_CELL;
+    window.innerHeight - (offset ?? 0) - STRIP_MARGIN * 2 - STRIP_PADDING - count * STRIP_CELL;
   return Math.max(0, Math.min(STRIP_GAP, room / (count - 1)));
 }
 
@@ -310,10 +313,49 @@ function fitsBeside(strip: HTMLElement, target: HTMLElement): boolean {
  * серверным, а место Оглавления — колонку, липкость, скрытие на узком экране —
  * решает вёрстка экрана. Меньше двух заголовков — компонент ничего не рисует.
  */
-export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function RichTextToc(
-  { target, offsetVar = "--topbar-h", listWidth = 240, className, ...rest },
+export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(
+  function RichTextToc(props, ref) {
+    return <TocCore ref={ref} {...props} />;
+  }
+);
+
+/**
+ * Ядро Оглавления: общее у `RichTextToc` и Инструмента `toc` Редактора
+ * (ADR-0068). Две настройки — только для кита, наружу не выходят: Редактор
+ * сам знает, где край его липкой Панели, и сам ставит каретку при переходе.
+ */
+export interface TocCoreProps extends RichTextTocProps {
+  /**
+   * Нижний край липкого верха в пикселях: от него считают подсветка, переход и
+   * шаг полосы. Нет — высота из `offsetVar`.
+   */
+  stickyTop?: () => number | null;
+  /** Поставить фокус при переходе самому; `true` — поставлен. */
+  focusHeading?: (heading: HTMLElement) => boolean;
+}
+
+export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore(
+  {
+    target,
+    offsetVar = "--topbar-h",
+    listWidth = 240,
+    stickyTop,
+    focusHeading,
+    className,
+    ...rest
+  },
   ref
 ) {
+  // Настройки хозяина читаются в обработчиках прокрутки: последние значения —
+  // через ссылку, чтобы новая функция на каждом рендере не пересоздавала слушателей.
+  const latest = useRef({ stickyTop, focusHeading, offsetVar });
+  useEffect(() => {
+    latest.current = { stickyTop, focusHeading, offsetVar };
+  });
+  const offsetNow = useCallback(() => {
+    const own = latest.current;
+    return own.stickyTop ? own.stickyTop() : stickyOffset(own.offsetVar);
+  }, []);
   const messages = useMessages();
   const [element, setElement] = useState<HTMLElement | null>(null);
   const [headings, setHeadings] = useState<TocHeading[]>([]);
@@ -373,7 +415,7 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
     let frame = 0;
     const update = () => {
       frame = 0;
-      setGap(stripGap(headings.length, offsetVar));
+      setGap(stripGap(headings.length, offsetNow()));
     };
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -384,7 +426,7 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("resize", schedule);
     };
-  }, [headings.length, offsetVar]);
+  }, [headings.length, offsetVar, offsetNow]);
 
   /*
     Раздел, выбранный переходом, держится подсвеченным, пока идёт прокрутка от
@@ -416,7 +458,7 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
     let frame = 0;
     const update = () => {
       frame = 0;
-      setCurrent(currentIndex(headings, offsetVar));
+      setCurrent(currentIndex(headings, offsetNow()));
     };
     const schedule = (event?: Event) => {
       // Считается только прокрутка, которая двигает Документ: окна или
@@ -443,7 +485,7 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
       document.removeEventListener("scroll", schedule, { capture: true });
       window.removeEventListener("resize", schedule);
     };
-  }, [headings, offsetVar]);
+  }, [headings, offsetVar, offsetNow]);
 
   // Уборка таймера выбранного раздела при размонтировании.
   useEffect(() => () => window.clearTimeout(pinned.current?.timer), []);
@@ -616,7 +658,7 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
                     )}
                     onClick={(event) => {
                       pin(index);
-                      jumpTo(heading.element, offsetVar);
+                      jumpTo(heading.element, offsetNow(), latest.current.focusHeading);
                       /*
                         В Редакторе в правке фокус на заголовок не переходит и
                         остаётся на пункте, а фокус в списке держит его открытым:

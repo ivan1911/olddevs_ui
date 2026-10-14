@@ -16,6 +16,7 @@ import {
   useId,
   useImperativeHandle,
   useLayoutEffect,
+  useCallback,
   useMemo,
   useRef,
   useState,
@@ -58,6 +59,7 @@ import type { ToolPopoverRequest } from "./core/toolButtons.js";
 import type { TextCardControl } from "./ui/TextCard.js";
 import { SelectionPopover } from "./ui/ToolButtonView.js";
 import { tableChunk } from "./features/table/tableTool.js";
+import { stickyOffset, TocCore } from "./features/toc/RichTextToc.js";
 import { replaceWithMarkdown } from "./core/markdown.js";
 import {
   documentFromJSON,
@@ -995,6 +997,47 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         : { maxHeight: areaLength };
 
     /*
+      Оглавление в левом поле (Инструмент `toc`, ADR-0068). Полоса липнет под
+      фиксированной Панелью: её высота меряется, потому что Панель переносит
+      ряд кнопок на узком поле. В прокручиваемом поле край — верх области.
+    */
+    const tocOn = enabledTools.has("toc");
+    const [toolbarShell, setToolbarShell] = useState<HTMLDivElement | null>(null);
+    const [toolbarHeight, setToolbarHeight] = useState(0);
+    useEffect(() => {
+      if (!toolbarShell || typeof ResizeObserver === "undefined") {
+        setToolbarHeight(toolbarShell?.offsetHeight ?? 0);
+        return;
+      }
+      const observer = new ResizeObserver(() => setToolbarHeight(toolbarShell.offsetHeight));
+      observer.observe(toolbarShell);
+      return () => observer.disconnect();
+    }, [toolbarShell]);
+    /** Нижний край липкого верха поля для подсветки и перехода в окне. */
+    const tocStickyTop = useCallback(
+      () => (stickyOffset("--topbar-h") ?? 0) + (toolbarShell?.offsetHeight ?? 0),
+      [toolbarShell]
+    );
+    /*
+      Переход в правке ставит каретку в конец заголовка, как структура документа
+      в Google Docs: с ним можно сразу писать. Прокрутку делает Оглавление, а
+      движок не прокручивает, чтобы не спорить с ним.
+      В `readOnly` каретки нет — фокус на заголовок ставит само Оглавление.
+    */
+    const tocFocusHeading = useCallback((heading: HTMLElement) => {
+      const current = editorRef.current;
+      if (!current || current.isDestroyed || !current.isEditable) return false;
+      const inside = current.view.posAtDOM(heading, 0);
+      const end = inside + current.state.doc.resolve(inside).parent.content.size;
+      current.commands.setTextSelection(end);
+      // `view.focus()`, а не команда `focus`: та ставит фокус кадром позже, и
+      // пункт списка, отпускающий фокус после клика, отдал бы его странице.
+      // ProseMirror фокусирует без прокрутки — прокрутку делает Оглавление.
+      current.view.focus();
+      return true;
+    }, []);
+
+    /*
       `Alt+F10` — фокус на первое доступное действие Панели. Плавающую Панель
       клавиша показывает сама, не дожидаясь задержки показа: человек с
       клавиатуры выделил текст и сразу просит Панель. На пустом выделении
@@ -1395,6 +1438,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     useEffect(() => () => clearTimeout(leaveTimerRef.current), []);
 
+    /** Цель Оглавления — Документ движка; объект новый с каждым движком. */
+    const tocTarget = useMemo(
+      () => ({
+        get current() {
+          return editor && !editor.isDestroyed ? (editor.view.dom as HTMLElement) : null;
+        },
+      }),
+      [editor]
+    );
     const searchPanelElement = (className: string) =>
       editor &&
       searchPanel && (
@@ -1450,7 +1502,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               `z-[1]` — внутри поля, а не ступень стека слоёв: Панель не
               оверлей и должна оставаться ниже любого из них.
             */
-            <div className={TOOLBAR_SHELL_CLASS}>
+            <div ref={setToolbarShell} className={TOOLBAR_SHELL_CLASS}>
               <EditorToolbar
                 editor={editor}
                 tools={enabledTools}
@@ -1511,7 +1563,34 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             style={areaStyle}
           >
             {/* В HTML-режиме Документ скрыт, но смонтирован: движок и история живы. */}
-            <EditorContent editor={editor} hidden={sourceOpen} />
+            {tocOn ? (
+              /*
+                Левое поле Оглавления: колонка есть, только пока есть полоса —
+                `TocCore` с меньше чем двумя заголовками не рисует ничего, и
+                текст стоит у края, как без Инструмента (ADR-0068, п. 2).
+              */
+              <div className="flex items-start">
+                {editor && !sourceOpen && (
+                  <TocCore
+                    target={tocTarget}
+                    stickyTop={scrolls ? undefined : tocStickyTop}
+                    focusHeading={tocFocusHeading}
+                    data-toc-gutter=""
+                    className="sticky mt-2 mr-3 shrink-0"
+                    style={{
+                      top: scrolls
+                        ? "0.5rem"
+                        : `calc(var(--topbar-h, 0px) + ${toolbarHeight}px + 0.5rem)`,
+                    }}
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <EditorContent editor={editor} hidden={sourceOpen} />
+                </div>
+              </div>
+            ) : (
+              <EditorContent editor={editor} hidden={sourceOpen} />
+            )}
             {!editor && (
               /*
               Скелет (ADR-0058, п. 11.4): до Готовности и при сбое загрузчика —
