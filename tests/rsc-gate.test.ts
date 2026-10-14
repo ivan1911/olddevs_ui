@@ -79,6 +79,13 @@ const SERVER_SAFE = [
       "module that assembles `tools` imports it next to the custom tool descriptions.",
   },
   {
+    file: "editor/core/toolCommands.ts",
+    why:
+      "The types of the Commands of a tool (OLDSUI-268): interfaces and one conditional type " +
+      "over the RichTextTools map, with type-only imports, so nothing is left in the build. " +
+      "It sits in the graph of `toolOptions.ts`, which a server module imports.",
+  },
+  {
     file: "editor/core/handleWatchers.ts",
     why:
       "Subscribers to the Editor handle's engine (watchHandleEditor, notifyHandleEditor): a WeakMap " +

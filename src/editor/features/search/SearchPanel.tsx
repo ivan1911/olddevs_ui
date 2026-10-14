@@ -15,6 +15,9 @@ import type { SearchOptions } from "./searchMatch.js";
 import { revealCurrentMatch } from "./revealMatch.js";
 import { searchState } from "./searchPlugin.js";
 
+const NO_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: false };
+const FLAGS = ["matchCase", "wholeWord", "regex"] as const;
+
 export interface SearchPanelProps {
   editor: Editor;
   /**
@@ -23,17 +26,9 @@ export interface SearchPanelProps {
    * при открытой панели выделяет текст поля поиска.
    */
   focus: { token: number; replace: boolean; query: string };
-  /**
-   * Стартовые флажки (Опции Инструмента `search`). Читаются при открытии
-   * панели; закрытая панель размонтируется, и следующее открытие снова
-   * начинает с них, а не с того, что автор переключил в прошлый раз.
-   */
-  initialOptions?: SearchOptions;
   onClose: () => void;
   className?: string;
 }
-
-const NO_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: false };
 
 /**
  * Панель «Поиск и замена»: немодальная, в углу поля. Состояние
@@ -48,17 +43,16 @@ const NO_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: f
  * переключатель не ложатся на «старт» Редактора, а плагин подсветки маленький и
  * стоит в нём.
  */
-export function SearchPanel({
-  editor,
-  focus,
-  initialOptions = NO_OPTIONS,
-  onClose,
-  className,
-}: SearchPanelProps) {
+export function SearchPanel({ editor, focus, onClose, className }: SearchPanelProps) {
   const messages = useMessages().editor;
-  const [query, setQuery] = useState(focus.query);
+  /*
+    Запрос и флажки панели — зеркало поиска в движке: на открытии она берёт
+    то, что в нём уже есть (стартовые флажки — Опции Инструмента, запрос — если
+    экран задал его командой), а позже подхватывает такие же правки снаружи.
+  */
+  const [query, setQuery] = useState(() => focus.query || searchState(editor.state)?.query || "");
   const [replacement, setReplacement] = useState("");
-  const [options, setOptions] = useState(initialOptions);
+  const [options, setOptions] = useState(() => searchState(editor.state)?.options ?? NO_OPTIONS);
   const searchRef = useRef<HTMLInputElement>(null);
   const replaceRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -72,6 +66,8 @@ export function SearchPanel({
         current: state?.current ?? -1,
         total: state?.total ?? 0,
         error: state?.error,
+        engineQuery: state?.query ?? "",
+        engineOptions: state?.options ?? NO_OPTIONS,
         editable: current.isEditable,
       };
     },
@@ -120,6 +116,19 @@ export function SearchPanel({
     reveal();
     // `reveal` — новая на каждый рендер, но читает только рефы и `editor`.
   }, [editor, query, options]);
+
+  /*
+    Запрос и флажки, заданные в движке мимо панели (команда `setQuery`), встают
+    в поля. Сверка с движком «вживую», а не по снимку `search`: эффект выше уже
+    протолкнул набранное в этом же коммите, и устаревший снимок откатил бы его.
+  */
+  useEffect(() => {
+    const live = searchState(editor.state);
+    if (!live) return;
+    if (live.query !== query) setQuery(live.query);
+    if (FLAGS.some((flag) => live.options[flag] !== options[flag])) setOptions(live.options);
+    // Только на смену поиска в движке; набор в полях уходит в движок эффектом выше.
+  }, [search.engineQuery, search.engineOptions]);
 
   const step = (direction: 1 | -1) => {
     editor.commands.searchStep(direction);

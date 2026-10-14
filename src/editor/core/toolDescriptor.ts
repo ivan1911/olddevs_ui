@@ -56,8 +56,9 @@ export interface ToolDescriptor {
    * Часть для движка: расширения Tiptap Инструмента — Node, Mark, Extension,
    * плагины ProseMirror. Функция от контекста — привилегия кита: встроенным
    * нужны мосты `RichTextEditor` (поповер ссылки, Меню вставки, `Alt+F10`).
+   * Второй аргумент — Опции этого Редактора (`options`), если они есть.
    */
-  engine?: (context: ToolEngineContext) => Extensions;
+  engine?: (context: ToolEngineContext, options?: object) => Extensions;
   /**
    * Загрузчик Части для движка (`toolLoader.ts`): движок создаётся после
    * загрузчиков всех описаний списка, и `engine` читает отданное `loaded`.
@@ -137,6 +138,41 @@ export interface ToolDescriptor {
    * (`shortcuts.ts`): у записи сочетание — её поле, а у Метки из движка — нет.
    */
   shortcuts?: readonly ShortcutCommand[];
+
+  /* Команды (OLDSUI-268). */
+
+  /**
+   * Команды Инструмента: то, что `handle.tool(name)` отдаёт экрану. Зовётся при
+   * каждом обращении к Хэндлу и обязана быть дешёвой: только обёртки над движком
+   * и мостом, без подписок и состояния. Нет — у Инструмента нет Команд, и
+   * `handle.tool(name)` отдаёт `null`.
+   */
+  commands?: (context: ToolCommandsContext) => object;
+}
+
+/** Что функция Команд получает от `RichTextEditor`. */
+export interface ToolCommandsContext {
+  /** Живой движок: функцию зовут, только когда он создан и не уничтожен. */
+  editor: Editor;
+  /** Мост к тому, что держит сам `RichTextEditor`: панели и ленивый UI. */
+  bridge: ToolBridge;
+}
+
+/**
+ * Что Команды встроенных берут у `RichTextEditor`: панель Поиска и ядро
+ * Оглавления живут в его React-дереве, а не в движке. Все методы возвращают
+ * `false`, когда сделать нельзя (HTML-режим, UI ещё не загружен). Привилегия
+ * кита: свой Инструмент моста не получает.
+ */
+export interface ToolBridge {
+  /** Открыть панель Поиска; `query` — сразу в поле, без него — выделенный текст. */
+  openSearch: (replace: boolean, query?: string) => boolean;
+  /** Закрыть панель Поиска и убрать подсветку, не трогая фокус. */
+  closeSearch: () => boolean;
+  /** Открыт ли HTML-режим: Документа на экране нет, искать и заменять в нём нельзя. */
+  sourceOpen: () => boolean;
+  /** Перейти к заголовку Оглавления с индексом списка. */
+  jumpToc: (index: number) => boolean;
 }
 
 /** Символ-триггер Инструмента в списке описаний: публичная запись и имя владельца для сообщений. */

@@ -47,14 +47,14 @@ import { customToolsError, FALLBACK_EXTENSIONS } from "./core/customToolEngine.j
 import { startLoad, type ToolLoad } from "./core/toolLoader.js";
 import { skeletonHtml } from "./core/skeleton.js";
 import { Button } from "../components/actions/Button.js";
-import { devError } from "../lib/dev-warn.js";
+import { devError, devWarn } from "../lib/dev-warn.js";
 import { describeImageNotice } from "./features/image/imageNotice.js";
 import { insertItemsFor } from "./core/insertItems.js";
 import type { CustomColorKind } from "./features/color/customColor.js";
 import { isImageSelection } from "./features/image/image.js";
 import { ImagePopover } from "./features/image/ImagePopover.js";
 import { ImageToolbar } from "./features/image/ImageToolbar.js";
-import { textCardsOf, toolOptions, triggersOf } from "./core/toolDescriptor.js";
+import { textCardsOf, toolOptions, triggersOf, type ToolBridge } from "./core/toolDescriptor.js";
 import type { ToolPopoverRequest } from "./core/toolButtons.js";
 import type { TextCardControl } from "./ui/TextCard.js";
 import { SelectionPopover } from "./ui/ToolButtonView.js";
@@ -366,6 +366,9 @@ export interface RichTextEditorHandle extends RichTextEditorHandleMethods {
    * Открыть панель «Поиск и замена» из кода экрана — то же, что
    * кнопка «Поиск» и `Mod+F`; `replace` — фокус в поле замены. Без Инструмента
    * `search`, в HTML-режиме и до монтажа — ничего.
+   *
+   * @deprecated Работает как `handle.tool("search")?.open(options)`; в разработке
+   * один раз предупреждает об этом в консоли. Будет удалён в 5.0.
    */
   openSearch(options?: { replace?: boolean }): void;
   /**
@@ -666,6 +669,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       replace: boolean;
       query: string;
     } | null>(null);
+    /** Переход ядра Оглавления (`TocCore`): есть, пока оно смонтировано. */
+    const tocJumpRef = useRef<((index: number) => boolean) | null>(null);
     const sourceFieldRef = useRef<HTMLTextAreaElement>(null);
     const sourceTextRef = useRef<string | null>(null);
     const sourceBaseRef = useRef("");
@@ -798,8 +803,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const openSource = () => {
       const current = editorRef.current;
       if (!current) return;
-      // Документа на экране не будет — искать в нём негде.
-      if (searchPanel) closeSearch(false);
+      // Документа на экране не будет — искать в нём негде. Подсветка бывает и без
+      // панели (команда `setQuery`): `next()` в скрытом Документе вышла бы удачной.
+      if (enabledTools.has("search")) closeSearch(false);
       const text = writeSource(current);
       switchFocusRef.current = "source";
       setSource({ text, minHeight: current.view.dom.getBoundingClientRect().height });
@@ -820,18 +826,25 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 
     /*
       Открыть панель поиска: кнопка Панели, `Mod+F`/`Mod+Alt+F` из движка и
-      `openSearch()` Хэндла. Выделенный текст одного Блока становится запросом,
+      команда `open` Инструмента. Выделенный текст одного Блока становится запросом,
       как в редакторах кода; выделение через Блоки — нет: запрос не переходит
-      границу Блока, и такой текст не нашёлся бы. В HTML-режиме Документа на
-      экране нет — искать негде, и `Mod+F` остаётся браузеру.
+      границу Блока, и такой текст не нашёлся бы. Явный `query` команды главнее
+      выделения. В HTML-режиме Документа на экране нет — искать негде, и `Mod+F`
+      остаётся браузеру.
     */
-    const openSearch = (replace: boolean): boolean => {
+    const openSearch = (replace: boolean, query?: string): boolean => {
       const current = editorRef.current;
       if (!current || !enabledTools.has("search") || sourceTextRef.current !== null) return false;
       const { $from, $to, empty } = current.state.selection;
-      const query =
+      const selected =
         !empty && $from.sameParent($to) ? current.state.doc.textBetween($from.pos, $to.pos) : "";
-      setSearchPanel((previous) => ({ token: (previous?.token ?? 0) + 1, replace, query }));
+      setSearchPanel((previous) => ({
+        token: (previous?.token ?? 0) + 1,
+        replace,
+        query: query ?? selected,
+      }));
+      // Подсветка и переходы — сразу, не дожидаясь ленивой панели.
+      if (query !== undefined) current.commands.setSearch(query);
       return true;
     };
     const openSearchRef = useRef(openSearch);
@@ -853,6 +866,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         chain.clearSearch().run();
       }
       setSearchPanel(null);
+      return true;
     };
 
     // Пункты Меню вставки — из того же замороженного набора, что и Схема.
@@ -1357,22 +1371,36 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       };
     }, [throttle, name]);
 
-    useImperativeHandle(
-      ref,
-      () => ({
+    const toolBridge: ToolBridge = {
+      openSearch,
+      // Фокус и каретку не трогаем: команду зовёт код экрана, а не автор в панели.
+      closeSearch: () => closeSearch(false),
+      sourceOpen: () => sourceTextRef.current !== null,
+      jumpToc: (index) => tocJumpRef.current?.(index) ?? false,
+    };
+
+    useImperativeHandle(ref, () => {
+      const methods = createHandleMethods({
         editor,
-        ...createHandleMethods({
-          editor,
-          editable,
-          known: () => knownRef.current,
-          initialDocument: () => initialDocumentRef.current,
-          tables: enabledTools.has("table"),
-          sourceOpen: () => sourceTextRef.current !== null,
-          sourceField: () => sourceFieldRef.current,
-          applySource: () => applySourceRef.current(),
-          rewriteSource,
-          fieldEmpty,
-        }),
+        editable,
+        known: () => knownRef.current,
+        initialDocument: () => initialDocumentRef.current,
+        tables: enabledTools.has("table"),
+        sourceOpen: () => sourceTextRef.current !== null,
+        sourceField: () => sourceFieldRef.current,
+        applySource: () => applySourceRef.current(),
+        rewriteSource,
+        fieldEmpty,
+        commands: (name) => {
+          const descriptor = enabledTools.descriptors.find((entry) => entry.name === name);
+          return editor && !editor.isDestroyed && descriptor?.commands
+            ? descriptor.commands({ editor, bridge: toolBridge })
+            : null;
+        },
+      });
+      return {
+        editor,
+        ...methods,
         getHTML: () => {
           applySourceRef.current();
           return editor ? serialize(editor) : knownRef.current;
@@ -1406,7 +1434,12 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           rewriteSource(editor);
           return true;
         },
-        openSearch: (options) => void openSearchRef.current(options?.replace ?? false),
+        openSearch: (options) => {
+          devWarn(
+            'RichTextEditor: handle.openSearch() is deprecated, use handle.tool("search")?.open()'
+          );
+          methods.tool("search")?.open(options);
+        },
         clear: () => {
           if (!editor) return;
           throttle.cancel();
@@ -1419,9 +1452,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           emit("");
           rewriteSource(editor);
         },
-      }),
-      [editor, editable, throttle]
-    );
+      };
+    }, [editor, editable, throttle]);
     // Хук `useRichTextEditorState` не видит смену движка у `ref` сам — сообщаем.
     useEffect(() => notifyHandleEditor(ref), [ref, editor]);
 
@@ -1474,7 +1506,6 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           <SearchPanel
             editor={editor}
             focus={searchPanel}
-            initialOptions={toolOptions(enabledTools, "search")}
             onClose={() => closeSearch(true)}
             className={className}
           />
@@ -1601,6 +1632,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                       stickyTop={tocStickyTop}
                       focusHeading={tocFocusHeading}
                       alignToFirstHeading
+                      jumpRef={tocJumpRef}
                       data-toc-gutter=""
                       className="sticky mr-3 shrink-0"
                       style={{

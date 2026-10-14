@@ -1,6 +1,7 @@
 "use client";
 
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
+import type { SearchToolCommands } from "../../core/toolCommands.js";
 import type { SearchToolOptions } from "../../core/toolOptions.js";
 import { SearchExtension } from "./searchPlugin.js";
 
@@ -28,7 +29,27 @@ export const SEARCH_TOOL: ToolDescriptor = {
   name: "search",
   defaults: SEARCH_DEFAULTS,
   checks: { matchCase: isFlag, wholeWord: isFlag, regex: isFlag },
-  engine: (context) => [SearchExtension.configure({ open: context.openSearch ?? (() => false) })],
+  /*
+    Запрос, переходы и замена — команды движка, как у панели; панель и HTML-режим
+    знает мост. `editor.commands` читается при каждом вызове, а не один раз:
+    Tiptap собирает его вместе с транзакцией, и сохранённый набор отправил бы
+    устаревшую.
+  */
+  commands: ({ editor, bridge }): SearchToolCommands => ({
+    open: (options) => bridge.openSearch(options?.replace === true, options?.query),
+    close: bridge.closeSearch,
+    setQuery: (query, flags) => !bridge.sourceOpen() && editor.commands.setSearch(query, flags),
+    next: () => editor.commands.searchStep(1),
+    previous: () => editor.commands.searchStep(-1),
+    replace: (text) => editor.commands.replaceMatch(text),
+    replaceAll: (text) => editor.commands.replaceAllMatches(text),
+  }),
+  engine: (context, options) => [
+    SearchExtension.configure({
+      open: context.openSearch ?? (() => false),
+      flags: options as SearchToolOptions,
+    }),
+  ],
   shortcuts: [
     { id: "search", group: "search", tool: "search", keys: SEARCH_KEYS, label: (m) => m.search },
     {

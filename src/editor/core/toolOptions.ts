@@ -1,3 +1,4 @@
+import type { SearchToolCommands, TocToolCommands } from "./toolCommands.js";
 import type { Tool as ToolName } from "./tools.js";
 
 /*
@@ -14,7 +15,12 @@ import type { Tool as ToolName } from "./tools.js";
  */
 export type TocLevel = 1 | 2 | 3 | 4;
 
-/** Опции Инструмента `search` (все значения — со стартовыми умолчаниями кита). */
+/**
+ * Опции Инструмента `search` (все значения — со стартовыми умолчаниями кита).
+ * Это стартовые флажки поиска вообще, а не только панели: запрос, который
+ * задаёт Команда `setQuery`, берёт не названные в ней флажки отсюда, пока
+ * поиск не закрыт (`close()`, Escape в панели).
+ */
 export interface SearchToolOptions {
   /**
    * Панель открывается с включённым флажком «Регистр». Флажок остаётся
@@ -82,12 +88,12 @@ export interface RichTextTools {
   search: {
     options: SearchToolOptions;
     state: Pending;
-    commands: Pending;
+    commands: SearchToolCommands;
   };
   toc: {
     options: TocToolOptions;
     state: Pending;
-    commands: Pending;
+    commands: TocToolCommands;
   };
 }
 
