@@ -2,7 +2,7 @@
 category: api
 status: stable
 source: src/editor/index.ts
-sourceHash: 6fab5c6f2f37
+sourceHash: b0247f77e524
 ---
 
 # Editor extension API
@@ -33,7 +33,7 @@ The decision is ADR-0058, which supplements ADR-0050. Capitalized terms come fro
 - Your own command in the Editor's interface: a button on the Toolbar, an Insert item in "/" and "+", a Block action in the Block handle menu, a Text card next to a fragment of text.
 - The screen controls the field: it inserts a template at the caret, renders its own panel, saves on focus loss, and shows "Saved" and the word count.
 - A built-in Tool needs configuring (`toc` under a header with its own height variable, Find with case matching on) or you need to know what is happening inside it: a match counter in the Status line, an external navigation over the headings, a "Find" button in the screen header.
-- A custom Tool with settings whose state and commands the screen needs: `defineTool` instead of a hand-written factory.
+- A custom Tool with options whose state and commands the screen needs: `defineTool` instead of a hand-written factory.
 - The server stores a Document with custom Blocks and must sanitize it with the same set of rules as the Editor.
 
 ## When not to use
@@ -320,7 +320,7 @@ The contract boundary per ADR-0058, item 12. The reviewer checks the changeset t
 - the third argument of `sanitizeRichText` and `richTextSchema`, the `tools` prop and the Island of `RichTextView`, `markRange`;
 - the names of built-in Tools (`ToolName`) and the existence of the Preset arrays `RICH_TEXT_PRESETS` — but not their composition (below).
 
-**Not included:** the kit's DOM and classes around a Slot; the ids of built-in buttons and items; the internal description of built-in Tools (a superset of the public shape) — it is not exported; the exact place of a UI contribution inside a surface; the look of the Skeleton; the shape of a Configured Tool from the inside (the entry is opaque, only the kit reads its fields); the delay of scrolling after the Find commands (it arrives a moment after the call); file and chunk names in `dist`, like any path inside the package (["Public contract"](../conventions.md#публичный-контракт)). The API of the raw `editor` and of the Engine part is Tiptap's API, and it follows the engine's major.
+**Not included:** the kit's DOM and classes around a Slot; the ids of built-in buttons and items; the internal description of built-in Tools (a superset of the public shape) — it is not exported; the exact place of a UI contribution inside a surface; the look of the Skeleton; the shape of a Configured Tool from the inside (the entry is opaque, only the kit reads its fields); the timing of the scroll after the Find commands (it happens a moment after the call); file and chunk names in `dist`, like any path inside the package (["Public contract"](../conventions.md#публичный-контракт)). The API of the raw `editor` and of the Engine part is Tiptap's API, and it follows the engine's major.
 
 **Neither a minor nor a patch breaks a saved Document.** The HTML convention is frozen: `data-block` and `data-mark` are extended only by addition. If the form has to change, that is a major, and until the next major the kit reads both forms — both in engine parsing and in the sanitizer.
 
