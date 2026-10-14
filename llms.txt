@@ -127,6 +127,7 @@
 - [SortableList](docs/components/content/sortable-list.md): Список, порядок которого задаёт пользователь перетаскиванием.
 - [EditableList](docs/components/content/editable-list.md): Список, в котором строки правят по месту и переставляют перетаскиванием, а новые добавляют снизу.
 - [RichTextView](docs/components/content/rich-text-view.md): `RichTextView` — показ сохранённого HTML `RichTextEditor` с той же типографикой, что внутри Редактора.
+- [RichTextToc](docs/components/content/rich-text-toc.md): `RichTextToc` — Оглавление Документа рядом с Просмотром (`RichTextView`) или Редактором в `readOnly`.
 - [VirtualGrid](docs/components/content/virtual-grid.md): Сетка карточек с виртуализацией: в DOM живут видимые ячейки и небольшой запас вокруг.
 - [Avatar и AvatarGroup](docs/components/content/avatar.md): `Avatar` показывает фотографию по `src` или, если её нет или она не загрузилась, инициалы и стабильный градиент, вычисленные из имени.
 - [Data display: `Badge`, `Stat`, `DescriptionList`, `Table`](docs/components/content/data-display.md): Выбирайте компонент по форме и смыслу данных: `Badge` отвечает на «сколько» или «есть ли новое», `Stat` — на один показатель с контекстом, `DescriptionList` — на пары «свойство — значение», `Table` — 

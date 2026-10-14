@@ -1,5 +1,5 @@
 ---
-sourceHash: ae694c0fa3fb
+sourceHash: 24a78e5196fa
 ---
 
 # Message catalog `UiMessages`
@@ -401,6 +401,7 @@ The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-edito
 | `blockMoveDown`                       | string   | Move down                                                                        | Вниз                                                                               |
 | `blockDuplicate`                      | string   | Duplicate                                                                        | Дублировать                                                                        |
 | `blockDelete`                         | string   | Delete                                                                           | Удалить                                                                            |
+| `toc`                                 | string   | Table of contents                                                                | Оглавление                                                                         |
 
 ## `errorState`
 

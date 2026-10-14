@@ -1,5 +1,5 @@
 ---
-sourceHash: 8b34aab7b3be
+sourceHash: 1efca315c26c
 ---
 
 # Component catalog
@@ -141,6 +141,7 @@ Components built from primitives: the page frame, its navigation and header.
 - [SortableList](content/sortable-list.md): `SortableList` — a short list the user reorders by dragging: menu sections, scenario steps, priorities; lists sharing a `group` can exchange rows, which is how a kanban board is built
 - [EditableList](content/editable-list.md): `EditableList` — a list whose rows can be edited in place and reordered by dragging, and which can be added to at the bottom: a checklist, tasks; if you only need the order, `SortableList` is enough
 - [RichTextView](content/rich-text-view.md): `RichTextView` — displays ready-made rich text from the Editor without the Editor itself; a separate entry point `@olddevs/ui/editor`, suitable for a server component
+- [RichTextToc](content/rich-text-toc.md): `RichTextToc` — the table of contents of a long Document next to the View or a `readOnly` Editor: a strip of strokes at the edge of the text, a list of headings on hover, a click goes to the heading; the `@olddevs/ui/editor` entry point
 - [VirtualGrid](content/virtual-grid.md): `VirtualGrid` — a grid of hundreds or thousands of previews that renders only the visible cells and lets you select them; for a dozen cards `Grid` is enough
 - [Avatar](content/avatar.md): `Avatar`, `AvatarGroup` — a round image of a person: a photo or, if there is none, initials; `AvatarGroup` shows several participants with a "+N" overflow count
 - [Data display](content/data-display.md): `Badge`, `Stat`, `DescriptionList`, `Table` — four ways to show data: a counter or a label, a key metric with an explanation, "property and value" pairs, a table of records of the same kind

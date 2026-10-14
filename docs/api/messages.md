@@ -403,6 +403,7 @@
 | `blockMoveDown`                       | строка  | Move down                                                                        | Вниз                                                                               |
 | `blockDuplicate`                      | строка  | Duplicate                                                                        | Дублировать                                                                        |
 | `blockDelete`                         | строка  | Delete                                                                           | Удалить                                                                            |
+| `toc`                                 | строка  | Table of contents                                                                | Оглавление                                                                         |
 
 ## `errorState`
 
