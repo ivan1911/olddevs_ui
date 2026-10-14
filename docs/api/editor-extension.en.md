@@ -40,7 +40,7 @@ The decision is ADR-0058, which supplements ADR-0050. Capitalized terms come fro
 
 - What you need is already among the kit's Tools (["Tools and Presets"](../components/inputs/rich-text-editor.md#инструменты-и-пресеты)): pass the name in `tools`, do not write a custom Tool.
 - To hide a built-in button or item, narrow `tools`. A built-in Tool cannot be replaced by name: turn it off and add a custom Tool under your own name.
-- Only `search` and `toc` have options; `tool("bold", …)` does not compile. The options of other built-in Tools arrive one at a time, on the first request. You cannot change the behavior of a built-in Tool by substitution (there is no `extend()` as in Tiptap): the descriptions of built-in Tools are not exported.
+- Only `search` and `toc` have options; `tool("bold", …)` does not compile. Options for other built-in Tools will be added one at a time, as consumers ask for them. You cannot change the behavior of a built-in Tool by substitution (there is no `extend()` as in Tiptap): the descriptions of built-in Tools are not exported.
 - You cannot change the options of a mounted field: they are read once, when the engine is created, together with `tools`. Remount the field with a key.
 - You cannot put arbitrary React in the Toolbar row or in a menu: the kit renders the UI contributions itself. React is allowed only in the content of a popover (of a button, Insert item or Block action) and in a Text card.
 - You cannot intercept paste and drop through a prop: the Engine part of a custom Tool handles them (["Paste and drop order"](../components/inputs/rich-text-editor.md#порядок-вставки-и-drop)).
@@ -110,14 +110,14 @@ A Tool's `trigger` is not a UI contribution of a Slot but another way into the s
 
 - **The Handle** (`ref`) — insertion at the caret (`insertHTML`, `insertText` → `boolean`), reading (`getText`, `getSelectedText`, `isEmpty`, `getHTML`, `getMarkdown`, `getJSON`), focus (`focus("start" | "end" | "restore")`, `blur`), history (`undo`, `redo`, `canUndo`, `canRedo`), plus `clear`, `setMarkdown` and `setJSON` (a JSON envelope → `boolean`) and `tool(name)`, the commands of a Tool (see "Options, state and commands" below). `openSearch({ replace? })` is deprecated: it works as `tool("search")?.open({ replace })`, warns once in development and is removed in 5.0. Insertion is an Author edit: a history step, `onChange` after a delay, the `maxLength` limit; past the limit, the insertion does not happen. Before Readiness the methods do not throw and change nothing: `insertHTML` and `insertText` return `false`. `editor` is the raw Tiptap for commands of Marks, Blocks and custom Tools; its API follows the Tiptap major.
 - **`useRichTextEditorState(ref, selector)`** — the state of your own panel: re-renders only when the slice changes, `null` before the engine and on the server.
-- **`useRichTextToolState(ref, name, selector?)`** — the state of a Tool: a data snapshot that re-renders only when it changes, `null` before mount, on the server and without the Tool in the set.
+- **`useRichTextToolState(ref, name, selector?)`** — the state of a Tool: a data snapshot; the screen re-renders only when it changes, and the hook returns `null` before mount, on the server and without the Tool in the set.
 - **`onReady()`** — once per mount, when Readiness arrives; **`onFocus()`** and **`onBlur()`** — report focus on the field as a whole (Document, Toolbar, the kit's popovers, the HTML field); before `onBlur`, a pending `onChange` is flushed.
 - **`status`** — the screen's React node in the line under the Document, at the start; the kit's counter is at the end. The kit does not announce the line.
 - **`showNotice({ tone: "status" | "error", text } | null)`** — an engine command: one Field notice, a new one replaces the previous; `status` is only announced, `error` is visible as a `role="alert"` line until the next Author edit. The kit's image messages go through the same channel.
 
 ## Options, state and commands
 
-A Tool has three typed parts. This carries `options`, `storage` and `commands` over from Tiptap onto the kit's contract rather than the engine's (ADR-0069).
+A Tool has three typed parts. They carry Tiptap's `options`, `storage` and `commands` over to the kit's contract, not the engine's (ADR-0069).
 
 | Part     | What it is                                    | Who sets it                                                                                       | How the screen uses it                       |
 | -------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------- |
@@ -139,10 +139,10 @@ The Engine part still follows the Tiptap major (ADR-0058, item 12.4). The three 
 
 - **`defaults`** is the full set of options. The options type is inferred from it, so you do not declare it a second time. A literal widens to its base type (`tone: "info"` becomes `string`): for a union, give the value a type, `tone: "info" as "info" | "warning"`.
 - **`create(options)`** returns the body of the description: the same shape as `CustomTool`, without the name (`CustomToolBody`): the Engine part, Schema rules, UI contributions. It is called once per Editor, when the set is built. Keep the Engine part Loader a module constant: the Loader's cache lives on the function itself, and a new function on every `create` call would load the part again for every Editor.
-- **`state({ editor, options })`** is the state for `useRichTextToolState`. It is called on every transaction and on every hook read, so it must be fast and free of side effects, and its result is data without DOM nodes that is compared by value. With no `state`, the Tool has no state and the hook returns `null`.
-- **`commands({ editor, options })`** gives the commands for `handle.tool(name)`. It is called on every access through the Handle: thin wrappers over the engine, no subscriptions. A command returns a `boolean`, like the built-in ones. With no `commands`, `handle.tool(name)` returns `null`.
-- **Merging options.** Nested plain objects are merged with the defaults, and arrays and functions are replaced whole, like `configure` in Tiptap v3. An `undefined` value does not count: what was there stays. The `defaults` object is not changed; the options object is shared by `create`, `state` and `commands`: read it, do not change it.
-- **Options are read once**, when the engine is created, together with the set. To change them, remount the Editor with a key (`key`). The values of a custom Tool's options are checked by its author: the kit does not do this.
+- **`state({ editor, options })`** is the state for `useRichTextToolState`. It is called on every transaction and on every hook read, so it must be fast and free of side effects, and it must return data without DOM nodes, which the kit compares by value. With no `state`, the Tool has no state and the hook returns `null`.
+- **`commands({ editor, options })`** returns the commands for `handle.tool(name)`. It is called on every access through the Handle: thin wrappers over the engine, no subscriptions. A command returns a `boolean`, like the built-in ones. With no `commands`, `handle.tool(name)` returns `null`.
+- **Merging options.** Nested plain objects are merged with the defaults, and arrays and functions are replaced whole, like `configure` in Tiptap v3. An `undefined` value is ignored: the existing value stays. The `defaults` object is not changed; the options object is shared by `create`, `state` and `commands`: read it, do not mutate it.
+- **Options are read once**, when the engine is created, together with the set. To change them, remount the Editor with a key (`key`). The kit does not validate the values of a custom Tool's options; that is up to its author.
 - **All the rules of a custom Tool apply** (ADR-0058): the Consumer prefix in the name, a unique name in `tools` (the same definition twice, with `tool()` and without, is also a set error), the set checks, the Engine part Loader. `defineTool` is sugar over the same `CustomTool` shape: it has no build path of its own. A plain `CustomTool` object in `tools` works as before, without options, state and commands.
 - **Server.** `defineTool` and `tool()` live in a module with no Tiptap or React at run time (Tiptap appears there only as types), so the `tools` set can be built in a server module next to the rest of the screen's configuration. A definition holds functions, like `CustomTool`, so it reaches a client component together with its module (an import), not as a prop across the RSC boundary. A configured built-in Tool is made of data: with data in its options, it can be passed as a prop too.
 
@@ -295,7 +295,7 @@ export function ArticleBody({ html }: { html: string }) {
 }
 ```
 
-Here is what matters. The `tool("toc", …)` entry switched the Table of contents on without a `"toc"` string, and `tool("search", …)` replaced Find from the Preset. `useRichTextToolState(ref, "acme_mention", …)` and `tool("acme_mention")` are typed thanks to `declare module`; without it they would return `unknown`. The options of `mention` in `EDITOR_TOOLS` are `limit: 10` instead of the default 5. They are read once, when the engine is created, and `insert` sees exactly those.
+What to note here. The `tool("toc", …)` entry switches the Table of contents on without a `"toc"` string, and `tool("search", …)` replaces Find from the Preset. `useRichTextToolState(ref, "acme_mention", …)` and `tool("acme_mention")` are typed thanks to `declare module`; without it they return `unknown`. The options of `mention` in `EDITOR_TOOLS` are `limit: 10` instead of the default 5. They are read once, when the engine is created, and `insert` sees exactly those.
 
 ## Loaders, Readiness and Skeleton
 
@@ -337,8 +337,8 @@ The contract boundary per ADR-0058, item 12. The reviewer checks the changeset t
 | Removing a Tool from a Preset, renaming a Tool                                                 | major                                               |
 | Removing a public name                                                                         | major, after `@deprecated` in a minor (below)       |
 | A new optional field, a new UI contribution kind, a Handle method or a callback                | minor                                               |
-| A new options or state field, a new command, an option on another built-in Tool                | minor                                               |
-| Removing an options, state or command field, changing its meaning                              | major                                               |
+| A new option or state field, a new command, an option on another built-in Tool                 | minor                                               |
+| Removing an option, state or command field, changing its meaning                               | major                                               |
 | A new built-in Tool in a Preset                                                                | minor, the changeset line is in bold                |
 | A shift of a Slot inside a surface                                                             | minor with a changeset line                         |
 | Raising Tiptap's lower bound within a major                                                    | minor                                               |

@@ -3049,7 +3049,7 @@ const remarkTool = defineTool({
 });
 
 const REMARK_SAMPLE =
-  "<p>Remarks are the paragraphs below; the status line counts them from the State of the tool.</p>" +
+  "<p>Remarks are the paragraphs below; the status line counts them using the Tool state.</p>" +
   '<div data-block="acme_remark">First remark</div>';
 
 /** Строка статуса и кнопка экрана: читают Состояние и зовут Команду своего Инструмента. */
