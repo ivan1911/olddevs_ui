@@ -39,6 +39,13 @@ export type {
 export { RICH_TEXT_PRESETS } from "./core/tools.js";
 export type { RichTextEditorPreset } from "./core/tools.js";
 export { tool } from "./core/toolOptions.js";
+export { defineTool } from "./core/defineTool.js";
+export type {
+  CustomToolBody,
+  ToolDefinition,
+  ToolDefinitionContext,
+  ToolDefinitionInput,
+} from "./core/defineTool.js";
 export type { ConfiguredTool, RichTextTools } from "./core/toolOptions.js";
 export type { SearchToolState, TocToolHeading, TocToolState } from "./core/toolState.js";
 export { markRange } from "./core/customTool.js";

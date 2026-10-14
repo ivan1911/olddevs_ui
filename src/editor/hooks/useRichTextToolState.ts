@@ -122,8 +122,12 @@ export function useRichTextToolState(
 
   const read = (): unknown => {
     const editor = ref.current?.editor;
+    // Своё Состояние — функция описания из набора этого Редактора; встроенное — таблица.
+    const own = toolSignals(ref).tools?.descriptors.find((entry) => entry.name === name)?.state;
     const snapshot =
-      editor && !editor.isDestroyed ? (SNAPSHOTS.get(name)?.(editor, ref) ?? null) : null;
+      editor && !editor.isDestroyed
+        ? ((own ? own(editor) : SNAPSHOTS.get(name)?.(editor, ref)) ?? null)
+        : null;
     const value = snapshot === null || !selector ? snapshot : selector(snapshot as never);
     // Прежняя ссылка, пока значение то же: иначе React видит новый снимок на каждый рендер.
     if (last.current && sameValue(last.current.value, value)) return last.current.value;

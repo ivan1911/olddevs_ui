@@ -3,7 +3,7 @@ import { EDITOR_LAYOUTS } from "../features/layout/columnLayouts.js";
 import { CUSTOM_COLOR_STYLE_PATTERN } from "../features/color/customColor.js";
 import { devWarn } from "../../lib/dev-warn.js";
 import type { CustomAttribute, PrefixedName, ToolEntry } from "./customTool.js";
-import { isConfiguredTool } from "./toolOptions.js";
+import { customToolOf } from "./defineTool.js";
 import {
   EDITOR_ALIGNMENTS,
   EDITOR_MARKER_NAMES,
@@ -376,9 +376,10 @@ function customAttributes(
 export function richTextSchema(tools: readonly ToolEntry[] = []): RichTextSchema {
   const customBlocks: Record<PrefixedName, RichTextCustomBlockRules> = {};
   const customMarks: Record<PrefixedName, RichTextCustomMarkRules> = {};
-  for (const tool of tools) {
-    // Строка — имя кита, Настроенный Инструмент — его опции: Схемы у них нет.
-    if (typeof tool !== "object" || tool === null || isConfiguredTool(tool)) continue;
+  for (const entry of tools) {
+    // Строка — имя кита, Настроенный встроенный — его опции: Схемы у них нет.
+    const tool = customToolOf(entry);
+    if (!tool) continue;
     for (const [name, block] of Object.entries(tool.blocks ?? {})) {
       if (!CUSTOM_NAME.test(name)) continue;
       const kind = block.kind === "inline" ? "inline" : "block";

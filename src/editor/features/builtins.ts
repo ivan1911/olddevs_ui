@@ -10,10 +10,10 @@ import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
 import { devError } from "../../lib/dev-warn.js";
-import type { CustomTool, ToolEntry } from "../core/customTool.js";
-import { describeCustomTool } from "../core/customToolEngine.js";
+import type { ToolEntry } from "../core/customTool.js";
+import { describeCustomTool, describeDefinition } from "../core/customToolEngine.js";
 import { toolList, type ToolDescriptor, type ToolList } from "../core/toolDescriptor.js";
-import { isConfiguredTool, type ConfiguredTool } from "../core/toolOptions.js";
+import { isConfiguredTool, mergeOptions, type ConfiguredTool } from "../core/toolOptions.js";
 import { SEARCH_TOOL } from "./search/searchTool.js";
 import { TABLE_TOOL } from "./table/tableTool.js";
 import { TOC_TOOL } from "./toc/tocTool.js";
@@ -143,7 +143,7 @@ function resolveOptions(
     );
   }
   return defaults
-    ? { ...descriptor, options: { ...defaults, ...Object.fromEntries(valid) } }
+    ? { ...descriptor, options: mergeOptions(defaults, Object.fromEntries(valid)) }
     : descriptor;
 }
 
@@ -165,7 +165,10 @@ export function expandTools(
   preset: RichTextEditorPreset,
   tools: readonly ToolEntry[] | undefined
 ): ToolList {
-  const configured = (tools ?? []).filter(isConfiguredTool);
+  // Настроенные встроенные: запись с определением настраивает свой Инструмент, она ниже.
+  const configured = (tools ?? []).filter(
+    (entry): entry is ConfiguredTool => isConfiguredTool(entry) && !entry.definition
+  );
   const twice = configured.find((entry, index) =>
     configured.some((e, i) => i < index && e.name === entry.name)
   );
@@ -182,9 +185,14 @@ export function expandTools(
       configured.find((entry) => entry.name === name)
     )
   );
-  const custom = (tools ?? [])
-    .filter((entry) => typeof entry === "object" && entry !== null && !isConfiguredTool(entry))
-    .map((entry) => describeCustomTool(entry as CustomTool));
+  // Свои: определение (с `tool()` и без) и обычное описание; уникальность имени проверяет набор.
+  const custom = (tools ?? []).flatMap((entry) => {
+    if (typeof entry !== "object" || entry === null) return [];
+    if (isConfiguredTool(entry)) {
+      return entry.definition ? describeDefinition(entry.definition, entry.options) : [];
+    }
+    return "defined" in entry ? describeDefinition(entry) : describeCustomTool(entry);
+  });
   return toolList(
     builtin.map((descriptor) => descriptor.name as Tool),
     [...builtin, ...custom],

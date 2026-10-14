@@ -34,6 +34,7 @@ import {
   type ToolLabel,
   type ToolList,
 } from "./toolDescriptor.js";
+import { resolveDefinition, type ToolDefinition } from "./defineTool.js";
 import { markdownFallback } from "./customMarkdown.js";
 import { CUSTOM_ATTRIBUTE_NAME, CUSTOM_NAME, customElement } from "./schema.js";
 import { loaded } from "./toolLoader.js";
@@ -234,6 +235,22 @@ export function describeCustomTool(tool: CustomTool): ToolDescriptor {
     documentContent: Object.entries(blocksOf(tool))
       .filter(([, block]) => block.kind === "block" && block.place === "top")
       .map(([name]) => name),
+  };
+}
+
+/**
+ * Внутреннее описание Инструмента из определения (`defineTool`): тело из
+ * `create` и имя определения собираются в обычный `CustomTool` и идут тем же
+ * путём, а Опции этого Редактора — умолчания, слитые с `tool()`, — достаются
+ * `create`, `state` и `commands`.
+ */
+export function describeDefinition(definition: ToolDefinition, given: object = {}): ToolDescriptor {
+  const { options, tool } = resolveDefinition(definition, given);
+  return {
+    ...describeCustomTool(tool),
+    options,
+    state: definition.state && ((editor) => definition.state!({ editor, options })),
+    commands: definition.commands && (({ editor }) => definition.commands!({ editor, options })),
   };
 }
 
