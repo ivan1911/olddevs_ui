@@ -19,6 +19,7 @@ import { FLOATING_TOOLBAR_KEY } from "./ui/FloatingToolbar.js";
 import { SELECTION_BUBBLE_KEY } from "./ui/SelectionBubble.js";
 import { TableSizeGrid as SizeGrid } from "./features/table/TableSizeGrid.js";
 import { tool } from "./core/toolOptions.js";
+import { useRichTextToolState } from "./hooks/useRichTextToolState.js";
 import { RICH_TEXT_PRESETS, TOOLS } from "./core/tools.js";
 
 /*
@@ -2130,8 +2131,31 @@ const SEARCH_SAMPLE =
   "heading, a match in a list, a ma<em>tch</em> across marks.</p>" +
   "<ul><li><p>Next match: Enter</p></li><li><p>Previous match: Shift+Enter</p></li></ul>";
 
+/**
+ * Строка статуса экрана из Состояния Поиска: «2 of 4», пока панель открыта.
+ * Хук читает снимок по тому же `ref`, что получает поле.
+ */
+function SearchStatus({ target }: { target: RefObject<RichTextEditorHandle | null> }) {
+  const search = useRichTextToolState(target, "search");
+  const text = !search?.open
+    ? "Search is closed"
+    : search.error
+      ? "Invalid regular expression"
+      : search.total === 0
+        ? "No matches"
+        : `${search.current + 1} of ${search.total}`;
+  return (
+    <p role="status" className="text-fg-2 mt-2 text-[13px]">
+      {text}
+    </p>
+  );
+}
+
 /** Открыть поиск по первому «match», как только движок готов: оно и станет текущим. */
-function OpenedSearch(props: Partial<RichTextEditorProps>) {
+function OpenedSearch({
+  status = false,
+  ...props
+}: Partial<RichTextEditorProps> & { status?: boolean }) {
   const ref = useRef<RichTextEditorHandle>(null);
   return (
     <div className="max-w-[640px]">
@@ -2155,6 +2179,7 @@ function OpenedSearch(props: Partial<RichTextEditorProps>) {
         }}
         {...props}
       />
+      {status && <SearchStatus target={ref} />}
     </div>
   );
 }
@@ -2175,6 +2200,17 @@ export const Search: Story = {
 /** Поиск в `basic`: кнопка «Поиск» есть и в коротком наборе. */
 export const SearchBasic: Story = {
   render: () => <OpenedSearch preset="basic" />,
+  tags: ["network-idle"],
+};
+
+/**
+ * Состояние Поиска на экране: строка под полем читает его хуком
+ * `useRichTextToolState(ref, "search")` и пишет «1 of 4». Переходите по
+ * совпадениям, меняйте запрос и флажки — строка следует за панелью; закройте
+ * панель — строка скажет, что поиск закрыт.
+ */
+export const SearchStatusLine: Story = {
+  render: () => <OpenedSearch status />,
   tags: ["network-idle"],
 };
 
@@ -2842,3 +2878,55 @@ function WithAppHeader(props: RichTextEditorProps) {
     </div>
   );
 }
+
+/*
+  Внешняя навигация по Состоянию Оглавления: список заголовков и текущий раздел
+  читаются хуком `useRichTextToolState(ref, "toc")`, а не из DOM Документа.
+*/
+function ReadingPosition({ target }: { target: RefObject<RichTextEditorHandle | null> }) {
+  const toc = useRichTextToolState(target, "toc");
+  if (!toc) return null;
+  return (
+    <nav
+      aria-label="Reading position"
+      className="border-line-soft sticky top-4 hidden w-56 shrink-0 self-start border-l pl-3 text-[13px] md:block"
+    >
+      <ul className="space-y-1">
+        {toc.headings.map((heading) => (
+          <li
+            key={heading.index}
+            aria-current={heading.index === toc.current ? "location" : undefined}
+            className={
+              heading.index === toc.current ? "text-fg-0 font-semibold" : "text-fg-2 font-normal"
+            }
+            style={{ paddingLeft: (heading.level - 1) * 12 }}
+          >
+            {heading.text}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function WithReadingPosition(props: RichTextEditorProps) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  return (
+    <div className="flex items-start gap-6">
+      <div className="max-w-[640px] min-w-0 flex-1">
+        <RichTextEditor ref={ref} aria-label="Body" {...props} />
+      </div>
+      <ReadingPosition target={ref} />
+    </div>
+  );
+}
+
+/**
+ * Состояние Оглавления на экране: справа от поля внешняя навигация из заголовков
+ * `useRichTextToolState(ref, "toc")`; текущий раздел идёт за прокруткой. Правьте
+ * заголовки — список меняется сразу, не дожидаясь ленивого ядра Оглавления.
+ */
+export const TableOfContentsExternalNavigation: Story = {
+  args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE },
+  render: (args) => <WithReadingPosition {...args} />,
+};

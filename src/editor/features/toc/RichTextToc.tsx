@@ -369,7 +369,9 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
   const [gap, setGap] = useState(STRIP_GAP);
   const [current, setCurrent] = useState(0);
   // Текущий раздел — в Состояние Инструмента (`useRichTextToolState`).
-  useEffect(() => latest.current.onCurrentChange?.(current), [current]);
+  useEffect(() => {
+    latest.current.onCurrentChange?.(current);
+  }, [current]);
   const [open, setOpen] = useState(false);
   const [fits, setFits] = useState(true);
   const stripRef = useRef<HTMLButtonElement>(null);

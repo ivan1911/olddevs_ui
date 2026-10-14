@@ -8,7 +8,7 @@ import type { SearchToolOptions, TocLevel } from "./toolOptions.js";
   значению, сериализовать и передать через границу RSC.
 */
 
-/** Состояние Инструмента `search` (ADR-0058, OLDSUI-268). */
+/** Состояние Инструмента `search` (ADR-0058). */
 export interface SearchToolState {
   /** Панель Поиска открыта. */
   open: boolean;
@@ -40,7 +40,7 @@ export interface TocToolHeading {
   index: number;
 }
 
-/** Состояние Инструмента `toc` (ADR-0068, OLDSUI-268). */
+/** Состояние Инструмента `toc` (ADR-0068). */
 export interface TocToolState {
   /**
    * Заголовки Документа в порядке чтения — те же, что в полосе и списке Оглавления:
