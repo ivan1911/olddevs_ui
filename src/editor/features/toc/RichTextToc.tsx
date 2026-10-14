@@ -332,6 +332,12 @@ export interface TocCoreProps extends RichTextTocProps {
   stickyTop?: () => number | null;
   /** Поставить фокус при переходе самому; `true` — поставлен. */
   focusHeading?: (heading: HTMLElement) => boolean;
+  /**
+   * Опустить полосу так, чтобы первый штрих стоял на середине первой строки
+   * первого заголовка: в поле Редактора полоса и заголовок начинаются с одного
+   * уровня, а не полоса выше текста.
+   */
+  alignToFirstHeading?: boolean;
 }
 
 export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore(
@@ -341,7 +347,9 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     listWidth = 240,
     stickyTop,
     focusHeading,
+    alignToFirstHeading = false,
     className,
+    style,
     ...rest
   },
   ref
@@ -519,6 +527,28 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     };
   }, [element, headings.length]);
 
+  // Выравнивание по первому заголовку: отступ сверху меряется от верха колонки,
+  // в которой стоит Оглавление, до середины первой строки заголовка, и
+  // пересчитывается при смене Документа и ширины поля (перенос строк).
+  const [lead, setLead] = useState(0);
+  useEffect(() => {
+    const first = headings[0]?.element;
+    const root = stripRef.current?.parentElement;
+    const column = root?.parentElement;
+    if (!alignToFirstHeading || !first || !column || !element) return;
+    const measure = () => {
+      const box = first.getBoundingClientRect();
+      const line = parseFloat(getComputedStyle(first).lineHeight) || box.height;
+      const center = box.top + Math.min(line, box.height) / 2;
+      const next = center - column.getBoundingClientRect().top - STRIP_PADDING / 2 - STRIP_CELL / 2;
+      setLead(Math.max(0, Math.round(next)));
+    };
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(element);
+    return () => observer?.disconnect();
+  }, [alignToFirstHeading, headings, element]);
+
   const listRef = useCallback(
     (node: HTMLElement | null) => {
       navRef.current = node;
@@ -576,6 +606,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
       ref={ref}
       data-hidden={fits ? undefined : ""}
       className={cn("inline-flex", !fits && "invisible", className)}
+      style={alignToFirstHeading ? { ...style, marginTop: lead } : style}
       {...rest}
     >
       <HoverCard open={open} onOpenChange={setOpen} openDelay={OPEN_DELAY} closeDelay={CLOSE_DELAY}>

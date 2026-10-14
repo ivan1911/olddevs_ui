@@ -1575,8 +1575,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                     target={tocTarget}
                     stickyTop={scrolls ? undefined : tocStickyTop}
                     focusHeading={tocFocusHeading}
+                    alignToFirstHeading
                     data-toc-gutter=""
-                    className="sticky mt-2 mr-3 shrink-0"
+                    className="sticky mr-3 shrink-0"
                     style={{
                       top: scrolls
                         ? "0.5rem"
