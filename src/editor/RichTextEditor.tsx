@@ -1436,7 +1436,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         },
         openSearch: (options) => {
           devWarn(
-            'RichTextEditor: handle.openSearch() is deprecated, use handle.tool("search")?.open()'
+            'RichTextEditor: handle.openSearch() is deprecated; use handle.tool("search")?.open() instead'
           );
           methods.tool("search")?.open(options);
         },

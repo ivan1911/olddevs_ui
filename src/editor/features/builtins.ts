@@ -138,8 +138,11 @@ function resolveOptions(
   const valid = given.filter(([key, value]) => checks?.[key]?.(value));
   if (valid.length < given.length) {
     devError(
-      `RichTextEditor: tool "${descriptor.name}": ignored options ` +
-        given.filter((entry) => !valid.includes(entry)).map(([key]) => key)
+      `RichTextEditor: tool "${descriptor.name}": ignored invalid options: ` +
+        given
+          .filter((entry) => !valid.includes(entry))
+          .map(([key]) => key)
+          .join(", ")
     );
   }
   return defaults
