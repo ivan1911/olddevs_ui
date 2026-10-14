@@ -67,7 +67,7 @@ function Screen({ html, surface, listWidth }: ScreenProps) {
   return (
     <div className="flex items-start gap-6">
       <div className="sticky top-[calc(var(--topbar-h,0px)+16px)] w-10 shrink-0">
-        <RichTextToc target={view} />
+        <RichTextToc target={view} listWidth={listWidth} />
       </div>
       <RichTextView
         ref={view}
