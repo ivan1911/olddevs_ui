@@ -3,8 +3,8 @@ component: RichTextToc
 exports: [RichTextToc, RichTextTocProps]
 category: content
 status: stable
-source: src/editor/RichTextToc.tsx
-story: src/editor/RichTextToc.stories.tsx
+source: src/editor/features/toc/RichTextToc.tsx
+story: src/editor/features/toc/RichTextToc.stories.tsx
 ---
 
 # RichTextToc
@@ -122,7 +122,7 @@ export function Article({ html }: { html: string }) {
 
 ## Связанные исходники и Storybook
 
-- Исходник: `src/editor/RichTextToc.tsx`, сбор заголовков — `src/editor/features/toc/headings.ts`
-- Stories: `src/editor/RichTextToc.stories.tsx`
+- Исходник: `src/editor/features/toc/RichTextToc.tsx`, сбор заголовков — `headings.ts` рядом
+- Stories: `src/editor/features/toc/RichTextToc.stories.tsx`
 - Тесты: `tests/rich-text-toc.test.tsx`; в браузере — `tests-visual/interactions.spec.ts`, блок `RichTextToc`
 - Решение: ADR-0066 «Оглавление Документа отдельным компонентом `RichTextToc`»

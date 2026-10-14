@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useRef } from "react";
-import type { RichTextSurface } from "./styles/surface.js";
-import { RichTextEditor, type RichTextEditorHandle } from "./RichTextEditor.js";
+import type { RichTextSurface } from "../../styles/surface.js";
+import { RichTextEditor, type RichTextEditorHandle } from "../../RichTextEditor.js";
 import { RichTextToc } from "./RichTextToc.js";
-import { RichTextView } from "./RichTextView.js";
+import { RichTextView } from "../../RichTextView.js";
 
 /*
   Нейтральный Документ со всеми уровнями заголовков: у H1 нет отступа, у

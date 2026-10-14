@@ -3,9 +3,9 @@ component: RichTextToc
 exports: [RichTextToc, RichTextTocProps]
 category: content
 status: stable
-source: src/editor/RichTextToc.tsx
-story: src/editor/RichTextToc.stories.tsx
-sourceHash: 383d395945cc
+source: src/editor/features/toc/RichTextToc.tsx
+story: src/editor/features/toc/RichTextToc.stories.tsx
+sourceHash: 52e52fdc8172
 ---
 
 # RichTextToc
@@ -123,7 +123,7 @@ The list is a `nav` labeled "Table of contents", and its items are buttons in a 
 
 ## Related sources and Storybook
 
-- Source: `src/editor/RichTextToc.tsx`; heading collection — `src/editor/features/toc/headings.ts`
-- Stories: `src/editor/RichTextToc.stories.tsx`
+- Source: `src/editor/features/toc/RichTextToc.tsx`; heading collection — `headings.ts` next to it
+- Stories: `src/editor/features/toc/RichTextToc.stories.tsx`
 - Tests: `tests/rich-text-toc.test.tsx`; in the browser — `tests-visual/interactions.spec.ts`, the `RichTextToc` block
 - Decision: ADR-0066 "The Table of contents of a Document as a separate `RichTextToc` component"

@@ -10,13 +10,17 @@ import {
   type KeyboardEvent,
   type RefObject,
 } from "react";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "../components/overlays/HoverCard.js";
-import { toPixels } from "../hooks/useStickyOffset.js";
-import { useMessages } from "../i18n/useMessages.js";
-import { cn } from "../lib/cn.js";
-import { watchHandleEditor } from "./core/handleWatchers.js";
-import type { RichTextEditorHandle } from "./RichTextEditor.js";
-import { collectHeadings, documentRoot, type TocHeading } from "./features/toc/headings.js";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../../../components/overlays/HoverCard.js";
+import { toPixels } from "../../../hooks/useStickyOffset.js";
+import { useMessages } from "../../../i18n/useMessages.js";
+import { cn } from "../../../lib/cn.js";
+import { watchHandleEditor } from "../../core/handleWatchers.js";
+import type { RichTextEditorHandle } from "../../RichTextEditor.js";
+import { collectHeadings, documentRoot, type TocHeading } from "./headings.js";
 
 export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /**
@@ -128,6 +132,11 @@ const FLASH_DURATION = 1600;
  * подсветку за правку. Цвет читается из токена на самом заголовке: так он
  * верен и на Листе, и во вложенной теме. Нет API — нет и подсветки.
  */
+/** Кривая шкалы движения, прочитанная с узла; нет токена — штатная `ease`. */
+function scaleCurve(node: HTMLElement, token: string): string {
+  return getComputedStyle(node).getPropertyValue(token).trim() || "ease";
+}
+
 function flash(heading: HTMLElement) {
   if (typeof heading.animate !== "function") return;
   const accent = getComputedStyle(heading).getPropertyValue("--accent-strong").trim();
@@ -139,7 +148,10 @@ function flash(heading: HTMLElement) {
       { backgroundColor: color, boxShadow: `0 0 0 6px ${color}`, borderRadius: "4px" },
       { backgroundColor: "transparent", boxShadow: "0 0 0 6px transparent", borderRadius: "4px" },
     ],
-    { duration: FLASH_DURATION, easing: "ease-out" }
+    // Кривая — ступень шкалы `--ease-enter` (ADR-0047): гаснет быстро и
+    // дотягивает медленно. Длительность вне шкалы намеренно: это не переход
+    // между состояниями, а след, который глаз должен успеть заметить.
+    { duration: FLASH_DURATION, easing: scaleCurve(heading, "--ease-enter") }
   );
 }
 
@@ -485,7 +497,7 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(function
                   data-depth={heading.depth}
                   data-current={index === current || undefined}
                   className={cn(
-                    "rounded-full transition-[width,height,background-color] duration-150",
+                    "rounded-full transition-[width,height,background-color]",
                     index === current
                       ? CURRENT_STROKE
                       : cn("bg-fg-3 h-0.5", strokeWidth(heading.depth))
