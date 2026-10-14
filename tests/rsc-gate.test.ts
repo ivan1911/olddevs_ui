@@ -79,6 +79,13 @@ const SERVER_SAFE = [
       "module that assembles `tools` imports it next to the custom tool descriptions.",
   },
   {
+    file: "editor/core/defineTool.ts",
+    why:
+      "defineTool() (OLDSUI-268): the definition of a custom tool is data and functions, like " +
+      "CustomTool, and the module only spreads and merges it. Tiptap is a type-only import, no " +
+      "React — a server module that builds `tools`, and `richTextSchema`, import it.",
+  },
+  {
     file: "editor/core/toolCommands.ts",
     why:
       "The types of the Commands of a tool (OLDSUI-268): interfaces and one conditional type " +
