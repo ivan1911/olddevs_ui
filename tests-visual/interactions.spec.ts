@@ -4187,6 +4187,36 @@ test.describe("RichTextToc", () => {
     await expect.poll(async () => Math.round((await heading.boundingBox())!.y)).toBe(56);
   });
 
+  test("without a header a jump scrolls the area and leaves the page where it was", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/iframe.html?id=content-richtexttoc--scrolling-area-without-header&globals=theme:dark;accent:blue"
+    );
+    await expect(strip(page)).toBeVisible();
+    // Страницу чуть прокрутили: сдвиг от перехода отличим от нуля.
+    await page.evaluate(() => window.scrollTo(0, 40));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(40);
+
+    await hoverStrip(page);
+    await list(page).getByRole("button", { name: "Tones", exact: true }).click();
+
+    const heading = page.getByRole("heading", { name: "Tones" });
+    const area = page.getByTestId("scroll-area");
+    await expect(heading).toBeFocused();
+    // Прокрутка плавная — ждём, пока она кончится.
+    await expect
+      .poll(
+        async () => {
+          const top = (await heading.boundingBox())!.y - (await area.boundingBox())!.y;
+          return Math.round(top);
+        },
+        { timeout: 5000 }
+      )
+      .toBe(0);
+    expect(await page.evaluate(() => window.scrollY)).toBe(40);
+  });
+
   test.describe("on a narrow screen", () => {
     test.use({ viewport: { width: 360, height: 700 } });
 

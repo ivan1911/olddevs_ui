@@ -764,3 +764,74 @@ test("after a mouse jump in an editable Editor the list does not hold focus, so 
   const nav = screen.getByRole("navigation", { name: "Table of contents" });
   expect(nav.contains(document.activeElement)).toBe(false);
 });
+
+// --- Переход без шапки (OLDSUI-275) -------------------------------------------
+
+/** Документ в своей прокручиваемой области; шапка (`--topbar-h`) не задана. */
+function ScrollBoxScreen() {
+  const view = useRef<HTMLDivElement>(null);
+  return (
+    <div>
+      <RichTextToc target={view} />
+      <div data-testid="box" style={{ overflowY: "auto", maxHeight: 320 }}>
+        <RichTextView ref={view} html={ARTICLE} data-testid="view" />
+      </div>
+    </div>
+  );
+}
+
+test("without a sticky header a jump scrolls the nearest scrollable box and leaves the window alone", async () => {
+  const user = userEvent.setup();
+  const windowScroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  render(<ScrollBoxScreen />);
+
+  const box = screen.getByTestId("box");
+  Object.defineProperty(box, "scrollHeight", { value: 2000, configurable: true });
+  Object.defineProperty(box, "clientHeight", { value: 320, configurable: true });
+  box.scrollTo = vi.fn();
+  box.getBoundingClientRect = () => ({ top: 100 }) as DOMRect;
+  const heading = screen.getByTestId("view").querySelector("h4")!;
+  heading.getBoundingClientRect = () => ({ top: 500 }) as DOMRect;
+
+  const items = await openList(user);
+  await user.click(items[2]!);
+
+  // Заголовок на 400 px ниже верха области; область была прокручена на 0.
+  expect(box.scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 400 }));
+  expect(windowScroll).not.toHaveBeenCalled();
+  expect(heading.scrollIntoView).not.toHaveBeenCalled();
+});
+
+test("without a sticky header the heading stops below its scroll-margin-top inside the box", async () => {
+  const user = userEvent.setup();
+  render(<ScrollBoxScreen />);
+
+  const box = screen.getByTestId("box");
+  Object.defineProperty(box, "scrollHeight", { value: 2000, configurable: true });
+  Object.defineProperty(box, "clientHeight", { value: 320, configurable: true });
+  Object.defineProperty(box, "scrollTop", { value: 50, configurable: true });
+  box.scrollTo = vi.fn();
+  box.getBoundingClientRect = () => ({ top: 100 }) as DOMRect;
+  const heading = screen.getByTestId("view").querySelector("h4")!;
+  heading.style.scrollMarginTop = "24px";
+  heading.getBoundingClientRect = () => ({ top: 500 }) as DOMRect;
+
+  const items = await openList(user);
+  await user.click(items[2]!);
+
+  expect(box.scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 50 + 400 - 24 }));
+});
+
+test("without a sticky header and without a scrollable box the window scrolls to the heading, honoring scroll-margin-top", async () => {
+  const user = userEvent.setup();
+  const windowScroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  render(<Screen html={ARTICLE} />);
+
+  const items = await openList(user);
+  await user.click(items[2]!);
+
+  // Отступ учитывает сам браузер: `scrollIntoView` читает `scroll-margin-top`.
+  const heading = screen.getByTestId("view").querySelector("h4")!;
+  expect(heading.scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: "start" }));
+  expect(windowScroll).not.toHaveBeenCalled();
+});

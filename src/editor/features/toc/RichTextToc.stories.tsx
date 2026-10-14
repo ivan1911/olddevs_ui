@@ -271,3 +271,33 @@ function WithTopBar(props: ScreenProps) {
     </div>
   );
 }
+
+/**
+ * Документ в своей прокручиваемой области, шапки у страницы нет. Переход
+ * прокручивает только эту область: страница стоит на месте, а заголовок встаёт
+ * к верхнему краю области (`scroll-margin-top`, ADR-0016).
+ */
+export const ScrollingAreaWithoutHeader: Story = {
+  render: (args) => <ScrollingAreaScreen {...args} />,
+};
+
+function ScrollingAreaScreen({ html }: ScreenProps) {
+  const view = useRef<HTMLDivElement>(null);
+  return (
+    <div>
+      <div className="flex items-start gap-6">
+        <div className="sticky top-4 w-10 shrink-0">
+          <RichTextToc target={view} />
+        </div>
+        <div
+          data-testid="scroll-area"
+          className="bg-bg-1 max-h-80 min-w-0 flex-1 overflow-y-auto px-4"
+        >
+          <RichTextView ref={view} html={html} className="max-w-[640px]" />
+        </div>
+      </div>
+      {/* Страница выше окна: ей есть куда прокручиваться, и сдвиг был бы виден. */}
+      <p className="text-fg-2 mt-6 h-[900px] text-[13px]">The page continues below the area.</p>
+    </div>
+  );
+}

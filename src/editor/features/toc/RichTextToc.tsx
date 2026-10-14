@@ -198,12 +198,23 @@ function jumpTo(
   flash(heading);
 
   const behavior: ScrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
-  // Без шапки браузер сам учтёт `scroll-margin-top` заголовка.
+  const scroller = scrollParent(heading);
   if (offset === null) {
-    heading.scrollIntoView({ behavior, block: "start" });
+    // Без шапки отступ задаёт `scroll-margin-top` заголовка (ADR-0016). Окно
+    // прокручивает браузер. Но `scrollIntoView` двигает ещё и всех
+    // прокручиваемых предков, а значит, при Документе в своей прокручиваемой
+    // области уехала бы и страница, — поэтому область прокручивается сама,
+    // а окно не трогается.
+    if (!scroller) {
+      heading.scrollIntoView({ behavior, block: "start" });
+      return;
+    }
+    const margin = parseFloat(getComputedStyle(heading).scrollMarginTop) || 0;
+    const edge = scroller.getBoundingClientRect().top;
+    const top = heading.getBoundingClientRect().top;
+    scroller.scrollTo({ top: scroller.scrollTop + top - edge - margin, behavior });
     return;
   }
-  const scroller = scrollParent(heading);
   const top = heading.getBoundingClientRect().top;
   if (scroller) {
     const edge = scroller.getBoundingClientRect().top;
