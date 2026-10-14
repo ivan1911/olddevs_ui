@@ -2821,11 +2821,15 @@ const TOC_TOOLS = [...RICH_TEXT_PRESETS.full, "toc"] as const;
  */
 export const TableOfContents: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /** `readOnly`: Панели нет, полоса липнет к краю окна, переход ставит фокус на заголовок. */
 export const TableOfContentsReadOnly: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, readOnly: true },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /**
@@ -2834,16 +2838,22 @@ export const TableOfContentsReadOnly: Story = {
  */
 export const TableOfContentsScrollingField: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, maxHeight: 360 },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /** Светлый Лист: Оглавление стоит в поле Редактора слева от Листа, в теме приложения. */
 export const TableOfContentsPaper: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, surface: "paper" },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /** Плавающая Панель: над полем ничего не липнет, полоса — к краю окна. */
 export const TableOfContentsFloatingToolbar: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, toolbar: "floating" },
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /**
@@ -2860,6 +2870,8 @@ export const TableOfContentsOptions: Story = {
     toolbar: "floating",
   },
   render: (args) => <WithAppHeader {...args} />,
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 function WithAppHeader(props: RichTextEditorProps) {
@@ -2930,6 +2942,8 @@ function WithReadingPosition(props: RichTextEditorProps) {
 export const TableOfContentsExternalNavigation: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE },
   render: (args) => <WithReadingPosition {...args} />,
+  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  tags: ["network-idle"],
 };
 
 /**
