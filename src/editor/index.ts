@@ -19,6 +19,8 @@ export { RichTextEditor } from "./RichTextEditor.js";
 export type { RichTextEditorHandle, RichTextEditorProps } from "./RichTextEditor.js";
 export type { RichTextDocument } from "./core/jsonDocument.js";
 export { useRichTextEditorState } from "./hooks/useRichTextEditorState.js";
+export { useRichTextToolState } from "./hooks/useRichTextToolState.js";
+export type { RichTextToolState } from "./hooks/useRichTextToolState.js";
 export { RichTextView } from "./RichTextView.js";
 export type { RichTextViewProps } from "./RichTextView.js";
 export { RichTextToc } from "./features/toc/RichTextToc.js";
@@ -38,6 +40,7 @@ export { RICH_TEXT_PRESETS } from "./core/tools.js";
 export type { RichTextEditorPreset } from "./core/tools.js";
 export { tool } from "./core/toolOptions.js";
 export type { ConfiguredTool, RichTextTools } from "./core/toolOptions.js";
+export type { SearchToolState, TocToolHeading, TocToolState } from "./core/toolState.js";
 export { markRange } from "./core/customTool.js";
 export type {
   TextCardRange,

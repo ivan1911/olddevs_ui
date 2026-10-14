@@ -1,3 +1,4 @@
+import type { SearchToolState, TocToolState } from "./toolState.js";
 import type { Tool as ToolName } from "./tools.js";
 
 /*
@@ -81,12 +82,12 @@ type Pending = Record<string, never>;
 export interface RichTextTools {
   search: {
     options: SearchToolOptions;
-    state: Pending;
+    state: SearchToolState;
     commands: Pending;
   };
   toc: {
     options: TocToolOptions;
-    state: Pending;
+    state: TocToolState;
     commands: Pending;
   };
 }

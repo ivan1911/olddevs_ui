@@ -327,6 +327,12 @@ export interface TocCoreProps extends RichTextTocProps {
    * уровня, а не полоса выше текста.
    */
   alignToFirstHeading?: boolean;
+  /**
+   * Текущий раздел сменился (в том числе при первом показе): Редактор кладёт
+   * индекс в Состояние Инструмента `toc`. Индекс считается по списку, который
+   * видит `TocCore`; пока заголовков меньше двух, он остаётся прежним.
+   */
+  onCurrentChange?: (index: number) => void;
 }
 
 export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore(
@@ -338,6 +344,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     stickyTop,
     focusHeading,
     alignToFirstHeading = false,
+    onCurrentChange,
     className,
     style,
     ...rest
@@ -346,9 +353,9 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
 ) {
   // Настройки хозяина читаются в обработчиках прокрутки: последние значения —
   // через ссылку, чтобы новая функция на каждом рендере не пересоздавала слушателей.
-  const latest = useRef({ stickyTop, focusHeading, offsetVar, levels });
+  const latest = useRef({ stickyTop, focusHeading, offsetVar, levels, onCurrentChange });
   useEffect(() => {
-    latest.current = { stickyTop, focusHeading, offsetVar, levels };
+    latest.current = { stickyTop, focusHeading, offsetVar, levels, onCurrentChange };
   });
   // Набор уровней сравнивается по значению: массив-литерал новый на каждом рендере.
   const levelsKey = levels ? levels.join(",") : "";
@@ -361,6 +368,10 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
   const [headings, setHeadings] = useState<TocHeading[]>([]);
   const [gap, setGap] = useState(STRIP_GAP);
   const [current, setCurrent] = useState(0);
+  // Текущий раздел — в Состояние Инструмента (`useRichTextToolState`).
+  useEffect(() => {
+    latest.current.onCurrentChange?.(current);
+  }, [current]);
   const [open, setOpen] = useState(false);
   const [fits, setFits] = useState(true);
   const stripRef = useRef<HTMLButtonElement>(null);

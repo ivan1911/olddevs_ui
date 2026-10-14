@@ -4257,4 +4257,33 @@ test.describe("RichTextEditor with the toc tool", () => {
       .toBe(0);
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
+
+  /*
+   * Состояние Инструмента `toc` (OLDSUI-268): текущий раздел в снимке следует за
+   * прокруткой. В jsdom у узлов нет геометрии, поэтому только здесь.
+   */
+  test("the State follows the scroll: the current section reaches the external navigation", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/iframe.html?id=inputs-richtexteditor--table-of-contents-external-navigation&globals=theme:dark;accent:blue"
+    );
+    const current = page
+      .getByRole("navigation", { name: "Reading position" })
+      .locator('[aria-current="location"]');
+    await expect(current).toHaveText("Palette");
+
+    // Заголовок встал под липкую Панель — он и есть текущий раздел.
+    await page.getByRole("heading", { name: "Layer 2 — roles by theme" }).evaluate((heading) => {
+      window.scrollTo(0, window.scrollY + heading.getBoundingClientRect().top - 30);
+    });
+    await expect(current).toHaveText("Layer 2 — roles by theme");
+
+    // Документ докручен до конца: текущий — последний раздел, хотя он короткий.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect(current).toHaveText("What's next");
+
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(current).toHaveText("Palette");
+  });
 });

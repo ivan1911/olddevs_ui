@@ -112,3 +112,51 @@ test("the schema for custom tools is part of the editor entry, not of the barrel
   expect(Object.keys(editor)).toContain("richTextSchema");
   expect(Object.keys(barrel)).not.toContain("richTextSchema");
 });
+
+test("the tool State hook is part of the editor entry, not of the barrel", async () => {
+  const editor = await import("../src/editor/index.js");
+
+  expect(Object.keys(editor)).toContain("useRichTextToolState");
+  expect(Object.keys(barrel)).not.toContain("useRichTextToolState");
+});
+
+/**
+ * Статический граф `RichTextEditor` (без `import()`): модули, которые он тянет
+ * сразу. Бюджет «старта» Редактора почти исчерпан, поэтому хук Состояния и
+ * вычисление снимков в нём быть не должны (OLDSUI-268): ими платит экран,
+ * который их импортировал.
+ */
+function staticGraph(entry: string): Set<string> {
+  const seen = new Set<string>();
+  const visit = (file: string) => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    const source = readFileSync(file, "utf8");
+    for (const [, specifier] of source.matchAll(
+      /^(?:import|export)\b[^;]*?from\s+"(\.[^"]+)"/gms
+    )) {
+      const base = resolve(file, "..", specifier!.replace(/\.js$/, ""));
+      for (const candidate of [`${base}.ts`, `${base}.tsx`]) {
+        try {
+          visit(candidate);
+          break;
+        } catch {
+          // Не тот суффикс: у модуля одно расширение.
+        }
+      }
+    }
+  };
+  visit(entry);
+  return seen;
+}
+
+test("the static graph of RichTextEditor does not carry the State hook or the snapshots", () => {
+  const graph = [...staticGraph(join(SRC, "editor/RichTextEditor.tsx"))].map((file) =>
+    relative(SRC, file).split("\\").join("/")
+  );
+
+  // Граф найден: иначе проверка ниже молча стала бы пустой.
+  expect(graph).toContain("editor/features/search/searchPlugin.ts");
+  expect(graph).toContain("editor/core/handleWatchers.ts");
+  expect(graph.filter((path) => /useRichTextToolState|Snapshot\.ts$/.test(path))).toEqual([]);
+});
