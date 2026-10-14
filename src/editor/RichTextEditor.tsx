@@ -1817,7 +1817,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             ref={hiddenRef}
             type="hidden"
             name={name}
-            defaultValue={initial}
+            /*
+              Значение скрытого поля пишет Редактор (`emit`, эффекты движка), а
+              не React. Но React на КАЖДОМ обновлении заново ставит `defaultValue`,
+              а у `type="hidden"` это и есть его значение: любой рендер родителя
+              откатывал бы поле формы к входящей строке. Поэтому после монтажа в
+              `defaultValue` уходит то, что уже лежит в поле, — React видит равенство
+              и ничего не трогает. Серверный рендер и первый кадр несут `initial`.
+            */
+            defaultValue={hiddenRef.current?.value ?? initial}
             // Выключенное поле не уходит в форму — как нативное. Поле только
             // для чтения уходит: это показанное значение, а не недоступный
             // контрол.
