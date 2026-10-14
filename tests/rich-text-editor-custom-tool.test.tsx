@@ -174,7 +174,8 @@ test("a custom tool that is not passed removes its blocks from the schema", () =
 // ── Набор: пресеты и порядок ──────────────────────────────────────────────
 
 test("the presets are exported as frozen arrays of tool names", () => {
-  expect(RICH_TEXT_PRESETS.full).toEqual(TOOLS);
+  // Все встроенные, кроме Оглавления: `toc` включают только явно (ADR-0068).
+  expect(RICH_TEXT_PRESETS.full).toEqual(TOOLS.filter((tool) => tool !== "toc"));
   expect(RICH_TEXT_PRESETS.basic).toContain("bold");
   expect(RICH_TEXT_PRESETS.basic).not.toContain("table");
   expect(Object.isFrozen(RICH_TEXT_PRESETS)).toBe(true);

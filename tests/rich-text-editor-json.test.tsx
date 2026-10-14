@@ -439,3 +439,23 @@ test("a tree that cannot be built is rejected with its cause in the development 
   // Причина — вторым аргументом: у кривого файла и у бросившего Инструмента виден стек.
   expect(error.mock.calls[0]?.[1]).toBeInstanceOf(Error);
 });
+
+test("a re-render of the owner keeps the form field value the Editor wrote", () => {
+  const { container, rerender } = render(
+    <RichTextEditor
+      aria-label="Body"
+      name="body"
+      defaultValue={envelope(paragraph(text("Sent")))}
+    />
+  );
+  rerender(
+    <RichTextEditor
+      aria-label="Body"
+      name="body"
+      className="changed"
+      defaultValue={envelope(paragraph(text("Sent")))}
+    />
+  );
+  const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="body"]');
+  expect(hidden?.value).toBe("<p>Sent</p>");
+});

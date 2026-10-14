@@ -37,7 +37,7 @@ category: inputs
 status: stable
 source: src/editor/RichTextEditor.tsx
 story: src/editor/RichTextEditor.stories.tsx
-sourceHash: 95badb4a657c
+sourceHash: 3eaf71d10511
 ---
 
 # RichTextEditor
@@ -305,43 +305,44 @@ The `link` Tool: the "Link" button on the Toolbar and `Ctrl/⌘+K` open a popove
 
 ## Tools and Presets
 
-`preset="full"` (default) is everything in the release. `preset="basic"` is for comments and short descriptions. `tools` is an exact list and takes precedence over a Preset; descriptions of custom Tools can be mixed in with the kit's names (see the "Custom Tool" section). The type of a `tools` element is `Tool` (a kit name or a `CustomTool`), the type of a kit name is `ToolName`; both are exported from `@olddevs/ui/editor`.
+`preset="full"` (default) is everything in the release except the Table of contents `toc`: it changes the layout of the field, so it is switched on only explicitly. `preset="basic"` is for comments and short descriptions. `tools` is an exact list and takes precedence over a Preset; descriptions of custom Tools can be mixed in with the kit's names (see the "Custom Tool" section). The type of a `tools` element is `Tool` (a kit name or a `CustomTool`), the type of a kit name is `ToolName`; both are exported from `@olddevs/ui/editor`.
 
 Presets are also exported as arrays of names — `RICH_TEXT_PRESETS.full` and `RICH_TEXT_PRESETS.basic` — so that you can assemble your own set from them: `tools={[...RICH_TEXT_PRESETS.full, mergeTagTool]}`. The arrays are frozen. A Preset's content is "what the kit considers the full set", not a frozen list: a new built-in Tool arrives in a Preset in a minor version. If you need a stable set, pass an exact list of names.
 
 **A disabled Tool removes both the button and the Schema extension.** Its Block or Mark cannot be created with a keyboard shortcut, a Markdown shortcut or a paste, and from `value` they arrive without Block markup, and the text stays.
 
-| `Tool`            | Button                                 | Markup                                    | Shortcut                                          | Markdown while typing  | `basic` |
-| ----------------- | -------------------------------------- | ----------------------------------------- | ------------------------------------------------- | ---------------------- | ------- |
-| `heading`         | "¶": Heading 2–4                       | `h2`, `h3`, `h4`                          | `Ctrl/⌘+Alt+2…4`                                  | `## `, `### `, `#### ` | —       |
-| `heading1`        | "¶": adds Heading 1                    | `h1`                                      | `Ctrl/⌘+Alt+1`                                    | `# `                   | —       |
-| `history`         | Undo, Redo                             | —                                         | `Ctrl/⌘+Z`, `+Shift+Z`                            | —                      | yes     |
-| `bold`            | Bold                                   | `strong`                                  | `Ctrl/⌘+B`                                        | `**text**`             | yes     |
-| `italic`          | Italic                                 | `em`                                      | `Ctrl/⌘+I`                                        | `*text*`               | yes     |
-| `underline`       | "…": Underline                         | `u`                                       | `Ctrl/⌘+U`                                        | —                      | —       |
-| `strike`          | Strikethrough                          | `s`                                       | `Ctrl/⌘+Shift+S`                                  | `~~text~~`             | yes     |
-| `code`            | "…": Inline code                       | `code`                                    | `Ctrl/⌘+E`                                        | `` `text` ``           | yes     |
-| `superscript`     | "…": Superscript                       | `sup`                                     | `Ctrl/⌘+.`                                        | —                      | —       |
-| `subscript`       | "…": Subscript                         | `sub`                                     | `Ctrl/⌘+,`                                        | —                      | —       |
-| `clearFormatting` | "…": Clear formatting                  | — (removes Marks)                         | `Ctrl/⌘+\`                                        | —                      | —       |
-| `link`            | Link (address popover)                 | `a[href]`                                 | `Ctrl/⌘+K`                                        | `[text](url)` on paste | yes     |
-| `color`           | Color ▾ (Selection menu): "Text color" | `span[data-color]`, `span[style]`         | —                                                 | —                      | —       |
-| `highlight`       | Highlight ▾ (Toolbar), "Color ▾"       | `mark[data-color]`, `mark[style]`         | —                                                 | —                      | —       |
-| `align`           | Alignment ▾ (menu)                     | `p`, `h2`–`h4` with `data-align`          | `Ctrl/⌘+Shift+L`, `+E`, `+R`                      | —                      | —       |
-| `bulletList`      | Lists ▾: Bulleted list                 | `ul`, `li`                                | `Ctrl/⌘+Shift+8`                                  | `- ` or `* `           | yes     |
-| `orderedList`     | Lists ▾: Numbered list                 | `ol`, `li`                                | `Ctrl/⌘+Shift+7`                                  | `1. `                  | yes     |
-| `taskList`        | Lists ▾: Checklist                     | `ul[data-type=taskList]` and items        | `Ctrl/⌘+Shift+9`                                  | `[ ] ` or `[x] `       | —       |
-| `blockquote`      | "…": Quote                             | `blockquote`                              | `Ctrl/⌘+Shift+B`                                  | `> `                   | yes     |
-| `codeBlock`       | "…": Code block                        | `pre`, `code class="language-*"`          | `Ctrl/⌘+Alt+C`                                    | ` ``` `                | —       |
-| `horizontalRule`  | "+": Divider                           | `hr`                                      | —                                                 | `---`                  | —       |
-| `table`           | Table ▾ (menu)                         | `table`, `tbody`, `tr`, `th`, `td`        | `Tab`, `Shift+Tab`, `Alt+↓` in a table            | —                      | —       |
-| `image`           | Image (address popover)                | `figure`, `img`, `figcaption`             | —                                                 | `![alt](url)` on paste | —       |
-| `emoji`           | Emoji (popover with a grid)            | — (plain text)                            | —                                                 | —                      | —       |
-| `source`          | HTML (mode toggle)                     | — (edits the Document's HTML)             | —                                                 | —                      | —       |
-| `search`          | Find (find and replace panel)          | — (searches the Document)                 | `Ctrl/⌘+F`, `Ctrl/⌘+Alt+F`                        | —                      | yes     |
-| `layout`          | "+": Layout                            | `div` with `data-block` and `data-layout` | `Tab`, `Shift+Tab`, arrow keys at the column edge | —                      | —       |
-| `wrapper`         | "+": Wrapper                           | `div[data-block=wrapper]`                 | `Enter` in an empty last paragraph — exit         | —                      | —       |
-| `insertMenu`      | "+" Insert menu                        | — (Blocks of other Tools)                 | —                                                 | `/`                    | —       |
+| `Tool`            | Button                                               | Markup                                    | Shortcut                                          | Markdown while typing  | `basic` |
+| ----------------- | ---------------------------------------------------- | ----------------------------------------- | ------------------------------------------------- | ---------------------- | ------- |
+| `heading`         | "¶": Heading 2–4                                     | `h2`, `h3`, `h4`                          | `Ctrl/⌘+Alt+2…4`                                  | `## `, `### `, `#### ` | —       |
+| `heading1`        | "¶": adds Heading 1                                  | `h1`                                      | `Ctrl/⌘+Alt+1`                                    | `# `                   | —       |
+| `history`         | Undo, Redo                                           | —                                         | `Ctrl/⌘+Z`, `+Shift+Z`                            | —                      | yes     |
+| `bold`            | Bold                                                 | `strong`                                  | `Ctrl/⌘+B`                                        | `**text**`             | yes     |
+| `italic`          | Italic                                               | `em`                                      | `Ctrl/⌘+I`                                        | `*text*`               | yes     |
+| `underline`       | "…": Underline                                       | `u`                                       | `Ctrl/⌘+U`                                        | —                      | —       |
+| `strike`          | Strikethrough                                        | `s`                                       | `Ctrl/⌘+Shift+S`                                  | `~~text~~`             | yes     |
+| `code`            | "…": Inline code                                     | `code`                                    | `Ctrl/⌘+E`                                        | `` `text` ``           | yes     |
+| `superscript`     | "…": Superscript                                     | `sup`                                     | `Ctrl/⌘+.`                                        | —                      | —       |
+| `subscript`       | "…": Subscript                                       | `sub`                                     | `Ctrl/⌘+,`                                        | —                      | —       |
+| `clearFormatting` | "…": Clear formatting                                | — (removes Marks)                         | `Ctrl/⌘+\`                                        | —                      | —       |
+| `link`            | Link (address popover)                               | `a[href]`                                 | `Ctrl/⌘+K`                                        | `[text](url)` on paste | yes     |
+| `color`           | Color ▾ (Selection menu): "Text color"               | `span[data-color]`, `span[style]`         | —                                                 | —                      | —       |
+| `highlight`       | Highlight ▾ (Toolbar), "Color ▾"                     | `mark[data-color]`, `mark[style]`         | —                                                 | —                      | —       |
+| `align`           | Alignment ▾ (menu)                                   | `p`, `h2`–`h4` with `data-align`          | `Ctrl/⌘+Shift+L`, `+E`, `+R`                      | —                      | —       |
+| `bulletList`      | Lists ▾: Bulleted list                               | `ul`, `li`                                | `Ctrl/⌘+Shift+8`                                  | `- ` or `* `           | yes     |
+| `orderedList`     | Lists ▾: Numbered list                               | `ol`, `li`                                | `Ctrl/⌘+Shift+7`                                  | `1. `                  | yes     |
+| `taskList`        | Lists ▾: Checklist                                   | `ul[data-type=taskList]` and items        | `Ctrl/⌘+Shift+9`                                  | `[ ] ` or `[x] `       | —       |
+| `blockquote`      | "…": Quote                                           | `blockquote`                              | `Ctrl/⌘+Shift+B`                                  | `> `                   | yes     |
+| `codeBlock`       | "…": Code block                                      | `pre`, `code class="language-*"`          | `Ctrl/⌘+Alt+C`                                    | ` ``` `                | —       |
+| `horizontalRule`  | "+": Divider                                         | `hr`                                      | —                                                 | `---`                  | —       |
+| `table`           | Table ▾ (menu)                                       | `table`, `tbody`, `tr`, `th`, `td`        | `Tab`, `Shift+Tab`, `Alt+↓` in a table            | —                      | —       |
+| `image`           | Image (address popover)                              | `figure`, `img`, `figcaption`             | —                                                 | `![alt](url)` on paste | —       |
+| `emoji`           | Emoji (popover with a grid)                          | — (plain text)                            | —                                                 | —                      | —       |
+| `source`          | HTML (mode toggle)                                   | — (edits the Document's HTML)             | —                                                 | —                      | —       |
+| `search`          | Find (find and replace panel)                        | — (searches the Document)                 | `Ctrl/⌘+F`, `Ctrl/⌘+Alt+F`                        | —                      | yes     |
+| `layout`          | "+": Layout                                          | `div` with `data-block` and `data-layout` | `Tab`, `Shift+Tab`, arrow keys at the column edge | —                      | —       |
+| `wrapper`         | "+": Wrapper                                         | `div[data-block=wrapper]`                 | `Enter` in an empty last paragraph — exit         | —                      | —       |
+| `insertMenu`      | "+" Insert menu                                      | — (Blocks of other Tools)                 | —                                                 | `/`                    | —       |
+| `toc`             | Table of contents in the left gutter (not in `full`) | — (reads the headings)                    | —                                                 | —                      | —       |
 
 A paragraph is always there; a soft line break is `Shift+Enter`. `insertMenu` and `emoji`, like `clearFormatting`, have no markup of their own: `insertMenu` provides access to other Tools' Blocks, and it is disabled where `/` is an ordinary character (paths, "and/or"); `basic` lacks it for the same reason. `emoji` inserts plain text — the Schema, the sanitizer and Markdown do not change because of it (see the "Emoji" section); `basic` lacks it: in a comment the OS's own palette is easier to reach, and a button would take up room in a short row. `source` is the HTML mode (see the "HTML mode" section): it has no markup of its own either, an HTML edit goes through the same Schema as `value`, and it cannot be used to get around the set of Tools; `basic` lacks it — in a comment an "HTML" button is superfluous unless the screen explicitly asks for it.
 
@@ -349,7 +350,7 @@ A paragraph is always there; a soft line break is `Shift+Enter`. `insertMenu` an
 
 Earlier, "no H1 in the Document" was a kit decision (the page heading sits outside the Editor); now it is the screen's decision — ADR-0053 revises the earlier decision, and ADR-0050 links to ADR-0053.
 
-A name enters the `Tool` type together with the Tool itself, not earlier: widening the input type does not break the consumer, whereas a name without an implementation would compile and do nothing. That is how `link` arrived — straight into the `basic` Preset too — and `color`, `highlight`, `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `source`; there are no reserved names now. Unknown names in `tools` (from JS without types) are dropped silently.
+A name enters the `Tool` type together with the Tool itself, not earlier: widening the input type does not break the consumer, whereas a name without an implementation would compile and do nothing. That is how `link` arrived — straight into the `basic` Preset too — and `color`, `highlight`, `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `source`, `toc`; there are no reserved names now. Unknown names in `tools` (from JS without types) are dropped silently.
 
 `preset` and `tools` are read **when the engine is created**: the Schema of a live ProseMirror cannot be changed. To change the set on a mounted field, remount it with a key (`key`) — the edit history is lost in the process.
 
@@ -1169,6 +1170,23 @@ The `search` Tool (present in `full` and in `basic`) is find and replace over th
 - **Weight.** The match highlighting plugin and the shortcuts are in the engine from the start; the find panel (fields, checkboxes, switch) is a lazy chunk that loads the first time the panel opens and does not delay Readiness.
 
 Message catalog strings: `editor.search` (the button and the `Ctrl/⌘+F` Shortcuts reference row), `searchReplace` (`Ctrl/⌘+Alt+F`), `searchPanel`, `searchField`, `replaceField`, `searchPrevious`, `searchNext`, `searchClose`, `searchMatchCase`, `searchWholeWord`, `searchRegex`, `replaceOne`, `replaceAll`, `searchCount({ current, total })`, `searchNoMatches`, `searchInvalid`.
+
+## Table of contents
+
+The `toc` Tool puts the Table of contents of the Document in the Editor's left gutter: the same strip of strokes and the same list as [`RichTextToc`](../content/rich-text-toc.md), but the Editor holds the place itself (ADR-0068). It is in neither Preset, `full` or `basic`: the Table of contents moves the text, and a kit update does not change the layout of screens that did not ask for it. Switch it on by name:
+
+```tsx
+<RichTextEditor tools={[...RICH_TEXT_PRESETS.full, "toc"]} defaultValue={html} />
+```
+
+- **Place.** A column to the left of the Document, inside the field frame. It exists only while there is a strip, from two `h1`–`h4` headings at the top level and in Wrappers: with the second heading the text moves right; without it the text stays at the edge, as without the Tool. The first stroke is level with the first line of the first heading.
+- **Stickiness.** The strip sticks under the fixed Toolbar (and under the app header: `--topbar-h`, ADR-0016); without a Toolbar, to the edge of the window. In a field with `maxHeight` or `resizable` it sticks to the top of the scrolling area, and the highlight and the jump count from there; the page does not scroll.
+- **The list** works as in `RichTextToc`: hover opens it to the right of the strip, Enter and Space open it from the keyboard, arrows move between items, Escape closes it; the current section is highlighted in the strip and in the list; the width is 240px, and a long heading is cut with an ellipsis. A click on an item does not close the list: moving the pointer away does.
+- **A jump while editing** puts the caret at the end of the heading, so you can type right away, as in the document outline of Google Docs; the Table of contents does the scrolling, and the heading flashes a fading background. In `readOnly` there is no caret, so focus goes to the heading itself.
+- **A live Document.** The list is rebuilt shortly after each edit: a new, renamed or removed heading shows in the strip. In HTML mode there is no Table of contents, because the Document is hidden.
+- **No Toolbar button.** To show or hide the Table of contents, the screen changes `tools` (and remounts the field with a `key`, as for any set of Tools).
+
+Message catalog string: `editor.toc` ("Table of contents"), the name of the strip and the label of the list.
 
 ## Status line and Field notice
 

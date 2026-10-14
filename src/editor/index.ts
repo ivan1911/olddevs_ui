@@ -21,6 +21,8 @@ export type { RichTextDocument } from "./core/jsonDocument.js";
 export { useRichTextEditorState } from "./hooks/useRichTextEditorState.js";
 export { RichTextView } from "./RichTextView.js";
 export type { RichTextViewProps } from "./RichTextView.js";
+export { RichTextToc } from "./features/toc/RichTextToc.js";
+export type { RichTextTocProps } from "./features/toc/RichTextToc.js";
 export type { FieldNotice, FieldNoticeTone } from "./core/fieldNotice.js";
 export type { RichTextSurface } from "./styles/surface.js";
 export { richTextSanitizeConfig, richTextSchema, sanitizeRichText } from "./core/schema.js";

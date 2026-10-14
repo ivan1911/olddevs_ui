@@ -72,6 +72,20 @@ const SERVER_SAFE = [
       "the description of a custom tool to sanitise with the same rules.",
   },
   {
+    file: "editor/core/handleWatchers.ts",
+    why:
+      "Subscribers to the Editor handle's engine (watchHandleEditor, notifyHandleEditor): a WeakMap " +
+      "and two functions, no React and no Tiptap. Split from handle.ts so that RichTextToc can wait " +
+      "for the engine without importing Tiptap (OLDSUI-264).",
+  },
+  {
+    file: "editor/features/toc/headings.ts",
+    why:
+      "Collects the headings of a Document for RichTextToc: a DOM walk over a node it is given, " +
+      "no React, no Tiptap and nothing at import time. RichTextToc.tsx, the client component, " +
+      "carries its own directive.",
+  },
+  {
     file: "editor/core/viewIsland.ts",
     why:
       "Picks the islands of custom blocks a document needs from `tools` for the server component " +

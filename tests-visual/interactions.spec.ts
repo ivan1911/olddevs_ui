@@ -4097,3 +4097,164 @@ test.describe("VirtualGrid library on a touch screen", () => {
     await expect(page.getByTestId("selected-count")).toHaveText("Selected: 0");
   });
 });
+
+/*
+ * Оглавление Документа (`RichTextToc`, OLDSUI-264). Наведение с задержкой,
+ * подсветка текущего раздела при прокрутке и переход под липкую шапку держатся
+ * на раскладке, прокрутке и pointer-событиях — в jsdom их нет.
+ */
+test.describe("RichTextToc", () => {
+  // Окно ниже штатного: история должна прокручиваться дальше последнего заголовка,
+  // иначе страница упирается в конец и подсветка с переходом проверяют не то.
+  test.use({ viewport: { width: 1280, height: 480 } });
+  const strip = (page: Page) => page.getByRole("button", { name: "Table of contents" });
+  const list = (page: Page) => page.getByRole("navigation", { name: "Table of contents" });
+
+  /** Курсор приходит на полосу снаружи: так браузер шлёт `pointerenter`. */
+  async function hoverStrip(page: Page) {
+    const box = (await strip(page).boundingBox())!;
+    await page.mouse.move(box.x + box.width + 400, box.y + box.height / 2);
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 4 });
+  }
+
+  test("hover opens the list after a delay and leaving closes it", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=content-richtexttoc--playground&globals=theme:dark;accent:blue"
+    );
+    await expect(strip(page)).toBeVisible();
+
+    await hoverStrip(page);
+    // Сразу — ещё нет: случайный пролёт курсора список не открывает.
+    await expect(list(page)).toHaveCount(0);
+    await expect(list(page)).toBeVisible();
+    await expect(strip(page)).toHaveAttribute("aria-expanded", "true");
+
+    await page.mouse.move(900, 700, { steps: 4 });
+    await expect(list(page)).toHaveCount(0);
+  });
+
+  test("a jump keeps the list open, focuses the heading and moves the highlight", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/iframe.html?id=content-richtexttoc--playground&globals=theme:dark;accent:blue"
+    );
+    await hoverStrip(page);
+    await list(page).getByRole("button", { name: "Surfaces", exact: true }).click();
+
+    const heading = page.getByRole("heading", { name: "Surfaces" });
+    await expect(heading).toBeFocused();
+    await expect(list(page)).toBeVisible();
+    await expect(list(page).getByRole("button", { name: "Surfaces", exact: true })).toHaveAttribute(
+      "aria-current",
+      "location"
+    );
+    // Адрес страницы не меняется: переход без якорей.
+    expect(new URL(page.url()).hash).toBe("");
+  });
+
+  test("scrolling moves the highlight in the strip", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=content-richtexttoc--playground&globals=theme:dark;accent:blue"
+    );
+    const current = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll("[data-toc-stroke]")].findIndex((stroke) =>
+          stroke.hasAttribute("data-current")
+        )
+      );
+    await expect.poll(current).toBe(0);
+
+    const tones = page.getByRole("heading", { name: "Tones" });
+    await tones.evaluate((node) =>
+      window.scrollTo(0, node.getBoundingClientRect().top + window.scrollY)
+    );
+    // «Tones» — пятый заголовок Документа.
+    await expect.poll(current).toBe(4);
+  });
+
+  test("a jump puts the heading under the sticky header, not behind it", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=content-richtexttoc--sticky-header&globals=theme:dark;accent:blue"
+    );
+    await expect(strip(page)).toBeVisible();
+    await hoverStrip(page);
+    await list(page).getByRole("button", { name: "Tones", exact: true }).click();
+
+    const heading = page.getByRole("heading", { name: "Tones" });
+    await expect(heading).toBeFocused();
+    // Шапка — 56px (`--topbar-h` в истории): заголовок встаёт ровно под неё.
+    await expect.poll(async () => Math.round((await heading.boundingBox())!.y)).toBe(56);
+  });
+
+  test.describe("on a narrow screen", () => {
+    test.use({ viewport: { width: 360, height: 700 } });
+
+    test("the strip hides itself when the margin has no room", async ({ page }) => {
+      await page.goto("/iframe.html?id=content-richtexttoc--margin&globals=theme:dark;accent:blue");
+      await expect(page.getByRole("heading", { name: "Palette" })).toBeVisible();
+      await expect(strip(page)).toBeHidden();
+    });
+  });
+});
+
+/*
+ * Инструмент `toc` Редактора (OLDSUI-271, ADR-0068): Оглавление в левом поле.
+ * Липкость под Панелью, каретка после перехода и прокрутка внутри поля — только
+ * в настоящем браузере.
+ */
+test.describe("RichTextEditor with the toc tool", () => {
+  test.use({ viewport: { width: 1280, height: 560 } });
+  const strip = (page: Page) => page.getByRole("button", { name: "Table of contents" });
+  const list = (page: Page) => page.getByRole("navigation", { name: "Table of contents" });
+
+  async function jump(page: Page, name: string) {
+    const box = (await strip(page).boundingBox())!;
+    await page.mouse.move(box.x + 600, box.y + 10);
+    await page.mouse.move(box.x + box.width / 2, box.y + 10, { steps: 4 });
+    await list(page).getByRole("button", { name, exact: true }).click();
+  }
+
+  test("a jump in an editable Editor puts the caret at the end of the heading", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/iframe.html?id=inputs-richtexteditor--table-of-contents&globals=theme:dark;accent:blue"
+    );
+    await expect(strip(page)).toBeVisible();
+    await jump(page, "Tones");
+    await page.keyboard.type("!");
+    await expect(page.getByRole("heading", { name: "Tones!" })).toBeVisible();
+  });
+
+  test("the strip sticks under the fixed toolbar", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=inputs-richtexteditor--table-of-contents&globals=theme:dark;accent:blue"
+    );
+    await expect(strip(page)).toBeVisible();
+    // Дважды прокрутили — полоса стоит на том же месте под Панелью: липнет.
+    await page.evaluate(() => window.scrollTo(0, 300));
+    const toolbar = (await page.getByRole("toolbar").first().boundingBox())!;
+    const first = (await strip(page).boundingBox())!.y;
+    expect(first).toBeGreaterThanOrEqual(toolbar.y + toolbar.height);
+    expect(first).toBeLessThan(toolbar.y + toolbar.height + 16);
+    await page.evaluate(() => window.scrollTo(0, 600));
+    await expect.poll(async () => (await strip(page).boundingBox())!.y).toBe(first);
+  });
+
+  test("in a field with maxHeight the jump scrolls the field, not the page", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=inputs-richtexteditor--table-of-contents-scrolling-field&globals=theme:dark;accent:blue"
+    );
+    await expect(strip(page)).toBeVisible();
+    await jump(page, "Tones");
+    const heading = page.getByRole("heading", { name: "Tones" });
+    const area = heading.locator("xpath=ancestor::div[contains(@class,'overflow-y-auto')][1]");
+    await expect
+      .poll(async () =>
+        Math.round((await heading.boundingBox())!.y - (await area.boundingBox())!.y)
+      )
+      .toBe(0);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+});
