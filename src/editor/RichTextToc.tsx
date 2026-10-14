@@ -93,6 +93,34 @@ function stickyOffset(offsetVar: string): number | null {
   return Number.isFinite(px) && px > 0 ? px : null;
 }
 
+/** Сколько гаснет подсветка заголовка после перехода. */
+const FLASH_DURATION = 1600;
+
+/**
+ * Подсветить заголовок, к которому перешли: фон цветом акцента гаснет до
+ * прозрачного. Глаз находит, куда приехала страница, — особенно когда
+ * заголовок не встал к верхнему краю (конец Документа).
+ *
+ * Анимацией Web Animations, а не классом: в Документе не появляется ни класса,
+ * ни `style` — Схема и сохранённый HTML прежние, а Редактор не принимает
+ * подсветку за правку. Цвет читается из токена на самом заголовке: так он
+ * верен и на Листе, и во вложенной теме. Нет API — нет и подсветки.
+ */
+function flash(heading: HTMLElement) {
+  if (typeof heading.animate !== "function") return;
+  const accent = getComputedStyle(heading).getPropertyValue("--accent-strong").trim();
+  const color = accent ? `color-mix(in srgb, ${accent} 24%, transparent)` : "transparent";
+  // Поле вокруг текста — тенью без размытия, а не `padding`: заголовок не
+  // сдвигается ни на пиксель, пока подсветка гаснет.
+  heading.animate(
+    [
+      { backgroundColor: color, boxShadow: `0 0 0 6px ${color}`, borderRadius: "4px" },
+      { backgroundColor: "transparent", boxShadow: "0 0 0 6px transparent", borderRadius: "4px" },
+    ],
+    { duration: FLASH_DURATION, easing: "ease-out" }
+  );
+}
+
 /**
  * Перейти к заголовку: прокрутить к нему и поставить на него фокус.
  *
@@ -107,6 +135,7 @@ function jumpTo(heading: HTMLElement, offsetVar: string) {
     heading.addEventListener("blur", () => heading.removeAttribute("tabindex"), { once: true });
   }
   heading.focus({ preventScroll: true });
+  flash(heading);
 
   const behavior: ScrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
   const offset = stickyOffset(offsetVar);

@@ -345,3 +345,26 @@ test("the list is 240px wide by default", async () => {
   const panel = screen.getByRole("navigation", { name: "Table of contents" }).parentElement!;
   expect(panel.style.width).toBe("240px");
 });
+
+test("the heading of a jump flashes a background that fades out, leaving no trace in the Document", async () => {
+  const user = userEvent.setup();
+  const animate = vi.fn();
+  Element.prototype.animate = animate;
+  try {
+    render(<Screen html={ARTICLE} />);
+    const items = await openList(user);
+    await user.click(items[1]!);
+
+    const heading = screen.getByTestId("view").querySelector("h3")!;
+    expect(animate).toHaveBeenCalledTimes(1);
+    expect(animate.mock.contexts[0]).toBe(heading);
+    const [keyframes] = animate.mock.calls[0]!;
+    expect(keyframes[0].backgroundColor).toBeTruthy();
+    expect(keyframes.at(-1).backgroundColor).toBe("transparent");
+    // Ни класса, ни стиля в разметке Документа: подсветка живёт в анимации.
+    expect(heading.getAttribute("class")).toBeNull();
+    expect(heading.getAttribute("style")).toBeNull();
+  } finally {
+    Reflect.deleteProperty(Element.prototype, "animate");
+  }
+});
