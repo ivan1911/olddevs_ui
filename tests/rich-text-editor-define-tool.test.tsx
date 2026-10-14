@@ -231,6 +231,61 @@ test("the State is null without the tool in the set and is not found for an unkn
   expect(unknown.last()).toBeNull();
 });
 
+test("the State compares plain data by value and everything else by reference", async () => {
+  // Значения, которые Состояние отдаёт на каждую транзакцию; тест подменяет их между правками.
+  const held: { value: unknown } = { value: undefined };
+  const stateful = defineTool({
+    name: "test_stateful",
+    defaults: {},
+    create: () => ({ engine: [] }),
+    state: () => ({ value: held.value }),
+  });
+  const screenResult = mountState(
+    (ref) =>
+      useRichTextToolState(ref, "test_stateful", (state) => (state as { value: unknown }).value),
+    { tools: [...RICH_TEXT_PRESETS.full, stateful] }
+  );
+  const edit = () => act(() => void screenResult.ref.current!.editor!.commands.insertContent("x"));
+  const setValue = (value: unknown) => {
+    held.value = value;
+    edit();
+  };
+
+  // Date, Map и Set не имеют своих ключей, но это не «один и тот же»: новый экземпляр — новый снимок.
+  for (const make of [
+    (n: number) => new Date(2026, 0, n),
+    (n: number) => new Map([["key", n]]),
+    (n: number) => new Set([n]),
+  ]) {
+    const first = make(1);
+    setValue(first);
+    expect(screenResult.last()).toBe(first);
+    const second = make(2);
+    setValue(second);
+    expect(screenResult.last()).toBe(second);
+    // Тот же экземпляр — экран не трогается.
+    const rendersBefore = screenResult.seen.renders;
+    setValue(second);
+    expect(screenResult.seen.renders).toBe(rendersBefore);
+  }
+
+  // Простые данные — по значению: новые, но равные объекты и массивы снимок не меняют.
+  setValue({ list: [1, { deep: "a" }], flag: true });
+  const plain = screenResult.last();
+  const rendersBefore = screenResult.seen.renders;
+  setValue({ list: [1, { deep: "a" }], flag: true });
+  expect(screenResult.last()).toBe(plain);
+  expect(screenResult.seen.renders).toBe(rendersBefore);
+  setValue({ list: [1, { deep: "b" }], flag: true });
+  expect(screenResult.last()).not.toBe(plain);
+
+  // Объект без прототипа — тоже простые данные.
+  setValue(Object.assign(Object.create(null), { a: 1 }));
+  const bare = screenResult.last();
+  setValue(Object.assign(Object.create(null), { a: 1 }));
+  expect(screenResult.last()).toBe(bare);
+});
+
 test("a tool with no state function has a null State and no Commands", () => {
   const bare = defineTool({
     name: "test_bare",

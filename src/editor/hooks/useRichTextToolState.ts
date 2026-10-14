@@ -39,11 +39,24 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
   ],
 ]);
 
-/** Равенство по значению для снимков: простые данные — примитивы, массивы и объекты. */
+/** Простой объект: литерал или `Object.create(null)`, не экземпляр класса. */
+function isPlainObject(value: object): boolean {
+  const prototype = Object.getPrototypeOf(value) as unknown;
+  return prototype === Object.prototype || prototype === null;
+}
+
+/**
+ * Равенство для снимков. По значению сравниваются только простые данные:
+ * примитивы, массивы и простые объекты. Всё прочее — `Date`, `Map`, `Set`,
+ * экземпляры классов — по ссылке: у них нет собственных ключей, по которым можно
+ * было бы увидеть разницу, и «равными по значению» оказались бы любые два, то есть
+ * экран тихо не обновлялся бы. Новый экземпляр — новый снимок.
+ */
 function sameValue(a: unknown, b: unknown): boolean {
   if (Object.is(a, b)) return true;
   if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
   if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (!Array.isArray(a) && !(isPlainObject(a) && isPlainObject(b))) return false;
   const left = a as Record<string, unknown>;
   const right = b as Record<string, unknown>;
   const keys = Object.keys(left);
@@ -62,9 +75,10 @@ function sameValue(a: unknown, b: unknown): boolean {
  * ПЕРЕРИСОВКА — ТОЛЬКО ПРИ СМЕНЕ СНИМКА. Снимок пересчитывается на каждую
  * транзакцию движка и на сигналы кита, которых в движке нет: открытие и закрытие
  * панели Поиска, смена текущего раздела Оглавления при прокрутке. Экран
- * перерисовывается, когда результат стал другим (сравнение по значению, как у
- * `useRichTextEditorState`), поэтому набор текста, не меняющий снимок, его не
- * трогает. Срез из `selector` сравнивается так же: `(state) => state.total`
+ * перерисовывается, когда результат стал другим (простые данные — примитивы,
+ * массивы, простые объекты — сравниваются по значению, как у
+ * `useRichTextEditorState`; `Date`, `Map`, `Set` и экземпляры классов — по
+ * ссылке), поэтому набор текста, не меняющий снимок, его не трогает. Срез из `selector` сравнивается так же: `(state) => state.total`
  * подписывает экран на одно число.
  *
  * `null` — до монтажа и в первом рендере экрана, на сервере, а также когда
