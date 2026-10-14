@@ -247,6 +247,22 @@ test("setQuery() flags change the search; the unnamed ones keep their value", ()
   expect(searchState(editor().state)?.total).toBe(2);
 });
 
+test("setQuery() with an undefined flag leaves that flag as it was", () => {
+  const { handle, editor } = renderEditor({ defaultValue: "<p>Cat cat</p>" });
+  const search = () => handle().tool("search")!;
+  act(() => void search().setQuery("cat", { matchCase: true }));
+  expect(searchState(editor().state)?.total).toBe(1);
+
+  // Ключ есть, значения нет — «не менять», а не «выключить».
+  act(() => void search().setQuery("cat", { matchCase: undefined }));
+  expect(searchState(editor().state)).toMatchObject({ total: 1, options: { matchCase: true } });
+  act(() => void search().setQuery("cat", { matchCase: undefined, wholeWord: true }));
+  expect(searchState(editor().state)).toMatchObject({
+    total: 1,
+    options: { matchCase: true, wholeWord: true },
+  });
+});
+
 test("the starting flags of tool('search') are the flags of the Commands until the search is closed", () => {
   const { handle, editor } = renderEditor({
     defaultValue: "<p>Cat cat</p>",
