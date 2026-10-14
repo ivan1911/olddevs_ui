@@ -86,6 +86,21 @@ function build(
 }
 
 /**
+ * Флажки после `setSearch`: названные в `named` заменяют прежние, остальные
+ * остаются. Ключ со значением `undefined` — не названный: обычное слияние
+ * `{ ...a, ...b }` стёрло бы им флажок, а вызов `setQuery(q, { matchCase: value })`
+ * с необязательным значением экрана не просит ничего менять.
+ */
+function withNamedFlags(current: SearchOptions, named: Partial<SearchOptions> = {}): SearchOptions {
+  const next = { ...current };
+  for (const key of Object.keys(named) as (keyof SearchOptions)[]) {
+    const value = named[key];
+    if (value !== undefined) next[key] = value;
+  }
+  return next;
+}
+
+/**
  * @param flags флажки без запроса: до первого `setSearch` и после `clearSearch`
  * (Опции Инструмента). Поиск, который идёт, держит свои.
  */
@@ -98,8 +113,11 @@ function searchPlugin(flags: SearchOptions) {
         const meta = tr.getMeta(SEARCH_KEY) as SearchMeta | undefined;
         if (meta?.type === "clear") return build(state, "", flags, () => -1);
         if (meta?.type === "set") {
-          return build(state, meta.query, { ...previous.options, ...meta.options }, (matches) =>
-            indexFrom(matches, state.selection.from)
+          return build(
+            state,
+            meta.query,
+            withNamedFlags(previous.options, meta.options),
+            (matches) => indexFrom(matches, state.selection.from)
           );
         }
         if (meta?.type === "select") {

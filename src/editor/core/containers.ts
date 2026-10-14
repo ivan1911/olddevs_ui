@@ -2,6 +2,7 @@
 
 import type { Node as PmNode, NodeType, ResolvedPos } from "@tiptap/pm/model";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
+import { WRAPPER_NODE } from "./nodeNames.js";
 
 /**
  * Общее у контейнерных Блоков — Раскладки (`layout.ts`, ADR-0056) и Обёртки
@@ -13,12 +14,13 @@ import { TextSelection, type Transaction } from "@tiptap/pm/state";
  * арифметика позиций не разъезжались молча.
  */
 
-/**
- * Имя узла Обёртки в Схеме движка. Живёт здесь, а не в `wrapper.ts`: оно же
- * входит в общий список ниже, а `wrapper.ts` импортирует этот модуль —
- * определение там дало бы цикл импортов. `wrapper.ts` его реэкспортирует.
- */
-export const WRAPPER_NODE = "wrapper";
+/*
+  Имя узла Обёртки живёт в `nodeNames.ts`, без Tiptap: его читает и Оглавление.
+  Не в `wrapper.ts`: оно же входит в общий список ниже, а `wrapper.ts`
+  импортирует этот модуль — определение там дало бы цикл импортов. `wrapper.ts`
+  его реэкспортирует.
+*/
+export { WRAPPER_NODE };
 
 /**
  * Узлы, внутри которых контейнерного Блока нет ни одного: Обёртка, цитата,

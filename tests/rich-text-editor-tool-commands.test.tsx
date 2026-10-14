@@ -7,9 +7,12 @@ import {
   RICH_TEXT_PRESETS,
   RichTextEditor,
   tool,
+  useRichTextToolState,
   type RichTextEditorHandle,
   type RichTextEditorProps,
+  type TocToolState,
 } from "../src/editor/index.js";
+import type { Editor } from "@tiptap/core";
 import { searchState } from "../src/editor/features/search/searchPlugin.js";
 import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { testLazyTool } from "./editor-test-tools.js";
@@ -245,6 +248,22 @@ test("setQuery() flags change the search; the unnamed ones keep their value", ()
   expect(searchState(editor().state)).toMatchObject({ total: 1, options: { matchCase: true } });
   act(() => void search().setQuery("c.t", { regex: true, wholeWord: false }));
   expect(searchState(editor().state)?.total).toBe(2);
+});
+
+test("setQuery() with an undefined flag leaves that flag as it was", () => {
+  const { handle, editor } = renderEditor({ defaultValue: "<p>Cat cat</p>" });
+  const search = () => handle().tool("search")!;
+  act(() => void search().setQuery("cat", { matchCase: true }));
+  expect(searchState(editor().state)?.total).toBe(1);
+
+  // Ключ есть, значения нет — «не менять», а не «выключить».
+  act(() => void search().setQuery("cat", { matchCase: undefined }));
+  expect(searchState(editor().state)).toMatchObject({ total: 1, options: { matchCase: true } });
+  act(() => void search().setQuery("cat", { matchCase: undefined, wholeWord: true }));
+  expect(searchState(editor().state)).toMatchObject({
+    total: 1,
+    options: { matchCase: true, wholeWord: true },
+  });
 });
 
 test("the starting flags of tool('search') are the flags of the Commands until the search is closed", () => {
@@ -517,6 +536,139 @@ test("jumpTo() follows the Document: a heading added by the author is in the lis
 
   act(() => void handle().tool("toc")!.jumpTo(1));
   expect(editor().state.selection.$from.parent.textContent).toBe("Two");
+});
+
+/**
+ * Экран со снимком `toc` рядом с Редактором: индексы для `jumpTo` берутся из
+ * него, как их берёт внешняя навигация.
+ */
+async function renderWithTocState(props: Partial<RichTextEditorProps> = {}) {
+  const ref = createRef<RichTextEditorHandle>();
+  let seen: TocToolState | null = null;
+  function Navigation() {
+    seen = useRichTextToolState(ref, "toc");
+    return null;
+  }
+  const view = render(
+    <>
+      <RichTextEditor
+        ref={ref}
+        aria-label="Body"
+        defaultValue={ARTICLE}
+        tools={[...WITH_TOC]}
+        {...props}
+      />
+      <Navigation />
+    </>
+  );
+  await waitFor(() => expect(strip()).not.toBeNull());
+  const indexOf = (text: string) => seen!.headings.find((heading) => heading.text === text)!.index;
+  return {
+    ...view,
+    handle: () => ref.current!,
+    editor: () => ref.current!.editor!,
+    snapshot: () => seen!,
+    indexOf,
+  };
+}
+
+/** Позиция Блока верхнего уровня с этим текстом. */
+function positionOf(editor: Editor, text: string): number {
+  let found = -1;
+  editor.state.doc.forEach((node, offset) => {
+    if (found < 0 && node.textContent === text) found = offset;
+  });
+  return found;
+}
+
+test("jumpTo() takes a snapshot index read right after an edit at the start, before the list is rebuilt", async () => {
+  const { handle, editor, indexOf, snapshot } = await renderWithTocState();
+
+  act(() => void editor().commands.insertContentAt(0, "<h2>Zero</h2>"));
+  // Правка моложе задержки пересборки списка: список Оглавления ещё прежний.
+  const index = indexOf("How to read");
+  expect(index).toBe(3);
+
+  let result = false;
+  act(() => {
+    result = handle().tool("toc")!.jumpTo(index);
+  });
+  expect(result).toBe(true);
+  expect(editor().state.selection.$from.parent.textContent).toBe("How to read");
+  expect(snapshot().current).toBe(index);
+
+  // Последний заголовок снимка — тоже пункт, хотя в прежнем списке его нет.
+  act(
+    () =>
+      void handle()
+        .tool("toc")!
+        .jumpTo(snapshot().headings.length - 1)
+  );
+  expect(editor().state.selection.$from.parent.textContent).toBe("What's next");
+});
+
+test("jumpTo() takes a snapshot index read right after an edit in the middle, not the neighbour heading", async () => {
+  const { handle, editor, indexOf, snapshot } = await renderWithTocState();
+
+  act(
+    () =>
+      void editor().commands.insertContentAt(positionOf(editor(), "How to read"), "<h2>Mid</h2>")
+  );
+  expect(snapshot().headings.map((heading) => heading.text)).toEqual([
+    "Title",
+    "Palette",
+    "Mid",
+    "How to read",
+    "Neutrals",
+    "What's next",
+  ]);
+
+  for (const text of ["Mid", "Neutrals", "What's next"]) {
+    act(() => void handle().tool("toc")!.jumpTo(indexOf(text)));
+    expect(editor().state.selection.$from.parent.textContent).toBe(text);
+  }
+});
+
+test("jumpTo() follows a removal too: the index of the snapshot is the same heading", async () => {
+  const { handle, editor, indexOf } = await renderWithTocState();
+
+  act(
+    () =>
+      void editor()
+        .chain()
+        .setTextSelection(positionOf(editor(), "Palette") + 1)
+        .selectParentNode()
+        .deleteSelection()
+        .run()
+  );
+  expect(indexOf("How to read")).toBe(1);
+  act(() => void handle().tool("toc")!.jumpTo(indexOf("What's next")));
+  expect(editor().state.selection.$from.parent.textContent).toBe("What's next");
+  // Прежний последний индекс (4) в списке из четырёх заголовков — уже не пункт.
+  expect(handle().tool("toc")!.jumpTo(4)).toBe(false);
+});
+
+test("jumpTo() with a snapshot index: the list is rebuilt mid-scroll and the same section stays current", async () => {
+  const { handle, editor, indexOf, snapshot } = await renderWithTocState();
+
+  act(() => void editor().commands.insertContentAt(0, "<h2>Zero</h2>"));
+  act(() => void handle().tool("toc")!.jumpTo(indexOf("Neutrals")));
+  const index = indexOf("Neutrals");
+  expect(snapshot().current).toBe(index);
+
+  // Прокрутка перехода ещё идёт: события прокрутки не дают разделу перехода улечься.
+  const scrolling = setInterval(() => document.dispatchEvent(new Event("scroll")), 20);
+  try {
+    await waitFor(() => expect(strip()!.querySelectorAll("[data-toc-stroke]")).toHaveLength(6));
+  } finally {
+    clearInterval(scrolling);
+  }
+  // Список пересобрался: подсвечен тот же заголовок, а индекс в пределах списка.
+  expect(snapshot().current).toBe(index);
+  const marked = [...strip()!.querySelectorAll("[data-toc-stroke]")].findIndex((stroke) =>
+    stroke.hasAttribute("data-current")
+  );
+  expect(marked).toBe(index);
 });
 
 test("jumpTo() is false in the HTML mode: the Document is hidden", async () => {

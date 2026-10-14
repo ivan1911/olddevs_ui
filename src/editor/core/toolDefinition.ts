@@ -52,7 +52,16 @@ export interface ToolDefinitionInput<
   defaults: Options;
   /** Тело описания Инструмента от Опций этого Редактора. */
   create(options: Options): CustomToolBody;
-  /** Состояние Инструмента, если оно есть. */
+  /**
+   * Состояние Инструмента, если оно есть. Экран перерисовывается, только когда
+   * снимок сменился, и экономия работает для простых данных: примитивов, массивов
+   * и простых объектов, их кит сравнивает по значению. `Date`, `Map`, `Set` и
+   * экземпляры классов сравниваются по ссылке: новый экземпляр — новый снимок. Если
+   * функция создаёт такое значение заново на каждый вызов, экран перерисуется на
+   * каждой транзакции (а в худшем случае React уйдёт в цикл): отдавайте простые
+   * данные (`date.toISOString()`, массив из `Map`) или одну и ту же ссылку, пока
+   * данные не изменились.
+   */
   state?(context: ToolDefinitionContext<Options>): State;
   /** Команды Инструмента, если они есть. */
   commands?(context: ToolDefinitionContext<Options>): Commands;
@@ -98,14 +107,20 @@ export interface ToolDefinition<
  * - `defaults` — полный набор Опций; тип Опций выводится из него, второй раз его
  *   объявлять не нужно.
  * - `create(options)` отдаёт тело описания — ту же форму, что `CustomTool`, без
- *   имени: Часть для движка, правила Схемы, UI-записи. Зовётся один раз на
- *   Редактор, при создании набора. Загрузчик Части для движка стоит держать
- *   константой модуля: кэш загрузчика живёт на самой функции, а новая функция на
- *   каждый вызов `create` загружала бы Часть заново для каждого Редактора.
+ *   имени: Часть для движка, правила Схемы, UI-записи. Зовётся один раз на запись
+ *   `tools` (определение само или объект, что вернул `tool(definition, options)`):
+ *   кит запоминает результат, и Остров, замкнутый над Опциями, один и тот же на
+ *   каждом рендере. Запись, созданная заново на каждом рендере экрана
+ *   (`tools={[tool(mention, …)]}` в теле компонента), для кита новая — выносите
+ *   `tools` из рендера. Загрузчик Части для движка стоит держать константой
+ *   модуля: кэш загрузчика живёт на самой функции, а новая функция на каждый
+ *   вызов `create` загружала бы Часть заново для каждой записи.
  * - `state({ editor, options })` — Состояние для `useRichTextToolState(ref, name)`.
  *   Зовётся при каждой транзакции и при каждом чтении хука, поэтому должна быть
- *   быстрой и без побочных эффектов; вернуть — данные без DOM-узлов, их сравнивают
- *   по значению. Нет — у Инструмента нет Состояния, и хук отдаёт `null`.
+ *   быстрой и без побочных эффектов; вернуть — данные без DOM-узлов. Простые данные
+ *   (примитивы, массивы, простые объекты) сравниваются по значению, всё прочее
+ *   (`Date`, `Map`, `Set`, экземпляры классов) — по ссылке. Нет — у Инструмента нет
+ *   Состояния, и хук отдаёт `null`.
  * - `commands({ editor, options })` — Команды для `handle.tool(name)`. Зовётся при
  *   каждом обращении к Хэндлу: только обёртки над движком, без подписок. Команда
  *   возвращает `boolean`, как у встроенных. Нет — `handle.tool(name)` отдаёт `null`.
@@ -136,17 +151,46 @@ export function defineTool<
   return { ...definition, defined: true };
 }
 
+/** Определение, собранное под одни Опции: слитые Опции и `CustomTool` с телом из `create`. */
+interface ResolvedDefinition {
+  options: object;
+  tool: CustomTool;
+}
+
+/** Ключ записи без `tool()`: у неё нет объекта Опций, определение берётся с умолчаниями. */
+const NO_OPTIONS: object = {};
+
+/**
+ * Что уже собрано: определение, затем объект Опций записи `tool()`. Слабые
+ * ссылки — запись, которую экран отпустил, уходит вместе с результатом.
+ */
+const resolved = new WeakMap<ToolDefinition, WeakMap<object, ResolvedDefinition>>();
+
 /**
  * Определение в обычное описание: Опции этого Редактора (умолчания, слитые с
  * `given` — опциями `tool()`) и `CustomTool` с телом из `create`. Дальше
  * Инструмент идёт тем же путём, что и описанный объектом.
+ *
+ * РЕЗУЛЬТАТ ЗАПОМИНАЕТСЯ по паре «определение + объект Опций записи `tool()`»
+ * (записи без `tool()` — по одному определению). `create` — функция автора, и
+ * Остров, замкнутый над Опциями, она создаёт заново на каждый вызов; а
+ * `richTextSchema`, `islandsFor`, `sanitizeRichText` и сборка набора читают
+ * определение каждый на своём рендере. Без запоминания клиентский родитель, что
+ * перерисовывает `RichTextView` с теми же `tools`, получал бы новый тип
+ * компонента на каждый рендер, а React размонтировал бы Остров. Одна запись
+ * `tools` — один `CustomTool`, пока жива запись.
  */
-export function resolveDefinition(
-  definition: ToolDefinition,
-  given: object = {}
-): { options: object; tool: CustomTool } {
-  const options = mergeOptions(definition.defaults, given);
-  return { options, tool: { ...definition.create(options), name: definition.name } };
+export function resolveDefinition(definition: ToolDefinition, given?: object): ResolvedDefinition {
+  const key = given ?? NO_OPTIONS;
+  let byOptions = resolved.get(definition);
+  if (!byOptions) resolved.set(definition, (byOptions = new WeakMap()));
+  let result = byOptions.get(key);
+  if (!result) {
+    const options = mergeOptions(definition.defaults, given ?? {});
+    result = { options, tool: { ...definition.create(options), name: definition.name } };
+    byOptions.set(key, result);
+  }
+  return result;
 }
 
 /**

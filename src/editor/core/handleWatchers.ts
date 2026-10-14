@@ -54,6 +54,18 @@ export function publishToolSignals(ref: unknown, next: ToolSignals): void {
   notifyHandleEditor(ref);
 }
 
+/**
+ * Редактор размонтирован: его сигналы уходят вместе с ним. Иначе они пережили бы
+ * его в таблице по `ref`, и хук отдавал бы снимок уже не существующего Редактора
+ * (а новый Редактор под тем же `ref` начинал бы с чужих сигналов). Подписчики
+ * получают уведомление: компонент, который из-за размонтирования не
+ * перерисовывается сам, узнаёт о нём только так.
+ */
+export function clearToolSignals(ref: unknown): void {
+  if (typeof ref !== "object" || ref === null || !signals.delete(ref)) return;
+  notifyHandleEditor(ref);
+}
+
 /** Сигналы Инструментов Редактора, привязанного к `ref`. */
 export function toolSignals(ref: object): ToolSignals {
   return signals.get(ref) ?? {};

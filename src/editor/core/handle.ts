@@ -9,7 +9,12 @@ import { isRichTextDocument, type RichTextDocument } from "./jsonDocument.js";
 import type { ToolCommandsOf } from "./toolCommands.js";
 import type { RichTextTools } from "./toolOptions.js";
 
-export { notifyHandleEditor, publishToolSignals, watchHandleEditor } from "./handleWatchers.js";
+export {
+  clearToolSignals,
+  notifyHandleEditor,
+  publishToolSignals,
+  watchHandleEditor,
+} from "./handleWatchers.js";
 
 /**
  * Плоские методы Хэндла (ADR-0058, раздел 8): то, что экран делает с Редактором
