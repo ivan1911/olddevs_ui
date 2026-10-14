@@ -12,6 +12,7 @@ import {
   type Tool,
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
+import { installPageGeometry } from "./editor-toc-geometry.js";
 
 /**
  * Состояние Инструмента (OLDSUI-268): `useRichTextToolState` на публичном входе.
@@ -23,35 +24,17 @@ beforeAll(loadLazyBuiltins);
 // Панель Поиска — ленивый чанк: прогреваем, чтобы `findBy` не ждал сеть.
 beforeAll(() => import("../src/editor/features/search/SearchPanel.js"));
 
-/**
- * Геометрия Документа для подсветки раздела. В jsdom у всего нулевой прямоугольник и
- * нулевая высота страницы, и ядро Оглавления считает страницу докрученной до конца:
- * текущим становится последний заголовок. Здесь заголовки стоят в столбик, а
- * `scrolledTo` — какой из них стоит у верхнего края (строки отсчёта).
- */
-const page = { scrolledTo: 0 };
-const nativeRect = Element.prototype.getBoundingClientRect;
+let removeGeometry: () => void;
 
 beforeEach(() => {
-  page.scrolledTo = 0;
+  removeGeometry = installPageGeometry();
   Element.prototype.scrollIntoView = vi.fn();
-  Object.defineProperty(document.documentElement, "scrollHeight", {
-    configurable: true,
-    value: 10_000,
-  });
-  Element.prototype.getBoundingClientRect = function (this: Element) {
-    const root = /^H[1-4]$/.test(this.tagName) ? this.closest(".ProseMirror") : null;
-    if (!root) return nativeRect.call(this);
-    const index = [...root.querySelectorAll("h1, h2, h3, h4")].indexOf(this);
-    return { top: (index - page.scrolledTo) * 200, bottom: 0, left: 0, right: 0 } as DOMRect;
-  };
 });
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
-  Element.prototype.getBoundingClientRect = nativeRect;
-  delete (document.documentElement as { scrollHeight?: number }).scrollHeight;
+  removeGeometry();
 });
 
 type EditorProps = Partial<ComponentProps<typeof RichTextEditor>>;
