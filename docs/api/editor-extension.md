@@ -8,13 +8,16 @@ source: src/editor/index.ts
 
 ## Кратко для AI
 
-Карта того, чем продукт расширяет `RichTextEditor` из `@olddevs/ui/editor`, и граница стабильности этого API. Единица расширения — **свой Инструмент** (`CustomTool`): описание одной возможности Редактора, которое передаётся в `tools` вперемешку с именами кита. Он несёт Блоки и Метки с правилами Схемы (это данные), Часть для движка (расширения Tiptap, сразу или Загрузчиком) и UI-записи: кнопки, Пункты вставки, Действия над Блоком, Карточки у текста. Есть и свой Символ-триггер (`trigger`): `@` для упоминаний открывает тот же список, что `/`. Код экрана управляет полем через Хэндл (`ref`) и хук `useRichTextEditorState`, узнаёт о Готовности и Фокусе поля колбэками `onReady`, `onFocus` и `onBlur`, кладёт своё в Строку статуса (`status`) и сообщает об ошибке командой `showNotice`. Тот же массив `tools` понимают серверная очистка (`sanitizeRichText`, `richTextSchema`) и `RichTextView` с Островами. Всё перечисленное подчиняется semver кита с первого выпуска, HTML-соглашение заморожено, мажор Tiptap — мажор кита (раздел «Стабильность»). Подробности каждого пункта живут на странице [RichTextEditor](../components/inputs/rich-text-editor.md); здесь — карта, граница контракта и рецепты.
+Карта того, чем продукт расширяет `RichTextEditor` из `@olddevs/ui/editor`, и граница стабильности этого API. Единица расширения — **свой Инструмент** (`CustomTool`): описание одной возможности Редактора, которое передаётся в `tools` вперемешку с именами кита. Он несёт Блоки и Метки с правилами Схемы (это данные), Часть для движка (расширения Tiptap, сразу или Загрузчиком) и UI-записи: кнопки, Пункты вставки, Действия над Блоком, Карточки у текста. Есть и свой Символ-триггер (`trigger`): `@` для упоминаний открывает тот же список, что `/`. Код экрана управляет полем через Хэндл (`ref`) и хук `useRichTextEditorState`, узнаёт о Готовности и Фокусе поля колбэками `onReady`, `onFocus` и `onBlur`, кладёт своё в Строку статуса (`status`) и сообщает об ошибке командой `showNotice`. У Инструмента три типизированные части, как `options`, `storage` и `commands` у расширения Tiptap: **Опции** (`tool(name, options)` у встроенных `search` и `toc`, `defineTool` у своего), **Состояние** (хук `useRichTextToolState`) и **Команды** (`handle.tool(name)`); их типы собраны в расширяемой карте `RichTextTools`, куда свой Инструмент дописывается через `declare module "@olddevs/ui/editor"`. Тот же массив `tools` понимают серверная очистка (`sanitizeRichText`, `richTextSchema`) и `RichTextView` с Островами. Всё перечисленное подчиняется semver кита с первого выпуска, HTML-соглашение заморожено, мажор Tiptap — мажор кита (раздел «Стабильность»). Подробности каждого пункта живут на странице [RichTextEditor](../components/inputs/rich-text-editor.md); здесь — карта, граница контракта и рецепты.
 
 ```tsx
 import {
   RICH_TEXT_PRESETS,
   RichTextEditor,
+  defineTool,
+  tool,
   useRichTextEditorState,
+  useRichTextToolState,
   type CustomTool,
   type RichTextEditorHandle,
 } from "@olddevs/ui/editor";
@@ -28,12 +31,16 @@ import { sanitizeRichText } from "@olddevs/ui/editor/schema";
 - Документу нужен свой Блок, Атом или своя Метка: Merge Tag, Embed, карточка товара, комментарий к фрагменту. Их Схема, HTML, Markdown и показ в `RichTextView` описываются одним Инструментом.
 - Своя команда в интерфейсе Редактора: кнопка на Панели, Пункт вставки в «/» и «+», Действие над Блоком в меню Ручки Блока, Карточка у текста.
 - Экран управляет полем: вставляет шаблон у каретки, рисует свою панель, сохраняет при потере фокуса, показывает «Сохранено» и число слов.
+- Встроенный Инструмент нужно настроить (`toc` под шапку со своей переменной высоты, Поиск с включённым регистром) или узнать, что в нём происходит: счётчик совпадений в Строке статуса, внешняя навигация по заголовкам, кнопка «Найти» в шапке экрана.
+- Свой Инструмент с настройками, которому нужны Состояние и Команды для экрана: `defineTool` вместо ручной фабрики.
 - Сервер хранит Документ со своими Блоками и должен чистить его тем же набором правил, что Редактор.
 
 ## Когда не использовать
 
 - Нужное уже есть среди Инструментов кита ([«Инструменты и Пресеты»](../components/inputs/rich-text-editor.md#инструменты-и-пресеты)): передайте имя в `tools`, своё не пишите.
 - Чтобы спрятать встроенную кнопку или пункт, сузьте `tools`. Подменить встроенный Инструмент по имени нельзя: выключите его и поставьте свой под своим именем.
+- Опции есть только у `search` и `toc`; `tool("bold", …)` не компилируется. Опции остальных встроенных приходят по одному, по первому запросу. Поменять поведение встроенного Инструмента подменой нельзя (`extend()` как у Tiptap нет): описания встроенных наружу не выходят.
+- Сменить Опции у смонтированного поля нельзя: они читаются один раз, при создании движка, вместе с `tools`. Перемонтируйте поле ключом.
 - Произвольный React в строке Панели и в меню нельзя: кит рисует записи сам, React допускается только в содержимом поповера (кнопки, Пункта вставки, Действия над Блоком) и в Карточке у текста.
 - Во вставку и drop пропом вмешаться нельзя: это делает Часть для движка своего Инструмента ([«Порядок вставки и drop»](../components/inputs/rich-text-editor.md#порядок-вставки-и-drop)).
 - Чего нет, пока потребители об этом не попросили (ADR-0058, раздел 13): `insertImage` и HTML выделения в Хэндле, `onSelectionChange`, `onPaste`, `onDrop`, `onEmpty`, `onDestroy`, события истории, сигнал об удалённых картинках, запертые Блоки шаблона, вид записи «меню», Карточки и Строка статуса в `RichTextView`. До тех пор у экрана есть `ref.current.editor` и его события.
@@ -41,21 +48,26 @@ import { sanitizeRichText } from "@olddevs/ui/editor/schema";
 
 ## Карта API
 
-| Что                                          | Где в API                                                                           | Подробно                                                                                                                                                                                                                            |
-| -------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Свой Инструмент                              | `CustomTool` в `tools`; Пресеты — `RICH_TEXT_PRESETS`                               | [«Свой Инструмент»](../components/inputs/rich-text-editor.md#свой-инструмент)                                                                                                                                                       |
-| Правила Схемы и HTML-соглашение              | `blocks` (`CustomBlock`), `marks` (`CustomMark`), `CustomAttribute`, `PrefixedName` | [«Свой Инструмент»](../components/inputs/rich-text-editor.md#свой-инструмент)                                                                                                                                                       |
-| Кнопка                                       | `buttons` (`CustomToolButton`, `CustomToolPopover`, `CustomToolLabel`)              | [«Кнопка своего Инструмента»](../components/inputs/rich-text-editor.md#кнопка-своего-инструмента)                                                                                                                                   |
-| Пункт вставки, Действие над Блоком           | `insertItems` (`CustomInsertItem`), `blockActions` (`CustomBlockAction`)            | [«Пункты вставки и Действия над Блоком»](../components/inputs/rich-text-editor.md#пункты-вставки-и-действия-над-блоком)                                                                                                             |
-| Символ-триггер                               | `trigger` (`CustomTrigger`, `TriggerItem`, `TriggerContext`)                        | [«Свой символ-триггер»](../components/inputs/rich-text-editor.md#свой-символ-триггер)                                                                                                                                               |
-| Карточка у текста                            | `textCards` (`CustomTextCard`), помощник `markRange`                                | [«Карточка у текста»](../components/inputs/rich-text-editor.md#карточка-у-текста)                                                                                                                                                   |
-| Хэндл и своя панель                          | `RichTextEditorHandle`, `useRichTextEditorState(ref, selector)`                     | [«Хэндл (`ref`) и своя панель вне поля»](../components/inputs/rich-text-editor.md#хэндл-ref-и-своя-панель-вне-поля)                                                                                                                 |
-| События                                      | `onReady`, `onFocus`, `onBlur`; вставка и drop — Частью для движка                  | [«События»](../components/inputs/rich-text-editor.md#события)                                                                                                                                                                       |
-| Строка статуса и Сообщение поля              | проп `status`; команда движка `showNotice`, тип `FieldNotice`                       | [«Строка статуса и Сообщение поля»](../components/inputs/rich-text-editor.md#строка-статуса-и-сообщение-поля)                                                                                                                       |
-| Загрузчик, Готовность и Скелет               | `engine: () => import(…)`                                                           | [«Загрузчик Части для движка»](../components/inputs/rich-text-editor.md#загрузчик-части-для-движка), [«Скелет»](../components/inputs/rich-text-editor.md#скелет)                                                                    |
-| Текст атома: `getText`, `maxLength`, пустота | `renderText` Части для движка                                                       | [«Текст атома»](../components/inputs/rich-text-editor.md#текст-атома)                                                                                                                                                               |
-| Сервер, Markdown, Просмотр                   | `sanitizeRichText(html, DOMPurify, tools)`, `richTextSchema(tools)`, `RichTextView` | [«Вне Редактора»](../components/inputs/rich-text-editor.md#вне-редактора-сервер-markdown-и-просмотр), [RichTextView, «Свои Инструменты: третий аргумент»](../components/content/rich-text-view.md#свои-инструменты-третий-аргумент) |
-| Остров своего Блока                          | `CustomBlock.island`, `CustomIslandProps`, проп `tools` у `RichTextView`            | [RichTextView, «Остров своего Блока»](../components/content/rich-text-view.md#остров-своего-блока)                                                                                                                                  |
+| Что                                              | Где в API                                                                                                 | Подробно                                                                                                                                                                                                                            |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Свой Инструмент                                  | `CustomTool` в `tools`; Пресеты — `RICH_TEXT_PRESETS`                                                     | [«Свой Инструмент»](../components/inputs/rich-text-editor.md#свой-инструмент)                                                                                                                                                       |
+| Правила Схемы и HTML-соглашение                  | `blocks` (`CustomBlock`), `marks` (`CustomMark`), `CustomAttribute`, `PrefixedName`                       | [«Свой Инструмент»](../components/inputs/rich-text-editor.md#свой-инструмент)                                                                                                                                                       |
+| Кнопка                                           | `buttons` (`CustomToolButton`, `CustomToolPopover`, `CustomToolLabel`)                                    | [«Кнопка своего Инструмента»](../components/inputs/rich-text-editor.md#кнопка-своего-инструмента)                                                                                                                                   |
+| Пункт вставки, Действие над Блоком               | `insertItems` (`CustomInsertItem`), `blockActions` (`CustomBlockAction`)                                  | [«Пункты вставки и Действия над Блоком»](../components/inputs/rich-text-editor.md#пункты-вставки-и-действия-над-блоком)                                                                                                             |
+| Символ-триггер                                   | `trigger` (`CustomTrigger`, `TriggerItem`, `TriggerContext`)                                              | [«Свой символ-триггер»](../components/inputs/rich-text-editor.md#свой-символ-триггер)                                                                                                                                               |
+| Карточка у текста                                | `textCards` (`CustomTextCard`), помощник `markRange`                                                      | [«Карточка у текста»](../components/inputs/rich-text-editor.md#карточка-у-текста)                                                                                                                                                   |
+| Хэндл и своя панель                              | `RichTextEditorHandle`, `useRichTextEditorState(ref, selector)`                                           | [«Хэндл (`ref`) и своя панель вне поля»](../components/inputs/rich-text-editor.md#хэндл-ref-и-своя-панель-вне-поля)                                                                                                                 |
+| Опции встроенного Инструмента                    | `tool(name, options)` → `ConfiguredTool` для `search` и `toc`                                             | [«Опции встроенного Инструмента: `tool()`»](../components/inputs/rich-text-editor.md#опции-встроенного-инструмента-tool)                                                                                                            |
+| Свой Инструмент с Опциями, Состоянием, Командами | `defineTool({ name, defaults, create, state, commands })` → `ToolDefinition`, `tool(definition, options)` | [«Опции, Состояние и Команды»](editor-extension.md#опции-состояние-и-команды)                                                                                                                                                       |
+| Типы Опций, Состояния и Команд                   | расширяемый интерфейс `RichTextTools`                                                                     | [«Карта `RichTextTools` и declaration merging»](editor-extension.md#карта-richtexttools-и-declaration-merging)                                                                                                                      |
+| Состояние Инструмента                            | `useRichTextToolState(ref, name, selector?)`, `SearchToolState`, `TocToolState`, `TocToolHeading`         | [«Состояние Инструмента: `useRichTextToolState`»](../components/inputs/rich-text-editor.md#состояние-инструмента-userichtexttoolstate)                                                                                              |
+| Команды Инструмента                              | `handle.tool(name)`                                                                                       | [«Команды Инструмента: `handle.tool()`»](../components/inputs/rich-text-editor.md#команды-инструмента-handletool)                                                                                                                   |
+| События                                          | `onReady`, `onFocus`, `onBlur`; вставка и drop — Частью для движка                                        | [«События»](../components/inputs/rich-text-editor.md#события)                                                                                                                                                                       |
+| Строка статуса и Сообщение поля                  | проп `status`; команда движка `showNotice`, тип `FieldNotice`                                             | [«Строка статуса и Сообщение поля»](../components/inputs/rich-text-editor.md#строка-статуса-и-сообщение-поля)                                                                                                                       |
+| Загрузчик, Готовность и Скелет                   | `engine: () => import(…)`                                                                                 | [«Загрузчик Части для движка»](../components/inputs/rich-text-editor.md#загрузчик-части-для-движка), [«Скелет»](../components/inputs/rich-text-editor.md#скелет)                                                                    |
+| Текст атома: `getText`, `maxLength`, пустота     | `renderText` Части для движка                                                                             | [«Текст атома»](../components/inputs/rich-text-editor.md#текст-атома)                                                                                                                                                               |
+| Сервер, Markdown, Просмотр                       | `sanitizeRichText(html, DOMPurify, tools)`, `richTextSchema(tools)`, `RichTextView`                       | [«Вне Редактора»](../components/inputs/rich-text-editor.md#вне-редактора-сервер-markdown-и-просмотр), [RichTextView, «Свои Инструменты: третий аргумент»](../components/content/rich-text-view.md#свои-инструменты-третий-аргумент) |
+| Остров своего Блока                              | `CustomBlock.island`, `CustomIslandProps`, проп `tools` у `RichTextView`                                  | [RichTextView, «Остров своего Блока»](../components/content/rich-text-view.md#остров-своего-блока)                                                                                                                                  |
 
 ## Свой Инструмент и HTML-соглашение
 
@@ -95,11 +107,196 @@ import { sanitizeRichText } from "@olddevs/ui/editor/schema";
 
 ## Хэндл (`ref`), события, Строка статуса
 
-- **Хэндл** (`ref`) — вставка у каретки (`insertHTML`, `insertText` → `boolean`), чтение (`getText`, `getSelectedText`, `isEmpty`, `getHTML`, `getMarkdown`, `getJSON`), фокус (`focus("start" | "end" | "restore")`, `blur`), история (`undo`, `redo`, `canUndo`, `canRedo`), а ещё `clear`, `setMarkdown` и `setJSON` (JSON-конверт → `boolean`) и `openSearch({ replace? })` — открыть панель поиска и замены. Вставка — Правка автора: шаг истории, `onChange` после задержки, предел `maxLength`; за пределом вставка не выполняется. До Готовности методы не бросают ошибок и ничего не меняют: `insertHTML` и `insertText` возвращают `false`. `editor` — сырой Tiptap для команд Меток, Блоков и своих Инструментов; его API следует мажору Tiptap.
+- **Хэндл** (`ref`) — вставка у каретки (`insertHTML`, `insertText` → `boolean`), чтение (`getText`, `getSelectedText`, `isEmpty`, `getHTML`, `getMarkdown`, `getJSON`), фокус (`focus("start" | "end" | "restore")`, `blur`), история (`undo`, `redo`, `canUndo`, `canRedo`), а ещё `clear`, `setMarkdown` и `setJSON` (JSON-конверт → `boolean`) и `tool(name)` — Команды Инструмента (раздел «Опции, Состояние и Команды» ниже). `openSearch({ replace? })` устарел: он работает как `tool("search")?.open({ replace })`, один раз предупреждает в разработке и удаляется в 5.0. Вставка — Правка автора: шаг истории, `onChange` после задержки, предел `maxLength`; за пределом вставка не выполняется. До Готовности методы не бросают ошибок и ничего не меняют: `insertHTML` и `insertText` возвращают `false`. `editor` — сырой Tiptap для команд Меток, Блоков и своих Инструментов; его API следует мажору Tiptap.
 - **`useRichTextEditorState(ref, selector)`** — состояние своей панели: перерисовка только при смене среза, `null` до движка и на сервере.
+- **`useRichTextToolState(ref, name, selector?)`** — Состояние Инструмента: снимок данных, перерисовка только при его смене, `null` до монтажа, на сервере и без Инструмента в наборе.
 - **`onReady()`** — один раз за монтаж, когда наступила Готовность; **`onFocus()`** и **`onBlur()`** — о Фокусе поля целиком (Документ, Панель, поповеры кита, поле HTML); перед `onBlur` отложенный `onChange` выталкивается.
 - **`status`** — React-узел экрана в строке под Документом, у начала; счётчик кита — в конце. Кит строку не озвучивает.
 - **`showNotice({ tone: "status" | "error", text } | null)`** — команда движка: одно Сообщение поля, новое заменяет прежнее; `status` только озвучивается, `error` видна строкой `role="alert"` до следующей Правки автора. Тем же каналом кит сообщает о картинках.
+
+## Опции, Состояние и Команды
+
+У Инструмента три типизированные части. Это перенос `options`, `storage` и `commands` из Tiptap на контракт кита, а не движка (ADR-0069).
+
+| Часть     | Что это                             | Кто задаёт                                                                            | Как пользуется экран                         |
+| --------- | ----------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Опции     | Что экран задаёт до создания движка | `tool(name, options)` у встроенных; `defaults` и `tool(definition, options)` у своего | —                                            |
+| Состояние | Снимок, который экран читает        | Кит у встроенных; поле `state` у `defineTool`                                         | `useRichTextToolState(ref, name, selector?)` |
+| Команды   | То, что экран вызывает              | Кит у встроенных; поле `commands` у `defineTool`                                      | `ref.current?.tool(name)?.команда()`         |
+
+Часть для движка по-прежнему следует мажору Tiptap (ADR-0058, п. 12.4). Три новые части от Tiptap не зависят: их типы и поведение подчиняются semver кита.
+
+### `tool()`: встроенный Инструмент с Опциями
+
+`tool(name, options)` возвращает Настроенный Инструмент — непрозрачную запись для `tools` (её поля читает только кит). Опции есть у `search` (стартовые флажки) и `toc` (`offsetVar`, `levels`, `listWidth`); их значения и пример — на странице [RichTextEditor](../components/inputs/rich-text-editor.md#опции-встроенного-инструмента-tool). Запись включает Инструмент и без имени в `tools`, а имя из Пресета ей уступает. Две записи `tool()` с одним именем — ошибка набора.
+
+`tool(definition, options)` настраивает тем же способом определение `defineTool`; Опции берутся из его `defaults`.
+
+### `defineTool()`: свой Инструмент с Опциями
+
+`defineTool({ name, defaults, create, state?, commands? })` возвращает определение — элемент `tools`, который работает и без `tool()` (с умолчаниями из `defaults`), и с ним.
+
+- **`defaults`** — полный набор Опций. Тип Опций выводится из него, второй раз его объявлять не нужно. Литерал расширяется до своего типа (`tone: "info"` станет `string`): нужен союз — укажите тип значения, `tone: "info" as "info" | "warning"`.
+- **`create(options)`** отдаёт тело описания — ту же форму, что `CustomTool`, без имени (`CustomToolBody`): Часть для движка, правила Схемы, UI-записи. Зовётся один раз на Редактор, при создании набора. Загрузчик Части для движка держите константой модуля: кэш загрузчика живёт на самой функции, и новая функция на каждый вызов `create` загружала бы Часть заново для каждого Редактора.
+- **`state({ editor, options })`** — Состояние для `useRichTextToolState`. Её зовут при каждой транзакции и при каждом чтении хука, поэтому она быстрая и без побочных эффектов, а результат — данные без DOM-узлов, которые сравниваются по значению. Нет `state` — у Инструмента нет Состояния, и хук отдаёт `null`.
+- **`commands({ editor, options })`** — Команды для `handle.tool(name)`. Их зовут при каждом обращении к Хэндлу: только обёртки над движком, без подписок. Команда возвращает `boolean`, как у встроенных. Нет `commands` — `handle.tool(name)` отдаёт `null`.
+- **Слияние Опций.** Вложенные простые объекты сливаются с умолчаниями, массивы и функции заменяются целиком — как `configure` у Tiptap v3. Значение `undefined` не в счёт: остаётся то, что было. Объект `defaults` не меняется, объект Опций общий для `create`, `state` и `commands`: читайте его, но не меняйте.
+- **Опции читаются один раз**, при создании движка, вместе с набором. Чтобы сменить их, перемонтируйте Редактор ключом (`key`). Значения Опций своего Инструмента проверяет его автор: кит этого не делает.
+- **Все правила своего Инструмента действуют** (ADR-0058): Префикс потребителя в имени, уникальность имени в `tools` (определение дважды, с `tool()` и без, — тоже ошибка набора), проверки набора, Загрузчик Части для движка. `defineTool` — сахар над той же формой `CustomTool`: отдельного пути сборки у него нет. Обычный объект `CustomTool` в `tools` работает как раньше, без Опций, Состояния и Команд.
+- **Сервер.** `defineTool` и `tool()` живут в модуле без Tiptap и React в рантайме (Tiptap там — только типы), поэтому набор `tools` собирается в серверном модуле, рядом с остальной конфигурацией экрана. Определение содержит функции, как и `CustomTool`, поэтому клиентскому компоненту оно отдаётся вместе с модулем (импортом), а не пропом через границу RSC. Настроенный встроенный Инструмент состоит из данных: при данных в опциях его можно передать и пропом.
+
+### Карта `RichTextTools` и declaration merging
+
+Типы всех трёх частей собраны в интерфейсе `RichTextTools`, как `Storage` и `Commands` у Tiptap: ключ — имя Инструмента, значение — `{ options; state; commands }`. Кит объявляет в нём `search` и `toc`, свой Инструмент потребитель дописывает сам:
+
+```ts
+declare module "@olddevs/ui/editor" {
+  interface RichTextTools {
+    acme_note: {
+      options: { tone: "info" | "warning" };
+      state: { count: number };
+      commands: { clear(): boolean };
+    };
+  }
+}
+```
+
+- Из карты выводятся тип снимка в `useRichTextToolState`, тип Команд в `handle.tool()` и Опции `tool()` встроенного. Опции своего Инструмента `tool()` берёт из `defaults` его определения, поэтому поле `options` в карте описывает Опции для читателей карты (`RichTextTools["acme_note"]["options"]`), а `tool()` его не использует.
+- **Типизация добровольна.** Инструмент, не дописанный в карту, работает: его Состояние и Команды имеют тип `unknown`.
+- Файл с `declare module` должен быть модулем (в нём есть `import` или `export`); иначе объявление не дополняет карту, а заводит свой модуль. Положите его рядом с определением Инструмента.
+- Карту нельзя перепутать с типизацией движка. Кто типизирует Часть для движка через `declare module "@tiptap/core"` (`Commands`, `Storage`), продолжает так делать: это слой движка и его мажор, а `RichTextTools` — слой кита.
+
+### Сквозной пример
+
+Один набор `tools` с настройками и свой Инструмент в серверно-безопасном модуле:
+
+```ts
+// editor-tools.ts: ни Tiptap, ни React в рантайме, модуль годится и для сервера.
+import type { Editor } from "@tiptap/core";
+import { RICH_TEXT_PRESETS, defineTool, tool } from "@olddevs/ui/editor";
+import { MentionIcon } from "@olddevs/ui/icons";
+
+// Загрузчик — одна функция на модуль: промис кэшируется на ней.
+const loadEngine = () => import("./mention-engine.js").then((module) => module.engine);
+
+function countMentions(editor: Editor): number {
+  let count = 0;
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === "acme_mention") count += 1;
+  });
+  return count;
+}
+
+export const mention = defineTool({
+  name: "acme_mention",
+  // Умолчания: из них выводится тип Опций.
+  defaults: { labels: { insert: "Mention" }, limit: 5 },
+  create: (options) => ({
+    engine: loadEngine,
+    blocks: {
+      acme_mention: {
+        kind: "inline",
+        attributes: { acme_id: { kind: "pattern", pattern: "[0-9]+" } },
+      },
+    },
+    insertItems: [
+      {
+        section: "insert",
+        label: options.labels.insert,
+        icon: MentionIcon,
+        run: (chain) => chain.insertContent({ type: "acme_mention", attrs: { acme_id: null } }),
+      },
+    ],
+  }),
+  // Состояние: данные, которые экран читает хуком.
+  state: ({ editor }) => ({ count: countMentions(editor) }),
+  // Команды: тонкие обёртки над движком, возвращают boolean.
+  commands: ({ editor, options }) => ({
+    insert: (id: number) =>
+      countMentions(editor) < options.limit &&
+      editor.commands.insertContent({ type: "acme_mention", attrs: { acme_id: String(id) } }),
+  }),
+});
+
+// Типы Состояния и Команд для `useRichTextToolState` и `handle.tool()`.
+declare module "@olddevs/ui/editor" {
+  interface RichTextTools {
+    acme_mention: {
+      options: { labels: { insert: string }; limit: number };
+      state: { count: number };
+      commands: { insert(id: number): boolean };
+    };
+  }
+}
+
+// Набор собирается один раз на модуль: `tools` читается при создании движка.
+export const EDITOR_TOOLS = [
+  ...RICH_TEXT_PRESETS.full,
+  tool("search", { matchCase: true }),
+  tool("toc", { offsetVar: "--header-h", levels: [2, 3] }),
+  tool(mention, { limit: 10, labels: { insert: "Отметить коллегу" } }),
+];
+```
+
+Экран читает Состояние всех трёх Инструментов и зовёт их Команды:
+
+```tsx
+"use client";
+import { useRef } from "react";
+import { RichTextEditor, useRichTextToolState } from "@olddevs/ui/editor";
+import type { RichTextEditorHandle } from "@olddevs/ui/editor";
+import { EDITOR_TOOLS } from "./editor-tools";
+
+export function ArticleBody({ html }: { html: string }) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  const search = useRichTextToolState(ref, "search");
+  const toc = useRichTextToolState(ref, "toc");
+  const mentions = useRichTextToolState(ref, "acme_mention", (state) => state.count);
+
+  return (
+    <>
+      <nav aria-label="Разделы">
+        {toc?.headings.map((heading) => (
+          <button
+            key={heading.index}
+            type="button"
+            aria-current={heading.index === toc.current ? "location" : undefined}
+            onClick={() => ref.current?.tool("toc")?.jumpTo(heading.index)}
+          >
+            {heading.text}
+          </button>
+        ))}
+      </nav>
+      <button type="button" onClick={() => ref.current?.tool("search")?.open()}>
+        Найти
+      </button>
+      <button
+        type="button"
+        // Клик по кнопке вне поля не должен уводить фокус из Документа.
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => ref.current?.tool("acme_mention")?.insert(1)}
+      >
+        Упомянуть ({mentions ?? 0})
+      </button>
+      <RichTextEditor
+        ref={ref}
+        aria-label="Текст статьи"
+        tools={EDITOR_TOOLS}
+        defaultValue={html}
+        status={
+          search?.open && search.query ? (
+            <span>
+              {search.total ? `${search.current + 1} из ${search.total}` : "Нет совпадений"}
+            </span>
+          ) : null
+        }
+      />
+    </>
+  );
+}
+```
+
+Что здесь важно. Запись `tool("toc", …)` включила Оглавление без строки `"toc"`, а `tool("search", …)` заменила Поиск из Пресета. `useRichTextToolState(ref, "acme_mention", …)` и `tool("acme_mention")` типизированы благодаря `declare module`; без него вернулся бы `unknown`. Опции `mention` в `EDITOR_TOOLS` — `limit: 10` вместо умолчания 5. Они читаются один раз, при создании движка, и `insert` видит именно их.
 
 ## Загрузчики, Готовность и Скелет
 
@@ -120,10 +317,11 @@ import { sanitizeRichText } from "@olddevs/ui/editor/schema";
 - описание своего Инструмента (`CustomTool` и его поля, в том числе `trigger`), UI-записи и их Отведённые места, правила Схемы (`CustomBlock`, `CustomMark`, `CustomAttribute`), Признаки Блока;
 - HTML-соглашение (`data-block`, `data-mark`, `data-<префикс>_<имя>`);
 - методы Хэндла, `useRichTextEditorState`, колбэки `onReady`, `onFocus`, `onBlur`, проп `status`, команда `showNotice` и тип `FieldNotice`;
+- Опции, Состояние и Команды (ADR-0069): карта `RichTextTools`, `tool()`, `defineTool()` и его типы (`ToolDefinition`, `ConfiguredTool`), `useRichTextToolState`, `handle.tool()`, а также поля Опций, Состояния и Команд `search` и `toc`;
 - третий аргумент `sanitizeRichText` и `richTextSchema`, проп `tools` и Остров у `RichTextView`, `markRange`;
 - имена встроенных Инструментов (`ToolName`) и сам факт Пресетов-массивов `RICH_TEXT_PRESETS` — но не их состав (ниже).
 
-**Не входят:** DOM и классы кита вокруг Отведённого места; id встроенных кнопок и пунктов; внутреннее описание встроенных Инструментов (надмножество публичной формы) — наружу оно не экспортируется; точное место записи внутри поверхности; вид Скелета; имена файлов и чанков в `dist`, как любой путь внутри пакета ([«Публичный контракт»](../conventions.md#публичный-контракт)). API сырого `editor` и Части для движка — это API Tiptap, он следует мажору движка.
+**Не входят:** DOM и классы кита вокруг Отведённого места; id встроенных кнопок и пунктов; внутреннее описание встроенных Инструментов (надмножество публичной формы) — наружу оно не экспортируется; точное место записи внутри поверхности; вид Скелета; форма Настроенного Инструмента изнутри (запись непрозрачна, её поля читает кит); задержка прокрутки после Команд Поиска (она приходит чуть позже вызова); имена файлов и чанков в `dist`, как любой путь внутри пакета ([«Публичный контракт»](../conventions.md#публичный-контракт)). API сырого `editor` и Части для движка — это API Tiptap, он следует мажору движка.
 
 **Сохранённый Документ не ломают ни minor, ни patch.** HTML-соглашение заморожено: `data-block` и `data-mark` расширяются только добавлением. Если форму придётся сменить, это мажор, и до следующего мажора кит читает обе формы — и разбором движка, и санитайзером.
 
@@ -140,6 +338,8 @@ import { sanitizeRichText } from "@olddevs/ui/editor/schema";
 | Удаление Инструмента из Пресета, переименование Инструмента                               | major                                        |
 | Удаление публичного имени                                                                 | major, после `@deprecated` в minor (ниже)    |
 | Новое необязательное поле, новый вид записи, метод Хэндла или колбэк                      | minor                                        |
+| Новое поле Опций или Состояния, новая Команда, опция у другого встроенного Инструмента    | minor                                        |
+| Удаление поля Опций, Состояния или Команды, смена его смысла                              | major                                        |
 | Новый встроенный Инструмент в Пресете                                                     | minor, строка changeset выделена жирным      |
 | Сдвиг Отведённого места внутри поверхности                                                | minor со строкой changeset                   |
 | Подъём нижней границы Tiptap внутри мажора                                                | minor                                        |
@@ -149,7 +349,7 @@ import { sanitizeRichText } from "@olddevs/ui/editor/schema";
 - **Мажор Tiptap — мажор кита.** Кит поддерживает один мажор Tiptap за раз; движка нет в манифесте кита, и диапазон версий (`^3.31.4`) держит потребитель по странице [RichTextEditor](../components/inputs/rich-text-editor.md#установка).
 - **Пресет** — «то, что кит считает полным набором», а не замороженный список. Кому нужен стабильный состав, передаёт точный список имён.
 - **Ужесточение очистки** выходит заметкой в [migration-notes](migration-notes.md): что теперь срезается и как найти такие Документы. Ослабление очистки — отдельное решение, а не вопрос версии.
-- **Сначала пометка, потом удаление.** Замена выходит в minor, старое получает `@deprecated` и одно предупреждение в разработке, удаляется следующим мажором.
+- **Сначала пометка, потом удаление.** Замена выходит в minor, старое получает `@deprecated` и одно предупреждение в разработке, удаляется следующим мажором. Так помечен `handle.openSearch()`: замена — `handle.tool("search")?.open()`, удаление — в 5.0, запись в [migration-notes](migration-notes.md).
 
 ## Рецепты
 
@@ -296,6 +496,8 @@ export const EDITOR_TOOLS = [
 
 Пустая подпись не роняет поле: в разработке — `console.error` с именем Инструмента и записи, а в имя и подсказку встаёт имя Инструмента.
 
+Эту же фабрику без ручного слияния опций даёт `defineTool`: умолчания в `defaults`, настройка — `tool(definition, options)` (раздел «Опции, Состояние и Команды»). Фабрика остаётся рабочим вариантом для Инструмента без Состояния и Команд.
+
 ### `modulepreload` для ленивых чанков
 
 Предзагрузки кит не публикует. Чанки Частей для движка (своих Загрузчиков и встроенных `codeBlock` и `table` в `full`) начинают грузиться с первого рендера Редактора, и это время закрывает Скелет. Чтобы чанк пришёл вместе со страницей, поставьте на него `<link rel="modulepreload">` (в React 19 — `preloadModule(url)` из `react-dom`); URL с хешем берите из манифеста своего сборщика: имена чанков кита в контракт не входят. Пример — [RichTextEditor, «Загрузчик Части для движка»](../components/inputs/rich-text-editor.md#загрузчик-части-для-движка); цена сценариев «старт» и «полный» — [«Размер импорта»](../getting-started.md#размер-импорта).
@@ -303,6 +505,6 @@ export const EDITOR_TOOLS = [
 ## Ссылки
 
 - Страницы: [RichTextEditor](../components/inputs/rich-text-editor.md), [RichTextView](../components/content/rich-text-view.md), [словарь Редактора](../glossary.md#редактор), [migration-notes](migration-notes.md).
-- Решения: ADR-0058 — API расширения, ADR-0050 — Редактор.
-- Исходник: вход `src/editor/index.ts`, публичная форма своего Инструмента `src/editor/core/customTool.ts`, проверка массива `tools` и проводка `src/editor/core/customToolEngine.ts`, Хэндл `src/editor/core/handle.ts`, хук `src/editor/hooks/useRichTextEditorState.ts`, Сообщение поля `src/editor/core/fieldNotice.ts`, Схема и очистка `src/editor/core/schema.ts`, Острова `src/editor/core/viewIsland.ts`.
-- Тесты: `tests/rich-text-editor-custom-tool.test.tsx` (описание, Схема, проверка массива `tools`), `tests/rich-text-editor-custom-button.test.tsx`, `tests/rich-text-editor-custom-ui.test.tsx` и `tests/rich-text-editor-text-card.test.tsx` (UI-записи), `tests/rich-text-editor-handle.test.tsx` и `tests/rich-text-editor-handle-ssr.test.tsx` (Хэндл и хук), `tests/rich-text-editor-events.test.tsx` (колбэки, порядок вставки и drop), `tests/rich-text-editor-notice.test.tsx` (Строка статуса и Сообщение поля), `tests/rich-text-editor-loaders.test.tsx`, `tests/rich-text-editor-skeleton.test.tsx` и `tests/rich-text-editor-lazy-builtins.test.tsx` (Загрузчики, Скелет, ленивые встроенные), `tests/rich-text-editor-atom-text.test.tsx` (Текст атома), `tests/rich-text-editor-custom-markdown.test.tsx`, `tests/editor-sanitize-tools.test.tsx`, `tests/rich-text-view-island.test.tsx`, `tests/editor-entry.test.ts`; тестовые Инструменты — `tests/editor-test-tools.ts`.
+- Решения: ADR-0058 — API расширения, ADR-0069 — Опции, Состояние и Команды Инструмента, ADR-0050 — Редактор.
+- Исходник: вход `src/editor/index.ts`, публичная форма своего Инструмента `src/editor/core/customTool.ts`, проверка массива `tools` и проводка `src/editor/core/customToolEngine.ts`, Хэндл `src/editor/core/handle.ts`, хуки `src/editor/hooks/useRichTextEditorState.ts` и `src/editor/hooks/useRichTextToolState.ts`, Опции и карта `src/editor/core/toolOptions.ts`, типы Команд `src/editor/core/toolCommands.ts` и Состояния `src/editor/core/toolState.ts`, Сообщение поля `src/editor/core/fieldNotice.ts`, Схема и очистка `src/editor/core/schema.ts`, Острова `src/editor/core/viewIsland.ts`.
+- Тесты: `tests/rich-text-editor-custom-tool.test.tsx` (описание, Схема, проверка массива `tools`), `tests/rich-text-editor-custom-button.test.tsx`, `tests/rich-text-editor-custom-ui.test.tsx` и `tests/rich-text-editor-text-card.test.tsx` (UI-записи), `tests/rich-text-editor-handle.test.tsx` и `tests/rich-text-editor-handle-ssr.test.tsx` (Хэндл и хук), `tests/rich-text-editor-events.test.tsx` (колбэки, порядок вставки и drop), `tests/rich-text-editor-notice.test.tsx` (Строка статуса и Сообщение поля), `tests/rich-text-editor-loaders.test.tsx`, `tests/rich-text-editor-skeleton.test.tsx` и `tests/rich-text-editor-lazy-builtins.test.tsx` (Загрузчики, Скелет, ленивые встроенные), `tests/rich-text-editor-atom-text.test.tsx` (Текст атома), `tests/rich-text-editor-custom-markdown.test.tsx`, `tests/editor-sanitize-tools.test.tsx`, `tests/rich-text-view-island.test.tsx`, `tests/editor-entry.test.ts`, `tests/rich-text-editor-tool-options.test.tsx`, `tests/rich-text-editor-tool-state.test.tsx`, `tests/rich-text-editor-tool-commands.test.tsx` и `tests/rich-text-editor-define-tool.test.tsx` (Опции, Состояние, Команды, `defineTool`), `tests/editor-tool-options-types.test.ts`, `tests/editor-tool-state-types.test.ts`, `tests/editor-tool-commands-types.test.ts` и `tests/editor-define-tool-types.test.ts` (типы и карта); тестовые Инструменты — `tests/editor-test-tools.ts`.

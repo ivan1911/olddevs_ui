@@ -1,5 +1,5 @@
 ---
-sourceHash: 1efca315c26c
+sourceHash: 3aa1b5325b8c
 ---
 
 # Component catalog
@@ -29,7 +29,7 @@ page.
 ## Input fields
 
 - [TextControl](inputs/text-control.md): `TextControl` — the base text field: a single line or multi-line text, with an icon and a placeholder inside; the other input fields are built on it
-- [RichTextEditor](inputs/rich-text-editor.md): `RichTextEditor`, the `useRichTextEditorState` hook, the `RICH_TEXT_PRESETS` Presets, a custom Tool (`CustomTool`) — a rich text editor: headings, lists, links, inline formatting (bold, italic, color). Suitable for long articles and descriptions, and the value is stored as HTML. A separate entry point `@olddevs/ui/editor`; the consumer installs the Tiptap engine with the command from that page
+- [RichTextEditor](inputs/rich-text-editor.md): `RichTextEditor`, the `useRichTextEditorState` and `useRichTextToolState` hooks, the `tool` and `defineTool` helpers, the `RICH_TEXT_PRESETS` Presets, a custom Tool (`CustomTool`) — a rich text editor: headings, lists, links, inline formatting (bold, italic, color). Suitable for long articles and descriptions, and the value is stored as HTML. A separate entry point `@olddevs/ui/editor`; the consumer installs the Tiptap engine with the command from that page
 - [Editor extension API](../api/editor-extension.md) — a reference for those who extend the Editor with custom Tools, buttons and Loaders: what can be plugged in and what will not change between versions
 - [NumberInput](inputs/number-input.md): `NumberInput` — a number field with "increase" and "decrease" buttons, bounds and formatting; an empty field yields `null`, not zero
 - [Choice controls](inputs/choice-controls.md): `Checkbox`, `CheckboxGroup`, `Radio`, `RadioGroup` — checkboxes and radio buttons: mark several independent options or choose exactly one from a set

@@ -24,7 +24,7 @@
 ## Поля ввода
 
 - [TextControl](inputs/text-control.md): `TextControl` — базовое текстовое поле: одна строка или многострочный текст, с иконкой и плейсхолдером внутри; на нём построены остальные поля ввода
-- [RichTextEditor](inputs/rich-text-editor.md): `RichTextEditor`, хук `useRichTextEditorState`, Пресеты `RICH_TEXT_PRESETS`, свой Инструмент (`CustomTool`) — редактор форматированного текста: заголовки, списки, ссылки, выделение слов (жирный, курсив, цвет). Подходит для длинных статей и описаний, значение хранится как HTML. Отдельный вход `@olddevs/ui/editor`; движок Tiptap потребитель ставит сам — командой со страницы
+- [RichTextEditor](inputs/rich-text-editor.md): `RichTextEditor`, хуки `useRichTextEditorState` и `useRichTextToolState`, помощники `tool` и `defineTool`, Пресеты `RICH_TEXT_PRESETS`, свой Инструмент (`CustomTool`) — редактор форматированного текста: заголовки, списки, ссылки, выделение слов (жирный, курсив, цвет). Подходит для длинных статей и описаний, значение хранится как HTML. Отдельный вход `@olddevs/ui/editor`; движок Tiptap потребитель ставит сам — командой со страницы
 - [API расширения Редактора](../api/editor-extension.md) — справочник для тех, кто дописывает Редактор своими Инструментами, кнопками и Загрузчиками: что можно подключить и что не изменится между версиями
 - [NumberInput](inputs/number-input.md): `NumberInput` — поле для числа с кнопками «больше» и «меньше», границами и форматированием; пустое поле даёт `null`, а не ноль
 - [Choice controls](inputs/choice-controls.md): `Checkbox`, `CheckboxGroup`, `Radio`, `RadioGroup` — флажки и радиокнопки: отметить несколько независимых вариантов или выбрать ровно один из набора
