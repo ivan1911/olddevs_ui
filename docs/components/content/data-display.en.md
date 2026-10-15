@@ -117,7 +117,7 @@ the row: a manual `stopPropagation` is not needed. A detail row and the expander
 button do not call the action. A row with an action gets a pointer cursor.
 
 **Expansion is the only axis that could not be added as a layer on top.**
-`DataTable` adds column visibility, order, density and the table bar (`toolbar`)
+`DataTable` adds column visibility, order, density and the table toolbar (`toolbar`)
 from the outside: they change what goes into `Table` through props. A detail row
 lives **inside** `<tbody>`, between the rows of the react-aria collection, and
 cannot be inserted from the outside. The analysis is in

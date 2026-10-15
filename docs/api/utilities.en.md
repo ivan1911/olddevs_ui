@@ -156,10 +156,10 @@ nothing outside React** and subscribes to nothing. The kit provides the shape, a
 ### Invariants the hook exists to keep
 
 - changing **filters, sorting or the page size resets the page** to the first one. Otherwise the user looks at
-  page four of a result set of ten rows, and reads the empty space as "nothing found";
+  page four while the filtered rows number ten, and reads the empty space as "nothing found";
 - **selection is not reset.** The reverse looks tidier, but it breaks a bulk action exactly when that action is
   needed most;
-- density and column visibility do **not** touch the page. A filter narrows the result set, not the look;
+- density and column visibility do **not** touch the page. A filter narrows the filtered rows, not the look;
 - an explicit `page` in the same call cancels the reset. This is how the state is restored from the address,
   in full and in one go.
 
@@ -190,7 +190,7 @@ router.replace(`?${tableStateToParams(state)}`);
 state. There are two reasons. The list of keys has no length limit. And a link with a selection, opened the next
 day, marks records that no longer exist. Selection is session state, not URL state.
 
-The restored state is passed to the hook as a whole, in one `set` call. The invariant "narrowing the result set
+The restored state is passed to the hook as a whole, in one `set` call. The invariant "narrowing the filtered rows
 resets the page" is cancelled by an explicit page in the same call. Otherwise a link would always open the first
 page.
 
@@ -207,7 +207,7 @@ For how to build a range in the UI, see [FilterBar](../components/table/filter-b
 
 ## Constants, classes and public types: where they are documented
 
-These are public exports, but not standalone components. The page of the family they belong to describes them,
+These are public exports, but not standalone components. The page of the compound component they belong to describes them,
 so that AI does not treat a class as a general-purpose API:
 
 | Exports                                                                                                                                       | Documentation                                                 |
@@ -221,8 +221,8 @@ so that AI does not treat a class as a general-purpose API:
 
 Each `*Props` type and each component-specific type exported with a component (for example `TableProps`,
 `CommandItem`, `SelectItem`, `KeyboardSelection` or `DrawerSide`) stays part of that component's public API. It
-is described on the page of its family. The [component catalog](../components/index.md) links the public exports
-to the family pages. `src/index.ts` is the final source for all exports.
+is described on the page of its compound component. The [component catalog](../components/index.md) links the public exports
+to the compound component pages. `src/index.ts` is the final source for all exports.
 
 ## Related sources and checks
 

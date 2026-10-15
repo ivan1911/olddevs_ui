@@ -106,7 +106,7 @@ The filter that gets built is an ordinary `TableFilter` with an optional `to`:
 - **A field with an already applied range is not offered again.** Two ranges on
   one field are an intersection, not an addition, and the tokens could not be
   told apart. The token identifier is `<field>:range`.
-- **The consumer computes the result set.** The kit describes the shape of the
+- **The consumer computes the filtered rows.** The kit describes the shape of the
   filter, it does not filter data
   (ADR-0023):
   how to treat the bounds (inclusive, in which time zone) is the application's

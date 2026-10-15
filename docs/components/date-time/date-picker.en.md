@@ -44,7 +44,7 @@ sourceHash: 389a684cb62f
 - **The `FormField` hint and error are announced together with the field.** The
   description is passed through context, and `aria-describedby` is set on the
   trigger; the consumer's `aria-describedby` value is not overridden but merged
-  with it. Before version 3.0.0 the react-aria families did not pick up the form description — it was on
+  with it. Before version 3.0.0 the react-aria compound components did not pick up the form description — it was on
   screen but never reached the screen reader
   (ADR-0031).
 - The popover uses `Calendar` with its grid and keyboard contract; it closes on selection.

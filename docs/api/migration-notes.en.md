@@ -22,7 +22,7 @@ became relevant.
 - When changing a default, accessibility, keyboard behavior or the shape of a
   controlled value: TypeScript may not detect such a migration.
 - When replacing one component with another, for example, when the old API goes away in favor of
-  an existing family.
+  an existing compound component.
 
 ## When not to use
 
@@ -110,7 +110,7 @@ ref.current?.tool("search")?.open({ replace: true });
 
 Unchanged: the same panel, the same focus, the same shortcuts. The differences are small: `tool("search")` is `null`
 without the `search` Tool in `tools` and before the engine exists, so a call through `?.` does nothing, just as
-`openSearch` did; `open` returns a `boolean` (`false` in HTML mode) instead of `void`.
+`openSearch` did; `open` returns a `boolean` (`false` in Source mode) instead of `void`.
 
 ### Action before updating
 
@@ -282,7 +282,7 @@ the same page.
 `onChange`, `onUploadImage` and `focus()` do not change, and the previous code builds.
 The note is needed because five changes are visible to current consumers
 of `@olddevs/ui/editor`, and one requires installing packages with pnpm. The new API
-(a custom Tool, the Handle, events, the Status line) requires no action — it is on the
+(a custom Tool, the Handle, events, the Status bar) requires no action — it is on the
 [extension API page](editor-extension.md).
 
 ### 1. Two new peer packages
@@ -381,7 +381,7 @@ arrive with the page, add `modulepreload` for them
 **What changed.** "Uploading…", "uploaded", an upload refusal, "not an image" and
 "files are not accepted" go through the same channel as the new engine command
 `showNotice`: one place under the field, a new message replaces the previous one, and an error
-(`role="alert"`) stays until the next Author edit. The texts and roles are the same, but the
+(`role="alert"`) stays until the next User edit. The texts and roles are the same, but the
 live region `role="status"` is now present in **every** Editor, not only with the
 `image` Tool.
 
@@ -578,7 +578,7 @@ is parameterized by your state (`SavedView<T>`) and is not tied to
 `TableState`; storage, sharing and the URL stay entirely with you. For details, see the
 [component page](../components/table/saved-views.md).
 
-**The `FormField` hint and error reach the react-aria families.** For
+**The `FormField` hint and error reach the react-aria compound components.** For
 `Select`, `Combobox`, `DatePicker` and `TagInput`, the description from `FormField` is now tied to
 the field through `aria-describedby`. **This is an accessibility fix, and it changes
 what is announced:** where a hint was visible on screen but did not reach a screen reader, a
@@ -646,7 +646,7 @@ above came from: `npm run check:dist`, `npm run check:consumer`,
 with changesets.
 
 **Deliberately postponed:** Figma Code Connect (priority P2 in the specification, only after
-the names and axes stabilize); binding the description for the react-aria families (`Select`,
+the names and axes stabilize); binding the description for the react-aria compound components (`Select`,
 `Combobox`, `DatePicker`, `TagInput`) — they have their own description slots; merging
 `UploadState` and `TimelineStatus` — it breaks a public type and waits for a major;
 widening the peer to React 18 — it doubles the consumer's CI build.
@@ -673,7 +673,7 @@ one breaks the public type released in 2.5.0 and waits for the next major.
 
 Nothing breaking: everything new is additive, and `AppShell` gained one slot.
 
-**1. Eight new component families.** `Banner`, `UploadQueue`, `NotificationItem` /
+**1. Eight new compound components.** `Banner`, `UploadQueue`, `NotificationItem` /
 `NotificationList` / `NotificationCenter`, `MediaCard`, `SortableList`,
 `VirtualGrid`, `CopyButton`, `Truncate`.
 
@@ -735,7 +735,7 @@ the description is **supplemented, not replaced**: the attribute holds a list.
 
 `TextControl` and everything built on it (`MaskedInput`,
 `PhoneInput`, `PasswordInput`, `SearchControl`), plus `NumberInput`, pick up the description. The react-aria
-families (`Select`, `Combobox`, `DatePicker`, `TagInput`) carry their own description slots
+compound components (`Select`, `Combobox`, `DatePicker`, `TagInput`) carry their own description slots
 and do not pick up the `FormField` hint yet.
 
 **3. A character that does not fit the mask is announced.** A character that did not fit the mask token
@@ -817,7 +817,7 @@ something read it; `DataTable` became that reader.
 `tableStateToParams`, `tableStateFromParams`, `DEFAULT_TABLE_STATE`.
 
 **5. Selection is within a page.** "Select all" marks the `items` that arrived;
-the kit does not support selecting the whole result set, and the labels about it do not lie.
+the kit does not support selecting all the filtered rows, and the labels about it do not lie.
 If you need selection beyond the page, that is your code, not the kit's.
 
 **6. State is carried into the URL without selection and expansion.** The list of keys
