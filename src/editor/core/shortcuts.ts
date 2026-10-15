@@ -295,27 +295,6 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
   },
 
   {
-    id: "bulletList",
-    group: "lists",
-    tool: "bulletList",
-    keys: SHORTCUT_KEYS.bulletList,
-    label: (m) => m.bulletList,
-  },
-  {
-    id: "orderedList",
-    group: "lists",
-    tool: "orderedList",
-    keys: SHORTCUT_KEYS.orderedList,
-    label: (m) => m.orderedList,
-  },
-  {
-    id: "taskList",
-    group: "lists",
-    tool: "taskList",
-    keys: SHORTCUT_KEYS.taskList,
-    label: (m) => m.taskList,
-  },
-  {
     id: "indentListItem",
     group: "lists",
     tool: LIST_TOOLS,

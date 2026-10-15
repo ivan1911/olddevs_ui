@@ -7,7 +7,6 @@
 
 import { Extension, type Extensions } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Placeholder } from "@tiptap/extensions";
@@ -188,14 +187,6 @@ const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extens
   color: () => TEXT_COLOR_EXTENSIONS,
   highlight: () => [HighlightExtension],
   align: () => [TextAlignExtension],
-  taskList: (context) => [
-    TaskList,
-    TaskItem.configure({
-      // Вложенные чек-листы — как вложенные обычные списки: Tab и Shift+Tab.
-      nested: true,
-      a11y: { checkboxLabel: (node) => context.taskCheckbox(node.textContent) },
-    }),
-  ],
 };
 
 /** Доли StarterKit не переехавших Инструментов: включённый — умолчание StarterKit. */
@@ -212,8 +203,6 @@ function legacyStarterKit(on: (tool: Tool) => boolean, context: ToolEngineContex
     ...keep("underline"),
     ...keep("strike"),
     ...keep("code"),
-    ...keep("bulletList"),
-    ...keep("orderedList"),
     ...keep("history"),
   } as Partial<StarterKitOptions>;
 }

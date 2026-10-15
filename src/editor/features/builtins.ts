@@ -12,6 +12,7 @@ import { EMOJI_TOOL } from "./emoji/emojiTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
 import { LAYOUT_TOOL } from "./layout/layoutTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
+import { BULLET_LIST_TOOL, ORDERED_LIST_TOOL, TASK_LIST_TOOL } from "./lists/listTools.js";
 import { devError } from "../../lib/dev-warn.js";
 import type { ToolEntry } from "../core/customTool.js";
 import { describeCustomTool, describeDefinition } from "../core/customToolEngine.js";
@@ -91,6 +92,9 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
     shortcuts: [BLOCKQUOTE_SHORTCUT],
   },
   link: LINK_TOOL,
+  bulletList: BULLET_LIST_TOOL,
+  orderedList: ORDERED_LIST_TOOL,
+  taskList: TASK_LIST_TOOL,
   image: IMAGE_TOOL,
   emoji: EMOJI_TOOL,
   insertMenu: INSERT_MENU_TOOL,
