@@ -1748,7 +1748,7 @@ const layoutBlock = (variant: string, ...columns: string[]) =>
   `<div data-block="layout" data-layout="${variant}">${columns.join("")}</div>`;
 
 const LAYOUTS_SAMPLE =
-  "<h2>Layouts</h2><p>Each layout is one block. Its columns read from left to right.</p>" +
+  "<h2>Column layouts</h2><p>Each layout is one block. Its columns read from left to right.</p>" +
   layoutBlock("100", layoutColumn("Single column", "A layout of one column frames its blocks.")) +
   layoutBlock(
     "50-50",
@@ -2024,7 +2024,7 @@ const tonedBlock = (tone: string, ...blocks: string[]) =>
   `<div data-block="wrapper" data-tone="${tone}">${blocks.join("")}</div>`;
 
 const WRAPPER_TONES_SAMPLE =
-  "<h2>Wrapper tones</h2>" +
+  "<h2>Callout tones</h2>" +
   "<p>A tone gives a wrapper a soft background and a stripe on the left.</p>" +
   tonedBlock(
     "accent",
