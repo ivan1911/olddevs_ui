@@ -1,0 +1,10 @@
+---
+"@olddevs/ui": minor
+---
+
+`RichTextEditor` gets the `invisibleCharacters` Tool: a button that shows spaces, soft line breaks (`Shift+Enter`) and paragraph ends over the Document, on the Invisible Characters extension from Tiptap (there was no requesting screen at release, ADR-0048, so the API follows Tiptap).
+
+- **`invisibleCharacters` is now in the `full` Preset, so the fixed Toolbar of every screen on the default Preset gets an "Invisible characters" button at the right edge, before "Find".** The characters are hidden until the author presses it, so nothing changes in how a Document looks, and the saved HTML does not change; `basic` is unchanged. **The fixed Toolbar of the `full` Preset is one button wider: in a column around 640 px it now wraps to a second row.** To keep the old Toolbar pass `tools={RICH_TEXT_PRESETS.full.filter((name) => name !== "invisibleCharacters")}`. Install `@tiptap/extension-invisible-characters` next to the other Tiptap packages (the install command on the RichTextEditor page has it).
+- It is display only: the marks are decorations, so `value`, `onChange`, `getHTML()`, Markdown and `RichTextView` never see them, and showing or hiding them is not an edit. Unlike Tiptap, where the extension starts shown, the kit starts hidden; `tool("invisibleCharacters", { visible: true })` shows them from the start.
+- State and command: `useRichTextToolState(ref, "invisibleCharacters")` returns `{ visible }`, and `ref.current?.tool("invisibleCharacters")?.toggle()` switches the display (it returns `false` in the HTML mode, where the button is `aria-disabled`, like "Find"). The button is a toggle with `aria-pressed`, only on the fixed Toolbar, with no shortcut.
+- New public bits: the `InvisibleCharactersToolOptions`, `InvisibleCharactersToolState` and `InvisibleCharactersToolCommands` types, the `InvisibleCharactersIcon` icon, and the `editor.invisibleCharacters` message.
