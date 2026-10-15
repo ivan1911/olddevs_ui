@@ -117,6 +117,7 @@ npm install @tiptap/core @tiptap/pm @tiptap/react @tiptap/starter-kit @tiptap/ex
   @tiptap/extension-list @tiptap/extension-subscript @tiptap/extension-superscript \
   @tiptap/extension-text-style @tiptap/extension-highlight @tiptap/extension-text-align @tiptap/extension-link \
   @tiptap/extension-table @tiptap/extension-details @tiptap/extension-blockquote @tiptap/extension-horizontal-rule \
+  @tiptap/extension-invisible-characters @tiptap/extension-typography \
   @tiptap/markdown marked @tiptap/suggestion \
   @tiptap/extension-code-block-lowlight lowlight highlight.js
 ```
