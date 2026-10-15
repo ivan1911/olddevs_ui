@@ -35,24 +35,16 @@ import type { Tool } from "./tools.js";
  * кнопку, и Схему» этим держится само: записи и Часть для движка Инструмента,
  * которого нет в списке, не попадают никуда.
  *
- * ПЕРЕЕЗД ПОСТЕПЕННЫЙ. Встроенный Инструмент без описания стоит в списке
- * заглушкой `legacy` и берётся из старых реестров (`INSERT_ITEMS`, `SHORTCUTS`,
- * `createEditorExtensions`…). Переезд Инструмента — его записи удаляются из
- * старых реестров и ложатся в описание в `BUILTIN_TOOLS`; место на поверхности
- * при этом не меняется — его держит порядок кита этой поверхности
- * (`INSERT_ORDER`, `BLOCK_TYPE_ORDER`), а не реестр записей.
+ * У КАЖДОГО ВСТРОЕННОГО — ОПИСАНИЕ (OLDSUI-273): `BUILTIN_TOOLS` полон, и
+ * компилятор не даст добавить имя в `TOOLS` без описания. Место записи на
+ * поверхности держит порядок кита этой поверхности (`INSERT_ORDER`,
+ * `BLOCK_TYPE_ORDER`, `SHORTCUT_ORDER`, `ENGINE_ORDER`), а не описание. Виджеты
+ * Панели и Меню выделения, «…», подменю Ручки и поповеры картинки остаются
+ * компонентами кита и спрашивают набор по имени (`tools.has`).
  */
 export interface ToolDescriptor {
   /** Имя Инструмента — то же, что в `tools`; у своего — с Префиксом потребителя. */
   name: Tool | PrefixedName;
-  /**
-   * Заглушка не переехавшего встроенного: его записи и Часть для движка — в
-   * старых реестрах. Остальные поля у заглушки пусты, кроме `blockActions`:
-   * Действия над Блоком переезжают отдельно от остального и
-   * читаются у всех описаний списка, переехавших и нет (`blockActionsOf`).
-   */
-  legacy?: true;
-
   /**
    * Часть для движка: расширения Tiptap Инструмента — Node, Mark, Extension,
    * плагины ProseMirror. Функция от контекста — привилегия кита: встроенным
@@ -375,8 +367,8 @@ export interface ToolList extends ReadonlySet<Tool> {
    */
   readonly error?: string;
   /**
-   * Описания включённых Инструментов: встроенные в порядке кита (у не
-   * переехавших — заглушки `legacy`), за ними свои в порядке `tools`.
+   * Описания включённых Инструментов: встроенные в порядке кита, за ними
+   * свои в порядке `tools`.
    */
   readonly descriptors: readonly ToolDescriptor[];
 }
@@ -403,11 +395,6 @@ export function toolOptions<Name extends ConfigurableToolName>(
 ): RichTextTools[Name]["options"] | undefined {
   const descriptor = tools.descriptors.find((candidate) => candidate.name === name);
   return descriptor?.options as RichTextTools[Name]["options"] | undefined;
-}
-
-/** Описания переехавших Инструментов набора — в порядке списка. */
-export function describedTools(tools: ToolList): readonly ToolDescriptor[] {
-  return tools.descriptors.filter((descriptor) => !descriptor.legacy);
 }
 
 /**
@@ -454,7 +441,6 @@ export function blockActionVisible(
  * - `order` — место встроенных Инструментов на поверхности, привилегия кита.
  *   Инструменты набора вне него идут следом, в порядке списка: так встаёт
  *   запись, у которой своего места на поверхности нет.
- * - `legacy` — старый реестр: записи Инструмента, ещё не переехавшего на описание.
  * - `own` — поле описания с записями этой поверхности.
  *
  * Фильтра по включённым Инструментам здесь нет: его держит сам список.
@@ -462,14 +448,10 @@ export function blockActionVisible(
 export function projectRecords<R>(
   tools: ToolList,
   order: readonly Tool[],
-  legacy: (name: Tool) => readonly R[] | undefined,
   own: (descriptor: ToolDescriptor) => readonly R[] | undefined
 ): R[] {
   const list = tools.descriptors;
   const placed = order.flatMap((name) => list.filter((descriptor) => descriptor.name === name));
   const rest = list.filter((descriptor) => !(order as readonly string[]).includes(descriptor.name));
-  return [...placed, ...rest].flatMap(
-    // Заглушка `legacy` бывает только у встроенного: имя — из `Tool`.
-    (descriptor) => (descriptor.legacy ? legacy(descriptor.name as Tool) : own(descriptor)) ?? []
-  );
+  return [...placed, ...rest].flatMap((descriptor) => own(descriptor) ?? []);
 }

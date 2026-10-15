@@ -18,8 +18,8 @@ import type { Tool } from "./tools.js";
  * заново — одной транзакцией, на одну отмену. Своего пути смены типа у меню
  * нет: два пути разошлись бы на первом же списке внутри цитаты.
  *
- * Отдельный реестр, а не выборка из `INSERT_ITEMS`, потому что у меню «¶»
- * другие слова и иконки: «Текст» с иконкой `T`, а не
+ * Пункты «¶» — поле описания `blockTypes`, а не выборка из `insertItems`,
+ * потому что у меню «¶» могут быть другие слова и иконки: «Текст» с иконкой `T`, а не
  * «Абзац» с пилкроу, и уровень заголовка на иконке. Блока кода в нём нет — у
  * него своя кнопка Панели.
  */
@@ -50,27 +50,23 @@ export function turnIntoTypes(
 }
 
 /**
- * Пункты «¶» по порядку показа. Сочетания — подписи из общей таблицы
- * (`shortcuts.ts`), по тем же id, что у Меню вставки и справочника:
- * вешают их расширения движка, и подпись обязана совпадать с ними.
+ * «Текст» — пункт кита, а не Инструмента: абзац есть в любом наборе. Сочетание —
+ * подпись из общей таблицы (`shortcuts.ts`): вешает его расширение движка.
  */
-export const BLOCK_TYPE_ITEMS: readonly BlockTypeItem[] = [
-  {
-    id: "text",
-    section: "turnInto",
-    tool: null,
-    label: (m) => m.textBlock,
-    icon: TextIcon,
-    keys: shortcutKeys("paragraph"),
-    run: (chain) => chain.setParagraph(),
-  },
-];
+const TEXT_ITEM: BlockTypeItem = {
+  id: "text",
+  section: "turnInto",
+  tool: null,
+  label: (m) => m.textBlock,
+  icon: TextIcon,
+  keys: shortcutKeys("paragraph"),
+  run: (chain) => chain.setParagraph(),
+};
 
 /**
  * Место встроенных Инструментов в «¶». «Текст» стоит первым всегда: абзац —
- * не Инструмент. Держится отдельно от `BLOCK_TYPE_ITEMS`: Инструмент,
- * переехавший на описание (`toolDescriptor.ts`), уходит из реестра, а место
- * остаётся здесь.
+ * не Инструмент. Пункты живут в описаниях, а место на поверхности — привилегия
+ * кита.
  */
 const BLOCK_TYPE_ORDER: readonly Tool[] = [
   "heading",
@@ -81,18 +77,12 @@ const BLOCK_TYPE_ORDER: readonly Tool[] = [
 ];
 
 /**
- * Пункты «¶» набора — проекция списка описаний: у переехавшего Инструмента —
- * из описания (`blockTypes`), у остальных — из `BLOCK_TYPE_ITEMS`.
+ * Пункты «¶» набора: «Текст» и проекция списка описаний (`blockTypes`).
  */
 function blockTypeItemsOf(tools: ToolList): readonly BlockTypeItem[] {
   return [
-    ...BLOCK_TYPE_ITEMS.filter((item) => item.tool === null),
-    ...projectRecords(
-      tools,
-      BLOCK_TYPE_ORDER,
-      (tool) => BLOCK_TYPE_ITEMS.filter((item) => item.tool === tool),
-      (descriptor) => descriptor.blockTypes
-    ),
+    TEXT_ITEM,
+    ...projectRecords(tools, BLOCK_TYPE_ORDER, (descriptor) => descriptor.blockTypes),
   ].filter((item) => item.alsoTool === undefined || tools.has(item.alsoTool));
 }
 

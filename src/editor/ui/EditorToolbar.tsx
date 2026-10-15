@@ -37,7 +37,7 @@ import { ShortcutsButton } from "./ShortcutsButton.js";
 import { SEARCH_KEYS } from "../features/search/searchTool.js";
 import { ariaShortcut, findShortcutKeys, isApple, shortcutLabel } from "../core/shortcuts.js";
 import { tableChunk } from "../features/table/tableTool.js";
-import { describedTools, type KitToolButton, type ToolList } from "../core/toolDescriptor.js";
+import { type KitToolButton, type ToolList } from "../core/toolDescriptor.js";
 import { ToolButtonView, useToolLabel } from "./ToolButtonView.js";
 import type { Tool } from "../core/tools.js";
 
@@ -182,7 +182,7 @@ type GroupEntry = Action | Widget | ToolEntry;
  * читается — для него нужен движок.
  */
 function toolbarGroups(tools: ToolList, withSource: boolean): GroupEntry[][] {
-  const described = describedTools(tools);
+  const described = tools.descriptors;
   const toolEntries = (buttons: readonly KitToolButton[] = []) =>
     buttons.map((button): ToolEntry => ({ kind: "tool", id: button.id, button }));
   const kitGroups = GROUPS.map((group) =>

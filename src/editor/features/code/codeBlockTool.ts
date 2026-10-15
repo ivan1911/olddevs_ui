@@ -5,7 +5,7 @@ import { CodeBlockIcon } from "../../../icons.js";
 // Только тип: статический импорт модуля втянул бы чанк в «старт».
 import type * as CodeBlockChunk from "./codeBlock.js";
 import { normalizeCodeLanguage, type CodeLanguageId } from "./codeLanguages.js";
-import { shortcutKeys } from "../../core/shortcuts.js";
+import { SHORTCUT_KEYS, shortcutKeys } from "../../core/shortcuts.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import { loaded } from "../../core/toolLoader.js";
 
@@ -61,15 +61,23 @@ const CodeBlockShape = Node.create({
  * загрузчиком, что у своего Инструмента. До загрузки Редактор с блоком кода —
  * Скелет (`RichTextEditor.tsx`).
  *
- * Переехали Часть для движка и пункты Меню вставки. Сочетание `Mod+Alt+C`
- * вешает расширение, и его строка справочника осталась в `SHORTCUTS`; клавиши
- * пунктов меню и «Формат ›» берутся из `SHORTCUT_KEYS`, место строки — из
- * `SHORTCUT_ORDER`. Кнопка «Блок кода» меню «…» и «¶» — виджеты Панели и
- * остаются у кита (OLDSUI-273).
+ * Сочетание `Mod+Alt+C` вешает расширение, поэтому строка справочника — только
+ * подпись (`shortcuts`); клавиши пунктов меню и «Формат ›» берутся из
+ * `SHORTCUT_KEYS`, место строки — из `SHORTCUT_ORDER`. Кнопка «Блок кода» меню
+ * «…» и «¶» — виджеты Панели и остаются у кита (OLDSUI-273).
  */
 export const CODE_BLOCK_TOOL: ToolDescriptor = {
   name: "codeBlock",
   load: loadCodeBlock,
+  shortcuts: [
+    {
+      id: "codeBlock",
+      group: "blockType",
+      tool: "codeBlock",
+      keys: SHORTCUT_KEYS.codeBlock,
+      label: (m) => m.codeBlock,
+    },
+  ],
   /*
     `Alt+F10` блока кода (в кнопку языка) обязан сработать раньше общего
     `ToolbarFocus`: Части для движка описаний регистрируются после него

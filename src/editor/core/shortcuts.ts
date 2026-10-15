@@ -1,5 +1,5 @@
 import type { UiMessages } from "../../i18n/messages.js";
-import { describedTools, toolLabel, type ToolList } from "./toolDescriptor.js";
+import { toolLabel, type ToolList } from "./toolDescriptor.js";
 import type { PrefixedName } from "./customTool.js";
 import type { Tool } from "./tools.js";
 
@@ -65,16 +65,11 @@ export interface ShortcutCommand {
 const LIST_TOOLS: readonly Tool[] = ["bulletList", "orderedList", "taskList"];
 
 /**
- * Таблица — сочетания кита и Инструментов, ещё не переехавших на описание.
- * Сочетание кнопки описания — поле самой кнопки (`toolDescriptor.ts`): её
- * строку справочник берёт оттуда, клавишу вешает `toolButtons.ts`.
- */
-/**
  * Сочетания встроенных команд по id — данные, а не привязки. Строка справочника
  * берёт клавиши отсюда, где бы она ни жила: в `SHORTCUTS` или в описании
  * Инструмента (`shortcuts`, `keys` кнопки). Поэтому подписи Меню вставки и «¶»,
  * которые читаются при загрузке модуля (`shortcutKeys`), не зависят от того,
- * переехал ли Инструмент.
+ * где лежит строка.
  */
 export const SHORTCUT_KEYS = {
   selectBlock: ["mod", "A"],
@@ -154,6 +149,12 @@ export const SHORTCUT_ORDER: readonly string[] = [
   "focusToolbar",
 ];
 
+/**
+ * Таблица — сочетания кита: команды, которые есть при любом наборе (выделение,
+ * Блоки, сдвиг пункта списка, `Alt+F10`). Строки Инструментов — в их описаниях.
+ * Сочетание кнопки описания — поле самой кнопки (`toolDescriptor.ts`): её
+ * строку справочник берёт оттуда, клавишу вешает `toolButtons.ts`.
+ */
 export const SHORTCUTS: readonly ShortcutCommand[] = [
   // Выделение: первое `⌘A` берёт текст Блока, второе — весь Документ (`blockCommands.ts`).
   {
@@ -199,14 +200,6 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     tool: null,
     keys: SHORTCUT_KEYS.blockActions,
     label: (m) => m.blockActions,
-  },
-
-  {
-    id: "codeBlock",
-    group: "blockType",
-    tool: "codeBlock",
-    keys: SHORTCUT_KEYS.codeBlock,
-    label: (m) => m.codeBlock,
   },
 
   {
@@ -274,8 +267,8 @@ export interface ShortcutSection {
 /**
  * Команды включённых инструментов по группам; пустые группы не возвращаются.
  *
- * Проекция списка описаний: строки не переехавших Инструментов — из
- * `SHORTCUTS`, переехавших — из их описаний (`toolDescriptor.ts`): клавиши
+ * Проекция списка описаний: строки кита — из `SHORTCUTS`, строки Инструментов —
+ * из их описаний (`toolDescriptor.ts`): клавиши
  * Части для движка — поле `shortcuts`, сочетания кнопок — поле кнопки. Место
  * строки в группе — `SHORTCUT_ORDER`, а строки вне него — следом в порядке набора;
  * кнопка без группы кита — в группу своего Инструмента после групп кита, в
@@ -286,7 +279,7 @@ export function shortcutGroupsFor(
   /** Локаль `UiProvider` — для подписи кнопки, заданной функцией от контекста. */
   locale = "en-US"
 ): readonly ShortcutSection[] {
-  const described = describedTools(tools);
+  const described = tools.descriptors;
   const moved = described.flatMap((descriptor) => descriptor.shortcuts ?? []);
   const commands = [...SHORTCUTS, ...moved].filter((command) => enabled(command, tools));
   const ownGroups: ShortcutSection[] = [];

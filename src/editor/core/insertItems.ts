@@ -68,30 +68,6 @@ export interface InsertItem {
 }
 
 /**
- * Старый реестр пунктов Меню вставки по инструментам.
- *
- * Новый встроенный Инструмент сюда уже не пишется: его пункты лежат в его
- * описании (`insertItems`, `features/builtins.ts`), и меню получает их проекцией
- * списка описаний (`insertItemsFor`). Здесь — пункты Инструментов, ещё не
- * переехавших на описание (ADR-0058, п. 10), одной записью без правки меню:
- *
- *     horizontalRule: [{ id: "horizontalRule", section: "insert",
- *                        label: (m) => m.horizontalRule, icon: DividerIcon,
- *                        run: (chain) => chain.setHorizontalRule() }],
- *
- * Ключ — `Tool`: выключенный инструмент убирает свои пункты и из `/`, и из «+»
- * сам, без проверок в меню. Порядок пунктов в разделе — `INSERT_ORDER`, а не
- * порядок записей. Подпись — из каталога (`editor.*`), иконка —
- * из `@olddevs/ui/icons`. Пункт, которому нужен свой интерфейс (поповер адреса
- * картинки), открывает его из `run` — `editor` для этого и передан.
- *
- * Абзац записан в описании самого `insertMenu` (`insertMenuTool.ts`): это не
- * инструмент, он есть в Схеме всегда, и «Превратить в абзац» нужен, пока есть
- * само меню.
- */
-export const INSERT_ITEMS: Partial<Record<Tool, readonly InsertItem[]>> = {};
-
-/**
  * Пункт «Таблица» заданного размера: строка-заголовок всегда есть.
  *
  * Меню вставки берёт 3×3 (описание Инструмента, `tableTool.ts`), сетка выбора
@@ -152,8 +128,8 @@ export function insertItemHint(
 
 /**
  * Место встроенных Инструментов в Меню вставки — порядок их пунктов внутри
- * раздела. Держится отдельно от `INSERT_ITEMS`: Инструмент, переехавший на
- * описание (`toolDescriptor.ts`), уходит из реестра, а место остаётся здесь.
+ * раздела. Пункты живут в описаниях (`insertItems`), а место на поверхности —
+ * привилегия кита, поэтому оно здесь, а не в описании.
  */
 const INSERT_ORDER: readonly Tool[] = [
   "insertMenu",
@@ -174,19 +150,15 @@ const INSERT_ORDER: readonly Tool[] = [
 export const INSERT_SECTIONS = ["insert", "turnInto"] as const;
 
 /**
- * Пункты для набора инструментов — проекция списка описаний: у переехавшего
- * Инструмента — из описания, у остальных — из `INSERT_ITEMS`, в порядке
- * `INSERT_ORDER`. Меню без пункта сверх
+ * Пункты для набора инструментов — проекция списка описаний (`insertItems`) в
+ * порядке `INSERT_ORDER`. Абзац — пункт описания `insertMenu`. Меню без пункта сверх
  * абзаца бессмысленно, и тогда список пуст: ни «+», ни `/` не появляются.
  */
 export function insertItemsFor(tools: ToolList): readonly InsertItem[] {
   if (!tools.has("insertMenu")) return [];
-  const items = projectRecords(
-    tools,
-    INSERT_ORDER,
-    (tool) => INSERT_ITEMS[tool],
-    (descriptor) => descriptor.insertItems
-  ).filter((item) => item.requires === undefined || tools.has(item.requires));
+  const items = projectRecords(tools, INSERT_ORDER, (descriptor) => descriptor.insertItems).filter(
+    (item) => item.requires === undefined || tools.has(item.requires)
+  );
   return items.length > 1 ? items : [];
 }
 

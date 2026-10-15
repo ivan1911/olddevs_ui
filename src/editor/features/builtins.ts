@@ -59,16 +59,14 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
 ];
 
 /**
- * Описания встроенных Инструментов, переехавших со старых реестров
- * (ADR-0058, п. 10; тип — `toolDescriptor.ts`).
+ * Описания встроенных Инструментов (ADR-0058, п. 10; тип — `toolDescriptor.ts`).
  *
- * Сюда Инструмент переезжает целиком: его записи удаляются из старых
- * реестров, и с этой минуты он берётся только из описания. Кого здесь нет, тот
- * стоит в развёрнутом списке заглушкой `legacy` и по-прежнему живёт в старых
- * реестрах. `layout` и виджеты Панели переезжают постепенно, и выпуск
- * их не ждёт.
+ * Запись полная, по каждому имени `TOOLS` (OLDSUI-273): встроенный Инструмент
+ * берётся только из описания, старых реестров по имени нет, и компилятор не
+ * пропустит новое имя без описания. Виджеты Панели и Меню выделения остаются
+ * компонентами кита и спрашивают набор по имени.
  */
-export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
+export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   search: SEARCH_TOOL,
   // Оглавление несёт только Опции: полоса и список рисуются в `RichTextEditor`.
   toc: TOC_TOOL,
@@ -142,8 +140,8 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
   },
   /*
     HTML-режим — виджет «HTML» Панели и режим `RichTextEditor`, показ по
-    `has("source")`. Ни Схемы, ни записей у Инструмента нет: описание
-    нужно, чтобы он не стоял заглушкой `legacy`.
+    `has("source")`. Ни Схемы, ни записей у Инструмента нет, но описание
+    есть у каждого встроенного — даже пустое.
   */
   source: { name: "source" },
   /*
@@ -219,7 +217,7 @@ export function expandTools(
   );
   const builtin = TOOLS.filter((name) => names.has(name)).map((name) =>
     resolveOptions(
-      BUILTIN_TOOLS[name] ?? { name, legacy: true },
+      BUILTIN_TOOLS[name],
       configured.find((entry) => entry.name === name)
     )
   );
