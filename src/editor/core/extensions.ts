@@ -7,8 +7,6 @@
 
 import { Extension, type Extensions } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { Subscript } from "@tiptap/extension-subscript";
-import { Superscript } from "@tiptap/extension-superscript";
 import { Placeholder } from "@tiptap/extensions";
 import { StarterKit, type StarterKitOptions } from "@tiptap/starter-kit";
 import { AtomText } from "./atomText.js";
@@ -172,20 +170,12 @@ const STARTER_KIT_OFF: Partial<StarterKitOptions> = {
  * переезд переносит запись отсюда в поле `engine` описания. Доли StarterKit
  * не переехавших — `legacyStarterKit` ниже.
  */
-const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extensions>> = {
-  superscript: () => [Superscript],
-  subscript: () => [Subscript],
-};
+const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extensions>> = {};
 
 /** Доли StarterKit не переехавших Инструментов: включённый — умолчание StarterKit. */
 function legacyStarterKit(on: (tool: Tool) => boolean) {
   const keep = (tool: Tool) => (on(tool) ? { [STARTER_KIT_KEY[tool] ?? tool]: undefined } : {});
   return {
-    ...keep("bold"),
-    ...keep("italic"),
-    ...keep("underline"),
-    ...keep("strike"),
-    ...keep("code"),
     ...keep("history"),
   } as Partial<StarterKitOptions>;
 }

@@ -210,44 +210,6 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     label: (m) => m.blockActions,
   },
 
-  { id: "bold", group: "marks", tool: "bold", keys: SHORTCUT_KEYS.bold, label: (m) => m.bold },
-  {
-    id: "italic",
-    group: "marks",
-    tool: "italic",
-    keys: SHORTCUT_KEYS.italic,
-    label: (m) => m.italic,
-  },
-  {
-    id: "strike",
-    group: "marks",
-    tool: "strike",
-    keys: SHORTCUT_KEYS.strike,
-    label: (m) => m.strike,
-  },
-  {
-    id: "underline",
-    group: "marks",
-    tool: "underline",
-    keys: SHORTCUT_KEYS.underline,
-    label: (m) => m.underline,
-  },
-  { id: "code", group: "marks", tool: "code", keys: SHORTCUT_KEYS.code, label: (m) => m.code },
-  {
-    id: "superscript",
-    group: "marks",
-    tool: "superscript",
-    keys: SHORTCUT_KEYS.superscript,
-    label: (m) => m.superscript,
-  },
-  {
-    id: "subscript",
-    group: "marks",
-    tool: "subscript",
-    keys: SHORTCUT_KEYS.subscript,
-    label: (m) => m.subscript,
-  },
-
   {
     id: "codeBlock",
     group: "blockType",
