@@ -244,6 +244,8 @@ test("Add offers the insert menu items once each, without shortcut hints", async
     "Layout",
     // Обёртка (OLDSUI-77): `rich-text-editor-wrapper.test.tsx`.
     "Wrapper",
+    // Сворачиваемый Блок (OLDSUI-277): `rich-text-editor-details.test.tsx`.
+    "Collapsible block",
   ]);
   expect(items.every((item) => item.shortcut === null)).toBe(true);
 });

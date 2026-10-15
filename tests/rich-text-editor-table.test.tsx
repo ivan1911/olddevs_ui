@@ -407,6 +407,7 @@ test("the insert menu lists Table among the blocks to add, with no shortcut hint
     "Image",
     "Layout",
     "Wrapper",
+    "Collapsible block",
   ]);
 });
 

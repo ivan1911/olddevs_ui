@@ -159,7 +159,12 @@ test("the basic preset has no layout", () => {
 });
 
 test("the schema data and the sanitiser know the layout", () => {
-  expect(RICH_TEXT_SCHEMA.attributes.div).toEqual(["data-block", "data-layout", "data-tone"]);
+  expect(RICH_TEXT_SCHEMA.attributes.div).toEqual([
+    "data-block",
+    "data-layout",
+    "data-tone",
+    "data-type",
+  ]);
   expect([...RICH_TEXT_SCHEMA.layouts]).toEqual([
     "100",
     "50-50",

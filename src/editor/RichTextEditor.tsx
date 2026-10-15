@@ -603,6 +603,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     placeholderRef.current = placeholderText;
     const taskCheckboxRef = useRef(messages.editor.taskCheckbox);
     taskCheckboxRef.current = messages.editor.taskCheckbox;
+    const detailsToggleRef = useRef(messages.editor.detailsToggle);
+    detailsToggleRef.current = messages.editor.detailsToggle;
     // Загрузчик и строки картинки — тоже через ref: расширение их читает в
     // момент вставки файла и при перерисовке подписи, а не при создании движка.
     const uploadRef = useRef(onUploadImage);
@@ -887,6 +889,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           placeholder: () => placeholderRef.current,
           limit: () => limitRef.current,
           taskCheckbox: (text) => taskCheckboxRef.current({ text }),
+          detailsToggle: (text) => detailsToggleRef.current({ text }),
           slash: slashBridge,
           triggers: triggerBindings,
           openPopover: (request) => setToolPopover({ request, open: true }),

@@ -563,6 +563,9 @@ export const messages: UiMessages = {
       warning: "Внимание",
       danger: "Осторожно",
     },
+    details: "Сворачиваемый блок",
+    unwrapDetails: "Снять сворачивание",
+    detailsToggle: ({ text }) => (text ? `Подробности: ${text}` : "Подробности: без заголовка"),
     emoji: "Эмодзи",
     emojiGrid: "Выберите эмодзи",
     emojiCategory: {
