@@ -306,12 +306,13 @@ const DETAILS_EDITOR =
   "[&_div[data-type=details]>button]:relative [&_div[data-type=details]>button]:mt-px " +
   "[&_div[data-type=details]>button]:size-6 [&_div[data-type=details]>button]:shrink-0 " +
   "[&_div[data-type=details]>button]:cursor-pointer [&_div[data-type=details]>button]:rounded-(--rte-radius) " +
-  "[&_div[data-type=details]>button]:text-(--rte-muted) " +
+  "[&_div[data-type=details]>button]:text-(--rte-secondary) " +
   "[&_div[data-type=details]>button]:before:absolute [&_div[data-type=details]>button]:before:left-1/2 " +
   "[&_div[data-type=details]>button]:before:top-1/2 [&_div[data-type=details]>button]:before:size-1.5 " +
   "[&_div[data-type=details]>button]:before:-translate-x-1/2 [&_div[data-type=details]>button]:before:-translate-y-1/2 " +
   "[&_div[data-type=details]>button]:before:-rotate-45 [&_div[data-type=details]>button]:before:border-r-2 " +
-  "[&_div[data-type=details]>button]:before:border-b-2 [&_div[data-type=details]>button]:before:content-[''] " +
+  "[&_div[data-type=details]>button]:before:border-b-2 [&_div[data-type=details]>button]:before:border-current " +
+  "[&_div[data-type=details]>button]:before:content-[''] " +
   "[&_div[data-type=details].is-open>button]:before:rotate-45";
 
 const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
