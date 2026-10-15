@@ -17,7 +17,6 @@ import { BlockCommands, BlockMenuKey } from "./blockCommands.js";
 import { FieldNoticeExtension, type FieldNoticeOptions } from "./fieldNotice.js";
 import type { RichImageOptions } from "../features/image/image.js";
 import { createDocumentNode } from "./document.js";
-import { LAYOUT_NODE, layoutExtensions } from "../features/layout/layout.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
 import { MaxLength } from "./maxLength.js";
 import {
@@ -35,7 +34,6 @@ import {
 import { ToolButtons, type ToolPopoverEntry, type ToolPopoverRequest } from "./toolButtons.js";
 import { ToolEntryShortcuts } from "./toolEntryShortcuts.js";
 import type { Tool } from "./tools.js";
-import { WRAPPER_EXTENSIONS, WRAPPER_NODE } from "../features/wrapper/wrapper.js";
 
 export interface EditorExtensionOptions {
   /** Включённые инструменты: выключенный не попадает в Схему вовсе. */
@@ -198,14 +196,6 @@ const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extens
       a11y: { checkboxLabel: (node) => context.taskCheckbox(node.textContent) },
     }),
   ],
-  // Раскладка — узлы колонок и их клавиатура (`layout.ts`). Без инструмента
-  // `div[data-block]` из вставки и `value` не разбирается, и Блоки колонок
-  // встают в Документ подряд.
-  layout: (context) => layoutExtensions({ wrapper: context.has("wrapper") }),
-  // Обёртка — узел и выход из неё по Enter (`wrapper.ts`). Без инструмента
-  // `div[data-block="wrapper"]` из вставки и `value` не разбирается, и её
-  // Блоки встают на её место подряд.
-  wrapper: () => WRAPPER_EXTENSIONS,
 };
 
 /** Доли StarterKit не переехавших Инструментов: включённый — умолчание StarterKit. */
@@ -301,11 +291,7 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
   const on = (tool: Tool) =>
     options.tools.has(tool) && !described.some((descriptor) => descriptor.name === tool);
   // Контейнеры Блоков верхнего уровня: их принимает только свой Документ.
-  const containers = [
-    ...(on("layout") ? [LAYOUT_NODE] : []),
-    ...(on("wrapper") ? [WRAPPER_NODE] : []),
-    ...described.flatMap((descriptor) => descriptor.documentContent ?? []),
-  ];
+  const containers = described.flatMap((descriptor) => descriptor.documentContent ?? []);
 
   const extensions: Extensions = [
     StarterKit.configure({

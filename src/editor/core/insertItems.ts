@@ -5,18 +5,15 @@ import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import type { ComponentType } from "react";
 import type { UiMessages } from "../../i18n/messages.js";
 import {
-  ColumnLayoutIcon,
   HeadingIcon,
   ListIcon,
   OrderedListIcon,
   TableIcon,
   TaskListIcon,
-  WrapperIcon,
   type IconProps,
 } from "../../icons.js";
 import { DEFAULT_LOCALE } from "../../i18n/defaults.js";
 import { handleBlock } from "./blockCommands.js";
-import { DEFAULT_LAYOUT } from "../features/layout/columnLayouts.js";
 import { shortcutKeys } from "./shortcuts.js";
 import { projectRecords, type ToolList, type ToolPopover } from "./toolDescriptor.js";
 import type { Tool } from "./tools.js";
@@ -146,38 +143,6 @@ export const INSERT_ITEMS: Partial<Record<Tool, readonly InsertItem[]>> = {
       markdown: "[ ]",
       keys: shortcutKeys("taskList"),
       run: (chain) => chain.toggleTaskList(),
-    },
-  ],
-  /*
-    Раскладка — пунктом без подменю: Меню вставки — плоский список
-    с фильтром по `/`, и подменю в нём не живут. Вариант по умолчанию — две
-    колонки, остальные — в «Добавить › Раскладка ›» и «Формат ›» ручки Блока.
-    Встаёт она только на верхний уровень: из колонки — под своей Раскладкой
-    (`insertLayout`).
-  */
-  layout: [
-    {
-      id: "layout",
-      section: "insert",
-      label: (m) => m.layout,
-      icon: ColumnLayoutIcon,
-      aliases: ["columns", "cols"],
-      run: (chain) => chain.insertLayout(DEFAULT_LAYOUT),
-    },
-  ],
-  /*
-    Обёртка — пустая, с одним абзацем, каретка внутри. Место —
-    Документ или колонка: из Обёртки, списка, цитаты и ячейки она встаёт под
-    их Блоком (`insertWrapper`).
-  */
-  wrapper: [
-    {
-      id: "wrapper",
-      section: "insert",
-      label: (m) => m.wrapper,
-      icon: WrapperIcon,
-      aliases: ["group", "container", "div"],
-      run: (chain) => chain.insertWrapper(),
     },
   ],
 };
