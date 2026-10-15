@@ -20,6 +20,7 @@ export const EDITOR_ENGINE = [
   "@tiptap/core",
   "@tiptap/extension-blockquote",
   "@tiptap/extension-code-block-lowlight",
+  "@tiptap/extension-details",
   "@tiptap/extension-highlight",
   "@tiptap/extension-horizontal-rule",
   "@tiptap/extension-link",

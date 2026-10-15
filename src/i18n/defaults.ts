@@ -525,6 +525,9 @@ export const DEFAULT_MESSAGES: UiMessages = {
       warning: "Warning",
       danger: "Caution",
     },
+    details: "Collapsible block",
+    unwrapDetails: "Remove collapsing",
+    detailsToggle: ({ text }) => (text ? `Details: ${text}` : "Details: no title"),
     emoji: "Emoji",
     emojiGrid: "Choose an emoji",
     emojiCategory: {

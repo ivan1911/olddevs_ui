@@ -741,6 +741,7 @@ describe("the Insert menu", () => {
             "Image",
             "Layout",
             "Wrapper",
+            "Collapsible block",
           ],
           "section": "Insert",
         },
@@ -785,6 +786,7 @@ describe("the Insert menu", () => {
         "menuitem: Image",
         "menuitem: Layout",
         "menuitem: Wrapper",
+        "menuitem: Collapsible block",
         "menuitem: Paragraph | Ctrl+Alt+0",
         "menuitem: Heading 1 | #",
         "menuitem: Heading 2 | ##",
@@ -860,6 +862,7 @@ describe("the block handle menu", () => {
             "menuitem: Image",
             "menuitem: Layout",
             "menuitem: Wrapper",
+            "menuitem: Collapsible block",
           ],
           "format": [
             "menuitemradio: Text [x] | Ctrl+Alt+0",

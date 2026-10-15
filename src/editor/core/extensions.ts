@@ -17,7 +17,12 @@ import { createDocumentNode } from "./document.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
 import { MaxLength } from "./maxLength.js";
 import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
-import { type ToolDescriptor, type ToolEngineContext, type ToolList } from "./toolDescriptor.js";
+import {
+  type BlockTraits,
+  type ToolDescriptor,
+  type ToolEngineContext,
+  type ToolList,
+} from "./toolDescriptor.js";
 import { ToolButtons, type ToolPopoverEntry, type ToolPopoverRequest } from "./toolButtons.js";
 import { ToolEntryShortcuts } from "./toolEntryShortcuts.js";
 import type { Tool } from "./tools.js";
@@ -31,6 +36,11 @@ export interface EditorExtensionOptions {
   limit: () => number | undefined;
   /** Имя флажка пункта чек-листа — из каталога, читается при каждой перерисовке пункта. */
   taskCheckbox: (text: string) => string;
+  /**
+   * Имя кнопки раскрытия сворачиваемого Блока по тексту его заголовка — из
+   * каталога, читается при каждой перерисовке кнопки.
+   */
+  detailsToggle: (text: string) => string;
   /**
    * Мост Меню вставки по `/`. Нет — меню не открывается: инструмент
    * `insertMenu` выключен или пунктов для него нет.
@@ -109,6 +119,28 @@ const HandledTabStaysInside = Extension.create({
 });
 
 /**
+ * Признаки Блоков описаний (`blocks`) — в spec узлов Схемы: `blockContainer`,
+ * `turnInto` и `plainAtom`, которые читают ручка и Меню выделения. Расширение
+ * без разметки: `extendNodeSchema` у Tiptap зовётся для каждого узла набора, и
+ * признак находит свой узел по имени. Нет признаков — расширения нет.
+ */
+function blockTraitsExtension(traits: Readonly<Record<string, BlockTraits>>) {
+  return Extension.create({
+    name: "blockTraits",
+    extendNodeSchema: (extension) => {
+      const own = Object.hasOwn(traits, extension.name) ? traits[extension.name] : undefined;
+      return own
+        ? {
+            blockContainer: own.container === true,
+            turnInto: own.turnInto === true,
+            plainAtom: own.plainAtom === true,
+          }
+        : {};
+    },
+  });
+}
+
+/**
  * Ключи StarterKit, которые принадлежат Инструментам. Все выключены, пока их не
  * включит доля описания (`starterKit`): Метка, которой нет в наборе, не
  * попадает в Схему. Цитата, разделитель, блок кода и
@@ -148,6 +180,11 @@ const TRIGGERS = "triggers";
  *   `handlePaste` и `handleDrop` своего Инструмента видят событие раньше и могут
  *   забрать его. Давать встроенному плагину `priority` выше 100 нельзя без правки
  *   этого правила;
+ * - **клавиши**: `Enter`, `Backspace` и стрелки сворачиваемого Блока (`details`)
+ *   срабатывают только в его заголовке и в пустом конце содержимого, поэтому
+ *   с клавишами других Блоков не спорят. Он стоит сразу за контейнерами
+ *   (Раскладка, Обёртка): позже ядра и StarterKit, значит, опрашивается раньше
+ *   них — `Enter` в заголовке уходит в содержимое, а не режет заголовок надвое;
  * - **клавиши**: `Alt+F10` блока кода (`codeBlockTool.ts`) зарегистрирован после
  *   `ToolbarFocus` и опрашивается раньше; Tab в таблице — раньше Раскладки.
  *
@@ -165,6 +202,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "image",
   "layout",
   "wrapper",
+  "details",
   "insertMenu",
   TRIGGERS,
   "history",
@@ -257,6 +295,12 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     // `showNotice` — в каждом Редакторе: сообщить может любой Инструмент (`fieldNotice.ts`).
     FieldNoticeExtension.configure({ onNotice: options.onNotice }),
   ];
+  // Признаки Блоков описаний (`blocks`) — одним расширением на весь набор.
+  const traits: Record<string, BlockTraits> = Object.assign(
+    {},
+    ...described.map((descriptor) => descriptor.blocks)
+  );
+  if (Object.keys(traits).length > 0) extensions.push(blockTraitsExtension(traits));
   // Части для движка встроенных — в порядке кита, свои — следом в порядке списка.
   const engineOf = (descriptor: ToolDescriptor) =>
     descriptor.engine?.(context, descriptor.options) ?? [];

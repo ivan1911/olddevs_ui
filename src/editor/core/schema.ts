@@ -63,6 +63,13 @@ export const RICH_TEXT_SCHEMA = {
    * Стоит на верхнем уровне и прямо в колонке Раскладки; внутри — Блоки, кроме
    * другой Обёртки и Раскладки.
    *
+   * `details` — сворачиваемый Блок: `details > summary` и следом
+   * `div[data-type="detailsContent"]` с Блоками; `open` — только у `details` и
+   * только пустым (`open=""`), так его пишет Редактор с Опцией `persist`.
+   * `summary` вне `details` и обёртка содержимого вне него снимаются —
+   * Блоки остаются подряд. Теги и атрибуты Блока открыты только в этой форме:
+   * `iframe` и ему подобное так не открывается.
+   *
    * Таблица — `table > tbody > tr > th|td`, без `thead`, `colgroup` и
    * `caption`: строка-заголовок — это обычная первая строка из `th`. На ячейке
    * бывают только слияние (`colspan`, `rowspan`) и выравнивание столбца
@@ -94,6 +101,8 @@ export const RICH_TEXT_SCHEMA = {
     "figure",
     "img",
     "figcaption",
+    "details",
+    "summary",
   ],
   /**
    * Метки и строчные узлы. `br` — мягкий перенос по Shift+Enter. `mark` —
@@ -112,9 +121,13 @@ export const RICH_TEXT_SCHEMA = {
      * Раскладка и её колонка: `data-block="layout"` и `data-block="column"`;
      * `data-layout` — вариант из `layouts`, только у Раскладки. Обёртка —
      * `data-block="wrapper"` и, если у неё есть тон, `data-tone` — имя из
-     * `wrapperTones`, только у Обёртки. У `div` пункта чек-листа атрибутов нет.
+     * `wrapperTones`, только у Обёртки. Обёртка содержимого сворачиваемого
+     * Блока — `data-type="detailsContent"`, только прямо в `details`. У `div`
+     * пункта чек-листа атрибутов нет.
      */
-    div: ["data-block", "data-layout", "data-tone"],
+    div: ["data-block", "data-layout", "data-tone", "data-type"],
+    /** Открытый сворачиваемый Блок: пустой `open`, только с Опцией `persist`. */
+    details: ["open"],
     /** Пункт чек-листа: `data-type="taskItem"` и `data-checked="true|false"`. */
     li: ["data-type", "data-checked"],
     /** Флажок пункта чек-листа: всегда `type="checkbox"`, `checked` — у отмеченного. */
@@ -584,6 +597,10 @@ export interface RichTextPurifier {
  *   колонке Раскладки, не в другой Обёртке, списке, цитате и таблице; иначе
  *   снимается так же, вместе с тоном; `data-tone` — имя из `wrapperTones` и
  *   только на Обёртке;
+ * - сворачиваемый Блок — `details` с `summary` прямо в нём и обёрткой содержимого
+ *   `div[data-type="detailsContent"]` тоже прямо в нём; `open` — только пустой и
+ *   только на `details`. `summary` и обёртка вне `details` теряют тег, их Блоки
+ *   остаются подряд;
  * - `colspan`, `rowspan` — на `th`/`td`, целое от 1 до `tableSpans`;
  * - ссылка — `href` по `protocols` (выражение конфига), `rel` всегда
  *   `"noopener noreferrer"`, ссылка без адреса становится текстом;
@@ -648,7 +665,14 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
   start: (node) => node.nodeName === "OL",
   "data-type": (node, value) =>
     (node.nodeName === "UL" && value === "taskList") ||
-    (node.nodeName === "LI" && value === "taskItem"),
+    (node.nodeName === "LI" && value === "taskItem") ||
+    // Обёртка содержимого сворачиваемого Блока: только `div` прямо в `details`.
+    (node.nodeName === "DIV" &&
+      value === DETAILS_CONTENT &&
+      node.parentElement?.nodeName === "DETAILS"),
+  // Открытый Блок: `open=""`, как его пишет Редактор; значение `open="open"` из
+  // чужого HTML атрибут теряет, Блок остаётся закрытым.
+  open: (node, value) => node.nodeName === "DETAILS" && value === "",
   "data-checked": (node, value) =>
     node.nodeName === "LI" &&
     node.getAttribute("data-type") === "taskItem" &&
@@ -787,6 +811,9 @@ const PARENT_OF: Record<string, string> = {
   SPAN: `${TASK_ITEM} > label`,
 };
 
+/** Значение `div[data-type]` обёртки содержимого сворачиваемого Блока (`details.ts`). */
+const DETAILS_CONTENT = "detailsContent";
+
 /** Значения `div[data-block]`: Раскладка, её колонка и Обёртка. */
 const LAYOUT_BLOCK = "layout";
 const COLUMN_BLOCK = "column";
@@ -794,10 +821,10 @@ const WRAPPER_BLOCK = "wrapper";
 
 /**
  * Где Раскладки быть не может: в другой Раскладке (её колонке), в Обёртке, в
- * списке, цитате и ячейке. Редактор такую не отдаёт — у колонки и прочих контейнеров
+ * списке, цитате, ячейке и сворачиваемом Блоке. Редактор такую не отдаёт — у колонки и прочих контейнеров
  * в Схеме движка её нет, — и при загрузке разворачивает в Блоки подряд.
  */
-const NOT_A_LAYOUT_PLACE = "div[data-block], li, blockquote, th, td";
+const NOT_A_LAYOUT_PLACE = "div[data-block], li, blockquote, th, td, details";
 
 /**
  * Раскладка, колонка и Обёртка: `true` — элемент обработан (оставлен или
@@ -868,6 +895,14 @@ function checkStructure(node: Element, schema: RichTextSchema): void {
     return;
   }
   if (node.nodeName === "SPAN" && coloured) return;
+  // Сворачиваемый Блок: `summary` — только прямо в `details`, обёртка
+  // содержимого с `data-type` — тоже (атрибут уже снят хуком, если она не там).
+  // Вне Блока они теряют обёртку, содержимое остаётся.
+  if (node.nodeName === "SUMMARY") {
+    if (node.parentElement?.nodeName !== "DETAILS") node.replaceWith(...node.childNodes);
+    return;
+  }
+  if (node.nodeName === "DIV" && node.getAttribute("data-type") === DETAILS_CONTENT) return;
   // Картинка — `img` с адресом прямо внутри `figure`, и только так: `figure`
   // без годной картинки разворачивается в содержимое, `img` вне `figure` или без
   // адреса удаляется, `figcaption` вне `figure` теряет обёртку.

@@ -9,6 +9,7 @@ import { INSERT_MENU_TOOL } from "../core/insertMenuTool.js";
 import { SHORTCUT_KEYS, type ShortcutCommand } from "../core/shortcuts.js";
 import { ALIGN_TOOL, COLOR_TOOL, HIGHLIGHT_TOOL } from "./color/colorTools.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
+import { DETAILS_TOOL } from "./details/detailsTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
 import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
 import { HISTORY_TOOL } from "./history/historyTool.js";
@@ -75,6 +76,7 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   highlight: HIGHLIGHT_TOOL,
   align: ALIGN_TOOL,
   wrapper: WRAPPER_TOOL,
+  details: DETAILS_TOOL,
   /*
     Разделитель и цитата: Инструмент с пунктом вставки и Инструмент с
     «Превратить в». Поля `insertItems` и `engine` те же, что у публичного

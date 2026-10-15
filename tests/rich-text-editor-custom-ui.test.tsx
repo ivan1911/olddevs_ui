@@ -143,7 +143,8 @@ test("own items stand at the end of their section, after the kit's, with the sho
 
   const { insert, turnInto } = slashRows();
   expect(insert.at(-1)).toMatch(/^Box en-US/);
-  expect(insert.at(-2)).toMatch(/^Wrapper/);
+  expect(insert.at(-3)).toMatch(/^Wrapper/);
+  expect(insert.at(-2)).toMatch(/^Collapsible block/);
   expect(turnInto.at(-1)).toMatch(/^Card/);
   expect(turnInto.at(-2)).toMatch(/^Code block/);
   // Подсказка — сочетание из поля записи: Ctrl на не-Apple (jsdom).
@@ -254,7 +255,7 @@ test("Add lists own items and puts a new block under the current one, one undo s
 
   const add = await openSubmenu(user, await openHandleMenu(user), "Add");
   const names = itemsOf(add).map((entry) => entry.name);
-  expect(names.slice(-3)).toEqual(["Wrapper", "Box en-US", "Card"]);
+  expect(names.slice(-4)).toEqual(["Wrapper", "Collapsible block", "Box en-US", "Card"]);
   // Подсказок сочетаний в «Добавить» нет — как у встроенных.
   expect(itemsOf(add).every((entry) => entry.shortcut === null)).toBe(true);
 
