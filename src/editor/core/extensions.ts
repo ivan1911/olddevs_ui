@@ -11,7 +11,7 @@ import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Placeholder } from "@tiptap/extensions";
-import { StarterKit } from "@tiptap/starter-kit";
+import { StarterKit, type StarterKitOptions } from "@tiptap/starter-kit";
 import { AtomText } from "./atomText.js";
 import { BlockCommands, BlockMenuKey } from "./blockCommands.js";
 import { FieldNoticeExtension, type FieldNoticeOptions } from "./fieldNotice.js";
@@ -31,7 +31,12 @@ import {
   type SlashBridge,
   type TriggerBinding,
 } from "./slashCommand.js";
-import { describedTools, type ToolList } from "./toolDescriptor.js";
+import {
+  describedTools,
+  type ToolDescriptor,
+  type ToolEngineContext,
+  type ToolList,
+} from "./toolDescriptor.js";
 import { ToolButtons, type ToolPopoverEntry, type ToolPopoverRequest } from "./toolButtons.js";
 import { ToolEntryShortcuts } from "./toolEntryShortcuts.js";
 import type { Tool } from "./tools.js";
@@ -150,20 +155,161 @@ const HandledTabStaysInside = Extension.create({
  *   `class="language-*"` на `<code>`. Оно, как и таблица, приходит
  *   ленивой Частью для движка из описания (`codeBlockTool.ts`, `tableTool.ts`).
  */
+/**
+ * Ключи StarterKit, которые принадлежат Инструментам. Все выключены, пока их не
+ * включит доля описания (`starterKit`) или не переехавший Инструмент: Метка,
+ * которой нет в наборе, не попадает в Схему. Цитата, разделитель, блок кода и
+ * ссылка — свои расширения кита, а `trailingNode` выключен всегда (см. выше).
+ * Документ, абзац, текст, перенос, пункт списка, его клавиши и курсоры
+ * StarterKit остаются его умолчаниями: они есть в любом наборе.
+ */
+const STARTER_KIT_OFF: Partial<StarterKitOptions> = {
+  heading: false,
+  bold: false,
+  italic: false,
+  underline: false,
+  strike: false,
+  code: false,
+  bulletList: false,
+  orderedList: false,
+  undoRedo: false,
+  blockquote: false,
+  codeBlock: false,
+  horizontalRule: false,
+  link: false,
+  trailingNode: false,
+};
+
+/**
+ * Части для движка не переехавших встроенных Инструментов (OLDSUI-273):
+ * переезд переносит запись отсюда в поле `engine` описания. Доли StarterKit
+ * не переехавших — `legacyStarterKit` ниже.
+ */
+const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extensions>> = {
+  superscript: () => [Superscript],
+  subscript: () => [Subscript],
+  // Цвет, маркер и выравнивание пишут `data-color` и `data-align`, а не `style`
+  // (`styleExtensions.ts`; единственное исключение — цвет автора, `customColor.ts`):
+  // выключенный инструмент не отдаёт ни атрибута, ни правила разбора, и такой
+  // атрибут из вставки отбрасывается.
+  color: () => TEXT_COLOR_EXTENSIONS,
+  highlight: () => [HighlightExtension],
+  align: () => [TextAlignExtension],
+  taskList: (context) => [
+    TaskList,
+    TaskItem.configure({
+      // Вложенные чек-листы — как вложенные обычные списки: Tab и Shift+Tab.
+      nested: true,
+      a11y: { checkboxLabel: (node) => context.taskCheckbox(node.textContent) },
+    }),
+  ],
+  // Картинка — `figure` с подписью (`image.ts`). Без инструмента `<img>` из
+  // вставки и `value` отбрасывается, а файлы из буфера не перехватываются.
+  image: (context) => (context.image ? [RichImage.configure(context.image)] : []),
+  // Раскладка — узлы колонок и их клавиатура (`layout.ts`). Без инструмента
+  // `div[data-block]` из вставки и `value` не разбирается, и Блоки колонок
+  // встают в Документ подряд.
+  layout: (context) => layoutExtensions({ wrapper: context.has("wrapper") }),
+  // Обёртка — узел и выход из неё по Enter (`wrapper.ts`). Без инструмента
+  // `div[data-block="wrapper"]` из вставки и `value` не разбирается, и её
+  // Блоки встают на её место подряд.
+  wrapper: () => WRAPPER_EXTENSIONS,
+  insertMenu: (context) =>
+    context.slash ? [SlashCommand.configure({ bridge: context.slash })] : [],
+};
+
+/** Доли StarterKit не переехавших Инструментов: включённый — умолчание StarterKit. */
+function legacyStarterKit(on: (tool: Tool) => boolean, context: ToolEngineContext) {
+  const keep = (tool: Tool) => (on(tool) ? { [STARTER_KIT_KEY[tool] ?? tool]: undefined } : {});
+  return {
+    // H1 — только с `heading1`; без него `#` и `<h1>` остаются
+    // прежними: правило ввода и разбор HTML строятся по этим уровням.
+    ...(on("heading") && {
+      heading: { levels: context.has("heading1") ? [1, 2, 3, 4] : [2, 3, 4] },
+    }),
+    ...keep("bold"),
+    ...keep("italic"),
+    ...keep("underline"),
+    ...keep("strike"),
+    ...keep("code"),
+    ...keep("bulletList"),
+    ...keep("orderedList"),
+    ...keep("history"),
+  } as Partial<StarterKitOptions>;
+}
+
+/** Ключ StarterKit Инструмента, если он не совпадает с именем. */
+const STARTER_KIT_KEY: Partial<Record<Tool, keyof StarterKitOptions>> = { history: "undoRedo" };
+
+/** Место символов-триггеров в `ENGINE_ORDER`: они не Инструмент, но порядок держат. */
+const TRIGGERS = "triggers";
+
+/**
+ * ПОРЯДОК РЕГИСТРАЦИИ Частей для движка встроенных — привилегия кита, как
+ * порядок поверхностей, и не зависит от того, переехал ли Инструмент. От него
+ * зависят:
+ *
+ * - **ранг Меток** — а с ним вложенность Меток в сохранённом HTML;
+ * - **вставка и drop** (ADR-0058, п. 9.5): плагины ProseMirror у Tiptap идут в
+ *   обратном порядке регистрации при равном `priority`, и зарегистрированное
+ *   последним опрашивается первым. Свои Инструменты стоят после встроенных
+ *   (`expandTools`), поэтому `transformPastedHTML`, `transformPasted`,
+ *   `handlePaste` и `handleDrop` своего Инструмента видят событие раньше и могут
+ *   забрать его. Давать встроенному плагину `priority` выше 100 нельзя без правки
+ *   этого правила;
+ * - **клавиши**: `Alt+F10` блока кода (`codeBlockTool.ts`) зарегистрирован после
+ *   `ToolbarFocus` и опрашивается раньше; Tab в таблице — раньше Раскладки.
+ *
+ * Список повторяет порядок до переезда (OLDSUI-273): сначала Инструменты, чьи
+ * расширения подключались отдельными ветками, затем Меню вставки, триггеры и
+ * описания в порядке `TOOLS`. Метки и Блоки из StarterKit регистрирует он сам.
+ */
+const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
+  "superscript",
+  "subscript",
+  "color",
+  "highlight",
+  "align",
+  "taskList",
+  "image",
+  "layout",
+  "wrapper",
+  "insertMenu",
+  TRIGGERS,
+  "history",
+  "heading",
+  "heading1",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "code",
+  "clearFormatting",
+  "link",
+  "bulletList",
+  "orderedList",
+  "blockquote",
+  "codeBlock",
+  "horizontalRule",
+  "table",
+  "emoji",
+  "source",
+  "search",
+  "toc",
+];
+
 export function createEditorExtensions(options: EditorExtensionOptions): Extensions {
   /*
     Движок — проекция списка описаний (`toolDescriptor.ts`): Часть для движка
-    переехавшего Инструмента берётся из описания, остальных — отсюда, как
-    раньше. `on` — «Инструмент включён и его расширение ещё здесь»; связи
-    между Инструментами (уровни заголовка, Обёртка в колонке) спрашивают сам
-    набор.
+    переехавшего Инструмента берётся из описания, остальных — из
+    `LEGACY_ENGINE`. `on` — «Инструмент включён и его расширение ещё здесь»;
+    связи между Инструментами (уровни заголовка, Обёртка в колонке) спрашивают
+    `has` контекста.
   */
   const described = describedTools(options.tools);
+  const context: ToolEngineContext = { ...options, has: (tool) => options.tools.has(tool) };
   const on = (tool: Tool) =>
     options.tools.has(tool) && !described.some((descriptor) => descriptor.name === tool);
-  // `false` выключает расширение внутри StarterKit, `undefined` оставляет его
-  // настройки по умолчанию.
-  const toggle = (tool: Tool) => (on(tool) ? undefined : false);
   // Контейнеры Блоков верхнего уровня: их принимает только свой Документ.
   const containers = [
     ...(on("layout") ? [LAYOUT_NODE] : []),
@@ -173,31 +319,13 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
 
   const extensions: Extensions = [
     StarterKit.configure({
+      ...STARTER_KIT_OFF,
+      ...legacyStarterKit(on, context),
+      // Доли описаний — одним StarterKit: порядок его Меток не меняется.
+      ...Object.assign({}, ...described.map((descriptor) => descriptor.starterKit?.(context))),
       // С Раскладкой или Обёрткой Документ — свой (`document.ts`): они не в
       // группе `block`, и принять их может только тот, кто назвал их поимённо.
       document: containers.length > 0 ? false : undefined,
-      // H1 — только с `heading1`; без него `#` и `<h1>` остаются
-      // прежними: правило ввода и разбор HTML строятся по этим уровням.
-      heading: on("heading")
-        ? { levels: options.tools.has("heading1") ? [1, 2, 3, 4] : [2, 3, 4] }
-        : false,
-      bold: toggle("bold"),
-      italic: toggle("italic"),
-      underline: toggle("underline"),
-      strike: toggle("strike"),
-      code: toggle("code"),
-      bulletList: toggle("bulletList"),
-      orderedList: toggle("orderedList"),
-      // Цитата и разделитель переехали на описание (`features/builtins.ts`): их Часть для движка — оттуда.
-      blockquote: false,
-      // Блок кода — `RichCodeBlock` из описания (`codeBlockTool.ts`): язык и подсветка (ADR-0051).
-      codeBlock: false,
-      horizontalRule: false,
-      undoRedo: toggle("history"),
-      // Ссылка — `RichLink` из описания Инструмента (`linkTool.tsx`): StarterKit
-      // отдаёт только опции, а разбор `<a>` нужно сузить до Схемы.
-      link: false,
-      trailingNode: false,
     }),
     ...(containers.length > 0 ? [createDocumentNode(containers)] : []),
     Placeholder.configure({ placeholder: () => options.placeholder() }),
@@ -212,64 +340,31 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     HandledTabStaysInside,
     // Команды над Блоками — своей разметки нет, включены всегда (`blockCommands.ts`).
     // После ядра Tiptap: его `Mod+A` (весь Документ) опрашивается позже нашего.
-    BlockCommands.configure({ clearFormatting: on("clearFormatting") }),
+    BlockCommands.configure({ clearFormatting: options.tools.has("clearFormatting") }),
     // `⌘/` — меню ручки Блока по месту клавиши, раньше карт Меток (`blockCommands.ts`).
     BlockMenuKey.configure({ openBlockMenu: options.openBlockMenu }),
     // `showNotice` — в каждом Редакторе: сообщить может любой Инструмент (`fieldNotice.ts`).
     FieldNoticeExtension.configure({ onNotice: options.onNotice }),
   ];
-  if (on("superscript")) extensions.push(Superscript);
-  if (on("subscript")) extensions.push(Subscript);
-  // Цвет, маркер и выравнивание пишут `data-color` и `data-align`, а не `style`
-  // (`styleExtensions.ts`; единственное исключение — цвет автора, `customColor.ts`):
-  // выключенный инструмент не отдаёт ни атрибута, ни правила разбора, и такой
-  // атрибут из вставки отбрасывается.
-  if (on("color")) extensions.push(...TEXT_COLOR_EXTENSIONS);
-  if (on("highlight")) extensions.push(HighlightExtension);
-  if (on("align")) extensions.push(TextAlignExtension);
-  if (on("taskList")) {
-    extensions.push(
-      TaskList,
-      TaskItem.configure({
-        // Вложенные чек-листы — как вложенные обычные списки: Tab и Shift+Tab.
-        nested: true,
-        a11y: { checkboxLabel: (node) => options.taskCheckbox(node.textContent) },
-      })
-    );
+  // Части для движка встроенных — в порядке кита, свои — следом в порядке списка.
+  const engineOf = (descriptor: ToolDescriptor) =>
+    descriptor.engine?.(context, descriptor.options) ?? [];
+  for (const slot of ENGINE_ORDER) {
+    if (slot === TRIGGERS) {
+      if (options.triggers?.length) {
+        extensions.push(TriggerCommand.configure({ triggers: options.triggers }));
+      }
+      continue;
+    }
+    const descriptor = described.find((candidate) => candidate.name === slot);
+    if (descriptor) extensions.push(...engineOf(descriptor));
+    else if (on(slot)) extensions.push(...(LEGACY_ENGINE[slot]?.(context) ?? []));
   }
-  // Картинка — `figure` с подписью (`image.ts`). Без инструмента `<img>` из
-  // вставки и `value` отбрасывается, а файлы из буфера не перехватываются.
-  if (on("image") && options.image) extensions.push(RichImage.configure(options.image));
-  // Раскладка — узлы колонок и их клавиатура (`layout.ts`). Без инструмента
-  // `div[data-block]` из вставки и `value` не разбирается, и Блоки колонок
-  // встают в Документ подряд.
-  if (on("layout")) extensions.push(...layoutExtensions({ wrapper: options.tools.has("wrapper") }));
-  // Обёртка — узел и выход из неё по Enter (`wrapper.ts`). Без инструмента
-  // `div[data-block="wrapper"]` из вставки и `value` не разбирается, и её
-  // Блоки встают на её место подряд.
-  if (on("wrapper")) extensions.push(...WRAPPER_EXTENSIONS);
-  if (on("insertMenu") && options.slash) {
-    extensions.push(SlashCommand.configure({ bridge: options.slash }));
+  for (const descriptor of described) {
+    if (!(ENGINE_ORDER as readonly string[]).includes(descriptor.name)) {
+      extensions.push(...engineOf(descriptor));
+    }
   }
-  if (options.triggers?.length) {
-    extensions.push(TriggerCommand.configure({ triggers: options.triggers }));
-  }
-  /*
-    Части для движка переехавших Инструментов — в порядке списка. ЗДЕСЬ ЖЕ
-    ЗАДАЁТСЯ ПОРЯДОК ВСТАВКИ И DROP (ADR-0058, п. 9.5): плагины ProseMirror у
-    Tiptap идут в обратном порядке регистрации при равном `priority`, и
-    зарегистрированное последним опрашивается первым. Свои Инструменты стоят в
-    конце списка (`expandTools`: за встроенными), а встроенные вставка Markdown,
-    загрузка картинок и Раскладка зарегистрированы выше — поэтому
-    `transformPastedHTML`, `transformPasted`, `handlePaste` и `handleDrop` своего
-    Инструмента видят событие раньше и могут забрать его. Менять порядок
-    регистрации или давать встроенному плагину `priority` выше 100 нельзя без
-    правки этого правила. На том же порядке держится `Alt+F10` блока кода
-    (`codeBlockTool.ts`): его расширение здесь, после `ToolbarFocus`, и
-    опрашивается раньше.
-  */
-  for (const descriptor of described)
-    extensions.push(...(descriptor.engine?.(options, descriptor.options) ?? []));
   // Сочетания кнопок описаний вешает кит: поле записи — их единственный источник.
   const buttons = described.flatMap((descriptor) => descriptor.buttons ?? []);
   // Поповер пункта вставки и Действия открывает та же команда, что у кнопки.

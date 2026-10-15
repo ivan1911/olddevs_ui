@@ -69,29 +69,114 @@ const LIST_TOOLS: readonly Tool[] = ["bulletList", "orderedList", "taskList"];
  * Сочетание кнопки описания — поле самой кнопки (`toolDescriptor.ts`): её
  * строку справочник берёт оттуда, клавишу вешает `toolButtons.ts`.
  */
+/**
+ * Сочетания встроенных команд по id — данные, а не привязки. Строка справочника
+ * берёт клавиши отсюда, где бы она ни жила: в `SHORTCUTS` или в описании
+ * Инструмента (`shortcuts`, `keys` кнопки). Поэтому подписи Меню вставки и «¶»,
+ * которые читаются при загрузке модуля (`shortcutKeys`), не зависят от того,
+ * переехал ли Инструмент.
+ */
+export const SHORTCUT_KEYS = {
+  selectBlock: ["mod", "A"],
+  selectDocument: ["mod", "A"],
+  undo: ["mod", "Z"],
+  redo: ["mod", "shift", "Z"],
+  duplicateBlock: ["mod", "shift", "D"],
+  moveBlockUp: ["alt", "shift", "↑"],
+  moveBlockDown: ["alt", "shift", "↓"],
+  blockActions: ["mod", "/"],
+  clearFormatting: ["mod", "\\"],
+  bold: ["mod", "B"],
+  italic: ["mod", "I"],
+  strike: ["mod", "shift", "S"],
+  underline: ["mod", "U"],
+  code: ["mod", "E"],
+  superscript: ["mod", "."],
+  subscript: ["mod", ","],
+  paragraph: ["mod", "alt", "0"],
+  h1: ["mod", "alt", "1"],
+  h2: ["mod", "alt", "2"],
+  h3: ["mod", "alt", "3"],
+  h4: ["mod", "alt", "4"],
+  codeBlock: ["mod", "alt", "C"],
+  bulletList: ["mod", "shift", "8"],
+  orderedList: ["mod", "shift", "7"],
+  taskList: ["mod", "shift", "9"],
+  indentListItem: ["mod", "]"],
+  outdentListItem: ["mod", "["],
+  alignLeft: ["mod", "shift", "L"],
+  alignCenter: ["mod", "shift", "E"],
+  alignRight: ["mod", "shift", "R"],
+  focusToolbar: ["alt", "F10"],
+} as const satisfies Record<string, readonly string[]>;
+
+/** Id строки справочника из таблицы кита. */
+export type ShortcutId = keyof typeof SHORTCUT_KEYS;
+
+/**
+ * Порядок строк справочника внутри групп — привилегия кита, как `INSERT_ORDER`
+ * у Меню вставки, и не зависит от того, где живёт строка: в `SHORTCUTS` или в
+ * описании Инструмента. Строки вне списка (кнопки описаний, свои Инструменты)
+ * встают в конец своей группы в порядке набора.
+ */
+export const SHORTCUT_ORDER: readonly string[] = [
+  "selectBlock",
+  "selectDocument",
+  "undo",
+  "redo",
+  "duplicateBlock",
+  "moveBlockUp",
+  "moveBlockDown",
+  "blockActions",
+  "clearFormatting",
+  "bold",
+  "italic",
+  "strike",
+  "underline",
+  "code",
+  "superscript",
+  "subscript",
+  "paragraph",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "blockquote",
+  "codeBlock",
+  "bulletList",
+  "orderedList",
+  "taskList",
+  "indentListItem",
+  "outdentListItem",
+  "alignLeft",
+  "alignCenter",
+  "alignRight",
+  "focusToolbar",
+];
+
 export const SHORTCUTS: readonly ShortcutCommand[] = [
   // Выделение: первое `⌘A` берёт текст Блока, второе — весь Документ (`blockCommands.ts`).
   {
     id: "selectBlock",
     group: "selection",
     tool: null,
-    keys: ["mod", "A"],
+    keys: SHORTCUT_KEYS.selectBlock,
     label: (m) => m.selectBlock,
   },
   {
     id: "selectDocument",
     group: "selection",
     tool: null,
-    keys: ["mod", "A"],
+    keys: SHORTCUT_KEYS.selectDocument,
     label: (m) => m.selectDocument,
   },
 
-  { id: "undo", group: "history", tool: "history", keys: ["mod", "Z"], label: (m) => m.undo },
+  { id: "undo", group: "history", tool: "history", keys: SHORTCUT_KEYS.undo, label: (m) => m.undo },
   {
     id: "redo",
     group: "history",
     tool: "history",
-    keys: ["mod", "shift", "Z"],
+    keys: SHORTCUT_KEYS.redo,
     label: (m) => m.redo,
   },
 
@@ -99,21 +184,21 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "duplicateBlock",
     group: "blocks",
     tool: null,
-    keys: ["mod", "shift", "D"],
+    keys: SHORTCUT_KEYS.duplicateBlock,
     label: (m) => m.duplicateBlock,
   },
   {
     id: "moveBlockUp",
     group: "blocks",
     tool: null,
-    keys: ["alt", "shift", "↑"],
+    keys: SHORTCUT_KEYS.moveBlockUp,
     label: (m) => m.moveBlockUp,
   },
   {
     id: "moveBlockDown",
     group: "blocks",
     tool: null,
-    keys: ["alt", "shift", "↓"],
+    keys: SHORTCUT_KEYS.moveBlockDown,
     label: (m) => m.moveBlockDown,
   },
   // Меню ручки Блока: ручка есть в любой правке, при любой Панели.
@@ -121,7 +206,7 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "blockActions",
     group: "blocks",
     tool: null,
-    keys: ["mod", "/"],
+    keys: SHORTCUT_KEYS.blockActions,
     label: (m) => m.blockActions,
   },
 
@@ -129,39 +214,45 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "clearFormatting",
     group: "clear",
     tool: "clearFormatting",
-    keys: ["mod", "\\"],
+    keys: SHORTCUT_KEYS.clearFormatting,
     label: (m) => m.clearFormatting,
   },
 
-  { id: "bold", group: "marks", tool: "bold", keys: ["mod", "B"], label: (m) => m.bold },
-  { id: "italic", group: "marks", tool: "italic", keys: ["mod", "I"], label: (m) => m.italic },
+  { id: "bold", group: "marks", tool: "bold", keys: SHORTCUT_KEYS.bold, label: (m) => m.bold },
+  {
+    id: "italic",
+    group: "marks",
+    tool: "italic",
+    keys: SHORTCUT_KEYS.italic,
+    label: (m) => m.italic,
+  },
   {
     id: "strike",
     group: "marks",
     tool: "strike",
-    keys: ["mod", "shift", "S"],
+    keys: SHORTCUT_KEYS.strike,
     label: (m) => m.strike,
   },
   {
     id: "underline",
     group: "marks",
     tool: "underline",
-    keys: ["mod", "U"],
+    keys: SHORTCUT_KEYS.underline,
     label: (m) => m.underline,
   },
-  { id: "code", group: "marks", tool: "code", keys: ["mod", "E"], label: (m) => m.code },
+  { id: "code", group: "marks", tool: "code", keys: SHORTCUT_KEYS.code, label: (m) => m.code },
   {
     id: "superscript",
     group: "marks",
     tool: "superscript",
-    keys: ["mod", "."],
+    keys: SHORTCUT_KEYS.superscript,
     label: (m) => m.superscript,
   },
   {
     id: "subscript",
     group: "marks",
     tool: "subscript",
-    keys: ["mod", ","],
+    keys: SHORTCUT_KEYS.subscript,
     label: (m) => m.subscript,
   },
 
@@ -171,7 +262,7 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "paragraph",
     group: "blockType",
     tool: "heading",
-    keys: ["mod", "alt", "0"],
+    keys: SHORTCUT_KEYS.paragraph,
     label: (m) => m.textBlock,
   },
   {
@@ -179,35 +270,35 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     group: "blockType",
     tool: "heading1",
     requires: "heading",
-    keys: ["mod", "alt", "1"],
+    keys: SHORTCUT_KEYS.h1,
     label: (m) => m.heading({ level: 1 }),
   },
   {
     id: "h2",
     group: "blockType",
     tool: "heading",
-    keys: ["mod", "alt", "2"],
+    keys: SHORTCUT_KEYS.h2,
     label: (m) => m.heading({ level: 2 }),
   },
   {
     id: "h3",
     group: "blockType",
     tool: "heading",
-    keys: ["mod", "alt", "3"],
+    keys: SHORTCUT_KEYS.h3,
     label: (m) => m.heading({ level: 3 }),
   },
   {
     id: "h4",
     group: "blockType",
     tool: "heading",
-    keys: ["mod", "alt", "4"],
+    keys: SHORTCUT_KEYS.h4,
     label: (m) => m.heading({ level: 4 }),
   },
   {
     id: "codeBlock",
     group: "blockType",
     tool: "codeBlock",
-    keys: ["mod", "alt", "C"],
+    keys: SHORTCUT_KEYS.codeBlock,
     label: (m) => m.codeBlock,
   },
 
@@ -215,35 +306,35 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "bulletList",
     group: "lists",
     tool: "bulletList",
-    keys: ["mod", "shift", "8"],
+    keys: SHORTCUT_KEYS.bulletList,
     label: (m) => m.bulletList,
   },
   {
     id: "orderedList",
     group: "lists",
     tool: "orderedList",
-    keys: ["mod", "shift", "7"],
+    keys: SHORTCUT_KEYS.orderedList,
     label: (m) => m.orderedList,
   },
   {
     id: "taskList",
     group: "lists",
     tool: "taskList",
-    keys: ["mod", "shift", "9"],
+    keys: SHORTCUT_KEYS.taskList,
     label: (m) => m.taskList,
   },
   {
     id: "indentListItem",
     group: "lists",
     tool: LIST_TOOLS,
-    keys: ["mod", "]"],
+    keys: SHORTCUT_KEYS.indentListItem,
     label: (m) => m.indentListItem,
   },
   {
     id: "outdentListItem",
     group: "lists",
     tool: LIST_TOOLS,
-    keys: ["mod", "["],
+    keys: SHORTCUT_KEYS.outdentListItem,
     label: (m) => m.outdentListItem,
   },
 
@@ -251,21 +342,21 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "alignLeft",
     group: "align",
     tool: "align",
-    keys: ["mod", "shift", "L"],
+    keys: SHORTCUT_KEYS.alignLeft,
     label: (m) => m.alignLeft,
   },
   {
     id: "alignCenter",
     group: "align",
     tool: "align",
-    keys: ["mod", "shift", "E"],
+    keys: SHORTCUT_KEYS.alignCenter,
     label: (m) => m.alignCenter,
   },
   {
     id: "alignRight",
     group: "align",
     tool: "align",
-    keys: ["mod", "shift", "R"],
+    keys: SHORTCUT_KEYS.alignRight,
     label: (m) => m.alignRight,
   },
 
@@ -273,12 +364,10 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "focusToolbar",
     group: "toolbar",
     tool: null,
-    keys: ["alt", "F10"],
+    keys: SHORTCUT_KEYS.focusToolbar,
     label: (m) => m.focusToolbar,
   },
 ];
-
-const BY_ID = new Map(SHORTCUTS.map((command) => [command.id, command]));
 
 /**
  * Сочетание команды по id или `undefined`, если у команды его нет. Панель
@@ -286,7 +375,7 @@ const BY_ID = new Map(SHORTCUTS.map((command) => [command.id, command]));
  * меню цвета сочетаний нет.
  */
 export function findShortcutKeys(id: string): readonly string[] | undefined {
-  return BY_ID.get(id)?.keys;
+  return Object.hasOwn(SHORTCUT_KEYS, id) ? SHORTCUT_KEYS[id as ShortcutId] : undefined;
 }
 
 /**
@@ -319,20 +408,12 @@ export interface ShortcutSection {
 }
 
 /**
- * Место строки переехавшего Инструмента в своей группе: id строки → id строки
- * из `SHORTCUTS`, перед которой она встаёт. Остальные переехавшие строки идут
- * в конец группы. Порядок справочника — не поле описания: место на поверхности
- * держит кит, как `INSERT_ORDER` у Меню вставки.
- */
-const MOVED_BEFORE: Readonly<Record<string, string>> = { blockquote: "codeBlock" };
-
-/**
  * Команды включённых инструментов по группам; пустые группы не возвращаются.
  *
  * Проекция списка описаний: строки не переехавших Инструментов — из
  * `SHORTCUTS`, переехавших — из их описаний (`toolDescriptor.ts`): клавиши
- * Части для движка — поле `shortcuts`, сочетания кнопок — поле кнопки. Строка
- * встаёт на место из `MOVED_BEFORE` или следом за строками своей группы кита;
+ * Части для движка — поле `shortcuts`, сочетания кнопок — поле кнопки. Место
+ * строки в группе — `SHORTCUT_ORDER`, а строки вне него — следом в порядке набора;
  * кнопка без группы кита — в группу своего Инструмента после групп кита, в
  * порядке списка (ADR-0058, п. 6.8).
  */
@@ -343,23 +424,16 @@ export function shortcutGroupsFor(
 ): readonly ShortcutSection[] {
   const described = describedTools(tools);
   const moved = described.flatMap((descriptor) => descriptor.shortcuts ?? []);
-  const anchored = (row: ShortcutCommand) =>
-    SHORTCUTS.some((command) => command.id === MOVED_BEFORE[row.id]);
-  const commands = [
-    ...SHORTCUTS.flatMap((command) => [
-      ...moved.filter((row) => MOVED_BEFORE[row.id] === command.id),
-      command,
-    ]),
-    ...moved.filter((row) => !anchored(row)),
-  ].filter((command) => enabled(command, tools));
+  const commands = [...SHORTCUTS, ...moved].filter((command) => enabled(command, tools));
   const ownGroups: ShortcutSection[] = [];
   for (const descriptor of described) {
     const own: ShortcutRow[] = [];
     for (const button of descriptor.buttons ?? []) {
-      if (!button.shortcut) continue;
+      const keys = button.shortcut ?? button.keys;
+      if (!keys) continue;
       const row: ShortcutRow = {
         id: button.id,
-        keys: button.shortcut,
+        keys,
         label: (messages) => toolLabel(button.label, { locale, messages }),
       };
       // Набор уже отфильтрован: кнопка есть только у включённого Инструмента.
@@ -380,10 +454,17 @@ export function shortcutGroupsFor(
     }
     if (own.length > 0) ownGroups.push({ group: descriptor.name, commands: own });
   }
+  // Сортировка устойчивая: строки вне `SHORTCUT_ORDER` сохраняют порядок набора.
+  const rank = (id: string) => {
+    const index = SHORTCUT_ORDER.indexOf(id);
+    return index === -1 ? SHORTCUT_ORDER.length : index;
+  };
   return [
     ...SHORTCUT_GROUPS.map((group) => ({
       group,
-      commands: commands.filter((command) => command.group === group),
+      commands: commands
+        .filter((command) => command.group === group)
+        .sort((left, right) => rank(left.id) - rank(right.id)),
     })),
     ...ownGroups,
   ].filter((entry) => entry.commands.length > 0);

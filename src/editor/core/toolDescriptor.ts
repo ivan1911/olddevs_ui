@@ -1,4 +1,5 @@
 import type { Editor, Extensions } from "@tiptap/core";
+import type { StarterKitOptions } from "@tiptap/starter-kit";
 import type { ComponentType, ReactNode } from "react";
 import type { UiMessages } from "../../i18n/messages.js";
 import type { IconProps } from "../../icons.js";
@@ -59,6 +60,14 @@ export interface ToolDescriptor {
    * Второй аргумент — Опции этого Редактора (`options`), если они есть.
    */
   engine?: (context: ToolEngineContext, options?: object) => Extensions;
+  /**
+   * Доля StarterKit: ключи `StarterKit.configure`, которые включают Блоки и
+   * Метки Инструмента (`bold: {}`, `heading: { levels }`). Привилегия кита.
+   * Доли всех описаний сливаются в ОДИН `StarterKit` (`extensions.ts`): так
+   * порядок Меток в сохранённом HTML и список пакетов движка остаются теми же,
+   * что при StarterKit целиком. Ключ, которого нет ни в одной доле, выключен.
+   */
+  starterKit?: (context: ToolEngineContext) => Partial<StarterKitOptions>;
   /**
    * Загрузчик Части для движка (`toolLoader.ts`): движок создаётся после
    * загрузчиков всех описаний списка, и `engine` читает отданное `loaded`.
@@ -189,8 +198,16 @@ export interface ToolBridge {
 /** Символ-триггер Инструмента в списке описаний: публичная запись и имя владельца для сообщений. */
 export type TriggerRecord = CustomTrigger & { tool: string };
 
-/** Что Часть для движка встроенного получает от `RichTextEditor`. */
-export type ToolEngineContext = Omit<EditorExtensionOptions, "tools">;
+/**
+ * Что Часть для движка встроенного получает от `RichTextEditor`: мосты и —
+ * вместо всего набора — вопрос `has`. Связи между Инструментами (уровни
+ * заголовка при `heading1`, Обёртка в колонке Раскладки, очистка формата)
+ * спрашивают его, а не список описаний.
+ */
+export type ToolEngineContext = Omit<EditorExtensionOptions, "tools"> & {
+  /** Включён ли Инструмент кита в этом Редакторе. */
+  has: (tool: Tool) => boolean;
+};
 
 type EditorMessages = UiMessages["editor"];
 
@@ -277,6 +294,14 @@ export type ToolButton = ToolButtonFields &
  * своей кнопке не дают.
  */
 export type KitToolButton = ToolButton & {
+  /**
+   * Сочетание, которое вешает не кит, а Часть для движка (`undoRedo` у
+   * StarterKit, `Mod-B` у Метки): только подпись — подсказка,
+   * `aria-keyshortcuts` и строка справочника. Взаимоисключимо с `shortcut`:
+   * та и вешает клавишу, и подписывает её, и две привязки одной клавиши
+   * спорили бы.
+   */
+  keys?: readonly string[];
   /**
    * Группа справочника сочетаний. Нет — строка встаёт в группу Инструмента без
    * заголовка после групп кита, как у своего Инструмента.
