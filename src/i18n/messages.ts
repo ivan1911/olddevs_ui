@@ -1032,8 +1032,8 @@ export interface UiMessages {
     sourceField: string;
     /**
      * Показ невидимых символов (пробелов, мягких переносов и концов абзацев):
-     * `invisibleCharacters` — имя и подсказка кнопки-переключателя Панели. О том,
-     * показаны ли символы, говорит `aria-pressed`, а не слова имени.
+     * `invisibleCharacters` — имя пункта-флажка меню «…» фиксированной Панели. О том,
+     * показаны ли символы, говорит `aria-checked`, а не слова имени.
      */
     invisibleCharacters: string;
     /**

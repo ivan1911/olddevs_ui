@@ -4,6 +4,7 @@ import { InvisibleCharacters } from "@tiptap/extension-invisible-characters";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import type { InvisibleCharactersToolCommands } from "../../core/toolCommands.js";
 import type { InvisibleCharactersToolOptions } from "../../core/toolOptions.js";
+import { toggleInvisibleCharacters } from "./invisibleCharactersVisible.js";
 
 /**
  * Умолчание Опции: невидимые символы скрыты. У расширения Tiptap по умолчанию
@@ -19,10 +20,12 @@ export const INVISIBLE_CHARACTERS_DEFAULTS: InvisibleCharactersToolOptions = { v
  * `getHTML()`, Markdown и `RichTextView` их не видят, Схема, санитайзер и
  * Markdown не меняются.
  *
- * Кнопка «Невидимые символы» — виджет фиксированной Панели у правого края
- * (`EditorToolbar.tsx`), как «Поиск», а не запись `buttons`: записи `buttons`
- * общие у фиксированной и плавающей Панели, а переключатель режима показа
- * Документа над выделением ни к чему. Сочетания и пункта Меню вставки у Инструмента нет.
+ * «Невидимые символы» — пункт-флажок меню «…» фиксированной Панели
+ * (`FormatMenus.tsx`), а не кнопка ряда и не запись `buttons`: отдельная кнопка
+ * переносила `full` во вторую строку в колонке 640 px (решение владельца), а
+ * записи `buttons` общие у фиксированной и плавающей Панели, где переключатель
+ * режима показа Документа над выделением ни к чему. Сочетания и пункта Меню
+ * вставки у Инструмента нет.
  */
 export const INVISIBLE_CHARACTERS_TOOL: ToolDescriptor = {
   name: "invisibleCharacters",
@@ -41,9 +44,9 @@ export const INVISIBLE_CHARACTERS_TOOL: ToolDescriptor = {
   ],
   /*
     `editor.commands` читается при каждом вызове, как у `search`. В HTML-режиме
-    Документа на экране нет, и переключать нечего: `false`, как у кнопки.
+    Документа на экране нет, и переключать нечего: `false` (меню «…» в этом режиме заперто).
   */
   commands: ({ editor, bridge }): InvisibleCharactersToolCommands => ({
-    toggle: () => !bridge.sourceOpen() && editor.commands.toggleInvisibleCharacters(),
+    toggle: () => !bridge.sourceOpen() && toggleInvisibleCharacters(editor),
   }),
 };
