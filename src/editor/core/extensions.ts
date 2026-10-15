@@ -199,14 +199,9 @@ const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extens
 };
 
 /** Доли StarterKit не переехавших Инструментов: включённый — умолчание StarterKit. */
-function legacyStarterKit(on: (tool: Tool) => boolean, context: ToolEngineContext) {
+function legacyStarterKit(on: (tool: Tool) => boolean) {
   const keep = (tool: Tool) => (on(tool) ? { [STARTER_KIT_KEY[tool] ?? tool]: undefined } : {});
   return {
-    // H1 — только с `heading1`; без него `#` и `<h1>` остаются
-    // прежними: правило ввода и разбор HTML строятся по этим уровням.
-    ...(on("heading") && {
-      heading: { levels: context.has("heading1") ? [1, 2, 3, 4] : [2, 3, 4] },
-    }),
     ...keep("bold"),
     ...keep("italic"),
     ...keep("underline"),
@@ -296,7 +291,7 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
   const extensions: Extensions = [
     StarterKit.configure({
       ...STARTER_KIT_OFF,
-      ...legacyStarterKit(on, context),
+      ...legacyStarterKit(on),
       // Доли описаний — одним StarterKit: порядок его Меток не меняется.
       ...Object.assign({}, ...described.map((descriptor) => descriptor.starterKit?.(context))),
       // С Раскладкой или Обёрткой Документ — свой (`document.ts`): они не в

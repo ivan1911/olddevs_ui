@@ -9,6 +9,7 @@ import { INSERT_MENU_TOOL } from "../core/insertMenuTool.js";
 import { SHORTCUT_KEYS, type ShortcutCommand } from "../core/shortcuts.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
+import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
 import { LAYOUT_TOOL } from "./layout/layoutTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
@@ -90,6 +91,8 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
     // Клавишу вешает расширение Tiptap; строка справочника — подпись к ней.
     shortcuts: [BLOCKQUOTE_SHORTCUT],
   },
+  heading: HEADING_TOOL,
+  heading1: HEADING1_TOOL,
   link: LINK_TOOL,
   image: IMAGE_TOOL,
   emoji: EMOJI_TOOL,

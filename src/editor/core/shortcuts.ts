@@ -248,44 +248,6 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     label: (m) => m.subscript,
   },
 
-  // Подпись — как у пункта «¶» («Текст»), а не «Абзац» Меню вставки: справочник
-  // называет команду тем словом, которым её выбирают на Панели.
-  {
-    id: "paragraph",
-    group: "blockType",
-    tool: "heading",
-    keys: SHORTCUT_KEYS.paragraph,
-    label: (m) => m.textBlock,
-  },
-  {
-    id: "h1",
-    group: "blockType",
-    tool: "heading1",
-    requires: "heading",
-    keys: SHORTCUT_KEYS.h1,
-    label: (m) => m.heading({ level: 1 }),
-  },
-  {
-    id: "h2",
-    group: "blockType",
-    tool: "heading",
-    keys: SHORTCUT_KEYS.h2,
-    label: (m) => m.heading({ level: 2 }),
-  },
-  {
-    id: "h3",
-    group: "blockType",
-    tool: "heading",
-    keys: SHORTCUT_KEYS.h3,
-    label: (m) => m.heading({ level: 3 }),
-  },
-  {
-    id: "h4",
-    group: "blockType",
-    tool: "heading",
-    keys: SHORTCUT_KEYS.h4,
-    label: (m) => m.heading({ level: 4 }),
-  },
   {
     id: "codeBlock",
     group: "blockType",
