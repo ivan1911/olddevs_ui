@@ -4,6 +4,7 @@ import {
   useRichTextToolState,
   type RichTextEditorHandle,
   type RichTextToolState,
+  type InvisibleCharactersToolState,
   type SearchToolState,
   type TocToolState,
 } from "../src/editor/index.js";
@@ -36,6 +37,9 @@ test("the type of the snapshot comes from the name of the tool", () => {
     expectTypeOf(search?.total).toEqualTypeOf<number | undefined>();
     expectTypeOf(toc?.headings[0]?.level).toEqualTypeOf<1 | 2 | 3 | 4 | undefined>();
     expectTypeOf<RichTextToolState<"search">>().toEqualTypeOf<SearchToolState>();
+    const invisible = useRichTextToolState(ref, "invisibleCharacters");
+    expectTypeOf(invisible).toEqualTypeOf<InvisibleCharactersToolState | null>();
+    expectTypeOf(invisible?.visible).toEqualTypeOf<boolean | undefined>();
   }
   expect(Screen).toBeTypeOf("function");
 });

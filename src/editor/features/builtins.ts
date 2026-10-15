@@ -14,6 +14,7 @@ import { EMOJI_TOOL } from "./emoji/emojiTool.js";
 import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
 import { HISTORY_TOOL } from "./history/historyTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
+import { INVISIBLE_CHARACTERS_TOOL } from "./invisibleCharacters/invisibleCharactersTool.js";
 import { LAYOUT_TOOL } from "./layout/layoutTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
 import { BULLET_LIST_TOOL, ORDERED_LIST_TOOL, TASK_LIST_TOOL } from "./lists/listTools.js";
@@ -70,6 +71,7 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
  */
 export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   search: SEARCH_TOOL,
+  invisibleCharacters: INVISIBLE_CHARACTERS_TOOL,
   // Оглавление несёт только Опции: полоса и список рисуются в `RichTextEditor`.
   toc: TOC_TOOL,
   layout: LAYOUT_TOOL,

@@ -232,6 +232,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "typography",
   "source",
   "search",
+  "invisibleCharacters",
   "toc",
 ];
 

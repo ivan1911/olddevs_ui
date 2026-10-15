@@ -6,6 +6,7 @@ import { toolSignals, watchHandleEditor } from "../core/handleWatchers.js";
 import { toolOptions } from "../core/toolDescriptor.js";
 import type { RichTextTools } from "../core/toolOptions.js";
 import type { RichTextEditorHandle } from "../RichTextEditor.js";
+import { invisibleCharactersSnapshot } from "../features/invisibleCharacters/invisibleCharactersSnapshot.js";
 import { searchSnapshot } from "../features/search/searchSnapshot.js";
 import { tocSnapshot } from "../features/toc/tocSnapshot.js";
 
@@ -36,6 +37,13 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
       const options = tools && toolOptions(tools, "toc");
       return options && tocSnapshot(editor, options, tocAt);
     },
+  ],
+  [
+    "invisibleCharacters",
+    (editor, ref) =>
+      toolSignals(ref).tools?.has("invisibleCharacters")
+        ? invisibleCharactersSnapshot(editor)
+        : null,
   ],
 ]);
 
@@ -70,7 +78,8 @@ function sameValue(a: unknown, b: unknown): boolean {
  * Состояние встроенного Инструмента для своего экрана: «3 из 12» в Строке
  * статуса из Поиска, внешняя навигация из заголовков Оглавления. Имя —
  * Инструмент из набора `tools`, а тип снимка выводится из карты
- * `RichTextTools`: `search` отдаёт `SearchToolState`, `toc` — `TocToolState`.
+ * `RichTextTools`: `search` отдаёт `SearchToolState`, `toc` — `TocToolState`,
+ * `invisibleCharacters` — `InvisibleCharactersToolState` (`{ visible }`).
  *
  * ПЕРЕРИСОВКА — ТОЛЬКО ПРИ СМЕНЕ СНИМКА. Снимок пересчитывается на каждую
  * транзакцию движка и на сигналы кита, которых в движке нет: открытие и закрытие

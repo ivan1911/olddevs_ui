@@ -49,14 +49,24 @@ export type {
 export type {
   ConfiguredTool,
   DetailsToolOptions,
+  InvisibleCharactersToolOptions,
   RichTextTools,
   SearchToolOptions,
   TocLevel,
   TocToolOptions,
   TypographyToolOptions,
 } from "./core/toolOptions.js";
-export type { SearchToolCommands, TocToolCommands } from "./core/toolCommands.js";
-export type { SearchToolState, TocToolHeading, TocToolState } from "./core/toolState.js";
+export type {
+  InvisibleCharactersToolCommands,
+  SearchToolCommands,
+  TocToolCommands,
+} from "./core/toolCommands.js";
+export type {
+  InvisibleCharactersToolState,
+  SearchToolState,
+  TocToolHeading,
+  TocToolState,
+} from "./core/toolState.js";
 export { markRange } from "./core/customTool.js";
 export type {
   TextCardRange,

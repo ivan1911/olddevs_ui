@@ -21,11 +21,14 @@ exports:
     TocToolOptions,
     DetailsToolOptions,
     TypographyToolOptions,
+    InvisibleCharactersToolOptions,
     TocLevel,
     SearchToolCommands,
     TocToolCommands,
+    InvisibleCharactersToolCommands,
     SearchToolState,
     TocToolState,
+    InvisibleCharactersToolState,
     TocToolHeading,
     Tool,
     ToolName,
@@ -75,11 +78,12 @@ sourceHash: bba3a0af1f9c
 - **Code block.** It has a header (language on the left, "Copy" on the right), a language (Python, TypeScript, JavaScript, Go, HTML, JSON, YAML, Markdown or plain text) and lowlight highlighting. Only `class="language-…"` is written into the Document, and for `RichTextView` the server helper from `@olddevs/ui/editor/highlight` highlights the Blocks.
 - **Source mode.** The "HTML" button of the fixed Toolbar (the `source` Tool) swaps the Document for a field with its source HTML; leaving the mode, `blur`, form submission and `getHTML()` apply the edit through the Schema, like an incoming `value`.
 - **Feature set.** `preset="full" | "basic"` or an exact `tools` list; a disabled Tool removes both its button and its markup from the Schema.
-- **Tool options, state and commands.** The built-in `search`, `toc`, `details` and `typography` Tools have options: a `tool("toc", { offsetVar: "--header-h", levels: [2, 3] })` entry sits in `tools` next to the names, switches the Tool on and configures it (for Search, the starting flags `matchCase`, `wholeWord` and `regex`; for the Table of contents, `offsetVar`, `levels` and `listWidth`; for the collapsible Block, `persist`; for Typography, the `quotes` set and the replacement rules). The `useRichTextToolState(ref, "search")` hook reads the state: for Search, whether the find panel is open, the query, the number of matches and the number of the current one; for the Table of contents, the headings and the current section. The hook returns `null` before mount, on the server, after the Editor unmounts and when the Tool is not in the set. Commands are called through the Handle: `ref.current?.tool("search")?.open()`, `ref.current?.tool("toc")?.jumpTo(2)`; each returns a `boolean`. Options are read once, when the engine is created. A custom Tool with the same three parts is described with `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
+- **Tool options, state and commands.** The built-in `search`, `toc`, `details`, `typography` and `invisibleCharacters` Tools have options: a `tool("toc", { offsetVar: "--header-h", levels: [2, 3] })` entry sits in `tools` next to the names, switches the Tool on and configures it (for Search, the starting flags `matchCase`, `wholeWord` and `regex`; for the Table of contents, `offsetVar`, `levels` and `listWidth`; for the collapsible Block, `persist`; for Typography, the `quotes` set and the replacement rules; for invisible characters, `visible`). The `useRichTextToolState(ref, "search")` hook reads the state: for Search, whether the find panel is open, the query, the number of matches and the number of the current one; for the Table of contents, the headings and the current section; for invisible characters, `visible`. The hook returns `null` before mount, on the server, after the Editor unmounts and when the Tool is not in the set. Commands are called through the Handle: `ref.current?.tool("search")?.open()`, `ref.current?.tool("toc")?.jumpTo(2)`, `ref.current?.tool("invisibleCharacters")?.toggle()`; each returns a `boolean`. Options are read once, when the engine is created. A custom Tool with the same three parts is described with `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
 - **Handle (`ref`).** The screen drives the field through `ref`: `insertHTML`, `insertText`, `getText`, `getSelectedText`, `isEmpty`, `focus(position?)`, `blur`, `undo`, `redo`, `tool(name)`; `getJSON()`/`setJSON()` export and load the Document as a lossless JSON envelope (see the "JSON" section), and `defaultValue` accepts the envelope too. The screen builds its own toolbar with the `useRichTextEditorState(ref, selector)` hook. `openSearch` is deprecated (removed in 5.0): use `tool("search")?.open()` instead. Before Readiness (on the server, before mount, while Tool Loaders are running) the methods are silent: see the "Handle (`ref`) and a custom toolbar outside the field" section.
 - **Events.** The screen learns about field events through the `onReady()`, `onFocus()` and `onBlur()` callbacks (see the "Events" section).
 - **Collapsible block.** The `details` Tool (in `full`) is a Block made of a title and content: it is inserted with the "Collapsible block" item of the Slash menu, its HTML is the `details` and `summary` tags, and in the View it opens the browser's native way, without the engine. The `tool("details", { persist: true })` option writes the Block's open state into the Document (`open`); by default it does not. In Markdown the Block is raw HTML `<details><summary>`.
 - **Typography.** The `typography` Tool (not in `full` or `basic`, switched on explicitly) is replacements while typing, on the Typography extension from Tiptap: `"` becomes guillemets under the Russian catalog and curly quotes under the English one (nested low-9 quotes too), `--` becomes a dash, `...` an ellipsis, plus arrows, ©, ½, ± and the other Tiptap rules. Input rules only: the Schema, the sanitizer and Markdown do not change, and `value` gets plain characters. It does not fire in code, and `Backspace` right after a replacement undoes it. The options are `quotes` and one per rule (`false` or a string).
+- **Invisible characters.** The `invisibleCharacters` Tool (in `full`) draws spaces, soft line breaks and paragraph ends over the Document; the "Invisible characters" button sits at the right edge of the fixed Toolbar, before "Find". It is display only: `value`, `onChange`, `getHTML()` and Markdown do not see it. The characters stay hidden until the author presses the button, and the starting display is set by the `tool("invisibleCharacters", { visible: true })` option; the state is `{ visible }`, the command is `toggle()`.
 - **Skeleton and Loader.** Until Readiness the field shows a Skeleton: the frame and the Document as static HTML without input, with no height jump. The Skeleton's Document is `value` cleaned by the Schema, and only in the browser; on the server the Skeleton is a frame without a Document. The Extensions of a custom Tool can be passed as a Loader (`engine: () => import(…)`); if it fails, the result is a field error with "Retry".
 - **Status bar and Field notice.** Below the field, inside the frame, are the Status bar (`status`: the screen's React node at the start, the kit's counter at the end, no `role`) and the Field notice: the engine command `showNotice({ tone: "status" | "error", text })` / `showNotice(null)`. `status` is only announced, `error` is shown as a `role="alert"` line until the next edit; image messages go through the same channel.
 - **Buttons of a custom Tool.** A custom Tool (`CustomTool` in `tools`) can carry buttons in the `buttons` field: a label (a string or a function that receives `{ locale }`), an icon, `can`, `isActive`, `isVisible`, `selectionMenu`, `shortcut` and exactly one of `run` and `popover`. The kit renders the button in one group before "Undo" and "Redo", binds the shortcut and shows it in the tooltip, in `aria-keyshortcuts` and in the Keyboard shortcuts popover.
@@ -104,6 +108,7 @@ import { RichTextEditor } from "@olddevs/ui/editor";
 - A component "for the future" (ADR-0048): at release there was no requesting screen, so the API is modeled on comparable products — Imperavi Redactor 5, Tiptap Simple Editor, minimal-tiptap, Notion. Your screen is the first test of this API. The engine decision is in ADR-0050.
 - The collapsible Block `details` is "for the future" too (ADR-0048): at release there was no requesting screen, and the API follows the Details extension from Tiptap; the first screen is entitled to ask for a different API.
 - Typography `typography` is "for the future" too (ADR-0048): at release there was no requesting screen, and the API follows the Typography extension from Tiptap; the first screen is entitled to ask for a different API.
+- The invisible characters Tool `invisibleCharacters` is "for the future" too (ADR-0048): at release there was no requesting screen, and the API follows the Invisible Characters extension from Tiptap; the first screen is entitled to ask for a different API.
 
 ## When not to use
 
@@ -163,9 +168,9 @@ The fixed Toolbar sits above the field and **sticks on scroll** below the app he
   | Insert      | link · image · Table ▾ · emoji                                                     |
   | History     | undo · redo                                                                        |
 
-  At the right edge are Find (the `search` Tool) and the Keyboard shortcuts popover. A button or menu without its Tool enabled is not rendered, and a group without buttons disappears together with its divider: in `basic` the row is bold, italic, "…" | Lists ▾ | link | undo, redo | find and the Keyboard shortcuts popover at the right edge (a "¶" with only "Text" is not rendered). The floating Toolbar (`toolbar="floating"`) has the same contents and order, only without Find and the Keyboard shortcuts popover; the Bubble menu (`toolbar="bubble"`) has its own short set — no alignment, with its own "Lists ▾" and "Color" (below).
+  At the right edge are "Invisible characters" (the `invisibleCharacters` Tool), Find (the `search` Tool) and the Keyboard shortcuts popover. A button or menu without its Tool enabled is not rendered, and a group without buttons disappears together with its divider: in `basic` the row is bold, italic, "…" | Lists ▾ | link | undo, redo | find and the Keyboard shortcuts popover at the right edge (a "¶" with only "Text" is not rendered). The floating Toolbar (`toolbar="floating"`) has the same contents and order, only without Invisible characters, Find and the Keyboard shortcuts popover; the Bubble menu (`toolbar="bubble"`) has its own short set — no alignment, with its own "Lists ▾" and "Color" (below).
 
-- There are no separate buttons on the Toolbar for alignment, lists, quote, horizontal rule and code block: alignment and lists are menus, quote is a checkbox in "…", the rule is a Slash menu item ("+" and `/`), the code block is an item in "…" (they are used rarely). When the Toolbar is narrower than its content it wraps onto the next row instead of running past the edge — **by whole groups**: "Undo · Redo" never split across rows, the divider sits at the end of a group, and a wrapped row starts with a button. The full row in a 640px column takes two rows: search and the Keyboard shortcuts popover go to the second one, to the right edge.
+- There are no separate buttons on the Toolbar for alignment, lists, quote, horizontal rule and code block: alignment and lists are menus, quote is a checkbox in "…", the rule is a Slash menu item ("+" and `/`), the code block is an item in "…" (they are used rarely). When the Toolbar is narrower than its content it wraps onto the next row instead of running past the edge — **by whole groups**: "Undo · Redo" never split across rows, the divider sits at the end of a group, and a wrapped row starts with a button. The full row in a 640px column takes two rows: "Invisible characters", search and the Keyboard shortcuts popover go to the second one, to the right edge.
 
 ### The "¶" menu — line type
 
@@ -337,54 +342,55 @@ Presets are also exported as arrays of names — `RICH_TEXT_PRESETS.full` and `R
 
 **A disabled Tool removes both the button and the Schema extension.** Its Block or Mark cannot be created with a keyboard shortcut, a Markdown shortcut or a paste, and from `value` they arrive without Block markup, and the text stays.
 
-| `Tool`            | Button                                               | Markup                                                | Shortcut                                                 | Markdown while typing  | `basic` |
-| ----------------- | ---------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- | ---------------------- | ------- |
-| `heading`         | "¶": Heading 2–4                                     | `h2`, `h3`, `h4`                                      | `Ctrl/⌘+Alt+2…4`                                         | `## `, `### `, `#### ` | —       |
-| `heading1`        | "¶": adds Heading 1                                  | `h1`                                                  | `Ctrl/⌘+Alt+1`                                           | `# `                   | —       |
-| `history`         | Undo, Redo                                           | —                                                     | `Ctrl/⌘+Z`, `+Shift+Z`                                   | —                      | yes     |
-| `bold`            | Bold                                                 | `strong`                                              | `Ctrl/⌘+B`                                               | `**text**`             | yes     |
-| `italic`          | Italic                                               | `em`                                                  | `Ctrl/⌘+I`                                               | `*text*`               | yes     |
-| `underline`       | "…": Underline                                       | `u`                                                   | `Ctrl/⌘+U`                                               | —                      | —       |
-| `strike`          | Strikethrough                                        | `s`                                                   | `Ctrl/⌘+Shift+S`                                         | `~~text~~`             | yes     |
-| `code`            | "…": Inline code                                     | `code`                                                | `Ctrl/⌘+E`                                               | `` `text` ``           | yes     |
-| `superscript`     | "…": Superscript                                     | `sup`                                                 | `Ctrl/⌘+.`                                               | —                      | —       |
-| `subscript`       | "…": Subscript                                       | `sub`                                                 | `Ctrl/⌘+,`                                               | —                      | —       |
-| `clearFormatting` | "…": Clear formatting                                | — (removes Marks)                                     | `Ctrl/⌘+\`                                               | —                      | —       |
-| `link`            | Link (address popover)                               | `a[href]`                                             | `Ctrl/⌘+K`                                               | `[text](url)` on paste | yes     |
-| `color`           | Color ▾ (Bubble menu): "Text color"                  | `span[data-color]`, `span[style]`                     | —                                                        | —                      | —       |
-| `highlight`       | Highlight ▾ (Toolbar), "Color ▾"                     | `mark[data-color]`, `mark[style]`                     | —                                                        | —                      | —       |
-| `align`           | Alignment ▾ (menu)                                   | `p`, `h2`–`h4` with `data-align`                      | `Ctrl/⌘+Shift+L`, `+E`, `+R`                             | —                      | —       |
-| `bulletList`      | Lists ▾: Bulleted list                               | `ul`, `li`                                            | `Ctrl/⌘+Shift+8`                                         | `- ` or `* `           | yes     |
-| `orderedList`     | Lists ▾: Numbered list                               | `ol`, `li`                                            | `Ctrl/⌘+Shift+7`                                         | `1. `                  | yes     |
-| `taskList`        | Lists ▾: Checklist                                   | `ul[data-type=taskList]` and items                    | `Ctrl/⌘+Shift+9`                                         | `[ ] ` or `[x] `       | —       |
-| `blockquote`      | "…": Quote                                           | `blockquote`                                          | `Ctrl/⌘+Shift+B`                                         | `> `                   | yes     |
-| `codeBlock`       | "…": Code block                                      | `pre`, `code class="language-*"`                      | `Ctrl/⌘+Alt+C`                                           | ` ``` `                | —       |
-| `horizontalRule`  | "+": Divider                                         | `hr`                                                  | —                                                        | `---`                  | —       |
-| `table`           | Table ▾ (menu)                                       | `table`, `tbody`, `tr`, `th`, `td`                    | `Tab`, `Shift+Tab`, `Alt+↓` in a table                   | —                      | —       |
-| `image`           | Image (address popover)                              | `figure`, `img`, `figcaption`                         | —                                                        | `![alt](url)` on paste | —       |
-| `emoji`           | Emoji (popover with a grid)                          | — (plain text)                                        | —                                                        | —                      | —       |
-| `source`          | HTML (mode toggle)                                   | — (edits the Document's HTML)                         | —                                                        | —                      | —       |
-| `search`          | Find (find and replace panel)                        | — (searches the Document)                             | `Ctrl/⌘+F`, `Ctrl/⌘+Alt+F`                               | —                      | yes     |
-| `layout`          | "+": Layout                                          | `div` with `data-block` and `data-layout`             | `Tab`, `Shift+Tab`, arrow keys at the column edge        | —                      | —       |
-| `wrapper`         | "+": Wrapper                                         | `div[data-block=wrapper]`                             | `Enter` in an empty last paragraph — exit                | —                      | —       |
-| `details`         | "+": Collapsible block                               | `details`, `summary`, `div[data-type=detailsContent]` | `Enter` in the title and at the empty end of the content | —                      | —       |
-| `insertMenu`      | "+" Slash menu                                       | — (Blocks of other Tools)                             | —                                                        | `/`                    | —       |
-| `toc`             | Table of contents in the left gutter (not in `full`) | — (reads the headings)                                | —                                                        | —                      | —       |
-| `typography`      | — (replacements while typing; not in `full`)         | — (plain characters)                                  | `Backspace` right after a replacement — undo             | `--`, `...`, `"`, `->` | —       |
+| `Tool`                | Button                                               | Markup                                                | Shortcut                                                 | Markdown while typing  | `basic` |
+| --------------------- | ---------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- | ---------------------- | ------- |
+| `heading`             | "¶": Heading 2–4                                     | `h2`, `h3`, `h4`                                      | `Ctrl/⌘+Alt+2…4`                                         | `## `, `### `, `#### ` | —       |
+| `heading1`            | "¶": adds Heading 1                                  | `h1`                                                  | `Ctrl/⌘+Alt+1`                                           | `# `                   | —       |
+| `history`             | Undo, Redo                                           | —                                                     | `Ctrl/⌘+Z`, `+Shift+Z`                                   | —                      | yes     |
+| `bold`                | Bold                                                 | `strong`                                              | `Ctrl/⌘+B`                                               | `**text**`             | yes     |
+| `italic`              | Italic                                               | `em`                                                  | `Ctrl/⌘+I`                                               | `*text*`               | yes     |
+| `underline`           | "…": Underline                                       | `u`                                                   | `Ctrl/⌘+U`                                               | —                      | —       |
+| `strike`              | Strikethrough                                        | `s`                                                   | `Ctrl/⌘+Shift+S`                                         | `~~text~~`             | yes     |
+| `code`                | "…": Inline code                                     | `code`                                                | `Ctrl/⌘+E`                                               | `` `text` ``           | yes     |
+| `superscript`         | "…": Superscript                                     | `sup`                                                 | `Ctrl/⌘+.`                                               | —                      | —       |
+| `subscript`           | "…": Subscript                                       | `sub`                                                 | `Ctrl/⌘+,`                                               | —                      | —       |
+| `clearFormatting`     | "…": Clear formatting                                | — (removes Marks)                                     | `Ctrl/⌘+\`                                               | —                      | —       |
+| `link`                | Link (address popover)                               | `a[href]`                                             | `Ctrl/⌘+K`                                               | `[text](url)` on paste | yes     |
+| `color`               | Color ▾ (Bubble menu): "Text color"                  | `span[data-color]`, `span[style]`                     | —                                                        | —                      | —       |
+| `highlight`           | Highlight ▾ (Toolbar), "Color ▾"                     | `mark[data-color]`, `mark[style]`                     | —                                                        | —                      | —       |
+| `align`               | Alignment ▾ (menu)                                   | `p`, `h2`–`h4` with `data-align`                      | `Ctrl/⌘+Shift+L`, `+E`, `+R`                             | —                      | —       |
+| `bulletList`          | Lists ▾: Bulleted list                               | `ul`, `li`                                            | `Ctrl/⌘+Shift+8`                                         | `- ` or `* `           | yes     |
+| `orderedList`         | Lists ▾: Numbered list                               | `ol`, `li`                                            | `Ctrl/⌘+Shift+7`                                         | `1. `                  | yes     |
+| `taskList`            | Lists ▾: Checklist                                   | `ul[data-type=taskList]` and items                    | `Ctrl/⌘+Shift+9`                                         | `[ ] ` or `[x] `       | —       |
+| `blockquote`          | "…": Quote                                           | `blockquote`                                          | `Ctrl/⌘+Shift+B`                                         | `> `                   | yes     |
+| `codeBlock`           | "…": Code block                                      | `pre`, `code class="language-*"`                      | `Ctrl/⌘+Alt+C`                                           | ` ``` `                | —       |
+| `horizontalRule`      | "+": Divider                                         | `hr`                                                  | —                                                        | `---`                  | —       |
+| `table`               | Table ▾ (menu)                                       | `table`, `tbody`, `tr`, `th`, `td`                    | `Tab`, `Shift+Tab`, `Alt+↓` in a table                   | —                      | —       |
+| `image`               | Image (address popover)                              | `figure`, `img`, `figcaption`                         | —                                                        | `![alt](url)` on paste | —       |
+| `emoji`               | Emoji (popover with a grid)                          | — (plain text)                                        | —                                                        | —                      | —       |
+| `source`              | HTML (mode toggle)                                   | — (edits the Document's HTML)                         | —                                                        | —                      | —       |
+| `search`              | Find (find and replace panel)                        | — (searches the Document)                             | `Ctrl/⌘+F`, `Ctrl/⌘+Alt+F`                               | —                      | yes     |
+| `invisibleCharacters` | Invisible characters (toggle)                        | — (draws marks over the Document)                     | —                                                        | —                      | —       |
+| `layout`              | "+": Layout                                          | `div` with `data-block` and `data-layout`             | `Tab`, `Shift+Tab`, arrow keys at the column edge        | —                      | —       |
+| `wrapper`             | "+": Wrapper                                         | `div[data-block=wrapper]`                             | `Enter` in an empty last paragraph — exit                | —                      | —       |
+| `details`             | "+": Collapsible block                               | `details`, `summary`, `div[data-type=detailsContent]` | `Enter` in the title and at the empty end of the content | —                      | —       |
+| `insertMenu`          | "+" Slash menu                                       | — (Blocks of other Tools)                             | —                                                        | `/`                    | —       |
+| `toc`                 | Table of contents in the left gutter (not in `full`) | — (reads the headings)                                | —                                                        | —                      | —       |
+| `typography`          | — (replacements while typing; not in `full`)         | — (plain characters)                                  | `Backspace` right after a replacement — undo             | `--`, `...`, `"`, `->` | —       |
 
-A paragraph is always there; a soft line break is `Shift+Enter`. `insertMenu` and `emoji`, like `clearFormatting`, have no markup of their own: `insertMenu` provides access to other Tools' Blocks, and it is disabled where `/` is an ordinary character (paths, "and/or"); `basic` lacks it for the same reason. `emoji` inserts plain text — the Schema, the sanitizer and Markdown do not change because of it (see the "Emoji" section); `basic` lacks it: in a comment the OS's own palette is easier to reach, and a button would take up room in a short row. `source` is the Source mode (see the "Source mode" section): it has no markup of its own either, an HTML edit goes through the same Schema as `value`, and it cannot be used to get around the set of Tools; `basic` lacks it — in a comment an "HTML" button is superfluous unless the screen explicitly asks for it.
+A paragraph is always there; a soft line break is `Shift+Enter`. `insertMenu` and `emoji`, like `clearFormatting`, have no markup of their own: `insertMenu` provides access to other Tools' Blocks, and it is disabled where `/` is an ordinary character (paths, "and/or"); `basic` lacks it for the same reason. `emoji` inserts plain text — the Schema, the sanitizer and Markdown do not change because of it (see the "Emoji" section); `basic` lacks it: in a comment the OS's own palette is easier to reach, and a button would take up room in a short row. `source` is the Source mode (see the "Source mode" section): it has no markup of its own either, an HTML edit goes through the same Schema as `value`, and it cannot be used to get around the set of Tools; `basic` lacks it — in a comment an "HTML" button is superfluous unless the screen explicitly asks for it. `invisibleCharacters` (see the "Invisible characters" section) has no markup either: it draws marks as decorations over the Document, and the Schema, the sanitizer and Markdown do not change; `basic` lacks it — a comment does not need a proofreading mode.
 
 **The level-one heading is `heading1`** (an add-on to `heading`): `full` has it, `basic` does not. With it the Block levels are 1–4: `Ctrl/⌘+Alt+1` and `# ` with a space give H1, `<h1>` from `value`, `defaultValue` and paste stays H1, and the "¶" menu on the Toolbar offers "Heading 1". Without it the old behavior holds: `# ` while typing stays text, `Ctrl/⌘+Alt+1` does nothing, and `<h1>` in incoming HTML becomes a paragraph. Disable `heading1` on a screen where the page heading already sits above the Editor: a second H1 breaks the page structure. Without the `heading` Tool there is no H1, even if `heading1` is passed.
 
 Earlier, "no H1 in the Document" was a kit decision (the page heading sits outside the Editor); now it is the screen's decision — ADR-0053 revises the earlier decision, and ADR-0050 links to ADR-0053.
 
-A name enters the `Tool` type together with the Tool itself, not earlier: widening the input type does not break the consumer, whereas a name without an implementation would compile and do nothing. That is how `link` arrived — straight into the `basic` Preset too — and `color`, `highlight`, `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `source`, `toc`, `typography`; there are no reserved names now. Unknown names in `tools` (from JS without types) are dropped silently.
+A name enters the `Tool` type together with the Tool itself, not earlier: widening the input type does not break the consumer, whereas a name without an implementation would compile and do nothing. That is how `link` arrived — straight into the `basic` Preset too — and `color`, `highlight`, `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `details`, `invisibleCharacters`, `source`, `toc`, `typography`; there are no reserved names now. Unknown names in `tools` (from JS without types) are dropped silently.
 
 `preset` and `tools` are read **when the engine is created**: the Schema of a live ProseMirror cannot be changed. To change the set on a mounted field, remount it with a key (`key`) — the edit history is lost in the process.
 
 ### Options of a built-in Tool: `tool()`
 
-Four built-in Tools have options: `search`, `toc`, `details` and `typography`. You set them with the `tool(name, options)` helper, which returns a Configured Tool: an entry for `tools` that sits next to the names and the descriptions of custom Tools (ADR-0069).
+Five built-in Tools have options: `search`, `toc`, `details`, `typography` and `invisibleCharacters`. You set them with the `tool(name, options)` helper, which returns a Configured Tool: an entry for `tools` that sits next to the names and the descriptions of custom Tools (ADR-0069).
 
 ```tsx
 import { RICH_TEXT_PRESETS, RichTextEditor, tool } from "@olddevs/ui/editor";
@@ -402,13 +408,13 @@ const tools = [
 - **An entry switches the Tool on.** `tool("toc", …)` enables `toc` without the `"toc"` string. If `tools` also holds the bare name (for example, `search` from `full`), the Configured Tool wins: there is still one Find button and one find panel.
 - **Pass only what you change.** The remaining options come from the kit's defaults. Nested objects are merged and arrays are replaced whole: `levels: [2, 3]` means exactly these levels, not an addition to the default.
 - **The position in the UI does not change.** A configured built-in Tool sits where it would sit by name; a custom Tool sits in `tools` order.
-- **Types infer the options from the name.** `tool("toc", { matchCase: true })` and `tool("bold", {})` do not compile: `tool()` accepts only Tools that have options, which today means `search`, `toc`, `details` and `typography`.
+- **Types infer the options from the name.** `tool("toc", { matchCase: true })` and `tool("bold", {})` do not compile: `tool()` accepts only Tools that have options, which today means `search`, `toc`, `details`, `typography` and `invisibleCharacters`.
 - **Two `tool()` entries with the same name** are a set error, like two custom Tools with the same name: a field error ("The editor couldn't start") and a `console.error` in development.
 - **A wrong value** (from JS without types: `levels: [5]`, `offsetVar: "header"`) is replaced with the default, with a single `console.error` per Tool in development; the field keeps working.
 - **Options are read once**, together with the `tools` set, when the engine is created. To change them on a mounted field, remount it with a key (`key`) — the edit history is lost in the process.
 - **Server.** `tool()` pulls neither Tiptap nor React into the module, so a `tools` set that uses it can be built in a server module. A configured built-in Tool is made of data, and if its options are data, you can pass it to a client component as a prop.
 
-The options of each Tool are described in its own section: "Find and replace", "Table of contents", "Collapsible block" and "Typography". The options of a custom Tool are set by `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
+The options of each Tool are described in its own section: "Find and replace", "Table of contents", "Collapsible block", "Typography" and "Invisible characters". The options of a custom Tool are set by `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
 
 ## Custom Tool
 
@@ -1343,6 +1349,69 @@ function ArticleBody({ html }: { html: string }) {
 }
 ```
 
+## Invisible characters
+
+The `invisibleCharacters` Tool (present in `full`, not in `basic`) shows the invisible characters of the Document: spaces (`·`), soft line breaks `Shift+Enter` (`↵`) and paragraph ends (`¶`). This is how you find double spaces, a trailing space and stray empty paragraphs. The engine is the Invisible Characters extension from Tiptap, and the API follows it (ADR-0048); the Tool has no Block, and the Schema, the sanitizer and Markdown do not change. The "Invisible characters" button (a pilcrow with an arrow) sits at the right edge of the fixed Toolbar, before "Find"; from screen code the `toggle` command switches the characters.
+
+```tsx
+<RichTextEditor /> // the button is there, the characters are hidden
+<RichTextEditor tools={[...RICH_TEXT_PRESETS.full, tool("invisibleCharacters", { visible: true })]} /> // shown from the start
+```
+
+- **Display only.** The marks are decorations over the Document: they are not in it. `value`, `onChange`, `getHTML()`, `getMarkdown()`, `getJSON()`, `getText()`, the edit history, `maxLength`, copying and `RichTextView` do not see them. Showing and hiding is not an edit: `onChange` is not called and there is no undo step.
+- **Hidden by default.** In Tiptap the extension starts shown (`visible: true`); in the kit it starts hidden: the Tool is in `full`, and a kit update must not change how every Editor on that Preset looks. The author turns the display on with the button or the `visible` option.
+- **What is shown.** Every ordinary space of the text (in a code block too) is `·`; a soft line break is `↵`; the end of every paragraph is `¶`, including an empty one and one in a list, quote, cell, column or collapsible Block. A heading and a code block have no end mark: the extension puts it on a paragraph only. A non-breaking space and other Unicode whitespace are not shown. In an empty field the paragraph mark gives way to the `placeholder`.
+- **Look.** The kit's CSS draws the marks, not text: a muted color (`--rte-muted-foreground`, recomputed for its background inside a toned Wrapper) and zero width. The text does not shift or wrap differently, the marks cannot be selected and the mouse does not catch them. The kit does not load the extension's own CSS (`injectCSS: false`): it would write its own `<style>` into the page `head`, bypassing the theme tokens.
+- **The button.** A toggle with `aria-pressed`: the characters are shown. It has no shortcut, like "HTML", and there is no Slash menu item: this is a display mode, not an insertion. The button exists only on the fixed Toolbar; the floating Toolbar, the Bubble menu and `readOnly` do not have it. In the Source mode the Document is not on screen, so the button, like "Find", gets `aria-disabled` but stays in the arrow order. In a `disabled` field it is disabled.
+- **Weight.** The extension is in the engine from the start and has no lazy chunk. It builds the marks over the whole Document when the engine is created and over the changed range on every transaction, shown or hidden: on very long Documents this is noticeable at load.
+
+The message catalog string is `editor.invisibleCharacters` ("Invisible characters"): the name and tooltip of the button; the icon is `InvisibleCharactersIcon`. The decision is ADR-0048 ("for the future": there was no customer at release).
+
+### Invisible characters options
+
+A `tool("invisibleCharacters", options)` entry sets only the start: after that the button and the command control the display.
+
+| Option    | Meaning                                                   | Default |
+| --------- | --------------------------------------------------------- | ------- |
+| `visible` | The characters are shown from the start, before any press | `false` |
+
+### Invisible characters state and command
+
+`useRichTextToolState(ref, "invisibleCharacters")` reads the state and `ref.current?.tool("invisibleCharacters")` calls the command. The general rules for both are in the "Handle (`ref`) and a custom toolbar outside the field" section.
+
+| State field | Meaning                                                                                      |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| `visible`   | The characters are shown. Follows the button, the command and the `visible` option at start. |
+
+| Command    | What it does                                                                                                                                                                                                           |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `toggle()` | Show the characters if hidden and hide them if shown: the same as the button. The new value is read from the state. `false` in the Source mode. The kit added no `show` and `hide`: `toggle` and `visible` are enough. |
+
+```tsx
+import { useRef } from "react";
+import { RichTextEditor, useRichTextToolState } from "@olddevs/ui/editor";
+import type { RichTextEditorHandle } from "@olddevs/ui/editor";
+
+function ProofreadingToggle({ html }: { html: string }) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  // `null` before mount and on the server: the screen renders the same in both places.
+  const visible = useRichTextToolState(ref, "invisibleCharacters", (state) => state.visible);
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-pressed={visible === true}
+        onClick={() => ref.current?.tool("invisibleCharacters")?.toggle()}
+      >
+        Invisible characters
+      </button>
+      <RichTextEditor ref={ref} aria-label="Article text" defaultValue={html} />
+    </>
+  );
+}
+```
+
 ## Table of contents
 
 The `toc` Tool puts the Table of contents of the Document in the Editor's left gutter: the same strip of strokes and the same list as [`RichTextToc`](../content/rich-text-toc.md), but the Editor holds the place itself (ADR-0068). It is in neither Preset, `full` or `basic`: the Table of contents moves the text, and a kit update does not change the layout of screens that did not ask for it. Switch it on by name:
@@ -1662,9 +1731,9 @@ function Screen() {
 
 ### Tool state: `useRichTextToolState`
 
-`useRichTextToolState(ref, name, selector?)` gives the screen the state of a Tool: a "3 of 12" counter from Find in the Status bar, or external navigation built from the headings of the Table of contents. The hook sits next to `useRichTextEditorState` and follows the Handle's engine in the same way, but it returns not a slice of the Tiptap engine but a typed snapshot of the kit's contract. The state fields of the built-in Tools are in the "Find and replace" and "Table of contents" sections.
+`useRichTextToolState(ref, name, selector?)` gives the screen the state of a Tool: a "3 of 12" counter from Find in the Status bar, or external navigation built from the headings of the Table of contents. The hook sits next to `useRichTextEditorState` and follows the Handle's engine in the same way, but it returns not a slice of the Tiptap engine but a typed snapshot of the kit's contract. The state fields of the built-in Tools are in the "Find and replace", "Table of contents" and "Invisible characters" sections.
 
-- **Name and type.** `name` is a Tool from the `tools` set; the snapshot type is inferred from the `RichTextTools` map: `search` returns `SearchToolState`, `toc` returns `TocToolState`. A name outside the map (a custom Tool without typing) gives `unknown`.
+- **Name and type.** `name` is a Tool from the `tools` set; the snapshot type is inferred from the `RichTextTools` map: `search` returns `SearchToolState`, `toc` returns `TocToolState`, `invisibleCharacters` returns `InvisibleCharactersToolState`. A name outside the map (a custom Tool without typing) gives `unknown`.
 - **Re-renders only when the snapshot changes.** The snapshot is recomputed on every engine transaction and on kit signals that the engine does not have: the find panel opening and closing, and the current section of the Table of contents changing on scroll. The screen re-renders when the result becomes different (plain data — primitives, arrays and plain objects — is compared by value, like `useRichTextEditorState`; `Date`, `Map`, `Set` and class instances are compared by reference), so typing that does not change the snapshot does not touch it. A custom Tool's `state` that creates such values anew on every call re-renders the screen on every transaction.
 - **A selector.** The third argument subscribes the screen to a slice: `useRichTextToolState(ref, "search", (state) => state.total)` re-renders it only when the number of matches changes. With `null`, the selector is not called.
 - **`null`** is what the hook returns before mount and in the screen's first render, on the server, after the Editor unmounts, and when the Tool is not in the set: Presets do not include `toc`, so you enable it by name or with a `tool("toc")` entry. This way the screen renders the same on the server and in the browser.
@@ -1675,7 +1744,7 @@ The state of a custom Tool is declared with `defineTool` (the `state` field) and
 
 ### Tool commands: `handle.tool()`
 
-`ref.current?.tool(name)` returns the commands object of a Tool: `tool("search")?.open({ query: "TODO" })`, `tool("toc")?.jumpTo(2)`. The commands of the built-in Tools are described in the "Find and replace" and "Table of contents" sections.
+`ref.current?.tool(name)` returns the commands object of a Tool: `tool("search")?.open({ query: "TODO" })`, `tool("toc")?.jumpTo(2)`. The commands of the built-in Tools are described in the "Find and replace", "Table of contents" and "Invisible characters" sections.
 
 ```tsx
 <button type="button" onClick={() => ref.current?.tool("search")?.open({ query: "TODO" })}>
@@ -1750,10 +1819,10 @@ export const pdfTool: CustomTool = { name: "acme_pdfDrop", engine: [PdfDrop] };
 - `maxHeight` — the height limit of the Document area (a number is pixels, a string is a CSS length), beyond it the Document scrolls inside the frame; `resizable` — a height handle at the area's bottom edge (a slider for keyboard users), and `maxHeight` with it is the starting height. See "Field height".
 - `surface` — `"theme"` (default) or `"paper"`: a light Paper in any theme, see "Surface". The type is `RichTextSurface`.
 - `status` — a React node of the Status bar inside the field's frame, at the start of the counter row; the kit does not announce it. The engine command `showNotice({ tone, text } | null)` is the Field notice. Both are in "Status bar and Field notice"; they follow the kit's semver.
-- `tools` — kit names, Configured Tools `tool(name, options)` for `search`, `toc`, `details` and `typography`, `defineTool(…)` definitions and descriptions of custom Tools (`CustomTool`, including their `buttons`, `insertItems`, `blockActions`, `textCards` and `trigger`), Presets as arrays — `RICH_TEXT_PRESETS`; see "Tools and Presets" and "Custom Tool". A description with an error is a field error.
+- `tools` — kit names, Configured Tools `tool(name, options)` for `search`, `toc`, `details`, `typography` and `invisibleCharacters`, `defineTool(…)` definitions and descriptions of custom Tools (`CustomTool`, including their `buttons`, `insertItems`, `blockActions`, `textCards` and `trigger`), Presets as arrays — `RICH_TEXT_PRESETS`; see "Tools and Presets" and "Custom Tool". A description with an error is a field error.
 - `ref` (`RichTextEditorHandle`): `getHTML()` — the current HTML, without waiting for the delay and without `onChange` (in Source mode it first applies the field's edit — then `onChange` is called if the Document changed; the same for `getMarkdown()`); `getMarkdown()` and `setMarkdown(md)` — see "Markdown"; `getJSON()` and `setJSON(document)` — see "JSON"; `clear()` — clear the Document, and `onChange("")` notifies the screen; `focus(position?)`, `blur()`, `insertHTML`, `insertText`, `getText`, `getSelectedText`, `isEmpty`, `undo`, `redo`, `canUndo`, `canRedo` — see "Handle (`ref`) and your own toolbar outside the field"; `tool(name)` — the commands of a Tool, see "Tool commands: `handle.tool()`"; `openSearch({ replace? })` — deprecated, removed in 5.0, replaced by `tool("search")?.open({ replace })`; `editor` — the underlying Tiptap `Editor`, its API **follows Tiptap's major version**, and before mount and on the server it is `null`. `focus()` without an argument puts the caret at the end of the Document (in Source mode, in the HTML field).
 - `useRichTextEditorState(ref, selector)` — a hook for your own toolbar outside the field, see "Handle (`ref`) and your own toolbar outside the field".
-- `useRichTextToolState(ref, name, selector?)` — the hook for Tool state (`search`, `toc` and custom Tools with `defineTool`): a data snapshot, `null` before mount, after unmount and without the Tool; see "Tool state: `useRichTextToolState`". It follows the kit's semver, as do `tool()`, `defineTool()`, `handle.tool()` and the `RichTextTools` map.
+- `useRichTextToolState(ref, name, selector?)` — the hook for Tool state (`search`, `toc`, `invisibleCharacters` and custom Tools with `defineTool`): a data snapshot, `null` before mount, after unmount and without the Tool; see "Tool state: `useRichTextToolState`". It follows the kit's semver, as do `tool()`, `defineTool()`, `handle.tool()` and the `RichTextTools` map.
 - SSR: the engine is created only in the browser (`immediatelyRender: false`). On the server it renders a Skeleton without a Document — the frame and the space reserved for the Toolbar — and a hidden field with the incoming value. After hydration the Skeleton shows the Document cleaned by the Schema, and the editable area takes its place after the Loaders, without a height jump. The exception is a JSON envelope in `defaultValue`: only the engine builds its HTML, so with it the Skeleton is a frame without a Document, the hidden field is empty until Readiness, and the height changes once when the Document appears.
 
 ## Markdown

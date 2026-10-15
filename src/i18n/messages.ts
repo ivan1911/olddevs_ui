@@ -1031,6 +1031,12 @@ export interface UiMessages {
     source: string;
     sourceField: string;
     /**
+     * Показ невидимых символов (пробелов, мягких переносов и концов абзацев):
+     * `invisibleCharacters` — имя и подсказка кнопки-переключателя Панели. О том,
+     * показаны ли символы, говорит `aria-pressed`, а не слова имени.
+     */
+    invisibleCharacters: string;
+    /**
      * Поиск и замена. `search` — имя и подсказка кнопки Панели и
      * строка справочника `Mod+F`; `searchReplace` — строка `Mod+Alt+F`;
      * `searchPanel` — имя панели; остальные — её поля, флажки и кнопки.

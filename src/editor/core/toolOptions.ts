@@ -1,8 +1,12 @@
 import type { EditorQuoteSet } from "../../i18n/messages.js";
 import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
-import type { SearchToolState, TocToolState } from "./toolState.js";
-import type { SearchToolCommands, TocToolCommands } from "./toolCommands.js";
+import type { InvisibleCharactersToolState, SearchToolState, TocToolState } from "./toolState.js";
+import type {
+  InvisibleCharactersToolCommands,
+  SearchToolCommands,
+  TocToolCommands,
+} from "./toolCommands.js";
 import type { Tool as ToolName } from "./tools.js";
 
 /*
@@ -132,9 +136,23 @@ export interface TypographyToolOptions {
 }
 
 /**
+ * Опции Инструмента `invisibleCharacters` (по расширению Invisible Characters
+ * из Tiptap, ADR-0048).
+ */
+export interface InvisibleCharactersToolOptions {
+  /**
+   * Невидимые символы показаны с самого начала. По умолчанию `false`, в отличие
+   * от Tiptap, где `true`: Инструмент входит в `full`, и обновление кита не
+   * должно менять вид каждого такого Редактора. Дальше показом управляют кнопка,
+   * Команда `toggle` и Состояние `visible`; Опция задаёт только начало.
+   */
+  visible: boolean;
+}
+
+/**
  * Типы Инструментов Редактора по имени: что экран задаёт при настройке (`options`),
  * что читает (`state`) и что вызывает (`commands`). Расширяемый интерфейс, как
- * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc`, `details` и `typography`, а
+ * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc`, `details`, `typography` и `invisibleCharacters`, а
  * потребитель дописывает свои Инструменты через declaration merging:
  *
  * ```ts
@@ -171,6 +189,11 @@ export interface RichTextTools {
   // Только Опции: правила ввода, Состояния и Команд у них нет.
   typography: {
     options: TypographyToolOptions;
+  };
+  invisibleCharacters: {
+    options: InvisibleCharactersToolOptions;
+    state: InvisibleCharactersToolState;
+    commands: InvisibleCharactersToolCommands;
   };
 }
 
@@ -262,7 +285,7 @@ export function mergeOptions(base: object, given: object): object {
  * опции (из JS без типов) заменяется умолчанием, в разработке — один
  * `console.error`; опции своего Инструмента проверяет его автор.
  *
- * Встроенный — только Инструмент с опциями: `search`, `toc`, `details` и `typography`. Серверно-безопасна.
+ * Встроенный — только Инструмент с опциями: `search`, `toc`, `details`, `typography` и `invisibleCharacters`. Серверно-безопасна.
  */
 export function tool<Name extends ConfigurableToolName>(
   name: Name,

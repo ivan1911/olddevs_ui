@@ -54,3 +54,9 @@ export interface TocToolState {
   /** Индекс текущего раздела в `headings`, от 0; `-1` — заголовков нет. Следует за прокруткой. */
   current: number;
 }
+
+/** Состояние Инструмента `invisibleCharacters` (по расширению Invisible Characters из Tiptap, ADR-0048). */
+export interface InvisibleCharactersToolState {
+  /** Пробелы, мягкие переносы и концы абзацев показаны. Скрыты, пока автор не включил их или Опция `visible`. */
+  visible: boolean;
+}

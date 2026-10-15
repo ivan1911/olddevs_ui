@@ -117,6 +117,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Wrapper: a group of Blocks          | `WrapperIcon`                                   | `ColumnLayoutIcon`             |
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
 | Collapsible Block of the Editor     | `DetailsIcon`                                   | `ChevronDownIcon`              |
+| Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
 
 ## Subject topics
 
@@ -219,6 +220,8 @@ Column layout added `ColumnLayoutIcon` — two columns, the "Layout" item of the
 Wrapper added the pair `WrapperIcon` and `UnwrapIcon` — lucide's `Group` and `Ungroup`: a frame with dashed corners around two Blocks and the same Blocks without a frame. The icons sit at the "Wrapper" item of the Slash menu and the "Remove Wrapper" item in the Block handle menu. This is not `ColumnLayoutIcon`: columns put Blocks side by side, while a Wrapper groups them without changing their order. `DeleteIcon` does not fit removal: only the container is deleted, not the content.
 
 Collapsible block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Slash menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
+
+Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`: a pilcrow with an arrow, the "Invisible characters" button of the Editor's fixed Toolbar. This is not `ParagraphIcon`: that one is a plain pilcrow, "an ordinary paragraph", and sits on the same Toolbar in the "¶" menu; the arrow tells the display toggle from a Block type.
 
 The first iteration of the table made do with two icons for four directions
 (`AddRowIcon`, `AddColumnIcon`) and an icon for the separate "Table

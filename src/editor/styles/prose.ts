@@ -318,6 +318,34 @@ const DETAILS_EDITOR =
 const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
 
 /**
+ * Невидимые символы (Инструмент `invisibleCharacters`): расширение Tiptap
+ * вставляет в разметку виджеты `span.tiptap-invisible-character` с модификатором
+ * `--space`, `--break` или `--paragraph`; пустой `span` несёт знак в `::before`.
+ * Собственный CSS расширения кит не подключает (`injectCSS: false`) и рисует
+ * знаки сам, токенами.
+ *
+ * НЕ ДВИГАЮТ ТЕКСТ. Знак — `inline-block` нулевой ширины, а высота строки — `1em`,
+ * поэтому перенос строк и высота абзацев такие же, как со скрытыми знаками.
+ * Выделение и мышь знаки не видят (`select-none`, `pointer-events-none`), копирование
+ * их не берёт: их нет в Документе. Цвет — приглушённый (`--rte-muted-foreground`),
+ * а на тонированной Обёртке он уже пересчитан под её фон (`WRAPPER_CLASS`).
+ *
+ * В пустом первом абзаце знак абзаца скрыт: его место занимает подсказка поля
+ * (`is-editor-empty`, `RichTextEditor.tsx`), и «¶» лёг бы поверх её текста.
+ * Знаки в Просмотре не появляются: класса там нет ни у кого.
+ */
+const INVISIBLE_CHARACTERS_CLASS =
+  "[&_.tiptap-invisible-character]:pointer-events-none [&_.tiptap-invisible-character]:select-none " +
+  "[&_.tiptap-invisible-character]:before:inline-block [&_.tiptap-invisible-character]:before:w-0 " +
+  "[&_.tiptap-invisible-character]:before:font-normal [&_.tiptap-invisible-character]:before:not-italic " +
+  "[&_.tiptap-invisible-character]:before:leading-none " +
+  "[&_.tiptap-invisible-character]:before:text-(--rte-muted-foreground) " +
+  "[&_.tiptap-invisible-character--space]:before:content-['·'] " +
+  "[&_.tiptap-invisible-character--break]:before:content-['↵'] " +
+  "[&_.tiptap-invisible-character--paragraph]:before:content-['¶'] " +
+  "[&_p.is-editor-empty:first-child>.tiptap-invisible-character--paragraph]:hidden ";
+
+/**
  * Свой Блок потребителя (ADR-0058, п. 3.2): `div[data-block]` с
  * именем, которого нет у кита. Кит даёт ему ритм абзаца и больше ничего — вид
  * задаёт CSS потребителя по `data-block` и токенам кита. Сам Блок отступ уже
@@ -450,6 +478,7 @@ const PROSE_RULES =
   " " +
   DETAILS_CLASS +
   " " +
+  INVISIBLE_CHARACTERS_CLASS +
   CUSTOM_BLOCK_CLASS;
 
 /**

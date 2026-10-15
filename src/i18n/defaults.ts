@@ -621,6 +621,7 @@ export const DEFAULT_MESSAGES: UiMessages = {
     },
     source: "HTML",
     sourceField: "HTML source",
+    invisibleCharacters: "Invisible characters",
     search: "Find",
     searchReplace: "Find and replace",
     searchPanel: "Find and replace",

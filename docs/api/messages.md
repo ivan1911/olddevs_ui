@@ -370,6 +370,7 @@
 | `emojiName.luggage`                   | строка  | Luggage                                                                          | Чемодан                                                                            |
 | `source`                              | строка  | HTML                                                                             | HTML                                                                               |
 | `sourceField`                         | строка  | HTML source                                                                      | HTML-код документа                                                                 |
+| `invisibleCharacters`                 | строка  | Invisible characters                                                             | Невидимые символы                                                                  |
 | `search`                              | строка  | Find                                                                             | Найти                                                                              |
 | `searchReplace`                       | строка  | Find and replace                                                                 | Найти и заменить                                                                   |
 | `searchPanel`                         | строка  | Find and replace                                                                 | Поиск и замена                                                                     |
