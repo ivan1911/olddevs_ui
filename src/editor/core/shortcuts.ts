@@ -93,6 +93,7 @@ export const SHORTCUT_KEYS = {
   h2: ["mod", "alt", "2"],
   h3: ["mod", "alt", "3"],
   h4: ["mod", "alt", "4"],
+  blockquote: ["mod", "shift", "B"],
   codeBlock: ["mod", "alt", "C"],
   bulletList: ["mod", "shift", "8"],
   orderedList: ["mod", "shift", "7"],
@@ -114,7 +115,7 @@ export type ShortcutId = keyof typeof SHORTCUT_KEYS;
  * описании Инструмента. Строки вне списка (кнопки описаний, свои Инструменты)
  * встают в конец своей группы в порядке набора.
  */
-export const SHORTCUT_ORDER: readonly string[] = [
+export const SHORTCUT_ORDER: readonly ShortcutId[] = [
   "selectBlock",
   "selectDocument",
   "undo",
@@ -313,7 +314,7 @@ export function shortcutGroupsFor(
   }
   // Сортировка устойчивая: строки вне `SHORTCUT_ORDER` сохраняют порядок набора.
   const rank = (id: string) => {
-    const index = SHORTCUT_ORDER.indexOf(id);
+    const index = (SHORTCUT_ORDER as readonly string[]).indexOf(id);
     return index === -1 ? SHORTCUT_ORDER.length : index;
   };
   return [

@@ -41,7 +41,7 @@ const BLOCKQUOTE_SHORTCUT: ShortcutCommand = {
   id: "blockquote",
   group: "blockType",
   tool: "blockquote",
-  keys: ["mod", "shift", "B"],
+  keys: SHORTCUT_KEYS.blockquote,
   label: (m) => m.blockquote,
 };
 
@@ -76,9 +76,9 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   align: ALIGN_TOOL,
   wrapper: WRAPPER_TOOL,
   /*
-    Проверочный набор: Инструмент с пунктом вставки и Инструмент
-    с «Превратить в». Поля `insertItems` и `engine` совпадают с будущим
-    публичным описанием, чтобы его форма проверялась кодом кита.
+    Разделитель и цитата: Инструмент с пунктом вставки и Инструмент с
+    «Превратить в». Поля `insertItems` и `engine` те же, что у публичного
+    описания своего Инструмента: форму проверяет код кита.
   */
   horizontalRule: {
     name: "horizontalRule",

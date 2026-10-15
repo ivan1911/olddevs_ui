@@ -223,7 +223,9 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     заголовка, Обёртка в колонке) спрашивают `has` контекста.
   */
   const described = options.tools.descriptors;
-  const context: ToolEngineContext = { ...options, has: (tool) => options.tools.has(tool) };
+  // Без самого набора: связи между Инструментами — только через `has`.
+  const { tools, ...bridges } = options;
+  const context: ToolEngineContext = { ...bridges, has: (tool) => tools.has(tool) };
   // Контейнеры Блоков верхнего уровня: их принимает только свой Документ.
   const containers = described.flatMap((descriptor) => descriptor.documentContent ?? []);
 
@@ -284,8 +286,14 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     .flatMap(({ id, label, popover }): ToolPopoverEntry[] =>
       popover ? [{ id, label: ({ messages, locale }) => label(messages, locale), popover }] : []
     );
-  if (buttons.length + entries.length > 0) {
-    extensions.push(ToolButtons.configure({ buttons, entries, openPopover: options.openPopover }));
+  // Кнопке без сочетания и поповера (отмена, картинка) расширение не нужно: её
+  // `run` зовёт Панель. Так набор расширений не меняется от того, что кнопка
+  // переехала в описание.
+  const keyed = buttons.filter((button) => button.shortcut || button.popover);
+  if (keyed.length + entries.length > 0) {
+    extensions.push(
+      ToolButtons.configure({ buttons: keyed, entries, openPopover: options.openPopover })
+    );
   }
   // То же — у пунктов вставки и Действий над Блоком.
   const keyedItems = described.flatMap((d) => d.insertItems ?? []).filter((i) => i.shortcut);

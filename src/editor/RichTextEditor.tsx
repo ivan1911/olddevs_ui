@@ -522,7 +522,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       Набор инструментов замораживается при монтаже: из него собрана Схема, а
       Схему у живого движка не поменять. Панель читает тот же замороженный
       набор — иначе новый `tools` показал бы кнопку, которой Схема не знает.
-      Набор — список описаний Инструментов (`features/builtins.ts`), реестры
+      Набор — список описаний Инструментов (`features/builtins.ts`), поверхности
       читают его проекцию.
     */
     const [enabledTools] = useState(() => expandTools(preset, tools));
