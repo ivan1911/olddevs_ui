@@ -1575,6 +1575,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 disabled={disabled}
                 onInsertTable={() => setTableDialogOpen(true)}
                 shortcutsReference
+                invisibleCharacters={enabledTools.has("invisibleCharacters")}
                 search={
                   enabledTools.has("search")
                     ? {
@@ -1613,6 +1614,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 tools={enabledTools}
                 source={sourceAvailable}
                 search={enabledTools.has("search")}
+                invisibleCharacters={enabledTools.has("invisibleCharacters")}
                 shortcutsReference
               />
             </div>

@@ -34,6 +34,9 @@ test("tool() takes the options of the tool it names and returns a Configured Too
   expectTypeOf(search).toEqualTypeOf<ConfiguredTool<"search">>();
   // Параметры необязательны: запись без опций только включает Инструмент.
   expectTypeOf(tool("toc")).toEqualTypeOf<ConfiguredTool<"toc">>();
+  expectTypeOf(tool("invisibleCharacters", { visible: true })).toEqualTypeOf<
+    ConfiguredTool<"invisibleCharacters">
+  >();
   expect(toc).toBeDefined();
 });
 
@@ -59,6 +62,10 @@ test("the options of another tool, an unknown option and a wrong value do not co
   tool("toc", { levels: [5] });
   // @ts-expect-error флажок — булево
   tool("search", { regex: "yes" });
+  // @ts-expect-error `visible` — булево
+  tool("invisibleCharacters", { visible: "yes" });
+  // @ts-expect-error `persist` — опция сворачиваемого Блока, а не невидимых символов
+  tool("invisibleCharacters", { persist: true });
 });
 
 test("tool() does not take a name that has no options", () => {

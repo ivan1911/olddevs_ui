@@ -16,7 +16,7 @@ import { Toolbar } from "../../components/actions/Toolbar.js";
 import { Tooltip, TooltipProvider } from "../../components/overlays/Tooltip.js";
 import type { UiMessages } from "../../i18n/messages.js";
 import { useMessages } from "../../i18n/useMessages.js";
-import { SearchIcon, SourceIcon, type IconProps } from "../../icons.js";
+import { InvisibleCharactersIcon, SearchIcon, SourceIcon, type IconProps } from "../../icons.js";
 import { buttonClasses } from "../../lib/button.js";
 import { cn } from "../../lib/cn.js";
 import { TOUCH_HIDDEN_CLASS } from "../../lib/touch.js";
@@ -34,6 +34,7 @@ import { InsertMenuButton } from "./InsertMenuButton.js";
 import { TOOLBAR_ROW_MARKS } from "./rowMarks.js";
 import { HighlightMenuButton } from "./ColorMenus.js";
 import { ShortcutsButton } from "./ShortcutsButton.js";
+import { invisibleCharactersVisible } from "../features/invisibleCharacters/invisibleCharactersVisible.js";
 import { SEARCH_KEYS } from "../features/search/searchTool.js";
 import { ariaShortcut, findShortcutKeys, isApple, shortcutLabel } from "../core/shortcuts.js";
 import { tableChunk } from "../features/table/tableTool.js";
@@ -243,6 +244,13 @@ export interface EditorToolbarProps {
    * плавающей Панели и без Инструмента `search`.
    */
   search?: { open: boolean; onToggle: () => void };
+  /**
+   * Кнопка «Невидимые символы» у правого края, перед «Поиском». Показ держит
+   * движок (плагин расширения), поэтому проп — только «кнопка есть»: нажатость
+   * Панель читает из движка сама. Без пропа кнопки нет — так у плавающей Панели и
+   * без Инструмента `invisibleCharacters`.
+   */
+  invisibleCharacters?: boolean;
 }
 
 /**
@@ -271,6 +279,7 @@ export function EditorToolbar({
   shortcutsReference = false,
   source,
   search,
+  invisibleCharacters = false,
 }: EditorToolbarProps) {
   const messages = useMessages().editor;
   const label = useToolLabel();
@@ -322,7 +331,12 @@ export function EditorToolbar({
       for (const button of toolButtons) {
         flags[button.id]!.visible = button.isVisible?.(current) ?? true;
       }
-      return { flags, editable: current.isEditable };
+      return {
+        flags,
+        editable: current.isEditable,
+        // Показ невидимых символов — состояние плагина движка, а не `isActive` кнопки.
+        invisible: invisibleCharacters && invisibleCharactersVisible(current),
+      };
     },
   });
 
@@ -489,13 +503,36 @@ export function EditorToolbar({
             {index < groups.length - 1 && <Separator className="h-auto" />}
           </div>
         ))}
-        {(search || shortcutsReference) && (
+        {(invisibleCharacters || search || shortcutsReference) && (
           /*
-            Поиск и справочник — одна группа у правого края. Узкая Панель
-            переносит её на новую строку целиком и тоже вправо: по одной кнопка
-            справочника осталась бы сиротой в начале строки.
+            «Невидимые символы», Поиск и справочник — одна группа у правого края.
+            Узкая Панель переносит её на новую строку целиком и тоже вправо: по
+            одной кнопка справочника осталась бы сиротой в начале строки.
           */
           <div className="ml-auto flex items-center gap-0.5">
+            {invisibleCharacters && (
+              /*
+                Переключатель показа: `aria-pressed` — символы показаны. Сочетания
+                нет (решение среза), подсказка — имя кнопки. В HTML-режиме
+                Документа на экране нет, показывать нечего — кнопка
+                `aria-disabled`, как «Поиск», и остаётся в обходе стрелками.
+              */
+              <Tooltip content={messages.invisibleCharacters}>
+                <button
+                  type="button"
+                  aria-label={messages.invisibleCharacters}
+                  aria-pressed={state.invisible}
+                  aria-disabled={locked || undefined}
+                  disabled={disabled}
+                  onClick={() => {
+                    if (!locked) editor.commands.toggleInvisibleCharacters();
+                  }}
+                  className={state.invisible ? BUTTON_PRESSED_CLASS : BUTTON_CLASS}
+                >
+                  <InvisibleCharactersIcon size={16} aria-hidden />
+                </button>
+              </Tooltip>
+            )}
             {search && (
               /*
                 Переключатель панели: `aria-pressed` — панель открыта. В
@@ -540,6 +577,8 @@ export interface ToolbarSkeletonProps {
   source: boolean;
   /** Есть ли кнопка «Поиск» и справочник сочетаний у правого края. */
   search: boolean;
+  /** Есть ли кнопка «Невидимые символы» у правого края. */
+  invisibleCharacters: boolean;
   shortcutsReference: boolean;
 }
 
@@ -554,6 +593,7 @@ export function ToolbarSkeleton({
   tools,
   source,
   search,
+  invisibleCharacters,
   shortcutsReference,
 }: ToolbarSkeletonProps) {
   const groups = toolbarGroups(tools, source).filter((group) => group.length > 0);
@@ -576,8 +616,9 @@ export function ToolbarSkeleton({
           {index < groups.length - 1 && <Separator orientation="vertical" className="h-auto" />}
         </div>
       ))}
-      {(search || shortcutsReference) && (
+      {(invisibleCharacters || search || shortcutsReference) && (
         <div className="ml-auto flex items-center gap-0.5">
+          {invisibleCharacters && place("invisibleCharacters", false)}
           {search && place("search", false)}
           {shortcutsReference && place("shortcuts", false, TOUCH_HIDDEN_CLASS)}
         </div>

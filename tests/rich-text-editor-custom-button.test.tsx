@@ -89,13 +89,21 @@ test("own buttons stand in one group before Undo and Redo, in the order of tools
   renderEditor({ tools: [...RICH_TEXT_PRESETS.full, testPickerTool, testStampTool] });
   const list = names(screen.getByRole("toolbar", TOOLBAR));
 
-  expect(list.slice(-6)).toEqual(["Picker", "Stamp", "Undo", "Redo", "Find", "Keyboard shortcuts"]);
+  expect(list.slice(-7)).toEqual([
+    "Picker",
+    "Stamp",
+    "Undo",
+    "Redo",
+    "Invisible characters",
+    "Find",
+    "Keyboard shortcuts",
+  ]);
   // Свои — после кнопок кита, а не между ними.
   expect(list.indexOf("Picker")).toBeGreaterThan(list.indexOf("Emoji"));
 
   cleanup();
   renderEditor({ tools: [...RICH_TEXT_PRESETS.full, testStampTool, testPickerTool] });
-  expect(names(screen.getByRole("toolbar", TOOLBAR)).slice(-6, -4)).toEqual(["Stamp", "Picker"]);
+  expect(names(screen.getByRole("toolbar", TOOLBAR)).slice(-7, -5)).toEqual(["Stamp", "Picker"]);
 });
 
 test("the group is separated from the kit groups like any other", () => {
@@ -197,9 +205,9 @@ test("the toolbar with own buttons is one Tab stop and arrows reach them", async
   await user.tab();
   expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Body" }));
 
-  // Назад в Панель, к концу ряда: справочник ← Поиск ← Повтор ← Отмена ← последняя своя.
+  // Назад в Панель, к концу ряда: справочник ← Поиск ← Невидимые символы ← Повтор ← Отмена ← последняя своя.
   await user.tab({ shift: true });
-  await user.keyboard("{End}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}");
+  await user.keyboard("{End}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}");
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Pin" }));
   await user.keyboard("{ArrowLeft}");
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Stamp" }));

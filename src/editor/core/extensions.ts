@@ -224,6 +224,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "emoji",
   "source",
   "search",
+  "invisibleCharacters",
   "toc",
 ];
 

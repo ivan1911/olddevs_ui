@@ -74,6 +74,17 @@ export interface TocToolCommands {
   jumpTo(index: number): boolean;
 }
 
+/** Команды Инструмента `invisibleCharacters`. */
+export interface InvisibleCharactersToolCommands {
+  /**
+   * Показать невидимые символы, если они скрыты, и скрыть, если показаны: то же,
+   * что кнопка «Невидимые символы». Документ и `value` не меняются, `onChange` не
+   * зовётся. Новое значение читается Состоянием Инструмента (`visible`).
+   * `false` — в HTML-режиме (Документа на экране нет).
+   */
+  toggle(): boolean;
+}
+
 /**
  * Команды Инструмента по имени из карты `RichTextTools`. Имя вне карты — `unknown`:
  * типизация добровольна, Инструмент работает и без неё.

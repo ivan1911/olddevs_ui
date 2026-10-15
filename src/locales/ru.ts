@@ -659,6 +659,7 @@ export const messages: UiMessages = {
     },
     source: "HTML",
     sourceField: "HTML-код документа",
+    invisibleCharacters: "Невидимые символы",
     search: "Найти",
     searchReplace: "Найти и заменить",
     searchPanel: "Поиск и замена",

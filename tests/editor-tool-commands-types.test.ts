@@ -15,6 +15,9 @@ import type { RichTextEditorHandle, RichTextTools } from "../src/editor/index.js
 function nameInTheMap(handle: RichTextEditorHandle) {
   expectTypeOf(handle.tool("search")).toEqualTypeOf<RichTextTools["search"]["commands"] | null>();
   expectTypeOf(handle.tool("toc")).toEqualTypeOf<RichTextTools["toc"]["commands"] | null>();
+  expectTypeOf(handle.tool("invisibleCharacters")).toEqualTypeOf<
+    RichTextTools["invisibleCharacters"]["commands"] | null
+  >();
 }
 
 function booleanAnswers(handle: RichTextEditorHandle) {
@@ -30,6 +33,7 @@ function booleanAnswers(handle: RichTextEditorHandle) {
   expectTypeOf(search.replace("DONE")).toEqualTypeOf<boolean>();
   expectTypeOf(search.replaceAll("DONE")).toEqualTypeOf<boolean>();
   expectTypeOf(toc.jumpTo(2)).toEqualTypeOf<boolean>();
+  expectTypeOf(handle.tool("invisibleCharacters")!.toggle()).toEqualTypeOf<boolean>();
 }
 
 function mistakes(handle: RichTextEditorHandle) {
@@ -37,6 +41,8 @@ function mistakes(handle: RichTextEditorHandle) {
   handle.tool("search")?.jumpTo(1);
   // @ts-expect-error `open` — Команда Поиска, а не Оглавления
   handle.tool("toc")?.open();
+  // @ts-expect-error у невидимых символов одна Команда, `toggle`: `show` и `hide` не заведены
+  handle.tool("invisibleCharacters")?.show();
   // @ts-expect-error такой Команды нет ни у кого
   handle.tool("search")?.highlight("TODO");
   // @ts-expect-error индекс — число
