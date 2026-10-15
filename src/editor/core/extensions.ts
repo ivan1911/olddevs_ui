@@ -19,11 +19,6 @@ import type { RichImageOptions } from "../features/image/image.js";
 import { createDocumentNode } from "./document.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
 import { MaxLength } from "./maxLength.js";
-import {
-  HighlightExtension,
-  TEXT_COLOR_EXTENSIONS,
-  TextAlignExtension,
-} from "../features/color/styleExtensions.js";
 import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
 import {
   describedTools,
@@ -181,13 +176,6 @@ const STARTER_KIT_OFF: Partial<StarterKitOptions> = {
 const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extensions>> = {
   superscript: () => [Superscript],
   subscript: () => [Subscript],
-  // Цвет, маркер и выравнивание пишут `data-color` и `data-align`, а не `style`
-  // (`styleExtensions.ts`; единственное исключение — цвет автора, `customColor.ts`):
-  // выключенный инструмент не отдаёт ни атрибута, ни правила разбора, и такой
-  // атрибут из вставки отбрасывается.
-  color: () => TEXT_COLOR_EXTENSIONS,
-  highlight: () => [HighlightExtension],
-  align: () => [TextAlignExtension],
   taskList: (context) => [
     TaskList,
     TaskItem.configure({

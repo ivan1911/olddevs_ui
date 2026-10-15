@@ -7,6 +7,7 @@ import { turnIntoTypes } from "../core/blockTypes.js";
 import type { InsertItem } from "../core/insertItems.js";
 import { INSERT_MENU_TOOL } from "../core/insertMenuTool.js";
 import { SHORTCUT_KEYS, type ShortcutCommand } from "../core/shortcuts.js";
+import { ALIGN_TOOL, COLOR_TOOL, HIGHLIGHT_TOOL } from "./color/colorTools.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
@@ -60,6 +61,9 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
   // Оглавление несёт только Опции: полоса и список рисуются в `RichTextEditor`.
   toc: TOC_TOOL,
   layout: LAYOUT_TOOL,
+  color: COLOR_TOOL,
+  highlight: HIGHLIGHT_TOOL,
+  align: ALIGN_TOOL,
   wrapper: WRAPPER_TOOL,
   /*
     Проверочный набор: Инструмент с пунктом вставки и Инструмент
