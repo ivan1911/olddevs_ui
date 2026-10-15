@@ -127,7 +127,7 @@ export function ToolButtonView({
 }: ToolButtonViewProps) {
   const apple = isApple();
   const [open, setOpen] = useState(false);
-  // Подпись: своё сочетание кнопки или клавиша Части для движка (`keys` встроенной).
+  // Подпись: своё сочетание кнопки или клавиша из Extensions (`keys` встроенной).
   const keys = button.shortcut ?? button.keys;
   const tooltip = keys ? (
     <span className="flex items-center gap-2">

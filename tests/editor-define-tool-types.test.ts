@@ -103,7 +103,7 @@ test("the body of create() is the shape of CustomTool without the name", () => {
   defineTool({
     name: "acme_body",
     defaults: {},
-    // @ts-expect-error Часть для движка обязательна
+    // @ts-expect-error Extensions обязательны
     create: () => ({}),
   });
 });

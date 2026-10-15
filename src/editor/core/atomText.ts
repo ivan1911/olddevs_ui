@@ -16,7 +16,7 @@ import { MARKDOWN_FALLBACK, warnNoMarkdown } from "./customMarkdown.js";
   Текст атома (ADR-0058, раздел 4). Одно правило для встроенных и
   своих атомов, и всё, что выдаёт текст Документа, читает его отсюда:
 
-  - Текст атома даёт `renderText` из Части для движка. Листовой атом без него —
+  - Текст атома даёт `renderText` из Extensions. Листовой атом без него —
     пустая строка, атом с содержимым (картинка с подписью) — текст своих детей;
   - вес атома в `maxLength` — длина этого текста (`countCharacters`);
   - `getText`, `getSelectedText`, копирование текстом и Markdown отдают тот же
@@ -90,7 +90,7 @@ export function atomText(node: ProseMirrorNode): string {
 */
 
 /**
- * Узлы по выгрузке в Markdown: `true` — Часть для движка умеет сама, строка —
+ * Узлы по выгрузке в Markdown: `true` — Extensions умеют сами, строка —
  * атом своего Инструмента без правил (имя Инструмента — для предупреждения).
  */
 function markdownHandled(editor: Editor): Map<string, true | string> {

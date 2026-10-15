@@ -92,8 +92,8 @@ test("the module graph of the entry has no React, no engine and no client bounda
 /*
   Свой Инструмент на сервере (OLDSUI-104, ADR-0058, п. 2.3): очистка читает
   правила Схемы из описания, и модуль описания (`customTool.ts`) импортируется
-  там же, где лёгкий вход, — без Tiptap и React. Часть для движка — дело
-  описания потребителя: с загрузчиком она и у него не попадает в граф сервера.
+  там же, где лёгкий вход, — без Tiptap и React. Extensions — дело
+  описания потребителя: с загрузчиком они и у него не попадают в граф сервера.
 */
 test("the custom tool description module is as light as the entry", () => {
   const { files, packages } = moduleGraph(join(SRC, "editor", "core", "customTool.ts"));
@@ -126,11 +126,11 @@ test("the tool() module is as light as the entry, and the schema skips a Configu
   expect(schema.customMarks).toEqual({});
 });
 
-test("the server reads only the schema rules of a description, never its engine part", () => {
+test("the server reads only the schema rules of a description, never its Extensions", () => {
   const description = {
     name: "acme_card",
     get engine(): never {
-      throw new Error("the server touched the engine part");
+      throw new Error("the server touched the Extensions");
     },
     blocks: { acme_card: { kind: "block" } },
   } as const;

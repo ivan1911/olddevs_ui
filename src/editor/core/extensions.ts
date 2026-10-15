@@ -169,7 +169,7 @@ const STARTER_KIT_OFF: Partial<StarterKitOptions> = {
 const TRIGGERS = "triggers";
 
 /**
- * ПОРЯДОК РЕГИСТРАЦИИ Частей для движка встроенных — привилегия кита, как
+ * ПОРЯДОК РЕГИСТРАЦИИ Extensions встроенных Инструментов — привилегия кита, как
  * порядок поверхностей, и описание его не задаёт. От него зависят:
  *
  * - **ранг Меток** — а с ним вложенность Меток в сохранённом HTML;
@@ -252,12 +252,12 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
  *   `codeBlock` из StarterKit: язык из `codeLanguages.ts` и подсветка
  *   декорациями lowlight (ADR-0051). В Документ по-прежнему уходит только
  *   `class="language-*"` на `<code>`. Оно, как и таблица, приходит
- *   ленивой Частью для движка из описания (`codeBlockTool.ts`, `tableTool.ts`).
+ *   из описания ленивыми Extensions (`codeBlockTool.ts`, `tableTool.ts`).
  */
 export function createEditorExtensions(options: EditorExtensionOptions): Extensions {
   /*
-    Движок — проекция списка описаний (`toolDescriptor.ts`): Часть для движка
-    Инструмента берётся из его описания. Связи между Инструментами (уровни
+    Движок — проекция списка описаний (`toolDescriptor.ts`): Extensions
+    Инструмента берутся из его описания. Связи между Инструментами (уровни
     заголовка, Обёртка в колонке) спрашивают `has` контекста.
   */
   const described = options.tools.descriptors;
@@ -301,7 +301,7 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     ...described.map((descriptor) => descriptor.blocks)
   );
   if (Object.keys(traits).length > 0) extensions.push(blockTraitsExtension(traits));
-  // Части для движка встроенных — в порядке кита, свои — следом в порядке списка.
+  // Extensions встроенных Инструментов — в порядке кита, свои — следом в порядке списка.
   const engineOf = (descriptor: ToolDescriptor) =>
     descriptor.engine?.(context, descriptor.options) ?? [];
   for (const slot of ENGINE_ORDER) {

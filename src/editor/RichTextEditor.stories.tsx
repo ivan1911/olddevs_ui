@@ -2614,7 +2614,7 @@ export const CustomEntryPopovers: Story = {
 
 /*
   Свой Инструмент с загрузчиком на нейтральных данных: врезка-
-  контейнер, Часть для движка которой приходит промисом. Промис решают кнопки
+  контейнер, чьи Extensions приходят промисом. Промис решают кнопки
   истории — так Скелет стоит на экране, сколько нужно, и снимок детерминирован.
   «Повторить» зовёт загрузчик заново: кнопки решают уже новый промис.
 */
@@ -2632,7 +2632,7 @@ const asideTool: CustomTool = {
 
 const ASIDE_SAMPLE =
   "<h2>Loading a tool</h2>" +
-  "<p>Until the engine part of every tool has loaded, the field shows the Skeleton: " +
+  "<p>Until the Extensions of every tool have loaded, the field shows the Skeleton: " +
   "the frame and this document as static HTML, without input.</p>" +
   '<div data-block="acme_aside"><p>An aside: its block comes from a lazily loaded tool.</p></div>' +
   "<ul><li><p>The height of the field does not jump.</p></li></ul>";
