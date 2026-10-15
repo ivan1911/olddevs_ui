@@ -289,9 +289,13 @@ function ScrollingAreaScreen({ html }: ScreenProps) {
         <div className="sticky top-4 w-10 shrink-0">
           <RichTextToc target={view} />
         </div>
+        {/* Прокручиваемая область достижима с клавиатуры, как `ScrollArea` кита (axe `scrollable-region-focusable`). */}
         <div
           data-testid="scroll-area"
-          className="bg-bg-1 max-h-80 min-w-0 flex-1 overflow-y-auto px-4"
+          tabIndex={0}
+          role="region"
+          aria-label="Document"
+          className="bg-bg-1 focus-visible:outline-accent-strong max-h-80 min-w-0 flex-1 overflow-y-auto px-4 focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           <RichTextView ref={view} html={html} className="max-w-[640px]" />
         </div>
