@@ -60,7 +60,7 @@ category: inputs
 status: stable
 source: src/editor/RichTextEditor.tsx
 story: src/editor/RichTextEditor.stories.tsx
-sourceHash: bba3a0af1f9c
+sourceHash: aea52dd61302
 ---
 
 # RichTextEditor

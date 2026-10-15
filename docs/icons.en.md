@@ -2,7 +2,7 @@
 entrypoint: "@olddevs/ui/icons"
 source: src/icons.ts
 status: stable
-sourceHash: 8b6aa04a1c0a
+sourceHash: 3461f8965c66
 ---
 
 # Icons `@olddevs/ui/icons`

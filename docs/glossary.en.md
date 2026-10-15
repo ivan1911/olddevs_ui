@@ -1,5 +1,5 @@
 ---
-sourceHash: 6a5aa1851689
+sourceHash: 3b1bc5a98e83
 ---
 
 # Glossary of `@olddevs/ui`
