@@ -133,12 +133,8 @@ function toolbarLayout() {
           ? "|"
           : (node.getAttribute("aria-label") ?? node.textContent)
       )
-      // Правый край — «Невидимые символы» (OLDSUI-278), «Поиск» (OLDSUI-151) и справочник:
-      // они не группа кита, у них свои тесты.
-      .filter(
-        (name) =>
-          name !== "Keyboard shortcuts" && name !== "Find" && name !== "Invisible characters"
-      )
+      // Правый край — «Поиск» (OLDSUI-151) и справочник: они не группа кита, у них свои тесты.
+      .filter((name) => name !== "Keyboard shortcuts" && name !== "Find")
   );
 }
 

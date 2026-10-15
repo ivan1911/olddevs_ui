@@ -546,7 +546,6 @@ describe("surfaces", () => {
           "|",
           "Undo",
           "Redo",
-          "Invisible characters",
           "Find",
           "Keyboard shortcuts",
         ],
