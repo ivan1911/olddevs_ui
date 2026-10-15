@@ -2207,6 +2207,70 @@ export const DetailsBlockHandleMenu: Story = {
   ),
 };
 
+/*
+  Типографика (Typography, OLDSUI-279): автозамены при наборе, вне Пресетов — явной
+  записью в `tools`. Истории не печатают сами: набор идёт в поле, подсказка — в
+  тексте Документа.
+*/
+const TYPOGRAPHY_SAMPLE =
+  "<h2>Typography</h2>" +
+  '<p>Type at the end of the next paragraph: <code>--</code>, <code>...</code>, <code>-&gt;</code>, <code>(c)</code>, <code>"quoted"</code> or <code>it\'s</code>. Backspace right after a replacement brings the typed characters back.</p>' +
+  "<p>Try it here: </p>";
+
+/**
+ * Автозамены при наборе на расширении Typography из Tiptap: `--` становится тире,
+ * `...` — многоточием, `->` — стрелкой, `"` — кавычкой по языку каталога
+ * сообщений (здесь английский: “ ”). Внутри кода замены не срабатывают.
+ */
+export const Typography: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "typography"]}
+        defaultValue={TYPOGRAPHY_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * Каталог сообщений русский: `"` даёт «ёлочки», а вложенная пара — „лапки“:
+ * `"a "b" c"` становится «a „b“ c».
+ */
+export const TypographyRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor
+          aria-label="Document"
+          tools={[...RICH_TEXT_PRESETS.full, "typography"]}
+          defaultValue={TYPOGRAPHY_SAMPLE}
+        />
+      </div>
+    </UiProvider>
+  ),
+};
+
+/**
+ * Опции: набор кавычек задан явно (`ru` под английским интерфейсом), тире выключено
+ * (`false`), многоточие заменено своей строкой.
+ */
+export const TypographyOptions: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[
+          ...RICH_TEXT_PRESETS.full,
+          tool("typography", { quotes: "ru", emDash: false, ellipsis: "\u22EF" }),
+        ]}
+        defaultValue={TYPOGRAPHY_SAMPLE}
+      />
+    </div>
+  ),
+};
+
 /** Открыть HTML-режим, как только Панель появилась: щелчок по кнопке «HTML». */
 function OpenedSource(props: Partial<RichTextEditorProps>) {
   const root = useRef<HTMLDivElement>(null);
