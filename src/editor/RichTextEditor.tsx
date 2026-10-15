@@ -605,6 +605,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     taskCheckboxRef.current = messages.editor.taskCheckbox;
     const detailsToggleRef = useRef(messages.editor.detailsToggle);
     detailsToggleRef.current = messages.editor.detailsToggle;
+    // Кавычки `typography` читаются в момент ввода: смена каталога движок не пересоздаёт.
+    const quoteSetRef = useRef(messages.editor.typographyQuotes);
+    quoteSetRef.current = messages.editor.typographyQuotes;
     // Загрузчик и строки картинки — тоже через ref: расширение их читает в
     // момент вставки файла и при перерисовке подписи, а не при создании движка.
     const uploadRef = useRef(onUploadImage);
@@ -890,6 +893,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           limit: () => limitRef.current,
           taskCheckbox: (text) => taskCheckboxRef.current({ text }),
           detailsToggle: (text) => detailsToggleRef.current({ text }),
+          quoteSet: () => quoteSetRef.current,
           slash: slashBridge,
           triggers: triggerBindings,
           openPopover: (request) => setToolPopover({ request, open: true }),

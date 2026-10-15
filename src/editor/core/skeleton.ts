@@ -38,6 +38,7 @@ const SCHEMA_ONLY: Omit<EditorExtensionOptions, "tools"> = {
   limit: () => undefined,
   taskCheckbox: (text) => text,
   detailsToggle: (text) => text,
+  quoteSet: () => "en",
   openPopover: quiet,
   focusToolbar: no,
   openBlockMenu: no,

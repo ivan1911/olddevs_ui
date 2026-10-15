@@ -1,3 +1,4 @@
+import type { EditorQuoteSet } from "../../i18n/messages.js";
 import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
 import type { SearchToolState, TocToolState } from "./toolState.js";
@@ -75,9 +76,65 @@ export interface DetailsToolOptions {
 }
 
 /**
+ * Опции Инструмента `typography` (по расширению Typography из Tiptap, ADR-0048).
+ *
+ * Каждое правило Tiptap — Опция с его именем: `false` выключает правило,
+ * строка заменяет символ замены. Кавычки добавляют два решения кита: набор
+ * `quotes` и вложенность «ёлочек» в русском наборе.
+ */
+export interface TypographyToolOptions {
+  /**
+   * Набор кавычек для `"`: `"ru"` — «ёлочки» и вложенные „лапки“, `"en"` —
+   * “ ”. `"auto"` берёт набор у каталога сообщений Редактора
+   * (`UiMessages.editor.typographyQuotes`) и следует за ним при смене каталога;
+   * явный набор нужен, когда язык Документа не совпадает с языком интерфейса.
+   * Одиночный `'` от набора не зависит. По умолчанию `"auto"`.
+   */
+  quotes: "auto" | EditorQuoteSet;
+  /**
+   * Открывающая и закрывающая двойная кавычка. Явная строка перекрывает набор
+   * `quotes` и выключает вложенность: кавычки идут парой, открывающая — после
+   * пробела, начала Блока или скобки. `false` выключает правило. Нет значения —
+   * кавычки набора.
+   */
+  openDoubleQuote?: false | string;
+  closeDoubleQuote?: false | string;
+  /** Одиночные кавычки: `'` после пробела — открывающая, иначе закрывающая (она же апостроф). */
+  openSingleQuote: false | string;
+  closeSingleQuote: false | string;
+  /** `--` → тире. */
+  emDash: false | string;
+  /** `...` → многоточие. */
+  ellipsis: false | string;
+  /** `<-` и `->` → стрелки. */
+  leftArrow: false | string;
+  rightArrow: false | string;
+  /** `(c)`, `(tm)`, `(sm)`, `(r)`. */
+  copyright: false | string;
+  trademark: false | string;
+  servicemark: false | string;
+  registeredTrademark: false | string;
+  /** `1/2 `, `1/4 `, `3/4 ` (с пробелом после дроби) → дроби. */
+  oneHalf: false | string;
+  oneQuarter: false | string;
+  threeQuarters: false | string;
+  /** `+/-` → `±`, `!=` → `≠`. */
+  plusMinus: false | string;
+  notEqual: false | string;
+  /** `<<` и `>>` → «ёлочки». */
+  laquo: false | string;
+  raquo: false | string;
+  /** `2x3` и `2*3` → `2×3`. */
+  multiplication: false | string;
+  /** `^2` и `^3` → `²` и `³`. */
+  superscriptTwo: false | string;
+  superscriptThree: false | string;
+}
+
+/**
  * Типы Инструментов Редактора по имени: что экран задаёт при настройке (`options`),
  * что читает (`state`) и что вызывает (`commands`). Расширяемый интерфейс, как
- * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc` и `details`, а
+ * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc`, `details` и `typography`, а
  * потребитель дописывает свои Инструменты через declaration merging:
  *
  * ```ts
@@ -110,6 +167,10 @@ export interface RichTextTools {
   // Только Опции: Состояния и Команд у сворачиваемого Блока нет.
   details: {
     options: DetailsToolOptions;
+  };
+  // Только Опции: правила ввода, Состояния и Команд у них нет.
+  typography: {
+    options: TypographyToolOptions;
   };
 }
 
@@ -201,7 +262,7 @@ export function mergeOptions(base: object, given: object): object {
  * опции (из JS без типов) заменяется умолчанием, в разработке — один
  * `console.error`; опции своего Инструмента проверяет его автор.
  *
- * Встроенный — только Инструмент с опциями: `search`, `toc` и `details`. Серверно-безопасна.
+ * Встроенный — только Инструмент с опциями: `search`, `toc`, `details` и `typography`. Серверно-безопасна.
  */
 export function tool<Name extends ConfigurableToolName>(
   name: Name,

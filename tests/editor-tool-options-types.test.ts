@@ -61,6 +61,24 @@ test("the options of another tool, an unknown option and a wrong value do not co
   tool("search", { regex: "yes" });
 });
 
+test("typography takes the quote set and a rule as false or a string (OLDSUI-279)", () => {
+  const typography = tool("typography", {
+    quotes: "ru",
+    emDash: false,
+    ellipsis: "...",
+    openDoubleQuote: "[",
+  });
+  expectTypeOf(typography).toEqualTypeOf<ConfiguredTool<"typography">>();
+  expectTypeOf(tool("typography")).toExtend<Tool>();
+  // @ts-expect-error набор кавычек — "auto", "ru" или "en"
+  tool("typography", { quotes: "de" });
+  // @ts-expect-error правило — false или строка, но не true
+  tool("typography", { emDash: true });
+  // @ts-expect-error такого правила у Typography нет
+  tool("typography", { semicolon: ";" });
+  expect(typography).toBeDefined();
+});
+
 test("tool() does not take a name that has no options", () => {
   // @ts-expect-error у `bold` опций нет
   tool("bold", {});
