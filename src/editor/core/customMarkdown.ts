@@ -12,7 +12,7 @@ import { devWarn } from "../../lib/dev-warn.js";
 /*
   Markdown своего Инструмента по умолчанию (ADR-0058, п. 3.1).
 
-  Свои правила Markdown — в Части для движка: `renderMarkdown` и токенайзер
+  Свои правила Markdown — в Extensions: `renderMarkdown` и токенайзер
   Tiptap, отдельного поля в описании нет. Без них `@tiptap/markdown` молча
   выгрузил бы узел пустой строкой — вместе со всем текстом внутри. Поэтому
   Node и Mark без `renderMarkdown` кит дописывает сам: Блок выгружается своим
@@ -31,7 +31,7 @@ export const MARKDOWN_FALLBACK = "kitMarkdownFallback";
 /** Предупреждение о Markdown по умолчанию — одно на Инструмент (`devWarn` помнит текст). */
 export function warnNoMarkdown(tool: string): void {
   devWarn(
-    `custom tool "${tool}" has no Markdown rules (renderMarkdown in its engine part): ` +
+    `custom tool "${tool}" has no Markdown rules (renderMarkdown in its Extensions): ` +
       "getMarkdown() writes its blocks as their content and its atoms as their text"
   );
 }

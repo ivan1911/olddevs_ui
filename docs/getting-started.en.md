@@ -1,5 +1,5 @@
 ---
-sourceHash: 8b639bb36130
+sourceHash: 19bb902470ef
 ---
 
 # Setting up `@olddevs/ui`
@@ -146,7 +146,7 @@ The last seven rows are separate Editor entry points with their own budgets
 them are scenarios (ADR-0058, item 11.7):
 **"start"** is the static graph, what ships immediately and what the `basic` Preset costs; **"full"** is the same
 plus all the lazy chunks of the entry point, what `full` ends up loading. The code Block and the table (absent from `basic`,
-and their Engine part weighs more than 10 kB) load lazily; until they arrive, an Editor that includes them shows a Skeleton.
+and their Extensions weigh more than 10 kB) load lazily; until they arrive, an Editor that includes them shows a Skeleton.
 `npm run size` checks that their modules are not in "start". The kit's own code is measured at "start".
 
 In the scenarios the engine is **included in the measurement** on purpose: the consumer installs Tiptap, but

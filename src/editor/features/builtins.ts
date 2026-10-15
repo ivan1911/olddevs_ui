@@ -148,7 +148,7 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   source: { name: "source" },
   /*
     Ленивые встроенные (ADR-0058, п. 11.1): их нет в `basic`, а
-    Часть для движка тяжелее 10 кБ gzip, поэтому она грузится загрузчиком
+    Extensions тяжелее 10 кБ gzip, поэтому они грузятся загрузчиком
     (`load`) — тем же, что у своего Инструмента.
   */
   codeBlock: CODE_BLOCK_TOOL,

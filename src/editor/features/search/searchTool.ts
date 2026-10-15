@@ -7,7 +7,7 @@ import type { SearchToolOptions } from "../../core/toolOptions.js";
 import { SearchExtension } from "./searchPlugin.js";
 
 /**
- * Поиск и замена на описании Инструмента. Часть для движка —
+ * Поиск и замена на описании Инструмента. Extensions —
  * плагин состояния и подсветки с сочетаниями `Mod+F` и `Mod+Alt+F`; панель
  * держит `RichTextEditor` и открывает её мостом `openSearch`. Кнопка «Поиск» —
  * виджет фиксированной Панели у правого края (`EditorToolbar.tsx`), как

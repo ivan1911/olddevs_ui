@@ -335,10 +335,10 @@ test("the reference lists own shortcuts in a group without a heading after the k
   expect(within(own).getByText("Ctrl+Shift+Y").tagName).toBe("KBD");
 });
 
-test("the reference does not list the keys of the engine part", async () => {
+test("the reference does not list the keys of the Extensions", async () => {
   const user = userEvent.setup();
   const { editor } = renderEditor();
-  // Часть для движка слушает `Mod-Shift-K` на деле — и это не строка справочника.
+  // Extensions слушают `Mod-Shift-K` на деле — и это не строка справочника.
   expect(testStampTool.engine).toHaveLength(1);
   caretAt(editor, 3);
   const { popover } = await openReference(user);

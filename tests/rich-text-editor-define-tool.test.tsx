@@ -361,7 +361,7 @@ test("a definition and a plain CustomTool with one name are a tool set error", (
 });
 
 test("the checks of a set apply to the body that create() returned", () => {
-  // Node без правил Схемы: тело отдало Часть для движка, но не `blocks`.
+  // Node без правил Схемы: тело отдало Extensions, но не `blocks`.
   const loose = defineTool({
     name: "test_loose",
     defaults: {},

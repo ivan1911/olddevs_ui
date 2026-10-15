@@ -80,7 +80,7 @@ export function documentFromJSON(editor: Editor, value: unknown): PmNode | null 
       preserveWhitespace: "full",
     });
   } catch (error) {
-    // Кривой файл — обычный отказ, но бросить может и Часть для движка своего
+    // Кривой файл — обычный отказ, но бросить могут и Extensions своего
     // Инструмента: причина уходит в консоль разработки, иначе её не найти.
     devError("RichTextEditor: a JSON document could not be built from its tree", error);
     return null;

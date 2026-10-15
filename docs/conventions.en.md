@@ -1,5 +1,5 @@
 ---
-sourceHash: 84104315608a
+sourceHash: 502667bd31f1
 ---
 
 # General conventions for `@olddevs/ui`
@@ -285,7 +285,7 @@ already catches itself. A violation after which the component cannot work is not
   (`vi.stubEnv`), and it stays silent on a correct call.
 
 **An error instead of a warning: `devError(message, cause?)`.** Use it when a violation breaks the whole component
-but not the page: the Tool set of `RichTextEditor` is built incorrectly, the loader of an engine part failed,
+but not the page: the Tool set of `RichTextEditor` is built incorrectly, the loader of the Extensions failed,
 `rangeAt` of the Text card threw an exception. The field shows the author a catalog string on its own, and the
 cause goes to the developer through `console.error`, with the same rules as `devWarn`: in development, once per
 text, in English.

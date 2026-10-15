@@ -43,13 +43,13 @@ import { loaded } from "./toolLoader.js";
   Свой Инструмент в движке (ADR-0058, разделы 1 и 2): из
   публичного описания — внутреннее, и проверка набора при сборке.
 
-  ПРАВИЛА СХЕМЫ — ЕДИНСТВЕННЫЙ ИСТОЧНИК HTML. Node и Mark Части для движка кит
+  ПРАВИЛА СХЕМЫ — ЕДИНСТВЕННЫЙ ИСТОЧНИК HTML. Node и Mark из Extensions кит
   дописывает сам: группу и строчность — по виду Блока, разбор HTML — только
   `div|span[data-block="<имя>"]` и `span[data-mark="<имя>"]`, свои атрибуты —
   `data-<имя>` со значением по виду из правил, Признаки Блока — в spec узла.
   Своё правило разбора чужого Блока поэтому не займёт тег кита, а значение вне
   правил не войдёт в Документ ни из `value`, ни из вставки: проверяет код кита,
-  и ослабить проверку Частью для движка нельзя. Поведение — содержимое,
+  и ослабить проверку через Extensions нельзя. Поведение — содержимое,
   `atom`, React-вид, `renderText`, команды — остаётся за потребителем.
 */
 
@@ -67,7 +67,7 @@ function allowed(rule: CustomAttribute, value: unknown): string | null {
   return isAllowedAttributeValue(rule, text) ? text : null;
 }
 
-/** Node или Mark Части для движка, дописанный по своим правилам Схемы. */
+/** Node или Mark из Extensions, дописанный по своим правилам Схемы. */
 function bindRules(extension: AnyExtension, tool: CustomTool): AnyExtension {
   const { name } = extension;
   const block = extension.type === "node" ? blocksOf(tool)[name] : undefined;
@@ -80,7 +80,7 @@ function bindRules(extension: AnyExtension, tool: CustomTool): AnyExtension {
   const config = {
     ...markdownFallback(extension, tool.name),
     parseHTML: () => [{ tag: selector }],
-    // Свой `renderHTML` остаётся у Части для движка (текст внутри атома);
+    // Свой `renderHTML` остаётся у Extensions (текст внутри атома);
     // соглашение с ним сверяет `customToolsError`.
     ...(getExtensionField(extension, "renderHTML") === undefined && {
       renderHTML: ({ node, HTMLAttributes }: { node?: PmNode; HTMLAttributes: object }) =>
@@ -211,7 +211,7 @@ function uiRecords(tool: CustomTool) {
   return { insertItems, blockTypes, blockActions, textCards };
 }
 
-/** Часть для движка: массив сразу или то, что отдал загрузчик; не массив — пустая. */
+/** Extensions: массив сразу или то, что отдал загрузчик; не массив — пустой массив. */
 function engineOf(tool: CustomTool): Extensions {
   const engine = typeof tool.engine === "function" ? loaded(tool.engine) : tool.engine;
   return Array.isArray(engine) ? engine : [];
@@ -222,7 +222,7 @@ export function describeCustomTool(tool: CustomTool): ToolDescriptor {
   return {
     name: tool.name,
     custom: tool,
-    // Загрузчик: правила Схемы ложатся на Часть, когда она пришла (`engineOf`).
+    // Загрузчик: правила Схемы ложатся на Extensions, когда они пришли (`engineOf`).
     load: typeof tool.engine === "function" ? tool.engine : undefined,
     engine: () => engineOf(tool).map((extension) => bindRules(extension, tool)),
     ...uiRecords(tool),
@@ -330,8 +330,8 @@ export interface CustomToolsError {
 /**
  * Ошибка сборки набора Инструментов или `null` (ADR-0058, п. 1.5, 2.4).
  *
- * Имя без Префикса потребителя, совпадение имён, Node или Mark Части для
- * движка без правил Схемы (и правило без них), атрибут, которого нет в
+ * Имя без Префикса потребителя, совпадение имён, Node или Mark из
+ * Extensions без правил Схемы (и правило без них), атрибут, которого нет в
  * правилах, HTML мимо соглашения, Схема, которую движок не собрал, — всё это
  * потеря данных на сервере или в самом Редакторе, и автор должен увидеть её
  * до первого сохранения. `extensions` — полный набор движка, свои уже в нём.
@@ -442,7 +442,7 @@ export function customToolsError(tools: ToolList, extensions: Extensions): Custo
         if (extra) return fail(`has attribute "${extra}" with no rule`);
         /*
           HTML — по соглашению: `toDOM` экземпляра по умолчанию даёт тег и
-          метку с именем. Свой `renderHTML` Части для движка мог уйти от них, и
+          метку с именем. Свой `renderHTML` в Extensions мог уйти от них, и
           тогда Блок не прочитался бы обратно из собственного `getHTML()`.
         */
         const { tag, marker } = customElement(

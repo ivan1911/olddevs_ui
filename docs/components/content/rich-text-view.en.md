@@ -19,7 +19,7 @@ category: content
 status: stable
 source: src/editor/RichTextView.tsx
 story: src/editor/RichTextView.stories.tsx
-sourceHash: 51e64d09a4ae
+sourceHash: bceb9f235ef0
 ---
 
 # RichTextView
@@ -153,7 +153,7 @@ Checked with the real DOMPurify 3.4.16 on jsdom in `tests/editor-sanitize.test.t
 
 #### Custom Tools: the third argument
 
-If the Editor works with custom Tools ([RichTextEditor, "Custom Tool"](../inputs/rich-text-editor.md#свой-инструмент)), the server passes **the same `tools` array** to `sanitizeRichText`. The description of a custom Tool is data, and the module with it is imported on the server: sanitizing reads only the Schema rules (`blocks`, `marks`) and does not touch the Engine part. To keep Tiptap out of the server graph too, keep the description in a module with no extension imports — the Engine part is then supplied by a Loader ([RichTextEditor, "Engine part Loader"](../inputs/rich-text-editor.md#загрузчик-части-для-движка)) or built next to the Editor.
+If the Editor works with custom Tools ([RichTextEditor, "Custom Tool"](../inputs/rich-text-editor.md#свой-инструмент)), the server passes **the same `tools` array** to `sanitizeRichText`. The description of a custom Tool is data, and the module with it is imported on the server: sanitizing reads only the Schema rules (`blocks`, `marks`) and does not touch the Extensions. To keep Tiptap out of the server graph too, keep the description in a module with no extension imports — the Extensions are then supplied by a Loader ([RichTextEditor, "Extensions Loader"](../inputs/rich-text-editor.md#загрузчик-extensions)) or built next to the Editor.
 
 ```ts
 import { sanitizeRichText } from "@olddevs/ui/editor/schema";
@@ -265,7 +265,7 @@ The look comes from the consumer's CSS, which targets the `data-block` selector 
 }
 ```
 
-A node view from the Engine part (a React view) is not used in `RichTextView`: there is no engine here. An inline Atom is shown as whatever is in the HTML: an empty `span` with no text is not visible; a Block can be brought to life in the View with an Island (the next section). The rhythm is checked by `tests/rich-text-paper-css.test.tsx` on the real cascade.
+A node view from the Extensions (a React view) is not used in `RichTextView`: there is no engine here. An inline Atom is shown as whatever is in the HTML: an empty `span` with no text is not visible; a Block can be brought to life in the View with an Island (the next section). The rhythm is checked by `tests/rich-text-paper-css.test.tsx` on the real cascade.
 
 ## Custom Block's Island
 
@@ -301,12 +301,12 @@ export const acmePlayer: CustomTool = {
 
 **How it works and why `RichTextView` stays a server component.** It works the same way as for "Copy" (the section above): the component itself has no state, and the client piece is a separate file with its own directive.
 
-1. The whole Tool description (Engine part, functions) cannot cross the RSC boundary, so `RichTextView` picks only the Islands from `tools`, and only those of Blocks whose `data-block="<name>"` is in the Document (`islandsFor`, `src/editor/core/viewIsland.ts`), and passes references to client components and attribute names to the Island. If there is no `tools`, no `island` on the Block, or no such Block in the Document, there is no Island at all: no anchor `<template>` in the markup, no effect, no loading of the consumer's Island code (the server serializes a reference to a client component only when the Block is there). `island` must be a component from a module with `"use client"`: a server component or a function with a dynamic import is not passed to a client Island.
+1. The whole Tool description (Extensions, functions) cannot cross the RSC boundary, so `RichTextView` picks only the Islands from `tools`, and only those of Blocks whose `data-block="<name>"` is in the Document (`islandsFor`, `src/editor/core/viewIsland.ts`), and passes references to client components and attribute names to the Island. If there is no `tools`, no `island` on the Block, or no such Block in the Document, there is no Island at all: no anchor `<template>` in the markup, no effect, no loading of the consumer's Island code (the server serializes a reference to a client component only when the Block is there). `island` must be a component from a module with `"use client"`: a server component or a function with a dynamic import is not passed to a client Island.
 2. The Block's server HTML is always in the page. Before hydration, before the Island loads and without JS, the reader sees it — that is, the Block's content as it was saved.
 3. After mounting, the Island (`src/editor/ui/BlockIsland.tsx` and the implementation in `BlockIslandSlots.tsx`, with its own `"use client"`) finds the Blocks of **its own** View the same way "Copy" finds its Mount points: going left from its anchor `<template>`, not through the global `document` — a View in a shadow root or an `iframe` works. In every occurrence of the Block, the content is replaced by the Island; when `tools` changes (the Island is gone) or the Block goes away, the content comes back. If a Block with an Island sits inside another Block with an Island, the outer one comes to life: the component gets its whole text, and the inner one stays as its content.
 4. The Island's state is not reset by a parent re-render: the Island looks for Blocks again only when the Document changed, not `tools` (an inline array literal in the parent does not remount the Island). For this, `RichTextView` keeps the `dangerouslySetInnerHTML` object stable (`useMemo` on the Document): a new object on every re-render would make React rewrite the markup together with the inserted Islands and "Copy" buttons.
 
-**The Island is a separate component**, not the Engine part's React view; the Editor does not read the `island` field.
+**The Island is a separate component**, not the React view from the Extensions; the Editor does not read the `island` field.
 
 **Cost.** The Island implementation (`BlockIslandSlots.tsx`) is loaded lazily (`React.lazy`) and is not part of the View's first load: while the chunk is in flight, the Block's server HTML is visible. The static `editorView` measurement includes only the shell and the choice of Islands — about 0.2 kB gzip; Tiptap is still not in the View's graph, which `tests/rich-text-view.test.tsx` checks.
 

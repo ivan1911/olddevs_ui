@@ -12,7 +12,7 @@ afterEach(cleanup);
 
 /**
  * Ленивые встроенные `codeBlock` и `table` (OLDSUI-111, ADR-0058, п. 11.1):
- * их Часть для движка грузится тем же загрузчиком, что у своего Инструмента.
+ * их Extensions грузятся тем же загрузчиком, что у своего Инструмента.
  * `basic`, где их нет, не грузит их вовсе и готов сразу; `full` до загрузки
  * обоих чанков показывает Скелет и доходит до Готовности после них.
  *
@@ -76,7 +76,7 @@ test("full shows the Skeleton until both chunks load, then reaches Readiness wit
   expect(await screen.findByRole("textbox", { name: "Body" }, { timeout: 10_000 })).toBeTruthy();
   expect([...imported].sort()).toEqual(["codeBlock", "table"]);
   expect(onReady).toHaveBeenCalledTimes(1);
-  // Схема собрана с обеими Частями: блок кода с языком и таблица из `value` на месте.
+  // Схема собрана с Extensions обоих Инструментов: блок кода с языком и таблица из `value` на месте.
   expect(ref.current?.getHTML()).toBe(VALUE);
   // Меню «Таблица» и окно вставки — из того же чанка.
   expect(screen.getByRole("button", { name: "Table" })).toBeTruthy();
