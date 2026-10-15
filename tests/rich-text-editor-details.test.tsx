@@ -620,6 +620,13 @@ test("the toggle button is named by the title, expands and collapses the content
   expect(content().hasAttribute("hidden")).toBe(true);
 });
 
+test("the toggle button is not editable: Chrome would move the focus off an editable button on any key", () => {
+  renderEditor({ defaultValue: details("Title", "<p>Body</p>") });
+  expect(
+    screen.getByRole("button", { name: "Details: Title" }).getAttribute("contenteditable")
+  ).toBe("false");
+});
+
 test("without persist toggling leaves the document and the undo history alone", async () => {
   const user = userEvent.setup();
   const { editor } = renderEditor({ defaultValue: details("Title", "<p>Body</p>") });

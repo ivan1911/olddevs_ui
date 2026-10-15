@@ -145,9 +145,26 @@ test("a caret above the block reaches its title with the arrow, never the hidden
 
   await field.getByText("A block keeps its details under a title.").click();
   await page.keyboard.press("End");
+  // The browser reports the caret move a frame or two later, and the Editor then writes its own
+  // selection back to the DOM: an arrow pressed before that is undone. Wait for both.
+  await page.evaluate(
+    () =>
+      new Promise<void>((done) => {
+        const timer = setTimeout(done, 300);
+        document.addEventListener(
+          "selectionchange",
+          () => {
+            clearTimeout(timer);
+            setTimeout(done, 100);
+          },
+          { once: true }
+        );
+      })
+  );
   await settle(page);
+  // The button is not editable, so the caret does not stop on it: one arrow reaches the title.
   await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("ArrowDown");
+  await settle(page);
   await page.keyboard.type("~");
   await expect(block.locator("summary")).toContainText("~");
   await expect(block.locator('div[data-type="detailsContent"]')).not.toContainText("~");
