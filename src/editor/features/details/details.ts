@@ -218,13 +218,35 @@ function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
         const stopEvent = (event: Event) =>
           event.target instanceof Node && !!toggle && toggle.contains(event.target);
         /*
-          Щелчок Tiptap возвращает фокус в Документ — мышь это не задевает, а
-          клавиатуру выбросило бы с кнопки (Enter и Space дают щелчок без
-          координат: `detail` равен нулю). Слушатель стоит после Tiptap и
-          возвращает фокус на кнопку: `aria-expanded` озвучивается там, где человек.
+          Кнопка стоит внутри редактируемого Документа и без этого сама
+          редактируема. Chrome при любой клавише переводит фокус с такой кнопки
+          на редактируемый корень ещё до `keydown`: Enter и Space не доходили до
+          неё, и Блок не раскрывался с клавиатуры. Нередактируемая кнопка
+          сохраняет фокус и получает клавишу.
         */
-        toggle?.addEventListener("click", (event) => {
-          if (event.detail === 0) toggle.focus({ preventScroll: true });
+        toggle?.setAttribute("contenteditable", "false");
+        /*
+          Щелчок Tiptap возвращает фокус в Документ — мышь это не задевает, а
+          клавиатуру выбросило бы с кнопки. Клавиатурный щелчок узнаём по Enter
+          или Space на самой кнопке: `detail` равен нулю и у `click()` из кода
+          (раскрытие вставленного Блока), а там фокус должен остаться в
+          Документе. Фокус Tiptap ставит кадром позже (`requestAnimationFrame`),
+          поэтому и возвращаем его кадром: колбэк стоит в очереди после Tiptap.
+          `aria-expanded` озвучивается там, где человек.
+        */
+        let byKey = false;
+        toggle?.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") byKey = true;
+        });
+        toggle?.addEventListener("blur", () => {
+          byKey = false;
+        });
+        toggle?.addEventListener("click", () => {
+          if (!byKey) return;
+          byKey = false;
+          requestAnimationFrame(() => {
+            if (toggle.isConnected) toggle.focus({ preventScroll: true });
+          });
         });
         return { ...view, stopEvent };
       };
