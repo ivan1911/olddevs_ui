@@ -129,12 +129,12 @@ peer-зависимости внешние, метрика gzip:
 | `cn` и `tableStateToParams`                                                                                 | 0,6 кБ   |
 | одна `Button`                                                                                               | 1,6 кБ   |
 | `DataTable`                                                                                                 | 9,0 кБ   |
-| весь кит целиком (`import *`)                                                                               | 77,1 кБ  |
-| `RichTextEditor` из `@olddevs/ui/editor`, без движка, «старт»                                               | 72,7 кБ  |
-| `RichTextEditor` вместе с движком Tiptap, «старт» (статический граф, `basic`)                               | 297,5 кБ |
-| `RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)                      | 346,6 кБ |
-| `RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён                                       | 12,3 кБ  |
-| `sanitizeRichText` и `richTextSanitizeConfig` из `@olddevs/ui/editor/schema`, движок Tiptap в замер включён | 3,9 кБ   |
+| весь кит целиком (`import *`)                                                                               | 77,2 кБ  |
+| `RichTextEditor` из `@olddevs/ui/editor`, без движка, «старт»                                               | 75,8 кБ  |
+| `RichTextEditor` вместе с движком Tiptap, «старт» (статический граф, `basic`)                               | 305,3 кБ |
+| `RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)                      | 354,5 кБ |
+| `RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён                                       | 12,7 кБ  |
+| `sanitizeRichText` и `richTextSanitizeConfig` из `@olddevs/ui/editor/schema`, движок Tiptap в замер включён | 4,0 кБ   |
 | `highlightCodeBlocks` из `@olddevs/ui/editor/highlight`, вместе с lowlight                                  | 22,6 кБ  |
 | `highlightCodeNodes` из `@olddevs/ui/editor/highlight`, вместе с lowlight                                   | 22,6 кБ  |
 
@@ -143,7 +143,7 @@ peer-зависимости внешние, метрика gzip:
 них — сценарии (ADR-0058, п. 11.7):
 **«старт»** — статический граф, то, что едет сразу и что платит Пресет `basic`; **«полный»** — он же
 плюс все ленивые чанки входа, то, что в итоге грузит `full`. Блок кода и таблица (их нет в `basic`,
-а их Часть для движка тяжелее 10 кБ) грузятся лениво; до их прихода Редактор, в котором они есть,
+а их Extensions тяжелее 10 кБ) грузятся лениво; до их прихода Редактор, в котором они есть,
 показывает Скелет. `npm run size` проверяет, что их модулей в «старте» нет. Код кита меряется на «старте».
 
 В сценариях движок **внесён в замер** намеренно: Tiptap ставит потребитель, но набор его расширений
@@ -155,7 +155,7 @@ peer-зависимости внешние, метрика gzip:
 У `RichTextView` Tiptap и lowlight внесены в замер ради проверки. В его строку входят только
 типографика и Остров кнопки «Копировать» у Блоков кода (кнопка и подсказка кита, каталог сообщений),
 и замер доказывает, что в графе нет ни движка, ни подсветчика. Так же меряется лёгкий вход
-`@olddevs/ui/editor/schema` (3,9 кБ): Схема, `richTextSchema`, очистка `sanitizeRichText` с хуками для
+`@olddevs/ui/editor/schema` (4,0 кБ): Схема, `richTextSchema`, очистка `sanitizeRichText` с хуками для
 DOMPurify, в том числе по правилам своих Инструментов, и `markRange`.
 
 Серверная подсветка `@olddevs/ui/editor/highlight` (22,6 кБ — почти целиком ядро highlight.js и

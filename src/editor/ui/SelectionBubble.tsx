@@ -149,11 +149,8 @@ export function SelectionBubble({
   // «Списки ▾» — сразу за «¶», как на Панели: из «¶» списки ушли.
   const hasLists = hasListMenu(tools);
   // Хвост — кнопки описаний с флагом Меню выделения: проекция списка.
-  const tail = projectRecords<KitToolButton>(
-    tools,
-    BUBBLE_TAIL_ORDER,
-    () => undefined,
-    (descriptor) => descriptor.buttons?.filter((button) => button.selectionMenu)
+  const tail = projectRecords<KitToolButton>(tools, BUBBLE_TAIL_ORDER, (descriptor) =>
+    descriptor.buttons?.filter((button) => button.selectionMenu)
   );
 
   // `aria-keyshortcuts` — путь в плашку из Документа; `Toolbar` react-aria

@@ -2,7 +2,13 @@
 import { act, cleanup, render } from "@testing-library/react";
 import { createRef } from "react";
 import { afterEach, beforeAll, expect, test } from "vitest";
-import { RichTextEditor, type RichTextEditorHandle } from "../src/editor/index.js";
+import {
+  RichTextEditor,
+  tool,
+  type RichTextEditorHandle,
+  type RichTextEditorProps,
+} from "../src/editor/index.js";
+import { TOOLS } from "../src/editor/core/tools.js";
 import { RICH_TEXT_SCHEMA } from "../src/editor/core/schema.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
@@ -19,9 +25,9 @@ afterEach(cleanup);
  * конфигом для санитайзера на сервере потребителя.
  */
 
-function load(html: string): string {
+function load(html: string, tools?: RichTextEditorProps["tools"]): string {
   const ref = createRef<RichTextEditorHandle>();
-  render(<RichTextEditor ref={ref} aria-label="Body" defaultValue={html} />);
+  render(<RichTextEditor ref={ref} aria-label="Body" defaultValue={html} tools={tools} />);
   return ref.current!.editor!.getHTML();
 }
 
@@ -167,8 +173,15 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     "<figcaption>Caption</figcaption></figure>" +
     '<div data-block="layout" data-layout="60-40"><div data-block="column"><p>l</p></div>' +
     '<div data-block="column"><p>r</p></div></div>' +
-    '<div data-block="wrapper" data-tone="warning"><p>w</p></div>';
-  const { tags, attributes } = inventory(load(sample));
+    '<div data-block="wrapper" data-tone="warning"><p>w</p></div>' +
+    // `open` пишется только с Опцией `persist` (OLDSUI-277).
+    '<details open=""><summary>s</summary><div data-type="detailsContent"><p>c</p></div></details>';
+  const { tags, attributes } = inventory(
+    load(sample, [
+      ...TOOLS.filter((name) => name !== "details"),
+      tool("details", { persist: true }),
+    ])
+  );
 
   expect([...ALLOWED_TAGS].filter((tag) => !tags.has(tag))).toEqual([]);
   expect([...ALLOWED_ATTRIBUTES].filter((name) => !attributes.has(name))).toEqual([]);

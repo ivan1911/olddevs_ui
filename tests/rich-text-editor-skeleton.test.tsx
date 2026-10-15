@@ -131,7 +131,7 @@ test("the Skeleton keeps the markup of the Schema: headings, lists, links with a
   lazy.resolve();
   await settle();
 
-  // Движок пришёл со своей Частью: Блок снова Блок, Скелета нет.
+  // Движок пришёл со своими Extensions: Блок снова Блок, Скелета нет.
   const document = screen.getByRole("textbox", { name: "Body" });
   expect(within(document).getByText("Lazy text").closest("[data-block=test_lazy]")).not.toBeNull();
   expect(screen.getAllByText("Lazy text")).toHaveLength(1);

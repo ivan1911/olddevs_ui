@@ -157,7 +157,7 @@ export interface RichTextEditorProps {
    * Редактор готов: движок создан, методы Хэндла (`ref`) уже действуют — например,
    * вставить шаблон. Без аргументов, один раз за монтаж, в том числе при
    * `readOnly` и `disabled`; перерисовка и смена колбэка повторного вызова не
-   * дают. Ждёт загрузчики Частей для движка своих Инструментов. Серверный
+   * дают. Ждёт загрузчики Extensions своих Инструментов. Серверный
    * рендер, ошибка набора `tools` и упавший загрузчик (движка нет) его не вызывают.
    */
   onReady?: () => void;
@@ -261,7 +261,7 @@ export interface RichTextEditorProps {
    * включает Инструмент и без имени, а имя из пресета уступает ей; две записи
    * `tool()` с одним именем — ошибка поля. Неизвестное имя отбрасывается
    * молча; описание с ошибкой (имя без Префикса потребителя, совпадение имён,
-   * Часть для движка мимо правил Схемы) — ошибка поля: движок не создаётся,
+   * Extensions мимо правил Схемы) — ошибка поля: движок не создаётся,
    * значение формы остаётся входящим, причина — в консоли разработчика.
    *
    * `preset` и `tools`, а с ними и Опции Инструментов, читаются при создании
@@ -522,17 +522,17 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       Набор инструментов замораживается при монтаже: из него собрана Схема, а
       Схему у живого движка не поменять. Панель читает тот же замороженный
       набор — иначе новый `tools` показал бы кнопку, которой Схема не знает.
-      Набор — список описаний Инструментов (`features/builtins.ts`), реестры
+      Набор — список описаний Инструментов (`features/builtins.ts`), поверхности
       читают его проекцию.
     */
     const [enabledTools] = useState(() => expandTools(preset, tools));
     /*
-      Загрузчики Частей для движка (ADR-0058, п. 11.3–11.6). Загрузка стартует
+      Загрузчики Extensions (ADR-0058, п. 11.3–11.6). Загрузка стартует
       в рендере, а не в эффекте: с первого рендера в браузере, ещё до монтажа;
       на сервере — никогда. Промис кэширован на загрузчике (`toolLoader.ts`):
       повторный рендер и второй Редактор его не зовут. Набор движка собирается,
       только когда отработали все (`ready`): Схема фиксируется при создании, и
-      Блоки из `value` без Части для движка потерялись бы при разборе.
+      Блоки из `value` без Extensions потерялись бы при разборе.
     */
     const loaders = enabledTools.descriptors.flatMap((descriptor) => descriptor.load ?? []);
     const loads = loaders.map((loader) =>
@@ -603,6 +603,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     placeholderRef.current = placeholderText;
     const taskCheckboxRef = useRef(messages.editor.taskCheckbox);
     taskCheckboxRef.current = messages.editor.taskCheckbox;
+    const detailsToggleRef = useRef(messages.editor.detailsToggle);
+    detailsToggleRef.current = messages.editor.detailsToggle;
     // Загрузчик и строки картинки — тоже через ref: расширение их читает в
     // момент вставки файла и при перерисовке подписи, а не при создании движка.
     const uploadRef = useRef(onUploadImage);
@@ -887,6 +889,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           placeholder: () => placeholderRef.current,
           limit: () => limitRef.current,
           taskCheckbox: (text) => taskCheckboxRef.current({ text }),
+          detailsToggle: (text) => detailsToggleRef.current({ text }),
           slash: slashBridge,
           triggers: triggerBindings,
           openPopover: (request) => setToolPopover({ request, open: true }),
@@ -917,7 +920,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       `value`. Движок тогда собирается из запасного набора и пустым, а наружу
       не выходит (`editor` ниже — `null`, как до монтажа): Хэндл тихий,
       скрытое поле несёт входящее значение, `onChange` молчит. Набор с
-      загрузчиками проверяется, когда они отработали: Часть для движка — их итог.
+      загрузчиками проверяется, когда они отработали: Extensions — их итог.
     */
     const toolsError = useMemo(
       () => extensions && customToolsError(enabledTools, extensions),

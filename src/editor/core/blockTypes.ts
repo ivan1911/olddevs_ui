@@ -1,20 +1,8 @@
 "use client";
 
-import type { ChainedCommands } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
-import type { ComponentType } from "react";
-import {
-  Heading1Icon,
-  Heading2Icon,
-  Heading3Icon,
-  Heading4Icon,
-  ListIcon,
-  OrderedListIcon,
-  TaskListIcon,
-  TextIcon,
-  type IconProps,
-} from "../../icons.js";
+import { TextIcon } from "../../icons.js";
 import type { PrefixedName } from "./customTool.js";
 import type { InsertItem } from "./insertItems.js";
 import { shortcutKeys } from "./shortcuts.js";
@@ -30,8 +18,8 @@ import type { Tool } from "./tools.js";
  * заново — одной транзакцией, на одну отмену. Своего пути смены типа у меню
  * нет: два пути разошлись бы на первом же списке внутри цитаты.
  *
- * Отдельный реестр, а не выборка из `INSERT_ITEMS`, потому что у меню «¶»
- * другие слова и иконки: «Текст» с иконкой `T`, а не
+ * Пункты «¶» — поле описания `blockTypes`, а не выборка из `insertItems`,
+ * потому что у меню «¶» могут быть другие слова и иконки: «Текст» с иконкой `T`, а не
  * «Абзац» с пилкроу, и уровень заголовка на иконке. Блока кода в нём нет — у
  * него своя кнопка Панели.
  */
@@ -61,70 +49,24 @@ export function turnIntoTypes(
     .map((item) => ({ ...item, section: "turnInto", tool, keys: item.keys ?? [] }));
 }
 
-const heading = (level: 1 | 2 | 3 | 4, icon: ComponentType<IconProps>): BlockTypeItem => ({
-  id: `heading${level}`,
-  section: "turnInto",
-  tool: "heading",
-  alsoTool: level === 1 ? "heading1" : undefined,
-  label: (m) => m.heading({ level }),
-  icon,
-  keys: shortcutKeys(`h${level}`),
-  run: (chain: ChainedCommands) => chain.setHeading({ level }),
-});
-
 /**
- * Пункты «¶» по порядку показа. Сочетания — подписи из общей таблицы
- * (`shortcuts.ts`), по тем же id, что у Меню вставки и справочника:
- * вешают их расширения движка, и подпись обязана совпадать с ними.
+ * «Текст» — пункт кита, а не Инструмента: абзац есть в любом наборе. Сочетание —
+ * подпись из общей таблицы (`shortcuts.ts`): вешает его расширение движка.
  */
-export const BLOCK_TYPE_ITEMS: readonly BlockTypeItem[] = [
-  {
-    id: "text",
-    section: "turnInto",
-    tool: null,
-    label: (m) => m.textBlock,
-    icon: TextIcon,
-    keys: shortcutKeys("paragraph"),
-    run: (chain) => chain.setParagraph(),
-  },
-  heading(1, Heading1Icon),
-  heading(2, Heading2Icon),
-  heading(3, Heading3Icon),
-  heading(4, Heading4Icon),
-  {
-    id: "bulletList",
-    section: "turnInto",
-    tool: "bulletList",
-    label: (m) => m.bulletList,
-    icon: ListIcon,
-    keys: shortcutKeys("bulletList"),
-    run: (chain) => chain.toggleBulletList(),
-  },
-  {
-    id: "orderedList",
-    section: "turnInto",
-    tool: "orderedList",
-    label: (m) => m.orderedList,
-    icon: OrderedListIcon,
-    keys: shortcutKeys("orderedList"),
-    run: (chain) => chain.toggleOrderedList(),
-  },
-  {
-    id: "taskList",
-    section: "turnInto",
-    tool: "taskList",
-    label: (m) => m.taskList,
-    icon: TaskListIcon,
-    keys: shortcutKeys("taskList"),
-    run: (chain) => chain.toggleTaskList(),
-  },
-];
+const TEXT_ITEM: BlockTypeItem = {
+  id: "text",
+  section: "turnInto",
+  tool: null,
+  label: (m) => m.textBlock,
+  icon: TextIcon,
+  keys: shortcutKeys("paragraph"),
+  run: (chain) => chain.setParagraph(),
+};
 
 /**
  * Место встроенных Инструментов в «¶». «Текст» стоит первым всегда: абзац —
- * не Инструмент. Держится отдельно от `BLOCK_TYPE_ITEMS`: Инструмент,
- * переехавший на описание (`toolDescriptor.ts`), уходит из реестра, а место
- * остаётся здесь.
+ * не Инструмент. Пункты живут в описаниях, а место на поверхности — привилегия
+ * кита.
  */
 const BLOCK_TYPE_ORDER: readonly Tool[] = [
   "heading",
@@ -135,18 +77,12 @@ const BLOCK_TYPE_ORDER: readonly Tool[] = [
 ];
 
 /**
- * Пункты «¶» набора — проекция списка описаний: у переехавшего Инструмента —
- * из описания (`blockTypes`), у остальных — из `BLOCK_TYPE_ITEMS`.
+ * Пункты «¶» набора: «Текст» и проекция списка описаний (`blockTypes`).
  */
 function blockTypeItemsOf(tools: ToolList): readonly BlockTypeItem[] {
   return [
-    ...BLOCK_TYPE_ITEMS.filter((item) => item.tool === null),
-    ...projectRecords(
-      tools,
-      BLOCK_TYPE_ORDER,
-      (tool) => BLOCK_TYPE_ITEMS.filter((item) => item.tool === tool),
-      (descriptor) => descriptor.blockTypes
-    ),
+    TEXT_ITEM,
+    ...projectRecords(tools, BLOCK_TYPE_ORDER, (descriptor) => descriptor.blockTypes),
   ].filter((item) => item.alsoTool === undefined || tools.has(item.alsoTool));
 }
 

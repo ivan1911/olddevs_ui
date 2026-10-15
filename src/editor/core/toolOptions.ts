@@ -60,9 +60,24 @@ export interface TocToolOptions {
 }
 
 /**
+ * Опции Инструмента `details` (по расширению Details из Tiptap, ADR-0048).
+ */
+export interface DetailsToolOptions {
+  /**
+   * Пишется ли открытость Блока в Документ: открытый Блок сохраняется с
+   * `open` и открытым же отдаётся в `RichTextView`. По умолчанию `false`, как
+   * у Tiptap: раскрытый при правке Блок не публикуется раскрытым без спроса,
+   * открытость живёт только в показе (в Редакторе и в Просмотре читатель
+   * открывает Блок сам). Со `true` Блок, вставленный из Меню вставки, сразу
+   * открыт и пишет `open`, а `open` из `value` и вставки читается.
+   */
+  persist: boolean;
+}
+
+/**
  * Типы Инструментов Редактора по имени: что экран задаёт при настройке (`options`),
  * что читает (`state`) и что вызывает (`commands`). Расширяемый интерфейс, как
- * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search` и `toc`, а
+ * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc` и `details`, а
  * потребитель дописывает свои Инструменты через declaration merging:
  *
  * ```ts
@@ -91,6 +106,10 @@ export interface RichTextTools {
     options: TocToolOptions;
     state: TocToolState;
     commands: TocToolCommands;
+  };
+  // Только Опции: Состояния и Команд у сворачиваемого Блока нет.
+  details: {
+    options: DetailsToolOptions;
   };
 }
 
@@ -182,7 +201,7 @@ export function mergeOptions(base: object, given: object): object {
  * опции (из JS без типов) заменяется умолчанием, в разработке — один
  * `console.error`; опции своего Инструмента проверяет его автор.
  *
- * Встроенный — только Инструмент с опциями: `search` и `toc`. Серверно-безопасна.
+ * Встроенный — только Инструмент с опциями: `search`, `toc` и `details`. Серверно-безопасна.
  */
 export function tool<Name extends ConfigurableToolName>(
   name: Name,

@@ -108,7 +108,7 @@ test("a tool without Commands and an unknown name give null", () => {
 test("before the engine exists handle.tool() is null", async () => {
   const lazy = testLazyTool();
   const { ref } = renderEditor({ tools: [...RICH_TEXT_PRESETS.full, lazy.tool] });
-  // Загрузчик ещё не отдал Часть для движка: движка нет, Хэндл тихий.
+  // Загрузчик ещё не отдал Extensions: движка нет, Хэндл тихий.
   expect(ref.current?.editor).toBeNull();
   expect(ref.current?.tool("search")).toBeNull();
 

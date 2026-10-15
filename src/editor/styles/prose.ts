@@ -271,6 +271,53 @@ const WRAPPER_CLASS =
   "[&_[data-block=wrapper][data-tone=danger]]:border-(--rte-tone-danger-border)";
 
 /**
+ * Сворачиваемый Блок (Details): в Просмотре — родной `details > summary` с
+ * `div[data-type=detailsContent]`, в Редакторе — `div[data-type=details]` с
+ * кнопкой раскрытия, заголовком `summary` и содержимым в обёртке (представление
+ * узла Tiptap). Рамка, отступы и ритм Блоков внутри — одни в обоих видах, чтобы
+ * читатель видел то, что набирал автор.
+ *
+ * ПРОСМОТР — БЕЗ JAVASCRIPT. Раскрывает и скрывает сам браузер, маркер
+ * `summary` — его, родной: он доступен скринридеру и с клавиатуры (Tab, Enter,
+ * Space) без единой строки кита. Свёрнутое содержимое прячет `details`, а не
+ * наше правило.
+ *
+ * РЕДАКТОР. Маркер `summary` снят (`list-none`): его заменяет кнопка слева,
+ * шеврон которой рисует CSS (`border-r` + `border-b`, повёрнутые на 45°), а
+ * раскрытость — класс `is-open` на `div`. Кнопка — настоящий `button` с именем
+ * из каталога и `aria-expanded`. Скрытое содержимое прячет атрибут `hidden`,
+ * который ставит само представление Tiptap.
+ */
+const DETAILS_BOX =
+  "[&_:is(details,div[data-type=details])]:rounded-(--rte-radius) " +
+  "[&_:is(details,div[data-type=details])]:border [&_:is(details,div[data-type=details])]:border-(--rte-hr) " +
+  "[&_:is(details,div[data-type=details])]:px-3 [&_:is(details,div[data-type=details])]:py-2 " +
+  "[&_summary]:font-medium [&_details>summary]:cursor-pointer " +
+  "[&_div[data-type=detailsContent]>*:not(:last-child)]:mb-3 " +
+  "[&_div[data-type=detailsContent]>:is(h1,h2,h3,h4):not(:first-child)]:mt-6 " +
+  "[&_details[open]>summary]:mb-2 ";
+
+const DETAILS_EDITOR =
+  "[&_div[data-type=details]]:flex [&_div[data-type=details]]:items-start " +
+  "[&_div[data-type=details]]:gap-1.5 " +
+  "[&_div[data-type=details]>div]:min-w-0 [&_div[data-type=details]>div]:flex-1 " +
+  "[&_div[data-type=details]_summary]:list-none " +
+  "[&_div[data-type=details].is-open>div>summary]:mb-2 " +
+  "[&_div[data-type=details]>button]:relative [&_div[data-type=details]>button]:mt-px " +
+  "[&_div[data-type=details]>button]:size-6 [&_div[data-type=details]>button]:shrink-0 " +
+  "[&_div[data-type=details]>button]:cursor-pointer [&_div[data-type=details]>button]:rounded-(--rte-radius) " +
+  "[&_div[data-type=details]>button]:text-(--rte-secondary) " +
+  "[&_div[data-type=details]>button]:before:absolute [&_div[data-type=details]>button]:before:left-1/2 " +
+  "[&_div[data-type=details]>button]:before:top-1/2 [&_div[data-type=details]>button]:before:size-1.5 " +
+  "[&_div[data-type=details]>button]:before:-translate-x-1/2 [&_div[data-type=details]>button]:before:-translate-y-1/2 " +
+  "[&_div[data-type=details]>button]:before:-rotate-45 [&_div[data-type=details]>button]:before:border-r-2 " +
+  "[&_div[data-type=details]>button]:before:border-b-2 [&_div[data-type=details]>button]:before:border-current " +
+  "[&_div[data-type=details]>button]:before:content-[''] " +
+  "[&_div[data-type=details].is-open>button]:before:rotate-45";
+
+const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
+
+/**
  * Свой Блок потребителя (ADR-0058, п. 3.2): `div[data-block]` с
  * именем, которого нет у кита. Кит даёт ему ритм абзаца и больше ничего — вид
  * задаёт CSS потребителя по `data-block` и токенам кита. Сам Блок отступ уже
@@ -400,6 +447,8 @@ const PROSE_RULES =
   LAYOUT_CLASS +
   " " +
   WRAPPER_CLASS +
+  " " +
+  DETAILS_CLASS +
   " " +
   CUSTOM_BLOCK_CLASS;
 

@@ -48,6 +48,7 @@ export type {
 } from "./core/toolDefinition.js";
 export type {
   ConfiguredTool,
+  DetailsToolOptions,
   RichTextTools,
   SearchToolOptions,
   TocLevel,

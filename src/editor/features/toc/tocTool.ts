@@ -5,7 +5,7 @@ import type { TocToolCommands } from "../../core/toolCommands.js";
 import type { TocLevel, TocToolOptions } from "../../core/toolOptions.js";
 
 /**
- * Оглавление на описании Инструмента (ADR-0068). Части для движка и UI-записей
+ * Оглавление на описании Инструмента (ADR-0068). Extensions и UI-записей
  * у него нет: полосу и список рисует `RichTextEditor` в левом поле рамки
  * (`TocCore`, ленивым чанком), а описание несёт Опции — умолчания и проверки,
  * из которых `expandTools` собирает Опции Редактора.

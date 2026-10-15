@@ -1,4 +1,5 @@
 import type { Editor, Extensions } from "@tiptap/core";
+import type { StarterKitOptions } from "@tiptap/starter-kit";
 import type { ComponentType, ReactNode } from "react";
 import type { UiMessages } from "../../i18n/messages.js";
 import type { IconProps } from "../../icons.js";
@@ -21,7 +22,7 @@ import type { Tool } from "./tools.js";
  * Внутреннее описание встроенного Инструмента (ADR-0058, п. 10).
  *
  * НАДФОРМА. Тип — надмножество будущего публичного описания своего
- * Инструмента: те же Часть для движка, Признаки Блока и UI-записи, а сверху
+ * Инструмента: те же Extensions, Признаки Блока и UI-записи, а сверху
  * привилегии кита, которых своему Инструменту не дают (теги Схемы кита,
  * модель содержимого, виджеты Панели, своё место в порядке поверхности).
  * Наружу описания встроенных не экспортируются: публичны только имена и
@@ -31,36 +32,36 @@ import type { Tool } from "./tools.js";
  * (`expandTools`, `features/builtins.ts`), и реестры по имени — движок, Меню
  * вставки, «¶», справочник сочетаний и следующие за ними — читают его
  * проекцию (`projectRecords`). Правило «выключенный Инструмент убирает и
- * кнопку, и Схему» этим держится само: записи и Часть для движка Инструмента,
+ * кнопку, и Схему» этим держится само: записи и Extensions Инструмента,
  * которого нет в списке, не попадают никуда.
  *
- * ПЕРЕЕЗД ПОСТЕПЕННЫЙ. Встроенный Инструмент без описания стоит в списке
- * заглушкой `legacy` и берётся из старых реестров (`INSERT_ITEMS`, `SHORTCUTS`,
- * `createEditorExtensions`…). Переезд Инструмента — его записи удаляются из
- * старых реестров и ложатся в описание в `BUILTIN_TOOLS`; место на поверхности
- * при этом не меняется — его держит порядок кита этой поверхности
- * (`INSERT_ORDER`, `BLOCK_TYPE_ORDER`), а не реестр записей.
+ * У КАЖДОГО ВСТРОЕННОГО — ОПИСАНИЕ (OLDSUI-273): `BUILTIN_TOOLS` полон, и
+ * компилятор не даст добавить имя в `TOOLS` без описания. Место записи на
+ * поверхности держит порядок кита этой поверхности (`INSERT_ORDER`,
+ * `BLOCK_TYPE_ORDER`, `SHORTCUT_ORDER`, `ENGINE_ORDER`), а не описание. Виджеты
+ * Панели и Меню выделения, «…», подменю Ручки и поповеры картинки остаются
+ * компонентами кита и спрашивают набор по имени (`tools.has`).
  */
 export interface ToolDescriptor {
   /** Имя Инструмента — то же, что в `tools`; у своего — с Префиксом потребителя. */
   name: Tool | PrefixedName;
   /**
-   * Заглушка не переехавшего встроенного: его записи и Часть для движка — в
-   * старых реестрах. Остальные поля у заглушки пусты, кроме `blockActions`:
-   * Действия над Блоком переезжают отдельно от остального и
-   * читаются у всех описаний списка, переехавших и нет (`blockActionsOf`).
-   */
-  legacy?: true;
-
-  /**
-   * Часть для движка: расширения Tiptap Инструмента — Node, Mark, Extension,
+   * Extensions: расширения Tiptap Инструмента — Node, Mark, Extension,
    * плагины ProseMirror. Функция от контекста — привилегия кита: встроенным
    * нужны мосты `RichTextEditor` (поповер ссылки, Меню вставки, `Alt+F10`).
    * Второй аргумент — Опции этого Редактора (`options`), если они есть.
    */
   engine?: (context: ToolEngineContext, options?: object) => Extensions;
   /**
-   * Загрузчик Части для движка (`toolLoader.ts`): движок создаётся после
+   * Доля StarterKit: ключи `StarterKit.configure`, которые включают Блоки и
+   * Метки Инструмента (`bold: {}`, `heading: { levels }`). Привилегия кита.
+   * Доли всех описаний сливаются в ОДИН `StarterKit` (`extensions.ts`): так
+   * порядок Меток в сохранённом HTML и список пакетов движка остаются теми же,
+   * что при StarterKit целиком. Ключ, которого нет ни в одной доле, выключен.
+   */
+  starterKit?: (context: ToolEngineContext) => Partial<StarterKitOptions>;
+  /**
+   * Загрузчик Extensions (`toolLoader.ts`): движок создаётся после
    * загрузчиков всех описаний списка, и `engine` читает отданное `loaded`.
    */
   load?: ToolLoader;
@@ -134,7 +135,7 @@ export interface ToolDescriptor {
   /** Пункты виджета «¶» Панели: у него свои слова и иконки (`blockTypes.ts`). */
   blockTypes?: readonly BlockTypeItem[];
   /**
-   * Строки справочника сочетаний для клавиш, которые вешает Часть для движка
+   * Строки справочника сочетаний для клавиш, которые вешают Extensions
    * (`shortcuts.ts`): у записи сочетание — её поле, а у Метки из движка — нет.
    */
   shortcuts?: readonly ShortcutCommand[];
@@ -189,8 +190,16 @@ export interface ToolBridge {
 /** Символ-триггер Инструмента в списке описаний: публичная запись и имя владельца для сообщений. */
 export type TriggerRecord = CustomTrigger & { tool: string };
 
-/** Что Часть для движка встроенного получает от `RichTextEditor`. */
-export type ToolEngineContext = Omit<EditorExtensionOptions, "tools">;
+/**
+ * Что Extensions встроенного Инструмента получают от `RichTextEditor`: мосты и —
+ * вместо всего набора — вопрос `has`. Связи между Инструментами (уровни
+ * заголовка при `heading1`, Обёртка в колонке Раскладки, очистка формата)
+ * спрашивают его, а не список описаний.
+ */
+export type ToolEngineContext = Omit<EditorExtensionOptions, "tools"> & {
+  /** Включён ли Инструмент кита в этом Редакторе. */
+  has: (tool: Tool) => boolean;
+};
 
 type EditorMessages = UiMessages["editor"];
 
@@ -276,24 +285,38 @@ export type ToolButton = ToolButtonFields &
  * Кнопка встроенного Инструмента: публичная форма и привилегии кита, которых
  * своей кнопке не дают.
  */
-export type KitToolButton = ToolButton & {
-  /**
-   * Группа справочника сочетаний. Нет — строка встаёт в группу Инструмента без
-   * заголовка после групп кита, как у своего Инструмента.
-   */
-  shortcutGroup?: ShortcutGroup;
-  /** Рамка поповера, если она не умолчание кита (у кнопки, по содержимому). */
-  popoverFrame?: {
+export type KitToolButton = ToolButton &
+  (
+    | {
+        /**
+         * Сочетание, которое вешает не кит, а Extensions (`undoRedo` у
+         * StarterKit, `Mod-B` у Метки): только подпись — подсказка,
+         * `aria-keyshortcuts` и строка справочника. Взаимоисключимо с
+         * `shortcut`: та и вешает клавишу, и подписывает её, и две привязки
+         * одной клавиши спорили бы.
+         */
+        keys: readonly string[];
+        shortcut?: undefined;
+      }
+    | { keys?: undefined }
+  ) & {
     /**
-     * `selection` — рамка всегда у выделения, и щелчком по кнопке тоже: поповер
-     * правит выделенный текст, и стоит у него при любом способе открыть
-     * (поповер ссылки).
+     * Группа справочника сочетаний. Нет — строка встаёт в группу Инструмента без
+     * заголовка после групп кита, как у своего Инструмента.
      */
-    anchor?: "selection";
-    /** Классы размера и отступов рамки вместо умолчания `w-auto p-2`. */
-    className?: string;
+    shortcutGroup?: ShortcutGroup;
+    /** Рамка поповера, если она не умолчание кита (у кнопки, по содержимому). */
+    popoverFrame?: {
+      /**
+       * `selection` — рамка всегда у выделения, и щелчком по кнопке тоже: поповер
+       * правит выделенный текст, и стоит у него при любом способе открыть
+       * (поповер ссылки).
+       */
+      anchor?: "selection";
+      /** Классы размера и отступов рамки вместо умолчания `w-auto p-2`. */
+      className?: string;
+    };
   };
-};
 
 /** Действие над Блоком: пункт меню Ручки Блока, в секции Инструмента перед «Удалить». */
 export interface BlockAction {
@@ -338,9 +361,9 @@ export interface TextCardRecord {
  * Развёрнутый набор Инструментов: список описаний и — как `Set` — имена
  * включённых Инструментов кита.
  *
- * Набор имён — тоже проекция списка: реестры, которые ещё фильтруют свои
- * записи по имени (`tools.has("table")`), читают его без правок. Свои
- * Инструменты есть только в списке описаний.
+ * Набор имён — тоже проекция списка: виджеты кита, которые спрашивают набор по
+ * имени (`tools.has("table")`), читают его без правок. Свои Инструменты есть
+ * только в списке описаний.
  */
 export interface ToolList extends ReadonlySet<Tool> {
   /**
@@ -350,8 +373,8 @@ export interface ToolList extends ReadonlySet<Tool> {
    */
   readonly error?: string;
   /**
-   * Описания включённых Инструментов: встроенные в порядке кита (у не
-   * переехавших — заглушки `legacy`), за ними свои в порядке `tools`.
+   * Описания включённых Инструментов: встроенные в порядке кита, за ними
+   * свои в порядке `tools`.
    */
   readonly descriptors: readonly ToolDescriptor[];
 }
@@ -378,11 +401,6 @@ export function toolOptions<Name extends ConfigurableToolName>(
 ): RichTextTools[Name]["options"] | undefined {
   const descriptor = tools.descriptors.find((candidate) => candidate.name === name);
   return descriptor?.options as RichTextTools[Name]["options"] | undefined;
-}
-
-/** Описания переехавших Инструментов набора — в порядке списка. */
-export function describedTools(tools: ToolList): readonly ToolDescriptor[] {
-  return tools.descriptors.filter((descriptor) => !descriptor.legacy);
 }
 
 /**
@@ -429,7 +447,6 @@ export function blockActionVisible(
  * - `order` — место встроенных Инструментов на поверхности, привилегия кита.
  *   Инструменты набора вне него идут следом, в порядке списка: так встаёт
  *   запись, у которой своего места на поверхности нет.
- * - `legacy` — старый реестр: записи Инструмента, ещё не переехавшего на описание.
  * - `own` — поле описания с записями этой поверхности.
  *
  * Фильтра по включённым Инструментам здесь нет: его держит сам список.
@@ -437,14 +454,10 @@ export function blockActionVisible(
 export function projectRecords<R>(
   tools: ToolList,
   order: readonly Tool[],
-  legacy: (name: Tool) => readonly R[] | undefined,
   own: (descriptor: ToolDescriptor) => readonly R[] | undefined
 ): R[] {
   const list = tools.descriptors;
   const placed = order.flatMap((name) => list.filter((descriptor) => descriptor.name === name));
   const rest = list.filter((descriptor) => !(order as readonly string[]).includes(descriptor.name));
-  return [...placed, ...rest].flatMap(
-    // Заглушка `legacy` бывает только у встроенного: имя — из `Tool`.
-    (descriptor) => (descriptor.legacy ? legacy(descriptor.name as Tool) : own(descriptor)) ?? []
-  );
+  return [...placed, ...rest].flatMap((descriptor) => own(descriptor) ?? []);
 }

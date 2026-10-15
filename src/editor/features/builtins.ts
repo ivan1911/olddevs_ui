@@ -2,13 +2,30 @@
 
 import Blockquote from "@tiptap/extension-blockquote";
 import HorizontalRule from "@tiptap/extension-horizontal-rule";
-import { DividerIcon, QuoteIcon, UnwrapIcon } from "../../icons.js";
+import { DividerIcon, QuoteIcon } from "../../icons.js";
 import { turnIntoTypes } from "../core/blockTypes.js";
 import type { InsertItem } from "../core/insertItems.js";
-import type { ShortcutCommand } from "../core/shortcuts.js";
+import { INSERT_MENU_TOOL } from "../core/insertMenuTool.js";
+import { SHORTCUT_KEYS, type ShortcutCommand } from "../core/shortcuts.js";
+import { ALIGN_TOOL, COLOR_TOOL, HIGHLIGHT_TOOL } from "./color/colorTools.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
+import { DETAILS_TOOL } from "./details/detailsTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
+import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
+import { HISTORY_TOOL } from "./history/historyTool.js";
+import { IMAGE_TOOL } from "./image/imageTool.js";
+import { LAYOUT_TOOL } from "./layout/layoutTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
+import { BULLET_LIST_TOOL, ORDERED_LIST_TOOL, TASK_LIST_TOOL } from "./lists/listTools.js";
+import {
+  BOLD_TOOL,
+  CODE_TOOL,
+  ITALIC_TOOL,
+  STRIKE_TOOL,
+  SUBSCRIPT_TOOL,
+  SUPERSCRIPT_TOOL,
+  UNDERLINE_TOOL,
+} from "./marks/markTools.js";
 import { devError } from "../../lib/dev-warn.js";
 import type { ToolEntry } from "../core/customTool.js";
 import { describeCustomTool, describeDefinition } from "../core/customToolEngine.js";
@@ -18,14 +35,14 @@ import { SEARCH_TOOL } from "./search/searchTool.js";
 import { TABLE_TOOL } from "./table/tableTool.js";
 import { TOC_TOOL } from "./toc/tocTool.js";
 import { resolveTools, TOOLS, type RichTextEditorPreset, type Tool } from "../core/tools.js";
-import { unwrapWrapperAt, WRAPPER_NODE } from "./wrapper/wrapper.js";
+import { WRAPPER_TOOL } from "./wrapper/wrapperTool.js";
 
 /** Сочетание цитаты: одна запись на справочник, Меню вставки и «¶». */
 const BLOCKQUOTE_SHORTCUT: ShortcutCommand = {
   id: "blockquote",
   group: "blockType",
   tool: "blockquote",
-  keys: ["mod", "shift", "B"],
+  keys: SHORTCUT_KEYS.blockquote,
   label: (m) => m.blockquote,
 };
 
@@ -43,47 +60,27 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
 ];
 
 /**
- * Описания встроенных Инструментов, переехавших со старых реестров
- * (ADR-0058, п. 10; тип — `toolDescriptor.ts`).
+ * Описания встроенных Инструментов (ADR-0058, п. 10; тип — `toolDescriptor.ts`).
  *
- * Сюда Инструмент переезжает целиком: его записи удаляются из старых
- * реестров, и с этой минуты он берётся только из описания. Кого здесь нет, тот
- * стоит в развёрнутом списке заглушкой `legacy` и по-прежнему живёт в старых
- * реестрах. `image`, `layout` и виджеты Панели переезжают постепенно, и выпуск
- * их не ждёт.
+ * Запись полная, по каждому имени `TOOLS` (OLDSUI-273): встроенный Инструмент
+ * берётся только из описания, старых реестров по имени нет, и компилятор не
+ * пропустит новое имя без описания. Виджеты Панели и Меню выделения остаются
+ * компонентами кита и спрашивают набор по имени.
  */
-export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
+export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   search: SEARCH_TOOL,
   // Оглавление несёт только Опции: полоса и список рисуются в `RichTextEditor`.
   toc: TOC_TOOL,
+  layout: LAYOUT_TOOL,
+  color: COLOR_TOOL,
+  highlight: HIGHLIGHT_TOOL,
+  align: ALIGN_TOOL,
+  wrapper: WRAPPER_TOOL,
+  details: DETAILS_TOOL,
   /*
-    Обёртка переехала только Действием над Блоком, поэтому
-    `legacy`: её узел, вставка и сочетания остаются в старых реестрах. «Тон ›» —
-    меню-виджет, своего Инструмента у него нет, и он собирается в Ручке по-старому.
-  */
-  wrapper: {
-    name: "wrapper",
-    legacy: true,
-    blockActions: [
-      {
-        id: "unwrap",
-        label: (messages) => messages.unwrap,
-        icon: UnwrapIcon,
-        blocks: [WRAPPER_NODE],
-        // Одна правка: Блоки встают на место Обёртки, отмена — одна.
-        run: (editor, pos) =>
-          void editor
-            .chain()
-            .focus()
-            .command(({ tr }) => unwrapWrapperAt(tr, pos))
-            .run(),
-      },
-    ],
-  },
-  /*
-    Проверочный набор: Инструмент с пунктом вставки и Инструмент
-    с «Превратить в». Поля `insertItems` и `engine` совпадают с будущим
-    публичным описанием, чтобы его форма проверялась кодом кита.
+    Разделитель и цитата: Инструмент с пунктом вставки и Инструмент с
+    «Превратить в». Поля `insertItems` и `engine` те же, что у публичного
+    описания своего Инструмента: форму проверяет код кита.
   */
   horizontalRule: {
     name: "horizontalRule",
@@ -109,11 +106,49 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
     // Клавишу вешает расширение Tiptap; строка справочника — подпись к ней.
     shortcuts: [BLOCKQUOTE_SHORTCUT],
   },
+  history: HISTORY_TOOL,
+  bold: BOLD_TOOL,
+  italic: ITALIC_TOOL,
+  underline: UNDERLINE_TOOL,
+  strike: STRIKE_TOOL,
+  code: CODE_TOOL,
+  superscript: SUPERSCRIPT_TOOL,
+  subscript: SUBSCRIPT_TOOL,
+  heading: HEADING_TOOL,
+  heading1: HEADING1_TOOL,
   link: LINK_TOOL,
+  bulletList: BULLET_LIST_TOOL,
+  orderedList: ORDERED_LIST_TOOL,
+  taskList: TASK_LIST_TOOL,
+  image: IMAGE_TOOL,
   emoji: EMOJI_TOOL,
+  insertMenu: INSERT_MENU_TOOL,
+  /*
+    Своего расширения у «Очистить форматирование» нет: клавишу `⌘\` держит
+    `BlockCommands` ядра (он спрашивает `has("clearFormatting")`), а кнопка в
+    «…» — виджет кита. В описании — только строка справочника.
+  */
+  clearFormatting: {
+    name: "clearFormatting",
+    shortcuts: [
+      {
+        id: "clearFormatting",
+        group: "clear",
+        tool: "clearFormatting",
+        keys: SHORTCUT_KEYS.clearFormatting,
+        label: (m) => m.clearFormatting,
+      },
+    ],
+  },
+  /*
+    HTML-режим — виджет «HTML» Панели и режим `RichTextEditor`, показ по
+    `has("source")`. Ни Схемы, ни записей у Инструмента нет, но описание
+    есть у каждого встроенного — даже пустое.
+  */
+  source: { name: "source" },
   /*
     Ленивые встроенные (ADR-0058, п. 11.1): их нет в `basic`, а
-    Часть для движка тяжелее 10 кБ gzip, поэтому она грузится загрузчиком
+    Extensions тяжелее 10 кБ gzip, поэтому они грузятся загрузчиком
     (`load`) — тем же, что у своего Инструмента.
   */
   codeBlock: CODE_BLOCK_TOOL,
@@ -184,7 +219,7 @@ export function expandTools(
   );
   const builtin = TOOLS.filter((name) => names.has(name)).map((name) =>
     resolveOptions(
-      BUILTIN_TOOLS[name] ?? { name, legacy: true },
+      BUILTIN_TOOLS[name],
       configured.find((entry) => entry.name === name)
     )
   );

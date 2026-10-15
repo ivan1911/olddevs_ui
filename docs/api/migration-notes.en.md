@@ -2,7 +2,7 @@
 category: api
 status: stable
 source: src/index.ts
-sourceHash: 902814b6f802
+sourceHash: 19d3eaf4181f
 ---
 
 # Compatibility and migration notes
@@ -287,7 +287,7 @@ of `@olddevs/ui/editor`, and one requires installing packages with pnpm. The new
 
 ### 1. Two new peer packages
 
-The blockquote and the divider take their Engine part from `@tiptap/extension-blockquote` and
+The blockquote and the divider take their Extensions from `@tiptap/extension-blockquote` and
 `@tiptap/extension-horizontal-rule` — optional peer dependencies of the
 `@olddevs/ui/editor` entry point with the same `^3.31.4` range (since 3.46.0 the engine
 packages are no longer in the kit manifest; see the entry above).
@@ -329,7 +329,7 @@ did not fit goes away whole, together with everything after it.
 
 **Action before updating.** Check the server-side length validation against the kit's rule:
 the Document's text without markup and Block separators, an Atom by the length of its text.
-The kit has no server-side counter: the weight of a custom Atom depends on its Engine part.
+The kit has no server-side counter: the weight of a custom Atom depends on its Extensions.
 
 ### 3. Skeleton before Readiness
 

@@ -950,7 +950,7 @@ export interface UiMessages {
      */
     toolsFailed: string;
     /**
-     * Кнопка у ошибки поля, когда упал загрузчик Части для движка (сеть,
+     * Кнопка у ошибки поля, когда упал загрузчик Extensions (сеть,
      * устаревший чанк): заново зовёт упавшие загрузчики (ADR-0058, п. 11.6).
      */
     retry: string;
@@ -997,6 +997,19 @@ export interface UiMessages {
     wrapperTone: (vars: { current: string }) => string;
     wrapperToneNone: string;
     wrapperToneName: Record<EditorWrapperTone, string>;
+    /**
+     * Сворачиваемый Блок (Details). `details` — пункт Меню вставки и «Добавить ›»
+     * у ручки Блока; `unwrapDetails` — пункт меню ручки: Блок перестаёт
+     * сворачиваться, заголовок становится абзацем, а содержимое остаётся на месте.
+     * `detailsToggle` — имя кнопки раскрытия: движок рисует кнопку без текста,
+     * и без имени скринридер слышал бы «кнопка». Имя называет Блок его
+     * заголовком (`text` — текст summary, пустой у Блока без заголовка), а
+     * раскрыт он или нет, говорит `aria-expanded`. Функцией: заголовок стоит в
+     * середине фразы.
+     */
+    details: string;
+    unwrapDetails: string;
+    detailsToggle: (vars: { text: string }) => string;
     /**
      * Эмодзи. `emoji` — имя кнопки Панели; `emojiGrid` — имя сетки в поповере.
      * `emojiCategory` — названия категорий, `emojiName` — имя каждого эмодзи:

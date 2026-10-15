@@ -1,5 +1,5 @@
 import type { UiMessages } from "../../i18n/messages.js";
-import { describedTools, toolLabel, type ToolList } from "./toolDescriptor.js";
+import { toolLabel, type ToolList } from "./toolDescriptor.js";
 import type { PrefixedName } from "./customTool.js";
 import type { Tool } from "./tools.js";
 
@@ -65,7 +65,94 @@ export interface ShortcutCommand {
 const LIST_TOOLS: readonly Tool[] = ["bulletList", "orderedList", "taskList"];
 
 /**
- * Таблица — сочетания кита и Инструментов, ещё не переехавших на описание.
+ * Сочетания встроенных команд по id — данные, а не привязки. Строка справочника
+ * берёт клавиши отсюда, где бы она ни жила: в `SHORTCUTS` или в описании
+ * Инструмента (`shortcuts`, `keys` кнопки). Поэтому подписи Меню вставки и «¶»,
+ * которые читаются при загрузке модуля (`shortcutKeys`), не зависят от того,
+ * где лежит строка.
+ */
+export const SHORTCUT_KEYS = {
+  selectBlock: ["mod", "A"],
+  selectDocument: ["mod", "A"],
+  undo: ["mod", "Z"],
+  redo: ["mod", "shift", "Z"],
+  duplicateBlock: ["mod", "shift", "D"],
+  moveBlockUp: ["alt", "shift", "↑"],
+  moveBlockDown: ["alt", "shift", "↓"],
+  blockActions: ["mod", "/"],
+  clearFormatting: ["mod", "\\"],
+  bold: ["mod", "B"],
+  italic: ["mod", "I"],
+  strike: ["mod", "shift", "S"],
+  underline: ["mod", "U"],
+  code: ["mod", "E"],
+  superscript: ["mod", "."],
+  subscript: ["mod", ","],
+  paragraph: ["mod", "alt", "0"],
+  h1: ["mod", "alt", "1"],
+  h2: ["mod", "alt", "2"],
+  h3: ["mod", "alt", "3"],
+  h4: ["mod", "alt", "4"],
+  blockquote: ["mod", "shift", "B"],
+  codeBlock: ["mod", "alt", "C"],
+  bulletList: ["mod", "shift", "8"],
+  orderedList: ["mod", "shift", "7"],
+  taskList: ["mod", "shift", "9"],
+  indentListItem: ["mod", "]"],
+  outdentListItem: ["mod", "["],
+  alignLeft: ["mod", "shift", "L"],
+  alignCenter: ["mod", "shift", "E"],
+  alignRight: ["mod", "shift", "R"],
+  focusToolbar: ["alt", "F10"],
+} as const satisfies Record<string, readonly string[]>;
+
+/** Id строки справочника из таблицы кита. */
+export type ShortcutId = keyof typeof SHORTCUT_KEYS;
+
+/**
+ * Порядок строк справочника внутри групп — привилегия кита, как `INSERT_ORDER`
+ * у Меню вставки, и не зависит от того, где живёт строка: в `SHORTCUTS` или в
+ * описании Инструмента. Строки вне списка (кнопки описаний, свои Инструменты)
+ * встают в конец своей группы в порядке набора.
+ */
+export const SHORTCUT_ORDER: readonly ShortcutId[] = [
+  "selectBlock",
+  "selectDocument",
+  "undo",
+  "redo",
+  "duplicateBlock",
+  "moveBlockUp",
+  "moveBlockDown",
+  "blockActions",
+  "clearFormatting",
+  "bold",
+  "italic",
+  "strike",
+  "underline",
+  "code",
+  "superscript",
+  "subscript",
+  "paragraph",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "blockquote",
+  "codeBlock",
+  "bulletList",
+  "orderedList",
+  "taskList",
+  "indentListItem",
+  "outdentListItem",
+  "alignLeft",
+  "alignCenter",
+  "alignRight",
+  "focusToolbar",
+];
+
+/**
+ * Таблица — сочетания кита: команды, которые есть при любом наборе (выделение,
+ * Блоки, сдвиг пункта списка, `Alt+F10`). Строки Инструментов — в их описаниях.
  * Сочетание кнопки описания — поле самой кнопки (`toolDescriptor.ts`): её
  * строку справочник берёт оттуда, клавишу вешает `toolButtons.ts`.
  */
@@ -75,45 +162,36 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "selectBlock",
     group: "selection",
     tool: null,
-    keys: ["mod", "A"],
+    keys: SHORTCUT_KEYS.selectBlock,
     label: (m) => m.selectBlock,
   },
   {
     id: "selectDocument",
     group: "selection",
     tool: null,
-    keys: ["mod", "A"],
+    keys: SHORTCUT_KEYS.selectDocument,
     label: (m) => m.selectDocument,
-  },
-
-  { id: "undo", group: "history", tool: "history", keys: ["mod", "Z"], label: (m) => m.undo },
-  {
-    id: "redo",
-    group: "history",
-    tool: "history",
-    keys: ["mod", "shift", "Z"],
-    label: (m) => m.redo,
   },
 
   {
     id: "duplicateBlock",
     group: "blocks",
     tool: null,
-    keys: ["mod", "shift", "D"],
+    keys: SHORTCUT_KEYS.duplicateBlock,
     label: (m) => m.duplicateBlock,
   },
   {
     id: "moveBlockUp",
     group: "blocks",
     tool: null,
-    keys: ["alt", "shift", "↑"],
+    keys: SHORTCUT_KEYS.moveBlockUp,
     label: (m) => m.moveBlockUp,
   },
   {
     id: "moveBlockDown",
     group: "blocks",
     tool: null,
-    keys: ["alt", "shift", "↓"],
+    keys: SHORTCUT_KEYS.moveBlockDown,
     label: (m) => m.moveBlockDown,
   },
   // Меню ручки Блока: ручка есть в любой правке, при любой Панели.
@@ -121,164 +199,33 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     id: "blockActions",
     group: "blocks",
     tool: null,
-    keys: ["mod", "/"],
+    keys: SHORTCUT_KEYS.blockActions,
     label: (m) => m.blockActions,
   },
 
   {
-    id: "clearFormatting",
-    group: "clear",
-    tool: "clearFormatting",
-    keys: ["mod", "\\"],
-    label: (m) => m.clearFormatting,
-  },
-
-  { id: "bold", group: "marks", tool: "bold", keys: ["mod", "B"], label: (m) => m.bold },
-  { id: "italic", group: "marks", tool: "italic", keys: ["mod", "I"], label: (m) => m.italic },
-  {
-    id: "strike",
-    group: "marks",
-    tool: "strike",
-    keys: ["mod", "shift", "S"],
-    label: (m) => m.strike,
-  },
-  {
-    id: "underline",
-    group: "marks",
-    tool: "underline",
-    keys: ["mod", "U"],
-    label: (m) => m.underline,
-  },
-  { id: "code", group: "marks", tool: "code", keys: ["mod", "E"], label: (m) => m.code },
-  {
-    id: "superscript",
-    group: "marks",
-    tool: "superscript",
-    keys: ["mod", "."],
-    label: (m) => m.superscript,
-  },
-  {
-    id: "subscript",
-    group: "marks",
-    tool: "subscript",
-    keys: ["mod", ","],
-    label: (m) => m.subscript,
-  },
-
-  // Подпись — как у пункта «¶» («Текст»), а не «Абзац» Меню вставки: справочник
-  // называет команду тем словом, которым её выбирают на Панели.
-  {
-    id: "paragraph",
-    group: "blockType",
-    tool: "heading",
-    keys: ["mod", "alt", "0"],
-    label: (m) => m.textBlock,
-  },
-  {
-    id: "h1",
-    group: "blockType",
-    tool: "heading1",
-    requires: "heading",
-    keys: ["mod", "alt", "1"],
-    label: (m) => m.heading({ level: 1 }),
-  },
-  {
-    id: "h2",
-    group: "blockType",
-    tool: "heading",
-    keys: ["mod", "alt", "2"],
-    label: (m) => m.heading({ level: 2 }),
-  },
-  {
-    id: "h3",
-    group: "blockType",
-    tool: "heading",
-    keys: ["mod", "alt", "3"],
-    label: (m) => m.heading({ level: 3 }),
-  },
-  {
-    id: "h4",
-    group: "blockType",
-    tool: "heading",
-    keys: ["mod", "alt", "4"],
-    label: (m) => m.heading({ level: 4 }),
-  },
-  {
-    id: "codeBlock",
-    group: "blockType",
-    tool: "codeBlock",
-    keys: ["mod", "alt", "C"],
-    label: (m) => m.codeBlock,
-  },
-
-  {
-    id: "bulletList",
-    group: "lists",
-    tool: "bulletList",
-    keys: ["mod", "shift", "8"],
-    label: (m) => m.bulletList,
-  },
-  {
-    id: "orderedList",
-    group: "lists",
-    tool: "orderedList",
-    keys: ["mod", "shift", "7"],
-    label: (m) => m.orderedList,
-  },
-  {
-    id: "taskList",
-    group: "lists",
-    tool: "taskList",
-    keys: ["mod", "shift", "9"],
-    label: (m) => m.taskList,
-  },
-  {
     id: "indentListItem",
     group: "lists",
     tool: LIST_TOOLS,
-    keys: ["mod", "]"],
+    keys: SHORTCUT_KEYS.indentListItem,
     label: (m) => m.indentListItem,
   },
   {
     id: "outdentListItem",
     group: "lists",
     tool: LIST_TOOLS,
-    keys: ["mod", "["],
+    keys: SHORTCUT_KEYS.outdentListItem,
     label: (m) => m.outdentListItem,
-  },
-
-  {
-    id: "alignLeft",
-    group: "align",
-    tool: "align",
-    keys: ["mod", "shift", "L"],
-    label: (m) => m.alignLeft,
-  },
-  {
-    id: "alignCenter",
-    group: "align",
-    tool: "align",
-    keys: ["mod", "shift", "E"],
-    label: (m) => m.alignCenter,
-  },
-  {
-    id: "alignRight",
-    group: "align",
-    tool: "align",
-    keys: ["mod", "shift", "R"],
-    label: (m) => m.alignRight,
   },
 
   {
     id: "focusToolbar",
     group: "toolbar",
     tool: null,
-    keys: ["alt", "F10"],
+    keys: SHORTCUT_KEYS.focusToolbar,
     label: (m) => m.focusToolbar,
   },
 ];
-
-const BY_ID = new Map(SHORTCUTS.map((command) => [command.id, command]));
 
 /**
  * Сочетание команды по id или `undefined`, если у команды его нет. Панель
@@ -286,7 +233,7 @@ const BY_ID = new Map(SHORTCUTS.map((command) => [command.id, command]));
  * меню цвета сочетаний нет.
  */
 export function findShortcutKeys(id: string): readonly string[] | undefined {
-  return BY_ID.get(id)?.keys;
+  return Object.hasOwn(SHORTCUT_KEYS, id) ? SHORTCUT_KEYS[id as ShortcutId] : undefined;
 }
 
 /**
@@ -319,20 +266,12 @@ export interface ShortcutSection {
 }
 
 /**
- * Место строки переехавшего Инструмента в своей группе: id строки → id строки
- * из `SHORTCUTS`, перед которой она встаёт. Остальные переехавшие строки идут
- * в конец группы. Порядок справочника — не поле описания: место на поверхности
- * держит кит, как `INSERT_ORDER` у Меню вставки.
- */
-const MOVED_BEFORE: Readonly<Record<string, string>> = { blockquote: "codeBlock" };
-
-/**
  * Команды включённых инструментов по группам; пустые группы не возвращаются.
  *
- * Проекция списка описаний: строки не переехавших Инструментов — из
- * `SHORTCUTS`, переехавших — из их описаний (`toolDescriptor.ts`): клавиши
- * Части для движка — поле `shortcuts`, сочетания кнопок — поле кнопки. Строка
- * встаёт на место из `MOVED_BEFORE` или следом за строками своей группы кита;
+ * Проекция списка описаний: строки кита — из `SHORTCUTS`, строки Инструментов —
+ * из их описаний (`toolDescriptor.ts`): клавиши
+ * Extensions — поле `shortcuts`, сочетания кнопок — поле кнопки. Место
+ * строки в группе — `SHORTCUT_ORDER`, а строки вне него — следом в порядке набора;
  * кнопка без группы кита — в группу своего Инструмента после групп кита, в
  * порядке списка (ADR-0058, п. 6.8).
  */
@@ -341,25 +280,18 @@ export function shortcutGroupsFor(
   /** Локаль `UiProvider` — для подписи кнопки, заданной функцией от контекста. */
   locale = "en-US"
 ): readonly ShortcutSection[] {
-  const described = describedTools(tools);
+  const described = tools.descriptors;
   const moved = described.flatMap((descriptor) => descriptor.shortcuts ?? []);
-  const anchored = (row: ShortcutCommand) =>
-    SHORTCUTS.some((command) => command.id === MOVED_BEFORE[row.id]);
-  const commands = [
-    ...SHORTCUTS.flatMap((command) => [
-      ...moved.filter((row) => MOVED_BEFORE[row.id] === command.id),
-      command,
-    ]),
-    ...moved.filter((row) => !anchored(row)),
-  ].filter((command) => enabled(command, tools));
+  const commands = [...SHORTCUTS, ...moved].filter((command) => enabled(command, tools));
   const ownGroups: ShortcutSection[] = [];
   for (const descriptor of described) {
     const own: ShortcutRow[] = [];
     for (const button of descriptor.buttons ?? []) {
-      if (!button.shortcut) continue;
+      const keys = button.shortcut ?? button.keys;
+      if (!keys) continue;
       const row: ShortcutRow = {
         id: button.id,
-        keys: button.shortcut,
+        keys,
         label: (messages) => toolLabel(button.label, { locale, messages }),
       };
       // Набор уже отфильтрован: кнопка есть только у включённого Инструмента.
@@ -380,10 +312,17 @@ export function shortcutGroupsFor(
     }
     if (own.length > 0) ownGroups.push({ group: descriptor.name, commands: own });
   }
+  // Сортировка устойчивая: строки вне `SHORTCUT_ORDER` сохраняют порядок набора.
+  const rank = (id: string) => {
+    const index = (SHORTCUT_ORDER as readonly string[]).indexOf(id);
+    return index === -1 ? SHORTCUT_ORDER.length : index;
+  };
   return [
     ...SHORTCUT_GROUPS.map((group) => ({
       group,
-      commands: commands.filter((command) => command.group === group),
+      commands: commands
+        .filter((command) => command.group === group)
+        .sort((left, right) => rank(left.id) - rank(right.id)),
     })),
     ...ownGroups,
   ].filter((entry) => entry.commands.length > 0);

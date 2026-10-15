@@ -4,22 +4,9 @@ import type { ChainedCommands, Editor, Range } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import type { ComponentType } from "react";
 import type { UiMessages } from "../../i18n/messages.js";
-import {
-  ColumnLayoutIcon,
-  HeadingIcon,
-  ImageIcon,
-  ListIcon,
-  OrderedListIcon,
-  ParagraphIcon,
-  TableIcon,
-  TaskListIcon,
-  WrapperIcon,
-  type IconProps,
-} from "../../icons.js";
+import { TableIcon, type IconProps } from "../../icons.js";
 import { DEFAULT_LOCALE } from "../../i18n/defaults.js";
 import { handleBlock } from "./blockCommands.js";
-import { DEFAULT_LAYOUT } from "../features/layout/columnLayouts.js";
-import { shortcutKeys } from "./shortcuts.js";
 import { projectRecords, type ToolList, type ToolPopover } from "./toolDescriptor.js";
 import type { Tool } from "./tools.js";
 
@@ -63,12 +50,12 @@ export interface InsertItem {
   keys?: readonly string[];
   /**
    * Сочетание, которое вешает кит (ADR-0058, п. 5.7): единственный источник
-   * клавиши, подсказки и строки справочника. У встроенных нет — клавишу вешает
-   * их Часть для движка, а подпись — `keys`.
+   * клавиши, подсказки и строки справочника. У встроенных нет — клавишу вешают
+   * их Extensions, а подпись — `keys`.
    */
   shortcut?: readonly string[];
   /**
-   * Второй нужный инструмент сверх ключа реестра: Заголовок 1 стоит под
+   * Второй нужный инструмент сверх владельца пункта: Заголовок 1 стоит под
    * `heading`, но есть только вместе с `heading1`, как в меню «¶».
    */
   requires?: Tool;
@@ -79,136 +66,6 @@ export interface InsertItem {
    */
   popover?: ToolPopover;
 }
-
-/**
- * Старый реестр пунктов Меню вставки по инструментам.
- *
- * Новый встроенный Инструмент сюда уже не пишется: его пункты лежат в его
- * описании (`insertItems`, `features/builtins.ts`), и меню получает их проекцией
- * списка описаний (`insertItemsFor`). Здесь — пункты Инструментов, ещё не
- * переехавших на описание (ADR-0058, п. 10), одной записью без правки меню:
- *
- *     horizontalRule: [{ id: "horizontalRule", section: "insert",
- *                        label: (m) => m.horizontalRule, icon: DividerIcon,
- *                        run: (chain) => chain.setHorizontalRule() }],
- *
- * Ключ — `Tool`: выключенный инструмент убирает свои пункты и из `/`, и из «+»
- * сам, без проверок в меню. Порядок пунктов в разделе — `INSERT_ORDER`, а не
- * порядок записей. Подпись — из каталога (`editor.*`), иконка —
- * из `@olddevs/ui/icons`. Пункт, которому нужен свой интерфейс (поповер адреса
- * картинки), открывает его из `run` — `editor` для этого и передан.
- *
- * Абзац записан под самим `insertMenu`: это не инструмент, он есть в Схеме
- * всегда, и «Превратить в абзац» нужен, пока есть само меню.
- */
-export const INSERT_ITEMS: Partial<Record<Tool, readonly InsertItem[]>> = {
-  insertMenu: [
-    {
-      id: "paragraph",
-      section: "turnInto",
-      label: (m) => m.paragraph,
-      icon: ParagraphIcon,
-      aliases: ["p", "text"],
-      keys: shortcutKeys("paragraph"),
-      run: (chain) => chain.setParagraph(),
-    },
-  ],
-  heading: ([1, 2, 3, 4] as const).map((level): InsertItem => ({
-    id: `heading${level}`,
-    section: "turnInto",
-    label: (m) => m.heading({ level }),
-    icon: HeadingIcon,
-    aliases: [`h${level}`],
-    markdown: "#".repeat(level),
-    keys: shortcutKeys(`h${level}`),
-    requires: level === 1 ? "heading1" : undefined,
-    run: (chain) => chain.setHeading({ level }),
-  })),
-  bulletList: [
-    {
-      id: "bulletList",
-      section: "turnInto",
-      label: (m) => m.bulletList,
-      icon: ListIcon,
-      aliases: ["ul", "-"],
-      markdown: "-",
-      keys: shortcutKeys("bulletList"),
-      run: (chain) => chain.toggleBulletList(),
-    },
-  ],
-  orderedList: [
-    {
-      id: "orderedList",
-      section: "turnInto",
-      label: (m) => m.orderedList,
-      icon: OrderedListIcon,
-      aliases: ["ol", "1."],
-      markdown: "1.",
-      keys: shortcutKeys("orderedList"),
-      run: (chain) => chain.toggleOrderedList(),
-    },
-  ],
-  taskList: [
-    {
-      id: "taskList",
-      section: "turnInto",
-      label: (m) => m.taskList,
-      icon: TaskListIcon,
-      aliases: ["todo", "[]"],
-      markdown: "[ ]",
-      keys: shortcutKeys("taskList"),
-      run: (chain) => chain.toggleTaskList(),
-    },
-  ],
-  /*
-    Картинке нужен адрес, и пункт его не знает: он готовит пустой абзац (как
-    любой пункт «Добавить») и открывает поповер картинки. Картинка из поповера
-    встаёт на место этого абзаца. Закрытый без адреса поповер оставляет
-    пустой абзац — как Блок, который передумали писать.
-  */
-  image: [
-    {
-      id: "image",
-      section: "insert",
-      label: (m) => m.image,
-      icon: ImageIcon,
-      aliases: ["img", "picture", "photo", "![]()"],
-      run: (chain) => chain.openImageEditor(),
-    },
-  ],
-  /*
-    Раскладка — пунктом без подменю: Меню вставки — плоский список
-    с фильтром по `/`, и подменю в нём не живут. Вариант по умолчанию — две
-    колонки, остальные — в «Добавить › Раскладка ›» и «Формат ›» ручки Блока.
-    Встаёт она только на верхний уровень: из колонки — под своей Раскладкой
-    (`insertLayout`).
-  */
-  layout: [
-    {
-      id: "layout",
-      section: "insert",
-      label: (m) => m.layout,
-      icon: ColumnLayoutIcon,
-      aliases: ["columns", "cols"],
-      run: (chain) => chain.insertLayout(DEFAULT_LAYOUT),
-    },
-  ],
-  /*
-    Обёртка — пустая, с одним абзацем, каретка внутри. Место —
-    Документ или колонка: из Обёртки, списка, цитаты и ячейки она встаёт под
-    их Блоком (`insertWrapper`).
-  */
-  wrapper: [
-    {
-      id: "wrapper",
-      section: "insert",
-      label: (m) => m.wrapper,
-      icon: WrapperIcon,
-      aliases: ["group", "container", "div"],
-      run: (chain) => chain.insertWrapper(),
-    },
-  ],
-};
 
 /**
  * Пункт «Таблица» заданного размера: строка-заголовок всегда есть.
@@ -271,8 +128,8 @@ export function insertItemHint(
 
 /**
  * Место встроенных Инструментов в Меню вставки — порядок их пунктов внутри
- * раздела. Держится отдельно от `INSERT_ITEMS`: Инструмент, переехавший на
- * описание (`toolDescriptor.ts`), уходит из реестра, а место остаётся здесь.
+ * раздела. Пункты живут в описаниях (`insertItems`), а место на поверхности —
+ * привилегия кита, поэтому оно здесь, а не в описании.
  */
 const INSERT_ORDER: readonly Tool[] = [
   "insertMenu",
@@ -287,25 +144,22 @@ const INSERT_ORDER: readonly Tool[] = [
   "image",
   "layout",
   "wrapper",
+  "details",
 ];
 
 /** Разделы по порядку показа. */
 export const INSERT_SECTIONS = ["insert", "turnInto"] as const;
 
 /**
- * Пункты для набора инструментов — проекция списка описаний: у переехавшего
- * Инструмента — из описания, у остальных — из `INSERT_ITEMS`, в порядке
- * `INSERT_ORDER`. Меню без пункта сверх
+ * Пункты для набора инструментов — проекция списка описаний (`insertItems`) в
+ * порядке `INSERT_ORDER`. Абзац — пункт описания `insertMenu`. Меню без пункта сверх
  * абзаца бессмысленно, и тогда список пуст: ни «+», ни `/` не появляются.
  */
 export function insertItemsFor(tools: ToolList): readonly InsertItem[] {
   if (!tools.has("insertMenu")) return [];
-  const items = projectRecords(
-    tools,
-    INSERT_ORDER,
-    (tool) => INSERT_ITEMS[tool],
-    (descriptor) => descriptor.insertItems
-  ).filter((item) => item.requires === undefined || tools.has(item.requires));
+  const items = projectRecords(tools, INSERT_ORDER, (descriptor) => descriptor.insertItems).filter(
+    (item) => item.requires === undefined || tools.has(item.requires)
+  );
   return items.length > 1 ? items : [];
 }
 

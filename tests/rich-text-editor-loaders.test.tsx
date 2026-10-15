@@ -69,7 +69,7 @@ test("until the loader settles: the Skeleton shows the Document, no input, a qui
   expect(screen.getByRole("textbox", { name: "Body" })).toBeTruthy();
   expect(onReady).toHaveBeenCalledTimes(1);
   expect(ref.current?.editor).not.toBeNull();
-  // Схема собрана уже с Частью для движка: Блок из `value` не потерялся.
+  // Схема собрана уже с Extensions: Блок из `value` не потерялся.
   expect(ref.current?.getHTML()).toBe(VALUE);
   expect(ref.current?.insertHTML("<p>Template</p>")).toBe(true);
   // Скелет ушёл: Документ на экране один.
@@ -137,7 +137,7 @@ test("Retry calls only the loaders that failed", async () => {
 
 test("the loaded engine is checked like an immediate one: a broken set is a field error without Retry", async () => {
   vi.spyOn(console, "error").mockImplementation(() => {});
-  // Загрузчик отдал Часть без Node для Блока из правил.
+  // Загрузчик отдал Extensions без Node для Блока из правил.
   const lazy = testLazyTool("test_lazy", []);
   const { ref, onReady } = renderEditor({ tools: [lazy.tool] });
   lazy.resolve();

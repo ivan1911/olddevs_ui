@@ -2085,6 +2085,128 @@ export const WrapperToneMenu: Story = {
   ),
 };
 
+/*
+  Сворачиваемый Блок (Details, OLDSUI-277): заголовок и содержимое из Блоков.
+  Нейтральный текст: заметка о сборке с подробностями под заголовком.
+*/
+const detailsBlock = (title: string, ...blocks: string[]) =>
+  `<details><summary>${title}</summary><div data-type="detailsContent">${blocks.join("")}</div></details>`;
+const openDetailsBlock = (title: string, ...blocks: string[]) =>
+  `<details open=""><summary>${title}</summary><div data-type="detailsContent">${blocks.join("")}</div></details>`;
+
+const DETAILS_SAMPLE =
+  "<h2>Collapsible blocks</h2><p>A block keeps its details under a title. Click the arrow to open it.</p>" +
+  detailsBlock(
+    "How to build the package",
+    "<p>Run the gates, then the build.</p>",
+    "<ol><li><p>Install the dependencies</p></li><li><p>Run <code>npm run build</code></p></li></ol>"
+  ) +
+  detailsBlock(
+    "Release checklist",
+    "<ul><li><p>Write the changelog</p></li><li><p>Tag the release</p></li></ul>",
+    detailsBlock("Rolling back", "<p>Revert the tag and publish the previous version.</p>")
+  ) +
+  "<p>Text after the blocks.</p>";
+
+/**
+ * Сворачиваемый Блок: стрелка слева раскрывает и сворачивает содержимое, заголовок и
+ * Блоки внутри правятся как обычный текст. Без Опции `persist` открытость живёт
+ * только в показе и в Документ не пишется. Блоки вкладываются друг в друга.
+ */
+export const Details: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DETAILS_SAMPLE} />
+    </div>
+  ),
+};
+
+/**
+ * `tool("details", { persist: true })`: открытый Блок пишется в Документ как
+ * `open` и открытым же приходит из `value`. Первый Блок здесь открыт.
+ */
+export const DetailsPersist: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...TOOLS.filter((name) => name !== "details"), tool("details", { persist: true })]}
+        defaultValue={
+          "<h2>Persisted state</h2>" +
+          openDetailsBlock("Open when saved", "<p>This block is saved open.</p>") +
+          detailsBlock("Closed when saved", "<p>This one is saved closed.</p>")
+        }
+      />
+    </div>
+  ),
+};
+
+/** Сворачиваемый Блок на светлом листе `surface="paper"`. */
+export const DetailsPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DETAILS_SAMPLE} surface="paper" />
+    </div>
+  ),
+};
+
+function InsertedDetails() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.chain().focus("end").insertDetails().run();
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        defaultValue="<p>A new collapsible block goes below the current block.</p>"
+      />
+    </div>
+  );
+}
+
+/**
+ * Только что вставленный Блок: пустой заголовок с кареткой и пустой абзац в
+ * содержимом, Блок раскрыт. Так его ставят пункт «Сворачиваемый блок» Меню
+ * вставки (`/collapsible` или «+») и «Добавить › Сворачиваемый блок» у ручки.
+ */
+export const DetailsInserted: Story = {
+  render: () => <InsertedDetails />,
+};
+
+/** Меню вставки по `/collapsible`: пункт «Collapsible block». */
+export const DetailsInsertSlash: Story = {
+  render: () => <TypedCommand command="/collapsible" />,
+};
+
+/**
+ * Меню ручки Блока у сворачиваемого Блока: ручка стоит у Блока целиком, а
+ * «Снять сворачивание» оставляет заголовок абзацем и Блоки на месте одной правкой.
+ */
+export const DetailsBlockHandleMenu: Story = {
+  render: () => (
+    <ShownHandle
+      caret="The caret is in this title."
+      document={
+        "<p>The handle of the title belongs to the whole block.</p>" +
+        detailsBlock("The caret is in this title.", "<p>Hidden until the block is opened.</p>")
+      }
+      open
+    />
+  ),
+};
+
 /** Открыть HTML-режим, как только Панель появилась: щелчок по кнопке «HTML». */
 function OpenedSource(props: Partial<RichTextEditorProps>) {
   const root = useRef<HTMLDivElement>(null);
@@ -2492,7 +2614,7 @@ export const CustomEntryPopovers: Story = {
 
 /*
   Свой Инструмент с загрузчиком на нейтральных данных: врезка-
-  контейнер, Часть для движка которой приходит промисом. Промис решают кнопки
+  контейнер, чьи Extensions приходят промисом. Промис решают кнопки
   истории — так Скелет стоит на экране, сколько нужно, и снимок детерминирован.
   «Повторить» зовёт загрузчик заново: кнопки решают уже новый промис.
 */
@@ -2510,7 +2632,7 @@ const asideTool: CustomTool = {
 
 const ASIDE_SAMPLE =
   "<h2>Loading a tool</h2>" +
-  "<p>Until the engine part of every tool has loaded, the field shows the Skeleton: " +
+  "<p>Until the Extensions of every tool have loaded, the field shows the Skeleton: " +
   "the frame and this document as static HTML, without input.</p>" +
   '<div data-block="acme_aside"><p>An aside: its block comes from a lazily loaded tool.</p></div>' +
   "<ul><li><p>The height of the field does not jump.</p></li></ul>";

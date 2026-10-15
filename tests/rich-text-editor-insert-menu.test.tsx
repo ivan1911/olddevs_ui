@@ -9,7 +9,7 @@ import { Dialog } from "../src/components/overlays/Dialog.js";
 import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import { DividerIcon } from "../src/icons.js";
-import { INSERT_ITEMS } from "../src/editor/core/insertItems.js";
+import { BUILTIN_TOOLS } from "../src/editor/features/builtins.js";
 import {
   RichTextEditor,
   type RichTextEditorHandle,
@@ -150,6 +150,7 @@ test("the menu lists both sections with icons, labels and hints", () => {
     "Image",
     "Layout",
     "Wrapper",
+    "Collapsible block",
   ]);
   expect(names(turnInto)).toEqual([
     "ParagraphCtrl+Alt+0",
@@ -318,7 +319,7 @@ test("Heading 1 turns the block into an H1 and carries the shortcut of the table
   await user.click(screen.getByRole("menuitem", { name: /Heading 1/ }));
 
   expect(editor.getHTML()).toBe("<h1>Title</h1>");
-  expect(INSERT_ITEMS.heading?.find((item) => item.id === "heading1")?.keys).toEqual([
+  expect(BUILTIN_TOOLS.heading?.insertItems?.find((item) => item.id === "heading1")?.keys).toEqual([
     "mod",
     "alt",
     "1",
@@ -380,16 +381,20 @@ test("Escape inside a Dialog closes only the menu", () => {
 
 test("a descriptor added to the registry shows up without touching the menu", () => {
   const ran = vi.fn((chain: ChainedCommands) => chain.insertContent("<p>made</p>"));
-  INSERT_ITEMS.bold = [
-    {
-      id: "testOnly",
-      section: "insert",
-      label: () => "Test block",
-      icon: DividerIcon,
-      aliases: ["zebra"],
-      run: ran,
-    },
-  ];
+  const original = BUILTIN_TOOLS.bold;
+  BUILTIN_TOOLS.bold = {
+    ...original!,
+    insertItems: [
+      {
+        id: "testOnly",
+        section: "insert",
+        label: () => "Test block",
+        icon: DividerIcon,
+        aliases: ["zebra"],
+        run: ran,
+      },
+    ],
+  };
   try {
     const { editor } = renderEditor({ tools: ["insertMenu", "bold"] });
     focusField();
@@ -400,7 +405,7 @@ test("a descriptor added to the registry shows up without touching the menu", ()
     expect(ran).toHaveBeenCalledTimes(1);
     expect(editor.getHTML()).toBe("<p>made</p>");
   } finally {
-    delete INSERT_ITEMS.bold;
+    BUILTIN_TOOLS.bold = original;
   }
 });
 

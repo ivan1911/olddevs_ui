@@ -1,5 +1,5 @@
 ---
-sourceHash: 24a78e5196fa
+sourceHash: 9e3157586a55
 ---
 
 # Message catalog `UiMessages`
@@ -276,6 +276,9 @@ The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-edito
 | `wrapperToneName.neutral`             | string   | Important                                                                        | Важно                                                                              |
 | `wrapperToneName.warning`             | string   | Warning                                                                          | Внимание                                                                           |
 | `wrapperToneName.danger`              | string   | Caution                                                                          | Осторожно                                                                          |
+| `details`                             | string   | Collapsible block                                                                | Сворачиваемый блок                                                                 |
+| `unwrapDetails`                       | string   | Remove collapsing                                                                | Снять сворачивание                                                                 |
+| `detailsToggle`                       | function | —                                                                                | —                                                                                  |
 | `emoji`                               | string   | Emoji                                                                            | Эмодзи                                                                             |
 | `emojiGrid`                           | string   | Choose an emoji                                                                  | Выберите эмодзи                                                                    |
 | `emojiCategory.favorites`             | string   | Favorites                                                                        | Избранное                                                                          |

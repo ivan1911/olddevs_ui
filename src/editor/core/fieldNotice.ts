@@ -38,7 +38,7 @@ declare module "@tiptap/core" {
        * история и `onChange` не затрагиваются. `error` уходит сама со следующей
        * Правкой автора, `status` остаётся, пока его не заменят или не снимут.
        *
-       * Свой Инструмент зовёт её из Части для движка (`this.editor.commands`),
+       * Свой Инструмент зовёт её из Extensions (`this.editor.commands`),
        * экран — через `handle.editor`. Сообщение без текста — то же, что `null`.
        */
       showNotice: (notice: FieldNotice | null) => ReturnType;

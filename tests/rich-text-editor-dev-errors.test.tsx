@@ -13,7 +13,7 @@ import { testBoxTool, testLazyTool } from "./editor-test-tools.js";
  * именем компонента и с исключением отдельным аргументом.
  *
  * Через публичный `RichTextEditor`: набор, Схему которого движок не собрал, и
- * загрузчик Части для движка, который упал.
+ * загрузчик Extensions, который упал.
  */
 
 let error: ReturnType<typeof vi.spyOn>;

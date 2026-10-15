@@ -139,6 +139,25 @@ if (engineDeclared.length > 0) {
   );
 }
 
+/*
+ * Фикстура ставит движок так же, как потребитель по команде со страницы
+ * Редактора: каждый пакет `EDITOR_ENGINE` — в её зависимостях. Пропуск не
+ * роняет сборку: Next.js находит пакет в `node_modules` кита выше по дереву, и
+ * с ним приезжает вторая копия `@tiptap/core` и `@tiptap/pm` — страница
+ * Редактора молча тяжелеет на десятки килобайт (OLDSUI-277: +93 кБ из-за
+ * `@tiptap/extension-details`).
+ */
+step("the fixture installs every Editor engine package");
+const fixtureManifest = JSON.parse(readFileSync(join(FIXTURE, "package.json"), "utf8"));
+const fixtureDeclared = { ...fixtureManifest.dependencies, ...fixtureManifest.devDependencies };
+const engineMissing = EDITOR_ENGINE.filter((name) => !(name in fixtureDeclared));
+if (engineMissing.length > 0) {
+  fail(
+    `fixtures/consumer/package.json lacks Editor engine packages: ${engineMissing.join(", ")}.\n` +
+      `A consumer installs them by the command on the Editor page; add them with the same range.`
+  );
+}
+
 step("installing consumer dependencies");
 run("npm", ["install", "--no-audit", "--no-fund"], FIXTURE);
 run("npm", ["install", "--no-save", "--no-audit", "--no-fund", "./olddevs-ui.tgz"], FIXTURE);

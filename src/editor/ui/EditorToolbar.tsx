@@ -16,14 +16,7 @@ import { Toolbar } from "../../components/actions/Toolbar.js";
 import { Tooltip, TooltipProvider } from "../../components/overlays/Tooltip.js";
 import type { UiMessages } from "../../i18n/messages.js";
 import { useMessages } from "../../i18n/useMessages.js";
-import {
-  ImageIcon,
-  RedoIcon,
-  SearchIcon,
-  SourceIcon,
-  UndoIcon,
-  type IconProps,
-} from "../../icons.js";
+import { SearchIcon, SourceIcon, type IconProps } from "../../icons.js";
 import { buttonClasses } from "../../lib/button.js";
 import { cn } from "../../lib/cn.js";
 import { TOUCH_HIDDEN_CLASS } from "../../lib/touch.js";
@@ -44,7 +37,7 @@ import { ShortcutsButton } from "./ShortcutsButton.js";
 import { SEARCH_KEYS } from "../features/search/searchTool.js";
 import { ariaShortcut, findShortcutKeys, isApple, shortcutLabel } from "../core/shortcuts.js";
 import { tableChunk } from "../features/table/tableTool.js";
-import { describedTools, type KitToolButton, type ToolList } from "../core/toolDescriptor.js";
+import { type KitToolButton, type ToolList } from "../core/toolDescriptor.js";
 import { ToolButtonView, useToolLabel } from "./ToolButtonView.js";
 import type { Tool } from "../core/tools.js";
 
@@ -62,7 +55,7 @@ type EditorMessages = UiMessages["editor"];
 interface Action {
   kind: "button";
   tool: Tool;
-  /** Стабильный ключ: у инструмента `history` кнопок две. */
+  /** Стабильный ключ: у одного Инструмента может быть несколько кнопок. */
   id: string;
   label: (messages: EditorMessages) => string;
   icon: ComponentType<IconProps>;
@@ -149,7 +142,7 @@ const slot = (tool: Tool): Slot => ({ kind: "slot", id: tool, tool });
  * край, — группами целиком: с кнопками «Маркер» и «Цвет» Панель
  * `full` в колонке 640 px занимает две строки, и группа не делится на сирот.
  *
- * КНОПКИ ОПИСАНИЙ (ADR-0058, п. 5.3). Ссылка и эмодзи стоят на местах, которые
+ * КНОПКИ ОПИСАНИЙ (ADR-0058, п. 5.3). Ссылка, картинка и эмодзи стоят на местах, которые
  * кит отвёл их Инструментам (`slot`). Кнопки описаний без места кита — своя
  * группа перед «Отменить» и «Повторить», в порядке списка Инструментов.
  */
@@ -171,44 +164,8 @@ const GROUPS: readonly (readonly Entry[])[] = [
     widget("more", (tools) => MORE_FORMAT_TOOLS.some((tool) => tools.has(tool))),
   ],
   [widget("lists", hasListMenu)],
-  [
-    slot("link"),
-    {
-      kind: "button",
-      tool: "image",
-      id: "image",
-      label: (m) => m.image,
-      icon: ImageIcon,
-      // Как у ссылки: кнопка открывает поповер (`ImagePopover`), а не вставляет
-      // сама. `aria-pressed` — выделена картинка или каретка в её подписи:
-      // поповер тогда правит её, а не вставляет новую.
-      run: (editor) => editor.commands.openImageEditor(),
-      can: (editor) => editor.can().openImageEditor(),
-      isActive: (editor) => editor.isActive("image"),
-    },
-    widget("table", (tools) => tools.has("table")),
-    slot("emoji"),
-  ],
-  [
-    {
-      kind: "button",
-      tool: "history",
-      id: "undo",
-      label: (m) => m.undo,
-      icon: UndoIcon,
-      run: (editor) => editor.chain().focus().undo().run(),
-      can: (editor) => editor.can().undo(),
-    },
-    {
-      kind: "button",
-      tool: "history",
-      id: "redo",
-      label: (m) => m.redo,
-      icon: RedoIcon,
-      run: (editor) => editor.chain().focus().redo().run(),
-      can: (editor) => editor.can().redo(),
-    },
-  ],
+  [slot("link"), slot("image"), widget("table", (tools) => tools.has("table")), slot("emoji")],
+  [slot("history")],
 ];
 
 /** Инструменты, чьим кнопкам кит отвёл место на Панели. */
@@ -225,7 +182,7 @@ type GroupEntry = Action | Widget | ToolEntry;
  * читается — для него нужен движок.
  */
 function toolbarGroups(tools: ToolList, withSource: boolean): GroupEntry[][] {
-  const described = describedTools(tools);
+  const described = tools.descriptors;
   const toolEntries = (buttons: readonly KitToolButton[] = []) =>
     buttons.map((button): ToolEntry => ({ kind: "tool", id: button.id, button }));
   const kitGroups = GROUPS.map((group) =>
