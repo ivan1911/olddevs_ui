@@ -13,14 +13,14 @@ sourceHash: a5e9fc1a0c10
 ## Summary for AI
 
 An application-level table with ready-made behavior on top of the low-level `Table`:
-column visibility and order, density, loading and error states, a table bar slot
+column visibility and order, density, loading and error states, a table toolbar slot
 (`toolbar`). It keeps no state of its own: it accepts `state` and reports changes as a
 patch, usually to `useTableState`.
 
 ## When to use
 
 - A list of entities in an admin panel: filters, column preferences, bulk actions.
-- Anywhere a table needs a table bar and user preferences.
+- Anywhere a table needs a table toolbar and user preferences.
 
 ## When not to use
 
@@ -57,7 +57,7 @@ const { state, set } = useTableState();
 | `selectable`    | `false` | The checkbox column. A separate prop — see below.                    |
 | `loading`       | `false` | Loading is in progress. The behavior depends on whether data exists. |
 | `error`         | —       | **Always** replaces the body, even when there is data.               |
-| `toolbar`       | —       | The table bar — usually `TableToolbar`.                              |
+| `toolbar`       | —       | The table toolbar — usually `TableToolbar`.                          |
 
 The other props go to `Table` — including `renderDetail`, `rowLabel` and
 `onRowAction`.

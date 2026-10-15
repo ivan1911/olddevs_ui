@@ -159,7 +159,7 @@ not know the shortcuts and their names.
   single key gets no separator.
 - In `CommandPalette` an item's shortcut is entirely `aria-hidden` — it is a reminder
   next to an item that can be chosen anyway. Here the shortcut is the dialog's
-  only content, and hiding it would hand a screen reader an empty cheat sheet.
+  only content, and hiding it would hand a screen reader an empty keyboard shortcuts dialog.
 - **Scrolling inside the dialog.** The list sits in a `ScrollArea` no taller than
   70% of the screen height and no taller than 32rem: the header with the close
   button stays in place. The area is a Tab stop with a separate name ("Shortcuts" /

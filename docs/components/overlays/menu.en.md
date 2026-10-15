@@ -17,7 +17,7 @@ use the dedicated `MenuButton`, not a regular `Button`: only it reads react-aria
 `ButtonContext`. The menu suits heterogeneous commands, sections, selected modes
 and submenus; it is not for choosing a field value. A nested `Menu` inside
 `SubmenuTrigger` opens beside its item on its own, and below it on a narrow
-screen: you do not need to set `placement`. The "aim" (protection that keeps a
+screen: you do not need to set `placement`. The "menu aim" (protection that keeps a
 submenu from closing while the pointer travels toward it) comes from react-aria;
 do not write your own.
 
@@ -80,7 +80,7 @@ writing, use `end top` or `start top`. The root menu opens as before, at `bottom
 submenus follow the same rule.
 
 Moving the pointer diagonally toward a submenu neither closes it nor switches to a
-neighboring item: this "aim" is handled by react-aria's `SubmenuTrigger`. The kit
+neighboring item: this "menu aim" is handled by react-aria's `SubmenuTrigger`. The kit
 does not replace it and adds none of its own, so do not write one on top of it.
 
 react-aria sets the menu panel's height from the visible area. Items that do

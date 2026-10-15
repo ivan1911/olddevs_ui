@@ -77,9 +77,9 @@ import { AspectRatio, Kbd, ScrollArea, Separator } from "@olddevs/ui";
 
 ### `Kbd`
 
-| Prop   | Default | Meaning                                                             |
-| ------ | ------- | ------------------------------------------------------------------- |
-| `size` | `sm`    | `sm` — inside a menu, `md` — in a standalone shortcuts cheat sheet. |
+| Prop   | Default | Meaning                                                                 |
+| ------ | ------- | ----------------------------------------------------------------------- |
+| `size` | `sm`    | `sm` — inside a menu, `md` — in a standalone keyboard shortcuts dialog. |
 
 `Kbd` renders the Apple modifier symbols (`⌘ ⌥ ⇧ ⌃`) in a string label in a
 proportional font and everything else in a monospace one. The kit's monospace
