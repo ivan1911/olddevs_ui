@@ -156,10 +156,10 @@ nothing outside React** and subscribes to nothing. The kit provides the shape, a
 ### Invariants the hook exists to keep
 
 - changing **filters, sorting or the page size resets the page** to the first one. Otherwise the user looks at
-  page four while the filtered rows number ten, and reads the empty space as "nothing found";
+  page four of ten filtered rows, and reads the empty space as "nothing found";
 - **selection is not reset.** The reverse looks tidier, but it breaks a bulk action exactly when that action is
   needed most;
-- density and column visibility do **not** touch the page. A filter narrows the filtered rows, not the look;
+- density and column visibility do **not** touch the page. A filter narrows the rows, not the look;
 - an explicit `page` in the same call cancels the reset. This is how the state is restored from the address,
   in full and in one go.
 

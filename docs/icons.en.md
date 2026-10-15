@@ -113,7 +113,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Vertical "more": the Block menu     | `MoreVerticalIcon`                              | `MoreIcon`, `DragHandleIcon`   |
 | Duplicate next to the original      | `DuplicateIcon`                                 | `CopyIcon`                     |
 | Arrow up / down                     | `ArrowUpIcon`, `ArrowDownIcon`                  | `ChevronUpIcon`, `SortIcon`    |
-| Document Column layout in columns   | `ColumnLayoutIcon`                              | `ColumnsIcon`                  |
+| A Column layout of the Document     | `ColumnLayoutIcon`                              | `ColumnsIcon`                  |
 | Wrapper: a group of Blocks          | `WrapperIcon`                                   | `ColumnLayoutIcon`             |
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
 | Collapsible Block of the Editor     | `DetailsIcon`                                   | `ChevronDownIcon`              |
