@@ -4,14 +4,7 @@ import type { ChainedCommands, Editor, Range } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import type { ComponentType } from "react";
 import type { UiMessages } from "../../i18n/messages.js";
-import {
-  HeadingIcon,
-  ListIcon,
-  OrderedListIcon,
-  TableIcon,
-  TaskListIcon,
-  type IconProps,
-} from "../../icons.js";
+import { HeadingIcon, TableIcon, type IconProps } from "../../icons.js";
 import { DEFAULT_LOCALE } from "../../i18n/defaults.js";
 import { handleBlock } from "./blockCommands.js";
 import { shortcutKeys } from "./shortcuts.js";
@@ -109,42 +102,6 @@ export const INSERT_ITEMS: Partial<Record<Tool, readonly InsertItem[]>> = {
     requires: level === 1 ? "heading1" : undefined,
     run: (chain) => chain.setHeading({ level }),
   })),
-  bulletList: [
-    {
-      id: "bulletList",
-      section: "turnInto",
-      label: (m) => m.bulletList,
-      icon: ListIcon,
-      aliases: ["ul", "-"],
-      markdown: "-",
-      keys: shortcutKeys("bulletList"),
-      run: (chain) => chain.toggleBulletList(),
-    },
-  ],
-  orderedList: [
-    {
-      id: "orderedList",
-      section: "turnInto",
-      label: (m) => m.orderedList,
-      icon: OrderedListIcon,
-      aliases: ["ol", "1."],
-      markdown: "1.",
-      keys: shortcutKeys("orderedList"),
-      run: (chain) => chain.toggleOrderedList(),
-    },
-  ],
-  taskList: [
-    {
-      id: "taskList",
-      section: "turnInto",
-      label: (m) => m.taskList,
-      icon: TaskListIcon,
-      aliases: ["todo", "[]"],
-      markdown: "[ ]",
-      keys: shortcutKeys("taskList"),
-      run: (chain) => chain.toggleTaskList(),
-    },
-  ],
 };
 
 /**

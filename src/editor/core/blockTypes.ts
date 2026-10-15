@@ -9,9 +9,6 @@ import {
   Heading2Icon,
   Heading3Icon,
   Heading4Icon,
-  ListIcon,
-  OrderedListIcon,
-  TaskListIcon,
   TextIcon,
   type IconProps,
 } from "../../icons.js";
@@ -91,33 +88,6 @@ export const BLOCK_TYPE_ITEMS: readonly BlockTypeItem[] = [
   heading(2, Heading2Icon),
   heading(3, Heading3Icon),
   heading(4, Heading4Icon),
-  {
-    id: "bulletList",
-    section: "turnInto",
-    tool: "bulletList",
-    label: (m) => m.bulletList,
-    icon: ListIcon,
-    keys: shortcutKeys("bulletList"),
-    run: (chain) => chain.toggleBulletList(),
-  },
-  {
-    id: "orderedList",
-    section: "turnInto",
-    tool: "orderedList",
-    label: (m) => m.orderedList,
-    icon: OrderedListIcon,
-    keys: shortcutKeys("orderedList"),
-    run: (chain) => chain.toggleOrderedList(),
-  },
-  {
-    id: "taskList",
-    section: "turnInto",
-    tool: "taskList",
-    label: (m) => m.taskList,
-    icon: TaskListIcon,
-    keys: shortcutKeys("taskList"),
-    run: (chain) => chain.toggleTaskList(),
-  },
 ];
 
 /**
