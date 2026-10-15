@@ -1,17 +1,8 @@
 "use client";
 
-import type { ChainedCommands } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
-import type { ComponentType } from "react";
-import {
-  Heading1Icon,
-  Heading2Icon,
-  Heading3Icon,
-  Heading4Icon,
-  TextIcon,
-  type IconProps,
-} from "../../icons.js";
+import { TextIcon } from "../../icons.js";
 import type { PrefixedName } from "./customTool.js";
 import type { InsertItem } from "./insertItems.js";
 import { shortcutKeys } from "./shortcuts.js";
@@ -58,17 +49,6 @@ export function turnIntoTypes(
     .map((item) => ({ ...item, section: "turnInto", tool, keys: item.keys ?? [] }));
 }
 
-const heading = (level: 1 | 2 | 3 | 4, icon: ComponentType<IconProps>): BlockTypeItem => ({
-  id: `heading${level}`,
-  section: "turnInto",
-  tool: "heading",
-  alsoTool: level === 1 ? "heading1" : undefined,
-  label: (m) => m.heading({ level }),
-  icon,
-  keys: shortcutKeys(`h${level}`),
-  run: (chain: ChainedCommands) => chain.setHeading({ level }),
-});
-
 /**
  * Пункты «¶» по порядку показа. Сочетания — подписи из общей таблицы
  * (`shortcuts.ts`), по тем же id, что у Меню вставки и справочника:
@@ -84,10 +64,6 @@ export const BLOCK_TYPE_ITEMS: readonly BlockTypeItem[] = [
     keys: shortcutKeys("paragraph"),
     run: (chain) => chain.setParagraph(),
   },
-  heading(1, Heading1Icon),
-  heading(2, Heading2Icon),
-  heading(3, Heading3Icon),
-  heading(4, Heading4Icon),
 ];
 
 /**

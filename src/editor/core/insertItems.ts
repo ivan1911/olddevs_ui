@@ -4,10 +4,9 @@ import type { ChainedCommands, Editor, Range } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import type { ComponentType } from "react";
 import type { UiMessages } from "../../i18n/messages.js";
-import { HeadingIcon, TableIcon, type IconProps } from "../../icons.js";
+import { TableIcon, type IconProps } from "../../icons.js";
 import { DEFAULT_LOCALE } from "../../i18n/defaults.js";
 import { handleBlock } from "./blockCommands.js";
-import { shortcutKeys } from "./shortcuts.js";
 import { projectRecords, type ToolList, type ToolPopover } from "./toolDescriptor.js";
 import type { Tool } from "./tools.js";
 
@@ -90,19 +89,7 @@ export interface InsertItem {
  * инструмент, он есть в Схеме всегда, и «Превратить в абзац» нужен, пока есть
  * само меню.
  */
-export const INSERT_ITEMS: Partial<Record<Tool, readonly InsertItem[]>> = {
-  heading: ([1, 2, 3, 4] as const).map((level): InsertItem => ({
-    id: `heading${level}`,
-    section: "turnInto",
-    label: (m) => m.heading({ level }),
-    icon: HeadingIcon,
-    aliases: [`h${level}`],
-    markdown: "#".repeat(level),
-    keys: shortcutKeys(`h${level}`),
-    requires: level === 1 ? "heading1" : undefined,
-    run: (chain) => chain.setHeading({ level }),
-  })),
-};
+export const INSERT_ITEMS: Partial<Record<Tool, readonly InsertItem[]>> = {};
 
 /**
  * Пункт «Таблица» заданного размера: строка-заголовок всегда есть.

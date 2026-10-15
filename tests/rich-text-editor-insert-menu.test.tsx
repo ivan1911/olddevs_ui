@@ -10,6 +10,7 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import { DividerIcon } from "../src/icons.js";
 import { INSERT_ITEMS } from "../src/editor/core/insertItems.js";
+import { BUILTIN_TOOLS } from "../src/editor/features/builtins.js";
 import {
   RichTextEditor,
   type RichTextEditorHandle,
@@ -318,7 +319,7 @@ test("Heading 1 turns the block into an H1 and carries the shortcut of the table
   await user.click(screen.getByRole("menuitem", { name: /Heading 1/ }));
 
   expect(editor.getHTML()).toBe("<h1>Title</h1>");
-  expect(INSERT_ITEMS.heading?.find((item) => item.id === "heading1")?.keys).toEqual([
+  expect(BUILTIN_TOOLS.heading?.insertItems?.find((item) => item.id === "heading1")?.keys).toEqual([
     "mod",
     "alt",
     "1",
