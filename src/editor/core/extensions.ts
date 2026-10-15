@@ -25,12 +25,7 @@ import {
   TEXT_COLOR_EXTENSIONS,
   TextAlignExtension,
 } from "../features/color/styleExtensions.js";
-import {
-  SlashCommand,
-  TriggerCommand,
-  type SlashBridge,
-  type TriggerBinding,
-} from "./slashCommand.js";
+import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
 import {
   describedTools,
   type ToolDescriptor,
@@ -214,8 +209,6 @@ const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extens
   // `div[data-block="wrapper"]` из вставки и `value` не разбирается, и её
   // Блоки встают на её место подряд.
   wrapper: () => WRAPPER_EXTENSIONS,
-  insertMenu: (context) =>
-    context.slash ? [SlashCommand.configure({ bridge: context.slash })] : [],
 };
 
 /** Доли StarterKit не переехавших Инструментов: включённый — умолчание StarterKit. */
