@@ -16,14 +16,7 @@ import { Toolbar } from "../../components/actions/Toolbar.js";
 import { Tooltip, TooltipProvider } from "../../components/overlays/Tooltip.js";
 import type { UiMessages } from "../../i18n/messages.js";
 import { useMessages } from "../../i18n/useMessages.js";
-import {
-  ImageIcon,
-  RedoIcon,
-  SearchIcon,
-  SourceIcon,
-  UndoIcon,
-  type IconProps,
-} from "../../icons.js";
+import { RedoIcon, SearchIcon, SourceIcon, UndoIcon, type IconProps } from "../../icons.js";
 import { buttonClasses } from "../../lib/button.js";
 import { cn } from "../../lib/cn.js";
 import { TOUCH_HIDDEN_CLASS } from "../../lib/touch.js";
@@ -149,7 +142,7 @@ const slot = (tool: Tool): Slot => ({ kind: "slot", id: tool, tool });
  * край, — группами целиком: с кнопками «Маркер» и «Цвет» Панель
  * `full` в колонке 640 px занимает две строки, и группа не делится на сирот.
  *
- * КНОПКИ ОПИСАНИЙ (ADR-0058, п. 5.3). Ссылка и эмодзи стоят на местах, которые
+ * КНОПКИ ОПИСАНИЙ (ADR-0058, п. 5.3). Ссылка, картинка и эмодзи стоят на местах, которые
  * кит отвёл их Инструментам (`slot`). Кнопки описаний без места кита — своя
  * группа перед «Отменить» и «Повторить», в порядке списка Инструментов.
  */
@@ -171,24 +164,7 @@ const GROUPS: readonly (readonly Entry[])[] = [
     widget("more", (tools) => MORE_FORMAT_TOOLS.some((tool) => tools.has(tool))),
   ],
   [widget("lists", hasListMenu)],
-  [
-    slot("link"),
-    {
-      kind: "button",
-      tool: "image",
-      id: "image",
-      label: (m) => m.image,
-      icon: ImageIcon,
-      // Как у ссылки: кнопка открывает поповер (`ImagePopover`), а не вставляет
-      // сама. `aria-pressed` — выделена картинка или каретка в её подписи:
-      // поповер тогда правит её, а не вставляет новую.
-      run: (editor) => editor.commands.openImageEditor(),
-      can: (editor) => editor.can().openImageEditor(),
-      isActive: (editor) => editor.isActive("image"),
-    },
-    widget("table", (tools) => tools.has("table")),
-    slot("emoji"),
-  ],
+  [slot("link"), slot("image"), widget("table", (tools) => tools.has("table")), slot("emoji")],
   [
     {
       kind: "button",
