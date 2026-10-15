@@ -3,9 +3,9 @@ import { findViolations, isTextFile, isUnbuilt, packedPaths } from "../scripts/c
 
 /**
  * The kit is published to npmjs and mirrored to a public repository. What the
- * package and the public tree carry must not point inside: no tracker keys in
- * the code that ships, no internal hosts, no traces of the product the kit was
- * forked from. The gate reads the files and names every hit by file and line.
+ * package and the public tree carry must not point inside: no internal hosts,
+ * no traces of the product the kit was forked from. Tracker keys are allowed
+ * everywhere (the owner's decision): they link a change to its issue. The gate reads the files and names every hit by file and line.
  *
  * The fixtures below are glued from pieces on purpose: the gate also reads this
  * file in `--repo` mode, and a literal internal address here would trip it.
@@ -16,18 +16,12 @@ const key = (n: number) => `OLDSUI-${n}`;
 const host = (name: string) => `${name}.olddevs` + ".ru";
 
 describe("tracker keys", () => {
-  test("a key in shipped source is reported with its file, line and rule", () => {
-    const found = findViolations(
-      files({ "src/Button.tsx": `const a = 1;\n// Fixed in ${key(42)}: focus ring.\n` })
-    );
-    expect(found).toEqual([{ path: "src/Button.tsx", line: 2, rule: "tracker-key" }]);
-  });
-
-  test("tests and scripts keep their keys: there a key ties a check to the regression it guards", () => {
+  test("a key is allowed in shipped source, tests and scripts", () => {
     const found = findViolations(
       files({
+        "src/Button.tsx": `const a = 1;\n// Fixed in ${key(42)}: focus ring.\n`,
+        "docs/button.md": `See ${key(41)}.`,
         "tests/button.test.tsx": `// ${key(42)}`,
-        "tests-visual/a11y.spec.ts": `// ${key(43)}`,
         "scripts/llms.mjs": `// ${key(44)}`,
       })
     );
