@@ -171,15 +171,6 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     label: (m) => m.selectDocument,
   },
 
-  { id: "undo", group: "history", tool: "history", keys: SHORTCUT_KEYS.undo, label: (m) => m.undo },
-  {
-    id: "redo",
-    group: "history",
-    tool: "history",
-    keys: SHORTCUT_KEYS.redo,
-    label: (m) => m.redo,
-  },
-
   {
     id: "duplicateBlock",
     group: "blocks",

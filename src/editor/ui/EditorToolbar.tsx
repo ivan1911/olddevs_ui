@@ -16,7 +16,7 @@ import { Toolbar } from "../../components/actions/Toolbar.js";
 import { Tooltip, TooltipProvider } from "../../components/overlays/Tooltip.js";
 import type { UiMessages } from "../../i18n/messages.js";
 import { useMessages } from "../../i18n/useMessages.js";
-import { RedoIcon, SearchIcon, SourceIcon, UndoIcon, type IconProps } from "../../icons.js";
+import { SearchIcon, SourceIcon, type IconProps } from "../../icons.js";
 import { buttonClasses } from "../../lib/button.js";
 import { cn } from "../../lib/cn.js";
 import { TOUCH_HIDDEN_CLASS } from "../../lib/touch.js";
@@ -55,7 +55,7 @@ type EditorMessages = UiMessages["editor"];
 interface Action {
   kind: "button";
   tool: Tool;
-  /** Стабильный ключ: у инструмента `history` кнопок две. */
+  /** Стабильный ключ: у одного Инструмента может быть несколько кнопок. */
   id: string;
   label: (messages: EditorMessages) => string;
   icon: ComponentType<IconProps>;
@@ -165,26 +165,7 @@ const GROUPS: readonly (readonly Entry[])[] = [
   ],
   [widget("lists", hasListMenu)],
   [slot("link"), slot("image"), widget("table", (tools) => tools.has("table")), slot("emoji")],
-  [
-    {
-      kind: "button",
-      tool: "history",
-      id: "undo",
-      label: (m) => m.undo,
-      icon: UndoIcon,
-      run: (editor) => editor.chain().focus().undo().run(),
-      can: (editor) => editor.can().undo(),
-    },
-    {
-      kind: "button",
-      tool: "history",
-      id: "redo",
-      label: (m) => m.redo,
-      icon: RedoIcon,
-      run: (editor) => editor.chain().focus().redo().run(),
-      can: (editor) => editor.can().redo(),
-    },
-  ],
+  [slot("history")],
 ];
 
 /** Инструменты, чьим кнопкам кит отвёл место на Панели. */
