@@ -10,7 +10,6 @@ import {
   ImageIcon,
   ListIcon,
   OrderedListIcon,
-  ParagraphIcon,
   TableIcon,
   TaskListIcon,
   WrapperIcon,
@@ -98,21 +97,11 @@ export interface InsertItem {
  * из `@olddevs/ui/icons`. Пункт, которому нужен свой интерфейс (поповер адреса
  * картинки), открывает его из `run` — `editor` для этого и передан.
  *
- * Абзац записан под самим `insertMenu`: это не инструмент, он есть в Схеме
- * всегда, и «Превратить в абзац» нужен, пока есть само меню.
+ * Абзац записан в описании самого `insertMenu` (`insertMenuTool.ts`): это не
+ * инструмент, он есть в Схеме всегда, и «Превратить в абзац» нужен, пока есть
+ * само меню.
  */
 export const INSERT_ITEMS: Partial<Record<Tool, readonly InsertItem[]>> = {
-  insertMenu: [
-    {
-      id: "paragraph",
-      section: "turnInto",
-      label: (m) => m.paragraph,
-      icon: ParagraphIcon,
-      aliases: ["p", "text"],
-      keys: shortcutKeys("paragraph"),
-      run: (chain) => chain.setParagraph(),
-    },
-  ],
   heading: ([1, 2, 3, 4] as const).map((level): InsertItem => ({
     id: `heading${level}`,
     section: "turnInto",

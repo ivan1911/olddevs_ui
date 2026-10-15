@@ -210,14 +210,6 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     label: (m) => m.blockActions,
   },
 
-  {
-    id: "clearFormatting",
-    group: "clear",
-    tool: "clearFormatting",
-    keys: SHORTCUT_KEYS.clearFormatting,
-    label: (m) => m.clearFormatting,
-  },
-
   { id: "bold", group: "marks", tool: "bold", keys: SHORTCUT_KEYS.bold, label: (m) => m.bold },
   {
     id: "italic",

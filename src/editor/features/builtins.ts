@@ -5,7 +5,8 @@ import HorizontalRule from "@tiptap/extension-horizontal-rule";
 import { DividerIcon, QuoteIcon, UnwrapIcon } from "../../icons.js";
 import { turnIntoTypes } from "../core/blockTypes.js";
 import type { InsertItem } from "../core/insertItems.js";
-import type { ShortcutCommand } from "../core/shortcuts.js";
+import { INSERT_MENU_TOOL } from "../core/insertMenuTool.js";
+import { SHORTCUT_KEYS, type ShortcutCommand } from "../core/shortcuts.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
@@ -111,6 +112,30 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
   },
   link: LINK_TOOL,
   emoji: EMOJI_TOOL,
+  insertMenu: INSERT_MENU_TOOL,
+  /*
+    Своего расширения у «Очистить форматирование» нет: клавишу `⌘\` держит
+    `BlockCommands` ядра (он спрашивает `has("clearFormatting")`), а кнопка в
+    «…» — виджет кита. В описании — только строка справочника.
+  */
+  clearFormatting: {
+    name: "clearFormatting",
+    shortcuts: [
+      {
+        id: "clearFormatting",
+        group: "clear",
+        tool: "clearFormatting",
+        keys: SHORTCUT_KEYS.clearFormatting,
+        label: (m) => m.clearFormatting,
+      },
+    ],
+  },
+  /*
+    HTML-режим — виджет «HTML» Панели и режим `RichTextEditor`, показ по
+    `has("source")`. Ни Схемы, ни записей у Инструмента нет: описание
+    нужно, чтобы он не стоял заглушкой `legacy`.
+  */
+  source: { name: "source" },
   /*
     Ленивые встроенные (ADR-0058, п. 11.1): их нет в `basic`, а
     Часть для движка тяжелее 10 кБ gzip, поэтому она грузится загрузчиком
