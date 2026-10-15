@@ -2,12 +2,13 @@
 
 import Blockquote from "@tiptap/extension-blockquote";
 import HorizontalRule from "@tiptap/extension-horizontal-rule";
-import { DividerIcon, QuoteIcon, UnwrapIcon } from "../../icons.js";
+import { DividerIcon, QuoteIcon } from "../../icons.js";
 import { turnIntoTypes } from "../core/blockTypes.js";
 import type { InsertItem } from "../core/insertItems.js";
 import type { ShortcutCommand } from "../core/shortcuts.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
+import { LAYOUT_TOOL } from "./layout/layoutTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
 import { devError } from "../../lib/dev-warn.js";
 import type { ToolEntry } from "../core/customTool.js";
@@ -18,7 +19,7 @@ import { SEARCH_TOOL } from "./search/searchTool.js";
 import { TABLE_TOOL } from "./table/tableTool.js";
 import { TOC_TOOL } from "./toc/tocTool.js";
 import { resolveTools, TOOLS, type RichTextEditorPreset, type Tool } from "../core/tools.js";
-import { unwrapWrapperAt, WRAPPER_NODE } from "./wrapper/wrapper.js";
+import { WRAPPER_TOOL } from "./wrapper/wrapperTool.js";
 
 /** Сочетание цитаты: одна запись на справочник, Меню вставки и «¶». */
 const BLOCKQUOTE_SHORTCUT: ShortcutCommand = {
@@ -56,30 +57,8 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
   search: SEARCH_TOOL,
   // Оглавление несёт только Опции: полоса и список рисуются в `RichTextEditor`.
   toc: TOC_TOOL,
-  /*
-    Обёртка переехала только Действием над Блоком, поэтому
-    `legacy`: её узел, вставка и сочетания остаются в старых реестрах. «Тон ›» —
-    меню-виджет, своего Инструмента у него нет, и он собирается в Ручке по-старому.
-  */
-  wrapper: {
-    name: "wrapper",
-    legacy: true,
-    blockActions: [
-      {
-        id: "unwrap",
-        label: (messages) => messages.unwrap,
-        icon: UnwrapIcon,
-        blocks: [WRAPPER_NODE],
-        // Одна правка: Блоки встают на место Обёртки, отмена — одна.
-        run: (editor, pos) =>
-          void editor
-            .chain()
-            .focus()
-            .command(({ tr }) => unwrapWrapperAt(tr, pos))
-            .run(),
-      },
-    ],
-  },
+  layout: LAYOUT_TOOL,
+  wrapper: WRAPPER_TOOL,
   /*
     Проверочный набор: Инструмент с пунктом вставки и Инструмент
     с «Превратить в». Поля `insertItems` и `engine` совпадают с будущим
