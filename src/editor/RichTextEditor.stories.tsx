@@ -2338,6 +2338,104 @@ export const SearchStatusLine: Story = {
 };
 
 /*
+  Невидимые символы (OLDSUI-278): пробелы, мягкие переносы (`Shift+Enter`) и концы
+  абзацев. Нейтральный текст: заметка с переносом строки внутри абзаца и пустым
+  абзацем, который легко не заметить. Двойной пробел из HTML схлопывается при
+  разборе, его набирают руками.
+*/
+const INVISIBLE_SAMPLE =
+  "<h2>Invisible characters</h2>" +
+  "<p>Spaces sit between these words, and a soft break<br>starts a new line inside one paragraph.</p>" +
+  "<p></p>" +
+  "<p>The empty paragraph above is easy to miss. Type a second space here to see it.</p>";
+
+/**
+ * Невидимые символы: кнопка «Invisible characters» у правого края Панели, перед
+ * «Find». По умолчанию символы скрыты, как и в любом Редакторе с пресетом `full`;
+ * нажмите кнопку, и пробелы (·), мягкие переносы (↵) и концы абзацев (¶) станут
+ * видны. Документ не меняется: знаки только нарисованы поверх текста.
+ */
+export const InvisibleCharacters: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={INVISIBLE_SAMPLE} />
+    </div>
+  ),
+};
+
+/** `tool("invisibleCharacters", { visible: true })`: знаки показаны с самого начала. */
+export const InvisibleCharactersShown: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, tool("invisibleCharacters", { visible: true })]}
+        defaultValue={INVISIBLE_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/** Показ знаков на светлом листе `surface="paper"`. */
+export const InvisibleCharactersPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        surface="paper"
+        tools={[...RICH_TEXT_PRESETS.full, tool("invisibleCharacters", { visible: true })]}
+        defaultValue={INVISIBLE_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+function WithInvisibleToggle() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  const [changes, setChanges] = useState(0);
+  const visible = useRichTextToolState(ref, "invisibleCharacters", (state) => state.visible);
+  return (
+    <div className="flex max-w-[640px] flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Button
+          size="sm"
+          variant="soft"
+          selected={visible === true}
+          onClick={() => ref.current?.tool("invisibleCharacters")?.toggle()}
+        >
+          {visible ? "Hide invisible characters" : "Show invisible characters"}
+        </Button>
+        <span className="text-sm">
+          <output aria-label="Change count">{changes}</output> changes reported
+        </span>
+      </div>
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        defaultValue={INVISIBLE_SAMPLE}
+        onChange={() => setChanges((count) => count + 1)}
+      />
+      <pre
+        aria-label="Saved HTML"
+        className="bg-bg-2 text-fg-2 overflow-x-auto rounded p-2 text-xs whitespace-pre-wrap"
+      >
+        {/* Читается при каждом рендере: переключение его перерисовывает через Состояние. */}
+        {ref.current?.getHTML() ?? ""}
+      </pre>
+    </div>
+  );
+}
+
+/**
+ * Показ с внешней кнопки: `handle.tool("invisibleCharacters")?.toggle()` и
+ * `useRichTextToolState(ref, "invisibleCharacters")` вместо кнопки Панели. Под полем
+ * сохранённый HTML и счётчик `onChange`: показ их не трогает.
+ */
+export const InvisibleCharactersExternalToggle: Story = {
+  render: () => <WithInvisibleToggle />,
+};
+
+/*
   Кнопки своего Инструмента на нейтральных данных: действие с
   сочетанием, Метка-переключатель с флагом Меню выделения и кнопка с поповером.
   Подпись — функция от локали, поэтому русская история переводится сама.
