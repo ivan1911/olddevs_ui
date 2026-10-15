@@ -122,7 +122,7 @@ This page is updated together with the key. The gate `tests/i18n-gate.test.ts` c
 
 ## `editor`
 
-The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-editor.md)) live in the shared catalog, not in a catalog of their own. Keys with a dot are nested: `emojiName.*` is the name of each emoji, and `emojiCategory.*` is the name of each category.
+The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-editor.md)) live in the shared catalog, not in a catalog of their own. Keys with a dot are nested: `emojiName.*` is the name of each emoji, and `emojiCategory.*` is the name of each category. `typographyQuotes` is not text for the screen but the language of the quote set of the `typography` Tool: `ru` (guillemets and low-9 quotes) or `en` (curly quotes); a catalog of another language keeps `en`, or the `quotes` option sets the quotes.
 
 | Key                                   | Shape    | `en-US`                                                                          | `ru-RU`                                                                            |
 | ------------------------------------- | -------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -405,6 +405,7 @@ The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-edito
 | `blockDuplicate`                      | string   | Duplicate                                                                        | Дублировать                                                                        |
 | `blockDelete`                         | string   | Delete                                                                           | Удалить                                                                            |
 | `toc`                                 | string   | Table of contents                                                                | Оглавление                                                                         |
+| `typographyQuotes`                    | string   | en                                                                               | ru                                                                                 |
 
 ## `errorState`
 

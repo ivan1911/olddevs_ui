@@ -20,6 +20,7 @@ exports:
     SearchToolOptions,
     TocToolOptions,
     DetailsToolOptions,
+    TypographyToolOptions,
     TocLevel,
     SearchToolCommands,
     TocToolCommands,
@@ -74,10 +75,11 @@ sourceHash: bba3a0af1f9c
 - **Code block.** It has a header (language on the left, "Copy" on the right), a language (Python, TypeScript, JavaScript, Go, HTML, JSON, YAML, Markdown or plain text) and lowlight highlighting. Only `class="language-…"` is written into the Document, and for `RichTextView` the server helper from `@olddevs/ui/editor/highlight` highlights the Blocks.
 - **Source mode.** The "HTML" button of the fixed Toolbar (the `source` Tool) swaps the Document for a field with its source HTML; leaving the mode, `blur`, form submission and `getHTML()` apply the edit through the Schema, like an incoming `value`.
 - **Feature set.** `preset="full" | "basic"` or an exact `tools` list; a disabled Tool removes both its button and its markup from the Schema.
-- **Tool options, state and commands.** The built-in `search`, `toc` and `details` Tools have options: a `tool("toc", { offsetVar: "--header-h", levels: [2, 3] })` entry sits in `tools` next to the names, switches the Tool on and configures it (for Search, the starting flags `matchCase`, `wholeWord` and `regex`; for the Table of contents, `offsetVar`, `levels` and `listWidth`; for the collapsible Block, `persist`). The `useRichTextToolState(ref, "search")` hook reads the state: for Search, whether the find panel is open, the query, the number of matches and the number of the current one; for the Table of contents, the headings and the current section. The hook returns `null` before mount, on the server, after the Editor unmounts and when the Tool is not in the set. Commands are called through the Handle: `ref.current?.tool("search")?.open()`, `ref.current?.tool("toc")?.jumpTo(2)`; each returns a `boolean`. Options are read once, when the engine is created. A custom Tool with the same three parts is described with `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
+- **Tool options, state and commands.** The built-in `search`, `toc`, `details` and `typography` Tools have options: a `tool("toc", { offsetVar: "--header-h", levels: [2, 3] })` entry sits in `tools` next to the names, switches the Tool on and configures it (for Search, the starting flags `matchCase`, `wholeWord` and `regex`; for the Table of contents, `offsetVar`, `levels` and `listWidth`; for the collapsible Block, `persist`; for Typography, the `quotes` set and the replacement rules). The `useRichTextToolState(ref, "search")` hook reads the state: for Search, whether the find panel is open, the query, the number of matches and the number of the current one; for the Table of contents, the headings and the current section. The hook returns `null` before mount, on the server, after the Editor unmounts and when the Tool is not in the set. Commands are called through the Handle: `ref.current?.tool("search")?.open()`, `ref.current?.tool("toc")?.jumpTo(2)`; each returns a `boolean`. Options are read once, when the engine is created. A custom Tool with the same three parts is described with `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
 - **Handle (`ref`).** The screen drives the field through `ref`: `insertHTML`, `insertText`, `getText`, `getSelectedText`, `isEmpty`, `focus(position?)`, `blur`, `undo`, `redo`, `tool(name)`; `getJSON()`/`setJSON()` export and load the Document as a lossless JSON envelope (see the "JSON" section), and `defaultValue` accepts the envelope too. The screen builds its own toolbar with the `useRichTextEditorState(ref, selector)` hook. `openSearch` is deprecated (removed in 5.0): use `tool("search")?.open()` instead. Before Readiness (on the server, before mount, while Tool Loaders are running) the methods are silent: see the "Handle (`ref`) and a custom toolbar outside the field" section.
 - **Events.** The screen learns about field events through the `onReady()`, `onFocus()` and `onBlur()` callbacks (see the "Events" section).
 - **Collapsible block.** The `details` Tool (in `full`) is a Block made of a title and content: it is inserted with the "Collapsible block" item of the Slash menu, its HTML is the `details` and `summary` tags, and in the View it opens the browser's native way, without the engine. The `tool("details", { persist: true })` option writes the Block's open state into the Document (`open`); by default it does not. In Markdown the Block is raw HTML `<details><summary>`.
+- **Typography.** The `typography` Tool (not in `full` or `basic`, switched on explicitly) is replacements while typing, on the Typography extension from Tiptap: `"` becomes guillemets under the Russian catalog and curly quotes under the English one (nested low-9 quotes too), `--` becomes a dash, `...` an ellipsis, plus arrows, ©, ½, ± and the other Tiptap rules. Input rules only: the Schema, the sanitizer and Markdown do not change, and `value` gets plain characters. It does not fire in code, and `Backspace` right after a replacement undoes it. The options are `quotes` and one per rule (`false` or a string).
 - **Skeleton and Loader.** Until Readiness the field shows a Skeleton: the frame and the Document as static HTML without input, with no height jump. The Skeleton's Document is `value` cleaned by the Schema, and only in the browser; on the server the Skeleton is a frame without a Document. The Extensions of a custom Tool can be passed as a Loader (`engine: () => import(…)`); if it fails, the result is a field error with "Retry".
 - **Status bar and Field notice.** Below the field, inside the frame, are the Status bar (`status`: the screen's React node at the start, the kit's counter at the end, no `role`) and the Field notice: the engine command `showNotice({ tone: "status" | "error", text })` / `showNotice(null)`. `status` is only announced, `error` is shown as a `role="alert"` line until the next edit; image messages go through the same channel.
 - **Buttons of a custom Tool.** A custom Tool (`CustomTool` in `tools`) can carry buttons in the `buttons` field: a label (a string or a function that receives `{ locale }`), an icon, `can`, `isActive`, `isVisible`, `selectionMenu`, `shortcut` and exactly one of `run` and `popover`. The kit renders the button in one group before "Undo" and "Redo", binds the shortcut and shows it in the tooltip, in `aria-keyshortcuts` and in the Keyboard shortcuts popover.
@@ -101,6 +103,7 @@ import { RichTextEditor } from "@olddevs/ui/editor";
 - The value is stored and served as HTML and is shown later by a page.
 - A component "for the future" (ADR-0048): at release there was no requesting screen, so the API is modeled on comparable products — Imperavi Redactor 5, Tiptap Simple Editor, minimal-tiptap, Notion. Your screen is the first test of this API. The engine decision is in ADR-0050.
 - The collapsible Block `details` is "for the future" too (ADR-0048): at release there was no requesting screen, and the API follows the Details extension from Tiptap; the first screen is entitled to ask for a different API.
+- Typography `typography` is "for the future" too (ADR-0048): at release there was no requesting screen, and the API follows the Typography extension from Tiptap; the first screen is entitled to ask for a different API.
 
 ## When not to use
 
@@ -328,7 +331,7 @@ The `link` Tool: the "Link" button on the Toolbar and `Ctrl/⌘+K` open a popove
 
 ## Tools and Presets
 
-`preset="full"` (default) is everything in the release except the Table of contents `toc`: it changes the layout of the field, so it is switched on only explicitly. `preset="basic"` is for comments and short descriptions. `tools` is an exact list and takes precedence over a Preset; descriptions of custom Tools can be mixed in with the kit's names (see the "Custom Tool" section). The type of a `tools` element is `Tool` (a kit name, a Configured Tool from `tool(…)`, a `defineTool(…)` definition or a `CustomTool`), the type of a kit name is `ToolName`; both are exported from `@olddevs/ui/editor`.
+`preset="full"` (default) is everything in the release except the Table of contents `toc` and Typography `typography`: the first changes the layout of the field, the second changes the text being typed, so they are switched on only explicitly. `preset="basic"` is for comments and short descriptions. `tools` is an exact list and takes precedence over a Preset; descriptions of custom Tools can be mixed in with the kit's names (see the "Custom Tool" section). The type of a `tools` element is `Tool` (a kit name, a Configured Tool from `tool(…)`, a `defineTool(…)` definition or a `CustomTool`), the type of a kit name is `ToolName`; both are exported from `@olddevs/ui/editor`.
 
 Presets are also exported as arrays of names — `RICH_TEXT_PRESETS.full` and `RICH_TEXT_PRESETS.basic` — so that you can assemble your own set from them: `tools={[...RICH_TEXT_PRESETS.full, mergeTagTool]}`. The arrays are frozen. A Preset's content is "what the kit considers the full set", not a frozen list: a new built-in Tool arrives in a Preset in a minor version. If you need a stable set, pass an exact list of names.
 
@@ -367,6 +370,7 @@ Presets are also exported as arrays of names — `RICH_TEXT_PRESETS.full` and `R
 | `details`         | "+": Collapsible block                               | `details`, `summary`, `div[data-type=detailsContent]` | `Enter` in the title and at the empty end of the content | —                      | —       |
 | `insertMenu`      | "+" Slash menu                                       | — (Blocks of other Tools)                             | —                                                        | `/`                    | —       |
 | `toc`             | Table of contents in the left gutter (not in `full`) | — (reads the headings)                                | —                                                        | —                      | —       |
+| `typography`      | — (replacements while typing; not in `full`)         | — (plain characters)                                  | `Backspace` right after a replacement — undo             | `--`, `...`, `"`, `->` | —       |
 
 A paragraph is always there; a soft line break is `Shift+Enter`. `insertMenu` and `emoji`, like `clearFormatting`, have no markup of their own: `insertMenu` provides access to other Tools' Blocks, and it is disabled where `/` is an ordinary character (paths, "and/or"); `basic` lacks it for the same reason. `emoji` inserts plain text — the Schema, the sanitizer and Markdown do not change because of it (see the "Emoji" section); `basic` lacks it: in a comment the OS's own palette is easier to reach, and a button would take up room in a short row. `source` is the Source mode (see the "Source mode" section): it has no markup of its own either, an HTML edit goes through the same Schema as `value`, and it cannot be used to get around the set of Tools; `basic` lacks it — in a comment an "HTML" button is superfluous unless the screen explicitly asks for it.
 
@@ -374,13 +378,13 @@ A paragraph is always there; a soft line break is `Shift+Enter`. `insertMenu` an
 
 Earlier, "no H1 in the Document" was a kit decision (the page heading sits outside the Editor); now it is the screen's decision — ADR-0053 revises the earlier decision, and ADR-0050 links to ADR-0053.
 
-A name enters the `Tool` type together with the Tool itself, not earlier: widening the input type does not break the consumer, whereas a name without an implementation would compile and do nothing. That is how `link` arrived — straight into the `basic` Preset too — and `color`, `highlight`, `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `source`, `toc`; there are no reserved names now. Unknown names in `tools` (from JS without types) are dropped silently.
+A name enters the `Tool` type together with the Tool itself, not earlier: widening the input type does not break the consumer, whereas a name without an implementation would compile and do nothing. That is how `link` arrived — straight into the `basic` Preset too — and `color`, `highlight`, `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `source`, `toc`, `typography`; there are no reserved names now. Unknown names in `tools` (from JS without types) are dropped silently.
 
 `preset` and `tools` are read **when the engine is created**: the Schema of a live ProseMirror cannot be changed. To change the set on a mounted field, remount it with a key (`key`) — the edit history is lost in the process.
 
 ### Options of a built-in Tool: `tool()`
 
-Three built-in Tools have options: `search`, `toc` and `details`. You set them with the `tool(name, options)` helper, which returns a Configured Tool: an entry for `tools` that sits next to the names and the descriptions of custom Tools (ADR-0069).
+Four built-in Tools have options: `search`, `toc`, `details` and `typography`. You set them with the `tool(name, options)` helper, which returns a Configured Tool: an entry for `tools` that sits next to the names and the descriptions of custom Tools (ADR-0069).
 
 ```tsx
 import { RICH_TEXT_PRESETS, RichTextEditor, tool } from "@olddevs/ui/editor";
@@ -398,13 +402,13 @@ const tools = [
 - **An entry switches the Tool on.** `tool("toc", …)` enables `toc` without the `"toc"` string. If `tools` also holds the bare name (for example, `search` from `full`), the Configured Tool wins: there is still one Find button and one find panel.
 - **Pass only what you change.** The remaining options come from the kit's defaults. Nested objects are merged and arrays are replaced whole: `levels: [2, 3]` means exactly these levels, not an addition to the default.
 - **The position in the UI does not change.** A configured built-in Tool sits where it would sit by name; a custom Tool sits in `tools` order.
-- **Types infer the options from the name.** `tool("toc", { matchCase: true })` and `tool("bold", {})` do not compile: `tool()` accepts only Tools that have options, which today means `search`, `toc` and `details`.
+- **Types infer the options from the name.** `tool("toc", { matchCase: true })` and `tool("bold", {})` do not compile: `tool()` accepts only Tools that have options, which today means `search`, `toc`, `details` and `typography`.
 - **Two `tool()` entries with the same name** are a set error, like two custom Tools with the same name: a field error ("The editor couldn't start") and a `console.error` in development.
 - **A wrong value** (from JS without types: `levels: [5]`, `offsetVar: "header"`) is replaced with the default, with a single `console.error` per Tool in development; the field keeps working.
 - **Options are read once**, together with the `tools` set, when the engine is created. To change them on a mounted field, remount it with a key (`key`) — the edit history is lost in the process.
 - **Server.** `tool()` pulls neither Tiptap nor React into the module, so a `tools` set that uses it can be built in a server module. A configured built-in Tool is made of data, and if its options are data, you can pass it to a client component as a prop.
 
-The options of each Tool are described in its own section: "Find and replace", "Table of contents" and "Collapsible block". The options of a custom Tool are set by `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
+The options of each Tool are described in its own section: "Find and replace", "Table of contents", "Collapsible block" and "Typography". The options of a custom Tool are set by `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
 
 ## Custom Tool
 
@@ -1422,6 +1426,65 @@ function SectionNav({ target }: { target: RefObject<RichTextEditorHandle | null>
 }
 ```
 
+## Typography
+
+The `typography` Tool is replacements while typing: a straight `"` becomes a quotation mark, `--` a dash, `...` an ellipsis, `->` an arrow, `(c)` the © sign. The engine is the Typography extension from Tiptap, and the API follows it (ADR-0048); the kit adds quotes by the language of the message catalog and nested guillemets. The Tool is in no Preset, neither `full` nor `basic`: it changes the text being typed, and a kit update must not do that where nobody asked for it. Switch it on by name or with a `tool()` entry:
+
+```tsx
+import { RICH_TEXT_PRESETS, RichTextEditor, tool } from "@olddevs/ui/editor";
+
+<RichTextEditor tools={[...RICH_TEXT_PRESETS.full, "typography"]} />;
+
+// A Russian Document under an English interface: the quote set is explicit,
+// and sizes like 3x3 must not turn into 3×3.
+<RichTextEditor
+  tools={[...RICH_TEXT_PRESETS.full, tool("typography", { quotes: "ru", multiplication: false })]}
+/>;
+```
+
+- **Input rules only.** The Schema, the sanitizer and Markdown do not change: `value` and `getHTML()` get plain Unicode characters with no new tags or attributes, and `RichTextView` shows them like any other text. The Tool has no Toolbar button, no Slash menu item, no state and no commands.
+- **It works while typing.** A rule fires on a character the author typed on the keyboard. Pasted text, `value`, `defaultValue`, `setMarkdown()` and `insertText()` are left as they are.
+- **It does not fire inside code.** In the `code` Mark and in a code Block, `--`, `"` and `(c)` stay as typed: code does not break.
+- **Every replacement is undone in one step.** `Backspace` right after a replacement brings the typed characters back (`--` instead of `—`). `Ctrl/⌘+Z` right after a replacement does the same: the replacement is a separate history step, the first press brings the typed characters back, the second removes them. After the next character, `Backspace` is ordinary.
+
+### Rules
+
+All the Tiptap rules are on. Each has an option of the same name: `false` switches the rule off, a string replaces the character.
+
+| Typed                  | Result  | Option                                                        |
+| ---------------------- | ------- | ------------------------------------------------------------- |
+| `--`                   | —       | `emDash`                                                      |
+| `...`                  | …       | `ellipsis`                                                    |
+| `<-`, `->`             | ←, →    | `leftArrow`, `rightArrow`                                     |
+| `(c)`, `(tm)`          | ©, ™    | `copyright`, `trademark`                                      |
+| `(sm)`, `(r)`          | ℠, ®    | `servicemark`, `registeredTrademark`                          |
+| `1/2 `, `1/4 `, `3/4 ` | ½, ¼, ¾ | `oneHalf`, `oneQuarter`, `threeQuarters` (with a space after) |
+| `+/-`, `!=`            | ±, ≠    | `plusMinus`, `notEqual`                                       |
+| `<<`, `>>`             | «, »    | `laquo`, `raquo`                                              |
+| `2x3`, `2*3`           | 2×3     | `multiplication`                                              |
+| `^2`, `^3`             | ², ³    | `superscriptTwo`, `superscriptThree`                          |
+| `"`                    | a quote | `openDoubleQuote`, `closeDoubleQuote` and the `quotes` set    |
+| `'`                    | ‘, ’    | `openSingleQuote`, `closeSingleQuote`                         |
+
+The multiplication rule fires on any `2x3` and `2*3`, so "a 3x3 grid" becomes "a 3×3 grid": if the Document is full of sizes, set `multiplication: false`. An empty string and an invalid value are replaced by the default, with one `console.error` per Tool in development. Options are read once, when the engine is created.
+
+### Quotes by the catalog language
+
+The `quotes` option picks the set for `"`: `"auto"` (default), `"ru"` or `"en"`. `"auto"` takes the set from the message catalog, from the `editor.typographyQuotes` string: `"ru"` in `@olddevs/ui/locales/ru`, `"en"` in the English fallback and in any catalog without that string. The set is read when the quote is typed, so a catalog change on a mounted field is picked up without a remount. An explicit set is for a Document whose language differs from the interface.
+
+| Set  | `"` at the start of a Block, after a space or a bracket | `"` after a word   |
+| ---- | ------------------------------------------------------- | ------------------ |
+| `en` | “                                                       | ”                  |
+| `ru` | « (inside «…» — „)                                      | » (inside „…“ — “) |
+
+In the Russian set quotes nest by what is open in the current Block before the caret: typing `"He said "hi""` gives «He said „hi“». An opening quote inside «…» gives „, a closing quote inside „…“ gives “, and a closing quote inside «…» with nothing nested closes the guillemet. A closing quote with nothing open is just ». Russian typography has no third level: an opening quote inside „…“ gives « again. Open quotes are counted within one Block.
+
+A single `'` does not depend on the set and follows the Tiptap rules in both: after a space or at the start of a Block it is ‘, otherwise ’ (which is also the apostrophe: `it's` → it’s).
+
+An explicit `openDoubleQuote` or `closeDoubleQuote` string beats the `quotes` set and switches nesting off: the quotes go as a pair, the opening one after a space, the start of a Block or a bracket and the closing one everywhere else, and the one of the pair that is not given comes from the set. `false` switches the rule off; with both off, `"` stays straight.
+
+The message catalog string is `editor.typographyQuotes`: not text for the screen but the language of the quote set, `"ru"` or `"en"`. The decision is ADR-0048 ("for the future": there was no requesting customer at release).
+
 ## Status bar and Field notice
 
 Under the field inside the frame there are two independent areas. The **Status bar** is what the screen puts there itself: "Saved", a word count, a co-author. The **Field notice** is what the kit and Tools report: an upload result, a paste rejection. The first is a React node in the `status` prop, the second is data and an engine command.
@@ -1687,7 +1750,7 @@ export const pdfTool: CustomTool = { name: "acme_pdfDrop", engine: [PdfDrop] };
 - `maxHeight` — the height limit of the Document area (a number is pixels, a string is a CSS length), beyond it the Document scrolls inside the frame; `resizable` — a height handle at the area's bottom edge (a slider for keyboard users), and `maxHeight` with it is the starting height. See "Field height".
 - `surface` — `"theme"` (default) or `"paper"`: a light Paper in any theme, see "Surface". The type is `RichTextSurface`.
 - `status` — a React node of the Status bar inside the field's frame, at the start of the counter row; the kit does not announce it. The engine command `showNotice({ tone, text } | null)` is the Field notice. Both are in "Status bar and Field notice"; they follow the kit's semver.
-- `tools` — kit names, Configured Tools `tool(name, options)` for `search`, `toc` and `details`, `defineTool(…)` definitions and descriptions of custom Tools (`CustomTool`, including their `buttons`, `insertItems`, `blockActions`, `textCards` and `trigger`), Presets as arrays — `RICH_TEXT_PRESETS`; see "Tools and Presets" and "Custom Tool". A description with an error is a field error.
+- `tools` — kit names, Configured Tools `tool(name, options)` for `search`, `toc`, `details` and `typography`, `defineTool(…)` definitions and descriptions of custom Tools (`CustomTool`, including their `buttons`, `insertItems`, `blockActions`, `textCards` and `trigger`), Presets as arrays — `RICH_TEXT_PRESETS`; see "Tools and Presets" and "Custom Tool". A description with an error is a field error.
 - `ref` (`RichTextEditorHandle`): `getHTML()` — the current HTML, without waiting for the delay and without `onChange` (in Source mode it first applies the field's edit — then `onChange` is called if the Document changed; the same for `getMarkdown()`); `getMarkdown()` and `setMarkdown(md)` — see "Markdown"; `getJSON()` and `setJSON(document)` — see "JSON"; `clear()` — clear the Document, and `onChange("")` notifies the screen; `focus(position?)`, `blur()`, `insertHTML`, `insertText`, `getText`, `getSelectedText`, `isEmpty`, `undo`, `redo`, `canUndo`, `canRedo` — see "Handle (`ref`) and your own toolbar outside the field"; `tool(name)` — the commands of a Tool, see "Tool commands: `handle.tool()`"; `openSearch({ replace? })` — deprecated, removed in 5.0, replaced by `tool("search")?.open({ replace })`; `editor` — the underlying Tiptap `Editor`, its API **follows Tiptap's major version**, and before mount and on the server it is `null`. `focus()` without an argument puts the caret at the end of the Document (in Source mode, in the HTML field).
 - `useRichTextEditorState(ref, selector)` — a hook for your own toolbar outside the field, see "Handle (`ref`) and your own toolbar outside the field".
 - `useRichTextToolState(ref, name, selector?)` — the hook for Tool state (`search`, `toc` and custom Tools with `defineTool`): a data snapshot, `null` before mount, after unmount and without the Tool; see "Tool state: `useRichTextToolState`". It follows the kit's semver, as do `tool()`, `defineTool()`, `handle.tool()` and the `RichTextTools` map.
