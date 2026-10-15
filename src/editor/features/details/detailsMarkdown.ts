@@ -10,8 +10,7 @@ import type {
 } from "@tiptap/core";
 
 /**
- * Сворачиваемый Блок в Markdown — СЫРЫМ HTML, как на GitHub (спека эпика
- * OLDSUI-272, раздел `details`):
+ * Сворачиваемый Блок в Markdown — СЫРЫМ HTML, как на GitHub:
  *
  * ```
  * <details>

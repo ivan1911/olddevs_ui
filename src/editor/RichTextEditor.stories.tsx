@@ -2086,7 +2086,7 @@ export const WrapperToneMenu: Story = {
 };
 
 /*
-  Сворачиваемый Блок (Details, OLDSUI-277): заголовок и содержимое из Блоков.
+  Сворачиваемый Блок (Details): заголовок и содержимое из Блоков.
   Нейтральный текст: заметка о сборке с подробностями под заголовком.
 */
 const detailsBlock = (title: string, ...blocks: string[]) =>

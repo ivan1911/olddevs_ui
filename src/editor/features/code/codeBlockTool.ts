@@ -64,7 +64,7 @@ const CodeBlockShape = Node.create({
  * Сочетание `Mod+Alt+C` вешает расширение, поэтому строка справочника — только
  * подпись (`shortcuts`); клавиши пунктов меню и «Формат ›» берутся из
  * `SHORTCUT_KEYS`, место строки — из `SHORTCUT_ORDER`. Кнопка «Блок кода» меню
- * «…» и «¶» — виджеты Панели и остаются у кита (OLDSUI-273).
+ * «…» и «¶» — виджеты Панели и остаются у кита.
  */
 export const CODE_BLOCK_TOOL: ToolDescriptor = {
   name: "codeBlock",
