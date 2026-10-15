@@ -1,3 +1,5 @@
+"use client";
+
 import type { Editor } from "@tiptap/core";
 import type { InvisibleCharactersToolState } from "../../core/toolState.js";
 import { invisibleCharactersVisible } from "./invisibleCharactersVisible.js";
