@@ -658,6 +658,7 @@ export const DEFAULT_MESSAGES: UiMessages = {
     blockDuplicate: "Duplicate",
     blockDelete: "Delete",
     toc: "Table of contents",
+    typographyQuotes: "en",
   },
 };
 

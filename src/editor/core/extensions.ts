@@ -9,6 +9,7 @@ import { Extension, type Extensions } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Placeholder } from "@tiptap/extensions";
 import { StarterKit, type StarterKitOptions } from "@tiptap/starter-kit";
+import type { EditorQuoteSet } from "../../i18n/messages.js";
 import { AtomText } from "./atomText.js";
 import { BlockCommands, BlockMenuKey } from "./blockCommands.js";
 import { FieldNoticeExtension, type FieldNoticeOptions } from "./fieldNotice.js";
@@ -41,6 +42,12 @@ export interface EditorExtensionOptions {
    * каталога, читается при каждой перерисовке кнопки.
    */
   detailsToggle: (text: string) => string;
+  /**
+   * Набор кавычек языка каталога сообщений (`UiMessages.editor.typographyQuotes`)
+   * для Инструмента `typography` при Опции `quotes: "auto"`. Читается при каждом
+   * вводе кавычки: смена каталога не пересоздаёт движок.
+   */
+  quoteSet: () => EditorQuoteSet;
   /**
    * Мост Меню вставки по `/`. Нет — меню не открывается: инструмент
    * `insertMenu` выключен или пунктов для него нет.
@@ -222,6 +229,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "horizontalRule",
   "table",
   "emoji",
+  "typography",
   "source",
   "search",
   "toc",

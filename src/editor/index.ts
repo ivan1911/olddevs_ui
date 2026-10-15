@@ -53,6 +53,7 @@ export type {
   SearchToolOptions,
   TocLevel,
   TocToolOptions,
+  TypographyToolOptions,
 } from "./core/toolOptions.js";
 export type { SearchToolCommands, TocToolCommands } from "./core/toolCommands.js";
 export type { SearchToolState, TocToolHeading, TocToolState } from "./core/toolState.js";

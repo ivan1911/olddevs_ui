@@ -1098,6 +1098,14 @@ export interface UiMessages {
      * `nav` со списком заголовков — одно слово на оба, это одна вещь.
      */
     toc: string;
+    /**
+     * Набор кавычек языка каталога для Инструмента `typography`: `"ru"` —
+     * «ёлочки» и „лапки“, `"en"` — “ ” и ‘ ’. Не текст для экрана, а признак
+     * языка каталога: у каталога другого языка (немецкий, французский)
+     * своего набора у кита нет, и пока значение не задано, действует `"en"`;
+     * набор можно задать явно Опцией `quotes`.
+     */
+    typographyQuotes: EditorQuoteSet;
   };
 }
 
@@ -1112,6 +1120,9 @@ export type EditorLayoutVariant = "100" | "50-50" | "33-33-33" | "25-25-25-25" |
  * кита, как их пишет `data-tone` (`editor/features/wrapper/wrapperTones.ts`).
  */
 export type EditorWrapperTone = "neutral" | "accent" | "success" | "warning" | "danger";
+
+/** Наборы кавычек `typography` — значения `editor.typographyQuotes` и Опции `quotes`. */
+export type EditorQuoteSet = "en" | "ru";
 
 /** Категории эмодзи Редактора — ключи `editor.emojiCategory`; порядок показа задаёт `editor/features/emoji/emoji.ts`. */
 export type EmojiCategory =
