@@ -1,3 +1,5 @@
+"use client";
+
 import { Extension, InputRule } from "@tiptap/core";
 import type { EditorQuoteSet } from "../../../i18n/messages.js";
 
