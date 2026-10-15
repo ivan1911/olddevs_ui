@@ -395,6 +395,45 @@ export const Wrappers: Story = {
 };
 
 /*
+  Сворачиваемый Блок в Просмотре: родной `details` и `summary` — раскрывается без
+  JavaScript, с клавиатуры и читается скринридером. Образец — тот же, что в
+  истории Редактора `Details`; второй Блок сохранён открытым (`persist`).
+*/
+const DETAILS_HTML =
+  "<h2>Collapsible blocks</h2><p>A block keeps its details under a title. Click the title to open it.</p>" +
+  '<details><summary>How to build the package</summary><div data-type="detailsContent">' +
+  "<p>Run the gates, then the build.</p>" +
+  "<ol><li><p>Install the dependencies</p></li><li><p>Run <code>npm run build</code></p></li></ol>" +
+  "</div></details>" +
+  '<details open=""><summary>Release checklist</summary><div data-type="detailsContent">' +
+  "<ul><li><p>Write the changelog</p></li><li><p>Tag the release</p></li></ul>" +
+  '<details><summary>Rolling back</summary><div data-type="detailsContent">' +
+  "<p>Revert the tag and publish the previous version.</p></div></details>" +
+  "</div></details>" +
+  "<p>Text after the blocks.</p>";
+
+/**
+ * Сворачиваемый Блок в Просмотре: без движка и без JavaScript — открывает и
+ * закрывает сам браузер. Блок, сохранённый с `open`, приходит открытым.
+ */
+export const Details: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={DETAILS_HTML} />
+    </div>
+  ),
+};
+
+/** Сворачиваемый Блок на светлом листе `surface="paper"`. */
+export const DetailsPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={DETAILS_HTML} surface="paper" />
+    </div>
+  ),
+};
+
+/*
   Тон Обёртки у читателя: тот же вид, что в Редакторе, — подложка
   и полоса тона; Обёртка без тона по-прежнему невидима. Образец — тот же, что
   в истории Редактора `WrapperTones`.
