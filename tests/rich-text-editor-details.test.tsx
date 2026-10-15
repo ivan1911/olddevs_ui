@@ -709,6 +709,22 @@ test("the toggle button is reachable by Tab and works with Enter and Space", asy
   expect(editor.getHTML()).toBe(details("First", "<p>a</p>") + details("Second", "<p>b</p>"));
 });
 
+test("a keyboard toggle does not pull focus back once it has moved to another button", async () => {
+  const user = userEvent.setup();
+  renderEditor({
+    defaultValue: details("First", "<p>a</p>") + details("Second", "<p>b</p>"),
+  });
+  const first = screen.getByRole("button", { name: "Details: First" });
+  const second = screen.getByRole("button", { name: "Details: Second" });
+
+  first.focus();
+  await user.keyboard("{Enter}");
+  // До кадра, в котором возвращается фокус, человек уже на следующей кнопке.
+  second.focus();
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  expect(document.activeElement).toBe(second);
+});
+
 test("Tab in the title and in the content is left to the browser", () => {
   const { editor } = renderEditor({ defaultValue: openDetails("Title", "<p>Body</p>") });
   openAll();

@@ -244,8 +244,26 @@ function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
         toggle?.addEventListener("click", () => {
           if (!byKey) return;
           byKey = false;
+          /*
+            До кадра человек может уйти дальше (Tab к кнопке следующего Блока),
+            а фокус Tiptap кадром позже утащит его и оттуда в Документ. Поэтому
+            запоминаем, куда фокус перевёл сам человек, и возвращаем туда, а не
+            на эту кнопку: иначе следующая клавиша ушла бы не той кнопке.
+          */
+          const owner = toggle.ownerDocument;
+          const root = view.dom.closest(".ProseMirror");
+          let target: HTMLElement = toggle;
+          const follow = (event: FocusEvent) => {
+            if (event.target instanceof HTMLElement && event.target !== root) target = event.target;
+          };
+          owner.addEventListener("focusin", follow, true);
           requestAnimationFrame(() => {
-            if (toggle.isConnected) toggle.focus({ preventScroll: true });
+            owner.removeEventListener("focusin", follow, true);
+            const active = owner.activeElement;
+            // Фокус в Документе — его поставил Tiptap; где-то ещё — его увёл человек.
+            if (target.isConnected && (active === root || active === target)) {
+              target.focus({ preventScroll: true });
+            }
           });
         });
         return { ...view, stopEvent };
