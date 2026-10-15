@@ -7,8 +7,6 @@
 
 import { Extension, type Extensions } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { Subscript } from "@tiptap/extension-subscript";
-import { Superscript } from "@tiptap/extension-superscript";
 import { Placeholder } from "@tiptap/extensions";
 import { StarterKit, type StarterKitOptions } from "@tiptap/starter-kit";
 import { AtomText } from "./atomText.js";
@@ -144,7 +142,7 @@ const HandledTabStaysInside = Extension.create({
  */
 /**
  * Ключи StarterKit, которые принадлежат Инструментам. Все выключены, пока их не
- * включит доля описания (`starterKit`) или не переехавший Инструмент: Метка,
+ * включит доля описания (`starterKit`): Метка,
  * которой нет в наборе, не попадает в Схему. Цитата, разделитель, блок кода и
  * ссылка — свои расширения кита, а `trailingNode` выключен всегда (см. выше).
  * Документ, абзац, текст, перенос, пункт списка, его клавиши и курсоры
@@ -166,32 +164,6 @@ const STARTER_KIT_OFF: Partial<StarterKitOptions> = {
   link: false,
   trailingNode: false,
 };
-
-/**
- * Части для движка не переехавших встроенных Инструментов (OLDSUI-273):
- * переезд переносит запись отсюда в поле `engine` описания. Доли StarterKit
- * не переехавших — `legacyStarterKit` ниже.
- */
-const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extensions>> = {
-  superscript: () => [Superscript],
-  subscript: () => [Subscript],
-};
-
-/** Доли StarterKit не переехавших Инструментов: включённый — умолчание StarterKit. */
-function legacyStarterKit(on: (tool: Tool) => boolean) {
-  const keep = (tool: Tool) => (on(tool) ? { [STARTER_KIT_KEY[tool] ?? tool]: undefined } : {});
-  return {
-    ...keep("bold"),
-    ...keep("italic"),
-    ...keep("underline"),
-    ...keep("strike"),
-    ...keep("code"),
-    ...keep("history"),
-  } as Partial<StarterKitOptions>;
-}
-
-/** Ключ StarterKit Инструмента, если он не совпадает с именем. */
-const STARTER_KIT_KEY: Partial<Record<Tool, keyof StarterKitOptions>> = { history: "undoRedo" };
 
 /** Место символов-триггеров в `ENGINE_ORDER`: они не Инструмент, но порядок держат. */
 const TRIGGERS = "triggers";
@@ -253,22 +225,17 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
 export function createEditorExtensions(options: EditorExtensionOptions): Extensions {
   /*
     Движок — проекция списка описаний (`toolDescriptor.ts`): Часть для движка
-    переехавшего Инструмента берётся из описания, остальных — из
-    `LEGACY_ENGINE`. `on` — «Инструмент включён и его расширение ещё здесь»;
-    связи между Инструментами (уровни заголовка, Обёртка в колонке) спрашивают
-    `has` контекста.
+    Инструмента берётся из его описания. Связи между Инструментами (уровни
+    заголовка, Обёртка в колонке) спрашивают `has` контекста.
   */
   const described = describedTools(options.tools);
   const context: ToolEngineContext = { ...options, has: (tool) => options.tools.has(tool) };
-  const on = (tool: Tool) =>
-    options.tools.has(tool) && !described.some((descriptor) => descriptor.name === tool);
   // Контейнеры Блоков верхнего уровня: их принимает только свой Документ.
   const containers = described.flatMap((descriptor) => descriptor.documentContent ?? []);
 
   const extensions: Extensions = [
     StarterKit.configure({
       ...STARTER_KIT_OFF,
-      ...legacyStarterKit(on),
       // Доли описаний — одним StarterKit: порядок его Меток не меняется.
       ...Object.assign({}, ...described.map((descriptor) => descriptor.starterKit?.(context))),
       // С Раскладкой или Обёрткой Документ — свой (`document.ts`): они не в
@@ -306,7 +273,6 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     }
     const descriptor = described.find((candidate) => candidate.name === slot);
     if (descriptor) extensions.push(...engineOf(descriptor));
-    else if (on(slot)) extensions.push(...(LEGACY_ENGINE[slot]?.(context) ?? []));
   }
   for (const descriptor of described) {
     if (!(ENGINE_ORDER as readonly string[]).includes(descriptor.name)) {

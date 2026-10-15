@@ -11,10 +11,20 @@ import { ALIGN_TOOL, COLOR_TOOL, HIGHLIGHT_TOOL } from "./color/colorTools.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
 import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
+import { HISTORY_TOOL } from "./history/historyTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
 import { LAYOUT_TOOL } from "./layout/layoutTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
 import { BULLET_LIST_TOOL, ORDERED_LIST_TOOL, TASK_LIST_TOOL } from "./lists/listTools.js";
+import {
+  BOLD_TOOL,
+  CODE_TOOL,
+  ITALIC_TOOL,
+  STRIKE_TOOL,
+  SUBSCRIPT_TOOL,
+  SUPERSCRIPT_TOOL,
+  UNDERLINE_TOOL,
+} from "./marks/markTools.js";
 import { devError } from "../../lib/dev-warn.js";
 import type { ToolEntry } from "../core/customTool.js";
 import { describeCustomTool, describeDefinition } from "../core/customToolEngine.js";
@@ -96,6 +106,14 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
     // Клавишу вешает расширение Tiptap; строка справочника — подпись к ней.
     shortcuts: [BLOCKQUOTE_SHORTCUT],
   },
+  history: HISTORY_TOOL,
+  bold: BOLD_TOOL,
+  italic: ITALIC_TOOL,
+  underline: UNDERLINE_TOOL,
+  strike: STRIKE_TOOL,
+  code: CODE_TOOL,
+  superscript: SUPERSCRIPT_TOOL,
+  subscript: SUBSCRIPT_TOOL,
   heading: HEADING_TOOL,
   heading1: HEADING1_TOOL,
   link: LINK_TOOL,
