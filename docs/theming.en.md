@@ -25,11 +25,11 @@ it writes the class `bg-bg-0`, backed by the `@theme` bridge.
 
 ### Layer 1 — primitives
 
-Three neutral ramps, one per theme (`slate` for dark, `cloud` for light,
-`navy` for dim), and seven tone families. Within a ramp the step number increases with lightness:
+Three neutral scales, one per theme (`slate` for dark, `cloud` for light,
+`navy` for dim), and seven tone scales. Within a scale the step number increases with lightness:
 1 is the darkest, 12 the lightest.
 
-Three ramps instead of one is not duplication: each theme's neutrals are tuned
+Three scales instead of one is not duplication: each theme's neutrals are tuned
 by hand for its own background, and reducing them to one scale would mean recoloring two
 themes out of three.
 
@@ -58,7 +58,7 @@ cover both; details and numbers are in the comments of `styles.css`.
 
 **Inverse surface** is a separate group of roles for a pill
 that sits directly on the Document and has to differ from it by polarity, not by a single
-step: the Editor's Selection menu. `--surface-inverse` (the background),
+step: the Editor's Bubble menu. `--surface-inverse` (the background),
 `--surface-inverse-hover` and `--surface-inverse-pressed` (hover and press),
 `--text-on-inverse` (text and icons) are light in `dark` and `dim`, and dark in
 `light`. The focus outline on it is `--accent-on-inverse`: it is the `--accent-strong`
@@ -71,7 +71,7 @@ a compatibility layer. Components get their colors through them, via Tailwind cl
 
 ### Layer 3 — component tokens
 
-The list is **closed**. A component token is added when a family has a real
+The list is **closed**. A component token is added when a component family has a real
 reason to differ from the semantics, not "just in case"; a token with no reader is
 not added at all.
 
@@ -346,7 +346,7 @@ The order is exactly this, checked on `teal`, which ships in the package as a sa
 
 **3. Check the light theme separately.** `--accent-strong` is read on a background,
 and the light theme almost certainly needs its own step; `--accent-on-inverse` is
-the opposite, light: the Selection menu pill is dark in the light theme. `--selection`
+the opposite, light: the Bubble menu pill is dark in the light theme. `--selection`
 returns to the light variant only here: the brand block comes after the light theme
 in the file and would override it with the dark one.
 

@@ -67,7 +67,7 @@ export function Article({ html }: { html: string }) {
 ### Which headings are included
 
 - `h1`–`h4` at the top level of the Document and inside a Wrapper.
-- Headings in the columns of a Layout are not included: two headings at the same height in neighboring columns confuse the highlight of the current section. Headings inside custom Blocks and their Islands are not included either: their content is part of the Block, not of the Document's structure.
+- Headings in the columns of a Column layout are not included: two headings at the same height in neighboring columns confuse the highlight of the current section. Headings inside custom Blocks and their Islands are not included either: their content is part of the Block, not of the Document's structure.
 - The `levels` prop narrows the set: `levels={[2, 3]}` keeps only `h2` and `h3`. Other levels are in neither the strip nor the list; an empty array leaves no headings at all.
 - With fewer than two headings (after `levels`) the component renders nothing, and the screen's column stays empty.
 

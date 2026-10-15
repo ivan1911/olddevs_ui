@@ -61,7 +61,7 @@ blue tint of `cloud`: the background of the inverse surface in the light theme.
 
 ### Tones
 
-The "Used by" column is the only way to see why a family has exactly this many
+The "Used by" column is the only way to see why a color scale has exactly this many
 steps: each one exists for a specific role in a specific theme, and there are no spare ones.
 
 | Primitive       | Value     | Used by                                                          |
@@ -155,7 +155,7 @@ text, borders, shadows and `--topbar-bg`, and takes tones and accent from the da
 ### Inverse surface
 
 A pill that has to differ from everything around it by sign, not by step
-of brightness: the Editor's Selection menu (`toolbar="bubble"`), which sits directly on the
+of brightness: the Editor's Bubble menu (`toolbar="bubble"`), which sits directly on the
 Document. Light in the dark themes, dark in the light one. It has the utilities
 `bg-surface-inverse`, `bg-surface-inverse-hover`, `bg-surface-inverse-pressed`,
 `text-text-on-inverse`, `outline-accent-on-inverse`.
@@ -366,7 +366,7 @@ VS Code and macOS; 3:1 is not the goal, because in a dark theme such a fill no l
 holds 4.5:1 for light text on top of it. `--selection-light` is the light variant in
 any app theme: the Editor's Paper (`surface="paper"`) takes it.
 `--selection-dark` is the dark mirror in any theme: the Editor's
-HTML mode field takes it, dark in the light theme too; the dark themes assign
+Source mode field takes it, dark in the light theme too; the dark themes assign
 it to `--selection`.
 
 The `teal` brand primitives are declared inside its own block and are not part of the shared

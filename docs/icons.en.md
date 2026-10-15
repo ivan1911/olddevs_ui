@@ -113,7 +113,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Vertical "more": the Block menu     | `MoreVerticalIcon`                              | `MoreIcon`, `DragHandleIcon`   |
 | Duplicate next to the original      | `DuplicateIcon`                                 | `CopyIcon`                     |
 | Arrow up / down                     | `ArrowUpIcon`, `ArrowDownIcon`                  | `ChevronUpIcon`, `SortIcon`    |
-| Document Layout in columns          | `ColumnLayoutIcon`                              | `ColumnsIcon`                  |
+| A Column layout of the Document     | `ColumnLayoutIcon`                              | `ColumnsIcon`                  |
 | Wrapper: a group of Blocks          | `WrapperIcon`                                   | `ColumnLayoutIcon`             |
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
 | Collapsible Block of the Editor     | `DetailsIcon`                                   | `ChevronDownIcon`              |
@@ -185,15 +185,15 @@ has no checkboxes, so that a list of records does not read as "done".
 The only visible label on the Toolbar buttons is the icon; the button's name
 comes from `aria-label`, and the keyboard shortcut is shown by a tooltip.
 
-The Insert menu added `ParagraphIcon` (¶) — the "Turn into
+The Slash menu added `ParagraphIcon` (¶) — the "Turn into
 paragraph" item. `HeadingIcon` does not fit it: that one is a heading in general, with no
-level. The "+" button of the Insert menu reuses the existing `AddIcon`.
+level. The "+" button of the Slash menu reuses the existing `AddIcon`.
 
 The Block type menu "¶" (under ADR-0049) added
 `Heading1Icon`–`Heading4Icon` (a heading with the level digit) and `TextIcon` (the letter
 "T", the "Text" item). `HeadingIcon` remains the icon of a heading without a level: the items of the
-Insert menu need it that way. `TextIcon` does not repeat `ParagraphIcon`: that one is
-the "paragraph" pilcrow in the Insert menu, and this one is "Text" in the Block type menu. The "¶" button
+Slash menu need it that way. `TextIcon` does not repeat `ParagraphIcon`: that one is
+the "paragraph" pilcrow in the Slash menu, and this one is "Text" in the Block type menu. The "¶" button
 on the Toolbar shows the icon of the current type: the icon of its menu item,
 `CodeBlockIcon` in a code Block, or the pilcrow `ParagraphIcon` when there is no text
 Block under the caret (an image is selected).
@@ -212,13 +212,13 @@ The Block handle added four names: `MoreVerticalIcon` — "⋮", the button of t
 
 Emoji added `EmojiIcon` — a smiley face, the button of the emoji grid in the Toolbar. The name is by the meaning "emoji", not by the glyph: a face elsewhere would mean mood or rating, and that would be a different decision under ADR-0049.
 
-HTML mode added `SourceIcon` — a sheet with `</>` (`FileCode`), the "HTML" button of the Toolbar: the source code of the whole Document. `CodeBlockIcon` already means a code Block inside a Document, and `CodeIcon` the subject topic "development"; a third meaning is not attached to them (ADR-0049).
+Source mode added `SourceIcon` — a sheet with `</>` (`FileCode`), the "HTML" button of the Toolbar: the source code of the whole Document. `CodeBlockIcon` already means a code Block inside a Document, and `CodeIcon` the subject topic "development"; a third meaning is not attached to them (ADR-0049).
 
-Layout added `ColumnLayoutIcon` — two columns, the "Layout" item of the Insert menu. `ColumnsIcon` with three columns already means "choosing the columns of a data table", and a second meaning is not attached to it (ADR-0049): the Layout has its own glyph.
+Column layout added `ColumnLayoutIcon` — two columns, the "Layout" item of the Slash menu. `ColumnsIcon` with three columns already means "choosing the columns of a data table", and a second meaning is not attached to it (ADR-0049): the Column layout has its own glyph.
 
-Wrapper added the pair `WrapperIcon` and `UnwrapIcon` — lucide's `Group` and `Ungroup`: a frame with dashed corners around two Blocks and the same Blocks without a frame. The icons sit at the "Wrapper" item of the Insert menu and the "Remove Wrapper" item in the Block handle menu. This is not `ColumnLayoutIcon`: columns put Blocks side by side, while a Wrapper groups them without changing their order. `DeleteIcon` does not fit removal: only the container is deleted, not the content.
+Wrapper added the pair `WrapperIcon` and `UnwrapIcon` — lucide's `Group` and `Ungroup`: a frame with dashed corners around two Blocks and the same Blocks without a frame. The icons sit at the "Wrapper" item of the Slash menu and the "Remove Wrapper" item in the Block handle menu. This is not `ColumnLayoutIcon`: columns put Blocks side by side, while a Wrapper groups them without changing their order. `DeleteIcon` does not fit removal: only the container is deleted, not the content.
 
-Collapsible block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Insert menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
+Collapsible block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Slash menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
 
 The first iteration of the table made do with two icons for four directions
 (`AddRowIcon`, `AddColumnIcon`) and an icon for the separate "Table

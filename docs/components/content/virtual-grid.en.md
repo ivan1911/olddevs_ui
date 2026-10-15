@@ -234,7 +234,7 @@ leaves the cell selected.
 
 The cell's `contextMenu` field (`items[n].contextMenu`) holds the menu items: `ContextMenuItem`,
 `ContextMenuSeparator`, `ContextMenuSub` and the rest of the
-[`ContextMenu`](../overlays/context-menu.md) family. The grid sets the panel, the trigger and the
+[`ContextMenu`](../overlays/context-menu.md) component family. The grid sets the panel, the trigger and the
 isolation from selection itself, so there is no need to wrap the cell in `ContextMenu` by hand.
 
 ```tsx
@@ -276,7 +276,7 @@ and the drag does not start.
 
 **Why not `ContextMenu` around `content`.** That is how it was done before the field appeared, and it
 produced two failures. First: a right click works, but Shift+F10 does not, because focus is on the
-cell while the menu trigger is inside it. Second: events from the panel, which is rendered in a
+cell while the menu button is inside it. Second: events from the panel, which is rendered in a
 portal, bubble up the React tree to the cell and select it. Both failures are now closed inside the
 grid.
 

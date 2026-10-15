@@ -95,7 +95,7 @@ marked `@deprecated`: the kit calls the current navigation item `active`.
 
 Hovering a category with the mouse opens its flyout at once, with no delay. Exactly one category is highlighted,
 the one whose flyout is open: the highlight follows `aria-expanded`, not `:hover`. Hovering a category without a
-flyout closes the open one, with the same caveat about aim as below.
+flyout closes the open one, with the same caveat about menu aim as below.
 
 The flyout closes 150 ms after the pointer has left both the category column and the flyout, so a brief
 excursion past the edge does not reset the catalog. It also closes on a pointer press outside the catalog and when
@@ -115,12 +115,12 @@ points to where the flyout will appear.
 
 ## Touch and narrow screens
 
-Touch has no hover, so the touch itself (`click`) opens a category, without aim. A pointer whose `pointerType` is
+Touch has no hover, so the touch itself (`click`) opens a category, without menu aim. A pointer whose `pointerType` is
 "touch" or "pen" neither opens a category on hover nor closes the flyout when it leaves: a pen behaves like a
 finger. Touching an open category again neither closes it nor goes anywhere. The flyout closes on a touch outside
 the catalog or on Escape.
 
-The mouse behaves as before: hover, aim and closing after 150 ms all remain while the screen is wide.
+The mouse behaves as before: hover, menu aim and closing after 150 ms all remain while the screen is wide.
 
 On a narrow screen, under 640px (the same breakpoint as `Menu` submenus and Editor submenus), there is no room beside
 the category column for the flyout: the edge of the window would cut it off on the right. So the catalog works as a
@@ -135,7 +135,7 @@ drill-down:
 - When you drill down, focus moves to "Back": the category button is hidden along with the category column, and focus
   left on it would be lost. In the flyout on a narrow screen, the arrow key toward the category column does
   nothing, because the column is not beside it.
-- There is no aim on a narrow screen: hovering with the mouse does not open a category, and moving the mouse away does
+- There is no menu aim on a narrow screen: hovering with the mouse does not open a category, and moving the mouse away does
   not cancel the drill-down. Replacing the column under the cursor would pull it out from under the person's hand.
 - The markup stays on the disclosure pattern: the category button keeps `aria-expanded` and `aria-controls` pointing
   to the region on screen (the button itself is hidden during the drill-down), and the region is named after the
@@ -150,11 +150,11 @@ screen (ADR-0018): the server does not know the width, and the markup it produce
 after hydration, a flyout opened by `defaultValue` is re-rendered once as a drill-down. On a phone the `nav` takes
 the full width through the `max-sm:w-full` class; a `w-*` class from `className` applies on a wide screen.
 
-## Aim
+## Menu aim
 
 On its way from a category to its flyout, the pointer cuts diagonally and brushes against the neighboring
 categories. If hover opened them at once, the flyout would change under the person's hand, and the links would be
-out of reach. Aim watches where the pointer is heading: while it moves toward the open flyout, a neighboring
+out of reach. Menu aim watches where the pointer is heading: while it moves toward the open flyout, a neighboring
 category does not take over the hover.
 
 - The direction of the pointer's last step is compared with the wedge from its previous position to the two corners
@@ -163,8 +163,8 @@ category does not take over the hover.
 - One movement off course is forgiven; two in a row are not, and then the category under the pointer opens.
 - If the pointer stops for 300 ms, the category under it opens even if it was aiming. The menu does not get stuck.
 - When the pointer reaches the flyout, the deferred switch is canceled.
-- Clicking a category opens it at once, bypassing aim. The keyboard knows nothing about aim.
-- Mouse only, and only on a wide screen: touch and pen open a category at once, and a narrow screen has no aim at all.
+- Clicking a category opens it at once, bypassing menu aim. The keyboard knows nothing about menu aim.
+- Mouse only, and only on a wide screen: touch and pen open a category at once, and a narrow screen has no menu aim at all.
 - The first hover, while there is no flyout yet, opens the category with no delay at all: there is nothing to aim at.
 
 The model is the same as for react-aria submenus (`Menu` with `SubmenuTrigger`), so that the two menus of the kit
@@ -303,12 +303,12 @@ into one. `MegaMenuButton` accepts the kit's button look (`variant`, `tone`, `si
 
 ## Related sources and tests
 
-- Implementation: `src/components/navigation/MegaMenu.tsx`; aim is in `src/components/navigation/useMenuAim.ts`.
+- Implementation: `src/components/navigation/MegaMenu.tsx`; menu aim is in `src/components/navigation/useMenuAim.ts`.
 - Tests: `tests/mega-menu.test.tsx` covers roles and `aria-controls`, hover and mounting only the open
   flyout, closing with a delay, roving tabindex, Enter, Escape and the arrows, Tab past the last link,
   a category that is a link, a disabled category, `active` and the `current` alias, `asChild` and `link` (on a
   category and on a column), fragments in a column, the current section and the Tab stop, typeahead, categories
-  inside your own components, the controlled value, a press outside the catalog and server rendering; `tests/mega-menu-aim.test.tsx` covers aim on mocked geometry and fake
+  inside your own components, the controlled value, a press outside the catalog and server rendering; `tests/mega-menu-aim.test.tsx` covers menu aim on mocked geometry and fake
   time, and the flip at the edge; `tests/mega-menu-touch.test.tsx` covers touch and pen, a mocked `matchMedia`,
   the drill-down in place of the category column, "Back" and focus, Escape, labels from the message catalog, the
   drill-down with categories inside your own components and server rendering; the browser test

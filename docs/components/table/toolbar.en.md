@@ -12,7 +12,7 @@ sourceHash: 957697357a68
 
 ## Summary for AI
 
-`TableToolbar` is the table bar: a title, a counter, actions, a filters slot and a
+`TableToolbar` is the table toolbar: a title, a counter, actions, a filters slot and a
 preferences slot. `TablePreferences` is the content behind the gear button: column
 visibility and order, density. Neither stores state: everything comes from above,
 usually from `useTableState`.
