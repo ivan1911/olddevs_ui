@@ -546,7 +546,6 @@ describe("surfaces", () => {
           "|",
           "Undo",
           "Redo",
-          "Invisible characters",
           "Find",
           "Keyboard shortcuts",
         ],
@@ -609,6 +608,7 @@ describe("surfaces", () => {
           "menuitemcheckbox: Code block | Ctrl+Alt+C",
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
           "menuitem: Clear formatting | Ctrl+\\",
+          "menuitemcheckbox: Invisible characters",
         ],
       }
     `);

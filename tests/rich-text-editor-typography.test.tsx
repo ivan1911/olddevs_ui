@@ -343,6 +343,30 @@ test("Mod+Z right after a replacement brings the typed characters back, the next
   vi.useRealTimers();
 });
 
+test.each([
+  ["English", (children: ReactNode) => children, "\u201C"],
+  ["Russian", inRussian, "\u00AB"],
+] as const)(
+  "Mod+Z right after a quote replacement (%s catalog) brings the typed quote back, the next one removes it",
+  (_name, wrap, replaced) => {
+    // Кавычки ставит собственное правило кита (`TypographyQuotes`), не Tiptap, и
+    // отмена у него та же, что у `--`: замена — отдельное событие истории.
+    const { editor } = renderEditor({}, wrap);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    // Пробел перед кавычкой — она открывающая.
+    typeText(editor, "ab ");
+    // Дальше история открывает новую группу, как после паузы в наборе.
+    vi.setSystemTime(Date.now() + 2000);
+    typeText(editor, '"');
+    expect(text(editor)).toBe(`ab ${replaced}`);
+    expect(undo(editor)).toBe(false);
+    expect(text(editor)).toBe('ab "');
+    undo(editor);
+    expect(text(editor)).toBe("ab ");
+    vi.useRealTimers();
+  }
+);
+
 test("the saved HTML holds plain characters and no new tags or attributes", () => {
   const onChange = vi.fn();
   const { editor } = renderEditor({ onChange });

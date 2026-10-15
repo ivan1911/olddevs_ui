@@ -2414,9 +2414,10 @@ const INVISIBLE_SAMPLE =
   "<p>The empty paragraph above is easy to miss. Type a second space here to see it.</p>";
 
 /**
- * Невидимые символы: кнопка «Invisible characters» у правого края Панели, перед
- * «Find». По умолчанию символы скрыты, как и в любом Редакторе с пресетом `full`;
- * нажмите кнопку, и пробелы (·), мягкие переносы (↵) и концы абзацев (¶) станут
+ * Невидимые символы: пункт-флажок «Invisible characters» в меню «…» Панели
+ * (последний раздел), отдельной кнопки нет: Панель в колонке 640 px остаётся в
+ * одну строку. По умолчанию символы скрыты, как и в любом Редакторе с пресетом
+ * `full`; отметьте пункт, и пробелы (·), мягкие переносы (↵) и концы абзацев (¶) станут
  * видны. Документ не меняется: знаки только нарисованы поверх текста.
  */
 export const InvisibleCharacters: Story = {
@@ -2492,7 +2493,7 @@ function WithInvisibleToggle() {
 
 /**
  * Показ с внешней кнопки: `handle.tool("invisibleCharacters")?.toggle()` и
- * `useRichTextToolState(ref, "invisibleCharacters")` вместо кнопки Панели. Под полем
+ * `useRichTextToolState(ref, "invisibleCharacters")` вместо пункта меню «…». Под полем
  * сохранённый HTML и счётчик `onChange`: показ их не трогает.
  */
 export const InvisibleCharactersExternalToggle: Story = {

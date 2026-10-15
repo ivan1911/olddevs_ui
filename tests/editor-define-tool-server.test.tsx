@@ -60,6 +60,20 @@ test("a Configured Tool of a built-in tool has no schema and no island", () => {
   expect(schema.customBlocks).toEqual({});
 });
 
+test("the Configured Tools typography and invisibleCharacters are safe on the server: a schema and a clean paragraph", () => {
+  // Инструменты без Блока (OLDSUI-278, OLDSUI-279): серверная очистка ничего не знает
+  // о них и не должна менять ни абзац, ни его символы.
+  const tools = [
+    tool("typography", { quotes: "ru" }),
+    tool("invisibleCharacters", { visible: true }),
+  ];
+  const schema = richTextSchema(tools);
+  expect(schema.customBlocks).toEqual({});
+
+  const html = "<p>Plain <strong>text</strong> \u2014 \u00AB\u2026\u00BB and a space</p>";
+  expect(sanitizeRichText(html, purify, tools)).toBe(html);
+});
+
 test("the island of a definition comes alive in RichTextView, and the server markup stays plain", async () => {
   const html = `<div data-block="test_player" data-test_src="https://example.com/a.mp4" data-test_kind="video">First</div>`;
   const withIsland = defineTool({
