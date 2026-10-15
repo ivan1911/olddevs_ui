@@ -15,7 +15,7 @@ import { StarterKit, type StarterKitOptions } from "@tiptap/starter-kit";
 import { AtomText } from "./atomText.js";
 import { BlockCommands, BlockMenuKey } from "./blockCommands.js";
 import { FieldNoticeExtension, type FieldNoticeOptions } from "./fieldNotice.js";
-import { RichImage, type RichImageOptions } from "../features/image/image.js";
+import type { RichImageOptions } from "../features/image/image.js";
 import { createDocumentNode } from "./document.js";
 import { LAYOUT_NODE, layoutExtensions } from "../features/layout/layout.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
@@ -203,9 +203,6 @@ const LEGACY_ENGINE: Partial<Record<Tool, (context: ToolEngineContext) => Extens
       a11y: { checkboxLabel: (node) => context.taskCheckbox(node.textContent) },
     }),
   ],
-  // Картинка — `figure` с подписью (`image.ts`). Без инструмента `<img>` из
-  // вставки и `value` отбрасывается, а файлы из буфера не перехватываются.
-  image: (context) => (context.image ? [RichImage.configure(context.image)] : []),
   // Раскладка — узлы колонок и их клавиатура (`layout.ts`). Без инструмента
   // `div[data-block]` из вставки и `value` не разбирается, и Блоки колонок
   // встают в Документ подряд.

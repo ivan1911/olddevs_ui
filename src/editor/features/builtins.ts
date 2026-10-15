@@ -8,6 +8,7 @@ import type { InsertItem } from "../core/insertItems.js";
 import type { ShortcutCommand } from "../core/shortcuts.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
+import { IMAGE_TOOL } from "./image/imageTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
 import { devError } from "../../lib/dev-warn.js";
 import type { ToolEntry } from "../core/customTool.js";
@@ -49,7 +50,7 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
  * Сюда Инструмент переезжает целиком: его записи удаляются из старых
  * реестров, и с этой минуты он берётся только из описания. Кого здесь нет, тот
  * стоит в развёрнутом списке заглушкой `legacy` и по-прежнему живёт в старых
- * реестрах. `image`, `layout` и виджеты Панели переезжают постепенно, и выпуск
+ * реестрах. `layout` и виджеты Панели переезжают постепенно, и выпуск
  * их не ждёт.
  */
 export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
@@ -110,6 +111,7 @@ export const BUILTIN_TOOLS: Partial<Record<Tool, ToolDescriptor>> = {
     shortcuts: [BLOCKQUOTE_SHORTCUT],
   },
   link: LINK_TOOL,
+  image: IMAGE_TOOL,
   emoji: EMOJI_TOOL,
   /*
     Ленивые встроенные (ADR-0058, п. 11.1): их нет в `basic`, а

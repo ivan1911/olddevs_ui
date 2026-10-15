@@ -7,7 +7,6 @@ import type { UiMessages } from "../../i18n/messages.js";
 import {
   ColumnLayoutIcon,
   HeadingIcon,
-  ImageIcon,
   ListIcon,
   OrderedListIcon,
   ParagraphIcon,
@@ -158,22 +157,6 @@ export const INSERT_ITEMS: Partial<Record<Tool, readonly InsertItem[]>> = {
       markdown: "[ ]",
       keys: shortcutKeys("taskList"),
       run: (chain) => chain.toggleTaskList(),
-    },
-  ],
-  /*
-    Картинке нужен адрес, и пункт его не знает: он готовит пустой абзац (как
-    любой пункт «Добавить») и открывает поповер картинки. Картинка из поповера
-    встаёт на место этого абзаца. Закрытый без адреса поповер оставляет
-    пустой абзац — как Блок, который передумали писать.
-  */
-  image: [
-    {
-      id: "image",
-      section: "insert",
-      label: (m) => m.image,
-      icon: ImageIcon,
-      aliases: ["img", "picture", "photo", "![]()"],
-      run: (chain) => chain.openImageEditor(),
     },
   ],
   /*
