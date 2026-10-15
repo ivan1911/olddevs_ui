@@ -310,28 +310,6 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
   },
 
   {
-    id: "alignLeft",
-    group: "align",
-    tool: "align",
-    keys: SHORTCUT_KEYS.alignLeft,
-    label: (m) => m.alignLeft,
-  },
-  {
-    id: "alignCenter",
-    group: "align",
-    tool: "align",
-    keys: SHORTCUT_KEYS.alignCenter,
-    label: (m) => m.alignCenter,
-  },
-  {
-    id: "alignRight",
-    group: "align",
-    tool: "align",
-    keys: SHORTCUT_KEYS.alignRight,
-    label: (m) => m.alignRight,
-  },
-
-  {
     id: "focusToolbar",
     group: "toolbar",
     tool: null,
