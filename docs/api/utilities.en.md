@@ -207,7 +207,7 @@ For how to build a range in the UI, see [FilterBar](../components/table/filter-b
 
 ## Constants, classes and public types: where they are documented
 
-These are public exports, but not standalone components. The page of the compound component they belong to describes them,
+These are public exports, but not standalone components. The page of the component family they belong to describes them,
 so that AI does not treat a class as a general-purpose API:
 
 | Exports                                                                                                                                       | Documentation                                                 |
@@ -221,8 +221,8 @@ so that AI does not treat a class as a general-purpose API:
 
 Each `*Props` type and each component-specific type exported with a component (for example `TableProps`,
 `CommandItem`, `SelectItem`, `KeyboardSelection` or `DrawerSide`) stays part of that component's public API. It
-is described on the page of its compound component. The [component catalog](../components/index.md) links the public exports
-to the compound component pages. `src/index.ts` is the final source for all exports.
+is described on the page of its component family. The [component catalog](../components/index.md) links the public exports
+to the component family pages. `src/index.ts` is the final source for all exports.
 
 ## Related sources and checks
 

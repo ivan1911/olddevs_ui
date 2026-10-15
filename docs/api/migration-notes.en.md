@@ -22,7 +22,7 @@ became relevant.
 - When changing a default, accessibility, keyboard behavior or the shape of a
   controlled value: TypeScript may not detect such a migration.
 - When replacing one component with another, for example, when the old API goes away in favor of
-  an existing compound component.
+  an existing component family.
 
 ## When not to use
 
@@ -578,7 +578,7 @@ is parameterized by your state (`SavedView<T>`) and is not tied to
 `TableState`; storage, sharing and the URL stay entirely with you. For details, see the
 [component page](../components/table/saved-views.md).
 
-**The `FormField` hint and error reach the react-aria compound components.** For
+**The `FormField` hint and error reach the react-aria component families.** For
 `Select`, `Combobox`, `DatePicker` and `TagInput`, the description from `FormField` is now tied to
 the field through `aria-describedby`. **This is an accessibility fix, and it changes
 what is announced:** where a hint was visible on screen but did not reach a screen reader, a
@@ -646,7 +646,7 @@ above came from: `npm run check:dist`, `npm run check:consumer`,
 with changesets.
 
 **Deliberately postponed:** Figma Code Connect (priority P2 in the specification, only after
-the names and axes stabilize); binding the description for the react-aria compound components (`Select`,
+the names and axes stabilize); binding the description for the react-aria component families (`Select`,
 `Combobox`, `DatePicker`, `TagInput`) — they have their own description slots; merging
 `UploadState` and `TimelineStatus` — it breaks a public type and waits for a major;
 widening the peer to React 18 — it doubles the consumer's CI build.
@@ -673,7 +673,7 @@ one breaks the public type released in 2.5.0 and waits for the next major.
 
 Nothing breaking: everything new is additive, and `AppShell` gained one slot.
 
-**1. Eight new compound components.** `Banner`, `UploadQueue`, `NotificationItem` /
+**1. Eight new component families.** `Banner`, `UploadQueue`, `NotificationItem` /
 `NotificationList` / `NotificationCenter`, `MediaCard`, `SortableList`,
 `VirtualGrid`, `CopyButton`, `Truncate`.
 
@@ -735,7 +735,7 @@ the description is **supplemented, not replaced**: the attribute holds a list.
 
 `TextControl` and everything built on it (`MaskedInput`,
 `PhoneInput`, `PasswordInput`, `SearchControl`), plus `NumberInput`, pick up the description. The react-aria
-compound components (`Select`, `Combobox`, `DatePicker`, `TagInput`) carry their own description slots
+component families (`Select`, `Combobox`, `DatePicker`, `TagInput`) carry their own description slots
 and do not pick up the `FormField` hint yet.
 
 **3. A character that does not fit the mask is announced.** A character that did not fit the mask token

@@ -12,12 +12,12 @@ layers and rules. Values change in the file, not here.
 
 ## Four layers
 
-| Layer         | What it is                                               | Names                                     | Consumer edits                   |
-| ------------- | -------------------------------------------------------- | ----------------------------------------- | -------------------------------- |
-| 1. Primitives | Palette: a color as a value, with no role or theme       | `--od-<family>-<step>`                    | **no**                           |
-| 2. Semantics  | Role: what is painted with what                          | `--surface-*`, `--text-*`, `--accent*` …  | yes, carefully                   |
-| 3. Component  | How one compound component differs from the general rule | closed list below                         | yes                              |
-| 4. Brand      | The `[data-brand="…"]` block on top of layers 2 and 3    | the brand's primitives + role assignments | **yes, this is the entry point** |
+| Layer         | What it is                                             | Names                                     | Consumer edits                   |
+| ------------- | ------------------------------------------------------ | ----------------------------------------- | -------------------------------- |
+| 1. Primitives | Palette: a color as a value, with no role or theme     | `--od-<family>-<step>`                    | **no**                           |
+| 2. Semantics  | Role: what is painted with what                        | `--surface-*`, `--text-*`, `--accent*` …  | yes, carefully                   |
+| 3. Component  | How one component family differs from the general rule | closed list below                         | yes                              |
+| 4. Brand      | The `[data-brand="…"]` block on top of layers 2 and 3  | the brand's primitives + role assignments | **yes, this is the entry point** |
 
 Reading rule: **a lower layer does not know about a higher one**. `--od-slate-1` does not know that
 it is the app background; `--surface-app` knows that. A component knows neither —
@@ -71,7 +71,7 @@ a compatibility layer. Components get their colors through them, via Tailwind cl
 
 ### Layer 3 — component tokens
 
-The list is **closed**. A component token is added when a compound component has a real
+The list is **closed**. A component token is added when a component family has a real
 reason to differ from the semantics, not "just in case"; a token with no reader is
 not added at all.
 

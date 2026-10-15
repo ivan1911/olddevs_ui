@@ -234,7 +234,7 @@ leaves the cell selected.
 
 The cell's `contextMenu` field (`items[n].contextMenu`) holds the menu items: `ContextMenuItem`,
 `ContextMenuSeparator`, `ContextMenuSub` and the rest of the
-[`ContextMenu`](../overlays/context-menu.md) compound component. The grid sets the panel, the trigger and the
+[`ContextMenu`](../overlays/context-menu.md) component family. The grid sets the panel, the trigger and the
 isolation from selection itself, so there is no need to wrap the cell in `ContextMenu` by hand.
 
 ```tsx
