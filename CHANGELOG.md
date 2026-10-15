@@ -1,5 +1,11 @@
 # @olddevs/ui
 
+## 4.6.2
+
+### Patch Changes
+
+- The README shows the Olddevs UI logo next to the package name, and the Storybook showcase shows the Olddevs UI mark, name and version in its header instead of the Storybook logo. The package code does not change.
+
 ## 4.6.1
 
 ### Patch Changes
