@@ -1,4 +1,4 @@
-# @olddevs/ui
+# <img src="https://ivan1911.github.io/olddevs_ui/logo.svg" alt="" width="44" height="56" align="absmiddle"> @olddevs/ui
 
 English · [Русский](README.ru.md)
 
