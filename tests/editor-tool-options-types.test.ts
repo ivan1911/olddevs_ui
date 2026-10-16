@@ -6,6 +6,7 @@ import {
   type RichTextEditorProps,
   type RichTextTools,
   type Tool,
+  type VideoToolOptions,
 } from "../src/editor/index.js";
 
 /**
@@ -116,4 +117,24 @@ test("a consumer extends the map through declare module with the package name", 
   expectTypeOf<RichTextTools["acme_note"]["commands"]>().toEqualTypeOf<{ clear(): boolean }>();
   // Дописанный Инструмент не ломает `tool()` встроенных.
   expectTypeOf(tool("toc", { levels: [2] })).toEqualTypeOf<ConfiguredTool<"toc">>();
+});
+
+test("youtube and twitch take autoload as a boolean and nothing else (OLDSUI-287)", () => {
+  const youtube = tool("youtube", { autoload: false });
+  const twitch = tool("twitch", { autoload: true });
+  expectTypeOf(youtube).toEqualTypeOf<ConfiguredTool<"youtube">>();
+  expectTypeOf(twitch).toEqualTypeOf<ConfiguredTool<"twitch">>();
+  // Параметры необязательны: запись без опций только включает Инструмент.
+  expectTypeOf(tool("youtube")).toEqualTypeOf<ConfiguredTool<"youtube">>();
+  expectTypeOf(tool("twitch")).toExtend<Tool>();
+  expectTypeOf<RichTextTools["youtube"]["options"]>().toEqualTypeOf<VideoToolOptions>();
+  expectTypeOf<RichTextTools["twitch"]["options"]>().toEqualTypeOf<{ autoload: boolean }>();
+  expectTypeOf<VideoToolOptions>().toEqualTypeOf<{ autoload: boolean }>();
+  // @ts-expect-error `autoload` — булево
+  tool("youtube", { autoload: "no" });
+  // @ts-expect-error такой опции у видео нет
+  tool("twitch", { autoplay: true });
+  // @ts-expect-error `matchCase` — опция Поиска, а не видео
+  tool("youtube", { matchCase: true });
+  expect([youtube, twitch]).toHaveLength(2);
 });

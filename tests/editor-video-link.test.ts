@@ -337,6 +337,38 @@ describe("the player address built at display time", () => {
     ).toBe("https://clips.twitch.tv/embed?clip=FunnyClip&parent=docs.example.com&autoplay=true");
   });
 
+  test("a player that stands on the page by itself (autoload) does not start playing (OLDSUI-287)", () => {
+    expect(playerUrl(yt("dQw4w9WgXcQ") as never, "example.com", false)).toBe(
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"
+    );
+    expect(
+      playerUrl(
+        { provider: "youtube", src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=90" },
+        "example.com",
+        false
+      )
+    ).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?start=90");
+    expect(
+      playerUrl(
+        { provider: "youtube", src: "https://www.youtube.com/playlist?list=PL1" },
+        "example.com",
+        false
+      )
+    ).toBe("https://www.youtube-nocookie.com/embed/videoseries?list=PL1");
+    // Twitch стартует сам, если не сказано иначе: `autoplay=false` называется явно.
+    const parent = "docs.example.com";
+    expect(
+      playerUrl(
+        { provider: "twitch", src: "https://www.twitch.tv/videos/12?t=1h2m3s" },
+        parent,
+        false
+      )
+    ).toBe("https://player.twitch.tv/?video=12&parent=docs.example.com&autoplay=false&time=1h2m3s");
+    expect(
+      playerUrl({ provider: "twitch", src: "https://clips.twitch.tv/FunnyClip" }, parent, false)
+    ).toBe("https://clips.twitch.tv/embed?clip=FunnyClip&parent=docs.example.com&autoplay=false");
+  });
+
   test("a link of another service than the block says builds nothing", () => {
     expect(
       playerUrl({ provider: "twitch", src: "https://youtu.be/dQw4w9WgXcQ" }, "example.com")

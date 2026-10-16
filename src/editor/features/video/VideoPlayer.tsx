@@ -10,6 +10,11 @@ import { playerUrl, VIDEO_PROVIDER_NAME, type VideoLink } from "./videoLink.js";
 export interface VideoPlayerProps {
   /** Видео из Документа: сервис и каноническая ссылка. */
   link: VideoLink;
+  /**
+   * Плеер встаёт сразу (Опция `autoload` Инструмента сервиса, по умолчанию `true`).
+   * `false` — заглушка с кнопкой «Воспроизвести» и ни одного запроса к сервису до щелчка.
+   */
+  autoload?: boolean;
   className?: string;
 }
 
@@ -34,34 +39,46 @@ export const PLAYER_FRAME =
 /**
  * Плеер видео (ADR-0071): общий вид узла в Редакторе и Острова в Просмотре.
  *
- * ДО ЩЕЛЧКА — ЗАГЛУШКА, И НИ ОДНОГО ЗАПРОСА К СЕРВИСУ. Она рисует только то, что
- * знает Документ: название сервиса, ссылку и кнопку «Воспроизвести». `iframe`
- * появляется после нажатия, и адрес собирается в этот момент (`playerUrl`):
- * Twitch берёт домен текущей страницы из `location`, а не из Документа. Так
- * чтение страницы и правка Документа не отправляют читателя ни в YouTube, ни в
- * Twitch, пока он сам не решил смотреть.
+ * ПО УМОЛЧАНИЮ ПЛЕЕР СТОИТ СРАЗУ (`autoload`, OLDSUI-287): `iframe` с адресом, который
+ * собирается при показе (`playerUrl`) — Twitch берёт домен текущей страницы из
+ * `location`, а не из Документа. Пустая заглушка на месте видео читалась как поломка.
+ * `loading="lazy"` оставляет запрос сервису до момента, когда рамка приближается к
+ * экрану. Автозапуска нет: плеер встал на страницу, но не играет.
+ *
+ * С `autoload: false` — ЗАГЛУШКА, И НИ ОДНОГО ЗАПРОСА К СЕРВИСУ ДО ЩЕЛЧКА. Она рисует
+ * только то, что знает Документ: название сервиса, ссылку и кнопку «Воспроизвести».
+ * `iframe` появляется после нажатия и стартует сразу. Так чтение страницы и правка
+ * Документа не отправляют читателя ни в YouTube, ни в Twitch, пока он сам не решил
+ * смотреть: для экранов, где важна приватность.
  *
  * ПЛЕЕР — С ЗАГОЛОВКОМ (`title`) для скринридера, `loading="lazy"`, `allow` и
  * `referrerpolicy`. Политика `strict-origin-when-cross-origin`: YouTube не
  * запускает плеер без реферера, а полный адрес страницы сервису не нужен. После
- * щелчка фокус переходит в плеер: кнопка, на которой он стоял, исчезла.
+ * щелчка фокус переходит в плеер: кнопка, на которой он стоял, исчезла. Сам вставший
+ * плеер фокус не берёт.
  *
- * ЕСЛИ АДРЕС ПЛЕЕРА СОБРАТЬ НЕЛЬЗЯ (`playerUrl` вернул `null`), кнопка не молчит:
- * на её месте остаётся ссылка на видео, по которой его можно открыть у сервиса.
+ * ЕСЛИ АДРЕС ПЛЕЕРА СОБРАТЬ НЕЛЬЗЯ (`playerUrl` вернул `null`), на месте плеера (или
+ * кнопки) остаётся ссылка на видео, по которой его можно открыть у сервиса.
  *
- * Цвета — роли `--rte-*` контейнера Документа: заглушка одинаково выглядит в
+ * Цвета — роли `--rte-*` контейнера Документа: рамка одинаково выглядит в
  * Редакторе, в `RichTextView` и на листе `paper`.
  */
-export function VideoPlayer({ link, className }: VideoPlayerProps) {
+export function VideoPlayer({ link, autoload = true, className }: VideoPlayerProps) {
   const messages = useMessages().editor;
-  const [src, setSrc] = useState<string | null>(null);
-  const [unavailable, setUnavailable] = useState(false);
+  // Адрес после щелчка; с `autoload` его не бывает, плеер собирается из самого Документа.
+  const [clicked, setClicked] = useState<string | null>(null);
+  const [clickFailed, setClickFailed] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
   const service = VIDEO_PROVIDER_NAME[link.provider];
+  // Плеер и Остров монтируются только на клиенте (вид узла, портал после эффекта), так что
+  // `location` здесь есть; сервер `RichTextView` отдаёт ссылку, а не этот компонент.
+  const auto = autoload ? playerUrl(link, window.location.hostname, false) : null;
+  const src = autoload ? auto : clicked;
+  const unavailable = autoload ? auto === null : clickFailed;
 
   useEffect(() => {
-    if (src) frame.current?.focus();
-  }, [src]);
+    if (clicked) frame.current?.focus();
+  }, [clicked]);
 
   return (
     <div data-video-player="" className={cn(PLAYER_FRAME, className)}>
@@ -98,8 +115,8 @@ export function VideoPlayer({ link, className }: VideoPlayerProps) {
                 aria-label={messages.videoPlayLabel({ service })}
                 onClick={() => {
                   const url = playerUrl(link, window.location.hostname);
-                  if (url) setSrc(url);
-                  else setUnavailable(true);
+                  if (url) setClicked(url);
+                  else setClickFailed(true);
                 }}
               >
                 {messages.videoPlay}

@@ -7,6 +7,7 @@ import { MathIsland } from "./features/mathematics/MathIsland.js";
 import { hasMath, withMathSource } from "./features/mathematics/mathHtml.js";
 import { mathOptionsOf } from "./features/mathematics/mathOptions.js";
 import { VideoIsland } from "./features/video/VideoIsland.js";
+import { videoAutoloadOf } from "./features/video/videoOptions.js";
 import { hasVideoBlocks } from "./features/video/videoSrc.js";
 import type { ToolEntry } from "./core/customTool.js";
 import { proseClass } from "./styles/prose.js";
@@ -42,7 +43,9 @@ export interface RichTextViewProps extends Omit<
    * а серверный HTML Блока виден до загрузки и без JS. И опции формул —
    * `tool("mathematics", { macros })`, чтобы макрос работал в Просмотре так же,
    * как в Редакторе; самих формул для этого в `tools` называть не нужно, они
-   * рисуются у любого Документа с формулами. Остальное в описании Просмотру не
+   * рисуются у любого Документа с формулами. И опцию `autoload` видео:
+   * `tool("youtube", { autoload: false })` оставляет заглушку «Воспроизвести» вместо
+   * плеера, по сервису; без записи плеер встаёт сразу. Остальное в описании Просмотру не
    * нужно. Без `tools`, и у Документа без таких Блоков и формул, Просмотр прежний
    * и клиентского кода не тянет.
    */
@@ -98,9 +101,10 @@ function fingerprint(html: string): string {
  * ОСТРОВ ВИДЕО — ЧЕТВЁРТЫЙ, ТАКОЙ ЖЕ (`VideoIsland`, ADR-0071). Блок видео приходит
  * в HTML ссылкой (`div[data-block="video"]` со ссылкой внутри), её видит читатель без
  * JS. Если блок в Документе есть (`hasVideoBlocks`), остров после монтирования
- * ставит на его место заглушку кита с кнопкой «Воспроизвести»; плеер появляется
- * после щелчка, и до него к сервису не уходит ни одного запроса. Нет блока — нет
- * острова, и код плеера не грузится.
+ * ставит на его место плеер сервиса сразу (`iframe` с `loading="lazy"`). Опция
+ * `tool("youtube", { autoload: false })` в `tools` возвращает заглушку кита с кнопкой
+ * «Воспроизвести»: плеер появляется после щелчка, и до него к сервису не уходит
+ * ни одного запроса. Нет блока — нет острова, и код плеера не грузится.
  *
  * ХУКИ — `useId` и `useMemo`, оба разрешены серверным компонентам. Идентификатор
  * связывает остров со своими гнёздами и совпадает на сервере и клиенте; `useMemo`
@@ -148,7 +152,7 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
       {/* Формулы — третий: только у Документа с формулами, и KaTeX грузит сам остров. */}
       {math && <MathIsland docKey={docKey} options={mathOptionsOf(tools)} />}
       {/* И остров видео (ADR-0071) — только у Документа, где есть блок видео. */}
-      {video && <VideoIsland docKey={docKey} />}
+      {video && <VideoIsland docKey={docKey} autoload={videoAutoloadOf(tools)} />}
     </>
   );
 });

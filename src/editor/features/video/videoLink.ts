@@ -223,34 +223,43 @@ export function videoLinkFromPlayer(input: string | null | undefined): VideoLink
 
 /**
  * Адрес плеера для показа. `parentHost` — имя хоста текущей страницы
- * (`location.hostname`): Twitch не запускает плеер без него. Плеер стартует сразу
- * (`autoplay`): его собирают только после щелчка «Воспроизвести».
+ * (`location.hostname`): Twitch не запускает плеер без него. `autoplay` — стартовать
+ * ли воспроизведение сразу: после щелчка «Воспроизвести» да (читатель только что
+ * решил смотреть), а плеер, который встал на страницу сам (`autoload`), сам не
+ * включается — это видео на странице, а не реклама.
  */
-export function playerUrl(link: VideoLink, parentHost: string): string | null {
+export function playerUrl(link: VideoLink, parentHost: string, autoplay = true): string | null {
   const url = parseVideoLink(link.src);
   if (!url || url.provider !== link.provider) return null;
   const source = new URL(url.src);
   if (url.provider === "youtube") {
     const list = source.searchParams.get("list");
-    if (list) return `https://www.youtube-nocookie.com/embed/videoseries?list=${list}&autoplay=1`;
+    // YouTube: `autoplay=1` или ничего — без параметра плеер ждёт нажатия.
+    const play = autoplay ? "autoplay=1" : "";
+    if (list) {
+      return (
+        `https://www.youtube-nocookie.com/embed/videoseries?list=${list}` + (play && `&${play}`)
+      );
+    }
     const start = source.searchParams.get("t");
+    const query = [play, start && `start=${start}`].filter(Boolean).join("&");
     return (
-      `https://www.youtube-nocookie.com/embed/${source.searchParams.get("v")}?autoplay=1` +
-      (start ? `&start=${start}` : "")
+      `https://www.youtube-nocookie.com/embed/${source.searchParams.get("v")}` +
+      (query && `?${query}`)
     );
   }
   const parent = encodeURIComponent(parentHost);
+  // Twitch по умолчанию стартует сам: без явного `autoplay=false` плеер встанет играющим.
+  const play = `&autoplay=${autoplay}`;
   if (source.hostname === "clips.twitch.tv") {
     return (
-      `https://clips.twitch.tv/embed?clip=${source.pathname.slice(1)}` +
-      `&parent=${parent}&autoplay=true`
+      `https://clips.twitch.tv/embed?clip=${source.pathname.slice(1)}` + `&parent=${parent}${play}`
     );
   }
   const parts = segments(source);
   const time = source.searchParams.get("t");
   const target = parts[0] === "videos" ? `video=${parts[1]}` : `channel=${parts[0]}`;
   return (
-    `https://player.twitch.tv/?${target}&parent=${parent}&autoplay=true` +
-    (time ? `&time=${time}` : "")
+    `https://player.twitch.tv/?${target}&parent=${parent}${play}` + (time ? `&time=${time}` : "")
   );
 }

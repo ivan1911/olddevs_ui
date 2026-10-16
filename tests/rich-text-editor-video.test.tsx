@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { Editor } from "@tiptap/react";
 import createDOMPurify from "dompurify";
@@ -9,9 +9,12 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import {
   RichTextEditor,
+  tool,
   type RichTextEditorHandle,
   type RichTextEditorProps,
 } from "../src/editor/index.js";
+import { resetDevWarnings } from "../src/lib/dev-warn.js";
+import { PLAYER_FRAME } from "../src/editor/features/video/VideoPlayer.js";
 import { sanitizeRichText } from "../src/editor/schema-entry.js";
 import { PRESETS, TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
@@ -562,13 +565,93 @@ describe("Markdown", () => {
   });
 });
 
-// ── Заглушка и плеер ──────────────────────────────────────────────────────
+// ── Плеер сразу (умолчание) ───────────────────────────────────────────────
 
-describe("the placeholder and the player", () => {
+/** `autoload: false` у обоих сервисов: прежнее поведение, заглушка до щелчка (OLDSUI-287). */
+const CLICK_TO_PLAY = [
+  tool("youtube", { autoload: false }),
+  tool("twitch", { autoload: false }),
+] as const;
+
+describe("the player at once (autoload, the default)", () => {
+  test("the node view is the iframe: nocookie src, title, lazy loading, allow, referrerpolicy, no placeholder", () => {
+    renderEditor({ defaultValue: video("youtube", YT) });
+    const frame = document.querySelector("iframe")!;
+    // Без автозапуска: плеер стоит на странице, а не включается сам.
+    expect(frame.getAttribute("src")).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
+    expect(frame.getAttribute("title")).toBe("YouTube video");
+    expect(frame.getAttribute("loading")).toBe("lazy");
+    expect(frame.getAttribute("allow")).toContain("fullscreen");
+    expect(frame.getAttribute("referrerpolicy")).toBe("strict-origin-when-cross-origin");
+    expect(frame.hasAttribute("allowfullscreen")).toBe(true);
+    expect(screen.queryByRole("button", { name: /Play/ })).toBeNull();
+    // Фокус не уходит в плеер сам: страница только что открылась.
+    expect(document.activeElement).not.toBe(frame);
+  });
+
+  test("Twitch takes the host of the current page as parent", () => {
+    renderEditor({ defaultValue: video("twitch", TW) });
+    const frame = document.querySelector("iframe")!;
+    expect(frame.getAttribute("src")).toBe(
+      `https://player.twitch.tv/?video=1234567890&parent=${window.location.hostname}&autoplay=false`
+    );
+    expect(frame.getAttribute("title")).toBe("Twitch video");
+    expect(frame.getAttribute("loading")).toBe("lazy");
+  });
+
+  test("the frame is the same 16:9 frame as the placeholder", () => {
+    renderEditor({ defaultValue: video("youtube", YT) });
+    const player = document.querySelector<HTMLElement>("[data-video-player]")!;
+    for (const token of PLAYER_FRAME.split(/\s+/)) {
+      expect(player.classList.contains(token), token).toBe(true);
+    }
+    expect(player.querySelector("iframe")!.classList.contains("absolute")).toBe(true);
+  });
+
+  test("the document keeps the link: no player, no parent, no iframe in the value", async () => {
+    const { editor } = renderEditor({ defaultValue: video("twitch", TW) + video("youtube", YT) });
+    // Вид узла рисуется порталом после первого прохода: ждём второй блок.
+    await waitFor(() => expect(document.querySelectorAll("iframe")).toHaveLength(2));
+    expect(editor.getHTML()).toBe(video("twitch", TW) + video("youtube", YT));
+  });
+
+  test("a block inserted from the menu gets its player at once", async () => {
+    const user = userEvent.setup();
+    const { editor } = renderEditor({ tools: FULL_PLUS_VIDEO, defaultValue: "<p>Intro</p>" });
+    caretIn(editor, "Intro");
+    expect(document.querySelector("iframe")).toBeNull();
+    const field = await openVideoPopover(user);
+    await user.type(field, `${YT}{Enter}`);
+    expect(document.querySelector("iframe")?.getAttribute("src")).toBe(
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"
+    );
+  });
+
+  test("a read-only editor shows the player too, with the title in the catalog language", () => {
+    render(
+      <UiProvider messages={ru} locale="ru">
+        <RichTextEditor
+          aria-label="Body"
+          tools={[...BOTH]}
+          readOnly
+          defaultValue={video("youtube", YT)}
+        />
+      </UiProvider>
+    );
+    expect(document.querySelector("iframe")?.getAttribute("title")).toBe(
+      ru.editor.videoPlayer({ service: "YouTube" })
+    );
+  });
+});
+
+describe("autoload: false is click-to-play", () => {
   test("before a click: the service name, the link and a Play button, no iframe, no request", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
-    renderEditor({ defaultValue: video("youtube", YT) + video("twitch", TW) });
+    renderEditor({
+      tools: [...CLICK_TO_PLAY],
+      defaultValue: video("youtube", YT) + video("twitch", TW),
+    });
     expect(document.querySelector("iframe")).toBeNull();
     const play = screen.getByRole("button", { name: "Play YouTube video" });
     expect(within(play).queryByText("Play")).toBeTruthy();
@@ -581,7 +664,7 @@ describe("the placeholder and the player", () => {
 
   test("a click builds the nocookie player with title, lazy loading, allow and referrerpolicy", async () => {
     const user = userEvent.setup();
-    renderEditor({ defaultValue: video("youtube", YT) });
+    renderEditor({ tools: [...CLICK_TO_PLAY], defaultValue: video("youtube", YT) });
     await user.click(screen.getByRole("button", { name: "Play YouTube video" }));
     const frame = document.querySelector("iframe")!;
     expect(frame.getAttribute("src")).toBe(
@@ -599,7 +682,7 @@ describe("the placeholder and the player", () => {
 
   test("Twitch takes the host of the current page as parent", async () => {
     const user = userEvent.setup();
-    renderEditor({ defaultValue: video("twitch", TW) });
+    renderEditor({ tools: [...CLICK_TO_PLAY], defaultValue: video("twitch", TW) });
     await user.click(screen.getByRole("button", { name: "Play Twitch video" }));
     const frame = document.querySelector("iframe")!;
     expect(frame.getAttribute("src")).toBe(
@@ -610,7 +693,10 @@ describe("the placeholder and the player", () => {
 
   test("the document keeps the link: no player, no parent, no iframe in the value", async () => {
     const user = userEvent.setup();
-    const { editor } = renderEditor({ defaultValue: video("twitch", TW) });
+    const { editor } = renderEditor({
+      tools: [...CLICK_TO_PLAY],
+      defaultValue: video("twitch", TW),
+    });
     await user.click(screen.getByRole("button", { name: "Play Twitch video" }));
     expect(editor.getHTML()).toBe(video("twitch", TW));
   });
@@ -621,7 +707,7 @@ describe("the placeholder and the player", () => {
       <UiProvider messages={ru} locale="ru">
         <RichTextEditor
           aria-label="Body"
-          tools={[...BOTH]}
+          tools={[...CLICK_TO_PLAY]}
           readOnly
           defaultValue={video("youtube", YT)}
         />
@@ -633,6 +719,79 @@ describe("the placeholder and the player", () => {
     expect(document.querySelector("iframe")?.getAttribute("title")).toBe(
       ru.editor.videoPlayer({ service: "YouTube" })
     );
+  });
+});
+
+describe("the Option belongs to its own service", () => {
+  test("autoload: false on youtube only: YouTube is a placeholder, Twitch is a player", async () => {
+    renderEditor({
+      tools: [tool("youtube", { autoload: false }), "twitch"],
+      defaultValue: video("youtube", YT) + video("twitch", TW),
+    });
+    expect(screen.getByRole("button", { name: "Play YouTube video" })).toBeTruthy();
+    await waitFor(() => expect(document.querySelector("iframe")).not.toBeNull());
+    const frames = [...document.querySelectorAll("iframe")];
+    expect(frames).toHaveLength(1);
+    expect(frames[0]!.getAttribute("title")).toBe("Twitch video");
+  });
+
+  test("autoload: false on twitch only: Twitch is a placeholder, YouTube is a player", async () => {
+    renderEditor({
+      tools: ["youtube", tool("twitch", { autoload: false })],
+      defaultValue: video("youtube", YT) + video("twitch", TW),
+    });
+    expect(await screen.findByRole("button", { name: "Play Twitch video" })).toBeTruthy();
+    const frames = [...document.querySelectorAll("iframe")];
+    expect(frames).toHaveLength(1);
+    expect(frames[0]!.getAttribute("title")).toBe("YouTube video");
+  });
+
+  test("the Option of a service that is not enabled changes nothing for the other", () => {
+    renderEditor({
+      tools: [tool("twitch", { autoload: false })],
+      defaultValue: video("twitch", TW),
+    });
+    expect(screen.getByRole("button", { name: "Play Twitch video" })).toBeTruthy();
+  });
+
+  test("a wrong value falls back to the default (the player at once) with one console.error", () => {
+    resetDevWarnings();
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    renderEditor({
+      tools: [tool("youtube", { autoload: "no" } as never)],
+      defaultValue: video("youtube", YT),
+    });
+    expect(document.querySelector("iframe")).not.toBeNull();
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(error.mock.calls[0]![0]).toMatch(
+      /^RichTextEditor: tool "youtube": ignored invalid options: autoload$/
+    );
+  });
+});
+
+describe("the player does not break editing", () => {
+  test("a node selection outlines the block and Backspace removes it with the player", async () => {
+    const { editor } = renderEditor({
+      tools: ["history", ...BOTH],
+      defaultValue: `<p>Intro</p>${video("youtube", YT)}<p>Outro</p>`,
+    });
+    await waitFor(() => expect(document.querySelector("iframe")).not.toBeNull());
+    focusField();
+    act(() => void editor.commands.setNodeSelection(editor.state.doc.child(0).nodeSize));
+    const wrapper = document.querySelector<HTMLElement>("[data-video-node]")!;
+    await waitFor(() => expect(wrapper.className).toContain("outline-(--rte-primary)"));
+    expect(wrapper.getAttribute("contenteditable")).toBe("false");
+    press(editor, "Backspace");
+    expect(document.querySelector("iframe")).toBeNull();
+    expect(editor.getHTML()).toBe("<p>Intro</p><p>Outro</p>");
+  });
+
+  test("the iframe sits in the non-editable node view: no text caret target inside", () => {
+    renderEditor({ defaultValue: video("youtube", YT) });
+    const wrapper = document.querySelector<HTMLElement>("[data-video-node]")!;
+    expect(wrapper.contains(document.querySelector("iframe"))).toBe(true);
+    // Внутри блока нет ничего, куда ProseMirror поставил бы каретку.
+    expect(wrapper.querySelector("[contenteditable=true]")).toBeNull();
   });
 });
 

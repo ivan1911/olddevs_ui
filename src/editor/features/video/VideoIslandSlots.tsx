@@ -4,11 +4,14 @@ import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { VideoPlayer } from "./VideoPlayer.js";
 import { videoLinkOf } from "./videoLink.js";
+import type { VideoAutoload } from "./videoOptions.js";
 import { VIDEO_BLOCK, type VideoLink } from "./videoSrc.js";
 
 export interface VideoIslandSlotsProps {
   /** Отпечаток HTML просмотра: сменился Документ — блоки новые, и остров ищет их заново. */
   docKey: string;
+  /** Опция `autoload` каждого сервиса из `tools` экрана (`videoAutoloadOf`): данные. */
+  autoload: VideoAutoload;
 }
 
 interface Found {
@@ -22,8 +25,8 @@ interface Found {
  *
  * СЕРВЕРНЫЙ HTML ПЕРВИЧЕН. Блок приходит в разметке целиком — со ссылкой внутри — и
  * читается без JS, до гидрации и в Markdown. После монтирования его содержимое
- * заменяет `VideoPlayer`: заглушка с кнопкой «Воспроизвести» и, после щелчка, плеер
- * с адресом, собранным здесь же. Размонтирование острова возвращает ссылку.
+ * заменяет `VideoPlayer`: плеер сразу или, с `autoload: false`, заглушка с кнопкой
+ * «Воспроизвести» и плеер после щелчка; адрес собирается здесь же. Размонтирование острова возвращает ссылку.
  * Блок, у которого сервис или адрес не годятся (HTML не прошёл очистку, чужой
  * сервис), остаётся ссылкой: плеер строится только из того, что узнаёт `isVideoSrc`.
  *
@@ -34,9 +37,10 @@ interface Found {
  * совпадает; порталы появляются только после эффекта.
  *
  * ЭФФЕКТ ЗАВИСИТ ОТ ДОКУМЕНТА (`docKey`), а не от пропсов просмотра: новый литерал у
- * родителя не должен перемонтировать плееры и обрывать воспроизведение.
+ * родителя не должен перемонтировать плееры и обрывать воспроизведение. Опция
+ * `autoload` — данные в пропсах и читается при отрисовке плеера.
  */
-export default function VideoIslandSlots({ docKey }: VideoIslandSlotsProps) {
+export default function VideoIslandSlots({ docKey, autoload }: VideoIslandSlotsProps) {
   const [found, setFound] = useState<Found[]>([]);
   const marker = useRef<HTMLTemplateElement>(null);
 
@@ -59,7 +63,7 @@ export default function VideoIslandSlots({ docKey }: VideoIslandSlotsProps) {
     <>
       <template ref={marker} data-video-island="" />
       {found.map((item, index) => (
-        <Slot key={`${docKey}:${index}`} item={item} />
+        <Slot key={`${docKey}:${index}`} item={item} autoload={autoload[item.link.provider]} />
       ))}
     </>
   );
@@ -76,7 +80,7 @@ const IN_FRAME = "absolute inset-0 aspect-auto size-full rounded-none border-0 b
  * корнем острова; корень встаёт ДО отрисовки плеера (`ready`), чтобы его эффекты
  * видели себя в документе. Размонтирование возвращает содержимое.
  */
-function Slot({ item }: { item: Found }) {
+function Slot({ item, autoload }: { item: Found; autoload: boolean }) {
   const { element, link } = item;
   const [root] = useState(() => {
     const span = document.createElement("span");
@@ -92,5 +96,7 @@ function Slot({ item }: { item: Found }) {
     return () => element.replaceChildren(...original);
   }, [element, root]);
 
-  return ready ? createPortal(<VideoPlayer link={link} className={IN_FRAME} />, root) : null;
+  return ready
+    ? createPortal(<VideoPlayer link={link} autoload={autoload} className={IN_FRAME} />, root)
+    : null;
 }

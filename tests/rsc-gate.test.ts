@@ -172,6 +172,14 @@ const SERVER_SAFE = [
       "server and RichTextView reads them to decide whether it needs the video island.",
   },
   {
+    file: "editor/features/video/videoOptions.ts",
+    why:
+      'The defaults, value checks and the reader of the autoload option of tool("youtube") and ' +
+      'tool("twitch") (OLDSUI-287): functions over data. It imports toolOptions.ts, customTool.ts, ' +
+      "videoSrc.ts and lib/dev-warn.ts (all server-safe), neither Tiptap nor React, so the " +
+      "server-rendered RichTextView reads the option for its island.",
+  },
+  {
     file: "editor/features/video/videoLink.ts",
     why:
       "The heavy side of the video link rules (OLDSUI-281): the recognition of YouTube and Twitch " +
