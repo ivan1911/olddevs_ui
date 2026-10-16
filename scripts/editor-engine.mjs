@@ -26,6 +26,7 @@ export const EDITOR_ENGINE = [
   "@tiptap/extension-invisible-characters",
   "@tiptap/extension-link",
   "@tiptap/extension-list",
+  "@tiptap/extension-mathematics",
   "@tiptap/extension-subscript",
   "@tiptap/extension-superscript",
   "@tiptap/extension-table",
@@ -39,6 +40,7 @@ export const EDITOR_ENGINE = [
   "@tiptap/starter-kit",
   "@tiptap/suggestion",
   "highlight.js",
+  "katex",
   "lowlight",
   "marked",
 ];

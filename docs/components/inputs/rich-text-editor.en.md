@@ -60,7 +60,7 @@ category: inputs
 status: stable
 source: src/editor/RichTextEditor.tsx
 story: src/editor/RichTextEditor.stories.tsx
-sourceHash: 2088ed0a4311
+sourceHash: 163b107fb91f
 ---
 
 # RichTextEditor
@@ -126,6 +126,7 @@ npm install @tiptap/core @tiptap/pm @tiptap/react @tiptap/starter-kit @tiptap/ex
   @tiptap/extension-text-style @tiptap/extension-highlight @tiptap/extension-text-align @tiptap/extension-link \
   @tiptap/extension-table @tiptap/extension-details @tiptap/extension-blockquote @tiptap/extension-horizontal-rule \
   @tiptap/extension-invisible-characters @tiptap/extension-typography \
+  @tiptap/extension-mathematics katex@0.18.10 \
   @tiptap/markdown marked @tiptap/suggestion \
   @tiptap/extension-code-block-lowlight lowlight highlight.js
 ```
@@ -136,7 +137,7 @@ The Editor has three entry points. `@olddevs/ui/editor` is the Editor itself, th
 
 In Next.js, add the `@olddevs/ui/editor` entry point to `optimizePackageImports` as a separate line next to `@olddevs/ui` ([getting-started.md](../../getting-started.md#пакет-в-серверных-компонентах)): without it, a page that imports just `RichTextView` from the entry point ships the whole Editor with the engine to the browser.
 
-Keep the Tiptap package versions identical: they reference each other by exact version. The range is `^3.31.4`.
+Keep the Tiptap package versions identical: they reference each other by exact version. The range is `^3.32.0`.
 
 A separate Tailwind `@source` is not needed: the Editor's classes sit in the same `dist` as the rest of the kit, and the `@source "./node_modules/@olddevs/ui/dist"` line from [getting-started.md](../../getting-started.md) already covers them.
 

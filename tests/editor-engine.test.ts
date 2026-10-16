@@ -63,7 +63,17 @@ describe("the Editor engine", () => {
   test.each(["components/inputs/rich-text-editor.md", "components/inputs/rich-text-editor.en.md"])(
     "the install command of %s names exactly the engine",
     (page) => {
-      expect(installCommand(page).sort()).toEqual([...EDITOR_ENGINE].sort());
+      // `katex@0.18.10`: a pinned spec is a name plus the exact devDependencies version.
+      const specs = installCommand(page).map((spec) => {
+        const at = spec.indexOf("@", 1);
+        return at === -1
+          ? { name: spec }
+          : { name: spec.slice(0, at), version: spec.slice(at + 1) };
+      });
+      expect(specs.map((spec) => spec.name).sort()).toEqual([...EDITOR_ENGINE].sort());
+      for (const spec of specs.filter((entry) => entry.version !== undefined)) {
+        expect(spec.version, spec.name).toBe(manifest.devDependencies[spec.name]);
+      }
     }
   );
 });

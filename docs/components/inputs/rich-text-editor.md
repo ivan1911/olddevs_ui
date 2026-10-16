@@ -125,6 +125,7 @@ npm install @tiptap/core @tiptap/pm @tiptap/react @tiptap/starter-kit @tiptap/ex
   @tiptap/extension-text-style @tiptap/extension-highlight @tiptap/extension-text-align @tiptap/extension-link \
   @tiptap/extension-table @tiptap/extension-details @tiptap/extension-blockquote @tiptap/extension-horizontal-rule \
   @tiptap/extension-invisible-characters @tiptap/extension-typography \
+  @tiptap/extension-mathematics katex@0.18.10 \
   @tiptap/markdown marked @tiptap/suggestion \
   @tiptap/extension-code-block-lowlight lowlight highlight.js
 ```
@@ -135,7 +136,7 @@ npm install @tiptap/core @tiptap/pm @tiptap/react @tiptap/starter-kit @tiptap/ex
 
 В Next.js добавьте вход `@olddevs/ui/editor` в `optimizePackageImports` отдельной строкой рядом с `@olddevs/ui` ([getting-started.md](../../getting-started.md#пакет-в-серверных-компонентах)): без неё страница, импортирующая из входа один `RichTextView`, отгружает в браузер весь Редактор с движком.
 
-Держите версии пакетов Tiptap одинаковыми: они ссылаются друг на друга точной версией. Диапазон — `^3.31.4`.
+Держите версии пакетов Tiptap одинаковыми: они ссылаются друг на друга точной версией. Диапазон — `^3.32.0`.
 
 Отдельный `@source` для Tailwind не нужен: классы Редактора лежат в том же `dist`, что и остальной кит, и строка `@source "./node_modules/@olddevs/ui/dist"` из [getting-started.md](../../getting-started.md) их уже покрывает.
 
