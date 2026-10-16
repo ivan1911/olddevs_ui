@@ -1,5 +1,6 @@
 "use client";
 
+import type { KatexOptions } from "katex";
 import type { Editor } from "@tiptap/react";
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "../../../components/actions/Button.js";
@@ -7,7 +8,8 @@ import { FormField } from "../../../components/inputs/FormField.js";
 import { TextControl } from "../../../components/inputs/TextControl.js";
 import { useMessages } from "../../../i18n/useMessages.js";
 import { katex, mathErrorDetail } from "./katexEngine.js";
-import { BLOCK_MATH, INLINE_MATH, insertFormula } from "./mathCommands.js";
+import { insertFormula } from "./mathCommands.js";
+import { BLOCK_FORMULA_NODE, INLINE_FORMULA_NODE } from "./mathNames.js";
 
 export interface MathFormProps {
   editor: Editor;
@@ -43,17 +45,19 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
   const messages = useMessages().editor;
   const fieldId = useId();
   const block = kind === "block";
-  const name = block ? BLOCK_MATH : INLINE_MATH;
+  const name = block ? BLOCK_FORMULA_NODE : INLINE_FORMULA_NODE;
   const [existing] = useState(() =>
     pos === undefined ? null : String(editor.state.doc.nodeAt(pos)?.attrs.latex ?? "")
   );
   const [draft, setDraft] = useState(existing ?? "");
 
   // Опции KaTeX берёт у расширения этого же вида: отдельной копии опций у формы нет.
+  // Фабрика, а не объект: `\gdef` пишет в `macros`, а `{ ...options }` вычисляет геттер
+  // макросов (`katexOptionsFor`) заново — каждая проверка и предпросмотр начинают с чистых.
   const katexOptions = useMemo(() => {
     const own = editor.extensionManager.extensions.find((extension) => extension.name === name);
-    const options = own?.options.katexOptions as { macros?: object } | undefined;
-    return { ...options, macros: { ...options?.macros } };
+    const options = own?.options.katexOptions as KatexOptions | undefined;
+    return (): KatexOptions => ({ ...options });
   }, [editor, name]);
 
   const latex = draft.trim();
@@ -62,7 +66,7 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
   const error = useMemo(() => {
     if (!latex) return null;
     try {
-      katex.renderToString(latex, katexOptions);
+      katex.renderToString(latex, katexOptions());
       return null;
     } catch (failure) {
       return mathErrorDetail(failure);
@@ -74,7 +78,7 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
   useEffect(() => {
     const target = previewRef.current;
     if (!target) return;
-    if (latex && error === null) katex.render(latex, target, katexOptions);
+    if (latex && error === null) katex.render(latex, target, katexOptions());
     else target.textContent = "";
   }, [latex, error, katexOptions]);
 

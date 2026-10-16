@@ -65,6 +65,8 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
       return {
         current: state?.current ?? -1,
         total: state?.total ?? 0,
+        // Формулы поиск находит, но не заменяет: остались одни они — заменять нечего.
+        replaceable: state?.matches.some((match) => !match.formula) ?? false,
         error: state?.error,
         engineQuery: state?.query ?? "",
         engineOptions: state?.options ?? NO_OPTIONS,
@@ -270,13 +272,13 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
 
       {search.editable && (
         <div className="flex justify-end gap-2">
-          <Button variant="soft" size="sm" disabled={!hasMatches} onClick={replaceOne}>
+          <Button variant="soft" size="sm" disabled={!search.replaceable} onClick={replaceOne}>
             {messages.replaceOne}
           </Button>
           <Button
             variant="soft"
             size="sm"
-            disabled={!hasMatches}
+            disabled={!search.replaceable}
             onClick={() => editor.commands.replaceAllMatches(replacement)}
           >
             {messages.replaceAll}

@@ -3,6 +3,7 @@
 import { Extension } from "@tiptap/core";
 import type { JSONContent } from "@tiptap/core";
 import { DOMParser as ProseMirrorParser, type ParseOptions, type Schema } from "@tiptap/pm/model";
+import { BLOCK_FORMULA_NODE, FORMULA_SELECTOR, INLINE_FORMULA_NODE } from "./mathNames.js";
 
 /*
   ФОРМУЛА БЕЗ ИНСТРУМЕНТА `mathematics` — ТЕКСТОМ (ADR-0070, «поведение без
@@ -23,8 +24,6 @@ import { DOMParser as ProseMirrorParser, type ParseOptions, type Schema } from "
   поведение, если ProseMirror переедет.
 */
 
-const FORMULAS = "span[data-type=inline-math], div[data-type=block-math]";
-
 /**
  * Формула в дереве JSON (`inlineMath`, `blockMath`) — текстом: тот же путь для
  * конверта Документа (`jsonDocument.ts`), что `formulasToText` для HTML. `null` —
@@ -32,18 +31,21 @@ const FORMULAS = "span[data-type=inline-math], div[data-type=block-math]";
  */
 export function formulaJsonAsText(node: JSONContent): JSONContent[] | null {
   const latex = node.attrs?.latex;
-  if (typeof latex !== "string" || (node.type !== "inlineMath" && node.type !== "blockMath")) {
+  if (
+    typeof latex !== "string" ||
+    (node.type !== INLINE_FORMULA_NODE && node.type !== BLOCK_FORMULA_NODE)
+  ) {
     return null;
   }
   if (!latex.trim()) return [];
-  if (node.type === "inlineMath") return [{ type: "text", text: `$${latex}$` }];
+  if (node.type === INLINE_FORMULA_NODE) return [{ type: "text", text: `$${latex}$` }];
   return [{ type: "paragraph", content: [{ type: "text", text: `$$${latex}$$` }] }];
 }
 
 /** Формулы поддерева — текстом. Меняет `dom` на месте: разбор получает свежий DOM. */
 function formulasToText(dom: Node): Node {
   const root = dom as Partial<ParentNode>;
-  for (const element of [...(root.querySelectorAll?.(FORMULAS) ?? [])]) {
+  for (const element of [...(root.querySelectorAll?.(FORMULA_SELECTOR) ?? [])]) {
     const latex = element.getAttribute("data-latex") ?? "";
     const owner = element.ownerDocument;
     if (!latex.trim()) {

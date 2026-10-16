@@ -1,6 +1,7 @@
 "use client";
 
 import type { Node as PmNode } from "@tiptap/pm/model";
+import { isFormulaNodeName } from "../mathematics/mathNames.js";
 
 /** Опции поиска — флажки панели «Поиск и замена». */
 export interface SearchOptions {
@@ -23,6 +24,12 @@ export interface SearchMatch {
    * назад и вперёд (`(?<=a)b`) без соседнего текста не сработал бы.
    */
   captures: readonly string[];
+  /**
+   * Совпадение внутри исходного LaTeX формулы: `from`–`to` — вся формула как узел,
+   * а не отрезок текста. Подсвечивается и выделяется узлом, а «Заменить» и
+   * «Заменить все» его пропускают: формула правится только Поповером.
+   */
+  formula: boolean;
 }
 
 export interface SearchResult {
@@ -74,6 +81,23 @@ export function searchPattern(
   }
 }
 
+/** Исходный LaTeX формулы — строка, в которой её ищут (ADR-0070, п. 8). */
+const sourceOf = (node: PmNode): string => String(node.attrs.latex ?? "");
+
+/**
+ * Совпадение запроса внутри формулы: одно на формулу, сколько бы раз запрос в ней
+ * ни повторялся, — подсвечивается и считается формула целиком. `null` — запрос в
+ * её исходнике не найден.
+ */
+function formulaMatch(node: PmNode, pos: number, pattern: RegExp): SearchMatch | null {
+  pattern.lastIndex = 0;
+  for (const found of sourceOf(node).matchAll(pattern)) {
+    if (found[0].length === 0) continue;
+    return { from: pos, to: pos + node.nodeSize, captures: [...found], formula: true };
+  }
+  return null;
+}
+
 /**
  * Все совпадения запроса в Документе, по порядку.
  *
@@ -83,6 +107,11 @@ export function searchPattern(
  * склеивается, и «bo**ld**» находится как «bold». Строчные атомы (картинка,
  * упоминание, мягкий перенос) встают в строку заместителем `ATOM`, и через них
  * совпадение не идёт.
+ *
+ * ФОРМУЛЫ — ЕДИНСТВЕННЫЕ АТОМЫ С ТЕКСТОМ: их исходник LaTeX ищется отдельной
+ * строкой, как отдельный Блок, и совпадение внутри — вся формула целиком
+ * (`SearchMatch.formula`). Через границу формулы совпадение с текстом рядом тоже
+ * не идёт, как и через любой другой атом.
  *
  * Пустые совпадения регулярного выражения (`x*`) пропускаются: подсвечивать и
  * заменять там нечего.
@@ -95,6 +124,12 @@ export function findMatches(doc: PmNode, query: string, options: SearchOptions):
 
   const matches: SearchMatch[] = [];
   doc.descendants((node, pos) => {
+    // Блочная формула — атом без детей: ищется по своему исходнику.
+    if (isFormulaNodeName(node.type.name)) {
+      const inFormula = formulaMatch(node, pos, pattern);
+      if (inFormula) matches.push(inFormula);
+      return false;
+    }
     if (!node.isTextblock) return true;
     // Строка Блока и позиция Документа для каждого её символа (+1 — конец).
     let text = "";
@@ -108,6 +143,10 @@ export function findMatches(doc: PmNode, query: string, options: SearchOptions):
       } else {
         positions.push(start);
         text += ATOM;
+        if (isFormulaNodeName(child.type.name)) {
+          const inFormula = formulaMatch(child, start, pattern);
+          if (inFormula) matches.push(inFormula);
+        }
       }
     });
     positions.push(pos + 1 + node.content.size);
@@ -121,9 +160,12 @@ export function findMatches(doc: PmNode, query: string, options: SearchOptions):
         from: positions[index]!,
         to: positions[index + length]!,
         captures: [...found],
+        formula: false,
       });
     }
     return false;
   });
+  // Формулы внутри строки встали в конец своего Блока: порядок Документа — по позиции.
+  matches.sort((a, b) => a.from - b.from);
   return { matches };
 }

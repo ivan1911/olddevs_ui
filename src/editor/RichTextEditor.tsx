@@ -37,7 +37,7 @@ import {
   type RichTextEditorHandleMethods,
 } from "./core/handle.js";
 import { EditorToolbar, ToolbarSkeleton } from "./ui/EditorToolbar.js";
-import { searchState } from "./features/search/searchPlugin.js";
+import { matchSelection, searchState } from "./features/search/searchPlugin.js";
 import { isDocumentEmpty } from "./core/emptiness.js";
 import { FieldNoticeView, StatusLine } from "./ui/FieldStatus.js";
 import type { FieldNotice } from "./core/fieldNotice.js";
@@ -868,7 +868,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         const match = state?.matches[state.current];
         const chain = current.chain();
         if (focusDocument) chain.focus();
-        if (focusDocument && match) chain.setTextSelection({ from: match.from, to: match.to });
+        // Текст — отрезком, формула — узлом (`matchSelection`).
+        if (focusDocument && match) {
+          chain.command(({ tr }) => (tr.setSelection(matchSelection(tr.doc, match)), true));
+        }
         chain.clearSearch().run();
       }
       setSearchPanel(null);

@@ -1,4 +1,5 @@
 import type { EditorQuoteSet } from "../../i18n/messages.js";
+import { devError } from "../../lib/dev-warn.js";
 import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
 import type { InvisibleCharactersToolState, SearchToolState, TocToolState } from "./toolState.js";
@@ -340,4 +341,54 @@ export function isConfiguredTool(entry: unknown): entry is ConfiguredTool<string
     entry !== null &&
     (entry as { configured?: unknown }).configured === true
   );
+}
+
+/** Настроенные встроенные Инструменты из `tools`: записи `tool("имя", …)`, без определений своих. */
+export function configuredBuiltins(tools: readonly unknown[] | undefined): ConfiguredTool[] {
+  return (tools ?? []).filter(
+    (entry): entry is ConfiguredTool => isConfiguredTool(entry) && !entry.definition
+  );
+}
+
+/** Первая запись, чьё имя уже встречалось раньше: две записи `tool()` одного Инструмента — ошибка набора. */
+export function repeatedConfigured(
+  configured: readonly ConfiguredTool[]
+): ConfiguredTool | undefined {
+  return configured.find((entry, index) =>
+    configured.some((other, i) => i < index && other.name === entry.name)
+  );
+}
+
+/**
+ * Опции Инструмента: умолчания, поверх них — те, что передал `tool()`. Значение, не
+ * прошедшее проверку, и опция, которой у Инструмента нет (проверки для неё тоже
+ * нет), отбрасываются, в разработке — одним `console.error` на Инструмент:
+ * потребитель на JS обходит типы карты, а поле от этого не падает.
+ *
+ * ОДНО ЧТЕНИЕ ДЛЯ РЕДАКТОРА И ПРОСМОТРА. Редактор читает опции при сборке набора
+ * (`expandTools`), серверный `RichTextView` — опции формул для своего Острова
+ * (`mathOptionsOf`); правило одно, чтобы то, что принял Редактор, принял и Просмотр.
+ * `owner` — чьё имя стоит в сообщении.
+ */
+export function resolveToolOptions(
+  owner: "RichTextEditor" | "RichTextView",
+  name: string,
+  defaults: object,
+  checks: Readonly<Record<string, (value: unknown) => boolean>> | undefined,
+  configured: ConfiguredTool | undefined
+): object {
+  const given = Object.entries(configured?.options ?? {}).filter(
+    ([, value]) => value !== undefined
+  );
+  const valid = given.filter(([key, value]) => checks?.[key]?.(value));
+  if (valid.length < given.length) {
+    devError(
+      `${owner}: tool "${name}": ignored invalid options: ` +
+        given
+          .filter((entry) => !valid.includes(entry))
+          .map(([key]) => key)
+          .join(", ")
+    );
+  }
+  return mergeOptions(defaults, Object.fromEntries(valid));
 }

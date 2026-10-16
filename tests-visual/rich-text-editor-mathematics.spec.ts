@@ -13,6 +13,14 @@ const STORY = (id: string, theme = "dark") =>
 const EDITOR = "inputs-richtexteditor--mathematics";
 const VIEW = "content-richtextview--mathematics";
 
+/*
+  Ленивые чанки формул по URL: файл называется по модулю и в dev-сервере
+  (`/src/editor/features/mathematics/mathChunk.tsx`), и в сборке (`/assets/mathChunk-<хэш>.js`),
+  поэтому маска «до первой точки или дефиса» держит задержку в обоих.
+*/
+const MATH_CHUNK = /\/mathChunk[.-][^/]*$/;
+const KATEX_ENGINE = /\/katexEngine[.-][^/]*$/;
+
 /** Дать ProseMirror прочитать каретку после щелчка. */
 async function settle(page: Page) {
   await page.evaluate(
@@ -114,13 +122,42 @@ test("an unreadable formula stays as source, underlined as an error", async ({ p
   await expect(field.locator('[data-type="block-math"]')).toHaveText("\\badcommand{x}");
 });
 
+// ── Поиск ────────────────────────────────────────────────────────────────
+
+test("search finds the LaTeX of a formula and lights the whole formula", async ({ page }) => {
+  await page.goto(STORY(EDITOR));
+  const { field } = editor(page);
+  await expect(field.locator(".katex").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Find" }).click();
+  const panel = page.getByRole("search", { name: "Find and replace" });
+  await panel.getByRole("textbox", { name: "Find" }).fill("\\pi");
+
+  // «\pi» стоит в исходнике двух формул: строчной с площадью и Эйлера; текста с таким запросом нет.
+  await expect(panel.getByRole("status")).toHaveText("1 of 2");
+  const lit = field.locator(".rte-search-match");
+  await expect(lit).toHaveCount(2);
+  await expect(lit.first()).toHaveAttribute("data-type", "inline-math");
+  await expect(field.locator(".rte-search-current")).toHaveCount(1);
+  // Заливка лежит на самой формуле, а не на отрезке текста внутри неё.
+  const fill = await lit.first().evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(fill).not.toBe("rgba(0, 0, 0, 0)");
+
+  await panel.getByRole("button", { name: "Next match" }).click();
+  await expect(field.locator(".rte-search-current")).toHaveCount(1);
+  await expect(panel.getByRole("status")).toHaveText("2 of 2");
+  // Заменять в формулах нечего: обе кнопки выключены.
+  await expect(panel.getByRole("button", { name: "Replace all" })).toBeDisabled();
+});
+
 // ── Скелет ───────────────────────────────────────────────────────────────
 
 test("before the chunk arrives the field shows the LaTeX in monospace, and its height barely changes", async ({
   page,
 }) => {
-  // Чанк формул задержан: Скелет стоит, пока ждём.
-  await page.route("**/features/mathematics/mathChunk*", async (route) => {
+  // Чанк формул задержан: Скелет стоит, пока ждём. Имя файла разное: `mathChunk.tsx` в
+  // dev-сервере и `assets/mathChunk-<хэш>.js` в собранной витрине (`storybook-static`).
+  await page.route(MATH_CHUNK, async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 4000));
     await route.continue();
   });
@@ -204,6 +241,9 @@ test("from the keyboard: Shift+Right selects a formula, Enter opens the popover,
 }) => {
   await page.goto(STORY(EDITOR));
   const { field } = editor(page);
+  // Движок с формулами пришёл: до него стоит Скелет, и при подмене поля каретка и фокус
+  // сбрасываются посреди набора клавиш (в собранной витрине чанк идёт заметно дольше, чем в dev).
+  await expect(field.locator(".katex").first()).toBeVisible();
   // Из заголовка — вниз, в первую строку абзаца, и в её начало; затем к формуле.
   await field.getByRole("heading", { name: "Formulas" }).click();
   await page.keyboard.press("ArrowDown");
@@ -298,7 +338,8 @@ test("RichTextView draws the formulas by its island, with the same stylesheet", 
 test("RichTextView shows the LaTeX source until its island has KaTeX, then the formula", async ({
   page,
 }) => {
-  await page.route("**/features/mathematics/katexEngine*", async (route) => {
+  // `katexEngine.ts` в dev-сервере и `assets/katexEngine-<хэш>.js` (с CSS рядом) в собранной витрине.
+  await page.route(KATEX_ENGINE, async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
     await route.continue();
   });

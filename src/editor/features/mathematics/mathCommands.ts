@@ -3,14 +3,11 @@
 import type { Editor } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { NodeSelection, TextSelection, type EditorState } from "@tiptap/pm/state";
-
-/** Имена узлов расширения Mathematics из Tiptap. */
-export const INLINE_MATH = "inlineMath";
-export const BLOCK_MATH = "blockMath";
+import { BLOCK_FORMULA_NODE, INLINE_FORMULA_NODE, isFormulaNodeName } from "./mathNames.js";
 
 /** Узел — формула, строчная или блочная. */
 export function isFormulaNode(node: ProseMirrorNode): boolean {
-  return node.type.name === INLINE_MATH || node.type.name === BLOCK_MATH;
+  return isFormulaNodeName(node.type.name);
 }
 
 /**
@@ -42,13 +39,17 @@ export function selectedFormula(state: EditorState): { node: ProseMirrorNode; po
  */
 export function insertFormula(editor: Editor, kind: "inline" | "block", latex: string): boolean {
   if (kind === "inline") {
-    return editor.chain().focus().insertContent({ type: INLINE_MATH, attrs: { latex } }).run();
+    return editor
+      .chain()
+      .focus()
+      .insertContent({ type: INLINE_FORMULA_NODE, attrs: { latex } })
+      .run();
   }
   return editor
     .chain()
     .focus()
     .command(({ tr }) => {
-      const type = tr.doc.type.schema.nodes[BLOCK_MATH];
+      const type = tr.doc.type.schema.nodes[BLOCK_FORMULA_NODE];
       const paragraph = tr.doc.type.schema.nodes.paragraph;
       if (!type || !paragraph) return false;
       const { selection } = tr;

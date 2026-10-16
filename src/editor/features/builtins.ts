@@ -28,11 +28,16 @@ import {
   UNDERLINE_TOOL,
 } from "./marks/markTools.js";
 import { MATHEMATICS_TOOL } from "./mathematics/mathematicsTool.js";
-import { devError } from "../../lib/dev-warn.js";
 import type { ToolEntry } from "../core/customTool.js";
 import { describeCustomTool, describeDefinition } from "../core/customToolEngine.js";
 import { toolList, type ToolDescriptor, type ToolList } from "../core/toolDescriptor.js";
-import { isConfiguredTool, mergeOptions, type ConfiguredTool } from "../core/toolOptions.js";
+import {
+  configuredBuiltins,
+  isConfiguredTool,
+  repeatedConfigured,
+  resolveToolOptions,
+  type ConfiguredTool,
+} from "../core/toolOptions.js";
 import { SEARCH_TOOL } from "./search/searchTool.js";
 import { TABLE_TOOL } from "./table/tableTool.js";
 import { TOC_TOOL } from "./toc/tocTool.js";
@@ -165,33 +170,17 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   table: TABLE_TOOL,
 };
 
-/**
- * Опции Инструмента для Редактора: умолчания описания, поверх них — те, что
- * передал `tool()`. Значение, не прошедшее проверку, и опция, которой у
- * Инструмента нет (проверки для неё тоже нет), отбрасываются, в разработке —
- * одним `console.error` на Инструмент: потребитель на JS обходит типы карты, а
- * поле от этого не падает.
- */
+/** Описание с опциями для Редактора (`resolveToolOptions`: умолчания, поверх них — `tool()`). */
 function resolveOptions(
   descriptor: ToolDescriptor,
   configured: ConfiguredTool | undefined
 ): ToolDescriptor {
-  const { defaults, checks } = descriptor;
-  const given = Object.entries(configured?.options ?? {}).filter(
-    ([, value]) => value !== undefined
-  );
-  const valid = given.filter(([key, value]) => checks?.[key]?.(value));
-  if (valid.length < given.length) {
-    devError(
-      `RichTextEditor: tool "${descriptor.name}": ignored invalid options: ` +
-        given
-          .filter((entry) => !valid.includes(entry))
-          .map(([key]) => key)
-          .join(", ")
-    );
-  }
+  const { defaults, checks, name } = descriptor;
   return defaults
-    ? { ...descriptor, options: mergeOptions(defaults, Object.fromEntries(valid)) }
+    ? {
+        ...descriptor,
+        options: resolveToolOptions("RichTextEditor", name, defaults, checks, configured),
+      }
     : descriptor;
 }
 
@@ -214,12 +203,8 @@ export function expandTools(
   tools: readonly ToolEntry[] | undefined
 ): ToolList {
   // Настроенные встроенные: запись с определением настраивает свой Инструмент, она ниже.
-  const configured = (tools ?? []).filter(
-    (entry): entry is ConfiguredTool => isConfiguredTool(entry) && !entry.definition
-  );
-  const twice = configured.find((entry, index) =>
-    configured.some((e, i) => i < index && e.name === entry.name)
-  );
+  const configured = configuredBuiltins(tools);
+  const twice = repeatedConfigured(configured);
   const names = resolveTools(
     preset,
     tools && [

@@ -171,6 +171,36 @@ test("value, engine, HTML, sanitizer and value again lose nothing", () => {
   ]);
 });
 
+test("the Editor writes data-latex that DOMPurify keeps: ]>, -->, --!> and </ get a space", () => {
+  const purify = createDOMPurify(window);
+  const tools = ["bold", "mathematics"] as const;
+  const html = `<p>${inline("\\left[0,1\\right]>x")} ${inline("a-->b")} ${inline("a--!>b")}</p>${block("p</style>q")}`;
+
+  const first = renderEditor({ tools, defaultValue: html });
+  const saved = first.editor.getHTML();
+
+  expect(saved).toBe(
+    `<p>${inline("\\left[0,1\\right] >x")} ${inline("a-- >b")} ${inline("a--! >b")}</p>${block("p< /style>q")}`
+  );
+  // Уже безопасный HTML санитайзер не меняет, и второй проход движка отдаёт те же байты.
+  const sanitized = sanitizeRichText(saved, purify, tools);
+  expect(sanitized).toBe(saved);
+  cleanup();
+  expect(renderEditor({ tools, defaultValue: sanitized }).editor.getHTML()).toBe(saved);
+});
+
+test("a formula inserted by the popover is written with the safe source too", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: "<p>One</p>" });
+  caretIn(editor, "One");
+
+  const popover = await openFromMenu(user, "Formula");
+  await enterLatex(user, popover, "[0,1]>x");
+  await user.click(within(popover).getByRole("button", { name: "Insert" }));
+
+  expect(editor.getHTML()).toContain('data-latex="[0,1] >x"');
+});
+
 test("the text of a formula is its LaTeX: getText, the counter and the selected text", () => {
   const { editor, handle } = renderEditor({
     maxLength: 12,
@@ -184,12 +214,13 @@ test("the text of a formula is its LaTeX: getText, the counter and the selected 
   expect(handle.getSelectedText()).toContain("x^2");
 });
 
-test("search treats a formula as any inline atom: its LaTeX is not searched, the text around it is", () => {
+test("search finds the LaTeX of a formula as a whole formula, and the text around it as text", () => {
   const { handle } = renderEditor({ defaultValue: `<p>see ${inline("\\sqrt{2}")} and see</p>` });
 
+  // Подробности (подсветка, переходы, замена) — `editor-search-formulas.test.tsx`.
   const search = handle.tool("search");
   expect(search?.setQuery("sqrt")).toBe(true);
-  expect(search?.next()).toBe(false);
+  expect(search?.next()).toBe(true);
   expect(search?.setQuery("see")).toBe(true);
   expect(search?.next()).toBe(true);
 });
@@ -253,6 +284,51 @@ test("tool('mathematics') macros apply, and a wrong value falls back to the defa
 });
 
 // ── Markdown ────────────────────────────────────────────────────────────────
+
+test("a \\gdef in one formula does not reach the next: the Editor agrees with the View", () => {
+  const macros = { "\\RR": "\\mathbb{R}" };
+  const html = `<p>${inline("\\gdef\\foo{x}\\foo")}</p><p>${inline("\\foo")}</p>${block("\\foo")}`;
+  const { editor } = renderEditor({ tools: [tool("mathematics", { macros })], defaultValue: html });
+
+  const [defining, inlineUser] = [...editor.view.dom.querySelectorAll('[data-type="inline-math"]')];
+  expect(defining!.classList.contains("inline-math-error")).toBe(false);
+  // Макрос из первой формулы второй неизвестен: `\foo` — ошибка, как в Просмотре.
+  expect(inlineUser!.classList.contains("inline-math-error")).toBe(true);
+  expect(formula(editor, '[data-type="block-math"]').classList.contains("block-math-error")).toBe(
+    true
+  );
+  // Макросы из `tool("mathematics")` при этом работают.
+  act(
+    () =>
+      void editor.commands.updateInlineMath({
+        latex: "\\RR",
+        pos: positionOf(editor, "inlineMath"),
+      })
+  );
+  expect(
+    editor.view.dom
+      .querySelector('[data-type="inline-math"]')!
+      .classList.contains("inline-math-error")
+  ).toBe(false);
+});
+
+test("a \\gdef typed in the popover does not leak into the next preview of the popover", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: "<p>One</p>" });
+  caretIn(editor, "One");
+
+  const popover = await openFromMenu(user, "Formula");
+  await enterLatex(user, popover, "\\gdef\\foo{x}\\foo");
+  expect(
+    within(popover).getByRole("group", { name: "Preview" }).querySelector(".katex")
+  ).not.toBeNull();
+  // Следующий разбор в том же Поповере начинает с чистых макросов: `\foo` больше не определён.
+  await enterLatex(user, popover, "\\foo");
+  expect(within(popover).getByRole("textbox", { name: "LaTeX" }).getAttribute("aria-invalid")).toBe(
+    "true"
+  );
+  expect(within(popover).getByRole("button", { name: "Insert" })).toHaveProperty("disabled", true);
+});
 
 test("$…$ and $$…$$ round trip through setMarkdown and getMarkdown", () => {
   const { editor, handle } = renderEditor();

@@ -5,6 +5,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { RichTextView, tool } from "../src/editor/index.js";
 import { hasMath, withMathSource } from "../src/editor/features/mathematics/mathHtml.js";
 import { mathOptionsOf } from "../src/editor/features/mathematics/mathOptions.js";
+import { resetDevWarnings } from "../src/lib/dev-warn.js";
 
 afterEach(cleanup);
 
@@ -144,4 +145,32 @@ test("tool('mathematics') macros reach the island, a wrong option falls back", a
   expect(
     mathOptionsOf(["bold", tool("mathematics", { macros: { RR: "x" }, strict: "warn" })])
   ).toEqual({ macros: {}, strict: "warn" });
+});
+
+test("the View resolves the options like the Editor: the same dev error, and two entries are an error", () => {
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  resetDevWarnings();
+
+  expect(
+    mathOptionsOf([tool("mathematics", { macros: { RR: "x" } as never, strict: "warn" })])
+  ).toEqual({ macros: {}, strict: "warn" });
+  expect(error).toHaveBeenCalledTimes(1);
+  expect(error.mock.calls[0]![0]).toMatch(
+    /^RichTextView: tool "mathematics": ignored invalid options: macros$/
+  );
+
+  // Два `tool("mathematics")` — ошибка набора, как у Редактора (он не стартует): Просмотр
+  // не выбирает «первую», а берёт умолчания и сообщает.
+  error.mockClear();
+  expect(
+    mathOptionsOf([
+      tool("mathematics", { strict: "warn", macros: { "\\RR": "x" } }),
+      tool("mathematics", { strict: "error" }),
+    ])
+  ).toEqual({ macros: {}, strict: "ignore" });
+  expect(error).toHaveBeenCalledTimes(1);
+  expect(error.mock.calls[0]![0]).toMatch(
+    /^RichTextView: tool "mathematics": two tool\(\) entries share this name$/
+  );
+  error.mockRestore();
 });

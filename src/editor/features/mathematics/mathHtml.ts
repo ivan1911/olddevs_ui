@@ -7,10 +7,34 @@
   Модуль серверный, как `codeHeader.ts`: строки в строки, без DOM и без KaTeX. Его
   читает `RichTextView` — серверный компонент.
 */
+import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "./mathNames.js";
+
+/**
+ * Исходный LaTeX, безопасный для атрибута `data-latex`: пробел внутрь пар, которые
+ * DOMPurify 3 считает концом разметки.
+ *
+ * ЗАЧЕМ. `SAFE_FOR_XML` у DOMPurify срезает атрибут целиком, если его значение
+ * содержит `]>`, `-->`, `--!>` или `</style|script|title|…`, и делает это раньше
+ * хуков кита. LaTeX такое содержит законно: `\left[0,1\right]>x`, стрелки `-->`.
+ * Без правки формула пропала бы на сервере потребителя вместе с обёрткой. Пробел
+ * рвёт пару: `]>` → `] >`, `-->` → `-- >`, `--!>` → `--! >`, `</` → `< /`. В
+ * математическом режиме KaTeX пробелы не рисует, и формула выглядит так же; в
+ * `\text{…}` пробел виден — предел, он записан в справочнике.
+ *
+ * ОДНА ФУНКЦИЯ НА ДВА МЕСТА. Редактор пишет `data-latex` уже такой (сохранённый
+ * HTML безопасен и при втором проходе не меняется), а санитайзер применяет её к
+ * чужому HTML до проверки DOMPurify. Повторный вызов исходник не меняет.
+ */
+export function safeLatexSource(latex: string): string {
+  return latex.replace(/(--!?|\])>/g, "$1 >").replace(/<\//g, "< /");
+}
 
 /** Есть ли в Документе формула: по ней `RichTextView` решает, монтировать ли Остров. */
 export function hasMath(html: string): boolean {
-  return html.includes('data-type="inline-math"') || html.includes('data-type="block-math"');
+  return (
+    html.includes(`data-type="${INLINE_FORMULA_TYPE}"`) ||
+    html.includes(`data-type="${BLOCK_FORMULA_TYPE}"`)
+  );
 }
 
 /**
@@ -23,7 +47,7 @@ const FORMULA_ELEMENT = /<(span|div)((?:\s+[\w:-]+(?:="[^"]*")?)*)\s*><\/\1>/g;
 /** Исходный LaTeX из атрибутов формулы или `null`, если это не формула. */
 function formulaSource(tag: string, attributes: string): string | null {
   const type = /\sdata-type="([^"]*)"/.exec(attributes)?.[1];
-  if (type !== (tag === "span" ? "inline-math" : "block-math")) return null;
+  if (type !== (tag === "span" ? INLINE_FORMULA_TYPE : BLOCK_FORMULA_TYPE)) return null;
   return /\sdata-latex="([^"]*)"/.exec(attributes)?.[1] ?? null;
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { BLOCK_FORMULA_TYPE, FORMULA_SELECTOR, FORMULA_SOURCE_ATTRIBUTE } from "./mathNames.js";
 import type { MathRenderOptions } from "./mathOptions.js";
 
 export interface MathIslandProps {
@@ -9,8 +10,6 @@ export interface MathIslandProps {
   /** Опции KaTeX из `tools` экрана (`mathOptionsOf`): макросы и строгость, данные. */
   options: MathRenderOptions;
 }
-
-const FORMULAS = "[data-type=inline-math], [data-type=block-math]";
 
 /**
  * Остров формул у `RichTextView` (ADR-0070, п. 6): отрисовывает каждую формулу из
@@ -46,15 +45,15 @@ export function MathIsland({ docKey, options }: MathIslandProps) {
   useEffect(() => {
     let view = marker.current?.previousElementSibling;
     while (view?.localName === "template") view = view.previousElementSibling;
-    const formulas = [...(view?.querySelectorAll<HTMLElement>(FORMULAS) ?? [])];
+    const formulas = [...(view?.querySelectorAll<HTMLElement>(FORMULA_SELECTOR) ?? [])];
     if (formulas.length === 0) return;
     let cancelled = false;
     void import("./katexEngine.js").then(
       ({ katex, katexOptionsFor }) => {
         if (cancelled) return;
         for (const element of formulas) {
-          const latex = element.getAttribute("data-latex") ?? "";
-          const block = element.getAttribute("data-type") === "block-math";
+          const latex = element.getAttribute(FORMULA_SOURCE_ATTRIBUTE) ?? "";
+          const block = element.getAttribute("data-type") === BLOCK_FORMULA_TYPE;
           try {
             katex.render(latex, element, katexOptionsFor(optionsRef.current, block));
             element.removeAttribute("data-math-error");

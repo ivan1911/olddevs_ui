@@ -315,14 +315,22 @@ const SERVER_SAFE = [
     file: "editor/features/mathematics/mathHtml.ts",
     why:
       "hasMath and withMathSource: string-to-string functions over the saved HTML that put the LaTeX " +
-      "source into the empty formula elements (ADR-0070). No imports, no React and no DOM, so the " +
-      "server-rendered RichTextView calls them.",
+      "source into the empty formula elements (ADR-0070) and make a LaTeX source safe for the data-latex " +
+      "attribute. The only import is mathNames.ts; no React and no DOM, so the server-rendered " +
+      "RichTextView and the sanitizer call them.",
+  },
+  {
+    file: "editor/features/mathematics/mathNames.ts",
+    why:
+      "The names of a formula as constants (OLDSUI-280, ADR-0070): the data-type values of the HTML, " +
+      "the Tiptap node names and the selectors built from them. Strings only, no imports, so the " +
+      "sanitizer in schema.ts, the server-rendered RichTextView and the Tool descriptor share them.",
   },
   {
     file: "editor/features/mathematics/mathOptions.ts",
     why:
       'The defaults, value checks and the reader of tool("mathematics") options: functions over data. ' +
-      "It imports toolOptions.ts and customTool.ts (both server-safe) and neither Tiptap nor KaTeX, so " +
+      "It imports toolOptions.ts, customTool.ts and lib/dev-warn.ts (all server-safe) and neither Tiptap nor KaTeX, so " +
       "the server-rendered RichTextView reads the macros for its island.",
   },
   {

@@ -144,7 +144,7 @@ export function sanitizeDocument(html: string): string {
 - `span[data-color]` и `mark[data-color]` — только имена палитры этого тега; старые имена маркера переводятся (`legacyMarkerColors`); `mark` без цвета снимается;
 - `style` — только `color:#rrggbb` на `span` и `background-color:#rrggbb` на `mark` (`RICH_TEXT_SCHEMA.customColor.styles`) и никогда вместе с `data-color`;
 - `data-align` — `center` или `right` на `p`, `h1`–`h4`, `th`, `td`;
-- формула — `span[data-type="inline-math"]` или `div[data-type="block-math"]` с `data-latex`: пара открыта только на этих тегах, элемент пуст (отрисованная разметка KaTeX снимается), без `data-latex` он теряет обёртку; в `data-latex` допустим `<`, и это единственное значение атрибута Схемы с `<`;
+- формула — `span[data-type="inline-math"]` или `div[data-type="block-math"]` с `data-latex`: пара открыта только на этих тегах, элемент пуст (отрисованная разметка KaTeX снимается), без `data-latex` он теряет обёртку; в `data-latex` допустим `<`, и это единственное значение атрибута Схемы с `<`; пары `]>`, `-->`, `--!>`, `</` получают в нём пробел до проверки DOMPurify (иначе он срезал бы атрибут целиком);
 - `colspan` и `rowspan` — только на `th` и `td`, целое не больше `RICH_TEXT_SCHEMA.tableSpans`;
 - ссылка — `href` только `http`, `https` или `mailto`, `rel` всегда `noopener noreferrer`, посторонний `target` снимается, ссылка без годного адреса становится текстом;
 - картинка — `img` с абсолютным `http`/`https` прямо внутри `figure` (без `data:` и `blob:`), `data-width` — пресет, `alt` есть всегда; `img` вне `figure` удаляется, `figcaption` вне `figure` теряет свой тег.
