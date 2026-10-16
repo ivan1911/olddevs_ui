@@ -12,7 +12,7 @@ sourceHash: 1463db91349e
 
 ## Summary for AI
 
-`SelectionBar` is a bulk-actions bar: "12 selected" and what can be done with them. The counter comes from the message catalog with plural forms for the locale; `countLabel` overrides it when you need to name the entity ("12 documents selected"). The bar sticks under the application's top bar and takes its actual height from a CSS variable. `useStickyOffset` is the same stickiness mechanism on its own, for your own bars.
+`SelectionBar` is a batch action bar: "12 selected" and what can be done with them. The counter comes from the message catalog with plural forms for the locale; `countLabel` overrides it when you need to name the entity ("12 documents selected"). The bar sticks under the application's top bar and takes its actual height from a CSS variable. `useStickyOffset` is the same sticky positioning mechanism on its own, for your own bars.
 
 ## When to use
 
@@ -64,7 +64,7 @@ At medium widths, when the actions do not fit on one line with the counter, they
 
 The "render nothing at zero" rule belongs to the bar, not to the calling code: otherwise every call site would write its own `count > 0 &&`, and one of them would eventually forget it.
 
-## Stickiness contract
+## Sticky positioning contract
 
 The application publishes the real height of its top bar in a CSS variable (`--topbar-h` by default), and the bar reads it. A hard-coded number will not do: on narrow screens the top bar is shorter, and a gap is left through which the scrolling content shows. The decision and the rejected options are in ADR-0016.
 
@@ -80,4 +80,4 @@ The bar is a `role="group"` with an accessible name: for a screen reader it is a
 
 - Sources: `src/components/navigation/SelectionBar.tsx`, `src/hooks/useStickyOffset.ts`
 - Stories: `src/components/navigation/SelectionBar.stories.tsx`
-- Tests: `tests/selection-bar.test.tsx`, `tests/sticky-offset.test.tsx`, browser stickiness scenarios — `tests-visual/interactions.spec.ts`
+- Tests: `tests/selection-bar.test.tsx`, `tests/sticky-offset.test.tsx`, browser sticky positioning scenarios — `tests-visual/interactions.spec.ts`

@@ -41,7 +41,7 @@ const [phone, setPhone] = useState("");
 | Prop       | Default              | Purpose                                                               |
 | ---------- | -------------------- | --------------------------------------------------------------------- |
 | `mask`     | `+7 (999) 999-99-99` | The number format. `RU_PHONE_MASK` is exported.                       |
-| `value`    | —                    | Raw digits without literals.                                          |
+| `value`    | —                    | Unmasked digits without literals.                                     |
 | `onChange` | —                    | `(raw, formatted)` — as in `MaskedInput`.                             |
 | `showMask` | `true`               | The format is visible in the field itself: `+7 (___) ___-__-__`.      |
 | the rest   | —                    | Passed to the `input`; `inputMode` and `autoComplete` are overridden. |

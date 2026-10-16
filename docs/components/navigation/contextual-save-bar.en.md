@@ -70,13 +70,13 @@ The component does not store form state. What counts as an edit is the consumer'
 
 ## Why at the bottom, not the top
 
-The bar sticks to the bottom edge of the **nearest scroll area**: the browser window, if the page scrolls, and the container, if the work area has its own `overflow` — as in most admin panels. This is ordinary `position: sticky` semantics, and you should know it: an ancestor with `overflow: auto` that does not itself scroll cancels stickiness to the window.
+The bar sticks to the bottom edge of the **nearest scroll area**: the browser window, if the page scrolls, and the container, if the work area has its own `overflow` — as in most admin panels. This is ordinary `position: sticky` semantics, and you should know it: an ancestor with `overflow: auto` that does not itself scroll cancels sticky positioning to the window.
 
-The application header and `SelectionBar` already sit at the top, and both measure stickiness from `--topbar-h` (ADR-0016, ADR-0019). A third sticky layer at the top would need a second height variable and a revision of the contract — a price out of proportion to the task. The bottom is free, and users are used to seeing such a bar there in admin panels.
+The application header and `SelectionBar` already sit at the top, and both measure sticky positioning from `--topbar-h` (ADR-0016, ADR-0019). A third sticky layer at the top would need a second height variable and a revision of the contract — a price out of proportion to the task. The bottom is free, and users are used to seeing such a bar there in admin panels.
 
 ## Above the phone's bottom bar
 
-On a phone the bottom edge of the viewport is taken by `MobileTabBar` in the `bottomBar` slot of `AppShell`. The shell publishes the slot height as `--bottombar-h` (at `md` and wider there is no bar and the value is `0px`), and the bar sticks that far above the viewport edge — the same way `SelectionBar` measures its stickiness from `--topbar-h`. There is no need to offset the bar with `max-md:bottom-14` by eye: a hard-coded number drifts from the real bar height (notch inset, wrapped labels).
+On a phone the bottom edge of the viewport is taken by `MobileTabBar` in the `bottomBar` slot of `AppShell`. The shell publishes the slot height as `--bottombar-h` (at `md` and wider there is no bar and the value is `0px`), and the bar sticks that far above the viewport edge — the same way `SelectionBar` measures its sticky positioning from `--topbar-h`. There is no need to offset the bar with `max-md:bottom-14` by eye: a hard-coded number drifts from the real bar height (notch inset, wrapped labels).
 
 `offsetVar` changes the variable name if the shell publishes it under a different name (`bottomBarHeightVar` on `AppShell`) or the application publishes the bottom bar itself. The offset is a class that reads this variable, not an inline `bottom`, so a `className` with `bottom-*` overrides it: your own bottom bar outside `AppShell` sets the offset the same way as with an inline `bottom`. With no published variable the offset is `0px`.
 

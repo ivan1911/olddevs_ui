@@ -25,7 +25,7 @@ component exports and their prop types are documented on the pages of the compon
   a Tailwind class. Details are in [SplitPanel](../components/app-shell/split-panel.md).
 - `Size`, `Tone`, `Variant`, `TONE_TOKENS` and `variantClasses`: when you create a new design-system primitive
   with the same semantic axes.
-- Period helpers: for a relative period in the URL and its conversion to dates. Time helpers: for `HH:MM` input
+- Period helpers: for a relative preset in the URL and its conversion to dates. Time helpers: for `HH:MM` input
   in date and time controls.
 - The theme registry: for a theme switcher and for applying the saved theme early. Take the axis lists from
   there. Do not rewrite them as constants in your own code.
@@ -62,16 +62,16 @@ The source of the shared exports is `src/index.ts`. Their implementations are in
 
 ## Periods
 
-| Export                                     | Purpose and limits                                                                                                                                                                                        |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RELATIVE_PERIODS`, `RelativePeriod`       | The allowed relative values: `7d`, `30d`, `90d`, `180d`, `365d`, `thisMonth`, `lastMonth`, `thisYear`.                                                                                                    |
-| `isRelativePeriod(value)`                  | A runtime type guard for an external string, including one from the URL.                                                                                                                                  |
-| `resolvePeriod(period, timeZone?, now?)`   | Returns the inclusive ISO bounds of a `DateRange`. Uses the local time zone by default. `now` is needed mainly for deterministic tests.                                                                   |
-| `DateRange`                                | A pair `{ start, end }` in ISO `YYYY-MM-DD`. Both bounds are inclusive.                                                                                                                                   |
-| `periodLength(range)`                      | The number of days, inclusive, computed in UTC. A range that was reversed by hand gives at least one day. An unparseable bound gives `0`, which means "nothing to count".                                 |
-| `formatPeriodLength(range, messages?)`     | The label for the period length, from the message catalog: `14 дней` or `14 days`. Without `messages`, the English fallback is used. With an unparseable bound, it returns an empty string, not `0 дней`. |
-| `PeriodPreset`, `periodPresets(messages?)` | A type and a function that builds a short set of standard presets for the UI, with labels from the message catalog. Without `messages`, the labels are in English.                                        |
-| `DEFAULT_PERIOD_PRESETS`                   | `@deprecated` since 2.0.0: an immutable set of presets with English labels. It does not know the locale. Use `periodPresets(messages)`. It is removed in the next major version.                          |
+| Export                                     | Purpose and limits                                                                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RELATIVE_PERIODS`, `RelativePeriod`       | The allowed relative values: `7d`, `30d`, `90d`, `180d`, `365d`, `thisMonth`, `lastMonth`, `thisYear`.                                                                                                   |
+| `isRelativePeriod(value)`                  | A runtime type guard for an external string, including one from the URL.                                                                                                                                 |
+| `resolvePeriod(period, timeZone?, now?)`   | Returns the inclusive ISO bounds of a `DateRange`. Uses the local time zone by default. `now` is needed mainly for deterministic tests.                                                                  |
+| `DateRange`                                | A pair `{ start, end }` in ISO `YYYY-MM-DD`. Both bounds are inclusive.                                                                                                                                  |
+| `periodLength(range)`                      | The number of days, inclusive, computed in UTC. A range that was reversed by hand gives at least one day. An unparseable bound gives `0`, which means "nothing to count".                                |
+| `formatPeriodLength(range, messages?)`     | The label for the range length, from the message catalog: `14 дней` or `14 days`. Without `messages`, the English fallback is used. With an unparseable bound, it returns an empty string, not `0 дней`. |
+| `PeriodPreset`, `periodPresets(messages?)` | A type and a function that builds a short set of standard presets for the UI, with labels from the message catalog. Without `messages`, the labels are in English.                                       |
+| `DEFAULT_PERIOD_PRESETS`                   | `@deprecated` since 2.0.0: an immutable set of presets with English labels. It does not know the locale. Use `periodPresets(messages)`. It is removed in the next major version.                         |
 
 ```ts
 const rawPeriod = searchParams.get("period");
@@ -93,11 +93,11 @@ const range = resolvePeriod(period, "Europe/Moscow");
 These are pure functions of the mask engine. They are exported apart from the component, because you may need
 to prepare a value before you send it, or check whether it is filled in, without a field on the screen.
 
-| Export                  | Purpose                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------ |
-| `formatMask(raw, mask)` | Lays out a raw value over the mask. The tail of the mask is not shown in advance.    |
-| `unmask(display, mask)` | Gets the raw value by position. A literal digit from the mask does not leak into it. |
-| `maskCapacity(mask)`    | How many value characters the mask holds: `+7 (999) 999-99-99` → 10.                 |
+| Export                  | Purpose                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `formatMask(raw, mask)` | Lays out an unmasked value over the mask. The tail of the mask is not shown in advance.   |
+| `unmask(display, mask)` | Gets the unmasked value by position. A literal digit from the mask does not leak into it. |
+| `maskCapacity(mask)`    | How many value characters the mask holds: `+7 (999) 999-99-99` → 10.                      |
 
 Mask tokens: `9` is a digit, `a` is a letter, `*` is a digit or a letter. Anything else is a literal. There is
 no escaping. Details are in [MaskedInput](../components/inputs/masked-input.md).
@@ -194,15 +194,15 @@ The restored state is passed to the hook as a whole, in one `set` call. The inva
 resets the page" is cancelled by an explicit page in the same call. Otherwise a link would always open the first
 page.
 
-### A filter token has its own `id`
+### A filter tag has its own `id`
 
-A filter has its own `id`, not a pair of "field + value" and not a label. Two filters on one field give tokens
+A filter has its own `id`, not a pair of "field + value" and not a label. Two filters on one field give tags
 that look the same, and you cannot tell which of the two to remove. A label, however, is localized and truncated.
 
-The model has no operators on purpose. Without `to`, the token means equality. With `to`, it means the range
+The model has no operators on purpose. Without `to`, the tag means equality. With `to`, it means the range
 `value…to`, where either bound may be an empty string ("from 50", "up to 100"). The presence of the `to` key
 carries the difference, so check it with `!== undefined` (ADR-0063). `contains` and `in` can be added when they
-are needed. In the URL, `to` is the fifth part of the token. Links with three and four parts are read as before.
+are needed. In the URL, `to` is the fifth part of the tag. Links with three and four parts are read as before.
 For how to build a range in the UI, see [FilterBar](../components/table/filter-bar.md).
 
 ## Constants, classes and public types: where they are documented

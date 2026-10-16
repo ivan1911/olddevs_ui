@@ -307,7 +307,7 @@ The message catalog does not load automatically: otherwise it would end up in ev
 only need English. The order in which a string is resolved, partial catalogs and
 integration with react-aria's `I18nProvider` — [i18n.md](i18n.md).
 
-## Common problems
+## Troubleshooting
 
 ### Escape in a dropdown also closes the dialog
 

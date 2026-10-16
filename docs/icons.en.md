@@ -96,11 +96,11 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Inline code (a Mark in text)        | `InlineCodeIcon`                                | `CodeIcon`, `CodeBlockIcon`    |
 | The Document's source HTML          | `SourceIcon`                                    | `CodeBlockIcon`, `CodeIcon`    |
 | Bulleted list in text               | `ListIcon`                                      | `TaskListIcon`                 |
-| Checklist                           | `TaskListIcon`                                  | `ListIcon`, `SuccessIcon`      |
-| Divider between Blocks              | `DividerIcon`                                   | `MinusIcon`                    |
+| Task list                           | `TaskListIcon`                                  | `ListIcon`, `SuccessIcon`      |
+| Horizontal rule between Blocks      | `DividerIcon`                                   | `MinusIcon`                    |
 | Clear formatting                    | `ClearFormattingIcon`                           | `DeleteIcon`                   |
 | Text color                          | `TextColorIcon`                                 | `PaletteIcon`                  |
-| Marker (colored fill)               | `HighlightIcon`                                 | `TextColorIcon`                |
+| Highlight (colored fill)            | `HighlightIcon`                                 | `TextColorIcon`                |
 | Plain paragraph, "just text"        | `ParagraphIcon`                                 | `HeadingIcon`                  |
 | Heading of level 1–4                | `Heading1Icon` … `Heading4Icon`                 | `HeadingIcon`                  |
 | "Text" in the Block type menu       | `TextIcon`                                      | `ParagraphIcon`, `HeadingIcon` |
@@ -116,7 +116,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | A Column layout of the Document     | `ColumnLayoutIcon`                              | `ColumnsIcon`                  |
 | Wrapper: a group of Blocks          | `WrapperIcon`                                   | `ColumnLayoutIcon`             |
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
-| Collapsible Block of the Editor     | `DetailsIcon`                                   | `ChevronDownIcon`              |
+| Details Block of the Editor         | `DetailsIcon`                                   | `ChevronDownIcon`              |
 | Editor formula, inline and block    | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
 | Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
 | Video by link in the Editor         | `VideoIcon`                                     | `PlayIcon`                     |
@@ -168,13 +168,13 @@ glyph as `DragHandleIcon`, and it will be removed in 4.0.0.
 The section was added at the request of the `RichTextEditor` Toolbar: `HeadingIcon`,
 `BoldIcon`, `ItalicIcon`, `UnderlineIcon`, `StrikethroughIcon`, `InlineCodeIcon`,
 `CodeBlockIcon`, `SuperscriptIcon`, `SubscriptIcon`, `ClearFormattingIcon`,
-`OrderedListIcon`, `TaskListIcon`, `QuoteIcon`, `DividerIcon`; color, marker and
+`OrderedListIcon`, `TaskListIcon`, `QuoteIcon`, `DividerIcon`; color, highlight and
 alignment added `TextColorIcon`, `HighlightIcon`,
 `AlignLeftIcon`, `AlignCenterIcon`, `AlignRightIcon`, `AlignJustifyIcon`. Existing meanings
 are not repeated: a bulleted list is `ListIcon`, undo and redo
 are `UndoIcon` and `RedoIcon`.
 
-Text color (`TextColorIcon`, a letter with a bar) and marker (`HighlightIcon`,
+Text color (`TextColorIcon`, a letter with a bar) and highlight (`HighlightIcon`,
 a highlighter) are different actions: the first colors the letters, the second puts color under
 them. `PaletteIcon` is the choice of a color scheme, not a text color. `AlignJustifyIcon`
 is not used in the Editor Toolbar ("justify" is absent in v1), but the meaning is in the vocabulary
@@ -182,7 +182,7 @@ for the consumer.
 
 Two distinctions are worth keeping in mind. Inline code (`InlineCodeIcon`, `< >`) is
 not `CodeIcon` (`</>`): that one is the subject topic "development", not an action on
-text. A checklist (`TaskListIcon`) is a list with checkmarks; `ListIcon` deliberately
+text. A task list (`TaskListIcon`) is a list with checkmarks; `ListIcon` deliberately
 has no checkboxes, so that a list of records does not read as "done".
 
 The only visible label on the Toolbar buttons is the icon; the button's name
@@ -221,7 +221,7 @@ Column layout added `ColumnLayoutIcon` — two columns, the "Layout" item of the
 
 Wrapper added the pair `WrapperIcon` and `UnwrapIcon` — lucide's `Group` and `Ungroup`: a frame with dashed corners around two Blocks and the same Blocks without a frame. The icons sit at the "Wrapper" item of the Slash menu and the "Remove Wrapper" item in the Block handle menu. This is not `ColumnLayoutIcon`: columns put Blocks side by side, while a Wrapper groups them without changing their order. `DeleteIcon` does not fit removal: only the container is deleted, not the content.
 
-Collapsible block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Slash menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
+The Details Block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Slash menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
 
 Formulas added the pair `FormulaIcon` and `BlockFormulaIcon` — lucide's `Sigma` and `SquareSigma`: the sigma is the "Formula" item of the Slash menu, the sigma in a frame is "Block formula". `CodeIcon` does not fit: it means the subject theme "development", while a sigma reads as math (ADR-0049).
 
