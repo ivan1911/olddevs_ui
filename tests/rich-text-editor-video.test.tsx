@@ -307,10 +307,12 @@ describe("the insert menu", () => {
       </UiProvider>
     );
     await user.click(screen.getByRole("button", { name: ru.editor.insertMenu }));
-    await user.click(screen.getByRole("menuitem", { name: "Видео" }));
-    const field = await screen.findByRole("textbox", { name: "Ссылка на видео" });
+    await user.click(screen.getByRole("menuitem", { name: ru.editor.video }));
+    const field = await screen.findByRole("textbox", { name: ru.editor.videoLink });
     await user.type(field, "https://vimeo.com/1{Enter}");
-    expect(await screen.findByText("Введите ссылку на видео YouTube / Twitch")).toBeTruthy();
+    expect(
+      await screen.findByText(ru.editor.videoNotFound({ services: "YouTube / Twitch" }))
+    ).toBeTruthy();
   });
 });
 
@@ -566,8 +568,12 @@ describe("the placeholder and the player", () => {
         />
       </UiProvider>
     );
-    await user.click(screen.getByRole("button", { name: "Воспроизвести видео YouTube" }));
-    expect(document.querySelector("iframe")?.getAttribute("title")).toBe("Видео YouTube");
+    await user.click(
+      screen.getByRole("button", { name: ru.editor.videoPlayLabel({ service: "YouTube" }) })
+    );
+    expect(document.querySelector("iframe")?.getAttribute("title")).toBe(
+      ru.editor.videoPlayer({ service: "YouTube" })
+    );
   });
 });
 

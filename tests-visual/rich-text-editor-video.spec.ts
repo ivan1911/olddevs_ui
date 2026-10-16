@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { messages as ru } from "../src/locales/ru.js";
 
 /**
  * Видео по ссылке в браузере (OLDSUI-281, ADR-0071): то, чего jsdom не видит, —
@@ -170,8 +171,13 @@ test("the russian catalog names the placeholder and the player", async ({ page }
   await page.goto(EDITOR("inputs-richtexteditor--video-russian"));
   const field = page.getByRole("textbox", { name: "Document" });
 
-  await field.getByRole("button", { name: "Воспроизвести видео YouTube" }).click();
-  await expect(field.locator("iframe")).toHaveAttribute("title", "Видео YouTube");
+  await field
+    .getByRole("button", { name: ru.editor.videoPlayLabel({ service: "YouTube" }) })
+    .click();
+  await expect(field.locator("iframe")).toHaveAttribute(
+    "title",
+    ru.editor.videoPlayer({ service: "YouTube" })
+  );
 });
 
 test("a disabled service: the block of the other one is only its link", async ({ page }) => {

@@ -93,8 +93,12 @@ test("the catalog language reaches the placeholder and the player title", async 
       <RichTextView html={block("youtube", YT)} />
     </UiProvider>
   );
-  await user.click(await screen.findByRole("button", { name: "Воспроизвести видео YouTube" }));
-  expect(document.querySelector("iframe")!.getAttribute("title")).toBe("Видео YouTube");
+  await user.click(
+    await screen.findByRole("button", { name: ru.editor.videoPlayLabel({ service: "YouTube" }) })
+  );
+  expect(document.querySelector("iframe")!.getAttribute("title")).toBe(
+    ru.editor.videoPlayer({ service: "YouTube" })
+  );
 });
 
 test("a document without a video mounts no island and loads no player", async () => {

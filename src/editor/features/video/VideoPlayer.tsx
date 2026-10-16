@@ -75,7 +75,7 @@ export function VideoPlayer({ link, className }: VideoPlayerProps) {
             size="sm"
             variant="solid"
             tone="accent"
-            icon={<PlayIcon aria-hidden />}
+            icon={<PlayIcon size={14} aria-hidden />}
             aria-label={messages.videoPlayLabel({ service })}
             onClick={() => setSrc(playerUrl(link, window.location.hostname))}
           >
