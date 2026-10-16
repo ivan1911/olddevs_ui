@@ -1,5 +1,11 @@
 # @olddevs/ui
 
+## 4.8.1
+
+### Patch Changes
+
+- e32ee38: The "Troubleshooting" link in the English Getting started page leads to the section again: in-page links in a Translation use the Original's anchors (ADR-0062), and the site moves this section to a page of its own.
+
 ## 4.8.0
 
 ### Minor Changes
