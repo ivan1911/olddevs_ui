@@ -68,10 +68,11 @@ export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "
  */
 const STROKE_WIDTH = ["w-3.5", "w-3", "w-2.5", "w-2"] as const;
 /**
- * Штрих текущего раздела толще и чуть длиннее старшего уровня: его видно в
- * полосе с первого взгляда, но он не выпирает из неё.
+ * Штрих текущего раздела той же толщины, что остальные (ячейка 2px), но длиннее
+ * старшего уровня и цвета акцента: его видно в полосе с первого взгляда, а он не
+ * выпирает из неё.
  */
-const CURRENT_STROKE = "bg-accent-strong h-[3px] w-4";
+const CURRENT_STROKE = "bg-accent-strong h-0.5 w-4";
 /** Отступ текста пункта по глубине. */
 const ITEM_INDENT = ["pl-0", "pl-2.5", "pl-5", "pl-7.5"] as const;
 
@@ -94,11 +95,13 @@ const ALL_LEVELS = [1, 2, 3, 4] as const;
 const REBUILD_DELAY = 150;
 
 /**
- * Шаг между штрихами полосы и его границы. Ячейка штриха — 3px (см. полосу),
- * `p-1` даёт по 4px сверху и снизу; запас оставляет воздух над и под полосой.
+ * Шаг между штрихами полосы и его границы. Ячейка штриха — 2px, ровно в штрих
+ * (см. полосу; решение владельца на превью 4.7.0, OLDSUI-289: было 3px), между
+ * ячейками — 5px. `p-1` даёт по 4px сверху и снизу; запас оставляет воздух над
+ * и под полосой.
  */
-const STRIP_GAP = 6;
-const STRIP_CELL = 3;
+const STRIP_GAP = 5;
+const STRIP_CELL = 2;
 const STRIP_PADDING = 8;
 const STRIP_MARGIN = 16;
 
@@ -731,7 +734,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
                 анимируются, а габариты полосы — нет. Иначе список, привязанный
                 к её краю, вздрагивал бы при каждой смене раздела. */}
             {headings.map((heading, index) => (
-              <span key={index} className="flex h-[3px] w-4 items-center">
+              <span key={index} className="flex h-0.5 w-4 items-center">
                 <span
                   data-toc-stroke=""
                   data-depth={heading.depth}

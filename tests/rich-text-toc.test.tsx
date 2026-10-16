@@ -598,13 +598,13 @@ test("the strip gap shrinks so that a long Document fits the window", async () =
     window.innerHeight = 300;
     const view = render(<Screen html={longArticle(8)} />);
     // Мало заголовков — обычный шаг.
-    expect(strip().style.rowGap).toBe("6px");
+    expect(strip().style.rowGap).toBe("5px");
 
     view.rerender(<Screen html={longArticle(60)} />);
     await waitFor(() => expect(strokes()).toBe(60));
     const gap = parseFloat(strip().style.rowGap);
     expect(gap).toBeGreaterThan(0);
-    expect(gap).toBeLessThan(6);
+    expect(gap).toBeLessThan(5);
 
     // Совсем много — шаг не уходит ниже нуля, штрих остаётся на каждый заголовок.
     view.rerender(<Screen html={longArticle(150)} />);
@@ -617,7 +617,7 @@ test("the strip gap shrinks so that a long Document fits the window", async () =
       window.dispatchEvent(new Event("resize"));
       await new Promise((resolve) => requestAnimationFrame(resolve));
     });
-    expect(strip().style.rowGap).toBe("6px");
+    expect(strip().style.rowGap).toBe("5px");
   } finally {
     window.innerHeight = height;
   }

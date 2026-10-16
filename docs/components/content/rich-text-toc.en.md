@@ -5,7 +5,7 @@ category: content
 status: stable
 source: src/editor/features/toc/RichTextToc.tsx
 story: src/editor/features/toc/RichTextToc.stories.tsx
-sourceHash: ece0addcd8ea
+sourceHash: d9cbf49d4dd0
 ---
 
 # RichTextToc
@@ -83,7 +83,7 @@ Every heading gets its own stroke. The strip is never taller than the window: wh
 
 ### The strip and the list
 
-- The strip is a button labeled "Table of contents" with `aria-expanded`. The stroke of the current section is in the accent color, thicker and slightly longer than the others.
+- The strip is a button labeled "Table of contents" with `aria-expanded`. The stroke of the current section is in the accent color and slightly longer than the others.
 - The list opens when you hover the strip, after a short delay: a cursor passing by accidentally does not open it. A press, a tap, Enter and Space open it immediately.
 - The list sits to the right of the strip, over the text. Clicking an item goes to the heading, and the list **stays open**. It closes when the cursor leaves the strip and the list, on Escape and on a press outside it.
 - The current section is highlighted both in the strip and in the list (`aria-current="location"`).
