@@ -3,6 +3,8 @@ import { cn } from "../lib/cn.js";
 import { BlockIsland } from "./ui/BlockIsland.js";
 import { CodeCopyIsland } from "./features/code/CodeCopyIsland.js";
 import { hasCodeBlocks, withCodeHeaders } from "./features/code/codeHeader.js";
+import { VideoIsland } from "./features/video/VideoIsland.js";
+import { hasVideoBlocks } from "./features/video/videoLink.js";
 import type { ToolEntry } from "./core/customTool.js";
 import { proseClass } from "./styles/prose.js";
 import { surfaceAttributes, type RichTextSurface } from "./styles/surface.js";
@@ -81,6 +83,13 @@ function fingerprint(html: string): string {
  * нет острова, и код Острова потребителя не грузится. Серверный HTML Блока
  * приходит всегда; Остров заменяет его после монтирования.
  *
+ * ОСТРОВ ВИДЕО — ТРЕТИЙ И ТАКОЙ ЖЕ (`VideoIsland`, ADR-0071). Блок видео приходит
+ * в HTML ссылкой (`div[data-block="video"]` со ссылкой внутри), её видит читатель без
+ * JS. Если блок в Документе есть (`hasVideoBlocks`), остров после монтирования
+ * ставит на его место заглушку кита с кнопкой «Воспроизвести»; плеер появляется
+ * после щелчка, и до него к сервису не уходит ни одного запроса. Нет блока — нет
+ * острова, и код плеера не грузится.
+ *
  * ХУКИ — `useId` и `useMemo`, оба разрешены серверным компонентам. Идентификатор
  * связывает остров со своими гнёздами и совпадает на сервере и клиенте; `useMemo`
  * держит объект разметки стабильным (см. ниже). Состояния и эффектов в самом
@@ -115,6 +124,8 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
       {hasCodeBlocks(html) && <CodeCopyIsland hostId={hostId} docKey={fingerprint(html)} />}
       {/* И острова своих Блоков — только у Документа, где такой Блок есть. */}
       {islands[0] && <BlockIsland islands={islands} docKey={fingerprint(html)} />}
+      {/* И остров видео (ADR-0071) — только у Документа, где есть блок видео. */}
+      {hasVideoBlocks(html) && <VideoIsland docKey={fingerprint(html)} />}
     </>
   );
 });

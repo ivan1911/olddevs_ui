@@ -164,6 +164,8 @@ test("the schema data and the sanitiser know the layout", () => {
     "data-layout",
     "data-tone",
     "data-type",
+    "data-provider",
+    "data-src",
   ]);
   expect([...RICH_TEXT_SCHEMA.layouts]).toEqual([
     "100",

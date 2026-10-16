@@ -1105,6 +1105,24 @@ export interface UiMessages {
      */
     toc: string;
     /**
+     * Видео по ссылке (Инструменты `youtube` и `twitch`, ADR-0071). `video` —
+     * пункт Меню вставки и «Добавить ›» ручки Блока; `videoLink` — имя поля
+     * ссылки в поповере; `videoInsert` — кнопка поповера; `videoNotFound` — ошибка
+     * поля на ссылку, которая не ведёт на видео включённого сервиса (`services` —
+     * названия сервисов через запятую: «YouTube» или «YouTube, Twitch»).
+     * `videoPlay` — подпись кнопки заглушки; `videoPlayLabel` — её доступное имя
+     * (видимое слово «Воспроизвести» входит в него целиком, WCAG 2.5.3);
+     * `videoPlayer` — заголовок `iframe` для скринридера. Названия сервисов
+     * (`service`) — имена брендов и не переводятся.
+     */
+    video: string;
+    videoLink: string;
+    videoInsert: string;
+    videoNotFound: (vars: { services: string }) => string;
+    videoPlay: string;
+    videoPlayLabel: (vars: { service: string }) => string;
+    videoPlayer: (vars: { service: string }) => string;
+    /**
      * Набор кавычек языка каталога для Инструмента `typography`: `"ru"` —
      * «ёлочки» и „лапки“, `"en"` — “ ” и ‘ ’. Не текст для экрана, а признак
      * языка каталога: у каталога другого языка (немецкий, французский)
