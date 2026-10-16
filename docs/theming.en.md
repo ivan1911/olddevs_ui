@@ -81,7 +81,7 @@ not added at all.
 | `--modal-shadow`        | `Dialog`                                                    |
 | `--topbar-bg`           | `SelectionBar` when stuck, `TopBar`                         |
 | `--sidenav-w`           | `SideNav`, the `AppShell` grid — expanded width             |
-| `--sidenav-w-collapsed` | the same in icon-only mode                                  |
+| `--sidenav-w-collapsed` | the same in collapsed mode                                  |
 | `--marker-<name>`       | the highlight of `RichTextEditor` and `RichTextView` — nine |
 | `--marker-text`         | dark text on any highlight, one for all themes              |
 

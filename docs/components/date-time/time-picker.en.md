@@ -33,7 +33,7 @@ sourceHash: 948ee600b428
 ## Public API
 
 - `value?: string | null`; `onChange(time: string)` is required; `step` defaults to 30 minutes.
-- `hourCycle?: 12 | 24` is the clock of the field and the list; the default is `24` (`14:30`). With `12`, the field and the slots show `2:30 PM`; you can type `230p` or `2:30 PM`, and a typed 24-hour time (`14:30`) is accepted too. This affects only display and input: `value` and `onChange` stay `HH:MM`. The `AM` and `PM` labels and the `h:mm AM` mask come from the catalog (`timePicker.am`, `timePicker.pm`, `timePicker.placeholder12`). If no day period is typed, the day period of the previous value is used, and `AM` for an empty field.
+- `hourCycle?: 12 | 24` is the hour cycle of the field and the list; the default is `24` (`14:30`). With `12`, the field and the slots show `2:30 PM`; you can type `230p` or `2:30 PM`, and a typed 24-hour time (`14:30`) is accepted too. This affects only display and input: `value` and `onChange` stay `HH:MM`. The `AM` and `PM` labels and the `h:mm AM` mask come from the catalog (`timePicker.am`, `timePicker.pm`, `timePicker.placeholder12`). If no day period is typed, the day period of the previous value is used, and `AM` for an empty field.
 - `placeholder` and `aria-label` come from the message catalog (`timePicker.placeholder`,
   `timePicker.label`): without a provider they are `HH:MM` and "Time", with `@olddevs/ui/locales/ru` —
   `ЧЧ:ММ` and "Время". A prop overrides the catalog string individually. `disabled` and `className` are available.
