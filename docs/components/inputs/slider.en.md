@@ -45,10 +45,10 @@ sourceHash: 6b20c8ce6cc4
 
 ## Vertical Slider
 
-- The fill grows from the bottom edge: "more" on a vertical scale is higher.
+- The range grows from the bottom edge: "more" on a vertical scale is higher.
 - The height is set by the root: `h-48` by default; set a custom height through `className` (`className="h-64"`). Without a height a vertical track has nothing to stretch into.
 - The label and the value sit above the track, as on the horizontal one; `valuePosition` and `formatValue` work the same. The slider width follows the width of the header (the label and the value above the track), not the full width of the container.
-- Why `RangeSlider` has no vertical orientation: the fill geometry between two ends along the height is not implemented, and a prop that compiles and does nothing is worse than a missing one. If it is needed, it is a separate task.
+- Why `RangeSlider` has no vertical orientation: the range geometry between two ends along the height is not implemented, and a prop that compiles and does nothing is worse than a missing one. If it is needed, it is a separate task.
 
 ## Accessibility and keyboard
 

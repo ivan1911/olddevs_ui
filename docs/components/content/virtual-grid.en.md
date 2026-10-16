@@ -12,7 +12,7 @@ sourceHash: ad0ecf3304ac
 
 ## Summary for AI
 
-A virtualized card grid: the visible cells and a small buffer around them live in the DOM. It
+A virtualized card grid: the visible cells and a small overscan around them live in the DOM. It
 scrolls **its own container** (`scroll="container"`, the consumer sets the height) or **the
 browser window** (`scroll="window"`). A cell is any node; buttons inside it are allowed. It
 loads more pages as the user nears the end and selects cells by dragging across them.

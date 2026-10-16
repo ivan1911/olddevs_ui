@@ -105,7 +105,7 @@ ordinary table to become user state.
 **`onRowAction` is a row action alongside selection.** A click on a row and Enter
 on a focused row call `onRowAction(item)`; its checkboxes select it, and
 Space on a row still toggles the selection. The rule is react-aria's "selection
-mode", and it is worth knowing in advance:
+behavior", and it is worth knowing in advance:
 
 - while nothing is selected, a click on a row is the action;
 - once a selection exists, a click on a row toggles it, so you can keep selecting
