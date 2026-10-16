@@ -315,7 +315,7 @@ test("the typing rules of the extension still work: $$x$$ in a line, $$$x$$$ as 
     for (const char of text) {
       const { from, to } = editor.state.selection;
       const handled = editor.view.someProp("handleTextInput", (handler) =>
-        handler(editor.view, from, to, char)
+        handler(editor.view, from, to, char, () => editor.state.tr.insertText(char, from, to))
       );
       if (!handled) editor.view.dispatch(editor.state.tr.insertText(char, from, to));
     }

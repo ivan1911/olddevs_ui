@@ -2271,6 +2271,155 @@ export const TypographyOptions: Story = {
   ),
 };
 
+/*
+  Формулы (Mathematics, OLDSUI-280, ADR-0070): LaTeX в строке и Блоком, отрисовывает
+  KaTeX. Вне Пресетов — явной записью в `tools`; чанк с KaTeX грузится лениво, до
+  его прихода формулы видны исходником. Нейтральный текст: выкладки из школьного курса.
+*/
+const MATH_SAMPLE =
+  "<h2>Formulas</h2>" +
+  '<p>The area of a circle is <span data-type="inline-math" data-latex="S = \\pi r^2"></span>, ' +
+  'and Euler\'s identity is <span data-type="inline-math" data-latex="e^{i\\pi} + 1 = 0"></span>. ' +
+  "Click a formula to edit it, or select it with the arrow keys and press Enter.</p>" +
+  '<div data-type="block-math" data-latex="\\int_0^1 x^2\\,dx = \\frac{1}{3}"></div>' +
+  "<p>The quadratic formula in a block:</p>" +
+  '<div data-type="block-math" data-latex="x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"></div>' +
+  "<p>Text after the formulas.</p>";
+
+const MATH_TOOLS = [...RICH_TEXT_PRESETS.full, "mathematics"] as const;
+
+/**
+ * Формулы LaTeX на KaTeX: строчные и блочные. Щелчок по формуле или Enter на
+ * выделенной открывает Поповер с полем LaTeX и предпросмотром; новые ставит Меню
+ * вставки («Formula» и «Block formula»).
+ */
+export const Mathematics: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" tools={MATH_TOOLS} defaultValue={MATH_SAMPLE} />
+    </div>
+  ),
+};
+
+/** Формулы на светлом листе `surface="paper"`. */
+export const MathematicsPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={MATH_TOOLS}
+        defaultValue={MATH_SAMPLE}
+        surface="paper"
+      />
+    </div>
+  ),
+};
+
+/**
+ * Опции: `tool("mathematics", { macros })` — свои макросы KaTeX. `\RR` ниже
+ * работает только благодаря макросу; тот же `tools` у `RichTextView` рисует его так же.
+ */
+export const MathematicsMacros: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[
+          ...RICH_TEXT_PRESETS.full,
+          tool("mathematics", { macros: { "\\RR": "\\mathbb{R}", "\\NN": "\\mathbb{N}" } }),
+        ]}
+        defaultValue={
+          "<p>A custom macro: " +
+          '<span data-type="inline-math" data-latex="f\\colon \\NN \\to \\RR"></span>.</p>'
+        }
+      />
+    </div>
+  ),
+};
+
+/**
+ * Формула, которую KaTeX не читает: остаётся исходником, подчёркнутым волной цветом
+ * ошибки. Документ она не ломает и не теряется; поправить её можно в Поповере.
+ */
+export const MathematicsInvalid: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={MATH_TOOLS}
+        defaultValue={
+          '<p>A broken formula: <span data-type="inline-math" data-latex="\\frac{1"></span> stays visible.</p>' +
+          '<div data-type="block-math" data-latex="\\badcommand{x}"></div>'
+        }
+      />
+    </div>
+  ),
+};
+
+/** Формулы в русской локали: подписи Меню вставки и Поповера — из каталога. */
+export const MathematicsRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor aria-label="Document" tools={MATH_TOOLS} defaultValue={MATH_SAMPLE} />
+      </div>
+    </UiProvider>
+  ),
+};
+
+function MathCommand({ command }: { command: string }) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useTypedCommand(ref, command);
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        tools={MATH_TOOLS}
+        defaultValue={INSERT_SAMPLE}
+      />
+    </div>
+  );
+}
+
+/** Меню вставки по `/formula`: пункты «Formula» и «Block formula» (и по `latex`, `math`). */
+export const MathematicsInsertSlash: Story = {
+  render: () => <MathCommand command="/formula" />,
+};
+
+/** Открыть Поповер правки первой формулы, как только Редактор нарисовал её. */
+function OpenedFormula() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const target = root.current?.querySelector<HTMLElement>(
+        ".tiptap-mathematics-render--editable"
+      );
+      if (!target) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      target.click();
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div ref={root} className="h-[420px] max-w-[640px]">
+      <RichTextEditor aria-label="Document" tools={MATH_TOOLS} defaultValue={MATH_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * Поповер правки формулы: поле LaTeX, предпросмотр и кнопки «Apply» и «Remove
+ * formula». Неверный LaTeX показывает ошибку в поле и не даёт применить.
+ */
+export const MathematicsPopover: Story = {
+  render: () => <OpenedFormula />,
+};
+
 /** Открыть HTML-режим, как только Панель появилась: щелчок по кнопке «HTML». */
 function OpenedSource(props: Partial<RichTextEditorProps>) {
   const root = useRef<HTMLDivElement>(null);

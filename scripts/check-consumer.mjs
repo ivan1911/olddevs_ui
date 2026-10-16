@@ -186,6 +186,37 @@ if (missing.length > 0) {
 }
 
 /**
+ * CSS и шрифты KaTeX доехали до потребителя (OLDSUI-280, ADR-0070, п. 9).
+ *
+ * Кит собирается голым `tsc`, и стили KaTeX у него не файл, а импорт
+ * `katex/dist/katex.min.css` в ленивом модуле формул: сборщик потребителя выпускает
+ * CSS ленивого чанка и переписывает `url(fonts/…)` на шрифты из пакета `katex`
+ * потребителя. Сборка зелёная и тогда, когда импорт потерялся, — формулы бы
+ * отрисовались без стилей и шрифтов, поэтому читается результат: правила `.katex`
+ * в CSS и файлы шрифтов в `static/media`.
+ */
+step("KaTeX styles and fonts reached the consumer build");
+const katexCssLost = [".katex", "KaTeX_Main"].filter((probe) => !css.includes(probe));
+if (katexCssLost.length > 0) {
+  fail(
+    `The consumer CSS lacks the KaTeX stylesheet (${katexCssLost.join(", ")}).\n` +
+      `The lazy formula module imports katex/dist/katex.min.css; if the bundler dropped it, ` +
+      `check the import in dist/editor/features/mathematics/katexEngine.js and the ` +
+      `sideEffects of the packages involved.`
+  );
+}
+const mediaDir = join(FIXTURE, ".next", "static", "media");
+const katexFonts = existsSync(mediaDir)
+  ? readdirSync(mediaDir).filter((name) => name.startsWith("KaTeX_"))
+  : [];
+if (katexFonts.length === 0) {
+  fail(
+    "No KaTeX_* font files in .next/static/media: the bundler did not resolve url(fonts/…) " +
+      "of katex.min.css from the consumer's katex package."
+  );
+}
+
+/**
  * Исключение Редактора из `@source` (OLDSUI-197): строка из getting-started
  * снимает его классы, а классы основного входа оставляет.
  *
@@ -260,8 +291,18 @@ const EDITOR_PROBES = [
   // компонент потребителя прошла границу RSC; серверный HTML Блока — на месте.
   "<template data-block-island",
   "Server badge",
+  // Формула (OLDSUI-280, ADR-0070): сервер кладёт в пустой элемент исходный LaTeX,
+  // метка острова формул стоит в разметке; отрисованного KaTeX на сервере нет.
+  "<template data-math-island",
+  'data-latex="e^{i\\pi}+1=0">e^{i\\pi}+1=0</span>',
 ];
-const EDITOR_LEAKS = ["fixed inset-0", "position:fixed", "javascript:alert", "data:image/png"];
+const EDITOR_LEAKS = [
+  "fixed inset-0",
+  "position:fixed",
+  "javascript:alert",
+  "data:image/png",
+  'class="katex"',
+];
 
 step("the editor page is sanitised, highlighted and has its copy island");
 const editorHtmlPath = join(FIXTURE, ".next", "server", "app", "editor.html");
