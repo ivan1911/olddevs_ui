@@ -177,6 +177,86 @@ describe("a data-src value", () => {
   });
 });
 
+/*
+  ДВА НАБОРА ПРАВИЛ — ОДИН СМЫСЛ. Очистка (`isVideoSrc`) и разбор ссылок
+  (`parseVideoLink`) написаны по-разному: очистке нужно выражение без `URL`, разбору —
+  разбор. Расходиться в том, что считается видео, они не вправе: блок, прошедший
+  очистку, но не ставший плеером, — мёртвый блок в Документе. Одна таблица адресов
+  идёт через оба.
+*/
+describe("the sanitizer rule and the parser agree", () => {
+  const YT = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+  const TABLE = [
+    YT,
+    `${YT}&t=90`,
+    `${YT}&t=0`,
+    `${YT}&t=99999999`,
+    "https://www.youtube.com/playlist?list=PL1-abc",
+    "https://www.youtube.com/watch?v=",
+    "https://www.youtube.com/watch?v=a/b",
+    "https://www.twitch.tv/videos/1234567890",
+    "https://www.twitch.tv/videos/1234567890?t=1h2m3s",
+    "https://www.twitch.tv/videos/1234567890?t=",
+    "https://www.twitch.tv/videos/abc",
+    "https://www.twitch.tv/videos",
+    "https://www.twitch.tv/some_channel",
+    "https://www.twitch.tv/Some-Channel2",
+    "https://clips.twitch.tv/FunnyClip-AbC123",
+    "https://clips.twitch.tv/embed",
+    "https://clips.twitch.tv/",
+    // Служебные разделы сайта и их написание в другом регистре — не каналы.
+    ...[
+      "directory",
+      "Videos",
+      "DIRECTORY",
+      "downloads",
+      "jobs",
+      "p",
+      "settings",
+      "subscriptions",
+      "friends",
+      "wallet",
+      "turbo",
+      "store",
+      "prime",
+      "search",
+      "popout",
+      "embed",
+      "moderator",
+      "broadcast",
+      "bits",
+      "dashboard",
+      "inventory",
+      "drops",
+      "u",
+      "team",
+      "clips",
+    ].map((name) => `https://www.twitch.tv/${name}`),
+  ];
+
+  test.each(TABLE)("%s", (src) => {
+    for (const provider of ["youtube", "twitch"]) {
+      const parsed = parseVideoLink(src);
+      const accepted = isVideoSrc(provider, src);
+      // Что очистка пропустила, разбор обязан узнать — тем же сервисом.
+      if (accepted) expect(parsed?.provider, "sanitizer accepts, parser rejects").toBe(provider);
+      // Что разбор записал бы в Документ, очистка обязана пропустить.
+      if (parsed?.provider === provider) {
+        expect(isVideoSrc(provider, parsed.src), "parser writes, sanitizer rejects").toBe(true);
+      }
+    }
+  });
+
+  test("the reserved names give neither a channel nor a block", () => {
+    for (const name of ["directory", "videos", "Videos", "settings", "clips"]) {
+      const src = `https://www.twitch.tv/${name}`;
+      expect(parseVideoLink(src), src).toBeNull();
+      expect(isVideoSrc("twitch", src), src).toBe(false);
+    }
+    expect(isVideoSrc("twitch", "https://clips.twitch.tv/embed")).toBe(false);
+  });
+});
+
 test("the video block is told from the HTML by a substring", () => {
   expect(hasVideoBlocks('<div data-block="video" data-provider="youtube"></div>')).toBe(true);
   expect(hasVideoBlocks('<div data-block="wrapper"><p>video</p></div>')).toBe(false);

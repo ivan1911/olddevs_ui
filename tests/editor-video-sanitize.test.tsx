@@ -96,6 +96,14 @@ describe("data-src", () => {
     );
   });
 
+  test("a reserved Twitch section is not a channel: the block is dropped, the link stays", () => {
+    for (const name of ["videos", "directory", "Settings"]) {
+      const out = clean(block("twitch", `https://www.twitch.tv/${name}`));
+      expect(out, name).not.toContain("data-block");
+      expect(out, name).toContain(`https://www.twitch.tv/${name}`);
+    }
+  });
+
   test("Twitch accepts its own hosts and nothing else", () => {
     for (const src of [
       "https://www.twitch.tv/videos/1234567890",
