@@ -406,7 +406,10 @@ const VIDEO_CLASS =
   "[&_div[data-block=video]]:bg-(--rte-code-background) " +
   "[&_div[data-block=video]]:flex [&_div[data-block=video]]:items-center " +
   "[&_div[data-block=video]]:justify-center [&_div[data-block=video]]:p-4 " +
-  "[&_div[data-block=video]>a]:max-w-full [&_div[data-block=video]>a]:truncate ";
+  "[&_div[data-block=video]>a]:max-w-full [&_div[data-block=video]>a]:truncate " +
+  // Ссылка на сером фоне рамки — основным цветом, как в Обёртке с тоном: акцент Листа
+  // откалиброван под белый лист и на `code-background` давал меньше 4.5:1 (axe, тёмная тема).
+  "[&_div[data-block=video]]:[--rte-link:var(--rte-tone-link)] ";
 
 /**
  * Свой Блок потребителя (ADR-0058, п. 3.2): `div[data-block]` с
