@@ -32,6 +32,23 @@ function editor(page: Page) {
   return { field, first: node, glyphs: node.locator(".katex-html") };
 }
 
+/**
+ * Аддон a11y витрины гоняет axe сам, и два прогона разом падают с «Axe is already
+ * running»: ждём чужой и повторяем (как `a11y.spec.ts`), любую другую ошибку не глотаем.
+ */
+async function analyzeWhenFree(page: Page, scope?: string) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const builder = new AxeBuilder({ page });
+      return await (scope ? builder.include(scope) : builder).analyze();
+    } catch (error) {
+      const busy = error instanceof Error && error.message.includes("Axe is already running");
+      if (!busy || attempt >= 10) throw error;
+      await page.waitForTimeout(150);
+    }
+  }
+}
+
 // ── Отрисовка ────────────────────────────────────────────────────────────
 
 test("the editor draws every formula with KaTeX: HTML for the eyes, MathML for the screen reader", async ({
@@ -246,7 +263,7 @@ test("the popover opened by a story is within the viewport and passes axe in all
       content:
         "*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }",
     });
-    const result = await new AxeBuilder({ page }).analyze();
+    const result = await analyzeWhenFree(page);
     const blocking = result.violations.filter(
       (v) => v.impact === "serious" || v.impact === "critical"
     );
@@ -320,7 +337,7 @@ test("the editor and the view pass axe in all three themes", async ({ page }) =>
         content:
           "*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }",
       });
-      const result = await new AxeBuilder({ page }).include("#storybook-root").analyze();
+      const result = await analyzeWhenFree(page, "#storybook-root");
       const blocking = result.violations.filter(
         (violation) => violation.impact === "serious" || violation.impact === "critical"
       );
