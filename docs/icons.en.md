@@ -118,6 +118,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
 | Collapsible Block of the Editor     | `DetailsIcon`                                   | `ChevronDownIcon`              |
 | Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
+| Video by link in the Editor         | `VideoIcon`                                     | `PlayIcon`                     |
 
 ## Subject topics
 
@@ -222,6 +223,8 @@ Wrapper added the pair `WrapperIcon` and `UnwrapIcon` — lucide's `Group` and `
 Collapsible block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Slash menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
 
 Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`: a pilcrow with an arrow, the "Invisible characters" item of the "…" menu on the Editor's fixed Toolbar. This is not `ParagraphIcon`: that one is a plain pilcrow, "an ordinary paragraph", and sits on the same Toolbar in the "¶" menu; the arrow tells the display toggle from a Block type.
+
+Video added `VideoIcon` — lucide's `SquarePlay`: a square with a play triangle, the "Video" item of the Editor's Insert menu (the `youtube` and `twitch` Tools). This is not `PlayIcon`: that one is a start button, and the player placeholder's own "Play" button carries exactly that icon (ADR-0049).
 
 The first iteration of the table made do with two icons for four directions
 (`AddRowIcon`, `AddColumnIcon`) and an icon for the separate "Table
