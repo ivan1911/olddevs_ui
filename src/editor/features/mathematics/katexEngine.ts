@@ -26,7 +26,17 @@ export { katex };
  * `trust` выключен (по умолчанию): `\href`, `\url` и `\includegraphics` из
  * чужого Документа не работают. `maxSize` ограничивает `\rule` и пробелы, чтобы
  * формула вроде `\rule{9999em}{9999em}` не растягивала страницу читателя;
- * `maxExpand` — потолок раскрытия макросов KaTeX, оставлен умолчанием 1000.
+ * `maxExpand` — потолок раскрытия макросов KaTeX, задан явно (1000, как умолчание
+ * KaTeX), чтобы лимит не зависел от версии пакета потребителя.
+ *
+ * МАКРОСЫ — СВЕЖАЯ КОПИЯ НА КАЖДУЮ ОТРИСОВКУ. `\gdef` в формуле пишет в объект
+ * `macros`, который KaTeX получил, и макрос одной формулы переезжал бы в
+ * следующие. Одни и те же опции, однако, читает не один вызов: расширение Tiptap
+ * отдаёт один объект `katexOptions` всем видам узлов Редактора, а Поповер — своим
+ * предпросмотрам. Поэтому `macros` — геттер: KaTeX читает поле при каждой отрисовке
+ * (`new Settings(options)`) и получает новый объект, так что формулы Редактора, его
+ * Поповера и Острова `RichTextView` не делят `\gdef`. Копия опций (`{ ...options }`)
+ * геттер вычисляет один раз, поэтому копировать надо перед каждым вызовом.
  */
 export function katexOptionsFor(options: MathRenderOptions, display: boolean): KatexOptions {
   return {
@@ -34,9 +44,9 @@ export function katexOptionsFor(options: MathRenderOptions, display: boolean): K
     output: "htmlAndMathml",
     throwOnError: true,
     strict: options.strict,
-    // Копия: `\gdef` в формуле пишет в переданный объект, и макрос одной формулы
-    // переезжал бы в следующие.
-    macros: { ...options.macros },
+    get macros() {
+      return { ...options.macros };
+    },
     maxSize: 50,
     maxExpand: 1000,
   };
