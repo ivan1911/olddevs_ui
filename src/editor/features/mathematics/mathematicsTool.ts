@@ -6,6 +6,12 @@ import { BlockFormulaIcon, FormulaIcon } from "../../../icons.js";
 import type * as MathChunkModule from "./mathChunk.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import { loaded } from "../../core/toolLoader.js";
+import {
+  BLOCK_FORMULA_NODE,
+  BLOCK_FORMULA_TYPE,
+  INLINE_FORMULA_NODE,
+  INLINE_FORMULA_TYPE,
+} from "./mathNames.js";
 import { MATH_CHECKS, MATH_DEFAULTS, type MathRenderOptions } from "./mathOptions.js";
 
 /*
@@ -39,27 +45,27 @@ const latexAttribute = () => ({
 
 const MATH_SHAPE = [
   Node.create({
-    name: "inlineMath",
+    name: INLINE_FORMULA_NODE,
     group: "inline",
     inline: true,
     atom: true,
     addAttributes: latexAttribute,
-    parseHTML: () => [{ tag: 'span[data-type="inline-math"]' }],
+    parseHTML: () => [{ tag: `span[data-type="${INLINE_FORMULA_TYPE}"]` }],
     renderHTML: ({ node }) => [
       "span",
-      { "data-type": "inline-math", "data-latex": node.attrs.latex },
+      { "data-type": INLINE_FORMULA_TYPE, "data-latex": node.attrs.latex },
       String(node.attrs.latex),
     ],
   }),
   Node.create({
-    name: "blockMath",
+    name: BLOCK_FORMULA_NODE,
     group: "block",
     atom: true,
     addAttributes: latexAttribute,
-    parseHTML: () => [{ tag: 'div[data-type="block-math"]' }],
+    parseHTML: () => [{ tag: `div[data-type="${BLOCK_FORMULA_TYPE}"]` }],
     renderHTML: ({ node }) => [
       "div",
-      { "data-type": "block-math", "data-latex": node.attrs.latex },
+      { "data-type": BLOCK_FORMULA_TYPE, "data-latex": node.attrs.latex },
       String(node.attrs.latex),
     ],
   }),
@@ -91,7 +97,10 @@ export const MATHEMATICS_TOOL: ToolDescriptor = {
     chunk().mathExtensions({ options: options as MathRenderOptions, openPopover }),
   skeleton: () => MATH_SHAPE,
   // Метки к атому не применимы: выделенную формулу Меню выделения и плавающая Панель не окружают.
-  blocks: { inlineMath: { plainAtom: true }, blockMath: { plainAtom: true } },
+  blocks: {
+    [INLINE_FORMULA_NODE]: { plainAtom: true },
+    [BLOCK_FORMULA_NODE]: { plainAtom: true },
+  },
   // `span` и `div` Схемы кита; формула — `data-type="inline-math"` / `"block-math"` с `data-latex`.
   kitTags: ["span", "div"],
   insertItems: [

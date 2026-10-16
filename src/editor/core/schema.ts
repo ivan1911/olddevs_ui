@@ -1,6 +1,7 @@
 import { CODE_LANGUAGE_IDS } from "../features/code/codeLanguages.js";
 import { EDITOR_LAYOUTS } from "../features/layout/columnLayouts.js";
 import { CUSTOM_COLOR_STYLE_PATTERN } from "../features/color/customColor.js";
+import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "../features/mathematics/mathNames.js";
 import { devWarn } from "../../lib/dev-warn.js";
 import type { CustomAttribute, PrefixedName, ToolEntry } from "./customTool.js";
 import { customToolOf } from "./toolDefinition.js";
@@ -705,8 +706,8 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
       value === DETAILS_CONTENT &&
       node.parentElement?.nodeName === "DETAILS") ||
     // Формула: строчная — `span`, блочная — `div`; значение чужого тега не проходит.
-    (node.nodeName === "SPAN" && value === INLINE_MATH) ||
-    (node.nodeName === "DIV" && value === BLOCK_MATH),
+    (node.nodeName === "SPAN" && value === INLINE_FORMULA_TYPE) ||
+    (node.nodeName === "DIV" && value === BLOCK_FORMULA_TYPE),
   // Исходный LaTeX — текст, а не разметка, поэтому правила «без `<`» (ADR-0070) к нему
   // нет: DOMPurify экранирует его при выводе. Но только у формулы: тот же атрибут на
   // другом теге или рядом с чужим `data-type` снимается. `data-type` читается из
@@ -869,16 +870,12 @@ const PARENT_OF: Record<string, string> = {
 /** Значение `div[data-type]` обёртки содержимого сворачиваемого Блока (`details.ts`). */
 const DETAILS_CONTENT = "detailsContent";
 
-/** Значения `data-type` формул: строчная — `span`, блочная — `div` (ADR-0070). */
-const INLINE_MATH = "inline-math";
-const BLOCK_MATH = "block-math";
-
 /** Формула в форме, которую пишет Редактор: тег и `data-type` из пары. */
 function isFormula(node: Element): boolean {
   const type = node.getAttribute("data-type");
   return (
-    (node.nodeName === "SPAN" && type === INLINE_MATH) ||
-    (node.nodeName === "DIV" && type === BLOCK_MATH)
+    (node.nodeName === "SPAN" && type === INLINE_FORMULA_TYPE) ||
+    (node.nodeName === "DIV" && type === BLOCK_FORMULA_TYPE)
   );
 }
 

@@ -7,13 +7,14 @@ import type { ReactNode } from "react";
 import type { ToolPopoverRequest } from "../../core/toolButtons.js";
 import { katexOptionsFor } from "./katexEngine.js";
 import { MathForm, type MathFormProps } from "./MathForm.js";
-import { BLOCK_MATH, selectedFormula } from "./mathCommands.js";
+import { selectedFormula } from "./mathCommands.js";
 import {
   blockMathTokenizer,
   inlineMathTokenizer,
   renderBlockMath,
   renderInlineMath,
 } from "./mathMarkdown.js";
+import { BLOCK_FORMULA_NODE } from "./mathNames.js";
 import type { MathRenderOptions } from "./mathOptions.js";
 
 /*
@@ -31,7 +32,7 @@ export function renderMathForm(props: MathFormProps): ReactNode {
 
 /** Запрос Поповера на правку формулы: Поповер стоит у самой формулы и следует за ней. */
 function editRequest(node: ProseMirrorNode, pos: number): ToolPopoverRequest {
-  const block = node.type.name === BLOCK_MATH;
+  const block = node.type.name === BLOCK_FORMULA_NODE;
   return {
     label: ({ messages }) => (block ? messages.mathBlock : messages.mathInline),
     popover: ({ editor, close, pos: current }) => (

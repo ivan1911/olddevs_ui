@@ -7,10 +7,14 @@
   Модуль серверный, как `codeHeader.ts`: строки в строки, без DOM и без KaTeX. Его
   читает `RichTextView` — серверный компонент.
 */
+import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "./mathNames.js";
 
 /** Есть ли в Документе формула: по ней `RichTextView` решает, монтировать ли Остров. */
 export function hasMath(html: string): boolean {
-  return html.includes('data-type="inline-math"') || html.includes('data-type="block-math"');
+  return (
+    html.includes(`data-type="${INLINE_FORMULA_TYPE}"`) ||
+    html.includes(`data-type="${BLOCK_FORMULA_TYPE}"`)
+  );
 }
 
 /**
@@ -23,7 +27,7 @@ const FORMULA_ELEMENT = /<(span|div)((?:\s+[\w:-]+(?:="[^"]*")?)*)\s*><\/\1>/g;
 /** Исходный LaTeX из атрибутов формулы или `null`, если это не формула. */
 function formulaSource(tag: string, attributes: string): string | null {
   const type = /\sdata-type="([^"]*)"/.exec(attributes)?.[1];
-  if (type !== (tag === "span" ? "inline-math" : "block-math")) return null;
+  if (type !== (tag === "span" ? INLINE_FORMULA_TYPE : BLOCK_FORMULA_TYPE)) return null;
   return /\sdata-latex="([^"]*)"/.exec(attributes)?.[1] ?? null;
 }
 

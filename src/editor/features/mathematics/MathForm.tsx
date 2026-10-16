@@ -7,7 +7,8 @@ import { FormField } from "../../../components/inputs/FormField.js";
 import { TextControl } from "../../../components/inputs/TextControl.js";
 import { useMessages } from "../../../i18n/useMessages.js";
 import { katex, mathErrorDetail } from "./katexEngine.js";
-import { BLOCK_MATH, INLINE_MATH, insertFormula } from "./mathCommands.js";
+import { insertFormula } from "./mathCommands.js";
+import { BLOCK_FORMULA_NODE, INLINE_FORMULA_NODE } from "./mathNames.js";
 
 export interface MathFormProps {
   editor: Editor;
@@ -43,7 +44,7 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
   const messages = useMessages().editor;
   const fieldId = useId();
   const block = kind === "block";
-  const name = block ? BLOCK_MATH : INLINE_MATH;
+  const name = block ? BLOCK_FORMULA_NODE : INLINE_FORMULA_NODE;
   const [existing] = useState(() =>
     pos === undefined ? null : String(editor.state.doc.nodeAt(pos)?.attrs.latex ?? "")
   );
