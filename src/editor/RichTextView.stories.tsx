@@ -555,8 +555,8 @@ const VIDEO_HTML =
   "<h2>Video</h2><p>Without JavaScript a reader sees the links below.</p>" +
   '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
   '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" rel="noopener noreferrer">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
-  '<div data-block="video" data-provider="twitch" data-src="https://www.twitch.tv/videos/1234567890">' +
-  '<a href="https://www.twitch.tv/videos/1234567890" rel="noopener noreferrer">https://www.twitch.tv/videos/1234567890</a></div>' +
+  '<div data-block="video" data-provider="twitch" data-src="https://www.twitch.tv/aws">' +
+  '<a href="https://www.twitch.tv/aws" rel="noopener noreferrer">https://www.twitch.tv/aws</a></div>' +
   "<p>Text after the videos.</p>";
 
 /**

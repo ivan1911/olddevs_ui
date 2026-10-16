@@ -22,7 +22,7 @@ async function settle(page: Page) {
 
 const YOUTUBE_PLAYER = "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ";
 const YOUTUBE_PLAYER_CLICKED = `${YOUTUBE_PLAYER}?autoplay=1`;
-const TWITCH_PLAYER = "https://player.twitch.tv/?video=1234567890&parent=127.0.0.1&autoplay=false";
+const TWITCH_PLAYER = "https://player.twitch.tv/?channel=aws&parent=127.0.0.1&autoplay=false";
 
 // ── Редактор: плеер сразу ──────────────────────────────────────────────────
 
@@ -108,9 +108,7 @@ test("a disabled service: the block of the other one is only its link", async ({
 
   await expect(field.locator('iframe[title="YouTube video"]')).toHaveCount(1);
   await expect(field.locator('iframe[title="Twitch video"]')).toHaveCount(0);
-  await expect(
-    field.getByRole("link", { name: "https://www.twitch.tv/videos/1234567890" })
-  ).toBeVisible();
+  await expect(field.getByRole("link", { name: "https://www.twitch.tv/aws" })).toBeVisible();
 });
 
 // ── Редактор: iframe не мешает правке ───────────────────────────────────────
@@ -253,7 +251,7 @@ test("autoload: false, Twitch takes the host of the page as parent", async ({ pa
   const frame = field.locator("iframe");
   await expect(frame).toHaveAttribute(
     "src",
-    "https://player.twitch.tv/?video=1234567890&parent=127.0.0.1&autoplay=true"
+    "https://player.twitch.tv/?channel=aws&parent=127.0.0.1&autoplay=true"
   );
   await expect(frame).toHaveAttribute("title", "Twitch video");
   await expect
@@ -330,7 +328,7 @@ test("the view with autoload: false shows the placeholder and loads the player o
   await page.getByRole("button", { name: "Play Twitch video" }).click();
   await expect(page.locator("iframe").nth(1)).toHaveAttribute(
     "src",
-    "https://player.twitch.tv/?video=1234567890&parent=127.0.0.1&autoplay=true"
+    "https://player.twitch.tv/?channel=aws&parent=127.0.0.1&autoplay=true"
   );
 });
 
