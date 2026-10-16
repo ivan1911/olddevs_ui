@@ -61,7 +61,7 @@ category: inputs
 status: stable
 source: src/editor/RichTextEditor.tsx
 story: src/editor/RichTextEditor.stories.tsx
-sourceHash: 9d278245d52f
+sourceHash: 53c637920fa3
 ---
 
 # RichTextEditor
@@ -1678,7 +1678,7 @@ Another host, `youtube.com.evil.example`, a login or a port in the address, and 
 
 **Without the Tool a Block becomes its link instead of vanishing.** A video Block from `value`, `defaultValue`, a JSON envelope and a paste, when its service is off (neither `youtube` nor `twitch` in `tools`, or only the other one is on), unfolds into a paragraph with the link: with the `link` Mark, or the address as text if there is none. The same `value` with the right Tool shows a player.
 
-### Markdown
+### Video in Markdown
 
 Video in Markdown is a link: `getMarkdown()` writes the canonical address on a line of its own between blank lines.
 
