@@ -244,13 +244,21 @@ test("from the keyboard: Shift+Right selects a formula, Enter opens the popover,
   // Движок с формулами пришёл: до него стоит Скелет, и при подмене поля каретка и фокус
   // сбрасываются посреди набора клавиш (в собранной витрине чанк идёт заметно дольше, чем в dev).
   await expect(field.locator(".katex").first()).toBeVisible();
-  // Из заголовка — вниз, в первую строку абзаца, и в её начало; затем к формуле.
-  await field.getByRole("heading", { name: "Formulas" }).click();
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("Home");
+  /*
+    Каретка — сразу перед формулой, выделением DOM, и ProseMirror успевает его прочесть.
+    Не двадцатью нажатиями `→`: ProseMirror читает выделение из DOM по `selectionchange`,
+    очередь нажатий Playwright его обгоняет, и прежнее выделение пишется обратно —
+    каретка то перескакивала формулу, то отскакивала назад (3 прогона из 8 на сборке).
+  */
+  await field.locator("p", { hasText: "The area of a circle is" }).evaluate((paragraph) => {
+    const text = paragraph.firstChild!;
+    const range = document.createRange();
+    range.setStart(text, text.textContent!.length);
+    range.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(range);
+  });
   await settle(page);
-  const lead = "The area of a circle is ";
-  for (let step = 0; step < lead.length; step++) await page.keyboard.press("ArrowRight");
   // Строчный атом каретка перешагивает без выделения (так устроен ProseMirror), поэтому
   // формулу выделяют `Shift+→` или щелчком — и Enter на ней открывает правку.
   await page.keyboard.press("Shift+ArrowRight");
