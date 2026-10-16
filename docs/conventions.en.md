@@ -58,26 +58,26 @@ same meaning takes the name from here, and does not invent its own.
 The rule comes from `Toolbar`, `Carousel`, `MobileTabBar` and `TagGroup`. Before it, these components handled the
 required name in different ways: in one, `label` was shown on screen, and in another it went into an attribute.
 
-- **`label` is only a visible caption.** A prop with this name draws text on screen. A name that is not drawn is
+- **`label` is only a visible label.** A prop with this name draws text on screen. A name that is not drawn is
   set with its own ARIA attribute.
-- **Without a visible caption, use exactly one of `aria-label` and `aria-labelledby`.** The type is
+- **Without a visible label, use exactly one of `aria-label` and `aria-labelledby`.** The type is
   [`AccessibleName`](../src/lib/accessible-name.ts), a union with `never`: TypeScript rejects a call with no name
   and a call with both. Two sources of one name drift apart silently when you edit.
 - **A name with a default from the catalog** uses `Partial<AccessibleName>`: you can pass nothing, but not both
   (`MobileTabBar`). The default is announced even when an empty string is passed.
-- **Visible caption or attribute:** `{ label; "aria-label"?: never;
-"aria-labelledby"?: never } | ({ label?: never } & AccessibleName)` (`TagGroup`). A caption together with an
+- **Visible label or attribute:** `{ label; "aria-label"?: never;
+"aria-labelledby"?: never } | ({ label?: never } & AccessibleName)` (`TagGroup`). A label together with an
   attribute is not allowed: the attribute would override the visible text, and a screen reader would give the
   component a different name than the one on screen.
 - The test locks the shape with `@ts-expect-error`: for "no name" and for "both at once".
 
-Components released before this rule use `label` as the name string without a visible caption (`SideNav`,
+Components released before this rule use `label` as the name string without a visible label (`SideNav`,
 `TopBar`, `FilterBar`, `ScrollArea` and others). Renaming it there is a breaking change and a separate decision.
 A new component follows the rule.
 
 ## Empty value
 
-An empty string is neither a caption nor a name. The rule and its history are in
+An empty string is neither a label nor a name. The rule and its history are in
 [`src/lib/empty.ts`](../src/lib/empty.ts). For a prop of type `string`, write the fallback with `||`, not `??`.
 For `ReactNode`, use `hasContent`, not `!= null`. `??` and `!= null` let `""` through: the component renders an
 empty node, stays without a name, or labels a button "Удалить: ". Each such branch is covered by a test with an

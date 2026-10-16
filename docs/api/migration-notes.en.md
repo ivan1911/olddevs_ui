@@ -287,7 +287,7 @@ of `@olddevs/ui/editor`, and one requires installing packages with pnpm. The new
 
 ### 1. Two new peer packages
 
-The blockquote and the divider take their Extensions from `@tiptap/extension-blockquote` and
+The blockquote and the horizontal rule take their Extensions from `@tiptap/extension-blockquote` and
 `@tiptap/extension-horizontal-rule` — optional peer dependencies of the
 `@olddevs/ui/editor` entry point with the same `^3.31.4` range (since 3.46.0 the engine
 packages are no longer in the kit manifest; see the entry above).
@@ -304,16 +304,16 @@ pnpm add @tiptap/extension-blockquote @tiptap/extension-horizontal-rule
 
 The full command is on the [RichTextEditor](../components/inputs/rich-text-editor.md#установка) page.
 
-### 2. A divider no longer weighs a character in `maxLength`
+### 2. A horizontal rule no longer counts as a character in `maxLength`
 
 **What changed.** Before, the counter substituted a space for a leaf node, and
-every `<hr>` took one character from the limit. Now the weight of an Atom is the length of its Atom
-text (`renderText`): a divider weighs 0, a soft break 1, an image the length of its
+every `<hr>` took one character from the limit. Now an Atom counts as the length of its Atom
+text (`renderText`): a horizontal rule counts as 0, a hard break as 1, an image as the length of its
 caption. The counter matches `getText()` without Block separators.
 
-**Who is affected.** Screens with `maxLength` and dividers in the Document. A Document
-with N dividers fits N more characters, and a Document that was previously
-"over the limit" by the number of dividers now fits. If the server
+**Who is affected.** Screens with `maxLength` and horizontal rules in the Document. A Document
+with N horizontal rules fits N more characters, and a Document that was previously
+"over the limit" by the number of horizontal rules now fits. If the server
 checks length against the same limit and counts `<hr>` as a character, it will reject what the
 Editor let through.
 
@@ -329,7 +329,7 @@ did not fit goes away whole, together with everything after it.
 
 **Action before updating.** Check the server-side length validation against the kit's rule:
 the Document's text without markup and Block separators, an Atom by the length of its text.
-The kit has no server-side counter: the weight of a custom Atom depends on its Extensions.
+The kit has no server-side counter: the count of a custom Atom depends on its Extensions.
 
 ### 3. Skeleton before Readiness
 
@@ -679,7 +679,7 @@ Nothing breaking: everything new is additive, and `AppShell` gained one slot.
 
 **2. `AppShell` gained a `banners` slot** — app-level messages above the
 header. Without the prop, the shell's markup stays identical node for node. Banners are not sticky, and
-`--topbar-h` still means exactly the header height: the stickiness contract
+`--topbar-h` still means exactly the header height: the sticky positioning contract
 is not touched.
 
 **3. No new dependencies.** Drag and drop and virtualization are built on
@@ -744,8 +744,8 @@ expected here. Exactly one typed character is parsed; a paste is not parsed.
 The new message catalog namespace is `maskedInput`; it has two keys, and they
 exist in the `ru` locale.
 
-**4. `TextControl` gained an `underlay` slot** — a backing under the value, on the same
-line. The mask guide is built on it. The component itself puts `aria-hidden` on the backing and
+**4. `TextControl` gained an `underlay` slot** — a background under the value, on the same
+line. The mask guide is built on it. The component itself puts `aria-hidden` on the background and
 sets `pointer-events: none` on it: there is nothing to read there.
 
 The rationale for the decisions and the sources are in ADR-0026.
@@ -828,7 +828,7 @@ that no longer exist.
 
 Nothing breaking. `SideNav`, shown by `AppShell` in a `Drawer`, no longer
 collapses: there is no collapse button there, and `collapsed` and `defaultCollapsed` have no effect in the
-overlay. The icon mode gives width to the page content —
+overlay. The collapsed mode gives width to the page content —
 there is nothing next to the drawer to give the width to.
 
 If you keep the collapsed state yourself and it survived a reload, the behavior

@@ -22,7 +22,7 @@ sourceHash: 16a76c5ab721
 ## When not to use
 
 - For ordinary compact date selection, use `DatePicker`.
-- For a period with two bounds, use `RangeCalendar` or `DateRangePicker`.
+- For a range with two bounds, use `RangeCalendar` or `DateRangePicker`.
 - Do not store a calendar date as a `Date`: it has a time zone. Use `DateValue` at the `Calendar` boundary, or an ISO string in a ready-made `DatePicker`.
 
 ## Minimal example

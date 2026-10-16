@@ -100,11 +100,11 @@ The other props go to the element — including `href` for the case without `asC
 and gets the default cursor, the same as `Button`. The attribute only declares the item unavailable: it does not cancel navigation
 through `href`, so the consumer either omits `href` or cancels the navigation itself.
 
-## Header and footer in icon mode
+## Header and footer in collapsed mode
 
 Items and sections adapt to the collapsed state on their own, but the `header`
 and `footer` slots belong to the consumer: the kit doesn't know what's in them.
-In icon mode the column is as wide as an icon, and a user block with a name and
+In collapsed mode the column is as wide as an icon, and a user block with a name and
 a role doesn't fit. Slot content reads the mode with the `useNavCollapsed()` hook:
 
 ```tsx
