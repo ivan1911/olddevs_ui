@@ -330,7 +330,7 @@ const SERVER_SAFE = [
     file: "editor/features/mathematics/mathOptions.ts",
     why:
       'The defaults, value checks and the reader of tool("mathematics") options: functions over data. ' +
-      "It imports toolOptions.ts and customTool.ts (both server-safe) and neither Tiptap nor KaTeX, so " +
+      "It imports toolOptions.ts, customTool.ts and lib/dev-warn.ts (all server-safe) and neither Tiptap nor KaTeX, so " +
       "the server-rendered RichTextView reads the macros for its island.",
   },
   {

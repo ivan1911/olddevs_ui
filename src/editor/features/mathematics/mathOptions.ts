@@ -1,9 +1,11 @@
 import {
-  isConfiguredTool,
-  mergeOptions,
+  configuredBuiltins,
+  repeatedConfigured,
+  resolveToolOptions,
   type MathematicsToolOptions,
 } from "../../core/toolOptions.js";
 import type { ToolEntry } from "../../core/customTool.js";
+import { devError } from "../../../lib/dev-warn.js";
 
 /*
   Опции формул (ADR-0070): умолчания, проверки значений и чтение опций из `tools`.
@@ -33,20 +35,25 @@ export const MATH_CHECKS: Readonly<Record<string, (value: unknown) => boolean>> 
 
 /**
  * Опции формул из `tools`: запись `tool("mathematics", …)` поверх умолчаний.
- * Значение, не прошедшее проверку, заменяется умолчанием — как в Редакторе
- * (`expandTools`); записи нет — умолчания. `RichTextView` читает ими формулы так
- * же, как Редактор: макрос, заданный Редактору, работает и в Просмотре.
+ * Читает их тем же `resolveToolOptions`, что Редактор (`expandTools`): значение, не
+ * прошедшее проверку, заменяется умолчанием с тем же `console.error` в разработке;
+ * записи нет — умолчания. Две записи `tool("mathematics")` — ошибка набора, на
+ * которой Редактор не стартует; Просмотр не выбирает «первую», а берёт умолчания и
+ * сообщает. `RichTextView` читает ими формулы так же, как Редактор: макрос, заданный
+ * Редактору, работает и в Просмотре.
  */
 export function mathOptionsOf(tools: readonly ToolEntry[] | undefined): MathRenderOptions {
-  const configured = (tools ?? []).find(
-    (entry) => isConfiguredTool(entry) && entry.name === "mathematics"
-  );
-  const given = Object.entries(isConfiguredTool(configured) ? configured.options : {}).filter(
-    ([key, value]) => value !== undefined && MATH_CHECKS[key]?.(value) === true
-  );
-  const { macros, strict } = mergeOptions(
+  const configured = configuredBuiltins(tools).filter((entry) => entry.name === "mathematics");
+  const twice = repeatedConfigured(configured);
+  if (twice) {
+    devError(`RichTextView: tool "mathematics": two tool() entries share this name`);
+  }
+  const { macros, strict } = resolveToolOptions(
+    "RichTextView",
+    "mathematics",
     MATH_DEFAULTS,
-    Object.fromEntries(given)
+    MATH_CHECKS,
+    twice ? undefined : configured[0]
   ) as MathRenderOptions;
   return { macros, strict };
 }
