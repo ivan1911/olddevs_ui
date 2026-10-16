@@ -408,6 +408,13 @@
 | `blockDuplicate`                      | строка  | Duplicate                                                                        | Дублировать                                                                        |
 | `blockDelete`                         | строка  | Delete                                                                           | Удалить                                                                            |
 | `toc`                                 | строка  | Table of contents                                                                | Оглавление                                                                         |
+| `video`                               | строка  | Video                                                                            | Видео                                                                              |
+| `videoLink`                           | строка  | Video link                                                                       | Ссылка на видео                                                                    |
+| `videoInsert`                         | строка  | Insert                                                                           | Вставить                                                                           |
+| `videoNotFound`                       | функция | —                                                                                | —                                                                                  |
+| `videoPlay`                           | строка  | Play                                                                             | Воспроизвести                                                                      |
+| `videoPlayLabel`                      | функция | —                                                                                | —                                                                                  |
+| `videoPlayer`                         | функция | —                                                                                | —                                                                                  |
 | `typographyQuotes`                    | строка  | en                                                                               | ru                                                                                 |
 
 ## `errorState`

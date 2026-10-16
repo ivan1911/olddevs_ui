@@ -3400,3 +3400,66 @@ export const DefinedToolConfigured: Story = {
     />
   ),
 };
+
+/*
+  Видео по ссылке (OLDSUI-281, ADR-0071): Инструменты `youtube` и `twitch`, вне
+  Пресетов — явной записью в `tools`. В Документе ссылка, а не плеер; плеер рисует
+  кит. Адреса — вымышленные: в историях плеер не нажимают, а настоящее видео не
+  грузится.
+*/
+const VIDEO_SAMPLE =
+  "<h2>Video</h2><p>Two blocks follow, one per service. A block stands as a placeholder " +
+  "until you press Play; nothing is requested from the service before that.</p>" +
+  '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
+  '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" rel="noopener noreferrer">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
+  '<div data-block="video" data-provider="twitch" data-src="https://www.twitch.tv/videos/1234567890">' +
+  '<a href="https://www.twitch.tv/videos/1234567890" rel="noopener noreferrer">https://www.twitch.tv/videos/1234567890</a></div>' +
+  "<p>Add another: menu → Video, or paste a link.</p>";
+
+/**
+ * Видео из YouTube и Twitch: заглушка с названием сервиса и кнопкой «Play», плеер
+ * после щелчка. «Video» в меню вставки («+» и «/») принимает ссылку любого из двух
+ * сервисов; ссылка в пустом абзаце тоже становится блоком.
+ */
+export const Video: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "youtube", "twitch"]}
+        defaultValue={VIDEO_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * Только YouTube: блок Twitch из `value` становится своей ссылкой, а поле ссылки
+ * в «Video» отвечает ошибкой на ссылку чужого сервиса.
+ */
+export const VideoYoutubeOnly: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "youtube"]}
+        defaultValue={VIDEO_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/** Каталог сообщений русский: «Видео», «Воспроизвести», «Ссылка на видео». */
+export const VideoRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor
+          aria-label="Document"
+          tools={[...RICH_TEXT_PRESETS.full, "youtube", "twitch"]}
+          defaultValue={VIDEO_SAMPLE}
+        />
+      </div>
+    </UiProvider>
+  ),
+};

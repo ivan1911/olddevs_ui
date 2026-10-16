@@ -698,6 +698,13 @@ export const messages: UiMessages = {
     blockDuplicate: "Дублировать",
     blockDelete: "Удалить",
     toc: "Оглавление",
+    video: "Видео",
+    videoLink: "Ссылка на видео",
+    videoInsert: "Вставить",
+    videoNotFound: ({ services }) => `Введите ссылку на видео ${services}`,
+    videoPlay: "Воспроизвести",
+    videoPlayLabel: ({ service }) => `Воспроизвести видео ${service}`,
+    videoPlayer: ({ service }) => `Видео ${service}`,
     typographyQuotes: "ru",
   },
 };

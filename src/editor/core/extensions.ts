@@ -228,6 +228,8 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "codeBlock",
   "horizontalRule",
   "table",
+  "youtube",
+  "twitch",
   "emoji",
   "typography",
   "source",
@@ -356,5 +358,6 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
       ToolEntryShortcuts.configure({ insertItems: keyedItems, blockActions: keyedActions })
     );
   }
-  return extensions;
+  // Одно расширение у двух описаний (общий узел `video`) регистрируется один раз.
+  return [...new Set(extensions)];
 }

@@ -36,6 +36,7 @@ import { SEARCH_TOOL } from "./search/searchTool.js";
 import { TABLE_TOOL } from "./table/tableTool.js";
 import { TOC_TOOL } from "./toc/tocTool.js";
 import { TYPOGRAPHY_TOOL } from "./typography/typographyTool.js";
+import { TWITCH_TOOL, YOUTUBE_TOOL } from "./video/videoTools.js";
 import { resolveTools, TOOLS, type RichTextEditorPreset, type Tool } from "../core/tools.js";
 import { WRAPPER_TOOL } from "./wrapper/wrapperTool.js";
 
@@ -81,6 +82,8 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   wrapper: WRAPPER_TOOL,
   details: DETAILS_TOOL,
   typography: TYPOGRAPHY_TOOL,
+  youtube: YOUTUBE_TOOL,
+  twitch: TWITCH_TOOL,
   /*
     Разделитель и цитата: Инструмент с пунктом вставки и Инструмент с
     «Превратить в». Поля `insertItems` и `engine` те же, что у публичного

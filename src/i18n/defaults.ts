@@ -659,6 +659,13 @@ export const DEFAULT_MESSAGES: UiMessages = {
     blockDuplicate: "Duplicate",
     blockDelete: "Delete",
     toc: "Table of contents",
+    video: "Video",
+    videoLink: "Video link",
+    videoInsert: "Insert",
+    videoNotFound: ({ services }) => `Enter a link to a ${services} video`,
+    videoPlay: "Play",
+    videoPlayLabel: ({ service }) => `Play ${service} video`,
+    videoPlayer: ({ service }) => `${service} video`,
     typographyQuotes: "en",
   },
 };

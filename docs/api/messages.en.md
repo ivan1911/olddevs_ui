@@ -406,6 +406,13 @@ The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-edito
 | `blockDuplicate`                      | string   | Duplicate                                                                        | Дублировать                                                                        |
 | `blockDelete`                         | string   | Delete                                                                           | Удалить                                                                            |
 | `toc`                                 | string   | Table of contents                                                                | Оглавление                                                                         |
+| `video`                               | string   | Video                                                                            | Видео                                                                              |
+| `videoLink`                           | string   | Video link                                                                       | Ссылка на видео                                                                    |
+| `videoInsert`                         | string   | Insert                                                                           | Вставить                                                                           |
+| `videoNotFound`                       | function | —                                                                                | —                                                                                  |
+| `videoPlay`                           | string   | Play                                                                             | Воспроизвести                                                                      |
+| `videoPlayLabel`                      | function | —                                                                                | —                                                                                  |
+| `videoPlayer`                         | function | —                                                                                | —                                                                                  |
 | `typographyQuotes`                    | string   | en                                                                               | ru                                                                                 |
 
 ## `errorState`

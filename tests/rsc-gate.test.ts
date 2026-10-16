@@ -164,6 +164,22 @@ const SERVER_SAFE = [
       "Tiptap — schema.ts publishes the tones, and scripts/contrast.mjs loads the file directly.",
   },
   {
+    file: "editor/features/video/videoSrc.ts",
+    why:
+      "The light side of the video link rules (OLDSUI-281, ADR-0071) as data: the service names, " +
+      "the data-src check by two regular expressions and the test for a video block in HTML. Pure " +
+      "functions over a string, no React and no Tiptap — schema.ts sanitises with them on a Node " +
+      "server and RichTextView reads them to decide whether it needs the video island.",
+  },
+  {
+    file: "editor/features/video/videoLink.ts",
+    why:
+      "The heavy side of the video link rules (OLDSUI-281): the recognition of YouTube and Twitch " +
+      "links and the player address, pure functions over a string with the global URL. No React and " +
+      "no Tiptap; it carries no directive because the editor chunk and the view island import it, " +
+      "and a server may call it too (an address check before it renders).",
+  },
+  {
     file: "editor/core/sourceFormat.ts",
     why:
       "The HTML mode formatter of the editor (OLDSUI-76): a string of document HTML in, the " +
