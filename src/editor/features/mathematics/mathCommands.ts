@@ -2,7 +2,7 @@
 
 import type { Editor } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { NodeSelection, TextSelection } from "@tiptap/pm/state";
+import { NodeSelection, TextSelection, type EditorState } from "@tiptap/pm/state";
 
 /** Имена узлов расширения Mathematics из Tiptap. */
 export const INLINE_MATH = "inlineMath";
@@ -11,6 +11,25 @@ export const BLOCK_MATH = "blockMath";
 /** Узел — формула, строчная или блочная. */
 export function isFormulaNode(node: ProseMirrorNode): boolean {
   return node.type.name === INLINE_MATH || node.type.name === BLOCK_MATH;
+}
+
+/**
+ * Выделенная формула: узел с позицией. Выделена она, когда выделен узел целиком
+ * (щелчок) или когда выделение — ровно её диапазон, как у `Shift+→` от каретки
+ * перед ней. С клавиатуры формулу выделяет только второе: ProseMirror переносит
+ * каретку через строчный атом без выделения, а выделение узла программой Chromium
+ * сбрасывает в каретку при следующем `selectionchange` — стрелка, перехваченная
+ * ради этого, не двигала бы каретку вовсе. `null` — выделено что-то другое.
+ */
+export function selectedFormula(state: EditorState): { node: ProseMirrorNode; pos: number } | null {
+  const { selection } = state;
+  if (selection instanceof NodeSelection) {
+    return isFormulaNode(selection.node) ? { node: selection.node, pos: selection.from } : null;
+  }
+  const node = selection.empty ? null : state.doc.nodeAt(selection.from);
+  return node && isFormulaNode(node) && selection.to === selection.from + node.nodeSize
+    ? { node, pos: selection.from }
+    : null;
 }
 
 /**

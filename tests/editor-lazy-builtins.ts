@@ -22,7 +22,7 @@ export async function loadLazyBuiltins(): Promise<void> {
   const view = render(
     createElement(RichTextEditor, {
       "aria-label": "Warm-up",
-      tools: TOOLS,
+      tools: [...TOOLS],
       onReady: () => (ready = true),
     })
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Editor } from "@tiptap/react";
-import { useId, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "../../../components/actions/Button.js";
 import { FormField } from "../../../components/inputs/FormField.js";
 import { TextControl } from "../../../components/inputs/TextControl.js";
@@ -57,17 +57,29 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
   }, [editor, name]);
 
   const latex = draft.trim();
-  const preview = useMemo(() => {
-    if (!latex) return { html: "", error: null };
+  // Проверка — `renderToString`: разметка из него никуда не вставляется, а ошибка
+  // KaTeX приходит тем же исключением, что при отрисовке.
+  const error = useMemo(() => {
+    if (!latex) return null;
     try {
-      return { html: katex.renderToString(latex, katexOptions), error: null };
-    } catch (error) {
-      return { html: "", error: mathErrorDetail(error) };
+      katex.renderToString(latex, katexOptions);
+      return null;
+    } catch (failure) {
+      return mathErrorDetail(failure);
     }
   }, [latex, katexOptions]);
+  // Предпросмотр рисует `katex.render` прямо в элемент: размеры KaTeX задаёт через
+  // CSSOM, а не строкой `style="…"` в `innerHTML`, и строгий CSP потребителя их не режет.
+  const previewRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const target = previewRef.current;
+    if (!target) return;
+    if (latex && error === null) katex.render(latex, target, katexOptions);
+    else target.textContent = "";
+  }, [latex, error, katexOptions]);
 
   const apply = () => {
-    if (!latex || preview.error !== null) return;
+    if (!latex || error !== null) return;
     if (pos === undefined) insertFormula(editor, kind, latex);
     else if (latex !== existing) {
       // Команда расширения: узел обновляется на месте, одна правка в истории.
@@ -99,7 +111,7 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
       <FormField
         label={messages.mathLatex}
         htmlFor={fieldId}
-        error={preview.error === null ? undefined : messages.mathInvalid({ detail: preview.error })}
+        error={error === null ? undefined : messages.mathInvalid({ detail: error })}
         layout="stack"
       >
         <TextControl
@@ -120,9 +132,8 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
         aria-label={messages.mathPreview}
         className="border-line bg-bg-2 rounded-control flex min-h-12 items-center justify-center overflow-x-auto border px-3 py-2"
       >
-        {preview.html ? (
-          <span dangerouslySetInnerHTML={{ __html: preview.html }} />
-        ) : (
+        <span ref={previewRef} hidden={!latex || error !== null} />
+        {(!latex || error !== null) && (
           <span className="text-fg-2 text-sm">{messages.mathEmpty}</span>
         )}
       </div>
@@ -137,7 +148,7 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
           size="sm"
           variant="solid"
           tone="accent"
-          disabled={!latex || preview.error !== null}
+          disabled={!latex || error !== null}
           onClick={apply}
         >
           {existing === null ? messages.mathInsert : messages.mathApply}

@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { userEvent } from "@testing-library/user-event";
 import type { Editor } from "@tiptap/react";
 import createDOMPurify from "dompurify";
+import { NodeSelection } from "@tiptap/pm/state";
 import { createRef } from "react";
 import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import { UiProvider } from "../src/i18n/UiProvider.js";
@@ -547,6 +548,21 @@ test("Enter on a formula selected with the keyboard opens its popover", async ()
   expect(within(popover).getByRole("textbox", { name: "LaTeX" })).toHaveProperty("value", "x^2");
   await user.keyboard("{Escape}");
   // Enter не расщепил абзац.
+  expect(editor.getHTML()).toBe(`<p>a ${inline("x^2")} b</p>`);
+});
+
+test("a range that is exactly one formula (Shift+Right from before it) counts as selected for Enter", async () => {
+  const { editor } = renderEditor({ defaultValue: `<p>a ${inline("x^2")} b</p>` });
+  const pos = positionOf(editor, "inlineMath");
+  act(() => {
+    editor.view.focus();
+    editor.commands.setTextSelection({ from: pos, to: pos + 1 });
+  });
+  expect(editor.state.selection instanceof NodeSelection).toBe(false);
+
+  expect(press(editor, "Enter")).toBe(true);
+
+  expect(await screen.findByRole("dialog", { name: "Formula" })).toBeTruthy();
   expect(editor.getHTML()).toBe(`<p>a ${inline("x^2")} b</p>`);
 });
 

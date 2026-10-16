@@ -2,13 +2,12 @@
 
 import { Extension, type Editor, type Extensions } from "@tiptap/core";
 import { BlockMath, InlineMath } from "@tiptap/extension-mathematics";
-import { NodeSelection } from "@tiptap/pm/state";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { ReactNode } from "react";
 import type { ToolPopoverRequest } from "../../core/toolButtons.js";
 import { katexOptionsFor } from "./katexEngine.js";
 import { MathForm, type MathFormProps } from "./MathForm.js";
-import { BLOCK_MATH, isFormulaNode } from "./mathCommands.js";
+import { BLOCK_MATH, selectedFormula } from "./mathCommands.js";
 import {
   blockMathTokenizer,
   inlineMathTokenizer,
@@ -53,8 +52,9 @@ export interface MathExtensionsContext {
  * Extensions Инструмента: узлы `inlineMath` и `blockMath` и правка с клавиатуры.
  *
  * - **Правка.** Щелчок (`onClick` расширения) и Enter на выделенной формуле открывают
- *   Поповер кита вместо встроенной правки Tiptap. В нередактируемом поле формула
- *   только показывается.
+ *   Поповер кита вместо встроенной правки Tiptap. С клавиатуры строчную формулу
+ *   выделяет `Shift+→` или `Shift+←` от каретки рядом с ней (`selectedFormula`).
+ *   В нередактируемом поле формула только показывается.
  * - **Текст атома — LaTeX.** `renderText` даёт исходник счётчику, копированию текстом
  *   и поиску (ADR-0058, п. 4), как `data-latex` даёт его HTML.
  * - **Markdown.** Токенизаторы и выгрузка — `mathMarkdown.ts`.
@@ -95,19 +95,19 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
     katexOptions: katexOptionsFor(options, true),
     onClick: open,
   });
-  const openOnEnter = Extension.create({
-    name: "mathOpenOnEnter",
+  const keyboard = Extension.create({
+    name: "mathKeyboard",
     addKeyboardShortcuts() {
       return {
+        // Enter на выделенной формуле — щелчком или `Shift+→` — открывает Поповер, а не рвёт абзац.
         Enter: ({ editor }) => {
-          const { selection } = editor.state;
-          if (!editor.isEditable || !(selection instanceof NodeSelection)) return false;
-          if (!isFormulaNode(selection.node)) return false;
-          edit(selection.node, selection.from);
+          const found = editor.isEditable ? selectedFormula(editor.state) : null;
+          if (!found) return false;
+          edit(found.node, found.pos);
           return true;
         },
       };
     },
   });
-  return [block, inline, openOnEnter];
+  return [block, inline, keyboard];
 }

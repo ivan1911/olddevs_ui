@@ -331,7 +331,10 @@ const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
  *
  * БЛОК. Центрируется и прокручивается по горизонтали, если шире Документа; поля
  * `.katex-display` сняты, ритм Блоков задаёт Документ. Исходник блока — слева и с
- * переносами строк, как набрал автор.
+ * переносами строк, как набрал автор, и не ниже 4 rem (`min-h-16`): отрисованная
+ * дробь или интеграл в разы выше строки исходника, и без запаса поле прыгало бы по
+ * высоте с приходом чанка (Скелет, ADR-0070, п. 5). Формула без дроби чуть ниже
+ * запаса, с матрицей — выше; точной высоты до отрисовки не знает никто.
  *
  * РЕДАКТОР. Вид узла (`tiptap-mathematics-render--editable`) кликабелен: щелчок
  * открывает Поповер, наведение подсвечивает. Выбранная стрелками формула
@@ -342,6 +345,9 @@ const MATH_CLASS =
   "[&_:is(span[data-type=inline-math],div[data-type=block-math]):not(:has(.katex))]:text-[0.9em] " +
   "[&_div[data-type=block-math]]:overflow-x-auto [&_div[data-type=block-math]]:py-1 " +
   "[&_div[data-type=block-math]]:text-center " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:flex " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:min-h-16 " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:items-center " +
   "[&_div[data-type=block-math]:not(:has(.katex))]:text-left " +
   "[&_div[data-type=block-math]:not(:has(.katex))]:whitespace-pre-wrap " +
   "[&_.katex-display]:my-0 " +
