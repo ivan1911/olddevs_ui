@@ -290,6 +290,20 @@ const SERVER_SAFE = [
       "and no DOM, so the server-rendered RichTextView calls it.",
   },
   {
+    file: "editor/features/mathematics/mathHtml.ts",
+    why:
+      "hasMath and withMathSource: string-to-string functions over the saved HTML that put the LaTeX " +
+      "source into the empty formula elements (ADR-0070). No imports, no React and no DOM, so the " +
+      "server-rendered RichTextView calls them.",
+  },
+  {
+    file: "editor/features/mathematics/mathOptions.ts",
+    why:
+      'The defaults, value checks and the reader of tool("mathematics") options: functions over data. ' +
+      "It imports toolOptions.ts and customTool.ts (both server-safe) and neither Tiptap nor KaTeX, so " +
+      "the server-rendered RichTextView reads the macros for its island.",
+  },
+  {
     file: "editor/styles/prose.ts",
     why:
       "Document typography as a class string, shared by the editor and the server-rendered " +

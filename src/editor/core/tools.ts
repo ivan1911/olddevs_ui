@@ -13,7 +13,7 @@
  * новым именем для него не ломающее. Зато имя без реализации стало бы
  * молчаливой ловушкой: `tools={["x"]}` компилировался бы и ничего не давал.
  * Так пришли `link`, `color`, `highlight`, `align`, `table`, `image`, `emoji`,
- * `layout`, `wrapper`, `details`, `invisibleCharacters`, `source` и `typography`; зарезервированных имён
+ * `layout`, `wrapper`, `details`, `mathematics`, `invisibleCharacters`, `source` и `typography`; зарезервированных имён
  * сейчас нет.
  *
  * `heading1` — заголовок первого уровня, надстройка над `heading`:
@@ -50,6 +50,17 @@
  * становится абзацем, содержимое идёт Блоками следом. Есть в `full`, в `basic`
  * нет — по той же причине, что у Раскладки и Обёртки. Открытость в Документ
  * пишет Опция `tool("details", { persist: true })`.
+ *
+ * `mathematics` — формулы LaTeX, строчные и блочные, на расширении Mathematics из
+ * Tiptap (ADR-0070; ADR-0048: заказчика при выпуске не было). Кнопки Панели у него
+ * нет — Меню вставки (пункты «Формула» и «Блочная формула») и щелчок или Enter на
+ * формуле: правит её Поповер кита. В Документе — только исходный LaTeX
+ * (`data-latex`), отрисовывает KaTeX: в Редакторе — вид узла, в `RichTextView` — Остров.
+ * KaTeX тяжёлый, поэтому Инструмент ленивый: его Части для движка и KaTeX с CSS
+ * грузит Загрузчик (ADR-0058, п. 11.1). В пресеты не входит — ни в `full`, ни в
+ * `basic`: пресеты не должны грузить KaTeX; включается явной записью в `tools`.
+ * Выключенный Инструмент оставляет формулу из вставки и `value` текстом
+ * `$…$` / `$$…$$` — LaTeX не теряется.
  *
  * `source` — HTML-режим: кнопка «HTML» фиксированной Панели меняет
  * Документ на поле с его исходным HTML, а выход применяет правку через Схему,
@@ -114,6 +125,7 @@ export const TOOLS = [
   "layout",
   "wrapper",
   "details",
+  "mathematics",
   "emoji",
   "source",
   "search",
@@ -140,8 +152,9 @@ export type RichTextEditorPreset = "full" | "basic";
  * markdown-шорткатом, чем через меню.
  */
 export const PRESETS: Record<RichTextEditorPreset, readonly Tool[]> = {
-  // Все встроенные, кроме Оглавления и типографики: их включают только явно (ADR-0068).
-  full: TOOLS.filter((tool) => tool !== "toc" && tool !== "typography"),
+  // Все встроенные, кроме Оглавления, типографики и формул: их включают только явно
+  // (ADR-0068; формулы грузят KaTeX, ADR-0070).
+  full: TOOLS.filter((tool) => tool !== "toc" && tool !== "typography" && tool !== "mathematics"),
   basic: [
     "history",
     "bold",

@@ -145,6 +145,7 @@ const INSERT_ORDER: readonly Tool[] = [
   "layout",
   "wrapper",
   "details",
+  "mathematics",
 ];
 
 /** Разделы по порядку показа. */

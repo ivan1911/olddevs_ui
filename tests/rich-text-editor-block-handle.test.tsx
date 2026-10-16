@@ -246,6 +246,9 @@ test("Add offers the insert menu items once each, without shortcut hints", async
     "Wrapper",
     // Сворачиваемый Блок (OLDSUI-277): `rich-text-editor-details.test.tsx`.
     "Collapsible block",
+    // Формулы (OLDSUI-280) — в `TOOLS`, вне пресетов: `rich-text-editor-mathematics.test.tsx`.
+    "Formula",
+    "Block formula",
   ]);
   expect(items.every((item) => item.shortcut === null)).toBe(true);
 });

@@ -2,6 +2,7 @@
 
 import type { Editor, JSONContent } from "@tiptap/core";
 import type { Schema } from "@tiptap/pm/model";
+import { formulaJsonAsText } from "../features/mathematics/mathAsText.js";
 
 /**
  * Дерево JSON — к Схеме Редактора, до `Schema.nodeFromJSON`.
@@ -83,7 +84,8 @@ export function conformToSchema(
   }
   const children = (node.content ?? []).flatMap((child) => conformToSchema(child, schema, options));
   const type = node.type && !options.excluded?.has(node.type) ? schema.nodes[node.type] : undefined;
-  if (!type) return children;
+  // Формула без Инструмента `mathematics` — текстом, а не потерей (`mathAsText.ts`).
+  if (!type) return formulaJsonAsText(node) ?? children;
 
   const content = type.inlineContent || type.isLeaf ? children : wrapInlineRuns(children, schema);
   const result: JSONContent = { ...node, content: content.length ? content : undefined };

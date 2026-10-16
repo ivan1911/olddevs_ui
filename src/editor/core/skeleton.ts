@@ -3,6 +3,7 @@
 import { createDocument, getSchema } from "@tiptap/core";
 import { DOMSerializer } from "@tiptap/pm/model";
 import { withCodeHeaders } from "../features/code/codeHeader.js";
+import { readFormulasAsText } from "../features/mathematics/mathAsText.js";
 import { createEditorExtensions, type EditorExtensionOptions } from "./extensions.js";
 import { toolList, type ToolDescriptor, type ToolList } from "./toolDescriptor.js";
 import type { ToolLoader } from "./toolLoader.js";
@@ -70,6 +71,9 @@ function narrowed(
 function cleaned(html: string, tools: ToolList): string | null {
   try {
     const schema = getSchema(createEditorExtensions({ tools, ...SCHEMA_ONLY }));
+    // Без `mathematics` формула в Скелете — текстом, как в движке: расширение этого
+    // не сделает, движка у Скелета нет (`mathAsText.ts`).
+    if (!tools.has("mathematics")) readFormulasAsText(schema);
     const inert = document.implementation.createHTMLDocument("");
     const box = inert.createElement("div");
     box.append(

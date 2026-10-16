@@ -70,6 +70,12 @@ export const RICH_TEXT_SCHEMA = {
    * Блоки остаются подряд. Теги и атрибуты Блока открыты только в этой форме:
    * `iframe` и ему подобное так не открывается.
    *
+   * Формулы — `span[data-type="inline-math"]` в строке и `div[data-type="block-math"]`
+   * Блоком, исходный LaTeX в `data-latex` (ADR-0070). Оба элемента всегда пусты:
+   * отрисованная разметка KaTeX в Документ не попадает, её рисует Редактор и Остров
+   * `RichTextView`. Пара `data-type` и `data-latex` открыта только на этих двух
+   * тегах; `data-latex` — единственное значение атрибута, где допустим `<`.
+   *
    * Таблица — `table > tbody > tr > th|td`, без `thead`, `colgroup` и
    * `caption`: строка-заголовок — это обычная первая строка из `th`. На ячейке
    * бывают только слияние (`colspan`, `rowspan`) и выравнивание столбца
@@ -122,10 +128,11 @@ export const RICH_TEXT_SCHEMA = {
      * `data-layout` — вариант из `layouts`, только у Раскладки. Обёртка —
      * `data-block="wrapper"` и, если у неё есть тон, `data-tone` — имя из
      * `wrapperTones`, только у Обёртки. Обёртка содержимого сворачиваемого
-     * Блока — `data-type="detailsContent"`, только прямо в `details`. У `div`
+     * Блока — `data-type="detailsContent"`, только прямо в `details`. Блочная
+     * формула — `data-type="block-math"` с `data-latex`, только на `div`. У `div`
      * пункта чек-листа атрибутов нет.
      */
-    div: ["data-block", "data-layout", "data-tone", "data-type"],
+    div: ["data-block", "data-layout", "data-tone", "data-type", "data-latex"],
     /** Открытый сворачиваемый Блок: пустой `open`, только с Опцией `persist`. */
     details: ["open"],
     /** Пункт чек-листа: `data-type="taskItem"` и `data-checked="true|false"`. */
@@ -147,9 +154,10 @@ export const RICH_TEXT_SCHEMA = {
      * Редактор не отдаёт и при загрузке отбрасывает вместе с обёрткой (старые
      * имена маркера он переводит — `legacyMarkerColors`). На `span` без
      * `data-color` и без `style` он тоже не бывает — пустой `span` есть только
-     * в пункте чек-листа.
+     * в пункте чек-листа и у строчной формулы: `data-type="inline-math"` с
+     * `data-latex`, только на `span`.
      */
-    span: ["data-color", "style"],
+    span: ["data-color", "style", "data-type", "data-latex"],
     mark: ["data-color", "style"],
     /**
      * Выравнивание Блока: значение из `alignments`, кроме `left` — оно
@@ -601,6 +609,9 @@ export interface RichTextPurifier {
  *   `div[data-type="detailsContent"]` тоже прямо в нём; `open` — только пустой и
  *   только на `details`. `summary` и обёртка вне `details` теряют тег, их Блоки
  *   остаются подряд;
+ * - формула — `span[data-type="inline-math"]` или `div[data-type="block-math"]` с
+ *   `data-latex`: пара открыта только на этих тегах, сам элемент пуст, а в `data-latex`
+ *   допустим `<` (это текст LaTeX, не разметка). Без `data-latex` элемент теряет обёртку;
  * - `colspan`, `rowspan` — на `th`/`td`, целое от 1 до `tableSpans`;
  * - ссылка — `href` по `protocols` (выражение конфига), `rel` всегда
  *   `"noopener noreferrer"`, ссылка без адреса становится текстом;
@@ -669,7 +680,15 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
     // Обёртка содержимого сворачиваемого Блока: только `div` прямо в `details`.
     (node.nodeName === "DIV" &&
       value === DETAILS_CONTENT &&
-      node.parentElement?.nodeName === "DETAILS"),
+      node.parentElement?.nodeName === "DETAILS") ||
+    // Формула: строчная — `span`, блочная — `div`; значение чужого тега не проходит.
+    (node.nodeName === "SPAN" && value === INLINE_MATH) ||
+    (node.nodeName === "DIV" && value === BLOCK_MATH),
+  // Исходный LaTeX — текст, а не разметка, поэтому правила «без `<`» (ADR-0070) к нему
+  // нет: DOMPurify экранирует его при выводе. Но только у формулы: тот же атрибут на
+  // другом теге или рядом с чужим `data-type` снимается. `data-type` читается из
+  // разметки, а не из решения хука: DOMPurify обходит атрибуты в своём порядке.
+  "data-latex": (node) => isFormula(node),
   // Открытый Блок: `open=""`, как его пишет Редактор; значение `open="open"` из
   // чужого HTML атрибут теряет, Блок остаётся закрытым.
   open: (node, value) => node.nodeName === "DETAILS" && value === "",
@@ -814,6 +833,19 @@ const PARENT_OF: Record<string, string> = {
 /** Значение `div[data-type]` обёртки содержимого сворачиваемого Блока (`details.ts`). */
 const DETAILS_CONTENT = "detailsContent";
 
+/** Значения `data-type` формул: строчная — `span`, блочная — `div` (ADR-0070). */
+const INLINE_MATH = "inline-math";
+const BLOCK_MATH = "block-math";
+
+/** Формула в форме, которую пишет Редактор: тег и `data-type` из пары. */
+function isFormula(node: Element): boolean {
+  const type = node.getAttribute("data-type");
+  return (
+    (node.nodeName === "SPAN" && type === INLINE_MATH) ||
+    (node.nodeName === "DIV" && type === BLOCK_MATH)
+  );
+}
+
 /** Значения `div[data-block]`: Раскладка, её колонка и Обёртка. */
 const LAYOUT_BLOCK = "layout";
 const COLUMN_BLOCK = "column";
@@ -880,6 +912,14 @@ function checkCustom(node: Element, schema: RichTextSchema): boolean {
 /** Хук `afterSanitizeAttributes`: место элемента в Документе. */
 function checkStructure(node: Element, schema: RichTextSchema): void {
   if (checkLayout(node) || checkCustom(node, schema)) return;
+  // Формула — лист: пустой элемент с `data-latex`. Отрисованная разметка KaTeX в
+  // Документ не попадает (ADR-0070), поэтому дети снимаются; без исходника
+  // элемент теряет обёртку, как любой лишний `span` и `div`.
+  if (isFormula(node)) {
+    if (node.hasAttribute("data-latex")) node.replaceChildren();
+    else node.replaceWith(...node.childNodes);
+    return;
+  }
   // Без `type="checkbox"` поле ввода — обычное текстовое: такого флажка нет.
   if (node.nodeName === "INPUT" && node.getAttribute("type") !== "checkbox") {
     node.remove();

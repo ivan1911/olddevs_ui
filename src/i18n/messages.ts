@@ -1011,6 +1011,24 @@ export interface UiMessages {
     unwrapDetails: string;
     detailsToggle: (vars: { text: string }) => string;
     /**
+     * Формулы (Mathematics, ADR-0070). `mathInline` и `mathBlock` — пункты Меню
+     * вставки и «Добавить ›» у ручки Блока, они же имена рамки Поповера формулы.
+     * В Поповере: `mathLatex` — подпись поля, `mathPreview` — имя области
+     * предпросмотра, `mathEmpty` — её подсказка, пока поле пусто, `mathInvalid` —
+     * ошибка в поле (`detail` — сообщение KaTeX: движок его не переводит, оно
+     * по-английски), `mathInsert` и `mathApply` — кнопка новой и правимой формулы,
+     * `mathRemove` — убрать правимую формулу из Документа.
+     */
+    mathInline: string;
+    mathBlock: string;
+    mathLatex: string;
+    mathPreview: string;
+    mathEmpty: string;
+    mathInvalid: (vars: { detail: string }) => string;
+    mathInsert: string;
+    mathApply: string;
+    mathRemove: string;
+    /**
      * Эмодзи. `emoji` — имя кнопки Панели; `emojiGrid` — имя сетки в поповере.
      * `emojiCategory` — названия категорий, `emojiName` — имя каждого эмодзи:
      * скринридер читает ячейку по имени, а не по символу (разные программы

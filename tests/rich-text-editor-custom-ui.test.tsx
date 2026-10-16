@@ -143,8 +143,11 @@ test("own items stand at the end of their section, after the kit's, with the sho
 
   const { insert, turnInto } = slashRows();
   expect(insert.at(-1)).toMatch(/^Box en-US/);
-  expect(insert.at(-3)).toMatch(/^Wrapper/);
-  expect(insert.at(-2)).toMatch(/^Collapsible block/);
+  expect(insert.at(-5)).toMatch(/^Wrapper/);
+  expect(insert.at(-4)).toMatch(/^Collapsible block/);
+  // Формулы (OLDSUI-280) — в наборе `TOOLS`, но вне пресетов: за сворачиваемым Блоком, перед своими.
+  expect(insert.at(-3)).toMatch(/^Formula/);
+  expect(insert.at(-2)).toMatch(/^Block formula/);
   expect(turnInto.at(-1)).toMatch(/^Card/);
   expect(turnInto.at(-2)).toMatch(/^Code block/);
   // Подсказка — сочетание из поля записи: Ctrl на не-Apple (jsdom).
@@ -255,7 +258,14 @@ test("Add lists own items and puts a new block under the current one, one undo s
 
   const add = await openSubmenu(user, await openHandleMenu(user), "Add");
   const names = itemsOf(add).map((entry) => entry.name);
-  expect(names.slice(-4)).toEqual(["Wrapper", "Collapsible block", "Box en-US", "Card"]);
+  expect(names.slice(-6)).toEqual([
+    "Wrapper",
+    "Collapsible block",
+    "Formula",
+    "Block formula",
+    "Box en-US",
+    "Card",
+  ]);
   // Подсказок сочетаний в «Добавить» нет — как у встроенных.
   expect(itemsOf(add).every((entry) => entry.shortcut === null)).toBe(true);
 

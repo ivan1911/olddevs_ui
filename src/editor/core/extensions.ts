@@ -16,6 +16,7 @@ import { FieldNoticeExtension, type FieldNoticeOptions } from "./fieldNotice.js"
 import type { RichImageOptions } from "../features/image/image.js";
 import { createDocumentNode } from "./document.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
+import { FormulasAsText } from "../features/mathematics/mathAsText.js";
 import { MaxLength } from "./maxLength.js";
 import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
 import {
@@ -210,6 +211,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "layout",
   "wrapper",
   "details",
+  "mathematics",
   "insertMenu",
   TRIGGERS,
   "history",
@@ -294,6 +296,9 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     MaxLength.configure({ limit: options.limit }),
     // `leafText` из `renderText`: Текст атома для счётчика, копирования и `textContent`.
     AtomText,
+    // Без Инструмента `mathematics` формула из `value` и вставки читается текстом
+    // `$…$`, а не пропадает вместе с пустым элементом (`mathAsText.ts`).
+    ...(options.tools.has("mathematics") ? [] : [FormulasAsText]),
     ToolbarFocus.configure({ focus: options.focusToolbar }),
     HandledTabStaysInside,
     // Команды над Блоками — своей разметки нет, включены всегда (`blockCommands.ts`).

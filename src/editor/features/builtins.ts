@@ -27,6 +27,7 @@ import {
   SUPERSCRIPT_TOOL,
   UNDERLINE_TOOL,
 } from "./marks/markTools.js";
+import { MATHEMATICS_TOOL } from "./mathematics/mathematicsTool.js";
 import { devError } from "../../lib/dev-warn.js";
 import type { ToolEntry } from "../core/customTool.js";
 import { describeCustomTool, describeDefinition } from "../core/customToolEngine.js";
@@ -80,6 +81,7 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   align: ALIGN_TOOL,
   wrapper: WRAPPER_TOOL,
   details: DETAILS_TOOL,
+  mathematics: MATHEMATICS_TOOL,
   typography: TYPOGRAPHY_TOOL,
   /*
     Разделитель и цитата: Инструмент с пунктом вставки и Инструмент с
@@ -153,7 +155,8 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   /*
     Ленивые встроенные (ADR-0058, п. 11.1): их нет в `basic`, а
     Extensions тяжелее 10 кБ gzip, поэтому они грузятся загрузчиком
-    (`load`) — тем же, что у своего Инструмента.
+    (`load`) — тем же, что у своего Инструмента. Формулы (`mathematics`) ленивы так
+    же, но стоят выше, рядом с остальными новыми Инструментами, — их нет и в `full`.
   */
   codeBlock: CODE_BLOCK_TOOL,
   table: TABLE_TOOL,

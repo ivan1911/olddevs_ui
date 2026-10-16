@@ -318,6 +318,49 @@ const DETAILS_EDITOR =
 const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
 
 /**
+ * Формулы (Инструмент `mathematics`, ADR-0070): `span[data-type=inline-math]` в строке
+ * и `div[data-type=block-math]` Блоком. Вид один в Редакторе и в Просмотре.
+ *
+ * ИСХОДНИК И ОТРИСОВКА. До отрисовки (Скелет Редактора, `RichTextView` без JS и до
+ * Острова) внутри элемента стоит исходный LaTeX текстом, и такой элемент — без
+ * `.katex` внутри — красится моноширинным: автор видит, где формула, а читатель
+ * читает исходник. Отрисованная формула — разметка KaTeX, ей своего шрифта не
+ * нужно: его несёт CSS KaTeX. Формула с ошибкой (`inline-math-error`,
+ * `block-math-error` у вида узла, `data-math-error` у Острова) остаётся исходником
+ * и подчёркнута волной цветом ошибки.
+ *
+ * БЛОК. Центрируется и прокручивается по горизонтали, если шире Документа; поля
+ * `.katex-display` сняты, ритм Блоков задаёт Документ. Исходник блока — слева и с
+ * переносами строк, как набрал автор.
+ *
+ * РЕДАКТОР. Вид узла (`tiptap-mathematics-render--editable`) кликабелен: щелчок
+ * открывает Поповер, наведение подсвечивает. Выбранная стрелками формула
+ * обведена — на ней работает Enter.
+ */
+const MATH_CLASS =
+  "[&_span[data-type=inline-math]:not(:has(.katex))]:font-mono " +
+  "[&_span[data-type=inline-math]:not(:has(.katex))]:text-[0.9em] " +
+  "[&_div[data-type=block-math]]:overflow-x-auto [&_div[data-type=block-math]]:py-1 " +
+  "[&_div[data-type=block-math]]:text-center " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:font-mono " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:text-[0.9em] " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:text-left " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:whitespace-pre-wrap " +
+  "[&_.katex-display]:my-0 " +
+  "[&_.inline-math-error]:font-mono [&_.block-math-error]:font-mono " +
+  "[&_.block-math-error]:text-left [&_.block-math-error]:whitespace-pre-wrap " +
+  "[&_.inline-math-error]:text-(--rte-text-danger) [&_.block-math-error]:text-(--rte-text-danger) " +
+  "[&_[data-math-error]]:text-(--rte-text-danger) " +
+  "[&_.inline-math-error]:underline [&_.block-math-error]:underline " +
+  "[&_[data-math-error]]:underline [&_.inline-math-error]:decoration-wavy " +
+  "[&_.block-math-error]:decoration-wavy [&_[data-math-error]]:decoration-wavy " +
+  "[&_.tiptap-mathematics-render--editable]:cursor-pointer " +
+  "[&_.tiptap-mathematics-render--editable]:rounded-(--rte-radius) " +
+  "[&_.tiptap-mathematics-render--editable:hover]:bg-(--rte-control-hover) " +
+  "[&_.tiptap-mathematics-render.ProseMirror-selectednode]:outline-2 " +
+  "[&_.tiptap-mathematics-render.ProseMirror-selectednode]:outline-(--rte-ring) ";
+
+/**
  * Невидимые символы (Инструмент `invisibleCharacters`): расширение Tiptap
  * вставляет в разметку виджеты `span.tiptap-invisible-character` с модификатором
  * `--space`, `--break` или `--paragraph`; пустой `span` несёт знак в `::before`.
@@ -478,6 +521,7 @@ const PROSE_RULES =
   " " +
   DETAILS_CLASS +
   " " +
+  MATH_CLASS +
   INVISIBLE_CHARACTERS_CLASS +
   CUSTOM_BLOCK_CLASS;
 
