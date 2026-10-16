@@ -41,14 +41,14 @@ sourceHash: 992d056f99b6
 
 - `items` are nodes in the `TreeNode` format; it is the same format as in `TreeView`, not a copy of it. A node encountered a second time during the traversal is not expanded further: a cycle in the data must not turn into a stack overflow.
 - `value` and `onChange` always work with an **array of keys**, both with `multiple` and without it.
-- `multiple` turns on multiple selection and changes the look of the closed field: chips instead of a label.
+- `multiple` turns on multiple selection and changes the look of the closed field: tags instead of a label.
 - `placeholder` is the text shown in an empty field. Defaults to the text from the message catalog.
 - `defaultExpandedKeys` — which nodes are expanded on first render; `expandedKeys` + `onExpandedChange` — controlled expansion. The second is for consumers who expand the tree to the current value or load branches on demand (lazy loading): without it a deeply nested selected node opens on a collapsed tree where nothing points to it.
 - `clearable` shows a clear button when something is selected; `clearLabel` sets its accessible name, as in `Select`.
 - `disabled` keeps the field from opening and closes one that is already open.
 - `aria-label` is required: for an unnamed field a screen reader announces only the value and "button", not what the field is for. `aria-label` becomes part of the field name together with the value, not instead of it.
 - A key that is not in `items` is shown **as the key itself**. Hiding it would give a field that says "nothing selected" while reporting a non-empty value to the consumer; dropping it would silently edit the consumer's value.
-- With `multiple` no more than three chips are shown; the rest collapse into "+N more": a field that grows by five rows stops being a field. To see exactly what is selected, open the tree.
+- With `multiple` no more than three tags are shown; the rest collapse into "+N more": a field that grows by five rows stops being a field. To see exactly what is selected, open the tree.
 
 ## Composition, not a second tree
 

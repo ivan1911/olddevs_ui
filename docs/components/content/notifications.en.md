@@ -155,7 +155,7 @@ popover.
 
 Bulk actions are the existing `SelectionBar`, not a bar of its own: it already
 carries a counter, selection clearing, two action slots and the rule "at zero
-there is no bar at all". Stickiness is off here: in a popover there is nothing
+there is no bar at all". Sticky positioning is off here: in a popover there is nothing
 to stick to.
 
 **The unread counter comes as a prop**, and is not computed from the rows: a

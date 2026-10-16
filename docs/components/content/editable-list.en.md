@@ -132,7 +132,7 @@ nobody underlined. The row's rounded corners are removed — under a rounded row
 straight line bends around the corners and stops being straight — and the hover
 highlight becomes a full-width stripe, as is usual for a divided list.
 
-The component does not support a bordered backing for a row, although that is also
+The component does not support a bordered background for a row, although that is also
 a way to separate rows. That option was considered and rejected: rows styled as
 cards read heavier, eight tasks turn into eight cards. No new prop is added for
 the future: an API nobody asked for would still have to be maintained
