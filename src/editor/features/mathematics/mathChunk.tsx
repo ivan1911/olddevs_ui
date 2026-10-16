@@ -3,6 +3,7 @@
 import { Extension, type Editor, type Extensions } from "@tiptap/core";
 import { BlockMath, InlineMath } from "@tiptap/extension-mathematics";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { TextSelection } from "@tiptap/pm/state";
 import type { ReactNode } from "react";
 import type { ToolPopoverRequest } from "../../core/toolButtons.js";
 import { katexOptionsFor } from "./katexEngine.js";
@@ -15,7 +16,7 @@ import {
   renderInlineMath,
 } from "./mathMarkdown.js";
 import { safeLatexSource } from "./mathHtml.js";
-import { BLOCK_FORMULA_NODE, FORMULA_SOURCE_ATTRIBUTE } from "./mathNames.js";
+import { BLOCK_FORMULA_NODE, FORMULA_SOURCE_ATTRIBUTE, INLINE_FORMULA_NODE } from "./mathNames.js";
 import type { MathRenderOptions } from "./mathOptions.js";
 
 /*
@@ -117,10 +118,31 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
     katexOptions: katexOptionsFor(options, true),
     onClick: open,
   });
+  /*
+    `Shift+→` и `Shift+←` у строчной формулы выделяют ровно её диапазоном текста. Без
+    перехвата выделение расширяет Chromium, и через `contenteditable="false"` он то
+    сворачивает его, то перешагивает атом дальше — Enter тогда не находит формулу.
+    Диапазон текста, в отличие от выделения узла, Chromium при `selectionchange` не
+    сбрасывает: ту же форму дал бы и удачный нативный `Shift+→`.
+  */
+  const selectBeside = (editor: Editor, forward: boolean) => {
+    const { selection } = editor.state;
+    if (!selection.empty) return false;
+    const { $head } = selection;
+    const node = forward ? $head.nodeAfter : $head.nodeBefore;
+    if (!node || node.type.name !== INLINE_FORMULA_NODE) return false;
+    const head = forward ? $head.pos + node.nodeSize : $head.pos - node.nodeSize;
+    editor.view.dispatch(
+      editor.state.tr.setSelection(TextSelection.create(editor.state.doc, $head.pos, head))
+    );
+    return true;
+  };
   const keyboard = Extension.create({
     name: "mathKeyboard",
     addKeyboardShortcuts() {
       return {
+        "Shift-ArrowRight": ({ editor }) => selectBeside(editor, true),
+        "Shift-ArrowLeft": ({ editor }) => selectBeside(editor, false),
         // Enter на выделенной формуле — щелчком или `Shift+→` — открывает Поповер, а не рвёт абзац.
         Enter: ({ editor }) => {
           const found = editor.isEditable ? selectedFormula(editor.state) : null;

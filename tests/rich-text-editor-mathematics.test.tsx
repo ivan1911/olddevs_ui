@@ -642,6 +642,28 @@ test("a range that is exactly one formula (Shift+Right from before it) counts as
   expect(editor.getHTML()).toBe(`<p>a ${inline("x^2")} b</p>`);
 });
 
+test("Shift+Right before a formula and Shift+Left after it select exactly the formula", () => {
+  const { editor } = renderEditor({ defaultValue: `<p>a ${inline("x^2")} b</p>` });
+  const pos = positionOf(editor, "inlineMath");
+  const caret = (at: number) =>
+    act(() => {
+      editor.view.focus();
+      editor.commands.setTextSelection(at);
+    });
+
+  caret(pos);
+  expect(press(editor, "ArrowRight", { shiftKey: true })).toBe(true);
+  expect([editor.state.selection.anchor, editor.state.selection.head]).toEqual([pos, pos + 1]);
+
+  caret(pos + 1);
+  expect(press(editor, "ArrowLeft", { shiftKey: true })).toBe(true);
+  expect([editor.state.selection.anchor, editor.state.selection.head]).toEqual([pos + 1, pos]);
+
+  // Не у формулы — выделение расширяет браузер, как обычно.
+  caret(pos - 1);
+  expect(press(editor, "ArrowLeft", { shiftKey: true })).toBe(false);
+});
+
 test("a read-only field shows formulas and opens no popover", async () => {
   const { editor } = renderEditor({ readOnly: true, defaultValue: `<p>${inline("x")}</p>` });
 
