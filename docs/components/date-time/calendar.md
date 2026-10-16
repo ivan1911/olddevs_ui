@@ -33,7 +33,7 @@ story: src/components/date-time/Calendar.stories.tsx
 ## Public API
 
 - Наследует `CalendarProps<DateValue>` React Aria, включая controlled/uncontrolled value, `minValue`, `maxValue`, `isDateUnavailable`.
-- **Дата — объект или ISO-строка.** `value`, `defaultValue`, `minValue`, `maxValue` и `defaultFocusedValue` принимают и объект `@internationalized/date`, и строку `ГГГГ-ММ-ДД`, как `DatePicker`. Импортировать `@internationalized/date` для этого не нужно (сам пакет остаётся peer-зависимостью кита): `minValue="2026-03-09"`. Неразбираемая строка (`2026-02-29`, мусор из адреса) не бросает исключение: значение считается пустым, граница — незаданной.
+- **Дата — объект или ISO-строка.** `value`, `defaultValue`, `minValue`, `maxValue` и `defaultFocusedValue` принимают и объект `@internationalized/date`, и строку `ГГГГ-ММ-ДД`, как `DatePicker`. Импортировать `@internationalized/date` для этого не нужно (сам пакет приезжает с китом): `minValue="2026-03-09"`. Неразбираемая строка (`2026-02-29`, мусор из адреса) не бросает исключение: значение считается пустым, граница — незаданной.
 - `onChange(value, iso)`: первый аргумент — объект календаря, как у React Aria (так было всегда), второй — тот же день ISO-строкой. Хранящему дату строкой достаточно `onChange={(_, iso) => setDate(iso)}`. Что получает `onChange`, не зависит от того, объектом или строкой передан `value`: прежние вызовы с объектами работают без правок.
 - `isDateUnavailable` получает объект календаря: `date.toString()` возвращает день строкой `ГГГГ-ММ-ДД`.
 - Без `locale` локаль приходит сверху: от `UiProvider`, `I18nProvider` потребителя или браузера; `locale` перебивает её для этого календаря, влияет на подписи и первый день недели; `className` относится к корню.

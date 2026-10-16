@@ -5,7 +5,7 @@ category: date-time
 status: stable
 source: src/components/date-time/DatePicker.tsx
 story: src/components/date-time/DatePicker.stories.tsx
-sourceHash: 389a684cb62f
+sourceHash: 294cc850728e
 ---
 
 # DatePicker
@@ -34,7 +34,7 @@ sourceHash: 389a684cb62f
 
 - `value?: string | null`; `onChange(date: string)` receives an ISO string after the user picks a date.
 - `minValue`, `maxValue`, `isDateUnavailable` limit the choice in the calendar; this is a UI boundary and does not replace server-side validation.
-- `minValue` and `maxValue` are ISO strings `YYYY-MM-DD`, like `value` (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself stays a peer dependency of the kit). An `@internationalized/date` object is still accepted. An unparsable string is treated as an unset bound. `isDateUnavailable` receives a calendar object: `date.toString()` returns the day as a `YYYY-MM-DD` string.
+- `minValue` and `maxValue` are ISO strings `YYYY-MM-DD`, like `value` (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself comes with the kit). An `@internationalized/date` object is still accepted. An unparsable string is treated as an unset bound. `isDateUnavailable` receives a calendar object: `date.toString()` returns the day as a `YYYY-MM-DD` string.
 - In `DateTimePicker` these bounds are calendar bounds, that is, day bounds: see [DateTimePicker](date-time-picker.md#public-api) for details.
 - `placeholder`, `disabled`, `locale`, `triggerClassName` configure the control.
 - `formatDate(isoDate, locale?)` is a public utility for displaying an ISO calendar date the same safe way; do not use `new Date("YYYY-MM-DD")` unless the date is a UTC instant.

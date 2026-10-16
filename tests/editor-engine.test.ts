@@ -16,6 +16,7 @@ import { installCommand } from "./docs-install-command.js";
 
 const ROOT = join(import.meta.dirname, "..");
 const manifest = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
+  dependencies: Record<string, string>;
   peerDependencies: Record<string, string>;
   devDependencies: Record<string, string>;
 };
@@ -51,8 +52,12 @@ describe("the Editor engine", () => {
     expect(EDITOR_ENGINE.filter((name) => !manifest.devDependencies[name])).toEqual([]);
   });
 
-  test("src/editor imports nothing beyond the engine and the required peers", () => {
-    const known = new Set([...EDITOR_ENGINE, ...Object.keys(manifest.peerDependencies)]);
+  test("src/editor imports nothing beyond the engine and the kit's declared packages", () => {
+    const known = new Set([
+      ...EDITOR_ENGINE,
+      ...Object.keys(manifest.dependencies),
+      ...Object.keys(manifest.peerDependencies),
+    ]);
     // react-dom comes with react in every React app; the kit never declared it.
     known.add("react-dom");
     const imported = importedPackages(sourceFiles(join(ROOT, "src", "editor")));

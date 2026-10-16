@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { LucideProvider } from "lucide-react";
 import * as icons from "./icons.js";
+
+// Вход отдаёт ещё и `LucideProvider` (ADR-0072) — в сетку идут только иконки словаря.
+const { LucideProvider, ...dictionary } = icons;
 
 /**
  * Витрина словаря. Её главная работа — не «показать красивое», а дать место,
@@ -15,7 +17,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const ENTRIES = Object.entries(icons).sort(([a], [b]) => a.localeCompare(b, "ru"));
+const ENTRIES = Object.entries(dictionary).sort(([a], [b]) => a.localeCompare(b, "ru"));
 
 function Grid({ size = 22, strokeWidth }: { size?: number; strokeWidth?: number }) {
   return (

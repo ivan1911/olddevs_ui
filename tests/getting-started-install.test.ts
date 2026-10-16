@@ -4,13 +4,13 @@ import { describe, expect, test } from "vitest";
 import { installCommand } from "./docs-install-command.js";
 
 /**
- * The install command in getting-started is the consumer's list of required
- * peers (ADR-0004): whatever it misses breaks the consumer's build, whatever it
- * adds the consumer keeps for nothing. It is written by hand, so it drifts from
- * `package.json` silently — OLDSUI-196 was exactly that: the changelog said
- * `@internationalized/date` was no longer needed while the manifest still
- * required it. Optional peers (the Editor engine, ADR-0050) are not on this
- * list: the Editor page has its own command.
+ * The install command in getting-started is the kit plus its required peers
+ * (since ADR-0072 that is React alone): whatever it misses breaks the consumer's
+ * build, whatever it adds the consumer keeps for nothing. It is written by
+ * hand, so it drifts from `package.json` silently — OLDSUI-196 was exactly
+ * that: the changelog said `@internationalized/date` was no longer needed
+ * while the manifest still required it. The Editor engine (ADR-0050) is not
+ * on this list: the Editor page has its own command.
  */
 
 const ROOT = join(import.meta.dirname, "..");

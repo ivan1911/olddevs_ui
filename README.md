@@ -17,17 +17,14 @@ Documentation: **[ui.olddevs.ru](https://ui.olddevs.ru)** · Showcase: **[Storyb
 ## Installation
 
 ```bash
-npm install @olddevs/ui react clsx tailwind-merge lucide-react sonner \
-  react-aria-components @internationalized/date \
-  @radix-ui/react-dialog @radix-ui/react-popover @radix-ui/react-tooltip \
-  @radix-ui/react-context-menu @radix-ui/react-slot
+npm install @olddevs/ui react
 ```
 
-All the packages after `@olddevs/ui` are peer dependencies, and none of them is optional:
+React is the only peer dependency: your app picks its version. The kit brings everything else
+itself, so you don't list these packages in your `package.json`:
 
 | Package                                                                    | Used for                                                       |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `react`                                                                    | The renderer                                                   |
 | `react-aria-components`                                                    | Behavior and accessibility of most controls                    |
 | `@radix-ui/react-dialog`, `-popover`, `-tooltip`, `-context-menu`, `-slot` | Dialogs, drawers, popovers, tooltips, context menus, `asChild` |
 | `lucide-react`                                                             | The icon set behind `@olddevs/ui/icons`                        |

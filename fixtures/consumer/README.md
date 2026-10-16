@@ -21,6 +21,6 @@ The `Alert` on the page is a probe for a lost `"use client"`. It calls a hook in
 
 The fixture installs the optional editor peer dependencies (Tiptap, `lowlight`, `highlight.js`, `marked`) itself, with one command from the `RichTextEditor` page, as a real consumer of the subpath would. `dompurify` and `jsdom` are the server sanitizer. The kit does not install it either.
 
-The fixture has its own dependencies and its own `package.json`: they do not go into the kit's `package.json`. The promise "one direct dependency and twelve peers" still holds. The kit itself is **not declared** in the fixture's dependencies. It is installed with `--no-save`, so the lock file is not rewritten on every release.
+The fixture has its own dependencies and its own `package.json`: they do not go into the kit's `package.json`. The kit's manifest declares React as its only peer and brings every other library itself (ADR-0072). Those libraries are resolved from the tarball's ranges on every run, as for a new consumer, so an upstream release that breaks the build or a budget shows up here before it reaches users. The kit itself is **not declared** in the fixture's dependencies. It is installed with `--no-save`, so the lock file is not rewritten on every release.
 
 The decision and the measurements are in ADR-0029.
