@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { stubVideoServices } from "./video-services.js";
 
 /**
  * Визуальный бейзлайн: снимок каждой истории витрины в каждой теме.
@@ -133,6 +134,8 @@ for (const story of stories) {
     // каждой истории — вчетверо больше файлов почти без прироста покрытия.
     test(`${story.id} — theme ${theme}`, async ({ page }) => {
       await applyViewport(page, story);
+      // Плеер видео встаёт сразу: чужой сервис в снимок не попадает.
+      if (story.id.includes("video")) await stubVideoServices(page);
       await page.goto(`/iframe.html?id=${story.id}&globals=theme:${theme};accent:blue`);
       await waitForStory(page, story);
       await expect(page).toHaveScreenshot(`${story.id}--${theme}.png`, { fullPage: true });

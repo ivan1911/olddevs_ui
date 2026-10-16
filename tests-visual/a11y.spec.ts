@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 // этого проекта дефолтный резолвится в пространство имён модуля и не конструируется.
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { stubVideoServices } from "./video-services.js";
 import type { Result } from "axe-core";
 
 /**
@@ -101,6 +102,8 @@ const RUNS = [
 for (const story of stories) {
   for (const run of RUNS) {
     test(`a11y: ${story.id} — ${run.label}`, async ({ page }) => {
+      // Плеер видео встаёт сразу: чужой сервис в аудит не попадает.
+      if (story.id.includes("video")) await stubVideoServices(page);
       await page.goto(`/iframe.html?id=${story.id}&globals=${run.globals}`);
       const canvas = page.locator("#storybook-root");
       // Готовность — сигнал самой витрины: `sb-show-main` на body ставится,

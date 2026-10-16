@@ -3567,12 +3567,12 @@ export const DefinedToolConfigured: Story = {
 /*
   Видео по ссылке (OLDSUI-281, ADR-0071): Инструменты `youtube` и `twitch`, вне
   Пресетов — явной записью в `tools`. В Документе ссылка, а не плеер; плеер рисует
-  кит. Адреса — вымышленные: в историях плеер не нажимают, а настоящее видео не
-  грузится.
+  кит. Плеер встаёт сразу (OLDSUI-287), `autoload: false` оставляет заглушку до
+  щелчка. Видео в историях — настоящий ролик YouTube и запись Twitch, но тесты
+  перехватывают запросы к сервисам (`tests-visual/rich-text-editor-video.spec.ts`).
 */
 const VIDEO_SAMPLE =
-  "<h2>Video</h2><p>Two blocks follow, one per service. A block stands as a placeholder " +
-  "until you press Play; nothing is requested from the service before that.</p>" +
+  "<h2>Video</h2><p>Two blocks follow, one per service.</p>" +
   '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
   '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" rel="noopener noreferrer">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
   '<div data-block="video" data-provider="twitch" data-src="https://www.twitch.tv/videos/1234567890">' +
@@ -3580,9 +3580,9 @@ const VIDEO_SAMPLE =
   "<p>Add another: menu → Video, or paste a link.</p>";
 
 /**
- * Видео из YouTube и Twitch: заглушка с названием сервиса и кнопкой «Play», плеер
- * после щелчка. «Video» в меню вставки («+» и «/») принимает ссылку любого из двух
- * сервисов; ссылка в пустом абзаце тоже становится блоком.
+ * Видео из YouTube и Twitch: плеер сервиса стоит сразу, в рамке 16:9. «Video» в меню
+ * вставки («+» и «/») принимает ссылку любого из двух сервисов; ссылка в пустом абзаце
+ * тоже становится блоком.
  */
 export const Video: Story = {
   // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
@@ -3592,6 +3592,29 @@ export const Video: Story = {
       <RichTextEditor
         aria-label="Document"
         tools={[...RICH_TEXT_PRESETS.full, "youtube", "twitch"]}
+        defaultValue={VIDEO_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * `autoload: false` у обоих сервисов: вместо плеера заглушка с названием сервиса и
+ * кнопкой «Play», плеер после щелчка. До него к сервису не уходит ни одного запроса —
+ * для экранов, где важна приватность.
+ */
+export const VideoClickToPlay: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[
+          ...RICH_TEXT_PRESETS.full,
+          tool("youtube", { autoload: false }),
+          tool("twitch", { autoload: false }),
+        ]}
         defaultValue={VIDEO_SAMPLE}
       />
     </div>

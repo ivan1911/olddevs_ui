@@ -548,8 +548,8 @@ export const WrapperTonesPaper: Story = {
 
 /*
   Видео в Просмотре (OLDSUI-281, ADR-0071): блок приходит ссылкой, остров кита
-  ставит на его место заглушку, а плеер появляется после щелчка. Образец — тот же,
-  что в истории Редактора `Video`.
+  ставит на его место плеер сразу (OLDSUI-287); с `autoload: false` в `tools` —
+  заглушку, а плеер после щелчка. Образец — тот же, что в истории Редактора `Video`.
 */
 const VIDEO_HTML =
   "<h2>Video</h2><p>Without JavaScript a reader sees the links below.</p>" +
@@ -560,8 +560,8 @@ const VIDEO_HTML =
   "<p>Text after the videos.</p>";
 
 /**
- * Видео в Просмотре: без движка. До щелчка к сервису не уходит ни одного запроса;
- * Twitch берёт домен этой страницы в `parent` при щелчке.
+ * Видео в Просмотре: без движка. Плеер встаёт сразу; Twitch берёт домен этой страницы
+ * в `parent` при показе.
  */
 export const Video: Story = {
   // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
@@ -569,6 +569,23 @@ export const Video: Story = {
   render: () => (
     <div className="max-w-[640px]">
       <RichTextView html={VIDEO_HTML} />
+    </div>
+  ),
+};
+
+/**
+ * `tool("youtube", { autoload: false })` и `tool("twitch", { autoload: false })` в `tools`
+ * Просмотра: заглушка с кнопкой «Play», до щелчка к сервису не уходит ни одного запроса.
+ */
+export const VideoClickToPlay: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView
+        html={VIDEO_HTML}
+        tools={[tool("youtube", { autoload: false }), tool("twitch", { autoload: false })]}
+      />
     </div>
   ),
 };
