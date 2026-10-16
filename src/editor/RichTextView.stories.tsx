@@ -485,3 +485,37 @@ export const WrapperTonesPaper: Story = {
     </div>
   ),
 };
+
+/*
+  Видео в Просмотре (OLDSUI-281, ADR-0071): блок приходит ссылкой, остров кита
+  ставит на его место заглушку, а плеер появляется после щелчка. Образец — тот же,
+  что в истории Редактора `Video`.
+*/
+const VIDEO_HTML =
+  "<h2>Video</h2><p>Without JavaScript a reader sees the links below.</p>" +
+  '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
+  '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" rel="noopener noreferrer">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
+  '<div data-block="video" data-provider="twitch" data-src="https://www.twitch.tv/videos/1234567890">' +
+  '<a href="https://www.twitch.tv/videos/1234567890" rel="noopener noreferrer">https://www.twitch.tv/videos/1234567890</a></div>' +
+  "<p>Text after the videos.</p>";
+
+/**
+ * Видео в Просмотре: без движка. До щелчка к сервису не уходит ни одного запроса;
+ * Twitch берёт домен этой страницы в `parent` при щелчке.
+ */
+export const Video: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={VIDEO_HTML} />
+    </div>
+  ),
+};
+
+/** Видео на светлом листе `surface="paper"`. */
+export const VideoPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={VIDEO_HTML} surface="paper" />
+    </div>
+  ),
+};
