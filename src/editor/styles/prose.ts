@@ -327,7 +327,7 @@ const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
  * читает исходник. Отрисованная формула — разметка KaTeX, ей своего шрифта не
  * нужно: его несёт CSS KaTeX. Формула с ошибкой (`inline-math-error`,
  * `block-math-error` у вида узла, `data-math-error` у Острова) остаётся исходником
- * и подчёркнута волной цветом ошибки.
+ * — он моноширинный по тому же правилу — и подчёркнута волной цветом ошибки.
  *
  * БЛОК. Центрируется и прокручивается по горизонтали, если шире Документа; поля
  * `.katex-display` сняты, ритм Блоков задаёт Документ. Исходник блока — слева и с
@@ -338,22 +338,16 @@ const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
  * обведена — на ней работает Enter.
  */
 const MATH_CLASS =
-  "[&_span[data-type=inline-math]:not(:has(.katex))]:font-mono " +
-  "[&_span[data-type=inline-math]:not(:has(.katex))]:text-[0.9em] " +
+  "[&_:is(span[data-type=inline-math],div[data-type=block-math]):not(:has(.katex))]:font-mono " +
+  "[&_:is(span[data-type=inline-math],div[data-type=block-math]):not(:has(.katex))]:text-[0.9em] " +
   "[&_div[data-type=block-math]]:overflow-x-auto [&_div[data-type=block-math]]:py-1 " +
   "[&_div[data-type=block-math]]:text-center " +
-  "[&_div[data-type=block-math]:not(:has(.katex))]:font-mono " +
-  "[&_div[data-type=block-math]:not(:has(.katex))]:text-[0.9em] " +
   "[&_div[data-type=block-math]:not(:has(.katex))]:text-left " +
   "[&_div[data-type=block-math]:not(:has(.katex))]:whitespace-pre-wrap " +
   "[&_.katex-display]:my-0 " +
-  "[&_.inline-math-error]:font-mono [&_.block-math-error]:font-mono " +
-  "[&_.block-math-error]:text-left [&_.block-math-error]:whitespace-pre-wrap " +
-  "[&_.inline-math-error]:text-(--rte-text-danger) [&_.block-math-error]:text-(--rte-text-danger) " +
-  "[&_[data-math-error]]:text-(--rte-text-danger) " +
-  "[&_.inline-math-error]:underline [&_.block-math-error]:underline " +
-  "[&_[data-math-error]]:underline [&_.inline-math-error]:decoration-wavy " +
-  "[&_.block-math-error]:decoration-wavy [&_[data-math-error]]:decoration-wavy " +
+  "[&_:is(.inline-math-error,.block-math-error,[data-math-error])]:text-(--rte-text-danger) " +
+  "[&_:is(.inline-math-error,.block-math-error,[data-math-error])]:underline " +
+  "[&_:is(.inline-math-error,.block-math-error,[data-math-error])]:decoration-wavy " +
   "[&_.tiptap-mathematics-render--editable]:cursor-pointer " +
   "[&_.tiptap-mathematics-render--editable]:rounded-(--rte-radius) " +
   "[&_.tiptap-mathematics-render--editable:hover]:bg-(--rte-control-hover) " +

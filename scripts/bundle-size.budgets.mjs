@@ -72,7 +72,7 @@ export const PACKAGE_SCENARIOS = [
     // в замер сами — внести нужно только пакеты Tiptap и `marked` (его
     // экземпляр свой у каждого Редактора, OLDSUI-47), а с OLDSUI-50 — подсветчик:
     // lowlight и грамматики highlight.js выбирает кит, как и расширения.
-    bundled: ["@tiptap/", "marked", "lowlight", "highlight.js"],
+    bundled: ["@tiptap/", "marked", "lowlight", "highlight.js", "katex"],
     /*
       Модули ленивых встроенных (ADR-0058, п. 11.1): ни один не должен попасть в
       статический граф. Скрипт проверяет и обратное — что каждый шаблон находит
@@ -93,6 +93,12 @@ export const PACKAGE_SCENARIOS = [
       // импортирует `@tiptap/extension-bubble-menu` (меню выделения), и ядро таблиц
       // в «старте» — цена Tiptap, а не утечка таблицы кита.
       "/node_modules/@tiptap/extension-table/",
+      // Формулы (OLDSUI-280, ADR-0070): расширение, KaTeX и его CSS — только чанком.
+      "/dist/editor/features/mathematics/mathChunk.js",
+      "/dist/editor/features/mathematics/MathForm.js",
+      "/dist/editor/features/mathematics/katexEngine.js",
+      "/node_modules/@tiptap/extension-mathematics/",
+      "/node_modules/katex/",
     ],
     source:
       'import { RichTextEditor } from "@olddevs/ui/editor";\nglobalThis.probe = RichTextEditor;\n',
@@ -102,7 +108,7 @@ export const PACKAGE_SCENARIOS = [
     title: "RichTextEditor with Tiptap, full",
     documented:
       "`RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)",
-    bundled: ["@tiptap/", "marked", "lowlight", "highlight.js"],
+    bundled: ["@tiptap/", "marked", "lowlight", "highlight.js", "katex"],
     chunks: "all",
     source:
       'import { RichTextEditor } from "@olddevs/ui/editor";\nglobalThis.probe = RichTextEditor;\n',
@@ -119,7 +125,7 @@ export const PACKAGE_SCENARIOS = [
     documented: "`RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён",
     // Подсветчик — тоже: `RichTextView` его не тянет (OLDSUI-50), и случайный
     // импорт lowlight в граф показал бы себя десятком килобайт.
-    bundled: ["@tiptap/", "lowlight", "highlight.js"],
+    bundled: ["@tiptap/", "lowlight", "highlight.js", "katex"],
     source:
       'import { RichTextView } from "@olddevs/ui/editor";\nglobalThis.probe = RichTextView;\n',
   },

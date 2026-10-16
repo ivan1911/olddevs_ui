@@ -275,6 +275,12 @@ const SERVER_SAFE = [
       "nothing of it reaches the runtime, so there is no boundary to declare.",
   },
   {
+    file: "editor/features/mathematics/katexCss.d.ts",
+    why:
+      "A type declaration for the side-effect import of katex.min.css, which the plain tsc build " +
+      "cannot type. Types only: nothing of it reaches the runtime, so there is no boundary to declare.",
+  },
+  {
     file: "editor/RichTextView.tsx",
     why:
       "The server-rendered view of a saved Document: a div with prose classes and the html as " +
