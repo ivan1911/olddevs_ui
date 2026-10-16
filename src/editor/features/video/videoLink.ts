@@ -20,7 +20,14 @@
  * без движка. Нужен глобальный `URL`: он есть в браузере и в Node.
  */
 
-import { isTwitchChannel, isTwitchClip, type VideoLink, type VideoProvider } from "./videoSrc.js";
+import {
+  isTwitchChannel,
+  isTwitchClip,
+  isVideoProvider,
+  isVideoSrc,
+  type VideoLink,
+  type VideoProvider,
+} from "./videoSrc.js";
 
 export type { VideoLink, VideoProvider } from "./videoSrc.js";
 
@@ -165,6 +172,19 @@ const YOUTUBE_HOSTS = ["youtube.com", "youtu.be"] as const;
 export function parseVideoLink(input: string): VideoLink | null {
   const url = toUrl(input);
   return url && (fromYoutube(url, YOUTUBE_HOSTS) ?? fromTwitch(url));
+}
+
+/**
+ * Блок видео из Документа (`data-provider` и `data-src`) — ссылкой, если он годится:
+ * сервис кита, канонический адрес этого сервиса (`isVideoSrc`) и разбор, который
+ * узнаёт его тем же сервисом. Одна проверка на разбор HTML (`video.ts`), Скелет и
+ * Остров (`VideoIslandSlots.tsx`): у чужого сервиса, чужого хоста и значения с
+ * разметкой плеера нет. `null` — блок остаётся ссылкой.
+ */
+export function videoLinkOf(provider: string | null, src: string): VideoLink | null {
+  if (!isVideoProvider(provider) || !isVideoSrc(provider, src)) return null;
+  const link = parseVideoLink(src);
+  return link?.provider === provider ? link : null;
 }
 
 /**

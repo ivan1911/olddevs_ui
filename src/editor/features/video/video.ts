@@ -11,7 +11,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey, TextSelection, type Transaction } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { VideoView } from "./VideoView.js";
-import { parseVideoLink, videoLinkFromPlayer } from "./videoLink.js";
+import { parseVideoLink, videoLinkFromPlayer, videoLinkOf } from "./videoLink.js";
 import {
   isVideoProvider,
   isVideoSrc,
@@ -194,15 +194,13 @@ export const RichVideo = Node.create<VideoOptions>({
       {
         tag: `div[data-block="${VIDEO_BLOCK}"]`,
         getAttrs: (element) => {
-          const provider = element.getAttribute("data-provider");
-          const src = element.getAttribute("data-src") ?? "";
-          const link = parseVideoLink(src);
           // Сервис блока, адрес на его хосте и включённый сервис — всё вместе.
-          return isVideoProvider(provider) &&
-            isVideoSrc(provider, src) &&
-            link?.provider === provider &&
-            providers.includes(provider)
-            ? { provider, link: link.src }
+          const link = videoLinkOf(
+            element.getAttribute("data-provider"),
+            element.getAttribute("data-src") ?? ""
+          );
+          return link && providers.includes(link.provider)
+            ? { provider: link.provider, link: link.src }
             : false;
         },
       },

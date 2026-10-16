@@ -4,6 +4,8 @@ import { userEvent } from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, test, vi } from "vitest";
 import { RichTextView } from "../src/editor/index.js";
+import { PLAYER_FRAME } from "../src/editor/features/video/VideoPlayer.js";
+import { PROSE_CLASS } from "../src/editor/styles/prose.js";
 import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 
@@ -128,4 +130,30 @@ test("a new document with another video replaces the players", async () => {
   view.rerender(<RichTextView html={block("twitch", TW)} />);
   await screen.findByRole("button", { name: "Play Twitch video" });
   expect(screen.queryByRole("button", { name: "Play YouTube video" })).toBeNull();
+});
+
+// ── Высота: рамка 16:9 с первого кадра ──────────────────────────────────────
+
+const PROSE_TOKENS = new Set(PROSE_CLASS.split(/\s+/).filter(Boolean));
+
+test("the server block is the same 16:9 frame as the player placeholder, so the island changes no height", () => {
+  // HTML Документа классов не несёт: рамка блока — правила контейнера Документа
+  // по `div[data-block=video]`, и каждый класс рамки плеера в них есть.
+  for (const token of PLAYER_FRAME.split(/\s+/)) {
+    expect(PROSE_TOKENS.has(`[&_div[data-block=video]]:${token}`), token).toBe(true);
+  }
+  // Ссылка в рамке остаётся ссылкой: читается и нажимается без JS.
+  const html = renderToString(<RichTextView html={block("youtube", YT)} />);
+  expect(html).toContain(`<div data-block="video"`);
+  expect(html).toContain(`<a href="${YT}"`);
+});
+
+test("the placeholder fills the server frame instead of drawing a second one", async () => {
+  const { container } = render(<RichTextView html={block("youtube", YT)} />);
+  await screen.findByRole("button", { name: "Play YouTube video" });
+  const player = container.querySelector<HTMLElement>("[data-video-player]")!;
+  expect(player.classList.contains("aspect-video")).toBe(false);
+  expect(player.classList.contains("border")).toBe(false);
+  expect(player.classList.contains("absolute")).toBe(true);
+  expect(player.classList.contains("inset-0")).toBe(true);
 });

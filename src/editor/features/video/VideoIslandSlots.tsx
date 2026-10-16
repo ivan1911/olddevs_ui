@@ -3,8 +3,8 @@
 import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { VideoPlayer } from "./VideoPlayer.js";
-import { parseVideoLink } from "./videoLink.js";
-import { isVideoProvider, isVideoSrc, VIDEO_BLOCK, type VideoLink } from "./videoSrc.js";
+import { videoLinkOf } from "./videoLink.js";
+import { VIDEO_BLOCK, type VideoLink } from "./videoSrc.js";
 
 export interface VideoIslandSlotsProps {
   /** Отпечаток HTML просмотра: сменился Документ — блоки новые, и остров ищет их заново. */
@@ -46,14 +46,10 @@ export default function VideoIslandSlots({ docKey }: VideoIslandSlotsProps) {
     const list: Found[] = [];
     for (const element of view?.querySelectorAll<HTMLElement>(`div[data-block="${VIDEO_BLOCK}"]`) ??
       []) {
-      const provider = element.dataset.provider;
-      const src = element.dataset.src ?? "";
-      const link = parseVideoLink(src);
-      if (isVideoProvider(provider) && isVideoSrc(provider, src) && link?.provider === provider) {
-        // Блок внутри блока видео — вложенность, которой нет: оживает внешний.
-        if (!element.parentElement?.closest(`div[data-block="${VIDEO_BLOCK}"]`)) {
-          list.push({ element, link });
-        }
+      const link = videoLinkOf(element.dataset.provider ?? null, element.dataset.src ?? "");
+      // Блок внутри блока видео — вложенность, которой нет: оживает внешний.
+      if (link && !element.parentElement?.closest(`div[data-block="${VIDEO_BLOCK}"]`)) {
+        list.push({ element, link });
       }
     }
     setFound(list);
@@ -68,6 +64,12 @@ export default function VideoIslandSlots({ docKey }: VideoIslandSlotsProps) {
     </>
   );
 }
+
+/**
+ * Рамку 16:9 уже держит сам блок (`VIDEO_CLASS` в `prose.ts`): плеер заполняет её, а
+ * не рисует вторую рамку и не добавляет высоты — остров высоту блока не меняет.
+ */
+const IN_FRAME = "absolute inset-0 aspect-auto size-full rounded-none border-0 bg-transparent";
 
 /**
  * Одно вхождение блока. Содержимое серверного HTML снимается и заменяется пустым
@@ -90,5 +92,5 @@ function Slot({ item }: { item: Found }) {
     return () => element.replaceChildren(...original);
   }, [element, root]);
 
-  return ready ? createPortal(<VideoPlayer link={link} />, root) : null;
+  return ready ? createPortal(<VideoPlayer link={link} className={IN_FRAME} />, root) : null;
 }

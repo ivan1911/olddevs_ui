@@ -389,6 +389,26 @@ const INVISIBLE_CHARACTERS_CLASS =
   "[&_p.is-editor-empty:first-child>.tiptap-invisible-character--paragraph]:hidden ";
 
 /**
+ * Видео (Инструменты `youtube` и `twitch`, ADR-0071): серверный блок
+ * `div[data-block=video]` со ссылкой внутри — рамка 16:9, те же классы, что у
+ * заглушки плеера (`PLAYER_FRAME`, `VideoPlayer.tsx`; тест сверяет списки). Так
+ * Скелет Редактора и серверный HTML `RichTextView` с первого кадра занимают ту высоту,
+ * что и заглушка, и приход чанка или острова её не меняет. Ссылка стоит по центру,
+ * читается и нажимается без JS; остров кладёт плеер в эту же рамку.
+ *
+ * Классы выписаны литералами: Tailwind не видит классы, собранные из строки.
+ */
+const VIDEO_CLASS =
+  "[&_div[data-block=video]]:relative [&_div[data-block=video]]:aspect-video " +
+  "[&_div[data-block=video]]:w-full [&_div[data-block=video]]:overflow-hidden " +
+  "[&_div[data-block=video]]:rounded-(--rte-radius) [&_div[data-block=video]]:border " +
+  "[&_div[data-block=video]]:border-(--rte-code-border) " +
+  "[&_div[data-block=video]]:bg-(--rte-code-background) " +
+  "[&_div[data-block=video]]:flex [&_div[data-block=video]]:items-center " +
+  "[&_div[data-block=video]]:justify-center [&_div[data-block=video]]:p-4 " +
+  "[&_div[data-block=video]>a]:max-w-full [&_div[data-block=video]>a]:truncate ";
+
+/**
  * Свой Блок потребителя (ADR-0058, п. 3.2): `div[data-block]` с
  * именем, которого нет у кита. Кит даёт ему ритм абзаца и больше ничего — вид
  * задаёт CSS потребителя по `data-block` и токенам кита. Сам Блок отступ уже
@@ -523,6 +543,7 @@ const PROSE_RULES =
   " " +
   MATH_CLASS +
   INVISIBLE_CHARACTERS_CLASS +
+  VIDEO_CLASS +
   CUSTOM_BLOCK_CLASS;
 
 /**
