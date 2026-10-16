@@ -256,7 +256,7 @@ text, border and indicator on a background (lighter in the dark themes, darker i
 | `--overlay-scrim` | `scrim-dark`  | `scrim-light`  | = dark       |
 | `--topbar-bg`     | `slate-1-a72` | `cloud-10-a84` | `navy-1-a72` |
 
-The nine Editor marker tokens `--marker-<name>` and `--marker-text` are in the [marker table](#маркер-редактора)
+The nine Editor highlight tokens `--marker-<name>` and `--marker-text` are in the [highlight table](#маркер-редактора)
 below: the value is per theme, and the selector is `[data-theme]` of any element, not `:root`.
 
 `--rating-star` is a layer 2 role, not a component token: it is declared next to
@@ -301,12 +301,12 @@ sources as text, and a class assembled at runtime silently does not make it into
 Color selection is built on the existing `ColorPicker` — the set does not need its own
 component.
 
-## Editor marker
+## Editor highlight
 
-Nine `--marker-<name>` tokens of the component layer: the fill of the marker in
+Nine `--marker-<name>` tokens of the component layer: the fill of the highlight in
 `RichTextEditor` and `RichTextView`. The color names, as in
 Notion, are not tones: `yellow` does not mean "warning". All nine are chosen in the
-"Marker color" grid. The three bright ones are the same in all themes
+"Highlight color" grid. The three bright ones are the same in all themes
 (primitives `--od-marker-yellow`, `-green`, `-pink`), and the text on them is dark:
 `--marker-text` (`--od-marker-text`). The six earlier Notion colors have
 their own primitives: `--od-marker-<name>-d` (dark, muted) and `--od-marker-<name>-l`
@@ -330,8 +330,8 @@ Dim has no values of its own: the dark fills suit both dark themes.
 `@theme` bridge: this way a nested wrapper with a different theme gets its own
 values (`theming.md`); the bright three and `--marker-text` do not depend on the theme.
 The dark text holds 4.5:1 on the bright three in all themes (14.4 on yellow and green, 7.5 on
-pink), and the main text `fg-0` holds it on the six readable markers (the worst is `orange`, 6.32, in
-`dark`): `npm run contrast` checks this. The markers depend on neither the accent nor the brand. Saved marker
+pink), and the main text `fg-0` holds it on the six readable highlights (the worst is `orange`, 6.32, in
+`dark`): `npm run contrast` checks this. The highlights depend on neither the accent nor the brand. Saved highlight
 names from the previous palette (`accent`, `success`, …) are converted to the nearest color —
 see the table in the [Editor documentation](components/inputs/rich-text-editor.md#цвет-маркер-и-выравнивание).
 

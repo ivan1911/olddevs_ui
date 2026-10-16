@@ -12,7 +12,7 @@ sourceHash: 8dfb10955692
 
 ## Summary for AI
 
-`FilterBar` shows the applied filters as removable tokens; `FilterBarAdd` is an
+`FilterBar` shows the applied filters as removable tags; `FilterBarAdd` is an
 add button with a choice of field and value, or of range bounds (amount, date).
 Neither **knows which filters exist**: the list is passed as a prop, and the
 kit has no domain vocabulary.
@@ -51,7 +51,7 @@ const { state, set } = useTableState();
 ```ts
 interface FilterField {
   id: string;
-  /** The field label. A string: it also ends up in the token label. */
+  /** The field label. A string: it also ends up in the tag label. */
   label: string;
   /** The field kind. Defaults to "values". */
   kind?: "values" | "number-range" | "date-range";
@@ -79,7 +79,7 @@ const FIELDS: FilterField[] = [
 
 The filter that gets built is an ordinary `TableFilter` with an optional `to`:
 
-| What was entered   | `value` | `to`           | Token label                  |
+| What was entered   | `value` | `to`           | Tag label                    |
 | ------------------ | ------- | -------------- | ---------------------------- |
 | 50 and 100         | `"50"`  | `"100"`        | "Amount: 50–100"             |
 | only "from" 50     | `"50"`  | `""`           | "Amount: from 50"            |
@@ -95,7 +95,7 @@ The filter that gets built is an ordinary `TableFilter` with an optional `to`:
   would read an empty result as "no data". In the "To" calendar the dates before
   "From" are unavailable, and vice versa.
 - **The kit builds the label** through the message catalog: the labels of the "From"
-  and "To" inputs are `fromField` and `toField`, the token label templates are
+  and "To" inputs are `fromField` and `toField`, the tag label templates are
   `rangeBetween`, `rangeFrom`, `rangeTo`. Numbers and dates in the label are
   formatted in the `UiProvider` locale; a date always includes the year: the
   label is stored in the page URL and in a saved view, and a link labeled "to
@@ -104,8 +104,8 @@ The filter that gets built is an ordinary `TableFilter` with an optional `to`:
   no `label`, `FilterBar` labels it with the same templates, but the bounds in
   the label stay raw, unformatted.
 - **A field with an already applied range is not offered again.** Two ranges on
-  one field are an intersection, not an addition, and the tokens could not be
-  told apart. The token identifier is `<field>:range`.
+  one field are an intersection, not an addition, and the tags could not be
+  told apart. The tag identifier is `<field>:range`.
 - **The consumer computes the filtered rows.** The kit describes the shape of the
   filter, it does not filter data
   (ADR-0023):
@@ -117,16 +117,16 @@ The filter that gets built is an ordinary `TableFilter` with an optional `to`:
 
 ## Decisions visible in the API
 
-**The tokens are built on react-aria's `TagGroup`, not on `Chip`.** A chip cannot be
+**The tags are built on react-aria's `TagGroup`, not on `Chip`.** A chip cannot be
 removed; it is for toggling. Keyboard support comes without extra work: Delete and
-Backspace on a token remove it.
+Backspace on a tag remove it.
 
-**A token has its own `id`, and the label is not an identifier.** Two filters on
-the same field produce tokens that look identical, and removing the right one by
-label would be impossible; the label is also localized and truncated. A token is
+**A tag has its own `id`, and the label is not an identifier.** Two filters on
+the same field produce tags that look identical, and removing the right one by
+label would be impossible; the label is also localized and truncated. A tag is
 removed by `filter.id`.
 
-**There are no operators in the model.** Without `to` a token means equality, with
+**There are no operators in the model.** Without `to` a tag means equality, with
 `to` — a range: `gte` and `lte` are the same range with an empty bound and do not
 deserve an axis of their own
 (ADR-0063).
@@ -140,10 +140,10 @@ reads the filter — the library adds it. This is checked against the computed
 accessible name, not the markup.
 
 **"Clear all" appears once there are two filters.** With one filter the button does
-exactly what the token's remove button does and only lengthens keyboard navigation.
+exactly what the tag's remove button does and only lengthens keyboard navigation.
 
 **An already applied value is not offered again.** Otherwise the user adds a
-second identical token, the result does not change, and they are left with two
+second identical tag, the result does not change, and they are left with two
 filters that look the same. When there is nothing to add, the button is disabled.
 
 **Focus returns to the button after adding.** If focus is lost, it falls back to the start of

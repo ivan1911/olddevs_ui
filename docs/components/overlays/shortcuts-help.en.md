@@ -157,7 +157,7 @@ not know the shortcuts and their names.
   according to the user's settings (NVDA skips it at the default punctuation
   level), and without the word "plus", "Ctrl K" would sound like two keys in a row. A
   single key gets no separator.
-- In `CommandPalette` an item's shortcut is entirely `aria-hidden` — it is a reminder
+- In `CommandPalette` an item's shortcut is entirely `aria-hidden` — it is a shortcut hint
   next to an item that can be chosen anyway. Here the shortcut is the dialog's
   only content, and hiding it would hand a screen reader an empty keyboard shortcuts dialog.
 - **Scrolling inside the dialog.** The list sits in a `ScrollArea` no taller than
