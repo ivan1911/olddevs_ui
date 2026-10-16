@@ -92,7 +92,9 @@ test("an editor with the video tools shows the link as a Skeleton, then is ready
   expect(imported).toEqual(["video"]);
   expect(onReady).toHaveBeenCalledTimes(1);
   expect(ref.current?.getHTML()).toBe(VALUE);
-  expect(screen.getByRole("button", { name: "Play YouTube video" })).toBeTruthy();
+  // Чанк пришёл — на месте ссылки плеер (OLDSUI-287); заглушка с кнопкой — только с `autoload: false`.
+  expect(container.querySelector("iframe")?.getAttribute("title")).toBe("YouTube video");
+  expect(screen.queryByRole("button", { name: "Play YouTube video" })).toBeNull();
 });
 
 test("a second editor with the video tools finds the chunk loaded and is ready inside render", () => {

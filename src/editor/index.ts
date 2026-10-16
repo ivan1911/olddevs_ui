@@ -56,6 +56,7 @@ export type {
   TocLevel,
   TocToolOptions,
   TypographyToolOptions,
+  VideoToolOptions,
 } from "./core/toolOptions.js";
 export type {
   InvisibleCharactersToolCommands,

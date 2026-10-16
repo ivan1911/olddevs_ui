@@ -11,6 +11,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey, TextSelection, type Transaction } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { VideoView } from "./VideoView.js";
+import { VIDEO_DEFAULTS, type VideoAutoload } from "./videoOptions.js";
 import { parseVideoLink, videoLinkFromPlayer, videoLinkOf } from "./videoLink.js";
 import {
   isVideoProvider,
@@ -35,6 +36,11 @@ declare module "@tiptap/core" {
 export interface VideoOptions {
   /** Сервисы, чьи ссылки Редактор принимает: решает набор `tools` (`youtube`, `twitch`). */
   providers: readonly VideoProvider[];
+  /**
+   * Опция `autoload` каждого сервиса (`tool("youtube", { autoload })`): плеер сразу или
+   * заглушка до щелчка. Её читает вид узла; Документ от неё не меняется.
+   */
+  autoload: VideoAutoload;
 }
 
 /** Сервисы Редактора, в котором живёт движок: их читают поповер и правила вставки. */
@@ -177,7 +183,10 @@ export const RichVideo = Node.create<VideoOptions>({
   selectable: true,
   draggable: true,
 
-  addOptions: () => ({ providers: [] }),
+  addOptions: () => ({
+    providers: [],
+    autoload: { youtube: VIDEO_DEFAULTS.autoload, twitch: VIDEO_DEFAULTS.autoload },
+  }),
 
   addAttributes() {
     // Свои имена, не `src`: у `iframe`, из которого блок разбирается, есть `src`, и
@@ -308,12 +317,13 @@ export const RichVideo = Node.create<VideoOptions>({
 });
 
 /**
- * Узел блока видео для набора сервисов. Токенизатор Markdown зависит от
- * включённых сервисов, а `Node.create` берёт его один раз, поэтому узел
+ * Узел блока видео для набора сервисов и их Опций. Токенизатор Markdown зависит
+ * от включённых сервисов, а `Node.create` берёт его один раз, поэтому узел
  * собирается под набор: настроенный `extend` с токенизатором этого набора.
  */
-export function createVideoNode(providers: readonly VideoProvider[]) {
+export function createVideoNode(providers: readonly VideoProvider[], autoload: VideoAutoload) {
   return RichVideo.extend({ markdownTokenizer: markdownTokenizer(providers) }).configure({
     providers,
+    autoload,
   });
 }

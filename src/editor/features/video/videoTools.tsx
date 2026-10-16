@@ -9,6 +9,7 @@ import { loaded } from "../../core/toolLoader.js";
 // Только тип: статический импорт модуля втянул бы чанк в «старт».
 import type * as VideoChunkModule from "./videoChunk.js";
 import { videoLinkOf } from "./videoLink.js";
+import { VIDEO_CHECKS, VIDEO_DEFAULTS, type VideoAutoload } from "./videoOptions.js";
 import { VIDEO_BLOCK, VIDEO_PROVIDERS, type VideoProvider } from "./videoSrc.js";
 
 type VideoChunk = typeof VideoChunkModule;
@@ -63,18 +64,30 @@ const VideoShape = Node.create({
 const providersOf = (has: ToolEngineContext["has"]): VideoProvider[] =>
   VIDEO_PROVIDERS.filter((provider) => has(provider));
 
-/** Узлы по набору сервисов: один и тот же объект у обоих Инструментов (см. `engineOf`). */
+/**
+ * Грузится ли плеер сразу, по сервисам набора: Опция `autoload` каждого Инструмента
+ * читается из его Опций (`optionsOf`), а у сервиса, которого в наборе нет, — умолчание.
+ */
+const autoloadOf = (optionsOf: ToolEngineContext["optionsOf"]): VideoAutoload => ({
+  youtube: optionsOf("youtube")?.autoload ?? VIDEO_DEFAULTS.autoload,
+  twitch: optionsOf("twitch")?.autoload ?? VIDEO_DEFAULTS.autoload,
+});
+
+/** Узлы по набору сервисов и их Опциям: один и тот же объект у обоих Инструментов (см. `engineOf`). */
 const NODES = new Map<string, ReturnType<VideoChunk["createVideoNode"]>>();
 
 /**
  * Узел `video` общий у двух Инструментов, а Extensions с тем же именем дважды не
  * регистрируются. Оба описания отдают один и тот же объект: набор сервисов узел
- * берёт из `has`, то есть из того, что включено на самом деле, и по нему же его
- * запоминает. Дубль по ссылке `createEditorExtensions` убирает.
+ * берёт из `has`, то есть из того, что включено на самом деле, а Опции `autoload` —
+ * из Опций обоих Инструментов (`optionsOf`: `engine` получает только свои, а узел
+ * один). По набору и Опциям узел и запоминается. Дубль по ссылке
+ * `createEditorExtensions` убирает.
  */
-const engineOf = ({ has }: ToolEngineContext) => {
+const engineOf = ({ has, optionsOf }: ToolEngineContext) => {
   const providers = providersOf(has);
-  const key = providers.join();
+  const autoload = autoloadOf(optionsOf);
+  const key = `${providers.join()}:${autoload.youtube}:${autoload.twitch}`;
   let node = NODES.get(key);
   if (!node) {
     // Движок собирается после загрузчика (`load`), так что чанк здесь есть. Нет — Схема
@@ -84,7 +97,7 @@ const engineOf = ({ has }: ToolEngineContext) => {
       devError("RichTextEditor: the video chunk is not loaded when the engine is built");
       return [];
     }
-    NODES.set(key, (node = chunk.createVideoNode(providers)));
+    NODES.set(key, (node = chunk.createVideoNode(providers, autoload)));
   }
   return [node];
 };
@@ -116,6 +129,8 @@ const videoItem = (alias: VideoProvider): InsertItem => ({
  */
 const videoTool = (name: VideoProvider): ToolDescriptor => ({
   name,
+  defaults: VIDEO_DEFAULTS,
+  checks: VIDEO_CHECKS,
   load: loadVideo,
   engine: engineOf,
   skeleton: () => [VideoShape],

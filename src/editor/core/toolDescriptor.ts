@@ -199,6 +199,14 @@ export type TriggerRecord = CustomTrigger & { tool: string };
 export type ToolEngineContext = Omit<EditorExtensionOptions, "tools"> & {
   /** Включён ли Инструмент кита в этом Редакторе. */
   has: (tool: Tool) => boolean;
+  /**
+   * Опции другого встроенного Инструмента этого Редактора (`toolOptions`). Нужны
+   * Инструментам, у которых один узел на двоих (`youtube` и `twitch` делят `video`):
+   * `engine` получает только свои Опции, а общий узел читает Опции обоих.
+   */
+  optionsOf: <Name extends ConfigurableToolName>(
+    name: Name
+  ) => RichTextTools[Name]["options"] | undefined;
 };
 
 type EditorMessages = UiMessages["editor"];

@@ -176,9 +176,26 @@ export interface InvisibleCharactersToolOptions {
 }
 
 /**
+ * Опции Инструментов `youtube` и `twitch` (ADR-0071, п. 4): у обоих одни и те же,
+ * каждый Инструмент настраивает блоки своего сервиса. Ни одна не меняет сохранённый
+ * HTML — в нём по-прежнему только ссылка. `RichTextView` читает те же опции из своего
+ * `tools`, чтобы видео вело себя в Просмотре так же, как в Редакторе.
+ */
+export interface VideoToolOptions {
+  /**
+   * Плеер сервиса встаёт сразу — `iframe` с `loading="lazy"` в Редакторе и в
+   * Просмотре. С `false` вместо него заглушка кита с названием сервиса и кнопкой
+   * «Воспроизвести», и ни одного запроса к сервису, пока читатель не нажал: для
+   * экранов, где важна приватность. По умолчанию `true`: пустая заглушка на месте
+   * видео читалась как поломка.
+   */
+  autoload: boolean;
+}
+
+/**
  * Типы Инструментов Редактора по имени: что экран задаёт при настройке (`options`),
  * что читает (`state`) и что вызывает (`commands`). Расширяемый интерфейс, как
- * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc`, `details`, `mathematics`, `typography` и `invisibleCharacters`, а
+ * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography` и `invisibleCharacters`, а
  * потребитель дописывает свои Инструменты через declaration merging:
  *
  * ```ts
@@ -215,6 +232,13 @@ export interface RichTextTools {
   // Только Опции: Состояния и Команд у формул нет.
   mathematics: {
     options: MathematicsToolOptions;
+  };
+  // Только Опции: плеер рисует вид узла и Остров, Состояния и Команд у видео нет.
+  youtube: {
+    options: VideoToolOptions;
+  };
+  twitch: {
+    options: VideoToolOptions;
   };
   // Только Опции: правила ввода, Состояния и Команд у них нет.
   typography: {
@@ -315,7 +339,7 @@ export function mergeOptions(base: object, given: object): object {
  * опции (из JS без типов) заменяется умолчанием, в разработке — один
  * `console.error`; опции своего Инструмента проверяет его автор.
  *
- * Встроенный — только Инструмент с опциями: `search`, `toc`, `details`, `mathematics`, `typography` и `invisibleCharacters`. Серверно-безопасна.
+ * Встроенный — только Инструмент с опциями: `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography` и `invisibleCharacters`. Серверно-безопасна.
  */
 export function tool<Name extends ConfigurableToolName>(
   name: Name,

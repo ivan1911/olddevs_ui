@@ -20,6 +20,7 @@ import { FormulasAsText } from "../features/mathematics/mathAsText.js";
 import { MaxLength } from "./maxLength.js";
 import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
 import {
+  toolOptions,
   type BlockTraits,
   type ToolDescriptor,
   type ToolEngineContext,
@@ -276,7 +277,11 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
   const described = options.tools.descriptors;
   // Без самого набора: связи между Инструментами — только через `has`.
   const { tools, ...bridges } = options;
-  const context: ToolEngineContext = { ...bridges, has: (tool) => tools.has(tool) };
+  const context: ToolEngineContext = {
+    ...bridges,
+    has: (tool) => tools.has(tool),
+    optionsOf: (name) => toolOptions(tools, name),
+  };
   // Контейнеры Блоков верхнего уровня: их принимает только свой Документ.
   const containers = described.flatMap((descriptor) => descriptor.documentContent ?? []);
 

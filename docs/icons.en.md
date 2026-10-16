@@ -2,7 +2,7 @@
 entrypoint: "@olddevs/ui/icons"
 source: src/icons.ts
 status: stable
-sourceHash: f4fdfd447e5f
+sourceHash: d415233093c6
 ---
 
 # Icons `@olddevs/ui/icons`
@@ -227,7 +227,7 @@ Formulas added the pair `FormulaIcon` and `BlockFormulaIcon` — lucide's `Sigma
 
 Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`: a pilcrow with an arrow, the "Invisible characters" item of the "…" menu on the Editor's fixed Toolbar. This is not `ParagraphIcon`: that one is a plain pilcrow, "an ordinary paragraph", and sits on the same Toolbar in the "¶" menu; the arrow tells the display toggle from a Block type.
 
-Video added `VideoIcon` — lucide's `SquarePlay`: a square with a play triangle, the "Video" item of the Editor's Insert menu (the `youtube` and `twitch` Tools). This is not `PlayIcon`: that one is a start button, and the player placeholder's own "Play" button carries exactly that icon (ADR-0049).
+Video added `VideoIcon` — lucide's `SquarePlay`: a square with a play triangle, the "Video" item of the Editor's Insert menu (the `youtube` and `twitch` Tools). This is not `PlayIcon`: that one is a start button, and the player placeholder's own "Play" button (the `autoload: false` option) carries exactly that icon (ADR-0049).
 
 The first iteration of the table made do with two icons for four directions
 (`AddRowIcon`, `AddColumnIcon`) and an icon for the separate "Table
