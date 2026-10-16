@@ -80,6 +80,31 @@ export interface DetailsToolOptions {
 }
 
 /**
+ * Опции Инструмента `mathematics` (по расширению Mathematics из Tiptap, ADR-0048,
+ * ADR-0070): только опции KaTeX, которые не влияют на сохранённый HTML — в нём
+ * лежит исходный LaTeX. `RichTextView` читает те же опции из своего `tools`, чтобы
+ * формула выглядела в Просмотре так же, как в Редакторе.
+ *
+ * Данные, а не функции: Настроенный Инструмент можно отдать клиентскому
+ * компоненту через границу RSC, и Остров Просмотра получает опции с сервера.
+ */
+export interface MathematicsToolOptions {
+  /**
+   * Свои макросы KaTeX: имя с обратной косой чертой — подстановка
+   * (`{ "\\RR": "\\mathbb{R}" }`). Вложенные объекты сливаются, как у любой
+   * Опции. По умолчанию макросов нет.
+   */
+  macros: Readonly<Record<string, string>>;
+  /**
+   * Что делать с не-LaTeX вводом (Юникод в математическом режиме и подобное):
+   * `"ignore"` — молча принять, `"warn"` — принять и написать в консоль,
+   * `"error"` — считать формулу неверной. По умолчанию `"ignore"`, а не `"warn"`
+   * как у KaTeX: консоль на каждую набранную букву шумела бы.
+   */
+  strict: "ignore" | "warn" | "error";
+}
+
+/**
  * Опции Инструмента `typography` (по расширению Typography из Tiptap, ADR-0048).
  *
  * Каждое правило Tiptap — Опция с его именем: `false` выключает правило,
@@ -152,7 +177,7 @@ export interface InvisibleCharactersToolOptions {
 /**
  * Типы Инструментов Редактора по имени: что экран задаёт при настройке (`options`),
  * что читает (`state`) и что вызывает (`commands`). Расширяемый интерфейс, как
- * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc`, `details`, `typography` и `invisibleCharacters`, а
+ * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc`, `details`, `mathematics`, `typography` и `invisibleCharacters`, а
  * потребитель дописывает свои Инструменты через declaration merging:
  *
  * ```ts
@@ -185,6 +210,10 @@ export interface RichTextTools {
   // Только Опции: Состояния и Команд у сворачиваемого Блока нет.
   details: {
     options: DetailsToolOptions;
+  };
+  // Только Опции: Состояния и Команд у формул нет.
+  mathematics: {
+    options: MathematicsToolOptions;
   };
   // Только Опции: правила ввода, Состояния и Команд у них нет.
   typography: {
@@ -285,7 +314,7 @@ export function mergeOptions(base: object, given: object): object {
  * опции (из JS без типов) заменяется умолчанием, в разработке — один
  * `console.error`; опции своего Инструмента проверяет его автор.
  *
- * Встроенный — только Инструмент с опциями: `search`, `toc`, `details`, `typography` и `invisibleCharacters`. Серверно-безопасна.
+ * Встроенный — только Инструмент с опциями: `search`, `toc`, `details`, `mathematics`, `typography` и `invisibleCharacters`. Серверно-безопасна.
  */
 export function tool<Name extends ConfigurableToolName>(
   name: Name,

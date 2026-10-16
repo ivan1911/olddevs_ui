@@ -291,6 +291,12 @@ const SERVER_SAFE = [
       "nothing of it reaches the runtime, so there is no boundary to declare.",
   },
   {
+    file: "editor/features/mathematics/katexCss.d.ts",
+    why:
+      "A type declaration for the side-effect import of katex.min.css, which the plain tsc build " +
+      "cannot type. Types only: nothing of it reaches the runtime, so there is no boundary to declare.",
+  },
+  {
     file: "editor/RichTextView.tsx",
     why:
       "The server-rendered view of a saved Document: a div with prose classes and the html as " +
@@ -304,6 +310,20 @@ const SERVER_SAFE = [
       "The code block header as class strings plus withCodeHeaders, a string-to-string function " +
       "that wraps saved code blocks in the header markup. Imports only codeLanguages.ts; no React " +
       "and no DOM, so the server-rendered RichTextView calls it.",
+  },
+  {
+    file: "editor/features/mathematics/mathHtml.ts",
+    why:
+      "hasMath and withMathSource: string-to-string functions over the saved HTML that put the LaTeX " +
+      "source into the empty formula elements (ADR-0070). No imports, no React and no DOM, so the " +
+      "server-rendered RichTextView calls them.",
+  },
+  {
+    file: "editor/features/mathematics/mathOptions.ts",
+    why:
+      'The defaults, value checks and the reader of tool("mathematics") options: functions over data. ' +
+      "It imports toolOptions.ts and customTool.ts (both server-safe) and neither Tiptap nor KaTeX, so " +
+      "the server-rendered RichTextView reads the macros for its island.",
   },
   {
     file: "editor/styles/prose.ts",

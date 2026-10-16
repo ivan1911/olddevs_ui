@@ -20,6 +20,10 @@ import { FixtureBadge } from "../fixture-badge";
  * границу RSC он проходит ссылкой. Extensions тут пусты: просмотру они не
  * нужны, а Tiptap в графе страницы появляться не должен.
  *
+ * Формула (OLDSUI-280, ADR-0070) лежит в документе пустым элементом с `data-latex`:
+ * сервер дописывает в него исходный LaTeX, метка острова формул стоит в разметке, а
+ * KaTeX и его CSS грузит клиент — в HTML страницы отрисованной формулы нет.
+ *
  * Подделки в документе — не для красоты: `scripts/check-consumer.mjs` читает
  * отрисованный HTML и требует, чтобы их там не было, а токены подсветки и
  * гнездо кнопки — были.
@@ -43,7 +47,8 @@ const SAVED =
   '<strong>bold</strong> and <a href="javascript:alert(1)">a fake link</a>.</p>' +
   '<pre><code class="language-python">def greet(name):\n    return f"hi {name}"</code></pre>' +
   '<figure><img src="data:image/png;base64,AAAA" alt=""></figure>' +
-  '<div data-block="fixture_badge" data-fixture_label="Live badge">Server badge</div>';
+  '<div data-block="fixture_badge" data-fixture_label="Live badge">Server badge</div>' +
+  '<p>Euler: <span data-type="inline-math" data-latex="e^{i\\pi}+1=0"></span></p>';
 
 export default function EditorPage() {
   const html = highlightCodeBlocks(sanitizeRichText(SAVED, DOMPurify, [FIXTURE_TOOL]));

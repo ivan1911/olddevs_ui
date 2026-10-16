@@ -3,6 +3,9 @@ import { cn } from "../lib/cn.js";
 import { BlockIsland } from "./ui/BlockIsland.js";
 import { CodeCopyIsland } from "./features/code/CodeCopyIsland.js";
 import { hasCodeBlocks, withCodeHeaders } from "./features/code/codeHeader.js";
+import { MathIsland } from "./features/mathematics/MathIsland.js";
+import { hasMath, withMathSource } from "./features/mathematics/mathHtml.js";
+import { mathOptionsOf } from "./features/mathematics/mathOptions.js";
 import { VideoIsland } from "./features/video/VideoIsland.js";
 import { hasVideoBlocks } from "./features/video/videoSrc.js";
 import type { ToolEntry } from "./core/customTool.js";
@@ -33,12 +36,15 @@ export interface RichTextViewProps extends Omit<
   surface?: RichTextSurface;
   /**
    * Свои Инструменты Документа — тот же массив, что у `RichTextEditor` и
-   * `sanitizeRichText`; Настроенный Инструмент (`tool()`) в нём допустим и
-   * Просмотром игнорируется. Просмотр читает из него только Острова своих Блоков
-   * (`blocks[имя].island`): Блок, у которого он есть и который есть в
-   * Документе, оживает клиентским компонентом, а серверный HTML Блока виден до
-   * загрузки и без JS. Остальное в описании Просмотру не нужно. Без `tools`, и
-   * у Документа без таких Блоков, Просмотр прежний и клиентского кода не тянет.
+   * `sanitizeRichText`; Настроенный Инструмент (`tool()`) в нём допустим.
+   * Просмотр читает из него Острова своих Блоков (`blocks[имя].island`): Блок, у
+   * которого он есть и который есть в Документе, оживает клиентским компонентом,
+   * а серверный HTML Блока виден до загрузки и без JS. И опции формул —
+   * `tool("mathematics", { macros })`, чтобы макрос работал в Просмотре так же,
+   * как в Редакторе; самих формул для этого в `tools` называть не нужно, они
+   * рисуются у любого Документа с формулами. Остальное в описании Просмотру не
+   * нужно. Без `tools`, и у Документа без таких Блоков и формул, Просмотр прежний
+   * и клиентского кода не тянет.
    */
   tools?: readonly ToolEntry[];
 }
@@ -83,7 +89,13 @@ function fingerprint(html: string): string {
  * нет острова, и код Острова потребителя не грузится. Серверный HTML Блока
  * приходит всегда; Остров заменяет его после монтирования.
  *
- * ОСТРОВ ВИДЕО — ТРЕТИЙ И ТАКОЙ ЖЕ (`VideoIsland`, ADR-0071). Блок видео приходит
+ * ОСТРОВ ФОРМУЛ — ТРЕТИЙ (ADR-0070, `MathIsland`). Формула лежит в Документе
+ * пустым элементом с `data-latex`; сервер дописывает в него исходный LaTeX
+ * (`withMathSource`), и без JS читатель видит его. Остров, только если
+ * формула в Документе есть (`hasMath`), грузит KaTeX с CSS ленивым `import()` и
+ * рисует формулы на месте — в чанк, который страница без формул не получает.
+ *
+ * ОСТРОВ ВИДЕО — ЧЕТВЁРТЫЙ, ТАКОЙ ЖЕ (`VideoIsland`, ADR-0071). Блок видео приходит
  * в HTML ссылкой (`div[data-block="video"]` со ссылкой внутри), её видит читатель без
  * JS. Если блок в Документе есть (`hasVideoBlocks`), остров после монтирования
  * ставит на его место заглушку кита с кнопкой «Воспроизвести»; плеер появляется
@@ -110,7 +122,10 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
   // по ссылке и при новом объекте переписывает `innerHTML` — вместе с кнопками и
   // Островами, которые острова вставили порталом. Перерисовка родителя с тем же
   // Документом (смена `className`, новый литерал `tools`) разметку трогать не должна.
-  const inner = useMemo(() => ({ __html: withCodeHeaders(html, hostId) }), [html, hostId]);
+  const inner = useMemo(
+    () => ({ __html: withMathSource(withCodeHeaders(html, hostId)) }),
+    [html, hostId]
+  );
   return (
     <>
       <div
@@ -124,6 +139,8 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
       {hasCodeBlocks(html) && <CodeCopyIsland hostId={hostId} docKey={fingerprint(html)} />}
       {/* И острова своих Блоков — только у Документа, где такой Блок есть. */}
       {islands[0] && <BlockIsland islands={islands} docKey={fingerprint(html)} />}
+      {/* Формулы — третий: только у Документа с формулами, и KaTeX грузит сам остров. */}
+      {hasMath(html) && <MathIsland docKey={fingerprint(html)} options={mathOptionsOf(tools)} />}
       {/* И остров видео (ADR-0071) — только у Документа, где есть блок видео. */}
       {hasVideoBlocks(html) && <VideoIsland docKey={fingerprint(html)} />}
     </>

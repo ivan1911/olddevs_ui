@@ -4,6 +4,7 @@ import { highlightCodeBlocks } from "./features/code/highlight.js";
 import { EDITOR_MARKER_NAMES, EDITOR_TEXT_COLOR_NAMES } from "./styles/palette.js";
 import { RichTextEditor } from "./RichTextEditor.js";
 import { RichTextView } from "./RichTextView.js";
+import { tool } from "./core/toolOptions.js";
 
 /*
   Нейтральный документ с каждым Блоком и каждой Меткой Схемы — тот же, что в
@@ -429,6 +430,59 @@ export const DetailsPaper: Story = {
   render: () => (
     <div className="max-w-[640px]">
       <RichTextView html={DETAILS_HTML} surface="paper" />
+    </div>
+  ),
+};
+
+/*
+  Формулы в Просмотре (OLDSUI-280, ADR-0070): элемент с `data-latex` приходит с
+  исходным LaTeX, а ленивый Остров после монтирования грузит KaTeX и рисует формулу.
+  Образец — тот же, что в истории Редактора `Mathematics`.
+*/
+const MATH_HTML =
+  "<h2>Formulas</h2>" +
+  '<p>The area of a circle is <span data-type="inline-math" data-latex="S = \\pi r^2"></span>, ' +
+  'and Euler\'s identity is <span data-type="inline-math" data-latex="e^{i\\pi} + 1 = 0"></span>.</p>' +
+  '<div data-type="block-math" data-latex="\\int_0^1 x^2\\,dx = \\frac{1}{3}"></div>' +
+  "<p>The quadratic formula in a block:</p>" +
+  '<div data-type="block-math" data-latex="x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"></div>' +
+  '<p>A formula KaTeX cannot read stays as source: <span data-type="inline-math" data-latex="\\frac{1"></span>.</p>';
+
+/**
+ * Формулы в Просмотре без движка: Остров рисует KaTeX из `data-latex` на месте.
+ * Без JavaScript и до отрисовки читателю виден исходный LaTeX; скринридер читает
+ * MathML, который выводит KaTeX.
+ */
+export const Mathematics: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={MATH_HTML} />
+    </div>
+  ),
+};
+
+/** Формулы на светлом листе `surface="paper"`. */
+export const MathematicsPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={MATH_HTML} surface="paper" />
+    </div>
+  ),
+};
+
+/**
+ * Опции формул берутся из `tools` Просмотра: макрос `\RR`, заданный Редактору через
+ * `tool("mathematics", { macros })`, работает и здесь. Сам Инструмент называть не нужно.
+ */
+export const MathematicsMacros: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView
+        html={
+          '<p>A custom macro: <span data-type="inline-math" data-latex="x \\in \\RR"></span>.</p>'
+        }
+        tools={[tool("mathematics", { macros: { "\\RR": "\\mathbb{R}" } })]}
+      />
     </div>
   ),
 };

@@ -117,6 +117,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Wrapper: a group of Blocks          | `WrapperIcon`                                   | `ColumnLayoutIcon`             |
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
 | Collapsible Block of the Editor     | `DetailsIcon`                                   | `ChevronDownIcon`              |
+| Editor formula, inline and block    | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
 | Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
 | Video by link in the Editor         | `VideoIcon`                                     | `PlayIcon`                     |
 
@@ -221,6 +222,8 @@ Column layout added `ColumnLayoutIcon` — two columns, the "Layout" item of the
 Wrapper added the pair `WrapperIcon` and `UnwrapIcon` — lucide's `Group` and `Ungroup`: a frame with dashed corners around two Blocks and the same Blocks without a frame. The icons sit at the "Wrapper" item of the Slash menu and the "Remove Wrapper" item in the Block handle menu. This is not `ColumnLayoutIcon`: columns put Blocks side by side, while a Wrapper groups them without changing their order. `DeleteIcon` does not fit removal: only the container is deleted, not the content.
 
 Collapsible block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Slash menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
+
+Formulas added the pair `FormulaIcon` and `BlockFormulaIcon` — lucide's `Sigma` and `SquareSigma`: the sigma is the "Formula" item of the Slash menu, the sigma in a frame is "Block formula". `CodeIcon` does not fit: it means the subject theme "development", while a sigma reads as math (ADR-0049).
 
 Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`: a pilcrow with an arrow, the "Invisible characters" item of the "…" menu on the Editor's fixed Toolbar. This is not `ParagraphIcon`: that one is a plain pilcrow, "an ordinary paragraph", and sits on the same Toolbar in the "¶" menu; the arrow tells the display toggle from a Block type.
 

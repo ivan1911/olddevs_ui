@@ -50,6 +50,7 @@ export type {
   ConfiguredTool,
   DetailsToolOptions,
   InvisibleCharactersToolOptions,
+  MathematicsToolOptions,
   RichTextTools,
   SearchToolOptions,
   TocLevel,
