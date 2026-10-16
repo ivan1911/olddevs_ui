@@ -2294,6 +2294,8 @@ const MATH_TOOLS = [...RICH_TEXT_PRESETS.full, "mathematics"] as const;
  * вставки («Formula» и «Block formula»).
  */
 export const Mathematics: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextEditor aria-label="Document" tools={MATH_TOOLS} defaultValue={MATH_SAMPLE} />
@@ -2303,6 +2305,8 @@ export const Mathematics: Story = {
 
 /** Формулы на светлом листе `surface="paper"`. */
 export const MathematicsPaper: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextEditor
@@ -2320,6 +2324,8 @@ export const MathematicsPaper: Story = {
  * работает только благодаря макросу; тот же `tools` у `RichTextView` рисует его так же.
  */
 export const MathematicsMacros: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextEditor
@@ -2342,6 +2348,8 @@ export const MathematicsMacros: Story = {
  * ошибки. Документ она не ломает и не теряется; поправить её можно в Поповере.
  */
 export const MathematicsInvalid: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextEditor
@@ -2358,6 +2366,8 @@ export const MathematicsInvalid: Story = {
 
 /** Формулы в русской локали: подписи Меню вставки и Поповера — из каталога. */
 export const MathematicsRussian: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
       <div className="max-w-[640px]">
@@ -2384,6 +2394,8 @@ function MathCommand({ command }: { command: string }) {
 
 /** Меню вставки по `/formula`: пункты «Formula» и «Block formula» (и по `latex`, `math`). */
 export const MathematicsInsertSlash: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => <MathCommand command="/formula" />,
 };
 
@@ -2417,6 +2429,8 @@ function OpenedFormula() {
  * formula». Неверный LaTeX показывает ошибку в поле и не даёт применить.
  */
 export const MathematicsPopover: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => <OpenedFormula />,
 };
 
@@ -3571,6 +3585,8 @@ const VIDEO_SAMPLE =
  * сервисов; ссылка в пустом абзаце тоже становится блоком.
  */
 export const Video: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextEditor
@@ -3587,6 +3603,8 @@ export const Video: Story = {
  * в «Video» отвечает ошибкой на ссылку чужого сервиса.
  */
 export const VideoYoutubeOnly: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextEditor
@@ -3600,6 +3618,8 @@ export const VideoYoutubeOnly: Story = {
 
 /** Каталог сообщений русский: «Видео», «Воспроизвести», «Ссылка на видео». */
 export const VideoRussian: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
       <div className="max-w-[640px]">

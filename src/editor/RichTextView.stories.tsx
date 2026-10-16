@@ -454,6 +454,8 @@ const MATH_HTML =
  * MathML, который выводит KaTeX.
  */
 export const Mathematics: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextView html={MATH_HTML} />
@@ -463,6 +465,8 @@ export const Mathematics: Story = {
 
 /** Формулы на светлом листе `surface="paper"`. */
 export const MathematicsPaper: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextView html={MATH_HTML} surface="paper" />
@@ -475,6 +479,8 @@ export const MathematicsPaper: Story = {
  * `tool("mathematics", { macros })`, работает и здесь. Сам Инструмент называть не нужно.
  */
 export const MathematicsMacros: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextView
@@ -558,6 +564,8 @@ const VIDEO_HTML =
  * Twitch берёт домен этой страницы в `parent` при щелчке.
  */
 export const Video: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextView html={VIDEO_HTML} />
@@ -567,6 +575,8 @@ export const Video: Story = {
 
 /** Видео на светлом листе `surface="paper"`. */
 export const VideoPaper: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
       <RichTextView html={VIDEO_HTML} surface="paper" />
