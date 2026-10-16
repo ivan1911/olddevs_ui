@@ -9,15 +9,18 @@ import { Extension, type Extensions } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Placeholder } from "@tiptap/extensions";
 import { StarterKit, type StarterKitOptions } from "@tiptap/starter-kit";
+import type { EditorQuoteSet } from "../../i18n/messages.js";
 import { AtomText } from "./atomText.js";
 import { BlockCommands, BlockMenuKey } from "./blockCommands.js";
 import { FieldNoticeExtension, type FieldNoticeOptions } from "./fieldNotice.js";
 import type { RichImageOptions } from "../features/image/image.js";
 import { createDocumentNode } from "./document.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
+import { FormulasAsText } from "../features/mathematics/mathAsText.js";
 import { MaxLength } from "./maxLength.js";
 import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
 import {
+  toolOptions,
   type BlockTraits,
   type ToolDescriptor,
   type ToolEngineContext,
@@ -41,6 +44,12 @@ export interface EditorExtensionOptions {
    * каталога, читается при каждой перерисовке кнопки.
    */
   detailsToggle: (text: string) => string;
+  /**
+   * Набор кавычек языка каталога сообщений (`UiMessages.editor.typographyQuotes`)
+   * для Инструмента `typography` при Опции `quotes: "auto"`. Читается при каждом
+   * вводе кавычки: смена каталога не пересоздаёт движок.
+   */
+  quoteSet: () => EditorQuoteSet;
   /**
    * Мост Меню вставки по `/`. Нет — меню не открывается: инструмент
    * `insertMenu` выключен или пунктов для него нет.
@@ -203,6 +212,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "layout",
   "wrapper",
   "details",
+  "mathematics",
   "insertMenu",
   TRIGGERS,
   "history",
@@ -221,9 +231,13 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "codeBlock",
   "horizontalRule",
   "table",
+  "youtube",
+  "twitch",
   "emoji",
+  "typography",
   "source",
   "search",
+  "invisibleCharacters",
   "toc",
 ];
 
@@ -263,7 +277,11 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
   const described = options.tools.descriptors;
   // Без самого набора: связи между Инструментами — только через `has`.
   const { tools, ...bridges } = options;
-  const context: ToolEngineContext = { ...bridges, has: (tool) => tools.has(tool) };
+  const context: ToolEngineContext = {
+    ...bridges,
+    has: (tool) => tools.has(tool),
+    optionsOf: (name) => toolOptions(tools, name),
+  };
   // Контейнеры Блоков верхнего уровня: их принимает только свой Документ.
   const containers = described.flatMap((descriptor) => descriptor.documentContent ?? []);
 
@@ -285,6 +303,9 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     MaxLength.configure({ limit: options.limit }),
     // `leafText` из `renderText`: Текст атома для счётчика, копирования и `textContent`.
     AtomText,
+    // Без Инструмента `mathematics` формула из `value` и вставки читается текстом
+    // `$…$`, а не пропадает вместе с пустым элементом (`mathAsText.ts`).
+    ...(options.tools.has("mathematics") ? [] : [FormulasAsText]),
     ToolbarFocus.configure({ focus: options.focusToolbar }),
     HandledTabStaysInside,
     // Команды над Блоками — своей разметки нет, включены всегда (`blockCommands.ts`).
@@ -347,5 +368,6 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
       ToolEntryShortcuts.configure({ insertItems: keyedItems, blockActions: keyedActions })
     );
   }
-  return extensions;
+  // Одно расширение у двух описаний (общий узел `video`) регистрируется один раз.
+  return [...new Set(extensions)];
 }

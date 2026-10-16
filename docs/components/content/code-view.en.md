@@ -115,7 +115,7 @@ export function Webhook({ body }: { body: string }) {
   hooks and no `"use client"`: it can be called in both a server component and a client
   component.
 - **The block background belongs to the highlight theme.** GitHub colors do not
-  reach a 4.5:1 contrast ratio on the kit's code backing, so under the kit's tokens the code area
+  reach a 4.5:1 contrast ratio on the kit's code background, so under the kit's tokens the code area
   takes the theme background. The helper puts a `data-code-highlight` marker on
   the token root, and `CodeView` turns the background on only when it is present: markup from
   your own highlighter, even with the same `hljs-…` classes, is not recolored.

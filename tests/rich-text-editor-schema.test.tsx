@@ -175,7 +175,13 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     '<div data-block="column"><p>r</p></div></div>' +
     '<div data-block="wrapper" data-tone="warning"><p>w</p></div>' +
     // `open` пишется только с Опцией `persist` (OLDSUI-277).
-    '<details open=""><summary>s</summary><div data-type="detailsContent"><p>c</p></div></details>';
+    '<details open=""><summary>s</summary><div data-type="detailsContent"><p>c</p></div></details>' +
+    // Видео (OLDSUI-281): сервис и ссылка на видео — два атрибута `div`.
+    '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
+    '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
+    // Формулы пишут только `data-type` и исходник в `data-latex` (OLDSUI-280).
+    '<p>f <span data-type="inline-math" data-latex="x^2"></span></p>' +
+    '<div data-type="block-math" data-latex="\\frac{a}{b}"></div>';
   const { tags, attributes } = inventory(
     load(sample, [
       ...TOOLS.filter((name) => name !== "details"),

@@ -3,7 +3,7 @@
 import { Extension, type Editor, type JSONContent } from "@tiptap/core";
 import { Markdown } from "@tiptap/markdown";
 import { Marked, type marked } from "marked";
-import { Fragment, Slice, type ResolvedPos } from "@tiptap/pm/model";
+import { Fragment, Slice, type ResolvedPos, type Schema } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorProps } from "@tiptap/pm/view";
 import { inContainerFreeNode } from "./containers.js";
@@ -11,6 +11,7 @@ import { COLUMN_NODE, LAYOUT_NODE } from "../features/layout/layout.js";
 import { replaceDocument } from "./maxLength.js";
 import { WRAPPER_NODE } from "../features/wrapper/wrapper.js";
 import { WRAPPER_TONE_ALERTS } from "../features/wrapper/wrapperTones.js";
+import { VIDEO_BLOCK } from "../features/video/videoSrc.js";
 import { conformToSchema, headingLevels } from "./schemaConform.js";
 
 /**
@@ -70,6 +71,23 @@ function alertOf(node: JSONContent): { tone: string; content: JSONContent[] } | 
 }
 
 /**
+ * Блок видео вне верхнего уровня Документа (в списке, цитате) — абзац с его
+ * ссылкой. Markdown плеера не знает: строка-ссылка становится блоком только сама
+ * по себе, а ссылка в пункте списка остаётся ссылкой. Блок в первом месте пункта
+ * списка к тому же не годится по Схеме (там абзац).
+ */
+function demoteNestedVideo(node: JSONContent, schema: Schema): JSONContent {
+  if (node.type === VIDEO_BLOCK) {
+    const href = String(node.attrs?.link ?? "");
+    const marks = schema.marks.link ? [{ type: "link", attrs: { href } }] : undefined;
+    return { type: "paragraph", content: [{ type: "text", text: href, marks }] };
+  }
+  return node.content
+    ? { ...node, content: node.content.map((child) => demoteNestedVideo(child, schema)) }
+    : node;
+}
+
+/**
  * Markdown как фрагмент Схемы редактора. Остаток несовпадений с Схемой
  * (вложенность блоков, которой она не допускает) подгоняет сама вставка:
  * фрагмент кладётся в документ через `replace` и клипборд ProseMirror, а они
@@ -84,7 +102,10 @@ function markdownToFragment(editor: Editor, markdown: string, wrapper = true): F
   const { schema } = editor;
   const options = { levels: headingLevels(editor), excluded: NOT_FROM_MARKDOWN };
   const toned = wrapper && WRAPPER_NODE in schema.nodes;
-  const blocks = (editor.markdown?.parse(markdown).content ?? []).flatMap((child) => {
+  const parsed = (editor.markdown?.parse(markdown).content ?? []).map((child) =>
+    child.type === VIDEO_BLOCK ? child : demoteNestedVideo(child, schema)
+  );
+  const blocks = parsed.flatMap((child) => {
     const alert = alertOf(child);
     if (!alert) return conformToSchema(child, schema, options);
     const content = alert.content.flatMap((block) => conformToSchema(block, schema, options));

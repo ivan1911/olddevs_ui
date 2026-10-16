@@ -88,6 +88,8 @@ test("the full preset offers the rare marks, Code block, Quote and Clear formatt
     // Цитата — флажок рядом с Блоком кода (OLDSUI-154): из «¶» она ушла.
     { role: "menuitemcheckbox", name: "Quote", checked: false, shortcut: "Ctrl+Shift+B" },
     { role: "menuitem", name: "Clear formatting", checked: false, shortcut: "Ctrl+\\" },
+    // Режим показа Документа, а не форматирование: последний раздел, без сочетания (OLDSUI-278).
+    { role: "menuitemcheckbox", name: "Invisible characters", checked: false, shortcut: null },
   ]);
 });
 
@@ -106,6 +108,7 @@ test("on Apple the shortcuts are signed with ⌘", async () => {
     "⌘+⌥+C",
     "⌘+⇧+B",
     "⌘+\\",
+    null,
   ]);
   // Знаки — пропорциональным шрифтом, как в \`Kbd\`: в моноширинном стеке \`⇧\`
   // нет, и запасной глиф выходит тонким (OLDSUI-117).
@@ -330,5 +333,6 @@ test("the menu speaks the provider's language", async () => {
     t.codeBlock,
     t.blockquote,
     t.clearFormatting,
+    t.invisibleCharacters,
   ]);
 });

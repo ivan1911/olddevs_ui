@@ -14,6 +14,7 @@ import { EMOJI_TOOL } from "./emoji/emojiTool.js";
 import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
 import { HISTORY_TOOL } from "./history/historyTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
+import { INVISIBLE_CHARACTERS_TOOL } from "./invisibleCharacters/invisibleCharactersTool.js";
 import { LAYOUT_TOOL } from "./layout/layoutTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
 import { BULLET_LIST_TOOL, ORDERED_LIST_TOOL, TASK_LIST_TOOL } from "./lists/listTools.js";
@@ -26,14 +27,22 @@ import {
   SUPERSCRIPT_TOOL,
   UNDERLINE_TOOL,
 } from "./marks/markTools.js";
-import { devError } from "../../lib/dev-warn.js";
+import { MATHEMATICS_TOOL } from "./mathematics/mathematicsTool.js";
 import type { ToolEntry } from "../core/customTool.js";
 import { describeCustomTool, describeDefinition } from "../core/customToolEngine.js";
 import { toolList, type ToolDescriptor, type ToolList } from "../core/toolDescriptor.js";
-import { isConfiguredTool, mergeOptions, type ConfiguredTool } from "../core/toolOptions.js";
+import {
+  configuredBuiltins,
+  isConfiguredTool,
+  repeatedConfigured,
+  resolveToolOptions,
+  type ConfiguredTool,
+} from "../core/toolOptions.js";
 import { SEARCH_TOOL } from "./search/searchTool.js";
 import { TABLE_TOOL } from "./table/tableTool.js";
 import { TOC_TOOL } from "./toc/tocTool.js";
+import { TYPOGRAPHY_TOOL } from "./typography/typographyTool.js";
+import { TWITCH_TOOL, YOUTUBE_TOOL } from "./video/videoTools.js";
 import { resolveTools, TOOLS, type RichTextEditorPreset, type Tool } from "../core/tools.js";
 import { WRAPPER_TOOL } from "./wrapper/wrapperTool.js";
 
@@ -69,6 +78,7 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
  */
 export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   search: SEARCH_TOOL,
+  invisibleCharacters: INVISIBLE_CHARACTERS_TOOL,
   // Оглавление несёт только Опции: полоса и список рисуются в `RichTextEditor`.
   toc: TOC_TOOL,
   layout: LAYOUT_TOOL,
@@ -77,6 +87,10 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   align: ALIGN_TOOL,
   wrapper: WRAPPER_TOOL,
   details: DETAILS_TOOL,
+  mathematics: MATHEMATICS_TOOL,
+  typography: TYPOGRAPHY_TOOL,
+  youtube: YOUTUBE_TOOL,
+  twitch: TWITCH_TOOL,
   /*
     Разделитель и цитата: Инструмент с пунктом вставки и Инструмент с
     «Превратить в». Поля `insertItems` и `engine` те же, что у публичного
@@ -149,39 +163,24 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   /*
     Ленивые встроенные (ADR-0058, п. 11.1): их нет в `basic`, а
     Extensions тяжелее 10 кБ gzip, поэтому они грузятся загрузчиком
-    (`load`) — тем же, что у своего Инструмента.
+    (`load`) — тем же, что у своего Инструмента. Формулы (`mathematics`) ленивы так
+    же, но стоят выше, рядом с остальными новыми Инструментами, — их нет и в `full`.
   */
   codeBlock: CODE_BLOCK_TOOL,
   table: TABLE_TOOL,
 };
 
-/**
- * Опции Инструмента для Редактора: умолчания описания, поверх них — те, что
- * передал `tool()`. Значение, не прошедшее проверку, и опция, которой у
- * Инструмента нет (проверки для неё тоже нет), отбрасываются, в разработке —
- * одним `console.error` на Инструмент: потребитель на JS обходит типы карты, а
- * поле от этого не падает.
- */
+/** Описание с опциями для Редактора (`resolveToolOptions`: умолчания, поверх них — `tool()`). */
 function resolveOptions(
   descriptor: ToolDescriptor,
   configured: ConfiguredTool | undefined
 ): ToolDescriptor {
-  const { defaults, checks } = descriptor;
-  const given = Object.entries(configured?.options ?? {}).filter(
-    ([, value]) => value !== undefined
-  );
-  const valid = given.filter(([key, value]) => checks?.[key]?.(value));
-  if (valid.length < given.length) {
-    devError(
-      `RichTextEditor: tool "${descriptor.name}": ignored invalid options: ` +
-        given
-          .filter((entry) => !valid.includes(entry))
-          .map(([key]) => key)
-          .join(", ")
-    );
-  }
+  const { defaults, checks, name } = descriptor;
   return defaults
-    ? { ...descriptor, options: mergeOptions(defaults, Object.fromEntries(valid)) }
+    ? {
+        ...descriptor,
+        options: resolveToolOptions("RichTextEditor", name, defaults, checks, configured),
+      }
     : descriptor;
 }
 
@@ -204,12 +203,8 @@ export function expandTools(
   tools: readonly ToolEntry[] | undefined
 ): ToolList {
   // Настроенные встроенные: запись с определением настраивает свой Инструмент, она ниже.
-  const configured = (tools ?? []).filter(
-    (entry): entry is ConfiguredTool => isConfiguredTool(entry) && !entry.definition
-  );
-  const twice = configured.find((entry, index) =>
-    configured.some((e, i) => i < index && e.name === entry.name)
-  );
+  const configured = configuredBuiltins(tools);
+  const twice = repeatedConfigured(configured);
   const names = resolveTools(
     preset,
     tools && [

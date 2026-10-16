@@ -74,7 +74,8 @@ interface Action {
 interface Widget {
   kind: "insert" | "source" | "blockType" | "align" | "highlight" | "more" | "lists" | "table";
   id: string;
-  present: (tools: ToolList) => boolean;
+  /** `withView` — у хозяина есть пункт «Невидимые символы» (фиксированная Панель). */
+  present: (tools: ToolList, withView: boolean) => boolean;
 }
 
 /**
@@ -97,7 +98,7 @@ interface ToolEntry {
 
 type Entry = Action | Widget | Slot;
 
-const widget = (kind: Widget["kind"], present: (tools: ToolList) => boolean): Widget => ({
+const widget = (kind: Widget["kind"], present: Widget["present"]): Widget => ({
   kind,
   id: kind,
   present,
@@ -161,7 +162,14 @@ const GROUPS: readonly (readonly Entry[])[] = [
     ...TOOLBAR_ROW_MARKS.map((mark): Action => ({ kind: "button", ...mark })),
     // Только «Маркер»: «Цвет» с обеими сетками — в меню выделения.
     widget("highlight", (tools) => tools.has("highlight")),
-    widget("more", (tools) => MORE_FORMAT_TOOLS.some((tool) => tools.has(tool))),
+    // «Невидимые символы» живёт в «…» только у фиксированной Панели: если он
+    // единственный, кнопка «…» нужна ради него одного.
+    widget(
+      "more",
+      (tools, withView) =>
+        MORE_FORMAT_TOOLS.some((tool) => tools.has(tool)) ||
+        (withView && tools.has("invisibleCharacters"))
+    ),
   ],
   [widget("lists", hasListMenu)],
   [slot("link"), slot("image"), widget("table", (tools) => tools.has("table")), slot("emoji")],
@@ -181,7 +189,7 @@ type GroupEntry = Action | Widget | ToolEntry;
  * группой перед историей. Предикат видимости кнопок описаний здесь не
  * читается — для него нужен движок.
  */
-function toolbarGroups(tools: ToolList, withSource: boolean): GroupEntry[][] {
+function toolbarGroups(tools: ToolList, withSource: boolean, withView: boolean): GroupEntry[][] {
   const described = tools.descriptors;
   const toolEntries = (buttons: readonly KitToolButton[] = []) =>
     buttons.map((button): ToolEntry => ({ kind: "tool", id: button.id, button }));
@@ -191,7 +199,9 @@ function toolbarGroups(tools: ToolList, withSource: boolean): GroupEntry[][] {
         return toolEntries(described.find((descriptor) => descriptor.name === entry.tool)?.buttons);
       }
       if (entry.kind === "button") return tools.has(entry.tool) ? [entry] : [];
-      return entry.present(tools) && (entry.kind !== "source" || withSource) ? [entry] : [];
+      return entry.present(tools, withView) && (entry.kind !== "source" || withSource)
+        ? [entry]
+        : [];
     })
   );
   const ownGroup = toolEntries(
@@ -243,6 +253,13 @@ export interface EditorToolbarProps {
    * плавающей Панели и без Инструмента `search`.
    */
   search?: { open: boolean; onToggle: () => void };
+  /**
+   * Пункт «Невидимые символы» в меню «…». Показ держит движок (плагин
+   * расширения), поэтому проп — только «пункт есть»: отметку меню читает из
+   * движка само. Без пропа пункта нет — так у плавающей Панели (она рисует то же
+   * «…», что и фиксированная) и без Инструмента `invisibleCharacters`.
+   */
+  invisibleCharacters?: boolean;
 }
 
 /**
@@ -271,6 +288,7 @@ export function EditorToolbar({
   shortcutsReference = false,
   source,
   search,
+  invisibleCharacters = false,
 }: EditorToolbarProps) {
   const messages = useMessages().editor;
   const label = useToolLabel();
@@ -280,7 +298,7 @@ export function EditorToolbar({
     своей группой перед историей. Есть ли кнопка сейчас, решает ещё и её
     предикат видимости — после чтения состояния ниже.
   */
-  const present = toolbarGroups(tools, source != null);
+  const present = toolbarGroups(tools, source != null, invisibleCharacters);
   const entries = present.flat();
   const actions = entries.filter((entry): entry is Action => entry.kind === "button");
   const toolButtons = entries.flatMap((entry) => (entry.kind === "tool" ? [entry.button] : []));
@@ -445,7 +463,13 @@ export function EditorToolbar({
                 case "highlight":
                   return <HighlightMenuButton key={entry.id} {...host} />;
                 case "more":
-                  return <MoreFormatMenu key={entry.id} {...host} />;
+                  return (
+                    <MoreFormatMenu
+                      key={entry.id}
+                      {...host}
+                      invisibleCharacters={invisibleCharacters}
+                    />
+                  );
                 case "lists":
                   return <ListMenu key={entry.id} {...host} />;
                 case "table": {
@@ -540,6 +564,8 @@ export interface ToolbarSkeletonProps {
   source: boolean;
   /** Есть ли кнопка «Поиск» и справочник сочетаний у правого края. */
   search: boolean;
+  /** Есть ли в «…» пункт «Невидимые символы»: от него зависит, нужна ли Панели кнопка «…». */
+  invisibleCharacters: boolean;
   shortcutsReference: boolean;
 }
 
@@ -554,9 +580,12 @@ export function ToolbarSkeleton({
   tools,
   source,
   search,
+  invisibleCharacters,
   shortcutsReference,
 }: ToolbarSkeletonProps) {
-  const groups = toolbarGroups(tools, source).filter((group) => group.length > 0);
+  const groups = toolbarGroups(tools, source, invisibleCharacters).filter(
+    (group) => group.length > 0
+  );
   const place = (key: string, menu: boolean, className?: string) => (
     <span key={key} className={cn(menu ? MENU_PLACE_CLASS : BUTTON_CLASS, className)}>
       <span className="size-4" />

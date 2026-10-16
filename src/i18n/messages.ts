@@ -1011,6 +1011,24 @@ export interface UiMessages {
     unwrapDetails: string;
     detailsToggle: (vars: { text: string }) => string;
     /**
+     * Формулы (Mathematics, ADR-0070). `mathInline` и `mathBlock` — пункты Меню
+     * вставки и «Добавить ›» у ручки Блока, они же имена рамки Поповера формулы.
+     * В Поповере: `mathLatex` — подпись поля, `mathPreview` — имя области
+     * предпросмотра, `mathEmpty` — её подсказка, пока поле пусто, `mathInvalid` —
+     * ошибка в поле (`detail` — сообщение KaTeX: движок его не переводит, оно
+     * по-английски), `mathInsert` и `mathApply` — кнопка новой и правимой формулы,
+     * `mathRemove` — убрать правимую формулу из Документа.
+     */
+    mathInline: string;
+    mathBlock: string;
+    mathLatex: string;
+    mathPreview: string;
+    mathEmpty: string;
+    mathInvalid: (vars: { detail: string }) => string;
+    mathInsert: string;
+    mathApply: string;
+    mathRemove: string;
+    /**
      * Эмодзи. `emoji` — имя кнопки Панели; `emojiGrid` — имя сетки в поповере.
      * `emojiCategory` — названия категорий, `emojiName` — имя каждого эмодзи:
      * скринридер читает ячейку по имени, а не по символу (разные программы
@@ -1030,6 +1048,12 @@ export interface UiMessages {
      */
     source: string;
     sourceField: string;
+    /**
+     * Показ невидимых символов (пробелов, мягких переносов и концов абзацев):
+     * `invisibleCharacters` — имя пункта-флажка меню «…» фиксированной Панели. О том,
+     * показаны ли символы, говорит `aria-checked`, а не слова имени.
+     */
+    invisibleCharacters: string;
     /**
      * Поиск и замена. `search` — имя и подсказка кнопки Панели и
      * строка справочника `Mod+F`; `searchReplace` — строка `Mod+Alt+F`;
@@ -1098,6 +1122,33 @@ export interface UiMessages {
      * `nav` со списком заголовков — одно слово на оба, это одна вещь.
      */
     toc: string;
+    /**
+     * Видео по ссылке (Инструменты `youtube` и `twitch`, ADR-0071). `video` —
+     * пункт Меню вставки и «Добавить ›» ручки Блока; `videoLink` — имя поля
+     * ссылки в поповере; `videoInsert` — кнопка поповера; `videoNotFound` — ошибка
+     * поля на ссылку, которая не ведёт на видео включённого сервиса (`services` —
+     * названия сервисов через « / »: «YouTube» или «YouTube / Twitch» — разделитель
+     * один на все языки, и фраза читается с ним одинаково).
+     * `videoPlay` — подпись кнопки заглушки; `videoPlayLabel` — её доступное имя
+     * (видимое слово «Воспроизвести» входит в него целиком, WCAG 2.5.3);
+     * `videoPlayer` — заголовок `iframe` для скринридера. Названия сервисов
+     * (`service`) — имена брендов и не переводятся.
+     */
+    video: string;
+    videoLink: string;
+    videoInsert: string;
+    videoNotFound: (vars: { services: string }) => string;
+    videoPlay: string;
+    videoPlayLabel: (vars: { service: string }) => string;
+    videoPlayer: (vars: { service: string }) => string;
+    /**
+     * Набор кавычек языка каталога для Инструмента `typography`: `"ru"` —
+     * «ёлочки» и „лапки“, `"en"` — “ ” и ‘ ’. Не текст для экрана, а признак
+     * языка каталога: у каталога другого языка (немецкий, французский)
+     * своего набора у кита нет, и пока значение не задано, действует `"en"`;
+     * набор можно задать явно Опцией `quotes`.
+     */
+    typographyQuotes: EditorQuoteSet;
   };
 }
 
@@ -1112,6 +1163,9 @@ export type EditorLayoutVariant = "100" | "50-50" | "33-33-33" | "25-25-25-25" |
  * кита, как их пишет `data-tone` (`editor/features/wrapper/wrapperTones.ts`).
  */
 export type EditorWrapperTone = "neutral" | "accent" | "success" | "warning" | "danger";
+
+/** Наборы кавычек `typography` — значения `editor.typographyQuotes` и Опции `quotes`. */
+export type EditorQuoteSet = "en" | "ru";
 
 /** Категории эмодзи Редактора — ключи `editor.emojiCategory`; порядок показа задаёт `editor/features/emoji/emoji.ts`. */
 export type EmojiCategory =

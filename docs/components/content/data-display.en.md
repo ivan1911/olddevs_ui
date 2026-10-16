@@ -93,9 +93,9 @@ const columns = [{ id: "name", header: "Name", cell: (item: User) => item.name, 
 | `stickyHeader`                      | Makes the header sticky; the outer container must have a set height and scrolling.                                                                                                                |
 | `resizable`                         | Turns on column resizing by mouse and keyboard. Only in this mode does `column.width` become the initial resizable width.                                                                         |
 | `onRowAction`                       | A row action: a click and Enter open the record (the handler receives the item from `items`), while its checkboxes select it. Turned on by passing the prop — see below.                          |
-| `renderDetail`                      | What to show under a row. Turns on the expansion axis: without the prop there is no expander column and no detail rows in the markup.                                                             |
+| `renderDetail`                      | What to show under a row. Turns on the expansion axis: without the prop there is no disclosure button column and no detail rows in the markup.                                                    |
 | `expandedKeys`, `onExpandedChange`  | Controlled expansion. A set of keys, like selection; there is no "one row or several" switch — see below. Without these props, the table manages expansion itself and keeps the state internally. |
-| `rowLabel`                          | The row's name for the labels of per-row buttons. Without it all the expanders have the same name — see below.                                                                                    |
+| `rowLabel`                          | The row's name for the labels of per-row buttons. Without it all the disclosure buttons have the same name — see below.                                                                           |
 | `emptyText`                         | The content of the empty state; by default a message-catalog string (`table.empty`): "Nothing here" without a provider, "Ничего нет" with `locales/ru`.                                           |
 
 `TableColumn.width` is applied as a CSS width without `resizable`; with
@@ -105,7 +105,7 @@ ordinary table to become user state.
 **`onRowAction` is a row action alongside selection.** A click on a row and Enter
 on a focused row call `onRowAction(item)`; its checkboxes select it, and
 Space on a row still toggles the selection. The rule is react-aria's "selection
-mode", and it is worth knowing in advance:
+behavior", and it is worth knowing in advance:
 
 - while nothing is selected, a click on a row is the action;
 - once a selection exists, a click on a row toggles it, so you can keep selecting
@@ -113,8 +113,8 @@ mode", and it is worth knowing in advance:
 - without selection (`selectedKeys` not passed) a click always calls the action.
 
 Buttons, links and menus inside cells keep their own click and do not activate
-the row: a manual `stopPropagation` is not needed. A detail row and the expander
-button do not call the action. A row with an action gets a pointer cursor.
+the row: a manual `stopPropagation` is not needed. A detail row and the disclosure button
+do not call the action. A row with an action gets a pointer cursor.
 
 **Expansion is the only axis that could not be added as a layer on top.**
 `DataTable` adds column visibility, order, density and the table toolbar (`toolbar`)
@@ -156,7 +156,7 @@ shifted.
   a clash with `item.id` and must not appear in the consumer's state.
 - Do not add your own Checkbox to the selection column: the component uses
   `Checkbox slot="selection"`, tied to the table state.
-- The expander is a real `<button>` in its own cell with `aria-expanded`, not a
+- The disclosure button is a real `<button>` in its own cell with `aria-expanded`, not a
   clickable row: a whole-row target conflicts with links and checkboxes inside
   it and is not reachable by keyboard.
 - **`selectedKeys` is the selection of visible rows, not of the whole result

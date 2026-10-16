@@ -12,12 +12,12 @@ sourceHash: e9b0a093db1d
 
 ## Summary for AI
 
-`NumberInput` is a controlled numeric field with step buttons. An empty field returns `null`, not `0` and not `NaN`.
+`NumberInput` is a controlled numeric field with increment/decrement buttons. An empty field returns `null`, not `0` and not `NaN`.
 
 ## When to use
 
 - You need numeric input with `min`, `max`, `step` or `Intl.NumberFormat` formatting.
-- A form needs a field with an accessible name and "less/more" steps.
+- A form needs a field with an accessible name and increment/decrement buttons.
 
 ## When not to use
 
@@ -76,6 +76,6 @@ another locale the field would show the format of another locale.
 
 ## Accessibility and forms
 
-- The step buttons get their names from `label` automatically.
+- The increment/decrement buttons get their names from `label` automatically.
 - Do not turn emptiness into zero: it changes the meaning of the data.
 - Source: `src/components/inputs/NumberInput.tsx`; checks — `tests/number-input.test.tsx`.

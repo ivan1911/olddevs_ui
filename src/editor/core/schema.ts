@@ -1,6 +1,8 @@
 import { CODE_LANGUAGE_IDS } from "../features/code/codeLanguages.js";
 import { EDITOR_LAYOUTS } from "../features/layout/columnLayouts.js";
 import { CUSTOM_COLOR_STYLE_PATTERN } from "../features/color/customColor.js";
+import { safeLatexSource } from "../features/mathematics/mathHtml.js";
+import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "../features/mathematics/mathNames.js";
 import { devWarn } from "../../lib/dev-warn.js";
 import type { CustomAttribute, PrefixedName, ToolEntry } from "./customTool.js";
 import { customToolOf } from "./toolDefinition.js";
@@ -11,6 +13,7 @@ import {
   LEGACY_MARKER_NAMES,
 } from "../styles/palette.js";
 import { EDITOR_WRAPPER_TONES } from "../features/wrapper/wrapperTones.js";
+import { isVideoProvider, isVideoSrc, VIDEO_BLOCK } from "../features/video/videoSrc.js";
 
 /**
  * Схема Редактора ДАННЫМИ: белый список тегов и атрибутов, которые он
@@ -34,7 +37,8 @@ import { EDITOR_WRAPPER_TONES } from "../features/wrapper/wrapperTones.js";
  * Модуль серверно-безопасен: данные, без React и без движка. Его импорты —
  * `palette.ts`, `customColor.ts`, `codeLanguages.ts`, `columnLayouts.ts` и
  * `wrapperTones.ts`, тоже данные: имена палитры, языков, вариантов Раскладки и
- * тонов Обёртки живут там один раз; ещё `lib/dev-warn.ts` — предупреждение
+ * тонов Обёртки живут там один раз; `videoSrc.ts` — имена видео и проверка
+ * его адреса (чистые функции над строкой); ещё `lib/dev-warn.ts` — предупреждение
  * разработчику без зависимостей.
  */
 export const RICH_TEXT_SCHEMA = {
@@ -69,6 +73,20 @@ export const RICH_TEXT_SCHEMA = {
    * `summary` вне `details` и обёртка содержимого вне него снимаются —
    * Блоки остаются подряд. Теги и атрибуты Блока открыты только в этой форме:
    * `iframe` и ему подобное так не открывается.
+   *
+   * `div[data-block="video"]` — видео по ссылке (ADR-0071): `data-provider`
+   * (`youtube` или `twitch`), `data-src` — `https`-адрес видео в каноническом
+   * виде, как его пишет Редактор, на хосте этого сервиса (YouTube:
+   * `www.youtube.com`, `watch?v=` или `playlist?list=`; Twitch: `www.twitch.tv`
+   * и `clips.twitch.tv`). Короткие формы (`youtu.be`), адрес без `www.`, `http` и
+   * адреса плееров не проходят (`isVideoSrc`). Внутри — обычная ссылка. Плеера в
+   * Документе нет, `iframe` срезается по-прежнему: плеер рисует кит при показе.
+   *
+   * Формулы — `span[data-type="inline-math"]` в строке и `div[data-type="block-math"]`
+   * Блоком, исходный LaTeX в `data-latex` (ADR-0070). Оба элемента всегда пусты:
+   * отрисованная разметка KaTeX в Документ не попадает, её рисует Редактор и Остров
+   * `RichTextView`. Пара `data-type` и `data-latex` открыта только на этих двух
+   * тегах; `data-latex` — единственное значение атрибута, где допустим `<`.
    *
    * Таблица — `table > tbody > tr > th|td`, без `thead`, `colgroup` и
    * `caption`: строка-заголовок — это обычная первая строка из `th`. На ячейке
@@ -122,10 +140,20 @@ export const RICH_TEXT_SCHEMA = {
      * `data-layout` — вариант из `layouts`, только у Раскладки. Обёртка —
      * `data-block="wrapper"` и, если у неё есть тон, `data-tone` — имя из
      * `wrapperTones`, только у Обёртки. Обёртка содержимого сворачиваемого
-     * Блока — `data-type="detailsContent"`, только прямо в `details`. У `div`
-     * пункта чек-листа атрибутов нет.
+     * Блока — `data-type="detailsContent"`, только прямо в `details`. Блочная
+     * формула — `data-type="block-math"` с `data-latex`, только на `div`. Видео —
+     * `data-block="video"` с `data-provider` (сервис) и `data-src` (ссылка на
+     * видео этого сервиса, `isVideoSrc`). У `div` пункта чек-листа атрибутов нет.
      */
-    div: ["data-block", "data-layout", "data-tone", "data-type"],
+    div: [
+      "data-block",
+      "data-layout",
+      "data-tone",
+      "data-type",
+      "data-provider",
+      "data-src",
+      "data-latex",
+    ],
     /** Открытый сворачиваемый Блок: пустой `open`, только с Опцией `persist`. */
     details: ["open"],
     /** Пункт чек-листа: `data-type="taskItem"` и `data-checked="true|false"`. */
@@ -147,9 +175,10 @@ export const RICH_TEXT_SCHEMA = {
      * Редактор не отдаёт и при загрузке отбрасывает вместе с обёрткой (старые
      * имена маркера он переводит — `legacyMarkerColors`). На `span` без
      * `data-color` и без `style` он тоже не бывает — пустой `span` есть только
-     * в пункте чек-листа.
+     * в пункте чек-листа и у строчной формулы: `data-type="inline-math"` с
+     * `data-latex`, только на `span`.
      */
-    span: ["data-color", "style"],
+    span: ["data-color", "style", "data-type", "data-latex"],
     mark: ["data-color", "style"],
     /**
      * Выравнивание Блока: значение из `alignments`, кроме `left` — оно
@@ -444,6 +473,8 @@ const HOOK_GUARDED_ATTRIBUTES: readonly string[] = [
   "rowspan",
   "type",
   "checked",
+  // Адрес видео: чужой скрипт ленивой загрузки читает именно `data-src`.
+  "data-src",
 ];
 const HOOK_GUARDED_TAGS: readonly string[] = ["input", "img"];
 
@@ -601,7 +632,14 @@ export interface RichTextPurifier {
  *   `div[data-type="detailsContent"]` тоже прямо в нём; `open` — только пустой и
  *   только на `details`. `summary` и обёртка вне `details` теряют тег, их Блоки
  *   остаются подряд;
+ * - формула — `span[data-type="inline-math"]` или `div[data-type="block-math"]` с
+ *   `data-latex`: пара открыта только на этих тегах, сам элемент пуст, а в `data-latex`
+ *   допустим `<` (это текст LaTeX, не разметка). Без `data-latex` элемент теряет обёртку;
  * - `colspan`, `rowspan` — на `th`/`td`, целое от 1 до `tableSpans`;
+ * - видео — `div[data-block="video"]` с `data-provider` из `VIDEO_PROVIDERS` и
+ *   `data-src`: `https`-адрес видео на хосте этого сервиса (`isVideoSrc`).
+ *   Блок без годного сервиса или адреса, и блок видео внутри блока видео,
+ *   теряет обёртку — остаётся ссылка внутри. `iframe` срезается всегда;
  * - ссылка — `href` по `protocols` (выражение конфига), `rel` всегда
  *   `"noopener noreferrer"`, ссылка без адреса становится текстом;
  * - картинка — `img` с абсолютным `http`/`https` прямо в `figure`, без `data:`
@@ -669,7 +707,15 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
     // Обёртка содержимого сворачиваемого Блока: только `div` прямо в `details`.
     (node.nodeName === "DIV" &&
       value === DETAILS_CONTENT &&
-      node.parentElement?.nodeName === "DETAILS"),
+      node.parentElement?.nodeName === "DETAILS") ||
+    // Формула: строчная — `span`, блочная — `div`; значение чужого тега не проходит.
+    (node.nodeName === "SPAN" && value === INLINE_FORMULA_TYPE) ||
+    (node.nodeName === "DIV" && value === BLOCK_FORMULA_TYPE),
+  // Исходный LaTeX — текст, а не разметка, поэтому правила «без `<`» (ADR-0070) к нему
+  // нет: DOMPurify экранирует его при выводе. Но только у формулы: тот же атрибут на
+  // другом теге или рядом с чужим `data-type` снимается. `data-type` читается из
+  // разметки, а не из решения хука: DOMPurify обходит атрибуты в своём порядке.
+  "data-latex": (node) => isFormula(node),
   // Открытый Блок: `open=""`, как его пишет Редактор; значение `open="open"` из
   // чужого HTML атрибут теряет, Блок остаётся закрытым.
   open: (node, value) => node.nodeName === "DETAILS" && value === "",
@@ -693,7 +739,10 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
   // Раскладка, колонка и Обёртка — только `div`; вариант — только у Раскладки.
   "data-block": (node, value) =>
     node.nodeName === "DIV" &&
-    (value === LAYOUT_BLOCK || value === COLUMN_BLOCK || value === WRAPPER_BLOCK),
+    (value === LAYOUT_BLOCK ||
+      value === COLUMN_BLOCK ||
+      value === WRAPPER_BLOCK ||
+      value === VIDEO_BLOCK),
   "data-layout": (node, value) =>
     node.nodeName === "DIV" &&
     node.getAttribute("data-block") === LAYOUT_BLOCK &&
@@ -703,6 +752,16 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
     node.nodeName === "DIV" &&
     node.getAttribute("data-block") === WRAPPER_BLOCK &&
     has(RICH_TEXT_SCHEMA.wrapperTones, value),
+  // Видео: сервис из списка и адрес на хосте этого сервиса. Сервис читается с
+  // самого элемента: DOMPurify обходит атрибуты в своём порядке.
+  "data-provider": (node, value) =>
+    node.nodeName === "DIV" &&
+    node.getAttribute("data-block") === VIDEO_BLOCK &&
+    isVideoProvider(value),
+  "data-src": (node, value) =>
+    node.nodeName === "DIV" &&
+    node.getAttribute("data-block") === VIDEO_BLOCK &&
+    isVideoSrc(node.getAttribute("data-provider") ?? "", value),
   "data-align": (node, value) =>
     ["P", "H1", "H2", "H3", "H4", "TH", "TD"].includes(node.nodeName) &&
     has(RICH_TEXT_SCHEMA.alignments, value),
@@ -783,6 +842,11 @@ function checkAttribute(
   event: RichTextAttributeHookEvent,
   schema: RichTextSchema
 ): void {
+  // Исходник формулы правится ДО проверки `SAFE_FOR_XML` у DOMPurify, которая идёт сразу
+  // после хуков и срезала бы атрибут с `]>` или `</style`: пробел внутрь пары (`mathHtml.ts`).
+  if (event.attrName === "data-latex" && isFormula(node)) {
+    event.attrValue = safeLatexSource(event.attrValue);
+  }
   const custom = customAttributeAllowed(node, event, schema);
   if (custom !== undefined) {
     if (!custom) event.keepAttr = false;
@@ -813,6 +877,15 @@ const PARENT_OF: Record<string, string> = {
 
 /** Значение `div[data-type]` обёртки содержимого сворачиваемого Блока (`details.ts`). */
 const DETAILS_CONTENT = "detailsContent";
+
+/** Формула в форме, которую пишет Редактор: тег и `data-type` из пары. */
+function isFormula(node: Element): boolean {
+  const type = node.getAttribute("data-type");
+  return (
+    (node.nodeName === "SPAN" && type === INLINE_FORMULA_TYPE) ||
+    (node.nodeName === "DIV" && type === BLOCK_FORMULA_TYPE)
+  );
+}
 
 /** Значения `div[data-block]`: Раскладка, её колонка и Обёртка. */
 const LAYOUT_BLOCK = "layout";
@@ -877,9 +950,33 @@ function checkCustom(node: Element, schema: RichTextSchema): boolean {
   return true;
 }
 
+/**
+ * Блок видео: `true` — элемент обработан. Без годного сервиса и адреса (хук
+ * атрибутов снял то, чего не должно быть) и внутри другого блока видео он теряет
+ * обёртку; остаётся ссылка, которую читатель видит и без плеера.
+ */
+function checkVideo(node: Element): boolean {
+  if (node.nodeName !== "DIV" || node.getAttribute("data-block") !== VIDEO_BLOCK) return false;
+  const provider = node.getAttribute("data-provider");
+  const src = node.getAttribute("data-src");
+  const valid = provider !== null && src !== null && isVideoSrc(provider, src);
+  if (!valid || node.parentElement?.closest(`div[data-block="${VIDEO_BLOCK}"]`)) {
+    node.replaceWith(...node.childNodes);
+  }
+  return true;
+}
+
 /** Хук `afterSanitizeAttributes`: место элемента в Документе. */
 function checkStructure(node: Element, schema: RichTextSchema): void {
-  if (checkLayout(node) || checkCustom(node, schema)) return;
+  if (checkLayout(node) || checkVideo(node) || checkCustom(node, schema)) return;
+  // Формула — лист: пустой элемент с `data-latex`. Отрисованная разметка KaTeX в
+  // Документ не попадает (ADR-0070), поэтому дети снимаются; без исходника
+  // элемент теряет обёртку, как любой лишний `span` и `div`.
+  if (isFormula(node)) {
+    if (node.hasAttribute("data-latex")) node.replaceChildren();
+    else node.replaceWith(...node.childNodes);
+    return;
+  }
   // Без `type="checkbox"` поле ввода — обычное текстовое: такого флажка нет.
   if (node.nodeName === "INPUT" && node.getAttribute("type") !== "checkbox") {
     node.remove();

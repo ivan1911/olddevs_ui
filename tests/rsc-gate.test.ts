@@ -72,6 +72,14 @@ const SERVER_SAFE = [
       "the description of a custom tool to sanitise with the same rules.",
   },
   {
+    file: "editor/core/tools.ts",
+    why:
+      "The names of the built-in tools, the presets and resolveTools (OLDSUI-285): constant arrays " +
+      "and one function over them, with no imports at all. A server module builds `tools` from " +
+      "`[...RICH_TEXT_PRESETS.full, tool(...)]`; behind a directive it would get a client " +
+      "reference instead of the array and `next build` would fail on `is not iterable`.",
+  },
+  {
     file: "editor/core/toolOptions.ts",
     why:
       "tool() and the RichTextTools map (OLDSUI-268): a Configured Tool is plain data, and the " +
@@ -154,6 +162,30 @@ const SERVER_SAFE = [
       "The wrapper tones of the editor (OLDSUI-78) as data: tone names, the check of a data-tone " +
       "value and the GitHub alert label of each tone. One type-only import, no React and no " +
       "Tiptap — schema.ts publishes the tones, and scripts/contrast.mjs loads the file directly.",
+  },
+  {
+    file: "editor/features/video/videoSrc.ts",
+    why:
+      "The light side of the video link rules (OLDSUI-281, ADR-0071) as data: the service names, " +
+      "the data-src check by two regular expressions and the test for a video block in HTML. Pure " +
+      "functions over a string, no React and no Tiptap — schema.ts sanitises with them on a Node " +
+      "server and RichTextView reads them to decide whether it needs the video island.",
+  },
+  {
+    file: "editor/features/video/videoOptions.ts",
+    why:
+      'The defaults, value checks and the reader of the autoload option of tool("youtube") and ' +
+      'tool("twitch") (OLDSUI-287): functions over data. It imports toolOptions.ts, customTool.ts, ' +
+      "videoSrc.ts and lib/dev-warn.ts (all server-safe), neither Tiptap nor React, so the " +
+      "server-rendered RichTextView reads the option for its island.",
+  },
+  {
+    file: "editor/features/video/videoLink.ts",
+    why:
+      "The heavy side of the video link rules (OLDSUI-281): the recognition of YouTube and Twitch " +
+      "links and the player address, pure functions over a string with the global URL. No React and " +
+      "no Tiptap; it carries no directive because the editor chunk and the view island import it, " +
+      "and a server may call it too (an address check before it renders).",
   },
   {
     file: "editor/core/sourceFormat.ts",
@@ -267,6 +299,12 @@ const SERVER_SAFE = [
       "nothing of it reaches the runtime, so there is no boundary to declare.",
   },
   {
+    file: "editor/features/mathematics/katexCss.d.ts",
+    why:
+      "A type declaration for the side-effect import of katex.min.css, which the plain tsc build " +
+      "cannot type. Types only: nothing of it reaches the runtime, so there is no boundary to declare.",
+  },
+  {
     file: "editor/RichTextView.tsx",
     why:
       "The server-rendered view of a saved Document: a div with prose classes and the html as " +
@@ -280,6 +318,28 @@ const SERVER_SAFE = [
       "The code block header as class strings plus withCodeHeaders, a string-to-string function " +
       "that wraps saved code blocks in the header markup. Imports only codeLanguages.ts; no React " +
       "and no DOM, so the server-rendered RichTextView calls it.",
+  },
+  {
+    file: "editor/features/mathematics/mathHtml.ts",
+    why:
+      "hasMath and withMathSource: string-to-string functions over the saved HTML that put the LaTeX " +
+      "source into the empty formula elements (ADR-0070) and make a LaTeX source safe for the data-latex " +
+      "attribute. The only import is mathNames.ts; no React and no DOM, so the server-rendered " +
+      "RichTextView and the sanitizer call them.",
+  },
+  {
+    file: "editor/features/mathematics/mathNames.ts",
+    why:
+      "The names of a formula as constants (OLDSUI-280, ADR-0070): the data-type values of the HTML, " +
+      "the Tiptap node names and the selectors built from them. Strings only, no imports, so the " +
+      "sanitizer in schema.ts, the server-rendered RichTextView and the Tool descriptor share them.",
+  },
+  {
+    file: "editor/features/mathematics/mathOptions.ts",
+    why:
+      'The defaults, value checks and the reader of tool("mathematics") options: functions over data. ' +
+      "It imports toolOptions.ts, customTool.ts and lib/dev-warn.ts (all server-safe) and neither Tiptap nor KaTeX, so " +
+      "the server-rendered RichTextView reads the macros for its island.",
   },
   {
     file: "editor/styles/prose.ts",

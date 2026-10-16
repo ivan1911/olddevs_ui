@@ -124,7 +124,7 @@
 
 ## `editor`
 
-Строки Редактора ([rich-text-editor.md](../components/inputs/rich-text-editor.md)) живут в общем каталоге, а не в своём. Ключи с точкой — вложенные: `emojiName.*` — имя каждого эмодзи, `emojiCategory.*` — категории.
+Строки Редактора ([rich-text-editor.md](../components/inputs/rich-text-editor.md)) живут в общем каталоге, а не в своём. Ключи с точкой — вложенные: `emojiName.*` — имя каждого эмодзи, `emojiCategory.*` — категории. `typographyQuotes` — не текст для экрана, а язык набора кавычек Инструмента `typography`: `ru` («ёлочки» и „лапки“) или `en` (“ ”); у каталога другого языка значение `en` или набор задаёт Опция `quotes`.
 
 | Ключ                                  | Форма   | `en-US`                                                                          | `ru-RU`                                                                            |
 | ------------------------------------- | ------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -281,6 +281,15 @@
 | `details`                             | строка  | Collapsible block                                                                | Сворачиваемый блок                                                                 |
 | `unwrapDetails`                       | строка  | Remove collapsing                                                                | Снять сворачивание                                                                 |
 | `detailsToggle`                       | функция | —                                                                                | —                                                                                  |
+| `mathInline`                          | строка  | Formula                                                                          | Формула                                                                            |
+| `mathBlock`                           | строка  | Block formula                                                                    | Блочная формула                                                                    |
+| `mathLatex`                           | строка  | LaTeX                                                                            | LaTeX                                                                              |
+| `mathPreview`                         | строка  | Preview                                                                          | Предпросмотр                                                                       |
+| `mathEmpty`                           | строка  | The formula appears here                                                         | Здесь появится формула                                                             |
+| `mathInvalid`                         | функция | —                                                                                | —                                                                                  |
+| `mathInsert`                          | строка  | Insert                                                                           | Вставить                                                                           |
+| `mathApply`                           | строка  | Apply                                                                            | Применить                                                                          |
+| `mathRemove`                          | строка  | Remove formula                                                                   | Убрать формулу                                                                     |
 | `emoji`                               | строка  | Emoji                                                                            | Эмодзи                                                                             |
 | `emojiGrid`                           | строка  | Choose an emoji                                                                  | Выберите эмодзи                                                                    |
 | `emojiCategory.favorites`             | строка  | Favorites                                                                        | Избранное                                                                          |
@@ -370,6 +379,7 @@
 | `emojiName.luggage`                   | строка  | Luggage                                                                          | Чемодан                                                                            |
 | `source`                              | строка  | HTML                                                                             | HTML                                                                               |
 | `sourceField`                         | строка  | HTML source                                                                      | HTML-код документа                                                                 |
+| `invisibleCharacters`                 | строка  | Invisible characters                                                             | Невидимые символы                                                                  |
 | `search`                              | строка  | Find                                                                             | Найти                                                                              |
 | `searchReplace`                       | строка  | Find and replace                                                                 | Найти и заменить                                                                   |
 | `searchPanel`                         | строка  | Find and replace                                                                 | Поиск и замена                                                                     |
@@ -407,6 +417,14 @@
 | `blockDuplicate`                      | строка  | Duplicate                                                                        | Дублировать                                                                        |
 | `blockDelete`                         | строка  | Delete                                                                           | Удалить                                                                            |
 | `toc`                                 | строка  | Table of contents                                                                | Оглавление                                                                         |
+| `video`                               | строка  | Video                                                                            | Видео                                                                              |
+| `videoLink`                           | строка  | Video link                                                                       | Ссылка на видео                                                                    |
+| `videoInsert`                         | строка  | Insert                                                                           | Вставить                                                                           |
+| `videoNotFound`                       | функция | —                                                                                | —                                                                                  |
+| `videoPlay`                           | строка  | Play                                                                             | Воспроизвести                                                                      |
+| `videoPlayLabel`                      | функция | —                                                                                | —                                                                                  |
+| `videoPlayer`                         | функция | —                                                                                | —                                                                                  |
+| `typographyQuotes`                    | строка  | en                                                                               | ru                                                                                 |
 
 ## `errorState`
 

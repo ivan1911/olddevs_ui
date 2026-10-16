@@ -318,6 +318,100 @@ const DETAILS_EDITOR =
 const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
 
 /**
+ * Формулы (Инструмент `mathematics`, ADR-0070): `span[data-type=inline-math]` в строке
+ * и `div[data-type=block-math]` Блоком. Вид один в Редакторе и в Просмотре.
+ *
+ * ИСХОДНИК И ОТРИСОВКА. До отрисовки (Скелет Редактора, `RichTextView` без JS и до
+ * Острова) внутри элемента стоит исходный LaTeX текстом, и такой элемент — без
+ * `.katex` внутри — красится моноширинным: автор видит, где формула, а читатель
+ * читает исходник. Отрисованная формула — разметка KaTeX, ей своего шрифта не
+ * нужно: его несёт CSS KaTeX. Формула с ошибкой (`inline-math-error`,
+ * `block-math-error` у вида узла, `data-math-error` у Острова) остаётся исходником
+ * — он моноширинный по тому же правилу — и подчёркнута волной цветом ошибки.
+ *
+ * БЛОК. Центрируется и прокручивается по горизонтали, если шире Документа; поля
+ * `.katex-display` сняты, ритм Блоков задаёт Документ. Исходник блока — слева и с
+ * переносами строк, как набрал автор, и не ниже 4 rem (`min-h-16`): отрисованная
+ * дробь или интеграл в разы выше строки исходника, и без запаса поле прыгало бы по
+ * высоте с приходом чанка (Скелет, ADR-0070, п. 5). Формула без дроби чуть ниже
+ * запаса, с матрицей — выше; точной высоты до отрисовки не знает никто.
+ *
+ * РЕДАКТОР. Вид узла (`tiptap-mathematics-render--editable`) кликабелен: щелчок
+ * открывает Поповер, наведение подсвечивает. Выбранная стрелками формула
+ * обведена — на ней работает Enter.
+ */
+const MATH_CLASS =
+  "[&_:is(span[data-type=inline-math],div[data-type=block-math]):not(:has(.katex))]:font-mono " +
+  "[&_:is(span[data-type=inline-math],div[data-type=block-math]):not(:has(.katex))]:text-[0.9em] " +
+  "[&_div[data-type=block-math]]:overflow-x-auto [&_div[data-type=block-math]]:py-1 " +
+  "[&_div[data-type=block-math]]:text-center " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:flex " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:min-h-16 " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:items-center " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:text-left " +
+  "[&_div[data-type=block-math]:not(:has(.katex))]:whitespace-pre-wrap " +
+  "[&_.katex-display]:my-0 " +
+  "[&_:is(.inline-math-error,.block-math-error,[data-math-error])]:text-(--rte-text-danger) " +
+  "[&_:is(.inline-math-error,.block-math-error,[data-math-error])]:underline " +
+  "[&_:is(.inline-math-error,.block-math-error,[data-math-error])]:decoration-wavy " +
+  "[&_.tiptap-mathematics-render--editable]:cursor-pointer " +
+  "[&_.tiptap-mathematics-render--editable]:rounded-(--rte-radius) " +
+  "[&_.tiptap-mathematics-render--editable:hover]:bg-(--rte-control-hover) " +
+  "[&_.tiptap-mathematics-render.ProseMirror-selectednode]:outline-2 " +
+  "[&_.tiptap-mathematics-render.ProseMirror-selectednode]:outline-(--rte-ring) ";
+
+/**
+ * Невидимые символы (Инструмент `invisibleCharacters`): расширение Tiptap
+ * вставляет в разметку виджеты `span.tiptap-invisible-character` с модификатором
+ * `--space`, `--break` или `--paragraph`; пустой `span` несёт знак в `::before`.
+ * Собственный CSS расширения кит не подключает (`injectCSS: false`) и рисует
+ * знаки сам, токенами.
+ *
+ * НЕ ДВИГАЮТ ТЕКСТ. Знак — `inline-block` нулевой ширины, а высота строки — `1em`,
+ * поэтому перенос строк и высота абзацев такие же, как со скрытыми знаками.
+ * Выделение и мышь знаки не видят (`select-none`, `pointer-events-none`), копирование
+ * их не берёт: их нет в Документе. Цвет — приглушённый (`--rte-muted-foreground`),
+ * а на тонированной Обёртке он уже пересчитан под её фон (`WRAPPER_CLASS`).
+ *
+ * В пустом первом абзаце знак абзаца скрыт: его место занимает подсказка поля
+ * (`is-editor-empty`, `RichTextEditor.tsx`), и «¶» лёг бы поверх её текста.
+ * Знаки в Просмотре не появляются: класса там нет ни у кого.
+ */
+const INVISIBLE_CHARACTERS_CLASS =
+  "[&_.tiptap-invisible-character]:pointer-events-none [&_.tiptap-invisible-character]:select-none " +
+  "[&_.tiptap-invisible-character]:before:inline-block [&_.tiptap-invisible-character]:before:w-0 " +
+  "[&_.tiptap-invisible-character]:before:font-normal [&_.tiptap-invisible-character]:before:not-italic " +
+  "[&_.tiptap-invisible-character]:before:leading-none " +
+  "[&_.tiptap-invisible-character]:before:text-(--rte-muted-foreground) " +
+  "[&_.tiptap-invisible-character--space]:before:content-['·'] " +
+  "[&_.tiptap-invisible-character--break]:before:content-['↵'] " +
+  "[&_.tiptap-invisible-character--paragraph]:before:content-['¶'] " +
+  "[&_p.is-editor-empty:first-child>.tiptap-invisible-character--paragraph]:hidden ";
+
+/**
+ * Видео (Инструменты `youtube` и `twitch`, ADR-0071): серверный блок
+ * `div[data-block=video]` со ссылкой внутри — рамка 16:9, те же классы, что у
+ * заглушки плеера (`PLAYER_FRAME`, `VideoPlayer.tsx`; тест сверяет списки). Так
+ * Скелет Редактора и серверный HTML `RichTextView` с первого кадра занимают ту высоту,
+ * что и заглушка, и приход чанка или острова её не меняет. Ссылка стоит по центру,
+ * читается и нажимается без JS; остров кладёт плеер в эту же рамку.
+ *
+ * Классы выписаны литералами: Tailwind не видит классы, собранные из строки.
+ */
+const VIDEO_CLASS =
+  "[&_div[data-block=video]]:relative [&_div[data-block=video]]:aspect-video " +
+  "[&_div[data-block=video]]:w-full [&_div[data-block=video]]:overflow-hidden " +
+  "[&_div[data-block=video]]:rounded-(--rte-radius) [&_div[data-block=video]]:border " +
+  "[&_div[data-block=video]]:border-(--rte-code-border) " +
+  "[&_div[data-block=video]]:bg-(--rte-code-background) " +
+  "[&_div[data-block=video]]:flex [&_div[data-block=video]]:items-center " +
+  "[&_div[data-block=video]]:justify-center [&_div[data-block=video]]:p-4 " +
+  "[&_div[data-block=video]>a]:max-w-full [&_div[data-block=video]>a]:truncate " +
+  // Ссылка на сером фоне рамки — основным цветом, как в Обёртке с тоном: акцент Листа
+  // откалиброван под белый лист и на `code-background` давал меньше 4.5:1 (axe, тёмная тема).
+  "[&_div[data-block=video]]:[--rte-link:var(--rte-tone-link)] ";
+
+/**
  * Свой Блок потребителя (ADR-0058, п. 3.2): `div[data-block]` с
  * именем, которого нет у кита. Кит даёт ему ритм абзаца и больше ничего — вид
  * задаёт CSS потребителя по `data-block` и токенам кита. Сам Блок отступ уже
@@ -450,6 +544,9 @@ const PROSE_RULES =
   " " +
   DETAILS_CLASS +
   " " +
+  MATH_CLASS +
+  INVISIBLE_CHARACTERS_CLASS +
+  VIDEO_CLASS +
   CUSTOM_BLOCK_CLASS;
 
 /**

@@ -145,10 +145,32 @@ const INSERT_ORDER: readonly Tool[] = [
   "layout",
   "wrapper",
   "details",
+  "mathematics",
+  "youtube",
+  "twitch",
 ];
 
 /** Разделы по порядку показа. */
 export const INSERT_SECTIONS = ["insert", "turnInto"] as const;
+
+/**
+ * Пункты с одним `id` — одним пунктом: пункт «Видео» стоит в описаниях `youtube` и
+ * `twitch` (ADR-0071), а в меню он один. Первая запись держит место, слова для
+ * поиска (`aliases`) складываются.
+ */
+function merged(items: readonly InsertItem[]): InsertItem[] {
+  const byId = new Map<string, InsertItem>();
+  for (const item of items) {
+    const first = byId.get(item.id);
+    byId.set(
+      item.id,
+      first
+        ? { ...first, aliases: [...new Set([...(first.aliases ?? []), ...(item.aliases ?? [])])] }
+        : item
+    );
+  }
+  return [...byId.values()];
+}
 
 /**
  * Пункты для набора инструментов — проекция списка описаний (`insertItems`) в
@@ -157,8 +179,10 @@ export const INSERT_SECTIONS = ["insert", "turnInto"] as const;
  */
 export function insertItemsFor(tools: ToolList): readonly InsertItem[] {
   if (!tools.has("insertMenu")) return [];
-  const items = projectRecords(tools, INSERT_ORDER, (descriptor) => descriptor.insertItems).filter(
-    (item) => item.requires === undefined || tools.has(item.requires)
+  const items = merged(
+    projectRecords(tools, INSERT_ORDER, (descriptor) => descriptor.insertItems).filter(
+      (item) => item.requires === undefined || tools.has(item.requires)
+    )
   );
   return items.length > 1 ? items : [];
 }

@@ -59,7 +59,7 @@ The kit honors the system setting `prefers-reduced-motion: reduce` without any
 action from the consumer: moving animations lose the movement and still make
 the element appear; the rotation of disclosure chevrons becomes instant.
 
-There are two exceptions, and both are busy indicators: `Spinner` and an
+There are two exceptions, and both are loading indicators: `Spinner` and an
 indeterminate `Progress` keep moving. Here the motion is the message,
 and a stopped indicator reads as broken. Formally this is allowed: WCAG 2.2
 criterion 2.3.3 is level AAA, and essential motion is exempt from the rule.

@@ -1,5 +1,5 @@
 ---
-sourceHash: 9e3157586a55
+sourceHash: 2719786ed189
 ---
 
 # Message catalog `UiMessages`
@@ -122,7 +122,7 @@ This page is updated together with the key. The gate `tests/i18n-gate.test.ts` c
 
 ## `editor`
 
-The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-editor.md)) live in the shared catalog, not in a catalog of their own. Keys with a dot are nested: `emojiName.*` is the name of each emoji, and `emojiCategory.*` is the name of each category.
+The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-editor.md)) live in the shared catalog, not in a catalog of their own. Keys with a dot are nested: `emojiName.*` is the name of each emoji, and `emojiCategory.*` is the name of each category. `typographyQuotes` is not text for the screen but the language of the quote set of the `typography` Tool: `ru` (guillemets and low-9 quotes) or `en` (curly quotes); a catalog of another language keeps `en`, or the `quotes` option sets the quotes.
 
 | Key                                   | Shape    | `en-US`                                                                          | `ru-RU`                                                                            |
 | ------------------------------------- | -------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -279,6 +279,15 @@ The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-edito
 | `details`                             | string   | Collapsible block                                                                | Сворачиваемый блок                                                                 |
 | `unwrapDetails`                       | string   | Remove collapsing                                                                | Снять сворачивание                                                                 |
 | `detailsToggle`                       | function | —                                                                                | —                                                                                  |
+| `mathInline`                          | string   | Formula                                                                          | Формула                                                                            |
+| `mathBlock`                           | string   | Block formula                                                                    | Блочная формула                                                                    |
+| `mathLatex`                           | string   | LaTeX                                                                            | LaTeX                                                                              |
+| `mathPreview`                         | string   | Preview                                                                          | Предпросмотр                                                                       |
+| `mathEmpty`                           | string   | The formula appears here                                                         | Здесь появится формула                                                             |
+| `mathInvalid`                         | function | —                                                                                | —                                                                                  |
+| `mathInsert`                          | string   | Insert                                                                           | Вставить                                                                           |
+| `mathApply`                           | string   | Apply                                                                            | Применить                                                                          |
+| `mathRemove`                          | string   | Remove formula                                                                   | Убрать формулу                                                                     |
 | `emoji`                               | string   | Emoji                                                                            | Эмодзи                                                                             |
 | `emojiGrid`                           | string   | Choose an emoji                                                                  | Выберите эмодзи                                                                    |
 | `emojiCategory.favorites`             | string   | Favorites                                                                        | Избранное                                                                          |
@@ -368,6 +377,7 @@ The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-edito
 | `emojiName.luggage`                   | string   | Luggage                                                                          | Чемодан                                                                            |
 | `source`                              | string   | HTML                                                                             | HTML                                                                               |
 | `sourceField`                         | string   | HTML source                                                                      | HTML-код документа                                                                 |
+| `invisibleCharacters`                 | string   | Invisible characters                                                             | Невидимые символы                                                                  |
 | `search`                              | string   | Find                                                                             | Найти                                                                              |
 | `searchReplace`                       | string   | Find and replace                                                                 | Найти и заменить                                                                   |
 | `searchPanel`                         | string   | Find and replace                                                                 | Поиск и замена                                                                     |
@@ -405,6 +415,14 @@ The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-edito
 | `blockDuplicate`                      | string   | Duplicate                                                                        | Дублировать                                                                        |
 | `blockDelete`                         | string   | Delete                                                                           | Удалить                                                                            |
 | `toc`                                 | string   | Table of contents                                                                | Оглавление                                                                         |
+| `video`                               | string   | Video                                                                            | Видео                                                                              |
+| `videoLink`                           | string   | Video link                                                                       | Ссылка на видео                                                                    |
+| `videoInsert`                         | string   | Insert                                                                           | Вставить                                                                           |
+| `videoNotFound`                       | function | —                                                                                | —                                                                                  |
+| `videoPlay`                           | string   | Play                                                                             | Воспроизвести                                                                      |
+| `videoPlayLabel`                      | function | —                                                                                | —                                                                                  |
+| `videoPlayer`                         | function | —                                                                                | —                                                                                  |
+| `typographyQuotes`                    | string   | en                                                                               | ru                                                                                 |
 
 ## `errorState`
 

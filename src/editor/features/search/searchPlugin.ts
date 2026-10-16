@@ -1,8 +1,9 @@
 "use client";
 
 import { Extension } from "@tiptap/core";
-import type { EditorState, Transaction } from "@tiptap/pm/state";
-import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
+import type { Node as PmNode } from "@tiptap/pm/model";
+import type { EditorState, Selection, Transaction } from "@tiptap/pm/state";
+import { NodeSelection, Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { findMatches, type SearchMatch, type SearchOptions } from "./searchMatch.js";
 
@@ -25,6 +26,8 @@ interface SearchPluginState {
 type SearchMeta =
   | { type: "set"; query: string; options?: Partial<SearchOptions> }
   | { type: "select"; index: number }
+  /** «Заменить» заменило не текущее совпадение (текущая — формула): искать дальше от каретки. */
+  | { type: "replaced" }
   | { type: "clear" };
 
 const SEARCH_KEY = new PluginKey<SearchPluginState>("search");
@@ -48,15 +51,28 @@ export function searchState(state: EditorState):
   return { query, options, current, total: matches.length, error, matches };
 }
 
+/**
+ * Выделение совпадения: текст — отрезок, формула — узел целиком. Отрезок через
+ * блочную формулу был бы выделением вне текста, а на строчной — не отличался бы
+ * от выделения узла только в Chromium.
+ */
+export function matchSelection(doc: PmNode, { from, to, formula }: SearchMatch): Selection {
+  return formula ? NodeSelection.create(doc, from) : TextSelection.create(doc, from, to);
+}
+
 function decorate(state: EditorState, matches: SearchMatch[], current: number): DecorationSet {
   if (matches.length === 0) return DecorationSet.empty;
   return DecorationSet.create(
     state.doc,
-    matches.map(({ from, to }, index) =>
-      Decoration.inline(from, to, {
+    matches.map(({ from, to, formula }, index) => {
+      const attributes = {
         class: index === current ? "rte-search-match rte-search-current" : "rte-search-match",
-      })
-    )
+      };
+      // Формула — атом с видом узла: подсветка узла целиком, а не отрезок текста в нём.
+      return formula
+        ? Decoration.node(from, to, attributes)
+        : Decoration.inline(from, to, attributes);
+    })
   );
 }
 
@@ -134,7 +150,10 @@ function searchPlugin(flags: SearchOptions) {
           что стоит на месте прежнего текущего (или первое после него).
         */
         const anchor = previous.matches[previous.current];
-        const pos = anchor ? tr.mapping.map(anchor.from, -1) : state.selection.from;
+        const pos =
+          anchor && meta?.type !== "replaced"
+            ? tr.mapping.map(anchor.from, -1)
+            : state.selection.from;
         return build(state, previous.query, previous.options, (matches) => indexFrom(matches, pos));
       },
     },
@@ -184,9 +203,16 @@ declare module "@tiptap/core" {
        * поля поиска к совпадению прокручивает панель (`revealMatch.ts`).
        */
       searchStep: (step: 1 | -1) => ReturnType;
-      /** Заменить текущее совпадение — одна правка, одна отмена. */
+      /**
+       * Заменить текущее совпадение — одна правка, одна отмена. Формулы пропускаются:
+       * если текущая — формула, заменяется следующее за ней совпадение с текстом;
+       * заменять нечего — `false`.
+       */
       replaceMatch: (replacement: string) => ReturnType;
-      /** Заменить все совпадения — одна транзакция, одна отмена. */
+      /**
+       * Заменить все совпадения с текстом — одна транзакция, одна отмена. Формулы не
+       * трогаются и остаются совпадениями: счётчик после замены показывает их.
+       */
       replaceAllMatches: (replacement: string) => ReturnType;
       /** Убрать запрос и подсветку; флажки вернутся к Опциям Инструмента. */
       clearSearch: () => ReturnType;
@@ -242,7 +268,7 @@ export const SearchExtension = Extension.create<SearchExtensionOptions>({
           const match = search.matches[index]!;
           if (dispatch) {
             tr.setMeta(SEARCH_KEY, { type: "select", index } satisfies SearchMeta);
-            tr.setSelection(TextSelection.create(tr.doc, match.from, match.to)).scrollIntoView();
+            tr.setSelection(matchSelection(tr.doc, match)).scrollIntoView();
           }
           return true;
         },
@@ -250,9 +276,17 @@ export const SearchExtension = Extension.create<SearchExtensionOptions>({
         (replacement) =>
         ({ state, tr, dispatch, editor }) => {
           const search = SEARCH_KEY.getState(state);
-          const match = search?.matches[search.current];
-          if (!search || !match || !editor.isEditable) return false;
+          const current = search?.matches[search.current];
+          if (!search || !current || !editor.isEditable) return false;
+          // Формулы Заменить не трогает: берётся ближайшее совпадение с текстом по кругу.
+          const total = search.matches.length;
+          const match = [...search.matches.keys()]
+            .map((offset) => search.matches[(search.current + offset) % total]!)
+            .find((candidate) => !candidate.formula);
+          if (!match) return false;
           if (dispatch) {
+            if (match !== current)
+              tr.setMeta(SEARCH_KEY, { type: "replaced" } satisfies SearchMeta);
             replaceRange(tr, match, replacementFor(match, replacement, search.options));
             // Каретка — за заменой: текущим станет следующее совпадение.
             tr.setSelection(TextSelection.create(tr.doc, tr.mapping.map(match.to)));
@@ -263,10 +297,11 @@ export const SearchExtension = Extension.create<SearchExtensionOptions>({
         (replacement) =>
         ({ state, tr, dispatch, editor }) => {
           const search = SEARCH_KEY.getState(state);
-          if (!search || search.matches.length === 0 || !editor.isEditable) return false;
+          const texts = search?.matches.filter((match) => !match.formula) ?? [];
+          if (!search || texts.length === 0 || !editor.isEditable) return false;
           if (dispatch) {
             // С конца: замена не сдвигает ещё не заменённые отрезки.
-            for (const match of [...search.matches].reverse()) {
+            for (const match of texts.reverse()) {
               replaceRange(tr, match, replacementFor(match, replacement, search.options));
             }
           }

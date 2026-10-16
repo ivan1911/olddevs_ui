@@ -13,7 +13,7 @@ sourceHash: 9fcb60e26838
 ## Summary for AI
 
 A field with an input mask, built on `TextControl`. The mask comes as a prop — the
-kit knows nothing about the domain. The value is **raw**; the display is
+kit knows nothing about the domain. The value is **unmasked**; the display is
 formatted; both are passed to the consumer. The caret is what the component exists for.
 
 ## When to use
@@ -43,7 +43,7 @@ const [value, setValue] = useState("");
 | Prop             | Default | Purpose                                                                 |
 | ---------------- | ------- | ----------------------------------------------------------------------- |
 | `mask`           | —       | The pattern: `9` is a digit, `a` is a letter, `*` is a digit or letter. |
-| `value`          | —       | The raw value, without the mask literals.                               |
+| `value`          | —       | The unmasked value, without the mask literals.                          |
 | `onChange`       | —       | `(raw, formatted)` — both representations at once.                      |
 | `showMask`       | `true`  | Show the format in the field itself: `+7 (___) ___-__-__`.              |
 | `shellClassName` | —       | Classes for the shell with the border.                                  |
@@ -96,12 +96,12 @@ Silent dropping is not a minor thing: the reference implementation of
 failed the WCAG 3.3.3 test on it (there, a mismatched character also cuts off the
 whole rest of the input).
 
-## The value is raw, the display is formatted
+## The value is unmasked, the display is formatted
 
 Storing the format means storing a display decision: the mask can change, while
 the brackets recorded with it stay in the database forever.
 
-**Both** representations are passed to the consumer: the raw one is needed by a
+**Both** representations are passed to the consumer: the unmasked one is needed by a
 request, the shown one by whoever stores the text as is. Passing only one forces
 many consumers to reformat.
 

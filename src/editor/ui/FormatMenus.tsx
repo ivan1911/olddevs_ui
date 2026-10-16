@@ -23,6 +23,7 @@ import {
   ClearFormattingIcon,
   CodeBlockIcon,
   InlineCodeIcon,
+  InvisibleCharactersIcon,
   ListIcon,
   MoreIcon,
   ParagraphIcon,
@@ -43,6 +44,10 @@ import { applyInsertItem } from "../core/insertItems.js";
 import { useLockableMenu } from "./lockableMenu.js";
 import { DEFAULT_ALIGNMENT, EDITOR_ALIGNMENTS, type EditorAlignment } from "../styles/palette.js";
 import { findShortcutKeys } from "../core/shortcuts.js";
+import {
+  invisibleCharactersVisible,
+  toggleInvisibleCharacters,
+} from "../features/invisibleCharacters/invisibleCharactersVisible.js";
 import type { ToolList } from "../core/toolDescriptor.js";
 import type { Tool } from "../core/tools.js";
 import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
@@ -576,6 +581,13 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
    * (`rowMarks.ts`).
    */
   omit?: readonly MoreMarkId[];
+  /**
+   * Пункт «Невидимые символы» в конце меню. Только у фиксированной Панели:
+   * плавающая Панель и плашка меню выделения рисуют то же «…», но переключатель
+   * режима показа Документа над выделением ни к чему. Проп — «пункт есть»;
+   * без Инструмента `invisibleCharacters` в `tools` пункта нет и при `true`.
+   */
+  invisibleCharacters?: boolean;
 }
 
 /**
@@ -600,6 +612,12 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
  * «…»; теперь это кнопки «Маркер» и «Цвет» с поповерами-сетками рядом с «…»
  * (`ColorMenus.tsx`): цвет выбирают глазами, по кружкам.
  *
+ * «НЕВИДИМЫЕ СИМВОЛЫ» — последний раздел, и только у фиксированной Панели
+ * (проп `invisibleCharacters`). Это режим показа Документа, а не форматирование
+ * выделенного, поэтому он отделён чертой от очистки и стоит в самом конце.
+ * Отметка — символы показаны; выбор переключает показ тем же путём, что команда
+ * `tool("invisibleCharacters").toggle()`, и `value` с `onChange` не трогает.
+ *
  * Хозяин — Панель или плашка меню выделения: всё место-зависимое приходит
  * пропами (`FormatMenuHostProps`).
  */
@@ -610,6 +628,7 @@ export function MoreFormatMenu({
   unavailable,
   shortcut,
   omit = [],
+  invisibleCharacters = false,
 }: MoreFormatMenuProps) {
   const messages = useMessages().editor;
   const locale = useUiLocale();
@@ -618,6 +637,7 @@ export function MoreFormatMenu({
   // Цитата — флажок рядом с Блоком кода: из «¶» она ушла.
   const quote = quoteItemFor(tools);
   const clear = tools.has("clearFormatting");
+  const view = invisibleCharacters && tools.has("invisibleCharacters");
 
   // Сравнение результата глубокое (умолчание `useEditorState`): рендер — только при смене.
   const state = useEditorState({
@@ -630,9 +650,11 @@ export function MoreFormatMenu({
       inQuote: quote !== undefined && current.isActive("blockquote"),
       canQuote: quote !== undefined && current.can().toggleBlockquote(),
       canClear: clear && current.can().unsetAllMarks(),
+      // Показ невидимых символов — состояние плагина движка, а не Метка или Блок.
+      invisible: view && invisibleCharactersVisible(current),
     }),
   });
-  if (marks.length === 0 && !codeBlock && !quote && !clear) return null;
+  if (marks.length === 0 && !codeBlock && !quote && !clear && !view) return null;
 
   const sections = (
     [
@@ -695,6 +717,21 @@ export function MoreFormatMenu({
             ]
           : [],
       },
+      {
+        // Свой раздел-флажок в конце: режим показа Документа, не форматирование.
+        id: "view",
+        selectionMode: "multiple",
+        selected: state.invisible ? ["invisibleCharacters"] : [],
+        items: view
+          ? [
+              {
+                id: "invisibleCharacters",
+                label: messages.invisibleCharacters,
+                icon: InvisibleCharactersIcon,
+              },
+            ]
+          : [],
+      },
     ] satisfies FormatMenuSection[]
   ).filter((section) => section.items.length > 0);
 
@@ -704,6 +741,10 @@ export function MoreFormatMenu({
     if (key === "codeBlock") return void editor.chain().focus().toggleCodeBlock().run();
     if (key === "blockquote") return void editor.chain().focus().toggleBlockquote().run();
     if (key === "clearFormatting") return void editor.chain().focus().unsetAllMarks().run();
+    if (key === "invisibleCharacters") {
+      toggleInvisibleCharacters(editor);
+      editor.commands.focus();
+    }
   };
 
   return (

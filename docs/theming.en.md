@@ -26,7 +26,7 @@ it writes the class `bg-bg-0`, backed by the `@theme` bridge.
 ### Layer 1 — primitives
 
 Three neutral scales, one per theme (`slate` for dark, `cloud` for light,
-`navy` for dim), and seven tone scales. Within a scale the step number increases with lightness:
+`navy` for dim), and seven color scales. Within a scale the step number increases with lightness:
 1 is the darkest, 12 the lightest.
 
 Three scales instead of one is not duplication: each theme's neutrals are tuned
@@ -75,28 +75,28 @@ The list is **closed**. A component token is added when a component family has a
 reason to differ from the semantics, not "just in case"; a token with no reader is
 not added at all.
 
-| Token                   | Who reads it                                             |
-| ----------------------- | -------------------------------------------------------- |
-| `--overlay-scrim`       | `Dialog`, `Drawer`, `CommandPalette`, `ModalOverlay`     |
-| `--modal-shadow`        | `Dialog`                                                 |
-| `--topbar-bg`           | `SelectionBar` when stuck, `TopBar`                      |
-| `--sidenav-w`           | `SideNav`, the `AppShell` grid — expanded width          |
-| `--sidenav-w-collapsed` | the same in icon-only mode                               |
-| `--marker-<name>`       | the marker of `RichTextEditor` and `RichTextView` — nine |
-| `--marker-text`         | dark text on any marker, one for all themes              |
+| Token                   | Who reads it                                                |
+| ----------------------- | ----------------------------------------------------------- |
+| `--overlay-scrim`       | `Dialog`, `Drawer`, `CommandPalette`, `ModalOverlay`        |
+| `--modal-shadow`        | `Dialog`                                                    |
+| `--topbar-bg`           | `SelectionBar` when stuck, `TopBar`                         |
+| `--sidenav-w`           | `SideNav`, the `AppShell` grid — expanded width             |
+| `--sidenav-w-collapsed` | the same in collapsed mode                                  |
+| `--marker-<name>`       | the highlight of `RichTextEditor` and `RichTextView` — nine |
+| `--marker-text`         | dark text on any highlight, one for all themes              |
 
-**`--marker-<name>` is nine Editor marker tokens** (`gray`, `brown`, `orange`,
+**`--marker-<name>` is nine Editor highlight tokens** (`gray`, `brown`, `orange`,
 `yellow`, `green`, `blue`, `purple`, `pink`, `red`). Three of them
 (`yellow`, `green`, `pink`) are bright and **the same in all themes**; they are declared once, in the
 `:root, [data-theme]` block, with no per-theme counterpart. The six earlier ones ("readable", they are not in the Toolbar
 menu) have a per-theme value: pastel in `light`, a muted dark in
-`dark` and `dim`. The text on a marker is dark — the `--marker-text` token. What sets them apart from
+`dark` and `dim`. The text on a highlight is dark — the `--marker-text` token. What sets them apart from
 the other tokens of this layer is the **selector**: they are declared on `[data-theme="…"]` of any
 element, not on `:root[data-theme="…"]`, and are read as a variable directly
 (`bg-(--marker-yellow)`), without the `@theme` bridge. So in a nested wrapper with a
-different theme the marker takes the value of the nearest theme. The bridge is declared on the root, and
+different theme the highlight takes the value of the nearest theme. The bridge is declared on the root, and
 `var()` in it is resolved there — a nested theme would not work through it.
-The dark `--marker-text` holds 4.5:1 on the bright three in all themes, and the main text holds it on the six readable markers (`npm run contrast`).
+The dark `--marker-text` holds 4.5:1 on the bright three in all themes, and the main text holds it on the six readable highlights (`npm run contrast`).
 
 `--topbar-bg` is named by role, not by its reader: it is the
 semi-transparent background of the header.

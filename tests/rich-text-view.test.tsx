@@ -319,7 +319,9 @@ test("the bare sanitise config lists the schema minus what only hooks may admit"
     "data-block",
     "data-checked",
     "data-color",
+    "data-latex",
     "data-layout",
+    "data-provider",
     "data-tone",
     "data-type",
     "data-width",
@@ -339,7 +341,16 @@ test("the sanitise config closes the attribute families DOMPurify opens by defau
   // назван ровно у `span` и `mark`, а в общий список конфига не попадает —
   // его пускает только хук `sanitizeRichText`, сверив тег и значение. Так же
   // `class`, `src`, слияние ячеек и атрибуты флажка.
-  for (const guarded of ["style", "class", "src", "colspan", "rowspan", "type", "checked"]) {
+  for (const guarded of [
+    "style",
+    "class",
+    "src",
+    "colspan",
+    "rowspan",
+    "type",
+    "checked",
+    "data-src",
+  ]) {
     expect(config.ALLOWED_ATTR, guarded).not.toContain(guarded);
   }
   expect(
@@ -354,7 +365,9 @@ test("the sanitise config closes the attribute families DOMPurify opens by defau
     "data-block",
     "data-checked",
     "data-color",
+    "data-latex",
     "data-layout",
+    "data-provider",
     "data-tone",
     "data-type",
     "data-width",

@@ -1,11 +1,13 @@
 import { render, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 import { RichTextEditor } from "../src/editor/index.js";
+import { TOOLS } from "../src/editor/core/tools.js";
 
 /**
- * Дождаться чанков ленивых встроенных — `codeBlock` и `table` (OLDSUI-111,
- * ADR-0058, п. 11.1) — через публичный API: Редактор с `full` монтируется,
- * доходит до Готовности (`onReady`) и снимается.
+ * Дождаться чанков ленивых встроенных — `codeBlock`, `table` (OLDSUI-111,
+ * ADR-0058, п. 11.1), а с ними и ленивых вне пресетов — `mathematics` (OLDSUI-280,
+ * ADR-0070) и видео (OLDSUI-281) — через публичный API: Редактор со всеми
+ * встроенными Инструментами монтируется, доходит до Готовности (`onReady`) и снимается.
  *
  * Зачем. С ленивыми встроенными `full` готов не в `render`, а после загрузки
  * чанков. Загрузчик кэширован на модуле (`toolLoader.ts`), поэтому после этого
@@ -17,7 +19,12 @@ import { RichTextEditor } from "../src/editor/index.js";
 export async function loadLazyBuiltins(): Promise<void> {
   let ready = false;
   const view = render(
-    createElement(RichTextEditor, { "aria-label": "Warm-up", onReady: () => (ready = true) })
+    createElement(RichTextEditor, {
+      "aria-label": "Warm-up",
+      // Все встроенные: и ленивые вне пресетов (`mathematics`, `youtube`, `twitch`) — тесты берут `TOOLS` целиком.
+      tools: [...TOOLS],
+      onReady: () => (ready = true),
+    })
   );
   await waitFor(
     () => {

@@ -66,7 +66,7 @@ const [expanded, setExpanded] = useState<Set<Key>>(new Set(["nature"]));
 | `selectedKeys`        | —       | Selected nodes.                                                                                                        |
 | `onSelectionChange`   | —       | Called with the selection.                                                                                             |
 | `disabledKeys`        | —       | Unavailable nodes.                                                                                                     |
-| `activeKey`           | —       | The current navigation node: `aria-current="page"` and a backing.                                                      |
+| `activeKey`           | —       | The current navigation node: `aria-current="page"` and a background.                                                   |
 | `onAction`            | —       | An action on a node: navigation, opening. It is not selection.                                                         |
 | `emptyText`           | —       | What to show when there are no nodes.                                                                                  |
 
@@ -115,7 +115,7 @@ is a place, not a choice. Hence a separate prop:
 ```
 
 - The node whose key equals `activeKey` gets `aria-current="page"` on its row and a
-  `bg-3` backing with a semibold label, like `NavItem` with `active`. If the key is not
+  `bg-3` background with a semibold label, like `NavItem` with `active`. If the key is not
   among the nodes or the prop is not set, nothing is marked.
 - The tree **does not move "current" by itself**: a click on a leaf calls `onAction`,
   and the consumer passes the new `activeKey` when the route has changed. Like

@@ -1,7 +1,13 @@
+import type { EditorQuoteSet } from "../../i18n/messages.js";
+import { devError } from "../../lib/dev-warn.js";
 import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
-import type { SearchToolState, TocToolState } from "./toolState.js";
-import type { SearchToolCommands, TocToolCommands } from "./toolCommands.js";
+import type { InvisibleCharactersToolState, SearchToolState, TocToolState } from "./toolState.js";
+import type {
+  InvisibleCharactersToolCommands,
+  SearchToolCommands,
+  TocToolCommands,
+} from "./toolCommands.js";
 import type { Tool as ToolName } from "./tools.js";
 
 /*
@@ -75,9 +81,121 @@ export interface DetailsToolOptions {
 }
 
 /**
+ * Опции Инструмента `mathematics` (по расширению Mathematics из Tiptap, ADR-0048,
+ * ADR-0070): только опции KaTeX, которые не влияют на сохранённый HTML — в нём
+ * лежит исходный LaTeX. `RichTextView` читает те же опции из своего `tools`, чтобы
+ * формула выглядела в Просмотре так же, как в Редакторе.
+ *
+ * Данные, а не функции: Настроенный Инструмент можно отдать клиентскому
+ * компоненту через границу RSC, и Остров Просмотра получает опции с сервера.
+ */
+export interface MathematicsToolOptions {
+  /**
+   * Свои макросы KaTeX: имя с обратной косой чертой — подстановка
+   * (`{ "\\RR": "\\mathbb{R}" }`). Вложенные объекты сливаются, как у любой
+   * Опции. По умолчанию макросов нет.
+   */
+  macros: Readonly<Record<string, string>>;
+  /**
+   * Что делать с не-LaTeX вводом (Юникод в математическом режиме и подобное):
+   * `"ignore"` — молча принять, `"warn"` — принять и написать в консоль,
+   * `"error"` — считать формулу неверной. По умолчанию `"ignore"`, а не `"warn"`
+   * как у KaTeX: консоль на каждую набранную букву шумела бы.
+   */
+  strict: "ignore" | "warn" | "error";
+}
+
+/**
+ * Опции Инструмента `typography` (по расширению Typography из Tiptap, ADR-0048).
+ *
+ * Каждое правило Tiptap — Опция с его именем: `false` выключает правило,
+ * строка заменяет символ замены. Кавычки добавляют два решения кита: набор
+ * `quotes` и вложенность «ёлочек» в русском наборе.
+ */
+export interface TypographyToolOptions {
+  /**
+   * Набор кавычек для `"`: `"ru"` — «ёлочки» и вложенные „лапки“, `"en"` —
+   * “ ”. `"auto"` берёт набор у каталога сообщений Редактора
+   * (`UiMessages.editor.typographyQuotes`) и следует за ним при смене каталога;
+   * явный набор нужен, когда язык Документа не совпадает с языком интерфейса.
+   * Одиночный `'` от набора не зависит. По умолчанию `"auto"`.
+   */
+  quotes: "auto" | EditorQuoteSet;
+  /**
+   * Открывающая и закрывающая двойная кавычка. Явная строка перекрывает набор
+   * `quotes` и выключает вложенность: кавычки идут парой, открывающая — после
+   * пробела, начала Блока или скобки. `false` выключает правило. Нет значения —
+   * кавычки набора.
+   */
+  openDoubleQuote?: false | string;
+  closeDoubleQuote?: false | string;
+  /** Одиночные кавычки: `'` после пробела — открывающая, иначе закрывающая (она же апостроф). */
+  openSingleQuote: false | string;
+  closeSingleQuote: false | string;
+  /** `--` → тире. */
+  emDash: false | string;
+  /** `...` → многоточие. */
+  ellipsis: false | string;
+  /** `<-` и `->` → стрелки. */
+  leftArrow: false | string;
+  rightArrow: false | string;
+  /** `(c)`, `(tm)`, `(sm)`, `(r)`. */
+  copyright: false | string;
+  trademark: false | string;
+  servicemark: false | string;
+  registeredTrademark: false | string;
+  /** `1/2 `, `1/4 `, `3/4 ` (с пробелом после дроби) → дроби. */
+  oneHalf: false | string;
+  oneQuarter: false | string;
+  threeQuarters: false | string;
+  /** `+/-` → `±`, `!=` → `≠`. */
+  plusMinus: false | string;
+  notEqual: false | string;
+  /** `<<` и `>>` → «ёлочки». */
+  laquo: false | string;
+  raquo: false | string;
+  /** `2x3` и `2*3` → `2×3`. */
+  multiplication: false | string;
+  /** `^2` и `^3` → `²` и `³`. */
+  superscriptTwo: false | string;
+  superscriptThree: false | string;
+}
+
+/**
+ * Опции Инструмента `invisibleCharacters` (по расширению Invisible Characters
+ * из Tiptap, ADR-0048).
+ */
+export interface InvisibleCharactersToolOptions {
+  /**
+   * Невидимые символы показаны с самого начала. По умолчанию `false`, в отличие
+   * от Tiptap, где `true`: Инструмент входит в `full`, и обновление кита не
+   * должно менять вид каждого такого Редактора. Дальше показом управляют кнопка,
+   * Команда `toggle` и Состояние `visible`; Опция задаёт только начало.
+   */
+  visible: boolean;
+}
+
+/**
+ * Опции Инструментов `youtube` и `twitch` (ADR-0071, п. 4): у обоих одни и те же,
+ * каждый Инструмент настраивает блоки своего сервиса. Ни одна не меняет сохранённый
+ * HTML — в нём по-прежнему только ссылка. `RichTextView` читает те же опции из своего
+ * `tools`, чтобы видео вело себя в Просмотре так же, как в Редакторе.
+ */
+export interface VideoToolOptions {
+  /**
+   * Плеер сервиса встаёт сразу — `iframe` с `loading="lazy"` в Редакторе и в
+   * Просмотре. С `false` вместо него заглушка кита с названием сервиса и кнопкой
+   * «Воспроизвести», и ни одного запроса к сервису, пока читатель не нажал: для
+   * экранов, где важна приватность. По умолчанию `true`: пустая заглушка на месте
+   * видео читалась как поломка.
+   */
+  autoload: boolean;
+}
+
+/**
  * Типы Инструментов Редактора по имени: что экран задаёт при настройке (`options`),
  * что читает (`state`) и что вызывает (`commands`). Расширяемый интерфейс, как
- * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc` и `details`, а
+ * `Storage` и `Commands` у Tiptap: кит объявляет в нём `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography` и `invisibleCharacters`, а
  * потребитель дописывает свои Инструменты через declaration merging:
  *
  * ```ts
@@ -110,6 +228,26 @@ export interface RichTextTools {
   // Только Опции: Состояния и Команд у сворачиваемого Блока нет.
   details: {
     options: DetailsToolOptions;
+  };
+  // Только Опции: Состояния и Команд у формул нет.
+  mathematics: {
+    options: MathematicsToolOptions;
+  };
+  // Только Опции: плеер рисует вид узла и Остров, Состояния и Команд у видео нет.
+  youtube: {
+    options: VideoToolOptions;
+  };
+  twitch: {
+    options: VideoToolOptions;
+  };
+  // Только Опции: правила ввода, Состояния и Команд у них нет.
+  typography: {
+    options: TypographyToolOptions;
+  };
+  invisibleCharacters: {
+    options: InvisibleCharactersToolOptions;
+    state: InvisibleCharactersToolState;
+    commands: InvisibleCharactersToolCommands;
   };
 }
 
@@ -201,7 +339,7 @@ export function mergeOptions(base: object, given: object): object {
  * опции (из JS без типов) заменяется умолчанием, в разработке — один
  * `console.error`; опции своего Инструмента проверяет его автор.
  *
- * Встроенный — только Инструмент с опциями: `search`, `toc` и `details`. Серверно-безопасна.
+ * Встроенный — только Инструмент с опциями: `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography` и `invisibleCharacters`. Серверно-безопасна.
  */
 export function tool<Name extends ConfigurableToolName>(
   name: Name,
@@ -227,4 +365,54 @@ export function isConfiguredTool(entry: unknown): entry is ConfiguredTool<string
     entry !== null &&
     (entry as { configured?: unknown }).configured === true
   );
+}
+
+/** Настроенные встроенные Инструменты из `tools`: записи `tool("имя", …)`, без определений своих. */
+export function configuredBuiltins(tools: readonly unknown[] | undefined): ConfiguredTool[] {
+  return (tools ?? []).filter(
+    (entry): entry is ConfiguredTool => isConfiguredTool(entry) && !entry.definition
+  );
+}
+
+/** Первая запись, чьё имя уже встречалось раньше: две записи `tool()` одного Инструмента — ошибка набора. */
+export function repeatedConfigured(
+  configured: readonly ConfiguredTool[]
+): ConfiguredTool | undefined {
+  return configured.find((entry, index) =>
+    configured.some((other, i) => i < index && other.name === entry.name)
+  );
+}
+
+/**
+ * Опции Инструмента: умолчания, поверх них — те, что передал `tool()`. Значение, не
+ * прошедшее проверку, и опция, которой у Инструмента нет (проверки для неё тоже
+ * нет), отбрасываются, в разработке — одним `console.error` на Инструмент:
+ * потребитель на JS обходит типы карты, а поле от этого не падает.
+ *
+ * ОДНО ЧТЕНИЕ ДЛЯ РЕДАКТОРА И ПРОСМОТРА. Редактор читает опции при сборке набора
+ * (`expandTools`), серверный `RichTextView` — опции формул для своего Острова
+ * (`mathOptionsOf`); правило одно, чтобы то, что принял Редактор, принял и Просмотр.
+ * `owner` — чьё имя стоит в сообщении.
+ */
+export function resolveToolOptions(
+  owner: "RichTextEditor" | "RichTextView",
+  name: string,
+  defaults: object,
+  checks: Readonly<Record<string, (value: unknown) => boolean>> | undefined,
+  configured: ConfiguredTool | undefined
+): object {
+  const given = Object.entries(configured?.options ?? {}).filter(
+    ([, value]) => value !== undefined
+  );
+  const valid = given.filter(([key, value]) => checks?.[key]?.(value));
+  if (valid.length < given.length) {
+    devError(
+      `${owner}: tool "${name}": ignored invalid options: ` +
+        given
+          .filter((entry) => !valid.includes(entry))
+          .map(([key]) => key)
+          .join(", ")
+    );
+  }
+  return mergeOptions(defaults, Object.fromEntries(valid));
 }

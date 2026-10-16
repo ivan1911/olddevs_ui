@@ -37,7 +37,7 @@ import {
   type RichTextEditorHandleMethods,
 } from "./core/handle.js";
 import { EditorToolbar, ToolbarSkeleton } from "./ui/EditorToolbar.js";
-import { searchState } from "./features/search/searchPlugin.js";
+import { matchSelection, searchState } from "./features/search/searchPlugin.js";
 import { isDocumentEmpty } from "./core/emptiness.js";
 import { FieldNoticeView, StatusLine } from "./ui/FieldStatus.js";
 import type { FieldNotice } from "./core/fieldNotice.js";
@@ -605,6 +605,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     taskCheckboxRef.current = messages.editor.taskCheckbox;
     const detailsToggleRef = useRef(messages.editor.detailsToggle);
     detailsToggleRef.current = messages.editor.detailsToggle;
+    // Кавычки `typography` читаются в момент ввода: смена каталога движок не пересоздаёт.
+    const quoteSetRef = useRef(messages.editor.typographyQuotes);
+    quoteSetRef.current = messages.editor.typographyQuotes;
     // Загрузчик и строки картинки — тоже через ref: расширение их читает в
     // момент вставки файла и при перерисовке подписи, а не при создании движка.
     const uploadRef = useRef(onUploadImage);
@@ -865,7 +868,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         const match = state?.matches[state.current];
         const chain = current.chain();
         if (focusDocument) chain.focus();
-        if (focusDocument && match) chain.setTextSelection({ from: match.from, to: match.to });
+        // Текст — отрезком, формула — узлом (`matchSelection`).
+        if (focusDocument && match) {
+          chain.command(({ tr }) => (tr.setSelection(matchSelection(tr.doc, match)), true));
+        }
         chain.clearSearch().run();
       }
       setSearchPanel(null);
@@ -890,6 +896,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           limit: () => limitRef.current,
           taskCheckbox: (text) => taskCheckboxRef.current({ text }),
           detailsToggle: (text) => detailsToggleRef.current({ text }),
+          quoteSet: () => quoteSetRef.current,
           slash: slashBridge,
           triggers: triggerBindings,
           openPopover: (request) => setToolPopover({ request, open: true }),
@@ -1575,6 +1582,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 disabled={disabled}
                 onInsertTable={() => setTableDialogOpen(true)}
                 shortcutsReference
+                invisibleCharacters={enabledTools.has("invisibleCharacters")}
                 search={
                   enabledTools.has("search")
                     ? {
@@ -1613,6 +1621,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 tools={enabledTools}
                 source={sourceAvailable}
                 search={enabledTools.has("search")}
+                invisibleCharacters={enabledTools.has("invisibleCharacters")}
                 shortcutsReference
               />
             </div>

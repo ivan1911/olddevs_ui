@@ -2207,6 +2207,233 @@ export const DetailsBlockHandleMenu: Story = {
   ),
 };
 
+/*
+  Типографика (Typography, OLDSUI-279): автозамены при наборе, вне Пресетов — явной
+  записью в `tools`. Истории не печатают сами: набор идёт в поле, подсказка — в
+  тексте Документа.
+*/
+const TYPOGRAPHY_SAMPLE =
+  "<h2>Typography</h2>" +
+  '<p>Type at the end of the next paragraph: <code>--</code>, <code>...</code>, <code>-&gt;</code>, <code>(c)</code>, <code>"quoted"</code> or <code>it\'s</code>. Backspace right after a replacement brings the typed characters back.</p>' +
+  "<p>Try it here: </p>";
+
+/**
+ * Автозамены при наборе на расширении Typography из Tiptap: `--` становится тире,
+ * `...` — многоточием, `->` — стрелкой, `"` — кавычкой по языку каталога
+ * сообщений (здесь английский: “ ”). Внутри кода замены не срабатывают.
+ */
+export const Typography: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "typography"]}
+        defaultValue={TYPOGRAPHY_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * Каталог сообщений русский: `"` даёт «ёлочки», а вложенная пара — „лапки“:
+ * `"a "b" c"` становится «a „b“ c».
+ */
+export const TypographyRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor
+          aria-label="Document"
+          tools={[...RICH_TEXT_PRESETS.full, "typography"]}
+          defaultValue={TYPOGRAPHY_SAMPLE}
+        />
+      </div>
+    </UiProvider>
+  ),
+};
+
+/**
+ * Опции: набор кавычек задан явно (`ru` под английским интерфейсом), тире выключено
+ * (`false`), многоточие заменено своей строкой.
+ */
+export const TypographyOptions: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[
+          ...RICH_TEXT_PRESETS.full,
+          tool("typography", { quotes: "ru", emDash: false, ellipsis: "\u22EF" }),
+        ]}
+        defaultValue={TYPOGRAPHY_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/*
+  Формулы (Mathematics, OLDSUI-280, ADR-0070): LaTeX в строке и Блоком, отрисовывает
+  KaTeX. Вне Пресетов — явной записью в `tools`; чанк с KaTeX грузится лениво, до
+  его прихода формулы видны исходником. Нейтральный текст: выкладки из школьного курса.
+*/
+const MATH_SAMPLE =
+  "<h2>Formulas</h2>" +
+  '<p>The area of a circle is <span data-type="inline-math" data-latex="S = \\pi r^2"></span>, ' +
+  'and Euler\'s identity is <span data-type="inline-math" data-latex="e^{i\\pi} + 1 = 0"></span>. ' +
+  "Click a formula to edit it, or select it with the arrow keys and press Enter.</p>" +
+  '<div data-type="block-math" data-latex="\\int_0^1 x^2\\,dx = \\frac{1}{3}"></div>' +
+  "<p>The quadratic formula in a block:</p>" +
+  '<div data-type="block-math" data-latex="x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"></div>' +
+  "<p>Text after the formulas.</p>";
+
+const MATH_TOOLS = [...RICH_TEXT_PRESETS.full, "mathematics"] as const;
+
+/**
+ * Формулы LaTeX на KaTeX: строчные и блочные. Щелчок по формуле или Enter на
+ * выделенной открывает Поповер с полем LaTeX и предпросмотром; новые ставит Меню
+ * вставки («Formula» и «Block formula»).
+ */
+export const Mathematics: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" tools={MATH_TOOLS} defaultValue={MATH_SAMPLE} />
+    </div>
+  ),
+};
+
+/** Формулы на светлом листе `surface="paper"`. */
+export const MathematicsPaper: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={MATH_TOOLS}
+        defaultValue={MATH_SAMPLE}
+        surface="paper"
+      />
+    </div>
+  ),
+};
+
+/**
+ * Опции: `tool("mathematics", { macros })` — свои макросы KaTeX. `\RR` ниже
+ * работает только благодаря макросу; тот же `tools` у `RichTextView` рисует его так же.
+ */
+export const MathematicsMacros: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[
+          ...RICH_TEXT_PRESETS.full,
+          tool("mathematics", { macros: { "\\RR": "\\mathbb{R}", "\\NN": "\\mathbb{N}" } }),
+        ]}
+        defaultValue={
+          "<p>A custom macro: " +
+          '<span data-type="inline-math" data-latex="f\\colon \\NN \\to \\RR"></span>.</p>'
+        }
+      />
+    </div>
+  ),
+};
+
+/**
+ * Формула, которую KaTeX не читает: остаётся исходником, подчёркнутым волной цветом
+ * ошибки. Документ она не ломает и не теряется; поправить её можно в Поповере.
+ */
+export const MathematicsInvalid: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={MATH_TOOLS}
+        defaultValue={
+          '<p>A broken formula: <span data-type="inline-math" data-latex="\\frac{1"></span> stays visible.</p>' +
+          '<div data-type="block-math" data-latex="\\badcommand{x}"></div>'
+        }
+      />
+    </div>
+  ),
+};
+
+/** Формулы в русской локали: подписи Меню вставки и Поповера — из каталога. */
+export const MathematicsRussian: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor aria-label="Document" tools={MATH_TOOLS} defaultValue={MATH_SAMPLE} />
+      </div>
+    </UiProvider>
+  ),
+};
+
+function MathCommand({ command }: { command: string }) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useTypedCommand(ref, command);
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        tools={MATH_TOOLS}
+        defaultValue={INSERT_SAMPLE}
+      />
+    </div>
+  );
+}
+
+/** Меню вставки по `/formula`: пункты «Formula» и «Block formula» (и по `latex`, `math`). */
+export const MathematicsInsertSlash: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => <MathCommand command="/formula" />,
+};
+
+/** Открыть Поповер правки первой формулы, как только Редактор нарисовал её. */
+function OpenedFormula() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const target = root.current?.querySelector<HTMLElement>(
+        ".tiptap-mathematics-render--editable"
+      );
+      if (!target) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      target.click();
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div ref={root} className="h-[420px] max-w-[640px]">
+      <RichTextEditor aria-label="Document" tools={MATH_TOOLS} defaultValue={MATH_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * Поповер правки формулы: поле LaTeX, предпросмотр и кнопки «Apply» и «Remove
+ * formula». Неверный LaTeX показывает ошибку в поле и не даёт применить.
+ */
+export const MathematicsPopover: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => <OpenedFormula />,
+};
+
 /** Открыть HTML-режим, как только Панель появилась: щелчок по кнопке «HTML». */
 function OpenedSource(props: Partial<RichTextEditorProps>) {
   const root = useRef<HTMLDivElement>(null);
@@ -2335,6 +2562,105 @@ export const SearchBasic: Story = {
 export const SearchStatusLine: Story = {
   render: () => <OpenedSearch status />,
   tags: ["network-idle"],
+};
+
+/*
+  Невидимые символы (OLDSUI-278): пробелы, мягкие переносы (`Shift+Enter`) и концы
+  абзацев. Нейтральный текст: заметка с переносом строки внутри абзаца и пустым
+  абзацем, который легко не заметить. Двойной пробел из HTML схлопывается при
+  разборе, его набирают руками.
+*/
+const INVISIBLE_SAMPLE =
+  "<h2>Invisible characters</h2>" +
+  "<p>Spaces sit between these words, and a soft break<br>starts a new line inside one paragraph.</p>" +
+  "<p></p>" +
+  "<p>The empty paragraph above is easy to miss. Type a second space here to see it.</p>";
+
+/**
+ * Невидимые символы: пункт-флажок «Invisible characters» в меню «…» Панели
+ * (последний раздел), отдельной кнопки нет: Панель в колонке 640 px остаётся в
+ * одну строку. По умолчанию символы скрыты, как и в любом Редакторе с пресетом
+ * `full`; отметьте пункт, и пробелы (·), мягкие переносы (↵) и концы абзацев (¶) станут
+ * видны. Документ не меняется: знаки только нарисованы поверх текста.
+ */
+export const InvisibleCharacters: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={INVISIBLE_SAMPLE} />
+    </div>
+  ),
+};
+
+/** `tool("invisibleCharacters", { visible: true })`: знаки показаны с самого начала. */
+export const InvisibleCharactersShown: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, tool("invisibleCharacters", { visible: true })]}
+        defaultValue={INVISIBLE_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/** Показ знаков на светлом листе `surface="paper"`. */
+export const InvisibleCharactersPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        surface="paper"
+        tools={[...RICH_TEXT_PRESETS.full, tool("invisibleCharacters", { visible: true })]}
+        defaultValue={INVISIBLE_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+function WithInvisibleToggle() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  const [changes, setChanges] = useState(0);
+  const visible = useRichTextToolState(ref, "invisibleCharacters", (state) => state.visible);
+  return (
+    <div className="flex max-w-[640px] flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Button
+          size="sm"
+          variant="soft"
+          selected={visible === true}
+          onClick={() => ref.current?.tool("invisibleCharacters")?.toggle()}
+        >
+          {visible ? "Hide invisible characters" : "Show invisible characters"}
+        </Button>
+        <span className="text-sm">
+          <output aria-label="Change count">{changes}</output> changes reported
+        </span>
+      </div>
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        defaultValue={INVISIBLE_SAMPLE}
+        onChange={() => setChanges((count) => count + 1)}
+      />
+      <pre
+        aria-label="Saved HTML"
+        className="bg-bg-2 text-fg-2 overflow-x-auto rounded p-2 text-xs whitespace-pre-wrap"
+      >
+        {/* Читается при каждом рендере: переключение его перерисовывает через Состояние. */}
+        {ref.current?.getHTML() ?? ""}
+      </pre>
+    </div>
+  );
+}
+
+/**
+ * Показ с внешней кнопки: `handle.tool("invisibleCharacters")?.toggle()` и
+ * `useRichTextToolState(ref, "invisibleCharacters")` вместо пункта меню «…». Под полем
+ * сохранённый HTML и счётчик `onChange`: показ их не трогает.
+ */
+export const InvisibleCharactersExternalToggle: Story = {
+  render: () => <WithInvisibleToggle />,
 };
 
 /*
@@ -3235,5 +3561,97 @@ export const DefinedToolConfigured: Story = {
         tool(remarkTool, { labels: { insert: "Comment" }, limit: 2 }),
       ]}
     />
+  ),
+};
+
+/*
+  Видео по ссылке (OLDSUI-281, ADR-0071): Инструменты `youtube` и `twitch`, вне
+  Пресетов — явной записью в `tools`. В Документе ссылка, а не плеер; плеер рисует
+  кит. Плеер встаёт сразу (OLDSUI-287), `autoload: false` оставляет заглушку до
+  щелчка. Видео в историях — настоящий ролик YouTube и запись Twitch, но тесты
+  перехватывают запросы к сервисам (`tests-visual/rich-text-editor-video.spec.ts`).
+*/
+const VIDEO_SAMPLE =
+  "<h2>Video</h2><p>Two blocks follow, one per service.</p>" +
+  '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
+  '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" rel="noopener noreferrer">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
+  '<div data-block="video" data-provider="twitch" data-src="https://www.twitch.tv/aws">' +
+  '<a href="https://www.twitch.tv/aws" rel="noopener noreferrer">https://www.twitch.tv/aws</a></div>' +
+  "<p>Add another: menu → Video, or paste a link.</p>";
+
+/**
+ * Видео из YouTube и Twitch: плеер сервиса стоит сразу, в рамке 16:9. «Video» в меню
+ * вставки («+» и «/») принимает ссылку любого из двух сервисов; ссылка в пустом абзаце
+ * тоже становится блоком.
+ */
+export const Video: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "youtube", "twitch"]}
+        defaultValue={VIDEO_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * `autoload: false` у обоих сервисов: вместо плеера заглушка с названием сервиса и
+ * кнопкой «Play», плеер после щелчка. До него к сервису не уходит ни одного запроса —
+ * для экранов, где важна приватность.
+ */
+export const VideoClickToPlay: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[
+          ...RICH_TEXT_PRESETS.full,
+          tool("youtube", { autoload: false }),
+          tool("twitch", { autoload: false }),
+        ]}
+        defaultValue={VIDEO_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * Только YouTube: блок Twitch из `value` становится своей ссылкой, а поле ссылки
+ * в «Video» отвечает ошибкой на ссылку чужого сервиса.
+ */
+export const VideoYoutubeOnly: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "youtube"]}
+        defaultValue={VIDEO_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/** Каталог сообщений русский: «Видео», «Воспроизвести», «Ссылка на видео». */
+export const VideoRussian: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor
+          aria-label="Document"
+          tools={[...RICH_TEXT_PRESETS.full, "youtube", "twitch"]}
+          defaultValue={VIDEO_SAMPLE}
+        />
+      </div>
+    </UiProvider>
   ),
 };

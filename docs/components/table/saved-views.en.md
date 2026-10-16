@@ -90,7 +90,7 @@ access to `localStorage`, `sessionStorage` or `history` fails the run.
 state goes into the page URL, consecutive writes by key build the URL from the
 same copy of the URL parameters in the current render: the last one wins, and the
 previous edits are lost. That is exactly what happened to a consumer, who lost the
-lower bound of a period when picking a range on top of a preset.
+lower bound of a range when picking a range on top of a preset.
 
 **The active view is announced, not just highlighted.** Each view is a chip
 (`Chip`); it carries `aria-pressed`, and color highlighting tells a screen reader

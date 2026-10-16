@@ -14,7 +14,7 @@ sourceHash: e6bb9a14d118
 
 `Menu` is a compound action menu opened by `MenuTrigger`. Inside `MenuTrigger`,
 use the dedicated `MenuButton`, not a regular `Button`: only it reads react-aria's
-`ButtonContext`. The menu suits heterogeneous commands, sections, selected modes
+`ButtonContext`. The menu suits heterogeneous commands, sections, checkable items
 and submenus; it is not for choosing a field value. A nested `Menu` inside
 `SubmenuTrigger` opens beside its item on its own, and below it on a narrow
 screen: you do not need to set `placement`. The "menu aim" (protection that keeps a
@@ -25,7 +25,7 @@ do not write your own.
 
 - Contextual actions for an entity, an overflow button, a sort or view menu.
 - You need sections, a separator, a shortcut, a disabled/danger item or a submenu.
-- Several selected modes belong to one `MenuSection`.
+- Several checkable items belong to one `MenuSection`.
 
 ## When not to use
 
@@ -111,7 +111,7 @@ Radix's modal layer. See [the Menu source](../../../src/components/overlays/Menu
 
 - A "View" section with `selectionMode="multiple"`.
 - `SubmenuTrigger` with a `MenuItem` as the first child and a nested `Menu` as the second.
-- `shortcut` as a visual reminder, while handling the shortcut stays the app's job.
+- `shortcut` as a visual hint, while handling the shortcut stays the app's job.
 
 ## Anti-patterns
 

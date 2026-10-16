@@ -4,6 +4,7 @@ import { highlightCodeBlocks } from "./features/code/highlight.js";
 import { EDITOR_MARKER_NAMES, EDITOR_TEXT_COLOR_NAMES } from "./styles/palette.js";
 import { RichTextEditor } from "./RichTextEditor.js";
 import { RichTextView } from "./RichTextView.js";
+import { tool } from "./core/toolOptions.js";
 
 /*
   Нейтральный документ с каждым Блоком и каждой Меткой Схемы — тот же, что в
@@ -434,6 +435,65 @@ export const DetailsPaper: Story = {
 };
 
 /*
+  Формулы в Просмотре (OLDSUI-280, ADR-0070): элемент с `data-latex` приходит с
+  исходным LaTeX, а ленивый Остров после монтирования грузит KaTeX и рисует формулу.
+  Образец — тот же, что в истории Редактора `Mathematics`.
+*/
+const MATH_HTML =
+  "<h2>Formulas</h2>" +
+  '<p>The area of a circle is <span data-type="inline-math" data-latex="S = \\pi r^2"></span>, ' +
+  'and Euler\'s identity is <span data-type="inline-math" data-latex="e^{i\\pi} + 1 = 0"></span>.</p>' +
+  '<div data-type="block-math" data-latex="\\int_0^1 x^2\\,dx = \\frac{1}{3}"></div>' +
+  "<p>The quadratic formula in a block:</p>" +
+  '<div data-type="block-math" data-latex="x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"></div>' +
+  '<p>A formula KaTeX cannot read stays as source: <span data-type="inline-math" data-latex="\\frac{1"></span>.</p>';
+
+/**
+ * Формулы в Просмотре без движка: Остров рисует KaTeX из `data-latex` на месте.
+ * Без JavaScript и до отрисовки читателю виден исходный LaTeX; скринридер читает
+ * MathML, который выводит KaTeX.
+ */
+export const Mathematics: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={MATH_HTML} />
+    </div>
+  ),
+};
+
+/** Формулы на светлом листе `surface="paper"`. */
+export const MathematicsPaper: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={MATH_HTML} surface="paper" />
+    </div>
+  ),
+};
+
+/**
+ * Опции формул берутся из `tools` Просмотра: макрос `\RR`, заданный Редактору через
+ * `tool("mathematics", { macros })`, работает и здесь. Сам Инструмент называть не нужно.
+ */
+export const MathematicsMacros: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView
+        html={
+          '<p>A custom macro: <span data-type="inline-math" data-latex="x \\in \\RR"></span>.</p>'
+        }
+        tools={[tool("mathematics", { macros: { "\\RR": "\\mathbb{R}" } })]}
+      />
+    </div>
+  ),
+};
+
+/*
   Тон Обёртки у читателя: тот же вид, что в Редакторе, — подложка
   и полоса тона; Обёртка без тона по-прежнему невидима. Образец — тот же, что
   в истории Редактора `WrapperTones`.
@@ -482,6 +542,61 @@ export const WrapperTonesPaper: Story = {
   render: () => (
     <div className="max-w-[640px]">
       <RichTextView html={WRAPPER_TONES_HTML} surface="paper" />
+    </div>
+  ),
+};
+
+/*
+  Видео в Просмотре (OLDSUI-281, ADR-0071): блок приходит ссылкой, остров кита
+  ставит на его место плеер сразу (OLDSUI-287); с `autoload: false` в `tools` —
+  заглушку, а плеер после щелчка. Образец — тот же, что в истории Редактора `Video`.
+*/
+const VIDEO_HTML =
+  "<h2>Video</h2><p>Without JavaScript a reader sees the links below.</p>" +
+  '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
+  '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" rel="noopener noreferrer">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
+  '<div data-block="video" data-provider="twitch" data-src="https://www.twitch.tv/aws">' +
+  '<a href="https://www.twitch.tv/aws" rel="noopener noreferrer">https://www.twitch.tv/aws</a></div>' +
+  "<p>Text after the videos.</p>";
+
+/**
+ * Видео в Просмотре: без движка. Плеер встаёт сразу; Twitch берёт домен этой страницы
+ * в `parent` при показе.
+ */
+export const Video: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={VIDEO_HTML} />
+    </div>
+  ),
+};
+
+/**
+ * `tool("youtube", { autoload: false })` и `tool("twitch", { autoload: false })` в `tools`
+ * Просмотра: заглушка с кнопкой «Play», до щелчка к сервису не уходит ни одного запроса.
+ */
+export const VideoClickToPlay: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView
+        html={VIDEO_HTML}
+        tools={[tool("youtube", { autoload: false }), tool("twitch", { autoload: false })]}
+      />
+    </div>
+  ),
+};
+
+/** Видео на светлом листе `surface="paper"`. */
+export const VideoPaper: Story = {
+  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  tags: ["network-idle"],
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={VIDEO_HTML} surface="paper" />
     </div>
   ),
 };

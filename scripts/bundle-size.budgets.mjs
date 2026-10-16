@@ -72,7 +72,7 @@ export const PACKAGE_SCENARIOS = [
     // в замер сами — внести нужно только пакеты Tiptap и `marked` (его
     // экземпляр свой у каждого Редактора, OLDSUI-47), а с OLDSUI-50 — подсветчик:
     // lowlight и грамматики highlight.js выбирает кит, как и расширения.
-    bundled: ["@tiptap/", "marked", "lowlight", "highlight.js"],
+    bundled: ["@tiptap/", "marked", "lowlight", "highlight.js", "katex"],
     /*
       Модули ленивых встроенных (ADR-0058, п. 11.1): ни один не должен попасть в
       статический граф. Скрипт проверяет и обратное — что каждый шаблон находит
@@ -93,6 +93,12 @@ export const PACKAGE_SCENARIOS = [
       // импортирует `@tiptap/extension-bubble-menu` (меню выделения), и ядро таблиц
       // в «старте» — цена Tiptap, а не утечка таблицы кита.
       "/node_modules/@tiptap/extension-table/",
+      // Формулы (OLDSUI-280, ADR-0070): расширение, KaTeX и его CSS — только чанком.
+      "/dist/editor/features/mathematics/mathChunk.js",
+      "/dist/editor/features/mathematics/MathForm.js",
+      "/dist/editor/features/mathematics/katexEngine.js",
+      "/node_modules/@tiptap/extension-mathematics/",
+      "/node_modules/katex/",
     ],
     source:
       'import { RichTextEditor } from "@olddevs/ui/editor";\nglobalThis.probe = RichTextEditor;\n',
@@ -102,7 +108,7 @@ export const PACKAGE_SCENARIOS = [
     title: "RichTextEditor with Tiptap, full",
     documented:
       "`RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)",
-    bundled: ["@tiptap/", "marked", "lowlight", "highlight.js"],
+    bundled: ["@tiptap/", "marked", "lowlight", "highlight.js", "katex"],
     chunks: "all",
     source:
       'import { RichTextEditor } from "@olddevs/ui/editor";\nglobalThis.probe = RichTextEditor;\n',
@@ -119,7 +125,7 @@ export const PACKAGE_SCENARIOS = [
     documented: "`RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён",
     // Подсветчик — тоже: `RichTextView` его не тянет (OLDSUI-50), и случайный
     // импорт lowlight в граф показал бы себя десятком килобайт.
-    bundled: ["@tiptap/", "lowlight", "highlight.js"],
+    bundled: ["@tiptap/", "lowlight", "highlight.js", "katex"],
     source:
       'import { RichTextView } from "@olddevs/ui/editor";\nglobalThis.probe = RichTextView;\n',
   },
@@ -188,7 +194,10 @@ export const BUDGETS = {
     // замер 8,5 кБ упёрся в бюджет. Поднят с 8,5 до 8,8 кБ, запас около 3 %, ADR-0030.
     // OLDSUI-193 (находки Галереи): замер 9,0 кБ (+0,3) — `onRowAction` у `Table` и подписи
     // диапазонов фильтров (ADR-0063). Поднят до 9,3 кБ, запас около 3 %, ADR-0030.
-    dataTable: 9523,
+    // Эпик OLDSUI-272 (OLDSUI-278…281): замер 9,3 кБ упёрся в порог — каталог `editor` (en) +16 строк
+    // новых Инструментов (формулы, видео, невидимые символы, набор кавычек), а каталог едет и в
+    // `DataTable`. Поднят до 9,6 кБ, запас около 3 %, ADR-0030.
+    dataTable: 9830,
     // OLDSUI-193: весь кит 66,7 кБ (+2,5) — одиннадцать находок Галереи: диапазоны `FilterBar`,
     // `onRowAction`, `onAction` и меню ячейки `VirtualGrid`, `activeKey` у `TreeView`,
     // `useMediaQuery`, `typeToConfirm`, `--bottombar-h`, строковое API календарей, подпись
@@ -334,7 +343,16 @@ export const BUDGETS = {
     // Действие «Снять сворачивание», строки каталога. Часть Extensions легче 10 кБ, поэтому по
     // ADR-0058, п. 11.1 Загрузчика нет. Владелец 2026-10-15 разрешил поднимать порог без
     // вопроса при объяснимом росте. Поднят до 77,5 кБ, запас около 2 %.
-    editor: 79360,
+    // Эпик OLDSUI-272, срезы OLDSUI-278…281: «старт» 79,5 кБ (+4,2 от 75,3 на OLDSUI-277) —
+    // `typography` и `invisibleCharacters` без Загрузчика (легче 10 кБ), лёгкие части ленивых
+    // `mathematics` и видео в статическом графе: описания, Скелет формулы, разбор формулы в текст
+    // без Инструмента, проверка ссылки видео, пункты Меню вставки и строки каталога. Поднят до
+    // 81,0 кБ, запас около 2 %.
+    // Ревью срезов OLDSUI-280 и OLDSUI-281: «старт» 81,8 кБ (+2,3) — поиск находит LaTeX формул (решение
+    // 2026-10-16), формула и видео из JSON-конверта без Инструмента разбираются в текст и ссылку,
+    // пробел в `data-latex` для DOMPurify, общий разбор Опций встроенных и имена формул одним модулем.
+    // Всё это работает до загрузки ленивых чанков, поэтому в «старте». Поднят до 83,5 кБ, запас около 2 %.
+    editor: 85504,
     // «Старт» движка (ADR-0058, п. 11.7) — 285,4 кБ: на 35,7 кБ меньше 321,1 кБ на ветке эпика (ушли
     // `@tiptap/extension-table`, `@tiptap/extension-code-block-lowlight`, lowlight и
     // грамматики highlight.js). Порог — замер плюс около 15 %, ADR-0030: снижен с 336,1 до
@@ -343,7 +361,11 @@ export const BUDGETS = {
     // «Полный» — весь граф подпути со всеми ленивыми чанками, то, что грузит `full`: 326,3 кБ
     // (статический граф 285,4 и ленивые 40,8 — блок кода, таблица, поповер своего цвета без
     // react-aria, она peer). Первый замер, порог — плюс около 15 %, ADR-0030.
-    editorEngineFull: 384300,
+    // OLDSUI-280 (ADR-0070): «полный» 461,0 кБ (+101,1) — ленивый чанк формул: KaTeX (~92 кБ),
+    // `@tiptap/extension-mathematics` и Поповер формулы; ещё ленивый чанк видео (OLDSUI-281, плеер и
+    // поле ссылки, ADR-0071). Рост принят в ADR-0070 («Последствия»): страница без формул его не
+    // грузит. Поднят до 484,0 кБ, запас около 5 %.
+    editorEngineFull: 495616,
     // RichTextView (OLDSUI-48): первый замер 0,7 кБ — PROSE_CLASS и обёртка. Движок
     // в замер включён: подтянутый случайно, он вырос бы бюджет в двести раз.
     // OLDSUI-41: 1,0 кБ — типографика чек-листа и блока кода в `prose.ts`.
@@ -373,7 +395,14 @@ export const BUDGETS = {
     // OLDSUI-277: 12,7 кБ (+0,3) — рамка, заголовок и шеврон сворачиваемого Блока `details` в
     // `prose.ts` (Просмотр рисует нативные `details` и `summary` без движка) и его строки в
     // каталоге. Поднят до 13,0 кБ, запас около 2,5 %.
-    editorView: 13312,
+    // OLDSUI-280, OLDSUI-281: 14,2 кБ (+1,4) — поиск формул и видео в HTML (`hasMath`,
+    // `hasVideoBlocks`), исходник LaTeX в пустой формуле для показа без JS (`withMathSource`),
+    // ленивые Острова формул и видео и их строки каталога. Код KaTeX и плеера — в ленивых чанках.
+    // Поднят до 14,6 кБ, запас около 3 %.
+    // Ревью OLDSUI-280/281: 14,8 кБ (+0,6) — рамка 16:9 блока видео в серверном HTML (без прыжка
+    // высоты), разбор Опций формул общим кодом Редактора, отпечаток Документа один на рендер.
+    // Поднят до 15,2 кБ, запас около 3 %.
+    editorView: 15565,
     // Вход Схемы (OLDSUI-48): данные и одна функция, без движка и без React.
     // Палитра и выравнивания в Схеме: замер 0,4 кБ, запас под ссылки (OLDSUI-42).
     // OLDSUI-42: 0,5 кБ (+0,2) — список схем ссылки и проверка адреса для `ALLOWED_URI_REGEXP`.
@@ -391,7 +420,12 @@ export const BUDGETS = {
     // OLDSUI-268: 3,9 кБ (+0,1) — правила Схемы из определений `defineTool` (`customToolOf`,
     // слияние Опций и кэш результата `create` на запись `tools`); замер упёрся в порог. Поднят
     // до 4,2 кБ, запас около 7 %, ADR-0030.
-    editorSchema: 4300,
+    // OLDSUI-280, OLDSUI-281: 4,4 кБ (+0,4) — правила формул (`data-type` и `data-latex`, `<` только
+    // в `data-latex`, формула — пустой лист) и видео (`data-provider`, `data-src` по шаблону хоста).
+    // Поднят до 4,6 кБ, запас около 4 %, ADR-0030.
+    // Ревью OLDSUI-280/281: 4,7 кБ (+0,3) — пробел в `data-latex` до проверки DOMPurify и одни
+    // правила имён каналов Twitch для санитайзера и разбора ссылки. Поднят до 4,9 кБ, запас около 4 %.
+    editorSchema: 5018,
     // Вход подсветки (OLDSUI-50): первый замер 21,3 кБ — хелпер, lowlight, ядро highlight.js и шесть грамматик; запас 15 %, ADR-0030.
     editorHighlight: 25100,
     // Подсветка для `CodeView` (OLDSUI-58): первый замер 22,4 кБ — хелпер узлов, lowlight, ядро highlight.js, семь грамматик и строка темы; запас 15 %, ADR-0030.

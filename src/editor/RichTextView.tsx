@@ -3,6 +3,12 @@ import { cn } from "../lib/cn.js";
 import { BlockIsland } from "./ui/BlockIsland.js";
 import { CodeCopyIsland } from "./features/code/CodeCopyIsland.js";
 import { hasCodeBlocks, withCodeHeaders } from "./features/code/codeHeader.js";
+import { MathIsland } from "./features/mathematics/MathIsland.js";
+import { hasMath, withMathSource } from "./features/mathematics/mathHtml.js";
+import { mathOptionsOf } from "./features/mathematics/mathOptions.js";
+import { VideoIsland } from "./features/video/VideoIsland.js";
+import { videoAutoloadOf } from "./features/video/videoOptions.js";
+import { hasVideoBlocks } from "./features/video/videoSrc.js";
 import type { ToolEntry } from "./core/customTool.js";
 import { proseClass } from "./styles/prose.js";
 import { surfaceAttributes, type RichTextSurface } from "./styles/surface.js";
@@ -31,12 +37,17 @@ export interface RichTextViewProps extends Omit<
   surface?: RichTextSurface;
   /**
    * Свои Инструменты Документа — тот же массив, что у `RichTextEditor` и
-   * `sanitizeRichText`; Настроенный Инструмент (`tool()`) в нём допустим и
-   * Просмотром игнорируется. Просмотр читает из него только Острова своих Блоков
-   * (`blocks[имя].island`): Блок, у которого он есть и который есть в
-   * Документе, оживает клиентским компонентом, а серверный HTML Блока виден до
-   * загрузки и без JS. Остальное в описании Просмотру не нужно. Без `tools`, и
-   * у Документа без таких Блоков, Просмотр прежний и клиентского кода не тянет.
+   * `sanitizeRichText`; Настроенный Инструмент (`tool()`) в нём допустим.
+   * Просмотр читает из него Острова своих Блоков (`blocks[имя].island`): Блок, у
+   * которого он есть и который есть в Документе, оживает клиентским компонентом,
+   * а серверный HTML Блока виден до загрузки и без JS. И опции формул —
+   * `tool("mathematics", { macros })`, чтобы макрос работал в Просмотре так же,
+   * как в Редакторе; самих формул для этого в `tools` называть не нужно, они
+   * рисуются у любого Документа с формулами. И опцию `autoload` видео:
+   * `tool("youtube", { autoload: false })` оставляет заглушку «Воспроизвести» вместо
+   * плеера, по сервису; без записи плеер встаёт сразу. Остальное в описании Просмотру не
+   * нужно. Без `tools`, и у Документа без таких Блоков и формул, Просмотр прежний
+   * и клиентского кода не тянет.
    */
   tools?: readonly ToolEntry[];
 }
@@ -81,6 +92,20 @@ function fingerprint(html: string): string {
  * нет острова, и код Острова потребителя не грузится. Серверный HTML Блока
  * приходит всегда; Остров заменяет его после монтирования.
  *
+ * ОСТРОВ ФОРМУЛ — ТРЕТИЙ (ADR-0070, `MathIsland`). Формула лежит в Документе
+ * пустым элементом с `data-latex`; сервер дописывает в него исходный LaTeX
+ * (`withMathSource`), и без JS читатель видит его. Остров, только если
+ * формула в Документе есть (`hasMath`), грузит KaTeX с CSS ленивым `import()` и
+ * рисует формулы на месте — в чанк, который страница без формул не получает.
+ *
+ * ОСТРОВ ВИДЕО — ЧЕТВЁРТЫЙ, ТАКОЙ ЖЕ (`VideoIsland`, ADR-0071). Блок видео приходит
+ * в HTML ссылкой (`div[data-block="video"]` со ссылкой внутри), её видит читатель без
+ * JS. Если блок в Документе есть (`hasVideoBlocks`), остров после монтирования
+ * ставит на его место плеер сервиса сразу (`iframe` с `loading="lazy"`). Опция
+ * `tool("youtube", { autoload: false })` в `tools` возвращает заглушку кита с кнопкой
+ * «Воспроизвести»: плеер появляется после щелчка, и до него к сервису не уходит
+ * ни одного запроса. Нет блока — нет острова, и код плеера не грузится.
+ *
  * ХУКИ — `useId` и `useMemo`, оба разрешены серверным компонентам. Идентификатор
  * связывает остров со своими гнёздами и совпадает на сервере и клиенте; `useMemo`
  * держит объект разметки стабильным (см. ниже). Состояния и эффектов в самом
@@ -97,11 +122,20 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
 ) {
   const hostId = useId();
   const islands = islandsFor(tools, html);
+  const code = hasCodeBlocks(html);
+  const math = hasMath(html);
+  const video = hasVideoBlocks(html);
+  // Отпечаток нужен каждому острову, а считается по всему HTML: один раз на отрисовку и
+  // только если остров есть, иначе тексту без островов пришлось бы платить за него зря.
+  const docKey = code || islands[0] || math || video ? fingerprint(html) : "";
   // Объект один на пару (Документ, просмотр): React сверяет `dangerouslySetInnerHTML`
   // по ссылке и при новом объекте переписывает `innerHTML` — вместе с кнопками и
   // Островами, которые острова вставили порталом. Перерисовка родителя с тем же
   // Документом (смена `className`, новый литерал `tools`) разметку трогать не должна.
-  const inner = useMemo(() => ({ __html: withCodeHeaders(html, hostId) }), [html, hostId]);
+  const inner = useMemo(
+    () => ({ __html: withMathSource(withCodeHeaders(html, hostId)) }),
+    [html, hostId]
+  );
   return (
     <>
       <div
@@ -112,9 +146,13 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
         dangerouslySetInnerHTML={inner}
       />
       {/* Остров — только у Документа с кодом: тексту без блоков кода он не нужен. */}
-      {hasCodeBlocks(html) && <CodeCopyIsland hostId={hostId} docKey={fingerprint(html)} />}
+      {code && <CodeCopyIsland hostId={hostId} docKey={docKey} />}
       {/* И острова своих Блоков — только у Документа, где такой Блок есть. */}
-      {islands[0] && <BlockIsland islands={islands} docKey={fingerprint(html)} />}
+      {islands[0] && <BlockIsland islands={islands} docKey={docKey} />}
+      {/* Формулы — третий: только у Документа с формулами, и KaTeX грузит сам остров. */}
+      {math && <MathIsland docKey={docKey} options={mathOptionsOf(tools)} />}
+      {/* И остров видео (ADR-0071) — только у Документа, где есть блок видео. */}
+      {video && <VideoIsland docKey={docKey} autoload={videoAutoloadOf(tools)} />}
     </>
   );
 });

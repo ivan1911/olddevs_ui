@@ -1,0 +1,102 @@
+"use client";
+
+import { useLayoutEffect, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { VideoPlayer } from "./VideoPlayer.js";
+import { videoLinkOf } from "./videoLink.js";
+import type { VideoAutoload } from "./videoOptions.js";
+import { VIDEO_BLOCK, type VideoLink } from "./videoSrc.js";
+
+export interface VideoIslandSlotsProps {
+  /** Отпечаток HTML просмотра: сменился Документ — блоки новые, и остров ищет их заново. */
+  docKey: string;
+  /** Опция `autoload` каждого сервиса из `tools` экрана (`videoAutoloadOf`): данные. */
+  autoload: VideoAutoload;
+}
+
+interface Found {
+  element: HTMLElement;
+  link: VideoLink;
+}
+
+/**
+ * Тело острова видео (ADR-0071, п. 3); оболочка и ленивая загрузка —
+ * `VideoIsland.tsx`. Устроен как остров своих Блоков (`BlockIslandSlots.tsx`).
+ *
+ * СЕРВЕРНЫЙ HTML ПЕРВИЧЕН. Блок приходит в разметке целиком — со ссылкой внутри — и
+ * читается без JS, до гидрации и в Markdown. После монтирования его содержимое
+ * заменяет `VideoPlayer`: плеер сразу или, с `autoload: false`, заглушка с кнопкой
+ * «Воспроизвести» и плеер после щелчка; адрес собирается здесь же. Размонтирование острова возвращает ссылку.
+ * Блок, у которого сервис или адрес не годятся (HTML не прошёл очистку, чужой
+ * сервис), остаётся ссылкой: плеер строится только из того, что узнаёт `isVideoSrc`.
+ *
+ * ПОИСК — ОТ СВОЕГО МЕСТА В ДЕРЕВЕ, как у «Копировать»: пустой инертный
+ * `<template>` стоит сразу за контейнером просмотра (или за метками других
+ * островов), поэтому просмотр в теневом корне или `iframe` находит свои блоки.
+ * Метка есть и в разметке сервера, и в первом клиентском проходе — гидрация
+ * совпадает; порталы появляются только после эффекта.
+ *
+ * ЭФФЕКТ ЗАВИСИТ ОТ ДОКУМЕНТА (`docKey`), а не от пропсов просмотра: новый литерал у
+ * родителя не должен перемонтировать плееры и обрывать воспроизведение. Опция
+ * `autoload` — данные в пропсах и читается при отрисовке плеера.
+ */
+export default function VideoIslandSlots({ docKey, autoload }: VideoIslandSlotsProps) {
+  const [found, setFound] = useState<Found[]>([]);
+  const marker = useRef<HTMLTemplateElement>(null);
+
+  useEffect(() => {
+    let view = marker.current?.previousElementSibling;
+    while (view?.localName === "template") view = view.previousElementSibling;
+    const list: Found[] = [];
+    for (const element of view?.querySelectorAll<HTMLElement>(`div[data-block="${VIDEO_BLOCK}"]`) ??
+      []) {
+      const link = videoLinkOf(element.dataset.provider ?? null, element.dataset.src ?? "");
+      // Блок внутри блока видео — вложенность, которой нет: оживает внешний.
+      if (link && !element.parentElement?.closest(`div[data-block="${VIDEO_BLOCK}"]`)) {
+        list.push({ element, link });
+      }
+    }
+    setFound(list);
+  }, [docKey]);
+
+  return (
+    <>
+      <template ref={marker} data-video-island="" />
+      {found.map((item, index) => (
+        <Slot key={`${docKey}:${index}`} item={item} autoload={autoload[item.link.provider]} />
+      ))}
+    </>
+  );
+}
+
+/**
+ * Рамку 16:9 уже держит сам блок (`VIDEO_CLASS` в `prose.ts`): плеер заполняет её, а
+ * не рисует вторую рамку и не добавляет высоты — остров высоту блока не меняет.
+ */
+const IN_FRAME = "absolute inset-0 aspect-auto size-full rounded-none border-0 bg-transparent";
+
+/**
+ * Одно вхождение блока. Содержимое серверного HTML снимается и заменяется пустым
+ * корнем острова; корень встаёт ДО отрисовки плеера (`ready`), чтобы его эффекты
+ * видели себя в документе. Размонтирование возвращает содержимое.
+ */
+function Slot({ item, autoload }: { item: Found; autoload: boolean }) {
+  const { element, link } = item;
+  const [root] = useState(() => {
+    const span = document.createElement("span");
+    span.style.display = "contents";
+    return span;
+  });
+  const [ready, setReady] = useState(false);
+
+  useLayoutEffect(() => {
+    const original = [...element.childNodes];
+    element.replaceChildren(root);
+    setReady(true);
+    return () => element.replaceChildren(...original);
+  }, [element, root]);
+
+  return ready
+    ? createPortal(<VideoPlayer link={link} autoload={autoload} className={IN_FRAME} />, root)
+    : null;
+}

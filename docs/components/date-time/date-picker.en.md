@@ -22,7 +22,7 @@ sourceHash: 389a684cb62f
 ## When not to use
 
 - For custom placement of the grid, use `Calendar`.
-- For date and time together, use `DateTimePicker`; for a period, use `DateRangePicker`.
+- For date and time together, use `DateTimePicker`; for a range, use `DateRangePicker`.
 
 ## Minimal example
 
