@@ -216,3 +216,79 @@ test("the view shows the placeholder in place of the link and loads the player o
     "https://player.twitch.tv/?video=1234567890&parent=127.0.0.1&autoplay=true"
   );
 });
+
+// ── Высота: блок не прыгает с приходом чанка и острова ──────────────────────
+
+/**
+ * Придержать запрос модуля, пока тест не отпустит: до этого на странице виден
+ * серверный блок (Скелет Редактора, HTML `RichTextView`), после — плеер.
+ */
+async function holdModule(page: Page, pattern: string) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  await page.route(pattern, async (route) => {
+    await gate;
+    await route.continue();
+  });
+  return release;
+}
+
+/** Высоты и ширины блоков `selector` — по раскладке, как их видит человек. */
+async function boxes(page: Page, selector: string) {
+  return page.locator(selector).evaluateAll((nodes) =>
+    nodes.map((node) => {
+      const { width, height } = node.getBoundingClientRect();
+      return { width, height };
+    })
+  );
+}
+
+test("the view: mounting the island does not change the height of the block", async ({ page }) => {
+  await captureServices(page);
+  const release = await holdModule(page, "**/VideoIslandSlots*");
+  await page.goto(EDITOR("content-richtextview--video"));
+
+  // Остров ещё не пришёл: на странице серверный блок со ссылкой — рамка 16:9.
+  const blocks = page.locator('div[data-block="video"]');
+  await expect(blocks).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Play YouTube video" })).toHaveCount(0);
+  await expect(blocks.first().getByRole("link")).toBeVisible();
+  const before = await boxes(page, 'div[data-block="video"]');
+  for (const box of before) expect(box.width / box.height).toBeCloseTo(16 / 9, 1);
+
+  release();
+  await expect(page.getByRole("button", { name: "Play YouTube video" })).toBeVisible();
+  const after = await boxes(page, 'div[data-block="video"]');
+  expect(after).toEqual(before);
+
+  // Плеер после щелчка занимает ту же рамку.
+  await page.getByRole("button", { name: "Play YouTube video" }).click();
+  await expect(page.locator("iframe")).toHaveCount(1);
+  expect(await boxes(page, 'div[data-block="video"]')).toEqual(before);
+});
+
+test("the editor: the chunk arriving does not change the height of the video block", async ({
+  page,
+}) => {
+  await captureServices(page);
+  const release = await holdModule(page, "**/videoChunk*");
+  await page.goto(EDITOR("inputs-richtexteditor--video"));
+
+  // Чанка нет: Скелет, блок видео — рамка 16:9 со ссылкой внутри.
+  const skeleton = page.locator('div[data-block="video"]');
+  await expect(skeleton).toHaveCount(2);
+  await expect(page.getByRole("textbox", { name: "Document" })).toHaveCount(0);
+  const before = await boxes(page, 'div[data-block="video"]');
+  for (const box of before) expect(box.width / box.height).toBeCloseTo(16 / 9, 1);
+
+  release();
+  const field = page.getByRole("textbox", { name: "Document" });
+  await expect(field.getByRole("button", { name: "Play YouTube video" })).toBeVisible();
+  const after = await boxes(page, "[data-video-player]");
+  expect(after.map((box) => Math.round(box.height))).toEqual(
+    before.map((box) => Math.round(box.height))
+  );
+  expect(after.map((box) => Math.round(box.width))).toEqual(
+    before.map((box) => Math.round(box.width))
+  );
+});
