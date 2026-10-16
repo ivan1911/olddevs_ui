@@ -1,5 +1,5 @@
 ---
-sourceHash: f980388baa1c
+sourceHash: fcf485fae55c
 ---
 
 # Setting up `@olddevs/ui`
@@ -131,13 +131,13 @@ peer dependencies are treated as external, and the metric is gzip:
 | -------------------------------------------------------------------------------------------------------- | -------- |
 | `cn` and `tableStateToParams`                                                                            | 0.6 kB   |
 | one `Button`                                                                                             | 1.6 kB   |
-| `DataTable`                                                                                              | 9.0 kB   |
+| `DataTable`                                                                                              | 9.3 kB   |
 | the whole kit (`import *`)                                                                               | 77.2 kB  |
-| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 77.3 kB  |
-| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 310.8 kB |
-| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 359.9 kB |
-| `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 12.8 kB  |
-| `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 4.0 kB   |
+| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 79.5 kB  |
+| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 313.2 kB |
+| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 461.0 kB |
+| `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 14.2 kB  |
+| `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 4.4 kB   |
 | `highlightCodeBlocks` from `@olddevs/ui/editor/highlight`, with lowlight                                 | 22.6 kB  |
 | `highlightCodeNodes` from `@olddevs/ui/editor/highlight`, with lowlight                                  | 22.6 kB  |
 
@@ -156,9 +156,11 @@ pipeline as the others (vite in library mode, where whitespace stays during mini
 an app bundler with full minification produced about 133 kB (measured before the Toolbar).
 
 For `RichTextView`, Tiptap and lowlight are included in the measurement as a check. Its row contains only
-typography and the Island of the "Copy" button on code Blocks (the kit's button and tooltip, the message catalog),
-and the measurement proves that its graph contains neither the engine nor a highlighter. The lightweight
-`@olddevs/ui/editor/schema` entry point is measured the same way (4.0 kB): the Schema, `richTextSchema`, the
+typography, the Island of the "Copy" button on code Blocks (the kit's button and tooltip, the message catalog)
+and the search for formulas and video in the HTML with the loaders of their Islands; KaTeX and the player themselves
+are in lazy chunks that a page without formulas or video does not load. The measurement proves that its graph
+contains neither the engine nor a highlighter. The lightweight
+`@olddevs/ui/editor/schema` entry point is measured the same way (4.4 kB): the Schema, `richTextSchema`, the
 `sanitizeRichText` sanitizer with hooks for DOMPurify, including for the rules of custom Tools, and `markRange`.
 
 Server-side highlighting in `@olddevs/ui/editor/highlight` (22.6 kB — almost entirely the highlight.js core and
