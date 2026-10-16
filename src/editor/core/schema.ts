@@ -73,10 +73,12 @@ export const RICH_TEXT_SCHEMA = {
    * `iframe` и ему подобное так не открывается.
    *
    * `div[data-block="video"]` — видео по ссылке (ADR-0071): `data-provider`
-   * (`youtube` или `twitch`), `data-src` — `https`-адрес видео на хосте этого
-   * сервиса (YouTube: `youtube.com`, `youtu.be`; Twitch: `twitch.tv`,
-   * `clips.twitch.tv`) и обычная ссылка внутри. Плеера в Документе нет, `iframe`
-   * срезается по-прежнему: плеер рисует кит при показе.
+   * (`youtube` или `twitch`), `data-src` — `https`-адрес видео в каноническом
+   * виде, как его пишет Редактор, на хосте этого сервиса (YouTube:
+   * `www.youtube.com`, `watch?v=` или `playlist?list=`; Twitch: `www.twitch.tv`
+   * и `clips.twitch.tv`). Короткие формы (`youtu.be`), адрес без `www.`, `http` и
+   * адреса плееров не проходят (`isVideoSrc`). Внутри — обычная ссылка. Плеера в
+   * Документе нет, `iframe` срезается по-прежнему: плеер рисует кит при показе.
    *
    * Формулы — `span[data-type="inline-math"]` в строке и `div[data-type="block-math"]`
    * Блоком, исходный LaTeX в `data-latex` (ADR-0070). Оба элемента всегда пусты:

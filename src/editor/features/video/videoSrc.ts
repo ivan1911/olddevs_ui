@@ -32,21 +32,61 @@ export interface VideoLink {
 }
 
 /**
+ * Имена верхнего уровня `twitch.tv`, которые не канал: ссылка на них видео не
+ * даёт. Список — служебные разделы сайта, не весь словарь запретных имён. ОДИН на
+ * очистку и на разбор ссылок (`videoLink.ts`): иначе блок `twitch.tv/videos`
+ * прошёл бы очистку и остался бы Документом, из которого плеера не получится.
+ */
+const TWITCH_RESERVED = new Set([
+  "directory",
+  "videos",
+  "downloads",
+  "jobs",
+  "p",
+  "settings",
+  "subscriptions",
+  "friends",
+  "wallet",
+  "turbo",
+  "store",
+  "prime",
+  "search",
+  "popout",
+  "embed",
+  "moderator",
+  "broadcast",
+  "bits",
+  "dashboard",
+  "inventory",
+  "drops",
+  "u",
+  "team",
+  "clips",
+]);
+
+/** Годится ли имя первым сегментом пути `www.twitch.tv` как канал: не служебный раздел, любой регистр. */
+export const isTwitchChannel = (name: string): boolean => !TWITCH_RESERVED.has(name.toLowerCase());
+
+/** Имя клипа в `clips.twitch.tv/<имя>`: `embed` — адрес плеера, а не клип. */
+export const isTwitchClip = (name: string): boolean => name !== "embed";
+
+/**
  * Каноническая ссылка по сервису. YouTube — ролик (`watch?v=`, с началом `&t=`
  * в секундах) или плейлист; Twitch — запись (`/videos/<число>`, с началом
  * `?t=1h2m3s`), канал или клип (`clips.twitch.tv`). Идентификатор — буквы,
- * цифры, `_` и `-`.
+ * цифры, `_` и `-`. Выражение Twitch выделяет имя канала (1) и клипа (2): служебные
+ * имена отсеивает `isVideoSrc` тем же списком, что и разбор ссылок.
  */
 const SRC: Readonly<Record<VideoProvider, RegExp>> = {
   youtube:
     /^https:\/\/www\.youtube\.com\/(?:watch\?v=[\w-]{1,64}(?:&t=\d{1,7})?|playlist\?list=[\w-]{1,64})$/,
   twitch:
-    /^https:\/\/(?:www\.twitch\.tv\/(?:videos\/\d{1,20}(?:\?t=(?=\d)(?:\d+h)?(?:\d+m)?(?:\d+s)?)?|[\w-]{1,64})|clips\.twitch\.tv\/[\w-]{1,64})$/,
+    /^https:\/\/(?:www\.twitch\.tv\/(?:videos\/\d{1,20}(?:\?t=(?=\d)(?:\d+h)?(?:\d+m)?(?:\d+s)?)?|([\w-]{1,64}))|clips\.twitch\.tv\/([\w-]{1,64}))$/,
 };
 
 /** Значение `data-provider` — сервис кита. */
 export function isVideoProvider(value: unknown): value is VideoProvider {
-  return value === "youtube" || value === "twitch";
+  return (VIDEO_PROVIDERS as readonly unknown[]).includes(value);
 }
 
 /**
@@ -56,7 +96,15 @@ export function isVideoProvider(value: unknown): value is VideoProvider {
  * `http`, `youtu.be` и значение с разметкой не проходят.
  */
 export function isVideoSrc(provider: string, value: string): boolean {
-  return isVideoProvider(provider) && SRC[provider].test(value);
+  if (!isVideoProvider(provider)) return false;
+  const match = SRC[provider].exec(value);
+  if (!match) return false;
+  // Канал и клип Twitch — те же имена, что принимает разбор ссылок (`videoLink.ts`).
+  const [, channel, clip] = match;
+  return (
+    (channel === undefined || isTwitchChannel(channel)) &&
+    (clip === undefined || isTwitchClip(clip))
+  );
 }
 
 /**

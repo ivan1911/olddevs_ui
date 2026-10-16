@@ -118,6 +118,12 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
 ) {
   const hostId = useId();
   const islands = islandsFor(tools, html);
+  const code = hasCodeBlocks(html);
+  const math = hasMath(html);
+  const video = hasVideoBlocks(html);
+  // Отпечаток нужен каждому острову, а считается по всему HTML: один раз на отрисовку и
+  // только если остров есть, иначе тексту без островов пришлось бы платить за него зря.
+  const docKey = code || islands[0] || math || video ? fingerprint(html) : "";
   // Объект один на пару (Документ, просмотр): React сверяет `dangerouslySetInnerHTML`
   // по ссылке и при новом объекте переписывает `innerHTML` — вместе с кнопками и
   // Островами, которые острова вставили порталом. Перерисовка родителя с тем же
@@ -136,13 +142,13 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
         dangerouslySetInnerHTML={inner}
       />
       {/* Остров — только у Документа с кодом: тексту без блоков кода он не нужен. */}
-      {hasCodeBlocks(html) && <CodeCopyIsland hostId={hostId} docKey={fingerprint(html)} />}
+      {code && <CodeCopyIsland hostId={hostId} docKey={docKey} />}
       {/* И острова своих Блоков — только у Документа, где такой Блок есть. */}
-      {islands[0] && <BlockIsland islands={islands} docKey={fingerprint(html)} />}
+      {islands[0] && <BlockIsland islands={islands} docKey={docKey} />}
       {/* Формулы — третий: только у Документа с формулами, и KaTeX грузит сам остров. */}
-      {hasMath(html) && <MathIsland docKey={fingerprint(html)} options={mathOptionsOf(tools)} />}
+      {math && <MathIsland docKey={docKey} options={mathOptionsOf(tools)} />}
       {/* И остров видео (ADR-0071) — только у Документа, где есть блок видео. */}
-      {hasVideoBlocks(html) && <VideoIsland docKey={fingerprint(html)} />}
+      {video && <VideoIsland docKey={docKey} />}
     </>
   );
 });

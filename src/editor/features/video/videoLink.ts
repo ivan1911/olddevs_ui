@@ -20,7 +20,14 @@
  * без движка. Нужен глобальный `URL`: он есть в браузере и в Node.
  */
 
-import type { VideoLink, VideoProvider } from "./videoSrc.js";
+import {
+  isTwitchChannel,
+  isTwitchClip,
+  isVideoProvider,
+  isVideoSrc,
+  type VideoLink,
+  type VideoProvider,
+} from "./videoSrc.js";
 
 export type { VideoLink, VideoProvider } from "./videoSrc.js";
 
@@ -36,13 +43,6 @@ const ID = /^[\w-]{1,64}$/;
 const TWITCH_VIDEO_ID = /^v?(\d{1,20})$/;
 /** Метка времени Twitch: `1h2m3s`, `45m`, `30s`; хотя бы одна часть. */
 const TWITCH_TIME = /^(?=\d)(?:\d+h)?(?:\d+m)?(?:\d+s)?$/;
-
-/**
- * Имена верхнего уровня `twitch.tv`, которые не канал: ссылка на них видео не
- * даёт. Список — служебные разделы сайта, не весь словарь запретных имён.
- */
-const TWITCH_RESERVED =
-  /^(?:directory|videos|downloads|jobs|p|settings|subscriptions|friends|wallet|turbo|store|prime|search|popout|embed|moderator|broadcast|bits|dashboard|inventory|drops|u|team|clips)$/i;
 
 /**
  * Разобрать текст как адрес: `https://…`, `http://…`, `//…` или без схемы
@@ -140,7 +140,7 @@ function fromTwitch(url: URL): VideoLink | null {
   const host = bareHost(url, "www.", "m.");
   const parts = segments(url);
   if (host === "clips.twitch.tv") {
-    return parts.length === 1 && parts[0] !== "embed" && ID.test(parts[0]!)
+    return parts.length === 1 && isTwitchClip(parts[0]!) && ID.test(parts[0]!)
       ? { provider: "twitch", src: `https://clips.twitch.tv/${parts[0]}` }
       : null;
   }
@@ -155,7 +155,7 @@ function fromTwitch(url: URL): VideoLink | null {
   if (parts.length === 3 && parts[1] === "clip" && ID.test(parts[0]!) && ID.test(parts[2]!)) {
     return { provider: "twitch", src: `https://clips.twitch.tv/${parts[2]}` };
   }
-  if (parts.length === 1 && ID.test(parts[0]!) && !TWITCH_RESERVED.test(parts[0]!)) {
+  if (parts.length === 1 && ID.test(parts[0]!) && isTwitchChannel(parts[0]!)) {
     return { provider: "twitch", src: `https://www.twitch.tv/${parts[0]}` };
   }
   return null;
@@ -172,6 +172,19 @@ const YOUTUBE_HOSTS = ["youtube.com", "youtu.be"] as const;
 export function parseVideoLink(input: string): VideoLink | null {
   const url = toUrl(input);
   return url && (fromYoutube(url, YOUTUBE_HOSTS) ?? fromTwitch(url));
+}
+
+/**
+ * Блок видео из Документа (`data-provider` и `data-src`) — ссылкой, если он годится:
+ * сервис кита, канонический адрес этого сервиса (`isVideoSrc`) и разбор, который
+ * узнаёт его тем же сервисом. Одна проверка на разбор HTML (`video.ts`), Скелет и
+ * Остров (`VideoIslandSlots.tsx`): у чужого сервиса, чужого хоста и значения с
+ * разметкой плеера нет. `null` — блок остаётся ссылкой.
+ */
+export function videoLinkOf(provider: string | null, src: string): VideoLink | null {
+  if (!isVideoProvider(provider) || !isVideoSrc(provider, src)) return null;
+  const link = parseVideoLink(src);
+  return link?.provider === provider ? link : null;
 }
 
 /**

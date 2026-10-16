@@ -139,6 +139,65 @@ describe("a video block in value without its tool", () => {
     expect(editor.getHTML()).toBe(`<p>${link(YT)}</p>${video("twitch", TW)}`);
   });
 
+  describe("the same document as a JSON envelope", () => {
+    /** Конверт Редактора, у которого есть оба сервиса: в нём лежат узлы `video`. */
+    const envelope = () => {
+      const source = renderEditor({
+        defaultValue: `<p>before</p>${video("youtube", YT)}${video("twitch", TW)}<p>after</p>`,
+      });
+      const json = source.handle.getJSON();
+      cleanup();
+      return json as never;
+    };
+
+    test.each([
+      ["no video tools, link on", [...PRESETS.full]],
+      ["the other service only", [...PRESETS.full, "twitch"] as const],
+    ])("%s: the YouTube node becomes its link, never nothing", (_name, tools) => {
+      const json = envelope();
+      const { editor } = renderEditor({ tools: [...tools], defaultValue: json });
+      const html = editor.getHTML();
+      expect(html).toContain(link(YT));
+      expect(html).not.toContain('data-provider="youtube"');
+    });
+
+    test("with no video tool both nodes keep their links", () => {
+      const { editor } = renderEditor({ tools: [...PRESETS.full], defaultValue: envelope() });
+      expect(editor.getHTML()).toBe(
+        `<p>before</p><p>${link(YT)}</p><p>${link(TW)}</p><p>after</p>`
+      );
+    });
+
+    test("setJSON on a live editor does the same", () => {
+      const json = envelope();
+      const { editor, handle } = renderEditor({ tools: [...PRESETS.full] });
+      act(() => void handle.setJSON(json));
+      expect(editor.getHTML()).toContain(link(YT));
+      expect(editor.getHTML()).toContain(link(TW));
+    });
+
+    test("without the link tool the URL stays as text", () => {
+      const { editor } = renderEditor({ tools: ["bold"], defaultValue: envelope() });
+      expect(editor.getHTML()).toBe(`<p>before</p><p>${YT}</p><p>${TW}</p><p>after</p>`);
+    });
+
+    test("a node of a foreign address is dropped to nothing dangerous", () => {
+      const json = {
+        format: "olddevs-rich-text",
+        version: 1,
+        doc: {
+          type: "doc",
+          content: [
+            { type: "video", attrs: { provider: "youtube", link: "https://evil.example/x" } },
+          ],
+        },
+      } as never;
+      const { editor } = renderEditor({ tools: [...PRESETS.full], defaultValue: json });
+      expect(editor.getHTML()).not.toContain("data-block");
+      expect(editor.getHTML()).not.toContain("evil.example");
+    });
+  });
+
   test("a foreign host in data-src is not a block: its inner link stays", () => {
     const { editor } = renderEditor({
       tools: FULL_PLUS_VIDEO,

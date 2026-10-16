@@ -2,18 +2,14 @@
 
 import { Node } from "@tiptap/core";
 import { VideoIcon } from "../../../icons.js";
+import { devError } from "../../../lib/dev-warn.js";
 import type { InsertItem } from "../../core/insertItems.js";
 import type { ToolDescriptor, ToolEngineContext } from "../../core/toolDescriptor.js";
 import { loaded } from "../../core/toolLoader.js";
 // Только тип: статический импорт модуля втянул бы чанк в «старт».
 import type * as VideoChunkModule from "./videoChunk.js";
-import {
-  isVideoProvider,
-  isVideoSrc,
-  VIDEO_BLOCK,
-  VIDEO_PROVIDERS,
-  type VideoProvider,
-} from "./videoSrc.js";
+import { videoLinkOf } from "./videoLink.js";
+import { VIDEO_BLOCK, VIDEO_PROVIDERS, type VideoProvider } from "./videoSrc.js";
 
 type VideoChunk = typeof VideoChunkModule;
 
@@ -43,12 +39,12 @@ const VideoShape = Node.create({
     {
       tag: `div[data-block="${VIDEO_BLOCK}"]`,
       getAttrs: (element) => {
-        const provider = element.getAttribute("data-provider");
-        const src = element.getAttribute("data-src") ?? "";
-        // Адрес в Документе уже канонический (`isVideoSrc`): Скелету разбирать его незачем.
-        return isVideoProvider(provider) && isVideoSrc(provider, src)
-          ? { provider, link: src }
-          : false;
+        // Адрес в Документе уже канонический (`videoLinkOf`): Скелету его переписывать незачем.
+        const link = videoLinkOf(
+          element.getAttribute("data-provider"),
+          element.getAttribute("data-src") ?? ""
+        );
+        return link ? { provider: link.provider, link: link.src } : false;
       },
     },
   ],
@@ -80,7 +76,16 @@ const engineOf = ({ has }: ToolEngineContext) => {
   const providers = providersOf(has);
   const key = providers.join();
   let node = NODES.get(key);
-  if (!node) NODES.set(key, (node = videoChunk()!.createVideoNode(providers)));
+  if (!node) {
+    // Движок собирается после загрузчика (`load`), так что чанк здесь есть. Нет — Схема
+    // остаётся без узла, и блоки видео читаются ссылками, как без Инструмента.
+    const chunk = videoChunk();
+    if (!chunk) {
+      devError("RichTextEditor: the video chunk is not loaded when the engine is built");
+      return [];
+    }
+    NODES.set(key, (node = chunk.createVideoNode(providers)));
+  }
   return [node];
 };
 
@@ -100,9 +105,23 @@ const videoItem = (alias: VideoProvider): InsertItem => ({
   // Пункт с поповером `run` не зовёт: `applyInsertItem` открывает поповер.
   run: (chain) => chain,
   popover: ({ editor, close }) => {
-    const { VideoForm } = videoChunk()!;
-    return <VideoForm editor={editor} onDone={close} />;
+    const VideoForm = videoChunk()?.VideoForm;
+    return VideoForm && <VideoForm editor={editor} onDone={close} />;
   },
+});
+
+/**
+ * Описание Инструмента сервиса. Оба — одно и то же, кроме имени и слова поиска
+ * пункта: блок общий, а сервис решает набор `tools`.
+ */
+const videoTool = (name: VideoProvider): ToolDescriptor => ({
+  name,
+  load: loadVideo,
+  engine: engineOf,
+  skeleton: () => [VideoShape],
+  blocks: { [VIDEO_BLOCK]: { plainAtom: true } },
+  kitTags: ["div", "a"],
+  insertItems: [videoItem(name)],
 });
 
 /**
@@ -115,22 +134,6 @@ const videoItem = (alias: VideoProvider): InsertItem => ({
  * ленивые (чанк `videoChunk.ts`), как у таблицы и блока кода: Скелет показывает
  * ссылку, пока чанк идёт.
  */
-export const YOUTUBE_TOOL: ToolDescriptor = {
-  name: "youtube",
-  load: loadVideo,
-  engine: engineOf,
-  skeleton: () => [VideoShape],
-  blocks: { [VIDEO_BLOCK]: { plainAtom: true } },
-  kitTags: ["div", "a"],
-  insertItems: [videoItem("youtube")],
-};
+export const YOUTUBE_TOOL: ToolDescriptor = videoTool("youtube");
 
-export const TWITCH_TOOL: ToolDescriptor = {
-  name: "twitch",
-  load: loadVideo,
-  engine: engineOf,
-  skeleton: () => [VideoShape],
-  blocks: { [VIDEO_BLOCK]: { plainAtom: true } },
-  kitTags: ["div", "a"],
-  insertItems: [videoItem("twitch")],
-};
+export const TWITCH_TOOL: ToolDescriptor = videoTool("twitch");

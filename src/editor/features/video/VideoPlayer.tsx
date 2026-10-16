@@ -20,6 +20,18 @@ export interface VideoPlayerProps {
 const PLAYER_ALLOW = "autoplay; encrypted-media; fullscreen; picture-in-picture; web-share";
 
 /**
+ * Рамка плеера: 16:9 на всю ширину колонки. Те же классы стоят правилами контейнера
+ * Документа на серверном блоке `div[data-block=video]` (`VIDEO_CLASS` в `prose.ts`):
+ * блок Скелета и серверный HTML `RichTextView` — такая же рамка, и приход чанка или
+ * острова высоту не меняет. Список — для проверки (`tests/rich-text-view-video.test.tsx`
+ * сверяет его с `prose.ts`); Tailwind собирает классы из исходников как текст, поэтому
+ * в `prose.ts` они выписаны литералами, а не собираются из этой строки.
+ */
+export const PLAYER_FRAME =
+  "relative aspect-video w-full overflow-hidden rounded-(--rte-radius) border " +
+  "border-(--rte-code-border) bg-(--rte-code-background)";
+
+/**
  * Плеер видео (ADR-0071): общий вид узла в Редакторе и Острова в Просмотре.
  *
  * ДО ЩЕЛЧКА — ЗАГЛУШКА, И НИ ОДНОГО ЗАПРОСА К СЕРВИСУ. Она рисует только то, что
@@ -34,12 +46,16 @@ const PLAYER_ALLOW = "autoplay; encrypted-media; fullscreen; picture-in-picture;
  * запускает плеер без реферера, а полный адрес страницы сервису не нужен. После
  * щелчка фокус переходит в плеер: кнопка, на которой он стоял, исчезла.
  *
+ * ЕСЛИ АДРЕС ПЛЕЕРА СОБРАТЬ НЕЛЬЗЯ (`playerUrl` вернул `null`), кнопка не молчит:
+ * на её месте остаётся ссылка на видео, по которой его можно открыть у сервиса.
+ *
  * Цвета — роли `--rte-*` контейнера Документа: заглушка одинаково выглядит в
  * Редакторе, в `RichTextView` и на листе `paper`.
  */
 export function VideoPlayer({ link, className }: VideoPlayerProps) {
   const messages = useMessages().editor;
   const [src, setSrc] = useState<string | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
   const service = VIDEO_PROVIDER_NAME[link.provider];
 
@@ -48,14 +64,7 @@ export function VideoPlayer({ link, className }: VideoPlayerProps) {
   }, [src]);
 
   return (
-    <div
-      data-video-player=""
-      className={cn(
-        "relative aspect-video w-full overflow-hidden rounded-(--rte-radius) border " +
-          "border-(--rte-code-border) bg-(--rte-code-background)",
-        className
-      )}
-    >
+    <div data-video-player="" className={cn(PLAYER_FRAME, className)}>
       {src ? (
         <iframe
           ref={frame}
@@ -70,18 +79,34 @@ export function VideoPlayer({ link, className }: VideoPlayerProps) {
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
           <span className="text-sm font-semibold text-(--rte-secondary)">{service}</span>
-          <Button
-            type="button"
-            size="sm"
-            variant="solid"
-            tone="accent"
-            icon={<PlayIcon size={14} aria-hidden />}
-            aria-label={messages.videoPlayLabel({ service })}
-            onClick={() => setSrc(playerUrl(link, window.location.hostname))}
-          >
-            {messages.videoPlay}
-          </Button>
-          <span className="max-w-full truncate text-xs text-(--rte-secondary)">{link.src}</span>
+          {unavailable ? (
+            <a
+              href={link.src}
+              rel="noopener noreferrer"
+              className="max-w-full truncate text-sm text-(--rte-link) underline underline-offset-2"
+            >
+              {link.src}
+            </a>
+          ) : (
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="solid"
+                tone="accent"
+                icon={<PlayIcon size={14} aria-hidden />}
+                aria-label={messages.videoPlayLabel({ service })}
+                onClick={() => {
+                  const url = playerUrl(link, window.location.hostname);
+                  if (url) setSrc(url);
+                  else setUnavailable(true);
+                }}
+              >
+                {messages.videoPlay}
+              </Button>
+              <span className="max-w-full truncate text-xs text-(--rte-secondary)">{link.src}</span>
+            </>
+          )}
         </div>
       )}
     </div>

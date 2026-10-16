@@ -2,6 +2,7 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { afterEach, expect, test, vi } from "vitest";
+import { PLAYER_FRAME } from "../src/editor/features/video/VideoPlayer.js";
 import {
   RichTextEditor,
   type RichTextEditorHandle,
@@ -74,6 +75,17 @@ test("an editor with the video tools shows the link as a Skeleton, then is ready
   expect(container.querySelector(`div[data-block="video"] > a[href="${YT}"]`)).not.toBeNull();
   // До щелчка нет и самого плеера: ни `iframe`, ни кнопки.
   expect(container.querySelector("iframe")).toBeNull();
+  // Высота (ADR-0071): блок Скелета — рамка 16:9, как заглушка плеера, и чанк роста не даёт.
+  // Скелет — разметка блока (`div > a`), а рамка — правила контейнера Документа, те же, что
+  // у `RichTextView`: каждый класс рамки плеера в них есть.
+  const frame = container.querySelector<HTMLElement>('div[data-block="video"]')!;
+  for (const token of PLAYER_FRAME.split(/\s+/)) {
+    expect(
+      frame.parentElement!.classList.contains(`[&_div[data-block=video]]:${token}`),
+      token
+    ).toBe(true);
+  }
+  expect([...frame.children].map((child) => child.localName)).toEqual(["a"]);
 
   expect(await screen.findByRole("textbox", { name: "Body" }, { timeout: 10_000 })).toBeTruthy();
   // Оба Инструмента делят один чанк: он грузится один раз.
