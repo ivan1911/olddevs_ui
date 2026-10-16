@@ -1,6 +1,7 @@
 import { CODE_LANGUAGE_IDS } from "../features/code/codeLanguages.js";
 import { EDITOR_LAYOUTS } from "../features/layout/columnLayouts.js";
 import { CUSTOM_COLOR_STYLE_PATTERN } from "../features/color/customColor.js";
+import { safeLatexSource } from "../features/mathematics/mathHtml.js";
 import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "../features/mathematics/mathNames.js";
 import { devWarn } from "../../lib/dev-warn.js";
 import type { CustomAttribute, PrefixedName, ToolEntry } from "./customTool.js";
@@ -839,6 +840,11 @@ function checkAttribute(
   event: RichTextAttributeHookEvent,
   schema: RichTextSchema
 ): void {
+  // Исходник формулы правится ДО проверки `SAFE_FOR_XML` у DOMPurify, которая идёт сразу
+  // после хуков и срезала бы атрибут с `]>` или `</style`: пробел внутрь пары (`mathHtml.ts`).
+  if (event.attrName === "data-latex" && isFormula(node)) {
+    event.attrValue = safeLatexSource(event.attrValue);
+  }
   const custom = customAttributeAllowed(node, event, schema);
   if (custom !== undefined) {
     if (!custom) event.keepAttr = false;

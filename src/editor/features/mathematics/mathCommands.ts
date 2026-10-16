@@ -39,7 +39,11 @@ export function selectedFormula(state: EditorState): { node: ProseMirrorNode; po
  */
 export function insertFormula(editor: Editor, kind: "inline" | "block", latex: string): boolean {
   if (kind === "inline") {
-    return editor.chain().focus().insertContent({ type: INLINE_FORMULA_NODE, attrs: { latex } }).run();
+    return editor
+      .chain()
+      .focus()
+      .insertContent({ type: INLINE_FORMULA_NODE, attrs: { latex } })
+      .run();
   }
   return editor
     .chain()

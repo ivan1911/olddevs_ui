@@ -24,7 +24,6 @@ import { BLOCK_FORMULA_NODE, FORMULA_SELECTOR, INLINE_FORMULA_NODE } from "./mat
   поведение, если ProseMirror переедет.
 */
 
-
 /**
  * Формула в дереве JSON (`inlineMath`, `blockMath`) — текстом: тот же путь для
  * конверта Документа (`jsonDocument.ts`), что `formulasToText` для HTML. `null` —
@@ -32,7 +31,10 @@ import { BLOCK_FORMULA_NODE, FORMULA_SELECTOR, INLINE_FORMULA_NODE } from "./mat
  */
 export function formulaJsonAsText(node: JSONContent): JSONContent[] | null {
   const latex = node.attrs?.latex;
-  if (typeof latex !== "string" || (node.type !== INLINE_FORMULA_NODE && node.type !== BLOCK_FORMULA_NODE)) {
+  if (
+    typeof latex !== "string" ||
+    (node.type !== INLINE_FORMULA_NODE && node.type !== BLOCK_FORMULA_NODE)
+  ) {
     return null;
   }
   if (!latex.trim()) return [];

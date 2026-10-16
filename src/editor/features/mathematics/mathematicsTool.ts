@@ -6,8 +6,10 @@ import { BlockFormulaIcon, FormulaIcon } from "../../../icons.js";
 import type * as MathChunkModule from "./mathChunk.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import { loaded } from "../../core/toolLoader.js";
+import { safeLatexSource } from "./mathHtml.js";
 import {
   BLOCK_FORMULA_NODE,
+  FORMULA_SOURCE_ATTRIBUTE,
   BLOCK_FORMULA_TYPE,
   INLINE_FORMULA_NODE,
   INLINE_FORMULA_TYPE,
@@ -39,7 +41,7 @@ const latexAttribute = () => ({
   latex: {
     default: "",
     rendered: false,
-    parseHTML: (element: HTMLElement) => element.getAttribute("data-latex"),
+    parseHTML: (element: HTMLElement) => element.getAttribute(FORMULA_SOURCE_ATTRIBUTE),
   },
 });
 
@@ -53,7 +55,7 @@ const MATH_SHAPE = [
     parseHTML: () => [{ tag: `span[data-type="${INLINE_FORMULA_TYPE}"]` }],
     renderHTML: ({ node }) => [
       "span",
-      { "data-type": INLINE_FORMULA_TYPE, "data-latex": node.attrs.latex },
+      { "data-type": INLINE_FORMULA_TYPE, "data-latex": safeLatexSource(String(node.attrs.latex)) },
       String(node.attrs.latex),
     ],
   }),
@@ -65,7 +67,7 @@ const MATH_SHAPE = [
     parseHTML: () => [{ tag: `div[data-type="${BLOCK_FORMULA_TYPE}"]` }],
     renderHTML: ({ node }) => [
       "div",
-      { "data-type": BLOCK_FORMULA_TYPE, "data-latex": node.attrs.latex },
+      { "data-type": BLOCK_FORMULA_TYPE, "data-latex": safeLatexSource(String(node.attrs.latex)) },
       String(node.attrs.latex),
     ],
   }),

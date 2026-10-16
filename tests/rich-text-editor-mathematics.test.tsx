@@ -171,6 +171,36 @@ test("value, engine, HTML, sanitizer and value again lose nothing", () => {
   ]);
 });
 
+test("the Editor writes data-latex that DOMPurify keeps: ]>, -->, --!> and </ get a space", () => {
+  const purify = createDOMPurify(window);
+  const tools = ["bold", "mathematics"] as const;
+  const html = `<p>${inline("\\left[0,1\\right]>x")} ${inline("a-->b")} ${inline("a--!>b")}</p>${block("p</style>q")}`;
+
+  const first = renderEditor({ tools, defaultValue: html });
+  const saved = first.editor.getHTML();
+
+  expect(saved).toBe(
+    `<p>${inline("\\left[0,1\\right] >x")} ${inline("a-- >b")} ${inline("a--! >b")}</p>${block("p< /style>q")}`
+  );
+  // Уже безопасный HTML санитайзер не меняет, и второй проход движка отдаёт те же байты.
+  const sanitized = sanitizeRichText(saved, purify, tools);
+  expect(sanitized).toBe(saved);
+  cleanup();
+  expect(renderEditor({ tools, defaultValue: sanitized }).editor.getHTML()).toBe(saved);
+});
+
+test("a formula inserted by the popover is written with the safe source too", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: "<p>One</p>" });
+  caretIn(editor, "One");
+
+  const popover = await openFromMenu(user, "Formula");
+  await enterLatex(user, popover, "[0,1]>x");
+  await user.click(within(popover).getByRole("button", { name: "Insert" }));
+
+  expect(editor.getHTML()).toContain('data-latex="[0,1] >x"');
+});
+
 test("the text of a formula is its LaTeX: getText, the counter and the selected text", () => {
   const { editor, handle } = renderEditor({
     maxLength: 12,

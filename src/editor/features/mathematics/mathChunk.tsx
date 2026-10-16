@@ -14,7 +14,8 @@ import {
   renderBlockMath,
   renderInlineMath,
 } from "./mathMarkdown.js";
-import { BLOCK_FORMULA_NODE } from "./mathNames.js";
+import { safeLatexSource } from "./mathHtml.js";
+import { BLOCK_FORMULA_NODE, FORMULA_SOURCE_ATTRIBUTE } from "./mathNames.js";
 import type { MathRenderOptions } from "./mathOptions.js";
 
 /*
@@ -72,6 +73,24 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
       host = this.editor;
     },
   };
+  /*
+    `data-latex` в HTML Редактор пишет с пробелом в парах, которые DOMPurify режет
+    (`safeLatexSource`): сохранённый HTML проходит санитайзер потребителя целым и при
+    втором проходе не меняется. Узел хранит набранное автором как есть.
+  */
+  const source = {
+    addAttributes() {
+      return {
+        latex: {
+          default: "",
+          parseHTML: (element: HTMLElement) => element.getAttribute(FORMULA_SOURCE_ATTRIBUTE),
+          renderHTML: (attributes: Record<string, unknown>) => ({
+            [FORMULA_SOURCE_ATTRIBUTE]: safeLatexSource(String(attributes.latex ?? "")),
+          }),
+        },
+      };
+    },
+  };
   const open = (node: ProseMirrorNode, pos: number) => {
     if (!host?.isEditable) return;
     // Щелчок выделяет узел сам; выделение нужно и Enter-у, и тому, кто вернётся в поле.
@@ -80,6 +99,7 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
   };
   const inline = InlineMath.extend({
     ...bind,
+    ...source,
     renderText: latexText,
     markdownTokenizer: inlineMathTokenizer,
     renderMarkdown: (node) => renderInlineMath(String(node.attrs?.latex ?? "")),
@@ -89,6 +109,7 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
   });
   const block = BlockMath.extend({
     ...bind,
+    ...source,
     renderText: latexText,
     markdownTokenizer: blockMathTokenizer,
     renderMarkdown: (node) => renderBlockMath(String(node.attrs?.latex ?? "")),
