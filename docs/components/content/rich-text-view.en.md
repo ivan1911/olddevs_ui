@@ -19,7 +19,7 @@ category: content
 status: stable
 source: src/editor/RichTextView.tsx
 story: src/editor/RichTextView.stories.tsx
-sourceHash: bceb9f235ef0
+sourceHash: f51039576cec
 ---
 
 # RichTextView

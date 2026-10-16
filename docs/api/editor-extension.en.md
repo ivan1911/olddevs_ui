@@ -2,7 +2,7 @@
 category: api
 status: stable
 source: src/editor/index.ts
-sourceHash: fe1cf12ec1df
+sourceHash: 52b2cb84a34b
 ---
 
 # Editor extension API
