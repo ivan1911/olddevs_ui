@@ -805,7 +805,7 @@ row or several" switch, because the table does not store state and cannot suppor
 such a prop.
 
 **2. `rowLabel` should be passed together with expansion.** Without it, all
-expanders have the same name, and a screen reader in button-listing mode reads
+disclosure buttons have the same name, and a screen reader in button-listing mode reads
 twenty identical "Show details".
 
 **3. `UiProvider` accepts `density`.** A default, not a mode: the table and its

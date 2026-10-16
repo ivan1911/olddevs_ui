@@ -93,11 +93,11 @@ const range = resolvePeriod(period, "Europe/Moscow");
 These are pure functions of the mask engine. They are exported apart from the component, because you may need
 to prepare a value before you send it, or check whether it is filled in, without a field on the screen.
 
-| Export                  | Purpose                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------ |
-| `formatMask(raw, mask)` | Lays out a raw value over the mask. The tail of the mask is not shown in advance.    |
-| `unmask(display, mask)` | Gets the raw value by position. A literal digit from the mask does not leak into it. |
-| `maskCapacity(mask)`    | How many value characters the mask holds: `+7 (999) 999-99-99` → 10.                 |
+| Export                  | Purpose                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `formatMask(raw, mask)` | Lays out an unmasked value over the mask. The tail of the mask is not shown in advance.   |
+| `unmask(display, mask)` | Gets the unmasked value by position. A literal digit from the mask does not leak into it. |
+| `maskCapacity(mask)`    | How many value characters the mask holds: `+7 (999) 999-99-99` → 10.                      |
 
 Mask tokens: `9` is a digit, `a` is a letter, `*` is a digit or a letter. Anything else is a literal. There is
 no escaping. Details are in [MaskedInput](../components/inputs/masked-input.md).

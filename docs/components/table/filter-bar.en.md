@@ -51,7 +51,7 @@ const { state, set } = useTableState();
 ```ts
 interface FilterField {
   id: string;
-  /** The field label. A string: it also ends up in the tag label. */
+  /** The field label. A string: it also ends up in the token label. */
   label: string;
   /** The field kind. Defaults to "values". */
   kind?: "values" | "number-range" | "date-range";

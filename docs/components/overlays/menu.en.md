@@ -111,7 +111,7 @@ Radix's modal layer. See [the Menu source](../../../src/components/overlays/Menu
 
 - A "View" section with `selectionMode="multiple"`.
 - `SubmenuTrigger` with a `MenuItem` as the first child and a nested `Menu` as the second.
-- `shortcut` as a visual shortcut hint, while handling the shortcut stays the app's job.
+- `shortcut` as a visual hint, while handling the shortcut stays the app's job.
 
 ## Anti-patterns
 
