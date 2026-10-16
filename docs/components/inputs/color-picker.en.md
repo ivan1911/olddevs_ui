@@ -5,7 +5,7 @@ category: inputs
 status: stable
 source: src/components/inputs/ColorPicker.tsx
 story: src/components/inputs/ColorPicker.stories.tsx
-sourceHash: 12e0cabcacce
+sourceHash: 0e36bd69421f
 ---
 
 # ColorPicker
@@ -45,7 +45,7 @@ components the kit used nowhere else. For comparison: the whole rest of the kit
 fits in 62 kB.
 
 The kit's own budget does not see this: in `npm run size` react-aria is declared
-external together with the other peer dependencies, and the consumer fixture page
+external together with the kit's other third-party libraries, and the consumer fixture page
 does not import color. A gate that is green whatever the decision checks nothing.
 
 A separate entry point makes 61 kB visible in the import line itself. The kit

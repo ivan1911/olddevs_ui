@@ -81,6 +81,57 @@ source: src/index.ts
 5. Добавьте или обновите тест для прежней границы и нового контракта; для
    взаимодействия проверяйте фокус, клавиатуру и доступные имена.
 
+## 4.8.0 — сторонние библиотеки приезжают с китом
+
+**Статус:** behavior change — minor. Ничего не ломается, действий не требует (ADR-0072).
+
+### Что изменилось
+
+Peer-зависимость кита теперь одна — `react`. Остальные одиннадцать пакетов перешли из `peerDependencies` в
+`dependencies` с теми же диапазонами: `@internationalized/date`, `@radix-ui/react-context-menu`,
+`@radix-ui/react-dialog`, `@radix-ui/react-popover`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`, `clsx`,
+`lucide-react`, `react-aria-components`, `sonner` и `tailwind-merge`. Вход `@olddevs/ui/icons` экспортирует
+`LucideProvider`.
+
+### Кого затрагивает
+
+Всех потребителей — только командой установки. Код, который импортирует `LucideProvider` из `lucide-react` или
+`toast` из `sonner`, и приложения, которые сами используют Radix, `react-aria-components` или
+`@internationalized/date`.
+
+### До → после
+
+```bash
+# было
+npm install @olddevs/ui react clsx tailwind-merge lucide-react sonner \
+  react-aria-components @internationalized/date \
+  @radix-ui/react-dialog @radix-ui/react-popover @radix-ui/react-tooltip \
+  @radix-ui/react-context-menu @radix-ui/react-slot
+# стало
+npm install @olddevs/ui react
+```
+
+```tsx
+// было
+import { LucideProvider } from "lucide-react";
+// стало
+import { LucideProvider } from "@olddevs/ui/icons";
+```
+
+### Семантика и доступность
+
+Не меняются: те же компоненты на тех же версиях библиотек. Разница в том, кто выбирает версию: теперь кит. npm
+больше не останавливает установку при несовпадении мажоров — если приложение само держит Radix или
+`react-aria-components` с несовместимым диапазоном, в сборке окажутся две копии, и слои, контексты и провайдеры
+одной не увидят другую.
+
+### Действие до обновления
+
+Не обязательно. Перенесённые пакеты, которые приложение само не импортирует, можно убрать из его `package.json`.
+`LucideProvider` переведите на импорт из `@olddevs/ui/icons`, `toast` — из `@olddevs/ui`. Если приложение
+пользуется Radix или `react-aria-components` напрямую, после обновления проверьте, что копия одна:
+`npm ls @radix-ui/react-dismissable-layer react-aria-components`.
+
 ## 4.5.0 — `handle.openSearch()` → `handle.tool("search")?.open()`
 
 **Статус:** deprecation — minor. Метод работает во всех выпусках 4.x и удаляется в 5.0 (ADR-0058, п. 12.7; ADR-0069).

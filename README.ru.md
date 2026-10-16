@@ -17,17 +17,14 @@ Olddevs UI — дизайн-система для React: токены, темы 
 ## Установка
 
 ```bash
-npm install @olddevs/ui react clsx tailwind-merge lucide-react sonner \
-  react-aria-components @internationalized/date \
-  @radix-ui/react-dialog @radix-ui/react-popover @radix-ui/react-tooltip \
-  @radix-ui/react-context-menu @radix-ui/react-slot
+npm install @olddevs/ui react
 ```
 
-Все пакеты после `@olddevs/ui` — peer-зависимости, и необязательных среди них нет:
+React — единственная peer-зависимость: его версию выбирает приложение. Остальное кит
+приносит сам, и в `package.json` приложения эти пакеты держать не нужно:
 
 | Пакет                                                                      | Для чего                                                       |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `react`                                                                    | Рендерер                                                       |
 | `react-aria-components`                                                    | Поведение и доступность большинства контролов                  |
 | `@radix-ui/react-dialog`, `-popover`, `-tooltip`, `-context-menu`, `-slot` | Окна, панели, поповеры, подсказки, контекстные меню, `asChild` |
 | `lucide-react`                                                             | Набор иконок за `@olddevs/ui/icons`                            |

@@ -15,9 +15,9 @@ import { withoutToolbarAxis } from "../../lib/toolbar-axis.js";
  * позиционирует чужое, и «один компонент с пропсами» превратился бы в проброс
  * десятка пропсов радикса наружу.
  *
- * Вторая внешняя зависимость пакета — `@radix-ui/react-popover`, в
- * `peerDependencies`. Позиционирование у края экрана, порталы, возврат фокуса
- * и закрытие по Escape — не то, что стоит писать заново.
+ * Поведение — `@radix-ui/react-popover` из `dependencies` пакета (ADR-0072).
+ * Позиционирование у края экрана, порталы, возврат фокуса и закрытие по Escape —
+ * не то, что стоит писать заново.
  */
 export const Popover = PopoverPrimitive.Root;
 export const PopoverTrigger = PopoverPrimitive.Trigger;

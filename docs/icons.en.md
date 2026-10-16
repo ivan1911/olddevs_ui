@@ -2,7 +2,7 @@
 entrypoint: "@olddevs/ui/icons"
 source: src/icons.ts
 status: stable
-sourceHash: d415233093c6
+sourceHash: afd8fa16d1d5
 ---
 
 # Icons `@olddevs/ui/icons`
@@ -48,10 +48,12 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 
 - The public entry point is `@olddevs/ui/icons`; do not import `src/icons.ts` or
   `lucide-react` through the package's internal paths.
-- Vocabulary names end in `Icon`; a test guarantees that every export
+- Vocabulary names end in `Icon`; a test guarantees that every name
   resolves to a component of the installed `lucide-react` version.
 - Size, stroke width and color are not fixed by the vocabulary. The consumer sets them
-  through Lucide props or `LucideProvider`.
+  through Lucide props or `LucideProvider`. Import the provider from this same entry point,
+  not from `lucide-react`: lucide comes with the kit, and a provider from a second copy in
+  your app never reaches the kit's icons (ADR-0072).
 - The `IconProps` type is also exported — it is `LucideProps` from `lucide-react`.
 
 ## Semantic differences

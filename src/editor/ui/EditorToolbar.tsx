@@ -274,7 +274,7 @@ export interface EditorToolbarProps {
  * - `Menu` (react-aria) — меню «+», «¶», «…», выравнивания, списков и
  *   таблицы: Escape и z-index идут через стек слоёв ADR-0041, и Escape внутри
  *   меню в `Dialog` закрывает меню, а не окно. `DropdownMenu` shadcn тянул бы
- *   новый Radix-пакет в peer-зависимости ради того же поведения.
+ *   новый Radix-пакет в зависимости кита ради того же поведения.
  * - `Tooltip` и `Kbd` — подсказка с сочетанием на ступени `OVERLAY_LAYER.popover`.
  *
  * Состояние кнопок читается через `useEditorState`: Панель перерисовывается,

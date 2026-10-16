@@ -5,7 +5,7 @@ category: inputs
 status: stable
 source: src/components/inputs/PhoneInput.tsx
 story: src/components/inputs/PhoneInput.stories.tsx
-sourceHash: 5f7ba3f7a6ad
+sourceHash: 78e653ae0fa8
 ---
 
 # PhoneInput
@@ -54,7 +54,7 @@ deliberately (ADR-0024):
 - `Intl` does **not format** phone numbers at all — there is nothing in the locale to
   take a format from;
 - proper parsing means `libphonenumber`, which weighs hundreds of kilobytes and would be a
-  peer dependency that an admin panel without phone numbers has no reason to pull in;
+  kit dependency that an admin panel without phone numbers has no reason to pull in;
 - a mask for one format is wrong for other countries, and this page states that
   limitation.
 

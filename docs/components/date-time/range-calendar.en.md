@@ -5,7 +5,7 @@ category: date-time
 status: stable
 source: src/components/date-time/RangeCalendar.tsx
 story: src/components/date-time/RangeCalendar.stories.tsx
-sourceHash: 0d83dbf9735c
+sourceHash: c7626240b8a6
 ---
 
 # RangeCalendar
@@ -34,7 +34,7 @@ sourceHash: 0d83dbf9735c
 
 - Inherits React Aria's `RangeCalendarProps<DateValue>`: controlled `value`, `defaultValue`, `onChange`, `minValue`, `maxValue`, unavailable dates.
 - An empty controlled value is passed as `null`.
-- **A range can be objects or ISO strings.** `value` and `defaultValue` accept `{ start, end }`, where the bounds are either `@internationalized/date` objects or `YYYY-MM-DD` strings (the strings are the same as `DateRange` in `DateRangePicker`). `minValue`, `maxValue` and `defaultFocusedValue` accept a string too (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself stays a peer dependency of the kit). An unparsable string does not throw: a range with such a bound is treated as empty (half a range is never selected) and the bound as not set.
+- **A range can be objects or ISO strings.** `value` and `defaultValue` accept `{ start, end }`, where the bounds are either `@internationalized/date` objects or `YYYY-MM-DD` strings (the strings are the same as `DateRange` in `DateRangePicker`). `minValue`, `maxValue` and `defaultFocusedValue` accept a string too (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself comes with the kit). An unparsable string does not throw: a range with such a bound is treated as empty (half a range is never selected) and the bound as not set.
 - `onChange(range, iso)` is called once both bounds are chosen. The first argument is `{ start, end }` of calendar objects, as in React Aria (it always was); the second is the same range as a pair of ISO strings, that is, the same `DateRange`. Whoever stores the range as strings needs only `onChange={(_, iso) => setRange(iso)}`. What `onChange` receives does not depend on whether `value` is passed as objects or strings: existing calls with objects work unchanged.
 - `isDateUnavailable` receives a calendar object: `date.toString()` returns the day as a `YYYY-MM-DD` string.
 - `months` is 1 or 2 and defaults to 1; without `locale`, the locale comes from above: from `UiProvider`, the consumer's `I18nProvider` or the browser; `locale` overrides it for this calendar.

@@ -33,7 +33,7 @@ story: src/components/date-time/DatePicker.stories.tsx
 
 - `value?: string | null`; `onChange(date: string)` получает ISO-строку после выбора.
 - `minValue`, `maxValue`, `isDateUnavailable` ограничивают выбор в календаре; это ограничение интерфейса, серверную валидацию не отменяет.
-- `minValue` и `maxValue` — ISO-строки `ГГГГ-ММ-ДД`, как и `value`: `minValue="2026-03-09"`, импортировать `@internationalized/date` не нужно (сам пакет остаётся peer-зависимостью кита). Объект `@internationalized/date` по-прежнему принимается. Неразбираемая строка считается незаданной границей. `isDateUnavailable` получает объект календаря: `date.toString()` возвращает день строкой `ГГГГ-ММ-ДД`.
+- `minValue` и `maxValue` — ISO-строки `ГГГГ-ММ-ДД`, как и `value`: `minValue="2026-03-09"`, импортировать `@internationalized/date` не нужно (сам пакет приезжает с китом). Объект `@internationalized/date` по-прежнему принимается. Неразбираемая строка считается незаданной границей. `isDateUnavailable` получает объект календаря: `date.toString()` возвращает день строкой `ГГГГ-ММ-ДД`.
 - У `DateTimePicker` эти границы календарные, то есть дневные: подробности — в [DateTimePicker](date-time-picker.md#public-api).
 - `placeholder`, `disabled`, `locale`, `triggerClassName` настраивают контрол.
 - `formatDate(isoDate, locale?)` — публичная утилита для того же безопасного отображения календарной ISO-даты; не используйте `new Date("YYYY-MM-DD")`, если дата — не момент UTC.

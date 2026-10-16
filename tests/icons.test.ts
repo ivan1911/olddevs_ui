@@ -1,3 +1,4 @@
+import { LucideProvider as lucideProvider } from "lucide-react";
 import { expect, test } from "vitest";
 import * as icons from "../src/icons.js";
 
@@ -21,7 +22,15 @@ import * as icons from "../src/icons.js";
  * пакете нет вовсе.
  */
 
-const names = Object.keys(icons);
+/**
+ * Кроме словаря вход отдаёт `LucideProvider` (ADR-0072): lucide приезжает с
+ * китом, и провайдер обязан быть из той же копии, что и иконки словаря. Иначе
+ * при двух копиях у потребителя толщина обводки молча перестаёт доходить до
+ * иконок кита. Это не иконка, поэтому соглашение об именах его не касается.
+ */
+const NOT_ICONS = new Set(["LucideProvider"]);
+
+const names = Object.keys(icons).filter((name) => !NOT_ICONS.has(name));
 
 test("the dictionary is not empty", () => {
   expect(names.length).toBeGreaterThan(40);
@@ -37,4 +46,8 @@ test.each(names)("%s resolves to a component", (name) => {
 test("every dictionary name ends with Icon", () => {
   const bad = names.filter((n) => !n.endsWith("Icon"));
   expect(bad, `without the Icon suffix: ${bad.join(", ")}`).toEqual([]);
+});
+
+test("LucideProvider comes from the same lucide copy as the icons", () => {
+  expect((icons as Record<string, unknown>).LucideProvider).toBe(lucideProvider);
 });

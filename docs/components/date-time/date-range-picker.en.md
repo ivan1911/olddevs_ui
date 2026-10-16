@@ -5,7 +5,7 @@ category: date-time
 status: stable
 source: src/components/date-time/DateRangePicker.tsx
 story: src/components/date-time/DateRangePicker.stories.tsx
-sourceHash: 1cc8eb9120cd
+sourceHash: 084346a5a1d1
 ---
 
 # DateRangePicker
@@ -47,7 +47,7 @@ sourceHash: 1cc8eb9120cd
 - `value?: DateRange | null`, where the bounds are ISO strings; `period?: RelativePeriod | null` ties the selected preset to the range.
 - `onChange(range, period)` receives `period=null` on a manual pick; `onClear` is required for the clear button to appear, because clearing must reset both values: `value` and `period`.
 - `presets`, `timeZone`, `minValue`, `maxValue`, `defaultFocusedValue`, `locale` define the allowed ranges and relative presets.
-- `minValue`, `maxValue` and `defaultFocusedValue` are ISO strings `YYYY-MM-DD`, like `value` (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself stays a peer dependency of the kit). An object is still accepted; an unparsable string is treated as an unset bound.
+- `minValue`, `maxValue` and `defaultFocusedValue` are ISO strings `YYYY-MM-DD`, like `value` (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself comes with the kit). An object is still accepted; an unparsable string is treated as an unset bound.
 - `isDateUnavailable(date)` marks specific days unavailable — booked dates, holidays: in the calendar they are struck through and cannot be picked. The function receives a calendar object; `date.toString()` returns the day as a `YYYY-MM-DD` string. `RangeCalendar` and `DatePicker` have the same prop. Presets ignore the rule: they are clamped only by `minValue` and `maxValue`, and a preset that covers an unavailable day is picked as is — if that is not allowed, do not leave such a preset in `presets`.
 - `open`/`onOpenChange` let you control the popover; otherwise internal state is used.
 

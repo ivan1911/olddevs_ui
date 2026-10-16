@@ -1,5 +1,5 @@
 ---
-sourceHash: 85365514a2a5
+sourceHash: 8a8a851395a5
 ---
 
 # Setting up `@olddevs/ui`
@@ -7,18 +7,18 @@ sourceHash: 85365514a2a5
 ## Installation
 
 ```bash
-npm install @olddevs/ui react clsx tailwind-merge lucide-react sonner \
-  react-aria-components @internationalized/date \
-  @radix-ui/react-dialog @radix-ui/react-popover @radix-ui/react-tooltip \
-  @radix-ui/react-context-menu @radix-ui/react-slot
+npm install @olddevs/ui react
 ```
 
-Everything after `@olddevs/ui` is its required peer dependencies
-(ADR-0004): the kit does not
-pull them in; the consumer lists them in its own `package.json`. The list includes
-`@internationalized/date`: the calendars accept ISO strings, so you do not need to import
-the package. But the calendars' prop types are written in terms of `@internationalized/date`
-objects, so the types do not compile without it.
+React is the kit's only peer dependency (ADR-0072): the app picks its version, and the app
+must have exactly one copy of it. The kit brings every other library itself, in its own
+`dependencies`: Radix, `react-aria-components`, `@internationalized/date`, `lucide-react`,
+`sonner`, `clsx` and `tailwind-merge`. You don't need to list them in your app's `package.json`.
+
+If your app uses one of them directly, keep its range compatible with the kit's. Otherwise the
+build ends up with two copies, and the layers, contexts and providers of one copy can't see the
+other's (see [Troubleshooting](#troubleshooting)). For the same reason, import `LucideProvider`
+from `@olddevs/ui/icons` and `toast` from `@olddevs/ui`, not from `lucide-react` and `sonner`.
 
 The Editor engine is not on the list: only an app that imports `@olddevs/ui/editor` installs
 it — the command is on the [Editor page](components/inputs/rich-text-editor.md#установка).
@@ -125,7 +125,7 @@ not needed.
 
 The package ships its source, and unused code is dropped by tree shaking: only what the
 consumer imported ends up in its bundle. Measured on 3.47.3. The figures are the contribution of **the package itself**;
-peer dependencies are treated as external, and the metric is gzip:
+React and the kit's third-party libraries are treated as external, and the metric is gzip:
 
 | What the consumer imports                                                                                | gzip     |
 | -------------------------------------------------------------------------------------------------------- | -------- |
@@ -165,14 +165,14 @@ contains neither the engine nor a highlighter. The lightweight
 
 Server-side highlighting in `@olddevs/ui/editor/highlight` (22.6 kB — almost entirely the highlight.js core and
 grammars) costs only an app that imports it, and usually only on the server. The
-`highlightCodeNodes` helper for `CodeView` weighs the same: React is not in the measurement, it is a peer of the kit
+`highlightCodeNodes` helper for `CodeView` weighs the same: React is not in the measurement
 (ADR-0052). An app that does not import the
 `@olddevs/ui/editor` entry point pays for neither the engine nor the Editor code; only the Editor's English
 labels in the shared message catalog reach the main entry point, about 1 kB gzip (ADR-0050, item 5).
 
 The Editor's custom color Popover (`ColorPicker` and the color subsystem of `react-aria-components`, about
 51 kB gzip) loads lazily on the first "Custom color…": it is not in "start", and "full" includes
-only the kit's own code, since react-aria is a peer dependency. The script does not drop the lazy chunks
+only the kit's own code, since react-aria is not in the measurement. The script does not drop the lazy chunks
 silently: it prints their weight on top of "start" next to each row. The chunks can be preloaded ahead
 of time: the consumer sets `modulepreload` on them.
 
@@ -331,8 +331,10 @@ find node_modules -name "react-dismissable-layer" -type d   # exactly one match
 
 In the `npm ls` output there is one version, and the other occurrences are marked `deduped`.
 
-**How to fix.** First, pick versions of `@radix-ui/react-dialog`, `-popover`, `-tooltip` and
-`-context-menu` that all pull in the same copy of `react-dismissable-layer`. The kit's own `devDependencies` currently have
+**How to fix.** Radix comes with the kit (ADR-0072), and on a fresh install `dialog`, `popover`,
+`tooltip` and `context-menu` all resolve to one copy of `react-dismissable-layer`. A second copy
+appears when something else pulls Radix into the app: your own code or another library. First,
+line up the versions so that every package pulls in the same copy. The kit is tested on
 `dialog@1.1.23`, `popover@1.1.23`, `tooltip@1.2.16` and `context-menu@2.3.7`, which all resolve to
 `react-dismissable-layer@1.1.19`. If versions alone cannot bring them together, pin one copy with
 `overrides` in your app's `package.json`:
@@ -346,7 +348,7 @@ In the `npm ls` output there is one version, and the other occurrences are marke
 ```
 
 In pnpm this is `pnpm.overrides`; in Yarn it is `resolutions`. The ranges in the kit's
-`peerDependencies` do not help here: the package cannot see which internal versions your package manager
+`dependencies` do not help here: the package cannot see which internal versions your package manager
 will choose. Repeat the check after every Radix update. `react-focus-scope` and `react-presence`
 also keep module-level state, so check their copies too.
 

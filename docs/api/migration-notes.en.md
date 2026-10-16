@@ -2,7 +2,7 @@
 category: api
 status: stable
 source: src/index.ts
-sourceHash: 19d3eaf4181f
+sourceHash: e30b3bafc560
 ---
 
 # Compatibility and migration notes
@@ -81,6 +81,56 @@ A concrete check or codemod.
    the replacement can be done in stages, describe the removal date/version and the warning.
 5. Add or update a test for the previous boundary and the new contract; for
    interaction, check focus, the keyboard and accessible names.
+
+## 4.8.0 — third-party libraries come with the kit
+
+**Status:** behavior change — minor. Nothing breaks, and no action is required (ADR-0072).
+
+### What changed
+
+The kit now has a single peer dependency, `react`. The other eleven packages moved from `peerDependencies` to
+`dependencies` with the same ranges: `@internationalized/date`, `@radix-ui/react-context-menu`,
+`@radix-ui/react-dialog`, `@radix-ui/react-popover`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`, `clsx`,
+`lucide-react`, `react-aria-components`, `sonner` and `tailwind-merge`. The `@olddevs/ui/icons` entry point exports
+`LucideProvider`.
+
+### Who is affected
+
+Every consumer, but only through the install command. Also code that imports `LucideProvider` from `lucide-react`
+or `toast` from `sonner`, and apps that use Radix, `react-aria-components` or `@internationalized/date` directly.
+
+### Before → after
+
+```bash
+# before
+npm install @olddevs/ui react clsx tailwind-merge lucide-react sonner \
+  react-aria-components @internationalized/date \
+  @radix-ui/react-dialog @radix-ui/react-popover @radix-ui/react-tooltip \
+  @radix-ui/react-context-menu @radix-ui/react-slot
+# after
+npm install @olddevs/ui react
+```
+
+```tsx
+// before
+import { LucideProvider } from "lucide-react";
+// after
+import { LucideProvider } from "@olddevs/ui/icons";
+```
+
+### Semantics and accessibility
+
+Unchanged: the same components on the same library versions. What changes is who picks the version: now the kit
+does. npm no longer stops the install over a major-version mismatch. If your app keeps Radix or
+`react-aria-components` at an incompatible range, the build ends up with two copies, and the layers, contexts
+and providers of one can't see the other's.
+
+### Action before upgrading
+
+Optional. You can remove the moved packages your app does not import itself from its `package.json`. Switch
+`LucideProvider` to the `@olddevs/ui/icons` import and `toast` to the `@olddevs/ui` import. If your app uses
+Radix or `react-aria-components` directly, check after the upgrade that there is one copy:
+`npm ls @radix-ui/react-dismissable-layer react-aria-components`.
 
 ## 4.5.0 — `handle.openSearch()` → `handle.tool("search")?.open()`
 
