@@ -17,7 +17,7 @@ must have exactly one copy of it. The kit brings every other library itself, in 
 
 If your app uses one of them directly, keep its range compatible with the kit's. Otherwise the
 build ends up with two copies, and the layers, contexts and providers of one copy can't see the
-other's (see [Troubleshooting](#troubleshooting)). For the same reason, import `LucideProvider`
+other's (see [Troubleshooting](#частые-проблемы)). For the same reason, import `LucideProvider`
 from `@olddevs/ui/icons` and `toast` from `@olddevs/ui`, not from `lucide-react` and `sonner`.
 
 The Editor engine is not on the list: only an app that imports `@olddevs/ui/editor` installs
