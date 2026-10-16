@@ -72,6 +72,14 @@ const SERVER_SAFE = [
       "the description of a custom tool to sanitise with the same rules.",
   },
   {
+    file: "editor/core/tools.ts",
+    why:
+      "The names of the built-in tools, the presets and resolveTools (OLDSUI-285): constant arrays " +
+      "and one function over them, with no imports at all. A server module builds `tools` from " +
+      "`[...RICH_TEXT_PRESETS.full, tool(...)]`; behind a directive it would get a client " +
+      "reference instead of the array and `next build` would fail on `is not iterable`.",
+  },
+  {
     file: "editor/core/toolOptions.ts",
     why:
       "tool() and the RichTextTools map (OLDSUI-268): a Configured Tool is plain data, and the " +

@@ -1,4 +1,4 @@
-import { RichTextEditor } from "@olddevs/ui/editor";
+import { RICH_TEXT_PRESETS, RichTextEditor, tool } from "@olddevs/ui/editor";
 
 /**
  * `RichTextEditor` с пресетом `full` прямо из серверного компонента (ADR-0058, п. 11.7): директиву несёт сам компонент, обёртки потребителю не нужно.
@@ -15,10 +15,19 @@ const DOCUMENT =
   "<table><tbody><tr><th><p>Name</p></th><th><p>Role</p></th></tr>" +
   "<tr><td><p>Ada</p></td><td><p>Author</p></td></tr></tbody></table>";
 
+/**
+ * Набор `tools`, собранный в серверном модуле (OLDSUI-285): пресет разворачивается
+ * в массив прямо здесь, а `tool()` добавляет Настроенный Инструмент. Если бы
+ * `RICH_TEXT_PRESETS` лежал в файле с "use client", сервер получил бы вместо массива
+ * клиентскую ссылку, и `next build` упал бы на `is not iterable`.
+ */
+const SERVER_TOOLS = [...RICH_TEXT_PRESETS.basic, tool("search", { matchCase: true })];
+
 export default function RichTextEditorPage() {
   return (
     <main className="p-6">
       <RichTextEditor aria-label="Release notes" preset="full" defaultValue={DOCUMENT} />
+      <RichTextEditor aria-label="Comment" tools={SERVER_TOOLS} defaultValue="<p>Short note.</p>" />
     </main>
   );
 }

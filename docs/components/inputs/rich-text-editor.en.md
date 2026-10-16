@@ -60,7 +60,7 @@ category: inputs
 status: stable
 source: src/editor/RichTextEditor.tsx
 story: src/editor/RichTextEditor.stories.tsx
-sourceHash: c08e9cf1ce41
+sourceHash: 2088ed0a4311
 ---
 
 # RichTextEditor
@@ -412,7 +412,7 @@ const tools = [
 - **Two `tool()` entries with the same name** are a set error, like two custom Tools with the same name: a field error ("The editor couldn't start") and a `console.error` in development.
 - **A wrong value** (from JS without types: `levels: [5]`, `offsetVar: "header"`) is replaced with the default, with a single `console.error` per Tool in development; the field keeps working.
 - **Options are read once**, together with the `tools` set, when the engine is created. To change them on a mounted field, remount it with a key (`key`) — the edit history is lost in the process.
-- **Server.** `tool()` pulls neither Tiptap nor React into the module, so a `tools` set that uses it can be built in a server module. A configured built-in Tool is made of data, and if its options are data, you can pass it to a client component as a prop.
+- **Server.** `tool()` and `RICH_TEXT_PRESETS` pull neither Tiptap nor React into the module, so a `tools` set such as `[...RICH_TEXT_PRESETS.full, tool("search", { matchCase: true })]` can be built in a server module: the presets are plain arrays, not client references. A configured built-in Tool is made of data, and if its options are data, you can pass it to a client component as a prop.
 
 The options of each Tool are described in its own section: "Find and replace", "Table of contents", "Collapsible block", "Typography" and "Invisible characters". The options of a custom Tool are set by `defineTool` (["Options, state and commands"](../../api/editor-extension.md#опции-состояние-и-команды)).
 
