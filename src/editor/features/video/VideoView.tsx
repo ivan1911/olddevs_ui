@@ -3,7 +3,7 @@
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { cn } from "../../../lib/cn.js";
 import { VideoPlayer } from "./VideoPlayer.js";
-import { isVideoSrc, type VideoLink } from "./videoLink.js";
+import { isVideoSrc, type VideoLink } from "./videoSrc.js";
 
 /**
  * Видео в Редакторе: заглушка кита и, после щелчка, плеер (`VideoPlayer`).

@@ -3,13 +3,8 @@
 import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { VideoPlayer } from "./VideoPlayer.js";
-import {
-  isVideoProvider,
-  isVideoSrc,
-  parseVideoLink,
-  VIDEO_BLOCK,
-  type VideoLink,
-} from "./videoLink.js";
+import { parseVideoLink } from "./videoLink.js";
+import { isVideoProvider, isVideoSrc, VIDEO_BLOCK, type VideoLink } from "./videoSrc.js";
 
 export interface VideoIslandSlotsProps {
   /** Отпечаток HTML просмотра: сменился Документ — блоки новые, и остров ищет их заново. */

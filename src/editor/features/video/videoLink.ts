@@ -1,12 +1,14 @@
 /**
- * Видео по ссылке — ДАННЫЕ и правила распознавания (ADR-0071): общий модуль
- * очистки на сервере (`schema.ts`), узла Редактора и Острова Просмотра.
+ * Видео по ссылке — правила распознавания и адрес плеера (ADR-0071): узел
+ * Редактора, поле ссылки и Остров Просмотра. Лёгкая часть — имена и проверка
+ * `data-src` для очистки — лежит в `videoSrc.ts` и в «старт» тянет только её.
  *
  * ЧТО ЛЕЖИТ В ДОКУМЕНТЕ. Не плеер, а ссылка: `data-provider` (сервис) и
- * `data-src` — ссылка на видео в каноническом виде. Адрес плеера собирается при
- * показе (`playerUrl`): у Twitch в нём домен страницы (`parent`), и Документ,
- * сохранённый в админке, на публичном сайте с другим доменом показывал бы
- * неработающий плеер. YouTube всегда идёт через `youtube-nocookie.com`.
+ * `data-src` — ссылка на видео в каноническом виде (`parseVideoLink`). Адрес
+ * плеера собирается при показе (`playerUrl`): у Twitch в нём домен страницы
+ * (`parent`), и Документ, сохранённый в админке, на публичном сайте с другим
+ * доменом показывал бы неработающий плеер. YouTube всегда идёт через
+ * `youtube-nocookie.com`.
  *
  * ПО ОБРАЗЦУ РАСШИРЕНИЙ TIPTAP YOUTUBE И TWITCH (решение владельца 2026-10-16:
  * свой код, пакеты расширений не ставятся): какие ссылки считаются видео и как из
@@ -18,26 +20,15 @@
  * без движка. Нужен глобальный `URL`: он есть в браузере и в Node.
  */
 
-/** Значение `div[data-block]` блока видео. */
-export const VIDEO_BLOCK = "video";
+import type { VideoLink, VideoProvider } from "./videoSrc.js";
 
-/** Сервисы видео: значения `data-provider`, они же имена Инструментов. */
-export const VIDEO_PROVIDERS = ["youtube", "twitch"] as const;
-
-export type VideoProvider = (typeof VIDEO_PROVIDERS)[number];
+export type { VideoLink, VideoProvider } from "./videoSrc.js";
 
 /** Название сервиса словами — подпись заглушки и имя плеера. Это имена брендов: не переводятся. */
 export const VIDEO_PROVIDER_NAME: Readonly<Record<VideoProvider, string>> = {
   youtube: "YouTube",
   twitch: "Twitch",
 };
-
-/** Видео в каноническом виде: сервис и ссылка, которая и лежит в Документе. */
-export interface VideoLink {
-  provider: VideoProvider;
-  /** `https`-ссылка на видео своего сервиса; та же, что `href` внутри блока. */
-  src: string;
-}
 
 /** Идентификатор видео, плейлиста, клипа: буквы, цифры, `_` и `-`. */
 const ID = /^[\w-]{1,64}$/;
@@ -50,32 +41,8 @@ const TWITCH_TIME = /^(?=\d)(?:\d+h)?(?:\d+m)?(?:\d+s)?$/;
  * Имена верхнего уровня `twitch.tv`, которые не канал: ссылка на них видео не
  * даёт. Список — служебные разделы сайта, не весь словарь запретных имён.
  */
-const TWITCH_RESERVED = new Set([
-  "directory",
-  "videos",
-  "downloads",
-  "jobs",
-  "p",
-  "settings",
-  "subscriptions",
-  "friends",
-  "wallet",
-  "turbo",
-  "store",
-  "prime",
-  "search",
-  "popout",
-  "embed",
-  "moderator",
-  "broadcast",
-  "bits",
-  "dashboard",
-  "inventory",
-  "drops",
-  "u",
-  "team",
-  "clips",
-]);
+const TWITCH_RESERVED =
+  /^(?:directory|videos|downloads|jobs|p|settings|subscriptions|friends|wallet|turbo|store|prime|search|popout|embed|moderator|broadcast|bits|dashboard|inventory|drops|u|team|clips)$/i;
 
 /**
  * Разобрать текст как адрес: `https://…`, `http://…`, `//…` или без схемы
@@ -188,7 +155,7 @@ function fromTwitch(url: URL): VideoLink | null {
   if (parts.length === 3 && parts[1] === "clip" && ID.test(parts[0]!) && ID.test(parts[2]!)) {
     return { provider: "twitch", src: `https://clips.twitch.tv/${parts[2]}` };
   }
-  if (parts.length === 1 && ID.test(parts[0]!) && !TWITCH_RESERVED.has(parts[0]!.toLowerCase())) {
+  if (parts.length === 1 && ID.test(parts[0]!) && !TWITCH_RESERVED.test(parts[0]!)) {
     return { provider: "twitch", src: `https://www.twitch.tv/${parts[0]}` };
   }
   return null;
@@ -205,24 +172,6 @@ const YOUTUBE_HOSTS = ["youtube.com", "youtu.be"] as const;
 export function parseVideoLink(input: string): VideoLink | null {
   const url = toUrl(input);
   return url && (fromYoutube(url, YOUTUBE_HOSTS) ?? fromTwitch(url));
-}
-
-/**
- * Годится ли значение `data-src` у сервиса `provider`: `https`-адрес хоста этого
- * сервиса, который распознаётся как видео. Одно правило на очистку на сервере,
- * Редактор и Остров. Значение с разметкой и пробелами не проходит.
- */
-export function isVideoSrc(provider: string, value: string): boolean {
-  return (
-    /^https:\/\//i.test(value) &&
-    !/[\s<>"']/.test(value) &&
-    parseVideoLink(value)?.provider === provider
-  );
-}
-
-/** Значение `data-provider` — сервис кита. */
-export function isVideoProvider(value: unknown): value is VideoProvider {
-  return (VIDEO_PROVIDERS as readonly unknown[]).includes(value);
 }
 
 /**
@@ -291,13 +240,4 @@ export function playerUrl(link: VideoLink, parentHost: string): string | null {
     `https://player.twitch.tv/?${target}&parent=${parent}&autoplay=true` +
     (time ? `&time=${time}` : "")
   );
-}
-
-/**
- * Есть ли в HTML Документа блок видео. Блок в очищенном HTML всегда записан как
- * `data-block="video"` в двойных кавычках (так пишет сериализатор DOM), поэтому
- * проверка — подстрока: по ней `RichTextView` решает, нужен ли Остров.
- */
-export function hasVideoBlocks(html: string): boolean {
-  return html.includes(`data-block="${VIDEO_BLOCK}"`);
 }

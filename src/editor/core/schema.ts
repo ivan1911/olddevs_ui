@@ -11,7 +11,7 @@ import {
   LEGACY_MARKER_NAMES,
 } from "../styles/palette.js";
 import { EDITOR_WRAPPER_TONES } from "../features/wrapper/wrapperTones.js";
-import { isVideoProvider, isVideoSrc, VIDEO_BLOCK } from "../features/video/videoLink.js";
+import { isVideoProvider, isVideoSrc, VIDEO_BLOCK } from "../features/video/videoSrc.js";
 
 /**
  * Схема Редактора ДАННЫМИ: белый список тегов и атрибутов, которые он
@@ -35,8 +35,8 @@ import { isVideoProvider, isVideoSrc, VIDEO_BLOCK } from "../features/video/vide
  * Модуль серверно-безопасен: данные, без React и без движка. Его импорты —
  * `palette.ts`, `customColor.ts`, `codeLanguages.ts`, `columnLayouts.ts` и
  * `wrapperTones.ts`, тоже данные: имена палитры, языков, вариантов Раскладки и
- * тонов Обёртки живут там один раз; `videoLink.ts` — правила адресов видео
- * (чистые функции над строкой); ещё `lib/dev-warn.ts` — предупреждение
+ * тонов Обёртки живут там один раз; `videoSrc.ts` — имена видео и проверка
+ * его адреса (чистые функции над строкой); ещё `lib/dev-warn.ts` — предупреждение
  * разработчику без зависимостей.
  */
 export const RICH_TEXT_SCHEMA = {

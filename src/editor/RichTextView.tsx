@@ -4,7 +4,7 @@ import { BlockIsland } from "./ui/BlockIsland.js";
 import { CodeCopyIsland } from "./features/code/CodeCopyIsland.js";
 import { hasCodeBlocks, withCodeHeaders } from "./features/code/codeHeader.js";
 import { VideoIsland } from "./features/video/VideoIsland.js";
-import { hasVideoBlocks } from "./features/video/videoLink.js";
+import { hasVideoBlocks } from "./features/video/videoSrc.js";
 import type { ToolEntry } from "./core/customTool.js";
 import { proseClass } from "./styles/prose.js";
 import { surfaceAttributes, type RichTextSurface } from "./styles/surface.js";

@@ -11,7 +11,7 @@ import { COLUMN_NODE, LAYOUT_NODE } from "../features/layout/layout.js";
 import { replaceDocument } from "./maxLength.js";
 import { WRAPPER_NODE } from "../features/wrapper/wrapper.js";
 import { WRAPPER_TONE_ALERTS } from "../features/wrapper/wrapperTones.js";
-import { VIDEO_BLOCK } from "../features/video/videoLink.js";
+import { VIDEO_BLOCK } from "../features/video/videoSrc.js";
 import { conformToSchema, headingLevels } from "./schemaConform.js";
 
 /**

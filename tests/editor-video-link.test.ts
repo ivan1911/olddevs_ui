@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
-  isVideoSrc,
   parseVideoLink,
   playerUrl,
   videoLinkFromPlayer,
 } from "../src/editor/features/video/videoLink.js";
+import { hasVideoBlocks, isVideoSrc } from "../src/editor/features/video/videoSrc.js";
 
 /*
   Распознавание ссылок на видео (ADR-0071): правила расширений Tiptap Youtube и
@@ -123,20 +123,63 @@ describe("hostile and foreign links", () => {
 });
 
 describe("a data-src value", () => {
-  test("must be https on a host of its own service", () => {
-    expect(isVideoSrc("youtube", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe(true);
-    expect(isVideoSrc("youtube", "https://youtu.be/dQw4w9WgXcQ")).toBe(true);
-    expect(isVideoSrc("twitch", "https://www.twitch.tv/videos/123")).toBe(true);
-    expect(isVideoSrc("twitch", "https://clips.twitch.tv/Clip")).toBe(true);
-    // Другой сервис, `http`, хост плеера, а не сайта, разметка в значении.
+  test("is the canonical https link on a host of its own service", () => {
+    for (const src of [
+      "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=90",
+      "https://www.youtube.com/playlist?list=PL1-abc",
+    ]) {
+      expect(isVideoSrc("youtube", src), src).toBe(true);
+    }
+    for (const src of [
+      "https://www.twitch.tv/videos/1234567890",
+      "https://www.twitch.tv/videos/1234567890?t=1h2m3s",
+      "https://www.twitch.tv/some_channel",
+      "https://clips.twitch.tv/FunnyClip-AbC123",
+    ]) {
+      expect(isVideoSrc("twitch", src), src).toBe(true);
+    }
+  });
+
+  test("is what the editor writes: every parsed link passes", () => {
+    for (const input of [
+      "https://youtu.be/dQw4w9WgXcQ?t=1m30s",
+      "https://www.youtube.com/shorts/dQw4w9WgXcQ",
+      "https://www.youtube.com/embed/videoseries?list=PL1",
+      "twitch.tv/videos/12?t=45m",
+      "https://www.twitch.tv/some_channel/clip/FunnyClip-AbC123",
+    ]) {
+      const link = parseVideoLink(input)!;
+      expect(isVideoSrc(link.provider, link.src), input).toBe(true);
+    }
+  });
+
+  test("is not the other service, a player host, http, a short form or markup", () => {
     expect(isVideoSrc("twitch", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe(false);
     expect(isVideoSrc("youtube", "http://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe(false);
+    expect(isVideoSrc("youtube", "https://youtu.be/dQw4w9WgXcQ")).toBe(false);
+    expect(isVideoSrc("youtube", "https://youtube.com/watch?v=dQw4w9WgXcQ")).toBe(false);
+    expect(isVideoSrc("twitch", "https://twitch.tv/videos/1")).toBe(false);
     expect(isVideoSrc("youtube", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")).toBe(false);
     expect(isVideoSrc("twitch", "https://player.twitch.tv/?video=123")).toBe(false);
-    expect(isVideoSrc("youtube", 'https://youtu.be/dQw4w9WgXcQ"><script>')).toBe(false);
-    expect(isVideoSrc("", "https://youtu.be/dQw4w9WgXcQ")).toBe(false);
+    expect(isVideoSrc("youtube", 'https://www.youtube.com/watch?v=dQw4w9WgXcQ"><script>')).toBe(
+      false
+    );
+    expect(isVideoSrc("youtube", "https://www.youtube.com.evil.example/watch?v=dQw4w9WgXcQ")).toBe(
+      false
+    );
+    expect(isVideoSrc("youtube", "https://www.youtube.com@evil.example/watch?v=dQw4w9WgXcQ")).toBe(
+      false
+    );
+    expect(isVideoSrc("youtube", "https://www.youtube.com/watch?v=dQw4w9WgXcQ\n")).toBe(false);
+    expect(isVideoSrc("", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe(false);
     expect(isVideoSrc("vimeo", "https://vimeo.com/1")).toBe(false);
   });
+});
+
+test("the video block is told from the HTML by a substring", () => {
+  expect(hasVideoBlocks('<div data-block="video" data-provider="youtube"></div>')).toBe(true);
+  expect(hasVideoBlocks('<div data-block="wrapper"><p>video</p></div>')).toBe(false);
 });
 
 describe("a player address from the Tiptap extensions", () => {

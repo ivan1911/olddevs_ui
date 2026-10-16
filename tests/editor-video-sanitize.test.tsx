@@ -76,6 +76,9 @@ describe("data-src", () => {
     ["a look-alike host", "https://youtube.com.evil.example/watch?v=dQw4w9WgXcQ"],
     ["a login in front of the host", "https://youtube.com@evil.example/watch?v=dQw4w9WgXcQ"],
     ["http", "http://www.youtube.com/watch?v=dQw4w9WgXcQ"],
+    // Читаемые, но не канонические формы: Редактор пишет только канонический вид.
+    ["a short form", "https://youtu.be/dQw4w9WgXcQ"],
+    ["a host without www", "https://youtube.com/watch?v=dQw4w9WgXcQ"],
     ["a javascript: address", "javascript:alert(1)"],
     ["a data: address", "data:text/html,<script>alert(1)</script>"],
     ["a player host instead of a site host", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"],
@@ -96,7 +99,7 @@ describe("data-src", () => {
   test("Twitch accepts its own hosts and nothing else", () => {
     for (const src of [
       "https://www.twitch.tv/videos/1234567890",
-      "https://twitch.tv/some_channel",
+      "https://www.twitch.tv/some_channel",
       "https://clips.twitch.tv/FunnyClip-AbC123",
     ]) {
       expect(clean(block("twitch", src))).toContain(`data-src="${src}"`);

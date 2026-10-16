@@ -10,11 +10,10 @@ import type * as VideoChunkModule from "./videoChunk.js";
 import {
   isVideoProvider,
   isVideoSrc,
-  parseVideoLink,
   VIDEO_BLOCK,
   VIDEO_PROVIDERS,
   type VideoProvider,
-} from "./videoLink.js";
+} from "./videoSrc.js";
 
 type VideoChunk = typeof VideoChunkModule;
 
@@ -46,9 +45,9 @@ const VideoShape = Node.create({
       getAttrs: (element) => {
         const provider = element.getAttribute("data-provider");
         const src = element.getAttribute("data-src") ?? "";
-        const link = parseVideoLink(src);
-        return isVideoProvider(provider) && isVideoSrc(provider, src) && link?.provider === provider
-          ? { provider, link: link.src }
+        // Адрес в Документе уже канонический (`isVideoSrc`): Скелету разбирать его незачем.
+        return isVideoProvider(provider) && isVideoSrc(provider, src)
+          ? { provider, link: src }
           : false;
       },
     },

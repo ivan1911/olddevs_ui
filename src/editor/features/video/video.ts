@@ -11,15 +11,14 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey, TextSelection, type Transaction } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { VideoView } from "./VideoView.js";
+import { parseVideoLink, videoLinkFromPlayer } from "./videoLink.js";
 import {
   isVideoProvider,
   isVideoSrc,
-  parseVideoLink,
   VIDEO_BLOCK,
-  videoLinkFromPlayer,
   type VideoLink,
   type VideoProvider,
-} from "./videoLink.js";
+} from "./videoSrc.js";
 
 /** Имя узла в Схеме движка. */
 export const VIDEO_NODE = VIDEO_BLOCK;
