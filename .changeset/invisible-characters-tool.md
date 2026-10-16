@@ -2,7 +2,7 @@
 "@olddevs/ui": minor
 ---
 
-`RichTextEditor` gets the `invisibleCharacters` Tool: a checkbox item in the "…" menu of the fixed Toolbar that shows spaces, soft line breaks (`Shift+Enter`) and paragraph ends over the Document, on the Invisible Characters extension from Tiptap (there was no requesting screen at release, ADR-0048, so the API follows Tiptap).
+`RichTextEditor` gets the `invisibleCharacters` Tool: a checkbox item in the "…" menu of the fixed Toolbar that shows spaces, hard breaks (`Shift+Enter`) and paragraph ends over the Document, on the Invisible Characters extension from Tiptap (there was no requesting screen at release, ADR-0048, so the API follows Tiptap).
 
 - **`invisibleCharacters` is now in the `full` Preset, so the fixed Toolbar of every screen on the default Preset gets an "Invisible characters" checkbox item in its "…" menu, as the last section.** There is no extra Toolbar button, so the Toolbar does not get longer. The characters are hidden until the author turns the display on, so nothing changes in how a Document looks, and the saved HTML does not change; `basic` is unchanged. To drop the item pass `tools={RICH_TEXT_PRESETS.full.filter((name) => name !== "invisibleCharacters")}`. Install `@tiptap/extension-invisible-characters` next to the other Tiptap packages (the install command on the RichTextEditor page has it).
 - It is display only: the marks are decorations, so `value`, `onChange`, `getHTML()`, Markdown and `RichTextView` never see them, and showing or hiding them is not an edit. Unlike Tiptap, where the extension starts shown, the kit starts hidden; `tool("invisibleCharacters", { visible: true })` shows them from the start.
