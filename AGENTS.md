@@ -99,8 +99,11 @@ enforces this with an allowlist of three justified reasons.
   `sourceHash` of the Original (ADR-0062). The Original is written first; the
   Translation repeats its shape: the same headings at the same levels, the same
   code blocks, the same frontmatter. `tests/docs-translations.test.ts` enforces
-  this. Editing an Original doesn't wait for its Translation: a stale one shows up
-  in `npm run docs:translations`. Notes about Russian colloquialisms to avoid are
+  this. Links in a Translation are written as in the Original: the `.md` path and the
+  Original's Russian anchor, never a Latin anchor from the English heading (the site
+  derives the English one); the same test checks every anchor against the Original's
+  heading slugs. Editing an Original doesn't wait for its Translation: a stale one shows
+  up in `npm run docs:translations`. Notes about Russian colloquialisms to avoid are
   not carried into a Translation, because they mean nothing to an English reader.
 
 ## Components on react-aria-components
