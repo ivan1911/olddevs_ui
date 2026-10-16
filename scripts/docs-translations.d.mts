@@ -10,3 +10,10 @@ export function translationsState(files: ReadonlyMap<string, string>): {
   problems: string[];
 };
 export function readDocs(dir?: string): Map<string, string>;
+export function headingSlug(heading: string): string;
+export function headingSlugs(text: string): Set<string>;
+export function translationLinkProblems(
+  path: string,
+  text: string,
+  files: ReadonlyMap<string, string>
+): string[];

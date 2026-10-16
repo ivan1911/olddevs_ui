@@ -57,6 +57,7 @@ const ALLOWED = [
       "tests/rich-text-editor-table-size-grid.test.tsx",
       "tests/rich-text-editor-table-menu.test.tsx",
       "tests/editor-search.test.tsx",
+      "tests/docs-translations.test.ts",
       "tests-visual/interactions.spec.ts",
     ],
     why:
@@ -68,7 +69,9 @@ const ALLOWED = [
       "The table menu test sorts Russian cell text and Russian number formats: the order " +
       "of `yo` after `e`, not after `ya`, and `1 234,5` read as a number are the check. " +
       "The search test pins whole-word matching in Cyrillic: `\\b` of JS knows only Latin, " +
-      "so a Russian word inside a longer one is the case the Unicode boundary exists for.",
+      "so a Russian word inside a longer one is the case the Unicode boundary exists for. " +
+      "The docs translations test pins Cyrillic heading slugs: a Translation links by the " +
+      "Original's Russian anchor, so the slug of a Russian heading is the check itself.",
   },
 ];
 

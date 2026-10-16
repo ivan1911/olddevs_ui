@@ -41,7 +41,7 @@ Slides never change on their own: no autoplay, no infinite strip.
   cannot be read in time).
 - A ready-made lightbox component: there is none and never will be, but a
   viewer that pages through slides in a dialog is assembled from `Dialog` and `Carousel` — see
-  ["Viewing with a carousel in a `Dialog`"](#viewing-with-a-carousel-in-a-dialog).
+  ["Viewing with a carousel in a `Dialog`"](#просмотр-каруселью-в-dialog).
 - For tabs with a single visible panel, use `Tabs`: they have different
   semantics (`tablist`), not a strip.
 - Paged browsing of records with arrow buttons and keys is a separate task (`DetailPager`
