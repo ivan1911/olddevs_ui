@@ -56,9 +56,16 @@ async function openMore(user: User) {
 /** Пункт открытого меню «…»; `null` — пункта нет. */
 const itemIn = (menu: HTMLElement) => within(menu).queryByRole("menuitemcheckbox", NAME);
 
-/** Переключить показ пунктом меню «…» одним щелчком; меню закрывается само. */
+/**
+ * Переключить показ пунктом меню «…» одним щелчком; меню закрывается само.
+ * Ждём и возврата фокуса в Документ: он приходит кадром позже, и открытое сразу
+ * следом меню «…» закрылось бы этим запоздалым фокусом.
+ */
 async function toggleByItem(user: User) {
   await user.click(itemIn(await openMore(user))!);
+  await waitFor(() =>
+    expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Body" }))
+  );
 }
 
 /** Отмечен ли пункт сейчас: открыть «…», прочитать, закрыть Escape. */
