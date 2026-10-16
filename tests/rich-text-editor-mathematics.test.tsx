@@ -184,12 +184,13 @@ test("the text of a formula is its LaTeX: getText, the counter and the selected 
   expect(handle.getSelectedText()).toContain("x^2");
 });
 
-test("search treats a formula as any inline atom: its LaTeX is not searched, the text around it is", () => {
+test("search finds the LaTeX of a formula as a whole formula, and the text around it as text", () => {
   const { handle } = renderEditor({ defaultValue: `<p>see ${inline("\\sqrt{2}")} and see</p>` });
 
+  // Подробности (подсветка, переходы, замена) — `editor-search-formulas.test.tsx`.
   const search = handle.tool("search");
   expect(search?.setQuery("sqrt")).toBe(true);
-  expect(search?.next()).toBe(false);
+  expect(search?.next()).toBe(true);
   expect(search?.setQuery("see")).toBe(true);
   expect(search?.next()).toBe(true);
 });
