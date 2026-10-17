@@ -4,24 +4,24 @@ import { useEffect, useRef, type RefObject } from "react";
 import { pushOverlayLayer } from "../lib/overlay-layer.js";
 
 /**
- * Регистрация модального слоя в общем стеке (ADR-0041).
+ * Registers a modal layer in the shared stack (ADR-0041).
  *
- * Хук, а не прямой вызов в каждом компоненте, по двум причинам.
+ * A hook rather than a direct call in each component, for two reasons.
  *
- * ПЕРВАЯ — жизненный цикл. Регистрировать надо ИМЕННО В ЭФФЕКТЕ: стек —
- * модульный, и запись в него из тела компонента была бы побочным действием
- * рендера. В StrictMode React монтирует, размонтирует и монтирует снова, и
- * слой, положенный в рендере и снятый уборщиком, обратно уже не попадал —
- * подложка переставала считать себя верхней и молча переставала закрываться по
- * Escape. Один правильный цикл лучше четырёх копий.
+ * FIRST: lifecycle. Registration has to happen IN AN EFFECT. The stack is a module-level
+ * singleton, so writing to it from the component body would be a side effect of render.
+ * In StrictMode React mounts, unmounts and mounts again, and a layer added during render
+ * and removed by the cleanup never got back in: the scrim stopped considering itself the
+ * topmost layer and silently stopped closing on Escape. One correct lifecycle beats four
+ * copies.
  *
- * ВТОРАЯ — охват. ADR обещает, что в стеке состоят ВСЕ модальные слои кита, и
- * первая версия обещание не держала: регистрировался один `ModalOverlay`, то
- * есть стек решал «подложка против подложки» и ничего больше.
+ * SECOND: coverage. The ADR promises that ALL of the kit's modal layers are in the stack,
+ * and the first version did not keep that promise. Only one `ModalOverlay` was registered,
+ * so the stack arbitrated scrim against scrim and nothing else.
  */
 export function useOverlayLayer(
   open: boolean,
-  /** Узел слоя: по его положению в документе и определяется верхний. */
+  /** The layer's node. Its position in the document decides which layer is the topmost. */
   nodeRef: RefObject<HTMLElement | null>
 ): { isTopmost: () => boolean } {
   const layerRef = useRef<ReturnType<typeof pushOverlayLayer> | null>(null);
@@ -37,6 +37,6 @@ export function useOverlayLayer(
     };
   }, [open, nodeRef]);
 
-  // Незарегистрированный слой верхним себя не считает: он закрыт.
+  // An unregistered layer does not count itself as the topmost: it is closed.
   return { isTopmost: () => layerRef.current?.isTopmost() ?? false };
 }

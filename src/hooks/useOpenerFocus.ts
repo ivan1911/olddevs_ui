@@ -3,44 +3,41 @@
 import { useEffect, useRef, type RefObject } from "react";
 
 /**
- * Возврат фокуса тому, кто открыл модальный слой.
+ * Returns focus to whoever opened the modal layer.
  *
- * Radix возвращает фокус на свой `Dialog.Trigger`, а у кита его нет: окна
- * открываются из состояния приложения, а не из обёрнутой кнопки. Модальный
- * контент при этом безусловно зовёт `event.preventDefault()` и фокусирует
- * `triggerRef`, которого не существует, — фокус уезжает на `<body>`, и
- * пользователь клавиатуры начинает обход страницы заново.
+ * Radix returns focus to its own `Dialog.Trigger`, but the kit has none: windows open from
+ * application state, not from a wrapped button. The modal content unconditionally calls
+ * `event.preventDefault()` and focuses `triggerRef`, which does not exist. Focus goes to
+ * `<body>`, and a keyboard user has to start tabbing through the page from the beginning.
  *
- * Связку завёл `Dialog`, потом повторил `Drawer`, а до `CommandPalette` она не
- * доехала — при том что палитра существует ТОЛЬКО ради клавиатуры, и потеря
- * фокуса там отказ основной функции, а не неудобство. Отсюда общий хук: третье
- * повторение и есть повод вынести.
+ * `Dialog` got the wiring first, then `Drawer` repeated it, and it had not reached
+ * `CommandPalette` yet, even though the palette exists ONLY for keyboard users, so losing
+ * focus there breaks its main function rather than being an inconvenience. Hence a shared
+ * hook: the third copy is the reason to extract it.
  *
- * Копии при этом РАЗОШЛИСЬ, и это второй довод. У `Drawer` было две проверки,
- * которых не было у `Dialog` (см. `isOpenerCandidate`), — то есть один и тот же
- * приём жил в двух версиях разного качества. Все три компонента зовут
- * теперь одну.
+ * The copies had DIVERGED, which is the second argument. `Drawer` had two checks that
+ * `Dialog` lacked (see `isOpenerCandidate`), so one and the same technique lived in two
+ * versions of different quality. All three components now call one.
  */
 /**
- * Может ли этот узел быть тем, кто открыл слой.
+ * Whether this node can be the one that opened the layer.
  *
- * Отсекаются ДВА случая, и оба разбирались на живых дефектах:
+ * TWO cases are excluded, and both were found through live defects:
  *
- * - **`<body>`.** В StrictMode слой монтируется дважды, и на втором заходе
- *   фокус уже уехал: `document.activeElement` равен `body`. Наивная запись
- *   затирала настоящего открывшего, и возвращать становилось некуда. В сборке
- *   этого нет, но разработчик смотрит на dev, и расхождение читается как
- *   поломка.
- * - **Содержимое СВОЕГО слоя.** Перемонтирование при уже открытом слое
- *   запомнило бы его собственную кнопку закрытия — и фокус после закрытия
- *   уезжал бы в никуда, потому что её к тому моменту уже нет.
+ * - **`<body>`.** In StrictMode the layer mounts twice, and on the second pass focus has
+ *   already moved away: `document.activeElement` is `body`. The naive version overwrote
+ *   the real opener, and there was nowhere left to return focus to. The production build
+ *   does not have this, but developers look at dev, and the mismatch reads as a bug.
+ * - **Content of ITS OWN layer.** Remounting while the layer is already open would
+ *   remember the layer's own close button. After closing, focus would go nowhere, because
+ *   that button no longer exists at that point.
  *
- * ИМЕННО СВОЕГО, а не «любого диалога». Первая версия этого хука отсекала всё,
- * что лежит внутри `[role="dialog"]`, — и тем ломала ВЛОЖЕННЫЕ окна: кнопка,
- * открывшая подтверждение, по определению лежит внутри родительского окна,
- * то есть отвергалась, и фокус после закрытия уезжал на `<body>`. До волны 26
- * `Dialog` такого условия не имел и работал верно; правило `Drawer`
- * («не моё содержимое») строго сильнее и взято за основу.
+ * ITS OWN, not "any dialog". The first version of this hook excluded everything inside
+ * `[role="dialog"]`, and that broke NESTED windows: the button that opened a confirmation
+ * lies inside the parent window by definition, so it was rejected, and after closing,
+ * focus went to `<body>`. Before wave 26, `Dialog` had no such condition and worked
+ * correctly. The `Drawer` rule ("not my own content") is strictly stronger and was taken
+ * as the basis.
  */
 function isOpenerCandidate(
   node: EventTarget | Element | null,
@@ -51,35 +48,34 @@ function isOpenerCandidate(
 
 export function useOpenerFocus(
   open: boolean,
-  /** Содержимое собственного слоя: фокус внутри него открывшим не считается. */
+  /** The layer's own content. Focus inside it does not count as the opener. */
   contentRef: RefObject<HTMLElement | null>
 ): {
-  /** В `onOpenAutoFocus`: запомнить того, кто открыл. */
+  /** In `onOpenAutoFocus`: remember whoever opened the layer. */
   remember: () => void;
-  /** В `onCloseAutoFocus`: вернуть ему фокус. */
+  /** In `onCloseAutoFocus`: return focus to them. */
   restore: (event: Event) => void;
 } {
   const opener = useRef<HTMLElement | null>(null);
   const lastOutside = useRef<HTMLElement | null>(null);
 
   /*
-    `activeElement` в `onOpenAutoFocus` — НЕ ВСЕГДА тот, кто открыл.
+    `activeElement` in `onOpenAutoFocus` is NOT ALWAYS the one who opened the layer.
 
-    У `Dialog` он тот: Radix зовёт колбэк до того, как уведёт фокус внутрь. Но
-    содержимое слоя вправе забрать фокус раньше — `CommandPalette` так и делает,
-    её поле поиска автофокусируется при монтировании. Запоминался `input`
-    палитры, при закрытии он уже отцеплен, проверка `isConnected` отбрасывала
-    его — и фокус уезжал на `<body>`, то есть починка не срабатывала ровно в том
-    компоненте, ради которого писалась.
+    For `Dialog` it is: Radix calls the callback before it moves focus inside. But the
+    layer's content may take focus earlier. `CommandPalette` does exactly that: its search
+    field autofocuses on mount. The palette's `input` was remembered, but by the time the
+    layer closed it was already detached, so the `isConnected` check discarded it and focus
+    went to `<body>`. The fix did not work in exactly the component it was written for.
 
-    Поэтому ведём историю: последний сфокусированный узел ВНЕ модального слоя.
+    Hence we keep a history: the last focused node OUTSIDE the modal layer.
 
-    Слушатель висит, ПОКА СЛОЙ ЗАКРЫТ, — именно тогда и происходит то, что надо
-    запомнить. Оговорка про экономию, стоявшая здесь раньше, утверждала
-    обратное: платим мы как раз на каждом закрытом слое, а закрытых на странице
-    куда больше, чем открытых. Если это станет заметно (список, где у каждой
-    строки свой `Dialog`), историю надо сделать общей на модуль — как счётчик в
-    `useScrollLock` и стек в `overlay-layer.ts`; она и по смыслу глобальная.
+    The listener stays attached WHILE THE LAYER IS CLOSED, because that is when the thing to
+    remember happens. The note about saving work that used to stand here claimed the opposite:
+    we pay on every closed layer, and there are far more closed layers on a page than open
+    ones. If this becomes measurable (a list where each row has its own `Dialog`), the history
+    should become shared at module level, like the counter in `useScrollLock` and the stack in
+    `overlay-layer.ts`. It is global in meaning too.
   */
   useEffect(() => {
     if (open) return;
@@ -99,17 +95,16 @@ export function useOpenerFocus(
     },
     restore: (event) => {
       /*
-        `remember` МОЖЕТ И НЕ СРАБОТАТЬ, и на это нельзя закладываться.
+        `remember` MAY NOT RUN AT ALL, and you cannot rely on it.
 
-        Radix зовёт `onOpenAutoFocus` не всегда: если содержимое слоя забрало
-        фокус само во время монтирования — а поле поиска палитры именно так и
-        делает, — колбэк не приходит вовсе (проверено). Поэтому история
-        `lastOutside` не подстраховка, а полноценный источник: `remember`
-        уточняет её там, где успевает.
+        Radix does not always call `onOpenAutoFocus`. If the layer's content took focus during
+        mount itself, as the palette's search field does, the callback never arrives (verified).
+        So the `lastOutside` history is not a safety net but a full source: `remember` refines
+        it wherever it gets the chance.
       */
       const el = opener.current ?? lastOutside.current;
-      // `isConnected` обязателен: кнопка, открывшая слой, могла исчезнуть
-      // вместе с элементом списка, который слой и редактировал.
+      // `isConnected` is required: the button that opened the layer could have been removed
+      // together with the list item that the layer was editing.
       if (!el?.isConnected) return;
       event.preventDefault();
       el.focus();

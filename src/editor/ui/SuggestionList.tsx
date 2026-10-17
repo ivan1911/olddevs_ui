@@ -16,7 +16,7 @@ import { keyGlyphs } from "../../components/content/Kbd.js";
 import type { IconProps } from "../../icons.js";
 import { GLASS_MENU_CLASS } from "../styles/glass.js";
 
-/** Нулевой прямоугольник: якорь, пока курсор на экране не найден. */
+/** A zero-size rectangle: the anchor used until the caret is found on screen. */
 export function emptyRect(): DOMRect {
   return {
     x: 0,
@@ -31,24 +31,24 @@ export function emptyRect(): DOMRect {
   };
 }
 
-/** Строка списка: иконка, подпись и необязательная подсказка (шорткат). */
+/** A list row: an icon, a label and an optional hint (a shortcut). */
 export interface SuggestionRow {
-  /** Ключ строки, уникальный во всём списке: из него собран `id` в DOM. */
+  /** The row key, unique across the whole list; the DOM `id` is built from it. */
   id: string;
   label: string;
   icon?: ComponentType<IconProps>;
-  /** Подсказка для глаз (Markdown или сочетание): имя строки — её подпись. */
+  /** A visual hint (Markdown or a shortcut): the row's name is its label. */
   hint?: string;
 }
 
-/** Раздел списка; без `label` строки стоят без заголовка и без группы. */
+/** A section of the list. Without a `label`, the rows have no heading and no group. */
 export interface SuggestionGroup {
   id: string;
   label?: string;
   rows: readonly SuggestionRow[];
 }
 
-/** Виртуальный якорь списка — курсор в Документе. */
+/** The list's virtual anchor: the caret in the Document. */
 export interface SuggestionAnchor {
   getBoundingClientRect: () => DOMRect;
   readonly contextElement: Element | undefined;
@@ -56,38 +56,41 @@ export interface SuggestionAnchor {
 
 export interface SuggestionListProps {
   open: boolean;
-  /** Список закрыт снаружи (Escape из стека слоёв, щелчок мимо): сессию надо завершить. */
+  /**
+   * The list was closed from outside (Escape from the layer stack, a click outside):
+   * the session must end.
+   */
   onClose: () => void;
   anchorRef: RefObject<SuggestionAnchor>;
   editorRef: RefObject<Editor | null>;
-  /** `id` корня списка: на него указывает `aria-controls` поля. */
+  /** The `id` of the list root; the field's `aria-controls` points to it. */
   listboxId: string;
-  /** Доступное имя списка. */
+  /** The list's accessible name. */
   label: string;
   groups: readonly SuggestionGroup[];
-  /** Номер текущей строки сквозь все разделы. */
+  /** The index of the current row across all sections. */
   active: number;
   onActivate: (position: number) => void;
-  /** Строка выбрана щелчком; клавиатуру слушает поле. */
+  /** A row is selected by a click; the field handles the keyboard. */
   onApply: (rowId: string) => void;
-  /** Строка «ничего не найдено» — когда строк нет. */
+  /** The "nothing found" row, shown when there are no rows. */
   emptyText: string;
-  /** Показывать ли её сейчас: ответ может ещё идти. */
+  /** Whether to show it now: the answer may still be loading. */
   showEmpty: boolean;
 }
 
-/** Id строки в DOM — на него указывает `aria-activedescendant` поля. */
+/** The row's `id` in the DOM; the field's `aria-activedescendant` points to it. */
 export const suggestionOptionId = (listboxId: string, rowId: string) => `${listboxId}-${rowId}`;
 
 /**
- * Список подсказок у курсора — общий для Меню вставки «/» (`SlashMenu`) и
- * своих символов-триггеров (`TriggerMenu`, ADR-0064).
+ * The suggestion list at the caret, shared by the `/` Insert menu (`SlashMenu`) and by
+ * custom trigger characters (`TriggerMenu`, ADR-0064).
  *
- * ФОКУС ОСТАЁТСЯ В ПОЛЕ. Список — «всплывающая часть» поля по паттерну
- * комбобокса APG: поле указывает на список `aria-controls`, текущую строку —
- * `aria-activedescendant`, а стрелки и Enter слушает движок (`slashCommand.ts`)
- * и передаёт владельцу списка. Подробности и ПОЧЕМУ `Popover` КИТА — на
- * `useSlashMenu`.
+ * FOCUS STAYS IN THE FIELD. The list is a floating part of the field, following the APG
+ * combobox pattern: the field points to the list with `aria-controls`, to the current row
+ * with `aria-activedescendant`, and the arrow keys and Enter are heard by the engine
+ * (`slashCommand.ts`) and passed to the list's owner. For details and for WHY the kit's
+ * `Popover` is used, see `useSlashMenu`.
  */
 export function SuggestionList({
   open,
@@ -106,10 +109,10 @@ export function SuggestionList({
   const flat = groups.flatMap((group) => group.rows);
   const activeRowId = open ? flat[active]?.id : undefined;
 
-  // Длинный список прокручивается за курсором стрелок. В jsdom прокрутки нет.
+  // A long list scrolls to follow the arrow keys. jsdom has no scrolling.
   useEffect(() => {
     if (!activeRowId) return;
-    // Список — в портале документа Редактора, не обязательно глобального.
+    // The list is portaled into the Editor's document, not necessarily the global one.
     const doc = editorRef.current?.view.dom.ownerDocument ?? document;
     const node = doc.getElementById(suggestionOptionId(listboxId, activeRowId));
     if (typeof node?.scrollIntoView === "function") node.scrollIntoView({ block: "nearest" });
@@ -141,7 +144,7 @@ export function SuggestionList({
           )}
           <span className="truncate">{row.label}</span>
           {row.hint && (
-            // Подсказка для глаз: имя строки — её подпись, без «##».
+            // Visual hint: the row's name is its label, without "##".
             <kbd aria-hidden="true" className={MENU_ITEM_SHORTCUT_CLASS}>
               {keyGlyphs(row.hint)}
             </kbd>
@@ -161,17 +164,17 @@ export function SuggestionList({
       <PopoverContent
         side="bottom"
         align="start"
-        // Курсор движется при наборе и прокрутке, а виртуальный якорь о
-        // своих сдвигах не сообщает: позиция пересчитывается каждый кадр,
-        // пока список открыт.
+        // The caret moves while typing and scrolling, and the virtual anchor does not
+        // report its shifts. So the position is recalculated every frame while the list
+        // is open.
         updatePositionStrategy="always"
-        // Фокус остаётся в поле — в нём продолжается набор запроса.
+        // Focus stays in the field: the query continues to be typed there.
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
-        // Поле — часть комбобокса, а не «снаружи» списка. Фокус, пришедший в
-        // него при открытом списке (каретка, поставленная программно, возврат
-        // в окно браузера), не повод закрывать список: Radix иначе считает это
-        // уходом фокуса и снимает слой, а с ним — сессию.
+        // The field is part of the combobox, not "outside" the list. Focus that arrives in
+        // it while the list is open (a caret placed programmatically, a return to the
+        // browser window) is no reason to close the list. Radix would otherwise count it as
+        // focus leaving and remove the layer, and with it the session.
         onFocusOutside={(event) => {
           const field = editorRef.current?.view.dom;
           if (field && event.target instanceof Node && field.contains(event.target)) {
@@ -184,7 +187,7 @@ export function SuggestionList({
           role="listbox"
           id={listboxId}
           aria-label={label}
-          // Щелчок по строке не уводит фокус из поля: иначе набор оборвался бы.
+          // A click on a row does not move focus out of the field, or typing would be interrupted.
           onMouseDown={(event) => event.preventDefault()}
         >
           {groups.map((group) => {

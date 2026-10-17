@@ -6,10 +6,10 @@ import type { UiMessages } from "../../i18n/messages.js";
 import { BoldIcon, ItalicIcon, UnderlineIcon, type IconProps } from "../../icons.js";
 import type { Tool } from "../core/tools.js";
 
-/** Метка-переключатель ряда: кнопка с `aria-pressed` на Панели и в плашке. */
+/** A Mark toggle in a row: a button with `aria-pressed` on the Toolbar and in the bubble menu. */
 export interface RowMark {
   tool: Tool;
-  /** Id строки общей таблицы сочетаний (`shortcuts.ts`) — оттуда подсказка. */
+  /** Id of the row in the shared shortcuts table (`shortcuts.ts`); the hint comes from there. */
   id: string;
   label: (messages: UiMessages["editor"]) => string;
   icon: ComponentType<IconProps>;
@@ -19,13 +19,13 @@ export interface RowMark {
 }
 
 /**
- * Частые Метки в ряду (решения владельца): у Панели — жирный и
- * курсив (`TOOLBAR_ROW_MARKS`), у плашки меню выделения — ещё и подчёркнутый
- * (`BUBBLE_ROW_MARKS`). Остальные Метки — в меню «…» (`FormatMenus.tsx`), и
- * то, что стоит в ряду, в «…» того же хозяина не повторяется.
+ * The frequently used Marks in the row (product decisions). The Toolbar has bold and
+ * italic (`TOOLBAR_ROW_MARKS`); the bubble menu also has underline (`BUBBLE_ROW_MARKS`).
+ * The other Marks live in the "…" menu (`FormatMenus.tsx`), and a Mark that is already in
+ * the row is not repeated in the "…" menu of the same surface.
  *
- * Маркер стоял здесь же — один щелчок жёлтым. Теперь это кнопка с
- * поповером (`ColorMenus.tsx`): щелчок открывает ряд маркеров.
+ * The highlighter used to sit here, as a single click that applied yellow. It is now a
+ * button with a popover (`ColorMenus.tsx`): a click opens the row of highlighters.
  */
 const ROW_MARKS: readonly RowMark[] = [
   {
@@ -59,8 +59,8 @@ const ROW_MARKS: readonly RowMark[] = [
 
 const pick = (ids: readonly string[]) => ids.map((id) => ROW_MARKS.find((mark) => mark.id === id)!);
 
-/** Ряд Метак Панели: B · I. */
+/** The Mark row of the Toolbar: B · I. */
 export const TOOLBAR_ROW_MARKS: readonly RowMark[] = pick(["bold", "italic"]);
 
-/** Ряд Метак плашки меню выделения: B · I · U. */
+/** The Mark row of the bubble menu: B · I · U. */
 export const BUBBLE_ROW_MARKS: readonly RowMark[] = pick(["bold", "italic", "underline"]);

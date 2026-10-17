@@ -15,30 +15,31 @@ import { toolLabel, type TriggerRecord } from "../core/toolDescriptor.js";
 import { emptyRect, SuggestionList, suggestionOptionId } from "./SuggestionList.js";
 
 export interface TriggerMenu {
-  /** Символы и мосты для расширения; пусто — у набора нет своих триггеров. */
+  /** Characters and bridges for the extension. Empty means the set has no triggers of its own. */
   bindings: readonly TriggerBinding[];
-  /** Атрибуты поля — комбобокс-часть паттерна, как у Меню вставки. */
+  /** Field attributes: the combobox part of the pattern, as in the Insert menu. */
   attributes: Record<string, string>;
-  /** Сам список — рисуется рядом с полем. */
+  /** The list itself, rendered next to the field. */
   element: ReactNode;
 }
 
-/** Открытая сессия: чей символ и что набрано. */
+/** The open session: which trigger character it belongs to and what was typed. */
 interface Opened {
   char: string;
   session: SlashSession;
 }
 
 /**
- * Списки своих символов-триггеров (ADR-0064): тот же `SuggestionList`, что у
- * Меню вставки «/», — поповер у каретки, строки и «Ничего не найдено», фокус в
- * поле, стрелки и `Enter` слушает движок и передаёт сюда мостом.
+ * Lists for custom trigger characters (ADR-0064). They use the same `SuggestionList` as the
+ * `/` Insert menu: a popover at the caret, the rows, and "Nothing found". Focus stays in the
+ * field, and the engine hears the arrow keys and `Enter` and passes them here through a
+ * bridge.
  *
- * Открыт может быть один список: символы разные, и набранное в Документе
- * подходит под один. Пункты приходят от потребителя по запросу — сразу или
- * промисом; ответ устаревшего запроса отбрасывается. Выбор отдаёт пункт и
- * диапазон `символ+запрос` обработчику потребителя; удалять набранное он
- * должен сам, заменив его своим узлом. После вызова список закрывается.
+ * At most one list can be open: the characters differ, and what was typed in the Document
+ * matches only one of them. Items come from the consumer on request, either at once or as a
+ * promise. The response to a stale request is dropped. Selecting an item passes the item and
+ * the range `character+query` to the consumer's handler. The handler must delete what was
+ * typed itself, by replacing it with its own node. The list closes after the call.
  */
 export function useTriggerMenu(
   triggers: readonly TriggerRecord[],
@@ -49,14 +50,14 @@ export function useTriggerMenu(
   const listboxId = useId();
   const [opened, setOpened] = useState<Opened | null>(null);
   const [found, setFound] = useState<readonly TriggerItem[]>([]);
-  // Ответ ещё идёт: пустой список не должен мигнуть «Ничего не найдено».
+  // The response is still pending: the empty list must not flash "Nothing found".
   const [pending, setPending] = useState(false);
   const [active, setActive] = useState(0);
 
   /*
-    Движок спрашивает про клавишу посреди своего обработчика, а не через
-    рендер: поэтому то, что он читает, лежит в ref и обновляется каждым
-    рендером — и сразу в обработчиках, где состояние нужно до рендера.
+    The engine asks about a key in the middle of its handler, not through a render. So
+    whatever it reads lives in a ref that every render updates, and is updated at once in the
+    handlers that need the state before a render.
   */
   const triggersRef = useRef(triggers);
   triggersRef.current = triggers;
@@ -64,12 +65,13 @@ export function useTriggerMenu(
   openedRef.current = opened;
   const foundRef = useRef(found);
   foundRef.current = found;
-  // Ответ на текущий запрос ещё не пришёл: на экране — пункты прошлого запроса.
+  // The response to the current query has not arrived yet: the screen shows the items of the
+  // previous query.
   const pendingRef = useRef(false);
   pendingRef.current = pending;
   const activeRef = useRef(active);
   activeRef.current = active;
-  // Номер последнего запроса: ответ с другим номером устарел.
+  // The number of the last request: a response with a different number is stale.
   const requestRef = useRef(0);
 
   const fetchItems = (char: string, query: string) => {
@@ -90,7 +92,8 @@ export function useTriggerMenu(
       return;
     }
     setPending(true);
-    // Ref — сразу: Enter, нажатый до следующего рендера, не должен взять пункт прошлого запроса.
+    // Set the ref at once: an Enter pressed before the next render must not take an item from
+    // the previous query.
     pendingRef.current = true;
     Promise.resolve(result).then(
       (list) => {
@@ -117,7 +120,8 @@ export function useTriggerMenu(
       range: current.session.range,
       query: current.session.query,
     });
-    // Обработчик обычно заменил набранное, и сессия кончилась сама; если нет — закрыть.
+    // The handler has usually replaced what was typed, and the session has ended by itself.
+    // If not, close it here.
     if (!editor.isDestroyed) closeTrigger(editor.view, current.char);
   };
 
@@ -129,7 +133,7 @@ export function useTriggerMenu(
       openedRef.current = value;
       setOpened(value);
       if (sameQuery) return;
-      // Новый запрос — новый список: курсор встаёт на первую строку.
+      // A new query means a new list: the active row resets to the first one.
       activeRef.current = 0;
       setActive(0);
       fetchItems(char, next.query);
@@ -144,26 +148,26 @@ export function useTriggerMenu(
     },
     keyDown: (char: string, event: KeyboardEvent) => {
       if (openedRef.current?.char !== char) return false;
-      // Enter, подтверждающий набор IME, принадлежит IME, а не списку.
+      // An Enter that confirms IME composition belongs to the IME, not to the list.
       if (event.isComposing) return false;
       const list = foundRef.current;
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         if (list.length === 0) return false;
         const step = event.key === "ArrowDown" ? 1 : -1;
-        // Ref — сразу, не дожидаясь рендера: две стрелки подряд не должны
-        // прочитать одну и ту же строку.
+        // Update the ref right away, without waiting for a render: two arrow presses in a row
+        // must not read the same row.
         const next = (activeRef.current + step + list.length) % list.length;
         activeRef.current = next;
         setActive(next);
         return true;
       }
       if (event.key === "Enter") {
-        // Ответ на набранное ещё в пути: в списке пункты прошлого запроса, и Enter
-        // вставил бы то, чего новый запрос, может быть, не находит. Enter съедается —
-        // и не выбирает, и не переводит строку посреди набора.
+        // A response to what was typed is still on its way. The list holds the items of the
+        // previous query, and Enter would insert something the new query may not find. Enter
+        // is swallowed: it neither picks an item nor breaks a line in the middle of typing.
         if (pendingRef.current) return true;
         const item = list[activeRef.current];
-        // Пусто — Enter остаётся переводом строки, и список закрывается сам.
+        // Nothing matches: Enter stays a line break, and the list closes by itself.
         if (!item) return false;
         apply(item);
         return true;
@@ -175,9 +179,10 @@ export function useTriggerMenu(
   handlersRef.current = handlers;
 
   /*
-    Мосты — по одному на символ, и живут, пока набор символов тот же: от них
-    зависят расширения движка, и пересоздавать движок ради нового обработчика
-    нельзя. Сами мосты тонкие: всё читают из `handlersRef`.
+    There is one bridge per character, and the bridges live as long as the set of characters
+    stays the same. The engine's extensions depend on them, and the engine cannot be
+    recreated for a new handler. The bridges themselves are thin: they read everything from
+    `handlersRef`.
   */
   const chars = triggers.map((trigger) => trigger.char).join("\n");
   const bindings = useMemo<readonly TriggerBinding[]>(
@@ -212,8 +217,8 @@ export function useTriggerMenu(
     return text !== "" ? text : messages.triggerList;
   })();
   const activeId = current ? suggestionOptionId(listboxId, current.id) : undefined;
-  // Объект меняется только вместе со значениями: из него собираются опции
-  // движка, и новый объект на каждом рендере переустанавливал бы их заново.
+  // The object changes only when its values change: the engine options are built from it,
+  // and a new object on every render would set them again.
   const attributes = useMemo(() => {
     const result: Record<string, string> = {};
     if (enabled) result["aria-autocomplete"] = "list";

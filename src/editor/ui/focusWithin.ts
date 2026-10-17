@@ -1,26 +1,27 @@
 import type { EditorView } from "@tiptap/pm/view";
 
 /**
- * Фокус в документе Редактора или внутри его плавающей панели — условие показа
- * `BubbleMenu` (Панель над выделением, панель картинки).
+ * Focus is inside the Editor's document or inside its floating Toolbar. This is the
+ * condition for showing the `BubbleMenu` (the Toolbar above the selection, the image
+ * toolbar).
  *
- * АКТИВНЫЙ ЭЛЕМЕНТ — ИЗ ДОКУМЕНТА САМОЙ ПАНЕЛИ, а не из глобального `document`.
- * Редактор в `iframe` или теневом корне живёт в чужом документе: глобальный
- * `document.activeElement` там — сам `iframe`, и панель пряталась бы от
- * собственной кнопки в фокусе. И второе: `BubbleMenu` зовёт условие по
- * таймеру, который может сработать после того, как окно уже снято (размонтаж,
- * конец теста), — обращение к глобальному `document` тогда падает, а у
- * `ownerDocument` элемента он есть всегда.
+ * THE ACTIVE ELEMENT COMES FROM THE TOOLBAR'S OWN DOCUMENT, not from the global
+ * `document`. An Editor inside an `iframe` or a shadow root lives in a foreign document:
+ * there the global `document.activeElement` is the `iframe` itself, and the Toolbar
+ * would hide itself from its own focused button. The second reason: `BubbleMenu` calls
+ * the condition from a timer that can fire after the window has already been torn down
+ * (unmount, end of a test). Accessing the global `document` then throws, while the
+ * element's `ownerDocument` always exists.
  */
 export function focusWithin(view: Pick<EditorView, "hasFocus">, element: HTMLElement): boolean {
   return view.hasFocus() || element.contains(element.ownerDocument.activeElement);
 }
 
 /**
- * Куда щелчок мимо поповера или меню ставит фокус осознанно: поле, кнопка,
- * ссылка, документ. Фокус на таком элементе после закрытия не отбирают; на
- * теле страницы или на контейнере окна (ловушка фокуса `Dialog` ставит его
- * туда, когда фокусный узел исчез) он оказался сам — его возвращают.
+ * Where a click outside a popover or menu deliberately places focus: a field, a button,
+ * a link, the document. Focus on such an element is not taken back after closing. Focus
+ * on the page body or on the window container (the `Dialog` focus trap puts it there
+ * when the focused node has disappeared) ended up there on its own, so it is returned.
  */
 export const FOCUS_TARGET =
   'a[href], button, input, select, textarea, summary, [contenteditable]:not([contenteditable="false"]), [tabindex]:not([tabindex="-1"])';

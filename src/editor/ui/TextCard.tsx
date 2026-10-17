@@ -12,45 +12,44 @@ import { ariaShortcut, isApple } from "../core/shortcuts.js";
 import type { TextCardRecord as TextCardEntry } from "../core/toolDescriptor.js";
 
 /*
-  Карточка у текста (ADR-0058, п. 7.6–7.11): четвёртый вид UI-записи
-  своего Инструмента, например карточка комментария под Меткой. Описание —
-  диапазон `rangeAt` и тело `render`; всё остальное держит кит.
+  The text card (ADR-0058, items 7.6–7.11): the fourth kind of UI contribution of a custom
+  Tool, for example a comment card under a Mark. The Tool describes it with `rangeAt`
+  (the range) and `render` (the body). The kit handles everything else.
 
-  ЧТО ОТКРЫТО, РЕШАЕТ ОДНА ФУНКЦИЯ `evaluate`, и зовётся она на каждой
-  транзакции, фокусе, потере фокуса и щелчке по Документу — не на наведении.
-  Каретка — свёрнутое выделение; развёрнутое выделение закрывает Карточку (там
-  работает Меню выделения). Открыта не больше одной: самый узкий диапазон под
-  кареткой, при равной ширине — запись раньше в списке, то есть Инструмент
-  раньше в `tools`.
+  WHICH CARD IS OPEN IS DECIDED BY ONE FUNCTION, `evaluate`. It runs on every transaction,
+  focus, blur and click in the Document, not on hover. The caret is a collapsed selection.
+  An expanded selection closes the card (the bubble menu works there). At most one card is
+  open: the narrowest range under the caret. If the widths are equal, the entry that comes
+  earlier in the list wins, that is, the Tool that comes earlier in `tools`.
 
-  ВЫШЕ ДОКУМЕНТА, НО НЕ МОДАЛЬНО. Рамка — `Popover` кита: слой, стек Escape
-  (ADR-0041), переворот у края. Фокус при открытии остаётся в Документе —
-  печать не прерывается; `Alt+F10` переводит его в Карточку, Escape возвращает
-  каретку и прячет Карточку. «Спрятана» — состояние `dismissed`: оно снимается,
-  когда каретка покинет диапазон этой записи, или щелчком по диапазону.
+  ABOVE THE DOCUMENT, BUT NOT MODAL. The frame is the kit's `Popover`: a layer in the
+  Escape stack (ADR-0041), which flips at the edge. Focus stays in the Document on open, so
+  typing is not interrupted. `Alt+F10` moves focus into the card, and Escape returns the
+  caret and hides the card. A hidden card is in the `dismissed` state. The state is lifted
+  when the caret leaves the range of this entry, or by a click on the range.
 
-  READONLY. Каретки у такого поля нет (Документ не принимает фокус в текст),
-  поэтому открывает щелчок: место щелчка запоминается и едет за правкой.
-  Фокус не требуется; закрывает щелчок мимо поля, Escape или выделение мышью.
+  READ-ONLY. Such a field has no caret (the Document does not take focus into the text), so
+  a click opens the card. The click position is remembered and follows the edits. Focus is
+  not required. A click outside the field, Escape or a mouse selection closes the card.
 */
 
-/** Открытая Карточка: номер записи и её диапазон на текущем состоянии. */
+/** The open card: the entry's index and its range in the current state. */
 interface Shown {
   index: number;
   from: number;
   to: number;
 }
 
-/** Что `RichTextEditor` просит у Карточки извне: `Alt+F10` ведёт в неё. */
+/** What `RichTextEditor` asks of the card from outside: `Alt+F10` leads into it. */
 export interface TextCardControl {
-  /** Перевести фокус в открытую Карточку; `false` — Карточки нет или она спрятана. */
+  /** Move focus into the open card. `false` means there is no card or it is dismissed. */
   focus: () => boolean;
 }
 
 /**
- * Записи, у которых есть диапазон под `pos`. Ответ, которому нельзя верить
- * (вне Документа, `from > to`, не числа), отбрасывается; исключение в `rangeAt`
- * — тоже: чужая функция не роняет поле.
+ * Entries that have a range at `pos`. A response that cannot be trusted (outside the
+ * Document, `from > to`, not numbers) is dropped. An exception thrown in `rangeAt` is
+ * dropped too: a foreign function must not break the field.
  */
 function rangesAt(editor: Editor, entries: readonly TextCardEntry[], pos: number): Shown[] {
   const { state } = editor;
@@ -76,7 +75,7 @@ function rangesAt(editor: Editor, entries: readonly TextCardEntry[], pos: number
   return found;
 }
 
-/** Самый узкий диапазон; при равной ширине — запись раньше (`found` идёт по порядку). */
+/** The narrowest range. With equal widths, the earlier entry wins (`found` is in order). */
 const narrowest = (found: readonly Shown[]): Shown | null =>
   found.reduce<Shown | null>(
     (best, item) => (best && best.to - best.from <= item.to - item.from ? best : item),
@@ -86,10 +85,10 @@ const narrowest = (found: readonly Shown[]): Shown | null =>
 export interface TextCardProps {
   editor: Editor;
   entries: readonly TextCardEntry[];
-  /** Выключено поле или HTML-режим: Карточек нет. */
+  /** The field is disabled or in HTML mode: there are no cards. */
   enabled: boolean;
   readOnly: boolean;
-  /** Корень поля: щелчок внутри него Карточку не закрывает сам по себе. */
+  /** The field root: a click inside it does not by itself close the card. */
   rootRef: RefObject<HTMLElement | null>;
   controlRef: MutableRefObject<TextCardControl | null>;
 }
@@ -107,15 +106,15 @@ export function TextCard({
   const [shown, setShown] = useState<Shown | null>(null);
   const shownRef = useRef<Shown | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  /** Запись, чью Карточку спрятали; нет — не прятали. */
+  /** The entry whose card was dismissed. `null` means no card was dismissed. */
   const dismissed = useRef<number | null>(null);
-  /** `readOnly`: место последнего щелчка, едет за правкой. */
+  /** `readOnly`: the position of the last click. It follows the edits. */
   const pinned = useRef<number | null>(null);
   const latest = useRef({ entries, enabled, readOnly });
   latest.current = { entries, enabled, readOnly };
 
   const evaluateRef = useRef<(settled?: boolean) => void>(() => {});
-  /** Пересчёт на такт позже: к тому времени фокус уже встал на новое место. */
+  /** Recalculate one tick later: by then focus has already moved to its new place. */
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const later = () => {
     clearTimeout(timer.current);
@@ -128,18 +127,19 @@ export function TextCard({
       const { selection } = editor.state;
       const pos = reading ? pinned.current : selection.empty ? selection.head : null;
       const card = cardRef.current;
-      // Каретка живёт там, где фокус: в Документе или в самой Карточке.
+      // The caret lives where focus is: in the Document or in the card itself.
       const focused =
         reading ||
         editor.view.hasFocus() ||
         (card != null && card.contains(card.ownerDocument.activeElement));
-      // Фокус «ушёл» посреди перехода — в самом `blur` активного элемента ещё
-      // нет: решает пересчёт на такт позже, а пока Карточка стоит как стояла.
+      // Focus has left in the middle of a transition: the active element has not blurred
+      // yet. The recalculation one tick later decides. Until then the card stays as it was.
       if (!focused && !settled && shownRef.current !== null) return later();
       if (pos !== null && focused) {
         let found = rangesAt(editor, list, pos);
         if (dismissed.current !== null) {
-          // Спрятана, пока каретка в диапазоне этой записи: ни она, ни соседи не всплывают.
+          // Dismissed while the caret is inside this entry's range: neither it nor
+          // its neighbours pop up.
           if (found.some((item) => item.index === dismissed.current)) found = [];
           else dismissed.current = null;
         }
@@ -158,7 +158,7 @@ export function TextCard({
     setShown(next);
   };
 
-  /** Спрятать до выхода каретки; фокус из Карточки — в Документ, каретка на месте. */
+  /** Hide until the caret leaves. Focus from the card goes to the Document; the caret stays put. */
   const dismiss = () => {
     const card = cardRef.current;
     if (card?.contains(card.ownerDocument.activeElement)) editor.view.focus();
@@ -183,21 +183,22 @@ export function TextCard({
       const { enabled: on, readOnly: reading, entries: list } = latest.current;
       if (!on || editor.isDestroyed) return;
       const { view } = editor;
-      // Место щелчка: по координатам; без раскладки (jsdom) — начало узла под ним.
+      // The click position comes from the coordinates. Without a layout (jsdom), it is the
+      // start of the node under the click.
       let pos: number | undefined;
       try {
         pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
       } catch {
-        // Координатам нечем мерить — запасной путь ниже.
+        // The coordinates cannot be measured; the fallback below takes over.
       }
       try {
         if (pos === undefined && event.target instanceof Node) pos = view.posAtDOM(event.target, 0);
       } catch {
-        // Узел вне Документа: щелчок места не назвал.
+        // The node is outside the Document: the click did not name a position.
       }
       if (pos === undefined) return;
       if (reading) {
-        // Выделение мышью (двойной щелчок по слову) — не открытие.
+        // A mouse selection (a double click on a word) is not an open action.
         const selection = view.dom.ownerDocument.getSelection();
         if (selection && !selection.isCollapsed) {
           pinned.current = null;
@@ -205,7 +206,7 @@ export function TextCard({
         }
         pinned.current = pos;
       }
-      // Щелчок по диапазону спрятанной Карточки открывает её снова.
+      // A click on the range of a dismissed card opens it again.
       if (dismissed.current !== null) {
         const entry = list[dismissed.current];
         if (entry && rangesAt(editor, [entry], pos).length > 0) dismissed.current = null;
@@ -216,7 +217,7 @@ export function TextCard({
     editor.on("focus", evaluate);
     editor.on("blur", later);
     editor.view.dom.addEventListener("click", onClick);
-    // Другая запись, режим или поле — свой пересчёт.
+    // A different entry, mode or field gets its own recalculation.
     evaluate();
     return () => {
       clearTimeout(timer.current);
@@ -248,7 +249,7 @@ export function TextCard({
 
   const entry = shown ? entries[shown.index] : undefined;
   const label = entry?.label(messages, locale) ?? "";
-  // Якорь меряется при каждом пересчёте позиции: Карточка едет за диапазоном.
+  // The anchor is measured on every position recalculation: the card follows the range.
   const anchor = useMemo(
     () => ({
       current: {
@@ -267,7 +268,8 @@ export function TextCard({
 
   return (
     <>
-      {/* Живой регион смонтирован всегда: скринридер объявляет изменение, а не появление. */}
+      {/* The live region is always mounted: the screen reader announces a change,
+          not an appearance. */}
       <div role="status" className="sr-only">
         {entry
           ? messages.textCardShown({ label, shortcut: ariaShortcut(["alt", "F10"], isApple()) })
@@ -282,16 +284,17 @@ export function TextCard({
             side="bottom"
             align="start"
             collisionPadding={8}
-            // Стекло поповеров Редактора: Карточка лежит над Документом.
+            // The Editor's popover glass: the card lies above the Document.
             className={cn(
               GLASS_PANEL_CLASS,
               "max-h-[var(--radix-popover-content-available-height)] w-auto max-w-[min(24rem,calc(100vw-1rem))] overflow-y-auto p-2"
             )}
-            // Фокус остаётся в Документе: Карточка немодальна, печать продолжается.
+            // Focus stays in the Document: the card is non-modal, so typing continues.
             onOpenAutoFocus={(event) => event.preventDefault()}
             onCloseAutoFocus={(event) => event.preventDefault()}
-            // Закрывает не Radix, а правила выше: Escape, `close`, выход каретки,
-            // щелчок мимо поля. Щелчок и фокус в самом поле — дело пересчёта.
+            // Radix does not close the card; the rules above do: Escape, `close`, the caret
+            // leaving the range, a click outside the field. A click and focus inside the
+            // field are the recalculation's job.
             onFocusOutside={(event) => event.preventDefault()}
             onPointerDownOutside={(event) => {
               event.preventDefault();

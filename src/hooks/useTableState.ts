@@ -7,43 +7,42 @@ import { DEFAULT_TABLE_STATE, type TableState } from "../lib/table-state.js";
 export interface TableStateApi {
   state: TableState;
   /**
-   * Изменить часть состояния. Один обновлятель, а не десять именованных
-   * обработчиков: инварианты ниже обязаны срабатывать независимо от того, что
-   * именно поменяли, и разложенные по десяти функциям они разъехались бы.
+   * Changes part of the state. One updater rather than ten named handlers: the invariants
+   * below have to hold no matter which field was changed, and spread across ten functions
+   * they would drift apart.
    */
   set: (patch: Partial<TableState>) => void;
-  /** Вернуть начальное состояние целиком. */
+  /** Restores the entire initial state. */
   reset: () => void;
 }
 
 /**
- * Состояние таблицы: форма и связи между её частями.
+ * Table state: the shape of the table and the links between its parts.
  *
- * Хук **ничего не хранит вне React** и ни на что не подписывается — ни на
- * маршрутизатор, ни на хранилище. Кит описывает форму, владеет ею потребитель
- * (ADR-0023). Перенос в адрес — `tableStateToParams` / `tableStateFromParams`,
- * применять их к адресу тоже дело приложения.
+ * The hook **stores nothing outside React** and subscribes to nothing: neither to the router
+ * nor to storage. The kit describes the shape, and the consumer owns it (ADR-0023). Moving it
+ * into the address is done with `tableStateToParams` / `tableStateFromParams`; applying them
+ * to the address is also the application's job.
  *
- * ИНВАРИАНТЫ, ради которых хук вообще существует:
+ * INVARIANTS, the reason this hook exists at all:
  *
- * - смена фильтров, сортировки или РАЗМЕРА СТРАНИЦЫ **сбрасывает страницу на
- *   первую**. Иначе
- *   пользователь оказывается на четвёртой странице выборки из десяти строк и
- *   видит пустоту, приняв её за «ничего не найдено»;
- * - выделение при этом **не сбрасывается**. Обратное выглядит аккуратнее и
- *   срывает массовое действие ровно тогда, когда оно нужнее всего: отметил
- *   строки, перелистнул — потерял всё.
+ * - changing the filters, the sorting or the PAGE SIZE **resets the page to the first one**.
+ *   Otherwise the user lands on page four of ten filtered rows, sees an empty table, and
+ *   takes it for "nothing found";
+ * - the selection is **not reset** in that case. The opposite looks tidier, but it breaks a
+ *   bulk action exactly when that action is needed most: the user ticks rows, turns the page,
+ *   and loses everything.
  *
- * Начальная плотность берётся у `UiProvider`, если её не задали явно: админка
- * с пятью таблицами объявляет её один раз.
+ * The initial density is taken from `UiProvider` unless it is set explicitly: an admin screen
+ * with five tables declares it once.
  */
 export function useTableState(initial: Partial<TableState> = {}): TableStateApi {
   const { density: providerDensity } = useUiConfig();
 
   const start = useMemo<TableState>(
     () => ({ ...DEFAULT_TABLE_STATE, density: providerDensity, ...initial }),
-    // Начальное значение и есть начальное: пересобирать его на каждое
-    // изменение пропов значило бы сбрасывать состояние пользователя под ним.
+    // The initial value is the initial value: rebuilding it on every prop change would
+    // reset the user's state underneath.
     []
   );
 
@@ -53,16 +52,15 @@ export function useTableState(initial: Partial<TableState> = {}): TableStateApi 
     setState((prev) => {
       const next = { ...prev, ...patch };
 
-      // Страницу сбрасывает смена выборки, а не любое изменение: смена
-      // плотности или видимости колонок оставляет пользователя там, где он был.
+      // Only a change of the filtered rows resets the page, not every change: changing the
+      // density or the column visibility leaves the user where they were.
       const narrowed =
         ("filters" in patch && patch.filters !== prev.filters) ||
         ("sort" in patch && patch.sort !== prev.sort) ||
-        // `pageSize` меняет ЧИСЛО СТРАНИЦ напрямую, и без него инвариант
-        // держался наполовину: 200 строк, размер 25 → 100 со страницы 8 дают
-        // `slice(700, 800)` — пусто, и таблица рисует «ничего не найдено».
-        // Само это не чинится: `Pagination` зажимает страницу только у себя и
-        // подсвечивает «2», пока таблица пуста.
+        // `pageSize` changes the NUMBER OF PAGES directly, and without it the invariant held
+        // only halfway: 200 rows, size 25 → 100 from page 8 gives `slice(700, 800)`, which is
+        // empty, so the table draws "nothing found". This does not fix itself: `Pagination`
+        // clamps the page only on its own side and keeps highlighting "2" while the table is empty.
         ("pageSize" in patch && patch.pageSize !== prev.pageSize);
 
       if (narrowed && !("page" in patch)) next.page = 1;

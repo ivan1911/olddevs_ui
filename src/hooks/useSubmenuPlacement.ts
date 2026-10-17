@@ -2,41 +2,41 @@
 
 import { useMediaQuery } from "./useMediaQuery.js";
 
-/** Уже `sm` (640): на такой ширине подменю сбоку от пункта не помещается. */
+/** Already `sm` (640): at this width a submenu does not fit beside its item. */
 const NARROW_QUERY = "(max-width: 639px)";
 
 /**
- * Узкий ли экран по правилу кита — граница одна на подменю и мегаменю.
+ * Whether the screen is narrow by the kit's rule. The boundary is one and the same for
+ * submenus and mega menus.
  *
- * Внутренний хук, как и `useSubmenuPlacement`. До гидратации и без `matchMedia`
- * — `false`, то есть широкий: серверной ширины нет, а угадывать значило бы
- * получить расхождение разметки (ADR-0018, см. `useMediaQuery`).
+ * An internal hook, like `useSubmenuPlacement`. Before hydration and without `matchMedia`
+ * it returns `false`, that is, wide: there is no server width, and guessing it would
+ * produce a markup mismatch (ADR-0018, see `useMediaQuery`).
  */
 export function useNarrowScreen(): boolean {
   return useMediaQuery(NARROW_QUERY);
 }
 
 /**
- * Где открыть подменю: сбоку от пункта или под ним.
+ * Where to open a submenu: beside its item or below it.
  *
- * Правило одно на весь кит: его применяет вложенный `Menu` и подменю Редактора.
+ * One rule for the whole kit: the nested `Menu` and the Editor's submenu both apply it.
  *
- * Сбоку — привычно на десктопе. На телефоне места нет ни справа, ни слева:
- * меню само занимает середину экрана, и react-aria, перевернув подменю на
- * другую сторону, ширину его не ужимает — на iPhone сетка размера таблицы
- * уехала за левый край. Поэтому на узком экране подменю встаёт под своим
- * пунктом, поверх родительского меню, как в меню самого телефона; по
- * поперечной оси react-aria его сдвигает в экран.
+ * Beside is the usual choice on desktop. On a phone there is no room on either side: the
+ * menu itself takes the middle of the screen, and react-aria, when it flips the submenu to
+ * the other side, does not shrink its width. On iPhone the table's size grid went past the
+ * left edge. So on a narrow screen the submenu opens below its item, over the parent menu,
+ * as in the phone's own menus. On the cross axis react-aria shifts it into the screen.
  *
- * Ширина, а не указатель (`useCoarsePointer`): дело в месте. Телефон,
- * повёрнутый горизонтально, и планшет оставляют подменю сбоку.
+ * The width decides, not the pointer (`useCoarsePointer`): what matters is the space. A
+ * phone turned sideways, and a tablet, keep the submenu beside its item.
  *
- * JS, а не CSS: место подменю — проп поповера, а не класс. Подписка — экран
- * поворачивают на лету. На сервере и без `matchMedia` — сбоку: подменю
- * открывается только в браузере, по действию пользователя.
+ * JS, not CSS: the submenu's place is a prop of the popover, not a class. The subscription
+ * is there because the screen can be rotated on the fly. On the server and without
+ * `matchMedia` it is beside: a submenu opens only in the browser, on a user action.
  *
- * Внутренний хук: наружу не экспортируется. Потребитель кита решает за себя
- * проп `placement` у `Menu`, а умолчание для вложенного меню уже здесь.
+ * An internal hook, not exported. A consumer of the kit sets the `placement` prop of `Menu`
+ * itself, and the default for a nested menu is already defined here.
  */
 export function useSubmenuPlacement(): "bottom start" | "right top" {
   return useNarrowScreen() ? "bottom start" : "right top";

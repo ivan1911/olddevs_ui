@@ -3,40 +3,38 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Счётчик замков — МОДУЛЬНЫЙ, и это принципиально.
+ * The lock counter is MODULE-LEVEL, and that is deliberate.
  *
- * Модалки вкладываются: поверх окна редактирования открывается диалог
- * подтверждения. Закрываясь, вложенный диалог не должен разблокировать
- * прокрутку, пока внешнее окно ещё открыто. Считаем замки, снимаем блокировку
- * на последнем.
+ * Modals nest: a confirmation dialog opens on top of the editing window. When the nested
+ * dialog closes, it must not unlock scrolling while the outer window is still open. So we
+ * count the locks and release the scroll lock on the last one.
  *
- * Отсюда же следует, что копий этого модуля в приложении должна быть РОВНО ОДНА.
- * Два счётчика (например, свой во фронте и свой в пакете) не видят друг друга,
- * и вложенный случай ломается молча: внутренний диалог снимает блокировку,
- * которую ставил внешний. Поэтому хук живёт здесь, рядом с классом
- * `body.scroll-locked` из `styles.css`, а не дублируется у потребителя.
+ * It follows that the application must contain EXACTLY ONE copy of this module. Two
+ * counters (say, one in the app and one in the package) cannot see each other, and the
+ * nested case breaks silently: the inner dialog releases the lock that the outer one set.
+ * That is why the hook lives here, next to the `body.scroll-locked` class in `styles.css`,
+ * rather than being duplicated in the consumer.
  */
 let lockCount = 0;
 
 /**
- * Чей отступ стоял на `<body>` до первого замка.
+ * Whose padding was on `<body>` before the first lock.
  *
- * Замок ВОЗВРАЩАЕТ прежнее значение, а не стирает его. Раньше снятие
- * присваивало `paddingRight = ""` безусловно, и приложение, держащее на
- * `<body>` собственный inline-отступ (скажем, компенсацию под свою
- * фиксированную панель), теряло его навсегда после первого же открытого
- * диалога кита — до перезагрузки страницы.
+ * The lock RETURNS the previous value instead of erasing it. Previously the release
+ * assigned `paddingRight = ""` unconditionally, so an app that kept its own inline padding
+ * on `<body>` (say, compensation for its fixed panel) lost it for good after the first
+ * dialog the kit opened, until the page was reloaded.
  *
- * Модульная переменная рядом со счётчиком и по той же причине: замки
- * вкладываются, и запомнить исходное состояние можно только на переходе 0→1.
+ * The module variable sits next to the counter for the same reason: locks nest, and the
+ * original state can only be remembered on the 0→1 transition.
  */
 let paddingBeforeLock = "";
-/** Что положил сам замок — чтобы не затереть чужую правку. */
+/** What the lock itself set, so that it does not overwrite someone else's change. */
 let paddingSetByLock = "";
 
 function applyLock() {
-  // Полоса прокрутки исчезает вместе с прокруткой, и содержимое прыгает вбок
-  // на её ширину. Компенсируем отступом.
+  // The scrollbar disappears together with scrolling, and the content jumps sideways
+  // by its width. We compensate with padding.
   const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
   paddingBeforeLock = document.body.style.paddingRight;
   document.body.classList.add("scroll-locked");
@@ -48,11 +46,11 @@ function removeLock() {
   document.body.classList.remove("scroll-locked");
 
   /*
-    Возвращаем прежнее значение — но только если в стиле всё ещё ЛЕЖИТ НАШЕ.
+    Restore the previous value, but only if OUR value is still in the style.
 
-    Приложение вправе поменять отступ и при поднятом замке (своя панель
-    появилась, пока открыт диалог). Безусловное восстановление затёрло бы эту
-    правку — то есть тот же дефект, что чинился здесь, только с другой стороны.
+    The app may change the padding even while the lock is up (its own panel appeared while
+    the dialog was open). An unconditional restore would overwrite that change, which is the
+    same defect this code fixes, only from the other side.
   */
   if (document.body.style.paddingRight === paddingSetByLock) {
     if (paddingBeforeLock) document.body.style.paddingRight = paddingBeforeLock;
@@ -62,7 +60,7 @@ function removeLock() {
   paddingSetByLock = "";
 }
 
-/** Блокирует прокрутку страницы, пока `isLocked` истинно. */
+/** Locks page scrolling while `isLocked` is true. */
 export function useScrollLock(isLocked: boolean): void {
   const wasLocked = useRef(false);
 
@@ -78,8 +76,8 @@ export function useScrollLock(isLocked: boolean): void {
     }
   }, [isLocked]);
 
-  // Размонтирование при поднятом замке — обычное дело: компонент с модалкой
-  // может исчезнуть вместе с ней. Без этого счётчик залипает навсегда.
+  // Unmounting while the lock is up is a normal case: a component with a modal can
+  // disappear along with it. Without this, the counter would get stuck forever.
   useEffect(() => {
     return () => {
       if (wasLocked.current) {
