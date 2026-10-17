@@ -56,8 +56,8 @@ const digitsOnly = (raw: string) => raw.replace(/\D/g, "");
  * character by itself, so the event is intercepted.
  *
  * `autocomplete="one-time-code"` is set on the FIRST field, so the browser and iOS
-  * suggest the code from the notification. The other fields don't need it, and it would get in the
-  * way.
+ * suggest the code from the notification. The other fields don't need it, and it would get in the
+ * way.
  *
  * THE CODE IS NUMERIC. `inputMode="numeric"` and `one-time-code` are about digits, and the input
  * filter is the same. A letter code would need a second axis and case rules; it will come

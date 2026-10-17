@@ -8,70 +8,66 @@ import { Badge } from "./Badge.js";
 import { SelectionBar } from "../navigation/SelectionBar.js";
 
 export interface NotificationCenterProps extends Omit<ComponentPropsWithoutRef<"div">, "title"> {
-  /** Заголовок центра. Умолчание — «Уведомления» из каталога. */
+  /** Title of the center. The default is "Notifications" from the message catalog. */
   title?: ReactNode;
   /**
-   * Уровень заголовка, 2–4: заголовок становится настоящим `<h2>`–`<h4>`.
+   * Heading level, 2–4: the title becomes a real `<h2>`–`<h4>`.
    *
-   * Уровень зависит от того, куда центр встал, — в поповер под `h1` страницы
-   * или в ящик, — и это знает потребитель, а не кит. Без пропа заголовок
-   * остаётся обычным текстом и в структуру заголовков страницы не входит.
+   * The level depends on where the center is placed — in a popover under the page's `h1`, or in a
+   * drawer — and the consumer knows this, not the kit. Without the prop, the title stays plain text
+   * and is not part of the page's heading structure.
    *
-   * Называется `level`, как у `SectionHeader`: одно понятие — одно имя на весь
-   * кит (словарь пропсов в `docs/conventions.md`).
+   * It is called `level`, as on `SectionHeader`: one concept, one name across the whole kit (the props
+   * vocabulary in `docs/conventions.md`).
    */
   level?: 2 | 3 | 4;
   /**
-   * `id` заголовка — для `aria-labelledby` поповера или ящика потребителя.
+   * The title's `id`, for the consumer's popover or drawer `aria-labelledby`.
    *
-   * Ложится на элемент заголовка, какой бы он ни был: с `level` это
-   * `<hN>`, без него — обычный текст, и имя поверхности всё равно приходит от
-   * него.
+   * It goes on the title element, whatever that is: with `level` it is an `<hN>`, without it plain text,
+   * and the surface's name comes from it all the same.
    */
   titleId?: string;
   /**
-   * Сколько непрочитанных всего — пропом, а не счётом по строкам.
+   * The total number of unread items, passed as a prop rather than counted from the rows.
    *
-   * Список бывает страницей, а счётчик относится ко всей коллекции: посчитав по
-   * детям, центр показывал бы «3» там, где непрочитанных триста.
+   * The list can be a page, while the counter refers to the whole collection: counting by the children,
+   * the center would show "3" where there are three hundred unread.
    */
   unreadCount?: number;
-  /** Фильтры — слот. Их состав доменный: типы событий знает приложение. */
+  /** Filters — a slot. Their content is domain-specific: the application knows the event types. */
   filters?: ReactNode;
-  /** Действия шапки — обычно «прочитать всё». */
+  /** Header actions — usually "mark all as read". */
   actions?: ReactNode;
-  /** Сколько строк выбрано. При нуле полосы массовых действий нет вовсе. */
+  /** How many rows are selected. At zero there is no bulk-actions bar at all. */
   selectedCount?: number;
-  /** Вызывается, когда пользователь снимает выделение. */
+  /** Called when the user clears the selection. */
   onClearSelection?: () => void;
-  /** Действия над выбранным — обычно `Button size="sm"`. */
+  /** Actions for the selected rows — usually `Button size="sm"`. */
   selectionActions?: ReactNode;
-  /** Список событий — обычно `NotificationList`. */
+  /** The event list — usually `NotificationList`. */
   children?: ReactNode;
-  /** Низ: «Показать все», ссылка на страницу событий. */
+  /** Bottom: "Show all", a link to the events page. */
   footer?: ReactNode;
 }
 
 /**
- * Оболочка ленты событий: заголовок, счётчик непрочитанных, фильтры, массовые
- * действия.
+ * The shell of an event feed: title, unread counter, filters, bulk actions.
  *
- * ПОВЕРХНОСТИ У ЦЕНТРА НЕТ, и это главное решение
- * (ADR-0027). Он не
- * попап, не ящик и не страница — он их содержимое. Потребитель ставит его
- * внутрь существующих `Popover` или `Drawer` либо прямо на страницу, и центр не
- * открывает и не закрывает себя: состояние поверхности живёт снаружи.
+ * THE CENTER HAS NO SURFACE OF ITS OWN, and this is the main decision (ADR-0027). It is not a popover,
+ * not a drawer and not a page — it is their content. The consumer places it inside an existing `Popover`
+ * or `Drawer`, or directly on a page, and the center neither opens nor closes itself: the state of the
+ * surface lives outside.
  *
- * Иначе пришлось бы выбрать одну поверхность за все приложения сразу — а в
- * админке лента чаще страница, в клиентском приложении чаще попап.
+ * Otherwise one surface would have to be chosen for all applications at once — while in an admin panel
+ * the feed is more often a page, and in a client application more often a popover.
  *
- * МАССОВЫЕ ДЕЙСТВИЯ — СУЩЕСТВУЮЩИЙ `SelectionBar`, а не своя полоса: он уже
- * несёт счётчик, снятие выделения, два слота действий и правило «при нуле
- * полосы нет вовсе». Липкость у него здесь выключена — центр стоит в попапе
- * или в ящике, где прилипать не к чему.
+ * BULK ACTIONS ARE THE EXISTING `SelectionBar`, not a bar of their own: it already has the counter,
+ * clearing the selection, two action slots and the rule "at zero there is no bar at all". Stickiness is
+ * off here: the center sits in a popover or a drawer, where there is nothing to stick to.
  *
- * СЧЁТЧИК ПРИХОДИТ ПРОПОМ. Считать его по детям нельзя: список бывает страницей
- * коллекции, и «3» вместо «300» — не округление, а неправда.
+ * THE COUNTER COMES AS A PROP. It cannot be computed from the children: the list can be a page of a
+ * collection, and "3" instead of "300" is not rounding but a falsehood.
  */
 export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterProps>(
   function NotificationCenter(
@@ -93,31 +89,30 @@ export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterP
     ref
   ) {
     const messages = useMessages();
-    // Без уровня остаётся `span`, как было: разметка тех, кто новых пропов не
-    // передаёт, не меняется, и заголовков на их странице не прибавляется.
-    // Уровень вне 2–4 (потребитель на JS, `depth + 1`) — тоже `span`: элемента
-    // `<h7>` нет, и заголовок молча пропал бы из структуры вместе с именем.
+    // Without a level it stays a `span`, as before: the markup of those who pass no new props does
+    // not change, and no headings are added to their page. A level outside 2–4 (a JS consumer,
+    // `depth + 1`) is a `span` too: there is no `<h7>` element, and the title would silently drop
+    // out of the structure along with its name.
     const Title = level === 2 || level === 3 || level === 4 ? (`h${level}` as const) : "span";
 
     return (
       <div ref={ref} className={cn("flex min-h-0 flex-col", className)} {...rest}>
         <div className="border-line-soft flex items-center gap-2 border-b px-3 py-2.5">
           <Title id={titleId} className="text-[13px] font-semibold">
-            {/* Пустая строка — не заголовок: `??` пропустил бы её, и центр остался бы безымянным. */}
+            {/* An empty string is not a title: `??` would let it through, and the center would be left unnamed. */}
             {hasContent(title) ? title : messages.notifications.label}
           </Title>
           {unreadCount != null && unreadCount > 0 && (
             /*
-              Имя даётся `sr-only`-текстом, а НЕ `aria-label` на бейдже.
+              The name is given by `sr-only` text, NOT by an `aria-label` on the badge.
 
-              `Badge` — это `<span>` без роли, то есть роль `generic`, а у неё
-              имя от автора не поддерживается: браузер `aria-label` просто
-              отбрасывает. Скринридер объявлял голое «3» — ровно то, что
-              комментарий обещал предотвратить. Тест давал ложную уверенность:
-              `getByLabelText` читает DOM-атрибут напрямую и проходит
-              независимо от того, признаёт ли его дерево доступности.
+              `Badge` is a `<span>` without a role, that is, role `generic`, and that role does not support
+              a name set by the author: the browser simply drops `aria-label`. The screen reader announced
+              a bare "3", exactly what this comment was meant to prevent. The test gave false confidence:
+              `getByLabelText` reads the DOM attribute directly and passes regardless of whether the
+              accessibility tree recognizes it.
 
-              Число при этом прячется от озвучки, чтобы не читалось дважды.
+              The number itself is hidden from speech, so it is not read twice.
             */
             <>
               <Badge tone="accent" aria-hidden>
@@ -138,9 +133,9 @@ export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterP
         )}
 
         {/*
-          Полоса массовых действий: своей не заводим. `sticky={false}` —
-          центр живёт в попапе или ящике, где липнуть не к чему, а зашитое
-          `--topbar-h` увело бы полосу под чужую шапку.
+          The bulk-actions bar: we do not create our own. `sticky={false}` because the center lives in a
+          popover or a drawer, where there is nothing to stick to, and a hard-coded `--topbar-h` would
+          push the bar under someone else's header.
         */}
         {selectedCount > 0 && (
           <div className="px-3 pt-2">
@@ -155,8 +150,8 @@ export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterP
           </div>
         )}
 
-        {/* Прокручивается СПИСОК, а не центр целиком: шапка и фильтры обязаны
-            остаться на виду, иначе фильтровать приходится вслепую. */}
+        {/* The LIST scrolls, not the whole center: the header and filters must stay in view, otherwise
+            you would have to filter blind. */}
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
 
         {footer != null && (

@@ -36,8 +36,8 @@ export interface RatingProps {
    * Display without input: the value is visible, but cannot be changed.
    *
    * Not the same as `disabled`. Read-only means displayed data, and dimming it would hide what is
-    * shown on purpose. A disabled control is an action that is unavailable right now, and it is
-    * dimmed.
+   * shown on purpose. A disabled control is an action that is unavailable right now, and it is
+   * dimmed.
    */
   readOnly?: boolean;
   /** Disables input and dims the stars. */
@@ -58,8 +58,8 @@ const STAR_SIZE = { sm: 14, md: 20 } as const;
 /**
  * Star rating.
  *
-  * THE KEYBOARD MODEL IS A RADIO GROUP, not a set of buttons. Arrow keys change the value, `Home`
-  * and
+ * THE KEYBOARD MODEL IS A RADIO GROUP, not a set of buttons. Arrow keys change the value, `Home`
+ * and
  * `End` jump to the edges, and Tab leaves the group as a whole: five tab stops for one question are
  * five stops where there is one answer. That is why the `radiogroup` role is used.
  *

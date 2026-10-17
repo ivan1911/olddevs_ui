@@ -117,8 +117,8 @@ const RadioStyleContext = createContext<{
  * already has this shape for it (`Select`, `Segmented`). Storing it per button would allow the
  * state "two selected".
  *
-  * THERE IS NO CLEARING, and this is not an oversight: a radio group cannot be cleared by
-  * definition.
+ * THERE IS NO CLEARING, and this is not an oversight: a radio group cannot be cleared by
+ * definition.
  * The set answers a question, and "no answer" is also an answer, so it is declared as an explicit
  * option ("doesn't matter", "any"). That is why `onChange` gives a `string`, not `string | null`:
  * `null` only occurs as an initial value passed in from outside.

@@ -4,44 +4,44 @@ import type { ComponentPropsWithRef } from "react";
 import { cn } from "../../lib/cn.js";
 import { NUMERIC_CLASS, type Numeric } from "../../lib/variants.js";
 
-/** Ступени шкалы, доступные заголовку. Мелкие (`xs`, `caption`) — у `Text`. */
+/** Sizes available to the heading. The small ones (`xs`, `caption`) are on `Text`. */
 export type HeadingSize = "md" | "lg" | "xl" | "2xl";
 
 export interface HeadingProps extends ComponentPropsWithRef<"h2"> {
   /**
-   * Уровень заголовка — понятие документа, а не размера: скринридер строит по
-   * ним оглавление страницы, и порядок обязан быть непрерывным (после `h2` не
-   * бывает `h4`).
+   * The heading level is a property of the document, not of its size: screen readers
+   * build the page outline from it, so the order must be continuous (no `h4` right
+   * after an `h2`).
    */
   level: 1 | 2 | 3 | 4;
   /**
-   * Размер — отдельно от уровня, если нужно разойтись.
+   * Size is kept apart from the level, for when the two need to differ.
    *
-   * Разведены намеренно. Компонент, у которого «h3 всегда меньше h2»,
-   * заставляет ломать одно ради другого: либо порядок заголовков рвут ради
-   * нужного кегля, либо ставят нужный кегль вручную мимо системы. Здесь
-   * умолчание связывает их (уровень задаёт размер), а `size` развязывает.
+   * They are separated on purpose. A component where "h3 is always smaller than h2" forces
+   * a trade-off: either the heading order is broken to get the right font size, or the font
+   * size is set by hand outside the system. Here the default ties them together (the level
+   * sets the size), and `size` unties them.
    */
   size?: HeadingSize;
   /**
-   * Тег — на случай, когда уровень в разметке уже занят.
+   * The tag, for when the level is already taken in the markup.
    *
-   * Пример из жизни: карточка с `h3` внутри секции с `h2` переезжает в диалог,
-   * где своя шапка — уровень меняется, вид не должен.
+   * A real case: a card with an `h3` inside a section with an `h2` moves into a dialog
+   * that has its own header. The level changes, the look must not.
    */
   as?: `h${1 | 2 | 3 | 4 | 5 | 6}`;
   /**
-   * Начертание цифр: `tabular` — равной ширины. Та же ось, что у `Text`, и она
-   * же ответ на крупное число в заголовке — сводку дашборда, которая
-   * пересчитывается на месте.
+   * Numeral style: `tabular` makes digits equal width. It is the same axis as on `Text`, and
+   * it is also the answer to a large number in a heading, such as a dashboard summary that
+   * recalculates in place.
    */
   numeric?: Numeric;
 }
 
 /**
- * Размер по умолчанию для уровня. Четвёртый уровень садится на `md` — тот же
- * кегль, что у основного текста: заголовок четвёртого порядка отличается от
- * абзаца насыщенностью, а не размером, иначе шкала уходит ниже читаемого.
+ * Default size for each level. Level 4 uses `md`, the same size as body text: a fourth-level
+ * heading differs from a paragraph by weight, not size, otherwise the scale would drop below
+ * what is readable.
  */
 const LEVEL_SIZE: Record<1 | 2 | 3 | 4, HeadingSize> = {
   1: "2xl",
@@ -58,11 +58,11 @@ const SIZE_CLASS: Record<HeadingSize, string> = {
 };
 
 /**
- * Заголовок: уровень документа и кегль — две независимые вещи.
+ * Heading: the document level and the font size are two independent things.
  *
- * `level` обязателен и не имеет умолчания. Умолчание здесь было бы вредным:
- * «какой это заголовок в документе» знает только тот, кто собирает страницу, а
- * молча выбранный `h2` — это молча сломанное оглавление для скринридера.
+ * `level` is required and has no default. A default would be harmful: only the person who
+ * assembles the page knows which heading this is in the document, and an `h2` that is
+ * selected silently is a silently broken outline for screen readers.
  */
 export function Heading({ level, size, as, numeric, className, ...rest }: HeadingProps) {
   const Comp = as ?? (`h${level}` as const);

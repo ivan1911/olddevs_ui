@@ -4,24 +4,24 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "../../lib/cn.js";
 
 export interface KbdProps extends ComponentPropsWithoutRef<"kbd"> {
-  /** `sm` — внутри пункта меню; `md` — в шпаргалке шорткатов. */
+  /** `sm` inside a menu item; `md` in the shortcut cheat sheet. */
   size?: "sm" | "md";
 }
 
-/** Знаки модификаторов Apple: `⌘ ⌥ ⇧ ⌃`. */
+/** Apple modifier glyphs: `⌘ ⌥ ⇧ ⌃`. */
 const KEY_SYMBOLS = /([⌘⌥⇧⌃])/;
 
 /**
- * Знаки клавиш в строке — отдельными `span` пропорциональным шрифтом.
+ * Key glyphs in a line are wrapped in separate `span`s set in the proportional font.
  *
- * В моноширинном стеке кита (SF Mono, Menlo) знака `⇧` нет, браузер берёт его
- * из запасного шрифта, и стрелка выходит тонкой и бледной рядом с `⌘` и буквой.
- * У `--font-sans` все четыре знака есть и одного веса; переводить
- * на него всю подпись нельзя — буквы и цифры клавиш держат моноширинный ряд.
- * Текст подписи не меняется: `span` без роли скринридер читает слитно.
+ * The kit's monospace stack (SF Mono, Menlo) has no `⇧` glyph, so the browser takes it from
+ * a fallback font, and the arrow comes out thin and pale next to `⌘` and a letter.
+ * `--font-sans` has all four glyphs in one weight. The whole label cannot be switched to it:
+ * the letters and digits of the keys keep the monospace row. The label text does not change:
+ * a `span` without a role is read by screen readers as part of the surrounding text.
  *
- * Экспорт — для меню: подсказка сочетания у пункта `Menu`, `ContextMenu` и
- * Слэш-меню — свой `<kbd>` другого размера, а знаки в нём те же.
+ * Exported for menus: the shortcut hint on a `Menu`, `ContextMenu` and Slash menu item is its
+ * own `<kbd>` of a different size, and the glyphs in it are the same.
  */
 export function keyGlyphs(children: ReactNode): ReactNode {
   if (typeof children !== "string" || !KEY_SYMBOLS.test(children)) return children;
@@ -38,24 +38,22 @@ export function keyGlyphs(children: ReactNode): ReactNode {
 }
 
 /**
- * Клавиша на клавиатуре: `⌘`, `Esc`, `⇧+D`.
+ * A keyboard key: `⌘`, `Esc`, `⇧+D`.
  *
- * Тег `<kbd>` — не косметика: он объявляет содержимое пользовательским вводом,
- * и скринридер читает его иначе, чем окружающий текст. Замена его на `<span>`
- * со шрифтом моноширинным выглядела бы так же и не значила ничего.
+ * The `<kbd>` tag is not cosmetic: it marks the content as user input, and screen readers
+ * announce it differently from the surrounding text. Replacing it with a `<span>` styled as
+ * monospace would look the same and mean nothing.
  *
- * Шрифт берётся из токена `--font-mono`, а не из системного `monospace`:
- * подписи клавиш почти всегда стоят рядом друг с другом (`⌘` + `K`), и разная
- * ширина знака делает ряд рваным.
+ * The font comes from the `--font-mono` token, not the system `monospace`: key labels usually
+ * sit next to each other (`⌘` + `K`), and glyphs of different widths make the row uneven.
  */
 export function Kbd({ size = "sm", className, children, ...rest }: KbdProps) {
   return (
     <kbd
       className={cn(
         "border-line-soft bg-bg-2 text-fg-2 inline-flex items-center justify-center rounded-xs border font-mono",
-        // Высота задана, а не выведена, — по тому же правилу, что у контролов:
-        // клавиша стоит в строке рядом с текстом, и её рост не должен зависеть
-        // от того, один в подписи знак или четыре.
+        // The height is set, not derived, by the same rule as for controls: the key sits in a line
+        // next to text, and its height must not depend on whether the label has one glyph or four.
         size === "sm" ? "text-caption h-5 min-w-5 px-1" : "h-6 min-w-6 px-1.5 text-xs",
         className
       )}
