@@ -8,13 +8,13 @@ import { OVERLAY_LAYER } from "../src/lib/overlay-layer.js";
 afterEach(cleanup);
 
 /**
- * До волны 26 у компонента не было ни одного теста.
+ * Before wave 26, the component had no tests at all.
  */
 function Host() {
   return (
     <Popover>
-      {/* `asChild`: без него Radix рисует СВОЮ кнопку поверх нашей, и в
-          разметке оказываются две вложенные. */}
+      {/* `asChild`: without it, Radix renders its OWN button on top of ours,
+          and the markup ends up with two nested ones. */}
       <PopoverTrigger asChild>
         <button type="button">Open</button>
       </PopoverTrigger>
@@ -49,9 +49,9 @@ test("closing returns focus to the trigger", async () => {
 });
 
 /**
- * Слой выше окон, а не ниже: поповер открывают ИЗ окна, и спрятать его под
- * затемнением значит сделать неработающим. Комментарий в компоненте называет
- * это решение прямо.
+ * The layer sits above dialogs, not below them: the popover is opened FROM a dialog,
+ * and hiding it under the scrim would make it unusable. The comment in the component
+ * states this decision directly.
  */
 test("the panel sits on the popover layer", async () => {
   const user = userEvent.setup();

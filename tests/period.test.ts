@@ -11,11 +11,11 @@ import {
 } from "../src/lib/period.js";
 
 /**
- * «Сегодня» задаётся явно во всех проверках расчёта.
+ * "Today" is passed explicitly in every calculation check.
  *
- * Без этого тест зависел бы от дня прогона: `lastMonth` в марте и в мае —
- * разные диапазоны, и падение в первый день месяца выглядело бы случайным.
- * Именно поэтому `resolvePeriod` принимает `now` третьим аргументом.
+ * Without it the test would depend on the day it runs: `lastMonth` in March and in May
+ * are different ranges, and a failure on the first day of a month would look random.
+ * That is why `resolvePeriod` takes `now` as its third argument.
  */
 const TODAY = parseDate("2026-03-15");
 
@@ -34,8 +34,8 @@ describe("resolvePeriod", () => {
   });
 
   /**
-   * Отсчёт включает сегодняшний день, поэтому «7 дней» — это ровно семь дат,
-   * а не восемь. Ошибка на единицу здесь незаметна глазом и заметна в отчёте.
+   * The count includes today, so "7 days" is exactly seven dates, not eight.
+   * An off-by-one error is invisible to the eye here and shows up in a report.
    */
   test("day periods contain exactly as many dates as they promise", () => {
     for (const [period, days] of [
@@ -49,7 +49,7 @@ describe("resolvePeriod", () => {
     }
   });
 
-  /** Длина февраля, високосный год и переход через границу года. */
+  /** February's length, a leap year, and a range that crosses the year boundary. */
   test.each([
     ["2026-03-15", "2026-02-01", "2026-02-28"],
     ["2024-03-15", "2024-02-01", "2024-02-29"],
@@ -60,8 +60,8 @@ describe("resolvePeriod", () => {
   });
 
   test("an unknown period does not turn into a “filter without bounds”", () => {
-    // Приведение повторяет то, что делает потребитель, забывший проверку:
-    // ошибка на границе честнее, чем пустой результат тремя строками ниже.
+    // The cast repeats what a consumer does when it forgets the check: a failure
+    // at the boundary is more honest than an empty result three lines below.
     expect(() => resolvePeriod("30days" as RelativePeriod, undefined, TODAY)).toThrow(
       /Unknown period/
     );
@@ -91,12 +91,12 @@ describe("periodLength", () => {
   });
 
   /**
-   * Расчёт идёт в UTC, и это защита от перехода на летнее время: в местной
-   * зоне сутки перевода длятся 23 или 25 часов, и деление на 86 400 000
-   * давало бы 30.96 дня вместо 31.
+   * The calculation runs in UTC, which guards against daylight saving time: in the local
+   * time zone a switch day lasts 23 or 25 hours, and dividing by 86 400 000 would give
+   * 30.96 days instead of 31.
    */
   test("a daylight-saving switch does not shift the length", () => {
-    // В США перевод часов 8 марта 2026 года, в Европе — 29 марта.
+    // In the US the clocks change on March 8, 2026; in Europe, on March 29.
     expect(periodLength({ start: "2026-03-01", end: "2026-03-31" })).toBe(31);
     expect(periodLength({ start: "2026-10-20", end: "2026-11-05" })).toBe(17);
   });
@@ -107,10 +107,10 @@ describe("periodLength", () => {
 });
 
 /**
- * Границы `DateRange` — обычные строки, и приходят они из адреса наравне с
- * периодом. `isRelativePeriod` и ветка `default` в `resolvePeriod` заведены
- * именно поэтому; `periodLength` эту же защиту не имел и бросал `parseDate`
- * прямо в рендер подписи под календарём.
+ * The `DateRange` bounds are plain strings, and they come from the URL just like the period.
+ * `isRelativePeriod` and the `default` branch in `resolvePeriod` exist for exactly that
+ * reason; `periodLength` had no such guard and threw `parseDate` straight into the render of
+ * the caption under the calendar.
  */
 describe("the length of a period does not throw on a hand-edited bound", () => {
   test.each([
@@ -123,8 +123,8 @@ describe("the length of a period does not throw on a hand-edited bound", () => {
   });
 
   test("an unshowable length renders as an empty string, not as “1 day”", () => {
-    // Пустая строка гасится `empty:hidden` у подписи; «1 день» под календарём с
-    // мусором в границах был бы уверенным враньём.
+    // An empty string is hidden by `empty:hidden` on the caption; "1 day" under the
+    // calendar with garbage in the bounds would be a confident lie.
     expect(formatPeriodLength({ start: "", end: "" })).toBe("");
   });
 });

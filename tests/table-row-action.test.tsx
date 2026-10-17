@@ -11,8 +11,8 @@ import { DEFAULT_TABLE_STATE, type TableState } from "../src/lib/table-state.js"
 afterEach(cleanup);
 
 /*
-  `onRowAction` (OLDSUI-193): действие по строке рядом с выделением. Клик и
-  Enter по строке открывают запись, а выделение остаётся за флажками.
+  `onRowAction` (OLDSUI-193): an action on a row next to the selection. A click and
+  Enter on a row open the record, while the selection stays with the checkboxes.
 */
 
 interface Row {
@@ -27,7 +27,7 @@ const ROWS: Row[] = [
 
 const COLUMNS = [{ id: "name", header: "Name", cell: (r: Row) => r.name }];
 
-/** Таблица с выделением, которое держит тест, как держит его экран. */
+/** A table with a selection that the test holds the same way the screen does. */
 function Harness(props: Partial<TableProps<Row>>) {
   const [selected, setSelected] = useState<Set<Key>>(new Set());
   return (

@@ -8,23 +8,24 @@ import { DateTimePicker } from "../src/components/date-time/DateTimePicker.js";
 import { TimePicker, upcomingSlots } from "../src/components/date-time/TimePicker.js";
 
 /**
- * Порядок «ближайшее первым» и равноправие двух способов ввода — то, что не
- * видно ни на снимке, ни в axe. Снимок показывает закрытое поле; здесь
- * проверяется, что список начинается с нужного слота, фильтр не съедает его
- * при уже выбранном значении, а blur с ручным вводом коммитит как раньше.
+ * The "nearest first" order and the equal standing of the two ways of entering a value
+ * are what neither the snapshot nor axe can see. The snapshot shows the closed field;
+ * here it is checked that the list starts with the right slot, that the filter does not
+ * swallow it when a value is already selected, and that blur with a typed value still
+ * commits as before.
  */
 
 afterEach(cleanup);
 
 describe("upcomingSlots — the nearest future first, wrapping around", () => {
   test.each([
-    // [сейчас, первый слот, последний слот]
+    // [now, first slot, last slot]
     ["14:07", "14:30", "14:00"],
-    // Ровно на слоте — «строго после»: свой слот уже не предложить.
+    // Exactly on a slot means "strictly after": that slot cannot be offered again.
     ["14:30", "15:00", "14:30"],
-    // Хвост суток заворачивает на полночь.
+    // The end of the day wraps around to midnight.
     ["23:45", "00:00", "23:30"],
-    // Полночь — особый случай «ровно на слоте».
+    // Midnight is a special case of "exactly on a slot".
     ["00:00", "00:30", "00:00"],
   ])("in %s the list starts with %s", (now, first, last) => {
     const [h, m] = now.split(":").map(Number);
@@ -60,7 +61,7 @@ describe("TimePicker", () => {
 
     const options = within(screen.getByRole("listbox")).getAllByRole("option");
     expect(options[0]!.textContent).toBe("14:30");
-    // Выбранное значение помечено, хотя стоит не первым.
+    // The selected value is marked, even though it is not first.
     expect(screen.getByRole("option", { name: "10:00" }).getAttribute("aria-selected")).toBe(
       "true"
     );
@@ -92,8 +93,8 @@ describe("TimePicker", () => {
     const { user, field } = setup();
     await user.click(field);
 
-    // Фильтр — только напечатанное после открытия; иначе value="10:00"
-    // сворачивал бы список до одного пункта.
+    // The filter applies only to what was typed after opening; otherwise value="10:00"
+    // would narrow the list down to a single item.
     expect(within(screen.getByRole("listbox")).getAllByRole("option")).toHaveLength(48);
   });
 
@@ -147,12 +148,12 @@ describe("TimePicker", () => {
 });
 
 /**
- * Пустое поле не превращается в полночь при уходе фокуса.
+ * An empty field does not turn into midnight when focus leaves it.
  *
- * `normalizeTime("", value ?? "00:00")` на пустом значении отдавал `00:00`, и
- * `next !== value` было истинно (`"00:00" !== null`): пользователь проходил
- * форму табом, задев поле и ничего не напечатав, — и наружу прилетало
- * `onChange("00:00")`. Форма становилась грязной, публикация уезжала на полночь.
+ * `normalizeTime("", value ?? "00:00")` on an empty value returned `00:00`, and
+ * `next !== value` was true (`"00:00" !== null`): a user who tabbed through the form,
+ * touching the field and typing nothing, sent `onChange("00:00")` outward. The form became
+ * dirty, and the publish drifted to midnight.
  */
 test("tabbing through an empty field commits nothing", async () => {
   const user = userEvent.setup();
@@ -166,11 +167,11 @@ test("tabbing through an empty field commits nothing", async () => {
 });
 
 /**
- * Неположительный шаг не вешает вкладку.
+ * A non-positive step does not hang the tab.
  *
- * Цикл `m += step` при нуле не завершается никогда, при отрицательном уходит в
- * минус: массив растёт до исчерпания памяти. `openList` зовётся из `onFocus`,
- * то есть вкладка вешалась при первом же фокусе поля.
+ * The loop `m += step` never ends with zero, and with a negative step it runs off into
+ * negative values: the array grows until memory runs out. `openList` is called from
+ * `onFocus`, so the tab hung on the very first focus of the field.
  */
 test.each([0, -15, Number.NaN])("step %o falls back instead of hanging", (step) => {
   expect(() => upcomingSlots(step, new Date("2026-03-15T10:00:00"))).not.toThrow();
@@ -178,18 +179,17 @@ test.each([0, -15, Number.NaN])("step %o falls back instead of hanging", (step) 
 });
 
 /**
- * Отвергнутое родителем значение не задерживается в поле.
+ * A value rejected by the parent does not linger in the field.
  *
- * `commit` писал в локальное состояние сразу; если проп не менялся, эффект по
- * `[value]` не срабатывал, и в поле навсегда оставался текст, который родитель
- * не принял.
+ * `commit` wrote to local state immediately; if the prop did not change, the `[value]`
+ * effect did not fire, and the text the parent had not accepted stayed in the field forever.
  */
 /**
- * Неуправляемый вызов: `value` необязателен, и набранное должно остаться.
+ * Uncontrolled call: `value` is optional, and what was typed must stay.
  *
- * Первая починка звала синхронизацию с `value` прямо в `onBlur` — а проп там
- * ещё старый, оба `setState` в одном батче, и побеждал второй. Наружу уходило
- * `onChange("09:30")`, а поле пустело и таким и оставалось.
+ * The first fix called the sync with `value` directly in `onBlur`, but the prop there was
+ * still the old one. Both `setState` calls were in one batch, and the second one won:
+ * `onChange("09:30")` still went out, while the field emptied and stayed that way.
  */
 test("an uncontrolled field keeps what was typed", async () => {
   const user = userEvent.setup();
@@ -214,16 +214,16 @@ test("a value the parent refused does not stay in the field", async () => {
   await user.type(field, "21:00");
   await user.tab();
 
-  // Родитель значение проигнорировал — поле возвращается к принятому.
+  // The parent ignored the value — the field goes back to the accepted one.
   expect(field.value).toBe("10:00");
 });
 
 /**
- * Границы `DateTimePicker` — КАЛЕНДАРНЫЕ, и это записано в контракте.
+ * The bounds of `DateTimePicker` are day-level, and that is written into the contract.
  *
- * Ячейки календаря — даты без времени, сравнение идёт по дню. Тест фиксирует
- * решение владельца (границ времени компонент не принимает), чтобы «почини,
- * ведь не работает» не превращалось в тихое добавление пропа.
+ * Calendar cells are dates without a time, and comparison goes by the day. The test records
+ * the owner's decision (the component does not accept time bounds), so that "fix it, it
+ * does not work" does not turn into a silent addition of a prop.
  */
 test("the datetime bounds are day-level by contract", () => {
   expect(parseDate("2026-09-11").compare(parseDateTime("2026-09-11T14:00"))).toBe(0);

@@ -1,17 +1,10 @@
 {
   "src/components/inputs/FileDropzone.stories.tsx": 3,
-  "tests/rich-text-editor-color-popover.test.tsx": 1,
   "tests/rich-text-editor-insert-menu.test.tsx": 1,
   "tests/rich-text-editor-json.test.tsx": 1,
   "tests/rich-text-editor-layout.test.tsx": 2,
-  "tests/rich-text-editor-lazy-builtins.test.tsx": 14,
-  "tests/rich-text-editor-loaders.test.tsx": 14,
   "tests/rich-text-editor-markdown.test.tsx": 40,
-  "tests/rich-text-editor-mathematics-lazy.test.tsx": 13,
   "tests/rich-text-editor-shortcuts.test.tsx": 1,
-  "tests/rich-text-editor-source.test.tsx": 53,
   "tests/rich-text-editor-table-menu.test.tsx": 1,
-  "tests/rich-text-editor-table.test.tsx": 2,
-  "tests/rich-text-editor-text-card.test.tsx": 38,
-  "tests/rich-text-editor.test.tsx": 41
+  "tests/rich-text-editor-table.test.tsx": 2
 }

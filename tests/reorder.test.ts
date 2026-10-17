@@ -30,8 +30,8 @@ describe("reorder", () => {
   });
 
   test("dropping onto itself does not lose the last item", () => {
-    // Раньше `findIndex` давал -1, и `slice(0, -1)` выбрасывал «4» — нашло
-    // ревью 2.5.0. Сброс «на себя» законен и не меняет ничего.
+    // Previously `findIndex` returned -1, and `slice(0, -1)` dropped "4" — the review
+    // of 2.5.0 caught it. A drop onto itself is legal and changes nothing.
     expect(reorder(items, new Set(["1"]), { key: "1", dropPosition: "before" })).toBeNull();
     expect(reorder(items, new Set(["1"]), { key: "1", dropPosition: "after" })).toBeNull();
   });

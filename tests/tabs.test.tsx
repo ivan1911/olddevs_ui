@@ -6,10 +6,10 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { Tabs, type TabItem } from "../src/components/navigation/Tabs.js";
 
 /**
- * Клавиатура и roving tabindex — то, ради чего вкладки переехали в пакет:
- * самодельные кнопки в SettingsModal были кликабельны, но стрелки по ним
- * не ходили, а таб останавливался на каждой. Проверяется контракт WAI-ARIA:
- * фокус — только на активной, стрелки двигают и фокус, и выбор.
+ * Keyboard handling and roving tabindex are the reason the tabs moved into the package:
+ * the homemade buttons in SettingsModal could be clicked, but the arrows did not move
+ * across them, and Tab stopped on every one. The WAI-ARIA contract is checked: focus
+ * only on the active tab, and arrows move both focus and selection.
  */
 
 afterEach(cleanup);
@@ -20,7 +20,7 @@ const ITEMS: TabItem[] = [
   { id: "danger", label: "Danger zone" },
 ];
 
-/** Управляемая обёртка: automatic activation виден только с живым стейтом. */
+/** Controlled wrapper: automatic activation shows up only with live state. */
 function Controlled({
   orientation,
   onChange,
@@ -106,8 +106,8 @@ describe("Tabs", () => {
     expect(screen.getByRole("tab", { name: "Profile" }).getAttribute("aria-controls")).toBe(
       "profile-panel"
     );
-    // У неактивных ссылки нет: их панели в разметке не существует, и
-    // `aria-controls` на отсутствующий id — невалидное значение (axe: critical).
+    // Inactive tabs have no link: their panels do not exist in the markup, and
+    // `aria-controls` pointing at a missing id is an invalid value (axe: critical).
     expect(screen.getByRole("tab", { name: "System" }).getAttribute("aria-controls")).toBeNull();
   });
 });

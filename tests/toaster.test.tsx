@@ -9,11 +9,11 @@ afterEach(() => {
 });
 
 /**
- * До волны 26 у компонента не было ни одного теста.
+ * Before wave 26 the component had no tests at all.
  *
- * Проверяется КОНТРАКТ КИТА, а не библиотека: что тост доезжает до экрана, что
- * тона ведут в разные сообщения и что `dismiss` снимает. Внутренности sonner —
- * его забота (ADR про взятую библиотеку).
+ * The kit's CONTRACT is checked, not the library: that a toast reaches the screen, that
+ * tones lead to different messages, and that `dismiss` removes it. The internals of
+ * sonner are its own concern (the ADR about the adopted library).
  */
 test("a toast reaches the screen", async () => {
   render(<Toaster />);

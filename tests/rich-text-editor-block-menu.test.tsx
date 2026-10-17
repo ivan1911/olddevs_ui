@@ -15,7 +15,7 @@ import {
 import { TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -24,11 +24,11 @@ afterEach(() => {
 });
 
 /**
- * Меню «¶» на Панели — тип Блока (OLDSUI-64).
+ * The "¶" menu on the Toolbar: the Block type (OLDSUI-64).
  *
- * Через публичный `RichTextEditor`: кнопка и пункты — ролями и именами, как их
- * слышит скринридер, результат — выходным HTML. Каретка ставится командами
- * движка: jsdom не умеет ввода в `contenteditable`.
+ * Through the public `RichTextEditor`: the button and items by roles and names, as a
+ * screen reader hears them; the result by the output HTML. The caret is set with engine
+ * commands: jsdom cannot type into `contenteditable`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -38,7 +38,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor };
 }
 
-/** Каретка в конец текста `text`. */
+/** Moves the caret to the end of the text `text`. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -51,9 +51,9 @@ function caretIn(editor: Editor, text: string) {
 const blockButton = () => screen.getByRole("button", { name: /^Block type/ });
 const textbox = () => screen.getByRole("textbox", { name: "Body" });
 
-/** Пункты открытого меню: имя без подписи сочетания, отметка, подпись. */
+/** The items of the open menu: the name without the shortcut label, the checked state, the shortcut. */
 function items() {
-  // Меню названо своей кнопкой (`aria-labelledby`), как в паттерне APG.
+  // The menu is named by its own button (`aria-labelledby`), as in the APG pattern.
   const menu = screen.getByRole("menu", { name: /^Block type/ });
   return within(menu)
     .getAllByRole("menuitemradio")
@@ -78,7 +78,7 @@ test("the full preset offers Text and headings with their shortcuts, Text checke
   expect(blockButton().getAttribute("aria-haspopup")).toBe("menu");
   await user.click(blockButton());
 
-  // jsdom — не Apple: `mod` подписан как Ctrl.
+  // jsdom is not Apple: `mod` is labelled as Ctrl.
   expect(items()).toEqual([
     { name: "Text", checked: true, shortcut: "Ctrl+Alt+0" },
     { name: "Heading 1", checked: false, shortcut: "Ctrl+Alt+1" },
@@ -86,7 +86,7 @@ test("the full preset offers Text and headings with their shortcuts, Text checke
     { name: "Heading 3", checked: false, shortcut: "Ctrl+Alt+3" },
     { name: "Heading 4", checked: false, shortcut: "Ctrl+Alt+4" },
   ]);
-  // Списки — в «Списки ▾», цитата — флажок «…» (OLDSUI-154).
+  // Lists are under "Lists ▾", the quote is a "…" checkbox (OLDSUI-154).
 });
 
 test("on Apple the shortcuts are signed with ⌘ ⌥ ⇧", async () => {
@@ -107,8 +107,8 @@ test("items come from the enabled tools; Heading 1 only with heading1", async ()
   expect(items().map((item) => item.name)).toEqual(["Text", "Heading 2", "Heading 3", "Heading 4"]);
   unmount();
 
-  // В `basic` заголовков нет: из «¶» остался бы один «Текст», и кнопки нет —
-  // цитата там флажок «…», списки — «Списки ▾» (OLDSUI-154).
+  // There are no headings in `basic`: "¶" would be left with a single "Text", and so
+  // there is no button — the quote is a "…" checkbox there, the lists are "Lists ▾" (OLDSUI-154).
   renderEditor({ preset: "basic" });
   expect(screen.queryByRole("button", { name: /^Block type/ })).toBeNull();
 });
@@ -129,7 +129,7 @@ test("the check and the button name follow the line under the caret, inside list
       "<blockquote><h3>Quoted heading</h3></blockquote>",
   });
 
-  // Решает строка под кареткой (OLDSUI-154): список и цитату показывают свои кнопки.
+  // The line under the caret decides (OLDSUI-154): a list and a quote show their own buttons.
   const cases = [
     ["Heading", "Heading 2"],
     ["Quoted", "Text"],
@@ -180,7 +180,7 @@ test("a heading stays inside a quote; in a list item, where the schema has no he
     defaultValue: "<blockquote><p>Quoted</p></blockquote><ul><li><p>Item</p></li></ul>",
   });
 
-  // Тип строки меняется на месте (OLDSUI-154).
+  // The type of the line changes in place (OLDSUI-154).
   caretIn(editor, "Quoted");
   await user.click(blockButton());
   await user.click(screen.getByRole("menuitemradio", { name: /Heading 2/ }));
@@ -188,7 +188,7 @@ test("a heading stays inside a quote; in a list item, where the schema has no he
     "<blockquote><h2>Quoted</h2></blockquote><ul><li><p>Item</p></li></ul>"
   );
 
-  // Первым в пункте списка заголовок стоять не может — путь «Превратить в».
+  // A heading cannot come first in a list item — that is the "Turn into" path.
   caretIn(editor, "Item");
   await user.click(blockButton());
   await user.click(screen.getByRole("menuitemradio", { name: /Heading 2/ }));
@@ -209,7 +209,7 @@ test("choosing the current type changes nothing and adds no undo step", async ()
   caretIn(editor, "One");
 
   await user.click(blockButton());
-  // Абзац в пункте списка — «Текст» (OLDSUI-154).
+  // A paragraph in a list item is "Text" (OLDSUI-154).
   await user.click(screen.getByRole("menuitemradio", { name: /^Text/ }));
 
   expect(editor.getHTML()).toBe(before);
@@ -228,16 +228,16 @@ test("Enter, Space and ArrowDown open the menu; Escape closes it and returns foc
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("menu"), key).toBeNull();
-    // react-aria возвращает фокус после снятия поповера — кадром позже.
+    // react-aria returns focus after the popover closes — one frame later.
     await waitFor(() => expect(document.activeElement, key).toBe(blockButton()));
   }
 });
 
 /**
- * Escape в меню принадлежит меню, а не слою под ним (ADR-0041). Слой —
- * `ModalOverlay`, а не `Dialog`: меню react-aria внутри модального окна Radix
- * в jsdom не раскрывается (разбор — `tests/overlay-layers.test.tsx`). С
- * настоящим `Dialog` то же проверяет `tests-visual/interactions.spec.ts`.
+ * Escape in the menu belongs to the menu, not to the layer under it (ADR-0041). The layer
+ * is `ModalOverlay`, not `Dialog`: a react-aria menu inside a Radix modal does not open in
+ * jsdom (the analysis is in `tests/overlay-layers.test.tsx`). With a real `Dialog` the same
+ * thing is checked by `tests-visual/interactions.spec.ts`.
  */
 test("Escape in the menu closes the menu, not the layer under it", async () => {
   const user = userEvent.setup();
@@ -249,15 +249,15 @@ test("Escape in the menu closes the menu, not the layer under it", async () => {
   );
 
   await user.click(blockButton());
-  // Меню react-aria открывается и закрывается в следующих кадрах: под нагрузкой
-  // полного прогона мгновенная проверка ловила промежуточное состояние.
+  // The react-aria menu opens and closes over the following frames: under the load of a
+  // full run, an instant check caught the intermediate state.
   expect(await screen.findByRole("menu")).toBeDefined();
   await user.keyboard("{Escape}");
 
   await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
   expect(onClose).not.toHaveBeenCalled();
 
-  // Контроль: без открытого меню тот же Escape закрывает слой.
+  // Control: without an open menu, the same Escape closes the layer.
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });
@@ -270,7 +270,7 @@ test("the menu speaks the provider's language", async () => {
     </UiProvider>
   );
 
-  // Ожидания — из русского каталога: гейт i18n держит кириллицу в каталоге.
+  // The expectations come from the Russian catalog: the i18n gate keeps Cyrillic inside the catalog.
   const t = ru.editor;
   const button = screen.getByRole("button", {
     name: t.blockType({ current: t.heading({ level: 2 }) }),

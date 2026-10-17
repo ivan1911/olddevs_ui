@@ -14,9 +14,9 @@ beforeAll(loadLazyBuiltins);
 afterEach(cleanup);
 
 /**
- * Состав меню Панели и плашки (OLDSUI-154): «¶» — только текст и заголовки,
- * значок по строке под кареткой; «Цитата» — флажок «…»; «Списки ▾» в плашке;
- * «Маркер» — на Панели, «Цвет» — в плашке.
+ * The contents of the Toolbar and the Bubble menu (OLDSUI-154): "¶" holds text and headings
+ * only, with the icon of the line under the caret; "Quote" is an item of the "…" menu;
+ * "Lists ▾" is in the Bubble menu; "Highlight" is on the Toolbar, "Color" is in the Bubble menu.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -35,7 +35,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 
 type Editor = ReturnType<typeof renderEditor>["editor"];
 
-/** Каретка или выделение в тексте `text`, с фокусом в Документе. */
+/** Caret or selection in the text `text`, with focus in the Document. */
 function select(editor: Editor, text: string, whole = false) {
   let from = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -51,7 +51,7 @@ const toolbar = () => screen.getByRole("toolbar", { name: "Formatting" });
 const bubble = () => screen.findByRole("toolbar", { name: "Selection formatting" });
 const blockTypeButton = (host: HTMLElement) =>
   within(host).getByRole("button", { name: /^Block type/ });
-/** Имена пунктов любой роли (`menuitem`, `menuitemradio`, `menuitemcheckbox`) без подписи сочетания. */
+/** Item names of any role (`menuitem`, `menuitemradio`, `menuitemcheckbox`) without the shortcut label. */
 const itemNames = (menu: HTMLElement) =>
   Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]')).map((item) =>
     (item.querySelector("kbd")

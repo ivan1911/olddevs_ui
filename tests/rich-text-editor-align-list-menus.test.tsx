@@ -14,7 +14,7 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -23,11 +23,11 @@ afterEach(() => {
 });
 
 /**
- * Меню «Выравнивание» и «Списки» на Панели (OLDSUI-66).
+ * The "Alignment" and "Lists" menus on the Toolbar (OLDSUI-66).
  *
- * Через публичный `RichTextEditor`, как меню «¶»: кнопка и пункты — ролями и
- * именами, результат — выходным HTML и шагами отмены. Каретка ставится
- * командами движка: jsdom не умеет ввода в `contenteditable`.
+ * Through the public `RichTextEditor`, like the "¶" menu: the button and items by roles
+ * and names, the result by the output HTML and undo steps. The caret is placed with
+ * engine commands: jsdom cannot type into `contenteditable`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -37,7 +37,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor };
 }
 
-/** Каретка в конец текста `text`. */
+/** Moves the caret to the end of the text `text`. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -51,9 +51,9 @@ const alignButton = () => screen.getByRole("button", { name: /^Alignment/ });
 const listButton = () => screen.getByRole("button", { name: /^(Lists|List:)/ });
 const textbox = () => screen.getByRole("textbox", { name: "Body" });
 
-/** Пункты открытого меню: имя без подписи сочетания, отметка, подпись. */
+/** The items of the open menu: the name without the shortcut label, the checked state, the shortcut. */
 function items(menuName: RegExp) {
-  // Меню названо своей кнопкой (`aria-labelledby`), как в паттерне APG.
+  // The menu is named by its own button (`aria-labelledby`), as in the APG pattern.
   const menu = screen.getByRole("menu", { name: menuName });
   return within(menu)
     .getAllByRole("menuitemradio")
@@ -69,7 +69,7 @@ function items(menuName: RegExp) {
 
 const checkedIn = (menuName: RegExp) => items(menuName).find((item) => item.checked)?.name ?? null;
 
-// --- Выравнивание ---------------------------------------------------------
+// --- Alignment ---------------------------------------------------------
 
 test("the alignment menu offers left, center and right with shortcuts; left is checked by default", async () => {
   const user = userEvent.setup();
@@ -80,7 +80,7 @@ test("the alignment menu offers left, center and right with shortcuts; left is c
   expect(alignButton().getAttribute("aria-haspopup")).toBe("menu");
   await user.click(alignButton());
 
-  // jsdom — не Apple: `mod` подписан как Ctrl. По ширине нет (WCAG 1.4.8).
+  // jsdom is not Apple: `mod` is labelled as Ctrl. Nothing here depends on the width (WCAG 1.4.8).
   expect(items(/^Alignment/)).toEqual([
     { name: "Align left", checked: true, shortcut: "Ctrl+Shift+L" },
     { name: "Align center", checked: false, shortcut: "Ctrl+Shift+E" },
@@ -110,7 +110,7 @@ test("choosing an alignment aligns the block, names it on the button, undoes in 
   expect(editor.getHTML()).toBe('<p data-align="center">Title</p>');
   expect(screen.queryByRole("menu")).toBeNull();
   expect(alignButton().getAttribute("aria-label")).toBe("Alignment: center");
-  // Значок кнопки — текущее выравнивание глазу.
+  // The button's icon shows the current alignment at a glance.
   expect(alignButton().querySelector("svg")?.innerHTML).not.toBe(leftIcon);
   await waitFor(() => expect(document.activeElement).toBe(textbox()));
 
@@ -136,7 +136,7 @@ test("left takes the alignment off, and choosing the current one adds no undo st
 
   await user.click(alignButton());
   await user.click(screen.getByRole("menuitemradio", { name: /Align left/ }));
-  // Влево — умолчание: атрибута в Документе нет.
+  // Left is the default: the Document has no attribute for it.
   expect(editor.getHTML()).toBe("<p>Title</p>");
 });
 
@@ -146,7 +146,7 @@ test("without the align tool there is no alignment menu", () => {
   expect(screen.queryByRole("button", { name: /^Alignment/ })).toBeNull();
 });
 
-// --- Списки ---------------------------------------------------------------
+// --- Lists ---------------------------------------------------------------
 
 test("the lists menu offers the three kinds with shortcuts; outside a list nothing is checked", async () => {
   const user = userEvent.setup();
@@ -242,7 +242,7 @@ test("items come from the enabled list tools; a single one is still a menu; none
   expect(items(/^Lists/).map((item) => item.name)).toEqual(["Bulleted list", "Numbered list"]);
   basic.unmount();
 
-  // Меню с одним пунктом остаётся меню: кнопка не превращается в переключатель.
+  // A menu with one item stays a menu: the button does not turn into a toggle.
   const single = renderEditor({ tools: ["taskList"] });
   await user.click(listButton());
   expect(items(/^Lists/).map((item) => item.name)).toEqual(["Checklist"]);
@@ -252,7 +252,7 @@ test("items come from the enabled list tools; a single one is still a menu; none
   expect(screen.queryByRole("button", { name: /^(Lists|List:)/ })).toBeNull();
 });
 
-// --- Общее ------------------------------------------------------------------
+// --- Shared ------------------------------------------------------------------
 
 test("Enter, Space and ArrowDown open both menus; Escape closes and returns focus to the button", async () => {
   const user = userEvent.setup();
@@ -300,7 +300,7 @@ test("both menus speak the provider's language", async () => {
     </UiProvider>
   );
 
-  // Ожидания — из русского каталога: гейт i18n держит кириллицу в каталоге.
+  // The expectations come from the Russian catalog: the i18n gate keeps Cyrillic inside the catalog.
   const t = ru.editor;
   const align = screen.getByRole("button", { name: t.alignMenu({ current: "center" }) });
   const lists = screen.getByRole("button", { name: t.listMenu({ current: "orderedList" }) });

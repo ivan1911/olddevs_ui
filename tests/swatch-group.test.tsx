@@ -6,12 +6,12 @@ import { afterEach, expect, test, vi } from "vitest";
 import { SwatchGroup, type SwatchOption } from "../src/components/inputs/SwatchGroup.js";
 
 /**
- * Набор образцов: имена, роли и клавиатура по сетке.
+ * The swatch set: names, roles and keyboard handling on a grid.
  *
- * Горизонтальные стрелки здесь НЕ проверяются: их разбирает браузер по имени
- * группы у радиокнопок, а jsdom этого не делает вовсе — проверка прошла бы и
- * на сломанном наборе. Они меряются в живом браузере
- * (`tests-visual/interactions.spec.ts`), там же и вид выбранности.
+ * Horizontal arrows are NOT checked here: the browser handles them by the name of the
+ * radio group, and jsdom does not do that at all, so the check would pass even on a
+ * broken set. They are measured in a live browser (`tests-visual/interactions.spec.ts`),
+ * where the look of the selected state is checked too.
  */
 
 afterEach(cleanup);
@@ -31,8 +31,8 @@ const HUES: SwatchOption[] = [
 test("the set is a named radio group and every option is named by a word", () => {
   render(<SwatchGroup label="Project colour" value="blue" options={HUES} onChange={vi.fn()} />);
 
-  // Без имени девять одинаковых кругов не различаются на слух никак, а
-  // закраска именем не является: её не прочитать.
+  // Without a name, nine identical circles cannot be told apart by ear at all, and
+  // colour is not a name: it cannot be read out.
   expect(screen.getByRole("radiogroup", { name: "Project colour" })).toBeTruthy();
   expect(screen.getAllByRole("radio")).toHaveLength(9);
   expect(screen.getByRole("radio", { name: "Teal" })).toBeTruthy();
@@ -55,8 +55,8 @@ test("the option shows ONE circle: the swatch itself, with no second dot beside 
   );
 
   /*
-    Ровно ради этого компонент и заведён: на `RadioGroup` у варианта были два
-    круга подряд — переключатель и образец, — и сетка из девяти читалась рябью.
+    This is exactly why the component exists: on `RadioGroup` the option had two circles
+    in a row — the radio button and the swatch — and a grid of nine read as ripples.
   */
   expect(container.querySelectorAll(".rounded-full.size-6")).toHaveLength(9);
 });
@@ -87,8 +87,8 @@ test("vertical arrows walk the COLUMN, a step of `columns`, and apply at once", 
   screen.getByRole("radio", { name: "Blue" }).focus();
   await user.keyboard("{ArrowDown}");
 
-  // Браузер в радиогруппе понимает «вниз» как «следующий», то есть увёл бы на
-  // соседний столбец. По сетке вниз — это через ряд.
+  // The browser in a radio group reads "down" as "next", which would move focus to the
+  // neighboring column. On the grid, down means skipping a full row.
   expect(onChange).toHaveBeenCalledWith("green");
 });
 
@@ -135,8 +135,8 @@ test("a disabled option is not chosen by the edges either", async () => {
   screen.getByRole("radio", { name: "Teal" }).focus();
   await user.keyboard("{Home}");
 
-  // «Первый» — это первый ДОСТУПНЫЙ: выключенный вариант остаётся на экране,
-  // чтобы набор не менял раскладку, но выбрать его нельзя ничем.
+  // "First" means the first AVAILABLE option: a disabled option stays on screen so the
+  // set does not change its layout, but it cannot be selected in any way.
   expect(onChange).toHaveBeenCalledWith("blue");
 });
 
@@ -157,8 +157,9 @@ test("a disabled set answers neither the mouse nor the keyboard", async () => {
 test("the step is counted from where the focus is, not from what is selected", async () => {
   const user = userEvent.setup();
   const onChange = vi.fn();
-  // Значение потребитель не применяет: так ведёт себя сохранение, ушедшее на
-  // сервер, — человек уже стоит на новом варианте, выбранным числится прежний.
+  // The consumer does not apply the value: this is how a save that went to the server
+  // behaves — the person is already on the new option, while the old one still counts
+  // as selected.
   render(
     <SwatchGroup
       label="Project colour"
@@ -172,29 +173,29 @@ test("the step is counted from where the focus is, not from what is selected", a
   screen.getByRole("radio", { name: "Violet" }).focus();
   await user.keyboard("{ArrowDown}");
 
-  // От фокуса («Violet», индекс 2) вниз — «Amber» (индекс 5). От значения
-  // («No colour», индекс 0) получился бы «Green».
+  // From the focus ("Violet", index 2) down is "Amber" (index 5). From the value
+  // ("No colour", index 0) it would be "Green".
   expect(onChange).toHaveBeenCalledWith("amber");
 });
 
 /*
-  ПОДСКАЗКА С ИМЕНЕМ ОТТЕНКА (`tooltips`).
+  TOOLTIP WITH THE SHADE NAME (`tooltips`).
 
-  Задержка здесь снята (`delayDuration={0}`): проверяется, ЧТО подсказка
-  называет и кому достаётся её текст, а темп задаёт общий провайдер и мерить
-  его тут нечем.
+  The delay is turned off here (`delayDuration={0}`): the check is WHAT the tooltip
+  names and who gets its text. The pace is set by the shared provider, and there is
+  nothing to measure it with here.
 */
 
 const withTooltips = (ui: React.ReactNode) =>
   render(<TooltipProvider delayDuration={0}>{ui}</TooltipProvider>);
 
-/** Подсказка появляется не мгновенно даже при нулевой задержке: Radix открывает её эффектом. */
+/** The tooltip does not appear instantly even with zero delay: Radix opens it in an effect. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
 
 test("without the prop there is no tooltip at all — and no TooltipProvider needed", async () => {
-  // Набор выпущен раньше подсказки и стоит у потребителей без провайдера:
-  // без `tooltips` он обязан рендериться вне провайдера, иначе патч уронил бы
-  // их на обновлении. Radix без провайдера бросает — сам рендер и есть проверка.
+  // The set shipped before the tooltip and is used by consumers without a provider:
+  // without `tooltips` it must render outside a provider, or the patch would break them
+  // on update. Radix throws without a provider, so the render itself is the check.
   render(<SwatchGroup label="Project colour" value="blue" options={HUES} onChange={vi.fn()} />);
 
   screen.getByRole("radio", { name: "Amber" }).focus();
@@ -211,8 +212,8 @@ test("the tooltip names the option under the keyboard focus, not only under the 
   screen.getByRole("radio", { name: "Amber" }).focus();
   await settle();
 
-  // Подсказка на самой радиокнопке появлялась бы только мышью: RAC не
-  // пропускает в разметку `onFocus` и `onBlur`. Отсюда и обёртка.
+  // A tooltip on the radio button itself would appear only with the mouse: RAC does not
+  // pass `onFocus` and `onBlur` into the markup. Hence the wrapper.
   expect(screen.getByRole("tooltip").textContent).toBe("Amber");
 });
 
@@ -226,10 +227,10 @@ test("the name is still announced ONCE: the tooltip describes nothing", async ()
   await settle();
 
   /*
-    Главная проверка заявки. Radix вешает на триггер `aria-describedby`, и на
-    самом варианте это удвоило бы имя — «Янтарный Янтарный». Описание обязано
-    осесть на обёртке: у радиокнопки своего `aria-describedby` нет, а от предка
-    описание не наследуется.
+    The main check of the task. Radix puts `aria-describedby` on the trigger, and on the
+    option itself that would double the name: "Amber Amber". The description must settle
+    on the wrapper: the radio button has no `aria-describedby` of its own, and a
+    description is not inherited from an ancestor.
   */
   expect(radio.getAttribute("aria-describedby")).toBeNull();
   expect(radio.closest("label")?.getAttribute("aria-describedby")).toBeNull();

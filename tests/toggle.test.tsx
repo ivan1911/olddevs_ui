@@ -22,12 +22,11 @@ test("the switch announces its role and state", () => {
 });
 
 /**
- * Роль и состояние НЕ ПЕРЕБИВАЮТСЯ спредом.
+ * The role and the state are NOT OVERRIDDEN by the spread.
  *
- * Починка перенесла `{...rest}` вперёд именно ради этого, но ни один тест не
- * передавал `role`/`aria-checked` через спред — вернув порядок обратно, все
- * пять тестов оставались зелёными. Переключатель, потерявший `role="switch"`,
- * перестаёт быть переключателем.
+ * The fix moved `{...rest}` forward for exactly this purpose, but no test passed `role`
+ * or `aria-checked` through the spread: put the order back and all five tests stayed
+ * green. A toggle that lost `role="switch"` stops being a switch.
  */
 test("a consumer cannot overwrite the role or the state", () => {
   render(
@@ -52,13 +51,12 @@ test("clicking flips the state", async () => {
 });
 
 /**
- * Чужой `onClick` НЕ ВЫТЕСНЯЕТ переключение.
+ * A consumer's `onClick` does NOT DISPLACE the toggling.
  *
- * `{...rest}` стоял последним и перекрывал собственные `onClick`, `role` и
- * `aria-checked`. Вызов `<Toggle … onClick={track} />` компилировался,
- * переключатель рисовался, аналитика срабатывала — а `onCheckedChange` не
- * вызывался НИКОГДА, то есть компонент был мёртв, и ни один тест этого не
- * ловил: тестов у `Toggle` не было вовсе.
+ * `{...rest}` stood last and overrode the component's own `onClick`, `role` and
+ * `aria-checked`. A call `<Toggle … onClick={track} />` compiled, the switch was drawn,
+ * analytics fired — but `onCheckedChange` was NEVER called, which means the component was
+ * dead, and no test caught it: `Toggle` had no tests at all.
  */
 test("a consumer onClick does not displace the toggling", async () => {
   const user = userEvent.setup();
@@ -88,11 +86,11 @@ test("a consumer onClick can cancel the toggling deliberately", async () => {
   await user.click(screen.getByRole("switch"));
 
   /*
-    Три утверждения, и ни одного лишнего.
+    Three assertions, and not one extra.
 
-    Прежняя версия не имела `expect()` вовсе: сторожем был бросок внутри
-    `onCheckedChange`, поэтому обработчик, не вызывавшийся НИКОГДА — то есть
-    ровно исходный дефект, — оставлял тест зелёным.
+    The previous version had no `expect()` at all: the guard was a throw inside
+    `onCheckedChange`, so a handler that was NEVER called — that is, exactly the original
+    defect — left the test green.
   */
   expect(onClick).toHaveBeenCalledTimes(1);
   expect(onCheckedChange).not.toHaveBeenCalled();
@@ -128,9 +126,9 @@ test("a disabled switch does not toggle", async () => {
 });
 
 /*
-  Видимая подпись и описание: строка настройки «слова слева, переключатель
-  справа». Подпись и описание принадлежат переключателю, а не экрану, поэтому
-  имя, описание и нажатие по тексту обязаны работать без сборки руками.
+  Visible label and description: a settings row with "words on the left, switch on the
+  right". The label and the description belong to the switch, not to the screen, so the
+  name, the description and a click on the text must work without assembling them by hand.
 */
 function Row({ onClick }: { onClick?: () => void }) {
   const [on, setOn] = useState(false);
@@ -258,8 +256,8 @@ test("className goes to the row when the label is visible", () => {
 });
 
 test("the name rule is checked in development: none, both, or a description without a label", () => {
-  // Типом это не проверяется: объединение `label | children` сломало бы
-  // `extends ToggleProps` и `Omit<ToggleProps, …>` у потребителя.
+  // The type does not check this: a union of `label | children` would break
+  // `extends ToggleProps` and `Omit<ToggleProps, …>` for the consumer.
   resetDevWarnings();
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   render(<Toggle checked onCheckedChange={() => {}} />);
@@ -277,7 +275,7 @@ test("the name rule is checked in development: none, both, or a description with
 });
 
 test("ToggleProps stays an object type: a consumer can extend it and Omit from it", () => {
-  // Типовой тест: компилятор обязан принять оба привычных вида обёртки.
+  // Type test: the compiler must accept both familiar kinds of wrapper.
   interface Labeled extends ToggleProps {
     hint?: string;
   }

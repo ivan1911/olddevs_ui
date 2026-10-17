@@ -12,20 +12,20 @@ import { TOOLS } from "../src/editor/core/tools.js";
 import { TEST_TOOLS } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Текст атома (OLDSUI-109, ADR-0058, раздел 4): вес в `maxLength`, `getText`,
- * Markdown, пустота и срез вставки.
+ * The text of an atom (OLDSUI-109, ADR-0058, section 4): its weight in `maxLength`,
+ * `getText`, Markdown, emptiness and the paste cut.
  *
- * Через публичный `RichTextEditor` со своими тестовыми Инструментами
- * (`editor-test-tools.ts`): Merge Tag — строчный атом с `renderText`
- * (`{{ключ}}`), видео — Блок-атом без текста, вставка (embed) — Блок-атом с
- * содержимым. Из встроенных — разделитель, мягкий перенос и картинка с подписью.
- * Каретка и выделение ставятся командами движка: jsdom не умеет ввода.
+ * Through the public `RichTextEditor` with its own test Tools (`editor-test-tools.ts`):
+ * Merge Tag is an inline atom with `renderText` (`{{key}}`), video is a Block atom with
+ * no text, embed is a Block atom with content. Of the built-in ones: a divider, a soft
+ * break and an image with a caption. The caret and selection are set with engine
+ * commands: jsdom cannot type.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -37,26 +37,26 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor, handle: ref.current! };
 }
 
-/** Вставка HTML из буфера: разбор Схемой и транзакция с меткой `paste`. */
+/** HTML paste from the clipboard: parsed by the Schema, in a transaction tagged `paste`. */
 function paste(editor: Editor, html: string) {
   act(() => void editor.view.pasteHTML(html, new Event("paste") as ClipboardEvent));
 }
 
-/** Каретка в конец документа. */
+/** Caret at the end of the document. */
 function caretAtEnd(editor: Editor) {
   act(() => void editor.commands.setTextSelection(editor.state.doc.content.size - 1));
 }
 
-/** Текст без разделителей Блоков — то, что считает счётчик. */
+/** The text without Block separators — what the counter counts. */
 const counted = (editor: Editor) => editor.getText({ blockSeparator: "" });
 
 const PHOTO = "https://cdn.example.com/photo.png";
-/** Merge Tag с ключом `x`: `{{x}}`, вес 5. */
+/** Merge Tag with the key `x`: `{{x}}`, weight 5. */
 const tag = '<span data-block="test_mergeTag" data-test_key="x"></span>';
 const video = '<div data-block="test_video"></div>';
 const embed = (text: string) => `<div data-block="test_embed">${text}</div>`;
 
-// ── Вес атома ──────────────────────────────────────────────────────────────
+// ── Atom weight ──────────────────────────────────────────────────────────────
 
 test("the counter matches the text of a document with every kind of atom", () => {
   const { editor, handle } = renderEditor({
@@ -67,7 +67,7 @@ test("the counter matches the text of a document with every kind of atom", () =>
       `<p>Hi ${tag}</p>${video}${embed("emb")}`,
   });
 
-  // a, перенос, b — 3; разделитель — 0; подпись — 3; «Hi » и `{{x}}` — 8; видео — 0; вставка — 3.
+  // a, line break, b — 3; divider — 0; caption — 3; "Hi " and `{{x}}` — 8; video — 0; embed — 3.
   expect(counted(editor)).toHaveLength(17);
   expect(counted(editor)).toBe("a\nb" + "cap" + "Hi {{x}}" + "emb");
   expect(screen.getByText("2 characters left")).toBeTruthy();
@@ -107,7 +107,7 @@ test("a custom atom weighs its text; without text it weighs nothing", () => {
   expect(screen.queryByText(/characters? left/)).toBeNull();
   cleanup();
 
-  // Атом с содержимым без `renderText` — текст своих детей.
+  // An atom with content and no `renderText` — the text of its children.
   renderEditor({ maxLength: 4, defaultValue: `${embed("abc")}${video}` });
   expect(screen.queryByText(/characters? left/)).toBeNull();
   cleanup();
@@ -126,7 +126,7 @@ test("typing is blocked at the limit counted with atoms", () => {
   expect(counted(editor)).toBe("{{x}}ab");
 });
 
-// ── Три вывода одного текста ───────────────────────────────────────────────
+// ── Three outputs of one text ───────────────────────────────────────────────
 
 test("getText, getSelectedText and getMarkdown give the same atom text", () => {
   const { editor, handle } = renderEditor({
@@ -143,7 +143,7 @@ test("getText, getSelectedText and getMarkdown give the same atom text", () => {
 test("an atom enters the selected text whole, never in part", () => {
   const { editor, handle } = renderEditor({ defaultValue: `<p>ab${tag}cd</p>` });
 
-  // Выделение «b», атом, «c»: от позиции 2 до 5; атом — одна позиция.
+  // The selection "b", the atom, "c": from position 2 to 5; the atom is one position.
   act(() => void editor.commands.setTextSelection({ from: 2, to: 5 }));
   expect(handle.getSelectedText()).toBe("b{{x}}c");
 
@@ -167,7 +167,7 @@ test("Markdown writes a block atom with content by its children and drops one wi
   expect(handle.getMarkdown()).toBe("One\n\ntwo");
 });
 
-// ── Пустота ────────────────────────────────────────────────────────────────
+// ── Emptiness ────────────────────────────────────────────────────────────────
 
 test("any atom makes the field non-empty; an empty paragraph does not", () => {
   const { handle } = renderEditor({ defaultValue: video });
@@ -215,7 +215,7 @@ test("a required field with only a custom atom without text passes the check", (
   expect(empty.container.querySelector("input:invalid")).not.toBeNull();
 });
 
-// ── Срез вставки ───────────────────────────────────────────────────────────
+// ── Paste cut ───────────────────────────────────────────────────────────
 
 test("a paste over the limit cuts the tail by characters", () => {
   const { editor } = renderEditor({ maxLength: 7, defaultValue: "<p>ab</p>" });
@@ -230,8 +230,8 @@ test("an atom that does not fit leaves whole together with everything after it",
   const { editor } = renderEditor({ maxLength: 8, defaultValue: "<p>ab</p>" });
   caretAtEnd(editor);
 
-  // «cd », `{{x}}` (5), « ef»: лишних 5 символов — хвост « ef» уходит, а атому
-  // не хватает места, и он уходит целиком, а не наполовину.
+  // "cd ", `{{x}}` (5), " ef": 5 characters are left over — the tail " ef" goes, and
+  // the atom does not fit either, so it goes whole, not in half.
   paste(editor, `<p>cd ${tag} ef</p>`);
 
   expect(editor.getHTML()).toBe("<p>abcd </p>");
