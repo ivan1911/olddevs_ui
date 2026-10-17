@@ -50,7 +50,7 @@ export function useFieldDescribedBy(): string | undefined {
  * ITSELF. But only the description went into the context, and the field did not set
  * the attribute: `<FormField error="…"><TextControl/></FormField>` drew red text under
  * the field and a plain border around it. For the border to turn red, the consumer had
- * to pass `aria-invalid` itself, and the string `aria-invalid` appears in no file under
+ * to pass `aria-invalid` itself, and the string `aria-invalid` appeared in no file under
  * `docs/`, so there was no way to learn about this obligation.
  */
 const FieldInvalidContext = createContext(false);

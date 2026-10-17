@@ -12,8 +12,8 @@ import type { Result } from "axe-core";
  * powers the a11y addon in Storybook.
  *
  * Why duplicate the addon: the addon shows its result to the person who opened the
- * story. Here there are 17 stories × 3 themes = 51 screens, and "checked by eye" at
- * that scale means "checked by sampling". The check covers all of them and fails
+ * story. Here every story runs in all three themes and once more in the brand teal
+ * (`RUNS` below), and "checked by eye" at that scale means "checked by sampling". The check covers all of them and fails
  * in CI, not in someone's memory.
  *
  * The threshold is `serious` and `critical`. `moderate` and `minor` deliberately do

@@ -292,7 +292,7 @@ function tsxFiles(dir: string): string[] {
   return out;
 }
 
-/** Comments are in Russian and also explain the old numbers, so the gate does not read them. */
+/** Comments also explain the old numbers, so the gate does not read them. */
 function stripComments(source: string): string {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))

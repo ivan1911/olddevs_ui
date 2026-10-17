@@ -6,11 +6,9 @@ import { Link } from "../src/components/content/Link.js";
 afterEach(cleanup);
 
 /*
- * The Russian locale is connected EXPLICITLY: since 2.0.0 the kit's fallback is English,
- * and a test that expects a Russian label without a provider would check not behavior but
- * the default language. The expectations are untouched: the strings are the same ones that
- * were hard-coded in the components before the move to the catalog, and that is what this
- * proves.
+ * No locale is connected here: since 2.0.0 the kit's fallback is English, so without a
+ * provider the tests read the catalog's English label (`opensInNewTab` in
+ * `src/i18n/defaults.ts`).
  */
 test("an external link without a new tab gets no rel", () => {
   render(

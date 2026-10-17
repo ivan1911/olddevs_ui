@@ -55,7 +55,7 @@ export const RICH_TEXT_SCHEMA = {
    * A `div` with `data-block` is a Column layout: `div[data-block="layout"]` with the variant in
    * `data-layout`, containing one to four `div[data-block="column"]`. A column holds Blocks,
    * except another Column layout. A Column layout is only a top-level Block: not inside a
-   * column, a Wrapper, a list, a quote or a cell. Column widths are set by the variant, not by
+   * column, a Wrapper, a list, a quote, a cell or a Details Block. Column widths are set by the variant, not by
    * `style` (`layouts` below).
    *
    * `div[data-block="wrapper"]` is a Wrapper, a group of Blocks, as in Redactor. Its tone, if
@@ -607,7 +607,7 @@ export interface RichTextPurifier {
  *   together with `data-color`.
  * - `data-align`: a known value on `p`, `h1`–`h4`, `th`, `td`.
  * - Column layout: `div[data-block="layout"]` with a variant from `layouts`, and only outside a
- *   column, a list, a quote or a table. `div[data-block="column"]` only directly inside a Column
+ *   column, a Wrapper, a list, a quote, a table or a Details Block. `div[data-block="column"]` only directly inside a Column
  *   layout. Otherwise the wrapper is removed and the Blocks stay in place.
  * - Wrapper: `div[data-block="wrapper"]` at the top level or directly in a Column layout column,
  *   not inside another Wrapper, a list, a quote or a table. Otherwise it is removed the same way,
@@ -719,7 +719,7 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
       tag === "span" || tag === "mark" ? RICH_TEXT_SCHEMA.customColor.styles[tag] : undefined;
     return pattern !== undefined && new RegExp(pattern).test(value);
   },
-  // Column layout, column and Wrapper: only on `div`. The variant is only on a Column layout.
+  // Column layout, column, Wrapper and video: only on `div`. The variant is only on a Column layout.
   "data-block": (node, value) =>
     node.nodeName === "DIV" &&
     (value === LAYOUT_BLOCK ||

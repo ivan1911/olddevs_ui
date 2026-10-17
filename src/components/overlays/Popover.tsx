@@ -109,8 +109,8 @@ export const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
               looks sluggish. The directional slide in from the trigger's side is lost: the kit's
               tokens have no `data-side` axis, and four tokens for four sides cost more than the loss.
 
-              There is no exit animation on purpose: `Tooltip` is built the same way (enter only), and
-              closing the panel stays instant, exactly as it has been all along.
+              The exit is its own token, `animate-popoverOut`, the pair of `tooltipOut` in `Tooltip`:
+              closing the panel fades it out over `--duration-fast` instead of removing it instantly.
             */
             "data-[state=open]:animate-popoverIn data-[state=closed]:animate-popoverOut",
             className

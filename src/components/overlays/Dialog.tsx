@@ -114,8 +114,8 @@ export interface DialogProps {
  *
  * NESTING WORKS ON ITS OWN. A confirmation dialog on top of an editing dialog is an ordinary case,
  * and Escape closes the top layer, not both: Radix manages the layer stack. It does not know about a
- * FOREIGN stack, though — the package's menus are built on react-aria, and the dialog tells their
- * layer apart separately (see `escapeBelongsToAriaLayer`). The earlier version had to catch Escape
+ * FOREIGN stack, though — the package's menus are built on react-aria (`ContextMenu` is Radix),
+ * and the dialog tells their layer apart separately (see `escapeBelongsToAriaLayer`). The earlier version had to catch Escape
  * in the capture phase and stop the event with `stopImmediatePropagation`.
  */
 export function Dialog({
@@ -151,7 +151,7 @@ export function Dialog({
    * An Escape addressed to a react-aria layer must not reach the dialog.
    *
    * Radix manages the stack of ITS OWN layers, and nested dialogs close one at a time. But the
-   * package's menus and lists are built on react-aria, which keeps its own stack, and neither library
+   * package's menus and lists are built on react-aria (except `ContextMenu`, which is Radix), which keeps its own stack, and neither library
    * knows about the other's: one Escape with a menu open inside the dialog closed both the menu and
    * the dialog — that is, it took the form away with the unsaved changes. The "Menu inside Dialog"
    * case is where this was found.

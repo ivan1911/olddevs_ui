@@ -58,7 +58,7 @@ export function Breadcrumbs({
     The condition used to be just `items.length > maxItems`, but the collapsed view was always
     built as "first + … + last two", which is three crumbs. Short chains broke: with two crumbs
     and `maxItems={1}` the first crumb landed both at the start and at the end (the root was
-    drawn TWICE), and `skipped` went negative, so the caption read "Skipped crumbs: -1". The
+    drawn TWICE), and `skipped` went negative, so the caption read "-1 more". The
     input is reachable through the docs: the Breadcrumbs page explicitly advises lowering
     `maxItems` in a narrow header.
   */
@@ -79,7 +79,7 @@ export function Breadcrumbs({
             >
               {item === "gap" ? (
                 // `aria-hidden` is required: without it, `title` gives the ellipsis an
-                // accessible name, and a screen reader reads "Skipped crumbs: 3" as a crumb
+                // accessible name, and a screen reader reads "3 more" as a crumb
                 // of the path. It already knows the count from the length of the list.
                 <span
                   aria-hidden
