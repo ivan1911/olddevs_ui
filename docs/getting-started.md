@@ -129,9 +129,9 @@ React and the kit's third-party libraries are treated as external, and the metri
 | one `Button`                                                                                             | 1.6 kB   |
 | `DataTable`                                                                                              | 9.3 kB   |
 | the whole kit (`import *`)                                                                               | 77.5 kB  |
-| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 82.0 kB  |
-| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 315.7 kB |
-| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 462.7 kB |
+| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 82.2 kB  |
+| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 315.9 kB |
+| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 469.6 kB |
 | `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 14.8 kB  |
 | `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 4.7 kB   |
 | `highlightCodeBlocks` from `@olddevs/ui/editor/highlight`, with lowlight                                 | 22.6 kB  |
