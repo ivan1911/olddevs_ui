@@ -67,14 +67,11 @@ export type TagGroupProps = TagGroupBaseProps &
         /** Visible group label; it is also the group's accessible name. */
         label: TagGroupLabel;
         /**
-         * Accessible name as a string, for when there is no visible label. Do not set it
-         * together with `aria-labelledby`: that would be two sources for one name.
+         * Accessible name as a string, when there is no visible label. Not set together with `aria-labelledby`: two sources of one name.
          */
         "aria-label"?: never;
         /**
-         * The `id` of the element whose text serves as the accessible name, for when there is
-         * no visible label. Do not set it together with `aria-label`: that would be two
-         * sources for one name.
+         * `id` of the element whose text serves as the accessible name, when there is no visible label. Not set together with `aria-label`: two sources of one name.
          */
         "aria-labelledby"?: never;
       }
