@@ -12,17 +12,17 @@ import { TOOLS } from "../src/editor/core/tools.js";
 import { RICH_TEXT_SCHEMA } from "../src/editor/core/schema.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Схема — единственный источник допустимой разметки (ADR-0050): что не в ней,
- * отбрасывается и при загрузке `value`, и при вставке. Здесь же сверяется, что
- * белый список ДАННЫМИ (`RICH_TEXT_SCHEMA`) совпадает с тем, что редактор
- * реально отдаёт, — в обе стороны: список, разрешающий лишнее, стал бы плохим
- * конфигом для санитайзера на сервере потребителя.
+ * The Schema is the only source of allowed markup (ADR-0050): anything not in it
+ * is dropped both when `value` is loaded and when content is pasted. This also checks that
+ * the allowlist as DATA (`RICH_TEXT_SCHEMA`) matches what the editor actually returns,
+ * in both directions: a list that allowed too much would be a bad config
+ * for the consumer's server-side sanitizer.
  */
 
 function load(html: string, tools?: RichTextEditorProps["tools"]): string {
@@ -35,13 +35,13 @@ function paste(html: string): string {
   const ref = createRef<RichTextEditorHandle>();
   render(<RichTextEditor ref={ref} aria-label="Body" />);
   const editor = ref.current!.editor!;
-  // Тот же путь, что у вставки из буфера: разбор HTML схемой и транзакция с
-  // меткой `paste`. `ClipboardEvent` в jsdom нет, поэтому событие — обычное.
+  // The same path as pasting from the clipboard: the HTML is parsed by the Schema, and the
+  // transaction carries the `paste` meta. jsdom has no `ClipboardEvent`, so the event is a plain one.
   act(() => void editor.view.pasteHTML(html, new Event("paste") as ClipboardEvent));
   return editor.getHTML();
 }
 
-/** Теги и атрибуты разметки — то, что увидит санитайзер на сервере. */
+/** Tags and attributes of the markup: what the server-side sanitizer will see. */
 function inventory(html: string) {
   const root = document.createElement("div");
   root.innerHTML = html;
@@ -62,21 +62,21 @@ const HOSTILE =
   "<iframe src='https://example.com'></iframe><table style='width:9px' onclick='steal()'><colgroup><col style='width:1px'></colgroup>" +
   "<tr><td colspan='2' rowspan='2' colwidth='9' style='color:red' align='right' onclick='steal()'>cell</td></tr></table>" +
   "<h1>Top</h1><h5>Deep</h5><font color=red>font</font>" +
-  // Флажок и обёртки разрешены только как разметка пункта чек-листа: вне него
-  // поле ввода, `label` и `div` не проходят.
+  // The checkbox and the wrappers are allowed only as the markup of a checklist item: outside it,
+  // an input field, `label` and `div` are dropped.
   '<p><input type="text" value="x" onfocus="steal()"><label for="a">labelled</label></p>' +
-  // `py` — не `js`: полное имя `javascript` совпало бы с `script` в проверке ниже.
+  // `py`, not `js`: the full name `javascript` would match `script` in the check below.
   '<pre><code class="evil language-py" data-x="1">code()</code></pre>' +
-  // Цвет и выравнивание: имена вне палитры и вне списка не проходят, `style` тоже.
+  // Color and alignment: names outside the palette and outside the list are dropped, and so is `style`.
   '<p data-align="justify" data-color="danger"><span data-color="hotpink" style="color:red">c</span>' +
   '<mark style="background:yellow">m</mark><b data-color="danger">b</b></p>' +
   '<p data-align="center"><span data-color="danger">ok</span><mark data-color="green">ok</mark></p>' +
-  // Палитры по тегам: имя маркера на `span` и имя цвета текста вне миграции не проходят.
+  // Palettes by tag: a marker name on a `span` and a text color name not covered by the migration are dropped.
   '<p><span data-color="yellow">x</span><mark data-color="hotpink">y</mark></p>' +
   '<ul data-type="taskList"><li data-type="taskItem" data-checked="true" data-evil="1">' +
   '<label><input type="checkbox" checked onclick="steal()"><span></span></label><div><p>todo</p></div></li></ul>' +
-  // Картинка: только `src` (http/https), `alt` и `data-width` из пресетов; ни
-  // `style`, ни размеров, ни классов, ни обработчиков — ни на `img`, ни на `figure`.
+  // Image: only `src` (http/https), `alt` and `data-width` from the presets; neither `style`,
+  // nor sizes, nor classes, nor handlers, on either `img` or `figure`.
   '<figure class="wide" style="float:left" data-width="50" src="javascript:steal()">' +
   '<img src="https://cdn.example.com/a.png" alt="ok" width="300" height="200" title="t" ' +
   'class="x" style="width:10px" data-width="33" loading="lazy" onerror="steal()">' +
@@ -101,15 +101,15 @@ for (const [path, run] of [
     expect([...tags].filter((tag) => !ALLOWED_TAGS.has(tag))).toEqual([]);
     expect([...attributes].filter((name) => !ALLOWED_ATTRIBUTES.has(name))).toEqual([]);
     expect(html).not.toMatch(/script|javascript:|onerror|onclick|style=|base64/i);
-    // Текст из неразрешённой обёртки не теряется — теряется сама обёртка.
+    // Text from a disallowed wrapper is kept; only the wrapper itself is lost.
     expect(html).toContain("link");
     expect(html).toContain("cell");
     expect(html).toContain("labelled");
-    // Из классов `<code>` остаётся только язык блока кода — полным именем.
+    // Of the `<code>` classes, only the code block's language is kept, by its full name.
     expect(html).toContain('<code class="language-python">code()</code>');
     expect(html.match(/<input/g)).toHaveLength(1);
-    // Картинки вне политики адреса пропадают целиком; та, что в политике, —
-    // с `src` и `alt`, без ширины вне пресетов.
+    // Images outside the address policy are dropped entirely; the one within the policy stays,
+    // with `src` and `alt`, and without a width outside the presets.
     expect(html.match(/<img/g)).toHaveLength(1);
     expect(html).toContain(
       '<figure><img src="https://cdn.example.com/a.png" alt="ok"><figcaption>caption</figcaption></figure>'
@@ -122,7 +122,7 @@ test("the schema names the two palettes by tag and the old marker names", () => 
   const { textColors, markerColors, legacyMarkerColors } = RICH_TEXT_SCHEMA;
 
   expect([...textColors]).toEqual(["accent", "success", "warning", "danger", "lime", "muted"]);
-  // Порядок — сетки «Цвет маркера», по оттенку (OLDSUI-153).
+  // The order of the "Marker color" grid is by hue (OLDSUI-153).
   expect([...markerColors]).toEqual([
     "gray",
     "brown",
@@ -134,11 +134,11 @@ test("the schema names the two palettes by tag and the old marker names", () => 
     "pink",
     "red",
   ]);
-  // Палитры не пересекаются: имя однозначно говорит, чьё оно.
+  // The palettes do not overlap: the name alone shows which palette it belongs to.
   expect(textColors.filter((name) => (markerColors as readonly string[]).includes(name))).toEqual(
     []
   );
-  // Старые имена маркера — ровно имена цвета текста, и все они переводятся.
+  // The old marker names are exactly the text color names, and all of them are migrated.
   expect(Object.keys(legacyMarkerColors).sort()).toEqual([...textColors].sort());
   for (const target of Object.values(legacyMarkerColors)) {
     expect(markerColors as readonly string[]).toContain(target);
@@ -174,12 +174,12 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     '<div data-block="layout" data-layout="60-40"><div data-block="column"><p>l</p></div>' +
     '<div data-block="column"><p>r</p></div></div>' +
     '<div data-block="wrapper" data-tone="warning"><p>w</p></div>' +
-    // `open` пишется только с Опцией `persist` (OLDSUI-277).
+    // `open` is written only with the `persist` option (OLDSUI-277).
     '<details open=""><summary>s</summary><div data-type="detailsContent"><p>c</p></div></details>' +
-    // Видео (OLDSUI-281): сервис и ссылка на видео — два атрибута `div`.
+    // Video (OLDSUI-281): the service and the video link are two attributes of the `div`.
     '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
     '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
-    // Формулы пишут только `data-type` и исходник в `data-latex` (OLDSUI-280).
+    // Formulas write only `data-type` and the source in `data-latex` (OLDSUI-280).
     '<p>f <span data-type="inline-math" data-latex="x^2"></span></p>' +
     '<div data-type="block-math" data-latex="\\frac{a}{b}"></div>';
   const { tags, attributes } = inventory(

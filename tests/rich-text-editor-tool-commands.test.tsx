@@ -19,12 +19,13 @@ import { testLazyTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 /**
- * Команды Инструмента (OLDSUI-268): `handle.tool("search")` и `handle.tool("toc")`.
- * Проверки идут через публичный `RichTextEditor`, как их вызовет экран.
+ * Tool commands (OLDSUI-268): `handle.tool("search")` and `handle.tool("toc")`.
+ * The checks go through the public `RichTextEditor`, the way a screen calls them.
  */
 
 beforeAll(loadLazyBuiltins);
-// Панель Поиска и ядро Оглавления — ленивые чанки: прогреваем, чтобы `findBy` не ждал сеть.
+// The Search panel and the TOC core are lazy chunks: warm them up so `findBy` does not
+// wait on the network.
 beforeAll(() => import("../src/editor/features/search/SearchPanel.js"));
 beforeAll(() => import("../src/editor/features/toc/RichTextToc.js"));
 
@@ -38,7 +39,7 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
   scrollTo = vi.fn();
   window.scrollTo = scrollTo as unknown as typeof window.scrollTo;
-  // Подсветка заголовка — Web Animations, которых в jsdom нет.
+  // Heading highlighting uses Web Animations, which jsdom does not have.
   animate = vi.fn();
   HTMLElement.prototype.animate = animate as unknown as HTMLElement["animate"];
 });
@@ -63,7 +64,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, handle, editor: () => ref.current!.editor! };
 }
 
-/** Промисы загрузчиков и эффекты Редактора отработали. */
+/** Loader promises and Editor effects have settled. */
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 10))));
 
@@ -74,7 +75,7 @@ const isOn = (control: HTMLElement) =>
   control.getAttribute("aria-checked") === "true" || (control as HTMLInputElement).checked === true;
 const strip = () => screen.queryByRole("button", { name: "Table of contents" });
 
-// ---------------------------------------------------------------- вход handle.tool()
+// ---------------------------------------------------------------- handle.tool() entry
 
 test("handle.tool() gives the Commands of a tool in the set and null for a tool outside it", () => {
   const { handle } = renderEditor({ tools: [...RICH_TEXT_PRESETS.full, "toc"] });
@@ -108,7 +109,7 @@ test("a tool without Commands and an unknown name give null", () => {
 test("before the engine exists handle.tool() is null", async () => {
   const lazy = testLazyTool();
   const { ref } = renderEditor({ tools: [...RICH_TEXT_PRESETS.full, lazy.tool] });
-  // Загрузчик ещё не отдал Extensions: движка нет, Хэндл тихий.
+  // The Loader has not yet delivered the Extensions: there is no engine, so the Handle is silent.
   expect(ref.current?.editor).toBeNull();
   expect(ref.current?.tool("search")).toBeNull();
 
@@ -117,7 +118,7 @@ test("before the engine exists handle.tool() is null", async () => {
   expect(ref.current!.tool("search")).not.toBeNull();
 });
 
-// ---------------------------------------------------------------- search: панель
+// ---------------------------------------------------------------- search: panel
 
 test("open() opens the panel with focus in the search field", async () => {
   const { handle } = renderEditor();
@@ -140,7 +141,7 @@ test("open({ replace }) puts the focus in the replace field", async () => {
 test("open({ query }) puts the query in the field and highlights the matches at once", async () => {
   const { handle, editor } = renderEditor();
   act(() => void handle().tool("search")!.open({ query: "cat" }));
-  // Подсветка не ждёт ленивую панель: команды работают сразу после `open`.
+  // Highlighting does not wait for the lazy panel: commands work right after `open`.
   expect(searchState(editor().state)).toMatchObject({ query: "cat", total: 2, current: 0 });
 
   await screen.findByRole("search", { name: "Find and replace" });
@@ -208,11 +209,11 @@ test("entering the HTML mode clears a query set without the panel", async () => 
 
   await user.click(screen.getByRole("button", { name: "HTML" }));
   expect(searchState(editor().state)?.total).toBe(0);
-  // Документ скрыт: переход по совпадениям в нём не может «получиться».
+  // The Document is hidden: navigating matches inside it cannot "succeed".
   expect(handle().tool("search")!.next()).toBe(false);
 });
 
-// ---------------------------------------------------------------- search: запрос и переходы
+// ---------------------------------------------------------------- search: query and navigation
 
 test("setQuery() sets the query without the panel: matches, the current one and a result", () => {
   const { handle, editor } = renderEditor();
@@ -243,7 +244,7 @@ test("setQuery() flags change the search; the unnamed ones keep their value", ()
   expect(searchState(editor().state)?.total).toBe(3);
   act(() => void search().setQuery("cat", { matchCase: true }));
   expect(searchState(editor().state)?.total).toBe(2);
-  // `matchCase` не назван — остаётся включённым.
+  // `matchCase` is not named, so it stays on.
   act(() => void search().setQuery("cat", { wholeWord: true }));
   expect(searchState(editor().state)).toMatchObject({ total: 1, options: { matchCase: true } });
   act(() => void search().setQuery("c.t", { regex: true, wholeWord: false }));
@@ -256,7 +257,7 @@ test("setQuery() with an undefined flag leaves that flag as it was", () => {
   act(() => void search().setQuery("cat", { matchCase: true }));
   expect(searchState(editor().state)?.total).toBe(1);
 
-  // Ключ есть, значения нет — «не менять», а не «выключить».
+  // The key is present but the value is not: "leave unchanged", not "turn off".
   act(() => void search().setQuery("cat", { matchCase: undefined }));
   expect(searchState(editor().state)).toMatchObject({ total: 1, options: { matchCase: true } });
   act(() => void search().setQuery("cat", { matchCase: undefined, wholeWord: true }));
@@ -277,7 +278,7 @@ test("the starting flags of tool('search') are the flags of the Commands until t
 
   act(() => void search().setQuery("cat", { matchCase: false }));
   expect(searchState(editor().state)?.total).toBe(2);
-  // После `close()` флажки возвращаются к Опциям Инструмента.
+  // After `close()` the checkboxes go back to the Tool options.
   act(() => void search().close());
   act(() => void search().setQuery("cat"));
   expect(searchState(editor().state)?.total).toBe(1);
@@ -340,7 +341,7 @@ test("next() and previous() are false without matches", () => {
   expect(search.next()).toBe(false);
 });
 
-// ---------------------------------------------------------------- search: замена
+// ---------------------------------------------------------------- search: replace
 
 test("replace() replaces the current match in one undoable edit", () => {
   const onChange = vi.fn();
@@ -354,7 +355,7 @@ test("replace() replaces the current match in one undoable edit", () => {
   });
   expect(result).toBe(true);
   expect(editor().getText()).toBe("cow dog cat");
-  // Текущим стало следующее совпадение: вторая замена берёт его.
+  // The next match is now the current one: the second replace takes it.
   act(() => void search().replace("cow"));
   expect(editor().getText()).toBe("cow dog cow");
   expect(onChange).toHaveBeenCalled();
@@ -452,7 +453,7 @@ test("jumpTo() does what a click on the list item does: scroll, flash, the curre
   const heading = [...editor().view.dom.querySelectorAll("h3")][0]!;
   heading.getBoundingClientRect = () => ({ top: 500 }) as DOMRect;
 
-  // Клик по пункту — образец.
+  // A click on an item is the reference case.
   await user.click(strip()!);
   const items = within(screen.getByRole("navigation", { name: "Table of contents" })).getAllByRole(
     "button"
@@ -469,7 +470,7 @@ test("jumpTo() does what a click on the list item does: scroll, flash, the curre
   expect(byCommand).toEqual(byClick);
   expect(animate).toHaveBeenCalledTimes(1);
   expect(animate.mock.contexts[0]).toBe(heading);
-  // Пункт «как у клика» подсвечен текущим.
+  // The item "as with a click" is highlighted as current.
   await waitFor(() =>
     expect(
       screen
@@ -539,8 +540,8 @@ test("jumpTo() follows the Document: a heading added by the author is in the lis
 });
 
 /**
- * Экран со снимком `toc` рядом с Редактором: индексы для `jumpTo` берутся из
- * него, как их берёт внешняя навигация.
+ * A screen with the `toc` snapshot next to the Editor: the indexes for `jumpTo` are taken from
+ * it, the way external navigation takes them.
  */
 async function renderWithTocState(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -572,7 +573,7 @@ async function renderWithTocState(props: Partial<RichTextEditorProps> = {}) {
   };
 }
 
-/** Позиция Блока верхнего уровня с этим текстом. */
+/** Position of the top-level Block with this text. */
 function positionOf(editor: Editor, text: string): number {
   let found = -1;
   editor.state.doc.forEach((node, offset) => {
@@ -585,7 +586,7 @@ test("jumpTo() takes a snapshot index read right after an edit at the start, bef
   const { handle, editor, indexOf, snapshot } = await renderWithTocState();
 
   act(() => void editor().commands.insertContentAt(0, "<h2>Zero</h2>"));
-  // Правка моложе задержки пересборки списка: список Оглавления ещё прежний.
+  // The edit is newer than the list rebuild delay, so the TOC list is still the old one.
   const index = indexOf("How to read");
   expect(index).toBe(3);
 
@@ -597,7 +598,7 @@ test("jumpTo() takes a snapshot index read right after an edit at the start, bef
   expect(editor().state.selection.$from.parent.textContent).toBe("How to read");
   expect(snapshot().current).toBe(index);
 
-  // Последний заголовок снимка — тоже пункт, хотя в прежнем списке его нет.
+  // The snapshot's last heading is an item too, although it is not in the old list.
   act(
     () =>
       void handle()
@@ -644,7 +645,7 @@ test("jumpTo() follows a removal too: the index of the snapshot is the same head
   expect(indexOf("How to read")).toBe(1);
   act(() => void handle().tool("toc")!.jumpTo(indexOf("What's next")));
   expect(editor().state.selection.$from.parent.textContent).toBe("What's next");
-  // Прежний последний индекс (4) в списке из четырёх заголовков — уже не пункт.
+  // The old last index (4) in the list of four headings is no longer an item.
   expect(handle().tool("toc")!.jumpTo(4)).toBe(false);
 });
 
@@ -656,14 +657,14 @@ test("jumpTo() with a snapshot index: the list is rebuilt mid-scroll and the sam
   const index = indexOf("Neutrals");
   expect(snapshot().current).toBe(index);
 
-  // Прокрутка перехода ещё идёт: события прокрутки не дают разделу перехода улечься.
+  // The jump's scroll is still running: scroll events keep the target section from settling.
   const scrolling = setInterval(() => document.dispatchEvent(new Event("scroll")), 20);
   try {
     await waitFor(() => expect(strip()!.querySelectorAll("[data-toc-stroke]")).toHaveLength(6));
   } finally {
     clearInterval(scrolling);
   }
-  // Список пересобрался: подсвечен тот же заголовок, а индекс в пределах списка.
+  // The list has been rebuilt: the same heading is highlighted, and the index is within the list.
   expect(snapshot().current).toBe(index);
   const marked = [...strip()!.querySelectorAll("[data-toc-stroke]")].findIndex((stroke) =>
     stroke.hasAttribute("data-current")
@@ -678,7 +679,7 @@ test("jumpTo() is false in the HTML mode: the Document is hidden", async () => {
   expect(handle().tool("toc")!.jumpTo(0)).toBe(false);
 });
 
-// ---------------------------------------------------------------- openSearch (устарел)
+// ---------------------------------------------------------------- openSearch (deprecated)
 
 test("handle.openSearch() still opens the panel, with the replace focus on request", async () => {
   const { handle } = renderEditor();

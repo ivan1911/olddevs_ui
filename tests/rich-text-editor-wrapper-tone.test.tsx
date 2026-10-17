@@ -20,19 +20,19 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Тон Обёртки (OLDSUI-78): `data-tone` на `div[data-block="wrapper"]` — имя из
- * словаря тонов кита, вид — мягкая подложка и полоса слева, в Markdown — GitHub
- * alert.
+ * Wrapper tone (OLDSUI-78): `data-tone` on `div[data-block="wrapper"]`. The name comes from
+ * the kit's tone vocabulary; the look is a soft background and a stripe on the left; in
+ * Markdown, a GitHub alert.
  *
- * Через публичный `RichTextEditor`, `RichTextView` и `sanitizeRichText`, как
- * тесты самой Обёртки (`rich-text-editor-wrapper.test.tsx`): результат —
- * выходной HTML, Markdown, меню ручки и шаг отмены.
+ * Through the public `RichTextEditor`, `RichTextView`, and `sanitizeRichText`, as in the
+ * Wrapper's own tests (`rich-text-editor-wrapper.test.tsx`): the result is the output HTML,
+ * Markdown, the handle menu, and the undo step.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -48,7 +48,7 @@ const wrapper = (...blocks: string[]) => `<div data-block="wrapper">${blocks.joi
 const toned = (tone: string, ...blocks: string[]) =>
   `<div data-block="wrapper" data-tone="${tone}">${blocks.join("")}</div>`;
 
-// ── Схема ────────────────────────────────────────────────────────────────
+// ── Schema ───────────────────────────────────────────────────────────────
 
 test.each(TONES)("a wrapper with the %s tone survives a round trip", (tone) => {
   const html = `<p>Before</p>${toned(tone, "<p>One</p>", "<h2>Two</h2>")}<p>After</p>`;
@@ -87,7 +87,7 @@ test("a toned wrapper nested in a wrapper unfolds and the outer one keeps its ow
   expect(editor.getHTML()).toBe(toned("accent", "<p>a</p>", "<p>x</p>"));
 });
 
-// ── Санитайзер ───────────────────────────────────────────────────────────
+// ── Sanitizer ────────────────────────────────────────────────────────────
 
 test("sanitizeRichText keeps what the editor writes and drops an unknown or misplaced tone", () => {
   const purify = createDOMPurify(window);
@@ -106,7 +106,7 @@ test("sanitizeRichText keeps what the editor writes and drops an unknown or misp
         '<div data-block="column" data-tone="accent"><p>a</p></div></div>',
       '<div data-block="layout" data-layout="100"><div data-block="column"><p>a</p></div></div>',
     ],
-    // Тон уходит вместе со снятой Обёрткой.
+    // The tone goes away together with the unwrapped Wrapper.
     [
       `<blockquote>${toned("danger", "<p>a</p>")}</blockquote>`,
       "<blockquote><p>a</p></blockquote>",
@@ -116,11 +116,14 @@ test("sanitizeRichText keeps what the editor writes and drops an unknown or misp
   }
 });
 
-// ── Меню «Тон ›» ─────────────────────────────────────────────────────────
+// ── "Tone ›" menu ────────────────────────────────────────────────────────
 
 const HANDLE = "Block actions";
 
-/** Каретка — в конец текста `text`, фокус — в Документ: ручка видна только при нём. */
+/**
+ * Places the caret at the end of the text `text`, focus in the Document: the handle is
+ * visible only then.
+ */
 function focusAt(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -173,15 +176,16 @@ test("the checked tone row keeps the swatch's own colours instead of the selecte
   const tone = await openToneMenu(user, "Warning");
   const row = within(tone).getByRole("menuitemradio", { name: "Warning" });
   expect(row.getAttribute("aria-checked")).toBe("true");
-  // Галочка и подложка строки — от пункта меню.
+  // The check mark and the row background come from the menu item.
   expect(row.querySelector("svg")).not.toBeNull();
   expect(row.className).toContain("selected:bg-accent-soft");
 
-  // Образец носит свои цвета и не наследует голубой текст выбранной строки.
+  // The sample carries its own colors and does not inherit the selected row's text color.
   const swatch = within(row).getByText("Warning");
   expect(swatch.className.split(" ")).toContain("text-fg-0");
   expect(swatch.className).toContain("bg-(--warning-soft)");
-  // Прозрачная подложка тона не смешивается с подложкой строки: под образцом непрозрачная основа.
+  // The tone's transparent background does not blend with the row background: under the
+  // sample there is an opaque base.
   expect(swatch.parentElement!.className).toContain("in-[[aria-checked=true]]:bg-surface-elevated");
 });
 
@@ -198,7 +202,7 @@ test("choosing a tone writes it in one undo step and the caret stays in its text
   expect(editor.state.selection.$from.parent.textContent).toBe("Two");
   await waitFor(() => expect(editor.view.hasFocus()).toBe(true));
 
-  // Имя пункта и отметка — уже с новым тоном.
+  // The item name and the check mark already show the new tone.
   tone = await openToneMenu(user, "Note");
   expect(checkedName(tone)).toEqual(["Note"]);
   await user.click(within(tone).getByRole("menuitemradio", { name: "Caution" }));
@@ -243,7 +247,7 @@ test("the handle of a wrapper selected as a whole sets its tone too", async () =
   expect(editor.getHTML()).toBe(
     `<p>Above</p>${toned("success", "<p>One</p>", "<p>Two</p>")}<p>Below</p>`
   );
-  // Обёртка осталась выделенной целиком.
+  // The Wrapper stays selected as a whole.
   expect((editor.state.selection as NodeSelection).node?.type.name).toBe("wrapper");
 });
 
@@ -308,7 +312,7 @@ test("each menu swatch wears the theme's tokens of its tone", () => {
   }
 });
 
-// ── Показ ────────────────────────────────────────────────────────────────
+// ── Display ──────────────────────────────────────────────────────────────
 
 test("RichTextView shows the tone as markup only: no role, no aria, no style", () => {
   const { container: root } = render(
@@ -333,7 +337,7 @@ test("the tone has one look in the editor and in the view; the dashed frame is f
   const toneRules = viewClasses.filter((token) => token.includes("[data-tone"));
   expect(toneRules.length).toBeGreaterThan(0);
   expect(toneRules.filter((token) => !editorClasses.has(token))).toEqual([]);
-  // Пунктир Редактора — только у Обёртки без тона.
+  // The Editor's dashed outline applies only to a Wrapper without a tone.
   const dashed = [...editorClasses].filter((token) => token.endsWith(":border-dashed"));
   expect(dashed.filter((token) => token.includes("[data-block=wrapper]"))).toEqual([
     "[&.ProseMirror_[data-block=wrapper]:not([data-tone])]:border-dashed",
@@ -385,7 +389,7 @@ test("an alert survives getMarkdown then setMarkdown, every tone", () => {
 });
 
 test("a line first in a toned wrapper survives the round trip, not turning the label into a heading", () => {
-  // `---` прямо под строкой метки Markdown читал бы подчёркиванием заголовка.
+  // `---` right under the Markdown label line would be read as a heading underline.
   const html = toned("accent", "<hr>", "<p>after</p>");
   const { editor, handle } = renderEditor({ defaultValue: html });
   act(() => handle.setMarkdown(handle.getMarkdown()));
@@ -442,7 +446,7 @@ test("raw wrapper HTML inside Markdown still makes no wrapper", () => {
   expect(editor.getHTML()).not.toContain("data-block");
 });
 
-/** Вставка обычного текста из буфера событием `paste`, как в тестах Markdown. */
+/** Pastes plain text from the clipboard as a `paste` event, as in the Markdown tests. */
 function pasteText(editor: Editor, text: string) {
   const event = new Event("paste", { bubbles: true, cancelable: true });
   Object.assign(event, {
@@ -454,7 +458,7 @@ function pasteText(editor: Editor, text: string) {
   act(() => void editor.view.dom.dispatchEvent(event));
 }
 
-/** Каретка — в конец текста `text`, без фокуса. */
+/** Places the caret at the end of the text `text`, without focus. */
 function caretAt(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -498,7 +502,7 @@ test.each([
   expect(editor.getText()).toContain("y");
 });
 
-// ── HTML-режим ───────────────────────────────────────────────────────────
+// ── HTML mode ────────────────────────────────────────────────────────────
 
 test("HTML mode shows the tone on the wrapper and applies it through the schema", async () => {
   const user = userEvent.setup();

@@ -14,7 +14,7 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -23,11 +23,11 @@ afterEach(() => {
 });
 
 /**
- * Редактор с доступом к движку через `ref.editor`.
+ * The Editor, with access to the engine through `ref.editor`.
  *
- * Набор в jsdom идёт командами движка, а не событиями клавиатуры: ProseMirror
- * читает ввод из мутаций DOM и `beforeinput`, которых jsdom не воспроизводит.
- * Для значения и схемы это та же транзакция, что и от живой клавиатуры.
+ * Typing in jsdom goes through engine commands, not keyboard events: ProseMirror
+ * reads input from DOM mutations and `beforeinput`, which jsdom does not reproduce.
+ * For the value and the schema, this is the same transaction as with a live keyboard.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -37,7 +37,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor };
 }
 
-/** Набор в конец документа — так, как дописывает автор. */
+/** Typing at the end of the document, the way the author appends text. */
 function typeAtEnd(editor: Editor, text: string) {
   act(() => {
     editor
@@ -82,7 +82,7 @@ test("blur hands the pending change over at once instead of waiting for the dela
 
   expect(onChange).toHaveBeenCalledTimes(1);
   expect(onChange).toHaveBeenLastCalledWith("<p>draft</p>");
-  // Ожидание снято, а не отложено: таймер не отдаёт ту же правку второй раз.
+  // The wait is cancelled, not postponed: the timer does not hand over the same edit a second time.
   act(() => void vi.advanceTimersByTime(1000));
   expect(onChange).toHaveBeenCalledTimes(1);
 });
@@ -111,8 +111,8 @@ test("name puts the current HTML into FormData, fresh at submit time", () => {
   vi.useFakeTimers();
 
   typeAtEnd(ref.current!.editor!, "b");
-  // Задержка не истекла — а отправка всё равно получает свежий HTML, и
-  // потребитель узнаёт о правке до своего `onSubmit`.
+  // The delay has not elapsed, yet the submit still gets fresh HTML, and
+  // the consumer learns about the edit before its own `onSubmit`.
   act(() => screen.getByRole("button", { name: "Send" }).click());
 
   expect(submitted!.get("body")).toBe("<p>ab</p>");
@@ -137,10 +137,10 @@ test("FormData read outside of submit also sees the latest HTML", () => {
 
   typeAtEnd(ref.current!.editor!, "now");
 
-  // Автосохранение по таймеру потребителя собирает форму без `submit` — и тоже
-  // не должно отставать от набора на `changeDelay`. Браузер на `new FormData`
-  // шлёт форме событие `formdata`; jsdom его не шлёт (TODO в его исходнике),
-  // поэтому событие отправляется здесь так, как это делает браузер.
+  // The consumer's timer-based autosave gathers the form without `submit`, and it too
+  // must not lag behind typing by `changeDelay`. The browser sends a `formdata` event
+  // to the form on `new FormData`; jsdom does not send it (a TODO in its source), so the
+  // event is dispatched here the way the browser does it.
   const form = container.querySelector("form")!;
   const data = new FormData(form);
   const event = Object.assign(new Event("formdata"), { formData: data });
@@ -167,9 +167,9 @@ test("the value echoed back by the owner keeps the document and the caret", () =
   const doc = editor.state.doc;
   const caret = editor.state.selection.from;
 
-  // Владелец кладёт отданный HTML обратно в `value` — обычный цикл
-  // управляемого поля. Пересоздание документа здесь сбросило бы курсор в начало
-  // на каждой букве.
+  // The owner puts the HTML it got back into `value`, the usual loop of a
+  // controlled field. Recreating the document here would reset the caret to the start
+  // on every letter.
   rerender(
     <RichTextEditor
       ref={ref}
@@ -234,15 +234,15 @@ test("a paste over maxLength keeps only what fits", () => {
 
   act(() => void editor.view.pasteHTML("<p>456789</p>", new Event("paste") as ClipboardEvent));
 
-  // Вставка в почти полное поле отдаёт всё, что поместилось, а не ничего.
+  // Pasting into an almost full field gives everything that fits, not nothing.
   expect(editor.getText()).toBe("12345");
 });
 
 test("a value longer than maxLength is loaded intact, not trimmed", () => {
   const { editor } = renderEditor({ maxLength: 3, value: "<p>123456</p>" });
 
-  // Это данные владельца: обрезать их молча значило бы испортить запись при
-  // первом же сохранении. Автор может сокращать текст, но не удлинять.
+  // This is the owner's data: trimming it silently would corrupt the record on
+  // the first save. The author may shorten the text, but not lengthen it.
   expect(editor.getText()).toBe("123456");
   expect(screen.getByText("3 characters over the limit")).toBeTruthy();
   typeAtEnd(editor, "7");
@@ -260,8 +260,8 @@ test("readOnly keeps the text readable and submitted, but not editable", () => {
   expect(field.getAttribute("contenteditable")).toBe("false");
   expect(field.getAttribute("aria-readonly")).toBe("true");
   expect(editor.isEditable).toBe(false);
-  // Поле только для чтения — показанное значение, а не недоступный контрол:
-  // в форму оно уходит, как у нативного `readonly`.
+  // A read-only field is a shown value, not a disabled control:
+  // it is submitted with the form, as a native `readonly` field is.
   expect(container.querySelector<HTMLInputElement>('input[name="body"]')?.disabled).toBe(false);
 });
 
@@ -371,7 +371,7 @@ test("inside FormField the hint and the error describe the field, the error mark
   );
   const field = screen.getByRole("textbox", { name: "Body" });
   const hint = screen.getByText("Markdown shortcuts work");
-  // Своё описание не вытесняется контекстным — атрибут хранит список.
+  // Its own description is not pushed out by the context one: the attribute holds a list.
   expect(field.getAttribute("aria-describedby")?.split(" ")).toEqual(["own", hint.id]);
   expect(field.getAttribute("aria-invalid")).toBeNull();
 
@@ -392,8 +392,8 @@ test("the FormField label names the field through htmlFor and id", () => {
     </FormField>
   );
 
-  // `<label for>` у `contenteditable` браузер не связывает — это не
-  // «labelable element». Имя доходит ссылкой на подпись.
+  // The browser does not associate `<label for>` with a `contenteditable` element, because
+  // it is not a "labelable element". The name comes through a reference to the label.
   const field = screen.getByRole("textbox", { name: "Description" });
   expect(field.id).toBe("description");
 });
@@ -405,8 +405,8 @@ test("the FormField label names the editor even without htmlFor and id", () => {
     </FormField>
   );
 
-  // Подпись публикует свой `id` контекстом, и редактору не нужно ни искать её в
-  // DOM, ни договариваться с вызывающим об одинаковых `id` и `htmlFor`.
+  // The label publishes its own `id` through context, so the editor has neither to look it up
+  // in the DOM nor to agree with the caller on matching `id` and `htmlFor`.
   const field = screen.getByRole("textbox", { name: "Description" });
   const label = screen.getByText("Description");
   expect(field.getAttribute("aria-labelledby")).toBe(label.id);
@@ -441,8 +441,8 @@ test("a click on a label that points at nothing still focuses the editor, and th
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Description" }))
   );
-  // Раньше поле дописывало подписи `id` и вешало её в `aria-labelledby` само;
-  // теперь подпись читается, но не правится.
+  // The field used to add the `id` to the label itself and wire it into `aria-labelledby`;
+  // now the label is read but not changed.
   expect(label.outerHTML).toBe(before);
 });
 
@@ -469,9 +469,9 @@ test("required is announced on the field", () => {
 });
 
 /**
- * Форма с обязательным редактором. `requestSubmit()`, а не щелчок по кнопке:
- * он проходит ту же проверку ограничений, что и кнопка, и не зависит от того,
- * как jsdom реализует активацию.
+ * A form with a required editor. `requestSubmit()` rather than a click on the button:
+ * it runs the same constraint check as the button and does not depend on
+ * how jsdom implements activation.
  */
 function renderRequiredForm(props: Partial<RichTextEditorProps> = {}) {
   const submitted: FormData[] = [];
@@ -495,8 +495,8 @@ test("an empty required editor blocks the submit and takes the focus", async () 
 
   act(() => form.requestSubmit());
 
-  // Как нативное `required`: отправка не состоялась, а фокус — в редакторе,
-  // чтобы автору не пришлось искать, какое поле не заполнено.
+  // As with a native `required`: the submit did not happen, and focus goes to the editor,
+  // so the author does not have to look for which field is empty.
   expect(submitted).toHaveLength(0);
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Body" }))
@@ -527,8 +527,8 @@ test("content lifts the block, and the HTML reaches FormData", () => {
 
   act(() => form.requestSubmit());
 
-  // Задержка `onChange` ещё не истекла, а форма уже разрешает отправку:
-  // валидность следует за документом, а не за отложенным значением.
+  // The `onChange` delay has not elapsed yet, but the form already allows submitting:
+  // validity follows the document, not the delayed value.
   expect(submitted).toHaveLength(1);
   expect(submitted[0]?.get("body")).toBe("<p>Hello</p>");
 });
@@ -545,8 +545,8 @@ test("clearing the document blocks the submit again", () => {
 });
 
 test("a document of one atom block without any text counts as content", () => {
-  // `<hr>` — блок без текста. Будущие картинки и таблицы относятся к нему же:
-  // пустым документ считается, только когда в нём нет ни текста, ни такого блока.
+  // `<hr>` is a block with no text. Future images and tables belong to the same group:
+  // a document counts as empty only when it has neither text nor such a block.
   const { form, submitted } = renderRequiredForm({ defaultValue: "<hr>" });
 
   act(() => form.requestSubmit());
@@ -605,7 +605,7 @@ test("the handle reads the HTML now and clears the document for the owner", () =
   vi.useFakeTimers();
 
   typeAtEnd(editor, " going");
-  // Без ожидания задержки — и без лишнего `onChange`: чтение не правка.
+  // No delay wait, and no extra `onChange`: a read is not an edit.
   expect(ref.current!.getHTML()).toBe("<p>Keep going</p>");
 
   act(() => ref.current!.clear());
@@ -623,13 +623,13 @@ test("focus() puts the caret into the document", async () => {
 
   act(() => ref.current!.focus());
 
-  // Tiptap ставит фокус в следующем кадре — ради клавиатуры iOS.
+  // Tiptap moves focus in the next frame, for the sake of the iOS keyboard.
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Body" }))
   );
 });
 
-/** Ввод текста тем путём, которым его получает ProseMirror от браузера. */
+/** Types text the way ProseMirror receives it from the browser. */
 function typeText(editor: Editor, text: string) {
   act(() => {
     for (const char of text) {
@@ -658,7 +658,7 @@ test("markdown shortcuts turn into blocks and marks while typing", () => {
 
   act(() => void editor.commands.setContent(""));
   typeText(editor, "# Top");
-  // H1 даёт инструмент `heading1` (в full он есть); без него — `heading1.test.tsx`.
+  // H1 comes from the `heading1` Tool (it is in full); without it, see `heading1.test.tsx`.
   expect(editor.getHTML()).toBe("<h1>Top</h1>");
 });
 

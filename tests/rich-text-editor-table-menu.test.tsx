@@ -14,18 +14,18 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Меню «Таблица» на Панели (OLDSUI-45), как у TinyMCE: одна кнопка вместо
- * «Таблицы» и «Действий с таблицей».
+ * The "Table" menu on the Toolbar (OLDSUI-45), as in TinyMCE: one button instead of
+ * "Table" and "Table actions".
  *
- * Через публичный `RichTextEditor`: пункты выбираются мышью и клавишами, как
- * пользователь, результат читается по ячейкам документа. Курсор ставится
- * командами движка: jsdom не умеет ввода в `contenteditable`.
+ * Through the public `RichTextEditor`: items are selected with the mouse and keys, as a user
+ * would, and the result is read from the cells of the document. The caret is placed with
+ * engine commands: jsdom cannot type into `contenteditable`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -35,7 +35,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor, handle: ref.current! };
 }
 
-/** Таблица 2×3 с заголовком и текстом в каждой ячейке. */
+/** A 2×3 table with a header and text in each cell. */
 const TABLE =
   "<table><tbody>" +
   "<tr><th><p>h1</p></th><th><p>h2</p></th></tr>" +
@@ -43,7 +43,7 @@ const TABLE =
   "<tr><td><p>b1</p></td><td><p>b2</p></td></tr>" +
   "</tbody></table>";
 
-/** Курсор в конец ячейки (или абзаца) с этим текстом. */
+/** Puts the caret at the end of the cell (or paragraph) with this text. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -60,7 +60,7 @@ async function openMenu(user: ReturnType<typeof userEvent.setup>) {
   return screen.getByRole("menu", { name: "Table" });
 }
 
-/** Пункты меню первого уровня: имя и недоступность. */
+/** Top-level menu items: name and disabled state. */
 const topItems = (menu: HTMLElement) =>
   Array.from(menu.querySelectorAll(':scope [role^="menuitem"]'))
     .filter((item) => item.closest('[role="menu"]') === menu)
@@ -95,7 +95,7 @@ test("outside a table only Table and Insert table are available; the rest stays 
     { name: "Sort", disabled: true },
     { name: "Delete table", disabled: true },
   ]);
-  // Недоступный пункт — `aria-disabled`, а не пропуск: стрелка на него встаёт.
+  // A disabled item is `aria-disabled`, not skipped: the arrow key lands on it.
   await user.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}");
   expect(document.activeElement?.textContent).toBe("Cell");
 });
@@ -131,7 +131,7 @@ test("Table › opens a size grid; a click inserts that size with a header row a
   expect(sizeOf(handle.getHTML())).toEqual({ cols: 4, rows: 2 });
   expect(rowsOf(handle.getHTML())[0]).toBe(`<tr>${"<th><p></p></th>".repeat(4)}</tr>`);
   expect(screen.queryByRole("menu")).toBeNull();
-  // Каретка — в первой ячейке новой таблицы, фокус — в документе.
+  // The caret is in the first cell of the new table, and focus is in the Document.
   expect(editor.isActive("tableHeader")).toBe(true);
   await waitFor(() => expect(document.activeElement).toBe(textbox()));
 });
@@ -146,12 +146,12 @@ test("the keyboard path: Enter opens the menu, → opens the grid and focuses it
   expect(document.activeElement?.closest('[role="menu"]')).toBe(
     screen.getByRole("menu", { name: "Table" })
   );
-  // `Enter` на кнопке меню ставит фокус на первый пункт — «Таблица ›».
+  // `Enter` on the menu button puts focus on the first item, "Table ›".
   expect(document.activeElement?.textContent).toBe("Table");
   await user.keyboard("{ArrowRight}");
   const grid = await screen.findByRole("grid", { name: "Table size" });
   await waitFor(() => expect(document.activeElement).toBe(grid));
-  // Меню под сеткой при этом открыто: фокус в подменю его не закрыл.
+  // The menu under the grid stays open: focus moving into the submenu did not close it.
   expect(screen.getByRole("menu", { name: "Table" })).toBeDefined();
 
   await user.keyboard("{ArrowRight}{ArrowDown}{Enter}");
@@ -163,9 +163,9 @@ test("the keyboard path: Enter opens the menu, → opens the grid and focuses it
 });
 
 /*
-  Фокус в сетку ставит сигнал поповера («место посчитано, вход доигран»), а не
-  таймер: часы здесь заморожены, и фокус обязан прийти без их хода. Таймер на
-  50 мс — гонка с устройством, сигнал react-aria — нет.
+  Focus moves into the grid on a signal from the popover ("the position is computed, the entry
+  animation has finished"), not on a timer: the clock is frozen here, so focus has to arrive
+  without its ticks. A 50 ms timer is a race with the device's timing; the react-aria signal is not.
 */
 test("the grid takes focus once its popover has settled, without waiting on a timer", async () => {
   const user = userEvent.setup();
@@ -177,7 +177,7 @@ test("the grid takes focus once its popover has settled, without waiting on a ti
 
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval"] });
   try {
-    // `fireEvent`, а не `user.keyboard`: тому самому нужны часы между событиями.
+    // `fireEvent`, not `user.keyboard`: the latter needs clock ticks between events.
     const item = document.activeElement!;
     await act(async () => {
       fireEvent.keyDown(item, { key: "ArrowRight" });
@@ -187,8 +187,8 @@ test("the grid takes focus once its popover has settled, without waiting on a ti
     expect(document.activeElement).toBe(grid);
     expect(screen.getByRole("menu", { name: "Table" })).toBeDefined();
   } finally {
-    // Таймеры, заведённые под замороженными часами (react-aria, движок), должны
-    // отработать: иначе их состояние протечёт в следующие тесты файла.
+    // Timers set under the frozen clock (react-aria, the engine) must run,
+    // otherwise their state leaks into the next tests in the file.
     act(() => vi.runOnlyPendingTimers());
     vi.useRealTimers();
   }
@@ -244,7 +244,7 @@ test("Insert table… opens a dialog on the last size; Enter in a field inserts 
   expect([columns, rows].map((field) => (field as HTMLInputElement).value)).toEqual(["3", "3"]);
   await waitFor(() => expect(document.activeElement).toBe(columns));
 
-  // Сверх предела поле прижимается к нему: 99 столбцов — это 20.
+  // Beyond the limit, the field is clamped to it: 99 columns becomes 20.
   await user.clear(columns);
   await user.type(columns, "99");
   await user.clear(rows);
@@ -255,7 +255,7 @@ test("Insert table… opens a dialog on the last size; Enter in a field inserts 
   await waitFor(() => expect(document.activeElement).toBe(textbox()));
   expect(editor.isActive("tableHeader")).toBe(true);
 
-  // Размер из окна запоминается так же, как из сетки.
+  // A size from the dialog is remembered the same way as one from the grid.
   caretIn(editor, "Text");
   const again = await openDialog(user);
   expect((within(again).getByRole("textbox", { name: "Columns" }) as HTMLInputElement).value).toBe(
@@ -299,7 +299,7 @@ const cells = (editor: Editor) =>
     Array.from(tr.children).map((cell) => cell.textContent)
   );
 
-/** Пункт подменю выбирается мышью: наведение на пункт первого уровня, щелчок в подменю. */
+/** A submenu item is selected with the mouse: hover over the top-level item, then click in the submenu. */
 async function choose(user: ReturnType<typeof userEvent.setup>, submenu: string, name: string) {
   const menu = await openMenu(user);
   await user.hover(within(menu).getByRole("menuitem", { name: submenu }));
@@ -320,7 +320,7 @@ test("Insert row below shows its shortcut Alt+↓", async () => {
   const below = within(row).getByRole("menuitem", { name: /Insert row below/ });
 
   expect(below.querySelector("kbd")?.textContent).toBe("Alt+↓");
-  // Сочетание есть только у этой строки: у «выше» и столбцов его нет.
+  // Only this row has a shortcut: "Insert above" and the column items have none.
   expect(row.querySelectorAll("kbd")).toHaveLength(1);
 });
 
@@ -431,7 +431,7 @@ test("submenus from the keyboard: → opens and focuses the first item, ← clos
   caretIn(editor, "a2");
 
   act(() => tableButton().focus());
-  // Таблица › — Вставить таблицу… — Ячейка — Строка.
+  // Table › — Insert table… — Cell — Row.
   await user.keyboard("{Enter}{ArrowDown}{ArrowDown}{ArrowDown}");
   expect(document.activeElement?.textContent).toBe("Row");
   await user.keyboard("{ArrowRight}");
@@ -488,7 +488,7 @@ test("the only row and the only column cannot be deleted; the submenus say so", 
   ).toBe(false);
 });
 
-/** Позиция ячейки (перед ней) с этим текстом — для выделения поперёк ячеек. */
+/** The position just before the cell with this text, for selecting across cells. */
 function cellPos(editor: Editor, text: string): number {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -547,8 +547,8 @@ test("merging writes colspan and rowspan that survive save and load; split takes
   selectCells(editor, "a1", "b2");
   await choose(user, "Cell", "Merge cells");
 
-  // Строка, целиком накрытая слиянием сверху, остаётся пустой `<tr>`: так
-  // таблица помнит свою высоту, и `rowspan="2"` есть куда растянуть.
+  // A row fully covered by a merge from above stays an empty `<tr>`: this way the table keeps
+  // its height, and `rowspan="2"` has room to stretch.
   const saved = handle.getHTML();
   expect(saved).toBe(
     "<table><tbody>" +
@@ -598,7 +598,7 @@ test("column alignment writes data-align on every cell of the column; the radio 
     ["Align column right", "false"],
   ]);
 
-  // «По левому краю» — умолчание: атрибут снимается.
+  // "Align left" is the default: the attribute is removed.
   await user.click(radios[0]!);
   expect(handle.getHTML()).not.toContain("data-align");
 });
@@ -642,8 +642,8 @@ test("column alignment round-trips through Markdown as GFM :---: and ---:", () =
 
 test("pasted GFM alignment becomes column alignment; :--- is the default and writes nothing", () => {
   const { editor, handle } = renderEditor();
-  // Обычный текст буфера, как в `rich-text-editor-markdown.test.tsx`: в jsdom
-  // нет `DataTransfer`, поэтому буфер — объектом.
+  // Plain clipboard text, as in `rich-text-editor-markdown.test.tsx`: jsdom has no
+  // `DataTransfer`, so the clipboard is an object.
   const text = "| a | b | c |\n| :--- | :---: | ---: |\n| 1 | 2 | 3 |";
   const event = new Event("paste", { bubbles: true, cancelable: true });
   Object.assign(event, {
@@ -682,14 +682,14 @@ test("getMarkdown degrades merged cells: the content stays in the top-left place
   );
 });
 
-/** Таблица со строкой-заголовком и одним столбцом значений. */
+/** A table with a header row and one column of values. */
 const column = (header: string, values: readonly string[]) =>
   "<table><tbody>" +
   `<tr><th><p>${header}</p></th></tr>` +
   values.map((value) => `<tr><td><p>${value}</p></td></tr>`).join("") +
   "</tbody></table>";
 
-/** Значения столбца сверху вниз, без строки-заголовка. */
+/** The column's values from top to bottom, without the header row. */
 const columnValues = (editor: Editor) => cells(editor).map((row) => row[0]);
 
 test("Sort ascending and descending: numbers compare as numbers, the header row stays first", async () => {
@@ -705,7 +705,7 @@ test("Sort ascending and descending: numbers compare as numbers, the header row 
   caretIn(editor, "15");
   await choose(user, "Sort", "Sort descending");
   expect(columnValues(editor)).toEqual(["Amount", "1,200", "1,000.25", "15", "3.5", "-2"]);
-  // Каретка уехала вместе со своей строкой.
+  // The caret moved along with its row.
   expect(editor.state.selection.$from.parent.textContent).toBe("15");
 });
 
@@ -746,7 +746,7 @@ test("text compares by the UI locale with numeric parts: ё in its place, item 2
   await user.hover(screen.getByRole("menuitem", { name: ru.editor.tableSort }));
   await user.click(await screen.findByRole("menuitem", { name: ru.editor.tableSortAscending }));
 
-  // По кодам символов «Е» встала бы первой, а «ё» — после «я».
+  // By character codes, the capitalized name would come first, and the "yo" word would come after the "ya" word.
   expect(columnValues(editor)).toEqual([
     "Имя",
     "арбуз",
@@ -861,14 +861,14 @@ test("with merged cells sorting is unavailable, and the submenu says why", async
 });
 
 /**
- * Escape — слой за слоем (ADR-0041): сетка, потом меню, и только потом слой
- * вокруг поля.
+ * Escape goes layer by layer (ADR-0041): the grid, then the menu, and only then the layer
+ * around the field.
  *
- * Слой — `ModalOverlay`, а не `Dialog`: меню react-aria внутри окна Radix в
- * jsdom не раскрывается — ловушка фокуса Radix возвращает фокус (разбор в
- * `rich-text-editor-toolbar.test.tsx`). Подложка спрашивает тот же предикат
- * чужого слоя, что и `Dialog`; сочетание с настоящим `Dialog` проверяет
- * браузер — `tests-visual/rich-text-editor-table-menu.spec.ts`.
+ * The layer is `ModalOverlay`, not `Dialog`: a react-aria menu inside a Radix window does not
+ * open in jsdom, because the Radix focus trap returns focus (explained in
+ * `rich-text-editor-toolbar.test.tsx`). The scrim asks the same predicate about a foreign layer
+ * as `Dialog` does; the combination with a real `Dialog` is checked in the browser, in
+ * `tests-visual/rich-text-editor-table-menu.spec.ts`.
  */
 test("inside a modal layer, Escape closes the grid, then the menu, and only then the layer", async () => {
   const user = userEvent.setup();
@@ -895,7 +895,7 @@ test("inside a modal layer, Escape closes the grid, then the menu, and only then
   expect(screen.queryByRole("menu")).toBeNull();
   expect(onClose).not.toHaveBeenCalled();
 
-  // Контроль: без открытого меню тот же Escape закрывает слой.
+  // Control check: without an open menu, the same Escape closes the layer.
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });

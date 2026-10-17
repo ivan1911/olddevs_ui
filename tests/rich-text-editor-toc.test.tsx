@@ -12,8 +12,8 @@ import {
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 /**
- * Инструмент `toc` (OLDSUI-271, ADR-0068): Оглавление в левом поле Редактора.
- * Проверки — через публичный `RichTextEditor` с `tools`, как его включит экран.
+ * The `toc` Tool (OLDSUI-271, ADR-0068): the Table of contents in the Editor's left field.
+ * The checks go through the public `RichTextEditor` with `tools`, the way a screen enables it.
  */
 
 beforeAll(loadLazyBuiltins);

@@ -13,7 +13,7 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -22,13 +22,13 @@ afterEach(() => {
 });
 
 /**
- * HTML-режим Редактора (OLDSUI-76): кнопка «HTML» на фиксированной Панели
- * заменяет Документ полем с исходным HTML, а выход применяет правку через
- * Схему, как входящий `value`.
+ * The Editor's HTML mode (OLDSUI-76): the "HTML" button on the fixed Toolbar
+ * replaces the Document with a field holding the source HTML, and the output applies the edit
+ * through the Schema, like the incoming `value`.
  *
- * Шов один — публичный `RichTextEditor`: что видит и слышит человек и что
- * получает владелец (`onChange`, `ref`, форма). Модуль форматирования
- * отдельно не проверяется — его без-потерьность видна через компонент.
+ * There is one seam, the public `RichTextEditor`: what the person sees and hears, and what
+ * the owner receives (`onChange`, `ref`, the form). The formatting module is not tested on its
+ * own: its losslessness shows through the component.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -66,7 +66,7 @@ test("floating, bubble and no toolbar have no HTML button, nor does a read-only 
     { readOnly: true },
   ] as const) {
     const { editor } = renderEditor({ ...props, defaultValue: "<p>text</p>" });
-    // Над выделением плавающая Панель и плашка показываются — кнопки нет и там.
+    // Over a selection the floating Toolbar and the Bubble menu show up, and the button is not there either.
     act(() => void editor.commands.setTextSelection({ from: 1, to: 5 }));
     expect(sourceButton(), JSON.stringify(props)).toBeNull();
     cleanup();
@@ -88,8 +88,8 @@ test("the HTML button swaps the document for a field with its formatted HTML", a
   await user.click(sourceButton()!);
 
   const field = sourceField() as HTMLTextAreaElement;
-  // Блок на строке, дети контейнера Блоков — с отступом в два пробела,
-  // содержимое Блока — на строке его тега, `pre` — как есть.
+  // A Block starts on its own line, the children of a Block container are indented by two spaces,
+  // a Block's content stays on the line of its tag, and `pre` is kept as is.
   expect(field.value).toBe(
     [
       "<h2>Title</h2>",
@@ -112,9 +112,9 @@ test("the HTML button swaps the document for a field with its formatted HTML", a
     ].join("\n")
   );
   expect(sourceButton()!.getAttribute("aria-pressed")).toBe("true");
-  // Документ скрыт, а не размонтирован: движок и история живы.
+  // The Document is hidden, not unmounted: the engine and the history are alive.
   expect(screen.queryByRole("textbox", { name: "Body" })).toBeNull();
-  // Фокус — в поле, каретка в начале.
+  // Focus is in the field, and the caret is at the start.
   expect(document.activeElement).toBe(field);
   expect([field.selectionStart, field.selectionEnd]).toEqual([0, 0]);
 });
@@ -137,9 +137,9 @@ test("in HTML mode the other toolbar actions are aria-disabled and stay in the a
   const buttons = Array.from(toolbar.querySelectorAll("button"));
   const names = (list: HTMLButtonElement[]) =>
     list.map((button) => button.getAttribute("aria-label"));
-  // Ни одна кнопка не выключена насовсем: все в обходе стрелками.
+  // No button is disabled for good: all of them are in the arrow-key navigation.
   expect(names(buttons.filter((button) => button.disabled))).toEqual([]);
-  // Доступны только сама «HTML» и справочник сочетаний.
+  // Only the "HTML" button itself and the keyboard shortcuts popover are available.
   expect(
     names(buttons.filter((button) => button.getAttribute("aria-disabled") !== "true"))
   ).toEqual(["HTML", "Keyboard shortcuts"]);
@@ -149,15 +149,15 @@ test("in HTML mode the other toolbar actions are aria-disabled and stay in the a
   expect(document.activeElement?.getAttribute("aria-label")).toBe("Insert block");
   await user.keyboard("{ArrowRight}{ArrowRight}");
   expect(document.activeElement?.getAttribute("aria-label")).toMatch(/^Block type/);
-  // Меню «¶» недоступно: стрелка вниз и Enter его не открывают.
+  // The "¶" menu is unavailable: the arrow down and Enter do not open it.
   await user.keyboard("{ArrowDown}{Enter}");
   expect(screen.queryByRole("menu")).toBeNull();
-  // Кнопка недоступна: щелчок ничего не делает.
+  // The button is unavailable: a click does nothing.
   await user.click(screen.getByRole("button", { name: "Bold" }));
   expect(screen.queryByRole("textbox", { name: "HTML source" })).not.toBeNull();
 });
 
-/** Заменить текст поля HTML целиком: `fireEvent.change`, как правка автора. */
+/** Replaces the whole text of the HTML field: `fireEvent.change`, like an edit by the author. */
 function typeSource(text: string) {
   const field = screen.getByRole("textbox", { name: "HTML source" });
   act(() => void fireEvent.change(field, { target: { value: text } }));
@@ -174,11 +174,11 @@ test("leaving the mode applies the edit through the schema and calls onChange on
       "<script>steal()</script>\n" +
       '<p>Read <a href="javascript:steal()">this</a> and <span style="font-size:40px">that</span></p>'
   );
-  // Набор в поле `onChange` не зовёт.
+  // Typing in the field does not call `onChange`.
   expect(onChange).not.toHaveBeenCalled();
   await user.click(sourceButton()!);
 
-  // Документ снова на месте, поле HTML ушло.
+  // The Document is back in place, and the HTML field is gone.
   expect(screen.getByRole("textbox", { name: "Body" })).toBeDefined();
   expect(screen.queryByRole("textbox", { name: "HTML source" })).toBeNull();
   const html = "<h2>Title</h2><p>Read this and that</p>";
@@ -202,8 +202,8 @@ test("a tool switched off drops its markup from the applied HTML, as from value"
 });
 
 /*
-  Документ со всеми контейнерами Блоков: вложенные списки, чек-лист, цитата,
-  таблица, картинка с подписью, Раскладка, блок кода с пустыми строками.
+  A Document with all the Block containers: nested lists, a checklist, a quote,
+  a table, an image with a caption, a Column layout, and a code block with empty lines.
 */
 const RICH =
   "<h2>Title</h2><p>Text with <strong>bold</strong>, <em>italic</em> and <code>code</code><br>next line</p>" +
@@ -237,13 +237,13 @@ test("the formatting is lossless: re-applying the formatted text gives the same 
   const before = handle.getHTML();
   await user.click(sourceButton()!);
   const field = screen.getByRole("textbox", { name: "HTML source" }) as HTMLTextAreaElement;
-  // Каждый Блок верхнего уровня — со своей строки, вложенные — с отступом.
+  // Each top-level Block starts on its own line, and nested ones are indented.
   expect(field.value).toContain(
     '\n<div data-block="layout" data-layout="50-50">\n  <div data-block="column">\n    <p>left</p>\n  </div>'
   );
   expect(field.value).toContain("\n<figure>\n  <img");
 
-  // Текст правился, но только пробелами между Блоками: Документ тот же.
+  // The text was edited, but only the spaces between Blocks: the Document is the same.
   typeSource(field.value + "\n\n");
   await user.click(sourceButton()!);
 
@@ -263,8 +263,8 @@ test("a wrapper shows its blocks indented, and the schema still rules what the m
   const before = handle.getHTML();
   await user.click(sourceButton()!);
 
-  // Обёртка (OLDSUI-77) — контейнер Блоков: форматирование, общее по
-  // структуре, раскладывает её Блоки с отступом без отдельного правила.
+  // The Wrapper (OLDSUI-77) is a Block container: the structural formatting shared by all of them
+  // indents its Blocks without a separate rule.
   const field = screen.getByRole("textbox", { name: "HTML source" }) as HTMLTextAreaElement;
   expect(field.value).toContain(
     '<div data-block="wrapper">\n  <h3>Inside</h3>\n  <ul>\n    <li>\n      <p>item</p>\n    </li>\n  </ul>\n</div>'
@@ -272,11 +272,11 @@ test("a wrapper shows its blocks indented, and the schema still rules what the m
   expect(field.value).toContain(
     '  <div data-block="column">\n    <div data-block="wrapper">\n      <p>in a column</p>\n    </div>\n  </div>'
   );
-  // Без правки — тот же Документ.
+  // No edit: the same Document.
   await user.click(sourceButton()!);
   expect(handle.getHTML()).toBe(before);
 
-  // Вложенную Обёртку HTML-режим не протащит: Схема снимает её, Блоки остаются.
+  // The HTML mode does not carry a nested Wrapper through: the Schema removes it, and the Blocks stay.
   await user.click(sourceButton()!);
   typeSource('<div data-block="wrapper"><div data-block="wrapper"><p>deep</p></div></div>');
   await user.click(sourceButton()!);
@@ -309,13 +309,13 @@ test("blur of the HTML field applies the edit and updates the hidden form field"
   expect(onChange).toHaveBeenCalledTimes(1);
   expect(onChange).toHaveBeenLastCalledWith("<p>new</p>");
   expect(container.querySelector<HTMLInputElement>('input[name="body"]')?.value).toBe("<p>new</p>");
-  // Применение на `blur` не переформатирует поле: автор продолжает со своим текстом.
+  // Applying on `blur` does not reformat the field: the author continues with their own text.
   expect((screen.getByRole("textbox", { name: "HTML source" }) as HTMLTextAreaElement).value).toBe(
     "<p>new</p>"
   );
 });
 
-/** Форма с Редактором: отправка и `new FormData` из HTML-режима. */
+/** A form with the Editor: submit and `new FormData` from the HTML mode. */
 function renderInForm() {
   const ref = createRef<RichTextEditorHandle>();
   const onChange = vi.fn();
@@ -346,7 +346,7 @@ test("submitting the form from HTML mode sends the edit after the schema", async
   await user.click(sourceButton()!);
   typeSource('<p onclick="x()">new <b>bold</b></p>');
 
-  // Программный щелчок — без `blur` поля: применяет сама отправка.
+  // A programmatic click, without the field's `blur`: the submit itself applies the edit.
   act(() => screen.getByRole("button", { name: "Send" }).click());
 
   expect(submitted[0]?.get("body")).toBe("<p>new <strong>bold</strong></p>");
@@ -359,8 +359,8 @@ test("FormData read from HTML mode carries the edit", async () => {
   await user.click(sourceButton()!);
   typeSource("<h2>Saved</h2>");
 
-  // jsdom не шлёт `formdata` на `new FormData` — событие отправляется так, как
-  // это делает браузер (см. `rich-text-editor.test.tsx`).
+  // jsdom does not send `formdata` on `new FormData`, so the event is sent the way the browser
+  // sends it (see `rich-text-editor.test.tsx`).
   const data = new FormData(form);
   act(() => void form.dispatchEvent(Object.assign(new Event("formdata"), { formData: data })));
 
@@ -374,7 +374,7 @@ test("getHTML and getMarkdown in HTML mode return the current edit after the sch
   await user.click(sourceButton()!);
 
   typeSource("<h2>Title</h2><p><b>bold</b><script>x()</script></p>");
-  // `script` Схема снимает вместе с содержимым — как в `value` и при вставке.
+  // The Schema removes `script` together with its content, as it does for `value` and on paste.
   expect(handle.getHTML()).toBe("<h2>Title</h2><p><strong>bold</strong></p>");
   expect(onChange).toHaveBeenCalledTimes(1);
 
@@ -396,14 +396,14 @@ test("a new value from the owner replaces the field text, its own echo does not"
   const { rerender } = render(tree("<p>one</p>", (html) => (echoed = html)));
   await user.click(sourceButton()!);
 
-  // Своё же отданное значение вернулось `value` — поле не сбивается.
+  // The value it sent out came back as `value`: the field is not reset.
   typeSource("<p>two</p>\n");
   act(() => void ref.current!.getHTML());
   expect(echoed).toBe("<p>two</p>");
   rerender(tree(echoed, (html) => (echoed = html)));
   expect(fieldValue()).toBe("<p>two</p>\n");
 
-  // Новое значение владельца главнее несохранённой правки.
+  // The owner's new value takes precedence over an unsaved edit.
   typeSource("<p>unsaved</p>");
   rerender(tree("<ul><li><p>three</p></li></ul>", (html) => (echoed = html)));
   expect(fieldValue()).toBe("<ul>\n  <li>\n    <p>three</p>\n  </li>\n</ul>");
@@ -424,7 +424,7 @@ test("setMarkdown and clear in HTML mode replace the document and the field text
   act(() => handle.clear());
   expect(fieldValue()).toBe("");
   expect(onChange).toHaveBeenLastCalledWith("");
-  // Замена снаружи — не правка поля: выход ничего не применяет повторно.
+  // A replacement from outside is not an edit of the field: the output applies nothing again.
   await user.click(sourceButton()!);
   expect(onChange).toHaveBeenCalledTimes(2);
   expect(handle.getHTML()).toBe("");
@@ -586,8 +586,8 @@ test("required follows the applied HTML and sends the focus to the HTML field", 
   const field = screen.getByRole("textbox", { name: "HTML source" });
   await user.click(screen.getByRole("button", { name: "Elsewhere" }));
 
-  // Пустой Документ блокирует отправку, а фокус уходит в поле HTML — туда,
-  // где автор его заполнит.
+  // An empty Document blocks the submit, and focus goes to the HTML field, where the author
+  // will fill it in.
   act(() => form.requestSubmit());
   expect(submitted).toHaveLength(0);
   await vi.waitFor(() => expect(document.activeElement).toBe(field));
@@ -606,8 +606,8 @@ test("unmounting the editor in HTML mode applies the pending edit and calls onCh
   await user.click(sourceButton()!);
   typeSource('<p onclick="x()">new <b>bold</b></p><script>x()</script>');
 
-  // Escape в поле внутри `Dialog` закрывает окно, и Редактор уходит из дерева
-  // без `blur` поля: применяет само размонтирование, иначе правка пропала бы.
+  // Escape in a field inside a `Dialog` closes the window, and the Editor leaves the tree without
+  // the field's `blur`: the unmount itself applies the edit, otherwise the edit would be lost.
   unmount();
 
   expect(onChange).toHaveBeenCalledTimes(1);
@@ -625,7 +625,7 @@ test("unmounting in HTML mode without an edit calls nothing", async () => {
   expect(onChange).not.toHaveBeenCalled();
 });
 
-/** Обязательный Редактор в форме: отправка `requestSubmit()` из кода, фокус в поле HTML. */
+/** A required Editor in a form: submit with `requestSubmit()` from code, focus in the HTML field. */
 function renderRequired(defaultValue = "") {
   const submitted: FormData[] = [];
   const view = render(
@@ -648,8 +648,8 @@ test("requestSubmit with the focus in the HTML field sends text typed into an em
   typeSource("<p>filled</p>");
   expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "HTML source" }));
 
-  // Проверка ограничений идёт ДО события `submit`, а правку применяет его
-  // захват: валидность обязана следовать тексту поля уже на наборе.
+  // The validity check runs BEFORE the `submit` event, and a capture listener applies the edit:
+  // validity has to follow the field's text already while typing.
   act(() => form.requestSubmit());
 
   expect(submitted).toHaveLength(1);
@@ -660,7 +660,7 @@ test("requestSubmit with the focus in the HTML field blocks a field the author e
   const user = userEvent.setup();
   const { submitted, form } = renderRequired("<p>text</p>");
   await user.click(sourceButton()!);
-  // То, что Схема отбрасывает целиком, — тоже пустота: как у применения.
+  // What the Schema drops entirely also counts as empty, the same as on apply.
   typeSource("<script>x()</script>\n<p></p>");
 
   act(() => form.requestSubmit());
@@ -681,27 +681,27 @@ test("Alt+F10 in the HTML field moves the focus to the HTML button, the toolbar'
   await user.click(sourceButton()!);
   const field = screen.getByRole("textbox", { name: "HTML source" }) as HTMLTextAreaElement;
   expect(document.activeElement).toBe(field);
-  // Панель обещает сочетание всем: из поля HTML оно обязано работать так же.
+  // The Toolbar promises the shortcut to everyone: from the HTML field it has to work the same way.
   expect(
     screen.getByRole("toolbar", { name: "Formatting" }).getAttribute("aria-keyshortcuts")
   ).toBe("Alt+F10");
 
   await user.keyboard("{Alt>}{F10}{/Alt}");
 
-  // «+», «¶» и прочие в режиме `aria-disabled`: первое действие, которое
-  // сработает, — сама «HTML». Текст поля клавиша не трогает.
+  // "+", "¶" and the others are in `aria-disabled` mode: the first action that works is the "HTML"
+  // button itself. The key does not touch the field's text.
   expect(document.activeElement).toBe(sourceButton());
   expect(field.value).toBe("<p>text</p>");
-  // Стрелки ходят по Панели от неё, Enter возвращает визуальный режим.
+  // The arrows move along the Toolbar from it, and Enter returns to the visual mode.
   await user.keyboard("{Enter}");
   expect(screen.queryByRole("textbox", { name: "HTML source" })).toBeNull();
 });
 
 /*
-  Выделение в поле HTML (OLDSUI-149). Поле всегда тёмное, а глобальный
-  `::selection` в светлой теме — светлая заливка с тёмным текстом: выделенное
-  читалось тёмным по тёмно-синему. У поля своя роль — выделение и текст тёмной
-  темы, как его подложка.
+  Selection in the HTML field (OLDSUI-149). The field is always dark, but the global
+  `::selection` in the light theme is a light fill with dark text: the selected text came out
+  dark on dark blue. The field has its own role for selection and text of the dark theme,
+  like its background.
 */
 test("the HTML field selects with its own dark-surface selection and text colour", async () => {
   const user = userEvent.setup();
@@ -721,7 +721,7 @@ test("on the paper surface the light sheet stays under the dark HTML field", asy
   expect(classes).toContain("bg-(--rte-background)");
   expect(classes).toContain("border");
   expect(classes).toContain("scheme-light");
-  // Само поле остаётся тёмным.
+  // The field itself stays dark.
   expect(sourceField()!.className).toContain("bg-(--rte-source-background)");
 });
 
