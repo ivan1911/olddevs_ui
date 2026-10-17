@@ -31,41 +31,38 @@ import { ColorMenuButton, HighlightMenuButton } from "./ColorMenus.js";
 import type { Tool } from "../core/tools.js";
 import { GLASS_INVERSE_CLASS } from "../styles/glass.js";
 
-/** Ключ плагина меню выделения: по нему его показывают командой (`Alt+F10`). */
+/** Plugin key of the Bubble menu, used to show it by command (`Alt+F10`). */
 export const SELECTION_BUBBLE_KEY = "richTextSelectionBubble";
 
-/** «…» плашки без Меток её ряда (подчёркнутого): они здесь кнопками. */
+/** The bubble's "…" menu leaves out the Marks of its row (underline): here they are buttons. */
 const BUBBLE_MORE_OMIT = BUBBLE_ROW_MARKS.map((mark) => mark.id).filter(isMoreMarkId);
 const BUBBLE_MORE_TOOLS = moreFormatTools(BUBBLE_MORE_OMIT);
 
 /**
- * Места кнопок описаний в хвосте плашки — привилегия кита: ссылка, затем
- * эмодзи. Кнопки описаний с флагом Меню выделения без места кита идут
- * следом, в порядке списка Инструментов.
+ * The tail of the bubble has places reserved for the kit's own buttons: link, then emoji.
+ * Button descriptors flagged for the selection menu that have no reserved place come after
+ * them, in the order of the Tool list.
  */
 const BUBBLE_TAIL_ORDER: readonly Tool[] = ["link", "emoji"];
 
 /**
- * Инверсная поверхность плашки — переназначением моста `@theme` внутри неё.
+ * The bubble's inverse surface, made by re-pointing the `@theme` bridge inside it.
  *
- * ПОЧЕМУ ТАК, А НЕ СВОИ КЛАССЫ НА КАЖДОЙ КНОПКЕ. В плашке стоят общие кнопки
- * Редактора — меню «¶» и «…» (`FormatMenus.tsx`) и кнопка эмодзи, — и они
- * красятся словарём кита: `text-fg-1`, `hover:bg-bg-2`, контур фокуса
- * `outline-accent-strong`. Утилита читает переменную моста (`--color-fg-1`),
- * а мост объявлен на корне и наследуется — значит, переобъявленный на плашке
- * мост перекрашивает всех её потомков, а сами кнопки о плашке не знают.
- * Свои классы пришлось бы протаскивать пропом в каждый общий компонент и
- * бороться со специфичностью `hover:` плагина react-aria.
+ * WHY THIS WAY, NOT WITH OWN CLASSES ON EACH BUTTON. The bubble holds the shared Editor buttons,
+ * the "¶" and "…" menus (`FormatMenus.tsx`) and the emoji button, and they are colored by the
+ * kit's vocabulary: `text-fg-1`, `hover:bg-bg-2`, the focus outline `outline-accent-strong`.
+ * A utility reads the bridge variable (`--color-fg-1`), and the bridge is declared on the root and
+ * inherited. So a bridge re-declared on the bubble recolors all its descendants, while the buttons
+ * themselves know nothing about the bubble. Own classes would have to be passed as props into every
+ * shared component, and would fight the `hover:` specificity of the react-aria plugin.
  *
- * ПОЧЕМУ МЕНЮ ОСТАЮТСЯ ОБЫЧНЫМИ. Списки меню, подсказки и поповеры (ссылка,
- * эмодзи) рисуются в портале у `body`, вне плашки, и переназначения не видят:
- * они на обычной поверхности поповера, как требует спека.
+ * WHY THE MENUS STAY NORMAL. Menu lists, tooltips and popovers (link, emoji) are rendered in a portal
+ * at `body`, outside the bubble, and do not see the re-declaration: they sit on the normal popover
+ * surface, as the spec requires.
  *
- * Роли: текст и иконки — `--text-on-inverse`; наведение (`bg-2`) —
- * `--surface-inverse-hover`; нажатие (`bg-3`, наведение на нажатую) и
- * разделители — `--surface-inverse-pressed`; контур фокуса —
- * `--accent-on-inverse`. Значения и пары контраста — ADR-0055,
- * `scripts/contrast.mjs`.
+ * Roles: text and icons, `--text-on-inverse`; hover (`bg-2`), `--surface-inverse-hover`; pressed
+ * (`bg-3`, hover on a pressed button) and dividers, `--surface-inverse-pressed`; focus outline,
+ * `--accent-on-inverse`. The values and contrast pairs are in ADR-0055 and `scripts/contrast.mjs`.
  */
 const INVERSE_SCOPE_CLASS =
   "[--color-fg-0:var(--text-on-inverse)] [--color-fg-1:var(--text-on-inverse)] " +
@@ -74,7 +71,7 @@ const INVERSE_SCOPE_CLASS =
   "[--color-accent-strong:var(--accent-on-inverse)]";
 
 const BUTTON_CLASS = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true });
-/** Нажатая метка — своя подложка инверсной поверхности, а не `soft` словаря. */
+/** A pressed Mark button gets its own inverse-surface background, not the kit's `soft` variant. */
 const BUTTON_PRESSED_CLASS = cn(
   BUTTON_CLASS,
   "bg-surface-inverse-pressed hover:bg-surface-inverse-pressed"
@@ -84,42 +81,43 @@ const TOOL_BUTTON_CLASSES = { idle: BUTTON_CLASS, pressed: BUTTON_PRESSED_CLASS 
 export interface SelectionBubbleProps {
   editor: Editor;
   tools: ToolList;
-  /** Поле выключено: кнопки видны, но не нажимаются. */
+  /** The field is disabled: the buttons are visible but cannot be pressed. */
   disabled: boolean;
   /**
-   * Пункт «Свой цвет…» поповера «Цвет»: поповер `ColorPicker` держит
-   * Редактор, как у Панели, — плашка прячется, когда фокус уходит в него.
+   * The "Custom color…" item of the "Color" popover. The Editor holds the `ColorPicker` popover,
+   * as the Toolbar does: the bubble hides when focus moves into it.
    */
   onCustomColor?: (kind: CustomColorKind) => void;
   /**
-   * Ведёт ли сюда `Alt+F10`. В режиме `toolbar="bubble"` — да; поверх
-   * фиксированной Панели сочетание ведёт в Панель, и плашка его не объявляет:
-   * два `aria-keyshortcuts` на одно сочетание — ложь для скринридера.
+   * Whether `Alt+F10` leads here. In `toolbar="bubble"` mode, yes. Over the fixed Toolbar the
+   * shortcut leads to the Toolbar, and the bubble does not declare it: two `aria-keyshortcuts`
+   * for one shortcut would be false for a screen reader.
    */
   keyboardTarget?: boolean;
-  /** Область Документа, которая прокручивается сама (ADR-0059); без неё — окно. */
+  /** The Document area that scrolls on its own (ADR-0059); without it, the window scrolls. */
   scrollTarget?: HTMLElement;
 }
 
 /**
- * Меню выделения — `toolbar="bubble"`: компактная плашка на
- * инверсной поверхности над непустым выделением.
+ * The Bubble menu, `toolbar="bubble"`: a compact pill on an inverse surface above a non-empty
+ * selection.
  *
- * СОСТАВ ЗАДАН КИТОМ: «¶» · Списки ▾ | жирный · курсив · подчёркнутый · Цвет ▾ ·
- * «…» | ссылка · эмодзи. «Цвет» — обе сетки, текста и маркера;
- * отдельного «Маркера» здесь нет — он на Панели (без инструмента `color` — есть).
- * Кнопка выключенного инструмента не рисуется, порядок от `tools` не зависит. Ссылка и эмодзи — кнопки описаний с флагом Меню выделения
- * (`toolDescriptor.ts`): те же, что на Панели. Справочника сочетаний, отмены и
- * повтора нет: плашка — про выделенный текст, а не про Документ.
+ * ITS CONTENTS ARE SET BY THE KIT: "¶" · Lists ▾ | bold · italic · underline · Color ▾ ·
+ * "…" | link · emoji. "Color" holds both grids, for text and for the highlight. There is no
+ * separate "Highlight" here: it is on the Toolbar (without the `color` Tool, it is here).
+ * The button of a disabled Tool is not drawn; the order does not depend on `tools`. Link and emoji
+ * are button descriptors flagged for the selection menu (`toolDescriptor.ts`): the same as on the
+ * Toolbar. There is no Keyboard shortcuts popover, no undo and no redo: the bubble is about the
+ * selected text, not about the Document.
  *
- * ПОКАЗ И ПОЗИЦИЯ — те же, что у плавающей Панели (`selectionMenu.ts`):
- * `BubbleMenu` Tiptap показывает плашку после того, как выделение устоялось,
- * прячет на пустом выделении, на картинке и без фокуса в Редакторе и вынимает
- * узел из DOM, когда прячет. Слой — `OVERLAY_LAYER.popover`; в стеке Escape
- * плашка не участвует, Escape в открытом из неё меню закрывает только меню.
+ * VISIBILITY AND POSITION are the same as for the floating Toolbar (`selectionMenu.ts`): Tiptap's
+ * `BubbleMenu` shows the bubble once the selection has settled, hides it on an empty selection, over
+ * an image, and without focus in the Editor, and removes its node from the DOM when it hides. The
+ * layer is `OVERLAY_LAYER.popover`. The bubble does not take part in the Escape stack, and Escape
+ * inside a menu opened from it closes only that menu.
  *
- * КЛАВИАТУРА — `Toolbar` кита: `Alt+F10` из Документа, стрелки, Home и End,
- * действие возвращает фокус в Документ на то же выделение.
+ * KEYBOARD: the kit's `Toolbar`. `Alt+F10` from the Document, arrow keys, Home and End; an action
+ * returns focus to the Document, on the same selection.
  */
 export function SelectionBubble({
   editor,
@@ -139,22 +137,23 @@ export function SelectionBubble({
   const marks = BUBBLE_ROW_MARKS.filter((mark) => tools.has(mark.tool));
   const hasMore = BUBBLE_MORE_TOOLS.some((tool) => tools.has(tool));
   /*
-    Цвет — одна кнопка «Цвет» с обеими сетками (решение владельца):
-    на Панели — «Маркер», здесь — «Цвет», без дублей. Без инструмента `color`
-    кнопки «Цвет» нет, и маркер ставит «Маркер» — иначе в плашке его не поставить.
+    The "Color" button is one button with both grids (the owner's decision):
+    on the Toolbar it is "Highlight", here it is "Color", with no duplicates. Without the `color`
+    Tool there is no "Color" button, and the highlight is set by "Highlight". Otherwise the mark
+    could not be set from the bubble.
   */
   const hasColor = tools.has("color");
   const hasHighlight = !hasColor && tools.has("highlight");
   const hasBlockType = hasBlockTypeMenu(tools);
-  // «Списки ▾» — сразу за «¶», как на Панели: из «¶» списки ушли.
+  // "Lists ▾" comes right after "¶", as on the Toolbar: the lists have moved out of the "¶" menu.
   const hasLists = hasListMenu(tools);
-  // Хвост — кнопки описаний с флагом Меню выделения: проекция списка.
+  // The tail: button descriptors flagged for the selection menu, projected from the Tool list.
   const tail = projectRecords<KitToolButton>(tools, BUBBLE_TAIL_ORDER, (descriptor) =>
     descriptor.buttons?.filter((button) => button.selectionMenu)
   );
 
-  // `aria-keyshortcuts` — путь в плашку из Документа; `Toolbar` react-aria
-  // атрибут в DOM не пропускает, поэтому — на узел, как у Панели.
+  // `aria-keyshortcuts` is the route into the bubble from the Document. react-aria's `Toolbar`
+  // does not pass the attribute to the DOM, so it is set on the node, as on the Toolbar.
   const toolbarRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (keyboardTarget) toolbarRef.current?.setAttribute("aria-keyshortcuts", "Alt+F10");
@@ -207,8 +206,8 @@ export function SelectionBubble({
           type="button"
           aria-label={label}
           aria-pressed={pressed}
-          // Недоступное действие — `aria-disabled`, как на Панели: кнопка
-          // остаётся в обходе стрелками и не пропадает молча.
+          // An unavailable action gets `aria-disabled`, as on the Toolbar: the button
+          // stays in the arrow-key navigation and does not silently disappear.
           aria-disabled={!available || undefined}
           aria-keyshortcuts={keys ? ariaShortcut(keys, apple) : undefined}
           disabled={disabled}
@@ -226,8 +225,8 @@ export function SelectionBubble({
   const shownTail = tail.filter((button) => state.flags[button.id]?.visible !== false);
   const hasMarks = marks.length > 0 || hasHighlight || hasColor || hasMore;
   const hasTail = shownTail.length > 0;
-  // Ни одной кнопки — нет и плашки: пустая тёмная полоса над выделением
-  // (`tools={["history", "table"]}` при Панели сверху) ничего не даёт.
+  // No buttons means no bubble at all: an empty dark strip above the selection
+  // (`tools={["history", "table"]}` with the Toolbar above it) would show nothing useful.
   if (!hasBlockType && !hasLists && !hasMarks && !hasTail) return null;
 
   return (
@@ -242,7 +241,7 @@ export function SelectionBubble({
         INVERSE_SCOPE_CLASS,
         GLASS_INVERSE_CLASS,
         "text-text-on-inverse shadow-2 rounded-md p-1",
-        // Узкий экран: плашка переносится на вторую строку, а не уезжает за край.
+        // Narrow screen: the bubble wraps onto a second row instead of running past the edge.
         "max-w-[calc(100vw-1rem)]"
       )}
     >
@@ -282,10 +281,10 @@ export function SelectionBubble({
             />
           )}
           {hasMore && (
-            // То же меню «…», что на Панели, без подчёркнутого: он здесь в ряду.
-            // Пункт «Блок кода» — и здесь: кнопки Блока кода у плашки
-            // не было, а выделенные строки в Блок кода превращают как раз отсюда,
-            // как тип Блока — из «¶» той же плашки.
+            // The same "…" menu as on the Toolbar, without underline: it is in the row here.
+            // The "Code block" item is here too: the bubble had no code Block button,
+            // and selected lines are turned into a code Block from here,
+            // just as the Block type is set from the "¶" menu of the same bubble.
             <MoreFormatMenu
               editor={editor}
               tools={tools}

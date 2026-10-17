@@ -1,27 +1,28 @@
 "use client";
 
-// Что стоит под полем внутри рамки: Сообщение поля и Строка статуса
-// (ADR-0058, раздел 7). Вынесено из `RichTextEditor.tsx`.
+// What sits under the Document, inside the field frame: the Field notice and the Status
+// bar (ADR-0058, section 7). Moved out of `RichTextEditor.tsx`.
 
 import type { ReactNode } from "react";
 import type { FieldNotice } from "../core/fieldNotice.js";
 
 /**
- * Сообщение поля. Живой регион смонтирован всегда, даже пока он пуст:
- * скринридер объявляет изменение региона, а не его появление. Поэтому он здесь
- * и у Редактора без картинок — сообщение может прийти от любого Инструмента.
+ * Field notice. The live region is always mounted, even while it is empty: a screen
+ * reader announces a change inside a region, not the region's appearance. That is why
+ * it is here also for an Editor without images: a notice can come from any Tool.
  *
- * `status` — в регион без вида: ход загрузки глазу показывает плейсхолдер в
- * Документе, а внутри `contenteditable` живой регион читается не везде. `error`
- * — видимая строка `role="alert"`: она требует действия, и Документ при этом
- * не изменился — без строки это выглядело бы как «ничего не случилось».
+ * `status` goes into a region with no visual output: the loading progress is shown to
+ * sighted users by a placeholder in the Document, and a live region inside
+ * `contenteditable` is not read everywhere. `error` is a visible `role="alert"` line:
+ * it asks for action, and the Document has not changed. Without the line it would look
+ * as if nothing had happened.
  */
 export function FieldNoticeView({
   notice,
   action,
 }: {
   notice: FieldNotice | null;
-  /** Действие у ошибки — «Повторить» упавшего загрузчика; вне `role="alert"`. */
+  /** Action for the error, such as "Retry" for a failed Loader; rendered outside `role="alert"`. */
   action?: ReactNode;
 }) {
   return (
@@ -41,19 +42,19 @@ export function FieldNoticeView({
   );
 }
 
-/** Есть ли у экрана что показать: пустые значения React строки не рисуют. */
+/** Whether the screen has anything to show: empty React values render nothing. */
 function hasContent(status: ReactNode): boolean {
   return status != null && status !== false && status !== true && status !== "";
 }
 
 /**
- * Строка статуса: своё содержимое экрана у начала, счётчик кита в конце.
+ * Status bar: the screen's own content at the start, the kit's counter at the end.
  *
- * Контейнер без `role` и `aria-live`: число слов, обновляющееся на каждую
- * правку, не должно зачитываться, а «Сохранено» экран при желании оборачивает в
- * `role="status"` сам. Строка стоит внутри рамки поля и потому видна при
- * `readOnly` и `disabled`. `counterId` остаётся у счётчика — на него ссылается
- * `aria-describedby` поля; содержимое экрана в описание не входит.
+ * The container has no `role` and no `aria-live`: a word count that updates on every
+ * User edit must not be read aloud. A screen that wants a "Saved" note announced wraps
+ * it in `role="status"` itself. The bar sits inside the field frame, so it stays visible
+ * with `readOnly` and `disabled`. `counterId` stays on the counter, since the field's
+ * `aria-describedby` points to it; the screen's own content is not part of that description.
  */
 export function StatusLine({
   status,
@@ -67,9 +68,9 @@ export function StatusLine({
   const own = hasContent(status);
   if (!own && counter == null) return null;
   return (
-    // `text-fg-2`, а не `text-fg-3`: строка стоит внутри поля, на `bg-2`, и
-    // третья ступень там не держит 4.5 — та же причина, что у счётчика
-    // `TextControl`. Экран красит своё содержимое сам, если ему нужен другой тон.
+    // `text-fg-2`, not `text-fg-3`: the bar sits inside the field, on `bg-2`, and the third
+    // step does not keep 4.5:1 contrast there, the same reason as for the counter in
+    // `TextControl`. A screen colors its own content itself if it needs another tone.
     <div
       data-status-line
       className="text-fg-2 flex items-center gap-2 pb-1.5 text-[11px] tabular-nums"

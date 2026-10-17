@@ -1,19 +1,19 @@
 /**
- * Маска ввода: форматирование, разбор и позиция каретки.
+ * Input mask: formatting, parsing and caret position.
  *
- * Функции чистые и живут отдельно от компонента намеренно: каретка — то, из-за
- * чего маска вообще сложна, и проверять её удобнее на строках, а не через DOM.
+ * The functions are pure and deliberately live apart from the component. The caret is what makes
+ * a mask complicated in the first place, and it is easier to check on strings than through the DOM.
  *
- * ТОКЕНЫ МАСКИ: `9` — цифра, `a` — буква, `*` — цифра или буква. Любой другой
- * символ — литерал, он подставляется сам и вводом не занимается.
+ * MASK TOKENS: `9` is a digit, `a` is a letter, `*` is a digit or a letter. Any other character is
+ * a literal: it is inserted by itself and does not take input.
  *
- * Экранирования нет: литерал `9` в маске выразить нечем. Это ограничение, а не
- * недосмотр — форматов с обязательной цифрой-литералом среди наших не нашлось,
- * а `\` в маске сделал бы её саму синтаксисом, который надо документировать
- * отдельно. Появится такой формат — появится и экранирование.
+ * There is no escaping: there is no way to express a literal `9` in a mask. This is a limitation,
+ * not an oversight. None of our formats needed a required digit literal, and a `\` in the mask would
+ * turn the mask itself into a syntax that has to be documented separately. If such a format appears,
+ * escaping will appear with it.
  */
 
-/** Токены маски. Union, а не `string`: по нему разбирается сообщение об отказе. */
+/** Mask tokens. A union rather than `string`: the rejection message is built from it. */
 export type MaskToken = "9" | "a" | "*";
 
 const TOKENS: Record<MaskToken, RegExp> = {
@@ -26,11 +26,11 @@ const isToken = (ch: string): ch is MaskToken => Object.hasOwn(TOKENS, ch);
 const matches = (ch: string, token: MaskToken) => TOKENS[token].test(ch);
 
 /**
- * Раскладывает сырое значение по маске.
+ * Lays a raw value out over the mask.
  *
- * Литералы подставляются только пока есть что ставить дальше: иначе пустое
- * поле показывало бы «+7 (» ещё до первого символа, а поле с одной цифрой —
- * хвост из скобок и дефисов.
+ * Literals are inserted only while there is something to put after them. Otherwise an empty field
+ * would show "+7 (" before the first character, and a field with one digit would show a tail of
+ * brackets and dashes.
  */
 export function formatMask(raw: string, mask: string): string {
   let out = "";
@@ -49,22 +49,21 @@ export function formatMask(raw: string, mask: string): string {
 }
 
 /**
- * Достаёт из показанной строки сырое значение.
+ * Extracts the raw value from the displayed string.
  *
- * Разбор идёт ПОЗИЦИОННО, вместе с маской, а не «выбросим всё, что похоже на
- * литерал»: в маске `+7 (999)` литерал `7` — тоже цифра, и наивный фильтр
- * утащил бы его в значение.
+ * Parsing goes POSITIONALLY, together with the mask, rather than "drop everything that looks like
+ * a literal". In the mask `+7 (999)` the literal `7` is also a digit, and a naive filter would drag
+ * it into the value.
  */
 export function unmask(display: string, mask: string): string {
   return walkMask(display, mask).raw;
 }
 
 /**
- * Один проход по маске: и значение, и то, где проход остановился.
+ * One pass over the mask: both the value and the point where the pass stopped.
  *
- * Вынесен, чтобы `unmask` и `unmaskOverflow` не разошлись: две копии одного
- * позиционного разбора — ровно тот случай, когда вторая молча начинает считать
- * иначе.
+ * Extracted so that `unmask` and `unmaskOverflow` cannot diverge. Two copies of one positional
+ * parse are exactly the case where the second one quietly starts counting differently.
  */
 function walkMask(
   display: string,
@@ -78,14 +77,13 @@ function walkMask(
   for (let mi = 0; mi < mask.length && di < display.length; mi += 1) {
     const m = mask[mi]!;
     if (isToken(m)) {
-      // Символы, которые в этот токен не годятся, пропускаются: так вставка
-      // «+7 916 123» раскладывается по маске из одних цифр.
+      // Characters that do not fit this token are skipped, so a paste of "+7 916 123"
+      // is laid out over a mask made of digits only.
       while (di < display.length && !matches(display[di]!, m)) {
-        // Но пропущенный символ пропущенному рознь. Пробел и дефис между
-        // группами — оформление, его потеря ничего не значит. А вот символ,
-        // который маска приняла бы В ДРУГОМ месте, — это потеря ЗНАЧЕНИЯ, и
-        // она обязана быть посчитана: на маске `999-aaa` вставка `123-456`
-        // отдаёт `123`, молча теряя половину.
+        // Skipped characters are not all alike. A space or a dash between groups is
+        // decoration, and losing it means nothing. But a character that the mask WOULD
+        // have accepted in ANOTHER place is a loss of VALUE, and it must be counted: on
+        // the mask `999-aaa`, pasting `123-456` yields `123`, silently losing the second half.
         if (kinds.some((token) => matches(display[di]!, token))) skipped += 1;
         di += 1;
       }
@@ -101,34 +99,32 @@ function walkMask(
 }
 
 /**
- * Сколько подходящих символов НЕ ВЛЕЗЛО в маску.
+ * Counts the matching characters that DID NOT FIT into the mask.
  *
- * Отдельная функция, а не второе поле у `unmask`: тот публичный и возвращает
- * строку, менять его контракт ради признака нельзя.
+ * A separate function rather than a second field on `unmask`: that one is public and returns a
+ * string, and its contract cannot be changed for the sake of a flag.
  *
- * Зачем признак вообще нужен. `unmask` идёт по маске и останавливается на её
- * конце — лишние символы отбрасываются молча. На телефонном поле это давало не
- * обрезанный, а ЧУЖОЙ номер: `89161234567` (самая частая форма в буфере обмена)
- * под маской `+7 (999) 999-99-99` превращался в `+7 (891) 612-34-56`. Значение
- * при этом изменилось, поэтому проверка `raw === value` в `MaskedInput` отказ
- * не замечала, и пользователю никто ничего не говорил.
+ * Why the flag is needed at all. `unmask` walks the mask and stops at its end, so extra characters
+ * are dropped silently. On a phone field this produced not a truncated number but a FOREIGN one:
+ * `89161234567` (the most common form in the clipboard) under the mask `+7 (999) 999-99-99` turned
+ * into `+7 (891) 612-34-56`. The value had changed, so the `raw === value` check in `MaskedInput`
+ * did not notice the rejection, and nobody told the user anything.
  *
- * Переполнением считаются только символы, которые маска МОГЛА БЫ принять:
- * хвост из пробелов и литералов — не потерянное значение, а мусор вокруг него.
+ * Only characters that the mask COULD have accepted count as overflow. A tail of spaces and literals
+ * is not a lost value, just noise around it.
  *
- * Считается потеря и В СЕРЕДИНЕ прохода, а не только хвост. На маске из
- * однородных токенов её не бывает, но на смешанной (`999-aaa`) вставка
- * `123-456` отдаёт `123` и теряет вторую половину — молча, потому что значение
- * при этом изменилось и проверка отказа по токену её не видит.
+ * Loss is counted in the MIDDLE of the pass too, not only at the tail. A mask of uniform tokens never
+ * has that, but on a mixed mask (`999-aaa`) pasting `123-456` yields `123` and loses the second half,
+ * silently, because the value has changed and the per-token rejection check does not see it.
  */
 export function unmaskOverflow(display: string, mask: string): number {
   const kinds = [...mask].filter(isToken);
   if (kinds.length === 0) return 0;
 
-  // Считать «все подходящие символы минус ёмкость» НЕЛЬЗЯ, и это та самая
-  // ловушка, о которой предупреждает шапка модуля: в `+7 (999)` литерал `7` —
-  // тоже цифра. Наивный счёт объявлял бы `79161234567` переполнением на один
-  // символ, хотя номер влезает ровно. Позиция решается только позиционно.
+  // Counting "all matching characters minus capacity" is NOT allowed. This is the trap
+  // that the module header warns about: in `+7 (999)` the literal `7` is also a digit.
+  // A naive count would report `79161234567` as one character over, although the number
+  // fits exactly. A position is resolved only by position.
   const { consumed, skipped } = walkMask(display, mask, kinds);
   let overflow = skipped;
   for (let i = consumed; i < display.length; i += 1) {
@@ -137,7 +133,7 @@ export function unmaskOverflow(display: string, mask: string): number {
   return overflow;
 }
 
-/** Сколько символов значения стоит левее позиции в показанной строке. */
+/** How many characters of the value stand to the left of the position in the displayed string. */
 export function rawLengthBefore(mask: string, caret: number): number {
   let count = 0;
   for (let i = 0; i < Math.min(caret, mask.length); i += 1) if (isToken(mask[i]!)) count += 1;
@@ -145,11 +141,11 @@ export function rawLengthBefore(mask: string, caret: number): number {
 }
 
 /**
- * Где стоять каретке после `count` введённых символов.
+ * Where the caret should stand after `count` characters have been entered.
  *
- * Позиция берётся ЗА последним занятым токеном, вместе со следующими за ним
- * литералами: иначе после третьей цифры каретка вставала перед `)`, и
- * следующая цифра уезжала за скобку.
+ * The position is taken AFTER the last occupied token, together with the literals that follow it.
+ * Otherwise, after the third digit the caret would land before `)`, and the next digit would be
+ * pushed past the bracket.
  */
 export function caretAfter(mask: string, count: number): number {
   if (count === 0) return 0;
@@ -167,17 +163,17 @@ export function caretAfter(mask: string, count: number): number {
   return mask.length;
 }
 
-/** Сколько символов значения вмещает маска. */
+/** How many characters of the value the mask holds. */
 export function maskCapacity(mask: string): number {
   return [...mask].filter(isToken).length;
 }
 
 /**
- * Токен, которому обязан удовлетворять символ значения под номером `index`.
+ * The token that the character of the value at position `index` must satisfy.
  *
- * Нужен для того, чтобы сказать пользователю, ЧЕГО тут ждали, а не безликое
- * «неверный ввод». `undefined` означает, что маска кончилась: значение
- * заполнено целиком, и следующему символу места нет.
+ * It is needed to tell the user WHAT was expected here, rather than a faceless "invalid input".
+ * `undefined` means the mask has run out: the value is filled completely, and the next character
+ * has no place.
  */
 export function maskTokenAt(mask: string, index: number): MaskToken | undefined {
   let seen = 0;
@@ -190,31 +186,29 @@ export function maskTokenAt(mask: string, index: number): MaskToken | undefined 
 }
 
 /**
- * Хвост маски после того, что уже показано: подсказка формата.
+ * The tail of the mask after what is already shown: a format hint.
  *
- * `formatMask` обрывается там, где кончилось значение, — поэтому пустое поле
- * показывает пустоту, а поле с одной цифрой не говорит, сколько их ещё. Эта
- * функция достраивает остаток: незанятые токены заменяются заполнителем,
- * литералы остаются собой. Пустое телефонное значение даёт
- * `+7 (___) ___-__-__`, а не голый ряд подчёркиваний — литералы и есть половина
- * подсказки.
+ * `formatMask` stops where the value ends, so an empty field shows nothing, and a field with one digit
+ * does not say how many are still missing. This function fills in the remainder: unoccupied tokens are
+ * replaced with a placeholder, and literals stay as themselves. An empty phone value gives
+ * `+7 (___) ___-__-__`, not a bare row of underscores. The literals are half of the hint.
  *
- * ДЛИНЫ СХОДЯТСЯ ВСЕГДА: `formatMask(raw, mask).length + maskRemainder(...).length`
- * равно длине маски при любом значении. На этом стоит показ — набранное и
- * остаток лежат друг за другом и вместе занимают ровно ширину маски.
- * Заполнитель поэтому односимвольный; строка длиннее сломала бы равенство.
+ * THE LENGTHS ALWAYS MATCH: `formatMask(raw, mask).length + maskRemainder(...).length` equals the length
+ * of the mask for any value. The display relies on this. The typed part and the remainder lie one after
+ * another and together take exactly the width of the mask. The placeholder is therefore one character;
+ * a longer string would break the equality.
  *
- * Наружу не экспортируется — как `caretAfter` и `rawLengthBefore`: это
- * механика показа, а не словарь для потребителя.
+ * Not exported, like `caretAfter` and `rawLengthBefore`: this is display mechanics, not a vocabulary
+ * for the consumer.
  */
 export function maskRemainder(raw: string, mask: string, fill = "_"): string {
   let out = "";
   let ri = 0;
   let mi = 0;
 
-  // Первый проход повторяет `formatMask` до места, где значение кончилось.
-  // Дублировать проход дешевле, чем возвращать оттуда пару: `formatMask`
-  // публичен, и его сигнатура — контракт с потребителем.
+  // The first pass repeats `formatMask` up to the point where the value ends.
+  // Duplicating the pass is cheaper than returning a pair from there: `formatMask`
+  // is public, and its signature is a contract with the consumer.
   for (; mi < mask.length; mi += 1) {
     if (ri >= raw.length) break;
     if (isToken(mask[mi]!)) ri += 1;

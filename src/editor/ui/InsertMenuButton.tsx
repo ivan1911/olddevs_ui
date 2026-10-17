@@ -23,23 +23,22 @@ export interface InsertMenuButtonProps {
   editor: Editor;
   items: readonly InsertItem[];
   disabled: boolean;
-  /** `aria-disabled`: в обходе стрелками, но меню не открывает (HTML-режим). */
+  /** `aria-disabled`: stays in the arrow-key navigation but does not open the menu (Source mode). */
   unavailable?: boolean;
-  /** Подпись сочетания — от Панели: она знает, Apple ли это. */
+  /** Shortcut label, supplied by the Toolbar, which knows whether this is an Apple device. */
   shortcut: (keys: readonly string[]) => string;
 }
 
 /**
- * «+» на Панели — второй вход в Меню вставки, для мыши и для тех, кто не знает
- * про `/`. Пункты те же, что у списка по `/`, из того же реестра
- * (`insertItems.ts`), и применяются тем же `applyInsertItem` — только к
- * выделению, а не к набранному запросу.
+ * The "+" button on the Toolbar is a second entry point to the Slash menu, for the mouse and for
+ * those who do not know about `/`. The items are the same as in the `/` list, from the same
+ * registry (`insertItems.ts`), and are applied by the same `applyInsertItem`, but to the
+ * selection rather than to a typed query.
  *
- * Здесь это `Menu` кита, а не список у курсора: фокус уходит из поля на кнопку,
- * и меню с собственным фокусом — обычный паттерн APG «кнопка меню»
- * (`aria-haspopup`, стрелки, Escape — через стек слоёв ADR-0041, как у меню
- * «¶»). Фильтра у него нет: набирать запрос негде, а первая буква
- * подписи и так ведёт к пункту (typeahead react-aria).
+ * This is the kit's `Menu`, not a list at the caret: focus moves from the field to the button,
+ * and a menu with its own focus is the usual APG menu button pattern (`aria-haspopup`, arrow keys,
+ * Escape through the layer stack, ADR-0041, as in the "¶" menu). It has no filter: there is nowhere
+ * to type a query, and the first letter of a label already leads to an item (react-aria typeahead).
  */
 export function InsertMenuButton({
   editor,
@@ -50,7 +49,7 @@ export function InsertMenuButton({
 }: InsertMenuButtonProps) {
   const messages = useMessages().editor;
   const locale = useUiLocale();
-  // Как у меню форматирования: недоступная кнопка меню не открывает.
+  // As with the format menus: an unavailable menu button does not open the menu.
   const menu = useLockableMenu(unavailable);
   return (
     <MenuTrigger {...menu.trigger}>
