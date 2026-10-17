@@ -11,10 +11,7 @@ import {
   type RichTextEditorHandle,
   type RichTextEditorProps,
 } from "../src/editor/index.js";
-import {
-  cleanPastedHtml,
-  type PasteCleanupStep,
-} from "../src/editor/features/pasteCleanup/cleanPastedHtml.js";
+import { cleanPastedHtml } from "../src/editor/features/pasteCleanup/cleanPastedHtml.js";
 import { backgroundMarkers } from "../src/editor/features/pasteCleanup/backgroundMarkers.js";
 import { parseCssColor } from "../src/editor/features/pasteCleanup/cssColor.js";
 import { excelCellStyles } from "../src/editor/features/pasteCleanup/excelCellStyles.js";
@@ -149,21 +146,19 @@ describe("Excel cell styles", () => {
   test("Safari keeps the cell styles as inline values, so bold, italic and alignment need no cleanup", () => {
     const html = pasted("excel-mac-safari-range");
 
-    expect(html).toContain(cell("center", "<strong>Fruit</strong>"));
+    expect(html).toContain(cell("center", '<mark data-color="blue"><strong>Fruit</strong></mark>'));
     expect(html).toContain(cell(null, "<em>Apple</em>"));
     expect(html).toContain(cell(null, "<u>Pear</u>"));
     expect(html).toContain('<td colspan="2" data-align="right"><p><strong>Total</strong></p></td>');
     expect(pasted("excel-mac-safari-cell")).toContain("<p><em>Apple</em></p>");
   });
 
-  test("Safari's fills become markers once its HTML is recognized as Excel", () => {
-    // Safari drops the Office namespaces and the `<style>` block, so `detectPasteSources` does not
-    // see Excel in this HTML (reported: `pasteSources.ts` is not this step's file). The step itself
-    // reads the inline `background: rgb(...)` Safari writes, which this run proves.
+  test("Safari's fills become markers: its HTML is recognized as Excel by the cell classes", () => {
+    // Safari drops the Office namespaces and the `<style>` block; `detectPasteSources` tells Excel by
+    // the `xl65`-style class on each cell, and the step reads the inline `background: rgb(...)`.
     const { "text/html": html } = fixture("excel-mac-safari-range");
-    const recognized: PasteCleanupStep = { ...backgroundMarkers, applies: () => true };
 
-    const cleaned = cleanPastedHtml(html, [recognized]);
+    const cleaned = cleanPastedHtml(html);
 
     expect(cleaned.match(/<mark data-color="blue">/g)).toHaveLength(5);
     expect(cleaned).toContain('<mark data-color="green">25%</mark>');

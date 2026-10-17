@@ -12,7 +12,10 @@
 export interface PasteSources {
   /** Word, desktop: the Office Word namespace, the `Word.Document` ProgId or the `Mso*` classes. */
   word: boolean;
-  /** Excel, desktop: the Office Excel namespace or the `Excel.Sheet` ProgId. */
+  /**
+   * Excel, desktop: the Office Excel namespace or the `Excel.Sheet` ProgId. Safari drops both (and the
+   * `<style>` block), but keeps Excel's `xl65`-style class on each cell, with the values inlined.
+   */
   excel: boolean;
   /** Google Docs: the `docs-internal-guid-…` wrapper of every copy. */
   googleDocs: boolean;
@@ -29,7 +32,8 @@ export interface PasteSources {
 
 const WORD =
   /urn:schemas-microsoft-com:office:word|\bcontent=["']?Word\.Document|\bclass=["']?Mso[A-Z]/i;
-const EXCEL = /urn:schemas-microsoft-com:office:excel|\bcontent=["']?Excel\.Sheet/i;
+const EXCEL =
+  /urn:schemas-microsoft-com:office:excel|\bcontent=["']?Excel\.Sheet|<td\b[^>]*\bclass=["']?xl\d+\b/i;
 const GOOGLE_DOCS = /\bid=["']?docs-internal-guid-/;
 const GOOGLE_SHEETS = /<google-sheets-html-origin|\bdata-sheets-/;
 const SHARE_POINT =
