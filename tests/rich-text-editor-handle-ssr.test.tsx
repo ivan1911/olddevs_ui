@@ -8,8 +8,8 @@ import {
 } from "../src/editor/index.js";
 import { testLazyTool } from "./editor-test-tools.js";
 
-// Окружение — node: на сервере нет ни `window`, ни DOM, и именно так проверяется
-// безопасность Хэндла и хука при SSR.
+// The environment is node: the server has neither `window` nor the DOM, and that is
+// exactly how the safety of the Handle and the hook under SSR is checked.
 
 test("the hook is safe on the server: it returns null and the selector is not called", () => {
   let calls = 0;
@@ -36,8 +36,8 @@ test("on the server there is no Handle to call: the ref stays empty", () => {
     renderToString(<RichTextEditor ref={ref} aria-label="Body" value="<p>Known</p>" />)
   ).not.toThrow();
 
-  // Хэндл появляется при монтаже: экран, звавший метод слишком рано, получает
-  // `null` из `ref.current?.…`, а не исключение.
+  // The Handle appears on mount: a screen that calls a method too early gets
+  // `null` from `ref.current?.…`, not an exception.
   expect(ref.current).toBeNull();
 });
 
@@ -48,9 +48,9 @@ test("on the server a loader is not called: the Skeleton is the frame without th
     <RichTextEditor aria-label="Body" value="<p>Known</p>" tools={[lazy.tool]} />
   );
 
-  // Загрузка стартует с первого рендера в браузере, а не на сервере.
+  // Loading starts on the first render in the browser, not on the server.
   expect(lazy.loader.calls).toBe(0);
-  // Документ Скелета — только в браузере: на сервере его не разобрать Схемой.
+  // The Skeleton's Document exists only in the browser: the server cannot parse it with the Schema.
   expect(html).not.toContain("Known");
 });
 
@@ -70,7 +70,7 @@ test("on the server an envelope in defaultValue renders the frame, and the form 
     />
   );
 
-  // HTML конверта знает только движок по своей Схеме — на сервере его нет.
+  // Only the engine knows the envelope's HTML through its Schema; there is no engine on the server.
   expect(html).not.toContain("Known");
   expect(html).toMatch(/<input type="hidden" name="body" value=""/);
 });

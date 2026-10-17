@@ -13,12 +13,13 @@ import { PRESETS } from "../src/editor/core/tools.js";
 afterEach(cleanup);
 
 /**
- * `mathematics` ленив и вне пресетов (OLDSUI-280, ADR-0070, ADR-0058, п. 11.1).
+ * `mathematics` is lazy and outside the presets (OLDSUI-280, ADR-0070, ADR-0058, item 11.1).
  *
- * Модули чанка и KaTeX подменены обёртками, которые только отмечают импорт: так
- * видно, звался ли он. Подмена — граница сети, а не внутренности: содержимое
- * модулей настоящее. Кэш загрузчика живёт на модуле, поэтому порядок тестов
- * значим: `basic` и `full` идут раньше всех, пока чанк никто не грузил.
+ * The chunk's modules and KaTeX are replaced by wrappers that only record the
+ * import, so it is visible whether they were called. The replacement sits at the
+ * network boundary, not in the internals: the modules' content is real. The
+ * loader's cache lives on the module, so the order of the tests matters: `basic`
+ * and `full` go first, before anyone has loaded the chunk.
  */
 const imported = vi.hoisted(() => [] as string[]);
 
@@ -43,7 +44,7 @@ function renderEditor(props: Partial<RichTextEditorProps>) {
   return { ...view, ref, onReady };
 }
 
-/** Таймеры и эффекты Редактора отработали. */
+/** The timers and the Editor's effects have run. */
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 30))));
 
@@ -53,18 +54,18 @@ test("neither preset names the tool, and basic and full never load the chunk or 
   expect(RICH_TEXT_PRESETS.full).not.toContain("mathematics");
   expect(RICH_TEXT_PRESETS.basic).not.toContain("mathematics");
 
-  // `full` ждёт свои чанки (блок кода, таблица), `basic` готов сразу.
+  // `full` waits for its chunks (the code block, the table); `basic` is ready at once.
   const basic = renderEditor({ preset: "basic", value: VALUE });
   expect(basic.ref.current?.editor).not.toBeNull();
   const full = renderEditor({ preset: "full", value: VALUE });
-  // Скелет `full` читает формулы текстом, как и движок: LaTeX не пропадает ни там, ни там.
+  // The `full` Skeleton reads formulas as text, as the engine does: the LaTeX survives in both.
   expect(full.container.textContent).toContain("Euler $e^{i\\pi}+1=0$ done");
   await waitFor(() => expect(full.onReady).toHaveBeenCalledTimes(1), { timeout: 10_000 });
   await settle();
 
   expect(full.ref.current?.editor).not.toBeNull();
   expect(imported).toEqual([]);
-  // Формулы без Инструмента — текстом, а не потерей (`mathAsText.ts`).
+  // Formulas without the Tool come out as text, not lost (`mathAsText.ts`).
   expect(full.ref.current?.getHTML()).toContain("<p>Euler $e^{i\\pi}+1=0$ done</p>");
 });
 
@@ -74,12 +75,12 @@ test("with the tool the Skeleton shows the LaTeX source, then the chunk brings K
     value: VALUE,
   });
 
-  // Скелет, пока чанк едет: Документ статичным HTML, ввода нет, Готовности нет.
+  // Skeleton while the chunk is on the way: the Document as static HTML, no input, no Readiness.
   expect(container.querySelector("[contenteditable]")).toBeNull();
   expect(ref.current?.editor).toBeNull();
   expect(onReady).not.toHaveBeenCalled();
-  // Формулы видны своей формой с исходным LaTeX текстом (CSS красит его моноширинным),
-  // а не пустыми местами: тот же разбор `data-latex`, что у движка.
+  // The formulas show their own shape with the source LaTeX text (CSS makes it
+  // monospace), not as empty places: the same `data-latex` parsing as in the engine.
   const inline = container.querySelector('span[data-type="inline-math"]');
   expect(inline?.textContent).toBe("e^{i\\pi}+1=0");
   expect(inline?.getAttribute("data-latex")).toBe("e^{i\\pi}+1=0");
@@ -91,7 +92,7 @@ test("with the tool the Skeleton shows the LaTeX source, then the chunk brings K
   expect(await screen.findByRole("textbox", { name: "Body" }, { timeout: 10_000 })).toBeTruthy();
   expect(imported).toContain("chunk");
   expect(onReady).toHaveBeenCalledTimes(1);
-  // KaTeX и CSS приехали вместе с чанком; формулы отрисованы, а HTML — прежний, без разметки KaTeX.
+  // KaTeX and CSS came with the chunk; the formulas are rendered, and the HTML is the old one, without KaTeX markup.
   expect(imported).toContain("katex");
   expect(container.querySelectorAll(".katex").length).toBeGreaterThanOrEqual(2);
   expect(ref.current?.getHTML()).toBe(

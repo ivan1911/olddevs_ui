@@ -11,7 +11,7 @@ import {
 import { TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -36,11 +36,11 @@ test("setMarkdown replaces the document and hands the new HTML to onChange at on
 
   const html = "<h2>Title</h2><ul><li><p>one</p></li><li><p>two</p></li></ul>";
   expect(handle.getHTML()).toBe(html);
-  // Как `clear()`: вызов зовёт потребитель, а значение держит владелец, —
-  // без немедленного `onChange` управляемый режим вернул бы прежний текст.
+  // As with `clear()`: the consumer makes the call, but the owner holds the value;
+  // without an immediate `onChange`, controlled mode would bring the previous text back.
   expect(onChange).toHaveBeenCalledTimes(1);
   expect(onChange).toHaveBeenLastCalledWith(html);
-  // Отложенный `onChange` от самой замены не должен отдать то же значение вторично.
+  // The deferred `onChange` from the replacement itself must not report the same value a second time.
   act(() => void vi.advanceTimersByTime(1000));
   expect(onChange).toHaveBeenCalledTimes(1);
 });
@@ -90,16 +90,16 @@ test("setMarkdown drops what the editor schema does not know and keeps the text"
   act(() => handle.setMarkdown(markdown));
 
   const html = handle.getHTML();
-  // `#` — H1: в full есть инструмент `heading1`. Без него `#` прижимается к
-  // H2 (`rich-text-editor-heading1.test.tsx`).
+  // `#` is H1: `full` has the `heading1` Tool. Without it, `#` becomes H2
+  // (`rich-text-editor-heading1.test.tsx`).
   expect(html).toContain("<h1>Top</h1>");
   expect(handle.getMarkdown()).toContain("# Top");
   expect(html).not.toMatch(/<script[\s>]/);
-  // Таблица в Схеме с OLDSUI-45 — она проходит, а не остаётся текстом.
+  // The table is in the Schema since OLDSUI-45: it passes through, not left as text.
   expect(html).toContain("<table>");
-  // Картинка в Схеме с OLDSUI-44 — она проходит своим Блоком.
+  // The image is in the Schema since OLDSUI-44: it passes through as its own Block.
   expect(html).toContain('<figure><img src="https://example.com/a.png" alt="alt"></figure>');
-  // Ссылка в Схеме с OLDSUI-42 — она проходит, а не теряет обёртку.
+  // The link is in the Schema since OLDSUI-42: it passes through and keeps its wrapper.
   expect(html).toContain('<a href="https://example.com" rel="noopener noreferrer">link</a>');
 });
 
@@ -112,22 +112,22 @@ test("setMarkdown turns a task list and a code fence into their blocks in the fu
   const html = handle.getHTML();
   expect(html).toContain('<ul data-type="taskList">');
   expect(html).toContain('<li data-checked="true" data-type="taskItem">');
-  // Псевдоним ограды (`js`) приходит в Документ полным именем языка (OLDSUI-50).
+  // The fence alias (`js`) comes into the Document as the full language name (OLDSUI-50).
   expect(html).toContain('<pre><code class="language-javascript">run()</code></pre>');
-  // Обратно — полным именем: `getMarkdown()` пишет язык так, как он в Документе.
+  // Back out with the full name: `getMarkdown()` writes the language as it is in the Document.
   expect(handle.getMarkdown().trim()).toBe(markdown.replace("```js", "```javascript"));
 });
 
 /**
- * Вставка из буфера обычным событием `paste` с `clipboardData`: ProseMirror
- * читает из него `text/plain` и `text/html` так же, как из живого буфера.
- * `ClipboardEvent` и `DataTransfer` в jsdom нет, поэтому данные — объектом.
+ * A paste from the clipboard through a plain `paste` event with `clipboardData`:
+ * ProseMirror reads `text/plain` and `text/html` from it just as from a live
+ * clipboard. jsdom has no `ClipboardEvent` or `DataTransfer`, so the data is an object.
  */
 function paste(editor: Editor, payload: { text?: string; html?: string }) {
   const event = new Event("paste", { bubbles: true, cancelable: true });
   Object.assign(event, {
     clipboardData: {
-      // Остальные типы (`vscode-editor-data` и подобные) пусты, как в буфере без них.
+      // The other types (`vscode-editor-data` and the like) are empty, as in a clipboard without them.
       getData: (type: string) =>
         (type === "text/plain" ? payload.text : type === "text/html" ? payload.html : "") ?? "",
       types: Object.keys(payload).map((key) => (key === "text" ? "text/plain" : "text/html")),
@@ -215,8 +215,8 @@ test.each([
 });
 
 /*
-  Ссылки Markdown при вставке (OLDSUI-71). У ссылки в Схеме один атрибут —
-  `href`: заголовок отбрасывается, определение сноски в Документ не попадает.
+  Markdown links on paste (OLDSUI-71). A link in the Schema has one attribute —
+  `href`: the title is dropped, and a footnote definition does not get into the Document.
 */
 const DOCS_LINK = '<a href="https://example.com/docs" rel="noopener noreferrer">the docs</a>';
 
@@ -255,8 +255,8 @@ test("a pasted autolink in angle brackets keeps no brackets", () => {
   );
 });
 
-// «Ссылка» escape-последовательностями: кириллица здесь — данные ввода, а
-// буквами её не пропустит ворота i18n (`tests/i18n-gate.test.ts`).
+// The Cyrillic word for "link" is written as escape sequences: here it is input
+// data, and the i18n gate would reject it written as letters (`tests/i18n-gate.test.ts`).
 const CYRILLIC_PAGE = "\u0421\u0441\u044b\u043b\u043a\u0430";
 
 test.each([
@@ -268,7 +268,7 @@ test.each([
   [
     "in bold",
     "**[docs](https://example.com)**",
-    // Порядок Меток — порядок Схемы: ссылка снаружи жирного.
+    // The order of Marks is the order of the Schema: the link is outside the bold.
     '<p><a href="https://example.com" rel="noopener noreferrer"><strong>docs</strong></a></p>',
   ],
   [
@@ -281,8 +281,8 @@ test.each([
     "see https://example.com/docs now",
     '<p>see <a href="https://example.com/docs" rel="noopener noreferrer">https://example.com/docs</a> now</p>',
   ],
-  // Относительный адрес политика ссылок не пропускает (только http, https,
-  // mailto) — остаётся текст ссылки.
+  // The link policy does not allow a relative address (only http, https, mailto),
+  // so the link text stays.
   [
     "with a relative address",
     "see [docs](/docs) and **more**",
@@ -309,10 +309,10 @@ test.each([
 });
 
 /*
-  Редактор кода кладёт в буфер рядом с `text/plain` ещё и `text/html` —
-  тот же исходник, раскрашенный подсветкой. Образцы ниже повторяют то, что
-  дают VS Code и JetBrains: моноширинный блок, строки — `div` или переводы
-  строк в `pre`, раскраска — `span` с `color`.
+  A code editor puts `text/html` on the clipboard next to `text/plain`: the same
+  source, colored by syntax highlighting. The samples below repeat what VS Code and
+  JetBrains give: a monospace block, lines as `div` or line breaks in `pre`, and
+  color as `span` with `color`.
 */
 const VS_CODE_LINE =
   `<meta charset='utf-8'><div style="color: #cccccc;background-color: #1f1f1f;font-family: Menlo;">` +
@@ -405,9 +405,9 @@ test("Shift-paste of highlighted Markdown stays plain text", () => {
 });
 
 /*
-  Регрессия: обычный HTML (браузер, Word, Google Docs) идёт прежним путём,
-  даже когда его `text/plain` похож на Markdown. Ожидаемое — то, что эти
-  вставки давали до OLDSUI-71.
+  Regression: plain HTML (browser, Word, Google Docs) keeps the old path, even when
+  its `text/plain` looks like Markdown. The expectations are what these pastes gave
+  before OLDSUI-71.
 */
 test.each([
   [
@@ -471,8 +471,8 @@ test("setMarkdown and getMarkdown round-trip a table with column alignment", () 
 
   const html = handle.getHTML();
   expect(html).toContain("<th><p>Name</p></th>");
-  // `---:` — выравнивание столбца (`data-align` на каждой его ячейке); `:---` —
-  // умолчание, атрибута нет. `style` не пишется никогда.
+  // `---:` is column alignment (`data-align` on each of its cells); `:---` is the
+  // default, with no attribute. `style` is never written.
   expect(html).toContain('<th data-align="right"><p>Qty</p></th>');
   expect(html).toContain('<td data-align="right"><p>10</p></td>');
   expect(html).not.toMatch(/style|data-align="left"/);
@@ -488,8 +488,8 @@ test("a table without the table tool stays as the text the author copied", () =>
 
   paste(editor, { text: GFM_TABLE });
 
-  // Отбросить блок — значит молча потерять вставленное; когда из Markdown не
-  // осталось ничего, вставка идёт обычным текстом.
+  // Dropping the block would silently lose what was pasted; when nothing is left of
+  // the Markdown, the paste goes in as plain text.
   expect(editor.getText({ blockSeparator: "\n" })).toBe(GFM_TABLE);
   expect(editor.getHTML()).not.toContain("<table");
 });
@@ -504,10 +504,10 @@ test("setMarkdown without the table tool drops the table", () => {
 });
 
 /**
- * Редакторы независимы: у каждого свой экземпляр `marked`. Общий давал бы
- * побочный эффект — Редактор с чек-листом оставлял свой токенайзер всем, кто
- * создан после него, и «Редактор без чек-листа» разбирал `- [ ]` как чек-лист.
- * Разбор идёт после того, как созданы оба, в обоих порядках создания.
+ * Editors are independent: each has its own `marked` instance. A shared one would
+ * leak a side effect: an Editor with the task list would leave its tokenizer to
+ * every Editor created after it, and "an Editor without the task list" would parse
+ * `- [ ]` as a task list. Parsing runs after both are created, in either creation order.
  */
 test.each([
   ["with the task list first", true],
@@ -530,8 +530,8 @@ test.each([
 });
 
 /**
- * Markdown в Редакторе, у которого нет чек-листа и блока кода: «чужое
- * отбрасывается» (`tools`, OLDSUI-41).
+ * Markdown in an Editor with neither a task list nor a code block: "foreign
+ * content is dropped" (`tools`, OLDSUI-41).
  */
 const WITHOUT_TASK_LIST_AND_CODE_BLOCK = TOOLS.filter(
   (tool) => tool !== "taskList" && tool !== "codeBlock"
@@ -561,8 +561,8 @@ test("a code fence the editor has no tool for stays as the text the author copie
 
   paste(editor, { text });
 
-  // Отбросить блок — значит молча потерять вставленное; когда из Markdown не
-  // осталось ничего, вставка идёт обычным текстом.
+  // Dropping the block would silently lose what was pasted; when nothing is left of
+  // the Markdown, the paste goes in as plain text.
   expect(editor.getText({ blockSeparator: "\n" })).toBe(text);
   expect(editor.getHTML()).not.toContain("<pre");
 });

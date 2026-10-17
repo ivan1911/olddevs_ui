@@ -11,7 +11,7 @@ import {
 import { PRESETS, TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
@@ -24,7 +24,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { handle, editor: handle.editor };
 }
 
-/** Набор по символам через `handleTextInput`: так срабатывают правила ввода (`# `). */
+/** Types character by character through `handleTextInput`: that is how input rules fire (`# `). */
 function typeText(editor: Editor, text: string) {
   act(() => {
     for (const char of text) {
@@ -48,7 +48,7 @@ function paste(editor: Editor, html: string) {
   act(() => void editor.view.dom.dispatchEvent(event));
 }
 
-/** Ctrl+Alt+цифра — `Mod-Alt-N` движка. Возвращает, перехватил ли Редактор сочетание. */
+/** Ctrl+Alt+digit is the engine's `Mod-Alt-N`. Returns whether the Editor intercepted the shortcut. */
 function pressHeadingShortcut(editor: Editor, digit: string): boolean {
   const event = new KeyboardEvent("keydown", {
     key: digit,

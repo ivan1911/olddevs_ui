@@ -11,7 +11,7 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -21,19 +21,21 @@ afterEach(() => {
 });
 
 /*
-  «Золотые» тесты встроенных Инструментов (OLDSUI-273).
+  "Golden" tests of the built-in Tools (OLDSUI-273).
 
-  Встроенные Инструменты переехали со старых реестров, с ключом-именем, на
-  описания (`features/builtins.ts`, `core/toolDescriptor.ts`) без видимых
-  изменений; эти тесты держали переезд и держат дальше. Здесь зафиксировано то, что Редактор
-  делает сегодня: порядок меток в сохранённом HTML, строки справочника
-  сочетаний, составы и порядок кнопок и меню, приоритет клавиш, то, что
-  переживает урезанная Схема. Снимки записаны с нынешнего кода и меняются
-  только осознанно: правка снимка — это видимое изменение продукта.
+  The built-in Tools moved from the old registries, keyed by name, to descriptors
+  (`features/builtins.ts`, `core/toolDescriptor.ts`) with no visible changes;
+  these tests held the move and keep holding it. They pin what the Editor does
+  today: the order of Marks in the saved HTML, the rows of the shortcut
+  reference, the composition and order of buttons and menus, the priority of
+  keys, and what survives a trimmed Schema. Snapshots are written from the
+  current code and change only on purpose: editing a snapshot is a visible
+  product change.
 
-  Только публичное поведение: `RichTextEditor`, его движок через `ref`, роли и
-  имена в DOM. Внутренние описания не импортируются: тест держит поведение. Язык —
-  английский по умолчанию, сочетания — как в jsdom (не Apple): `Ctrl`.
+  Public behavior only: `RichTextEditor`, its engine through `ref`, roles and
+  names in the DOM. Internal descriptors are not imported: the test holds the
+  behavior. The language is English by default, and shortcuts are as in jsdom
+  (not Apple): `Ctrl`.
 */
 
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
@@ -49,14 +51,14 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor };
 }
 
-/** HTML Документа по блокам верхнего уровня: снимок читается построчно. */
+/** The Document's HTML by top-level Blocks: the snapshot reads line by line. */
 function blocks(html: string): string[] {
   const root = document.createElement("div");
   root.innerHTML = html;
   return Array.from(root.children, (child) => child.outerHTML);
 }
 
-/** Диапазон текста `text` в Документе (первое вхождение). */
+/** Range of the text `text` in the Document (first occurrence). */
 function rangeOf(editor: Editor, text: string) {
   let from = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -71,7 +73,7 @@ function select(editor: Editor, text: string) {
   act(() => void editor.commands.setTextSelection(range));
 }
 
-/** Каретка — в конец (или в начало) текста `text`. */
+/** Caret at the end (or at the start) of the text `text`. */
 function caretIn(editor: Editor, text: string, at: "end" | "start" = "end") {
   const { from, to } = rangeOf(editor, text);
   act(() => {
@@ -80,14 +82,14 @@ function caretIn(editor: Editor, text: string, at: "end" | "start" = "end") {
   });
 }
 
-/** `keydown` на документе; `true` — Редактор отпустил клавишу браузеру. */
+/** `keydown` on the document; `true` means the Editor released the key to the browser. */
 function press(editor: Editor, key: string, init: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
   act(() => void editor.view.dom.dispatchEvent(event));
   return !event.defaultPrevented;
 }
 
-// --- 1. Сохранённый HTML: порядок вложенных меток -----------------------------
+// --- 1. Saved HTML: order of nested Marks -----------------------------
 
 const LINK = "https://example.com/page";
 const FIGURE = '<figure><img src="https://cdn.example.com/photo.png" alt="A lake"></figure>';
@@ -95,16 +97,16 @@ const TABLE =
   "<table><tbody><tr><th><p>H1</p></th><th><p>H2</p></th></tr>" +
   "<tr><td><p>c1</p></td><td><p>c2</p></td></tr></tbody></table>";
 
-/** Документ со всеми видами Блоков и меток, в том числе в разном порядке вложения. */
+/** A Document with every kind of Block and Mark, including in different nesting orders. */
 const EVERYTHING =
-  // Метки в разных порядках вложения: сериализатор приводит их к одному.
+  // Marks nested in different orders: the serializer normalizes them to one order.
   "<p><strong><em><u><s>BIUS</s></u></em></strong> " +
   "<s><u><em><strong>SUIB</strong></em></u></s> " +
   "<u><strong><s><em>UBSE</em></s></strong></u></p>" +
   "<p><code>code</code> x<sup>2</sup> H<sub>2</sub>O " +
   `<a href="${LINK}">link</a> <mark data-color="yellow">marker</mark> ` +
   '<span style="color:#ff0000">red</span> <span data-color="danger">palette</span></p>' +
-  // Всё сразу на одном куске текста, снаружи внутрь в «неудобном» порядке.
+  // Everything at once on one run of text, from outside in, in an awkward order.
   `<p><a href="${LINK}"><mark data-color="green"><span style="color:#ff0000">` +
   "<s><u><em><strong><sup>everything</sup></strong></em></u></s></span></mark></a></p>" +
   "<h1>Heading 1</h1><h2>Heading 2</h2><h3>Heading 3</h3><h4>Heading 4</h4>" +
@@ -321,9 +323,9 @@ describe("saved HTML", () => {
   });
 });
 
-// --- 2. Справочник сочетаний ---------------------------------------------------
+// --- 2. Shortcut reference ---------------------------------------------------
 
-/** Строки справочника по группам (`tbody`): подпись команды и сочетание. */
+/** Rows of the reference by group (`tbody`): the command label and its shortcut. */
 async function shortcutRows(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Keyboard shortcuts" }));
   const dialog = await screen.findByRole("dialog", { name: "Keyboard shortcuts" });
@@ -454,9 +456,9 @@ describe("shortcut reference", () => {
   });
 });
 
-// --- 3. Составы и порядок поверхностей -----------------------------------------
+// --- 3. Compositions and order of surfaces -----------------------------------------
 
-/** Пункты открытого меню: роль, имя без подписи сочетания, отметка, сочетание. */
+/** Items of the open menu: role, name without the shortcut, checked mark, shortcut. */
 function items(menu: HTMLElement) {
   return Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]'), (item) => {
     const shortcut = item.querySelector("kbd")?.textContent ?? null;
@@ -467,7 +469,7 @@ function items(menu: HTMLElement) {
   });
 }
 
-/** Кнопки и разделители Панели по порядку: `|` — разделитель. */
+/** Buttons and separators of the Toolbar in order: `|` is a separator. */
 function layoutOf(toolbar: HTMLElement) {
   return Array.from(toolbar.querySelectorAll('button, [role="separator"]'), (node) =>
     node.getAttribute("role") === "separator"
@@ -479,8 +481,9 @@ function layoutOf(toolbar: HTMLElement) {
 const PRESETS = ["full", "basic"] as const;
 
 /**
- * Прогнать сценарий по обоим пресетам и собрать результаты в один объект: общий
- * вызов `toMatchInlineSnapshot` в `describe.each` писал бы в одно место.
+ * Run the scenario through both presets and collect the results into one object:
+ * a shared `toMatchInlineSnapshot` call inside `describe.each` would write to a
+ * single place.
  */
 async function eachPreset<T>(run: (preset: (typeof PRESETS)[number]) => Promise<T> | T) {
   const out = {} as Record<(typeof PRESETS)[number], T>;
@@ -493,7 +496,7 @@ async function eachPreset<T>(run: (preset: (typeof PRESETS)[number]) => Promise<
 
 const CONTENT = "<p>Hello world</p>";
 
-/** Редактор с выделением первого слова и плашкой над ним. */
+/** Editor with the first word selected and the Bubble menu above it. */
 async function openBubble(preset: (typeof PRESETS)[number]) {
   const { editor } = renderEditor({ preset, toolbar: "bubble", defaultValue: CONTENT });
   act(() => {
@@ -712,11 +715,11 @@ describe("surfaces", () => {
   });
 });
 
-/** Меню вставки по `/`: разделы и их строки в порядке показа. */
+/** Slash menu on `/`: sections and their rows in display order. */
 function slashSections() {
   const listbox = screen.getByRole("listbox", { name: "Insert block" });
   return Array.from(listbox.querySelectorAll('[role="group"]'), (group) => ({
-    // Имя раздела — по `aria-labelledby`: сам id случайный.
+    // The section name comes from `aria-labelledby`: the id itself is random.
     section:
       group.getAttribute("aria-label") ??
       document.getElementById(group.getAttribute("aria-labelledby") ?? "")?.textContent,
@@ -890,9 +893,9 @@ describe("the block handle menu", () => {
   });
 });
 
-// --- 4. Приоритет клавиш ---------------------------------------------------------
+// --- 4. Key priority ---------------------------------------------------------
 
-/** Где стоит каретка: Блок с кареткой, его текст и родитель Блока. */
+/** Where the caret is: the Block that holds it, its text, and the Block's parent. */
 function where(editor: Editor) {
   const { $from } = editor.state.selection;
   return `${$from.parent.type.name}("${$from.parent.textContent}") in ${$from.node(-2)?.type.name ?? "-"}/${$from.node(-1).type.name}`;
@@ -1009,7 +1012,7 @@ describe("key precedence", () => {
         editor.view.focus();
         editor.commands.setTextSelection(editor.state.doc.content.size - 1);
       });
-      // Каретка — в последнем (пустом) пункте: ищем самый глубокий пустой абзац.
+      // The caret goes into the last (empty) item: find the deepest empty paragraph.
       let target = -1;
       editor.state.doc.descendants((node, pos) => {
         if (node.type.name === "paragraph" && node.content.size === 0) target = pos + 1;
@@ -1069,7 +1072,7 @@ describe("key precedence", () => {
   });
 });
 
-// --- 5. Урезанная Схема --------------------------------------------------------
+// --- 5. Trimmed Schema --------------------------------------------------------
 
 const KITCHEN_SINK =
   "<p><strong>b</strong> <em>i</em> <u>u</u> <s>s</s> <code>c</code> x<sup>2</sup> H<sub>2</sub>O " +

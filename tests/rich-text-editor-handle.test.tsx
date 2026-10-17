@@ -12,7 +12,7 @@ import {
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 import { testMergeTagTool } from "./editor-test-tools.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -20,7 +20,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** Редактор с `ref`: всё, что умеет экран, он делает через Хэндл, а не движок. */
+/** Editor with a `ref`: everything the screen does, it does through the Handle, not the engine. */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
   const view = render(<RichTextEditor ref={ref} aria-label="Body" {...props} />);
@@ -28,19 +28,19 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, handle: () => ref.current! };
 }
 
-/** Каретка (или диапазон) в документе — так, как её оставил автор. */
+/** Caret (or range) in the document, as the author left it. */
 function select(handle: RichTextEditorHandle, from: number, to = from) {
   act(() => void handle.editor!.commands.setTextSelection({ from, to }));
 }
 
-/** Фокус Tiptap ставит в следующем кадре — ради клавиатуры iOS. */
+/** Tiptap sets focus on the next frame, for the sake of the iOS keyboard. */
 async function focused() {
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Body" }))
   );
 }
 
-// --- вставка у каретки -----------------------------------------------------
+// --- insertion at the caret -----------------------------------------------------
 
 test("insertHTML puts the markup at the caret and reports it", () => {
   const { handle } = renderEditor({ defaultValue: "<p>Hello world</p>" });
@@ -128,7 +128,7 @@ test("insertText turns a newline into a soft break, and keeps it raw in a code b
   act(() => void handle().insertText("1\n2"));
   expect(handle().getHTML()).toContain("<p>a1<br>2b</p>");
 
-  // Каретка в блоке кода: перенос там — символ, а не мягкий перенос.
+  // Caret in a code block: a line break there is a character, not a soft break.
   const code = handle().editor!;
   select(handle(), code.state.doc.content.size - 1);
   act(() => void handle().insertText("\ny"));
@@ -162,7 +162,7 @@ test("insertions do nothing in a field the author cannot edit", () => {
   expect(handle().getHTML()).toBe("<p>abc</p>");
 });
 
-// --- вставка — Правка автора -------------------------------------------------
+// --- insertion — User edit -------------------------------------------------
 
 test("an insertion is the author's edit: onChange after the delay, one undo step", () => {
   const onChange = vi.fn();
@@ -171,12 +171,12 @@ test("an insertion is the author's edit: onChange after the delay, one undo step
   select(handle(), 4);
 
   act(() => void handle().insertText(" two"));
-  // Правка автора, а не Замена снаружи: `onChange` ждёт `changeDelay`.
+  // A User edit, not a Programmatic replacement from outside: `onChange` waits for `changeDelay`.
   expect(onChange).not.toHaveBeenCalled();
   act(() => void vi.advanceTimersByTime(300));
   expect(onChange).toHaveBeenLastCalledWith("<p>One two</p>");
 
-  // Вставка — отдельный шаг истории, даже сразу за набором.
+  // An insertion is a separate history step, even right after typing.
   act(() => void handle().editor!.commands.insertContent("!"));
   act(() => void handle().insertText(" three"));
   expect(handle().getHTML()).toBe("<p>One two! three</p>");
@@ -195,7 +195,7 @@ test("clear and setMarkdown stay a replacement from outside: onChange at once", 
   expect(onChange).toHaveBeenLastCalledWith("");
 });
 
-// --- чтение -------------------------------------------------------------------
+// --- reading -------------------------------------------------------------------
 
 test("getText returns the plain text of the Document", () => {
   const { handle } = renderEditor({
@@ -229,7 +229,7 @@ test("isEmpty follows the kit's rule: an atom is content, an empty paragraph is 
   expect(handle().isEmpty()).toBe(false);
 });
 
-// --- фокус ------------------------------------------------------------------------
+// --- focus ------------------------------------------------------------------------
 
 test("focus() without an argument still puts the caret at the end of the Document", async () => {
   const { handle } = renderEditor({ defaultValue: "<p>Hello</p><p>World</p>" });
@@ -259,7 +259,7 @@ test('focus("restore") returns the selection after an outside dialog', async () 
   act(() => handle().focus("restore"));
   await focused();
 
-  // Внешний диалог: фокус ушёл в чужое поле, выделение документа осталось в состоянии.
+  // An outside dialog: focus went to a foreign field, and the document's selection stayed in the state.
   const dialog = document.createElement("input");
   document.body.append(dialog);
   act(() => dialog.focus());
@@ -285,7 +285,7 @@ test("blur() takes the focus out of the Document", async () => {
   );
 });
 
-// --- история ------------------------------------------------------------------------
+// --- history ------------------------------------------------------------------------
 
 test("undo and redo go through the Handle, and canUndo / canRedo follow them", () => {
   const onChange = vi.fn();
@@ -301,7 +301,7 @@ test("undo and redo go through the Handle, and canUndo / canRedo follow them", (
   expect(handle().getHTML()).toBe("<p>One</p>");
   expect(handle().canUndo()).toBe(false);
   expect(handle().canRedo()).toBe(true);
-  // Отмена — Правка автора: владелец значения узнаёт о ней через `onChange`.
+  // Undo is a User edit: the owner of the value learns about it through `onChange`.
   expect(onChange).toHaveBeenLastCalledWith("<p>One</p>");
 
   act(() => handle().redo());
@@ -320,7 +320,7 @@ test("without the history Tool undo and redo are silent", () => {
   expect(handle().getHTML()).toBe("<p>One two</p>");
 });
 
-// --- HTML-режим ---------------------------------------------------------------------
+// --- HTML mode ---------------------------------------------------------------------
 
 test("in the HTML mode the Handle applies the field first and keeps the field in step", () => {
   const { handle } = renderEditor({ defaultValue: "<p>One</p>" });
@@ -328,23 +328,23 @@ test("in the HTML mode the Handle applies the field first and keeps the field in
   const field = screen.getByRole<HTMLTextAreaElement>("textbox", { name: /HTML/ });
 
   fireEvent.change(field, { target: { value: "<p>Edited</p>" } });
-  // Чтение применяет правку поля, как `getHTML()`.
+  // Reading applies the field's edit, as `getHTML()` does.
   expect(handle().getText()).toBe("Edited");
 
-  // Вставка — в Документ, а поле перезаписывается новым Документом.
+  // The insertion goes into the Document, and the field is overwritten by the new Document.
   select(handle(), 7);
   act(() => void handle().insertText("!"));
   expect(handle().getHTML()).toBe("<p>Edited!</p>");
   expect(field.value).toContain("Edited!");
 
-  // Отмена в HTML-режиме — у самого поля, Хэндл молчит.
+  // Undo in HTML mode belongs to the field itself; the Handle stays silent.
   expect(handle().canUndo()).toBe(false);
   act(() => handle().undo());
   expect(handle().getHTML()).toBe("<p>Edited!</p>");
   expect(handle().getSelectedText()).toBe("");
 });
 
-// --- до монтажа -----------------------------------------------------------------------
+// --- before mount -----------------------------------------------------------------------
 
 test("before mount the Handle reads what it knows and writes nothing", () => {
   const seen: Record<string, unknown> = {};
@@ -353,7 +353,7 @@ test("before mount the Handle reads what it knows and writes nothing", () => {
       aria-label="Body"
       defaultValue="<p>Known</p>"
       ref={(handle) => {
-        // Колбэк-`ref` получает Хэндл при монтаже, когда движка ещё нет.
+        // The callback `ref` gets the Handle on mount, when there is no engine yet.
         if (!handle || "html" in seen) return;
         seen.editor = handle.editor;
         seen.html = handle.getHTML();
@@ -402,9 +402,9 @@ test("before mount isEmpty judges by the incoming value", () => {
 });
 
 /*
-  До монтажа и после — одно правило пустоты (`required`, `editor.isEmpty`):
-  абзац без текста, пустой заголовок, список или цитата — пусто; мягкий
-  перенос, атом и любой текст, даже неразрывный пробел, — содержимое.
+  Before and after mount there is one emptiness rule (`required`, `editor.isEmpty`):
+  a paragraph without text, an empty heading, a list or a quote is empty; a soft
+  break, an Atom and any text, even a non-breaking space, is content.
 */
 const EMPTINESS = [
   "",
@@ -444,7 +444,7 @@ test.each(EMPTINESS)("isEmpty before mount agrees with the mounted field: %j", (
   expect(before).toBe(handle!.isEmpty());
 });
 
-// --- хук ----------------------------------------------------------------------------------
+// --- hook ----------------------------------------------------------------------------------
 
 test("useRichTextEditorState shows the active Marks and re-renders only when the slice changes", () => {
   let renders = 0;
@@ -460,7 +460,7 @@ test("useRichTextEditorState shows the active Marks and re-renders only when the
         <button
           type="button"
           aria-pressed={state?.bold ?? false}
-          // Рецепт внешнего тулбара: кнопка не уводит фокус из Документа.
+          // Recipe for an external toolbar: the button does not take focus away from the Document.
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => ref.current?.editor?.chain().focus().toggleBold().run()}
         >
@@ -473,7 +473,7 @@ test("useRichTextEditorState shows the active Marks and re-renders only when the
 
   render(<Screen />);
 
-  // Документ создан после первого рендера, а панель всё равно получила срез.
+  // The Document was created after the first render, yet the panel still got the slice.
   expect(slices[0]).toBeNull();
   expect(slices.at(-1)).toEqual({ bold: false });
   const button = screen.getByRole("button", { name: "Screen bold" });
@@ -485,13 +485,13 @@ test("useRichTextEditorState shows the active Marks and re-renders only when the
   act(() => void button.click());
   expect(button.getAttribute("aria-pressed")).toBe("true");
 
-  // Набор текста срез не меняет — панель не перерисовывается.
+  // Typing does not change the slice, so the panel does not re-render.
   const before = renders;
   act(() => void editor.commands.insertContentAt(8, "x", { updateSelection: false }));
   act(() => void editor.commands.insertContentAt(9, "y", { updateSelection: false }));
   expect(renders).toBe(before);
 
-  // Каретка в обычный текст — срез сменился.
+  // The caret moves into plain text: the slice has changed.
   act(() => void editor.commands.setTextSelection(10));
   expect(button.getAttribute("aria-pressed")).toBe("false");
 });

@@ -11,14 +11,14 @@ import {
 afterEach(cleanup);
 
 /**
- * Ленивые встроенные `codeBlock` и `table` (OLDSUI-111, ADR-0058, п. 11.1):
- * их Extensions грузятся тем же загрузчиком, что у своего Инструмента.
- * `basic`, где их нет, не грузит их вовсе и готов сразу; `full` до загрузки
- * обоих чанков показывает Скелет и доходит до Готовности после них.
+ * Lazy built-in `codeBlock` and `table` (OLDSUI-111, ADR-0058, item 11.1): their
+ * Extensions load through the same loader as those of a custom Tool. `basic`,
+ * where they are absent, does not load them at all and is ready at once; `full`
+ * shows the Skeleton until both chunks load, and reaches Readiness after them.
  *
- * Модуль чанка подменён обёрткой, которая только отмечает импорт: так видно,
- * звался ли он. Подмена — граница сети, а не внутренности: содержимое чанка —
- * настоящее.
+ * The chunk module is replaced by a wrapper that only records the import, so it
+ * is visible whether it was called. The replacement sits at the network boundary,
+ * not in the internals: the chunk's content is real.
  */
 const imported = vi.hoisted(() => [] as string[]);
 
@@ -43,11 +43,11 @@ function renderEditor(props: Partial<RichTextEditorProps>) {
   return { ...view, ref, onReady };
 }
 
-/** Таймеры и эффекты Редактора отработали. */
+/** The timers and the Editor's effects have run. */
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 20))));
 
-// Порядок тестов значим: кэш загрузчика живёт на модуле, и первый `full` его греет.
+// The order of the tests matters: the loader's cache lives on the module, and the first `full` warms it up.
 
 test("basic loads neither chunk and is ready inside render", async () => {
   const { ref, onReady } = renderEditor({ preset: "basic", value: "<p>Comment</p>" });
@@ -61,14 +61,15 @@ test("basic loads neither chunk and is ready inside render", async () => {
 test("full shows the Skeleton until both chunks load, then reaches Readiness without losing blocks", async () => {
   const { ref, onReady, container } = renderEditor({ value: VALUE });
 
-  // Скелет, пока чанки едут: Документ статичным HTML, ввода нет, Готовности нет.
+  // Skeleton while the chunks are on the way: the Document as static HTML, no input, no Readiness.
   expect(screen.getByText("print(1)")).toBeTruthy();
   expect(screen.getByText("Ada")).toBeTruthy();
   expect(container.querySelector("[contenteditable]")).toBeNull();
   expect(ref.current?.editor).toBeNull();
   expect(onReady).not.toHaveBeenCalled();
-  // Блоки видны своей формой, а не текстом: блок кода с языком и шапкой, таблица
-  // со строкой-заголовком — поле не прыгает с приходом чанков.
+  // The Blocks show their own shape, not plain text: a code Block with its language
+  // and header, and a table with its header row, so the field does not jump when
+  // the chunks arrive.
   expect(container.querySelector("pre > code.language-python")?.textContent).toBe("print(1)");
   expect(container.querySelector("[data-code-header]")?.textContent).toBe("Python");
   expect(container.querySelector("table > tbody > tr > th")?.textContent).toBe("Name");
@@ -76,9 +77,9 @@ test("full shows the Skeleton until both chunks load, then reaches Readiness wit
   expect(await screen.findByRole("textbox", { name: "Body" }, { timeout: 10_000 })).toBeTruthy();
   expect([...imported].sort()).toEqual(["codeBlock", "table"]);
   expect(onReady).toHaveBeenCalledTimes(1);
-  // Схема собрана с Extensions обоих Инструментов: блок кода с языком и таблица из `value` на месте.
+  // The Schema is built with the Extensions of both Tools: the code Block with its language and the table from `value` are in place.
   expect(ref.current?.getHTML()).toBe(VALUE);
-  // Меню «Таблица» и окно вставки — из того же чанка.
+  // The Table menu and the insert dialog come from the same chunk.
   expect(screen.getByRole("button", { name: "Table" })).toBeTruthy();
 });
 
