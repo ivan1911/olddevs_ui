@@ -50,11 +50,11 @@ describe("Toolbar", () => {
   });
 
   test("a name is required by the types", () => {
-    // Проверяется компилятором (`npm run typecheck`): строки без имени и с обоими
-    // именами сразу не собираются. В рантайме достаточно, что тест их не рендерит.
-    // @ts-expect-error — ни `aria-label`, ни `aria-labelledby`
+    // Checked by the compiler (`npm run typecheck`): rows with no name and rows with both names
+    // at once do not compile. At runtime it is enough that the test does not render them.
+    // @ts-expect-error — neither `aria-label` nor `aria-labelledby`
     const unnamed = <Toolbar>x</Toolbar>;
-    // @ts-expect-error — оба сразу: второй источник имени
+    // @ts-expect-error — both at once: a second source of the name
     const both = <Toolbar aria-label="a" aria-labelledby="b" />;
     expect(unnamed && both).toBeTruthy();
   });
@@ -106,7 +106,7 @@ describe("Toolbar", () => {
     await user.keyboard("{Home}");
     expect(focused()).toBe("One");
     await user.keyboard("{ArrowLeft}");
-    // Края не зацикливаются: «круг» прятал бы, что действия кончились.
+    // Edges do not wrap: wrapping around would hide that there are no more actions.
     expect(focused()).toBe("One");
   });
 
@@ -163,8 +163,8 @@ describe("Toolbar", () => {
     await user.tab();
     await user.keyboard("{ArrowRight}");
     expect(focused()).toBe("Grid");
-    // Слушатель панели срабатывает раньше React-обработчиков вложенного виджета,
-    // и `defaultPrevented` их не видит: виджет должен быть узнан по роли.
+    // The bar's listener runs before the React handlers of the nested widget, and
+    // `defaultPrevented` does not see them: the widget must be recognized by its role.
     await user.keyboard("{End}");
     expect(focused()).toBe("Grid");
   });
@@ -206,7 +206,7 @@ describe("Toolbar", () => {
       <Toolbar aria-label="Tools">
         <Button>One</Button>
         <Button>Two</Button>
-        {/* Скрыто стилем (адаптивный `hidden md:inline-flex`), а не атрибутом. */}
+        {/* Hidden by style (the responsive `hidden md:inline-flex`), not by the attribute. */}
         <button style={{ display: "none" }}>Wide only</button>
       </Toolbar>
     );
@@ -271,7 +271,7 @@ describe("Toolbar", () => {
       </Toolbar>
     );
     const group = screen.getByRole("group", { name: "Style" });
-    // Атрибут добавляет react-aria вместе с ролью `group`; для неё он недопустим (axe).
+    // react-aria adds it together with the `group` role, which does not allow it (axe).
     await waitFor(() => expect(group.getAttribute("aria-orientation")).toBeNull());
   });
 
@@ -327,7 +327,7 @@ describe("Toolbar", () => {
           <Button>Two</Button>
         </Toolbar>
       );
-      // Горизонтальная черта — значение по умолчанию, и атрибута может не быть.
+      // Horizontal is the default orientation, so the attribute may be absent.
       expect(screen.getByRole("separator").getAttribute("aria-orientation")).not.toBe("vertical");
     });
 
@@ -363,7 +363,7 @@ describe("Toolbar", () => {
           </Popover>
         </Toolbar>
       );
-      // Вне DOM панели группа — самостоятельная `toolbar`, и ось у неё своя.
+      // Outside the bar's DOM, the group is a separate `toolbar` with its own axis.
       const group = screen.getByRole("toolbar", { name: "Status" });
       expect(group.getAttribute("aria-orientation")).toBe("horizontal");
     });

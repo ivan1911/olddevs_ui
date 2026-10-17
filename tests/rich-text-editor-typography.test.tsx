@@ -16,7 +16,7 @@ import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { doubleQuoteFor, openRussianQuotes } from "../src/editor/features/typography/typography.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивый `codeBlock` (OLDSUI-111): Редактор с ним готов в `render` после загрузки чанка.
+// Lazy `codeBlock` (OLDSUI-111): an Editor with it is ready in `render` once the chunk loads.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -25,13 +25,13 @@ afterEach(() => {
 });
 
 /**
- * Инструмент `typography` (OLDSUI-279): автозамены при наборе на Typography из
- * Tiptap.
+ * The `typography` Tool (OLDSUI-279): autoreplacements while typing, from the Tiptap
+ * Typography extension.
  *
- * Через публичный `RichTextEditor` с конкретным `tools`. Ввод идёт тем путём, которым
- * его получает ProseMirror от браузера (`handleTextInput`), — на нём висят правила ввода.
- * Тексты в тестах латинские: правила не зависят от алфавита слов, а гейт i18n не
- * пускает кириллицу в тесты без причины.
+ * Through the public `RichTextEditor` with a specific `tools`. Input takes the same path that
+ * ProseMirror receives it from the browser (`handleTextInput`), where the input rules hang.
+ * The texts in the tests are Latin: the rules do not depend on the alphabet of the words, and
+ * the i18n gate does not let Cyrillic into the tests without a reason.
  */
 
 const TYPOGRAPHY = ["typography", "history", "bold", "code", "codeBlock"] as const;
@@ -51,14 +51,14 @@ function renderEditor(
   return { ...view, editor, handle: ref.current! };
 }
 
-/** Каталог кита в UiProvider: русский — с локалью, как подключает потребитель. */
+/** The kit catalog in UiProvider: Russian comes with its locale, as the consumer wires it up. */
 const inRussian = (children: ReactNode) => (
   <UiProvider locale="ru-RU" messages={ru}>
     {children}
   </UiProvider>
 );
 
-/** Ввод текста тем путём, которым его получает ProseMirror от браузера. */
+/** Types text the way ProseMirror receives it from the browser. */
 function typeText(editor: Editor, text: string) {
   act(() => {
     for (const char of text) {
@@ -71,7 +71,7 @@ function typeText(editor: Editor, text: string) {
   });
 }
 
-/** `keydown` на документе; `true` — Редактор отпустил клавишу браузеру. */
+/** `keydown` on the document; `true` means the Editor let the browser handle the key. */
 function press(editor: Editor, key: string, init: KeyboardEventInit & { keyCode?: number } = {}) {
   const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
   if (init.keyCode !== undefined) Object.defineProperty(event, "keyCode", { value: init.keyCode });
@@ -82,10 +82,10 @@ function press(editor: Editor, key: string, init: KeyboardEventInit & { keyCode?
 const backspace = (editor: Editor) => press(editor, "Backspace", { keyCode: 8 });
 const undo = (editor: Editor) => press(editor, "z", { ctrlKey: true, keyCode: 90 });
 
-/** Текст Документа одной строкой: без тегов, замены видны символами. */
+/** The Document's text on one line: no tags, and the replacements are visible as characters. */
 const text = (editor: Editor) => editor.getText();
 
-// ── Правила Tiptap, все включены ─────────────────────────────────────────
+// ── Tiptap rules, all enabled ────────────────────────────────────────────
 
 const RULES: readonly (readonly [string, string, string])[] = [
   ["em dash", "a--", "a—"],
@@ -117,7 +117,7 @@ test.each(RULES)("%s: typed characters are replaced", (_name, typed, expected) =
   expect(text(editor)).toBe(expected);
 });
 
-// ── Кавычки по языку каталога ────────────────────────────────────────────
+// ── Quotes by catalog language ───────────────────────────────────────────
 
 test("the English catalog types curly double and single quotes", () => {
   const { editor } = renderEditor();
@@ -181,7 +181,7 @@ test("auto follows the catalog when it changes while the editor is mounted", () 
       {field}
     </UiProvider>
   );
-  // Тот же Редактор: движок не пересоздан, а набор кавычек прочитан заново.
+  // The same Editor: the engine was not recreated, but the quote set was read again.
   expect(ref.current!.editor).toBe(editor);
   typeText(editor, '"b"');
   expect(text(editor)).toBe("\u201Ca\u201D \u00ABb\u00BB");
@@ -237,7 +237,7 @@ test("both double quotes switched off leave every double quote straight", () => 
   expect(text(editor)).toBe('"a" ‘b’');
 });
 
-// ── Опции правил ─────────────────────────────────────────────────────────
+// ── Rule options ─────────────────────────────────────────────────────────
 
 test("a rule switched off with false does not fire, the others do", () => {
   const { editor } = renderEditor({ tools: [tool("typography", { emDash: false })] });
@@ -266,7 +266,7 @@ test("an invalid option value is ignored with one dev error, the default stays",
   expect(String(error.mock.calls[0]?.[0])).toContain("emDash, quotes");
 });
 
-// ── Код, отмена, значение ────────────────────────────────────────────────
+// ── Code, undo, value ────────────────────────────────────────────────────
 
 test("nothing is replaced inside the code mark", () => {
   const { editor } = renderEditor({ defaultValue: "<p><code>x</code></p>" });
@@ -318,8 +318,8 @@ test("the kit keymap does not block the undo in a list item or with every kit to
 });
 
 test("Backspace after more typing leaves the replacement alone", () => {
-  // Отмена замены живёт до следующего ввода или смены каретки: дальше Backspace
-  // обычный, а его удаление делает браузер, не Документ.
+  // Undoing a replacement lasts until the next input or caret move: after that, Backspace
+  // is an ordinary key, and the browser, not the Document, deletes the text.
   const { editor } = renderEditor();
   typeText(editor, "a-- b");
   backspace(editor);
@@ -327,12 +327,13 @@ test("Backspace after more typing leaves the replacement alone", () => {
 });
 
 test("Mod+Z right after a replacement brings the typed characters back, the next one removes them", () => {
-  // Правило закрывает историю перед заменой (`closeHistory`): замена — отдельное событие,
-  // и первая отмена возвращает набранные символы, как Backspace; вторая убирает их.
+  // The rule closes history before the replacement (`closeHistory`): the replacement is a
+  // separate event, and the first undo restores the typed characters, like Backspace; the
+  // second one removes them.
   const { editor } = renderEditor();
   vi.useFakeTimers({ toFake: ["Date"] });
   typeText(editor, "ab");
-  // Дальше история открывает новую группу, как после паузы в наборе.
+  // After that, history opens a new group, as after a pause in typing.
   vi.setSystemTime(Date.now() + 2000);
   typeText(editor, "--");
   expect(text(editor)).toBe("ab\u2014");
@@ -349,13 +350,13 @@ test.each([
 ] as const)(
   "Mod+Z right after a quote replacement (%s catalog) brings the typed quote back, the next one removes it",
   (_name, wrap, replaced) => {
-    // Кавычки ставит собственное правило кита (`TypographyQuotes`), не Tiptap, и
-    // отмена у него та же, что у `--`: замена — отдельное событие истории.
+    // Quotes are inserted by the kit's own rule (`TypographyQuotes`), not by Tiptap, and
+    // its undo is the same as for `--`: the replacement is a separate history event.
     const { editor } = renderEditor({}, wrap);
     vi.useFakeTimers({ toFake: ["Date"] });
-    // Пробел перед кавычкой — она открывающая.
+    // A space before a quote: that quote is an opening one.
     typeText(editor, "ab ");
-    // Дальше история открывает новую группу, как после паузы в наборе.
+    // After that, history opens a new group, as after a pause in typing.
     vi.setSystemTime(Date.now() + 2000);
     typeText(editor, '"');
     expect(text(editor)).toBe(`ab ${replaced}`);
@@ -384,7 +385,7 @@ test("the replaced characters survive a round trip through value", () => {
   expect(editor.getHTML()).toBe(html);
 });
 
-// ── Вне пресетов ─────────────────────────────────────────────────────────
+// ── Outside presets ──────────────────────────────────────────────────────
 
 test("no preset enables typography", () => {
   expect(RICH_TEXT_PRESETS.full).not.toContain("typography");
@@ -417,7 +418,7 @@ test("the tool adds no button to the toolbar", () => {
   expect(buttons(["history", "typography"])).toBe(buttons(["history"]));
 });
 
-// ── Выбор кавычки ────────────────────────────────────────────────────────
+// ── Quote choice ─────────────────────────────────────────────────────────
 
 beforeEach(() => resetDevWarnings());
 
@@ -426,7 +427,7 @@ test("openRussianQuotes counts only pairs closed by their own mark", () => {
   expect(openRussianQuotes("«a „b")).toEqual(["«", "„"]);
   expect(openRussianQuotes("«a „b“")).toEqual(["«"]);
   expect(openRussianQuotes("«a» b")).toEqual([]);
-  // Закрывающая без своей открывающей не сбивает счёт.
+  // A closing quote without its own opening one does not throw off the count.
   expect(openRussianQuotes("«a „b»")).toEqual(["«", "„"]);
 });
 

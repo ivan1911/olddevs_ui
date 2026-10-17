@@ -20,17 +20,17 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
-  // Поведение карточки не должно протекать между тестами через стенд для тача.
+  // The card's behavior must not leak between tests through the touch stub.
   Reflect.deleteProperty(window, "matchMedia");
-  // Трекер модальности глобален: уход окна из фокуса сбрасывает недоставленное
-  // событие, чтобы клавиша одного теста не стала «клавишей» следующего.
+  // The modality tracker is global: when the window loses focus, it drops an
+  // undelivered event, so one test's key does not count as the next test's key.
   fireEvent.blur(window);
 });
 
 /*
-  Без user-event: его обёртка `asyncWrapper` у Testing Library ждёт реальный
-  `setTimeout`, а под `vi.useFakeTimers` он не наступает — тест висит до
-  таймаута. События шлются напрямую, время двигает `tick`.
+  No user-event: its `asyncWrapper` in Testing Library waits for a real
+  `setTimeout`, and under `vi.useFakeTimers` it never fires, so the test hangs
+  until the timeout. Events are dispatched directly, and time is moved by `tick`.
 */
 const hover = (element: Element) =>
   act(() => {
@@ -42,10 +42,10 @@ const unhover = (element: Element) =>
   });
 
 /*
-  Карточка открывается только по фокусу, пришедшему от клавиши: модальность
-  ввода читается из `lib/interaction-modality` (слушатели на `document`). Тесты
-  воспроизводят цепочку событий браузера: клавиша или нажатие, затем фокус.
-  Фокус без предшествующего события — это виртуальная модальность (скринридер).
+  The card opens only on focus that came from a key: the input modality is read
+  from `lib/interaction-modality` (listeners on `document`). The tests reproduce
+  the browser's event chain: a key or a press, then focus. Focus without a
+  preceding event is the virtual modality (a screen reader).
 */
 const pressTab = () => {
   act(() => {
@@ -54,14 +54,14 @@ const pressTab = () => {
     fireEvent.keyUp(document.body);
   });
 };
-/** Нажатие мышью или пальцем: событие указателя, затем фокус от него. */
+/** A press with the mouse or a finger: a pointer event, then focus from it. */
 const mouseFocus = () => {
   act(() => {
     fireEvent.pointerDown(trigger(), { pointerType: "mouse" });
     trigger().focus();
   });
 };
-/** Фокус без клавиши и указателя: так его ставит свайп VoiceOver или TalkBack. */
+/** Focus without a key or a pointer: this is how a VoiceOver or TalkBack swipe sets it. */
 const virtualFocus = () => act(() => trigger().focus());
 const escape = () =>
   act(() => {
@@ -87,10 +87,10 @@ function Host(props: Partial<HoverCardProps> & { onTriggerClick?: () => void }) 
 const trigger = () => screen.getByRole("link", { name: "Ada Lovelace" });
 const card = () => screen.queryByText("Mathematician, first programmer");
 
-/** Время идёт внутри `act`: таймеры меняют состояние React. */
+/** Time advances inside `act`: timers change React state. */
 const tick = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 
-/** Эмуляция устройства без наведения: `matchMedia("(hover: none)")` совпадает. */
+/** Emulates a device without hover: `matchMedia("(hover: none)")` matches. */
 function stubHoverNone() {
   vi.stubGlobal(
     "matchMedia",
@@ -147,8 +147,8 @@ describe("opening", () => {
   test("focus that came from a click does not open the card", () => {
     render(<Host />);
 
-    // Щелчок по ссылке тоже ставит на неё фокус; карточка под уже
-    // совершённым действием не нужна.
+    // A click on the link also focuses it; the card is not needed for an action
+    // that is already done.
     mouseFocus();
     tick(5000);
 
@@ -158,8 +158,8 @@ describe("opening", () => {
   test("focus with no key or pointer before it (a screen reader) does not open the card", () => {
     render(<Host />);
 
-    // Свайп VoiceOver или TalkBack, виртуальный курсор NVDA: страница не
-    // получает ни клавиши, ни указателя — фокус просто появляется.
+    // A VoiceOver or TalkBack swipe, or NVDA's virtual cursor: the page gets
+    // neither a key nor a pointer, the focus just appears.
     virtualFocus();
     tick(5000);
 
@@ -190,8 +190,8 @@ describe("opening", () => {
   test("programmatic focus right after a click does not open the card", () => {
     render(<Host />);
 
-    // Обработчик клика переводит фокус кодом (например, возвращает его на
-    // триггер после закрытия окна): это продолжение нажатия, а не клавиша.
+    // A click handler moves focus in code (for example, returns it to the trigger
+    // after a dialog closes): that is a continuation of the press, not a key.
     act(() => {
       fireEvent.pointerDown(document.body, { pointerType: "mouse" });
       trigger().focus();
@@ -243,8 +243,8 @@ describe("opening", () => {
     tick(300);
     expect(card()).toBeNull();
 
-    // Пользователь ушёл из окна и вернулся: браузер возвращает фокус на ссылку
-    // без клавиши. Прежняя клавиша не должна считаться причиной этого фокуса.
+    // The user left the window and came back: the browser returns focus to the
+    // link without a key. The earlier key must not count as the cause of this focus.
     act(() => {
       fireEvent.blur(window);
       fireEvent.focus(window);
@@ -345,8 +345,8 @@ describe("closing", () => {
     pressTab();
     tick(700);
 
-    // Фокус уходит в пустоту, а не на соседний элемент: так проверяется именно
-    // отложенное закрытие по blur, без немедленного закрытия по клику вовне.
+    // Focus goes to nothing, not to a neighboring element: this checks exactly the
+    // deferred close on blur, without an immediate close on a click outside.
     act(() => trigger().blur());
     tick(300);
 
@@ -406,8 +406,8 @@ describe("state does not outlive the card", () => {
     unhover(trigger());
     hover(card()!);
 
-    // Escape убирает панель из документа вместе с курсором на ней: `pointerleave`
-    // не придёт, и флаг «курсор на карточке» остался бы поднятым.
+    // Escape removes the panel from the document together with the pointer on it:
+    // `pointerleave` will not come, and the "pointer on the card" flag would stay raised.
     escape();
     expect(card()).toBeNull();
 
@@ -429,7 +429,7 @@ describe("state does not outlive the card", () => {
     hover(trigger());
     tick(700);
     expect(card()).not.toBeNull();
-    // Фокус всё ещё на ссылке; но после закрытия он «держать» карточку не должен.
+    // Focus is still on the link, but after closing it must not keep the card open.
     unhover(trigger());
     tick(300);
     expect(card()).toBeNull();
@@ -461,8 +461,8 @@ describe("the trigger keeps its own action", () => {
   test("the trigger is not announced as a popup opener", () => {
     render(<Host />);
 
-    // Карточка — дополнение, а не поповер по клику: ни `aria-haspopup`, ни
-    // `aria-expanded` на ссылке нет, иначе скринридер пообещает меню.
+    // The card is a supplement, not a click popover: there is no `aria-haspopup`
+    // or `aria-expanded` on the link, or the screen reader would promise a menu.
     expect(trigger().getAttribute("aria-haspopup")).toBeNull();
     expect(trigger().getAttribute("aria-expanded")).toBeNull();
   });
@@ -514,7 +514,7 @@ describe("devices without hover", () => {
     stubHoverNone();
     render(<Host />);
 
-    // Касание ставит фокус, но не клавишей — как щелчок мышью.
+    // A touch sets focus, but not with a key, just like a mouse click.
     fireEvent.pointerEnter(trigger(), { pointerType: "touch" });
     act(() => {
       fireEvent.pointerDown(trigger(), { pointerType: "touch" });
@@ -598,9 +598,9 @@ describe("layers", () => {
         <Host />
       </Dialog>
     );
-    // Карточка открывается ПОСЛЕ окна, как и в жизни: слои Radix встают в стек
-    // в порядке монтирования, и `defaultOpen` в том же коммите, что и окно,
-    // поставил бы карточку ниже него — это артефакт теста, а не поведение.
+    // The card opens AFTER the dialog, as it does in real life: Radix layers join
+    // the stack in mount order, and `defaultOpen` in the same commit as the dialog
+    // would put the card below it. That is a test artifact, not behavior.
     hover(trigger());
     tick(700);
 

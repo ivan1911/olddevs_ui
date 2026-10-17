@@ -14,7 +14,7 @@ type Story = StoryObj<HeadingProps>;
 
 export const Playground: Story = {};
 
-/** Уровень задаёт и тег, и кегль. */
+/** The level sets both the tag and the font size. */
 export const Levels: Story = {
   render: (args) => (
     <div className="flex flex-col gap-4">
@@ -35,8 +35,8 @@ export const Levels: Story = {
 };
 
 /**
- * Уровень и размер разведены: порядок заголовков в документе остаётся
- * непрерывным, а кегль берётся тот, который нужен на экране.
+ * Level and size are decoupled: the order of headings in the document stays continuous,
+ * and the font size is the one the screen needs.
  */
 export const SizeApartFromLevel: Story = {
   render: (args) => (
@@ -55,8 +55,8 @@ export const SizeApartFromLevel: Story = {
 };
 
 /**
- * Непрерывная лестница уровней — то, что читает скринридер. Аудит axe проверяет
- * именно эту историю: перескок с `h2` на `h4` он ловит как нарушение.
+ * A continuous ladder of levels is what the screen reader reads. The axe audit checks exactly
+ * this story: it flags a jump from `h2` to `h4` as a violation.
  */
 export const InDocument: Story = {
   render: () => (
@@ -76,8 +76,8 @@ export const InDocument: Story = {
 };
 
 /**
- * Цифры равной ширины — та же ось, что у `Text`. Слева сводка пересчитывается
- * и на каждом пересчёте меняет ширину, справа число стоит на месте.
+ * Tabular numerals are on the same axis as `Text`. On the left the summary is recalculated and
+ * changes width on every recalculation; on the right the number stays in place.
  */
 export const Numerals: Story = {
   render: (args) => (

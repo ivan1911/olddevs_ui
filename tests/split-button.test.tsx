@@ -7,9 +7,9 @@ import { MenuItem } from "../src/components/overlays/Menu.js";
 import { SplitButton } from "../src/components/actions/SplitButton.js";
 
 /*
-  Шим `CSS.escape` — тот же, что в `menu.test.tsx` и по той же причине: в jsdom
-  объекта `CSS` нет, а попоувер react-aria зовёт `CSS.escape` при открытии, и
-  без шима меню не открывается ни в одном тесте.
+  `CSS.escape` shim. It is the same as in `menu.test.tsx`, for the same reason: jsdom has no `CSS`
+  object, and the react-aria popover calls `CSS.escape` when it opens. Without the shim, the menu
+  does not open in any test.
 */
 if (typeof globalThis.CSS === "undefined")
   (globalThis as unknown as { CSS: { escape: (v: string) => string } }).CSS = {
@@ -48,13 +48,13 @@ test("the toggle opens the menu and the main action does not", async () => {
 
   await user.click(screen.getByRole("button", { name: /More actions/ }));
   expect(await screen.findByRole("menu")).toBeTruthy();
-  // Открытие меню не должно звать главное действие: это разные исходы.
+  // Opening the menu must not call the main action: these are two different outcomes.
   expect(onClick).toHaveBeenCalledTimes(1);
 });
 
 /*
-  Единственное собственное решение компонента, и потому отдельный тест: без
-  подписи действия в речи идут «Export» и следом безымянная кнопка со стрелкой.
+  This is the component's only own decision, so it gets a separate test. Without the action's
+  label, speech output reads "Export" and then an unnamed button with an arrow.
 */
 test("the toggle name is built from the main action label", () => {
   render(<Export />);
@@ -75,9 +75,9 @@ test("a menu item calls its own action, not the main one", async () => {
 });
 
 /*
-  Утверждение компонента — «меню открыть нельзя», а не «на кнопке висит
-  атрибут». Проверяем первое: чем именно react-aria выражает выключенность, его
-  дело, и тест не должен разъезжаться при смене этой детали.
+  The component's claim is "the menu cannot be opened", not "the button has an attribute". The test
+  checks the first: how react-aria expresses being disabled is its own concern, and the test must
+  not break when that detail changes.
 */
 test("disabled turns off both buttons", async () => {
   const user = userEvent.setup();
@@ -89,14 +89,13 @@ test("disabled turns off both buttons", async () => {
 });
 
 /*
-  Отправка гасит раскрыватель по той же причине, что и `disabled`: открытое меню
-  посреди отправки предлагает второй способ сделать то, что уже делается.
+  Submitting disables the menu button for the same reason as `disabled`: an open menu in the middle
+  of a submission offers a second way to do what is already in progress.
 */
 /*
-  Проверяется и выключенность самого раскрывателя, а не только то, что меню не
-  открылось: заслон `isOpen` удовлетворял тест в одиночку, и регрессия
-  «раскрыватель выглядит живым, но ничего не делает» прошла бы зелёной — а это
-  хуже честно выключенной кнопки.
+  The test also checks that the menu button itself is disabled, not only that the menu did not
+  open. The `isOpen` guard alone satisfied the test, so a regression where the menu button looks
+  alive but does nothing would have passed. That is worse than an honestly disabled button.
 */
 test("loading turns off the toggle, not just the main action", async () => {
   const user = userEvent.setup();
@@ -110,17 +109,17 @@ test("loading turns off the toggle, not just the main action", async () => {
 });
 
 /*
-  Дыра, найденная ревью и воспроизведённая до починки: неуправляемый
-  `MenuTrigger` держал раскрытую панель после выключения, и пункт продолжал
-  срабатывать — компонент выглядел выключенным, а второй способ работал.
+  A gap found in review and reproduced before the fix: the uncontrolled `MenuTrigger` kept the
+  open panel after the component was disabled, and the item kept firing. The component looked
+  disabled, but the second way still worked.
 */
 test("turning the component off closes a menu that is already open", async () => {
   const user = userEvent.setup();
   const onExport = vi.fn();
 
-  // Переключатель снаружи не годится: открытая панель делает остальную страницу
-  // инертной, и до кнопки не добраться ни кликом, ни запросом. Состояние
-  // меняется напрямую — проверяется реакция компонента, а не путь до тумблера.
+  // A toggle outside the component will not work: the open panel makes the rest of the page inert,
+  // so the button cannot be reached by a click or a query. The state is changed directly, so the
+  // test checks how the component reacts, not the path to the switch.
   let turnOff = () => {};
   function Switchable() {
     const [off, setOff] = useState(false);
@@ -140,9 +139,9 @@ test("turning the component off closes a menu that is already open", async () =>
 });
 
 /*
-  Вторая половина того же дефекта, и она пряталась за первой: `isOpen` гасит
-  показ, но управляемая смена не зовёт `onOpenChange`, поэтому `open` оставался
-  `true`. Меню возвращалось само, когда выключенность снимали.
+  The second half of the same defect, hidden behind the first. `isOpen` prevents showing the menu,
+  but a controlled change does not call `onOpenChange`, so `open` stayed `true`. The menu came back
+  on its own when the disabled state was lifted.
 */
 test("re-enabling does not bring the menu back on its own", async () => {
   const user = userEvent.setup();
@@ -166,9 +165,9 @@ test("re-enabling does not bring the menu back on its own", async () => {
 });
 
 /*
-  Всё обоснование компонента держится на том, что раскрыватель — отдельная точка
-  табуляции и открывается с клавиатуры. Без этого теста «с клавиатуры до второго
-  исхода не добраться» остаётся утверждением докстроки.
+  The whole rationale for the component rests on the menu button being its own tab stop and
+  opening from the keyboard. Without this test, "the second outcome cannot be reached from the
+  keyboard" stays a claim in the docstring.
 */
 test("the toggle is its own tab stop and opens from the keyboard", async () => {
   const user = userEvent.setup();
@@ -187,9 +186,9 @@ test("the toggle is its own tab stop and opens from the keyboard", async () => {
 });
 
 /*
-  Имя панели приходит от триггера, своего `aria-label` компонент ей не даёт.
-  Тест сторожит, что имя вообще есть: молча безымянное меню — то, что ловится
-  только аудитом или ухом.
+  The panel gets its name from the trigger; the component does not give it its own `aria-label`.
+  The test guards that the name exists at all: a menu that is silently unnamed is something only an
+  audit or a listener would catch.
 */
 test("the menu takes its accessible name from the toggle", async () => {
   const user = userEvent.setup();

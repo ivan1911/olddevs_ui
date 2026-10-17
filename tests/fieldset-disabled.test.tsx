@@ -12,16 +12,14 @@ import { RangeSlider, Slider } from "../src/components/inputs/Slider.js";
 afterEach(cleanup);
 
 /*
-  Выключенный `<fieldset disabled>` (так `Form` с `pending` гасит поля) отключает
-  вложенные нативные контролы, но НЕ выставляет `data-disabled` на элементах
-  react-aria: те знают только о собственном `isDisabled`. Поэтому `disabled:`
-  на их корне не срабатывает, и контрол остаётся «живым» на вид, будучи
-  неработающим. Нативное состояние видит только псевдокласс `:disabled` на
-  скрытом `input` внутри — отсюда `has-[input:disabled]:`.
+  A disabled `<fieldset disabled>` (this is how `Form` with `pending` disables its fields)
+  disables the nested native controls, but does NOT set `data-disabled` on react-aria
+  elements: they know only about their own `isDisabled`. So `disabled:` on their root
+  does not fire, and the control looks "alive" while it does not work. Only the `:disabled`
+  pseudo-class on the hidden `input` inside sees the native state, hence `has-[input:disabled]:`.
 
-  В jsdom нет вычисленных стилей Tailwind, поэтому проверяются два факта: что
-  `input` действительно выключен предком и что у его обёртки есть класс,
-  привязанный к этому состоянию.
+  jsdom has no computed Tailwind styles, so two facts are checked: that the `input` is really
+  disabled by an ancestor, and that its wrapper has a class tied to this state.
 */
 const inDisabledFieldset = (ui: ReactNode) => render(<fieldset disabled>{ui}</fieldset>);
 
@@ -45,7 +43,7 @@ test("a card checkbox inside a disabled fieldset is dimmed", () => {
   const input = screen.getByRole("checkbox");
 
   expect(input.matches(":disabled")).toBe(true);
-  // Корень карточки — `div` RAC-поля, а не метка внутри него.
+  // The card root is the `div` of the RAC field, not the label inside it.
   expect(dimsOnDisabledDescendant(input.closest("label")?.parentElement ?? null)).toBe(true);
 });
 
@@ -81,7 +79,7 @@ test.each([
 
   const thumb = screen.getAllByRole("slider")[0]!;
   expect(thumb.matches(":disabled")).toBe(true);
-  // Сам `fieldset` тоже имеет роль `group`, поэтому корень ищется от бегунка.
+  // The `fieldset` itself also has the `group` role, so the root is looked up from the thumb.
   expect(dimsOnDisabledDescendant(thumb.closest('[role="group"]'))).toBe(true);
 });
 
@@ -93,8 +91,8 @@ test("a switch caption inside a disabled fieldset is dimmed together with the tr
   );
   const control = screen.getByRole("switch");
 
-  // Дорожка гаснет сама (`disabled:` на нативной кнопке), а подпись — только по
-  // собственному `disabled`, то есть внутри fieldset оставалась яркой.
+  // The track dims on its own (`disabled:` on the native button), while the caption
+  // dims only by its own `disabled`, so inside the fieldset it stayed bright.
   expect(control.matches(":disabled")).toBe(true);
   expect(
     screen
@@ -105,8 +103,8 @@ test("a switch caption inside a disabled fieldset is dimmed together with the tr
 });
 
 test("a disabled node in the description does not dim a working card", () => {
-  // Голый `has-disabled` ловил любой выключенный узел внутри и гасил рабочую
-  // карточку из-за кнопки в описании. Условие сужено до скрытого `input`.
+  // A bare `has-disabled` caught any disabled node inside and dimmed a working card
+  // because of a button in the description. The condition is narrowed to the hidden `input`.
   render(
     <CheckboxCard tone="accent" description={<button disabled>Upgrade</button>}>
       Analytics

@@ -9,14 +9,14 @@ const ROOT = resolve(import.meta.dirname, "..");
 const SRC = join(ROOT, "src");
 
 /**
- * Ворота входа `@olddevs/ui/editor/schema` (OLDSUI-48, ADR-0050).
+ * The guard of the `@olddevs/ui/editor/schema` entry point (OLDSUI-48, ADR-0050).
  *
- * ЗАЧЕМ. Очистка HTML — дело сервера потребителя, и Node-процессу, которому
- * нужен один конфиг для DOMPurify, незачем грузить React и Tiptap. Вход
- * `@olddevs/ui/editor` тянет редактор целиком, поэтому конфиг отдаётся ещё и
- * отдельным лёгким входом. Обещание держится на графе модулей: одна лишняя
- * строка импорта в `schema.ts` — и вход снова тяжёлый, а ни размер (Tiptap во
- * внешних), ни типы этого не заметят.
+ * WHY. Sanitizing HTML is the consumer's server job, and a Node process that needs
+ * one config for DOMPurify has no reason to load React and Tiptap. The
+ * `@olddevs/ui/editor` entry point pulls in the whole editor, so the config is also exposed
+ * as a separate light entry point. The promise rests on the module graph: one extra
+ * import line in `schema.ts` and the entry is heavy again, and neither the size check (Tiptap is among the
+ * externals) nor the types would notice this.
  */
 
 test("the entry exports the schema as data, the sanitiser, the bare config and markRange", () => {
@@ -36,14 +36,14 @@ test("the entry exports the schema as data, the sanitiser, the bare config and m
 test("the editor entry keeps exporting the sanitise config and the sanitiser", () => {
   expect(editor.richTextSanitizeConfig).toBe(schemaEntry.richTextSanitizeConfig);
   expect(editor.sanitizeRichText).toBe(schemaEntry.sanitizeRichText);
-  // Схема для набора `tools` своих Инструментов (OLDSUI-104) — из обоих входов.
+  // The Schema for the `tools` set of custom Tools (OLDSUI-104), from both entry points.
   expect(editor.richTextSchema).toBe(schemaEntry.richTextSchema);
-  // Помощник Карточки у текста: описание своего Инструмента собирается и на
-  // сервере, а `rangeAt` — его поле (OLDSUI-113).
+  // Text card helper: the description of a custom Tool is also assembled on the
+  // server, and `rangeAt` is its field (OLDSUI-113).
   expect(editor.markRange).toBe(schemaEntry.markRange);
 });
 
-/** Подключения модуля: `from "…"` и `import "…"`; типовые импорты не в счёт. */
+/** Module dependencies: `from "…"` and side-effect `import "…"`; regular imports do not count. */
 function specifiers(source: string): string[] {
   const found: string[] = [];
   for (const match of source.matchAll(
@@ -82,7 +82,7 @@ test("the module graph of the entry has no React, no engine and no client bounda
 
   expect(files).toContain(join(SRC, "editor", "core", "schema.ts"));
   expect(files).toContain(join(SRC, "editor", "core", "customTool.ts"));
-  // Ни одного пакета: React и Tiptap — пакеты, а компоненты кита до графа не доходят.
+  // Not a single package: React and Tiptap are packages, and the kit's components never reach the graph.
   expect(packages).toEqual([]);
   expect(
     files.filter((file) => readFileSync(file, "utf8").trimStart().startsWith('"use client"'))
@@ -90,11 +90,11 @@ test("the module graph of the entry has no React, no engine and no client bounda
 });
 
 /*
-  Свой Инструмент на сервере (OLDSUI-104, ADR-0058, п. 2.3): очистка читает
-  правила Схемы из описания, и модуль описания (`customTool.ts`) импортируется
-  там же, где лёгкий вход, — без Tiptap и React. Extensions — дело
-  описания потребителя: с загрузчиком они и у него не попадают в граф сервера.
-*/
+ * A custom Tool on the server (OLDSUI-104, ADR-0058, section 2.3): sanitizing reads
+ * the Schema rules from the description, and the description module (`customTool.ts`) is imported
+ * where the light entry is, without Tiptap and React. Extensions are the job of the
+ * consumer's description: with a loader, they also stay out of the server graph.
+ */
 test("the custom tool description module is as light as the entry", () => {
   const { files, packages } = moduleGraph(join(SRC, "editor", "core", "customTool.ts"));
 
@@ -102,15 +102,15 @@ test("the custom tool description module is as light as the entry", () => {
   expect(
     files.filter((file) => readFileSync(file, "utf8").trimStart().startsWith('"use client"'))
   ).toEqual([]);
-  // Проводка своего Инструмента в движок — отдельно и в граф входа не попадает.
+  // Wiring a custom Tool into the engine is separate and is not part of the entry's graph.
   const entry = moduleGraph(join(SRC, "editor", "schema-entry.ts")).files;
   expect(entry).not.toContain(join(SRC, "editor", "core", "customToolEngine.ts"));
 });
 
 /*
-  Настроенный Инструмент на сервере (OLDSUI-268): `tool()` вызывают в серверном
-  модуле, где собирается `tools`, и модуль помощника не тянет ни Tiptap, ни React.
-*/
+ * A Configured Tool on the server (OLDSUI-268): `tool()` is called in the server
+ * module where `tools` is assembled, and the helper module pulls in neither Tiptap nor React.
+ */
 test("the tool() module is as light as the entry, and the schema skips a Configured Tool", () => {
   const { files, packages } = moduleGraph(join(SRC, "editor", "core", "toolOptions.ts"));
 
@@ -118,7 +118,7 @@ test("the tool() module is as light as the entry, and the schema skips a Configu
   expect(
     files.filter((file) => readFileSync(file, "utf8").trimStart().startsWith('"use client"'))
   ).toEqual([]);
-  // Он же — часть графа лёгкого входа: `schema.ts` отличает им запись `tools` от своего Инструмента.
+  // It is also part of the light entry's graph: `schema.ts` uses it to tell a `tools` entry from a custom Tool.
   expect(moduleGraph(join(SRC, "editor", "schema-entry.ts")).files).toContain(files[0]);
 
   const schema = schemaEntry.richTextSchema([editor.tool("toc", { levels: [2] })]);

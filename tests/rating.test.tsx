@@ -43,13 +43,13 @@ test("clicking a star sets that value", async () => {
 });
 
 /*
-  Клавиатурная модель — радиогруппа: пять табстопов на один вопрос это пять
-  остановок там, где ответ один.
+  The keyboard model is a radio group: five tab stops for one question is five
+  stops where there is one answer.
 */
 /*
-  Роуминг табиндекса: в табуляции ровно одна звезда — выбранная. Без него
-  группа объявлена радиогруппой, но построена как ряд неинтерактивных
-  элементов, и стрелка меняет значение молча.
+  Roving tabindex: exactly one star is in the tab order — the chosen one. Without it
+  the group is declared a radio group but built as a row of non-interactive elements,
+  and the arrow changes the value silently.
 */
 test("the whole rating is one tab stop, and it is the chosen star", async () => {
   const user = userEvent.setup();
@@ -84,8 +84,8 @@ test("with no rating yet the first star holds the tab stop", async () => {
 });
 
 /*
-  Состояние обязано висеть на элементе, а не только в подписи: без него
-  скринридер прочитает пять одинаковых радиокнопок.
+  The state must sit on the element, not only in the caption: without it a screen
+  reader reads five identical radio buttons.
 */
 test("only the chosen star is checked", () => {
   render(<Stars initial={2} />);
@@ -97,8 +97,8 @@ test("only the chosen star is checked", () => {
 });
 
 /*
-  Фокус идёт за значением: иначе следующая стрелка отсчитывала бы от прежней
-  звезды, а объявлено было бы новое значение.
+  Focus follows the value: otherwise the next arrow would count from the previous star,
+  while the new value is the one announced.
 */
 test("focus follows the value so the next arrow counts from it", async () => {
   const user = userEvent.setup();
@@ -124,15 +124,15 @@ test("arrows move the value and Home and End reach the ends", async () => {
   await user.keyboard("{End}");
   expect(onValue).toHaveBeenLastCalledWith(5);
 
-  // `Home` уводит на ноль, а не на единицу: ноль объявлен законным значением,
-  // и нижний край группы — это он.
+  // `Home` goes to zero, not to one: zero is declared a legal value, and it is
+  // the bottom edge of the group.
   await user.keyboard("{Home}");
   expect(onValue).toHaveBeenLastCalledWith(0);
 });
 
 /*
-  Ноль достижим только стрелкой назад с единицы: снять оценку — законное
-  действие, но случайно в него не попадают.
+  Zero is reachable only by an arrow back from one: clearing a rating is a legal
+  action, but nobody lands on it by accident.
 */
 test("the value can be taken back to zero but never below", async () => {
   const user = userEvent.setup();
@@ -148,24 +148,24 @@ test("the value can be taken back to zero but never below", async () => {
 });
 
 /*
-  `readOnly` и `disabled` — разные состояния. Первое показывает данные и не
-  гасит их; второе гасит, потому что это недоступное сейчас действие.
+  `readOnly` and `disabled` are different states. The first shows data and does not
+  dim it; the second dims it, because the action is unavailable right now.
 */
 test("read-only shows the value, leaves the tab order and is not dimmed", () => {
   const { container } = render(<Stars initial={4} readOnly />);
 
   expect(screen.queryByRole("radiogroup")).toBeNull();
-  // Имя СКЛЕИВАЕТСЯ из подписи потребителя и величины, а не подменяется ею:
-  // «Оценка 4 из 5» без предмета — величина без ответа на вопрос «чего».
+  // The name is COMPOSED from the consumer's label and the value, not replaced by it:
+  // "Rated 4 out of 5" without a subject is a value without an answer to "of what".
   expect(screen.getByRole("img", { name: "Quality Rated 4 out of 5" })).toBeTruthy();
   expect(container.querySelector(".opacity-50")).toBeNull();
 });
 
 /*
-  Выключенная оценка остаётся радиогруппой и помечается `aria-disabled`:
-  `role="img"` прочитался бы как картинка, а не как недоступное действие.
-  Клавиатуру проверяем событием на самой группе — иначе оно уходит в `body` и
-  тест зелёный при любом коде.
+  A disabled rating stays a radio group and is marked with `aria-disabled`:
+  `role="img"` would be read as a picture, not as an unavailable action. The keyboard
+  is checked with an event on the group itself — otherwise the event goes to `body`
+  and the test passes with any code.
 */
 test("disabled keeps the role, marks itself and refuses input", async () => {
   const user = userEvent.setup();
@@ -175,7 +175,7 @@ test("disabled keeps the role, marks itself and refuses input", async () => {
   const group = screen.getByRole("radiogroup");
   expect(group.getAttribute("aria-disabled")).toBe("true");
   expect(container.querySelector(".opacity-50")).toBeTruthy();
-  // Звёзды выпали из табуляции целиком.
+  // The stars are removed from the tab order entirely.
   expect(screen.getAllByRole("radio").every((star) => !star.hasAttribute("tabindex"))).toBe(true);
 
   await user.click(screen.getByRole("radio", { name: "4 of 5" }));
@@ -185,12 +185,12 @@ test("disabled keeps the role, marks itself and refuses input", async () => {
 });
 
 /*
-  Цвет и число закрашенных звёзд — единственный визуальный носитель величины.
-  Без строки скринридер прочитал бы пять одинаковых элементов.
+  The colour and the number of filled stars are the only visual carrier of the value.
+  Without a text line a screen reader would read five identical elements.
 */
 /*
-  Величина словами входит в имя группы и в интерактивном режиме тоже: без неё
-  стрелка меняла бы `aria-checked` на элементе, а вслух не звучало бы ничего.
+  The value in words is part of the group name in interactive mode too: without it an
+  arrow would change `aria-checked` on the element, and nothing would be spoken aloud.
 */
 test("the value is part of the group name, not a stray line", () => {
   render(<Stars initial={3} />);
@@ -203,8 +203,8 @@ test("the caption is the consumer's, the kit does not compute it", () => {
 });
 
 /*
-  Токен звезды свой, а не `--warning`: цвет сегодня тот же, и в этом ловушка —
-  правка предупреждения молча перекрасила бы все оценки (ADR-0040).
+  The star token is its own, not `--warning`: the colour is the same today, and that is
+  the trap — editing the warning would silently recolour every rating (ADR-0040).
 */
 test("filled stars take the rating token, empty ones the muted foreground", () => {
   const { container } = render(<Stars initial={2} />);
@@ -214,10 +214,10 @@ test("filled stars take the rating token, empty ones the muted foreground", () =
 });
 
 /*
-  Дробное `value` тип разрешает, а закраску компонент от него принимает
-  (`star <= 4.2` даёт четыре звезды) — значит запретить его молча нельзя.
-  Прежде оно не совпадало ни с одной звездой, роуминг не ставил табстоп никуда,
-  и радиогруппа становилась недостижимой с клавиатуры целиком.
+  The type allows a fractional `value`, and the component takes its fill from it
+  (`star <= 4.2` gives four stars), so it cannot be forbidden silently. Previously it
+  matched none of the stars, roving tabindex put the tab stop nowhere, and the radio
+  group became unreachable from the keyboard altogether.
 */
 test("a fractional value still leaves exactly one tab stop", () => {
   render(<Stars initial={4.2} />);
@@ -236,9 +236,9 @@ test("a non-numeric value does not strand the control either", () => {
 });
 
 /*
-  `max` и `value` приходят из данных потребителя, и тип у них — обычное число.
-  Шкала из нуля делений не шкала: прежде `max={0}` давал радиогруппу без единой
-  опции и подпись «из 0».
+  `max` and `value` come from the consumer's data, and their type is a plain number.
+  A scale with zero divisions is not a scale: previously `max={0}` gave a radio group
+  with no options at all and the caption "out of 0".
 */
 test("a degenerate max is brought back to a usable scale", () => {
   render(<Rating value={1} max={0} aria-label="Quality" />);
@@ -252,8 +252,8 @@ test("a non-numeric value is announced as zero, not as NaN", () => {
 });
 
 /*
-  Событие без изменения значения читается адресатом как правка. Стрелка у края
-  и щелчок по уже выбранной звезде значения не меняют.
+  An event without a change of value is read by the recipient as an edit. An arrow at
+  the edge and a click on an already chosen star do not change the value.
 */
 test("the rating stays silent when the value would not change", async () => {
   const user = userEvent.setup();
@@ -272,12 +272,12 @@ test("the rating stays silent when the value would not change", async () => {
 });
 
 /**
- * Счёт идёт от ПРИВЕДЁННЫХ чисел, а не от сырых пропов.
+ * The arithmetic runs on the COERCED numbers, not on the raw props.
  *
- * Файл объявляет в комментарии «приведение обоих чисел до всякого
- * использования» и считает `total` и `rounded` — а `onKeyDown` их не
- * использовал: `End` брал сырой `max`, стрелки — сырое `value`. Оба приходят из
- * данных потребителя, и докстрока `max` прямо разрешает им быть какими угодно.
+ * The file declares in a comment "coercing both numbers before any use" and computes
+ * `total` and `rounded` — but `onKeyDown` did not use them: `End` took the raw `max`,
+ * the arrows took the raw `value`. Both come from the consumer's data, and the `max`
+ * JSDoc explicitly allows them to be any value.
  */
 describe("keyboard arithmetic uses the coerced numbers", () => {
   test("End goes to the top of the scale even when max is not a number", async () => {
@@ -288,9 +288,8 @@ describe("keyboard arithmetic uses the coerced numbers", () => {
     await user.tab();
     await user.keyboard("{End}");
 
-    // `clamp(NaN, 0, total)` — это `NaN`, проверка `clamped === rounded` на нём
-    // не срабатывает, и наружу уходило `onChange(NaN)`: оценка потребителя
-    // становилась `NaN` навсегда.
+    // `clamp(NaN, 0, total)` returns `NaN`, the check `clamped === rounded` does not
+    // fire on it, and `onChange(NaN)` went out: the consumer's rating became `NaN` for good.
     const [value] = onChange.mock.calls.at(-1) ?? [];
     expect(Number.isFinite(value)).toBe(true);
     expect(value).toBe(5);
@@ -304,7 +303,7 @@ describe("keyboard arithmetic uses the coerced numbers", () => {
     await user.tab();
     await user.keyboard("{End}");
 
-    // `max={0}` приводится к шкале в одну звезду; End обязан дать её, а не ноль.
+    // `max={0}` is coerced to a scale of one star; End must give it, not zero.
     expect(onChange).toHaveBeenCalledWith(1);
   });
 
@@ -312,11 +311,11 @@ describe("keyboard arithmetic uses the coerced numbers", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     /*
-      Значение ВНЕ зоны зажима.
+      A value OUTSIDE the clamp zone.
 
-      На `4.2` сырой шаг давал `5.2`, но `clamp(…, 5)` возвращал `5` — то есть
-      ровно ожидаемое, и тест был зелёным на неисправленном коде. На `2.2` шаг
-      от сырого даёт `3.2`, зажим его не трогает, и разница видна.
+      On `4.2` the raw step gave `5.2`, but `clamp(…, 5)` returned `5` — that is,
+      exactly the expected result, and the test passed on unfixed code. On `2.2` the step
+      from the raw value gives `3.2`, the clamp does not touch it, and the difference shows.
     */
     render(<Rating value={2.2} onChange={onChange} aria-label="Rating" />);
 
@@ -329,8 +328,8 @@ describe("keyboard arithmetic uses the coerced numbers", () => {
   test("a fractional value still marks a star as checked", () => {
     render(<Rating value={4.2} onChange={() => {}} aria-label="Rating" />);
 
-    // Закраска и роуминг считались от `rounded`, а `aria-checked` — от сырого
-    // `value`: радиогруппа объявлялась без выбранного варианта вовсе.
+    // Fill and roving were computed from `rounded`, while `aria-checked` came from the
+    // raw `value`: the radio group was announced with no option selected at all.
     const checked = screen
       .getAllByRole("radio")
       .filter((r) => r.getAttribute("aria-checked") === "true");

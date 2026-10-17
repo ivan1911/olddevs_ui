@@ -7,10 +7,10 @@ import { CopyButton } from "../src/components/actions/CopyButton.js";
 afterEach(cleanup);
 
 /*
-  Заглушка ставится ПОСЛЕ `userEvent.setup()`, и это не придирка к порядку:
-  setup сам подменяет `navigator.clipboard` своей реализацией, и заглушка,
-  поставленная раньше, молча им перетирается — тест на отказ проходил бы как
-  успех.
+  The stub is set AFTER `userEvent.setup()`, and this is not a nitpick about order:
+  setup itself replaces `navigator.clipboard` with its own implementation, and a
+  stub set earlier is silently overwritten by it, so the failure test would pass
+  as a success.
 */
 function setup(writeText: () => Promise<void>) {
   const user = userEvent.setup();
@@ -34,8 +34,8 @@ test("the result is announced, not only reflected in the icon", async () => {
   const user = setup(vi.fn().mockResolvedValue(undefined));
   render(<CopyButton value="OLDSUI-42" />);
 
-  // Галочка — сигнал для глаз; пользователь скринридера иначе не узнает,
-  // сработала кнопка или нет.
+  // The checkmark is a visual signal; otherwise a screen reader user would not learn
+  // whether the button worked.
   expect(screen.getByRole("status").textContent).toBe("");
   await user.click(screen.getByRole("button"));
   await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Copied"));
@@ -46,7 +46,7 @@ test("the button name changes with the state", async () => {
   render(<CopyButton value="OLDSUI-42" />);
 
   await user.click(screen.getByRole("button", { name: "Copy" }));
-  // «Скопировано» на кнопке, которая ничего не скопировала, — ложь.
+  // A "Copied" label on a button that copied nothing is a lie.
   await waitFor(() => expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy());
 });
 
@@ -55,9 +55,9 @@ test("a clipboard failure is visible and does not break the button", async () =>
   const onCopy = vi.fn();
   render(<CopyButton value="OLDSUI-42" onCopy={onCopy} />);
 
-  // В небезопасном контексте `navigator.clipboard` отсутствует вовсе, а запись
-  // может быть запрещена разрешениями. Молчать об этом значит показать кнопку,
-  // которая ничего не делает.
+  // In an insecure context `navigator.clipboard` is missing altogether, and writing
+  // can be blocked by permissions. Staying silent about this means showing a button
+  // that does nothing.
   await user.click(screen.getByRole("button"));
   await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Could not copy"));
   expect(onCopy).toHaveBeenCalledWith(false);

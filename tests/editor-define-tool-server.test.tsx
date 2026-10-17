@@ -11,14 +11,14 @@ import { testPlayerNode, testPlayerTool } from "./editor-test-tools.js";
 afterEach(cleanup);
 
 /**
- * Определение вне движка (OLDSUI-268): серверная очистка, Схема данными и Остров
- * в `RichTextView` читают правила из тела, которое отдал `create`, с Опциями
- * определения — теми же `tools`, что у Редактора.
+ * A definition outside the engine (OLDSUI-268): server-side sanitizing, the Schema as data and the Island
+ * in `RichTextView` read the rules from the body that `create` returned, with the options
+ * of the definition: the same `tools` the Editor uses.
  */
 
 const purify = createDOMPurify(window);
 
-/** Тот же Блок, что у `testPlayerTool`, но атрибут `test_kind` берёт значения из Опций. */
+/** The same Block as `testPlayerTool`, but the `test_kind` attribute takes its values from the options. */
 const player = defineTool({
   name: "test_player",
   defaults: { kinds: ["audio", "video"] },
@@ -50,7 +50,7 @@ test("the options of tool() reach the rules the server reads", () => {
     test_kind: { kind: "list", values: ["audio"] },
   });
 
-  // Очистка с теми же `tools`: значение вне списка Опций срезается.
+  // Sanitizing with the same `tools`: a value outside the options list is stripped.
   expect(sanitizeRichText(BLOCK("video"), purify, [player])).toContain('data-test_kind="video"');
   expect(sanitizeRichText(BLOCK("video"), purify, [strict])).not.toContain("data-test_kind");
 });
@@ -61,8 +61,8 @@ test("a Configured Tool of a built-in tool has no schema and no island", () => {
 });
 
 test("the Configured Tools typography and invisibleCharacters are safe on the server: a schema and a clean paragraph", () => {
-  // Инструменты без Блока (OLDSUI-278, OLDSUI-279): серверная очистка ничего не знает
-  // о них и не должна менять ни абзац, ни его символы.
+  // Tools without a Block (OLDSUI-278, OLDSUI-279): server-side sanitizing knows nothing
+  // about them and must change neither the paragraph nor its characters.
   const tools = [
     tool("typography", { quotes: "ru" }),
     tool("invisibleCharacters", { visible: true }),
@@ -90,9 +90,9 @@ test("the island of a definition comes alive in RichTextView, and the server mar
 });
 
 /**
- * `create` отдаёт Остров замыканием над Опциями: функция каждый раз новая. Клиентский
- * родитель перерисовывает `RichTextView` с теми же `tools`, и Остров не должен
- * размонтироваться — React сравнивает тип компонента по ссылке.
+ * `create` returns the Island as a closure over the options: the function is new every time. The client
+ * parent re-renders `RichTextView` with the same `tools`, and the Island must not
+ * unmount: React compares the component type by reference.
  */
 function counterDefinition(created: { count: number }) {
   return defineTool({
@@ -137,7 +137,7 @@ test("a client parent that re-renders RichTextView with the same tools keeps the
 
   act(() => rerender());
   act(() => rerender());
-  // Состояние Острова пережило перерисовки родителя: тип компонента тот же.
+  // The Island's state survived the parent's re-renders: the component type is the same.
   expect(screen.getByTestId("counter").textContent).toBe("Clicks 1");
   expect(created.count).toBe(1);
 });
@@ -152,7 +152,7 @@ test("a definition without tool() is resolved once too, and each tool() record h
   expect(created.count).toBe(1);
   first.unmount();
 
-  // Другая запись `tool()` — другие Опции и свой результат; запись остаётся при себе.
+  // A different `tool()` entry has different options and its own result; the entry keeps to itself.
   const a = tool(definition, { label: "A" });
   const b = tool(definition, { label: "B" });
   const view = render(<RichTextView html={html} tools={[a]} />);

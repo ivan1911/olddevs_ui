@@ -15,13 +15,13 @@ import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 /**
- * Опции встроенных Инструментов (OLDSUI-268): `tool("toc", …)` и
- * `tool("search", …)` в `tools`. Проверки идут через публичный
- * `RichTextEditor`, как их напишет экран.
+ * Options of the built-in Tools (OLDSUI-268): `tool("toc", …)` and
+ * `tool("search", …)` in `tools`. The checks go through the public
+ * `RichTextEditor`, the way a screen will write them.
  */
 
 beforeAll(loadLazyBuiltins);
-// Панель Поиска — ленивый чанк: прогреваем, чтобы `findBy` не ждал сеть.
+// The Search panel is a lazy chunk: warm it up so `findBy` does not wait on the network.
 beforeAll(() => import("../src/editor/features/search/SearchPanel.js"));
 
 let error: ReturnType<typeof vi.spyOn>;
@@ -58,7 +58,7 @@ async function openList(user: ReturnType<typeof userEvent.setup>) {
   );
 }
 
-/** Промисы загрузчиков и эффекты Редактора отработали. */
+/** Loader promises and Editor effects have settled. */
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 10))));
 
@@ -70,7 +70,7 @@ test('tool("toc") switches the table of contents on without the name in tools', 
   expect(strokes()).toBe(5);
 
   cleanup();
-  // Точный список: имени `"toc"` в нём нет, и Инструмент включает одна запись `tool()`.
+  // Exact list: there is no `"toc"` name in it, and a single `tool()` entry enables the Tool.
   renderEditor({ defaultValue: ARTICLE, tools: ["heading", "heading1", tool("toc")] });
   await waitFor(() => expect(strip()).not.toBeNull());
   expect(strokes()).toBe(5);
@@ -170,7 +170,7 @@ test("a Configured Tool beats the bare name of the same tool in tools", async ()
 
 // ---------------------------------------------------------------- search
 
-/** Флажок или переключатель включён: у RAC это `aria-checked` или свойство `checked` внутри. */
+/** Checkbox or switch is on: in RAC this is `aria-checked`, or a `checked` property inside. */
 const isOn = (control: HTMLElement) =>
   control.getAttribute("aria-checked") === "true" || (control as HTMLInputElement).checked === true;
 
@@ -189,11 +189,11 @@ test("search options set the starting flags of the panel; they stay switchable",
   expect(isOn(matchCase)).toBe(true);
   expect(isOn(screen.getByRole("checkbox", { name: "Whole words" }))).toBe(false);
 
-  // «Регистр» работает с первого символа.
+  // "Match case" works from the first character.
   await user.keyboard("cat");
   expect(searchState(ref.current!.editor!.state)).toMatchObject({ total: 1 });
 
-  // И остаётся переключаемым.
+  // And it stays toggleable.
   await user.click(matchCase);
   expect(searchState(ref.current!.editor!.state)).toMatchObject({ total: 2 });
 });
@@ -247,7 +247,7 @@ test("a Configured Tool takes the place of the bare name on the surface", () => 
   expect(configured).toEqual(bare);
 });
 
-// ---------------------------------------------------------------- набор
+// ---------------------------------------------------------------- tool set
 
 test("two tool() entries with one name are a tool set error: the field and the console", async () => {
   renderEditor({
@@ -265,13 +265,13 @@ test("a wrong value of a built-in option is replaced by the default with one con
     defaultValue: ARTICLE,
     tools: [
       ...RICH_TEXT_PRESETS.full,
-      // Из JS без типов: уровень 7, ширина — объект.
+      // From JS without types: level 7, and width is an object.
       tool("toc", { levels: [2, 7], listWidth: {} } as never),
     ],
   });
   await waitFor(() => expect(strip()).not.toBeNull());
 
-  // Поле работает, значения — умолчания.
+  // The field works, and the values are the defaults.
   expect(strokes()).toBe(5);
   const items = await openList(user);
   expect(items).toHaveLength(5);

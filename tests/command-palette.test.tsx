@@ -31,15 +31,15 @@ test("hint mode hides the list only on an EMPTY query", async () => {
     />
   );
 
-  // Пустой запрос — подсказка вместо списка. Сама подсказка тоже приходит
-  // пунктом: `renderEmptyState` у react-aria рисуется внутри списка.
+  // An empty query shows a hint instead of the list. The hint itself also arrives
+  // as an item: react-aria's `renderEmptyState` is rendered inside the list.
   expect(screen.queryByRole("option", { name: /Upload photos/ })).toBeNull();
   expect(screen.getByText("Start typing an action name")).toBeTruthy();
 
   await user.type(screen.getByRole("searchbox"), "Uploa");
 
-  // А набранный — обычный поиск. Раньше условие было константой, и палитра
-  // в этом режиме не могла найти ничего никогда.
+  // A typed query is an ordinary search. The condition used to be a constant, so the palette
+  // could never find anything in this mode.
   expect(screen.getByRole("option", { name: /Upload photos/ })).toBeTruthy();
 });
 
@@ -56,19 +56,19 @@ test("search goes through synonyms too", async () => {
   render(<CommandPalette open onClose={() => {}} onSelect={() => {}} sections={SECTIONS} />);
   await user.type(screen.getByRole("searchbox"), "similar");
 
-  // Слова по-английски в подписи нет — оно лежит в `keywords`.
+  // The English word is not in the label; it lives in `keywords`.
   expect(screen.getByRole("option", { name: /Find similar/ })).toBeTruthy();
   expect(screen.queryByRole("option", { name: /Upload photos/ })).toBeNull();
 });
 
 /**
- * Палитра существует только ради клавиатуры, поэтому потеря фокуса здесь —
- * отказ основной функции.
+ * The palette exists only for the keyboard, so losing focus here is
+ * a failure of its primary function.
  *
- * Компонент собран на голом `DialogPrimitive.Content` без `Trigger`: Radix
- * безусловно зовёт `preventDefault()` и фокусирует `triggerRef`, которого нет,
- * и фокус уезжает на `<body>`. `Dialog` и `Drawer` эту связку имеют, до палитры
- * она не доехала.
+ * The component is built on a bare `DialogPrimitive.Content` with no `Trigger`: Radix
+ * unconditionally calls `preventDefault()` and focuses `triggerRef`, which does not exist,
+ * so focus moves to `<body>`. `Dialog` and `Drawer` have this wiring, but the palette
+ * did not get it until now.
  */
 test("closing returns focus to whoever opened the palette", async () => {
   const user = userEvent.setup();
@@ -100,11 +100,11 @@ test("closing returns focus to whoever opened the palette", async () => {
 });
 
 /**
- * Запрос не переживает закрытие.
+ * The query does not survive closing.
  *
- * `query` живёт состоянием компонента, а не содержимого диалога, и при
- * `open=false` сохранялся. Выбрав пункт, пользователь при следующем открытии
- * видел прошлый запрос и отфильтрованный по нему список.
+ * `query` lives in the component's state, not in the dialog's content, and with
+ * `open=false` it was kept. After choosing an item, the user on the next opening
+ * saw the previous query and the list filtered by it.
  */
 test("the palette opens with an empty query after a pick", async () => {
   const user = userEvent.setup();
@@ -145,8 +145,8 @@ test("the palette opens with an empty query after a pick", async () => {
 });
 
 /*
- * Дальше — заявка Nextable: поиск, который живёт на сервере. Три пункта её
- * контракта, каждый отдельным тестом.
+ * Next is the Nextable request: a search that lives on the server. Its three points of the
+ * contract, each in a separate test.
  */
 
 const SERVER_SECTION = {
@@ -154,18 +154,18 @@ const SERVER_SECTION = {
   label: "Tasks",
   prefiltered: true,
   items: [
-    // Подстроки «meetings» здесь нет ни в одной подписи — в этом весь смысл.
+    // The substring "meetings" appears in no label here; that is the whole point.
     { id: "t1", label: "Schedule a meeting" },
     { id: "t2", label: "Review the notes" },
   ],
 };
 
 /**
- * Раздел, отфильтрованный снаружи, не просеивается второй раз.
+ * A section filtered from outside is not filtered a second time.
  *
- * Морфологический поиск находит «Schedule a meeting» по запросу «meetings», а
- * локальный `contains` такую пару не сматчит никогда: подстроки в подписи нет.
- * До флага сервер находил, а палитра показывала «ничего не найдено».
+ * Morphological search finds "Schedule a meeting" for the query "meetings", but a
+ * local `contains` never matches that pair: there is no substring in the label.
+ * Before the flag, the server found it, but the palette showed "no results found".
  */
 test("a prefiltered section survives a query its labels do not contain", async () => {
   const user = userEvent.setup();
@@ -182,14 +182,14 @@ test("a prefiltered section survives a query its labels do not contain", async (
   await user.type(screen.getByRole("searchbox"), "meetings");
 
   expect(screen.getByRole("option", { name: /Schedule a meeting/ })).toBeTruthy();
-  // И порядок сервера сохранён: ранжировал тот, кто искал.
+  // The server's order is preserved too: the server, not the palette, ranked the results.
   expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([
     "Schedule a meeting",
     "Review the notes",
   ]);
 });
 
-/** Разделы обоих видов уживаются в одном списке: команды всё ещё фильтруются. */
+/** Sections of both kinds coexist in one list: commands are still filtered. */
 test("a local section keeps filtering next to a prefiltered one", async () => {
   const user = userEvent.setup();
 
@@ -206,12 +206,12 @@ test("a local section keeps filtering next to a prefiltered one", async () => {
 
   expect(screen.getByRole("option", { name: /Upload photos/ })).toBeTruthy();
   expect(screen.queryByRole("option", { name: /Find similar/ })).toBeNull();
-  // Раздел сервера на этот запрос ничего не прислал бы, но пока прислал —
-  // показывается как передан. Решение о содержимом принято снаружи.
+  // The server section would return nothing for this query, but while it does return results,
+  // it is shown as passed. The decision about its content is made outside.
   expect(screen.getByRole("option", { name: /Schedule a meeting/ })).toBeTruthy();
 });
 
-/** Запрос уходит наружу — иначе серверный поиск нечем запустить. */
+/** The query is passed out to the consumer, or a server search has nothing to run on. */
 test("the typed query is reported to the consumer", async () => {
   const user = userEvent.setup();
   const seen: string[] = [];
@@ -232,10 +232,10 @@ test("the typed query is reported to the consumer", async () => {
 });
 
 /**
- * Сброс при закрытии тоже уходит наружу.
+ * The reset on close is passed out too.
  *
- * Без этого потребитель остаётся с запросом, которого в поле уже нет, и
- * продолжает по нему ходить в сеть.
+ * Without it, the consumer keeps a query that is no longer in the field, and
+ * keeps sending network requests for it.
  */
 test("closing reports the reset query", async () => {
   const user = userEvent.setup();
@@ -262,10 +262,10 @@ test("closing reports the reset query", async () => {
 });
 
 /**
- * Пока идёт поиск, пустое состояние не утверждает, что ничего не нашлось.
+ * While a search is in progress, the empty state does not claim that nothing was found.
  *
- * Именно это и происходило на каждый набранный символ: ответ сервера ещё в
- * пути, а палитра уже сообщила результат.
+ * That is exactly what happened on every keystroke: the server response was still in
+ * flight, but the palette had already reported a result.
  */
 test("loading replaces the not-found line", async () => {
   const user = userEvent.setup();

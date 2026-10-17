@@ -1,9 +1,10 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
- * Поповер кнопки своего Инструмента в браузере (OLDSUI-105): то, чего jsdom не
- * умеет, — положение у кнопки и у каретки. Роли, имена, `aria-*`, сочетания и
- * справочник проверены в `tests/rich-text-editor-custom-button.test.tsx`.
+ * Popover of a custom Tool's button in a browser (OLDSUI-105): what jsdom cannot
+ * do, namely the position relative to the button and to the caret. Roles, names,
+ * `aria-*`, shortcuts and the reference are checked in
+ * `tests/rich-text-editor-custom-button.test.tsx`.
  */
 
 const STORY = (id: string) =>
@@ -17,7 +18,7 @@ async function boxOf(locator: Locator) {
   return box as Box;
 }
 
-/** Каретка Документа — прямоугольник выделения в координатах окна. */
+/** The Document's caret: the selection rectangle in window coordinates. */
 async function caretBox(page: Page): Promise<Box> {
   return page.evaluate(() => {
     const range = window.getSelection()!.getRangeAt(0).cloneRange();
@@ -26,7 +27,10 @@ async function caretBox(page: Page): Promise<Box> {
   });
 }
 
-/** Поповер стоит вплотную к якорю: рядом по вертикали и якорь — в пределах его ширины. */
+/**
+ * The popover sits right next to its anchor: vertically adjacent, and the anchor lies
+ * within its width.
+ */
 function expectAnchoredAt(popover: Box, anchor: Box) {
   const below = popover.y - (anchor.y + anchor.height);
   const above = anchor.y - (popover.y + popover.height);
@@ -57,7 +61,7 @@ test("a click opens the popover at the button; Escape returns the caret to the t
 test("the shortcut opens the popover at the caret, not at the button", async ({ page }) => {
   await page.goto(STORY("custom-tool-buttons"));
   const field = page.getByRole("textbox", { name: "Document" });
-  // Каретка — в середине второго абзаца: далеко от кнопки Панели.
+  // The caret is in the middle of the second paragraph, far from the Toolbar button.
   await field.getByText("The Stamp, Pin and Symbol").click({ position: { x: 120, y: 8 } });
   const caret = await caretBox(page);
 

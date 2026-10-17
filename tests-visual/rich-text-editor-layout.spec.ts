@@ -1,18 +1,18 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Раскладка Редактора в браузере (OLDSUI-74): то, чего jsdom не умеет, —
- * настоящая сетка с контейнерным запросом, геометрия стрелок и Tab внутри окна
- * Radix со своей ловушкой фокуса.
+ * Editor layout in a browser (OLDSUI-74): what jsdom cannot do, namely the real
+ * grid with a container query, arrow-key geometry, and Tab inside a Radix dialog
+ * with its own focus trap.
  */
 
 const STORY = (id: string) => `/iframe.html?id=${id}&globals=theme:dark;accent:blue`;
 
 /**
- * Дать ProseMirror прочитать каретку после щелчка. Выделение из DOM он берёт
- * по `selectionchange`, а это отдельная задача после `mouseup`: клавиша,
- * нажатая сразу за щелчком, видела бы прежнюю каретку. Человек так быстро не
- * нажимает; два кадра — с запасом.
+ * Give ProseMirror time to read the caret after a click. It takes the selection
+ * from the DOM by `selectionchange`, which is a separate task after `mouseup`: a key
+ * pressed right after the click would see the previous caret. A person does not press
+ * that fast; two frames is a safe margin.
  */
 async function settle(page: Page) {
   await page.evaluate(
@@ -39,7 +39,7 @@ test("inside a Dialog: two columns stand side by side and Tab walks them", async
   await expect(columns.nth(1)).toContainText("Typed Right");
   await expect(field).toBeFocused();
 
-  // Из последней колонки Tab уходит дальше по окну, а окно остаётся открытым.
+  // From the last column, Tab moves on through the dialog, and the dialog stays open.
   await page.keyboard.press("Tab");
   await expect(field).not.toBeFocused();
   await expect(dialog).toBeVisible();
@@ -53,12 +53,13 @@ test("arrows cross the columns and leave the layout below", async ({ page }) => 
   await page.keyboard.press("End");
   await settle(page);
 
-  // Из конца левой колонки `→` — в начало правой.
+  // From the end of the left column, `→` moves to the start of the right one.
   await page.keyboard.press("ArrowRight");
   await page.keyboard.type("x");
   await expect(field.getByRole("heading", { name: "xRisks" })).toBeVisible();
 
-  // Из нижней строки колонки `↓` — к Блоку под Раскладкой, а не в соседнюю колонку.
+  // From the bottom line of a column, `↓` goes to the Block below the Column layout,
+  // not to the neighboring column.
   await field.getByText("The index rebuild", { exact: false }).click();
   await page.keyboard.press("End");
   await settle(page);

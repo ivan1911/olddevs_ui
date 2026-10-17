@@ -17,15 +17,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Одна кнопка с живыми контролами — покрутить пропсы. */
+/** A single button with live controls. Tweak the props. */
 export const Playground: Story = {
   args: { variant: "solid", tone: "accent", size: "md", disabled: false },
 };
 
 /**
- * Матрица variant × tone. Смысл витрины именно в ней: одиночная кнопка не
- * покажет, что `outline` тона `warning` в светлой теме теряет контраст,
- * а `ghost` тона `neutral` в покое почти неотличим от фона — матрица покажет.
+ * Variant × tone matrix. This is the point of the showcase: a single button won't
+ * show that `outline` in the `warning` tone loses contrast in the light theme, or
+ * that `ghost` in the `neutral` tone is nearly indistinguishable from the background
+ * at rest. The matrix will.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -61,11 +62,11 @@ export const Matrix: Story = {
   ),
 };
 
-/** Размеры, иконка и выключенное состояние. */
+/** Sizes, icon and disabled state. */
 /**
- * Только иконка. Отдельная история, а не столбец матрицы: у такой кнопки другая
- * геометрия (квадрат) и другое требование к доступности — имя берётся из
- * `aria-label`, потому что подписи внутри нет.
+ * Icon only. A separate story rather than a column of the matrix: such a button has
+ * a different geometry (square) and different accessibility requirements. Its name
+ * comes from `aria-label`, because there is no visible label inside it.
  */
 export const IconOnly: Story = {
   parameters: { layout: "padded" },
@@ -130,7 +131,7 @@ export const SizesAndStates: Story = {
         ))}
       </div>
 
-      {/* Иконка — произвольный ReactNode, размер она не подстраивает. */}
+      {/* The icon is an arbitrary ReactNode; the button does not resize it. */}
       <div className="flex flex-wrap items-center gap-3">
         {SIZES.map((size) => (
           <Button key={size} size={size} variant="outline" tone="neutral" icon={<span>★</span>}>
@@ -165,15 +166,15 @@ export const SizesAndStates: Story = {
 };
 
 /**
- * `asChild` — вид кнопки на элементе, который кнопкой не является.
+ * `asChild` applies the button's look to an element that is not a button.
  *
- * Переход на другой экран — это ссылка: её открывают средней кнопкой мыши в
- * новой вкладке, копируют адрес, видят в строке состояния. Кнопка с
- * `onClick={() => router.push(…)}` не умеет ничего из этого, а скринридер
- * объявляет её кнопкой, то есть врёт про то, что произойдёт.
+ * Navigating to another screen is a link: users open it in a new tab with the
+ * middle mouse button, copy its address, and see it in the status bar. A button
+ * with `onClick={() => router.push(…)}` supports none of this, and a screen reader
+ * announces it as a button, so it misreports what will happen.
  *
- * Клавиатура у роли своя, и это не дефект: кнопка срабатывает на пробел и
- * Enter, ссылка — только на Enter.
+ * The keyboard behavior is specific to the role, and that is not a defect: a button
+ * activates on Space and Enter, a link only on Enter.
  */
 export const AsLink: Story = {
   render: (args) => (
@@ -192,13 +193,14 @@ export const AsLink: Story = {
 };
 
 /**
- * `loading` — отправка идёт.
+ * `loading` means a submission is in progress.
  *
- * Кольцо занимает слот иконки, кнопка не нажимается, состояние объявляется
- * через `aria-busy`. Отдельный `disabled` рядом не нужен: он наступает сам.
+ * The spinner takes the icon slot, the button can't be pressed, and the state is
+ * announced through `aria-busy`. A separate `disabled` is not needed: it applies on
+ * its own.
  *
- * У кнопки без иконки слот появляется на время отправки, и подпись сдвигается —
- * поэтому кнопке, которая умеет уходить в отправку, иконку стоит дать сразу.
+ * A button without an icon gets the slot only while submitting, and its label shifts.
+ * So a button that can enter the submitting state should get an icon up front.
  */
 export const Submitting: Story = {
   render: (args) => (

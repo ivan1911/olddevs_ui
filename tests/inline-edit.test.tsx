@@ -27,8 +27,8 @@ const field = () => screen.getByRole("textbox", { name: "Name" });
 test("the value is in the button name, not only in its text", () => {
   render(<Title />);
 
-  // `aria-label` вытеснил бы значение, и скринридер объявлял бы «изменить
-  // название», не читая того, что там написано.
+  // `aria-label` would displace the value, and the screen reader would announce
+  // "edit name" without reading what the button actually shows.
   expect(screen.getByRole("button", { name: /^Daily collection\s*,\s*edit$/ })).toBeTruthy();
 });
 
@@ -44,7 +44,7 @@ test("opening puts the caret in the field instead of leaving it on the button", 
 
   await user.click(button());
 
-  // Иначе пользователь клавиатуры открыл поле и печатает в никуда.
+  // Otherwise a keyboard user opens the field and types into nowhere.
   expect(document.activeElement).toBe(field());
 });
 
@@ -58,7 +58,7 @@ test("Enter confirms and returns focus to the button", async () => {
   await user.type(field(), "Night city{Enter}");
 
   expect(onChange).toHaveBeenCalledWith("Night city");
-  // Поле исчезает, и без возврата фокус уехал бы на `<body>`.
+  // The field disappears, and without the return focus would move to `<body>`.
   expect(document.activeElement).toBe(button());
 });
 
@@ -71,8 +71,8 @@ test("Escape restores the previous value AND focus", async () => {
   await user.clear(field());
   await user.type(field(), "Other{Escape}");
 
-  // Без отмены пользователь, начавший править по ошибке, не может выйти, не
-  // сохранив: щелчок мимо подтверждает, Enter подтверждает.
+  // Without a cancel, a user who started editing by mistake could not leave without
+  // saving: a click outside confirms, and Enter confirms.
   expect(onChange).not.toHaveBeenCalled();
   expect(button().textContent).toContain("Daily collection");
   expect(document.activeElement).toBe(button());
@@ -94,7 +94,7 @@ test("losing focus confirms but does not steal focus", async () => {
   await user.click(screen.getByRole("button", { name: "Neighbour" }));
 
   expect(onChange).toHaveBeenCalledWith("Night city");
-  // Пользователь ушёл туда, куда хотел, — забирать фокус обратно нельзя.
+  // The user went where they wanted to go, so focus must not be pulled back.
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Neighbour" }));
 });
 
@@ -111,8 +111,8 @@ test("confirming without changes does not reach the outside", async () => {
 
 test("the component does not store the confirmed value", async () => {
   const user = userEvent.setup();
-  // Значение приходит пропом и наружу не меняется: так ведёт себя вызывающий,
-  // у которого сервер отказался сохранить.
+  // The value comes in as a prop and does not change outwards: this is how a caller
+  // behaves when the server has refused to save.
   render(<InlineEdit value="Previous" label="Name" onChange={() => {}} />);
 
   await user.click(button());
@@ -137,7 +137,7 @@ test("the mode can be driven from outside", async () => {
 
   await user.click(button());
 
-  // Режим контролируемый: компонент сообщает о намерении, но сам не открывает.
+  // The mode is controlled: the component reports the intent, but does not open the field itself.
   expect(onEditingChange).toHaveBeenCalledWith(true);
   expect(screen.queryByRole("textbox")).toBeNull();
 });
@@ -151,15 +151,15 @@ test("the draft starts from the current value, not from the previous edit", asyn
   await user.type(field(), "Draft{Escape}");
   await user.click(button());
 
-  // Между открытиями значение могло измениться снаружи.
+  // The value could have changed from outside between openings.
   expect((field() as HTMLInputElement).value).toBe("Daily collection");
 });
 
 /**
- * Регрессия, и дефект был с потерей данных. Escape размонтирует поле, `blur`
- * при этом не приходит вовсе, и флаг «идёт отмена» оставался поднятым до
- * следующей правки — та молча не подтверждалась по щелчку мимо. Пользователь
- * дописывал значение, уходил и терял его без единого признака.
+ * A regression, and the defect lost data. Escape unmounts the field, and no `blur`
+ * arrives at all, so the "cancel in progress" flag stayed raised until the next edit,
+ * which was then silently not confirmed on a click outside. The user kept typing a
+ * value, walked away and lost it with no sign at all.
  */
 test("after a cancel the next edit is confirmed by clicking away", async () => {
   const user = userEvent.setup();
@@ -184,12 +184,12 @@ test("after a cancel the next edit is confirmed by clicking away", async () => {
 });
 
 /**
- * Черновик синхронизируется при ЛЮБОМ открытии, а не только через `start()`.
+ * The draft syncs on ANY opening, not only through `start()`.
  *
- * `start()` — обработчик кнопки. Когда режим ведут снаружи (документированный
- * сценарий: правка открывается из меню строки), открытие через проп `editing`
- * до него не доходило, и в поле оставался черновик с монтирования. Дальше blur
- * подтверждал его поверх значения, пришедшего с сервера, — тихий откат.
+ * `start()` is the button's handler. When the mode is driven from outside (the documented
+ * scenario: editing opens from a row's menu), an opening through the `editing` prop never
+ * reached it, and the draft from mount stayed in the field. Then blur confirmed it over
+ * the value that came from the server: a silent rollback.
  */
 test("a controlled open picks up the value that arrived meanwhile", async () => {
   const user = userEvent.setup();
@@ -221,7 +221,7 @@ test("a controlled open picks up the value that arrived meanwhile", async () => 
   }
 
   render(<Host />);
-  // Значение пришло с сервера, пока правка была закрыта.
+  // The value came from the server while the edit was closed.
   await user.click(screen.getByRole("button", { name: "Receive B" }));
   await user.click(screen.getByRole("button", { name: "Edit" }));
 
@@ -264,15 +264,15 @@ test("Escape does not leave the cancelled text for the next opening", async () =
 });
 
 /**
- * Открытая правка выделяет текст целиком — и при открытии СНАРУЖИ тоже.
+ * An open edit selects the whole text, and that holds when it is opened FROM OUTSIDE too.
  *
- * `setDraft` — это запрос на рендер, а не запись: к моменту `select()` в поле
- * ещё старый текст, React дофлашивает новый сразу после эффекта и схлопывает
- * выделение в конец. Видно это ровно в том сценарии, ради которого
- * синхронизация и заводилась (T21): открытие пропом, когда значение успело
- * смениться. В обычном пути (щелчок по кнопке) `setDraft` — no-op, рендера нет,
- * и выделение случайно уцелевало — то есть обещание «открыл и печатаешь
- * поверх» держалось там, где правка не нужна, и отваливалось там, где нужна.
+ * `setDraft` is a render request, not a write: by the time `select()` runs, the field
+ * still holds the old text; React flushes the new one right after the effect and
+ * collapses the selection to the end. This shows up exactly in the scenario the sync was
+ * added for (T21): opening through a prop after the value has changed. On the usual path
+ * (a button click) `setDraft` is a no-op, there is no render, and the selection survived
+ * by chance. So the promise "open it and type over it" held where no edit was needed,
+ * and broke where one was.
  */
 test("opening from outside selects the freshly arrived value", async () => {
   const user = userEvent.setup();

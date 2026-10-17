@@ -6,9 +6,9 @@ import { Image } from "../src/components/content/Image.js";
 
 afterEach(() => {
   cleanup();
-  // Без этого шпион на `complete` переживает упавшее утверждение и утекает в
-  // следующий тест: тот видит «картинка уже готова» и падает по причине,
-  // не имеющей отношения к тому, что он проверяет.
+  // Without this, the spy on `complete` survives a failed assertion and leaks into the
+  // next test: that test sees "the image is already ready" and fails for a reason
+  // unrelated to what it checks.
   vi.restoreAllMocks();
 });
 
@@ -17,9 +17,9 @@ test("a broken URL shows the fallback instead of the browser broken-image icon",
 
   fireEvent.error(container.querySelector("img") as HTMLImageElement);
 
-  // Самой картинки в разметке больше нет — вместо неё фолбэк, и он названный:
-  // подпись объекта отказ загрузки переживает (значок внутри при этом свой
-  // `aria-hidden` сохраняет, он декоративен).
+  // The image itself is gone from the markup; a fallback takes its place, and it is
+  // named: a load failure keeps the object's label (the icon inside keeps its own
+  // `aria-hidden`, since it is decorative).
   expect(container.querySelector("img")).toBeNull();
   expect(screen.getByRole("img", { name: "Night city" })).toBeTruthy();
 });
@@ -29,8 +29,8 @@ test("changing the URL resets the failure", () => {
   fireEvent.error(container.querySelector("img") as HTMLImageElement);
   expect(container.querySelector("img")).toBeNull();
 
-  // Без сброса узел, переиспользованный под другой обой (виртуализованная
-  // сетка так и делает), навсегда остался бы с фолбэком.
+  // Without a reset, a node reused for another image (as a virtualized grid does)
+  // would keep the fallback forever.
   rerender(<Image src="/other.png" alt="Photo" />);
   expect(container.querySelector("img")).toBeTruthy();
 });
@@ -38,7 +38,7 @@ test("changing the URL resets the failure", () => {
 test("an empty URL goes straight to the fallback, without trying to load", () => {
   const { container } = render(<Image src={null} alt="No preview" />);
   expect(container.querySelector("img")).toBeNull();
-  // Запроса нет, а объект остаётся названным.
+  // There is no request, and the object still has a name.
   expect(screen.getByRole("img", { name: "No preview" })).toBeTruthy();
 });
 
@@ -48,7 +48,7 @@ test("loading defaults are set and laziness can be turned off", () => {
   expect(img.getAttribute("loading")).toBe("lazy");
   expect(img.getAttribute("decoding")).toBe("async");
 
-  // Картинка первого экрана, отложенная браузером, роняет LCP.
+  // An above-the-fold image deferred by the browser hurts LCP.
   rerender(<Image src="/a.png" alt="a" eager />);
   expect(screen.getByRole("img", { name: "a" }).getAttribute("loading")).toBe("eager");
 });
@@ -67,10 +67,10 @@ test("custom onLoad and onError are called alongside the internal ones", () => {
 });
 
 test("a cached image leaves no dead skeleton", () => {
-  // По готовой картинке события `load` не будет вовсе, и без проверки
-  // `complete` скелетон оставался бы в разметке навсегда. На экране библиотеки
-  // так вышло у 33 плиток из 58 — не видно глазом, потому что скелетон лежит
-  // под непрозрачным превью.
+  // An image that is already loaded fires no `load` event at all, and without checking
+  // `complete` the skeleton would stay in the markup forever. On the library screen this
+  // happened to 33 of 58 tiles. It was not visible to the eye, because the skeleton sits
+  // under an opaque preview.
   const complete = vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(true);
   const natural = vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(320);
 
@@ -102,10 +102,10 @@ test("the skeleton goes away after loading", () => {
 });
 
 test("intrinsic does not impose the box size on the image", () => {
-  // Дефект, найденный ревью: в режиме `fill` картинке проставлены h-full/w-full,
-  // то есть проценты от коробки. У коробки без своего размера они дают ноль —
-  // и просмотр кадра схлопывался в 0×0, а ленивая загрузка не стартовала вовсе,
-  // потому что показывать было нечего.
+  // A defect found in review: in `fill` mode the image gets h-full/w-full, that is,
+  // percentages of the box. A box without its own size resolves them to zero, so the
+  // frame preview collapsed to 0×0, and lazy loading never started at all, because
+  // there was nothing to show.
   const { container, rerender } = render(<Image src="/a.png" alt="Frame" sizing="intrinsic" />);
   const img = screen.getByRole("img", { name: "Frame" });
   expect(img.className).not.toContain("h-full");
@@ -125,8 +125,8 @@ test("a meaningful label survives a load failure", () => {
   const { container } = render(<Image src="/none.png" alt="Night city" />);
   fireEvent.error(container.querySelector("img") as HTMLImageElement);
 
-  // Картинки больше нет, но объект остаётся названным: иначе отказ превращает
-  // его в пустое место, о котором скринридер не сообщает.
+  // The image is gone, but the object stays named: otherwise the failure turns it into
+  // an empty spot that the screen reader does not announce.
   expect(screen.getByRole("img", { name: "Night city" })).toBeTruthy();
 });
 
@@ -139,10 +139,10 @@ test("a decorative image stays decorative even in failure", () => {
 });
 
 test("the default fallback carries its own backdrop, a custom one does not", () => {
-  // Обёртка даёт только место и центровку: свой фолбэк красится вызывающим
-  // (буква категории — по её имени), и подложка умолчания закрыла бы его.
-  // Расхождение реализации с документацией нашло ревью: подложки не было
-  // вовсе, а страница компонента обещала «значок на приглушённой подложке».
+  // The wrapper provides only the place and the centering; a custom fallback is painted
+  // by the caller (the category letter, by its name), and the default backdrop would
+  // cover it. Review found a mismatch between the implementation and the docs: there was
+  // no backdrop at all, while the component's page promised "an icon on a muted backdrop".
   const { container, rerender } = render(<Image src={null} alt="" />);
   expect(container.querySelector(".bg-bg-2")).toBeTruthy();
 

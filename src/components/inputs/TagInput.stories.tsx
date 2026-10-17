@@ -34,7 +34,7 @@ export const Empty: Story = {
   },
 };
 
-/** Предел: по достижении ввод выключается, теги остаются снимаемыми. */
+/** A limit: once it is reached, the input is disabled, while the tags stay removable. */
 export const WithLimit: Story = {
   render: function Render() {
     const [tags, setTags] = useState(["sunset", "mountains", "fog"]);

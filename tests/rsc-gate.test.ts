@@ -3,33 +3,32 @@ import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 /**
- * Ворота RSC: раскладка директив `"use client"` по файлам зафиксирована.
+ * RSC gate: the placement of the `"use client"` directives across files is pinned.
  *
- * Зачем. Пакет обещает потребителю, что его компонент импортируется прямо в
- * серверный компонент Next.js App Router — без обёртки. Обещание держится
- * ровно на том, что у каждого файла с клиентским кодом директива стоит первой
- * строкой. Забыть её легко и **незаметно**: у себя в витрине и в jsdom всё
- * работает одинаково, потому что там весь код клиентский. Ломается это у
- * потребителя, в чужой сборке, сообщением про хуки в серверном компоненте.
+ * Why. The package promises the consumer that its components can be imported directly into
+ * a Next.js App Router server component, with no wrapper. The promise holds on exactly one
+ * thing: every file with client code has the directive as its first line. It is easy to
+ * forget and **easy to miss**: in our showcase and in jsdom everything works the same,
+ * because all the code there is client code. The break shows up at the consumer, in their
+ * build, as a message about hooks in a server component.
  *
- * Проверка идёт в обе стороны, и вторая не менее важна первой. Лишняя директива
- * на чистом модуле `lib/` уводит утилиту в клиентский граф: серверный код,
- * которому нужна одна функция форматирования, начинает тянуть за собой границу
- * клиента. Разбор цены — ADR-0029.
+ * The check runs both ways, and the second matters as much as the first. An extra directive
+ * on a pure `lib/` module pulls the utility into the client graph: server code that needs
+ * one formatting function starts dragging the client boundary along with it. The cost is
+ * analyzed in ADR-0029.
  *
- * Список серверно-безопасных модулей — ПЕРЕЧИСЛЕНИЕ С ОБОСНОВАНИЕМ, а не
- * правило «всё в lib/ без директивы». Правило по каталогу разрешало бы завести
- * в `lib/` хук и не заметить этого; перечисление заставляет автора объяснить,
- * почему конкретный файл серверно-безопасен.
+ * The list of server-safe modules is an ENUMERATION WITH REASONS, not a rule "everything in
+ * lib/ has no directive". A rule by folder would allow a hook to be added to `lib/` unnoticed;
+ * the enumeration forces the author to explain why a specific file is server-safe.
  *
- * Собранный `dist` этот тест НЕ смотрит: директиву теряет сборщик, и проверять
- * её надо после сборки. Это делает `npm run check:dist` — он же стоит в джобе
- * `build` и в `release:check`.
+ * This test does NOT inspect the built `dist`: the bundler drops the directive, so it must be
+ * checked after the build. `npm run check:dist` does that: it is also in the `build` job and
+ * in `release:check`.
  */
 
 const SRC = resolve(import.meta.dirname, "..", "src");
 
-/** Файлы, у которых директивы не должно быть, и почему. */
+/** Files that must not have the directive, and why. */
 const SERVER_SAFE = [
   {
     file: "index.ts",
@@ -553,15 +552,15 @@ function sourceFiles(dir: string): string[] {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) return sourceFiles(full);
     if (!/\.tsx?$/.test(entry.name)) return [];
-    // Истории и файлы Code Connect в пакет не уезжают (tsconfig.build.json),
-    // контракта RSC не несут: первые живут в витрине, вторые — только у CLI
-    // Figma, и ни те, ни другие не импортируются рантаймом потребителя.
+    // Stories and Code Connect files do not ship in the package (tsconfig.build.json) and
+    // carry no RSC contract: the former live in the showcase, the latter only in the Figma
+    // CLI, and neither is imported by the consumer's runtime.
     if (entry.name.includes(".stories.") || entry.name.includes(".figma.")) return [];
     return [full];
   });
 }
 
-/** Первая значащая строка файла: директива обязана стоять до импортов. */
+/** The first meaningful line of a file: the directive must come before the imports. */
 function firstStatement(file: string): string {
   return readFileSync(file, "utf8").trimStart().split("\n", 1)[0]!.trim();
 }

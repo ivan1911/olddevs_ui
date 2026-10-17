@@ -18,9 +18,9 @@ import { OVERLAY_LAYER } from "../src/lib/overlay-layer.js";
 afterEach(cleanup);
 
 /**
- * До волны 26 у компонента не было ни одного теста — как и у `Toaster`,
- * `ModalOverlay` и `Popover`. Это ровно те компоненты, где отказ молчит: слой,
- * фокус, Escape.
+ * Before wave 26 the component had no tests at all, nor did `Toaster`,
+ * `ModalOverlay` or `Popover`. These are exactly the components where a failure
+ * is silent: the layer, focus, Escape.
  */
 function Menu({ onSelect }: { onSelect?: () => void }) {
   return (
@@ -75,11 +75,11 @@ test("Escape closes the panel", async () => {
 });
 
 /**
- * Панель обязана лежать НА СЛОЕ поповеров.
+ * The panel must sit ON the popover overlay layer.
  *
- * Radix берёт z-index из вычисленного стиля содержимого и получал `auto`:
- * правый клик внутри `Dialog` или `Drawer` рисовал меню ПОД затемнением
- * (`z-90`) — размытым и некликабельным. Разбор — ADR-0041.
+ * Radix takes the z-index from the content's computed style and got `auto`:
+ * a right click inside a `Dialog` or `Drawer` drew the menu UNDER the scrim
+ * (`z-90`), blurred and unclickable. See ADR-0041.
  */
 test("the panel sits on the popover layer, above the modal scrim", async () => {
   const user = userEvent.setup();
@@ -92,12 +92,12 @@ test("the panel sits on the popover layer, above the modal scrim", async () => {
 });
 
 /*
-  ОДИНОЧНЫЙ ВЫБОР ОБЪЯВЛЯЕТСЯ РОЛЬЮ, А НЕ ВИДОМ ГАЛОЧКИ.
+  A SINGLE CHOICE IS DECLARED BY ITS ROLE, NOT BY THE LOOK OF A CHECKMARK.
 
-  Ради этого Radix здесь и взят: `menuitemradio` и `aria-checked` у ВСЕХ
-  пунктов группы, включая невыбранные. Набор обычных пунктов с нарисованной
-  отметкой выглядит так же, а скринридеру сообщает список команд, среди
-  которых не видно текущей.
+  This is why Radix is used here: `menuitemradio` and `aria-checked` on ALL
+  items of the group, including the unselected ones. A set of plain items with a
+  drawn checkmark looks the same, but to a screen reader it announces a list of
+  commands, among which the current one cannot be told apart.
 */
 test("a single-choice group announces every item, chosen and not", async () => {
   const user = userEvent.setup();

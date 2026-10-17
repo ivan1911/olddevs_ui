@@ -17,14 +17,14 @@ import {
 import { OVERLAY_LAYER } from "../src/lib/overlay-layer.js";
 
 /*
-  Выпадающий вид — та же разметка Категорий, обёрнутая в `MegaMenuTrigger`.
-  Тесты смотрят только на то, что видно снаружи: роли, атрибуты, фокус.
+  The dropdown variant: the same category markup, wrapped in `MegaMenuTrigger`.
+  The tests check only what is visible from outside: roles, attributes, focus.
 */
 
 afterEach(cleanup);
 
-// jsdom не умеет переходить по ссылкам: щелчок по `a[href]` печатает «not
-// implemented: navigation». Переход здесь не предмет проверки.
+// jsdom cannot follow links: a click on `a[href]` logs "not implemented:
+// navigation". Navigation is not under test here.
 beforeEach(() => {
   const stopNavigation = (event: Event) => event.preventDefault();
   document.addEventListener("click", stopNavigation);
@@ -117,7 +117,7 @@ test("a click opens the catalog under the button: focus goes to the first catego
 
   expect(menu()).not.toBeNull();
   expect(trigger().getAttribute("aria-expanded")).toBe("true");
-  // `aria-controls` указывает на содержимое оверлея.
+  // `aria-controls` points at the overlay content.
   const panel = document.getElementById(trigger().getAttribute("aria-controls") ?? "");
   expect(panel?.contains(menu())).toBe(true);
   expect(document.activeElement).toBe(category("Electronics"));
@@ -201,7 +201,7 @@ test("a press outside closes the catalog", async () => {
   await user.click(screen.getByRole("button", { name: "after" }));
 
   expect(menu()).toBeNull();
-  // Фокус остаётся там, куда нажал пользователь, а не отнимается кнопкой.
+  // Focus stays where the user clicked, instead of being taken by the button.
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "after" }));
 });
 
@@ -329,7 +329,7 @@ test("onOpenChange reports every change; a controlled catalog follows only its o
           open={open}
           onOpenChange={(next) => {
             onOpenChange(next);
-            // Владелец решает сам: закрыть можно, открыть щелчком по кнопке — нет.
+            // The owner decides: closing is allowed, opening on a button click is not.
             if (!next) setOpen(false);
           }}
         />
@@ -451,9 +451,10 @@ test("a disabled button never opens the catalog", async () => {
 });
 
 /*
-  Выпадающий вид на узком экране (OLDSUI-262): спуск в Категорию идёт внутри
-  оверлея, «Назад» и Escape возвращают Столбец, не закрывая каталог. Ширину
-  оверлея jsdom не посчитает — её проверяет `tests-visual/mega-menu.spec.ts`.
+  The dropdown variant on a narrow screen (OLDSUI-262): drilling into a category
+  happens inside the overlay, and "Back" and Escape return to the category column
+  without closing the catalog. jsdom does not compute the overlay width; it is
+  checked by `tests-visual/mega-menu.spec.ts`.
 */
 
 describe("on a narrow screen", () => {

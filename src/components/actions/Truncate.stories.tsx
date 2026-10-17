@@ -22,8 +22,8 @@ type Story = StoryObj<TruncateProps>;
 const LONG_TEXT = "A very long file name that does not fit the table column and gets truncated";
 
 /**
- * Наведите или пройдите Tab: подсказка появляется только у **обрезанного**
- * текста. Второй строке она не нужна, и её там нет.
+ * Hover over it or Tab to it: the tooltip appears only for **truncated** text. The multi-line
+ * story doesn't need one, so there isn't one there.
  */
 export const Playground: Story = {
   render: () => (
@@ -38,7 +38,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Несколько строк: обрезка по числу строк, а не по ширине. */
+/** Several lines: truncation by line count, not by width. */
 export const MultipleLines: Story = {
   render: () => (
     <div className="bg-bg-2 border-line-soft w-[280px] rounded border px-2 py-1.5 text-[13px]">
@@ -47,7 +47,7 @@ export const MultipleLines: Story = {
   ),
 };
 
-/** В узкой колонке обрезается больше — замер повторяется при смене размера. */
+/** In a narrow column more gets truncated. The measurement repeats when the size changes. */
 export const NarrowColumn: Story = {
   render: () => (
     <div className="flex items-start gap-3">

@@ -7,8 +7,8 @@ import { RichTextView } from "./RichTextView.js";
 import { tool } from "./core/toolOptions.js";
 
 /*
-  Нейтральный документ с каждым Блоком и каждой Меткой Схемы — тот же, что в
-  историях Редактора: типографику сравнивают на одном тексте.
+  A neutral Document with every Block and every Schema Mark, the same one as in the
+  Editor stories: typography is compared on one text.
 */
 const SAMPLE =
   "<h2>Release notes</h2>" +
@@ -22,7 +22,7 @@ const SAMPLE =
   "<blockquote><p>A quotation stands apart from the surrounding text.</p></blockquote>" +
   "<hr><p>Text after the divider.</p>";
 
-/* Таблица: строка-заголовок из `th`, шесть столбцов — шире узкого экрана. */
+/* A table: a header row of `th` cells, six columns, wider than a narrow screen. */
 const TABLE_HTML =
   "<h2>Roadmap</h2><p>Quarterly plan by area.</p>" +
   "<table><tbody>" +
@@ -35,8 +35,8 @@ const TABLE_HTML =
   "</tbody></table><p>Text after the table.</p>";
 
 /*
-  Слитые ячейки и выравнивание столбца — так их пишет меню «Таблица» Редактора:
-  `colspan`, `rowspan` и `data-align` на каждой ячейке столбца.
+  Merged cells and column alignment, written the way the Editor's Table menu writes
+  them: `colspan`, `rowspan`, and `data-align` on each cell in a column.
 */
 const MERGED_TABLE_HTML =
   "<table><tbody>" +
@@ -62,10 +62,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /*
-  Блоки кода: по одному на каждый язык Редактора и обычный текст.
-  В образцах есть ключевые слова, строки, числа, комментарии и теги — чтобы
-  тему подсветки было видно целиком и axe мерил контраст каждой роли токена
-  во всех трёх темах.
+  Code blocks: one per language the Editor supports, plus plain text. The samples
+  include keywords, strings, numbers, comments and tags, so the highlight theme can be
+  seen in full and axe measures the contrast of every token role in all three themes.
 */
 const CODE_SAMPLES = [
   ["python", '# Greets a user\ndef greet(name: str) -> str:\n    return f"Hello, {name}!" * 2'],
@@ -97,21 +96,21 @@ const CODE_BLOCKS =
   "<pre><code>Plain text is never highlighted: if (a) { return b; }</code></pre>";
 
 /**
- * Сохранённый Документ без движка. HTML здесь — константа; в приложении он
- * приходит с сервера уже очищенным: компонент сам ничего не санитизирует.
+ * A saved Document without an engine. The HTML here is a constant; in the app it
+ * arrives from the server already sanitized: the component does not sanitize anything itself.
  */
 export const Playground: Story = {};
 
-/** Пустой документ — пустой контейнер, без заглушки: пустое состояние рисует страница. */
+/** An empty Document is an empty container, with no placeholder: the page draws the empty state. */
 export const Empty: Story = {
   args: { html: "" },
 };
 
 /**
- * Цвет, маркер и выравнивание в Просмотре: те же имена палитр, что пишет
- * Редактор, и те же классы (`prose.ts`) — без движка и без `style`. Цвет текста
- * — шесть тонов на `span`, маркер — три ярких и шесть прежних цветов Notion на `mark`. Тема
- * переключается тулбаром витрины.
+ * Text color, marker and alignment in the View: the same palette names the Editor
+ * writes, and the same classes (`prose.ts`), with no engine and no `style`. Text color
+ * is six tones on a `span`; the marker is three bright colors and the six older Notion
+ * colors on a `mark`. The theme is switched with the showcase toolbar.
  */
 export const ColourAndAlignment: Story = {
   args: {
@@ -127,17 +126,16 @@ export const ColourAndAlignment: Story = {
 };
 
 /**
- * Палитра маркера: три ярких цвета — жёлтый, ярко-зелёный,
- * розовый — одинаковы в `dark`, `light` и `dim`, и текст на них тёмный
- * (`--marker-text`, 4.5:1 в каждой теме, `npm run contrast`). Шесть прежних
- * цветов Notion (blue, gray, brown, orange, purple, red) красятся своими
- * значениями темы с основным текстом; их снова предлагает сетка.
- * Тема переключается тулбаром витрины, поэтому история снимается и проверяется
- * axe во всех трёх.
+ * Marker palette: the three bright colors (yellow, bright green, pink) are the same in
+ * `dark`, `light` and `dim`, and the text on them is dark (`--marker-text`, 4.5:1 in
+ * every theme, `npm run contrast`). The six older Notion colors (blue, gray, brown,
+ * orange, purple, red) take their theme values alongside the main text; the grid offers
+ * them again. The theme is switched with the showcase toolbar, so the story is
+ * snapshotted and checked with axe in all three.
  *
- * Строки: сам маркер на одной строке, маркер под цветным текстом — на другой.
- * Цвет текста на маркере другого имени держит контраст не всегда, и гейт его не
- * меряет: автор выбрал пару сам.
+ * Rows: the marker on its own in one row, and the marker under colored text in another.
+ * Text color on a marker of a different name does not always keep the contrast, and the
+ * gate does not measure it: the author chose the pair.
  */
 export const MarkerPalette: Story = {
   args: {
@@ -154,7 +152,7 @@ export const MarkerPalette: Story = {
   },
 };
 
-/** Заголовки четырёх уровней: H1 той же типографикой, что в Редакторе (`RichTextEditor` › `Heading1`). */
+/** Four heading levels: H1 uses the same typography as in the Editor (`RichTextEditor` › `Heading1`). */
 export const Headings: Story = {
   args: {
     html:
@@ -166,24 +164,24 @@ export const Headings: Story = {
   },
 };
 
-/** Заголовки на светлом листе: H1 в тёмной теме приложения остаётся светлым. */
+/** Headings on a light Paper: H1 stays light in the app's dark theme. */
 export const HeadingsPaper: Story = {
   args: { ...Headings.args, surface: "paper" },
 };
 
-/** Таблица в Просмотре: те же границы и подложка строки-заголовка, что в Редакторе, на голой `<table>`. */
+/** A table in the View: the same borders and header-row background as in the Editor, on a bare `<table>`. */
 export const Table: Story = {
   args: { html: TABLE_HTML },
 };
 
-/** Слитые ячейки и выравнивание столбца в Просмотре: те же классы `prose.ts`, что в Редакторе. */
+/** Merged cells and column alignment in the View: the same `prose.ts` classes as in the Editor. */
 export const TableMerged: Story = {
   args: { html: MERGED_TABLE_HTML },
 };
 
 /**
- * Узкий экран (375 px): таблица прокручивается по горизонтали на самой
- * `<table>` — обёртки в сохранённом HTML нет, и прокрутка должна работать без неё.
+ * Narrow screen (375 px): the table scrolls horizontally on the `<table>` itself. The
+ * saved HTML has no wrapper, so scrolling must work without one.
  */
 export const TableNarrow: Story = {
   tags: ["viewport-phone"],
@@ -191,24 +189,25 @@ export const TableNarrow: Story = {
 };
 
 /**
- * Подсвеченные блоки кода (ADR-0051): HTML прошёл через
- * `highlightCodeBlocks` из `@olddevs/ui/editor/highlight` — в приложении это
- * делает сервер после очистки. `RichTextView` только красит токены темой
- * GitHub Light/Dark классами контейнера; подсветчика в его графе нет.
+ * Highlighted code blocks (ADR-0051): the HTML went through `highlightCodeBlocks` from
+ * `@olddevs/ui/editor/highlight`. In the app, the server does this after sanitizing.
+ * `RichTextView` only colors the tokens with the GitHub Light/Dark theme through the
+ * container's classes; it has no highlighter in its graph.
  *
- * У каждого блока шапка: слева язык (блок без языка — без подписи), справа
- * «Копировать». Подпись приходит в HTML от сервера, кнопку вставляет клиентский
- * остров после монтирования; в буфер уходит текст кода без токенов.
+ * Each block has a header: the language on the left (a block with no language has no
+ * label), and "Copy" on the right. The label comes in the HTML from the server, and the
+ * button is inserted by a client-side Island after mounting. The clipboard receives the
+ * code text without tokens.
  */
 export const CodeBlocks: Story = {
   args: { html: highlightCodeBlocks(CODE_BLOCKS) },
 };
 
 /**
- * Светлый лист в любой теме (`surface="paper"`) — для экранов
- * печати, PDF и писем: документ выглядит как в светлой теме, маркеры и
- * подсветка кода — светлые, лист отделён от тёмной страницы рамкой и тенью.
- * Тот же документ в Редакторе — `RichTextEditor` › `PaperSurface`.
+ * A light Paper in any theme (`surface="paper"`), for print, PDF and email screens. The
+ * document looks as it does in the light theme: the markers and the code highlight are
+ * light, and the sheet is set off from the dark page by a border and a shadow. The same
+ * document in the Editor is `RichTextEditor` › `PaperSurface`.
  */
 export const PaperSurface: Story = {
   args: {
@@ -230,10 +229,10 @@ export const PaperSurface: Story = {
 };
 
 /**
- * Редактор и Просмотр на одном документе. Правка слева сразу видна справа:
- * типографика совпадает, потому что оба берут классы из одного модуля
- * (`prose.ts`). Тема переключается тулбаром витрины, темы `dark`, `light` и `dim`
- * проверяются снимками.
+ * The Editor and the View on one document. An edit on the left shows up on the right at
+ * once: the typography matches, because both take their classes from one module
+ * (`prose.ts`). The theme is switched with the showcase toolbar; the `dark`, `light` and
+ * `dim` themes are checked with snapshots.
  */
 export const SideBySide: Story = {
   render: (args) => {
@@ -256,8 +255,8 @@ export const SideBySide: Story = {
 };
 
 /*
-  Шапка блока кода: Редактор и Просмотр на одном документе рядом.
-  Светлая и тёмная темы — переключатель витрины: снимок снимается во всех трёх.
+  Code block header: the Editor and the View on one document, side by side.
+  Light and dark themes are switched with the showcase toggle; the snapshot is taken in all three.
 */
 const HEADER_DOC =
   `<pre><code class="language-python">${escapeCode(CODE_SAMPLES[0][1])}</code></pre>` +
@@ -265,12 +264,13 @@ const HEADER_DOC =
   "<pre><code>Plain text: no label in the view.</code></pre>";
 
 /**
- * Шапка блока кода: полоса над кодом, язык слева и «Копировать» справа, обе
- * части всегда на виду, на десктопе и на касании. Слева — Редактор, справа —
- * Просмотр (его HTML прошёл `highlightCodeBlocks`, как на сервере). Код
- * начинается под полосой, кнопки его не перекрывают. У блока без языка в
- * Редакторе кнопка «Plain text», в Просмотре подписи нет. Тема — переключатель витрины, снимается в `dark`,
- * `light` и `dim`.
+ * Code block header: a strip above the code, the language on the left and "Copy" on the
+ * right. Both parts are always visible, on desktop and on touch. The Editor is on the
+ * left and the View on the right (its HTML went through `highlightCodeBlocks`, as on the
+ * server). The code starts below the strip, and the buttons do not cover it. In the
+ * Editor, a block with no language shows a "Plain text" button; in the View, it has no
+ * label. The theme is switched with the showcase toggle; the snapshot is taken in `dark`,
+ * `light` and `dim`.
  */
 export const CodeBlockHeader: Story = {
   render: () => (
@@ -290,8 +290,8 @@ export const CodeBlockHeader: Story = {
 };
 
 /*
-  Раскладка в Просмотре: та же сетка, что в Редакторе, без рамок.
-  Образец — тот же, что в истории Редактора `Layouts`.
+  Column layout in the View: the same grid as in the Editor, without borders.
+  The sample is the same one as in the Editor's `Layouts` story.
 */
 const layoutColumn = (title: string, text: string) =>
   `<div data-block="column"><h4>${title}</h4><p>${text}</p></div>`;
@@ -332,9 +332,9 @@ const LAYOUTS_HTML =
   "<p>Text after the layouts.</p>";
 
 /**
- * Раскладка в Просмотре: колонки той же сеткой, что в Редакторе, но без
- * пунктира — граница нужна автору, а не читателю. Порядок чтения — колонки
- * слева направо, как в разметке.
+ * Column layout in the View: the columns use the same grid as in the Editor, but without
+ * the dashed outline. The border is for the author, not the reader. The reading order is
+ * the columns from left to right, as in the markup.
  */
 export const Layouts: Story = {
   render: () => (
@@ -344,7 +344,7 @@ export const Layouts: Story = {
   ),
 };
 
-/** Раскладки на светлом листе `surface="paper"`. */
+/** Column layouts on a light Paper (`surface="paper"`). */
 export const LayoutsPaper: Story = {
   render: () => (
     <div className="max-w-[960px]">
@@ -354,9 +354,9 @@ export const LayoutsPaper: Story = {
 };
 
 /**
- * Узкий экран (375 px): колонки столбцом, левая сверху. Порог — ширина самого
- * Документа (контейнерный запрос), поэтому в узкой колонке страницы на широком
- * экране они тоже встают столбцом.
+ * Narrow screen (375 px): the columns stack, with the left one on top. The threshold is
+ * the width of the Document itself (a container query), so on a wide screen they also
+ * stack inside a narrow column of the page.
  */
 export const LayoutNarrow: Story = {
   tags: ["viewport-phone"],
@@ -364,8 +364,8 @@ export const LayoutNarrow: Story = {
 };
 
 /*
-  Обёртка в Просмотре: рамки нет, отступы между Блоками — как в
-  Документе. Образец — тот же, что в истории Редактора `Wrappers`.
+  Wrapper in the View: no border, and the spacing between Blocks is the same as in
+  the Document. The sample is the same one as in the Editor's `Wrappers` story.
 */
 const wrapperBlock = (...blocks: string[]) => `<div data-block="wrapper">${blocks.join("")}</div>`;
 
@@ -384,8 +384,9 @@ const WRAPPERS_HTML =
   "<p>Text after the wrappers.</p>";
 
 /**
- * Обёртка в Просмотре: читатель её не видит — ни рамки, ни отступа, Блоки
- * идут, как в Документе. Пунктир — подсказка автору в Редакторе.
+ * Wrapper in the View: the reader does not see it. There is no border and no indent, and
+ * the Blocks flow as they do in the Document. The dashed outline is a hint for the author
+ * in the Editor.
  */
 export const Wrappers: Story = {
   render: () => (
@@ -396,9 +397,9 @@ export const Wrappers: Story = {
 };
 
 /*
-  Сворачиваемый Блок в Просмотре: родной `details` и `summary` — раскрывается без
-  JavaScript, с клавиатуры и читается скринридером. Образец — тот же, что в
-  истории Редактора `Details`; второй Блок сохранён открытым (`persist`).
+  Collapsible block in the View: the native `details` and `summary` elements expand without
+  JavaScript, work from the keyboard, and are read by screen readers. The sample is the
+  same one as in the Editor's `Details` story; the second block is saved open (`persist`).
 */
 const DETAILS_HTML =
   "<h2>Collapsible blocks</h2><p>A block keeps its details under a title. Click the title to open it.</p>" +
@@ -414,8 +415,8 @@ const DETAILS_HTML =
   "<p>Text after the blocks.</p>";
 
 /**
- * Сворачиваемый Блок в Просмотре: без движка и без JavaScript — открывает и
- * закрывает сам браузер. Блок, сохранённый с `open`, приходит открытым.
+ * Collapsible block in the View: no engine and no JavaScript. The browser itself opens and
+ * closes it. A block saved with `open` arrives open.
  */
 export const Details: Story = {
   render: () => (
@@ -425,7 +426,7 @@ export const Details: Story = {
   ),
 };
 
-/** Сворачиваемый Блок на светлом листе `surface="paper"`. */
+/** Collapsible block on a light Paper (`surface="paper"`). */
 export const DetailsPaper: Story = {
   render: () => (
     <div className="max-w-[640px]">
@@ -435,9 +436,9 @@ export const DetailsPaper: Story = {
 };
 
 /*
-  Формулы в Просмотре (OLDSUI-280, ADR-0070): элемент с `data-latex` приходит с
-  исходным LaTeX, а ленивый Остров после монтирования грузит KaTeX и рисует формулу.
-  Образец — тот же, что в истории Редактора `Mathematics`.
+  Formulas in the View (OLDSUI-280, ADR-0070): an element with `data-latex` arrives with
+  its source LaTeX, and after mounting, a lazy Island loads KaTeX and draws the formula.
+  The sample is the same one as in the Editor's `Mathematics` story.
 */
 const MATH_HTML =
   "<h2>Formulas</h2>" +
@@ -449,12 +450,12 @@ const MATH_HTML =
   '<p>A formula KaTeX cannot read stays as source: <span data-type="inline-math" data-latex="\\frac{1"></span>.</p>';
 
 /**
- * Формулы в Просмотре без движка: Остров рисует KaTeX из `data-latex` на месте.
- * Без JavaScript и до отрисовки читателю виден исходный LaTeX; скринридер читает
- * MathML, который выводит KaTeX.
+ * Formulas in the View without an engine: the Island draws KaTeX from `data-latex` in
+ * place. Without JavaScript, or before rendering, the reader sees the source LaTeX; a
+ * screen reader reads the MathML that KaTeX outputs.
  */
 export const Mathematics: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for network silence.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -463,9 +464,9 @@ export const Mathematics: Story = {
   ),
 };
 
-/** Формулы на светлом листе `surface="paper"`. */
+/** Formulas on a light Paper (`surface="paper"`). */
 export const MathematicsPaper: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for network silence.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -475,11 +476,11 @@ export const MathematicsPaper: Story = {
 };
 
 /**
- * Опции формул берутся из `tools` Просмотра: макрос `\RR`, заданный Редактору через
- * `tool("mathematics", { macros })`, работает и здесь. Сам Инструмент называть не нужно.
+ * Formula options come from the View's `tools`: the `\RR` macro set for the Editor through
+ * `tool("mathematics", { macros })` works here too. No need to name the Tool itself.
  */
 export const MathematicsMacros: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for network silence.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -494,9 +495,9 @@ export const MathematicsMacros: Story = {
 };
 
 /*
-  Тон Обёртки у читателя: тот же вид, что в Редакторе, — подложка
-  и полоса тона; Обёртка без тона по-прежнему невидима. Образец — тот же, что
-  в истории Редактора `WrapperTones`.
+  Callout tone of a Wrapper in the View: the same look as in the Editor, a background and
+  a tone stripe. A Wrapper without a tone is still invisible. The sample is the same one as
+  in the Editor's `WrapperTones` story.
 */
 const tonedBlock = (tone: string, ...blocks: string[]) =>
   `<div data-block="wrapper" data-tone="${tone}">${blocks.join("")}</div>`;
@@ -525,9 +526,9 @@ const WRAPPER_TONES_HTML =
   "<p>Text after the wrappers.</p>";
 
 /**
- * Тоны Обёртки у читателя: мягкая подложка и полоса 3 px слева, текст —
- * обычный текст Документа. Роли и `aria-*` у Обёртки нет — смысл заметки
- * несёт слово в её тексте.
+ * Callout tones of a Wrapper for the reader: a soft background and a 3 px stripe on the
+ * left, and the text is ordinary Document text. A Wrapper has no role or `aria-*`: the
+ * meaning of the note is carried by a word in its text.
  */
 export const WrapperTones: Story = {
   render: () => (
@@ -537,7 +538,7 @@ export const WrapperTones: Story = {
   ),
 };
 
-/** Тоны Обёртки на светлом листе `surface="paper"` — в любой теме приложения. */
+/** Callout tones of a Wrapper on a light Paper (`surface="paper"`), in any app theme. */
 export const WrapperTonesPaper: Story = {
   render: () => (
     <div className="max-w-[640px]">
@@ -547,9 +548,10 @@ export const WrapperTonesPaper: Story = {
 };
 
 /*
-  Видео в Просмотре (OLDSUI-281, ADR-0071): блок приходит ссылкой, остров кита
-  ставит на его место плеер сразу (OLDSUI-287); с `autoload: false` в `tools` —
-  заглушку, а плеер после щелчка. Образец — тот же, что в истории Редактора `Video`.
+  Video in the View (OLDSUI-281, ADR-0071): the block arrives as a link, and the kit's
+  Island puts the player in its place right away (OLDSUI-287). With `autoload: false` in
+  `tools`, it shows a placeholder, and the player loads after a click. The sample is the
+  same one as in the Editor's `Video` story.
 */
 const VIDEO_HTML =
   "<h2>Video</h2><p>Without JavaScript a reader sees the links below.</p>" +
@@ -560,11 +562,11 @@ const VIDEO_HTML =
   "<p>Text after the videos.</p>";
 
 /**
- * Видео в Просмотре: без движка. Плеер встаёт сразу; Twitch берёт домен этой страницы
- * в `parent` при показе.
+ * Video in the View: no engine. The player appears immediately; Twitch takes this page's
+ * domain as `parent` when it is shown.
  */
 export const Video: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for network silence.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -574,11 +576,11 @@ export const Video: Story = {
 };
 
 /**
- * `tool("youtube", { autoload: false })` и `tool("twitch", { autoload: false })` в `tools`
- * Просмотра: заглушка с кнопкой «Play», до щелчка к сервису не уходит ни одного запроса.
+ * `tool("youtube", { autoload: false })` and `tool("twitch", { autoload: false })` in the View's
+ * `tools`: a placeholder with a "Play" button. No request goes to the service until the click.
  */
 export const VideoClickToPlay: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for network silence.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -590,9 +592,9 @@ export const VideoClickToPlay: Story = {
   ),
 };
 
-/** Видео на светлом листе `surface="paper"`. */
+/** Video on a light Paper (`surface="paper"`). */
 export const VideoPaper: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for network silence.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">

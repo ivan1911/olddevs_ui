@@ -33,8 +33,8 @@ const ORG: TreeNode[] = [
 const meta = {
   title: "Inputs/TreeSelect",
   component: TreeSelect,
-  // Периферия по ADR-0038: композиция готовых `TreeView` и `Popover`. Метка
-  // снимает снимки — они сторожили бы атомы, уже посторожённые ядром.
+  // Periphery per ADR-0038: a composition of the ready-made `TreeView` and `Popover`.
+  // The tag turns off snapshots: they would guard atoms that the core already guards.
   tags: ["periphery"],
   parameters: { layout: "centered" },
   args: {
@@ -60,38 +60,37 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Одиночный выбор: узел выбран — поповер закрылся, цель достигнута. */
+/** Single selection: the node is selected, the popover closes, and the goal is reached. */
 export const Playground: Story = {
   args: { value: ["logistics"] },
 };
 
 /**
- * Множественный выбор: чипы в закрытом поле, поповер остаётся открытым — выбор
- * ещё не закончен, и закрытие требовало бы открывать заново на каждый узел.
+ * Multiple selection: chips in the closed field, and the popover stays open, since the selection
+ * is not finished yet; closing it would force reopening it for every node.
  */
 export const Multiple: Story = {
   args: { multiple: true, value: ["direct", "logistics"] },
 };
 
-/** Больше трёх выбранных: хвост сворачивается, поле не растёт на пять строк. */
+/** More than three selected: the tail collapses, and the field does not grow by five rows. */
 export const ManySelected: Story = {
   args: { multiple: true, value: ["direct", "partners", "logistics", "payroll"] },
 };
 
 /**
- * Очистка — настоящая кнопка рядом с триггером, как у `Select`: вложенная
- * кнопка была бы `nested-interactive`, а `aria-hidden`-крестик внутри выпадал бы
- * из дерева доступности целиком. С клавиатуры поле очищают ещё и Delete или
- * Backspace.
+ * Clearing uses a real button next to the trigger, as in `Select`: a nested button
+ * would be `nested-interactive`, and an `aria-hidden` cross inside it would drop out of the
+ * accessibility tree entirely. From the keyboard, Delete or Backspace also clears the field.
  */
 export const Clearable: Story = {
   args: { clearable: true, value: ["partners"] },
 };
 
-/** Пустое поле показывает подсказку из каталога, если своей не передали. */
+/** An empty field shows the placeholder from the message catalog if none is passed. */
 export const Empty: Story = {};
 
-/** Выключенное поле не раскрывается. */
+/** A disabled field does not expand. */
 export const Disabled: Story = {
   args: { disabled: true, value: ["finance"] },
 };

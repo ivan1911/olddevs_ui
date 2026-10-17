@@ -2,11 +2,12 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
- * Поповер пункта вставки и Действия над Блоком в браузере (история 39,
- * ADR-0058, п. 5.6): то, чего jsdom не умеет, — положение у каретки (там, где
- * стоял «/») и у Блока Ручки. Открытие из каждого места, Escape, возврат фокуса
- * и ошибки набора проверены в `tests/rich-text-editor-custom-popover.test.tsx`;
- * поповер уходит в портал, поэтому axe открытого поповера — здесь же.
+ * Popover of an Insert item and of a Block action in a browser (story 39,
+ * ADR-0058, item 5.6): what jsdom cannot do, namely the position relative to the
+ * caret (where the "/" was) and to the Block of the Block handle. Opening from each
+ * place, Escape, focus return and typing errors are checked in
+ * `tests/rich-text-editor-custom-popover.test.tsx`. The popover goes into a portal,
+ * so axe on the open popover is also here.
  */
 
 const STORY = (theme = "dark") =>
@@ -20,7 +21,7 @@ async function boxOf(locator: Locator) {
   return box as Box;
 }
 
-/** Каретка Документа — прямоугольник выделения в координатах окна. */
+/** The Document's caret: the selection rectangle in window coordinates. */
 async function caretBox(page: Page): Promise<Box> {
   return page.evaluate(() => {
     const range = window.getSelection()!.getRangeAt(0).cloneRange();
@@ -29,7 +30,7 @@ async function caretBox(page: Page): Promise<Box> {
   });
 }
 
-/** Поповер вплотную к якорю по вертикали. */
+/** The popover sits vertically next to its anchor. */
 function expectNextTo(popover: Box, anchor: Box) {
   const below = popover.y - (anchor.y + anchor.height);
   const above = anchor.y - (popover.y + popover.height);
@@ -39,7 +40,10 @@ function expectNextTo(popover: Box, anchor: Box) {
 const SLASH_TEXT = "Type / and pick Symbol";
 const BLOCK_TEXT = "Append symbol in the block menu";
 
-/** Поповер у «/»: набрать « /sym» в конце абзаца и выбрать пункт. Каретка — где стоял «/». */
+/**
+ * Popover from "/": type " /sym" at the end of the paragraph and pick the item.
+ * The caret is where the "/" was.
+ */
 async function openFromSlash(page: Page) {
   const field = page.getByRole("textbox", { name: "Document" });
   await field.getByText(SLASH_TEXT).click();
@@ -54,7 +58,10 @@ async function openFromSlash(page: Page) {
   return { field, caret, popover };
 }
 
-/** Поповер Действия у Блока: каретка в абзаце, меню Ручки, «Append symbol». */
+/**
+ * Popover of a Block action: the caret is in the paragraph, the Block handle menu,
+ * "Append symbol".
+ */
 async function openFromHandle(page: Page) {
   const field = page.getByRole("textbox", { name: "Document" });
   const paragraph = field.locator("p", { hasText: BLOCK_TEXT });
@@ -74,9 +81,10 @@ test("the popover of an item picked in / stands where the slash was; Escape retu
 
   const box = await boxOf(popover);
   expectNextTo(box, caret);
-  // Левый край поповера — у каретки (`align="start"`), а не у начала строки или кнопки.
+  // The popover's left edge is at the caret (`align="start"`), not at the start of the
+  // line or at the button.
   expect(Math.abs(box.x - caret.x)).toBeLessThan(24);
-  // Набранная «/команда» убрана, как у обычного пункта.
+  // The typed "/command" is removed, as it is for a regular item.
   await expect(field).not.toContainText("/sym");
 
   await page.keyboard.press("Escape");
@@ -112,7 +120,7 @@ test("from + and Add of the handle the popover stays open at the caret: the clos
   await page.getByRole("button", { name: "Insert block" }).click();
   await page.getByRole("menuitem", { name: "Symbol" }).click();
   await expect(popover).toBeVisible();
-  // Меню снимается и возвращает фокус своему триггеру — поповер при этом не закрывается.
+  // The menu closes and returns focus to its trigger, and the popover stays open.
   await page.waitForTimeout(300);
   await expect(popover).toBeVisible();
   expectNextTo(await boxOf(popover), caret);
@@ -131,7 +139,7 @@ test("from + and Add of the handle the popover stays open at the caret: the clos
 for (const theme of ["dark", "light", "dim"] as const) {
   test(`the open popovers and the field pass axe — theme ${theme}`, async ({ page }) => {
     await page.goto(STORY(theme));
-    // Входная анимация начинается с прозрачности: axe посчитал бы по ней контраст.
+    // The entrance animation starts from transparency: axe would compute contrast from that.
     await page.addStyleTag({
       content:
         "*, *::before, *::after { animation-duration: 0s !important; transition: none !important; }",

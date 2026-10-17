@@ -23,7 +23,7 @@ import {
 } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -34,12 +34,12 @@ afterEach(() => {
 });
 
 /**
- * Кнопка своего Инструмента (OLDSUI-105, ADR-0058, разделы 5 и 6).
+ * A button of a custom Tool (OLDSUI-105, ADR-0058, sections 5 and 6).
  *
- * Через публичный `RichTextEditor` со своими Инструментами из общего помощника
- * тестов: роли, имена и `aria-*` кнопок, выходной HTML, справочник сочетаний.
- * Выделение и фокус ставятся командами движка: jsdom не умеет ввода. Положение
- * поповера у каретки меряет браузер (`tests-visual`), jsdom раскладки не знает.
+ * Through the public `RichTextEditor` with custom Tools from the shared test helper:
+ * roles, names and `aria-*` of the buttons, the output HTML, the shortcuts reference.
+ * Selection and focus are set by engine commands: jsdom does not support typing. The position
+ * of the popover at the caret is measured by the browser (`tests-visual`); jsdom does not know layout.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -60,13 +60,13 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 const TOOLBAR = { name: "Formatting" } as const;
 const BUBBLE = { name: "Selection formatting" } as const;
 
-/** Имена кнопок Панели по порядку — так их обходят стрелки. */
+/** Toolbar button names in order: this is how the arrow keys walk them. */
 const names = (toolbar: HTMLElement) =>
   within(toolbar)
     .getAllByRole("button")
     .map((button) => button.getAttribute("aria-label"));
 
-/** Сочетание в документе — так, как его слышит движок: `keydown` на редактируемой области. */
+/** A shortcut in the Document, the way the engine hears it: a `keydown` on the editable area. */
 function press(editor: RichTextEditorHandle["editor"], init: KeyboardEventInit) {
   act(() => {
     editor!.view.dom.dispatchEvent(
@@ -75,7 +75,7 @@ function press(editor: RichTextEditorHandle["editor"], init: KeyboardEventInit) 
   });
 }
 
-/** Фокус в Документ и каретка в позицию. */
+/** Focus the Document and move the caret to the position. */
 function caretAt(editor: NonNullable<RichTextEditorHandle["editor"]>, pos: number) {
   act(() => {
     editor.view.focus();
@@ -83,14 +83,14 @@ function caretAt(editor: NonNullable<RichTextEditorHandle["editor"]>, pos: numbe
   });
 }
 
-// ── Место на Панели ───────────────────────────────────────────────────────
+// ── Place on the Toolbar ───────────────────────────────────────────────────────
 
 test("own buttons stand in one group before Undo and Redo, in the order of tools", () => {
   renderEditor({ tools: [...RICH_TEXT_PRESETS.full, testPickerTool, testStampTool] });
   const list = names(screen.getByRole("toolbar", TOOLBAR));
 
   expect(list.slice(-6)).toEqual(["Picker", "Stamp", "Undo", "Redo", "Find", "Keyboard shortcuts"]);
-  // Свои — после кнопок кита, а не между ними.
+  // Custom ones come after the kit's buttons, not between them.
   expect(list.indexOf("Picker")).toBeGreaterThan(list.indexOf("Emoji"));
 
   cleanup();
@@ -176,7 +176,7 @@ test("no toolbar at all: the own button is gone, its shortcut still works", () =
   expect(editor.getHTML()).toBe("<p>He★llo world</p>");
 });
 
-// ── Клавиатура и состояние ────────────────────────────────────────────────
+// ── Keyboard and state ────────────────────────────────────────────────
 
 test("the toolbar with own buttons is one Tab stop and arrows reach them", async () => {
   const user = userEvent.setup();
@@ -197,7 +197,7 @@ test("the toolbar with own buttons is one Tab stop and arrows reach them", async
   await user.tab();
   expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Body" }));
 
-  // Назад в Панель, к концу ряда: справочник ← Поиск ← Повтор ← Отмена ← последняя своя.
+  // Back to the Toolbar, to the end of the row: Keyboard shortcuts ← Find ← Redo ← Undo ← last custom one.
   await user.tab({ shift: true });
   await user.keyboard("{End}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}");
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Pin" }));
@@ -251,7 +251,7 @@ test("a visibility predicate hides the button in its context and shows it in ano
 
   act(() => void editor.commands.setTextSelection(3));
   expect(screen.queryByRole("button", { name: "Count" })).toBeNull();
-  // Скрытая кнопка не мешает остальным своего Инструмента.
+  // A hidden button does not get in the way of the other buttons of its Tool.
   expect(screen.getByRole("button", { name: "Lock" })).toBeDefined();
 
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
@@ -264,14 +264,14 @@ test("a disabled field keeps the button visible and off", () => {
   expect(stamp.disabled).toBe(true);
 });
 
-// ── Сочетание ─────────────────────────────────────────────────────────────
+// ── Shortcut ─────────────────────────────────────────────────────────────
 
 test("the shortcut runs the button and shows in the tooltip and aria-keyshortcuts", async () => {
   const user = userEvent.setup();
   const { editor } = renderEditor();
   const stamp = screen.getByRole("button", { name: "Stamp" });
 
-  // jsdom — не Apple: `mod` — это Ctrl.
+  // jsdom is not Apple: `mod` is Ctrl.
   expect(stamp.getAttribute("aria-keyshortcuts")).toBe("Control+Shift+Y");
 
   caretAt(editor, 3);
@@ -307,7 +307,7 @@ test("an unavailable button does not take its shortcut: the key goes on to the d
   expect(taken).not.toHaveBeenCalled();
 });
 
-/** Справочник сочетаний: строки таблицы по порядку, с именем группы по `tbody`. */
+/** Keyboard shortcuts reference: the table rows in order, with the group name taken from the `tbody`. */
 async function openReference(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Keyboard shortcuts" }));
   const popover = await screen.findByRole("dialog", { name: "Keyboard shortcuts" });
@@ -324,13 +324,13 @@ test("the reference lists own shortcuts in a group without a heading after the k
   });
   const { popover, rows } = await openReference(user);
 
-  // Свои — в порядке `tools`, в конце таблицы, после всех групп кита.
+  // Custom ones follow the `tools` order, at the end of the table, after all the kit's groups.
   expect(rows.slice(-3)).toEqual(["Picker", "Stamp", "Pin"]);
   const kit = within(popover).getByText("Bold").closest("tbody")!;
   const own = within(popover).getByText("Stamp").closest("tbody")!;
   expect(own).not.toBe(kit);
   expect(kit.compareDocumentPosition(own) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  // Без заголовка группы: в таблице одни строки команд.
+  // No group header: the table has command rows only.
   expect(popover.querySelectorAll("tbody th:not([scope=row])")).toHaveLength(0);
   expect(within(own).getByText("Ctrl+Shift+Y").tagName).toBe("KBD");
 });
@@ -338,7 +338,7 @@ test("the reference lists own shortcuts in a group without a heading after the k
 test("the reference does not list the keys of the Extensions", async () => {
   const user = userEvent.setup();
   const { editor } = renderEditor();
-  // Extensions слушают `Mod-Shift-K` на деле — и это не строка справочника.
+  // The Extensions actually listen to `Mod-Shift-K`, and it is not a row of the reference.
   expect(testStampTool.engine).toHaveLength(1);
   caretAt(editor, 3);
   const { popover } = await openReference(user);
@@ -356,7 +356,7 @@ test("a tool with no shortcut adds no group to the reference", async () => {
   expect(rows).not.toContain("Lock");
 });
 
-// ── Подпись ───────────────────────────────────────────────────────────────
+// ── Label ───────────────────────────────────────────────────────────────
 
 test("a label function reads the locale of UiProvider and redraws when it changes", () => {
   const tools = [...RICH_TEXT_PRESETS.full, testLocaleTool];
@@ -402,7 +402,7 @@ test("an empty label is a console.error with the tool and the button, and the to
   expect(error).toHaveBeenCalledWith(expect.stringMatching(/test_nameless.*blank.*empty label/));
 });
 
-// ── Поповер ───────────────────────────────────────────────────────────────
+// ── Popover ───────────────────────────────────────────────────────────────
 
 const POPOVER_TOOLS = [...RICH_TEXT_PRESETS.full, testPickerTool];
 
@@ -419,7 +419,7 @@ test("a click opens the popover at the button with the content of the button and
 
   expect(screen.queryByRole("dialog", { name: "Picker" })).toBeNull();
   expect(editor.getHTML()).toBe("<p>HeAlphallo world</p>");
-  // Фокус — в Документ, а не на кнопку: человек продолжает писать.
+  // Focus goes to the Document, not to the button: the person keeps typing.
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
 });
 
@@ -492,7 +492,7 @@ test("Escape in the popover inside a Dialog closes the popover, not the window",
 
 test("a button whose can is off does not open its popover by the shortcut", async () => {
   const { editor } = renderEditor({ tools: POPOVER_TOOLS });
-  // Нередактируемое поле: `can` кнопки выполнен, но кит не открывает поповер.
+  // Non-editable field: the button's `can` passes, but the kit does not open the popover.
   act(() => editor.setEditable(false));
   caretAt(editor, 3);
 
@@ -502,9 +502,9 @@ test("a button whose can is off does not open its popover by the shortcut", asyn
   expect(screen.queryByRole("dialog", { name: "Picker" })).toBeNull();
 });
 
-// ── Ошибка набора ─────────────────────────────────────────────────────────
+// ── Definition error ─────────────────────────────────────────────────────────
 
-/** Набор с ошибкой: поле с ошибкой, без движка. */
+/** A definition with an error: a field error, without an engine. */
 function expectFieldError(tool: CustomTool, reason: RegExp) {
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
   const ref = createRef<RichTextEditorHandle>();
@@ -588,7 +588,7 @@ test("a button without an id is a field error", () => {
   );
 });
 
-// Потребитель на JS: форма `buttons` не та, что в типах, — ошибка поля, а не падение страницы.
+// A consumer in plain JS: the `buttons` shape differs from the types, which is a field error, not a page crash.
 test.each([
   ["buttons that are not an array", { buttons: button() }, /buttons must be an array/],
   ["a button that is not an object", { buttons: [null] }, /buttons\[0\] must be an object/],

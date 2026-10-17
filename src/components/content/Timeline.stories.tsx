@@ -22,7 +22,7 @@ export const Running: Story = {
   },
 };
 
-/** Отказ: подпись жирнее, подробности красятся тоном опасности. */
+/** A failure: the label is bolder, and the details are colored with the danger tone. */
 export const WithError: Story = {
   args: {
     "aria-label": "Task steps",

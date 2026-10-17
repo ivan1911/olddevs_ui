@@ -26,8 +26,8 @@ test("one column by default, two by prop and only from sm", () => {
       </FormField>
     </FormLayout>
   );
-  // Одна колонка на узких экранах — это медиазапрос, а не `matchMedia`:
-  // раскладка, зависящая от JS, до гидратации показывает неверную.
+  // One column on narrow screens is a media query, not `matchMedia`:
+  // a layout that depends on JS shows the wrong one until hydration.
   expect(root(container).className).toContain("sm:grid-cols-2");
 });
 
@@ -76,8 +76,8 @@ test("our prop outranks a foreign style", () => {
     </FormLayout>
   );
 
-  // Именованный проп явнее, чем переменная в `style`, — а она и появляется
-  // там, где пропа не хватило.
+  // A named prop is more explicit than a variable in `style`, which fills in
+  // only where the prop is missing.
   expect(root(container).style.getPropertyValue("--form-label-w")).toBe("8rem");
 });
 
@@ -102,8 +102,8 @@ test("FieldRow spans every column, however many there are", () => {
     </FormLayout>
   );
 
-  // `col-span-full`, а не `col-span-2`: фиксированные две колонки в
-  // одноколоночной раскладке создали бы неявную вторую.
+  // `col-span-full`, not `col-span-2`: two fixed columns in a
+  // one-column layout would create an implicit second one.
   const row = screen.getByText("Address").closest("div")?.parentElement as HTMLElement;
   expect(row.className).toContain("col-span-full");
   expect(row.className).not.toContain("col-span-2");
@@ -119,8 +119,8 @@ test("the layout does not require children to be kit fields", () => {
     </FormLayout>
   );
 
-  // Позицию раскладка задаёт любому ребёнку; подписи она не рисует, и
-  // `labels="side"` для чужого поля молча не применяется — рисовать там нечего.
+  // The layout gives a position to any child; it draws no labels, so
+  // `labels="side"` silently does nothing for a foreign field: there is nothing to draw there.
   expect(container.querySelector("input[aria-label='A foreign field']")).toBeTruthy();
   expect(screen.getByRole("button", { name: "Save" })).toBeTruthy();
 });

@@ -6,14 +6,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Carousel } from "../src/index.js";
 
 /**
- * Лента слайдов: имена, кнопки, края, `onIndexChange`, режимы.
+ * The carousel: names, buttons, edges, `onIndexChange`, modes.
  *
- * jsdom раскладки не считает и `scrollTo` у элементов не знает, поэтому
- * положение подменяется ровно теми тремя числами, которые читает компонент:
- * `scrollLeft`, `scrollWidth`, `clientWidth`. Привязку к слайду, жест и
- * вычисленную ширину слайда на брейкпойнтах jsdom проверить не может — их
- * меряет браузер (ручная проверка витрины), а попадание каждого класса ширины в
- * CSS стережёт `tests/class-coverage.test.ts` через матрицу.
+ * jsdom does not compute layout and does not know `scrollTo` on elements, so the
+ * position is stubbed with exactly the three numbers the component reads: `scrollLeft`,
+ * `scrollWidth`, `clientWidth`. Snapping to a slide, the gesture, and the slide width
+ * computed at the breakpoints cannot be checked in jsdom: the browser measures them
+ * (manual check in the showcase), and `tests/class-coverage.test.ts` guards through the
+ * matrix that every width class reaches the CSS.
  */
 
 afterEach(() => {
@@ -22,7 +22,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Ширина слайда и число слайдов в подменённой раскладке. */
+/** The slide width and the slide count in the stubbed layout. */
 const SLIDE = 300;
 
 interface Layout {
@@ -33,10 +33,13 @@ interface Layout {
 
 let layout: Layout;
 let scrollTo: ReturnType<typeof vi.fn>;
-/** Мгновенная ли прокрутка в подмене: `false` — как плавная, положение стоит, пока тест его не сдвинет. */
+/**
+ * Whether the stubbed scroll is instant. `false` means smooth: the position holds
+ * until the test moves it.
+ */
 let jumps: boolean;
 
-/** Лента из `count` слайдов шириной `SLIDE`, в кадре — `perView`. */
+/** A track of `count` slides, each `SLIDE` wide, with `perView` in view. */
 function setLayout(count: number, perView = 1) {
   layout = { scrollLeft: 0, scrollWidth: count * SLIDE, clientWidth: perView * SLIDE };
 }
@@ -68,10 +71,10 @@ beforeEach(() => {
   });
 });
 
-/** Лента — родитель слайдов: у неё нет роли, и потребителю она не нужна. */
+/** The track is the slides' parent: it has no role, and the consumer does not need one. */
 const viewport = () => screen.getAllByRole("group")[0]!.parentElement!;
 
-/** Пользователь отпустил ленту на положении `left`: событие прокрутки с новым смещением. */
+/** The user released the track at position `left`: a scroll event with the new offset. */
 function scrollLeftTo(left: number) {
   layout.scrollLeft = left;
   fireEvent.scroll(viewport());
@@ -100,19 +103,19 @@ describe("accessible structure", () => {
   });
 
   test("the name is one of aria-label and aria-labelledby, and label is not a prop", () => {
-    // Типы — часть контракта: без имени регион звучит как безымянная «карусель»,
-    // а два источника имени при правке расходятся молча.
-    // @ts-expect-error — имени нет
+    // The types are part of the contract: without a name the region is announced as an
+    // unnamed "carousel", and two name sources drift apart silently when edited.
+    // @ts-expect-error — no name
     render(<Carousel>{slides(1)}</Carousel>);
     cleanup();
     render(
-      // @ts-expect-error — оба источника имени сразу
+      // @ts-expect-error — both name sources at once
       <Carousel aria-label="A" aria-labelledby="b">
         {slides(1)}
       </Carousel>
     );
     cleanup();
-    // @ts-expect-error — `label` в ките значит видимую подпись, а у карусели её нет
+    // @ts-expect-error — in the kit `label` means a visible caption, and a carousel has none
     render(<Carousel label="Featured">{slides(1)}</Carousel>);
     expect(screen.queryByRole("region", { name: "Featured" })).toBeNull();
   });
@@ -135,8 +138,8 @@ describe("accessible structure", () => {
   test("slide content stays readable: slides outside the frame are not hidden", () => {
     render(<Carousel aria-label="Featured">{slides(3)}</Carousel>);
 
-    // Автопрокрутки нет, и лента читается целиком — скрыть невидимые слайды
-    // значило бы спрятать от скринридера то, что он обязан найти.
+    // There is no autoplay, and the track is read as a whole: hiding the off-screen slides
+    // would hide from the screen reader what it must find.
     expect(screen.getByText("Slide 3")).toBeTruthy();
     for (const group of screen.getAllByRole("group")) {
       expect(group.closest("[aria-hidden='true']")).toBeNull();
@@ -193,8 +196,9 @@ describe("buttons", () => {
   });
 
   test("fast clicks accumulate from the target of the scroll in flight, not from where it started", () => {
-    // Плавная прокрутка не успела сдвинуться: положение стоит на нуле.
-    // Клики синхронные: между ними не проходит и миллисекунды, и таймер остановки не вмешивается.
+    // The smooth scroll has not moved yet: the position stays at zero.
+    // The clicks are synchronous: not even a millisecond passes between them, and the
+    // stop timer does not interfere.
     jumps = false;
     render(<Carousel aria-label="Featured">{slides(5)}</Carousel>);
     const next = screen.getByRole("button", { name: "Next slide" });
@@ -230,7 +234,7 @@ describe("buttons", () => {
     scrollLeftTo(2 * SLIDE);
     expect(next.hasAttribute("disabled")).toBe(false);
 
-    // Дальше слайда 3 лента не едет: в кадре слайды 4 и 5.
+    // Past slide 3 the track does not move: slides 4 and 5 are in view.
     scrollLeftTo(3 * SLIDE);
     expect(next.hasAttribute("disabled")).toBe(true);
   });
@@ -245,8 +249,8 @@ describe("buttons", () => {
     const next = screen.getByRole("button", { name: "Next slide" });
     expect(next.hasAttribute("disabled")).toBe(false);
 
-    // Ширина ленты прежняя, поэтому `ResizeObserver` молчит; меняется ширина
-    // слайдов, и все три теперь в кадре.
+    // The track width is unchanged, so `ResizeObserver` stays silent; the slide width
+    // changes, and all three are now in view.
     setLayout(3, 3);
     rerender(
       <Carousel aria-label="Featured" slidesPerView={3}>
@@ -277,7 +281,7 @@ describe("buttons", () => {
     const next = screen.getByRole("button", { name: "Next slide" });
     next.focus();
 
-    // Последний шаг вперёд: кнопка выключается, пока на ней фокус.
+    // The last step forward: the button is disabled while it has focus.
     await user.keyboard("{Enter}");
     scrollLeftTo(2 * SLIDE);
 
@@ -294,7 +298,7 @@ describe("onIndexChange", () => {
       </Carousel>
     );
 
-    // Лента проехала слайды 1 и 2 без остановки и встала на третьем.
+    // The track moved past slides 1 and 2 without stopping and came to rest on the third.
     scrollLeftTo(SLIDE);
     scrollLeftTo(2 * SLIDE);
     expect(onIndexChange).not.toHaveBeenCalled();
@@ -326,7 +330,7 @@ describe("onIndexChange", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Next slide" }));
-    // Подмена прокручивает мгновенно, событие прокрутки браузера — следом.
+    // The stub scrolls instantly, and the browser's scroll event follows.
     fireEvent.scroll(viewport());
 
     await waitFor(() => expect(onIndexChange).toHaveBeenCalledWith(1));
@@ -354,7 +358,7 @@ describe("onIndexChange", () => {
       </Carousel>
     );
 
-    // Дрогнула на пару пикселей и вернулась.
+    // It jittered by a couple of pixels and came back.
     scrollLeftTo(12);
     scrollLeftTo(0);
     await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
@@ -435,7 +439,7 @@ describe("controlled and uncontrolled modes", () => {
 
     await waitFor(() => expect(screen.getByTestId("index").textContent).toBe("1"));
     expect(seen).toEqual([1]);
-    // Родитель принял индекс, который лента уже показывает: второй прокрутки нет.
+    // The parent accepted the index the track already shows: there is no second scroll.
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
@@ -452,7 +456,7 @@ describe("controlled and uncontrolled modes", () => {
         disconnect() {}
       }
     );
-    // Скрытый контейнер — вкладка, окно до анимации, `display: none`: раскладки нет.
+    // A hidden container (a tab, a window before its animation, `display: none`) has no layout.
     layout = { scrollLeft: 0, scrollWidth: 0, clientWidth: 0 };
     const onIndexChange = vi.fn();
     render(
@@ -498,7 +502,7 @@ describe("controlled and uncontrolled modes", () => {
     expect(scrollTo).toHaveBeenLastCalledWith({ left: 2 * SLIDE, behavior: "instant" });
     scrollTo.mockClear();
 
-    // `display: none` убирает раскладку и сбрасывает прокрутку в ноль.
+    // `display: none` removes the layout and resets the scroll to zero.
     layout = { scrollLeft: 0, scrollWidth: 0, clientWidth: 0 };
     resize();
     setLayout(5);
@@ -516,9 +520,10 @@ describe("controlled and uncontrolled modes", () => {
       </Carousel>
     );
 
-    // Слайд 4 недостижим при трёх в кадре: лента встаёт на 2, а не едет в пустоту.
+    // Slide 4 is unreachable with three in view: the track stops at 2 instead of moving
+    // into empty space.
     expect(scrollTo).toHaveBeenCalledWith({ left: 2 * SLIDE, behavior: "instant" });
-    // Остановка на 2 — результат нашей же прокрутки, а не жест пользователя.
+    // The stop at 2 is the result of our own scroll, not a user gesture.
     fireEvent.scroll(viewport());
     await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
     expect(onIndexChange).not.toHaveBeenCalled();
@@ -532,7 +537,7 @@ describe("controlled and uncontrolled modes", () => {
       </Carousel>
     );
 
-    // Пользователь пролистал на третий слайд, а родитель индекс не меняет.
+    // The user scrolled to the third slide, but the parent does not change the index.
     scrollLeftTo(2 * SLIDE);
 
     await waitFor(() => expect(onIndexChange).toHaveBeenCalledWith(2));
@@ -567,7 +572,7 @@ describe("component contract", () => {
   test("the scrolling strip is reachable from the keyboard", () => {
     render(<Carousel aria-label="Featured">{slides(2)}</Carousel>);
 
-    // Прокручиваемый блок без места в обходе — нарушение `scrollable-region-focusable`.
+    // A scrollable region without a place in the tab order violates `scrollable-region-focusable`.
     expect(viewport().getAttribute("tabindex")).toBe("0");
   });
 });

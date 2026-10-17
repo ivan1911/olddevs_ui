@@ -14,9 +14,10 @@ describe("maskTime — inserts the colon as you type", () => {
     ["21", "21"],
     ["213", "21:3"],
     ["2130", "21:30"],
-    // Лишние цифры отбрасываются: в сутках нет пятого разряда.
+    // Extra digits are dropped: a day has no fifth place.
     ["213045", "21:30"],
-    // Нецифры выкидываются, а не ломают маску — сюда попадает и вставка из буфера.
+    // Non-digits are dropped rather than breaking the mask; this also covers a paste from
+    // the clipboard.
     ["21:30", "21:30"],
     ["ab21cd30", "21:30"],
   ])("%s → %s", (input, expected) => {
@@ -35,23 +36,23 @@ describe("normalizeTime — completes partial input to HH:MM", () => {
   });
 
   test("it clamps to the day bounds instead of rejecting the input", () => {
-    // Пользователь, набравший «99:99», ошибся в значении, а не в намерении:
-    // показать ему пустое поле хуже, чем показать ближайшее возможное время.
+    // A user who typed "99:99" got the value wrong, not the intent: showing them an empty
+    // field is worse than showing the nearest possible time.
     expect(normalizeTime("9999")).toBe("23:59");
     expect(normalizeTime("2599")).toBe("23:59");
   });
 
   test("empty input returns the fallback value instead of silently returning midnight", () => {
     expect(normalizeTime("", "16:00")).toBe("16:00");
-    // Умолчание запасного — полночь, и это осознанно: время публикации
-    // без указания часа — это начало суток.
+    // The fallback default is midnight, on purpose: a publish time with no hour given
+    // means the start of the day.
     expect(normalizeTime("")).toBe("00:00");
   });
 });
 
 describe("formatTime12 — HH:MM to the 12-hour clock", () => {
   test.each([
-    // Полночь и полдень — 12, а не 0: так их читает 12-часовые часы.
+    // Midnight and noon are 12, not 0: that is how 12-hour clocks read them.
     ["00:00", "12:00 AM"],
     ["00:30", "12:30 AM"],
     ["09:05", "9:05 AM"],
@@ -72,16 +73,16 @@ describe("maskTime12 — colon and period as you type", () => {
     ["", ""],
     ["2", "2"],
     ["12", "12"],
-    // Три цифры — `ч:мм`, четыре — `чч:мм`: разряд часов определяется с конца.
+    // Three digits are `h:mm`, four are `hh:mm`: the hour place is counted from the end.
     ["230", "2:30"],
     ["1230", "12:30"],
     ["123045", "12:30"],
     ["2:30", "2:30"],
-    // Буква периода достраивается до AM/PM; регистр и «m» не важны.
+    // The period letter is completed to AM/PM; case and "m" do not matter.
     ["2:30p", "2:30 PM"],
     ["230pm", "2:30 PM"],
     ["2:30 a", "2:30 AM"],
-    // Период без цифр не ставится.
+    // A period without digits is not set.
     ["p", ""],
   ])("%s → %s", (input, expected) => {
     expect(maskTime12(input)).toBe(expected);
@@ -95,10 +96,10 @@ describe("normalizeTime12 — completes partial input to HH:MM", () => {
     ["12:00 AM", "10:00", "00:00"],
     ["12:15 PM", "10:00", "12:15"],
     ["230p", "10:00", "14:30"],
-    // Без периода берётся период прежнего значения; без значения — AM.
+    // Without a period, the period of the previous value is taken; without a value, AM.
     ["2:30", "10:00", "02:30"],
     ["2:30", "15:00", "14:30"],
-    // Набрано 24-часовое время — период не нужен и не учитывается.
+    // 24-hour time was typed: no period is needed, and none is taken into account.
     ["14:30", "10:00", "14:30"],
     ["13", "10:00", "13:00"],
     ["", "10:00", "10:00"],
@@ -117,10 +118,10 @@ describe("12-hour input edge cases", () => {
   });
 
   test("erasing does not re-complete the period, so Backspace is not stuck", () => {
-    // Браузер отдаёт «2:30 P» после Backspace на «2:30 PM»: период не достраивается.
+    // The browser gives "2:30 P" after Backspace on "2:30 PM": the period is not completed.
     expect(maskTime12("2:30 P", L, "2:30 PM")).toBe("2:30");
     expect(maskTime12("2:30 P", L)).toBe("2:30 PM");
-    // Полная метка, оставшаяся после стирания цифры, сохраняется.
+    // A full label left after erasing a digit is kept.
     expect(maskTime12("2:3 PM", L, "2:30 PM")).toBe("23 PM");
   });
 

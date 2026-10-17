@@ -16,7 +16,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<MediaCardProps>;
 
-/** Заглушка вместо сети: витрина не ходит наружу. */
+/** A stub instead of the network: the showcase makes no outside requests. */
 const PREVIEW = (
   <div className="from-accent-soft to-bg-3 flex h-full w-full items-center justify-center bg-gradient-to-br text-2xl">
     ▦
@@ -32,7 +32,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Бейджи и действия поверх превью. Действия достижимы с клавиатуры. */
+/** Badges and actions over the preview. The actions are reachable from the keyboard. */
 export const WithActions: Story = {
   render: () => (
     <div className="w-[220px]">
@@ -66,7 +66,7 @@ export const WithActions: Story = {
   ),
 };
 
-/** Ось выбора включается парой пропов; без них кнопки нет вовсе. */
+/** The selection axis is turned on by a pair of props; without them there is no button at all. */
 export const WithSelection: Story = {
   render: function Render() {
     const [selected, setSelected] = useState<Record<string, boolean>>({ "2": true });
@@ -86,7 +86,7 @@ export const WithSelection: Story = {
   },
 };
 
-/** Пропорция задаётся числом и держится существующим `AspectRatio`. */
+/** The ratio is set by a number and kept by the existing `AspectRatio`. */
 export const Ratios: Story = {
   render: () => (
     <div className="flex w-[560px] items-start gap-3">
@@ -103,7 +103,7 @@ export const Ratios: Story = {
   ),
 };
 
-/** Превью — обычно `Image`: своей загрузки и своего скелетона плитка не пишет. */
+/** The preview is usually an `Image`: the tile writes neither its own loading state nor its own skeleton. */
 export const WithImage: Story = {
   render: () => (
     <div className="w-[220px]">

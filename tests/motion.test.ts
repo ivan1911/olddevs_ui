@@ -3,22 +3,22 @@ import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 /**
- * Движение кита и `prefers-reduced-motion` — ADR-0043.
+ * The kit's motion and `prefers-reduced-motion`: ADR-0043.
  *
- * Почему тест текстовый: по тем же причинам, что и `token-layers.test.ts` —
- * jsdom не разрешает `var()` и не считает каскад, а поднимать ради четырёх
- * инвариантов настоящий браузер дороже, чем они стоят. Живой каскад под обеими
- * системными настройками сторожит `tests-visual/interactions.spec.ts`.
+ * Why the test is text-based: for the same reasons as `token-layers.test.ts`.
+ * jsdom does not resolve `var()` and does not compute the cascade, and raising a
+ * real browser for four invariants costs more than they are worth. The live
+ * cascade under both system settings is guarded by `tests-visual/interactions.spec.ts`.
  *
- * Что здесь ломается молча и ради чего тест заведён: токен анимации, добавленный
- * без пары в блоке `reduce`. Он не роняет ни типы, ни линтер, ни снимки —
- * снимки гоняются с `reducedMotion: "reduce"`, но `animations: "disabled"`
- * замораживает анимацию в конечном кадре, и разница между «погашено» и «не
- * погашено» на них не видна вовсе.
+ * What breaks silently here, and why the test exists: an animation token added
+ * without a pair in the `reduce` block. It breaks neither the types, nor the
+ * linter, nor the snapshots. The snapshots run with `reducedMotion: "reduce"`, but
+ * `animations: "disabled"` freezes the animation at its final frame, so the
+ * difference between "damped" and "not damped" is not visible in them at all.
  */
 const css = readFileSync(resolve(import.meta.dirname, "..", "styles.css"), "utf8");
 
-/** Тело блока по его началу. Скобки считаются: внутри лежат вложенные правила. */
+/** The body of a block, found by its opening. Braces are counted: nested rules sit inside. */
 function bodyAt(from: number): string {
   let i = css.indexOf("{", from) + 1;
   const start = i;
@@ -38,7 +38,7 @@ function blockBody(opener: string): string {
 const animationTokens = (body: string) =>
   [...body.matchAll(/--(animate-[\w-]+)\s*:\s*([^;]+);/g)].map((m) => m[1] as string);
 
-/** Пары «токен → значение» — когда важно не имя, а из чего оно собрано. */
+/** Pairs "token → value", for when what matters is what it is built from, not its name. */
 const animationValues = (body: string) =>
   new Map(
     [...body.matchAll(/--(animate-[\w-]+)\s*:\s*([^;]+);/g)].map(
@@ -47,26 +47,27 @@ const animationValues = (body: string) =>
   );
 
 /**
- * Цикл — не переход. `shimmer`, `spin`, `pulse` и `progressIndeterminate`
- * сохраняют литеральный период: подставить туда ступень значило бы сказать, что
- * блик скелетона и появление подсказки — величины одного рода (ADR-0047).
+ * A cycle is not a transition. `shimmer`, `spin`, `pulse` and `progressIndeterminate`
+ * keep their literal period: putting a step there would mean saying that the
+ * skeleton's glint and the appearance of a tooltip are quantities of one kind
+ * (ADR-0047).
  *
- * Признак формальный намеренно: «это же цикл» человек определяет верно, а тест
- * обязан определять однозначно.
+ * The criterion is formal on purpose: a person judges "this is a cycle" correctly,
+ * but the test must decide unambiguously.
  */
 const isCycle = (value: string) => value.includes("infinite");
 
 const THEME = blockBody("@theme");
 
-/** Токены кита: всё, что объявлено в `@theme`. */
+/** The kit's tokens: everything declared in `@theme`. */
 const DECLARED = animationTokens(THEME);
 
 /**
- * Шкала движения: ступени длительности и кривые.
+ * The motion scale: the duration steps and the curves.
  *
- * Объявление ищется по имени с двоеточием, ссылка — по `var()`. Разделять их
- * обязательно: `--default-transition-duration: var(--duration-base)` содержит
- * и то и другое, и жадный поиск посчитал бы ссылку объявлением.
+ * A declaration is found by its name followed by a colon; a reference by `var()`.
+ * The two must be told apart: `--default-transition-duration: var(--duration-base)`
+ * contains both, and a greedy search would count the reference as a declaration.
  */
 const scaleDecls = (body: string, family: "duration" | "ease") =>
   [...body.matchAll(new RegExp(`(?:^|[\\s;{])--(${family}-[\\w-]+)\\s*:`, "g"))].map(
@@ -77,26 +78,26 @@ const scaleRefs = (body: string, family: "duration" | "ease") =>
   [...body.matchAll(new RegExp(`var\\(--(${family}-[\\w-]+)\\)`, "g"))].map((m) => m[1] as string);
 
 /**
- * Обе шкалы закрыты числом, как и белый список исключений: пятая ступень или
- * четвёртая кривая обязаны потребовать разбора в ADR, а не правки этого теста.
+ * Both scales are closed by a number, like the allowlist of exceptions: a fifth
+ * step or a fourth curve must require analysis in an ADR, not an edit to this test.
  */
 const DURATIONS = scaleDecls(THEME, "duration");
 const EASES = scaleDecls(THEME, "ease");
 
 /**
- * Переопределения при `reduce`. Ищется `:root` ВНУТРИ медиазапроса, а не первый
- * в файле: первый — это словарь ролей, и спутать их означало бы зелёный тест на
- * пустом месте.
+ * Overrides under `reduce`. `:root` is searched INSIDE the media query, not the
+ * first one in the file: the first one is the role dictionary, and confusing the
+ * two would mean a green test on an empty spot.
  */
 const REDUCE_BLOCK = blockBody("@media (prefers-reduced-motion: reduce)");
 const REDUCED = animationTokens(REDUCE_BLOCK);
 
 /**
- * Исключения: движение, которое НЕ гасится, потому что само является
- * сообщением. Обе записи разобраны в ADR-0043.
+ * Exceptions: motion that is NOT damped, because it is itself a message. Both
+ * entries are analyzed in ADR-0043.
  *
- * Список закрыт числом. Третья запись обязана потребовать разбора, а не правки
- * этого числа — приём взят у белого списка `i18n-gate` (ADR-0034).
+ * The list is closed by a number. A third entry must require analysis, not an edit
+ * to this number. The approach is borrowed from the `i18n-gate` allowlist (ADR-0034).
  */
 const ESSENTIAL = ["animate-progress-indeterminate", "animate-spin"];
 
@@ -115,8 +116,8 @@ describe("the motion scale", () => {
   });
 
   test("a step carries a value, and the value is not a step of another scale", () => {
-    // Ступень — число со временем, кривая — функция. Перепутать их местами
-    // легко: обе живут в одном соседстве и обе читаются одним `var()`.
+    // A step is a number with a time, a curve is a function. They are easy to mix
+    // up: both live side by side and both are read by one `var()`.
     for (const [decl, value] of [
       ...THEME.matchAll(/(?:^|[\s;{])--(duration-[\w-]+)\s*:\s*([^;]+);/g),
     ].map((m) => [m[1] as string, (m[2] as string).trim()] as const))
@@ -142,9 +143,9 @@ describe("the motion scale", () => {
 
   test("a transition token is built from the scale, never from a literal", () => {
     /*
-     * Литерал внутри токена — это ступень, которой нет в шкале, и найти её
-     * можно только прочитав все десять значений подряд. Ровно так и появились
-     * 0.14s против 0.16s у подсказки и якорной панели.
+     * A literal inside a token is a step that is not in the scale, and it can be
+     * found only by reading all ten values in a row. That is exactly how 0.14s
+     * versus 0.16s appeared on the tooltip and the anchored panel.
      */
     for (const [token, value] of animationValues(THEME)) {
       if (isCycle(value)) continue;
@@ -158,9 +159,9 @@ describe("the motion scale", () => {
 
   test("damping keeps the tempo: reduce changes the keyframes and nothing else", () => {
     /*
-     * ADR-0043 обещает «та же длительность, та же кривая, только прозрачность».
-     * До шкалы обещание держалось на комментарии и на том, что автор аккуратно
-     * скопировал число в обе строки; теперь оно проверяется.
+     * ADR-0043 promises "the same duration, the same curve, only the opacity".
+     * Before the scale, the promise rested on a comment and on the author having
+     * carefully copied the number into both lines. Now it is checked.
      */
     const theme = animationValues(THEME);
     for (const [token, damped] of animationValues(REDUCE_BLOCK)) {
@@ -176,10 +177,10 @@ describe("the motion scale", () => {
 
   test("Tailwind's transition defaults read the scale", () => {
     /*
-     * Без этой пары шкала осталась бы половинчатой: `transition-colors` без
-     * явного класса длительности продолжал бы идти дефолтные 150ms Tailwind —
-     * число, совпадающее со ступенью случайно, а не по ссылке. Потребитель,
-     * переопределивший `--duration-base`, не сдвинул бы ни один такой переход.
+     * Without this pair the scale would be half-done: `transition-colors` without
+     * an explicit duration class would keep using Tailwind's default 150ms, a number
+     * that happens to match a step rather than referencing it. A consumer who
+     * overrode `--duration-base` would not shift a single such transition.
      */
     expect(THEME).toMatch(/--default-transition-duration:\s*var\(--duration-[\w-]+\);/);
     expect(THEME).toMatch(/--default-transition-timing-function:\s*var\(--ease-[\w-]+\);/);
@@ -222,13 +223,13 @@ describe("motion and prefers-reduced-motion", () => {
 
   test("an animation is set through a token, not a literal", () => {
     /*
-     * Ловит дефект, найденный волной 27: `.skeleton` зашивала
-     * `animation: shimmer 1.6s linear infinite` мимо токена, и переопределение
-     * `--animate-shimmer` в блоке `reduce` было мёртвым кодом — правило,
-     * которое не читает переменную, продолжает бежать.
+     * Catches a defect found in wave 27: `.skeleton` hard-coded
+     * `animation: shimmer 1.6s linear infinite` around the token, so overriding
+     * `--animate-shimmer` in the `reduce` block was dead code. A rule that does not
+     * read the variable keeps running.
      *
-     * `@keyframes` из проверки исключены: там `animation` не объявляют, а
-     * `@theme` объявляет сами токены.
+     * `@keyframes` are excluded from the check: `animation` is not declared there,
+     * while `@theme` declares the tokens themselves.
      */
     const outsideTheme = css.slice(css.indexOf("}", css.indexOf("@theme")));
     for (const [decl, value] of [...outsideTheme.matchAll(/\n\s*animation:\s*([^;]+);/g)].map(
@@ -240,7 +241,7 @@ describe("motion and prefers-reduced-motion", () => {
   });
 
   test("the kit damps nothing of its host: no global reset, no !important", () => {
-    // ADR-0043, п. 2: пакет не вправе гасить анимации страницы, на которой стоит.
+    // ADR-0043, item 2: the package may not damp the animations of the page it sits on.
     expect(REDUCE_BLOCK).not.toMatch(/!important/);
     expect(
       REDUCE_BLOCK,
@@ -250,25 +251,26 @@ describe("motion and prefers-reduced-motion", () => {
 });
 
 /**
- * Темп компонента берётся из шкалы, а не из числа в `className` — ADR-0047.
+ * A component's tempo is taken from the scale, not from a number in `className`
+ * (ADR-0047).
  *
- * ЧТО ЛОМАЕТСЯ МОЛЧА. `duration-150`, написанное в новом компоненте, не роняет
- * ни типы, ни линтер, ни снимки, и выглядит ровно как соседние шестнадцать,
- * которые эта же волна убрала. Через полгода их снова шестнадцать, и шкала
- * остаётся в `styles.css` сама по себе.
+ * WHAT BREAKS SILENTLY. `duration-150`, written in a new component, breaks neither
+ * the types, nor the linter, nor the snapshots, and it looks exactly like the
+ * neighboring sixteen that this same wave removed. In half a year there will be
+ * sixteen of them again, and the scale in `styles.css` will stay in place on its own.
  *
- * Гейт по исходникам, а не по собранному CSS: в сборке утилита `duration-150`
- * неотличима от `duration-base` — обе дают 150ms. Разница вся в намерении,
- * а намерение записано именно в исходнике.
+ * The gate works on the sources, not on the built CSS: in the build, the utility
+ * `duration-150` is indistinguishable from `duration-base`, since both give 150ms.
+ * The whole difference is intent, and the intent is written precisely in the source.
  */
 const COMPONENTS = resolve(import.meta.dirname, "..", "src");
 
 /**
- * Запрещено — числовая длительность и задержка, чужие имена кривых и
- * произвольные значения. Разрешено — ступени и кривые шкалы, они проверяются
- * отдельно тем, что объявлены в `@theme`.
+ * Forbidden: a numeric duration and delay, foreign curve names, and arbitrary
+ * values. Allowed: the steps and curves of the scale, which are checked separately
+ * by being declared in `@theme`.
  *
- * `transition-[left]` и подобные НЕ запрещены: это выбор свойства, а не темпа.
+ * `transition-[left]` and the like are NOT forbidden: that is a choice of property, not of tempo.
  */
 const OFF_SCALE = [
   { pattern: /\b(?:duration|delay)-\d+\b/, why: "a numeric duration instead of a step" },
@@ -290,7 +292,7 @@ function tsxFiles(dir: string): string[] {
   return out;
 }
 
-/** Комментарии русские и объясняют в том числе прежние числа — гейт их не смотрит. */
+/** Comments are in Russian and also explain the old numbers, so the gate does not read them. */
 function stripComments(source: string): string {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))

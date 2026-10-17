@@ -13,13 +13,14 @@ import { messages as en } from "../src/locales/en.js";
 import { messages as ru } from "../src/locales/ru.js";
 
 /*
-  Касание и узкий экран мегаменю (OLDSUI-258).
+  Touch and narrow screen for the mega menu (OLDSUI-258).
 
-  Касание (и перо) открывает Категорию сразу, без Прицела; повторное касание
-  открытой Категории её не закрывает. На узком экране (тот же брейкпойнт, что
-  у подменю кита) открытая Категория ЗАМЕНЯЕТ Столбец своей Полкой со строкой
-  «Назад»; «Назад» и Escape возвращают Столбец и фокус на исходную Категорию.
-  Ширина подменяется через `matchMedia`, как в `submenu-placement`.
+  A touch (and a pen) opens a Category at once, with no menu aim. A repeated
+  tap on an open Category does not close it. On a narrow screen (the same
+  breakpoint as the kit's submenu) the open Category REPLACES the Column with its
+  flyout, with a "Back" row. "Back" and Escape return the Column and focus to the
+  originating Category. The width is switched through `matchMedia`, as in
+  `submenu-placement`.
 */
 
 function mockWidth(narrow: boolean) {
@@ -65,7 +66,7 @@ function Catalog() {
 const category = (name: string) => screen.getByRole("button", { name });
 const expanded = (name: string) => category(name).getAttribute("aria-expanded") === "true";
 
-/** Касание пальцем или пером: поток событий указателя, затем `click`, как в браузере. */
+/** A finger or pen touch: a stream of pointer events, then `click`, as in a browser. */
 function tap(element: Element, pointerType: "touch" | "pen" = "touch") {
   act(() => {
     fireEvent.pointerEnter(element, { pointerType });
@@ -81,7 +82,7 @@ test.each(["touch", "pen"] as const)("a %s tap opens the showcase at once, with 
   expect(expanded("Electronics")).toBe(true);
   expect(screen.getByRole("link", { name: "Phone A" })).toBeTruthy();
 
-  // Другая Категория открывается сразу же, без ожидания остановки указателя.
+  // The other Category opens at once, without waiting for the pointer to stop.
   tap(category("Books"), type);
   expect(expanded("Books")).toBe(true);
   expect(expanded("Electronics")).toBe(false);
@@ -118,15 +119,15 @@ test("a narrow screen replaces the column with the category's showcase and a Bac
   render(<Catalog />);
   tap(category("Electronics"));
 
-  // Столбец исчез: остальных Категорий нет в доступном дереве.
+  // The Column is gone: the other Categories are not in the accessible tree.
   expect(screen.queryByRole("button", { name: "Books" })).toBeNull();
   expect(screen.queryByRole("link", { name: "Sale" })).toBeNull();
 
   const region = screen.getByRole("region", { name: "Electronics" });
   expect(region.hidden).toBe(false);
   expect(screen.getByRole("link", { name: "Phone A" })).toBeTruthy();
-  // У Категории со ссылкой имя показывает заголовок-ссылка под строкой
-  // «Назад» — и только он: дважды подряд имя на телефоне не стоит.
+  // A Category with a link gets its name from the heading link below the "Back"
+  // row, and only from that: showing the name twice in a row on a phone is not worth it.
   const back = screen.getByRole("button", { name: "Back" });
   expect(region.contains(back)).toBe(true);
   expect(back.parentElement?.textContent).not.toContain("Electronics");
@@ -277,16 +278,16 @@ test("the catalog renders on the server, where the screen width is unknown", () 
       </MegaMenuCategory>
     </MegaMenu>
   );
-  // Сервер ширины не знает: рисует широкий вид, Столбец на месте.
+  // The server does not know the width: it renders the wide view, with the Column in place.
   expect(html).toContain("Electronics");
   expect(html).not.toContain("Back");
 });
 
 /*
-  Категории, которых Столбец не видит среди прямых детей (OLDSUI-262):
-  обёрнутые компонентом потребителя или пришедшие из серверного компонента
-  Next.js, где тип элемента на клиенте — ленивая обёртка, а не сама функция.
-  Спуск обязан опираться на то, что Категории сообщают о себе сами.
+  Categories that the Column does not see among its direct children (OLDSUI-262):
+  wrapped by a consumer's component, or coming from a Next.js server component,
+  where the element type on the client is a lazy wrapper rather than the function
+  itself. The descent must rely on what the Categories report about themselves.
 */
 
 function Wrapped({ id, label, href }: { id: string; label: string; href?: string }) {
@@ -306,7 +307,7 @@ test("wrapped categories: a value naming a link-only category leaves the column 
       <Wrapped id="sale" label="Sale" href="/sale" />
     </MegaMenu>
   );
-  // Раньше Столбец прятался целиком, а спускаться было некуда: пустой каталог.
+  // Previously the Column was hidden entirely and there was nowhere to descend: an empty catalog.
   expect(screen.getByRole("button", { name: "Books" })).toBeTruthy();
   expect(screen.getByRole("link", { name: "Sale" })).toBeTruthy();
 });

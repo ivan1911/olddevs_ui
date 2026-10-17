@@ -27,8 +27,8 @@ test("an arrow moves by step, Shift by a large step", async () => {
   await user.keyboard("{ArrowRight}");
   expect(onChangeSpy).toHaveBeenLastCalledWith(55);
 
-  // Крупный шаг react-aria считает от диапазона (10%), а не от `step`:
-  // иначе на шкале в тысячу единиц Shift не давал бы ничего заметного.
+  // react-aria computes the large step from the range (10%), not from `step`. Otherwise, on a scale
+  // of a thousand units, Shift would not change anything noticeable.
   await user.keyboard("{Shift>}{ArrowRight}{/Shift}");
   const last = onChangeSpy.mock.calls.at(-1)![0] as number;
   expect(last).toBeGreaterThan(60);
@@ -54,9 +54,9 @@ test("the range ends do not come closer than the minimum gap", async () => {
   ends[0]!.focus();
   await user.keyboard("{ArrowRight}");
 
-  // Шаг свёл бы концы вплотную — «от 400 до 400». Значение ЗАЖИМАЕТСЯ, а не
-  // отбрасывается: отбрасывание заклинивало ползунок насмерть, стоило ему
-  // однажды оказаться в состоянии уже нарушенного зазора.
+  // The step would bring the ends together: "from 400 to 400". The value is CLAMPED, not
+  // discarded. Discarding would jam the slider for good once it was ever in a state where the gap
+  // was already violated.
   expect(onChangeSpy).toHaveBeenCalledWith([400, 500]);
 });
 
@@ -79,8 +79,8 @@ test("from a violated gap the thumb gets out instead of jamming", async () => {
   screen.getAllByRole("slider")[1]!.focus();
   await user.keyboard("{ArrowRight}");
 
-  // «Сохранённый фильтр» с нулевым диапазоном — законное начальное состояние,
-  // и выйти из него обязано быть можно.
+  // A "saved filter" with a zero-width range is a valid starting state, and it must be possible to
+  // get out of it.
   expect(onChangeSpy).toHaveBeenCalled();
   const [low, high] = onChangeSpy.mock.calls.at(-1)![0] as [number, number];
   expect(high - low).toBeGreaterThanOrEqual(100);
@@ -109,11 +109,11 @@ test("movement within the gap goes through", async () => {
 });
 
 /**
- * База «какой конец двигали» не должна быть заморожена на `defaultValue`.
+ * The baseline for "which end was moved" must not be frozen at `defaultValue`.
  *
- * У неуправляемого ползунка `rest.value` всегда `undefined`, а `defaultValue`
- * не меняется никогда — после первого же движения сравнение шло с НАЧАЛЬНЫМ
- * значением, а не с предыдущим, и зажимался не тот конец.
+ * For an uncontrolled slider, `rest.value` is always `undefined`, and `defaultValue` never changes.
+ * After the first movement, the comparison was made against the INITIAL value instead of the
+ * previous one, so the wrong end got clamped.
  */
 test("an uncontrolled range keeps clamping the thumb that did not move", async () => {
   const user = userEvent.setup();
@@ -133,29 +133,29 @@ test("an uncontrolled range keeps clamping the thumb that did not move", async (
 
   const thumbs = screen.getAllByRole("slider");
 
-  // Сначала уводим НИЖНИЙ конец от его умолчания: пока он стоит на 300,
-  // замороженная база совпадает с текущей, и расхождения не видно.
+  // First move the LOWER end away from its default. While it is still at 300, the frozen baseline
+  // matches the current value, so the discrepancy does not show.
   thumbs[0]!.focus();
   await user.keyboard("{ArrowRight>2/}");
 
-  // Теперь тянем ВЕРХНИЙ вниз, пока не упрёмся в зазор.
+  // Now drag the UPPER end down until it hits the gap.
   thumbs[1]!.focus();
   await user.keyboard("{ArrowLeft>5/}");
 
   const [low, high] = onChange.mock.calls.at(-1)?.[0] as [number, number];
   expect(high - low).toBe(100);
-  // Двигали верхний — он и остаётся под пальцем, а уезжает нижний. С базой,
-  // замороженной на `defaultValue`, сравнение `low !== prevLow` давало ИСТИНУ
-  // (нижний-то успел уехать раньше), и зажимался верхний: он прыгал прочь от
-  // того места, куда его тянули.
+  // The upper end was moved, so it stays under the finger, and the lower end moves away. With the
+  // baseline frozen at `defaultValue`, the check `low !== prevLow` returned TRUE (the lower end had
+  // already moved earlier), and the upper end got clamped: it jumped away from where it was being
+  // dragged.
   expect(high).toBe(500);
   expect(low).toBe(400);
 });
 
 /**
- * Вертикаль — это поведение, а не только вид: скринридер объявляет ориентацию,
- * а стрелки вверх/вниз становятся основными. Проверяем, что проп дошёл до
- * react-aria, а не осел в одном CSS.
+ * Vertical is a behavior, not only a look: the screen reader announces the orientation, and the
+ * up/down arrow keys become the primary ones. The test checks that the prop reaches react-aria,
+ * rather than living only in CSS.
  */
 test("a vertical slider announces its orientation", () => {
   render(<Slider label="Level" defaultValue={65} orientation="vertical" />);
@@ -182,8 +182,8 @@ test("on a vertical slider up raises the value and down lowers it", async () => 
 
   screen.getByRole("slider", { name: "Level" }).focus();
 
-  // Вверх — больше: заливка растёт от нижнего края, и стрелка обязана
-  // двигать бегунок туда же, куда смотрит.
+  // Up means more: the fill grows from the bottom edge, so the arrow key must move the thumb in the
+  // same direction the fill points.
   await user.keyboard("{ArrowUp}");
   expect(onChangeSpy).toHaveBeenLastCalledWith(55);
   await user.keyboard("{ArrowDown}{ArrowDown}");
@@ -196,10 +196,9 @@ test("on a vertical slider up raises the value and down lowers it", async () => 
 });
 
 /**
- * Главный риск вертикали — ползунок, который принял проп и всё равно
- * нарисовался горизонтальным: ради этого `orientation` и был убран из типа.
- * Размер заливки — то, что видит глаз: у вертикального её задаёт высота,
- * у горизонтального ширина, и никогда обе сразу.
+ * The main risk of the vertical orientation is a slider that accepts the prop and still renders
+ * horizontally. That is why `orientation` was removed from the type. The fill size is what the eye
+ * sees: a vertical slider sets it by height, a horizontal one by width, and never both at once.
  */
 test("the fill grows along the slider's own axis", () => {
   const { container: vertical } = render(
@@ -217,19 +216,17 @@ test("the fill grows along the slider's own axis", () => {
 });
 
 test("a range slider stays horizontal at the type level", () => {
-  // Вертикаль есть только у одиночного ползунка: геометрия заливки между
-  // двумя концами по высоте не сделана, и проп, который компилируется и
-  // ничего не делает, хуже отсутствующего.
-  // @ts-expect-error — `orientation` у RangeSlider намеренно нет
+  // Vertical is available only for a single slider: the fill geometry between two ends has not been
+  // built for height. A prop that compiles and does nothing is worse than no prop at all.
+  // @ts-expect-error — `orientation` is intentionally absent from RangeSlider
   render(<RangeSlider label="Size" defaultValue={[20, 80]} orientation="vertical" />);
   expect(screen.getAllByRole("slider")).toHaveLength(2);
 });
 
 /**
- * Выключенный ползунок приглушается целиком (OLDSUI-37; почему так — у
- * `DIMMED_WHEN_DISABLED` в `Slider.tsx`). jsdom CSS не считает, поэтому
- * проверяем связку «признак — вид»: `data-disabled` на корне и привязанный
- * к нему приглушающий класс, плюс `aria-disabled` у группы.
+ * A disabled slider is dimmed as a whole (OLDSUI-37; for the reason, see `DIMMED_WHEN_DISABLED` in
+ * `Slider.tsx`). jsdom does not compute CSS, so the test checks the link between the flag and the
+ * look: `data-disabled` on the root, the dimming class bound to it, and `aria-disabled` on the group.
  */
 test.each([
   ["Slider", <Slider key="h" label="Level" defaultValue={40} isDisabled />],
@@ -248,8 +245,8 @@ test.each([
 });
 
 test("a consumer's own render still wraps the root", () => {
-  // Кит кладёт `aria-disabled` через `render`; свой `render` потребителя
-  // обязан при этом сработать, а не молча пропасть.
+  // The kit sets `aria-disabled` through `render`. The consumer's own `render` must still run, and
+  // must not silently disappear.
   render(
     <Slider
       label="Level"
@@ -290,11 +287,11 @@ test("at the edge of the scale the wheel is left to the page", () => {
   render(<Slider label="Quality" defaultValue={100} onChange={onChangeSpy} />);
 
   const group = screen.getByRole("group");
-  // `fireEvent` возвращает `false`, если у события отменили действие по умолчанию.
+  // `fireEvent` returns `false` if the event's default action was cancelled.
   expect(fireEvent.wheel(group, { deltaY: -100 })).toBe(true);
   expect(onChangeSpy).not.toHaveBeenCalled();
 
-  // Обратно от края значение двигается, и страница при этом стоит.
+  // Scrolling back from the edge moves the value, and the page stays put.
   expect(fireEvent.wheel(group, { deltaY: 100 })).toBe(false);
   expect(onChangeSpy).toHaveBeenLastCalledWith(99);
 });
@@ -332,7 +329,7 @@ test("the wheel on a range moves the end nearest to the cursor", () => {
     />
   );
 
-  // jsdom не раскладывает вёрстку: дорожку на 0–1000 px задаём вручную.
+  // jsdom does not lay out the page, so the 0–1000 px track is set by hand.
   const track = screen.getAllByRole("slider")[0]!.parentElement!.parentElement!.parentElement!;
   track.getBoundingClientRect = () =>
     ({ left: 0, top: 0, width: 1000, height: 6, right: 1000, bottom: 6 }) as DOMRect;
@@ -406,14 +403,14 @@ test("a leftover from an old gesture or the opposite direction does not eat the 
     render(<Slider label="Quality" defaultValue={50} onChange={onChangeSpy} />);
     const group = screen.getByRole("group");
 
-    // Недокрутка вверх, пауза — и щелчок вниз сразу даёт шаг.
+    // A partial scroll up, then a pause, and a scroll down immediately produces a step.
     fireEvent.wheel(group, { deltaY: -30 });
     vi.advanceTimersByTime(500);
     fireEvent.wheel(group, { deltaY: 100 });
     expect(onChangeSpy).toHaveBeenCalledTimes(1);
     expect(onChangeSpy).toHaveBeenLastCalledWith(49);
 
-    // Разворот без паузы: остаток вверх не вычитается из щелчка вниз.
+    // A reversal without a pause: the leftover upward delta is not subtracted from the downward one.
     fireEvent.wheel(group, { deltaY: -30 });
     fireEvent.wheel(group, { deltaY: 100 });
     expect(onChangeSpy).toHaveBeenCalledTimes(2);
@@ -435,7 +432,7 @@ test("wheel lines (Firefox) count as a notch", () => {
   const onChangeSpy = vi.fn();
   render(<Slider label="Quality" defaultValue={50} onChange={onChangeSpy} />);
 
-  // deltaMode 1 — строки: три строки по 16 px — больше порога, это один щелчок.
+  // deltaMode 1 means lines: three lines of 16 px each is above the threshold, so it is one notch.
   fireEvent.wheel(screen.getByRole("group"), { deltaY: -3, deltaMode: 1 });
   expect(onChangeSpy).toHaveBeenLastCalledWith(51);
 });

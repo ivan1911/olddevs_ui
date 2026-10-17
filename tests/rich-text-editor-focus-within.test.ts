@@ -3,10 +3,10 @@ import { expect, test } from "vitest";
 import { focusWithin } from "../src/editor/ui/focusWithin.js";
 
 /*
-  Условие показа плавающих панелей обязано читать активный элемент из
-  документа САМОЙ панели. Редактор в `iframe` живёт в чужом документе: там
-  глобальный `document.activeElement` — не кнопка панели, и панель, прочитав
-  его, пряталась бы от собственной кнопки в фокусе.
+  The condition for showing the floating toolbars must read the active element from
+  the document OF the toolbar itself. The Editor in an `iframe` lives in another document: there
+  the global `document.activeElement` is not the toolbar's button, and a toolbar that read it
+  would hide itself from its own focused button.
 */
 test("a toolbar focused inside another document keeps the floating panel shown", () => {
   const frame = document.createElement("iframe");

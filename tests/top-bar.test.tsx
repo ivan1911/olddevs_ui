@@ -9,24 +9,23 @@ afterEach(() => {
 });
 
 /**
- * jsdom не считает раскладку: `offsetHeight` там всегда 0, а `ResizeObserver`
- * отсутствует вовсе. Подменяются оба — иначе проверялась бы заглушка, а не
- * контракт. Настоящую высоту сторожит `tests-visual/interactions.spec.ts`,
- * где полоса встаёт под шапку в живом браузере.
+ * jsdom does not compute layout: `offsetHeight` is always 0 there, and `ResizeObserver` is
+ * missing altogether. Both are replaced, otherwise the test would check the stub rather than the
+ * contract. The real height is guarded by `tests-visual/interactions.spec.ts`, where the sticky
+ * bar sits under the TopBar in a live browser.
  */
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
     configurable: true,
     /*
-      Отцепленный узел обязан отдавать НОЛЬ, как в браузере.
+      A detached node must return ZERO, as in a browser.
 
-      Константа здесь была заглушкой, которая сторожила сама себя: уборщик
-      эффекта сверял опубликованное значение с `el.offsetHeight`, а `useEffect`
-      — пассивный эффект, его уборщик запускается ПОСЛЕ фазы мутаций, когда узел
-      уже вынут из документа. В браузере там ноль, сравнение `"56px" === "0px"`
-      ложно всегда, и переменная не снималась ни разу. Заглушка отвечала 56 и
-      для отцепленного узла — поэтому тест «переменная снимается вместе с
-      шапкой» был зелёным при неработающем коде.
+      The constant here was a stub that guarded itself: the effect's cleanup compared the published
+      value with `el.offsetHeight`, but `useEffect` is a passive effect whose cleanup runs AFTER the
+      mutation phase, when the node is already removed from the document. In a browser that reads
+      zero, the comparison `"56px" === "0px"` is always false, and the variable was never removed.
+      The stub also answered 56 for the detached node, so the test "the variable is removed together
+      with the TopBar" passed against broken code.
     */
     get(this: HTMLElement) {
       return this.isConnected ? 56 : 0;
@@ -48,9 +47,9 @@ describe("TopBar", () => {
   });
 
   /**
-   * Регрессия: `style` потребителя перезаписывал атрибут ЦЕЛИКОМ, и шапка
-   * теряла подложку — а с липким блюром это значит просвечивающий контент.
-   * Ловится только так: разметка валидна, типы сходятся, тесты слотов зелёные.
+   * Regression: the consumer's `style` overwrote the attribute WHOLE, and the TopBar lost its
+   * backdrop, which with sticky blur means content shows through. Only this check catches it: the
+   * markup is valid, the types match, and the slot tests are green.
    */
   test("a consumer style adds to the underlay instead of wiping it", () => {
     const { container } = render(<TopBar style={{ zIndex: 99 }} />);
@@ -72,8 +71,8 @@ describe("TopBar", () => {
 });
 
 /**
- * Ради этого блока ADR-0019 и писался: до 2.1.0 высоту публиковало приложение,
- * теперь — сама шапка кита.
+ * ADR-0019 was written for this block: before 2.1.0 the application published the height, and
+ * now the kit's own TopBar does.
  */
 describe("TopBar: publishing the height", () => {
   test("the height goes into --topbar-h on mount", () => {
@@ -93,13 +92,13 @@ describe("TopBar: publishing the height", () => {
   });
 
   /**
-   * Переменную публикует не только кит: имя её — проп именно потому, что шапка
-   * может быть чужой (ADR-0016). Значение, переписанное мимо кита, уходящая
-   * шапка не снимает.
+   * The kit is not the only publisher of the variable: its name is a prop precisely because the
+   * TopBar may be someone else's (ADR-0016). A value overwritten from outside the kit is not removed
+   * by a departing TopBar.
    */
   test("a departing header does not clear a value written by someone else", () => {
     const { unmount } = render(<TopBar />);
-    // Вторая шапка успела опубликовать своё значение до размонтирования первой.
+    // The second TopBar published its value before the first one unmounted.
     document.documentElement.style.setProperty("--topbar-h", "72px");
     unmount();
     expect(heightOf("--topbar-h")).toBe("72px");
@@ -109,24 +108,24 @@ describe("TopBar: publishing the height", () => {
     const { unmount } = render(<TopBar />);
     expect(heightOf("--topbar-h")).toBe("56px");
     unmount();
-    // Оставленная переменная заставила бы липкие полосы отступать от
-    // несуществующего элемента.
+    // A leftover variable would make the sticky bars offset from an element that no longer
+    // exists.
     expect(heightOf("--topbar-h")).toBe("");
   });
 });
 
 /**
- * Две настоящие шапки, а не имитация записью в стиль.
+ * Two real TopBars, not a simulation by writing to the style.
  *
- * При переходе между экранами новая монтируется РАНЬШЕ, чем размонтируется
- * старая; то же даёт шапка приложения плюс шапка встроенного виджета с тем же
- * именем переменной. Владение определялось СРАВНЕНИЕМ ЗНАЧЕНИЙ — а две шапки
- * одного компонента дают одинаковую высоту и по значению неразличимы: уходящая
- * снимала переменную, которую только что опубликовала оставшаяся.
+ * When switching screens, the new TopBar mounts BEFORE the old one unmounts. The same happens with
+ * the application's TopBar plus an embedded widget's TopBar that uses the same variable name.
+ * Ownership was decided by COMPARING VALUES, but two TopBars of one component produce the same
+ * height and cannot be told apart by value: the departing one removed the variable that the
+ * remaining one had just published.
  *
- * До волны 26 дефект не проявлялся по другой причине: уборщик перезамерял уже
- * отцепленный узел, получал ноль, и ветка снятия не срабатывала никогда.
- * Починка уборщика эту ветку включила — и тем самым открыла дефект.
+ * Before wave 26 the defect did not show, for another reason: the cleanup re-measured an already
+ * detached node, got zero, and the removal branch never ran. Fixing the cleanup enabled that
+ * branch, and thereby exposed the defect.
  */
 describe("TopBar: two headers at once", () => {
   test("a departing header leaves the variable to the one still mounted", () => {
@@ -136,7 +135,7 @@ describe("TopBar: two headers at once", () => {
 
     first.unmount();
 
-    // Высота у обеих одна и та же — различить их можно только по владельцу.
+    // Both have the same height, so they can be told apart only by their owner.
     expect(heightOf("--topbar-h")).toBe("56px");
   });
 
@@ -155,11 +154,11 @@ test("a value written by the application survives a departing middle header", ()
   const first = render(<TopBar />);
   render(<TopBar />);
 
-  // Приложение публикует своё значение — по докстроке модуля это законно.
+  // The application publishes its own value, which the module docstring allows.
   document.documentElement.style.setProperty("--topbar-h", "100px");
   first.unmount();
 
-  // Проверка «в корне лежит не наше» стояла под условием «я последний», и при
-  // трёх участниках уходящая не последняя шапка перезаписывала чужое значение.
+  // The check "the root holds someone else's value" was guarded by "I am the last one", so with
+  // three participants a departing TopBar that was not the last one overwrote someone else's value.
   expect(heightOf("--topbar-h")).toBe("100px");
 });

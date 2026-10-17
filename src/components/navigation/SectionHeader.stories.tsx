@@ -14,7 +14,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = { args: { size: "md" } };
 
-/** Матрица размер × наполнение правой части. */
+/** Matrix of size × right-side content. */
 export const Matrix: Story = {
   render: () => (
     <div className="flex w-[520px] flex-col gap-6">

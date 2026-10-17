@@ -39,7 +39,7 @@ export const Playground: Story = {
   args: { onClear: () => {}, children: actions },
 };
 
-/** Правый край — отдельный слот: у него своя сторона распорки и своё поведение на узком экране. */
+/** The right edge is a separate slot: it has its own side of the spacer and its own behavior on a narrow screen. */
 export const WithSelectAll: Story = {
   args: {
     onClear: () => {},
@@ -52,7 +52,7 @@ export const WithSelectAll: Story = {
   },
 };
 
-/** Своя подпись счётчика: предметные единицы требуют склонения, а пакет о нём не знает. */
+/** A custom count label: the domain nouns need declension, and the package does not know about it. */
 export const CustomLabel: Story = {
   args: {
     count: 3,
@@ -67,9 +67,9 @@ export const CustomLabel: Story = {
 };
 
 /**
- * Шесть действий в колонке 830 px — ширина содержимого админки при окне около
- * 1145 px. Действия не влезают в одну строку с счётчиком и
- * переносятся целыми кнопками: подписи не ломаются, иконки не сжимаются.
+ * Six actions in an 830 px column: the width of an admin panel's content at a window of about
+ * 1145 px. The actions do not fit on one line with the counter, so they wrap as whole buttons:
+ * labels do not break, and icons do not shrink.
  */
 export const ManyActions: Story = {
   args: {
@@ -110,12 +110,10 @@ export const ManyActions: Story = {
 };
 
 /**
- * При нуле полосы нет вовсе — это её собственное правило, а не забота
- * вызывающего.
+ * With zero, the bar is not rendered at all: that is its own rule, not a concern of the caller.
  *
- * Рядом стоит подпись, и она здесь не для красоты: аудит axe ждёт непустой
- * канвас истории, а история из одного `null` его не даёт и роняет прогон
- * по таймауту.
+ * The caption next to it is not there for looks: the axe audit expects a non-empty story canvas,
+ * and a story made of a single `null` does not provide one and fails the run by timeout.
  */
 export const Empty: Story = {
   args: { count: 0, children: actions },
@@ -128,21 +126,21 @@ export const Empty: Story = {
 };
 
 /**
- * Липкость: полоса прижимается под верхнюю панель приложения и теряет верхние
- * скругления, коснувшись её.
+ * Stickiness: the bar sticks under the app's top bar and loses its rounded top corners where it
+ * meets that bar.
  *
- * История воспроизводит контракт целиком: «приложение» рисует свою панель и
- * публикует её настоящую высоту в `--topbar-h`, а полоса эту переменную
- * читает. Зашитое число здесь не годится — на узких экранах панель ниже, и
- * остаётся просвет, сквозь который видно уезжающий контент ([ADR-0016]).
+ * The story reproduces the whole contract: the "app" draws its own bar and publishes its real
+ * height in `--topbar-h`, and the bar reads that variable. A hard-coded number does not work here:
+ * on narrow screens the top bar is shorter, and a gap remains through which the scrolling content
+ * shows ([ADR-0016]).
  *
- * Проверяется в настоящем браузере: `tests-visual/interactions.spec.ts`.
- * В jsdom проверить нечего — там нет ни прокрутки, ни `position: sticky`,
- * ни работающего `IntersectionObserver`.
+ * It is checked in a real browser: `tests-visual/interactions.spec.ts`.
+ * There is nothing to check in jsdom: it has no scrolling, no `position: sticky`,
+ * and no working `IntersectionObserver`.
  */
 function StickyDemo() {
   useEffect(() => {
-    // Так же это делает `TopBar` приложения: публикует измеренную высоту.
+    // The app's `TopBar` does the same: it publishes the measured height.
     document.documentElement.style.setProperty("--topbar-h", `${TOPBAR_HEIGHT}px`);
     return () => {
       document.documentElement.style.removeProperty("--topbar-h");

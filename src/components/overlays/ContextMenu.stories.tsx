@@ -57,12 +57,12 @@ export const Playground: Story = {
 };
 
 /**
- * ОДИНОЧНЫЙ ВЫБОР — не флажки и не пункты с нарисованной галочкой.
+ * SINGLE CHOICE — not checkboxes and not items with a drawn check mark.
  *
- * Значение задано на группе: «выбран ровно один» — свойство группы, и только
- * она может проставить остальным `aria-checked="false"`. Здесь это видно
- * глазами — отмечен один пункт, — а в дереве доступности видно ролью
- * `menuitemradio`, которую и сторожит тест.
+ * The value is set on the group: "exactly one is selected" is a property of the group, and only
+ * the group can set `aria-checked="false"` on the others. Here it is visible at a glance: one item
+ * is marked. In the accessibility tree it shows up as the `menuitemradio` role, which is what the
+ * test guards.
  */
 export const SingleChoice: Story = {
   render: function Render() {
@@ -92,30 +92,27 @@ export const SingleChoice: Story = {
 };
 
 /**
- * ДВА МЕНЮ РЯДОМ — главная проверка обоих компонентов.
+ * TWO MENUS SIDE BY SIDE — the main check of both components.
  *
- * Слева `ContextMenu` на Radix, справа `Menu` на react-aria. Библиотеки разные,
- * а выглядеть они обязаны одинаково: пользователь не должен видеть «другое»
- * меню оттого, что открыл его правой кнопкой мыши. Общая таблица вида в
- * `lib/menu.ts` — единственное, что их удерживает, и удерживает она только
- * потому, что говорит на обоих диалектах состояний (`data-focused` у одного,
- * `data-highlighted` у другого, и так далее).
+ * `ContextMenu` on Radix is on the left, `Menu` on react-aria is on the right. The libraries differ,
+ * but they must look the same: the user must not see a "different" menu just because they opened it
+ * with the right mouse button. The shared look table in `lib/menu.ts` is the only thing that keeps
+ * them together, and it does so only because it speaks both dialects of state (`data-focused` in one,
+ * `data-highlighted` in the other, and so on).
  *
- * Подсвеченный пункт справа — фокус, который react-aria ставит при открытии;
- * у Radix без указателя фокуса на пункте нет. Это состояние, а не вид.
+ * The highlighted item on the right is the focus that react-aria sets on open; Radix has no focused
+ * item without a pointer. This is state, not appearance.
  *
- * Расхождение здесь видно глазами и ловится бейзлайном. Рассуждением оно не
- * ловится вовсе: у одной библиотеки состояние может просто не примениться, и
- * компонент будет выглядеть исправным.
+ * A mismatch here is visible by eye and is caught by the baseline snapshot. Reasoning does not catch
+ * it at all: in one library the state may simply not apply, and the component will still look correct.
  */
 export const TwoMenusSideBySide: Story = {
   render: () => (
-    // Панели рисуются в порталах и раскладке не подчиняются: меню react-aria
-    // якорится к своей кнопке, меню Radix без указателя встаёт в угол экрана.
-    // Поэтому кнопка отодвинута вправо — так обе панели видны рядом, а не одна
-    // поверх другой. Подсвеченный пункт у react-aria — это фокус, который она
-    // ставит при открытии, а не отличие вида: без него фокус-кольцо обводило бы
-    // всю панель.
+    // Panels are drawn in portals and do not follow the layout: the react-aria menu
+    // anchors to its own button, and a Radix menu without a pointer lands in a corner of the screen.
+    // So the button is pushed to the right, and both panels are visible side by side instead of one
+    // on top of the other. The highlighted item in react-aria is the focus it sets on open,
+    // not a difference in look: without it, the focus ring would outline the whole panel.
     <div className="h-[420px]">
       <MenuTrigger isOpen>
         <MenuButton

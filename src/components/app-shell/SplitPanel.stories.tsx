@@ -22,9 +22,9 @@ function Details() {
   return (
     <div className="text-[13px]">
       {/*
-        Заголовок стоит ВНЕ `dl`: список определений допускает прямыми потомками
-        только пары `dt`/`dd` и обёртки над ними, и `div` с одним текстом ронял
-        аудит axe как `definition-list`.
+        The heading sits OUTSIDE the `dl`: a definition list allows only `dt`/`dd` pairs
+        and wrappers around them as direct children, and a `div` with a single text node
+        failed the axe `definition-list` audit.
       */}
       <div className="text-fg-0 mb-3 font-semibold">Order #4821</div>
       <dl>
@@ -64,34 +64,34 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Панель сбоку: тянется ширина, ручка вертикальная. */
+/** A side panel: the width is stretched, and the handle is vertical. */
 export const Side: Story = {
   args: { position: "side", defaultSize: 260 },
 };
 
 /**
- * Панель снизу: тянется высота, ручка горизонтальная. Тот же компонент —
- * разница ровно в оси раскладки.
+ * A bottom panel: the height is stretched, and the handle is horizontal. It is the same
+ * component; the only difference is the layout axis.
  */
 export const Bottom: Story = {
   args: { position: "bottom", defaultSize: 170, minSize: 80, maxSize: 200 },
 };
 
 /**
- * Схлопнутая панель. Содержимое остаётся в DOM — состояние формы внутри
- * переживает схлопывание, — но уходит из дерева доступности: панель, до которой
- * доходит Tab и которой не видно, уводит фокус в никуда. Ручка исчезает вместе
- * с ней: тянуть нечего.
+ * A collapsed panel. The content stays in the DOM, so form state inside it survives
+ * the collapse, but it leaves the accessibility tree. A panel that Tab can reach and
+ * that is not visible would send focus nowhere. The handle disappears with it: there is
+ * nothing to drag.
  */
 export const Collapsed: Story = {
   args: { position: "side", collapsed: true },
 };
 
 /**
- * Узкий экран: панель сворачивается ниже `lg`, остаётся одна область. Штатного
- * адаптивного режима у компонента нет — ширину спрашивает `useMediaQuery`, а
- * схлопывает существующий `collapsed`. До гидратации хук отвечает «узко», так что
- * первый кадр на сервере — одна область.
+ * Narrow screen: the panel collapses below `lg`, leaving one area. The component has no
+ * built-in adaptive mode. The width is queried by `useMediaQuery`, and the existing
+ * `collapsed` prop does the collapsing. Until hydration the hook reports "narrow", so the
+ * first frame on the server is a single area.
  */
 export const Adaptive: Story = {
   render: (args) => {
@@ -114,9 +114,9 @@ export const Adaptive: Story = {
 };
 
 /**
- * Управляемый размер. Кит даёт форму, хранит потребитель — то же разделение,
- * что у состояния таблицы: у заказчика размер обычно уже лежит в адресе
- * страницы, и второе хранилище внутри кита разошлось бы с первым молча.
+ * Controlled size. The kit provides the shape, and the consumer holds the state: the same
+ * split as with the table state. In the consumer's app the size usually already lives in the
+ * page URL, and a second store inside the kit would silently drift apart from the first.
  */
 export const Controlled: Story = {
   render: (args) => {
@@ -141,11 +141,11 @@ export const Controlled: Story = {
 };
 
 /**
- * Сворачивание НЕ по щелчку, а по внешнему состоянию.
+ * Collapsing is driven by external state, NOT by a click.
  *
- * Щелчок по кнопке сам уводит фокус на неё, и переносить становится нечего.
- * Сворачивание бывает и без него — горячей клавишей, ответом сервера, сменой
- * раскладки; именно тогда фокус, стоявший внутри панели, и терялся.
+ * A click on the button moves focus onto it by itself, so there is nothing to hand off.
+ * Collapsing also happens without a click, from a hotkey, a server response, or a layout
+ * change. That is exactly when focus that was inside the panel gets lost.
  */
 export const CollapseFromOutside: Story = {
   render: (args) => {

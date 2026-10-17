@@ -9,13 +9,15 @@ import {
 } from "../src/components/navigation/MegaMenu.js";
 
 /*
-  Прицел мегаменю (OLDSUI-256): курсор, идущий наискосок к открытой Полке,
-  не отдаёт её соседней Категории, которую задевает по пути.
+  Menu aim in the mega menu (OLDSUI-256): a pointer cutting diagonally toward
+  the open flyout does not hand it over to a neighboring category that the
+  pointer crosses on the way.
 
-  Геометрия jsdom пустая, поэтому прямоугольник Полки подменён: Столбец —
-  x 0…250, Полка — x 260…900, y 0…400. Время — поддельное: и прореживание
-  шагов, и остановка курсора считаются по нему. События — напрямую, без
-  user-event (его обёртка ждёт настоящий `setTimeout`, см. `hover-card`).
+  jsdom has no layout, so the flyout's rectangle is mocked: the category column
+  is x 0…250, the flyout x 260…900, y 0…400. Time is faked too: both the
+  thinning of pointer steps and the pointer coming to rest are measured by it.
+  Events are fired directly, without user-event (its wrapper waits on a real
+  `setTimeout`; see `hover-card`).
 */
 
 const SHOWCASE = { left: 260, right: 900, top: 0, bottom: 400 };
@@ -66,13 +68,13 @@ function Catalog() {
 const category = (name: string) => screen.getByRole("button", { name });
 const expanded = (name: string) => category(name).getAttribute("aria-expanded") === "true";
 
-/** Наведение мышью на строку: `pointerEnter` у Testing Library шлёт и `pointerover`. */
+/** Hovers the mouse over a row: Testing Library's `pointerEnter` also sends `pointerover`. */
 const enter = (element: Element, pointerType = "mouse") =>
   act(() => {
     fireEvent.pointerEnter(element, { pointerType });
   });
 
-/** Шаг курсора; кадр между шагами — иначе прореживание его отбросит. */
+/** A pointer step. A frame goes between steps, otherwise the thinning would drop it. */
 const move = (x: number, y: number, target: Element = document.body, pointerType = "mouse") =>
   act(() => {
     vi.advanceTimersByTime(20);
@@ -86,7 +88,7 @@ test("cutting diagonally across a neighbor towards the showcase keeps the open c
   enter(category("Alpha"));
   expect(expanded("Alpha")).toBe(true);
 
-  // Вправо и чуть вниз — в сектор к углам ближнего края Полки.
+  // Right and slightly down, into the sector towards the corners of the flyout's near edge.
   move(100, 20);
   move(130, 30);
   move(160, 40);
@@ -129,10 +131,10 @@ test("two steps away from the showcase end the aim and open the category under t
   enter(category("Beta"));
   expect(expanded("Alpha")).toBe(true);
 
-  // Одно движение вбок прощается…
+  // One sideways move is forgiven…
   move(150, 60);
   expect(expanded("Alpha")).toBe(true);
-  // …второе подряд — уже нет.
+  // …a second one in a row is not.
   move(140, 80);
   expect(expanded("Beta")).toBe(true);
 });
@@ -191,7 +193,7 @@ test("touch and pen do not aim: their moves never defer a switch", () => {
 test("near the end edge of the window the showcase flips, and the arrow towards it flips too", () => {
   vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(640);
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 1400 });
-  // Столбец у правого края: справа 150px, слева — 1000; Полке нужно 652.
+  // The category column is at the right edge: 150px to the right, 1000 to the left; the flyout needs 652.
   vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(function (
     this: HTMLElement
   ) {
@@ -225,7 +227,7 @@ test("a deferred switch that unmounts the focused showcase hands focus to its ca
   move(100, 20);
   move(130, 30);
   enter(category("Beta"));
-  // Пока смена отложена, пользователь ушёл Tab'ом в открытую Полку.
+  // While the switch is deferred, the user tabbed into the open flyout.
   act(() => {
     screen.getByRole("link", { name: "Alpha link" }).focus();
   });

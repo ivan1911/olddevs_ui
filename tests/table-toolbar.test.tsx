@@ -8,7 +8,7 @@ afterEach(cleanup);
 describe("TableToolbar", () => {
   test("absent slots do not reach the markup", () => {
     const { container } = render(<TableToolbar />);
-    // Пустая полоса не должна оставлять после себя пустых узлов раскладки.
+    // An empty strip must not leave empty layout nodes behind it.
     expect(container.textContent).toBe("");
     expect(container.querySelectorAll("div").length).toBe(1);
   });
@@ -28,14 +28,14 @@ describe("TableToolbar", () => {
 
   test("zero is shown, not hidden", () => {
     render(<TableToolbar count={0} />);
-    // Ноль — это результат, а не отсутствие результата: «0 записей» отвечает
-    // на вопрос, а пустое место оставляет его открытым.
+    // Zero is a result, not the absence of one: "0 records" answers the question,
+    // while an empty place leaves it open.
     expect(screen.getByText("0 records")).toBeTruthy();
   });
 
   /**
-   * Роль `toolbar` обязывает к навигации стрелками, а ARIA её сама не даёт.
-   * Объявить роль и не реализовать поведение — обмануть скринридер.
+   * The `toolbar` role obliges arrow-key navigation, and ARIA does not provide it itself.
+   * Declaring the role without implementing the behavior deceives the screen reader.
    */
   test("there is no toolbar role: no promise of keyboard navigation is made", () => {
     render(<TableToolbar title="Documents" actions={<button>Create</button>} />);

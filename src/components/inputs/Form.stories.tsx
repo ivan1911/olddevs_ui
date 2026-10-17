@@ -58,12 +58,12 @@ export const Playground: Story = {
 };
 
 /**
- * Отправка идёт: форма выключена целиком через `<fieldset disabled>`.
+ * Submitting is in progress: the whole form is disabled through `<fieldset disabled>`.
  *
- * Проверка не косметическая. Свойство `disabled` у полей при этом остаётся
- * `false` — выключенность наследуется, и видит её только псевдокласс
- * `:disabled`. Если бы словарь опирался на атрибут, поля выглядели бы
- * рабочими, оставаясь неработающими.
+ * The check is not cosmetic. The `disabled` property of the fields stays `false` in this
+ * case: being disabled is inherited, and only the `:disabled` pseudo-class sees it.
+ * If the styles relied on the attribute, the fields would look working
+ * while being non-functional.
  */
 export const Submitting: Story = {
   render: () => (
@@ -75,7 +75,7 @@ export const Submitting: Story = {
   ),
 };
 
-/** Ошибки передаются пропами полей, а не магическим каналом формы. */
+/** Errors are passed as props of the fields, not through a magic channel of the form. */
 export const WithErrors: Story = {
   render: () => (
     <div className="w-[320px]">

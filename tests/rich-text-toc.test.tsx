@@ -12,17 +12,18 @@ import {
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 /**
- * Оглавление Документа (OLDSUI-264, ADR-0066). Проверки идут через публичную
- * пару компонентов: экран ставит `RichTextToc` рядом с `RichTextView` и отдаёт
- * ему ref Просмотра — ровно так, как это сделает потребитель.
+ * The Document's table of contents (OLDSUI-264, ADR-0066). The checks go through the public
+ * pair of components: the screen renders `RichTextToc` next to `RichTextView` and passes it
+ * the View's ref, exactly as a consumer would.
  */
 
-// Ленивые встроенные Редактора (OLDSUI-111): после загрузки чанков движок создаётся прямо в `render`.
+// Lazy built-in Tools of the Editor (OLDSUI-111): after the chunks load, the engine
+// is created right in `render`.
 beforeAll(loadLazyBuiltins);
 
 beforeEach(() => {
-  // В jsdom прокрутки нет: переход проверяется по фокусу, а вызов только
-  // не должен падать.
+  // jsdom has no scrolling: the jump is checked by focus, and the call only
+  // must not throw.
   Element.prototype.scrollIntoView = vi.fn();
 });
 
@@ -49,7 +50,7 @@ const ARTICLE =
 
 const strip = () => screen.getByRole("button", { name: "Table of contents" });
 
-/** Открыть список и вернуть его пункты. */
+/** Open the list and return its items. */
 async function openList(user: ReturnType<typeof userEvent.setup>) {
   await user.click(strip());
   const nav = screen.getByRole("navigation", { name: "Table of contents" });
@@ -99,7 +100,7 @@ test("fewer than two headings render nothing", () => {
 
 test("the indent and stroke length follow the level relative to the largest heading", async () => {
   const user = userEvent.setup();
-  // Самый крупный здесь — H2: он без отступа, хотя H1 в Схеме есть.
+  // The largest one here is H2: it has no indent, although H1 is in the Schema.
   render(<Screen html="<h2>A</h2><h3>B</h3><h4>C</h4>" />);
 
   const depths = [...strip().querySelectorAll("[data-toc-stroke]")].map((stroke) =>
@@ -114,7 +115,8 @@ test("the indent and stroke length follow the level relative to the largest head
 test("every deeper level gets a shorter stroke", () => {
   render(<Screen html="<h1>A</h1><h2>B</h2><h3>C</h3><h4>D</h4>" />);
 
-  // Первый штрих — текущий раздел, у него своя длина; уровни сверяются по остальным.
+  // The first stroke is the current section and has its own length; the levels are
+  // checked against the rest.
   const widths = [...strip().querySelectorAll("[data-toc-stroke]:not([data-current])")].map(
     (stroke) => Number(stroke.className.match(/\bw-([\d.]+)\b/)?.[1])
   );
@@ -135,7 +137,7 @@ test("a click on an item focuses the heading without touching the address or ids
   expect(document.activeElement).toBe(heading);
   expect(heading.getAttribute("tabindex")).toBe("-1");
   expect(heading.scrollIntoView).toHaveBeenCalled();
-  // Список не пропадает от выбора: его закрывает уход курсора.
+  // Selecting an item does not make the list disappear: the cursor leaving closes it.
   expect(screen.getByRole("navigation", { name: "Table of contents" })).toBeTruthy();
   expect(window.location.href).toBe(before);
   expect(screen.getByTestId("view").querySelector("[id]")).toBeNull();
@@ -220,7 +222,7 @@ test("hovering the strip opens the list after a delay", async () => {
       vi.advanceTimersByTime(250);
     });
     expect(screen.getByRole("navigation", { name: "Table of contents" })).toBeTruthy();
-    // Наведение не уводит фокус с места.
+    // Hovering does not move the focus away.
     expect(document.activeElement).toBe(document.body);
   } finally {
     vi.useRealTimers();
@@ -231,7 +233,7 @@ test("the section whose heading passed the top edge is current in the strip and 
   const user = userEvent.setup();
   render(<Screen html={ARTICLE} />);
 
-  // Первые два заголовка ушли выше края окна, третий и четвёртый ниже.
+  // The first two headings are above the top edge of the window, the third and fourth below it.
   const tops = [-400, -100, 300, 900];
   const headings = [...screen.getByTestId("view").querySelectorAll("h2, h3, h4")];
   headings.forEach((heading, index) => {
@@ -310,7 +312,7 @@ test("the strip hides itself when it would overlap the text or leave the window"
   const root = strip().closest("div")!;
   expect(root.className).not.toMatch(/\binvisible\b/);
 
-  // Поле слева сузилось: полоса наползает на текст.
+  // The field on the left narrowed: the strip slides over the text.
   strip().getBoundingClientRect = () => ({ left: 40, right: 70 }) as DOMRect;
   screen.getByTestId("view").getBoundingClientRect = () => ({ left: 60 }) as DOMRect;
   await act(async () => {
@@ -319,7 +321,7 @@ test("the strip hides itself when it would overlap the text or leave the window"
   });
   expect(root.className).toMatch(/\binvisible\b/);
 
-  // Окно расширили — полоса снова на месте.
+  // The window was widened: the strip is back in place.
   screen.getByTestId("view").getBoundingClientRect = () => ({ left: 120 }) as DOMRect;
   await act(async () => {
     window.dispatchEvent(new Event("resize"));
@@ -366,7 +368,7 @@ test("levels leaves only those levels in the strip and the list; the indent coun
   expect(strip().querySelectorAll("[data-toc-stroke]")).toHaveLength(2);
   const items = await openList(user);
   expect(items.map((item) => item.textContent)).toEqual(["How to read", "Neutrals"]);
-  // H3 теперь самый крупный: глубина считается от него.
+  // H3 is now the largest: the depth is counted from it.
   expect(items.map((item) => item.getAttribute("data-depth"))).toEqual(["0", "1"]);
 });
 
@@ -415,7 +417,7 @@ test("the heading of a jump flashes a background that fades out, leaving no trac
     const [keyframes] = animate.mock.calls[0]!;
     expect(keyframes[0].backgroundColor).toBeTruthy();
     expect(keyframes.at(-1).backgroundColor).toBe("transparent");
-    // Ни класса, ни стиля в разметке Документа: подсветка живёт в анимации.
+    // No class and no style in the Document markup: the highlight lives in the animation.
     expect(heading.getAttribute("class")).toBeNull();
     expect(heading.getAttribute("style")).toBeNull();
   } finally {
@@ -429,14 +431,14 @@ test("the list is rebuilt when the View gets a new html, in both directions", as
   const view = render(<Screen html="<h2>Only one</h2><p>Text</p>" />);
   expect(screen.queryByRole("button", { name: "Table of contents" })).toBeNull();
 
-  // Второй заголовок пришёл — полоса появилась.
+  // The second heading arrived: the strip appeared.
   view.rerender(<Screen html="<h2>Only one</h2><h3>Second</h3><p>Text</p>" />);
   await waitFor(() => expect(strokes()).toBe(2));
 
   view.rerender(<Screen html={ARTICLE} />);
   await waitFor(() => expect(strokes()).toBe(4));
 
-  // Остался один — полоса исчезла.
+  // Only one is left: the strip disappeared.
   view.rerender(<Screen html="<h2>Only one</h2>" />);
   await waitFor(() =>
     expect(screen.queryByRole("button", { name: "Table of contents" })).toBeNull()
@@ -451,12 +453,12 @@ test("a burst of changes is rebuilt once, after a pause", async () => {
     expect(strokes()).toBe(4);
 
     view.rerender(<Screen html="<h2>A</h2><h2>B</h2>" />);
-    // Наблюдатель DOM отвечает микрозадачей — дать ему отработать до таймера.
+    // The DOM observer responds with a microtask: let it run before the timer.
     await act(async () => {});
     await act(async () => {
       vi.advanceTimersByTime(100);
     });
-    // Пауза ещё не прошла: список прежний.
+    // The pause has not elapsed yet: the list is unchanged.
     expect(strokes()).toBe(4);
 
     await act(async () => {
@@ -477,8 +479,8 @@ test("the jump itself does not rebuild the list", async () => {
   const heading = screen.getByTestId("view").querySelector("h4")!;
   expect(heading.getAttribute("tabindex")).toBe("-1");
 
-  // Метка `tabindex` ставится и снимается на переходе; пересборка по ней
-  // подменила бы узлы пунктов и сбросила бы фокус в списке.
+  // The `tabindex` marker is set and removed on the jump; rebuilding on it would replace
+  // the item nodes and drop the focus in the list.
   await new Promise((resolve) => setTimeout(resolve, 300));
   expect(document.activeElement).toBe(heading);
   expect(
@@ -486,7 +488,7 @@ test("the jump itself does not rebuild the list", async () => {
   ).toHaveLength(4);
 });
 
-// --- Редактор как цель -------------------------------------------------------
+// --- Editor as a target ------------------------------------------------------
 
 function EditorScreen({
   html,
@@ -551,7 +553,7 @@ test("editing an editable Editor rebuilds the list, a new heading and a changed 
   const items = await openList(user);
   expect(items.map((item) => item.textContent)).toEqual(["Second", "First"]);
 
-  // Набор внутри заголовка — меняется пункт, а число штрихов остаётся.
+  // Typing inside a heading changes the item, but the number of strokes stays.
   act(() => {
     handle.current!.editor!.commands.insertContentAt(1, "New ");
   });
@@ -577,14 +579,14 @@ test("a jump in an editable Editor leaves the selection where it was", async () 
   await user.click(items[3]!);
 
   const heading = screen.getByRole("textbox", { name: "Body" }).querySelectorAll("h2")[1]!;
-  // Каретка осталась в Документе, а заголовок не обзавёлся меткой фокуса.
+  // The caret stayed in the Document, and the heading did not get a focus marker.
   expect(heading.hasAttribute("tabindex")).toBe(false);
   expect(heading.scrollIntoView).toHaveBeenCalled();
   expect(editor.state.selection.toJSON()).toEqual(before);
   expect(editor.getHTML()).not.toContain("tabindex");
 });
 
-// --- Длинный Документ --------------------------------------------------------
+// --- Long Document -----------------------------------------------------------
 
 const longArticle = (count: number) =>
   Array.from(
@@ -597,7 +599,7 @@ test("the strip gap shrinks so that a long Document fits the window", async () =
   try {
     window.innerHeight = 300;
     const view = render(<Screen html={longArticle(8)} />);
-    // Мало заголовков — обычный шаг.
+    // Few headings: the usual step.
     expect(strip().style.rowGap).toBe("5px");
 
     view.rerender(<Screen html={longArticle(60)} />);
@@ -606,12 +608,12 @@ test("the strip gap shrinks so that a long Document fits the window", async () =
     expect(gap).toBeGreaterThan(0);
     expect(gap).toBeLessThan(5);
 
-    // Совсем много — шаг не уходит ниже нуля, штрих остаётся на каждый заголовок.
+    // Very many: the step does not go below zero, and a stroke stays for each heading.
     view.rerender(<Screen html={longArticle(150)} />);
     await waitFor(() => expect(strokes()).toBe(150));
     expect(parseFloat(strip().style.rowGap)).toBe(0);
 
-    // Окно выросло — шаг вернулся.
+    // The window grew: the step is back.
     window.innerHeight = 2000;
     await act(async () => {
       window.dispatchEvent(new Event("resize"));
@@ -627,7 +629,7 @@ test("the opened list of a long Document scrolls to the current item", async () 
   const user = userEvent.setup();
   render(<Screen html={longArticle(40)} />);
 
-  // Двадцать пять заголовков ушли выше края окна — текущий двадцать пятый.
+  // Twenty-five headings are above the top edge of the window: the current one is the twenty-fifth.
   const headings = [...screen.getByTestId("view").querySelectorAll("h2, h3, h4")];
   headings.forEach((heading, index) => {
     heading.getBoundingClientRect = () => ({ top: (index - 24) * 100 }) as DOMRect;
@@ -641,8 +643,8 @@ test("the opened list of a long Document scrolls to the current item", async () 
     await new Promise((resolve) => requestAnimationFrame(resolve));
   });
 
-  // Строки списка по 22px, видимая часть списка — 300px: двадцать пятый пункт
-  // ниже её края.
+  // List rows are 22px each and the visible part of the list is 300px: the twenty-fifth item
+  // is below its edge.
   const original = HTMLElement.prototype.getBoundingClientRect;
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
     this: HTMLElement
@@ -660,9 +662,9 @@ test("the opened list of a long Document scrolls to the current item", async () 
   const items = await openList(user);
   expect(items[24]!.getAttribute("aria-current")).toBe("location");
   const box = items[24]!.closest("nav")!.parentElement!;
-  // Прокручен ровно сам список, чтобы пункт встал к его нижнему краю.
+  // Only the list itself is scrolled, so the item lands at its bottom edge.
   expect(box.scrollTop).toBe(25 * 22 - 300);
-  // Страницу (scrollIntoView предков) Оглавление не двигает.
+  // The table of contents does not move the page (the ancestors' scrollIntoView).
   expect(vi.mocked(Element.prototype.scrollIntoView)).not.toHaveBeenCalled();
 });
 
@@ -698,7 +700,7 @@ test("scrolling the list itself neither recomputes the highlight nor drops the j
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 200));
   });
-  // Колесо над списком: прокручивается он, а не Документ.
+  // Wheel over the list: the list scrolls, not the Document.
   const list = screen.getByRole("navigation", { name: "Table of contents" }).parentElement!;
   await act(async () => {
     fireEvent.scroll(list);
@@ -711,8 +713,8 @@ test("the section chosen by a jump stays current while the jump scrolls, even at
   const user = userEvent.setup();
   render(<Screen html={ARTICLE} />);
 
-  // Документ докручен до конца, все заголовки в окне: правило конца отдало бы
-  // подсветку последнему.
+  // The Document is scrolled to the end, all headings are in the window: the end rule would
+  // give the highlight to the last one.
   Object.defineProperty(document.documentElement, "scrollHeight", {
     value: 600,
     configurable: true,
@@ -732,12 +734,12 @@ test("the section chosen by a jump stays current while the jump scrolls, even at
 
   await user.click(items[1]!);
   expect(items[1]!.getAttribute("aria-current")).toBe("location");
-  // Прокрутка от самого перехода подсветку не трогает.
+  // The scroll caused by the jump itself does not touch the highlight.
   await scroll();
   await scroll();
   expect(items[1]!.getAttribute("aria-current")).toBe("location");
 
-  // Переход улёгся, читатель прокрутил сам — подсветка снова считается.
+  // The jump has settled and the reader scrolled on their own: the highlight is counted again.
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 200));
   });
@@ -765,9 +767,9 @@ test("after a mouse jump in an editable Editor the list does not hold focus, so 
   expect(nav.contains(document.activeElement)).toBe(false);
 });
 
-// --- Переход без шапки (OLDSUI-275) -------------------------------------------
+// --- Jump without a top bar (OLDSUI-275) --------------------------------------
 
-/** Документ в своей прокручиваемой области; шапка (`--topbar-h`) не задана. */
+/** The Document in its own scrollable area; the top bar (`--topbar-h`) is not set. */
 function ScrollBoxScreen() {
   const view = useRef<HTMLDivElement>(null);
   return (
@@ -796,7 +798,7 @@ test("without a sticky header a jump scrolls the nearest scrollable box and leav
   const items = await openList(user);
   await user.click(items[2]!);
 
-  // Заголовок на 400 px ниже верха области; область была прокручена на 0.
+  // The heading is 400 px below the top of the area; the area was scrolled by 0.
   expect(box.scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 400 }));
   expect(windowScroll).not.toHaveBeenCalled();
   expect(heading.scrollIntoView).not.toHaveBeenCalled();
@@ -830,7 +832,7 @@ test("without a sticky header and without a scrollable box the window scrolls to
   const items = await openList(user);
   await user.click(items[2]!);
 
-  // Отступ учитывает сам браузер: `scrollIntoView` читает `scroll-margin-top`.
+  // The browser accounts for the offset itself: `scrollIntoView` reads `scroll-margin-top`.
   const heading = screen.getByTestId("view").querySelector("h4")!;
   expect(heading.scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: "start" }));
   expect(windowScroll).not.toHaveBeenCalled();

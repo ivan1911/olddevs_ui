@@ -14,7 +14,7 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -23,13 +23,13 @@ afterEach(() => {
 });
 
 /**
- * Меню «…» на Панели — More formatting (OLDSUI-65): строчный код,
- * подчёркивание, индексы, Блок кода (OLDSUI-76), подменю маркера и цвета
- * текста, очистка стилей.
+ * The "…" menu on the Toolbar, More formatting (OLDSUI-65): inline code,
+ * underline, sub- and superscript, the Code block (OLDSUI-76), the submenus for the marker and
+ * the text color, and clear styles.
  *
- * Через публичный `RichTextEditor`: кнопка и пункты — ролями и именами, как их
- * слышит скринридер, результат — выходным HTML. Выделение ставится командами
- * движка: jsdom не умеет ввода в `contenteditable`.
+ * Through the public `RichTextEditor`: the button and the items are found by roles and names,
+ * as a screen reader hears them; the result is the output HTML. The selection is set with
+ * engine commands: jsdom cannot type into `contenteditable`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -39,7 +39,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor };
 }
 
-/** Выделение текста `text` целиком. */
+/** Selects the whole text `text`. */
 function select(editor: Editor, text: string) {
   let from = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -52,7 +52,7 @@ function select(editor: Editor, text: string) {
 const moreButton = () => screen.getByRole("button", { name: "More formatting" });
 const textbox = () => screen.getByRole("textbox", { name: "Body" });
 
-/** Пункты открытого меню (или подменю): роль, имя без подписи сочетания, отметка, подпись. */
+/** Items of the open menu (or submenu): role, name without the shortcut label, checked state, label. */
 function items(menu: HTMLElement) {
   return Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]')).map((item) => {
     const shortcut = item.querySelector("kbd")?.textContent ?? null;
@@ -77,7 +77,7 @@ test("the full preset offers the rare marks, Code block, Quote and Clear formatt
   expect(moreButton().getAttribute("aria-haspopup")).toBe("menu");
   const menu = await openMore(user);
 
-  // jsdom — не Apple: `mod` подписан как Ctrl.
+  // jsdom is not Apple: `mod` is labeled Ctrl.
   expect(items(menu)).toEqual([
     { role: "menuitemcheckbox", name: "Inline code", checked: false, shortcut: "Ctrl+E" },
     { role: "menuitemcheckbox", name: "Underline", checked: false, shortcut: "Ctrl+U" },
@@ -85,10 +85,10 @@ test("the full preset offers the rare marks, Code block, Quote and Clear formatt
     { role: "menuitemcheckbox", name: "Superscript", checked: false, shortcut: "Ctrl+." },
     { role: "menuitemcheckbox", name: "Subscript", checked: false, shortcut: "Ctrl+," },
     { role: "menuitemcheckbox", name: "Code block", checked: false, shortcut: "Ctrl+Alt+C" },
-    // Цитата — флажок рядом с Блоком кода (OLDSUI-154): из «¶» она ушла.
+    // Quote is a check item next to the Code block (OLDSUI-154): it has moved out of "¶".
     { role: "menuitemcheckbox", name: "Quote", checked: false, shortcut: "Ctrl+Shift+B" },
     { role: "menuitem", name: "Clear formatting", checked: false, shortcut: "Ctrl+\\" },
-    // Режим показа Документа, а не форматирование: последний раздел, без сочетания (OLDSUI-278).
+    // A display mode of the Document, not formatting: the last section, without a shortcut (OLDSUI-278).
     { role: "menuitemcheckbox", name: "Invisible characters", checked: false, shortcut: null },
   ]);
 });
@@ -110,8 +110,8 @@ test("on Apple the shortcuts are signed with ⌘", async () => {
     "⌘+\\",
     null,
   ]);
-  // Знаки — пропорциональным шрифтом, как в \`Kbd\`: в моноширинном стеке \`⇧\`
-  // нет, и запасной глиф выходит тонким (OLDSUI-117).
+  // Key symbols are set in a proportional font, as in \`Kbd\`: in a monospace stack the \`⇧\`
+  // glyph is missing, and the fallback glyph comes out thin (OLDSUI-117).
   const strike = within(menu).getByRole("menuitemcheckbox", { name: /Strikethrough/ });
   expect(
     [...strike.querySelectorAll("kbd [data-key-symbol]")].map((node) => node.textContent)
@@ -121,7 +121,7 @@ test("on Apple the shortcuts are signed with ⌘", async () => {
 test("items come from the enabled tools: basic has inline code, strikethrough and Quote", async () => {
   const user = userEvent.setup();
   const { unmount } = renderEditor({ preset: "basic" });
-  // Зачёркнутый в ряду Панели больше не стоит — он в «…» (OLDSUI-60).
+  // Strikethrough no longer sits in the Toolbar row: it is in "…" (OLDSUI-60).
   expect(items(await openMore(user)).map((item) => item.name)).toEqual([
     "Inline code",
     "Strikethrough",
@@ -129,7 +129,7 @@ test("items come from the enabled tools: basic has inline code, strikethrough an
   ]);
   unmount();
 
-  // Маркер — своя кнопка рядом (OLDSUI-153), в «…» его нет.
+  // The marker has its own button next to it (OLDSUI-153), and it is not in "…".
   renderEditor({ tools: ["bold", "highlight", "subscript"] });
   expect(items(await openMore(user)).map((item) => item.name)).toEqual(["Subscript"]);
 });
@@ -218,15 +218,15 @@ test("in a code block the marks have nothing to do and are unavailable", async (
     const item = within(menu).getByRole("menuitemcheckbox", { name: new RegExp(name) });
     expect(item.getAttribute("aria-disabled"), name).toBe("true");
   }
-  // Блок кода, напротив, отмечен и доступен: выбор вернёт Блок в текст.
+  // The Code block, on the other hand, is checked and available: selecting it turns the Block back into text.
   const codeBlock = within(menu).getByRole("menuitemcheckbox", { name: /Code block/ });
   expect(codeBlock.getAttribute("aria-checked")).toBe("true");
   expect(codeBlock.hasAttribute("aria-disabled")).toBe(false);
 });
 
 /**
- * Блок кода — пункт «…», а не кнопка Панели (OLDSUI-76): пользуются им
- * нечасто. Пункт-флажок своего раздела — Блок, а не Метка.
+ * The Code block is an item in "…", not a Toolbar button (OLDSUI-76): it is used
+ * rarely. The check item of its own section is the Block, not the Mark.
  */
 test("Code block is a check item of the menu, not a toolbar button", async () => {
   const user = userEvent.setup();
@@ -244,7 +244,7 @@ test("Code block is a check item of the menu, not a toolbar button", async () =>
   expect(screen.queryByRole("menu")).toBeNull();
   await waitFor(() => expect(document.activeElement).toBe(textbox()));
 
-  // Каретка в Блоке кода — пункт отмечен, и выбор возвращает Блок в текст.
+  // The caret in the Code block: the item is checked, and selecting it turns the Block back into text.
   const again = await openMore(user);
   const checked = within(again).getByRole("menuitemcheckbox", { name: /Code block/ });
   expect(checked.getAttribute("aria-checked")).toBe("true");
@@ -282,9 +282,9 @@ test("a disabled field switches the button off", () => {
 });
 
 /**
- * Escape в меню принадлежит меню, а не слою под ним (ADR-0041). Слой —
- * `ModalOverlay`: меню react-aria внутри модального окна Radix в jsdom не
- * раскрывается. С настоящими `Dialog` и `Drawer` — `tests-visual/interactions.spec.ts`.
+ * Escape in a menu belongs to the menu, not to the layer under it (ADR-0041). The layer is
+ * `ModalOverlay`: a react-aria menu inside a Radix modal does not open in jsdom. For the real
+ * `Dialog` and `Drawer`, see `tests-visual/interactions.spec.ts`.
  */
 test("Escape in the menu closes it, not the layer under it", async () => {
   const user = userEvent.setup();
@@ -297,16 +297,16 @@ test("Escape in the menu closes it, not the layer under it", async () => {
 
   act(() => moreButton().focus());
   await user.keyboard("{Enter}");
-  // Меню react-aria открывается и закрывается в следующих кадрах: под нагрузкой
-  // полного прогона мгновенная проверка ловила промежуточное состояние.
+  // The react-aria menu opens and closes over the next frames: under the load of a full run,
+  // an instant check caught the intermediate state.
   expect(await screen.findByRole("menu", { name: "More formatting" })).toBeDefined();
   await user.keyboard("{Escape}");
   await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
   expect(onClose).not.toHaveBeenCalled();
 
-  // Контроль: без открытого меню тот же Escape закрывает слой. Фокус — в
-  // Документ: на кнопке «…», куда он вернулся, может открыться подсказка, и
-  // первый Escape по стеку слоёв достался бы ей.
+  // Control check: without an open menu, the same Escape closes the layer. Focus goes back into
+  // the Document, not to the "…" button: a tooltip may open on that button, and the first Escape
+  // through the layer stack would go to it.
   act(() => textbox().focus());
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
@@ -320,7 +320,7 @@ test("the menu speaks the provider's language", async () => {
     </UiProvider>
   );
 
-  // Ожидания — из русского каталога: гейт i18n держит кириллицу в каталоге.
+  // The expectations come from the Russian catalog: the i18n gate keeps Cyrillic in the catalog.
   const t = ru.editor;
   await user.click(screen.getByRole("button", { name: t.moreFormatting }));
   const menu = screen.getByRole("menu", { name: t.moreFormatting });

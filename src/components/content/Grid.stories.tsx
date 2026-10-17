@@ -12,7 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<GridProps>;
 
-/** Ячейка-заглушка: видно границы колонок и зазор, ничего доменного. */
+/** Placeholder cell: the column edges and the gap are visible, nothing domain-specific. */
 function Tile({ children, as = "div" }: { children: ReactNode; as?: "div" | "li" }) {
   const Comp = as;
   return (
@@ -30,8 +30,8 @@ const tiles = (count: number, as?: "div" | "li") =>
   ));
 
 /**
- * Число колонок одним числом — отзывчивая лестница: одна на телефоне, две с
- * `sm`, сколько сказано — с `lg`. Сузьте окно, чтобы увидеть переходы.
+ * A column count as a single number is a responsive ladder: one on a phone, two from `sm`,
+ * and the given number from `lg`. Narrow the window to see the transitions.
  */
 export const Playground: Story = {
   args: { columns: 4, gap: "md" },
@@ -43,8 +43,8 @@ export const Playground: Story = {
 };
 
 /**
- * Точное число колонок с каждого брейкпойнта: 1 → 2 с `sm` → 3 с `md` → 6 с
- * `xl`. Неизменное число на любой ширине — объект с одним `base`.
+ * The exact column count from each breakpoint: 1 → 2 from `sm` → 3 from `md` → 6 from
+ * `xl`. An unchanged count at any width is an object with a single `base` key.
  */
 export const Breakpoints: Story = {
   render: () => (
@@ -60,9 +60,9 @@ export const Breakpoints: Story = {
 };
 
 /**
- * Наименьшая ширина ячейки вместо числа колонок: строка заполняется сама.
- * Пустые дорожки остаются (`auto-fill`), поэтому три ячейки не растягиваются
- * во всю ширину и равны ячейкам полной строки.
+ * A minimum cell width instead of a column count: the row fills itself. Empty tracks remain
+ * (`auto-fill`), so three cells do not stretch across the full width, and they are the same
+ * size as the cells of a full row.
  */
 export const AutoFill: Story = {
   render: () => (
@@ -79,7 +79,7 @@ export const AutoFill: Story = {
 
 const GAPS: GridGap[] = ["none", "xs", "sm", "md", "lg", "xl"];
 
-/** Зазор — ступень шкалы: none, 8, 12, 16, 24, 32 пикселя. */
+/** Gap is a step on the scale: none, 8, 12, 16, 24, or 32 pixels. */
 export const Gaps: Story = {
   render: () => (
     <div className="flex flex-col gap-6">
@@ -95,7 +95,7 @@ export const Gaps: Story = {
   ),
 };
 
-/** Набор, который и есть список: скринридер объявит его и число элементов. */
+/** A set that is itself a list: a screen reader announces it along with the item count. */
 export const AsList: Story = {
   render: () => (
     <Grid as="ul" aria-label="Plans" columns={3}>

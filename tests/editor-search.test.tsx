@@ -10,15 +10,15 @@ import {
 import { findMatches, type SearchOptions } from "../src/editor/features/search/searchMatch.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Блок кода и таблица — ленивые (OLDSUI-111): `full` готов в `render` после чанков.
+// The code Block and the table are lazy (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 afterEach(cleanup);
 
 /**
- * Поиск по Документу (OLDSUI-151): чистая функция «Документ + запрос + опции →
- * совпадения». Документ — настоящий, Схемы Редактора: совпадения меряются в
- * позициях ProseMirror, и проверка «текст между позициями равен найденному»
- * ловит сдвиг на единицу, который на глаз не виден.
+ * Find in the Document (OLDSUI-151): a pure function "Document + query + options →
+ * matches". The Document is real, built from the Editor Schema: matches are measured in
+ * ProseMirror positions, and the check "text between positions equals the found text"
+ * catches a shift by one that is not visible to the eye.
  */
 function docOf(html: string) {
   const ref = createRef<RichTextEditorHandle>();

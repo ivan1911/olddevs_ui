@@ -27,8 +27,8 @@ test("Backspace with non-empty input does not touch the tags", async () => {
   const field = screen.getByLabelText("Tags: add");
   await user.type(field, "fo{Backspace}");
 
-  // Стирается набранное, а не соседний тег: иначе исправить опечатку было бы
-  // нельзя, не потеряв тег.
+  // What gets erased is what was typed, not the neighboring tag: otherwise a typo could not
+  // be fixed without losing a tag.
   expect(onChangeSpy).not.toHaveBeenCalled();
 });
 
@@ -55,19 +55,19 @@ test("duplicates are neither added nor complained about", async () => {
 
   await user.type(screen.getByLabelText("Tags: add"), "sunset{Enter}");
 
-  // Повторный тег ничего не значит; сообщать о нём — ругаться на действие,
-  // которое ничего не сломало.
+  // A repeated tag means nothing; reporting it would mean scolding the user for an action
+  // that broke nothing.
   expect(onChangeSpy).not.toHaveBeenCalled();
   expect(screen.getByLabelText("Tags: add")).toHaveProperty("value", "");
 });
 
 /**
- * Набор добран — поле только для чтения, а НЕ выключено.
+ * The limit is reached — the field is read-only, and NOT disabled.
  *
- * `disabled` на поле, в котором стоит каретка, снимает с него фокус: пользователь
- * набирал последний тег, жал Enter — и фокус улетал на документ, а обход формы
- * начинался заново. Заодно переставал работать Backspace для снятия последнего
- * тега: события выключенного поля не приходят вовсе.
+ * `disabled` on a field that holds the caret takes focus away from it: a user typed the
+ * last tag and pressed Enter, and focus flew to the document, and the form's tab order
+ * started over. On top of that, Backspace stopped working for removing the last tag: a
+ * disabled field receives no events at all.
  */
 test("the limit stops input without dropping focus or removal", async () => {
   const user = userEvent.setup();
@@ -81,24 +81,23 @@ test("the limit stops input without dropping focus or removal", async () => {
   field.focus();
   expect(document.activeElement).toBe(field);
 
-  // Backspace по-прежнему снимает последний тег — у выключенного поля события
-  // не приходили вовсе.
+  // Backspace still removes the last tag: a disabled field received no events at all.
   await user.keyboard("{Backspace}");
   expect(onChange).toHaveBeenCalledWith(["a"]);
 });
 
 /**
- * Регрессия ревью волны 18. Имя кнопки снятия задваивалось: react-aria
- * дописывает подпись своего тега сам, и «Убрать тег альфа» читалось как
- * «Убрать тег альфа альфа». По разметке этого не видно — атрибут выглядит
- * правильным, — поэтому проверяется вычисленное доступное имя.
+ * A regression from the review of wave 18. The remove button's name was doubled: react-aria
+ * appends the label of its tag itself, so "Remove tag alpha" read as "Remove tag alpha alpha".
+ * The markup does not show this — the attribute looks correct — so the computed accessible
+ * name is checked.
  */
 test("TagInput: the remove button names the tag exactly once", () => {
   render(<TagInput label="Tags" value={["alpha"]} onChange={() => {}} />);
 
-  // Запрос по роли считает доступное имя тем же способом, что и скринридер —
-  // и в отличие от чтения `aria-label` видит то, что дописал react-aria.
-  // Подписи приходят из английского фолбэка: провайдера здесь нет.
+  // The role query computes the accessible name the same way a screen reader does, and
+  // unlike reading `aria-label` it sees what react-aria appended. The labels come from the
+  // English fallback: there is no provider here.
   expect(screen.getByRole("button", { name: "Remove tag alpha" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Remove tag alpha alpha" })).toBeNull();
 });

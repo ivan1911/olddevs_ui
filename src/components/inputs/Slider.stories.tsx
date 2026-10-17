@@ -46,7 +46,7 @@ export const WithFormat: Story = {
   ),
 };
 
-/** Диапазон: концы не сходятся ближе, чем на `minGap`. */
+/** Range: the ends cannot come closer together than `minGap`. */
 export const Range: Story = {
   render: function Render() {
     const [range, setRange] = useState([300, 900]);
@@ -68,8 +68,8 @@ export const Range: Story = {
 };
 
 /**
- * Колесо мыши и тачпад двигают значение на шаг. У диапазона едет конец,
- * ближайший к курсору; на краю шкалы страница листается как обычно.
+ * The mouse wheel and the trackpad move the value by one step. On a range, the end nearest
+ * to the cursor moves; at the edge of the track the page scrolls as usual.
  */
 export const Wheel: Story = {
   render: () => (
@@ -88,7 +88,7 @@ export const Wheel: Story = {
   ),
 };
 
-/** Выключенное состояние: ползунок приглушён целиком, тянуть и фокусировать нельзя. */
+/** Disabled state: the slider is dimmed as a whole, and it cannot be dragged or focused. */
 export const Disabled: Story = {
   render: () => (
     <div className="flex items-end gap-10">
@@ -114,8 +114,8 @@ export const Disabled: Story = {
 };
 
 /**
- * Вертикальный ползунок: заливка растёт от нижнего края, стрелки вверх/вниз —
- * основные. Высота по умолчанию `h-48`, меняется через `className`.
+ * Vertical slider: the fill grows from the bottom edge, and the up and down arrows are
+ * the primary ones. The default height is `h-48`; it is changed through `className`.
  */
 export const Vertical: Story = {
   render: function Render() {
@@ -142,9 +142,9 @@ export const Vertical: Story = {
 };
 
 /**
- * Все варианты рядом: обе ориентации с подписью и без значения
- * (`valuePosition="none"`) и диапазон. Обзорная история — её же берёт галерея
- * снимков (скрипт съёмки выбирает `Matrix` первой).
+ * All variants side by side: both orientations with a label and without a value
+ * (`valuePosition="none"`), and a range. This overview story is also the one the snapshot
+ * gallery uses (the capture script picks `Matrix` first).
  */
 export const Matrix: Story = {
   render: () => (

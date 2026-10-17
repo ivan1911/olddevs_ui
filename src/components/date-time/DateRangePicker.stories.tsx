@@ -17,9 +17,9 @@ export default meta;
 type Story = StoryObj<DateRangePickerProps>;
 
 /**
- * Живой выбор. Открытая панель показывает пресеты и календарь; пресет
- * разворачивается в конкретные даты от «сегодня», поэтому в снимок эта
- * история попадает только свёрнутой.
+ * Live example. The open panel shows the presets and the calendar; a preset expands
+ * into concrete dates counted from "today", so this story gets into the snapshot only
+ * in its collapsed state.
  */
 export const Playground: Story = {
   render: (args) => {
@@ -42,11 +42,10 @@ export const Playground: Story = {
 };
 
 /**
- * Раскрытая панель: колонка пресетов, календарь на два месяца и длительность
- * снизу. Месяц зафиксирован, поэтому снимок не меняется от суток к суткам.
- * Выбранного пресета здесь нет: рамка на первом пресете («7 days») — фокус
- * клавиатуры при открытии, а не выбор; выбранный пресет подсвечивался бы только
- * после клика.
+ * The expanded panel: a column of presets, a two-month calendar and the duration below.
+ * The month is fixed, so the snapshot does not change from day to day.
+ * No preset is selected here: the outline on the first preset ("7 days") is the keyboard
+ * focus on open, not a selection; a selected preset would be highlighted only after a click.
  */
 export const Open: Story = {
   render: (args) => (
@@ -57,9 +56,9 @@ export const Open: Story = {
 };
 
 /**
- * С крестиком очистки. Без него период снимается только общим «Сбросить»,
- * который сносит и все остальные фильтры разом, — на ревью это назвали
- * функциональным пробелом, и справедливо.
+ * With a clear button. Without it, the range is removed only by the shared "Reset", which
+ * also clears all the other filters at once: in review this was called a functional gap,
+ * and rightly so.
  */
 export const WithClear: Story = {
   render: (args) => (
@@ -76,7 +75,7 @@ export const Matrix: Story = {
     <div className="flex w-[320px] flex-col gap-4">
       <DateRangePicker {...args} value={null} />
       <DateRangePicker {...args} value={RANGE} />
-      {/* Пресет вытесняет подпись из дат: «30 дней» честнее пары дат, которая завтра станет другой. */}
+      {/* A preset replaces the date label: "30 days" is more honest than a date range that will differ tomorrow. */}
       <DateRangePicker {...args} value={RANGE} period="30d" />
       <DateRangePicker {...args} value={RANGE} disabled />
     </div>
@@ -84,8 +83,9 @@ export const Matrix: Story = {
 };
 
 /**
- * Занятые дни и границы строками: в календаре они зачёркнуты и не выбираются;
- * `minValue` и `maxValue` — ISO-строки, `@internationalized/date` не нужен.
+ * Unavailable days and bounds as strings: in the calendar they are struck through and
+ * cannot be selected; `minValue` and `maxValue` are ISO strings, so `@internationalized/date`
+ * is not needed.
  */
 export const UnavailableDays: Story = {
   render: (args) => (

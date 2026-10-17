@@ -25,27 +25,27 @@ const base = {
 } as const;
 
 /*
-  ЗДЕСЬ ТОЛЬКО РАЗМЕТКА, ИМЕНА И ОТСУТСТВИЕ ХРАНЕНИЯ.
+  HERE ONLY MARKUP, NAMES AND THE ABSENCE OF STORAGE ARE CHECKED.
 
-  Переходы фокуса и спор за клавиши со списком проверяются в живом браузере
-  (`tests-visual/interactions.spec.ts`), и это не перестраховка: коллекция
-  react-aria в jsdom монтирует содержимое строки иначе, а `document
-  .activeElement` после размонтирования ведёт себя не так, как в браузере. Все
-  три дефекта, найденные при сборке компонента, jsdom пропустил бы молча.
+  Focus moves and key clashes with the list are checked in a live browser
+  (`tests-visual/interactions.spec.ts`), and this is not overcaution: the collection
+  of react-aria mounts row content differently in jsdom, and `document
+  .activeElement` behaves differently after unmounting than in a browser. All
+  three defects found while building the component would slip past jsdom silently.
 */
 
 test("every row has a drag handle", () => {
   render(<EditableList items={rows} {...base} />);
 
-  // Без `<Button slot="drag">` строка таскается мышью, а с клавиатуры не
-  // берётся вовсе — react-aria лишь предупреждает в консоль (ADR-0028).
+  // Without `<Button slot="drag">` a row drags with the mouse, but the keyboard does not
+  // pick it up at all: react-aria only logs a warning to the console (ADR-0028).
   expect(screen.getAllByRole("button", { name: /Drag/ })).toHaveLength(3);
 });
 
 test("the handle name does not repeat the row label", () => {
   render(<EditableList items={rows} {...base} />);
 
-  // Подпись строки библиотека дописывает сама: «Перетащить Первая».
+  // The library appends the row label itself: "Drag First".
   expect(screen.getAllByRole("button")[0]!.getAttribute("aria-label")).toBe("Drag");
 });
 
@@ -59,9 +59,9 @@ test("the list is named and the rows are in place", () => {
 test("the list has no live region of its own", () => {
   const { container } = render(<EditableList items={rows} {...base} />);
 
-  // Перетаскивание объявляет react-aria, локализованно; своя область
-  // дублировала бы её объявления, а появление добавленной строки объявляет
-  // потребитель — у него для этого уже есть своя область.
+  // react-aria announces the drag itself, with localized text; a region of our own
+  // would duplicate those announcements, while the appearance of an added row is announced
+  // by the consumer, who already has a live region of their own for that.
   expect(container.querySelector("[aria-live]")).toBeNull();
 });
 
@@ -69,16 +69,16 @@ test("the component stores neither the order nor the values", async () => {
   const { rerender } = render(<EditableList items={rows} {...base} />);
   expect(screen.getAllByRole("row")[0]!.textContent).toContain("First");
 
-  // Порядок приходит пропом и уходит наружу целиком — как сортировка у таблицы
+  // The order arrives as a prop and leaves as a whole, the same way table sorting does
   // (ADR-0023).
   rerender(<EditableList items={[rows[2]!, rows[0]!, rows[1]!]} {...base} />);
   expect(screen.getAllByRole("row")[0]!.textContent).toContain("Third");
 
-  // Значение — тоже проп. Компонент, хранящий подтверждённое, показывал бы своё
-  // после отказа сервера сохранить.
+  // The value is a prop too. A component that kept the confirmed value would show its own
+  // copy after the server refused to save.
   rerender(<EditableList items={[{ id: "1", value: "Renamed outside" }]} {...base} />);
-  // Ждём конца ухода: две пропавшие строки доживают его на своих местах
-  // (OLDSUI-14), и до конца в списке лежит прежний порядок.
+  // Wait for the exit to finish: the two removed rows stay in place until it ends
+  // (OLDSUI-14), and until then the list keeps its old order.
   await waitFor(() => expect(screen.getAllByRole("row")).toHaveLength(1));
   expect(screen.getAllByRole("row")[0]!.textContent).toContain("Renamed outside");
 });
@@ -86,13 +86,13 @@ test("the component stores neither the order nor the values", async () => {
 test("an empty value shows the empty label", () => {
   render(<EditableList items={[{ id: "1", value: "" }]} {...base} />);
 
-  // Пустое значение — не ошибка данных: строка обязана остаться видимой и
-  // правимой, иначе исправить её нечем.
+  // An empty value is not a data error: the row must stay visible and
+  // editable, or there would be no way to fix it.
   expect(screen.getByText("Not set")).toBeTruthy();
 
-  // И она обязана остаться ИМЕНОВАННОЙ. Пустое `textValue` react-aria встречает
-  // предупреждением в консоль: строка выглядит рабочей, а набором по первым
-  // буквам до неё не добраться.
+  // It must also stay NAMED. An empty `textValue` triggers a react-aria warning
+  // in the console: the row looks fine, but type-ahead by first letters
+  // cannot reach it.
   expect(screen.getByRole("row", { name: /Not set/ })).toBeTruthy();
 });
 
@@ -114,8 +114,8 @@ test("the add row exists only with the add prop and carries a name", () => {
     />
   );
 
-  // Плейсхолдер именем не считается: он исчезает ровно тогда, когда в поле
-  // что-то есть, а имя нужно и до, и после.
+  // A placeholder does not count as a name: it disappears exactly when the field
+  // has a value, while the name is needed both before and after.
   expect(screen.getByRole("textbox", { name: "New task" })).toBeTruthy();
 });
 
@@ -125,8 +125,8 @@ test("the row action is the consumer's, not the component's", async () => {
 
   await userEvent.click(screen.getAllByRole("row")[1]!);
 
-  // Одиночный щелчок открывает подробности, а не правку: иначе строке нечем
-  // было бы их открыть.
+  // A single click opens the details, not the editor; otherwise the row would have no way
+  // to open them.
   expect(onRowAction).toHaveBeenCalledWith("2");
 });
 
@@ -140,36 +140,36 @@ test("slots render the consumer's content", () => {
     />
   );
 
-  // Флажок, бейдж состояния и кнопки строки — дело потребителя: доменных
-  // состояний компонент не знает.
+  // The checkbox, status badge and row buttons belong to the consumer: the component
+  // knows no domain states.
   expect(screen.getByText("L1")).toBeTruthy();
   expect(screen.getByText("T3")).toBeTruthy();
 });
 
 /*
-  ПРОВЕРКА «ENTER НА РУЧКЕ НЕ ОТКРЫВАЕТ ПРАВКУ» ЖИВЁТ В БРАУЗЕРЕ, а не здесь, и
-  это не перестраховка.
+  THE CHECK "ENTER ON THE HANDLE DOES NOT OPEN THE EDITOR" LIVES IN THE BROWSER, NOT HERE, AND
+  THIS IS NOT OVERCAUTION.
 
-  Написанная в jsdom, она начинала настоящий перенос — ровно то, ради чего
-  правка и делалась, — а завершить его в jsdom нечем: `Escape` до цели не
-  доходит. Пока сессия переноса открыта, react-aria прячет от дерева
-  доступности всё, что в ней не участвует, и делает это наблюдателем за DOM:
-  под `aria-hidden` уходили контейнеры СЛЕДУЮЩИХ тестов. Падал то один, то
-  другой, примерно раз в четыре прогона.
+  Written in jsdom, it started a real move, the very thing the fix was made for, and
+  jsdom has no way to finish it: `Escape` never reaches its target. While a move session
+  is open, react-aria hides from the accessibility tree everything not taking part in it,
+  and it does so with a DOM observer:
+  the containers of the NEXT tests ended up under `aria-hidden`. One test or another failed,
+  about once every four runs.
 
-  В `tests-visual/interactions.spec.ts` та же проверка сформулирована сильнее:
-  «Enter на ручке начинает перенос, а не правку» — там перенос настоящий и
-  доводится до конца.
+  In `tests-visual/interactions.spec.ts` the same check is worded more strongly:
+  "Enter on the handle starts a move, not an edit" - there the move is real and
+  runs to the end.
 */
 
 test("Enter on a control in a slot does not open the editor either", async () => {
   /*
-    `leading` и `trailing` — чужая территория. Перехват ловил `Enter` и там:
-    флажок выполнения и кнопки действий строки открывали переименование.
+    `leading` and `trailing` are not ours. The handler caught `Enter` there too:
+    the done checkbox and the row action buttons opened rename.
 
-    Проверяется именно «правка не открылась». Дальше клавишу разбирает
-    `GridList` по своим правилам строки-ячейки, и это уже не наше дело:
-    отбирать её у списка компонент не должен.
+    The check is exactly "the editor did not open". Beyond that point the key is handled
+    by `GridList` per its own cell rules, which is no longer our concern:
+    the component must not take it away from the list.
   */
   const user = userEvent.setup();
   render(
@@ -191,8 +191,8 @@ test("Enter on a control in a slot does not open the editor either", async () =>
 });
 
 test("Enter on the row itself still opens the editor", async () => {
-  // Обратная сторона той же проверки: сузив условие, легко отобрать у строки
-  // то, ради чего перехват и заводился.
+  // The flip side of the same check: narrowing the condition easily takes away
+  // from the row the very thing the handler was set up for.
   const user = userEvent.setup();
   render(<EditableList items={rows} {...base} />);
 
@@ -204,10 +204,10 @@ test("Enter on the row itself still opens the editor", async () => {
 
 test("pending does not disable the add field", () => {
   /*
-    Второй дефект, найденный потребителем: `pending` уходил в `disabled`,
-    выключенное поле теряло фокус и обратно его не получало. Серия задач
-    подряд обрывалась на первой же, как только добавление идёт через сеть, —
-    то есть у всех.
+    The second defect, a consumer's find: `pending` turned into `disabled`,
+    so the disabled field lost focus and never got it back. A run of tasks
+    broke on the first one as soon as adding goes through the network,
+    which means for everyone.
   */
   render(
     <EditableList items={rows} {...base} add={{ label: "New", onAdd: () => {}, pending: true }} />
@@ -228,12 +228,12 @@ test("rows are not divided by default", () => {
 test("divided draws a hairline between the rows, not under the last one", () => {
   render(<EditableList items={rows} {...base} divided />);
 
-  // Под последней строкой линия подчеркнула бы список, которого никто не
-  // подчёркивал, поэтому у неё рамка снимается вариантом `last:`.
+  // Under the last row, the line would underline a list nobody underlined, so its border
+  // is removed with the `last:` variant.
   const row = screen.getAllByRole("row")[0]!.className;
   expect(row).toContain("border-b");
   expect(row).toContain("last:border-b-0");
-  // Скругление снимается: под скруглённой строкой линия загибается по углам.
+  // The rounding is removed: under a rounded row the line would bend at the corners.
   expect(row).toContain("rounded-none");
 });
 
@@ -252,8 +252,8 @@ test("focusAdd on a list without an add row does nothing, silently", () => {
   const handle = createRef<EditableListHandle>();
   render(<EditableList ref={handle} items={rows} {...base} />);
 
-  // Молча, а не исключением: вызывающий приходит из палитры команд и как раз
-  // не хочет знать, в каком состоянии список.
+  // Silently, not by throwing: the caller comes from the command palette and
+  // does not want to know what state the list is in.
   expect(() => handle.current!.focusAdd()).not.toThrow();
 });
 
@@ -268,7 +268,7 @@ test("focusAdd selects what is typed only when asked", async () => {
   handle.current!.focusAdd();
   expect(field.selectionStart).toBe(field.value.length);
 
-  // С `select` повторный вызов начинает ввод заново, а не дописывает к прошлому.
+  // With `select`, a repeated call starts typing afresh instead of appending to the old input.
   handle.current!.focusAdd({ select: true });
   expect([field.selectionStart, field.selectionEnd]).toEqual([0, field.value.length]);
 });
@@ -282,15 +282,15 @@ test("the row stays a Tailwind group root, and slot content sits inside it", () 
     />
   );
 
-  // Обещанный потребителю контракт, а не деталь вёрстки (ADR-0046). Внутри
-  // кита `group` на этой строке не используется ничем, поэтому уборка мёртвых
-  // классов сняла бы его с чистой совестью — и наведение у потребителя
-  // сломалось бы молча: кнопки просто стали бы видны всегда.
+  // A contract promised to the consumer, not a markup detail (ADR-0046). Inside
+  // the kit nothing on this row uses `group`, so cleaning up dead classes would
+  // strip it with a clear conscience, and hover in the consumer's code would
+  // break silently: the buttons would simply always be visible.
   const row = document.querySelector('[data-key="1"]') as HTMLElement;
   expect(row.classList.contains("group")).toBe(true);
 
-  // Вторая половина контракта: содержимое слота лежит ВНУТРИ корня группы —
-  // иначе `group-hover:` до него не дотянется, сколько маркер ни держи.
+  // The second half of the contract: the slot content sits INSIDE the group root,
+  // otherwise `group-hover:` cannot reach it, however you place the marker.
   expect(row.contains(screen.getByRole("button", { name: "Delete First" }))).toBe(true);
 });
 
@@ -301,7 +301,7 @@ test("add.leading reserves a column before the field, and nothing when omitted",
   const field = screen.getByRole("textbox", { name: "New" });
   const addRow = field.closest(".flex.items-center") as HTMLElement;
 
-  // Без слота ведущих колонок ровно одна — распорка под ручку перетаскивания.
+  // Without a leading slot there is exactly one column: a spacer for the drag handle.
   expect(addRow.querySelector('[data-testid="add-leading"]')).toBeNull();
 
   rerender(
@@ -319,21 +319,21 @@ test("add.leading reserves a column before the field, and nothing when omitted",
   const slot = screen.getByTestId("add-leading");
   expect(addRow.contains(slot)).toBe(true);
 
-  // Порядок важнее присутствия: слот стоит ПОСЛЕ распорки под ручку и ПЕРЕД
-  // полем — иначе колонки строки добавления не совпадут с колонками строк.
+  // Order matters more than presence: the slot goes AFTER the drag handle spacer and BEFORE
+  // the field, or the add row's columns would not line up with the rows' columns.
   const order = Array.from(addRow.querySelectorAll("*"));
   expect(order.indexOf(slot)).toBeLessThan(order.indexOf(field));
 });
 
 /*
-  КУРСОР ЗАХВАТА — НА ОБЁРТКЕ РУЧКИ, А НЕ НА САМОЙ РУЧКЕ.
+  THE GRAB CURSOR IS ON THE HANDLE WRAPPER, NOT ON THE HANDLE ITSELF.
 
-  react-aria ставит кнопке переноса `pointer-events: none`: она нужна ему как
-  цель для клавиатуры, а не для указателя. Курсор на ней поэтому не
-  применяется вовсе — замеряли в живом браузере: `getComputedStyle` у кнопки
-  отдаёт `grab`, а `elementFromPoint` в центре ручки возвращает строку с
-  `cursor: auto`. Проверка стоит здесь, чтобы класс не «починили» обратно на
-  кнопку, где он выглядит уместнее, а работает никак.
+  react-aria sets `pointer-events: none` on the move button: it needs it as a
+  keyboard target, not a pointer one. So the cursor is not applied to it at all:
+  measured in a live browser, `getComputedStyle` of the button returns `grab`,
+  while `elementFromPoint` at the center of the handle returns the row with
+  `cursor: auto`. This check lives here so the class is not "fixed" back onto the
+  button, where it looks more fitting but does nothing.
 */
 test("the grab cursor sits on the handle wrapper, not on the handle itself", () => {
   render(<EditableList items={rows} {...base} />);
@@ -351,14 +351,14 @@ test("a row that cannot be dragged shows no grab cursor", () => {
 });
 
 /*
-  УХОД СТРОКИ — OLDSUI-14.
+  ROW EXIT - OLDSUI-14.
 
-  Анимаций jsdom не исполняет, поэтому здесь они ПОДМЕНЯЮТСЯ: заглушка говорит
-  «на строке что-то играет», а конец ухода тест объявляет сам — событием
-  `animationend`, тем же самым, по которому строка снимается в браузере. Так
-  проверяется ровно то, что написано в компоненте: строка живёт, пока идёт её
-  уход. Сам уход — смыкание, ступень, кривая и поведение при `reduce` — меряется
-  в живом браузере, в `tests-visual/interactions.spec.ts`.
+  jsdom does not run animations, so here they are MOCKED: the stub says
+  "something is playing on the row", and the test fires the end of the exit itself, with the
+  `animationend` event, the same one the browser uses to remove the row. That way
+  the test checks exactly what the component says: the row lives while its exit
+  runs. The exit itself (gap closing, timing, curve and the `reduce` behavior) is measured
+  in a live browser, in `tests-visual/interactions.spec.ts`.
 */
 const realGetAnimations = Element.prototype.getAnimations;
 
@@ -374,7 +374,7 @@ afterEach(() => {
 
 const shorter = rows.filter((row) => row.id !== "2");
 
-/** Строка целиком — по тексту внутри неё. */
+/** The whole row, matched by the text inside it. */
 const rowWith = (text: string) => screen.getByText(text).closest("[data-key]") as HTMLElement;
 
 test("a row gone from items lives until its exit is over", async () => {
@@ -383,14 +383,14 @@ test("a row gone from items lives until its exit is over", async () => {
 
   rerender(<EditableList items={shorter} {...base} />);
 
-  // Строка на месте, и место под ней ещё занято — смыкание идёт вместе с уходом.
+  // The row stays in place and its space is still taken: the gap closes along with the exit.
   expect(rowWith("Second")).not.toBeNull();
   expect(screen.getAllByRole("row")).toHaveLength(3);
 
   await act(async () => {
-    // Настоящее событие, а не `fireEvent.animationEnd`: синтетический
-    // обработчик React на него в jsdom не срабатывает, и компонент слушает
-    // поэтому настоящее.
+    // A real event, not `fireEvent.animationEnd`: React's synthetic handler does not
+    // fire on it in jsdom, and the component listens for the real one,
+    // so the test dispatches a real event.
     rowWith("Second").dispatchEvent(new Event("animationend", { bubbles: true }));
   });
 
@@ -405,11 +405,11 @@ test("the leaving row is inert from the first frame, not at the end of the exit"
   rerender(<EditableList items={shorter} {...base} />);
 
   const ghost = rowWith("Second");
-  // `inert` разом снимает фокус, щелчок и объявление скринридером: для
-  // незрячего запись исчезла в момент действия.
+  // `inert` removes focus, clicks and the screen reader announcement at once: for a
+  // blind user the entry vanished at the moment of the action.
   expect(ghost.hasAttribute("inert")).toBe(true);
   expect(ghost.getAttribute("data-disabled")).toBe("true");
-  // Ручка переноса выключена вместе со строкой: уходящую не перетаскивают.
+  // The drag handle is disabled along with the row: a row that is leaving cannot be dragged.
   const handle = within(ghost).getByRole("button", { name: /Drag/ });
   expect((handle as HTMLButtonElement).disabled).toBe(true);
 });
@@ -422,8 +422,8 @@ test("the exit carries the measured height, because height does not animate from
 
   const ghost = rowWith("Second");
   expect(ghost.className).toContain("animate-rowout");
-  // В jsdom раскладки нет и высота нулевая — проверяется, что переменная
-  // ставится вообще, а не чему она равна: значение меряется в браузере.
+  // jsdom has no layout and the height is zero, so the test checks that the variable
+  // is set at all, not what it equals: the value is measured in a browser.
   expect(ghost.style.getPropertyValue("--row-exit-h")).toMatch(/^\d+px$/);
 });
 
@@ -442,8 +442,8 @@ test("two rows leaving one after another keep their places, not swap them", () =
   stubAnimations();
   const { rerender } = render(<EditableList items={rows} {...base} />);
 
-  // Сначала уходит вторая, следом — третья. Индекс в прежнем `items` про
-  // призрака не знает: он сдвинут на ушедшую, и строки менялись местами.
+  // The second row leaves first, then the third. The index into the old `items` knows
+  // nothing about the ghost: it is shifted by the departed row, and the rows swapped places.
   rerender(<EditableList items={[rows[0]!, rows[2]!]} {...base} />);
   rerender(<EditableList items={[rows[0]!]} {...base} />);
 
@@ -455,8 +455,8 @@ test("two rows leaving one after another keep their places, not swap them", () =
 });
 
 test("a row nothing animates is dropped on the next frame, not held forever", async () => {
-  // Заглушка НЕ ставится: `getAnimations` в jsdom нет вовсе — то же состояние,
-  // что у браузера, которому нечего проигрывать.
+  // The stub is NOT installed: `getAnimations` does not exist in jsdom at all, which is
+  // the same state as a browser with nothing to play.
   const { rerender } = render(<EditableList items={rows} {...base} />);
 
   rerender(<EditableList items={shorter} {...base} />);

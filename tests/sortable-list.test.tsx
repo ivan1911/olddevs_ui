@@ -14,18 +14,18 @@ const rows = [
 test("every row has a drag handle", () => {
   render(<SortableList items={rows} onReorder={() => {}} aria-label="Order" />);
 
-  // Без `<Button slot="drag">` строка таскается мышью, а с клавиатуры не
-  // берётся ВООБЩЕ — react-aria при этом лишь предупреждает в консоль, то есть
-  // недоступный список выглядит рабочим. Ручку рисует компонент, а не
-  // потребитель по желанию.
+  // Without `<Button slot="drag">`, a row can be dragged with a mouse but cannot be picked up from
+  // the keyboard AT ALL. react-aria only logs a console warning in that case, so an inaccessible
+  // list looks like it works. The component renders the handle, not the consumer, and it is not
+  // optional.
   expect(screen.getAllByRole("button", { name: /Drag/ })).toHaveLength(3);
 });
 
 test("the handle name does not repeat the row label", () => {
   render(<SortableList items={rows} onReorder={() => {}} aria-label="Order" />);
 
-  // Подпись строки react-aria дописывает сама: «Перетащить Первая». Повторив
-  // её в `aria-label`, мы получили бы её дважды.
+  // react-aria appends the row label itself, for example "Drag First". Repeating it in `aria-label`
+  // would announce it twice.
   const handle = screen.getAllByRole("button")[0]!;
   expect(handle.getAttribute("aria-label")).toBe("Drag");
 });
@@ -42,8 +42,8 @@ test("the list has no live region of its own", () => {
     <SortableList items={rows} onReorder={() => {}} aria-label="Order" />
   );
 
-  // react-aria объявляет перетаскивание сам и локализованно; своя область
-  // дублировала бы объявления и спорила бы с ними.
+  // react-aria announces the drag itself, localized. A custom region would duplicate those
+  // announcements and conflict with them.
   expect(container.querySelector("[aria-live]")).toBeNull();
 });
 
@@ -61,7 +61,7 @@ test("the component does not store the order", () => {
   );
   expect(screen.getAllByRole("row")[0]!.textContent).toContain("First");
 
-  // Порядок приходит пропом и уходит наружу — как сортировка у таблицы.
+  // The order comes in as a prop and goes out through a callback, like sorting in a table.
   const other = [rows[2]!, rows[0]!, rows[1]!];
   rerender(<SortableList items={other} onReorder={onReorder} aria-label="Order" />);
   expect(screen.getAllByRole("row")[0]!.textContent).toContain("Third");
@@ -81,8 +81,8 @@ test("markup instead of a label requires textValue", () => {
     />
   );
 
-  // Из `textValue` собирается и имя строки, и имя её ручки, и объявления
-  // «Вставить между … и …».
+  // `textValue` provides the row name, the handle name and the drop announcements, for example
+  // "Insert between … and …".
   expect(screen.getByRole("row", { name: /Bold/ })).toBeTruthy();
 });
 
@@ -98,8 +98,8 @@ test("the list id names it inside its group and stays out of the DOM", () => {
     />
   );
 
-  // `id` — ключ состояния доски, а не `id` элемента: «todo» в DOM столкнулся
-  // бы с любым другим «todo» на странице.
+  // `id` is the key of the board's state, not the element's `id`: "todo" in the DOM would collide
+  // with any other "todo" on the page.
   expect(container.querySelector("#todo")).toBeNull();
   expect(screen.getAllByRole("row")).toHaveLength(3);
 });

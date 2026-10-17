@@ -3,7 +3,7 @@ import { Button } from "./Button.js";
 import { ButtonGroup } from "./ButtonGroup.js";
 import { GridDenseIcon, GridSparseIcon } from "../../icons.js";
 
-/** Волна 9, облегчённая планка: шла вместе с примитивами навигации. */
+/** Wave 9, a lighter quality bar: it shipped together with the navigation primitives. */
 const meta = {
   title: "Actions/ButtonGroup",
   component: ButtonGroup,

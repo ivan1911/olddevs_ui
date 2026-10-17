@@ -14,16 +14,16 @@ import {
 } from "../src/components/overlays/Menu.js";
 
 /*
-  Шим `CSS.escape`.
+  `CSS.escape` shim.
 
-  В jsdom объекта `CSS` нет вовсе, а попоувер react-aria зовёт `CSS.escape`
-  при открытии — без шима меню не открывается ни в одном тесте, и падает это
-  не в проверяемом месте, а внутри библиотеки.
+  jsdom has no `CSS` object at all, but the react-aria popover calls `CSS.escape`
+  when it opens. Without the shim, no menu opens in any test, and the failure
+  surfaces not at the place being checked but inside the library.
 
-  Шим допустим ровно потому, что делает окружение БЛИЖЕ к браузеру, а не
-  дальше: `CSS.escape` есть везде и является чистой строковой функцией. Это
-  не то же самое, что подменять раскладку или фокус — такое в jsdom не
-  подменяется, и проверки, которые от них зависят, живут в
+  The shim is admissible precisely because it brings the environment CLOSER to a
+  browser, not further away: `CSS.escape` exists everywhere and is a pure string
+  function. That is not the same as replacing layout or focus. Such things are
+  not replaced in jsdom, and the checks that depend on them live in
   `tests-visual/interactions.spec.ts` (ADR-0012).
 */
 if (typeof globalThis.CSS === "undefined")
@@ -88,8 +88,8 @@ test("onAction fires once, not twice", async () => {
   await user.click(screen.getByRole("button", { name: "Actions" }));
   await user.click(screen.getByRole("menuitem", { name: "Rename" }));
 
-  // Двойной вызов — классическая поломка меню, собранного руками: обработчик
-  // вешают и на пункт, и на всплывающий клик панели.
+  // A double call is the classic failure of a hand-built menu: the handler is
+  // attached both to the item and to the panel's bubbling click.
   expect(onAction).toHaveBeenCalledTimes(1);
 });
 
@@ -110,8 +110,8 @@ test("a toggle item does NOT close the menu", async () => {
   await user.click(screen.getByRole("button", { name: "View" }));
   await user.click(screen.getByRole("menuitemcheckbox", { name: "Show labels" }));
 
-  // Переключатели ставят пачкой: закрытие после первого заставляло бы открывать
-  // меню заново на каждый флажок.
+  // Toggles are set in bulk: closing after the first one would force the menu to
+  // be reopened for every checkbox.
   expect(screen.getByRole("menu")).toBeTruthy();
 });
 
@@ -121,8 +121,8 @@ test("selection on a section yields roles and aria-checked, not just a tick", as
 
   await user.click(screen.getByRole("button", { name: "View" }));
 
-  // Роль и состояние проставляет react-aria — ровно поэтому переключатели
-  // сделаны выбором на разделе, а не пропом `checked` у пункта.
+  // react-aria sets the role and the state, which is exactly why the toggles are
+  // made as a selection on a section rather than with a `checked` prop on the item.
   const dense = screen.getByRole("menuitemcheckbox", { name: "Dense grid" });
   expect(dense.getAttribute("aria-checked")).toBe("true");
   expect(
@@ -164,20 +164,20 @@ test("arrows walk the items and skip the disabled one", async () => {
 
   await user.click(screen.getByRole("button", { name: "Actions" }));
 
-  // Открытое МЫШЬЮ меню ставит фокус на сам список, а не на первый пункт:
-  // подсветка пункта появляется только тогда, когда пользователь взялся за
-  // клавиатуру. Так ведёт себя react-aria в настоящем браузере (проверено в
-  // Chromium), и первое нажатие стрелки не уходит «в никуда» — оно и приводит
-  // на первый пункт. Открытие с клавиатуры сразу подсвечивает первый пункт,
-  // но нажатие Enter на кнопке jsdom не воспроизводит (ADR-0012).
+  // A menu opened with the mouse puts focus on the list itself, not on the first
+  // item: the item highlight appears only once the user reaches for the keyboard.
+  // That is how react-aria behaves in a real browser (checked in Chromium), and
+  // the first arrow press does not go "nowhere": it lands on the first item.
+  // Opening from the keyboard highlights the first item at once, but jsdom does
+  // not reproduce pressing Enter on the button (ADR-0012).
   expect(document.activeElement).toBe(screen.getByRole("menu"));
 
   await user.keyboard("{ArrowDown}");
   expect(document.activeElement?.textContent).toBe("First");
 
   await user.keyboard("{ArrowDown}");
-  // «Второй» выключен и пропускается: остановка на нём означала бы тупик —
-  // выбрать его нельзя, а стрелка дальше уже нажата.
+  // "Second" is disabled and skipped: stopping on it would be a dead end. It
+  // cannot be selected, and the arrow press has already moved past it.
   expect(document.activeElement?.textContent).toBe("Third");
 
   await user.keyboard("{ArrowUp}");

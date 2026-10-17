@@ -12,18 +12,17 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Панель Редактора: фиксированная, над полем (OLDSUI-41).
+ * The Editor's Toolbar: fixed, above the field (OLDSUI-41).
  *
- * Проверяется снаружи — ролями и именами, как её видит скринридер, — и
- * результатом в HTML. Движок доступен через `ref.editor` только там, где jsdom
- * не умеет ввода: выделение и набор идут командами, как в остальных тестах
- * Редактора.
+ * It is checked from the outside, by roles and names, the way a screen reader sees it, and
+ * by the result in HTML. `ref.editor` gives access to the engine only where jsdom cannot
+ * handle input: selection and typing go through commands, as in the other Editor tests.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -57,14 +56,14 @@ test("arrows, Home and End move between the toolbar actions", async () => {
   screen.getByRole("button", { name: "Before" }).focus();
   await user.tab();
 
-  // Первая остановка — первая кнопка Панели: в `basic` это «Жирный» — «¶» из
-  // одного «Текста» не рисуется (OLDSUI-154).
+  // The first stop is the Toolbar's first button: in `basic` it is "Bold"; "¶" from a single
+  // "Text" is not rendered (OLDSUI-154).
   const first = screen.getByRole("button", { name: "Bold" });
   expect(document.activeElement).toBe(first);
   await user.keyboard("{ArrowRight}");
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Italic" }));
   await user.keyboard("{End}");
-  // Последняя остановка — справочник сочетаний у правого края (OLDSUI-67).
+  // The last stop is the keyboard shortcuts popover at the right edge (OLDSUI-67).
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Keyboard shortcuts" }));
   await user.keyboard("{Home}");
   expect(document.activeElement).toBe(first);
@@ -81,7 +80,7 @@ test("toggle buttons report the marks and blocks under the caret with aria-press
   expect(bold.getAttribute("aria-pressed")).toBe("true");
   expect(italic.getAttribute("aria-pressed")).toBe("false");
 
-  // Список под кареткой объявляет не кнопка, а имя меню «Списки» (OLDSUI-66).
+  // The list under the caret is announced not by a button but by the "Lists" menu name (OLDSUI-66).
   act(() => void editor.commands.setTextSelection(editor.state.doc.content.size - 4));
   expect(bold.getAttribute("aria-pressed")).toBe("false");
   expect(screen.getByRole("button", { name: "List: bulleted" })).toBeDefined();
@@ -112,16 +111,16 @@ test("the tooltip names the action together with its shortcut", async () => {
   renderEditor();
   const bold = screen.getByRole("button", { name: "Bold" });
 
-  // jsdom — не Apple: `mod` подписан как Ctrl.
+  // jsdom is not Apple: `mod` is labeled as Ctrl.
   expect(bold.getAttribute("aria-keyshortcuts")).toBe("Control+B");
   await user.hover(bold);
   expect((await screen.findByRole("tooltip")).textContent).toBe("BoldCtrl+B");
 });
 
 /**
- * Имена кнопок Панели по порядку — то, что услышит скринридер, — и `|` на
- * месте разделителя групп. Справочник сочетаний у правого края не считается:
- * он не зависит от `tools`, и его место и состав проверяет
+ * The Toolbar button names in order, which is what a screen reader announces, and `|` at the
+ * place of the group separator. The keyboard shortcuts popover at the right edge is not counted:
+ * it does not depend on `tools`, and its place and contents are checked by
  * `rich-text-editor-shortcuts.test.tsx`.
  */
 function toolbarLayout() {
@@ -133,20 +132,21 @@ function toolbarLayout() {
           ? "|"
           : (node.getAttribute("aria-label") ?? node.textContent)
       )
-      // Правый край — «Поиск» (OLDSUI-151) и справочник: они не группа кита, у них свои тесты.
+      // The right edge holds "Find" (OLDSUI-151) and the shortcuts popover: they are not a
+      // kit group, and they have their own tests.
       .filter((name) => name !== "Keyboard shortcuts" && name !== "Find")
   );
 }
 
-/** Только кнопки, без разделителей. */
+/** Buttons only, without separators. */
 const toolbarButtons = () => toolbarLayout().filter((name) => name !== "|");
 
 /*
-  Раскладка компактной Панели (OLDSUI-66) — порядок кита: «+» · HTML (OLDSUI-76) ·
-  «¶» · выравнивание ▾ | жирный · курсив · маркер · «…» | списки ▾ |
-  ссылка · картинка · таблица ▾ · эмодзи | отмена · повтор. Отдельных кнопок
-  выравнивания, списков, разделителя и Блока кода нет: первые два — меню,
-  разделитель — в Меню вставки, Блок кода — пункт «…» (OLDSUI-76).
+  The layout of the compact Toolbar (OLDSUI-66), in the kit's order: "+" · HTML (OLDSUI-76) ·
+  "¶" · Alignment ▾ | Bold · Italic · Highlight · "…" | Lists ▾ |
+  Link · Image · Table ▾ · Emoji | Undo · Redo. There are no separate buttons
+  for alignment, lists, the separator, or the code block: the first two are menus,
+  the separator is in the Slash menu, and the code block is an item under "…" (OLDSUI-76).
 */
 test("the full preset lays the toolbar out in the kit's order, groups split by separators", () => {
   renderEditor();
@@ -159,7 +159,7 @@ test("the full preset lays the toolbar out in the kit's order, groups split by s
     "|",
     "Bold",
     "Italic",
-    // «Цвет» — в меню выделения, на Панели только «Маркер» (OLDSUI-154).
+    // "Color" is in the selection menu; the Toolbar has only "Highlight" (OLDSUI-154).
     "Highlight: None",
     "More formatting",
     "|",
@@ -188,8 +188,8 @@ test("the full preset lays the toolbar out in the kit's order, groups split by s
 test("the basic preset keeps only its tools' buttons and menus, without empty groups", () => {
   renderEditor({ preset: "basic" });
 
-  // Цитата, строчный код и зачёркнутый — пункты «…»; «¶» из одного «Текста» не
-  // рисуется (OLDSUI-154); маркера и меню выравнивания в basic нет.
+  // Quote, inline code, and strikethrough are items under "…"; "¶" from a single "Text" is not
+  // rendered (OLDSUI-154); there is no highlight or alignment menu in basic.
   expect(toolbarLayout()).toEqual([
     "Bold",
     "Italic",
@@ -216,14 +216,14 @@ test("the shortcuts reference is the last button of the fixed toolbar", () => {
 test("tools is an exact list and wins over the preset, in the kit's order", () => {
   renderEditor({ preset: "basic", tools: ["taskList", "bold", "underline", "align"] });
 
-  // Чек-лист — в «Списки ▾», а не в «¶»: без заголовков «¶» нет (OLDSUI-154).
+  // Task list is under "Lists ▾", not under "¶": without headings there is no "¶" (OLDSUI-154).
   expect(toolbarButtons()).toEqual(["Alignment: left", "Bold", "More formatting", "Lists"]);
 });
 
 /*
-  Имя из JS без типов или из более новой версии кита: Редактор его не знает и
-  молча отбрасывает (решение владельца, OLDSUI-98), а не падает и не теряет
-  остальной набор.
+  A name from JS without types, or from a newer kit version: the Editor does not know it and
+  silently drops it (the owner's decision, OLDSUI-98), instead of failing or losing the rest
+  of the set.
 */
 test("an unknown name in tools is dropped silently, the rest of the set works", () => {
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -255,8 +255,8 @@ test("a disabled tool drops its markup from loaded and pasted content", () => {
     expect(html).toMatch(/<strong>b<\/strong>/);
     expect(html).toMatch(/<ul><li><p>bullet/);
     expect(html).toMatch(/<blockquote>/);
-    // Отключённое в `basic` — заголовок, подчёркивание, индексы, чек-лист,
-    // блок кода и разделитель — пропадает, а текст из них остаётся.
+    // What is turned off in `basic` (heading, underline, sub/superscript, task list,
+    // code block, and separator) disappears, but the text from them stays.
     expect(html).not.toMatch(/<h2|<u>|<sup>|<sub>|taskList|<pre|<hr/);
     expect(html).toContain("Title");
     expect(html).toContain("code()");
@@ -274,7 +274,7 @@ test("a disabled tool's shortcut does nothing", () => {
   const withUnderline = renderEditor({ tools: ["underline"], defaultValue: "<p>word</p>" });
   act(() => void withUnderline.editor.commands.setTextSelection({ from: 1, to: 5 }));
   pressCtrlU(withUnderline.editor);
-  // Контроль: сочетание вообще доходит до движка в jsdom.
+  // Control: the shortcut does reach the engine in jsdom at all.
   expect(withUnderline.editor.getHTML()).toBe("<p><u>word</u></p>");
   cleanup();
 
@@ -313,9 +313,9 @@ test("the toolbar speaks the provider's language", () => {
     </UiProvider>
   );
 
-  // Ожидания — из русского каталога, а не литералами: гейт i18n держит
-  // кириллицу в каталоге, и проверяется здесь именно то, что Панель берёт
-  // строки у провайдера, а не у фолбэка.
+  // The expectations come from the Russian catalog, not from literals: the i18n gate keeps
+  // Cyrillic in the catalog, and what is checked here is that the Toolbar takes its strings
+  // from the provider, not from the fallback.
   const t = ru.editor;
   expect(screen.getByRole("toolbar", { name: t.toolbar })).toBeDefined();
   expect(screen.getByRole("button", { name: t.bold })).toBeDefined();

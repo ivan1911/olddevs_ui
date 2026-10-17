@@ -10,13 +10,13 @@ import {
 } from "../src/editor/index.js";
 
 /**
- * Типы Опций встроенного Инструмента (OLDSUI-268): `tool()` и карта
- * `RichTextTools` на публичном входе. Проверяет `npm run typecheck`, а не
- * Vitest: `expectTypeOf` и `@ts-expect-error` во время работы ничего не делают.
+ * Types of built-in Tool options (OLDSUI-268): `tool()` and the `RichTextTools` map
+ * on the public entry point. Checked by `npm run typecheck`, not by Vitest:
+ * `expectTypeOf` and `@ts-expect-error` do nothing at run time.
  */
 
-// Потребитель дописывает свой Инструмент в карту так же, как Tiptap дописывает
-// `Commands`. Имя пакета разрешается на исходник через `paths` в tsconfig.json.
+// A consumer adds its own Tool to the map the same way Tiptap adds to `Commands`.
+// The package name resolves to the source via `paths` in tsconfig.json.
 declare module "@olddevs/ui/editor" {
   interface RichTextTools {
     acme_note: {
@@ -33,7 +33,7 @@ test("tool() takes the options of the tool it names and returns a Configured Too
 
   expectTypeOf(toc).toEqualTypeOf<ConfiguredTool<"toc">>();
   expectTypeOf(search).toEqualTypeOf<ConfiguredTool<"search">>();
-  // Параметры необязательны: запись без опций только включает Инструмент.
+  // The options are optional: an entry without options only switches the Tool on.
   expectTypeOf(tool("toc")).toEqualTypeOf<ConfiguredTool<"toc">>();
   expectTypeOf(tool("invisibleCharacters", { visible: true })).toEqualTypeOf<
     ConfiguredTool<"invisibleCharacters">
@@ -53,19 +53,19 @@ test("a Configured Tool is an element of tools next to names and presets", () =>
 });
 
 test("the options of another tool, an unknown option and a wrong value do not compile", () => {
-  // @ts-expect-error `matchCase` — опция Поиска, а не Оглавления
+  // @ts-expect-error `matchCase` is a Find option, not a Table of contents one
   tool("toc", { matchCase: true });
-  // @ts-expect-error `offsetVar` — опция Оглавления, а не Поиска
+  // @ts-expect-error `offsetVar` is a Table of contents option, not a Find one
   tool("search", { offsetVar: "--header-h" });
-  // @ts-expect-error такой опции нет ни у кого
+  // @ts-expect-error no Tool has such an option
   tool("toc", { color: "red" });
-  // @ts-expect-error уровни Оглавления — 1–4
+  // @ts-expect-error Table of contents levels are 1–4
   tool("toc", { levels: [5] });
-  // @ts-expect-error флажок — булево
+  // @ts-expect-error the flag is a boolean
   tool("search", { regex: "yes" });
-  // @ts-expect-error `visible` — булево
+  // @ts-expect-error `visible` is a boolean
   tool("invisibleCharacters", { visible: "yes" });
-  // @ts-expect-error `persist` — опция сворачиваемого Блока, а не невидимых символов
+  // @ts-expect-error `persist` is an option of the Details Block, not of invisible characters
   tool("invisibleCharacters", { persist: true });
 });
 
@@ -78,21 +78,21 @@ test("typography takes the quote set and a rule as false or a string (OLDSUI-279
   });
   expectTypeOf(typography).toEqualTypeOf<ConfiguredTool<"typography">>();
   expectTypeOf(tool("typography")).toExtend<Tool>();
-  // @ts-expect-error набор кавычек — "auto", "ru" или "en"
+  // @ts-expect-error the quote set is "auto", "ru" or "en"
   tool("typography", { quotes: "de" });
-  // @ts-expect-error правило — false или строка, но не true
+  // @ts-expect-error a rule is false or a string, not true
   tool("typography", { emDash: true });
-  // @ts-expect-error такого правила у Typography нет
+  // @ts-expect-error Typography has no such rule
   tool("typography", { semicolon: ";" });
   expect(typography).toBeDefined();
 });
 
 test("tool() does not take a name that has no options", () => {
-  // @ts-expect-error у `bold` опций нет
+  // @ts-expect-error `bold` has no options
   tool("bold", {});
-  // @ts-expect-error и имени без опций тоже
+  // @ts-expect-error and so does a name without options
   tool("history");
-  // @ts-expect-error имя вне набора кита
+  // @ts-expect-error a name outside the kit's set
   tool("nope", {});
 });
 
@@ -115,7 +115,7 @@ test("a consumer extends the map through declare module with the package name", 
   }>();
   expectTypeOf<RichTextTools["acme_note"]["state"]>().toEqualTypeOf<{ count: number }>();
   expectTypeOf<RichTextTools["acme_note"]["commands"]>().toEqualTypeOf<{ clear(): boolean }>();
-  // Дописанный Инструмент не ломает `tool()` встроенных.
+  // A Tool added to the map does not break the built-in `tool()` calls.
   expectTypeOf(tool("toc", { levels: [2] })).toEqualTypeOf<ConfiguredTool<"toc">>();
 });
 
@@ -124,17 +124,17 @@ test("youtube and twitch take autoload as a boolean and nothing else (OLDSUI-287
   const twitch = tool("twitch", { autoload: true });
   expectTypeOf(youtube).toEqualTypeOf<ConfiguredTool<"youtube">>();
   expectTypeOf(twitch).toEqualTypeOf<ConfiguredTool<"twitch">>();
-  // Параметры необязательны: запись без опций только включает Инструмент.
+  // The options are optional: an entry without options only switches the Tool on.
   expectTypeOf(tool("youtube")).toEqualTypeOf<ConfiguredTool<"youtube">>();
   expectTypeOf(tool("twitch")).toExtend<Tool>();
   expectTypeOf<RichTextTools["youtube"]["options"]>().toEqualTypeOf<VideoToolOptions>();
   expectTypeOf<RichTextTools["twitch"]["options"]>().toEqualTypeOf<{ autoload: boolean }>();
   expectTypeOf<VideoToolOptions>().toEqualTypeOf<{ autoload: boolean }>();
-  // @ts-expect-error `autoload` — булево
+  // @ts-expect-error `autoload` is a boolean
   tool("youtube", { autoload: "no" });
-  // @ts-expect-error такой опции у видео нет
+  // @ts-expect-error videos have no such option
   tool("twitch", { autoplay: true });
-  // @ts-expect-error `matchCase` — опция Поиска, а не видео
+  // @ts-expect-error `matchCase` is a Find option, not a video one
   tool("youtube", { matchCase: true });
   expect([youtube, twitch]).toHaveLength(2);
 });

@@ -30,18 +30,17 @@ type Story = StoryObj<SavedViewsProps<Filters>>;
 export const Playground: Story = {};
 
 /**
- * Активного вида нет — у заказчика это «вид по умолчанию», сброшенный адрес.
- * Возврат к нему делается видом, который потребитель кладёт в список сам:
- * своего понятия «сброс» кит не заводит, потому что не знает, что для
- * приложения пусто.
+ * There is no active view. In the client's app this is the "default view", a reset address.
+ * Returning to it is done with a view that the consumer adds to the list itself: the kit does not
+ * introduce its own concept of "reset", because it does not know what counts as empty for the app.
  */
 export const WithoutActive: Story = {
   args: { activeId: null },
 };
 
 /**
- * Живое переключение: снимок приходит целиком за один вызов, и применяет его
- * потребитель — здесь в локальное состояние истории, у заказчика в адрес.
+ * Live switching: the snapshot arrives whole in a single call, and the consumer applies it:
+ * here into the story's local state, in the client's app into the address bar.
  */
 export const WithApply: Story = {
   render: (args) => {
@@ -54,7 +53,7 @@ export const WithApply: Story = {
           {...args}
           activeId={active}
           onSelect={(view) => {
-            // Один вызов, весь снимок. Разбор по ключу — знание потребителя.
+            // One call, the whole snapshot. Parsing by key is the consumer's knowledge.
             setActive(view.id);
             setApplied(view.state);
           }}
@@ -67,9 +66,9 @@ export const WithApply: Story = {
   },
 };
 
-/** Длинный список переносится по строкам, а не режется и не скроллится. */
+/** A long list wraps by rows instead of being cut off or scrolled. */
 export const ManyViews: Story = {
-  // Узкая рамка: в широком кадре все виды помещаются в одну строку и перенос не виден.
+  // A narrow frame: in a wide frame all views fit on one row, so the wrapping does not show.
   decorators: [
     (Story) => (
       <div className="max-w-sm">

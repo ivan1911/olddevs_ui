@@ -364,25 +364,24 @@ test("disabled fires no editing callbacks", async () => {
 });
 
 /**
- * `preserveFocus` не должен ронять роуминг табиндекса.
+ * `preserveFocus` must not break the roving tabindex.
  *
- * Все три эффекта восстановления выходили по `if (preserveFocus) return;` ДО
- * `setActiveIndex`, а число клавиш меняется вместе с раскладкой и режимом:
- * ru-буквы — 50 клавиш, en-буквы — 44, ru-символы — 35. Уйдя стрелками на
- * позицию, которой в новом наборе нет, панель оставалась БЕЗ единственного
- * табстопа: `tabIndex={0}` не было ни у одной кнопки, и панель выпадала из
- * порядка обхода целиком.
+ * All three restore effects returned early on `if (preserveFocus) return;` BEFORE
+ * `setActiveIndex`, while the number of keys changes with the layout and the mode:
+ * ru letters have 50 keys, en letters 44, ru symbols 35. After arrowing to a position
+ * that does not exist in the new set, the panel was left WITHOUT a single tab stop: no
+ * button had `tabIndex={0}`, and the panel dropped out of the tab order entirely.
  *
- * `activeIndex` — состояние РАЗМЕТКИ, а не фокуса: зажимать его надо всегда,
- * а под `preserveFocus` пропускать только сам вызов `focus()`.
+ * `activeIndex` is markup state, not focus state: it must always be clamped, and only
+ * the `focus()` call itself is skipped under `preserveFocus`.
  */
 function keyTabStops() {
-  // Только клавиши сетки: у панели есть и другие кнопки со своим табстопом.
+  // Only the grid keys: the panel has other buttons with their own tab stop.
   return (
     screen
       .getAllByRole("button")
-      // Клавиши сетки — единственные, у кого табиндекс проставлен явно
-      // (роуминг): у прочих кнопок панели атрибута нет вовсе.
+      // The grid keys are the only ones with an explicitly set tabindex (roving):
+      // the panel's other buttons have no attribute at all.
       .filter((b) => b.hasAttribute("tabindex") && b.tabIndex === 0)
   );
 }
@@ -408,10 +407,10 @@ test("switching layout with preserveFocus keeps exactly one tab stop", async () 
   render(<Host />);
   expect(keyTabStops()).toHaveLength(1);
 
-  // Уходим роумингом в КОНЕЦ ru-набора: 50 клавиш против 44 у en. Сначала вниз
-  // по рядам, потом вправо — одни лишь стрелки вправо дальше своего ряда не
-  // уводят. Сам щелчок табстоп не двигает, поэтому без этого прохода позиция
-  // остаётся валидной в обеих раскладках и дефект не воспроизводится.
+  // Roving into the END of the ru set: 50 keys against 44 in en. First down through the
+  // rows, then right: arrows right alone do not move past their own row. The click itself
+  // does not move the tab stop, so without this pass the position stays valid in both
+  // layouts and the defect does not reproduce.
   const keys = screen.getAllByRole("button").filter((b) => b.hasAttribute("tabindex"));
   keys[0]?.focus();
   await user.keyboard("{ArrowDown>6/}{ArrowRight>20/}");

@@ -11,13 +11,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Одна полоса с живыми контролами. */
+/** A single bar with live controls. */
 export const Playground: Story = {};
 
 /**
- * Матрица форм. У скелетона нет ни тонов, ни вариантов — его ось это форма,
- * поэтому матрица показывает не `variant × tone`, а то, что он реально
- * подменяет: строку текста, аватар, превью, кнопку.
+ * Matrix of shapes. A skeleton has neither tones nor variants: its axis is the shape,
+ * so the matrix shows not `variant × tone` but what the skeleton actually stands in for:
+ * a line of text, an avatar, a preview, a button.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },

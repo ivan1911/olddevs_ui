@@ -3,29 +3,27 @@ import { join, relative, resolve } from "node:path";
 import { expect, test } from "vitest";
 
 /**
- * Ворота байтов: в исходниках нет управляющих символов, кроме перевода строки и
- * табуляции.
+ * Byte gate: source files contain no control characters except newline and tab.
  *
- * Зачем отдельная проверка на то, что выглядит невозможным. Один такой символ в
- * репозитории уже жил: `FilterBarAdd.tsx` содержал три сырых нулевых байта —
- * разделитель составного ключа был записан самим символом, а не escape-
- * последовательностью. Компилятор, линтер и тесты этого не замечают вовсе:
- * значение строки правильное, поведение правильное.
+ * Why a separate check for something that looks impossible: one such character already lived in
+ * the repository. `FilterBarAdd.tsx` contained three raw NUL bytes, because the separator of a
+ * composite key was written as the character itself, not as an escape sequence. The compiler,
+ * the linter and the tests do not notice this at all: the string value is correct, and so is the
+ * behavior.
  *
- * Замечают инструменты, работающие с файлом как с текстом. `file` называет такой
- * файл `data`, а `grep` считает бинарным и **молча пропускает** — выходит с
- * кодом 1, не напечатав ни строки. То есть любая проверка, построенная на
- * текстовом поиске, обходит файл стороной и сообщает об успехе. Волна 21
- * построила на текстовом сканировании ворота директив `"use client"`, и
- * пропущенный файл означал бы дыру ровно в них.
+ * Tools that treat a file as text do notice. `file` labels such a file `data`, and `grep` treats
+ * it as binary and **silently skips it**: it exits with code 1 without printing a line. So any
+ * check built on text search walks around the file and reports success. Wave 21 built the
+ * `"use client"` directive gate on text scanning, and a skipped file would leave a hole exactly
+ * there.
  *
- * Отсюда порядок: файлы читаются как БАЙТЫ и разбираются явно, без `grep` и без
- * предположения, что содержимое — текст.
+ * Hence the approach: files are read as BYTES and parsed explicitly, with no `grep` and no
+ * assumption that the content is text.
  */
 
 const SRC = resolve(import.meta.dirname, "..", "src");
 
-/** Перевод строки, возврат каретки и табуляция — единственные разрешённые. */
+/** Line feed, carriage return and tab are the only allowed control bytes. */
 const ALLOWED_CONTROL_BYTES = new Set([0x09, 0x0a, 0x0d]);
 
 function sourceFiles(dir: string): string[] {
@@ -45,7 +43,7 @@ test("sources carry no control bytes except newline and tab", () => {
       const byte = bytes[i]!;
       if (byte < 0x20 && !ALLOWED_CONTROL_BYTES.has(byte)) {
         const hex = `0x${byte.toString(16).padStart(2, "0")}`;
-        // Смещение, а не строка: строк у такого файла может не быть вовсе.
+        // Report the byte offset, not a line: such a file may have no lines at all.
         offenders.push(`${relative(SRC, file)}: byte ${hex} at offset ${i}`);
         break;
       }

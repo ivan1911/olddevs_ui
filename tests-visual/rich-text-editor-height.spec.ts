@@ -1,9 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
- * Высота поля в браузере (OLDSUI-123, ADR-0059): то, чего jsdom не умеет, —
- * настоящая прокрутка области Документа, ручка Блока, которая едет вместе с
- * текстом, и тяга ручки высоты мышью.
+ * Field height in a browser (OLDSUI-123, ADR-0059): what jsdom cannot do, namely
+ * real scrolling of the Document area, the Block handle that moves with the text,
+ * and dragging the resize handle with the mouse.
  */
 
 const STORY = (id: string) => `/iframe.html?id=${id}&globals=theme:dark;accent:blue`;
@@ -14,7 +14,7 @@ async function settle(page: Page) {
   );
 }
 
-/** Область Документа: ближайший предок с прокруткой. */
+/** The Document area: the nearest ancestor with scrolling. */
 function areaOf(field: Locator) {
   return field.locator("xpath=ancestor::div[contains(@class, 'overflow-y-auto')][1]");
 }

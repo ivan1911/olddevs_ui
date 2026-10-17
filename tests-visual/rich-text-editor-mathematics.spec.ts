@@ -2,10 +2,10 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Формулы (Mathematics, OLDSUI-280, ADR-0070) в браузере: то, чего jsdom не умеет, —
- * настоящая отрисовка KaTeX со стилями и шрифтами, Скелет до прихода ленивого чанка
- * (высота поля), щелчок и клавиши на формуле, Поповер у самой формулы и Остров
- * `RichTextView`.
+ * Formulas (Mathematics, OLDSUI-280, ADR-0070) in a browser: what jsdom cannot do,
+ * namely real KaTeX rendering with its styles and fonts, the Skeleton before the lazy
+ * chunk arrives (the field height), a click and keys on a formula, the popover right
+ * at the formula, and the Island of `RichTextView`.
  */
 
 const STORY = (id: string, theme = "dark") =>
@@ -14,14 +14,14 @@ const EDITOR = "inputs-richtexteditor--mathematics";
 const VIEW = "content-richtextview--mathematics";
 
 /*
-  Ленивые чанки формул по URL: файл называется по модулю и в dev-сервере
-  (`/src/editor/features/mathematics/mathChunk.tsx`), и в сборке (`/assets/mathChunk-<хэш>.js`),
-  поэтому маска «до первой точки или дефиса» держит задержку в обоих.
+  Lazy formula chunks by URL: the file is named after its module both in the dev server
+  (`/src/editor/features/mathematics/mathChunk.tsx`) and in the build
+  (`/assets/mathChunk-<hash>.js`), so the pattern "up to the first dot or hyphen" matches both.
 */
 const MATH_CHUNK = /\/mathChunk[.-][^/]*$/;
 const KATEX_ENGINE = /\/katexEngine[.-][^/]*$/;
 
-/** Дать ProseMirror прочитать каретку после щелчка. */
+/** Give ProseMirror time to read the caret after a click. */
 async function settle(page: Page) {
   await page.evaluate(
     () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
@@ -29,10 +29,10 @@ async function settle(page: Page) {
 }
 
 /**
- * Первая формула Документа — «S = \pi r^2» — и поле, в котором она стоит. Щелчок —
- * по видимой части формулы (`.katex-html`), как щёлкнул бы читатель: у `.katex` первой
- * идёт четверть для скрытого MathML размером в один пиксель, и Playwright целился бы
- * в неё, а не в знаки.
+ * The Document's first formula, "S = \pi r^2", and the field it sits in. The click
+ * goes to the visible part of the formula (`.katex-html`), as a reader would click:
+ * in `.katex` the first quarter is a one-pixel hidden MathML, and Playwright would
+ * aim at it instead of the glyphs.
  */
 function editor(page: Page) {
   const field = page.getByRole("textbox", { name: "Document" });
@@ -41,8 +41,9 @@ function editor(page: Page) {
 }
 
 /**
- * Аддон a11y витрины гоняет axe сам, и два прогона разом падают с «Axe is already
- * running»: ждём чужой и повторяем (как `a11y.spec.ts`), любую другую ошибку не глотаем.
+ * The showcase's a11y addon runs axe on its own, and two runs at once fail with "Axe is
+ * already running": wait for the other one and retry (as `a11y.spec.ts` does). Any other
+ * error is rethrown.
  */
 async function analyzeWhenFree(page: Page, scope?: string) {
   for (let attempt = 0; ; attempt++) {
@@ -57,7 +58,7 @@ async function analyzeWhenFree(page: Page, scope?: string) {
   }
 }
 
-// ── Отрисовка ────────────────────────────────────────────────────────────
+// ── Rendering ────────────────────────────────────────────────────────────
 
 test("the editor draws every formula with KaTeX: HTML for the eyes, MathML for the screen reader", async ({
   page,
@@ -65,21 +66,22 @@ test("the editor draws every formula with KaTeX: HTML for the eyes, MathML for t
   await page.goto(STORY(EDITOR));
   const { field } = editor(page);
 
-  // Две строчные и две блочные формулы образца.
+  // Two inline and two block formulas in the sample.
   await expect(field.locator(".katex")).toHaveCount(4);
   await expect(field.locator(".katex-display")).toHaveCount(2);
   const first = field.locator(".katex").first();
-  // Скринридер читает MathML и аннотацию с исходником; HTML-вид от него скрыт.
+  // The screen reader reads the MathML and the annotation with the source; the HTML
+  // view is hidden from it.
   await expect(first.locator("math annotation")).toHaveText("S = \\pi r^2", {
     useInnerText: false,
   });
   await expect(first.locator(".katex-html")).toHaveAttribute("aria-hidden", "true");
-  // Исходник формулы — в `data-latex` узла, а не в тексте Документа.
+  // The formula source is in the node's `data-latex`, not in the Document's text.
   await expect(field.locator('[data-type="inline-math"]').first()).toHaveAttribute(
     "data-latex",
     "S = \\pi r^2"
   );
-  // Дробь и корень блочной формулы нарисованы, а не оставлены исходником.
+  // The fraction and the root of the block formula are drawn, not left as source.
   await expect(field.locator(".katex .mfrac")).not.toHaveCount(0);
   await expect(field.locator(".katex .sqrt")).not.toHaveCount(0);
 });
@@ -95,11 +97,11 @@ test("the stylesheet and the fonts of KaTeX arrive with the lazy chunk", async (
   const first = editor(page).field.locator(".katex").first();
   await expect(first).toBeVisible();
 
-  // CSS KaTeX применён: шрифт формулы — его собственный, а не шрифт Документа.
+  // The KaTeX CSS is applied: the formula's font is its own, not the Document's font.
   await expect
     .poll(() => first.evaluate((element) => getComputedStyle(element).fontFamily))
     .toContain("KaTeX_Main");
-  // Шрифты резолвятся из пакета `katex` и грузятся: ни одного 404.
+  // The fonts resolve from the `katex` package and load: not a single 404.
   await expect.poll(() => fonts.length).toBeGreaterThan(0);
   await page.evaluate(() => document.fonts.ready);
   expect(fonts.filter((font) => font.status !== 200)).toEqual([]);
@@ -122,7 +124,7 @@ test("an unreadable formula stays as source, underlined as an error", async ({ p
   await expect(field.locator('[data-type="block-math"]')).toHaveText("\\badcommand{x}");
 });
 
-// ── Поиск ────────────────────────────────────────────────────────────────
+// ── Search ───────────────────────────────────────────────────────────────
 
 test("search finds the LaTeX of a formula and lights the whole formula", async ({ page }) => {
   await page.goto(STORY(EDITOR));
@@ -133,30 +135,32 @@ test("search finds the LaTeX of a formula and lights the whole formula", async (
   const panel = page.getByRole("search", { name: "Find and replace" });
   await panel.getByRole("textbox", { name: "Find" }).fill("\\pi");
 
-  // «\pi» стоит в исходнике двух формул: строчной с площадью и Эйлера; текста с таким запросом нет.
+  // "\pi" is in the source of two formulas: the inline one with the area and Euler's.
+  // There is no text match for this query.
   await expect(panel.getByRole("status")).toHaveText("1 of 2");
   const lit = field.locator(".rte-search-match");
   await expect(lit).toHaveCount(2);
   await expect(lit.first()).toHaveAttribute("data-type", "inline-math");
   await expect(field.locator(".rte-search-current")).toHaveCount(1);
-  // Заливка лежит на самой формуле, а не на отрезке текста внутри неё.
+  // The highlight sits on the formula itself, not on a stretch of text inside it.
   const fill = await lit.first().evaluate((element) => getComputedStyle(element).backgroundColor);
   expect(fill).not.toBe("rgba(0, 0, 0, 0)");
 
   await panel.getByRole("button", { name: "Next match" }).click();
   await expect(field.locator(".rte-search-current")).toHaveCount(1);
   await expect(panel.getByRole("status")).toHaveText("2 of 2");
-  // Заменять в формулах нечего: обе кнопки выключены.
+  // There is nothing to replace in formulas, so both replace buttons are disabled.
   await expect(panel.getByRole("button", { name: "Replace all" })).toBeDisabled();
 });
 
-// ── Скелет ───────────────────────────────────────────────────────────────
+// ── Skeleton ─────────────────────────────────────────────────────────────
 
 test("before the chunk arrives the field shows the LaTeX in monospace, and its height barely changes", async ({
   page,
 }) => {
-  // Чанк формул задержан: Скелет стоит, пока ждём. Имя файла разное: `mathChunk.tsx` в
-  // dev-сервере и `assets/mathChunk-<хэш>.js` в собранной витрине (`storybook-static`).
+  // The formula chunk is held back: the Skeleton stays up while we wait. The file name
+  // differs: `mathChunk.tsx` in the dev server and `assets/mathChunk-<hash>.js` in the
+  // built showcase (`storybook-static`).
   await page.route(MATH_CHUNK, async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 4000));
     await route.continue();
@@ -173,11 +177,12 @@ test("before the chunk arrives the field shows the LaTeX in monospace, and its h
 
   await expect(page.locator("[contenteditable] .katex").first()).toBeVisible({ timeout: 15_000 });
   const after = (await root.boundingBox())!.height;
-  // Блок-формула в Скелете не ниже 4 rem: поле не схлопывается и не прыгает больше чем на десятую.
+  // The block formula in the Skeleton is at least 4 rem tall: the field neither
+  // collapses nor jumps by more than a tenth.
   expect(Math.abs(after - before) / after).toBeLessThan(0.1);
 });
 
-// ── Поповер ──────────────────────────────────────────────────────────────
+// ── Popover ──────────────────────────────────────────────────────────────
 
 test("a click opens the popover at the formula; Apply redraws it, and focus returns to the text", async ({
   page,
@@ -191,13 +196,13 @@ test("a click opens the popover at the formula; Apply redraws it, and focus retu
   const latex = popover.getByRole("textbox", { name: "LaTeX" });
   await expect(latex).toHaveValue("S = \\pi r^2");
   await expect(latex).toBeFocused();
-  // Поповер стоит рядом с формулой: рамка не дальше пары строк от неё.
+  // The popover sits next to the formula: its frame is no more than a couple of lines away.
   const formulaBox = (await first.boundingBox())!;
   const popoverBox = (await popover.boundingBox())!;
   expect(Math.abs(popoverBox.y - (formulaBox.y + formulaBox.height))).toBeLessThan(60);
 
   await latex.fill("x^3 + y^3");
-  // Живой предпросмотр: исходник и отрисовка из того же KaTeX.
+  // Live preview: the source and the rendering both come from the same KaTeX.
   const preview = popover.getByRole("group", { name: "Preview" });
   await expect(preview.locator("annotation")).toHaveText("x^3 + y^3");
   await popover.getByRole("button", { name: "Apply" }).click();
@@ -241,14 +246,15 @@ test("from the keyboard: Shift+Right selects a formula, Enter opens the popover,
 }) => {
   await page.goto(STORY(EDITOR));
   const { field } = editor(page);
-  // Движок с формулами пришёл: до него стоит Скелет, и при подмене поля каретка и фокус
-  // сбрасываются посреди набора клавиш (в собранной витрине чанк идёт заметно дольше, чем в dev).
+  // The engine with formulas has arrived: until then the Skeleton is up, and when the field
+  // is swapped the caret and focus are reset in the middle of the key presses (in the built
+  // showcase the chunk takes noticeably longer than in dev).
   await expect(field.locator(".katex").first()).toBeVisible();
   /*
-    Каретка — сразу перед формулой, выделением DOM, и ProseMirror успевает его прочесть.
-    Не двадцатью нажатиями `→`: ProseMirror читает выделение из DOM по `selectionchange`,
-    очередь нажатий Playwright его обгоняет, и прежнее выделение пишется обратно —
-    каретка то перескакивала формулу, то отскакивала назад (3 прогона из 8 на сборке).
+    The caret goes right before the formula, as a DOM selection, and ProseMirror has time to read it.
+    Not with twenty `→` presses: ProseMirror reads the selection from the DOM by `selectionchange`,
+    Playwright's queue of key presses gets ahead of it, and the previous selection is written back:
+    the caret either jumped over the formula or bounced back (3 runs out of 8 on the build).
   */
   await field.locator("p", { hasText: "The area of a circle is" }).evaluate((paragraph) => {
     const text = paragraph.firstChild!;
@@ -259,8 +265,9 @@ test("from the keyboard: Shift+Right selects a formula, Enter opens the popover,
     document.getSelection()!.addRange(range);
   });
   await settle(page);
-  // Строчный атом каретка перешагивает без выделения (так устроен ProseMirror), поэтому
-  // формулу выделяют `Shift+→` или щелчком — и Enter на ней открывает правку.
+  // The caret steps over an inline atom without selecting it (that is how ProseMirror works),
+  // so the formula is selected with `Shift+→` or a click, and Enter on it opens the
+  // editing popover.
   await page.keyboard.press("Shift+ArrowRight");
   await settle(page);
 
@@ -271,7 +278,7 @@ test("from the keyboard: Shift+Right selects a formula, Enter opens the popover,
   await page.keyboard.press("Escape");
   await expect(popover).toBeHidden();
   await expect(field).toBeFocused();
-  // Enter не расщепил абзац, формула на месте.
+  // Enter did not split the paragraph, and the formula is still in place.
   await expect(field.locator("p", { hasText: "The area of a circle is" })).toHaveCount(1);
   await expect(field.locator('[data-type="inline-math"]').first()).toHaveAttribute(
     "data-latex",
@@ -284,7 +291,7 @@ test("the slash menu inserts a formula: / formula, Enter, type, Enter", async ({
   const field = page.getByRole("textbox", { name: "Document" });
   const list = page.getByRole("listbox", { name: "Insert block" });
   await expect(list.getByRole("option", { name: /^Formula/ })).toBeVisible();
-  // «formula» подходит обоим пунктам; первый — строчная, её и выбирает Enter.
+  // "formula" matches both items; the first one is the inline formula, and Enter picks it.
   await expect(list.getByRole("option", { name: /^Block formula/ })).toBeVisible();
 
   await page.keyboard.press("Enter");
@@ -321,7 +328,7 @@ test("the popover opened by a story is within the viewport and passes axe in all
   }
 });
 
-// ── Просмотр ─────────────────────────────────────────────────────────────
+// ── View ─────────────────────────────────────────────────────────────────
 
 test("RichTextView draws the formulas by its island, with the same stylesheet", async ({
   page,
@@ -329,7 +336,8 @@ test("RichTextView draws the formulas by its island, with the same stylesheet", 
   await page.goto(STORY(VIEW));
   const view = page.locator("#storybook-root");
 
-  // Четыре читаемые формулы (две строчные и две блочные) отрисованы, нечитаемая — исходник.
+  // The four readable formulas (two inline and two block) are rendered; the unreadable
+  // one stays as source.
   await expect(view.locator(".katex")).toHaveCount(4);
   await expect(view.locator(".katex-display")).toHaveCount(2);
   const first = view.locator(".katex").first();
@@ -346,7 +354,8 @@ test("RichTextView draws the formulas by its island, with the same stylesheet", 
 test("RichTextView shows the LaTeX source until its island has KaTeX, then the formula", async ({
   page,
 }) => {
-  // `katexEngine.ts` в dev-сервере и `assets/katexEngine-<хэш>.js` (с CSS рядом) в собранной витрине.
+  // `katexEngine.ts` in the dev server and `assets/katexEngine-<hash>.js` (with its CSS
+  // next to it) in the built showcase.
   await page.route(KATEX_ENGINE, async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
     await route.continue();
@@ -373,7 +382,7 @@ test("the macros of tool('mathematics') reach the view without naming the tool t
 
   await expect(view.locator(".katex")).toHaveCount(1);
   await expect(view.locator("[data-math-error]")).toHaveCount(0);
-  // `\RR` — блэкборд-R: символ из набора `KaTeX_AMS`.
+  // `\RR` is blackboard R: a glyph from the `KaTeX_AMS` set.
   await expect(view.locator(".katex .mathbb")).toHaveCount(1);
 });
 

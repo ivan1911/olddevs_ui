@@ -7,10 +7,10 @@ import { RichTextView, tool } from "../src/editor/index.js";
 afterEach(cleanup);
 
 /**
- * Плеер, адрес которого собрать нельзя (OLDSUI-281, ADR-0071): кнопка «Воспроизвести» не
- * молчит, на её месте остаётся ссылка на видео. Адрес плеера подменён на «нельзя»: из
- * блока, прошедшего проверку `data-src`, он собирается всегда, так что иначе этой
- * ветки не достичь.
+ * A player whose URL cannot be built (OLDSUI-281, ADR-0071): the Play button does not
+ * fail silently, the link to the video stays in its place. The player URL is replaced
+ * with "unavailable": a Block that passed the `data-src` check always produces one, so
+ * this branch cannot be reached any other way.
  */
 vi.mock("../src/editor/features/video/videoLink.js", async (original) => ({
   ...(await original<Record<string, unknown>>()),

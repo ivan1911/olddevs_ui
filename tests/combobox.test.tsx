@@ -21,7 +21,7 @@ test("a value outside the list reaches onChange", async () => {
 
   await user.type(screen.getByRole("combobox", { name: "Category" }), "Custom");
 
-  // Ровно то, чем `Combobox` отличается от `Select`: список подсказывает, но
-  // не ограничивает — значения «Своя» в наборе нет.
+  // This is exactly what separates `Combobox` from `Select`: the list suggests but
+  // does not restrict. The set has no "Custom" item.
   expect(onInput).toHaveBeenLastCalledWith("Custom");
 });

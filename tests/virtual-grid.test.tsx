@@ -14,15 +14,14 @@ afterEach(() => {
 });
 
 /*
-  ЧЕГО ЗДЕСЬ НЕТ И ПОЧЕМУ. В jsdom нет раскладки: ширина и высота контейнера
-  равны нулю, и виртуализатор честно решает, что видимых ячеек нет — в разметке
-  их ноль при любом числе элементов. Проверять здесь виртуализацию, число
-  колонок или прокрутку бессмысленно: тест либо проходил бы всегда, либо падал
-  на исправном компоненте.
+  WHAT IS NOT TESTED HERE, AND WHY. jsdom has no layout: the container's width and height are zero,
+  so the virtualizer correctly decides that no cells are visible — the markup contains none,
+  whatever the number of items. Testing virtualization, the column count or scrolling here is
+  pointless: the test would either always pass or fail on a working component.
 
-  Настоящие проверки — в браузере, `tests-visual/interactions.spec.ts`:
-  сколько узлов в DOM при шестистах ячейках, что прокрутка своя и что при
-  прокрутке отрисовываются другие ячейки. Разделение — ADR-0012 и ADR-0028.
+  The real checks are in the browser, `tests-visual/interactions.spec.ts`: how many nodes are in
+  the DOM with six hundred cells, that scrolling is custom, and that scrolling renders other cells.
+  The split is ADR-0012 and ADR-0028.
 */
 
 const cells: VirtualGridItem[] = Array.from({ length: 5 }, (_, i) => ({
@@ -34,9 +33,9 @@ const cells: VirtualGridItem[] = Array.from({ length: 5 }, (_, i) => ({
 test("the grid is named; the role comes from the behaviour layer", () => {
   render(<VirtualGrid items={cells} aria-label="Frames" className="h-[300px]" />);
 
-  // `grid` с `data-layout="grid"` — решение react-aria (`GridList`): своими
-  // руками роли мы не проставляем, иначе клавиатура перестала бы соответствовать
-  // разметке. До OLDSUI-199 здесь был `listbox` (ADR-0028, дополнение).
+  // `grid` with `data-layout="grid"` is react-aria's decision (`GridList`): we do not set the roles
+  // by hand, otherwise the keyboard would stop matching the markup. Before OLDSUI-199 this was
+  // `listbox` (ADR-0028, addendum).
   const grid = screen.getByRole("grid", { name: "Frames" });
   expect(grid.getAttribute("data-layout")).toBe("grid");
 });
@@ -44,9 +43,9 @@ test("the grid is named; the role comes from the behaviour layer", () => {
 test("the container itself owns the scrolling, not the window", () => {
   render(<VirtualGrid items={cells} aria-label="Frames" className="h-[300px]" />);
 
-  // Фронтовая сетка крутит страницу (`useWindowVirtualizer`); здесь прокрутка
-  // своя, и высоту контейнеру обязан задать потребитель — без неё
-  // виртуализация не включится вовсе.
+  // The window-scrolling grid scrolls the page (`useWindowVirtualizer`); here scrolling is its own,
+  // and the consumer must set the container's height — without it, virtualization does not turn on
+  // at all.
   const grid = screen.getByRole("grid");
   expect(grid.className).toContain("overflow-auto");
   expect(grid.className).toContain("h-[300px]");
@@ -62,7 +61,8 @@ test("an empty grid shows its own state", () => {
 test("without the prop there is no selection axis at all", () => {
   render(<VirtualGrid items={cells} aria-label="Frames" className="h-[300px]" />);
 
-  // Ось включается ЯВНО: сетка без пропа не обещает выбора и не объявляет его.
+  // The axis is turned on EXPLICITLY: a grid without the prop promises no selection and does not
+  // announce one.
   expect(screen.getByRole("grid").hasAttribute("aria-multiselectable")).toBe(false);
 });
 
@@ -71,15 +71,15 @@ test("selectionMode puts the axis on the grid, not inside the cell", () => {
     <VirtualGrid items={cells} aria-label="Frames" selectionMode="multiple" className="h-[300px]" />
   );
 
-  // Выбирается сама ячейка — ролью. Флажок выбора внутри ячейки законен с
-  // OLDSUI-199 (`gridcell`), но ось по-прежнему у сетки.
+  // The cell itself is selected — by role. A selection checkbox inside the cell is legal since
+  // OLDSUI-199 (`gridcell`), but the axis still belongs to the grid.
   expect(screen.getByRole("grid").getAttribute("aria-multiselectable")).toBe("true");
 });
 
 /*
-  ПОВЕДЕНИЕ ЯЧЕЕК. Раскладки в jsdom нет, поэтому размеры контейнера задаются
-  заплаткой: виртуализатор получает ненулевое окно и отрисовывает ячейки.
-  Число колонок и прокрутка по-прежнему проверяются только в браузере.
+  CELL BEHAVIOR. There is no layout in jsdom, so the container's size is set by a stub: the
+  virtualizer gets a non-zero window and renders the cells. The number of columns and scrolling are
+  still checked only in the browser.
 */
 function withLayout() {
   vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(600);
@@ -185,7 +185,7 @@ test("Shift+F10 and the context-menu key open the menu with focus on the cell it
 
   await user.keyboard("{Escape}");
   expect(screen.queryByRole("menu")).toBeNull();
-  // Закрытое с клавиатуры меню возвращает фокус на ячейку, а не теряет его.
+  // A menu closed from the keyboard returns focus to the cell, rather than losing it.
   expect(document.activeElement).toBe(option);
 
   await user.keyboard("{ContextMenu}");
@@ -224,10 +224,9 @@ test("cells without contextMenu keep their markup and open nothing", () => {
 });
 
 /*
-  OLDSUI-199: сетка для библиотеки фото. Прокрутка окна,
-  подгрузка у края и протяжка пальцем живут в браузере
-  (`tests-visual/interactions.spec.ts`); здесь — то, что видно в разметке и
-  в вызовах.
+  OLDSUI-199: a grid for a photo library. Window scrolling, load-on-edge and touch drag live in the
+  browser (`tests-visual/interactions.spec.ts`); here are the things visible in the markup and in
+  the calls.
 */
 
 test("a button inside a cell is legal and neither selects nor opens the cell", async () => {
@@ -256,8 +255,8 @@ test("a button inside a cell is legal and neither selects nor opens the cell", a
     />
   );
 
-  // Кнопка лежит в `gridcell`, а не в `option`: так axe не видит вложенного
-  // интерактива (в `option` это было nested-interactive уровня serious).
+  // The button sits in the `gridcell`, not in an `option`: this way axe does not see a nested
+  // interactive element (in `option` it was a serious-level nested-interactive violation).
   const button = screen.getByRole("button", { name: "Favourite 1" });
   expect(button.closest('[role="gridcell"]')).not.toBeNull();
   expect(button.closest('[role="option"]')).toBeNull();
@@ -279,8 +278,8 @@ test("onAction hands over the cell's rectangle for an opening animation", async 
   expect(onAction).toHaveBeenCalledTimes(1);
   const [id, details] = onAction.mock.calls[0]!;
   expect(id).toBe("1");
-  // В jsdom прямоугольник подменён заплаткой раскладки (600×400) — важно, что
-  // он пришёл и что это прямоугольник ячейки, а не сетки.
+  // In jsdom the rectangle is replaced by the layout stub (600×400): what matters is that it came
+  // and that it is the cell's rectangle, not the grid's.
   expect(details.rect).toMatchObject({ width: 600, height: 400 });
 });
 
@@ -300,7 +299,7 @@ test("selectionBehavior is passed to the behaviour layer", async () => {
     />
   );
 
-  // В `replace` клик выделяет, а не открывает: действие — двойной клик и Enter.
+  // In `replace`, a click selects rather than opens: the action is double-click and Enter.
   await user.click(screen.getAllByRole("row")[2]!);
   expect(onAction).not.toHaveBeenCalled();
   expect([...onSelectionChange.mock.lastCall![0]]).toEqual(["2"]);
@@ -324,15 +323,15 @@ test('rangeSelection="add": Shift extends the selection without dropping what wa
   const rows = screen.getAllByRole("row");
   rows[1]!.focus();
   await user.keyboard("{Shift>}{ArrowRight}{/Shift}");
-  // react-aria заменил бы набор диапазоном от якоря; режим `add` докладывает
-  // диапазон к прежнему выбору — «0» и «4» остаются.
+  // react-aria would replace the set with a range from the anchor; `add` mode adds the range to the
+  // previous selection — "0" and "4" remain.
   const keys = [...onSelectionChange.mock.lastCall![0]].sort();
   expect(keys).toEqual(expect.arrayContaining(["0", "4"]));
   expect(keys.length).toBeGreaterThan(2);
 });
 
 test('rangeSelection="add": a second Shift range in a row still starts at the anchor', async () => {
-  // Потребитель хранит выбор как пришёл — так велит страница компонента.
+  // The consumer stores the selection as it arrived, as the component's page instructs.
   function Harness() {
     const [keys, setKeys] = useState<Selection>(new Set());
     return (
@@ -356,9 +355,8 @@ test('rangeSelection="add": a second Shift range in a row still starts at the an
   await user.click(row(2));
   await user.click(row(4));
   await user.keyboard("{/Shift}");
-  // Якорь — ячейка «0»: второй диапазон тянется от неё и захватывает «3».
-  // Объединение в обычном `Set` теряло якорь, и второй Shift+клик выделял
-  // одну ячейку «4» (OLDSUI-203).
+  // The anchor is cell "0": the second range extends from it and captures "3". Merging into a plain
+  // `Set` lost the anchor, and the second Shift+click selected only cell "4" (OLDSUI-203).
   const selected = screen
     .getAllByRole("row")
     .filter((r) => r.getAttribute("aria-selected") === "true")
@@ -371,8 +369,8 @@ test('scroll="window": no own scrolling, cells keep clear of the sticky bar', ()
 
   const grid = screen.getByRole("grid");
   expect(grid.className).not.toContain("overflow-auto");
-  // Фокус, уведённый стрелкой за край окна, не прячется под липкую шапку:
-  // отступ — та же переменная, что публикует `TopBar` (ADR-0016/0019).
+  // Focus moved by an arrow past the window edge is not hidden under the sticky TopBar: the offset is
+  // the same variable that `TopBar` publishes (ADR-0016/0019).
   const row = screen.getAllByRole("row")[0]!;
   expect(row.style.scrollMarginTop).toBe("var(--topbar-h, 0px)");
 });
@@ -383,9 +381,8 @@ test("offsetVar renames the variable of the sticky bar, like SelectionBar", () =
 });
 
 test("isLoadingMore shows the loading row with an accessible status", () => {
-  // Датчик подгрузки react-aria стоит на `IntersectionObserver`, которого в
-  // jsdom нет. Потребителю с `onLoadMore` в jsdom нужна та же заглушка —
-  // это сказано на странице компонента.
+  // react-aria's load-more sensor relies on `IntersectionObserver`, which is absent in jsdom. A
+  // consumer with `onLoadMore` needs the same stub in jsdom — this is stated on the component's page.
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -410,7 +407,7 @@ test("minItemHeight is a real minimum: the cell is never lower", () => {
   render(
     <VirtualGrid items={cells} aria-label="Frames" minItemHeight={140} className="h-[300px]" />
   );
-  // `gridcell` у react-aria — `display: contents`, высоту держит обёртка внутри.
+  // `gridcell` in react-aria is `display: contents`; the height is held by a wrapper inside.
   const cell = screen.getAllByRole("gridcell")[0]!.firstElementChild as HTMLElement;
   expect(cell.style.minHeight).toBe("140px");
 });
@@ -420,8 +417,8 @@ test("the cell wrapper gives its content a definite height, so `h-full` content 
     <VirtualGrid items={cells} aria-label="Frames" minItemHeight={140} className="h-[300px]" />
   );
   const cell = screen.getAllByRole("gridcell")[0]!.firstElementChild as HTMLElement;
-  // Процентная высота вложенного узла не считается от `min-height`, а от строки
-  // сетки — считается: поэтому обёртка — сетка с одной строкой не ниже минимума.
+  // A nested node's percentage height is resolved against the grid row, not against `min-height`,
+  // so the wrapper is a one-row grid that is never shorter than the minimum.
   expect(cell.classList.contains("grid")).toBe(true);
   expect(cell.style.gridTemplateRows).toBe("minmax(140px, 1fr)");
 });
@@ -437,8 +434,8 @@ test("edgeGap={false} puts the outer cells flush with the edges", () => {
       className="h-[300px]"
     />
   );
-  // Раскладка ставит ячейки абсолютно; первая ячейка без внешнего отступа
-  // начинается в нуле по обеим осям.
+  // The layout positions cells absolutely; the first cell, with no outer margin,
+  // starts at zero on both axes.
   const first = screen.getAllByRole("row")[0]!.parentElement!;
   expect(first.style.left).toBe("0px");
   expect(first.style.top).toBe("0px");

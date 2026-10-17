@@ -15,13 +15,13 @@ import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 import { installPageGeometry } from "./editor-toc-geometry.js";
 
 /**
- * Состояние Инструмента (OLDSUI-268): `useRichTextToolState` на публичном входе.
- * Экран читает снимок `search` и `toc`; сдвигают его действия пользователя и
- * Хэндл, как в жизни.
+ * Tool state (OLDSUI-268): `useRichTextToolState` on the public entry point.
+ * The screen reads the `search` and `toc` snapshots; user actions and the Handle change them,
+ * as they would in real life.
  */
 
 beforeAll(loadLazyBuiltins);
-// Панель Поиска — ленивый чанк: прогреваем, чтобы `findBy` не ждал сеть.
+// The Search panel is a lazy chunk: warm it up so `findBy` does not wait on the network.
 beforeAll(() => import("../src/editor/features/search/SearchPanel.js"));
 
 let removeGeometry: () => void;
@@ -40,8 +40,8 @@ afterEach(() => {
 type EditorProps = Partial<ComponentProps<typeof RichTextEditor>>;
 
 /**
- * Экран с хуком: `read` вызывает хук с `ref` Редактора, а замер собирает всё,
- * что хук отдал экрану, и число рендеров.
+ * A screen with the hook: `read` calls the hook with the Editor's `ref`, and the measurement
+ * collects everything the hook handed to the screen, plus the number of renders.
  */
 function mount<Result>(
   read: (ref: RefObject<RichTextEditorHandle | null>) => Result,
@@ -68,7 +68,7 @@ function mount<Result>(
   };
 }
 
-// --- Поиск --------------------------------------------------------------------------------
+// --- Search --------------------------------------------------------------------------------
 
 const findButton = () => screen.getByRole("button", { name: "Find" });
 const findField = () => screen.getByRole("textbox", { name: "Find" });
@@ -78,7 +78,7 @@ test("search: null in the first render, then a closed panel and no matches", () 
     defaultValue: "<p>cat dog cat</p>",
   });
 
-  // Документ создан после первого рендера экрана: до того хук молчит.
+  // The Document was created after the screen's first render; until then the hook stays silent.
   expect(screenResult.seen.results[0]).toBeNull();
   expect(screenResult.last()).toEqual({
     open: false,
@@ -159,7 +159,7 @@ test("search: the selector takes a slice and the screen re-renders only when the
   await user.type(findField(), "cat");
   expect(screenResult.last()).toBe(2);
 
-  // Переход к следующему совпадению срез `total` не меняет — экран не трогается.
+  // Moving to the next match does not change the `total` slice, so the screen is left alone.
   const before = screenResult.seen.renders;
   await user.keyboard("{Enter}");
   expect(screenResult.seen.renders).toBe(before);
@@ -212,7 +212,7 @@ test("null without the tool in the set", () => {
   expect(search.last()).toBeNull();
   cleanup();
 
-  // `toc` не входит в пресеты — без имени в `tools` Инструмента нет.
+  // `toc` is not part of the presets, so without its name in `tools` there is no such Tool.
   const toc = mount((ref) => useRichTextToolState(ref, "toc"), {
     defaultValue: "<h2>One</h2><h2>Two</h2>",
   });
@@ -229,7 +229,8 @@ test("a name outside the map is null: an unknown tool has no state yet", () => {
 test("the hook gives null after the Editor unmounts, even in a component that does not re-render", async () => {
   let setShow: (show: boolean) => void = () => {};
   let ref!: RefObject<RichTextEditorHandle | null>;
-  // `memo` без пропов: родитель его не перерисует, о размонтировании он узнаёт только от хука.
+  // `memo` with no props: the parent will not re-render it, so it learns about unmounting
+  // only from the hook.
   const Counter = memo(function Counter({
     source,
   }: {
@@ -282,7 +283,7 @@ test("a new mount under the same ref starts from its own signals, not the sectio
   act(() => setShow(false));
   expect(seen.at(-1)).toBeNull();
 
-  // Тот же `ref`, новый Редактор: «текущий раздел» старого в его снимок не попадает.
+  // Same `ref`, new Editor: the old editor's "current section" does not end up in its snapshot.
   const before = seen.length;
   act(() => setShow(true));
   await waitFor(() => expect(strip()).not.toBeNull());
@@ -291,7 +292,7 @@ test("a new mount under the same ref starts from its own signals, not the sectio
   expect(fresh).not.toContain(3);
 });
 
-// --- Оглавление ---------------------------------------------------------------------------
+// --- Table of contents ---------------------------------------------------------------------------
 
 const ARTICLE =
   "<h1>Palette</h1><p>Intro</p><h2>How to read</h2><p>Text</p><h3>Neutrals</h3><h2>What's next</h2>";

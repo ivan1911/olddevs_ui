@@ -6,11 +6,11 @@ import { afterEach, expect, test, vi } from "vitest";
 import { Tag, TagGroup, type TagKey } from "../src/index.js";
 
 /**
- * Метка для показа: имена, удаление и фокус после него.
+ * Tag for display: names, removal and focus after it.
  *
- * Стрелки, Delete и Backspace разбирает react-aria; здесь проверяется, что
- * обёртка их не сломала и что имя кнопки удаления — ровно из каталога, а не
- * «каталог плюс подпись react-aria».
+ * Arrows, Delete and Backspace are handled by react-aria; here it is checked that the
+ * wrapper did not break them, and that the name of the remove button comes exactly from
+ * the catalog, not from "the catalog plus the react-aria label".
  */
 
 afterEach(cleanup);
@@ -59,13 +59,13 @@ test("aria-label names the group when there is no visible label", () => {
 });
 
 test("an empty label does not count as a name for the types", () => {
-  // Проверяется компилятором (`npm run typecheck`): `label` типа `ReactNode`
-  // пропускал `undefined`, `null` и `false` — группа без имени собиралась.
-  // @ts-expect-error — `label` пустой, `aria-label` нет
+  // Checked by the compiler (`npm run typecheck`): a `label` of type `ReactNode` let
+  // `undefined`, `null` and `false` through — a group without a name compiled.
+  // @ts-expect-error — `label` is empty, `aria-label` is missing
   const missing = <TagGroup label={undefined}>x</TagGroup>;
-  // @ts-expect-error — `null` не имя
+  // @ts-expect-error — `null` is not a name
   const none = <TagGroup label={null}>x</TagGroup>;
-  // @ts-expect-error — результат `{flag && "…"}` при ложном флаге
+  // @ts-expect-error — the result of `{flag && "…"}` when the flag is false
   const off = <TagGroup label={false}>x</TagGroup>;
   expect(missing && none && off).toBeTruthy();
 });
@@ -84,13 +84,13 @@ test("aria-labelledby names the group by a heading elsewhere on the page", () =>
 });
 
 test("the name comes from exactly one source", () => {
-  // Проверяется компилятором: видимая подпись И атрибут — два источника одного
-  // имени, и на слух группа называлась бы не так, как на экране.
-  // @ts-expect-error — имени нет вовсе
+  // Checked by the compiler: a visible label AND an attribute are two sources of one name,
+  // and by ear the group would be called something other than what is on screen.
+  // @ts-expect-error — there is no name at all
   const unnamed = <TagGroup>x</TagGroup>;
-  // @ts-expect-error — подпись и `aria-label` сразу
+  // @ts-expect-error — a label and `aria-label` at once
   const labelAndAria = <TagGroup label="Categories" aria-label="Post categories" />;
-  // @ts-expect-error — `aria-label` и `aria-labelledby` сразу
+  // @ts-expect-error — `aria-label` and `aria-labelledby` at once
   const bothAria = <TagGroup aria-label="a" aria-labelledby="b" />;
   expect(unnamed && labelAndAria && bothAria).toBeTruthy();
 });
@@ -127,8 +127,8 @@ test("onRemove turns the remove buttons on; each one names the tag it removes", 
     </TagGroup>
   );
 
-  // Имя целиком из каталога: подпись метки внутри строки, а не дописанная
-  // react-aria следом («Remove: Design Design»).
+  // The name comes whole from the catalog: the label inside the row, not one that
+  // react-aria appends after it ("Remove: Design Design").
   expect(screen.getByRole("button", { name: "Remove: Design" })).toBeTruthy();
   await user.click(screen.getByRole("button", { name: "Remove: Docs" }));
 
@@ -218,7 +218,7 @@ test("a hue does not leak into the accessible name", () => {
     </TagGroup>
   );
 
-  // Точка — для глаз: оттенок слова не заменяет, а имя переводится.
+  // The dot is for the eye: the hue does not stand in for a word, and the name is translated.
   expect(screen.getByRole("row", { name: "Design" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Remove: Design" })).toBeTruthy();
 });
@@ -240,7 +240,7 @@ test("a link tag carries its address", () => {
 test("an empty `empty` is no empty-state text: nothing blank is drawn", () => {
   const { container } = render(<TagGroup label="Categories" empty="" />);
 
-  // Пустой `span` вместо текста — та же «пропавшая» группа, от которой проп и есть.
+  // An empty `span` instead of text is the same "vanished" group the prop exists to prevent.
   const list = container.querySelector("[data-empty]") as HTMLElement;
   expect(list.childElementCount).toBe(0);
 });

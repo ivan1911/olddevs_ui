@@ -21,20 +21,20 @@ test("a rejected file is shown with a reason instead of vanishing", async () => 
   render(<FileDropzone accept="image/*" maxSize={1024} onFiles={onFiles} />);
 
   const field = document.querySelector('input[type="file"]') as HTMLInputElement;
-  // Неподходящий ТИП через диалог выбора не проверить: `accept` у поля отсекает
-  // такие файлы ещё в диалоге, и до компонента они не доходят — так же ведёт
-  // себя браузер. Фильтр типа работает на пути перетаскивания, где ОС ничего
-  // не отсекает; здесь остаётся предел размера.
+  // A wrong TYPE cannot be checked through the picker dialog: the field's `accept` filters
+  // such files out already in the dialog, so they never reach the component, the same way
+  // the browser behaves. The type filter works on the drag-and-drop path, where the OS filters
+  // nothing; here only the size limit remains.
   await user.upload(field, [
     file("small.png", "image/png", 100),
     file("huge.png", "image/png", 5000),
   ]);
 
-  // Принятое уехало вызывающему...
+  // The accepted file went to the caller...
   expect(onFiles).toHaveBeenCalledTimes(1);
   expect(onFiles.mock.calls[0]![0].map((f: File) => f.name)).toEqual(["small.png"]);
 
-  // ...а про отклонённое сказано на экране, с причиной.
+  // ...and the rejected one is reported on screen, with the reason.
   expect(screen.getByText(/huge\.png — too large, 5 kB/)).toBeTruthy();
 });
 
@@ -45,7 +45,7 @@ test("the rejection is announced aloud", async () => {
   const field = document.querySelector('input[type="file"]') as HTMLInputElement;
   await user.upload(field, [file("huge.png", "image/png", 99999)]);
 
-  // Иначе пользователь узнает об отказе, только добравшись до этого места табом.
+  // Otherwise the user learns of the refusal only by tabbing to this spot.
   expect(screen.getByRole("alert")).toBeTruthy();
 });
 
@@ -58,9 +58,9 @@ test("the choose button really opens the dialog", async () => {
 
   await user.click(screen.getByRole("button", { name: "Choose files" }));
 
-  // Проверять существование кнопки недостаточно: с обычной `<button>` она
-  // выглядела рабочей и не открывала диалог ни разу — `FileTrigger` подключает
-  // потомка через контекст react-aria, которого та не читает.
+  // Checking that the button exists is not enough: with a plain `<button>` it looked
+  // functional and never once opened the dialog. `FileTrigger` connects its child through
+  // the react-aria context, which a plain button does not read.
   expect(click).toHaveBeenCalledTimes(1);
 });
 
@@ -73,30 +73,29 @@ test("a single-file zone does not accept a batch", async () => {
   const field = document.querySelector('input[type="file"]') as HTMLInputElement;
   await user.upload(field, [file("a.png", "image/png", 10), file("b.png", "image/png", 10)]);
 
-  // Через диалог выбора второй файл и не дойдёт: поле без `multiple` его
-  // отсекает, как и браузер. Предел компонента виден на пути перетаскивания —
-  // там ОС ничего не отсекает, и раньше все пять брошенных файлов уезжали
-  // вызывающему вопреки пропу.
+  // Through the picker dialog the second file would not arrive at all: a field without
+  // `multiple` filters it out, as the browser does too. The component's limit is visible
+  // on the drag-and-drop path: there the OS filters nothing, and before, all five dropped
+  // files went to the caller despite the prop.
   expect(onFiles.mock.calls[0]![0].map((f: File) => f.name)).toEqual(["a.png"]);
   expect(field.multiple).toBe(false);
 });
 
 /**
- * ЧЕГО ЗДЕСЬ НЕТ — и почему.
+ * WHAT IS NOT TESTED HERE, and why.
  *
- * Обе правки волны 26 лежат на пути ПЕРЕТАСКИВАНИЯ: отказ `getFile()` и фильтр
- * типа (на пути диалога `accept` отсекает файл раньше компонента — об этом
- * говорит комментарий в первом тесте). Путь перетаскивания в jsdom не
- * воспроизводится: `DropZone` из react-aria ждёт настоящих событий переноса с
- * `DataTransfer`, которого в jsdom по сути нет.
+ * Both fixes of wave 26 lie on the DRAG-AND-DROP path: the `getFile()` rejection and the type
+ * filter (on the dialog path `accept` filters the file out before the component; the comment
+ * in the first test says so). The drag path cannot be reproduced in jsdom: `DropZone` from
+ * react-aria waits for real drag events with a `DataTransfer`, which jsdom essentially lacks.
  *
- * Поэтому ниже проверяется то, что проверяемо без переноса: обе причины отказа
- * есть в каталоге и в обеих локалях — то есть русская строка на месте больше не
- * появится. Сам разбор дропа сторожит `tests-visual/`, где область уже есть.
+ * So below we check what can be checked without a drag: both rejection reasons exist in the
+ * catalogue and in both locales, so a Russian string in their place will not come back.
+ * The drop parsing itself is guarded by `tests-visual/`, where the area already exists.
  */
 test("both drag-path rejection reasons come from the catalogue", () => {
-  // `wrongType` заменил русскую строку, зашитую в компоненте; `unreadable` —
-  // новая причина для файла, который не прочитался.
+  // `wrongType` replaced the Russian string hard-coded in the component; `unreadable` is
+  // a new reason for a file that could not be read.
   expect(DEFAULT_MESSAGES.fileDropzone.wrongType).toBeTruthy();
   expect(DEFAULT_MESSAGES.fileDropzone.unreadable).toBeTruthy();
   expect(ru.fileDropzone.wrongType).toBeTruthy();

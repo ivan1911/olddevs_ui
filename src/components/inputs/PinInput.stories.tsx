@@ -20,7 +20,7 @@ export const Playground: Story = {
   },
 };
 
-/** Заполненный код: значение — одна строка, а не шесть отдельных. */
+/** A filled code: the value is one string, not six separate ones. */
 export const Filled: Story = {
   render: function Render() {
     const [value, setValue] = useState("482913");
@@ -33,7 +33,7 @@ export const Filled: Story = {
   },
 };
 
-/** Четыре поля — тот же компонент, другая длина. */
+/** Four fields: the same component with a different length. */
 export const FourFields: Story = {
   render: function Render() {
     const [value, setValue] = useState("12");
@@ -41,7 +41,7 @@ export const FourFields: Story = {
   },
 };
 
-/** В форме: подпись и пояснение даёт `FormField`, как обычному полю. */
+/** In a form: the label and the hint come from `FormField`, as for an ordinary field. */
 export const InForm: Story = {
   render: function Render() {
     const [value, setValue] = useState("");
@@ -59,7 +59,7 @@ export const Disabled: Story = {
   render: () => <PinInput value="4829" onChange={() => {}} label="SMS code" disabled />,
 };
 
-/** Ошибка: рамки полей красные, на каждом поле `aria-invalid`. Правило проверки — у потребителя. */
+/** Error: the field borders are red, and each field has `aria-invalid`. The validation rule belongs to the consumer. */
 export const Invalid: Story = {
   render: function Render() {
     const [value, setValue] = useState("4829");
@@ -67,7 +67,7 @@ export const Invalid: Story = {
   },
 };
 
-/** Ошибка формы доходит до полей кода сама: `invalid` не нужен, хватает `error` у `FormField`. */
+/** A form error reaches the code fields by itself: `invalid` is not needed, `error` on `FormField` is enough. */
 export const InFormWithError: Story = {
   render: function Render() {
     const [value, setValue] = useState("482913");

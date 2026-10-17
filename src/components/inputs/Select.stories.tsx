@@ -15,7 +15,7 @@ const ITEMS: Topic[] = [
   { id: 5, label: "Minimal", keywords: "minimal", meta: 56, hue: 200 },
 ];
 
-/** Заглушка картинки: цветной квадрат вместо превью — в витрине нет сети. */
+/** Image stub: a colored square instead of a preview, since the showcase makes no network requests. */
 const square = (item: Topic, px: number) => (
   <span
     aria-hidden
@@ -30,10 +30,10 @@ const square = (item: Topic, px: number) => (
 );
 
 /**
- * Аргументы витрины типизируются одиночной ветвью union'а: у `SelectProps`
- * форма зависит от `multiple`, и Storybook не может вывести `args` из союза —
- * `render(args)` получал бы `any`. Мультивыбор показывают отдельные истории,
- * дописывая `multiple` к общим аргументам явно.
+ * The showcase's arguments are typed with a single branch of the union: for `SelectProps`
+ * the shape depends on `multiple`, and Storybook cannot infer `args` from the union, so
+ * `render(args)` would get `any`. Multiple selection is shown by separate stories that
+ * add `multiple` to the shared arguments explicitly.
  */
 type SingleSelect = Extract<SelectProps<Topic>, { multiple?: false }>;
 
@@ -53,7 +53,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<SingleSelect>;
 
-/** Живой выбор: состояние настоящее, крестик очищает. */
+/** Live example: the state is real, and the clear button empties it. */
 export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = useState<string | number | null>(null);
@@ -65,7 +65,7 @@ export const Playground: Story = {
   },
 };
 
-/** Живой мультивыбор: панель не закрывается, крестик снимает весь набор. */
+/** Live multiple selection: the panel stays open, and the clear button removes the whole set. */
 export const PlaygroundMultiple: Story = {
   render: (args) => {
     const [value, setValue] = useState<(string | number)[]>([]);
@@ -86,10 +86,9 @@ export const PlaygroundMultiple: Story = {
 };
 
 /**
- * Матрица состояний триггера. Открытый список сюда не входит: он живёт
- * в портале поверх страницы, и два открытых списка перекрыли бы друг друга —
- * ровно как у `Popover` и `ModalOverlay`. Раскрытое состояние снимается
- * отдельными историями ниже.
+ * Matrix of the trigger's states. The open list is not included here: it lives in a portal
+ * over the page, and two open lists would overlap each other, just as `Popover` and
+ * `ModalOverlay` do. The expanded state is captured by the separate stories below.
  */
 export const Matrix: Story = {
   render: (args) => (
@@ -112,8 +111,8 @@ export const Matrix: Story = {
                 value={value}
                 clearable={clearable}
                 renderMedia={i === 3 ? undefined : square}
-                // По умолчанию иконка берётся из словаря дизайн-системы;
-                // последняя строка показывает, что потребитель может его заменить.
+                // By default the icon comes from the design system's dictionary;
+                // the last row shows that the consumer can replace it.
                 icon={i === 4 ? <FilterIcon size={14} /> : undefined}
               />
             </td>
@@ -146,10 +145,10 @@ export const Matrix: Story = {
 };
 
 /**
- * Классы потребителя на триггере. Отдельная история, потому что именно здесь
- * уже была регрессия: `triggerClassName` уезжал на обёртку, отступы удваивались,
- * и контрол вырастал с 36 до 56 пикселей. Классы взяты дословно из вызова
- * во фронте, а не придуманы, — иначе снимок сторожит не то, что ломается.
+ * The consumer's classes on the trigger. This is a separate story because this is exactly
+ * where a regression already happened: `triggerClassName` moved onto the wrapper, the paddings
+ * doubled, and the control grew from 36 to 56 pixels. The classes are copied verbatim from
+ * the call in the frontend, not made up; otherwise the snapshot guards the wrong thing.
  */
 export const WithConsumerClasses: Story = {
   render: (args) => (
@@ -171,12 +170,12 @@ export const WithConsumerClasses: Story = {
 };
 
 /**
- * Вид формы: `highlightSelected={false}`.
+ * Form appearance: `highlightSelected={false}`.
  *
- * Акцентная подсветка выбранного значения означает «фильтр применён» — в панели
- * фильтров её ищут глазами, пробегая ряд. В форме то же самое означало бы
- * «поле заполнено», а это норма, а не событие: рядом с обычными полями
- * акцентная пилюля читается тревогой на пустом месте.
+ * The accent highlight of the selected value means "filter applied": in the filter panel
+ * people look for it with their eyes, scanning the row. In a form the same thing would mean
+ * "field filled in", which is the norm, not an event: next to ordinary fields an accent pill
+ * reads as an alarm on an empty spot.
  */
 export const FormAppearance: Story = {
   render: (args) => (
@@ -194,19 +193,19 @@ export const FormAppearance: Story = {
         renderMedia={square}
         triggerClassName="border-line bg-bg-2 w-full rounded-control px-3 py-2.5"
       />
-      {/* Для сравнения — то же значение с подсветкой, как в фильтрах. */}
+      {/* For comparison: the same value with the highlight, as in the filters. */}
       <Select {...args} value={2} renderMedia={square} />
     </div>
   ),
 };
 
 /**
- * Выключенное поле — рядом с рабочим, чтобы разница была видна.
+ * A disabled field, next to a working one so that the difference is visible.
  *
- * Гаснет пилюля целиком, а не подпись внутри неё, и крестик очистки исчезает:
- * поле, которое нельзя менять, нельзя и очистить. Потребитель гасит форму на
- * время запроса, и `Select`, оставшийся живым среди погасших соседей, читался
- * бы как недоделка.
+ * The whole pill is dimmed, not just the label inside it, and the clear button disappears:
+ * a field that cannot be changed cannot be cleared either. The consumer dims the form while
+ * a request is in flight, and a `Select` left alive among its dimmed neighbors would read
+ * as unfinished work.
  */
 export const Disabled: Story = {
   render: (args) => (
@@ -228,7 +227,7 @@ export const Disabled: Story = {
         aria-label="Category"
         triggerClassName="border-line bg-bg-2 w-full rounded-control px-3 py-2.5"
       />
-      {/* Та же пара в виде пилюли фильтра. */}
+      {/* The same pair as a filter pill. */}
       <div className="flex items-start gap-2">
         <Select {...args} value={null} disabled />
         <Select {...args} value={null} />
@@ -238,12 +237,12 @@ export const Disabled: Story = {
 };
 
 /**
- * Длинная подпись в узкой пилюле и в широком триггере.
+ * A long label in a narrow pill and in a wide trigger.
  *
- * Сверху — умолчание: подпись обрезается на 110px, иначе одно длинное название
- * растолкало бы соседние фильтры в ряду. Снизу — тот же элемент в поле формы,
- * где предел снят классом `[--select-label-max:none]`: место есть, и резать
- * подпись там незачем.
+ * The top one is the default: the label is cut at 110px, otherwise one long name would push
+ * the neighboring filters in the row apart. The bottom one is the same element in a form field,
+ * where the limit is lifted by the `[--select-label-max:none]` class: there is room,
+ * so there is no reason to cut the label there.
  */
 export const LongLabel: Story = {
   render: (args) => {
@@ -265,12 +264,12 @@ export const LongLabel: Story = {
 };
 
 /**
- * Подпись, которой нет среди элементов, и счётчик множественного выбора.
+ * A label that is not among the items, and the multiple selection counter.
  *
- * Обе ветки подписи режутся тем же пределом, что и выбранное значение. Раньше
- * предел стоял только у него: пилюля с «This project has been deleted»
- * занимала 170 пикселей против 120 у обычной, и одной такой хватало, чтобы
- * панель фильтров разъехалась на вторую строку.
+ * Both branches of the label are cut at the same limit as the selected value. Before, the limit
+ * applied only to the selected value: a pill with "This project has been deleted" took
+ * 170 pixels against 120 for an ordinary one, and one such pill was enough to push the filter
+ * panel onto a second row.
  */
 export const MissingAndCountLabels: Story = {
   render: (args) => (
@@ -293,7 +292,7 @@ export const MissingAndCountLabels: Story = {
   ),
 };
 
-/** Раскрытый список с поиском: картинки, счётчики справа, отметка выбранного. */
+/** An expanded list with search: pictures, counters on the right, a mark on the selected item. */
 export const Open: Story = {
   render: (args) => (
     <div className="h-[420px]">
@@ -303,8 +302,8 @@ export const Open: Story = {
 };
 
 /**
- * Раскрытый список без поиска — та самая ось, ради которой во фронте жили два
- * рукописных дропдауна: три статуса искать незачем.
+ * An expanded list without search: this is the same axis for which the frontend once kept
+ * two hand-written dropdowns. Three statuses are not worth searching.
  */
 export const OpenWithoutSearch: Story = {
   render: (args) => (
@@ -314,7 +313,7 @@ export const OpenWithoutSearch: Story = {
   ),
 };
 
-/** Раскрытый мультивыбор: отмечено несколько сразу. */
+/** An expanded multiple selection: several options are checked at once. */
 export const OpenMultiple: Story = {
   render: (args) => (
     <div className="h-[420px]">

@@ -19,10 +19,9 @@ const TREE: TreeNode[] = [
 ];
 
 test("roles and levels are set by the behaviour layer, not by us", () => {
-  // Роль дерева у react-aria — `treegrid`, а узлы объявлены `row`: в строке
-  // живут кнопка раскрытия и флажок, а `treeitem` второго интерактивного
-  // элемента внутри себя не предполагает. Это её решение, и мы его не
-  // переопределяем.
+  // react-aria's tree role is `treegrid`, and the nodes are declared `row`: a row holds the expander
+  // button and a checkbox, and a `treeitem` does not expect a second interactive element inside it.
+  // That is its decision, and we do not override it.
   render(<TreeView items={TREE} aria-label="Categories" defaultExpandedKeys={["nature"]} />);
 
   expect(screen.getByRole("treegrid", { name: "Categories" })).toBeTruthy();
@@ -53,15 +52,15 @@ test("expansion goes outwards as a set", async () => {
 
   await user.click(screen.getAllByRole("button", { name: /Expand/ })[0]!);
 
-  // Дерево состояний не хранит: множество уходит тому, у кого они лежат.
+  // The tree does not keep the state itself: the set goes to whoever owns it.
   expect(onExpandedChange).toHaveBeenCalledWith(new Set(["nature"]));
 });
 
 test("the expander button name does not repeat the node label", () => {
   render(<TreeView items={TREE} aria-label="Categories" />);
 
-  // react-aria дописывает подпись своего элемента сама: «Раскрыть Природа»
-  // читалось бы как «Раскрыть Природа Природа» (урок ревью волны 18).
+  // react-aria appends the label of its element on its own: "Expand Nature" would be read as
+  // "Expand Nature Nature" (a lesson from the wave 18 review).
   const button = screen.getAllByRole("button")[0]!;
   expect(button.getAttribute("aria-label")).toBe("Expand");
 });
@@ -69,7 +68,7 @@ test("the expander button name does not repeat the node label", () => {
 test("without selectionMode there is no selection axis at all", () => {
   render(<TreeView items={TREE} aria-label="Categories" defaultExpandedKeys={["nature"]} />);
 
-  // Дерево категорий, по которому просто ходят, не должно тащить флажки.
+  // A category tree that is only browsed should not carry checkboxes.
   expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
   expect(screen.getByRole("row", { name: /Nature/ }).getAttribute("aria-selected")).toBeNull();
 });
@@ -91,9 +90,8 @@ test("selectionMode turns on the checkboxes and selection goes outwards", async 
   expect(boxes.length).toBeGreaterThan(0);
   await user.click(boxes[0]!);
 
-  // Сравнение по содержимому, а не по объекту: `Selection` из react-aria —
-  // это `Set` с дополнительными полями (якорь и текущий ключ), и строгое
-  // равенство множеств на нём не сходится.
+  // Compare by content, not by object: the `Selection` from react-aria is a `Set` with extra fields
+  // (an anchor and a current key), and strict equality of sets does not hold for it.
   const selected = onSelectionChange.mock.calls[0]![0] as Set<unknown>;
   expect([...selected]).toEqual(["nature"]);
 });
@@ -133,8 +131,8 @@ test("activeKey marks the current node with aria-current and draws no checkboxes
     />
   );
 
-  // Текущее место навигации — не выбор: `aria-current`, без флажков и без
-  // `aria-selected` (словарь кита: `active` — это `aria-current="page"`).
+  // The current navigation location is not a selection: `aria-current`, without checkboxes and
+  // without `aria-selected` (the kit's vocabulary: `active` is `aria-current="page"`).
   expect(screen.getByRole("row", { name: /Forest/ }).getAttribute("aria-current")).toBe("page");
   expect(screen.getByRole("row", { name: /Sea/ }).getAttribute("aria-current")).toBeNull();
   expect(screen.getByRole("row", { name: /Nature/ }).getAttribute("aria-current")).toBeNull();
@@ -154,8 +152,8 @@ test("activeKey follows the prop and an unknown key marks nothing", () => {
 });
 
 test("activeKey moves between nested nodes when the prop changes with stable items", () => {
-  // Узлы остаются теми же объектами: дерево обязано перерисовать строки по
-  // одному `activeKey`, а не по смене `items`.
+  // The nodes stay the same objects: the tree must re-render the rows by a single `activeKey`,
+  // not by a change of `items`.
   const { rerender } = render(
     <TreeView
       items={TREE}
@@ -185,8 +183,8 @@ test("activeKey works together with onAction and does not turn into a selection"
 
   await user.click(screen.getByRole("row", { name: /City/ }));
 
-  // Узел остаётся текущим, пока потребитель не сменит ключ: дерево само
-  // «текущее» не переставляет.
+  // The node stays current until the consumer changes the key: the tree does not move "current"
+  // by itself.
   expect(onAction).toHaveBeenCalledWith("city");
   expect(screen.getByRole("row", { name: /City/ }).getAttribute("aria-current")).toBe("page");
 });
@@ -206,9 +204,9 @@ test("with onAction a click on a folder acts but does not expand it", async () =
 
   await user.click(screen.getByRole("row", { name: /Nature/ }));
 
-  // Поведение react-aria, а не наше: действие по папке и раскрытие — разные
-  // жесты. Раскрывает папку кнопка-шеврон и стрелка вправо; кто хочет
-  // раскрывать по клику на строку, делает это в `onAction` сам.
+  // This is react-aria's behavior, not ours: acting on a folder and expanding it are different
+  // gestures. The chevron button and the right arrow expand a folder; whoever wants to expand on a
+  // row click does it in `onAction` themselves.
   expect(onAction).toHaveBeenCalledWith("nature");
   expect(onExpandedChange).not.toHaveBeenCalled();
 });
@@ -241,12 +239,11 @@ test("without onAction a click on a folder row expands it", async () => {
 });
 
 /*
-  В jsdom нет вычисленных стилей Tailwind, поэтому проверяется то, что
-  возвращает рендер: у крашеного элемента лежит ЛИТЕРАЛЬНЫЙ класс состояния.
-  Варианты `disabled:` и `selected:` на внутреннем `div` не срабатывали никогда
-  — react-aria ставит `data-disabled` и `data-selected` на строку `row`, а не
-  на содержимое, — и по классам такой дефект не отличить от рабочего кода, если
-  искать вариант. Поэтому ищется класс без префикса варианта.
+  jsdom has no computed Tailwind styles, so what is checked is what the render returns: the colored
+  element carries a LITERAL state class. The `disabled:` and `selected:` variants on the inner `div`
+  never fired: react-aria puts `data-disabled` and `data-selected` on the `row`, not on the content,
+  and by class names such a defect cannot be told apart from working code if you search for the
+  variant. So the test searches for the class without the variant prefix.
 */
 const labelBox = (name: string) => screen.getByText(name).parentElement!;
 const label = (name: string) => screen.getByText(name);
@@ -262,7 +259,7 @@ test("a selected row carries the highlight on the element that is painted", () =
     />
   );
 
-  // Состояние есть на строке, а краска должна лежать на содержимом.
+  // The state lives on the row, but the paint must sit on the content.
   expect(screen.getByRole("row", { name: /Forest/ }).hasAttribute("data-selected")).toBe(true);
   expect(labelBox("Forest").classList.contains("bg-accent-soft")).toBe(true);
   expect(labelBox("Sea").classList.contains("bg-accent-soft")).toBe(false);
@@ -299,8 +296,8 @@ test("a disabled row with a selection checkbox is not dimmed twice", () => {
     />
   );
 
-  // Флажок гасится собственным `disabled:opacity-50` (блокировку он получает от
-  // строки), поэтому на самом ряду приглушения быть не должно — иначе 25%.
+  // The checkbox is dimmed by its own `disabled:opacity-50` (it gets the blocking from the row), so
+  // the row itself must not be dimmed as well: otherwise the two would stack to 25%.
   expect(labelBox("City").classList.contains("opacity-50")).toBe(false);
   expect(screen.getByRole("checkbox").matches(":disabled")).toBe(true);
 });

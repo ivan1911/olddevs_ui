@@ -15,12 +15,14 @@ beforeAll(loadLazyBuiltins);
 afterEach(cleanup);
 
 /**
- * Поповеры цвета (OLDSUI-153): кнопка «Цвет» с сетками цвета текста и маркера и
- * кнопка «Маркер» с рядом маркеров и «Убрать маркер». Образец — Notion-like
- * шаблон Tiptap: цвет выбирают глазами, по кружкам, одним щелчком.
+ * The colour popovers (OLDSUI-153): the "Color" button with the text colour and highlight
+ * colour grids, and the "Highlight" button with the row of markers and "Remove highlight".
+ * The model is Tiptap's Notion-like template: a colour is chosen by eye, from the dots,
+ * with one click.
  *
- * Кнопки разведены без дублей (OLDSUI-154): «Маркер» — на Панели, «Цвет» — в
- * меню выделения. Поэтому меню выделения здесь включено: «Цвет» есть только в нём.
+ * The buttons are split with no duplicates (OLDSUI-154): "Highlight" is on the Toolbar,
+ * "Color" is in the Bubble menu. That is why the Bubble menu is on here: "Color" exists
+ * only there.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -32,7 +34,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { editor };
 }
 
-/** Выделить «alpha» — первое слово абзаца. */
+/** Selects "alpha" — the first word of the paragraph. */
 function selectFirstWord(editor: ReturnType<typeof renderEditor>["editor"]) {
   act(() => {
     editor.view.focus();
@@ -41,13 +43,13 @@ function selectFirstWord(editor: ReturnType<typeof renderEditor>["editor"]) {
 }
 
 const toolbar = () => screen.getByRole("toolbar", { name: "Formatting" });
-/** Меню выделения: всплывает над непустым выделением, пока у Документа фокус. */
+/** The Bubble menu: it pops up above a non-empty selection while the Document has focus. */
 const bubble = () => screen.findByRole("toolbar", { name: "Selection formatting" });
-/** «Цвет» — только в меню выделения (OLDSUI-154). */
+/** "Color" — only in the Bubble menu (OLDSUI-154). */
 const colorButton = async () => within(await bubble()).getByRole("button", { name: /^Color:/ });
-/** «Маркер» — только на Панели (OLDSUI-154). */
+/** "Highlight" — only on the Toolbar (OLDSUI-154). */
 const highlightButton = () => within(toolbar()).getByRole("button", { name: /^Highlight:/ });
-/** Кружки сетки по имени; «Свой цвет…» — тоже вариант, но без кружка. */
+/** The grid's dots by name; "Custom color…" is an option too, but without a dot. */
 const radios = (menu: HTMLElement) =>
   within(menu)
     .getAllByRole("menuitemradio")
@@ -63,7 +65,7 @@ test("the Color button opens two grids: text colour and highlight colour", async
   const menu = await screen.findByRole("menu", { name: "Color" });
   const text = within(menu).getByRole("group", { name: "Text color" });
   const highlight = within(menu).getByRole("group", { name: "Highlight color" });
-  // Снятие — значок последней ячейкой, как в «Маркере», а не белый кружок первым (OLDSUI-160).
+  // Removal is the icon in the last cell, as in "Highlight", not a white dot first (OLDSUI-160).
   expect(radios(text)).toEqual(["Accent", "Green", "Amber", "Red", "Lime", "Gray"]);
   expect(within(text).getByRole("menuitem", { name: "Remove color" })).toBeDefined();
   expect(within(highlight).getByRole("menuitem", { name: "Remove highlight" })).toBeDefined();
@@ -78,7 +80,7 @@ test("the Color button opens two grids: text colour and highlight colour", async
     "Pink",
     "Red",
   ]);
-  // «Свой цвет…» — у каждого раздела свой.
+  // "Custom color…" — each section has its own.
   expect(within(text).getByRole("menuitemradio", { name: "Custom color…" })).toBeDefined();
   expect(within(highlight).getByRole("menuitemradio", { name: "Custom color…" })).toBeDefined();
 });
@@ -94,7 +96,7 @@ test("picking a text colour applies it, closes the popover and returns focus to 
   expect(editor.getHTML()).toBe('<p><span data-color="danger">alpha</span> beta</p>');
   expect(screen.queryByRole("menu", { name: "Color" })).toBeNull();
   await waitFor(() => expect(editor.isFocused).toBe(true));
-  // Одна правка — один шаг отмены.
+  // One edit — one undo step.
   act(() => void editor.commands.undo());
   expect(editor.getHTML()).toBe("<p>alpha beta</p>");
 });
@@ -126,7 +128,7 @@ test("the arrows walk the grid: → next, ↓ the same column a row lower, Enter
   selectFirstWord(editor);
   await user.click(await colorButton());
   const menu = await screen.findByRole("menu", { name: "Color" });
-  // Цвета нет — отмеченного нет, и фокус на первом кружке, а не на «Свой цвет…».
+  // No colour — nothing is checked, and focus is on the first dot, not on "Custom color…".
   expect(
     within(menu)
       .getAllByRole("menuitemradio")
@@ -138,7 +140,7 @@ test("the arrows walk the grid: → next, ↓ the same column a row lower, Enter
   await user.keyboard("{ArrowRight}");
   expect(document.activeElement?.getAttribute("aria-label")).toBe("Green");
   await user.keyboard("{ArrowLeft}");
-  // Ряд ниже, тот же столбец: Accent Green Amber Red Lime | Gray «Убрать цвет».
+  // One row lower, the same column: Accent Green Amber Red Lime | Gray "Remove color".
   await user.keyboard("{ArrowDown}");
   expect(document.activeElement?.getAttribute("aria-label")).toBe("Gray");
   await user.keyboard("{Enter}");
@@ -216,7 +218,8 @@ test("without the color tool there is no Color button, and the bubble carries Hi
   selectFirstWord(editor);
   expect(within(toolbar()).queryByRole("button", { name: /^Color:/ })).toBeNull();
   expect(highlightButton()).toBeDefined();
-  // Без «Цвета» маркер в плашке ставит «Маркер» (OLDSUI-154): иначе там его не поставить.
+  // Without "Color" the highlight in the pill is set by "Highlight" (OLDSUI-154): otherwise
+  // it could not be set there.
   const withoutColor = await bubble();
   expect(within(withoutColor).queryByRole("button", { name: /^Color:/ })).toBeNull();
   expect(within(withoutColor).getByRole("button", { name: "Highlight: None" })).toBeDefined();
@@ -244,8 +247,8 @@ test("in the HTML mode the colour buttons are unavailable and open nothing", asy
   selectFirstWord(editor);
   expect(await colorButton()).toBeDefined();
   await user.click(within(toolbar()).getByRole("button", { name: "HTML" }));
-  // «Цвет» живёт в меню выделения (OLDSUI-154), а оно — над Документом: в режиме
-  // HTML Документа на экране нет, и плашка уходит вместе с «Цветом».
+  // "Color" lives in the Bubble menu (OLDSUI-154), and that is above the Document: in HTML
+  // mode there is no Document on screen, and the pill goes away together with "Color".
   await waitFor(() =>
     expect(screen.queryByRole("toolbar", { name: "Selection formatting" })).toBeNull()
   );
@@ -260,13 +263,13 @@ test("the selection menu carries Color, the toolbar Highlight — no duplicates"
   const { editor } = renderEditor();
   selectFirstWord(editor);
   const selection = await bubble();
-  // Без дублей (OLDSUI-154): «Цвет» с обеими сетками — в плашке, «Маркер» — на Панели.
+  // No duplicates (OLDSUI-154): "Color" with both grids is in the pill, "Highlight" is on the Toolbar.
   expect(within(selection).queryByRole("button", { name: /^Highlight/ })).toBeNull();
   expect(within(toolbar()).queryByRole("button", { name: /^Color:/ })).toBeNull();
   expect(highlightButton()).toBeDefined();
   await user.click(within(selection).getByRole("button", { name: /^Color:/ }));
   const menu = await screen.findByRole("menu", { name: "Color" });
-  // Плашка не прячется, пока поповер открыт.
+  // The pill does not hide while the popover is open.
   expect(screen.getByRole("toolbar", { name: "Selection formatting" })).toBeDefined();
   await user.click(within(menu).getByRole("menuitemradio", { name: "Accent" }));
   expect(editor.getHTML()).toBe('<p><span data-color="accent">alpha</span> beta</p>');
@@ -281,7 +284,7 @@ test("Escape in a colour popover inside a modal layer closes the popover, not th
       <RichTextEditor ref={ref} aria-label="Body" defaultValue="<p>alpha beta</p>" />
     </ModalOverlay>
   );
-  // «Цвет» — в меню выделения (OLDSUI-154): нужны фокус в Документе и выделение.
+  // "Color" is in the Bubble menu (OLDSUI-154): it needs focus in the Document and a selection.
   selectFirstWord(ref.current!.editor!);
   await user.click(await colorButton());
   await screen.findByRole("menu", { name: "Color" });
@@ -289,9 +292,9 @@ test("Escape in a colour popover inside a modal layer closes the popover, not th
   await waitFor(() => expect(screen.queryByRole("menu", { name: "Color" })).toBeNull());
   expect(onClose).not.toHaveBeenCalled();
 
-  // Контроль: без поповера тот же Escape закрывает слой. Фокус — в Документ: на
-  // кнопке, куда он вернулся, открыта подсказка, и первый Escape по стеку слоёв
-  // закрыл бы её.
+  // Control: without the popover the same Escape closes the layer. Focus goes to the
+  // Document: the button it returned to has its tooltip open, and the first Escape along
+  // the stack of layers would close that.
   const button = await colorButton();
   await waitFor(() => expect(document.activeElement).toBe(button));
   act(() => screen.getByRole("textbox", { name: "Body" }).focus());
@@ -318,7 +321,7 @@ test("in a code block colours have nothing to do: both buttons are unavailable",
   const user = userEvent.setup();
   const { editor } = renderEditor({ defaultValue: "<pre><code>const x = 1;</code></pre>" });
   selectFirstWord(editor);
-  // Плашка над кодом всплывает, но «Цвет» в ней недоступен, как и «Маркер» Панели.
+  // The pill pops up above the code, but "Color" in it is unavailable, as is the Toolbar's "Highlight".
   expect((await colorButton()).getAttribute("aria-disabled")).toBe("true");
   expect(highlightButton().getAttribute("aria-disabled")).toBe("true");
   await user.click(await colorButton());

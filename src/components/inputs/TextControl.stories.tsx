@@ -18,9 +18,9 @@ type Story = StoryObj<typeof meta>;
 export const Playground: Story = { args: { as: "input" } };
 
 /**
- * Матрица «вид × состояние». Состояния показаны реальными атрибутами
- * (`disabled`, `readOnly`), а не классами: если оформление разъедется
- * с настоящим состоянием поля, матрица это покажет.
+ * A matrix of "appearance × state". The states are shown with real attributes
+ * (`disabled`, `readOnly`), not classes: if the styling drifts apart from the
+ * field's actual state, the matrix will show it.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -48,15 +48,14 @@ export const Matrix: Story = {
 };
 
 /**
- * Растущее поле и счётчик символов.
+ * A growing field with a character counter.
  *
- * Высоту считает браузер, а не JS: невидимый близнец с той же типографикой
- * лежит в той же ячейке грида и задаёт её высоту. Обычный способ — читать
- * `scrollHeight` на каждое нажатие — это принудительный пересчёт раскладки на
- * каждый символ.
+ * The browser computes the height, not JS: an invisible twin with the same typography
+ * sits in the same grid cell and sets its height. The usual approach, reading
+ * `scrollHeight` on every keystroke, forces a layout recalculation on each character.
  *
- * `rows` при `autosize` работает минимумом, `maxRows` — пределом, после
- * которого включается прокрутка.
+ * With `autosize`, `rows` is the minimum and `maxRows` is the limit, after which
+ * scrolling kicks in.
  */
 export const Growing: Story = {
   parameters: { layout: "padded" },
@@ -91,7 +90,7 @@ export const Growing: Story = {
   },
 };
 
-/** Счётчик: с `maxLength` показывает «N/M», без него — просто «N». */
+/** Counter: with `maxLength` it shows "N/M", without it just "N". */
 export const WithCounter: Story = {
   parameters: { layout: "padded" },
   render: function Render() {
@@ -123,14 +122,14 @@ export const WithCounter: Story = {
 };
 
 /**
- * Ступень высоты рядом с соседями по строке.
+ * The size step next to its neighbors in a row.
  *
- * `sm` — 36 пикселей, ровно рост `Button size="md"` и пилюли-триггера `Select`:
- * в панели управления поле до этой ступени выпадало из ряда в одиночку. `md` —
- * прежние 42, и в форме это верная высота.
+ * `sm` is 36 px, exactly the height of `Button size="md"` and the `Select` trigger pill.
+ * In a control bar, a field below this step used to fall out of the row on its own. `md` is
+ * the previous 42 px, which is the right height in a form.
  *
- * История нужна замеру: разницу в шесть пикселей на статичном кадре видно
- * только рядом с тем, с чем поле обязано совпасть.
+ * The story exists for measurement: a six-pixel difference is visible in a static frame
+ * only next to the thing the field has to match.
  */
 export const Sizes: Story = {
   render: () => (
@@ -138,7 +137,7 @@ export const Sizes: Story = {
       <div className="flex items-center gap-2" data-testid="compact-row">
         <Button>New task</Button>
         <TextControl aria-label="Compact search" size="sm" placeholder="sm — 36" />
-        {/* Ступень пробрасывается и в поиск: он стоит на этом же поле. */}
+        {/* The size is passed through to search as well: it sits on the same field. */}
         <SearchControl label="Search tasks" size="sm" value="" onChange={() => {}} />
         <Select
           items={[{ id: "all", label: "All projects" }]}

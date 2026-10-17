@@ -14,13 +14,13 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Подложка снимается прямо в истории, а не по клику: снимок должен быть
- * детерминированным, а состояние «открыто» — единственное, что тут видно.
+ * The overlay is open right in the story, not by a click: the snapshot must be
+ * deterministic, and the "open" state is the only thing visible here.
  *
- * Фон набран блоками, а не текстом, и это не украшательство. Текст под
- * затемнением axe меряет сквозь подложку и справедливо считает нечитаемым —
- * для контента позади модального окна это норма, но аудит об этом не знает
- * и падал бы на каждой теме. Блоки показывают размытие не хуже.
+ * The background is built from blocks, not text, and this is not decoration. axe measures text
+ * under the dimming through the scrim and correctly considers it unreadable. For content behind a
+ * modal window that is normal, but the audit does not know that and would fail on every theme.
+ * Blocks show the blur just as well.
  */
 const Backdrop = () => (
   <div className="flex h-[420px] flex-col gap-3 p-6" aria-hidden>
@@ -61,10 +61,10 @@ export const Centered: Story = {
 };
 
 /**
- * Матрицы у этого примитива нет, и не по недосмотру: оверлей — `position: fixed`
- * на весь экран, два таких в одном кадре просто лягут друг на друга. Проверено:
- * подложка второго затемняет карточку первого, и аудит axe справедливо ловит
- * нечитаемый текст. Поэтому каждое выравнивание — своя история.
+ * This primitive has no matrix, and not by oversight: the overlay is `position: fixed` across the
+ * whole screen, so two of them in one frame would simply stack on top of each other. Checked: the
+ * scrim of the second dims the card of the first, and the axe audit rightly flags the unreadable
+ * text. That is why each alignment gets its own story.
  */
 export const FromTop: Story = {
   render: (args) => (

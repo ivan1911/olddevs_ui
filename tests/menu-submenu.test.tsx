@@ -12,14 +12,15 @@ import {
 } from "../src/components/overlays/Menu.js";
 
 /*
-  Место подменю `Menu` (OLDSUI-254). Положение в jsdom не посчитать, зато
-  react-aria пишет итоговое место на поповер атрибутом `data-placement`, а
-  `data-trigger` говорит, корневой это поповер или подменю — этого хватает,
-  чтобы увидеть умолчание глазами потребителя. Настоящая геометрия, включая
-  переворот у края, проверяется в `tests-visual/menu-submenu.spec.ts`.
+  Placement of the `Menu` submenu (OLDSUI-254). jsdom cannot compute the layout,
+  but react-aria writes the final placement onto the popover in the
+  `data-placement` attribute, and `data-trigger` says whether the popover is the
+  root or a submenu. That is enough to see the default the way a consumer sees
+  it. The real geometry, including the flip at the edge, is checked in
+  `tests-visual/menu-submenu.spec.ts`.
 */
 
-// Шим `CSS.escape`: см. `tests/menu.test.tsx`.
+// `CSS.escape` shim: see `tests/menu.test.tsx`.
 if (typeof globalThis.CSS === "undefined")
   (globalThis as unknown as { CSS: { escape: (v: string) => string } }).CSS = {
     escape: (value: string) => String(value).replace(/[^a-zA-Z0-9_-]/g, (c) => `\\${c}`),
@@ -58,7 +59,7 @@ function Nested({ placement }: { placement?: "bottom end" | "left top" }) {
   );
 }
 
-/** Открывает корневое меню и подменю с клавиатуры; возвращает оба поповера. */
+/** Opens the root menu and the submenu from the keyboard; returns both popovers. */
 async function openBoth() {
   const user = userEvent.setup();
   await user.click(screen.getByRole("button", { name: "Actions" }));
@@ -106,9 +107,9 @@ test("on a narrow screen an explicit placement still wins", async () => {
 });
 
 /*
-  Логические стороны в явном `placement` (OLDSUI-262): «сбоку по концу строки»
-  — то же умолчание, что у подменю кита, — можно задать и самому, и при письме
-  справа налево оно встаёт слева.
+  Logical sides in an explicit `placement` (OLDSUI-262): the side at the end of
+  the line is the same default as the kit's submenu. It can also be set by hand,
+  and in a right-to-left script it lands on the left.
 */
 
 function NestedLogical({ placement }: { placement: "end top" | "start top" }) {

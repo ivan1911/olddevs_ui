@@ -7,31 +7,31 @@ import { Toggle } from "../src/components/actions/Toggle.js";
 afterEach(cleanup);
 
 /**
- * Семейство «чужой обработчик не вытесняет собственный».
+ * Family: "a consumer handler does not displace the component's own".
  *
- * `{...rest}`, стоящий после собственных пропов, перекрывает их. Для
- * оформления это безобидно и часто ДАЖЕ НУЖНО — потребитель вправе переопределить
- * `aria-label`. Для обработчика, которым компонент делает свою работу, это
- * смерть: `Toggle` с чужим `onClick` рисовался, слушался, звал аналитику и не
- * переключался никогда.
+ * `{...rest}` placed after the component's own props overrides them. For styling
+ * this is harmless and often even NEEDED: the consumer may override `aria-label`.
+ * For a handler that the component uses to do its work, it is fatal: a `Toggle`
+ * with a foreign `onClick` rendered, responded to clicks, called analytics and
+ * never toggled.
  *
- * Отдельно проверяется `onClick={undefined}`: ключ всё равно попадает в `rest`
- * и затирает собственный обработчик, то есть дефект ловится даже без реального
- * обработчика — на одной лишь необязательной пропе, проброшенной из обёртки
- * потребителя.
+ * Separately, `onClick={undefined}` is checked: the key still ends up in `rest`
+ * and overwrites the component's own handler, so the defect is caught even without
+ * a real handler — by an optional prop alone, passed through from the consumer's
+ * wrapper.
  *
- * Правило не «спред всегда первым»: `MaskedInput` держит спред последним и
- * корректен, потому что вынимает `onChange` и `onKeyDown` из `rest`
- * деструктуризацией. Проверяется СЛЕДСТВИЕ, а не расположение строк.
+ * The rule is not "spread always goes first": `MaskedInput` keeps the spread last
+ * and is correct, because it pulls `onChange` and `onKeyDown` out of `rest` by
+ * destructuring. What is checked is the CONSEQUENCE, not the order of the lines.
  *
- * Здесь перечислены компоненты, у которых есть И собственное поведение по
- * щелчку, И приём чужого обработчика. Аудит волны 26 нашёл ровно один такой —
- * `Toggle`; список заведён, чтобы второй попадал сюда, а не в приложение.
+ * Listed here are the components that have BOTH their own click behavior AND accept
+ * a foreign handler. The wave 26 audit found exactly one such component, `Toggle`;
+ * the list is kept so that a second one is caught here and not in an application.
  *
- * Два других способа не иметь этого дефекта законны и в список не ведут:
- * вынуть обработчик из `rest` деструктуризацией (`MaskedInput`) или вовсе не
- * принимать его, вычеркнув из пропов через `Omit` (`CopyButton`) — там
- * вытеснять нечего.
+ * Two other ways of not having this defect are legitimate and are not listed here:
+ * pull the handler out of `rest` by destructuring (`MaskedInput`), or do not accept
+ * it at all by removing it from the props with `Omit` (`CopyButton`) — there is
+ * nothing to displace in those cases.
  */
 const CASES = [
   {

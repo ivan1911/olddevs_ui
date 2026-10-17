@@ -18,7 +18,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Живое поле: крестик появляется с первым символом и возвращает фокус в поле. */
+/** Live field: the clear button appears with the first character and returns focus to the field. */
 export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = useState("");
@@ -30,7 +30,7 @@ export const Playground: Story = {
   },
 };
 
-/** По образцу поиска YouTube: панель открывается кнопкой внутри поля и меняет текущее выделение. */
+/** Modeled on YouTube search: the panel opens from a button inside the field and changes the current text selection. */
 export const OnScreenKeyboard: Story = {
   render: (args) => {
     const [value, setValue] = useState("sunset");
@@ -48,7 +48,7 @@ export const OnScreenKeyboard: Story = {
   },
 };
 
-/** Технический сценарий для проверки Escape в стеке Popover поверх Dialog. */
+/** A technical scenario for checking Escape in a Popover stack on top of a Dialog. */
 export const KeyboardInDialog: Story = {
   tags: ["periphery"],
   render: (args) => {
@@ -76,12 +76,12 @@ export const KeyboardInDialog: Story = {
 };
 
 /**
- * Матрица «состояние × форма». Геометрия задаётся через `shellClassName` —
- * своей оси размера у поля нет, как и у `Select` с его `triggerClassName`:
- * какой вид у окружающей формы, пакет не знает.
+ * Matrix of state × shape. The geometry is set through `shellClassName`: the field has no
+ * size axis of its own, just like `Select` with its `triggerClassName`, because the package
+ * does not know the look of the surrounding form.
  *
- * Последняя строка — пилюля из фильтра библиотеки: тот же примитив, другая
- * оболочка, а не второй компонент.
+ * The last row is the pill from the library's filter: the same primitive with a different
+ * shell, not a second component.
  */
 export const Matrix: Story = {
   render: (args) => (

@@ -59,7 +59,7 @@ export const Playground: Story = {
   },
 };
 
-/** Выбор: ось включается `selectionMode`, состояние — снаружи. */
+/** Selection: the axis is turned on by `selectionMode`, and the state lives outside. */
 export const WithSelection: Story = {
   render: function Render() {
     const [expanded, setExpanded] = useState<Set<Key>>(new Set(["nature", "sea"]));
@@ -80,7 +80,7 @@ export const WithSelection: Story = {
   },
 };
 
-/** Без пропов выбора флажков нет вовсе — по узлам просто ходят. */
+/** Without the selection props there are no checkboxes at all: the user simply moves across the nodes. */
 export const WithoutSelection: Story = {
   render: () => (
     <div className="w-[320px]">
@@ -90,9 +90,9 @@ export const WithoutSelection: Story = {
 };
 
 /**
- * Навигация: текущая статья помечена `activeKey` (`aria-current="page"`), без
- * флажков. Лист открывает `onAction`; папку раскрывают шеврон и стрелка
- * вправо, поэтому раскрытие по клику на строку — тоже в `onAction`.
+ * Navigation: the current article is marked with `activeKey` (`aria-current="page"`), without
+ * checkboxes. A leaf opens with `onAction`; a folder is expanded by its chevron or the Right Arrow
+ * key, so expanding on a row click also goes through `onAction`.
  */
 export const CurrentNode: Story = {
   render: function Render() {

@@ -13,8 +13,8 @@ const LONG = `curl -X POST https://api.example.com/v1/orders --header "Content-T
 const meta = {
   title: "Content/CodeView",
   component: CodeView,
-  // Периферия по ADR-0038: представление без поведения, подсветку компонент не
-  // делает вовсе.
+  // Periphery per ADR-0038: a view without behavior. The component does no syntax
+  // highlighting at all.
   tags: ["periphery"],
   parameters: { layout: "padded" },
   args: { code: BODY },
@@ -23,22 +23,22 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Простой текст: подсветчика кит не везёт, и без него это просто моноширинный код. */
+/** Plain text: the kit ships no highlighter, so without one this is simply monospaced code. */
 export const Playground: Story = {};
 
-/** Шапка с именем файла и копированием — существующая `CopyButton`. */
+/** A header with the file name and a copy action: the existing `CopyButton`. */
 export const WithHeader: Story = {
   args: { title: "response.json", copyable: true, lineNumbers: true },
 };
 
 /**
- * Подсвеченная разметка. Это то, что вернул подсветчик потребителя; `code`
- * при этом остаётся источником правды для нумерации и копирования.
+ * Highlighted markup. This is what the consumer's highlighter returned, but `code`
+ * remains the source of truth for numbering and copying.
  *
- * Цвета здесь взяты из токенов кита и в варианте `strong`: обычный `accent` на
- * подложке кода не проходит по контрасту, и аудит axe это ловит. Заметьте, что
- * это довод самой границы ADR-0039 — кит не может отвечать за цвета синтаксиса,
- * которых не выбирал.
+ * The colors here come from the kit's tokens, in the `strong` variant: a plain `accent` on
+ * a code background fails the contrast check, and the axe audit catches it. Note that this is
+ * an argument for the ADR-0039 boundary itself: the kit cannot answer for syntax colors it
+ * did not choose.
  */
 export const Highlighted: Story = {
   args: { title: "response.json", copyable: true, lineNumbers: true },
@@ -65,7 +65,7 @@ export const Highlighted: Story = {
   ),
 };
 
-/** Рамка уже строки: иначе в широком кадре она помещается и ни прокрутки, ни переноса не видно. */
+/** A frame narrower than the line: otherwise the line fits in a wide frame, and neither scrolling nor wrapping is visible. */
 const narrowFrame: Decorator = (Story) => (
   <div className="max-w-md">
     <Story />
@@ -73,15 +73,15 @@ const narrowFrame: Decorator = (Story) => (
 );
 
 /**
- * Длинная строка без переноса даёт прокрутку, а не обрезку: обрезанная строка
- * кода молча теряет то, ради чего её открыли.
+ * A long line without wrapping scrolls rather than truncates: a truncated line of code
+ * silently loses what it was opened for.
  */
 export const LongLine: Story = {
   args: { code: LONG, title: "request.sh", copyable: true },
   decorators: [narrowFrame],
 };
 
-/** Та же строка в той же узкой рамке, но с переносом. */
+/** The same line in the same narrow frame, but with wrapping. */
 export const Wrapped: Story = {
   args: { code: LONG, title: "request.sh", copyable: true, wrap: true },
   decorators: [narrowFrame],

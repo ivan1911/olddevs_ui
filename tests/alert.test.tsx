@@ -7,20 +7,21 @@ import { Alert } from "../src/components/actions/Alert.js";
 afterEach(cleanup);
 
 /*
- * Русская локаль подключается ЯВНО: с 2.0.0 фолбэк кита английский, и тест,
- * ожидающий русскую подпись без провайдера, проверял бы не поведение, а язык
- * дефолта. Ожидания при этом не тронуты — строки те же, что были зашиты в
- * компонентах до переезда в каталог, и это здесь и доказывается.
+ * The Russian locale is wired in EXPLICITLY: since 2.0.0 the kit falls back to English,
+ * so a test that expects a Russian label without a provider would check the default
+ * language instead of the behavior. The expectations are unchanged: the strings are the
+ * same ones that were hard-coded in the components before they moved to the catalog,
+ * and this is what the test proves.
  */
 test("role follows the tone, not the appearance", () => {
   const { unmount } = render(<Alert tone="danger">Channel disconnected</Alert>);
-  // `alert` перебивает текущую речь скринридера — это уместно для ошибки.
+  // `alert` interrupts the current screen reader speech, which is right for an error.
   expect(screen.getByRole("alert").textContent).toContain("Channel disconnected");
   unmount();
 
   for (const tone of ["neutral", "accent", "success", "warning"] as const) {
     const { unmount: u } = render(<Alert tone={tone}>Message</Alert>);
-    // `status` дожидается паузы: орать про успешное сохранение незачем.
+    // `status` waits for a pause: there is no reason to shout about a successful save.
     expect(screen.getByRole("status")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
     u();
@@ -58,6 +59,6 @@ test("a custom icon displaces the tone icon", () => {
     </Alert>
   );
   expect(screen.getByTestId("custom")).toBeTruthy();
-  // Значок по тону — один `svg`; со своим значком его быть не должно.
+  // The icon comes from the tone: there is one `svg`, and no icon of its own.
   expect(container.querySelectorAll("svg")).toHaveLength(0);
 });

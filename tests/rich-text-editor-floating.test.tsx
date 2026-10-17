@@ -10,7 +10,7 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -19,12 +19,12 @@ afterEach(() => {
 });
 
 /**
- * Плавающая Панель (OLDSUI-42): над непустым выделением, а на сенсорных
- * экранах — фиксированная, чтобы не спорить с системным меню выделения.
+ * The floating Toolbar (OLDSUI-42): above a non-empty selection, and on touch
+ * screens it is fixed, so that it does not compete with the system selection menu.
  *
- * Выделение и фокус ставятся командами движка (`ref.editor`): мышью и
- * клавиатурой jsdom выделять не умеет. Фокус — `view.focus()`, а не команда
- * `focus()`: та ставит его в следующем кадре.
+ * Selection and focus are set by engine commands (`ref.editor`): jsdom cannot select
+ * with the mouse or the keyboard. Focus is `view.focus()`, not the
+ * `focus()` command, which sets it in the next frame.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -57,7 +57,7 @@ test("the floating toolbar appears over a non-empty selection only", async () =>
   await waitFor(() => expect(screen.queryByRole("toolbar", { name: "Formatting" })).toBeNull());
 });
 
-/** Сенсорный экран: `matchMedia("(pointer: coarse)")` совпадает, и о смене сообщается. */
+/** A touch screen: `matchMedia("(pointer: coarse)")` matches, and the change is reported. */
 function stubPointer(initial: "coarse" | "fine") {
   let coarse = initial === "coarse";
   const listeners = new Set<() => void>();
@@ -85,7 +85,7 @@ test("on a touch screen the floating toolbar falls back to the fixed one, and ba
   const pointer = stubPointer("coarse");
   const { editor } = renderEditor();
 
-  // Фиксированная Панель видна без выделения — это и есть отступление.
+  // The fixed Toolbar is visible without a selection: that is the exception.
   act(() => void editor.commands.setTextSelection(3));
   expect(screen.getByRole("toolbar", { name: "Formatting" })).toBeDefined();
 
@@ -95,7 +95,7 @@ test("on a touch screen the floating toolbar falls back to the fixed one, and ba
   expect(await screen.findByRole("toolbar", { name: "Formatting" })).toBeDefined();
 });
 
-/** `Alt+F10` в документе — так, как его слышит движок. */
+/** `Alt+F10` in the Document, the way the engine hears it. */
 function pressAltF10(editor: RichTextEditorHandle["editor"]) {
   act(() => {
     editor!.view.dom.dispatchEvent(
@@ -109,11 +109,11 @@ test("Alt+F10 moves focus from the selection into the floating toolbar, Shift+Ta
   const { editor } = renderEditor({ preset: "basic" });
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
 
-  // Сразу, не дожидаясь задержки показа: клавиатура показывает Панель сама.
+  // Immediately, without waiting for the show delay: the keyboard shows the Toolbar by itself.
   pressAltF10(editor);
   const toolbar = screen.getByRole("toolbar", { name: "Formatting" });
-  // Первая кнопка Панели `basic` — жирный: «¶» из одного «Текста» не рисуется
-  // (OLDSUI-154), за жирным — курсив.
+  // The first button of the `basic` Toolbar is Bold: '¶' is not shown for a lone 'Text'
+  // (OLDSUI-154), and Italic follows Bold.
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Bold" }));
   expect(toolbar.getAttribute("aria-keyshortcuts")).toBe("Alt+F10");
 
@@ -121,7 +121,7 @@ test("Alt+F10 moves focus from the selection into the floating toolbar, Shift+Ta
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Italic" }));
   await user.keyboard("{ArrowLeft}{Enter}");
   expect(editor.getHTML()).toBe("<p><strong>Hello</strong> world</p>");
-  // Действие возвращает фокус в документ, на то же выделение (в следующем кадре).
+  // The action returns focus to the Document, to the same selection (in the next frame).
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
 
   pressAltF10(editor);

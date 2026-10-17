@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Card } from "./Card.js";
 import { Stat } from "./Stat.js";
 
-/** Волна 10: данные. Облегчённая планка, снимков нет. */
+/** Wave 10: data. A lighter bar, no snapshots. */
 const meta = {
   title: "Content/Stat",
   component: Stat,

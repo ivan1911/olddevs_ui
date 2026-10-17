@@ -18,7 +18,7 @@ import { TOOLS } from "../src/editor/core/tools.js";
 import { TEST_TOOLS, testBoxTool, testCardTool, testNoteTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -28,15 +28,15 @@ afterEach(() => {
 });
 
 /**
- * Пункт вставки и Действие над Блоком своего Инструмента (OLDSUI-106,
- * ADR-0058, п. 5 и 6).
+ * Insert item and Block action of a custom Tool (OLDSUI-106,
+ * ADR-0058, sections 5 and 6).
  *
- * Через публичный `RichTextEditor`: описание своего Инструмента приходит в
- * `tools`, а проверяются Меню вставки («/», «+»), «Добавить ›» и «Формат ›»
- * Ручки Блока, Действие в её меню, сочетания и справочник — по ролям и именам,
- * как их видит автор. Тестовые Инструменты — общий помощник
- * `editor-test-tools.ts`: коробка (пункт «Добавить» и действие «Unbox»),
- * карточка (пункт «Превратить в» и действие с предикатом «Enlarge»).
+ * Through the public `RichTextEditor`: the description of a custom Tool goes into
+ * `tools`, and what is checked is the Slash menu ('/', '+'), 'Add ›' and 'Format ›'
+ * of the Block handle, the Block action in its menu, the shortcuts and the reference, by roles and names,
+ * the way the author sees them. The test Tools come from the shared helper
+ * `editor-test-tools.ts`: a box (an 'Add' item and the 'Unbox' action),
+ * a card (a 'Turn into' item and an action with the 'Enlarge' predicate).
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}, locale?: "ru") {
   const ref = createRef<RichTextEditorHandle>();
@@ -57,7 +57,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}, locale?: "ru") {
   return { ...view, editor };
 }
 
-/** Фокус в Документ и каретка в конец текста `text`. */
+/** Focus the Document and move the caret to the end of the `text` text. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -70,12 +70,12 @@ function caretIn(editor: Editor, text: string) {
   });
 }
 
-/** Набрать текст в позицию каретки — транзакцией, как это сделал бы ввод. */
+/** Types text at the caret position as a transaction, the way real input would. */
 function type(editor: Editor, text: string) {
   act(() => void editor.commands.insertContent(text));
 }
 
-/** Клавиша на поле — настоящим `keydown`, как его получат и ProseMirror, и меню. */
+/** A key press on the field is a real `keydown`, the way both ProseMirror and the menus receive it. */
 function press(editor: Editor, key: string, modifiers: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", {
     key,
@@ -93,7 +93,7 @@ const box = (...blocks: string[]) => `<div data-block="test_box">${blocks.join("
 const card = (text: string, size?: string) =>
   `<div data-block="test_card"${size ? ` data-test_size="${size}"` : ""}>${text}</div>`;
 
-/** Пункты меню любой роли `menuitem*`: имя без подписи сочетания и сама подпись. */
+/** Items of any `menuitem*` role: the name without the shortcut label, and the label itself. */
 function itemsOf(menu: HTMLElement) {
   return Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]')).map((item) => {
     const shortcut = item.querySelector("kbd")?.textContent ?? null;
@@ -113,7 +113,7 @@ async function openSubmenu(user: User, menu: HTMLElement, name: string) {
   return screen.findByRole("menu", { name });
 }
 
-/** Выбрать пункт `name` в меню Ручки; `path` — подменю по пути. */
+/** Select the `name` item in the Block handle menu; `path` is the submenu path. */
 async function choose(user: User, ...path: string[]) {
   let menu = await openHandleMenu(user);
   for (const step of path.slice(0, -1)) menu = await openSubmenu(user, menu, step);
@@ -125,9 +125,9 @@ async function choose(user: User, ...path: string[]) {
 
 const undo = (editor: Editor) => act(() => void editor.commands.undo());
 
-// ── Меню вставки: «/» ──────────────────────────────────────────────────────
+// ── Slash menu: '/' ──────────────────────────────────────────────────────
 
-/** Строки списка «/» по разделам. */
+/** Rows of the '/' list by section. */
 function slashRows() {
   const rows = (section: string) =>
     Array.from(
@@ -145,14 +145,14 @@ test("own items stand at the end of their section, after the kit's, with the sho
   expect(insert.at(-1)).toMatch(/^Box en-US/);
   expect(insert.at(-6)).toMatch(/^Wrapper/);
   expect(insert.at(-5)).toMatch(/^Collapsible block/);
-  // Формулы (OLDSUI-280) и видео (OLDSUI-281) — в наборе `TOOLS`, но вне пресетов: за
-  // сворачиваемым Блоком, перед своими.
+  // Formulas (OLDSUI-280) and videos (OLDSUI-281) are in the `TOOLS` set but outside the presets: after
+  // the Details Block, before the custom ones.
   expect(insert.at(-4)).toMatch(/^Formula/);
   expect(insert.at(-3)).toMatch(/^Block formula/);
   expect(insert.at(-2)).toMatch(/^Video/);
   expect(turnInto.at(-1)).toMatch(/^Card/);
   expect(turnInto.at(-2)).toMatch(/^Code block/);
-  // Подсказка — сочетание из поля записи: Ctrl на не-Apple (jsdom).
+  // The hint is the shortcut from the item: Ctrl on non-Apple platforms (jsdom).
   expect(insert.at(-1)).toBe("Box en-USCtrl+Alt+B");
 });
 
@@ -189,7 +189,7 @@ test("filtering finds own items by the label, the en-US label and aliases", () =
     return Array.from(screen.queryAllByRole("option")).map((option) => option.textContent);
   };
 
-  // Подпись в текущей локали («Box ru»), подпись с `en-US` и `aliases`.
+  // The label in the current locale ('Box ru'), the label with `en-US`, and `aliases`.
   expect(query("ru")).toEqual(["Box ruCtrl+Alt+B"]);
   expect(query("en-us")).toEqual(["Box ruCtrl+Alt+B"]);
   expect(query("crate")).toEqual(["Box ruCtrl+Alt+B"]);
@@ -205,7 +205,7 @@ test("Enter on own Insert item adds its block in place of the empty paragraph, o
 
   expect(editor.getHTML()).toBe(`<p>Intro</p>${box("<p></p>")}`);
   expect(screen.queryByRole("listbox")).toBeNull();
-  // Набор `/запроса` и вставка — одна история с правкой до неё: одна отмена убирает Блок.
+  // Typing `/query` and the insert are one history step together with the edit before them: a single undo removes the Block.
   undo(editor);
   expect(editor.getHTML()).not.toContain("test_box");
 });
@@ -230,7 +230,7 @@ test("Enter on own Turn into item changes the current block and keeps its text, 
   expect(editor.getHTML()).toBe("<ul><li><p>Point</p></li></ul>");
 });
 
-// ── Меню вставки: «+» ──────────────────────────────────────────────────────
+// ── Slash menu: '+' ──────────────────────────────────────────────────────
 
 test("the Insert menu button lists own items with hints and applies them", async () => {
   const user = userEvent.setup();
@@ -251,7 +251,7 @@ test("the Insert menu button lists own items with hints and applies them", async
   expect(editor.getHTML()).toBe("<p>One</p>");
 });
 
-// ── Ручка Блока: «Добавить ›» и «Формат ›» ─────────────────────────────────
+// ── Block handle: 'Add ›' and 'Format ›' ─────────────────────────────────
 
 test("Add lists own items and puts a new block under the current one, one undo step", async () => {
   const user = userEvent.setup();
@@ -269,7 +269,7 @@ test("Add lists own items and puts a new block under the current one, one undo s
     "Box en-US",
     "Card",
   ]);
-  // Подсказок сочетаний в «Добавить» нет — как у встроенных.
+  // The 'Add' items have no shortcut hints, as for the built-in ones.
   expect(itemsOf(add).every((entry) => entry.shortcut === null)).toBe(true);
 
   await user.click(itemsOf(add).find((entry) => entry.name === "Box en-US")!.item);
@@ -286,11 +286,11 @@ test("Format lists own Turn into items and takes the block out of the list, one 
   const format = await openSubmenu(user, await openHandleMenu(user), "Format");
   const names = itemsOf(format).map((entry) => entry.name);
   expect(names.at(-1)).toBe("Card");
-  // Вставки «Добавить» в «Формат» не попадают.
+  // Items from 'Add' do not appear in 'Format'.
   expect(names).not.toContain("Box en-US");
 
   await user.click(itemsOf(format).find((entry) => entry.name === "Card")!.item);
-  // Список выходит из обёрток; каждый его абзац — карточка, как с «Заголовком».
+  // The list leaves its wrappers; each of its paragraphs becomes a card, as with 'Heading'.
   expect(editor.getHTML()).toBe(card("a") + card("b"));
   undo(editor);
   expect(editor.getHTML()).toBe("<ul><li><p>a</p></li><li><p>b</p></li></ul>");
@@ -307,7 +307,7 @@ test("Format shows the shortcut of an own item where it works, and turns a parag
   expect(editor.getHTML()).toBe(card("One"));
 });
 
-// ── Подписи от локали ──────────────────────────────────────────────────────
+// ── Labels from the locale ──────────────────────────────────────────────────────
 
 test("a label function gets the locale of the provider", async () => {
   const user = userEvent.setup();
@@ -341,12 +341,12 @@ test("an empty label is a developer error and the tool name stands in for it", (
   expect(error).toHaveBeenCalledWith(expect.stringContaining('custom tool "test_box"'));
 });
 
-// ── Действие над Блоком ────────────────────────────────────────────────────
+// ── Block action ────────────────────────────────────────────────────
 
 test("an own action stands in its section right before Delete, with its shortcut", async () => {
   const user = userEvent.setup();
   const { editor } = renderEditor({ defaultValue: `<p>Plain</p>${box("<p>in</p>")}` });
-  // Блок прямо в коробке: действие видно и у него (`blocks` называет и контейнер).
+  // A Block right inside the box: the action is visible on it too (`blocks` names the container as well).
   caretIn(editor, "in");
 
   const items = itemsOf(await openHandleMenu(user));
@@ -391,7 +391,7 @@ test("the visibility predicate hides the action once it no longer applies", asyn
   expect(itemsOf(menu).map((entry) => entry.name)).not.toContain("Enlarge");
 });
 
-// ── Выключенный Инструмент ─────────────────────────────────────────────────
+// ── Disabled Tool ─────────────────────────────────────────────────
 
 test("a tool left out of tools takes its items and actions away everywhere", async () => {
   const user = userEvent.setup();
@@ -422,7 +422,7 @@ test("without the insert menu tool own items are not offered", () => {
   expect(screen.queryByRole("button", { name: "Insert block" })).toBeNull();
 });
 
-// ── Сочетания ──────────────────────────────────────────────────────────────
+// ── Shortcuts ──────────────────────────────────────────────────────────────
 
 const CTRL_ALT = { ctrlKey: true, altKey: true };
 
@@ -475,13 +475,13 @@ test("the shortcut reference lists them in a group of the tool, after the kit's 
   expect(rows[at("Box en-US")]).toBe("Box en-USCtrl+Alt+B");
   expect(rows[at("Card")]).toBe("CardCtrl+Alt+K");
   expect(rows[at("Unbox")]).toBe("UnboxCtrl+Alt+U");
-  // Группа своего Инструмента — после групп кита: последняя строка кита идёт раньше.
+  // The group of a custom Tool comes after the kit's groups: the kit's last row comes earlier.
   expect(at("Box en-US")).toBeGreaterThan(at("Bold"));
 });
 
-// ── Ошибка набора ──────────────────────────────────────────────────────────
+// ── Definition error ──────────────────────────────────────────────────────────
 
-/** Набор с ошибкой: поле с ошибкой, без движка. */
+/** A definition with an error: a field error, without an engine. */
 function expectFieldError(tool: unknown, reason: RegExp) {
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
   const ref = createRef<RichTextEditorHandle>();

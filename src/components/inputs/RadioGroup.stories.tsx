@@ -38,17 +38,17 @@ export const Playground: Story = {
   render: () => <LiveDemo description="The choice affects the whole set of posts" />,
 };
 
-/** Горизонтальная раскладка — для двух-трёх коротких вариантов. */
+/** Horizontal layout: for two or three short options. */
 export const Horizontal: Story = {
   render: () => <LiveDemo orientation="horizontal" />,
 };
 
 /**
- * Матрица тон × размер.
+ * Matrix of tone × size.
  *
- * Показывает то, чего не видно на одном наборе: невыбранный вариант нейтрален
- * при любом тоне, а тон и размер приходят от группы — разъехаться по виду
- * внутри одного набора нечему.
+ * It shows what cannot be seen on a single set: an unselected option is neutral in any tone,
+ * and the tone and size come from the group, so there is nothing that could drift apart
+ * within one set.
  */
 export const Matrix: Story = {
   render: () => (
@@ -63,7 +63,7 @@ export const Matrix: Story = {
   ),
 };
 
-/** Ошибка вытесняет пояснение — то же правило, что у `CheckboxGroup`. */
+/** An error replaces the hint: the same rule as for `CheckboxGroup`. */
 export const WithError: Story = {
   render: () => (
     <LiveDemo
@@ -108,17 +108,17 @@ function CardsDemo({
   );
 }
 
-/** Карточки выбора: вся карточка — область нажатия, выбранная — рамка и кружок. */
+/** Choice cards: the whole card is the hit area; the selected one gets an outline and the radio dot. */
 export const Cards: Story = {
   render: () => <CardsDemo />,
 };
 
-/** Карточки в строку с переносом. */
+/** Cards in a row, with wrapping. */
 export const CardsHorizontal: Story = {
   render: () => <CardsDemo orientation="horizontal" />,
 };
 
-/** Ошибка и выключенный набор — как у обычной радиогруппы. */
+/** An error and a disabled set: the same as for an ordinary radio group. */
 export const CardsStates: Story = {
   render: () => (
     <div className="flex flex-col gap-8">
@@ -128,7 +128,7 @@ export const CardsStates: Story = {
   ),
 };
 
-/** Тон окрашивает рамку выбранной карточки; невыбранные нейтральны. */
+/** The tone colors the outline of the selected card; unselected cards are neutral. */
 export const CardsTones: Story = {
   render: () => (
     <div className="flex flex-col gap-6">

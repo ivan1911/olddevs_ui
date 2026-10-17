@@ -11,7 +11,7 @@ test("a container card stays a div without a role", () => {
   const root = container.firstElementChild as HTMLElement;
   expect(root.tagName).toBe("DIV");
   expect(root.getAttribute("role")).toBeNull();
-  // Вид контейнера не меняется от появления `asChild` у соседей.
+  // The container's look does not change when `asChild` appears on its neighbors.
   expect(root.className).not.toContain("cursor-pointer");
 });
 
@@ -30,7 +30,7 @@ test("asChild gives the appearance to a button and makes the card keyboard-reach
   expect(button.className).toContain("cursor-pointer");
   expect(button.className).toContain("rounded-lg");
 
-  // Ровно то, чего не умел `<div onClick>`: срабатывание с клавиатуры.
+  // Exactly what `<div onClick>` could not do: firing from the keyboard.
   await user.tab();
   expect(document.activeElement).toBe(button);
   await user.keyboard("{Enter}");
@@ -56,11 +56,11 @@ test("interactive outlines the card only on focus of the stretched link", () => 
     </Card>
   );
   const root = container.firstElementChild as HTMLElement;
-  // Контейнер остаётся div: кнопку в кнопку вкладывать нельзя, а меню действий
-  // живёт рядом со ссылкой.
+  // The container stays a div: a button cannot be nested in a button, and the actions
+  // menu lives next to the link.
   expect(root.tagName).toBe("DIV");
   expect(root.className).toContain("relative");
-  // Кольцо привязано к ссылке, а не к любому потомку: фокус на меню «Ещё» не
-  // должен обводить карточку целиком.
+  // The focus ring is tied to the link, not to any descendant: focus on the "More" menu
+  // must not outline the whole card.
   expect(root.className).toContain("has-[a:focus-visible]:outline-2");
 });

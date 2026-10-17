@@ -12,9 +12,9 @@ afterEach(() => {
 });
 
 /**
- * jsdom не считает раскладку, поэтому `offsetHeight` подменяется (как в
- * `top-bar.test.tsx`): отцепленный узел отдаёт ноль, подключённый — высоту
- * нижней панели. Настоящую высоту и порядок слоёв на телефоне сторожит
+ * jsdom does not compute layout, so `offsetHeight` is stubbed (as in `top-bar.test.tsx`):
+ * a detached node returns zero, and a connected one returns the height of the bottom bar.
+ * The real height and layer order on a phone are guarded by
  * `tests-visual/interactions.spec.ts`.
  */
 beforeAll(() => {
@@ -89,7 +89,7 @@ describe("ContextualSaveBar: standing above the bottom bar", () => {
     render(<ContextualSaveBar visible onSave={() => {}} />);
     expect(offset()).toBe("var(--bottombar-h, 0px)");
     expect(bar().className).toContain("bottom-[var(--od-savebar-bottom)]");
-    // Не инлайн: инлайновый `bottom` перебил бы класс потребителя.
+    // Not inline: an inline `bottom` would override the consumer's class.
     expect(bar().style.bottom).toBe("");
   });
 
@@ -99,7 +99,7 @@ describe("ContextualSaveBar: standing above the bottom bar", () => {
   });
 
   test("a consumer bottom-* class wins over the kit offset", () => {
-    // Своя нижняя панель вне `AppShell`: потребитель подпирает полосу классом.
+    // A custom bottom bar outside `AppShell`: the consumer lifts the bar with a class.
     render(<ContextualSaveBar visible className="bottom-14" onSave={() => {}} />);
     expect(bar().className).toContain("bottom-14");
     expect(bar().className).not.toContain("bottom-[var(--od-savebar-bottom)]");

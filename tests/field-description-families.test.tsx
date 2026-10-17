@@ -15,21 +15,20 @@ import { Toggle } from "../src/components/actions/Toggle.js";
 afterEach(cleanup);
 
 /**
- * Долг Track C, переданный волной 21 и погашенный волной 22.
+ * Debt of Track C, passed on by wave 21 and paid off by wave 22.
  *
- * `FormField` рисует подсказку и ошибку и кладёт их `id` в контекст; поля кита
- * забирают его через `useFieldDescribedBy`. До 3.0.0 забирали только
- * `TextControl` и `NumberInput` — у семей react-aria свои слоты описания, и
- * подсказка формы к их полю не относилась никак: на экране она была, а
- * скринридеру не доставалась.
+ * `FormField` renders the hint and the error and puts their `id`s into context; the kit's
+ * fields pick it up through `useFieldDescribedBy`. Before 3.0.0 only `TextControl` and
+ * `NumberInput` picked it up: the react-aria families have their own description slots,
+ * and the form's hint was not linked to their field at all. It was on the screen,
+ * but it never reached the screen reader.
  *
- * Проверяется ВЫЧИСЛЕННАЯ связь: `aria-describedby` мишени указывает на узел,
- * в котором лежит текст подсказки. Совпадения строк идентификаторов мало —
- * `useId` даёт их зависимыми от порядка тестов, и висящая ссылка в никуда
- * выглядела бы точно так же.
+ * The check is of the COMPUTED link: the target's `aria-describedby` points to the node
+ * that holds the hint text. Matching identifier strings is not enough: `useId` makes them
+ * depend on the test order, and a dangling reference to nowhere would look exactly the same.
  */
 
-/** Мишень описания и текст, на который она обязана указывать. */
+/** The description target, and the text it must point to. */
 function describedText(target: Element, container: HTMLElement): string[] {
   const ids = target.getAttribute("aria-describedby")?.split(" ").filter(Boolean) ?? [];
   return ids.map(
@@ -79,8 +78,8 @@ describe("the FormField description reaches the react-aria families", () => {
   });
 
   test("TagInput: the description is linked to the input, not to the tag group", () => {
-    // Мишень — поле: описание объясняет, ЧТО НАБИРАТЬ. Набор уже добавленных
-    // тегов оно не описывает.
+    // The target is the field: the description explains WHAT TO ENTER. It does not
+    // describe the set of tags that are already added.
     const { container } = render(
       <FormField label="Tags" hint="Enter adds a tag">
         <TagInput value={["sky"]} onChange={() => {}} aria-label="Tags" />
@@ -100,7 +99,7 @@ describe("the error displaces the hint instead of standing under it", () => {
       </FormField>
     );
 
-    // Под полем ровно одно сообщение — и описание указывает именно на него.
+    // Exactly one message sits under the field, and the description points to it.
     const trigger = screen.getByRole("button", { name: /Select/ });
     expect(describedText(trigger, container)).toEqual(["Pick a category"]);
   });
@@ -122,8 +121,8 @@ describe("a foreign description is appended to, not displaced", () => {
       </>
     );
 
-    // `aria-describedby` — список: потребитель, описавший поле своим узлом, не
-    // должен терять подсказку формы.
+    // `aria-describedby` is a list: a consumer who described the field with its own node
+    // must not lose the form's hint.
     const trigger = screen.getByRole("button", { name: /Select/ });
     expect(describedText(trigger, container)).toEqual(["Active only", "Affects the results"]);
   });
@@ -145,8 +144,8 @@ describe("a foreign description is appended to, not displaced", () => {
 
 describe("outside FormField the markup does not change", () => {
   test("none of the families leaves a dangling aria-describedby", () => {
-    // Ссылка в никуда хуже отсутствия: скринридер молча её пропускает, и
-    // дефект не виден ни в разметке, ни в тесте, который его ищет.
+    // A dangling reference is worse than none: a screen reader silently skips it, and
+    // the defect is visible neither in the markup nor in the test that looks for it.
     const { container } = render(
       <>
         <Select items={items} placeholder="Select" onChange={() => {}} />
@@ -169,14 +168,13 @@ describe("outside FormField the markup does not change", () => {
 });
 
 /**
- * Долг волны 22, погашенный волной 26.
+ * Debt of wave 22, paid off by wave 26.
  *
- * Волна 22 завела это семейство и охватила поля react-aria. Пять компонентов в
- * охват не попали: `PinInput` строит нативные `input` сам и берёт из
- * `lib/field.ts` только класс оболочки, а `Toggle`, `Slider`, `Rating` и
- * `ColorPicker` контекст не читали вовсе. `<FormField hint="…">` рисовал
- * подсказку, но ни одно из этих полей на неё не ссылалось: на экране она была,
- * скринридеру не доставалась.
+ * Wave 22 set up this family and covered the react-aria fields. Five components were not
+ * in the scope: `PinInput` builds its native `input` itself and takes only the wrapper class
+ * from `lib/field.ts`, while `Toggle`, `Slider`, `Rating` and `ColorPicker` did not read
+ * the context at all. `<FormField hint="…">` rendered the hint, but none of these fields
+ * referenced it: it was on the screen, but it never reached the screen reader.
  */
 describe("the description reaches the fields the kit builds itself", () => {
   test("PinInput: the description is linked to the group, once", () => {
@@ -186,8 +184,7 @@ describe("the description reaches the fields the kit builds itself", () => {
       </FormField>
     );
 
-    // Именно на группе, а не на шести клетках: иначе подсказка прочиталась бы
-    // шесть раз подряд.
+    // On the group, not on the six cells: otherwise the hint would be read six times in a row.
     expect(describedText(screen.getByRole("group"), container)).toEqual([
       "Six digits from the text message",
     ]);
@@ -212,8 +209,8 @@ describe("the description reaches the fields the kit builds itself", () => {
       </FormField>
     );
 
-    // На бегунке, а не на группе: фокусируется он, и `role="slider"` тоже
-    // на нём — группе react-aria атрибут не ставит вовсе.
+    // On the thumb, not on the group: the thumb is what gets focus, and `role="slider"`
+    // is on it too; react-aria sets no attribute on the group at all.
     expect(describedText(screen.getByRole("slider"), container)).toEqual([
       "Higher means a bigger file",
     ]);
@@ -243,20 +240,20 @@ describe("the description reaches the fields the kit builds itself", () => {
 });
 
 /**
- * Своё описание и описание формы СКЛЕИВАЮТСЯ, а не вытесняют друг друга.
+ * The consumer's own description and the form's description are MERGED, not displacing each other.
  *
- * Семейство проверяло только «описание доходит», и ошибка пряталась по обе
- * стороны: у `PinInput` спред `{...rest}` стоял после условного, и
- * пользовательский `aria-describedby` затирал контекстный — поле кода внутри
- * `<FormField error="…">` не объявляло ошибку вовсе; у `Toggle` — наоборот,
- * терялась подсказка потребителя.
+ * The family checked only that "the description arrives", and the error was hidden on both sides.
+ * In `PinInput` the `{...rest}` spread came after the conditional one, so a consumer's
+ * `aria-describedby` overwrote the context one: the code field inside `<FormField error="…">`
+ * did not declare the error at all. In `Toggle` it was the other way round: the consumer's
+ * hint was lost.
  *
- * В списке только те, кто склеивает САМ. Вне списка два законных случая:
- * `Rating` и `ColorPicker` объявлены закрытыми интерфейсами без `...rest` —
- * передать им `aria-describedby` нечем, и вытеснять нечего (как у `CopyButton`
- * с `onClick`); а `Slider` склеивать не должен — его `rest` уходит на группу, и
- * react-aria сама сносит описание на бегунок и объединяет со своим. Склейка там
- * давала бы один и тот же `id` дважды.
+ * Only those who merge on THEIR OWN are in the list. Outside the list there are two legitimate cases:
+ * `Rating` and `ColorPicker` are declared as closed interfaces without `...rest` — there is
+ * nothing to pass `aria-describedby` into, and nothing to displace (as with `CopyButton`
+ * and `onClick`); and `Slider` must not merge: its `rest` goes to the group, and react-aria
+ * itself moves the description to the thumb and combines it with its own. Merging there
+ * would give the same `id` twice.
  */
 describe("a consumer description and the form description are merged", () => {
   const CASES = [

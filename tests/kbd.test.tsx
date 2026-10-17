@@ -6,9 +6,9 @@ import { Kbd } from "../src/components/content/Kbd.js";
 afterEach(cleanup);
 
 /*
-  Знаки модификаторов — пропорциональным шрифтом (OLDSUI-117). В моноширинном
-  стеке кита (SF Mono, Menlo) знака `⇧` нет, браузер берёт его из запасного
-  шрифта, и стрелка выходит тонкой и бледной рядом с `⌘` и буквой.
+  Modifier glyphs are set in the proportional font (OLDSUI-117). The kit's monospace
+  stack (SF Mono, Menlo) has no `⇧` glyph, so the browser takes it from a fallback font,
+  and the arrow comes out thin and pale next to `⌘` and a letter.
 */
 const glyphs = (container: HTMLElement) =>
   [...container.querySelectorAll("kbd [data-key-symbol]")].map((node) => node.textContent);

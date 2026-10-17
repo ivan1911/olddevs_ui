@@ -19,7 +19,7 @@ import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { testMergeTagTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 beforeEach(resetDevWarnings);
@@ -30,13 +30,13 @@ afterEach(() => {
 });
 
 /**
- * Свой символ-триггер (ADR-0064, OLDSUI-193): набор `@` открывает тот же
- * список, что `/`, а выбор отдаёт пункт и диапазон `@запрос` обработчику
- * Инструмента.
+ * A custom trigger character (ADR-0064, OLDSUI-193): typing `@` opens the same
+ * list as `/`, and selecting an item hands the item and the `@query` range to the Tool's
+ * handler.
  *
- * Через публичный `RichTextEditor`. Набор идёт командами движка, как в тестах
- * Меню вставки: jsdom не умеет ввода в `contenteditable`. Инструмент — строчный
- * атом `test_mergeTag` из общего помощника с триггером `@`.
+ * Through the public `RichTextEditor`. Typing goes through engine commands, as in the
+ * Slash menu tests: jsdom cannot handle input in `contenteditable`. The Tool is an inline
+ * atom, `test_mergeTag`, from the shared helper, with the `@` trigger.
  */
 const PEOPLE: TriggerItem[] = [
   { id: "ada", label: "Ada Lovelace", data: "ada" },
@@ -48,7 +48,7 @@ function filterPeople(query: string): TriggerItem[] {
   return PEOPLE.filter((person) => person.label.toLowerCase().includes(query.toLowerCase()));
 }
 
-/** Заменить `@запрос` атомом и пробелом — так пишет обработчик потребителя. */
+/** Replace `@query` with the atom and a space, the way the consumer's handler does it. */
 function insertMention(item: TriggerItem, range: { from: number; to: number }, editor: Editor) {
   editor
     .chain()
@@ -87,12 +87,12 @@ function focusField() {
   act(() => screen.getByRole("textbox", { name: "Body" }).focus());
 }
 
-/** Набрать текст в позицию курсора — транзакцией, как это сделал бы ввод. */
+/** Type text at the cursor position with a transaction, as real input would. */
 function type(editor: Editor, text: string) {
   act(() => void editor.commands.insertContent(text));
 }
 
-/** Клавиша на поле — настоящим `keydown`, как её получат и движок, и Radix. */
+/** A key press on the field is a real `keydown`, the way both the engine and Radix receive it. */
 function press(editor: Editor, key: string) {
   act(() => {
     editor.view.dom.dispatchEvent(
@@ -151,7 +151,7 @@ test("Enter picks the active item: onSelect gets the item and the range of the t
   expect(item.id).toBe("alan");
   expect(ctx.query).toBe("al");
   expect(ctx.editor).toBe(editor);
-  // «@al» стоит с позиции 5: абзац открывается на 1, «Hi » занимает 3 знака.
+  // "@al" starts at position 5: the paragraph opens at 1, and "Hi " takes 3 characters.
   expect(ctx.range).toEqual({ from: 4, to: 7 });
   expect(mentions(editor)).toEqual(["alan"]);
   expect(editor.getText()).not.toContain("@al");
@@ -195,7 +195,7 @@ test("focus stays in the field; arrows move the active option through aria-activ
 
   press(editor, "ArrowDown");
   expect(field.getAttribute("aria-activedescendant")).toBe(options[1]?.id);
-  // Стрелка вверх с первой строки уходит на последнюю.
+  // Up arrow from the first row moves to the last one.
   press(editor, "ArrowUp");
   press(editor, "ArrowUp");
   expect(field.getAttribute("aria-activedescendant")).toBe(options.at(-1)?.id);
@@ -236,7 +236,7 @@ test("nothing found shows the same row as the slash menu", () => {
   const rows = screen.getAllByRole("option");
   expect(rows.map((row) => row.textContent)).toEqual(["Nothing found"]);
   expect(rows[0]?.getAttribute("aria-disabled")).toBe("true");
-  // Enter на пустом списке — обычный перевод строки: пункта нет, сессия остаётся.
+  // Enter on an empty list is an ordinary line break: there is no item, and the session stays open.
   press(editor, "Enter");
   expect(mentions(editor)).toEqual([]);
 });
@@ -275,10 +275,10 @@ test("items may be a promise: the list shows once it settles, a stale answer is 
 
   type(editor, "@a");
   type(editor, "l");
-  // Пока ответа нет, «Ничего не найдено» не мигает.
+  // While there is no response yet, "No results" does not flicker.
   expect(screen.queryByText("Nothing found")).toBeNull();
 
-  // Ответ на «a» пришёл позже запроса «al» и ничего не меняет.
+  // The response to "a" arrived after the "al" query and changes nothing.
   await act(async () => pending.get("al")?.([PEOPLE[1]!]));
   await act(async () => pending.get("a")?.(PEOPLE));
   expect(optionNames()).toEqual(["Alan Turing"]);
@@ -300,7 +300,8 @@ test("Enter while the answer to a new query is on its way picks nothing from the
   await act(async () => pending.get("a")?.(PEOPLE));
   expect(optionNames()[0]).toBe("Ada Lovelace");
 
-  // «al» ещё в пути; на экране — список «a». Enter не берёт из него Ada Lovelace.
+  // "al" is still in flight; the screen shows the "a" list. Enter does not pick
+  // Ada Lovelace from it.
   type(editor, "l");
   await userEvent.keyboard("{Enter}");
   expect(onSelect).not.toHaveBeenCalled();

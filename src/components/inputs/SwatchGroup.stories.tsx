@@ -13,7 +13,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<SwatchGroupProps>;
 
-/** Имя оттенка словом — оно же имя варианта для скринридера. */
+/** The hue name as a word: it is also the option's name for the screen reader. */
 const NAMES: Record<(typeof LABEL_HUES)[number], string> = {
   blue: "Blue",
   violet: "Violet",
@@ -25,13 +25,13 @@ const NAMES: Record<(typeof LABEL_HUES)[number], string> = {
   steel: "Steel",
 };
 
-/** Девять вариантов потребителя: восемь оттенков и «без цвета». */
+/** The consumer's nine options: eight hues and "no color". */
 const OPTIONS: SwatchOption[] = [
   { value: "none", name: "No colour" },
   ...LABEL_HUES.map((hue) => ({ value: hue, hue, name: NAMES[hue] })),
 ];
 
-/** Живой выбор: стрелки двигают его по сетке и применяют сразу. */
+/** Live example: the arrow keys move the selection across the grid and apply it at once. */
 export const Playground: Story = {
   render: () => {
     const [value, setValue] = useState("teal");
@@ -42,8 +42,8 @@ export const Playground: Story = {
 };
 
 /**
- * Столбцы — число, а не `auto-fill`: по ним ходят вертикальные стрелки, и
- * набор обязан знать их количество. Слева шесть в ряду, справа три.
+ * Columns are set as a number, not `auto-fill`: the vertical arrow keys move by them,
+ * so the set must know their count. On the left, six in a row; on the right, three.
  */
 export const Columns: Story = {
   render: () => (
@@ -61,9 +61,8 @@ export const Columns: Story = {
 };
 
 /**
- * Выбранность — кольцо, а не второй цвет: акцентное кольцо вокруг синего
- * образца не читалось бы вовсе, а различать выбранное по одной насыщенности
- * нельзя.
+ * The selected state is a ring, not a second color: an accent ring around the blue sample
+ * would not read at all, and the selected one cannot be told apart by saturation alone.
  */
 export const Selected: Story = {
   render: () => (
@@ -82,7 +81,7 @@ export const Selected: Story = {
   ),
 };
 
-/** Выключенный набор и выключенный вариант — разные вещи. */
+/** A disabled set and a disabled option are different things. */
 export const Disabled: Story = {
   render: () => (
     <div className="flex items-start gap-8">
@@ -108,15 +107,15 @@ export const Disabled: Story = {
 };
 
 /**
- * Имя оттенка подсказкой: при наведении и при фокусе с клавиатуры.
+ * The hue name as a tooltip: on hover and on focus from the keyboard.
  *
- * Слово берётся из того же `name`, которым вариант называется для скринридера,
- * — и вслух он по-прежнему называется ОДИН раз: описание Radix оседает на
- * обёртке, а не на самой радиокнопке.
+ * The word comes from the same `name` by which the option is announced to the screen reader,
+ * and aloud it is still announced ONCE: the Radix description settles on the wrapper,
+ * not on the radio button itself.
  *
- * Провайдер здесь развёрнут историей. В приложении он один на корень, и это
- * требование к потребителю: без него Radix бросает на первом же варианте —
- * ровно поэтому подсказка и не включена по умолчанию.
+ * The provider is set up here by the story. In an app there is one, at the root, and that
+ * is a requirement on the consumer: without it Radix throws on the very first option, which is
+ * exactly why the tooltip is off by default.
  */
 export const Tooltips: Story = {
   decorators: [

@@ -20,7 +20,7 @@ type Story = StoryObj<BannerProps>;
 
 export const Playground: Story = {};
 
-/** Тона: тот же словарь, что у `Alert` и `StatusBadge`. */
+/** Tones: the same vocabulary as `Alert` and `StatusBadge`. */
 export const Matrix: Story = {
   render: (args) => (
     <div className="flex flex-col">
@@ -31,7 +31,7 @@ export const Matrix: Story = {
   ),
 };
 
-/** С действием и закрытием. Без обработчика крестика нет вовсе. */
+/** With an action and a dismiss button. Without an `onDismiss` handler there is no close button at all. */
 export const WithAction: Story = {
   args: {
     tone: "warning",
@@ -47,11 +47,11 @@ export const WithAction: Story = {
 };
 
 /**
- * Стопка — обычный список соседних баннеров: каждый закрывается своей кнопкой,
- * порядок задаёт потребитель. Своей очереди у компонента нет.
+ * A stack is a plain list of adjacent banners: each one is dismissed with its own
+ * button, and the consumer sets the order. The component has no queue of its own.
  *
- * Шапка под баннерами остаётся липкой на `top: 0` — контракт `--topbar-h` не
- * трогается (ADR-0027).
+ * The app header below the banners stays sticky at `top: 0`. The `--topbar-h`
+ * contract is untouched (ADR-0027).
  */
 export const Stack: Story = {
   render: () => (

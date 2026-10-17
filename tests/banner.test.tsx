@@ -8,8 +8,8 @@ afterEach(cleanup);
 
 test("danger interrupts speech, other tones wait for a pause", () => {
   const { rerender } = render(<Banner tone="danger">Service unavailable</Banner>);
-  // Роль выбирается по тону тем же правилом, что в `Alert`: путать их значит
-  // либо потерять сообщение об отказе, либо орать про успешное сохранение.
+  // The role is chosen from the tone by the same rule as in `Alert`: mixing them up means
+  // either losing an error message or shouting about a successful save.
   expect(screen.getByRole("alert").textContent).toContain("Service unavailable");
 
   rerender(<Banner tone="success">Everything is back</Banner>);
@@ -26,8 +26,8 @@ test("closing calls the handler and is announced with catalog words", async () =
   const onDismiss = vi.fn();
   render(<Banner onDismiss={onDismiss}>Maintenance in progress</Banner>);
 
-  // Подпись своя, а не общая «Закрыть»: баннер закрывает сообщение уровня
-  // приложения, и скринридер обязан сказать, что именно скрывается.
+  // The label is specific, not a generic "Close": the banner closes an app-level message,
+  // and the screen reader must say what is being dismissed.
   await user.click(screen.getByRole("button", { name: "Dismiss announcement" }));
   expect(onDismiss).toHaveBeenCalledTimes(1);
 });
@@ -56,8 +56,8 @@ test("a stack is adjacent banners, each with its own button", async () => {
     </>
   );
 
-  // Своей очереди у компонента нет: она была бы состоянием, а состояние в ките
-  // не живёт. Стопка — это просто два соседа.
+  // The component has no queue of its own: a queue would be state, and state does not
+  // live in the kit. A stack is just two neighbors.
   const buttons = screen.getAllByRole("button");
   expect(buttons).toHaveLength(2);
   await user.click(buttons[1]!);
@@ -82,7 +82,7 @@ test("no rounding: a banner is a strip across the application, not a card", () =
   const { container } = render(<Banner>Maintenance in progress</Banner>);
   const banner = container.firstElementChild as HTMLElement;
 
-  // Скруглённые углы читались бы как блок содержимого, то есть как `Alert`.
+  // Rounded corners would read as a content block, that is, like `Alert`.
   expect(banner.className).toContain("w-full");
   expect(banner.className).not.toContain("rounded-md");
 });

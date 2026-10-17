@@ -2,10 +2,10 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Avatar } from "./Avatar.js";
 
 /**
- * Фото в историях — data-URI, а не сеть: витрина работает офлайн, а снимок не
- * зависит от чужого хоста. Кадр намеренно портретный (2:3) с «головой и
- * плечами»: на квадратном кружке по нему сразу видно, вписана картинка по
- * `cover` или растянута.
+ * Photos in the stories are data URIs, not network requests: the showcase works offline, and
+ * the snapshot does not depend on a third-party host. The frame is deliberately portrait (2:3),
+ * with the head and shoulders in view, so on a square circle you can see at once whether the
+ * picture is fitted by `cover` or stretched.
  */
 const portrait = (hue: number) =>
   "data:image/svg+xml;base64," +
@@ -25,14 +25,14 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = { args: { size: "md" } };
 
-// Оттенок считается по первому символу имени, поэтому разные имена здесь начинаются
-// на разные буквы, а одинаковое — повторено.
+// The hue is computed from the first character of the name, so the different names here start
+// with different letters, and the identical one is repeated.
 const MATRIX_NAMES = ["Ada Lovelace", "Grace Hopper", "Grace Hopper", "Zoe Quinn", "Mary Jackson"];
 
 /**
- * Матрица размер × имя. Второй столбец — смысл компонента: оттенок обязан
- * различаться у имён на разные буквы и совпадать у одинаковых имён: считается он
- * по первому символу.
+ * Size × name matrix. The second column is the point of the component: the hue must differ
+ * for names that start with different letters and match for identical names, because it is
+ * computed from the first character.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -70,12 +70,12 @@ export const Photo: Story = {
   args: { size: "lg", src: portrait(210) },
 };
 
-/** Адрес не открывается: вместо пустого круга — инициалы на том же оттенке. */
+/** The address does not open: instead of an empty circle, initials in the same hue. */
 export const PhotoLoadFailed: Story = {
   args: { size: "lg", src: "/no-such-file.png" },
 };
 
-/** Фото и инициалы рядом: размер и круг одинаковы, меняется только содержимое. */
+/** Photo and initials side by side: the size and circle are identical, only the content changes. */
 export const PhotoMatrix: Story = {
   parameters: { layout: "padded" },
   render: () => (

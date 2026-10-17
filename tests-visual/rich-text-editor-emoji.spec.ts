@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Сетка эмодзи Редактора в браузере (OLDSUI-68): то, чего jsdom не умеет —
- * настоящие `pointer-events` окна Radix и стек слоёв Escape (ADR-0041).
+ * Editor emoji grid in a browser (OLDSUI-68): what jsdom cannot do, namely the real
+ * `pointer-events` of a Radix dialog and the Escape stack of layers (ADR-0041).
  */
 
 const STORY = (id: string) =>
@@ -60,7 +60,7 @@ test("the keyboard walks the grid and Enter inserts at the caret", async ({ page
   await page.keyboard.press("Enter");
 
   await expect(grid).toBeHidden();
-  // Вторая ячейка и строка ниже — «Fire».
+  // The second cell in the row below is "Fire".
   await expect(field).toContainText("🔥");
   await expect(field).toBeFocused();
 });

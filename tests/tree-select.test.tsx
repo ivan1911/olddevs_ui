@@ -8,9 +8,8 @@ import { TreeSelect } from "../src/components/inputs/TreeSelect.js";
 import type { TreeNode } from "../src/components/navigation/TreeView.js";
 
 /*
-  Шим `CSS.escape` — тот же, что в `menu.test.tsx`: в jsdom объекта `CSS` нет, а
-  попоувер зовёт его при открытии, и без шима поле не раскрывается ни в одном
-  тесте.
+  The `CSS.escape` shim is the same as in `menu.test.tsx`: jsdom has no `CSS` object, and the
+  popover calls it on open, so without the shim the field does not open in any test.
 */
 if (typeof globalThis.CSS === "undefined")
   (globalThis as unknown as { CSS: { escape: (v: string) => string } }).CSS = {
@@ -55,9 +54,9 @@ function Org({ initial = [] as Key[], multiple = false, clearable = false, disab
 }
 
 /*
-  Имя поля складывается из скрытой подписи и содержимого: `aria-label` на кнопке
-  побеждал бы содержимое, и поле объявлялось бы «Division» — без единого слова о
-  том, что выбрано.
+  The field's name is built from the hidden label and the content: `aria-label` on the button would
+  win over the content, and the field would be announced as "Division" with not a word about what
+  is selected.
 */
 const field = () => screen.getByRole("button", { name: /^Division/ });
 
@@ -73,10 +72,9 @@ test("the closed field shows the caption of the chosen node", () => {
 });
 
 /*
-  Главная проверка доступности этого поля: выбранное обязано входить в имя.
-  Пока имя бралось из `aria-label`, пользователь скринридера слышал «Division,
-  кнопка» и никогда не узнавал, что выбрано, — а axe этого не ловит, потому что
-  имя у кнопки есть.
+  The main accessibility check for this field: the selected value must be part of the name. While
+  the name came from `aria-label`, a screen reader user heard "Division, button" and never learned
+  what was selected, and axe does not catch this, because the button does have a name.
 */
 test("the accessible name carries both the label and the chosen value", () => {
   render(<Org initial={["logistics"]} />);
@@ -89,8 +87,8 @@ test("the accessible name falls back to the placeholder while empty", () => {
 });
 
 /*
-  Внутри — тот самый `TreeView`, а не второе дерево: роль `treegrid` приходит
-  от него (ADR-0024). Тест сторожит композицию, а не разметку.
+  The inner part is the `TreeView` itself, not a second tree: the `treegrid` role comes from it
+  (ADR-0024). The test guards the composition, not the markup.
 */
 test("the popover holds a TreeView, not a second tree", async () => {
   const user = userEvent.setup();
@@ -112,8 +110,8 @@ test("a single choice sets the value and closes the popover", async () => {
 });
 
 /*
-  Множественный выбор поповер НЕ закрывает: выбор ещё не закончен, и закрытие
-  требовало бы открывать заново на каждый узел.
+  Multi-select does NOT close the popover: the selection is not finished, and closing it would
+  require reopening on every node.
 */
 test("a multiple choice keeps the popover open and shows chips", async () => {
   const user = userEvent.setup();
@@ -126,16 +124,16 @@ test("a multiple choice keeps the popover open and shows chips", async () => {
   await user.click(screen.getByRole("row", { name: /^Finance$/ }));
   expect(screen.getByRole("treegrid")).toBeTruthy();
 
-  // Искать по всему документу нельзя: поповер открыт, и подписи строк дерева
-  // матчатся тем же выражением. Прежняя версия теста проходила и на
-  // компоненте, который чипов не рисует вовсе.
+  // Searching the whole document is not an option: the popover is open, and the tree's row labels
+  // match the same expression. The previous version of the test passed even on a component that
+  // does not render chips at all.
   const chips = within(field()).getAllByText(/^(Logistics|Finance)$/);
   expect(chips).toHaveLength(2);
 });
 
 /*
-  Отметка ветки не отмечает потомков, и это решение, а не упущение: значит ли
-  «отдел» всех его сотрудников — вопрос политики прав, а не кита.
+  Ticking a branch does not tick its descendants, and that is a decision, not an oversight: whether
+  "department" means all its employees is a question of access policy, not of the kit.
 */
 test("choosing a branch does not choose its descendants", async () => {
   const user = userEvent.setup();
@@ -160,9 +158,9 @@ test("Delete clears the field from the keyboard", async () => {
 });
 
 /*
-  Очистка — настоящая кнопка-СОСЕД триггера, как у `Select`. Прежняя версия
-  теста считала кнопки на странице и ждала единицу: вложенную кнопку она бы
-  поймала, но ровно так же проходила, когда очистки нет вовсе.
+  Clearing is a real button SIBLING of the trigger, as in `Select`. The previous version of the test
+  counted buttons on the page and expected one: it would catch a nested button, but it would also
+  pass when there is no clear button at all.
 */
 test("clearing is a real button next to the trigger, not inside it", async () => {
   const user = userEvent.setup();
@@ -173,7 +171,7 @@ test("clearing is a real button next to the trigger, not inside it", async () =>
 
   await user.click(clear);
   expect(screen.getByText("Select a node")).toBeTruthy();
-  // Очистка не раскрывает поле: иначе каждый сброс открывал бы дерево.
+  // Clearing does not open the field: otherwise every reset would open the tree.
   expect(screen.queryByRole("treegrid")).toBeNull();
 });
 
@@ -187,9 +185,9 @@ test("Backspace clears the field as well as Delete", async () => {
 });
 
 /*
-  Ключ, которого нет в `items`, показывается сам собой. Прежде поле говорило
-  «ничего не выбрано», очистка была недоступна, а наружу уходило непустое
-  значение — три разных ответа на один вопрос одновременно.
+  A key that is not in `items` is shown as is. Previously the field said "nothing selected", clearing
+  was unavailable, and a non-empty value went outward: three different answers to one question at
+  once.
 */
 test("a key missing from items is shown and can be cleared", async () => {
   const user = userEvent.setup();
@@ -203,7 +201,7 @@ test("a key missing from items is shown and can be cleared", async () => {
 });
 
 /*
-  Поле, вырастающее на пять строк, перестаёт быть полем: хвост сворачивается.
+  A field that grows by five rows stops being a field: its tail gets collapsed.
 */
 test("more than three chips collapse into a tail", () => {
   render(<Org multiple initial={["direct", "partners", "logistics", "finance"]} />);
@@ -223,9 +221,9 @@ test("a disabled field does not open", async () => {
 });
 
 /*
-  Два заслона от раскрытия выключенного поля маскировали друг друга: тест падал
-  только при снятии обоих. Проверяем каждый по отдельности — через наблюдаемое
-  следствие, а не через атрибут.
+  The two guards against opening a disabled field masked each other: the test failed only when both
+  were removed. We check each one separately, through the observable consequence rather than an
+  attribute.
 */
 test("a disabled field keeps both guards: the trigger is off and the popover is pinned shut", async () => {
   const user = userEvent.setup();
@@ -234,15 +232,15 @@ test("a disabled field keeps both guards: the trigger is off and the popover is 
   const trigger = field();
   expect(trigger.hasAttribute("disabled")).toBe(true);
 
-  // Даже принудительное нажатие мимо атрибута не раскрывает поле.
+  // Even a forced press that bypasses the attribute does not open the field.
   await user.click(trigger);
   fireEvent.keyDown(trigger, { key: "Enter" });
   expect(screen.queryByRole("treegrid")).toBeNull();
 });
 
 /*
-  Пустое дерево — это «данных нет», а не «ничего не найдено»: своего поиска у
-  поля нет, и запроса пользователь не делал. Словарь кита разводит эти строки.
+  An empty tree means "no data", not "nothing found": the field has no search of its own, and the
+  user made no query. The kit's vocabulary distinguishes these two states.
 */
 test("an empty tree says there is no data, not that a search found nothing", async () => {
   const user = userEvent.setup();
@@ -253,7 +251,7 @@ test("an empty tree says there is no data, not that a search found nothing", asy
   expect(screen.queryByText("Nothing found")).toBeNull();
 });
 
-/* Тип всплывающего обязан совпадать с тем, что внутри: там `treegrid`. */
+/* The popover's role must match what is inside it: here it is `treegrid`. */
 test("the trigger announces the popup it actually opens", () => {
   render(<Org />);
   expect(field().getAttribute("aria-haspopup")).toBe("grid");
@@ -288,8 +286,8 @@ test("clearLabel names the clear button", () => {
 });
 
 /*
-  Управляемое раскрытие: без него глубоко лежащий выбранный узел открывается на
-  свёрнутом дереве, где на него ничто не указывает.
+  Controlled expansion: without it, a deeply nested selected node opens in a collapsed tree where
+  nothing points to it.
 */
 test("expandedKeys is controlled from outside", async () => {
   const user = userEvent.setup();
@@ -306,12 +304,12 @@ test("expandedKeys is controlled from outside", async () => {
   );
 
   await user.click(field());
-  // Раскрыта только «Компания»: её дети видны, дети «Продаж» — нет.
+  // Only "Company" is expanded: its children are visible, the children of "Sales" are not.
   expect(await screen.findByRole("row", { name: /^Sales$/ })).toBeTruthy();
   expect(screen.queryByRole("row", { name: /^Direct sales$/ })).toBeNull();
 });
 
-/* Ось `multiple` управляет режимом выбора самого дерева, а не только видом поля. */
+/* The `multiple` axis controls the selection mode of the tree itself, not only the look of the field. */
 test("multiple drives the tree selection mode", async () => {
   const user = userEvent.setup();
   const { unmount } = render(<Org />);
@@ -328,8 +326,7 @@ test("multiple drives the tree selection mode", async () => {
 });
 
 /*
-  Цикл в `items` — испорченные данные потребителя, но переполнение стека плохой
-  способ ему об этом сказать.
+  A cycle in `items` is bad data from the consumer, but a stack overflow is a poor way to report it.
 */
 test("a cycle in items does not blow the stack", () => {
   const loop: TreeNode = { id: "a", label: "Loop" };
@@ -342,12 +339,12 @@ test("a cycle in items does not blow the stack", () => {
 });
 
 /**
- * Выключение поля закрывает панель, а не прячет её.
+ * Disabling the field closes the panel instead of hiding it.
  *
- * `Popover open={open && !disabled}` гасил показ, но управляемая смена `open` у
- * Radix не зовёт `onOpenChange`: внутреннее состояние оставалось `true`. Форма
- * ушла в отправку — панель исчезла; отправка кончилась — панель вернулась сама,
- * хотя пользователь ничего не нажимал.
+ * `Popover open={open && !disabled}` suppressed the display, but a controlled change of `open` in
+ * Radix does not call `onOpenChange`, so the internal state stayed `true`. The form was submitted:
+ * the panel disappeared; when submission ended, the panel came back on its own, even though the
+ * user had pressed nothing.
  */
 test("disabling the field closes the popover for good", async () => {
   const user = userEvent.setup();
@@ -364,8 +361,8 @@ test("disabling the field closes the popover for good", async () => {
     );
   }
 
-  // Через `rerender`, а НЕ щелчком по соседней кнопке: щелчок мимо панели
-  // Radix закрывает её сам, и дефект так не воспроизводится — проверено.
+  // Through `rerender`, NOT by clicking a neighboring button: a click outside the panel is closed by
+  // Radix itself, and the defect does not reproduce this way. Verified.
   const { rerender } = render(<Host disabled={false} />);
   await user.click(field());
   expect(screen.getByRole("treegrid")).toBeDefined();

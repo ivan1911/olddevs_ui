@@ -7,18 +7,18 @@ import { Pagination, pageRange } from "../src/components/navigation/Pagination.j
 afterEach(cleanup);
 
 /**
- * До волны 26 компонент не был покрыт НИЧЕМ — ни `tests/`, ни `tests-visual/`.
- * Докстрока при этом утверждала: «Ширина ряда при этом постоянна —
- * `2×siblings + 5` ячеек максимум, — и кнопки под курсором не прыгают при
- * переходе на соседнюю страницу». Постоянен был только максимум.
+ * Until wave 26 the component had no coverage at all: neither `tests/` nor
+ * `tests-visual/`. Its JSDoc meanwhile claimed: "The row width stays constant:
+ * at most `2×siblings + 5` cells, and the buttons under the cursor do not jump
+ * when moving to the adjacent page". Only the maximum was constant.
  */
 describe("the row keeps a constant width", () => {
   test("every page of a long range yields the same number of cells", () => {
     const widths = new Set<number>();
     for (let page = 1; page <= 10; page += 1) widths.add(pageRange(page, 10, 1).length);
 
-    // Было 4→5→6→7→7→6→5→4: переход 4→5 уводил кнопку «5» влево, и повторный
-    // щелчок по той же точке экрана попадал в «4».
+    // It used to be 4→5→6→7→7→6→5→4: the 4→5 step moved the "5" button to the
+    // left, so a repeated click at the same spot on screen landed on "4".
     expect([...widths]).toEqual([7]);
   });
 
@@ -28,7 +28,7 @@ describe("the row keeps a constant width", () => {
   });
 
   test("a short range is not padded beyond its pages", () => {
-    // Добивать нечем и незачем: страниц меньше, чем ячеек в ряду.
+    // Nothing to pad with, and no need to: there are fewer pages than cells in the row.
     expect(pageRange(1, 3, 1)).toEqual([1, 2, 3]);
     expect(pageRange(2, 4, 1)).toEqual([1, 2, 3, 4]);
   });
@@ -42,8 +42,8 @@ describe("boundaries", () => {
   test("a page outside the range is clamped, not walked to", () => {
     const cells = pageRange(99, 5, 1);
 
-    // Страховка от вакуумности: цикл по пустому массиву зелен ни на чём —
-    // тот же приём, что в `data-table.test.tsx`.
+    // A guard against vacuous passing: a loop over an empty array passes on
+    // nothing. Same technique as in `data-table.test.tsx`.
     expect(cells.length).toBeGreaterThan(0);
     for (const cell of cells) {
       if (cell !== "gap") expect(cell).toBeLessThanOrEqual(5);
@@ -52,8 +52,8 @@ describe("boundaries", () => {
   });
 
   test("a huge page number returns immediately instead of hanging", () => {
-    // Функция публичная, и `?page=` приходит из адреса. Шаг добивания
-    // единичный: без зажима `page=1e9` не завершался вовсе.
+    // The function is public, and `?page=` comes from the URL. The padding step
+    // is one page per iteration: without the clamp, `page=1e9` never finished.
     const started = Date.now();
     expect(pageRange(1_000_000_000, 10, 1)).toHaveLength(7);
     expect(Date.now() - started).toBeLessThan(100);

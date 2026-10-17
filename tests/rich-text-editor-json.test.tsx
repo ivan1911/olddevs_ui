@@ -15,7 +15,7 @@ import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { TEST_TOOLS, testLazyTool, testMergeTagTool } from "./editor-test-tools.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -26,12 +26,13 @@ afterEach(() => {
 });
 
 /**
- * JSON-конверт Документа (OLDSUI-180, ADR-0061): `getJSON()` и `setJSON()`
- * Хэндла рядом с HTML-значением.
+ * The JSON envelope of a Document (OLDSUI-180, ADR-0061): the Handle's `getJSON()`
+ * and `setJSON()` next to the HTML value.
  *
- * Шов один — публичный `RichTextEditor` с `ref`: что получает владелец
- * значения (`getHTML`, `onChange`, форма). Приведение дерева к Схеме и проверка
- * конверта отдельно не тестируются — их правила видны через компонент.
+ * There is one seam: the public `RichTextEditor` with a `ref`, and what the owner
+ * of the value gets (`getHTML`, `onChange`, the form). Bringing the tree to the
+ * Schema and checking the envelope are not tested on their own: their rules show
+ * through the component.
  */
 
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
@@ -42,7 +43,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { handle, editor: handle.editor };
 }
 
-/** Документ со всем, что Markdown теряет при выгрузке (раздел «Markdown» страницы Редактора). */
+/** A Document with everything Markdown loses on export (the "Markdown" section of the Editor's page). */
 const RICH = [
   '<h2 data-align="center">Title</h2>',
   "<p><u>under</u> ",
@@ -63,7 +64,7 @@ const RICH = [
 test("getJSON then setJSON brings back the same document, with everything Markdown loses", () => {
   const source = renderEditor({ defaultValue: RICH }).handle;
   const html = source.getHTML();
-  // Образец и правда несёт то, что теряет Markdown, — иначе круг ничего не доказывает.
+  // The sample really carries what Markdown loses; otherwise the round trip proves nothing.
   for (const feature of [
     'data-align="center"',
     "<u>",
@@ -92,7 +93,7 @@ test("getJSON then setJSON brings back the same document, with everything Markdo
   expect(target.getHTML()).toBe(html);
 });
 
-/** Конверт с этим деревом Блоков. */
+/** An envelope around this tree of Blocks. */
 const envelope = (...content: unknown[]) =>
   ({ format: "olddevs-rich-text", version: 1, doc: { type: "doc", content } }) as RichTextDocument;
 const paragraph = (...content: unknown[]) => ({ type: "paragraph", content });
@@ -119,7 +120,7 @@ test("setJSON is an outside replacement: onChange gets the new HTML at once and 
   expect(handle.getHTML()).toBe("<p>new</p>");
   expect(onChange).toHaveBeenCalledTimes(1);
   expect(onChange).toHaveBeenLastCalledWith("<p>new</p>");
-  // Отложенный `onChange` от самой замены не отдаёт то же значение вторично.
+  // The deferred `onChange` from the replacement itself does not report the same value again.
   act(() => void vi.advanceTimersByTime(1000));
   expect(onChange).toHaveBeenCalledTimes(1);
 });
@@ -184,14 +185,14 @@ test("JSON is not a way around the schema: unsafe attributes go exactly as in HT
   act(() => void handle.setJSON(unsafe));
   const fromJSON = handle.getHTML();
 
-  // Тот же Документ HTML-строкой, как его отдал бы движок без проверок Схемы.
+  // The same Document as an HTML string, as the engine would give it without the Schema checks.
   const raw = renderEditor().editor;
   raw.commands.setContent(unsafe.doc, { emitUpdate: false });
   const sameAsHTML = renderEditor({ defaultValue: raw.getHTML() }).handle.getHTML();
 
   expect(fromJSON).toBe(sameAsHTML);
-  // И в самом Документе: вывод ссылки Tiptap и сам снимает опасный адрес, а
-  // состояние без второго прохода его бы хранило.
+  // And in the Document itself: the Tiptap link output strips the unsafe address by
+  // itself, while the state without a second pass would keep it.
   expect(JSON.stringify(handle.getJSON())).not.toContain("javascript:");
   expect(fromJSON).not.toContain("javascript:");
   expect(fromJSON).not.toContain("data:image");
@@ -209,13 +210,13 @@ test("a custom tool goes round through JSON and is checked by its own rules", ()
   act(() => void target.setJSON(exported));
   expect(target.getHTML()).toBe(source.getHTML());
 
-  // Ключ вне шаблона Инструмента (`[a-z_]+`) снимается, как в HTML.
+  // A key outside the Tool's template (`[a-z_]+`) is stripped, as in HTML.
   const bad = envelope(
     paragraph(text("Hi "), { type: "test_mergeTag", attrs: { test_key: "Bad Key!" } })
   );
   act(() => void target.setJSON(bad));
-  // Сверка по Документу, а не по выводу: вывод HTML своего Инструмента сам
-  // не пишет плохой ключ, а в состоянии он остался бы и ушёл бы в `getJSON()`.
+  // Check against the Document, not the output: the HTML output of a custom Tool does
+  // not write a bad key by itself, but in the state it would stay and go into `getJSON()`.
   expect(JSON.stringify(target.getJSON())).not.toContain("Bad Key!");
   expect(target.getHTML()).not.toContain("Bad Key!");
 });
@@ -284,7 +285,7 @@ test("in HTML mode getJSON applies the field edit first, setJSON rewrites the fi
   expect(onChange).toHaveBeenLastCalledWith("<p>from json</p>");
 });
 
-// --- до монтажа и начальный конверт ------------------------------------------------------
+// --- before mount and the initial envelope ------------------------------------------------------
 
 test("before mount getJSON is null and setJSON changes nothing", () => {
   const seen: Record<string, unknown> = {};
@@ -293,7 +294,7 @@ test("before mount getJSON is null and setJSON changes nothing", () => {
       aria-label="Body"
       defaultValue="<p>Known</p>"
       ref={(handle) => {
-        // Колбэк-`ref` получает Хэндл при монтаже, когда движка ещё нет.
+        // The callback `ref` gets the Handle on mount, when there is no engine yet.
         if (!handle || "json" in seen) return;
         seen.json = handle.getJSON();
         seen.set = handle.setJSON(envelope(paragraph(text("x"))));
@@ -373,9 +374,9 @@ test("with an envelope the Skeleton is the frame without the Document until the 
 });
 
 /*
-  До монтажа и после — одно правило пустоты, как у HTML-значения: Блок без
-  текста — пусто; текст (в конверте пробелы не схлопываются), мягкий перенос,
-  атом и таблица — содержимое.
+  Before and after mount there is one emptiness rule, as for the HTML value: a Block
+  without text is empty; text (spaces are not collapsed in an envelope), a soft
+  break, an Atom and a table are content.
 */
 const EMPTINESS: [string, unknown][] = [
   ["no content", { format: "olddevs-rich-text", version: 1, doc: { type: "doc" } }],
@@ -436,7 +437,7 @@ test("a tree that cannot be built is rejected with its cause in the development 
   expect(accepted).toBe(false);
   expect(error).toHaveBeenCalledTimes(1);
   expect(String(error.mock.calls[0]?.[0])).toContain("could not be built");
-  // Причина — вторым аргументом: у кривого файла и у бросившего Инструмента виден стек.
+  // The cause is passed as the second argument, so a broken file or a throwing Tool shows its stack.
   expect(error.mock.calls[0]?.[1]).toBeInstanceOf(Error);
 });
 

@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import * as icons from "./icons.js";
 
-// Вход отдаёт ещё и `LucideProvider` (ADR-0072) — в сетку идут только иконки словаря.
+// The entry point also exports `LucideProvider` (ADR-0072); the grid shows only dictionary icons.
 const { LucideProvider, ...dictionary } = icons;
 
 /**
- * Витрина словаря. Её главная работа — не «показать красивое», а дать место,
- * где геометрию lucide можно сверить глазами до того, как она разъедется
- * по полусотне экранов потребителя.
+ * Showcase of the icon dictionary. Its main job is not to look pretty but to give
+ * a place where the lucide geometry can be checked by eye before it drifts across
+ * the consumer's fifty-odd screens.
  */
 const meta = {
   title: "Foundations/Icons",
@@ -36,17 +36,17 @@ function Grid({ size = 22, strokeWidth }: { size?: number; strokeWidth?: number 
 }
 
 /**
- * Весь словарь целиком, с именами. Имя под иконкой — то самое, которым её
- * импортирует потребитель: `import { DeleteIcon } from "@olddevs/ui/icons"`.
+ * The whole dictionary, with names. The name under each icon is the one the consumer
+ * imports it by: `import { DeleteIcon } from "@olddevs/ui/icons"`.
  */
 export const Catalog: Story = {
   render: () => <Grid />,
 };
 
 /**
- * Толщина обводки задаётся у потребителя через `LucideProvider` и наследуется
- * всеми иконками сразу. Здесь три значения рядом: 1.6 — то, что было
- * у самописного набора и что фронт ставит по умолчанию; 2 — дефолт lucide.
+ * The consumer sets the stroke width through `LucideProvider`, and all icons inherit it
+ * at once. Three values side by side here: 1.6 is what the in-house set used and what
+ * the front end sets by default; 2 is the lucide default.
  */
 export const StrokeWidth: Story = {
   render: () => (
@@ -73,12 +73,12 @@ export const StrokeWidth: Story = {
 };
 
 /**
- * Размерная лестница, которая реально встречается во фронте: 14 в мелких
- * бейджах, 18 в кнопках, 20 в триггерах, 28 в списках.
+ * The size ladder the front end actually uses: 14 in small badges, 18 in buttons,
+ * 20 in triggers, 28 in lists.
  *
- * 20, а не 22: строчный бокс контрола задан `leading-5`, и всё, что кладётся
- * в строку триггера, обязано в неё уместиться — иначе триггер растёт и
- * расходится по высоте с соседним полем.
+ * 20, not 22: the control's line box is set by `leading-5`, and anything placed in a
+ * trigger's line has to fit inside it. Otherwise the trigger grows and its height
+ * drifts away from the neighboring field.
  */
 export const Sizes: Story = {
   render: () => (

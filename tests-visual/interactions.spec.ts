@@ -2,22 +2,22 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { focusToolbarButton } from "./editor-toolbar.js";
 
 /**
- * Поведение, которое обязано проверяться в настоящем браузере.
+ * The behavior that has to be checked in a real browser.
  *
- * Уровень 0 (`npm test`, jsdom) закрывает почти всё, но не то, что зависит от
- * родной механики браузера: активацию `<label>` кликом в его потомка,
- * перемещение фокуса по Tab, pointer-события. Тест на такое в jsdom либо
- * проходит всегда, либо падает на исправном компоненте — и то и другое хуже
- * его отсутствия. Разделение зафиксировано в ADR-0012.
+ * Level 0 (`npm test`, jsdom) covers almost everything, but not what depends on
+ * the browser's own machinery: activating a `<label>` with a click on its
+ * descendant, moving focus with Tab, pointer events. A test for that in jsdom
+ * either always passes or fails on a working component, and both are worse than
+ * having no test at all. The split is recorded in ADR-0012.
  *
- * Здесь не снимки: файл лежит рядом с ними только потому, что оба набора
- * гоняются одним Playwright'ом против статической сборки витрины.
+ * These are not snapshots: the file sits next to them only because both suites
+ * run through one Playwright against the static build of the showcase.
  */
 /*
- * Имена здесь АНГЛИЙСКИЕ, и это не оплошность: с 2.0.0 фолбэк кита английский,
- * а витрина рендерится без `UiProvider` — она показывает кит как он есть из
- * коробки. Русские подписи проверяются в `tests/`, где локаль подключается
- * явно через `tests/ru.tsx`.
+ * The names here are in ENGLISH, and that is deliberate: since 2.0.0 the kit's
+ * fallback is English, and the showcase renders without `UiProvider`, so it shows
+ * the kit as it is out of the box. Russian labels are checked in `tests/`, where
+ * the locale is wired in explicitly through `tests/ru.tsx`.
  */
 
 test("Checkbox: clicking the label toggles the box", async ({ page }) => {
@@ -26,8 +26,8 @@ test("Checkbox: clicking the label toggles the box", async ({ page }) => {
   const box = page.getByRole("checkbox");
   await expect(box).not.toBeChecked();
 
-  // Кликаем именно по тексту: подпись обязана быть частью мишени, а не просто
-  // лежать рядом с коробкой.
+  // Click on the text itself: the label must be part of the hit area, not just
+  // sit next to the box.
   await page.getByText("Show in the feed").click();
   await expect(box).toBeChecked();
 });
@@ -38,12 +38,12 @@ test("Checkbox: a click does not clear the third state", async ({ page }) => {
   const mixed = page.getByRole("checkbox", { name: "accent, indeterminate" });
   await expect(mixed).toHaveJSProperty("indeterminate", true);
 
-  // Кликаем по `<label>`, а не по самому input: он лежит в `VisuallyHidden`, и
-  // кликать невидимое Playwright отказывается — справедливо, пользователь тоже
-  // не может. Мишень флажка без подписи — коробка внутри метки.
+  // We click the `<label>`, not the input itself: it sits inside `VisuallyHidden`,
+  // and Playwright refuses to click what is invisible, which is fair, since a user
+  // cannot either. A checkbox's hit area without a label is the box inside the label.
   await page.locator('label:has(input[aria-label="accent, indeterminate"])').click();
 
-  // «Частично» ставит вызывающий, пересчитав набор; клик его не снимает.
+  // The caller sets "partial" after recounting the set; a click does not clear it.
   await expect(mixed).toHaveJSProperty("indeterminate", true);
 });
 
@@ -62,8 +62,8 @@ test("TextControl: a growing field grows with the content and stops at maxRows",
   const after = (await growing.boundingBox())!.height;
   expect(after).toBeGreaterThan(before);
 
-  // Предел: поле с `maxRows={4}` не выше четырёх строк, сколько бы в нём ни
-  // было текста, и прокручивается внутри себя.
+  // The limit: a field with `maxRows={4}` is never taller than four lines, however
+  // much text it holds, and scrolls inside itself.
   const capped = page.getByLabel("Grows to a limit, then scrolls");
   const cappedBox = (await capped.boundingBox())!;
   const scrollable = await capped.evaluate(
@@ -194,10 +194,10 @@ test("Keyboard: the matrix shows both closed and immediately open search scenari
   ).toHaveCount(2);
 
   await page.setViewportSize({ width: 768, height: 1000 });
-  // Поповеры переезжают за полем не в момент смены ширины, а на следующем
-  // кадре: floating-ui пересчитывает позицию асинхронно. Разовый замер под
-  // нагрузкой ловил старую раскладку в две колонки, где панели стоят в одном
-  // ряду, — поэтому зазор опрашивается, пока раскладка не устоится.
+  // Popovers move with the field not at the moment the width changes but on the
+  // next frame: floating-ui recalculates the position asynchronously. A one-off
+  // measurement under load caught the old two-column layout, where the panels sit
+  // in one row, so the gap is polled until the layout settles.
   await expect
     .poll(async () => {
       const russianKeyboard = await page
@@ -270,8 +270,8 @@ test("SearchControl: the old empty popover area does not intercept a click after
   );
   await page.mouse.up();
 
-  // Эта точка лежала внутри Popover до переноса, но уже вне видимой панели.
-  // Клик должен считаться внешним и закрыть клавиатуру.
+  // This point lay inside the Popover before the move, but is now outside the
+  // visible panel. The click must count as outside and close the keyboard.
   await page.mouse.click(
     originalBounds.x + originalBounds.width - 4,
     originalBounds.y + originalBounds.height - 4
@@ -296,12 +296,12 @@ test("SearchControl: Escape closes the keyboard but not the dialog under it", as
 });
 
 /*
-  Стык двух библиотек: меню react-aria внутри диалога Radix.
+  The seam between two libraries: a react-aria menu inside a Radix dialog.
 
-  Единственное место в пакете, где два независимых менеджера фокуса встречаются
-  на одном экране. Проверка живёт здесь, а не в jsdom, потому что jsdom не
-  двигает фокус по Tab так, как браузер: тест на ловушку фокуса прошёл бы там в
-  любом случае, то есть не проверял бы ничего (ADR-0012).
+  The only place in the package where two independent focus managers meet on one
+  screen. The check lives here, not in jsdom, because jsdom does not move focus on
+  Tab the way a browser does: a focus-trap test would pass there regardless, so it
+  would check nothing (ADR-0012).
 */
 test("Menu inside Dialog: Escape closes the menu but not the window", async ({ page }) => {
   await page.goto(
@@ -315,8 +315,8 @@ test("Menu inside Dialog: Escape closes the menu but not the window", async ({ p
   await expect(page.getByRole("menu")).toBeVisible();
 
   await page.keyboard.press("Escape");
-  // Меню закрылось, окно осталось: иначе один Escape уносил бы всю форму
-  // вместе с несохранённым.
+  // The menu closed and the window stayed: otherwise one Escape would dismiss the
+  // whole form along with unsaved changes.
   await expect(page.getByRole("menu")).toBeHidden();
   await expect(dialog).toBeVisible();
 
@@ -325,11 +325,11 @@ test("Menu inside Dialog: Escape closes the menu but not the window", async ({ p
 });
 
 /*
-  Тот же стык в Редакторе: меню «¶» (тип Блока, OLDSUI-64) — меню react-aria,
-  окно — Radix. В jsdom это сочетание не раскрывается
-  (`tests/rich-text-editor-block-menu.test.tsx` проверяет стек слоёв на
-  `ModalOverlay`), поэтому `Dialog` — здесь. Путь — клавиатурный, как у
-  пользователя без мыши: `Alt+F10` в Панель, стрелками на «¶», `Enter` открывает.
+  The same seam in the Editor: the "¶" menu (the Block type, OLDSUI-64) is a
+  react-aria menu, and the window is Radix. jsdom does not reproduce this
+  combination (`tests/rich-text-editor-block-menu.test.tsx` checks the layer stack
+  on `ModalOverlay`), so the `Dialog` lives here. The path is keyboard-only, as for
+  a user without a mouse: `Alt+F10` into the Toolbar, arrows to "¶", `Enter` opens it.
 */
 test("RichTextEditor inside Dialog: Escape closes the block type menu, not the window", async ({
   page,
@@ -344,7 +344,7 @@ test("RichTextEditor inside Dialog: Escape closes the block type menu, not the w
   await field.click();
   await page.mouse.move(0, 0);
 
-  // Alt+F10 — в Панель, стрелками до «¶».
+  // Alt+F10 into the Toolbar, arrows to "¶".
   const button = await focusToolbarButton(page, "Block type: Text");
   await expect(button).toBeFocused();
 
@@ -361,8 +361,8 @@ test("RichTextEditor inside Dialog: Escape closes the block type menu, not the w
   await expect(dialog).toBeVisible();
   await expect(button).toBeFocused();
 
-  // Выбор пункта меняет Блок и возвращает фокус в Документ; окно на месте.
-  // `↓` открывает меню на первом пункте; «Heading 2» — третий.
+  // Choosing an item changes the Block and returns focus to the Document; the
+  // window stays put. `↓` opens the menu on the first item; "Heading 2" is the third.
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("menuitemradio", { name: /^Text/ })).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -377,9 +377,9 @@ test("RichTextEditor inside Dialog: Escape closes the block type menu, not the w
 });
 
 /*
-  Меню «Выравнивание» и «Списки» (OLDSUI-66) — те же меню react-aria внутри
-  окна Radix: Escape закрывает меню, а не окно, выбор с клавиатуры меняет Блок
-  и возвращает фокус в Документ.
+  The Alignment and Lists menus (OLDSUI-66) are the same react-aria menus inside a
+  Radix window: Escape closes the menu, not the window, and choosing an item from
+  the keyboard changes the Block and returns focus to the Document.
 */
 test("RichTextEditor inside Dialog: the alignment and lists menus work from the keyboard, Escape keeps the window", async ({
   page,
@@ -403,7 +403,7 @@ test("RichTextEditor inside Dialog: the alignment and lists menus work from the 
   await expect(dialog).toBeVisible();
   await expect(lists).toBeFocused();
 
-  // «Нумерованный» — второй пункт; выбор оборачивает Блок и называет его на кнопке.
+  // "Numbered" is the second item; choosing it wraps the Block, and the button names it.
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("menuitemradio", { name: /^Numbered list/ })).toBeFocused();
@@ -427,8 +427,8 @@ test("RichTextEditor inside Dialog: the alignment and lists menus work from the 
 });
 
 /*
-  Меню вставки по `/` (OLDSUI-43). В jsdom раскладки нет, и «список у курсора»
-  там не проверить: координаты у всех узлов нулевые. Здесь — настоящая.
+  The Insert menu opened by `/` (OLDSUI-43). jsdom has no layout, so "the list at
+  the caret" cannot be checked there: all nodes have zero coordinates. Here it is real.
 */
 test("RichTextEditor insert menu: the slash list opens at the caret and Enter applies", async ({
   page,
@@ -440,10 +440,10 @@ test("RichTextEditor insert menu: the slash list opens at the caret and Enter ap
   const field = page.getByRole("textbox", { name: "Document" });
   const listbox = page.getByRole("listbox", { name: "Insert block" });
   await expect(listbox).toBeVisible();
-  // Фокус остаётся в поле: список — часть комбобокса, а не новая остановка.
+  // Focus stays in the field: the list is part of the combobox, not a new stop.
   await expect(field).toBeFocused();
 
-  // Список стоит под набранным `/`: левый край — у черты, верх — ниже её.
+  // The list sits under the typed `/`: its left edge lines up with it, and its top is below it.
   const command = field.locator(".suggestion");
   const caret = (await command.boundingBox())!;
   const panel = (await listbox.boundingBox())!;
@@ -454,7 +454,7 @@ test("RichTextEditor insert menu: the slash list opens at the caret and Enter ap
   await page.keyboard.press("ArrowDown");
   await expect(field).not.toHaveAttribute("aria-activedescendant", first!);
 
-  // Вторая строка раздела «Insert» — разделитель.
+  // The second row of the "Insert" section is a divider.
   await page.keyboard.press("Enter");
   await expect(listbox).toBeHidden();
   await expect(field.locator("hr")).toHaveCount(1);
@@ -471,7 +471,7 @@ test("RichTextEditor inside Dialog: Escape closes the insert menu, not the windo
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
 
-  // Последний абзац пуст: `/` в начале Блока открывает меню.
+  // The last paragraph is empty: `/` at the start of a Block opens the menu.
   await page.locator('[contenteditable="true"] p').last().click();
   await page.keyboard.type("/");
   const listbox = page.getByRole("listbox", { name: "Insert block" });
@@ -480,7 +480,7 @@ test("RichTextEditor inside Dialog: Escape closes the insert menu, not the windo
   await page.keyboard.press("Escape");
   await expect(listbox).toBeHidden();
   await expect(dialog).toBeVisible();
-  // Набранное остаётся текстом.
+  // What was typed stays as text.
   await expect(page.locator('[contenteditable="true"] p').last()).toHaveText("/");
 
   await page.keyboard.press("Escape");
@@ -488,10 +488,10 @@ test("RichTextEditor inside Dialog: Escape closes the insert menu, not the windo
 });
 
 /*
-  Команды над Блоками (OLDSUI-63). В jsdom событие собирается руками, а здесь
-  его собирает браузер: `key` под Shift и Alt, `⌘` на Mac и `Ctrl` у остальных
-  (`ControlOrMeta` — та же развилка, что у ProseMirror). Так проверяется, что
-  сочетания движка совпадают с тем, что приходит от настоящей клавиатуры.
+  Block commands (OLDSUI-63). jsdom assembles the event by hand, but here the
+  browser assembles it: `key` under Shift and Alt, `⌘` on Mac and `Ctrl` on the
+  rest (`ControlOrMeta` is the same fork as in ProseMirror). This checks that the
+  engine's key combinations match what arrives from a real keyboard.
 */
 test("RichTextEditor block commands: Alt+Shift+arrows move, Mod+] and Mod+[ shift, Mod+Shift+D duplicates", async ({
   page,
@@ -504,7 +504,7 @@ test("RichTextEditor block commands: Alt+Shift+arrows move, Mod+] and Mod+[ shif
   const steps = document.locator("ol > li");
   await expect(steps).toHaveText(["Step one", "Step two"]);
   await steps.first().locator("p").click();
-  // ProseMirror читает выделение браузера по `selectionchange`, не мгновенно.
+  // ProseMirror reads the browser's selection via `selectionchange`, not instantly.
   await page.waitForTimeout(300);
 
   await page.keyboard.press("Alt+Shift+ArrowDown");
@@ -512,7 +512,7 @@ test("RichTextEditor block commands: Alt+Shift+arrows move, Mod+] and Mod+[ shif
   await page.keyboard.press("Alt+Shift+ArrowUp");
   await expect(steps).toHaveText(["Step one", "Step two"]);
 
-  // Каретка ушла вместе с пунктом — она в «Step one»; дальше — во второй пункт.
+  // The caret moved with the item and is now in "Step one"; next, into the second item.
   await steps.nth(1).locator("p").click();
   await page.keyboard.press("End");
   await page.waitForTimeout(300);
@@ -524,17 +524,18 @@ test("RichTextEditor block commands: Alt+Shift+arrows move, Mod+] and Mod+[ shif
 
   await page.keyboard.press("ControlOrMeta+Shift+D");
   await expect(steps).toHaveText(["Step one", "Step two", "Step two"]);
-  // Каретка — в копии: набранное попадает в третий пункт.
+  // The caret is in the copy: what is typed lands in the third item.
   await page.keyboard.type("!");
   await expect(steps).toHaveText(["Step one", "Step two", "Step two!"]);
 });
 
 /*
-  Тема подсветки — переменные на элементе с `data-theme`, и блок кода берёт их у
-  БЛИЖАЙШЕГО предка с темой (OLDSUI-50, ADR-0051). Так работает будущая
-  «бумага»: Документ в `data-theme="light"` внутри тёмного приложения. Правила
-  «тема → токен под ней» при вложенных темах спорили бы порядком в файле, и
-  светлая бумага показала бы тёмные токены — поэтому каскад проверяется вживую.
+  The highlight theme is variables on the element with `data-theme`, and a code
+  block takes them from the NEAREST ancestor with a theme (OLDSUI-50, ADR-0051).
+  That is how the future "paper" works: a Document with `data-theme="light"` inside
+  a dark app. Rules of the form "theme → token under it" would fight over file order
+  with nested themes, and a light paper would show dark tokens, so the cascade is
+  checked live.
 */
 test("RichTextView code theme: a nested data-theme wrapper picks its own GitHub theme", async ({
   page,
@@ -555,13 +556,13 @@ test("RichTextView code theme: a nested data-theme wrapper picks its own GitHub 
   await page.locator(".hljs-keyword").first().waitFor();
   expect(await colours()).toEqual({ keyword: "rgb(255, 123, 114)", pre: "rgb(13, 17, 23)" });
 
-  // Светлая бумага внутри тёмного приложения — GitHub Light.
+  // A light paper inside a dark app: GitHub Light.
   await page
     .locator("#storybook-root")
     .evaluate((root) => root.setAttribute("data-theme", "light"));
   expect(await colours()).toEqual({ keyword: "rgb(215, 58, 73)", pre: "rgb(255, 255, 255)" });
 
-  // И наоборот: тёмный остров внутри светлой страницы — GitHub Dark.
+  // And the other way round: a dark island inside a light page: GitHub Dark.
   await page.goto(
     "/iframe.html?id=content-richtextview--code-blocks&globals=theme:light;accent:blue"
   );
@@ -572,10 +573,10 @@ test("RichTextView code theme: a nested data-theme wrapper picks its own GitHub 
 });
 
 /*
-  Лист `surface="paper"` (OLDSUI-52) в живом браузере: документ светлый в
-  тёмном, сумрачном и брендовом приложении, а Панель Редактора — в теме
-  приложения. jsdom-тест (`tests/rich-text-paper-css.test.tsx`) проверяет то же
-  на развёрнутых слоях; здесь — настоящий каскад со слоями Tailwind.
+  The Paper (`surface="paper"`, OLDSUI-52) in a live browser: the Document is light
+  in a dark, dim and branded app, while the Editor's Toolbar follows the app's
+  theme. The jsdom test (`tests/rich-text-paper-css.test.tsx`) checks the same on
+  rendered layers; here it is the real cascade with the Tailwind layers.
 */
 for (const globals of [
   "theme:dark;accent:blue",
@@ -612,15 +613,16 @@ for (const globals of [
       heading: "rgb(248, 250, 252)",
       insideToolbar: false,
     });
-    // Панель — на подложке поля ТЕМЫ ПРИЛОЖЕНИЯ, тёмной.
+    // The Toolbar sits on the field's background in the APP theme, which is dark.
     expect(colours.toolbar).not.toBe("rgb(255, 255, 255)");
     expect(colours.toolbar).toMatch(/^rgb\((\d{1,2}), (\d{1,2}), (\d{1,2})\)$/);
   });
 }
 
 /*
-  Яркий маркер (OLDSUI-61) в живом браузере: три цвета одинаковы во всех темах,
-  текст на них тёмный, а прежние имена красятся прежними значениями с текстом темы.
+  The bright marker (OLDSUI-61) in a live browser: the three colours are the same
+  in every theme, the text on them is dark, and the former names keep their old
+  values with the theme's text.
 */
 for (const theme of ["dark", "light", "dim"]) {
   test(`marker palette is bright with dark text in every theme — ${theme}`, async ({ page }) => {
@@ -642,7 +644,7 @@ for (const theme of ["dark", "light", "dim"]) {
     ] as const) {
       expect(paint[name], name).toEqual({ background, text: "rgb(26, 26, 26)" });
     }
-    // Прежнее имя читается своим значением и не берёт тёмный текст маркера.
+    // The former name reads with its own value and does not take the marker's dark text.
     expect(paint.blue.text).not.toBe("rgb(26, 26, 26)");
   });
 }
@@ -657,7 +659,7 @@ test("RichTextEditor inside Dialog: Alt+F10 reaches the code language menu, Esca
   const dialog = page.getByRole("dialog", { name: "Edit the note" });
   await expect(dialog).toBeVisible();
 
-  // Ограда с языком в пустом абзаце — блок кода Python (OLDSUI-50).
+  // A code fence with a language in an empty paragraph: a Python code block (OLDSUI-50).
   await page.locator('[contenteditable="true"] p').last().click();
   await page.keyboard.type("```python ");
   await page.keyboard.type("print(1)");
@@ -674,20 +676,22 @@ test("RichTextEditor inside Dialog: Alt+F10 reaches the code language menu, Esca
   await expect(menu).toBeHidden();
   await expect(dialog).toBeVisible();
   await expect(trigger).toBeFocused();
-  // Меню доживает уход (ADR-0043), и пока оно в DOM, окно не берёт Escape само
-  // (`hasOpenAriaOverlay`, тот же селектор). Ждём, пока уйдёт совсем: иначе
-  // проверка ниже проходила бы за счёт анимации, а не шапки — как и было до починки.
+  // The menu outlives its exit (ADR-0043), and while it is in the DOM the window
+  // does not take Escape by itself (`hasOpenAriaOverlay`, the same selector). Wait
+  // until it is gone entirely: otherwise the check below would pass thanks to the
+  // animation, not the header, as it did before the fix.
   await expect(page.locator("[data-rac][data-placement]")).toHaveCount(0);
-  // Escape на самой кнопке — обратно в код, окно остаётся. Видимость окна
-  // этого не докажет: закрытое окно тоже доживает уход и ещё видно. Radix
-  // снимает `data-state="open"` сразу, в тот же кадр.
+  // Escape on the button itself returns to the code, and the window stays. The
+  // window's visibility would not prove this: a closed window also outlives its
+  // exit and is still visible for a while. Radix drops `data-state="open"` at once,
+  // in the same frame.
   await page.keyboard.press("Escape");
   await expect(page.getByRole("textbox", { name: "Document" })).toBeFocused();
   await expect(dialog).toHaveAttribute("data-state", "open");
   await page.keyboard.press("Alt+F10");
   await expect(trigger).toBeFocused();
 
-  // Выбор с клавиатуры: язык сменился, фокус вернулся в код.
+  // Choosing from the keyboard: the language changed, and focus returned to the code.
   await page.keyboard.press("Enter");
   await page.getByRole("menuitemradio", { name: "YAML" }).press("Enter");
   await expect(page.getByRole("button", { name: "Language: YAML" })).toBeVisible();
@@ -703,9 +707,9 @@ test("RichTextView code blocks: Copy puts the plain code text on the clipboard",
     "/iframe.html?id=content-richtextview--code-block-header&globals=theme:dark;accent:blue"
   );
 
-  // Кнопки вставляет клиентский остров после монтирования; блок подсвечен на
-  // «сервере», и токены в буфер не идут.
-  // Шесть: по три блока в Редакторе и в Просмотре.
+  // The buttons are inserted by a client-side Island after mounting; the block is
+  // highlighted on the "server", and the tokens do not go into the clipboard.
+  // Six: three blocks each in the Editor and in the View.
   const copy = page.getByRole("button", { name: "Copy" });
   await expect(copy).toHaveCount(6);
   await expect(page.locator(".hljs-keyword").first()).toBeVisible();
@@ -726,15 +730,15 @@ test("RichTextEditor code blocks: Alt+F10 goes language, copy, toolbar; Enter on
 
   const first = page.locator("[data-code-header]").first();
   await first.getByRole("button", { name: "Language: Python" }).waitFor();
-  // Обе кнопки вне Tab; вход — каретка в блоке и `Alt+F10`.
+  // Both buttons are outside the Tab order; the entry point is the caret in the block and `Alt+F10`.
   await expect(first.getByRole("button", { name: "Copy" })).toHaveAttribute("tabindex", "-1");
   const document = page.getByRole("textbox", { name: "Document" });
-  // Подсветка — декорации: пока токенов нет, редактор ещё не осел, и щелчок
-  // мог бы попасть в блок, который сейчас перерисуется.
+  // Highlighting is decoration: until the tokens exist, the editor has not settled
+  // yet, and a click could land on a block that is about to re-render.
   await expect(document.locator("pre code .hljs-keyword").first()).toBeVisible();
   await document.locator("pre code").first().click();
-  // ProseMirror читает выделение браузера по `selectionchange`, не мгновенно:
-  // сочетание, нажатое сразу за щелчком, видит ещё прежнее выделение.
+  // ProseMirror reads the browser's selection via `selectionchange`, not instantly:
+  // a shortcut pressed right after a click still sees the previous selection.
   await page.waitForTimeout(300);
   await page.keyboard.press("Alt+F10");
   await expect(first.getByRole("button", { name: "Language: Python" })).toBeFocused();
@@ -762,8 +766,8 @@ test("RichTextEditor inside Dialog: Escape closes the link popover, not the wind
   const dialog = page.getByRole("dialog", { name: "Edit the note" });
   await expect(dialog).toBeVisible();
 
-  // Выделение слова — двойным щелчком, как его делает человек; поповер
-  // открывается с клавиатуры, мимо Панели.
+  // The word is selected with a double click, the way a person does it; the popover
+  // opens from the keyboard, bypassing the Toolbar.
   await page.getByRole("textbox", { name: "Document" }).getByText("Escape").dblclick();
   await page.keyboard.press("ControlOrMeta+k");
   const address = page.getByRole("textbox", { name: "Address" });
@@ -772,7 +776,7 @@ test("RichTextEditor inside Dialog: Escape closes the link popover, not the wind
   await page.keyboard.press("Escape");
   await expect(address).toBeHidden();
   await expect(dialog).toBeVisible();
-  // Escape отменяет и возвращает фокус в документ, а не на `<body>`.
+  // Escape cancels and returns focus to the document, not to `<body>`.
   await expect(page.getByRole("textbox", { name: "Document" })).toBeFocused();
 });
 
@@ -796,7 +800,7 @@ test("RichTextEditor inside Dialog: Escape closes the shortcuts reference, not t
   await expect(dialog).toBeVisible();
   await expect(button).toBeFocused();
 
-  // Щелчок снаружи: пустое место окна закрывает справочник и возвращает фокус на кнопку.
+  // A click outside: an empty spot in the window closes the reference and returns focus to the button.
   await button.click();
   await expect(reference).toBeVisible();
   await dialog.getByRole("heading", { name: "Edit the note" }).click();
@@ -815,10 +819,10 @@ test("RichTextEditor inside Dialog: Escape closes the colour picker, then the cu
   const dialog = page.getByRole("dialog", { name: "Edit the note" });
   await expect(dialog).toBeVisible();
 
-  // Обычное слово, а не «Escape»: тот — строчный код, и цвет на нём недоступен.
+  // A plain word rather than "Escape": that one is inline code, and colour is unavailable on it.
   await dblclickWord(page, "inside");
-  // «Цвет» › «Свой цвет…» сетки текста (OLDSUI-153). «Цвет» — кнопка меню
-  // выделения (OLDSUI-154): на Панели только «Маркер».
+  // "Color" › "Custom color…" of the text grid (OLDSUI-153). "Color" is the button
+  // of the Bubble menu (OLDSUI-154); the Toolbar has only "Highlight".
   await page
     .getByRole("toolbar", { name: "Selection formatting", exact: true })
     .getByRole("button", { name: "Color: Default", exact: true })
@@ -833,7 +837,7 @@ test("RichTextEditor inside Dialog: Escape closes the colour picker, then the cu
   const hex = page.getByRole("textbox", { name: "HEX" });
   await expect(hex).toBeVisible();
 
-  // Каждый Escape закрывает ровно один слой (ADR-0041).
+  // Each Escape closes exactly one layer (ADR-0041).
   await page.keyboard.press("Escape");
   await expect(hex).toBeHidden();
   await expect(popover).toBeVisible();
@@ -842,7 +846,7 @@ test("RichTextEditor inside Dialog: Escape closes the colour picker, then the cu
   await page.keyboard.press("Escape");
   await expect(popover).toBeHidden();
   await expect(dialog).toBeVisible();
-  // Фокус вернулся в документ, а не на `<body>`.
+  // Focus returned to the document, not to `<body>`.
   await expect(page.getByRole("textbox", { name: "Document" })).toBeFocused();
 
   await page.keyboard.press("Escape");
@@ -850,14 +854,15 @@ test("RichTextEditor inside Dialog: Escape closes the colour picker, then the cu
 });
 
 /*
-  Поповер «Маркер» и меню «…» внутри окна и ящика (OLDSUI-65, OLDSUI-153).
-  jsdom проверяет стек слоёв на `ModalOverlay`; настоящие `Dialog` и `Drawer` —
-  здесь: мышью и с клавиатуры.
+  The Highlight popover and the "…" menu inside a window and a drawer (OLDSUI-65,
+  OLDSUI-153). jsdom checks the layer stack on `ModalOverlay`; the real `Dialog`
+  and `Drawer` are here: with the mouse and from the keyboard.
 */
-/** Двойной щелчок ровно по слову: середина его прямоугольника, а не абзаца. */
+/** Double-click exactly on a word: the middle of its rectangle, not of the paragraph. */
 async function dblclickWord(page: Page, word: string) {
-  // До Готовности на месте поля стоит Скелет (OLDSUI-110): тот же текст, но
-  // без `role="textbox"` — поиск слова ниже нашёл бы пустоту. Ждём движок.
+  // Until Readiness, a Skeleton stands in the field's place (OLDSUI-110): the same
+  // text, but without `role="textbox"`, so the word search below would find nothing.
+  // Wait for the engine.
   await expect(page.getByRole("textbox", { name: "Document" })).toBeVisible();
   const point = await page.evaluate((text) => {
     const field = document.querySelector('[role="textbox"][aria-label="Document"]')!;
@@ -874,10 +879,10 @@ async function dblclickWord(page: Page, word: string) {
     throw new Error(`no "${text}" in the document`);
   }, word);
   await page.mouse.dblclick(point.x, point.y);
-  // Выделение Документа ProseMirror читает из DOM асинхронно: клавиша,
-  // нажатая раньше, увела бы фокус с кареткой вместо слова. Плашка меню
-  // выделения появляется только при непустом выделении в состоянии Редактора —
-  // это и есть честная точка синхронизации.
+  // ProseMirror reads the Document's selection from the DOM asynchronously: a key
+  // pressed earlier would move focus with the caret instead of the word. The Bubble
+  // menu appears only when the selection is non-empty in the Editor's state, and
+  // that is the honest synchronization point.
   await expect(
     page.getByRole("toolbar", { name: "Selection formatting", exact: true })
   ).toBeVisible();
@@ -898,7 +903,7 @@ for (const [story, word] of [
     await expect(layer).toBeVisible();
 
     await dblclickWord(page, word);
-    // Кнопки Панели: над выделением стоит ещё и плашка со своими.
+    // The Toolbar's buttons: a Bubble menu over the selection has its own too.
     const toolbar = page.getByRole("toolbar", { name: "Formatting", exact: true });
     await toolbar.getByRole("button", { name: "Highlight: None" }).click();
     await page.getByRole("menuitemradio", { name: "Pink" }).click();
@@ -908,7 +913,7 @@ for (const [story, word] of [
     await expect(field).toBeFocused();
     await expect(layer).toBeVisible();
 
-    // Метка из меню «…» — тоже мышью.
+    // The mark from the "…" menu, also with the mouse.
     await toolbar.getByRole("button", { name: "More formatting" }).click();
     await page.getByRole("menuitemcheckbox", { name: /Underline/ }).click();
     await expect(field.locator("u")).toHaveText(word);
@@ -928,23 +933,23 @@ for (const [story, word] of [
     await dblclickWord(page, word);
     await page.mouse.move(0, 0);
 
-    // Alt+F10 — в Панель, стрелками до «Маркера».
+    // Alt+F10 into the Toolbar, arrows to "Highlight".
     const button = await focusToolbarButton(page, "Highlight: None");
     await expect(button).toBeFocused();
 
-    // Enter открывает ряд, фокус — на первом кружке (маркера на слове нет).
+    // Enter opens the row, and focus lands on the first swatch (the word has no highlight yet).
     await page.keyboard.press("Enter");
     const grid = page.getByRole("menu", { name: "Highlight" });
     await expect(grid).toBeVisible();
     await expect(page.getByRole("menuitemradio", { name: "Gray" })).toBeFocused();
 
-    // Escape закрывает только поповер и возвращает фокус на кнопку.
+    // Escape closes only the popover and returns focus to the button.
     await page.keyboard.press("Escape");
     await expect(grid).toBeHidden();
     await expect(button).toBeFocused();
     await expect(layer).toBeVisible();
 
-    // Выбор с клавиатуры: Gray → Brown → Orange → Yellow → Green, Enter.
+    // Choosing from the keyboard: Gray → Brown → Orange → Yellow → Green, Enter.
     await page.keyboard.press("Enter");
     await expect(page.getByRole("menuitemradio", { name: "Gray" })).toBeFocused();
     for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowRight");
@@ -967,8 +972,8 @@ test("Menu inside Dialog: after the menu closes focus stays in the window", asyn
   await expect(page.getByRole("menu")).toBeVisible();
   await page.keyboard.press("Escape");
 
-  // Фокус обязан вернуться триггеру, а не уехать на `<body>`: иначе
-  // клавиатурный пользователь теряет место в форме.
+  // Focus must return to the trigger, not drift to `<body>`: otherwise a keyboard
+  // user loses their place in the form.
   await expect(trigger).toBeFocused();
 });
 
@@ -982,13 +987,13 @@ test("Menu inside Dialog: the focus trap does not let go while the menu is open"
   await page.getByRole("button", { name: "Actions" }).click();
   await expect(page.getByRole("menu")).toBeVisible();
 
-  // Десяти табов заведомо больше, чем элементов в окне: если ловушка течёт,
-  // фокус к этому моменту уже уедет на страницу под оверлеем.
+  // Ten Tabs is certainly more than the elements in the window: if the trap leaks,
+  // focus will by then have moved to the page under the overlay.
   for (let i = 0; i < 10; i++) await page.keyboard.press("Tab");
 
-  // Проверяется НЕ «фокус внутри диалога»: при открытом меню он законно лежит
-  // в портале меню, а тот диалогу не потомок. Проверяется то, что важно
-  // пользователю, — фокус не ушёл на страницу позади оверлея.
+  // What is checked is NOT "focus inside the dialog": with the menu open, focus
+  // legitimately lies in the menu's portal, which is not a descendant of the dialog.
+  // What matters to the user is checked: focus has not moved to the page behind the overlay.
   const escaped = await page.evaluate(() => {
     const active = document.activeElement;
     if (active == null || active === document.body) return false;
@@ -997,7 +1002,7 @@ test("Menu inside Dialog: the focus trap does not let go while the menu is open"
   });
   expect(escaped).toBe(false);
 
-  // И положительная половина: фокус там, где ему место, — в окне или в меню.
+  // And the positive half: focus is where it belongs, in the window or in the menu.
   const contained = await page.evaluate(() => {
     const active = document.activeElement;
     const dialog = document.querySelector('[role="dialog"]');
@@ -1010,18 +1015,18 @@ test("Menu inside Dialog: the focus trap does not let go while the menu is open"
 });
 
 /*
-  Щелчок мышью по оверлею react-aria внутри модального слоя Radix (OLDSUI-51).
+  A mouse click on a react-aria overlay inside a Radix modal layer (OLDSUI-51).
 
-  Модальный Radix ставит `<body>` инлайновое `pointer-events: none` и
-  возвращает указатель только СВОИМ слоям. Панель меню и список подсказок
-  react-aria живут в портале прямо под `<body>`, наследовали `none`, и щелчок
-  проваливался на подложку: пункт выбирался только с клавиатуры. Проверки выше
-  жали Escape и мышью пункт не выбирали ни разу — поэтому дефект прожил до
-  эпика редактора.
+  A modal Radix sets an inline `pointer-events: none` on `<body>` and gives the
+  pointer back only to ITS OWN layers. The react-aria menu panel and the suggestion
+  list live in a portal directly under `<body>`, inherited `none`, and the click fell
+  through to the backdrop: an item could only be picked from the keyboard. The checks
+  above pressed Escape and never picked an item with the mouse, which is why the
+  defect survived until the Editor epic.
 
-  Клик здесь — БЕЗ `force`: проверка «элемент принимает указатель» у Playwright
-  и есть то, что сломано. Вторая половина каждого теста — окно осталось
-  открытым: Radix не должен счесть щелчок по порталу «щелчком снаружи».
+  The click here is WITHOUT `force`: the check that "the element accepts the pointer"
+  in Playwright is exactly what was broken. The second half of each test: the window
+  stays open, and Radix must not count a click on the portal as a "click outside".
 */
 test("Menu inside Dialog: a mouse click on an item runs it and keeps the window", async ({
   page,
@@ -1074,11 +1079,11 @@ test("Combobox inside Drawer: a mouse click on a suggestion picks it", async ({ 
 });
 
 /*
-  Тосты проверяются только в браузере.
+  Toasts are checked only in the browser.
 
-  В jsdom нет ни анимаций, ни раскладки портала, ни таймеров, по которым тост
-  живёт и уходит: проверка там свелась бы к «функция вызвалась», то есть к
-  тесту на sonner, а не на пакет.
+  jsdom has no animations, no portal layout, and no timers by which a toast lives
+  and leaves: a check there would reduce to "the function was called", that is, a
+  test of sonner rather than of the package.
 */
 test("toast: the tones are called and show text with a description", async ({ page }) => {
   await page.goto("/iframe.html?id=actions-toaster--tones&globals=theme:dark;accent:blue");
@@ -1088,7 +1093,7 @@ test("toast: the tones are called and show text with a description", async ({ pa
 
   await page.getByRole("button", { name: "Error with a description" }).click();
   await expect(page.getByText("Could not save")).toBeVisible();
-  // Описание — вторая строка: сюда потребитель кладёт текст с сервера.
+  // The description is the second line: the consumer puts the server's text here.
   await expect(page.getByText("The channel does not answer — code 502")).toBeVisible();
 });
 
@@ -1107,28 +1112,28 @@ test("toast: a promise goes through pending to a result", async ({ page }) => {
 
   await page.getByRole("button", { name: "Promise" }).click();
   await expect(page.getByText("Saving…")).toBeVisible();
-  // Тот же тост меняет содержимое, а не появляется второй рядом.
+  // The same toast changes its content instead of a second one appearing next to it.
   await expect(page.getByText("Saved")).toBeVisible({ timeout: 5000 });
   await expect(page.getByText("Saving…")).toBeHidden();
 });
 
 /**
- * Высота контрола объявлена (`leading-5` в `lib/field.ts`), а не выведена из
- * множителя строки, и держится она только проверкой в браузере.
+ * A control's height is declared (`leading-5` in `lib/field.ts`), not derived from
+ * the line-height multiplier, and it is held only by a check in the browser.
  *
- * Снимок такого не ловит: на нём равенство высот надо мерить глазом, а
- * разошедшийся на полпикселя триггер выглядит как антиалиасинг. Так и уехал
- * `DateRangePicker` — правку получили поля и `Select`, а он остался на прежних
- * 41.5 и стал единственным несовпадающим в форме; нашлось это ревью, не
- * бейзлайном, хотя бейзлайн был перегенерирован вместе с расхождением внутри.
+ * A snapshot does not catch this: on it, equal heights have to be measured by eye,
+ * and a trigger off by half a pixel looks like anti-aliasing. That is how
+ * `DateRangePicker` drifted: the fields and `Select` got the fix, but it stayed at
+ * the old 41.5 and became the only mismatch in the form. Review caught it, not the
+ * baseline, although the baseline had been regenerated along with the mismatch in it.
  */
 test("form: fields and triggers share one height", async ({ page }) => {
   await page.goto("/iframe.html?id=inputs-formfield--matrix&globals=theme:dark;accent:blue");
 
-  // Меряется видимая коробка контрола, а она у всех — родитель мишени: у поля
-  // это оболочка с рамкой (`lib/field.ts`), у триггера — пилюля, несущая
-  // отступы потребителя. Само поле внутри оболочки на 2px ниже, и сравнивать
-  // его с пилюлей было бы сравнением разных вещей.
+  // What is measured is the control's visible box, and for all of them that is the
+  // target's parent: for a field it is the bordered wrapper (`lib/field.ts`), for a
+  // trigger it is the pill carrying the consumer's padding. The field itself sits
+  // 2px lower inside the wrapper, and comparing it with the pill would compare different things.
   const boxes = {
     TextControl: page.getByLabel("Label only"),
     SearchControl: page.getByLabel("Find photos"),
@@ -1141,17 +1146,17 @@ test("form: fields and triggers share one height", async ({ page }) => {
     expect(box.height, `${label} in the form`).toBe(42);
   }
 
-  // `DatePicker` в эту проверку не входит намеренно: его триггер — подчёркнутая
-  // строка с одной рамкой снизу, а не коробка поля, и в форме он даёт 40.5.
-  // Привести его к 42 значит завести ему коробочный вид — отдельное решение,
-  // а не следствие правки строчного бокса.
+  // `DatePicker` is deliberately left out of this check: its trigger is an underlined
+  // line with a single border at the bottom, not a field box, and in the form it
+  // gives 40.5. Bringing it to 42 would mean giving it a boxed look, a separate
+  // decision, not a consequence of fixing the inline box.
 });
 
 /**
- * Выбор пункта в `Combobox`. Уровень 0 этого не видит: список react-aria живёт
- * в портале, и в jsdom до его пунктов не дотянуться — аннонсер говорит «2
- * options available», а узлов в документе нет. Ровно тот случай, ради которого
- * ADR-0012 разводит уровни.
+ * Picking an item in a `Combobox`. Level 0 does not see this: the react-aria list
+ * lives in a portal, and in jsdom its items cannot be reached. The announcer says
+ * "2 options available", and there are no nodes in the document. Exactly the case
+ * for which ADR-0012 splits the levels.
  */
 test("Combobox: picking from the list puts the label into the field", async ({ page }) => {
   await page.goto("/iframe.html?id=inputs-combobox--playground&globals=theme:dark;accent:blue");
@@ -1170,16 +1175,16 @@ test("Combobox: a custom value stays in the field and is not reset by the list",
 
   const field = page.getByRole("combobox", { name: "Category" });
   await field.fill("Custom category");
-  // Клик мимо закрывает список; значение вне набора обязано выжить — этим
-  // `Combobox` и отличается от `Select`.
+  // A click outside closes the list; a value outside the set must survive. That is
+  // what sets `Combobox` apart from `Select`.
   await page.keyboard.press("Escape");
 
   await expect(field).toHaveValue("Custom category");
 });
 
 /**
- * Командная палитра. Уровень 0 её не видит целиком: окно живёт в портале
- * Radix, а список — в коллекции react-aria, и в jsdom до пунктов не добраться.
+ * The command palette. Level 0 does not see it whole: the window lives in a Radix
+ * portal, the list is a react-aria collection, and in jsdom its items cannot be reached.
  */
 test("CommandPalette: a synonym from keywords finds the action", async ({ page }) => {
   await page.goto(
@@ -1191,7 +1196,7 @@ test("CommandPalette: a synonym from keywords finds the action", async ({ page }
   const field = page.getByRole("searchbox", { name: "Search actions" });
   await field.fill("similar");
 
-  // Слово по-английски в подписи не встречается — оно лежит в `keywords`.
+  // The English word does not appear in the label; it lives in `keywords`.
   await expect(page.getByRole("option")).toHaveCount(1);
   await expect(page.getByRole("option")).toHaveText(/Find similar/);
 });
@@ -1204,8 +1209,8 @@ test("CommandPalette: picking an item yields it and closes the window", async ({
   await page.getByRole("button", { name: "Open the palette" }).click();
   await page.getByRole("option", { name: /New campaign/ }).click();
 
-  // Оставлять палитру открытой поверх результата — значит требовать второго
-  // жеста там, где пользователь уже всё сказал.
+  // Leaving the palette open over the result would demand a second gesture where
+  // the user has already said everything.
   await expect(page.getByRole("searchbox")).toHaveCount(0);
   await expect(page.getByText("Picked: new")).toBeVisible();
 });
@@ -1217,17 +1222,16 @@ test("CommandPalette: an empty query shows the whole list in sections", async ({
 
   await page.getByRole("button", { name: "Open the palette" }).click();
 
-  // Палитра работает оглавлением: её открывают и чтобы вспомнить, что есть.
+  // The palette works as a table of contents: people open it to remember what exists.
   await expect(page.getByRole("option")).toHaveCount(5);
 });
 
 /**
- * Ключи колонок таблицы разведены префиксом внутри компонента: у react-aria
- * колонки и строки живут в одном пространстве имён, и совпадение
- * идентификаторов схлопывало одну из них. Наружу при этом обязан уходить
- * исходный идентификатор — иначе сортировка уедет на сервер с чужим именем
- * поля. В jsdom клик по заголовку недоступен: react-aria зовёт `CSS.escape`,
- * которого там нет.
+ * Table column keys are kept apart by a prefix inside the component: in react-aria,
+ * columns and rows live in one namespace, and matching identifiers collapsed one
+ * of them. What goes outward must be the original identifier, otherwise sorting
+ * would reach the server with someone else's field name. In jsdom a click on the
+ * heading is unavailable: react-aria calls `CSS.escape`, which is not there.
  */
 test("Table: sorting yields the original column id outwards", async ({ page }) => {
   await page.goto("/iframe.html?id=content-table--basic-table&globals=theme:dark;accent:blue");
@@ -1235,16 +1239,16 @@ test("Table: sorting yields the original column id outwards", async ({ page }) =
   const heading = page.getByRole("columnheader", { name: /Size/ });
   await heading.click();
 
-  // Если бы наружу уходил внутренний ключ, направление бы не применилось:
-  // история сравнивает `sort.column` со своим `id`.
+  // If the internal key went outward, the direction would not apply: the story
+  // compares `sort.column` with its own `id`.
   await expect(heading).toHaveAttribute("aria-sort", "ascending");
 });
 
 /**
- * `onRowAction`: действие по строке рядом с выделением (OLDSUI-193). Клик по
- * строке открывает запись и не отмечает флажок, Enter на сфокусированной строке
- * делает то же, а выделяет только флажок. Настоящие pointer-события и фокус
- * строки в jsdom не проверить.
+ * `onRowAction`: an action on a row next to the selection (OLDSUI-193). A click on
+ * the row opens the record and does not tick the checkbox; Enter on the focused row
+ * does the same, and only the checkbox selects. Real pointer events and row focus
+ * cannot be checked in jsdom.
  */
 test("Table: a row click and Enter run the row action, only the checkbox selects", async ({
   page,
@@ -1271,7 +1275,7 @@ test("Table: a row click and Enter run the row action, only the checkbox selects
   await expect(status).toHaveText("Opened: Night city");
   await expect(night.getByRole("checkbox")).not.toBeChecked();
 
-  // Выделяет флажок, и действие при этом не вызывается.
+  // Selects via the checkbox, and the action is not called in this case.
   await page
     .getByRole("row", { name: /Sunset over the sea/ })
     .locator("label")
@@ -1293,8 +1297,9 @@ test("Drawer: the backdrop and the panel land on the requested layer together", 
   const panel = page.getByRole("dialog");
   await expect(panel).toBeVisible();
 
-  // Слой читается вычисленным стилем, а не классом: класс может присутствовать
-  // в разметке и не доехать до CSS, и тогда ящик молча уедет под чужое окно.
+  // The layer is read from the computed style, not the class: the class may be in the
+  // markup and never reach the CSS, and then the drawer would silently slide under
+  // someone else's window.
   const layer = async (l: ReturnType<typeof page.locator>) =>
     l.evaluate((el) => getComputedStyle(el).zIndex);
 
@@ -1305,7 +1310,7 @@ test("Drawer: the backdrop and the panel land on the requested layer together", 
   expect(await layer(panel)).toBe("100");
   expect(await layer(underlay)).toBe("100");
 
-  // Чужой оверлей приложения остаётся ниже — ради этого проп и заведён.
+  // The application's foreign overlay stays below; that is why the prop exists.
   const foreign = page.locator(".z-95");
   expect(await layer(foreign)).toBe("95");
 });
@@ -1320,8 +1325,8 @@ test("Drawer: closing returns focus to whoever opened it", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
 
-  // Без явного возврата Radix оставляет фокус на `body`: открытием управляют
-  // снаружи, и штатной мишени для возврата у него нет.
+  // Without an explicit return, Radix leaves focus on `body`: opening is controlled
+  // from outside, and it has no standard target to return to.
   await expect(open).toBeFocused();
 });
 
@@ -1332,13 +1337,14 @@ test("TagInput: the cross on a tag removes it", async ({ page }) => {
   await expect(group.getByRole("row")).toHaveCount(2);
 
   /*
-    Проверка живёт здесь, а не в jsdom, и это не выбор удобства: react-aria
-    рисует содержимое `Tag` вторым проходом, и в jsdom потомки коллекции не
-    появляются вовсе — кнопки там физически нет. Тест уровня 0 на неё либо
-    падал бы всегда, либо проверял пустоту. Граница зафиксирована в ADR-0012.
+    The check lives here, not in jsdom, and that is not a matter of convenience:
+    react-aria renders the content of `Tag` in a second pass, and in jsdom the
+    collection's children do not appear at all, so the button is physically absent
+    there. A level 0 test for it would either always fail or check emptiness. The
+    boundary is recorded in ADR-0012.
 
-    Мышь — основной способ снять тег, и до этого теста он не проверялся ни разу:
-    покрыт был только Backspace, то есть путь с клавиатуры.
+    The mouse is the main way to remove a tag, and until this test it was never
+    checked: only Backspace was covered, that is, the keyboard path.
   */
   await page.getByRole("button", { name: "Remove tag sunset" }).click();
   await expect(group.getByRole("row")).toHaveCount(1);
@@ -1346,14 +1352,14 @@ test("TagInput: the cross on a tag removes it", async ({ page }) => {
 });
 
 /**
- * Липкость `SelectionBar` — то, что в jsdom проверить нечем вовсе: там нет ни
- * прокрутки, ни `position: sticky`, ни работающего `IntersectionObserver`.
- * Юнит-тесты хука проверяют только вычисление `rootMargin` из переменной.
+ * The stickiness of `SelectionBar` is something jsdom cannot check at all: there is
+ * no scrolling, no `position: sticky`, and no working `IntersectionObserver`. The
+ * hook's unit tests check only the computation of `rootMargin` from a variable.
  *
- * Здесь проверяется весь контракт целиком (ADR-0016): полоса отсчитывает
- * НАСТОЯЩУЮ высоту панели из `--topbar-h`, встаёт ровно под неё и, коснувшись,
- * теряет верхние скругления — иначе они приоткрывают фон страницы уголками
- * на стыке.
+ * Here the whole contract is checked at once (ADR-0016): the bar takes the ACTUAL
+ * height of the panel from `--topbar-h`, sits exactly under it, and once it reaches
+ * it, loses its top rounding. Otherwise the corners would peek the page background
+ * at the joint.
  */
 test("SelectionBar: the bar lands under the panel and loses its top rounding", async ({ page }) => {
   await page.goto("/iframe.html?id=navigation-selectionbar--sticky&globals=theme:dark;accent:blue");
@@ -1361,21 +1367,21 @@ test("SelectionBar: the bar lands under the panel and loses its top rounding", a
   const bar = page.getByRole("group", { name: "Actions on selection" });
   await expect(bar).toBeVisible();
 
-  // До прокрутки полоса лежит в потоке: скругления круговые со всех сторон.
+  // Before scrolling, the bar lies in the flow: its corners are round on all sides.
   await expect(bar).toHaveCSS("border-top-left-radius", "14px");
   const beforeTop = (await bar.boundingBox())?.y ?? 0;
   expect(beforeTop).toBeGreaterThan(56);
 
   await page.mouse.wheel(0, 600);
 
-  // Прижавшись, полоса стоит РОВНО под панелью — 56px, взятые из переменной,
-  // а не из зашитого числа.
+  // Stuck to the top, the bar sits EXACTLY under the panel: 56px, taken from the
+  // variable, not from a hard-coded number.
   await expect.poll(async () => Math.round((await bar.boundingBox())?.y ?? -1)).toBe(56);
 
   await expect(bar).toHaveCSS("border-top-left-radius", "0px");
   await expect(bar).toHaveCSS("border-bottom-left-radius", "14px");
 
-  // Обратно вверх — скругления возвращаются: состояние не залипает.
+  // Back up: the rounding returns, so the state does not stick.
   await page.mouse.wheel(0, -600);
   await expect(bar).toHaveCSS("border-top-left-radius", "14px");
 });
@@ -1387,8 +1393,8 @@ test("SelectionBar: without the panel variable the bar sticks to the top of the 
   const bar = page.getByRole("group", { name: "Actions on selection" });
   await expect(bar).toBeVisible();
 
-  // Отсутствие переменной — законное состояние, а не ошибка: у потребителя
-  // может не быть шапки вовсе.
+  // A missing variable is a legitimate state, not an error: a consumer may have no
+  // header at all.
   await page.evaluate(() => document.documentElement.style.removeProperty("--topbar-h"));
   await page.mouse.wheel(0, 600);
 
@@ -1396,11 +1402,10 @@ test("SelectionBar: without the panel variable the bar sticks to the top of the 
 });
 
 /**
- * Раскладка полосы на средней ширине (OLDSUI-200) — тоже только в браузере:
- * jsdom не считает размеры. В колонке 830 px шесть действий не влезают в
- * строку со счётчиком. Прежде flex ужимал кнопки: подписи ломались на две
- * строки, а иконки сплющивались по ширине. Теперь действия переносятся
- * целыми кнопками.
+ * The bar's layout at a medium width (OLDSUI-200) is also browser-only: jsdom does
+ * not measure sizes. In an 830 px column, six actions do not fit in one row with the
+ * counter. Previously flex shrank the buttons: labels broke onto two lines and icons
+ * were squashed by width. Now the actions wrap as whole buttons.
  */
 test("SelectionBar: in a narrow column the actions wrap instead of shrinking", async ({ page }) => {
   await page.goto(
@@ -1419,10 +1424,10 @@ test("SelectionBar: in a narrow column the actions wrap instead of shrinking", a
   ];
   for (const name of ACTIONS) {
     const button = bar.getByRole("button", { name, exact: true });
-    // Подпись в одну строку: высота кнопки `sm` — ровно 30 px.
+    // A single-line label: the height of an `sm` button is exactly 30 px.
     const box = await button.boundingBox();
     expect(Math.round(box?.height ?? 0), await button.innerText()).toBe(30);
-    // Иконка — квадрат своего размера, а не сплющенная flex-элементом полоска.
+    // The icon is a square of its own size, not a strip squashed by the flex item.
     const svg = button.locator("svg").first();
     if ((await svg.count()) === 0) continue;
     const icon = await svg.boundingBox();
@@ -1431,7 +1436,7 @@ test("SelectionBar: in a narrow column the actions wrap instead of shrinking", a
     );
   }
 
-  // Действия не умещаются в одну строку и уходят на следующую.
+  // The actions do not fit on one row and wrap onto the next.
   const tops = new Set(
     await Promise.all(
       (await bar.getByRole("button", { name: /schedule|Delete/ }).all()).map(async (b) =>
@@ -1443,12 +1448,12 @@ test("SelectionBar: in a narrow column the actions wrap instead of shrinking", a
 });
 
 /**
- * Та же липкость, но издатель переменной теперь свой — `TopBar` кита
- * (ADR-0019). Проверка отдельной историей, а не заменой прежней: контракт с
- * ВНЕШНЕЙ шапкой продолжает действовать, и сломать его новой шапкой нельзя.
+ * The same stickiness, but the variable's publisher is now the kit's own `TopBar`
+ * (ADR-0019). This is a separate story, not a replacement for the previous one: the
+ * contract with an EXTERNAL header still holds, and a new header must not break it.
  *
- * Здесь же косвенно проверяется `ResizeObserver`: высота не зашита в историю,
- * а измерена шапкой в живом браузере.
+ * The `ResizeObserver` is also checked indirectly here: the height is not hard-coded
+ * into the story, but measured by the header in a live browser.
  */
 test("the kit TopBar publishes its height and the bar lands right under it", async ({ page }) => {
   await page.goto(
@@ -1463,8 +1468,8 @@ test("the kit TopBar publishes its height and the bar lands right under it", asy
   const headerHeight = Math.round((await header.boundingBox())?.height ?? 0);
   expect(headerHeight).toBeGreaterThan(0);
 
-  // Переменную публикует шапка, а не история: значение обязано совпасть с её
-  // измеренной высотой.
+  // The header publishes the variable, not the story: the value must match its
+  // measured height.
   const published = await page.evaluate(() =>
     getComputedStyle(document.documentElement).getPropertyValue("--topbar-h").trim()
   );
@@ -1472,7 +1477,7 @@ test("the kit TopBar publishes its height and the bar lands right under it", asy
 
   await page.mouse.wheel(0, 600);
 
-  // Полоса стоит ровно под шапкой — просвета нет.
+  // The bar sits exactly under the header, with no gap.
   await expect.poll(async () => Math.round((await bar.boundingBox())?.y ?? -1)).toBe(headerHeight);
   await expect(bar).toHaveCSS("border-top-left-radius", "0px");
 });
@@ -1480,16 +1485,16 @@ test("the kit TopBar publishes its height and the bar lands right under it", asy
 test("PinInput: pasting the code into the first field fills them all", async ({ page }) => {
   await page.goto("/iframe.html?id=inputs-pininput--playground&globals=theme:dark;accent:blue");
 
-  // Буфер обмена в headless закрыт по умолчанию: без разрешения `writeText`
-  // бросает, и проверять было бы нечего.
+  // The clipboard is closed by default in headless mode: without the permission,
+  // `writeText` throws, and there would be nothing to check.
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
 
   const fields = page.getByRole("textbox");
   await fields.first().click();
 
-  // Ровно то, что нельзя проверить в jsdom: при `maxLength=1` браузер сам
-  // обрезает вставленное до первого символа, и без перехвата события код из
-  // СМС превратился бы в одну цифру.
+  // Exactly what cannot be checked in jsdom: with `maxLength=1` the browser itself
+  // trims the pasted text to the first character, and without intercepting the event,
+  // a code from an SMS would turn into a single digit.
   await page.evaluate(() => navigator.clipboard.writeText("482913"));
   await page.keyboard.press("ControlOrMeta+V");
 
@@ -1504,8 +1509,8 @@ test("PinInput: typing over an occupied field replaces the digit", async ({ page
   await fields.nth(1).click();
   await page.keyboard.press("7");
 
-  // При `maxLength=1` набор поверх занятого поля не проходит вовсе, если
-  // содержимое не выделено на фокусе, — и проверить это можно только в браузере.
+  // With `maxLength=1`, typing over an occupied field does not go through at all
+  // unless the content is selected on focus, and this can only be checked in a browser.
   await expect(fields.nth(1)).toHaveValue("7");
 });
 
@@ -1521,9 +1526,9 @@ test("InlineEdit: Escape restores the value and focus to the button", async ({ p
   await field.fill("Other");
   await page.keyboard.press("Escape");
 
-  // Возврат фокуса виден только в настоящем браузере: в jsdom `document
-  // .activeElement` после размонтирования ведёт себя иначе, и тест проходил бы
-  // на сломанном компоненте.
+  // The focus return is visible only in a real browser: in jsdom, `document
+  // .activeElement` behaves differently after unmounting, and the test would pass
+  // on a broken component.
   await expect(page.getByRole("button")).toBeFocused();
   await expect(page.getByRole("button")).toContainText("Daily collection");
 });
@@ -1539,8 +1544,8 @@ test("InlineEdit: clicking away confirms and does not steal focus", async ({ pag
   await neighbour.click();
 
   await expect(page.getByRole("button", { name: /Sunrise/ })).toBeVisible();
-  // Пользователь ушёл туда, куда хотел: правка соседа открылась, а фокус не
-  // уехал обратно.
+  // The user went where they wanted: the neighbour's edit opened, and focus did not
+  // jump back.
   await expect(page.getByRole("textbox", { name: "Author" })).toBeFocused();
 });
 
@@ -1549,13 +1554,13 @@ test("TreeView: the keyboard expands and collapses a node with arrows", async ({
     "/iframe.html?id=navigation-treeview--without-selection&globals=theme:dark;accent:blue"
   );
 
-  // «Природа» здесь свёрнута: раскрыт только «Город».
+  // "Nature" is collapsed here: only "City" is expanded.
   const nature = page.getByRole("row", { name: /Nature/ });
   await nature.click();
   await expect(nature).toHaveAttribute("aria-expanded", "true");
 
-  // Клавиатура целиком от react-aria, и проверяется она там, где работает, —
-  // в браузере: в jsdom стрелочная навигация коллекции не воспроизводится.
+  // The keyboard is entirely react-aria's, and it is checked where it works, in the
+  // browser: jsdom does not reproduce the collection's arrow navigation.
   await page.keyboard.press("ArrowLeft");
   await expect(nature).toHaveAttribute("aria-expanded", "false");
 
@@ -1576,12 +1581,12 @@ test("TreeView: activeKey moves with onAction and keeps the rows free of checkbo
   await expect(page.getByRole("row", { name: /Sunset/ })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("checkbox")).toHaveCount(0);
 
-  // Лист: действие меняет текущий узел, прежний теряет отметку.
+  // Leaf: the action moves the current node, and the previous one loses its mark.
   await page.getByRole("row", { name: /Storm/ }).click();
   await expect(page.getByRole("row", { name: /Storm/ })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("row", { name: /Sunset/ })).not.toHaveAttribute("aria-current");
 
-  // Папка: клик по строке зовёт `onAction`, а раскрывает её уже история.
+  // Folder: a click on the row calls `onAction`, and the story expands it.
   const city = page.getByRole("row", { name: /City/ });
   await expect(city).toHaveAttribute("aria-expanded", "false");
   await city.click();
@@ -1596,13 +1601,13 @@ test("MaskedInput: the caret stays in the middle of the number instead of jumpin
 
   const field = page.getByRole("textbox", { name: "Phone" });
   await field.click();
-  // Ставим каретку сразу за третьей цифрой и правим середину.
+  // Put the caret right after the third digit and edit the middle.
   await field.evaluate((el: HTMLInputElement) => el.setSelectionRange(7, 7));
   await page.keyboard.press("Backspace");
 
   await expect(field).toHaveValue("+7 (911) 234-56-7");
-  // Родная механика браузера: форматирование перерисовывает строку целиком, и
-  // без возврата позиции каретка ушла бы в конец. В jsdom этого не видно.
+  // Native browser behavior: formatting re-renders the whole string, and without
+  // restoring the position the caret would jump to the end. jsdom does not show this.
   expect(await field.evaluate((el: HTMLInputElement) => el.selectionStart)).toBe(6);
 });
 
@@ -1614,22 +1619,22 @@ test("MaskedInput: clicking the skeleton lands in the field, not in the underlay
   const field = page.getByRole("textbox", { name: "Phone" });
   const skeleton = page.getByText("+7 (___) ___-__-__");
 
-  // Щёлкаем ПО КООРДИНАТАМ скелета, а не по локатору: `locator.click()` ждёт,
-  // пока элемент начнёт принимать события, и на `pointer-events: none` просто
-  // истекает по таймауту. Здесь же событие уходит в точку, а мишень выбирает
-  // сам браузер — то есть проверяется ровно то, что делает пользователь.
+  // We click AT THE COORDINATES of the skeleton, not through the locator:
+  // `locator.click()` waits until the element starts accepting events, and with
+  // `pointer-events: none` it simply times out. Here the event goes to a point, and
+  // the browser itself picks the target, so exactly what the user does is checked.
   //
-  // Скелет лежит в той же ячейке сетки, что и поле, и занимает его ширину.
-  // Перехватывай он указатель — поле перестало бы фокусироваться щелчком по
-  // собственному тексту. В jsdom это недоказуемо: там нет ни раскладки, ни
-  // загруженного CSS, и `pointer-events` ни на что не влияет.
+  // The skeleton sits in the same grid cell as the field and takes its width. If it
+  // intercepted the pointer, the field would stop focusing on a click on its own
+  // text. This is unprovable in jsdom: there is no layout there, no loaded CSS, and
+  // `pointer-events` has no effect.
   const box = (await skeleton.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(field).toBeFocused();
 
   await page.keyboard.type("916");
-  // Скелет съедается слева направо: видимый остаток начинается ровно там, где
-  // кончился ввод, и это видно только с настоящей раскладкой.
+  // The skeleton is consumed left to right: the visible remainder starts exactly
+  // where the input ended, and this is visible only with a real layout.
   await expect(page.getByText(") ___-__-__")).toBeVisible();
 });
 
@@ -1643,8 +1648,8 @@ test("MaskedInput: an unsuitable key is announced instead of vanishing silently"
   await page.keyboard.type("x");
 
   await expect(field).toHaveValue("");
-  // Отбрасывание было молчаливым: пользователь видел, что нажатие «не
-  // сработало», и оставался без объяснения.
+  // The discard was silent: the user saw that the keypress "did not work" and was
+  // left without an explanation.
   await expect(page.getByRole("status")).toHaveText("A digit is expected here");
 });
 
@@ -1653,11 +1658,12 @@ test("SortableList: keyboard dragging is announced in the provider locale", asyn
     "/iframe.html?id=content-sortablelist--russian-locale&globals=theme:dark;accent:blue"
   );
 
-  // Наблюдатель ставится ПОСЛЕ гидратации: повешенный на ещё не построенное
-  // дерево, он не увидит ни одного объявления.
+  // The observer is attached AFTER hydration: attached to a tree that is not built
+  // yet, it would see none of the announcements.
   await page.waitForTimeout(300);
 
-  // Объявления живут доли секунды — ловим наблюдателем, а не опросом.
+  // Announcements live for fractions of a second: we catch them with an observer,
+  // not with polling.
   await page.evaluate(() => {
     (window as { __live?: string[] }).__live = [];
     new MutationObserver(() => {
@@ -1670,14 +1676,15 @@ test("SortableList: keyboard dragging is announced in the provider locale", asyn
   });
 
   await page.keyboard.press("Tab");
-  // Стрелка вправо переводит фокус со строки на её ручку — навигация внутри
-  // строки принадлежит слою поведения.
+  // The Right arrow moves focus from the row to its handle: navigation inside the
+  // row belongs to the behavior layer.
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Enter");
   await page.waitForTimeout(200);
-  // Между целями ходят СТРЕЛКАМИ, хотя объявление предлагает Tab: в списке из
-  // пяти строк Tab уводит фокус из кольца целей и отменяет перетаскивание —
-  // проверено. Объявление описывает общий случай, замер — наш.
+  // Targets are moved between with ARROWS, although the announcement suggests Tab:
+  // in a list of five rows, Tab moves focus out of the drop-target ring and cancels
+  // the drag, as verified. The announcement describes the general case; the
+  // measurement is our own.
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await page.waitForTimeout(300);
@@ -1685,12 +1692,12 @@ test("SortableList: keyboard dragging is announced in the provider locale", asyn
   const announcements = await page.evaluate(() =>
     (window as { __live?: string[] }).__live!.join(" | ")
   );
-  // Своей живой области у списка нет: эти строки — react-aria, и они
-  // локализованы из коробки.
+  // The list has no live region of its own: these strings come from react-aria, and
+  // they are localized out of the box.
   expect(announcements).toContain("Начато перетаскивание");
   expect(announcements).toContain("Перетаскивание завершено");
 
-  // Порядок ушёл наружу и вернулся пропом.
+  // The order went outward and came back through the prop.
   await expect(page.getByTestId("order")).toHaveText("2,1,3,4,5");
 });
 
@@ -1701,7 +1708,8 @@ test("SortableList: a row moves to another list of its group with the mouse", as
   const board = page.getByTestId("board");
   await expect(board).toHaveText("todo:a,b doing:c done:");
 
-  // Строка «Write the brief» — на верх строки «Book the speakers» соседней колонки.
+  // The "Write the brief" row is dropped onto the top of the "Book the speakers" row
+  // in the neighbouring column.
   const column = (name: string) => page.getByRole("grid", { name });
   await column("To do")
     .getByRole("row")
@@ -1709,14 +1717,14 @@ test("SortableList: a row moves to another list of its group with the mouse", as
     .dragTo(column("In progress").getByRole("row").first(), { targetPosition: { x: 60, y: 3 } });
   await expect(board).toHaveText("todo:b doing:a,c done:");
 
-  // Внутри списка группы по-прежнему работает перестановка — `onReorder`, а не `onMove`.
+  // Reordering inside a group's list still works: `onReorder`, not `onMove`.
   await column("In progress")
     .getByRole("row")
     .first()
     .dragTo(column("In progress").getByRole("row").last(), { targetPosition: { x: 60, y: 30 } });
   await expect(board).toHaveText("todo:b doing:c,a done:");
 
-  // Пустой список принимает строку броском на сам список.
+  // An empty list accepts a row when it is dropped onto the list itself.
   await column("In progress").getByRole("row").last().dragTo(column("Done"));
   await expect(board).toHaveText("todo:b doing:c done:a");
 });
@@ -1727,12 +1735,12 @@ test("SortableList: a row moves to another list of its group from the keyboard",
   await page.goto("/iframe.html?id=content-sortablelist--board&globals=theme:dark;accent:blue");
   await page.waitForTimeout(300);
 
-  // Фокус на первой строке «To do», стрелка вправо — на её ручку, Enter — взять.
+  // Focus on the first row of "To do", Right arrow to its handle, Enter to pick it up.
   await page.getByRole("grid", { name: "To do" }).getByRole("row").first().focus();
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Enter");
   await page.waitForTimeout(200);
-  // Tab ведёт к следующему списку группы — тот же слой поведения, что и цели внутри списка.
+  // Tab moves to the next list of the group: the same behavior layer as the targets inside a list.
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
   await page.waitForTimeout(300);
@@ -1756,18 +1764,18 @@ test("VirtualGrid: only visible cells live in the DOM, the scrolling is its own"
     }));
 
   const before = await snapshot();
-  // Шестьсот ячеек — десятки узлов. В jsdom это не проверяется вовсе: там нет
-  // раскладки, и виртуализатор не отрисовывает ничего.
+  // Six hundred cells, but only tens of nodes. This is not checked in jsdom at all:
+  // there is no layout there, and the virtualizer renders nothing.
   expect(before.inDOM).toBeGreaterThan(0);
   expect(before.inDOM).toBeLessThan(120);
-  // Прокрутка СВОЯ: содержимое многократно выше контейнера.
+  // The scrolling is ITS OWN: the content is many times taller than the container.
   expect(before.contentHeight).toBeGreaterThan(before.containerHeight * 5);
 
   await grid.evaluate((el) => el.scrollTo(0, 4000));
   await page.waitForTimeout(250);
   const after = await snapshot();
 
-  // Окно виртуализации переехало: отрисованы уже другие ячейки.
+  // The virtualization window has moved: different cells are rendered now.
   expect(after.first).not.toBe(before.first);
   expect(after.inDOM).toBeLessThan(120);
 });
@@ -1788,7 +1796,7 @@ test("VirtualGrid: onAction opens a cell by click and Enter without selecting it
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("opened")).toHaveText("Opened: 3");
 
-  // Ни клик, ни Enter не выбирают: выбор остался за Space.
+  // Neither the click nor Enter selects: selection stays with Space.
   await expect(page.getByTestId("selected")).toHaveText("Selected: none");
   await page.keyboard.press("Space");
   await expect(page.getByTestId("selected")).toHaveText("Selected: 3");
@@ -1807,7 +1815,7 @@ test("VirtualGrid: Shift+F10 on a focused cell opens its menu and Escape returns
 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("menu")).toHaveCount(0);
-  // Фокус вернулся на ячейку, а не пропал в начало страницы.
+  // Focus returned to the cell instead of vanishing to the start of the page.
   await expect(cell).toBeFocused();
 });
 
@@ -1815,17 +1823,17 @@ test("VirtualGrid: a menu item neither selects the cell nor opens it", async ({ 
   await page.goto(VIRTUAL_GRID_ACTIONS);
   const cells = page.getByRole("grid", { name: "Frames" }).getByRole("row");
 
-  // Выбранная ячейка — чтобы заметить, если пункт меню сдвинет выбор.
+  // A selected cell, so that we notice if the menu item shifts the selection.
   await cells.nth(4).focus();
   await page.keyboard.press("Space");
   await expect(page.getByTestId("selected")).toHaveText("Selected: 4");
 
-  // Правая кнопка и клик по пункту мышью.
+  // The right button, and a mouse click on the item.
   await cells.nth(0).click({ button: "right" });
   await page.getByRole("menuitem", { name: "Rename" }).click();
   await expect(page.getByTestId("picked")).toHaveText("Menu: rename 0");
 
-  // С клавиатуры: Shift+F10, стрелка вниз, Enter.
+  // From the keyboard: Shift+F10, Down arrow, Enter.
   await cells.nth(1).focus();
   await page.keyboard.press("Shift+F10");
   await page.keyboard.press("ArrowDown");
@@ -1841,14 +1849,14 @@ test("ContextualSaveBar: the bar stays at the bottom edge of the scroll area", a
     "/iframe.html?id=navigation-contextualsavebar--in-form&globals=theme:dark;accent:blue"
   );
 
-  // Полосы нет, пока форма не тронута: она появляется с первой правкой.
+  // The bar is absent while the form is untouched: it appears with the first edit.
   await expect(page.getByRole("group", { name: "Unsaved changes" })).toHaveCount(0);
 
   await page.getByRole("textbox").fill("Procurement team");
   const bar = page.getByRole("group", { name: "Unsaved changes" });
   await expect(bar).toBeVisible();
 
-  // Липкость в jsdom не проверяется вовсе: там нет ни раскладки, ни прокрутки.
+  // Stickiness is not checked in jsdom at all: there is no layout or scrolling there.
   const area = page.locator(".overflow-auto").first();
   const box = (await area.boundingBox())!;
   const before = (await bar.boundingBox())!;
@@ -1860,18 +1868,18 @@ test("ContextualSaveBar: the bar stays at the bottom edge of the scroll area", a
   expect(await area.evaluate((el) => el.scrollTop)).toBeGreaterThan(300);
 
   const after = (await bar.boundingBox())!;
-  // Полоса всё ещё внутри области и прижата к её низу, а не уехала вверх.
+  // The bar is still inside the area and pinned to its bottom, rather than having moved up.
   expect(after.y + after.height).toBeLessThanOrEqual(box.y + box.height + 1);
   expect(after.y + after.height).toBeGreaterThan(box.y + box.height - 60);
 });
 
 /**
- * Нижняя панель телефона и то, что липнет к низу (OLDSUI-193).
+ * The phone's bottom bar and what sticks to the bottom (OLDSUI-193).
  *
- * `AppShell` публикует высоту слота `bottomBar` в `--bottombar-h`, а
- * `ContextualSaveBar` и `Toaster` отсчитывают от неё отступ от края окна. В
- * jsdom это проверено на уровне переменной; что полоса и вправду встала НАД
- * панелью, а не под неё, видно только по раскладке.
+ * `AppShell` publishes the height of the `bottomBar` slot into `--bottombar-h`, and
+ * `ContextualSaveBar` and `Toaster` offset from the window's edge by it. jsdom checks
+ * this at the variable level; that the bar really stands ABOVE the panel, not under
+ * it, is visible only through the layout.
  */
 const SAVE_BAR_ABOVE_TABS =
   "/iframe.html?id=navigation-contextualsavebar--above-bottom-bar&globals=theme:dark;accent:blue";
@@ -1888,7 +1896,7 @@ test("ContextualSaveBar: on a phone the bar stands right above the tab bar, not 
   await expect(bar).toBeVisible();
   await expect(tabs).toBeVisible();
 
-  // Высота опубликована и равна настоящей высоте панели (с рамкой и вырезом).
+  // The height is published and equals the panel's real height (border and cutout included).
   const tabsBox = (await tabs.boundingBox())!;
   const published = await page.evaluate(() =>
     parseFloat(document.documentElement.style.getPropertyValue("--bottombar-h"))
@@ -1902,10 +1910,10 @@ test("ContextualSaveBar: on a phone the bar stands right above the tab bar, not 
 
     const barBox = (await bar.boundingBox())!;
     const tabsNow = (await tabs.boundingBox())!;
-    // Полоса целиком над панелью — ни пикселя под ней…
+    // The bar is entirely above the panel, not a single pixel under it…
     expect(barBox.y + barBox.height).toBeLessThanOrEqual(tabsNow.y + 1);
-    // …и вплотную к ней, а не оставила просвет «на глаз» (допуск на отступ
-    // содержимого, когда страница прокручена до конца).
+    // …and flush against it, not left with a gap "by eye" (a tolerance for the
+    // content's padding when the page is scrolled to the end).
     expect(tabsNow.y - (barBox.y + barBox.height)).toBeLessThan(24);
   }
 });
@@ -1921,7 +1929,7 @@ test("ContextualSaveBar: on a wide screen there is no tab bar and the bar keeps 
   await expect(bar).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Sections" })).toBeHidden();
 
-  // Панель скрыта на `md` и шире: высота слота равна нулю, отступа нет.
+  // The panel is hidden at `md` and wider: the slot's height is zero, and there is no offset.
   const published = await page.evaluate(() =>
     document.documentElement.style.getPropertyValue("--bottombar-h")
   );
@@ -1932,7 +1940,7 @@ test("ContextualSaveBar: on a wide screen there is no tab bar and the bar keeps 
   await area.evaluate((el) => el.scrollTo(0, 0));
   await page.waitForTimeout(150);
   const barBox = (await bar.boundingBox())!;
-  // Прижата к самому низу прокручиваемой области (зазор — только обводка).
+  // Pinned to the very bottom of the scrollable area (the gap is only the outline).
   expect(box.y + box.height - (barBox.y + barBox.height)).toBeLessThan(4);
 });
 
@@ -1944,12 +1952,13 @@ test("SplitButton: the toggle is a separate tab stop and returns focus after clo
   const action = page.getByRole("button", { name: "Export", exact: true });
   const toggle = page.getByRole("button", { name: "More actions: Export" });
 
-  // Два табстопа, а не один: на этом держится всё обоснование компонента —
-  // одна кнопка с зоной оставила бы второй исход недостижимым с клавиатуры.
+  // Two tab stops, not one: the whole rationale of the component rests on this. A
+  // single button with a zone would leave the second outcome unreachable from the
+  // keyboard.
   //
-  // Фокус ставится явно, а не первым Tab: в iframe витрины обход начинается не
-  // с тела документа, и «сколько нажатий до кнопки» — свойство обёртки
-  // Storybook, а не компонента.
+  // Focus is set explicitly, not with the first Tab: in the showcase's iframe the
+  // traversal does not start from the document body, and "how many presses to the
+  // button" is a property of the Storybook wrapper, not of the component.
   await action.focus();
   await expect(action).toBeFocused();
   await page.keyboard.press("Tab");
@@ -1960,8 +1969,8 @@ test("SplitButton: the toggle is a separate tab stop and returns focus after clo
 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("menu")).toBeHidden();
-  // Фокус возвращается раскрывателю, а не уезжает на `<body>`: иначе
-  // клавиатурный пользователь оказывается в начале документа.
+  // Focus returns to the toggle, not drifts to `<body>`: otherwise a keyboard user
+  // ends up at the start of the document.
   await expect(toggle).toBeFocused();
 });
 
@@ -1973,8 +1982,8 @@ test("SplitPanel: the handle resizes by dragging and by arrow keys", async ({ pa
 
   const before = (await panel.boundingBox())!.width;
 
-  // Тяга влево увеличивает панель: она стоит после содержимого, поэтому
-  // движение к началу оси отдаёт ей место.
+  // Dragging left enlarges the panel: it sits after the content, so movement toward
+  // the start of the axis gives it room.
   const box = (await handle.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
@@ -1984,20 +1993,20 @@ test("SplitPanel: the handle resizes by dragging and by arrow keys", async ({ pa
   const dragged = (await panel.boundingBox())!.width;
   expect(dragged).toBeGreaterThan(before + 40);
 
-  // Клавиатура обязана уметь то же самое: ручка, доступная только мышью, —
-  // ровно тот случай, ради которого под полосой лежит настоящий ползунок.
+  // The keyboard must be able to do the same: a handle reachable only by mouse is
+  // exactly the case the real slider under the strip exists for.
   await handle.focus();
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowRight");
   expect((await panel.boundingBox())!.width).toBeGreaterThan(dragged);
 
-  // `End` обязан брать ровно `maxSize`, а не «почти». Пока шаг ползунка был 16,
-  // верхняя граница с клавиатуры не бралась вовсе: шаговая база у `range` — это
-  // `min`, и до `max` сетка не доходила.
+  // `End` must take exactly `maxSize`, not "almost". While the slider's step was 16,
+  // the upper bound was not reachable from the keyboard at all: the step base of
+  // `range` is `min`, and the grid never reached `max`.
   //
-  // Сверяется значение ползунка со своими же границами, а не ширина панели:
-  // ширину ограничивает ещё и контейнер, и тогда тест сторожил бы размер
-  // обёртки в витрине.
+  // The slider's value is checked against its own bounds, not the panel's width: the
+  // container also limits the width, and then the test would guard the wrapper's size
+  // in the showcase.
   await page.keyboard.press("End");
   expect(await handle.inputValue()).toBe(await handle.getAttribute("max"));
 
@@ -2012,8 +2021,8 @@ test("SplitPanel: the bottom axis drags along its own axis", async ({ page }) =>
   const handle = page.getByRole("slider");
   const before = (await panel.boundingBox())!.height;
 
-  // Знак дельты для нижней оси — собственное решение компонента, и до сих пор
-  // он жил только в снимке: тянули лишь боковую ось.
+  // The sign of the delta for the bottom axis is the component's own decision, and
+  // until now it lived only in the snapshot: only the side axis was dragged.
   const box = (await handle.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
@@ -2039,8 +2048,8 @@ test("SplitPanel: a pointer released away from the handle does not leave it drag
 
   const settled = (await panel.boundingBox())!.width;
 
-  // Наведение без нажатия не должно двигать границу: именно так выглядела
-  // утечка состояния тяги — панель ездила за курсором с отпущенной кнопкой.
+  // Hovering without a press must not move the edge: that is exactly how the drag
+  // state's leak looked, with the panel following the cursor while the button was released.
   await page.mouse.move(box.x - 200, box.y + box.height / 2, { steps: 6 });
   await page.mouse.move(box.x + 200, box.y + box.height / 2, { steps: 6 });
   expect((await panel.boundingBox())!.width).toBe(settled);
@@ -2054,8 +2063,8 @@ test("SplitPanel: dragging does not select the text it passes over", async ({ pa
   await page.mouse.down();
   await page.mouse.move(box.x - 120, box.y + box.height / 2, { steps: 10 });
 
-  // Пока кнопка не отпущена, выделения быть не должно: иначе движение мимо
-  // полосы подсвечивает половину списка.
+  // While the button is still held, there must be no selection: otherwise movement
+  // past the strip would highlight half of the list.
   const selected = await page.evaluate(() => window.getSelection()?.toString() ?? "");
   await page.mouse.up();
   expect(selected).toBe("");
@@ -2070,9 +2079,9 @@ test("Transfer: focus follows the moved items into the receiving list", async ({
   await available.getByRole("option", { name: "Export data" }).click();
   await page.getByRole("button", { name: "Move to selected" }).click();
 
-  // Принимающая колонка НЕ пуста — в ней уже лежит «View reports». Именно этот
-  // случай раньше ломался: фокус вставал на старый элемент, потому что
-  // `focus()` звали до коммита нового выделения.
+  // The receiving column is NOT empty: "View reports" is already in it. This exact
+  // case used to break: focus landed on the old element, because `focus()` was
+  // called before the new selection was committed.
   const focused = selected.getByRole("option", { name: "Export data" });
   await expect(focused).toBeFocused();
 });
@@ -2088,9 +2097,9 @@ test("Transfer: focus lands on the arriving item even when the column was empty"
   await available.getByRole("option", { name: "View reports" }).click();
   await page.getByRole("button", { name: "Move to selected" }).click();
 
-  // Вырожденный случай: принимающая колонка была пуста, делегировать фокус
-  // react-aria некуда, и раньше он оставался на контейнере. Правило требует
-  // приехавший элемент.
+  // The degenerate case: the receiving column was empty, react-aria had nothing to
+  // delegate focus to, and it used to stay on the container. The rule requires the
+  // arriving element.
   await expect(selected.getByRole("option", { name: "View reports" })).toBeFocused();
 });
 
@@ -2103,18 +2112,18 @@ test("TreeSelect: Escape closes the popover and returns focus to the field", asy
 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("treegrid")).toBeHidden();
-  // Фокус возвращается полю, а не уезжает на `<body>`: иначе после отказа от
-  // выбора пользователь оказывается в начале документа.
+  // Focus returns to the field, not drifts to `<body>`: otherwise after dismissing
+  // the selection the user ends up at the start of the document.
   await expect(field).toBeFocused();
 });
 
 /**
- * Сворачивание переводит фокус в содержимое, а не роняет его.
+ * Collapsing moves focus into the content instead of dropping it.
  *
- * Проверка живёт ЗДЕСЬ, а не в jsdom, и это существенно: там атрибут `hidden`
- * фокус не снимает, и тест на «фокус не на body» проходил бы и на
- * неисправленном коде — опираясь на расхождение jsdom с браузером. По ADR-0012
- * такая проверка обязана быть браузерной.
+ * The check lives HERE, not in jsdom, and that matters: there the `hidden` attribute
+ * does not remove focus, so a test for "focus is not on body" would pass even on
+ * unfixed code, relying on the mismatch between jsdom and the browser. Per ADR-0012
+ * such a check must be a browser one.
  */
 test("SplitPanel: collapsing moves focus into the content instead of dropping it", async ({
   page,
@@ -2126,7 +2135,7 @@ test("SplitPanel: collapsing moves focus into the content instead of dropping it
   await page.getByTestId("note").focus();
   await expect(page.getByTestId("note")).toBeFocused();
 
-  // Сворачивание приходит НЕ от щелчка: щелчок сам уводит фокус на кнопку.
+  // Collapsing does NOT come from a click: a click itself moves focus to the button.
   await page.getByTestId("collapse-later").click();
   await page.getByTestId("note").focus();
   await expect(page.getByTestId("state")).toHaveText("collapsed");
@@ -2141,11 +2150,11 @@ test("SplitPanel: useMediaQuery collapses the panel on a narrow window and retur
   await page.setViewportSize({ width: 700, height: 600 });
   await page.goto("/iframe.html?id=app-shell-splitpanel--adaptive&globals=theme:dark;accent:blue");
 
-  // Узко: панель смонтирована, но не видна и не в дереве доступности.
+  // Narrow: the panel is mounted, but not visible and not in the accessibility tree.
   await expect(page.getByTestId("adaptive-panel")).toBeHidden();
   await expect(page.getByRole("slider")).toHaveCount(0);
 
-  // Окно расширили: хук подписан на изменение, перезагрузка не нужна.
+  // The window was widened: the hook subscribes to the change, so no reload is needed.
   await page.setViewportSize({ width: 1200, height: 600 });
   await expect(page.getByRole("region", { name: "Order details" })).toBeVisible();
   await expect(page.getByTestId("adaptive-panel")).toBeVisible();
@@ -2156,17 +2165,17 @@ test("SplitPanel: useMediaQuery collapses the panel on a narrow window and retur
 });
 
 /*
- * Движение и `prefers-reduced-motion` — ADR-0043.
+ * Motion and `prefers-reduced-motion` (ADR-0043).
  *
- * Здесь проверяется то, чего текстовый `tests/motion.test.ts` не видит:
- * настоящий каскад. Он читает `styles.css` и знает, что токен переопределён; он
- * не знает, дошло ли переопределение до элемента — а именно там волна 27 нашла
- * дефект: `.skeleton` задавала анимацию строкой мимо токена, и блок `reduce` её
- * не касался.
+ * This checks what the text gate in `tests/motion.test.ts` cannot see: the real
+ * cascade. It reads `styles.css` and knows that the token is overridden; it does not
+ * know whether the override reached the element. That is exactly where wave 27 found
+ * a defect: `.skeleton` set its animation with a literal string, bypassing the token,
+ * and the `reduce` block did not touch it.
  *
- * ВАЖНО про настройку: весь файл идёт с `reducedMotion: "reduce"` — так задано
- * в `playwright.config.ts` ради устойчивости снимков. Поэтому «погашено»
- * проверяется в обычном тесте, а «работает» — в блоке со своим `test.use`.
+ * IMPORTANT about the setting: the whole file runs with `reducedMotion: "reduce"`.
+ * That is set in `playwright.config.ts` for the sake of snapshot stability. Therefore
+ * "switched off" is checked in a normal test, and "still works" in a block with its own `test.use`.
  */
 test("Motion: the kit's own animation loses its movement under reduced motion", async ({
   page,
@@ -2181,8 +2190,8 @@ test("Motion: the kit's own animation loses its movement under reduced motion", 
 test("Motion: a busy indicator keeps moving — it is the named exception", async ({ page }) => {
   await page.goto("/iframe.html?id=actions-progress--matrix&globals=theme:dark;accent:blue");
 
-  // Неопределённый прогресс: доля неизвестна, и движение полосы и есть всё
-  // сообщение. Застывшая треть читается как «зависло», а не как «спокойно».
+  // Indeterminate progress: the fraction is unknown, and the bar's movement is the
+  // whole message. A frozen third reads as "stuck", not as "calm".
   const running = page.locator(".animate-progress-indeterminate").first();
   await expect(running).toBeVisible();
   expect(await running.evaluate((el) => getComputedStyle(el).animationName)).toBe(
@@ -2195,28 +2204,29 @@ test("Motion: an expander chevron does not rotate under reduced motion", async (
     "/iframe.html?id=navigation-accordion--accordion-single&globals=theme:dark;accent:blue"
   );
 
-  // Переход задан утилитой Tailwind, а не токеном: переопределить его из
-  // `styles.css` нечем, гасит вариант `motion-reduce:` по месту.
+  // The transition is set by a Tailwind utility, not by a token: there is nothing to
+  // override it with from `styles.css`, so the `motion-reduce:` variant switches it
+  // off in place.
   const chevron = page.locator(".transition-transform").first();
   await expect(chevron).toBeVisible();
   expect(await chevron.evaluate((el) => getComputedStyle(el).transitionProperty)).toBe("none");
 });
 
 /*
- * ВЫХОД ОВЕРЛЕЕВ проверяется только здесь, и иначе не может.
+ * OVERLAY EXIT is checked only here, and it cannot be checked any other way.
  *
- * Текстовый гейт видит токен, но не видит главного: дожил ли узел до конца
- * анимации. Выход существует ровно постольку, поскольку библиотека держит
- * элемент в DOM после того, как состояние стало «закрыто», — а это поведение
- * Radix и react-aria, не наше CSS.
+ * The text gate sees the token, but not the main thing: whether the node survives
+ * until the end of the animation. The exit exists exactly as long as the library
+ * keeps the element in the DOM after its state has become "closed". That behavior
+ * belongs to Radix and react-aria, not to our CSS.
  *
- * Снимки этого тоже не поймают: они идут с `animations: "disabled"`, то есть
- * в конечном кадре, где закрытая панель уже удалена.
+ * Snapshots won't catch this either: they run with `animations: "disabled"`, that is,
+ * on the final frame, where the closed panel has already been removed.
  *
- * Замер устроен наблюдателем, а не паузой: выход длится 100–150мс, и sleep
- * на глазок дал бы тест, зелёный на медленной машине и красный на быстрой.
- * Наблюдатель ставится ДО закрытия и записывает первый же кадр, в котором
- * состояние сменилось.
+ * The measurement is built on an observer, not a pause: the exit lasts 100–150ms, and
+ * a sleep "by eye" would give a test that is green on a slow machine and red on a fast
+ * one. The observer is attached BEFORE the close and records the first frame in which
+ * the state changed.
  */
 const recordExit = (page: Page, selector: string) =>
   page.evaluate((sel) => {
@@ -2239,10 +2249,10 @@ const recordExit = (page: Page, selector: string) =>
   }, selector);
 
 /*
- * Панель меню не адресуется селектором: у RAC класс выхода лежит на попоувере,
- * внутри которого сидит меню, у Radix — на самой панели. Общего селектора нет,
- * поэтому наблюдатель поднимается от `role="menu"` до первого предка, у которого
- * есть анимация. Так один и тот же тест смотрит на обе реализации.
+ * The menu panel is not addressed by a selector: in RAC the exit class sits on the
+ * popover that wraps the menu, and in Radix it sits on the panel itself. There is no
+ * shared selector, so the observer climbs from `role="menu"` to the first ancestor
+ * that has an animation. That way one and the same test watches both implementations.
  */
 const recordMenuExit = (page: Page) =>
   page.evaluate(() => {
@@ -2300,10 +2310,10 @@ test.describe("without the system setting", () => {
     );
 
     /*
-     * Класса длительности в разметке шеврона больше НЕТ: прежде там стояло
-     * `duration-150`, снятое вместе с пятнадцатью такими же (ADR-0047). Темп
-     * приходит из умолчания, и проверяется здесь именно это — что снятие класса
-     * не оставило переход без времени.
+     * The chevron's markup has NO duration class any more: previously `duration-150`
+     * stood there, removed together with fifteen like it (ADR-0047). The tempo now
+     * comes from the default, and this checks exactly that: removing the class did not
+     * leave the transition without a time.
      */
     await expect(chevron).not.toHaveClass(/\bduration-/);
     expect(await chevron.evaluate((el) => getComputedStyle(el).transitionDuration)).toBe("0.15s");
@@ -2313,16 +2323,16 @@ test.describe("without the system setting", () => {
     page,
   }) => {
     /*
-     * Шкала движения — ADR-0047. Текстовый гейт видит, что
-     * `--default-transition-duration` ссылается на ступень; он не видит, дошла
-     * ли ссылка до элемента. А именно там она и может оборваться: между
-     * объявлением и переходом стоит вся сборка Tailwind, и достаточно, чтобы
-     * `@theme` кита не доехал до витрины, — число молча вернётся к штатным
-     * 150ms, совпадающим со ступенью случайно.
+     * The motion scale (ADR-0047). The text gate sees that
+     * `--default-transition-duration` references a step; it does not see whether the
+     * reference reaches the element. That is exactly where it can break: the whole
+     * Tailwind build sits between the declaration and the transition, and it is enough
+     * for the kit's `@theme` not to reach the showcase. The number would then silently
+     * fall back to Tailwind's standard 150ms, which matches the step by coincidence.
      *
-     * Ссылка, а не число, проверяется второй строкой: у элемента резолвится
-     * `--duration-base`. Будь здесь только `0.15s`, тест остался бы зелёным и
-     * на зашитом умолчании Tailwind.
+     * The reference, not the number, is checked by the second line: `--duration-base`
+     * resolves on the element. Were there only `0.15s` here, the test would stay green
+     * even on Tailwind's hard-coded default.
      */
     await page.goto(
       "/iframe.html?id=foundations-motion--default-tempo&globals=theme:dark;accent:blue"
@@ -2333,12 +2343,12 @@ test.describe("without the system setting", () => {
     expect(await button.evaluate((el) => getComputedStyle(el).transitionDuration)).toBe("0.15s");
 
     /*
-     * Ступень СУЩЕСТВУЕТ у элемента, а не совпала числом: без этой строки тест
-     * остался бы зелёным и на зашитом умолчании Tailwind, которое равно 150ms
-     * по совпадению.
+     * The step EXISTS on the element, rather than matching by number. Without this
+     * line the test would stay green even on Tailwind's hard-coded default, which is
+     * 150ms by coincidence.
      *
-     * Сравнивается величина, а не запись: браузер нормализует `150ms` в `.15s`,
-     * и строгое равенство строк ловило бы орфографию вместо смысла.
+     * The value is compared, not the notation: the browser normalizes `150ms` to `.15s`,
+     * and a strict string equality would catch spelling instead of meaning.
      */
     const step = await button.evaluate((el) =>
       getComputedStyle(el).getPropertyValue("--duration-base").trim()
@@ -2349,13 +2359,13 @@ test.describe("without the system setting", () => {
 
   test("Motion: an overlay enters on the step its token names", async ({ page }) => {
     /*
-     * Токен собран из ссылок на шкалу (ADR-0047), и текстовый гейт видит только
-     * это. Дошла ли ссылка до живой анимации — вопрос каскада: `@theme` кита
-     * мог бы не доехать до витрины, и `animation` осталась бы с невалидной
-     * длительностью, то есть с нулём.
+     * The token is assembled from references to the scale (ADR-0047), and the text gate
+     * sees only that. Whether the reference reaches the live animation is a question of
+     * the cascade: the kit's `@theme` could fail to reach the showcase, and `animation`
+     * would be left with an invalid duration, that is, with zero.
      *
-     * Подсказка выбрана потому, что на ней изменение и проверяется: прежде она
-     * входила за 0.14s, панель рядом — за 0.16s, и обе теперь на `base`.
+     * The tooltip is chosen because the change is verified on it: it used to enter in
+     * 0.14s, and the panel beside it in 0.16s. Both are now on `base`.
      */
     await page.goto("/iframe.html?id=overlays-tooltip--playground&globals=theme:dark;accent:blue");
 
@@ -2368,13 +2378,13 @@ test.describe("without the system setting", () => {
 
   test("Motion: every step of the scale reaches the element", async ({ page }) => {
     /*
-     * `duration-*` объявлены руками через `@utility`, потому что пространства
-     * имён `--duration-*` у Tailwind нет (ADR-0047). Утилита из ИМПОРТИРОВАННОГО
-     * файла — ровно то, что могло бы не доехать до сборки: `@theme` и `@plugin`
-     * оттуда работают, и это в своё время тоже проверялось отдельно.
+     * The `duration-*` utilities are declared by hand via `@utility`, because Tailwind
+     * has no `--duration-*` namespace (ADR-0047). A utility from an IMPORTED file is
+     * exactly what could fail to reach the build: `@theme` and `@plugin` from there work,
+     * and this was verified separately at the time too.
      *
-     * Ступени перебираются все четыре, включая `duration-slow`, которого сегодня
-     * не пишет ни один компонент. Непроверенная верхняя граница — не граница.
+     * All four steps are iterated, including `duration-slow`, which no component
+     * writes today. An unchecked upper bound is not a bound.
      */
     await page.goto("/iframe.html?id=foundations-motion--durations&globals=theme:dark;accent:blue");
 
@@ -2419,9 +2429,9 @@ test.describe("without the system setting", () => {
 
     await recordExit(page, '[role="tooltip"]');
     /*
-     * Escape, а не увод указателя. Увод Radix-подсказку не закрывает: она живёт
-     * до настоящего `pointerleave` триггера, и `mouse.move` мимо него оставляет
-     * её открытой — тест на этом молча висел бы до таймаута.
+     * Escape rather than moving the pointer away. Moving away does not close the Radix
+     * tooltip: it stays until the trigger's real `pointerleave`, and a `mouse.move`
+     * past it leaves it open, so the test would silently hang on this until the timeout.
      */
     await page.keyboard.press("Escape");
 
@@ -2453,16 +2463,16 @@ test.describe("without the system setting", () => {
 
   test("Motion: choosing an item leaves no panel behind", async ({ page }) => {
     /*
-     * Уход панели ОТЛОЖИЛ её удаление на 150мс, и это меняет условия для
-     * потребителя: пункт меню часто запускает мутацию и перерисовку списка, а
-     * панель в этот момент ещё уходит. Если уход и перерисовка разойдутся,
-     * останется подвисший узел — меню, которого на экране быть не должно.
+     * The panel's exit DEFERS its removal by 150ms, and this changes the conditions for
+     * the consumer: a menu item often triggers a mutation and a re-render of the list,
+     * while the panel is still leaving. If the exit and the re-render diverge, a stuck
+     * node is left behind: a menu that should not be on screen.
      *
-     * Проверяется на истории с настоящим состоянием: выбор пункта здесь меняет
-     * `useState` и перерисовывает содержимое, а не вызывает пустой колбэк.
+     * Checked on a story with real state: choosing an item here changes `useState` and
+     * re-renders the content, rather than calling an empty callback.
      *
-     * Заявка соседней сессии (NEX-88): опасение высказано до выпуска, проверено
-     * здесь, чтобы ответ не был рассуждением.
+     * A task from a neighbouring session (NEX-88): the concern was raised before the
+     * release and is checked here, so that the answer is measured rather than reasoned.
      */
     await page.goto(
       "/iframe.html?id=overlays-menu--sections-and-submenus&globals=theme:dark;accent:blue"
@@ -2472,16 +2482,16 @@ test.describe("without the system setting", () => {
     await expect(page.getByRole("menu").first()).toBeVisible();
 
     /*
-     * Пункт ОДИНОЧНОГО выбора: он и меняет `useState` истории, и закрывает
-     * меню. Пункт-флажок для этой проверки не годится — множественный выбор
-     * панель намеренно не закрывает, и тест мерил бы не то.
+     * An item of SINGLE selection: it both changes the story's `useState` and closes
+     * the menu. A checkbox item is unsuitable for this check: multiple selection
+     * deliberately does not close the panel, and the test would measure the wrong thing.
      */
     await page.getByRole("menuitemradio", { name: "By name" }).click();
 
     /*
-     * Ждётся ИСЧЕЗНОВЕНИЕ, а не пауза: Playwright опрашивает до успеха, поэтому
-     * тест не зависит от того, насколько быстра машина. Подвисший узел он
-     * поймает таймаутом, а не совпадением.
+     * It WAITS for the disappearance rather than pausing: Playwright polls until
+     * success, so the test does not depend on how fast the machine is. A stuck node
+     * is caught by the timeout, not by coincidence.
      */
     await expect(page.getByRole("menu")).toHaveCount(0);
     expect(
@@ -2497,13 +2507,12 @@ test.describe("without the system setting", () => {
 
   test("Motion: both menus leave the same way, on both dialects", async ({ page }) => {
     /*
-     * `Menu` собран на react-aria, `ContextMenu` — на Radix, а вид у них общий:
-     * одна строка классов на две реализации (`lib/menu.ts`). До этой волны она
-     * несла ТОЛЬКО диалект RAC, и `ContextMenu` не анимировался вовсе — при
-     * комментарии, обещавшем, что оба меню открываются одинаково.
+     * `Menu` is built on react-aria and `ContextMenu` on Radix, and their look is
+     * shared: one line of classes for both implementations (`lib/menu.ts`). Until this
+     * wave that line carried ONLY the RAC dialect, and `ContextMenu` did not animate at
+     * all, despite a comment promising that both menus open the same way.
      *
-     * Поэтому проверяются оба, и именно на совпадение: разойтись они могут
-     * только молча.
+     * So both are checked, and for an exact match: they can diverge only silently.
      */
     await page.goto(
       "/iframe.html?id=overlays-contextmenu--playground&globals=theme:dark;accent:blue"
@@ -2530,9 +2539,9 @@ test.describe("without the system setting", () => {
 test.describe("with reduced motion", () => {
   test("Motion: the exit survives reduce — only its movement is dropped", async ({ page }) => {
     /*
-     * ADR-0043 гасит движение, а не событие. У выхода это особенно важно:
-     * `animation: none` убрал бы исчезновение вовсе, и панель пропадала бы в
-     * кадр — резче, чем если бы правила не было совсем.
+     * ADR-0043 switches off the movement, not the event. For the exit this matters
+     * especially: `animation: none` would remove the disappearance altogether, and the
+     * panel would vanish in a single frame, more abruptly than if the rule did not exist at all.
      */
     await page.goto("/iframe.html?id=overlays-tooltip--playground&globals=theme:dark;accent:blue");
 
@@ -2550,13 +2559,13 @@ test.describe("with reduced motion", () => {
 });
 
 /*
-  `EditableList` проверяется здесь целиком и намеренно.
+  `EditableList` is checked here in full, and deliberately.
 
-  Все три дефекта, найденные при сборке, jsdom пропустил бы молча: коллекция
-  react-aria там монтирует содержимое строки иначе, а `document.activeElement`
-  после размонтирования ведёт себя не как в браузере. Компонент заводился ради
-  одного — чтобы поле внутри строки не спорило со списком за клавиши, — и
-  проверить это можно только тут.
+  jsdom would have silently missed all three defects found during assembly: there
+  the react-aria collection mounts the row's content differently, and
+  `document.activeElement` after unmounting does not behave as in the browser. The
+  component was built for one thing, so that a field inside a row does not contest
+  the list for keys, and this can only be checked here.
 */
 
 const EDITABLE_LIST =
@@ -2566,13 +2575,13 @@ test("EditableList: Enter on the handle starts the drag, not the edit", async ({
   await page.goto(EDITABLE_LIST);
 
   /*
-    ЭТОЙ ПРОВЕРКИ НЕ БЫЛО, И РОВНО ЧЕРЕЗ ЭТУ ДЫРУ УЕХАЛ ДЕФЕКТ 3.10.1.
+    THIS CHECK DID NOT EXIST, AND THE 3.10.1 DEFECT SLIPPED THROUGH EXACTLY THIS HOLE.
 
-    Перехват клавиш искал строку через `closest("[data-key]")` и потому
-    срабатывал на её ручке: `Enter` гасился здесь и открывал правку, а до
-    react-aria не доходил — перенос с клавиатуры не начинался никогда.
-    В jsdom это не ловится: перетаскивание там не работает вовсе (ADR-0028),
-    и оба теста — «правка открылась» и «перенос пошёл» — были бы зелёными.
+    The key handler found the row via `closest("[data-key]")` and therefore fired on
+    its handle: `Enter` was prevented here and opened the edit, and never reached
+    react-aria, so the move from the keyboard never started.
+    jsdom does not catch this: dragging there does not work at all (ADR-0028), and both
+    tests, "the edit opened" and "the move started", would have been green.
   */
   const before = await page.getByTestId("order").textContent();
 
@@ -2581,10 +2590,10 @@ test("EditableList: Enter on the handle starts the drag, not the edit", async ({
   await page.keyboard.press("Enter");
   await page.waitForTimeout(200);
 
-  // Правка НЕ открылась — это первая половина дефекта.
+  // The edit did NOT open: this is the first half of the defect.
   await expect(page.getByRole("textbox", { name: /^Rename / })).toHaveCount(0);
 
-  // И перенос действительно пошёл: цель выбирается стрелками, Enter применяет.
+  // And the move did start: the target is chosen with the arrows, Enter applies it.
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await page.waitForTimeout(300);
@@ -2602,8 +2611,8 @@ test("EditableList: Enter opens the edit with the text selected", async ({ page 
   const field = page.getByRole("textbox", { name: /^Rename / });
   await expect(field).toBeFocused();
 
-  // Выделение целиком: правка по месту почти всегда — замена названия, а не
-  // дописывание к нему.
+  // The whole text is selected: an inline edit is almost always a replacement of the
+  // name, not an append to it.
   const selected = await field.evaluate(
     (node: HTMLInputElement) => node.selectionStart === 0 && node.selectionEnd === node.value.length
   );
@@ -2619,10 +2628,9 @@ test("EditableList: arrows from the open field do not walk the list", async ({ p
   const field = page.getByRole("textbox", { name: /^Rename / });
   await expect(field).toBeFocused();
 
-  // РАДИ ЭТОЙ ПРОВЕРКИ КОМПОНЕНТ И ЗАВОДИЛСЯ. Строка — `GridListItem`, и она
-  // слушает стрелки сама, причём раньше любого обработчика на поле: без
-  // перехвата в фазе погружения фокус уезжал на следующую строку прямо посреди
-  // набора.
+  // THE COMPONENT WAS BUILT FOR THIS CHECK. The row is a `GridListItem`, and it
+  // listens for arrows itself, before any handler on the field: without interception
+  // in the capture phase, focus would jump to the next row right in the middle of typing.
   await page.keyboard.press("ArrowDown");
   await expect(field).toBeFocused();
   await page.keyboard.press("ArrowUp");
@@ -2651,7 +2659,7 @@ test("EditableList: Enter confirms and returns focus to the row", async ({ page 
   await page.getByRole("textbox", { name: /^Rename / }).fill("Renamed by keyboard");
   await page.keyboard.press("Enter");
 
-  // Поле исчезает, и без возврата фокус уехал бы на `<body>`.
+  // The field disappears, and without a return, focus would have drifted to `<body>`.
   await expect(page.getByRole("row", { name: /Renamed by keyboard/ })).toBeFocused();
 });
 
@@ -2666,15 +2674,15 @@ test("EditableList: clicking away confirms and does not steal focus", async ({ p
   await add.click();
 
   await expect(page.getByRole("row", { name: /Committed by clicking away/ })).toBeVisible();
-  // Пользователь ушёл туда, куда хотел.
+  // The user went where they wanted.
   await expect(add).toBeFocused();
 });
 
 test("EditableList: the add row takes a series and ignores an empty confirm", async ({ page }) => {
   await page.goto(EDITABLE_LIST);
 
-  // Вниз с последней строки — в поле добавления: оно не элемент коллекции, и
-  // этот переход никто, кроме компонента, не напишет.
+  // Down from the last row goes into the add field: it is not a collection item, and
+  // no one but the component would write this transition.
   await page.getByRole("row", { name: /Collect the quarterly budget/ }).click();
   await page.keyboard.press("ArrowDown");
 
@@ -2683,21 +2691,21 @@ test("EditableList: the add row takes a series and ignores an empty confirm", as
 
   await page.keyboard.type("Buy tickets");
   await page.keyboard.press("Enter");
-  // Поле осталось открытым и пустым — в этом вся разница с `InlineEdit`.
+  // The field stayed open and empty: that is the whole difference from `InlineEdit`.
   await expect(add).toBeFocused();
   await expect(add).toHaveValue("");
 
   await page.keyboard.type("Renew the domain");
   await page.keyboard.press("Enter");
-  // Пустое подтверждение не создаёт ничего.
+  // An empty confirmation creates nothing.
   await page.keyboard.press("Enter");
 
   await expect(page.getByTestId("order")).toHaveText("1,2,3,4,5,6,7");
   await expect(page.getByRole("row", { name: /Buy tickets/ })).toBeVisible();
   await expect(page.getByRole("row", { name: /Renew the domain/ })).toBeVisible();
 
-  // Вверх из пустого поля — обратно на последнюю строку: иначе из поля, которое
-  // всегда на экране, некуда выйти с клавиатуры.
+  // Up from the empty field goes back to the last row: otherwise there would be no
+  // way out of the field by keyboard, since it is always on screen.
   await page.keyboard.press("ArrowUp");
   await expect(page.getByRole("row", { name: /Renew the domain/ })).toBeFocused();
 });
@@ -2709,7 +2717,7 @@ test("EditableList: the handle is disabled only on the row being edited", async 
   await row.click();
   await page.keyboard.press("Enter");
 
-  // Тащить строку, пока в ней курсор, нельзя: стрелки принадлежат каретке.
+  // A row cannot be dragged while the cursor is in it: the arrows belong to the caret.
   await expect(row.getByRole("button", { name: "Drag" })).toBeDisabled();
   await expect(
     page.getByRole("row", { name: /Pay for hosting/ }).getByRole("button", { name: "Drag" })
@@ -2724,15 +2732,15 @@ test("Segmented: segments that do not fit move to a second row", async ({ page }
   const buttons = group.getByRole("button");
   await expect(buttons).toHaveCount(5);
 
-  // Раскладка, а не класс: сегменты не сжимаются, поэтому проверять надо, куда
-  // они в итоге встали. Ряд опознаётся по верхней кромке кнопки.
+  // Layout, not a class: the segments do not shrink, so what must be checked is where
+  // they end up. A row is recognised by the top edge of the button.
   const tops = await buttons.evaluateAll((nodes) =>
     Array.from(new Set(nodes.map((n) => Math.round(n.getBoundingClientRect().top))))
   );
   expect(tops.length).toBe(2);
 
-  // То, ради чего заявка и подана: WCAG 1.4.10 — содержимое умещается по
-  // ширине, горизонтальной прокрутки нет ни у контрола, ни у страницы.
+  // This is what the task was filed for: WCAG 1.4.10. The content fits the width, and
+  // there is no horizontal scrolling on either the control or the page.
   const fits = await group.evaluate((el) => {
     const parent = el.parentElement as HTMLElement;
     const doc = document.documentElement;
@@ -2743,8 +2751,8 @@ test("Segmented: segments that do not fit move to a second row", async ({ page }
   });
   expect(fits).toEqual({ insideParent: true, pageScrollsSideways: false });
 
-  // Зазор между рядами шире, чем между сегментами: 4 против 2. С одним `gap`
-  // на обе оси ряды слиплись бы и прочитались сеткой, а не одним контролом.
+  // The gap between rows is wider than between segments: 4 against 2. With one `gap`
+  // on both axes the rows would stick together and read as a grid, not as one control.
   const gaps = await group.evaluate((el) => {
     const style = getComputedStyle(el);
     return { row: style.rowGap, column: style.columnGap };
@@ -2753,11 +2761,11 @@ test("Segmented: segments that do not fit move to a second row", async ({ page }
 });
 
 /**
- * Режим «только значок на узком экране» — OLDSUI-19.
+ * The "icon only on a narrow screen" mode (OLDSUI-19).
  *
- * Замер в браузере обязателен по двум причинам: порог живёт в медиазапросе, о
- * котором jsdom не знает вовсе, и доказывать надо ВЫСОТУ — ровно ту величину,
- * ради которой заявка подана.
+ * Measuring in the browser is mandatory for two reasons: the threshold lives in a
+ * media query that jsdom does not know about at all, and what must be proven is the
+ * HEIGHT, exactly the quantity the task was filed for.
  */
 const SEGMENTED_MOBILE =
   "/iframe.html?id=actions-segmented--mobile-icon-only&globals=theme:dark;accent:blue";
@@ -2768,8 +2776,8 @@ test("Segmented: mobileIconOnly collapses the row on a phone and keeps every nam
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(SEGMENTED_MOBILE);
 
-  // Первый переключатель — без режима, второй — с ним. Пять одинаковых
-  // сегментов в обоих, сравнивать можно напрямую.
+  // The first switcher has no mode, the second has it. Five identical segments in
+  // both, so they can be compared directly.
   const groups = page.locator("div.inline-flex.flex-wrap");
   await expect(groups).toHaveCount(2);
   const plain = groups.nth(0);
@@ -2790,29 +2798,30 @@ test("Segmented: mobileIconOnly collapses the row on a phone and keeps every nam
   const height = async (group: Locator) => (await group.boundingBox())!.height;
   expect(await height(compact)).toBeLessThan(await height(plain));
 
-  // ГЛАВНОЕ: подпись спрятана глазам, но осталась именем кнопки. Спрятанная
-  // неправильно — `hidden`, `display: none`, выброшенные дети — дала бы ряд
-  // безымянных кнопок, и видно это было бы только аудитом.
+  // THE KEY POINT: the label is hidden from the eyes but remains the button's name.
+  // Hidden incorrectly (`hidden`, `display: none`, dropped children) would give a row
+  // of nameless buttons, and that would be visible only through an audit.
   for (const name of ["Active", "Deferred", "Done", "Dropped", "Available now"]) {
     await expect(compact.getByRole("button", { name, exact: true })).toBeVisible();
   }
   /*
-    Глазам подписи нет — и меряется это КОРОБКОЙ, а не `toBeVisible`: `sr-only`
-    не гасит узел, а сжимает его в пиксель и обрезает, поэтому для Playwright
-    он «видим». Пиксель — и есть доказательство: ушёл из виду, остался в дереве.
+    The label is absent to the eye, and this is measured by the BOX, not by
+    `toBeVisible`: `sr-only` does not remove the node, it compresses it into a pixel
+    and clips it, so for Playwright it counts as "visible". The pixel is the proof:
+    it left sight, and stayed in the tree.
   */
   const label = (await compact.getByText("Active").boundingBox())!;
   expect(label.width).toBeLessThanOrEqual(1);
 
-  // Выбранный сегмент помечен состоянием, а не только цветом: без подписей это
-  // важнее обычного.
+  // The selected segment is marked by state, not only by colour: without labels,
+  // this matters more than usual.
   await expect(compact.getByRole("button", { name: "Available now" })).toHaveAttribute(
     "aria-pressed",
     "true"
   );
 
-  // Отступ режется вместе с подписью: вокруг одного значка `px-3` дал бы
-  // кнопку заметно шире своей высоты.
+  // The padding is cut together with the label: around a lone icon, `px-3` would
+  // make the button noticeably wider than its height.
   const box = (await compact.getByRole("button").first().boundingBox())!;
   expect(box.width).toBeLessThan(box.height + 8);
 });
@@ -2825,7 +2834,7 @@ test("Segmented: on a wide screen the mode changes nothing", async ({ page }) =>
   const plain = (await groups.nth(0).getByRole("button").first().boundingBox())!;
   const compact = (await groups.nth(1).getByRole("button").first().boundingBox())!;
 
-  // Порог берётся от ширины ЭКРАНА: выше него режим обязан быть незаметен.
+  // The threshold is taken from the SCREEN width: above it, the mode must be invisible.
   expect(Math.round(compact.width)).toBe(Math.round(plain.width));
   await expect(groups.nth(1).getByText("Active")).toBeVisible();
 });
@@ -2835,9 +2844,9 @@ test("EditableList: the add field lines up with the task names, not with the lea
 }) => {
   await page.goto(EDITABLE_LIST);
 
-  // Замер, а не класс: выравнивание держится геометрией, и сойтись оно должно
-  // на живой раскладке. У потребителя рамка стояла на колонке флажка — между
-  // краем строки и названиями, не совпадая ни с тем, ни с другим.
+  // Measurement, not a class: the alignment holds by geometry and must converge on
+  // the live layout. For the consumer, the border sat on the checkbox column, between
+  // the row's edge and the names, matching neither.
   const firstRow = page.getByRole("row").first();
   await firstRow.waitFor();
 
@@ -2852,10 +2861,10 @@ test("EditableList: the add field lines up with the task names, not with the lea
   });
   expect(edges.fieldBorder).toBe(edges.name);
 
-  // Зеркало в `add.leading` не должно попадать ни в дерево доступности, ни в
-  // порядок обхода: флажок у задачи, которой ещё нет, отмечать нечего.
-  // Флажков ровно столько, сколько строк, — шестого, из строки добавления,
-  // скринридер не видит.
+  // The mirror in `add.leading` must not get into the accessibility tree or the tab
+  // order: there is no checkbox to tick for a task that does not exist yet. There are
+  // exactly as many checkboxes as rows; the sixth, from the add row, is not seen by
+  // the screen reader.
   await expect(page.getByRole("row")).toHaveCount(5);
   await expect(page.getByRole("checkbox")).toHaveCount(5);
 });
@@ -2864,8 +2873,8 @@ test("EditableList: a mouse drag moves the row and does not duplicate it", async
   await page.goto(EDITABLE_LIST);
 
   const rows = page.getByRole("row");
-  // `allInnerTexts` не ждёт сама: без этого замер «до» снимается с пустого
-  // списка и проверка состава сравнивает ноль строк с пятью.
+  // `allInnerTexts` does not wait by itself: without this, the "before" snapshot is
+  // taken from an empty list, and the composition check compares zero rows with five.
   await rows.first().waitFor();
   const before = await rows.allInnerTexts();
 
@@ -2878,11 +2887,11 @@ test("EditableList: a mouse drag moves the row and does not duplicate it", async
   }
   await page.mouse.up();
 
-  // Состав, а не только порядок. Разрешена ровно одна операция — `move`, и
-  // проверяется здесь именно её следствие: строк после броска столько же,
-  // сколько было. В WebKit система в начале перетаскивания рисует значок
-  // копирования (баг 178058, разобран в справочнике) — но копирования не
-  // происходит и там, и эта проверка сторожит саму операцию.
+  // The composition, not only the order. Exactly one operation is allowed, `move`, and
+  // what is checked here is its consequence: after the drop there are as many rows as
+  // there were. In WebKit the system draws a copy badge at the start of the drag (bug
+  // 178058, analysed in the reference), but no copy happens there either, and this
+  // check guards the operation itself.
   const after = await rows.allInnerTexts();
   expect(after).toHaveLength(before.length);
   expect(after).not.toEqual(before);
@@ -2897,9 +2906,10 @@ test("Select: the width limit applies to the missing and count labels too", asyn
   const triggers = page.getByRole("button");
   await triggers.first().waitFor();
 
-  // Замер, а не класс: `truncate` стоял в этих ветках и раньше, обрезать ему
-  // было нечего — без `max-width` подпись занимает столько, сколько занимает.
-  // Проверяется следствие: подпись не шире предела, и многоточие настоящее.
+  // Measurement, not a class: `truncate` was on these branches before too, and there
+  // was nothing for it to cut. Without `max-width`, the label takes as much space as
+  // it takes. What is checked is the consequence: the label is no wider than the
+  // limit, and the ellipsis is real.
   const measured = await page.evaluate(() => {
     const labels = [...document.querySelectorAll("button span")].filter(
       (el) =>
@@ -2929,20 +2939,19 @@ test("EditableList: row actions appear on hover AND when focus reaches them", as
   await row.waitFor();
   const actions = row.getByTestId("row-actions");
 
-  // Замер вычисленного стиля, а не наличия класса: неизвестный вариант Tailwind
-  // правила не порождает и пропадает молча, а класс в разметке остаётся.
-  // `toHaveCSS` ждёт сам — у рецепта переход в 150 мс, и мгновенный замер
-  // поймал бы середину.
+  // Measuring the computed style, not the presence of a class: an unknown Tailwind
+  // variant generates no rule and disappears silently, while the class stays in the
+  // markup. `toHaveCSS` waits by itself: the recipe has a 150 ms transition, and an
+  // instant measurement would catch the middle of it.
   await expect(actions).toHaveCSS("opacity", "0");
 
   await row.hover();
   await expect(actions).toHaveCSS("opacity", "1");
 
-  // И главное — клавиатура. Прежний рецепт предписывал здесь
-  // `group-focus-within:`, и та утилита не срабатывала никогда: строка несёт
-  // `data-rac`, а плагин react-aria метит такой элемент атрибутом
-  // `data-focus-within`, которого строка не выставляет. Кнопка, до которой
-  // дошёл таб, оставалась невидимой — то есть человек нажимал вслепую.
+  // And the main thing: the keyboard. The former recipe prescribed `group-focus-within:`
+  // here, and that utility never fired: the row carries `data-rac`, while the react-aria
+  // plugin marks such an element with a `data-focus-within` attribute, which the row
+  // does not set. A button that Tab reached stayed invisible, so a person pressed blindly.
   await page.mouse.move(0, 0);
   await expect(actions).toHaveCSS("opacity", "0");
 
@@ -2951,25 +2960,24 @@ test("EditableList: row actions appear on hover AND when focus reaches them", as
 });
 
 /**
- * Колесо над панелью `Select`, открытой изнутри модального слоя.
+ * The wheel over a `Select` panel opened from inside a modal layer.
  *
- * Замок прокрутки (`react-remove-scroll`) Radix вешает на ПОДЛОЖКУ, а панель
- * портируется в `body` — то есть в DOM лежит вне замка и попадает в него
- * только через дерево React. Отсюда две противоположные поломки, и обе уже
- * случались: замок гасит колесо всегда, и список не крутится вовсе (OLDSUI-6,
- * `Drawer`), либо не гасит никогда, и прокрутка уходит на страницу под слоем
- * (подозрение OLDSUI-8, `Dialog`).
+ * Radix's scroll lock (`react-remove-scroll`) is attached to the BACKDROP, while the
+ * panel is portaled into `body`. That is, in the DOM it lies outside the lock and gets
+ * into it only through the React tree. Hence two opposite breakages, and both have
+ * already happened: the lock swallows the wheel always, and the list does not scroll
+ * at all (OLDSUI-6, `Drawer`), or it never swallows, and the scroll leaks to the page
+ * under the layer (suspected in OLDSUI-8, `Dialog`).
  *
- * Поэтому замер идёт в обе стороны и в обоих слоях. В jsdom его не сделать
- * вовсе: `scrollHeight` там всегда ноль, и проверка проходила бы при любой
- * раскладке.
+ * So the measurement runs in both directions and in both layers. It cannot be done in
+ * jsdom at all: `scrollHeight` there is always zero, and the check would pass under any layout.
  */
 async function wheelOverPanel(page: Page) {
   return await page.evaluate(async () => {
     const list = document.querySelector("[role=listbox]") as HTMLElement;
     const before = list.scrollTop;
-    // Слушатель в самом хвосте цепочки: он видит не своё решение, а итоговое —
-    // отменил ли событие замок.
+    // The listener sits at the very end of the chain: it sees not its own decision but
+    // the final one, namely whether the lock cancelled the event.
     let prevented = false;
     const seen = (e: WheelEvent) => (prevented = e.defaultPrevented);
     window.addEventListener("wheel", seen, { passive: true });
@@ -3005,13 +3013,13 @@ for (const layer of ["dialog", "drawer"] as const) {
     const list = page.getByRole("listbox");
     await expect(list).toBeVisible();
 
-    // Списку есть куда крутиться — событие обязано дойти до него живым.
+    // The list has room to scroll, so the event must reach it alive.
     const atStart = await wheelOverPanel(page);
     expect(atStart.max).toBeGreaterThan(0);
     expect(atStart.prevented).toBe(false);
 
-    // Настоящим колесом, а не присвоением: `scrollTop` крутит панель мимо
-    // замка, и такой замер ничего не сказал бы о нём.
+    // A real wheel, not an assignment: setting `scrollTop` moves the panel past the
+    // lock, and such a measurement would say nothing about it.
     const box = (await list.boundingBox())!;
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.wheel(0, 200);
@@ -3019,12 +3027,12 @@ for (const layer of ["dialog", "drawer"] as const) {
       .poll(async () => await list.evaluate((el) => Math.round(el.scrollTop)))
       .toBeGreaterThan(0);
 
-    // Докручено до конца — дальше не идёт ничего: ни список, ни страница под
-    // слоем. Событие гасится замком, а не остаётся без последствий случайно.
+    // Scrolled to the end, and nothing goes further: neither the list nor the page
+    // under the layer. The event is cancelled by the lock, not left without effect by chance.
     await list.evaluate((el) => (el.scrollTop = el.scrollHeight));
     const atEnd = await wheelOverPanel(page);
-    // Допуск в пиксель: `scrollTop` бывает дробным при дробной высоте строки,
-    // а `scrollHeight` браузер отдаёт округлённым.
+    // A one-pixel tolerance: `scrollTop` can be fractional with a fractional row
+    // height, while the browser reports `scrollHeight` rounded.
     expect(Math.abs(atEnd.before - atEnd.max)).toBeLessThanOrEqual(1);
     expect(atEnd.prevented).toBe(true);
 
@@ -3038,23 +3046,24 @@ for (const layer of ["dialog", "drawer"] as const) {
 }
 
 /**
- * Уход строки `EditableList` — OLDSUI-14.
+ * The exit of an `EditableList` row (OLDSUI-14).
  *
- * В jsdom этого не измерить: анимаций там нет вовсе, а коллекция react-aria
- * монтирует строки иначе — именно на этом ушёл первый подход, где призрак
- * снимался в том же кадре, в котором появлялся. Поэтому здесь меряется живое:
- * что уход идёт, что вместе с ним смыкается место, что несколько строк уходят
- * разом и что `reduce` снимает смыкание, а не сам уход.
+ * This cannot be measured in jsdom: there are no animations there at all, and the
+ * react-aria collection mounts rows differently. That is exactly where the first
+ * approach went wrong, when the ghost was removed in the same frame in which it
+ * appeared. So what is measured here is live behavior: that the exit runs, that the
+ * space closes together with it, that several rows leave at once, and that `reduce`
+ * removes the closing-up but not the exit itself.
  *
- * Время нигде не ждут: анимация ставится на паузу и перематывается. Ожидание
- * «примерно середины» на 150 мс — это флейк, а не проверка.
+ * Time is never waited on: the animation is paused and rewound. Waiting for "about
+ * the middle" at 150 ms is a flake, not a check.
  */
 const EDITABLE_LIST_LEAVING =
   "/iframe.html?id=content-editablelist--leaving&globals=theme:dark;accent:blue";
 
 test.describe("EditableList: a row leaves instead of vanishing", () => {
-  // Витрина гоняется с `reducedMotion: "reduce"` — здесь нужна обратная
-  // настройка: смыкание проверяется именно в полном движении.
+  // The showcase runs with `reducedMotion: "reduce"`; here the opposite setting is
+  // needed, because the collapse is checked at full motion.
   test.use({ contextOptions: { reducedMotion: "no-preference" } });
 
   test("the row lives through its exit, and the space closes with the same motion", async ({
@@ -3067,7 +3076,7 @@ test.describe("EditableList: a row leaves instead of vanishing", () => {
 
     await page.getByRole("button", { name: "Done" }).nth(1).click();
 
-    // Строка не пропала: она доживает уход на своём месте.
+    // The row did not vanish: it lives through its exit in its place.
     const leaving = page.locator("[data-key][inert]");
     await expect(leaving).toHaveCount(1);
     await expect(leaving).toContainText("Pay for hosting");
@@ -3076,17 +3085,17 @@ test.describe("EditableList: a row leaves instead of vanishing", () => {
       const [animation] = row.getAnimations() as CSSAnimation[];
       const keyframes = (animation!.effect as KeyframeEffect).getKeyframes();
       animation!.pause();
-      // Перемотка вместо ожидания: смыкание видно в любой точке, а ждать
-      // «примерно середины» значит мерить скорость машины, а не анимацию.
+      // Rewinding instead of waiting: the collapse is visible at any point, and waiting
+      // for "about the middle" means measuring the speed of the machine, not the animation.
       animation!.currentTime = 0;
       const start = row.getBoundingClientRect().height;
       animation!.currentTime = 40;
       const early = row.getBoundingClientRect().height;
       animation!.currentTime = 120;
       const late = row.getBoundingClientRect().height;
-      // Ровно на конце мерить нечего: заливки у анимации нет, и на последнем
-      // кадре стиль уже снят. Смыкание доказывает монотонность, а ноль в
-      // конце — сами кейфреймы.
+      // There is nothing to measure at the very end: the animation has no fill, and on
+      // the last frame the style is already removed. The collapse is proven by
+      // monotonicity, and the zero at the end by the keyframes themselves.
       animation!.finish();
       return {
         name: animation!.animationName,
@@ -3099,7 +3108,7 @@ test.describe("EditableList: a row leaves instead of vanishing", () => {
     });
 
     expect(exit.name).toBe("rowout");
-    // Высота приходит переменной: `height` не интерполируется от `auto`.
+    // The height comes in a variable: `height` does not interpolate from `auto`.
     expect(exit.height.trim()).toMatch(/^\d+px$/);
     expect(exit.collapsesTo).toBe("0px");
     expect(exit.early).toBeLessThan(exit.start);
@@ -3116,17 +3125,17 @@ test.describe("EditableList: a row leaves instead of vanishing", () => {
     await expect(page.locator("[data-key]")).toHaveCount(5);
 
     /*
-      Старт записывается в самом `animationstart`, а не запросом вдогонку.
+      The start is recorded in `animationstart` itself, not by a query afterwards.
 
-      Прежде здесь сравнивался `currentTime` с нулём — и он ноль только в кадре
-      старта: часы документа идут, а между кликом и следующим походом в
-      страницу под параллельной нагрузкой проходит кадр-другой. Три строки,
-      стартовавшие вместе, показывали тогда 16,7 или 83 мс — поровну, но не
-      ноль, и тест падал на исправном компоненте. `startTime` — точка старта на
-      шкале документа — не стареет, сколько её ни читай.
+      Previously `currentTime` was compared with zero here, and it is zero only in the
+      start frame: the document clock keeps running, and between the click and the next
+      visit to the page under parallel load a frame or two passes. Three rows that
+      started together then showed 16.7 or 83 ms: evenly, but not zero. The test failed
+      on a working component. `startTime`, the start point on the document's timeline,
+      does not age, however often it is read.
 
-      Наблюдатель ставится ДО клика: уход длится 150 мс, и под нагрузкой
-      счётчик призраков, опрошенный после, мог бы их уже не застать.
+      The observer is attached BEFORE the click: the exit lasts 150 ms, and under load a
+      ghost counter polled afterwards might no longer find them.
     */
     type Start = { key: string | null; name: string; startTime: number | null; delay: number };
     await page.evaluate(() => {
@@ -3134,13 +3143,13 @@ test.describe("EditableList: a row leaves instead of vanishing", () => {
       w.__rowStarts = [];
       document.addEventListener("animationstart", (event) => {
         const row = event.target as HTMLElement;
-        // Только сами призраки: анимация из слотов потребителя всплывает сюда же.
+        // Only the ghosts themselves: an animation from the consumer's slots bubbles up here too.
         if (!row.matches("[data-key][inert]")) return;
         const animation = (row.getAnimations() as CSSAnimation[]).find(
           (candidate) => candidate.animationName === event.animationName
         )!;
-        // `startTime` читается по `ready`: до него старт ещё не назначен, и
-        // `null` означал бы «не успели спросить», а не «не стартовала».
+        // `startTime` is read via `ready`: until then the start is not assigned, and
+        // `null` would mean "we did not get to ask", not "did not start".
         void animation.ready.then(() =>
           w.__rowStarts.push({
             key: row.getAttribute("data-key"),
@@ -3161,13 +3170,13 @@ test.describe("EditableList: a row leaves instead of vanishing", () => {
       () => (window as unknown as { __rowStarts: Start[] }).__rowStarts
     );
 
-    // Уходят ровно три снятые строки, каждая — призраком (`inert`), и каждая
-    // своим уходом, а не чужой анимацией.
+    // Exactly three removed rows leave, each as a ghost (`inert`), and each with its
+    // own exit, not someone else's animation.
     expect(starts.map((start) => start.key).sort()).toEqual(["1", "2", "3"]);
     expect(starts.map((start) => start.name)).toEqual(["rowout", "rowout", "rowout"]);
-    // Волна на десятке строк превращается в ожидание, а порядок ухода ничего
-    // не значит: все три идут с одной точки. Волну можно устроить двумя
-    // способами — разнести старты или раздать задержки, — и закрыты оба.
+    // A wave across ten rows turns into waiting, and the order of the exit means
+    // nothing: all three go from one point. A wave can be built in two ways, by
+    // spreading the starts apart or by handing out delays, and both are closed off.
     const [first] = starts;
     expect(first!.startTime).not.toBeNull();
     expect(starts.map((start) => start.startTime)).toEqual([
@@ -3184,12 +3193,12 @@ test.describe("EditableList: a row leaves instead of vanishing", () => {
 test("EditableList: focus goes forward from the row that left", async ({ page }) => {
   await page.goto(EDITABLE_LIST_LEAVING);
 
-  // Кнопка лежит ВНУТРИ строки — так снимает задачу флажок у потребителя,
-  // и фокус в момент пропажи стоит внутри уходящей строки.
+  // The button sits INSIDE the row: that is how the consumer's checkbox removes a task,
+  // and at the moment of disappearance focus sits inside the leaving row.
   await page.getByRole("button", { name: "Done" }).nth(1).click();
 
-  // Вперёд — на строку, занявшую место ушедшей. Оставить фокус на призраке
-  // нельзя: он `inert`, и фокус провалился бы в `body`.
+  // Forward, to the row that took the place of the one that left. Focus cannot stay
+  // on the ghost: it is `inert`, and focus would fall into `body`.
   await expect
     .poll(async () => await page.evaluate(() => document.activeElement?.getAttribute("data-key")))
     .toBe("3");
@@ -3203,12 +3212,12 @@ test("EditableList: the last row hands focus to the add field", async ({ page })
     await expect(page.locator("[data-key]:not([inert])")).toHaveCount(left - 1);
   }
 
-  // Списка не осталось — фокусу некуда идти, кроме строки добавления.
+  // No rows are left, so focus has nowhere to go except the add row.
   await expect(page.getByRole("textbox", { name: "New task" })).toBeFocused();
 });
 
 test("EditableList: under reduce the exit stays and the collapse goes", async ({ page }) => {
-  // Контекст витрины и есть `reduce` — отдельной настройки не нужно.
+  // The showcase context IS `reduce`, so no separate setting is needed.
   await page.goto(EDITABLE_LIST_LEAVING);
   await expect(page.locator("[data-key]")).toHaveCount(5);
 
@@ -3225,8 +3234,9 @@ test("EditableList: under reduce the exit stays and the collapse goes", async ({
     return { name: animation!.animationName, half };
   });
 
-  // Уход остаётся — иначе строка пропадала бы в кадр, то есть резче, чем без
-  // правила вовсе (ADR-0043). Уходит смыкание: это движение всего, что ниже.
+  // The exit stays: otherwise the row would vanish in a single frame, that is, more
+  // abruptly than without the rule at all (ADR-0043). What goes is the collapse, the
+  // movement of everything below it.
   expect(damped.name).toBe("fadeOutOnly");
   expect(damped.half).toBeGreaterThan(0);
 
@@ -3241,8 +3251,8 @@ test("EditableList: with a ghost still on screen, focus lands on the live neighb
   await page.getByRole("button", { name: "Done" }).first().click();
   const leaving = page.locator("[data-key][inert]");
   await expect(leaving).toHaveCount(1);
-  // Призрак замирает, чтобы вторая пропажа случилась ПРИ нём, а не после:
-  // гонка на 150 мс проверяла бы скорость машины, а не компонент.
+  // The ghost freezes so that the second disappearance happens WHILE it is still there,
+  // not after: a race at 150 ms would measure the machine's speed, not the component.
   await leaving.evaluate((row) => row.getAnimations().forEach((animation) => animation.pause()));
 
   await page
@@ -3252,9 +3262,9 @@ test("EditableList: with a ghost still on screen, focus lands on the live neighb
     .click();
 
   /*
-    Сосед ищется в `items`, а не на экране: экранный индекс считает призраков, и
-    фокус уезжал бы через строку от ушедшей — при живом призраке выше по списку
-    он промахивался на одну.
+    The neighbour is looked up in `items`, not on screen: the on-screen index counts
+    the ghosts, and focus would drift a row past the one that left. With a live ghost
+    higher up the list, it missed by one.
   */
   await expect
     .poll(async () => await page.evaluate(() => document.activeElement?.getAttribute("data-key")))
@@ -3262,11 +3272,11 @@ test("EditableList: with a ghost still on screen, focus lands on the live neighb
 });
 
 /**
- * Набор образцов — OLDSUI-17.
+ * The swatch group (OLDSUI-17).
  *
- * В jsdom не проверить двух вещей: горизонтальных стрелок (их разбирает
- * радиогруппа react-aria, и в jsdom это ведёт себя иначе) и того, что
- * выбранность видна не одним цветом — кольцо живёт в CSS.
+ * Two things cannot be checked in jsdom: horizontal arrows (they are handled by the
+ * react-aria radio group, and jsdom behaves differently there) and that selection is
+ * visible not by colour alone, since the ring lives in CSS.
  */
 const SWATCH_GROUP =
   "/iframe.html?id=inputs-swatchgroup--playground&globals=theme:dark;accent:blue";
@@ -3277,7 +3287,7 @@ test("SwatchGroup: Tab brings focus to the selected option, not to the first", a
 
   await page.keyboard.press("Tab");
 
-  // Набор — один табстоп, и входить в него надо туда, где стоит ответ.
+  // The group is a single tab stop, and entering it must land on the answer.
   await expect(page.getByRole("radio", { name: "Teal" })).toBeFocused();
 });
 
@@ -3289,24 +3299,24 @@ test("SwatchGroup: horizontal arrows walk the row, vertical ones walk the column
   await page.keyboard.press("Tab");
   await expect(page.getByRole("radio", { name: "Teal" })).toBeFocused();
 
-  // Влево — предыдущий вариант в ряду; это делает сама радиогруппа.
+  // Left goes to the previous option in the row; the radio group does this itself.
   await page.keyboard.press("ArrowLeft");
   await expect(page.getByRole("radio", { name: "Violet" })).toBeChecked();
 
   /*
-    Вниз — через ряд, шагом в `columns` (шесть): под «Violet» в сетке стоит
-    «Steel». Линейная навигация react-aria увела бы на «Teal», то есть на
-    соседний столбец, — обработчик компонента обязан перехватить клавишу
-    раньше неё.
+    Down goes across the row, by a step of `columns` (six): under "Violet" in the grid
+    sits "Steel". react-aria's linear navigation would move to "Teal", that is, to the
+    adjacent column, so the component's handler must intercept the key before it does.
   */
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("radio", { name: "Steel" })).toBeChecked();
 
-  // Вверх возвращает в тот же столбец, а не на предыдущий вариант.
+  // Up returns to the same column, not to the previous option.
   await page.keyboard.press("ArrowUp");
   await expect(page.getByRole("radio", { name: "Violet" })).toBeChecked();
 
-  // Под второй строкой ничего нет, и край не зацикливается: набор не карусель.
+  // There is nothing below the second row, and the edge does not wrap: a swatch group
+  // is not a carousel.
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("radio", { name: "Steel" })).toBeChecked();
@@ -3324,25 +3334,25 @@ test("SwatchGroup: the selected swatch is marked by a ring, not by colour alone"
       .evaluate((radio) => getComputedStyle(radio.closest("label")!).boxShadow);
 
   /*
-    Кольцо рисуется тенью и лежит ВОКРУГ образца, на подложке: на самом оттенке
-    оно не добирает 3:1 у бирюзы и янтаря, а это признак состояния (WCAG
-    1.4.11). У невыбранного варианта тени нет вовсе.
+    The ring is drawn with a shadow and sits AROUND the swatch, on the backdrop: on the
+    hue itself it falls short of 3:1 for teal and amber, and that is a state indicator
+    (WCAG 1.4.11). An unselected option has no shadow at all.
   */
   expect(await ring("Teal")).not.toBe("none");
   expect(await ring("Blue")).toBe("none");
 });
 
 /**
- * Имя оттенка подсказкой — OLDSUI-18.
+ * The swatch name as a tooltip (OLDSUI-18).
  *
- * Замер в браузере обязателен: подсказка висит на обёртке варианта именно
- * потому, что `RadioButton` не пропускает наружу `onFocus`, — а событие фокуса
- * от настоящего Tab отличается от вызванного руками.
+ * Measuring in the browser is mandatory: the tooltip hangs on the option's wrapper
+ * precisely because `RadioButton` does not pass `onFocus` outward, and a focus event
+ * from a real Tab differs from one fired by hand.
  */
 const SWATCH_TOOLTIPS =
   "/iframe.html?id=inputs-swatchgroup--tooltips&globals=theme:dark;accent:blue";
 
-/** Сам вариант: радиокнопка внутри него скрыта и мышью недостижима. */
+/** The option itself: the radio button inside it is hidden and unreachable by mouse. */
 const swatch = (set: Locator, name: string) =>
   set.getByRole("radio", { name }).locator("xpath=ancestor::label[1]");
 
@@ -3354,24 +3364,24 @@ test("SwatchGroup: the tooltip names the option under hover and under keyboard f
   await expect(set).toBeVisible();
 
   /*
-    Подсказки ищутся ПО ИМЕНИ, а не одной ролью: уходящая держится в разметке
-    ещё кадр-другой (её убирает анимация закрытия), и поиск одной ролью ловил
-    бы две сразу — тест падал бы на самом обычном переезде фокуса.
+    Tooltips are looked up BY NAME, not by a single role: the outgoing one stays in
+    the markup for a frame or two (the closing animation removes it), and a lookup by
+    one role would catch two at once. The test would fail on the most ordinary focus move.
   */
 
-  // Наводиться нужно на сам вариант, а не на скрытую радиокнопку внутри него:
-  // кнопка в разметке есть, но лежит под образцом и мышью недостижима.
+  // Hover must be on the option itself, not on the hidden radio button inside it: the
+  // button is in the markup, but lies under the swatch and is unreachable by mouse.
   await swatch(set, "Amber").hover();
   await expect(page.getByRole("tooltip", { name: "Amber" })).toBeVisible();
 
-  // Фокус с клавиатуры: Tab приводит его на выбранный вариант, стрелка уводит
-  // на соседний — подсказка обязана переехать следом, а не остаться на прежнем.
+  // Focus from the keyboard: Tab brings it to the selected option, and the arrow moves
+  // it to a neighbouring one. The tooltip must follow, not stay on the previous one.
   await page.keyboard.press("Tab");
   await expect(page.getByRole("tooltip", { name: "Teal" })).toBeVisible();
   await page.keyboard.press("ArrowRight");
   await expect(page.getByRole("tooltip", { name: "Green" })).toBeVisible();
 
-  // Escape убирает подсказку и НЕ забирает фокус: выбор продолжается стрелками.
+  // Escape dismisses the tooltip and does NOT take focus: the choice continues with the arrows.
   await page.keyboard.press("Escape");
   await expect(page.getByRole("tooltip")).toHaveCount(0);
   await expect(set.getByRole("radio", { name: "Green" })).toBeFocused();
@@ -3387,15 +3397,15 @@ test("SwatchGroup: the tooltip describes nothing — the name stays said once", 
   await expect(page.getByRole("tooltip", { name: "Amber" })).toBeVisible();
 
   /*
-    Radix вешает `aria-describedby` на триггер. Триггер здесь — обёртка, а не
-    сам вариант: на варианте описание удвоило бы имя, и скринридер прочитал бы
-    «Янтарный Янтарный».
+    Radix puts `aria-describedby` on the trigger. Here the trigger is the wrapper, not
+    the option itself: on the option, the description would double the name, and the
+    screen reader would read "Amber Amber".
   */
   expect(await radio.getAttribute("aria-describedby")).toBeNull();
   expect(
     await radio.evaluate((node) => node.closest("label")!.getAttribute("aria-describedby"))
   ).toBeNull();
-  // Описание оседает на обёртке — и это тот самый узел подсказки, а не чужой.
+  // The description lands on the wrapper, and that is the tooltip's own node, not someone else's.
   const describedBy = await radio.evaluate((node) =>
     node.closest("label")!.parentElement!.getAttribute("aria-describedby")
   );
@@ -3407,23 +3417,23 @@ test("SwatchGroup: a disabled option is named too", async ({ page }) => {
   const set = page.getByRole("radiogroup", { name: "A disabled option is named too" });
   await expect(set).toBeVisible();
 
-  // «Почему нельзя» подсказка не объясняет, но «что это за цвет» — вопрос
-  // законный и к недоступному варианту.
+  // The tooltip does not explain why the option is unavailable, but "what colour is
+  // this" is a legitimate question for an unavailable option too.
   await swatch(set, "Red").hover();
   await expect(page.getByRole("tooltip", { name: "Red" })).toBeVisible();
 });
 
 /**
- * Крутилка поиска в палитре — OLDSUI-15.
+ * The search spinner in the palette (OLDSUI-15).
  *
- * Замер в браузере, и иначе нельзя: в jsdom раскладки нет вовсе, а весь дефект
- * был в двух пикселях ширины.
+ * Measured in the browser, and it cannot be done otherwise: jsdom has no layout at
+ * all, and the whole defect was two pixels of width.
  */
 test("CommandPalette: the loading spinner does not move the typed text", async ({ page }) => {
   /*
-    Одна история открывается дважды — с `loading` и без, — а не переключается
-    кнопкой: палитра модальна, и до кнопки за ней не дотянуться ни мышью, ни
-    клавиатурой. Аргумент приходит адресом, то есть оба кадра детерминированы.
+    One story is opened twice, with `loading` and without, rather than switched by a
+    button: the palette is modal, and the button behind it cannot be reached by mouse
+    or keyboard. The argument comes through the address, so both frames are deterministic.
   */
   const at = async (loading: boolean) => {
     await page.goto(
@@ -3438,18 +3448,18 @@ test("CommandPalette: the loading spinner does not move the typed text", async (
   const idle = await at(false);
   const busy = await at(true);
 
-  // Коробку под значок держит разметка: лупа 16, крутилка 14, и раньше поле
-  // уезжало на разницу при каждом включении загрузки.
+  // The markup holds the icon box: the magnifier is 16, the spinner 14, and previously
+  // the field shifted by the difference every time loading was switched on.
   expect(busy.x).toBe(idle.x);
   expect(busy.width).toBe(idle.width);
 });
 
 /**
- * Ступень высоты поля — OLDSUI-16.
+ * The field height step (OLDSUI-16).
  *
- * Замер в браузере, и иначе нельзя: вся ступень — это шесть пикселей высоты, а
- * в jsdom раскладки нет вовсе. Проверяется не число само по себе, а РАВЕНСТВО
- * соседям по строке: ради него ступень и заводилась.
+ * Measured in the browser, and it cannot be done otherwise: the whole step is six
+ * pixels of height, and jsdom has no layout at all. What is checked is not the number
+ * itself, but its EQUALITY with the neighbours in the row: that is what the step was created for.
  */
 test("TextControl: the sm step matches the row — button, field and select share one height", async ({
   page,
@@ -3460,16 +3470,16 @@ test("TextControl: the sm step matches the row — button, field and select shar
   await expect(row).toBeVisible();
 
   /*
-    Меряется ОБОЛОЧКА, а не сам `input`: рамка живёт на ней, и видимая высота
-    поля — это её коробка. У поля внутри она на два пикселя меньше — ровно на
-    рамку.
+    The SHELL is measured, not the `input` itself: the border lives on it, and the
+    field's visible height is its box. The input inside it is two pixels shorter,
+    which is exactly the border.
   */
   const heights = await row.evaluate((node) => {
     const round = (element: Element) => Math.round(element.getBoundingClientRect().height);
     return {
       button: round(node.querySelector("button")!),
       field: round(node.querySelector("input")!.parentElement!),
-      // Пилюля `Select` — внешний бокс триггера, а не кнопка внутри неё.
+      // The `Select` pill is the trigger's outer box, not the button inside it.
       select: round(node.querySelector("[aria-haspopup='listbox']")!.parentElement!),
     };
   });
@@ -3478,7 +3488,7 @@ test("TextControl: the sm step matches the row — button, field and select shar
   expect(heights.field).toBe(heights.button);
   expect(heights.field).toBe(heights.select);
 
-  // Умолчание не тронуто: в форме верны прежние 42.
+  // The default is untouched: in the form, the old 42 still holds.
   const form = page.getByRole("textbox", { name: "Form field" });
   expect(
     await form.evaluate((input) => Math.round(input.parentElement!.getBoundingClientRect().height))
@@ -3486,9 +3496,9 @@ test("TextControl: the sm step matches the row — button, field and select shar
 });
 
 /*
-  Таблицы Редактора (OLDSUI-45). В jsdom нет раскладки и нативной каретки:
-  выход стрелкой из таблицы, прокрутка узкой таблицы и фокус после действия из
-  меню проверяются только здесь.
+  The Editor's tables (OLDSUI-45). jsdom has no layout and no native caret: leaving a
+  table with an arrow, scrolling a narrow table, and focus after an action from a menu
+  are checked only here.
 */
 test("RichTextEditor table: Alt+F10 reaches the Table menu and a Row action keeps focus in the document", async ({
   page,
@@ -3501,21 +3511,21 @@ test("RichTextEditor table: Alt+F10 reaches the Table menu and a Row action keep
   const rows = field.locator("tr");
   await expect(rows).toHaveCount(4);
 
-  // История ставит каретку в ячейку «Billing» сама. Alt+F10 — в Панель,
-  // стрелками до «Таблица ▾».
+  // The story puts the caret into the "Billing" cell itself. Alt+F10 into the Toolbar,
+  // arrows to "Table ▾".
   const button = await focusToolbarButton(page, "Table");
   await expect(button).toBeFocused();
   await expect(button).toHaveAttribute("aria-haspopup", "menu");
 
   await page.keyboard.press("Enter");
   await expect(page.getByRole("menu", { name: "Table" })).toBeVisible();
-  // Таблица › — Вставить таблицу… — Ячейка — Строка; → открывает подменю.
+  // Table › Insert table… › Cell › Row; → opens the submenu.
   for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowRight");
   await expect(page.getByRole("menu", { name: "Row" })).toBeVisible();
   await page.keyboard.press("Enter");
 
-  // Первый пункт — «Insert row above» к строке «Billing».
+  // The first item, "Insert row above", applies to the "Billing" row.
   await expect(rows).toHaveCount(5);
   await expect(field).toBeFocused();
 });
@@ -3528,20 +3538,20 @@ test("RichTextEditor table: Tab walks the cells, Tab in the last one adds a row,
   );
 
   const field = page.getByRole("textbox", { name: "Document" });
-  // «Таблица ▾» → «Таблица ›» → сетка 3×3.
+  // "Table ▾" → "Table ›" → a 3×3 grid.
   await page.getByRole("button", { name: "Table", exact: true }).click();
   await page.getByRole("menuitem", { name: "Table", exact: true }).hover();
   await page.getByRole("gridcell", { name: "3 columns, 3 rows" }).click();
   await expect(field.locator("tr")).toHaveCount(3);
-  // Фокус возвращается в документ, когда меню снято (после его исчезновения):
-  // Tab до этого достался бы сетке, а не ячейке.
+  // Focus returns to the document once the menu is dismissed (after it disappears):
+  // a Tab before that would land on the grid, not on the cell.
   await expect(field).toBeFocused();
 
-  // Девять ячеек: восемь Tab — из первой в последнюю, девятый добавляет строку.
+  // Nine cells: eight Tabs from the first to the last, and the ninth adds a row.
   for (let i = 0; i < 9; i++) await page.keyboard.press("Tab");
   await expect(field.locator("tr")).toHaveCount(4);
 
-  // Стрелка вниз из последней строки: курсор-щель под таблицей, набор — абзац.
+  // Down arrow from the last row: the gap cursor under the table, and typing makes a paragraph.
   await page.keyboard.press("ArrowDown");
   await page.keyboard.type("after");
   await expect(field.locator("p").last()).toHaveText("after");
@@ -3549,8 +3559,8 @@ test("RichTextEditor table: Tab walks the cells, Tab in the last one adds a row,
 });
 
 /*
-  Сетка размера таблицы (OLDSUI-45): фокус при монтировании, рост от стрелок и
-  клавиатурный выбор проверяются в настоящем браузере.
+  The table size grid (OLDSUI-45): focus on mount, growth by arrows, and keyboard
+  selection are checked in a real browser.
 */
 test("RichTextEditor table size grid: arrows grow the grid, Enter picks, Escape cancels", async ({
   page,
@@ -3603,8 +3613,8 @@ test("RichTextView table: a wide table scrolls inside itself on a phone and does
     "/iframe.html?id=content-richtextview--table-narrow&globals=theme:dark;accent:blue"
   );
 
-  // Только в холсте истории: в `iframe.html` витрина держит ещё и скрытую
-  // заготовку таблицы аргументов (`.sb-argstableBlock`).
+  // Only in the story canvas: in `iframe.html` the showcase also holds a hidden
+  // argstable template (`.sb-argstableBlock`).
   const table = page.locator("#storybook-root table");
   await expect(table).toBeVisible();
   const metrics = await table.evaluate((node) => ({
@@ -3617,15 +3627,16 @@ test("RichTextView table: a wide table scrolls inside itself on a phone and does
 
   expect(metrics.overflowX).toBe("auto");
   expect(metrics.scrollWidth).toBeGreaterThan(metrics.clientWidth);
-  // Страница осталась в ширине окна: горизонтально едет только таблица.
+  // The page stayed within the window's width: only the table scrolls horizontally.
   expect(metrics.page).toBeLessThanOrEqual(metrics.window);
 });
 
 /*
-  Ошибка полей кода и времени: красит рамку каскад (`has-[…aria-invalid]` и
-  вариант Tailwind по `aria-invalid`), а jsdom каскад не считает. Эталон цвета берётся с
-  текста ошибки `FormField` — он `text-danger-strong`, то есть тот же токен, —
-  чтобы тест не зависел от темы.
+  The error state of the code and time fields: the border is painted by the cascade
+  (`has-[…aria-invalid]` and the Tailwind variant on `aria-invalid`), and jsdom does
+  not compute the cascade. The reference colour is taken from the error text of
+  `FormField`, which is `text-danger-strong`, that is, the same token, so that the
+  test does not depend on the theme.
 */
 test("PinInput: an error of FormField turns every cell border red", async ({ page }) => {
   await page.goto(
@@ -3652,8 +3663,8 @@ test("TimePicker: invalid turns the underline red, in focus too", async ({ page 
   await expect(fields.nth(0)).toHaveCSS("border-bottom-color", danger);
   await expect(fields.nth(1)).toHaveCSS("border-bottom-color", danger);
 
-  // Фокус красит линию в акцент (`focus-visible:`); у поля с ошибкой должен
-  // побеждать красный — порядок вариантов в CSS jsdom не проверит.
+  // Focus paints the line in the accent (`focus-visible:`); on a field with an error,
+  // the red must win. jsdom does not check the order of variants in CSS.
   await fields.nth(0).focus();
   await expect(fields.nth(0)).toHaveCSS("border-bottom-color", danger);
 });
@@ -3664,8 +3675,8 @@ test("Toggle: a click on the description flips the switch", async ({ page }) => 
   const guests = page.getByRole("switch", { name: "Members can invite guests" });
   await expect(guests).not.toBeChecked();
 
-  // Описание — часть мишени: нажатие по нему активирует переключатель средствами
-  // браузера (`<label for>`), а у выключенного не срабатывает.
+  // The description is part of the target: a click on it activates the switch by the
+  // browser's own means (`<label for>`), and for a disabled one it does not fire.
   await page.getByText("Guests see only the projects they are added to.").click();
   await expect(guests).toBeChecked();
 
@@ -3687,11 +3698,11 @@ test("ConfirmDialog typeToConfirm: the focus starts in the field, Enter confirms
   const field = dialog.getByRole("textbox", { name: "Type “Acme Labs” to confirm" });
   const confirm = dialog.getByRole("button", { name: "Delete the workspace" });
 
-  // Фокус в поле — не на кнопке и не на крестике — и кнопка выключена.
+  // Focus is in the field, not on the button or the close cross, and the button is disabled.
   await expect(field).toBeFocused();
   await expect(confirm).toBeDisabled();
 
-  // Enter без совпадения окно не закрывает; регистр важен.
+  // Enter without a match does not close the dialog; case matters.
   await page.keyboard.type("acme labs");
   await page.keyboard.press("Enter");
   await expect(dialog).toBeVisible();
@@ -3715,18 +3726,18 @@ test("FilterBar: a number range and a date range are added through the popover a
   await page.getByRole("button", { name: "Field" }).click();
   await page.getByRole("option", { name: "Amount" }).click();
 
-  // Вместо списка значений — два числовых поля; «Применить» ждёт границу.
+  // Instead of a list of values there are two number fields; "Apply" waits for the bounds.
   const apply = page.getByRole("button", { name: "Apply" });
   await expect(apply).toBeDisabled();
   await page.getByRole("textbox", { name: "From" }).fill("50");
   await page.getByRole("textbox", { name: "To" }).fill("100");
-  // Нажатие мышью уводит фокус с поля и фиксирует ввод до самого клика.
+  // A mouse click moves focus off the field and commits the input right up to the click.
   await apply.click();
 
   await expect(page.getByText("Amount: 50–100")).toBeVisible();
   await expect(add).toBeFocused();
 
-  // Дата: календарь открывается внутри поповера добавления и не закрывает его.
+  // Date: the calendar opens inside the add popover and does not close it.
   await add.click();
   await page.getByRole("button", { name: "Field" }).click();
   await page.getByRole("option", { name: "Created" }).click();
@@ -3739,7 +3750,7 @@ test("FilterBar: a number range and a date range are added through the popover a
 
   await expect(page.getByText(/^Created: from /)).toBeVisible();
 
-  // Токен диапазона снимается как любой другой.
+  // The range token is removed like any other.
   await page.getByRole("button", { name: "Remove filter" }).first().click();
   await expect(page.getByText("Amount: 50–100")).toHaveCount(0);
 });
@@ -3757,16 +3768,16 @@ test.describe("VirtualGrid on a touch screen", () => {
     const box = (await page.getByRole("row").first().boundingBox())!;
     const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 
-    // Долгое нажатие — настоящими событиями касания: меню Radix открывает его
-    // по таймеру, а `usePress` ячейки react-aria мог бы принять отпускание за нажатие.
+    // A long press, with real touch events: Radix's menu opens it by timer, while the
+    // cell's react-aria `usePress` could take the release for a press.
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
     await page.waitForTimeout(1200);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await page.waitForTimeout(300);
 
-    // У ячейки с меню долгое нажатие — только меню (OLDSUI-202): react-aria
-    // по своему правилу выделил бы её, но сетка отменяет его нажатие раньше.
+    // On a cell with a menu, a long press brings up only the menu (OLDSUI-202):
+    // react-aria would select it by its own rule, but the grid cancels its press earlier.
     await expect(page.getByRole("menu")).toHaveCount(1);
     await expect(page.getByTestId("opened")).toHaveText("Opened: none");
     await expect(page.getByTestId("selected")).toHaveText("Selected: none");
@@ -3779,13 +3790,13 @@ test.describe("VirtualGrid on a touch screen", () => {
       "/iframe.html?id=content-virtualgrid--actions-and-menu&globals=theme:dark;accent:blue"
     );
     await page.waitForTimeout(500);
-    // На узком экране одна колонка: ячейка «2» ниже края — сначала прокрутка сетки.
+    // On a narrow screen there is one column: cell "2" is below the edge, so the grid scrolls first.
     const grid = page.getByRole("grid", { name: "Frames" });
     await grid.evaluate((el) => el.scrollTo(0, 400));
     await page.waitForTimeout(300);
     const box = (await page.locator('[role="row"][data-key="2"]').boundingBox())!;
     const area = (await grid.boundingBox())!;
-    // Касание — в видимую часть ячейки: её низ может уходить за край сетки.
+    // The touch lands in the visible part of the cell: its bottom may run past the grid's edge.
     const top = Math.max(box.y, area.y);
     const bottom = Math.min(box.y + box.height, area.y + area.height);
     const point = { x: box.x + box.width / 2, y: (top + bottom) / 2 };
@@ -3824,10 +3835,10 @@ test.describe("VirtualGrid on a touch screen", () => {
 });
 
 /*
-  VirtualGrid в библиотеке (OLDSUI-199): прокрутка окна под липкой шапкой,
-  подгрузка у конца, кнопки и флажок в ячейке, Shift только добавляет,
-  протяжка пальцем. Всё это — раскладка, окно и события касания, то есть
-  ровно то, чего в jsdom нет.
+  VirtualGrid in the library (OLDSUI-199): window scrolling under the sticky bar,
+  loading at the end, buttons and a checkbox in a cell, Shift only adds, and a finger
+  drag. All of this is layout, the window and touch events, that is, exactly what
+  jsdom does not have.
 */
 const VIRTUAL_GRID_LIBRARY =
   "/iframe.html?id=content-virtualgrid--library&globals=theme:dark;accent:blue";
@@ -3845,7 +3856,7 @@ test("VirtualGrid library: the window scrolls, the DOM keeps only cells near it"
   const grid = await openLibrary(page);
   const first = () => grid.getByRole("row").first().getAttribute("data-key");
 
-  // Своей прокрутки у сетки нет: она во всю высоту содержимого.
+  // The grid has no scrolling of its own: it spans the full height of the content.
   const own = await grid.evaluate((el) => ({ client: el.clientHeight, scroll: el.scrollHeight }));
   expect(own.scroll).toBeLessThanOrEqual(own.client + 1);
   expect(await grid.getByRole("row").count()).toBeLessThan(60);
@@ -3864,7 +3875,7 @@ test("VirtualGrid library: a focused cell never hides under the sticky bar", asy
   await page.mouse.wheel(0, 2500);
   await page.waitForTimeout(300);
 
-  // Ячейка у верхнего края окна, ниже шапки; дальше — стрелкой вверх.
+  // A cell at the top edge of the window, below the header; then further with the Up arrow.
   const target = grid.getByRole("row");
   let focusKey = "";
   for (const row of await target.all()) {
@@ -3891,7 +3902,7 @@ test("VirtualGrid library: the next page loads at the end, once", async ({ page 
   await page.mouse.move(400, 400);
   await page.mouse.wheel(0, 200);
   await expect(page.getByTestId("loaded")).toHaveText("Loaded: 240");
-  // Подгрузка не идёт подряд сама: без прокрутки страница одна.
+  // Loading does not chain on its own: without scrolling, the page stays a single page.
   await page.waitForTimeout(1200);
   await expect(page.getByTestId("loaded")).toHaveText("Loaded: 240");
 });
@@ -3900,8 +3911,8 @@ test("VirtualGrid library: buttons in a cell work and neither open nor select it
   page,
 }) => {
   const grid = await openLibrary(page);
-  // Кнопки `MediaCard` ловят указатель при наведении — сначала курсор на плитку,
-  // как у живого человека.
+  // The `MediaCard` buttons catch the pointer on hover, so first the cursor goes onto
+  // the tile, as it would for a real person.
   await grid.getByRole("row").nth(2).hover();
   const favourite = page.getByRole("button", { name: "Favourite poster-0002.jpg" });
   await favourite.click();
@@ -3909,9 +3920,9 @@ test("VirtualGrid library: buttons in a cell work and neither open nor select it
   await expect(page.getByTestId("opened")).toHaveText("Opened: none");
   await expect(page.getByTestId("selected-count")).toHaveText("Selected: 0");
 
-  // Флажок выбора — та же ось, что у сетки.
+  // The selection checkbox is on the same axis as the grid.
   await grid.getByRole("row").nth(3).hover();
-  // Видимая коробка перекрывает скрытый `input`: человек жмёт по метке флажка.
+  // The visible box covers the hidden `input`: a person presses the checkbox's label.
   await page
     .getByRole("checkbox", { name: "Select poster-0003.jpg" })
     .locator("xpath=ancestor::label[1]")
@@ -3933,7 +3944,7 @@ test("VirtualGrid library: Shift extends the selection and keeps what was there"
 }) => {
   const grid = await openLibrary(page);
   await grid.getByRole("row").nth(0).hover();
-  // Видимая коробка перекрывает скрытый `input`: человек жмёт по метке флажка.
+  // The visible box covers the hidden `input`: a person presses the checkbox's label.
   await page
     .getByRole("checkbox", { name: "Select poster-0000.jpg" })
     .locator("xpath=ancestor::label[1]")
@@ -3943,7 +3954,8 @@ test("VirtualGrid library: Shift extends the selection and keeps what was there"
   await grid.getByRole("row").nth(6).focus();
   await page.keyboard.press("Shift+ArrowRight");
   await page.keyboard.press("Shift+ArrowRight");
-  // «Ноль» на месте: react-aria без режима `add` заменил бы набор диапазоном.
+  // The earlier selection is still there: react-aria without the `add` mode would
+  // have replaced the set with the range.
   await expect(page.getByRole("checkbox", { name: "Select poster-0000.jpg" })).toBeChecked();
   const count = Number((await page.getByTestId("selected-count").innerText()).replace(/\D/g, ""));
   expect(count).toBeGreaterThanOrEqual(3);
@@ -3966,9 +3978,9 @@ test("VirtualGrid library: edgeGap={false} keeps the requested gap between cells
   const rows = grid.getByRole("row");
   const first = (await rows.nth(0).boundingBox())!;
   const second = (await rows.nth(1).boundingBox())!;
-  // Обе ячейки в первой строке: зазор между ними — заказанный `gap` (12 по
-  // умолчанию). Раскладка react-aria урезает свой зазор ниже `minSpace` при
-  // округлении, и «вплотную» его наследовал (OLDSUI-203: 16 вместо 18).
+  // Both cells are in the first row: the gap between them is the requested `gap` (12 by
+  // default). react-aria's layout shrinks its own gap below `minSpace` when rounding,
+  // and the flush mode inherited that (OLDSUI-203: 16 instead of 18).
   expect(Math.round(second.y)).toBe(Math.round(first.y));
   expect(Math.round(second.x - (first.x + first.width))).toBe(12);
 });
@@ -3987,18 +3999,17 @@ test.describe("VirtualGrid library on a narrow screen", () => {
     for (const box of await Promise.all((await rows.all()).map((row) => row.boundingBox()))) {
       if (box && Math.round(box.y) === top) inFirstRow += 1;
     }
-    // История: minItemWidth 180, gap 12. Колонок — как у `minmax(180px, 1fr)`
-    // без полей по краям. Раскладка react-aria резервировала внешний зазор и
-    // теряла колонку (OLDSUI-203).
+    // The story: minItemWidth 180, gap 12. Columns as in `minmax(180px, 1fr)` without
+    // edge margins. react-aria's layout reserved the outer gap and lost a column (OLDSUI-203).
     const expected = Math.max(1, Math.floor((width + 12) / (180 + 12)));
-    // Ширина окна подобрана так, что react-aria насчитала бы на колонку меньше.
+    // The window width is chosen so that react-aria would have counted one column fewer.
     expect(Math.floor(width / (180 + 12))).toBe(expected - 1);
     expect(inFirstRow).toBe(expected);
   });
 });
 
 test.describe("VirtualGrid library on a touch screen", () => {
-  // 420, а не 390: при 390 влезает одна колонка, и протяжка шла бы по столбцу.
+  // 420, not 390: at 390 only one column fits, and the drag would run along a single column.
   test.use({ hasTouch: true, isMobile: true, viewport: { width: 420, height: 800 } });
 
   async function centre(page: Page, key: string) {
@@ -4022,10 +4033,10 @@ test.describe("VirtualGrid library on a touch screen", () => {
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await page.waitForTimeout(300);
 
-    // Ячейки 0..3 по порядку коллекции, а не прямоугольник на экране.
+    // Cells 0..3 in collection order, not the rectangle on screen.
     await expect(page.getByTestId("selected-count")).toHaveText("Selected: 4");
     await expect(page.getByTestId("opened")).toHaveText("Opened: none");
-    // Движение пальца сняло таймер меню Radix: жест — выделение, а не меню.
+    // The finger's movement cancelled Radix's menu timer: the gesture is a selection, not a menu.
     await expect(page.getByRole("menu")).toHaveCount(0);
   });
 
@@ -4038,8 +4049,8 @@ test.describe("VirtualGrid library on a touch screen", () => {
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await page.waitForTimeout(300);
 
-    // Удержание лишь взводит протяжку: без движения это долгое нажатие меню,
-    // и только меню — выбор не меняется (OLDSUI-202).
+    // Holding only arms the drag: without movement, this long press opens the menu and
+    // only the menu; the selection does not change (OLDSUI-202).
     await expect(page.getByRole("menu")).toHaveCount(1);
     await expect(page.getByTestId("selected-count")).toHaveText("Selected: 0");
     await expect(page.getByTestId("opened")).toHaveText("Opened: none");
@@ -4064,7 +4075,7 @@ test.describe("VirtualGrid library on a touch screen", () => {
     await drag(page, ["0", "1"]);
     await expect(page.getByTestId("selected-count")).toHaveText("Selected: 2");
 
-    // Флаг гашения щелчка после жеста не должен съесть следующий настоящий тап.
+    // The click-suppression flag after a gesture must not swallow the next real tap.
     await page.waitForTimeout(500);
     const favourite = page.getByRole("button", { name: "Favourite poster-0003.jpg" });
     await favourite.tap();
@@ -4099,18 +4110,18 @@ test.describe("VirtualGrid library on a touch screen", () => {
 });
 
 /*
- * Оглавление Документа (`RichTextToc`, OLDSUI-264). Наведение с задержкой,
- * подсветка текущего раздела при прокрутке и переход под липкую шапку держатся
- * на раскладке, прокрутке и pointer-событиях — в jsdom их нет.
+ * The Document's table of contents (`RichTextToc`, OLDSUI-264). Hover with a delay,
+ * highlighting the current section on scroll, and the jump under the sticky header
+ * depend on layout, scrolling and pointer events, and jsdom has none of these.
  */
 test.describe("RichTextToc", () => {
-  // Окно ниже штатного: история должна прокручиваться дальше последнего заголовка,
-  // иначе страница упирается в конец и подсветка с переходом проверяют не то.
+  // The window is shorter than standard: the story must scroll beyond the last heading,
+  // otherwise the page hits the end and the highlight and the jump are checked against the wrong thing.
   test.use({ viewport: { width: 1280, height: 480 } });
   const strip = (page: Page) => page.getByRole("button", { name: "Table of contents" });
   const list = (page: Page) => page.getByRole("navigation", { name: "Table of contents" });
 
-  /** Курсор приходит на полосу снаружи: так браузер шлёт `pointerenter`. */
+  /** The pointer arrives at the strip from outside: that is how the browser sends `pointerenter`. */
   async function hoverStrip(page: Page) {
     const box = (await strip(page).boundingBox())!;
     await page.mouse.move(box.x + box.width + 400, box.y + box.height / 2);
@@ -4124,7 +4135,7 @@ test.describe("RichTextToc", () => {
     await expect(strip(page)).toBeVisible();
 
     await hoverStrip(page);
-    // Сразу — ещё нет: случайный пролёт курсора список не открывает.
+    // Not right away: a stray pass of the cursor does not open the list.
     await expect(list(page)).toHaveCount(0);
     await expect(list(page)).toBeVisible();
     await expect(strip(page)).toHaveAttribute("aria-expanded", "true");
@@ -4149,7 +4160,7 @@ test.describe("RichTextToc", () => {
       "aria-current",
       "location"
     );
-    // Адрес страницы не меняется: переход без якорей.
+    // The page address does not change: the jump uses no anchors.
     expect(new URL(page.url()).hash).toBe("");
   });
 
@@ -4169,7 +4180,7 @@ test.describe("RichTextToc", () => {
     await tones.evaluate((node) =>
       window.scrollTo(0, node.getBoundingClientRect().top + window.scrollY)
     );
-    // «Tones» — пятый заголовок Документа.
+    // "Tones" is the fifth heading of the Document.
     await expect.poll(current).toBe(4);
   });
 
@@ -4183,7 +4194,7 @@ test.describe("RichTextToc", () => {
 
     const heading = page.getByRole("heading", { name: "Tones" });
     await expect(heading).toBeFocused();
-    // Шапка — 56px (`--topbar-h` в истории): заголовок встаёт ровно под неё.
+    // The header is 56px (`--topbar-h` in the story): the heading sits exactly under it.
     await expect.poll(async () => Math.round((await heading.boundingBox())!.y)).toBe(56);
   });
 
@@ -4194,7 +4205,7 @@ test.describe("RichTextToc", () => {
       "/iframe.html?id=content-richtexttoc--scrolling-area-without-header&globals=theme:dark;accent:blue"
     );
     await expect(strip(page)).toBeVisible();
-    // Страницу чуть прокрутили: сдвиг от перехода отличим от нуля.
+    // The page was scrolled a little, so the shift from the jump is distinguishable from zero.
     await page.evaluate(() => window.scrollTo(0, 40));
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(40);
 
@@ -4204,7 +4215,7 @@ test.describe("RichTextToc", () => {
     const heading = page.getByRole("heading", { name: "Tones" });
     const area = page.getByTestId("scroll-area");
     await expect(heading).toBeFocused();
-    // Прокрутка плавная — ждём, пока она кончится.
+    // The scroll is smooth, so we wait until it ends.
     await expect
       .poll(
         async () => {
@@ -4229,9 +4240,9 @@ test.describe("RichTextToc", () => {
 });
 
 /*
- * Инструмент `toc` Редактора (OLDSUI-271, ADR-0068): Оглавление в левом поле.
- * Липкость под Панелью, каретка после перехода и прокрутка внутри поля — только
- * в настоящем браузере.
+ * The Editor's `toc` Tool (OLDSUI-271, ADR-0068): the Table of contents in the left
+ * margin of the field. Stickiness under the Toolbar, the caret after a jump, and
+ * scrolling inside the field are checked only in a real browser.
  */
 test.describe("RichTextEditor with the toc tool", () => {
   test.use({ viewport: { width: 1280, height: 560 } });
@@ -4262,7 +4273,7 @@ test.describe("RichTextEditor with the toc tool", () => {
       "/iframe.html?id=inputs-richtexteditor--table-of-contents&globals=theme:dark;accent:blue"
     );
     await expect(strip(page)).toBeVisible();
-    // Дважды прокрутили — полоса стоит на том же месте под Панелью: липнет.
+    // Scrolled twice: the strip stays in the same place under the Toolbar, so it sticks.
     await page.evaluate(() => window.scrollTo(0, 300));
     const toolbar = (await page.getByRole("toolbar").first().boundingBox())!;
     const first = (await strip(page).boundingBox())!.y;
@@ -4281,18 +4292,20 @@ test.describe("RichTextEditor with the toc tool", () => {
     await expect(strip(page)).toBeVisible();
     await page.getByRole("button", { name: "Go to “How to read”" }).click();
     const heading = page.getByRole("heading", { name: "How to read" });
-    // Край — низ оболочки Панели, а не самой `toolbar`: от оболочки (с её рамкой)
-    // Редактор меряет высоту Панели для перехода и липкой полосы.
+    // The edge is the bottom of the Toolbar's shell, not of the `toolbar` itself: the
+    // Editor measures the Toolbar's height for the jump and the sticky strip from the
+    // shell (with its border).
     const shell = page.getByRole("toolbar").first().locator("xpath=..");
     const toolbar = (await shell.boundingBox())!;
     const edge = toolbar.y + toolbar.height;
-    // Прокрутка плавная: ждём, пока заголовок встанет вплотную под нижний край Панели.
+    // The scroll is smooth: we wait until the heading lands flush under the Toolbar's bottom edge.
     await expect
       .poll(async () => Math.round((await heading.boundingBox())!.y - edge), { timeout: 5000 })
       .toBeLessThanOrEqual(2);
-    // И не под ней: заголовок целиком ниже Панели и шапки.
+    // And not beneath it: the heading sits entirely below the Toolbar and the header.
     expect((await heading.boundingBox())!.y).toBeGreaterThanOrEqual(edge - 1);
-    // Кнопка вне поля, а каретка в конце заголовка: как после клика по пункту.
+    // The button is outside the field, and the caret is at the end of the heading,
+    // as after a click on an item.
     await page.keyboard.type("!");
     await expect(page.getByRole("heading", { name: "How to read!" })).toBeVisible();
   });
@@ -4314,8 +4327,8 @@ test.describe("RichTextEditor with the toc tool", () => {
   });
 
   /*
-   * Состояние Инструмента `toc` (OLDSUI-268): текущий раздел в снимке следует за
-   * прокруткой. В jsdom у узлов нет геометрии, поэтому только здесь.
+   * The Tool state of `toc` (OLDSUI-268): the current section in the snapshot follows
+   * the scroll. jsdom nodes have no geometry, so this is checked only here.
    */
   test("the State follows the scroll: the current section reaches the external navigation", async ({
     page,
@@ -4328,14 +4341,16 @@ test.describe("RichTextEditor with the toc tool", () => {
       .locator('[aria-current="location"]');
     await expect(current).toHaveText("Palette");
 
-    // Заголовок встал под липкую Панель — он и есть текущий раздел. Берётся раздел
-    // из середины: до заголовков у конца прокрутка не доезжает, там текущий — последний.
+    // The heading has settled under the sticky Toolbar, so it is the current section.
+    // The section is taken from the middle: the scroll does not reach the headings near
+    // the end, where the current one is the last.
     await page.getByRole("heading", { name: "Layer 1 — primitives" }).evaluate((heading) => {
       window.scrollTo(0, window.scrollY + heading.getBoundingClientRect().top - 30);
     });
     await expect(current).toHaveText("Layer 1 — primitives");
 
-    // Документ докручен до конца: текущий — последний раздел, хотя он короткий.
+    // The document is scrolled to the end: the current one is the last section,
+    // even though it is short.
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await expect(current).toHaveText("What's next");
 

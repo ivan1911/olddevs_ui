@@ -118,16 +118,16 @@ import type { ButtonSize, Size, Tone, Variant } from "../src/lib/variants.js";
 const TONES: Tone[] = ["neutral", "accent", "success", "warning", "danger"];
 const VARIANTS: Variant[] = ["solid", "soft", "outline", "ghost"];
 const SIZES: Size[] = ["sm", "md", "lg"];
-//: У кнопки ступеней четыре: `xs` заведена под кнопку-иконку в строке списка и
-//: живёт только здесь, поэтому список свой, а не расширенный общий.
+//: The size-step button has four steps: `xs` is there for the icon button in a list
+//: row and lives only here, so this list is local rather than the shared extended one.
 const BUTTON_SIZES: ButtonSize[] = ["xs", "sm", "md", "lg"];
 
 /**
- * Полная матрица пропсов всех примитивов.
+ * The full prop matrix of all primitives.
  *
- * Смысл в исчерпывающем переборе: класс, который выдаёт редкое сочетание,
- * должен попасть в разметку — иначе проверка покрытия его не увидит и
- * пропустит именно тот случай, который сломается в проде.
+ * The point is exhaustive enumeration: a class that a rare combination produces
+ * must reach the markup, otherwise the coverage check will not see it and will
+ * miss exactly the case that breaks in production.
  */
 export function renderMatrix(): ReactElement {
   const els: ReactElement[] = [];
@@ -137,7 +137,7 @@ export function renderMatrix(): ReactElement {
       for (const size of BUTTON_SIZES)
         els.push(h(Button, { key: `b-${variant}-${tone}-${size}`, variant, tone, size }, "Button"));
   els.push(h(Button, { key: "b-disabled", disabled: true }, "Disabled"));
-  // Кольцо отправки на каждом размере: у него своя таблица классов.
+  // The submit ring at each size: it has its own class table.
   for (const size of BUTTON_SIZES)
     els.push(h(Button, { key: `b-loading-${size}`, size, loading: true }, "Submitting"));
   els.push(h(Button, { key: "b-icon", icon: h("span", null, "★") }, "With an icon"));
@@ -167,16 +167,16 @@ export function renderMatrix(): ReactElement {
   for (const tone of TONES)
     for (const size of ["sm", "md"] as const)
       for (const dot of [true, false])
-        // children в пропсах, а не третьим аргументом: у StatusBadge он обязателен,
-        // и перегрузка createElement этого не видит.
+        // children go in props, not as the third argument: StatusBadge requires it,
+        // and the createElement overload does not see it.
         els.push(
           h(StatusBadge, { key: `s-${tone}-${size}-${dot}`, tone, size, dot, children: "Status" })
         );
 
   for (const size of ["sm", "md"] as const)
     els.push(h(Card, { key: `card-${size}`, size }, "Card"));
-  // Нажимаемая карточка добавляет свою таблицу классов (курсор, hover рамки,
-  // кольцо фокуса) — без неё в матрице половина `Card` осталась бы непокрытой.
+  // The pressable card adds its own class table (cursor, hover border, focus ring):
+  // without it, half of `Card` would stay uncovered in the matrix.
   els.push(
     h(Card, { key: "card-aschild", asChild: true }, h("button", { type: "button" }, "Pressable"))
   );
@@ -200,10 +200,10 @@ export function renderMatrix(): ReactElement {
         })
       );
 
-  // Флажок — первый компонент на react-aria-components. Перебор полный: тон
-  // окрашивает только отмеченное состояние, поэтому строка «не отмечен» у всех
-  // пяти тонов даёт одни и те же классы, а «отмечен» — пять разных наборов.
-  // `invalid` и `disabled` вынесены отдельно: они не зависят от тона.
+  // The checkbox is the first component on react-aria-components. The enumeration is
+  // full: the tone colors only the checked state, so the "not checked" row gives the
+  // same classes for all five tones, while "checked" gives five different sets.
+  // `invalid` and `disabled` are listed separately: they do not depend on the tone.
   for (const tone of TONES)
     for (const checked of [true, false])
       for (const size of ["sm", "md"] as const)
@@ -227,9 +227,9 @@ export function renderMatrix(): ReactElement {
     h(Checkbox, { key: "cb-desc", label: "With a hint", description: "Hint" })
   );
 
-  // Группа флажков: три состояния — обычное, выключенное и с ошибкой. Ошибка
-  // вытесняет пояснение, поэтому классы обеих строк собираются разными
-  // элементами матрицы, а не одним.
+  // The checkbox group: three states — normal, disabled and with an error. The error
+  // replaces the description, so the classes of both rows come from different
+  // matrix entries, not from one.
   for (const [key, extra] of [
     ["plain", { description: "Hint" }],
     ["disabled", { disabled: true, description: "Hint" }],
@@ -252,8 +252,8 @@ export function renderMatrix(): ReactElement {
         )
       );
 
-  // Радиогруппа: тон × размер × раскладка. Невыбранный вариант нейтрален при
-  // любом тоне, поэтому классы кружка различаются только у выбранного.
+  // The radio group: tone × size × layout. An unselected option is neutral under
+  // any tone, so the classes of the circle differ only for the selected one.
   for (const tone of TONES)
     for (const size of ["sm", "md"] as const)
       els.push(
@@ -292,9 +292,9 @@ export function renderMatrix(): ReactElement {
     )
   );
 
-  // Карточки выбора: ось живёт у группы. Тон красит рамку выбранной карточки
-  // (пять строк), размер — индикатор и подпись; ошибка, выключенность,
-  // раскладка в строку и значок идут отдельными элементами.
+  // Choice cards: the axis lives on the group. The tone colors the frame of the
+  // selected card (five rows), the size colors the indicator and the label; error,
+  // disabled state, row layout and the icon go in as separate elements.
   for (const tone of TONES)
     for (const size of ["sm", "md"] as const)
       els.push(
@@ -374,8 +374,8 @@ export function renderMatrix(): ReactElement {
           )
         )
       );
-  // Тон группы флажков: перекрывает `tone` флажка внутри («Second» просит
-  // `danger`, но получает тон набора). Пять тонов × обычный вид и карточки.
+  // The checkbox group's tone overrides the `tone` of the checkbox inside it ("Second"
+  // asks for `danger`, but gets the group's tone). Five tones × the plain look and the cards.
   for (const tone of TONES)
     for (const appearance of ["default", "card"] as const)
       els.push(
@@ -402,8 +402,8 @@ export function renderMatrix(): ReactElement {
     )
   );
 
-  // Числовое поле: оболочка общая с `TextControl`, поэтому её классы уже
-  // покрыты; здесь важны кнопки ступеней и невалидное состояние.
+  // The numeric field: its wrapper is shared with `TextControl`, so its classes are
+  // already covered; what matters here are the step buttons and the invalid state.
   for (const [key, extra] of [
     ["plain", {}],
     ["invalid", { invalid: true }],
@@ -420,15 +420,15 @@ export function renderMatrix(): ReactElement {
       })
     );
 
-  // FormField: ошибка и обязательность. Ошибка вытесняет пояснение, поэтому
-  // классы обеих строк собираются разными элементами матрицы.
+  // FormField: error and required. The error replaces the description, so the
+  // classes of both rows come from different matrix entries.
   els.push(
     h(FormField, { key: "ff-hint", label: "Label", hint: "Hint" }, "field"),
     h(FormField, { key: "ff-err", label: "Label", hint: "Hint", error: "Error" }, "field"),
     h(FormField, { key: "ff-req", label: "Label", required: true }, "field")
   );
 
-  // Сообщения: тон × вид, плюс крестик и действие.
+  // Messages: tone × look, plus the close button and the action.
   for (const tone of TONES)
     for (const variant of ["soft", "outline"] as const)
       els.push(
@@ -439,12 +439,12 @@ export function renderMatrix(): ReactElement {
     h(Alert, { key: "al-action", action: h("span", null, "action") }, "With an action")
   );
 
-  // Баннеры: тон, плюс крестик. Вида у баннера нет — он всегда полоса.
+  // Banners: tone, plus the close button. A banner has no look: it is always a strip.
   for (const tone of TONES)
     els.push(h(Banner, { key: `bn-${tone}`, tone, title: "Title" }, "Application message"));
   els.push(h(Banner, { key: "bn-dismiss", onDismiss: () => {} }, "With a cross"));
 
-  // Копирование и обрезка: оба состояния кнопки и обе раскладки обрезки.
+  // Copy and crop: both button states and both crop layouts.
   els.push(
     h(CopyButton, { key: "cb", value: "OLDSUI-42" }),
     h(CopyButton, { key: "cb-label", value: "OLDSUI-42", children: "Copy" }),
@@ -452,19 +452,19 @@ export function renderMatrix(): ReactElement {
     h(Truncate, { key: "tr-lines", lines: 2, children: "A longer value" })
   );
 
-  // Виртуальная сетка: в jsdom ячеек не отрисует (нет раскладки), но классы
-  // контейнера в разметку попадают — ради них она здесь и стоит.
+  // Virtual grid: jsdom does not render the cells (there is no layout), but the
+  // container's classes do reach the markup — that is why it is here.
   els.push(
     h(VirtualGrid, {
       key: "vg",
       "aria-label": "Cells",
-      // Высота — класс ПОТРЕБИТЕЛЯ, и в матрице ему не место: Tailwind сканирует
-      // `src`, а не тесты, и гейт справедливо объявил бы его пропавшим.
+      // Height is a CONSUMER class and has no place in the matrix: Tailwind scans
+      // `src`, not the tests, and the gate would rightly report it as missing.
       items: [{ id: "1", textValue: "Cell", content: h("span", null, "Cell") }],
     })
   );
 
-  // Сортируемый список: строки с ручками.
+  // Sortable list: rows with drag handles.
   els.push(
     h(SortableList, {
       key: "sl",
@@ -477,7 +477,7 @@ export function renderMatrix(): ReactElement {
     })
   );
 
-  // Плитка: с выбором и без, с бейджами и действиями, обе пропорции.
+  // Tile: with and without selection, with badges and actions, both ratios.
   for (const selected of [true, false])
     els.push(
       h(MediaCard, {
@@ -493,7 +493,7 @@ export function renderMatrix(): ReactElement {
     );
   els.push(h(MediaCard, { key: "mc-plain", preview: h("span", null, "▦"), ratio: 16 / 9 }));
 
-  // Уведомления: прочитанное и непрочитанное на всех тонах, плюс группы.
+  // Notifications: read and unread on all tones, plus groups.
   els.push(
     h(
       NotificationList,
@@ -530,7 +530,7 @@ export function renderMatrix(): ReactElement {
     })
   );
 
-  // Оси строки: превью рядом со значком; вся строка — кнопка, прочитанная и нет.
+  // Row axes: the preview next to the icon; the whole row is a button, read or not.
   els.push(
     h(
       NotificationList,
@@ -557,7 +557,7 @@ export function renderMatrix(): ReactElement {
     )
   );
 
-  // Центр уведомлений: шапка со счётчиком, фильтры, выделение, низ.
+  // Notification center: the header with a counter, filters, selection, footer.
   els.push(
     h(
       NotificationCenter,
@@ -575,7 +575,7 @@ export function renderMatrix(): ReactElement {
     )
   );
 
-  // Центр с заголовком h2 и id: на него ссылается имя поверхности потребителя.
+  // Center with an h2 heading and an id: the consumer's surface name refers to it.
   els.push(
     h(
       "div",
@@ -592,9 +592,9 @@ export function renderMatrix(): ReactElement {
     )
   );
 
-  // Очередь загрузок: все четыре состояния, оба вида прогресса, бейдж и мета.
-  // Очередь загрузок: все четыре состояния, оба вида прогресса, бейдж и мета,
-  // а также тон поверх состояния (D9): «Дубль» успешной загрузки — warning.
+  // Download queue: all four states, both progress kinds, badge and meta.
+  // Download queue: all four states, both progress kinds, badge and meta,
+  // and the tone layered over the state (D9): the "Duplicate" badge on a successful download is `warning`.
   els.push(
     h(UploadQueue, {
       key: "uq",
@@ -631,7 +631,7 @@ export function renderMatrix(): ReactElement {
     })
   );
 
-  // Прогресс и спиннер: тон × размер, плюс неизвестное состояние.
+  // Progress and spinner: tone × size, plus the indeterminate state.
   for (const tone of TONES) {
     for (const size of ["sm", "md"] as const)
       els.push(
@@ -644,19 +644,19 @@ export function renderMatrix(): ReactElement {
     h(Progress, { key: "pr-val", value: 30, label: "With a percentage", showValue: true })
   );
 
-  // Скелетон: классов у него ровно один, но он должен дойти до CSS так же, как остальные.
+  // Skeleton: it has exactly one class, but it must reach the CSS the same way the others do.
   els.push(h(Skeleton, { key: "sk", width: 120, height: 12 }));
 
-  // Картинка: коробка, вписывание и фолбэк — три разных набора классов.
+  // Image: the box, the fit and the fallback — three different sets of classes.
   for (const fit of ["cover", "contain"] as const)
     els.push(h(Image, { key: `img-${fit}`, src: "/a.png", alt: "", fit, ratio: 1 }));
   els.push(h(Image, { key: "img-fallback", src: null, alt: "" }));
-  // Контент-ведомая раскладка: у коробки свой набор классов, и без него
-  // половина компонента осталась бы непокрытой.
+  // Content-driven layout: the box has its own set of classes, and without it
+  // half of the component would stay uncovered.
   els.push(h(Image, { key: "img-intrinsic", src: "/a.png", alt: "", sizing: "intrinsic" }));
   els.push(h(Image, { key: "img-named-fallback", src: null, alt: "Night city" }));
 
-  // Лента шагов: все четыре состояния разом — у каждого свой тон.
+  // Steps strip: all four states at once, each with its own tone.
   els.push(
     h(Timeline, {
       key: "tl",
@@ -676,7 +676,7 @@ export function renderMatrix(): ReactElement {
     })
   );
 
-  // Полоса выделения: панель, счётчик, крестик и распорка — свой набор классов.
+  // Selection bar: the panel, the counter, the close button and the spacer — each has its own set of classes.
   els.push(
     h(
       SelectionBar,
@@ -685,8 +685,8 @@ export function renderMatrix(): ReactElement {
     )
   );
 
-  // Полоса несохранённого: свои кнопки, свой тон отказа. Липкость выключена —
-  // в матрице она только мешала бы раскладке.
+  // Unsaved-changes bar: its own buttons, its own failure tone. Stickiness is off:
+  // in the matrix it would only get in the way of the layout.
   els.push(
     h(ContextualSaveBar, {
       key: "savebar",
@@ -699,8 +699,8 @@ export function renderMatrix(): ReactElement {
     })
   );
 
-  // Сохранённые виды: активный и неактивный чипы разом — вид у переключателя
-  // целиком чиповый, и свои классы он приносит только обёрткой.
+  // Saved views: the active and inactive chips at once — the switcher is chip-styled
+  // as a whole, and it brings its own classes only through the wrapper.
   els.push(
     h(SavedViews, {
       key: "saved-views",
@@ -713,8 +713,8 @@ export function renderMatrix(): ReactElement {
     })
   );
 
-  // Пусто и отказ: геометрия у них общая (`lib/state.ts`), а тон разный — в
-  // матрицу идут оба размера каждого, иначе половина таблицы остаётся непроверенной.
+  // Empty and error states: their geometry is shared (`lib/state.ts`), but the tone differs;
+  // both sizes of each go into the matrix, otherwise half of the table stays unverified.
   for (const size of ["sm", "md"] as const) {
     els.push(
       h(EmptyState, {
@@ -737,7 +737,7 @@ export function renderMatrix(): ReactElement {
   }
   for (const size of ["md", "lg"] as const)
     els.push(h(Avatar, { key: `av-${size}`, size, name: "Ada" }));
-  // Ось `src`: фото получает имя из `alt`, а без `alt` — из `name`.
+  // The `src` axis: the photo gets its name from `alt`, and without `alt` from `name`.
   for (const size of ["md", "lg"] as const)
     els.push(h(Avatar, { key: `avp-${size}`, size, name: "Ada", src: "/ada.png" }));
   for (const size of ["sm", "md"] as const)
@@ -745,8 +745,8 @@ export function renderMatrix(): ReactElement {
   els.push(h(PageHeader, { key: "ph", title: "Page", subtitle: "label", actions: "actions" }));
   for (const as of ["input", "textarea"] as const)
     els.push(h(TextControl, { key: `tc-${as}`, as, rows: 3, "aria-label": "Field" }));
-  // Слоты переключают оболочку на flex — без перебора эта ветка классов
-  // не попадает в разметку вовсе, а именно её и добавил `SearchControl`.
+  // Slots switch the wrapper to flex — without enumeration this branch of classes
+  // does not reach the markup at all, and it is exactly the one `SearchControl` added.
   els.push(
     h(TextControl, {
       key: "tc-icon",
@@ -762,8 +762,8 @@ export function renderMatrix(): ReactElement {
     })
   );
   els.push(h(FormField, { key: "ff", label: "Label", hint: "Hint" }));
-  // Боковая раскладка поля: своя сетка, отступ подписи и колонка пояснения —
-  // без перебора эта ветка классов в разметке не появляется вовсе.
+  // The side layout of a field: its own grid, the label indent and the description column —
+  // without enumeration this branch of classes does not appear in the markup at all.
   els.push(
     h(FormField, {
       key: "ff-side",
@@ -787,8 +787,8 @@ export function renderMatrix(): ReactElement {
   els.push(h(PhoneInput, { key: "ph", value: "916", onChange: () => {}, "aria-label": "Phone" }));
   els.push(h(InlineEdit, { key: "ie", value: "Name", onChange: () => {}, label: "Name" }));
   els.push(h(InlineEdit, { key: "ie-empty", value: "", onChange: () => {}, label: "Description" }));
-  // Дерево: раскрытый узел, лист и флажок выбора — три ветки классов, каждая
-  // появляется только в своём состоянии.
+  // Tree: an expanded node, a leaf and the selection checkbox — three branches of classes,
+  // each appearing only in its own state.
   for (const selectionMode of [undefined, "multiple"] as const)
     els.push(
       h(TreeView, {
@@ -811,8 +811,8 @@ export function renderMatrix(): ReactElement {
         h(FieldRow, { key: "r" }, "full width")
       )
     );
-  // Поле поиска: крестик существует только при непустом значении и только
-  // во включённом состоянии, поэтому оба флага перебираются вместе со строкой.
+  // Search field: the clear button exists only with a non-empty value and only in
+  // the enabled state, so both flags are enumerated together with the row.
   for (const value of ["", "sunset"])
     for (const clearable of [true, false])
       for (const disabled of [true, false])
@@ -856,7 +856,7 @@ export function renderMatrix(): ReactElement {
       disabled: true,
     })
   );
-  // Вопросик справки: раскрытый поповер уходит в портал, ловим классы триггера.
+  // Help icon: the expanded popover goes into a portal, so we catch the trigger's classes.
   els.push(
     h(HelpTooltip, {
       key: "ht",
@@ -864,7 +864,7 @@ export function renderMatrix(): ReactElement {
       children: h("span", null, "Hint"),
     })
   );
-  // Диалог подтверждения — во всех характерах и в состоянии отправки.
+  // Confirmation dialog: in all its tones and in the sending state.
   for (const kind of ["danger", "warning", "info"] as const)
     els.push(
       h(ConfirmDialog, {
@@ -888,7 +888,7 @@ export function renderMatrix(): ReactElement {
       onConfirm: () => {},
     })
   );
-  // Свод горячих клавиш: группа с несколькими клавишами (разделитель) и с одной.
+  // Shortcuts summary: a group with several keys (separator) and with one key.
   els.push(
     h(ShortcutsHelp, {
       key: "sh",
@@ -906,7 +906,7 @@ export function renderMatrix(): ReactElement {
       ],
     })
   );
-  // Шапка окна — в двух состояниях: с крестиком и без него (идёт отправка).
+  // Window header — in two states: with the close button and without it (sending in progress).
   for (const withClose of [true, false])
     els.push(
       h(ModalHeader, {
@@ -917,10 +917,10 @@ export function renderMatrix(): ReactElement {
         onClose: withClose ? () => {} : undefined,
       })
     );
-  // Раскрытый список живёт в портале и в статичную разметку не попадает —
-  // проверяем классы триггера во всех его состояниях. Ось `searchable` на
-  // триггер не влияет вовсе: поле поиска живёт в той же портальной панели,
-  // поэтому здесь перебирается только `multiple` и наполнение выбора.
+  // The expanded list lives in a portal and does not reach the static markup, so
+  // we check the trigger's classes in all its states. The `searchable` axis does not
+  // affect the trigger at all: the search field lives in the same portal panel, so
+  // only `multiple` and the selection contents are enumerated here.
   for (const value of [null, "1"])
     for (const triggerClassName of [
       undefined,
@@ -938,7 +938,7 @@ export function renderMatrix(): ReactElement {
             triggerClassName,
           })
         );
-  // Без акцентной подсветки: вид формы, а не фильтра.
+  // Without the accent highlight: this is the form's look, not a filter's.
   for (const value of [null, "1"])
     els.push(
       h(Select, {
@@ -951,7 +951,7 @@ export function renderMatrix(): ReactElement {
         triggerClassName: "w-full rounded-control px-3 py-2.5",
       })
     );
-  // Мультивыбор: пусто, один (подпись элемента) и несколько (счётчик).
+  // Multi-select: empty, one (the item's label) and several (a counter).
   for (const value of [[], ["1"], ["1", "2"]])
     els.push(
       h(Select, {
@@ -967,9 +967,9 @@ export function renderMatrix(): ReactElement {
         onChange: () => {},
       })
     );
-  // Календари рисуются целиком в разметке, поэтому берём их состояния прямо:
-  // выбранное значение, границы и недоступные даты дают разные наборы классов
-  // у ячейки, и мимо перебора ни один из них не проверяется.
+  // Calendars are rendered whole in the markup, so we take their states directly:
+  // the selected value, the range edges and the unavailable dates give different
+  // class sets on the cell, and none of them is checked unless enumerated here.
   els.push(h(Calendar, { key: "cal", value: parseDate("2026-03-12") }));
   els.push(
     h(Calendar, {
@@ -988,7 +988,7 @@ export function renderMatrix(): ReactElement {
         value: { start: parseDate("2026-03-09"), end: parseDate("2026-03-22") },
       })
     );
-  // У пикеров раскрытая панель уходит в портал — ловим классы триггеров.
+  // For pickers the expanded panel goes into a portal, so we catch the trigger classes.
   for (const value of [null, "2026-03-12"])
     for (const disabled of [true, false])
       els.push(
@@ -1009,8 +1009,8 @@ export function renderMatrix(): ReactElement {
           onChange: () => {},
         })
       );
-  // С крестиком очистки: он появляется только при выбранном значении и только
-  // когда обработчик передан, поэтому перебираются оба условия.
+  // With the clear button: it appears only when a value is selected and only when
+  // the handler is passed, so both conditions are enumerated.
   for (const onClear of [() => {}, undefined])
     els.push(
       h(DateRangePicker, {
@@ -1020,9 +1020,9 @@ export function renderMatrix(): ReactElement {
         onChange: () => {},
       })
     );
-  // Мусор в значении — не выдуманный случай: диапазон приходит из URL,
-  // а URL правят руками. Матрица рендерится через `renderToStaticMarkup`,
-  // поэтому падение на разборе даты уронит проверку покрытия — этого и хотим.
+  // Garbage in the value is not a made-up case: a range comes from the URL, and
+  // URLs get edited by hand. The matrix renders via `renderToStaticMarkup`, so a
+  // crash while parsing the date would break the coverage check — which is what we want.
   els.push(
     h(DateRangePicker, {
       key: "drp-garbage",
@@ -1055,10 +1055,10 @@ export function renderMatrix(): ReactElement {
         ],
       })
     );
-  // Волна 7. `Link` здесь обязателен: его `QUIET_HOVER_CLASS` — таблица
-  // литеральных `hover:text-*-strong` на каждый тон, то есть ровно тот случай,
-  // ради которого покрытие классов и заведено. Пять строк, пять тонов, и без
-  // этой матрицы ни одна из них не была бы проверена.
+  // Wave 7. `Link` is required here: its `QUIET_HOVER_CLASS` is a table of literal
+  // `hover:text-*-strong` classes, one per tone, which is exactly the case the class
+  // coverage was set up for. Five rows, five tones, and without this matrix none of
+  // them would be checked.
   const TEXT_SIZES: TextSize[] = ["caption", "xs", "sm", "md", "lg"];
   for (const size of TEXT_SIZES)
     for (const level of [1, 2, 3] as const)
@@ -1085,10 +1085,10 @@ export function renderMatrix(): ReactElement {
     els.push(h(ScrollArea, { key: `sa-${orientation}`, orientation, label: "List" }, "content"));
   els.push(h(AspectRatio, { key: "ar", ratio: 16 / 9 }, "image"));
 
-  // Сетка: её классы и есть контракт, поэтому перебор полный — каждая клетка
-  // словаря колонок на каждом брейкпойнте, каждая ширина автозаполнения, каждая
-  // ступень зазора и каждый тег. Число (лестница) и объект идут разными путями
-  // через один словарь, и проверяются оба.
+  // Grid: its classes are the contract, so the enumeration is full — every cell of
+  // the column dictionary at every breakpoint, every autofill width, every gap step
+  // and every tag. A number (a ladder) and an object take different paths through
+  // one dictionary, and both are checked.
   const GRID_COLUMNS = [1, 2, 3, 4, 5, 6] as const;
   for (const columns of GRID_COLUMNS) {
     els.push(h(Grid, { key: `gr-${columns}`, columns }, "cell"));
@@ -1104,9 +1104,9 @@ export function renderMatrix(): ReactElement {
   for (const as of ["ul", "ol"] as const)
     els.push(h(Grid, { key: `gr-${as}`, as, "aria-label": "Cells" }, h("li", null, "cell")));
 
-  // Лента слайдов: класс ширины слайда и есть контракт, поэтому перебор полный —
-  // каждая клетка словаря на каждом брейкпойнте. Скаляр и объект идут разными
-  // путями через один словарь, и проверяются оба.
+  // Slide strip: the slide width class is the contract, so the enumeration is full —
+  // every dictionary cell at every breakpoint. A scalar and an object take different
+  // paths through one dictionary, and both are checked.
   for (const slidesPerView of [1, 2, 3, 4] as const) {
     els.push(
       h(
@@ -1128,8 +1128,8 @@ export function renderMatrix(): ReactElement {
         )
       );
   }
-  // Панель действий: обе оси и разделитель в каждой. Разделитель без своего
-  // `orientation` берёт его у панели, и в разметке должны быть обе ориентации.
+  // Action bar: both axes and the separator in each. A separator without its own
+  // `orientation` takes it from the bar, so both orientations must be in the markup.
   for (const orientation of ["horizontal", "vertical"] as const)
     els.push(
       h(
@@ -1141,11 +1141,11 @@ export function renderMatrix(): ReactElement {
       )
     );
 
-  // Периферия волн 8–11. По ADR-0014 покрытие классов обязательно на ОБОИХ
-  // уровнях: снимков у этих компонентов нет, и без матрицы их разметку не
-  // сторожило бы ничего, кроме axe. Портальные части (`Drawer`,
-  // `CommandPalette`, панель `Combobox`) сюда не попадают по той же причине,
-  // что и тултип, — они рисуются вне статичной разметки.
+  // The periphery of waves 8–11. Under ADR-0014, class coverage is mandatory at BOTH
+  // levels: these components have no snapshots, and without the matrix nothing but
+  // axe would guard their markup. Portal parts (`Drawer`, `CommandPalette`, the
+  // `Combobox` panel) are not included, for the same reason as the tooltip: they are
+  // rendered outside the static markup.
   els.push(
     h(Combobox, {
       key: "cb",
@@ -1156,7 +1156,7 @@ export function renderMatrix(): ReactElement {
   els.push(
     h(TagInput, { key: "ti", value: ["sunset", "mountains"], onChange: () => {}, label: "Tags" })
   );
-  // Метка для показа: каждый оттенок палитры, ссылка, удаление и пустая группа.
+  // Label for display: every palette shade, a link, removal and an empty group.
   els.push(
     h(
       TagGroup,
@@ -1207,8 +1207,8 @@ export function renderMatrix(): ReactElement {
       ],
     })
   );
-  // Открытая Категория — чтобы классы Витрины, колонки и ссылок попали в
-  // разметку; ссылка-Категория и выключенная — свои классы строки.
+  // An open category — so that the classes of the flyout, the column and the links
+  // reach the markup; the link category and the disabled one have their own row classes.
   els.push(
     h(
       MegaMenu,
@@ -1226,8 +1226,8 @@ export function renderMatrix(): ReactElement {
       h(MegaMenuCategory, { id: "off", label: "Off", disabled: true }, h("span"))
     )
   );
-  // Выпадающий вид: на сервере виден только закрытый Раскрыватель — оверлей в
-  // портале монтируется после гидратации, и его классы матрица не видит.
+  // The dropdown variant: on the server only the closed disclosure is visible — the
+  // overlay in the portal mounts after hydration, and the matrix does not see its classes.
   els.push(
     h(MegaMenuTrigger, {
       key: "mmt",
@@ -1259,8 +1259,8 @@ export function renderMatrix(): ReactElement {
       h(Button, { variant: "outline" }, "Tile")
     )
   );
-  // `CodeView` с шапкой и гутером: обе части необязательны, и без экземпляра с
-  // ними гейт покрытия увидел бы только `pre`.
+  // `CodeView` with the header and the gutter: both parts are optional, and without
+  // an instance that has them the coverage gate would see only the `pre`.
   els.push(
     h(CodeView, {
       key: "code-view",
@@ -1270,8 +1270,8 @@ export function renderMatrix(): ReactElement {
       lineNumbers: true,
     })
   );
-  // Три состояния `Rating` сразу: закрашенная звезда, незакрашенная и показ без
-  // ввода. Токен `--rating-star` встречается только здесь.
+  // Three `Rating` states at once: a filled star, an empty star and display-only
+  // without input. The `--rating-star` token occurs only here.
   els.push(
     h(Rating, { key: "rating", value: 3, onChange: () => {}, "aria-label": "Quality" }),
     h(Rating, {
@@ -1283,9 +1283,9 @@ export function renderMatrix(): ReactElement {
       "aria-label": "Quality",
     })
   );
-  // `ColorPicker` в закрытом виде: раскрытая панель живёт в портале и в
-  // статическую разметку матрицы не попадает, а свои классы у компонента —
-  // оболочка поля и образец цвета.
+  // `ColorPicker` in the closed state: the expanded panel lives in a portal and does
+  // not reach the matrix's static markup, while the component's own classes are the
+  // field wrapper and the color swatch.
   els.push(
     h(ColorPicker, {
       key: "color-picker",
@@ -1294,8 +1294,9 @@ export function renderMatrix(): ReactElement {
       label: "Brand colour",
     })
   );
-  // `TreeSelect` в закрытом виде: раскрытое дерево уже покрыто `TreeView`, а
-  // здесь свои классы только у поля — оболочка, чипы и крестик очистки.
+  // `TreeSelect` in the closed state: the expanded tree is already covered by
+  // `TreeView`, while only the field has its own classes here — the wrapper, the chips
+  // and the clear button.
   els.push(
     h(TreeSelect, {
       key: "tree-select",
@@ -1306,8 +1307,8 @@ export function renderMatrix(): ReactElement {
       clearable: true,
       "aria-label": "Division",
     }),
-    // Второй экземпляр — пустое одиночное поле: подсказка и подпись выбранного
-    // лежат в других ветках, и без него гейт зелёный случайно.
+    // The second instance is an empty single field: the hint and the label of the
+    // selected item sit in other branches, and without it the gate would be green by accident.
     h(TreeSelect, {
       key: "tree-select-empty",
       items: [{ id: "a", label: "Company" }],
@@ -1316,10 +1317,10 @@ export function renderMatrix(): ReactElement {
       "aria-label": "Division",
     })
   );
-  // `Transfer` стоит здесь ради полей поиска, шапок колонок и кнопок переноса:
-  // у `ListBoxItem` класс один статический литерал, и варианты `selected:` /
-  // `disabled:` гейт видит из него независимо от состояния. Экземпляр с
-  // выключенным элементом и поиском полезен аудиту axe, а не покрытию.
+  // `Transfer` is here for the search fields, the column headers and the transfer
+  // buttons: `ListBoxItem` has a single static class literal, and the gate sees its
+  // `selected:` / `disabled:` variants in it regardless of state. The instance with a
+  // disabled item and search is useful to the axe audit, not to coverage.
   els.push(
     h(Transfer, {
       key: "transfer",
@@ -1333,10 +1334,10 @@ export function renderMatrix(): ReactElement {
       searchable: true,
     })
   );
-  // Обе оси `SplitPanel`: у ручки и границ разные классы, и без второго
-  // экземпляра гейт покрытия увидит только вертикальную полосу. Третий стоит
-  // схлопнутым: `hidden` у панели — единственное состояние, в котором
-  // раскладки нет вовсе.
+  // Both axes of `SplitPanel`: the handle and the borders have different classes, and
+  // without a second instance the coverage gate would see only the vertical bar. The
+  // third is collapsed: `hidden` on the panel is the only state in which there is no
+  // layout at all.
   els.push(
     h(
       SplitPanel,
@@ -1354,9 +1355,9 @@ export function renderMatrix(): ReactElement {
       "List"
     )
   );
-  // Раскрыватель у `SplitButton` — квадратная кнопка RAC рядом с обычной:
-  // сочетание классов группы, `iconOnly` и вида кнопки не встречается больше
-  // нигде, и без экземпляра гейт покрытия его не увидит.
+  // The `SplitButton` toggle is a square RAC button next to a regular one: the
+  // combination of the group's classes, `iconOnly` and the button look occurs nowhere
+  // else, and without this instance the coverage gate would not see it.
   els.push(
     h(
       SplitButton,
@@ -1384,8 +1385,8 @@ export function renderMatrix(): ReactElement {
         { id: "size", header: "Size", cell: () => "2 MB", align: "end" as const },
       ],
     }),
-    // Раскрытая строка: у детальной ячейки и кнопки-раскрывателя свои классы,
-    // и без второго экземпляра гейт покрытия их не увидит.
+    // An expanded row: the detail cell and the expander button have their own classes,
+    // and without a second instance the coverage gate would not see them.
     h(Table<{ id: string; name: string }>, {
       key: "table-detail",
       "aria-label": "Expansion",
@@ -1432,8 +1433,8 @@ export function renderMatrix(): ReactElement {
     })
   );
 
-  // У тултипа содержимое живёт в портале и в статичной разметке не появляется;
-  // проверяем хотя бы то, что обёртка не съедает классы обёрнутой кнопки.
+  // A tooltip's content lives in a portal and does not appear in the static markup;
+  // we at least check that the wrapper does not swallow the classes of the wrapped button.
   els.push(
     h(
       Tooltip,
@@ -1442,8 +1443,8 @@ export function renderMatrix(): ReactElement {
     )
   );
 
-  // Карточка-превью: триггер — ссылка со своим действием, панель открыта сразу,
-  // чтобы её классы и разметка тоже попали под проверки матрицы.
+  // Preview card: the trigger is a link with its own action, and the panel is open
+  // right away, so that its classes and markup also come under the matrix checks.
   els.push(
     h(HoverCard, {
       key: "hover-card",
@@ -1462,14 +1463,14 @@ export function renderMatrix(): ReactElement {
   );
 
   /*
-   * Оболочка приложения. Рендерится в ОБОИХ режимах навигации: развёрнутая и
-   * схлопнутая раскладки дают разные классы (`w-[var(--sidenav-w)]` против
-   * `-collapsed`, `sr-only` у подписи, `justify-center` у пункта), и без
-   * второго прохода половина осталась бы непокрытой.
+   * The app shell. Rendered in BOTH navigation modes: the expanded and collapsed
+   * layouts give different classes (`w-[var(--sidenav-w)]` against `-collapsed`,
+   * `sr-only` on the label, `justify-center` on the item), and without a second pass
+   * half of it would stay uncovered.
    *
-   * `AppShell` идёт без `sidebar`: колонка навигации уже отрисована ниже
-   * отдельно, а внутри каркаса она добавила бы к ней ещё и копию в `Drawer` —
-   * содержимое портала в статичной разметке всё равно не появляется.
+   * `AppShell` runs without `sidebar`: the navigation column is already rendered
+   * separately below, and inside the frame it would add a copy of it in a `Drawer` —
+   * portal content does not appear in the static markup anyway.
    */
   els.push(
     h(AppShell, {
@@ -1478,8 +1479,8 @@ export function renderMatrix(): ReactElement {
       bottomBar: h(
         MobileTabBar,
         null,
-        // Все состояния пункта: текущий и обычный, число, точка, свой текст
-        // значка, подпись без иконки и пункт через `asChild`.
+        // All item states: current and regular, a count, a dot, its own icon text,
+        // a label without an icon, and an item via `asChild`.
         h(MobileTabBarItem, { label: "Home", href: "#", active: true, icon: h("span") }),
         h(MobileTabBarItem, { label: "Inbox", href: "#", icon: h("span"), badge: 3 }),
         h(MobileTabBarItem, { label: "Alerts", href: "#", icon: h("span"), badge: true }),
@@ -1508,7 +1509,7 @@ export function renderMatrix(): ReactElement {
       children: "Content",
     })
   );
-  // Та же полоса вне каркаса: подложка без хвоста под вырез — своя строка словаря.
+  // The same strip outside the frame: a backdrop with no tail under the cutout — its own dictionary row.
   els.push(
     h(MobileTabBar, {
       key: "mtb-standalone",
@@ -1598,8 +1599,8 @@ export function renderMatrix(): ReactElement {
     })
   );
 
-  // Радикс требует провайдер над каждым тултипом и падает без него. Провайдер
-  // здесь — часть контракта примитива, а не декорация теста: то же самое обязан
-  // поставить у себя потребитель, о чём написано в docs/components/overlays/tooltip.md.
+  // Radix requires a provider above every tooltip and throws without one. The provider
+  // is part of the primitive's contract here, not a decoration of the test: the consumer
+  // must set up the same thing on its side, as described in docs/components/overlays/tooltip.md.
   return h(TooltipProvider, null, h(Fragment, null, els));
 }

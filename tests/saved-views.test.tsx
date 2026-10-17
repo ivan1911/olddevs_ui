@@ -20,8 +20,8 @@ const views: SavedView<Filters>[] = [
 test("the active view is announced, not only highlighted", () => {
   render(<SavedViews views={views} activeId="drafts" onSelect={() => {}} />);
 
-  // Подсветка цветом — не сообщение для скринридера: тот же дефект чинили у
-  // `Segmented` и у переключателя тем.
+  // A color highlight is not a message for the screen reader: the same defect was fixed in
+  // `Segmented` and in the theme switcher.
   const pressed = screen
     .getAllByRole("button")
     .filter((b) => b.getAttribute("aria-pressed") === "true");
@@ -30,7 +30,7 @@ test("the active view is announced, not only highlighted", () => {
 });
 
 test("without an active view none is announced as pressed", () => {
-  // `activeId` не задан — у заказчика это «вид по умолчанию», сброшенный адрес.
+  // `activeId` is not set: in the consumer this is the "default view", a reset address.
   render(<SavedViews views={views} onSelect={() => {}} />);
   const pressed = screen
     .getAllByRole("button")
@@ -39,11 +39,10 @@ test("without an active view none is announced as pressed", () => {
 });
 
 test("picking yields the whole snapshot in ONE call", async () => {
-  // Ради этого компонент и устроен так. У заказчика состояние переносится в
-  // адрес, и последовательные записи по ключу строят адрес из одного снимка
-  // текущего рендера: побеждает последняя, правки предыдущих пропадают. Именно
-  // так во фронте терялась нижняя граница периода, и ради этого там появился
-  // `setMany`.
+  // This is why the component is built this way. In the consumer, the state is carried into
+  // the address, and consecutive writes by key build the address from one snapshot of the
+  // current render: the last one wins and the earlier edits are lost. That is exactly how the
+  // lower bound of the range was lost in the front end, and why `setMany` was added there.
   const onSelect = vi.fn();
   render(<SavedViews views={views} activeId="all" onSelect={onSelect} />);
 
@@ -52,20 +51,20 @@ test("picking yields the whole snapshot in ONE call", async () => {
 
   expect(onSelect).toHaveBeenCalledTimes(1);
   expect(onSelect).toHaveBeenCalledWith(views[2]);
-  // Снимок приходит целиком, а не по ключу: обе части состояния на месте.
+  // The snapshot arrives whole, not by key: both parts of the state are in place.
   expect(onSelect.mock.calls[0]?.[0].state).toEqual({ status: "failed", page: 3 });
 });
 
 test("the kit stores nothing and subscribes to nothing", async () => {
-  // Хранилища ПОДМЕНЯЮТСЯ ЦЕЛИКОМ, а не шпионятся через `Storage.prototype`.
-  // Причина та же, что записана у `themeInitScript` в `themes.test.ts`:
-  // `localStorage` в jsdom этой версии есть по имени, но без методов
-  // `Storage`. Шпион на прототипе там не сработает никогда — и проверка
-  // «ничего не записано» пройдёт при любом поведении компонента.
+  // The storages are REPLACED WHOLE, not spied on through `Storage.prototype`.
+  // The reason is the same as the one written for `themeInitScript` in `themes.test.ts`:
+  // in this version of jsdom `localStorage` exists by name, but without the `Storage`
+  // methods. A spy on the prototype would never fire there, and the "nothing was written"
+  // check would pass whatever the component does.
   //
-  // Здесь это не рассуждение, а пойманный дефект: первая версия гейта
-  // шпионила прототип и осталась зелёной, когда в компонент нарочно добавили
-  // запись в `localStorage`.
+  // This is not a theory here but a caught defect: the first version of the gate spied on
+  // the prototype and stayed green when a write to `localStorage` was deliberately added to
+  // the component.
   const storage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn(), clear: vi.fn() };
   vi.stubGlobal("localStorage", storage);
   vi.stubGlobal("sessionStorage", storage);
@@ -77,7 +76,8 @@ test("the kit stores nothing and subscribes to nothing", async () => {
   await user.click(screen.getByText("Drafts"));
   rerender(<SavedViews views={views} activeId="drafts" onSelect={() => {}} />);
 
-  // Модель `useTableState` (ADR-0023): форма у кита, владение у потребителя.
+  // The `useTableState` model (ADR-0023): the shape belongs to the kit, the ownership
+  // to the consumer.
   expect(storage.setItem).not.toHaveBeenCalled();
   expect(storage.getItem).not.toHaveBeenCalled();
   expect(storage.removeItem).not.toHaveBeenCalled();
@@ -90,7 +90,7 @@ test("the kit stores nothing and subscribes to nothing", async () => {
 });
 
 test("an empty list is not drawn at all", () => {
-  // Пустая группа объявила бы себя скринридеру, не имея внутри ничего.
+  // An empty group would announce itself to the screen reader while containing nothing.
   const { container } = render(<SavedViews views={[]} onSelect={() => {}} />);
   expect(container.firstChild).toBeNull();
 });
@@ -104,9 +104,9 @@ test("the group accessible name comes from the catalog and is overridden by a pr
 });
 
 test("a snapshot with a range filter is handed back untouched", async () => {
-  // Вид хранит снимок как непрозрачное значение (ADR-0033): диапазон с `to`,
-  // в том числе с пустой границей, обязан вернуться тем же объектом, без
-  // нормализации «пустая граница — нет границы».
+  // A view stores the snapshot as an opaque value (ADR-0033): a range with `to`, including one
+  // with an empty bound, must come back as the same object, without the normalization "an empty
+  // bound means no bound".
   const range = { id: "r", field: "amount", value: "50", to: "" };
   const withRange: SavedView<{ filters: (typeof range)[] }>[] = [
     { id: "big", name: "Big orders", state: { filters: [range] } },

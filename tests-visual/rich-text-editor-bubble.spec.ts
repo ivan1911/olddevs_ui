@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Меню выделения Редактора в браузере (`toolbar="bubble"`, OLDSUI-69): то, чего
- * jsdom не умеет, — раскладка floating-ui у краёв, настоящие слои `Dialog` и
- * `Drawer` и каскад инверсной поверхности.
+ * Editor Bubble menu in a browser (`toolbar="bubble"`, OLDSUI-69): what jsdom cannot
+ * do, namely floating-ui placement at the edges, the real layers of `Dialog` and
+ * `Drawer`, and the cascade of the inverse surface.
  */
 
 const STORY = (id: string, theme = "dark", args = "") =>
@@ -12,14 +12,15 @@ const STORY = (id: string, theme = "dark", args = "") =>
 const BUBBLE = { name: "Selection formatting" } as const;
 
 /**
- * Выделить первое слово Документа двойным щелчком — одно действие, а не
- * череда `Shift+→`: под нагрузкой параллельного прогона ProseMirror успевал
- * перечитать выделение посреди череды нажатий, и слово выделялось не целиком.
+ * Select the Document's first word with a double-click, as one action rather than a
+ * run of `Shift+→` presses: under the load of a parallel run, ProseMirror re-read the
+ * selection in the middle of the presses, and the word was not selected in full.
  */
 async function selectFirstWord(page: Page, word: string) {
   const field = page.getByRole("textbox", { name: "Document" });
-  // Окно и ящик ставят фокус сами, когда доиграет появление, — после него и
-  // начинаем, иначе их автофокус увёл бы выделение из Документа.
+  // The dialog and the drawer move focus themselves once their entrance animation
+  // ends, so start only after it; otherwise their autofocus would move the selection
+  // out of the Document.
   await page.waitForFunction(() =>
     document.getAnimations().every((animation) => animation.playState !== "running")
   );
@@ -28,7 +29,7 @@ async function selectFirstWord(page: Page, word: string) {
     .first()
     .dblclick({ position: { x: 4, y: 8 } });
   await expect.poll(() => page.evaluate(() => window.getSelection()?.toString().trim())).toBe(word);
-  // ProseMirror читает выделение из `selectionchange` — дать ему кадр-другой.
+  // ProseMirror reads the selection from `selectionchange`, so give it a frame or two.
   await page.evaluate(
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
   );
@@ -46,8 +47,8 @@ test("inside a Dialog: the bubble formats, and Escape in its menu closes only th
 
   await bubble.getByRole("button", { name: "Bold" }).click();
   await expect(field.locator("strong")).toHaveText("Press");
-  // Действие возвращает фокус в Документ кадром позже, а плашка пересчитывает
-  // показ через 250 мс после правки — дождаться обоих, как человек.
+  // The action returns focus to the Document one frame later, and the Bubble menu
+  // recalculates its display 250 ms after an edit: wait for both, as a person would.
   await expect(field).toBeFocused();
   await page.waitForTimeout(300);
   await expect(bubble.getByRole("button", { name: "Bold" })).toHaveAttribute(
@@ -77,7 +78,8 @@ test("inside a Drawer: the bubble shows over the selection and its buttons work"
   await expect(field.locator("em")).toHaveText("Meeting");
   await expect(drawer).toBeVisible();
 
-  // Слой плашки выше слоя ящика: она не прячется под его панелью.
+  // The Bubble menu's layer is above the drawer's layer, so it does not hide behind
+  // the drawer's panel.
   const box = await bubble.boundingBox();
   const panel = await drawer.boundingBox();
   expect(box && panel && box.x >= panel.x && box.x + box.width <= panel.x + panel.width).toBe(true);
@@ -88,7 +90,7 @@ test("in a scroll container at the window edge the bubble flips and shifts inste
 }) => {
   await page.goto(STORY("selection-bubble-in-scroll"));
   const container = page.getByTestId("scroll-container");
-  // Первое слово заголовка — у верхнего и левого края контейнера и окна.
+  // The heading's first word sits at the top and left edges of the container and the window.
   await selectFirstWord(page, "Meeting");
   const bubble = page.getByRole("toolbar", BUBBLE);
   await expect(bubble).toBeVisible();
@@ -101,7 +103,7 @@ test("in a scroll container at the window edge the bubble flips and shifts inste
   expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
   expect(box.y + box.height).toBeLessThanOrEqual(frame.y + frame.height);
 
-  // Прокрутка контейнера: плашка едет вместе с текстом, а не остаётся на месте.
+  // Scrolling the container: the Bubble menu moves with the text instead of staying in place.
   const heading = page.getByRole("heading", { name: "Meeting notes" });
   const before = { bubble: box.y, heading: (await heading.boundingBox())!.y };
   await container.evaluate((element) => element.scrollBy(0, 12));
@@ -114,8 +116,8 @@ test("in a scroll container at the window edge the bubble flips and shifts inste
 });
 
 /**
- * Цвет как `[r, g, b, alpha]`. Полупрозрачную подложку из `color-mix` Chromium
- * отдаёт в `color(srgb r g b / a)` с долями единицы, сплошную — в `rgb()`.
+ * Colour as `[r, g, b, alpha]`. Chromium reports a translucent background from
+ * `color-mix` as `color(srgb r g b / a)` with fractions of one, and a solid one as `rgb()`.
  */
 function rgba(colour: string): number[] {
   const srgb = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/.exec(colour);
@@ -128,12 +130,12 @@ function rgba(colour: string): number[] {
   return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3]), Number(rgb[4] ?? 1)];
 }
 
-/** Цвет подложки и значка — так, как его посчитал браузер. */
+/** The background and icon colours as the browser computed them. */
 async function colours(page: Page) {
   const bubble = page.getByRole("toolbar", BUBBLE);
   await expect(bubble).toBeVisible();
   const { background, icon } = await bubble.evaluate((toolbar) => {
-    // Плашка — узел `BubbleMenu`, родитель панели.
+    // The Bubble menu is the `BubbleMenu` node, the parent of the panel.
     const surface = toolbar.parentElement!;
     const bold = toolbar.querySelector<HTMLElement>('button[aria-label="Bold"]')!;
     return {
@@ -145,9 +147,9 @@ async function colours(page: Page) {
 }
 
 /*
-  Подложка — инверсный токен на стекле (OLDSUI-118): тот же цвет с альфой 0.82.
-  Прежде здесь стояла сплошная `rgb()`, и смена подложки на полупрозрачную
-  была бы видна только на снимке.
+  The background is the inverse token on glass (OLDSUI-118): the same colour with
+  alpha 0.82. Previously a solid `rgb()` was used here, and a change to a translucent
+  background would have shown up only in a snapshot.
 */
 for (const [theme, background, icon] of [
   ["light", [31, 31, 31], "rgb(255, 255, 255)"],
@@ -162,7 +164,7 @@ for (const [theme, background, icon] of [
     await bubble.getByRole("button", { name: /^Block type/ }).click();
     const menu = page.getByRole("menu");
     await expect(menu).toBeVisible();
-    // Меню — в портале, на обычной поверхности поповера, а не на плашке.
+    // The menu is in a portal, on the ordinary popover surface, not on the Bubble menu.
     const menuBackground = await menu.evaluate((element) => {
       let node: Element | null = element;
       while (node && getComputedStyle(node).backgroundColor === "rgba(0, 0, 0, 0)")
@@ -174,9 +176,9 @@ for (const [theme, background, icon] of [
 }
 
 /*
-  Сплошная подложка при просьбе системы (OLDSUI-118): поднятый контраст и
-  убранная прозрачность. `prefers-reduced-transparency` Playwright не
-  эмулирует — признак ставится через CDP Chromium напрямую.
+  Solid background when the system asks for it (OLDSUI-118): raised contrast and
+  reduced transparency. Playwright does not emulate `prefers-reduced-transparency`,
+  so the flag is set directly through Chromium's CDP.
 */
 test("the bubble turns solid when contrast is raised", async ({ page }) => {
   await page.emulateMedia({ contrast: "more" });
@@ -194,12 +196,12 @@ test("the bubble turns solid when transparency is reduced", async ({ page }) => 
 });
 
 /*
-  `Alt+F10` сразу после выделения с клавиатуры: меню ещё спрятано — его покажет
-  только таймер плагина через 250 мс после последней смены выделения. Клавиша
-  показывает его сама, и уже в первом кадре оно обязано стоять над выделением,
-  а не у статической точки под полем, куда плагин вставляет свой узел.
-  Позиция снимается кадром после нажатия — задолго до таймера, который
-  поставил бы меню на место и скрыл ошибку.
+  `Alt+F10` right after a keyboard selection: the menu is still hidden, and only the
+  plugin's timer, 250 ms after the last selection change, will show it. The key shows
+  it by itself, and in the very first frame the menu must already sit above the
+  selection, not at the static point below the field where the plugin inserts its node.
+  The position is read one frame after the key press, long before the timer, which
+  would have put the menu in place and hidden the bug.
 */
 for (const toolbar of ["floating", "bubble"] as const) {
   test(`toolbar="${toolbar}": Alt+F10 right after a keyboard selection shows the menu above it`, async ({
@@ -219,7 +221,7 @@ for (const toolbar of ["floating", "bubble"] as const) {
         const onKeyDown = (event: KeyboardEvent) => {
           if (event.key !== "F10") return;
           document.removeEventListener("keydown", onKeyDown, true);
-          // Выделение — до обработчика клавиши: фокус он уводит в меню.
+          // Read the selection before the key handler runs: the handler moves focus into the menu.
           const selection = window.getSelection()!.getRangeAt(0).getBoundingClientRect();
           const sinceSelection = performance.now() - selected;
           requestAnimationFrame(() => {
@@ -237,8 +239,8 @@ for (const toolbar of ["floating", "bubble"] as const) {
       });
     });
     for (let step = 0; step < 6; step++) await page.keyboard.press("Shift+ArrowRight");
-    // ProseMirror читает выделение из `selectionchange`, а Chromium шлёт его
-    // задачей позже нажатий — дать ему кадр-другой, как дал бы человек.
+    // ProseMirror reads the selection from `selectionchange`, and Chromium fires it
+    // as a task after the key presses, so give it a frame or two, as a person would.
     await page.evaluate(
       () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
     );
@@ -247,7 +249,7 @@ for (const toolbar of ["floating", "bubble"] as const) {
       () => (window as unknown as { firstFrame: Promise<unknown> }).firstFrame
     )) as { sinceSelection: number; top: number; bottom?: number; height?: number };
 
-    // Нажатие застало меню спрятанным: таймер плагина ещё не сработал.
+    // The key press found the menu hidden: the plugin's timer had not fired yet.
     expect(frame.sinceSelection).toBeLessThan(200);
     expect(frame.height).toBeGreaterThan(0);
     expect(frame.bottom).toBeLessThanOrEqual(frame.top);

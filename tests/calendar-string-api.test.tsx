@@ -9,9 +9,9 @@ import { DateRangePicker } from "../src/components/date-time/DateRangePicker.js"
 import { RangeCalendar } from "../src/components/date-time/RangeCalendar.js";
 
 /*
-  Строковое API календарей: границы, значение и ответ ходят ISO-строками
-  `ГГГГ-ММ-ДД`, как у `DatePicker`/`DateRangePicker`, и потребителю не нужен
-  `@internationalized/date`, чтобы их собрать. Объекты по-прежнему принимаются.
+  The string API of the calendars: bounds, value, and answers travel as ISO strings
+  `YYYY-MM-DD`, as in `DatePicker`/`DateRangePicker`, and the consumer does not need
+  `@internationalized/date` to build them. Objects are still accepted.
 */
 
 beforeAll(() => {
@@ -29,7 +29,7 @@ beforeAll(() => {
 afterEach(cleanup);
 afterAll(() => vi.restoreAllMocks());
 
-/** Ячейка дня мартовской сетки 2026 по полному имени, которое объявляет react-aria. */
+/** The day cell of the March 2026 grid, found by the full name react-aria announces. */
 const day = (n: number, weekday: string) =>
   screen.getByRole("button", { name: new RegExp(`^${weekday}, March ${n}, 2026`) });
 

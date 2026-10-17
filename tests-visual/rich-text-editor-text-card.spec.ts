@@ -2,12 +2,12 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
- * Карточка у текста в браузере (OLDSUI-113): то, чего jsdom не умеет, — положение
- * под диапазоном, переворот у края окна и удержание в окне. Роли, имена, фокус,
- * Escape, `Alt+F10`, выбор самой узкой Карточки и фраза для скринридера проверены
- * в `tests/rich-text-editor-text-card.test.tsx`; axe проходит историю
- * `TextCardOpen` в `a11y.spec.ts` — но только холст: Карточка уходит в портал, и
- * её axe проверяет здесь же, отдельным тестом.
+ * Text card in a browser (OLDSUI-113): what jsdom cannot do, namely the position
+ * below the range, flipping at the window edge, and staying inside the window. Roles,
+ * names, focus, Escape, `Alt+F10`, choosing the narrowest Text card and the phrase for
+ * the screen reader are checked in `tests/rich-text-editor-text-card.test.tsx`. axe
+ * passes the `TextCardOpen` story in `a11y.spec.ts`, but only on the canvas: the Text
+ * card goes into a portal, so its axe check is here too, as a separate test.
  */
 
 const STORY = (id: string) =>
@@ -22,9 +22,9 @@ async function boxOf(locator: Locator) {
 }
 
 /**
- * Карточка грузится лениво: её чанк приходит после Редактора, и щелчок раньше
- * него ушёл бы в пустоту. Готовность — живой регион Карточки: второй
- * `role="status"` рядом с регионом Сообщения поля.
+ * The Text card loads lazily: its chunk arrives after the Editor, and a click before
+ * that would go nowhere. Readiness is the Text card's live region: a second
+ * `role="status"` next to the field's Field notice region.
  */
 async function open(page: Page, id: string) {
   await page.goto(STORY(id));
@@ -34,7 +34,7 @@ async function open(page: Page, id: string) {
 
 const MARK = '[data-mark="acme_comment"]';
 
-/** Карточка стоит под диапазоном вплотную, а её левый край — у начала диапазона. */
+/** The Text card sits right under the range, with its left edge at the start of the range. */
 function expectBelow(card: Box, range: Box) {
   const gap = card.y - (range.y + range.height);
   expect(gap).toBeGreaterThanOrEqual(-2);
@@ -42,7 +42,7 @@ function expectBelow(card: Box, range: Box) {
   expect(Math.abs(card.x - range.x)).toBeLessThan(24);
 }
 
-/** Карточка целиком в окне. */
+/** The Text card is fully inside the window. */
 async function expectInViewport(page: Page, card: Box) {
   const { width, height } = page.viewportSize()!;
   expect(card.x).toBeGreaterThanOrEqual(0);
@@ -59,7 +59,7 @@ test("a click on the range opens the card under it, typing goes on, the focus st
   const mark = field.locator(MARK).first();
   const card = page.getByRole("dialog", { name: "Comment" });
 
-  // Наведение Карточку не открывает.
+  // Hovering does not open the Text card.
   await mark.hover();
   await expect(card).toBeHidden();
 
@@ -84,10 +84,10 @@ test("the card follows the range when the text before it changes", async ({ page
   await expect(card).toBeVisible();
   const before = await boxOf(card);
 
-  // Длинная вставка в начало абзаца переносит строку: замечание уезжает вниз,
-  // каретка — вместе с ним, а Карточка — за диапазоном.
+  // A long insert at the start of the paragraph wraps the line: the comment moves down,
+  // the caret moves with it, and the Text card follows the range.
   await page.evaluate(() => {
-    // Tiptap кладёт движок на корень редактируемой области.
+    // Tiptap puts the engine on the root of the editable area.
     type Engine = {
       view: { dispatch: (tr: unknown) => void };
       state: { tr: { insertText: (text: string, pos: number) => unknown } };
@@ -112,7 +112,7 @@ test("with no room below the card flips above the range", async ({ page }) => {
   await expect(card).toBeVisible();
   const box = await boxOf(card);
   const range = await boxOf(mark);
-  // Над диапазоном, вплотную, и целиком в окне.
+  // Above the range, right next to it, and fully inside the window.
   expect(box.y + box.height).toBeLessThanOrEqual(range.y + 2);
   expect(range.y - (box.y + box.height)).toBeLessThan(24);
   await expectInViewport(page, box);
@@ -122,7 +122,7 @@ test("a narrow window keeps the card inside it", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await open(page, "text-card");
   const field = page.getByRole("textbox", { name: "Document" });
-  // Второе замечание — короткое, на одной строке: щелчок попадает в него, а не между строк.
+  // The second comment is short and on one line: the click lands on it, not between lines.
   await field
     .locator(MARK)
     .nth(1)
@@ -150,7 +150,7 @@ test("Alt+F10 leads into the card, Escape returns the caret; a click opens it ag
   await page.keyboard.press("Escape");
   await expect(card).toBeHidden();
   await expect(field).toBeFocused();
-  // Каретка на месте: набранное встало в замечание.
+  // The caret is in place: what was typed went into the comment.
   await page.keyboard.type("Z");
   await expect(mark).toContainText("Z");
   await expect(card).toBeHidden();
@@ -182,7 +182,7 @@ for (const theme of ["dark", "light", "dim"] as const) {
     );
     const card = page.getByRole("dialog", { name: "Comment" });
     await expect(card).toBeVisible();
-    // Входная анимация начинается с прозрачности: axe посчитал бы по ней контраст.
+    // The entrance animation starts from transparency: axe would compute contrast from that.
     await page.addStyleTag({
       content:
         "*, *::before, *::after { animation-duration: 0s !important; transition: none !important; }",

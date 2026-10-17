@@ -91,18 +91,17 @@ const ROWS: Row[] = Array.from({ length: 18 }, (_, i) => ({
 }));
 
 /**
- * Страница-список целиком из кита — **первый критерий успеха спеки, и с 2.2.0
- * он закрыт**: каркас, навигация, шапка, заголовок, прикладная таблица с
- * тулбаром и фильтрами, полоса массовых действий и пагинация. Ни одного
- * локального примитива.
+ * A list page built entirely from the kit. **It is the spec's first success criterion, and
+ * it has been met since 2.2.0**: the frame, navigation, header, title, an application table
+ * with a toolbar and filters, the bulk-action bar, and pagination. Not a single local primitive.
  *
- * До волны 18 здесь стояла низкоуровневая `Table`, и в этой докстроке была
- * оговорка «читать как готовый ответ пока рано». Оговорка снята: видимость
- * колонок, плотность, тулбар и фильтры теперь на месте.
+ * Before wave 18 this story used the low-level `Table`, and this docstring carried a caveat
+ * that it was too early to read it as a finished answer. The caveat is gone: column
+ * visibility, density, the toolbar and the filters are now in place.
  *
- * Маршрута нет: «переход» — это локальное состояние, которое едет в `routeKey`.
- * Кит о маршрутизаторе не знает вовсе (ADR-0018), а состояние таблицы держит
- * `useTableState` — кит даёт форму, владеет ею потребитель (ADR-0023).
+ * There is no route: "navigation" is local state carried in `routeKey`. The kit knows nothing
+ * about the router (ADR-0018). The table state is held by `useTableState`: the kit provides
+ * the shape, and the consumer owns it (ADR-0023).
  */
 export const AdminEntityList: Story = {
   args: { children: null },
@@ -112,13 +111,13 @@ export const AdminEntityList: Story = {
     const { state, set } = useTableState({ pageSize: 6 });
 
     /*
-      Нарезка на страницы — работа ПОТРЕБИТЕЛЯ: `DataTable` данными не владеет
-      и `items` не режет. В приложении здесь был бы запрос к серверу с
-      `page` и `pageSize`; в истории — срез массива.
+      Paging is the consumer's job: `DataTable` does not own the data and does not
+      slice `items`. In an app this would be a server request with `page` and
+      `pageSize`; in the story it is an array slice.
 
-      Раньше история считала `pageCount` и рисовала пагинацию поверх всех
-      восемнадцати строк: кнопки переключались, а таблица не менялась —
-      демо обещало то, чего не делало.
+      The story used to compute `pageCount` and draw pagination over all eighteen rows.
+      The buttons switched, but the table did not change, so the demo promised something
+      it did not do.
     */
     const page = ROWS.slice((state.page - 1) * state.pageSize, state.page * state.pageSize);
 
@@ -289,12 +288,12 @@ export const AdminEntityList: Story = {
 };
 
 /**
- * Слот нижней панели с `MobileTabBar`. Каркас даёт панели прилипание, высоту в
- * потоке, отступ под вырез экрана и скрытие на `md` и шире — сама панель этого
- * не несёт (ADR-0018). Сузьте окно ниже 768px, чтобы увидеть её.
+ * The bottom-bar slot for `MobileTabBar`. The frame provides the sticky positioning, the
+ * in-flow height, the inset for the screen notch, and hiding at `md` and wider. The bar
+ * itself carries none of this (ADR-0018). Narrow the window below 768px to see it.
  *
- * Метка `viewport-phone`: визуальный тест снимает историю на ширине телефона,
- * а не на 1280px, где слот полосу прячет и снимок не показал бы ничего.
+ * The `viewport-phone` tag: the visual test takes a snapshot of this story at phone width,
+ * not at 1280px, where the slot hides the bar and the snapshot would show nothing.
  */
 export const WithBottomBar: Story = {
   tags: ["viewport-phone"],
@@ -329,14 +328,13 @@ export const WithBottomBar: Story = {
 };
 
 /**
- * Баннеры уровня приложения над шапкой.
+ * App-level banners above the header.
  *
- * Шапка при этом остаётся липкой на `top: 0`, а `--topbar-h` продолжает
- * означать ровно её высоту: липкая стопка баннеров потребовала бы второй
- * переменной смещения, и всё, что от `--topbar-h` считает, обязано было бы
- * прибавлять её высоту (ADR-0027).
+ * The header stays sticky at `top: 0`, and `--topbar-h` still means exactly its height. A sticky
+ * stack of banners would need a second offset variable, and everything that computes from
+ * `--topbar-h` would have to add its height (ADR-0027).
  *
- * Прокрутите страницу: баннеры уезжают, шапка прилипает.
+ * Scroll the page: the banners scroll away, and the header sticks.
  */
 export const WithBanners: Story = {
   args: { children: null },

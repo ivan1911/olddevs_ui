@@ -5,38 +5,38 @@ import { DEFAULT_MESSAGES } from "../src/i18n/defaults.js";
 import { messages as ru } from "../src/locales/ru.js";
 
 /**
- * Ворота i18n: две проверки, каждая ловит свою молчаливую поломку.
+ * The i18n gate: two checks, each catching its own silent breakage.
  *
- * Первая — литерал, добавленный в компонент мимо каталога. Он не роняет ни
- * компилятор, ни линтер, и обнаруживается только когда кто-то переключает язык
- * и видит русское слово посреди английского интерфейса.
+ * The first is a literal added to a component outside the catalog. It breaks
+ * neither the compiler nor the linter, and it is found only when someone switches
+ * the language and sees a Russian word in the middle of the English interface.
  *
- * Вторая — ключ, заведённый в фолбэке и забытый в русской локали. Тип ловит
- * отсутствие ключа, но не ловит пустую строку и не ловит расхождение формы:
- * строка вместо функции читается как `[object Object]` на экране.
+ * The second is a key added to the fallback and forgotten in the Russian locale.
+ * The type catches a missing key, but not an empty string, and not a mismatch of
+ * shape: a string where a function belongs is rendered as `[object Object]` on screen.
  */
 
 const ROOT = resolve(import.meta.dirname, "..");
 
 /**
- * Что сторожим. Волна 23 расширила гейт с одного `src/` на всё, что кит
- * показывает наружу.
+ * What we guard. Wave 23 widened the gate from `src/` alone to everything the kit
+ * shows to the outside.
  *
- * `docs/` в этот список НЕ входит: у справочника свои ворота ниже («the Reference is
- * English», ADR-0073), потому что `.ts`-обход и правила белого списка ему не подходят.
+ * `docs/` is NOT in this list: the Reference has its own gate below («the Reference is
+ * English», ADR-0073), because the `.ts` walk and the allow-list rules do not suit it.
  *
- * `scripts/` тоже НЕ входит, и это осознанно. `bundle-size.mjs` разбирает
- * `docs/getting-started.md` — русский заголовок раздела и единица «кБ» лежат в
- * нём как ключи сверки, а не как текст. Гейт, вынужденный внести половину
- * `scripts/` в белый список, не сторожил бы ничего; вывод скриптов переведён
- * волной 23 и держится ревью.
+ * `scripts/` is NOT in this list either, and that is deliberate. `bundle-size.mjs` parses
+ * `docs/getting-started.md`: the Russian section heading and the Russian unit for
+ * kilobytes are there as reconciliation keys, not as text. A gate that was forced to put
+ * half of `scripts/` on the allow list would guard nothing; the scripts' output was
+ * translated in wave 23 and is held by review.
  */
 const ROOTS = ["src", "tests", "tests-visual", ".storybook"];
 
 /**
- * Белый список — ПЕРЕЧИСЛЕНИЕ С ОБОСНОВАНИЕМ, а не regexp «пропускать
- * кириллицу». Regexp снял бы гейт целиком: он не отличает данные ввода от
- * забытой подписи, то есть разрешал бы ровно то, что ищет.
+ * The allow list is an ENUMERATION WITH REASONS, not a regexp that "skips Cyrillic".
+ * A regexp would drop the gate entirely: it does not tell input DATA from a forgotten
+ * label, so it would allow exactly what the gate is looking for.
  */
 const ALLOWED = [
   {
@@ -73,11 +73,12 @@ const ALLOWED = [
 ];
 
 /**
- * Детектор кириллицы escape-последовательностями, а не литералом.
+ * The Cyrillic detector uses escape sequences, not a literal.
  *
- * После волны 23 гейт сканирует и `tests/`, то есть самого себя: класс
- * `[а-яА-ЯёЁ]`, записанный буквами, поймал бы эту строку и сделал файл вечно
- * красным. Диапазоны те же — а-я, А-Я и обе ё.
+ * After wave 23 the gate scans `tests/` too, that is, itself: a character class with
+ * the letters written out literally would catch this very line and make the file
+ * permanently red. The ranges are the same: lowercase and uppercase Russian letters,
+ * plus both yo.
  */
 const CYRILLIC = /[\u0430-\u044f\u0410-\u042f\u0451\u0401]/;
 
@@ -86,9 +87,9 @@ function sourceFiles(dir: string): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) out.push(...sourceFiles(full));
-    // Исключений по имени файла больше нет: волна 23 перевела и витрину, и
-    // шаблоны Code Connect (последние заодно удалены, ADR-0037), поэтому
-    // истории гейт сторожит наравне с компонентами.
+    // There are no exceptions by file name any more: wave 23 translated both the
+    // showcase and the Code Connect templates (the latter were also deleted, ADR-0037),
+    // so the gate guards the stories on a par with the components.
     else if (/\.tsx?$/.test(entry.name)) out.push(full);
   }
   return out;
@@ -122,10 +123,10 @@ describe("no user-visible literals bypass the catalog", () => {
   });
 
   test("no allow-list entry has outlived its file", () => {
-    // Тот же сторож, что у ворот RSC: запись, пережившая файл, молча разрешает
-    // то, чего нет, — и следующий файл с таким именем окажется вне проверки.
-    // Волна 23 растянула список с двух путей до пяти по четырём корням, и
-    // держать его в голове стало нельзя.
+    // The same guard as the RSC gate: an entry that outlives its file silently allows
+    // something that no longer exists, and the next file with that name ends up
+    // outside the check. Wave 23 stretched the list from two paths to five across
+    // four roots, and it became impossible to keep in one's head.
     const stale = ALLOWED.flatMap((a) => a.files).filter(
       (file) => !existsSync(resolve(ROOT, file))
     );
@@ -136,15 +137,15 @@ describe("no user-visible literals bypass the catalog", () => {
   });
 
   test("the allow list stays short and explained", () => {
-    // Растущий белый список — это гейт, который выключают по одной строке.
-    // Потолок считает ПРИЧИНЫ, а не пути: одна причина вправе покрыть два файла,
-    // но четвёртая причина — это разбор, а не правка числа.
+    // A growing allow list is a gate that gets switched off one line at a time.
+    // The ceiling counts REASONS, not paths: one reason may cover two files, but a
+    // fourth reason calls for a review, not an edit of the number.
     expect(ALLOWED.length).toBeLessThanOrEqual(3);
     for (const entry of ALLOWED) expect(entry.why.length).toBeGreaterThan(40);
   });
 });
 
-/** Форма значения: строка остаётся строкой, функция — функцией. */
+/** The shape of a value: a string stays a string, a function stays a function. */
 function shapeOf(value: unknown): string {
   if (typeof value === "function") return "function";
   if (value && typeof value === "object") return "object";
@@ -196,8 +197,8 @@ describe("locale completeness", () => {
   });
 
   test("the locale carries no extra keys absent from the fallback", () => {
-    // Лишний ключ — это либо опечатка, либо строка, которую компонент никогда
-    // не прочитает. И то и другое лучше узнать здесь.
+    // An extra key is either a typo or a string the component never reads.
+    // It is better to find out which here.
     const extra: string[] = [];
     walk(
       ru as unknown as Record<string, unknown>,
@@ -210,14 +211,15 @@ describe("locale completeness", () => {
 });
 
 /**
- * Ворота справочника (ADR-0073, английский Оригинал). Раньше `docs/` был исключён из
- * гейта: справочник был русским по ADR-0034. Теперь Оригинал английский, русский
- * Перевод живёт на сайте, и кириллица в `docs/**` и `README.md` — дефект.
+ * The gate for the Reference (ADR-0073, English Original). `docs/` used to be excluded
+ * from the gate: the Reference was Russian under ADR-0034. Now the Original is English,
+ * the Russian Translation lives on the site, and Cyrillic in `docs/**` and `README.md`
+ * is a defect.
  *
- * Перечень ниже — страницы, где русские строки являются ДАННЫМИ: значения русского
- * каталога сообщений, русский пример ввода, русская подпись в примере кода. Страница
- * без них в список не попадает. Поэтому он проверяется и в обратную сторону: запись
- * для страницы без кириллицы устарела и роняет тест, иначе список только растёт.
+ * The list below holds the pages where Russian strings are DATA: values of the Russian
+ * message catalog, a Russian input example, a Russian caption in a code example. A page
+ * without them does not get on the list. So the list is also checked in reverse: an entry
+ * for a page without Cyrillic is stale and fails the test, or the list would only grow.
  */
 const DOCS_ALLOWED_PAGES = new Set([
   "api/editor-extension.md",

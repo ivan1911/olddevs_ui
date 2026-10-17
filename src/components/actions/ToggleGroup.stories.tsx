@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ToggleGroup } from "./ToggleGroup.js";
 import { Text } from "../content/Text.js";
 
-/** Волна 9, облегчённая планка: шла вместе с примитивами навигации. */
+/** Wave 9, a lighter quality bar: it shipped together with the navigation primitives. */
 const meta = {
   title: "Actions/ToggleGroup",
   component: ToggleGroup,

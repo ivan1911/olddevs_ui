@@ -4,9 +4,9 @@ import { afterEach, expect, test } from "vitest";
 import { useSubmenuPlacement } from "../src/hooks/useSubmenuPlacement.js";
 
 /*
-  Подменю Редактора на узком экране (OLDSUI-147). Сбоку от пункта на телефоне
-  места нет ни справа, ни слева: на iPhone сетка размера таблицы уехала за
-  левый край. Там подменю открывается под своим пунктом, поверх родителя.
+  Editor submenu on a narrow screen (OLDSUI-147). On a phone there is no room beside the
+  item, neither on the right nor on the left: on iPhone the table size grid ran past the
+  left edge. There the submenu opens under its item, over the parent.
 */
 
 function mockWidth(narrow: boolean) {

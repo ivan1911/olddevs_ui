@@ -17,7 +17,7 @@ const TONES: Tone[] = ["neutral", "accent", "success", "warning", "danger"];
 
 export const Playground: Story = {};
 
-/** Пять ступеней шкалы, доступных тексту. */
+/** The five steps of the scale available to text. */
 export const Sizes: Story = {
   render: (args) => (
     <div className="flex flex-col gap-3">
@@ -31,7 +31,7 @@ export const Sizes: Story = {
   ),
 };
 
-/** Приглушённость: основной, вторичный, служебный. */
+/** Muting: primary, secondary, utility. */
 export const Muting: Story = {
   render: (args) => (
     <div className="flex flex-col gap-2">
@@ -48,7 +48,7 @@ export const Muting: Story = {
   ),
 };
 
-/** Тон перекрывает приглушённость: у окрашенного текста вторичности нет. */
+/** A tone overrides muting: colored text has no secondary level. */
 export const Tones: Story = {
   render: (args) => (
     <div className="flex flex-col gap-2">
@@ -77,7 +77,7 @@ export const Weights: Story = {
   ),
 };
 
-/** Обрезка: одной строкой и на заданном числе строк. */
+/** Truncation: to one line, or to a set number of lines. */
 export const Truncation: Story = {
   render: (args) => (
     <div className="flex w-[280px] flex-col gap-4">
@@ -102,7 +102,7 @@ export const Truncation: Story = {
   ),
 };
 
-/** Матрица размер × уровень: три уровня цвета и жирное начертание на каждом размере. */
+/** Size × level matrix: three color levels and the bold weight at each size. */
 export const Matrix: Story = {
   render: (args) => (
     <div className="flex flex-col gap-6">
@@ -124,8 +124,9 @@ export const Matrix: Story = {
 const TICKS = ["0:00", "0:11", "1:38", "8:21"];
 
 /**
- * Цифры равной ширины. Слева строки одной длины кончаются в разных местах —
- * именно так таймер и ездит на каждом тике; справа правый край стоит.
+ * Tabular numerals (digits of equal width). On the left, lines of the same length end in
+ * different places, which is exactly how a timer jumps on every tick; on the right the
+ * right edge stays put.
  */
 export const Numerals: Story = {
   render: (args) => (
