@@ -24,9 +24,9 @@ import { useRichTextToolState } from "./hooks/useRichTextToolState.js";
 import { RICH_TEXT_PRESETS, TOOLS } from "./core/tools.js";
 
 /*
-  Нейтральный документ: заголовки, списки, чек-лист, цитата, блок кода,
-  разделитель и все метки — чтобы типографику было видно целиком, без доменных
-  данных.
+  Neutral document: headings, lists, a checklist, a quote, a code Block,
+  a divider and all Marks, so the typography can be seen in full, without
+  domain data.
 */
 const SAMPLE =
   "<h2>Release notes</h2>" +
@@ -45,10 +45,10 @@ const SAMPLE =
   "<hr><p>Text after the divider.</p>";
 
 /*
-  Блоки кода: по одному на каждый язык Редактора и обычный текст.
-  В образцах есть ключевые слова, строки, числа, комментарии и теги — чтобы
-  тему подсветки было видно целиком и axe мерил контраст каждой роли токена
-  во всех трёх темах.
+  Code Blocks: one for each Editor language, and plain text. The samples
+  contain keywords, strings, numbers, comments and tags, so the highlight theme
+  can be seen in full and axe measures the contrast of every token role in all
+  three themes.
 */
 const CODE_SAMPLES = [
   ["python", '# Greets a user\ndef greet(name: str) -> str:\n    return f"Hello, {name}!" * 2'],
@@ -84,9 +84,10 @@ const CODE_BLOCKS =
   "<pre><code>Plain text is never highlighted: if (a) { return b; }</code></pre>";
 
 /*
-  Палитры в документе: имена цвета текста — на `span`, имена маркера — на `mark`.
-  Списки имён — данные кита (`palette.ts`), поэтому новый цвет попадает в
-  историю сам и в её снимки во всех темах (`dark`, `light`, `dim`) тоже.
+  Palette names in the Document: text color names go on `span`, highlight
+  names on `mark`. The name lists are kit data (`palette.ts`), so a new color
+  gets into the story by itself, and into its snapshots in all themes (`dark`,
+  `light`, `dim`) too.
 */
 const COLOURS =
   "<h2>Colour, highlight and alignment</h2>" +
@@ -102,13 +103,15 @@ const COLOURS =
   "<p>Text on the default alignment, to the left.</p>";
 
 /*
-  Цвет автора: единственный `style` в документе, и только в строгой
-  форме. Рядом с палитрой — чтобы разницу видно: палитра следует за темой
-  (`dark`, `light`, `dim`), цвет автора остаётся тем же во всех трёх, и на одной
-  из тем пара «цвет — фон» может не держать контраст. Так задумано и сказано в
-  документации; история снимается во всех темах, чтобы это было видно.
-  Текст на любом маркере тёмный (`--marker-text`): и на яркой
-  палитре, и на цвете автора; цвет текста автора под маркером им перекрывается.
+  Author color: the only `style` in the Document, and only in its strict form.
+  It sits next to the palette so the difference is visible: the palette follows
+  the theme (`dark`, `light`, `dim`), the author color stays the same in all
+  three, and in one of the themes the "color on background" pair may lose
+  contrast. This is intended and documented; the story is captured in all
+  themes so that this shows.
+  Text on any highlight is dark (`--marker-text`): both on a bright palette
+  highlight and on an author-color highlight; the author's text color under a
+  highlight is overridden by it.
 */
 const CUSTOM_COLOURS =
   "<h2>Custom colour</h2>" +
@@ -126,8 +129,8 @@ const CUSTOM_COLOURS =
   "<p>Select a word and choose Color › «Custom color…» for the text or the highlight.</p>";
 
 /*
-  Таблица: строка-заголовок, текст и метки в ячейках. Шесть столбцов — чтобы на
-  узком экране она не помещалась и прокручивалась (`TableNarrow`).
+  Table: a header row, text and Marks in the cells. Six columns, so that on a
+  narrow screen it does not fit and scrolls (`TableNarrow`).
 */
 const TABLE_SAMPLE =
   "<h2>Roadmap</h2><p>Quarterly plan by area.</p>" +
@@ -143,10 +146,10 @@ const TABLE_SAMPLE =
   "</tbody></table><p>Text after the table.</p>";
 
 /*
-  Слитые ячейки: заголовок «Q1» над двумя столбцами (`colspan`) и область,
-  растянутая на две строки (`rowspan`), — так приходит таблица из Word или
-  Google Docs. Каретка — в обычной ячейке, и «Ячейка › Объединить» доступно
-  после выделения нескольких ячеек мышью или Shift со стрелками.
+  Merged cells: a "Q1" header over two columns (`colspan`) and an area stretched
+  over two rows (`rowspan`), the way a table arrives from Word or Google Docs.
+  The caret is in an ordinary cell, and "Cell › Merge cells" is available after
+  selecting several cells with the mouse or with Shift and the arrows.
 */
 const MERGED_SAMPLE =
   "<h2>Budget</h2>" +
@@ -164,9 +167,10 @@ const MERGED_SAMPLE =
   "</tbody></table><p>Merged cells stay merged in HTML; Markdown keeps the text and loses the merge.</p>";
 
 /*
-  Сортировка и выравнивание: числа с разрядами, даты ISO и `ДД.ММ.ГГГГ`, текст.
-  Сумма выровнена вправо, статус — по центру (`data-align` на каждой ячейке
-  столбца). Строка-заголовок при сортировке остаётся первой.
+  Sorting and alignment: numbers with digit grouping, ISO dates and
+  `DD.MM.YYYY`, text. The Amount column is right-aligned and Status is centered
+  (`data-align` on every cell of the column). The header row stays first when
+  sorting.
 */
 const SORT_SAMPLE =
   "<h2>Invoices</h2>" +
@@ -183,7 +187,7 @@ const SORT_SAMPLE =
   '<td data-align="center"><p>draft</p></td></tr>' +
   "</tbody></table><p>Put the caret in a column and choose Table › Sort.</p>";
 
-/** Часть ключа перемонтирования для записи `tools`: имя, у `tool()` — ещё и опции. */
+/** Part of the remount key for a `tools` entry: the name, and for `tool()` the options too. */
 const toolKey = (entry: NonNullable<RichTextEditorProps["tools"]>[number]) =>
   typeof entry === "string"
     ? entry
@@ -198,8 +202,8 @@ const meta = {
   args: { "aria-label": "Document", defaultValue: SAMPLE },
   render: (args) => (
     <div className="max-w-[640px]">
-      {/* Набор инструментов читается при создании движка: смена пресета в
-          панели управления пересоздаёт поле ключом. */}
+      {/* The Tool set is read when the engine is created: changing the preset in
+          the controls panel remounts the field with a new key. */}
       <RichTextEditor key={`${args.preset}-${args.tools?.map(toolKey).join()}`} {...args} />
     </div>
   ),
@@ -209,16 +213,16 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Все Блоки и Метки и фиксированная Панель в пресете `full`. Панель — одна
- * остановка Tab, по кнопкам — стрелки, Home и End; подсказка называет
- * сочетание клавиш. Раскладка — порядок кита: «+», HTML, «¶»,
- * выравнивание ▾ | метки и «…» (в нём и блок кода) | списки ▾ |
- * ссылка, картинка, таблица ▾, эмодзи | отмена и повтор, справочник сочетаний
- * у правого края.
+ * All Blocks, all Marks and the fixed Toolbar in the `full` preset. The Toolbar
+ * is one Tab stop; the buttons are reached with the arrows, Home and End, and
+ * the hint names the key combination. The layout follows the kit's order: "+",
+ * HTML, "¶", alignment ▾ | Marks and "…" (which also holds the code Block) |
+ * lists ▾ | link, image, table ▾, emoji | undo and redo, with the keyboard
+ * shortcuts popover at the right edge.
  */
 export const Playground: Story = {};
 
-/** Пресет `basic` — для комментариев и коротких описаний. */
+/** The `basic` preset, for comments and short descriptions. */
 export const BasicPreset: Story = {
   args: {
     preset: "basic",
@@ -228,23 +232,23 @@ export const BasicPreset: Story = {
 };
 
 /**
- * Точный список инструментов: `tools` сильнее пресета. Порядок кнопок задаёт
- * кит, а не список. Заголовков в наборе нет — `<h2>` из значения пришёл
- * абзацем.
+ * An exact list of Tools: `tools` overrides the preset. The kit sets the order
+ * of the buttons, not the list. There are no headings in the set: the `<h2>`
+ * from the value came in as a paragraph.
  */
 export const CustomTools: Story = {
   args: { tools: ["bold", "italic", "taskList", "history"] },
 };
 
-/** Без Панели: форматирование остаётся за клавиатурой и markdown-шорткатами. */
+/** Without a Toolbar: formatting stays with the keyboard and the Markdown shortcuts. */
 export const WithoutToolbar: Story = {
   args: { toolbar: "none" },
 };
 
 /**
- * Плавающая Панель: выделите слово — Панель появится над ним. `Alt+F10` из
- * документа переводит в неё фокус, `Shift+Tab` возвращает. На сенсорном
- * экране (`pointer: coarse`) вместо неё — фиксированная.
+ * Floating Toolbar: select a word and the Toolbar appears above it. `Alt+F10`
+ * from the Document moves focus into it, `Shift+Tab` returns it. On a touch
+ * screen (`pointer: coarse`) a fixed Toolbar is shown instead.
  */
 export const FloatingToolbar: Story = {
   args: {
@@ -255,7 +259,7 @@ export const FloatingToolbar: Story = {
       "<p>From the keyboard: select with Shift and the arrows, then press Alt+F10.</p>",
   },
   render: (args) => (
-    // Запас сверху — Панель встаёт над первой строкой.
+    // Extra space on top: the Toolbar sits above the first line.
     <div className="max-w-[640px] pt-16">
       <RichTextEditor {...args} />
     </div>
@@ -263,15 +267,17 @@ export const FloatingToolbar: Story = {
 };
 
 /*
-  Меню выделения, показанное сразу: фокус в Документ, выделение
-  на слове и команда показа — та же, которой плашку зовёт `Alt+F10`. Без
-  команды плашка ждала бы задержку показа, и снимок мог бы её не застать.
+  The Bubble menu shown at once: focus goes to the Document, the selection is
+  on a word, and the command is the show command that `Alt+F10` sends to the
+  pill. Without the command the pill would wait for the show delay, and the
+  snapshot could miss it.
 
-  Одного `show` мало: плагин `BubbleMenu` сначала считает позицию,
-  а потом показывает, а скрытой плашке позицию не считает. Плашка встаёт без
-  `top`/`left` — под полем — и уезжает к выделению только по задержке показа,
-  через ~250 мс. Снимок, устоявшийся раньше, ловил её под полем. Второй
-  командой позиция считается уже у видимой плашки.
+  One `show` is not enough: the `BubbleMenu` plugin computes the position first
+  and only then shows, and a hidden pill does not compute its position. The pill
+  is placed without `top`/`left`, under the field, and moves to the selection
+  only after the show delay, about 250 ms. A snapshot taken before it settled
+  caught it under the field. The second command computes the position for the
+  already visible pill.
 */
 function useShownBubble(
   ref: RefObject<RichTextEditorHandle | null>,
@@ -312,7 +318,7 @@ function ShownBubble({ surface }: { surface?: "paper" }) {
   const ref = useRef<RichTextEditorHandle>(null);
   useShownBubble(ref, "compact");
   return (
-    // Запас сверху — плашка встаёт над строкой, а не под ней.
+    // Extra space on top: the pill sits above the line, not below it.
     <div className="max-w-[640px] pt-16">
       <RichTextEditor
         ref={ref}
@@ -326,26 +332,26 @@ function ShownBubble({ surface }: { surface?: "paper" }) {
 }
 
 /**
- * Меню выделения (`toolbar="bubble"`): компактная плашка на
- * инверсной поверхности — тёмная в светлой теме, светлая в тёмных. Состав
- * задан китом: «¶», «Списки», жирный, курсив, подчёркнутый, «Цвет», «…», ссылка,
- * эмодзи; кнопки выключенных инструментов нет. Показ и позиция — как у плавающей Панели;
- * меню, поповеры и подсказки из плашки — на обычной поверхности. Плашка
- * показана при показе истории.
+ * Bubble menu (`toolbar="bubble"`): a compact pill on an inverse surface, dark
+ * in the light theme and light in the dark ones. Its contents are set by the
+ * kit: "¶", "Lists", bold, italic, underline, "Color", "…", link, emoji; buttons
+ * of disabled Tools are absent. Showing and position work as for the floating
+ * Toolbar. Menus, popovers and hints opened from the pill sit on the regular
+ * surface. The pill is shown as soon as the story is shown.
  */
 export const SelectionBubble: Story = {
   render: () => <ShownBubble />,
 };
 
-/** Лист `surface="paper"`: светлый Документ, плашка — в теме приложения. */
+/** The `surface="paper"` sheet: a light Document, the pill in the app theme. */
 export const SelectionBubblePaper: Story = {
   render: () => <ShownBubble surface="paper" />,
 };
 
 /**
- * Меню выделения в ящике. Плашка лежит в DOM Редактора, поэтому едет вместе
- * с текстом при прокрутке ящика; Escape в открытом из неё меню закрывает
- * только меню.
+ * Bubble menu in a drawer. The pill sits in the Editor's DOM, so it moves with
+ * the text when the drawer scrolls; Escape in a menu opened from it closes only
+ * that menu.
  */
 export const SelectionBubbleInDrawer: Story = {
   render: function Render() {
@@ -362,8 +368,8 @@ export const SelectionBubbleInDrawer: Story = {
 };
 
 /**
- * Меню выделения в контейнере прокрутки. У верхнего края контейнера плашка
- * переворачивается под выделение, у боковых — сдвигается внутрь.
+ * Bubble menu in a scroll container. Near the container's top edge the pill
+ * flips below the selection; near the side edges it shifts inward.
  */
 export const SelectionBubbleInScroll: Story = {
   render: () => (
@@ -387,10 +393,10 @@ export const SelectionBubbleInScroll: Story = {
 };
 
 /*
-  Стекло видно только над контрастным фоном: над ровным текстом
-  полупрозрачная подложка неотличима от сплошной. Поэтому над выделенной
-  строкой — ряд цветных Меток (Панель), под ней — ещё несколько (списки «¶» и
-  «…» раскрываются вниз).
+  Glass shows only over a contrasting background: over plain text a translucent
+  backing is indistinguishable from a solid one. So above the selected line
+  there is a row of colored Marks (the Toolbar), and below it several more (the
+  "¶" and "…" lists open downward).
 */
 const MARKS_ROW =
   '<p><mark data-color="yellow">Pipeline</mark> <mark data-color="orange">forecast</mark> ' +
@@ -428,27 +434,27 @@ function ShownGlass({ toolbar }: { toolbar: "floating" | "bubble" }) {
 }
 
 /**
- * Стекло всплывающих поверхностей: плавающая Панель, меню
- * выделения, списки меню и поповеры Редактора — полупрозрачная подложка своей
- * поверхности (82 %) с размытием фона в 14px, как у тостов. При
- * `prefers-reduced-transparency` и `prefers-contrast: more` подложка сплошная.
- * Панель показана при показе истории; «¶» и «…» раскрываются над цветными
- * строками ниже.
+ * Glass on floating surfaces: the floating Toolbar, the Bubble menu, the
+ * Editor's menu lists and popovers get a translucent backing of their own
+ * surface (82 %) with the background blurred by 14px, as toasts do. With
+ * `prefers-reduced-transparency` and `prefers-contrast: more` the backing is
+ * solid. The Toolbar is shown as soon as the story is shown; "¶" and "…" open
+ * over the colored rows below.
  */
 export const GlassFloatingToolbar: Story = {
   render: () => <ShownGlass toolbar="floating" />,
 };
 
-/** Меню выделения на стекле: инверсная поверхность, те же 82 % и 14px. */
+/** Bubble menu on glass: an inverse surface, the same 82 % and 14px. */
 export const GlassSelectionBubble: Story = {
   render: () => <ShownGlass toolbar="bubble" />,
 };
 
 /**
- * Ссылки: кнопка «Ссылка» или `Ctrl/⌘+K` открывают поле адреса у выделения.
- * Enter применяет, Escape отменяет; в существующей ссылке есть «Убрать
- * ссылку». Адрес — только `http`, `https` или `mailto`; адрес, набранный в
- * тексте, становится ссылкой сам.
+ * Links: the "Link" button or `Ctrl/⌘+K` opens an address field at the
+ * selection. Enter applies, Escape cancels; an existing link has "Remove link".
+ * Addresses are `http`, `https` or `mailto` only; an address typed into the
+ * text becomes a link by itself.
  */
 export const LinkEditing: Story = {
   args: {
@@ -462,9 +468,9 @@ export const LinkEditing: Story = {
 };
 
 /**
- * Длинный документ под липкой шапкой приложения. Шапка публикует свою высоту в
- * `--topbar-h` (здесь — вручную, у `TopBar` кита — сама), и Панель липнет
- * вплотную под ней, пока поле на экране.
+ * A long Document under the app's sticky header. The header publishes its
+ * height in `--topbar-h` (set by hand here, and by the kit's `TopBar` itself),
+ * and the Toolbar sticks right below it while the field is on screen.
  */
 export const StickyUnderHeader: Story = {
   parameters: { layout: "fullscreen" },
@@ -484,8 +490,9 @@ export const StickyUnderHeader: Story = {
 };
 
 /**
- * Редактор в окне. Escape в меню «¶» и в поповере ссылки закрывает меню или
- * поповер, а не окно: их слои — в общем стеке оверлеев кита (ADR-0041).
+ * Editor in a dialog. Escape in the "¶" menu or in the link popover closes the
+ * menu or popover, not the dialog: their layers are in the kit's shared overlay
+ * stack (ADR-0041).
  */
 export const InsideDialog: Story = {
   render: function Render(args) {
@@ -507,9 +514,9 @@ export const InsideDialog: Story = {
 };
 
 /**
- * Редактор в ящике: меню «…» и поповеры цвета
- * выбираются мышью и клавиатурой, Escape закрывает по одному уровню — сначала
- * поповер или меню, и только затем ящик (ADR-0041).
+ * Editor in a drawer: the options of the "…" menu and of the color popovers
+ * are selected with the mouse and the keyboard. Escape closes one level at a
+ * time: first the popover or menu, and only then the drawer (ADR-0041).
  */
 export const InsideDrawer: Story = {
   render: function Render(args) {
@@ -529,35 +536,36 @@ export const InsideDrawer: Story = {
 };
 
 /**
- * Цвет текста, маркер и выравнивание. Выделите слово и выберите
- * цвет в поповере «Цвет» (сетки «Цвет текста» и «Цвет маркера») или кнопкой
- * «Маркер»; выравнивание — меню «Выравнивание ▾». В документе остаются имена палитры (`data-color`, `data-align`), без `style`;
- * конкретный цвет подставляет тема, поэтому история снимается во всех трёх.
+ * Text color, highlight and alignment. Select a word and select a color in the
+ * "Color" popover (the "Text color" and "Highlight color" grids), or use the
+ * "Highlight" button; alignment is the "Alignment ▾" menu. The Document keeps
+ * the palette names (`data-color`, `data-align`) and no `style`; the theme
+ * supplies the actual color, so the story is captured in all three.
  */
 export const ColourAndAlignment: Story = {
   args: { defaultValue: COLOURS },
 };
 
 /**
- * Свой цвет: «Свой цвет…» у сеток поповера «Цвет» открывает
- * `ColorPicker` в поповере с предупреждением о контрасте против фона ТЕКУЩЕЙ
- * темы. В документе остаётся `style="color:#rrggbb"` на `span` и
- * `style="background-color:#rrggbb"` на `mark`; цвет автора не следует за
- * темой, в отличие от палитры.
+ * Custom color: "Custom color…" in the grids of the "Color" popover opens a
+ * `ColorPicker` inside the popover, with a warning about contrast against the
+ * CURRENT theme's background. The Document keeps `style="color:#rrggbb"` on
+ * `span` and `style="background-color:#rrggbb"` on `mark`; an author color does
+ * not follow the theme, unlike the palette.
  *
- * Каждый свой цвет текста в образце стоит на своём маркере: пара не зависит от
- * темы и держит контраст во всех трёх, поэтому axe-аудит историй проходит, а
- * переключение темы по-прежнему показывает, что свой цвет остаётся на месте.
- * Голый цвет автора на фоне темы контраст во всех темах не удержит — именно
- * об этом предупреждает поповер.
+ * Every custom text color in the sample sits on its own highlight: the pair does
+ * not depend on the theme and keeps contrast in all three, so the axe audit of
+ * the stories passes, while switching the theme still shows that the custom
+ * color stays in place. A bare author color on a theme background cannot keep
+ * contrast in every theme, which is exactly what the popover warns about.
  */
 export const CustomColour: Story = {
   args: { defaultValue: CUSTOM_COLOURS },
 };
 
 /*
-  Документ с заголовками четырёх уровней: тот же образец в Редакторе
-  и в Просмотре, чтобы типографику H1 сравнивали на одном тексте.
+  A Document with four heading levels: the same sample in the Editor and in the
+  View, so the H1 typography is compared on one text.
 */
 const HEADING_LEVELS =
   "<h1>Quarterly report</h1>" +
@@ -567,35 +575,36 @@ const HEADING_LEVELS =
   "<h4>Notes</h4><p>Text under the fourth level.</p>";
 
 /**
- * Заголовок первого уровня: с инструментом `heading1` (в `full` он
- * есть) уровни Блока — 1–4. H1 ставится сочетанием `Ctrl/⌘+Alt+1`, набором
- * `# ` или пунктом «Заголовок 1» меню «¶». Тема переключается
- * тулбаром витрины: типографика H1 снимается в `dark`, `light` и `dim`.
+ * First-level heading: with the `heading1` Tool (it is in `full`), the Block
+ * levels are 1–4. H1 is set with `Ctrl/⌘+Alt+1`, by typing `# `, or with the
+ * "Heading 1" item of the "¶" menu. The theme is switched with the showcase
+ * toolbar: the H1 typography is captured in `dark`, `light` and `dim`.
  */
 export const Heading1: Story = {
   args: { defaultValue: HEADING_LEVELS },
 };
 
 /**
- * Тот же документ на листе `surface="paper"`: H1 светлый в любой теме
- * приложения, как остальной текст листа.
+ * The same Document on a `surface="paper"` sheet: H1 is light in any app
+ * theme, like the rest of the sheet's text.
  */
 export const Heading1Paper: Story = {
   args: { surface: "paper", defaultValue: HEADING_LEVELS },
 };
 
 /**
- * Экран, у которого H1 уже стоит над Редактором, выключает `heading1`: в меню
- * «¶» нет пункта «Заголовок 1», а `<h1>` из значения приходит абзацем.
+ * A screen that already has an H1 above the Editor turns `heading1` off: the
+ * "¶" menu has no "Heading 1" item, and the `<h1>` from the value comes in as a
+ * paragraph.
  */
 export const WithoutHeading1: Story = {
   args: { tools: TOOLS.filter((tool) => tool !== "heading1"), defaultValue: HEADING_LEVELS },
 };
 
 /*
-  Каретка в Блоке и открытое меню Панели, как только движок создан: меню
-  открывается нажатием, а не пропом, и история показывает его открытым.
-  `button` — начало имени кнопки: «¶», «Выравнивание» или «Списки».
+  The caret in a Block and an open Toolbar menu, once the engine is created: the
+  menu is opened by a click, not by a prop, and the story shows it open.
+  `button` is the start of the button's name: "¶", "Alignment" or "List".
 */
 function useOpenBlockMenu(
   ref: RefObject<RichTextEditorHandle | null>,
@@ -615,7 +624,7 @@ function useOpenBlockMenu(
         if (end < 0 && node.isText && node.text === text) end = pos + node.nodeSize;
       });
       if (end > 0) editor.commands.setTextSelection(end);
-      // В истории одно поле, и кнопка меню на странице одна.
+      // The story has one field, so there is one menu button on the page.
       const trigger = document.querySelector<HTMLElement>(`button[aria-label^="${button}"]`);
       frame = requestAnimationFrame(() => trigger?.click());
     };
@@ -639,25 +648,27 @@ function OpenBlockMenu({ caret }: { caret: string }) {
 }
 
 /**
- * Меню «¶» — тип строки: Текст и Заголовок 1–4, у
- * каждого — сочетание; списки — в «Списки ▾», цитата — флажок «…». Каретка в
- * заголовке, поэтому отмечен «Heading 2», и он же — иконка (H2) и имя кнопки.
- * Выбор меняет тип строки с сохранением текста; `Ctrl/⌘+Z` отменяет его одним шагом.
+ * The "¶" menu sets the line type: Text and Heading 1–4, each with its shortcut;
+ * lists are under "List ▾", and the quote is a checkbox item in the "…" menu.
+ * The caret is in a heading, so "Heading 2" is checked, and it is also the icon
+ * (H2) and the button's name. Choosing an item changes the line type and keeps
+ * the text; `Ctrl/⌘+Z` undoes it in one step.
  */
 export const BlockTypeMenu: Story = {
   render: () => <OpenBlockMenu caret="Project plan" />,
 };
 
-/** Каретка в пункте списка: решает строка — отмечен «Text», иконка «¶». */
+/** The caret in a list item: the line decides, so "Text" is checked and the icon is "¶". */
 export const BlockTypeMenuInList: Story = {
   render: () => <OpenBlockMenu caret="A bulleted item keeps its text when it becomes a heading" />,
 };
 
 /*
-  Ручка Блока, показанная сразу: фокус в Документ и каретка в
-  тексте `text` — ручка видна только у Блока с кареткой при фокусе в Редакторе,
-  наведения она не ждёт. С `open` меню ещё и открыто нажатием на ручку, как
-  щелчком: ручка появляется кадром позже каретки, поэтому её ждут.
+  The Block handle shown at once: focus goes to the Document and the caret to
+  the `text`. The handle is visible only on the Block that holds the caret while
+  the Editor has focus; it does not wait for hover. With `open` the menu is also
+  opened by pressing the handle, as with a click: the handle appears one frame
+  after the caret, so the story waits for it.
 */
 function useShownHandle(
   ref: RefObject<RichTextEditorHandle | null>,
@@ -667,8 +678,9 @@ function useShownHandle(
 ) {
   useEffect(() => {
     let frame = 0;
-    // Подменю — как с клавиатуры, фокус на пункте и `→`: наведение мышью
-    // открыло бы его с задержкой, и снимок ловил бы промежуточный кадр.
+    // The submenu opens as it does from the keyboard: focus on the item and `→`.
+    // Hovering with the mouse would open it after a delay, and the snapshot
+    // would catch an intermediate frame.
     const openSubmenu = () => {
       const item = Array.from(
         document.querySelectorAll<HTMLElement>('[role="menuitem"][aria-haspopup]')
@@ -723,7 +735,7 @@ function ShownHandle({
 }: {
   caret: string;
   open?: boolean;
-  /** Открыть и подменю — пункт, чьё имя начинается с этих слов. */
+  /** Also opens a submenu: the item whose name starts with these words. */
   submenu?: string;
   document?: string;
 }) {
@@ -737,19 +749,20 @@ function ShownHandle({
 }
 
 /**
- * Ручка Блока «⋮»: у Блока с кареткой, слева от его первой строки,
- * в левом поле Документа. Каретка во втором пункте списка, а ручка — у первой
- * строки списка: Блок — весь список. Наведение ручку не показывает; с
- * клавиатуры меню открывает `Ctrl/⌘+/`.
+ * Block handle "⋮": on the Block with the caret, to the left of its first line,
+ * in the Document's left margin. The caret is in the second item of the list,
+ * but the handle is at the list's first line: the Block is the whole list.
+ * Hovering does not show the handle; from the keyboard, `Ctrl/⌘+/` opens the
+ * menu.
  */
 export const BlockHandle: Story = {
   render: () => <ShownHandle caret="Second item of the list" />,
 };
 
 /**
- * Меню ручки: Добавить › (пункты Меню вставки, новый Блок ниже), Формат ›
- * (пункты «¶»), Вверх, Вниз, Дублировать и Удалить — красным. У абзаца
- * верхнего уровня подписаны сочетания: они делают то же, что пункты.
+ * The handle menu: Add › (the Insert menu items, a new Block below), Format ›
+ * (the "¶" items), Move up, Move down, Duplicate and Delete, in red. A top-level
+ * paragraph shows its shortcuts: they do the same as the items.
  */
 export const BlockHandleMenu: Story = {
   render: () => (
@@ -776,29 +789,30 @@ function OpenToolbarMenu({ caret, button }: { caret: string; button: string }) {
 }
 
 /**
- * Меню «Выравнивание ▾»: По левому краю, По центру, По правому
- * краю с сочетаниями. Каретка в строке по центру — отмечен «Align center», его
- * иконка стоит на кнопке, а имя кнопки — «Alignment: center». По ширине нет
- * (WCAG 1.4.8). Заодно видна компактная Панель одним рядом в колонке 640 px.
+ * The "Alignment ▾" menu: Align left, Align center and Align right, with their
+ * shortcuts. The caret is in the centered line, so "Align center" is checked;
+ * its icon is on the button, and the button's name is "Alignment: center".
+ * There is no justify (WCAG 1.4.8). The compact Toolbar in one row is also
+ * visible in the 640 px column.
  */
 export const AlignmentMenu: Story = {
   render: () => <OpenToolbarMenu caret="A centred line under the heading." button="Alignment" />,
 };
 
 /**
- * Меню «Списки ▾»: те же три вида списка, что в «¶». Каретка в
- * нумерованном списке — отмечен «Numbered list», иконка на кнопке — его, имя —
- * «List: numbered». Повторный выбор отмеченного снимает список.
+ * The "List ▾" menu: the same three kinds of list as in "¶". The caret is in a
+ * numbered list, so "Numbered list" is checked, its icon is on the button, and
+ * the name is "List: numbered". Selecting the checked item again removes the list.
  */
 export const ListsMenu: Story = {
   render: () => <OpenToolbarMenu caret="Share the minutes" button="List" />,
 };
 
 /*
-  Выделение и открытое меню «…» или поповер цвета, как только
-  движок создан. `button` — точное имя кнопки или его начало. С `bubble` кнопка
-  ищется в меню выделения («Цвет» живёт только там): фокус ставится в
-  Документ, и кнопку ждут, пока плашка не встанет над выделением.
+  A selection and an open "…" menu or color popover, once the engine is created.
+  `button` is the exact button name or its start. With `bubble` the button is
+  searched for in the Bubble menu ("Color" lives only there): focus goes to the
+  Document, and the button is awaited until the pill is placed above the selection.
 */
 function useOpenToolbarPopover(
   ref: RefObject<RichTextEditorHandle | null>,
@@ -816,14 +830,15 @@ function useOpenToolbarPopover(
       const scope = bubble
         ? document.querySelector('[role="toolbar"][aria-label="Selection formatting"]')
         : document;
-      // Кнопка с таким именем у своего хозяина одна.
+      // There is only one button with this name in its scope.
       const trigger = scope?.querySelector<HTMLElement>(`button[aria-label^="${button}"]`);
       if (!trigger) {
         if (tries++ < 120) later(press);
         return;
       }
-      // Сначала фокус на кнопку, как у щелчка мышью: плашка прячется, когда
-      // фокус уходит из Документа куда-то вне неё (в поповер), а с кнопки — нет.
+      // Focus the button first, as a mouse click does: the pill hides when focus
+      // leaves the Document for something outside it (the popover), but not when
+      // it leaves the button.
       trigger.focus();
       trigger.click();
     };
@@ -869,44 +884,46 @@ function OpenFormatPopover({
 }
 
 /**
- * Меню «…» — More formatting: Строчный код, Подчёркивание, Верхний
- * и Нижний индекс с сочетаниями, Блок кода, «Очистить стили» (`Ctrl/⌘+\`).
- * Выделено подчёркнутое слово — отмечено «Underline». Рядом с Блоком кода —
- * флажок «Цитата». Цветов здесь нет — у них свои кнопки.
+ * The "…" menu, More formatting: Inline code, Underline, Superscript and
+ * Subscript with their shortcuts, Code block, "Clear formatting" (`Ctrl/⌘+\`).
+ * A selected underlined word has "Underline" checked. Next to Code block is a
+ * "Quote" checkbox. There are no colors here: they have their own buttons.
  */
 export const MoreFormattingMenu: Story = {
   render: () => <OpenFormatPopover selection="More formatting" />,
 };
 
 /**
- * Поповер «Цвет» — в меню выделения: сетки «Цвет
- * текста» (по умолчанию и шесть тонов) и «Цвет маркера» (без маркера и девять
- * цветов), у заголовка каждой — «Свой цвет…». Выделен красный текст — отмечен
- * «Red» в сетке текста.
+ * The "Color" popover, in the Bubble menu: the "Text color" grid (default and
+ * six tones) and the "Highlight color" grid (no highlight and nine colors); each
+ * grid's header has "Custom color…". The selected red text has "Red" checked in
+ * the text grid.
  */
 export const ColorPopover: Story = {
   render: () => <OpenFormatPopover selection="red text" button="Color" bubble />,
-  // Плашка встаёт над выделением с задержкой, поповер — за ней: метка велит
-  // снимку и axe дождаться тишины, иначе они застают поле без плашки.
+  // The pill is placed above the selection after a delay, and the popover after
+  // it: the tag tells the snapshot and axe to wait for quiet, otherwise they
+  // catch the field without the pill.
   tags: ["network-idle"],
 };
 
 /**
- * Поповер «Маркер»: девять маркеров по оттенку и «Убрать маркер».
- * Выделен розовый маркер — отмечен «Pink», имя кнопки — «Highlight: Pink».
+ * The "Highlight" popover: nine highlights by hue, and "Remove highlight".
+ * A selected pink highlight has "Pink" checked, and the button's name is
+ * "Highlight: Pink".
  */
 export const HighlightPopover: Story = {
   render: () => <OpenFormatPopover selection="a pink highlight" button="Highlight:" />,
 };
 
-/** Пустой документ — плейсхолдер из каталога. */
+/** An empty Document: the placeholder comes from the catalog. */
 export const Empty: Story = {
   args: { defaultValue: undefined },
 };
 
 /**
- * Управляемый режим: HTML уходит наружу не чаще раза в `changeDelay` мс и
- * сразу на `blur`. Курсор не сбивается, когда владелец возвращает тот же HTML.
+ * Controlled mode: the HTML goes out at most once per `changeDelay` ms, and at
+ * once on `blur`. The caret is not reset when the owner passes back the same HTML.
  */
 export const Controlled: Story = {
   render: (args) => {
@@ -935,10 +952,10 @@ const MARKDOWN_SAMPLE = [
 ].join("\n");
 
 /**
- * Markdown. Вставьте в поле текст с разметкой (`## Заголовок`, `- пункт`,
- * `**жирный**`) — он станет Блоками и Метками; обычный текст останется
- * абзацами. Кнопки зовут `ref.setMarkdown()` и `ref.getMarkdown()`; в
- * выгрузку не попадают цвет, выравнивание и подчёркивание.
+ * Markdown. Paste text with markup into the field (`## Heading`, `- item`,
+ * `**bold**`) and it becomes Blocks and Marks; plain text stays as paragraphs.
+ * The buttons call `ref.setMarkdown()` and `ref.getMarkdown()`; color, alignment
+ * and underline are not part of the export.
  */
 export const PasteMarkdown: Story = {
   args: { defaultValue: undefined },
@@ -961,11 +978,11 @@ export const PasteMarkdown: Story = {
 };
 
 /**
- * JSON-конверт. «Download JSON» сохраняет Документ файлом через
- * `ref.getJSON()` — без потерь, в отличие от Markdown: цвет, выравнивание и
- * подчёркивание остаются. «Open JSON» читает файл и отдаёт его `ref.setJSON()`;
- * чужой файл отвергается, и экран сам говорит об этом. Кнопки и выбор файла —
- * код экрана, а не Редактора.
+ * JSON envelope. "Download JSON" saves the Document to a file through
+ * `ref.getJSON()`, losslessly, unlike Markdown: color, alignment and underline
+ * are kept. "Open JSON" reads the file and passes it to `ref.setJSON()`; a
+ * foreign file is rejected, and the screen says so itself. The buttons and the
+ * file picker are the screen's code, not the Editor's.
  */
 export const JsonExportImport: Story = {
   render: (args) => {
@@ -981,7 +998,7 @@ export const JsonExportImport: Story = {
         download: "document.json",
       });
       link.click();
-      // Браузер забирает файл после щелчка, а не в нём: адрес живёт до следующей задачи.
+      // The browser takes the file after the click, not during it: the address lives until the next task.
       setTimeout(() => URL.revokeObjectURL(link.href));
       setStatus("Saved document.json");
     };
@@ -991,7 +1008,7 @@ export const JsonExportImport: Story = {
       try {
         parsed = JSON.parse(await file.text());
       } catch {
-        // Не JSON вовсе — `setJSON(null)` отвергнет так же, как чужой формат.
+        // Not JSON at all: `setJSON(null)` rejects it the same way as a foreign format.
       }
       const accepted = ref.current?.setJSON(parsed) ?? false;
       setStatus(accepted ? `Opened ${file.name}` : `${file.name} is not a rich text document`);
@@ -1023,7 +1040,7 @@ export const JsonExportImport: Story = {
   },
 };
 
-/** Счётчик остатка появляется у 80 % предела; сверх предела ввод не идёт. */
+/** The remaining-count appears at 80 % of the limit; input stops at the limit. */
 export const WithMaxLength: Story = {
   args: {
     defaultValue: "<p>A short note that is already close to its limit.</p>",
@@ -1031,17 +1048,17 @@ export const WithMaxLength: Story = {
   },
 };
 
-/** Число слов в HTML документа: теги не считаются, пустой документ — ноль. */
+/** The word count of a Document's HTML: tags are not counted, an empty Document is zero. */
 function countWords(html: string): number {
   const text = html.replace(/<[^>]*>/g, " ").trim();
   return text ? text.split(/\s+/).length : 0;
 }
 
 /**
- * Высота поля (ADR-0059): `maxHeight` ограничивает область
- * Документа, и длинный Документ прокручивается внутри рамки; Панель над ним и
- * Строка статуса под ним остаются на месте. Ручка Блока и плашка выделения
- * едут вместе с текстом.
+ * Field height (ADR-0059): `maxHeight` limits the Document's area, and a long
+ * Document scrolls inside the frame; the Toolbar above it and the Status bar
+ * below it stay in place. The Block handle and the selection pill move together
+ * with the text.
  */
 export const ScrollingDocument: Story = {
   render: (args) => (
@@ -1057,9 +1074,10 @@ export const ScrollingDocument: Story = {
 };
 
 /**
- * `resizable`: ручка высоты — полоса по нижнему краю области Документа, с хватом по центру. `maxHeight` с ним —
- * стартовая высота, а не предел: поле тянется и выше, и ниже, но не уже
- * нескольких строк.
+ * `resizable`: the resize handle is a strip along the bottom edge of the
+ * Document's area, with a grip in the middle. With it, `maxHeight` is the
+ * starting height, not a limit: the field can be dragged both taller and
+ * shorter, but not below a few lines.
  */
 export const ResizableDocument: Story = {
   render: (args) => (
@@ -1070,11 +1088,11 @@ export const ResizableDocument: Story = {
 };
 
 /**
- * Строка статуса (ADR-0058, раздел 7): «Сохранено» и число слов
- * стоят внутри рамки поля у начала строки счётчика, счётчик `maxLength` — в
- * конце. Кит её не озвучивает: число слов не зачитывается на каждую правку, а
- * «Сохранено» обёрнуто в `role="status"` — рецепт озвучки на стороне экрана.
- * «Сохранение» идёт по таймеру после правки, как автосохранение.
+ * Status bar (ADR-0058, section 7): "Saved" and the word count sit inside the
+ * field's frame at the start of the counter line, and the `maxLength` counter
+ * at the end. The kit does not announce it: the word count is not read out on
+ * every edit, and "Saved" is wrapped in `role="status"`, the screen-side recipe
+ * for announcing it. "Saving" runs on a timer after an edit, like autosave.
  */
 export const StatusLine: Story = {
   render: (args) => {
@@ -1107,7 +1125,7 @@ export const StatusLine: Story = {
   },
 };
 
-/** Строка статуса видна и при `readOnly`: она часть рамки поля, а не правки. */
+/** The status bar is visible with `readOnly` too: it is part of the field's frame, not of the edits. */
 export const StatusLineReadOnly: Story = {
   args: {
     readOnly: true,
@@ -1117,10 +1135,11 @@ export const StatusLineReadOnly: Story = {
 };
 
 /**
- * Сообщение поля: команда движка `showNotice` с тоном и текстом. «Status»
- * только озвучивается (живой регион, глазу ничего не видно), «error» — строка
- * `role="alert"` под полем до следующей правки, нового сообщения или снятия.
- * Тем же каналом идут сообщения о файлах (истории `ImageUpload…`).
+ * Field notice: the engine command `showNotice` with a tone and a text.
+ * "status" is only announced (a live region, nothing is visible to the eye);
+ * "error" is a `role="alert"` line under the field, until the next edit, a new
+ * notice or its removal. File messages travel through the same channel (stories
+ * `ImageUpload…`).
  */
 export const FieldNotice: Story = {
   render: (args) => {
@@ -1158,7 +1177,7 @@ export const FieldNotice: Story = {
   },
 };
 
-/** Подпись, подсказка и ошибка `FormField`; имя полю даёт подпись через `id`. */
+/** The label, hint and error of `FormField`; the label gives the field its name through `id`. */
 export const InFormField: Story = {
   render: () => {
     const [submitted, setSubmitted] = useState<string | null>(null);
@@ -1190,17 +1209,17 @@ export const InFormField: Story = {
   },
 };
 
-/** Только чтение: текст выделяется и уходит в форму, но не правится. */
+/** Read-only: the text can be selected and goes into the form, but it cannot be edited. */
 export const ReadOnly: Story = {
   args: { readOnly: true },
 };
 
 /**
- * Светлый лист в любой теме (`surface="paper"`): документ —
- * текст, ссылка, палитры, таблица, чек-лист, блок кода (GitHub Light) — как в
- * светлой теме, а Панель, меню, поповеры и рамка фокуса поля — в теме
- * приложения. Тема переключается тулбаром витрины; axe мерит историю в
- * `dark`, `light`, `dim` и с брендом.
+ * A light sheet in any theme (`surface="paper"`): the Document — text, link,
+ * palettes, table, checklist, code Block (GitHub Light) — looks as in the light
+ * theme, while the Toolbar, menus, popovers and the field's focus ring stay in
+ * the app theme. The theme is switched with the showcase toolbar; axe measures
+ * the story in `dark`, `light`, `dim` and with the brand.
  */
 export const PaperSurface: Story = {
   args: {
@@ -1214,10 +1233,11 @@ export const PaperSurface: Story = {
       TABLE_SAMPLE,
   },
   /*
-    Колонка шире общей на поле ручки Блока: у листа своё поле
-    справа, и в 640 px шесть столбцов таблицы по 6 rem уже не помещались —
-    таблица прокручивалась внутри себя, а axe считает такую область
-    недоступной с клавиатуры (каретку в ячейках он не видит, `prose.ts`).
+    The column is wider than the others, to make room for the Block handle's
+    margin: the sheet has its own right margin, and at 640 px six table columns
+    of 6 rem each did not fit. The table scrolled inside itself, and axe counts
+    such an area as unreachable from the keyboard (it does not see the caret in
+    the cells, `prose.ts`).
   */
   render: (args) => (
     <div className="max-w-[680px]">
@@ -1226,36 +1246,39 @@ export const PaperSurface: Story = {
   ),
 };
 
-/** Выключено, как у прочих полей. */
+/** Disabled, like other fields. */
 export const Disabled: Story = {
   args: { disabled: true },
 };
 
 /**
- * Блоки кода (ADR-0051): восемь языков (в образце — все, Markdown последним) и обычный текст. В шапке блока
- * слева кнопка языка, справа «Копировать» — текст блока уходит в буфер без
- * токенов подсветки. С клавиатуры — `Alt+F10` из блока на язык, ещё раз — на
- * «Копировать», ещё раз — в Панель; стрелки ходят по шапке, `Escape` обратно в код.
- * Подсветка — декорации: в `onChange` уходит только `class="language-…"`.
- * Тема — GitHub Light в `light`, GitHub Dark в `dark` и `dim`; снимается во
- * всех трёх, и axe мерит контраст токенов на фоне блока.
+ * Code Blocks (ADR-0051): eight languages (the sample has all of them, Markdown
+ * last) and plain text. In a Block's header the language button is on the left
+ * and "Copy" on the right: the Block's text goes to the clipboard without the
+ * highlight tokens. From the keyboard, `Alt+F10` from the Block goes to the
+ * language, again to "Copy", and once more to the Toolbar; the arrows move across
+ * the header, and `Escape` returns to the code. The highlighting is decoration:
+ * only `class="language-…"` goes into `onChange`. The theme is GitHub Light in
+ * `light` and GitHub Dark in `dark` and `dim`; it is captured in all three, and
+ * axe measures the token contrast on the Block's background.
  */
 export const CodeBlocks: Story = {
   args: { defaultValue: CODE_BLOCKS },
 };
 
 /**
- * Только чтение: вместо кнопки языка — подпись, менять нечего; «Копировать» остаётся.
- * У блока без языка подписи нет: «Обычный текст» — имя пункта меню, а не языка,
- * и серверный `RichTextView` такой блок тоже не подписывает.
+ * Read-only: a label replaces the language button, as there is nothing to
+ * change; "Copy" stays. A Block without a language has no label: "Plain text" is
+ * the name of a menu item, not of a language, and the server-side `RichTextView`
+ * does not label such a Block either.
  */
 export const CodeBlocksReadOnly: Story = {
   args: { defaultValue: CODE_BLOCKS, readOnly: true },
 };
 
 /**
- * Шапка по-русски: «Язык: Python», «Обычный текст», подсказка «Копировать код»
- * — из каталога.
+ * The header in the Russian locale: labels such as "Language: Python", "Plain
+ * text" and the "Copy code" hint come from the catalog.
  */
 export const CodeBlocksRussian: Story = {
   render: () => (
@@ -1266,8 +1289,8 @@ export const CodeBlocksRussian: Story = {
 };
 
 /**
- * Русская локаль: имя поля, плейсхолдер, счётчик, Панель и подсказки — из
- * `@olddevs/ui/locales/ru`. Текст документа — данные и остаётся английским.
+ * Russian locale: the field name, placeholder, counter, Toolbar and hints come
+ * from `@olddevs/ui/locales/ru`. The Document's text is data and stays English.
  */
 export const RussianLocale: Story = {
   render: () => (
@@ -1285,12 +1308,13 @@ export const RussianLocale: Story = {
 };
 
 /**
- * Набрать команду в последний (пустой) абзац, как только движок создан: меню
- * по `/` открывается набором, а не пропом, и история показывает его открытым.
+ * Type the command into the last (empty) paragraph, once the engine is created:
+ * the menu opened by `/` opens by typing, not by a prop, and the story shows it
+ * open.
  */
 function useTypedCommand(ref: RefObject<RichTextEditorHandle | null>, command: string) {
   useEffect(() => {
-    // Пустая команда — поле остаётся нетронутым: его набирают тесты руками.
+    // An empty command leaves the field untouched: tests type into it by hand.
     if (command === "") return;
     let frame = 0;
     const tick = () => {
@@ -1319,22 +1343,23 @@ function TypedCommand({ command }: { command: string }) {
 }
 
 /**
- * Меню вставки по `/`: у курсора, фокус остаётся в поле. Стрелки ходят по
- * пунктам, Enter применяет, Escape закрывает, оставив набранное. Разделы —
- * «Insert» (новый Блок после текущего) и «Turn into» (сменить тип текущего).
+ * The Slash menu opened by `/`: it appears at the caret, and focus stays in the
+ * field. The arrows move between items, Enter applies, and Escape closes it and
+ * keeps what was typed. The sections are "Insert" (a new Block after the current
+ * one) and "Turn into" (change the type of the current one).
  */
 export const InsertMenuSlash: Story = {
   render: () => <TypedCommand command="/" />,
 };
 
-/** Набранное после `/` фильтрует пункты: по подписи и коротким именам (`h2`, `hr`). */
+/** What is typed after `/` filters the items: by label and by short names (`h2`, `hr`). */
 export const InsertMenuFiltered: Story = {
   render: () => <TypedCommand command="/head" />,
 };
 
 /**
- * Те же пункты — кнопкой «+», первой на Панели: меню кита с фокусом на
- * пунктах. Пункт применяется к Блоку под курсором.
+ * The same items, opened by the "+" button, the first one on the Toolbar: the
+ * kit's menu with focus on its items. An item applies to the Block under the caret.
  */
 export const InsertMenuPlus: Story = {
   args: {
@@ -1342,7 +1367,7 @@ export const InsertMenuPlus: Story = {
   },
 };
 
-/** Меню вставки в русской локали: подписи, разделы и «ничего не найдено» — из каталога. */
+/** The Slash menu in the Russian locale: labels, sections and the "no results" text come from the catalog. */
 export const InsertMenuRussian: Story = {
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
@@ -1352,9 +1377,9 @@ export const InsertMenuRussian: Story = {
 };
 
 /**
- * Поставить каретку в ячейку, как только движок создан: пункты меню «Таблица»,
- * кроме вставки, доступны только пока каретка в таблице, и история должна
- * показывать их доступными.
+ * Place the caret in a cell once the engine is created: the "Table" menu items,
+ * except insert, are available only while the caret is in a table, and the
+ * story must show them as available.
  */
 function useCaretInCell(ref: RefObject<RichTextEditorHandle | null>, text: string) {
   useEffect(() => {
@@ -1402,55 +1427,55 @@ function TableInCell({
 }
 
 /**
- * Меню «Таблица ▾» на Панели, как у TinyMCE: «Таблица ›» — сетка размера,
- * «Вставить таблицу…» — окно с числами до 20 × 50, затем подменю «Ячейка»,
- * «Строка», «Столбец», «Сортировка» и «Удалить таблицу». Каретка в ячейке
- * «Billing», поэтому доступно всё. С клавиатуры: `Alt+F10` → кнопка → `Enter`,
- * `→` открывает подменю, `←` и `Escape` закрывают. `Tab` в документе — по
- * ячейкам, в последней добавляет строку.
+ * The "Table ▾" menu on the Toolbar, as in TinyMCE: "Table ›" is the size grid,
+ * "Insert table…" opens a dialog with numbers up to 20 × 50, and then come the
+ * "Cell", "Row", "Column", "Sort" and "Delete table" submenus. The caret is in
+ * the "Billing" cell, so everything is available. From the keyboard: `Alt+F10`
+ * → button → `Enter`; `→` opens a submenu, `←` and `Escape` close it. `Tab` in
+ * the Document moves between cells, and in the last one it adds a row.
  */
 export const TableMenu: Story = {
   render: () => <TableInCell />,
 };
 
 /**
- * Слитые ячейки: `colspan` и `rowspan` пишутся в HTML и переживают сохранение.
- * «Ячейка › Разделить» на слитой ячейке возвращает сетку; «Объединить» —
- * после выделения нескольких ячеек. Сортировка в такой таблице недоступна, и
- * подменю говорит почему.
+ * Merged cells: `colspan` and `rowspan` are written to the HTML and survive
+ * saving. "Cell › Split cell" on a merged cell restores the grid; "Merge cells"
+ * needs several selected cells. Sorting is unavailable in such a table, and the
+ * submenu says why.
  */
 export const TableMerged: Story = {
   render: () => <TableInCell document={MERGED_SAMPLE} caret="Billing" />,
 };
 
 /**
- * Сортировка и выравнивание столбца: «Сортировка ›» сравнивает числа как
- * числа (разряды и дробь по локали), даты ISO и `ДД.ММ.ГГГГ` как даты, текст —
- * по алфавиту локали. «Столбец › Выравнивание» пишет `data-align` на каждую
- * ячейку столбца; в Markdown это `:---:` и `---:`.
+ * Sorting and alignment of a column: "Sort ›" compares numbers as numbers
+ * (digit grouping and decimals per locale), ISO dates and `DD.MM.YYYY` as dates,
+ * and text by the locale's alphabet. "Column › Align" writes `data-align` on
+ * every cell of the column; in Markdown it is `:---:` and `---:`.
  */
 export const TableSortAndAlign: Story = {
   render: () => <TableInCell document={SORT_SAMPLE} caret="Contoso" />,
 };
 
-/** Меню вставки по `/table`: новая таблица 3×3 со строкой-заголовком встаёт после текущего Блока. */
+/** The Slash menu by `/table`: a new 3×3 table with a header row goes after the current Block. */
 export const TableInsertSlash: Story = {
   render: () => <TypedCommand command="/table" />,
 };
 
 /**
- * Меню таблицы в русской локали: «Таблица», «Вставить таблицу…», подменю и
- * пункты — из каталога, размер в сетке — со склонением, сортировка текста —
- * по русскому алфавиту.
+ * The table menu in the Russian locale: the "Table" and "Insert table…" labels,
+ * the submenus and the items come from the catalog; the grid size takes Russian
+ * plural forms, and text sorting follows the Russian alphabet.
  */
 export const TableRussian: Story = {
   render: () => <TableInCell locale="ru-RU" document={SORT_SAMPLE} caret="Contoso" />,
 };
 
 /**
- * Узкий экран (375 px): таблица из шести столбцов не помещается и прокручивается
- * по горизонтали внутри себя (`display: block; overflow-x: auto`), страницу не
- * раздвигает. Минимальная ширина столбца — 6 rem.
+ * A narrow screen (375 px): a six-column table does not fit and scrolls
+ * horizontally inside itself (`display: block; overflow-x: auto`), without
+ * pushing the page wider. The minimum column width is 6 rem.
  */
 export const TableNarrow: Story = {
   tags: ["viewport-phone"],
@@ -1458,15 +1483,16 @@ export const TableNarrow: Story = {
 };
 
 /**
- * Адрес картинки историй: файл витрины (`.storybook/static`). Абсолютный —
- * Документ принимает только `http(s)`, — и от адреса самой витрины: она
- * публикуется и в корне, и в подкаталоге (как на GitHub Pages).
+ * The image address of the stories: the showcase file (`.storybook/static`).
+ * It must be absolute, because the Document accepts only `http(s)`, and it is
+ * built from the showcase's own address: the showcase is published either at the
+ * root or in a subdirectory (as on GitHub Pages).
  */
 function sampleImage(): string {
   return new URL("editor-sample-landscape.svg", document.baseURI).href;
 }
 
-/** Картинки трёх ширин, с подписью и без — так их пишет Редактор. */
+/** Images at three widths, with and without a caption, written the way the Editor writes them. */
 function imagesDocument(): string {
   const src = sampleImage();
   return (
@@ -1480,7 +1506,7 @@ function imagesDocument(): string {
   );
 }
 
-/** Хост-заглушка сетки: показывает, что именно выбрано, — для глаз и для браузерных тестов. */
+/** A host stub for the grid: it shows what is selected, for the eye and for browser tests. */
 function TableSizeGridDemo({ fields, locale }: { fields?: boolean; locale?: "ru-RU" }) {
   const [picked, setPicked] = useState("nothing picked yet");
   const grid = (
@@ -1505,11 +1531,11 @@ function TableSizeGridDemo({ fields, locale }: { fields?: boolean; locale?: "ru-
 }
 
 /**
- * Картинки: `<figure>` с `<img>` и необязательной подписью.
- * Щелчок по картинке выделяет её: над ней — панель с пресетами ширины 50, 75
- * и 100 %, «Изменить» и «Убрать», по бокам — ручки ширины для мыши. Enter на
- * выделенной картинке — в подпись. Кнопка «Image» на Панели вставляет картинку
- * по адресу.
+ * Images: a `<figure>` with an `<img>` and an optional caption. A click on the
+ * image selects it: above it is a bar with width presets of 50, 75 and 100 %,
+ * "Edit image" and "Remove image", and on the sides are width grips for the
+ * mouse. Enter on the selected image moves into the caption. The "Image" button
+ * on the Toolbar inserts an image by address.
  */
 export const Images: Story = {
   render: (args) => (
@@ -1519,7 +1545,7 @@ export const Images: Story = {
   ),
 };
 
-/** Вставка по адресу: поповер открыт кнопкой «Image» Панели над пустым абзацем. */
+/** Insert by address: the popover opened by the Toolbar's "Image" button above an empty paragraph. */
 export const ImageByAddress: Story = {
   render: function Render(args) {
     const ref = useRef<RichTextEditorHandle>(null);
@@ -1548,7 +1574,7 @@ export const ImageByAddress: Story = {
   },
 };
 
-/** Ненастоящий загрузчик: «грузит» полторы секунды и отдаёт адрес или отказ. */
+/** A fake uploader: it "uploads" for one and a half seconds, then gives back an address or a refusal. */
 function fakeUploader(outcome: "success" | "failure") {
   return (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -1560,10 +1586,11 @@ function fakeUploader(outcome: "success" | "failure") {
 }
 
 /**
- * Загрузка файла: перетащите картинку в поле, вставьте снимок экрана из
- * буфера или выберите файл в поповере («Upload from device»). Полторы секунды
- * на месте картинки плейсхолдер, затем она встаёт на его место — одна отмена
- * её убирает. Загрузчик ненастоящий и всегда отдаёт картинку витрины.
+ * File upload: drag an image into the field, paste a screenshot from the
+ * clipboard, or choose a file in the popover ("Upload from device"). For one and
+ * a half seconds a placeholder stands where the image will go, then the image
+ * takes its place; one undo removes it. The uploader is fake and always gives
+ * back the showcase image.
  */
 export const ImageUploadSuccess: Story = {
   args: {
@@ -1573,9 +1600,10 @@ export const ImageUploadSuccess: Story = {
 };
 
 /**
- * Отказ загрузки: плейсхолдер исчезает, Документ не меняется, под полем —
- * сообщение. Без `onUploadImage` (история `Images`) файл из буфера не
- * принимается вовсе — с подсказкой вставить картинку по адресу.
+ * Upload failure: the placeholder disappears, the Document does not change, and
+ * a message appears under the field. Without `onUploadImage` (the `Images`
+ * story) a file from the clipboard is not accepted at all, and the field hints
+ * at inserting the image by address.
  */
 export const ImageUploadFailure: Story = {
   args: {
@@ -1584,7 +1612,7 @@ export const ImageUploadFailure: Story = {
   },
 };
 
-/** Картинки в русской локали: поповер, панель картинки, подсказка подписи и сообщения о файлах. */
+/** Images in the Russian locale: the popover, the image bar, the caption hint and file messages. */
 export const ImagesRussian: Story = {
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
@@ -1600,28 +1628,28 @@ export const ImagesRussian: Story = {
 };
 
 /**
- * Сетка выбора размера таблицы сама по себе: пять на пять, растёт до десяти на
- * десять вслед за выбором. Стрелки двигают выбор, `Enter` выбирает, `Escape`
- * отменяет; первая строка закрашена как заголовок. На Панели она живёт в
- * подменю «Таблица ›» меню «Таблица» (история `TableMenu`).
+ * The table size grid on its own: five by five, growing to ten by ten as the
+ * selection moves. The arrows move the selection, `Enter` selects, `Escape`
+ * cancels; the first row is painted as a header. On the Toolbar it lives in the
+ * "Table ›" submenu of the "Table" menu (story `TableMenu`).
  */
 export const TableSizeGrid: Story = {
   render: () => <TableSizeGridDemo />,
 };
 
-/** Та же сетка с числовыми полями «Столбцы» и «Строки» (до 20 × 50) и кнопкой «Вставить». */
+/** The same grid with the numeric "Columns" and "Rows" fields (up to 20 × 50) and an "Insert" button. */
 export const TableSizeGridFields: Story = {
   render: () => <TableSizeGridDemo fields />,
 };
 
-/** Русская локаль: имя сетки и размер словами со склонением — «3 столбца, 4 строки». */
+/** Russian locale: the grid's name and the size in words with plural forms, e.g. "3 columns, 4 rows" (English stand-in). */
 export const TableSizeGridRussian: Story = {
   render: () => <TableSizeGridDemo fields locale="ru-RU" />,
 };
 
 /**
- * Открыть сетку эмодзи кнопкой Панели, как только движок и Панель появились:
- * история показывает поповер открытым — для глаз, снимков и axe.
+ * Open the emoji grid with the Toolbar button, as soon as the engine and the
+ * Toolbar appear: the story shows the popover open, for the eye, snapshots and axe.
  */
 function useOpenEmoji(ref: RefObject<HTMLDivElement | null>, name: string) {
   useEffect(() => {
@@ -1660,30 +1688,31 @@ function EmojiOpen({ locale }: { locale?: "ru-RU" }) {
 }
 
 /**
- * Кнопка «Emoji» — последняя в ряду Панели, после таблицы и картинки. Она
- * открывает поповер с курированным набором: «Избранное» (20) и шесть категорий
- * по десять эмодзи. Щелчок или `Enter` вставляет эмодзи обычным текстом: в
- * конец выделения, не стирая его, с кареткой за эмодзи и одной правкой на
- * отмену. Стрелки, `Home` и `End` ходят по сетке, `Escape` закрывает поповер и
- * возвращает фокус в Документ. Поповер открыт при показе истории.
+ * The "Emoji" button is the last one in the Toolbar row, after the table and the
+ * image. It opens a popover with a curated set: "Favorites" (20) and six
+ * categories of ten emoji each. A click or `Enter` inserts the emoji as plain
+ * text: at the end of the selection, without erasing it, with the caret after
+ * the emoji and one edit for undo. The arrows, `Home` and `End` move across the
+ * grid, and `Escape` closes the popover and returns focus to the Document. The
+ * popover is open as the story is shown.
  */
 export const EmojiGrid: Story = {
   render: () => <EmojiOpen />,
 };
 
-/** Русская локаль: названия категорий и имена эмодзи (их читает скринридер) — из каталога. */
+/** Russian locale: the category names and the emoji names (a screen reader reads them) come from the catalog. */
 export const EmojiGridRussian: Story = {
   render: () => <EmojiOpen locale="ru-RU" />,
 };
 
-/** Без `emoji` в `tools` кнопки нет, как и в пресете `basic`. */
+/** Without `emoji` in `tools` there is no button, as in the `basic` preset. */
 export const EmojiDisabled: Story = {
   args: { tools: ["history", "bold", "italic", "link", "table", "image"] },
 };
 
 /**
- * Нажать кнопку справочника сочетаний, как только Панель нарисована: поповер
- * открывается щелчком, а не пропом, и история показывает его открытым.
+ * Click the keyboard shortcuts button once the Toolbar is drawn: the popover
+ * opens by a click, not by a prop, and the story shows it open.
  */
 function useOpenedShortcuts(rootRef: RefObject<HTMLDivElement | null>, name: string) {
   useEffect(() => {
@@ -1714,21 +1743,21 @@ function OpenedShortcuts({ name, preset }: { name: string; preset?: "basic" }) {
 }
 
 /**
- * Справочник сочетаний: кнопка с клавиатурой — последняя на Панели,
- * у правого края. Поповер — таблица «Command — Shortcut» только для чтения;
- * строки — из той же таблицы, из которой Панель берёт подсказки. Escape и
- * щелчок снаружи закрывают его и возвращают фокус на кнопку.
+ * Keyboard shortcuts popover: its keyboard button is the last one on the
+ * Toolbar, at the right edge. The popover is a read-only "Command — Shortcut"
+ * table; its rows come from the same table the Toolbar takes its hints from.
+ * Escape and a click outside close it and return focus to the button.
  */
 export const ShortcutsReference: Story = {
   render: () => <OpenedShortcuts name="Keyboard shortcuts" />,
 };
 
-/** Пресет `basic`: в справочнике только команды его инструментов и общие для всех. */
+/** The `basic` preset: the reference lists only the commands of its Tools and the common ones. */
 export const ShortcutsReferenceBasic: Story = {
   render: () => <OpenedShortcuts name="Keyboard shortcuts" preset="basic" />,
 };
 
-/** Русская локаль: заголовки столбцов и названия команд — из каталога. */
+/** Russian locale: the column headers and the command names come from the catalog. */
 export const ShortcutsReferenceRussian: Story = {
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
@@ -1738,9 +1767,9 @@ export const ShortcutsReferenceRussian: Story = {
 };
 
 /*
-  Раскладка: все шесть вариантов на нейтральном тексте. Колонки —
-  разной высоты, чтобы было видно, что сетка не выравнивает их содержимое, а
-  пунктир каждой колонки тянется на высоту ряда.
+  Column layouts: all six variants on neutral text. The columns have different
+  heights, to show that the grid does not align their content, and the dashed
+  outline of each column stretches to the height of the row.
 */
 const layoutColumn = (title: string, text: string) =>
   `<div data-block="column"><h4>${title}</h4><p>${text}</p></div>`;
@@ -1780,7 +1809,7 @@ const LAYOUTS_SAMPLE =
   ) +
   "<p>Text after the layouts.</p>";
 
-/** Раскладка шире обычной истории: у четырёх колонок своя ширина нужна от 48 rem. */
+/** The layout story is wider than usual: the four-column layout needs a width of at least 48 rem. */
 function WideField(props: Partial<RichTextEditorProps>) {
   return (
     <div className="max-w-[960px]">
@@ -1790,23 +1819,23 @@ function WideField(props: Partial<RichTextEditorProps>) {
 }
 
 /**
- * Раскладка: шесть вариантов — одна, две, три, четыре колонки,
- * 60/40 и 40/60. Колонка — отдельная область с пунктирной рамкой (только в
- * Редакторе), в ней любые Блоки, кроме другой Раскладки. Tab и Shift+Tab — по
- * колонкам, `←`/`→` у края текста — в соседнюю колонку, `↑`/`↓` у верхней и
- * нижней строки — из Раскладки. В HTML — `div[data-block]` и вариант в
- * `data-layout`, без `style`.
+ * Column layout: six variants — one, two, three and four columns, 60/40 and
+ * 40/60. A column is a separate area with a dashed frame (in the Editor only),
+ * and it holds any Blocks except another Column layout. Tab and Shift+Tab move
+ * between the columns; `←`/`→` at the edge of the text move to the neighboring
+ * column; `↑`/`↓` at the top and bottom lines leave the Column layout. In HTML it
+ * is `div[data-block]` with the variant in `data-layout`, and no `style`.
  */
 export const Layouts: Story = {
   render: () => <WideField />,
 };
 
-/** Те же Раскладки на листе `surface="paper"`. */
+/** The same Column layouts on a `surface="paper"` sheet. */
 export const LayoutsPaper: Story = {
   render: () => <WideField surface="paper" />,
 };
 
-/** Поставить Раскладку, как только движок создан: пункт Меню вставки «Раскладка». */
+/** Insert a Column layout once the engine is created: the "Column layout" item of the Insert menu. */
 function useInsertedLayout(ref: RefObject<RichTextEditorHandle | null>) {
   useEffect(() => {
     let frame = 0;
@@ -1838,22 +1867,23 @@ function InsertedLayout() {
 }
 
 /**
- * Только что вставленная Раскладка — две пустые колонки с пунктирной рамкой,
- * каретка в первой (образец владельца). Так её ставит пункт «Раскладка» Меню
- * вставки (`/layout` или «+»).
+ * A Column layout just inserted: two empty columns with a dashed frame, the
+ * caret in the first one (as the owner's reference shows). This is how the
+ * "Column layout" item of the Insert menu places it (`/layout` or "+").
  */
 export const LayoutInserted: Story = {
   render: () => <InsertedLayout />,
 };
 
-/** Меню вставки по `/layout`: пункт «Раскладка» с двумя колонками по умолчанию. */
+/** The Slash menu by `/layout`: the "Column layout" item with two columns by default. */
 export const LayoutInsertSlash: Story = {
   render: () => <TypedCommand command="/layout" />,
 };
 
 /**
- * Узкий экран (375 px): колонки встают столбцом в порядке чтения — левая
- * сверху. Порог — по ширине самого Документа (контейнерный запрос), а не окна.
+ * A narrow screen (375 px): the columns stack in reading order, the left one on
+ * top. The threshold is the width of the Document itself (a container query),
+ * not the window's.
  */
 export const LayoutNarrow: Story = {
   tags: ["viewport-phone"],
@@ -1861,9 +1891,9 @@ export const LayoutNarrow: Story = {
 };
 
 /**
- * Раскладка в окне: две колонки помещаются в Dialog шириной 560 px
- * и стоят рядом; Tab в Документе ходит по колонкам и не закрывает окно, из
- * последней колонки уходит дальше по окну.
+ * A Column layout in a window: two columns fit in a 560 px Dialog and stand
+ * side by side. Tab in the Document moves between the columns and does not
+ * close the window; from the last column it moves on through the window.
  */
 export const LayoutInDialog: Story = {
   render: function Render() {
@@ -1900,10 +1930,10 @@ const LAYOUT_HANDLE_SAMPLE =
   );
 
 /**
- * Ручка Блока в колонке: у левого края своей колонки, на уровне
- * первой строки Блока — у правой колонки она стоит в промежутке между
- * колонками. Блок здесь — ребёнок колонки: «Вверх», «Вниз» и «Добавить ниже»
- * не выходят из неё.
+ * The Block handle in a column: at the left edge of its own column, at the level
+ * of the Block's first line; for the right column it stands in the gap between
+ * the columns. The Block here is a child of the column: "Move up", "Move down"
+ * and "Add below" do not leave it.
  */
 export const LayoutBlockHandle: Story = {
   render: () => (
@@ -1912,10 +1942,12 @@ export const LayoutBlockHandle: Story = {
 };
 
 /**
- * Меню ручки Блока в колонке: «Формат ›» — тип самого Блока, а «Раскладка ›» —
- * вариант её Раскладки (шесть, с отметкой текущего). В «Добавить ›» Раскладка —
- * подменю тех же шести вариантов; новая встаёт под всей Раскладкой — вложенных
- * нет. У Раскладки, выделенной целиком, «Формат ›» — эти шесть вариантов.
+ * The menu of the Block handle in a column: "Format ›" is the type of the Block
+ * itself, and "Column layout ›" is the variant of its Column layout (six, with
+ * the current one checked). Under "Add ›" the Column layout is a submenu of the
+ * same six variants; the new one goes below the whole Column layout, with no
+ * nesting. For a Column layout selected as a whole, "Format ›" lists these six
+ * variants.
  */
 export const LayoutBlockHandleMenu: Story = {
   render: () => (
@@ -1924,9 +1956,9 @@ export const LayoutBlockHandleMenu: Story = {
 };
 
 /*
-  Обёртка: группа Блоков без своего вида, как Wrapper у Redactor.
-  Нейтральный текст: заметка о выпуске, Обёртка на верхнем уровне и в колонке
-  Раскладки.
+  Wrapper: a group of Blocks without a look of its own, as Redactor's Wrapper
+  is. Neutral text: a release note, a Wrapper at the top level and in a Column
+  layout column.
 */
 const wrapperBlock = (...blocks: string[]) => `<div data-block="wrapper">${blocks.join("")}</div>`;
 
@@ -1945,10 +1977,10 @@ const WRAPPERS_SAMPLE =
   "<p>Text after the wrappers.</p>";
 
 /**
- * Обёртка: серый пунктир и внутренний отступ — только в Редакторе,
- * тем же видом, что колонки Раскладки. Внутри — любые Блоки, кроме другой
- * Обёртки и Раскладки; Обёртка стоит в Документе и в колонке. В HTML —
- * `div[data-block="wrapper"]` без других атрибутов.
+ * Wrapper: a gray dashed outline and inner padding, in the Editor only, with the
+ * same look as the Column layout's columns. Inside it are any Blocks except
+ * another Wrapper and a Column layout; a Wrapper stands in the Document and in a
+ * column. In HTML it is `div[data-block="wrapper"]` with no other attributes.
  */
 export const Wrappers: Story = {
   render: () => (
@@ -1985,23 +2017,23 @@ function InsertedWrapper() {
 }
 
 /**
- * Только что вставленная Обёртка — пустой абзац в пунктирной рамке, каретка
- * внутри. Так её ставят пункт «Обёртка» Меню вставки (`/wrapper` или «+») и
- * «Добавить › Обёртка» у ручки Блока.
+ * A Wrapper just inserted: an empty paragraph in a dashed frame, with the caret
+ * inside. This is how the "Wrapper" item of the Insert menu (`/wrapper` or "+")
+ * and the "Add › Wrapper" item of the Block handle place it.
  */
 export const WrapperInserted: Story = {
   render: () => <InsertedWrapper />,
 };
 
-/** Меню вставки по `/wrapper`: пункт «Обёртка». */
+/** The Slash menu by `/wrapper`: the "Wrapper" item. */
 export const WrapperInsertSlash: Story = {
   render: () => <TypedCommand command="/wrapper" />,
 };
 
 /**
- * Меню ручки Блока в Обёртке: ручка — у левого края Обёртки, действия не
- * выходят из неё, «Тон ›» меняет вид Обёртки, а «Снять обёртку»
- * оставляет Блоки на её месте одной правкой.
+ * The Block handle menu in a Wrapper: the handle is at the Wrapper's left edge,
+ * and the actions do not leave it. "Tone ›" changes the look of the Wrapper, and
+ * "Unwrap" leaves the Blocks in its place in one edit.
  */
 export const WrapperBlockHandleMenu: Story = {
   render: () => (
@@ -2017,8 +2049,8 @@ export const WrapperBlockHandleMenu: Story = {
 };
 
 /*
-  Тон Обёртки: пять тонов и Обёртка без тона в одном Документе.
-  Смысл заметки назван словом в её тексте — тон его только подкрепляет.
+  Wrapper tones: five tones and a Wrapper without a tone in one Document.
+  The meaning of a note is named in words in its text; the tone only reinforces it.
 */
 const tonedBlock = (tone: string, ...blocks: string[]) =>
   `<div data-block="wrapper" data-tone="${tone}">${blocks.join("")}</div>`;
@@ -2047,10 +2079,11 @@ const WRAPPER_TONES_SAMPLE =
   "<p>Text after the wrappers.</p>";
 
 /**
- * Тоны Обёртки: Заметка, Совет, Важно, Внимание, Осторожно и
- * Обёртка без тона. Тон — мягкая подложка и полоса 3 px слева из статусных
- * токенов кита, тот же вид, что у читателя в `RichTextView`; пунктир Редактора
- * остаётся только у Обёртки без тона. В HTML — `data-tone` с именем тона.
+ * Wrapper tones: Note, Tip, Important, Warning, Caution, and a Wrapper without
+ * a tone. A tone is a soft background and a 3 px stripe on the left, drawn from
+ * the kit's status tokens: the same look the reader gets in `RichTextView`. The
+ * Editor's dashed outline stays only on the Wrapper without a tone. In HTML it
+ * is `data-tone` with the tone's name.
  */
 export const WrapperTones: Story = {
   render: () => (
@@ -2060,7 +2093,7 @@ export const WrapperTones: Story = {
   ),
 };
 
-/** Тоны Обёртки на светлом листе `surface="paper"`: роли `--rte-tone-*` листа. */
+/** Wrapper tones on a light `surface="paper"` sheet: the sheet's `--rte-tone-*` roles. */
 export const WrapperTonesPaper: Story = {
   render: () => (
     <div className="max-w-[640px]">
@@ -2070,9 +2103,10 @@ export const WrapperTonesPaper: Story = {
 };
 
 /**
- * Подменю «Тон ›» у ручки Блока в Обёртке: «Без тона» и пять тонов словами, с
- * образцом подложки и полосы; текущий отмечен, а имя пункта несёт его —
- * «Tone: Warning». Выбор — одна правка, одна отмена.
+ * The "Tone ›" submenu of the Block handle in a Wrapper: "None" and the five
+ * tones by name, with a sample of the background and the stripe. The current one
+ * is checked, and its item name carries it too: "Tone: Warning". Choosing one is
+ * one edit and one undo.
  */
 export const WrapperToneMenu: Story = {
   render: () => (
@@ -2086,8 +2120,8 @@ export const WrapperToneMenu: Story = {
 };
 
 /*
-  Сворачиваемый Блок (Details): заголовок и содержимое из Блоков.
-  Нейтральный текст: заметка о сборке с подробностями под заголовком.
+  Collapsible block (Details): a title and content made of Blocks.
+  Neutral text: a build note with details under the title.
 */
 const detailsBlock = (title: string, ...blocks: string[]) =>
   `<details><summary>${title}</summary><div data-type="detailsContent">${blocks.join("")}</div></details>`;
@@ -2109,9 +2143,10 @@ const DETAILS_SAMPLE =
   "<p>Text after the blocks.</p>";
 
 /**
- * Сворачиваемый Блок: стрелка слева раскрывает и сворачивает содержимое, заголовок и
- * Блоки внутри правятся как обычный текст. Без Опции `persist` открытость живёт
- * только в показе и в Документ не пишется. Блоки вкладываются друг в друга.
+ * Collapsible block: an arrow on the left expands and collapses the content;
+ * the title and the Blocks inside are edited as ordinary text. Without the
+ * `persist` option the open state lives only on screen and is not written into
+ * the Document. Blocks nest in one another.
  */
 export const Details: Story = {
   render: () => (
@@ -2122,8 +2157,8 @@ export const Details: Story = {
 };
 
 /**
- * `tool("details", { persist: true })`: открытый Блок пишется в Документ как
- * `open` и открытым же приходит из `value`. Первый Блок здесь открыт.
+ * `tool("details", { persist: true })`: an open Block is written into the
+ * Document as `open` and comes back open from `value`. The first Block here is open.
  */
 export const DetailsPersist: Story = {
   render: () => (
@@ -2141,7 +2176,7 @@ export const DetailsPersist: Story = {
   ),
 };
 
-/** Сворачиваемый Блок на светлом листе `surface="paper"`. */
+/** A collapsible block on a light `surface="paper"` sheet. */
 export const DetailsPaper: Story = {
   render: () => (
     <div className="max-w-[640px]">
@@ -2177,22 +2212,24 @@ function InsertedDetails() {
 }
 
 /**
- * Только что вставленный Блок: пустой заголовок с кареткой и пустой абзац в
- * содержимом, Блок раскрыт. Так его ставят пункт «Сворачиваемый блок» Меню
- * вставки (`/collapsible` или «+») и «Добавить › Сворачиваемый блок» у ручки.
+ * A Collapsible block just inserted: an empty title with the caret, and an empty
+ * paragraph in its content; the Block is expanded. This is how the "Collapsible
+ * block" item of the Insert menu (`/collapsible` or "+") and the "Add › Collapsible
+ * block" item of the handle place it.
  */
 export const DetailsInserted: Story = {
   render: () => <InsertedDetails />,
 };
 
-/** Меню вставки по `/collapsible`: пункт «Collapsible block». */
+/** The Slash menu by `/collapsible`: the "Collapsible block" item. */
 export const DetailsInsertSlash: Story = {
   render: () => <TypedCommand command="/collapsible" />,
 };
 
 /**
- * Меню ручки Блока у сворачиваемого Блока: ручка стоит у Блока целиком, а
- * «Снять сворачивание» оставляет заголовок абзацем и Блоки на месте одной правкой.
+ * The Block handle menu of a Collapsible block: the handle belongs to the whole
+ * Block, and "Remove collapsing" leaves the title as a paragraph and the Blocks
+ * in place, in one edit.
  */
 export const DetailsBlockHandleMenu: Story = {
   render: () => (
@@ -2208,9 +2245,10 @@ export const DetailsBlockHandleMenu: Story = {
 };
 
 /*
-  Типографика (Typography, OLDSUI-279): автозамены при наборе, вне Пресетов — явной
-  записью в `tools`. Истории не печатают сами: набор идёт в поле, подсказка — в
-  тексте Документа.
+  Typography (OLDSUI-279): automatic replacements while typing; outside the
+  Presets only with an explicit entry in `tools`. The stories do not type by
+  themselves: the typing goes into the field, and the hint is in the text of the
+  Document.
 */
 const TYPOGRAPHY_SAMPLE =
   "<h2>Typography</h2>" +
@@ -2218,9 +2256,10 @@ const TYPOGRAPHY_SAMPLE =
   "<p>Try it here: </p>";
 
 /**
- * Автозамены при наборе на расширении Typography из Tiptap: `--` становится тире,
- * `...` — многоточием, `->` — стрелкой, `"` — кавычкой по языку каталога
- * сообщений (здесь английский: “ ”). Внутри кода замены не срабатывают.
+ * Automatic replacements while typing, from the Typography extension of Tiptap:
+ * `--` becomes a dash, `...` an ellipsis, `->` an arrow, and `"` a quotation
+ * mark of the message catalog's language (English here: “ ”). Replacements do
+ * not fire inside code.
  */
 export const Typography: Story = {
   render: () => (
@@ -2235,8 +2274,8 @@ export const Typography: Story = {
 };
 
 /**
- * Каталог сообщений русский: `"` даёт «ёлочки», а вложенная пара — „лапки“:
- * `"a "b" c"` становится «a „b“ c».
+ * The message catalog is Russian: `"` gives guillemets «…», and a nested pair
+ * gives „…“: `"a "b" c"` becomes «a „b“ c».
  */
 export const TypographyRussian: Story = {
   render: () => (
@@ -2253,8 +2292,8 @@ export const TypographyRussian: Story = {
 };
 
 /**
- * Опции: набор кавычек задан явно (`ru` под английским интерфейсом), тире выключено
- * (`false`), многоточие заменено своей строкой.
+ * Options: the quote set is given explicitly (`ru` under the English interface),
+ * the dash is off (`false`), and the ellipsis is replaced with its own string.
  */
 export const TypographyOptions: Story = {
   render: () => (
@@ -2272,9 +2311,10 @@ export const TypographyOptions: Story = {
 };
 
 /*
-  Формулы (Mathematics, OLDSUI-280, ADR-0070): LaTeX в строке и Блоком, отрисовывает
-  KaTeX. Вне Пресетов — явной записью в `tools`; чанк с KaTeX грузится лениво, до
-  его прихода формулы видны исходником. Нейтральный текст: выкладки из школьного курса.
+  Formulas (Mathematics, OLDSUI-280, ADR-0070): LaTeX inline and as a Block,
+  drawn by KaTeX. Outside the Presets only with an explicit entry in `tools`; the
+  KaTeX chunk loads lazily, and until it arrives the formulas show as source.
+  Neutral text: formulas from a school course.
 */
 const MATH_SAMPLE =
   "<h2>Formulas</h2>" +
@@ -2289,12 +2329,12 @@ const MATH_SAMPLE =
 const MATH_TOOLS = [...RICH_TEXT_PRESETS.full, "mathematics"] as const;
 
 /**
- * Формулы LaTeX на KaTeX: строчные и блочные. Щелчок по формуле или Enter на
- * выделенной открывает Поповер с полем LaTeX и предпросмотром; новые ставит Меню
- * вставки («Formula» и «Block formula»).
+ * LaTeX formulas with KaTeX: inline and block. A click on a formula, or Enter on
+ * the selected one, opens the popover with the LaTeX field and a preview; new
+ * ones are inserted from the Insert menu ("Formula" and "Block formula").
  */
 export const Mathematics: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -2303,9 +2343,9 @@ export const Mathematics: Story = {
   ),
 };
 
-/** Формулы на светлом листе `surface="paper"`. */
+/** Formulas on a light `surface="paper"` sheet. */
 export const MathematicsPaper: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -2320,11 +2360,12 @@ export const MathematicsPaper: Story = {
 };
 
 /**
- * Опции: `tool("mathematics", { macros })` — свои макросы KaTeX. `\RR` ниже
- * работает только благодаря макросу; тот же `tools` у `RichTextView` рисует его так же.
+ * Options: `tool("mathematics", { macros })` sets your own KaTeX macros. `\RR`
+ * below works only thanks to the macro; the same `tools` in `RichTextView`
+ * renders it the same way.
  */
 export const MathematicsMacros: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -2344,11 +2385,12 @@ export const MathematicsMacros: Story = {
 };
 
 /**
- * Формула, которую KaTeX не читает: остаётся исходником, подчёркнутым волной цветом
- * ошибки. Документ она не ломает и не теряется; поправить её можно в Поповере.
+ * A formula that KaTeX cannot read stays as source, underlined with the error
+ * color wave. It does not break the Document and is not lost; it can be fixed
+ * in the popover.
  */
 export const MathematicsInvalid: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -2364,9 +2406,9 @@ export const MathematicsInvalid: Story = {
   ),
 };
 
-/** Формулы в русской локали: подписи Меню вставки и Поповера — из каталога. */
+/** Formulas in the Russian locale: the labels of the Insert menu and of the popover come from the catalog. */
 export const MathematicsRussian: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
@@ -2392,14 +2434,14 @@ function MathCommand({ command }: { command: string }) {
   );
 }
 
-/** Меню вставки по `/formula`: пункты «Formula» и «Block formula» (и по `latex`, `math`). */
+/** The Slash menu by `/formula`: the "Formula" and "Block formula" items (and by `latex`, `math`). */
 export const MathematicsInsertSlash: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => <MathCommand command="/formula" />,
 };
 
-/** Открыть Поповер правки первой формулы, как только Редактор нарисовал её. */
+/** Open the edit popover of the first formula as soon as the Editor has drawn it. */
 function OpenedFormula() {
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -2425,16 +2467,17 @@ function OpenedFormula() {
 }
 
 /**
- * Поповер правки формулы: поле LaTeX, предпросмотр и кнопки «Apply» и «Remove
- * formula». Неверный LaTeX показывает ошибку в поле и не даёт применить.
+ * The formula edit popover: the LaTeX field, a preview, and the "Apply" and
+ * "Remove formula" buttons. Invalid LaTeX shows an error in the field and
+ * blocks applying it.
  */
 export const MathematicsPopover: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => <OpenedFormula />,
 };
 
-/** Открыть HTML-режим, как только Панель появилась: щелчок по кнопке «HTML». */
+/** Open the HTML mode as soon as the Toolbar appears: a click on the "HTML" button. */
 function OpenedSource(props: Partial<RichTextEditorProps>) {
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -2458,19 +2501,20 @@ function OpenedSource(props: Partial<RichTextEditorProps>) {
 }
 
 /**
- * HTML-режим: кнопка «HTML» на Панели сразу за «+» заменяет
- * Документ полем с его исходным HTML — по Блоку на строку, вложенные Блоки с
- * отступом, содержимое Блока на строке тега. Поле — на поверхности и шрифте
- * Блока кода, не ниже Документа и растёт по содержимому. Остальные кнопки
- * Панели недоступны (`aria-disabled`), ручки Блока и меню выделения нет. Выход
- * той же кнопкой, `blur`, отправка формы и `getHTML()` применяют правку через
- * Схему, как входящий `value`.
+ * HTML mode: the "HTML" button on the Toolbar, right after "+", replaces the
+ * Document with a field holding its source HTML: one Block per line, nested
+ * Blocks indented, and the content of a Block on the line of its tag. The field
+ * has the surface and font of a code Block, is not shorter than the Document,
+ * and grows with its content. The other Toolbar buttons are unavailable
+ * (`aria-disabled`), and there is no Block handle or selection menu. Leaving the
+ * mode with the same button, `blur`, form submission and `getHTML()` apply the
+ * edit through the Schema, like an incoming `value`.
  */
 export const SourceMode: Story = {
   render: () => <OpenedSource />,
 };
 
-/** HTML-режим на листе `surface="paper"`: светлый лист, а поле — тёмное, цветом кита. */
+/** HTML mode on a `surface="paper"` sheet: a light sheet, and a dark field in the kit's color. */
 export const SourceModePaper: Story = {
   render: () => <OpenedSource surface="paper" />,
 };
@@ -2482,8 +2526,9 @@ const SEARCH_SAMPLE =
   "<ul><li><p>Next match: Enter</p></li><li><p>Previous match: Shift+Enter</p></li></ul>";
 
 /**
- * Строка статуса экрана из Состояния Поиска: «2 of 4», пока панель открыта.
- * Хук читает снимок по тому же `ref`, что получает поле.
+ * The screen's status line, fed by the Search Tool state: "2 of 4" while the
+ * panel is open. The hook reads the snapshot through the same `ref` that the
+ * field receives.
  */
 function SearchStatus({ target }: { target: RefObject<RichTextEditorHandle | null> }) {
   const search = useRichTextToolState(target, "search");
@@ -2501,7 +2546,7 @@ function SearchStatus({ target }: { target: RefObject<RichTextEditorHandle | nul
   );
 }
 
-/** Открыть поиск по первому «match», как только движок готов: оно и станет текущим. */
+/** Open search on the first "match" once the engine is ready: that match becomes the current one. */
 function OpenedSearch({
   status = false,
   ...props
@@ -2535,29 +2580,29 @@ function OpenedSearch({
 }
 
 /**
- * Поиск и замена: кнопка «Поиск» у правого края Панели и `Mod+F`
- * открывают панель под Панелью — счётчик, переходы, поля поиска и замены,
- * «Учитывать регистр», «Слово целиком», «Регулярное выражение», «Заменить» и
- * «Заменить все». Все совпадения подсвечены мягко, текущее — плотнее и с
- * рамкой; «ma*tch*» найдено через границу Метки.
+ * Find and replace: the "Find" button at the right edge of the Toolbar and
+ * `Mod+F` open a panel under the Toolbar: the counter, next and previous, the
+ * find and replace fields, "Match case", "Whole words", "Regular expression",
+ * "Replace" and "Replace all". All matches are softly highlighted, and the
+ * current one is stronger and framed; "ma*tch*" is found across a Mark's border.
  */
 export const Search: Story = {
   render: () => <OpenedSearch />,
-  // Панель поиска — ленивый чанк: снимок ждёт, пока он загрузится.
+  // The search panel is a lazy chunk: the snapshot waits until it loads.
   tags: ["network-idle"],
 };
 
-/** Поиск в `basic`: кнопка «Поиск» есть и в коротком наборе. */
+/** Search in `basic`: the "Find" button is there in the short set too. */
 export const SearchBasic: Story = {
   render: () => <OpenedSearch preset="basic" />,
   tags: ["network-idle"],
 };
 
 /**
- * Состояние Поиска на экране: строка под полем читает его хуком
- * `useRichTextToolState(ref, "search")` и пишет «1 of 4». Переходите по
- * совпадениям, меняйте запрос и флажки — строка следует за панелью; закройте
- * панель — строка скажет, что поиск закрыт.
+ * The Search Tool state on the screen: the line under the field reads it with
+ * the hook `useRichTextToolState(ref, "search")` and writes "1 of 4". Move
+ * through the matches and change the query and the checkboxes: the line follows
+ * the panel. Close the panel and the line says that search is closed.
  */
 export const SearchStatusLine: Story = {
   render: () => <OpenedSearch status />,
@@ -2565,10 +2610,10 @@ export const SearchStatusLine: Story = {
 };
 
 /*
-  Невидимые символы (OLDSUI-278): пробелы, мягкие переносы (`Shift+Enter`) и концы
-  абзацев. Нейтральный текст: заметка с переносом строки внутри абзаца и пустым
-  абзацем, который легко не заметить. Двойной пробел из HTML схлопывается при
-  разборе, его набирают руками.
+  Invisible characters (OLDSUI-278): spaces, soft breaks (`Shift+Enter`) and
+  paragraph ends. Neutral text: a note with a line break inside a paragraph, and
+  an empty paragraph that is easy to overlook. A double space from HTML collapses
+  when parsed, so it is typed by hand.
 */
 const INVISIBLE_SAMPLE =
   "<h2>Invisible characters</h2>" +
@@ -2577,11 +2622,12 @@ const INVISIBLE_SAMPLE =
   "<p>The empty paragraph above is easy to miss. Type a second space here to see it.</p>";
 
 /**
- * Невидимые символы: пункт-флажок «Invisible characters» в меню «…» Панели
- * (последний раздел), отдельной кнопки нет: Панель в колонке 640 px остаётся в
- * одну строку. По умолчанию символы скрыты, как и в любом Редакторе с пресетом
- * `full`; отметьте пункт, и пробелы (·), мягкие переносы (↵) и концы абзацев (¶) станут
- * видны. Документ не меняется: знаки только нарисованы поверх текста.
+ * Invisible characters: the "Invisible characters" checkbox item in the Toolbar's
+ * "…" menu (the last section); there is no separate button, and the Toolbar in a
+ * 640 px column stays in one row. By default the characters are hidden, as in any
+ * Editor with the `full` preset. Tick the item, and spaces (·), soft breaks (↵)
+ * and paragraph ends (¶) become visible. The Document does not change: the marks
+ * are only drawn over the text.
  */
 export const InvisibleCharacters: Story = {
   render: () => (
@@ -2591,7 +2637,7 @@ export const InvisibleCharacters: Story = {
   ),
 };
 
-/** `tool("invisibleCharacters", { visible: true })`: знаки показаны с самого начала. */
+/** `tool("invisibleCharacters", { visible: true })`: the marks are shown from the start. */
 export const InvisibleCharactersShown: Story = {
   render: () => (
     <div className="max-w-[640px]">
@@ -2604,7 +2650,7 @@ export const InvisibleCharactersShown: Story = {
   ),
 };
 
-/** Показ знаков на светлом листе `surface="paper"`. */
+/** Showing the marks on a light `surface="paper"` sheet. */
 export const InvisibleCharactersPaper: Story = {
   render: () => (
     <div className="max-w-[640px]">
@@ -2647,7 +2693,7 @@ function WithInvisibleToggle() {
         aria-label="Saved HTML"
         className="bg-bg-2 text-fg-2 overflow-x-auto rounded p-2 text-xs whitespace-pre-wrap"
       >
-        {/* Читается при каждом рендере: переключение его перерисовывает через Состояние. */}
+        {/* Read on every render: toggling redraws it through the Tool state. */}
         {ref.current?.getHTML() ?? ""}
       </pre>
     </div>
@@ -2655,23 +2701,25 @@ function WithInvisibleToggle() {
 }
 
 /**
- * Показ с внешней кнопки: `handle.tool("invisibleCharacters")?.toggle()` и
- * `useRichTextToolState(ref, "invisibleCharacters")` вместо пункта меню «…». Под полем
- * сохранённый HTML и счётчик `onChange`: показ их не трогает.
+ * Showing from an external button: `handle.tool("invisibleCharacters")?.toggle()`
+ * and `useRichTextToolState(ref, "invisibleCharacters")` instead of the "…" menu
+ * item. Below the field are the saved HTML and the `onChange` counter; showing
+ * does not touch them.
  */
 export const InvisibleCharactersExternalToggle: Story = {
   render: () => <WithInvisibleToggle />,
 };
 
 /*
-  Кнопки своего Инструмента на нейтральных данных: действие с
-  сочетанием, Метка-переключатель с флагом Меню выделения и кнопка с поповером.
-  Подпись — функция от локали, поэтому русская история переводится сама.
+  Buttons of a custom Tool on neutral data: an action with a shortcut, a toggle
+  Mark with the selection-menu flag, and a button with a popover. The label is a
+  function of the locale, so the Russian story is translated by itself.
 */
 /*
-  Подписи по-русски — данные автора Инструмента, а не строки кита, и каталогу они
-  не принадлежат (ADR-0058, п. 6.2). Записаны escape-последовательностями: гейт
-  i18n ищет русские литералы в компонентах и историях, а здесь они — по делу.
+  The Russian labels are data of the Tool's author, not the kit's strings, and
+  the catalog does not own them (ADR-0058, item 6.2). They are written as escape
+  sequences: the i18n gate looks for Russian literals in components and stories,
+  and here they are deliberate.
 */
 const RU_LABELS = {
   stamp: "\u0428\u0442\u0430\u043c\u043f",
@@ -2683,7 +2731,7 @@ const PinMark = Mark.create({ name: "acme_pin" });
 
 const SYMBOLS = ["★", "✓", "→"] as const;
 
-/** Содержимое поповеров-примеров: три символа, выбор зовёт `onPick`. */
+/** The content of the example popovers: three symbols; selecting one calls `onPick`. */
 function SymbolChoices({ onPick }: { onPick: (symbol: string) => void }) {
   return (
     <div role="group" aria-label="Symbols" className="flex gap-1">
@@ -2756,11 +2804,12 @@ const CUSTOM_BUTTON_SAMPLE =
   "before Undo and Redo. Pin also shows in the selection menu.</p>";
 
 /**
- * Кнопки своего Инструмента: одна группа на Панели перед «Отменить» и
- * «Повторить», в порядке `tools`. «Stamp» — действие с сочетанием
- * `Ctrl/⌘+Shift+Y`, «Pin» — переключатель с `aria-pressed` и местом в Меню
- * выделения, «Symbol» — поповер с содержимым Инструмента. Подсказка называет
- * сочетание, справочник сочетаний даёт им группу без заголовка после групп кита.
+ * Buttons of a custom Tool: one group on the Toolbar, before "Undo" and "Redo",
+ * in the order of `tools`. "Stamp" is an action with the `Ctrl/⌘+Shift+Y`
+ * shortcut, "Pin" is a toggle with `aria-pressed` and a place in the selection
+ * menu, and "Symbol" is a popover with the Tool's content. The hint names the
+ * shortcut, and the keyboard shortcuts popover gives them a group with no heading
+ * after the kit's groups.
  */
 export const CustomToolButtons: Story = {
   args: {
@@ -2769,12 +2818,12 @@ export const CustomToolButtons: Story = {
   },
 };
 
-/** Поповер своей кнопки открыт: рамка, слой и возврат фокуса — у кита. */
+/** The popover of the custom button is open: the frame, the layer and the focus return are the kit's. */
 export const CustomToolButtonPopover: Story = {
   render: () => <CustomButtonOpen />,
 };
 
-/** Русская локаль: подписи-функции получают `locale: "ru-RU"` и переводят кнопки. */
+/** Russian locale: the label functions receive `locale: "ru-RU"` and translate the buttons. */
 export const CustomToolButtonsRussian: Story = {
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
@@ -2804,9 +2853,9 @@ function CustomButtonOpen() {
 }
 
 /*
-  Свой Инструмент с пунктом вставки и Действием над Блоком на
-  нейтральных данных: заметка-контейнер. Подпись пункта — функция от
-  `{ locale }`, поэтому в русской локали она другая.
+  A custom Tool with an insert item and a Block action on neutral data: a
+  container note. The item's label is a function of `{ locale }`, so in the
+  Russian locale it is different.
 */
 const Callout = Node.create({ name: "acme_callout", content: "block+", isolating: true });
 
@@ -2835,7 +2884,7 @@ const calloutTool: CustomTool = {
           .chain()
           .focus()
           .command(({ tr }) => {
-            // Позиция — Блок Ручки: сама заметка или Блок прямо в ней.
+            // The position is the handle's Block: the note itself, or a Block right inside it.
             const $pos = tr.doc.resolve(pos);
             const from = $pos.parent.type.name === "acme_callout" ? $pos.before($pos.depth) : pos;
             const callout = tr.doc.nodeAt(from);
@@ -2854,16 +2903,17 @@ const CALLOUT_SAMPLE =
   '<div data-block="acme_callout"><p>The block menu of this note has its own Unwrap action.</p></div>';
 
 /**
- * Свой пункт Меню вставки («/», «+», «Добавить ›» стоят в конце раздела
- * «Добавить») и своё Действие над Блоком (секция меню Ручки перед «Удалить»,
- * видна у заметки и у Блока в ней). Сочетания — поле записи: `⌘⌥N` вставляет
- * заметку, подсказка и справочник их показывают.
+ * A custom insert item (in the "/" menu, the "+" button, and "Add ›", which
+ * stand at the end of the "Add" section) and a custom Block action (in the handle
+ * menu's section before "Delete", visible on the note and on a Block inside it).
+ * Shortcuts are a recording field: `⌘⌥N` inserts the note, and the hint and the
+ * keyboard shortcuts popover show them.
  */
 export const CustomInsertItemAndBlockAction: Story = {
   args: { tools: [...RICH_TEXT_PRESETS.full, calloutTool], defaultValue: CALLOUT_SAMPLE },
 };
 
-/** То же в русской локали: подпись пункта получает `locale`, каталог — русский. */
+/** The same in the Russian locale: the item's label receives `locale`, and the catalog is Russian. */
 export const CustomInsertItemAndBlockActionRussian: Story = {
   args: { tools: [...RICH_TEXT_PRESETS.full, calloutTool], defaultValue: CALLOUT_SAMPLE },
   render: (args) => (
@@ -2876,9 +2926,10 @@ export const CustomInsertItemAndBlockActionRussian: Story = {
 };
 
 /*
-  Пункт вставки и Действие над Блоком с поповером (ADR-0058, п. 5.6) на
-  нейтральных данных: выбор символа. Рамку держит кит, как у кнопки; поповер
-  пункта встаёт у каретки (из «/» — там, где стоял «/»), Действия — у Блока.
+  An insert item and a Block action with a popover (ADR-0058, item 5.6) on
+  neutral data: choosing a symbol. The kit draws the frame, as for a button; the
+  item's popover stands at the caret (from "/", where the "/" was), and the
+  action's popover stands at the Block.
 */
 const symbolEntriesTool: CustomTool = {
   name: "acme_symbolEntries",
@@ -2904,7 +2955,7 @@ const symbolEntriesTool: CustomTool = {
       label: "Append symbol",
       icon: TagIcon,
       blocks: ["paragraph", "heading"],
-      // `pos` — Блок Ручки: символ встаёт в конец его текста.
+      // `pos` is the handle's Block: the symbol goes at the end of its text.
       popover: ({ editor, close, pos }) => (
         <SymbolChoices
           onPick={(symbol) => {
@@ -2927,9 +2978,10 @@ const SYMBOL_ENTRIES_SAMPLE =
   "<p>Append symbol in the block menu of this paragraph opens its picker at the block.</p>";
 
 /**
- * Поповер пункта вставки и Действия над Блоком: «Symbol» в «/», «+» и
- * «Добавить ›» открывает выбор у каретки, «Append symbol» в меню Ручки — у
- * Блока. Escape закрывает поповер и возвращает каретку в текст.
+ * The popover of an insert item and of a Block action: "Symbol" in "/", "+" and
+ * "Add ›" opens the picker at the caret, and "Append symbol" in the handle menu
+ * opens it at the Block. Escape closes the popover and returns the caret to the
+ * text.
  */
 export const CustomEntryPopovers: Story = {
   args: {
@@ -2939,10 +2991,10 @@ export const CustomEntryPopovers: Story = {
 };
 
 /*
-  Свой Инструмент с загрузчиком на нейтральных данных: врезка-
-  контейнер, чьи Extensions приходят промисом. Промис решают кнопки
-  истории — так Скелет стоит на экране, сколько нужно, и снимок детерминирован.
-  «Повторить» зовёт загрузчик заново: кнопки решают уже новый промис.
+  A custom Tool with a loader on neutral data: a container aside whose
+  Extensions arrive as a promise. The buttons of the story settle the promise,
+  so the Skeleton stays on screen as long as needed and the snapshot is
+  deterministic. "Retry" calls the loader again: the buttons settle the new promise.
 */
 const Aside = Node.create({ name: "acme_aside", content: "block+", isolating: true });
 let settleAside: (fail: boolean) => void = () => {};
@@ -2982,11 +3034,12 @@ function ToolLoaderStory(args: RichTextEditorProps) {
 }
 
 /**
- * Скелет до Готовности: рамка поля, место Панели и Документ статичным HTML с
- * ритмом Просмотра, без ввода. Документ очищен Схемой: врезка, чей загрузчик
- * ещё не отработал, видна текстом. «Finish loading» решает загрузчик — движок
- * встаёт на место Скелета без прыжка высоты; «Fail loading» — ошибка поля с
- * «Повторить», Документ остаётся виден.
+ * The Skeleton before Readiness: the field's frame, a place for the Toolbar, and
+ * the Document as static HTML with the rhythm of the View, without input. The
+ * Document is cleaned by the Schema: an aside whose loader has not finished yet
+ * shows as text. "Finish loading" settles the loader, and the engine takes the
+ * Skeleton's place without a height jump; "Fail loading" shows a field error with
+ * "Retry", and the Document stays visible.
  */
 export const ToolLoader: Story = {
   args: { tools: [...RICH_TEXT_PRESETS.full, asideTool], defaultValue: ASIDE_SAMPLE },
@@ -2994,14 +3047,14 @@ export const ToolLoader: Story = {
 };
 
 /*
-  Карточка у текста (ADR-0058, п. 7.6–7.11) на нейтральных данных:
-  замечания к тексту. Метка `acme_comment` и её Карточка — Инструмент потребителя;
-  диапазон даёт готовый помощник кита `markRange`, а рамку, якорь под диапазоном,
-  переворот у края и Escape держит кит.
+  Text card (ADR-0058, items 7.6–7.11) on neutral data: comments on the text.
+  The `acme_comment` Mark and its Text card are the consumer's Tool; the range is
+  given by the kit's ready-made helper `markRange`, while the frame, the anchor
+  under the range, the flip at the edge and Escape are the kit's.
 */
 const CommentMark = Mark.create({ name: "acme_comment" });
 
-/* Русская подпись — данные автора Инструмента; escape-ами — по гейту i18n, как выше. */
+/* The Russian label is data of the Tool's author; it is escape-encoded because of the i18n gate, as above. */
 const RU_COMMENT = "\u041a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0439";
 
 const commentTool: CustomTool = {
@@ -3035,7 +3088,7 @@ const COMMENT_SAMPLE =
   "so the team can test it early.</p>" +
   '<p>Open questions: <span data-mark="acme_comment">who owns the rollback</span>?</p>';
 
-/** Каретка в первую Метку-замечание, как только движок появился: история показывает Карточку открытой. */
+/** Put the caret in the first comment Mark as soon as the engine appears: the story shows the Text card open. */
 function useCaretInComment(ref: RefObject<RichTextEditorHandle | null>) {
   useEffect(() => {
     let frame = 0;
@@ -3081,33 +3134,35 @@ function CommentOpen({ locale }: { locale?: "ru-RU" }) {
 }
 
 /**
- * Карточка у текста: каретка внутри замечания или щелчок по нему открывает
- * Карточку под диапазоном; наведение — нет. Фокус остаётся в Документе, печать
- * продолжается; `Alt+F10` ведёт в Карточку, Escape возвращает каретку и прячет
- * её до выхода каретки из диапазона. Развёрнутое выделение закрывает Карточку.
+ * Text card: the caret inside a comment, or a click on it, opens the Text card
+ * under the range; hovering does not. Focus stays in the Document and typing
+ * goes on; `Alt+F10` moves into the Text card, and Escape returns the caret and
+ * hides the card until the caret leaves the range. An expanded selection closes
+ * the Text card.
  */
 export const TextCard: Story = {
   args: { defaultValue: COMMENT_SAMPLE, tools: [...RICH_TEXT_PRESETS.full, commentTool] },
 };
 
 /**
- * Карточка открыта — для глаз, снимков и axe: рамка, слой и доступное имя у кита.
- * Карточка — ленивый чанк, и его загрузка стартует только после
- * Готовности движка: метка `network-idle` велит снимку и аудиту дождаться тишины
- * в сети, иначе они застают поле без Карточки.
+ * The Text card is open: for the eye, snapshots and axe. The frame, the layer
+ * and the accessible name are the kit's. The Text card is a lazy chunk, and its
+ * loading starts only after the engine is ready; the `network-idle` tag tells the
+ * snapshot and the audit to wait for the network to go quiet, otherwise they
+ * catch the field without the Text card.
  */
 export const TextCardOpen: Story = {
   tags: ["network-idle"],
   render: () => <CommentOpen />,
 };
 
-/** Русская локаль: подпись записи — функция от `{ locale }`, имя рамки и фраза о появлении — каталог. */
+/** Russian locale: the entry's label is a function of `{ locale }`; the frame's name and the appearance phrase come from the catalog. */
 export const TextCardRussian: Story = {
   tags: ["network-idle"],
   render: () => <CommentOpen locale="ru-RU" />,
 };
 
-/** `readOnly`: Карточки работают — читать замечания можно и без правки текста. */
+/** `readOnly`: the Text cards work, so the comments can be read without editing the text. */
 export const TextCardReadOnly: Story = {
   args: {
     defaultValue: COMMENT_SAMPLE,
@@ -3117,8 +3172,8 @@ export const TextCardReadOnly: Story = {
 };
 
 /**
- * Поле у нижнего края окна (прокрутите вниз): последнее замечание стоит там,
- * где под диапазоном места нет, и Карточка переворачивается над ним.
+ * A field near the bottom edge of the window (scroll down): the last comment sits
+ * where there is no room under its range, and the Text card flips above it.
  */
 export const TextCardNearEdge: Story = {
   render: () => (
@@ -3133,9 +3188,9 @@ export const TextCardNearEdge: Story = {
 };
 
 /*
-  Свой символ-триггер (ADR-0064) на нейтральных данных: упоминания
-  по `@`. Инструмент описывает символ, пункты по запросу и то, что делает выбор
-  (заменяет `@запрос` атомом); список — тот же компонент кита, что у «/».
+  A custom trigger symbol (ADR-0064) on neutral data: mentions by `@`. The Tool
+  describes the symbol, the items by query, and what choosing does (it replaces
+  `@query` with an atom); the list is the same kit component as the one for "/".
 */
 const MENTION_PEOPLE = [
   { id: "ada", name: "Ada Lovelace" },
@@ -3210,32 +3265,33 @@ function MentionTriggerStory({ command }: { command: string }) {
 }
 
 /**
- * Свой символ-триггер: набор `@` в начале Блока или после пробела открывает
- * список людей у каретки — тот же, что у «/», с фокусом в поле. Запрос после
- * `@` фильтрует, стрелки и Enter выбирают, Escape закрывает, оставив набранное.
- * Выбор заменяет `@запрос` атомом упоминания. Внутри слова (`mail@example.com`)
- * список молчит.
+ * A custom trigger symbol: typing `@` at the start of a Block or after a space
+ * opens the list of people at the caret, the same one as for "/", with focus in
+ * the field. The query after `@` filters the list, the arrows and Enter select,
+ * and Escape closes it and keeps what was typed. Choosing an item replaces
+ * `@query` with a mention atom. Inside a word (`mail@example.com`) the list
+ * stays silent.
  */
 export const MentionTrigger: Story = {
   render: () => <MentionTriggerStory command="@" />,
 };
 
-/** Поле без набранного: клавиатурные проверки в браузере набирают `@` сами. */
+/** An empty field: the keyboard checks in the browser type the `@` themselves. */
 export const MentionTriggerIdle: Story = {
   render: () => <MentionTriggerStory command="" />,
 };
 
-/** Набранное после `@` фильтрует пункты, их отдаёт `items(query)` Инструмента. */
+/** What is typed after `@` filters the items, which the Tool's `items(query)` returns. */
 export const MentionTriggerFiltered: Story = {
   render: () => <MentionTriggerStory command="@gr" />,
 };
 
-/** Ничего не нашлось — строка «Nothing found», как у «/». */
+/** Nothing found: the "Nothing found" line, as for "/". */
 export const MentionTriggerNothingFound: Story = {
   render: () => <MentionTriggerStory command="@zzz" />,
 };
 
-/* ── Оглавление: Инструмент `toc` (ADR-0068) ──────────────────── */
+/* ── Table of contents: the `toc` Tool (ADR-0068) ──────────────────── */
 
 const tocSection = (topic: string) =>
   `<p>This section describes ${topic}. It has enough text to give the field some height, ` +
@@ -3262,54 +3318,57 @@ const TOC_ARTICLE =
 const TOC_TOOLS = [...RICH_TEXT_PRESETS.full, "toc"] as const;
 
 /**
- * Оглавление в левом поле Редактора: Инструмент `toc` включают именем, в пресеты
- * он не входит. Полоса липнет под Панелью; наведение раскрывает список, клик
- * ставит каретку в конец заголовка. Добавьте или удалите заголовок — список
- * пересоберётся, а с последним заголовком из пары уйдёт и левое поле.
+ * The Table of contents in the Editor's left margin: the `toc` Tool is switched
+ * on by name; it is not in the presets. The strip sticks below the Toolbar;
+ * hovering expands the list, and a click puts the caret at the end of a heading.
+ * Add or remove a heading and the list rebuilds; the left margin goes away too
+ * with the last heading of a pair.
  */
 export const TableOfContents: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE },
-  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  // The Table of contents core is a lazy chunk: the snapshot waits until the strip arrives.
   tags: ["network-idle"],
 };
 
-/** `readOnly`: Панели нет, полоса липнет к краю окна, переход ставит фокус на заголовок. */
+/** `readOnly`: there is no Toolbar, the strip sticks to the window edge, and a jump puts focus on the heading. */
 export const TableOfContentsReadOnly: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, readOnly: true },
-  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  // The Table of contents core is a lazy chunk: the snapshot waits until the strip arrives.
   tags: ["network-idle"],
 };
 
 /**
- * Поле с `maxHeight`: Документ прокручивается внутри Редактора, полоса липнет к
- * верху области, подсветка и переход считают от неё.
+ * A field with `maxHeight`: the Document scrolls inside the Editor, the strip
+ * sticks to the top of the area, and the highlight and the jump are computed
+ * from it.
  */
 export const TableOfContentsScrollingField: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, maxHeight: 360 },
-  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  // The Table of contents core is a lazy chunk: the snapshot waits until the strip arrives.
   tags: ["network-idle"],
 };
 
-/** Светлый Лист: Оглавление стоит в поле Редактора слева от Листа, в теме приложения. */
+/** The light Paper: the Table of contents stands in the Editor's field to the left of the Paper, in the app theme. */
 export const TableOfContentsPaper: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, surface: "paper" },
-  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  // The Table of contents core is a lazy chunk: the snapshot waits until the strip arrives.
   tags: ["network-idle"],
 };
 
-/** Плавающая Панель: над полем ничего не липнет, полоса — к краю окна. */
+/** Floating Toolbar: nothing sticks above the field, and the strip sticks to the window edge. */
 export const TableOfContentsFloatingToolbar: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE, toolbar: "floating" },
-  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  // The Table of contents core is a lazy chunk: the snapshot waits until the strip arrives.
   tags: ["network-idle"],
 };
 
 /**
- * Оглавление, настроенное записью `tool("toc", …)`: только уровни H2–H3 и
- * шапка экрана, чья высота лежит в своей переменной `--header-h`, а не в
- * `--topbar-h`. Запись сама включает Инструмент, имя `"toc"` в `tools` не нужно.
- * Прокрутите страницу и нажмите пункт списка: заголовок встанет под шапку, а
- * H1 и H4 в полосе и списке нет.
+ * The Table of contents configured by a `tool("toc", …)` entry: only the H2–H3
+ * levels, and the screen header, whose height is in its own variable
+ * `--header-h`, not in `--topbar-h`. The entry switches the Tool on by itself;
+ * the name `"toc"` is not needed in `tools`. Scroll the page and click a list
+ * item: the heading goes under the header, and H1 and H4 are not in the strip
+ * or the list.
  */
 export const TableOfContentsOptions: Story = {
   args: {
@@ -3318,7 +3377,7 @@ export const TableOfContentsOptions: Story = {
     toolbar: "floating",
   },
   render: (args) => <WithAppHeader {...args} />,
-  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  // The Table of contents core is a lazy chunk: the snapshot waits until the strip arrives.
   tags: ["network-idle"],
 };
 
@@ -3341,8 +3400,9 @@ function WithAppHeader(props: RichTextEditorProps) {
 }
 
 /*
-  Внешняя навигация по Состоянию Оглавления: список заголовков и текущий раздел
-  читаются хуком `useRichTextToolState(ref, "toc")`, а не из DOM Документа.
+  External navigation from the Table of contents Tool state: the list of
+  headings and the current section are read by the hook
+  `useRichTextToolState(ref, "toc")`, not from the Document's DOM.
 */
 function ReadingPosition({ target }: { target: RefObject<RichTextEditorHandle | null> }) {
   const toc = useRichTextToolState(target, "toc");
@@ -3383,24 +3443,26 @@ function WithReadingPosition(props: RichTextEditorProps) {
 }
 
 /**
- * Состояние Оглавления на экране: справа от поля внешняя навигация из заголовков
- * `useRichTextToolState(ref, "toc")`; текущий раздел идёт за прокруткой. Правьте
- * заголовки — список меняется сразу, не дожидаясь ленивого ядра Оглавления.
+ * The Table of contents Tool state on the screen: to the right of the field, an
+ * external navigation built from the headings via `useRichTextToolState(ref, "toc")`;
+ * the current section follows the scroll. Edit the headings: the list changes at
+ * once, without waiting for the lazy Table of contents core.
  */
 export const TableOfContentsExternalNavigation: Story = {
   args: { tools: [...TOC_TOOLS], defaultValue: TOC_ARTICLE },
   render: (args) => <WithReadingPosition {...args} />,
-  // Ядро Оглавления — ленивый чанк: снимок ждёт, пока полоса придёт.
+  // The Table of contents core is a lazy chunk: the snapshot waits until the strip arrives.
   tags: ["network-idle"],
 };
 
 /**
- * Команды Инструмента из кода экрана: кнопки шапки зовут `handle.tool("search")` и
- * `handle.tool("toc")`, а не внутренности Редактора. «Найти „tone“» открывает панель
- * Поиска сразу с запросом, «Дальше» ведёт к следующему совпадению, «К заголовку»
- * переходит по списку Оглавления: заголовок встаёт под шапку экрана и под
- * фиксированную Панель, как при клике по пункту списка. В списке только H2–H3
- * (`levels`), поэтому индекс 0 — «How to read».
+ * Tool commands from the screen's code: the header buttons call
+ * `handle.tool("search")` and `handle.tool("toc")`, not the Editor's internals.
+ * "Find “tone”" opens the Search panel at once with the query, "Next match" goes
+ * to the next match, and "Go to “How to read”" jumps through the Table of contents
+ * list: the heading goes under the screen header and under the fixed Toolbar, as
+ * on a click of a list item. The list has only H2–H3 (`levels`), so index 0 is
+ * "How to read".
  */
 export const ToolCommands: Story = {
   args: {
@@ -3408,14 +3470,14 @@ export const ToolCommands: Story = {
     defaultValue: TOC_ARTICLE,
   },
   render: (args) => <WithToolCommands {...args} />,
-  // Панель поиска — ленивый чанк.
+  // The search panel is a lazy chunk.
   tags: ["network-idle"],
 };
 
 function WithToolCommands(props: RichTextEditorProps) {
   const ref = useRef<RichTextEditorHandle>(null);
   useEffect(() => {
-    // Шапка экрана и Панель Редактора липнут одна под другой: обе читают высоту шапки.
+    // The screen header and the Editor's Toolbar stick one under the other: both read the header height.
     const root = document.documentElement;
     root.style.setProperty("--header-h", "56px");
     root.style.setProperty("--topbar-h", "56px");
@@ -3446,12 +3508,12 @@ function WithToolCommands(props: RichTextEditorProps) {
   );
 }
 
-/* ── Свой Инструмент с опциями: defineTool ───────── */
+/* ── A custom Tool with options: defineTool ───────── */
 
 /*
-  Заметка на полях на нейтральных данных: Инструмент с подписями и пределом в
-  Опциях, Состоянием «сколько заметок» и Командой «добавить». Автор дописывает его
-  в карту `RichTextTools`, и хук с `handle.tool()` получают типы.
+  A margin note on neutral data: a Tool with labels and a limit in its Options,
+  a Tool state ("how many notes") and a Tool command ("add"). The author adds it
+  to the `RichTextTools` map, and the hook with `handle.tool()` gets the types.
 */
 declare module "@olddevs/ui/editor" {
   interface RichTextTools {
@@ -3514,7 +3576,7 @@ const REMARK_SAMPLE =
   "<p>Remarks are the paragraphs below; the status line counts them using the Tool state.</p>" +
   '<div data-block="acme_remark">First remark</div>';
 
-/** Строка статуса и кнопка экрана: читают Состояние и зовут Команду своего Инструмента. */
+/** The status line and the screen button: they read the Tool state and call the Tool command. */
 function RemarkScreen(props: RichTextEditorProps) {
   const ref = useRef<RichTextEditorHandle>(null);
   const remarks = useRichTextToolState(ref, "acme_remark");
@@ -3538,20 +3600,20 @@ function RemarkScreen(props: RichTextEditorProps) {
 }
 
 /**
- * Свой Инструмент через `defineTool` с умолчаниями: подпись кнопки и пункта
- * «Remark» и предел в три заметки — из `defaults`. Строка статуса над полем читает
- * Состояние Инструмента хуком `useRichTextToolState`, кнопка «Add a remark» зовёт
- * его Команду `handle.tool("acme_remark")?.add(…)`; на пределе кнопка Панели
- * выключается, а Команда возвращает `false`.
+ * A custom Tool through `defineTool` with defaults: the button label and the
+ * "Remark" item, and the limit of three notes, come from `defaults`. The status
+ * line above the field reads the Tool state with the `useRichTextToolState` hook;
+ * the "Add a remark" button calls its Tool command `handle.tool("acme_remark")?.add(…)`;
+ * at the limit the Toolbar button is disabled, and the command returns `false`.
  */
 export const DefinedTool: Story = {
   render: () => <RemarkScreen tools={[...RICH_TEXT_PRESETS.full, remarkTool]} />,
 };
 
 /**
- * Тот же Инструмент, настроенный экраном: `tool(remark, { labels: { insert:
- * "Comment" }, limit: 2 })` меняет подпись кнопки и пункта «Comment» и предел, а
- * остальные умолчания остаются, вложенные подписи сливаются с ними.
+ * The same Tool, configured by the screen: `tool(remark, { labels: { insert:
+ * "Comment" }, limit: 2 })` changes the button label, the "Comment" item and the
+ * limit, while the other defaults stay, and the nested labels are merged with them.
  */
 export const DefinedToolConfigured: Story = {
   render: () => (
@@ -3565,11 +3627,12 @@ export const DefinedToolConfigured: Story = {
 };
 
 /*
-  Видео по ссылке (OLDSUI-281, ADR-0071): Инструменты `youtube` и `twitch`, вне
-  Пресетов — явной записью в `tools`. В Документе ссылка, а не плеер; плеер рисует
-  кит. Плеер встаёт сразу (OLDSUI-287), `autoload: false` оставляет заглушку до
-  щелчка. Видео в историях — настоящий ролик YouTube и запись Twitch, но тесты
-  перехватывают запросы к сервисам (`tests-visual/rich-text-editor-video.spec.ts`).
+  Video by link (OLDSUI-281, ADR-0071): the `youtube` and `twitch` Tools, outside
+  the Presets: an explicit entry in `tools`. The Document holds a link, not a
+  player; the kit draws the player. The player appears at once (OLDSUI-287), and
+  `autoload: false` leaves a placeholder until a click. The videos in the stories
+  are a real YouTube video and a Twitch recording, but the tests intercept the
+  requests to the services (`tests-visual/rich-text-editor-video.spec.ts`).
 */
 const VIDEO_SAMPLE =
   "<h2>Video</h2><p>Two blocks follow, one per service.</p>" +
@@ -3580,12 +3643,12 @@ const VIDEO_SAMPLE =
   "<p>Add another: menu → Video, or paste a link.</p>";
 
 /**
- * Видео из YouTube и Twitch: плеер сервиса стоит сразу, в рамке 16:9. «Video» в меню
- * вставки («+» и «/») принимает ссылку любого из двух сервисов; ссылка в пустом абзаце
- * тоже становится блоком.
+ * Videos from YouTube and Twitch: the service's player appears at once, in a
+ * 16:9 frame. "Video" in the Insert menu ("+" and "/") accepts a link from either
+ * service; a link in an empty paragraph also becomes a Block.
  */
 export const Video: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -3599,12 +3662,13 @@ export const Video: Story = {
 };
 
 /**
- * `autoload: false` у обоих сервисов: вместо плеера заглушка с названием сервиса и
- * кнопкой «Play», плеер после щелчка. До него к сервису не уходит ни одного запроса —
- * для экранов, где важна приватность.
+ * `autoload: false` for both services: a placeholder with the service's name and
+ * a "Play" button stands in place of the player, and the player loads after a
+ * click. Until then no request goes to the service at all; this is for screens
+ * where privacy matters.
  */
 export const VideoClickToPlay: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -3622,11 +3686,11 @@ export const VideoClickToPlay: Story = {
 };
 
 /**
- * Только YouTube: блок Twitch из `value` становится своей ссылкой, а поле ссылки
- * в «Video» отвечает ошибкой на ссылку чужого сервиса.
+ * YouTube only: a Twitch Block from `value` becomes a plain link, and the link
+ * field in "Video" answers with an error for a link from another service.
  */
 export const VideoYoutubeOnly: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <div className="max-w-[640px]">
@@ -3639,9 +3703,9 @@ export const VideoYoutubeOnly: Story = {
   ),
 };
 
-/** Каталог сообщений русский: «Видео», «Воспроизвести», «Ссылка на видео». */
+/** The Russian message catalog: labels such as "Video", "Play" and "Video link" (English stand-ins) come from it. */
 export const VideoRussian: Story = {
-  // Ленивые чанки (KaTeX, плеер, Остров): снимок и аудит ждут тишины в сети.
+  // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
