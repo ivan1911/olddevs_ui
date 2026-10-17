@@ -1,0 +1,16 @@
+{
+  "source": "gsheets",
+  "browser": "chrome",
+  "scenario": "cell",
+  "origin": "captured for OLDSUI-274",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "types": [
+    "text/plain",
+    "text/html",
+    "application/x-vnd.google-docs-internal-clip-id",
+    "application/x-vnd.google-spreadsheet-compact-table+json"
+  ],
+  "files": [],
+  "text/html": "<meta charset='utf-8'><style type=\"text/css\"><!--td {border: 1px solid #cccccc;}br {mso-data-placement:same-cell;}--></style><span style=\"font-size:11pt;font-family:Arial;font-weight:bold;font-style:normal;text-align:center;\" data-sheets-root=\"1\">Share</span>",
+  "text/plain": "Share"
+}

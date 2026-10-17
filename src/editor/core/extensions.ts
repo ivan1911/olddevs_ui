@@ -232,6 +232,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "twitch",
   "emoji",
   "typography",
+  "pasteCleanup",
   "source",
   "search",
   "invisibleCharacters",

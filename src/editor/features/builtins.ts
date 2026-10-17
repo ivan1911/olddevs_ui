@@ -39,6 +39,7 @@ import {
   type ConfiguredTool,
 } from "../core/toolOptions.js";
 import { SEARCH_TOOL } from "./search/searchTool.js";
+import { PASTE_CLEANUP_TOOL } from "./pasteCleanup/pasteCleanupTool.js";
 import { TABLE_TOOL } from "./table/tableTool.js";
 import { TOC_TOOL } from "./toc/tocTool.js";
 import { TYPOGRAPHY_TOOL } from "./typography/typographyTool.js";
@@ -89,6 +90,7 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   details: DETAILS_TOOL,
   mathematics: MATHEMATICS_TOOL,
   typography: TYPOGRAPHY_TOOL,
+  pasteCleanup: PASTE_CLEANUP_TOOL,
   youtube: YOUTUBE_TOOL,
   twitch: TWITCH_TOOL,
   /*

@@ -1,0 +1,11 @@
+{
+  "source": "gdocs",
+  "browser": "chromium",
+  "scenario": "list-item-level-styling",
+  "origin": "Mr0grog/google-docs-to-markdown@9db1084 test/fixtures/list-item-level-styling.copy.html",
+  "types": [
+    "text/html"
+  ],
+  "text/html": "<meta charset=\"utf-8\">\n<b style=\"font-weight:normal;\" id=\"docs-internal-guid-00000000-0000-0000-0000-000000000000\">\n\t<p dir=\"ltr\" style=\"line-height:1.38;margin-top:0pt;margin-bottom:0pt;\">\n\t\t<span style=\"font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\">\n\t\t\tThis is a test of formatting bleeding across list items.\n\t\t</span>\n\t</p>\n\t<br />\n\t<ul style=\"margin-top:0;margin-bottom:0;padding-inline-start:48px;\">\n\t\t<li dir=\"ltr\" style=\"list-style-type:disc;font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:700;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;\" aria-level=\"1\">\n\t\t\t<p dir=\"ltr\" style=\"line-height:1.38;margin-top:0pt;margin-bottom:0pt;\" role=\"presentation\">\n\t\t\t\t<span style=\"font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:700;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\">\n\t\t\t\t\tBold formatting\n\t\t\t\t</span>\n\t\t\t</p>\n\t\t</li>\n\t\t<li dir=\"ltr\" style=\"list-style-type:disc;font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:700;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;\" aria-level=\"1\">\n\t\t\t<p dir=\"ltr\" style=\"line-height:1.38;margin-top:0pt;margin-bottom:0pt;\" role=\"presentation\">\n\t\t\t\t<span style=\"font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\">\n\t\t\t\t\tNormal text\n\t\t\t\t</span>\n\t\t\t</p>\n\t\t</li>\n\t</ul>\n</b>\n",
+  "text/plain": ""
+}

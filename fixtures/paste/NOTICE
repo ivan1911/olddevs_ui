@@ -1,0 +1,32 @@
+Clipboard HTML used as paste test fixtures. None of these files ships in the npm package
+("files" in package.json does not include fixtures/). Each file keeps its source's licence.
+
+word-mac-*, excel-mac-*, gdocs-{chrome,safari,firefox}-*, gsheets-*
+  Captured for OLDSUI-274 on 2026-10-17 on macOS: Microsoft Word 16.114 and Excel for Mac,
+  Google Docs and Google Sheets, pasted into Chrome, Safari and Firefox Developer Edition.
+  Office temp file paths and Google copy GUIDs are replaced with constants.
+  Licence: the kit's licence (MIT).
+
+word-win-firefox-*
+  Microsoft Word 12 (2007) on Windows, captured through Firefox. From tinymce/tinymce at tag
+  6.8.5, modules/tinymce/src/core/test/ts/module/test/PasteStrings.ts (constants table and
+  wordList1; wordList2 there is byte-identical to wordList1). Temp file paths are replaced with constants.
+  MIT License. Copyright (c) 2022 Ephox Corporation DBA Tiny Technologies, Inc.
+
+gdocs-chromium-*
+  Google Docs copies made in Chromium. From Mr0grog/google-docs-to-markdown at commit
+  9db10842fd78288b14d73750e901d6e8799aadf9, test/fixtures/<name>.copy.html.
+  BSD 3-Clause License. Copyright (c) 2018, Rob Brackett.
+
+MIT License: Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files, to deal in the Software without
+restriction, subject to the above copyright notice and this permission notice being included
+in all copies or substantial portions of the Software. The Software is provided "as is",
+without warranty of any kind.
+
+BSD 3-Clause License: Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the copyright notice, this list of conditions and
+the following disclaimer are retained; neither the name of the copyright holder nor the names
+of its contributors may be used to endorse or promote products derived from this software
+without specific prior written permission. The software is provided "as is", without warranty
+of any kind.
