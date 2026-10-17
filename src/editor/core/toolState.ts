@@ -1,62 +1,63 @@
 import type { SearchToolOptions, TocLevel } from "./toolOptions.js";
 
 /*
-  Снимки Состояния встроенных Инструментов: чистые данные для
-  `useRichTextToolState`. Модуль только из типов, серверно-безопасный, как
-  `toolOptions.ts`: карта `RichTextTools` ссылается на него в части `state`.
-  Узлов DOM, позиций ProseMirror и функций в снимках нет — их можно сравнить по
-  значению, сериализовать и передать через границу RSC.
+  Snapshots of the built-in Tools' state: plain data for
+  `useRichTextToolState`. A types-only module, server-safe, like
+  `toolOptions.ts`: the `RichTextTools` map refers to it in the `state` part.
+  Snapshots contain no DOM nodes, ProseMirror positions or functions, so they can
+  be compared by value, serialized and passed across the RSC boundary.
 */
 
-/** Состояние Инструмента `search` (ADR-0058). */
+/** State of the `search` Tool (ADR-0058). */
 export interface SearchToolState {
-  /** Панель Поиска открыта. */
+  /** The Find panel is open. */
   open: boolean;
   /**
-   * Запрос. Закрытие панели убирает запрос и подсветку; без панели запрос ставит
-   * Команда `setQuery`.
+   * The query. Closing the panel clears the query and its highlight; without the
+   * panel, the query is set by the `setQuery` command.
    */
   query: string;
   /**
-   * Флажки поиска. Закрытие панели возвращает их к стартовым из Опций
-   * Инструмента, с которыми панель и откроется.
+   * Find flags. Closing the panel resets them to the starting values from the
+   * Tool's options, which the panel reopens with.
    */
   flags: Readonly<SearchToolOptions>;
-  /** Сколько совпадений запроса в Документе. */
+  /** How many matches of the query are in the Document. */
   total: number;
-  /** Индекс текущего совпадения, от 0; `-1` — совпадений нет. */
+  /** Index of the current match, from 0; `-1` means there are no matches. */
   current: number;
   /**
-   * Текст ошибки, если запрос — неверное регулярное выражение (сообщение движка
-   * JavaScript, не локализованное); иначе `null`. Совпадений при ошибке нет.
+   * Error text if the query is an invalid regular expression (the JavaScript engine's
+   * message, not localized); otherwise `null`. There are no matches when there is an error.
    */
   error: string | null;
 }
 
-/** Заголовок в Состоянии Инструмента `toc`: пункт списка Оглавления. */
+/** Heading in the `toc` Tool's state: an entry of the Table of contents. */
 export interface TocToolHeading {
-  /** Уровень по тегу: 1 для `h1` … 4 для `h4`. */
+  /** Level from the tag: 1 for `h1` … 4 for `h4`. */
   level: TocLevel;
-  /** Текст пункта — текст заголовка без разметки, без крайних пробелов. */
+  /** Entry text: the heading's text without markup and without outer whitespace. */
   text: string;
-  /** Номер пункта в списке Оглавления, от 0; по нему текущий раздел находит свой заголовок. */
+  /** Position of the entry in the Table of contents list, from 0; the current section uses it to find its heading. */
   index: number;
 }
 
-/** Состояние Инструмента `toc` (ADR-0068). */
+/** State of the `toc` Tool (ADR-0068). */
 export interface TocToolState {
   /**
-   * Заголовки Документа в порядке чтения — те же, что в полосе и списке Оглавления:
-   * верхний уровень и Обёртки, только уровни из Опции `levels`, без пустых.
-   * Список отдаётся и при одном заголовке, хотя полосы тогда нет.
+   * Headings of the Document in reading order, the same as in the strip and the Table
+   * of contents list: headings at the top level and inside Wrappers, only the levels
+   * from the `levels` option, no empty ones. The list is returned even with a single
+   * heading, though then there is no strip.
    */
   headings: readonly TocToolHeading[];
-  /** Индекс текущего раздела в `headings`, от 0; `-1` — заголовков нет. Следует за прокруткой. */
+  /** Index of the current section in `headings`, from 0; `-1` means there are no headings. Follows scrolling. */
   current: number;
 }
 
-/** Состояние Инструмента `invisibleCharacters` (по расширению Invisible Characters из Tiptap, ADR-0048). */
+/** State of the `invisibleCharacters` Tool (based on the Invisible Characters extension from Tiptap, ADR-0048). */
 export interface InvisibleCharactersToolState {
-  /** Пробелы, мягкие переносы и концы абзацев показаны. Скрыты, пока автор не включил их или Опция `visible`. */
+  /** Spaces, soft hyphens and paragraph ends are shown. Hidden until the author turns them on or the `visible` option applies. */
   visible: boolean;
 }

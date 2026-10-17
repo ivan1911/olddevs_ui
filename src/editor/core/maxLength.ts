@@ -1,9 +1,9 @@
 "use client";
 
-// Происхождение: Tiptap, `@tiptap/extensions/character-count` (MIT, © Tiptap GmbH,
-// https://github.com/ueberdosis/tiptap). Взята логика `filterTransaction` и
-// подсчёт символов; лимит читается функцией, а замена документа снаружи
-// пропускается меткой. Лицензия — NOTICE в корне пакета.
+// Origin: Tiptap, `@tiptap/extensions/character-count` (MIT, © Tiptap GmbH,
+// https://github.com/ueberdosis/tiptap). The `filterTransaction` logic and the character count are
+// taken from it. The limit is read by a function, and a replacement of the document from outside is
+// let through by a meta flag. License: NOTICE in the package root.
 
 import { Extension, type Editor } from "@tiptap/core";
 import { Slice, type Fragment, type Node as ProseMirrorNode } from "@tiptap/pm/model";
@@ -12,18 +12,19 @@ import { textBetween } from "./atomText.js";
 import { trimPaste } from "./pasteTrim.js";
 
 /**
- * Метка транзакции «документ заменён снаружи» — новым `value` или `clear()`.
+ * Meta flag of a transaction that replaces the document from outside, with a new `value` or with
+ * `clear()`.
  *
- * Такая замена лимиту не подчиняется: это данные владельца, а не набор автора.
- * Предел, молча отвергший длинный `value`, оставил бы на экране прежний текст
- * при новом значении в состоянии потребителя.
+ * Such a replacement is not subject to the limit: it is the consumer's data, not the author's
+ * input. A limit that silently rejected a long `value` would leave the old text on screen next to
+ * a new value in the consumer's state.
  */
 export const EXTERNAL_CHANGE = "olddevsExternalChange";
 
 /**
- * Документ целиком — новым содержимым, Заменой снаружи: одна транзакция с
- * меткой `EXTERNAL_CHANGE`, предел её не режет. Так заменяют Документ
- * `setMarkdown()` и `setJSON()`.
+ * The whole Document as new content, a Programmatic replacement: one transaction with the
+ * `EXTERNAL_CHANGE` meta, which the limit does not truncate. This is how `setMarkdown()` and
+ * `setJSON()` replace the Document.
  */
 export function replaceDocument(editor: Editor, content: Fragment): void {
   const { tr, doc } = editor.state;
@@ -32,9 +33,9 @@ export function replaceDocument(editor: Editor, content: Fragment): void {
 }
 
 /**
- * Символов в документе: `getText` без разделителей Блоков. Атом весит длину
- * своего Текста атома (`atomText.ts`): разделитель — 0, мягкий перенос — 1,
- * картинка — длину подписи, Merge Tag — длину `{{key}}`.
+ * Characters in the Document: `getText` without the Block separators. An Atom weighs the length
+ * of its Atom text (`atomText.ts`): a separator counts 0, a soft break 1, an image the length of
+ * its caption, a Merge Tag the length of `{{key}}`.
  */
 export function countCharacters(doc: ProseMirrorNode): number {
   return textBetween(doc, 0, doc.content.size, "").length;
@@ -45,20 +46,18 @@ export interface MaxLengthOptions {
 }
 
 /**
- * Предел символов: правка, уводящая документ за `limit`, не проходит.
+ * Character limit: an edit that takes the Document past `limit` is not applied.
  *
- * ПОЧЕМУ НЕ `CharacterCount` КАК ЕСТЬ. У него лимит задаётся один раз при
- * создании движка, а `maxLength` — проп и вправе меняться; пересоздавать движок
- * ради нового числа значило бы терять историю правок и курсор. И он же
- * отвергает ЛЮБУЮ транзакцию за пределом, включая замену документа новым
- * `value`, а при `autoTrim` по умолчанию ещё и срезает начало слишком длинного
- * начального значения, то есть молча портит данные потребителя.
+ * WHY NOT `CharacterCount` AS IS. Its limit is set once, when the engine is created, while
+ * `maxLength` is a prop and may change. Recreating the engine for a new number would lose the
+ * edit history and the caret. It also rejects ANY transaction past the limit, including a
+ * replacement of the Document with a new `value`. And with `autoTrim` on by default, it cuts the
+ * start of an over-long initial value, silently corrupting the consumer's data.
  *
- * Документ, уже лежащий за пределом (пришёл таким в `value`), можно сокращать,
- * но не удлинять. Вставка обрезается до предела, а не отвергается целиком: это
- * поведение оригинала, и человек, вставивший абзац в почти полное поле,
- * получает всё, что поместилось. Режет `pasteTrim.ts`: хвост — по символам,
- * атом — целиком.
+ * A Document that is already past the limit (it came in that way, in `value`) may be shortened,
+ * but not lengthened. A paste is trimmed to the limit rather than rejected whole. This is the
+ * original's behavior: a person who pastes a paragraph into an almost full field gets everything
+ * that fits. `pasteTrim.ts` does the trimming: the tail by characters, an atom whole.
  */
 export const MaxLength = Extension.create<MaxLengthOptions>({
   name: "maxLength",
@@ -88,9 +87,9 @@ export const MaxLength = Extension.create<MaxLengthOptions>({
           if (after <= max || after <= before) return true;
           if (before >= max || !transaction.getMeta("paste")) return false;
 
-          // Вставка: срезается хвост вставленного. Правка транзакции внутри
-          // фильтра — приём оригинала; если срезать нечем или после среза
-          // предел всё ещё превышен, правка отвергается целиком.
+          // Paste: the tail of the pasted text is cut. Editing the transaction inside the filter
+          // is the original's approach. If there is nothing to cut, or the limit is still exceeded
+          // after cutting, the edit is rejected whole.
           return trimPaste(transaction, after - max) && countCharacters(transaction.doc) <= max;
         },
       }),

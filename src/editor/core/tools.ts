@@ -1,112 +1,109 @@
 /**
- * Инструменты Редактора: одна возможность — одна кнопка Панели и одно
- * расширение Схемы.
+ * Editor Tools: one capability is one Toolbar button and one Schema extension.
  *
- * ПОЧЕМУ КНОПКА И РАСШИРЕНИЕ — ОДНО ИМЯ. Спрятанная кнопка без отключённого
- * расширения ничего не запрещает: подчёркивание пришло бы вставкой из Word,
- * `Ctrl+U` или markdown-шорткатом. Поэтому выключенный инструмент убирает и то,
- * и другое (спека, «Набор инструментов»), а набор расширений строится из того
- * же множества, что и Панель (`extensions.ts`).
+ * WHY THE BUTTON AND THE EXTENSION SHARE ONE NAME. A hidden button with the extension
+ * still enabled forbids nothing: the underline would arrive by pasting from Word, with
+ * `Ctrl+U`, or with a markdown shortcut. So a disabled Tool removes both (the spec, section
+ * "Tool set"), and the extension set is built from the same set as the Toolbar
+ * (`extensions.ts`).
  *
- * ИМЯ ПРИХОДИТ В ТИП ВМЕСТЕ С ИНСТРУМЕНТОМ, НЕ РАНЬШЕ. Тип входной:
- * потребитель передаёт значения, а не разбирает их, и расширение объединения
- * новым именем для него не ломающее. Зато имя без реализации стало бы
- * молчаливой ловушкой: `tools={["x"]}` компилировался бы и ничего не давал.
- * Так пришли `link`, `color`, `highlight`, `align`, `table`, `image`, `emoji`,
- * `layout`, `wrapper`, `details`, `mathematics`, `invisibleCharacters`, `source`, `typography`,
- * `youtube` и `twitch`; зарезервированных имён сейчас нет.
+ * THE NAME COMES INTO THE TYPE WITH THE TOOL, NOT EARLIER. The type is an input type: the
+ * consumer passes values and does not parse them, so extending the union with a new name is
+ * not a breaking change for it. But a name with no implementation would be a silent trap:
+ * `tools={["x"]}` would compile and do nothing. This is how `link`, `color`, `highlight`,
+ * `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `details`, `mathematics`,
+ * `invisibleCharacters`, `source`, `typography`, `youtube` and `twitch` arrived; there are no
+ * reserved names at the moment.
  *
- * `heading1` — заголовок первого уровня, надстройка над `heading`:
- * с ним уровни Блока — 1–4, без него — 2–4. Отдельным инструментом он стоит
- * потому, что у экрана заголовок страницы чаще уже есть над Редактором, и второй
- * H1 в нём — ошибка структуры (WCAG 1.3.1), а у документа без своей страницы
- * (заметка, статья в базе знаний) автору нечем поставить главный заголовок.
- * Без `heading` его нет вовсе: уровни есть только у Блока заголовка.
+ * `heading1` is the first-level heading, an add-on over `heading`: with it, the Block's levels
+ * are 1–4; without it, 2–4. It is a separate Tool because on a screen the page's heading often
+ * already sits above the Editor, and a second H1 there is a structure error (WCAG 1.3.1), while
+ * a document without its own page (a note, an article in a knowledge base) gives its author no
+ * other way to set a main heading. Without `heading` it does not exist at all: levels belong only
+ * to the heading Block.
  *
- * `insertMenu` — Меню вставки (`/` в тексте и «+» на Панели). Своего Блока у
- * него нет, как у `clearFormatting`: это способ добраться до чужих Блоков, и
- * выключается он ради поля, где `/` — обычный символ (пути, «и/или»). Пункты
- * меню берутся из включённых инструментов (`insertItems.ts`).
+ * `insertMenu` is the Slash menu (`/` in the text and the "+" on the Toolbar). It has no Block of
+ * its own, like `clearFormatting`: it is a way to reach other Blocks, and it is switched off for
+ * the sake of a field where `/` is an ordinary character (paths, "and/or"). Menu items come from
+ * the enabled Tools (`insertItems.ts`).
  *
- * `emoji` — кнопка Панели с сеткой эмодзи (`EmojiGrid`). Своей Схемы у него нет,
- * как у `clearFormatting`: эмодзи — обычный текст, и Схема, санитайзер и
- * Markdown не меняются. В `basic` его нет: в комментарии системная палитра ОС
- * ближе, а кнопка занимала бы место у короткого ряда.
+ * `emoji` is the Toolbar button with an emoji grid (`EmojiGrid`). It has no Schema of its own,
+ * like `clearFormatting`: an emoji is ordinary text, so the Schema, the sanitizer and Markdown do
+ * not change. It is not in `basic`: in a comment, the OS's own emoji palette is the closer fit,
+ * and the button would take space from the short row.
  *
- * `layout` — Раскладка, Блок из колонок (`layout.ts`). Кнопки Панели у неё нет:
- * она вставляется из Меню вставки и меню ручки Блока. Выключенный инструмент
- * убирает узлы из Схемы, и Раскладка из вставки разворачивается в Блоки
- * подряд. В `basic` её нет: колонки в комментарии — вёрстка, а не текст.
+ * `layout` is the Column layout, a Block of columns (`layout.ts`). It has no Toolbar button: it is
+ * inserted from the Slash menu and from the Block handle menu. A disabled Tool removes the nodes
+ * from the Schema, and a Column layout from an insert unwraps into its Blocks one after another.
+ * It is not in `basic`: in a comment, columns are layout, not text.
  *
- * `wrapper` — Обёртка, Блок-группа других Блоков (`wrapper.ts`), как Wrapper у
- * Redactor. Кнопки Панели у неё тоже нет — Меню вставки и меню ручки.
- * Выключенный инструмент разворачивает Обёртку из вставки и `value` в Блоки
- * подряд. В `basic` её нет по той же причине, что и Раскладки.
+ * `wrapper` is the Wrapper, a Block that groups other Blocks (`wrapper.ts`), like Redactor's
+ * Wrapper. It has no Toolbar button either, only the Slash menu and the Block handle menu. A
+ * disabled Tool unwraps a Wrapper from an insert and from `value` into its Blocks one after
+ * another. It is not in `basic`, for the same reason as the Column layout.
  *
- * `details` — сворачиваемый Блок: заголовок (`summary`) и содержимое из Блоков
- * (`details.ts`), API по расширению Details из Tiptap (ADR-0048: заказчика при
- * выпуске не было). Кнопки Панели у него нет — Меню вставки и меню ручки.
- * Выключенный инструмент разворачивает Блок из вставки и `value`: заголовок
- * становится абзацем, содержимое идёт Блоками следом. Есть в `full`, в `basic`
- * нет — по той же причине, что у Раскладки и Обёртки. Открытость в Документ
- * пишет Опция `tool("details", { persist: true })`.
+ * `details` is the collapsible Block: a title (`summary`) and content made of Blocks
+ * (`details.ts`), with an API based on the Details extension from Tiptap (ADR-0048: no customer
+ * had asked for it at release). It has no Toolbar button, only the Slash menu and the Block handle
+ * menu. A disabled Tool unwraps the Block from an insert and from `value`: the title becomes a
+ * paragraph, and the content follows as Blocks. It is in `full` but not in `basic`, for the same
+ * reason as the Column layout and the Wrapper. The open state is written into the Document by the
+ * `tool("details", { persist: true })` option.
  *
- * `mathematics` — формулы LaTeX, строчные и блочные, на расширении Mathematics из
- * Tiptap (ADR-0070; ADR-0048: заказчика при выпуске не было). Кнопки Панели у него
- * нет — Меню вставки (пункты «Формула» и «Блочная формула») и щелчок или Enter на
- * формуле: правит её Поповер кита. В Документе — только исходный LaTeX
- * (`data-latex`), отрисовывает KaTeX: в Редакторе — вид узла, в `RichTextView` — Остров.
- * KaTeX тяжёлый, поэтому Инструмент ленивый: его Части для движка и KaTeX с CSS
- * грузит Загрузчик (ADR-0058, п. 11.1). В пресеты не входит — ни в `full`, ни в
- * `basic`: пресеты не должны грузить KaTeX; включается явной записью в `tools`.
- * Выключенный Инструмент оставляет формулу из вставки и `value` текстом
- * `$…$` / `$$…$$` — LaTeX не теряется.
+ * `mathematics` is LaTeX formulas, inline and block, on the Mathematics extension from Tiptap
+ * (ADR-0070; ADR-0048: no customer had asked for it at release). It has no Toolbar button: it is
+ * inserted from the Slash menu items ("Formula" and "Block formula") and opened by a click or Enter
+ * on a formula, which edits it in the kit's Popover. The Document holds only the source LaTeX
+ * (`data-latex`); KaTeX draws it: in the Editor as a node view, in `RichTextView` as an Island.
+ * KaTeX is heavy, so the Tool is lazy: its engine parts and KaTeX with its CSS are loaded by the
+ * Loader (ADR-0058, item 11.1). It is not in the presets, neither `full` nor `basic`: presets must
+ * not load KaTeX; it is enabled by an explicit entry in `tools`. A disabled Tool leaves a formula
+ * from an insert and from `value` as the text `$…$` / `$$…$$`, so the LaTeX is not lost.
  *
- * `source` — HTML-режим: кнопка «HTML» фиксированной Панели меняет
- * Документ на поле с его исходным HTML, а выход применяет правку через Схему,
- * как входящий `value`. Своей Схемы у него нет, как у `clearFormatting`:
- * разметку решает Схема, и режим её не расширяет. В `basic` его нет: в
- * комментарии кнопка «HTML» без явного запроса экрана — лишняя.
+ * `source` is HTML mode: the "HTML" button on the fixed Toolbar replaces the Document with a field
+ * holding its HTML, and on exit the field's content is applied through the Schema, like an
+ * incoming `value`. It has no Schema of its own, like `clearFormatting`: the Schema governs the
+ * markup, and the mode does not extend it. It is not in `basic`: in a comment, an "HTML" button
+ * without an explicit request from the screen is superfluous.
  *
- * `toc` — Оглавление в левом поле рамки (ADR-0068): полоса и список
- * `RichTextToc`, липкие под Панелью или в прокручиваемом поле. Своей Схемы нет.
- * Настраивается записью `tool("toc", { offsetVar, levels, listWidth })`.
- * В пресеты не входит — ни в `full`, ни в `basic`: оно меняет раскладку поля,
- * и обновление кита не должно сдвигать текст там, где его не просили.
+ * `toc` is the Table of contents in the frame's left margin (ADR-0068): the strip and the
+ * `RichTextToc` list, sticky under the Toolbar or in a scrolling field. It has no Schema. It is
+ * configured with `tool("toc", { offsetVar, levels, listWidth })`. It is not in the presets,
+ * neither `full` nor `basic`: it changes the field's layout, and a kit update must not shift the
+ * text where nobody asked for that.
  *
- * `typography` — автозамены при наборе: прямые кавычки по языку каталога
- * сообщений («ёлочки» и „лапки“ для ru, “ ” для en), тире, многоточие, стрелки и
- * прочие правила расширения Typography из Tiptap (ADR-0048). Только правила ввода:
- * Схема, санитайзер и Markdown не меняются, в `value` уходят обычные символы. В
- * пресеты не входит — ни в `full`, ни в `basic`: он меняет набираемый текст, и
- * обновление кита не должно делать этого там, где его не просили. Правила и набор
- * кавычек задаёт запись `tool("typography", { quotes, emDash, … })`.
+ * `typography` is typing replacements: straight quotes become the quotes of the message catalog's
+ * language (guillemets for ru, curly quotes for en), a dash, an ellipsis, arrows, and the other
+ * rules of the Typography extension from Tiptap (ADR-0048). Input rules only: the Schema, the
+ * sanitizer and Markdown do not change, and `value` gets plain characters. It is not in the presets,
+ * neither `full` nor `basic`: it changes the text being typed, and a kit update must not do that
+ * where nobody asked for it. The rules and the quote set are set by
+ * `tool("typography", { quotes, emDash, … })`.
  *
- * `youtube` и `twitch` — видео по ссылке (ADR-0071; по расширениям Youtube и Twitch из
- * Tiptap, ADR-0048: заказчика при выпуске не было). Один общий Блок `video`: в
- * Документе ссылка на видео, а плеер рисует кит при показе — заглушка с кнопкой
- * «Воспроизвести», до щелчка ни одного запроса к сервису. Какие сервисы разрешены,
- * решает набор `tools`: `youtube`, `twitch` или оба. Кнопки Панели нет — один пункт
- * «Видео» в Меню вставки и голая ссылка в пустом абзаце. Выключенный сервис
- * разворачивает блок из вставки и `value` в его ссылку. В пресеты не входят — ни в
- * `full`, ни в `basic`: плеер тянет сторонний сервис (CSP `frame-src`, приватность),
- * и обновление кита не должно этого делать там, где его не просили.
+ * `youtube` and `twitch` are video by link (ADR-0071; based on the Youtube and Twitch extensions
+ * from Tiptap, ADR-0048: no customer had asked for them at release). They share one `video` Block:
+ * the Document holds a link to the video, and the kit draws the player at display time, as a
+ * placeholder with a "Play" button, with no request to the service until a click. Which services
+ * are allowed is decided by the `tools` set: `youtube`, `twitch`, or both. There is no Toolbar
+ * button: a single "Video" item in the Slash menu, and a bare link in an empty paragraph. A
+ * disabled service unwraps the Block from an insert and from `value` into its link. They are not in
+ * the presets, neither `full` nor `basic`: the player loads a third-party service (CSP `frame-src`,
+ * privacy), and a kit update must not do that where nobody asked for it.
  *
- * `search` — поиск и замена по Документу: кнопка «Поиск»
- * фиксированной Панели и `Mod+F` в поле открывают панель в углу поля. Своей
- * Схемы нет, как у `clearFormatting`. Есть и в `basic`: искать по длинному
- * описанию нужно и там, а кнопка у правого края ряд не удлиняет. Стартовые
- * флажки панели задаёт запись `tool("search", { matchCase, wholeWord, regex })`.
+ * `search` is find and replace across the Document: the "Find" button on the fixed Toolbar and
+ * `Mod+F` in the field open the panel in the field's corner. It has no Schema of its own, like
+ * `clearFormatting`. It is also in `basic`: searching a long description is needed there too, and
+ * the button at the right edge does not make the row longer. The panel's starting flags are set by
+ * the `tool("search", { matchCase, wholeWord, regex })` entry.
  *
- * `invisibleCharacters` — показ пробелов, мягких переносов и концов абзацев
- * (по расширению Invisible Characters из Tiptap, ADR-0048: заказчика при выпуске
- * не было). Это Decoration поверх Документа: Схема, санитайзер, Markdown и
- * сохранённый HTML не меняются. Пункт-флажок «Невидимые символы» — в меню «…»
- * фиксированной Панели, последним разделом; отдельной кнопки нет (она переносила
- * `full` во вторую строку), в плавающей Панели и меню выделения пункта нет. Есть
- * в `full`, в `basic` нет: комментарию такой режим не нужен. Но в `full`
- * символы скрыты, пока автор не включил показ: начальный показ задаёт Опция
- * `tool("invisibleCharacters", { visible: true })`.
+ * `invisibleCharacters` shows spaces, soft hyphens and paragraph ends (based on the Invisible
+ * Characters extension from Tiptap, ADR-0048: no customer had asked for it at release). It is a
+ * Decoration over the Document: the Schema, the sanitizer, Markdown and the saved HTML do not change.
+ * The "Invisible characters" checkbox item sits in the "…" menu of the fixed Toolbar, as its last
+ * section. There is no separate button, because it pushed `full` onto a second row; the floating
+ * Toolbar and the Bubble menu have no such item. It is in `full`, not in `basic`: a comment does not
+ * need this mode. But in `full` the characters stay hidden until the author turns display on: the
+ * starting display is set by the `tool("invisibleCharacters", { visible: true })` option.
  */
 export const TOOLS = [
   "history",
@@ -147,25 +144,25 @@ export const TOOLS = [
   "twitch",
 ] as const;
 
-/** Имя инструмента Редактора. Список и смысл каждого — на странице компонента. */
+/** Name of an Editor Tool. The list and the meaning of each one are on the component's page. */
 export type Tool = (typeof TOOLS)[number];
 
-/** Готовый набор инструментов. */
+/** Ready-made set of Tools. */
 export type RichTextEditorPreset = "full" | "basic";
 
 /**
- * Состав пресетов.
+ * Composition of the presets.
  *
- * `basic` — для комментариев и коротких описаний: метки без подчёркивания и
- * индексов, ссылка, два вида списков, цитата и история правок.
+ * `basic` is for comments and short descriptions: marks without underline and sub- and
+ * superscript, a link, two kinds of lists, a quote, and the edit history.
  *
- * Меню вставки в `basic` нет: в комментарии `/` чаще значит «и/или» или путь,
- * чем команду, а из Блоков там только списки и цитата — до них ближе
- * markdown-шорткатом, чем через меню.
+ * The Slash menu is not in `basic`: in a comment, `/` more often means "and/or" or a path
+ * than a command, and of the Blocks there only lists and a quote are included. For those, a
+ * markdown shortcut is closer than the menu.
  */
 export const PRESETS: Record<RichTextEditorPreset, readonly Tool[]> = {
-  // Все встроенные, кроме Оглавления, типографики, формул и видео: их включают только явно
-  // (ADR-0068; формулы грузят KaTeX, ADR-0070; видео — сторонний плеер, ADR-0071).
+  // Everything built in except the Table of contents, typography, formulas and video: they are
+  // enabled only explicitly (ADR-0068; formulas load KaTeX, ADR-0070; video is a third-party player, ADR-0071).
   full: TOOLS.filter(
     (tool) =>
       tool !== "toc" &&
@@ -189,11 +186,11 @@ export const PRESETS: Record<RichTextEditorPreset, readonly Tool[]> = {
 };
 
 /**
- * Пресеты наружу — массивами (ADR-0058, п. 1.2): свой набор собирается из них,
- * например `[...RICH_TEXT_PRESETS.full, mergeTagTool]`. Копии заморожены:
- * `PRESETS.full` — почти весь `TOOLS`, и правка массива потребителем меняла бы набор
- * кита во всех Редакторах страницы. Состав пресета — не контракт (ADR-0058,
- * п. 12.5): стабильный набор — точный список имён.
+ * Presets are exported as arrays (ADR-0058, item 1.2): a custom set is assembled from them, for
+ * example `[...RICH_TEXT_PRESETS.full, mergeTagTool]`. The copies are frozen: `PRESETS.full` is
+ * almost all of `TOOLS`, and if a consumer changed the array, the kit's set would change in every
+ * Editor on the page. The composition of a preset is not a contract (ADR-0058, item 12.5): a
+ * stable set is the exact list of names.
  */
 export const RICH_TEXT_PRESETS: Readonly<Record<RichTextEditorPreset, readonly Tool[]>> =
   Object.freeze({
@@ -202,13 +199,13 @@ export const RICH_TEXT_PRESETS: Readonly<Record<RichTextEditorPreset, readonly T
   });
 
 /**
- * Включённые инструменты: точный список `tools`, если он передан, иначе пресет.
- * Редактор берёт их не отсюда, а списком описаний (`expandTools`,
- * `features/builtins.ts`), который строится из этих имён.
+ * Enabled Tools: the exact `tools` list if one is passed, otherwise the preset. The Editor does
+ * not take them from here; it takes a list of descriptions (`expandTools`, `features/builtins.ts`),
+ * which is built from these names.
  *
- * Неизвестные имена отбрасываются молча — из JS без типов, или имя из
- * следующего среза в старой версии кита. Падать из-за лишнего имени незачем:
- * лишнего инструмента в Редакторе от этого не появится.
+ * Unknown names are dropped silently: they come from JS without types, or from a name of a later
+ * slice in an older kit version. There is no point in failing over an extra name: no extra Tool
+ * will appear in the Editor because of it.
  */
 export function resolveTools(
   preset: RichTextEditorPreset,

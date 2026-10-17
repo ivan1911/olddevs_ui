@@ -7,23 +7,23 @@ import { replaceDocument } from "./maxLength.js";
 import { conformToSchema, headingLevels } from "./schemaConform.js";
 
 /*
-  JSON-конверт Документа (ADR-0061): формат обмена рядом с HTML, а
-  не вместо него. Значение Редактора остаётся HTML (ADR-0050, п. 3); конверт —
-  для файлов, шаблонов и переноса без потерь, которых Markdown не выражает.
+  JSON envelope of a Document (ADR-0061): an exchange format next to HTML, not instead of it.
+  The Editor's value stays HTML (ADR-0050, item 3); the envelope is for files, templates and
+  lossless transfer, which Markdown cannot express.
 
-  Внутри — дерево Документа в форме движка. Имена его узлов и атрибутов с этого
-  момента — контракт формата: переименование в Схеме поднимает `version`, а
-  старые файлы мигрирует кит, а не экран.
+  Inside is the Document's tree in the engine's shape. From now on, the names of its nodes and
+  attributes are part of the format's contract: renaming one in the Schema bumps `version`, and
+  the kit migrates old files, not the screen.
 */
 
-/** Имя формата в конверте: отличает файл Редактора от любого другого JSON. */
+/** Format name in the envelope: tells an Editor file apart from any other JSON. */
 const FORMAT = "olddevs-rich-text";
-/** Версия дерева. Других пока нет — и миграций тоже. */
+/** Tree version. There are no others yet, and no migrations either. */
 const VERSION = 1;
 
 /**
- * Документ Редактора как JSON: `getJSON()` отдаёт его, `setJSON()` и
- * `defaultValue` принимают. `doc` — дерево Документа, верхний узел `"doc"`.
+ * The Editor's Document as JSON: `getJSON()` returns it, `setJSON()` and `defaultValue` accept
+ * it. `doc` is the Document's tree, with the top node `"doc"`.
  */
 export interface RichTextDocument {
   format: typeof FORMAT;
@@ -34,7 +34,7 @@ export interface RichTextDocument {
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-/** Форма конверта — без Схемы: формат, версия и верхний узел `doc`. */
+/** Envelope shape, without the Schema: the format, the version and the top node `doc`. */
 export function isRichTextDocument(value: unknown): value is RichTextDocument {
   return (
     isObject(value) &&
@@ -46,24 +46,23 @@ export function isRichTextDocument(value: unknown): value is RichTextDocument {
   );
 }
 
-/** Документ движка — конвертом. */
+/** The engine's Document as an envelope. */
 export function documentToJSON(editor: Editor): RichTextDocument {
   return { format: FORMAT, version: VERSION, doc: editor.getJSON() };
 }
 
 /**
- * Документ из конверта — через Схему, а не мимо неё. `null` — конверт
- * отвергнут: не та форма, или из дерева не собрать узлы.
+ * A Document from an envelope, through the Schema and not around it. `null` means the envelope
+ * was rejected: the shape is wrong, or no nodes can be built from the tree.
  *
- * ДВА ПРОХОДА. Сначала дерево приводится к Схеме (`schemaConform.ts`): без
- * этого `nodeFromJSON` бросил бы на Блоке выключенного Инструмента. Но
- * `nodeFromJSON` не знает правил разбора HTML, а на них держится вся политика
- * атрибутов: адрес ссылки и картинки, цвет автора, `data-*`, правила своих
- * Инструментов. Поэтому собранный Документ выводится в HTML и разбирается Схемой
- * заново — тем же `createDocument`, что входящий `value`. Одна политика на все
- * входы, и второй копии проверок атрибутов нет. Заодно разбор достраивает
- * вложенность, которую `nodeFromJSON` не сверяет. Пробелы при этом не
- * схлопываются: круг `getJSON()` → `setJSON()` текст не меняет.
+ * TWO PASSES. First the tree is conformed to the Schema (`schemaConform.ts`): without that,
+ * `nodeFromJSON` would throw on a Block of a disabled Tool. But `nodeFromJSON` knows nothing
+ * about the HTML parse rules, and the whole attribute policy rests on them: link and image
+ * addresses, the author's color, `data-*`, the rules of custom Tools. So the assembled Document
+ * is serialized to HTML and parsed by the Schema again, with the same `createDocument` as the
+ * incoming `value`. One policy for every input, and no second copy of the attribute checks. As a
+ * side effect, the parse fills in the nesting that `nodeFromJSON` does not check. Whitespace is
+ * not collapsed: a `getJSON()` → `setJSON()` round trip does not change the text.
  */
 export function documentFromJSON(editor: Editor, value: unknown): PmNode | null {
   if (!isRichTextDocument(value)) return null;
@@ -74,23 +73,23 @@ export function documentFromJSON(editor: Editor, value: unknown): PmNode | null 
       conformToSchema(node, schema, options)
     );
     const fragment = Fragment.fromArray(blocks.map((block) => schema.nodeFromJSON(block)));
-    // Пробелы — как в дереве: HTML здесь пишет сам движок, слитно и без
-    // отступов, и схлопывать в нём нечего, кроме двойных пробелов автора.
+    // Whitespace is kept as in the tree: the engine writes this HTML itself, without line breaks
+    // or indentation, so there is nothing to collapse except the author's double spaces.
     return createDocument(getHTMLFromFragment(fragment, schema), schema, {
       preserveWhitespace: "full",
     });
   } catch (error) {
-    // Кривой файл — обычный отказ, но бросить могут и Extensions своего
-    // Инструмента: причина уходит в консоль разработки, иначе её не найти.
+    // A malformed file is an ordinary refusal, but a custom Tool's Extensions can throw too.
+    // The cause goes to the development console, or it would be hard to find.
     devError("RichTextEditor: a JSON document could not be built from its tree", error);
     return null;
   }
 }
 
 /**
- * Документ целиком — из конверта, Заменой снаружи (`EXTERNAL_CHANGE`), как
- * `replaceWithMarkdown`: предел символов её не режет. `false` — конверт
- * отвергнут, Документ не тронут.
+ * A whole Document from an envelope, as a Programmatic replacement (`EXTERNAL_CHANGE`), the same
+ * as `replaceWithMarkdown`: the character limit does not truncate it. `false` means the envelope
+ * was rejected and the Document is untouched.
  */
 export function replaceWithJSON(editor: Editor, value: unknown): boolean {
   const next = documentFromJSON(editor, value);

@@ -7,62 +7,57 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { Button } from "../actions/Button.js";
 
 export interface PaginationProps {
-  /** Номер текущей страницы, с единицы. Значение вне диапазона зажимается в него. */
+  /** Current page number, counted from 1. A value outside the range is clamped to it. */
   page: number;
-  /** Общее число страниц. При значении 1 и меньше компонент ничего не рисует. */
+  /** Total number of pages. With a value of 1 or less, the component renders nothing. */
   pageCount: number;
-  /** Вызывается с номером страницы, на которую перешли, — по номеру или стрелкам. */
+  /** Called with the number of the page the user moved to, by a number or by an arrow. */
   onChange: (page: number) => void;
-  /** Сколько страниц показывать вокруг текущей с каждой стороны. */
+  /** How many pages to show on each side of the current page. */
   siblings?: number;
-  /** Дополнительные классы на `nav`. */
+  /** Extra classes on the `nav`. */
   className?: string;
-  /** Доступное имя навигации. По умолчанию берётся из словаря сообщений. */
+  /** Accessible name of the navigation. By default it comes from the message catalog. */
   "aria-label"?: string;
 }
 
 /**
- * Диапазон страниц для показа.
+ * Range of pages to show.
  *
- * Алгоритм записан здесь, потому что «какие номера видны» — решение, а не
- * деталь: список из тридцати номеров бесполезен, а из трёх — не даёт прыгнуть
- * ни в начало, ни в конец.
+ * The algorithm is written here because "which numbers are visible" is a decision, not a detail: a list
+ * of thirty numbers is useless, and a list of three does not let the user jump to the start or the end.
  *
- * Правило: ВСЕГДА видны первая и последняя страница; вокруг текущей — по
- * `siblings` соседей; разрывы между этими группами схлопываются в многоточие.
- * Многоточие рисуется только когда за ним прячется БОЛЬШЕ одной страницы:
- * «1 … 3 4 5» вместо «1 2 3 4 5» врёт про длину и экономит ровно ничего.
+ * The rule: the first and the last page are ALWAYS visible; around the current page there are `siblings`
+ * neighbors on each side; the gaps between these groups collapse into an ellipsis. The ellipsis is drawn
+ * only when MORE than one page is hidden behind it: "1 … 3 4 5" instead of "1 2 3 4 5" misstates the
+ * length and saves exactly nothing.
  *
- * Ширина ряда при этом постоянна — `2×siblings + 5` ячеек, а на коротком
- * диапазоне столько, сколько всего страниц, — и кнопки
- * под курсором не прыгают при переходе на соседнюю страницу.
+ * The width of the row stays constant: `2×siblings + 5` cells, and on a short range as many cells as
+ * there are pages in total. Buttons under the pointer do not jump when moving to a neighboring page.
  */
 export function pageRange(page: number, pageCount: number, siblings: number): (number | "gap")[] {
   const first = 1;
   const last = pageCount;
   /*
-    Окно ДОБИВАЕТСЯ до постоянной ширины со стороны, где есть запас.
+    The window is PADDED out to a constant width on the side that has room.
 
-    Без этого ряд шёл 4→5→6→7→7→6→5→4 при `siblings=1` и десяти страницах, и
-    переход 4→5 уводил кнопку «5» влево: повторный щелчок по той же точке экрана
-    попадал в «4». Докстрока обещала обратное — постоянную ширину, — а постоянен
-    был только максимум.
+    Without this, the row went 4→5→6→7→7→6→5→4 with `siblings=1` and ten pages, and the step 4→5 moved
+    the "5" button to the left: a repeated click at the same spot on screen landed on "4". The doc comment
+    promised a constant width, but only the maximum was constant.
 
-    Ширина СЧИТАЕТСЯ ПО ГОТОВОМУ РЯДУ, а не выводится формулой: крайние
-    страницы и многоточия дают то одну ячейку, то две (ровно одну пропущенную
-    страницу дешевле показать, чем спрятать), и арифметика «на глаз» здесь
-    ошибается.
+    The width is COUNTED FROM THE FINISHED ROW, not derived with a formula: the end pages and the ellipses
+    take either one cell or two (it is cheaper to show exactly one skipped page than to hide it), and
+    arithmetic "by eye" gets this wrong.
   */
   const width = Math.min(2 * siblings + 5, pageCount);
   /*
-    Страница ЗАЖИМАЕТСЯ здесь, а не только в компоненте.
+    The page is CLAMPED here, not only in the component.
 
-    Функция публичная (`index.ts`), и прямой вызов — ожидаемый сценарий:
-    потребитель собирает свой ряд и берёт `?page=` из адреса. Шаг добивания
-    единичный, поэтому со страницей вне диапазона цикл проходил `page −
-    pageCount` итераций, каждая со сборкой массива: `page=1e9` не завершался
-    вовсе — вкладка вешалась. Зажим в компоненте от этого не спасал, он ниже по
-    стеку.
+    The function is exported (`index.ts`), and calling it directly is an expected scenario: a consumer
+    builds its own row and takes `?page=` from the address. The padding step is one at a time, so with a
+    page outside the range the loop ran `page − pageCount` iterations, each building an array: `page=1e9`
+    never finished, and the tab hung. Clamping in the component did not help, because it runs lower in
+    the stack.
   */
   const current = clamp(page, first, last);
   let from = Math.max(first, current - siblings);
@@ -72,8 +67,8 @@ export function pageRange(page: number, pageCount: number, siblings: number): (n
     if (to < last) to += 1;
     else from -= 1;
   }
-  // Последний шаг мог перескочить через цель: ячейка у края добавляет сразу
-  // две (страницу и многоточие). Тогда откатываемся.
+  // The last step may have overshot the target: a cell at the edge adds two at once (the page and the
+  // ellipsis). In that case we step back.
   if (build(from, to, first, last).length > width) {
     if (to > Math.min(last, page + siblings)) to -= 1;
     else if (from < Math.max(first, page - siblings)) from += 1;
@@ -82,13 +77,13 @@ export function pageRange(page: number, pageCount: number, siblings: number): (n
   return build(from, to, first, last);
 }
 
-/** Ряд ячеек для готового окна. Вынесен, чтобы ширину можно было измерить. */
+/** The row of cells for a finished window. Pulled out so that the width can be measured. */
 function build(from: number, to: number, first: number, last: number): (number | "gap")[] {
   const out: (number | "gap")[] = [];
 
   if (from > first) {
     out.push(first);
-    // Ровно одна пропущенная страница дешевле показать, чем спрятать.
+    // Showing exactly one skipped page is cheaper than hiding it.
     if (from === first + 2) out.push(first + 1);
     else if (from > first + 1) out.push("gap");
   }
@@ -105,15 +100,14 @@ function build(from: number, to: number, first: number, last: number): (number |
 }
 
 /**
- * Постраничная навигация.
+ * Page navigation (pagination).
  *
- * **При одной странице не рисуется ничего.** Пагинация из единственной кнопки
- * «1» — это не навигация, а мусор в раскладке: она сообщает о возможности
- * перехода там, где переходить некуда.
+ * **With one page nothing is rendered.** Pagination with a single "1" button is not navigation but clutter
+ * in the layout: it signals that a move is possible where there is nowhere to move.
  *
- * Собрана руками, а не на react-aria: готового компонента там нет, а всё, что
- * нужно, — это `nav`, список кнопок и `aria-current`. Своей клавиатурной
- * механики здесь не появляется, кнопки ходятся обычным табом.
+ * Built by hand rather than on react-aria: there is no ready-made component there, and all that is needed
+ * is a `nav`, a list of buttons and `aria-current`. No keyboard logic of its own appears here: the buttons
+ * are reached with the ordinary Tab.
  */
 export function Pagination({
   page,
@@ -127,9 +121,9 @@ export function Pagination({
   if (pageCount <= 1) return null;
 
   /*
-    Страница вне диапазона — обычное дело: фильтр сузил выдачу, а номер
-    остался прежним. Без зажима ряд вырождался в «1 …» без текущей страницы
-    вовсе, а «предыдущая» вела на несуществующую.
+    A page outside the range is a normal case: a filter narrowed the results, and the page number stayed.
+    Without clamping, the row degraded to "1 …" with no current page at all, and "previous" led to a page
+    that does not exist.
   */
   const current = clamp(page, 1, pageCount);
   const range = pageRange(current, pageCount, siblings);
@@ -150,8 +144,8 @@ export function Pagination({
 
       {range.map((item, index) =>
         item === "gap" ? (
-          // Многоточие — не кнопка: нажимать его некуда, а кнопка обещала бы
-          // действие. Для скринридера оно скрыто, число страниц он и так знает.
+          // The ellipsis is not a button: there is nothing to press, and a button would promise an action. For
+          // screen readers it is hidden: they know the page count anyway.
           <span key={`gap-${index}`} aria-hidden className="text-fg-3 px-1 text-sm">
             …
           </span>
@@ -161,8 +155,7 @@ export function Pagination({
             size="sm"
             variant={item === current ? "solid" : "ghost"}
             tone={item === current ? "accent" : "neutral"}
-            // `aria-current` вместо `aria-selected`: страница — это место, а не
-            // выбранный из набора элемент.
+            // `aria-current` instead of `aria-selected`: a page is a place, not an item selected from a set.
             aria-current={item === current ? "page" : undefined}
             onClick={() => onChange(item)}
           >

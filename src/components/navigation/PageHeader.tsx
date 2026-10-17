@@ -4,19 +4,19 @@ import { forwardRef, type ComponentPropsWithoutRef, type ReactNode } from "react
 import { cn } from "../../lib/cn.js";
 
 export interface PageHeaderProps extends Omit<ComponentPropsWithoutRef<"div">, "title"> {
-  /** Заголовок страницы. `ReactNode`: во фронте сюда кладут разметку с иконкой. */
+  /** Page title. A `ReactNode`: in frontend code, markup with an icon goes here. */
   title: ReactNode;
-  /** Пояснение под заголовком. */
+  /** Explanation under the title. */
   subtitle?: ReactNode;
-  /** Кнопки справа; на узких экранах переносятся под заголовок. */
+  /** Buttons on the right; on narrow screens they wrap under the title. */
   actions?: ReactNode;
 }
 
 /**
- * Шапка страницы: заголовок, пояснение и действия.
+ * Page header: the title, the description and the actions.
  *
- * Размера у него нет и не будет: страница одна, и второй ступени взяться
- * неоткуда. Заводить `size` «на будущее» — ровно то, чего пакет избегает.
+ * It has no size and never will: there is one page, so a second size has nowhere to come from. Adding a
+ * `size` "for later" is exactly what this package avoids.
  */
 export const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(function PageHeader(
   { title, subtitle, actions, className, ...rest },

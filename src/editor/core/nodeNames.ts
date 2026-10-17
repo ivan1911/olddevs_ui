@@ -1,7 +1,8 @@
 /**
- * Имена узлов Схемы, которые знает не только движок. Модуль без Tiptap: имя
- * нужно и Оглавлению (`features/toc`), которому движок в бандл не нужен.
+ * Names of Schema nodes that more than the engine knows. A module without Tiptap: the name is
+ * also needed by the Table of contents (`features/toc`), which should not pull the engine into
+ * its bundle.
  */
 
-/** Имя узла Обёртки в Схеме движка (ADR-0057). */
+/** Schema node name of the Wrapper in the engine (ADR-0057). */
 export const WRAPPER_NODE = "wrapper";

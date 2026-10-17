@@ -7,21 +7,20 @@ import { EmojiGrid } from "./EmojiGrid.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 
 /**
- * Вставить эмодзи обычным текстом: в конец выделения, не заменяя его, и каретка
- * сразу за эмодзи.
+ * Inserts an emoji as plain text: at the end of the selection, without replacing it, with the
+ * caret right after the emoji.
  *
- * ПОЧЕМУ ПОСЛЕ ВЫДЕЛЕНИЯ, А НЕ ВМЕСТО. Эмодзи — не замена слова, а добавка к
- * нему; стереть выделенный абзац ради смайла на его краю — потеря, которую
- * человек заметит последним. Так решено владельцем.
+ * WHY AFTER THE SELECTION, NOT INSTEAD OF IT. An emoji does not replace a word; it is added to it.
+ * Deleting the selected paragraph for a smiley at its edge would be a loss the person notices last.
+ * The project owner decided this.
  *
- * ОДНА ТРАНЗАКЦИЯ — одна правка на отмену. Она же проходит через `maxLength`:
- * фильтр транзакций отвергает вставку, уводящую документ за предел, целиком —
- * эмодзи не бывает «наполовину», и выделение остаётся на месте.
+ * ONE TRANSACTION — one undo step. It also goes through `maxLength`: the transaction filter rejects
+ * an insert that would take the document past the limit, as a whole. An emoji is never inserted
+ * "halfway", and the selection stays where it was.
  *
- * Метки берутся у каретки (`insertText` без заданных меток): эмодзи в
- * жирном тексте жирный, как набранная буква. Вставка возможна, только когда
- * конец выделения лежит в тексте: у выделенной картинки или строки таблицы
- * текста нет, и `false` говорит об этом вызывающему.
+ * Marks are taken from the caret (`insertText` without explicit Marks): an emoji in bold text is
+ * bold, like a letter typed there. Insertion is possible only when the end of the selection lies in
+ * text: a selected image or a table row has no text, and `false` tells the caller so.
  */
 export function insertEmoji(editor: Editor, char: string): boolean {
   if (!editor.isEditable) return false;
@@ -35,14 +34,13 @@ export function insertEmoji(editor: Editor, char: string): boolean {
 }
 
 /**
- * Эмодзи на описании Инструмента (ADR-0058, п. 10.4) — проверка
- * кнопки с поповером на той же форме, что у своего Инструмента. Своей Схемы и
- * Extensions нет: эмодзи — обычный текст.
+ * Emoji on the Tool description (ADR-0058, item 10.4): a proof that a button with a popover fits
+ * the same shape as a Tool of its own. It has no Schema and no Extensions: an emoji is plain text.
  *
- * Поповер — сетка `EmojiGrid` в рамке кита у кнопки. Выбор вставляет эмодзи и
- * закрывает поповер; фокус возвращается в Документ, а не на кнопку: человек
- * пришёл поставить смайл в текст и продолжает писать. Недоступна кнопка,
- * когда вставлять некуда — выделена картинка или ячейки таблицы.
+ * The popover is the `EmojiGrid` in the kit's frame, attached to the button. Picking an emoji
+ * inserts it and closes the popover. Focus goes back to the Document, not to the button: the person
+ * came to put a smiley into the text and keeps writing. The button is disabled when there is nowhere
+ * to insert: a selected image or table cells.
  */
 export const EMOJI_TOOL: ToolDescriptor = {
   name: "emoji",

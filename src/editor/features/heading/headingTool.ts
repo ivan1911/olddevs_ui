@@ -14,14 +14,14 @@ import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 
 const LEVELS = [1, 2, 3, 4] as const;
 
-/** Иконки «¶»: в отличие от Меню вставки (одна `HeadingIcon`), там уровень виден на самой иконке. */
+/** Icons of the ¶ menu: unlike the Slash menu (one `HeadingIcon`), the level shows on the icon itself. */
 const BLOCK_TYPE_ICONS = [Heading1Icon, Heading2Icon, Heading3Icon, Heading4Icon] as const;
 
 /**
- * Пункты заголовков: Меню вставки и «¶» — одни и те же пункты «Превратить в».
- * H1 стоит под `heading` и есть только вместе с `heading1`: у `heading1` своего
- * места в порядке поверхностей нет (`INSERT_ORDER`, `BLOCK_TYPE_ORDER`), поэтому
- * его пункт живёт здесь и скрывается по `requires`.
+ * Heading items: the Slash menu and the ¶ menu share the same "Turn into" items.
+ * H1 is listed under `heading` and exists only together with `heading1`: `heading1` has no place of
+ * its own in the order of the UI surfaces (`INSERT_ORDER`, `BLOCK_TYPE_ORDER`), so its item lives
+ * here and is hidden by `requires`.
  */
 const HEADING_ITEMS: readonly InsertItem[] = LEVELS.map((level): InsertItem => ({
   id: `heading${level}`,
@@ -36,12 +36,12 @@ const HEADING_ITEMS: readonly InsertItem[] = LEVELS.map((level): InsertItem => (
 }));
 
 /**
- * Заголовки на описании Инструмента (ADR-0058, п. 10).
+ * Headings on the Tool description (ADR-0058, item 10).
  *
- * Узел и его клавиши даёт StarterKit, поэтому в описании — доля StarterKit, а
- * не `engine`. H1 — только с `heading1`; без него `#` и `<h1>` остаются
- * прежними: правило ввода и разбор HTML строятся по этим уровням. Меню «¶»
- * (`BlockTypeMenu`) — виджет кита и описания не касается.
+ * The node and its keys come from StarterKit, so the description holds a share of StarterKit, not
+ * `engine`. H1 comes only with `heading1`; without it, `#` and `<h1>` keep their old meaning: the
+ * input rule and the HTML parsing are built on these levels. The ¶ menu (`BlockTypeMenu`) is a kit
+ * widget, and the Tool description does not touch it.
  */
 export const HEADING_TOOL: ToolDescriptor = {
   name: "heading",
@@ -54,9 +54,9 @@ export const HEADING_TOOL: ToolDescriptor = {
     icon: BLOCK_TYPE_ICONS[index]!,
     alsoTool: item.requires,
   })),
-  // Клавиши вешает расширение Tiptap; строки справочника — подписи к ним.
-  // Подпись — как у пункта «¶» («Текст»), а не «Абзац» Меню вставки: справочник
-  // называет команду тем словом, которым её выбирают на Панели.
+  // The Tiptap extension binds the keys; the reference rows are their labels.
+  // The label is the same as the ¶ menu item ("Text"), not the "Paragraph" item of the Slash menu:
+  // the reference names the command with the word people pick it by on the Toolbar.
   shortcuts: [
     {
       id: "paragraph",
@@ -76,10 +76,9 @@ export const HEADING_TOOL: ToolDescriptor = {
 };
 
 /**
- * `heading1` — надстройка над `heading`: своего узла у неё нет, она добавляет
- * только H1 (уровни заголовка спрашивают `has("heading1")`, пункты H1 лежат в
- * описании `heading`). В описании — строка справочника `⌘⌥1`, которая есть
- * лишь вместе с `heading`.
+ * `heading1` is an add-on to `heading`: it has no node of its own, and it adds only H1 (the heading
+ * levels query `has("heading1")`, and the H1 items live in the description of `heading`). In the
+ * description, the reference row `⌘⌥1` exists only together with `heading`.
  */
 export const HEADING1_TOOL: ToolDescriptor = {
   name: "heading1",

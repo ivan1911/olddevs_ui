@@ -7,20 +7,20 @@ import { keymapName } from "./toolButtons.js";
 import { blockActionVisible, type BlockAction } from "./toolDescriptor.js";
 
 export interface ToolEntryShortcutsOptions {
-  /** Пункты вставки с сочетанием — в порядке списка описаний. */
+  /** Insert items that have a shortcut, in the order of the descriptor list. */
   insertItems: readonly InsertItem[];
-  /** Действия над Блоком с сочетанием — в порядке списка описаний. */
+  /** Block actions that have a shortcut, in the order of the descriptor list. */
   blockActions: readonly BlockAction[];
 }
 
 /**
- * Сочетания пунктов вставки и Действий над Блоком описаний (ADR-0058, п. 5.7):
- * сочетание — поле записи и единственный источник клавиши, поэтому её вешает кит.
+ * Shortcuts of the insert items and Block actions of the descriptors (ADR-0058, item 5.7): the
+ * shortcut is a field of the entry and the only source of the key, so the kit binds the key itself.
  *
- * Пункт применяется так же, как из Меню вставки у каретки (`applyInsertItem`:
- * одна правка, одна отмена). Действие — над Блоком под кареткой, тем же Блоком,
- * который выбирает Ручка (`handleBlock`), и только там, где оно видно в её
- * меню: на чужом Блоке клавиша идёт дальше, в Документ.
+ * An item is applied the same way as from the Slash menu at the caret (`applyInsertItem`: one edit,
+ * one undo). An action runs on the Block under the caret, the same Block that the Block handle picks
+ * (`handleBlock`), and only where the action is visible in the handle's menu. On another Block the
+ * key goes on, into the Document.
  */
 export const ToolEntryShortcuts = Extension.create<ToolEntryShortcutsOptions>({
   name: "toolEntryShortcuts",

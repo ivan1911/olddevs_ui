@@ -6,42 +6,41 @@ import { cn } from "../../../lib/cn.js";
 import { EMOJI_CATEGORIES, EMOJI_COLUMNS, EMOJI_SET, type Emoji } from "./emoji.js";
 
 export interface EmojiGridProps {
-  /** Эмодзи выбран: `Enter` или пробел в сетке, щелчок по ячейке. */
+  /** An emoji is picked: `Enter` or Space in the grid, or a click on a cell. */
   onPick: (emoji: Emoji) => void;
   /**
-   * Взять фокус при монтировании. Хозяину, у которого фокус ставит ловушка
-   * (поповер Radix), — `false`: сетка, взявшая его раньше ловушки, внутри
-   * `Dialog` теряет его обратно.
+   * Take focus on mount. For a host whose focus is set by a focus trap (a Radix popover), pass
+   * `false`: a grid that took focus before the trap loses it again inside a `Dialog`.
    */
   autoFocus?: boolean;
   className?: string;
 }
 
-/** Все эмодзи набора подряд, как их обходит клавиатура. */
+/** All emoji of the set in one flat list, in the order the keyboard walks through them. */
 const FLAT: readonly { emoji: Emoji; category: (typeof EMOJI_CATEGORIES)[number] }[] =
   EMOJI_CATEGORIES.flatMap((category) => EMOJI_SET[category].map((emoji) => ({ emoji, category })));
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /**
- * Сетка эмодзи: категории по порядку, в каждой — строки по десять.
+ * Emoji grid: categories in order, each made of rows of ten.
  *
- * ARIA: ШАБЛОН GRID ИЗ APG, КАК У `TableSizeGrid`. `role="grid"` — группы строк
- * (`rowgroup`, по одной на категорию, с именем категории), строки (`row`) и
- * ячейки (`gridcell`); фокус остаётся на самой сетке, а текущую ячейку называет
- * `aria-activedescendant`. Roving tabindex отвергнут по той же причине: ячеек
- * восемьдесят, и Tab, проходящий по каждой, — это восемьдесят остановок вместо
- * одной. Стрелки двигают выбор на ячейку и на строку, `Home` и `End` — по
- * строке (с `Ctrl` — в углы сетки), `Enter` и пробел вставляют. `Escape` сетка
- * не слушает: закрывает поповер Radix, а вместе с ним — стек слоёв (ADR-0041).
+ * ARIA: THE GRID PATTERN FROM THE APG, AS IN `TableSizeGrid`. `role="grid"` — row groups
+ * (`rowgroup`, one per category, named after it), rows (`row`) and cells (`gridcell`). Focus stays
+ * on the grid itself, and `aria-activedescendant` names the current cell. A roving tabindex is
+ * rejected for the same reason: there are eighty cells, and Tab stopping at each one would mean
+ * eighty stops instead of one. The arrows move the selection one cell or one row at a time,
+ * `Home` and `End` go to the ends of the row (with `Ctrl`, to the corners of the grid), and `Enter`
+ * and Space insert. The grid does not listen to `Escape`: the Radix popover closes on it, and with
+ * it the Escape stack (ADR-0041).
  *
- * ИМЯ ЯЧЕЙКИ — СЛОВАМИ. Символ эмодзи скринридеры читают по-разному, а то и
- * молчат, поэтому имя ячейки — из каталога сообщений (`emojiName`), а сам
- * символ только рисуется. Подпись категории видна глазу, а слуху её читает
- * имя группы строк: дубль в дереве доступности был бы шумом.
+ * THE CELL NAME IS WORDS. Screen readers read an emoji character differently, or not at all, so the
+ * cell name comes from the message catalog (`emojiName`), and the character itself is only drawn.
+ * The category label is visible to the eye, and screen readers hear it as the name of the row group:
+ * a duplicate in the accessibility tree would be noise.
  *
- * ОДИН ЭМОДЗИ В ДВУХ КАТЕГОРИЯХ — ДВЕ ЯЧЕЙКИ. Идентификатор ячейки берётся по
- * её месту в сетке, а не по имени: «Избранное» повторяет часть остальных.
+ * ONE EMOJI IN TWO CATEGORIES — TWO CELLS. A cell's identifier is taken from its place in the grid,
+ * not from its name: "Favorites" repeats some of the others.
  */
 export function EmojiGrid({ onPick, autoFocus = true, className }: EmojiGridProps) {
   const messages = useMessages().editor;
@@ -53,18 +52,18 @@ export function EmojiGrid({ onPick, autoFocus = true, className }: EmojiGridProp
     if (autoFocus) gridRef.current?.focus();
   }, [autoFocus]);
 
-  // Активная ячейка не уходит из виду, когда сетка прокручивается стрелками.
+  // The active cell stays in view when the grid is scrolled with the arrows.
   const activeId = `${id}-${active}`;
   useEffect(() => {
     const node = document.getElementById(activeId);
-    // В jsdom метода нет; в браузере он есть всегда.
+    // jsdom has no such method; in a browser it always exists.
     node?.scrollIntoView?.({ block: "nearest" });
   }, [activeId]);
 
   const last = FLAT.length - 1;
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    // Enter, которым IME подтверждает слово, и сочетания с Alt и Meta — не наши.
+    // Enter, which IME uses to confirm a word, and key combinations with Alt or Meta are not ours.
     if (event.nativeEvent.isComposing || event.altKey || event.metaKey) return;
     const rowStart = active - (active % EMOJI_COLUMNS);
     let next: number;

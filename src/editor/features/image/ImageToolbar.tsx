@@ -16,7 +16,7 @@ import { IMAGE_WIDTHS, isImageSelection, type ImageWidth } from "./image.js";
 import { focusWithin } from "../../ui/focusWithin.js";
 import { GLASS_PANEL_CLASS } from "../../styles/glass.js";
 
-/** Ключ плагина панели картинки — отдельный от плавающей Панели форматирования. */
+/** Key of the image Toolbar plugin, separate from the floating formatting Toolbar. */
 export const IMAGE_TOOLBAR_KEY = "richTextImageToolbar";
 
 const IMAGE_TOOLBAR_OPTIONS = {
@@ -29,18 +29,17 @@ const IMAGE_TOOLBAR_OPTIONS = {
 const ICON_BUTTON = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true });
 
 /**
- * Панель выделенной картинки: пресеты ширины, «Изменить» (поповер с адресом и
- * описанием) и «Убрать». Появляется над картинкой, выделенной щелчком или
- * стрелками, — как плавающая Панель над текстом, тем же `BubbleMenu`.
+ * Toolbar for the selected image: width presets, "Edit" (a popover with the address and the
+ * description) and "Remove". It appears above an image selected with a click or with the arrows,
+ * like the floating Toolbar above text, with the same `BubbleMenu`.
  *
- * Это путь мыши и быстрых правок. С клавиатуры в неё ведёт тот же `Alt+F10`,
- * что и в Панель форматирования: на выделенной картинке он выбирает её
- * панель. Ширина с клавиатуры есть и в поповере картинки.
+ * This is the path for the mouse and for quick edits. From the keyboard, the same `Alt+F10` that
+ * opens the formatting Toolbar leads here: on a selected image it targets this Toolbar. The width
+ * from the keyboard is also available in the image popover.
  *
- * `role="toolbar"` кита — одна остановка Tab, стрелки, Home и End. Пресеты —
- * кнопки-переключатели с `aria-pressed`; нажатый повторным нажатием снимается,
- * и картинка возвращается к своему размеру. Действие оставляет картинку
- * выделенной: следующий пресет жмётся сразу.
+ * The kit's `role="toolbar"` is one Tab stop, with the arrows, Home and End. The presets are toggle
+ * buttons with `aria-pressed`; pressing a pressed one again clears it, and the image goes back to
+ * its own size. The action keeps the image selected, so the next preset can be pressed right away.
  */
 export function ImageToolbar({
   editor,
@@ -51,7 +50,7 @@ export function ImageToolbar({
   editor: Editor;
   disabled: boolean;
   onEdit: () => void;
-  /** Область Документа, которая прокручивается сама (ADR-0059); без неё — окно. */
+  /** The area of the Document that scrolls on its own (ADR-0059); without it, the window. */
   scrollTarget?: HTMLElement;
 }) {
   const messages = useMessages().editor;
@@ -61,7 +60,7 @@ export function ImageToolbar({
     [scrollTarget]
   );
 
-  // Лишняя остановка Tab у узла плагина — та же причина, что у `FloatingToolbar`.
+  // The extra Tab stop on the plugin's node has the same cause as in `FloatingToolbar`.
   useEffect(() => {
     ref.current?.setAttribute("tabindex", "-1");
   }, [editor]);

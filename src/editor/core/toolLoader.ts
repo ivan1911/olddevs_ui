@@ -3,20 +3,19 @@
 import { devError } from "../../lib/dev-warn.js";
 
 /*
-  Загрузчики Extensions (ADR-0058, п. 1.3 и 11.3–11.6).
+  Loaders of Extensions (ADR-0058, items 1.3 and 11.3–11.6).
 
-  Промис кэшируется на самой функции загрузчика, а не на Редакторе: второй
-  Редактор на странице с тем же Инструментом ничего не ждёт и загрузчик не
-  зовёт. Упавший остаётся в кэше упавшим — иначе каждая перерисовка звала бы
-  его снова; заново его зовёт только «Повторить» (`retry`). Механизм общий:
-  встроенный Инструмент с ленивыми Extensions кладёт свой загрузчик в
-  то же поле описания (`ToolDescriptor.load`).
+  The promise is cached on the loader function itself, not on the Editor: a second Editor on a
+  page with the same Tool waits for nothing and does not call the loader. A load that failed stays
+  failed in the cache, otherwise every re-render would call it again; only the "Retry" button
+  (`retry`) calls it anew. The mechanism is shared: a built-in Tool with lazy Extensions puts its
+  own loader into the same field of its description (`ToolDescriptor.load`).
 */
 
-/** Загрузчик Extensions: функция с динамическим импортом. */
+/** Loader of Extensions: a function with a dynamic import. */
 export type ToolLoader = () => Promise<unknown>;
 
-/** Ход загрузки: промис не отклоняется никогда, итог — в `done` или `failed`. */
+/** The state of one load: the promise never rejects; the outcome is in `done` or `failed`. */
 export interface ToolLoad {
   promise: Promise<void>;
   value?: unknown;
@@ -26,7 +25,7 @@ export interface ToolLoad {
 
 const LOADS = new WeakMap<ToolLoader, ToolLoad>();
 
-/** Запустить загрузчик, если он ещё не звался (или упал и это повтор). */
+/** Start the loader if it has not been called yet, or if it failed and this is a retry. */
 export function startLoad(loader: ToolLoader, retry?: boolean): ToolLoad {
   let load = LOADS.get(loader);
   if (!load || (retry && load.failed)) {
@@ -46,5 +45,5 @@ export function startLoad(loader: ToolLoader, retry?: boolean): ToolLoad {
   return load;
 }
 
-/** Что отдал загрузчик; до конца загрузки — `undefined`. */
+/** What the loader returned; `undefined` until the load finishes. */
 export const loaded = (loader: ToolLoader): unknown => LOADS.get(loader)?.value;
