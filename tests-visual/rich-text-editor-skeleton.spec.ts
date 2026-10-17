@@ -1,16 +1,19 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Скелет Редактора в браузере (OLDSUI-110, ADR-0058, п. 11.4): то, чего jsdom
- * не умеет, — раскладка. Скелет и движок рисуют Документ с одним ритмом и одной
- * рамкой, поэтому смена Скелета движком не двигает ни высоту поля, ни текст.
- * Роли, Хэндл, `onReady` и «Повторить» проверены в
+ * Editor Skeleton in a browser (OLDSUI-110, ADR-0058, item 11.4): what jsdom cannot
+ * do, namely the layout. The Skeleton and the engine draw the Document with one
+ * rhythm and one frame, so the engine replacing the Skeleton moves neither the field
+ * height nor the text. Roles, the Handle, `onReady` and "Retry" are checked in
  * `tests/rich-text-editor-loaders.test.tsx`.
  */
 
 const STORY = "/iframe.html?id=inputs-richtexteditor--tool-loader&globals=theme:dark;accent:blue";
 
-/** Высота поля и положение строк Документа, которые есть и в Скелете, и в движке. */
+/**
+ * The field height and the positions of Document lines that exist in both the Skeleton
+ * and the engine.
+ */
 async function layout(page: Page) {
   const field = page.locator("[data-story-field]");
   const box = await field.boundingBox();

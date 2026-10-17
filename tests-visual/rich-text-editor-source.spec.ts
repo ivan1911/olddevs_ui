@@ -1,11 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * HTML-режим Редактора в браузере (OLDSUI-76): то, чего jsdom не умеет, —
- * раскладка. Высота поля при входе не ниже Документа, дальше поле растёт по
- * содержимому без своего скролла; фокус на входе — в поле, на выходе — в
- * Документ. Вид режима в трёх темах и на листе снимает `stories.spec.ts`
- * (истории `SourceMode` и `SourceModePaper`).
+ * Editor Source mode in a browser (OLDSUI-76): what jsdom cannot do, namely the
+ * layout. On entry the field height is no less than the Document's; then the field
+ * grows with its content, with no scrolling of its own. Focus goes into the field on
+ * entry and back to the Document on exit. The look of the mode in three themes and
+ * on paper is captured by `stories.spec.ts` (the `SourceMode` and `SourceModePaper`
+ * stories).
  */
 
 const STORY = (id: string) =>
@@ -27,7 +28,7 @@ test("the HTML field is at least as tall as the document, grows with its text an
   expect(await field.evaluate((node: HTMLTextAreaElement) => node.selectionStart)).toBe(0);
   const before = (await field.boundingBox())!.height;
   expect(before).toBeGreaterThanOrEqual(documentHeight - 1);
-  // Своего скролла нет: всё содержимое видно.
+  // There is no scrolling of its own: all the content is visible.
   expect(await field.evaluate((node) => node.scrollHeight - node.clientHeight)).toBeLessThanOrEqual(
     1
   );

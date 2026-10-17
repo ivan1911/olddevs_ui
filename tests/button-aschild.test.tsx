@@ -14,8 +14,8 @@ test("asChild gives the appearance to the link instead of wrapping it in a butto
   );
 
   const link = screen.getByRole("link", { name: "New campaign" });
-  // Кнопки в разметке нет вовсе: вложенная интерактивность недопустима, и
-  // ссылка внутри кнопки — именно она.
+  // There is no button in the markup at all: nested interactive content is not allowed,
+  // and a link inside a button is exactly that case.
   expect(screen.queryByRole("button")).toBeNull();
   expect(link.className).toContain("bg-accent");
 });
@@ -27,15 +27,15 @@ test("type=button does not leak into the link markup", () => {
     </Button>
   );
 
-  // У `a` такого атрибута нет вовсе, и React отрисовал бы его мусором.
+  // An `a` has no such attribute at all, and React would render it as garbage.
   expect(screen.getByRole("link").hasAttribute("type")).toBe(false);
 });
 
 test("a plain button still gets type=button", () => {
   render(<Button>Save</Button>);
 
-  // Умолчание держит старый дефект закрытым: кнопка внутри формы без него
-  // отправляет форму.
+  // The default keeps the old defect closed: without it, a button inside a form
+  // submits the form.
   expect(screen.getByRole("button")).toHaveProperty("type", "button");
 });
 
@@ -47,7 +47,7 @@ test("the icon is not lost with asChild", () => {
   );
 
   const link = screen.getByRole("link", { name: "Upload" });
-  // Иконка уехала ВНУТРЬ ссылки, а не осталась снаружи рядом с ней.
+  // The icon moved INSIDE the link instead of staying outside next to it.
   expect(link.querySelector('[data-testid="icon"]')).not.toBeNull();
 });
 
@@ -78,9 +78,9 @@ test("disabled on a link is expressed by role, not by a non-existent attribute",
   );
 
   const link = screen.getByRole("link", { name: "New campaign" });
-  // `<a disabled>` остаётся и фокусируемой, и переходимой, а `disabled:opacity-50`
-  // не срабатывает: `:disabled` — псевдокласс полей формы. Выключенная на вид,
-  // рабочая на деле ссылка — худший исход из возможных.
+  // `<a disabled>` stays focusable and navigable, and `disabled:opacity-50` does not
+  // apply: `:disabled` is a form-field pseudo-class. A link that looks disabled but
+  // works is the worst possible outcome.
   expect(link.hasAttribute("disabled")).toBe(false);
   expect(link.getAttribute("aria-disabled")).toBe("true");
   expect(link.className).toContain("pointer-events-none");
@@ -93,8 +93,8 @@ test("selected does not put aria-pressed on a link", () => {
     </Button>
   );
 
-  // У роли `link` атрибут запрещён — аудит axe ловит его как `aria-allowed-attr`.
-  // Нажатой ссылки не бывает: если состояние нужно, это кнопка.
+  // The `link` role does not allow this attribute: the axe audit flags it as
+  // `aria-allowed-attr`. A pressed link does not exist: if the state is needed, it is a button.
   expect(screen.getByRole("link").hasAttribute("aria-pressed")).toBe(false);
 });
 
@@ -105,13 +105,12 @@ test("a plain button still reports the pressed state", () => {
 });
 
 /**
- * Выключенная ссылка обязана быть выключенной И ДЛЯ КЛАВИАТУРЫ.
+ * A disabled link must be disabled FOR THE KEYBOARD too.
  *
- * При `asChild` выключенность выражалась только `aria-disabled` — атрибутом
- * рекомендательным — и классом `pointer-events-none`, который гасит
- * исключительно указатель. Ссылка оставалась в порядке обхода и срабатывала по
- * Enter: пользователь клавиатуры доходил до визуально бледной кнопки «Оплатить»
- * во время отправки формы и уходил со страницы. Тесты проверяли только атрибуты.
+ * With `asChild`, disabled was expressed only by `aria-disabled`, a hint attribute, and by
+ * the `pointer-events-none` class, which blocks the pointer alone. The link stayed in the
+ * tab order and fired on Enter: a keyboard user reached a visually faded "Pay" button during
+ * form submission and left the page. The tests checked only the attributes.
  */
 test("a disabled asChild link is out of the tab order", () => {
   render(
@@ -155,12 +154,12 @@ test("an enabled asChild link still works", async () => {
 });
 
 /**
- * Собственный `tabIndex` потомка не перебивает выключённость.
+ * The child's own `tabIndex` does not override the disabled state.
  *
- * `Slot` отдаёт приоритет пропам ПОТОМКА независимо от порядка спреда, поэтому
- * `tabIndex: -1`, переданный кнопке, ссылка с `tabIndex={0}` попросту
- * перебивала — и оставалась достижимой табом, хотя выглядела выключённой.
- * Комментарий рядом при этом утверждал, что защиту бережёт порядок спреда.
+ * `Slot` gives priority to the CHILD's props regardless of spread order, so a link with
+ * `tabIndex={0}` simply overrode the `tabIndex: -1` passed to the button, and stayed
+ * reachable by Tab even though it looked disabled. The comment next to it claimed that
+ * the spread order was what protected it.
  */
 test("a child tabIndex does not defeat the disabled guard", () => {
   render(
@@ -183,7 +182,7 @@ test("an enabled asChild child keeps its own tabIndex", () => {
     </Button>
   );
 
-  // Клонирование включается только выключённостью: обычную разметку
-  // вызывающего компонент не переписывает.
+  // Cloning is switched on only by the disabled state: the component does not rewrite
+  // the caller's regular markup.
   expect(screen.getByRole("link").getAttribute("tabindex")).toBe("3");
 });

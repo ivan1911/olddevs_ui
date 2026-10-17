@@ -17,7 +17,7 @@ test("submitting is announced and not clickable", async () => {
 
   const button = screen.getByRole("button", { name: "Save" });
   expect(button.getAttribute("aria-busy")).toBe("true");
-  // Выключенность наступает сама: отдельный `disabled` вызывающему не нужен.
+  // Disabled applies by itself: the caller does not need a separate `disabled`.
   expect((button as HTMLButtonElement).disabled).toBe(true);
 
   await user.click(button);
@@ -26,8 +26,8 @@ test("submitting is announced and not clickable", async () => {
 
 test("the spinner is not part of the button accessible name", () => {
   render(<Button loading>Save</Button>);
-  // Ровно ради этого внутри не `Spinner`: у того есть невидимая подпись
-  // «Загрузка», и имя стало бы «Загрузка Сохранить».
+  // That is exactly why there is no `Spinner` inside: it has a hidden label "Loading",
+  // and the name would become "Loading Save".
   expect(screen.getByRole("button", { name: "Save" })).toBeTruthy();
   expect(screen.queryByText("Loading")).toBeNull();
 });
@@ -58,6 +58,6 @@ test("with asChild disabledness is expressed independently of the role", () => {
   const link = screen.getByRole("link", { name: "Link" });
   expect(link.getAttribute("aria-disabled")).toBe("true");
   expect(link.getAttribute("aria-busy")).toBe("true");
-  // Атрибута `disabled` у ссылки не существует — он не должен уехать в разметку.
+  // A link has no `disabled` attribute, so it must not end up in the markup.
   expect(link.hasAttribute("disabled")).toBe(false);
 });

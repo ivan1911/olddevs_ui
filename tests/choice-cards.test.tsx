@@ -9,11 +9,11 @@ import { Radio, RadioGroup } from "../src/components/inputs/RadioGroup.js";
 
 afterEach(cleanup);
 
-// Что здесь НЕ проверяется, и почему. Клик по любому месту карточки (по
-// описанию, по пустому полю) — это клик по метке, накрывающей всю карточку, а
-// jsdom не строит геометрии и не воспроизводит активацию `<label>` по клику в
-// потомка. Эта часть контракта, как и вычисленный стиль рамки с размером
-// индикатора, проверена руками в живом браузере по собранной витрине.
+// What is NOT checked here, and why. A click anywhere on the card (on the description,
+// on an empty field) is a click on the label that covers the whole card, and jsdom builds
+// no geometry and does not reproduce `<label>` activation by a click on a descendant. This
+// part of the contract, like the computed frame style with the indicator size, is verified
+// by hand in a live browser on the built showcase.
 
 function PlanPicker({
   initial = null,
@@ -88,8 +88,8 @@ function ModulePicker({
 test("a radio card keeps the native radio semantics with name and description apart", () => {
   render(<PlanPicker />);
 
-  // Имя — подпись варианта, пояснение — отдельно. Если бы описание вошло в
-  // метку, скринридер читал бы его дважды: как имя и как описание.
+  // The name is the option's label, and the hint is separate. If the description went
+  // into the label, a screen reader would read it twice: as the name and as the description.
   const radio = screen.getByRole("radio", {
     name: "Starter",
     description: "Up to 3 projects",
@@ -122,7 +122,7 @@ test("arrows move through radio cards and change the value", async () => {
 
   expect((screen.getByRole("radio", { name: "Team" }) as HTMLInputElement).checked).toBe(true);
 
-  // «Корпоративный» выключен, поэтому набор зацикливается на первый доступный.
+  // "Corporate" is disabled, so the set loops back to the first available option.
   await user.keyboard("{ArrowDown}");
   expect((screen.getByRole("radio", { name: "Starter" }) as HTMLInputElement).checked).toBe(true);
 });
@@ -130,8 +130,8 @@ test("arrows move through radio cards and change the value", async () => {
 test("a radio card exposes selection as a data attribute on the card itself", () => {
   render(<PlanPicker initial="pro" />);
 
-  // Рамка рисуется по этому признаку: пометка живёт на карточке, а не только на
-  // скрытом `input`. Цвет рамки и размер индикатора смотрит браузерный тест.
+  // The frame is drawn from this flag: the mark lives on the card, not only on the hidden
+  // `input`. The browser test checks the frame color and the indicator size.
   const selected = screen.getByRole("radio", { name: "Team" }).closest("div[data-selected]");
   expect(selected).toBeTruthy();
   expect(selected?.contains(screen.getByText("Unlimited projects"))).toBe(true);
@@ -180,7 +180,7 @@ test("an error is announced for a radio card set like for a plain one", () => {
   const group = screen.getByRole("radiogroup", { name: "Plan" });
   const message = screen.getByText("Pick a plan");
   expect(group.getAttribute("aria-describedby")?.split(" ")).toContain(message.id);
-  // Невалидность приходит от группы на каждую карточку: рамка красится по ней.
+  // Invalidity comes from the group to each card: the frame is colored by it.
   for (const el of screen.getAllByRole("radio"))
     expect(el.closest("div[data-invalid]")).toBeTruthy();
 });
@@ -203,9 +203,9 @@ test("the default appearance stays a plain radio list without card markup", () =
   );
 
   expect(screen.getByRole("radio", { name: "Starter", description: "Hint" })).toBeTruthy();
-  // Карточкой по умолчанию не становится: описание стоит под вариантом, вне
-  // метки, — в карточке оно внутри неё, чтобы щелчок по нему выбирал вариант.
-  // Рамку карточки jsdom не увидит — её стерегут снимки.
+  // It does not turn into a card by default: the description sits under the option,
+  // outside the label, while in a card it is inside, so a click on it selects the option.
+  // jsdom does not see the card's frame: snapshots guard it.
   expect(screen.getByText("Hint").closest("label")).toBeNull();
 });
 
@@ -218,8 +218,8 @@ test("an empty icon, label or description adds no blank node to a card", () => {
     </RadioGroup>
   );
 
-  // Пустая строка — не содержимое: ни пустого описания у варианта, ни пустого
-  // узла значка, который съел бы зазор столбца.
+  // An empty string is not content: there is no empty description on the option and no
+  // empty icon node that would eat the column gap.
   const radio = screen.getByRole("radio", { name: "Starter" });
   expect(radio.getAttribute("aria-describedby")).toBeNull();
   expect(container.querySelector("[slot=description]")).toBeNull();
@@ -309,7 +309,7 @@ test("a checkbox outside a group keeps the default appearance", () => {
     </Checkbox>
   );
 
-  // Вне группы карточки быть не может: ось живёт у группы.
+  // A card cannot exist outside a group: the axis lives on the group.
   expect(screen.getByRole("checkbox", { name: "Consent", description: "Hint" })).toBeTruthy();
   expect(screen.getByTestId("icon-solo")).toBeTruthy();
 });

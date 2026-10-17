@@ -5,15 +5,15 @@ import { Calendar } from "../src/components/date-time/Calendar.js";
 import { RangeCalendar } from "../src/components/date-time/RangeCalendar.js";
 
 /*
-  Заголовок календаря — `formatRange` из Intl внутри react-aria, а Intl у
-  сервера и у браузера разный: ICU в Node ставит вокруг тире тонкие пробелы
-  (U+2009), Chrome — обычные. Отрисованный на сервере `RangeCalendar` с двумя
-  месяцами не проходил гидратацию (React #418, OLDSUI-171). Тест идёт в Node —
-  там, где тонкие пробелы и появляются.
+  The calendar heading is `formatRange` from Intl inside react-aria, and Intl differs
+  between the server and the browser: ICU in Node puts thin spaces around the dash
+  (U+2009), while Chrome uses regular spaces. A `RangeCalendar` rendered on the server
+  with two months failed hydration (React #418, OLDSUI-171). The test runs in Node, where
+  the thin spaces do appear.
 */
 const THIN_SPACES = /[\u2009\u202f]/;
 
-/** Класс точки «сегодня» под числом. */
+/** The class of the "today" dot under the number. */
 const TODAY_MARK = "after:size-[3px]";
 
 function heading(html: string): string {
@@ -34,9 +34,9 @@ test("the two-month RangeCalendar heading uses plain spaces on the server", () =
 });
 
 /*
-  «Сегодня» на сервере неизвестно: статику собирают в другой день и в другом
-  часовом поясе, и точка под числом в HTML стояла бы не на том дне, что у
-  читателя. Точку ставит браузер после монтирования.
+  "Today" is unknown on the server: the static HTML is built on another day and in
+  another time zone, so the dot under the number would sit on a different day than the
+  reader's. The browser places the dot after mounting.
 */
 test("the server HTML marks no day as today", () => {
   const month = today(getLocalTimeZone());

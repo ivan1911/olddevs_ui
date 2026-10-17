@@ -11,38 +11,36 @@ import {
 import { renderMatrix } from "./matrix.js";
 
 /**
- * Проверяет, что КАЖДЫЙ класс, который примитивы реально выдают в разметку,
- * присутствует в собранном Tailwind CSS.
+ * Checks that EVERY class the primitives actually emit into the markup
+ * is present in the built Tailwind CSS.
  *
- * Зачем: Tailwind сканирует исходники как текст и не исполняет код. Класс,
- * собранный конкатенацией (`hover:${t.bg}`), сканер не увидит — он не попадёт
- * в CSS, и при этом **сборка пройдёт успешно, без единого предупреждения**.
- * Компонент просто окажется без стилей. Ни компилятор, ни линтер этого не ловят.
+ * Why: Tailwind scans the sources as text and does not execute the code. A class
+ * assembled by concatenation (`hover:${t.bg}`) is invisible to the scanner: it does not
+ * get into the CSS, and the build **succeeds without a single warning**. The component
+ * simply ends up unstyled. Neither the compiler nor the linter catches this.
  *
- * Ключевая деталь: `@source` здесь указывает на ИСХОДНИКИ пакета, а не на
- * отрендеренную разметку. Если бы сканировалась разметка, тест находил бы там
- * же, откуда взял список, и проходил бы всегда — не доказывая ничего.
+ * Key detail: `@source` here points to the package's SOURCES, not to the rendered markup.
+ * If the markup were scanned, the test would find the classes in the very place it took
+ * the list from, and would always pass, proving nothing.
  */
 
 const ROOT = resolve(import.meta.dirname, "..");
 
-// Временная папка обязана лежать ВНУТРИ пакета: Tailwind резолвит
-// `@import "tailwindcss"` относительно входного файла, а в системном tmp
-// никакого node_modules нет.
+// The temp folder must live INSIDE the package: Tailwind resolves `@import "tailwindcss"`
+// relative to the input file, and the system tmp has no node_modules.
 const tmp = mkdtempSync(join(ROOT, ".tmp-coverage-"));
 
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 
 /**
- * Обратная задача экранированию: убираем из CSS обратные слэши и ищем класс
- * как он написан в разметке.
+ * The reverse of escaping: we strip the backslashes from the CSS and look up the class
+ * as it is written in the markup.
  *
- * Раньше здесь был список экранируемых символов, и он оказался неполным:
- * Tailwind пишет `.transition-\[border-color\,box-shadow\]`, а запятой в списке
- * не было — класс объявлялся пропавшим, хотя лежал в CSS. Ловить полный
- * перечень спецсимволов вручную бессмысленно: он растёт с каждым новым
- * произвольным значением. Снять экранирование один раз надёжнее, чем повторить
- * его правила.
+ * Previously there was a list of characters to escape, and it turned out incomplete:
+ * Tailwind writes `.transition-\[border-color\,box-shadow\]`, and the list had no comma,
+ * so the class was reported missing although it lay in the CSS. Catching the full set of
+ * special characters by hand is pointless: it grows with every new arbitrary value.
+ * Removing the escaping once is more reliable than repeating its rules.
  */
 const unescapeCss = (css: string) => css.replace(/\\/g, "");
 
@@ -52,12 +50,12 @@ function buildCss(): string {
   writeFileSync(
     input,
     [
-      // `source(none)` обязателен. Без него Tailwind сам добавляет в источники
-      // папку входного файла — то есть весь пакет, включая `storybook-static/`
-      // и `dist/`. В них лежит РАНЕЕ собранный CSS, и класс, только что
-      // пропавший из исходников, находится там: проверка молча зеленеет.
-      // Проверено: с подложенной конкатенацией `bg-accent${"-soft"}` тест
-      // проходил, хотя `.bg-accent-soft` в свежем CSS отсутствовал.
+      // `source(none)` is required. Without it, Tailwind adds the input file's folder to
+      // the sources on its own, that is, the whole package, including `storybook-static/`
+      // and `dist/`. They hold the PREVIOUSLY built CSS, and a class that has just
+      // disappeared from the sources is found there: the check silently passes.
+      // Verified: with a planted concatenation `bg-accent${"-soft"}` the test passed,
+      // although `.bg-accent-soft` was missing from the fresh CSS.
       '@import "tailwindcss" source(none);',
       `@import "${join(ROOT, "styles.css")}";`,
       `@source "${join(ROOT, "src")}";`,
@@ -71,19 +69,19 @@ function buildCss(): string {
   return readFileSync(output, "utf8");
 }
 
-/** Сборка CSS — секунды; оба теста читают один результат. */
+/** The CSS build takes seconds; both tests read one result. */
 let css: string | undefined;
 const builtCss = () => (css ??= unescapeCss(buildCss()));
 
-/** Классы, которых в CSS нет. */
+/** Classes that are missing from the CSS. */
 function missingFrom(css: string, classes: Iterable<string>): string[] {
-  // После селектора обязан идти разделитель, иначе `.bg-bg-1` совпадёт
-  // с началом `.bg-bg-10` и тест пропустит настоящую пропажу.
+  // A separator must follow the selector, otherwise `.bg-bg-1` would match the start of
+  // `.bg-bg-10`, and the test would let a real missing class slip through.
   //
-  // `[` в списке — из-за вариантов `data-[…]:`, которые пришли с датапикерами:
-  // Tailwind дописывает к такому классу сам атрибут, и селектор выглядит как
-  // `.data-[selected]:bg-accent[data-selected]`. Без квадратной скобки среди
-  // разделителей каждый такой класс объявлялся бы пропавшим, хотя он в CSS есть.
+  // `[` is in the list because of the `data-[…]:` variants that came with the date pickers:
+  // Tailwind appends the attribute to such a class itself, and the selector looks like
+  // `.data-[selected]:bg-accent[data-selected]`. Without the square bracket among the
+  // separators, every such class would be reported missing although it is in the CSS.
   const BOUNDARY = [" ", ",", ":", ">", "+", "~", "\n", "{", "["];
   return [...classes].filter((c) => {
     const sel = "." + c;
@@ -100,9 +98,9 @@ function missingFrom(css: string, classes: Iterable<string>): string[] {
 test("every class from primitive markup is present in the built CSS", () => {
   const html = renderToStaticMarkup(renderMatrix());
 
-  // Разметка приходит с HTML-экранированием: класс `after:content-['']`
-  // выглядит в ней как `after:content-[&#x27;&#x27;]` и не совпал бы с CSS.
-  // Обратная замена нужна для любого произвольного значения с кавычками.
+  // The markup comes HTML-escaped: the class `after:content-['']` looks like
+  // `after:content-[&#x27;&#x27;]` there and would not match the CSS.
+  // The reverse replacement is needed for any arbitrary value with quotes.
   const unescapeHtml = (s: string) =>
     s
       .replace(/&#x27;/g, "'")
@@ -112,28 +110,28 @@ test("every class from primitive markup is present in the built CSS", () => {
       .replace(/&amp;/g, "&");
 
   /**
-   * Классы, которые ставит не Tailwind, а сторонний компонент, и которых в нашем
-   * CSS быть НЕ должно. lucide вешает на каждую свою `<svg>` пару
-   * `lucide lucide-<имя>` — это её собственные хуки для стилизации на стороне
-   * потребителя, а не утилиты Tailwind. Без этого исключения тест ловил бы их
-   * как «пропавшие» и падал бы на любом компоненте с иконкой.
+   * Classes that a third-party component sets rather than Tailwind, and that must NOT
+   * be in our CSS. lucide puts a `lucide lucide-<name>` pair on every one of its `<svg>`:
+   * these are its own hooks for styling on the consumer's side, not Tailwind utilities.
+   * Without this exception the test would flag them as "missing" and fail on any
+   * component with an icon.
    *
-   * Исключение намеренно узкое — по конкретному префиксу, а не «игнорировать
-   * незнакомое»: смысл теста в том, чтобы незнакомое как раз ронять.
+   * The exception is deliberately narrow: by a specific prefix, not by "ignore anything
+   * unfamiliar". The point of the test is to fail on exactly what is unfamiliar.
    */
   const isThirdParty = (c: string) =>
     c === "lucide" ||
     c.startsWith("lucide-") ||
-    // `react-aria-components` вешает на свои элементы `react-aria-CalendarGrid`
-    // и подобные — те же собственные хуки для стилизации, что у lucide.
+    // `react-aria-components` puts `react-aria-CalendarGrid` and similar classes on its
+    // elements: the same kind of own styling hooks as lucide's.
     c.startsWith("react-aria-") ||
     /*
-      `group` и `peer` — МАРКЕРЫ Tailwind, а не утилиты: своего правила они не
-      порождают вовсе, а только дают якорь вариантам `group-hover:` и
-      `peer-checked:`. В CSS их поэтому нет и быть не должно.
+      `group` and `peer` are Tailwind MARKERS, not utilities: they produce no rule of
+      their own at all, they only give an anchor to the `group-hover:` and `peer-checked:`
+      variants. That is why they are absent from the CSS, and must be.
 
-      Исключение узкое — ровно два имени, без префиксов: именованные варианты
-      (`group/item`) сюда не попадают и продолжают проверяться.
+      The exception is narrow: exactly two names, no prefixes. Named variants
+      (`group/item`) do not fall under it and are still checked.
     */
     c === "group" ||
     c === "peer";
@@ -143,7 +141,7 @@ test("every class from primitive markup is present in the built CSS", () => {
     for (const c of unescapeHtml(m[1] ?? "").split(/\s+/))
       if (c && !isThirdParty(c)) classes.add(c);
 
-  expect(classes.size).toBeGreaterThan(50); // защита от «матрица отрендерилась пустой»
+  expect(classes.size).toBeGreaterThan(50); // a guard against the matrix rendering empty
 
   const missing = missingFrom(builtCss(), classes);
 
@@ -154,10 +152,10 @@ test("every class from primitive markup is present in the built CSS", () => {
 });
 
 /**
- * Стекло Редактора (OLDSUI-118) в матрицу не входит: Редактор — отдельная
- * точка входа. А поймано на нём ровно то, ради чего тест заведён: подложка,
- * собранная шаблонной строкой из имени токена, в CSS не попала, и меню
- * осталось с одним размытием на прозрачном фоне.
+ * The Editor's Glass (OLDSUI-118) is not in the matrix: the Editor is a separate entry
+ * point. Yet it caught exactly what the test was written for: a backdrop assembled by a
+ * template string from a token name never got into the CSS, and the menu was left with
+ * only a blur over a transparent background.
  */
 test("every class of the editor glass surfaces is present in the built CSS", () => {
   const classes = [GLASS_PANEL_CLASS, GLASS_MENU_CLASS, GLASS_INVERSE_CLASS].flatMap((surface) =>

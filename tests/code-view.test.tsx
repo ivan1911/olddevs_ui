@@ -17,8 +17,8 @@ test("plain code is rendered as is when no markup is given", () => {
 });
 
 /*
-  Разметка — необязательный слой отображения; `code` при этом остаётся
-  источником правды и для нумерации, и для копирования.
+  Markup is an optional display layer; `code` nonetheless stays the source of truth both
+  for numbering and for copying.
 */
 test("supplied markup replaces the plain rendering", () => {
   render(
@@ -30,9 +30,9 @@ test("supplied markup replaces the plain rendering", () => {
 });
 
 /*
-  Гутер считается по `code`, а не по потомкам: считающий себя по разметке
-  разъедется с содержимым на первом же подсветчике, который завернёт строку в
-  два элемента.
+  The gutter is counted from `code`, not from the children: a gutter that counts from the
+  markup would drift out of sync with the content on the first highlighter that wraps a
+  line in two elements.
 */
 test("line numbers are counted from code", () => {
   const { container } = render(<CodeView code={JSON_BODY} lineNumbers />);
@@ -40,24 +40,24 @@ test("line numbers are counted from code", () => {
 });
 
 /*
-  Один завершающий перевод строки срезается: файл, прочитанный с диска, почти
-  всегда заканчивается им, и без этого гутер показывал бы лишний номер у пустой
-  строки в конце.
+  One trailing newline is stripped: a file read from disk almost always ends with one,
+  and without this the gutter would show an extra number on the empty line at the end.
 */
 test("trailing newlines do not add phantom lines", () => {
   const { container, rerender } = render(<CodeView code={"a\nb\n"} lineNumbers />);
   expect(container.querySelector("[aria-hidden]")?.textContent).toBe("12");
 
-  // Два подряд встречаются не реже одного: файл с пустой строкой в конце.
+  // Two in a row are no rarer than one: a file with an empty line at the end.
   rerender(<CodeView code={"a\nb\n\n"} lineNumbers />);
   expect(container.querySelector("[aria-hidden]")?.textContent).toBe("12");
 });
 
 /*
-  С разметкой гутера нет вовсе, и это решение. Кит не знает, где в чужой
-  разметке границы строк: подсветчик волен завернуть строку во сколько угодно
-  элементов, а перенос добавляет ей высоты, о которой соседняя колонка номеров
-  не догадывается. Номер напротив чужой строки хуже, чем его отсутствие.
+  With markup there is no gutter at all, and that is a deliberate decision. The kit does
+  not know where the line boundaries are in foreign markup: a highlighter is free to wrap
+  a line in any number of elements, and wrapping adds height that the neighboring column
+  of numbers cannot know about. A number opposite someone else's line is worse than no
+  number.
 */
 test("supplied markup drops the gutter instead of misaligning it", () => {
   const { container } = render(
@@ -69,8 +69,8 @@ test("supplied markup drops the gutter instead of misaligning it", () => {
 });
 
 /*
-  Номера — шум в речи и мусор в буфере: скопированный код с номерами не
-  компилируется.
+  Numbers are noise for screen readers and junk in the clipboard: copied code with
+  numbers does not compile.
 */
 test("line numbers are hidden from speech and from selection", () => {
   const { container } = render(<CodeView code={JSON_BODY} lineNumbers />);
@@ -86,16 +86,16 @@ test("without line numbers there is no gutter at all", () => {
 });
 
 /*
-  Без переноса появляется прокрутка, а не обрезка: обрезанная строка кода молча
-  теряет то, ради чего её открыли.
+  Without wrapping there is scrolling, not clipping: a clipped line of code silently loses
+  what it was opened for.
 */
 test("wrapping is an axis, and its absence gives scrolling rather than clipping", () => {
   const { container, rerender } = render(<CodeView code={JSON_BODY} />);
   const scroller = container.querySelector(".overflow-x-auto") as HTMLElement;
   expect(scroller).toBeTruthy();
   expect(container.querySelector("pre")?.className).toContain("whitespace-pre");
-  // До содержимого, которое прокручивается только указателем, клавиатура не
-  // доберётся: правило axe `scrollable-region-focusable`.
+  // The keyboard cannot reach content that scrolls only with a pointer: the axe rule
+  // `scrollable-region-focusable`.
   expect(scroller.getAttribute("tabindex")).toBe("0");
 
   rerender(<CodeView code={JSON_BODY} wrap />);
@@ -104,14 +104,14 @@ test("wrapping is an axis, and its absence gives scrolling rather than clipping"
 });
 
 /*
-  Копирование берёт `code`, а не DOM: иначе в буфер уехали бы номера строк и
-  границы токенов подсветки.
+  Copying takes `code`, not the DOM: otherwise the line numbers and the boundaries of the
+  highlight tokens would end up in the clipboard.
 */
 test("copying takes the plain code even when markup is shown", async () => {
   const writeText = vi.fn().mockResolvedValue(undefined);
-  // Заглушка ставится ПОСЛЕ `userEvent.setup()`: он сам подменяет
-  // `navigator.clipboard`, и поставленная раньше молча им перетирается — тот же
-  // порядок, что в `tests/copy-button.test.tsx`.
+  // The stub goes in AFTER `userEvent.setup()`: it replaces `navigator.clipboard` itself,
+  // and a stub set earlier is silently overwritten. Same order as in
+  // `tests/copy-button.test.tsx`.
   const user = userEvent.setup();
   Object.defineProperty(navigator, "clipboard", {
     configurable: true,
@@ -125,14 +125,15 @@ test("copying takes the plain code even when markup is shown", async () => {
   );
   await user.click(screen.getByRole("button", { name: /Copy/i }));
 
-  // В буфер уходит строка, а не разметка: копия из DOM утащила бы номера строк
-  // и границы токенов подсветки — текст, который не компилируется.
+  // Only the string goes to the clipboard, not the markup: a copy from the DOM would
+  // carry the line numbers and the boundaries of the highlight tokens, text that does
+  // not compile.
   expect(writeText).toHaveBeenCalledWith(JSON_BODY);
 });
 
 /*
-  Считать `div`-ы бессмысленно: прежняя версия этого теста проходила и на
-  компоненте, который рисует шапку всегда. Сторожим конкретный узел.
+  Counting `div`s is pointless: the previous version of this test also passed on a
+  component that always renders the header. We guard the specific node.
 */
 test("without a title and without copying there is no header", () => {
   const { container, rerender } = render(<CodeView code={JSON_BODY} title="response.json" />);
@@ -144,8 +145,9 @@ test("without a title and without copying there is no header", () => {
 });
 
 /*
-  Компонент не подсвечивает ничего сам — это граница ADR-0039, и её стоит
-  сторожить: подсветчик, добавленный «заодно», иначе появился бы незаметно.
+  The component does not highlight anything itself: this is the ADR-0039 boundary, and it
+  is worth guarding, since a highlighter added "while at it" would otherwise appear
+  unnoticed.
 */
 test("the kit adds no syntax markup of its own", () => {
   const { container } = render(<CodeView code={JSON_BODY} />);
@@ -155,9 +157,9 @@ test("the kit adds no syntax markup of its own", () => {
 });
 
 /*
-  Вторая причина снимать гутер, названная в докстроке пропа наравне с первой:
-  перенос добавляет строке высоты, о которой колонка номеров не догадывается, и
-  номер встаёт напротив чужой строки. Условие проверяло только разметку.
+  The second reason to drop the gutter, named in the prop's doc string alongside the
+  first: wrapping adds height to a line that the column of numbers does not know about,
+  and the number lands opposite someone else's line. The condition checked only the markup.
 */
 test("wrapping drops the gutter for the same reason markup does", () => {
   const { container, rerender } = render(<CodeView code={JSON_BODY} lineNumbers />);
@@ -168,9 +170,8 @@ test("wrapping drops the gutter for the same reason markup does", () => {
 });
 
 /*
-  Лишний табстоп на непрокручиваемом блоке — такой же дефект, как его отсутствие
-  на прокручиваемом: пользователь клавиатуры останавливается там, где делать
-  нечего.
+  An extra tab stop on a non-scrollable block is the same defect as its absence on a
+  scrollable one: a keyboard user stops where there is nothing to do.
 */
 test("a wrapped block is not a tab stop, because it does not scroll", () => {
   const { container } = render(<CodeView code={JSON_BODY} wrap />);

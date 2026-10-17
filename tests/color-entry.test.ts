@@ -6,14 +6,14 @@ import * as barrel from "../src/index.js";
 const ROOT = resolve(import.meta.dirname, "..");
 
 /**
- * Ворота отдельного входа `@olddevs/ui/color`.
+ * The gate of the separate `@olddevs/ui/color` entry point.
  *
- * ЗАЧЕМ. Цветовая подсистема react-aria стоит 61 кБ gzip, и ADR-0038 держит её
- * вне barrel именно поэтому. Но одна забытая строка `export` в `src/index.ts`
- * добавит эти килобайты каждому потребителю, и **не покраснеет ничего**:
- * `npm run size` объявляет react-aria внешним вместе с остальными
- * сторонними библиотеками кита, а страница фикстуры цвет не импортирует. Сам ADR называет
- * это отслеживаемым риском — здесь он отслеживается.
+ * WHY. The react-aria color subsystem costs 61 kB gzip, and ADR-0038 keeps it outside
+ * the barrel for exactly this reason. But one forgotten `export` line in `src/index.ts`
+ * would add those kilobytes to every consumer, and **nothing would turn red**:
+ * `npm run size` declares react-aria external together with the kit's other third-party
+ * libraries, and the fixture page does not import color. The ADR itself calls this a
+ * tracked risk; here it is tracked.
  */
 
 test("the barrel does not export the colour picker", () => {

@@ -1,15 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Прицел мегаменю настоящей мышью (OLDSUI-256).
+ * Mega menu aim with a real mouse (OLDSUI-256).
  *
- * jsdom геометрии не знает, и Прицел там проверяется на подменённых
- * прямоугольниках. Здесь — настоящая раскладка истории и настоящий указатель:
- * курсор идёт к Полке наискосок через соседнюю Категорию, затем — прямо вниз
- * по Столбцу.
+ * jsdom does not know geometry, so there menu aim is checked against stubbed
+ * rectangles. Here the layout is real, and so is the pointer: the cursor moves
+ * diagonally toward the flyout across the neighboring category, then straight
+ * down the category column.
  *
- * Шаги — по одному на кадр с паузой: `mouse.move` со `steps` шлёт события
- * подряд без пауз, и Прицел, прореженный до кадра, видел бы из них один шаг.
+ * Steps are taken one per frame with a pause in between: `mouse.move` with `steps`
+ * sends its events back to back without pauses, and menu aim, throttled to one
+ * event per frame, would see only one of them.
  */
 
 const STORY = "/iframe.html?id=navigation-megamenu--catalog&globals=theme:light;accent:blue";
@@ -46,8 +47,8 @@ test("cutting diagonally across a neighbor to the showcase keeps the showcase", 
   if (!showcase) throw new Error("the showcase has no box");
   const phones = await page.getByRole("button", { name: "Phones" }).boundingBox();
   if (!phones) throw new Error("no box for Phones");
-  // Цель — точка в Полке, путь к которой пересекает край Столбца на высоте
-  // строки «Phones»: курсор её заденет.
+  // Target: a point in the flyout, reached by a path that crosses the edge of the
+  // category column at the height of the "Phones" row, so the cursor grazes it.
   const target = { x: showcase.x + 120, y: phones.y + phones.height / 2 + 60 };
   await glide(page, start, target);
 
@@ -69,16 +70,18 @@ test("moving straight down the column switches categories without waiting", asyn
   const books = await center(page, "Books");
   await glide(page, start, books);
 
-  // Сразу, без ожидания остановки: путь вниз — не к Полке, Прицел не включался.
+  // Immediately, with no wait for the pointer to stop: the path down does not lead
+  // to the flyout, so menu aim never turned on.
   expect(await page.getByRole("button", { name: "Books" }).getAttribute("aria-expanded")).toBe(
     "true"
   );
 });
 
 /*
-  Выпадающий вид у правого края окна (OLDSUI-257): Полка переходит на другую
-  сторону Столбца и остаётся в окне. Сторона меряется при открытии Категории, а
-  не на монтировании: в этот момент Radix ещё не расставил оверлей.
+  Dropdown variant near the right edge of the window (OLDSUI-257): the flyout
+  switches to the other side of the category column and stays in the window.
+  The side is measured when a category opens, not on mount: at that moment Radix
+  has not yet positioned the overlay.
 */
 test("in the dropdown near the right edge the showcase flips and stays in the viewport", async ({
   page,
@@ -88,7 +91,7 @@ test("in the dropdown near the right edge the showcase flips and stays in the vi
     "/iframe.html?id=navigation-megamenu--dropdown-in-top-bar&globals=theme:light;accent:blue"
   );
   const button = page.getByRole("button", { name: "Catalog" });
-  // Кнопка — к правому краю окна, как в шапке с каталогом справа.
+  // The button sits at the right edge of the window, as in a top bar with the catalog on the right.
   await button.evaluate((node) => {
     Object.assign((node as HTMLElement).style, { position: "fixed", right: "8px", top: "8px" });
   });
@@ -104,10 +107,11 @@ test("in the dropdown near the right edge the showcase flips and stays in the vi
 });
 
 /*
-  Выпадающий вид на ширине телефона (OLDSUI-262). Обёртка Radix меряет оверлей
-  по содержимому, и без явной ширины каталог сжимался до самой длинной подписи,
-  менял ширину при спуске в Категорию, а подпись без пробелов выталкивала его
-  за край окна. Теперь оверлей — во всю ширину окна без отступов по краям.
+  Dropdown variant at phone width (OLDSUI-262). The Radix wrapper sizes the overlay
+  to its content, and without an explicit width the catalog shrank to the longest
+  label, changed width when drilling down into a category, and a label without
+  spaces pushed it past the edge of the window. Now the overlay spans the full
+  width of the window, with no margins at the edges.
 */
 test("on a phone the dropdown spans the viewport and keeps its width when drilling down", async ({
   page,
@@ -119,7 +123,7 @@ test("on a phone the dropdown spans the viewport and keeps its width when drilli
   await page.getByRole("button", { name: "Catalog" }).click();
   const nav = page.getByRole("navigation", { name: "Catalog" });
 
-  // Длинная подпись без пробелов: прежде она выталкивала оверлей за край.
+  // A long label with no spaces: it used to push the overlay past the edge.
   await page
     .getByRole("button", { name: "Health" })
     .locator("[data-mega-label]")

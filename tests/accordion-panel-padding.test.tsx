@@ -7,10 +7,10 @@ import { Accordion, AccordionItem } from "../src/components/navigation/Accordion
 afterEach(cleanup);
 
 /*
-  Свёрнутая панель остаётся в разметке с нулевой высотой содержимого, и её
-  `pb-3` всё равно занимал 12px, из-за чего свёрнутая секция была выше заголовка.
-  В jsdom нет раскладки — проверяем, что отступ есть только у раскрытой панели. Как это
-  выглядит, смотрят глазами: Navigation/Accordion → AccordionSingle.
+  A collapsed panel stays in the markup with zero content height, but its `pb-3`
+  still took 12px, so a collapsed section was taller than its header. jsdom has no
+  layout, so the test only checks that the padding is present on the expanded panel.
+  How it looks is checked by eye: Navigation/Accordion → AccordionSingle.
 */
 const panelOf = (container: HTMLElement) =>
   container.querySelector<HTMLElement>('[role="group"]') as HTMLElement;

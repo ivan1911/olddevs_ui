@@ -1,14 +1,15 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
- * Невидимые символы (OLDSUI-278) в браузере: то, чего jsdom не умеет, — знаки
- * из `::before` с нулевой шириной, которые не сдвигают текст, не выделяются и не
- * ловят мышь, и неизменность сохранённого HTML при показе.
+ * Invisible characters (OLDSUI-278) in a browser: what jsdom cannot do, namely the
+ * marks from zero-width `::before` pseudo-elements that do not shift the text, cannot
+ * be selected and do not catch the mouse, and the saved HTML staying unchanged while
+ * they are shown.
  */
 
 const STORY = (id: string) => `/iframe.html?id=${id}&globals=theme:dark;accent:blue`;
 
-/** Сколько знаков каждого вида нарисовано в Документе. */
+/** How many marks of each kind are drawn in the Document. */
 async function marks(field: Locator) {
   const count = (kind: string) => field.locator(`.tiptap-invisible-character--${kind}`).count();
   return {
@@ -18,7 +19,10 @@ async function marks(field: Locator) {
   };
 }
 
-/** Меню «…» фиксированной Панели: пункт «Невидимые символы» живёт в нём, кнопки нет. */
+/**
+ * The "…" menu of the fixed Toolbar: the "Invisible characters" item lives there,
+ * with no button.
+ */
 const openMore = async (page: Page) => {
   await page.getByRole("button", { name: "More formatting" }).click();
   return page.getByRole("menu", { name: "More formatting" });
@@ -26,13 +30,13 @@ const openMore = async (page: Page) => {
 const itemOf = (menu: Locator) =>
   menu.getByRole("menuitemcheckbox", { name: "Invisible characters" });
 
-/** Переключить показ пунктом «…»: меню закрывается выбором. */
+/** Toggle the display through the "…" item: choosing it closes the menu. */
 async function toggle(page: Page) {
   await itemOf(await openMore(page)).click();
   await expect(page.getByRole("menu", { name: "More formatting" })).toBeHidden();
 }
 
-/** Отмечен ли пункт: открыть «…», прочитать, закрыть Escape. */
+/** Whether the item is checked: open "…", read it, close with Escape. */
 async function checked(page: Page) {
   const menu = await openMore(page);
   const value = await itemOf(menu).getAttribute("aria-checked");
@@ -41,7 +45,7 @@ async function checked(page: Page) {
   return value;
 }
 
-/** Текст знака из `::before` и то, как он устроен: ширина, выделение, мышь. */
+/** The mark's text from `::before` and how it is built: width, selection, pointer. */
 function look(mark: Locator) {
   return mark.evaluate((element) => {
     const css = getComputedStyle(element);
@@ -67,13 +71,13 @@ test("the «…» menu item turns spaces, hard breaks and paragraph ends visible
   await toggle(page);
   expect(await checked(page)).toBe("true");
   const shown = await marks(field);
-  // Три абзаца (в том числе пустой) — три знака; у заголовка своего знака нет; один
-  // мягкий перенос; пробелов в тексте много.
+  // Three paragraphs (including the empty one) give three marks; the heading has no
+  // mark of its own; one soft break; there are many spaces in the text.
   expect(shown.paragraph).toBe(3);
   expect(shown.break).toBe(1);
   expect(shown.space).toBeGreaterThan(15);
 
-  // Знак — `·`, `↵`, `¶`: нулевая ширина, мышь и выделение его не видят.
+  // The marks are `·`, `↵` and `¶`: zero width, and the mouse and selection do not see them.
   expect(await look(field.locator(".tiptap-invisible-character--space").first())).toEqual({
     content: '"·"',
     beforeWidth: "0px",
@@ -96,7 +100,7 @@ test("the fixed toolbar of the full preset stays one row in a 640 px column", as
   const toolbar = page.getByRole("toolbar", { name: "Formatting" });
   await expect(page.getByRole("button", { name: "Invisible characters" })).toHaveCount(0);
 
-  // Одна строка кнопок — около 30 px; с лишней кнопкой Панель переносилась и вырастала до 62.
+  // One row of buttons is about 30 px; with an extra button the Toolbar wrapped and grew to 62.
   const height = await toolbar.evaluate((element) => element.getBoundingClientRect().height);
   expect(height).toBeLessThan(40);
 });
@@ -151,7 +155,7 @@ test("the paragraph mark of the empty field gives way to the placeholder", async
   await expect(field).toContainText("Type a second space");
 
   await field.click();
-  // Первое `Mod+A` выделяет Блок под кареткой, второе — весь Документ.
+  // The first `Mod+A` selects the Block under the caret, the second selects the whole Document.
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.press("Delete");
@@ -179,7 +183,8 @@ test("an external toggle drives the same state, and the saved HTML and onChange 
   await external.click();
   await expect(external).toHaveText("Hide invisible characters");
   await expect(external).toHaveAttribute("aria-pressed", "true");
-  // Пункт «…» в том же Редакторе отмечен вместе с внешней кнопкой: состояние одно.
+  // The "…" item in the same Editor is checked together with the external button:
+  // there is one state.
   expect(await checked(page)).toBe("true");
   await expect(field.locator(".tiptap-invisible-character--paragraph")).toHaveCount(3);
   await expect(saved).toHaveText(html!);
@@ -202,7 +207,7 @@ test("from the keyboard: «…» opens with Enter, the item is the last one, Spa
   const item = page.getByRole("menuitemcheckbox", { name: "Invisible characters" });
   await more.focus();
   await page.keyboard.press("Enter");
-  // `↑` из начала списка уходит в конец: последний пункт — «Невидимые символы».
+  // `↑` from the start of the list wraps to the end: the last item is "Invisible characters".
   await page.keyboard.press("ArrowUp");
   await expect(item).toBeFocused();
 

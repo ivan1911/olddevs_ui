@@ -1,14 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Сворачиваемый Блок (Details) в браузере (OLDSUI-277): то, чего jsdom не умеет, —
- * настоящая раскладка (содержимое спрятано `hidden` и не занимает места), родное
- * раскрытие `details` в Просмотре без JavaScript, стили кнопки и фокус с клавиатуры.
+ * Details Block in a browser (OLDSUI-277): what jsdom cannot do, namely the real
+ * layout (the content is hidden with `hidden` and takes no space), the native
+ * `details` disclosure in the View without JavaScript, the button styles and keyboard focus.
  */
 
 const STORY = (id: string) => `/iframe.html?id=${id}&globals=theme:dark;accent:blue`;
 
-/** Дать ProseMirror прочитать каретку после щелчка (как в спеке Обёртки). */
+/** Give ProseMirror time to read the caret after a click (as in the Wrapper spec). */
 async function settle(page: Page) {
   await page.evaluate(
     () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
@@ -17,7 +17,7 @@ async function settle(page: Page) {
 
 const BUILD = "How to build the package";
 
-// ── Редактор ─────────────────────────────────────────────────────────────
+// ── Editor ───────────────────────────────────────────────────────────────
 
 test("in the editor a block is closed at first: the content takes no room until the button opens it", async ({
   page,
@@ -86,7 +86,7 @@ test("the title is edited as text; Enter in an open block goes into the content"
   await settle(page);
   await page.keyboard.type(" quickly");
   await expect(block.locator("summary")).toHaveText(`${BUILD} quickly`);
-  // Имя кнопки следует за заголовком.
+  // The button's name follows the title.
   await expect(block.getByRole("button", { name: `Details: ${BUILD} quickly` })).toBeVisible();
 
   await page.keyboard.press("Enter");
@@ -126,7 +126,7 @@ test("from the keyboard: Tab reaches the button, Enter and Space open and close,
   await page.keyboard.press("Enter");
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(content).toBeVisible();
-  // Enter не разрезал строку и не оставил фокус в Документе: кнопка всё ещё под рукой.
+  // Enter did not split the line or leave focus in the Document: the button is still at hand.
   await expect(toggle).toBeFocused();
   await expect(field.locator("summary").first()).toHaveText(BUILD);
 
@@ -199,7 +199,7 @@ test("an inserted block is open with the caret in the empty title", async ({ pag
   await expect(block.locator("summary")).toHaveText("Title");
 });
 
-// ── Просмотр ─────────────────────────────────────────────────────────────
+// ── View ─────────────────────────────────────────────────────────────────
 
 test("RichTextView opens and closes a block natively, from the mouse and the keyboard", async ({
   page,
@@ -209,7 +209,7 @@ test("RichTextView opens and closes a block natively, from the mouse and the key
   const summary = first.locator(":scope > summary");
   const content = first.locator(':scope > div[data-type="detailsContent"]');
 
-  // Без движка: ни кнопки, ни `role` — родной элемент браузера.
+  // No engine here: no button and no `role`, just the browser's native element.
   await expect(first.getByRole("button")).toHaveCount(0);
   await expect(first).not.toHaveAttribute("open", /.*/);
   await expect(content).toBeHidden();
@@ -239,7 +239,7 @@ test("RichTextView shows a block saved with open already open, and a nested one 
   await expect(nested.getByText("Revert the tag")).toBeHidden();
 });
 
-/** Рамка и заголовок Блока — то, что должно совпасть в Редакторе и в Просмотре. */
+/** The frame and title of a Block: what must match in the Editor and the View. */
 const look = (element: Element) => {
   const css = getComputedStyle(element);
   const summary = getComputedStyle(element.querySelector("summary")!);
@@ -269,7 +269,8 @@ test("a block looks the same in the editor and in the view: frame and title", as
 test("the blocks inside the content keep the spacing of the document", async ({ page }) => {
   await page.goto(STORY("content-richtextview--details"));
   const checklist = page.locator("details").nth(1);
-  // Список над вложенным Блоком — не последний ребёнок содержимого: отступ как между Блоками.
+  // The list above the nested Block is not the last child of the content: the gap is
+  // the same as between Blocks.
   const gap = await checklist
     .locator(':scope > div[data-type="detailsContent"] > ul')
     .evaluate((element) => getComputedStyle(element).marginBottom);

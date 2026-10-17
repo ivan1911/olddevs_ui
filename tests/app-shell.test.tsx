@@ -40,14 +40,14 @@ describe("AppShell: layout and landmarks", () => {
     await user.tab();
     const skip = screen.getByRole("link", { name: "Skip to content" });
     expect(document.activeElement).toBe(skip);
-    // Цель ссылки — именно `<main>`, а не соседний узел.
+    // The link target is `<main>` itself, not a neighboring node.
     expect(skip.getAttribute("href")).toBe(`#${screen.getByRole("main").id}`);
   });
 
   /**
-   * `focus:absolute` у skip-ссылки отсчитывается от ближайшего
-   * позиционированного предка: без `relative` на корне вложенный каркас
-   * всплывал бы ссылкой не над собой, а где-то на странице.
+   * The skip link's `focus:absolute` is positioned against the nearest positioned
+   * ancestor: without `relative` on the root, a nested shell would show the link
+   * somewhere on the page instead of above itself.
    */
   test("the root is positioned — the link floats above its own frame", () => {
     const { container } = render(<AppShell>Page</AppShell>);
@@ -67,9 +67,9 @@ describe("AppShell: layout and landmarks", () => {
 });
 
 /**
- * Слот нижней панели заведён без компонента (ADR-0018): каркас обязан знать,
- * что внизу может стоять полоса, съедающая высоту и safe-area. Проверяется,
- * что отсутствующая полоса ничего не занимает, а заданная получает отступ.
+ * The bottom bar slot is wired without a component (ADR-0018): the shell has to know
+ * that a bar taking height and safe-area can sit at the bottom. The test checks that
+ * a missing bar takes no space, and a provided one gets its offset.
  */
 describe("AppShell: bottom bar slot", () => {
   const SAFE_AREA = ".pb-\\[env\\(safe-area-inset-bottom\\,0px\\)\\]";
@@ -99,7 +99,7 @@ describe("AppShell: focus returns on route change", () => {
 
   test("focus is not taken on the first render", () => {
     render(<Routed />);
-    // Иначе каркас крал бы фокус у пользователя, который уже начал работать.
+    // Otherwise the shell would steal focus from a user who has already started working.
     expect(document.activeElement).toBe(document.body);
   });
 
@@ -112,11 +112,11 @@ describe("AppShell: focus returns on route change", () => {
   });
 
   /*
-    StrictMode в dev монтирует компонент, снимает и монтирует снова, и эффекты
-    отрабатывают дважды. Пропуск первого прохода по флагу в рефе это не
-    переживал: ко второму запуску флаг уже был сброшен, и фокус уходил в
-    `<main>` на первой загрузке, а браузер прокручивал страницу к нему под
-    шапку (OLDSUI-201).
+    In dev, StrictMode mounts the component, unmounts it, and mounts it again, so
+    effects run twice. Skipping the first pass with a flag in a ref did not survive
+    that: by the second run the flag was already reset, and focus moved to `<main>`
+    on the first load, while the browser scrolled the page to it under the header
+    (OLDSUI-201).
   */
   test("under StrictMode focus is not taken on the first render either", () => {
     render(
@@ -140,8 +140,8 @@ describe("AppShell: focus returns on route change", () => {
   });
 
   test("focus moves into <main> without scrolling to it", async () => {
-    // Прокрутку при переходе задаёт роутер; фокусу своя не нужна, иначе
-    // `<main>` уезжает под липкую шапку. Под StrictMode — там дефект и жил.
+    // The router sets the scroll on navigation; focus must not do it too, or `<main>`
+    // ends up under the sticky header. The bug lived under StrictMode.
     const focus = vi.spyOn(HTMLElement.prototype, "focus");
     const user = userEvent.setup();
     render(
@@ -189,7 +189,8 @@ describe("AppShell and TopBar: the navigation button", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Open navigation" }));
-    // Ящик с навигацией внутри — именно он, а не колонка: у неё своё имя.
+    // The drawer with the navigation inside is the one meant here, not the column,
+    // which has its own name.
     expect(screen.getByRole("dialog", { name: "Main navigation" })).toBeTruthy();
   });
 
@@ -200,8 +201,8 @@ describe("AppShell and TopBar: the navigation button", () => {
 });
 
 /**
- * Навигация в ящике: иконочный режим там бессмыслен — он существует ради того,
- * чтобы отдать ширину содержимому страницы, а рядом с оверлеем содержимого нет.
+ * Navigation in a drawer: the icon-only mode makes no sense there. It exists to give
+ * the width back to the page content, and next to an overlay there is no page content.
  */
 describe("SideNav inside the drawer", () => {
   const nav = (props: { collapsed?: boolean; defaultCollapsed?: boolean } = {}) => (
@@ -232,15 +233,15 @@ describe("SideNav inside the drawer", () => {
   });
 
   /**
-   * Главная половина правки. Убрать кнопку и оставить `collapsed` в силе было
-   * бы ХУЖЕ исходного дефекта: потребитель, держащий схлопнутость снаружи,
-   * получил бы в ящике иконки без единого способа их развернуть.
+   * The main half of the fix. Removing the button and keeping `collapsed` in force
+   * would be WORSE than the original defect: a consumer that holds the collapsed state
+   * from the outside would get icons in the drawer with no way to expand them.
    */
   test("outer collapsing has no effect inside the drawer — labels stay visible", async () => {
     await openDrawer(nav({ collapsed: true }));
     const drawer = screen.getByRole("dialog", { name: "Main navigation" });
     expect(within(drawer).getByText("Dashboard").className).not.toContain("sr-only");
-    // Заголовок раздела тоже возвращается: в схлопнутом виде он был чертой.
+    // The section heading comes back too: when collapsed, it was just a line.
     expect(within(drawer).getByText("Work")).toBeTruthy();
   });
 
@@ -250,8 +251,8 @@ describe("SideNav inside the drawer", () => {
     expect(within(drawer).getByText("Dashboard").className).not.toContain("sr-only");
   });
 
-  // Слоты потребителя видят тот же развёрнутый режим, что и пункты: иначе в
-  // ящике подвал рисовал бы один аватар рядом с подписанными пунктами.
+  // Consumer slots see the same expanded mode as the items: otherwise the footer
+  // in the drawer would render a lone avatar next to labeled items.
   test("slot content inside the drawer reads the expanded state", async () => {
     const Mode = () => <span>{useNavCollapsed() ? "icons" : "full"}</span>;
     await openDrawer(
@@ -273,17 +274,17 @@ describe("SideNav inside the drawer", () => {
         </AppShell>
       </TooltipProvider>
     );
-    // Ящик закрыт, в разметке только колонка — и она схлопнута, как просили.
+    // The drawer is closed, so only the column is in the markup, and it is collapsed, as requested.
     expect(screen.getByText("Dashboard").className).toContain("sr-only");
     expect(screen.getByRole("button", { name: "Expand navigation" })).toBeTruthy();
   });
 });
 
 /**
- * Регрессия: `openNavigation` умел читать только китовый `TopBar`, и своя
- * шапка получала навигацию, которую ниже `md` нечем открыть — колонка скрыта,
- * ящик открывать некому, предупреждения нет. Дефект молчаливый: на широком
- * экране всё работает, а раздел интерфейса недостижим только на узком.
+ * Regression: `openNavigation` could only read the kit's `TopBar`, so a custom header
+ * got navigation that cannot be opened below `md`: the column is hidden, nothing opens
+ * the drawer, and there is no warning. The defect is silent: on a wide screen everything
+ * works, and the section is unreachable only on a narrow one.
  */
 describe("useAppShell: a custom header instead of the kit one", () => {
   function OwnHeader() {
@@ -321,9 +322,9 @@ describe("useAppShell: a custom header instead of the kit one", () => {
 });
 
 test("without the banners slot the markup does not change by a single node", () => {
-  // Слот добавлен к СТАБИЛЬНОМУ каркасу волны 17, и цена такого изменения —
-  // обещание, что без слота он остаётся прежним. Сравнивается разметка целиком:
-  // иначе обещание держится на том, что мы догадались проверить нужный узел.
+  // The slot is added to the STABLE shell of wave 17, and the price of such a change
+  // is a promise that without the slot the shell stays as it was. The whole markup is
+  // compared: otherwise the promise would rest on our guess about which node to check.
   const shell = (props: { banners?: React.ReactNode }) => (
     <AppShell header={<div>Header</div>} {...props}>
       Content
@@ -335,7 +336,7 @@ test("without the banners slot the markup does not change by a single node", () 
 
   rerender(shell({ banners: undefined }));
   expect(container.innerHTML).toBe(without);
-  // Пустого `div` под баннеры в разметке нет — узла нет вовсе.
+  // There is no empty `div` for banners in the markup: the node is not there at all.
   expect(without).not.toContain("banner");
 });
 
@@ -349,8 +350,8 @@ test("banners sit above the header, not below it", () => {
     </AppShell>
   );
 
-  // Порядок в разметке — это порядок на экране: баннер под шапкой означал бы
-  // сообщение о состоянии приложения ниже навигации по нему.
+  // Markup order is screen order: a banner under the header would put an app-state
+  // message below the navigation it refers to.
   const column = screen.getByTestId("bn").parentElement!;
   const nodes = Array.from(column.children).map((n) => n.textContent);
   expect(nodes[0]).toBe("Maintenance in progress");
@@ -364,9 +365,9 @@ test("the header under banners stays sticky at zero", () => {
     </AppShell>
   );
 
-  // Контракт `--topbar-h` не трогается: липкая стопка баннеров потребовала бы
-  // второй переменной смещения, и всё, что считает от `--topbar-h`, обязано
-  // было бы прибавлять её высоту (ADR-0027).
+  // The `--topbar-h` contract is left as is: a sticky stack of banners would need a
+  // second offset variable, and everything computed from `--topbar-h` would have to
+  // add its height (ADR-0027).
   expect(screen.getByRole("banner").className).toContain("sticky");
   expect(screen.getByRole("banner").className).toContain("top-0");
 });

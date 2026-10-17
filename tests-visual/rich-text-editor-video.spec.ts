@@ -3,17 +3,18 @@ import { messages as ru } from "../src/locales/ru.js";
 import { stubVideoServices } from "./video-services.js";
 
 /**
- * Видео по ссылке в браузере (OLDSUI-281, OLDSUI-287, ADR-0071): то, чего jsdom не
- * видит, — настоящая раскладка рамки (16:9) и настоящий `iframe`. Запросы к YouTube
- * и Twitch перехватываются (`stubVideoServices`): сеть не ходит, тест сверяет адрес,
- * который кит загрузил бы. По умолчанию плеер встаёт сразу; с `autoload: false`
- * (истории `VideoClickToPlay`) до щелчка — заглушка и ноль запросов.
+ * Video by link in a browser (OLDSUI-281, OLDSUI-287, ADR-0071): what jsdom cannot
+ * see, namely the real layout of the frame (16:9) and a real `iframe`. Requests to
+ * YouTube and Twitch are intercepted (`stubVideoServices`): the network is not hit, and
+ * the test checks the address the kit would have loaded. By default the player appears
+ * at once; with `autoload: false` (the `VideoClickToPlay` stories) there is a placeholder
+ * and zero requests until a click.
  */
 
 const EDITOR = (id: string) => `/iframe.html?id=${id}&globals=theme:dark;accent:blue`;
 const captureServices = stubVideoServices;
 
-/** Дать ProseMirror прочитать каретку после щелчка. */
+/** Give ProseMirror time to read the caret after a click. */
 async function settle(page: Page) {
   await page.evaluate(
     () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
@@ -24,7 +25,7 @@ const YOUTUBE_PLAYER = "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ";
 const YOUTUBE_PLAYER_CLICKED = `${YOUTUBE_PLAYER}?autoplay=1`;
 const TWITCH_PLAYER = "https://player.twitch.tv/?channel=aws&parent=127.0.0.1&autoplay=false";
 
-// ── Редактор: плеер сразу ──────────────────────────────────────────────────
+// ── Editor: player at once ─────────────────────────────────────────────────
 
 test("the editor shows the players at once, in the 16:9 frame, with no placeholder", async ({
   page,
@@ -43,7 +44,7 @@ test("the editor shows the players at once, in the 16:9 frame, with no placehold
   }
   await expect(field.getByRole("button", { name: /^Play/ })).toHaveCount(0);
 
-  // 16:9 по раскладке, а не по разметке; iframe заполняет рамку.
+  // 16:9 comes from the layout, not from the markup; the iframe fills the frame.
   const player = field.locator("[data-video-player]").first();
   const box = (await player.boundingBox())!;
   expect(box.width / box.height).toBeCloseTo(16 / 9, 1);
@@ -51,8 +52,8 @@ test("the editor shows the players at once, in the 16:9 frame, with no placehold
   expect(Math.abs(inner.width - box.width)).toBeLessThan(3);
   expect(Math.abs(inner.height - box.height)).toBeLessThan(3);
 
-  // Сеть: `loading="lazy"` грузит плеер, когда рамка у экрана. Первый уже у экрана,
-  // второй после прокрутки.
+  // Network: `loading="lazy"` loads a player when its frame nears the screen. The first is
+  // already on screen; the second loads after scrolling.
   await expect.poll(() => requested).toContain(YOUTUBE_PLAYER);
   await twitch.scrollIntoViewIfNeeded();
   await expect.poll(() => requested).toContain(TWITCH_PLAYER);
@@ -65,10 +66,12 @@ test("the insert menu takes a link of either service and the new block gets its 
   await page.goto(EDITOR("inputs-richtexteditor--video"));
   const field = page.getByRole("textbox", { name: "Document" });
 
-  // Виды узлов монтируются следом за полем: щелчок до них попал бы в сдвигающуюся раскладку.
+  // Node views mount right after the field: a click before that would land in a layout
+  // that is still shifting.
   await expect(field.locator("iframe")).toHaveCount(2);
-  // Фокус до щелчка: ProseMirror через 20 мс после фокуса возвращает в DOM своё выделение,
-  // и щелчок, совпавший с этим окном, терялся (каретка оставалась в начале Документа).
+  // Focus before the click: ProseMirror puts its own selection back into the DOM 20 ms
+  // after focus, and a click that fell within that window was lost (the caret stayed at
+  // the start of the Document).
   await field.focus();
   await page.waitForTimeout(100);
   await field.getByText("Add another", { exact: false }).click();
@@ -111,7 +114,7 @@ test("a disabled service: the block of the other one is only its link", async ({
   await expect(field.getByRole("link", { name: "https://www.twitch.tv/aws" })).toBeVisible();
 });
 
-// ── Редактор: iframe не мешает правке ───────────────────────────────────────
+// ── Editor: iframe does not get in the way of editing ───────────────────────
 
 test("keyboard: arrows select the block around the player, Delete removes it, Tab leaves the player", async ({
   page,
@@ -121,7 +124,8 @@ test("keyboard: arrows select the block around the player, Delete removes it, Ta
   const field = page.getByRole("textbox", { name: "Document" });
   await expect(field.locator("iframe")).toHaveCount(2);
 
-  // Каретка в конце абзаца перед первым блоком; ↓ выделяет блок целиком (Атом).
+  // The caret is at the end of the paragraph before the first block; ↓ selects the whole
+  // block (an Atom).
   await field.focus();
   await page.waitForTimeout(100);
   await field.getByText("Two blocks follow", { exact: false }).click();
@@ -138,11 +142,12 @@ test("keyboard: arrows select the block around the player, Delete removes it, Ta
     )
     .toBe(true);
   await expect(selected.first()).toBeVisible();
-  // Ручка Блока следует за выделением, и поле хранит фокус.
+  // The Block handle follows the selection, and the field keeps focus.
   await expect(page.getByRole("button", { name: "Block actions" })).toBeVisible();
   await expect(field).toBeFocused();
 
-  // ↑ возвращает каретку в абзац над блоком, ↓↓ — в абзац под вторым блоком.
+  // ↑ returns the caret to the paragraph above the block; ↓↓ moves it to the paragraph
+  // below the second block.
   await page.keyboard.press("ArrowUp");
   await settle(page);
   await expect
@@ -154,7 +159,7 @@ test("keyboard: arrows select the block around the player, Delete removes it, Ta
     )
     .toBe("none");
 
-  // Delete на выделенном блоке убирает блок вместе с плеером.
+  // Delete on the selected block removes the block together with its player.
   await page.keyboard.press("ArrowDown");
   await settle(page);
   await page.keyboard.press("Delete");
@@ -173,12 +178,13 @@ test("a click inside the player goes to the player and keyboard focus can leave 
   await expect(frame).toBeVisible();
 
   await frame.click();
-  // Фокус в iframe: активный элемент страницы — сам iframe, поле его отдало.
+  // Focus is in the iframe: the page's active element is the iframe itself, which the
+  // field handed over.
   await expect.poll(() => page.evaluate(() => document.activeElement?.localName)).toBe("iframe");
   await expect(field).not.toBeFocused();
 
-  // Tab выводит из iframe вперёд — в следующий плеер, как из любого iframe, а Shift+Tab —
-  // назад и дальше, из первого плеера, в само поле: фокус нигде не застревает.
+  // Tab moves focus out of the iframe forward, to the next player, as from any iframe; Shift+Tab
+  // goes back and on, from the first player, into the field itself: focus never gets stuck.
   const active = () =>
     page.evaluate(() => {
       const element = document.activeElement;
@@ -195,7 +201,7 @@ test("a click inside the player goes to the player and keyboard focus can leave 
   await expect(field).toBeFocused();
 });
 
-// ── Редактор: autoload: false — заглушка до щелчка ──────────────────────────
+// ── Editor: autoload: false — placeholder until a click ─────────────────────
 
 test("autoload: false shows a placeholder with the service name and Play; nothing is requested before a click", async ({
   page,
@@ -212,11 +218,11 @@ test("autoload: false shows a placeholder with the service name and Play; nothin
   await expect(field.locator("[data-video-player]").first()).toContainText("YouTube");
   await expect(field.locator("iframe")).toHaveCount(0);
 
-  // 16:9 по раскладке, а не по разметке.
+  // 16:9 comes from the layout, not from the markup.
   const box = (await field.locator("[data-video-player]").first().boundingBox())!;
   expect(box.width / box.height).toBeCloseTo(16 / 9, 1);
 
-  // Подождать запросов, которые могли бы уйти позже загрузки.
+  // Wait for any requests that might have gone out after loading.
   await page.waitForTimeout(500);
   expect(requested).toEqual([]);
 });
@@ -236,9 +242,9 @@ test("autoload: false, a click loads the nocookie YouTube player with a title, l
   await expect(frame).toHaveAttribute("loading", "lazy");
   await expect(frame).toHaveAttribute("referrerpolicy", "strict-origin-when-cross-origin");
   await expect(frame).toBeFocused();
-  // Сеть: запрос ушёл ровно на адрес плеера, и только после щелчка.
+  // Network: the request went exactly to the player's address, and only after the click.
   await expect.poll(() => requested).toContain(YOUTUBE_PLAYER_CLICKED);
-  // Второй блок не тронут.
+  // The second block is untouched.
   await expect(field.getByRole("button", { name: "Play Twitch video" })).toBeVisible();
 });
 
@@ -266,11 +272,13 @@ test("autoload: false, a bare link pasted into an empty paragraph becomes a plac
   await page.goto(EDITOR("inputs-richtexteditor--video-click-to-play"));
   const field = page.getByRole("textbox", { name: "Document" });
 
-  // Пустой абзац в конце: Enter за последним абзацем.
-  // Виды узлов монтируются следом за полем: щелчок до них попал бы в сдвигающуюся раскладку.
+  // An empty paragraph at the end: Enter after the last paragraph.
+  // Node views mount right after the field: a click before that would land in a layout
+  // that is still shifting.
   await expect(field.getByRole("button", { name: "Play Twitch video" })).toBeVisible();
-  // Фокус до щелчка: ProseMirror через 20 мс после фокуса возвращает в DOM своё выделение,
-  // и щелчок, совпавший с этим окном, терялся (каретка оставалась в начале Документа).
+  // Focus before the click: ProseMirror puts its own selection back into the DOM 20 ms
+  // after focus, and a click that fell within that window was lost (the caret stayed at
+  // the start of the Document).
   await field.focus();
   await page.waitForTimeout(100);
   await field.getByText("Add another", { exact: false }).click();
@@ -294,7 +302,7 @@ test("autoload: false, a bare link pasted into an empty paragraph becomes a plac
   ).toHaveCount(1);
 });
 
-// ── Просмотр ─────────────────────────────────────────────────────────────
+// ── View ─────────────────────────────────────────────────────────────────
 
 test("the view puts the players in place of the links at once", async ({ page }) => {
   const requested = await captureServices(page);
@@ -332,11 +340,11 @@ test("the view with autoload: false shows the placeholder and loads the player o
   );
 });
 
-// ── Высота: блок не прыгает с приходом чанка и острова ──────────────────────
+// ── Height: the block does not jump when the chunk and the island arrive ───
 
 /**
- * Придержать запрос модуля, пока тест не отпустит: до этого на странице виден
- * серверный блок (Скелет Редактора, HTML `RichTextView`), после — плеер.
+ * Hold the module request until the test releases it: until then the page shows the
+ * server-rendered block (the Editor Skeleton, the `RichTextView` HTML), and afterwards the player.
  */
 async function holdModule(page: Page, pattern: string) {
   let release!: () => void;
@@ -348,7 +356,7 @@ async function holdModule(page: Page, pattern: string) {
   return release;
 }
 
-/** Высоты и ширины блоков `selector` — по раскладке, как их видит человек. */
+/** The heights and widths of the `selector` blocks, from the layout as a person sees them. */
 async function boxes(page: Page, selector: string) {
   return page.locator(selector).evaluateAll((nodes) =>
     nodes.map((node) => {
@@ -379,7 +387,8 @@ for (const mode of [
     const release = await holdModule(page, "**/VideoIslandSlots*");
     await page.goto(EDITOR(`content-richtextview--${mode.view}`));
 
-    // Остров ещё не пришёл: на странице серверный блок со ссылкой — рамка 16:9.
+    // The island has not arrived yet: the page has the server-rendered block with its
+    // link, in a 16:9 frame.
     const blocks = page.locator('div[data-block="video"]');
     await expect(blocks).toHaveCount(2);
     await expect(page.locator("iframe")).toHaveCount(0);
@@ -393,7 +402,7 @@ for (const mode of [
     const after = await boxes(page, 'div[data-block="video"]');
     expect(after).toEqual(before);
 
-    // Плеер после щелчка занимает ту же рамку.
+    // After the click the player takes up the same frame.
     if (mode.ready === "button") {
       await page.getByRole("button", { name: "Play YouTube video" }).click();
       await expect(page.locator("iframe")).toHaveCount(1);
@@ -408,7 +417,7 @@ for (const mode of [
     const release = await holdModule(page, "**/videoChunk*");
     await page.goto(EDITOR(`inputs-richtexteditor--${mode.editor}`));
 
-    // Чанка нет: Скелет, блок видео — рамка 16:9 со ссылкой внутри.
+    // No chunk yet: the Skeleton shows, and the video block is a 16:9 frame with a link inside.
     const skeleton = page.locator('div[data-block="video"]');
     await expect(skeleton).toHaveCount(2);
     await expect(page.getByRole("textbox", { name: "Document" })).toHaveCount(0);

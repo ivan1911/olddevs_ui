@@ -8,12 +8,12 @@ import { highlightCodeNodes } from "../src/editor/highlight-entry.js";
 afterEach(cleanup);
 
 /**
- * Подсветка кита в `CodeView` (OLDSUI-58, ADR-0052): хелпер входа
- * `@olddevs/ui/editor/highlight` отдаёт токены узлами, потребитель кладёт их в
- * `children`, а `code` по-прежнему передаёт строкой.
+ * The kit's highlighting in `CodeView` (OLDSUI-58, ADR-0052): the entry helper
+ * `@olddevs/ui/editor/highlight` returns tokens as nodes, the consumer puts them into
+ * `children`, while `code` still passes a string.
  *
- * Сверяется то, что видит читатель: текст области кода тот же, что `code`,
- * и он размечен токенами `hljs-…` — теми же, что в блоке кода Документа.
+ * What the reader sees is checked: the text of the code area is the same as `code`,
+ * and it is marked up with `hljs-…` tokens, the same ones as in the Document's code block.
  */
 
 const SAMPLES = {
@@ -47,9 +47,10 @@ test.each(Object.entries(SAMPLES))(
 );
 
 /*
-  Корень токенов несёт маркер `data-code-highlight`: по нему `CodeView`
-  включает фон темы подсветки, а тема красит только то, что под ним. Внутри
-  корня — только `span` с классами `hljs-…`: ни `style`, ни других атрибутов.
+  The token root carries the `data-code-highlight` marker: `CodeView` uses it to turn on
+  the background of the highlight theme, and the theme paints only what is under it.
+  Inside the root there are only `span`s with `hljs-…` classes: no `style` and no other
+  attributes.
 */
 test("tokens sit under one marked root and carry nothing but hljs classes", () => {
   const pre = renderHighlighted(SAMPLES.python, "python");
@@ -67,9 +68,8 @@ test("tokens sit under one marked root and carry nothing but hljs classes", () =
 });
 
 /*
-  Код из ответа API или тела вебхука — недоверенный. Узлы, а не строка HTML:
-  разметка внутри кода остаётся текстом, и ни одного элемента из неё не
-  появляется.
+  Code from an API response or a webhook body is untrusted. Nodes, not an HTML string:
+  markup inside the code stays text, and not a single element from it appears.
 */
 test("markup inside the code stays text", () => {
   const code = '<script>alert("x")</script> & <b>bold</b>';
@@ -80,8 +80,8 @@ test("markup inside the code stays text", () => {
 });
 
 /*
-  Язык — по правилам Редактора: псевдоним и регистр приводятся к имени
-  Документа, и `py` красится так же, как `python`.
+  The language follows the Editor's rules: the alias and the case are normalized to the
+  Document's name, and `py` is highlighted the same way as `python`.
 */
 test("an alias or odd case is highlighted as the canonical language", () => {
   const canonical = renderHighlighted("def f(): pass", "python").innerHTML;
@@ -94,9 +94,9 @@ test("an alias or odd case is highlighted as the canonical language", () => {
 });
 
 /*
-  Неизвестный язык и пустой код дают пустой результат, а не код строкой:
-  тогда `children` пуст, и `CodeView` рисует код как есть — с нумерацией
-  строк, которой при переданной разметке нет.
+  An unknown language and empty code give an empty result, not the code as a string:
+  then `children` is empty, and `CodeView` renders the code as is, with the line numbering
+  that does not exist when markup is passed.
 */
 test("an unknown language or empty code leaves CodeView plain, with line numbers", () => {
   expect(highlightCodeNodes("fn main() {}", "rust")).toBeNull();
@@ -107,10 +107,10 @@ test("an unknown language or empty code leaves CodeView plain, with line numbers
   expect(document.querySelector("[aria-hidden]")?.textContent).toBe("12");
 });
 
-/* Копирование берёт `code`, а не DOM: токены в буфер не попадают. */
+/* Copying takes `code`, not the DOM: the tokens do not end up in the clipboard. */
 test("copying highlighted code takes the plain source", async () => {
   const writeText = vi.fn().mockResolvedValue(undefined);
-  // Заглушка — после `userEvent.setup()`, тот же порядок, что в `code-view.test.tsx`.
+  // The stub goes in after `userEvent.setup()`, the same order as in `code-view.test.tsx`.
   const user = userEvent.setup();
   Object.defineProperty(navigator, "clipboard", {
     configurable: true,
