@@ -8,34 +8,33 @@ import type { ConfiguredTool } from "./toolOptions.js";
 import type { Tool as ToolName } from "./tools.js";
 
 /*
-  Свой Инструмент — публичная форма (ADR-0058, разделы 1 и 2).
+  Custom Tool: the public form (ADR-0058, sections 1 and 2).
 
-  Модуль серверно-безопасен, как `schema.ts`: типы и одна функция над данными.
-  Tiptap здесь — только тип (`Extensions`), он стирается при сборке, поэтому
-  описание своего Инструмента импортируется и там, где движка нет: очистка на
-  сервере читает те же правила Схемы. Всё, что трогает движок, —
-  в `customToolEngine.ts`.
+  The module is safe to load on the server, like `schema.ts`: types and one function over data.
+  Tiptap appears here only as a type (`Extensions`), which is erased at build time, so the
+  description of a custom Tool is imported where the engine is absent too: server-side
+  sanitization reads the same Schema rules. Everything that touches the engine is in
+  `customToolEngine.ts`.
 */
 
 export type { ToolName };
 
 /**
- * Имя с Префиксом потребителя: префикс, подчёркивание, остаток — `acme_mergeTag`.
- * В именах кита подчёркивания не бывает, поэтому своё и встроенное не
- * пересекаются. Подчёркивание, а не дефис: в выражениях content ProseMirror
- * имя узла должно быть словом.
+ * A name with the consumer prefix: the prefix, an underscore, the rest, for example `acme_mergeTag`.
+ * Kit names have no underscores, so custom and built-in names never overlap. An underscore
+ * rather than a hyphen: in ProseMirror content expressions a node name must be a word.
  */
 export type PrefixedName = `${string}_${string}`;
 
 /**
- * Вид значения своего атрибута. Проверяет код кита — и в Редакторе, и на
- * сервере; функций-проверок у потребителя нет.
+ * The kind of value a custom attribute accepts. The kit's code checks it, both in the Editor and
+ * on the server; the consumer writes no check functions.
  *
- * - `list` — одно из значений `values`;
- * - `pattern` — регулярное выражение строкой на ВСЁ значение (кит сам ставит
- *   `^…$`), как `customColor` в Схеме кита;
- * - `url` — адрес по политике протоколов кита: абсолютный `http`, `https` или
- *   `mailto`, как у ссылки.
+ * - `list` — one of the `values`;
+ * - `pattern` — a regular expression as a string for the WHOLE value (the kit adds `^…$`
+ *   itself), like `customColor` in the kit's Schema;
+ * - `url` — an address under the kit's protocol policy: an absolute `http`, `https` or
+ *   `mailto` URL, the same as for a link.
  */
 export type CustomAttribute =
   | { kind: "list"; values: readonly string[] }
@@ -43,209 +42,215 @@ export type CustomAttribute =
   | { kind: "url" };
 
 /**
- * Правила Схемы своего Блока и его Признаки.
+ * Schema rules of a custom Block, and its traits.
  *
- * HTML Блока пишет кит по соглашению: блочный — `div[data-block="<имя>"]`,
- * строчный — `span[data-block="<имя>"]`, атрибут `acme_size` — `data-acme_size`.
+ * The kit writes the Block's HTML by convention: a block-level one is `div[data-block="<name>"]`,
+ * an inline one is `span[data-block="<name>"]`, and the attribute `acme_size` is `data-acme_size`.
  */
 export interface CustomBlock {
-  /** Блочный (`div`, группа `block`) или строчный (`span`, группа `inline`). */
+  /** Block-level (`div`, group `block`) or inline (`span`, group `inline`). */
   kind: "block" | "inline";
   /**
-   * Где стоит блочный Блок: `anywhere` (по умолчанию) — везде, где Блок
-   * Документа; `top` — только верхний уровень Документа, как Раскладка.
+   * Where a block-level Block can sit: `anywhere` (default) — wherever a Block of the Document
+   * can go; `top` — only at the top level of the Document, like a Column layout.
    */
   place?: "anywhere" | "top";
-  /** Свои атрибуты: имя с Префиксом потребителя — вид значения. */
+  /** Custom attributes: a name with the consumer prefix, mapped to the kind of value. */
   attributes?: Readonly<Record<PrefixedName, CustomAttribute>>;
-  /** Признак «контейнер»: Блоки внутри — со своей Ручкой Блока, как у Обёртки. */
+  /** The "container" trait: Blocks inside get their own Block handle, as in a Wrapper. */
   container?: boolean;
-  /** Признак «можно превратить в»: «Формат ›» Ручки Блока доступен и для него. */
+  /**
+   * The "can be turned into" trait: the Format › item of the Block handle is available for it too.
+   */
   turnInto?: boolean;
-  /** Признак «атом без меню форматирования»: над выделенным Блоком нет Меню выделения. */
+  /**
+   * The "plain Atom" trait: the Bubble menu is not shown above a selected Block of this kind.
+   */
   plainAtom?: boolean;
   /**
-   * Остров Блока в `RichTextView` — клиентский компонент из модуля с
-   * директивой `"use client"` (ADR-0058, п. 3.3). Без него Блок в Просмотре —
-   * очищенный HTML. Редактор поле не читает: его вид задают Extensions.
+   * The Block's Island in `RichTextView`: a client component from a module with the
+   * `"use client"` directive (ADR-0058, item 3.3). Without it, the Block in the View is sanitized
+   * HTML. The Editor does not read this field: its look comes from the Extensions.
    *
-   * Только компонент из модуля с директивой: серверный компонент и функция-
-   * загрузчик через границу RSC не проходят — сервер получает ссылку на
-   * клиентский компонент, а код его загружается, лишь когда Блок есть в
-   * Документе. Очистка и Схема поле не читают.
+   * Only a component from a module with the directive is allowed. A server component and a
+   * Loader function do not cross the RSC boundary: the server gets a reference to the client
+   * component, and its code loads only when the Block is in the Document. Sanitization and the
+   * Schema do not read this field.
    */
   island?: ComponentType<CustomIslandProps>;
 }
 
 /**
- * Что получает Остров своего Блока: имя Блока, его атрибуты и текст. Атрибуты —
- * только объявленные в `attributes` Блока, по их именам без `data-`
- * (`acme_size`), значения как в очищенном HTML Документа; необъявленный
- * атрибут компонент не видит. Текст — `textContent` Блока из серверного HTML.
+ * What an Island of a custom Block receives: the Block's name, its attributes and its text.
+ * The attributes are only those declared in the Block's `attributes`, by their names without
+ * `data-` (`acme_size`), with values as in the sanitized HTML of the Document; an undeclared
+ * attribute is not visible to the component. The text is the Block's `textContent` from the
+ * server-rendered HTML.
  */
 export interface CustomIslandProps {
-  /** Имя Блока — ключ `blocks`, один компонент может обслуживать несколько Блоков. */
+  /** The Block name: the `blocks` key. One component can serve several Blocks. */
   block: string;
-  /** Объявленные атрибуты Блока, которые есть в HTML. */
+  /** Declared attributes of the Block that are present in the HTML. */
   attributes: Readonly<Record<string, string>>;
-  /** Текст Блока: для атома — его Текст из серверного HTML, часто пустой. */
+  /** The Block's text: for an Atom, its Atom text from the server HTML, often empty. */
   text: string;
 }
 
-/** Правила Схемы своей Метки: HTML — `span[data-mark="<имя>"]`. */
+/** Schema rules of a custom Mark: the HTML is `span[data-mark="<name>"]`. */
 export interface CustomMark {
-  /** Свои атрибуты Метки: имя с Префиксом потребителя — вид значения. */
+  /**
+   * Custom attributes of the Mark: a name with the consumer prefix, mapped to the kind of value.
+   */
   attributes?: Readonly<Record<PrefixedName, CustomAttribute>>;
 }
 
 /**
- * Описание своего Инструмента — публичное подмножество внутреннего описания
- * встроенных (`ToolDescriptor`, ADR-0058, п. 10). Передаётся в `tools`
- * вперемешку с именами Инструментов кита.
+ * Description of a custom Tool: the public subset of the internal description of built-in Tools
+ * (`ToolDescriptor`, ADR-0058, item 10). Passed in `tools`, mixed with the kit's Tool names.
  *
- * Обязательное — имя, Extensions и правила Схемы для каждого Блока и
- * Метки, которые она определяет. Остальное — по умолчанию (ADR-0058, п. 1.6):
- * обычный Блок без Признаков, без UI-записей.
+ * Required: the name, the Extensions, and the Schema rules for each Block and Mark they define.
+ * The rest has defaults (ADR-0058, item 1.6): an ordinary Block with no traits and no UI
+ * contributions.
  */
 export interface CustomTool {
-  /** Имя с Префиксом потребителя, уникальное в `tools`. */
+  /** The name with the consumer prefix, unique within `tools`. */
   name: PrefixedName;
   /**
-   * Extensions — расширения Tiptap: Node, Mark, Extension, плагины
-   * ProseMirror, React-вид узла, `renderText` атома. Их контракт следует
-   * мажору Tiptap. Node и Mark стоят на верхнем уровне массива: группу,
-   * разбор HTML и свои атрибуты им ставит кит по правилам.
+   * Extensions: Tiptap extensions, that is Node, Mark, Extension, ProseMirror plugins, a React
+   * node view, the `renderText` of an Atom. Their contract follows the major version of Tiptap.
+   * Nodes and Marks stand at the top level of the array: the kit assigns the group, HTML parsing
+   * and the custom attributes itself, by the rules.
    *
-   * Сразу массивом или загрузчиком — функцией с динамическим импортом, которая
-   * отдаёт промис того же массива: `() => import("./engine.js").then((m) =>
-   * m.engine)`. С загрузчиком модуль описания импортируется и на сервере, без
-   * Tiptap и React. Движок создаётся после загрузчиков всех Инструментов, до
-   * того поле показывает Скелет; промис кэшируется на функции загрузчика.
+   * Either an array right away, or a Loader: a function with a dynamic import that returns a
+   * promise of the same array, for example `() => import("./engine.js").then((m) => m.engine)`.
+   * With a Loader, the description module is imported on the server too, without Tiptap and
+   * React. The engine is created after the Loaders of all Tools; until then the field shows the
+   * Skeleton. The promise is cached on the Loader function.
    */
   engine: Extensions | (() => Promise<Extensions>);
-  /** Правила Схемы для каждого Node из Extensions — по имени узла. */
+  /** Schema rules for each Node from Extensions, by node name. */
   blocks?: Readonly<Record<PrefixedName, CustomBlock>>;
-  /** Правила Схемы для каждой Mark из Extensions — по имени Метки. */
+  /** Schema rules for each Mark from Extensions, by Mark name. */
   marks?: Readonly<Record<PrefixedName, CustomMark>>;
 
-  /* UI-записи (ADR-0058, п. 5 и 6): кнопки, пункты вставки и Действия над Блоком. */
+  /* UI contributions (ADR-0058, items 5 and 6): buttons, Insert items and Block actions. */
 
   /**
-   * Кнопки Панели, фиксированной и плавающей (набор один). Встают одной
-   * группой перед «Отменить» и «Повторить», в порядке `tools` и порядке
-   * массива; выключенный Инструмент уносит их вместе с собой.
+   * Toolbar buttons, fixed and floating (one set). They go in one group before "Undo" and "Redo",
+   * in the order of `tools` and the order of the array; a disabled Tool takes them along.
    */
   buttons?: readonly CustomToolButton[];
-  /** Пункты Меню вставки: «/», «+», «Добавить ›» и «Формат ›» Ручки Блока. */
+  /**
+   * Insert items: they appear in the Slash menu ("/" and "+") and in the "Add ›" and
+   * "Format ›" items of the Block handle.
+   */
   insertItems?: readonly CustomInsertItem[];
-  /** Действия над Блоком в меню Ручки Блока — секцией перед «Удалить». */
+  /** Block actions in the Block handle menu, as a section before "Delete". */
   blockActions?: readonly CustomBlockAction[];
   /**
-   * Карточки у текста (ADR-0058, п. 7.6–7.11): кит показывает их под Меткой
-   * или другим диапазоном, у которого стоит каретка. Открыта не больше
-   * одной: побеждает самый узкий диапазон под кареткой, при равной ширине —
-   * Инструмент раньше в `tools`.
+   * Text cards (ADR-0058, items 7.6–7.11): the kit shows them under a Mark or another range where
+   * the caret is. At most one is open: the narrowest range under the caret wins; at equal width,
+   * the Tool that comes first in `tools` wins.
    */
   textCards?: readonly CustomTextCard[];
   /**
-   * Свой символ-триггер (ADR-0064): набор `char` в начале Блока или после
-   * пробела открывает список пунктов у каретки — тот же, что рисует Меню
-   * вставки «/». Один триггер на Инструмент; символ уникален в `tools`.
+   * A custom trigger character (ADR-0064): typing `char` at the start of a Block or after a space
+   * opens a list of items at the caret, the same list the "/" Slash menu draws. One trigger per
+   * Tool; the character is unique within `tools`.
    */
   trigger?: CustomTrigger;
 }
 
 /**
- * Пункт списка своего триггера. Рисует его кит: иконка и подпись; фильтрует
- * по набранному сам потребитель — в `items`, поэтому `aliases` здесь нет.
+ * An item of a custom trigger's list. The kit draws it: the icon and the label. The consumer
+ * filters by the typed query itself, in `items`, which is why there are no `aliases` here.
  */
 export interface TriggerItem {
-  /** Ключ пункта, уникальный в одном ответе `items`. */
+  /** The item key, unique within one `items` response. */
   id: string;
-  /** Подпись — текст строки; на языке интерфейса её готовит потребитель. */
+  /** The label: the row's text; the consumer prepares it in the interface language. */
   label: string;
-  /** Иконка строки — компонент с контрактом `IconProps`; нет — строка без иконки. */
+  /** The row's icon: a component with the `IconProps` contract. No icon means a plain row. */
   icon?: ComponentType<IconProps>;
-  /** Любые данные потребителя: кит их не читает и отдаёт в `onSelect` как есть. */
+  /** Any data of the consumer: the kit does not read it and passes it to `onSelect` as is. */
   data?: unknown;
 }
 
 /**
- * Что получает `onSelect`: `range` — набранное вместе с символом (`@запрос`),
- * его кит НЕ удаляет, а обработчик заменяет своим узлом; `query` — запрос без
- * символа.
+ * What `onSelect` receives. `range` is the text typed together with the character (`@query`):
+ * the kit does NOT delete it, the handler replaces it with its own node. `query` is the query
+ * without the character.
  */
 export interface TriggerContext {
-  /** Редактор (сырой Tiptap) — для вставки своего узла. */
+  /** The Editor (raw Tiptap), for inserting your own node. */
   editor: Editor;
-  /** Диапазон `@запрос` в Документе: позиции ProseMirror, `from < to`. */
+  /** The `@query` range in the Document: ProseMirror positions, `from < to`. */
   range: { from: number; to: number };
-  /** Набранное после символа, без самого символа. */
+  /** What was typed after the character, without the character itself. */
   query: string;
 }
 
 /**
- * Свой символ-триггер Инструмента (ADR-0064): упоминания по `@`, теги по `#`.
+ * A custom trigger character of a Tool (ADR-0064): mentions with `@`, tags with `#`.
  *
- * Правила открытия те же, что у «/»: символ стоит в начале Блока или после
- * пробела (внутри слова — `a@b.com` — список молчит), в блоке кода и в
- * строчном коде не открывается. Запрос — до пробела. Фокус остаётся в
- * Документе; стрелки, `Enter` и `Escape` — как у Меню вставки, пустой ответ —
- * строка «Ничего не найдено».
+ * The opening rules are the same as for "/": the character must stand at the start of a Block or
+ * after a space (inside a word, as in `a@b.com`, the list stays closed); it does not open in a
+ * code Block or in inline code. The query runs up to the next space. Focus stays in the Document;
+ * the arrows, `Enter` and `Escape` work as in the Insert menu. An empty response shows the row
+ * "Nothing found".
  */
 export interface CustomTrigger {
   /**
-   * Один печатный знак, не `/` и не пробел: `@`, `#`, `:`. Два Инструмента с
-   * одним символом — ошибка набора (`console.error` в разработке и ошибка поля).
+   * One printable character, not `/` and not a space: `@`, `#`, `:`. Two Tools with the same
+   * character are an error in the set of Tools (`console.error` in development, and an error of
+   * the field).
    */
   char: string;
   /**
-   * Имя списка для скринридера: строка или функция от `{ locale }`. Нет — имя
-   * из каталога кита («Подсказки»).
+   * The name of the list for screen readers: a string or a function of `{ locale }`. If absent,
+   * the kit's catalog name ("Suggestions") is used.
    */
   label?: CustomToolLabel;
   /**
-   * Пункты по запросу — сразу или промисом. Зовётся на каждое изменение
-   * запроса, в том числе с пустой строкой сразу после символа; ответ
-   * устаревшего запроса кит отбрасывает. Отклонённый промис — пустой список и
-   * `console.error` в разработке.
+   * Items for the query, at once or as a promise. Called on every change of the query, including
+   * an empty query right after the character; the kit discards the answer to an outdated query.
+   * A rejected promise gives an empty list and a `console.error` in development.
    */
   items: (query: string) => TriggerItem[] | Promise<TriggerItem[]>;
   /**
-   * Пункт выбран (стрелки и `Enter` или щелчок). Обработчик заменяет
-   * `ctx.range` своим узлом одной транзакцией; кит после вызова закрывает
-   * список.
+   * An item is chosen (the arrows and `Enter`, or a click). The handler replaces `ctx.range` with
+   * its own node in one transaction; the kit closes the list after the call.
    */
   onSelect: (item: TriggerItem, ctx: TriggerContext) => void;
 }
 
 /**
- * Годится ли символ в триггеры (ADR-0064): один печатный знак — не пробел и
- * не управляющий, — кроме `/`, который занят Меню вставки. Знак вне BMP
- * (эмодзи) — один знак.
+ * Whether a character can be a trigger (ADR-0064): one printable character, not a space and not a
+ * control character, except `/`, which the Slash menu occupies. A character outside the BMP (an
+ * emoji) counts as one character.
  */
 export function isTriggerChar(char: unknown): char is string {
   return typeof char === "string" && char !== "/" && /^[^\s\p{C}]$/u.test(char);
 }
 
-/** Диапазон Документа, к которому привязана Карточка: позиции ProseMirror, `from <= to`. */
+/** The Document range a Text card is attached to: ProseMirror positions, `from <= to`. */
 export interface TextCardRange {
   from: number;
   to: number;
 }
 
 /**
- * Диапазон Карточки у каретки: `pos` — каретка (или место щелчка), ответ —
- * диапазон, к которому привязана Карточка, или `null`, если здесь её нет.
- * Для Метки готовый помощник — `markRange`. Функция читает только состояние и
- * зовётся на каждой транзакции, поэтому должна быть быстрой и без побочных
- * эффектов. Диапазон шире Документа или с `from > to` кит отбрасывает.
+ * The Text card's range at the caret: `pos` is the caret (or the click position). The result is
+ * the range the Text card is attached to, or `null` if there is no Text card here. For a Mark,
+ * the ready-made helper is `markRange`. The function only reads the state and is called on every
+ * transaction, so it must be fast and free of side effects. A range wider than the Document, or
+ * with `from > to`, is discarded by the kit.
  */
 export type TextCardRangeAt = (state: EditorState, pos: number) => TextCardRange | null;
 
 /**
- * Тело Карточки у текста: `range` — диапазон из `rangeAt` на текущем состоянии
- * (он едет за правкой), `close` прячет Карточку тем же путём, что Escape.
+ * The body of a Text card. `range` is the range from `rangeAt` on the current state (it moves
+ * with edits); `close` hides the Text card the same way Escape does.
  */
 export type CustomTextCardRender = (props: {
   editor: Editor;
@@ -254,60 +259,63 @@ export type CustomTextCardRender = (props: {
 }) => ReactNode;
 
 /**
- * Карточка у текста — четвёртый вид UI-записи (ADR-0058, п. 7.6–7.11):
- * например, карточка комментария под Меткой-выделением.
+ * A Text card is the fourth kind of UI contribution (ADR-0058, items 7.6–7.11): for example, a
+ * comment card under a Mark-highlighted range.
  *
- * Рамку держит кит: слой и стек Escape как у `Popover` кита, якорь под
- * диапазоном, переворот у края окна. Тело — React-узел `render`; заголовка и
- * кнопок-данных у рамки нет, иконки у записи тоже. Карточка немодальна: фокус
- * остаётся в Документе, печать продолжается; `Alt+F10` ведёт в Карточку, а
- * Escape — обратно в Документ.
+ * The kit holds the frame: the layer and the Escape stack as in the kit's `Popover`, the anchor
+ * under the range, a flip at the edge of the window. The body is the React node `render`; the
+ * frame has no header and no data buttons, and the entry has no icon. The Text card is non-modal:
+ * focus stays in the Document and typing goes on; `Alt+F10` moves into the Text card, and Escape
+ * moves back to the Document.
  *
- * Открывается свёрнутой кареткой внутри диапазона или щелчком по нему, но не
- * наведением. При развёрнутом выделении закрыта (там работает Меню
- * выделения). Escape и `close` прячут её, пока каретка не покинет диапазон;
- * щелчок открывает снова. Работает и при `readOnly`: правки из `render` режет
- * сам движок. В `RichTextView` Карточек нет.
+ * It opens when the collapsed caret is inside the range, or on a click on it, but not on hover.
+ * It stays closed while the selection is expanded (the Bubble menu works there). Escape and
+ * `close` hide it until the caret leaves the range; a click opens it again. It also works with
+ * `readOnly`: the engine itself blocks edits made from `render`. `RichTextView` has no Text cards.
  */
 export interface CustomTextCard {
   /**
-   * Подпись — строка или функция от `{ locale }`: доступное имя рамки и часть
-   * фразы, которой кит сообщает скринридеру о появлении Карточки. Иконки нет.
+   * The label: a string or a function of `{ locale }`. It is the accessible name of the frame and
+   * part of the phrase the kit uses to announce the Text card to screen readers. There is no icon.
    */
   label: CustomToolLabel;
-  /** Диапазон под кареткой: для Метки — `markRange("acme_comment")`. */
+  /** The range under the caret: for a Mark, `markRange("acme_comment")`. */
   rangeAt: TextCardRangeAt;
-  /** Тело Карточки; монтируется заново на каждое открытие. */
+  /** The body of the Text card; it is mounted again on each opening. */
   render: CustomTextCardRender;
 }
 
 /**
- * Пункт Меню вставки своего Инструмента (ADR-0058, п. 5).
+ * An Insert item of a custom Tool (ADR-0058, item 5).
  *
- * Сам попадает в «/», «+», «Добавить ›» и «Формат ›» Ручки Блока: меню кит
- * правит без потребителя. Пункт встаёт в конец своего раздела, свои пункты —
- * в порядке `tools`. Выключенный Инструмент убирает и пункт.
+ * It gets into the "/" and "+" menus, and into the "Add ›" and "Format ›" items of the Block
+ * handle, by itself: the kit edits those menus, the consumer does nothing. The item goes at the
+ * end of its section; the custom items keep the order of `tools`. A disabled Tool removes the
+ * item too.
  *
- * Раздел решает, что делается с Документом, а `run` — какой Блок: в `insert`
- * кит готовит пустой абзац (текущий пустой или новый сразу за Блоком), в
- * `turnInto` — снимает со Блока обёртки (список, цитату). Подготовка и `run`
- * идут одной транзакцией, поэтому правка отменяется одним `Ctrl+Z`.
+ * The section decides what happens to the Document, and `run` decides which Block: in `insert`
+ * the kit prepares an empty paragraph (the current empty one, or a new one right after the
+ * Block); in `turnInto` it strips the wrappers (a list, a quote) off the Block. The preparation
+ * and `run` go in one transaction, so the edit is undone with a single `Ctrl+Z`.
  *
- * Ровно одно из двух: `run` или `popover` (ADR-0058, п. 5.6). Поповер — та же
- * рамка кита, что у кнопки, и встаёт у каретки при любом способе вызова.
+ * Exactly one of `run` or `popover` (ADR-0058, item 5.6). A popover is the same kit frame as a
+ * button's, and it opens at the caret however the item was invoked.
  */
 export type CustomInsertItem = CustomInsertItemFields &
   (
     | {
-        /** Команда над цепочкой: вернуть её с командой Блока, `.run()` зовёт кит. */
+        /**
+         * A command on the chain: return it together with the Block's command.
+         * The kit calls `.run()`.
+         */
         run: (chain: ChainedCommands, editor: Editor) => ChainedCommands;
         popover?: undefined;
       }
     | {
         /**
-         * Поповер вместо команды — у каретки (из «/» — там, где стоял «/»).
-         * Документ кит не готовит: убирает набранную «/команду», а содержимое
-         * в Документ ставит сам поповер через `editor`.
+         * A popover instead of a command: it opens at the caret (from "/", where the "/" stood). The
+         * kit does not prepare the Document: it removes the typed "/command", and the popover itself
+         * puts the content into the Document through `editor`.
          */
         popover: CustomToolPopover;
         run?: undefined;
@@ -315,140 +323,158 @@ export type CustomInsertItem = CustomInsertItemFields &
   );
 
 interface CustomInsertItemFields {
-  /** «Добавить» — новый Блок после текущего, «Превратить в» — сменить текущий. */
+  /** "Insert": a new Block after the current one. "Turn into": change the current one. */
   section: "insert" | "turnInto";
-  /** Подпись — строка или функция от `{ locale }`; поиск идёт и по ней. */
+  /** The label: a string or a function of `{ locale }`; search matches it too. */
   label: CustomToolLabel;
-  /** Компонент с контрактом `IconProps`: из словаря `@olddevs/ui/icons` или свой. */
+  /**
+   * A component with the `IconProps` contract: from the `@olddevs/ui/icons` set, or your own.
+   */
   icon: ComponentType<IconProps>;
-  /** Слова для поиска сверх подписи — на любом языке; подписи кит ищет сам. */
+  /** Extra search words beyond the label, in any language; the kit searches the labels itself. */
   aliases?: readonly string[];
   /**
-   * Сочетание в нотации Панели (`mod`, `alt`, `shift`, клавиша). Единственный
-   * источник: кит сам вешает клавишу, пишет её в подсказку пункта и в
-   * справочник сочетаний.
+   * A shortcut in the Toolbar notation (`mod`, `alt`, `shift`, a key). It is the only source: the
+   * kit binds the key itself and writes it in the item's hint and in the shortcuts reference.
    */
   shortcut?: readonly string[];
 }
 
 /**
- * Действие над Блоком своего Инструмента — пункт меню Ручки Блока (ADR-0058,
- * п. 5). Свои Действия стоят секцией перед «Удалить», в порядке `tools`.
+ * A Block action of a custom Tool: an item of the Block handle menu (ADR-0058, item 5). Custom
+ * Block actions stand as a section before "Delete", in the order of `tools`.
  *
- * Ровно одно из двух: `run` или `popover` (ADR-0058, п. 5.6). Поповер встаёт у
- * Блока: выбором в меню Ручки — у её Блока, сочетанием — у Блока под кареткой.
+ * Exactly one of `run` or `popover` (ADR-0058, item 5.6). The popover opens at the Block: by a
+ * choice in the handle menu, at its Block; by a shortcut, at the Block under the caret.
  */
 export type CustomBlockAction = CustomBlockActionFields &
   (
     | {
-        /** `pos` — позиция Блока Ручки в Документе. Одна правка — одна отмена. */
+        /**
+         * `pos` is the position of the handle's Block in the Document. One edit is one undo.
+         */
         run: (editor: Editor, pos: number) => void;
         popover?: undefined;
       }
     | {
-        /** Поповер вместо действия — у Блока; содержимое получает и `pos` Блока. */
+        /**
+         * A popover instead of an action: it opens at the Block. The content also gets the Block's `pos`.
+         */
         popover: CustomToolPopover<{ pos: number }>;
         run?: undefined;
       }
   );
 
 interface CustomBlockActionFields {
-  /** Подпись — строка или функция от `{ locale }`. */
+  /** The label: a string or a function of `{ locale }`. */
   label: CustomToolLabel;
-  /** Компонент с контрактом `IconProps`. */
+  /** The icon: a component with the `IconProps` contract. */
   icon: ComponentType<IconProps>;
   /**
-   * Имена Блоков, для которых действие показывается: имя Блока Ручки или
-   * контейнера, в котором он стоит прямо.
+   * The names of the Blocks for which the action is shown: the name of the handle's Block, or of
+   * the container it stands directly in.
    */
   blocks: readonly string[];
-  /** Сочетание в нотации Панели; кит вешает его на Блок под кареткой. */
+  /** The shortcut in the Toolbar notation; the kit binds it to the Block under the caret. */
   shortcut?: readonly string[];
-  /** Видимость по контексту; нет — действие видно у всех своих `blocks`. */
+  /** Visibility by context; if absent, the action is visible for all of its `blocks`. */
   isVisible?: (editor: Editor, pos: number) => boolean;
 }
 
 /**
- * Подпись записи — строка или функция от контекста (ADR-0058, п. 6.1). Кит
- * зовёт функцию при отрисовке с локалью `UiProvider`, поэтому смена локали
- * перерисовывает запись. Строка подходит одноязычному приложению.
+ * The label of an entry: a string or a function of the context (ADR-0058, item 6.1). The kit
+ * calls the function on render with the `UiProvider` locale, so a change of locale re-renders the
+ * entry. A string suits a single-language application.
  */
 export type CustomToolLabel = string | ((context: { locale: string }) => string);
 
 /**
- * Содержимое поповера кнопки, пункта вставки и Действия над Блоком. Рамку
- * держит кит: слой, якорь, стек Escape, возврат фокуса и выделения в Документ;
- * `close` закрывает поповер тем же путём, что Escape. `Extra` — что запись
- * добавляет к `editor` и `close`: у Действия над Блоком — `{ pos }` его Блока.
+ * The content of the popover of a button, an Insert item or a Block action. The kit holds the
+ * frame: the layer, the anchor, the Escape stack, and returning focus and the selection to the
+ * Document. `close` closes the popover the same way Escape does. `Extra` is what the entry adds
+ * to `editor` and `close`: for a Block action, the Block's `{ pos }`.
  */
 export type CustomToolPopover<Extra extends object = object> = (
   props: { editor: Editor; close: () => void } & Extra
 ) => ReactNode;
 
 interface CustomToolButtonFields {
-  /** Ключ кнопки, уникальный в своём Инструменте: с id кита и чужих Инструментов не сталкивается. */
+  /**
+   * The button key, unique within its Tool. It never collides with the kit's ids or with the
+   * buttons of other Tools.
+   */
   id: string;
-  /** Подпись: имя кнопки для скринридера, текст подсказки и имя поповера. Пустая — имя Инструмента. */
+  /**
+   * The caption: the button's name for screen readers, the tooltip text and the popover's name.
+   * An empty one means the Tool's name.
+   */
   label: CustomToolLabel;
-  /** Иконка — компонент с контрактом `IconProps` из словаря кита или своя. Обязательна. */
+  /**
+   * The icon: a component with the `IconProps` contract, from the kit's icon set or your own.
+   * Required.
+   */
   icon: ComponentType<IconProps>;
-  /** Доступна ли кнопка сейчас. В нередактируемом поле кит выключает кнопки сам, проверять это здесь не нужно. */
+  /**
+   * Whether the button is available now. In a read-only field the kit disables the buttons itself,
+   * so the check does not belong here.
+   */
   can: (editor: Editor) => boolean;
-  /** Есть — кнопка-переключатель с `aria-pressed`; нет — разовое действие. */
+  /** Present: a toggle button with `aria-pressed`. Absent: a one-off action. */
   isActive?: (editor: Editor) => boolean;
-  /** Предикат видимости по контексту; нет — кнопка видна всегда. */
+  /** Visibility predicate by context; if absent, the button is always visible. */
   isVisible?: (editor: Editor) => boolean;
-  /** Кнопка стоит ещё и в Меню выделения. */
+  /** The button is also placed in the Bubble menu. */
   selectionMenu?: boolean;
   /**
-   * Сочетание в нотации Панели: `mod`, `alt`, `shift` и клавиша —
-   * `["mod", "shift", "Y"]`. Единственный источник: кит сам вешает клавишу,
-   * пишет её в подсказку, `aria-keyshortcuts` и справочник сочетаний.
+   * A shortcut in the Toolbar notation: `mod`, `alt`, `shift` and a key, for example
+   * `["mod", "shift", "Y"]`. It is the only source: the kit binds the key itself and writes it in
+   * the hint, in `aria-keyshortcuts` and in the shortcuts reference.
    */
   shortcut?: readonly string[];
 }
 
 /**
- * Кнопка своего Инструмента — данные, рисует её кит (ADR-0058, раздел 5).
+ * A button of a custom Tool: data, drawn by the kit (ADR-0058, section 5).
  *
- * Ровно одно из двух: `run` выполняется щелчком и сочетанием, `popover`
- * открывается щелчком у кнопки, а сочетанием — у каретки.
+ * Exactly one of `run` or `popover`. `run` runs on a click and on a shortcut; `popover` opens on a
+ * click at the button, and on a shortcut at the caret.
  */
 export type CustomToolButton = CustomToolButtonFields &
   (
     | {
-        /** Действие кнопки: выполняется над редактором по щелчку и по сочетанию клавиш. */
+        /** The button's action: runs over the editor on a click and on a shortcut. */
         run: (editor: Editor) => void;
-        /** Не задаётся вместе с `run`: у кнопки одно действие. */
+        /** Not set together with `run`: a button has one action. */
         popover?: undefined;
       }
     | {
-        /** Поповер кнопки: открывается щелчком у кнопки, а сочетанием клавиш — у каретки. */
+        /**
+         * The button's popover: opens on a click at the button, and on a shortcut at the caret.
+         */
         popover: CustomToolPopover;
-        /** Не задаётся вместе с `popover`: у кнопки одно действие. */
+        /** Not set together with `popover`: a button has one action. */
         run?: undefined;
       }
   );
 
 /**
- * Элемент `tools`: имя Инструмента кита, Настроенный Инструмент (`tool()`),
- * определение своего Инструмента (`defineTool()`) или описание своего
- * Инструмента обычным объектом.
+ * An element of `tools`: the name of a kit Tool, a Configured Tool (`tool()`), a definition of a
+ * custom Tool (`defineTool()`), or a description of a custom Tool as a plain object.
  */
 export type ToolEntry = ToolName | ConfiguredTool<string> | ToolDefinition | CustomTool;
 
 /**
- * Годится ли значение атрибута по его виду (`CustomAttribute`). Живёт в
- * `schema.ts` рядом с политикой адресов: проверку читает и очистка на сервере.
+ * Whether an attribute value is allowed by its kind (`CustomAttribute`). It lives in `schema.ts`,
+ * next to the address policy: the sanitizer on the server reads the same check.
  */
 export { isAllowedAttributeValue } from "./schema.js";
 
 /**
- * `rangeAt` для Метки: непрерывный отрезок текста с этой Меткой (с теми же
- * значениями атрибутов) вокруг `pos`. Края входят — каретка сразу за словом
- * или перед ним ещё «в» диапазоне, иначе щелчок по первой букве не открывал
- * бы Карточку. Если каретка стоит между двумя отрезками, берётся тот, что
- * кончается здесь: так пишут дальше. Метки нет — `null`.
+ * `rangeAt` for a Mark: the continuous stretch of text with this Mark (and the same attribute
+ * values) around `pos`. The edges are included: a caret right after or right before a word is
+ * still "inside" the range, otherwise a click on the first letter would not open the Text card.
+ * If the caret stands between two stretches, the one that ends here is taken: that is where one
+ * continues typing. No Mark, `null`.
  */
 export function markRange(markName: string): TextCardRangeAt {
   return (state, pos) => {

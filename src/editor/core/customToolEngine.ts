@@ -40,17 +40,17 @@ import { CUSTOM_ATTRIBUTE_NAME, CUSTOM_NAME, customElement } from "./schema.js";
 import { loaded } from "./toolLoader.js";
 
 /*
-  Свой Инструмент в движке (ADR-0058, разделы 1 и 2): из
-  публичного описания — внутреннее, и проверка набора при сборке.
+  Custom Tool in the engine (ADR-0058, sections 1 and 2): from the public description, the
+  internal one, and the check of the set at build time.
 
-  ПРАВИЛА СХЕМЫ — ЕДИНСТВЕННЫЙ ИСТОЧНИК HTML. Node и Mark из Extensions кит
-  дописывает сам: группу и строчность — по виду Блока, разбор HTML — только
-  `div|span[data-block="<имя>"]` и `span[data-mark="<имя>"]`, свои атрибуты —
-  `data-<имя>` со значением по виду из правил, Признаки Блока — в spec узла.
-  Своё правило разбора чужого Блока поэтому не займёт тег кита, а значение вне
-  правил не войдёт в Документ ни из `value`, ни из вставки: проверяет код кита,
-  и ослабить проверку через Extensions нельзя. Поведение — содержимое,
-  `atom`, React-вид, `renderText`, команды — остаётся за потребителем.
+  THE SCHEMA RULES ARE THE ONLY SOURCE OF THE HTML. The kit adds the Node and Mark from
+  Extensions itself: the group and inline-ness follow the kind of Block, HTML parsing is only
+  `div|span[data-block="<name>"]` and `span[data-mark="<name>"]`, the custom attributes are
+  `data-<name>` with a value checked by the kind from the rules, and the Block traits go into
+  the node spec. So a custom parse rule cannot take over a kit tag, and a value outside the rules
+  does not enter the Document, neither from `value` nor from a paste: the kit's code checks it,
+  and the check cannot be weakened through Extensions. Behavior (content, `atom`, the React view,
+  `renderText`, commands) stays with the consumer.
 */
 
 type Rule = CustomBlock | CustomMark;
@@ -60,14 +60,14 @@ const marksOf = (tool: CustomTool): Readonly<Record<string, CustomMark>> => tool
 const attributesOf = (rule: Rule): Readonly<Record<string, CustomAttribute>> =>
   rule.attributes ?? {};
 
-/** Значение атрибута — по правилу или `null` (умолчание узла). */
+/** The attribute value, checked by its rule, or `null` (the node's default). */
 function allowed(rule: CustomAttribute, value: unknown): string | null {
   if (value == null) return null;
   const text = String(value);
   return isAllowedAttributeValue(rule, text) ? text : null;
 }
 
-/** Node или Mark из Extensions, дописанный по своим правилам Схемы. */
+/** A Node or Mark from Extensions, extended with the kit's Schema rules. */
 function bindRules(extension: AnyExtension, tool: CustomTool): AnyExtension {
   const { name } = extension;
   const block = extension.type === "node" ? blocksOf(tool)[name] : undefined;
@@ -80,8 +80,8 @@ function bindRules(extension: AnyExtension, tool: CustomTool): AnyExtension {
   const config = {
     ...markdownFallback(extension, tool.name),
     parseHTML: () => [{ tag: selector }],
-    // Свой `renderHTML` остаётся у Extensions (текст внутри атома);
-    // соглашение с ним сверяет `customToolsError`.
+    // A custom `renderHTML` stays with the Extensions (the text inside an Atom). The convention
+    // with it is checked by `customToolsError`.
     ...(getExtensionField(extension, "renderHTML") === undefined && {
       renderHTML: ({ node, HTMLAttributes }: { node?: PmNode; HTMLAttributes: object }) =>
         node?.isLeaf
@@ -105,7 +105,7 @@ function bindRules(extension: AnyExtension, tool: CustomTool): AnyExtension {
       return result;
     },
     ...(block && {
-      // Верхний уровень — вне группы `block`: его называет сам Документ (`document.ts`).
+      // The top level is outside the `block` group: the Document names it itself (`document.ts`).
       group: block.place === "top" ? "" : block.kind,
       inline: block.kind === "inline",
       extendNodeSchema(
@@ -127,12 +127,12 @@ function bindRules(extension: AnyExtension, tool: CustomTool): AnyExtension {
 }
 
 /**
- * Кнопка своего Инструмента — во внутреннюю форму. Id получает имя Инструмента
- * (`acme_stamp:stamp`): ключи флагов Панели и справочника общие с кнопками кита,
- * и свой id с чужим не столкнётся. Пустая подпись — `console.error` и имя
- * Инструмента (ADR-0058, п. 6.5); подпись зовётся при каждой отрисовке, поэтому
- * ошибка живёт в обёртке, а не в проверке набора: функция от локали бывает
- * пустой только в одной из них.
+ * A custom Tool's button, in the internal form. The id is the Tool's name and the button key
+ * (`acme_stamp:stamp`): the keys of the Toolbar flags and of the reference are shared with the
+ * kit's buttons, so an id never collides with them or with another Tool's id. An empty caption
+ * gives a `console.error` and the Tool's name (ADR-0058, item 6.5). The caption is called on
+ * every render, so the error lives in the wrapper and not in the set check: the set check cannot
+ * see what a locale function returns, only the wrapper can.
  */
 function describeButton(tool: CustomTool, button: CustomToolButton): KitToolButton {
   return {
@@ -150,9 +150,9 @@ function describeButton(tool: CustomTool, button: CustomToolButton): KitToolButt
 }
 
 /**
- * Подпись записи для меню: строка или функция от `{ locale, messages }`.
- * Пустая подпись — `console.error` в разработке и имя Инструмента вместо неё
- * (ADR-0058, п. 6.5): забытый перевод не роняет поле.
+ * A label for the menu: a string or a function of `{ locale, messages }`. An empty label gives a
+ * `console.error` in development and the Tool's name in its place (ADR-0058, item 6.5): a
+ * forgotten translation does not break the field.
  */
 function labelOf(tool: CustomTool, entry: string, label: ToolLabel) {
   return (messages: UiMessages["editor"], locale: string): string => {
@@ -163,15 +163,18 @@ function labelOf(tool: CustomTool, entry: string, label: ToolLabel) {
   };
 }
 
-/** Записи списка. Не список или не объект — не запись: набор отвергнет `customToolsError`. */
+/**
+ * Records of a list. A value that is not an array, or an item that is not an object, is not a
+ * record: `customToolsError` rejects the set.
+ */
 const records = <T extends object>(list: readonly T[] | undefined): readonly T[] =>
   Array.isArray(list) ? list.filter((item) => typeof item === "object" && item !== null) : [];
 
 /**
- * Пункты вставки и Действия над Блоком в форме внутренних записей. Id — имя
- * Инструмента и номер записи через дефис: у имён дефиса нет, и пункт не
- * совпадёт ни с кит-пунктом, ни с чужим. «Превратить в» своего Инструмента
- * стоит и в «Формат ›» Ручки Блока (она читает «¶»): те же слова и иконка.
+ * Insert items and Block actions in the internal form of records. The id is the Tool's name and
+ * the entry's number, joined with a hyphen: names have no hyphens, so an item matches neither a
+ * kit item nor someone else's. The "Turn into" of a custom Tool also appears in the Format ›
+ * item of the Block handle (it reads it through the "¶" paragraph): the same words and icon.
  */
 function uiRecords(tool: CustomTool) {
   const insertItems = records(tool.insertItems).map((item, index): InsertItem => ({
@@ -182,7 +185,7 @@ function uiRecords(tool: CustomTool) {
     aliases: item.aliases,
     keys: item.shortcut,
     shortcut: item.shortcut,
-    // Пункт с поповером `run` не зовёт: `applyInsertItem` открывает поповер.
+    // An item with a popover does not call `run`: `applyInsertItem` opens the popover.
     run: item.run ?? ((chain) => chain),
     popover: item.popover,
   }));
@@ -195,13 +198,14 @@ function uiRecords(tool: CustomTool) {
       icon: action.icon,
       blocks: action.blocks,
       shortcut: action.shortcut,
-      // Действие с поповером открывает его у Блока: меню Ручки и сочетание зовут `run`.
+      // A Block action with a popover opens it at its Block. The handle menu and the shortcut
+      // call `run`, which opens the popover.
       run: action.run ?? ((editor, pos) => void editor.commands.openToolPopover(id, pos)),
       popover: action.popover,
       isVisible: action.isVisible,
     };
   });
-  // Id — по номеру записи, как у Действий: у Карточки он нужен только ключом React.
+  // The id is the entry's number, as for Block actions. A Text card needs it only as a React key.
   const textCards = records(tool.textCards).map((textCard, index): TextCardRecord => ({
     id: `${tool.name}-textCard${index}`,
     label: labelOf(tool, `text card ${index}`, textCard.label),
@@ -211,18 +215,18 @@ function uiRecords(tool: CustomTool) {
   return { insertItems, blockTypes, blockActions, textCards };
 }
 
-/** Extensions: массив сразу или то, что отдал загрузчик; не массив — пустой массив. */
+/** Extensions: an array as is, or what the Loader returned. Not an array: an empty array. */
 function engineOf(tool: CustomTool): Extensions {
   const engine = typeof tool.engine === "function" ? loaded(tool.engine) : tool.engine;
   return Array.isArray(engine) ? engine : [];
 }
 
-/** Внутреннее описание своего Инструмента — то, что кладёт в список `expandTools`. */
+/** The internal description of a custom Tool: what goes into the `expandTools` list. */
 export function describeCustomTool(tool: CustomTool): ToolDescriptor {
   return {
     name: tool.name,
     custom: tool,
-    // Загрузчик: правила Схемы ложатся на Extensions, когда они пришли (`engineOf`).
+    // A Loader: the Schema rules are applied to the Extensions once they arrive (`engineOf`).
     load: typeof tool.engine === "function" ? tool.engine : undefined,
     engine: () => engineOf(tool).map((extension) => bindRules(extension, tool)),
     ...uiRecords(tool),
@@ -239,10 +243,10 @@ export function describeCustomTool(tool: CustomTool): ToolDescriptor {
 }
 
 /**
- * Внутреннее описание Инструмента из определения (`defineTool`): тело из
- * `create` и имя определения собираются в обычный `CustomTool` и идут тем же
- * путём, а Опции этого Редактора — умолчания, слитые с `tool()`, — достаются
- * `create`, `state` и `commands`.
+ * The internal description of a Tool from a definition (`defineTool`). The body from `create` and
+ * the definition's name are assembled into a plain `CustomTool` and go the same way; this
+ * Editor's options (the defaults merged with `tool()`) are taken by `create`, `state` and
+ * `commands`.
  */
 export function describeDefinition(definition: ToolDefinition, given: object = {}): ToolDescriptor {
   const { options, tool } = resolveDefinition(definition, given);
@@ -255,26 +259,26 @@ export function describeDefinition(definition: ToolDefinition, given: object = {
 }
 
 /**
- * Набор движка, который `RichTextEditor` собирает при ошибке набора: движок
- * нужен хуку `useEditor` в любом случае, но наружу он не выходит.
+ * The engine's extension set that `RichTextEditor` builds when the Tool set has an error. The
+ * `useEditor` hook needs an engine in any case, but that engine is never exposed.
  */
 export const FALLBACK_EXTENSIONS: Extensions = [StarterKit];
 
-/** Виды правил: поле описания и тип расширения Tiptap. */
+/** The kinds of rules: the descriptor field and the Tiptap extension type. */
 const KINDS = [
   ["blocks", "node"],
   ["marks", "mark"],
 ] as const;
 
-/** Подпись — строка или функция, иконка — компонент (функция или `memo`/`forwardRef`). */
+/** A label is a string or a function; an icon is a component (a function, or `memo`/`forwardRef`). */
 const isLabel = (value: unknown) => typeof value === "string" || typeof value === "function";
 const isIcon = (value: unknown) =>
   typeof value === "function" || (typeof value === "object" && value !== null);
-/** Список непустых строк: имена Блоков, `aliases`, клавиши сочетания. */
+/** A list of non-empty strings: Block names, `aliases`, shortcut keys. */
 const isWords = (value: unknown) =>
   Array.isArray(value) && value.every((word) => typeof word === "string" && word !== "");
 
-/** Ошибка UI-записей своего Инструмента (ADR-0058, п. 5) или `null`. */
+/** The error in a custom Tool's UI contributions (ADR-0058, item 5), or `null`. */
 function uiEntryError(tool: CustomTool): string | null {
   const lists = [
     ["insertItems", tool.insertItems],
@@ -321,33 +325,33 @@ function uiEntryError(tool: CustomTool): string | null {
   return null;
 }
 
-/** Ошибка набора своих Инструментов: текст для консоли и исключение движка, если было. */
+/** An error in the Tool set: the text for the console and the engine exception, if any. */
 export interface CustomToolsError {
   message: string;
   cause?: unknown;
 }
 
 /**
- * Ошибка сборки набора Инструментов или `null` (ADR-0058, п. 1.5, 2.4).
+ * An error in building the set of Tools, or `null` (ADR-0058, items 1.5 and 2.4).
  *
- * Имя без Префикса потребителя, совпадение имён, Node или Mark из
- * Extensions без правил Схемы (и правило без них), атрибут, которого нет в
- * правилах, HTML мимо соглашения, Схема, которую движок не собрал, — всё это
- * потеря данных на сервере или в самом Редакторе, и автор должен увидеть её
- * до первого сохранения. `extensions` — полный набор движка, свои уже в нём.
- * Неизвестная строка в `tools` сюда не доходит: её отбрасывает `expandTools`.
+ * A name without the consumer prefix, two Tools with one name, a Node or Mark in the Extensions
+ * without Schema rules (and a rule without them), an attribute that has no rule, HTML outside the
+ * convention, a Schema the engine failed to build: all of this is data lost on the server or in
+ * the Editor itself, and the author must see it before the first save. `extensions` is the
+ * engine's full set; the custom ones are already in it. An unknown string in `tools` does not
+ * reach here: `expandTools` drops it.
  *
- * Текст — для консоли разработчика, по-английски (ADR-0034), коротко: каждая
- * строка здесь — вес кода кита; автору поле показывает строку каталога.
- * Исключение движка — отдельно, в `cause`: текст — ключ «один раз» у `devError`.
+ * The text is for the developer's console, in English (ADR-0034), and short: each line here adds
+ * to the kit's bundle size; the author sees a catalog string in the field instead. An engine
+ * exception is separate, in `cause`: the text is the once-only key of `devError`.
  */
 export function customToolsError(tools: ToolList, extensions: Extensions): CustomToolsError | null {
-  // Ошибка, найденная при развороте `tools` (две записи `tool()` с одним именем), идёт тем же путём.
+  // The error found while expanding `tools` (two `tool()` entries with one name) goes the same way.
   if (tools.error) return { message: tools.error };
   const custom = tools.descriptors.flatMap((descriptor) => descriptor.custom ?? []);
   if (custom.length === 0) return null;
-  // Имена Инструментов и имена Блоков и Меток — разные пространства: Инструмент
-  // `acme_card` вправе описывать Блок `acme_card`.
+  // Tool names and the names of Blocks and Marks are separate namespaces: a Tool `acme_card`
+  // may describe a Block `acme_card`.
   const toolNames = new Set<string>();
   const ruleNames = new Set<string>();
   const triggerChars = new Set<string>();
@@ -356,7 +360,7 @@ export function customToolsError(tools: ToolList, extensions: Extensions): Custo
     if (!CUSTOM_NAME.test(tool.name)) return fail("the name needs a consumer prefix (acme_name)");
     if (toolNames.has(tool.name)) return fail("two tools share this name");
     toolNames.add(tool.name);
-    // Форму списка проверяет код кита: потребитель на JS обходит типы.
+    // The kit checks the shape of the list: a consumer in plain JS can bypass the types.
     if (tool.buttons !== undefined && !Array.isArray(tool.buttons)) {
       return fail("buttons must be an array");
     }
@@ -441,9 +445,9 @@ export function customToolsError(tools: ToolList, extensions: Extensions): Custo
         );
         if (extra) return fail(`has attribute "${extra}" with no rule`);
         /*
-          HTML — по соглашению: `toDOM` экземпляра по умолчанию даёт тег и
-          метку с именем. Свой `renderHTML` в Extensions мог уйти от них, и
-          тогда Блок не прочитался бы обратно из собственного `getHTML()`.
+          The HTML follows the convention: the instance's default `toDOM` gives the tag and the
+          label with the name. A custom `renderHTML` in the Extensions could depart from them, and
+          then the Block would not read back from its own `getHTML()` output.
         */
         const { tag, marker } = customElement(
           type === "node" ? (rule as CustomBlock).kind : "mark"
