@@ -4,12 +4,7 @@
   "scenario": "cell",
   "origin": "captured for OLDSUI-274",
   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
-  "types": [
-    "text/plain",
-    "text/html",
-    "text/rtf",
-    "Files"
-  ],
+  "types": ["text/plain", "text/html", "text/rtf", "Files"],
   "files": [
     {
       "name": "image.png",

@@ -4,12 +4,7 @@
   "scenario": "whole",
   "origin": "captured for OLDSUI-274",
   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:159.0) Gecko/20100101 Firefox/159.0",
-  "types": [
-    "text/html",
-    "text/rtf",
-    "text/plain",
-    "Files"
-  ],
+  "types": ["text/html", "text/rtf", "text/plain", "Files"],
   "files": [
     {
       "name": "image.png",
