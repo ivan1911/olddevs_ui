@@ -1,35 +1,35 @@
 /**
- * Каталог сообщений кита: тип и форма значения.
+ * The kit's message catalog: the type and the shape of a value.
  *
- * Пространство имён — на семью компонентов; строки, которые встречаются в
- * нескольких семьях, живут в `common` и не дублируются. Правило простое: если
- * подпись значит одно и то же в двух местах, у неё один ключ.
+ * A namespace per component family. Strings that appear in several families live in
+ * `common` and are not duplicated. The rule is simple: if a label means the same thing
+ * in two places, it has one key.
  *
- * ФОРМА ЗНАЧЕНИЯ. Простое сообщение — строка. Параметризованное — функция
- * `(vars) => string`, а не ICU-шаблон. Параметризованных из девяноста строк
- * кита девять, из них три со склонением, и ради них тащить в бандл потребителя
- * парсер ICU несоразмерно. Цена решения записывается прямо: файл локали
- * перестаёт быть данными и становится кодом, поэтому во внешний TMS он не
- * отдаётся как есть. Решение — ADR-0002.
+ * THE SHAPE OF A VALUE. A plain message is a string. A parameterized one is a function
+ * `(vars) => string`, not an ICU template. Of the roughly ninety strings in the kit, nine
+ * are parameterized and three of those need plural forms, and pulling an ICU parser into
+ * the consumer's bundle for them is out of proportion. The cost of the decision is stated
+ * openly: a locale file stops being data and becomes code, so it is not handed to an
+ * external TMS as is. See ADR-0002.
  *
- * Склонение живёт ВНУТРИ файла локали и делается `Intl.PluralRules`: правила
- * знает локаль, а не компонент. Компонент, который считает окончания, — это
- * компонент, который умеет только один язык.
+ * Plural forms live INSIDE the locale file and are done with `Intl.PluralRules`: the
+ * locale knows the rules, not the component. A component that counts word endings is a
+ * component that speaks only one language.
  */
 
-/** Подписи, общие для нескольких семей. Дублировать их в семьях нельзя. */
+/** Labels shared by several families. They must not be duplicated across families. */
 export interface CommonMessages {
-  /** Крестик закрытия: `Alert`, `ModalHeader`, `Dialog`, `Keyboard`. */
+  /** Close button: `Alert`, `ModalHeader`, `Dialog`, `Keyboard`. */
   close: string;
-  /** Сброс значения: `Select`, `DateRangePicker`, `SearchControl`. */
+  /** Clearing the value: `Select`, `DateRangePicker`, `SearchControl`. */
   clear: string;
-  /** Поиск не дал результата: `Select`, `Combobox`, `CommandPalette`. */
+  /** The search found nothing: `Select`, `Combobox`, `CommandPalette`. */
   notFound: string;
-  /** Данных нет вовсе — в отличие от `notFound`, где есть запрос. */
+  /** There is no data at all, unlike `notFound`, where there is a query. */
   empty: string;
-  /** Идёт загрузка: `Spinner`. */
+  /** Loading in progress: `Spinner`. */
   loading: string;
-  /** Плейсхолдер поля поиска. */
+  /** Placeholder of the search field. */
   searchPlaceholder: string;
 }
 
@@ -38,46 +38,46 @@ export interface UiMessages {
 
   alert: {
     /**
-     * Своя подпись, а не `common.close`: у сообщения крестик закрывает ИМЕННО
-     * сообщение, и скринридер обязан это сказать. Обобщение до «Закрыть»
-     * стоило бы конкретности имени — ровно того, ради чего подпись есть.
+     * Its own label, not `common.close`: on a message, the close button closes THIS
+     * message, and the screen reader must say so. Generalizing it to "Close" would lose
+     * the specificity of the name, which is exactly what the label is for.
      */
     close: string;
   };
 
   banner: {
     /**
-     * Своя подпись, а не `common.close`: баннер закрывает СООБЩЕНИЕ УРОВНЯ
-     * ПРИЛОЖЕНИЯ, и «Закрыть» рядом с крестиком шапки или диалога звучало бы
-     * одинаково для разных вещей. Та же причина, что у `alert.close`.
+     * Its own label, not `common.close`: the banner closes an APP-LEVEL MESSAGE, and
+     * "Close" next to the close button of a header or a dialog would sound the same for
+     * different things. The same reason as for `alert.close`.
      */
     close: string;
   };
 
   breadcrumbs: {
     label: string;
-    /** Подсказка у свёрнутых звеньев. */
+    /** Hint on the collapsed items. */
     collapsed: (vars: { count: number }) => string;
   };
 
   combobox: {
-    /** Подпись кнопки, раскрывающей список подсказок. */
+    /** Label of the button that expands the list of suggestions. */
     showSuggestions: string;
   };
 
   commandPalette: {
     title: string;
     placeholder: string;
-    /** Подсказка при пустом запросе. */
+    /** Hint shown for an empty query. */
     emptyHint: string;
   };
 
   confirmDialog: {
     confirm: string;
     cancel: string;
-    /** Подпись поля подтверждения вводом (`typeToConfirm`): что именно надо набрать. */
+    /** Label of the type-to-confirm field (`typeToConfirm`): what exactly must be typed. */
     typeToConfirm: (vars: { text: string }) => string;
-    /** Подсказка под этим полем: по какому правилу сверяется набранное. */
+    /** Hint under this field: the rule the typed text is checked against. */
     typeToConfirmHint: string;
   };
 
@@ -96,43 +96,42 @@ export interface UiMessages {
   fileDropzone: {
     label: string;
     browse: string;
-    /** Причина отказа: файл больше лимита. Размер уже отформатирован. */
+    /** Rejection reason: the file is over the limit. The size is already formatted. */
     tooLarge: (vars: { size: string }) => string;
-    /** Причина отказа: пришло несколько файлов, а принимается один. */
+    /** Rejection reason: several files arrived, but only one is accepted. */
     singleFileOnly: string;
-    /** Причина отказа: папки не принимаются. */
+    /** Rejection reason: folders are not accepted. */
     foldersNotAccepted: string;
-    /** Причина отказа: тип файла не подходит под `accept`. */
+    /** Rejection reason: the file type does not match `accept`. */
     wrongType: string;
-    /** Причина отказа: файл не удалось прочитать. */
+    /** Rejection reason: the file could not be read. */
     unreadable: string;
-    /** Подставляется вместо имени, когда у элемента его нет: это папка. */
+    /** Substituted for the name when the item has none: it is a folder. */
     folderName: string;
   };
 
   filterBar: {
-    /** Доступное имя набора применённых фильтров. */
+    /** Accessible name of the set of applied filters. */
     label: string;
     /**
-     * Имя кнопки снятия — БЕЗ подписи фильтра.
+     * The name of the remove button WITHOUT the filter's label.
      *
-     * react-aria сам дописывает к имени кнопки подпись своего тега
-     * (`aria-labelledby` на кнопку и на тег), и «Снять фильтр Раздел: Договоры»
-     * превращалось в «…Раздел: Договоры Раздел: Договоры». Скринридер всё
-     * равно читает фильтр — его добавляет библиотека.
+     * react-aria itself appends its tag's label to the button's name (`aria-labelledby`
+     * on the button and on the tag), and "Remove filter Section: Contracts" became
+     * "…Section: Contracts Section: Contracts". The screen reader reads the filter anyway,
+     * because the library adds it.
      */
     remove: string;
     clear: string;
-    /** Кнопка добавления фильтра и подписи её полей. */
+    /** The add-filter button and the labels of its fields. */
     add: string;
     field: string;
     value: string;
     apply: string;
     /**
-     * Диапазон (ADR-0063): подписи двух полей ввода и три формы подписи
-     * токена. Токен собирается как «Поле: <форма>» — «Сумма: 50–100»,
-     * «Сумма: от 50», «Дата: до 12 марта». Границы приходят уже
-     * отформатированными по локали `UiProvider`.
+     * Range (ADR-0063): the labels of the two input fields and three forms of the token
+     * label. The token is built as "Field: <form>": "Amount: 50–100", "Amount: from 50",
+     * "Date: until March 12". The bounds arrive already formatted for the `UiProvider` locale.
      */
     fromField: string;
     toField: string;
@@ -143,46 +142,45 @@ export interface UiMessages {
 
   maskedInput: {
     /**
-     * Символ не подошёл под маску.
+     * The character did not match the mask.
      *
-     * Говорит, ЧЕГО ждали, а не «неверный ввод»: пользователь, услышавший
-     * второе, знает ровно столько же, сколько до объявления. Эталонная
-     * реализация USWDS провалила на этом тест WCAG 3.3.3 — отброшенный ввод
-     * там не объявляется вовсе.
+     * It says what was expected, not "invalid input": a user who hears the second knows
+     * exactly as much as before the announcement. The reference USWDS implementation
+     * failed the WCAG 3.3.3 test on this: a rejected input was not announced there at all.
      */
     rejected: (vars: { expected: "digit" | "letter" | "any" }) => string;
-    /** Маска заполнена целиком — месту для нового символа взяться неоткуда. */
+    /** The mask is filled completely: there is no room for a new character. */
     full: string;
     /**
-     * Вставленное значение длиннее маски, и хвост в поле не попал.
+     * The pasted value is longer than the mask, and its tail did not fit into the field.
      *
-     * Отдельно от `full`, потому что это ДРУГОЙ отказ: там места не было
-     * изначально, здесь часть значения принята, а часть отброшена. Молчать
-     * нельзя — обрезка даёт правдоподобный результат: `89161234567` под
-     * маской телефона превращается в `+7 (891) 612-34-56`, то есть в чужой
-     * номер, и ни компонент, ни глаз этого не замечают.
+     * Kept separate from `full`, because this is a DIFFERENT rejection: there the field had
+     * no room from the start, while here part of the value was accepted and part was dropped.
+     * It must not be silent, because truncation gives a plausible result: `89161234567` under
+     * a phone mask turns into `+7 (891) 612-34-56`, that is, another person's number, and
+     * neither the component nor the eye notices it.
      */
     truncated: (vars: { count: number }) => string;
   };
 
   inlineEdit: {
     /**
-     * Хвост доступного имени кнопки-значения: «Ежедневная подборка, изменить».
+     * The tail of the value button's accessible name: "Daily digest, edit".
      *
-     * Имя строится из СОДЕРЖИМОГО, а не задаётся `aria-label`: значение
-     * обязано быть в имени, иначе скринридер объявляет «изменить название» и
-     * не читает то, что там сейчас написано.
+     * The name is built from the CONTENT, not set by `aria-label`: the value must be in the
+     * name, otherwise the screen reader announces "edit title" and never reads what is
+     * there now.
      */
     edit: string;
-    /** Подпись пустого значения на кнопке. */
+    /** Label of the empty value on the button. */
     empty: string;
   };
 
   keyboard: {
-    /** Имя виджета целиком; раскладка — данные, а не перевод. */
+    /** The whole widget's name; the layout is data, not a translation. */
     label: (vars: { layout: KeyboardLayoutName }) => string;
     close: string;
-    /** Подпись ручки перетаскивания. */
+    /** Label of the drag handle. */
     move: string;
     switchLayout: string;
     switchLayoutTo: (vars: { layout: KeyboardLayoutName }) => string;
@@ -193,7 +191,7 @@ export interface UiMessages {
     backspace: string;
     space: string;
     submit: string;
-    /** Имена символьных клавиш: озвучиваются, но не рисуются. */
+    /** Names of the character keys: they are spoken but not drawn. */
     keyComma: string;
     keyPeriod: string;
     keyLess: string;
@@ -203,7 +201,7 @@ export interface UiMessages {
   };
 
   link: {
-    /** Только для скринридера: ссылка откроется в новой вкладке. */
+    /** Screen reader only: the link opens in a new tab. */
     opensInNewTab: string;
   };
 
@@ -213,30 +211,30 @@ export interface UiMessages {
   };
 
   nav: {
-    /** Доступное имя `<nav>` сайдбара. */
+    /** Accessible name of the sidebar's `<nav>`. */
     label: string;
     /**
-     * Подписи кнопки сворачивания. Две, а не одна с подстановкой: кнопка
-     * называет ДЕЙСТВИЕ, и «свернуть»/«развернуть» — разные действия, а не
-     * одно с параметром.
+     * Labels of the collapse button. Two, not one with a substitution: the button names an
+     * ACTION, and "collapse" and "expand" are different actions, not one action with a
+     * parameter.
      */
     collapse: string;
     expand: string;
   };
 
   mobileTabBar: {
-    /** Доступное имя `<nav>` нижней полосы разделов. */
+    /** Accessible name of the bottom section bar's `<nav>`. */
     label: string;
     /**
-     * Текст точки «есть новое» для скринридера.
+     * Text of the "has something new" dot for the screen reader.
      *
-     * Точка — сигнал для глаз и текста в разметке не несёт: без этой строки
-     * пункт с точкой звучит так же, как без неё.
+     * The dot is a signal for the eye and carries no text in the markup: without this
+     * string, an item with a dot sounds the same as one without it.
      */
     new: string;
     /**
-     * Имя числового счётчика пункта: голое «3» рядом с названием раздела
-     * ни о чём не говорит. Настоящее число, а не «99+» с экрана.
+     * The name of an item's numeric counter: a bare "3" next to the section's name says
+     * nothing. It is the real number, not the "99+" shown on screen.
      */
     newCount: (vars: { count: number }) => string;
   };
@@ -249,19 +247,19 @@ export interface UiMessages {
 
   passwordInput: {
     /**
-     * Подпись кнопки показа — ОДНА на оба состояния.
+     * The label of the show button is ONE for both states.
      *
-     * Состояние объявляет `aria-pressed`, а не подпись: кнопка-переключатель,
-     * у которой меняется и имя, и состояние, читается дважды и противоречиво
-     * («Скрыть пароль, нажато»). Правило APG — имя постоянно, меняется признак.
+     * The state is announced by `aria-pressed`, not by the label: a toggle button whose name
+     * and state both change is read twice and contradictorily ("Hide password, pressed").
+     * The APG rule: the name stays constant, the flag changes.
      */
     toggle: string;
-    /** Предупреждение о включённом Caps Lock. */
+    /** Warning that Caps Lock is on. */
     capsLock: string;
   };
 
   pinInput: {
-    /** Имя одного поля кода: без него скринридер читает N безымянных полей. */
+    /** The name of one code field: without it the screen reader reads N unnamed fields. */
     digit: (vars: { index: number; total: number }) => string;
   };
 
@@ -273,18 +271,18 @@ export interface UiMessages {
   selectionBar: {
     label: string;
     clearSelection: string;
-    /** Со склонением: 1 выбран, 2 выбрано, 5 выбрано. */
+    /** With plural forms: 1 selected, 2 selected, 5 selected. */
     count: (vars: { count: number }) => string;
   };
 
   shell: {
     /**
-     * Первая фокусируемая ссылка страницы: перескочить навигацию и уйти в
-     * `<main>`. Видима только под фокусом, но это НЕ sr-only текст —
-     * клавиатурный пользователь без скринридера видит её глазами.
+     * The first focusable link on the page: it skips the navigation and goes to `<main>`.
+     * It is visible only on focus, but this is NOT sr-only text: a keyboard user without
+     * a screen reader sees it with their eyes.
      */
     skipToContent: string;
-    /** Кнопка, открывающая навигацию ящиком на узких экранах. */
+    /** Button that opens the navigation as a drawer on narrow screens. */
     openNavigation: string;
   };
 
@@ -295,14 +293,15 @@ export interface UiMessages {
   stepper: {
     label: string;
     /**
-     * Состояние шага для озвучки: пройден или впереди.
+     * The state of a step for speech: passed or upcoming.
      *
-     * Состояние выражалось ТОЛЬКО кружком с номером или галочкой, а он помечен
-     * `aria-hidden`. Скринридер читал мастер из пяти одинаковых пунктов и
-     * текущий — какие уже заполнены, а какие впереди, не сообщалось никак.
+     * The state used to be expressed ONLY by the circle with a number or a checkmark, and
+     * that is marked `aria-hidden`. The screen reader read the wizard as five identical
+     * items, and which steps were already filled in and which were still upcoming was not
+     * reported at all.
      *
-     * ТЕКУЩЕГО ШАГА ЗДЕСЬ НЕТ: его объявляет `aria-current="step"`, и своя
-     * строка давала бы «current step, current step, Оплата».
+     * The CURRENT step is NOT here: it is announced by `aria-current="step"`, and a string
+     * of its own would produce "current step, current step, Payment".
      */
     state: (vars: { state: "done" | "upcoming" }) => string;
   };
@@ -311,15 +310,15 @@ export interface UiMessages {
     empty: string;
     selectAll: string;
     selectRow: string;
-    /** Доступное имя колонки-раскрывателя: без него столбец безымянный. */
+    /** Accessible name of the expander column: without it the column is unnamed. */
     expandColumn: string;
     /**
-     * Подписи кнопки раскрытия. Две, потому что это разные действия.
+     * Labels of the expand button. Two, because these are different actions.
      *
-     * Принимают имя строки: одинаковое «Показать подробности» у двадцати строк
-     * даёт скринридеру в режиме перечисления кнопок двадцать одинаковых имён.
-     * Имя необязательно — его даёт `rowLabel`, а его у таблицы может не быть;
-     * ветвление живёт в файле локали, как и склонение.
+     * They take the row's name: the same "Show details" on twenty rows gives the screen
+     * reader twenty identical names in button-list mode. The name is optional: it comes
+     * from `rowLabel`, and a table may not have one. The branching lives in the locale file,
+     * as the plural forms do.
      */
     expandRow: (vars: { row?: string }) => string;
     collapseRow: (vars: { row?: string }) => string;
@@ -330,25 +329,25 @@ export interface UiMessages {
     density: string;
     comfortable: string;
     compact: string;
-    /** Подписи кнопок порядка называют колонку: иначе они неразличимы. */
+    /** The order buttons name the column: otherwise they are indistinguishable. */
     moveUp: (vars: { column: string }) => string;
     moveDown: (vars: { column: string }) => string;
   };
 
   tableToolbar: {
-    /** Сколько записей всего. Со склонением: 1 запись, 2 записи, 5 записей. */
+    /** Total number of records. With plural forms: 1 record, 2 records, 5 records. */
     total: (vars: { count: number }) => string;
-    /** Доступное имя кнопки настроек таблицы. */
+    /** Accessible name of the table settings button. */
     preferences: string;
   };
 
   tagInput: {
     /**
-     * Имя кнопки снятия — БЕЗ имени тега.
+     * The name of the remove button WITHOUT the tag's name.
      *
-     * react-aria сам дописывает к имени кнопки подпись своего тега, и
-     * «Убрать тег альфа» превращалось в «…альфа альфа». Найдено ревью волны 18
-     * вычислением доступного имени; тот же дефект был у `FilterBar`.
+     * react-aria itself appends its tag's label to the button's name, and "Remove tag alpha"
+     * became "…alpha alpha". Found in the wave-18 review by computing the accessible name;
+     * the same defect was in `FilterBar`.
      */
     remove: string;
     add: string;
@@ -357,450 +356,451 @@ export interface UiMessages {
 
   tagGroup: {
     /**
-     * Имя кнопки удаления — С подписью метки внутри («Удалить: Дизайн»).
+     * The name of the delete button INCLUDES the label inside it ("Delete: Design").
      *
-     * В отличие от `tagInput.remove` подпись вписана в ЭТУ строку, а не
-     * дописывается react-aria: порядок слов принадлежит языку, и «Удалить: X»
-     * не везде строится как «глагол плюс имя». Поэтому на кнопке отключён
-     * `aria-labelledby` react-aria — иначе имя читалось бы дважды.
+     * Unlike `tagInput.remove`, the label is written into THIS string and not appended by
+     * react-aria: the order of words belongs to the language, and "Delete: X" is not built
+     * as "verb plus name" everywhere. That is why react-aria's `aria-labelledby` is turned
+     * off on the button, otherwise the name would be read twice.
      */
     remove: (vars: { label: string }) => string;
   };
 
   copyButton: {
-    /** Обычное состояние кнопки. */
+    /** Normal state of the button. */
     copy: string;
-    /** Получилось. Объявляется, а не только меняет иконку. */
+    /** Succeeded. It is announced, not just changes the icon. */
     copied: string;
     /**
-     * Не получилось.
+     * Failed.
      *
-     * Отказ буфера — законный исход: в небезопасном контексте
-     * `navigator.clipboard` отсутствует вовсе, а запись может быть запрещена
-     * разрешениями. Молчать об этом значит показать пользователю кнопку,
-     * которая ничего не делает.
+     * A failed copy is a legitimate outcome: in an insecure context `navigator.clipboard`
+     * is absent altogether, and writing may be forbidden by permissions. Staying silent
+     * about it would show the user a button that does nothing.
      */
     failed: string;
   };
 
   mediaCard: {
     /**
-     * Подпись кнопки выбора. Состояние в неё НЕ входит: его объявляет
-     * `aria-pressed`, и «Выбрано, снять выбор» прозвучало бы дважды.
+     * Label of the select button. The state is NOT part of it: it is announced by
+     * `aria-pressed`, and "Selected, deselect" would be read twice.
      */
     select: string;
   };
 
   notifications: {
-    /** Доступное имя списка событий. */
+    /** Accessible name of the events list. */
     label: string;
     /**
-     * Слово рядом с непрочитанным событием.
+     * The word next to an unread event.
      *
-     * Точка и подложка — сигнал для глаз; без этой строки человек, который их
-     * не видит, не отличит новое событие от старого вовсе.
+     * The dot and the background are signals for the eye. Without this string, a person
+     * who cannot see them would not tell a new event from an old one at all.
      */
     unread: string;
-    /** Имя счётчика непрочитанных: голое «3» ни о чём не говорит. */
+    /** Name of the unread counter: a bare "3" says nothing. */
     unreadCount: (vars: { count: number }) => string;
   };
 
   editableList: {
     /**
-     * Имя ручки перетаскивания — ТОЛЬКО глагол.
+     * The name of the drag handle is ONLY a verb.
      *
-     * Своё, а не общее с `sortableList`: два компонента, делящие один ключ,
-     * ломаются молча, когда у одного из них подпись понадобится другая.
+     * Its own, not shared with `sortableList`: two components sharing one key break
+     * silently as soon as one of them needs a different label.
      */
     drag: string;
     /**
-     * Что показать вместо пустого названия строки.
+     * What to show instead of an empty row title.
      *
-     * Строка с пустым значением — не ошибка данных: правку могли подтвердить
-     * пустой. Показывать нечего, а строка при этом обязана остаться видимой и
-     * правимой, иначе исправить её нечем.
+     * A row with an empty value is not a data error: the edit could have been confirmed
+     * with an empty value. There is nothing to show, but the row must stay visible and
+     * editable, otherwise there would be no way to fix it.
      */
     emptyValue: string;
   };
 
   sortableList: {
     /**
-     * Имя ручки перетаскивания — ТОЛЬКО глагол.
+     * The name of the drag handle is ONLY a verb.
      *
-     * Подпись строки react-aria дописывает сама («Перетащить Отчёт за март»);
-     * повторив её здесь, мы получили бы её дважды — тот же урок, что с
-     * кнопками внутри `TagGroup` в ревью 2.1.0.
+     * react-aria appends the row's label itself ("Drag Report for March"). Repeating it
+     * here would give it twice, the same lesson as with the buttons inside `TagGroup`
+     * in review 2.1.0.
      */
     drag: string;
   };
 
   contextualSaveBar: {
-    /** Доступное имя полосы. */
+    /** Accessible name of the bar. */
     label: string;
-    /** Умолчание, когда число правок не передано. */
+    /** Default when the number of edits is not passed. */
     unsaved: string;
-    /** То же с числом: склонение делает локаль, а не компонент. */
+    /** The same, with a number: the locale does the plural forms, not the component. */
     changes: (vars: { count: number }) => string;
     save: string;
     cancel: string;
-    /** Ход сохранения — объявляется, а не только рисуется на кнопке. */
+    /** Save in progress: it is announced, not just drawn on the button. */
     saving: string;
   };
 
   savedViews: {
-    /** Доступное имя группы переключателей вида. */
+    /** Accessible name of the view switcher group. */
     label: string;
   };
 
   uploadQueue: {
-    /** Доступное имя списка очереди. */
+    /** Accessible name of the queue list. */
     label: string;
     /**
-     * Итог очереди для скринридера: частичный успех иначе виден только глазами.
+     * The queue summary for the screen reader: a partial success is otherwise visible
+     * only to the eyes.
      *
-     * Склонение делает файл локали через `Intl.PluralRules` — правила знает
-     * локаль, а не компонент.
+     * The plural forms are done by the locale file through `Intl.PluralRules`: the locale
+     * knows the rules, not the component.
      */
     summary: (vars: { done: number; total: number; failed: number }) => string;
-    /** Имя полосы прогресса, когда имя файла — не строка. */
+    /** Name of the progress bar when the file name is not a string. */
     progress: string;
-    /** Имя полосы прогресса конкретного файла. */
+    /** Name of the progress bar of a specific file. */
     itemProgress: (vars: { name: string }) => string;
   };
 
   treeView: {
     /**
-     * Имя кнопки раскрытия — БЕЗ имени узла: react-aria дописывает подпись
-     * своего элемента сам, и «Раскрыть Природа» превращалось бы в
-     * «…Природа Природа» (урок ревью волны 18).
+     * The name of the expand button WITHOUT the node's name: react-aria appends its item's
+     * label itself, and "Expand Nature" would become "…Nature Nature" (a lesson from the
+     * wave-18 review).
      */
     expand: string;
     collapse: string;
-    /** Имя флажка выбора узла. */
+    /** Name of the node's selection checkbox. */
     select: string;
   };
 
   timePicker: {
     label: string;
-    /** Маска ввода: буквы часов и минут на языке локали. */
+    /** Input mask: the letters for hours and minutes in the locale's language. */
     placeholder: string;
-    /** Маска ввода при `hourCycle={12}`. */
+    /** Input mask with `hourCycle={12}`. */
     placeholder12: string;
-    /** Подпись времени до полудня на 12-часовых часах. */
+    /** Label for the time before noon on a 12-hour clock. */
     am: string;
-    /** Подпись времени после полудня на 12-часовых часах. */
+    /** Label for the time after noon on a 12-hour clock. */
     pm: string;
   };
 
   topbar: {
     /**
-     * Доступное имя `<header>`. Нужно даже при единственной шапке: во
-     * встроенном виджете она перестаёт быть уникальным `banner` документа.
+     * Accessible name of the `<header>`. It is needed even with a single header: in an
+     * embedded widget it stops being the document's unique `banner`.
      */
     label: string;
   };
 
   rating: {
-    /** Значение словами — единственный носитель величины для скринридера. */
+    /** The value in words: the only carrier of the magnitude for the screen reader. */
     value: (vars: { value: number; total: number }) => string;
-    /** Имя отдельной звезды в радиогруппе. */
+    /** Name of an individual star in the radio group. */
     star: (vars: { index: number; total: number }) => string;
   };
 
   colorPicker: {
-    /** Подпись ряда пресетов. */
+    /** Label of the row of presets. */
     presets: string;
     /**
-     * Подпись поля ввода. Всегда про шестнадцатеричный формат: поле такое и
-     * есть, а `outputFormat` меняет только строку наружу.
+     * Label of the input field. It is always about the hexadecimal format: the field is
+     * exactly that, and `outputFormat` changes only the string that goes out.
      */
     hex: string;
   };
 
   treeSelect: {
-    /** Подпись закрытого поля, когда ничего не выбрано. */
+    /** Label of the closed field when nothing is selected. */
     placeholder: string;
-    /** Свёрнутый хвост чипов: «ещё 4». */
+    /** The collapsed tail of the chips: "4 more". */
     more: (vars: { count: number }) => string;
   };
 
   transfer: {
-    /** Подпись левой колонки по умолчанию. */
+    /** Label of the default left column. */
     source: string;
-    /** Подпись правой колонки по умолчанию. */
+    /** Label of the default right column. */
     target: string;
-    /** Имя кнопки «вправо». */
+    /** Name of the "right" button. */
     moveToTarget: string;
-    /** Имя кнопки «влево». */
+    /** Name of the "left" button. */
     moveToSource: string;
     /**
-     * Имя поля поиска внутри колонки.
+     * Name of the search field inside a column.
      *
-     * Параметризовано подписью колонки: полей поиска на экране два, и «Поиск» у
-     * обоих не различает их ничем.
+     * Parameterized with the column's label: there are two search fields on the screen,
+     * and "Search" in both would not tell them apart.
      */
     searchIn: (vars: { list: string }) => string;
   };
 
   splitPanel: {
-    /** Имя ручки, когда у панели нет своего имени. */
+    /** Name of the handle when the panel has no name of its own. */
     resize: string;
     /**
-     * Имя ручки, когда панель названа: «Изменить размер: Детали заказа».
+     * Name of the handle when the panel is named: "Resize: Order details".
      *
-     * Два ключа, а не подстановка пустой строки: ручек на экране бывает
-     * несколько, и «Изменить размер» у каждой не различает их ничем.
+     * Two keys, not a substitution of an empty string: there can be several handles on the
+     * screen, and "Resize" on each of them would not tell them apart.
      */
     resizeNamed: (vars: { panel: string }) => string;
-    /** Текущий размер словами — `aria-valuetext` ползунка. */
+    /** The current size in words: the slider's `aria-valuetext`. */
     size: (vars: { size: number }) => string;
   };
 
   splitButton: {
     /**
-     * Доступное имя раскрывателя, построенное из подписи главного действия.
+     * The accessible name of the expander, built from the label of the main action.
      *
-     * Параметризовано намеренно: раскрывателей на странице обычно несколько, и
-     * без подписи действия они неразличимы в речи — «кнопка», «кнопка»,
-     * «кнопка».
+     * Parameterized on purpose: there are usually several expanders on a page, and without
+     * the action's label they are indistinguishable in speech: "button", "button", "button".
      */
     more: (vars: { action: string }) => string;
   };
 
   period: {
-    /** Подписи пресетов периода: 7 дней, этот месяц и так далее. */
+    /** Labels of the period presets: 7 days, this month and so on. */
     presets: Record<PeriodPresetKey, string>;
-    /** Длина периода со склонением: 1 день, 2 дня, 5 дней. */
+    /** Length of the period, with plural forms: 1 day, 2 days, 5 days. */
     length: (vars: { days: number }) => string;
   };
 
   carousel: {
     /**
-     * Что скринридер называет регионом: `aria-roledescription` — это текст для
-     * слуха, а не токен ARIA, и на русском интерфейсе английское «carousel»
-     * прозвучало бы чужим словом.
+     * What the screen reader calls the region: `aria-roledescription` is text for the ear,
+     * not an ARIA token, and in a Russian interface the English "carousel" would sound like
+     * a foreign word.
      */
     roleDescription: string;
-    /** То же для слайда: «слайд, 2 из 5». */
+    /** The same for a slide: "slide, 2 of 5". */
     slideRoleDescription: string;
-    /** Имя кнопки «назад». */
+    /** Name of the "back" button. */
     previous: string;
-    /** Имя кнопки «вперёд». */
+    /** Name of the "forward" button. */
     next: string;
-    /** Имя слайда: положение в ленте. Слово «слайд» добавляет роль, не имя. */
+    /** Name of a slide: its position in the strip. The role adds the word "slide", not the name. */
     slide: (vars: { index: number; total: number }) => string;
   };
 
   megaMenu: {
     /**
-     * Строка возврата на узком экране: открытая Категория заменяет Столбец, и
-     * эта кнопка возвращает его. Имя кнопки — одно слово без названия
-     * Категории: название стоит рядом текстом, а регион им уже подписан.
+     * The back row on a narrow screen: an open category replaces the category column, and
+     * this button brings it back. The button's name is one word without the category's name:
+     * the name stands next to it as text, and the region is already labeled by it.
      */
     back: string;
   };
 
   shortcutsHelp: {
-    /** Заголовок окна по умолчанию. Он же доступное имя диалога. */
+    /** Default window title. It is also the dialog's accessible name. */
     title: string;
     /**
-     * Имя прокручиваемой области со списком. Своё, а не повтор заголовка:
-     * одинаковые имена у окна и у региона внутри него скринридер объявил бы
-     * дважды подряд.
+     * The name of the scrollable area with the list. Its own, not a repeat of the title:
+     * identical names on the window and on the region inside it would make the screen reader
+     * announce them twice in a row.
      */
     list: string;
     /**
-     * Слово между клавишами сочетания, только для слуха: «Ctrl плюс K».
+     * The word between the keys of a shortcut, for the ear only: "Ctrl plus K".
      *
-     * Видимый «+» скринридеры читают по-разному — NVDA на умолчательном уровне
-     * пунктуации его опускает, и «Ctrl K» звучит как две отдельные клавиши, а не
-     * как сочетание. Слово из каталога снимает зависимость от настроек.
+     * Screen readers read the visible "+" differently: NVDA at its default punctuation level
+     * drops it, and "Ctrl K" sounds like two separate keys rather than a shortcut. A word from
+     * the catalog removes the dependency on settings.
      */
     keySeparator: string;
   };
 
   /**
-   * Редактор форматированного текста — отдельный вход `@olddevs/ui/editor`
-   * (ADR-0050). Строки живут в общем каталоге, а не в своём: локаль
-   * потребитель подключает одной строкой на весь кит, и второй каталог ради
-   * подпути он бы просто не нашёл.
+   * The rich text editor: a separate entry point `@olddevs/ui/editor` (ADR-0050). Its strings
+   * live in the shared catalog, not in a catalog of their own: the consumer wires the locale
+   * with one line for the whole kit, and a second catalog for a subpath would simply not be
+   * picked up.
    */
   editor: {
     /**
-     * Доступное имя поля, когда его не дали ни `aria-label`, ни подпись
-     * `FormField`. Без него скринридер объявил бы безымянное «поле ввода».
+     * The accessible name of the field when neither `aria-label` nor a `FormField` label is
+     * given. Without it, the screen reader would announce an unnamed "input field".
      */
     label: string;
-    /** Плейсхолдер пустого документа по умолчанию. */
+    /** Placeholder of the empty default document. */
     placeholder: string;
-    /** Счётчик при `maxLength`, начиная с 80 % предела: «Осталось 12 символов». */
+    /** Counter with `maxLength`, starting at 80% of the limit: "12 characters left". */
     remaining: (vars: { count: number }) => string;
     /**
-     * Документ длиннее предела — пришёл таким в `value`. Своя строка, а не
-     * отрицательное «осталось»: «Осталось −3 символа» читается как опечатка.
+     * The document is longer than the limit: it came in that way in `value`. A string of its
+     * own, not a negative "left" count: "−3 characters left" reads as a typo.
      */
     overLimit: (vars: { count: number }) => string;
     /**
-     * Пузырь браузера на пустом обязательном редакторе. Своя строка, а не
-     * родное «Please fill out this field»: оно живёт в языке браузера и не
-     * следует за локалью кита.
+     * The browser's bubble on an empty required editor. A string of its own, not the native
+     * "Please fill out this field": that one lives in the browser's language and does not
+     * follow the kit's locale.
      */
     required: string;
     /**
-     * Имя Панели (`role="toolbar"`). Безымянную панель скринридер объявляет
-     * просто «панель инструментов», не говоря, к чему она относится.
+     * The name of the Toolbar (`role="toolbar"`). An unnamed toolbar is announced by the
+     * screen reader simply as "toolbar", without saying what it belongs to.
      */
     toolbar: string;
     /**
-     * Имя меню выделения (`toolbar="bubble"`, `role="toolbar"`). Своё, а не
-     * «Форматирование» Панели: это другой набор кнопок, и скринридер должен
-     * отличать плашку над выделением от Панели над полем.
+     * The name of the selection menu (`toolbar="bubble"`, `role="toolbar"`). Its own, not the
+     * Toolbar's "Formatting": it is a different set of buttons, and the screen reader must
+     * tell the Bubble menu's pill over the selection apart from the Toolbar over the field.
      */
     selectionToolbar: string;
     /**
-     * Прежний список стиля текста на Панели («Стиль текста: Абзац»).
+     * The former text style list on the Toolbar ("Text style: Paragraph").
      *
-     * @deprecated Панель его больше не читает: тип Блока выбирают в меню
-     * «¶» (`blockType`). Ключ оставлен, чтобы частичный каталог потребителя с
-     * ним компилировался; уйдёт в 4.0.0.
+     * @deprecated The Toolbar no longer reads it: the Block type is chosen in the "¶" menu
+     * (`blockType`). The key stays so that a consumer's partial catalog with it still
+     * compiles; it goes in 4.0.0.
      */
     textStyle: (vars: { current: string }) => string;
     /**
-     * Меню «¶» — тип Блока: имя кнопки (и меню), когда под
-     * кареткой нет текстового Блока — выделена картинка или разделитель.
+     * The "¶" menu, the Block type: the name of the button (and the menu) when there is no
+     * text Block under the caret, that is, an image or a divider is selected.
      */
     blockTypeMenu: string;
     /**
-     * Имя кнопки меню «¶» с текущим типом Блока: «Тип блока: Заголовок 2».
-     * Иконка кнопки показывает тип глазу, имя — скринридеру; без значения в
-     * имени он узнал бы тип, только открыв меню.
+     * The name of the "¶" menu button with the current Block type: "Block type: Heading 2".
+     * The button's icon shows the type to the eye, the name shows it to the screen reader;
+     * without the value in the name, the user would learn the type only by opening the menu.
      */
     blockType: (vars: { current: string }) => string;
     /**
-     * Меню «…»: имя кнопки и меню с редкими метками, маркером,
-     * цветом текста и очисткой стилей. Текущего значения в имени нет: у меню
-     * много независимых отметок, и одно значение кнопка не назовёт.
+     * The "…" menu: the name of the button and the menu with the rarer marks, the highlight,
+     * text color and clearing of styles. There is no current value in the name: the menu has
+     * many independent marks, and one value would not name the button.
      */
     moreFormatting: string;
     /**
-     * Пункт «обычный текст» меню «¶». Не `paragraph`: в Меню вставки тот же
-     * Блок называется «Абзац», а меню «¶» говорит словами образца — «Текст».
+     * The "plain text" item of the "¶" menu. Not `paragraph`: in the Slash menu the same
+     * Block is called "Paragraph", while the "¶" menu uses the wording of the design
+     * reference: "Text".
      */
     textBlock: string;
-    /** Пункт «обычный абзац» в разделе «Превратить в» Меню вставки. */
+    /** The "plain paragraph" item in the "Turn into" section of the Slash menu. */
     paragraph: string;
-    /** Заголовок уровня `level` (1–4) — пункт меню «¶» и Меню вставки, значение на кнопке «¶». */
+    /**
+     * Heading of level `level` (1–4): an item of the "¶" and Slash menus, and the value on
+     * the "¶" button.
+     */
     heading: (vars: { level: number }) => string;
     /**
-     * Меню вставки: имя кнопки «+» на Панели и имя списка, который открывает
-     * `/` в тексте. Одно имя на оба входа — это одно меню.
+     * The Slash menu: the name of the "+" button on the Toolbar and the name of the list that
+     * `/` opens in the text. One name for both entry points: it is one menu.
      */
     insertMenu: string;
-    /** Раздел меню вставки: новый Блок после текущего. */
+    /** Section of the Slash menu: a new Block after the current one. */
     insertSection: string;
-    /** Раздел меню вставки: сменить тип текущего Блока, сохранив текст. */
+    /** The "Turn into" section of the Slash menu: changes the type of the current Block, keeping the text. */
     turnIntoSection: string;
     /**
-     * Строка меню вставки, когда набранное после `/` ничему не отвечает. Без
-     * неё пустой список выглядел бы зависшим, а скринридер не услышал бы ничего.
+     * The Slash menu's row for when what is typed after `/` matches nothing. Without it, an
+     * empty list would look frozen, and the screen reader would hear nothing.
      */
     nothingFound: string;
     /**
-     * Имя списка своего символа-триггера (`@`, `#`), у которого потребитель не
-     * задал `label`: список подсказок рядом с кареткой.
+     * The name of the list for a custom trigger character (`@`, `#`) for which the consumer
+     * did not set a `label`: the list of suggestions next to the caret.
      */
     triggerList: string;
     bold: string;
     italic: string;
     underline: string;
     strike: string;
-    /** Строчный код — метка внутри абзаца, не блок кода. */
+    /** Inline code: a mark inside a paragraph, not a code block. */
     code: string;
     superscript: string;
     subscript: string;
-    /** Снять все метки с выделения. */
+    /** Remove all marks from the selection. */
     clearFormatting: string;
-    /** Ссылка: кнопка Панели и имя поповера ссылки. */
+    /** Link: the Toolbar button and the name of the link popover. */
     link: string;
-    /** Подпись поля адреса в поповере ссылки. */
+    /** Label of the address field in the link popover. */
     linkAddress: string;
-    /** Применить адрес — то же, что Enter в поле. */
+    /** Apply the address: the same as Enter in the field. */
     linkApply: string;
-    /** Снять ссылку, оставив текст. Есть, когда каретка уже в ссылке. */
+    /** Remove the link, keeping the text. Present when the caret is already in a link. */
     linkRemove: string;
     /**
-     * Адрес не принят: чужая схема (`javascript:`, `ftp:`), относительный путь
-     * или пробел внутри. Называет, что принимается, — иначе непонятно, что
-     * исправлять.
+     * The address was not accepted: a foreign scheme (`javascript:`, `ftp:`), a relative path,
+     * or a space inside it. Names what is accepted, otherwise it is unclear what to fix.
      */
     linkInvalid: string;
     bulletList: string;
     orderedList: string;
-    /** Чек-лист: пункты с флажками. */
+    /** Checklist: items with checkboxes. */
     taskList: string;
     blockquote: string;
     codeBlock: string;
     /**
-     * Кнопка языка у блока кода: имя включает текущий язык, как у
-     * меню цвета, — «Language: Python». Имена языков — данные
-     * (`codeLanguages.ts`), они не переводятся; блок без языка называется
-     * `codeLanguagePlain`.
+     * The language button of a code block: its name includes the current language, as the
+     * color menu's name does: "Language: Python". The language names are data (`codeLanguages.ts`)
+     * and are not translated; a block without a language is named `codeLanguagePlain`.
      */
     codeLanguage: (vars: { current: string }) => string;
-    /** Блок кода без языка: без подсветки и без `class` в Документе. */
+    /** A code block without a language: no highlighting and no `class` in the Document. */
     codeLanguagePlain: string;
     /**
-     * Подсказка кнопки «копировать» в шапке блока кода: «Copy code». Имя
-     * кнопки и «Скопировано» берутся из `copyButton` — как у кита везде.
+     * The hint of the "copy" button in the header of a code block: "Copy code". The button's
+     * name and "Copied" come from `copyButton`, as they do everywhere in the kit.
      */
     codeCopy: string;
-    /** Разделитель — горизонтальная черта между Блоками. */
+    /** Divider: a horizontal rule between Blocks. */
     horizontalRule: string;
     undo: string;
     redo: string;
     /**
-     * Имя флажка у пункта чек-листа. Флажок рисует движок, и без этой строки
-     * скринридер слышал бы английское «Task item checkbox for …». Пустой пункт
-     * приходит с `text: ""`.
+     * The name of the checkbox on a checklist item. The engine draws the checkbox, and without
+     * this string the screen reader would hear the English "Task item checkbox for …". An empty
+     * item comes with `text: ""`.
      */
     taskCheckbox: (vars: { text: string }) => string;
     /**
-     * Имя кнопки «Маркер» включает текущий цвет словом — образец глазу, имя
-     * слуху. Цвет назван оттенком, а не ролью токена:
-     * автор выбирает «красный», а не `danger`, и имя переводится.
+     * The name of the "Highlight" button includes the current color as a word: a sample for the
+     * eye, the name for the ear. The color is named by its shade, not by its token role: the
+     * author picks "red", not `danger`, and the name is translated.
      */
     highlight: (vars: { current: string }) => string;
-    /** Пункт «снять цвет текста» и его подпись на триггере без цвета. */
+    /** The "remove text color" item and its label on a trigger without a color. */
     colorDefault: string;
-    /** Пункт «снять маркер» и подпись триггера без маркера. */
+    /** The "remove highlight" item and the label of a trigger without a highlight. */
     highlightNone: string;
     /**
-     * Подсказка кнопки «Маркер» на Панели и в плашке меню выделения: щелчок
-     * открывает ряд маркеров. Имя кнопки — `highlight` с текущим.
+     * The hint of the "Highlight" button on the Toolbar and in the Bubble menu's pill: a click
+     * opens the row of highlights. The button's name is `highlight` with the current value.
      */
     highlightToggle: string;
-    /** «Убрать маркер» — последняя ячейка ряда и сетки маркеров, иконка с подсказкой. */
+    /** "Remove highlight": the last cell of the highlight row and grid, an icon with a hint. */
     highlightRemove: string;
-    /** «Убрать цвет» — последняя ячейка сетки «Цвет текста», иконка с подсказкой. */
+    /** "Remove color": the last cell of the "Text color" grid, an icon with a hint. */
     colorRemove: string;
     /**
-     * Кнопка «Цвет»: буква «A» текущего цвета, открывает сетки
-     * цвета текста и маркера. Это же имя у её поповера.
+     * The "Color" button: the letter "A" in the current color; it opens the text color and
+     * highlight grids. The same name belongs to its popover.
      */
     color: string;
-    /** Имя кнопки «Цвет» с текущим цветом текста: «Цвет: Красный». */
+    /** The name of the "Color" button with the current text color: "Color: Red". */
     colorMenu: (vars: { current: string }) => string;
-    /** Заголовки сеток поповера «Цвет». */
+    /** Headings of the grids in the "Color" popover. */
     textColorSection: string;
     highlightSection: string;
-    /** Имена цветов текста (`EDITOR_TEXT_COLORS` в `src/editor/styles/palette.ts`). */
+    /** Names of the text colors (`EDITOR_TEXT_COLORS` in `src/editor/styles/palette.ts`). */
     colorAccent: string;
     colorSuccess: string;
     colorWarning: string;
     colorDanger: string;
     colorLime: string;
     colorMuted: string;
-    /** Имена цветов маркера (`EDITOR_MARKERS`): девять кружков сетки, по оттенку. */
+    /** Names of the highlight colors (`EDITOR_MARKERS`): the nine circles of the grid, by shade. */
     markerGray: string;
     markerBrown: string;
     markerOrange: string;
@@ -811,58 +811,57 @@ export interface UiMessages {
     markerPink: string;
     markerRed: string;
     /**
-     * Произвольный цвет через `ColorPicker`: пункт у заголовка каждой сетки
-     * поповера «Цвет». Многоточие — признак того, что пункт открывает окно, а
-     * не применяет цвет.
+     * A custom color through `ColorPicker`: the item at the top of each "Color" popover grid.
+     * The ellipsis is the sign that the item opens a dialog rather than applying a color.
      */
     colorCustom: string;
-    /** Цвет автора в имени кнопки: «Цвет: Свой #00aa55», «Маркер: Свой #ffe066». */
+    /**
+     * The author's color in the button's name: "Color: Custom #00aa55", "Highlight: Custom #ffe066".
+     */
     colorCustomCurrent: (vars: { hex: string }) => string;
-    /** Имя поповера произвольного цвета текста. */
+    /** Name of the custom text color popover. */
     customColorText: string;
-    /** Имя поповера произвольного цвета маркера. */
+    /** Name of the custom highlight color popover. */
     customColorHighlight: string;
-    /** Кнопка выбора цвета в поповере: видимая подпись называет значение. */
+    /** The color choice button in the popover: the visible label names the value. */
     customColorValue: (vars: { hex: string }) => string;
     customColorApply: string;
     customColorCancel: string;
     /**
-     * Предупреждение о контрасте цвета текста с фоном Редактора текущей темы
-     * (WCAG 1.4.3, 4.5:1). Предупреждает, а не запрещает.
+     * A warning about the contrast of the text color with the Editor's background in the current
+     * theme (WCAG 1.4.3, 4.5:1). It warns, it does not forbid.
      */
     customColorLowContrastText: (vars: { ratio: string }) => string;
-    /** То же для маркера: меряется основной текст Редактора на этой подложке. */
+    /** The same for a highlight: the Editor's main text is measured against this background. */
     customColorLowContrastHighlight: (vars: { ratio: string }) => string;
-    /** Цвет автора не сменяется вместе с темой, в отличие от цветов палитры. */
+    /** The author's color does not change with the theme, unlike the palette colors. */
     customColorThemeNote: string;
     /**
-     * Выравнивание Блока: пункты меню «Выравнивание» и строки
-     * справочника сочетаний. Имя каждого самодостаточно.
+     * Alignment of a Block: the items of the "Alignment" menu and the rows of the shortcut
+     * reference. The name of each one is self-sufficient.
      */
     alignLeft: string;
     alignCenter: string;
     alignRight: string;
     /**
-     * Меню «Выравнивание»: имя кнопки и меню с текущим
-     * выравниванием — «Выравнивание: по центру». Иконка кнопки показывает его
-     * глазу, имя — скринридеру. Умолчание (`left`) — тоже значение: Блок без
-     * `data-align` выровнен влево.
+     * The "Alignment" menu: the name of the button and the menu with the current alignment:
+     * "Alignment: center". The button's icon shows it to the eye, the name to the screen reader.
+     * The default (`left`) is a value too: a Block without `data-align` is aligned left.
      */
     alignMenu: (vars: { current: "left" | "center" | "right" }) => string;
     /**
-     * Меню «Списки»: имя кнопки и меню с текущим видом списка —
-     * «Список: нумерованный»; `null` — каретка не в списке, и имя просто
-     * называет меню.
+     * The "Lists" menu: the name of the button and the menu with the current kind of list:
+     * "List: numbered". `null` means the caret is not in a list, and the name simply names the menu.
      */
     listMenu: (vars: { current: "bulletList" | "orderedList" | "taskList" | null }) => string;
     /**
-     * Таблица. `table` — пункт Меню вставки, кнопка Панели и имя её
-     * меню (как у TinyMCE: одна кнопка «Таблица ▾» на вставку и на действия), и
-     * пункт этого меню с сеткой размера. `tableInsertDialog` — пункт, который
-     * открывает окно с числовыми полями, `tableInsertDialogTitle` — заголовок
-     * окна. `tableCell`, `tableRow`, `tableColumn`, `tableSort` — подменю.
-     * Имя каждого пункта подменю самодостаточно: «Вставить строку выше», а не
-     * «Выше» под заголовком «Строка» — скринридер читает пункт, а не его раздел.
+     * Table. `table` is the Slash menu item, the Toolbar button and the name of its menu (as in
+     * TinyMCE: one "Table ▾" button for insertion and for actions), and the item of this menu
+     * with a size grid. `tableInsertDialog` is the item that opens the window with numeric
+     * fields, `tableInsertDialogTitle` is the window's title. `tableCell`, `tableRow`,
+     * `tableColumn` and `tableSort` are submenus. The name of each submenu item is
+     * self-sufficient: "Insert row above", not "Above" under the heading "Row", because the
+     * screen reader reads the item, not its section.
      */
     table: string;
     tableInsertDialog: string;
@@ -879,92 +878,95 @@ export interface UiMessages {
     tableAddColumnAfter: string;
     tableDeleteRow: string;
     tableDeleteColumn: string;
-    /** Пункт-переключатель: первая строка таблицы — заголовки столбцов. */
+    /** Toggle item: the first table row holds the column headers. */
     tableHeaderRow: string;
-    /** Выравнивание столбца под кареткой: пункты-радиокнопки подменю «Столбец». */
+    /** Alignment of the column under the caret: radio items of the "Column" submenu. */
     tableAlignLeft: string;
     tableAlignCenter: string;
     tableAlignRight: string;
     tableSortAscending: string;
     tableSortDescending: string;
     /**
-     * Почему сортировка недоступна: в таблице есть слитые ячейки, и строку
-     * нельзя переставить, не разрезав слияние. Подпись раздела подменю.
+     * Why sorting is unavailable: the table has merged cells, and a row cannot be moved without
+     * splitting the merge. The label of the submenu's section.
      */
     tableSortMerged: string;
     tableDelete: string;
-    /** Отмена в окне «Вставить таблицу». */
+    /** Cancel in the "Insert table" window. */
     tableCancel: string;
-    /** Картинка: кнопка Панели, пункт Меню вставки и имя поповера картинки. */
+    /** Image: the Toolbar button, the Slash menu item and the name of the image popover. */
     image: string;
-    /** Подпись поля адреса картинки в поповере. */
+    /** Label of the image address field in the popover. */
     imageAddress: string;
     /**
-     * Адрес картинки не принят: `data:`, `blob:`, относительный путь или чужая
-     * схема. Называет, что принимается, — иначе непонятно, что исправлять.
+     * The image address was not accepted: `data:`, `blob:`, a relative path or a foreign
+     * scheme. Names what is accepted, otherwise it is unclear what to fix.
      */
     imageInvalid: string;
-    /** Подпись поля альтернативного текста. */
+    /** Label of the alternative text field. */
     imageAlt: string;
     /**
-     * Подсказка под полем альтернативного текста: зачем оно и что значит
-     * пустое. Без неё поле выглядит обязательным, а пустое — ошибкой.
+     * The hint under the alternative text field: what it is for and what an empty value means.
+     * Without it the field looks required, and an empty one looks like an error.
      */
     imageAltHint: string;
-    /** Вставить картинку по адресу — то же, что Enter в поле. */
+    /** Insert the image by its address: the same as Enter in the field. */
     imageInsert: string;
-    /** Применить изменения существующей картинки. */
+    /** Apply the changes to the existing image. */
     imageApply: string;
-    /** Выбрать файл с устройства — есть, когда потребитель дал `onUploadImage`. */
+    /** Choose a file from the device: present when the consumer supplied `onUploadImage`. */
     imageChooseFile: string;
-    /** Убрать картинку из Документа. */
+    /** Remove the image from the Document. */
     imageRemove: string;
-    /** Открыть поповер выделенной картинки: адрес, описание и ширина. */
+    /** Open the popover of the selected image: address, description and width. */
     imageEdit: string;
-    /** Имя группы пресетов ширины и плавающей панели картинки. */
+    /** Name of the group of width presets and of the image's floating Toolbar. */
     imageWidth: string;
-    /** Пресет ширины: «50 %». Функцией — у языков свой знак процента и пробел перед ним. */
+    /**
+     * Width preset: "50 %". A function, because languages have their own percent sign and
+     * space before it.
+     */
     imageWidthPreset: (vars: { percent: number }) => string;
-    /** Подсказка пустой подписи картинки. Подпись необязательна — строка это говорит. */
+    /** Hint for an empty image caption. The caption is optional, and the string says so. */
     imageCaption: string;
-    /** Плейсхолдер на месте загружаемой картинки и сообщение живого региона. */
+    /** Placeholder in place of the uploading image, and the message of the live region. */
     imageUploading: (vars: { name: string }) => string;
-    /** Живой регион: картинка загружена и встала в Документ. */
+    /** Live region: the image has been uploaded and placed in the Document. */
     imageUploaded: (vars: { name: string }) => string;
     /**
-     * Загрузка не удалась (`onUploadImage` отклонил обещание или вернул адрес
-     * вне политики). Документ при этом не меняется.
+     * The upload failed (`onUploadImage` rejected the promise or returned an address outside
+     * the policy). The Document does not change in this case.
      */
     imageUploadFailed: (vars: { name: string }) => string;
-    /** Файл из буфера или перетаскивания — не картинка. */
+    /** A file from the clipboard or from a drag is not an image. */
     imageNotImage: (vars: { name: string }) => string;
     /**
-     * Файл вставлен или перетащен, а загрузчика нет (`onUploadImage` не
-     * передан). Подсказывает, как вставить картинку иначе.
+     * A file was pasted or dropped, and there is no uploader (`onUploadImage` was not passed).
+     * It explains how to insert the image another way.
      */
     imageFilesUnsupported: string;
     /**
-     * Ошибка поля: Редактор не запустился — набор Инструментов собран с
-     * ошибкой (ADR-0058, п. 1.5 и 2.4). Причину разработчик видит в консоли;
-     * автору — что поле не работает и что Документ не тронут.
+     * The field's error: the Editor did not start, because the set of Tools was assembled with
+     * an error (ADR-0058, items 1.5 and 2.4). The developer sees the cause in the console; the
+     * author gets the message that the field does not work and the Document is untouched.
      */
     toolsFailed: string;
     /**
-     * Кнопка у ошибки поля, когда упал загрузчик Extensions (сеть,
-     * устаревший чанк): заново зовёт упавшие загрузчики (ADR-0058, п. 11.6).
+     * The button on the field's error, when an Extensions loader failed (network, a stale
+     * chunk): it calls the failed loaders again (ADR-0058, item 11.6).
      */
     retry: string;
     /**
-     * Живой регион: у текста появилась Карточка своего Инструмента (ADR-0058,
-     * п. 6.8). `label` — подпись записи, `shortcut` — сочетание, которое ведёт в
-     * Карточку (`Alt+F10`). Функцией: подпись и клавиша стоят в середине фразы.
+     * Live region: a Text card of a custom Tool has appeared on the text (ADR-0058, item 6.8).
+     * `label` is the record's label, `shortcut` is the key combination that leads to the Text
+     * card (`Alt+F10`). A function: the label and the key stand in the middle of the sentence.
      */
     textCardShown: (vars: { label: string; shortcut: string }) => string;
     /**
-     * Сетка выбора размера таблицы. `tableGrid` — имя сетки; `tableSize` — размер
-     * словами («3 столбца, 4 строки») для имени ячейки и живой области: в русском
-     * склонение по числу, поэтому функция, а не две строки. `tableColumns`,
-     * `tableRows` — имена числовых полей, `tableInsert` — кнопка под ними.
+     * The table size picker. `tableGrid` is the name of the grid; `tableSize` is the size in
+     * words ("3 columns, 4 rows") for the cell's name and the live region. In Russian the plural
+     * depends on the number, so it is a function, not two strings. `tableColumns` and `tableRows`
+     * are the names of the numeric fields, `tableInsert` is the button under them.
      */
     tableGrid: string;
     tableSize: (vars: { cols: number; rows: number }) => string;
@@ -972,52 +974,53 @@ export interface UiMessages {
     tableRows: string;
     tableInsert: string;
     /**
-     * Раскладка — Блок из колонок. `layout` — пункт Меню вставки и
-     * подменю «Добавить › Раскладка ›» у ручки Блока; `layoutVariant` — имена
-     * шести вариантов («Две колонки», «60/40»), пункты подменю и «Формат ›».
-     * Ключи — имена вариантов Схемы (`editor/features/layout/columnLayouts.ts`).
+     * The layout: a Block of columns. `layout` is the Slash menu item and the "Add › Layout ›"
+     * submenu of the Block handle; `layoutVariant` holds the names of the six variants ("Two
+     * columns", "60/40"), the items of the submenu and "Format ›". The keys are the names of the
+     * Schema's variants (`editor/features/layout/columnLayouts.ts`).
      */
     layout: string;
     layoutVariant: Record<EditorLayoutVariant, string>;
     /**
-     * Обёртка — Блок, собирающий группу Блоков. `wrapper` — пункт
-     * Меню вставки и «Добавить ›» у ручки Блока; `unwrap` — пункт меню ручки,
-     * который снимает Обёртку и оставляет её Блоки на месте.
+     * A Wrapper: a Block that gathers a group of Blocks. `wrapper` is the Slash menu item and the
+     * "Add ›" submenu of the Block handle; `unwrap` is the handle's menu item that removes the
+     * Wrapper and leaves its Blocks in place.
      */
     wrapper: string;
     unwrap: string;
     /**
-     * Тон Обёртки — подменю «Тон ›» меню ручки Обёртки.
-     * `wrapperTone` — имя пункта с текущим тоном («Тон: Заметка»), как имя
-     * кнопки «¶» с текущим типом; `wrapperToneNone` — пункт «Без тона» и
-     * текущее значение Обёртки без тона; `wrapperToneName` — имена тонов
-     * словами GitHub alerts (Заметка, Совет, Важно, Внимание, Осторожно), ключи
-     * — имена `data-tone`. Слово, а не цвет: тон выбирают по смыслу заметки.
+     * The tone of a Wrapper: the "Tone ›" submenu of the Wrapper handle's menu. `wrapperTone` is
+     * the name of the item with the current tone ("Tone: Note"), like the name of the "¶" button
+     * with the current Block type. `wrapperToneNone` is the "No tone" item and the current value
+     * of a Wrapper without a tone. `wrapperToneName` holds the tone names in the words of GitHub
+     * alerts (Note, Tip, Important, Warning, Caution), and its keys are the `data-tone` names.
+     * A word, not a color: the tone is chosen by the meaning of the note.
      */
     wrapperTone: (vars: { current: string }) => string;
     wrapperToneNone: string;
     wrapperToneName: Record<EditorWrapperTone, string>;
     /**
-     * Сворачиваемый Блок (Details). `details` — пункт Меню вставки и «Добавить ›»
-     * у ручки Блока; `unwrapDetails` — пункт меню ручки: Блок перестаёт
-     * сворачиваться, заголовок становится абзацем, а содержимое остаётся на месте.
-     * `detailsToggle` — имя кнопки раскрытия: движок рисует кнопку без текста,
-     * и без имени скринридер слышал бы «кнопка». Имя называет Блок его
-     * заголовком (`text` — текст summary, пустой у Блока без заголовка), а
-     * раскрыт он или нет, говорит `aria-expanded`. Функцией: заголовок стоит в
-     * середине фразы.
+     * A collapsible Block (Details). `details` is the Slash menu item and the "Add ›" submenu
+     * of the Block handle. `unwrapDetails` is the handle's menu item: the Block stops being
+     * collapsible, its title becomes a paragraph, and the content stays in place.
+     * `detailsToggle` is the name of the expand button: the engine draws the button without
+     * text, and without a name the screen reader would say "button". The name identifies the
+     * Block by its title (`text` is the summary text, empty for a Block without a title), and
+     * whether it is expanded is said by `aria-expanded`. A function: the title stands in the
+     * middle of the sentence.
      */
     details: string;
     unwrapDetails: string;
     detailsToggle: (vars: { text: string }) => string;
     /**
-     * Формулы (Mathematics, ADR-0070). `mathInline` и `mathBlock` — пункты Меню
-     * вставки и «Добавить ›» у ручки Блока, они же имена рамки Поповера формулы.
-     * В Поповере: `mathLatex` — подпись поля, `mathPreview` — имя области
-     * предпросмотра, `mathEmpty` — её подсказка, пока поле пусто, `mathInvalid` —
-     * ошибка в поле (`detail` — сообщение KaTeX: движок его не переводит, оно
-     * по-английски), `mathInsert` и `mathApply` — кнопка новой и правимой формулы,
-     * `mathRemove` — убрать правимую формулу из Документа.
+     * Formulas (Mathematics, ADR-0070). `mathInline` and `mathBlock` are the items of the Slash
+     * menu and of the "Add ›" submenu of the Block handle; they are also the names of the frame
+     * of the formula popover. In the popover: `mathLatex` is the label of the field, `mathPreview`
+     * is the name of the preview area, `mathEmpty` is its hint while the field is empty,
+     * `mathInvalid` is the error in the field (`detail` is the KaTeX message: the engine does not
+     * translate it, so it stays in English), `mathInsert` and `mathApply` are the buttons for a
+     * new and for an editable formula, and `mathRemove` removes the editable formula from the
+     * Document.
      */
     mathInline: string;
     mathBlock: string;
@@ -1029,10 +1032,10 @@ export interface UiMessages {
     mathApply: string;
     mathRemove: string;
     /**
-     * Эмодзи. `emoji` — имя кнопки Панели; `emojiGrid` — имя сетки в поповере.
-     * `emojiCategory` — названия категорий, `emojiName` — имя каждого эмодзи:
-     * скринридер читает ячейку по имени, а не по символу (разные программы
-     * озвучивают один и тот же символ по-разному, а то и молчат). Ключи — из
+     * Emoji. `emoji` is the name of the Toolbar button; `emojiGrid` is the name of the grid in
+     * the popover. `emojiCategory` holds the category names, `emojiName` the name of each emoji:
+     * a screen reader reads a cell by its name, not by its character, because different programs
+     * voice the same character differently, or stay silent. The keys come from
      * `editor/features/emoji/emoji.ts`.
      */
     emoji: string;
@@ -1040,26 +1043,24 @@ export interface UiMessages {
     emojiCategory: Record<EmojiCategory, string>;
     emojiName: Record<EmojiName, string>;
     /**
-     * HTML-режим. `source` — имя и подсказка кнопки-переключателя
-     * Панели; `sourceField` — имя поля с исходным HTML Документа, которое
-     * заменяет Документ в режиме. Подпись кнопки — «HTML» и по-русски: так
-     * режим называют Redactor и CMS, а «Исходный код» длиннее и не короче
-     * объясняет.
+     * HTML mode. `source` is the name and the hint of the Toolbar's toggle button; `sourceField`
+     * is the name of the field with the Document's source HTML, which replaces the Document in
+     * this mode. The button's label is "HTML" in every language: that is what Redactor and the
+     * CMSs call the mode, and "Source code" would be longer and explain no better.
      */
     source: string;
     sourceField: string;
     /**
-     * Показ невидимых символов (пробелов, мягких переносов и концов абзацев):
-     * `invisibleCharacters` — имя пункта-флажка меню «…» фиксированной Панели. О том,
-     * показаны ли символы, говорит `aria-checked`, а не слова имени.
+     * Showing invisible characters (spaces, soft hyphens and paragraph ends). `invisibleCharacters`
+     * is the name of the checkbox item in the "…" menu of the fixed Toolbar. Whether the characters
+     * are shown is said by `aria-checked`, not by the words of the name.
      */
     invisibleCharacters: string;
     /**
-     * Поиск и замена. `search` — имя и подсказка кнопки Панели и
-     * строка справочника `Mod+F`; `searchReplace` — строка `Mod+Alt+F`;
-     * `searchPanel` — имя панели; остальные — её поля, флажки и кнопки.
-     * `searchCount` — счётчик «3 из 12», озвучивается вежливо; без совпадений
-     * — `searchNoMatches`.
+     * Search and replace. `search` is the name and the hint of the Toolbar button, and of the
+     * shortcut reference row `Mod+F`; `searchReplace` is the `Mod+Alt+F` row; `searchPanel` is the
+     * name of the panel; the rest are its fields, checkboxes and buttons. `searchCount` is the
+     * counter "3 of 12", announced politely; with no matches, it is `searchNoMatches`.
      */
     search: string;
     searchReplace: string;
@@ -1078,37 +1079,37 @@ export interface UiMessages {
     searchNoMatches: string;
     searchInvalid: string;
     /**
-     * Ручка высоты поля (`resizable`): `resizeField` — имя
-     * ползунка, `fieldHeight` — его текущая высота словами (`aria-valuetext`).
+     * The height handle of a field (`resizable`): `resizeField` is the name of the slider,
+     * `fieldHeight` is its current height in words (`aria-valuetext`).
      */
     resizeField: string;
     fieldHeight: (vars: { size: number }) => string;
     /**
-     * Справочник сочетаний клавиш. `shortcuts` — имя кнопки Панели,
-     * подсказка и имя поповера; `shortcutsCommand` и `shortcutsKeys` — заголовки
-     * двух столбцов таблицы. Остальные — подписи команд, у которых нет своей
-     * кнопки и потому нет подписи выше: команды над Блоками, выделение, сдвиг
-     * пункта списка и переход в Панель. Подпись называет действие, а не клавишу:
-     * клавиши рядом, в соседнем столбце.
+     * The shortcut reference. `shortcuts` is the name of the Toolbar button, its hint and the
+     * name of the popover; `shortcutsCommand` and `shortcutsKeys` are the headings of the two
+     * table columns. The rest are labels of commands that have no button of their own, and so
+     * no label above: the commands over Blocks, selection, moving a list item and moving into
+     * the Toolbar. The label names the action, not the key: the keys are next to it, in the
+     * adjacent column.
      */
     shortcuts: string;
     shortcutsCommand: string;
     shortcutsKeys: string;
-    /** Первое `⌘A`: выделить текст текущего Блока. */
+    /** The first `⌘A`: select the text of the current Block. */
     selectBlock: string;
-    /** Второе `⌘A` подряд: выделить весь Документ. */
+    /** A second `⌘A` in a row: select the whole Document. */
     selectDocument: string;
     duplicateBlock: string;
     moveBlockUp: string;
     moveBlockDown: string;
     indentListItem: string;
     outdentListItem: string;
-    /** `Alt+F10`: перевести фокус из Документа в Панель. */
+    /** `Alt+F10`: move focus from the Document to the Toolbar. */
     focusToolbar: string;
     /**
-     * Ручка Блока: `blockActions` — имя кнопки «⋮», её меню и
-     * строки справочника сочетаний (`Mod+/`); остальные — пункты меню. Слова
-     * короткие, без «блок»: меню и так названо «Действия с блоком».
+     * The Block handle: `blockActions` is the name of the "⋮" button, its menu and the shortcut
+     * reference rows (`Mod+/`); the rest are the menu items. The words are short and without
+     * "block": the menu is already named "Block actions".
      */
     blockActions: string;
     blockAdd: string;
@@ -1118,21 +1119,20 @@ export interface UiMessages {
     blockDuplicate: string;
     blockDelete: string;
     /**
-     * Оглавление Документа (`RichTextToc`): имя кнопки-полосы и подпись
-     * `nav` со списком заголовков — одно слово на оба, это одна вещь.
+     * The Document's table of contents (`RichTextToc`): the name of the strip button and the label
+     * of the `nav` with the list of headings. It is one word for both, because it is one thing.
      */
     toc: string;
     /**
-     * Видео по ссылке (Инструменты `youtube` и `twitch`, ADR-0071). `video` —
-     * пункт Меню вставки и «Добавить ›» ручки Блока; `videoLink` — имя поля
-     * ссылки в поповере; `videoInsert` — кнопка поповера; `videoNotFound` — ошибка
-     * поля на ссылку, которая не ведёт на видео включённого сервиса (`services` —
-     * названия сервисов через « / »: «YouTube» или «YouTube / Twitch» — разделитель
-     * один на все языки, и фраза читается с ним одинаково).
-     * `videoPlay` — подпись кнопки заглушки; `videoPlayLabel` — её доступное имя
-     * (видимое слово «Воспроизвести» входит в него целиком, WCAG 2.5.3);
-     * `videoPlayer` — заголовок `iframe` для скринридера. Названия сервисов
-     * (`service`) — имена брендов и не переводятся.
+     * Video by link (the `youtube` and `twitch` Tools, ADR-0071). `video` is the Slash menu item
+     * and the "Add ›" submenu of the Block handle; `videoLink` is the name of the link field in the
+     * popover; `videoInsert` is the popover's button; `videoNotFound` is the field's error for a
+     * link that does not lead to a video of an enabled service (`services` is the names of the
+     * services joined by " / ": "YouTube" or "YouTube / Twitch". The separator is the same in every
+     * language, and the phrase reads the same with it). `videoPlay` is the label of the placeholder
+     * button; `videoPlayLabel` is its accessible name (the visible word "Play" is included in it
+     * whole, WCAG 2.5.3); `videoPlayer` is the `iframe` title for the screen reader. The service
+     * names (`service`) are brand names and are not translated.
      */
     video: string;
     videoLink: string;
@@ -1142,36 +1142,42 @@ export interface UiMessages {
     videoPlayLabel: (vars: { service: string }) => string;
     videoPlayer: (vars: { service: string }) => string;
     /**
-     * Набор кавычек языка каталога для Инструмента `typography`: `"ru"` —
-     * «ёлочки» и „лапки“, `"en"` — “ ” и ‘ ’. Не текст для экрана, а признак
-     * языка каталога: у каталога другого языка (немецкий, французский)
-     * своего набора у кита нет, и пока значение не задано, действует `"en"`;
-     * набор можно задать явно Опцией `quotes`.
+     * The quote set of the catalog's language for the `typography` Tool: `"ru"` — «…» and „…“,
+     * `"en"` — “…” and ‘…’. It is not text for a screen reader but a marker of the catalog's
+     * language: a catalog in another language (German, French) has no quote set of its own
+     * in the kit, and until the value is set, `"en"` applies. The set can be set explicitly
+     * with the `quotes` Option.
      */
     typographyQuotes: EditorQuoteSet;
   };
 }
 
 /**
- * Варианты Раскладки Редактора — ключи `editor.layoutVariant`: доли колонок в
- * процентах через дефис, как их пишет `data-layout` (`editor/features/layout/columnLayouts.ts`).
+ * The Editor's Layout variants: the keys of `editor.layoutVariant`, the column shares in percent
+ * joined by dashes, as `data-layout` writes them (`editor/features/layout/columnLayouts.ts`).
  */
 export type EditorLayoutVariant = "100" | "50-50" | "33-33-33" | "25-25-25-25" | "60-40" | "40-60";
 
 /**
- * Тоны Обёртки Редактора — ключи `editor.wrapperToneName`: имена словаря `Tone`
- * кита, как их пишет `data-tone` (`editor/features/wrapper/wrapperTones.ts`).
+ * The Editor's Wrapper tones: the keys of `editor.wrapperToneName`, the names of the kit's `Tone`
+ * vocabulary, as `data-tone` writes them (`editor/features/wrapper/wrapperTones.ts`).
  */
 export type EditorWrapperTone = "neutral" | "accent" | "success" | "warning" | "danger";
 
-/** Наборы кавычек `typography` — значения `editor.typographyQuotes` и Опции `quotes`. */
+/** The `typography` quote sets: the values of `editor.typographyQuotes` and of the `quotes` Option. */
 export type EditorQuoteSet = "en" | "ru";
 
-/** Категории эмодзи Редактора — ключи `editor.emojiCategory`; порядок показа задаёт `editor/features/emoji/emoji.ts`. */
+/**
+ * The Editor's emoji categories: the keys of `editor.emojiCategory`. The display order is set by
+ * `editor/features/emoji/emoji.ts`.
+ */
 export type EmojiCategory =
   "favorites" | "smileys" | "gestures" | "animals" | "food" | "activities" | "travel";
 
-/** Имена эмодзи Редактора — ключи `editor.emojiName`; состав категорий задаёт `editor/features/emoji/emoji.ts`. */
+/**
+ * The Editor's emoji names: the keys of `editor.emojiName`. The membership of the categories is
+ * set by `editor/features/emoji/emoji.ts`.
+ */
 export type EmojiName =
   | "faceWithTearsOfJoy"
   | "redHeart"
@@ -1252,13 +1258,13 @@ export type EmojiName =
   | "camping"
   | "luggage";
 
-/** Раскладка экранной клавиатуры. Это ДАННЫЕ ввода, а не язык интерфейса. */
+/** The on-screen keyboard layout. This is input DATA, not the interface language. */
 export type KeyboardLayoutName = "ru" | "en";
 
-/** Ключи пресетов периода; совпадают с `PeriodPreset` из `lib/period.ts`. */
+/** Period preset keys; they match `PeriodPreset` from `lib/period.ts`. */
 export type PeriodPresetKey = "7d" | "30d" | "90d" | "365d" | "thisMonth" | "lastMonth";
 
-/** Частичный каталог: потребитель переопределяет только то, что хочет. */
+/** A partial catalog: the consumer overrides only what it wants. */
 export type PartialUiMessages = {
   [K in keyof UiMessages]?: Partial<UiMessages[K]>;
 };

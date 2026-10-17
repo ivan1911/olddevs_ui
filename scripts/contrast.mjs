@@ -1,21 +1,21 @@
 /**
- * Проверка контраста токенов по WCAG 2.x.
+ * Checks the contrast of the tokens against WCAG 2.x.
  *
- * Зачем отдельно от аддона a11y в Storybook: аддон проверяет отрендеренный DOM
- * конкретных историй и видит только те сочетания, которые история показала.
- * Здесь перебираются ВСЕ сочетания `variant × tone × тема × акцент`, включая
- * ещё не отрендеренные. Расхождение в числах между двумя инструментами —
- * не противоречие: они измеряют разное.
+ * Why this is separate from the a11y addon in Storybook: the addon checks the rendered DOM of
+ * particular stories, so it only sees the combinations those stories happen to show. Here ALL
+ * the combinations of `variant × tone × theme × accent` are enumerated, including the ones
+ * that are not rendered anywhere yet. A difference in the numbers between the two tools is
+ * not a contradiction: they measure different things.
  *
- * Пары берутся из `variantClasses()`, то есть из реального вывода словаря,
- * а не из списка, переписанного руками. Список, переписанный руками, уже
- * отставал от кода: после правки `soft` в 0.1.1 у него изменился состав.
+ * The pairs come from `variantClasses()`, that is, from the real output of the dictionary,
+ * not from a list rewritten by hand. A hand-written list had already fallen behind the code:
+ * after the `soft` change in 0.1.1 its contents no longer matched.
  *
- * Импорт `.ts` напрямую — Node снимает типы сам (без флага с 22.18). Нижняя
- * граница по Node в этом пакете и так выше: Storybook 10 требует 22.19+.
+ * `.ts` is imported directly: Node strips the types itself (without a flag since 22.18). The
+ * lower Node bound of this package is already higher anyway: Storybook 10 requires 22.19+.
  *
- *   node scripts/contrast.mjs          только провалы
- *   node scripts/contrast.mjs --all    вся таблица
+ *   node scripts/contrast.mjs          failures only
+ *   node scripts/contrast.mjs --all    the whole table
  */
 
 import { readFileSync } from "node:fs";
@@ -29,10 +29,10 @@ import { EDITOR_WRAPPER_TONES } from "../src/editor/features/wrapper/wrapperTone
 const ROOT = resolve(import.meta.dirname, "..");
 
 /**
- * Рамка выбранной карточки и рамка отмеченной коробки внутри неё — один признак
- * одного цвета, но словарей два: `choice-card.ts` не может импортировать
- * `variants.ts` в рантайме (Node не сопоставляет `.js` с `.ts`). Расхождение
- * словарей гейт ловит здесь, а не комментарием.
+ * The border of a selected card and the border of a checked box inside it are one signal in
+ * one colour, but there are two dictionaries: `choice-card.ts` cannot import `variants.ts` at
+ * runtime (Node does not map `.js` to `.ts`). The gate catches a drift between the dictionaries
+ * here, instead of relying on a comment.
  */
 for (const [tone, cls] of Object.entries(STATE_BORDER))
   if (CHOICE_CARD_SELECTED_BORDER[tone] !== cls)
@@ -42,44 +42,43 @@ for (const [tone, cls] of Object.entries(STATE_BORDER))
     );
 const css = readFileSync(resolve(ROOT, "styles.css"), "utf8");
 
-/** Текст — 4.5:1. Весь текст в примитивах мельче 18.66px bold / 24px, послаблений нет. */
+/** Text: 4.5:1. All text in the primitives is smaller than 18.66px bold / 24px, so there is no relaxation. */
 const TEXT = 4.5;
-/** Рамки, точки-индикаторы, иконки-индикаторы — 3:1, WCAG 1.4.11 Non-text Contrast. */
+/** Borders, dot indicators and icon indicators: 3:1, WCAG 1.4.11 Non-text Contrast. */
 const NON_TEXT = 3;
 
 /**
- * ВСЕ подложки приложения, а не только две. Считаем по худшей из четырёх:
- * `*-soft` полупрозрачны, и на более светлой подложке тот же токен даёт
- * меньший контраст, чем на фоне приложения.
+ * ALL the app's surfaces, not just two. The check uses the worst of the four: `*-soft` are
+ * semi-transparent, so the same token gives less contrast on a lighter surface than on the
+ * app background.
  *
- * **Список был из двух — `surface-app` и `surface-panel` — и это стоило двух
- * пропущенных дефектов.** Оба нашёл аудит axe во фронте, пока скрипт рапортовал
- * ноль провалов: счётчик символов `TextControl` и подсказка `FormField`.
- * Расширение до четырёх вскрыло ещё 36 сочетаний, и они не бумажные — плашка
- * `StatusBadge` тона `warning` в карточке деталей давала живые 4.42.
+ * **The list had two entries, `surface-app` and `surface-panel`, and that cost two missed
+ * defects.** Both were found by the axe audit on the front end while the script reported zero
+ * failures: the character counter of `TextControl` and the hint of `FormField`. Widening it to
+ * four exposed 36 more combinations, and they are not theoretical: the `StatusBadge` pill of
+ * the `warning` tone in a details card gave a real 4.42.
  *
- * Закрыто перекалибровкой палитры 2026-08-06: тринадцать токенов (`*-strong`
- * у четырёх тонов, `text-muted`, `text-muted-2`) сдвинуты до порога 4.6 —
- * с запасом, потому что ровно 4.50 браузер округляет в 4.49. Решение
- * пользователя: приложение стало заметно контрастнее, тона в тёмных темах
- * светлее.
+ * Closed by recalibrating the palette on 2026-08-06: thirteen tokens (the `*-strong` tokens of
+ * four tones, `text-muted`, `text-muted-2`) were moved to the 4.6 threshold, with some margin,
+ * because a value of exactly 4.50 is rounded down to 4.49 by the browser. The user's decision:
+ * the app became noticeably more contrasty, and the tones in the dark themes became lighter.
  *
- * Добавлять сюда новую подложку — значит проверять её честно. Если появится
- * пятая, гейт покраснеет, и это правильно.
+ * Adding a new surface here means checking it honestly. If a fifth one appears, the gate will
+ * turn red, and that is correct.
  */
 const SURFACES = ["surface-app", "surface-panel", "surface-panel-hover", "surface-elevated"];
 
 /**
- * Токены, к которым порог не применяется.
+ * Tokens the threshold does not apply to.
  *
- * `line` (`--border-default`) — нейтральная рамка и разделитель. WCAG 1.4.11
- * требует 3:1 от границ, *необходимых для опознания* компонента; `soft` опознаётся
- * заливкой и контрастной подписью, а карточки и разделители — расположением.
- * Дотянуть его до 3:1 значило бы `#d9e2ec → #7192b8` в светлой теме, то есть
- * сделать резкими все рамки приложения разом. Решение пользователя, 2026-07-25.
+ * `line` (`--border-default`) is the neutral border and divider. WCAG 1.4.11 requires 3:1 only
+ * for the borders *needed to identify* a component. `soft` is identified by its fill and its
+ * contrasting label, and cards and dividers by their placement. Raising it to 3:1 would mean
+ * `#d9e2ec → #7192b8` in the light theme, which would make every border in the app harsh at
+ * once. The user's decision, 2026-07-25.
  *
- * Рамки ТОНОВ (`accent`, `danger`, `warning`, `success`) под порогом остаются:
- * они несут смысл, а не отделяют блок от блока.
+ * The borders of the TONES (`accent`, `danger`, `warning`, `success`) stay under the threshold:
+ * they carry meaning, rather than separating one block from another.
  */
 const DECORATIVE = new Set(["line", "line-soft"]);
 
@@ -87,18 +86,19 @@ const THEMES = ["dark", "light", "dim"];
 const ACCENTS = ["blue", "violet"];
 
 /**
- * Бренды. `base` — кит без атрибута `data-brand`, остальные приходят оверлеями.
+ * Brands. `base` is the kit without a `data-brand` attribute; the others come in as overlays.
  *
- * Список написан руками НАМЕРЕННО и сверяется с CSS ниже: бренд, объявленный в
- * `styles.css` и забытый здесь, роняет скрипт. Автоподхват выглядел бы удобнее
- * и был бы хуже — гейт молча измерял бы не то, что отгружается. Ровно так уже
- * терялись пары: цветной токен жил в CSS, а проверка его не видела.
+ * The list is written by hand ON PURPOSE and is checked against the CSS below: a brand declared
+ * in `styles.css` and forgotten here makes the script fail. Auto-discovery would look more
+ * convenient and would be worse: the gate would quietly measure something other than what ships.
+ * This is exactly how pairs were lost before: a coloured token lived in the CSS, and the check
+ * did not see it.
  */
 const BRANDS = ["base", "teal"];
 
-// ─── разбор styles.css ────────────────────────────────────────────────────────
+// ─── parsing styles.css ───────────────────────────────────────────────────────
 
-/** Тело блока по селектору. Скобки считаются: внутри `@theme` лежат `@keyframes`. */
+/** The body of a block, found by its selector. Braces are counted: `@theme` contains `@keyframes`. */
 function blockBody(pattern) {
   const m = css.match(pattern);
   if (!m) throw new Error(`styles.css has no block ${pattern}`);
@@ -117,21 +117,21 @@ function decls(body) {
   return out;
 }
 
-/** Мост «утилита Tailwind → токен»: `--color-accent-soft: var(--accent-soft)`. */
+/** The bridge from a Tailwind utility to a token: `--color-accent-soft: var(--accent-soft)`. */
 const themeBridge = decls(blockBody(/@theme\s*\{/));
 
 /**
- * Токены маркера Редактора живут в своих блоках на `[data-theme]` ЛЮБОГО
- * элемента (вложенная тема, OLDSUI-46), а не на `:root[data-theme]`: тёмные
- * значения — у `:root` и любой темы, кроме `light`, светлые — у `light`. Здесь они
- * добавляются к базе и к светлой теме, как если бы стояли в их блоках.
+ * The Editor's highlight-marker tokens live in their own blocks on `[data-theme]` of ANY
+ * element (a nested theme, OLDSUI-46), not on `:root[data-theme]`: the dark values are on
+ * `:root` and on every theme except `light`, the light ones on `light`. Here they are added to
+ * the base and to the light theme, as if they stood in those blocks.
  */
 const MARKER_DARK = decls(blockBody(/:root,\s*\[data-theme\]:not\(\[data-theme="light"\]\)\s*\{/));
 const MARKER_LIGHT = decls(blockBody(/^\[data-theme="light"\]\s*\{/m));
 /**
- * Яркие маркеры и тёмный текст на них (OLDSUI-61): один блок на `:root` и любую
- * тему, значение у всех тем общее, поэтому здесь они добавляются к базе, а не к
- * тёмной или светлой теме.
+ * The bright markers and the dark text on them (OLDSUI-61): one block for `:root` and any
+ * theme, with a value shared by all themes. So here they are added to the base, not to the
+ * dark or the light theme.
  */
 const MARKER_BRIGHT = decls(blockBody(/^:root,\s*\[data-theme\]\s*\{/m));
 
@@ -147,32 +147,31 @@ const ACCENT_VARS = {
 };
 
 /**
- * Блоки, где тема и акцент перестают быть независимыми. Такой блок специфичнее
- * и стоит в CSS после обоих, поэтому и здесь накладывается последним.
+ * Blocks where the theme and the accent stop being independent. Such a block is more specific
+ * and comes after both in the CSS, so here it is also applied last.
  */
 const COMBINED = {
   "light/violet": decls(blockBody(/:root\[data-theme="light"\]\[data-accent="violet"\]\s*\{/)),
 };
 
 /**
- * Оверлеи брендов. Бренд объявляет свои примитивы внутри своего блока, поэтому
- * `decls` забирает и палитру, и присвоения ролей — `resolveVar` дальше проходит
- * ту же цепочку, что и в базе.
+ * Brand overlays. A brand declares its own primitives inside its block, so `decls` picks up
+ * both the palette and the role assignments. `resolveVar` then follows the same chain as it
+ * does for the base.
  */
 const BRAND_VARS = {
   base: {},
   teal: decls(blockBody(/:root\[data-brand="teal"\]\s*\{/)),
 };
 
-/** Блоки, где бренд и тема перестают быть независимыми — как у акцента выше. */
+/** Blocks where the brand and the theme stop being independent, as with the accent above. */
 const BRAND_COMBINED = {
   "light/teal": decls(blockBody(/:root\[data-theme="light"\]\[data-brand="teal"\]\s*\{/)),
 };
 
 /**
- * Сверка списка с содержимым CSS. Бренд, добавленный в `styles.css` и не
- * внесённый сюда, не должен пройти молча: гейт обязан либо мерить его, либо
- * упасть.
+ * Checks the list against the CSS contents. A brand added to `styles.css` and not entered here
+ * must not pass silently: the gate has to either measure it or fail.
  */
 const declaredBrands = [
   ...new Set([...css.matchAll(/\[data-brand="([\w-]+)"\]/g)].map((m) => m[1])),
@@ -186,24 +185,24 @@ if (unmeasured.length) {
 }
 
 /**
- * Роли `--rte-*` Документа в теме приложения (`EDITOR_TOKENS_CLASS`): классы на
- * контейнере Документа, а не блок `styles.css`. Значения — ссылки на токены
- * кита, поэтому их можно класть к любой теме: `resolveVar` дойдёт по ссылке до
- * значения темы. Пары тона Обёртки (OLDSUI-78) меряют роли, а не токены: что
- * стоит в строке классов, то и проверяется.
+ * The Document's `--rte-*` roles in the app theme (`EDITOR_TOKENS_CLASS`): classes on the
+ * Document's container, not a `styles.css` block. The values are references to the kit's
+ * tokens, so they can be placed on any theme: `resolveVar` follows the reference to the
+ * theme's value. The pairs of the Wrapper's Callout tone (OLDSUI-78) measure roles, not tokens: whatever
+ * is in the class string is what gets checked.
  */
 const rteRoles = (classes, pattern) =>
   Object.fromEntries([...classes.matchAll(pattern)].map((m) => [m[1], m[2]]));
-/** Вторичный текст в Обёртке с тоном: роли `--rte-tone-<роль>` (`tokens.ts`). */
+/** Secondary text in a Wrapper with a Callout tone: the `--rte-tone-<role>` roles (`tokens.ts`). */
 const TONE_TEXT_ROLES = ["link", "secondary", "muted", "muted-foreground"];
 
 const THEME_ROLES = rteRoles(EDITOR_TOKENS_CLASS, /(?:^|\s)\[--(rte-[\w-]+):([^\]]+)\]/g);
 
 /**
- * Порядок наложения повторяет каскад в CSS: база → тема → акцент → пара
- * «тема + акцент» → бренд → пара «тема + бренд». Бренд идёт ПОСЛЕ акцента,
- * потому что в файле его блок стоит ниже при равной специфичности — заданный
- * бренд отменяет ось акцента целиком.
+ * The order of application repeats the cascade in the CSS: base → theme → accent → the
+ * "theme + accent" pair → brand → the "theme + brand" pair. The brand comes AFTER the accent,
+ * because its block sits lower in the file at equal specificity: a set brand overrides the
+ * accent axis entirely.
  */
 const varsFor = (theme, accent, brand) => ({
   ...THEME_ROLES,
@@ -223,7 +222,7 @@ function resolveVar(name, vars, depth = 0) {
   return ref ? resolveVar(ref[1], vars, depth + 1) : value;
 }
 
-// ─── цвет ─────────────────────────────────────────────────────────────────────
+// ─── color ────────────────────────────────────────────────────────────────────
 
 const TRANSPARENT = { r: 0, g: 0, b: 0, a: 0 };
 
@@ -253,12 +252,12 @@ function parseColor(value) {
 }
 
 /**
- * Альфа-композит: полупрозрачный `fg` поверх непрозрачного `bg`.
+ * Alpha compositing: a semi-transparent `fg` over an opaque `bg`.
  *
- * Каналы округляются до целых — как их округляет браузер, прежде чем показать.
- * Без округления расчёт расходится с axe примерно на 0.02, и токен, подобранный
- * «ровно на 4.50», в браузере оказывается 4.49. Один раз так и вышло: скрипт
- * был зелёный, axe на том же элементе — красный.
+ * The channels are rounded to whole numbers, as the browser rounds them before painting.
+ * Without rounding the result drifts from axe by about 0.02, and a token tuned to "exactly
+ * 4.50" comes out as 4.49 in the browser. This happened once: the script was green while axe
+ * was red on the same element.
  */
 const composite = (fg, bg) => ({
   r: Math.round(fg.a * fg.r + (1 - fg.a) * bg.r),
@@ -280,14 +279,14 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** Цвет по классу Tailwind: `bg-accent-soft` → `--color-accent-soft` → `--accent-soft`. */
+/** The colour of a Tailwind class: `bg-accent-soft` → `--color-accent-soft` → `--accent-soft`. */
 function colorOfClass(className, vars) {
   if (className === "bg-transparent") return TRANSPARENT;
-  // Прямая ссылка на переменную: `bg-(--marker-gray)` — маркер читает токен без
-  // моста `@theme` (мост подставил бы значение корня во вложенной теме).
+  // A direct reference to a variable: `bg-(--marker-gray)`. The marker reads the token
+  // without the `@theme` bridge, which would substitute the root's value inside a nested theme.
   const direct = className.match(/^(?:bg|text|border)-\(--([\w-]+)\)$/);
   if (direct) return parseColor(resolveVar(direct[1], vars));
-  // Модификатор непрозрачности Tailwind: `bg-label-red/25` — токен с альфой 25 %.
+  // The Tailwind opacity modifier: `bg-label-red/25` is the token with 25% alpha.
   const [utility, opacity] = className.split("/");
   const name = utility.replace(/^(bg|text|border)-/, "");
   const bridged = themeBridge[`color-${name}`];
@@ -297,11 +296,11 @@ function colorOfClass(className, vars) {
   return opacity === undefined ? color : { ...color, a: color.a * (Number(opacity) / 100) };
 }
 
-// ─── пары ─────────────────────────────────────────────────────────────────────
+// ─── pairs ────────────────────────────────────────────────────────────────────
 
 /**
- * Худший контраст пары по всем подложкам. Возвращает и подложку — без неё
- * непонятно, что чинить: цвет или место, где примитив стоит.
+ * The worst contrast of a pair across all surfaces. It returns the surface as well: without it
+ * it is unclear what to fix, the colour or the place where the primitive sits.
  */
 function worstRatio(fgClass, bgClass, vars) {
   let worst = null;
@@ -315,16 +314,15 @@ function worstRatio(fgClass, bgClass, vars) {
   return worst;
 }
 
-/** Токен без префикса утилиты: `border-accent` и `bg-accent` — один и тот же цвет. */
+/** The token without the utility prefix: `border-accent` and `bg-accent` are the same colour. */
 const token = (cls) => cls.replace(/^(bg|text|border)-/, "");
 
 /**
- * Пары из реального вывода словаря.
+ * Pairs from the real output of the dictionary.
  *
- * Дедупликация по «род × токен × подложка», а не по классу: `outline` и `ghost`
- * дают одну и ту же пару, а рамка тона и его же точка-индикатор — один цвет на
- * одной подложке, то есть одно вычисление. Иначе таблица распухает строками,
- * которые отличаются только подписью.
+ * Deduplication is by "kind × token × surface", not by class: `outline` and `ghost` give the
+ * same pair, and a tone's border and its dot indicator are one colour on one surface, so it is
+ * one computation. Otherwise the table swells with rows that differ only in their label.
  */
 function pairs() {
   const out = new Map();
@@ -344,19 +342,19 @@ function pairs() {
       const border = classes.find((c) => c.startsWith("border-") && c !== "border-transparent");
 
       if (text) add("text", TEXT, text, bg, `${variant}/${tone} — text`);
-      // Рамка сравнивается с тем, что снаружи: она отделяет примитив от подложки.
+      // The border is compared with what is outside it: it separates the primitive from the surface.
       if (border)
         add("non-text", NON_TEXT, border, "bg-transparent", `${token(border)} — border/indicator`);
     }
     const dot = TONE_TOKENS[tone].dotBg;
     add("non-text", NON_TEXT, dot, "bg-transparent", `${token(dot)} — border/indicator`);
 
-    // Выбранное состояние — отдельная пара, потому что `variantClasses()` её не
-    // отдаёт: это не вариант подачи тона, а состояние поверх любого из них.
-    // Без этой строки `selected:bg-bg-3` у `neutral` остался бы единственным
-    // сочетанием словаря, которое скрипт не видит: у остальных тонов пара
-    // совпадает с `soft` и проверяется там, а у нейтрального подложка своя —
-    // на шаг темнее, чем hover, иначе выбранное неотличимо от наведённого.
+    // The selected state is a separate pair, because `variantClasses()` does not return it.
+    // It is not a variant of the tone's presentation, but a state on top of any of them.
+    // Without this line, `selected:bg-bg-3` on `neutral` would remain the only combination
+    // in the dictionary that the script does not see. For the other tones the pair matches
+    // `soft` and is checked there, but the neutral one has its own surface, one step darker
+    // than hover, otherwise a selected item cannot be told apart from a hovered one.
     const strip = (c) => c.replace(/^selected:/, "");
     add(
       "text",
@@ -368,30 +366,29 @@ function pairs() {
   }
 
   /*
-   * Метки пользователя: восемь оттенков, порог нетекстовый.
+   * User labels: eight hues, a non-text threshold.
    *
-   * Метка — кружок или полоска рядом с названием, то есть графический признак,
-   * а не подпись: WCAG 1.4.11, 3:1. Подпись рядом с ней рисуется обычным
-   * текстом на подложке приложения и проверяется своими парами выше.
+   * A label is a dot or a stripe next to a name, so it is a graphic signal rather than a
+   * caption: WCAG 1.4.11, 3:1. The caption next to it is drawn as ordinary text on the app
+   * surface and is checked by its own pairs above.
    *
-   * Проверять их обязательно и обязательно во всех темах: набор, подобранный в
-   * тёмной, в светлой обычно разваливается — половина оттенков сливается с
-   * фоном. Без этих строк комментарий в `styles.css` про «проверяет contrast»
-   * был бы обещанием, которого никто не выполняет.
+   * They must be checked, and in every theme: a set chosen in the dark theme usually falls
+   * apart in the light one, with half the hues merging into the background. Without these
+   * lines, the comment in `styles.css` that says it "checks contrast" would be a promise
+   * nobody keeps.
    */
   for (const hue of ["blue", "violet", "teal", "green", "amber", "red", "pink", "steel"])
     add("non-text", NON_TEXT, `bg-label-${hue}`, "bg-transparent", `label/${hue} — indicator`);
 
   /*
-    Рамка выбранной карточки выбора (`appearance="card"`).
+    The border of a selected choice card (`appearance="card"`).
 
-    Это признак состояния, а не украшение: WCAG 1.4.11, 3:1. Меряется дважды —
-    против подложек приложения (снаружи рамки) и против самой карточки, `bg-2`
-    (внутри). Пары `border-<тон>-strong` против подложек уже есть выше, но
-    рамка `neutral` у карточки своя (`border-fg-3`, а не `border-line`, который
-    гейт пропускает как декоративный), и внутренняя сторона у всех пяти — новый
-    контекст. Рядом с рамкой в карточке всегда есть и второй признак — кружок
-    или галочка, но порог рамка обязана держать и сама.
+    It is a state signal, not decoration: WCAG 1.4.11, 3:1. It is measured twice: against the
+    app surfaces (outside the border) and against the card itself, `bg-2` (inside). The pairs
+    `border-<tone>-strong` against the surfaces are already above, but the `neutral` border of
+    the card has its own colour (`border-fg-3`, not `border-line`, which the gate skips as
+    decorative), and the inner side is a new context for all five. Next to the border the card
+    always has a second signal, a dot or a tick, but the border must hold the threshold on its own too.
   */
   for (const [tone, cls] of Object.entries(CHOICE_CARD_SELECTED_BORDER)) {
     add("non-text", NON_TEXT, cls, "bg-transparent", `card/${tone} — selected border outside`);
@@ -399,19 +396,18 @@ function pairs() {
   }
 
   /*
-    Рамка отмеченной коробки `Checkbox` (и `mixed` — у него та же коробка) и
-    включённой дорожки `Toggle`: `STATE_BORDER` из `variants.ts`.
+    The border of a checked `Checkbox` box (and `mixed` uses the same box) and of an on
+    `Toggle` track: `STATE_BORDER` from `variants.ts`.
 
-    Отмеченность — признак состояния, WCAG 1.4.11, 3:1. **Заливка отмеченной
-    коробки против подложки порога не держит**: `solid/<тон>` даёт 1.07–2.9 у
-    четырёх тонов из пяти (`success` проходит), в тёмных темах на
-    `surface-elevated` и в светлой у `neutral`/`warning`. Гейт с парами
-    «заливка против подложки и против `bg-2`» падал на 48 сочетаниях из 288.
-    Значения токенов кита не менялись (заметное изменение вида), поэтому границу
-    коробки несёт рамка, и меряется то, что компонент рисует на самом деле:
-    рамка против подложек приложения (флажок в строке и в таблице) и против
-    `bg-2` — подложки карточки, внутри которой коробка стоит в `appearance="card"`.
-    Галочка на заливке меряется парами `solid/<тон> — text` выше.
+    Being checked is a state signal, WCAG 1.4.11, 3:1. **The fill of a checked box does not
+    hold the threshold against a surface**: `solid/<tone>` gives 1.07–2.9 for four of the five
+    tones (`success` passes), in the dark themes on `surface-elevated` and in the light theme
+    for `neutral` and `warning`. The gate with the pairs "fill against the surface and against
+    `bg-2`" failed on 48 of 288 combinations. The kit's token values did not change (a visible
+    change of look), so the box's edge is carried by its border, and what is measured is what
+    the component actually draws: the border against the app surfaces (a checkbox in a row or
+    a table) and against `bg-2`, the surface of the card inside which the box sits with
+    `appearance="card"`. The tick on the fill is measured by the `solid/<tone> — text` pairs above.
   */
   for (const [tone, cls] of Object.entries(STATE_BORDER)) {
     add("non-text", NON_TEXT, cls, "bg-transparent", `checkbox/${tone} — checked box edge outside`);
@@ -419,20 +415,19 @@ function pairs() {
   }
 
   /*
-    Палитры цвета текста и маркера Редактора (`src/editor/styles/palette.ts`, OLDSUI-46).
+    The Editor's text colour and highlight-marker palettes (`src/editor/styles/palette.ts`, OLDSUI-46).
 
-    Это текст документа, который читают, — порог текстовый, 4.5:1, на всех
-    подложках: Редактор стоит на `bg-2`, а `RichTextView` — на фоне страницы.
+    This is document text that people read, so the threshold is the text one, 4.5:1, on all
+    surfaces: the Editor sits on `bg-2`, and `RichTextView` sits on the page background.
 
-    Цвет текста — `strong`-ступень тона прямо на подложке приложения. Маркер —
-    непрозрачная подложка `--marker-<имя>`. Три ярких (жёлтый,
-    зелёный, розовый) одинаковы во всех темах, и текст на них ВСЕГДА тёмный —
-    `--marker-text`, а не `fg-0` темы (OLDSUI-61). Шесть прежних цветов
-    Notion сохранили свои значения (светлая пастель, тёмная приглушённая; сумрак
-    берёт тёмную) и текст `fg-0`: `mark` с их именем оставляет цвет
-    наследуемым. Девять маркеров × три темы × бренд — всё это перебирается
-    ниже, как у любой пары. Цветной текст на маркере ДРУГОГО цвета гейт не
-    меряет: автор выбрал это сам и видит результат.
+    The text colour is the `strong` step of a tone, right on the app surface. A marker is an
+    opaque `--marker-<name>` surface. The three bright ones (yellow, green, pink) are the same
+    in every theme, and the text on them is ALWAYS dark: `--marker-text`, not the theme's
+    `fg-0` (OLDSUI-61). The six older Notion colours kept their values (light pastel, dark
+    muted; the dusk theme takes the dark one) and the `fg-0` text: a `mark` with their name
+    leaves the colour inheritable. Nine markers × three themes × brand are all enumerated
+    below, like any pair. The gate does not measure coloured text on a marker of a DIFFERENT
+    colour: the author chose that and sees the result.
   */
   for (const { name, text } of EDITOR_TEXT_COLORS)
     add("text", TEXT, `text-${text}`, "bg-transparent", `editor text colour ${name}`);
@@ -445,7 +440,7 @@ function pairs() {
       `editor marker ${name} — ${bright ? "dark marker text" : "body text"}`
     );
 
-  // Текстовые токены вне словаря тонов: они задают иерархию подписей.
+  // Text tokens outside the tone dictionary: they set the hierarchy of the labels.
   for (const [cls, label] of [
     ["text-fg-1", "text-secondary on a surface"],
     ["text-fg-2", "text-muted on a surface"],
@@ -454,80 +449,79 @@ function pairs() {
     add("text", TEXT, cls, "bg-transparent", label);
 
   /*
-    Выделенный текст (OLDSUI-116): глобальный `::selection` и роль
-    `--rte-selection` Документа в теме — обе стоят на `--selection`, а текст
-    поверх — основной. Заливка выделения теперь плотная (до 45 % альфы), и
-    светлый текст на ней в тёмных темах — ровно то, что может упасть ниже 4.5.
-    Различимость самой заливки от подложки (1.5–2:1) гейт не меряет: 3:1 там
-    не цель, см. `--selection` в `styles.css`.
+    Selected text (OLDSUI-116): the global `::selection` and the Document's `--rte-selection`
+    role in the theme both sit on `--selection`, and the text on top of it is the primary one.
+    The selection fill is now dense (up to 45% alpha), and light text on it in the dark themes
+    is exactly what can drop below 4.5. The gate does not measure how distinct the fill itself
+    is from the surface (1.5–2:1): 3:1 is not the target there, see `--selection` in `styles.css`.
   */
   add("text", TEXT, "text-fg-0", "bg-(--selection)", "selected text");
 
-  // Те же токены ВНУТРИ поля ввода, на `bg-2`.
+  // The same tokens INSIDE an input field, on `bg-2`.
   //
-  // Это отдельный контекст, а не тот же самый: подложка поля светлее фона
-  // страницы, и приглушённый текст, проходящий порог на втором, проваливает
-  // его на первой. Ровно так и вышло со счётчиком символов `TextControl` —
-  // `text-fg-3` дал 4.0 при требуемых 4.5, и увидел это только аудит axe,
-  // потому что скрипт такой пары не знал.
+  // This is a separate context, not the same one: the field's surface is lighter than the page
+  // background, and muted text that passes the threshold on the second fails it on the first.
+  // This is exactly what happened with the character counter of `TextControl`: `text-fg-3` gave
+  // 4.0 against the required 4.5, and only the axe audit caught it, because the script did not
+  // know this pair.
   add("text", TEXT, "text-fg-2", "bg-bg-2", "text-muted inside a field");
 
   /*
-    Приглушённый текст ВНУТРИ КАРТОЧКИ, тоже на `bg-2`.
+    Muted text INSIDE A CARD, also on `bg-2`.
 
-    Отдельная пара, потому что это отдельный контекст: подсказка `FormField`,
-    подпись под значением, вторая строка в блоке — всё это `text-fg-3` как
-    ТЕКСТ, а не как значок. Скрипт знал `fg-3` на `bg-2` только с не-текстовым
-    порогом (слот иконки, 3:1) и текстовый провал пропускал.
+    A separate pair, because this is a separate context: the `FormField` hint, a caption under
+    a value, a second line in a block are all `text-fg-3` used as TEXT, not as an icon. The
+    script knew `fg-3` on `bg-2` only with the non-text threshold (the icon slot, 3:1), and let
+    the text failure through.
 
-    Нашёл это аудит axe во фронте: подсказка «Необязательно. Укажите сюжет…»
-    в блоке загрузки дала 4.0 при требуемых 4.5, и та же пара била по строке
-    «Полный доступ» в сайдбаре. Скрипт при этом рапортовал ноль провалов.
+    The axe audit on the front end found it: the hint "Optional. Specify the plot…" in the upload
+    block gave 4.0 against the required 4.5, and the same pair hit the "Full access" row in the
+    sidebar. The script reported zero failures the whole time.
   */
   add("text", TEXT, "text-fg-3", "bg-bg-2", "text-muted-2 inside a card");
 
-  // `fg-3` внутри поля — цвет СЛОТА ИКОНКИ (лупа поиска, единица измерения), а
-  // не текста, поэтому порог не-текстовый. Текстом внутри поля он не бывает:
-  // счётчик символов взял `fg-2` именно потому, что 4.5 на этой подложке не
-  // проходил, а плейсхолдер кит не красит вовсе — там цвет браузера.
+  // `fg-3` inside a field is the colour of an ICON SLOT (the search magnifier, the unit of
+  // measure), not of text, so the threshold is the non-text one. It is never used as text
+  // inside a field: the character counter takes `fg-2` precisely because 4.5 did not pass on
+  // this surface, and the kit does not colour the placeholder at all: that uses the browser's colour.
   add("non-text", NON_TEXT, "text-fg-3", "bg-bg-2", "text-muted-2 — icon inside a field");
 
   /*
-    Тон `draft` — пометка несохранённых правок. Он не в `TONE_TOKENS`: своего
-    варианта подачи у него нет, компоненты его не принимают, это палитра для
-    прикладного экрана (рамка изменённой карточки и подпись рядом с ней).
+    The `draft` tone marks unsaved edits. It is not in `TONE_TOKENS`: it has no variant of its
+    own, the components do not accept it, and it is a palette for an application screen (the
+    border of a changed card and the label next to it).
 
-    Поэтому пары заводятся руками — иначе токен остался бы единственным цветным
-    в `styles.css`, которого гейт не видит. Ровно так уже терялись пары, из-за
-    которых ниже стоят три отдельных `add` для `fg-2`/`fg-3`.
+    So the pairs are added by hand. Otherwise the token would remain the only coloured one in
+    `styles.css` that the gate cannot see. This is how pairs were lost before, and the reason
+    three separate `add` calls for `fg-2`/`fg-3` appear below.
   */
   add("text", TEXT, "text-draft-strong", "bg-transparent", "draft-strong — label");
   add("non-text", NON_TEXT, "border-draft-strong", "bg-transparent", "draft-strong — border");
   add("non-text", NON_TEXT, "border-draft", "bg-transparent", "draft — border/indicator");
 
   /*
-    Звезда `Rating` — тот же случай, что и `draft`: собственный токен
-    компонентного слоя (ADR-0040), которого нет ни в `TONE_TOKENS`, ни в осях
-    компонентов. Без этой пары гейт его не увидел бы вовсе.
+    The `Rating` star is the same case as `draft`: its own token of the component layer
+    (ADR-0040), absent from both `TONE_TOKENS` and the component axes. Without this pair the
+    gate would not see it at all.
 
-    Порог не-текстовый: ряд звёзд несёт величину визуально — это не украшение.
-    Незакрашенная звезда взята второй парой: она значит «не выбрано», и отличать
-    её от закрашенной надо глазом.
+    The threshold is non-text: a row of stars carries the value visually, so it is not decoration.
+    The empty star is taken as a second pair: it means "not selected", and it has to be told
+    apart from the filled one by eye.
   */
   add("non-text", NON_TEXT, "text-rating-star", "bg-bg-1", "rating-star — filled star");
   add("non-text", NON_TEXT, "text-fg-3", "bg-bg-1", "text-muted-2 — empty star");
 
   /*
-    Инверсная поверхность — меню выделения Редактора (`toolbar="bubble"`,
-    OLDSUI-69): светлая плашка в тёмных темах, тёмная в светлой.
+    The inverse surface is the Editor's selection menu (`toolbar="bubble"`, OLDSUI-69): a light
+    pill in the dark themes, a dark one in the light theme.
 
-    Плашка непрозрачна, поэтому подложка приложения под ней в расчёт не идёт —
-    меряется пара «то, что на плашке, — сама плашка» в трёх её состояниях:
-    покой, наведение, нажатие (нажатая метка, открытое меню). Подписей в
-    плашке нет, только значки, но порог у её текста — текстовый: токен назван
-    «текст на инверсной», и подпись на нём обязана читаться. Значки меряются
-    отдельно, 3:1 (WCAG 1.4.11). Контур фокуса — `accent-on-inverse`, тоже
-    3:1, и тоже на всех трёх подложках: фокус бывает и на нажатой кнопке.
+    The pill is opaque, so the app surface under it does not enter the calculation. The pair
+    measured is "what is on the pill against the pill itself" in its three states: at rest,
+    hovered, pressed (a pressed mark, an open menu). The pill has no captions, only icons, but
+    its text threshold is the text one: the token is named "text on inverse", and a caption on it
+    has to be readable. The icons are measured separately, at 3:1 (WCAG 1.4.11). The focus ring is
+    `accent-on-inverse`, also 3:1, and also on all three surfaces, since focus can land on a
+    pressed button too.
   */
   for (const [bg, state] of [
     ["bg-surface-inverse", "at rest"],
@@ -546,17 +540,16 @@ function pairs() {
   }
 
   /*
-    Тон Обёртки Редактора (OLDSUI-78): мягкая подложка тона и полоса 3 px слева,
-    роли `--rte-tone-<тон>-background` и `-border` (`tokens.ts`).
+    The Editor's Wrapper Callout tone (OLDSUI-78): the soft tone surface and a 3 px stripe on the left,
+    roles `--rte-tone-<tone>-background` and `-border` (`tokens.ts`).
 
-    Текст на подложке — обычный текст Документа (`--rte-foreground`) и
-    вторичный, который Обёртка с тоном берёт ролями `--rte-tone-*`: ссылка,
-    цитата, приглушённый (подпись, выполненный пункт, серый цвет текста) и
-    подсказка. Порог текстовый, на всех подложках приложения: подложки тонов
-    полупрозрачны, и на самой светлой из них контраст меньше. Цвет текста автора
-    (палитра и свой цвет) гейт здесь не меряет — выбор автора. Полоса — признак
-    тона, WCAG 1.4.11, 3:1, против того, что вокруг Обёртки: подложки приложения
-    снаружи и её собственной заливки внутри.
+    The text on the surface is the ordinary Document text (`--rte-foreground`) and the secondary
+    text that a Wrapper with a Callout tone takes from the `--rte-tone-*` roles: a link, a quote, muted
+    text (a caption, a completed item, grey text) and a hint. The threshold is the text one, on
+    all the app surfaces: the tone surfaces are semi-transparent, and the contrast is lower on
+    the lightest of them. The gate does not measure the author's own text colour (the palette and
+    a custom colour), since that is the author's choice. The stripe is a tone signal: WCAG 1.4.11,
+    3:1, against what surrounds the Wrapper: the app surfaces outside and its own fill inside.
   */
   for (const tone of EDITOR_WRAPPER_TONES) {
     const background = `bg-(--rte-tone-${tone}-background)`;
@@ -571,19 +564,18 @@ function pairs() {
   return [...out.values()];
 }
 
-// ─── лист `surface="paper"` Редактора ─────────────────────────────────────────
+// ─── the Editor's Paper (`surface="paper"`) ───────────────────────────────────
 
 /*
-  Лист (OLDSUI-52) — светлый Документ в ЛЮБОЙ теме приложения, поэтому пары
-  выше, мерящие токены кита на подложках темы, его не покрывают: роли `--rte-*`
-  листа смотрят в примитивы светлой темы, а акцент — в заливку темы приложения.
-  Здесь каждая пара меряется против самого листа (`--rte-background`) во всех
-  темах × акцентах × брендах.
+  Paper (OLDSUI-52) is a light Document in ANY app theme, so the pairs above, which measure the
+  kit's tokens on the theme's surfaces, do not cover it: the `--rte-*` roles of the Paper look
+  at the light theme's primitives, and the accent looks at the app theme's fill. Here each pair
+  is measured against the Paper itself (`--rte-background`) across all themes × accents × brands.
 
-  Значения ролей — из `EDITOR_PAPER_TOKENS_CLASS`, той же строки классов, что
-  стоит на листе, а не из списка, переписанного руками. Лист несёт вложенный
-  `data-theme="light"`, поэтому маркеры и тема подсветки берут светлые блоки
-  `styles.css`; в светлом приложении акцентные роли — вариант по корню.
+  The role values come from `EDITOR_PAPER_TOKENS_CLASS`, the same class string that is on the
+  Paper, not from a hand-written list. The Paper carries a nested `data-theme="light"`, so the
+  markers and the highlighting theme take the light blocks of `styles.css`. In a light app the
+  accent roles are the root variant.
 */
 const PAPER = rteRoles(EDITOR_PAPER_TOKENS_CLASS, /(?:^|\s)\[--(rte-[\w-]+):([^\]]+)\]/g);
 const PAPER_LIGHT_ROOT = rteRoles(
@@ -633,7 +625,7 @@ function paperPairs() {
       add("text", TEXT, role, "rte-code-block-background", `paper: code ${role}`);
   add("non-text", NON_TEXT, "rte-ring", null, "paper: focus of a control in the document");
   add("non-text", NON_TEXT, "rte-primary", null, "paper: checkbox, selected image outline");
-  // Тон Обёртки на листе (OLDSUI-78) — те же три пары, что в теме, против листа.
+  // The Wrapper Callout tone on the Paper (OLDSUI-78): the same three pairs as in the theme, against the Paper.
   for (const tone of EDITOR_WRAPPER_TONES) {
     const background = `rte-tone-${tone}-background`;
     const border = `rte-tone-${tone}-border`;
@@ -652,23 +644,23 @@ function paperPairs() {
   return out;
 }
 
-/** Пара на листе: подложка (если есть) поверх листа, текст поверх неё. */
+/** A pair on the Paper: the surface (if any) over the Paper, the text over that. */
 function paperRatio({ fg, bg }, vars) {
   const sheet = parseColor(resolveVar("rte-background", vars));
   const under = bg ? composite(parseColor(resolveVar(bg, vars)), sheet) : sheet;
   return contrast(composite(parseColor(resolveVar(fg, vars)), under), under);
 }
 
-// ─── самопроверка расчёта ─────────────────────────────────────────────────────
+// ─── self-check of the calculation ────────────────────────────────────────────
 
 /**
- * Якорь из исходной спецификации контраста: `#1f7ae0` на `rgba(31,122,224,0.16)` поверх `#26272d` = 2.95.
- * Это состояние токенов на момент замера в спеке.
+ * An anchor from the original contrast specification: `#1f7ae0` on `rgba(31,122,224,0.16)` over
+ * `#26272d` = 2.95. These are the token values at the time of measurement in the spec.
  *
- * Цвета здесь ЛИТЕРАЛЬНЫЕ, а не взятые из `styles.css`, и это принципиально:
- * проверяется формула и альфа-композит, а не текущая палитра. Читай якорь из
- * токенов — и он бы падал при каждой законной правке `--accent`, то есть ровно
- * тогда, когда скрипт нужнее всего. Один раз так и вышло.
+ * The colours here are LITERAL, not taken from `styles.css`, and that is deliberate: what is
+ * verified is the formula and the alpha compositing, not the current palette. Had the anchor been
+ * read from the tokens, it would fail on every legitimate change to `--accent`, which is exactly
+ * when the script is most needed. This happened once.
  */
 function selfCheck() {
   const bg = composite(parseColor("rgba(31, 122, 224, 0.16)"), parseColor("#26272d"));
@@ -682,7 +674,7 @@ function selfCheck() {
   }
 }
 
-// ─── прогон ───────────────────────────────────────────────────────────────────
+// ─── run ──────────────────────────────────────────────────────────────────────
 
 selfCheck();
 
@@ -694,8 +686,8 @@ for (const pair of ALL_PAIRS)
   for (const theme of THEMES)
     for (const accent of ACCENTS)
       for (const brand of BRANDS) {
-        // У бренда своя ось акцента: мерить его дважды, по разу на каждый
-        // акцент, значило бы удвоить строки, не добавив ни одного сочетания.
+        // A brand has its own accent axis. Measuring it twice, once per accent,
+        // would double the rows without adding a single combination.
         if (brand !== "base" && accent !== ACCENTS[0]) continue;
         const vars = varsFor(theme, accent, brand);
         const { ratio, surface } = worstRatio(pair.fgClass, pair.bgClass, vars);
@@ -720,7 +712,7 @@ for (const pair of PAPER_PAIRS)
         });
       }
 
-/** `dark/blue` для базы, `dark/teal` для бренда — акцент у бренда свой. */
+/** `dark/blue` for the base, `dark/teal` for a brand: a brand has its own accent. */
 const variantLabel = (r) => `${r.theme}/${r.brand === "base" ? r.accent : r.brand}`;
 
 const failed = rows.filter((r) => !r.ok);

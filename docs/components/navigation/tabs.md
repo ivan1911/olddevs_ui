@@ -9,26 +9,26 @@ story: src/components/navigation/Tabs.stories.tsx
 
 # Tabs
 
-## Кратко для AI
+## Summary for AI
 
-`Tabs` — controlled-only лента вкладок; компонент рендерит только tablist, не
-панели. Потребитель хранит `value`, применяет `onChange` и обязан отрендерить
-активную панель с `id={`${value}-panel`}` и `role="tabpanel"`.
+`Tabs` is a controlled-only tab strip; the component renders only the tablist, not the
+panels. The consumer stores `value`, applies `onChange` and must render the
+active panel with `id={`${value}-panel`}` and `role="tabpanel"`.
 
-## Когда использовать
+## When to use
 
-- Несколько равноправных мгновенно переключаемых представлений одного контекста.
-- Вертикальная навигация settings/sidebar или горизонтальная лента со скроллом.
-- Состояние активной вкладки уже принадлежит URL или компоненту-потребителю.
+- Several peer, instantly switchable views of one context.
+- Vertical settings/sidebar navigation or a horizontal scrolling strip.
+- The active tab state already belongs to the URL or the consuming component.
 
-## Когда не использовать
+## When not to use
 
-- Для пошагового процесса используйте `Stepper`; для независимых сворачиваемых блоков —
-  `Accordion`; для переключения форматных режимов — `Segmented`.
-- Не используйте tabs, если содержимое всех секций должно быть видно одновременно.
-- Не ожидайте uncontrolled `defaultValue`: его нет.
+- For a step-by-step process, use `Stepper`; for independent collapsible blocks,
+  `Accordion`; for switching between format modes, `Segmented`.
+- Do not use tabs if the content of all sections must be visible at once.
+- Do not expect an uncontrolled `defaultValue`: there is none.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Tabs items={items} value={tab} onChange={setTab} />
@@ -37,34 +37,34 @@ story: src/components/navigation/Tabs.stories.tsx
 
 ## Public API
 
-`items` — массив `{ id, label, icon? }`; `value` и `onChange` обязательны.
-`orientation` — `horizontal` (умолчание) или `vertical`, `className` настраивает
-container. Чтобы ориентация менялась по ширине экрана, выбирайте `orientation` на
-стороне потребителя. Item id формирует `aria-controls`, поэтому он должен быть пригоден
-для HTML id и уникален в этой tablist.
+`items` is an array of `{ id, label, icon? }`; `value` and `onChange` are required.
+`orientation` is `horizontal` (the default) or `vertical`, and `className` styles the
+container. To change orientation with the screen width, choose `orientation` on the
+consumer side. The item id is used to build `aria-controls`, so it must be valid
+as an HTML id and unique within this tablist.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-У активной вкладки `tabIndex=0`, у остальных `-1`: Tab входит только в
-активную, а roving focus использует стрелки. По горизонтальной ленте
-перемещаются `←/→`, по вертикальной — `↑/↓`; Home/End идут к краям, края не зацикливаются.
-Выбор следует за фокусом (automatic activation). `aria-controls` получает лишь
-активная вкладка, потому что потребитель может не рендерить неактивные панели.
-См. [исходник Tabs](../../../src/components/navigation/Tabs.tsx).
+The active tab has `tabIndex=0` and the rest `-1`: Tab enters only the
+active one, and roving focus uses the arrow keys. A horizontal strip moves with
+`←/→`, a vertical one with `↑/↓`; Home/End go to the ends, and the ends do not wrap.
+Selection follows focus (automatic activation). Only the active tab gets
+`aria-controls`, because the consumer may not render inactive panels.
+See the [Tabs source](../../../src/components/navigation/Tabs.tsx).
 
-## Хорошие примеры
+## Good examples
 
-- Settings sidebar: `orientation="vertical"` и отдельный `tabpanel`.
-- Горизонтальная лента с короткими подписями, допускающая overflow-x.
-- Иконки только как дополнение к читаемым label.
+- A settings sidebar: `orientation="vertical"` and a separate `tabpanel`.
+- A horizontal strip with short labels that allows overflow-x.
+- Icons only as a complement to readable labels.
 
-## Антипаттерны
+## Anti-patterns
 
-- Рендерить tablist без панели активной вкладки.
-- Передавать в `value` id, отсутствующий в `items`.
-- Добавлять отдельный Enter для активации: переключение уже происходит стрелкой.
+- Rendering a tablist without a corresponding active panel.
+- Passing a `value` id that is not in `items`.
+- Adding a separate Enter for activation: an arrow key already switches tabs.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/navigation/Tabs.tsx`
 - `src/components/navigation/Tabs.stories.tsx`

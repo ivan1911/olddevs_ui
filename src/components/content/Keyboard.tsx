@@ -20,29 +20,31 @@ export type KeyboardLayout = "en" | "ru";
 export type { KeyboardSelection } from "./keyboardEditing.js";
 
 export interface KeyboardProps {
-  /** Текущий текст поля, которым управляет клавиатура. */
+  /** Current text of the field that the keyboard controls. */
   value: string;
-  /** Позиция курсора или выделенный диапазон в `value`. */
+  /** Caret position or the selected range in `value`. */
   selection: KeyboardSelection;
-  /** Вызывается с новым текстом после нажатия клавиши или удаления символа. */
+  /** Called with the new text after a key press or a character deletion. */
   onChange: (nextValue: string) => void;
-  /** Вызывается с новой позицией курсора или выделения после ввода. */
+  /** Called with the new caret position or selection after input. */
   onSelectionChange: (next: KeyboardSelection) => void;
-  /** Раскладка клавиш: `en` или `ru`. */
+  /** Keyboard layout: `en` or `ru`. */
   layout: KeyboardLayout;
-  /** Вызывается с новой раскладкой, когда пользователь переключает язык. */
+  /** Called with the new layout when the user switches the language. */
   onLayoutChange: (nextLayout: KeyboardLayout) => void;
-  /** Подтверждает введённый запрос без синтеза DOM-события. */
+  /** Submits the entered query without synthesizing a DOM event. */
   onSubmit?: () => void;
-  /** Отключает все клавиши, ручку перемещения и кнопку закрытия. По умолчанию `false`. */
+  /** Disables all keys, the move handle and the close button. Defaults to `false`. */
   disabled?: boolean;
-  /** При работе указателем не уводит фокус с внешнего текстового поля. */
+  /** With a pointer, does not move focus away from the external text field. */
   preserveFocus?: boolean;
-  /** Доступное имя панели и её заголовок; без него берётся стандартное название по раскладке. */
+  /** Accessible name and heading of the panel; without it, the standard name for the layout is used. */
   label?: string;
-  /** Доступное имя кнопки закрытия; без него берётся стандартная подпись. */
+  /** Accessible name of the close button; without it, the standard label is used. */
   closeLabel?: string;
-  /** Вызывается по кнопке закрытия. Без обработчика кнопка закрытия не рисуется. */
+  /**
+   * Called when the close button is pressed. Without this handler the close button is not rendered.
+   */
   onRequestClose?: () => void;
 }
 
@@ -112,9 +114,9 @@ const SHIFTED_NUMBER_ROWS: Record<KeyboardLayout, string[]> = {
 };
 
 /*
-  Символ на клавише — ДАННЫЕ ввода, а его озвучка — интерфейс. Поэтому здесь
-  лежит ключ каталога, а не готовая подпись: клавиша «,» вводит запятую на любом
-  языке, но называется она по-разному.
+  The character on a key is input DATA, while its spoken name is UI. That is why this holds
+  a message catalog key rather than a ready label: the "," key types a comma in any language,
+  but it is named differently in each.
 */
 type PunctuationKeyName =
   "keyComma" | "keyPeriod" | "keyLess" | "keyGreater" | "keySemicolon" | "keyColon";
@@ -166,11 +168,10 @@ const KEYBOARD_MOVE_OFFSETS: Record<string, { x: number; y: number }> = {
 };
 
 /*
-  РАСКЛАДКА — ЭТО ДАННЫЕ, А НЕ ПЕРЕВОД. Массивы `LETTER_ROWS.ru` остаются
-  кириллицей при любом языке интерфейса: они говорят, какие символы клавиатура
-  ВВОДИТ, а не на каком языке она подписана. Поэтому `layout` и локаль
-  провайдера независимы: русская раскладка при английском интерфейсе — обычный
-  случай, а не ошибка. Гейт «нет литералов» знает про это исключение по имени.
+  THE LAYOUT IS DATA, NOT TRANSLATION. The `LETTER_ROWS.ru` arrays stay in Cyrillic whatever the
+  UI language is: they say which characters the keyboard TYPES, not which language its keys are
+  labeled in. So `layout` and the provider's locale are independent: a Russian layout in an English
+  UI is a normal case, not a bug. The "no literals" gate knows this exception by name.
 */
 function panelTitle(layout: KeyboardLayout, messages: UiMessages) {
   return messages.keyboard.label({ layout });
@@ -252,8 +253,8 @@ function keyboardRows(
       {
         action: "layout",
         label: messages.keyboard.switchLayout,
-        // Раскладка ПЕРЕКЛЮЧАЕТСЯ на другую, поэтому в подпись идёт та, что
-        // будет после нажатия, а не текущая.
+        // The layout is SWITCHED to the other one, so the label names the layout that
+        // the press switches to, not the current one.
         ariaLabel: messages.keyboard.switchLayoutTo({ layout: layout === "ru" ? "en" : "ru" }),
         icon: "language",
       },
@@ -287,7 +288,7 @@ function keyClassName(key: KeyboardKey) {
     .join(" ");
 }
 
-/** Экранная клавиатура управляет value и selection вызывающего поля, но не DOM-ref. */
+/** The on-screen keyboard controls the value and selection of the calling field, but not its DOM ref. */
 export function Keyboard({
   value,
   selection,
@@ -329,22 +330,20 @@ export function Keyboard({
   const [activeIndex, setActiveIndex] = useState(firstLetter);
 
   /*
-    Табстоп ВСЕГДА внутри текущего набора клавиш.
+    The tab stop is ALWAYS inside the current key set.
 
-    `activeIndex` — состояние разметки, а не фокуса, и число клавиш меняется
-    вместе с раскладкой и режимом: ru-буквы — 50, en-буквы — 44, ru-символы —
-    35. Эффекты восстановления ниже выходили по `preserveFocus` ДО
-    `setActiveIndex`, и позиция, взятая в длинном наборе, оставалась в коротком:
-    `tabIndex={0}` не получала НИ ОДНА кнопка, и панель выпадала из порядка
-    обхода целиком — у компонента, который существует ради клавиатуры.
+    `activeIndex` is state of the markup, not of focus, and the number of keys changes together with
+    the layout and the mode: ru letters — 50, en letters — 44, ru symbols — 35. The restore effects
+    below used to exit on `preserveFocus` BEFORE `setActiveIndex`, so a position taken from the long
+    set stayed in the short one: NO button got `tabIndex={0}`, and the whole panel dropped out of the
+    tab order — for a component that exists for the keyboard.
   */
   const keyCount = rows.flat().length;
   useEffect(() => {
     setActiveIndex((current) => {
-      // Зажим с ОБЕИХ сторон: отрицательный индекс проходил проверку
-      // `current < keyCount` насквозь. И падаем на ПЕРВУЮ клавишу, а не на
-      // последнюю: последняя — это submit, и после смены раскладки снаружи
-      // табстоп уезжал на Enter вместо буквы.
+      // Clamp on BOTH sides: a negative index passed the `current < keyCount` check straight through.
+      // And we fall back to the FIRST key, not the last one: the last one is submit, and after an
+      // external layout change the tab stop moved to Enter instead of a letter.
       if (current >= 0 && current < keyCount) return current;
       return Math.min(firstLetter, Math.max(0, keyCount - 1));
     });
@@ -353,8 +352,8 @@ export function Keyboard({
   useEffect(() => {
     if (!focusFirstLetterAfterLayoutChange.current) return;
     focusFirstLetterAfterLayoutChange.current = false;
-    // Табстоп переезжает всегда; под `preserveFocus` пропускается только сам
-    // перевод фокуса — забирать его у поля ввода там нельзя.
+    // The tab stop always moves; under `preserveFocus` only the focus move itself is skipped,
+    // because taking focus away from the input field is not allowed there.
     setActiveIndex(firstLetter);
     if (preserveFocus) return;
     buttons.current[firstLetter]?.focus();
@@ -363,8 +362,8 @@ export function Keyboard({
   useEffect(() => {
     if (!focusSymbolsAfterChange.current) return;
     focusSymbolsAfterChange.current = false;
-    // Табстоп переезжает всегда; под `preserveFocus` пропускается только сам
-    // перевод фокуса — забирать его у поля ввода там нельзя.
+    // The tab stop always moves; under `preserveFocus` only the focus move itself is skipped,
+    // because taking focus away from the input field is not allowed there.
     setActiveIndex(symbolsIndex);
     if (preserveFocus) return;
     buttons.current[symbolsIndex]?.focus();

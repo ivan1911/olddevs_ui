@@ -36,67 +36,67 @@ import { withoutToolbarAxis } from "../../lib/toolbar-axis.js";
 import { useMenuAim } from "./useMenuAim.js";
 
 /*
-  МЕГАМЕНЮ — НАВИГАЦИЯ, А НЕ МЕНЮ КОМАНД.
+  MEGA MENU IS NAVIGATION, NOT A COMMAND MENU.
 
-  Отсюда шаблон WAI-ARIA Disclosure Navigation, а не `role="menu"`: Категория
-  с Полкой — кнопка с `aria-expanded`, Полка — регион со ссылками, ссылки
-  — настоящие `a`. Роль `menu` обещает скринридеру меню действий с его
-  клавиатурной моделью (стрелки по всем пунктам, Tab закрывает), и ссылки в
-  нём перестают быть ссылками: их нельзя открыть в новой вкладке, их не видно
-  в списке ссылок страницы. `Menu` кита по той же причине навигацию запрещает.
+  Hence the WAI-ARIA Disclosure Navigation pattern, not `role="menu"`. A category with a flyout is a
+  button with `aria-expanded`, the flyout is a region of links, and the links are real `a` elements.
+  The `menu` role promises assistive technology an action menu with its keyboard model (arrows across
+  all items, Tab closes), and the links inside it stop being links: they cannot be opened in a new tab
+  and do not show up in the page's list of links. For the same reason the kit's `Menu` does not allow
+  navigation.
 
-  Поведение своё, а не react-aria: готового «раскрывающегося каталога» у неё
-  нет, а `Menu` на её основе — ровно та роль `menu`, от которой мы уходим.
+  The behavior is our own, not react-aria's: react-aria has no ready-made "drop-down catalog", and a
+  `Menu` built on it would be exactly the `menu` role we are moving away from.
 
-  КАСАНИЕ И УЗКИЙ ЭКРАН. Касание наведения не знает: Категорию открывает
-  `click`, а `pointerType` «touch» и «pen» в наведении и уходе указателя
-  отбрасываются — Прицел им не нужен. На узком экране (граница та же, что у
-  подменю кита) Полке некуда встать сбоку, и она ЗАМЕНЯЕТ Столбец: «спуск»
-  в Категорию со строкой «Назад». Прицела там тоже нет: заменять Столбец под
-  курсором по наведению значило бы вырывать его из-под руки.
+  TOUCH AND NARROW SCREENS. Touch has no hover: a category is opened by `click`, and `pointerType`
+  "touch" and "pen" are dropped on pointer enter and leave, so menu aim is not needed for them. On a
+  narrow screen (the same breakpoint as the kit's submenu) the flyout has nowhere to sit beside the
+  category column, so it REPLACES the column: a drill-down into the category, with a "Back" row. There
+  is no menu aim there either: replacing the column under the cursor on hover would pull it out from
+  under the user's hand.
 */
 
-/** Задержка закрытия, когда курсор ушёл и со Столбца, и с Полки. */
+/** Close delay, used when the pointer has left both the category column and the flyout. */
 const LEAVE_GRACE_MS = 150;
 
-/** Что считается фокусируемым внутри Полки при переходе в неё с клавиатуры. */
+/** What counts as focusable inside the flyout when focus moves into it from the keyboard. */
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 interface MegaMenuContextValue {
   baseId: string;
-  /** Открытая Категория. */
+  /** The open category. */
   value: string | null;
   /**
-   * Категория — единственная остановка Tab в Столбце (roving tabindex).
-   * `undefined` — Категории ещё не сообщили о себе (сервер, первая отрисовка):
-   * тогда остановка у каждой доступной, иначе Tab проскочил бы каталог.
+   * The category is the only Tab stop in the category column (roving tabindex).
+   * `undefined` means the categories have not registered yet (server render, first paint): then every
+   * enabled category is a Tab stop, otherwise Tab would skip the whole catalog.
    */
   tabStop: string | null | undefined;
-  /** Категория сообщает о себе: Столбец не разбирает детей по типу (см. `MegaMenu`). */
+  /** A category registers itself: the column does not inspect children by type (see `MegaMenu`). */
   register: (id: string, record: CategoryRecord) => void;
   unregister: (id: string) => void;
-  /** Открыть Категорию щелчком или с клавиатуры — сразу, мимо Прицела. */
+  /** Open a category by click or from the keyboard right away, bypassing menu aim. */
   openCategory: (id: string, focusShowcase?: boolean) => void;
   close: () => void;
-  /** Курсор наведён на строку Столбца: решает Прицел. `null` — строка без Полки. */
+  /** The pointer is over a column row: menu aim decides. `null` means a row without a flyout. */
   hoverCategory: (target: string | null) => void;
-  /** Полка перевёрнута на другую сторону: со стороны конца строки ей не хватило места. */
+  /** The flyout is flipped to the other side: there was not enough room on the end side of the row. */
   flipped: boolean;
-  /** Мегаменю в оверлее `MegaMenuTrigger`: Столбец и Полка прокручиваются сами. */
+  /** The mega menu is inside a `MegaMenuTrigger` overlay: the column and the flyout scroll by themselves. */
   inOverlay: boolean;
-  /** Узкий экран: Полка заменяет Столбец, а не встаёт сбоку. */
+  /** Narrow screen: the flyout replaces the column instead of sitting beside it. */
   narrow: boolean;
-  /** Категория, чья Полка сейчас заменяет Столбец; `null` — Столбец на месте. */
+  /** The category whose flyout now replaces the column; `null` means the column is in place. */
   drilledId: string | null;
-  /** Вернуться из Полки к Столбцу и поставить фокус на исходную Категорию. */
+  /** Go back from the flyout to the column and focus the category the flyout came from. */
   back: (id: string) => void;
   onCategoryKeyDown: (event: KeyboardEvent<HTMLElement>, id: string, hasShowcase: boolean) => void;
   onShowcaseKeyDown: (event: KeyboardEvent<HTMLElement>, id: string) => void;
   onCategoryFocus: (id: string) => void;
-  /** Категория хочет перевести фокус в свою Полку, как только та смонтируется. */
+  /** A category wants to move focus into its flyout as soon as the flyout mounts. */
   pendingFocus: MutableRefObject<string | null>;
-  /** Категория, на которую вернуть фокус, когда её кнопку снова покажут. */
+  /** The category to return focus to once its button is shown again. */
   returnFocus: MutableRefObject<string | null>;
 }
 
@@ -108,19 +108,19 @@ function useMegaMenu(part: string): MegaMenuContextValue {
   return context;
 }
 
-/** id для DOM: id Категории приходит от потребителя и может содержать что угодно. */
+/** An id for the DOM: the category id comes from the consumer and may contain anything. */
 function domId(baseId: string, kind: "category" | "showcase", id: string): string {
   return `${baseId}-${kind}-${encodeURIComponent(id)}`;
 }
 
-/** Что Столбцу нужно знать о Категории, чтобы выбрать остановку Tab и спуск. */
+/** What the column needs to know about a category to select its Tab stop and its drill-down. */
 interface CategoryRecord {
   hasShowcase: boolean;
   disabled: boolean;
   active: boolean;
 }
 
-/** Дети в одном списке, с раскрытием фрагментов: у каждой ссылки колонки — свой пункт. */
+/** Children in one flat list, with fragments unwrapped: each link of a column gets its own item. */
 function flattenFragments(children: ReactNode): ReactNode[] {
   return Children.toArray(children).flatMap((child) =>
     isValidElement(child) && child.type === Fragment
@@ -129,23 +129,23 @@ function flattenFragments(children: ReactNode): ReactNode[] {
   );
 }
 
-/** Сколько ждать следующую букву поиска, прежде чем начать слово заново. */
+/** How long to wait for the next typed letter before the word starts over. */
 const TYPEAHEAD_RESET_MS = 500;
 
 /**
- * Стрелка «к Полке» — по тому, где Полка стоит на экране: при письме справа
- * налево она слева, а перевёрнутая у края — на другой стороне.
+ * The arrow key that leads to the flyout depends on where the flyout is on screen: with right-to-left
+ * writing it is on the left, and a flyout flipped at the edge is on the other side.
  */
 function forwardKey(node: HTMLElement, flipped: boolean): "ArrowRight" | "ArrowLeft" {
   const rtl = getComputedStyle(node).direction === "rtl";
   return rtl === flipped ? "ArrowRight" : "ArrowLeft";
 }
 
-/** Зазор между Столбцом и Полкой (`ms-1`) и запас до края окна, пиксели. */
+/** Gap between the column and the flyout (`ms-1`), and the margin to the window edge, in pixels. */
 const SHOWCASE_GAP = 4;
 const VIEWPORT_MARGIN = 8;
 
-/** Клавиши, которые поле ввода в Полке (поиск, промо с формой) обязано оставить себе. */
+/** Keys that an input inside the flyout (search, a promo with a form) must keep for itself. */
 function isTextEntry(target: EventTarget): boolean {
   return (
     target instanceof HTMLElement &&
@@ -157,36 +157,34 @@ export interface MegaMenuProps extends Omit<
   ComponentPropsWithoutRef<"nav">,
   "children" | "defaultValue"
 > {
-  /** Доступное имя навигации: на странице с несколькими `nav` они различимы только по нему. */
+  /** Accessible name of the navigation: on a page with several `nav` elements, only this tells them apart. */
   "aria-label": string;
-  /** Категории — `MegaMenuCategory`, прямыми детьми (фрагменты допустимы). */
+  /** Categories: `MegaMenuCategory` elements as direct children (fragments are allowed). */
   children?: ReactNode;
-  /** Открытая Категория — управляемо. `null` — Полка закрыта. */
+  /** The open category, controlled. `null` means the flyout is closed. */
   value?: string | null;
-  /** Открытая Категория при монтировании, без управления. */
+  /** The category open on mount, uncontrolled. */
   defaultValue?: string | null;
-  /** Открылась другая Категория или Полка закрылась. */
+  /** Called when another category opens or the flyout closes. */
   onValueChange?: (value: string | null) => void;
   /**
-   * Ширина Полки — длина CSS или пиксели. Одна на все Категории: каталог не
-   * должен прыгать, когда у соседних Категорий разный объём.
+   * The flyout width: a CSS length or pixels. One width for all categories, so the menu does not jump
+   * when neighboring categories have different amounts of content.
    */
   showcaseWidth?: number | string;
 }
 
 /**
- * Мегаменю в духе Amazon: Столбец категорий слева, Полка наведённой
- * Категории справа.
+ * Amazon-style mega menu: the category column on the left, and the flyout of the hovered category on
+ * the right.
  *
- * СОСТАВНОЙ API, как у `Menu`: Полка разнородна — колонки ссылок, промо,
- * своё содержимое, — и описывать её массивом значило бы завести второй язык
- * разметки рядом с JSX.
+ * COMPOUND API, like `Menu`: the flyout is heterogeneous (link columns, promos, custom content), and
+ * describing it as an array would mean a second markup language next to JSX.
  *
- * Полка — потомок своей Категории в DOM, а не портал. Отсюда сразу три
- * следствия, и все нужные: порядок Tab идёт «Категория → её ссылки → дальше
- * по странице», уход указателя из Столбца в Полку не считается уходом из
- * меню, а Полка встаёт вплотную к Столбцу без расчёта позиции — она
- * `absolute` от корня.
+ * The flyout is a DOM descendant of its category, not a portal. That gives three consequences, and all
+ * of them are needed: the Tab order runs "category → its links → the rest of the page"; moving the
+ * pointer from the column into the flyout does not count as leaving the menu; and the flyout sits right
+ * against the column without position math, because it is `absolute` relative to the root.
  */
 export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu(
   {
@@ -206,7 +204,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
 ) {
   const baseId = useId();
   const rootRef = useRef<HTMLElement | null>(null);
-  // Внутри `MegaMenuTrigger` Столбец и Полка прокручиваются в оверлее сами.
+  // Inside `MegaMenuTrigger` the column and the flyout scroll within the overlay by themselves.
   const inOverlay = useContext(MegaMenuTriggerContext) !== null;
   const [innerValue, setInnerValue] = useState<string | null>(defaultValue);
   const controlled = valueProp !== undefined;
@@ -217,12 +215,11 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /*
-    КАТЕГОРИИ СООБЩАЮТ О СЕБЕ САМИ, а не разбираются по типу детей. Разбор
-    `child.type === MegaMenuCategory` видел только прямых детей и ломался
-    дважды: на Категориях, обёрнутых своим компонентом, и на пришедших из
-    серверного компонента Next.js — там тип элемента на клиенте ленивая
-    обёртка, а не сама функция. Порядок записей — порядок монтирования, то есть
-    порядок строк в DOM.
+    CATEGORIES REGISTER THEMSELVES instead of being found by child type. Matching
+    `child.type === MegaMenuCategory` only saw direct children, and it broke in two cases: for categories
+    wrapped in their own component, and for elements that came from a Next.js server component, where the
+    element type on the client is a lazy wrapper rather than the function itself. Record order is mount
+    order, which is the order of the rows in the DOM.
   */
   const [registry, setRegistry] = useState<ReadonlyMap<string, CategoryRecord>>(() => new Map());
   const register = useCallback((id: string, record: CategoryRecord) => {
@@ -235,7 +232,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
         old.active === record.active
       )
         return prev;
-      // `set` по существующему ключу место записи не меняет.
+      // `set` on an existing key does not change the record's position.
       return new Map(prev).set(id, record);
     });
   }, []);
@@ -257,9 +254,9 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     firstEnabled ??= id;
     if (record.active) activeId ??= id;
   }
-  // Остановка Tab: где пользователь был последним, иначе открытая, иначе
-  // текущий раздел, иначе первая. Ключ, которого нет среди Категорий (чужой
-  // `value`, убранная строка), пропускается: остановка не должна пропасть.
+  // Tab stop: where the user was last, otherwise the open category, otherwise the current section,
+  // otherwise the first one. A key that is not among the categories (a foreign `value`, a removed row)
+  // is skipped, so the Tab stop never disappears.
   const tabStop =
     registry.size === 0
       ? undefined
@@ -280,10 +277,10 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   );
 
   /*
-    Смена или закрытие по указателю (уход мыши, отложенная смена Прицела) не
-    должны терять фокус: если он внутри уходящей Полки, её содержимое
-    размонтируется, и фокус упал бы на `body` посреди работы с клавиатуры. Тогда
-    он возвращается на Категорию этой Полки — через тот же эффект, что у «Назад».
+    Switching or closing by pointer (mouse leave, a deferred menu aim switch) must not lose focus: if
+    focus is inside the flyout being left, its content unmounts and focus would drop to `body` in the
+    middle of keyboard work. So focus goes back to the category of that flyout, through the same effect
+    as "Back".
   */
   const switchByPointer = useCallback(
     (next: string | null) => {
@@ -303,7 +300,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   };
   useEffect(() => cancelLeave, []);
 
-  /** Категории Столбца в DOM-порядке; выключенные — по запросу. */
+  /** The column's categories in DOM order; disabled ones only on request. */
   const categoryNodes = useCallback((withDisabled = false): HTMLElement[] => {
     const root = rootRef.current;
     if (!root) return [];
@@ -312,7 +309,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     );
   }, []);
 
-  // Прицелу нужна открытая Полка; ищется по id, а не ref'ом: её рисует Категория.
+  // Menu aim needs the open flyout. It is looked up by id rather than by ref, because the category renders it.
   const showcaseRef = useMemo(
     () => ({
       get current(): HTMLElement | null {
@@ -324,8 +321,8 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   const narrow = useNarrowScreen();
   const narrowRef = useRef(narrow);
   narrowRef.current = narrow;
-  // Спуск возможен лишь в Категорию с Полкой: `value` с чужим ключом или
-  // Категория без детей Столбец не прячут — иначе не осталось бы ничего.
+  // A drill-down is possible only into a category that has a flyout. A `value` with a foreign key, or a
+  // category without children, does not hide the column: otherwise nothing would be left on screen.
   const drilledId =
     narrow && value !== null && registry.get(value)?.hasShowcase === true ? value : null;
 
@@ -333,22 +330,20 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   const { cancel: cancelAim, request: requestAim } = aim;
 
   /*
-    ПЕРЕВОРОТ У КРАЯ. Полка встаёт со стороны конца строки; если там не
-    хватает места, а с другой стороны хватает — она переходит туда. Не хватает
-    ни там, ни там — остаётся на своей стороне: `max-w` её ужмёт.
+    FLIP AT THE EDGE. The flyout sits on the end side of the row. If there is not enough room there but
+    there is on the other side, it moves to that side. If there is not enough room on either side, it stays
+    on its own side: `max-w` will shrink it.
 
-    Меряется ДО открытия, на монтировании и при смене размера окна, а не по
-    открытой Полке: стрелка «к Полке» должна знать сторону уже при первом
-    открытии с клавиатуры. Ширину даёт зонд с той же длиной, что у Полки, —
-    длина приходит строкой CSS (`40rem`, `min(…)`), и посчитать её может только
-    браузер.
+    It is measured BEFORE opening, on mount and on window resize, not from the open flyout: the arrow key
+    that leads to the flyout must know the side already at the first keyboard open. The width comes from a
+    probe with the same length as the flyout. The length arrives as a CSS string (`40rem`, `min(…)`), and
+    only the browser can compute it.
   */
   const [flipped, setFlipped] = useState(false);
   /*
-    Замер — функция, а не только эффект: в выпадающем виде `nav` монтируется
-    раньше, чем Radix расставит оверлей, и замер на монтировании видит его не
-    там, где он окажется. Поэтому сторона перемеряется ещё и при открытии
-    Категории и прямо перед решением, какая стрелка ведёт к Полке.
+    The measurement is a function, not only an effect: in the dropdown variant, `nav` mounts before Radix
+    places the overlay, so a measurement on mount sees it in the wrong place. That is why the side is also
+    measured again when a category opens, and right before deciding which arrow key leads to the flyout.
   */
   const measureFlip = useCallback((): boolean => {
     const root = rootRef.current;
@@ -374,12 +369,11 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     measureFlip();
     window.addEventListener("resize", measureFlip);
     return () => window.removeEventListener("resize", measureFlip);
-    // Перемер — при открытии каталога, а не на каждой смене Категории: сторона
-    // от смены не зависит, а зонд и чтение раскладки на каждое наведение — лишняя
-    // работа на горячем пути.
+    // Re-measure when the catalog opens, not on every category change: the side does not depend on the
+    // category, and a probe plus a layout read on every hover is wasted work on the hot path.
   }, [measureFlip, showcaseWidth, value === null]);
 
-  /** Набранное поиском по первой букве и таймер, после которого слово начинается заново. */
+  /** The typed-ahead text and the timer after which the word starts over. */
   const typeahead = useRef({ text: "", timer: null as ReturnType<typeof setTimeout> | null });
   useEffect(
     () => () => {
@@ -399,12 +393,12 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
   const context = useMemo<MegaMenuContextValue>(() => {
     const openCategory = (id: string, focusShowcase = false) => {
       cancelAim();
-      // На узком экране кнопка Категории исчезает вместе со Столбцом: фокус,
-      // оставшийся на ней, упал бы на `body`, поэтому он идёт в Полку всегда.
+      // On a narrow screen the category button disappears together with the column. Focus left on it would
+      // drop to `body`, so focus always goes into the flyout.
       const intoShowcase = focusShowcase || narrowRef.current;
       if (intoShowcase) pendingFocus.current = id;
-      // Уже открыта наведением — значение не меняется, и эффект Категории,
-      // который переводит фокус в Полку, не сработает. Переводим сами.
+      // Already open by hover: the value does not change, so the category effect that moves focus into the
+      // flyout will not run. We move it ourselves.
       if (intoShowcase && valueRef.current === id) {
         pendingFocus.current = null;
         document
@@ -421,10 +415,10 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     };
 
     /*
-      ПОИСК ПО ПЕРВОЙ БУКВЕ, как в `Menu`: длинный Столбец не листают стрелками
-      по строке. Буквы, набранные подряд, ищут начало подписи; одна и та же
-      буква подряд ведёт по Категориям на неё по кругу. Пауза сбрасывает
-      набранное. Буква с модификатором — сочетание клавиш, его не трогаем.
+      TYPEAHEAD BY FIRST LETTER, as in `Menu`: a long column is not walked with the arrow keys row by row.
+      Letters typed in a row search for the start of a label. The same letter repeated cycles through the
+      categories that start with it. A pause resets what was typed. A letter with a modifier is a keyboard
+      shortcut and is left alone.
     */
     const matchTypeahead = (
       event: KeyboardEvent<HTMLElement>,
@@ -440,12 +434,12 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
         state.timer = null;
       }, TYPEAHEAD_RESET_MS);
       const key = event.key.toLocaleLowerCase();
-      // После хода по кругу («b», «b») новая буква — новое слово, а не «bbg».
+      // After a cycle ("b", "b") a new letter starts a new word, not "bbg".
       const cycling = state.text.length > 1 && [...state.text].every((c) => c === state.text[0]);
       state.text = cycling && key !== state.text[0] ? key : state.text + key;
       const repeated = [...state.text].every((char) => char === state.text[0]);
       const query = repeated ? key : state.text;
-      // Новая буква ищется со следующей строки, продолжение слова — с текущей.
+      // A new letter is searched from the next row, a continuation of the word from the current row.
       const start = repeated ? index + 1 : Math.max(index, 0);
       const ordered = [...nodes.slice(start), ...nodes.slice(0, start)];
       return ordered.find((node) =>
@@ -464,8 +458,8 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       const node = event.currentTarget;
       const enabled = categoryNodes();
       const index = enabled.indexOf(node);
-      // У ссылки-Категории Enter — переход, Пробел — прокрутка страницы:
-      // обе роли браузерные, отнимать их незачем.
+      // On a category link, Enter navigates and Space scrolls the page. Both are browser behaviors, so there
+      // is no reason to take them away.
       const openFromKey = () => {
         if (!hasShowcase || node.getAttribute("aria-disabled") === "true") return;
         event.preventDefault();
@@ -492,13 +486,13 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
           }
           return;
         case " ":
-          // Пробел посреди набранного — часть подписи («Home and garden»), а
-          // не открытие Категории.
+          // A space in the middle of the typed text is part of a label ("Home and garden"), not
+          // a request to open the category.
           if (typeahead.current.text === "") {
             openFromKey();
             return;
           }
-          // Не открываем и без совпадения: кнопка сработала бы на отпускании.
+          // Do not open without a match either: a button would fire on release.
           event.preventDefault();
           target = matchTypeahead(event, enabled, index);
           if (!target) return;
@@ -524,8 +518,8 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       event.preventDefault();
       if (!target || target === node) return;
       target.focus();
-      // Полка открыта — она следует за фокусом, как следует за наведением:
-      // иначе подсвечена одна Категория, а открыта другая.
+      // The flyout is open: it follows focus the same way it follows hover. Otherwise one category would be
+      // highlighted while another one's flyout is open.
       if (valueRef.current !== null) {
         const targetId = target.dataset.megaCategory ?? null;
         cancelAim();
@@ -533,9 +527,8 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       }
     };
 
-    // Закрытие и возврат фокуса — в таком порядке и через эффект Категории:
-    // пока Полка заменяет Столбец, кнопка Категории скрыта, и сфокусировать
-    // её можно только после того, как Столбец вернулся на место.
+    // Close, then return focus, in that order and through the category's effect: while the flyout replaces
+    // the column, the category button is hidden, and it can be focused only after the column is back in place.
     const back = (id: string) => {
       returnFocus.current = id;
       close();
@@ -544,7 +537,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     const onShowcaseKeyDown = (event: KeyboardEvent<HTMLElement>, id: string) => {
       if (isTextEntry(event.target)) return;
       if (narrowRef.current) {
-        // Стрелки «к Столбцу» тут не при чём: Столбца рядом нет. Escape — «Назад».
+        // Arrow keys toward the column do not apply here: there is no column next to it. Escape means "Back".
         if (event.key === "Escape") {
           event.preventDefault();
           back(id);
@@ -553,8 +546,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       }
       if (event.key === "Escape") {
         event.preventDefault();
-        // Фокус — до закрытия: закрытие размонтирует ссылку под фокусом, и
-        // фокус упал бы на `body`.
+        // Move focus first: closing unmounts the link that has focus, and focus would drop to `body`.
         focusCategory(id);
         close();
       } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -576,7 +568,7 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
       unregister,
       openCategory,
       close,
-      // Прицела на узком экране нет: Полку открывает только щелчок или касание.
+      // There is no menu aim on a narrow screen: only a click or a tap opens the flyout.
       hoverCategory: narrow ? () => {} : requestAim,
       flipped,
       narrow,
@@ -607,8 +599,8 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
     measureFlip,
   ]);
 
-  // Щелчок или касание вне каталога закрывают Полку. Уход указателя этого
-  // не покрывает: у касания ухода нет.
+  // A click or tap outside the catalog closes the flyout. Pointer leave does not cover this: a touch has
+  // no leave.
   useEffect(() => {
     if (value === null) return;
     const onPointerDown = (event: globalThis.PointerEvent) => {
@@ -636,12 +628,12 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
         onPointerLeave={(event: PointerEvent<HTMLElement>) => {
           onPointerLeave?.(event);
           if (event.pointerType === "touch" || event.pointerType === "pen") return;
-          // Не сразу: курсор, на миг вышедший за край Полки или в зазор у
-          // Столбца, не должен сбрасывать каталог.
+          // Not immediately: a cursor that briefly leaves the edge of the flyout or the gap next to the column
+          // must not reset the catalog.
           cancelLeave();
           leaveTimer.current = setTimeout(() => {
-            // Спуск на узком экране — шаг навигации, а не наведение: уход мыши
-            // его не отменяет, возвращает «Назад».
+            // On a narrow screen a drill-down is a navigation step, not a hover: leaving with the mouse does not
+            // cancel it, and "Back" undoes it.
             if (narrowRef.current) return;
             cancelAim();
             switchByPointer(null);
@@ -649,9 +641,8 @@ export const MegaMenu = forwardRef<HTMLElement, MegaMenuProps>(function MegaMenu
         }}
         onBlur={(event: FocusEvent<HTMLElement>) => {
           onBlur?.(event);
-          // Фокус ушёл со страницы каталога (Tab за последней ссылкой) — Полка
-          // закрывается. `relatedTarget` пуст при щелчке по нефокусируемому
-          // месту внутри Полки: это не уход, а его закрывает щелчок снаружи.
+          // Focus has left the menu (Tab past its last link): the flyout closes. `relatedTarget` is empty when
+          // clicking a non-focusable spot inside the flyout. That is not leaving: an outside click closes it.
           const next = event.relatedTarget;
           if (next instanceof Node && !event.currentTarget.contains(next)) setValue(null);
         }}
@@ -671,51 +662,50 @@ const COLUMN_CLASS =
   "bg-surface-elevated border-line flex flex-col gap-px rounded-md border p-1 list-none m-0";
 
 /**
- * Строка Категории. Подсветка — по `aria-expanded`, а не по `:hover`:
- * подсвечено ровно то, чья Полка открыта. При «Прицеле» курсор стоит над
- * соседней Категорией, а Полка ещё прежняя — две подсветки разом читались бы
- * как два выбора.
+ * A category row. The highlight comes from `aria-expanded`, not from `:hover`, so exactly the category
+ * whose flyout is open is highlighted. During menu aim the pointer is over a neighboring category while
+ * the old flyout is still open, and two highlights at once would read as two selections.
  */
 const CATEGORY_CLASS =
   "text-fg-0 flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent " +
   "px-2.5 py-2 text-start text-[13px] leading-5 no-underline select-none " +
   "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:-outline-offset-2 " +
   "aria-expanded:bg-bg-2 aria-expanded:font-semibold " +
-  // Текущий раздел — цветом, как текущая ссылка Полки; открытая — фоном: это
-  // два разных признака, и у одной строки бывают оба.
+  // The current section is shown in color, like the current link in the flyout; the open category is
+  // shown with a background. These are two different signals, and one row can have both.
   "aria-[current=true]:text-accent-strong " +
   "aria-disabled:cursor-default aria-disabled:opacity-50";
 
-/** Ссылка-Категория без Полки подсвечивается наведением: открывать ей нечего. */
+/** A category link without a flyout is highlighted on hover: there is nothing to open. */
 const CATEGORY_LINK_CLASS = "hover:bg-bg-2";
 
 const CATEGORY_ICON_CLASS = "text-fg-2 flex shrink-0";
 
-/** Подпись переносится, а не обрезается: длинное название раздела читается целиком. */
+/** The label wraps instead of being cut off, so a long section name can be read in full. */
 const CATEGORY_LABEL_CLASS = "min-w-0 flex-1 break-words";
 
 const CATEGORY_CHEVRON_CLASS = "text-fg-3 flex shrink-0 rtl:rotate-180";
 
 /**
- * Полка: вплотную к Столбцу со стороны конца строки, не ниже его, одна ширина
- * на все Категории. Поверхность и тень — как у панели `Menu`: три меню кита
- * должны читаться одной системой.
+ * The flyout: right against the column on the end side of the row, no shorter than the column, one
+ * width for all categories. Its surface and shadow match the `Menu` panel: the kit's three menus should
+ * read as one system.
  */
 const SHOWCASE_CLASS =
   "bg-surface-elevated border-line absolute top-0 min-h-full " +
   "w-[var(--mega-menu-showcase-w)] max-w-[calc(100vw-2rem)] rounded-md border p-4 " +
   `shadow-[var(--shadow-2)] ${OVERLAY_LAYER.popover}`;
 
-/** Сторона Полки: со стороны конца строки или, перевёрнутая у края, — начала. */
+/** The side of the flyout: the end side of the row, or the start side when it is flipped at the edge. */
 const SHOWCASE_SIDE = { end: "start-full ms-1", start: "end-full me-1" } as const;
 
 /**
- * Полка вместо Столбца на узком экране: обычный блок на всю ширину, без
- * собственной поверхности. Рамка и фон — у Столбца, внутри которого она стоит.
+ * The flyout in place of the column on a narrow screen: an ordinary full-width block with no surface of
+ * its own. The border and background belong to the column it sits in.
  */
 const SHOWCASE_DRILLED_CLASS = "w-full p-3";
 
-/** Строка «Назад» с именем Категории: шаг назад по Столбцу, как в меню телефона. */
+/** The "Back" row with the category name: a step back through the column, as in a phone menu. */
 const BACK_ROW_CLASS = "border-line -mx-3 mb-3 flex items-center gap-1 border-b px-1 pb-2";
 
 const BACK_BUTTON_CLASS =
@@ -729,48 +719,47 @@ const SHOWCASE_HEADING_CLASS =
 
 const SHOWCASE_GRID_CLASS = "grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-x-6 gap-y-5";
 
-/** Колонки ссылок в заменившей Столбец Полке идут одна под другой: рядом им тесно. */
+/** In a flyout that replaces the column, link columns stack one below another: side by side they would be too cramped. */
 const SHOWCASE_GRID_DRILLED_CLASS = "grid grid-cols-1 gap-y-5";
 
 export interface MegaMenuCategoryProps {
-  /** Ключ Категории — им же её открывают через `value`. */
+  /** The category key: it is also what opens the category through `value`. */
   id: string;
-  /** Подпись в Столбце; она же — доступное имя Полки. */
+  /** The label in the column; it is also the flyout's accessible name. */
   label: ReactNode;
-  /** Иконка слева от подписи; скрыта от скринридера. */
+  /** Icon to the left of the label; hidden from screen readers. */
   icon?: ReactNode;
   /**
-   * Адрес раздела целиком. С Полкой — заголовок-ссылка в её начале, без
-   * Полки — сама строка Столбца становится ссылкой.
+   * The URL of the section as a whole. With a flyout, it is a heading link at the top of the
+   * flyout; without one, the category's row in the category column becomes the link.
    */
   href?: string;
   /**
-   * Ссылка роутера вместо `href`: пустой элемент (`<Link href="/x" />`),
-   * подпись уезжает внутрь. Отдельным пропом, а не `asChild`: дети Категории —
-   * это её Полка.
+   * A router link instead of `href`: an empty element (`<Link href="/x" />`), and the label moves inside
+   * it. It is a separate prop rather than `asChild`, because the children of a category are its flyout.
    */
   link?: ReactElement;
-  /** Видна, но не открывается и пропускается стрелками. */
+  /** Visible but cannot be opened; the arrow keys skip it. */
   disabled?: boolean;
   /**
-   * Текущая страница лежит в этом разделе: `aria-current="true"` и вид
-   * текущей, открыта Полка или нет. Ничего не открывает; без открытой Полки
-   * Tab приходит в Столбец на эту Категорию. Вычисляет потребитель, как
-   * `active` у `NavItem`: правила сравнения адресов у каждого роутера свои.
+   * The current page is in this section: `aria-current="true"` and the current-item styling,
+   * whether or not the flyout is open. It opens nothing; without an open flyout, Tab reaches this
+   * category in the category column. The consumer computes it, like `active` on `NavItem`: each
+   * router has its own rules for comparing URLs.
    */
   active?: boolean;
-  /** Содержимое Полки: `MegaMenuGroup` и что угодно своё. Без детей Полки нет. */
+  /** Flyout content: `MegaMenuGroup` or anything custom. Without children there is no flyout. */
   children?: ReactNode;
-  /** Классы на строку Столбца. */
+  /** Classes for the row in the category column. */
   className?: string;
 }
 
 /**
- * Категория Столбца и её Полка.
+ * A category of the column and its flyout.
  *
- * Содержимое Полки монтируется только у открытой Категории: каталог из
- * сотни ссылок и картинок не должен грузить всё разом. Сам регион при этом
- * есть всегда (скрытым): на него указывает `aria-controls` кнопки.
+ * The flyout content mounts only for the open category: a catalog of hundreds of links and images must
+ * not load everything at once. The region itself always exists (hidden): the button's `aria-controls`
+ * points to it.
  */
 export function MegaMenuCategory({
   id,
@@ -791,13 +780,12 @@ export function MegaMenuCategory({
   const showcaseRef = useRef<HTMLElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const messages = useMessages();
-  // Эта Категория заменила Столбец / Столбец заменён другой Категорией.
+  // This category has replaced the column / the column is replaced by another category.
   const drilled = menu.drilledId === id;
   const coveredByOther = menu.drilledId !== null && !drilled;
 
-  // Сообщить Столбцу о себе. Снятие — отдельным эффектом по `id`: смена
-  // `disabled` или `active` обновляет запись на её месте, порядок строк не
-  // сбивается.
+  // Register with the column. Unregistering is a separate effect keyed by `id`: a change of `disabled` or
+  // `active` updates the record in place, so the row order is not disturbed.
   const { register, unregister } = menu;
   useLayoutEffect(() => () => unregister(id), [id, unregister]);
   useLayoutEffect(
@@ -805,15 +793,15 @@ export function MegaMenuCategory({
     [id, hasShowcase, disabled, active, register]
   );
 
-  // Переход в Полку с клавиатуры или касанием: фокус на её первый фокусируемый элемент,
-  // как только содержимое смонтировалось.
+  // Moving into the flyout by keyboard or touch: focus goes to its first focusable element as soon as the
+  // content has mounted.
   useEffect(() => {
     if (!open || menu.pendingFocus.current !== id) return;
     menu.pendingFocus.current = null;
     showcaseRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
   }, [open, id, menu.pendingFocus]);
 
-  // «Назад»: Столбец вернулся, кнопка Категории снова видна — фокус ей.
+  // "Back": the column is back and the category button is visible again, so focus goes to it.
   useEffect(() => {
     if (open || menu.returnFocus.current !== id) return;
     menu.returnFocus.current = null;
@@ -824,8 +812,8 @@ export function MegaMenuCategory({
     id: categoryId,
     "data-mega-category": id,
     "data-mega-showcase": hasShowcase ? "true" : "false",
-    // До того как Категории сообщили о себе (сервер, первая отрисовка), остановка
-    // Tab у каждой доступной: какая из них первая, Столбец ещё не знает.
+    // Before the categories have registered (server render, first paint), every enabled one is a Tab stop:
+    // the column does not know yet which one comes first.
     tabIndex: (menu.tabStop === undefined ? !disabled : menu.tabStop === id) ? 0 : -1,
     "aria-disabled": disabled || undefined,
     "aria-current": active ? ("true" as const) : undefined,
@@ -834,8 +822,8 @@ export function MegaMenuCategory({
       menu.onCategoryKeyDown(event, id, hasShowcase),
     onPointerEnter: (event: PointerEvent<HTMLElement>) => {
       if (disabled || event.pointerType === "touch" || event.pointerType === "pen") return;
-      // Решает Прицел: курсор, идущий к открытой Полке наискосок, задевает
-      // соседние строки — они не должны её перехватывать.
+      // Menu aim decides: a pointer moving diagonally toward the open flyout brushes past
+      // neighboring rows, and those must not take it over.
       menu.hoverCategory(hasShowcase ? id : null);
     },
   };
@@ -854,10 +842,10 @@ export function MegaMenuCategory({
   );
 
   if (!hasShowcase) {
-    // Выключенная — не переход, и ссылку роутера она не рисует вовсе: `Slot`
-    // зовёт обработчик потомка раньше своего, и роутер успел бы перейти до
-    // любого `preventDefault`. Остаётся `a` без адреса — `aria-disabled` у
-    // ссылки лишь объявляет недоступность, а не отменяет её.
+    // A disabled category is not a navigation, and it does not render a router link at all: `Slot` calls
+    // the child's handler before its own, so the router would navigate before any `preventDefault`. What
+    // remains is an `a` without an address: `aria-disabled` on a link only announces that it is unavailable,
+    // it does not cancel the link.
     const routed = link != null && !disabled;
     const Comp = routed ? Slot : "a";
     return (
@@ -879,16 +867,16 @@ export function MegaMenuCategory({
       <button
         {...shared}
         ref={buttonRef}
-        // Скрыта, пока Полка занимает её место: `aria-expanded` и
-        // `aria-controls` остаются в DOM, а имя региону даёт `aria-labelledby`.
+        // Hidden while the flyout takes its place: `aria-expanded` and `aria-controls` stay in the DOM, and
+        // `aria-labelledby` gives the region its name.
         hidden={drilled}
         type="button"
         aria-expanded={open}
         aria-controls={showcaseId}
         className={cn(CATEGORY_CLASS, className)}
         onClick={() => {
-          // Открывает, а не переключает: повторное касание открытой Категории
-          // не должно прятать Полку, которую человек только что открыл.
+          // Opens rather than toggles: tapping an open category again must not hide the flyout the user has just
+          // opened.
           if (!disabled) menu.openCategory(id);
         }}
       >
@@ -925,9 +913,8 @@ export function MegaMenuCategory({
                   {messages.megaMenu.back}
                 </button>
                 {/*
-                  Имя Категории — здесь, только если у неё нет своей ссылки:
-                  иначе его строкой ниже покажет заголовок-ссылка, и имя на
-                  телефоне стояло бы дважды подряд.
+                  The category name is shown here only when it has no link of its own. Otherwise the heading link below
+                  shows it, and on a phone the name would appear twice in a row.
                 */}
                 {href == null && link == null && (
                   <span className="text-fg-0 min-w-0 flex-1 font-semibold break-words">
@@ -975,21 +962,21 @@ function ShowcaseHeading({
 }
 
 export interface MegaMenuGroupProps {
-  /** Заголовок колонки; он же подписывает её список ссылок. */
+  /** The column title; it also labels the column's list of links. */
   title: ReactNode;
-  /** Адрес подраздела целиком: заголовок становится ссылкой. */
+  /** The URL of the subsection as a whole: the title becomes a link. */
   href?: string;
   /**
-   * Ссылка роутера вместо `href`: пустой элемент (`<Link href="/x" />`),
-   * заголовок уезжает внутрь — как `link` у Категории.
+   * A router link instead of `href`: an empty element (`<Link href="/x" />`), and the title moves inside
+   * it, as with `link` on a category.
    */
   link?: ReactElement;
   /**
-   * Ссылки колонки — `MegaMenuLink`. Каждая уезжает в свой пункт списка,
-   * в том числе пришедшие фрагментом.
+   * The links of the column: `MegaMenuLink` elements. Each one goes into its own list item, including
+   * those that come in a fragment.
    */
   children?: ReactNode;
-  /** Классы на колонку. */
+  /** Classes for the column. */
   className?: string;
 }
 
@@ -998,10 +985,10 @@ const GROUP_TITLE_LINK_CLASS = "hover:text-accent-strong text-inherit no-underli
 const GROUP_LIST_CLASS = "m-0 flex list-none flex-col p-0";
 
 /**
- * Колонка Полки: заголовок и список ссылок под ним.
+ * A column of the flyout: a title and the list of links under it.
  *
- * Список подписан заголовком (`aria-labelledby`): скринридер объявляет
- * «Смартфоны, список, 5 пунктов», а не безымянный список посреди Полки.
+ * The list is labeled by the title (`aria-labelledby`): a screen reader announces "Smartphones, list,
+ * 5 items" rather than an unnamed list in the middle of the flyout.
  */
 export function MegaMenuGroup({ title, href, link, children, className }: MegaMenuGroupProps) {
   const titleId = useId();
@@ -1022,7 +1009,7 @@ export function MegaMenuGroup({ title, href, link, children, className }: MegaMe
         )}
       </div>
       <ul aria-labelledby={titleId} className={GROUP_LIST_CLASS}>
-        {/* Ключ — позиция: список статичен, а ключи из разных фрагментов совпали бы. */}
+        {/* The key is the position: the list is static, and keys from different fragments would collide. */}
         {flattenFragments(children).map((child, index) => (
           <li key={index}>{child}</li>
         ))}
@@ -1032,18 +1019,18 @@ export function MegaMenuGroup({ title, href, link, children, className }: MegaMe
 }
 
 export interface MegaMenuLinkProps extends ComponentPropsWithoutRef<"a"> {
-  /** Ссылка ведёт на текущую страницу: `aria-current="page"` и вид текущей. */
+  /** The link points to the current page: `aria-current="page"` and the current-item styling. */
   active?: boolean;
   /**
-   * @deprecated Используйте `active`: текущий пункт навигации в ките — `active`,
-   * как у `NavItem`. Алиас работает до 5.0.
+   * @deprecated Use `active`: the current navigation item in the kit is `active`, as on `NavItem`.
+   * The alias works until 5.0.
    */
   current?: boolean;
-  /** Иконка слева от подписи; скрыта от скринридера. */
+  /** Icon to the left of the label; hidden from screen readers. */
   icon?: ReactNode;
   /**
-   * Вывести ссылку элементом роутера: `<MegaMenuLink asChild><Link href="/x">Подпись</Link></MegaMenuLink>`.
-   * Стили, пропы и `ref` переходят на него, иконка — внутрь.
+   * Render the link as the router's element: `<MegaMenuLink asChild><Link href="/x">Label</Link></MegaMenuLink>`.
+   * Styles, props and `ref` pass to it; the icon goes inside.
    */
   asChild?: boolean;
 }
@@ -1055,10 +1042,10 @@ const LINK_CLASS =
   "aria-[current=page]:text-accent-strong aria-[current=page]:font-semibold";
 
 /**
- * Ссылка Полки.
+ * A flyout link.
  *
- * Текущую страницу кит не вычисляет — проп `active`, как у `NavItem`:
- * правила сравнения адресов у каждого роутера свои (ADR-0018).
+ * The kit does not compute the current page: it takes the `active` prop, as `NavItem` does, because each
+ * router has its own rules for comparing addresses (ADR-0018).
  */
 export const MegaMenuLink = forwardRef<HTMLAnchorElement, MegaMenuLinkProps>(function MegaMenuLink(
   { active, current, icon, asChild = false, children, className, ...rest },
@@ -1083,128 +1070,122 @@ export const MegaMenuLink = forwardRef<HTMLAnchorElement, MegaMenuLinkProps>(fun
 });
 
 /*
-  ВЫПАДАЮЩИЙ ВИД — ТА ЖЕ РАЗМЕТКА, ДРУГАЯ ОБЁРТКА.
+  THE DROPDOWN VIEW: THE SAME MARKUP, A DIFFERENT WRAPPER.
 
-  `MegaMenu` внутри `MegaMenuTrigger` не меняется ни в одной строке: Столбец,
-  Полка, roving tabindex, Escape в Полке — всё то же. Обёртка добавляет
-  только то, чего у встроенного вида нет: кнопку, оверлей под ней и закрытие.
+  `MegaMenu` inside `MegaMenuTrigger` does not change in any line: the column, the flyout, roving
+  tabindex, Escape in the flyout are all the same. The wrapper adds only what the inline view does not
+  have: the button, the overlay under it, and closing.
 
-  ОВЕРЛЕЙ — RADIX `Popover`, а не react-aria, как у `Menu`. Причин три.
-  Во-первых, это не меню: react-aria ради `Menu` вешает роль `menu` и
-  типизированный поиск по пунктам, а нам нужна навигация со ссылками.
-  Во-вторых, стек слоёв Radix сам решает «кому Escape» среди своих слоёв:
-  `Dialog` кита тоже Radix, поэтому мегаменю внутри окна закрывается первым
-  Escape, а окно — вторым, без заслонов (ADR-0041). В-третьих, портал,
-  переворот у края экрана и `available-height` для прокрутки уже есть.
+  THE OVERLAY IS A RADIX `Popover`, not react-aria as in `Menu`. There are three reasons. First, this is
+  not a menu: react-aria would add the `menu` role and typed search over items, while we need navigation
+  with links. Second, Radix's layer stack decides "who gets Escape" among its own layers: the kit's
+  `Dialog` is also Radix, so a mega menu inside a window closes on the first Escape and the window on the
+  second, with no workarounds (ADR-0041). Third, the portal, flipping at the screen edge and
+  `available-height` for scrolling are already there.
 */
 
 interface MegaMenuTriggerContextValue {
-  /** Кнопка-Раскрыватель — чтобы вернуть ей фокус при закрытии. */
+  /** The trigger button, which gets focus back on close. */
   triggerRef: RefObject<HTMLButtonElement | null>;
   setOpen: (open: boolean) => void;
 }
 
 const MegaMenuTriggerContext = createContext<MegaMenuTriggerContextValue | null>(null);
 
-/** Портал оверлея: ось `Toolbar`, из которой открыта кнопка, внутрь не проходит. */
+/** The overlay portal: the `Toolbar` axis that the button is rendered in does not pass into it. */
 const DropdownPortal = withoutToolbarAxis(PopoverPrimitive.Portal);
 
 /**
- * Оверлей: слой `popover`, появление по шкале движения кита, прокрутка внутри.
+ * The overlay: the `popover` layer, appearing on the kit's motion scale, scrolling inside.
  *
- * ПРОКРУТКА — У СТОЛБЦА И У ВИТРИНЫ ПО ОТДЕЛЬНОСТИ, а не у оверлея целиком.
- * Полка — `absolute` от `nav`, рядом со Столбцом. `overflow: auto` на самом
- * оверлее обрезал бы её по его рамке, и от Полки осталась бы полоска шириной
- * в зазор. Поэтому высотой ограничены `ul` Столбца и `section` Полки — классом
- * `OVERLAY_SCROLL_CLASS`, который ставит сам `MegaMenu`. `ul` не позиционирован,
- * и содержащий блок Полки — `nav` выше него, так что `overflow` на `ul`
- * Полку не режет.
+ * SCROLLING IS SEPARATE FOR THE COLUMN AND THE FLYOUT, not for the whole overlay. The flyout is
+ * `absolute` relative to `nav`, next to the column. `overflow: auto` on the overlay itself would clip it
+ * at the overlay's border, leaving only a sliver the width of the gap. So the height is limited on the
+ * column's `ul` and on the flyout's `section`, with the `OVERLAY_SCROLL_CLASS` class that `MegaMenu`
+ * applies itself. The `ul` is not positioned, and the flyout's containing block is the `nav` above it,
+ * so `overflow` on the `ul` does not clip the flyout.
  */
 const DROPDOWN_CONTENT_CLASS =
   `${OVERLAY_LAYER.popover} outline-none ` +
   /*
-    Узкий экран — на всю ширину окна за вычетом отступов по 8px с краёв
-    (`collisionPadding`).
-    Обёртка Radix меряет оверлей по содержимому (`min-width: max-content`), и
-    без явной ширины каталог на телефоне сжимался до самой длинной подписи:
-    уже Столбца на десктопе, разный у каждой Категории при спуске, а длинная
-    подпись без пробелов выталкивала его за край. Граница та же, что у
-    `useNarrowScreen`: `sm` — 640px.
+    Narrow screen: the full width of the window minus 8px margins on each side (`collisionPadding`).
+    Radix's wrapper measures the overlay by its content (`min-width: max-content`), and without an explicit
+    width the menu on a phone shrank to the longest label: narrower than the column on desktop, and
+    different for each category during a drill-down. A long label without spaces pushed it past the edge.
+    The breakpoint is the same as in `useNarrowScreen`: `sm`, 640px.
 
-    `100vw` считает и полосу прокрутки, если она не накладная (окно настольного
-    браузера, суженное ниже 640px), — тогда оверлей вылез бы за край на её
-    ширину. Потолок — ширина, которую Radix считает по видимой области:
-    `available-width`.
+    `100vw` also counts the scrollbar when it is not an overlay scrollbar (a desktop browser window narrowed
+    below 640px), and then the overlay would stick out by its width. The cap is the width Radix computes
+    from the visible area: `available-width`.
   */
   "max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[var(--radix-popover-content-available-width)] " +
-  // Появление и уход — токены, видимые гейту `prefers-reduced-motion` (ADR-0043, ADR-0047).
+  // Enter and exit use tokens that the `prefers-reduced-motion` gate can see (ADR-0043, ADR-0047).
   "data-[state=open]:animate-fadein data-[state=closed]:animate-fadeout";
 
 /**
- * Прокрутка Столбца и Полки в оверлее: высота до края окна от кнопки
- * (`available-height` Radix). Классы ставит сам `MegaMenu`, узнав оверлей по
- * контексту, — а не оверлей селекторами по чужой разметке, которые молча
- * отвалились бы при первой её правке.
+ * Scrolling of the column and the flyout in the overlay: the height runs from the button to the edge of
+ * the window (Radix `available-height`). `MegaMenu` applies the classes itself, having learned from the
+ * context that it is in an overlay. It does not rely on overlay selectors against foreign markup, which
+ * would silently break at the first edit to it.
  *
- * Обход высоты на iOS — как у `MENU_PANEL_CLASS`: в Safari на iOS 27
- * `available-height` бывает близок к нулю, и от Столбца остаётся полоска.
- * 24rem или 60 % динамической высоты экрана — что меньше; `!` перебивает
- * правило выше. `-webkit-touch-callout` понимает только WebKit на iOS.
+ * The iOS height workaround is the same as in `MENU_PANEL_CLASS`: in Safari on iOS 27, `available-height`
+ * can come out close to zero, and only a strip of the column remains. It is 24rem or 60% of the dynamic
+ * screen height, whichever is smaller; `!` overrides the rule above. `-webkit-touch-callout` is understood
+ * only by WebKit on iOS.
  */
 const OVERLAY_SCROLL_CLASS =
   "max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain " +
   "[@supports(-webkit-touch-callout:none)]:max-h-[min(24rem,60dvh)]!";
 
-/** Поле ввода внутри Полки Escape оставляет себе — иначе закрываем оверлей. */
+/** Escape stays with an input inside the flyout; otherwise it would close the overlay. */
 const SHOWCASE_SELECTOR = "[data-mega-showcase-region]";
 
-/** Остановки Tab внутри оверлея: Столбец — одна, плюс ссылки открытой Полки. */
+/** Tab stops inside the overlay: the column is one, plus the links of the open flyout. */
 function tabStops(root: HTMLElement): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
     (node) => node.tabIndex >= 0 && !node.closest("[hidden]")
   );
 }
 
-/** Куда ставить фокус при открытии: открытая Категория или первая доступная. */
+/** Where focus goes on open: the open category, or the first enabled one. */
 function entryCategory(root: HTMLElement): HTMLElement | null {
   const enabled = Array.from(root.querySelectorAll<HTMLElement>("[data-mega-category]")).filter(
     (node) => node.getAttribute("aria-disabled") !== "true"
   );
-  // Остановка Tab у Столбца — как раз открытая Категория, иначе первая.
+  // The column's Tab stop is the open category, otherwise the first one.
   return enabled.find((node) => node.tabIndex === 0) ?? enabled[0] ?? null;
 }
 
 export interface MegaMenuTriggerProps {
-  /** Открыто ли мегаменю — управляемо. */
+  /** Whether the mega menu is open. Controlled. */
   open?: boolean;
-  /** Открыто ли мегаменю при монтировании, без управления. */
+  /** Whether the mega menu is open on mount. Uncontrolled. */
   defaultOpen?: boolean;
-  /** Мегаменю открылось или закрылось: щелчком, клавишей, переходом по ссылке. */
+  /** Called when the mega menu opens or closes: by click, by key, or by following a link. */
   onOpenChange?: (open: boolean) => void;
   /**
-   * Первый ребёнок — `MegaMenuButton`, остальные — `MegaMenu`; они рисуются в
-   * оверлее под кнопкой.
+   * The first child is `MegaMenuButton`; the rest are `MegaMenu`, and they render in the overlay below
+   * the button.
    */
   children: ReactNode;
 }
 
 /**
- * Выпадающее мегаменю: кнопка и под ней `MegaMenu` в оверлее.
+ * A dropdown mega menu: a button, with the `MegaMenu` in an overlay under it.
  *
  *     <MegaMenuTrigger>
- *       <MegaMenuButton>Каталог</MegaMenuButton>
- *       <MegaMenu aria-label="Каталог">…</MegaMenu>
+ *       <MegaMenuButton>Catalog</MegaMenuButton>
+ *       <MegaMenu aria-label="Catalog">…</MegaMenu>
  *     </MegaMenuTrigger>
  *
- * Открывается щелчком и клавишами (Enter, Пробел, стрелка вниз), наведением —
- * нет: мегаменю не должно выпрыгивать от случайного движения мыши. Закрывается
- * по Escape на Категории, щелчку снаружи, повторному щелчку по кнопке,
- * переходу по любой ссылке и по Tab за последним элементом. На кнопку фокус
- * возвращается при Escape и повторном щелчке.
+ * It opens on click and from the keyboard (Enter, Space, Arrow Down), not on hover: the mega menu must
+ * not pop open from an accidental mouse movement. It closes on Escape in a category, on a click outside,
+ * on a second click on the button, on following any link, and on Tab past the last element. Focus returns
+ * to the button on Escape and on a second click.
  *
- * ПЕРВЫЙ РЕБЁНОК — КНОПКА, ОСТАЛЬНЫЕ — ОВЕРЛЕЙ, и разбор идёт по позиции, а не
- * по типу: так кнопку можно обернуть своим компонентом (подсказка, счётчик), а
- * `MegaMenu` — вынести в свой, и ничто не отправит оверлей молча в шапку.
+ * THE FIRST CHILD IS THE BUTTON, THE REST ARE THE OVERLAY. They are matched by position, not by type: so
+ * the button can be wrapped in your own component (a hint, a counter), and `MegaMenu` can be moved into
+ * your own component, and nothing silently sends the overlay to the header.
  */
 export function MegaMenuTrigger({
   open: openProp,
@@ -1222,7 +1203,7 @@ export function MegaMenuTrigger({
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
-  /** Tab увёл фокус дальше по странице: возвращать его на кнопку нельзя. */
+  /** Tab moved focus further down the page: focus must not be returned to the button. */
   const tabbedAway = useRef(false);
 
   const setOpen = useCallback(
@@ -1244,8 +1225,8 @@ export function MegaMenuTrigger({
         <DropdownPortal>
           <PopoverPrimitive.Content
             ref={contentRef}
-            // Роль `dialog` Radix ставит по умолчанию, а это навигация: `nav`
-            // внутри `div` без роли, как в APG Disclosure Navigation.
+            // Radix sets the `dialog` role by default, but this is navigation: a `nav` inside a `div` with no role,
+            // as in the APG Disclosure Navigation pattern.
             role={undefined}
             align="start"
             sideOffset={4}
@@ -1253,30 +1234,29 @@ export function MegaMenuTrigger({
             className={DROPDOWN_CONTENT_CLASS}
             onOpenAutoFocus={(event) => {
               tabbedAway.current = false;
-              // Фокус — на Категорию, а не на первый фокусируемый (им была бы
-              // она же, но только пока Полка закрыта).
+              // Focus goes to a category, not to the first focusable element (that would be the same category,
+              // but only while the flyout is closed).
               event.preventDefault();
               const root = contentRef.current;
               (root && entryCategory(root))?.focus({ preventScroll: true });
             }}
             onCloseAutoFocus={(event) => {
-              // Возврат фокуса — свой: Radix не возвращает его после щелчка по
-              // самой кнопке (тот считается щелчком снаружи), а нам нужно.
+              // Focus return is handled here: Radix does not return focus after a click on the button itself
+              // (it counts as an outside click), and we need it to.
               event.preventDefault();
               if (tabbedAway.current) {
                 tabbedAway.current = false;
                 return;
               }
               const active = document.activeElement;
-              // Фокус ушёл на другой элемент (щелчок по полю) — не отнимаем его.
+              // Focus moved to another element (a click on a field): we do not take it back.
               if (!active || active === document.body || contentRef.current?.contains(active))
                 triggerRef.current?.focus();
             }}
             onEscapeKeyDown={(event) => {
-              // Escape в Полке — её собственный: вернуть фокус на Категорию и
-              // закрыть Полку (обработчик в `MegaMenuCategory`). Оверлей при
-              // этом остаётся. В поле ввода Escape оверлею отдаём: иначе в
-              // Полке с поиском он не закрыл бы ничего.
+              // Escape in the flyout belongs to the flyout: return focus to the category and close the flyout
+              // (the handler is in `MegaMenuCategory`). The overlay stays open. In a text field Escape goes to
+              // the overlay: otherwise, in a flyout with search, it would close nothing.
               const target = event.target;
               if (
                 target instanceof Element &&
@@ -1290,22 +1270,19 @@ export function MegaMenuTrigger({
               const stops = tabStops(event.currentTarget);
               const edge = event.shiftKey ? stops[0] : stops[stops.length - 1];
               if (!edge || event.target !== edge) return;
-              // Оверлей лежит в портале в конце `body`: «дальше по Tab» от него
-              // — не следующий элемент страницы. Поэтому фокус сначала встаёт
-              // на кнопку, и браузер продолжает Tab от неё. Назад (Shift+Tab)
-              // кнопка и есть предыдущая остановка — на ней и остаёмся.
+              // The overlay lives in a portal at the end of `body`, so "next by Tab" from it is not the next
+              // element of the page. So focus first lands on the button, and the browser continues Tab from
+              // there. For Shift+Tab the button is the previous stop, so we stay on it.
               triggerRef.current?.focus();
               if (event.shiftKey) event.preventDefault();
               else tabbedAway.current = true;
               setOpen(false);
             }}
             onClick={(event) => {
-              // Переход по ссылке закрывает мегаменю: после навигации оно не
-              // должно висеть поверх новой страницы. Роутерные ссылки тоже
-              // `a`, а их `preventDefault` закрытию не мешает. Щелчок с
-              // модификатором (Cmd/Ctrl, Shift — новая вкладка или окно) и
-              // средняя кнопка страницу не меняют: каталог остаётся открытым,
-              // чтобы можно было открыть в фоне несколько разделов подряд.
+              // Following a link closes the mega menu: after navigation it must not hang over the new page. Router
+              // links are `a` too, and their `preventDefault` does not block closing. A click with a modifier
+              // (Cmd/Ctrl, Shift: a new tab or window) or with the middle button does not change the page: the
+              // menu stays open, so that several sections can be opened in the background one after another.
               const modified =
                 event.metaKey ||
                 event.ctrlKey ||
@@ -1326,25 +1303,25 @@ export function MegaMenuTrigger({
 }
 
 export interface MegaMenuButtonProps extends ButtonLookOptions {
-  /** Подпись кнопки. С `iconOnly` не показывается. */
+  /** The button label. Not shown with `iconOnly`. */
   children?: ReactNode;
-  /** Иконка слева. С `iconOnly` — единственное содержимое. */
+  /** Icon on the left. With `iconOnly` it is the only content. */
   icon?: ReactNode;
-  /** Кнопка заблокирована: мегаменю не открывается. */
+  /** The button is disabled: the mega menu does not open. */
   disabled?: boolean;
-  /** Доступное имя. Обязательно, когда подписи нет. */
+  /** Accessible name. Required when there is no label. */
   "aria-label"?: string;
-  /** Классы на кнопку. */
+  /** Classes for the button. */
   className?: string;
 }
 
 /**
- * Кнопка, открывающая мегаменю, — первый ребёнок `MegaMenuTrigger`.
+ * The button that opens the mega menu: the first child of `MegaMenuTrigger`.
  *
- * Вид тот же, что у `MenuButton` (`lib/button.ts`). Семантика — раскрыватель:
- * `aria-expanded` и `aria-controls`, без `aria-haspopup`. Radix по умолчанию
- * объявляет `aria-haspopup="dialog"`, а оверлей — не диалог, а навигация, и
- * скринридер не должен обещать диалог.
+ * Same look as `MenuButton` (`lib/button.ts`). The semantics are those of a disclosure button:
+ * `aria-expanded` and `aria-controls`, without `aria-haspopup`. Radix sets `aria-haspopup="dialog"` by
+ * default, but the overlay is not a dialog, it is navigation, and a screen reader must not promise a
+ * dialog.
  */
 export const MegaMenuButton = forwardRef<HTMLButtonElement, MegaMenuButtonProps>(
   function MegaMenuButton(
@@ -1366,8 +1343,7 @@ export const MegaMenuButton = forwardRef<HTMLButtonElement, MegaMenuButtonProps>
           aria-haspopup={undefined}
           className={cn(buttonClasses({ variant, tone, size, iconOnly, selected }), className)}
           onKeyDown={(event) => {
-            // Щелчок, Enter и Пробел открывают сами (Radix); стрелка вниз — по
-            // привычке к выпадающим спискам.
+            // A click, Enter and Space open it by themselves (Radix); Arrow Down is a habit from dropdown lists.
             if (event.key !== "ArrowDown") return;
             event.preventDefault();
             trigger.setOpen(true);

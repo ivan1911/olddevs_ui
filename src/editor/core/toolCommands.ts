@@ -1,93 +1,93 @@
 import type { RichTextTools, SearchToolOptions } from "./toolOptions.js";
 
 /*
-  Команды Инструмента: типы того, что экран вызывает через `handle.tool(name)`.
-  Модуль серверно-безопасен, как `toolOptions.ts`: одни типы, без Tiptap и React.
-  Реализации встроенных лежат рядом с их описаниями (`searchTool.ts`, `tocTool.ts`).
+  Tool commands: the types of what the screen calls through `handle.tool(name)`.
+  The module is safe on the server, like `toolOptions.ts`: types only, without Tiptap or React.
+  The built-in implementations sit next to their descriptions (`searchTool.ts`, `tocTool.ts`).
 */
 
 /**
- * Команды Инструмента `search`. Каждая возвращает `boolean`: выполнена или нет
- * (HTML-режим, нет совпадений, поле нельзя править). Команды ведут себя как
- * панель «Поиск и замена»: тот же запрос, те же флажки, та же подсветка.
- * Запрос и флажки живут в движке, поэтому `setQuery`, `next` и `replace` работают
- * и без открытой панели — на них можно собрать свой интерфейс поиска.
+ * Commands of the `search` Tool. Each returns a `boolean`: done or not (Source mode, no matches,
+ * the field cannot be edited). The commands behave like the Find and replace panel: the same query,
+ * the same checkboxes, the same highlighting. The query and the checkboxes live in the engine, so
+ * `setQuery`, `next` and `replace` work even without an open panel, and they can be used to build
+ * your own search UI.
  */
 export interface SearchToolCommands {
   /**
-   * Открыть панель — то же, что кнопка «Поиск» и `Mod+F`. `query` сразу ставит
-   * запрос в поле и в подсветку документа; без него запросом становится текст,
-   * выделенный в одном Блоке. `replace` ставит фокус в поле замены. Флажки на
-   * открытой панели не меняются, на закрытой панель стартует с Опций Инструмента.
-   * `false` — в HTML-режиме (Документа на экране нет).
+   * Opens the panel: the same as the Search button and `Mod+F`. `query` puts the query into the
+   * field and into the Document's highlight at once; without it, the query is the text selected in
+   * one Block. `replace` moves focus to the replace field. The checkboxes on an open panel do not
+   * change; on a closed panel, the panel starts with the Tool options. `false` in Source mode (there
+   * is no Document on screen).
    */
   open(options?: { replace?: boolean; query?: string }): boolean;
   /**
-   * Закрыть панель и убрать подсветку. Фокус и каретка остаются где были:
-   * в отличие от Escape в панели, команда в Документ их не переводит. Панель,
-   * уже закрытая, — не ошибка: подсветка всё равно убирается.
+   * Closes the panel and removes the highlight. Focus and caret stay where they were: unlike Escape
+   * in the panel, the command does not move them into the Document. A panel that is already closed
+   * is not an error: the highlight is removed anyway.
    */
   close(): boolean;
   /**
-   * Задать запрос. Не названные в `flags` флажки (и флажки со значением
-   * `undefined`) берутся из открытой панели, а если её нет — из Опций
-   * Инструмента. Открытая панель показывает новый запрос
-   * и флажки. Непустой запрос прокручивает к первому совпадению после каретки,
-   * как `next` (прокрутка приходит чуть позже). `true` — запрос применён, даже
-   * если совпадений нет (их число — Состояние Инструмента); `false` — в
-   * HTML-режиме.
+   * Sets the query. Flags not named in `flags` (and flags with the value `undefined`) are taken from
+   * the open panel, and if there is none, from the Tool options. An open panel shows the new query
+   * and flags. A non-empty query scrolls to the first match after the caret, as `next` does (the
+   * scroll arrives a little later). `true` means the query is applied, even if there are no matches
+   * (their count is the Tool state); `false` in Source mode.
    */
   setQuery(query: string, flags?: Partial<SearchToolOptions>): boolean;
   /**
-   * Следующее совпадение по кругу, выделяет его и прокручивает к нему ближайшую
-   * прокручиваемую область поля или окно — как панель, даже когда фокус вне
-   * Документа; фокус при этом не забирается. Прокрутка приходит чуть позже
-   * вызова (микрозадачей и кадром): её код грузится при первом вызове. `false` —
-   * совпадений нет.
+   * Next match, cycling around: selects it and scrolls the nearest scrollable area of the field, or
+   * the window, to it, as the panel does, even when focus is outside the Document. Focus is not
+   * taken. The scroll arrives a little after the call (as a microtask and on a frame), since its code
+   * loads on the first call. `false` means there are no matches.
    */
   next(): boolean;
-  /** Предыдущее совпадение по кругу; выделяет и прокручивает, как `next`. `false` — совпадений нет. */
+  /**
+   * Previous match, cycling around. Selects and scrolls, as `next` does. `false` means there are no
+   * matches.
+   */
   previous(): boolean;
   /**
-   * Заменить текущее совпадение: одна правка, одна отмена. Текущим становится
-   * следующее. `false` — совпадений нет или поле нельзя править.
+   * Replaces the current match: one edit, one undo. The next match becomes current. `false` means
+   * there are no matches, or the field cannot be edited.
    */
   replace(text: string): boolean;
-  /** Заменить все совпадения: одна правка, одна отмена. Условия — как у `replace`. */
+  /** Replaces all matches: one edit, one undo. The conditions are the same as for `replace`. */
   replaceAll(text: string): boolean;
 }
 
-/** Команды Инструмента `toc`. */
+/** Commands of the `toc` Tool. */
 export interface TocToolCommands {
   /**
-   * Перейти к заголовку списка Оглавления — как клик по пункту. Индекс считается
-   * в том же списке, что и пункты: с учётом `levels`, с нуля, пустые заголовки
-   * пропускаются. В правке каретка встаёт в конец заголовка, в `readOnly` фокус
-   * получает сам заголовок; прокрутка ставит его под липкую шапку (`offsetVar`) и
-   * Панель, подсветка заголовка гаснет.
+   * Moves to a heading of the Table of contents list, as a click on an item does. The index is
+   * counted in the same list as the items: with `levels` taken into account, from zero, and with
+   * empty headings skipped. When the Editor is editable, the caret goes to the end of the heading;
+   * in `readOnly`, the heading itself gets focus. Scrolling puts it below the sticky header
+   * (`offsetVar`) and the Toolbar, and the heading's highlight fades.
    *
-   * `false` — нет заголовка с таким индексом, либо Оглавление ещё не готово: его
-   * UI грузится отдельным куском после создания движка, и в HTML-режиме его нет.
-   * Заголовков меньше двух — не причина отказа: полоса не рисуется, но список
-   * есть, и переход работает.
+   * `false` means there is no heading with that index, or the Table of contents is not ready yet:
+   * its UI loads as a separate chunk after the engine is created, and in Source mode it does not
+   * exist. Fewer than two headings is not a reason to refuse: the strip is not rendered, but the
+   * list exists, and the jump works.
    */
   jumpTo(index: number): boolean;
 }
 
-/** Команды Инструмента `invisibleCharacters`. */
+/** Commands of the `invisibleCharacters` Tool. */
 export interface InvisibleCharactersToolCommands {
   /**
-   * Показать невидимые символы, если они скрыты, и скрыть, если показаны: то же,
-   * что пункт «Невидимые символы» меню «…». Документ и `value` не меняются, `onChange` не
-   * зовётся. Новое значение читается Состоянием Инструмента (`visible`).
-   * `false` — в HTML-режиме (Документа на экране нет).
+   * Shows the invisible characters if they are hidden, and hides them if they are shown: the same as
+   * the "Invisible characters" item of the "…" menu. The Document and `value` do not change, and
+   * `onChange` is not called. The new value is read by the Tool state (`visible`). `false` in Source
+   * mode (there is no Document on screen).
    */
   toggle(): boolean;
 }
 
 /**
- * Команды Инструмента по имени из карты `RichTextTools`. Имя вне карты — `unknown`:
- * типизация добровольна, Инструмент работает и без неё.
+ * Commands of a Tool by name from the `RichTextTools` map. A name outside the map gives `unknown`:
+ * typing is optional, and the Tool works without it.
  */
 export type ToolCommandsOf<Name extends string> = Name extends keyof RichTextTools
   ? RichTextTools[Name] extends { commands: infer Commands }

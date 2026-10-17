@@ -13,12 +13,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Одна карточка с живыми контролами — покрутить пропсы. */
+/** A single card with live controls. Tweak the props. */
 export const Playground: Story = {
   args: { size: "md" },
 };
 
-/** Содержимое, по которому видно отступы и то, как ложится текст внутри. */
+/** Content that shows the padding and how the text sits inside. */
 function CardBody() {
   return (
     <div className="flex w-56 flex-col gap-2">
@@ -37,9 +37,9 @@ function CardBody() {
 }
 
 /**
- * Матрица размеров. Ось у карточки одна, и одиночный экземпляр по ней ничего не
- * скажет: разницу `sm` и `md` (отступ и радиус движутся парой) видно только
- * рядом, при одинаковом содержимом.
+ * Size matrix. A card has one axis, and a single instance says nothing along it. The difference
+ * between `sm` and `md` (padding and radius move as a pair) is visible only side by side, with
+ * identical content.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -57,7 +57,7 @@ export const Matrix: Story = {
   ),
 };
 
-/** Карточка на карточке: проверка, что рамка и тень не сливаются на вложенности. */
+/** A card on a card: a check that the border and shadow don't merge when nested. */
 export const Nesting: Story = {
   parameters: { layout: "padded" },
   render: () => (
@@ -76,12 +76,11 @@ export const Nesting: Story = {
 };
 
 /**
- * `asChild` — карточка, по которой нажимают.
+ * `asChild` — a card that the user presses.
  *
- * До этого пропа такие карточки собирались как `<div onClick>`: с клавиатуры
- * недостижимы, роли нет, скринридер о нажатии не сообщает. Здесь вид уезжает
- * на настоящую кнопку или ссылку, а вместе с ним — курсор, подсветка рамки и
- * кольцо фокуса.
+ * Before this prop, such cards were built as `<div onClick>`: unreachable from the keyboard,
+ * with no role, and screen readers do not announce the press. Here the look moves onto a real
+ * button or link, and the cursor, the border highlight and the focus ring move with it.
  */
 export const Pressable: Story = {
   parameters: { layout: "padded" },
@@ -107,12 +106,11 @@ export const Pressable: Story = {
 };
 
 /**
- * `interactive` — карточка с главным действием и вторичными рядом.
+ * `interactive` — a card with a primary action and secondary actions next to it.
  *
- * Кнопку в кнопку вкладывать нельзя, поэтому карточка с меню «Ещё» не может
- * быть кнопкой целиком. Главное действие — ссылка, растянутая по площади
- * карточки (`after:absolute after:inset-0`); меню лежит выше по слою и
- * остаётся отдельной целью для мыши и для клавиатуры.
+ * A button cannot be nested inside a button, so a card with a "More" menu cannot be a button as a
+ * whole. The primary action is a link stretched over the card's area (`after:absolute after:inset-0`).
+ * The menu sits higher in the stacking layer and remains a separate target for mouse and keyboard.
  */
 export const WithMenuInside: Story = {
   parameters: { layout: "padded" },

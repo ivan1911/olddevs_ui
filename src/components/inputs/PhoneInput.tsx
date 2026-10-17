@@ -5,37 +5,37 @@ import { MaskedInput, type MaskedInputProps } from "./MaskedInput.js";
 
 export interface PhoneInputProps extends Omit<MaskedInputProps, "mask"> {
   /**
-   * Маска номера: один формат, он не подбирается по вводу. По умолчанию — российская (`RU_PHONE_MASK`).
+   * The number mask: a single format, not inferred from the input. By default it is the Russian one (`RU_PHONE_MASK`).
    *
-   * Проп есть именно потому, что умолчание — выбор, а не истина: другой стране
-   * нужен другой формат, и менять его должно быть просто.
+   * The prop exists precisely because the default is a choice, not a fact: another country
+   * needs a different format, and changing it should be easy.
    */
   mask?: string;
 }
 
-/** Российский формат. Умолчание, а не единственно возможное. */
+/** The Russian format. A default, not the only possible one. */
 export const RU_PHONE_MASK = "+7 (999) 999-99-99";
 
 /**
- * Поле телефона: `MaskedInput` с телефонной маской и телефонными атрибутами.
+ * A phone field: `MaskedInput` with a phone mask and phone attributes.
  *
- * ЧЕГО КОМПОНЕНТ НЕ ДЕЛАЕТ — важнее того, что делает. Он **не разбирает
- * номер, не хранит справочник стран и не валидирует**. Формат один и
- * фиксированный, задаётся пропом.
+ * WHAT THE COMPONENT DOES NOT DO matters more than what it does. It **does not parse
+ * the number, keep a country directory, or validate**. The format is single and
+ * fixed, set by the prop.
  *
- * Спека обещала «формат из локали», и обещание снято сознательно (ADR-0024):
- * `Intl` телефоны не форматирует вовсе, а честный разбор — это
- * `libphonenumber` весом в сотни килобайт, то есть зависимость кита, которую
- * админке без телефонов тащить не за что. Маска под один формат неверна для
- * остальных стран, и компонент об этом говорит прямо, а не делает вид.
+ * The spec promised "a format from the locale", and that promise was deliberately dropped (ADR-0024):
+ * `Intl` does not format phone numbers at all, and honest parsing means
+ * `libphonenumber`, hundreds of kilobytes of code, a kit dependency that
+ * an admin area without phone fields has no reason to pull in. A mask for one format is wrong for
+ * other countries, and the component says so openly rather than pretending otherwise.
  *
- * Кит здесь ВПЕРВЫЕ знает о предметной области, и граница проведена узко:
- * маска, `inputMode="tel"` и `autocomplete="tel"` — всё. `Form` от валидации
- * отказался осознанно, и телефон этого не пересматривает: правила «настоящий
- * ли это номер» остаются у того, кто его отправляет.
+ * The kit knows about a business domain here FOR THE FIRST TIME, and the boundary is drawn narrowly:
+ * the mask, `inputMode="tel"` and `autocomplete="tel"`, and that is all. `Form` gave up
+ * validation on purpose, and the phone input does not revisit that: the rules for "is this a real
+ * number" stay with whoever submits it.
  *
- * Наружу, как и у `MaskedInput`, идут оба представления: сырые цифры для
- * запроса и отформатированное для показа.
+ * As with `MaskedInput`, both representations go out: the raw digits for
+ * the request, and the formatted value for display.
  */
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function PhoneInput(
   { mask = RU_PHONE_MASK, ...rest },
@@ -47,8 +47,8 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function
       mask={mask}
       inputMode="tel"
       autoComplete="tel"
-      // Спред идёт последним: и режим клавиатуры, и автозаполнение —
-      // умолчания, а не запреты.
+      // The spread goes last: both the keyboard mode and autofill are
+      // defaults, not prohibitions.
       {...rest}
     />
   );

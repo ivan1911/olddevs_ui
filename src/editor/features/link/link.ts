@@ -3,44 +3,47 @@
 import { Link as TiptapLink, type LinkOptions } from "@tiptap/extension-link";
 import { isAllowedLinkHref } from "../../core/schema.js";
 
-/** `rel` каждой ссылки Документа: страница показа не отдаёт ей ни `opener`, ни `Referer`. */
+/**
+ * `rel` of every Document link: the page that shows the View gives the target neither
+ * `opener` nor `Referer`.
+ */
 export const LINK_REL = "noopener noreferrer";
 
-/** Есть ли у адреса схема (`https:`, `mailto:`, `javascript:`…). */
+/** Whether the address has a scheme (`https:`, `mailto:`, `javascript:`…). */
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
 /**
- * Ссылка Документа — `Link` Tiptap, суженный до Схемы кита.
+ * A Document link: Tiptap's `Link`, narrowed to the kit's Schema.
  *
- * ПОЧЕМУ `extend`, А НЕ `StarterKit.configure({ link })`. Опциями не убрать
- * лишнее из РАЗБОРА: атрибуты `target`, `class`, `title` и чужой `rel` Tiptap
- * читает из входящего `<a>` сам и отдаёт обратно, а `isAllowedUri` по
- * умолчанию пропускает относительные адреса и десяток схем (`ftp`, `tel`,
- * `sms`…). Здесь у Метки один атрибут — `href`, а `rel` пишется на выходе.
+ * WHY `extend`, NOT `StarterKit.configure({ link })`. Options cannot strip what is not
+ * needed from PARSING. Tiptap reads the `target`, `class`, `title` attributes and a foreign
+ * `rel` from the incoming `<a>` itself and returns them. `isAllowedUri` by default lets
+ * through relative addresses and a dozen schemes (`ftp`, `tel`, `sms`…). Here the Mark has
+ * one attribute, `href`, and `rel` is written on output.
  *
- * АДРЕС ПРОВЕРЯЕТСЯ НА КАЖДОМ ВХОДЕ, и входы разные:
+ * THE ADDRESS IS CHECKED ON EVERY INPUT, and the inputs differ:
  *
- * - `<a href>` из `value` и вставки HTML — `parseHTML`, строго по Схеме;
- * - Markdown (`[текст](адрес)`) приходит JSON-ом мимо `parseHTML` —
- *   `parseMarkdown` снимает ссылку с чужим адресом, текст остаётся;
- * - автоссылка при наборе и адрес из буфера — значение linkify, у него часто
- *   нет схемы (`example.com`): схему подставит `defaultProtocol`, поэтому
- *   `isAllowedUri` отсекает только ЯВНУЮ чужую схему;
- * - вставка адреса поверх выделения (`linkOnPaste`) `isAllowedUri` не зовёт
- *   вовсе — её закрывает `shouldAutoLink`;
- * - на выходе `renderHTML` ещё раз сверяет адрес: Метку с чужим адресом мог
- *   поставить только сырой `ref.editor`, и в HTML она уходит без `href`.
+ * - `<a href>` from `value` and pasted HTML: `parseHTML`, strictly by the Schema;
+ * - Markdown (`[text](address)`) arrives as JSON, bypassing `parseHTML`: `parseMarkdown`
+ *   drops the link with a foreign address and keeps the text;
+ * - an autolink while typing and an address from the clipboard go through linkify, which
+ *   often has no scheme (`example.com`). `defaultProtocol` adds one, so `isAllowedUri`
+ *   rejects only an EXPLICIT foreign scheme;
+ * - pasting an address over a selection (`linkOnPaste`) does not call `isAllowedUri` at all:
+ *   `shouldAutoLink` covers it;
+ * - on output, `renderHTML` checks the address once more. Only a raw `ref.editor` could set a
+ *   Mark with a foreign address, and in HTML it leaves without `href`.
  *
- * `Mod+K` и поповер адреса — не здесь: это кнопка описания Инструмента
- * (`linkTool.tsx`), и клавишу кнопки вешает кит (`toolButtons.ts`).
+ * `Mod+K` and the address popover are not here. They belong to the Tool's button descriptor
+ * (`linkTool.tsx`), and the kit binds the button's key (`toolButtons.ts`).
  */
 export const RichLink = TiptapLink.extend<LinkOptions>({
   addOptions() {
     const parent = this.parent!();
     return {
       ...parent,
-      // В Редакторе ссылка не открывается по щелчку: щелчок ставит каретку,
-      // как в любом тексте. Адрес видно и правят в поповере.
+      // The Editor does not open a link on click: a click places the caret, as in any text.
+      // The address is seen and edited in the popover.
       openOnClick: false,
       autolink: true,
       linkOnPaste: true,
@@ -63,7 +66,7 @@ export const RichLink = TiptapLink.extend<LinkOptions>({
       href: {
         default: null,
         parseHTML: (element) => element.getAttribute("href")?.trim() ?? null,
-        // `rel` — константа выхода, а не атрибут Метки: см. `renderHTML`.
+        // `rel` is a constant of the output, not an attribute of the Mark: see `renderHTML`.
         renderHTML: (attributes) => ({ href: attributes.href }),
       },
     };
@@ -90,18 +93,18 @@ export const RichLink = TiptapLink.extend<LinkOptions>({
   },
 });
 
-/** Похоже на адрес почты без схемы: `team@example.com`. */
+/** Looks like an email address without a scheme: `team@example.com`. */
 const BARE_EMAIL = /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/;
 
 /**
- * Адрес из поля поповера — в адрес ссылки, или `null`, если такой ссылке в
- * Документе не быть.
+ * Turns the address from the popover field into the link's address, or returns `null` if such
+ * a link cannot be in the Document.
  *
- * Человек пишет адрес так, как видит его в строке браузера: `example.com`, а
- * не `https://example.com`. Адрес без схемы поэтому получает `https://`, а
- * похожий на почту — `mailto:`. Однозначно это потому, что относительных
- * адресов Схема не принимает (`RICH_TEXT_SCHEMA.protocols`): начинающийся с
- * `/`, `#`, `?` или `.` адрес — ошибка, а не путь от текущей страницы.
+ * A person types an address as they see it in the browser bar: `example.com`, not
+ * `https://example.com`. An address without a scheme therefore gets `https://`, and an
+ * email-like one gets `mailto:`. This is unambiguous because the Schema accepts no relative
+ * addresses (`RICH_TEXT_SCHEMA.protocols`): an address that starts with `/`, `#`, `?` or `.`
+ * is an error, not a path from the current page.
  */
 export function normalizeLinkInput(input: string): string | null {
   const value = input.trim();

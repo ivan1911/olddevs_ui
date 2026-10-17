@@ -8,8 +8,8 @@ import {
   type RichTextEditorHandle,
 } from "../src/editor/index.js";
 
-// Окружение — node: на сервере нет ни `window`, ни DOM, и именно так проверяется
-// безопасность хука Состояния Инструмента при SSR.
+// Environment: node. The server has neither `window` nor the DOM, and this is how
+// the safety of the Tool state hook under SSR is checked.
 
 test("the tool State hook is null on the server and the selector is not called", () => {
   let calls = 0;

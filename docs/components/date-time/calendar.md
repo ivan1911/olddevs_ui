@@ -9,22 +9,22 @@ story: src/components/date-time/Calendar.stories.tsx
 
 # Calendar
 
-## Кратко для AI
+## Summary for AI
 
-`Calendar` — низкоуровневый controlled building block для выбора одной `DateValue` из React Aria. Для готового поля формы обычно используйте `DatePicker`; `Calendar` выбирайте только для собственной композиции.
+`Calendar` is a low-level controlled building block for picking a single React Aria `DateValue`. For a ready-made form field, use `DatePicker`; choose `Calendar` only for your own composition.
 
-## Когда использовать
+## When to use
 
-- Нужна встроенная сетка календаря с React Aria props: `value`, `defaultValue`, `onChange`, недоступные даты и ограничения.
-- Требуется собственный оверлей или раскладка вокруг календаря.
+- You need an inline calendar grid with React Aria props: `value`, `defaultValue`, `onChange`, unavailable dates and constraints.
+- You need your own overlay or layout around the calendar.
 
-## Когда не использовать
+## When not to use
 
-- Для обычного компактного выбора даты используйте `DatePicker`.
-- Для периода с двумя границами используйте `RangeCalendar` или `DateRangePicker`.
-- Не храните календарную дату как `Date`: у него есть часовой пояс. Берите `DateValue` на границе `Calendar` или ISO-строку в готовом `DatePicker`.
+- For ordinary compact date selection, use `DatePicker`.
+- For a range with two bounds, use `RangeCalendar` or `DateRangePicker`.
+- Do not store a calendar date as a `Date`: it has a time zone. Use `DateValue` at the `Calendar` boundary, or an ISO string in a ready-made `DatePicker`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Calendar value={date} onChange={setDate} locale="ru-RU" minValue={today(getLocalTimeZone())} />
@@ -32,15 +32,15 @@ story: src/components/date-time/Calendar.stories.tsx
 
 ## Public API
 
-- Наследует `CalendarProps<DateValue>` React Aria, включая controlled/uncontrolled value, `minValue`, `maxValue`, `isDateUnavailable`.
-- **Дата — объект или ISO-строка.** `value`, `defaultValue`, `minValue`, `maxValue` и `defaultFocusedValue` принимают и объект `@internationalized/date`, и строку `ГГГГ-ММ-ДД`, как `DatePicker`. Импортировать `@internationalized/date` для этого не нужно (сам пакет приезжает с китом): `minValue="2026-03-09"`. Неразбираемая строка (`2026-02-29`, мусор из адреса) не бросает исключение: значение считается пустым, граница — незаданной.
-- `onChange(value, iso)`: первый аргумент — объект календаря, как у React Aria (так было всегда), второй — тот же день ISO-строкой. Хранящему дату строкой достаточно `onChange={(_, iso) => setDate(iso)}`. Что получает `onChange`, не зависит от того, объектом или строкой передан `value`: прежние вызовы с объектами работают без правок.
-- `isDateUnavailable` получает объект календаря: `date.toString()` возвращает день строкой `ГГГГ-ММ-ДД`.
-- Без `locale` локаль приходит сверху: от `UiProvider`, `I18nProvider` потребителя или браузера; `locale` перебивает её для этого календаря, влияет на подписи и первый день недели; `className` относится к корню.
-- `NAV_BUTTON_CLASS` и `WEEKDAY_CELL_CLASS` — публичные константы стилей для согласованной пользовательской композиции, не отдельные компоненты.
+- Inherits React Aria's `CalendarProps<DateValue>`, including controlled/uncontrolled value, `minValue`, `maxValue`, `isDateUnavailable`.
+- **A date is an object or an ISO string.** `value`, `defaultValue`, `minValue`, `maxValue` and `defaultFocusedValue` accept both an `@internationalized/date` object and a `YYYY-MM-DD` string, like `DatePicker`. There is no need to import `@internationalized/date` for this (the package itself comes with the kit): `minValue="2026-03-09"`. An unparsable string (`2026-02-29`, garbage from the address bar) does not throw: the value is treated as empty and the bound as not set.
+- `onChange(value, iso)`: the first argument is a calendar object, as in React Aria (it always was); the second is the same day as an ISO string. Whoever stores the date as a string needs only `onChange={(_, iso) => setDate(iso)}`. What `onChange` receives does not depend on whether `value` is passed as an object or a string: existing calls with objects work unchanged.
+- `isDateUnavailable` receives a calendar object: `date.toString()` returns the day as a `YYYY-MM-DD` string.
+- Without `locale`, the locale comes from above: from `UiProvider`, the consumer's `I18nProvider` or the browser; `locale` overrides it for this calendar and affects labels and the first day of the week; `className` applies to the root.
+- `NAV_BUTTON_CLASS` and `WEEKDAY_CELL_CLASS` are public style constants for a consistent custom composition, not separate components.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- React Aria реализует `grid`, полные доступные имена дат и клавиатурную навигацию.
-- Сегодня отмечается точкой, выбранная дата — заливкой; не делайте точку и заливку единственным признаком даты в собственной вёрстке вокруг календаря: имя ячейки (полная дата) даёт React Aria.
-- См. `src/components/date-time/Calendar.tsx`, `src/components/date-time/Calendar.stories.tsx`, `tests/matrix.tsx`.
+- React Aria implements `grid`, full accessible names for dates and keyboard navigation.
+- Today is marked with a dot, the selected date with a fill; do not make the dot and the fill the only indicator of a date in your own markup around the calendar: React Aria provides the cell name (the full date).
+- See `src/components/date-time/Calendar.tsx`, `src/components/date-time/Calendar.stories.tsx`, `tests/matrix.tsx`.

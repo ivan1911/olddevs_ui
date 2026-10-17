@@ -6,35 +6,34 @@ import type { Size } from "../../lib/variants.js";
 import { Image } from "./Image.js";
 
 export interface AvatarProps extends Omit<ComponentPropsWithoutRef<"span">, "children"> {
-  /** Имя или логин. Инициалы и оттенок берутся отсюда. */
+  /** Name or login. The initials and the hue are derived from it. */
   name?: string;
-  /** `md` — в списках и шапке, `lg` — в карточке профиля. */
+  /** `md` for lists and headers, `lg` for a profile card. */
   size?: Extract<Size, "md" | "lg">;
   /**
-   * Адрес фотографии. Пока она грузится, виден круг с оттенком имени; если её
-   * нет или она не загрузилась — инициалы. Пустое значение равносильно
-   * отсутствию: разметка остаётся прежней.
+   * Photo URL. While it loads, a circle in the name's hue is shown; if there is no photo or it
+   * fails to load, the initials are shown. An empty value is the same as no value: the markup
+   * stays the same.
    */
   src?: string | null;
   /**
-   * Альтернативный текст фотографии. По умолчанию — `name`; пустая строка делает фото
-   * декоративным (имя человека написано рядом). Без `src` не действует:
-   * инициалы читаются как обычный текст.
+   * Alt text for the photo. Defaults to `name`; an empty string makes the photo decorative (the
+   * person's name is written next to it). Has no effect without `src`: the initials are read as
+   * plain text.
    */
   alt?: string;
 }
 
 /**
- * Инициалы в круге с оттенком, выведенным из имени.
+ * Initials in a circle with a hue derived from the name.
  *
- * Оттенок считается из первого символа, а не выбирается из палитры: аватар
- * должен быть узнаваем и стабилен для одного и того же человека, а список
- * людей заранее не известен.
+ * The hue is computed from the first character rather than picked from a palette: the avatar has
+ * to be recognizable and stable for the same person, and the list of people is not known in
+ * advance.
  *
- * Прежняя версия принимала `size` числом пикселей. Здесь это ступень словаря:
- * `size` во всех примитивах значит одно и то же, и один примитив не может
- * трактовать его иначе. Обе ступени взяты из фактических вызовов (28 и 64),
- * а не придуманы про запас.
+ * The previous version accepted `size` as a pixel number. Here it is a dictionary step: `size`
+ * means the same thing in every primitive, and one primitive cannot interpret it differently.
+ * Both steps are taken from actual call sites (28 and 64), not added as a spare margin.
  */
 const SIZES = {
   md: "h-7 w-7 text-[11px]",
@@ -46,25 +45,24 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   ref
 ) {
   /*
-    Пустая строка — это ОТСУТСТВИЕ имени, а не имя.
+    An empty string is the ABSENCE of a name, not a name.
 
-    Умолчание в сигнатуре срабатывает только на `undefined`, и `name=""`
-    (бэкенд отдал пользователя с пустым `displayName`) доходило до расчёта:
-    `"".charCodeAt(0)` даёт `NaN`, оттенок становился `NaN`, весь
-    `linear-gradient(... oklch(0.55 0.13 NaN) ...)` браузер отбрасывал как
-    невалидный — подложки не было, а класс `text-text-on-accent` оставался.
-    На светлой теме получался пустой круг белым по белому, в `AvatarGroup` —
-    занятое место без содержимого.
+    The default in the signature only applies to `undefined`, so `name=""` (the backend returned
+    a user with an empty `displayName`) reached the calculation: `"".charCodeAt(0)` gives `NaN`,
+    the hue became `NaN`, and the browser discarded the whole
+    `linear-gradient(... oklch(0.55 0.13 NaN) ...)` as invalid. There was no background, but the
+    `text-text-on-accent` class remained. On a light theme this produced an empty circle, white on
+    white; in `AvatarGroup`, a slot taken up with no content.
   */
-  // Для обычной строки `||` выражает то же правило, что `hasContent` для
-  // `ReactNode`, и не спорит с типами: пустая строка и `undefined` одинаково
-  // ложны. Предикат нужен там, где пустыми бывают ещё `false` и `[]`.
+  // For a plain string, `||` expresses the same rule as `hasContent` does for `ReactNode`, and it
+  // does not fight the types: an empty string and `undefined` are both falsy. The predicate is
+  // needed where `false` and `[]` can also be empty.
   const name = nameProp || "IV";
   const hue = (name.charCodeAt(0) * 7) % 360;
   const initials = name.slice(0, 2).toUpperCase();
-  // Адрес, фото по которому уже загрузилось: после этого подложка не нужна.
-  // Привязка к адресу, а не булев флаг — при смене `src` круг снова «грузится»
-  // и подложка возвращается без отдельного сброса.
+  // The address whose photo has already loaded: after that the background is not needed. The
+  // binding is to the address, not to a boolean flag: when `src` changes, the circle "loads" again
+  // and the background comes back without a separate reset.
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const loaded = Boolean(src) && loadedSrc === src;
 
@@ -78,9 +76,9 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
         className
       )}
       style={{
-        // Оттенок вычисляется из имени, поэтому классом его не выразить.
-        // Под загруженным фото подложка убрана: у PNG и SVG с прозрачным фоном
-        // оттенок имени просвечивал бы сквозь силуэт.
+        // The hue is computed from the name, so it cannot be expressed as a class.
+        // Under a loaded photo the background is removed: for PNG and SVG with a transparent
+        // background, the name's hue would show through the silhouette.
         background: loaded
           ? undefined
           : `linear-gradient(135deg, oklch(0.55 0.13 ${hue}), oklch(0.4 0.13 ${(hue + 60) % 360}))`,
@@ -91,29 +89,28 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
       {src ? (
         <>
           {/*
-            Невидимая распорка остаётся В ПОТОКЕ: корень круга с фото получает ту
-            же базовую линию, что и с инициалами. Иначе круг с одной картинкой
-            садился бы на строку нижним краем, а круг с инициалами — текстом, и
-            в строке с соседним текстом фото и инициалы стояли бы на разной
-            высоте, а при отказе загрузки круг ещё и прыгал бы. Это нулевая
-            ширина, а не копия инициалов: копия дважды попадала бы в
-            `textContent` и в поиск по тексту у потребителя.
+            The invisible spacer stays IN THE FLOW: the root of a circle with a photo gets the same
+            baseline as one with initials. Otherwise a circle with only a picture would sit on the
+            line by its bottom edge, while one with initials sits by its text, and in a row with
+            neighboring text the photo and the initials would be at different heights; on a load
+            failure the circle would also jump. It is zero-width, not a copy of the initials: a copy
+            would end up twice in `textContent` and in the consumer's text search.
           */}
           <span aria-hidden className="invisible">
             {"\u200B"}
           </span>
           {/*
-            Фото рисует `Image`, а загрузку и отказ он обрабатывает сам (ADR-0011):
-            второго обработчика `onError` здесь нет.
+            `Image` draws the photo and handles loading and failure itself (ADR-0011): there is no
+            second `onError` handler here.
 
-            Подложка с оттенком остаётся на КОРНЕ, а не на фолбэке — поэтому
-            скелетон выключен: он закрыл бы её мерцанием, и между «грузится» и
-            «не загрузилось» круг менял бы вид дважды. Меняется только
-            содержимое: круг цвета имени → фото или инициалы на том же круге.
+            The hue background stays on the ROOT, not on the fallback — which is why the skeleton is
+            off: it would cover the background with a shimmer, and between "loading" and "failed to
+            load" the circle would change its look twice. Only the content changes: a circle in the
+            name's color becomes the photo or the initials on that same circle.
 
-            `alt` по умолчанию — имя, но НЕ подставленное «IV»: заглушка не имя
-            человека, и читать её вслух значит выдумать подпись. Без имени и без
-            `alt` фото декоративно.
+            The default `alt` is the name, but NOT the substituted "IV": the placeholder is not a
+            person's name, and reading it aloud would invent a caption. Without a name and without
+            `alt`, the photo is decorative.
           */}
           <Image
             src={src}

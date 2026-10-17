@@ -14,13 +14,13 @@ const TRAIL = [
 ];
 
 /**
- * Короткие цепочки.
+ * Short chains.
  *
- * Свёрнутый вид всегда собирался как «первое + … + последние два» — три звена,
- * — а условие срабатывало уже при `items.length > maxItems`. При двух звеньях и
- * `maxItems={1}` корень попадал и в начало, и в хвост (рисовался ДВАЖДЫ), а
- * число пропущенных уходило в минус: «Пропущено звеньев: −1». Вход достижим по
- * документации — страница советует уменьшать `maxItems` в узком хедере.
+ * The collapsed view was always built as "first + … + last two" (three links), but
+ * the condition fired already at `items.length > maxItems`. With two items and
+ * `maxItems={1}`, the root landed both at the start and at the tail (it was rendered
+ * TWICE), and the count of skipped links went negative: "Skipped links: −1". The input
+ * is reachable per the docs: the page advises lowering `maxItems` in a narrow header.
  */
 test.each([
   [1, 2],

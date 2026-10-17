@@ -6,8 +6,8 @@ import { afterEach, expect, test, vi } from "vitest";
 import { ColorPicker } from "../src/components/inputs/ColorPicker.js";
 
 /*
-  Шим `CSS.escape` — тот же, что в `menu.test.tsx`: попоувер react-aria зовёт
-  его при открытии, а в jsdom объекта `CSS` нет.
+  Shim for `CSS.escape`, the same one as in `menu.test.tsx`: the react-aria popover
+  calls it on open, and jsdom has no `CSS` object.
 */
 if (typeof globalThis.CSS === "undefined")
   (globalThis as unknown as { CSS: { escape: (v: string) => string } }).CSS = {
@@ -53,8 +53,8 @@ test("the trigger carries the label", () => {
 });
 
 /*
-  Наружу и внутрь — строка, а не объект `Color` библиотеки: объект протащил бы
-  тип RAC в состояние потребителя и в его сигнатуры.
+  In and out, the value is a string, not the library's `Color` object: the object
+  would leak the RAC type into the consumer's state and into its signatures.
 */
 test("the value goes out as a string in the requested format", async () => {
   const user = userEvent.setup();
@@ -62,8 +62,8 @@ test("the value goes out as a string in the requested format", async () => {
   render(<Brand outputFormat="rgb" onValue={onValue} />);
 
   await user.click(trigger());
-  // Ползунков несколько: область насыщенности и полоса тона. Берётся
-  // последний — полоса, — потому что двигать её проще всего предсказуемо.
+  // There are several sliders: the saturation area and the hue strip. Take the
+  // last one, the strip, because it is the most predictable to move.
   const sliders = await screen.findAllByRole("slider");
   (sliders.at(-1) as HTMLElement).focus();
   await user.keyboard("{ArrowRight}");
@@ -79,15 +79,15 @@ test("the two-dimensional area and the hue slider are both reachable", async () 
   render(<Brand />);
 
   await user.click(trigger());
-  // Два ползунка: двумерная область насыщенности и яркости — один контрол с
-  // двумя осями, полоса тона — второй. Роли приходят из react-aria, а не
-  // пишутся здесь.
+  // Two sliders: the two-dimensional saturation and brightness area, one control
+  // with two axes, and the hue strip, the second. The roles come from react-aria
+  // rather than being written here.
   expect(await screen.findAllByRole("slider")).toHaveLength(2);
 });
 
 /*
-  Умолчания у пресетов нет намеренно: набор «фирменных» цветов — домен
-  потребителя. Без пропа ряда не должно быть вовсе, а не пустого.
+  There is no default for presets on purpose: the set of brand colours belongs to
+  the consumer's domain. Without the prop the row must not render at all, not render empty.
 */
 test("presets appear only when the consumer supplies them", async () => {
   const user = userEvent.setup();
@@ -115,9 +115,9 @@ test("a preset can be chosen and reports the new value", async () => {
 });
 
 /*
-  Поле ввода шестнадцатеричное всегда, и подпись это говорит: `outputFormat`
-  меняет только строку наружу. Подписать поле «HSL», принимая hex, значило бы
-  врать пользователю прямо на экране.
+  The input is always hexadecimal, and the label says so: `outputFormat` changes
+  only the string that goes out. Labelling the field "HSL" while it accepts hex
+  would lie to the user right on the screen.
 */
 test("the input stays hexadecimal whatever the output format is", async () => {
   const user = userEvent.setup();
@@ -129,8 +129,9 @@ test("the input stays hexadecimal whatever the output format is", async () => {
 });
 
 /*
-  Выключенное поле не раскрывается. Проверка есть потому, что без неё снятие
-  атрибута с триггера не уронило бы ни один тест: снимков у периферии нет.
+  A disabled picker does not expand. The check exists because without it,
+  removing the attribute from the trigger would fail no test: periphery
+  components have no snapshots.
 */
 test("a disabled picker does not open", async () => {
   const user = userEvent.setup();
@@ -142,9 +143,10 @@ test("a disabled picker does not open", async () => {
 });
 
 /*
-  Неразборчивая строка становится чёрным — это поведение react-aria, и кит его
-  не перехватывает. Но последствие стоит зафиксировать: первое же движение
-  ползунка отдаст чёрный, то есть заменит непонятое значение понятым.
+  An unreadable string becomes black. This is react-aria's behavior, and the kit
+  does not intercept it. But the consequence is worth pinning down: the first
+  slider movement emits black, which replaces the value that was not understood
+  with one that is.
 */
 test("an unparsable value falls back to black instead of throwing", async () => {
   const user = userEvent.setup();
@@ -160,10 +162,10 @@ test("an unparsable value falls back to black instead of throwing", async () => 
 });
 
 /*
-  `label` объявлен обязательным именно потому, что безымянный контрол скринридер
-  объявляет пустым словом. Прежде он рисовался только в ветке умолчания, и
-  передача `children` — ровно то, ради чего проп заведён, — оставляла кнопку без
-  имени. axe этого не ловил: истории с `children` нет.
+  `label` is required precisely because a screen reader announces an unnamed
+  control as an empty word. It used to render only in the default branch, so
+  passing `children`, the very reason the prop exists, left the button without
+  a name. axe did not catch this: there is no story with `children`.
 */
 test("the trigger keeps its name when children replace the default content", () => {
   render(
@@ -175,17 +177,17 @@ test("the trigger keeps its name when children replace the default content", () 
 });
 
 /*
-  Библиотека бросает на непонятой строке, и бросок происходит в фазе рендера —
-  то есть уносит поддерево потребителя целиком. Ломается не экзотика:
-  `rebeccapurple` это законный CSS-цвет, которого библиотека не берёт, а
-  фирменную палитру совершенно естественно держать именами.
+  The library throws on a string it does not understand, and the throw happens
+  during render, so it takes the consumer's whole subtree down with it. This is
+  not an exotic case: `rebeccapurple` is a valid CSS colour that the library does
+  not parse, and it is entirely natural to keep a brand palette in names.
 */
 test("an unparsable preset is skipped instead of taking the render down", async () => {
   const user = userEvent.setup();
   render(<Brand presets={["#e11d48", "rebeccapurple", "not-a-colour", "#16a34a"]} />);
 
   await user.click(trigger());
-  // Остались только разобранные две; ряд заготовок при этом никуда не делся.
+  // Only the two parsed ones remain; the presets row itself is still rendered.
   expect(await screen.findAllByRole("option")).toHaveLength(2);
 });
 

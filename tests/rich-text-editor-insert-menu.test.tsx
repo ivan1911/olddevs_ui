@@ -17,17 +17,19 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Меню вставки: по `/` в тексте и по кнопке «+» на Панели (OLDSUI-43).
+ * The Slash menu: opened by `/` in the text and by the "+" button on the Toolbar
+ * (OLDSUI-43).
  *
- * Набор идёт командами движка, как в остальных тестах Редактора: jsdom не
- * умеет ввода в `contenteditable`. Клавиши, которые меню слушает, — настоящие
- * события `keydown` на поле: так их видит и ProseMirror, и стек слоёв Radix.
+ * Typing goes through engine commands, as in the other Editor tests: jsdom
+ * cannot do input into `contenteditable`. The keys the menu listens to are real
+ * `keydown` events on the field: that is how both ProseMirror and the Radix layer
+ * stack see them.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -38,14 +40,14 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 }
 
 /**
- * Фокус в поле. Не `commands.focus()`: Tiptap ставит фокус следующим кадром,
- * и в синхронном тесте его ещё нет.
+ * Focus the field. Not `commands.focus()`: Tiptap sets focus on the next frame,
+ * and in a synchronous test it has not happened yet.
  */
 function focusField() {
   act(() => screen.getByRole("textbox", { name: "Body" }).focus());
 }
 
-/** Набрать текст в позицию курсора — транзакцией, как это сделал бы ввод. */
+/** Type text at the caret as a transaction, the way real input would. */
 function type(editor: Editor, text: string) {
   act(() => void editor.commands.insertContent(text));
 }
@@ -60,9 +62,10 @@ test("a slash at the start of an empty paragraph opens the insert menu", () => {
 });
 
 /*
-  Поле — часть комбобокса: фокус, пришедший в него при открытом списке
-  (каретка, поставленная программно уже после `/`, возврат в окно браузера),
-  не «уход наружу». Radix снимал на нём слой, а с ним — сессию `/`.
+  The field is part of the combobox: focus that comes back into it while the list
+  is open (a caret set programmatically right after `/`, a return to the browser
+  window) is not a focus-out. Radix removed the layer on it, and with it the `/`
+  session.
 */
 test("focus coming back into the field keeps the slash list open", async () => {
   const { editor } = renderEditor();
@@ -72,7 +75,7 @@ test("focus coming back into the field keeps the slash list open", async () => {
 
   act(() => (document.activeElement as HTMLElement).blur());
   focusField();
-  // Radix подписывается на фокус снаружи с задержкой — даём ему кадр.
+  // Radix subscribes to focus from outside with a delay, so give it a frame.
   await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
 
   expect(screen.getByRole("listbox", { name: "Insert block" })).toBeDefined();
@@ -90,7 +93,7 @@ test("a slash after a space opens the menu, a slash inside a word does not", () 
   expect(screen.getByRole("listbox", { name: "Insert block" })).toBeDefined();
 });
 
-/** Клавиша на поле — настоящим `keydown`, как его получат и движок, и Radix. */
+/** A key press on the field: a real `keydown`, as both the engine and Radix receive it. */
 function press(editor: Editor, key: string) {
   act(() => {
     editor.view.dom.dispatchEvent(
@@ -99,7 +102,7 @@ function press(editor: Editor, key: string) {
   });
 }
 
-/** Имя текущей строки списка — та, на которую указывает поле. */
+/** The current list row: the one the field points to through `aria-activedescendant`. */
 function activeOption(editor: Editor) {
   const id = editor.view.dom.getAttribute("aria-activedescendant");
   return id ? document.getElementById(id) : null;
@@ -115,7 +118,7 @@ test("focus stays in the field; arrows move the active option through aria-activ
   expect(document.activeElement).toBe(field);
   expect(field.getAttribute("aria-controls")).toBe(listbox.id);
 
-  // Первый раздел — «Insert», его первая строка — текущая.
+  // The first section is "Insert", and its first row is the current one.
   const options = screen.getAllByRole("option");
   expect(activeOption(editor)).toBe(options[0]);
   expect(options[0]?.getAttribute("aria-selected")).toBe("true");
@@ -124,7 +127,7 @@ test("focus stays in the field; arrows move the active option through aria-activ
   expect(activeOption(editor)).toBe(options[1]);
   expect(options[0]?.getAttribute("aria-selected")).toBe("false");
 
-  // Стрелка вверх с первой строки уходит на последнюю.
+  // Up arrow from the first row goes to the last one.
   press(editor, "ArrowUp");
   press(editor, "ArrowUp");
   expect(activeOption(editor)).toBe(options.at(-1));
@@ -164,7 +167,7 @@ test("the menu lists both sections with icons, labels and hints", () => {
     "Quote>",
     "Code blockCtrl+Alt+C",
   ]);
-  // Подсказка — для глаз: имя строки — только подпись.
+  // The hint is for the eye: the row's name is only the label.
   expect(screen.getByRole("option", { name: "Heading 2" })).toBeDefined();
 });
 
@@ -206,8 +209,8 @@ test("filtering follows the provider's language and still knows the English labe
   );
   const editor = ref.current!.editor!;
   focusField();
-  // Запрос — начало русской подписи из каталога: литерал кириллицы держит
-  // каталог, а не тест (гейт i18n).
+  // The query is the opening of a Russian label from the catalog: the catalog, not
+  // the test, holds the Cyrillic literal (i18n gate).
   const t = ru.editor;
   type(editor, `/${t.blockquote.slice(0, 3)}`);
 
@@ -256,7 +259,7 @@ test("an Insert item in an empty paragraph replaces it instead of adding a block
   press(editor, "Enter");
 
   expect(editor.getHTML()).toBe("<p>Intro</p><pre><code></code></pre>");
-  // Курсор — внутри нового блока кода: набор продолжается в нём.
+  // The caret is inside the new code block: typing continues in it.
   expect(editor.state.selection.$from.parent.type.name).toBe("codeBlock");
 });
 
@@ -307,8 +310,9 @@ test("a slash inside a code block is just a slash", () => {
 });
 
 /*
-  Заголовок 1 — надстройка над `heading` (OLDSUI-62): пункт есть только вместе
-  с `heading1`, как в меню «¶». Без него — только 2–4 (тест ниже).
+  Heading 1 is an extension over `heading` (OLDSUI-62): the item exists only
+  together with `heading1`, as in the "¶" menu. Without it there are only 2–4
+  (the test below).
 */
 test("Heading 1 turns the block into an H1 and carries the shortcut of the table", async () => {
   const user = userEvent.setup();
@@ -338,7 +342,7 @@ test("a disabled tool has no item, and without insertMenu the slash is just a sl
     "Heading 4####",
     "Bulleted list-",
   ]);
-  // Раздела без пунктов нет вовсе.
+  // A section without items does not appear at all.
   expect(screen.queryByRole("group", { name: "Insert" })).toBeNull();
   cleanup();
 
@@ -350,11 +354,12 @@ test("a disabled tool has no item, and without insertMenu the slash is just a sl
 });
 
 /**
- * Escape при открытом меню принадлежит меню, а не окну вокруг поля (ADR-0041).
+ * Escape with an open menu belongs to the menu, not to the dialog around the
+ * field (ADR-0041).
  *
- * Здесь настоящий `Dialog`, а не подложка, как в тесте списка стилей: список
- * Меню вставки — слой Radix, той же библиотеки, что окно, и в jsdom их стек
- * работает так же, как в браузере.
+ * This is a real `Dialog`, not a plain wrapper as in the Glass style test: the
+ * Slash menu's list is a Radix layer, the same library as the dialog, and in
+ * jsdom their stack behaves just as in the browser.
  */
 test("Escape inside a Dialog closes only the menu", () => {
   const onClose = vi.fn();
@@ -374,7 +379,7 @@ test("Escape inside a Dialog closes only the menu", () => {
   expect(onClose).not.toHaveBeenCalled();
   expect(editor.getHTML()).toBe("<p>/</p>");
 
-  // Контроль: без меню тот же Escape закрывает окно.
+  // Control: without the menu, the same Escape closes the dialog.
   press(editor, "Escape");
   expect(onClose).toHaveBeenCalledTimes(1);
 });
@@ -416,7 +421,7 @@ test("the plus button opens the same items as a menu and applies them to the sel
 
   const plus = screen.getByRole("button", { name: "Insert block" });
   expect(plus.getAttribute("aria-haspopup")).toBe("true");
-  // «+» — первая кнопка Панели.
+  // The "+" is the first button of the Toolbar.
   const toolbar = screen.getByRole("toolbar", { name: "Formatting" });
   expect(toolbar.querySelector("button")).toBe(plus);
 
@@ -428,7 +433,7 @@ test("the plus button opens the same items as a menu and applies them to the sel
 
   await user.click(screen.getByRole("menuitem", { name: /Quote/ }));
   expect(editor.getHTML()).toBe("<blockquote><p>Intro</p></blockquote>");
-  // Набор продолжается в документе, а не на кнопке «+».
+  // Typing continues in the document, not on the "+" button.
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Body" }))
   );
@@ -459,6 +464,6 @@ test("«+» with a gap cursor between two tables inserts there instead of throwi
 
   await user.click(screen.getByRole("button", { name: "Insert block" }));
   await user.click(screen.getByRole("menuitem", { name: /Divider/ }));
-  // Линия встаёт в щель, между двумя таблицами.
+  // The divider lands in the gap, between two tables.
   expect(editor.getHTML()).toMatch(/<\/table><hr>(<p><\/p>)?<table>/);
 });

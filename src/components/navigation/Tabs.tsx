@@ -4,48 +4,47 @@ import { useRef, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "../../lib/cn.js";
 
 export interface TabItem {
-  /** Идентификатор вкладки; по нему сверяется `value` и строится `{id}-panel` для `aria-controls`. */
+  /** Tab identifier. `value` is matched against it, and `{id}-panel` is built from it for `aria-controls`. */
   id: string;
-  /** Подпись вкладки. */
+  /** Tab label. */
   label: string;
-  /** Иконка слева от подписи; скрыта от скринридера. */
+  /** Icon to the left of the label; hidden from screen readers. */
   icon?: ReactNode;
 }
 
 export interface TabsProps {
-  /** Вкладки по порядку. */
+  /** Tabs, in order. */
   items: TabItem[];
-  /** `id` активной вкладки. Компонент управляемый: состояние ведёт потребитель. */
+  /** The `id` of the active tab. The component is controlled: the consumer owns the state. */
   value: string;
-  /** Вызывается с `id` вкладки при клике и при переходе стрелками, Home и End. */
+  /** Called with the tab's `id` on a click and on arrow, Home and End navigation. */
   onChange: (id: string) => void;
   /**
-   * `vertical` — сайдбар (колонка, стрелки ↑↓); `horizontal` — лента со
-   * скроллом (стрелки ←→). Компонент рендерит только вкладки: панели, их
-   * разметка и адаптив — забота потребителя.
+   * `vertical` is a sidebar (a column, arrows ↑↓); `horizontal` is a scrolling strip (arrows ←→).
+   * The component renders only the tabs. Panels, their markup, and the responsive layout are the
+   * consumer's job.
    */
   orientation?: "vertical" | "horizontal";
-  /** Дополнительные классы на ленту вкладок. */
+  /** Extra classes on the tab strip. */
   className?: string;
 }
 
 /**
- * Лента вкладок. Controlled-only: единственный потребитель и так держит
- * активную вкладку в своём стейте, uncontrolled-режим был бы кодом про запас.
+ * Tab strip. Controlled-only: the one consumer already keeps the active tab in its own state, and
+ * an uncontrolled mode would be code kept in reserve.
  *
- * Выбор следует за фокусом (automatic activation): панели здесь рендерятся
- * мгновенно, ждать отдельного Enter после стрелки незачем. Фокус ходит по
- * roving tabindex — табом попадаешь только на активную вкладку, дальше
- * стрелками; края не зацикливаются, как везде в ките.
+ * Selection follows focus (automatic activation): panels render instantly here, so there is no
+ * reason to wait for a separate Enter after an arrow. Focus moves through a roving tabindex, so
+ * Tab reaches only the active tab and the arrows move on from there. Edges do not wrap, as
+ * everywhere in the kit.
  *
- * `aria-controls` проставляется ТОЛЬКО выбранной вкладке и указывает на
- * `{id}-panel`. Потребители рендерят панель лишь для активной вкладки, и
- * ссылка с остальных указывала бы на отсутствующий в разметке элемент —
- * это невалидное значение атрибута, аудит axe роняет его как `critical`.
- * Спецификация такой пропуск допускает прямо для этого случая.
+ * `aria-controls` is set ONLY on the selected tab and points to `{id}-panel`. Consumers render a
+ * panel only for the active tab, so a reference from the others would point to an element missing
+ * from the markup. That is an invalid attribute value, and the axe audit flags it as `critical`.
+ * The specification allows this omission explicitly for exactly this case.
  *
- * Контейнер содержимого на стороне потребителя обязан иметь `id={`${value}-panel`}`
- * и `role="tabpanel"`.
+ * The content container on the consumer's side must have `id={`${value}-panel`}` and
+ * `role="tabpanel"`.
  */
 export function Tabs({ items, value, onChange, orientation = "horizontal", className }: TabsProps) {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);

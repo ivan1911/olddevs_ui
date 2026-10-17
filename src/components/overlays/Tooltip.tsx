@@ -11,32 +11,32 @@ import { cn } from "../../lib/cn.js";
 import { OVERLAY_LAYER } from "../../lib/overlay-layer.js";
 
 export interface TooltipProps {
-  /** Текст подсказки. Пусто — тултипа нет, `children` рендерится как есть. */
+  /** Tooltip text. Empty means there is no tooltip, and `children` renders as is. */
   content?: ReactNode;
-  /** Элемент, к которому крепится подсказка. Должен принимать ref. */
+  /** The element the tooltip is attached to. Must accept a ref. */
   children: ReactElement;
-  /** С какой стороны от элемента показать подсказку: `top`, `right`, `bottom` или `left`. Не хватает места — Radix переносит на другую. */
+  /** Side of the element to show the tooltip on: `top`, `right`, `bottom` or `left`. If there is no room, Radix moves it to another side. */
   side?: TooltipPrimitive.TooltipContentProps["side"];
-  /** Выравнивание подсказки вдоль стороны: `start`, `center` или `end`. */
+  /** Alignment of the tooltip along the side: `start`, `center` or `end`. */
   align?: TooltipPrimitive.TooltipContentProps["align"];
-  /** Сколько миллисекунд наведение держится до показа. Не задано — задержка из `TooltipProvider`. */
+  /** How many milliseconds the hover must last before the tooltip shows. If not set, the delay comes from `TooltipProvider`. */
   delayDuration?: number;
 }
 
 /**
- * Подсказка при наведении и фокусе.
+ * A hint on hover and focus.
  *
- * Поведение — `@radix-ui/react-tooltip` из `dependencies` пакета: он приезжает
- * вместе с китом, потребитель его не ставит (ADR-0072). Тултип держит фокус,
- * Escape, порталы и позиционирование у края экрана, и своя реализация этого
- * была бы не примитивом, а второй библиотекой.
+ * The behavior is `@radix-ui/react-tooltip` from the package's `dependencies`: it ships with the
+ * kit, and the consumer does not install it (ADR-0072). The tooltip manages focus, Escape, portals
+ * and positioning at the edge of the screen, and a home-grown implementation of this would be not
+ * a primitive but a second library.
  *
- * `TooltipProvider` здесь НЕ встроен в каждый экземпляр намеренно: провайдер
- * задаёт общую задержку и группировку подсказок на всё приложение, и вложенные
- * провайдеры эту группировку ломают. Потребитель ставит один на корень.
+ * `TooltipProvider` is deliberately NOT built into each instance: the provider sets the shared
+ * delay and the grouping of tooltips for the whole application, and nested providers break that
+ * grouping. The consumer mounts one at the root.
  *
- * Пустой `content` возвращает `children` без обёртки — так вызывающему не нужно
- * ветвиться самому, а лишний слой DOM не появляется.
+ * An empty `content` returns `children` without a wrapper: the caller does not need to branch
+ * itself, and no extra DOM layer appears.
  */
 export function Tooltip({ content, children, side, align, delayDuration }: TooltipProps) {
   if (!content) return children;
@@ -60,15 +60,14 @@ export const TooltipContent = forwardRef<
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
-          // Полупрозрачная подложка на токенах темы: цвет меняется вместе с
-          // `data-theme` без участия JS.
+          // A semi-transparent backdrop on the theme tokens: the color changes together with
+          // `data-theme`, without any JS.
           //
-          // `z-[120]` — по той же причине, что у `Popover`: подсказку всегда
-          // вызывают из того, что уже на экране, поэтому под оверлеем она не
-          // нужна никогда. При `z-[60]` она уходила под `ModalOverlay` (`z-90`)
-          // и под ящик редактирования во фронте (`z-100`) — в разметке есть,
-          // на экране нет, причём ровно у кнопок с одними иконками, где
-          // подсказка и есть подпись.
+          // `z-[120]` for the same reason as `Popover`: a tooltip is always triggered from
+          // something already on screen, so it never needs to sit under an overlay. At `z-[60]`
+          // it went under `ModalOverlay` (`z-90`) and under the edit drawer in the front app
+          // (`z-100`): it was in the markup, but not on screen. This hit exactly the icon-only
+          // buttons, where the tooltip is the label.
           OVERLAY_LAYER.popover,
           "text-fg-0 border-line-soft shadow-2 rounded-control max-w-[240px] border px-2.5 py-1.5",
           "bg-[color-mix(in_srgb,var(--bg-1)_85%,transparent)] backdrop-blur-[10px]",

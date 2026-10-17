@@ -4,17 +4,16 @@ import type { Transaction } from "@tiptap/pm/state";
 import { textSerializers } from "./atomText.js";
 
 /*
-  Срез вставки за пределом `maxLength` (ADR-0058, раздел 4, п. 5).
+  Trimming a paste that goes past `maxLength` (ADR-0058, section 4, item 5).
 
-  Вставка режется по СИМВОЛАМ, а не по позициям: позиция — это и символ, и
-  граница Блока, и целый атом (одна позиция на `{{key}}` из пяти символов), и
-  счёт по позициям оставлял бы то лишний хвост, то половину подстановки.
-  Атом не режется: не поместившийся уходит целиком вместе со всем, что после
-  него. Подключается из `maxLength.ts` — вызывается на транзакции с меткой
-  `paste` — и больше ничего в порядке обработчиков вставки не трогает.
+  The paste is cut by CHARACTERS, not by positions: a position can be a character, a Block
+  boundary, or a whole atom (one position for `{{key}}`, which is five characters). Counting by
+  positions would cut either an extra tail or half a substitution. An atom is not cut: one that
+  does not fit goes whole, along with everything after it. It is called from `maxLength.ts` on a
+  transaction with the `paste` meta, and it touches nothing else in the order of paste handlers.
 */
 
-/** Кусок вставленного текста: символы текстового узла или неделимый атом. */
+/** A piece of the pasted content: characters of a text node, or an indivisible atom. */
 interface Piece {
   from: number;
   to: number;
@@ -22,7 +21,7 @@ interface Piece {
   atom: boolean;
 }
 
-/** Что вставила транзакция: от самого раннего начала до самого позднего конца в итоговом документе. */
+/** What the transaction inserted: from the earliest start to the latest end in the resulting document. */
 function insertedRange(tr: Transaction): { from: number; to: number } | null {
   let from = Infinity;
   let to = -Infinity;
@@ -37,7 +36,7 @@ function insertedRange(tr: Transaction): { from: number; to: number } | null {
   return from < to ? { from, to: Math.min(to, tr.doc.content.size) } : null;
 }
 
-/** Куски вставленного, в порядке документа; нулевой вес — не кусок (разделитель, видео). */
+/** The pieces of the pasted content in document order. Zero weight means not a piece (a separator, a video). */
 function piecesOf(tr: Transaction, from: number, to: number): Piece[] {
   const serializers = textSerializers(tr.doc.type.schema);
   const pieces: Piece[] = [];
@@ -49,7 +48,8 @@ function piecesOf(tr: Transaction, from: number, to: number): Piece[] {
       return false;
     }
     const serialize = serializers[node.type.name];
-    // Узел, начатый до вставки, — чужой (контейнер вокруг): режут только своё.
+    // A node that started before the paste belongs to someone else (a container around it).
+    // Only our own content is cut.
     if (!serialize || !parent || pos < from) return true;
     const weight = serialize({ node, pos, parent, index, range: { from, to } }).length;
     if (weight > 0) pieces.push({ from: pos, to: pos + node.nodeSize, weight, atom: true });
@@ -59,9 +59,9 @@ function piecesOf(tr: Transaction, from: number, to: number): Piece[] {
 }
 
 /**
- * Срезает с конца вставки `excess` символов: текст — по символам, атом — целиком.
- * Правит транзакцию внутри фильтра — приём оригинала (`CharacterCount`).
- * `false` — срезать нечем: вставка отвергается целиком.
+ * Cuts `excess` characters from the end of the paste: text by characters, an atom whole.
+ * Edits the transaction inside the filter, the same approach as the original (`CharacterCount`).
+ * `false` means there is nothing to cut, and the paste is rejected whole.
  */
 export function trimPaste(tr: Transaction, excess: number): boolean {
   const range = insertedRange(tr);

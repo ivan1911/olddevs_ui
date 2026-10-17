@@ -13,8 +13,8 @@ export default meta;
 type Story = StoryObj;
 
 /**
- * Скрытое содержимое видно только скринридеру — на снимке его нет, и это
- * ровно то, чего от него ждут.
+ * Hidden content is visible only to a screen reader: it is absent from the snapshot,
+ * and that is exactly what is expected of it.
  */
 export const HiddenContent: Story = {
   render: () => (

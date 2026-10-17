@@ -23,10 +23,10 @@ export const Playground: Story = {
 };
 
 /**
- * Матрица тонов и размеров, плюс неизвестный прогресс.
+ * Matrix of tones and sizes, plus an indeterminate progress bar.
  *
- * У неизвестного `aria-valuenow` отсутствует, а не равен нулю: так ARIA
- * отличает «полоса на нуле» от «идёт неизвестно сколько».
+ * An indeterminate bar has no `aria-valuenow`, rather than a value of zero: this is how
+ * ARIA tells "a bar at zero" apart from "in progress for an unknown amount of time".
  */
 export const Matrix: Story = {
   render: () => (
@@ -43,11 +43,11 @@ export const Matrix: Story = {
 };
 
 /**
- * Три индикатора рядом — граница между ними.
+ * Three indicators side by side, showing where the boundary between them lies.
  *
- * Скелетон там, где форма будущего содержимого известна: он удерживает
- * раскладку, и содержимое не прыгает при появлении. Полоса — где известна доля
- * работы. Спиннер — где не известно ни то, ни другое.
+ * A skeleton is for places where the shape of the future content is known: it holds
+ * the layout, so the content does not jump when it appears. A bar is for places where
+ * the share of work done is known. A spinner is for places where neither is known.
  */
 export const VersusNeighbours: Story = {
   render: () => (

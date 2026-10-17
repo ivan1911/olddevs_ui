@@ -6,13 +6,13 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { TONE_TOKENS, type Size, type Tone } from "../../lib/variants.js";
 
 export interface SpinnerProps {
-  /** Размер кольца: `sm`, `md` или `lg`. По умолчанию `md`. */
+  /** Ring size: `sm`, `md` or `lg`. Defaults to `md`. */
   size?: Size;
-  /** Цвет кольца из словаря тонов. По умолчанию `accent`. */
+  /** Ring color from the tone vocabulary. Defaults to `accent`. */
   tone?: Tone;
-  /** Доступное имя. По умолчанию — «Загрузка». */
+  /** Accessible name. Defaults to "Loading". */
   label?: string;
-  /** Классы на корневой элемент. */
+  /** Classes for the root element. */
   className?: string;
 }
 
@@ -23,37 +23,34 @@ const SIZES: Record<Size, string> = {
 };
 
 /**
- * Крутящийся индикатор — когда неизвестно ни сколько ждать, ни что появится.
+ * A spinning indicator, for when it is unknown both how long the wait will be and what will appear.
  *
- * ГРАНИЦА С СОСЕДЯМИ, и её стоит держать в голове:
+ * THE BOUNDARY WITH ITS NEIGHBORS, keep it in mind:
  *
- *   `Skeleton`  — форма будущего содержимого известна: строки списка, карточка.
- *   `Progress`  — известна доля выполненной работы.
- *   `Spinner`   — не известно ни то, ни другое: отправка формы, ожидание ответа
- *                 без раскладки под него.
+ *   `Skeleton`  — the shape of the future content is known: list rows, a card.
+ *   `Progress`  — the share of completed work is known.
+ *   `Spinner`   — neither is known: a form submission, waiting for a response with no layout
+ *                 reserved for it.
  *
- * Скелетон вместо спиннера там, где форма известна, — не украшение: он
- * удерживает раскладку, и содержимое не прыгает при появлении.
+ * A skeleton instead of a spinner where the shape is known is not decoration: it holds the
+ * layout, so the content does not jump when it appears.
  *
- * `role="status"` с невидимой подписью, а не голый `div`: без имени вращающийся
- * кружок для скринридера просто не существует, и пользователь не узнаёт, что
- * страница чем-то занята.
+ * `role="status"` with a visually hidden label, not a bare `div`: without a name, a spinning
+ * circle does not exist for a screen reader, and the user does not learn that the page is busy.
  *
- * Вращение при `prefers-reduced-motion` НЕ гасится — это одно из двух
- * названных исключений кита (ADR-0043; второе — неопределённый `Progress`).
- * Довод тот же, что и у `role="status"` абзацем выше: спиннер — единственное,
- * чем кит сообщает «идёт работа». Остановленный кружок не спокойнее
- * крутящегося, он выглядит сломанным, и пользователь теряет сведения, а не
- * раздражитель. W3C выводит существенное движение из-под правила; здесь оно
- * существенное.
+ * The spin is NOT disabled under `prefers-reduced-motion`. This is one of the two named
+ * exceptions in the kit (ADR-0043; the other is the indeterminate `Progress`). The reasoning is
+ * the same as for `role="status"` above: the spinner is the only thing by which the kit reports
+ * "work in progress". A frozen circle is no calmer than a spinning one; it looks broken, and
+ * the user loses information rather than removing an irritant. W3C exempts essential motion
+ * from the rule; here the motion is essential.
  *
- * Чтобы исключение было видно не только отсюда, `--animate-spin` объявлен в
- * `@theme` кита явно: гейт читает `styles.css` и о дефолтной теме Tailwind не
- * знает.
+ * So that the exception is visible beyond this file, `--animate-spin` is declared explicitly in
+ * the kit's `@theme`: the gate reads `styles.css` and does not know Tailwind's default theme.
  *
- * До волны 27 этот абзац утверждал обратное — что анимация гасится «глобальным
- * правилом пакета». Правила не существовало: во всём репозитории строка
- * `prefers-reduced-motion` встречалась ровно один раз, в нём самом.
+ * Before wave 27 this paragraph claimed the opposite: that animation is turned off by a "global
+ * rule of the package". No such rule existed: across the whole repository the string
+ * `prefers-reduced-motion` appeared exactly once, in this very comment.
  */
 export const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinner(
   { size = "md", tone = "accent", label, className },
@@ -67,8 +64,8 @@ export const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinne
       <span
         aria-hidden
         className={cn(
-          // Кольцо с одним прозрачным сектором: три стороны цветные, четвёртая
-          // прозрачная — отсюда и видно вращение.
+          // A ring with one transparent segment: three sides are colored, the fourth is
+          // transparent — that is what makes the rotation visible.
           "animate-spin rounded-full border-current border-t-transparent",
           SIZES[size],
           t.fg

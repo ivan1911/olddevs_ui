@@ -52,17 +52,17 @@ export const Playground: Story = {
   render: () => <LiveDemo description="Pick more than one" />,
 };
 
-/** Горизонтальная раскладка — для двух-трёх коротких подписей. */
+/** Horizontal layout: for two or three short labels. */
 export const Horizontal: Story = {
   render: () => <LiveDemo orientation="horizontal" />,
 };
 
 /**
- * Матрица трёх состояний группы.
+ * Matrix of the group's three states.
  *
- * Показывает то, чего не видно на одной группе: индивидуальный `disabled`
- * гасит один пункт, групповой — все, включая пункты без своего `disabled`;
- * а ошибка вытесняет пояснение, а не встаёт под ним.
+ * It shows what cannot be seen on a single group: an individual `disabled` dims one item,
+ * a group-level one dims all of them, including items without their own `disabled`;
+ * and an error replaces the hint instead of sitting under it.
  */
 export const Matrix: Story = {
   render: () => (
@@ -124,17 +124,17 @@ function CardsDemo({
   );
 }
 
-/** Карточки выбора: пробел переключает, вся карточка — область нажатия. */
+/** Choice cards: Space toggles a card, and the whole card is the hit area. */
 export const Cards: Story = {
   render: () => <CardsDemo />,
 };
 
-/** Карточки в строку с переносом. */
+/** Cards in a row, with wrapping. */
 export const CardsHorizontal: Story = {
   render: () => <CardsDemo orientation="horizontal" />,
 };
 
-/** Ошибка и выключенная группа — как у обычной группы флажков. */
+/** An error and a disabled group: the same as for an ordinary checkbox group. */
 export const CardsStates: Story = {
   render: () => (
     <div className="flex flex-col gap-8">
@@ -147,9 +147,9 @@ export const CardsStates: Story = {
 const TONES: Tone[] = ["neutral", "accent", "success", "warning", "danger"];
 
 /**
- * Тон группы красит рамку выбранной карточки и галочку. Заданный `tone` группы
- * один на весь набор и перекрывает `tone` отдельных флажков. Последняя группа без
- * `tone` — флажки красятся каждый своим.
+ * The group's tone colors the outline of the selected card and its check mark. A `tone` set
+ * on the group is one for the whole set and overrides the `tone` of individual checkboxes.
+ * The last group, without a `tone`, colors each checkbox with its own tone.
  */
 export const CardsTones: Story = {
   render: () => (
@@ -179,7 +179,7 @@ export const CardsTones: Story = {
   ),
 };
 
-/** Тон группы и у обычных строк: коробка отмеченного флажка берёт его же. */
+/** The group's tone applies to plain rows too: the box of a checked checkbox takes it. */
 export const Tones: Story = {
   render: () => (
     <div className="flex flex-col gap-6">

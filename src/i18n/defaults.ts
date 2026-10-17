@@ -1,18 +1,18 @@
 import type { UiMessages } from "./messages.js";
 
 /**
- * Английский фолбэк, зашитый в код.
+ * The English fallback, baked into the code.
  *
- * Он ВСЕГДА в бандле — на нём стоит третья ступень разрешения строки
- * (`проп → сообщение провайдера → фолбэк`), и без него компонент без провайдера
- * рисовал бы пустоту. Поэтому каталог держится маленьким и без зависимостей.
+ * It is ALWAYS in the bundle: it backs the third step of string resolution
+ * (`prop → provider message → fallback`), and without it a component with no provider
+ * would render nothing. So the catalog is kept small and dependency-free.
  *
- * `@olddevs/ui/locales/en` реэкспортирует этот же объект, а не повторяет его:
- * две копии английского разошлись бы молча, как разошлись бы любые две копии.
+ * `@olddevs/ui/locales/en` re-exports this same object instead of repeating it: two
+ * copies of the English would drift apart silently, as any two copies do.
  *
- * Русский переехал в `@olddevs/ui/locales/ru` и подключается одной строкой.
- * До 2.0.0 он был зашит здесь же — это было следствием ADR-0024 продукта-потребителя,
- * и вне того продукта основание отпало.
+ * Russian moved to `@olddevs/ui/locales/ru` and is wired in with one line. Before
+ * 2.0.0 it was baked in here as well, a consequence of ADR-0024 of the consuming
+ * product; outside that product the reason fell away.
  */
 export const DEFAULT_MESSAGES: UiMessages = {
   common: {
@@ -334,8 +334,8 @@ export const DEFAULT_MESSAGES: UiMessages = {
       thisMonth: "This month",
       lastMonth: "Last month",
     },
-    // Английский обходится двумя формами, поэтому `Intl.PluralRules` здесь
-    // не нужен. В русском он нужен — см. `locales/ru.ts`.
+    // English gets by with two forms, so `Intl.PluralRules` is not needed here.
+    // Russian does need it — see `locales/ru.ts`.
     length: ({ days }) => `${days} ${days === 1 ? "day" : "days"}`,
   },
 
@@ -517,7 +517,7 @@ export const DEFAULT_MESSAGES: UiMessages = {
     unwrap: "Unwrap",
     wrapperTone: ({ current }) => `Tone: ${current}`,
     wrapperToneNone: "None",
-    // Слова меток GitHub alerts: NOTE, TIP, IMPORTANT, WARNING, CAUTION.
+    // Labels of GitHub alerts: NOTE, TIP, IMPORTANT, WARNING, CAUTION.
     wrapperToneName: {
       accent: "Note",
       success: "Tip",
@@ -679,5 +679,5 @@ export const DEFAULT_MESSAGES: UiMessages = {
   },
 };
 
-/** Локаль фолбэка. Явно `en-US`, а не `en`: движки резолвят `en` по-разному. */
+/** The fallback locale. Explicitly `en-US`, not `en`: engines resolve `en` differently. */
 export const DEFAULT_LOCALE = "en-US";

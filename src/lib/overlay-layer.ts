@@ -1,43 +1,41 @@
 /**
- * Слои оверлеев: стек, признак чужого слоя и шкала z-index.
+ * Overlay layers: the stack, the mark of a foreign layer, and the z-index scale.
  *
- * Единственное место, где кит знает про порядок оверлеев. Решение и разбор
- * альтернатив — ADR-0041.
+ * The only place where the kit knows about the order of overlays. The decision and the analysis
+ * of the alternatives are in ADR-0041.
  *
- * Задача существует потому, что кит строит оверлеи на ДВУХ библиотеках сразу:
- * `Dialog`, `Drawer`, `ContextMenu`, `Popover`, `Tooltip` и `CommandPalette` —
- * на Radix, а `Menu`, `Select`, `Combobox`, `TreeSelect` — на
- * react-aria-components. Каждая ведёт свой стек и о чужом не знает. До волны 26
- * решение «кто верхний» принималось четыре раза в четырёх файлах, каждый раз
- * заново и каждый раз наполовину.
+ * The task exists because the kit builds overlays on TWO libraries at once: `Dialog`, `Drawer`,
+ * `ContextMenu`, `Popover`, `Tooltip` and `CommandPalette` are on Radix, while `Menu`, `Select`,
+ * `Combobox` and `TreeSelect` are on react-aria-components. Each keeps its own stack and knows
+ * nothing about the other. Before wave 26, the decision "which one is on top" was made four times
+ * in four files, each time from scratch and each time only partially.
  *
- * Модуль НЕ оборачивает Radix и не заменяет её стек: внутри своей библиотеки она
- * справляется сама, вложенные Radix-диалоги закрывались правильно и до этого.
- * Решается ровно стык двух библиотек.
+ * The module does NOT wrap Radix and does not replace its stack: within its own library, Radix
+ * handles it by itself, and nested Radix dialogs were closing correctly before this. It solves
+ * exactly the seam between the two libraries.
  */
 
 /**
- * Стек открытых слоёв кита.
+ * The stack of the kit's open layers.
  *
- * Модульный — по той же причине, что счётчик в `useScrollLock`: слои
- * вкладываются, и локальным состоянием «кто верхний» не выразить. Отсюда же
- * следует, что копий модуля в приложении должна быть ровно одна.
+ * Module-level, for the same reason as the counter in `useScrollLock`: layers nest, and "which
+ * one is on top" cannot be expressed with local state. It also follows that there must be
+ * exactly one copy of the module in the application.
  */
 const layers = new Set<{ node: HTMLElement | null }>();
 
 /**
- * Зарегистрировать слой.
+ * Registers a layer.
  *
- * ВЕРХНИЙ ОПРЕДЕЛЯЕТСЯ ПО ПОЛОЖЕНИЮ В ДОКУМЕНТЕ, а не по порядку регистрации, и
- * это не педантизм. Эффекты React выполняются СНИЗУ ВВЕРХ: у вложенных
- * подложек внутренняя регистрируется раньше внешней, и «последний
- * зарегистрировавшийся» оказывался ВНЕШНИМ — то есть верхним считался тот, кто
- * лежит под всеми. Порядок монтирования про порядок слоёв не говорит ничего.
+ * THE TOP ONE IS DETERMINED BY POSITION IN THE DOCUMENT, not by the order of registration, and
+ * this is not pedantry. React runs effects child-first: for nested scrims, the inner one registers
+ * before the outer one. So "the last one registered" turned out to be the OUTER one, that is, the
+ * one lying under all the others was taken as the topmost. The mount order says nothing about the
+ * order of layers.
  *
- * Положение говорит. Вложенный узел всегда следует за своим предком в порядке
- * документа, а два независимых оверлея идут в том порядке, в каком их вставили.
- * Поэтому верхний — тот, за кем не следует ни один другой зарегистрированный
- * узел.
+ * Position does. A nested node always follows its ancestor in document order, and two independent
+ * overlays go in the order in which they were inserted. So the top one is the one that no other
+ * registered node follows.
  */
 export function pushOverlayLayer(): {
   isTopmost: () => boolean;
@@ -52,20 +50,19 @@ export function pushOverlayLayer(): {
       entry.node = node;
     },
     isTopmost: () => {
-      // Узла ещё нет — слой зарегистрировался последним, и это всё, что о нём
-      // известно. Считать его нижним значило бы отдать Escape тому, кто открыт
-      // раньше.
+      // The node does not exist yet: the layer registered last, and that is all that is known
+      // about it. Treating it as lower would hand Escape to whoever was opened earlier.
       if (!entry.node?.isConnected) return true;
       for (const other of layers) {
-        // Отцепленный узел в сравнении участвовать не может: для узла из
-        // другого дерева `compareDocumentPosition` возвращает `DISCONNECTED`
-        // вместе с произвольным `PRECEDING`/`FOLLOWING` — спецификация прямо
-        // называет этот выбор «consistent, but arbitrary». Слой, чей узел React
-        // уже вынул, но уборщик снять не успел, объявлял верхним никого.
+        // A detached node cannot take part in the comparison: for a node from another tree,
+        // `compareDocumentPosition` returns `DISCONNECTED` together with an arbitrary
+        // `PRECEDING`/`FOLLOWING`. The specification itself calls this choice "consistent, but
+        // arbitrary". A layer whose node React has already removed, but whose cleanup has not
+        // yet run, declared no one topmost.
         if (other === entry || !other.node?.isConnected) continue;
         const position = entry.node.compareDocumentPosition(other.node);
-        // `CONTAINED_BY` приходит вместе с `FOLLOWING`, поэтому одной проверки
-        // хватает и на вложенность, и на соседство.
+        // `CONTAINED_BY` comes together with `FOLLOWING`, so one check covers both nesting
+        // and siblings.
         if (position & Node.DOCUMENT_POSITION_FOLLOWING) return false;
       }
       return true;
@@ -76,87 +73,83 @@ export function pushOverlayLayer(): {
   };
 }
 
-/** Сколько слоёв сейчас зарегистрировано. @internal — для тест-семейства. */
+/** How many layers are currently registered. @internal For the test suite. */
 export function layerCount(): number {
   return layers.size;
 }
 
 /**
- * Признак позиционированного оверлея react-aria.
+ * The mark of a positioned react-aria overlay.
  *
- * ПАРА атрибутов `data-rac` + `data-placement`. Её ставит только
- * позиционированный оверлей RAC (`Popover` и всё, что на нём: списки
- * `Combobox`, панели `Menu`), и нет ни у одного узла Radix, ни у полей кита
- * внутри окна.
+ * A PAIR of attributes, `data-rac` + `data-placement`. Only a positioned RAC overlay sets it
+ * (`Popover` and everything built on it: `Combobox` lists, `Menu` panels). No Radix node has it,
+ * and neither do the kit's fields inside a dialog.
  *
- * Селектор читают ДВА места, и оба — про стык библиотек: `hasOpenAriaOverlay`
- * ниже и правило указателя в `styles.css`.
+ * Two places read the selector, and both are about the seam between the libraries:
+ * `hasOpenAriaOverlay` below and the pointer rule in `styles.css`.
  *
- * УКАЗАТЕЛЬ — ЧЕТВЁРТАЯ ВЕЩЬ СТЫКА, после стека, Escape и шкалы. Модальный
- * Radix (`Dialog`, `Drawer`) ставит `<body>` инлайновое `pointer-events: none`
- * и возвращает указатель только СВОИМ слоям — инлайновым же `auto`. Оверлей
- * react-aria портируется прямо под `<body>`, наследовал `none`, и щелчок
- * проваливался на подложку: пункт меню и вариант списка внутри окна выбирались
- * только с клавиатуры. Кит делает для оверлея RAC то же, что Radix
- * делает для своих, — возвращает ему `auto`.
+ * THE POINTER IS THE FOURTH THING AT THE SEAM, after the stack, Escape and the scale. A modal Radix
+ * component (`Dialog`, `Drawer`) sets an inline `pointer-events: none` on `<body>` and gives the
+ * pointer back only to its OWN layers, also with an inline `auto`. A react-aria overlay is portaled
+ * directly under `<body>` and inherited `none`, so clicks fell through to the scrim: a menu item and
+ * a list option inside the dialog could only be selected from the keyboard. For the RAC overlay, the
+ * kit does what Radix does for its own: it gives it back `auto`.
  *
- * Правило живёт в CSS, а не классом на панелях кита, потому что свои оверлеи
- * react-aria рисует и потребитель: его поповер ломался так же, а класс кита
- * до него не доходит. Окно от щелчка в портал при этом не закрывается: Radix
- * решает «щелчок снаружи» по дереву React, а портал остаётся его потомком.
- * Связку селектора с `styles.css` сторожит `tests/overlay-layers.test.tsx`.
+ * The rule lives in CSS, not in a class on the kit's panels, because the consumer also draws its own
+ * react-aria overlays: its popover broke the same way, and the kit's class does not reach it. A click
+ * into the portal does not close the dialog, though: Radix decides "click outside" by the React tree,
+ * and the portal remains its descendant. The link between the selector and `styles.css` is guarded by
+ * `tests/overlay-layers.test.tsx`.
  */
 export const ARIA_OVERLAY_SELECTOR = "[data-rac][data-placement]";
 
 /**
- * Открыт ли поверх нас оверлей react-aria — по `ARIA_OVERLAY_SELECTOR`.
+ * Whether a react-aria overlay is open above us, by `ARIA_OVERLAY_SELECTOR`.
  *
- * Прежний заслон в `Dialog` определял чужой слой по ПОЛОЖЕНИЮ ЦЕЛИ события:
- * «`data-rac` и вне окна». Для меню это работало, а для `Combobox` внутри окна —
- * нет: фокус стоит в `Input`, который лежит ВНУТРИ контента, и второе условие
- * было ложным. Escape закрывал окно вместо списка подсказок.
+ * The former guard in `Dialog` identified a foreign layer by the POSITION OF THE EVENT TARGET:
+ * "`data-rac` and outside the window". That worked for menus, but not for a `Combobox` inside the
+ * dialog: focus sits in an `Input` that is INSIDE the content, so the second condition was false.
+ * Escape closed the dialog instead of the suggestion list.
  *
- * Опора на внутренние атрибуты библиотеки — осознанный риск (ADR-0041). Сторожит
- * его тест на сочетание «`Combobox` внутри `Dialog`»: он сломается при смене
- * разметки RAC, и это лучше молчаливого возврата дефекта.
+ * Relying on the library's internal attributes is a deliberate risk (ADR-0041). A test on the
+ * combination of `Combobox` inside `Dialog` guards it: it breaks when the RAC markup changes, which
+ * is better than a silent return of the defect.
  */
 export function hasOpenAriaOverlay(): boolean {
   if (typeof document === "undefined") return false;
   /*
-    ПОДСКАЗКА — НЕ СЛОЙ, и это не придирка.
+    A TOOLTIP IS NOT A LAYER, and this is not nitpicking.
 
-    `Tooltip` из react-aria несёт ту же пару `data-rac` + `data-placement`, что
-    список или меню, но фокуса не забирает и от появления окна не закрывается.
-    Пока курсор стоит на триггере «?», подсказка висит — и Escape переставал
-    закрывать окно ВООБЩЕ. Свой `Tooltip` кита на Radix, поэтому изнутри пакета
-    это не стреляло; но свои подсказки react-aria рисует и потребитель, и такая
-    подсказка в любой части страницы гасила Escape у всех окон кита.
+    The react-aria `Tooltip` carries the same `data-rac` + `data-placement` pair as a list or a menu,
+    but it does not take focus and does not close when a window opens. While the pointer rests on the
+    "?" trigger, the tooltip hangs there, and Escape stopped closing the dialog AT ALL. The kit's own
+    `Tooltip` is on Radix, so this did not fire from inside the package. But react-aria tooltips are
+    drawn by the consumer too, and such a tooltip anywhere on the page prevented Escape from closing
+    any of the kit's dialogs.
 
-    Спрашиваем про слой, который сам съест Escape, а не про любой оверлей RAC.
+    We ask about a layer that will consume Escape itself, not about any RAC overlay.
   */
   return document.querySelector(`${ARIA_OVERLAY_SELECTOR}:not([role="tooltip"])`) != null;
 }
 
 /**
- * Ступени слоёв.
+ * Layer steps.
  *
- * Числа перестают быть литералами в шести файлах и становятся именованными
- * ступенями в одном. Порядок осмысленный: затемнение ниже панели меню, панель
- * ниже подсказки. Одинаковое большое число для всех — не шкала, а капитуляция
- * (ADR-0041).
+ * The numbers stop being literals in six files and become named steps in one place. The order is
+ * meaningful: the scrim is below the menu panel, and the panel is below the tooltip. One large
+ * number for all of them is not a scale but a capitulation (ADR-0041).
  *
- * ШКАЛА И ПОРЯДОК ДОКУМЕНТА — РАЗНЫЕ ОСИ. `isTopmost` судит строго по положению
- * в документе, и совпадают они, только пока у всех слоёв одна ступень. Проп
- * `zIndex` у `ModalOverlay` позволяет их развести: подложка на `alert` поверх
- * подложки на `modal` видна сверху, а по документу может идти раньше — и тогда
- * Escape уйдёт не к ней. Смешивать ступени у вложенных подложек не следует;
- * если понадобится — сравнение придётся вести по паре «ступень, положение».
+ * THE SCALE AND THE DOCUMENT ORDER ARE DIFFERENT AXES. `isTopmost` judges strictly by position in the
+ * document, and the two coincide only while all layers share one step. The `zIndex` prop of
+ * `ModalOverlay` lets them diverge: a scrim on `alert` above a scrim on `modal` is visible on top, but
+ * in the document it may come earlier, and then Escape will not go to it. Mixing steps among nested
+ * scrims is not advisable. If it becomes necessary, the comparison has to be made by the pair "step, position".
  */
 export const OVERLAY_LAYER = {
-  /** Модальное затемнение и окно на нём. */
+  /** The modal scrim and the dialog on top of it. */
   modal: "z-90",
-  /** Слой поверх модального: подтверждение над окном, которое его открыло. */
+  /** A layer above the modal one: a confirmation above the dialog that opened it. */
   alert: "z-100",
-  /** Всплывающие панели: меню, поповеры, списки. Выше окна — их открывают из него. */
+  /** Popups: menus, popovers, lists. Above the dialog, because they are opened from it. */
   popover: "z-[120]",
 } as const;

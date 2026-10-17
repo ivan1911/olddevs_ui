@@ -33,9 +33,11 @@ function sourceFiles(dir: string): string[] {
 function importedPackages(files: string[]) {
   const names = new Set<string>();
   for (const file of files) {
-    for (const [, spec] of readFileSync(file, "utf8").matchAll(
-      /(?:\bfrom|\bimport)\s*\(?\s*["']([^"'.][^"']*)["']/g
-    )) {
+    // Comments are prose and may say `from "x"` or `import "x"` in English: look at code only.
+    const code = readFileSync(file, "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|\s)\/\/[^\n]*/g, "$1");
+    for (const [, spec] of code.matchAll(/(?:\bfrom|\bimport)\s*\(?\s*["']([^"'.][^"']*)["']/g)) {
       const parts = spec!.split("/");
       names.add(spec!.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0]!);
     }

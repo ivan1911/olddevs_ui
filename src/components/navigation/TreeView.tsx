@@ -16,19 +16,17 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { Checkbox } from "../inputs/Checkbox.js";
 
 /**
- * Ставит или снимает `aria-current` на строке дерева, в которой лежит `inside`.
+ * Sets or removes `aria-current` on the tree row that contains `inside`.
  *
- * Руками, потому что `TreeItem` фильтрует свои пропсы: до разметки доходят
- * только `data-*` и пара `aria-*` с именем, а `aria-current` отбрасывается молча
- * — запись `aria-current="page"` в JSX выглядела бы рабочей и ничего не делала.
- * Атрибут вне набора, которым владеет React на этой строке, так что перерисовка
- * его не стирает.
+ * Done by hand, because `TreeItem` filters its props: only `data-*` and a pair of named `aria-*`
+ * attributes reach the markup, and `aria-current` is silently dropped. Writing
+ * `aria-current="page"` in JSX would look like it works and do nothing. The attribute is outside
+ * the set that React owns on this row, so re-rendering does not erase it.
  *
- * Зовётся из ref содержимого строки, а не из ref самой строки: строкой
- * react-aria владеет сама, и ref на `TreeItem` вызывается один раз на
- * монтировании — смена текущего узла его не дёргала бы. Содержимое же
- * перерисовывается вместе с `activeKey`, а inline-ref вызывается на каждой
- * перерисовке.
+ * It is called from the ref of the row's content, not from the ref of the row itself. react-aria
+ * owns the row itself, and the ref on `TreeItem` is called once at mount, so changing the current
+ * node would never call it. The content, however, re-renders together with `activeKey`, and an
+ * inline ref is called on every re-render.
  */
 function markCurrent(inside: HTMLElement | null, current: boolean) {
   const row = inside?.closest('[role="row"]');
@@ -38,103 +36,105 @@ function markCurrent(inside: HTMLElement | null, current: boolean) {
 }
 
 export interface TreeNode {
-  /** Уникальный ключ узла: по нему работают раскрытие, выбор и `onAction`. */
+  /** Unique node key. Expansion, selection, and `onAction` all work by it. */
   id: Key;
-  /** Подпись узла. Может быть вёрсткой — тогда задайте `textValue`. */
+  /** Node label. It can be markup, in which case set `textValue`. */
   label: ReactNode;
   /**
-   * Строковое представление узла: по нему работает поиск набором с клавиатуры.
-   * Обязателен, когда `label` — не строка.
+   * String form of the node. Keyboard type-ahead search works by it. Required when `label` is not
+   * a string.
    */
   textValue?: string;
-  /** Иконка слева от подписи. */
+  /** Icon to the left of the label. */
   icon?: ReactNode;
-  /** Дочерние узлы. Есть они — у узла появляется кнопка раскрытия. */
+  /** Child nodes. If there are any, the node gets an expand button. */
   children?: TreeNode[];
-  /** Блокирует узел: его нельзя выбрать и активировать. */
+  /** Blocks the node: it cannot be selected or activated. */
   disabled?: boolean;
 }
 
 export interface TreeViewProps {
-  /** Узлы верхнего уровня; вложенность задаётся полем `children`. */
+  /** Top-level nodes. Nesting is set by the `children` field. */
   items: TreeNode[];
-  /** Доступное имя дерева. Обязательно: безымянное дерево скринридер называет только по роли. */
+  /**
+   * Accessible name of the tree. Required: an unnamed tree is announced by its role alone.
+   */
   "aria-label": string;
-  /** Раскрытые узлы. Дерево их не хранит — как сортировку и выделение таблица. */
+  /**
+   * Expanded nodes. The tree does not store them, just as a table does not store sorting and
+   * selection.
+   */
   expandedKeys?: Iterable<Key>;
-  /** Вызывается с новым множеством раскрытых узлов после раскрытия или сворачивания. */
+  /** Called with the new set of expanded nodes after expanding or collapsing. */
   onExpandedChange?: (keys: Set<Key>) => void;
-  /** Раскрытые при первом показе. Дальше состояние ведёт react-aria. */
+  /** Expanded on first render. After that, the state is managed by react-aria. */
   defaultExpandedKeys?: Iterable<Key>;
   /**
-   * Выбор узлов. Режим включается наличием пропа: без него ни флажков, ни
-   * `aria-selected` в разметке нет — то же правило, что у `Table`.
+   * Selection mode. It is enabled by the presence of this prop: without it there are no checkboxes
+   * and no `aria-selected` in the markup. This is the same rule as for `Table`.
    */
   selectionMode?: "single" | "multiple";
-  /** Выбранные узлы (управляемое значение). Работает при заданном `selectionMode`. */
+  /** Selected nodes (controlled value). Applies when `selectionMode` is set. */
   selectedKeys?: Selection;
-  /** Вызывается с новым набором выбранных узлов. */
+  /** Called with the new set of selected nodes. */
   onSelectionChange?: (keys: Selection) => void;
-  /** Ключи заблокированных узлов; действует вместе с полем `disabled` самих узлов. */
+  /** Keys of disabled nodes. Applies together with the `disabled` field of the nodes themselves. */
   disabledKeys?: Iterable<Key>;
   /**
-   * Текущий узел навигации: ключ узла, чья страница открыта. Узел получает
-   * `aria-current="page"` и заметную подложку.
+   * Current navigation node: the key of the node whose page is open. The node gets
+   * `aria-current="page"` and a visible background.
    *
-   * Это не выбор: ни флажков, ни `aria-selected`, режим `selectionMode`
-   * включать не нужно. Имя — по словарю кита: `active` занято текущим пунктом
-   * навигации, а здесь пунктов нет, есть ключи, как у `selectedKeys` и
-   * `expandedKeys`. Дерево «текущее» само не переставляет — это делает
-   * маршрут потребителя.
+   * This is not a selection: there are no checkboxes and no `aria-selected`, and `selectionMode`
+   * does not need to be set. The name follows the kit's vocabulary. `active` is taken by the
+   * current navigation item, and there are no items here, only keys, as with `selectedKeys` and
+   * `expandedKeys`. The tree does not move the "current" marker itself. The consumer's route does
+   * that.
    */
   activeKey?: Key;
   /**
-   * Действие по узлу: переход, открытие карточки. Выбором не является.
+   * Action on a node: navigation, opening a card. It is not a selection.
    *
-   * По строке-папке действие НЕ раскрывает её: раскрывают шеврон и стрелка
-   * вправо. Раскрывать по клику — дело `onAction` потребителя.
+   * For a folder row, the action does NOT expand it: the chevron and the right arrow expand it.
+   * Expanding on click is the job of the consumer's `onAction`.
    */
   onAction?: (id: Key) => void;
-  /** Что показать, когда узлов нет. Не задан — дерево остаётся пустым. */
+  /** What to show when there are no nodes. If not set, the tree stays empty. */
   emptyText?: ReactNode;
-  /** Дополнительные классы на корень дерева. */
+  /** Extra classes on the tree root. */
   className?: string;
 }
 
 /**
- * Дерево: иерархия с раскрытием, выбором и клавиатурой.
+ * Tree: a hierarchy with expansion, selection, and keyboard support.
  *
- * ПОВЕДЕНИЕ ЦЕЛИКОМ ОТ `Tree` ИЗ react-aria (ADR-0005), и это причина, по
- * которой дерево вообще можно писать без экрана-заказчика. Роли,
- * `aria-expanded`, `aria-level`, `aria-posinset`, стрелки, Home и End, поиск
- * набором — всё оттуда. Своими руками здесь только разметка узла и токены. В
- * 1.21 компонент вышел из `UNSTABLE_`, так что префикса нет.
+ * THE BEHAVIOR COMES ENTIRELY FROM `Tree` IN react-aria (ADR-0005), and that is why the tree can be
+ * written at all without a requesting screen. Roles, `aria-expanded`, `aria-level`,
+ * `aria-posinset`, arrows, Home and End, and type-ahead search all come from there. Only the node
+ * markup and the tokens are written by hand here. In 1.21 the component graduated from
+ * `UNSTABLE_`, so there is no prefix.
  *
- * РОЛЬ — `treegrid`, А НЕ `tree`, и узлы объявлены `row`. Это решение
- * react-aria, и оно обоснованное: в строке живут кнопка раскрытия и флажок, а
- * `treeitem` второго интерактивного элемента внутри себя не предполагает.
- * Переопределять роли руками мы не станем — тогда клавиатура из слоя поведения
- * перестала бы соответствовать объявленной разметке.
+ * THE ROLE IS `treegrid`, NOT `tree`, AND NODES ARE DECLARED AS `row`. This is react-aria's
+ * decision, and a justified one: the row holds an expand button and a checkbox, and a `treeitem`
+ * does not allow a second interactive element inside it. We do not override the roles by hand. The
+ * keyboard from the behavior layer would then stop matching the declared markup.
  *
- * СОСТОЯНИЙ ДЕРЕВО НЕ ХРАНИТ — правило то же, что у `Table`: раскрытые и
- * выбранные узлы приходят множествами, а `defaultExpandedKeys` ведёт
- * react-aria, а не мы. `useTreeData` наружу НЕ реэкспортируется: это
- * хранилище, а кит состоянием не владеет (ADR-0023). Кому нужно готовое —
- * берёт его из `react-aria-components` напрямую, и тогда это его выбор, а не
- * навязанный китом.
+ * STATE IS NOT KEPT BY THE TREE. The rule is the same as for `Table`: expanded and selected nodes
+ * arrive as sets, and `defaultExpandedKeys` is managed by react-aria, not by us. `useTreeData` is
+ * NOT re-exported: it is a store, and the kit does not own state (ADR-0023). Whoever needs a
+ * ready-made one takes it from `react-aria-components` directly. That is then their choice, not one
+ * imposed by the kit.
  *
- * Режим выбора включается `selectionMode`. Без него флажков нет вовсе: дерево
- * категорий, по которому просто ходят, не должно тащить колонку выбора.
+ * The selection mode is enabled by `selectionMode`. Without it there are no checkboxes at all: a
+ * category tree that is only browsed should not carry a selection column.
  *
- * ТЕКУЩИЙ УЗЕЛ — ОТДЕЛЬНАЯ ОСЬ ОТ ВЫБОРА. `activeKey` ставит строке
- * `aria-current="page"` и подложку, а флажков не рисует: дерево статей, по
- * которому ходят, показывает «вы здесь», а не набор отмеченного. `dependencies`
- * на корне нужны затем, что react-aria кеширует строки по `items`: сменился
- * только ключ — без них отметка осталась бы на прежней строке.
+ * THE CURRENT NODE IS A SEPARATE AXIS FROM SELECTION. `activeKey` sets `aria-current="page"` on the
+ * row and the background, and draws no checkboxes. A tree of articles that is browsed shows "you
+ * are here", not a set of checked items. The `dependencies` on the root are needed because
+ * react-aria caches rows by `items`. If only the key changed, the mark would stay on the old row.
  *
- * Имена кнопок раскрытия НЕ повторяют подпись узла: react-aria дописывает её
- * сам, и «Раскрыть Природа» читалось бы как «Раскрыть Природа Природа» — тот
- * же дефект, что нашло ревью волны 18 у `TagInput` и `FilterBar`.
+ * Expand button names do NOT repeat the node label. react-aria appends the label itself, so
+ * "Expand Nature" would read as "Expand Nature Nature". That is the same defect the wave 18 review
+ * found in `TagInput` and `FilterBar`.
  */
 export function TreeView({
   items,
@@ -166,36 +166,36 @@ export function TreeView({
       >
         <TreeItemContent>
           {({ isExpanded, hasChildItems, isSelected, isDisabled }) => {
-            // Гасятся шеврон, иконка и подпись по отдельности, а не весь `div`:
-            // флажок выбора получает блокировку от строки сам и гасится собственным
-            // `disabled:opacity-50`, так что приглушение всего ряда дало бы ему
-            // двойное — 25% вместо 50%.
+            // Dimming is applied to the chevron, the icon, and the label separately, not to the
+            // whole `div`. The selection checkbox gets the block from the row itself and is dimmed
+            // by its own `disabled:opacity-50`, so dimming the whole row would dim it twice: 25%
+            // instead of 50%.
             const dim = isDisabled && "opacity-50";
             return (
               <div
                 ref={(content) => markCurrent(content, current)}
                 className={cn(
                   "text-fg-1 flex items-center gap-2 rounded-xs py-1.5 pr-2 text-[13px] leading-5",
-                  // Выбор и блокировка берутся из рендер-пропа, а не вариантами
-                  // `selected:` и `disabled:`: `data-selected` и `data-disabled`
-                  // react-aria ставит на строку (`row`), а красится её содержимое —
-                  // вариант на нём не срабатывал, и ни выбранный узел не
-                  // подсвечивался, ни заблокированный не гас. Тот же случай, что
-                  // шеврон в `Accordion`.
+                  // The selected and disabled states come from the render prop, not from the
+                  // `selected:` and `disabled:` variants. react-aria sets `data-selected` and
+                  // `data-disabled` on the row (`row`), but the content is what gets painted. A
+                  // variant on the content never matched, so a selected node was not highlighted
+                  // and a disabled one was not dimmed. This is the same case as the chevron in
+                  // `Accordion`.
                   //
-                  // Приглушение — не на всём `div`, а на частях (см. `dim` ниже).
+                  // Dimming is not applied to the whole `div` but to its parts (see `dim` below).
                   //
-                  // Текущий узел — подложка и вес шрифта, как у `NavItem` с `active`.
-                  // Стоит ДО выбора: `cn` оставляет последнюю подложку, и у узла,
-                  // который и текущий, и выбран, видна подложка выбора — как было,
-                  // пока порядок решал каскад вариантов.
+                  // The current node gets a background and a font weight, as `NavItem` does with
+                  // `active`. It comes BEFORE selection: `cn` keeps the last background, so a node
+                  // that is both current and selected shows the selection background, as it did
+                  // before, when the order was decided by the cascade of variants.
                   current && "bg-bg-3 text-fg-0 font-semibold",
                   isSelected ? "bg-accent-soft text-fg-0" : !isDisabled && "hover:bg-bg-2",
                   "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:-outline-offset-2"
                 )}
-                // Уровень вложенности берётся у react-aria: она кладёт его в
-                // `--tree-item-level` на строке, и считать глубину самим не нужно
-                // — иначе у нас была бы вторая копия того же числа.
+                // react-aria puts the nesting level in `--tree-item-level` on the row, so we do not
+                // compute the depth ourselves. Otherwise we would have a second copy of the same
+                // number.
                 style={{
                   paddingLeft: "calc((var(--tree-item-level) - 1) * var(--tree-indent) + 0.25rem)",
                 }}
@@ -221,8 +221,8 @@ export function TreeView({
                     />
                   </Button>
                 ) : (
-                  // Место раскрывателя занято всегда: без него подписи листьев
-                  // разъезжаются с подписями узлов на том же уровне.
+                  // The expander slot is always reserved. Without it, the leaf labels would not
+                  // line up with the labels of nodes at the same level.
                   <span aria-hidden className="w-[14px] shrink-0" />
                 )}
                 {selectionMode ? (

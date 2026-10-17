@@ -9,57 +9,59 @@ story: src/components/inputs/Select.stories.tsx
 
 # Select
 
-## Кратко для AI
+## Summary for AI
 
-`Select` выбирает значение только из закрытого списка `items`. `searchable` фильтрует этот список, но не разрешает свободный ввод. `multiple` меняет форму value и callback на массив.
+`Select` picks a value only from the closed list `items`. `searchable` filters that list but does not allow free input. `multiple` changes the shape of value and the callback to an array.
 
-## Когда использовать
+## When to use
 
-- Значения заранее известны: категория, статус, коллекция, набор фильтров.
-- Нужен поиск среди длинного, но всё ещё закрытого списка.
-- Нужен один или несколько выбранных элементов с типобезопасной формой значения.
+- The values are known in advance: a category, a status, a collection, a set of filters.
+- You need search within a long but still closed list.
+- You need one or several selected items with a type-safe value shape.
 
-## Когда не использовать
+## When not to use
 
-- Если пользователь вправе создать новое значение, используйте `Combobox`.
-- Если нужны флажки со сложной разметкой, разной у каждого, используйте `CheckboxGroup`.
-- Если нужен ровно один режим, всегда выбранный, используйте `Segmented`.
+- If the user may create a new value, use `Combobox`.
+- If you need checkboxes with complex markup that differs from one to the next, use `CheckboxGroup`.
+- If you need exactly one mode, always selected, use `Segmented`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<Select items={[{ id: "draft", label: "Черновик" }]} value={status} onChange={setStatus} placeholder="Статус" clearable />
+<Select items={[{ id: "draft", label: "Draft" }]} value={status} onChange={setStatus} placeholder="Status" clearable />
 
-<Select multiple items={tags} value={tagIds} onChange={setTagIds} searchable countLabel={(n) => `Выбрано: ${n}`} />
+<Select multiple items={tags} value={tagIds} onChange={setTagIds} searchable countLabel={(n) => `Selected: ${n}`} />
 ```
 
 ## Public API
 
-- Элемент обязан иметь `id` и `label`; опциональны `keywords`, `meta`, `renderMedia` и доменные поля.
-- Без `multiple`: `value?: SelectId | null`, `onChange(id | null)`; с `multiple: true`: `value?: SelectId[]`, `onChange(ids)`. Очистка отдаёт `null` или `[]` соответственно.
-- `searchable` по умолчанию false; `clearable`, `highlightSelected`, плейсхолдеры, `icon`, `triggerClassName`, `contentClassName` настраивают представление.
-- `disabled` выключает поле целиком: триггер не фокусируется, панель не открывается (а открытая закрывается), крестик очистки исчезает, пилюля гаснет. Поведение и вид — как у `Button` и `TextControl`.
-- `aria-label` (или `aria-labelledby` — ссылка на уже показанную подпись) даёт полю имя. Имя **складывается** с содержимым триггера, а не вытесняет его: поле объявляется «Иконка, Круг, кнопка». Заданы оба — побеждает `aria-labelledby`.
-- `missingLabel` подписывает значение, которому не нашлось элемента в `items`: так бывает, пока список грузится, и когда запись удалили. По умолчанию показывается сам ключ — он честнее плейсхолдера, если понятен человеку; для машинных идентификаторов (UUID) задайте подпись сами.
-- Для широкой формы можно снять ограничение подписи: `triggerClassName="[--select-label-max:none]"`.
-- **Всё, что кладётся в строку триггера, обязано умещаться в 20 px.** Строка триггера — строчный бокс `leading-5`, и от него зависит высота контрола: пилюля фильтра — 36 px (как `Button` размера `md`), триггер в форме с отступами `py-2.5` — 42 px (как `TextControl`, `NumberInput`, `SearchControl` и `DateRangePicker`). Более высокий потомок растягивает триггер и разводит его с соседними полями. Поэтому `renderMedia(item, px)` получает сторону квадрата числом — 20 в триггере и 28 в списке — и рисовать надо ровно её. К слотам `icon` и `trailing` полей ввода это не относится: они стоят рядом с полем, а не в его строке.
-- Свой размер шрифта в `triggerClassName` держит высоту, только если это ступень [типографической шкалы](../../theming.md#типографическая-шкала): у каждой ступени задан свой строчный бокс. Произвольный `text-[15px]` вытесняет пару `text-[13px] leading-5` целиком, и высота снова выводится из множителя `1.5`.
+- An item must have `id` and `label`; `keywords`, `meta`, `renderMedia` and domain fields are optional.
+- Without `multiple`: `value?: SelectId | null`, `onChange(id | null)`; with `multiple: true`: `value?: SelectId[]`, `onChange(ids)`. Clearing produces `null` or `[]` respectively.
+- `searchable` is false by default; `clearable`, `highlightSelected`, placeholders, `icon`, `triggerClassName`, `contentClassName` configure the presentation.
+- `disabled` disables the whole field: the trigger cannot be focused, the panel does not open (and an open one closes), the clear button disappears, the pill is dimmed. Behavior and look are as with `Button` and `TextControl`.
+- `aria-label` (or `aria-labelledby`, a reference to a label that is already rendered) sets the field's name. The name is **combined** with the trigger content and does not replace it: the field is announced as "Icon, Circle, button". If both are set, `aria-labelledby` wins.
+- `missingLabel` labels a value for which no item was found in `items`: this happens while the list is loading and when the record was deleted. By default the key itself is shown — it is more honest than a placeholder if it is human-readable; for machine identifiers (UUIDs) set the label yourself.
+- For a wide form the label limit can be lifted: `triggerClassName="[--select-label-max:none]"`.
+- **Anything you put in the trigger's text row must fit in 20 px.** The trigger row is a `leading-5` line box, and the control's height depends on it: a filter pill is 36 px (the same as a `Button` of size `md`), and a trigger in a form with `py-2.5` padding is 42 px (the same as `TextControl`, `NumberInput`, `SearchControl` and `DateRangePicker`). A taller child stretches the trigger and throws it out of line with the fields next to it. That is why `renderMedia(item, px)` receives the side of the square as a number, 20 in the trigger and 28 in the list, and you should draw exactly that. This does not apply to the `icon` and `trailing` slots of the input fields: they sit beside the field rather than in its text row.
+- A custom font size in `triggerClassName` keeps the height only if it is a step of the [type scale](../../theming.md#type-scale): every step sets its own line box. An arbitrary `text-[15px]` displaces the `text-[13px] leading-5` pair as a whole, and the height is again derived from the `1.5` multiplier.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- **Пояснение и ошибка `FormField` объявляются вместе с полем.** Описание
-  приходит контекстом, `aria-describedby` ставится на триггер; значение, заданное
-  потребителем, не вытесняется, а дополняется. До версии 3.0.0 компоненты на react-aria
-  не забирали описание формы — на экране оно было, скринридеру не доставалось
+- **The hint and error of `FormField` are announced together with the field.** The
+  description arrives through context, and `aria-describedby` is set on the trigger;
+  the value set by the consumer is not replaced but merged with it. Before version 3.0.0 the
+  components built on react-aria did not pick up the form description — it was on the screen
+  but did not reach the screen reader
   (ADR-0031).
-- Триггер сообщает `aria-haspopup="listbox"` и `aria-expanded`; очистка — отдельная кнопка.
-- **Имя поля в форме задаётся `aria-label` или `aria-labelledby`, а не подписью
-  `FormField`.** Составной контрол не принимает `id`, и `htmlFor` связывать
-  нечего: без явного имени скринридер объявляет только содержимое триггера
-  («Без иконки, кнопка»), и два таких поля рядом на слух не различаются. В
-  панели фильтров имя не нужно: там плейсхолдер и есть название фильтра.
-  Имя из `aria-label` уходит в скрытый узел и читается **вместе** со значением; обычный
-  `aria-label` на кнопке победил бы содержимое, и поле перестало бы сообщать,
-  что в нём выбрано (тот же приём — в `TreeSelect`).
-- В списке работают стрелки, Home/End, Enter/Space, Escape. В searchable-режиме стрелки переводят фокус между поиском и списком.
-- Источники: `src/components/inputs/Select.tsx`, `src/components/inputs/Select.stories.tsx`, `tests/select.test.tsx`.
+- The trigger reports `aria-haspopup="listbox"` and the expanded state; clearing is a separate button.
+- **The field name in a form is set by `aria-label` or `aria-labelledby`, not by
+  the `FormField` label.** A composite control does not accept an `id`, so there is
+  nothing for `htmlFor` to bind to: without an explicit name the screen reader
+  announces only the trigger content — "No icon, button" — and two such fields side
+  by side cannot be told apart by ear. In a filter bar no name is needed: there the
+  placeholder is the name of the filter. The name from `aria-label` goes into a hidden node and is
+  read **together** with the value; a plain `aria-label` on the button would win over
+  the content, and the field would stop reporting what is selected in it (the same
+  technique is in `TreeSelect`).
+- In the list, the arrow keys, Home/End, Enter/Space and Escape work. In searchable mode the arrow keys move focus between the search and the list.
+- Sources: `src/components/inputs/Select.tsx`, `src/components/inputs/Select.stories.tsx`, `tests/select.test.tsx`.

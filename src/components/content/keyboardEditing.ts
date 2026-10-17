@@ -1,14 +1,14 @@
 export interface KeyboardSelection {
-  /** Начало выделения (позиция курсора, если совпадает с `end`). */
+  /** Start of the selection (the caret position when it equals `end`). */
   start: number;
-  /** Конец выделения. */
+  /** End of the selection. */
   end: number;
 }
 
 export interface KeyboardEdit {
-  /** Текст после правки. */
+  /** The text after the edit. */
   value: string;
-  /** Позиция курсора после правки. */
+  /** The caret position after the edit. */
   selection: KeyboardSelection;
 }
 

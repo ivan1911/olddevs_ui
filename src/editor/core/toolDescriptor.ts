@@ -19,190 +19,182 @@ import type { ToolLoader } from "./toolLoader.js";
 import type { Tool } from "./tools.js";
 
 /**
- * Внутреннее описание встроенного Инструмента (ADR-0058, п. 10).
+ * Internal description of a built-in Tool (ADR-0058, item 10).
  *
- * НАДФОРМА. Тип — надмножество будущего публичного описания своего
- * Инструмента: те же Extensions, Признаки Блока и UI-записи, а сверху
- * привилегии кита, которых своему Инструменту не дают (теги Схемы кита,
- * модель содержимого, виджеты Панели, своё место в порядке поверхности).
- * Наружу описания встроенных не экспортируются: публичны только имена и
- * пресеты.
+ * SHAPE. The type is a superset of the future public description of a custom Tool: the same
+ * Extensions, Block traits and UI entries, plus the kit's privileges that a custom Tool is not
+ * given (the Schema tags of the kit, the content model, Toolbar widgets, its own place in the order
+ * of the surface). Built-in descriptions are not exported: only the names and the presets are public.
  *
- * ОДИН СПИСОК. `tools` и `preset` разворачиваются в список описаний
- * (`expandTools`, `features/builtins.ts`), и реестры по имени — движок, Меню
- * вставки, «¶», справочник сочетаний и следующие за ними — читают его
- * проекцию (`projectRecords`). Правило «выключенный Инструмент убирает и
- * кнопку, и Схему» этим держится само: записи и Extensions Инструмента,
- * которого нет в списке, не попадают никуда.
+ * ONE LIST. `tools` and `preset` are expanded into a list of descriptions (`expandTools`,
+ * `features/builtins.ts`), and the registries by name (the engine, the Slash menu, "¶", the shortcut
+ * reference and what follows them) read its projection (`projectRecords`). The rule "a disabled Tool
+ * removes both its button and its Schema" holds by itself: the entries and the Extensions of a Tool
+ * that is not in the list go nowhere.
  *
- * У КАЖДОГО ВСТРОЕННОГО — ОПИСАНИЕ: `BUILTIN_TOOLS` полон, и
- * компилятор не даст добавить имя в `TOOLS` без описания. Место записи на
- * поверхности держит порядок кита этой поверхности (`INSERT_ORDER`,
- * `BLOCK_TYPE_ORDER`, `SHORTCUT_ORDER`, `ENGINE_ORDER`), а не описание. Виджеты
- * Панели и Меню выделения, «…», подменю Ручки и поповеры картинки остаются
- * компонентами кита и спрашивают набор по имени (`tools.has`).
+ * EVERY BUILT-IN HAS A DESCRIPTION: `BUILTIN_TOOLS` is complete, and the compiler does not let a name
+ * into `TOOLS` without a description. The place of an entry on the surface is held by the kit's order
+ * for that surface (`INSERT_ORDER`, `BLOCK_TYPE_ORDER`, `SHORTCUT_ORDER`, `ENGINE_ORDER`), not by the
+ * description. Toolbar widgets, the Bubble menu, the "…" menu, the Block handle's submenu and the image
+ * popovers remain kit components and ask for the set by name (`tools.has`).
  */
 export interface ToolDescriptor {
-  /** Имя Инструмента — то же, что в `tools`; у своего — с Префиксом потребителя. */
+  /** The Tool's name, the same as in `tools`; a custom Tool's name has the consumer prefix. */
   name: Tool | PrefixedName;
   /**
-   * Extensions: расширения Tiptap Инструмента — Node, Mark, Extension,
-   * плагины ProseMirror. Функция от контекста — привилегия кита: встроенным
-   * нужны мосты `RichTextEditor` (поповер ссылки, Меню вставки, `Alt+F10`).
-   * Второй аргумент — Опции этого Редактора (`options`), если они есть.
+   * Extensions: the Tool's Tiptap extensions, meaning Node, Mark, Extension and ProseMirror plugins.
+   * A function of the context is a kit privilege: built-ins need the bridges of `RichTextEditor` (the
+   * link popover, the Slash menu, `Alt+F10`). The second argument is this Editor's Options (`options`),
+   * if it has any.
    */
   engine?: (context: ToolEngineContext, options?: object) => Extensions;
   /**
-   * Доля StarterKit: ключи `StarterKit.configure`, которые включают Блоки и
-   * Метки Инструмента (`bold: {}`, `heading: { levels }`). Привилегия кита.
-   * Доли всех описаний сливаются в ОДИН `StarterKit` (`extensions.ts`): так
-   * порядок Меток в сохранённом HTML и список пакетов движка остаются теми же,
-   * что при StarterKit целиком. Ключ, которого нет ни в одной доле, выключен.
+   * The StarterKit share: the `StarterKit.configure` keys that switch on the Tool's Blocks and Marks
+   * (`bold: {}`, `heading: { levels }`). A kit privilege. The shares of all descriptions are merged
+   * into ONE `StarterKit` (`extensions.ts`): this keeps the order of Marks in the saved HTML and the
+   * list of engine packages the same as with the whole StarterKit. A key that is in no share is
+   * switched off.
    */
   starterKit?: (context: ToolEngineContext) => Partial<StarterKitOptions>;
   /**
-   * Загрузчик Extensions (`toolLoader.ts`): движок создаётся после
-   * загрузчиков всех описаний списка, и `engine` читает отданное `loaded`.
+   * The loader of Extensions (`toolLoader.ts`): the engine is created after the loaders of all the
+   * descriptions in the list have run, and `engine` reads the value that `loaded` returned.
    */
   load?: ToolLoader;
   /**
-   * Форма Блоков для Скелета, пока загрузчик не отработал (`skeleton.ts`):
-   * лёгкие узлы с той же разметкой и тем же разбором атрибутов, без плагинов
-   * и тяжёлых пакетов. Привилегия ленивого встроенного: без неё его Блоки в
-   * Скелете видны текстом, и поле прыгает по высоте с приходом чанка.
+   * The shape of Blocks for the Skeleton while the loader has not finished (`skeleton.ts`): light
+   * nodes with the same markup and the same attribute parsing, without plugins and heavy packages. A
+   * privilege of a lazy built-in: without it its Blocks show up as text in the Skeleton, and the field
+   * jumps in height when the chunk arrives.
    */
   skeleton?: () => Extensions;
-  /** Признаки Блока по имени узла; кит переносит их в spec узла. Нет — обычный Блок. */
+  /** Block traits by node name; the kit copies them into the node spec. None means an ordinary Block. */
   blocks?: Readonly<Record<string, BlockTraits>>;
 
-  /* Опции. */
+  /* Options. */
 
   /**
-   * Умолчания Опций встроенного Инструмента: полный набор полей, из которого
-   * `tool()` меняет нужные. Нет — у Инструмента нет Опций. Поле — надформа:
-   * публичные Опции своего Инструмента задаёт `defineTool` (`defaults`).
+   * Default Options of a built-in Tool: the complete set of fields, from which `tool()` changes the ones
+   * it needs. None means the Tool has no Options. The field is the internal shape: the public Options of
+   * a custom Tool are set by `defineTool` (`defaults`).
    */
   defaults?: object;
   /**
-   * Проверки значений Опций по имени поля — по одной на каждое поле `defaults`.
-   * Значение, не прошедшее проверку, заменяется умолчанием (`expandTools`):
-   * потребитель на JS обходит типы карты `RichTextTools`.
+   * Checks of Option values by field name, one for each field of `defaults`. A value that fails its check
+   * is replaced with the default (`expandTools`): a JavaScript consumer bypasses the types of the
+   * `RichTextTools` map.
    */
   checks?: Readonly<Record<string, (value: unknown) => boolean>>;
   /**
-   * Опции этого Редактора: умолчания, слитые с `tool()`. Ставит `expandTools`
-   * при сборке набора, поэтому описание в реестре — общее на все Редакторы, а
-   * это поле — своё в списке каждого. Читаются один раз, вместе с набором.
+   * This Editor's Options: the defaults merged with `tool()`. `expandTools` sets it when the set is
+   * assembled, so the description in the registry is shared by all Editors, while this field is each
+   * Editor's own in its list. Read once, together with the set.
    */
   options?: object;
 
-  /* UI-записи. */
+  /* UI entries. */
 
   /**
-   * Кнопки Панели (фиксированной и плавающей — набор один), флагом — и Меню
-   * выделения. Место встроенной кнопки на Панели — привилегия кита: её
-   * отводит Панель по имени Инструмента (`EditorToolbar.tsx`).
+   * Toolbar buttons (the fixed and the floating Toolbar share one set), flagged, and the Bubble menu. The
+   * place of a built-in button on the Toolbar is a kit privilege: the Toolbar places it by the Tool's name
+   * (`EditorToolbar.tsx`).
    */
   buttons?: readonly KitToolButton[];
-  /** Пункты Меню вставки: «/», «+», «Добавить ›» и «Формат ›» Ручки Блока. */
+  /** Slash menu items: "/", "+", "Add ›" and the Block handle's "Format ›". */
   insertItems?: readonly InsertItem[];
-  /** Действия над Блоком в меню Ручки Блока. */
+  /** Block actions in the Block handle menu. */
   blockActions?: readonly BlockAction[];
-  /** Карточки у текста: у встроенных их пока нет, но форма одна (ADR-0058, п. 7.6). */
+  /** Text cards: built-ins have none yet, but the shape is one (ADR-0058, item 7.6). */
   textCards?: readonly TextCardRecord[];
-  /** Символы-триггеры: у встроенных их нет, у своего Инструмента — один (ADR-0064). */
+  /** Trigger characters: built-ins have none; a custom Tool has one (ADR-0064). */
   triggers?: readonly TriggerRecord[];
 
   /**
-   * Публичное описание своего Инструмента, из которого собрано это
-   * (`customToolEngine.ts`): по нему набор проверяется при сборке.
+   * The public description of a custom Tool that this one is built from (`customToolEngine.ts`): the set
+   * is checked against it when it is assembled.
    */
   custom?: CustomTool;
 
-  /* Привилегии кита. */
+  /* Kit privileges. */
 
   /**
-   * Теги Схемы кита, которые пишет Инструмент (`p`, `h1`–`h4`, `a`, `table`…).
-   * Свой Инструмент их не получает: его HTML — `data-block` и `data-mark`.
+   * The Schema tags of the kit that the Tool writes (`p`, `h1`–`h4`, `a`, `table`…). A custom Tool does
+   * not get them: its HTML is `data-block` and `data-mark`.
    */
   kitTags?: readonly string[];
   /**
-   * Модель содержимого: узлы, которые Документ называет поимённо, а не через
-   * группу `block`, — контейнеры верхнего уровня, как Раскладка и Обёртка
-   * (`document.ts`).
+   * The content model: nodes that the Document names individually, rather than through the `block` group.
+   * These are top-level containers, such as the Column layout and the Wrapper (`document.ts`).
    */
   documentContent?: readonly string[];
-  /** Пункты виджета «¶» Панели: у него свои слова и иконки (`blockTypes.ts`). */
+  /** Items of the "¶" Toolbar widget: it has its own labels and icons (`blockTypes.ts`). */
   blockTypes?: readonly BlockTypeItem[];
   /**
-   * Строки справочника сочетаний для клавиш, которые вешают Extensions
-   * (`shortcuts.ts`): у записи сочетание — её поле, а у Метки из движка — нет.
+   * Rows of the shortcut reference for keys that Extensions bind (`shortcuts.ts`): for an entry, the
+   * shortcut is its field; a Mark from the engine has none.
    */
   shortcuts?: readonly ShortcutCommand[];
 
-  /* Команды. */
+  /* Commands. */
 
   /**
-   * Команды Инструмента: то, что `handle.tool(name)` отдаёт экрану. Зовётся при
-   * каждом обращении к Хэндлу и обязана быть дешёвой: только обёртки над движком
-   * и мостом, без подписок и состояния. Нет — у Инструмента нет Команд, и
-   * `handle.tool(name)` отдаёт `null`.
+   * The Tool's commands: what `handle.tool(name)` hands to the screen. Called on every access to the
+   * Handle, so it must be cheap: only wrappers over the engine and the bridge, with no subscriptions and
+   * no state. None means the Tool has no commands, and `handle.tool(name)` returns `null`.
    */
   commands?: (context: ToolCommandsContext) => object;
 
-  /* Состояние. */
+  /* State. */
 
   /**
-   * Состояние Инструмента: снимок для `useRichTextToolState(ref, name)`. Хук
-   * зовёт её на каждую транзакцию и каждое чтение, поэтому она быстрая и без
-   * побочных эффектов. Есть только у своего Инструмента (`defineTool`): снимки
-   * встроенных хук держит у себя (`SNAPSHOTS`), чтобы Поиск и Оглавление не
-   * тянули их код в стартовый кусок Редактора. Нет — Состояния у Инструмента нет.
+   * The Tool's state: a snapshot for `useRichTextToolState(ref, name)`. The hook calls it on every
+   * transaction and every read, so it is fast and free of side effects. It exists only for a custom Tool
+   * (`defineTool`): the hook keeps the snapshots of built-ins itself (`SNAPSHOTS`), so that Find and the
+   * Table of contents do not pull their code into the Editor's initial chunk. None means the Tool has no
+   * State.
    */
   state?: (editor: Editor) => unknown;
 }
 
-/** Что функция Команд получает от `RichTextEditor`. */
+/** What the commands function receives from `RichTextEditor`. */
 export interface ToolCommandsContext {
-  /** Живой движок: функцию зовут, только когда он создан и не уничтожен. */
+  /** Live engine: the function is called only when it has been created and not destroyed. */
   editor: Editor;
-  /** Мост к тому, что держит сам `RichTextEditor`: панели и ленивый UI. */
+  /** The bridge to what `RichTextEditor` itself holds: the panels and the lazy UI. */
   bridge: ToolBridge;
 }
 
 /**
- * Что Команды встроенных берут у `RichTextEditor`: панель Поиска и ядро
- * Оглавления живут в его React-дереве, а не в движке. Все методы возвращают
- * `false`, когда сделать нельзя (HTML-режим, UI ещё не загружен). Привилегия
- * кита: свой Инструмент моста не получает.
+ * What the Commands of built-ins take from `RichTextEditor`: the Find panel and the core of the Table of
+ * contents live in its React tree, not in the engine. Every method returns `false` when the action is
+ * impossible (source mode, UI not loaded yet). A kit privilege: a custom Tool does not get the bridge.
  */
 export interface ToolBridge {
-  /** Открыть панель Поиска; `query` — сразу в поле, без него — выделенный текст. */
+  /** Open the Find panel; `query` goes straight into the field, without it the selected text is used. */
   openSearch: (replace: boolean, query?: string) => boolean;
-  /** Закрыть панель Поиска и убрать подсветку, не трогая фокус. */
+  /** Close the Find panel and remove the highlight, without moving focus. */
   closeSearch: () => boolean;
-  /** Открыт ли HTML-режим: Документа на экране нет, искать и заменять в нём нельзя. */
+  /** Whether source mode is open: the Document is not on screen, so it cannot be searched or replaced. */
   sourceOpen: () => boolean;
-  /** Перейти к заголовку Оглавления с индексом списка. */
+  /** Go to a Table of contents heading by its list index. */
   jumpToc: (index: number) => boolean;
 }
 
-/** Символ-триггер Инструмента в списке описаний: публичная запись и имя владельца для сообщений. */
+/** A trigger character of a Tool in the descriptor list: the public entry and the owner's name for messages. */
 export type TriggerRecord = CustomTrigger & { tool: string };
 
 /**
- * Что Extensions встроенного Инструмента получают от `RichTextEditor`: мосты и —
- * вместо всего набора — вопрос `has`. Связи между Инструментами (уровни
- * заголовка при `heading1`, Обёртка в колонке Раскладки, очистка формата)
- * спрашивают его, а не список описаний.
+ * What a built-in Tool's Extensions get from `RichTextEditor`: the bridges and, instead of the whole set,
+ * the question `has`. The links between Tools (the heading levels with `heading1`, the Wrapper in a Column
+ * layout column, clearing the format) ask it, not the list of descriptions.
  */
 export type ToolEngineContext = Omit<EditorExtensionOptions, "tools"> & {
-  /** Включён ли Инструмент кита в этом Редакторе. */
+  /** Whether the kit's Tool is enabled in this Editor. */
   has: (tool: Tool) => boolean;
   /**
-   * Опции другого встроенного Инструмента этого Редактора (`toolOptions`). Нужны
-   * Инструментам, у которых один узел на двоих (`youtube` и `twitch` делят `video`):
-   * `engine` получает только свои Опции, а общий узел читает Опции обоих.
+   * The Options of another built-in Tool of this Editor (`toolOptions`). They are needed by Tools that
+   * share one node (`youtube` and `twitch` both use `video`): `engine` receives only its own Options,
+   * while the shared node reads the Options of both.
    */
   optionsOf: <Name extends ConfigurableToolName>(
     name: Name
@@ -212,76 +204,75 @@ export type ToolEngineContext = Omit<EditorExtensionOptions, "tools"> & {
 type EditorMessages = UiMessages["editor"];
 
 /**
- * Признаки Блока, которые понимает только кит. Все выключены по умолчанию:
- * обычный Блок — не контейнер, без «Превратить в», с меню форматирования.
+ * Block traits that only the kit understands. All are off by default: an ordinary Block is not a container,
+ * has no "Turn into", and gets the formatting menu.
  */
 export interface BlockTraits {
-  /** Контейнер: Блоки внутри — со своей Ручкой Блока (`blockContainer` в spec узла). */
+  /** A container: Blocks inside it get their own Block handle (`blockContainer` in the node spec). */
   container?: boolean;
-  /** Блок можно превратить в другой: «Формат ›» Ручки Блока и «¶». */
+  /** The Block can be turned into another one: the "Format ›" item of the Block handle and "¶". */
   turnInto?: boolean;
-  /** Атом без меню форматирования: кнопки Меток над ним не показываются. */
+  /** An atom without the formatting menu: the Mark buttons are not shown over it. */
   plainAtom?: boolean;
 }
 
 /**
- * Подпись записи — строка или функция от контекста (ADR-0058, п. 6.1). Кит
- * зовёт её при отрисовке, поэтому смена локали `UiProvider` перерисовывает
- * запись. Встроенным в контекст кладутся ещё и `messages` кита: форма подписи
- * у своего и встроенного одна.
+ * A label: a string, or a function of the context (ADR-0058, item 6.1). The kit calls it on render, so a
+ * change of the `UiProvider` locale re-renders the entry. Built-ins also get the kit's `messages` in the
+ * context: the shape of a label is the same for a custom Tool and a built-in one.
  */
 export type ToolLabel = string | ((context: ToolLabelContext) => string);
 
 export interface ToolLabelContext {
-  /** Локаль `UiProvider` (`useUiLocale`). */
+  /** Locale of `UiProvider` (`useUiLocale`). */
   locale: string;
-  /** Строки Редактора из каталога кита — для встроенных Инструментов. */
+  /** Strings of the Editor from the kit's catalog, for built-in Tools. */
   messages: EditorMessages;
 }
 
-/** Подпись записи в текущем контексте. */
+/** The label in the current context. */
 export function toolLabel(label: ToolLabel, context: ToolLabelContext): string {
   return typeof label === "string" ? label : label(context);
 }
 
 /**
- * Содержимое поповера кнопки. Рамку держит кит: слой, якорь, стек Escape
- * (ADR-0041), имя рамки — подпись кнопки, возврат фокуса и выделения в
- * Документ. `close` закрывает поповер тем же путём, что Escape.
+ * The content of a button's popover. The kit holds the frame: the layer, the anchor, the Escape stack
+ * (ADR-0041), the frame's name (the button's label), and the return of focus and selection to the
+ * Document. `close` closes the popover the same way Escape does.
  */
 export type ToolPopover = (props: { editor: Editor; close: () => void }) => ReactNode;
 
 interface ToolButtonFields {
-  /** Стабильный ключ, уникальный среди кнопок Панели. */
+  /** Stable key, unique among the Toolbar buttons. */
   id: string;
   label: ToolLabel;
   icon: ComponentType<IconProps>;
-  /** Доступна ли кнопка сейчас. В нередактируемом поле кит выключает кнопки сам, проверять это здесь не нужно. */
+  /**
+   * Whether the button is available now. In a non-editable field the kit disables the buttons itself, so
+   * there is no need to check that here.
+   */
   can: (editor: Editor) => boolean;
-  /** Есть — кнопка-переключатель с `aria-pressed`; нет — разовое действие. */
+  /** Present: a toggle button with `aria-pressed`; absent: a one-off action. */
   isActive?: (editor: Editor) => boolean;
-  /** Предикат видимости по контексту; нет — кнопка видна всегда. */
+  /** Visibility predicate by context; absent means the button is always visible. */
   isVisible?: (editor: Editor) => boolean;
-  /** Кнопка стоит и в Меню выделения. */
+  /** The button is also in the Bubble menu. */
   selectionMenu?: boolean;
   /**
-   * Сочетание в нотации Панели (`mod`, `alt`, `shift`, клавиша) — единственный
-   * его источник: кит сам вешает клавишу, пишет её в подсказку,
-   * `aria-keyshortcuts` и справочник сочетаний.
+   * The shortcut in the Toolbar notation (`mod`, `alt`, `shift`, a key), its only source: the kit binds the
+   * key itself, writes it into the hint, `aria-keyshortcuts` and the shortcut reference.
    */
   shortcut?: readonly string[];
 }
 
 /**
- * Кнопка Панели (фиксированной и плавающей — набор один), флагом — и Меню
- * выделения. Подсказка — подпись и `Kbd` сочетания; `aria-pressed` — только
- * при `isActive`. Форма та же, что у будущей публичной кнопки своего
- * Инструмента (ADR-0058, п. 5).
+ * A Toolbar button (the fixed and the floating Toolbar share one set), flagged, and the Bubble menu. The hint
+ * is the label and the `Kbd` of the shortcut; `aria-pressed` appears only with `isActive`. The shape is the
+ * same as that of the future public button of a custom Tool (ADR-0058, item 5).
  *
- * ДЕЙСТВИЕ ИЛИ ПОПОВЕР — ровно одно из двух. `run` выполняется щелчком и
- * сочетанием. `popover` открывается щелчком у кнопки, а сочетанием — у
- * каретки: кнопки на экране может и не быть (`toolbar="none"`, спрятанная
- * плавающая Панель).
+ * ACTION OR POPOVER: exactly one of the two. `run` is executed by a click and by the shortcut. `popover`
+ * opens on a click at the button, and by the shortcut at the caret: the button may not be on screen at all
+ * (`toolbar="none"`, a hidden floating Toolbar).
  */
 export type ToolButton = ToolButtonFields &
   (
@@ -290,18 +281,16 @@ export type ToolButton = ToolButtonFields &
   );
 
 /**
- * Кнопка встроенного Инструмента: публичная форма и привилегии кита, которых
- * своей кнопке не дают.
+ * A built-in Tool's button: the public shape plus the kit's privileges, which a custom button does not get.
  */
 export type KitToolButton = ToolButton &
   (
     | {
         /**
-         * Сочетание, которое вешает не кит, а Extensions (`undoRedo` у
-         * StarterKit, `Mod-B` у Метки): только подпись — подсказка,
-         * `aria-keyshortcuts` и строка справочника. Взаимоисключимо с
-         * `shortcut`: та и вешает клавишу, и подписывает её, и две привязки
-         * одной клавиши спорили бы.
+         * A shortcut that is bound not by the kit but by Extensions (`undoRedo` of StarterKit, `Mod-B` of a
+         * Mark): only a label, that is, the hint, `aria-keyshortcuts` and a row of the reference. Mutually
+         * exclusive with `shortcut`: that one both binds the key and labels it, and two bindings of one key
+         * would conflict.
          */
         keys: readonly string[];
         shortcut?: undefined;
@@ -309,87 +298,84 @@ export type KitToolButton = ToolButton &
     | { keys?: undefined }
   ) & {
     /**
-     * Группа справочника сочетаний. Нет — строка встаёт в группу Инструмента без
-     * заголовка после групп кита, как у своего Инструмента.
+     * The group of the shortcut reference. None means the row goes into the Tool's group without a heading,
+     * after the kit's groups, as for a custom Tool.
      */
     shortcutGroup?: ShortcutGroup;
-    /** Рамка поповера, если она не умолчание кита (у кнопки, по содержимому). */
+    /** The popover frame, if it is not the kit's default (for a button, by content). */
     popoverFrame?: {
       /**
-       * `selection` — рамка всегда у выделения, и щелчком по кнопке тоже: поповер
-       * правит выделенный текст, и стоит у него при любом способе открыть
-       * (поповер ссылки).
+       * `selection`: the frame is always at the selection, including on a button click. The popover edits the
+       * selected text, and stays at it however it was opened (the link popover).
        */
       anchor?: "selection";
-      /** Классы размера и отступов рамки вместо умолчания `w-auto p-2`. */
+      /** Size and padding classes of the frame, instead of the default `w-auto p-2`. */
       className?: string;
     };
   };
 
-/** Действие над Блоком: пункт меню Ручки Блока, в секции Инструмента перед «Удалить». */
+/** A Block action: a menu item of the Block handle, in the Tool's section before "Delete". */
 export interface BlockAction {
   id: string;
-  /** Подпись в локали `UiProvider`: у встроенных — строка каталога, у своих — `ToolLabel`. */
+  /** Label in the `UiProvider` locale: for built-ins, a catalog string; for custom ones, a `ToolLabel`. */
   label: (messages: EditorMessages, locale: string) => string;
   icon: ComponentType<IconProps>;
   /**
-   * Имена Блоков, для которых действие показывается: имя Блока Ручки или
-   * контейнера, в котором он стоит прямо (`blockContainer` в spec узла). Так
-   * «Снять обёртку» с `["wrapper"]` есть и у самой Обёртки, и у Блока в ней.
+   * Block names for which the action is shown: the name of the handle's Block, or of the container it stands
+   * in directly (`blockContainer` in the node spec). This way "Remove wrapper" with `["wrapper"]` is on the
+   * Wrapper itself and on the Block inside it.
    */
   blocks: readonly string[];
   /**
-   * Сочетание, которое вешает кит (ADR-0058, п. 5.7): на Блок под кареткой, у
-   * которого действие видно. У встроенных нет.
+   * A shortcut that the kit binds, on the Block under the caret, for which the action is visible. Built-ins
+   * have none.
    */
   shortcut?: readonly string[];
-  /** `pos` — позиция Блока Ручки в Документе. */
+  /** `pos` is the position of the handle's Block in the Document. */
   run: (editor: Editor, pos: number) => void;
   /**
-   * Поповер своего Инструмента у Блока (ADR-0058, п. 5.6). `run` такого
-   * Действия открывает его — меню Ручки и сочетание о поповере не знают.
+   * A custom Tool's popover on a Block (ADR-0058, item 5.6). The `run` of such an action opens it: the Block
+   * handle's menu and the shortcut know nothing about the popover.
    */
   popover?: (props: { editor: Editor; close: () => void; pos: number }) => ReactNode;
   isVisible?: (editor: Editor, pos: number) => boolean;
 }
 
 /**
- * Карточка у текста: диапазон у каретки и тело; рамку держит кит
- * (`TextCard.tsx`, ADR-0058, п. 7.6–7.11).
+ * A text card: a range at the caret and a body. The kit holds the frame (`TextCard.tsx`, ADR-0058,
+ * items 7.6–7.11).
  */
 export interface TextCardRecord {
   id: string;
-  /** Подпись в локали `UiProvider`: доступное имя рамки и часть фразы о появлении. */
+  /** Label in the `UiProvider` locale: the accessible name of the frame and part of the phrase about its appearance. */
   label: (messages: EditorMessages, locale: string) => string;
   rangeAt: TextCardRangeAt;
   render: CustomTextCardRender;
 }
 
 /**
- * Развёрнутый набор Инструментов: список описаний и — как `Set` — имена
- * включённых Инструментов кита.
+ * The expanded set of Tools: the list of descriptions and, as a `Set`, the names of the kit's enabled Tools.
  *
- * Набор имён — тоже проекция списка: виджеты кита, которые спрашивают набор по
- * имени (`tools.has("table")`), читают его без правок. Свои Инструменты есть
- * только в списке описаний.
+ * The set of names is also a projection of the list: kit widgets that ask the set by name (`tools.has("table")`)
+ * read it without changes. Custom Tools are only in the list of descriptions.
  */
 export interface ToolList extends ReadonlySet<Tool> {
   /**
-   * Ошибка сборки набора, найденная до движка: две записи `tool()` с одним
-   * именем. Редактор показывает её тем же путём, что ошибки своих Инструментов
-   * (`customToolsError`): строкой поля и `console.error` в разработке.
+   * A set-assembly error found before the engine: two `tool()` entries with one name. The Editor shows it the
+   * same way as the errors of custom Tools (`customToolsError`): as a field line, and as `console.error` in
+   * development.
    */
   readonly error?: string;
   /**
-   * Описания включённых Инструментов: встроенные в порядке кита, за ними
-   * свои в порядке `tools`.
+   * Descriptions of the enabled Tools: built-ins in the kit's order, followed by custom ones in the order of
+   * `tools`.
    */
   readonly descriptors: readonly ToolDescriptor[];
 }
 
 /**
- * Набор из имён кита и списка описаний — единственный способ его собрать:
- * развернуть `tools` (`expandTools`) или сузить готовый (Скелет).
+ * A set built from kit names and a list of descriptions. It is the only way to build one: expand `tools`
+ * (`expandTools`) or narrow a ready one (the Skeleton).
  */
 export function toolList(
   names: Iterable<Tool>,
@@ -400,8 +386,8 @@ export function toolList(
 }
 
 /**
- * Опции встроенного Инструмента этого Редактора: умолчания кита, слитые с
- * `tool()`. Инструмента нет в наборе или у него нет Опций — `undefined`.
+ * Options of a built-in Tool for this Editor: the kit's defaults merged with `tool()`. If the Tool is not in
+ * the set, or has no Options, the result is `undefined`.
  */
 export function toolOptions<Name extends ConfigurableToolName>(
   tools: ToolList,
@@ -412,30 +398,30 @@ export function toolOptions<Name extends ConfigurableToolName>(
 }
 
 /**
- * Действия над Блоком набора — проекция списка описаний, в порядке кита. Фильтра
- * по Блоку здесь нет: имя и предикат видимости спрашивает меню Ручки на
- * своём Блоке (`blockActionVisible`).
+ * The Block actions of the set: a projection of the list of descriptions, in the kit's order. There is no
+ * filter by Block here: the name and the visibility predicate are checked by the handle's menu on its own
+ * Block (`blockActionVisible`).
  */
 export function blockActionsOf(tools: ToolList): readonly BlockAction[] {
   return tools.descriptors.flatMap((descriptor) => descriptor.blockActions ?? []);
 }
 
 /**
- * Карточки у текста набора в порядке списка: при равной ширине диапазона
- * выигрывает та, что раньше, то есть Инструмент раньше в `tools`.
+ * The text cards of the set in list order: for equal range width, the one that comes first wins, that is,
+ * the Tool that is earlier in `tools`.
  */
 export function textCardsOf(tools: ToolList): readonly TextCardRecord[] {
   return tools.descriptors.flatMap((descriptor) => descriptor.textCards ?? []);
 }
 
-/** Символы-триггеры набора в порядке списка (ADR-0064). */
+/** The trigger characters of the set in list order (ADR-0064). */
 export function triggersOf(tools: ToolList): readonly TriggerRecord[] {
   return tools.descriptors.flatMap((descriptor) => descriptor.triggers ?? []);
 }
 
 /**
- * Показывается ли действие у Блока `pos`: `block` — имя этого Блока, `container`
- * — имя контейнера, в котором он стоит прямо (у Блока Документа это сам Документ).
+ * Whether the action is shown at Block `pos`: `block` is the name of this Block, `container` is the name of
+ * the container it stands in directly (for the Document's own Block, that is the Document itself).
  */
 export function blockActionVisible(
   action: BlockAction,
@@ -450,14 +436,13 @@ export function blockActionVisible(
 }
 
 /**
- * Записи одной поверхности — проекция списка описаний.
+ * The entries of one surface, a projection of the list of descriptions.
  *
- * - `order` — место встроенных Инструментов на поверхности, привилегия кита.
- *   Инструменты набора вне него идут следом, в порядке списка: так встаёт
- *   запись, у которой своего места на поверхности нет.
- * - `own` — поле описания с записями этой поверхности.
+ * - `order` is the place of the built-in Tools on the surface, a kit privilege. The set's Tools that are not
+ *   in it follow, in list order: this is how an entry with no place of its own on the surface lands.
+ * - `own` is the field of a description with that surface's entries.
  *
- * Фильтра по включённым Инструментам здесь нет: его держит сам список.
+ * There is no filter by enabled Tools here: the list itself holds it.
  */
 export function projectRecords<R>(
   tools: ToolList,

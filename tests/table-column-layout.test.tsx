@@ -4,9 +4,9 @@ import { afterEach, expect, test } from "vitest";
 import { Table } from "../src/components/content/Table.js";
 
 /*
-  Раскладка шапки (OLDSUI-245): заголовок колонки `align: "end"` не должен
-  уезжать влево из-за ручки ширины, а служебные колонки (выбор, раскрытие) —
-  оставаться узкими и без `resizable`, где проп `width` у react-aria не действует.
+  Header layout (OLDSUI-245): the header of a column with `align: "end"` must not shift
+  left because of the width handle, and service columns (selection, expansion) must stay
+  narrow and without `resizable`, where react-aria's `width` prop has no effect.
 */
 type Row = { id: string; name: string; size: number };
 const ROWS: Row[] = [{ id: "1", name: "Contract", size: 3 }];

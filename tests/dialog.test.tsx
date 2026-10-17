@@ -7,11 +7,11 @@ import { ConfirmDialog } from "../src/components/overlays/ConfirmDialog.js";
 import { Dialog } from "../src/components/overlays/Dialog.js";
 
 /**
- * Модальность: имя, возврат фокуса и запрет закрытия во время отправки.
+ * Modality: the name, focus return, and no closing while a submission is in progress.
  *
- * Ловушку фокуса здесь не проверяем — jsdom не двигает фокус по Tab так, как
- * это делает браузер, и «проверка», которая проходит в любом случае, хуже её
- * отсутствия. Ловушка проверена в браузере и держится Radix.
+ * The focus trap is not tested here: jsdom does not move focus on Tab the way
+ * a browser does, and a "check" that passes regardless is worse than having no
+ * check. The trap is verified in the browser and is provided by Radix.
  */
 
 afterEach(cleanup);
@@ -26,9 +26,9 @@ test("the window is announced as a dialog and takes its name from the title", ()
   const dialog = screen.getByRole("dialog");
   const titleId = dialog.getAttribute("aria-labelledby");
   expect(titleId).toBeTruthy();
-  // Ссылка обязана вести в существующий заголовок: в первой версии сюда
-  // уезжал `id={undefined}`, ссылка указывала в пустоту, и окно оставалось
-  // безымянным — ровно тот дефект, ради которого примитив и заводился.
+  // The link must point to an existing heading: in the first version it pointed
+  // to `id={undefined}`, the link pointed at nothing, and the dialog stayed
+  // unnamed, which is exactly the defect this primitive was created to fix.
   expect(document.getElementById(titleId!)?.textContent).toBe("New album");
 });
 
@@ -110,8 +110,8 @@ test("while submitting it closes neither by the cross nor by Escape", async () =
 
   await user.keyboard("{Escape}");
   expect(onClose).not.toHaveBeenCalled();
-  // Крестик не просто заблокирован — его нет: закрывать нечем, и показывать
-  // выключенную кнопку значило бы обещать действие, которого не будет.
+  // The close button is not merely disabled, it is absent: there is nothing to close
+  // with, and showing a disabled button would promise an action that will not happen.
   expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
 });
 
@@ -144,19 +144,20 @@ test("focus goes where told and returns to whoever opened it", async () => {
 
   await user.keyboard("{Escape}");
 
-  // Radix возвращает фокус на свой `Dialog.Trigger`, которого здесь нет:
-  // окна открываются из состояния приложения. Без собственного возврата
-  // фокус уезжал на `<body>`, и пользователь клавиатуры начинал обход заново.
+  // Radix returns focus to its own `Dialog.Trigger`, which does not exist here:
+  // the dialogs are opened from application state. Without its own return,
+  // focus went to `<body>`, and keyboard users had to start navigating again.
   expect(document.activeElement).toBe(trigger);
 });
 
 /**
- * У окна с ролью `alertdialog` обязано быть доступное ОПИСАНИЕ.
+ * A dialog with the `alertdialog` role must have an accessible DESCRIPTION.
  *
- * `aria-describedby` был зашит в `undefined` ради подавления предупреждения
- * Radix, и следствие вышло шире задуманного: ни одно окно кита не могло иметь
- * описания вовсе. У `ConfirmDialog` это значило, что сам вопрос скринридеру не
- * читался — объявлялись имя окна и кнопка, на которую уехал фокус.
+ * `aria-describedby` was hard-coded to `undefined` to suppress a warning from
+ * Radix, and the consequence went further than intended: no kit dialog could have
+ * a description at all. For `ConfirmDialog` this meant the question itself was not
+ * read to the screen reader: only the dialog name and the button focus moved to
+ * were announced.
  */
 test("a confirmation announces the question, not just its title", () => {
   render(
@@ -172,8 +173,8 @@ test("a confirmation announces the question, not just its title", () => {
   const dialog = screen.getByRole("alertdialog");
   const ids = dialog.getAttribute("aria-describedby")?.split(" ").filter(Boolean) ?? [];
 
-  // Проверяется ВЫЧИСЛЕННАЯ связь: ссылка должна вести в узел с текстом
-  // вопроса, а не просто существовать.
+  // The COMPUTED link is checked: the reference must point to the node holding the
+  // question's text, not merely exist.
   const described = ids.map((id) => document.getElementById(id)?.textContent ?? "").join(" ");
   expect(described).toContain("Delete 12 items permanently?");
 });
@@ -194,10 +195,10 @@ test("the description points at the visible paragraph, not at a copy", () => {
   );
 
   /*
-    Первая починка передавала `message` в `description` и рисовала его скрытой
-    копией: текст оказывался в документе ДВАЖДЫ, ссылка внутри него давала
-    невидимый лишний табстоп в `alertdialog`, а компонент с собственным `id` —
-    дубль идентификатора.
+    The first fix passed `message` into `description` and rendered it as a hidden
+    copy: the text ended up in the document TWICE, a link inside it added an
+    invisible extra tab stop in the `alertdialog`, and a component with its own `id`
+    produced a duplicate id.
   */
   expect(screen.getAllByRole("link", { hidden: true })).toHaveLength(1);
   expect(screen.getAllByText(/Delete 12 items/)).toHaveLength(1);
@@ -214,15 +215,15 @@ test("a dialog without a description does not point at nothing", () => {
 });
 
 /**
- * Вложенное окно возвращает фокус кнопке ВНУТРИ родительского.
+ * A nested dialog returns focus to a button INSIDE the parent dialog.
  *
- * Первая версия `useOpenerFocus` отсекала как «открывшего» всё, что лежит
- * внутри `[role="dialog"]`, — а кнопка, открывшая подтверждение, по определению
- * лежит внутри родительского окна. Она отвергалась, хук падал на историю
- * «последний фокус вне модальных слоёв», и фокус после закрытия уезжал на
- * `<body>`. До волны 26 `Dialog` такого условия не имел и работал верно, то
- * есть это была регрессия, внесённая починкой. Ни один из 1075 тестов её не
- * ловил.
+ * The first version of `useOpenerFocus` treated as "the opener" everything that
+ * sits inside `[role="dialog"]`, but the button that opened the confirmation, by
+ * definition, sits inside the parent dialog. It was rejected, and the hook fell
+ * back to the history entry "last focus outside modal layers", and after closing,
+ * focus moved to `<body>`. Before wave 26 `Dialog` had no such condition and worked
+ * correctly, so this was a regression introduced by the fix. None of the 1075 tests
+ * caught it.
  */
 test("a nested confirmation returns focus to the button that opened it", async () => {
   const user = userEvent.setup({ pointerEventsCheck: 0 });

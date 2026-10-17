@@ -1,32 +1,32 @@
 "use client";
 
-// Сообщение поля (ADR-0058, раздел 7): одно место под полем, куда
-// кит и свои Инструменты сообщают о результате действия. Раньше это было
-// внутренним состоянием сообщений о картинках; теперь — команда движка.
+// Field notice (ADR-0058, section 7): one place under the field where the kit and its custom
+// Tools report the result of an action. It used to be internal state of the image messages;
+// now it is an engine command.
 
 import { Extension } from "@tiptap/core";
 
 /**
- * Тон Сообщения поля. `status` невидим и только озвучивается; `error` видна
- * строкой `role="alert"` под полем.
+ * Tone of a field notice. `status` is invisible and only announced; `error` is shown as a
+ * `role="alert"` line under the field.
  */
 export type FieldNoticeTone = "status" | "error";
 
 /**
- * Сообщение поля — данные, а не React-узел: тон и готовый текст. Текст кит не
- * переводит: Инструмент берёт его из своего каталога на языке экрана, а кит —
- * из каталога сообщений (`editor.*`). Своих длительностей, кнопок закрытия и
- * спиннеров у сообщения нет.
+ * A field notice is data, not a React node: a tone and a ready text. The kit does not translate the
+ * text: a Tool takes it from its own catalog in the screen's language, and the kit takes its own
+ * from the message catalog (`editor.*`). A notice has no durations, close buttons or spinners of its
+ * own.
  */
 export interface FieldNotice {
-  /** Тон сообщения: `status` только озвучивается, `error` видна строкой под полем. */
+  /** Tone of the notice: `status` is only announced, `error` is shown as a line under the field. */
   tone: FieldNoticeTone;
-  /** Готовый текст на языке экрана; кит его не переводит. */
+  /** Text that is already in the screen's language; the kit does not translate it. */
   text: string;
 }
 
 export interface FieldNoticeOptions {
-  /** Показать сообщение; `null` — снять. Состояние держит `RichTextEditor`. */
+  /** Show a notice; `null` clears it. The state is held by `RichTextEditor`. */
   onNotice: (notice: FieldNotice | null) => void;
 }
 
@@ -34,12 +34,12 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     fieldNotice: {
       /**
-       * Показать Сообщение поля: новое заменяет прежнее, `null` снимает. Документ,
-       * история и `onChange` не затрагиваются. `error` уходит сама со следующей
-       * Правкой автора, `status` остаётся, пока его не заменят или не снимут.
+       * Show a field notice: a new one replaces the previous one, `null` clears it. The Document,
+       * history and `onChange` are not affected. An `error` goes away on its own with the next User
+       * edit; a `status` stays until it is replaced or cleared.
        *
-       * Свой Инструмент зовёт её из Extensions (`this.editor.commands`),
-       * экран — через `handle.editor`. Сообщение без текста — то же, что `null`.
+       * A custom Tool calls it from its Extensions (`this.editor.commands`), a screen through
+       * `handle.editor`. A notice without text is the same as `null`.
        */
       showNotice: (notice: FieldNotice | null) => ReturnType;
     };
@@ -47,13 +47,13 @@ declare module "@tiptap/core" {
 }
 
 /**
- * Команда `showNotice`. Живёт в каждом Редакторе независимо от набора
- * Инструментов: сообщить об ошибке вставки может и Инструмент без картинок.
+ * The `showNotice` command. It lives in every Editor, regardless of the Tool set: a Tool without
+ * images can also report a paste error.
  *
- * ПОЧЕМУ БЕЗ ТРАНЗАКЦИИ. Сообщение — не часть Документа: команда ничего не
- * пишет в `tr`, поэтому в историю и `onChange` оно не попадает, а Правку автора
- * (она снимает `error`) от неё отличить легко — это единственное, что порождает
- * событие `update`. Проба `editor.can()` команду не исполняет (`dispatch` пуст).
+ * WHY NO TRANSACTION. A notice is not part of the Document: the command writes nothing to `tr`, so
+ * it does not reach history or `onChange`, and a User edit (which clears an `error`) is easy to tell
+ * apart from it: it is the only thing that produces an `update` event. A probe with `editor.can()`
+ * does not run the command (`dispatch` is not passed).
  */
 export const FieldNoticeExtension = Extension.create<FieldNoticeOptions>({
   name: "fieldNotice",

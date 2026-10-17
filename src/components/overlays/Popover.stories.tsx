@@ -21,8 +21,7 @@ const Content = () => (
 );
 
 /**
- * Открыто по умолчанию — снимок должен быть детерминированным, а закрытая
- * панель на нём просто отсутствует.
+ * Open by default: the snapshot must be deterministic, and a closed panel is simply absent from it.
  */
 export const Playground: Story = {
   render: () => (
@@ -40,11 +39,10 @@ export const Playground: Story = {
 };
 
 /**
- * Матрицы у панели нет по той же причине, что и у `ModalOverlay`: содержимое
- * живёт в портале поверх всей страницы, и две открытые панели в одном кадре
- * перекрывают друг друга. Здесь — одна, привязанная к нижнему краю.
- * Якорь стоит у правого края кадра: правый край панели (`align="end"`) совпадает
- * с правым краем кнопки, и слева для неё есть место.
+ * The panel has no matrix, for the same reason as `ModalOverlay`: the content lives in a portal
+ * above the whole page, and two open panels in one frame would overlap each other. Here there is
+ * one, anchored to the bottom edge. The anchor sits at the right edge of the frame: the panel's
+ * right edge (`align="end"`) lines up with the button's right edge, and there is room for it on the left.
  */
 export const BelowTrigger: Story = {
   render: () => (

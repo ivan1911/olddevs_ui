@@ -7,13 +7,13 @@ import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { testBoxTool, testLazyTool } from "./editor-test-tools.js";
 
 /**
- * Ошибки Редактора разработчику (`devError`, `docs/conventions.md`, раздел
- * «Предупреждения в режиме разработки»): поле показывает автору строку
- * каталога, а причина уходит в консоль — в разработке, один раз на текст, с
- * именем компонента и с исключением отдельным аргументом.
+ * Editor errors for the developer (`devError`, `docs/conventions.md`, section
+ * 'Warnings in development mode'): the field shows the author a line
+ * from the catalog, and the cause goes to the console: in development, once per text, with
+ * the component name and the exception as a separate argument.
  *
- * Через публичный `RichTextEditor`: набор, Схему которого движок не собрал, и
- * загрузчик Extensions, который упал.
+ * Through the public `RichTextEditor`: a set whose Schema the engine did not build, and
+ * an Extensions loader that failed.
  */
 
 let error: ReturnType<typeof vi.spyOn>;
@@ -37,7 +37,7 @@ const broken: CustomTool = {
 const renderBroken = () =>
   render(<RichTextEditor aria-label="Body" tools={[...RICH_TEXT_PRESETS.basic, broken]} />);
 
-/** Промисы загрузчиков и эффекты Редактора отработали. */
+/** The loaders' promises and the Editor's effects have settled. */
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 10))));
 

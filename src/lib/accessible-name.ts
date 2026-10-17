@@ -1,35 +1,44 @@
 /**
- * Доступное имя компонента без видимой подписи: ровно одно из `aria-label` и
+ * Accessible name of a component without a visible label: exactly one of `aria-label` and
  * `aria-labelledby`.
  *
- * Правило записано в `docs/conventions.md` («Доступное имя»): `label` в ките —
- * только видимая подпись, а имя, которое не рисуется, называется своим
- * ARIA-атрибутом. До правила одно и то же требование было устроено в трёх
- * компонентах тремя способами, и `label` в одном выводился на экран, а в
- * соседнем уходил в атрибут, — потребитель не мог угадать, что увидит.
+ * The rule is written in `docs/conventions.md` ("Accessible name"): in the kit, `label` is only a
+ * visible caption, and a name that is not drawn is given by its own ARIA attribute. Before the rule,
+ * the same requirement was built three different ways in three components. `label` was rendered on
+ * screen in one of them and went into an attribute in a neighbor, so a consumer could not tell what
+ * would appear.
  *
- * Оба атрибута сразу запрещены: это два источника одного имени, и при правке
- * они расходятся молча (`aria-labelledby` по спецификации побеждает, и строка
- * в `aria-label` перестаёт что-либо значить).
+ * Both attributes at once are forbidden: they are two sources of one name, and on edit they silently
+ * diverge (per the spec, `aria-labelledby` wins, and the string in `aria-label` stops meaning anything).
  *
- * НЕОБЯЗАТЕЛЬНОЕ ИМЯ — тот же тип под `Partial`: у компонента с умолчанием из
- * каталога сообщений (`MobileTabBar`) имя можно не передавать, но правило
- * «не оба сразу» остаётся. `Partial` распределяется по объединению, поэтому
- * `Partial<AccessibleName>` — это «одно из двух или ничего».
+ * OPTIONAL NAME: the same type under `Partial`. For a component with a default from the message
+ * catalog (`MobileTabBar`) the name may be omitted, but the rule "not both at once" still holds.
+ * `Partial` distributes over the union, so `Partial<AccessibleName>` means "one of the two, or nothing".
  *
- * `@internal` — наружу из пакета не экспортируется: потребитель видит его
- * раскрытым в пропах компонента.
+ * `@internal`: not exported from the package. The consumer sees it expanded in the component's props.
  */
 export type AccessibleName =
   | {
-      /** Доступное имя строкой, когда видимой подписи нет. Не задаётся вместе с `aria-labelledby`: два источника одного имени. */
+      /**
+       * Accessible name as a string, when there is no visible label. Do not set it together with
+       * `aria-labelledby`: that gives the name two sources.
+       */
       "aria-label": string;
-      /** `id` элемента, чей текст служит доступным именем, когда видимой подписи нет. Не задаётся вместе с `aria-label`: два источника одного имени. */
+      /**
+       * `id` of the element whose text serves as the accessible name, when there is no visible
+       * label. Do not set it together with `aria-label`: that gives the name two sources.
+       */
       "aria-labelledby"?: never;
     }
   | {
-      /** `id` элемента, чей текст служит доступным именем, когда видимой подписи нет. Не задаётся вместе с `aria-label`: два источника одного имени. */
+      /**
+       * `id` of the element whose text serves as the accessible name, when there is no visible
+       * label. Do not set it together with `aria-label`: that gives the name two sources.
+       */
       "aria-labelledby": string;
-      /** Доступное имя строкой, когда видимой подписи нет. Не задаётся вместе с `aria-labelledby`: два источника одного имени. */
+      /**
+       * Accessible name as a string, when there is no visible label. Do not set it together with
+       * `aria-labelledby`: that gives the name two sources.
+       */
       "aria-label"?: never;
     };

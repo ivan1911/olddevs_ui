@@ -9,134 +9,139 @@ story: src/components/content/Grid.stories.tsx
 
 # Grid
 
-## Кратко для AI
+## Summary for AI
 
-Адаптивная сетка равных колонок на утилитах Tailwind. Колонки задаются
-числом (адаптивная лестница), объектом по брейкпойнтам кита
-(`base`/`sm`/`md`/`lg`/`xl`) или наименьшей шириной ячейки для автозаполнения.
-Поведения нет: ни ролей, ни клавиатуры, ни состояния — только раскладка.
+A responsive grid of equal columns built on Tailwind utilities. Columns are set
+by a number (a responsive ladder), by an object keyed by the kit's breakpoints
+(`base`/`sm`/`md`/`lg`/`xl`), or by a minimum cell width for auto-fill. It has
+no behavior: no roles, no keyboard, no state — only layout.
 
-## Когда использовать
+## When to use
 
-- Набор однородных блоков: карточки тарифов, плитки показателей, превью
-  документов — десяток-другой, без виртуализации.
-- Число колонок должно меняться по ширине экрана вместе с `AppShell` и
-  `FormLayout`, а не на своих брейкпойнтах.
-- Компонент «на будущее» (ADR-0048): экрана-заказчика при выпуске не было, API взят по
-  аналогам — Mantine `SimpleGrid`, Chakra `SimpleGrid`, MUI `Grid`, Ant `Row`/`Col`,
-  Cloudscape `ColumnLayout`. Ваш экран — первая проверка этого API, а не
-  нарушение контракта.
+- A set of uniform blocks: pricing cards, metric tiles, document previews — a
+  dozen or two, without virtualization.
+- The number of columns has to change with the screen width together with
+  `AppShell` and `FormLayout`, not on your own breakpoints.
+- A component "for the future" (ADR-0048): there was no requesting screen at release, and
+  the API was taken from analogues — Mantine `SimpleGrid`, Chakra `SimpleGrid`,
+  MUI `Grid`, Ant `Row`/`Col`, Cloudscape `ColumnLayout`. Your screen is the first
+  test of this API, not a breach of the contract.
 
-## Когда не использовать
+## When not to use
 
-- Сотни ячеек или выбор ячеек с клавиатуры — это `VirtualGrid`: у него своя
-  прокрутка, роли `listbox`/`option` и стрелки по сетке.
-- Поля формы в одну-две колонки — это `FormLayout`: он ещё и передаёт полям
-  место подписи.
-- Ячейки разной ширины, объединение колонок (`span`), masonry — не здесь: сетка
-  только равных колонок. Сложная раскладка экрана остаётся классами
-  потребителя.
-- Стопка или строка элементов с зазором — это `flex` с `gap` у потребителя;
-  `Stack` и `Inline` пакет не экспортирует.
+- Hundreds of cells or keyboard selection of cells — that is `VirtualGrid`: it has
+  its own scrolling, the `listbox`/`option` roles and arrow keys across the grid.
+- Form fields in one or two columns — that is `FormLayout`: it also sets
+  label placement for the fields.
+- Cells of different widths, column merging (`span`), masonry — not here: the grid
+  has only equal columns. A complex screen layout stays with the consumer's
+  classes.
+- A stack or a row of elements with a gap is `flex` with `gap` on the consumer's
+  side; the package does not export `Stack` and `Inline`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Card, Grid } from "@olddevs/ui";
 
 <Grid columns={3}>
-  <Card>Базовый</Card>
-  <Card>Команда</Card>
-  <Card>Компания</Card>
+  <Card>Basic</Card>
+  <Card>Team</Card>
+  <Card>Company</Card>
 </Grid>;
 ```
 
 ## Public API
 
-| Проп           | По умолчанию | Значение                                                                                                             |
-| -------------- | ------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `columns`      | `1`          | Число `1`–`6` — адаптивная лестница (ниже); объект `{ base, sm, md, lg, xl }` — точное число с каждой ширины.        |
-| `minItemWidth` | —            | `120`, `160`, `200`, `240`, `280`, `320` — наименьшая ширина ячейки в пикселях; колонок столько, сколько помещается. |
-| `gap`          | `md`         | Зазор ступенью шкалы: `none` 0, `xs` 8, `sm` 12, `md` 16, `lg` 24, `xl` 32 пикселя.                                  |
-| `as`           | `div`        | Тег: `div`, `ul` или `ol`. Для списка детьми идут `<li>`.                                                            |
-| атрибуты `div` | —            | `className`, `id`, `aria-*`, `data-*` доходят до элемента; `ref` — на него же (`forwardRef`).                        |
+| Prop             | Default | Meaning                                                                                                                     |
+| ---------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `columns`        | `1`     | A number `1`–`6` — a responsive ladder (below); an object `{ base, sm, md, lg, xl }` — the exact number from each width up. |
+| `minItemWidth`   | —       | `120`, `160`, `200`, `240`, `280`, `320` — the minimum cell width in pixels; as many columns as fit.                        |
+| `gap`            | `md`    | The gap as a scale step: `none` 0, `xs` 8, `sm` 12, `md` 16, `lg` 24, `xl` 32 pixels.                                       |
+| `as`             | `div`   | The tag: `div`, `ul` or `ol`. For a list, the children are `<li>`.                                                          |
+| `div` attributes | —       | `className`, `id`, `aria-*`, `data-*` reach the element; `ref` goes to it too (`forwardRef`).                               |
 
-`columns` и `minItemWidth` **взаимоисключающие**, и это сказано типом: колонок
-либо столько, сколько задано, либо столько, сколько помещается. Обе записи сразу
-TypeScript не пропустит. Потребитель на JS их всё же передаст — тогда побеждает
-`minItemWidth`, а `columns` игнорируется, и в режиме разработки консоль один раз
-пишет об этом ([правила предупреждений](../../conventions.md#предупреждения-в-режиме-разработки)).
+`columns` and `minItemWidth` are **mutually exclusive**, and the type says so:
+there are either as many columns as you specify or as many as fit. TypeScript
+does not accept both at once. A JS consumer can still pass both — then
+`minItemWidth` wins and `columns` is ignored, and in development mode the console
+reports it once ([warning rules](../../conventions.md#warnings-in-development-mode)).
 
-Значения — закрытые наборы, а не любые числа: каждый класс написан в исходнике
-целиком, иначе Tailwind его не увидит и сетка молча останется без колонок.
+The values are closed sets, not arbitrary numbers: every class is written out in
+full in the source, otherwise Tailwind would not see it and the grid would
+silently be left without columns.
 
-### Число — адаптивная лестница
+### A number is a responsive ladder
 
-Число в `columns` — **лестница**: оно задаёт число колонок на широком экране,
-на узких их меньше. Это решение владельца, и менять его в пользу «число = ровно столько
-колонок» не нужно. Ровно N колонок на любой ширине — объект `{ base: N }`.
+A single number does not mean "this many columns at any width". It means "this
+many on a wide screen": the number in `columns` is a **ladder, not a fixed
+number**. This is the owner's decision, and there is no need to change it in
+favor of "number = exactly that many columns". Exactly N columns at any width is
+the object `{ base: N }`.
 
-| Ширина экрана        | `columns={1}` | `columns={2}` | `columns={3}`…`{6}` |
-| -------------------- | ------------- | ------------- | ------------------- |
-| до 640               | 1             | 1             | 1                   |
-| с `sm` (640)         | 1             | 2             | 2                   |
-| с `lg` (1024) и шире | 1             | 2             | 3…6                 |
+| Screen width        | `columns={1}` | `columns={2}` | `columns={3}`…`{6}` |
+| ------------------- | ------------- | ------------- | ------------------- |
+| up to 640           | 1             | 1             | 1                   |
+| from `sm` (640)     | 1             | 2             | 2                   |
+| from `lg` (1024) up | 1             | 2             | 3…6                 |
 
-Скачок к полному числу стоит на `lg`, а не на `md`: с `md` `AppShell`
-показывает боковую навигацию, и она забирает у содержимого 240 пикселей. По тому же принципу
-`FormLayout` с `columns={2}` даёт на телефоне одну колонку.
+The jump to the full number sits at `lg`, not `md`: from `md`, `AppShell` shows
+the side navigation, and it takes 240 pixels from the content. `FormLayout` with
+`columns={2}` likewise gives one column on a phone.
 
-### Объект — точное число по брейкпойнтам
+### An object is an exact number per breakpoint
 
 ```tsx
 <Grid columns={{ base: 1, sm: 2, md: 3, xl: 6 }}>{tiles}</Grid>
-<Grid columns={{ base: 3 }}>{tiles}</Grid> // три колонки на любой ширине
+<Grid columns={{ base: 3 }}>{tiles}</Grid> // three columns at any width
 ```
 
-Отсчёт mobile-first, как в Tailwind: значение действует с указанной ширины и
-выше, пока его не перекроет следующий ключ. Брейкпойнты штатные: `sm` 640,
-`md` 768, `lg` 1024, `xl` 1280 пикселей; `base` — с нуля. Это ширина **экрана**,
-а не контейнера: сетка перестраивается вместе с оболочкой. Container queries в ките
-пока нет.
+Breakpoints are mobile-first, as in Tailwind: a value applies from the given width
+and up until the next key overrides it. The breakpoints are the standard ones:
+`sm` 640, `md` 768, `lg` 1024, `xl` 1280 pixels; `base` starts at zero. This is
+the width of the **screen**, not of the container: the grid changes layout at the same
+widths as the shell. The kit has no container queries yet.
 
-### Наименьшая ширина ячейки
+### Minimum cell width
 
 ```tsx
 <Grid minItemWidth={200}>{previews}</Grid>
 ```
 
-Строка заполняется сама: `repeat(auto-fill, minmax(min(100%, 200px), 1fr))`.
-Пустые дорожки остаются (`auto-fill`, не `auto-fit`), поэтому три ячейки на
-широком экране не растягиваются во всю строку — они равны ячейкам полной
-строки. Если ширина контейнера меньше 200 пикселей, ячейка сжимается до этой ширины
-и не выходит за край.
+The grid fills each row automatically: `repeat(auto-fill, minmax(min(100%, 200px), 1fr))`.
+Empty tracks are kept (`auto-fill`, not `auto-fit`), so three cells on a wide
+screen do not stretch across the whole row — they are the same size as the cells
+of a full row. In a container narrower than 200 pixels, a cell shrinks to the
+container's width instead of overflowing the edge.
 
-## Доступность
+## Accessibility
 
-- По умолчанию сетка — `div` и ничего не объявляет: раскладка не смысл.
-- Набор, который и есть список, рисуйте `as="ul"` (или `ol`, если порядок
-  значим) с `<li>` внутри — скринридер объявит список и число элементов. Имя
-  списку — `aria-label`, если рядом нет заголовка.
-- Порядок чтения и табуляции — порядок детей в разметке. Сетка его не меняет и
-  не должна: визуальная перестановка ячеек разошлась бы с клавиатурой.
+- By default the grid is a `div` and announces nothing: layout is not meaning.
+- Render a set that is a list with `as="ul"` (or `ol` if the order matters) and
+  `<li>` inside — the screen reader announces a list and the number of items. Name
+  the list with `aria-label` if there is no heading next to it.
+- The reading and tab order is the order of the children in the markup. The grid
+  does not change it and must not: visually reordering the cells would no longer match
+  the keyboard order.
 
-## Антипаттерны
+## Anti-patterns
 
-- Склеивать класс колонок в рантайме (`` `grid-cols-${n}` ``) — в CSS его не
-  будет. Для этого и есть `columns`.
-- Ставить `columns={4}` и ждать четырёх колонок на телефоне. Нужна неизменная
-  сетка — `columns={{ base: 4 }}`.
-- Передавать `columns` и `minItemWidth` вместе.
-- Класть в `as="ul"` детей не `<li>` — список без элементов скринридер объявит
-  пустым.
-- Брать `Grid` под сотни ячеек: все они будут в DOM — это работа `VirtualGrid`.
+- Building a column class at runtime (`` `grid-cols-${n}` ``) — it is not in
+  the CSS. That is what `columns` is for.
+- Setting `columns={4}` and expecting four columns on a phone. For an unchanging
+  grid use `columns={{ base: 4 }}`.
+- Passing `columns` and `minItemWidth` together.
+- Putting children other than `<li>` into `as="ul"` — a screen reader
+  announces a list without items as empty.
+- Using `Grid` for hundreds of cells: all of them end up in the DOM — that is a
+  job for `VirtualGrid`.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходник: `src/components/content/Grid.tsx`; словарь «значение по брейкпойнтам →
-  классы» — внутренний `src/lib/responsive.ts` (не public API).
-- Тесты: `tests/grid.test.tsx`; каждый класс словаря в собранном CSS —
-  `tests/class-coverage.test.ts`. Число колонок на разной ширине окна jsdom не
-  видит: оно проверено вручную в браузере на историях витрины.
-- Витрина: `src/components/content/Grid.stories.tsx`. Уровень — периферия (ADR-0014):
-  снимков нет.
+- Source: `src/components/content/Grid.tsx`; the "value per breakpoint → classes"
+  map is the internal `src/lib/responsive.ts` (not public API).
+- Tests: `tests/grid.test.tsx`; every class of the map in the built CSS —
+  `tests/class-coverage.test.ts`. jsdom cannot see the column count at different
+  window widths: it was checked by hand in a browser on the showcase stories.
+- Showcase: `src/components/content/Grid.stories.tsx`. The level is periphery
+  (ADR-0014): no snapshots.

@@ -18,8 +18,8 @@ const fields = () => screen.getAllByRole("textbox") as HTMLInputElement[];
 test("the fields are named for a screen reader instead of being nameless", () => {
   render(<Code />);
 
-  // Иначе скринридер читает шесть безымянных полей подряд и место в коде
-  // теряется.
+  // Otherwise a screen reader reads six nameless fields in a row, and the place
+  // in the code gets lost.
   expect(screen.getByRole("textbox", { name: "Digit 1 of 6" })).toBeTruthy();
   expect(screen.getByRole("textbox", { name: "Digit 6 of 6" })).toBeTruthy();
   expect(screen.getByRole("group", { name: "SMS code" })).toBeTruthy();
@@ -40,8 +40,8 @@ test("pasting the whole code fills every field", async () => {
   fields()[0]!.focus();
   await user.paste("123456");
 
-  // Код приходит из СМС целиком; при `maxLength=1` браузер сам обрезал бы
-  // вставленное до первой цифры.
+  // The code arrives from an SMS in full; with `maxLength=1` the browser itself
+  // would trim the paste down to the first digit.
   expect(fields().map((f) => f.value)).toEqual(["1", "2", "3", "4", "5", "6"]);
 });
 
@@ -82,7 +82,8 @@ test("Backspace on an empty field moves focus back and erases the digit", async 
   fields()[2]!.focus();
   await user.keyboard("{Backspace}");
 
-  // Иначе фокус упирается в пустое поле и стереть предыдущую цифру нечем.
+  // Otherwise focus stops at an empty field, and there is nothing to erase the
+  // previous digit with.
   expect(fields().map((f) => f.value)).toEqual(["1", "", "", "", "", ""]);
   expect(document.activeElement).toBe(fields()[1]);
 });
@@ -105,7 +106,7 @@ test("a string goes outwards, not an array", () => {
 
   fireEvent.change(screen.getAllByRole("textbox")[0]!, { target: { value: "9" } });
 
-  // Потребителю нужен код целиком: он уходит в запрос одной строкой.
+  // The consumer needs the whole code: it goes into the request as one string.
   expect(onChange).toHaveBeenCalledWith("9");
 });
 
@@ -129,10 +130,10 @@ test("deleting in the middle shifts the rest — the value is one, there are no 
 });
 
 /**
- * Регрессия. Фокус выделяет содержимое поля, поэтому буква поверх занятой
- * цифры приходит в обработчик как замена. Не отличая её от очистки, компонент
- * СТИРАЛ цифру за символ, который даже не показал: «482913» превращалось в
- * «48913» от одного нажатия не той клавиши.
+ * Regression. Focus selects the contents of a field, so a letter typed over an occupied
+ * digit reaches the handler as a replacement. Without telling it apart from a clear, the
+ * component ERASED the digit for a character it did not even show: "482913" became "48913"
+ * after a single wrong key press.
  */
 test("a non-digit over an occupied field erases nothing", async () => {
   const user = userEvent.setup();

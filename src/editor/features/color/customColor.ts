@@ -1,55 +1,53 @@
 /**
- * Произвольный цвет Редактора ДАННЫМИ: единственная форма, в которой он
- * существует в документе, и разбор, который её сторожит.
+ * A custom Editor color as DATA: the only form in which it exists in the document, and the parser
+ * that guards that form.
  *
- * ЗАЧЕМ `style`, КОГДА ВЕЗДЕ ИМЕНА. Палитры (`palette.ts`) — имена, и
- * значение подставляет тема. Произвольный цвет — это значение автора, и имени у
- * него нет; единственный носитель значения в HTML, который понимают и браузер,
- * и письмо, и экспорт, — `style`. Исключение из правила «`style` в документе
- * нет» УЗКОЕ и утверждено владельцем: одно объявление, один
- * шестнадцатеричный цвет, два тега.
+ * WHY `style` WHEN EVERYWHERE ELSE THERE ARE NAMES. The palettes (`palette.ts`) are names, and the
+ * theme substitutes the value. A custom color is the author's value, and it has no name. The only
+ * carrier of a value in HTML that the browser, the email client and the export all understand is
+ * `style`. The exception to "no `style` in a Document" is NARROW and was approved by the owner: one
+ * declaration, one hex color, two tags.
  *
- *   - `<span style="color:#rrggbb">` — цвет текста;
- *   - `<mark style="background-color:#rrggbb">` — маркер.
+ *   - `<span style="color:#rrggbb">` — text color;
+ *   - `<mark style="background-color:#rrggbb">` — highlight.
  *
- * Строчные буквы, ровно шесть цифр, ничего больше в `style` и никогда вместе с
- * `data-color` на одном элементе: цвет у метки один, палитры или произвольный.
+ * Lowercase letters, exactly six digits, nothing else in `style`, and never together with
+ * `data-color` on the same element: a Mark has one color, either from the palette or a custom one.
  *
- * ЧТО ПРИНИМАЕТСЯ ИЗ ЧУЖОГО HTML (загрузка и вставка). Только это объявление —
- * без учёта регистра и пробелов, с необязательной точкой с запятой; регистр
- * приводится к нижнему. Всё остальное — `#abc`, `rgb()`, `red`, `var(--x)`,
- * `!important`, второе объявление рядом — отбрасывается вместе с обёрткой,
- * текст остаётся. Перевод `rgb(255, 0, 0)` в `#ff0000` (так пишут Word и
- * Google Docs) технически прост, но расширил бы поверхность разбора форматами,
- * которые санитайзер на сервере потребителя обязан был бы знать тоже, а
- * угадывание за автора кит отверг уже для палитры (`styleExtensions.ts`).
- * Строгая форма — это ещё и то, что очистка `sanitizeRichText` проверяет одним
- * регулярным выражением (`RICH_TEXT_SCHEMA.customColor`).
+ * WHAT IS ACCEPTED FROM FOREIGN HTML (loading and pasting). Only this declaration, case- and
+ * whitespace-insensitive, with an optional trailing semicolon; the case is lowered. Everything else
+ * (`#abc`, `rgb()`, `red`, `var(--x)`, `!important`, a second declaration next to it) is dropped
+ * together with the wrapper, and the text stays. Converting `rgb(255, 0, 0)` to `#ff0000` (as Word
+ * and Google Docs write it) is technically simple, but it would widen the parser with formats that
+ * the consumer's server sanitizer would also have to know, and guessing on the author's behalf is
+ * something the kit already rejected for the palette (`styleExtensions.ts`). The strict form is
+ * also what the sanitization in `sanitizeRichText` checks with one regular expression
+ * (`RICH_TEXT_SCHEMA.customColor`).
  *
- * Модуль серверно-безопасен: данные и чистые функции, без импортов.
+ * The module is safe on the server: data and pure functions, no imports.
  */
 
-/** Свойство CSS, которое несёт цвет, по тегу метки. */
+/** The CSS property that carries the color, by the tag of the Mark. */
 export const CUSTOM_COLOR_PROPERTY = {
   span: "color",
   mark: "background-color",
 } as const;
 
-/** Вид произвольного цвета: текст или маркер. */
+/** Kind of custom color: text or highlight. */
 export type CustomColorKind = "text" | "highlight";
 
-/** Свойство CSS по виду цвета. */
+/** CSS property by kind of color. */
 export const CUSTOM_COLOR_PROPERTY_BY_KIND: Record<CustomColorKind, string> = {
   text: CUSTOM_COLOR_PROPERTY.span,
   highlight: CUSTOM_COLOR_PROPERTY.mark,
 };
 
-/** Шестнадцатеричный цвет в каноничной записи: `#rrggbb`, строчные. */
+/** Hex color in its canonical form: `#rrggbb`, lowercase. */
 export const CUSTOM_COLOR_PATTERN = /^#[0-9a-f]{6}$/;
 
 /**
- * `#RRGGBB` → `#rrggbb`; всё остальное — `null`. Входит и в команды, и в разбор,
- * так что значение с другим регистром не создаёт двух записей одного цвета.
+ * `#RRGGBB` → `#rrggbb`; anything else gives `null`. This is used both in the commands and in
+ * parsing, so a value with another case does not create two entries for one color.
  */
 export function normalizeCustomColor(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -58,9 +56,9 @@ export function normalizeCustomColor(value: unknown): string | null {
 }
 
 /**
- * Цвет из значения `style` — только если это ОДНО объявление нужного свойства
- * с `#rrggbb`. Пробелы вокруг и хвостовая `;` терпятся: так браузер сам пишет
- * `style` после правки через DOM.
+ * A color from a `style` value, only if it is ONE declaration of the needed property with
+ * `#rrggbb`. Spaces around it and a trailing `;` are tolerated, since that is how the browser
+ * itself writes `style` after an edit through the DOM.
  */
 export function customColorFromStyle(
   style: string | null,
@@ -71,7 +69,7 @@ export function customColorFromStyle(
   return match && match[1]!.toLowerCase() === property ? normalizeCustomColor(match[2]) : null;
 }
 
-/** Значение `style`, как его пишет Редактор: `color:#ff0000`, без пробелов и `;`. */
+/** The `style` value as the Editor writes it: `color:#ff0000`, with no spaces and no `;`. */
 export function customColorStyle(
   property: (typeof CUSTOM_COLOR_PROPERTY)[keyof typeof CUSTOM_COLOR_PROPERTY],
   color: string
@@ -80,10 +78,10 @@ export function customColorStyle(
 }
 
 /**
- * Допустимое значение `style` по тегу — регулярным выражением СТРОКОЙ, как его
- * публикует Схема (`RICH_TEXT_SCHEMA.customColor.styles`): строка не зависит от
- * движка регулярных выражений санитайзера и переносится в конфиг как есть.
- * Значение без пробелов и без `;` — именно так его пишет Редактор.
+ * The allowed `style` value by tag, as a regular expression STRING, the way the Schema publishes it
+ * (`RICH_TEXT_SCHEMA.customColor.styles`). A string does not depend on the sanitizer's regex engine,
+ * so it is carried into the config as is. The value has no spaces and no `;`, which is exactly how
+ * the Editor writes it.
  */
 export const CUSTOM_COLOR_STYLE_PATTERN = {
   span: `^${CUSTOM_COLOR_PROPERTY.span}:#[0-9a-f]{6}$`,

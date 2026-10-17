@@ -11,18 +11,18 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Таблицы Редактора (OLDSUI-45).
+ * Editor tables (OLDSUI-45).
  *
- * Через публичный `RichTextEditor`, как остальные тесты: вставка — Меню
- * вставки, клавиши — настоящие `keydown`. Меню «Таблица» на Панели —
+ * Through the public `RichTextEditor`, like the other tests: insertion goes through the
+ * insert menu, and the keys are real `keydown` events. The "Table" menu on the Toolbar is in
  * `rich-text-editor-table-menu.test.tsx`.
- * Курсор ставится командами движка: jsdom не умеет ввода в `contenteditable`.
+ * The caret is placed with engine commands: jsdom cannot type into `contenteditable`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -62,12 +62,12 @@ test("the Table item of the insert menu adds a 3x3 table with a header row", () 
   expect(editor.getHTML()).toBe(
     `<p>Intro </p><table><tbody>${row("th", 3)}${row("td", 3)}${row("td", 3)}</tbody></table>`
   );
-  // Курсор — в первой ячейке: набор продолжается в таблице.
+  // The caret is in the first cell: typing continues in the table.
   expect(editor.state.selection.$from.parent.type.name).toBe("paragraph");
   expect(editor.isActive("tableHeader")).toBe(true);
 });
 
-/** Таблица, какой её присылают чужие редакторы: ширины, слияние, выравнивание, стили. */
+/** A table as other editors send it: widths, merging, alignment, styles. */
 const FOREIGN_TABLE =
   '<table class="grid" style="width:100%" border="1">' +
   '<colgroup><col style="width:30%"><col></colgroup>' +
@@ -75,7 +75,7 @@ const FOREIGN_TABLE =
   '<tbody><tr><td rowspan="2" colwidth="100" align="right" onclick="steal()">a</td><td>b</td></tr>' +
   "<tr><td>c</td></tr></tbody></table>";
 
-/** То, что Схема разрешает ячейке, и только оно: слияние, `data-align`. */
+/** What the Schema allows a cell, and only that: merging, `data-align`. */
 const FOREIGN_LEFTOVERS =
   /style|colwidth|class|[^-]align=|scope|border|onclick|colgroup|<col[\s>]|thead|caption/;
 
@@ -85,8 +85,8 @@ test("a loaded table keeps its merges and nothing else: no style, widths, classe
   const html = handle.getHTML();
   expect(html).toMatch(/^<table><tbody>.*<\/tbody><\/table>$/);
   expect(html).not.toMatch(FOREIGN_LEFTOVERS);
-  // Слияние из чужой таблицы (Word, Excel, Google Docs) сохраняется, а её
-  // `text-align` и `align` становятся `data-align`.
+  // Merged cells from a foreign table (Word, Excel, Google Docs) are kept, and its
+  // `text-align` and `align` become `data-align`.
   expect(html).toContain('<th colspan="2" data-align="center"><p>Head</p></th>');
   expect(html).toContain('<td rowspan="2" data-align="right"><p>a</p></td>');
   expect(html.match(/<tr>/g)).toHaveLength(3);
@@ -116,7 +116,7 @@ test("spans the Schema does not allow become 1: zero, fractions, units and over 
       '<tr><td colspan=" 2 "><p>z</p></td></tr></tbody></table>',
   });
   expect(handle.getHTML()).toContain('colspan="20"');
-  // Пробелы по краям браузер и DOMPurify снимают — Редактор тоже.
+  // The browser and DOMPurify strip spaces at the edges, and so does the Editor.
   expect(handle.getHTML()).toContain('<td colspan="2"><p>z</p></td>');
   expect(handle.getHTML()).toContain('rowspan="50"');
 });
@@ -139,8 +139,8 @@ test("data-align on a cell is kept only with a known value; left is the default 
 });
 
 /*
-  Таблица из Word, Excel или Google Docs выравнивает ячейки `style` или
-  устаревшим `align`: они читаются как `data-align`, а сами не пишутся.
+  A table from Word, Excel or Google Docs aligns cells with `style` or the obsolete
+  `align`: they are read as `data-align`, and are not written themselves.
 */
 test("text-align style and the align attribute on cells become data-align; justify writes nothing", () => {
   const { handle } = renderEditor({
@@ -169,7 +169,7 @@ test("a table typed by the toolbar commands never writes style or widths either"
   expect(editor.getHTML()).toBe(`<table><tbody>${row("td", 3)}${row("td", 3)}</tbody></table>`);
 });
 
-/** Таблица 2x2 с заголовком и текстом в каждой ячейке; курсор — в ячейке «a2». */
+/** A 2x2 table with a header and text in each cell; the caret is in the cell "a2". */
 const TABLE =
   "<table><tbody>" +
   "<tr><th><p>h1</p></th><th><p>h2</p></th></tr>" +
@@ -177,7 +177,7 @@ const TABLE =
   "<tr><td><p>b1</p></td><td><p>b2</p></td></tr>" +
   "</tbody></table>";
 
-/** Курсор в конец ячейки с этим текстом. */
+/** Puts the caret at the end of the cell with this text. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -192,7 +192,7 @@ const cells = (editor: Editor) =>
     Array.from(tr.children).map((cell) => cell.textContent)
   );
 
-/** Текст ячейки под кареткой. */
+/** The text of the cell under the caret. */
 const here = (editor: Editor) => editor.state.selection.$from.parent.textContent;
 
 test("Tab and Shift+Tab walk the cells in reading order", () => {
@@ -230,10 +230,10 @@ test("Tab in the last cell adds a row and moves into it; Shift+Tab in the first 
 });
 
 /*
-  Таблица — последний Блок: `↓` из ЛЮБОЙ ячейки последней строки ставит щель
-  за таблицей. Движок таблиц сам искал место через `Selection.near` и, не найдя
-  его за таблицей, возвращал каретку в последнюю ячейку — выйти удавалось лишь
-  второй стрелкой. `↑` из первой строки таблицы, стоящей первой, — щель перед ней.
+  The table is the last Block: `↓` from ANY cell of the last row places a gap
+  cursor after the table. The table engine itself looked for a place through `Selection.near` and,
+  not finding one after the table, moved the caret back into the last cell, so leaving took a
+  second arrow. `↑` from the first row of a table that comes first places a gap cursor before it.
 */
 test("an arrow out of the edge row of a table that ends the document puts a gap cursor past it", () => {
   const { editor } = renderEditor({ defaultValue: TABLE });
@@ -249,7 +249,7 @@ test("an arrow out of the edge row of a table that ends the document puts a gap 
   expect(editor.state.selection.constructor.name).toBe("GapCursor");
   expect(editor.state.selection.from).toBe(0);
 
-  // Не крайняя строка — ход по ячейкам остаётся за движком таблиц.
+  // Not an edge row: moving between cells stays with the table engine.
   caretIn(editor, "a1");
   press(editor, "ArrowDown");
   expect(here(editor)).toBe("b1");
@@ -265,9 +265,9 @@ test("with a paragraph past the table the arrow lands in it, not on a gap cursor
 });
 
 /*
-  Alt+↓ (⌥↓) — строка под текущей, каретка в том же столбце новой строки
-  (решение владельца, OLDSUI-45). Только в таблице: вне неё сочетание
-  остаётся браузеру.
+  Alt+↓ (⌥↓) adds the row below the current one, with the caret in the same column of the
+  new row (the owner's decision, OLDSUI-45). Only inside a table: elsewhere the shortcut
+  stays with the browser.
 */
 test("Alt+ArrowDown in a cell adds a row below and moves the caret into the same column", () => {
   const { editor } = renderEditor({ defaultValue: TABLE });
@@ -283,8 +283,8 @@ test("Alt+ArrowDown in a cell adds a row below and moves the caret into the same
   ]);
   const { $from } = editor.state.selection;
   expect($from.parent.textContent).toBe("");
-  expect($from.index(-3)).toBe(2); // строка в таблице
-  expect($from.index(-2)).toBe(1); // ячейка в строке
+  expect($from.index(-3)).toBe(2); // row in the table
+  expect($from.index(-2)).toBe(1); // cell in the row
 });
 
 test("one undo takes the row added by Alt+ArrowDown away", () => {
@@ -302,7 +302,7 @@ test("one undo takes the row added by Alt+ArrowDown away", () => {
   ]);
 });
 
-/** Клавиша, отпущенная Редактором: `defaultPrevented` снят — её получит браузер. */
+/** A key released by the Editor: `defaultPrevented` is cleared, so the browser receives it. */
 function altDownReachesBrowser(editor: Editor): boolean {
   const event = new KeyboardEvent("keydown", {
     key: "ArrowDown",
@@ -389,7 +389,7 @@ test("inserting a table from an empty cell puts it after the current table, not 
   const html = editor.getHTML();
   expect(html.match(/<table>/g)).toHaveLength(2);
   expect(html).toMatch(/<\/table><table>/);
-  // Каретка — в первой ячейке новой таблицы.
+  // The caret is in the first cell of the new table.
   expect(editor.isActive("tableHeader")).toBe(true);
 });
 
@@ -420,10 +420,10 @@ test("a table with rows of unequal length is padded when the editor starts, with
       "<table><tbody><tr><th>Head</th></tr><tr><td>a</td><td>b</td></tr></tbody></table>",
   });
 
-  // Выравнивание идёт на `create`, который Tiptap шлёт таймером после монтажа.
+  // The alignment runs on `create`, which Tiptap sends with a timer after mounting.
   await waitFor(() => expect(cells(editor).map((r) => r.length)).toEqual([2, 2]));
   expect(onChange).not.toHaveBeenCalled();
-  // Команда на выровненной таблице работает: до выравнивания она бросала.
+  // A command on an aligned table works: before the alignment, it threw.
   caretIn(editor, "a");
   act(() => void editor.commands.toggleHeaderRow());
   expect(editor.getHTML()).toContain("<td><p>Head</p></td>");

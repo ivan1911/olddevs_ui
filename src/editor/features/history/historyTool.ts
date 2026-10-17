@@ -5,16 +5,15 @@ import { SHORTCUT_KEYS } from "../../core/shortcuts.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 
 /**
- * Отмена и повтор на описании Инструмента.
+ * Undo and redo on the Tool description.
  *
- * Расширение — доля StarterKit (`undoRedo`): `{}` включает его умолчание так же,
- * как прежний `undefined`. Клавиши `Mod+Z` и `Mod+Shift+Z` вешает оно, а не
- * кнопки: поэтому у кнопок `keys` (подпись для подсказки, `aria-keyshortcuts` и
- * справочника), а не `shortcut` — тот привязал бы клавишу второй раз. Строки
- * справочника — те же кнопки с группой «История» (`shortcutGroup`), отдельных
- * `shortcuts` у Инструмента нет: иначе строка встала бы дважды.
+ * The extension is part of StarterKit (`undoRedo`): `{}` turns it on with its default, just as the
+ * former `undefined` did. `Mod+Z` and `Mod+Shift+Z` are bound by the extension, not by the buttons.
+ * So the buttons have `keys` (the hint label, `aria-keyshortcuts` and the reference), not `shortcut`,
+ * which would bind the key a second time. The reference rows are the same buttons in the "History"
+ * group (`shortcutGroup`); the Tool has no separate `shortcuts`, or the row would appear twice.
  *
- * Место кнопок — последняя группа Панели (`slot("history")`, `EditorToolbar.tsx`).
+ * The buttons go in the last group of the Toolbar (`slot("history")`, `EditorToolbar.tsx`).
  */
 export const HISTORY_TOOL: ToolDescriptor = {
   name: "history",

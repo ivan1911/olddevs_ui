@@ -15,52 +15,52 @@ export interface InlineEditProps extends Omit<
   ComponentPropsWithoutRef<"div">,
   "onChange" | "children" | "defaultValue"
 > {
-  /** Подтверждённое значение. Компонент его не хранит. */
+  /** The confirmed value. The component does not store it. */
   value: string;
-  /** Подтверждение правки. Вызывается, только когда значение изменилось. */
+  /** Called when an edit is confirmed, and only if the value has changed. */
   onChange: (value: string) => void;
   /**
-   * Доступное имя поля. Обязательно и проверяется компилятором: без него
-   * правка по месту даёт поле без имени ровно в момент ввода. Имя кнопки
-   * строится из значения и слова «изменить» из каталога сообщений.
+   * The accessible name of the field. Required, and enforced by the compiler: without it, in-place
+   * editing produces a field with no name at the very moment of typing. The button's name is built
+   * from the value and the word "edit" from the message catalog.
    */
   label: string;
-  /** Режим правки. Без пропа компонент ведёт его сам. */
+  /** Edit mode. If the prop is omitted, the component manages it itself. */
   editing?: boolean;
-  /** Вызывается при входе в режим правки и выходе из него и получает новое состояние. */
+  /** Called when edit mode is entered or left; receives the new state. */
   onEditingChange?: (editing: boolean) => void;
-  /** Что показать на кнопке, когда значение пустое. */
+  /** What to show on the button when the value is empty. */
   placeholder?: string;
-  /** Выключает правку: кнопка-значение не открывает поле. */
+  /** Disables editing: the value button does not open the field. */
   disabled?: boolean;
 }
 
 /**
- * Правка значения по месту: кнопка-значение → поле → подтверждение.
+ * In-place value editing: the value button → the field → confirmation.
  *
- * ПОДТВЕРЖДЁННОЕ ЗНАЧЕНИЕ НЕ ХРАНИТСЯ. Внутри живёт только черновик правки — то,
- * что набирают прямо сейчас; подтверждение уходит наружу, и следующим кадром
- * значение приходит пропом. Компонент, хранящий подтверждённое, показывал бы
- * своё после отказа сервера сохранить.
+ * THE CONFIRMED VALUE IS NOT STORED. Only the edit draft lives inside: what is being typed
+ * right now. The confirmation goes out, and on the next frame the value arrives as a prop.
+ * A component that stored the confirmed value would keep showing its own after the server
+ * refused to save.
  *
- * ОТМЕНА ПО ESCAPE — ТРЕБОВАНИЕ, А НЕ УДОБСТВО. Без неё пользователь, начавший
- * править по ошибке, не может выйти, не сохранив: щелчок мимо подтверждает,
- * Enter подтверждает, и выхода без записи не остаётся.
+ * CANCELLING WITH ESCAPE IS A REQUIREMENT, NOT A CONVENIENCE. Without it, a user who started
+ * editing by mistake cannot leave without saving: a click outside confirms, Enter confirms,
+ * and there is no way out without writing.
  *
- * ФОКУС — ГЛАВНОЕ, ЧТО ЗДЕСЬ ЕСТЬ, и потому проверяется в живом браузере:
+ * FOCUS IS THE MAIN THING HERE, and so it is checked in a live browser:
  *
- * - открытие ставит курсор в поле, а не оставляет его на кнопке — иначе
- *   пользователь клавиатуры открыл поле и печатает в никуда;
- * - Escape возвращает и значение, и фокус на кнопку;
- * - Enter подтверждает и тоже возвращает фокус на кнопку: поле исчезает, и без
- *   возврата фокус уезжает на `<body>`;
- * - щелчок мимо подтверждает и фокус НЕ забирает: пользователь ушёл туда,
- *   куда хотел.
+ * - opening places the caret in the field, rather than leaving it on the button: otherwise
+ *   a keyboard user opens the field and types into nothing;
+ * - Escape returns both the value and the focus to the button;
+ * - Enter confirms and also returns focus to the button: the field disappears, and without
+ *   the return the focus would drop to `<body>`;
+ * - a click outside confirms and does NOT take focus back: the user has moved on
+ *   to where they wanted to go.
  *
- * Режим правки можно вести снаружи (`editing` + `onEditingChange`) — так же,
- * как сворачивание у `SideNav`. Без пропа компонент ведёт его сам: три строки
- * состояния, повторённые каждым потребителем, — это не «состояние у
- * потребителя», а переписанный компонент.
+ * The edit mode can be driven from outside (`editing` + `onEditingChange`), the same way
+ * as collapsing in `SideNav`. Without the prop, the component manages it itself: three lines
+ * of state repeated by each consumer would not be "state in the consumer": it would be a
+ * component rewritten in every screen.
  */
 export function InlineEdit({
   value,
@@ -81,11 +81,11 @@ export function InlineEdit({
   const [draft, setDraft] = useState(value);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const fieldRef = useRef<HTMLInputElement>(null);
-  // Возврат фокуса нужен НЕ всегда: после щелчка мимо забирать фокус обратно
-  // значит уводить его оттуда, куда пользователь только что ушёл.
+  // Focus is NOT always returned: after a click outside, taking focus back
+  // would pull it away from where the user has just gone.
   const returnFocus = useRef(false);
-  // Escape снимает режим сам, и вслед за ним не должно сработать подтверждение
-  // по потере фокуса.
+  // Escape clears the mode itself, and the confirmation on focus loss must not
+  // fire right after it.
   const cancelling = useRef(false);
 
   const setOpen = (next: boolean) => {
@@ -96,25 +96,25 @@ export function InlineEdit({
   useLayoutEffect(() => {
     if (open) {
       /*
-        Черновик берётся из значения на КАЖДОМ открытии, а не только в `start()`.
+        The draft is taken from the value on EVERY opening, not only in `start()`.
 
-        `start()` — обработчик кнопки, и открытие снаружи (`editing` пропом —
-        документированный сценарий: правка из меню строки) до него не доходило.
-        В поле оставался черновик с монтирования: пришедшее с сервера значение
-        не подхватывалось, а blur подтверждал устаревший текст поверх нового —
-        тихий откат. Отменённый Escape'ом текст возвращался тем же путём.
+        `start()` is the button's handler, and opening from outside (`editing` as a prop, a
+        documented scenario: editing from a row menu) never reached it.
+        The field kept the draft from mount: a value that came from the server was not picked up,
+        and blur confirmed the stale text over the new one: a silent rollback.
+        Text cancelled with Escape came back the same way.
       */
       setDraft(value);
       cancelling.current = false;
       /*
-        Значение кладётся в DOM СИНХРОННО, до `select()`.
+        The value is written to the DOM SYNCHRONOUSLY, before `select()`.
 
-        `setDraft` — это запрос на рендер, а не запись: к моменту `select()` в
-        поле ещё старый текст, и React дофлашивает новый сразу после эффекта,
-        схлопывая выделение в конец. Видно это ровно в том сценарии, ради
-        которого синхронизация и заводилась: открытие снаружи, когда значение
-        успело смениться. В обычном пути (щелчок по кнопке) `setDraft` —
-        no-op, рендера нет, и выделение случайно уцелевало.
+        `setDraft` is a render request, not a write: by the time `select()` runs, the field
+        still holds the old text, and React flushes the new one right after the effect,
+        collapsing the selection to the end. This shows up exactly in the scenario the sync was added for:
+        opening from outside while the value has changed in the meantime.
+        On the usual path (a click on the button) `setDraft` is a no-op,
+        so there is no render, and the selection survives by accident.
       */
       if (fieldRef.current) fieldRef.current.value = value;
       fieldRef.current?.focus();
@@ -125,9 +125,9 @@ export function InlineEdit({
       returnFocus.current = false;
       buttonRef.current?.focus();
     }
-    // Зависимость ТОЛЬКО `open`, и это намеренно: правка значения снаружи при
-    // уже открытой форме не должна затирать то, что пользователь набрал.
-    // Эффект стреляет на переходе режима, а не на смене значения.
+    // The dependency is ONLY `open`, on purpose: an external change of the value while the form
+    // is already open must not overwrite what the user has typed.
+    // The effect fires on a change of mode, not on a change of value.
   }, [open]);
 
   const start = () => setOpen(true);
@@ -193,9 +193,9 @@ export function InlineEdit({
             value
           )}
           {/*
-            Имя кнопки строится из содержимого: значение обязано быть в имени.
-            `aria-label` вытеснил бы его, и скринридер объявлял бы «изменить
-            название», не читая того, что там написано.
+            The button's name is built from its content: the value must be part of the name.
+            An `aria-label` would replace it, and a screen reader would announce "edit
+            name" without reading what is written there.
           */}
           <span className="sr-only">, {messages.inlineEdit.edit}</span>
         </button>

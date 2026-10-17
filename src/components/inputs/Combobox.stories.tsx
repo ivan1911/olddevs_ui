@@ -19,7 +19,7 @@ const meta = {
   title: "Inputs/Combobox",
   component: Combobox,
   parameters: { layout: "padded" },
-  // Периферия: снимков нет, планка по ADR-0014.
+  // Periphery: no snapshots; the bar is set by ADR-0014.
   tags: ["periphery"],
   args: { items: CATEGORIES, placeholder: "Category" },
 } satisfies Meta<ComboboxProps>;
@@ -36,8 +36,8 @@ export const Playground: Story = {
 };
 
 /**
- * Свободный ввод — то, чем `Combobox` отличается от `Select`: значение может
- * не совпасть ни с одним пунктом.
+ * Free input is what sets `Combobox` apart from `Select`: the value may not match
+ * any item.
  */
 export const FreeInput: Story = {
   render: function Render(args) {
@@ -75,12 +75,12 @@ export const InForm: Story = {
 };
 
 /**
- * Список подсказок внутри модального слоя Radix — `Dialog` или `Drawer`.
+ * A suggestion list inside a modal Radix layer, that is, a `Dialog` or a `Drawer`.
  *
- * Список живёт в портале react-aria прямо под `<body>`, а модальный Radix гасит
- * у `<body>` `pointer-events`. Пока кит не возвращал оверлею react-aria
- * указатель, вариант выбирался только с клавиатуры, а щелчок проваливался на
- * подложку. Проверяется в `tests-visual/interactions.spec.ts`.
+ * The list lives in a react-aria portal directly under `<body>`, while the modal Radix
+ * switches off `pointer-events` on `<body>`. Until the kit gave the react-aria overlay
+ * the pointer back, an option could be selected only from the keyboard, and a click fell
+ * through to the backdrop. Checked in `tests-visual/interactions.spec.ts`.
  */
 function InsideModal({ args, layer }: { args: ComboboxProps; layer: "dialog" | "drawer" }) {
   const [open, setOpen] = useState(true);
@@ -96,7 +96,7 @@ function InsideModal({ args, layer }: { args: ComboboxProps; layer: "dialog" | "
     </div>
   );
   return layer === "dialog" ? (
-    // Ширина и отступы тела — как в историях Dialog: у самого `Dialog` умолчаний нет.
+    // The body's width and padding match the Dialog stories: `Dialog` itself has no defaults.
     <Dialog
       open={open}
       onClose={() => setOpen(false)}

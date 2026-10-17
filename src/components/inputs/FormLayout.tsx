@@ -5,55 +5,55 @@ import { cn } from "../../lib/cn.js";
 import { FieldLayoutProvider } from "./FormField.js";
 
 export interface FormLayoutProps extends ComponentPropsWithoutRef<"div"> {
-  /** Число колонок. На узких экранах колонка всегда одна — это делает CSS. */
+  /** The number of columns. On narrow screens there is always one column, handled by CSS. */
   columns?: 1 | 2;
-  /** Где стоят подписи полей: над полем или в колонке слева. */
+  /** Where the field labels sit: above the field, or in a column on the left. */
   labels?: "top" | "side";
   /**
-   * Ширина колонки подписей — любая длина CSS.
+   * The width of the label column: any CSS length.
    *
-   * Проп, а не только переменная, потому что ширина зависит от самых длинных
-   * подписей ЭТОЙ формы, а не от темы: подобрать её глобально нельзя.
+   * This is a prop rather than only a variable, because the width depends on the longest
+   * labels of THIS form, not on the theme, so it cannot be set globally.
    */
   labelWidth?: string;
 }
 
 /**
- * Раскладка формы: колонки и место подписей.
+ * Form layout: the columns and the placement of labels.
  *
- * ОТВЕЧАЕТ ТОЛЬКО ЗА ПОЗИЦИЮ УЗЛОВ. Ни валидации, ни состава полей, ни
- * состояния: `Form` отказался от собственной валидации осознанно, и раскладка
- * этого не пересматривает. Признак нарушения границы проверяемый — проп,
- * который влияет не на позицию узлов, а на их состав (ADR-0025).
+ * IT ONLY CONTROLS THE POSITION OF NODES. It does not handle validation, the set of fields, or
+ * state: `Form` deliberately gave up its own validation, and the layout
+ * does not revisit that. A breach of the boundary is easy to check: a prop
+ * that changes the set of nodes rather than their position is the sign of it (ADR-0025).
  *
- * СЕТКА НА CSS, А НЕ РАСЧЁТ В JS. Одна колонка на узких экранах включается
- * медиазапросом: раскладка, зависящая от `matchMedia`, до гидратации
- * показывает неверную, и первый кадр формы приходится на неё.
+ * THE GRID IS CSS, NOT A CALCULATION IN JS. The single column on narrow screens is switched on
+ * by a media query: a layout that depends on `matchMedia` shows the wrong layout until hydration,
+ * and the form's first frame lands on it.
  *
- * ПОДПИСИ СЛЕВА — ЭТО ОСЬ `FormField`, А НЕ ЭТОГО КОМПОНЕНТА. Раскладка лишь
- * передаёт её контекстом: подпись рисует поле, и перенести её снаружи
- * невозможно. Отсюда следствие, которое стоит знать заранее: `labels="side"`
- * действует на `FormField` и молча не применяется к чужим детям — `<input>`
- * потребителя раскладка позиционирует, но подписи у него не видит.
+ * LEFT-SIDE LABELS ARE THE AXIS OF `FormField`, NOT OF THIS COMPONENT. The layout only
+ * passes it down through context: the field draws its label, so it cannot be moved
+ * from outside. So one consequence is worth knowing up front: `labels="side"`
+ * applies to `FormField` and silently does nothing for foreign children: the consumer's `<input>`
+ * is positioned by the layout, but it never sees a label.
  *
- * `Fieldset` отдельным компонентом не заводится: группировка с подписью — это
- * родные `<fieldset>` и `<legend>`, и обёртка вокруг них не добавила бы
- * ничего, кроме имени в экспорте.
+ * `Fieldset` is not added as a separate component: a labelled group is the native
+ * `<fieldset>` and `<legend>`, and a wrapper around them would add nothing
+ * except a name in the exports.
  */
 export const FormLayout = forwardRef<HTMLDivElement, FormLayoutProps>(function FormLayout(
   { columns = 1, labels = "top", labelWidth, className, style, ...rest },
   ref
 ) {
   return (
-    // «Сверху» у поля называется `stack`: у раскладки это место подписи, у поля
-    // — способ сложить свои узлы. Переименовывать одно в другое хуже, чем
-    // сопоставить их в одной строке.
+    // The field's "top" option is called `stack`: for the layout it is the label position, for the field
+    // it is how to stack its own nodes. Renaming one to the other is worse than
+    // mapping them in one line.
     <FieldLayoutProvider value={labels === "side" ? "side" : "stack"}>
       <div
         ref={ref}
         className={cn("grid gap-4", columns === 2 && "sm:grid-cols-2", className)}
-        // Свой проп сильнее чужого `style`: он именованный и явный, а
-        // переменная в `style` — способ обойти отсутствие пропа.
+        // An own prop wins over a foreign `style`: it is named and explicit, while
+        // a variable in `style` is a way to get around the missing prop.
         style={
           labelWidth != null ? ({ ...style, "--form-label-w": labelWidth } as CSSProperties) : style
         }
@@ -66,11 +66,11 @@ export const FormLayout = forwardRef<HTMLDivElement, FormLayoutProps>(function F
 export type FieldRowProps = ComponentPropsWithoutRef<"div">;
 
 /**
- * Поле во всю ширину раскладки: адрес, длинное описание, блок кнопок.
+ * A field spanning the full width of the layout: an address, a long description, a button block.
  *
- * `col-span-full`, а не `col-span-2`: строка обязана занимать столько колонок,
- * сколько их есть. Фиксированные две в одноколоночной раскладке создали бы
- * неявную вторую колонку — форма разъехалась бы там, где ничего не меняли.
+ * `col-span-full`, not `col-span-2`: the row must take up as many columns as there are,
+ * because a fixed two would create an implicit second column in a one-column layout.
+ * The form would break apart where nothing was changed.
  */
 export const FieldRow = forwardRef<HTMLDivElement, FieldRowProps>(function FieldRow(
   { className, ...rest },

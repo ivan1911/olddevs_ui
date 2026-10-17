@@ -9,41 +9,42 @@ story: src/components/overlays/HoverCard.stories.tsx
 
 # HoverCard
 
-## Кратко для AI
+## Summary for AI
 
-`HoverCard` — карточка-превью: при наведении на имя или ссылку, а также при
-фокусе на них с клавиатуры рядом всплывает панель с подробностями. Фокус от
-скринридера карточку **не** открывает (намеренно, см. «Доступность и клавиатура»). Триггер —
-ссылка или кнопка **со своим действием**; карточка его дополняет и ничего не
-заменяет. Содержимое — только дополнительное: всё, что в нём есть, должно быть
-доступно и без неё. Не кладите в карточку формы и обязательные действия.
-Собрана на китовом `Popover`, новой зависимости нет.
+`HoverCard` is a preview card: when you hover over a name or a link, or focus it
+from the keyboard, a panel with details pops up next to it. Focus from a screen
+reader does **not** open the card (deliberately, see "Accessibility and keyboard"). The
+trigger is a link or a button **with its own action**; the card complements it
+and replaces nothing. The content is only supplementary: everything in it must
+also be available without the card. Do not put forms or required actions in the card.
+It is built on the kit's `Popover`, with no new dependency.
 
-## Когда использовать
+## When to use
 
-- Имя пользователя, ссылка на документ, тег, сущность в тексте: по наведению
-  нужно показать аватар, должность, первые строки — не уводя человека со
-  страницы.
-- Подробности вторичны: пользователь, не увидевший карточку, ничего не теряет
-  (ссылка ведёт на ту же информацию целиком).
-- **Экрана-заказчика при выпуске не было** (ADR-0048):
-  API взят по аналогам — `HoverCard` у Radix и shadcn/ui, hover-card у Chakra и
-  Mantine. Первый экран потребителя — первая проверка контракта; расхождение
-  между контрактом и экраном — повод менять API.
+- A user name, a link to a document, a tag, an entity in text: on hover you need
+  to show an avatar, a job title, the first lines — without navigating away from
+  the page.
+- The details are secondary: a user who did not see the card loses nothing (the
+  link leads to the same information in full).
+- **There was no requesting screen at release** (ADR-0048):
+  the API was modeled on similar components — `HoverCard` in Radix and shadcn/ui,
+  hover-card in Chakra and Mantine. The consumer's first screen is the first test
+  of the contract; a mismatch between the contract and the screen is a reason to
+  change the API.
 
-## Когда не использовать
+## When not to use
 
-- Короткая подпись или расшифровка термина — `Tooltip`: это одна строка текста,
-  без разметки, и открывается быстрее.
-- Поясняющий абзац, который надо успеть прочитать, лучше отдать `HelpTooltip`: это
-  поповер **по клику** на кнопку-вопросик, он не исчезает, когда курсор ушёл.
-- Содержимое с полями, кнопками действий, ссылками, до которых нужно добраться,
-  лучше отдать `Popover` (открывается по клику, забирает фокус, возвращает его)
-  или `Dialog`. Карточка закрывается, когда курсор или фокус уходят, и до неё не
-  доберёшься клавишей Tab.
-- Единственный способ узнать что-то важное. На телефоне она, как правило, не открывается.
+- Use `Tooltip` for a short caption or the meaning of a term: it is one line of
+  text, without markup, and opens faster.
+- Use `HelpTooltip` for an explanatory paragraph that people need time to read: it
+  is a popover **on click** of a question-mark button, and it does not vanish when
+  the cursor moves away.
+- For content with fields, action buttons or links that must be reachable, use
+  `Popover` (opens on click, takes focus, returns it) or `Dialog`. The card
+  closes when the cursor or focus leaves, and you cannot reach it with the Tab key.
+- The only way to learn something important. On a phone it usually does not open.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Avatar, HoverCard, HoverCardContent, HoverCardTrigger } from "@olddevs/ui";
@@ -63,112 +64,114 @@ import { Avatar, HoverCard, HoverCardContent, HoverCardTrigger } from "@olddevs/
 
 ## Public API
 
-**`HoverCard`** — корень, ничего не рисует.
+**`HoverCard`** is the root and renders nothing.
 
-| Проп           | Значение по умолчанию | Смысл                                                                                       |
-| -------------- | --------------------- | ------------------------------------------------------------------------------------------- |
-| `openDelay`    | `700`                 | Мс, которые наведение или фокус должны продержаться, чтобы карточка открылась               |
-| `closeDelay`   | `300`                 | Мс после того, как курсор ушёл **и** с триггера, **и** с карточки                           |
-| `open`         | —                     | Управляемое состояние; задержки по-прежнему считает компонент и просит через `onOpenChange` |
-| `defaultOpen`  | `false`               | Начальное состояние без управления                                                          |
-| `onOpenChange` | —                     | Вызывается по таймеру, по Escape, по клику или фокусу вне карточки                          |
+| Prop           | Default | Meaning                                                                                            |
+| -------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `openDelay`    | `700`   | Milliseconds that hover or focus must last for the card to open                                    |
+| `closeDelay`   | `300`   | Milliseconds after the cursor has left **both** the trigger **and** the card                       |
+| `open`         | —       | Controlled state; the component still times the delays and requests changes through `onOpenChange` |
+| `defaultOpen`  | `false` | Initial state when uncontrolled                                                                    |
+| `onOpenChange` | —       | Called when the timer fires, on Escape, or on a click or focus outside the card                    |
 
-**`HoverCardTrigger`** — слушает наведение и фокус. `asChild` включён по
-умолчанию: вид отдаётся единственному потомку — ссылке или кнопке. Собственные
-обработчики потомка сохраняются; по клику триггер **ничего не переключает**.
-Состояние для стилей — атрибут `data-state="open" | "closed"`. Почему на
-триггере нет `aria-haspopup` и `aria-expanded`, см. «Доступность и клавиатура».
+**`HoverCardTrigger`** listens for hover and focus. `asChild` is on by default:
+the trigger renders as its single child — a link or a button. The child's own
+handlers are kept; a click on the trigger **toggles nothing**. The state for
+styles is the `data-state="open" | "closed"` attribute. For why the trigger has
+no `aria-haspopup` or `aria-expanded`, see "Accessibility and keyboard".
 
-**`HoverCardContent`** — панель. Принимает пропы `PopoverContent` (`side`,
-`align`, `sideOffset`, `className`): вид, слой и анимации общие с ним. Ширину и
-отступы задаёт содержимое, как у поповера.
+**`HoverCardContent`** is the panel. It accepts the `PopoverContent` props
+(`side`, `align`, `sideOffset`, `className`): the look, the layer and the
+animations are shared with it. Width and padding are set by the content, as with
+a popover.
 
-Что отличает карточку от поповера:
+What sets the card apart from a popover:
 
-- **Открытие.** По `pointerenter` с задержкой `openDelay`. По фокусу — только
-  фокус, пришедший от навигационной клавиши (Tab, Shift+Tab, Option+Tab в Safari
-  на macOS, стрелки, Home, End, PageUp, PageDown): щелчок по ссылке ставит на неё
-  фокус, и открывать карточку, когда действие уже совершено, незачем. Фокус без
-  клавиши и без указателя
-  (свайп скринридера, программный `focus()`) карточку не открывает. Быстрый
-  пролёт курсора её не открывает.
-- **Закрытие.** Когда курсор ушёл и с триггера, и с карточки, через `closeDelay`.
-  Переход курсора с триггера на карточку её не закрывает; возврат на триггер до
-  конца задержки — тоже. Щелчок (в том числе по самому триггеру) и фокус на другом
-  элементе, а также Escape закрывают сразу; фокус на самом триггере карточку не
-  закрывает.
-- **Фокус.** При открытии остаётся на месте — в содержимое не уходит. При
-  закрытии не возвращается на триггер: закрытие от указателя не должно
-  перетаскивать фокус. Ловушки фокуса нет.
-- **Устройства без наведения.** При `(hover: none)` и для касаний карточка не
-  открывается по наведению; касание выполняет действие триггера (переход по
-  ссылке) и карточку не открывает. **Клавиатурный фокус открывает её и там:**
-  у планшета бывает аппаратная клавиатура, и Tab на триггере работает так же,
-  как на компьютере. Клавишу от касания отличает модальность ввода: клавиша
-  открывает, тап и щелчок мыши — нет. Управляемый `open` этим не блокируется.
-- **Роль.** У панели нет `role="dialog"`: диалог без перехода фокуса — обещание,
-  которого она не держит. Нужна роль или имя — передайте `role`, `aria-label`.
+- **Opening.** On `pointerenter`, after `openDelay`. On focus — only focus that
+  came from a navigation key (Tab, Shift+Tab, Option+Tab in Safari on macOS,
+  arrow keys, Home, End, PageUp, PageDown): a click on a link puts focus on it,
+  and there is no point in opening the card after the action has already been
+  taken. Focus with no key and no pointer (a screen reader swipe, a programmatic
+  `focus()`) does not open the card. A quick fly-by of the cursor does not open it.
+- **Closing.** When the cursor has left both the trigger and the card, after
+  `closeDelay`. Moving the cursor from the trigger to the card does not close it;
+  neither does returning to the trigger before the delay ends. A click (including
+  on the trigger itself), focus on another element, and Escape close it at once;
+  focus on the trigger itself does not close the card.
+- **Focus.** On open it stays where it is — it does not move into the content. On
+  close it does not return to the trigger: a close caused by the pointer must not
+  drag focus around. There is no focus trap.
+- **Devices without hover.** With `(hover: none)` and for touch input the card does
+  not open on hover; a touch performs the trigger's action (following the link)
+  and does not open the card. **Keyboard focus opens it there too:** a tablet may
+  have a hardware keyboard, and Tab on the trigger works just as it does on a
+  computer. Input modality tells a key from a touch: a key opens the card, a tap
+  and a mouse click do not. A controlled `open` is not blocked by this.
+- **Role.** The panel has no `role="dialog"`: a dialog that does not move focus is
+  a promise it does not keep. If you need a role or a name, pass `role` or `aria-label`.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- Tab на триггер открывает карточку после `openDelay`; Tab дальше или Escape
-  закрывают. Клавиатурной считается навигационная клавиша: Tab, Shift+Tab,
-  стрелки, Home, End, PageUp, PageDown — и **Option+Tab**: в Safari на macOS это
-  единственный способ дойти клавишей до ссылок, пока в настройках не включён
-  обход всех элементов. Другие сочетания с Option, Ctrl и Cmd навигацией не
-  считаются (Ctrl+Tab переключает вкладки браузера, Cmd+Tab — приложения). Escape
-  слушает Radix, как у `Popover` и `Tooltip`; новых обработчиков Escape и своих
-  `z-index` у компонента нет — панель стоит на ступени
-  `OVERLAY_LAYER.popover` (ADR-0041),
-  выше окон, поэтому из `Dialog` она открывается видимой. Если карточка открыта
-  из окна, первое нажатие Escape закрывает её, второе — окно.
-- **Фокус от скринридера карточку не открывает — намеренно.** Свайп VoiceOver
-  и TalkBack, а на десктопе виртуальный курсор NVDA и JAWS (режим обзора) ставят
-  фокус, не присылая странице ни клавиши, ни указателя; `:focus-visible` в этом
-  случае истинен, поэтому кит различает источник фокуса сам (внутренний трекер
-  модальности ввода, без зависимостей). Карточка, всплывшая без объявления,
-  сбивает пользователя скринридера, а при экранной лупе закрывает соседний текст.
-  Содержимое по контракту дополнительное и доступно иначе — на странице, куда
-  ведёт триггер.
-- **Аппаратная клавиатура.** Tab и стрелки с неё открывают карточку и под
-  скринридером: это настоящая клавиша. Фокус, который браузер возвращает на
-  триггер, когда вкладка снова становится активной, и фокус, который код
-  страницы ставит сам (например, после закрытия окна), карточку не открывают.
-- **Ограничение: адресная строка.** Если первый Tab пришёл из адресной строки
-  или панели браузера, страница клавиши не видела — такой фокус неотличим от
-  фокуса скринридера, и карточка не откроется; следующий Tab или наведение
-  откроют её.
-- Триггер не должен быть единственным путём к содержимому для скринридера:
-  карточка дополняет, а не заменяет. Всё важное из неё должно быть и на
-  странице, на которую ведёт триггер.
-- **Триггер построен на `PopoverAnchor`, а не на `PopoverTrigger`.** Якорь только
-  задаёт, к чему крепится панель: ни переключения по клику, ни ARIA-атрибутов
-  поповера он не несёт, а открывает и закрывает карточку сам `HoverCard`
-  (Radix-поповер под ним управляемый). Поэтому на триггере нет `aria-haspopup` и
-  `aria-expanded`, и клик карточку не переключает: скринридер слышит обычную
-  ссылку или кнопку со своим действием, а не кнопку-поповер, обещающую панель по
-  нажатию.
-- Движение — по шкале движения (ADR-0047):
-  вход `popoverIn`, при `prefers-reduced-motion: reduce` остаётся одно
-  появление без смещения.
+- Tab onto the trigger opens the card after `openDelay`; Tab onward or Escape
+  closes it. A navigation key counts as keyboard: Tab, Shift+Tab, arrow keys, Home,
+  End, PageUp, PageDown — and **Option+Tab**: in Safari on macOS it is the only
+  way to reach links with the key until tabbing through all elements is turned on
+  in the settings. Other combinations with Option, Ctrl and Cmd do not count as
+  navigation (Ctrl+Tab switches browser tabs, Cmd+Tab switches applications).
+  Radix listens for Escape, as it does for `Popover` and `Tooltip`; the component
+  has no new Escape handlers and no `z-index` of its own — the panel sits on the
+  `OVERLAY_LAYER.popover` step (ADR-0041),
+  above dialogs, so it stays visible when opened from a `Dialog`. If the card is
+  opened from a dialog, the first Escape press closes the card and the second
+  closes the dialog.
+- **Focus from a screen reader does not open the card — deliberately.** A
+  VoiceOver or TalkBack swipe and, on desktop, the NVDA and JAWS virtual cursor
+  (browse mode) set focus without sending the page a key or a pointer;
+  `:focus-visible` matches in that case, so the kit works out the source of focus
+  on its own (an internal input modality tracker, with no dependencies). A card
+  that pops up without an announcement throws a screen reader user off, and with
+  a screen magnifier it covers the neighboring text. By contract the content is
+  supplementary and available another way — on the page the trigger leads to.
+- **Hardware keyboard.** Tab and the arrow keys on it open the card even with a
+  screen reader running: that is a real key. Focus that the browser returns to
+  the trigger when the tab becomes active again, and focus that the app sets
+  programmatically (for example, after a dialog closes), do not open the card
+  either.
+- **Limitation: the address bar.** If the first Tab came from the address bar or
+  the browser toolbar, the page did not see the key — such focus is
+  indistinguishable from screen reader focus, and the card does not open; the next
+  Tab or a hover opens it.
+- The trigger should not be the only path to the content for a screen reader: the
+  card complements, it does not replace. Everything important in it must also be
+  on the page the trigger leads to.
+- **The trigger is built on `PopoverAnchor`, not on `PopoverTrigger`.** An anchor
+  only defines what the panel attaches to: it carries neither click toggling nor
+  the popover's ARIA attributes, and `HoverCard` itself opens and closes the card
+  (the Radix popover under it is controlled). That is why the trigger has no
+  `aria-haspopup` or `aria-expanded`, and a click does not toggle the card: a
+  screen reader hears an ordinary link or a button with its own action, not a
+  popover button promising a panel on press.
+- Motion follows the kit's motion scale (ADR-0047):
+  the entrance is `popoverIn`, and under `prefers-reduced-motion: reduce` only the
+  appearance remains, with no shift.
 
-## Хорошие примеры
+## Good examples
 
-- Имя автора в списке комментариев → аватар, должность, число материалов.
-- Ссылка на документ в тексте → заголовок, автор, первые строки.
-- `openDelay={0}` для плотных таблиц, где человек и так ведёт курсор целенаправленно.
+- An author's name in a comment list → avatar, job title, number of materials.
+- A link to a document in text → title, author, first lines.
+- `openDelay={0}` for dense tables, where the person moves the cursor purposefully anyway.
 
-## Антипаттерны
+## Anti-patterns
 
-- Триггер без своего действия (`span`, `div`, кнопка-пустышка): карточка — для
-  ссылок и кнопок, у которых есть куда нажать.
-- Форма, кнопка «Сохранить» или единственная ссылка на важное внутри
+- A trigger without its own action (`span`, `div`, a dummy button): the card is
+  for links and buttons that have somewhere to go on click.
+- A form, a "Save" button or the only link to something important inside
   `HoverCardContent`.
-- Подпись в одну строку — для неё `Tooltip`.
-- Свой `z-index` или свой обработчик Escape на панели.
-- `@radix-ui/react-hover-card` рядом с китом: компонент собран на `Popover`.
+- A one-line caption — `Tooltip` is for that.
+- Your own `z-index` or your own Escape handler on the panel.
+- `@radix-ui/react-hover-card` next to the kit: the component is built on `Popover`.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/overlays/HoverCard.tsx`
 - `src/components/overlays/HoverCard.stories.tsx`

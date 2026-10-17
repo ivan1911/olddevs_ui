@@ -9,49 +9,49 @@ import type { PartialUiMessages, UiMessages } from "./messages.js";
 
 export interface UiProviderProps {
   /**
-   * Локаль форматирования: даты, числа, склонения. Не задана — кит не
-   * навязывает свою: значение берётся у `I18nProvider` из react-aria, то есть
-   * у внешнего провайдера потребителя или у браузера.
+   * The formatting locale: dates, numbers, plural forms. If not set, the kit does
+   * not impose its own: the value is taken from react-aria's `I18nProvider`, that is,
+   * from the consumer's outer provider or from the browser.
    *
-   * Строки при этом от локали НЕ зависят: их приносит `messages`. Разделение
-   * намеренное — каталог локали подключается импортом, иначе он оказался бы в
-   * бандле у всех, включая тех, кому нужен только английский.
+   * Strings do NOT depend on the locale: they come from `messages`. The split is
+   * deliberate: a locale catalog is pulled in by import, otherwise it would land in
+   * the bundle of everyone, including those who need only English.
    */
   locale?: string;
   /**
-   * Каталог сообщений — целиком или частично. Недоданные ветки берутся из
-   * английского фолбэка, поэтому `messages={{ common: { close: "Закрыть" } }}`
-   * — законный вызов.
+   * The message catalog, whole or partial. Branches that are not supplied are taken
+   * from the English fallback, so `messages={{ common: { close: "Dismiss" } }}` is a
+   * legitimate call.
    */
   messages?: PartialUiMessages;
-  /** Направление письма. Кит его публикует; компонентной поддержки RTL нет. */
+  /** Writing direction. The kit publishes it; there is no component-level RTL support. */
   dir?: "ltr" | "rtl";
-  /** Куда рендерить порталы оверлеев. По умолчанию — `document.body`. */
+  /** Where to render overlay portals. Defaults to `document.body`. */
   portalContainer?: HTMLElement | null;
   /**
-   * Плотность раскладки по умолчанию для всего приложения.
+   * The default layout density for the whole app.
    *
-   * Умолчание, а не режим: таблица и её шестерёнка значение перекрывают. Поле
-   * появилось в 2.2.0 — ADR-0002 откладывал его до появления читателя, и
-   * `DataTable` им стал.
+   * A default, not a mode: a table and its gear override the value. The field
+   * appeared in 2.2.0 — ADR-0002 deferred it until a reader appeared, and
+   * `DataTable` became that reader.
    */
   density?: Density;
   children: ReactNode;
 }
 
-/** Слияние на два уровня: пространство имён → ключ. Глубже структура не идёт. */
+/** Two-level merge: namespace → key. The structure goes no deeper. */
 function mergeMessages(base: UiMessages, patch: PartialUiMessages | undefined): UiMessages {
   if (!patch) return base;
   const out = { ...base } as Record<string, unknown>;
   for (const [ns, values] of Object.entries(patch)) {
     if (!values) continue;
     /*
-      Ключ со значением `undefined` ПРОПУСКАЕТСЯ, а не затирает фолбэк.
+      A key whose value is `undefined` is SKIPPED, not overwriting the fallback.
 
-      Спред копирует и такие ключи, а `exactOptionalPropertyTypes` в
-      `tsconfig.json` выключен — компилятор молчит. Реальная форма вызова —
-      `messages={{ common: { close: dict[key] }}}`, где ключа в словаре
-      потребителя нет: крестик закрытия молча оставался без доступного имени.
+      The spread copies such keys too, and `exactOptionalPropertyTypes` in
+      `tsconfig.json` is off, so the compiler stays silent. The real call shape is
+      `messages={{ common: { close: dict[key] }}}`, where the key is missing from the
+      consumer's dictionary: the close button silently kept no accessible name.
     */
     const defined: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(values)) {
@@ -63,10 +63,10 @@ function mergeMessages(base: UiMessages, patch: PartialUiMessages | undefined): 
 }
 
 /**
- * Совпадают ли два частичных каталога ПО СОДЕРЖИМОМУ.
+ * Whether two partial catalogs match BY CONTENT.
  *
- * Нужна, чтобы литерал на месте не считался новым каталогом на каждом рендере.
- * Глубина та же, что у слияния, — два уровня: глубже структура не идёт.
+ * Needed so that a literal written in place is not treated as a new catalog on every
+ * render. The depth is the same as the merge's: two levels, the structure goes no deeper.
  */
 function sameMessages(a: PartialUiMessages | undefined, b: PartialUiMessages | undefined): boolean {
   if (a === b) return true;
@@ -89,21 +89,18 @@ function sameMessages(a: PartialUiMessages | undefined, b: PartialUiMessages | u
 }
 
 /**
- * Провайдер кита: локаль, каталог сообщений, направление письма и контейнер
- * порталов.
+ * The kit's provider: locale, message catalog, writing direction and portal container.
  *
- * Порядок разрешения строки — `проп → сообщение провайдера → фолбэк`. Проп
- * компонента побеждает всегда: он точечное переопределение, а не единственный
- * способ, каким был до 2.0.0.
+ * Resolution order for a string: `prop → provider message → fallback`. A component's
+ * prop always wins: it is a point override, not the only way it was done before 2.0.0.
  *
- * ВЛОЖЕНИЕ РАБОТАЕТ. Внутренний провайдер наследует локаль и сообщения
- * внешнего и переопределяет то, что задал сам. Случай не выдуманный: диалог со
- * своей локалью внутри приложения на другой — обычное дело.
+ * NESTING WORKS. An inner provider inherits the locale and messages of the outer one
+ * and overrides only what it sets itself. The case is not contrived: a dialog with its
+ * own locale inside an app in another locale is an ordinary thing.
  *
- * `I18nProvider` из react-aria разворачивается ТОЛЬКО при явной локали. Иначе
- * кит молча перебил бы провайдер потребителя своим `en-US`, и датапикеры
- * заговорили бы не на том языке, на котором говорит остальное приложение.
- * Решение — ADR-0002.
+ * react-aria's `I18nProvider` is wrapped ONLY when the locale is explicit. Otherwise the
+ * kit would silently override the consumer's provider with its own `en-US`, and date
+ * pickers would speak a different language from the rest of the app. See ADR-0002.
  */
 export function UiProvider({
   locale,
@@ -116,21 +113,22 @@ export function UiProvider({
   const parent = useContext(UiContext);
 
   /*
-    Каталог сравнивается ПО СОДЕРЖИМОМУ, а не по ссылке.
+    The catalog is compared BY CONTENT, not by reference.
 
-    Докстрока пропа разрешает литерал на месте, и это остаётся законным вызовом
-    — но литерал даёт новый объект на каждый рендер. Через `useMemo` по ссылке
-    это означало новое значение контекста, а значит перерисовку КАЖДОГО
-    компонента кита, читающего `useMessages`: под провайдером стоит всё дерево,
-    и любой тик состояния в корне обходился в перерисовку всего кита разом.
+    The prop's doc allows a literal written in place, and that stays a legitimate
+    call, but a literal produces a new object on every render. Keyed by reference in
+    a `useMemo`, that meant a new context value, and so a re-render of EVERY kit
+    component that reads `useMessages`: the whole tree sits under the provider, so any
+    state tick at the root re-rendered the entire kit at once.
 
-    Кеш в ref, а не ещё один `useMemo`: зависимости сравниваются по ссылке, то
-    есть той же монетой. Присваивание идемпотентно и наружу ничего не меняет.
+    The cache lives in a ref, not in another `useMemo`: a `useMemo` would compare its
+    dependencies by reference too, so it would not help. The assignment is idempotent
+    and changes nothing outside.
 
-    ПРЕДЕЛ, О КОТОРОМ НАДО ЗНАТЬ: сравнение поверхностное, и функция-сообщение,
-    объявленная прямо в литерале (`{ rating: { star: () => … } }`), каждый раз
-    новая — такой каталог по-прежнему обновляет контекст на каждом рендере.
-    Выносить такие сообщения в константу.
+    A LIMIT TO KNOW ABOUT: the comparison is shallow, and a message function declared
+    right in the literal (`{ rating: { star: () => … } }`) is new on every render, so
+    such a catalog still updates the context on every render. Move such messages into
+    a constant.
   */
   const cached = useRef(messages);
   if (!sameMessages(cached.current, messages)) cached.current = messages;

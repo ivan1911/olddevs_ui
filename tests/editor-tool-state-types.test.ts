@@ -10,10 +10,10 @@ import {
 } from "../src/editor/index.js";
 
 /**
- * Типы Состояния Инструмента (OLDSUI-268): `useRichTextToolState` на публичном
- * входе. Проверяет `npm run typecheck`, а не Vitest: `expectTypeOf` и
- * `@ts-expect-error` во время работы ничего не делают, а хуки вне рендера не
- * вызываются — функции ниже только компилируются.
+ * Tool state types (OLDSUI-268): `useRichTextToolState` on the public entry point.
+ * Checked by `npm run typecheck`, not by Vitest: `expectTypeOf` and `@ts-expect-error`
+ * do nothing at run time, and hooks outside a render are not called, so the functions
+ * below are only compiled.
  */
 
 declare module "@olddevs/ui/editor" {
@@ -64,11 +64,11 @@ test("the type of the selector's slice comes from the name too", () => {
 
 test("a field that the snapshot does not have does not compile", () => {
   function Screen(ref: Ref) {
-    // @ts-expect-error у Состояния Поиска нет позиций совпадений
+    // @ts-expect-error the Find state has no match positions
     useRichTextToolState(ref, "search", (state) => state.matches);
-    // @ts-expect-error заголовки — у Оглавления, а не у Поиска
+    // @ts-expect-error headings belong to the Table of contents, not to Find
     useRichTextToolState(ref, "search", (state) => state.headings);
-    // @ts-expect-error запрос — у Поиска, а не у Оглавления
+    // @ts-expect-error the query belongs to Find, not to the Table of contents
     useRichTextToolState(ref, "toc", (state) => state.query);
   }
   expect(Screen).toBeTypeOf("function");
@@ -82,7 +82,7 @@ test("a tool added to the map is typed, one that is not is unknown", () => {
     expectTypeOf(counter).toEqualTypeOf<{ count: number; labels: readonly string[] } | null>();
     expectTypeOf(count).toEqualTypeOf<number | null>();
     expectTypeOf(other).toBeUnknown();
-    // @ts-expect-error снимок неизвестного Инструмента — `unknown`, поля у него нет
+    // @ts-expect-error the snapshot of an unknown Tool is `unknown`, it has no fields
     useRichTextToolState(ref, "acme_other", (state) => state.count);
   }
   expect(Screen).toBeTypeOf("function");

@@ -7,111 +7,113 @@ source: src/components/overlays/Dialog.tsx
 story: src/components/overlays/Dialog.stories.tsx
 ---
 
-# Dialog, ModalHeader и ModalOverlay
+# Dialog, ModalHeader and ModalOverlay
 
-## Кратко для AI
+## Summary for AI
 
-Используйте `Dialog` для модального окна с известным заголовком: он создаёт
-модальность, доступное имя, ловушку фокуса, портал и возврат фокуса. `ModalHeader`
-— только готовая шапка. `ModalOverlay` — только затемнённая подложка; он не делает
-содержимое диалогом и не должен быть заменой `Dialog` для форм или подтверждений.
+Use `Dialog` for a modal dialog with a known title: it provides modality, an
+accessible name, a focus trap, a portal and focus return. `ModalHeader` is only a
+ready-made header. `ModalOverlay` is only a dimmed scrim; it does not make its
+content a dialog and must not replace `Dialog` for forms or confirmations.
 
-## Когда использовать
+## When to use
 
-- `Dialog` — форма, просмотр или другое блокирующее окно с `open` и `onClose`.
-- `ModalHeader` — шапка для нестандартного оверлея, который уже самостоятельно
-  задаёт роль, имя и управление фокусом.
-- `ModalOverlay` — подложка для содержимого, которое не объявляется диалогом и
-  само отвечает за доступность; передавайте `onClose` и при необходимости
-  `escape={false}`.
+- `Dialog` — a form, a view or another blocking dialog with `open` and `onClose`.
+- `ModalHeader` — a header for a non-standard overlay that already sets the role,
+  the name and focus management on its own.
+- `ModalOverlay` — a scrim for content that is not announced as a dialog and
+  handles its own accessibility; pass `onClose` and, if needed, `escape={false}`.
 
-## Когда не использовать
+## When not to use
 
-- Для вопроса, требующего явного решения, используйте `ConfirmDialog`, а не
-  `Dialog` с двумя вручную собранными кнопками.
-- Для выезжающей панели используйте `Drawer`.
-- Для привязанной к триггеру небольшой панели — `Popover`; для пояснения — `Tooltip`.
-- Не оборачивайте `Dialog` в `ModalOverlay` и не добавляйте `useScrollLock`: Radix
-  уже управляет модальностью и прокруткой.
+- For a question that needs an explicit decision, use `ConfirmDialog`, not a
+  `Dialog` with two hand-built buttons.
+- For a sliding panel, use `Drawer`.
+- Use `Popover` for a small panel anchored to a trigger and `Tooltip` for an explanation.
+- Do not wrap `Dialog` in `ModalOverlay` and do not add `useScrollLock`: Radix
+  already manages modality and scrolling.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Dialog
   open={open}
   onClose={() => setOpen(false)}
-  title="Новая коллекция"
+  title="New collection"
   className="w-full max-w-[420px]"
 >
-  <form>{/* поля и действия */}</form>
+  <form>{/* fields and actions */}</form>
 </Dialog>
 ```
 
 ## Public API
 
-`Dialog` требует `open`, `onClose` и `title`. `title` может быть `ReactNode` и
-становится доступным именем. `subtitle`, `icon`, `closeLabel` (доступное имя крестика, умолчание «Закрыть»), `className`, `overlayClassName`,
-`overlayStyle`, `contentStyle`, `zIndex` и `align` настраивают представление.
-`header={false}` оставляет скрытый `Dialog.Title`, поэтому `title` всё равно
-обязателен. `role` принимает `dialog` (умолчание) или `alertdialog`.
+`Dialog` requires `open`, `onClose` and `title`. `title` can be a `ReactNode` and
+becomes the accessible name. `subtitle`, `icon`, `closeLabel` (the accessible name of the close button, "Close" by default), `className`, `overlayClassName`,
+`overlayStyle`, `contentStyle`, `zIndex` and `align` tune the presentation.
+`header={false}` leaves a hidden `Dialog.Title`, so `title` is still required.
+`role` accepts `dialog` (the default) or `alertdialog`.
 
-`describedBy` — `id` узла, который служит окну описанием: текстом, который
-скринридер читает следом за именем. Это не `subtitle` — тот виден глазами и
-живёт в шапке. Для `role="alertdialog"` описание обязательно по ARIA Authoring Practices Guide (APG):
-подтверждение, объявившее только имя и кнопку, вынуждает подтверждать вслепую.
-`ConfirmDialog` ссылается на свой `message` сам.
+`describedBy` is the `id` of the node that serves as the dialog's description:
+the text a screen reader reads after the name. It is not `subtitle` — that one is
+visible on screen and lives in the header. For `role="alertdialog"` the ARIA
+Authoring Practices Guide (APG) requires a description: a confirmation that announces only a name and
+a button forces people to confirm blind. `ConfirmDialog` points to its own
+`message`.
 
-**Идентификатор, а не текст: так вышло после разбора дефекта.** До 3.7.0 проп
-назывался `description`, принимал `ReactNode` и рисовал его скрытой копией,
-поэтому текст оказывался в документе дважды: ссылка внутри него давала невидимый
-лишний табстоп, а компонент со своим `id` — дубль идентификатора. Описание
-обязано указывать на тот же узел, который видит глаз. Если текст нужен только
-для озвучки, положите его в `children` под `sr-only` и сошлитесь сюда.
+**An identifier, not text: a lesson from a defect analysis.** Before 3.7.0
+the prop was called `description`, accepted a `ReactNode` and rendered it as a
+hidden copy, so the text ended up in the document twice: a link inside it created
+an invisible extra tab stop, and a component with its own `id` created a duplicate
+ID. The description must point to the same node that is displayed on screen. If
+the text is only for screen readers, put it in `children` under `sr-only` and
+refer to it here.
 
-`loading` — единое состояние отправки: крестик исчезает, а Escape и клик вне
-окна его не закрывают. `initialFocusRef` задаёт начальный фокус; используйте его,
-например, для безопасного поля формы, не вызывая `focus()` эффектом снаружи.
-`onEscapeKeyDown` — дополнительная реакция для внутреннего состояния окна; она не
-заменяет `onClose`.
+`loading` is one shared submitting state: the close button disappears, and Escape
+and a click outside the dialog do not close it. `initialFocusRef` sets the initial focus;
+use it, for example, for a safe form field, instead of calling `focus()` from an
+effect in your own code. `onEscapeKeyDown` is an additional handler for the dialog's
+internal state; it does not replace `onClose`.
 
-`ModalHeader` принимает `title`, опциональные `subtitle`, `icon`, `onClose`,
-`closeLabel`, `titleId`, `titleComponent` и `className`. Кнопка закрытия существует
-только при `onClose`. `ModalOverlay` принимает `onClose`, `zIndex`, `align`,
-`backdrop`, `blur`, `escape`, `className` и `children`; он закрывается по клику на
-подложку и, по умолчанию, по Escape.
+`ModalHeader` accepts `title`, optional `subtitle`, `icon`, `onClose`,
+`closeLabel`, `titleId`, `titleComponent` and `className`. The close button
+is rendered only when `onClose` is passed. `ModalOverlay` accepts `onClose`, `zIndex`, `align`,
+`backdrop`, `blur`, `escape`, `className` and `children`; it closes on a click on
+the scrim and, by default, on Escape.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-`Dialog` основан на Radix: фокус остаётся в модальном слое, при закрытии
-возвращается открывшему элементу, а вложенные окна Radix закрываются по одному
-на каждое нажатие Escape. При открытом меню или списке react-aria первое нажатие
-Escape обрабатывает это меню или список, а не родительское окно. Мышью такое меню
-или список внутри окна тоже работает: Radix отключает указатель у `<body>`, и кит возвращает его
-оверлею react-aria правилом в `@olddevs/ui/styles.css` — раньше пункт
-выбирался только с клавиатуры. `ModalHeader` получает доступное имя
-кнопки закрытия из `closeLabel` (по умолчанию «Закрыть»).
+`Dialog` is based on Radix: focus stays in the modal layer, returns to the
+element that opened it on close, and nested Radix dialogs close one at a time, one per press of
+Escape. While a react-aria menu or list is open, the first Escape press is handled
+by that menu or list and does not close the parent dialog. Such a menu or list inside the dialog
+also works with the mouse: Radix turns off pointer events on `<body>`, and the kit
+returns them to the react-aria overlay with a rule in `@olddevs/ui/styles.css`
+— before that an item could be chosen only with the keyboard. `ModalHeader`
+takes the accessible name of the close button from `closeLabel` (by default
+"Close").
 
-`ModalOverlay` не даёт `role="dialog"`, `aria-modal`, focus trap или scroll lock.
-Если его всё же применяют для интерактивного окна, потребитель обязан добавить
-эти свойства сам. См. [исходник Dialog](../../../src/components/overlays/Dialog.tsx),
-[ModalHeader](../../../src/components/overlays/ModalHeader.tsx) и
+`ModalOverlay` does not provide `role="dialog"`, `aria-modal`, a focus trap or a
+scroll lock. If it is still used for an interactive dialog, the consumer must
+add these properties itself. See [the Dialog source](../../../src/components/overlays/Dialog.tsx),
+[ModalHeader](../../../src/components/overlays/ModalHeader.tsx) and
 [ModalOverlay](../../../src/components/overlays/ModalOverlay.tsx).
 
-## Хорошие примеры
+## Good examples
 
-- Окно формы: `Dialog` с `title`, `FormField` и footer в `children`.
-- Нестандартная геометрия: `Dialog header={false}` с собственным содержимым, но
-  не с самодельной ролью.
-- Обычная подложка предпросмотра: `ModalOverlay`, если preview не объявляется
-  пользователю модальным диалогом.
+- A form dialog: `Dialog` with a `title`, a `FormField` and a footer in `children`.
+- Non-standard geometry: `Dialog header={false}` with its own content, but not
+  with a custom role.
+- A plain preview scrim: `ModalOverlay`, if the preview is not announced to
+  the user as a modal dialog.
 
-## Антипаттерны
+## Anti-patterns
 
-- `role="dialog"` на `ModalOverlay` без имени и focus trap.
-- Три раздельных флага для запрета крестика, Escape и click-away вместо `loading`.
-- Класть в `title` блочную разметку вроде футера или оставлять окно без смыслового названия.
+- `role="dialog"` on `ModalOverlay` without a name and a focus trap.
+- Three separate flags to disable the close button, Escape and click-away instead of `loading`.
+- Putting block markup such as a footer in `title`, or leaving the dialog without a meaningful name.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/overlays/Dialog.tsx`, `src/components/overlays/ModalHeader.tsx`, `src/components/overlays/ModalOverlay.tsx`
 - `src/components/overlays/Dialog.stories.tsx`

@@ -4,24 +4,23 @@ import { Extension, InputRule } from "@tiptap/core";
 import type { EditorQuoteSet } from "../../../i18n/messages.js";
 
 /*
-  Двойная кавычка `"` — единственное правило Typography, которое кит пишет сам.
-  Расширение Tiptap ставит кавычки фиксированной парой, а кит выбирает их по
-  языку каталога сообщений, и каталог может смениться при смонтированном
-  Редакторе: набор читается в момент ввода, а не при сборке правил. Во вложенных
-  русских кавычках («Он сказал: „привет“») пара зависит ещё и от того, что открыто
-  в Блоке до каретки.
+  The double quote `"` is the only Typography rule that the kit writes itself. The
+  Tiptap extension sets quotes as a fixed pair, but the kit picks them by the message
+  catalog's language, and the catalog can change while the Editor is mounted: the set
+  is read at the moment of typing, not when the rules are built. Inside nested Russian
+  quotes («He said: „hi“»), the pair also depends on what is open in the Block before the caret.
 */
 
-/** Пары кавычек наборов: открывающая и закрывающая первого уровня. */
+/** Quote pairs of the sets: the opening and the closing first-level quote. */
 const PAIRS: Record<EditorQuoteSet, readonly [string, string]> = {
   en: ["“", "”"],
   ru: ["«", "»"],
 };
 
 /*
-  Что перед кавычкой делает её открывающей. Список — у Tiptap (начало Блока,
-  пробел, скобка, другая открывающая кавычка); в русском наборе добавлены «ёлочка»
-  и нижняя лапка, а верхняя лапка ушла: она закрывает, а не открывает.
+  What makes the character before a quote an opening quote. The list is Tiptap's (the
+  start of a Block, a space, a bracket, another opening quote). The Russian set adds the
+  guillemet « and the low-9 quote „, and drops the high “: it closes rather than opens.
 */
 const OPENING_BEFORE: Record<EditorQuoteSet, RegExp> = {
   en: /[\s{[(<'"‘“]/,
@@ -29,9 +28,9 @@ const OPENING_BEFORE: Record<EditorQuoteSet, RegExp> = {
 };
 
 /**
- * Русские кавычки, открытые и не закрытые в тексте до каретки, снаружи внутрь.
- * Закрывающая считается, только если закрывает свою пару: чужая «»“» без
- * открывающей не сбивает счёт.
+ * Russian quotes that are open and not yet closed in the text before the caret, from
+ * the outermost to the innermost. A closing quote counts only if it closes its own pair:
+ * a stray closing quote without an opening one does not throw off the count.
  */
 export function openRussianQuotes(before: string): string[] {
   const open: string[] = [];
@@ -43,21 +42,21 @@ export function openRussianQuotes(before: string): string[] {
   return open;
 }
 
-/** Явные значения Опций `openDoubleQuote` и `closeDoubleQuote`: `undefined` — не заданы. */
+/** Explicit values of the `openDoubleQuote` and `closeDoubleQuote` Options: `undefined` means not set. */
 export interface DoubleQuoteOverrides {
   open?: false | string;
   close?: false | string;
 }
 
 /**
- * Кавычка, в которую превращается `"`: `before` — текст Блока до каретки.
+ * The quote that `"` turns into. `before` is the text of the Block before the caret.
  *
- * Открывающая или закрывающая — по символу перед кавычкой, как у Tiptap. В
- * русском наборе без явных строк пара зависит от открытого: вне кавычек — «»,
- * внутри «…» открывающая даёт „ („вложенная“), а закрывающая закрывает «»;
- * внутри „…“ закрывающая даёт “. Вложенность третьего уровня русская
- * типографика не знает: открывающая внутри „…“ снова даёт «. Явная строка Опции
- * выключает вложенность — кавычки идут парой. `false` — кавычки нет.
+ * Opening or closing is decided by the character before the quote, as in Tiptap. In the
+ * Russian set, without explicit strings, the pair depends on what is open: outside any
+ * quotes it is «»; inside «…» an opening quote gives „ (a nested quote), and a closing one
+ * closes «»; inside „…“ a closing quote gives “. Russian typography has no third nesting
+ * level: an opening quote inside „…“ again gives «. An explicit Option string turns nesting
+ * off, so the quotes go in pairs. `false` means no quote.
  */
 export function doubleQuoteFor(
   set: EditorQuoteSet,
@@ -76,27 +75,27 @@ export function doubleQuoteFor(
 }
 
 interface QuotesOptions extends DoubleQuoteOverrides {
-  /** Набор кавычек на момент ввода: Опция `quotes` или каталог сообщений Редактора. */
+  /** The quote set at the moment of typing: the `quotes` Option or the Editor's message catalog. */
   set: () => EditorQuoteSet;
 }
 
 /**
- * Правило ввода двойной кавычки. Внутри `code` и блока кода оно не срабатывает
- * само: ядро Tiptap пропускает правила ввода там (`inputRulesPlugin`), как и для
- * правил Typography. Отмена — `Backspace` сразу после замены (`undoInputRule`).
+ * The input rule for the double quote. Inside `code` and a code block it does not fire
+ * by itself: the Tiptap core skips input rules there (`inputRulesPlugin`), as it does for
+ * the other Typography rules. Undo is `Backspace` right after the replacement (`undoInputRule`).
  */
 export const TypographyQuotes = Extension.create<QuotesOptions>({
   name: "typographyQuotes",
   addOptions: () => ({ set: () => "en" }),
   addInputRules() {
     const { set, open, close } = this.options;
-    // Обе кавычки выключены — правила нет, `"` остаётся прямой.
+    // Both quotes are disabled: there is no rule, and `"` stays straight.
     if (open === false && close === false) return [];
     return [
       new InputRule({
         find: /"$/,
         handler: ({ state, range }) => {
-          // Документ состояния уже с набранной кавычкой: текст до неё кончается на `range.from`.
+          // The state's document already contains the typed quote: the text before it ends at `range.from`.
           const $from = state.doc.resolve(range.from);
           const before = $from.parent.textBetween(0, $from.parentOffset, undefined, "￼");
           const quote = doubleQuoteFor(set(), before, { open, close });

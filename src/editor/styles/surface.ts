@@ -1,23 +1,24 @@
 /**
- * Поверхность области Документа.
+ * Surface of the Document area.
  *
- * - `"theme"` (по умолчанию) — Документ в теме приложения, как в Notion,
- *   Confluence и Slack.
- * - `"paper"` — светлый лист в любой теме приложения (тёмной, сумрачной,
- *   брендовой), как «Сменить режим» в Word: текст, ссылки, маркеры, таблицы,
- *   код и цвета автора — как в светлой теме. Панель, поповеры, меню и окна
- *   остаются в теме приложения, рамка фокуса поля — тоже.
+ * - `"theme"` (default) — the Document follows the app theme, as in Notion,
+ *   Confluence and Slack.
+ * - `"paper"` — a light sheet in any app theme (dark, dim, brand), like "Switch
+ *   Mode" in Word: text, links, markers, tables, code and author colors look as
+ *   in the light theme. The Panel, popovers, menus and dialogs stay in the app
+ *   theme, and so does the field focus ring.
  *
- * Модуль серверно-безопасен: данные и тип, без React и без движка.
+ * The module is server-safe: it holds data and a type, with no React and no engine.
  */
 export type RichTextSurface = "theme" | "paper";
 
 /**
- * Атрибуты контейнера Документа. `data-theme="light"` — вложенная тема для
- * того, что объявлено на `[data-theme]` любого элемента: маркеры (`--marker-*`)
- * и тема подсветки кода (`styles.css`). Роли `--rte-*` лист получает классами
- * (`EDITOR_PAPER_TOKENS_CLASS`): токены кита на вложенную тему не отзываются.
- * `data-surface` — для потребителя и тестов: стилей на нём нет.
+ * Attributes of the Document container. `data-theme="light"` is a nested theme for
+ * whatever is declared on `[data-theme]` of any element: markers (`--marker-*`)
+ * and the code highlighting theme (`styles.css`). The sheet gets its `--rte-*`
+ * roles from a class (`EDITOR_PAPER_TOKENS_CLASS`), because the kit's tokens do
+ * not react to the nested theme. `data-surface` is for the consumer and the tests:
+ * no styles are attached to it.
  */
 export function surfaceAttributes(surface: RichTextSurface): Record<string, string> {
   return surface === "paper" ? { "data-surface": "paper", "data-theme": "light" } : {};

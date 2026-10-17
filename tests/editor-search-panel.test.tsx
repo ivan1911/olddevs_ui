@@ -12,7 +12,7 @@ import { searchState } from "../src/editor/features/search/searchPlugin.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 beforeAll(loadLazyBuiltins);
-// Панель — ленивый чанк: прогреваем, чтобы `findBy` не ждал сеть.
+// The panel is a lazy chunk: warm it up so `findBy` does not wait for the network.
 beforeAll(() => import("../src/editor/features/search/SearchPanel.js"));
 afterEach(() => {
   cleanup();
@@ -20,8 +20,8 @@ afterEach(() => {
 });
 
 /**
- * Панель «Поиск и замена» (OLDSUI-151): кнопка Панели, сочетания, поля,
- * флажки, счётчик, замена и закрытие.
+ * The "Find and replace" panel (OLDSUI-151): the Toolbar button that opens it, shortcuts, fields,
+ * checkboxes, counter, replace and close.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -70,7 +70,7 @@ test("Enter goes to the next match, Shift+Enter to the previous", async () => {
   expect(searchState(editor.state)?.current).toBe(1);
   await user.keyboard("{Shift>}{Enter}{/Shift}");
   expect(searchState(editor.state)?.current).toBe(0);
-  // Фокус остаётся в поле поиска — можно жать дальше.
+  // Focus stays in the search field, so the user can keep pressing.
   expect(document.activeElement).toBe(findField());
 });
 
@@ -192,7 +192,7 @@ test("Ctrl+F again with new selected text puts it in the field selected", async 
   const { editor } = renderEditor();
   await user.click(screen.getByRole("button", { name: "Find" }));
   await user.type(await screen.findByRole("textbox", { name: "Find" }), "cat");
-  // Автор щёлкает в Документ: фокус — сразу в него (`focus()` Tiptap откладывает).
+  // The author clicks into the Document: focus goes straight into it (Tiptap's `focus()` defers).
   act(() => {
     editor.view.focus();
     editor.commands.setTextSelection({ from: 5, to: 8 });
@@ -204,10 +204,10 @@ test("Ctrl+F again with new selected text puts it in the field selected", async 
 });
 
 /**
- * Прокрутка к текущему совпадению (OLDSUI-152). Фокус при переходе — в поле
- * поиска, и ProseMirror к выделению не прокручивает: показывает панель. В jsdom
- * нет раскладки — место совпадения задаёт подменённый `getBoundingClientRect`,
- * а прокрутку окна видно по записи `scrollTop` корня страницы.
+ * Scrolling to the current match (OLDSUI-152). On navigation, focus goes to the search field,
+ * and ProseMirror does not scroll to the selection: the panel shows it. In jsdom
+ * there is no layout, so the match position comes from a stubbed `getBoundingClientRect`,
+ * and window scrolling is seen in the `scrollTop` of the page root.
  */
 function placeCurrentMatch(top: number) {
   const rect = Element.prototype.getBoundingClientRect;
@@ -233,7 +233,7 @@ test("going to a match below the visible area scrolls the page to put it in the 
   const below = window.innerHeight + 500;
   const scrolled = placeCurrentMatch(below);
   await user.keyboard("{Enter}");
-  // Середина совпадения — на середину окна: сдвиг на разницу центров.
+  // The middle of the match goes to the middle of the window: a shift by the difference of centers.
   await waitFor(() => expect(scrolled).toEqual([below + 10 - window.innerHeight / 2]));
 });
 

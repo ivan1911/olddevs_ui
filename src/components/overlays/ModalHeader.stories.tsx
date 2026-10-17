@@ -12,12 +12,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Обычная шапка: заголовок и крестик. */
+/** A plain header: a title and a close button. */
 export const Playground: Story = {};
 
 /**
- * Все формы, которые реально встречаются во фронте. Взяты из кода диалогов,
- * а не придуманы: иначе снимок сторожил бы не то, что ломается.
+ * Every form that actually occurs in the front end. Taken from the dialogs' code,
+ * not made up: otherwise the snapshot would guard the wrong thing.
  */
 export const Variants: Story = {
   render: () => (

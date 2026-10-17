@@ -12,20 +12,20 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Команды над Блоками (OLDSUI-63): дублировать, переставить, выделить текст
- * Блока, сдвиг пункта списка, очистка стилей.
+ * Commands over Blocks (OLDSUI-63): duplicate, move, select a Block's text, indent a list
+ * item, clear styles.
  *
- * Через публичный `RichTextEditor`, как остальные тесты Редактора: клавиши —
- * настоящие `keydown` на документе, результат — выходной HTML и шаг отмены.
- * Каретка ставится командами движка: jsdom не умеет ввода в `contenteditable`.
- * jsdom — не Apple, поэтому `Mod` здесь — `Ctrl`. Реальные нажатия в
- * браузере — `tests-visual/interactions.spec.ts`.
+ * Through the public `RichTextEditor`, like the other Editor tests: the keys are real
+ * `keydown` events on the document, the result is the output HTML and an undo step.
+ * The caret is placed with engine commands: jsdom cannot type into `contenteditable`.
+ * jsdom is not Apple, so `Mod` here is `Ctrl`. Real key presses in a browser are covered
+ * by `tests-visual/interactions.spec.ts`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -36,9 +36,9 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 }
 
 /**
- * `keydown` на документе. `keyCode` — как у настоящего браузера: по нему
- * ProseMirror узнаёт букву под Shift и на другой раскладке. Возвращает,
- * отпустил ли Редактор клавишу браузеру (`defaultPrevented` снят).
+ * `keydown` on the document. `keyCode` is as in a real browser: ProseMirror uses it to
+ * recognise the letter under Shift and on another layout. Returns whether the Editor
+ * released the key to the browser (`defaultPrevented` is not set).
  */
 function press(editor: Editor, key: string, init: KeyboardEventInit & { keyCode?: number } = {}) {
   const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
@@ -56,7 +56,7 @@ const indent = (editor: Editor) => press(editor, "]", { ctrlKey: true, keyCode: 
 const outdent = (editor: Editor) => press(editor, "[", { ctrlKey: true, keyCode: 219 });
 const clearStyles = (editor: Editor) => press(editor, "\\", { ctrlKey: true, keyCode: 220 });
 
-/** Каретка — в конец текста `text`. */
+/** The caret goes to the end of the text `text`. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -66,7 +66,7 @@ function caretIn(editor: Editor, text: string) {
   act(() => void editor.commands.setTextSelection(found));
 }
 
-/** Текст, в котором стоит каретка. */
+/** The text in which the caret stands. */
 const here = (editor: Editor) => editor.state.selection.$from.parent.textContent;
 
 function undo(editor: Editor) {
@@ -79,9 +79,9 @@ const TABLE =
   "<table><tbody><tr><th><p>h1</p></th></tr><tr><td><p>c1</p></td></tr></tbody></table>";
 
 /**
- * Блоки, которые команды двигают и копируют целиком: разметка Блока и текст,
- * в который ставится каретка. Картинка выделяется узлом — так её выделяют
- * щелчком и стрелками.
+ * Blocks that the commands move and copy as a whole: the Block's markup and the text the
+ * caret is placed in. An image is selected as a node — the way it is selected with a click
+ * and the arrows.
  */
 const BLOCKS: readonly (readonly [name: string, html: string, caret: string | "node"])[] = [
   ["paragraph", "<p>Body</p>", "Body"],
@@ -92,7 +92,7 @@ const BLOCKS: readonly (readonly [name: string, html: string, caret: string | "n
   ["table", TABLE, "c1"],
 ];
 
-/** Каретка в текст Блока или, для `"node"`, выделение второго Блока Документа узлом. */
+/** The caret in a Block's text or, for `"node"`, the selection of the Document's second Block as a node. */
 function placeIn(editor: Editor, caret: string | "node") {
   if (caret !== "node") return caretIn(editor, caret);
   const { doc, tr } = editor.state;
@@ -124,7 +124,7 @@ describe("duplicate a block: Mod+Shift+D", () => {
       duplicate(editor);
 
       expect(editor.getHTML()).toBe(`<p>Before</p>${html}${html}<p>After</p>`);
-      // Каретка или выделение — в копии, то есть во втором из двух одинаковых Блоков.
+      // The caret or selection is in the copy, that is, in the second of the two identical Blocks.
       expect(editor.state.selection.$from.index(0)).toBe(2);
       undo(editor);
       expect(editor.getHTML()).toBe(doc);
@@ -183,7 +183,7 @@ describe("move a block: Alt+Shift+ArrowUp and ArrowDown", () => {
     expect(editor.getHTML()).toBe("<p>A</p><p>B</p>");
   });
 
-  // Таблица — ниже: из ячейки сочетание не действует.
+  // The table is below: the shortcut does not work from inside a cell.
   test.each(BLOCKS.filter(([name]) => name !== "table"))(
     "a %s moves as a whole",
     (_, html, caret) => {
@@ -219,14 +219,14 @@ describe("move a block: Alt+Shift+ArrowUp and ArrowDown", () => {
     moveUp(editor);
     expect(editor.getHTML()).toBe("<p>Intro</p><ol><li><p>b</p></li><li><p>a</p></li></ol>");
 
-    // Первый пункт выше не уходит: из списка перестановка не выводит.
+    // The first item does not go up: a move does not take it out of the list.
     moveUp(editor);
     expect(editor.getHTML()).toBe("<p>Intro</p><ol><li><p>b</p></li><li><p>a</p></li></ol>");
   });
 
   test("a selection across several blocks moves as a whole", () => {
     const { editor } = renderEditor({ defaultValue: "<p>A</p><p>B</p><p>C</p>" });
-    // От середины A до середины B.
+    // From the middle of A to the middle of B.
     act(() => void editor.commands.setTextSelection({ from: 1, to: 5 }));
 
     moveDown(editor);
@@ -243,7 +243,7 @@ describe("move a block: Alt+Shift+ArrowUp and ArrowDown", () => {
     editor.state.doc.descendants((node, pos) => {
       if (node.isText && node.text === "c1") cell = pos + 1;
     });
-    // От «Before» до середины ячейки: выделение начинается вне таблицы.
+    // From "Before" to the middle of the cell: the selection starts outside the table.
     act(() => void editor.commands.setTextSelection({ from: 2, to: cell }));
 
     moveDown(editor);
@@ -260,7 +260,7 @@ describe("move a block: Alt+Shift+ArrowUp and ArrowDown", () => {
     expect(moveDown(editor)).toBe(true);
     expect(editor.getHTML()).toBe(doc);
 
-    // Alt+↓ по-прежнему добавляет строку.
+    // Alt+↓ still adds a row.
     press(editor, "ArrowDown", { altKey: true });
     expect(editor.view.dom.querySelectorAll("tr")).toHaveLength(3);
   });
@@ -364,8 +364,8 @@ describe("clear styles: Mod+\\", () => {
     await user.click(screen.getByRole("button", { name: "More formatting" }));
     const item = screen.getByRole("menuitem", { name: /Clear formatting/ });
 
-    // `aria-keyshortcuts` у пункта нет: `MenuItem` react-aria его не пропускает
-    // (`TableMenuButton.tsx`); сочетание — в подписи и в справочнике.
+    // `aria-keyshortcuts` is absent on the item: react-aria's `MenuItem` does not pass it
+    // through (`TableMenuButton.tsx`); the shortcut is in the label and in the reference.
     expect(item.querySelector("kbd")?.textContent).toBe("Ctrl+\\");
   });
 
@@ -405,7 +405,7 @@ test("a gap cursor between two tables is in no Block: duplicate and move leave t
   const { GapCursor } = await import("@tiptap/pm/gapcursor");
   const { editor } = renderEditor({ defaultValue: TABLE + TABLE });
   const html = editor.getHTML();
-  // Щель — на уровне Документа, между двумя таблицами.
+  // The gap is at the Document level, between two tables.
   const between = editor.state.doc.child(0).nodeSize;
   act(() =>
     editor.view.dispatch(

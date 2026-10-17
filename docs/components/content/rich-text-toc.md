@@ -9,28 +9,28 @@ story: src/editor/features/toc/RichTextToc.stories.tsx
 
 # RichTextToc
 
-## Кратко для AI
+## Summary for AI
 
-`RichTextToc` — Оглавление Документа рядом с Просмотром (`RichTextView`) или Редактором в `readOnly`. Свёрнуто — полоса штрихов, по одному на заголовок, штрих текущего раздела подсвечен. Наведение на полосу раскрывает список заголовков, клик по пункту прокручивает к заголовку и ставит на него фокус. Компонент клиентский и подключается только явно: экран ставит его в свою колонку и передаёт `target` — ref на Просмотр или Хэндл Редактора. Заголовки читаются из DOM цели, якорей и `id` в Документе нет, адрес страницы не меняется. Проп `levels` оставляет только нужные уровни из `h1`–`h4`. Живёт во входе `@olddevs/ui/editor`. Решение — ADR-0066.
+`RichTextToc` is the Table of contents of a Document, placed next to the View (`RichTextView`) or an Editor in `readOnly`. Collapsed, it is a strip of strokes, one per heading, with the stroke of the current section highlighted. Hovering the strip expands a list of headings; clicking an item scrolls to the heading and moves focus to it. The component is client-side and opt-in: the screen puts it in its own column and passes `target`, a ref to the View or to the Editor's Handle. Headings are read from the target's DOM; the Document has no anchors or `id` attributes, and the page address does not change. The `levels` prop keeps only the heading levels you need out of `h1`–`h4`. It lives in the `@olddevs/ui/editor` entry point. Decision: ADR-0066.
 
 ```tsx
 import { RichTextToc, RichTextView } from "@olddevs/ui/editor";
 ```
 
-## Когда использовать
+## When to use
 
-- Длинный Документ в Просмотре: статья, регламент, описание, где читателю нужно перейти к разделу, не листая страницу целиком.
-- Редактор в `readOnly` показывает тот же длинный Документ, и навигация нужна там же.
+- A long Document in the View: an article, a policy, a description, where the reader needs to jump to a section without scrolling through the whole page.
+- An Editor in `readOnly` shows the same long Document and needs the same navigation.
 
-## Когда не использовать
+## When not to use
 
-- Короткий Документ: если в нём меньше двух заголовков, компонент ничего не рисует, а на трёх-четырёх абзацах Оглавление только занимает место.
-- Навигация по страницам приложения или разделам сайта — это `SideNav` или `Tabs`, а не Оглавление Документа.
-- Ссылка на раздел, которой можно поделиться: Оглавление ведёт к заголовку без якоря (`#slug`), адрес страницы не меняется. Ссылка на раздел потребует отдельного ADR об `id` в Схеме.
-- Оглавление как часть самого Документа, Блоком внутри текста: такого Блока в Схеме нет.
-- Оглавление нужно внутри поля Редактора, а своей колонки у экрана нет — это Инструмент `toc` Редактора: та же полоса в левом поле рамки, липкая под Панелью и в поле с `maxHeight` (страница `RichTextEditor`, раздел «Оглавление»). Те же `offsetVar`, `levels` и `listWidth` там задаёт запись `tool("toc", options)`, а заголовки и текущий раздел экран читает хуком `useRichTextToolState`. У отдельного `RichTextToc` Состояния и Команд нет: у него нет Хэндла.
+- A short Document: with fewer than two headings the component renders nothing, and on three or four paragraphs a Table of contents only takes up space.
+- Navigation between application pages or sections of a site: use `SideNav` or `Tabs`, not the Table of contents of a Document.
+- A link to a section that can be shared: the Table of contents goes to a heading without an anchor (`#slug`), and the page address does not change. A link to a section would need its own ADR about `id` in the Schema.
+- A Table of contents as part of the Document itself, a Block inside the text: the Schema has no such Block.
+- The Table of contents belongs inside the Editor field and the screen has no column for it: use the Editor's `toc` Tool, the same strip in the left gutter of the frame, sticky under the Toolbar and in a field with `maxHeight` (the `RichTextEditor` page, "Table of contents" section). There, a `tool("toc", options)` entry sets the same `offsetVar`, `levels` and `listWidth`, and the screen reads the headings and the current section with the `useRichTextToolState` hook. The standalone `RichTextToc` has no state or commands: it has no Handle.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 "use client";
@@ -41,7 +41,7 @@ export function Article({ html }: { html: string }) {
   const view = useRef<HTMLDivElement>(null);
   return (
     <div className="flex items-start gap-6">
-      {/* Колонку и липкость задаёт экран, а не компонент. */}
+      {/* The screen sets the column and the stickiness, not the component. */}
       <div className="sticky top-[calc(var(--topbar-h,0px)+16px)] w-10 shrink-0">
         <RichTextToc target={view} />
       </div>
@@ -51,81 +51,81 @@ export function Article({ html }: { html: string }) {
 }
 ```
 
-`RichTextView` при этом остаётся серверно-безопасным: клиентская здесь только обёртка экрана, которой нужен `ref`.
+`RichTextView` stays server-safe here: only the screen's wrapper is client-side, because it needs the `ref`.
 
 ## Public API
 
-| Prop        | Значение                                                                                                                                                                                                                                                                                             |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `target`    | Обязательный. Ref на `RichTextView` или на Хэндл `RichTextEditor`, чьи заголовки показывает Оглавление. Заголовки читаются после монтирования: до гидратации полосы нет.                                                                                                                             |
-| `offsetVar` | Имя CSS-переменной с высотой липкой шапки экрана, по умолчанию `--topbar-h` (её публикует `TopBar`). Переход ставит заголовок под шапку, подсветка считает раздел от её нижнего края.                                                                                                                |
-| `listWidth` | Ширина списка: длина CSS или пиксели, по умолчанию `240`. Постоянная, а не по самому длинному заголовку; заголовок, что не помещается, обрезается многоточием.                                                                                                                                       |
-| `levels`    | Уровни заголовков, которые попадают в Оглавление: подмножество `1`–`4`, по умолчанию все четыре. Заголовка другого уровня нет ни в полосе, ни в списке, а отступ пунктов считается от самого крупного из оставшихся. Набор читается при каждой сборке списка, поэтому его смена пересобирает список. |
-| `className` | Классы корня. Остальные свойства `div` уходят на корень.                                                                                                                                                                                                                                             |
+| Prop        | Meaning                                                                                                                                                                                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target`    | Required. A ref to a `RichTextView` or to the Handle of a `RichTextEditor` whose headings the Table of contents shows. Headings are read after mounting, so there is no strip before hydration.                                                                                                                       |
+| `offsetVar` | The name of the CSS variable with the height of the screen's sticky header, `--topbar-h` by default (`TopBar` publishes it). A jump places the heading below the header, and the highlight counts a section from the header's bottom edge.                                                                            |
+| `listWidth` | The width of the list: a CSS length or pixels, `240` by default. It is fixed rather than sized to the longest heading; a heading that does not fit is truncated with an ellipsis.                                                                                                                                     |
+| `levels`    | The heading levels that go into the Table of contents: a subset of `1`–`4`, all four by default. A heading of any other level is in neither the strip nor the list, and item indentation is counted from the largest remaining level. The set is read on every rebuild of the list, so changing it rebuilds the list. |
+| `className` | Classes for the root. The remaining `div` props go to the root.                                                                                                                                                                                                                                                       |
 
-### Какие заголовки попадают
+### Which headings are included
 
-- `h1`–`h4` на верхнем уровне Документа и внутри Обёртки.
-- Не попадают заголовки в колонках Раскладки: два заголовка на одной высоте в соседних колонках путают подсветку текущего раздела. Не попадают и заголовки внутри своих Блоков и их Островов: их содержимое — часть Блока, а не структура Документа.
-- Проп `levels` сужает набор: `levels={[2, 3]}` оставляет только `h2` и `h3`. Остальных уровней нет ни в полосе, ни в списке; пустой массив оставляет ноль заголовков.
-- Меньше двух заголовков (после `levels`) — компонент ничего не рисует, колонка экрана остаётся пустой.
+- `h1`–`h4` at the top level of the Document and inside a Wrapper.
+- Headings in the columns of a Column layout are not included: two headings at the same height in neighboring columns confuse the highlight of the current section. Headings inside custom Blocks and their Islands are not included either: their content is part of the Block, not of the Document's structure.
+- The `levels` prop narrows the set: `levels={[2, 3]}` keeps only `h2` and `h3`. Other levels are in neither the strip nor the list; an empty array leaves no headings at all.
+- With fewer than two headings (after `levels`) the component renders nothing, and the screen's column stays empty.
 
-Отступ пункта и длина штриха считаются по уровню **относительно самого крупного заголовка из попавших в Оглавление**: если Документ начинается с `h2`, у `h2` нет отступа и самый длинный штрих. Чем глубже уровень, тем короче штрих.
+The indent of an item and the length of its stroke depend on the level **relative to the largest heading that made it into the Table of contents**: if the Document starts with `h2`, then `h2` has no indent and the longest stroke. The deeper the level, the shorter the stroke.
 
-### Живой Документ
+### A live Document
 
-Список следит за целью: новый `html` Просмотра, новое значение Редактора или правка пересобирают его через `MutationObserver` с короткой задержкой. Пришёл второй заголовок — полоса появляется, ушёл — пропадает. Хэндл Редактора даёт Документ, только когда движок готов: до этого Оглавление ждёт и подхватывает его само.
+The list follows the target: a new `html` of the View, a new value of the Editor or an edit rebuilds it through a `MutationObserver` with a short delay. When a second heading appears, the strip appears; when one goes, it disappears. The Editor's Handle provides the Document only once the engine is ready; until then the Table of contents waits and picks it up on its own.
 
-### Длинный Документ
+### A long Document
 
-На каждый заголовок свой штрих. Полоса не выше окна: когда штрихам не хватает места, шаг между ними сжимается. Список ограничен по высоте и прокручивается, пункт текущего раздела держится в его видимой части.
+Every heading gets its own stroke. The strip is never taller than the window: when there is not enough room for the strokes, the step between them shrinks. The list has a limited height and scrolls, and the item of the current section stays within its visible part.
 
-### Полоса и список
+### The strip and the list
 
-- Полоса — кнопка с подписью «Оглавление» и `aria-expanded`. Штрих текущего раздела — цветом акцента и чуть длиннее остальных.
-- Список открывается наведением на полосу с короткой задержкой: случайный пролёт курсора его не открывает. Нажатие, касание, Enter и Space открывают его сразу.
-- Список стоит справа от полосы поверх текста. Клик по пункту ведёт к заголовку, а список **остаётся открытым**: закрывается он, когда курсор ушёл с полосы и списка, по Escape и по нажатию вне него.
-- Текущий раздел подсвечен и в полосе, и в списке (`aria-current="location"`).
+- The strip is a button labeled "Table of contents" with `aria-expanded`. The stroke of the current section is in the accent color and slightly longer than the others.
+- The list opens when you hover the strip, after a short delay: a cursor passing by accidentally does not open it. A press, a tap, Enter and Space open it immediately.
+- The list sits to the right of the strip, over the text. Clicking an item goes to the heading, and the list **stays open**. It closes when the cursor leaves the strip and the list, on Escape and on a press outside it.
+- The current section is highlighted both in the strip and in the list (`aria-current="location"`).
 
-### Переход
+### Jumping to a heading
 
-Клик по пункту прокручивает к заголовку (при `prefers-reduced-motion` — без анимации) и ставит на него фокус: следующий Tab идёт от заголовка, скринридер читает его. На время фокуса заголовок получает `tabindex="-1"`, с уходом фокуса атрибут снимается — в Документе следа не остаётся. Адрес страницы не меняется, `id` не появляются, Схема и `sanitizeRichText` прежние.
+Clicking an item scrolls to the heading (without animation under `prefers-reduced-motion`) and moves focus to it: the next Tab continues from the heading, and a screen reader reads it. While it has focus, the heading gets `tabindex="-1"`; when focus leaves, the attribute is removed, so the Document keeps no trace. The page address does not change, no `id` attributes appear, and the Schema and `sanitizeRichText` stay as they were.
 
-Заголовок, к которому перешли, ненадолго подсвечивается фоном цвета акцента, и фон гаснет примерно за полторы секунды: глаз находит, куда приехала страница, даже если заголовок не встал к верхнему краю (конец Документа). Подсветка — анимация Web Animations, в разметку Документа она не пишет ни класса, ни `style`.
+The heading you jump to is briefly highlighted with an accent-colored background that fades out in about a second and a half: the eye finds where the page has scrolled to, even if the heading did not reach the top edge (the end of the Document). The highlight is a Web Animations animation; it writes neither a class nor a `style` into the Document's markup.
 
-Прокручивается ближайший прокручиваемый предок цели, а если его нет — окно.
+The nearest scrollable ancestor of the target scrolls, or the window if there is none.
 
-**Редактор в правке.** Если Редактор перевели из `readOnly` в правку, Оглавление продолжает работать: список пересобирается на правках, переход прокручивает к заголовку и подсвечивает его. Фокус при этом на заголовок не переходит, а каретка остаётся там, где её оставил автор: поставить фокус на заголовок внутри `contenteditable`, не тронув каретку, нельзя. Контрактом этот режим не обещан.
+**An Editor being edited.** If the Editor is switched from `readOnly` to editing, the Table of contents keeps working: the list is rebuilt on edits, and a jump scrolls to the heading and highlights it. Focus does not move to the heading, though, and the caret stays where the author left it: there is no way to focus a heading inside a `contenteditable` without disturbing the caret. This mode is not covered by the contract.
 
-### Липкая шапка
+### Sticky header
 
-Высоту шапки компонент берёт по контракту ADR-0016: из CSS-переменной, имя которой передаёт `offsetVar`. Переменная есть — заголовок встаёт ровно под шапку, и текущим раздел становится, когда его заголовок дошёл до её нижнего края. Переменной нет — отступом служит `scroll-margin-top` заголовка, который экран может задать сам. Числового пропа отступа нет: высота шапки зависит от брейкпоинта, и константа оставила бы просвет на узком экране.
+The component takes the header's height by the contract of ADR-0016: from the CSS variable whose name `offsetVar` carries. If the variable exists, the heading lands exactly below the header, and a section becomes the current one when its heading reaches the header's bottom edge. If it does not, the offset is the heading's `scroll-margin-top`, which the screen can set itself. There is no numeric offset prop: the header's height depends on the breakpoint, and a constant would leave a gap on a narrow screen.
 
-### Узкий экран
+### Narrow screens
 
-Если слева от текста нет места, Оглавление прячется само: полоса, которая заходит на текст Документа или уходит за левый край окна, становится невидимой (`visibility: hidden`) вместе со своим списком. Место в колонке она сохраняет, раскладка экрана не прыгает. Когда место появляется, полоса возвращается. Так работает и колонка рядом с текстом, и поле страницы слева от центрированной колонки (история `Margin`).
+If there is no room to the left of the text, the Table of contents hides itself: a strip that overlaps the Document's text or goes past the left edge of the window becomes invisible (`visibility: hidden`) together with its list. It keeps its space in the column, so the screen layout does not jump. When room appears, the strip comes back. This works both for a column next to the text and for the page margin to the left of a centered column (the `Margin` story).
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-| Клавиша      | Где    | Действие                                          |
-| ------------ | ------ | ------------------------------------------------- |
-| Enter, Space | полоса | Открыть список, фокус — на пункт текущего раздела |
-| ↓ ↑          | список | Следующий и предыдущий пункт                      |
-| Home, End    | список | Первый и последний пункт                          |
-| Enter        | пункт  | Перейти к заголовку, фокус — на заголовок         |
-| Escape       | список | Закрыть список, фокус — на полосу                 |
+| Key          | Where | Action                                                   |
+| ------------ | ----- | -------------------------------------------------------- |
+| Enter, Space | strip | Open the list, focus moves to the current section's item |
+| ↓ ↑          | list  | Next and previous item                                   |
+| Home, End    | list  | First and last item                                      |
+| Enter        | item  | Go to the heading, focus moves to the heading            |
+| Escape       | list  | Close the list, focus moves to the strip                 |
 
-Список — `nav` с подписью «Оглавление», пункты — кнопки в списке `ul`. Список — Оверлей в Стеке Escape: вложенный в другой оверлей, он закрывается первым. Наведение и фокус не уводят фокус с места: список дополняет полосу, а не забирает управление. Подписи берутся из каталога сообщений кита (`editor.toc`): «Оглавление» в `ru`, «Table of contents» в фолбэке.
+The list is a `nav` labeled "Table of contents", and its items are buttons in a `ul` list. The list is an overlay in the Escape stack: nested in another overlay, it closes first. Hover and focus do not take focus away from where it is: the list complements the strip rather than taking over control. Labels come from the kit's message catalog (`editor.toc`): "Оглавление" in `ru`, "Table of contents" in the fallback.
 
-## Антипаттерны
+## Anti-patterns
 
-- Передавать `target` на обёртку вокруг Просмотра вместе с соседними блоками страницы: в Оглавление попадут чужие заголовки. Ref — на сам Просмотр.
-- Прятать Оглавление на узком экране через `display: none` у колонки и одновременно рассчитывать на его самоскрытие: самоскрытие нужно, когда колонка остаётся, а места в ней нет. Колонку, которой нет на телефоне, экран убирает сам.
-- Ставить `id` заголовкам ради Оглавления: оно в них не нуждается, а Схема их снимет.
+- Pointing `target` at a wrapper that holds the View together with neighboring blocks of the page: other headings end up in the Table of contents. Put the ref on the View itself.
+- Hiding the Table of contents on a narrow screen with `display: none` on the column while also relying on its self-hiding: self-hiding is for when the column stays but has no room. A column that should not exist on a phone is removed by the screen itself.
+- Adding `id` to headings for the sake of the Table of contents: it does not need them, and the Schema will strip them.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходник: `src/editor/features/toc/RichTextToc.tsx`, сбор заголовков — `headings.ts` рядом
+- Source: `src/editor/features/toc/RichTextToc.tsx`; heading collection — `headings.ts` next to it
 - Stories: `src/editor/features/toc/RichTextToc.stories.tsx`
-- Тесты: `tests/rich-text-toc.test.tsx`; в браузере — `tests-visual/interactions.spec.ts`, блок `RichTextToc`
-- Решение: ADR-0066 «Оглавление Документа отдельным компонентом `RichTextToc`»
+- Tests: `tests/rich-text-toc.test.tsx`; in the browser — `tests-visual/interactions.spec.ts`, the `RichTextToc` block
+- Decision: ADR-0066 "The Table of contents of a Document as a separate `RichTextToc` component"

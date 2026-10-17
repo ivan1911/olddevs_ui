@@ -2,15 +2,15 @@
 
 import katex, { type KatexOptions } from "katex";
 /*
-  CSS и шрифты KaTeX едут вместе с этим модулем (ADR-0070, п. 9). Кит собирается
-  голым `tsc`, без сборщика, поэтому CSS не лежит файлом пакета: модуль просто
-  импортирует `katex/dist/katex.min.css` из пакета `katex` потребителя, а его
-  сборщик (Next.js, Vite, webpack) сам выпускает файл стилей и переписывает
-  `url(fonts/…)` на шрифты из того же пакета. Модуль грузится только лениво —
-  Загрузчиком Редактора и Островом `RichTextView` (`import()`), поэтому стили и
-  шрифты не попадают на страницы без формул: сборщик кладёт CSS в тот же ленивый
-  чанк. Никакого шага у потребителя нет: `katex` он ставит той же командой, что
-  Tiptap (страница Редактора).
+  The KaTeX CSS and fonts ship with this module (ADR-0070, item 9). The kit is built
+  with a bare `tsc`, without a bundler, so the CSS is not a file of the package: the
+  module imports `katex/dist/katex.min.css` from the consumer's `katex` package, and
+  the consumer's bundler (Next.js, Vite, webpack) emits the stylesheet itself and
+  rewrites `url(fonts/…)` to the fonts of the same package. The module loads only
+  lazily, through the Editor's Loader and the `RichTextView` Island (`import()`), so
+  styles and fonts stay off pages without formulas: the bundler puts the CSS into the
+  same lazy chunk. The consumer has no extra step: it installs `katex` with the same
+  command as Tiptap (see the Editor page).
 */
 import "katex/dist/katex.min.css";
 import type { MathRenderOptions } from "./mathOptions.js";
@@ -18,25 +18,26 @@ import type { MathRenderOptions } from "./mathOptions.js";
 export { katex };
 
 /**
- * Опции KaTeX для одной формулы.
+ * KaTeX options for one formula.
  *
- * `throwOnError` включён: Редактор и Остров ловят ошибку сами и показывают
- * исходник с пометкой, а предпросмотр Поповера пишет её в поле. `output` — HTML
- * и MathML (ADR-0070, п. 8): скринридер читает MathML, а не разрозненные `span`.
- * `trust` выключен (по умолчанию): `\href`, `\url` и `\includegraphics` из
- * чужого Документа не работают. `maxSize` ограничивает `\rule` и пробелы, чтобы
- * формула вроде `\rule{9999em}{9999em}` не растягивала страницу читателя;
- * `maxExpand` — потолок раскрытия макросов KaTeX, задан явно (1000, как умолчание
- * KaTeX), чтобы лимит не зависел от версии пакета потребителя.
+ * `throwOnError` is on: the Editor and the Island catch the error themselves and show
+ * the source with a mark, while the popover's preview writes it into the field. `output`
+ * is HTML and MathML (ADR-0070, item 8): a screen reader reads MathML, not a set of loose
+ * `span`s. `trust` is off (the default): `\href`, `\url` and `\includegraphics` from
+ * someone else's Document do not work. `maxSize` limits `\rule` and spaces, so a formula
+ * such as `\rule{9999em}{9999em}` does not stretch the reader's page. `maxExpand` is the
+ * cap on macro expansion in KaTeX, set explicitly (1000, the KaTeX default), so that the
+ * limit does not depend on the version of the consumer's package.
  *
- * МАКРОСЫ — СВЕЖАЯ КОПИЯ НА КАЖДУЮ ОТРИСОВКУ. `\gdef` в формуле пишет в объект
- * `macros`, который KaTeX получил, и макрос одной формулы переезжал бы в
- * следующие. Одни и те же опции, однако, читает не один вызов: расширение Tiptap
- * отдаёт один объект `katexOptions` всем видам узлов Редактора, а Поповер — своим
- * предпросмотрам. Поэтому `macros` — геттер: KaTeX читает поле при каждой отрисовке
- * (`new Settings(options)`) и получает новый объект, так что формулы Редактора, его
- * Поповера и Острова `RichTextView` не делят `\gdef`. Копия опций (`{ ...options }`)
- * геттер вычисляет один раз, поэтому копировать надо перед каждым вызовом.
+ * MACROS ARE A FRESH COPY ON EVERY RENDER. `\gdef` in a formula writes into the `macros`
+ * object that KaTeX received, and the macro of one formula would carry over to the next
+ * ones. However, the same options are not read by one call only: the Tiptap extension
+ * passes one `katexOptions` object to all node views of the Editor, and the popover uses
+ * it for its own previews. So `macros` is a getter: KaTeX reads the field on every render
+ * (`new Settings(options)`) and gets a new object, so the formulas of the Editor, of its
+ * popover and of the `RichTextView` Island do not share a `\gdef`. A copy of the options
+ * taken once (`{ ...options }`) evaluates the getter once, so the copy must be made before
+ * every call.
  */
 export function katexOptionsFor(options: MathRenderOptions, display: boolean): KatexOptions {
   return {
@@ -53,8 +54,9 @@ export function katexOptionsFor(options: MathRenderOptions, display: boolean): K
 }
 
 /**
- * Сообщение об ошибке KaTeX без префикса «KaTeX parse error:»: фраза идёт в поле
- * после нашего «Неверный LaTeX». Ошибка не из KaTeX (сбой рендера) — её текст.
+ * The KaTeX error message without the "KaTeX parse error:" prefix: the phrase goes into the
+ * field after our "Invalid LaTeX" message. An error that is not from KaTeX (a render failure)
+ * is used as its own text.
  */
 export function mathErrorDetail(error: unknown): string {
   const raw = (error as { rawMessage?: unknown } | null)?.rawMessage;

@@ -1,16 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Картинки Редактора в браузере (OLDSUI-44): то, чего jsdom не умеет, —
- * перетаскивание файла, ручки ширины мышью и раскладка `figure`.
+ * Editor images in a browser (OLDSUI-44): what jsdom cannot do, namely dragging
+ * in a file, the width handles with the mouse, and the `figure` layout.
  *
- * Загрузчик историй ненастоящий: «грузит» полторы секунды и отдаёт адрес
- * картинки витрины (`ImageUploadSuccess`) или отказ (`ImageUploadFailure`).
+ * The story uploader is a stub: it "uploads" for a second and a half, then returns
+ * the address of a showcase image (`ImageUploadSuccess`) or a failure
+ * (`ImageUploadFailure`).
  */
 
 const STORY = (id: string) => `/iframe.html?id=inputs-richtexteditor--${id}&globals=theme:dark`;
 
-/** Перетащить «файл» PNG на поле: `DataTransfer` собирается в странице. */
+/** Drag a PNG "file" onto the field: the `DataTransfer` is built in the page. */
 async function dropImageFile(page: Page, name: string) {
   const field = page.getByRole("textbox", { name: "Document" });
   const box = (await field.boundingBox())!;
@@ -37,7 +38,7 @@ test("RichTextEditor image: a dropped file shows a placeholder, then the image",
 
   await expect(field.locator("[data-image-upload]")).toContainText("Uploading photo.png");
   await expect(page.getByRole("status")).toHaveText("Uploading photo.png…");
-  // Пока загрузка идёт, картинки в Документе нет.
+  // While the upload is in progress, there is no image in the Document yet.
   await expect(field.locator("figure img")).toHaveCount(0);
 
   await expect(field.locator("figure img")).toHaveCount(1, { timeout: 5000 });
@@ -68,14 +69,14 @@ test("RichTextEditor image: the resize handle snaps the width to a preset", asyn
   const img = figure.locator("img");
   await expect(img).toHaveAttribute("data-width", "75");
 
-  // Щелчок выделяет картинку: появляются её панель и ручки.
+  // A click selects the image: its toolbar and handles appear.
   await img.click();
   await expect(page.getByRole("toolbar", { name: "Image" })).toBeVisible();
   const handle = figure.locator('[data-resize-handle="right"]');
   await expect(handle).toBeVisible();
 
-  // Тянем правую ручку влево: картинка по центру, ширина меняется на
-  // удвоенный сдвиг и прилипает к ближайшему пресету.
+  // Drag the right handle to the left: the image is centered, its width changes by
+  // twice the shift and snaps to the nearest preset.
   const start = (await handle.boundingBox())!;
   const fieldBox = (await field.boundingBox())!;
   await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
@@ -84,7 +85,7 @@ test("RichTextEditor image: the resize handle snaps the width to a preset", asyn
   await page.mouse.up();
 
   await expect(img).toHaveAttribute("data-width", "50");
-  // В Документе — только пресет, никакого `style` от перетаскивания.
+  // The Document keeps only the preset, with no `style` left over from the drag.
   await expect(figure).not.toHaveAttribute("style", /width/);
 });
 

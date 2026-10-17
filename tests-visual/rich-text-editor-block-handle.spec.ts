@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Ручка Блока Редактора в браузере (OLDSUI-72): то, чего jsdom не умеет.
+ * Editor Block handle in a browser (OLDSUI-72): what jsdom cannot do.
  *
- * Меню react-aria внутри окна Radix в jsdom не раскрывается — ловушка фокуса
- * окна возвращает фокус, — поэтому стек слоёв ADR-0041 с настоящим `Dialog`
- * проверяется здесь: `ControlOrMeta+/` из Документа, подменю «Формат» и
- * Escape по одному уровню. Здесь же — настоящая раскладка: ручка стоит слева
- * от текста и следует за кареткой.
+ * A react-aria menu inside a Radix dialog does not open in jsdom: the dialog's focus
+ * trap sends focus back. So the overlay layer stack of ADR-0041 is checked here, with
+ * a real `Dialog`: `ControlOrMeta+/` from the Document, the "Format" submenu, and
+ * Escape closing one level at a time. This is also where the real layout is checked:
+ * the handle sits to the left of the text and follows the caret.
  */
 
 const STORY = (id: string) =>
@@ -29,7 +29,7 @@ test("inside a Dialog: the shortcut opens the menu, Escape closes the submenu, t
   const menu = page.getByRole("menu", { name: "Block actions" });
   await expect(menu).toBeVisible();
 
-  // Стрелками до «Формат», → — подменю с фокусом внутри.
+  // Arrow keys to "Format", then → opens the submenu with focus inside it.
   await page.getByRole("menuitem", { name: "Format" }).focus();
   await page.keyboard.press("ArrowRight");
   const format = page.getByRole("menu", { name: "Format" });
@@ -70,7 +70,8 @@ test("the handle sits left of the text and follows the caret to the first line o
   const handle = page.getByRole("button", { name: "Block actions" });
   await expect(handle).toBeVisible();
 
-  // Каретка во втором пункте — ручка у первой строки списка, левее маркеров.
+  // The caret is in the second item: the handle sits at the first line of the list,
+  // to the left of the markers.
   const list = field.locator("ul");
   const box = (await handle.boundingBox())!;
   const listBox = (await list.boundingBox())!;
@@ -78,7 +79,7 @@ test("the handle sits left of the text and follows the caret to the first line o
   expect(box.x + box.width).toBeLessThanOrEqual(listBox.x);
   expect(Math.abs(box.y + box.height / 2 - (first.y + first.height / 2))).toBeLessThan(3);
 
-  // Щелчок в заголовок — ручка переезжает к нему.
+  // Clicking the heading moves the handle to it.
   const title = field.getByText("Weekly summary");
   await title.click();
   const titleBox = (await title.boundingBox())!;

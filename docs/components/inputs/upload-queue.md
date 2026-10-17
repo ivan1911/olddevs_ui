@@ -9,150 +9,151 @@ story: src/components/inputs/UploadQueue.stories.tsx
 
 # UploadQueue
 
-## Кратко для AI
+## Summary for AI
 
-Менеджер загрузок: что уже отправлено, что идёт и что упало. **Только
-представление** — транспорта в ките нет. Элементы и обработчики приходят
-пропами; итог очереди объявляется скринридеру живой областью.
+An upload manager: what has been sent, what is in progress and what failed. **Presentation
+only** — the kit has no transport. Items and handlers come as props; the outcome of the
+queue is announced to the screen reader through a live region.
 
-## Когда использовать
+## When to use
 
-- Пользователь отправляет несколько файлов и должен видеть, что стало с каждым.
-- Часть файлов может упасть, а часть — пройти: нужен частичный успех.
-- Нужны действия над элементом: повтор, отмена, убрать из очереди.
+- The user sends several files and has to see what happened to each.
+- Some files may fail while others go through: partial success must be possible.
+- You need actions on an item: retry, cancel, remove from the queue.
 
-## Когда не использовать
+## When not to use
 
-- Для **выбора** файла используйте `FileDropzone`. Граница простая: область даёт
-  файлы, очередь показывает, что с ними стало. На экране они стоят рядом, и
-  путают их именно поэтому.
-- Для одного файла без прогресса и без ошибок — очередь из одной строки не
-  сообщает ничего, чего не сказало бы имя файла рядом с полем.
-- Для ленты уже завершённых событий используйте `Timeline`: там у шага нет действий,
-  а порядок задаёт процесс, а не пользователь.
+- To **choose** a file, use `FileDropzone`. The boundary is simple: the area
+  supplies files, the queue shows what happened to them. On the screen they sit
+  side by side, and that is exactly why they get confused.
+- For a single file without progress and without errors — a queue of one row says
+  nothing that the file name next to the field would not say.
+- For a feed of already completed events, use `Timeline`: there a step has no
+  actions, and the order is set by the process, not by the user.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { UploadQueue, type UploadItem } from "@olddevs/ui";
 
 const [items, setItems] = useState<UploadItem[]>([]);
 
-<UploadQueue items={items} empty={<EmptyState title="Очередь пуста" />} />;
+<UploadQueue items={items} empty={<EmptyState title="The queue is empty" />} />;
 ```
 
-## Пропы
+## Props
 
-| Проп         | Умолчание          | Назначение                                                              |
-| ------------ | ------------------ | ----------------------------------------------------------------------- |
-| `items`      | —                  | Элементы очереди. Состояние хранит потребитель.                         |
-| `empty`      | —                  | Что показать при пустой очереди. Если не задан, ничего не показывается. |
-| `aria-label` | «Очередь загрузки» | Доступное имя списка.                                                   |
+| Prop         | Default        | Purpose                                                        |
+| ------------ | -------------- | -------------------------------------------------------------- |
+| `items`      | —              | The queue items. The consumer keeps the state.                 |
+| `empty`      | —              | What to show for an empty queue. If omitted, nothing is shown. |
+| `aria-label` | "Upload queue" | The accessible name of the list.                               |
 
-Элемент (`UploadItem`): `id`, `name`, `size`, `preview`, `state`, `progress`,
+An `UploadItem` has these fields: `id`, `name`, `size`, `preview`, `state`, `progress`,
 `statusLabel`, `tone`, `meta`, `actions`.
 
-## Транспорта в ките нет
+## The kit has no transport
 
-Отправка, повтор, отмена и опрос задач на сервере — знание потребителя: URL,
-формат ответов и правила повтора принадлежат приложению. Кит даёт форму
-элемента, прогресс, состояния и объявление итога.
+Sending, retrying, canceling and polling jobs on the server are the consumer's
+concern: URLs, response formats and retry rules belong to the application.
+The kit provides the item shape, progress, states and the announcement of the outcome.
 
-Это то же разделение обязанностей, что у таблицы
-(ADR-0023): кит
-даёт форму состояния, владеет им потребитель. Решение по очереди —
+This is the same division of responsibilities as with the table
+(ADR-0023): the kit
+provides the shape of the state; the consumer owns it. The decision on the queue is
 ADR-0027.
 
-## Состояние — механика, подпись и тон — домен
+## State is mechanics, label and tone are domain
 
-`state` принимает четыре значения: `pending`, `running`, `success`, `failed`.
-Это исход работы, а не предметная область — тот же словарь, что у `Timeline`.
-Незнакомое значение (бэкенд завёл пятое) не роняет очередь: тон выводится
-нейтральным.
+`state` takes four values: `pending`, `running`, `success`, `failed`. This
+describes what happened to the job, not the application domain — the same vocabulary as in `Timeline`. An
+unknown value (the backend added a fifth) does not break the queue: the
+tone falls back to neutral.
 
-«Дубль», «На модерации», «Превышен лимит» — подписи потребителя, они приходят в
-`statusLabel` и рисуются бейджем. Заводить их состояниями кита нельзя: кит не знает
-предметной области приложения (фото, публикации). Так же устроен `StatusBadge`: его
-перенесли в кит из приложения-источника без словаря из 11 доменных статусов.
+"Duplicate", "Pending moderation", "Limit exceeded" are consumer labels; they arrive in
+`statusLabel` and are rendered as a badge. Making them kit states is not allowed: the
+kit does not know the application's domain (photos, publications). `StatusBadge` is built the same
+way: it was brought into the kit from the source app without a dictionary of 11 domain statuses.
 
-**`statusLabel` меняет только текст бейджа, а не его цвет.** Цвет выводится из
-`state`: `pending` — нейтральный, `running` — акцентный, `success` — зелёный,
-`failed` — красный. Пока подпись согласуется с состоянием («Готово» на
-`success`, «В очереди» на `pending`), этого достаточно.
+**`statusLabel` changes only the badge text, not its color.** The color is derived
+from `state`: `pending` is neutral, `running` is accent, `success` is green, `failed`
+is red. As long as the label agrees with the state ("Done" on `success`, "Queued" on
+`pending`), this is enough.
 
-### Доменный статус поверх механического: `tone`
+### A domain status over the mechanical one: `tone`
 
-Подпись и состояние расходятся там, где приложение знает больше транспорта.
-Пример — «Дубль»: файл дошёл до сервера, то есть `state="success"`, но радоваться
-нечему, и зелёный бейдж был бы неправдой. Для этого у элемента есть `tone`
-(`neutral | accent | success | warning | danger`) — он перекрывает тон,
-выведенный из `state`:
+The label and the state diverge where the application knows more than the transport.
+An example is "Duplicate": the file reached the server, that is `state="success"`, but
+there is no good news, and a green badge would be misleading. For this an item
+has `tone` (`neutral | accent | success | warning | danger`) — it overrides the tone
+derived from `state`:
 
 ```tsx
 const items: UploadItem[] = [
-  { id: "1", name: "report.pdf", state: "success", statusLabel: "Готово" },
+  { id: "1", name: "report.pdf", state: "success", statusLabel: "Done" },
   {
     id: "2",
     name: "report-copy.pdf",
     state: "success",
-    statusLabel: "Дубль",
+    statusLabel: "Duplicate",
     tone: "warning",
   },
 ];
 ```
 
-- **Без `tone` ничего не меняется:** цвет по-прежнему идёт от `state`.
-- **`tone` красит бейдж и полосу прогресса.** Они стоят в одной строке, и
-  зелёная полоса рядом с жёлтым «Дубль» говорила бы об одном элементе два
-  разных слова.
-- **Текст `meta` упавшего элемента `tone` не учитывает** — он следует `state`:
-  отправка упала, что бы ни говорил домен. И наоборот, красный `tone` у
-  `success` не делает элемент сбоем: итог в живой области считается по `state`.
-- **Тон не заменяет подпись.** Цвет без слова не читается ни скринридером, ни
-  дальтоником: «Дубль» остаётся в `statusLabel`, а `tone` лишь решает, каким цветом он
-  показан.
-- Неизвестное значение `tone` (опечатка, словарь потребителя разошёлся с китом)
-  игнорируется, как незаданное: тон выводится из `state`.
+- **Without `tone` nothing changes:** the color still comes from `state`.
+- **`tone` colors the badge and the progress bar.** They sit in one row, and a
+  green bar next to a yellow "Duplicate" would send two different messages about one item.
+- **The `meta` text of a failed item ignores `tone`** — it follows `state`: the
+  sending failed, whatever the domain says. And conversely, a red `tone` on a
+  `success` item does not make it count as a failure: the outcome in the live region is
+  computed from `state`.
+- **The tone does not replace the label.** Color without a word is read neither by a
+  screen reader nor by a color-blind person: "Duplicate" stays in `statusLabel`, and
+  `tone` only decides which color it is shown in.
+- An unknown `tone` value (a typo, or a consumer dictionary that has drifted from the kit)
+  is ignored, as if it were not set: the tone is derived from `state`.
 
-Размер файла тоже приходит **уже отформатированным**: «2,4 МБ» и «2.4 MB»
-отличаются не только разделителем, но и единицами (МБ или МиБ), а выбор единиц — решение приложения.
+The file size also comes **already formatted**: "2,4 МБ" and "2.4 MB" differ by more
+than the decimal separator, and the choice of units (MB or MiB) is the application's
+decision.
 
-## Итог объявляется, а не только показывается
+## The outcome is announced, not only shown
 
-Частичный успех — «загружено 9 из 12, 1 ошибка» — виден глазами по цвету строк.
-Пользователь скринридера, отправив дюжину файлов, о единственной упавшей загрузке не
-узнает вовсе, если её не назвать.
+A partial success — "9 of 12 uploaded, 1 failed" — is visible to the eye by the color
+of the rows. A screen reader user who sent a dozen files will not learn about the
+single failed one at all unless it is announced.
 
-Поэтому под списком стоит живая область, **смонтированная всегда**: область,
-вставленная в документ вместе с сообщением, объявляется ненадёжно — часть
-скринридеров успевает её пропустить. Тот же приём и по той же причине, что в
+That is why under the list there is a live region that is **always mounted**: a region
+inserted into the document together with its message is announced unreliably — some
+screen readers manage to miss it. This is the same technique, used for the same reason, as in
 `FileDropzone`.
 
-Склонение («1 ошибка», «2 ошибки», «5 ошибок») делает файл локали через
-`Intl.PluralRules`: правила знает локаль, а не компонент.
+Pluralization ("1 error", "2 errors") is done by the locale file through
+`Intl.PluralRules`: the locale knows the rules, not the component.
 
-## Прогресс: `null` — не ноль
+## Progress: `null` is not zero
 
-`progress: null` означает «общий объём работы неизвестен»: полоса показывает неопределённый прогресс, а
-`aria-valuenow` отсутствует. `progress: 0` означает «начали и пока ничего не
-сделали». `progress` не задан — полосы нет вовсе.
+`progress: null` means "the total amount of work is unknown": the bar shows indeterminate
+progress and `aria-valuenow` is absent. `progress: 0` means "started and nothing done yet".
+If `progress` is not set, there is no bar at all.
 
-Имя полосы собирается из имени файла: в очереди из дюжины строк одинаковые
-«Загрузка» не говорят, о каком файле речь.
+The bar name is built from the file name: in a queue of a dozen rows the same
+"Uploading" on every row does not say which file it refers to.
 
-## Антипаттерны
+## Anti-patterns
 
-- Хранить очередь внутри компонента. Он её не хранит — и не будет: состояние
-  принадлежит тому, кто ведёт отправку.
-- Заводить новое `state` под доменный случай вместо `statusLabel` и `tone`.
-- Не заполнять `statusLabel`, чтобы бейдж не стал зелёным у «Дубля»: цвет
-  задаёт `tone`, подпись для этого трогать не нужно.
-- Выражать смысл только цветом: `tone` без `statusLabel` бейджа не рисует вовсе,
-  а цвет полосы не заменяет слова.
-- Показывать `progress: 0` там, где длина ответа неизвестна: это неправда.
+- Keeping the queue inside the component. It does not keep it — and will not:
+  the state belongs to whoever runs the sending.
+- Introducing a new `state` for a domain case instead of `statusLabel` and `tone`.
+- Leaving `statusLabel` empty so that a "Duplicate" badge does not turn green:
+  the color is set by `tone`, the label does not need to be touched for that.
+- Expressing meaning by color only: `tone` without `statusLabel` renders no badge at all,
+  and the color of the bar does not replace words.
+- Showing `progress: 0` where the length of the response is unknown: that is untrue.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Исходник: `src/components/inputs/UploadQueue.tsx`
-- Тесты: `tests/upload-queue.test.tsx`
-- Витрина: `src/components/inputs/UploadQueue.stories.tsx`
+- Source: `src/components/inputs/UploadQueue.tsx`
+- Tests: `tests/upload-queue.test.tsx`
+- Showcase: `src/components/inputs/UploadQueue.stories.tsx`

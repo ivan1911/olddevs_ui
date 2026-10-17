@@ -3,9 +3,9 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Toggle, type ToggleProps } from "./Toggle.js";
 
 /**
- * Toggle управляемый: он не хранит своё состояние и без внешнего стейта на клик
- * не отзовётся. Поэтому истории оборачивают его в локальный `useState`, а проп
- * `checked` задаёт только начальное положение.
+ * Toggle is controlled: it does not store its own state, and without external state it
+ * does not respond to a click. So the stories wrap it in a local `useState`, and the
+ * `checked` prop only sets the initial position.
  */
 function ControlledToggle({
   checked = false,
@@ -19,15 +19,15 @@ const meta = {
   title: "Actions/Toggle",
   component: Toggle,
   parameters: { layout: "centered" },
-  // `label` обязателен по типам, поэтому задаётся здесь — иначе Storybook
-  // потребует его в args каждой истории, включая те, что рендерят матрицу.
+  // `label` is required by the types, so it is set here. Otherwise Storybook
+  // would require it in the args of every story, including those that render the matrix.
   args: { checked: false, onCheckedChange: () => {}, label: "Switch" },
 } satisfies Meta<typeof Toggle>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Живой переключатель: контрол `checked` задаёт стартовое положение. */
+/** A live toggle: the `checked` control sets the starting position. */
 export const Playground: Story = {
   args: { checked: false, disabled: false, label: "Auto-publishing" },
   render: (args) => (
@@ -40,9 +40,9 @@ export const Playground: Story = {
 };
 
 /**
- * Матрица состояние × доступность. Одиночный переключатель не покажет, что
- * выключенный `disabled` во включённом положении гасится прозрачностью и в
- * светлой теме почти неотличим от выключенного положения — матрица покажет.
+ * State × availability matrix. A single toggle won't show that a `disabled` toggle in the
+ * on position is dimmed by opacity, and in the light theme it is almost indistinguishable
+ * from the off position. The matrix will.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -77,8 +77,8 @@ export const Matrix: Story = {
 };
 
 /**
- * Подпись на экране — через `children`: она же доступное имя, нажатие по ней
- * переключает. Без подписи (`label`) переключатель остаётся голой дорожкой.
+ * The on-screen label is set through `children`. It is also the accessible name, and clicking
+ * it toggles the switch. Without a label (`label`), the toggle stays a bare track.
  */
 export const WithLabel: Story = {
   parameters: { layout: "padded" },
@@ -92,9 +92,9 @@ export const WithLabel: Story = {
 };
 
 /**
- * Строка настройки: заголовок и пояснение слева, переключатель справа. Описание
- * связано с переключателем через `aria-describedby`, нажатие по любому из двух
- * текстов переключает.
+ * Settings row: the title and the explanation on the left, the toggle on the right. The
+ * description is linked to the toggle through `aria-describedby`, and a click on either
+ * of the two texts toggles it.
  */
 export const SettingRow: Story = {
   parameters: { layout: "padded" },

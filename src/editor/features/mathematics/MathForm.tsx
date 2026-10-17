@@ -13,33 +13,35 @@ import { BLOCK_FORMULA_NODE, INLINE_FORMULA_NODE } from "./mathNames.js";
 
 export interface MathFormProps {
   editor: Editor;
-  /** Строчная формула или блочная: от вида зависят имя узла, поле и режим предпросмотра. */
+  /** Inline or block formula: the kind sets the node name, the field and the preview mode. */
   kind: "inline" | "block";
-  /** Позиция правимой формулы; нет — форма вставляет новую на место каретки. */
+  /**
+   * Position of the formula being edited. Without it, the form inserts a new formula at the
+   * caret.
+   */
   pos?: number;
-  /** Закрыть Поповер тем же путём, что Escape. */
+  /** Closes the popover the same way Escape does. */
   close: () => void;
 }
 
 /**
- * Содержимое Поповера формулы (ADR-0070, п. 7): поле LaTeX, живой предпросмотр и
- * ошибка в самом поле. Рамку держит кит (`SelectionPopover`): `Popover` в стеке
- * слоёв, имя рамки — подпись пункта, возврат фокуса в Документ.
+ * Content of the formula popover (ADR-0070, item 7): the LaTeX field, a live preview and the
+ * error inside the field itself. The kit draws the frame (`SelectionPopover`): a `Popover` in
+ * the layer stack. The frame's name is the item's label, and focus returns to the Document.
  *
- * ДВА РЕЖИМА ПО `pos`, как у Поповера картинки. С `pos` форма правит формулу
- * (щелчок или Enter на ней) — кнопки «Применить» и «Убрать формулу»; без него
- * вставляет новую (пункт Меню вставки) — кнопка «Вставить».
+ * TWO MODES, SET BY `pos`, as in the image popover. With `pos`, the form edits the formula
+ * (a click or Enter on it) and shows the "Apply" and "Remove formula" buttons. Without it,
+ * the form inserts a new formula (a Slash menu item) and shows the "Insert" button.
  *
- * НЕВЕРНЫЙ LaTeX ДОКУМЕНТ НЕ МЕНЯЕТ. Разбор идёт на каждое нажатие, и пока KaTeX
- * ругается, кнопка применения выключена, а в поле стоит его сообщение: в Документ
- * не попадёт формула, которой нет чем нарисовать. Предпросмотр и Документ рисует
- * один и тот же KaTeX с теми же опциями, что взял Редактор (`tool("mathematics")`),
- * поэтому «в предпросмотре правильно» значит «в Документе правильно».
+ * AN INVALID LaTeX DOES NOT CHANGE THE DOCUMENT. Parsing runs on every keystroke. While KaTeX
+ * reports an error, the apply button is disabled and its message stays in the field, so a
+ * formula that cannot be drawn never reaches the Document. The preview and the Document are
+ * drawn by the same KaTeX with the same options the Editor uses (`tool("mathematics")`), so
+ * "correct in the preview" means "correct in the Document".
  *
- * Поле формулы блочного вида — многострочное (`aligned`, матрицы удобнее писать
- * столбцом), `Enter` в нём — перенос строки, а применяет `Ctrl/⌘+Enter`. У
- * строчной — однострочное, `Enter` применяет. Enter, которым IME подтверждает
- * слово, не считается.
+ * The field of a block formula is multiline (`aligned` and matrices are easier to write as a
+ * column). `Enter` inserts a line break there, and `Ctrl/⌘+Enter` applies. An inline field is
+ * single-line, and `Enter` applies. An Enter that an IME uses to confirm a word does not count.
  */
 export function MathForm({ editor, kind, pos, close }: MathFormProps) {
   const messages = useMessages().editor;
@@ -51,9 +53,9 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
   );
   const [draft, setDraft] = useState(existing ?? "");
 
-  // Опции KaTeX берёт у расширения этого же вида: отдельной копии опций у формы нет.
-  // Фабрика, а не объект: `\gdef` пишет в `macros`, а `{ ...options }` вычисляет геттер
-  // макросов (`katexOptionsFor`) заново — каждая проверка и предпросмотр начинают с чистых.
+  // KaTeX options come from the extension of the same kind: the form keeps no copy of its own.
+  // It is a factory, not an object: `\gdef` writes into `macros`, and `{ ...options }`
+  // re-evaluates the macros getter (`katexOptionsFor`), so each check and preview starts clean.
   const katexOptions = useMemo(() => {
     const own = editor.extensionManager.extensions.find((extension) => extension.name === name);
     const options = own?.options.katexOptions as KatexOptions | undefined;
@@ -61,8 +63,8 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
   }, [editor, name]);
 
   const latex = draft.trim();
-  // Проверка — `renderToString`: разметка из него никуда не вставляется, а ошибка
-  // KaTeX приходит тем же исключением, что при отрисовке.
+  // The check uses `renderToString`: its markup goes nowhere, and a KaTeX error arrives as the
+  // same exception that rendering throws.
   const error = useMemo(() => {
     if (!latex) return null;
     try {
@@ -72,8 +74,9 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
       return mathErrorDetail(failure);
     }
   }, [latex, katexOptions]);
-  // Предпросмотр рисует `katex.render` прямо в элемент: размеры KaTeX задаёт через
-  // CSSOM, а не строкой `style="…"` в `innerHTML`, и строгий CSP потребителя их не режет.
+  // The preview calls `katex.render` straight into the element. KaTeX sizes are set through
+  // CSSOM, not as a `style="…"` string in `innerHTML`, so a consumer's strict CSP does not
+  // block them.
   const previewRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const target = previewRef.current;
@@ -86,7 +89,7 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
     if (!latex || error !== null) return;
     if (pos === undefined) insertFormula(editor, kind, latex);
     else if (latex !== existing) {
-      // Команда расширения: узел обновляется на месте, одна правка в истории.
+      // Extension command: the node updates in place, as one edit in the history.
       if (block) editor.chain().focus().updateBlockMath({ latex, pos }).run();
       else editor.chain().focus().updateInlineMath({ latex, pos }).run();
     }
@@ -103,7 +106,7 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-    // Блочное поле — столбец: Enter переносит строку, применяет Mod+Enter.
+    // A block field is a column: Enter inserts a line break, Mod+Enter applies.
     if (block && !(event.metaKey || event.ctrlKey)) return;
     event.preventDefault();
     apply();
@@ -111,7 +114,8 @@ export function MathForm({ editor, kind, pos, close }: MathFormProps) {
 
   return (
     <div className="flex w-80 max-w-full flex-col gap-3 p-1">
-      {/* `layout="stack"` явно: Поповер рисуется вне раскладки формы, где стоит Редактор. */}
+      {/* `layout="stack"` is set explicitly: the popover is drawn outside the form layout where
+          the Editor sits. */}
       <FormField
         label={messages.mathLatex}
         htmlFor={fieldId}

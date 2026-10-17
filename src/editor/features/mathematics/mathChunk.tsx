@@ -20,19 +20,19 @@ import { BLOCK_FORMULA_NODE, FORMULA_SOURCE_ATTRIBUTE, INLINE_FORMULA_NODE } fro
 import type { MathRenderOptions } from "./mathOptions.js";
 
 /*
-  Чанк формул (ADR-0070, п. 5; ADR-0058, п. 11.1): расширение Mathematics из
-  Tiptap, KaTeX и его CSS (`katexEngine.ts`), Поповер формулы и Markdown. Всё это
-  тяжелее 10 кБ gzip, а `basic` и `full` формул не несут, поэтому чанк грузит
-  Загрузчик Инструмента (`mathematicsTool.ts`) и только у Редактора, где
-  `mathematics` назван в `tools`.
+  The formula chunk (ADR-0070, item 5; ADR-0058, item 11.1): the Mathematics extension
+  from Tiptap, KaTeX and its CSS (`katexEngine.ts`), the formula popover and Markdown.
+  Together they weigh more than 10 kB gzip, while `basic` and `full` carry no formulas,
+  so the chunk is loaded by the Tool's Loader (`mathematicsTool.ts`), and only in an
+  Editor that names `mathematics` in `tools`.
 */
 
-/** Форма Поповера как узел: рамку, имя и якорь даёт кит. */
+/** The popover form as a node: the kit supplies the frame, the title and the anchor. */
 export function renderMathForm(props: MathFormProps): ReactNode {
   return <MathForm {...props} />;
 }
 
-/** Запрос Поповера на правку формулы: Поповер стоит у самой формулы и следует за ней. */
+/** A popover request to edit a formula: the popover stands right at the formula and follows it. */
 function editRequest(node: ProseMirrorNode, pos: number): ToolPopoverRequest {
   const block = node.type.name === BLOCK_FORMULA_NODE;
   return {
@@ -45,29 +45,30 @@ function editRequest(node: ProseMirrorNode, pos: number): ToolPopoverRequest {
 }
 
 export interface MathExtensionsContext {
-  /** Опции KaTeX этого Редактора. */
+  /** The KaTeX options of this Editor. */
   options: MathRenderOptions;
-  /** Открыть Поповер у выделения или у Блока (мост `RichTextEditor`). */
+  /** Open the popover at the selection or at a Block (the bridge from `RichTextEditor`). */
   openPopover: (request: ToolPopoverRequest) => void;
 }
 
 /**
- * Extensions Инструмента: узлы `inlineMath` и `blockMath` и правка с клавиатуры.
+ * The Tool's Extensions: the `inlineMath` and `blockMath` nodes and keyboard editing.
  *
- * - **Правка.** Щелчок (`onClick` расширения) и Enter на выделенной формуле открывают
- *   Поповер кита вместо встроенной правки Tiptap. С клавиатуры строчную формулу
- *   выделяет `Shift+→` или `Shift+←` от каретки рядом с ней (`selectedFormula`).
- *   В нередактируемом поле формула только показывается.
- * - **Текст атома — LaTeX.** `renderText` даёт исходник счётчику, копированию текстом
- *   и поиску (ADR-0058, п. 4), как `data-latex` даёт его HTML.
- * - **Markdown.** Токенизаторы и выгрузка — `mathMarkdown.ts`.
- * - **Блочная формула отрисовывается в режиме `display`**: расширение Tiptap одни
- *   опции KaTeX отдаёт обоим узлам, а блоку нужна формула крупно и по центру.
+ * - **Editing.** A click (the extension's `onClick`) and Enter on a selected formula open
+ *   the kit's popover instead of Tiptap's built-in editing. From the keyboard, `Shift+→`
+ *   or `Shift+←` from the caret next to an inline formula selects it (`selectedFormula`).
+ *   In a non-editable field the formula is only shown.
+ * - **Atom text is LaTeX.** `renderText` gives the source to the counter, to copying as
+ *   text and to search (ADR-0058, item 4), the way `data-latex` gives it to the HTML.
+ * - **Markdown.** The tokenizers and the export are in `mathMarkdown.ts`.
+ * - **A block formula is drawn in `display` mode**: the Tiptap extension passes one set of
+ *   KaTeX options to both nodes, but a block needs the formula large and centered.
  */
 export function mathExtensions({ options, openPopover }: MathExtensionsContext): Extensions {
   const edit = (node: ProseMirrorNode, pos: number) => openPopover(editRequest(node, pos));
   const latexText = ({ node }: { node: ProseMirrorNode }) => String(node.attrs.latex ?? "");
-  // Редактор узла — для проверки «поле правится» в обработчике щелчка: он знает только узел.
+  // The Editor that hosts the node: the click handler checks that the field is editable,
+  // which the node alone cannot tell.
   let host: Editor | null = null;
   const bind = {
     onBeforeCreate(this: { editor: Editor }) {
@@ -75,9 +76,9 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
     },
   };
   /*
-    `data-latex` в HTML Редактор пишет с пробелом в парах, которые DOMPurify режет
-    (`safeLatexSource`): сохранённый HTML проходит санитайзер потребителя целым и при
-    втором проходе не меняется. Узел хранит набранное автором как есть.
+    The Editor writes `data-latex` in the HTML with a space inside the pairs that DOMPurify
+    cuts (`safeLatexSource`): the saved HTML passes the consumer's sanitizer intact and does
+    not change on a second pass. The node keeps what the author typed, as is.
   */
   const source = {
     addAttributes() {
@@ -94,7 +95,8 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
   };
   const open = (node: ProseMirrorNode, pos: number) => {
     if (!host?.isEditable) return;
-    // Щелчок выделяет узел сам; выделение нужно и Enter-у, и тому, кто вернётся в поле.
+    // The click selects the node itself. The selection is needed both by Enter and by the
+    // author who comes back to the field.
     host.commands.setNodeSelection(pos);
     edit(node, pos);
   };
@@ -119,11 +121,11 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
     onClick: open,
   });
   /*
-    `Shift+→` и `Shift+←` у строчной формулы выделяют ровно её диапазоном текста. Без
-    перехвата выделение расширяет Chromium, и через `contenteditable="false"` он то
-    сворачивает его, то перешагивает атом дальше — Enter тогда не находит формулу.
-    Диапазон текста, в отличие от выделения узла, Chromium при `selectionchange` не
-    сбрасывает: ту же форму дал бы и удачный нативный `Shift+→`.
+    `Shift+→` and `Shift+←` on an inline formula select exactly its text range. Without a
+    key handler, Chromium widens the selection, and through `contenteditable="false"` it
+    either collapses it or steps past the atom — and then Enter does not find the formula.
+    Unlike a node selection, a text range is not reset by Chromium on `selectionchange`: a
+    native `Shift+→` that worked would give the same shape.
   */
   const selectBeside = (editor: Editor, forward: boolean) => {
     const { selection } = editor.state;
@@ -143,7 +145,8 @@ export function mathExtensions({ options, openPopover }: MathExtensionsContext):
       return {
         "Shift-ArrowRight": ({ editor }) => selectBeside(editor, true),
         "Shift-ArrowLeft": ({ editor }) => selectBeside(editor, false),
-        // Enter на выделенной формуле — щелчком или `Shift+→` — открывает Поповер, а не рвёт абзац.
+        // Enter on a selected formula, whether selected by a click or by `Shift+→`, opens the
+        // popover instead of splitting the paragraph.
         Enter: ({ editor }) => {
           const found = editor.isEditable ? selectedFormula(editor.state) : null;
           if (!found) return false;

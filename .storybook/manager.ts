@@ -3,18 +3,18 @@ import { create } from "storybook/theming";
 import pkg from "../package.json" with { type: "json" };
 
 /**
- * Шапка боковой панели витрины — как на сайте ui.olddevs.ru: знак, название и
- * версия кита вместо логотипа Storybook. `static/mark.svg` и `static/logo.svg` —
- * копии узкого знака и логотипа главной сайта (`olddevs_ui_site/public/`,
- * собираются из геометрии `src/lib/brand.ts` сайта; правятся там, сюда —
- * копией). Из `static/` они раздаются рядом с витриной, и README берёт
- * логотип с адреса `https://ivan1911.github.io/olddevs_ui/logo.svg`.
+ * The header of the showcase's sidebar, as on the ui.olddevs.ru site: the mark, the name and
+ * the kit version instead of the Storybook logo. `static/mark.svg` and `static/logo.svg` are
+ * copies of the narrow mark and the logo from the site's home page (`olddevs_ui_site/public/`,
+ * built from the geometry in the site's `src/lib/brand.ts`; they are edited there and copied
+ * here by hand). They are served from `static/` next to the showcase, and the README takes the
+ * logo from `https://ivan1911.github.io/olddevs_ui/logo.svg`.
  *
- * `brandTitle` Storybook вставляет как HTML. Адрес картинки относительный:
- * витрина живёт и в корне, и в подкаталоге GitHub Pages.
+ * Storybook inserts `brandTitle` as HTML. The image address is relative: the showcase lives
+ * both at the root and in a subdirectory of GitHub Pages.
  *
- * Тема — по системной, как и без этого файла: `create` требует `base`, а без
- * него Storybook сам смотрит на `prefers-color-scheme`.
+ * The theme follows the system setting, as it would without this file: `create` requires
+ * `base`, and without it Storybook checks `prefers-color-scheme` itself.
  */
 const base = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 

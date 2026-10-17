@@ -8,45 +8,51 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     toolButtons: {
       /**
-       * Внутренняя команда кита, не API: открыть поповер записи описания.
-       * Кнопка — у выделения (сочетание, рамка `anchor: "selection"`); пункт
-       * вставки — у каретки; Действие над Блоком — у Блока `block`. В
-       * нередактируемом поле и при невыполненном `can` кнопки — нет.
+       * Internal kit command, not API: opens the popover of a button entry. A button is anchored to
+       * the selection (its shortcut, the frame `anchor: "selection"`); an insert item is anchored to
+       * the caret; a Block action is anchored to its `block`. In a non-editable field, and when `can`
+       * fails, there are no buttons.
        */
       openToolPopover: (id: string, block?: number) => ReturnType;
     };
   }
 }
 
-/** Запись с поповером, кроме кнопки: пункт вставки или Действие над Блоком. */
+/** An entry with a popover, other than a button: an insert item or a Block action. */
 export interface ToolPopoverEntry {
   id: string;
   label: ToolLabel;
   popover: ToolPopoverRequest["popover"];
 }
 
-/** Что открыть: рамку держит `RichTextEditor` (`SelectionPopover`). */
+/** What to open: the frame is held by `RichTextEditor` (`SelectionPopover`). */
 export interface ToolPopoverRequest {
-  /** Подпись записи — имя рамки. */
+  /** The entry's label: the frame's name. */
   label: ToolLabel;
-  /** Содержимое; `pos` — Блок у поповера или, у каретки, начало выделения. */
+  /**
+   * The content. `pos` is the Block the popover is for, or, for the caret, the start of the
+   * selection.
+   */
   popover: (props: { editor: Editor; close: () => void; pos: number }) => ReactNode;
-  /** Классы рамки вместо умолчания (`popoverFrame` кнопки кита). */
+  /** Frame classes in place of the default (the kit button's `popoverFrame`). */
   className?: string;
-  /** Позиция Блока: поповер у Блока. Нет — у выделения. */
+  /**
+   * The Block's position. The popover is attached to the Block; if absent, it is attached to the
+   * selection.
+   */
   block?: number;
 }
 
 export interface ToolButtonsOptions {
-  /** Кнопки описаний включённых Инструментов — в порядке списка. */
+  /** Descriptor buttons of the enabled Tools, in list order. */
   buttons: readonly KitToolButton[];
-  /** Пункты вставки и Действия над Блоком с поповером. */
+  /** Insert items and Block actions that have a popover. */
   entries: readonly ToolPopoverEntry[];
-  /** Открыть поповер у выделения или у Блока: его держит `RichTextEditor`. */
+  /** Opens the popover at the selection or at a Block: `RichTextEditor` holds it. */
   openPopover: (request: ToolPopoverRequest) => void;
 }
 
-/** Нажать кнопку можно: поле правится, кнопка видна и доступна. */
+/** The button can be pressed: the field is editable, and the button is visible and enabled. */
 function available(editor: Editor, button: KitToolButton): boolean {
   return editor.isEditable && (button.isVisible?.(editor) ?? true) && button.can(editor);
 }
@@ -60,8 +66,8 @@ const KEY_NAMES: Record<string, string> = {
 };
 
 /**
- * Сочетание из нотации Панели (`["mod", "K"]`) — в имя клавиши ProseMirror
- * (`Mod-k`). Буква — строчной: заглавную keymap читает как клавишу с Shift.
+ * Converts a Toolbar-notation shortcut (`["mod", "K"]`) into a ProseMirror key name (`Mod-k`).
+ * The letter becomes lowercase: the keymap reads an uppercase one as a key with Shift.
  */
 export function keymapName(keys: readonly string[]): string {
   return keys
@@ -70,10 +76,10 @@ export function keymapName(keys: readonly string[]): string {
 }
 
 /**
- * Сочетания у кнопок описаний (ADR-0058, п. 5.7): сочетание — поле
- * записи и единственный его источник, поэтому клавишу вешает кит, а не
- * Extensions Инструмента. `run` выполняется, поповер открывается у выделения.
- * Недоступная кнопка клавишу не берёт: она идёт дальше, в Документ.
+ * Shortcuts of the descriptor buttons (ADR-0058, item 5.7): the shortcut is the entry's own field
+ * and its only source, so the kit binds the key, not the Tool's Extensions. `run` executes, and the
+ * popover opens at the selection. An unavailable button does not take the key: it passes on, to the
+ * Document.
  */
 export const ToolButtons = Extension.create<ToolButtonsOptions>({
   name: "toolButtons",
@@ -89,18 +95,17 @@ export const ToolButtons = Extension.create<ToolButtonsOptions>({
           const entry = this.options.entries.find((candidate) => candidate.id === id);
           if (!editor.isEditable) return false;
           if (button ? !button.popover || !available(editor, button) : !entry) return false;
-          // `can()` зовёт команду всухую, без `dispatch`: поповер открывается
-          // только настоящим вызовом.
+          // `can()` calls the command dry, without `dispatch`: the popover opens only on a real call.
           if (!dispatch) return true;
           if (button?.popover) {
             const { label, popover, popoverFrame } = button;
             this.options.openPopover({ label, popover, className: popoverFrame?.className });
           } else if (entry) {
             /*
-              Кадром позже: пункт меню зовёт команду после `focus()` в цепочке,
-              а Tiptap возвращает фокус в Документ в следующем кадре, и меню
-              тем временем снимается. Поповер, открытый сразу, потерял бы фокус
-              и закрылся как «фокус ушёл наружу» — как поповер картинки.
+              One frame later: the menu item calls the command after `focus()` in the chain, and
+              Tiptap returns focus to the Document on the next frame, while the menu is removed in
+              the meantime. A popover opened right away would lose focus and close as "focus moved
+              outside", like the image popover does.
             */
             requestAnimationFrame(() => {
               if (!editor.isDestroyed) this.options.openPopover({ ...entry, block });

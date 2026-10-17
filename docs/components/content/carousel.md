@@ -9,53 +9,53 @@ story: src/components/content/Carousel.stories.tsx
 
 # Carousel
 
-## Кратко для AI
+## Summary for AI
 
-Лента слайдов на нативной прокрутке с CSS scroll-snap: листают кнопки «назад»
-и «вперёд», колесо мыши, тачпад, свайп и стрелки клавиатуры; слайд после жеста
-встаёт ровно. Имя региона обязательно: ровно одно из `aria-label` и
-`aria-labelledby`. Сколько
-слайдов в кадре — `slidesPerView` (число или объект по брейкпойнтам кита), текущий
-слайд — `index` / `defaultIndex` / `onIndexChange`. Слайды сами не
-переключаются никогда: ни автопрокрутки, ни бесконечной ленты.
+A strip of slides on native scrolling with CSS scroll-snap: the "previous" and
+"next" buttons, the mouse wheel, the trackpad, swipe and the arrow keys all move
+it; after a gesture the slide settles exactly in place. The region name is
+required — exactly one of `aria-label` and `aria-labelledby`. The number of
+slides in view is `slidesPerView` (a number or an object keyed by the kit's
+breakpoints), and the current slide is `index` / `defaultIndex` / `onIndexChange`.
+Slides never change on their own: no autoplay, no infinite strip.
 
-## Когда использовать
+## When to use
 
-- Галерея, подборка или набор карточек, которые должны занять одну строку
-  экрана, а не расти вниз: превью, рекомендации, шаги знакомства.
-- Нужно показывать несколько слайдов разом и менять их число по ширине экрана
-  (`slidesPerView={{ base: 1, md: 2, xl: 4 }}`).
-- Нужно связать ленту с остальным экраном: подпись, миниатюры, счётчик — через
-  `index` и `onIndexChange`.
-- Компонент «на будущее» (ADR-0048): заказчика при выпуске не было, API взят по
-  аналогам — shadcn/ui `Carousel`, Mantine `Carousel`, Chakra `Carousel`, Ant
-  `Carousel`, Fluent 2 `Carousel`. Ваш экран первым проверит этот API: если он
-  потребует другого API, это не нарушение контракта.
+- A gallery, a selection or a set of cards that should fill one row of the
+  screen instead of growing downward: previews, recommendations, onboarding steps.
+- You need to show several slides at once and change their number with the screen
+  width (`slidesPerView={{ base: 1, md: 2, xl: 4 }}`).
+- You need to tie the strip to the rest of the screen: a caption, thumbnails, a
+  counter — through `index` and `onIndexChange`.
+- A component "for the future" (ADR-0048): there was no requesting screen at release, and
+  the API was modeled on comparable kits — shadcn/ui `Carousel`, Mantine `Carousel`,
+  Chakra `Carousel`, Ant `Carousel`, Fluent 2 `Carousel`. Your screen is the first
+  to test this API: if it needs a different API, that is not a violation of the contract.
 
-## Когда не использовать
+## When not to use
 
-- Автоматически сменяющиеся слайды, бесконечная лента, точки-индикаторы — их
-  нет и не будет: кит не берёт на себя ни кнопку паузы, ни ловушки доступности
-  автопрокрутки (движение нельзя остановить, текст не успевают прочитать).
-- Готовый компонент-лайтбокс: отдельного нет и не будет, но просмотр
-  листаемым окном собирается из `Dialog` и `Carousel` — см.
-  [«Просмотр каруселью в `Dialog`»](#просмотр-каруселью-в-dialog).
-- Для вкладок с одним видимым содержимым используйте `Tabs`: у них иная семантика
-  (`tablist`), а не лента.
-- Постраничный просмотр записей со стрелками и клавишами — отдельная задача
-  (`DetailPager` в реестре кандидатов), не карусель.
-- Если набор уместно показать сеткой целиком, берите `Grid`: скрыть половину
-  содержимого за прокруткой — плата, которую платят только когда сетка не
-  помещается.
-- Для длинного списка строк используйте `Table` или список; горизонтальная лента
-  для него — неверный способ показа.
+- Automatically changing slides, an infinite strip, dot indicators — they do
+  not exist and never will: the kit takes on neither a pause button nor the
+  accessibility traps of autoplay (motion that cannot be stopped, text that
+  cannot be read in time).
+- A ready-made lightbox component: there is none and never will be, but a
+  viewer that pages through slides in a dialog is assembled from `Dialog` and `Carousel` — see
+  ["Viewing with a carousel in a `Dialog`"](#viewing-with-a-carousel-in-a-dialog).
+- For tabs with a single visible panel, use `Tabs`: they have different
+  semantics (`tablist`), not a strip.
+- Paged browsing of records with arrow buttons and keys is a separate task (`DetailPager`
+  in the candidate registry), not a carousel.
+- If a set can reasonably be shown in full as a grid, use `Grid`: hiding half of the content behind
+  scrolling is a price paid only when the grid does not fit.
+- For a long list of rows, use a `Table` or a list; a horizontal strip is the
+  wrong way to present it.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Carousel } from "@olddevs/ui";
 
-<Carousel aria-label="Рекомендации" slidesPerView={{ base: 1, md: 3 }}>
+<Carousel aria-label="Recommendations" slidesPerView={{ base: 1, md: 3 }}>
   <ProductCard id="a" />
   <ProductCard id="b" />
   <ProductCard id="c" />
@@ -65,64 +65,67 @@ import { Carousel } from "@olddevs/ui";
 
 ## Public API
 
-| Проп               | По умолчанию | Значение                                                                                                       |
-| ------------------ | ------------ | -------------------------------------------------------------------------------------------------------------- |
-| `aria-label`       | —            | Имя региона строкой. Обязательно ровно одно из `aria-label` и `aria-labelledby`; оба сразу — ошибка типа.      |
-| `aria-labelledby`  | —            | Имя региона от видимого заголовка над лентой — `id` заголовка.                                                 |
-| `slidesPerView`    | `1`          | `1`, `2`, `3` или `4` слайда в кадре; объект `{ base, sm, md, lg, xl }` — своё число, начиная с каждой ширины. |
-| `index`            | —            | Текущий слайд, управляемый режим: левый видимый, с нуля.                                                       |
-| `defaultIndex`     | `0`          | Слайд при первом показе, неуправляемый режим. Открывается без анимации.                                        |
-| `onIndexChange`    | —            | `(index: number) => void` — лента остановилась на другом слайде.                                               |
-| `children`         | —            | Слайды: каждый прямой потомок — один слайд.                                                                    |
-| атрибуты `section` | —            | `className`, `id`, `data-*` доходят до региона; `ref` — на `<section>` (`forwardRef`).                         |
+| Prop                 | Default | Meaning                                                                                                                   |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `aria-label`         | —       | The region name as a string. Exactly one of `aria-label` and `aria-labelledby` is required; both at once is a type error. |
+| `aria-labelledby`    | —       | The region name taken from a visible heading above the strip — the heading's `id`.                                        |
+| `slidesPerView`      | `1`     | `1`, `2`, `3` or `4` slides in view; an object `{ base, sm, md, lg, xl }` — a separate number starting at each width.     |
+| `index`              | —       | The current slide, controlled mode: the leftmost visible one, zero-based.                                                 |
+| `defaultIndex`       | `0`     | The initial slide in uncontrolled mode. It is shown without animation.                                                    |
+| `onIndexChange`      | —       | `(index: number) => void` — the strip has stopped on a different slide.                                                   |
+| `children`           | —       | The slides: each direct child is one slide.                                                                               |
+| `section` attributes | —       | `className`, `id` and `data-*` are passed to the region; `ref` goes to the `<section>` (`forwardRef`).                    |
 
-**Слайд — прямой потомок.** Фрагмент — один потомок, поэтому слайды внутри него
-не становятся отдельными слайдами; `null`, `false` и пустые строки слайдом не становятся.
+**A slide is a direct child.** A fragment is one child, so slides inside it do not
+become separate slides; `null`, `false` and empty strings do not become slides.
 
-**Зазора между слайдами нет.** Ширина слайда — доля строки, и зазор сделал бы её
-зависимой от числа слайдов в кадре. Отступ между карточками — внутренний отступ
-содержимого слайда (`p-2` на корне карточки).
+**There is no gap between slides.** A slide's width is a fraction of the row, and
+a gap would make it depend on the number of slides in view. The space between
+cards is the inner padding of the slide's content (`p-2` on the card root).
 
-### Индекс — левый видимый слайд
+### The index is the leftmost visible slide
 
-При `slidesPerView={3}` и пяти слайдах достижимы индексы 0–2: лента не едет
-дальше своего конца, в последнем кадре слайды с индексами 2–4. Индекс, которого достичь
-нельзя (`index={4}` в этом примере), лента заменяет ближайшим достижимым.
+With `slidesPerView={3}` and five slides, indexes 0–2 are reachable: the strip does
+not scroll past its end, and the last view holds the slides with indexes 2–4. An index that cannot
+be reached (`index={4}` in this example) is replaced by the nearest
+reachable one.
 
-### `onIndexChange` — после остановки
+### `onIndexChange` fires after scrolling stops
 
-Колбэк вызывается, когда прокрутка остановилась (через 100 мс после последнего
-события прокрутки), а не на каждый кадр. Поэтому в управляемом режиме смена
-`index` снаружи не порождает эхо: лента едет к назначенному слайду, проходит
-промежуточные молча, и на месте колбэк не вызывается — слайд уже тот.
+The callback is called when scrolling has stopped (100 ms after the last scroll
+event), not on every frame. So in controlled mode, changing `index` externally
+does not create an echo: the strip travels to the assigned slide, passes the
+intermediate ones silently, and the callback is not called on arrival — the slide
+is already the right one.
 
-Управляемый режим — в обычном смысле: `index` назначает слайд, колбэк просит
-родителя его сменить. Родитель, оставивший прежний индекс, получит ленту обратно
-на нём — плавно, после остановки. Слайд, который назначили сами (`index`,
-`defaultIndex`), колбэка не вызывает.
+This is controlled mode in the usual sense: `index` assigns the slide, and the
+callback asks the parent to change it. A parent that keeps the old index gets the
+strip back on it — smoothly, after scrolling stops. A slide you assigned yourself
+(`index`, `defaultIndex`) does not call the callback.
 
-### Кнопки и края
+### Buttons and edges
 
-Кнопки — `Button` кита, только иконка; имена из каталога сообщений («Предыдущий
-слайд», «Следующий слайд»). На краях выключаются; если вся лента помещается в
-кадр, выключены обе. Нажатая кнопка, ставшая выключенной, передаёт фокус
-соседней — пользователь клавиатуры не оказывается в начале страницы. Если нажать
-несколько раз подряд, каждое нажатие отсчитывается от слайда, к которому лента
-уже едет.
+The buttons are the kit's `Button`, icon only; their names come from the message
+catalog ("Previous slide", "Next slide"). They are disabled at the edges; if the
+whole strip fits in view, both are disabled. A pressed button that becomes
+disabled passes focus to its neighbor — a keyboard user does not end up at the
+start of the page. If you press several times in a row, each press counts from the slide the strip is
+already scrolling to.
 
-### Плавность и `prefers-reduced-motion`
+### Smoothness and `prefers-reduced-motion`
 
-Кнопки листают с `behavior: "smooth"`, а при `prefers-reduced-motion: reduce` —
-мгновенно. Предпочтение читается в момент прокрутки. Остановка на слайде после
-жеста — встроенная привязка браузера, её анимацию ведёт браузер.
+The buttons scroll with `behavior: "smooth"`, but instantly under
+`prefers-reduced-motion: reduce`. The preference is read at the moment of scrolling. Settling
+on a slide after a gesture is the browser's built-in snapping, and the browser
+itself drives its animation.
 
-## Просмотр каруселью в `Dialog`
+## Viewing with a carousel in a `Dialog`
 
-Лайтбокс — не компонент, а компоновка: `Dialog` даёт окно, фокус и возврат
-фокуса, `Carousel` — листание. Новых экспортов она не требует. Открытием
-отдельного слайда занимается вызывающий код: он запоминает индекс и список слайдов на
-момент открытия, `Dialog` показывает их, а `Carousel` стартует с нужного места
-через `defaultIndex`.
+A lightbox is not a component but a composition: `Dialog` supplies the modal surface,
+focus and focus return, `Carousel` supplies the paging. It needs no new
+exports. Opening a particular slide is handled by the calling code: it remembers the index
+and the list of slides at the moment of opening, `Dialog` shows them, and
+`Carousel` starts at the right place through `defaultIndex`.
 
 ```tsx
 import { Carousel, Dialog, Image } from "@olddevs/ui";
@@ -132,20 +135,20 @@ const [index, setIndex] = useState(0);
 
 const open = (start: number) => {
   setIndex(start);
-  // Список замораживается при открытии: загрузка, пришедшая позже, не должна
-  // сдвинуть слайды под пальцем.
+  // The list is frozen on opening: an upload that lands later must not shift
+  // the slides under the user's finger.
   setView({ start, files });
 };
 
 <Dialog
   open={view !== null}
   onClose={() => setView(null)}
-  title={view?.files[index]?.name ?? "Просмотр"}
-  subtitle={view ? `${index + 1} из ${view.files.length}` : undefined}
+  title={view?.files[index]?.name ?? "Preview"}
+  subtitle={view ? `${index + 1} of ${view.files.length}` : undefined}
   className="w-full max-w-[720px]"
 >
   {view && (
-    <Carousel aria-label="Файлы" defaultIndex={view.start} onIndexChange={setIndex}>
+    <Carousel aria-label="Files" defaultIndex={view.start} onIndexChange={setIndex}>
       {view.files.map((file) => (
         <Image key={file.id} src={file.url} alt={file.name} ratio={16 / 9} fit="contain" />
       ))}
@@ -154,74 +157,79 @@ const open = (start: number) => {
 </Dialog>;
 ```
 
-Что здесь важно:
+What matters here:
 
-- **`defaultIndex`, а не `index`.** Окно монтирует содержимое при открытии,
-  поэтому лента каждый раз стартует с `view.start` без анимации. Управляемый
-  `index` нужен, только если слайд меняется и снаружи (миниатюры, кнопки в
-  шапке).
-- **Заголовок и счётчик идут от `onIndexChange`.** Колбэк срабатывает после
-  остановки ленты, а не на каждый кадр — заголовок меняется, когда слайд встал.
-  Имя окна остаётся именем `Dialog` (`title`), а имя слайда «N из M» лента
-  объявляет сама.
-- **`{view && …}` внутри окна.** Пока `view` пуст, ленты нет вовсе: следующее
-  открытие создаёт её заново и не наследует прежнюю прокрутку.
-- **Слайд со своим подписанным содержимым.** `alt` у изображения — имя файла:
-  имя слайда «N из M» его не заменяет.
-- Фокус: открытие кладёт его в окно, `Escape` закрывает и возвращает туда,
-  откуда окно открыли. Стрелки листают, когда фокус на ленте; кнопки ленты —
-  отдельные табстопы.
+- **`defaultIndex`, not `index`.** The dialog mounts its content on opening, so
+  the strip starts at `view.start` each time, without animation. A controlled
+  `index` is needed only if the slide can also be changed from elsewhere (thumbnails,
+  buttons in the header).
+- **The title and the counter follow `onIndexChange`.** The callback fires after
+  the strip stops, not on every frame — the title changes once the slide has
+  settled. The dialog's name stays the `title` of `Dialog`, while the slide
+  name "N of M" is announced by the strip itself.
+- **`{view && …}` inside the dialog.** While `view` is empty there is no strip
+  at all: the next opening creates it anew and does not inherit the previous
+  scroll position.
+- **A slide whose content has its own label.** The image's `alt` is the file
+  name: the slide name "N of M" does not replace it.
+- Focus: opening the dialog moves focus into it; `Escape` closes the dialog and returns
+  focus to where it was opened from. The arrow keys page through the slides when the strip is focused;
+  the strip's buttons are separate tab stops.
 
-Открывать окно удобно по `onAction` у [`VirtualGrid`](virtual-grid.md): клик и
-Enter по ячейке вызывают `open`, не выделяя её.
+It is convenient to open the dialog from the `onAction` of a
+[`VirtualGrid`](virtual-grid.md): a click or Enter on a cell calls `open`
+without selecting it.
 
-## Доступность
+## Accessibility
 
-Паттерн WAI-ARIA APG Carousel (без автопрокрутки, поэтому без кнопки паузы).
+This component follows the WAI-ARIA APG Carousel pattern, without autoplay and so without a pause
+button.
 
-- Регион — `<section>` с `aria-roledescription` «carousel» (в русской локали
-  «карусель») и именем из `aria-label` или `aria-labelledby`. Без имени
-  скринридер объявит безымянный регион, поэтому имя требует тип. Пропа `label`
-  у карусели нет: в ките `label` — только видимая подпись
-  ([conventions.md](../../conventions.md#доступное-имя)).
-- Слайд — `role="group"` с `aria-roledescription` «slide» («слайд») и именем
-  «N из M» из каталога: скринридер читает «слайд, 2 из 5». Слова
-  `aria-roledescription` — текст, который озвучивает скринридер, поэтому они в каталоге сообщений, а
-  не токен ARIA.
-- Слайды вне кадра от скринридера **не скрываются**: без автопрокрутки лента
-  читается целиком, а когда фокус попадает на слайд вне кадра, браузер докручивает ленту до этого
-  слайда сам.
-- Клавиатура: Tab доходит до кнопки «назад», ленты и кнопки «вперёд»; выключенные кнопки на краях в обход не входят. На
-  сфокусированной ленте стрелки листают встроенной прокруткой, с привязкой. Если в
-  слайдах есть ссылки и кнопки, Tab по ним докручивает ленту к слайду.
-- Лента получает `tabIndex={0}`: прокручиваемый блок без места в обходе — нарушение
-  axe `scrollable-region-focusable`.
-- Подписи слайдам по смыслу («Фото 2: закат») задавайте содержимым — имя слайда
-  «N из M» их не заменяет.
-- В RTL листание и стрелки на кнопках зеркалятся.
+- The region is a `<section>` with `aria-roledescription` "carousel" (in the
+  Russian locale "карусель") and a name from `aria-label` or `aria-labelledby`.
+  Without a name the screen reader announces an unnamed region, which is why the
+  type requires the name. The carousel has no `label` prop: in the kit `label` is
+  only a visible label
+  ([conventions.md](../../conventions.md#accessible-name)).
+- A slide is `role="group"` with `aria-roledescription` "slide" and the name "N of
+  M" from the catalog: the screen reader reads "slide, 2 of 5". The
+  `aria-roledescription` words are text that screen readers speak, so they live in the message
+  catalog and are not an ARIA token.
+- Slides outside the view are **not hidden** from the screen reader: without
+  autoplay the strip is read in full, and when focus lands on a slide that is out of view, the browser scrolls the strip to
+  that slide on its own.
+- Keyboard: Tab reaches the "previous" button, the strip and the "next" button; disabled buttons at the edges are skipped. On
+  a focused strip, the arrow keys scroll it natively, with snapping. If
+  the slides contain links and buttons, Tab through them scrolls the strip to
+  that slide.
+- The strip gets `tabIndex={0}`: a scrollable block with no place in the tab order
+  is the axe violation `scrollable-region-focusable`.
+- Give slides meaningful captions ("Photo 2: sunset") through the content — the
+  slide name "N of M" does not replace them.
+- In RTL, the scrolling and the arrows on the buttons are mirrored.
 
-## Антипаттерны
+## Anti-patterns
 
-- Класть в слайды интерактивные формы, которые нельзя пройти без листания:
-  скрытое за краем не видно и не найти глазами.
-- Задавать `slidesPerView` числом вне набора 1–4 (`slidesPerView={5}`) или
-  собирать класс ширины самому — набор закрыт, класс на каждое значение написан
-  в исходнике.
-- Собирать лайтбокс не из `Dialog`, а на `ModalOverlay` или на своей подложке:
-  теряются имя окна, ловушка фокуса и возврат фокуса.
-- Менять `index` из таймера, чтобы «оживить» ленту: автосмена — то, чего
-  компонент не делает по замыслу, и пользователь не успевает прочитать.
-- Выводить число слайдов из значения `index` при `slidesPerView > 1`: индекс — левый
-  видимый слайд, а не «страница».
+- Putting interactive forms in slides when they cannot be completed without paging:
+  what is hidden past the edge is not visible and cannot be found by eye.
+- Setting `slidesPerView` to a number outside the set 1–4 (`slidesPerView={5}`) or
+  assembling the width class yourself — the set is closed, and a class for each
+  value is written out in the source.
+- Building a lightbox not from `Dialog` but on `ModalOverlay` or your own
+  scrim: the dialog name, the focus trap and the focus return are lost.
+- Changing `index` from a timer to "liven up" the strip: auto-advance is what the
+  component deliberately does not do, and the user does not have time to read.
+- Deriving the number of slides from `index` when `slidesPerView > 1`: the index
+  is the leftmost visible slide, not a "page".
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходник: `src/components/content/Carousel.tsx`; словарь «значение по брейкпойнтам →
-  классы» — внутренний `src/lib/responsive.ts` (не public API).
-- Тесты: `tests/carousel.test.tsx` (имена, кнопки, края, `onIndexChange`,
-  режимы; прокрутка подменена, потому что jsdom не считает раскладку);
-  привязка к слайду, жест и ширина слайда на брейкпойнтах — ручная проверка
-  витрины в браузере; каждый класс ширины в собранном CSS —
+- Source: `src/components/content/Carousel.tsx`; the "value per breakpoint →
+  classes" map is the internal `src/lib/responsive.ts` (not public API).
+- Tests: `tests/carousel.test.tsx` (names, buttons, edges, `onIndexChange`, modes;
+  scrolling is stubbed because jsdom does not compute layout); snapping to a
+  slide, the gesture and the slide width at breakpoints are checked by hand in
+  the showcase in a browser; every width class in the built CSS —
   `tests/class-coverage.test.ts`.
-- История: `src/components/content/Carousel.stories.tsx`. Уровень — ядро (ADR-0014): своя
-  модель доступности и своё поведение прокрутки.
+- Story: `src/components/content/Carousel.stories.tsx`. The tier is core
+  (ADR-0014): its own accessibility model and its own scrolling behavior.

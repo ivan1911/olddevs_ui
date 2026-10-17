@@ -9,106 +9,109 @@ story: src/components/inputs/Transfer.stories.tsx
 
 # Transfer
 
-## Кратко для AI
+## Summary for AI
 
-`Transfer` — две колонки и перенос между ними: слева то, что можно выбрать, справа — выбранное. Управляемый: `items` — все элементы разом, `value` — ключи тех, что оказались справа. Порядок `value` значим и сохраняется.
+`Transfer` is a pair of columns with items moved between them: what can be chosen on the left, what is selected on the right. Controlled: `items` is all the items at once, `value` is the keys of those that ended up on the right. The order of `value` matters and is preserved.
 
-## Когда использовать
+## When to use
 
-- Назначение прав, ролей, участников, территорий — всё, где «есть» и «выдано» надо видеть рядом.
-- Выбранных много, и порядок назначения важен.
-- Пользователю нужно видеть, что осталось невыбранным, а не только что выбрано.
+- Assigning permissions, roles, members, territories — anywhere "what exists" and "what is granted" must be seen side by side.
+- There are many selected items and the order of assignment matters.
+- The user needs to see what remains unselected, not only what is selected.
 
-## Когда не использовать
+## When not to use
 
-- Если выбирают одно значение или несколько из короткого списка, используйте `Select` с `multiple`.
-- Если значения набираются свободным вводом, используйте `TagInput`.
-- Если выбор идёт по иерархии, используйте `TreeSelect`.
+- If one value or several are picked from a short list, use `Select` with `multiple`.
+- If values are typed as free input, use `TagInput`.
+- If the choice follows a hierarchy, use `TreeSelect`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Transfer
   items={allPermissions}
   value={granted}
   onChange={setGranted}
-  sourceLabel="Все права"
-  targetLabel="Выданы роли"
+  sourceLabel="All permissions"
+  targetLabel="Granted to the role"
   searchable
 />
 ```
 
 ## Public API
 
-- `items` — **все** элементы разом, независимо от колонки. Один список, а не два: два разъехались бы при первой правке, и элемент, забытый в обоих или пропавший из обоих, никак себя не проявит. `id` обязан быть уникальным: коллекция react-aria схлопывает дубликаты, и один из элементов молча пропадает с экрана.
-- `value` + `onChange` — ключи правой колонки. Порядок значим: это порядок назначения. Ключ, которого нет в `items`, кит не показывает, не считает и **не выбрасывает** — он переживает переносы нетронутым. Выбросить его значило бы молча править значение потребителя.
-- `sourceLabel` / `targetLabel` — подписи колонок; без них берутся из каталога сообщений.
-- `searchable` добавляет поле поиска над каждым списком. Кнопка переносит **только видимое**, то есть то, что пользователь видит; выделение, спрятанное фильтром, с места не двигается.
-- `disabled` гасит весь контрол: обе колонки и обе кнопки. Отличается от `TransferItem.disabled`, который про один показанный, но непереносимый элемент.
-- `aria-label` даёт паре колонок имя, и тогда она объявляется группой. Без имени группа не объявляется: безымянная группа — лишнее объявление для скринридера, за которым не следует ничего. То же правило, что у `ButtonGroup`.
-- `TransferItem.disabled` — элемент показан, но не переносится и не выбирается.
+- `items` is **all** the items at once, regardless of column. One list, not two: two would drift apart at the first edit, and an item forgotten in both or missing from both would show no sign of it. `id` must be unique: the react-aria collection collapses duplicates, and one of the items silently disappears from the screen.
+- `value` and `onChange` work with the keys of the right column. The order matters: it is the order of assignment. The kit does not show or count a key that is not in `items`, and does **not drop** it either — it survives the moves untouched. Dropping it would mean silently editing the consumer's value.
+- `sourceLabel` / `targetLabel` are the column labels; without them they come from the message catalog.
+- `searchable` adds a search field above each list. The button moves **only what is visible**, that is, what the user sees; a selection hidden by the filter does not move.
+- `disabled` dims the whole control: both columns and both buttons. It differs from `TransferItem.disabled`, which applies to a single item that is shown but cannot be moved.
+- `aria-label` gives the pair of columns a name, and then it is announced as a group. Without a name the group is not announced: an unnamed group is an extra announcement in the screen reader output that is followed by nothing. The same rule applies to `ButtonGroup`.
+- `TransferItem.disabled` — the item is shown but can be neither moved nor selected.
 
-## Потолок размера
+## Size ceiling
 
-Виртуализации нет: каждый элемент получает DOM-узел. Замер задержки одного
-нажатия в поле поиска — 200 элементов — около 16 мс, 1000 — около 56 мс, 3000 — около
-187 мс. До нескольких сотен компонент комфортен, дальше ввод начинает
-ощущаться.
+There is no virtualization: every item gets a DOM node. The measured delay of one
+keystroke in the search field is about 16 ms for 200 items, about 56 ms for 1000,
+about 187 ms for 3000. Up to a few hundred items the component is comfortable to use; beyond that
+you start to notice lag when typing.
 
-Мемоизация здесь не помогает и намеренно не добавлена: тело рендера даже на
-20 000 элементов стоит около миллисекунды, а тратится всё в React и в
-пересборке коллекции. Нужны тысячи — это не проп, а решение о виртуализации.
+Memoization does not help here and was deliberately not added: the render body costs
+about a millisecond even at 20,000 items, and everything is spent in
+React and in rebuilding the collection. If you need thousands, that is not a prop but
+a decision about virtualization.
 
-## Выделение и значение — разные вещи
+## Selection and value are different things
 
-Подсветка внутри колонки живёт в компоненте и перенос не переживает. Значение —
-что в какой колонке — приходит и уходит пропами. Компонент их не смешивает:
-иначе «подсвечено» и «выдано» стали бы одним состоянием, и снять подсветку было
-бы нельзя, не отобрав право.
+The highlight inside a column lives in the component and does not survive a move.
+The value — what is in which column — is passed in and out through props. The component
+does not mix them: otherwise "highlighted" and "granted" would become one state, and
+removing the highlight would be impossible without taking the permission away.
 
-## Счётчик считает колонку, а не фильтр
+## The counter counts the column, not the filter
 
-Число в шапке — количество всего, что лежит в колонке, независимо от поиска: оно отвечает на
-вопрос «сколько всего прав доступно», а фильтр — это лишь взгляд на них. Оно же
-входит в доступное имя списка — иначе число на экране есть, а для скринридера его нет.
+The number in the header is the count of everything in the column, regardless of the
+search: it answers the question "how many permissions are available in total", and
+the filter is only a view of them. It is also part of the list's accessible name —
+otherwise the number is on the screen but not in the screen reader output.
 
-## Выделить всё
+## Select all
 
-`Ctrl` / `Cmd` + `A` внутри колонки — штатное сочетание клавиш react-aria, и она отдаёт
-особое значение «всё», а не набор ключей. Кит раскрывает его в ключи своей
-колонки: иначе самый частый сценарий (выделить всё и перенести) гасил бы обе
-кнопки. Недоступные элементы при этом не переносятся: выделить всё не значит
-обойти запрет.
+`Ctrl` / `Cmd` + `A` inside a column is a standard react-aria shortcut, and it yields the
+special value "all", not a set of keys. The kit expands it into the keys of its own
+column: otherwise the most common scenario — select all and move — would disable
+both buttons. Disabled items are not moved: select all does not mean bypassing
+the restriction.
 
-## Фокус после переноса
+## Focus after a move
 
-Единственное собственное решение компонента. После переноса выделенные элементы
-из списка исчезают — вместе с тем, на котором стоял фокус. react-aria на этот
-случай ответа не даёт: коллекция сменилась, и фокус уходит на `body`, то есть в
-начало документа.
+This is the only decision the component makes itself. After a move the selected items vanish
+from the list — together with the one that had focus. react-aria has no handling for
+this case: the collection changed, and focus goes to `body`, that is, to the start
+of the document.
 
-**Правило: фокус идёт за элементами.** Он встаёт на первый перенесённый элемент, а
-все перенесённые становятся там выделением — поэтому вернуть их можно, не
-выделяя заново.
+**The rule: focus follows the items.** It lands on the first moved item, and
+all the moved ones become the selection there — so they can be moved back without
+selecting again.
 
-Фокус ставится кадром позже коммита, и это не оптимизация: `ListBox` строит свою
-коллекцию отдельным проходом, и сразу после коммита в ней ещё нет перенесённого
-элемента — зато есть тот, что был в колонке раньше. Синхронная установка фокуса
-попадала именно в него.
+Focus is set one frame after the commit, and this is not an optimization: `ListBox`
+builds its collection in a separate pass, and right after the commit it does not yet
+contain the moved item — but it does contain the one that was in the column
+before. Setting focus synchronously landed on exactly that item.
 
-Альтернатива «оставить фокус на кнопке» ломается на первом же полном переносе:
-кнопка гаснет, потому что переносить больше нечего, и фокус теряется всё равно.
+The alternative "leave focus on the button" breaks on the very first full move: the
+button dims because there is nothing left to move, and focus is lost anyway.
 
-## Недоступный элемент
+## A disabled item
 
-Показан, но не переносится. Скрыть его значило бы соврать про состав прав —
-пользователь не увидит, что право вообще существует; перенести — обойти запрет.
-Кнопка переноса остаётся выключенной, если выделены только недоступные элементы.
+It is shown but not moved. Hiding it would misrepresent which permissions exist —
+the user would not see that the permission exists at all; moving it would bypass
+the restriction. The move button stays disabled if only disabled items are
+selected.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Каждая колонка — `listbox`, имя которого складывается из подписи и счётчика; элементы — `option` с множественным выделением. Клавиатура, поиск набором по первым буквам и роли приходят из `ListBox` react-aria.
-- Кнопки переноса названы по смыслу действия («Перенести в выбранное»), а не стрелкой: «вправо» ничего не говорит о смысле.
-- Имя поля поиска параметризовано подписью колонки: полей два, и «Поиск» у обоих не различает их ничем.
-- Пустая колонка говорит «Пусто», пустой результат поиска — «Ничего не найдено»; обе строки из `common`, своих ключей компонент на них не заводит.
-- См. `src/components/inputs/Transfer.tsx`, `src/components/inputs/Transfer.stories.tsx`, `tests/transfer.test.tsx`.
+- Each column is a `listbox` whose name is made of the label and the counter; the items have the `option` role, with multiple selection. The keyboard, typeahead and roles come from the react-aria `ListBox`.
+- The move buttons are named by direction ("Move to selected"), not by an arrow: "right" says nothing about the meaning.
+- The name of the search field is parameterized by the column label: there are two fields, and "Search" on both does not tell them apart at all.
+- An empty column says "Empty", an empty search result — "Nothing found"; both strings are from `common`, the component adds no keys of its own for them.
+- See `src/components/inputs/Transfer.tsx`, `src/components/inputs/Transfer.stories.tsx`, `tests/transfer.test.tsx`.

@@ -6,9 +6,9 @@ import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import { DateRangePicker } from "../src/components/date-time/DateRangePicker.js";
 
 /*
-  `matchMedia` в jsdom нет, а `DateRangePicker` спрашивает его, чтобы решить,
-  показывать один месяц или два. Заглушка отвечает «узко» — один месяц: так
-  разметка теста не зависит от ширины окна.
+  `matchMedia` does not exist in jsdom, but `DateRangePicker` asks it to decide
+  whether to show one month or two. The stub answers "narrow", meaning one month,
+  so the test markup does not depend on the window width.
 */
 beforeAll(() => {
   Object.defineProperty(window, "matchMedia", {
@@ -25,11 +25,12 @@ beforeAll(() => {
 afterEach(cleanup);
 
 /**
- * Перевёрнутый диапазон из адреса — не значение.
+ * A reversed range from the URL is not a value.
  *
- * Календарём его не выбрать, но собрать руками можно. Обе даты разбирались,
- * триггер показывал «10 мар 2026 — 01 мар 2026», календарь не подсвечивал
- * ничего, а подпись снизу через `periodLength` уверенно сообщала «1 день».
+ * It cannot be selected with the calendar, but it can be built by hand. Both dates
+ * were parsed, the trigger showed "10 Mar 2026 — 01 Mar 2026", the calendar
+ * highlighted nothing, and the caption below via `periodLength` confidently
+ * reported "1 day".
  */
 test("an inverted range from the address shows the placeholder", () => {
   render(
@@ -56,11 +57,11 @@ test("a correct range is still shown", () => {
 });
 
 /**
- * Пресет подрезается по границам поля.
+ * A preset is clamped to the field's bounds.
  *
- * `resolvePeriod` считает от «сегодня» и отдавал результат в `onChange` без
- * сверки: ограничения применялись только к календарю, и «365 дней» уезжали за
- * `minValue` — наружу шёл диапазон, который в календаре выбрать нельзя вовсе.
+ * `resolvePeriod` counts from "today" and passed the result to `onChange` without
+ * a check: the limits applied only to the calendar, and "365 days" went past
+ * `minValue`, so a range went out that cannot be selected in the calendar at all.
  */
 test("a preset is clamped to minValue", async () => {
   const user = userEvent.setup();
@@ -83,20 +84,20 @@ test("a preset is clamped to minValue", async () => {
 });
 
 /**
- * Пресет, целиком выпавший за границы, не выдаёт перевёрнутый диапазон.
+ * A preset that falls entirely outside the bounds does not yield a reversed range.
  *
- * `clampRange` двигал концы независимо: при `minValue` первого числа текущего
- * месяца «прошлый месяц» уезжал наружу как `{start: "2026-09-01", end:
- * "2026-08-31"}` — заведомо невозможное значение, которое потребитель писал в
- * адрес и в запрос. Триггер при этом показывал подпись пресета, календарь не
- * подсвечивал ничего, а подпись длины гасилась `empty:hidden`: наружу ушло
- * невозможное, а на экране всё выглядело выбранным.
+ * `clampRange` moved the ends independently: with `minValue` set to the first day
+ * of the current month, "last month" went out as `{start: "2026-09-01", end:
+ * "2026-08-31"}`, a value that cannot be valid, which the consumer wrote to the URL
+ * and to the request. Meanwhile the trigger showed the preset's label, the calendar
+ * highlighted nothing, and the length caption was hidden by `empty:hidden`: an impossible
+ * value went out, but on screen everything looked selected.
  */
 test("a preset entirely outside the bounds is not reported at all", async () => {
   const user = userEvent.setup();
   const onChange = vi.fn();
 
-  // Данные доступны только с первого числа текущего месяца.
+  // Data is available only from the first day of the current month.
   const firstOfThisMonth = `${new Date().toISOString().slice(0, 7)}-01`;
 
   render(

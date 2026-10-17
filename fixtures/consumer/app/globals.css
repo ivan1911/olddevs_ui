@@ -1,4 +1,4 @@
-/* Три строки из docs/getting-started.md, дословно. Расхождение ловит сборка. */
+/* The three lines from docs/getting-started.md, verbatim. The build catches any drift. */
 @import "tailwindcss";
 @import "@olddevs/ui/styles.css";
 @source "../node_modules/@olddevs/ui/dist";

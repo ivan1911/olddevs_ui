@@ -4,33 +4,33 @@ import type { MarkdownTokenizer } from "@tiptap/core";
 import { BLOCK_FORMULA_NODE, INLINE_FORMULA_NODE } from "./mathNames.js";
 
 /**
- * Формулы в Markdown: `$…$` в строке и `$$…$$` Блоком (ADR-0070).
+ * Formulas in Markdown: `$…$` inside a line and a `$$…$$` Block (ADR-0070).
  *
- * ПОЧЕМУ СВОИ ТОКЕНИЗАТОРЫ, А НЕ ТЕ, ЧТО В РАСШИРЕНИИ TIPTAP. Строчный токенизатор
- * расширения (`/^\$([^$]+)\$(?!\$)/`) принимал за формулу любую пару долларов:
- * «стоит $5 или $6» превращалось в формулу «5 или », а деньги в тексте — обычное
- * дело. Здесь правила Pandoc: после открывающего `$` нет пробела, перед закрывающим
- * нет пробела, и за закрывающим не идёт цифра. «$5 или $6» остаётся текстом,
- * `$x^2$` и `$\alpha + \beta$` — формулами. Экранированный знак (`\$`, `\\`) в
- * формуле — пара, а не конец: `$\text{\$5}$` читается целиком. Блочный
- * токенизатор расширения тоже обходил `\$` и не требовал конца строки — `$$a$$ и текст`
- * резал абзац надвое; здесь формула-Блок занимает свои строки целиком.
+ * WHY THE MODULE HAS ITS OWN TOKENIZERS AND NOT THE ONES FROM THE TIPTAP EXTENSION. The
+ * extension's inline tokenizer (`/^\$([^$]+)\$(?!\$)/`) took any pair of dollar signs for
+ * a formula: "costs $5 or $6" turned into the formula "5 or ", and money in text is
+ * common. Here the rules are Pandoc's: no space after the opening `$`, no space before the
+ * closing `$`, and no digit after the closing `$`. "$5 or $6" stays text, while `$x^2$`
+ * and `$\alpha + \beta$` are formulas. An escaped character (`\$`, `\\`) inside a formula
+ * is a pair, not an end: `$\text{\$5}$` is read whole. The extension's block tokenizer
+ * also stepped over `\$` and did not require the end of the line: `$$a$$ and text` cut
+ * the paragraph in two. Here a block formula takes its lines whole.
  *
- * Выгрузка — как у расширения: `$latex$` и `$$` / latex / `$$` на своих строках. LaTeX
- * хранится без пробелов по краям (Поповер его обрезает), поэтому круг без потерь.
- * Регулярные выражения без lookbehind: старый WebKit его не разбирает (так же написано
- * в самом расширении).
+ * The export is like the extension's: `$latex$`, and `$$` / latex / `$$` on their own
+ * lines. The LaTeX is kept without spaces at the ends (the popover trims it), so the round
+ * trip is lossless. The regular expressions have no lookbehind: old WebKit cannot parse
+ * it (the extension's own code says the same).
  */
 
-/** Символ формулы: не пробел и не знак `$`, либо экранированная пара. */
+/** A formula character: not a space and not a `$` sign, or an escaped pair. */
 const SOLID = String.raw`(?:[^\s$\\]|\\[\s\S])`;
-/** Любой символ формулы в середине, без перевода строки. */
+/** Any formula character in the middle, without a line break. */
 const ANY = String.raw`(?:[^$\\\n]|\\[\s\S])`;
 
 const INLINE = new RegExp(String.raw`^\$(${SOLID}(?:${ANY}*?${SOLID})?)\$(?!\d)`);
 const BLOCK = /^\$\$((?:[^$\\]|\\[\s\S])+?)\$\$[ \t]*(?:\n|$)/;
 
-/** Строчная формула: `$…$`. */
+/** An inline formula: `$…$`. */
 export const inlineMathTokenizer: MarkdownTokenizer = {
   name: INLINE_FORMULA_NODE,
   level: "inline",
@@ -42,7 +42,7 @@ export const inlineMathTokenizer: MarkdownTokenizer = {
   },
 };
 
-/** Блочная формула: `$$…$$` на своих строках. */
+/** A block formula: `$$…$$` on its own lines. */
 export const blockMathTokenizer: MarkdownTokenizer = {
   name: BLOCK_FORMULA_NODE,
   level: "block",
@@ -55,8 +55,8 @@ export const blockMathTokenizer: MarkdownTokenizer = {
   },
 };
 
-/** Markdown строчной формулы. */
+/** The Markdown of an inline formula. */
 export const renderInlineMath = (latex: string): string => `$${latex}$`;
 
-/** Markdown блочной формулы. */
+/** The Markdown of a block formula. */
 export const renderBlockMath = (latex: string): string => `$$\n${latex}\n$$`;

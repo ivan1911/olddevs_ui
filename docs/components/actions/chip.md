@@ -9,38 +9,38 @@ story: src/components/actions/Chip.stories.tsx
 
 # Chip
 
-## Кратко для AI
+## Summary for AI
 
-`Chip` — компактная кнопка-фильтр. Его `selected` — управляемое состояние, оно объявляется через `aria-pressed`; компонент не хранит выбор сам.
+`Chip` is a compact filter button. Its `selected` is controlled state and is announced through `aria-pressed`; the component does not store the selection itself.
 
-## Когда использовать
+## When to use
 
-- Нужен короткий фильтр, тег действия или переключаемая категория.
-- Нужен необязательный счётчик рядом с короткой подписью.
+- You need a short filter, an action tag or a toggleable category.
+- You need an optional counter next to a short label.
 
-## Когда не использовать
+## When not to use
 
-- Для статуса сущности используйте `StatusBadge`; для простого числового маркера — `Badge`.
-- Для нескольких согласованных вариантов используйте `ToggleGroup` или `Segmented`.
-- Для декоративного тега без действия не используйте `Chip`: это кнопка.
+- For an entity's status, use `StatusBadge`; for a plain numeric marker, use `Badge`.
+- For several related options, use `ToggleGroup` or `Segmented`.
+- Do not use `Chip` for a decorative tag with no action: it is a button.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Chip selected={filters.includes("ready")} onClick={() => toggleFilter("ready")} count={12}>
-  Готово
+  Ready
 </Chip>
 ```
 
 ## Public API
 
-- `selected` по умолчанию `false`; `tone` окрашивает только выбранный chip.
-- `size`: `sm` или `md`; `count={0}` показывается, `null` и `undefined` — нет.
-- `iconOnly` скрывает видимую подпись, но оставляет её для скринридера; `mobileIconOnly` скрывает подпись только на экранах меньше 640 пикселей (брейкпоинт `sm`).
-- По умолчанию `type="button"`; нативные атрибуты `button` передаются элементу.
+- `selected` defaults to `false`; `tone` colors only the selected chip.
+- `size`: `sm` or `md`; `count={0}` is shown, `null` and `undefined` are not.
+- `iconOnly` hides the visible label but keeps it for the screen reader; `mobileIconOnly` hides the label only on screens narrower than 640 pixels (the `sm` breakpoint).
+- `type="button"` by default; native `button` attributes are passed to the element.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Всегда передавайте `children` для icon-only и mobile-only вариантов: это имя кнопки.
-- Не используйте цвет как единственный сигнал — состояние сообщается `aria-pressed`.
-- См. `src/components/actions/Chip.tsx`, `src/components/actions/Chip.stories.tsx`.
+- Always pass `children` for the icon-only and mobile-only variants: it is the button's name.
+- Do not use color as the only signal — the state is conveyed by `aria-pressed`.
+- See `src/components/actions/Chip.tsx`, `src/components/actions/Chip.stories.tsx`.

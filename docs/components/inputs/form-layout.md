@@ -7,91 +7,92 @@ source: src/components/inputs/FormLayout.tsx
 story: src/components/inputs/FormLayout.stories.tsx
 ---
 
-# FormLayout и FieldRow
+# FormLayout and FieldRow
 
-## Кратко для AI
+## Summary for AI
 
-Раскладка формы: `columns` (1 или 2) и `labels` (`top` или `side`), плюс
-`FieldRow` для поля во всю ширину. Только позиция узлов — ни валидации, ни
-состава полей, ни состояния. Подписи слева поддерживает только `FormField`:
-подпись рисует он.
+Form layout: `columns` (1 or 2) and `labels` (`top` or `side`), plus
+`FieldRow` for a full-width field. Only the position of nodes — no validation,
+no field composition, no state. Side labels are supported only by `FormField`:
+it renders the label.
 
-## Когда использовать
+## When to use
 
-- Форма из нескольких полей: настройки, редактирование сущности, регистрация.
-- Нужны подписи в колонке слева или две колонки полей.
+- A form with several fields: settings, editing an entity, registration.
+- You need labels in a left column or two columns of fields.
 
-## Когда не использовать
+## When not to use
 
-- Для отправки и блокировки на время запроса — это `Form`; их используют вместе.
-- Для группы полей с общим заголовком — родные `<fieldset>` и `<legend>`.
-  Отдельного `Fieldset` в ките нет намеренно: обёртка вокруг них не добавила бы
-  ничего, кроме имени в экспорте.
+- For submitting and locking during a request — that is `Form`; the two are used together.
+- For a group of fields with a shared heading — the native `<fieldset>` and `<legend>`.
+  The kit has no separate `Fieldset` on purpose: a wrapper around them would add
+  nothing but a name in the exports.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { FieldRow, FormField, FormLayout, TextControl } from "@olddevs/ui";
 
 <FormLayout columns={2} labels="side" labelWidth="8rem">
-  <FormField label="Имя" htmlFor="name">
+  <FormField label="First name" htmlFor="name">
     <TextControl id="name" shellClassName="w-full" />
   </FormField>
-  <FormField label="Фамилия" htmlFor="surname">
+  <FormField label="Last name" htmlFor="surname">
     <TextControl id="surname" shellClassName="w-full" />
   </FormField>
   <FieldRow>
-    <FormField label="Адрес" htmlFor="address">
+    <FormField label="Address" htmlFor="address">
       <TextControl id="address" shellClassName="w-full" />
     </FormField>
   </FieldRow>
 </FormLayout>;
 ```
 
-## Пропы
+## Props
 
-| Проп         | Умолчание | Назначение                                              |
-| ------------ | --------- | ------------------------------------------------------- |
-| `columns`    | `1`       | Число колонок. На узких экранах колонка всегда одна.    |
-| `labels`     | `"top"`   | Где стоят подписи полей: над полем или в колонке слева. |
-| `labelWidth` | `12rem`   | Ширина колонки подписей — любая длина CSS.              |
+| Prop         | Default | Purpose                                                       |
+| ------------ | ------- | ------------------------------------------------------------- |
+| `columns`    | `1`     | Number of columns. On narrow screens there is always one.     |
+| `labels`     | `"top"` | Where field labels go: above the field or in the left column. |
+| `labelWidth` | `12rem` | Width of the label column — any CSS length.                   |
 
-`FieldRow` пропов не имеет: это `div` с `col-span-full`.
+`FieldRow` has no props: it is a `div` with `col-span-full`.
 
-## Сетка на CSS, а не расчёт в JS
+## A CSS grid, not a JS calculation
 
-Одна колонка на узких экранах включается медиазапросом (`sm:grid-cols-2`), а не
-`matchMedia`. Раскладка, зависящая от JS, до гидратации неверна, и
-первый кадр формы приходится именно на этот момент.
+A single column on narrow screens is switched on by a media query (`sm:grid-cols-2`),
+not by `matchMedia`. A layout that depends on JS is wrong before
+hydration, and the first frame of the form is exactly that moment.
 
-`FieldRow` занимает **все** колонки (`col-span-full`), а не фиксированные две:
-`col-span-2` в одноколоночной раскладке создал бы неявную вторую колонку, и
-форма разъехалась бы там, где ничего не меняли.
+`FieldRow` takes **all** the columns (`col-span-full`), not a fixed two:
+`col-span-2` in a one-column layout would create an implicit second column, and
+the form would fall out of alignment where nothing was changed.
 
-## `labels="side"` действует на `FormField`, а не на любых детей
+## `labels="side"` applies to `FormField`, not to arbitrary children
 
-Это следствие того, что подпись рисует само поле: перенести её в левую колонку
-снаружи невозможно, и раскладка лишь передаёт ось контекстом
+This follows from the field rendering its own label: the layout cannot move it
+into the left column, and only passes the axis through context
 (ADR-0025).
 
-Позицию раскладка задаёт **любому** ребёнку — чужому `<input>`, полю другой
-библиотеки, целому блоку. Но подписи этих детей раскладка не видит, и `labels="side"` для
-них молча ничего не меняет. Явный `layout` на поле сильнее раскладки.
+The layout sets the position for **any** child — a bare `<input>`, a field from
+another library, a whole block. But it knows nothing about their labels, and
+`labels="side"` silently changes nothing for them. An explicit `layout` on the
+field wins over the layout.
 
-Ширина колонки живёт в переменной `--form-label-w`; `labelWidth` — отдельный
-проп для этого, и он сильнее той же переменной, переданной через `style`.
+The column width lives in the `--form-label-w` variable; `labelWidth` is the dedicated
+prop for setting it, and it wins over the same variable passed through `style`.
 
-## Чего компонент не делает
+## What the component does not do
 
-Ни валидации, ни состава полей, ни состояния — `Form` отказался от собственной
-валидации осознанно, и раскладка этого не пересматривает. Признак нарушения
-границы проверяемый: проп, который влияет не на позицию узлов, а на их состав.
+No validation, no field composition, no state — `Form` deliberately gave up its own
+validation, and the layout does not revisit that. A boundary violation can be
+recognized by a test: a prop that affects not the position of nodes but their composition.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/inputs/FormLayout.tsx`, ось подписи — в
+- Implementation: `src/components/inputs/FormLayout.tsx`, the label axis is in
   `src/components/inputs/FormField.tsx`.
-- Тесты: `tests/form-layout.test.tsx` — обе оси, приоритет пропа поля,
-  `FieldRow` в обеих раскладках, чужие дети; `tests/form-field.test.tsx` —
-  тождественность разметки поля без оси.
-- Истории витрины: `src/components/inputs/FormLayout.stories.tsx`.
+- Tests: `tests/form-layout.test.tsx` — both axes, priority of the field prop,
+  `FieldRow` in both layouts, children from outside the kit; `tests/form-field.test.tsx` —
+  identical field markup without the axis.
+- Showcase stories: `src/components/inputs/FormLayout.stories.tsx`.

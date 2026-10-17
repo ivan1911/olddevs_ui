@@ -32,7 +32,7 @@ itself, so you don't list these packages in your `package.json`:
 | `clsx`, `tailwind-merge`                                                   | Class composition                                              |
 | `@internationalized/date`                                                  | Types for the date and time components                         |
 
-The rich text engine (Tiptap) is not on the list. Only an app that imports `@olddevs/ui/editor` installs it; the command is on the [Rich text editor page](docs/components/inputs/rich-text-editor.en.md#installation).
+The rich text engine (Tiptap) is not on the list. Only an app that imports `@olddevs/ui/editor` installs it; the command is on the [Rich text editor page](docs/components/inputs/rich-text-editor.md#installation).
 
 ## Adding the styles
 
@@ -58,11 +58,11 @@ In a Next.js App Router app, also add this to `next.config.mjs`, or a single `Bu
 export default { experimental: { optimizePackageImports: ["@olddevs/ui"] } };
 ```
 
-Details are in [docs/getting-started.en.md](docs/getting-started.en.md).
+Details are in [docs/getting-started.md](docs/getting-started.md).
 
 ## Usage
 
-Import components from the package root and icons from `@olddevs/ui/icons`. Use only the public entry points listed in the `exports` field of `package.json` and in the [glossary](docs/glossary.en.md); never import from `src/`.
+Import components from the package root and icons from `@olddevs/ui/icons`. Use only the public entry points listed in the `exports` field of `package.json` and in the [glossary](docs/glossary.md); never import from `src/`.
 
 ```tsx
 import { useState } from "react";
@@ -117,19 +117,19 @@ import ru from "@olddevs/ui/locales/ru";
 </UiProvider>;
 ```
 
-See [Themes, tokens and brands](docs/theming.en.md) and [Localization](docs/i18n.en.md).
+See [Themes, tokens and brands](docs/theming.md) and [Localization](docs/i18n.md).
 
 ## Documentation
 
 - [ui.olddevs.ru](https://ui.olddevs.ru): the documentation site
 - [Storybook](https://ivan1911.github.io/olddevs_ui/): the showcase, every component's stories in each theme, built from the latest release
-- [docs/index.md](docs/index.md) (in Russian): the Reference, the `docs/` folder in the package, with one page per component and "When to use" and "When not to use" sections
-- [docs/components/index.en.md](docs/components/index.en.md): the component catalog
-- [docs/accessibility.en.md](docs/accessibility.en.md): the accessibility contract
+- [docs/index.md](docs/index.md): the Reference, the `docs/` folder in the package, with one page per component and "When to use" and "When not to use" sections
+- [docs/components/index.md](docs/components/index.md): the component catalog
+- [docs/accessibility.md](docs/accessibility.md): the accessibility contract
 
-The Reference is written in Russian. Most pages have an English translation next to them, as `*.en.md`.
+The Reference is written in English. Its Russian translation is on the [documentation site](https://ui.olddevs.ru/ru).
 
-The package ships `docs/` and an `llms.txt` index, so the Reference matching your installed version is in `node_modules/@olddevs/ui/`. Point AI coding tools at `llms.txt` (in Russian) first.
+The package ships `docs/` and an `llms.txt` index, so the Reference matching your installed version is in `node_modules/@olddevs/ui/`. Point AI coding tools at `llms.txt` first.
 
 ## Contributing and support
 

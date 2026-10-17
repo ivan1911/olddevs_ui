@@ -1,15 +1,15 @@
 /**
- * Сенсорный экран без наведения — телефон или планшет без трекпада.
- * Там нет клавиатурных сочетаний, и всё, что про них
- * рассказывает, — подписи в меню, кнопка справочника, — только занимает место.
+ * A touch screen without hover: a phone or a tablet with no trackpad.
+ * There are no keyboard shortcuts there, so everything that describes them (menu
+ * labels, the help button) only takes up space.
  *
- * Медиазапрос, а не определение устройства в JS: класс работает с первого
- * кадра и на сервере (ADR-0018), а планшет с подключённым трекпадом
- * (`pointer: fine`) подсказки сохраняет. Оба условия сразу — чтобы не задеть
- * ноутбук с сенсорным экраном: у него есть мышь, и `hover: none` он не
- * отдаёт.
+ * A media query rather than device detection in JS: the class works from the first
+ * frame and on the server (ADR-0018). A tablet with a trackpad attached
+ * (`pointer: fine`) keeps the hints. Both conditions are needed so that a laptop with
+ * a touch screen is not affected: it has a mouse, and it does not report `hover: none`.
  *
- * Класс целиком, одной строкой: Tailwind находит его в исходнике как слово
- * (у потребителя — через `@source` на `dist`), склеенный он в CSS не попал бы.
+ * The class is kept whole, on one line: Tailwind finds it in the source as a word
+ * (for consumers, through `@source` on `dist`), and a class assembled from pieces
+ * would never reach the CSS.
  */
 export const TOUCH_HIDDEN_CLASS = "[@media(hover:none)_and_(pointer:coarse)]:hidden";

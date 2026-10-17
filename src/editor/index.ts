@@ -1,19 +1,19 @@
 /**
- * Отдельный вход для редактора форматированного текста: `@olddevs/ui/editor`.
+ * The separate entry point for the rich text editor: `@olddevs/ui/editor`.
  *
- * ПОЧЕМУ МИМО BARREL. Движок — Tiptap v3 на ProseMirror — в манифест кита не
- * входит: его ставит только тот, кто импортирует этот вход, командой со
- * страницы Редактора (раздел «Установка»). Остальные ничего не ставят, и
- * бюджет основного входа не меняется. Реэкспорт из `src/index.ts`
- * сделал бы Tiptap обязательным для каждого потребителя — сборка без него
- * падала бы на неразрешимом импорте. Сторожит `tests/editor-entry.test.ts`.
+ * WHY OUTSIDE THE BARREL. The engine (Tiptap v3 on ProseMirror) is not part of the kit's
+ * manifest: only the consumer who imports this entry installs it, with the command from the
+ * Editor page ("Installation" section). Everyone else installs nothing, and the size budget
+ * of the main entry does not change. A re-export from `src/index.ts` would make Tiptap
+ * mandatory for every consumer, and a build without it would fail on an unresolvable import.
+ * Guarded by `tests/editor-entry.test.ts`.
  *
- * Директивы `"use client"` здесь нет намеренно, как у `color.ts`: модуль только
- * реэкспортирует, а клиентский компонент несёт директиву сам. Вход заодно
- * отдаёт серверно-безопасные `RichTextView` и `richTextSanitizeConfig`, и
- * директива на входе увела бы их в клиентский граф.
+ * There is intentionally no `"use client"` directive here, as in `color.ts`: the module only
+ * re-exports, and the client component carries the directive itself. The entry also exposes
+ * the server-safe `RichTextView` and `richTextSanitizeConfig`, and a directive on the entry
+ * would pull them into the client graph.
  *
- * Решение — ADR-0050.
+ * The decision is recorded in ADR-0050.
  */
 export { RichTextEditor } from "./RichTextEditor.js";
 export type { RichTextEditorHandle, RichTextEditorProps } from "./RichTextEditor.js";

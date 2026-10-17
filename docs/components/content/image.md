@@ -9,22 +9,22 @@ story: src/components/content/Image.stories.tsx
 
 # Image
 
-## Кратко для AI
+## Summary for AI
 
-`Image` — картинка со всеми тремя состояниями: грузится, загрузилась, не загрузилась. Стоит на обычном `<img>`; `next/image` не используется намеренно (ADR-0011).
+`Image` handles all three states of a picture: loading, loaded and failed to load. It is built on a plain `<img>`; `next/image` is deliberately not used (ADR-0011).
 
-## Когда использовать
+## When to use
 
-- Везде, где в разметке появился бы `<img>`: плитки, превью, изображения объектов, строки списков.
-- Когда адрес приходит из данных и может оказаться битым или пустым — то есть почти всегда.
+- Anywhere the markup would have an `<img>`: tiles, previews, object images, list rows.
+- When the URL comes from data and may turn out broken or empty — that is, almost always.
 
-## Когда не использовать
+## When not to use
 
-- Для иконки — это `@olddevs/ui/icons`, там векторные иконки; имя иконки выбирают по смыслу действия (см. [иконки](../../icons.md)).
-- Для фотографии пользователя есть `Avatar`: у него `src` и `alt`, круг фиксированного размера и возврат к инициалам, а загрузку внутри ведёт тот же `Image`.
-- Для пустой коробки под будущее содержимое — это `AspectRatio` или `Skeleton`.
+- For an icon — that is `@olddevs/ui/icons`, which has vector icons; pick an icon name by the meaning of the action (see [icons](../../icons.md)).
+- For a user's photo — there is `Avatar`: it has `src` and `alt`, a circle of fixed size and a fallback to initials, and the same `Image` handles loading inside it.
+- For an empty box that holds future content — that is `AspectRatio` or `Skeleton`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Image } from "@olddevs/ui";
@@ -34,31 +34,31 @@ import { Image } from "@olddevs/ui";
 
 ## Public API
 
-Компонент рисует коробку (`span`) и картинку внутри неё. Коробке — размер, скругление и рамка, картинке — вписывание.
+The component renders a box (`span`) and an image inside it. The box gets the size, corner radius and border; the image gets the fit.
 
-| Prop           | По умолчанию | Значение                                                                                       |
-| -------------- | ------------ | ---------------------------------------------------------------------------------------------- |
-| `src`          | —            | Адрес. `null`, `undefined` и пустая строка означают «нечего показывать» → фолбэк.              |
-| `alt`          | —            | Обязателен. `""` — законное значение: «картинка декоративна».                                  |
-| `fit`          | `cover`      | `cover` заполняет коробку, `contain` вписывает целиком. При `sizing="intrinsic"` не действует. |
-| `sizing`       | `fill`       | `fill` — размер известен снаружи, `intrinsic` — размер у картинки (ниже, «Кто задаёт размер»). |
-| `ratio`        | —            | Соотношение сторон коробки числом (`16 / 9`). Без него высоту задаёт раскладка.                |
-| `fallback`     | иконка       | Свой узел вместо иконки; `null` оставляет пустую коробку.                                      |
-| `skeleton`     | `true`       | Скелетон под картинкой, пока она грузится.                                                     |
-| `eager`        | `false`      | Отключает отложенную загрузку — для картинки первого экрана.                                   |
-| `className`    | —            | Классы коробки: размер, скругление, рамка.                                                     |
-| `imgClassName` | —            | Классы самой картинки. Нужны редко.                                                            |
-| `imgStyle`     | —            | Инлайн-стиль самой картинки; нужен там, где визуальный элемент — она, а не коробка.            |
+| Prop           | Default | Meaning                                                                                                                 |
+| -------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `src`          | —       | The image URL. `null`, `undefined` and an empty string mean "nothing to show" → fallback.                               |
+| `alt`          | —       | Required. `""` is a legitimate value: "the image is decorative".                                                        |
+| `fit`          | `cover` | `cover` fills the box, `contain` fits the whole image inside. Has no effect with `sizing="intrinsic"`.                  |
+| `sizing`       | `fill`  | `fill` — the size is set by the surrounding layout, `intrinsic` — the image sets the size (below, "Who sets the size"). |
+| `ratio`        | —       | The box aspect ratio as a number (`16 / 9`). Without it, the layout sets the height.                                    |
+| `fallback`     | icon    | A custom node instead of the icon; `null` leaves an empty box.                                                          |
+| `skeleton`     | `true`  | A skeleton under the image while it loads.                                                                              |
+| `eager`        | `false` | Turns off lazy loading — for an above-the-fold image.                                                                   |
+| `className`    | —       | Box classes: size, corner radius, border.                                                                               |
+| `imgClassName` | —       | Classes of the image itself. Rarely needed.                                                                             |
+| `imgStyle`     | —       | Inline style of the image itself; needed where the visual element is the image, not the box.                            |
 
-Остальные атрибуты `<img>` (включая `onLoad`, `onError`, `draggable`, `onDoubleClick`) уходят на картинку; свои обработчики вызываются вместе с внутренними, а не вместо них.
+The other `<img>` attributes (including `onLoad`, `onError`, `draggable`, `onDoubleClick`) go to the image; handlers you pass are called together with the internal ones, not instead of them.
 
-Отдельного пропа `radius` нет: коробка принимает `className`, а радиусов картинки в приложении-источнике семь разных — шкала из трёх ступеней здесь мешала бы. Та же причина, по которой `Skeleton` принимает числа.
+There is no separate `radius` prop: the box accepts `className`, and the source app has seven different image radii — a three-step scale would get in the way here. It is the same reason `Skeleton` accepts numbers.
 
-## Кто задаёт размер
+## Who sets the size
 
-`fill` (умолчание) — размер известен снаружи: плитка в сетке, аватар, превью фиксированной высоты. Картинке проставлены `h-full w-full`, и она заполняет коробку по `fit`.
+`fill` (the default) — the size is set by the surrounding layout: a tile in a grid, an avatar, a preview of fixed height. The image gets `h-full w-full` and fills the box according to `fit`.
 
-`intrinsic` — размер у картинки, коробка её оборачивает. Так устроен просмотр картинки целиком: своей высоты у него нет, есть только потолок, и вешать его нужно на **картинку**:
+`intrinsic` — the image has the size, and the box wraps it. This is how the full-image viewer works: it has no height of its own, only a maximum height, and it must go on the **image**:
 
 ```tsx
 <Image
@@ -70,45 +70,45 @@ import { Image } from "@olddevs/ui";
 />
 ```
 
-Потолок на коробке (`className`) обрежет картинку вместо того, чтобы её уменьшить. А `fill` в такой раскладке сводит всё к нулю: `h-full` — это процент от коробки, у которой размера нет. Ленивая загрузка при этом не стартует вовсе, потому что показывать нечего.
+A maximum height on the box (`className`) would crop the image instead of shrinking it. And `fill` in this layout collapses everything to zero: `h-full` is a percentage of a box that has no size. Lazy loading then does not start at all, because there is nothing to show.
 
-Скелетона в режиме `intrinsic` нет и быть не может: до загрузки коробке нечего оборачивать. Место под картинку держит вызывающий.
+There is no skeleton in `intrinsic` mode and there cannot be: before loading, the box wraps nothing. The calling code has to reserve the space for the image.
 
-## Состояния
+## States
 
-- **Грузится** — скелетон лежит **под** картинкой, а не вместо неё: браузер начинает загрузку, только когда `<img>` есть в дереве.
-- **Загрузилась** — скелетон снимается.
-- **Не загрузилась** — картинка заменяется фолбэком; состояние сбрасывается при смене `src`, иначе узел, переиспользованный виртуализованной сеткой под другую картинку, навсегда остался бы с фолбэком.
+- **Loading** — the skeleton sits **under** the image, not instead of it: the browser starts loading only when the `<img>` is in the tree.
+- **Loaded** — the skeleton is removed.
+- **Failed to load** — the image is replaced with the fallback; the state resets when `src` changes, otherwise a node reused by a virtualized grid for a different image would keep the fallback forever.
 
-## Доступность
+## Accessibility
 
-`alt` обязателен, и обязательность нужна не ради текста, а ради выбора: `alt=""` — решение («картинка декоративна»), а отсутствующий атрибут — забывчивость, после которой скринридер читает вслух имя файла.
+`alt` is required, and it is required not for the text but for the choice: `alt=""` is a decision ("the image is decorative"), while a missing attribute is an oversight after which a screen reader reads the file name aloud.
 
-Скелетон декоративен всегда. Фолбэк наследует решение из `alt`: при пустом он декоративен, при непустом берёт подпись себе (`role="img"` с тем же именем) — иначе отказ загрузки превращал бы названный объект в пустое место, о котором скринридер не сообщает. Сам факт отказа не озвучивается: это не событие для пользователя, а отсутствие превью.
+The skeleton is always decorative. The fallback inherits the decision from `alt`: when it is empty, the fallback is decorative; when it is not, the fallback takes the label itself (`role="img"` with the same name) — otherwise a load failure would turn a named object into an empty place that a screen reader does not announce. The failure itself is not announced: it is not an event for the user, but a missing preview.
 
-## Антипаттерны
+## Anti-patterns
 
 ```tsx
-// Плохо: своя обработка отказа поверх компонента, который это уже умеет.
+// Bad: custom failure handling on top of a component that already does it.
 const [broken, setBroken] = useState(false);
 {
   broken ? <Placeholder /> : <Image src={src} alt="" onError={() => setBroken(true)} />;
 }
 
-// Хорошо:
+// Good:
 <Image src={src} alt="" fallback={<Placeholder />} />;
 ```
 
 ```tsx
-// Плохо: картинка первого экрана откладывается браузером и ухудшает LCP.
+// Bad: an above-the-fold image is deferred by the browser and hurts LCP.
 <Image src={hero} alt="" />
 
-// Хорошо:
+// Good:
 <Image src={hero} alt="" eager />
 ```
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходник: `src/components/content/Image.tsx`
+- Source: `src/components/content/Image.tsx`
 - Stories: `src/components/content/Image.stories.tsx`
-- Тесты: `tests/image.test.tsx`
+- Tests: `tests/image.test.tsx`

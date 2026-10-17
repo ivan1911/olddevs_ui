@@ -16,143 +16,145 @@ import { hasContent } from "../../lib/empty.js";
 import { STATE_BORDER, TONE_TOKENS, type Size, type Tone } from "../../lib/variants.js";
 
 export interface CheckboxProps {
-  /** Видимая подпись справа от коробки. */
+  /** Visible label to the right of the checkbox. */
   children?: ReactNode;
   /**
-   * Доступное имя для флажка без видимой подписи — в шапке таблицы, в строке
-   * списка. Когда подпись есть, задавать не нужно: её и объявит скринридер.
+   * Accessible name for a checkbox without a visible label: in a table header or
+   * in a list row. When there is a visible label, there is no need to set it:
+   * the screen reader announces the label.
    *
-   * Компилятор наличия имени не требует, и это осознанно. Союзный тип
-   * («либо `children`, либо `label`») ломается в двух местах сразу: третий
-   * аргумент `createElement` в проверку союза не сворачивается, а `Omit` по
-   * союзу схлопывает его — то есть падают и матрица класс-покрытия, и любая
-   * обёртка в историях. Ровно этот компромисс уже описан у `Button.iconOnly`,
-   * и он там разрешён так же: имя сторожит не компилятор, а аудит axe —
-   * безымянный флажок роняет его как `critical`. Проверка есть в
-   * `tests-visual/a11y.spec.ts`.
+   * The compiler does not require a name, and this is deliberate. A union type
+   * ("either `children` or `label`") breaks in two places at once: the third
+   * argument of `createElement` does not collapse into the union check, and `Omit`
+   * over a union collapses it. So both the class-coverage matrix and any wrapper in
+   * the stories would fail. The same trade-off is already described for
+   * `Button.iconOnly`, and it is resolved the same way there: the name is guarded
+   * not by the compiler but by the axe audit. An unnamed checkbox fails it as
+   * `critical`. The check lives in `tests-visual/a11y.spec.ts`.
    */
   label?: string;
-  /** Отмечен ли флажок — управляемое значение; обновлять его нужно в `onCheckedChange`. */
+  /** Whether the checkbox is checked. A controlled value: update it in `onCheckedChange`. */
   checked?: boolean;
-  /** Начальное состояние неуправляемого флажка: отмечен ли он при первом показе. */
+  /** Initial state of an uncontrolled checkbox: whether it is checked on first render. */
   defaultChecked?: boolean;
   /**
-   * Третье состояние — «часть выбрана».
+   * Third state: "some items are selected".
    *
-   * Перекрывает `checked` при отрисовке и не снимается кликом: пользователь
-   * переводит флажок в да/нет, а «частично» ставит только вызывающий, пересчитав
-   * набор. Это поведение RAC, и оно же — единственно осмысленное: снять
-   * «частично» кликом означало бы выдумать за пользователя, что он имел в виду.
+   * Overrides `checked` when rendering and is not cleared by a click. The user toggles
+   * the checkbox on and off, while "partially" is set only by the caller, who recomputes
+   * the set. This is the react-aria-components (RAC) behavior, and it is the only sensible
+   * one: clearing "partially" with a click would mean inventing on the user's behalf
+   * what they meant.
    */
   indeterminate?: boolean;
-  /** Вызывается при смене отметки и получает новое состояние. */
+  /** Called when the checked state changes, with the new state. */
   onCheckedChange?: (checked: boolean) => void;
-  /** Пояснение под подписью. */
+  /** Description under the label. */
   description?: ReactNode;
   /**
-   * Иконка пункта. Декоративная: из доступного имени исключена, имя несёт
-   * подпись. В карточке стоит в её начале, в обычном виде — между коробкой и
-   * подписью.
+   * Item icon. Decorative: it is excluded from the accessible name, which the label carries. In a
+   * card it sits at the start; in the default view, between the checkbox and the label.
    */
   icon?: ReactNode;
-  /** Размер флажка: `sm` — меньшая коробка, `md` — большая. По умолчанию `md`. */
+  /** Checkbox size: `sm` is smaller, `md` larger. Defaults to `md`. */
   size?: Extract<Size, "sm" | "md">;
   /**
-   * Слот react-aria: `selection` — флажок выделения в таблице или списке.
+   * React Aria slot: `selection` marks a selection checkbox in a table or a list.
    *
-   * Через него компонент забирает состояние у контекста коллекции — включая
-   * «выделено не всё» у флажка в шапке. Без слота такой флажок пришлось бы
-   * связывать с выделением руками, повторяя работу библиотеки, и он молча
-   * оставался бы немым: ни отметки, ни третьего состояния.
+   * Through it the component takes its state from the collection context, including
+   * "some but not all selected" for a checkbox in the header. Without the slot, such a
+   * checkbox would have to be wired to the selection by hand, repeating the library's
+   * work, and it would silently stay mute: no check mark and no indeterminate state.
    */
   slot?: string;
   /**
-   * Тон отмеченного флажка; неотмеченный всегда нейтрален.
+   * Tone of a checked checkbox. An unchecked one is always neutral.
    *
-   * Цвет отмеченного состояния (в карточке — ещё и рамки отмеченной карточки).
-   * На неотмеченный флажок не влияет — он всегда нейтрален, как невыбранный
-   * `Chip`: тон здесь означает «что значит согласие», а не «какого цвета рамка».
+   * The color of the checked state (in a card, also the border of the checked card).
+   * It does not affect an unchecked checkbox: that one is always neutral, like an
+   * unselected `Chip`. Here the tone means "what agreeing means", not "what color the
+   * border is".
    *
-   * Внутри `CheckboxGroup` с заданным `tone` игнорируется: тон набора один на
-   * всех. У группы без `tone` и вне группы работает как раньше.
+   * Inside a `CheckboxGroup` with a set `tone`, it is ignored: the group's tone is one
+   * for all. A group without `tone`, and a checkbox outside a group, work as before.
    */
   tone?: Tone;
-  /** Выключает флажок: отметить или снять его нельзя. */
+  /** Disables the checkbox: it cannot be checked or unchecked. */
   disabled?: boolean;
-  /** Показывает флажок в состоянии ошибки. */
+  /** Shows the checkbox in the error state. */
   invalid?: boolean;
-  /** Имя и значение для нативной отправки формы. */
+  /** Name and value for native form submission. */
   name?: string;
   /**
-   * Значение для нативной отправки формы; внутри `CheckboxGroup` — ключ пункта
-   * в массиве группы.
+   * Value for native form submission. Inside a `CheckboxGroup`, it is the item's key
+   * in the group's array.
    */
   value?: string;
-  /** Классы на корневой элемент. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 /**
- * Карточка, которую `CheckboxGroup appearance="card"` рисует вместо строки.
+ * Card that `CheckboxGroup appearance="card"` renders instead of a row.
  *
- * Получает все пропы флажка и уже решённый `tone` — итог выбора между тоном
- * набора и собственным. Раскладку набора она берёт из своего контекста, а не
- * отсюда: обычному флажку она ни к чему, а каждое лишнее поле в этом файле
- * оплачивает и `DataTable`.
+ * It receives all the checkbox props and the already-resolved `tone`, which is the
+ * result of choosing between the group's tone and its own. It takes the set's layout
+ * from its own context, not from here: a plain checkbox has no use for it, and every
+ * extra field in this file is also paid for by `DataTable`.
  */
 export type CheckboxCardComponent = ForwardRefExoticComponent<
   CheckboxProps & { tone: Tone } & RefAttributes<HTMLDivElement>
 >;
 
 /**
- * Контекст набора флажков: тон и, у карточек, рисовальщик карточки.
+ * Context of a checkbox set: the tone and, for cards, the card renderer.
  *
- * `Card` лежит в контексте, а не импортируется в этот файл, и это не вкус, а
- * размер бандла. Голый `Checkbox` живёт без группы — в шапке и строках
- * `DataTable`, — и импорт карточной ветки отсюда тащил её код в каждый такой
- * бандл (`DataTable` вырос с 5,4 до 5,9 кБ gzip ради кода, который он не
- * показывает). Теперь карточку знает только `CheckboxGroup`: он кладёт её в
- * контекст, а флажок использует лишь то, что пришло.
+ * `Card` lives in the context rather than being imported into this file, and this is
+ * not a matter of taste but of bundle size. A bare `Checkbox` lives without a group, in
+ * the header and rows of `DataTable`. Importing the card branch from here pulled its
+ * code into every such bundle (`DataTable` grew from 5.4 to 5.9 kB gzip for code it
+ * does not show). Now only `CheckboxGroup` knows about the card: it puts the card into
+ * the context, and a checkbox uses only what arrives.
  *
- * `tone` у набора необязателен, и «не задан» — отдельное значение, а не
- * `accent`: именно оно оставляет флажкам их собственные тона. У `RadioGroup`
- * тон есть всегда, потому что у `Radio` собственного нет.
+ * The set's `tone` is optional, and "not set" is a separate value, not `accent`. That
+ * is exactly what leaves each checkbox its own tone. `RadioGroup` always has a tone,
+ * because `Radio` has none of its own.
  */
 export const CheckboxGroupStyleContext = createContext<{
   tone?: Tone;
   Card?: CheckboxCardComponent;
 }>({});
 
-/** Размеры коробки флажка: общие для обычного вида и для карточки. */
+/** Checkbox box sizes: shared by the regular view and the card. */
 export const CHECKBOX_SIZES: Record<"sm" | "md", { box: string; label: string; icon: number }> = {
   sm: { box: "size-4 rounded-xs", label: "text-xs", icon: 11 },
   md: { box: "size-[18px] rounded-xs", label: "text-[13px]", icon: 13 },
 };
 
 /**
- * Флажок.
+ * Checkbox.
  *
- * Здесь `checked`, а не `selected` из общего словаря: у флажка есть родное
- * ARIA-понятие (`aria-checked`), и подменять его своим термином — значит
- * расходиться со стандартом. То же решение, что у `Toggle`.
+ * It is `checked` here, not `selected` from the shared vocabulary: a checkbox has a
+ * native ARIA concept (`aria-checked`), and replacing it with our own term would
+ * diverge from the standard. Same decision as `Toggle`.
  *
- * Собран на `CheckboxField` + `CheckboxButton`, а НЕ на `Checkbox` из
- * react-aria-components: последний в 1.19 помечен `@deprecated` в пользу этой
- * пары. Первый же компонент волны, построенный на устаревшем экспорте, стал бы
- * долгом миграции на весь пакет.
+ * It is built on `CheckboxField` + `CheckboxButton`, NOT on `Checkbox` from
+ * react-aria-components: in 1.19 the latter is marked `@deprecated` in favor of this
+ * pair. The first component of the wave built on a deprecated export would become a
+ * migration debt for the whole package.
  *
- * ВИД КОРОБКИ ЗАДАЁТСЯ ЧЕРЕЗ РЕНДЕР-ПРОП, а не вариантами `selected:`/`invalid:`.
- * Причина не стилистическая: коробка — дочерний `span`, а атрибуты состояния
- * (`data-selected`, `data-invalid`) висят на `<label>` снаружи. Достать их
- * оттуда можно было бы только формой `group-selected:`, а её пришлось бы
- * склеивать из префикса и атома тона — ровно то, чего словарь не допускает:
- * Tailwind сканирует исходники как текст, и класс, собранный в рантайме, молча
- * не попадёт в CSS. Рендер-проп отдаёт состояние прямо в JS, и из таблицы
- * берётся готовая литеральная строка.
+ * THE LOOK OF THE BOX IS SET THROUGH A RENDER PROP, not through `selected:` / `invalid:`
+ * variants. The reason is not stylistic. The box is a child `span`, while the state
+ * attributes (`data-selected`, `data-invalid`) sit on the outer `<label>`. Reaching them
+ * from there would be possible only with the `group-selected:` form, and that would have
+ * to be assembled from a prefix and a tone atom, which is exactly what the vocabulary
+ * forbids: Tailwind scans sources as text, and a class built at runtime silently does not
+ * reach the CSS. The render prop passes the state straight into JS, and a ready literal
+ * string is taken from the table.
  *
- * На самой `<label>` состояния, наоборот, заданы вариантами — `hover:` и
- * `disabled:` там срабатывают на RAC-элементе благодаря двойному селектору
- * плагина (см. `styles.css`).
+ * On the `<label>` itself, the states are set by variants instead. `hover:` and
+ * `disabled:` work there on the RAC element thanks to the plugin's double selector (see
+ * `styles.css`).
  */
 export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Checkbox(props, ref) {
   const {
@@ -174,15 +176,16 @@ export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Check
     className,
   } = props;
   const { tone: groupTone, Card } = useContext(CheckboxGroupStyleContext);
-  // Тон набора, если он задан, перекрывает собственный: набор не может разъехаться
-  // по виду — правило `RadioGroup`. Не задан — у каждого флажка свой, как и вне группы.
+  // The group's tone, if set, overrides the checkbox's own: a group cannot diverge in
+  // look, the same rule as `RadioGroup`. If not set, each checkbox has its own tone, as
+  // it does outside a group.
   const tone = groupTone ?? ownTone;
   const t = TONE_TOKENS[tone];
   const s = CHECKBOX_SIZES[size];
 
-  // Все пропы уходят карточке одним объектом, а не перечнем по полям: перечень из
-  // семнадцати имён в минифицированном бандле не сжимается (имена свойств
-  // остаются) и ложится в каждый `DataTable`, где карточек нет вовсе.
+  // All props go to the card as a single object, not as a list by field. A list of
+  // seventeen names does not get minified in the bundle (property names stay), and it
+  // lands in every `DataTable`, even where there are no cards at all.
   if (Card) return <Card {...props} ref={ref} tone={tone} />;
 
   return (
@@ -201,47 +204,44 @@ export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Check
       className={cn("flex flex-col gap-1", className)}
     >
       {/*
-        ЗОНА НАЖАТИЯ РАСШИРЕНА ДВУМЯ ПОЛОСКАМИ ВЫШЕ И НИЖЕ КОНТРОЛА.
+        THE HIT AREA IS EXTENDED BY TWO STRIPS, ONE ABOVE AND ONE BELOW THE CONTROL.
 
-        Замер на 3.12.0: у флажка `md` без видимой подписи цель 26×22, у `sm`
-        с подписью — 20 по высоте. То есть из четырёх сочетаний размера и
-        подписи порог WCAG 2.5.8 (24×24) проходило ровно одно — `md` с
-        подписью, и то за счёт строчного бокса текста, а не собственной
-        геометрии.
+        Measured in 3.12.0: a `md` checkbox without a visible label has a 26×22 target,
+        and an `sm` one with a label has 20 in height. So of the four combinations of size
+        and label, the WCAG 2.5.8 threshold (24×24) passed exactly one: `md` with a label.
+        Even that passed thanks to the line box of the text, not to its own geometry.
 
-        Формально нарушения у потребителя может и не быть: у критерия есть
-        исключение Spacing, и строка списка его проходит, когда соседние цели
-        достаточно разнесены. Но проходит она РАССТОЯНИЕМ ДО СОСЕДЕЙ, то есть
-        тем, чем кит не управляет: поставь рядом ещё один элемент управления —
-        и исключение исчезает, а флажок не менялся. Опираться на чужую
-        раскладку нельзя, поэтому цель дотянута здесь.
+        Formally, a consumer may have no violation: the criterion has a Spacing exception,
+        and a list row passes it when the neighboring targets are far enough apart. But it
+        passes by the DISTANCE TO THE NEIGHBORS, which the kit does not control. Put one more
+        control next to it, and the exception disappears while the checkbox itself did not
+        change. Relying on someone else's layout is not allowed, so the target is extended
+        here.
 
-        Псевдоэлементами, а не отступами: отступы подняли бы и высоту в
-        раскладке, а её держит строка списка — 32 пикселя, и флажок в неё
-        обязан помещаться. В раскладке контрол остаётся прежним, пальцем и
-        мышью ловится минимум на 24.
+        With pseudo-elements rather than margins. Margins would also raise the height in the
+        layout, and the layout is held by a list row of 32 pixels, into which the checkbox
+        must fit. In the layout the control stays the same, and it is caught by a finger and
+        a mouse at a minimum of 24.
 
-        Две полоски ПО КРАЯМ, а не один слой поверх всего контрола, и это не
-        придирка к форме. Слой поверх перехватывал указатель у собственной
-        подписи: клик по тексту доходил до метки (псевдоэлемент ей и
-        принадлежит), но всё, что проверяет перекрытие — от Playwright до
-        выделения текста, — упиралось в него. Увести слой под содержимое
-        `-z-10` тоже нельзя: отрицательный слой уходит за фон предка, и
-        расширенная зона перестаёт ловить клики вовсе. Проверено обоими
-        способами в живом браузере.
+        Two strips AT THE EDGES, not one layer over the whole control, and this is not a
+        nitpick about form. A layer over it intercepted the pointer over its own label: a
+        click on the text reached the label (the pseudo-element belongs to it), but everything
+        that checks overlap, from Playwright to text selection, ran into it. Moving the layer
+        under the content with `-z-10` is not possible either. A negative layer goes behind
+        the ancestor's background, and the extended zone stops catching clicks entirely. Both
+        approaches were checked in a live browser.
 
-        По 2 пикселя с каждой стороны, а не ровно столько, сколько не хватает:
-        высота контрола зависит и от размера, и от наличия видимой подписи —
-        от 20 до 24. Одна и та же пара полосок доводит любое из них до 24 и
-        больше, а вычислять недостачу классом, собранным в рантайме, нельзя:
-        Tailwind сканирует исходники как текст.
+        2 pixels on each side, not exactly as much as is missing. The control's height depends
+        on both the size and whether a visible label is present, from 20 to 24. The same pair
+        of strips brings any of them to 24 and more. Computing the shortfall with a class built
+        at runtime is not possible: Tailwind scans sources as text.
       */}
       <CheckboxButton
         className={
           "hover:bg-bg-2 relative flex w-fit cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 " +
           "transition-colors disabled:cursor-default disabled:opacity-50 " +
-          // `disabled:` ловит только собственный `isDisabled`; выключенный предок-
-          // `fieldset` — см. `DIMMED_IN_DISABLED_FIELDSET`.
+          // `disabled:` matches only the element's own `isDisabled`. For a disabled
+          // ancestor `fieldset`, see `DIMMED_IN_DISABLED_FIELDSET`.
           DIMMED_IN_DISABLED_FIELDSET +
           " " +
           "before:absolute before:inset-x-0 before:bottom-full before:h-0.5 before:content-[''] after:absolute after:inset-x-0 after:top-full after:h-0.5 after:content-['']"
@@ -255,9 +255,9 @@ export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Check
                 className={cn(
                   "flex shrink-0 items-center justify-center border transition-colors",
                   s.box,
-                  // Рамка отмеченной коробки — `STATE_BORDER`, а не цвет по умолчанию
-                  // (`currentcolor` = цвет галочки): заливка против подложки не
-                  // дотягивает до 3:1, и границу коробки держит рамка.
+                  // The border of a marked box is `STATE_BORDER`, not the default color
+                  // (`currentcolor` = the checkmark's color). A fill against the background
+                  // does not reach 3:1, and the box's edge is held by the border.
                   on ? cn(t.solid, STATE_BORDER[tone]) : "border-line bg-bg-2",
                   isInvalid && "border-danger-strong",
                   isFocusVisible && "ring-accent-strong ring-offset-bg-1 ring-2 ring-offset-1"

@@ -9,27 +9,27 @@ story: src/components/content/CodeView.stories.tsx
 
 # CodeView
 
-## Кратко для AI
+## Summary for AI
 
-`CodeView` показывает код: JSON ответа, YAML конфига, тело вебхука. **Сам подсветку не делает**: `code` — обязательный простой текст, `children` — необязательная разметка. Подсветку кита той же темой, что в Редакторе, даёт `highlightCodeNodes(code, language)` из `@olddevs/ui/editor/highlight`. Её результат кладут в `children`, а можно принести и свой подсветчик.
+`CodeView` is a code viewer: a JSON API response, a YAML config, a webhook body. **It does not highlight by itself**: `code` is required plain text, `children` is optional markup. The kit's highlighting, with the same theme as in the Editor, comes from `highlightCodeNodes(code, language)` in `@olddevs/ui/editor/highlight` — put its result into `children`; you can also bring your own highlighter.
 
-## Когда использовать
+## When to use
 
-- Надо показать код или данные как есть: ответ API, конфигурацию, выражение фильтра.
-- Пользователю нужно это скопировать целиком.
+- You need to show code or data as is: an API response, a configuration, a filter expression.
+- The user needs to copy it whole.
 
-## Когда не использовать
+## When not to use
 
-- Код надо **редактировать** — это другой компонент, а не ось у этого. Редактор кода требует Monaco или CodeMirror, и разговор начинается с решения, а не с пропа.
-- Показывается короткий идентификатор в строке — это `Kbd` или `CopyButton` рядом с текстом.
+- The code has to be **edited** — that is a different component, not an axis of this one. A code editor requires Monaco or CodeMirror, and the conversation starts with a decision, not with a prop.
+- If you show a short identifier inline, use `Kbd` or `CopyButton` next to the text.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <CodeView code={JSON.stringify(response, null, 2)} title="response.json" copyable lineNumbers />
 ```
 
-С подсветкой кита — хелпер из входа `@olddevs/ui/editor/highlight` (раздел «Подсветка кита»):
+With the kit's highlighting — the helper from the `@olddevs/ui/editor/highlight` entry point (the "Kit highlighting" section):
 
 ```tsx
 import { highlightCodeNodes } from "@olddevs/ui/editor/highlight";
@@ -39,10 +39,10 @@ import { highlightCodeNodes } from "@olddevs/ui/editor/highlight";
 </CodeView>;
 ```
 
-Со своим подсветчиком — тоже **узлами**, а не строкой HTML:
+With your own highlighter — also as **nodes**, not an HTML string:
 
 ```tsx
-// Shiki: codeToHast + hast-to-jsx. Prism: tokenize. Оба отдают узлы.
+// Shiki: codeToHast + hast-to-jsx. Prism: tokenize. Both return nodes.
 <CodeView code={source} title="response.json" copyable>
   {highlightToNodes(source)}
 </CodeView>
@@ -50,46 +50,48 @@ import { highlightCodeNodes } from "@olddevs/ui/editor/highlight";
 
 ## Public API
 
-- `code` — **обязателен всегда**, даже когда передана разметка. Из него считается число строк и берётся содержимое для копирования.
-- `children` — подсвеченная разметка: `highlightCodeNodes` кита или свой подсветчик; без неё выводится `code` как есть.
-- `title` — заголовок панели; без него и без `copyable` шапки нет вовсе.
-- `copyable` — кнопка копирования в шапке, готовая `CopyButton`.
-- `lineNumbers` — нумерация строк. Работает **только с простым `code` и только без `wrap`**: см. ниже.
-- `wrap` — перенос длинных строк; без него горизонтальная прокрутка, и область прокрутки фокусируема с клавиатуры.
+- `code` — **always required**, even when markup is passed. The line count is computed from it, and the content to copy is taken from it.
+- `children` — highlighted markup: the kit's `highlightCodeNodes` or your own highlighter; without it, `code` is rendered as is.
+- `title` — the panel title; without it and without `copyable` there is no header at all.
+- `copyable` — a copy button in the header, the ready-made `CopyButton`.
+- `lineNumbers` — line numbering. Works **only with plain `code` and only without `wrap`**: see below.
+- `wrap` — wraps long lines; without it there is horizontal scrolling, and the scroll area is keyboard-focusable.
 
-## Граница доверия: разметка целиком на потребителе
+## Trust boundary: the consumer is fully responsible for the markup
 
-`children` рендерится как есть, обычным путём React. Оговорка нужна потому, что
-основные API подсветчиков отдают **строку HTML**, а не узлы — Shiki `codeToHtml`,
-Prism `highlight`, highlight.js `highlightAuto().value`. Единственный способ
-поместить такую строку сюда — `dangerouslySetInnerHTML`.
+`children` is rendered as is, through the ordinary React path. The caveat is
+needed because the main highlighter APIs return an **HTML string**, not nodes:
+Shiki `codeToHtml`, Prism `highlight`, highlight.js `highlightAuto().value`.
+The only way to put such a string here is `dangerouslySetInnerHTML`.
 
-Тогда потребитель сам решает, можно ли доверять разметке, а `code` в этом компоненте
-обычно **недоверенный**: ADR-0039 сам называет его сценарии — ответ API, тело
-вебхука. Санитизация не входит ни в подсветчик, ни в кит.
+Then the consumer alone decides whether the markup can be trusted, while `code` in this
+component is usually **untrusted**: ADR-0039 itself names its scenarios — an API
+response, a webhook body. Sanitization is not part of the highlighter or of
+the kit.
 
-Безопасный путь — узлы, а не строка: `highlightCodeNodes` кита, `codeToHast` у
-Shiki, `Prism.tokenize` у Prism. Примеры выше написаны именно так.
+The safe path is nodes, not a string: the kit's `highlightCodeNodes`, Shiki's
+`codeToHast`, Prism's `Prism.tokenize`. The examples above are written exactly
+this way.
 
-## Потолок размера
+## Size limit
 
-`lineNumbers` создаёт по DOM-узлу на строку. Замер: мегабайт без нумерации занимает
-4 узла, с нумерацией — больше пятнадцати тысяч, и заметно блокируется основной поток. На
-файлах в тысячи строк нумерацию выключают, а слишком большой ввод потребитель
-обрезает сам: компонент — просмотрщик, а не редактор, и виртуализации у него
-нет.
+`lineNumbers` renders one DOM node per line. Measured: a megabyte of code is 4 nodes without
+numbering and more than fifteen thousand with it, and the main thread is
+noticeably blocked. On files of thousands of lines, turn numbering off; the consumer
+truncates an input that is too large itself: the component is a viewer, not
+an editor, and has no virtualization.
 
-## Подсветка кита
+## Kit highlighting
 
-`highlightCodeNodes(code, language)` из входа `@olddevs/ui/editor/highlight`
-красит код той же грамматикой и той же темой, что блок кода в
-[Редакторе](../inputs/rich-text-editor.md) и [`RichTextView`](rich-text-view.md):
-GitHub Light в теме `light`, GitHub Dark в `dark` и `dim`. Тема следует
-ближайшему предку с `data-theme`, поэтому `CodeView` на вложенном светлом
-Листе (`surface="paper"`) внутри тёмного приложения светлый.
+`highlightCodeNodes(code, language)` from the `@olddevs/ui/editor/highlight`
+entry point colors code with the same grammar and the same theme as the code block in
+the [Editor](../inputs/rich-text-editor.md) and [`RichTextView`](rich-text-view.md):
+GitHub Light in the `light` theme, GitHub Dark in `dark` and `dim`. The theme
+follows the nearest ancestor with `data-theme`, so `CodeView` on a nested light
+Paper (`surface="paper"`) inside a dark app is light.
 
 ```tsx
-// Серверный компонент: подсветка не попадает в клиентский бандл.
+// A server component: highlighting does not end up in the client bundle.
 import { CodeView } from "@olddevs/ui";
 import { highlightCodeNodes } from "@olddevs/ui/editor/highlight";
 
@@ -102,71 +104,73 @@ export function Webhook({ body }: { body: string }) {
 }
 ```
 
-- **Языки** — те же, что у Редактора: Python, TypeScript, JavaScript, Go, HTML,
-  JSON, YAML, Markdown. Регистр и пробелы не важны, псевдонимы (`py`, `ts`, `js`,
-  `golang`, `htm`, `yml`, `md`) приводятся к имени. На неизвестном языке и на
-  пустом коде хелпер возвращает `null`: `children` пуст, и `CodeView` выводит код
-  как есть — с нумерацией строк, если она включена.
-- **Узлы, а не строка.** Код становится текстовыми узлами React, токены —
-  `span` с классами `hljs-…`; разметка из кода остаётся текстом. Хуков и
-  `"use client"` у хелпера нет: его можно вызывать и в серверном, и в
-  клиентском компоненте.
-- **Фон блока — у темы подсветки.** Цвета GitHub не держат 4,5:1 на подложке
-  кода кита, поэтому под токенами кита область кода берёт фон темы. Хелпер
-  ставит на корень токенов маркер `data-code-highlight`, и `CodeView` включает
-  фон только по нему: разметка своего подсветчика, даже с теми же классами
-  `hljs-…`, не перекрашивается.
-- **Нумерации строк с подсветкой нет** — по тому же правилу, что для любой
-  разметки (раздел ниже).
-- **Цена.** Сам `CodeView` и основной вход `@olddevs/ui` подсветчика не
-  импортируют. Lowlight, ядро highlight.js и восемь грамматик — 22,6 кБ gzip —
-  попадают в бандл только у того, кто импортировал `@olddevs/ui/editor/highlight`;
-  ставить для него нужно `lowlight` и `highlight.js` (пакеты движка
-  Редактора, в манифесте кита их нет).
+- **Languages** — the same as in the Editor: Python, TypeScript, JavaScript, Go,
+  HTML, JSON, YAML, Markdown. Case and spaces do not matter, aliases (`py`, `ts`,
+  `js`, `golang`, `htm`, `yml`, `md`) are resolved to the name. For an unknown
+  language and for empty code the helper returns `null`: `children` is empty,
+  and `CodeView` renders the code as is — with line numbers, if they are on.
+- **Nodes, not a string.** Code becomes React text nodes, tokens become `span`
+  with `hljs-…` classes; markup inside the code stays text. The helper has no
+  hooks and no `"use client"`: it can be called in both a server component and a client
+  component.
+- **The block background belongs to the highlight theme.** GitHub colors do not
+  reach a 4.5:1 contrast ratio on the kit's code background, so under the kit's tokens the code area
+  takes the theme background. The helper puts a `data-code-highlight` marker on
+  the token root, and `CodeView` turns the background on only when it is present: markup from
+  your own highlighter, even with the same `hljs-…` classes, is not recolored.
+- **There are no line numbers with highlighting** — by the same rule as for any
+  markup (the section below).
+- **Cost.** `CodeView` itself and the main `@olddevs/ui` entry point do not import the
+  highlighter. Lowlight, the highlight.js core and eight grammars — 22.6 kB
+  gzip — are included only for whoever imports `@olddevs/ui/editor/highlight`; you need
+  to install `lowlight` and `highlight.js` for it (Editor engine packages,
+  not in the kit's manifest).
 
-Почему хелпер, а не проп `language`: условного импорта не бывает, и проп держал
-бы подсветчик в графе основного входа у каждого потребителя кита. Граница —
+Why a helper and not a `language` prop: there is no conditional import, and a
+prop would keep the highlighter in the main entry point's graph for every consumer of
+the kit. The boundary is
 ADR-0039,
-сужена ADR-0052.
+narrowed by ADR-0052.
 
-Свой подсветчик (Shiki, Prism) по-прежнему кладётся в `children` — тему и фон
-тогда выбирает потребитель, кит их не трогает.
+Your own highlighter (Shiki, Prism) still goes into `children` — then the
+consumer chooses the theme and background, and the kit does not touch them.
 
-## Почему `code` обязателен даже с разметкой
+## Why `code` is required even with markup
 
-Копирование берёт строку, а не DOM. Копирование из разметки утащило бы в буфер
-обмена номера строк и границы токенов подсветки — то есть текст, который не
-компилируется.
+Copying takes the string, not the DOM. Copying from the markup would drag line
+numbers and highlight token boundaries into the clipboard — that is, text that
+does not compile.
 
-По той же причине число строк считается по `code`: гутер, считающий себя по
-разметке, разъедется с содержимым на первом же подсветчике, который завернёт
-строку в два элемента.
+For the same reason the line count is computed from `code`: a gutter that derives its line count
+from the markup drifts from the content on the first highlighter that
+wraps a line in two elements.
 
-## Нумерация не работает ни с разметкой, ни с переносом
+## Line numbers are not supported with markup or wrapping
 
-С `children` гутер не рендерится вовсе, и это намеренно. Кит не знает, где в сторонней
-разметке границы строк: подсветчик волен завернуть строку во сколько угодно
-элементов. Номер напротив не той строки хуже, чем его
-отсутствие.
+With `children` the gutter is not rendered at all, and this is deliberate. The
+kit does not know where the line boundaries are in third-party markup: a highlighter
+is free to wrap a line in any number of elements. A number next to
+the wrong line is worse than no number.
 
-С `wrap` — по той же причине, только источник расхождения другой: перенесённая
-строка занимает в тексте два и более ряда, а в колонке номеров по-прежнему один.
-Номер встаёт напротив не той строки, и последняя строка кода остаётся без номера
-вовсе.
+With `wrap`, the reason is the same but the mismatch comes from a different source: a
+wrapped line takes two or more visual lines in the text and still one in the number
+column. The number lands next to the wrong line, and the last line of code is
+left without a number altogether.
 
-Завершающие переводы строки при подсчёте срезаются все: файл, прочитанный с
-диска, почти всегда кончается хотя бы одним, а бывает и двумя. Иначе каждый такой перевод давал
-бы лишний номер у пустой строки в конце.
+All trailing line breaks are trimmed when counting: a file read from disk almost
+always ends with at least one, sometimes two. Otherwise each such line break would add an extra
+number for an empty line at the end.
 
-## Что кит всё-таки делает
+## What the kit still does
 
-То, чего подсветчик не решает и что иначе каждый потребитель пишет заново:
-перенос или прокрутка вместо обрезки, нумерация строк, моноширинный шрифт из
-токена типографики и копирование готовой `CopyButton`.
+What the highlighter does not solve and what every consumer would otherwise
+write from scratch: wrapping or scrolling instead of clipping, line numbering, a
+monospaced font from a typography token, and copying with the ready-made
+`CopyButton`.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Номера строк `aria-hidden` и `select-none`: в речи они шум, потому что каждая строка начиналась бы с числа, а в буфере обмена — мусор. Колонка номеров липнет к левому краю: иначе при прокрутке вправо она уезжает за край ровно тогда, когда нужнее всего.
-- Область горизонтальной прокрутки фокусируема (`tabindex="0"`): до содержимого, которое прокручивается только указателем, клавиатура не доберётся — правило axe `scrollable-region-focusable`.
-- Цвета токенов у подсветки кита — тема GitHub, общая с Редактором; axe мерит контраст каждой роли токена во всех трёх темах (история `KitHighlighting` в `src/editor/CodeViewHighlighting.stories.tsx`). Разметку своего подсветчика кит не красит.
-- См. `src/components/content/CodeView.tsx`, `src/components/content/CodeView.stories.tsx`, `tests/code-view.test.tsx`; подсветка кита — `src/editor/features/code/highlightNodes.ts`, `src/editor/CodeViewHighlighting.stories.tsx`, `tests/code-view-highlight.test.tsx`.
+- Line numbers are `aria-hidden` and `select-none`: in speech they are noise, because every line would start with a number, and in the clipboard they are junk. The number column sticks to the left edge: otherwise, when scrolling right, it slides off the edge exactly when it is needed most.
+- The horizontal scroll area is focusable (`tabindex="0"`): the keyboard cannot reach content that scrolls only with a pointer — the axe rule `scrollable-region-focusable`.
+- The token colors of the kit's highlighting are the GitHub theme, shared with the Editor; axe measures the contrast of each token role in all three themes (the `KitHighlighting` story in `src/editor/CodeViewHighlighting.stories.tsx`). The kit does not color the markup of your own highlighter.
+- See `src/components/content/CodeView.tsx`, `src/components/content/CodeView.stories.tsx`, `tests/code-view.test.tsx`; the kit's highlighting — `src/editor/features/code/highlightNodes.ts`, `src/editor/CodeViewHighlighting.stories.tsx`, `tests/code-view-highlight.test.tsx`.

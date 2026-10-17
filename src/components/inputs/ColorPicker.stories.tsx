@@ -5,8 +5,8 @@ import { ColorPicker } from "./ColorPicker.js";
 const meta = {
   title: "Inputs/ColorPicker",
   component: ColorPicker,
-  // Периферия по ADR-0038: обёртка над цветовыми компонентами react-aria,
-  // своей математики цвета нет.
+  // Periphery under ADR-0038: a wrapper over the react-aria color components,
+  // with no color math of its own.
   tags: ["periphery"],
   parameters: { layout: "centered" },
   args: { value: "#4f7df3", onChange: () => {}, label: "Brand colour" },
@@ -24,13 +24,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Область насыщенности, полоса тона и поле формата. */
+/** The saturation area, the hue strip and the format field. */
 export const Playground: Story = {};
 
 /**
- * Заготовки. Умолчания у них нет намеренно: набор «фирменных» цветов — домен
- * потребителя, и подставить сюда значения токенов темы должен тот, кто знает,
- * какие из них применимы к его сущности.
+ * Presets. They have no default on purpose: a set of brand colors is the consumer's domain,
+ * and whoever knows which of them apply to their entity should plug in the theme token values.
  */
 export const WithPresets: Story = {
   args: {
@@ -39,15 +38,15 @@ export const WithPresets: Story = {
 };
 
 /**
- * Формат строки наружу. Поле ввода при этом остаётся шестнадцатеричным: `rgb` и
- * `hsl` — это три поля каналов, то есть другой контрол, а не другой формат
- * того же. Отсюда и имя пропа.
+ * The format of the string that comes out. The input field stays hexadecimal, though:
+ * `rgb` and `hsl` are three channel fields, that is, a different control rather than
+ * a different format of the same one. Hence the prop name.
  */
 export const RgbOutput: Story = {
   args: { outputFormat: "rgb" },
 };
 
-/** Выключенное поле не раскрывается. */
+/** A disabled field does not expand. */
 export const Disabled: Story = {
   args: { disabled: true },
 };

@@ -10,36 +10,36 @@ import {
   unwrapDetailsAt,
 } from "./details.js";
 
-/** Умолчания Опций: открытость в Документ не пишется (как `persist` у Tiptap). */
+/** Option defaults: the open state is not written to the Document (like `persist` in Tiptap). */
 export const DETAILS_DEFAULTS: DetailsToolOptions = { persist: false };
 
 /**
- * Сворачиваемый Блок на описании Инструмента (ADR-0048): узлы и их клавиатура
- * (`details.ts`), Markdown сырым HTML (`detailsMarkdown.ts`), пункт Меню вставки,
- * Действие «Снять сворачивание» и Признак «контейнер» для содержимого.
+ * The Details Block on the Tool description (ADR-0048): the nodes and their keyboard handling
+ * (`details.ts`), Markdown as raw HTML (`detailsMarkdown.ts`), the Slash menu item, the "Remove
+ * collapsing" Block action and the `container` trait for the content.
  *
- * Своей группы в модели Документа у Блока нет: он входит в `block`, как абзац.
- * Меню ручки — как у Обёртки: «Вверх», «Вниз», «Дублировать», «Удалить» общие, к
- * ним «Снять сворачивание» у самого Блока и у Блока в его содержимом. «Тон ›» у
- * Блока нет — тонов он не знает.
+ * The Block has no group of its own in the Document model: it belongs to `block`, like a paragraph.
+ * The Block handle menu is the same as for a Wrapper: "Move up", "Move down", "Duplicate" and
+ * "Delete" are shared, and "Remove collapsing" is offered for the Block itself and for a Block in
+ * its content. The Details Block has no "Tone ›": it does not know tones.
  */
 export const DETAILS_TOOL: ToolDescriptor = {
   name: "details",
   defaults: DETAILS_DEFAULTS,
   checks: { persist: (value) => typeof value === "boolean" },
   /*
-    Без Инструмента `details` из вставки и `value` не разбирается: заголовок
-    становится абзацем, Блоки содержимого идут за ним (расширения в Схеме нет, и
-    браузерный разбор берёт содержимое тегов, как у любого неизвестного).
+    Without the `details` Tool, `details` from paste and from `value` is not parsed: the title
+    becomes a paragraph, and the content Blocks follow it. The Schema has no rule for it, so the
+    browser's parser takes the contents of the tags, as it does for any unknown tag.
   */
   engine: (context, options) =>
     detailsExtensions({
       persist: (options as DetailsToolOptions | undefined)?.persist === true,
       toggleLabel: context.detailsToggle,
     }),
-  // Содержимое — контейнер Блоков: дети со своей Ручкой (`blockContainer`).
+  // The content is a container of Blocks: its children get their own handle (`blockContainer`).
   blocks: { [DETAILS_CONTENT_NODE]: { container: true } },
-  // Теги Схемы кита; обёртка содержимого — `div[data-type="detailsContent"]`.
+  // The kit's Schema tags; the content wrapper is `div[data-type="detailsContent"]`.
   kitTags: ["details", "summary"],
   insertItems: [
     {
@@ -57,7 +57,8 @@ export const DETAILS_TOOL: ToolDescriptor = {
       label: (messages) => messages.unwrapDetails,
       icon: UnwrapIcon,
       blocks: [DETAILS_NODE, DETAILS_CONTENT_NODE],
-      // Одна правка: заголовок — абзац, содержимое на месте Блока, отмена — одна.
+      // One edit: the title becomes a paragraph, the content takes the Block's place, and undo
+      // reverts it in one step.
       run: (editor, pos) =>
         void editor
           .chain()

@@ -24,13 +24,13 @@ import { DEFAULT_MESSAGES } from "../src/i18n/defaults.js";
 import { TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 /*
-  Все сочетания кита при всех Инструментах: таблица `SHORTCUTS` и сочетания из
-  описаний Инструментов (цитата — OLDSUI-100, кнопка ссылки — OLDSUI-101). Это ровно то, что
-  показывает справочник полного набора.
+  All the kit's shortcuts with all Tools: the `SHORTCUTS` table and the shortcuts from the
+  descriptions of Tools (quote — OLDSUI-100, link button — OLDSUI-101). This is exactly what
+  the full set's shortcuts popover shows.
 */
 const SHORTCUTS = shortcutGroupsFor(expandTools("full", [...TOOLS])).flatMap(
   (entry) => entry.commands
@@ -43,13 +43,12 @@ afterEach(() => {
 });
 
 /**
- * Справочник сочетаний клавиш Редактора (OLDSUI-67) и таблица, из которой он
- * строится.
+ * The Editor's keyboard shortcuts popover (OLDSUI-67) and the table it is built from.
  *
- * Через публичный `RichTextEditor`: роли, имена, текст таблицы и — главное —
- * настоящие нажатия сочетаний из таблицы. Справочник, который обещает ⌘⇧D там,
- * где движок его не слушает, хуже справочника, которого нет. Реальные нажатия в
- * браузере и открытый справочник на снимках — `tests-visual`.
+ * Through the public `RichTextEditor`: roles, names, the table text and, most important,
+ * real presses of the shortcuts from the table. A popover that promises ⌘⇧D where the engine
+ * does not listen to it is worse than no popover at all. Real presses in the browser and the
+ * open popover in the snapshots are in `tests-visual`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -71,14 +70,14 @@ async function openReference(user: ReturnType<typeof userEvent.setup>, name = BU
   return screen.findByRole("dialog", { name });
 }
 
-/** Подписи команд в таблице справочника, по порядку строк. */
+/** Command labels in the popover's table, in row order. */
 function commandNames(popover: HTMLElement) {
   return within(popover)
     .getAllByRole("rowheader")
     .map((cell) => cell.textContent);
 }
 
-/** Сочетание строки справочника по имени команды. */
+/** The shortcut of a popover row, by command name. */
 function keysOf(popover: HTMLElement, command: string) {
   const row = within(popover)
     .getAllByRole("row")
@@ -87,7 +86,7 @@ function keysOf(popover: HTMLElement, command: string) {
   return row.querySelector("kbd")?.textContent;
 }
 
-// --- Кнопка ----------------------------------------------------------------
+// --- Button ----------------------------------------------------------------
 
 test("the reference button is the last one on the toolbar, with a tooltip", async () => {
   const user = userEvent.setup();
@@ -97,7 +96,7 @@ test("the reference button is the last one on the toolbar, with a tooltip", asyn
   const buttons = Array.from(toolbar.querySelectorAll("button"));
   const button = screen.getByRole("button", { name: BUTTON });
   expect(buttons.at(-1)).toBe(button);
-  // `Popover` кита: поповер, а не меню и не окно.
+  // The kit's `Popover`: a popover, not a menu and not a dialog.
   expect(button.getAttribute("aria-haspopup")).toBe("dialog");
 
   await user.hover(button);
@@ -113,7 +112,7 @@ test("the reference button is absent in read-only mode and without a toolbar", (
   expect(screen.queryByRole("button", { name: BUTTON })).toBeNull();
 });
 
-/** Сенсорный экран: `matchMedia("(pointer: coarse)")` совпадает. */
+/** Touch screen: `matchMedia("(pointer: coarse)")` matches. */
 function stubPointer(coarse: boolean) {
   vi.stubGlobal(
     "matchMedia",
@@ -135,13 +134,13 @@ test("the floating toolbar has no reference button, the touch fallback to the fi
   unmount();
   cleanup();
 
-  // На сенсорном экране вместо плавающей — фиксированная Панель, и справочник на ней.
+  // On a touch screen, the fixed Toolbar is shown instead of the floating one, and the popover is on it.
   stubPointer(true);
   renderEditor({ toolbar: "floating" });
   expect(screen.getByRole("button", { name: BUTTON })).toBeDefined();
 });
 
-// --- Справочник ------------------------------------------------------------
+// --- Shortcuts popover ------------------------------------------------------------
 
 test("the reference is a table of commands and shortcuts with column headers", async () => {
   const user = userEvent.setup();
@@ -154,7 +153,7 @@ test("the reference is a table of commands and shortcuts with column headers", a
       .getAllByRole("columnheader")
       .map((cell) => cell.textContent)
   ).toEqual(["Command", "Shortcut"]);
-  // Сочетание — `<kbd>` кита, а не обычный текст.
+  // A shortcut is the kit's `<kbd>`, not plain text.
   expect(table.querySelectorAll("tbody kbd").length).toBe(
     within(table).getAllByRole("row").length - 1
   );
@@ -211,7 +210,7 @@ test("the reference lists only the commands of the enabled tools", async () => {
   const popover = await openReference(user);
   const names = commandNames(popover);
 
-  // Команды Блоков, выделение и переход в Панель — всегда.
+  // The Block commands, the selection, and moving into the Toolbar are always there.
   for (const always of [
     "Select block text",
     "Duplicate block",
@@ -220,8 +219,8 @@ test("the reference lists only the commands of the enabled tools", async () => {
   ]) {
     expect(names, always).toContain(always);
   }
-  // В `basic` нет заголовков, подчёркивания, индексов, выравнивания, чек-листа,
-  // блока кода и очистки стилей — а значит, и их строк.
+  // `basic` has no headings, underline, sub- and superscript, alignment, checklist,
+  // code block, or clear styles, and so no rows for them either.
   for (const absent of [
     "Heading 2",
     "Text",
@@ -247,10 +246,10 @@ test("heading 1 is listed only when both heading and heading1 are on", () => {
   expect(rows(["heading", "heading1"])).toContain("h1");
   expect(rows(["heading"])).not.toContain("h1");
   expect(rows(["heading1"])).not.toContain("h1");
-  // Сдвиг пункта — при любом списке, а не при всех сразу.
+  // The item shift applies to any list, not to all of them at once.
   expect(rows(["taskList"])).toContain("indentListItem");
   expect(rows(["bold"])).not.toContain("indentListItem");
-  // Без инструментов остаются только команды без своего инструмента.
+  // Without the Tools, only the commands that have no Tool of their own remain.
   expect(rows([])).toEqual([
     "selectBlock",
     "selectDocument",
@@ -267,15 +266,15 @@ test("the reference is as wide as its longest row, not a fixed column", async ()
   renderEditor();
   const popover = await openReference(user);
 
-  // Фиксированная колонка в 384px оставляла пустое поле между командой и
-  // сочетанием (OLDSUI-117); край экрана по-прежнему ограничивает ширину.
+  // A fixed 384px column left an empty gap between the command and the shortcut (OLDSUI-117);
+  // the screen edge still limits the width.
   expect(popover.className).toContain("w-max");
   expect(popover.className).not.toContain("w-96");
   expect(popover.className).toContain("max-w-[calc(100vw-2rem)]");
 });
 
 test("labels follow the platform: symbols on Apple, names elsewhere", async () => {
-  // jsdom — не Apple: то же, что `prosemirror-keymap` решает по `navigator.platform`.
+  // jsdom is not Apple: this is the same choice that `prosemirror-keymap` makes by `navigator.platform`.
   const user = userEvent.setup();
   renderEditor();
   let popover = await openReference(user);
@@ -327,7 +326,7 @@ test("the reference speaks the provider's language", async () => {
   expect(commandNames(popover)).toContain(ru.editor.bold);
 });
 
-// --- Фокус и слои ----------------------------------------------------------
+// --- Focus and layers ----------------------------------------------------------
 
 test("Escape closes the reference and returns focus to its button", async () => {
   const user = userEvent.setup();
@@ -381,24 +380,24 @@ test("Escape in the reference inside a Dialog closes the reference, not the wind
   await waitFor(() => expect(screen.queryByRole("dialog", { name: BUTTON })).toBeNull());
   expect(screen.getByRole("dialog", { name: "Edit article" })).toBeDefined();
   expect(onClose).not.toHaveBeenCalled();
-  // Фокус вернулся на кнопку.
+  // Focus returned to the button.
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole("button", { name: BUTTON }))
   );
 
-  // Контроль: без открытого справочника тот же Escape закрывает окно. Фокус
-  // уводится в документ — на кнопке Escape сперва закрыл бы её подсказку.
+  // Control check: without the open popover, the same Escape closes the window. Focus is moved
+  // into the Document, because on the button Escape would first close its tooltip.
   act(() => ref.current!.editor!.view.focus());
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
-// --- Таблица против движка -------------------------------------------------
+// --- Table against the engine -------------------------------------------------
 
 /**
- * `keydown` по записи таблицы — так, как его шлёт клавиатура. `keyCode` — как у
- * настоящего браузера: по нему ProseMirror узнаёт клавишу под Shift и Alt.
- * jsdom — не Apple, поэтому `mod` здесь — `Ctrl`.
+ * A `keydown` for a table entry, the way the keyboard sends it. `keyCode` is as in a real
+ * browser: ProseMirror recognizes the key under Shift and Alt by it.
+ * jsdom is not Apple, so `mod` here is `Ctrl`.
  */
 const KEY_CODES: Record<string, number> = {
   "↑": 38,
@@ -432,7 +431,7 @@ function press(editor: Editor, keys: readonly string[]): boolean {
   return event.defaultPrevented;
 }
 
-/** Каретка — в конец текста `text`; выделение — весь текст, если дан `to`. */
+/** The caret goes to the end of the text `text`; the selection is the whole text if `to` is given. */
 function selectText(editor: Editor, text: string, whole = false) {
   let from = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -448,12 +447,12 @@ function selectText(editor: Editor, text: string, whole = false) {
 }
 
 interface Scenario {
-  /** Документ до нажатия. */
+  /** The Document before the press. */
   value: string;
-  /** Что выделить; по умолчанию каретка в конце первого текста. */
+  /** What to select; by default the caret is at the end of the first text. */
   select: string;
   whole?: boolean;
-  /** Проверка после нажатия сочетания из таблицы. */
+  /** A check after pressing a shortcut from the table. */
   then: (editor: Editor, pressed: () => boolean) => void | Promise<void>;
 }
 
@@ -466,7 +465,7 @@ const html =
 
 const WORD = { value: "<p>word</p>", select: "word", whole: true } as const;
 
-/** Что каждое сочетание таблицы обязано сделать в живом Редакторе. */
+/** What each shortcut in the table must do in a live Editor. */
 const SCENARIOS: Record<string, Scenario> = {
   selectBlock: {
     value: "<p>one two</p><p>three</p>",
@@ -611,7 +610,7 @@ const SCENARIOS: Record<string, Scenario> = {
       expect(await screen.findByRole("textbox", { name: "Address" })).toBeDefined();
     },
   },
-  // Поиск (OLDSUI-151): панель открывается с выделенным словом в поле поиска.
+  // Search (OLDSUI-151): the panel opens with the selected word in the search field.
   search: {
     ...WORD,
     then: async (_editor, pressed) => {
@@ -653,13 +652,13 @@ test.each(SHORTCUTS.map((command) => [command.id, command] as const))(
     act(() => editor.view.focus());
     selectText(editor, scenario.select, scenario.whole);
 
-    // Что таблица обещает, то и нажимается: клавиши берутся из неё самой.
+    // What the table promises is what gets pressed: the keys are taken from the table itself.
     await scenario.then(editor, () => press(editor, command.keys));
   }
 );
 
 test("a command whose tool is off does nothing: the label promises only enabled tools", () => {
-  // Контроль обратной стороны: выключенный инструмент не в справочнике — и не в движке.
+  // Reverse check: a disabled Tool is not in the popover, and not in the engine.
   const { editor } = renderEditor({ tools: ["bold"], defaultValue: "<p>word</p>" });
   selectText(editor, "word", true);
 
@@ -683,7 +682,7 @@ test("clear formatting without its tool is not in the reference and does not fir
   expect(commandNames(popover)).not.toContain("Clear formatting");
 });
 
-// --- Одна таблица на всех --------------------------------------------------
+// --- One table for all --------------------------------------------------
 
 test("the toolbar buttons take their shortcuts from the table, name for name", () => {
   renderEditor({ tools: [...TOOLS] });
@@ -700,11 +699,11 @@ test("the toolbar buttons take their shortcuts from the table, name for name", (
     expect(button.getAttribute("aria-keyshortcuts")).toBe(ariaShortcut(command!.keys, false));
     checked += 1;
   }
-  // Недоверие к пустой проверке: жирный, курсив, ссылка, история и поиск.
-  // Маркер в ряду сочетания не имеет; редкие метки, зачёркнутый, Блок кода
-  // (OLDSUI-76) и очистка — в «…» (OLDSUI-65, OLDSUI-60), выравнивание и
-  // списки — в своих меню (OLDSUI-66); их подписи сверяют
-  // `rich-text-editor-more-menu.test.tsx` и
+  // Guard against a check that passes on nothing: bold, italic, link, history and search.
+  // The marker has no shortcut in the table; rare marks, strikethrough, the Code block
+  // (OLDSUI-76) and clear styles are in "…" (OLDSUI-65, OLDSUI-60), and alignment and
+  // lists are in their own menus (OLDSUI-66); their labels are checked by
+  // `rich-text-editor-more-menu.test.tsx` and
   // `rich-text-editor-align-list-menus.test.tsx`.
   expect(checked).toBe(6);
 });
@@ -713,7 +712,7 @@ test("the table has no repeated id and no shared keys except the two-step select
   const ids = SHORTCUTS.map((command) => command.id);
   expect(new Set(ids).size).toBe(ids.length);
 
-  // Одно сочетание на две команды допустимо только для двухступенчатого ⌘A.
+  // One shortcut for two commands is allowed only for the two-step ⌘A.
   const seen = new Map<string, string>();
   for (const command of SHORTCUTS) {
     const signature = command.keys.join("+");

@@ -19,19 +19,19 @@ import type { ToolPopoverRequest } from "../core/toolButtons.js";
 import { toolLabel, type KitToolButton, type ToolLabel } from "../core/toolDescriptor.js";
 
 /**
- * Кнопка из описания Инструмента (`toolDescriptor.ts`) на Панели, плавающей
- * Панели и в Меню выделения, и рамка её поповера.
+ * A button built from a Tool description (`toolDescriptor.ts`) on the Toolbar, on the
+ * floating Toolbar and in the bubble menu, and the frame of its popover.
  *
- * КИТ РИСУЕТ, ОПИСАНИЕ ОПИСЫВАЕТ (ADR-0058, п. 5). Хозяин места — Панель или
- * Меню выделения — считает состояние кнопки (`pressed`, `unavailable`) вместе
- * со своими и держит roving-фокус; здесь — то, что у всех кнопок описаний
- * одно: подсказка с `Kbd`, `aria-pressed` только при `isActive`,
- * `aria-keyshortcuts`, `aria-disabled` и поповер.
+ * THE KIT DRAWS, THE DESCRIPTION DESCRIBES (ADR-0058, item 5). The host of the place (the
+ * Toolbar or the bubble menu) computes the button's state (`pressed`, `unavailable`)
+ * together with its own state, and manages roving focus. What all description buttons
+ * share is here: the hint with `Kbd`, `aria-pressed` only when `isActive`,
+ * `aria-keyshortcuts`, `aria-disabled` and the popover.
  */
 
 /**
- * Подпись записи в локали `UiProvider`: смена локали перерисовывает запись
- * (ADR-0058, п. 6.1). Встроенным в контекст кладутся строки Редактора кита.
+ * The label of an entry in the `UiProvider` locale. A locale change re-renders the entry
+ * (ADR-0058, item 6.1). The kit's Editor strings are placed in the context for built-ins.
  */
 export function useToolLabel(): (label: ToolLabel) => string {
   const messages = useMessages().editor;
@@ -40,28 +40,29 @@ export function useToolLabel(): (label: ToolLabel) => string {
 }
 
 /**
- * Рамка поповера по умолчанию: по содержимому, с небольшим отступом. Подложка
- * — стекло поповеров Редактора у любой рамки, и у своего
- * Инструмента: его поповер всплывает над Документом так же, как встроенные.
+ * The default popover frame: sized to its content, with a small padding. The background is
+ * the Editor's popover glass for every frame, including a custom Tool's popover. It floats
+ * above the Document just like the built-in ones.
  */
 const POPOVER_FRAME_CLASS = "w-auto p-2";
 
 const OPEN_CLASS = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true, selected: true });
 
 /**
- * Рамка поповера записи — общая для якоря у кнопки, у выделения и у Блока.
+ * The popover frame of an entry, shared by the anchor on a button, on a selection and on
+ * a Block.
  *
- * `Popover` КИТА. Radix ведёт стек слоёв, и `Dialog` кита — тоже Radix: Escape
- * в поповере внутри окна закрывает поповер, а не окно (ADR-0041). Выбор мышью
- * в `Dialog` и `Drawer` работает по той же причине: слой поповера выше слоя
- * окна и сам включает `pointer-events`.
+ * The kit's `Popover`. Radix keeps the stack of layers, and the kit's `Dialog` is Radix
+ * too: Escape inside a popover within a dialog closes the popover, not the dialog
+ * (ADR-0041). Mouse selection in `Dialog` and `Drawer` works for the same reason: the
+ * popover's layer is above the dialog's layer and enables `pointer-events` itself.
  *
- * ФОКУС. Закрытие с клавиатуры или выбором возвращает фокус в Документ, на
- * прежнее выделение, а не на кнопку: человек пришёл править текст и
- * продолжает с того места. Щелчок мимо фокус не трогает — человек сам
- * выбрал, куда его поставить. Фокус внутрь берёт сам Radix — на первый
- * фокусируемый элемент; своей рукой его ставить нельзя: внутри `Dialog`
- * ловушка фокуса окна ещё не приостановлена и вернула бы его кнопке.
+ * FOCUS. Closing with the keyboard or by a selection returns focus to the Document, to the
+ * previous selection, not to the button: the user came to edit the text and continues from
+ * the same place. A click outside does not touch focus, because the user chose where to put
+ * it. Radix itself moves focus inside, to the first focusable element. That cannot be done
+ * by hand: inside a `Dialog` the window's focus trap is not yet suspended, and it would
+ * return focus to the button.
  */
 function ToolPopoverFrame({
   editor,
@@ -86,16 +87,16 @@ function ToolPopoverFrame({
         interactedOutside.current = true;
       }}
       onCloseAutoFocus={(event) => {
-        // Radix вернул бы фокус кнопке-триггеру, а у поповера у выделения её
-        // нет вовсе. Таймер Radix мог сработать уже после размонтажа движка.
-        // Фокус — сразу, а не кадром позже, как `commands.focus()`: запоздалый
-        // фокус в Документ закрыл бы поповер, открытый повторным щелчком.
+        // Radix would return focus to the trigger button, but a popover on a selection has
+        // no such button at all. Radix's timer could also fire after the engine has been
+        // unmounted. Focus is set at once, not a frame later as `commands.focus()` does: a
+        // delayed focus into the Document would close a popover opened by a second click.
         event.preventDefault();
         if (!interactedOutside.current && !editor.isDestroyed) editor.view.focus();
       }}
     >
-      {/* Содержимое монтируется заново на каждое открытие: оно берёт
-          состояние Документа в момент открытия, а не прошлый черновик. */}
+      {/* The content is mounted anew on each open: it takes the Document's state at the
+          moment of opening, not a stale draft. */}
       {children}
     </PopoverContent>
   );
@@ -104,15 +105,15 @@ function ToolPopoverFrame({
 export interface ToolButtonViewProps {
   editor: Editor;
   button: KitToolButton;
-  /** Подпись в текущей локали (`toolLabel`). */
+  /** The label in the current locale (`toolLabel`). */
   label: string;
-  /** Состояние `isActive`; у кнопки без него не читается. */
+  /** The `isActive` state; not read for a button that has no `isActive`. */
   pressed: boolean;
-  /** `aria-disabled`: `can` не выполнен или HTML-режим. */
+  /** `aria-disabled`: the `can` check fails, or the field is in HTML mode. */
   unavailable: boolean;
-  /** Поле выключено: кнопка видна, но не нажимается и не берёт фокус. */
+  /** The field is disabled: the button stays visible but cannot be pressed or take focus. */
   disabled: boolean;
-  /** Классы хозяина места: обычная и нажатая кнопка (у Меню выделения — свои). */
+  /** The host's classes: the normal and the pressed button (the bubble menu has its own). */
   classes: { idle: string; pressed: string };
 }
 
@@ -127,7 +128,8 @@ export function ToolButtonView({
 }: ToolButtonViewProps) {
   const apple = isApple();
   const [open, setOpen] = useState(false);
-  // Подпись: своё сочетание кнопки или клавиша из Extensions (`keys` встроенной).
+  // The tooltip text: the button's own shortcut, or the key from the Extensions (`keys` of a
+  // built-in).
   const keys = button.shortcut ?? button.keys;
   const tooltip = keys ? (
     <span className="flex items-center gap-2">
@@ -138,12 +140,13 @@ export function ToolButtonView({
     label
   );
   const Icon = button.icon;
-  // Поповер у кнопки держит сама кнопка; у выделения — Редактор (`SelectionPopover`).
+  // A button's popover is held by the button itself; a selection's popover is held by the
+  // Editor (`SelectionPopover`).
   const atButton = button.popover != null && button.popoverFrame?.anchor !== "selection";
   /*
-    Недоступное действие — `aria-disabled`, а не `disabled`: APG советует
-    оставлять действия панели фокусируемыми, иначе стрелки перепрыгивают
-    кнопку молча. Выключенное ПОЛЕ — другое дело: в нём фокусу делать нечего.
+    An unavailable action uses `aria-disabled`, not `disabled`: APG advises keeping Toolbar
+    actions focusable, otherwise arrow keys skip the button silently. A disabled FIELD is a
+    different matter: there is nothing for focus to do in it.
   */
   const trigger = (
     <button
@@ -155,11 +158,11 @@ export function ToolButtonView({
       aria-keyshortcuts={keys ? ariaShortcut(keys, apple) : undefined}
       disabled={disabled}
       onClick={(event) => {
-        // Radix не откроет поповер, если обработчик отменил событие.
+        // Radix will not open the popover if the handler cancelled the event.
         if (unavailable) event.preventDefault();
         else if (atButton) return;
-        // Поповер у выделения открывает команда движка — та же, что у
-        // сочетания (`toolButtons.ts`).
+        // The engine command that opens the popover on a selection is the same as the one
+        // behind the shortcut (`toolButtons.ts`).
         else if (button.popover) editor.commands.openToolPopover(button.id);
         else button.run(editor);
       }}
@@ -184,28 +187,29 @@ export function ToolButtonView({
 
 export interface SelectionPopoverProps {
   editor: Editor;
-  /** Запись, чей поповер открыт или был открыт последним. */
+  /** The entry whose popover is open, or was opened last. */
   request: ToolPopoverRequest;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 /**
- * Поповер записи у выделения или у Блока (ADR-0058, п. 5.6): так он встаёт,
- * когда его открыло сочетание или меню (пункт вставки — у каретки, Действие
- * над Блоком — у Блока), и всегда — у кнопки с рамкой `anchor: "selection"`
- * (ссылка). Держит его `RichTextEditor`, а не кнопка или меню: сочетание
- * работает и без Панели (`toolbar="none"`), и при спрятанной плавающей, а меню
- * к открытию поповера уже снято.
+ * The entry's popover on a selection or on a Block (ADR-0058, item 5.6). It appears this
+ * way when a shortcut or a menu opened it: an Insert item opens at the caret, and a Block
+ * action opens at the Block. It always appears at a button with the frame
+ * `anchor: "selection"` (the link). `RichTextEditor` holds it, not a button or a menu. A
+ * shortcut works without the Toolbar (`toolbar="none"`) and with the floating Toolbar
+ * hidden, and by the time the popover opens, the menu is already gone.
  *
- * Якорь меряется при каждом пересчёте позиции, а не раз при открытии: Radix
- * зовёт его на прокрутке и ресайзе, и поповер едет вместе с текстом. Выделение
- * движка при этом не меняется — фокус в поповере его не сбрасывает. Позиция
- * Блока едет за правками Документа, пока поповер открыт.
+ * The anchor is measured on every position recalculation, not once on opening. Radix calls
+ * it on scroll and on resize, and the popover moves with the text. The engine's selection
+ * does not change in the process: focus in the popover does not reset it. The Block's
+ * position follows the Document's edits while the popover is open.
  */
 export function SelectionPopover({ editor, request, open, onOpenChange }: SelectionPopoverProps) {
   const label = useToolLabel();
-  // Позиция Блока своего запроса: новый запрос сразу берёт свою, без кадра со старой.
+  // The Block position of the request: a new request takes its own position at once, with
+  // no frame showing the old one.
   const [moved, setMoved] = useState({ request, block: request.block });
   const block = moved.request === request ? moved.block : request.block;
   const blockRef = useRef(block);

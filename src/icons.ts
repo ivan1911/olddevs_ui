@@ -1,594 +1,574 @@
 /**
- * Семантический словарь иконок дизайн-системы.
+ * Semantic icon vocabulary of the design system.
  *
- * ЧТО ЭТО И ПОЧЕМУ ОТДЕЛЬНЫМ ФАЙЛОМ, А НЕ ПРОСТО `import { X } from "lucide-react"`
- * В КАЖДОМ МЕСТЕ ВЫЗОВА:
+ * WHAT THIS IS AND WHY IT IS A SEPARATE FILE, NOT JUST `import { X } from "lucide-react"`
+ * AT EVERY CALL SITE:
  *
- * Геометрию иконок мы арендуем у lucide, а системное решение — не в путях SVG,
- * а в словаре: «удаление — это корзина, а не крестик; ИИ — это `WandSparkles`;
- * поиск похожих — это `ScanSearch`». Это решение дизайн-системы, и оно должно
- * жить в одном месте, а не быть размазанным по полусотне файлов потребителя.
+ * We rent the icon geometry from lucide, but the design-system decision lives not in the SVG
+ * paths and not in the glyph shapes, it lives in the vocabulary: "deleting is a bin, not a cross;
+ * AI is `WandSparkles`; finding similar items is `ScanSearch`". That decision belongs to the
+ * design system, so it must live in one place, not be scattered across half a hundred consumer
+ * files.
  *
- * Отсюда три следствия:
+ * This gives three consequences:
  *
- * 1. Смена визуального языка целиком (уйти с lucide на phosphor, нарисовать своё)
- *    — это правка ОДНОГО файла, а не форк компонентов.
- * 2. Точечная замена («шестерёнка не нравится, хочу другую») — одна строка здесь,
- *    и она разъезжается по всем местам вызова сразу.
- * 3. Потребитель не решает заново, какой иконкой обозначить удаление. Именно
- *    поэтому имена семантические (`DeleteIcon`), а не геометрические (`Trash2Icon`)
- *    везде, где смысл важнее формы.
+ * 1. Replacing the whole visual language (moving from lucide to Phosphor, or drawing our own)
+ *    is an edit to ONE file, not a fork of the components.
+ * 2. A point replacement ("the cog is not liked, I want another one") is one line here, and it
+ *    propagates to every call site at once.
+ * 3. The consumer does not decide again which icon marks deletion. That is why names are semantic
+ *    (`DeleteIcon`), not geometric (`Trash2Icon`), wherever meaning matters more than shape.
  *
- * СТИЛЬ (размер, толщина, цвет) здесь НЕ задаётся — это работа `LucideProvider`
- * у потребителя. Разделение намеренное: словарь отвечает за «что», провайдер за «как».
- * Провайдер потребитель берёт отсюда же, а не из `lucide-react` (ADR-0072): lucide
- * приезжает с китом, и при второй копии в приложении провайдер из неё молча
- * не дошёл бы до иконок словаря.
+ * STYLE (size, stroke width, color) is NOT set here. It is the job of the consumer's
+ * `LucideProvider`. The split is intentional: the vocabulary answers "what", the provider answers
+ * "how". The consumer takes the provider from here too, not from `lucide-react` (ADR-0072): lucide
+ * ships with the kit, and if the application had a second copy, the provider would silently fail
+ * to reach the vocabulary's icons.
  *
- * ИМЕНА СВЕРЯЮТСЯ ПО УСТАНОВЛЕННОМУ ПАКЕТУ, НЕ ПО ДОКАМ И НЕ ПО ЧЕЙНДЖЛОГУ.
- * Проверено: `pending-cw` числится в релиз-нотах lucide 1.27.0, а экспорта
- * `PendingCw` в опубликованном пакете нет. Страхует `tests/icons.test.ts`.
+ * NAMES ARE CHECKED AGAINST THE INSTALLED PACKAGE, NOT AGAINST THE DOCS OR THE CHANGELOG.
+ * Verified: `pending-cw` is listed in the lucide 1.27.0 release notes, but there is no `PendingCw`
+ * export in the published package. `tests/icons.test.ts` guards this.
  *
- * И ТОЛЬКО КАНОНИЧЕСКИЕ ИМЕНА, А НЕ АЛИАСЫ. `Trash2`, `Filter`, `Home`, `History`
- * в установленном пакете — лишь второе имя рисунка (`Trash`, `Funnel`, `House`,
- * `RotateCcwClock`), а алиасы уезжают в мажорах lucide. Иногда алиас ведёт и не
- * туда, куда ждёшь: `BarChart` — это `ChartNoAxesColumnIncreasing`, а не
- * `ChartColumn`. Каноническое имя — `displayName` компонента.
+ * ONLY CANONICAL NAMES, NOT ALIASES. In the installed package, `Trash2`, `Filter`, `Home` and
+ * `History` are just second names for a glyph (`Trash`, `Funnel`, `House`, `RotateCcwClock`), and
+ * aliases are dropped in lucide's major versions. Sometimes an alias points somewhere you do not
+ * expect: `BarChart` is `ChartNoAxesColumnIncreasing`, not `ChartColumn`. The canonical name is the
+ * component's `displayName`.
  *
- * С 3.29.0 в словаре есть базовый набор: смыслы, которые есть в наборах иконок
- * почти всех крупных систем (ADR-0049). Остальное — по заявке, как раньше.
+ * Since 3.29.0 the vocabulary has a base set: meanings that appear in the icon sets of almost all
+ * major systems (ADR-0049). Everything else is added on request, as before.
  */
 
 export {
-  // ── Навигация и разделы ────────────────────────────────────────────────
+  // ── Navigation and sections ────────────────────────────────────────────
   LayoutDashboard as DashboardIcon,
   LibraryBig as LibraryIcon,
   Search as SearchIcon,
   Calendar as CalendarIcon,
   Folder as FolderIcon,
   /**
-   * Перечень записей: список задач, дел, пунктов.
+   * A list of records: a list of tasks, to-dos or items.
    *
-   * Отличается от `FolderIcon` и `LibraryIcon` смыслом: те про хранилище и
-   * вложенность, этот — про сам перечень.
+   * It differs from `FolderIcon` and `LibraryIcon` in meaning: those are about storage and
+   * nesting, this one is about the list itself.
    *
-   * Рисунок «несколько горизонтальных линий» в наборе уже был — это
-   * `NavigationIcon`, гамбургер. Второй смысл на него не вешается: в ряду
-   * вкладок он прочитается как «меню».
+   * The "several horizontal lines" glyph was already in the set: it is `NavigationIcon`, the
+   * hamburger. A second meaning is not hung on it, because in a row of tabs it would read as "menu".
    *
-   * Маркеры, а не флажки (`ListTodo` у lucide): галочка внутри иконки читается
-   * как «выполнено» и спорит с `SuccessIcon`, который в таком ряду стоит
-   * обычно рядом.
+   * Bullets, not checkboxes (`ListTodo` in lucide): a tick inside the icon reads as "done" and
+   * conflicts with `SuccessIcon`, which usually stands next to it in such a row.
    *
-   * Он же — маркированный список в панели Редактора: смысл тот же, «перечень
-   * с маркерами», и второе имя на этот рисунок словарь не заводит (ADR-0049).
+   * It is also the bulleted list in the Editor's Toolbar: the meaning is the same, "a list with
+   * bullets", and the vocabulary does not add a second name for this glyph (ADR-0049).
    */
   List as ListIcon,
   /**
-   * Цель, за которую берутся: мишень.
+   * A target to aim for: a bullseye.
    *
-   * Имя по рисунку — редкое в этом словаре исключение, и оно намеренное.
-   * Смысл мишени киту не принадлежит: у одного потребителя это «доступно
-   * сейчас», у другого — план или точность. Назвать её по одному из этих
-   * смыслов значило бы закрыть её для остальных.
+   * Naming by the glyph is a rare exception in this vocabulary, and it is deliberate. The meaning
+   * of a target does not belong to the kit: for one consumer it is "available now", for another a
+   * plan or precision. Naming it after one of these meanings would close it off for the rest.
    *
-   * Не `PlayIcon` («начать») и не `FavoriteIcon` («моё»): оба заняты, и оба
-   * означают выбор человека, а не свойство самой записи.
+   * Not `PlayIcon` ("start") and not `FavoriteIcon` ("mine"): both are taken, and both mean a
+   * person's choice, not a property of the record itself.
    */
   Target as TargetIcon,
   Settings as SettingsIcon,
   Bell as BellIcon,
-  /** Открыть навигацию на узком экране: «гамбургер» шапки. */
+  /** Open navigation on a narrow screen: the header's hamburger. */
   Menu as NavigationIcon,
-  /** Главная, корень приложения. Не `DashboardIcon`: тот — раздел-сводка, а не корень. */
+  /** Home, the root of the app. Not `DashboardIcon`: that one is a summary section, not the root. */
   House as HomeIcon,
-  /** Назад по истории или на уровень выше. Не `ChevronLeftIcon`: шеврон — шаг, «предыдущий». */
+  /** Back in history or up one level. Not `ChevronLeftIcon`: a chevron is a step, "previous". */
   ArrowLeft as BackIcon,
-  /** Далее, перейти. Пара к `BackIcon`; не `ChevronRightIcon` — тот про шаг и вложенность. */
+  /** Forward, go to. The pair of `BackIcon`; not `ChevronRightIcon`, which is about a step and nesting. */
   ArrowRight as ForwardIcon,
-  /** Показать или скрыть боковую панель. Не `NavigationIcon`: гамбургер открывает навигацию на узком экране. */
+  /** Show or hide the sidebar. Not `NavigationIcon`: the hamburger opens navigation on a narrow screen. */
   PanelLeft as SidebarIcon,
-  /** Раздел кампаний. */
+  /** Campaigns section. */
   Ad as CampaignIcon,
-  /** Telegram-канал как адресат публикации. */
+  /** Telegram channel as the recipient of a publication. */
   Megaphone as ChannelIcon,
 
-  // ── Разделы настроек ───────────────────────────────────────────────────
-  /** Профиль пользователя. */
+  // ── Settings sections ──────────────────────────────────────────────────
+  /** User profile. */
   User as ProfileIcon,
-  /** Внешний вид: тема, акцент, плотность. */
+  /** Appearance: theme, accent, density. */
   Contrast as AppearanceIcon,
-  /** ИИ и автоматизация. */
+  /** AI and automation. */
   Cpu as AutomationIcon,
-  /** Внешние интеграции. */
+  /** External integrations. */
   Plug as IntegrationIcon,
-  /** Хранилище и API. */
+  /** Storage and API. */
   Database as StorageIcon,
-  /** Безопасность и доступ. */
+  /** Security and access. */
   Shield as SecurityIcon,
 
-  // ── Действия ───────────────────────────────────────────────────────────
+  // ── Actions ────────────────────────────────────────────────────────────
   Upload as UploadIcon,
   Download as DownloadIcon,
   Funnel as FilterIcon,
   Ellipsis as MoreIcon,
-  /** Ручка перетаскивания: за неё берут строку сортируемого списка. */
+  /** Drag handle: a sortable list's row is grabbed by it. */
   GripVertical as DragHandleIcon,
   Pencil as EditIcon,
   Check as CheckIcon,
   /**
-   * Третье состояние флажка — «часть выбрана».
+   * A checkbox's third state: "partially selected".
    *
-   * Не `CheckIcon` под другим углом и не своя рисовка: словарь обязан назвать
-   * это состояние отдельным смыслом, иначе сменить его начертание можно будет
-   * только правкой самого `Checkbox`.
+   * Not `CheckIcon` at another angle, and not a custom drawing: the vocabulary must name this state
+   * as a separate meaning, otherwise its look could only be changed by editing `Checkbox` itself.
    */
   Minus as MinusIcon,
-  /** Закрыть. Самое частое действие во фронте. */
+  /** Close. The most frequent action on the front end. */
   X as CloseIcon,
   Plus as AddIcon,
   /**
-   * Начать воспроизведение или отсчёт: настоящее транспортное действие.
+   * Start playback or a countdown: a real transport action.
    *
-   * Только кнопка. Пометкой «начал» в истории `PlayIcon` быть перестал — для
-   * неё заведён `FirstStepIcon`: два play с разным смыслом в одном ряду
-   * потребитель уже прочитал неверно, приняв запись в историю за кнопку.
+   * A button only. As a "started" mark in history, `PlayIcon` has stopped being one: `FirstStepIcon`
+   * is set up for that. A consumer already misread two plays with different meanings in one row,
+   * taking a history entry for a button.
    *
-   * Продолжение после паузы — он же: это ровно тот смысл, под который он заведён.
+   * Resuming after a pause is this icon too: that is exactly the meaning it is set up for.
    */
   Play as PlayIcon,
   /**
-   * Приостановить воспроизведение или отсчёт.
+   * Pause playback or a countdown.
    *
-   * Пара к `PlayIcon` и вторая половина транспорта. Иконки «стоп» рядом нет и
-   * не заводится: завершение — действие с последствиями, оно подписывается
-   * словом, а не метафорой.
+   * The pair of `PlayIcon` and the second half of the transport. There is no "stop" icon beside it,
+   * and none is set up: ending something is an action with consequences, so it is labeled with a
+   * word, not a metaphor.
    */
   Pause as PauseIcon,
   Copy as CopyIcon,
-  /** Копирование пачкой — в старом наборе звалось `copy2`. */
+  /** Copy in bulk: it was called `copy2` in the old set. */
   Files as CopyManyIcon,
   ClipboardPaste as PasteIcon,
   Trash as DeleteIcon,
-  /** Отменить действие. `Undo2`, а не дуга `Undo`: дуга со стрелкой — это `RefreshIcon`. */
+  /** Undo an action. `Undo2`, not the `Undo` arc: an arc with an arrow is `RefreshIcon`. */
   Undo2 as UndoIcon,
-  /** Повторить отменённое. Не `RecurringIcon`: тот — «повторяется по правилу», свойство записи. */
+  /** Redo what was undone. Not `RecurringIcon`: that one is "repeats on a schedule", a property of the record. */
   Redo2 as RedoIcon,
-  /** Поделиться. Узлы, а не коробка со стрелкой (`Share`): та спорит с `UploadIcon`. */
+  /** Share. Nodes, not a box with an arrow (`Share`): that one conflicts with `UploadIcon`. */
   Share2 as ShareIcon,
-  /** Закрепить: колонку, запись, представление. Не `FavoriteIcon` — тот про «моё», а не про место. */
+  /** Pin: a column, a record, a view. Not `FavoriteIcon`, which is about "mine", not about a place. */
   Pin as PinIcon,
-  /** Настроить этот вид. Не `SettingsIcon` (раздел настроек) и не `FilterIcon` (сузить данные). */
+  /** Adjust this view. Not `SettingsIcon` (the settings section) and not `FilterIcon` (narrow the data). */
   SlidersHorizontal as AdjustIcon,
-  /** Сортировать. Стрелки, а не шевроны: шевроны «вверх-вниз» — это `SelectIcon`. */
+  /** Sort. Arrows, not chevrons: up-down chevrons are `SelectIcon`. */
   ArrowUpDown as SortIcon,
   ArrowUpNarrowWide as SortAscendingIcon,
   ArrowDownWideNarrow as SortDescendingIcon,
-  /** Масштаб. Третья лупа после `SearchIcon` и `FindSimilarIcon`: рядом без подписи не ставить. */
+  /** Zoom. The third magnifier after `SearchIcon` and `FindSimilarIcon`: do not place them side by side without a label. */
   ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
   Printer as PrintIcon,
   Link as LinkIcon,
-  /** Ссылка ведёт наружу — за пределы приложения. Иконка у `Link external`. */
+  /** The link leads outside, beyond the app. The icon of `Link external`. */
   ExternalLink as ExternalLinkIcon,
   Send as SendIcon,
   RefreshCw as RefreshIcon,
   Archive as ArchiveIcon,
-  /** Убрать из архива/коллекции. */
+  /** Remove from the archive or a collection. */
   ArchiveX as ArchiveRemoveIcon,
-  /** «Найти похожие» — семантический поиск по картинке. */
+  /** "Find similar": semantic search by image. */
   ScanSearch as FindSimilarIcon,
   Maximize2 as ExpandIcon,
   Minimize2 as CollapseIcon,
   /**
-   * Выход из аккаунта.
+   * Sign out of the account.
    *
-   * Дверной проём со стрелкой наружу: по отдельности ни то, ни другое не
-   * читается — голая стрелка означает «дальше», проём без стрелки «вход».
-   * Имя по действию, а не по рисунку (`DoorIcon`): рисунок у иконки действия
-   * может смениться, действие — нет.
+   * A doorway with an arrow pointing outward. Neither part reads on its own: a bare arrow means
+   * "forward", a doorway without an arrow means "enter". The name follows the action, not the
+   * glyph (`DoorIcon`): an action icon's glyph may change, the action does not.
    *
-   * `CloseIcon` здесь не подмена, а худший из промахов: в меню крестик значит
-   * «закрыть меню», то есть ровно противоположное — человек ждёт, что меню
-   * свернётся, а его разлогинит.
+   * `CloseIcon` here is not a stand-in but the worst of misses: in a menu a cross means "close the
+   * menu", which is the exact opposite. The person expects the menu to collapse and gets signed out.
    */
   LogOut as LogoutIcon,
 
-  // ── Шевроны ────────────────────────────────────────────────────────────
+  // ── Chevrons ───────────────────────────────────────────────────────────
   ChevronRight as ChevronRightIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronDown as ChevronDownIcon,
   ChevronUp as ChevronUpIcon,
   ChevronsRight as ChevronDoubleRightIcon,
   ChevronsLeft as ChevronDoubleLeftIcon,
-  /** Триггер выпадающего списка. */
+  /** Trigger of a dropdown list. */
   ChevronsUpDown as SelectIcon,
 
-  // ── Состояния и признаки ───────────────────────────────────────────────
+  // ── States and markers ─────────────────────────────────────────────────
   Eye as VisibleIcon,
   EyeOff as HiddenIcon,
-  /** Метка, ярлык: ценник. Решётку системы называют «hashtag», это другой смысл. */
+  /** Label, tag: a price tag. The system's hash sign is called "hashtag", which is a different meaning. */
   Tag as TagIcon,
   TriangleAlert as WarningIcon,
   Image as ImageIcon,
-  /** Пояснение, информация. Кружок с «i». */
+  /** Explanation, information. A circle with an "i". */
   Info as InfoIcon,
-  /** Помощь: кружок с «?». Не `InfoIcon` — помощь и информацию системы держат раздельно. */
+  /** Help: a circle with a "?". Not `InfoIcon`: help and the system's information are kept apart. */
   CircleQuestionMark as HelpIcon,
-  /** Совет, подсказка. Не `InfoIcon`: тот — нейтральное пояснение. */
+  /** Advice, a hint. Not `InfoIcon`, which is a neutral explanation. */
   Lightbulb as TipIcon,
-  /** Пометить проблему, пожаловаться. Не для начала работы — это `FirstStepIcon`. */
+  /** Flag a problem, report it. Not for starting work: that is `FirstStepIcon`. */
   Flag as FlagIcon,
-  /** Запрещено. Не `ErrorIcon` (не получилось) и не `LockIcon` (заперто, но доступно с ключом). */
+  /** Forbidden. Not `ErrorIcon` (it failed) and not `LockIcon` (locked, but available with a key). */
   Ban as BlockedIcon,
   /**
-   * Успех — в сообщении, а не в флажке.
+   * Success: in a message, not in a checkbox.
    *
-   * Отдельный смысл от `CheckIcon`: та означает «отмечено», эта — «получилось».
-   * Совмещать их значило бы, что сменить начертание одного нельзя, не сменив
-   * второе.
+   * A separate meaning from `CheckIcon`: that one means "marked", this one means "it worked".
+   * Merging them would mean the look of one could not be changed without changing the other.
    */
   CircleCheck as SuccessIcon,
-  /** Ошибка — то, что не получилось и требует внимания. */
+  /** Error: something that failed and needs attention. */
   CircleAlert as ErrorIcon,
   /**
-   * Срок, к которому нужно сделать: дедлайн записи.
+   * A deadline by which something must be done: a record's deadline.
    *
-   * ЗАЧЕМ ОТДЕЛЬНОЕ ИМЯ, КОГДА ЕСТЬ `CalendarIcon`. Дата в словаре была ровно
-   * одна и означала «дата вообще». Но у записи их бывает две, и они
-   * ортогональны: «когда станет актуально» и «когда горит». Один рисунок на
-   * обе помечает одинаково ровно то, что продукт и заведён различать (заявка
-   * Nextable).
+   * WHY A SEPARATE NAME WHEN `CalendarIcon` EXISTS. The vocabulary had exactly one date, and it
+   * meant "a date in general". But a record can have two, and they are orthogonal: "when it becomes
+   * relevant" and "when it is on fire". One glyph for both would mark identically exactly what the
+   * product was set up to tell apart (Nextable request).
    *
-   * Песочные часы, а не второй календарь: календарный силуэт на 14 пикселях
-   * читается как «дата», и в соседней колонке с `CalendarIcon` разница между
-   * ними исчезает. У часов силуэт вертикальный и ни на что в словаре не похож.
+   * An hourglass, not a second calendar: a calendar silhouette at 14 pixels reads as "date", and in
+   * a neighboring column with `CalendarIcon` the difference between them vanishes. The hourglass
+   * silhouette is vertical and resembles nothing else in the vocabulary.
    *
-   * Отвергнуты и остальные соседи, у каждого свой смысл: `TargetIcon` — цель,
-   * за которую берутся; `BellIcon` — напоминание; `WarningIcon` — просрочка,
-   * то есть вычисленное состояние, а не поле; `Clock` и `ClockAlert` читаются
-   * «время вообще» и «тревога»; `FlagTriangleRight` на 14 пикселях
-   * превращается в треугольник play — та же ловушка, из-за которой пометку
-   * начала работы рисует `FirstStepIcon`.
+   * The other neighbors were rejected, each with its own meaning: `TargetIcon` is a target to aim
+   * for; `BellIcon` is a reminder; `WarningIcon` is overdue, a computed state rather than a field;
+   * `Clock` and `ClockAlert` read as "time in general" and "alarm"; `FlagTriangleRight` at 14 pixels
+   * turns into a play triangle, the same trap that makes `FirstStepIcon` draw the start-of-work mark.
    */
   Hourglass as DeadlineIcon,
   /**
-   * Повторяется по правилу: запись возвращается сама.
+   * Repeats on a schedule: the record comes back by itself.
    *
-   * НЕ `RefreshIcon`, и разница не в рисунке, а в смысле. Круговые стрелки в
-   * интерфейсе означают перезагрузку — «обнови то, что видишь»; повтор
-   * означает свойство самой записи. Один рисунок на оба закрыл бы второй смысл
-   * для всех потребителей — та же развилка, на которой словарь уже развёл
-   * `CheckIcon` и `SuccessIcon`.
+   * NOT `RefreshIcon`, and the difference is not in the glyph but in the meaning. Circular arrows in
+   * an interface mean reload: "refresh what you see". Repetition means a property of the record
+   * itself. One glyph for both would close the second meaning for every consumer, the same fork on
+   * which the vocabulary already separated `CheckIcon` and `SuccessIcon`.
    *
-   * `Repeat`, а не `RotateCw` и не `IterationCw`: у первого прямоугольная
-   * петля из двух стрелок — знак повтора из плееров, и рядом с круглым
-   * `RefreshIcon` он различим даже на 14 пикселях. Вторые два — дуга со
-   * стрелкой, то есть «отменить» и «повторить действие».
+   * `Repeat`, not `RotateCw` and not `IterationCw`: the first is a rectangular loop of two arrows,
+   * the repeat sign from media players, and next to the round `RefreshIcon` it is distinguishable
+   * even at 14 pixels. The other two are arcs with an arrow, that is, "undo" and "redo the action".
    */
   Repeat as RecurringIcon,
   /**
-   * Приступил к работе: первый шаг сделан.
+   * Started work: the first step is done.
    *
-   * Это ПОМЕТКА, а не кнопка: запись в истории о том, что дело сдвинулось.
-   * Раньше на этом месте стоял `PlayIcon`, и владелец продукта прочитал его как
-   * транспортную кнопку — попросил «поставить на паузу», нажав на пометку. С
-   * появлением паузы в том же ряду два play стали бы неразличимы по смыслу.
+   * This is a MARK, not a button: a history entry saying that the matter has moved forward.
+   * Previously `PlayIcon` stood here, and the product owner read it as a transport button and asked
+   * to "pause it" by clicking the mark. Once pause sits in the same row, two play glyphs would be
+   * indistinguishable in meaning.
    *
-   * Следы, а не флажок: флажок в трекерах означает «проблема, заблокировано»
-   * (так он подан в Jira), и пометка о начале работы читалась бы тревогой.
-   * `FlagTriangleRight` отвергнут по рисунку — в ряду 14 пикселей он и есть
-   * треугольник play, то есть повторил бы ровно ту ошибку, ради которой иконка
-   * заводится. `Hourglass` означает ожидание, а не начало; `CircleDot` в ряду
-   * читается как переключатель; `Timer` спорит с самим таймером полосы.
+   * Footprints, not a flag: in trackers a flag means "problem, blocked" (that is how Jira draws it),
+   * and a mark about starting work would read as an alarm. `FlagTriangleRight` was rejected for its
+   * glyph: in a row at 14 pixels it is exactly a play triangle, which would repeat the very mistake
+   * the icon exists to avoid. `Hourglass` means waiting, not starting; `CircleDot` in a row reads as
+   * a toggle; `Timer` conflicts with the progress bar's own timer.
    *
-   * Имя по смыслу, а не по рисунку: следы могут смениться, «первый шаг» — нет.
+   * Named by the meaning, not the glyph: footprints may change, "first step" does not.
    */
   Footprints as FirstStepIcon,
   /**
-   * Ручка перетаскивания.
+   * Drag handle.
    *
-   * @deprecated Тот же рисунок, что `DragHandleIcon`: берите его. Уйдёт в 4.0.0.
+   * @deprecated The same glyph as `DragHandleIcon`: use that one instead. Removed in 4.0.0.
    */
   GripVertical as DragIcon,
   Layers as LayersIcon,
   Palette as PaletteIcon,
   Keyboard as KeyboardIcon,
-  /** Подтвердить ввод или отправить поиск с экранной клавиатуры. */
+  /** Confirm input, or submit a search from the on-screen keyboard. */
   CornerDownLeft as EnterIcon,
-  /** Смена языка ввода и раскладки. */
+  /** Switch the input language and layout. */
   Earth as LanguageIcon,
   Heart as FavoriteIcon,
-  /** Звезда оценки. Отличается от избранного смыслом: избранное — отметка
-      «моё», оценка — величина (ADR-0040). */
+  /** Star rating. It differs from a favorite in meaning: a favorite is a "mine" mark, a rating is a
+      magnitude (ADR-0040). */
   Star as RatingStarIcon,
   Sparkle as SparkleIcon,
   Sparkles as SparklesIcon,
-  /** Генерация текста ИИ. */
+  /** AI text generation. */
   WandSparkles as AiIcon,
 
-  // ── Файлы и общение ────────────────────────────────────────────────────
-  /** Вложение: прикреплённый файл. Не `LinkIcon` — тот ссылка. */
+  // ── Files and communication ────────────────────────────────────────────
+  /** Attachment: an attached file. Not `LinkIcon`, which is a link. */
   Paperclip as AttachmentIcon,
-  /** Файл, документ. Не `FolderIcon`: тот — вместилище. */
+  /** File, document. Not `FolderIcon`, which is a container. */
   File as FileIcon,
   FolderOpen as FolderOpenIcon,
-  /** Комментарий, обсуждение. Квадратное облачко: круглое на 14 px сливается с `InfoIcon`. */
+  /** Comment, discussion. A square speech bubble: a round one at 14 px blends with `InfoIcon`. */
   MessageSquare as CommentIcon,
-  /** Упоминание (@). Не `MailIcon`: тот — письмо как тема дела. */
+  /** Mention (@). Not `MailIcon`, which is a letter as a business subject. */
   AtSign as MentionIcon,
   BellOff as NotificationsOffIcon,
 
-  // ── Люди и доступ ──────────────────────────────────────────────────────
-  /** Команда, участники. Не `ProfileIcon`: один человек — профиль. */
+  // ── People and access ──────────────────────────────────────────────────
+  /** Team, members. Not `ProfileIcon`: one person is a profile. */
   Users as TeamIcon,
   UserPlus as AddUserIcon,
-  /** Вход в аккаунт. Пара к `LogoutIcon`; не `EnterIcon` — тот клавиша Enter. */
+  /** Sign in to the account. The pair of `LogoutIcon`; not `EnterIcon`, which is the Enter key. */
   LogIn as LoginIcon,
-  /** Заперто, только чтение, приватно. Не `SecurityIcon`: щит — раздел настроек. */
+  /** Locked, read-only, private. Not `SecurityIcon`: the shield is the settings section. */
   Lock as LockIcon,
   LockOpen as UnlockIcon,
   KeyRound as KeyIcon,
 
-  // ── Время и место ──────────────────────────────────────────────────────
-  /** Время вообще. Не `DeadlineIcon` (срок) и не `HistoryIcon` (часы со стрелкой — прошлое). */
+  // ── Time and place ─────────────────────────────────────────────────────
+  /** Time in general. Not `DeadlineIcon` (a deadline) and not `HistoryIcon` (a clock with an arrow, the past). */
   Clock as TimeIcon,
-  /** История изменений. Не `UndoIcon` и не `RefreshIcon`: те — действия, а не журнал. */
+  /** Change history. Not `UndoIcon` or `RefreshIcon`: those are actions, not a log. */
   RotateCcwClock as HistoryIcon,
-  /** Место, адрес. Не `TripIcon` (поездка как тема дела) и не `PinIcon` (закрепить). */
+  /** Place, address. Not `TripIcon` (a trip as a business subject) and not `PinIcon` (pin). */
   MapPin as LocationIcon,
 
-  // ── Вид данных ─────────────────────────────────────────────────────────
+  // ── Data view ──────────────────────────────────────────────────────────
   Table as TableIcon,
-  /** Выбор колонок таблицы. Не `AdjustIcon`: тот настраивает вид целиком. */
+  /** Table column selection. Not `AdjustIcon`: that one adjusts the whole view. */
   Columns3 as ColumnsIcon,
-  /** Аналитика, график. Не `DashboardIcon` — тот раздел-сводка. */
+  /** Analytics, chart. Not `DashboardIcon`, which is a summary section. */
   ChartColumn as ChartIcon,
 
-  // ── Предметные темы ────────────────────────────────────────────────────
+  // ── Subject-matter topics ──────────────────────────────────────────────
   //
-  // ЗАЧЕМ ПРОДУКТОВО-НЕЙТРАЛЬНОМУ СЛОВАРЮ ТЕМЫ ПРЕДМЕТНОГО МИРА. Остальные
-  // разделы описывают интерфейс: навигацию, действия, состояния. Эти десять
-  // описывают то, о чём задача, — и это первый такой раздел.
+  // WHY A PRODUCT-NEUTRAL VOCABULARY HAS TOPICS FROM THE DOMAIN. The other sections describe the
+  // interface: navigation, actions, states. These ten describe what the task is about, and this is
+  // the first such section.
   //
-  // Заведён он не ради одного потребителя, а потому что альтернатива хуже.
-  // Потребителю нужна иконка «позвонить» в строке списка; в словаре нет ни
-  // одной такой темы, и по правилу набора брать «что-то похожее» из lucide мимо
-  // словаря нельзя. Значит, либо тема живёт здесь одним решением, либо каждый
-  // продукт выбирает её заново — и через полгода в двух приложениях одного кита
-  // «звонок» нарисован по-разному.
+  // It was introduced not for the sake of one consumer, but because the alternative is worse. A
+  // consumer needs a "call" icon in a list row. There is no such topic in the vocabulary, and by the
+  // set's rule one cannot take "something similar" from lucide outside the vocabulary. So either the
+  // topic lives here as one decision, or each product chooses it anew, and within half a year the
+  // "call" glyph is drawn differently in two apps of one kit.
   //
-  // Набор закрытый и расширяется заявкой, как и всё остальное здесь. Значение
-  // «без темы» в словаре не заводится: отсутствие темы — это отсутствие
-  // значения, а не одиннадцатая иконка.
+  // The set is closed and is extended by request, like everything else here. The value "no topic"
+  // is not added to the vocabulary: the absence of a topic is an absence of a value, not an eleventh
+  // icon.
   //
-  // Все десять проверены столбцом на 16 пикселях — размер, в котором они стоят
-  // в строке списка. По одному проходят любые; сторожит именно столбец.
+  // All ten are checked in a column at 16 pixels, the size at which they stand in a list row. Any of
+  // them passes on its own; the column is what catches the problems.
   /**
-   * Разработка, код.
+   * Development, code.
    *
-   * Каноническое имя lucide — `CodeXml`; `Code2`, под которым рисунок знают,
-   * с 1.41.0 лишь алиас к нему, и в словаре ему делать нечего: алиасы из
-   * набора уезжают в мажорах, а мы сверяемся с установленным пакетом.
+   * The canonical lucide name is `CodeXml`. `Code2`, the name under which the glyph is known, has been
+   * an alias for it since 1.41.0, and the vocabulary has no use for it: aliases from the set are
+   * dropped in majors, and we check against the installed package.
    *
-   * Не `AutomationIcon` (процессор): тот про ИИ и автоматизацию, а не про
-   * работу с кодом.
+   * Not `AutomationIcon` (the processor): that one is about AI and automation, not about working with
+   * code.
    */
   CodeXml as CodeIcon,
-  /** Игра. `Gamepad2`, а не `Gamepad`: второй остался от прежней геометрии набора. */
+  /** Game. `Gamepad2`, not `Gamepad`: the second one is left over from the set's previous geometry. */
   Gamepad2 as GameIcon,
-  /** Покупка: корзина. */
+  /** Purchase: a shopping cart. */
   ShoppingCart as PurchaseIcon,
   /**
-   * Здоровье: визит к врачу, лекарства, самочувствие.
+   * Health: a doctor's visit, medication, well-being.
    *
-   * Сердце с пульсом, и пульс здесь — единственное, чем иконка отличается от
-   * `FavoriteIcon` на 16 пикселях. Разница смысловая и существенная: избранное
-   * — выбор человека, здоровье — тема дела. Ставить их в один столбец без
-   * подписи не стоит.
+   * A heart with a pulse, and the pulse is the only thing that tells this icon apart from
+   * `FavoriteIcon` at 16 pixels. The difference is semantic and significant: a favorite is a person's
+   * choice, health is a subject of business. Do not place them in one column without a label.
    */
   HeartPulse as HealthIcon,
   /**
-   * Звонок.
+   * Call.
    *
-   * `Phone`, а не `PhoneCall`: у второго по бокам трубки расходящиеся дуги, на
-   * 16 пикселях они сливаются в шум и смысла не добавляют.
+   * `Phone`, not `PhoneCall`: the latter has diverging arcs beside the handset, which blur into noise
+   * at 16 pixels and add no meaning.
    */
   Phone as CallIcon,
-  /** Письмо как тема дела. Не `SendIcon`: тот — действие отправки. */
+  /** A letter as a subject of business. Not `SendIcon`, which is the send action. */
   Mail as MailIcon,
   /**
-   * Встреча: рукопожатие.
+   * Meeting: a handshake.
    *
-   * До 3.29.0 здесь стояли `Users`, но их забрала «команда» (`TeamIcon`): этот
-   * смысл есть во всех крупных системах, а у встречи общепринятого рисунка нет,
-   * так что уступила она (ADR-0049).
+   * Until 3.29.0 `Users` stood here, but it was taken by "team" (`TeamIcon`). This meaning exists in
+   * all major systems, and a meeting has no commonly accepted glyph, so it yielded (ADR-0049).
    *
-   * Не `CalendarIcon`: календарь в ките занят отложенностью, и на одном экране
-   * это был бы один рисунок в двух смыслах.
+   * Not `CalendarIcon`: in the kit the calendar is taken by "scheduled for later", and on one screen
+   * that would be one glyph with two meanings.
    */
   Handshake as MeetingIcon,
   /**
-   * Поездка: самолёт.
+   * Trip: an airplane.
    *
-   * Силуэтом соседствует с `SendIcon` — бумажным самолётиком отправки. Рядом
-   * их лучше не ставить; смысл разный: тема дела против действия.
+   * Its silhouette borders `SendIcon`, the paper plane of send. Better not to place them side by side:
+   * the meanings differ, a business subject versus an action.
    */
   Plane as TripIcon,
-  /** Оплата: кошелёк. Не `StorageIcon` (база данных) — тот про хранилище. */
+  /** Payment: a wallet. Not `StorageIcon` (a database), which is about storage. */
   Wallet as PaymentIcon,
-  /** Чтение. Не `LibraryIcon`: тот — раздел-хранилище, полка, а не чтение. */
+  /** Reading. Not `LibraryIcon`: that one is a storage section, a shelf, not reading. */
   BookOpen as ReadingIcon,
 
-  // ── Форматирование текста ──────────────────────────────────────────────
+  // ── Text formatting ────────────────────────────────────────────────────
   //
-  // Пополнение по заявке, как велит ADR-0049: заявка — панель
-  // `RichTextEditor` (ADR-0050). Рисунки — канонические имена
-  // lucide. Уже занятые смыслы не дублируются: маркированный список —
-  // `ListIcon`, отменить и повторить — `UndoIcon` и `RedoIcon`.
-  /** Заголовок вообще, без уровня: пункты заголовков Меню вставки. Уровень — `Heading1Icon`…`Heading4Icon`. */
+  // Additions on request, as ADR-0049 requires: the request came from the `RichTextEditor` Toolbar
+  // (ADR-0050). The glyphs are the canonical lucide names. Meanings already taken are not duplicated:
+  // the bulleted list is `ListIcon`, undo and redo are `UndoIcon` and `RedoIcon`.
+  /** A heading in general, without a level: the heading items of the Slash menu. The level is `Heading1Icon`…`Heading4Icon`. */
   Heading as HeadingIcon,
   Bold as BoldIcon,
   Italic as ItalicIcon,
   Underline as UnderlineIcon,
   Strikethrough as StrikethroughIcon,
   /**
-   * Строчный код — метка внутри абзаца. Не `CodeIcon`: тот предметная тема
-   * «разработка» (`</>`), и в одном ряду с ним этот читался бы его повтором.
+   * Inline code: a label inside a paragraph. Not `CodeIcon`, which is the Development topic (`</>`),
+   * and next to it this one would read as a repeat of it.
    */
   Code as InlineCodeIcon,
   /**
-   * Цвет текста: буква с полосой под ней, в Панели Редактора. Не `PaletteIcon`:
-   * палитра — выбор цветовой схемы, а здесь красится сам текст.
+   * Text color: a letter with a bar under it, in the Editor's Toolbar. Not `PaletteIcon`: a palette is
+   * a color scheme choice, while here the text itself is colored.
    */
   Baseline as TextColorIcon,
-  /** Маркер: выделить текст цветной подложкой. Не `TextColorIcon`: тот красит буквы, этот — фон под ними. */
+  /** Highlighter: highlight text with a colored background. Not `TextColorIcon`, which colors the letters; this one colors the background behind them. */
   Highlighter as HighlightIcon,
-  /** Выравнивание Блока по краю или по центру. Четыре смысла — это четыре начертания, а не один общий. */
+  /** Block alignment: to an edge or to the center. The four meanings are four glyphs, not one shared glyph. */
   AlignLeft as AlignLeftIcon,
   AlignCenter as AlignCenterIcon,
   AlignRight as AlignRightIcon,
-  /** По ширине. В Панели Редактора его нет (рваные пробелы), но смысл есть у потребителя. */
+  /** Justified. The Editor's Toolbar has none (ragged spaces), but the meaning is there for the consumer. */
   AlignJustify as AlignJustifyIcon,
-  /** Блок кода. Не `InlineCodeIcon`: тот — метка внутри строки, этот — отдельный Блок в рамке. */
+  /** Code block. Not `InlineCodeIcon`: that one is a label inside a line, this one is a separate Block in a frame. */
   SquareCode as CodeBlockIcon,
   /**
-   * Исходный HTML Документа — кнопка HTML-режима Редактора: лист с
-   * `</>`, «код всего документа». Не `CodeBlockIcon`: тот — Блок кода внутри
-   * Документа; не `CodeIcon`: тот — предметная тема «разработка».
+   * The Document's source HTML: the Editor's HTML-mode button, a sheet with `</>`, "the code of the
+   * whole document". Not `CodeBlockIcon`, which is a code Block inside a Document; not `CodeIcon`,
+   * which is the Development topic.
    */
   FileCode as SourceIcon,
   Superscript as SuperscriptIcon,
   Subscript as SubscriptIcon,
-  /** Снять форматирование с выделения. Не `DeleteIcon`: текст остаётся, уходят метки. */
+  /** Clear the formatting of the selection. Not `DeleteIcon`: the text stays, the marks go away. */
   RemoveFormatting as ClearFormattingIcon,
   ListOrdered as OrderedListIcon,
   /**
-   * Чек-лист: пункты с флажками. Галочка внутри — ровно его смысл, и потому он
-   * отдельный от `ListIcon`, где флажки отвергнуты.
+   * Checklist: items with checkboxes. The tick inside is exactly its meaning, which is why it is
+   * separate from `ListIcon`, where checkboxes were rejected.
    */
   ListTodo as TaskListIcon,
-  /** Цитата. */
+  /** Quote. */
   Quote as QuoteIcon,
-  /** Разделитель между Блоками. Не `MinusIcon`: тот — третье состояние флажка. */
+  /** Separator between Blocks. Not `MinusIcon`, which is the checkbox's third state. */
   SeparatorHorizontal as DividerIcon,
   /**
-   * Обычный абзац — пункт «Превратить в» Меню вставки. Не
-   * `HeadingIcon`: тот — тип Блока вообще, этот — именно «просто текст».
+   * A plain paragraph: the "Turn into" item of the Slash menu. Not `HeadingIcon`, which is the Block
+   * type in general; this one is specifically "plain text".
    */
   Pilcrow as ParagraphIcon,
   /*
-    Меню «¶» редактора (по ADR-0049): у пунктов
-    типа Блока свои иконки. Заголовок вообще — по-прежнему `HeadingIcon`;
-    иконка с цифрой — именно уровень.
+    The Editor's "¶" menu (per ADR-0049): the Block-type items have their own icons. The heading in
+    general is still `HeadingIcon`; an icon with a digit is the level itself.
   */
-  /** Заголовок первого уровня. Не `HeadingIcon`: тот — тип Блока вообще, без уровня. */
+  /** First-level heading. Not `HeadingIcon`, which is the Block type in general, without a level. */
   Heading1 as Heading1Icon,
-  /** Заголовок второго уровня. */
+  /** Second-level heading. */
   Heading2 as Heading2Icon,
-  /** Заголовок третьего уровня. */
+  /** Third-level heading. */
   Heading3 as Heading3Icon,
-  /** Заголовок четвёртого уровня. */
+  /** Fourth-level heading. */
   Heading4 as Heading4Icon,
   /**
-   * Обычный текст — пункт «Текст» меню типа Блока. Не `ParagraphIcon`: тот —
-   * пилкроу, «абзац» в Меню вставки; и не `HeadingIcon`: заголовок — другой тип.
+   * Plain text: the "Text" item of the Block-type menu. Not `ParagraphIcon`, which is the pilcrow,
+   * the "paragraph" in the Slash menu; and not `HeadingIcon`, because a heading is another type.
    */
   Type as TextIcon,
   /*
-    Таблица в документе. Вставка — уже занятый `TableIcon`, удаление
-    строки, столбца и таблицы — `DeleteIcon`, сортировка — `SortAscendingIcon` и
-    `SortDescendingIcon`, выравнивание столбца — `AlignLeftIcon` и соседи.
-    Направление вставки рисует сама иконка: у lucide на каждую сторону свой.
+    A table in a document. Insert is the already taken `TableIcon`; deleting a row, a column or the
+    table is `DeleteIcon`; sorting is `SortAscendingIcon` and `SortDescendingIcon`; column alignment
+    is `AlignLeftIcon` and its siblings. The insertion direction is drawn by the icon itself: lucide
+    has a separate one for each side.
   */
-  /** Вставить строку таблицы выше. Не `AddIcon`: тот — «создать» вообще. */
+  /** Insert a table row above. Not `AddIcon`, which is "create" in general. */
   BetweenHorizontalStart as InsertRowAboveIcon,
-  /** Вставить строку таблицы ниже. */
+  /** Insert a table row below. */
   BetweenHorizontalEnd as InsertRowBelowIcon,
-  /** Вставить столбец таблицы слева. Не `ColumnsIcon`: тот — выбор колонок таблицы данных. */
+  /** Insert a table column to the left. Not `ColumnsIcon`, which is the data table's column selection. */
   BetweenVerticalStart as InsertColumnLeftIcon,
-  /** Вставить столбец таблицы справа. */
+  /** Insert a table column to the right. */
   BetweenVerticalEnd as InsertColumnRightIcon,
-  /** Объединить выделенные ячейки таблицы в одну. */
+  /** Merge the selected table cells into one. */
   TableCellsMerge as MergeCellsIcon,
-  /** Разделить объединённую ячейку обратно. */
+  /** Split a merged cell back. */
   TableCellsSplit as SplitCellIcon,
-  /** Первая строка — заголовки столбцов. Не `TableIcon`: тот — вся таблица. */
+  /** First row: column headers. Not `TableIcon`, which is the whole table. */
   PanelTop as HeaderRowIcon,
   /**
-   * Эмодзи: лицо-смайл, кнопка сетки эмодзи в Панели Редактора.
-   * Имя по смыслу «эмодзи», а не по рисунку: лицо в другом месте означало бы
-   * настроение или оценку, и это другое решение (ADR-0049). Не `Smile` без
-   * приставки: словарь называет смысл, а не форму.
+   * Emoji: a smiling face, the emoji grid button in the Editor's Toolbar.
+   * Named by the meaning "emoji", not by the glyph: a face in another place would mean mood or
+   * rating, which is a different decision (ADR-0049). Not a bare `Smile`: the vocabulary names the
+   * meaning, not the shape.
    */
   Smile as EmojiIcon,
   /*
-    Ручка Блока редактора (по ADR-0049): кнопка «⋮» у Блока и пункты
-    её меню. Добавить, формат и удалить берут уже занятые `AddIcon`,
-    `ParagraphIcon` и `DeleteIcon`.
+    The Editor's Block handle (per ADR-0049): the "⋮" button on a Block and the items of its menu.
+    Add, format and delete take the already taken `AddIcon`, `ParagraphIcon` and `DeleteIcon`.
   */
   /**
-   * «Ещё» в столбец: меню действий у строки или Блока. Не `MoreIcon`: тот — в
-   * ряду кнопок; не `DragHandleIcon`: за эту ручку не тянут, её нажимают.
+   * "More" in a column: the actions menu of a row or a Block. Not `MoreIcon`, which is in a row of
+   * buttons; not `DragHandleIcon`: this handle is not dragged, it is pressed.
    */
   EllipsisVertical as MoreVerticalIcon,
-  /** Стрелка вверх. Имя по форме (ADR-0049, п. 3): переставить выше, прокрутить, сортировать. */
+  /** Arrow up. Named by shape (ADR-0049, item 3): move up, scroll, sort. */
   ArrowUp as ArrowUpIcon,
-  /** Стрелка вниз — пара к `ArrowUpIcon`. */
+  /** Arrow down, the pair of `ArrowUpIcon`. */
   ArrowDown as ArrowDownIcon,
-  /** Дублировать: копия рядом с оригиналом. Не `CopyIcon`: тот — в буфер обмена. */
+  /** Duplicate: a copy next to the original. Not `CopyIcon`, which is for the clipboard. */
   CopyPlus as DuplicateIcon,
   /**
-   * Раскладка Документа колонками — Блок «Раскладка» Редактора.
-   * Не `ColumnsIcon`: тот — выбор колонок таблицы данных, другой смысл на
-   * другом рисунке (ADR-0049).
+   * A Document's layout in columns: the Editor's Column layout Block.
+   * Not `ColumnsIcon`, which is a data table's column selection, another meaning on another glyph
+   * (ADR-0049).
    */
   Columns2 as ColumnLayoutIcon,
   /**
-   * Обёртка — Блок, собирающий группу Блоков в Редакторе: рамка
-   * пунктирными углами вокруг двух Блоков. Не `ColumnLayoutIcon`: колонки
-   * ставят Блоки рядом, Обёртка — группирует их, не меняя порядка (ADR-0049).
+   * Wrapper: the Block that gathers a group of Blocks in the Editor, a frame with dashed corners
+   * around two Blocks. Not `ColumnLayoutIcon`: columns place Blocks side by side, while a Wrapper
+   * groups them without changing their order (ADR-0049).
    */
   Group as WrapperIcon,
   /**
-   * Снять Обёртку: Блоки остаются, рамки нет. Пара к `WrapperIcon`, как у
-   * lucide; не `DeleteIcon` — удаляется не содержимое, а только контейнер.
+   * Unwrap: the Blocks stay, the Wrapper's frame is gone. The pair of `WrapperIcon`, as in lucide;
+   * not `DeleteIcon`, because what is removed is not the content, only the container.
    */
   Ungroup as UnwrapIcon,
   /**
-   * Сворачиваемый Блок Редактора (Details): список со стрелками сворачивания.
-   * Не `ChevronDownIcon`/`CollapseIcon`: шеврон — шаг и вложенность, `CollapseIcon`
-   * — свернуть окно; здесь Блок целиком с заголовком и спрятанным содержимым.
-   * Стоит у пункта «Сворачиваемый блок» Меню вставки; снять Блок — `UnwrapIcon`.
+   * The Editor's collapsible Block (Details): a list with collapse arrows.
+   * Not `ChevronDownIcon` or `CollapseIcon`: a chevron is a step and nesting, `CollapseIcon` collapses
+   * a window; here it is a whole Block with a title and hidden content.
+   * It stands at the "Collapsible block" item of the Slash menu; to unwrap the Block, use `UnwrapIcon`.
    */
   ListCollapse as DetailsIcon,
   /**
-   * Видео в Редакторе (Инструменты `youtube` и `twitch`): квадрат с треугольником
-   * «играть», пункт «Видео» Меню вставки. Не `PlayIcon`: тот — кнопка запуска, и
-   * внутри самого плеера стоит именно она.
+   * Video in the Editor (the `youtube` and `twitch` Tools): a square with a "play" triangle, the
+   * "Video" item of the Slash menu. Not `PlayIcon`: that one is a launch button, and it is exactly
+   * that button inside the player itself.
    */
   SquarePlay as VideoIcon,
   /**
-   * Строчная формула Редактора (Mathematics): сигма — пункт «Формула» Меню
-   * вставки. Не `CodeIcon`: тот — предметная тема «разработка», а сигма читается
-   * как математика. Блочная формула — `BlockFormulaIcon`.
+   * The inline formula of the Editor (Mathematics): sigma, the "Formula" item of the Slash menu.
+   * Not `CodeIcon`: that one is the Development topic, while sigma reads as mathematics. The block
+   * formula is `BlockFormulaIcon`.
    */
   Sigma as FormulaIcon,
   /**
-   * Блочная формула Редактора: сигма в рамке-строке — пункт «Блочная формула»
-   * Меню вставки. Пара к `FormulaIcon`: рамка отделяет формулу-Блок от формулы
-   * в строке текста.
+   * The Editor's block formula: sigma in a framed row, the "Block formula" item of the Slash menu.
+   * The pair of `FormulaIcon`: the frame sets a formula-Block apart from a formula inside a line of text.
    */
   SquareSigma as BlockFormulaIcon,
   /**
-   * Показ невидимых символов Редактора: пилкроу со стрелкой — пункт
-   * «Невидимые символы» меню «…» фиксированной Панели. Не `ParagraphIcon`: тот
-   * уже значит «обычный абзац» и стоит в той же Панели, в меню «¶» слева; стрелка
-   * отличает переключатель показа от типа Блока.
+   * Show invisible characters in the Editor: a pilcrow with an arrow, the "Invisible characters" item
+   * of the "…" menu of the fixed Toolbar. Not `ParagraphIcon`: that one already means "plain paragraph"
+   * and stands in the same Toolbar, in the "¶" menu on the left; the arrow tells the show toggle apart
+   * from a Block type.
    */
   PilcrowRight as InvisibleCharactersIcon,
 
-  // ── Тема и плотность сетки ─────────────────────────────────────────────
+  // ── Theme and grid density ─────────────────────────────────────────────
   Sun as ThemeLightIcon,
   Moon as ThemeDarkIcon,
   SunMoon as ThemeAutoIcon,

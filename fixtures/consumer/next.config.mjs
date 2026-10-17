@@ -1,15 +1,15 @@
 /**
- * Конфигурация потребителя — ровно та, что описана в docs/getting-started.md.
+ * The consumer configuration, exactly as described in docs/getting-started.md.
  *
- * `optimizePackageImports` здесь не украшение: без него страница с одной
- * `Button` весит 408 кБ вместо 114 при базовой линии 102 (ADR-0029). Если
- * строку убрать, джоба бюджета размера покраснеет — это и есть проверка того,
- * что документация не разошлась с действительностью.
+ * `optimizePackageImports` is not a decoration here: without it, a page with a
+ * single `Button` weighs 408 kB instead of 114 at the 102 baseline (ADR-0029).
+ * If the line is removed, the size budget job turns red. That is the check that
+ * the documentation has not drifted from reality.
  *
- * `@olddevs/ui/editor` — отдельной строкой: корневая строка подпуть не
- * покрывает, это проверено замером. Без неё `RichTextView` из
- * серверного компонента тянет в клиент весь редактор с движком — 435 кБ
- * вместо 137 на странице `/editor`.
+ * `@olddevs/ui/editor` is a separate line: the root entry does not cover the
+ * subpath, which was verified by measurement. Without it, `RichTextView` used in
+ * a Server Component pulls the whole editor with its engine into the client:
+ * 435 kB instead of 137 on the `/editor` page.
  */
 export default {
   experimental: { optimizePackageImports: ["@olddevs/ui", "@olddevs/ui/editor"] },

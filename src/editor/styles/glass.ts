@@ -1,64 +1,66 @@
 /**
- * Стекло всплывающих поверхностей Редактора: полупрозрачная
- * подложка своей поверхности с размытием того, что под ней.
+ * Glass for the Editor's floating surfaces: a semi-transparent backing of the
+ * surface itself, blurring whatever lies behind it.
  *
- * ЗНАЧЕНИЯ — КАК У ТОСТОВ (ADR-0010): 82 % цвета в `color-mix` и размытие в
- * 14px. Это уже принятое стекло кита; второе со своими числами разошлось бы с
- * ним при первой правке. Подсказка не в счёт: у неё свои 85 % и 10px, и
- * Редактор её не трогает.
+ * VALUES ARE THE SAME AS FOR TOASTS (ADR-0010): 82 % of the color in `color-mix`
+ * and a 14px blur. This is the kit's glass already, and a second set of values
+ * would drift away from it at the first edit. Tooltips do not count: they have
+ * their own 85 % and 10px, and the Editor does not touch them.
  *
- * ЦВЕТ — ТОКЕН СВОЕЙ ПОВЕРХНОСТИ, а не новый. Панель лежит на `bg-1`, списки
- * меню — на `surface-elevated`, меню выделения — на инверсной; тема меняет
- * токен, и стекло меняется вместе с ним без отдельных значений на тему. Внутри
- * меню выделения переназначен только мост `--color-*` (`SelectionBubble.tsx`),
- * а сырые `--bg-1` и `--surface-inverse` — нет, поэтому здесь читаются они.
+ * THE COLOR IS THE TOKEN OF ITS OWN SURFACE, not a new one. The Panel sits on
+ * `bg-1`, menu lists on `surface-elevated`, the Bubble menu on the inverse
+ * surface. A theme changes the token, and the glass changes with it, without
+ * separate values per theme. Inside the Bubble menu only the `--color-*` bridge
+ * is reassigned (`SelectionBubble.tsx`), while the raw `--bg-1` and
+ * `--surface-inverse` are not, which is why they are read here.
  *
- * ПОЧЕМУ ТОЛЬКО РЕДАКТОР. Поверхности попадают сюда классом: `Menu` и
- * `PopoverContent` принимают `className`, а `tailwind-merge` в `cn` снимает
- * сплошную подложку панели. Те же компоненты вне Редактора остаются
- * сплошными, и публичный API не меняется.
+ * WHY ONLY IN THE EDITOR. Surfaces get the glass through a class: `Menu` and
+ * `PopoverContent` accept `className`, and `tailwind-merge` in `cn` removes the
+ * solid backing of the Panel. The same components outside the Editor stay solid,
+ * and the public API does not change.
  *
- * СПЛОШНОЙ ФОЛБЭК. `prefers-reduced-transparency` (просьба системы убрать
- * прозрачность) и `prefers-contrast: more` возвращают сплошной токен и
- * снимают размытие: под полупрозрачной подложкой контраст текста зависит от
- * того, что лежит под меню, и проверить его `scripts/contrast.mjs` не может.
+ * SOLID FALLBACK. `prefers-reduced-transparency` (the system's request to remove
+ * transparency) and `prefers-contrast: more` return the solid token and remove
+ * the blur. Under a semi-transparent backing, text contrast depends on what lies
+ * under the menu, and `scripts/contrast.mjs` cannot check that.
  *
- * НА iOS — ТОЖЕ СПЛОШНАЯ. В Safari на iOS 27 меню Редактора вышли
- * без подложки вовсе: пункты легли на текст Документа в полную силу. Подложку
- * стеклянного элемента iOS-WebKit не нарисовал, а воспроизвести это вне
- * устройства не вышло — безголовый WebKit размытие не рисует вовсе, и разницы
- * не видно. Условие `@supports (-webkit-touch-callout: none)` понимает только
- * WebKit на iOS (Chrome там — тот же WebKit), десктоп его не видит и стекло
- * сохраняет.
+ * ON iOS THE SURFACE IS SOLID TOO. In Safari on iOS 27 the Editor's menus came
+ * out with no backing at all: the items lay over the Document's text at full
+ * strength. iOS WebKit did not draw the backing of a glass element, and this
+ * could not be reproduced off the device: headless WebKit does not draw the blur
+ * at all, so the difference is not visible there. The
+ * `@supports (-webkit-touch-callout: none)` condition matches only WebKit on iOS
+ * (Chrome there is WebKit too). Desktop does not match it and keeps the glass.
  */
 
 /*
-  ИМЕНА КЛАССОВ — ЦЕЛИКОМ, БЕЗ СБОРКИ ИЗ КУСКОВ. Tailwind (и у нас, и у
-  потребителя через `@source` на `dist`) находит класс только как целое слово
-  в исходнике. Подложка, собранная шаблонной строкой из имени токена, в CSS не
-  попадала: размытие было, а подложка оставалась прозрачной.
+  CLASS NAMES ARE WRITTEN IN FULL, NOT ASSEMBLED FROM PIECES. Tailwind (in our
+  build and in the consumer's build through `@source` on `dist`) finds a class
+  only as a whole word in the source. A backing built by a template string from
+  a token name never made it into the CSS: the blur was there, but the backing
+  stayed transparent.
 */
 
-/** Размытие и его снятие при просьбе убрать прозрачность или поднять контраст. */
+/** The blur, and its removal when the user asks to reduce transparency or raise contrast. */
 const BLUR =
   "backdrop-blur-[14px] [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none " +
   "contrast-more:backdrop-blur-none [@supports(-webkit-touch-callout:none)]:backdrop-blur-none";
 
-/** Плавающая Панель, панель картинки, поповеры Редактора — поверхность `bg-1`. */
+/** Floating Panel, image panel and Editor popovers: the `bg-1` surface. */
 export const GLASS_PANEL_CLASS =
   "bg-[color-mix(in_srgb,var(--bg-1)_82%,transparent)] " +
   "[@media(prefers-reduced-transparency:reduce)]:bg-bg-1 contrast-more:bg-bg-1 " +
   "[@supports(-webkit-touch-callout:none)]:bg-bg-1 " +
   BLUR;
 
-/** Списки меню Редактора — поверхность `surface-elevated`, как у `Menu`. */
+/** Editor menu lists: the `surface-elevated` surface, as in `Menu`. */
 export const GLASS_MENU_CLASS =
   "bg-[color-mix(in_srgb,var(--surface-elevated)_82%,transparent)] " +
   "[@media(prefers-reduced-transparency:reduce)]:bg-surface-elevated " +
   "contrast-more:bg-surface-elevated [@supports(-webkit-touch-callout:none)]:bg-surface-elevated " +
   BLUR;
 
-/** Меню выделения — инверсная поверхность. */
+/** Bubble menu: the inverse surface. */
 export const GLASS_INVERSE_CLASS =
   "bg-[color-mix(in_srgb,var(--surface-inverse)_82%,transparent)] " +
   "[@media(prefers-reduced-transparency:reduce)]:bg-surface-inverse " +

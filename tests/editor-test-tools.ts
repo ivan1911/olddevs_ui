@@ -5,19 +5,19 @@ import { markRange, type CustomIslandProps, type CustomTool } from "../src/edito
 import { ImageIcon, PinIcon, SparkleIcon, TagIcon, WrapperIcon } from "../src/icons.js";
 
 /**
- * Тестовые свои Инструменты эпика OLDSUI-98 — общий помощник тестов.
+ * Custom test Tools of the OLDSUI-98 epic: a shared helper for the tests.
  *
- * Префикс `test_`: это проверка публичного API, а не новые Блоки кита. Каждый
- * Инструмент — своя переменная, чтобы тест брал ровно нужное, а `TEST_TOOLS` —
- * весь набор. Extensions написаны так, как их написал бы потребитель по
- * странице компонента: Node и Mark без `parseHTML`, `renderHTML`, `group` и
- * разбора атрибутов — всё это кит берёт из правил Схемы.
+ * The `test_` prefix marks a check of the public API, not new kit Blocks. Each
+ * Tool has its own variable, so a test takes exactly what it needs, and `TEST_TOOLS` is
+ * the whole set. The Extensions are written the way a consumer would write them from the
+ * component page: Node and Mark without `parseHTML`, `renderHTML`, `group` and
+ * attribute parsing; the kit takes all of that from the Schema rules.
  *
- * Следующие срезы добавляют сюда свои (Метка с Карточкой у текста, Инструмент
- * без Блока с фильтром вставки, Инструмент с загрузчиком), а не заводят копии.
+ * Later slices add their own here (a Mark with a Text card, a Tool without a Block and with
+ * a paste filter, a Tool with a Loader) instead of creating copies.
  */
 
-/** Строчный атом — Merge Tag: `{{key}}` текстом атома, ключ — шаблоном. */
+/** Inline atom — Merge Tag: `{{key}}` as the atom's text, the key as a pattern. */
 export const testMergeTagNode = Node.create({
   name: "test_mergeTag",
   atom: true,
@@ -37,7 +37,7 @@ export const testMergeTagTool: CustomTool = {
   },
 };
 
-/** Блок-контейнер — как Обёртка: Блоки внутри со своей Ручкой Блока. */
+/** Container Block — like a Wrapper: the Blocks inside get their own Block handle. */
 export const testBoxNode = Node.create({
   name: "test_box",
   content: "block+",
@@ -48,11 +48,11 @@ export const testBoxTool: CustomTool = {
   name: "test_box",
   engine: [testBoxNode],
   blocks: { test_box: { kind: "block", container: true } },
-  // Пункт «Добавить»: пустая коробка с абзацем; подпись — по локали, сочетание — поле записи.
+  // "Add" item: an empty box with a paragraph; the label is localized, the shortcut is a field of the item.
   insertItems: [
     {
       section: "insert",
-      // Подпись — функция от контекста: локаль `UiProvider` видна в самой подписи.
+      // The label is a function of the context: the UiProvider locale is visible in the label itself.
       label: ({ locale }) => `Box ${locale}`,
       icon: WrapperIcon,
       aliases: ["crate", "bin"],
@@ -60,7 +60,7 @@ export const testBoxTool: CustomTool = {
       run: (chain) => chain.insertContent({ type: "test_box", content: [{ type: "paragraph" }] }),
     },
   ],
-  // Действие над Блоком: показывается у коробки и у Блока прямо в ней.
+  // Block action: shown on the box and on the Block inside it.
   blockActions: [
     {
       label: "Unbox",
@@ -72,7 +72,7 @@ export const testBoxTool: CustomTool = {
           .chain()
           .focus()
           .command(({ tr }) => {
-            // Позиция — Блок Ручки: сама коробка или Блок в ней; снимается коробка.
+            // The position is the Block the handle points to: the box itself or a Block inside it; the box is unwrapped.
             const $pos = tr.doc.resolve(pos);
             const depth = $pos.parent.type.name === "test_box" ? $pos.depth : -1;
             const from = depth < 0 ? pos : $pos.before(depth);
@@ -87,9 +87,9 @@ export const testBoxTool: CustomTool = {
 };
 
 /**
- * Блок с атрибутами трёх видов значения и без Признаков: размер — списком,
- * код — шаблоном, адрес — по политике протоколов кита. Свои атрибуты Node не
- * объявляет: их добавляет кит по правилам.
+ * Block with attributes of three value kinds and no Block traits: size as a list,
+ * code as a pattern, address by the kit's URL protocol policy. The Node does not
+ * declare its own attributes: the kit adds them by the rules.
  */
 export const testCardNode = Node.create({
   name: "test_card",
@@ -109,7 +109,7 @@ export const testCardTool: CustomTool = {
       },
     },
   },
-  // Пункт «Превратить в»: текущий Блок становится карточкой; подпись — строкой.
+  // "Turn into" item: the current Block becomes a card; the label is a plain string.
   insertItems: [
     {
       section: "turnInto",
@@ -120,7 +120,7 @@ export const testCardTool: CustomTool = {
       run: (chain) => chain.setNode("test_card"),
     },
   ],
-  // Действие с предикатом видимости: «Enlarge» есть, пока размер не `l`.
+  // Block action with a visibility predicate: "Enlarge" is shown while the size is not `l`.
   blockActions: [
     {
       label: "Enlarge",
@@ -141,7 +141,7 @@ export const testCardTool: CustomTool = {
   ],
 };
 
-/** Своя Метка — заметка на полях с автором. */
+/** Custom Mark — a margin note with an author. */
 export const testNoteMark = Mark.create({
   name: "test_note",
   addAttributes: () => ({ test_author: { default: null } }),
@@ -156,18 +156,18 @@ export const testNoteTool: CustomTool = {
 };
 
 /**
- * Инструмент без Блока: фильтр вставки и перехват файла. Только Extensions
- * (`Extension`), ни одного Блока и Метки — поведение, а не разметка.
+ * A Tool without a Block: a paste filter and file interception. Only Extensions
+ * (`Extension`), no Block and no Mark: behavior, not markup.
  *
- * Фильтр `transformPastedHTML` дописывает к вставке чужую разметку
- * (`<script>`, `onclick`): Схема всё равно разберёт её по своим правилам.
- * `handlePaste` и `handleDrop` забирают PDF целиком и отдают его в `onFile`;
- * остальные файлы не трогают — они идут дальше, к киту.
+ * The `transformPastedHTML` filter appends foreign markup to the paste
+ * (`<script>`, `onclick`): the Schema parses it by its own rules anyway.
+ * `handlePaste` and `handleDrop` take a PDF whole and pass it to `onFile`;
+ * other files are left alone, they go on to the kit.
  */
 export interface TestPasteFilterOptions {
-  /** Файл, который Инструмент забрал: вставкой (`paste`) или перетаскиванием (`drop`). */
+  /** The file the Tool took: by paste (`paste`) or by drag and drop (`drop`). */
   onFile?: (file: File, via: "paste" | "drop") => void;
-  /** Порядок обращений к обработчикам Инструмента — для проверки очерёдности. */
+  /** Order of calls to the Tool's handlers, to check the sequence. */
   trace?: string[];
 }
 
@@ -186,7 +186,7 @@ export function testPasteFilterTool(options: TestPasteFilterOptions = {}): Custo
           },
           handlePaste(view, event) {
             options.trace?.push("handlePaste");
-            // `!!текст` — вставка своей транзакцией, без метки `paste`.
+            // `!!text` — the paste goes in its own transaction, without the `paste` meta flag.
             const own = /^!!(.+)$/.exec(event.clipboardData?.getData("text/plain") ?? "")?.[1];
             if (own !== undefined) {
               view.dispatch(view.state.tr.insertText(own));
@@ -215,11 +215,11 @@ export function testPasteFilterTool(options: TestPasteFilterOptions = {}): Custo
 }
 
 /**
- * Блок-атом без Текста атома — видео: `renderText` нет, в Документе он «пустой
- * текст, но содержимое» (OLDSUI-109). Тот же узел вставляется по ссылке
- * (`testVideoLinkTool`, OLDSUI-108): адрес видео, вставленный текстом, становится
- * Блоком `test_video` раньше встроенной вставки и Markdown. Вставка — своей
- * транзакцией без метки `paste`: предел символов её не режет, а отклоняет целиком.
+ * An atom Block without Atom text: a video. It has no `renderText`, so in the Document it is
+ * "empty text, but content" (OLDSUI-109). The same node is inserted by link
+ * (`testVideoLinkTool`, OLDSUI-108): a video address pasted as text becomes a `test_video`
+ * Block, ahead of the built-in paste and Markdown. The paste goes in its own transaction
+ * without the `paste` meta: the character limit does not cut it, it rejects it whole.
  */
 export const testVideoNode = Node.create({
   name: "test_video",
@@ -275,7 +275,7 @@ export const testVideoTool: CustomTool = {
   },
 };
 
-/** Блок-атом с содержимым и без `renderText` — его Текст атома — текст детей. */
+/** Atom Block with content and without `renderText`: its Atom text is the text of its children. */
 export const testEmbedNode = Node.create({
   name: "test_embed",
   atom: true,
@@ -290,9 +290,9 @@ export const testEmbedTool: CustomTool = {
 };
 
 /**
- * Блок со своими правилами Markdown (OLDSUI-104): строка `::: текст` —
- * токенайзер Tiptap, разбор и `renderMarkdown` в Extensions, как их
- * написал бы потребитель. Без них кит выгрузил бы Блок его содержимым.
+ * A Block with its own Markdown rules (OLDSUI-104): the `::: text` line is handled by
+ * a Tiptap tokenizer, the parser and `renderMarkdown` in the Extensions, written the way
+ * a consumer would write them. Without them the kit would export the Block as plain content.
  */
 export const testAsideNode = Node.create({
   name: "test_aside",
@@ -325,13 +325,13 @@ export const testAsideTool: CustomTool = {
 };
 
 /**
- * Блок с Островом в Просмотре (OLDSUI-114): плеер из адреса и подписи. Остров
- * рисует кнопку «Play …» и считает нажатия своим состоянием — по нему видно,
- * перемонтировал ли его Просмотр. Вызовы пишутся в `testPlayerCalls`: тест
- * проверяет, что Остров не работал у Документа без такого Блока.
+ * A Block with an Island in the View (OLDSUI-114): a player built from an address and a caption.
+ * The Island draws a "Play …" button and keeps the click count as its own state, which shows
+ * whether the View remounted it. Calls are written to `testPlayerCalls`: the test checks
+ * that the Island did not run for a Document without such a Block.
  *
- * В настоящем приложении Остров — компонент из модуля с `"use client"`; в
- * jsdom директива ничего не меняет, и компонент лежит здесь же.
+ * In a real app the Island is a component from a module with `"use client"`; in jsdom
+ * the directive changes nothing, so the component lives here.
  */
 export const testPlayerCalls: CustomIslandProps[] = [];
 
@@ -371,7 +371,7 @@ export const testPlayerTool: CustomTool = {
   },
 };
 
-/** Строчный Блок с Островом — Остров встаёт и в `span`. */
+/** Inline Block with an Island: the Island mounts in a `span` too. */
 export const testBadgeNode = Node.create({
   name: "test_badge",
   atom: true,
@@ -391,7 +391,7 @@ export const testBadgeTool: CustomTool = {
   },
 };
 
-/** Все тестовые свои Инструменты — в порядке `tools`. */
+/** All test custom Tools, in `tools` order. */
 export const TEST_TOOLS: readonly CustomTool[] = [
   testMergeTagTool,
   testBoxTool,
@@ -402,17 +402,17 @@ export const TEST_TOOLS: readonly CustomTool[] = [
 ];
 
 /**
- * Инструменты с кнопками (OLDSUI-105) — не в `TEST_TOOLS`: кнопка меняет
- * Панель, и тесты, которые её не ждут, остаются на прежней. Тест берёт нужный.
+ * Tools with buttons (OLDSUI-105) are not in `TEST_TOOLS`: a button changes the Toolbar,
+ * and tests that do not expect it keep the old one. A test takes the one it needs.
  */
 
-/** Каретка стоит в тексте: вставлять есть куда. */
+/** The caret is in text: there is room to insert. */
 const inText = (editor: Editor) => editor.state.selection.$to.parent.inlineContent;
 
 /**
- * Кнопка-действие: вставляет «★» в каретку. Сочетание — поле кнопки, и клавишу
- * вешает кит; Extensions при этом вешают свою клавишу (`Mod-Shift-K`),
- * которой в справочнике быть не должно.
+ * An action button: inserts "★" at the caret. The shortcut is a field of the button, and the kit
+ * binds the key; the Extensions bind their own key (`Mod-Shift-K`) as well, which must not
+ * appear in the Reference.
  */
 export const testStampTool: CustomTool = {
   name: "test_stamp",
@@ -434,7 +434,7 @@ export const testStampTool: CustomTool = {
   ],
 };
 
-/** Метка-переключатель: `isActive` даёт `aria-pressed`, `selectionMenu` — место в Меню выделения. */
+/** Toggle Mark: `isActive` gives `aria-pressed`, `selectionMenu` places it in the Bubble menu. */
 export const testPinMark = Mark.create({ name: "test_pin" });
 
 export const testPinTool: CustomTool = {
@@ -456,8 +456,8 @@ export const testPinTool: CustomTool = {
 };
 
 /**
- * Две кнопки в порядке описания: «Count» видна только над непустым выделением,
- * «Lock» никогда не доступна (`can` — нет).
+ * Two buttons, in the order of description: "Count" is visible only over a non-empty
+ * selection, "Lock" is never available (there is no `can`).
  */
 export const testContextTool: CustomTool = {
   name: "test_context",
@@ -475,7 +475,7 @@ export const testContextTool: CustomTool = {
   ],
 };
 
-/** Подпись функцией от контекста: смена локали `UiProvider` перерисовывает кнопку. */
+/** Label as a function of the context: a change of the `UiProvider` locale re-renders the button. */
 export const testLocaleTool: CustomTool = {
   name: "test_locale",
   engine: [],
@@ -492,8 +492,8 @@ export const testLocaleTool: CustomTool = {
 };
 
 /**
- * Кнопка с поповером: содержимое — функция от `editor` и `close`. Пункт
- * «Choose Alpha» вставляет текст и закрывает поповер, «Dismiss» только закрывает.
+ * A button with a popover: the content is a function of `editor` and `close`. The item
+ * "Choose Alpha" inserts the text and closes the popover; "Dismiss" only closes it.
  */
 export const testPickerTool: CustomTool = {
   name: "test_picker",
@@ -526,7 +526,7 @@ export const testPickerTool: CustomTool = {
   ],
 };
 
-/** Содержимое поповера пункта: «Choose Alpha» вставляет текст у каретки и закрывает. */
+/** Content of the item's popover: "Choose Alpha" inserts the text at the caret and closes it. */
 const choiceOf: NonNullable<NonNullable<CustomTool["insertItems"]>[number]["popover"]> = ({
   editor,
   close,
@@ -544,9 +544,9 @@ const choiceOf: NonNullable<NonNullable<CustomTool["insertItems"]>[number]["popo
   );
 
 /**
- * Пункты вставки и Действие над Блоком с поповером (история 39): «Ask» —
- * «Добавить», «Reshape» — «Превратить в», оба вставляют «Alpha» у каретки.
- * «Inspect» у абзаца показывает позицию своего Блока и пишет «Beta» в его начало.
+ * Insert items and a Block action with a popover (history 39): "Ask" is under "Insert",
+ * "Reshape" is under "Turn into", and both insert "Alpha" at the caret.
+ * "Inspect" on a paragraph shows the position of its Block and writes "Beta" at its start.
  */
 export const testAskTool: CustomTool = {
   name: "test_ask",
@@ -593,11 +593,11 @@ export const testAskTool: CustomTool = {
 };
 
 /**
- * Инструмент с загрузчиком (OLDSUI-110): Extensions приходят промисом,
- * который решает сам тест. Фабрика, а не константа: промис кэшируется на
- * функции загрузчика, и каждому тесту нужен свой. `calls` — сколько раз кит
- * позвал загрузчик; `resolve` и `reject` решают последний вызов. `engine`
- * подменяет то, что загрузчик отдаст, — например, Extensions мимо правил Схемы.
+ * A Tool with a Loader (OLDSUI-110): the Extensions arrive as a promise
+ * that the test settles itself. A factory rather than a constant: the promise is cached on
+ * the loader function, and each test needs its own. `calls` is how many times the kit
+ * called the Loader; `resolve` and `reject` settle the last call. `engine` replaces
+ * what the Loader returns, for example Extensions that bypass the Schema rules.
  */
 export function testLazyTool(name: `test_${string}` = "test_lazy", engine?: Extensions) {
   const node = Node.create({ name, content: "inline*" });
@@ -619,13 +619,13 @@ export function testLazyTool(name: `test_${string}` = "test_lazy", engine?: Exte
 }
 
 /**
- * Карточки у текста (OLDSUI-113) — не в `TEST_TOOLS`: Карточка открывается
- * кареткой в диапазоне, и тесты, которые её не ждут, не должны её видеть.
+ * Text cards (OLDSUI-113) are not in `TEST_TOOLS`: a card opens when the caret enters
+ * its range, and tests that do not expect it must not see it.
  *
- * Метка с Карточкой — замечание: `markRange` — готовый помощник кита для Метки.
- * Тело Карточки показывает диапазон (он едет за правкой) и две кнопки: «Reply»
- * — для фокуса и Tab, «Close» — `close` прячет Карточку до выхода каретки.
- * Подпись — функция от локали, чтобы доступное имя рамки менялось с языком.
+ * A Mark with a Text card is a remark: `markRange` is the kit's ready-made helper for a Mark.
+ * The card body shows the range (it moves with the edit) and two buttons: "Reply"
+ * for focus and Tab, and "Close": `close` hides the card until the caret leaves.
+ * The label is a function of the locale, so the accessible name of the frame changes with the language.
  */
 export const testRemarkMark = Mark.create({ name: "test_remark" });
 
@@ -663,7 +663,7 @@ export const testRemarkTool: CustomTool = {
   ],
 };
 
-/** Вторая Метка с Карточкой: диапазоны двух Инструментов перекрываются и совпадают. */
+/** Second Mark with a Text card: the ranges of two Tools overlap and coincide. */
 export const testTopicMark = Mark.create({ name: "test_topic" });
 
 export const testTopicTool: CustomTool = {

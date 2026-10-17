@@ -10,37 +10,36 @@ import { BUTTON_ICON_SIZE } from "../../lib/button.js";
 
 export interface CopyButtonProps extends Omit<
   ButtonProps,
-  // `onCopy` вытесняется намеренно: у `<button>` он свой, буферный, и наш
-  // одноимённый проп конфликтовал бы с ним по типу.
+  // `onCopy` is overridden on purpose: `<button>` has its own, clipboard-related one, and our
+  // same-named prop would conflict with it by type.
   "children" | "icon" | "onClick" | "value" | "onCopy"
 > {
-  /** Что скопировать. */
+  /** What to copy. */
   value: string;
-  /** Подпись рядом с иконкой. Без неё кнопка иконочная. */
+  /** Label next to the icon. Without it the button is icon-only. */
   children?: ReactNode;
-  /** Сколько держать состояние «скопировано», мс. */
+  /** How long to keep the "copied" state, in ms. */
   resetDelay?: number;
-  /** Сообщить наружу, чем кончилось. Логи и метрики — забота потребителя. */
+  /** Report the outcome outside the component. Logging and metrics are left to the consumer. */
   onCopy?: (ok: boolean) => void;
 }
 
 /**
- * Кнопка «скопировать»: значение в буфер и внятный ответ пользователю.
+ * "Copy" button: puts the value into the clipboard and gives the user a clear answer.
  *
- * РЕЗУЛЬТАТ ОБЪЯВЛЯЕТСЯ, а не только меняет иконку. Галочка вместо иконки —
- * сигнал для глаз; пользователь скринридера, нажав кнопку, иначе не узнает,
- * сработала она или нет. Поэтому рядом стоит живая область, смонтированная
- * ВСЕГДА: вставленная вместе с текстом, она объявляется ненадёжно — часть
- * скринридеров успевает её пропустить. Тот же приём, что в `FileDropzone`.
+ * THE RESULT IS ANNOUNCED, not only shown by swapping the icon. A checkmark instead of the icon
+ * is a signal for the eyes; a screen reader user who presses the button would otherwise not know
+ * whether it worked. So next to it sits a live region, mounted ALWAYS: when it is inserted
+ * together with its text, it is announced unreliably — some screen readers manage to skip it.
+ * The same trick as in `FileDropzone`.
  *
- * ОТКАЗ БУФЕРА — ЗАКОННЫЙ ИСХОД, а не исключение. `navigator.clipboard`
- * отсутствует в небезопасном контексте (страница по `http`), а запись может
- * быть запрещена разрешениями. Кнопка при этом не падает и не притворяется
- * успешной: она говорит, что скопировать не вышло, и значение остаётся
- * доступным для выделения руками.
+ * A CLIPBOARD FAILURE IS A LEGITIMATE OUTCOME, not an exception. `navigator.clipboard` is missing
+ * in an insecure context (a page served over `http`), and writing may be blocked by permissions.
+ * The button does not crash and does not pretend to have succeeded: it says the copy did not
+ * work, and the value stays available for selecting by hand.
  *
- * Таймер сбрасывается при размонтировании: иначе `setState` прилетал бы в
- * снятый компонент после закрытия попапа, в котором кнопка стояла.
+ * The timer is reset on unmount: otherwise `setState` would fire on an unmounted component after
+ * the popover in which the button stood was closed.
  */
 export function CopyButton({
   value,
@@ -64,8 +63,8 @@ export function CopyButton({
   const copy = useCallback(async () => {
     let ok = false;
     try {
-      // `navigator.clipboard` может отсутствовать целиком — в небезопасном
-      // контексте его нет, и обращение к `writeText` упало бы на `undefined`.
+      // `navigator.clipboard` may be missing entirely — in an insecure context it does not
+      // exist, and calling `writeText` would fail on `undefined`.
       await navigator.clipboard.writeText(value);
       ok = true;
     } catch {
@@ -92,8 +91,8 @@ export function CopyButton({
     <span className={cn("inline-flex items-center", className)}>
       <Button
         {...rest}
-        // Имя кнопки МЕНЯЕТСЯ вместе с состоянием: «Скопировано» на кнопке,
-        // которая ничего не скопировала, — ложь, и наоборот.
+        // The button's name CHANGES together with the state: "Copied" on a button that copied
+        // nothing is a lie, and vice versa.
         aria-label={hasContent(children) ? undefined : label}
         icon={state === "copied" ? <CheckIcon size={iconSize} /> : <CopyIcon size={iconSize} />}
         iconOnly={!hasContent(children)}
@@ -103,7 +102,7 @@ export function CopyButton({
         {children}
       </Button>
 
-      {/* Область смонтирована всегда, подменяется только текст. */}
+      {/* The region is mounted always; only its text is swapped. */}
       <span role="status" aria-live="polite" className="sr-only">
         {state === "idle" ? "" : label}
       </span>

@@ -9,26 +9,27 @@ story: src/components/content/MediaCard.stories.tsx
 
 # MediaCard
 
-## Кратко для AI
+## Summary for AI
 
-Плитка с изображением: превью в заданной пропорции, действия поверх него, бейджи
-и выбор. Доменное — избранное, дубликаты, переход — остаётся снаружи слотами.
+An image tile: a preview in a set aspect ratio, actions over it, badges and
+selection. Domain-specific behavior — favorites, duplicates, navigation — stays outside, in
+slots.
 
-## Когда использовать
+## When to use
 
-- Сетка или лента превью: картинки, документы, обложки.
-- Нужно выбирать плитки и действовать над выбранным.
-- Нужны бейджи поверх превью: статус, пометка, длительность.
+- A grid or feed of previews: images, documents, covers.
+- You need to select tiles and act on the selection.
+- You need badges over the preview: a status, a mark, a duration.
 
-## Когда не использовать
+## When not to use
 
-- Для блока содержимого без картинки — это `Card`. Граница по главному: у
-  плитки главное превью, у карточки — содержимое.
-- Для строки списка с миниатюрой — это `UploadQueue` или своя строка: плитка
-  занимает столбец, а не строку.
-- Для одной картинки без действий — это `Image` в `AspectRatio`.
+- For a content block without a picture — that is `Card`. The boundary follows
+  what matters most: for a tile it is the preview, for a card — the content.
+- For a list row with a thumbnail — that is `UploadQueue` or a custom row: a
+  tile takes a column, not a row.
+- For a single image without actions — that is `Image` in `AspectRatio`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { MediaCard, Image } from "@olddevs/ui";
@@ -42,91 +43,94 @@ import { MediaCard, Image } from "@olddevs/ui";
 />;
 ```
 
-## Пропы
+## Props
 
-| Проп               | Умолчание   | Назначение                                                                                                      |
-| ------------------ | ----------- | --------------------------------------------------------------------------------------------------------------- |
-| `preview`          | —           | Превью. Обычно `Image`.                                                                                         |
-| `ratio`            | `1`         | Пропорция числом: `16 / 9`, `1`, `9 / 16`.                                                                      |
-| `title`            | —           | Название плитки под превью.                                                                                     |
-| `subtitle`         | —           | Вторая строка, уже отформатированная.                                                                           |
-| `badges`           | —           | Бейджи поверх превью.                                                                                           |
-| `actions`          | —           | Действия поверх превью.                                                                                         |
-| `selected`         | —           | Плитка выбрана.                                                                                                 |
-| `onSelectedChange` | —           | Переключить выбор. Без него оси выбора нет. Внутри `VirtualGrid` не передаётся — там выбор у сетки.             |
-| `selectLabel`      | из каталога | Своя подпись кнопки выбора; умолчание (`mediaCard.select`) — «Выбрать» в `locales/ru`, «Select» без провайдера. |
+| Prop               | Default                  | Purpose                                                                                                                             |
+| ------------------ | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `preview`          | —                        | The preview. Usually `Image`.                                                                                                       |
+| `ratio`            | `1`                      | The aspect ratio as a number: `16 / 9`, `1`, `9 / 16`.                                                                              |
+| `title`            | —                        | The title under the preview.                                                                                                        |
+| `subtitle`         | —                        | The second line, already formatted.                                                                                                 |
+| `badges`           | —                        | Badges over the preview.                                                                                                            |
+| `actions`          | —                        | Actions over the preview.                                                                                                           |
+| `selected`         | —                        | The tile is selected.                                                                                                               |
+| `onSelectedChange` | —                        | Toggle the selection. Without it there is no selection axis. Not passed inside `VirtualGrid` — there the grid manages selection.    |
+| `selectLabel`      | from the message catalog | A custom label for the select button; the default (`mediaCard.select`) is "Select" without a provider, "Выбрать" with `locales/ru`. |
 
-## Ось выбора включается явно
+## The selection axis is turned on explicitly
 
-Без `onSelectedChange` кнопки выбора в разметке нет, без `selected` — рамки.
-Плитка со всеми осями сразу добавляла бы в разметку кнопки и рамки, которые
-ничего не делают: это общее правило осей кита. Один `selected` без обработчика
-только показывает выбор, которым управляет сетка: так карточка используется в
-`VirtualGrid` (ниже).
+Without `onSelectedChange` there is no selection button in the markup, without
+`selected` there is no border. A tile with every axis at once would add buttons
+and borders to the markup that do nothing: this is the kit's general rule for
+axes. `selected` alone, without a handler, only displays a selection that the
+grid controls: that is how the card is used in `VirtualGrid` (below).
 
-**Выбор объявляется состоянием, а не рамкой.** `aria-pressed` говорит
-скринридеру, выбрана плитка или нет; рамка — сигнал для глаз, и человек, который
-её не видит, иначе о выборе не узнает вовсе.
+**Selection is announced as a state, not as a border.** `aria-pressed` tells a
+screen reader whether the tile is selected; the border is a signal for the eyes,
+and a person who cannot see it would not learn about the selection at all.
 
-Подпись кнопки состояние **не повторяет**: `aria-pressed` уже объявлен, и
-«Выбрано, снять выбор» прозвучало бы дважды.
+The button label does **not repeat** the state: `aria-pressed` is already
+announced, and "Selected, deselect" would be announced twice.
 
-### Внутри `VirtualGrid` выбор принадлежит сетке
+### Inside `VirtualGrid`, selection belongs to the grid
 
-`onSelectedChange` здесь **не передаётся**: у карточки была бы своя ось рядом
-с осью сетки, и два выбора разошлись бы.
+`onSelectedChange` is **not passed** here: the card would get its own axis next to
+the grid's, and the two selections would drift apart.
 
-В сетке ось включается у неё самой — пропом `selectionMode`, см.
-[VirtualGrid](virtual-grid.md#выбор--у-сетки-а-не-у-ячейки). Карточке передают
-`selected`: она рисует рамку и держит панель действий открытой, а переключает выбор
-сетка. Флажок выбора — `<Checkbox slot="selection" />` в `actions`: сетка
-связывает его со своей осью сама.
+In the grid, the axis is turned on in the grid itself — with the `selectionMode`
+prop, see
+[VirtualGrid](virtual-grid.md#selection-belongs-to-the-grid-not-the-cell). The card gets
+`selected`: it renders the border and keeps the actions panel open, and the grid toggles the
+selection. The selection checkbox is `<Checkbox slot="selection" />` in `actions`: the
+grid wires it to its axis itself.
 
 ```tsx
 <VirtualGrid selectionMode="multiple" selectedKeys={keys} onSelectionChange={setKeys}>
-  {/* content ячейки */}
+  {/* cell content */}
   <MediaCard
     preview={preview}
     title={name}
     selected={keys.has(id)}
-    actions={<Checkbox slot="selection" label={`Выбрать ${name}`} />}
+    actions={<Checkbox slot="selection" label={`Select ${name}`} />}
   />
 </VirtualGrid>
 ```
 
-До 3.47.0 рамку карточка рисовала только при своей оси, и выбранная плитка в
-сетке оставалась без знака.
+Before 3.47.0 the card rendered the border only with its own axis, and a selected tile in
+the grid had no visible indicator at all.
 
-До 3.1.0 документация советовала обратное. Совет был неисполним — разбор в
-[CHANGELOG](../../../CHANGELOG.md) и на странице сетки.
+Before 3.1.0 the documentation advised the opposite. The advice could not be
+followed — the analysis is in the [CHANGELOG](../../../CHANGELOG.md) and on the
+grid page.
 
-## Действия достижимы с клавиатуры
+## Actions are reachable from the keyboard
 
-Панель действий **всегда в разметке**; прячется она только прозрачностью, а показывается
-при наведении, при фокусе внутри, когда плитка выбрана и всегда на устройствах
-без наведения (`hover: none`).
+The actions panel is **always in the markup**; it is hidden only with opacity,
+and it appears on hover, when focus is inside it, when the tile is selected, and
+always on devices without hover (`hover: none`).
 
-Панель на `display: none` под `:hover` для клавиатуры недостижима вовсе:
-пользоваться ею нельзя.
+A panel that is `display: none` and shown only on `:hover` is unreachable for the
+keyboard altogether: it cannot be used.
 
-## Доменное остаётся снаружи
+## Domain-specific behavior stays outside
 
-Обобщали по образцу карточки приложения-источника, 212
-строк. Избранное, дубликаты, длинное нажатие и переход по плитке в кит не вошли:
-сюда приходят узлы (`badges`, `actions`), а что они значат, знает приложение
+The generalization was modeled on the source app's card, 212
+lines. Favorites, duplicates, long press and navigation on the tile
+did not make it into the kit: nodes come in here (`badges`, `actions`), and what
+they mean is known to the app
 (ADR-0027).
 
-Превью стоит на существующих `Image` и `AspectRatio`: своей загрузки, своего
-фолбэка и своего скелетона плитка не пишет.
+The preview is built on the existing `Image` and `AspectRatio`: the tile implements
+no loading, fallback or skeleton of its own.
 
-## Антипаттерны
+## Anti-patterns
 
-- Отмечать выбор только рамкой.
-- Прятать действия так, чтобы до них нельзя было дотянуться с клавиатуры.
-- Заводить проп `isFavorite`: это `badges` или `actions` потребителя.
+- Marking selection with a border alone.
+- Hiding actions so that the keyboard cannot reach them.
+- Adding an `isFavorite` prop: that is the consumer's `badges` or `actions`.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Исходник: `src/components/content/MediaCard.tsx`
-- Тесты: `tests/media-card.test.tsx`
-- Витрина: `src/components/content/MediaCard.stories.tsx`
+- Source: `src/components/content/MediaCard.tsx`
+- Tests: `tests/media-card.test.tsx`
+- Showcase: `src/components/content/MediaCard.stories.tsx`

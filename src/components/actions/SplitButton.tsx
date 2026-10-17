@@ -11,92 +11,92 @@ import { BUTTON_ICON_SIZE } from "../../lib/button.js";
 
 export interface SplitButtonProps {
   /**
-   * Подпись главного действия — строка, а не узел.
+   * The label of the main action — a string, not a node.
    *
-   * Это единственное ограничение компонента по сравнению с `Button`, и оно
-   * следует из его устройства: из подписи строится доступное имя раскрывателя
-   * («Другие действия: Экспорт»). Узел дал бы имя, которого нет, — или
-   * потребовал бы второго пропа с той же подписью строкой, то есть двух мест,
-   * где написано одно и то же, и они разошлись бы при первой правке.
+   * This is the only restriction compared with `Button`, and it follows from how the component
+   * is built: the menu button's accessible name is built from the label ("More actions: Export").
+   * A node would give a name that does not exist — or would require a second prop with the same
+   * label as a string, that is, two places where the same thing is written, which would drift
+   * apart at the first edit.
    */
   label: string;
-  /** Иконка слева у главного действия. */
+  /** Icon on the left of the main action. */
   icon?: ReactNode;
-  /** Главное действие. Раскрыватель его не зовёт. */
+  /** The main action. The menu button does not call it. */
   onClick?: MouseEventHandler<HTMLButtonElement>;
   /**
-   * Гасит обе кнопки сразу.
+   * Disables both buttons at once.
    *
-   * Раздельной выключенности здесь нет намеренно: живой раскрыватель при мёртвом
-   * действии предлагает варианты того, что сделать нельзя.
+   * There is no separate disabled state for the two on purpose: a live menu button next to a
+   * dead action offers variants of what cannot be done.
    */
   disabled?: boolean;
   /**
-   * Главное действие отправляется: кольцо вместо иконки, `aria-busy`.
+   * The main action is submitting: a ring instead of the icon, `aria-busy`.
    *
-   * Раскрыватель на это время тоже гаснет — по той же причине, что и при
-   * `disabled`. Открытое меню посреди отправки предлагает второй способ сделать
-   * то, что уже делается.
+   * The menu button is disabled for this time too, for the same reason as with `disabled`. An
+   * open menu in the middle of a submission offers a second way to do what is already being done.
    */
   loading?: boolean;
-  /** Подача обеих кнопок: оси словаря те же, что у `Button`. Без значения действует умолчание `Button`. */
+  /**
+   * Variant of both buttons: the same axis as in `Button`. Without a value, the default of `Button`
+   * applies.
+   */
   variant?: Variant;
-  /** Тон обеих кнопок: ось словаря та же, что у `Button`. Без значения действует умолчание `Button`. */
+  /** Tone of both buttons: the axis is the same as in `Button`. Without a value, `Button`'s default applies. */
   tone?: Tone;
-  /** Размер обеих кнопок: ось словаря та же, что у `Button`. Без значения действует умолчание `Button`. */
+  /** Size of both buttons: the axis is the same as in `Button`. Without a value, `Button`'s default applies. */
   size?: Size;
-  /** Пункты меню: `MenuItem`, `MenuSection`, `MenuSeparator`. */
+  /** Menu items: `MenuItem`, `MenuSection`, `MenuSeparator`. */
   children?: ReactNode;
   /**
-   * Сторона, с которой раскрывается панель меню.
+   * The side the menu panel opens toward.
    *
-   * Четыре значения из шести, которые умеет `Menu`: боковые (`right top`,
-   * `left top`) сузили намеренно — панель, уезжающая вбок от раскрывателя,
-   * встаёт поверх главного действия, то есть закрывает то, ради чего пришли.
+   * Four values out of the six that `Menu` supports: the side ones (`right top`, `left top`) are
+   * deliberately narrowed — a panel that slides sideways from the menu button would land on top
+   * of the main action, covering the very thing the user came for.
    */
   placement?: "bottom start" | "bottom end" | "top start" | "top end";
   /**
-   * Классы на группу, а не на кнопку.
+   * Classes for the group, not the button.
    *
-   * Отличие от одноимённого пропа `Button`, и оно вынужденное: элементов здесь
-   * два, и «класс на кнопку» не имеет однозначного адресата.
+   * This differs from the same-named prop of `Button`, and it is forced: there are two elements
+   * here, and "a class on the button" has no unambiguous target.
    */
   className?: string;
 }
 
 /**
- * Кнопка главного действия и раскрыватель его вариантов рядом.
+ * The main action button and the menu button for its variants, side by side.
  *
- * ДВЕ ОТДЕЛЬНЫЕ КНОПКИ, А НЕ КНОПКА С ЗОНОЙ. Одна кнопка, у которой правая
- * часть открывает меню, — это элемент с двумя разными исходами и одним
- * доступным именем: с клавиатуры до второго исхода не добраться вовсе, а
- * скринридер объявит одно действие вместо двух. Разделение здесь не оформление,
- * а разные элементы управления.
+ * TWO SEPARATE BUTTONS, NOT ONE BUTTON WITH A ZONE. One button whose right part opens a menu is
+ * an element with two different outcomes and one accessible name: from the keyboard the second
+ * outcome cannot be reached at all, and a screen reader announces one action instead of two. The
+ * split here is not styling but different controls.
  *
- * ИМЯ РАСКРЫВАТЕЛЯ СТРОИТСЯ ИЗ ПОДПИСИ ДЕЙСТВИЯ, и это единственное собственное
- * решение компонента. Без него в речи идут «Экспорт» и следом безымянная кнопка
- * со стрелкой — а таких стрелок на странице обычно несколько, и различить их
- * нечем. Отсюда и требование к `label` быть строкой.
+ * THE MENU BUTTON'S NAME IS BUILT FROM THE ACTION'S LABEL, and this is the component's only own
+ * decision. Without it, a screen reader says "Export" and then an unnamed button with an arrow —
+ * and there are usually several such arrows on a page, with nothing to tell them apart. Hence the
+ * requirement for `label` to be a string.
  *
- * Вид и раскладка целиком чужие: `ButtonGroup` срезает внутренние углы и
- * схлопывает соседние рамки, `Button` и `MenuButton` берут вид из
- * `lib/button.ts`. Своей палитры компонент не заводит — оси `variant`, `tone` и
- * `size` те же, что у кнопки, и значат то же самое.
+ * The look and layout are entirely borrowed: `ButtonGroup` trims the inner corners and collapses
+ * adjacent borders; `Button` and `MenuButton` take their look from `lib/button.ts`. The component
+ * does not introduce its own palette — the `variant`, `tone` and `size` axes are the same as for a
+ * button, and they mean the same thing.
  *
- * Почему `MenuButton`, а не второй `Button`: `MenuTrigger` передаёт триггеру
- * свои пропы через `ButtonContext` react-aria, и обычный `<button>` этого
- * контекста не читает — меню молча не откроется. Разбор — в докстроке `Menu`.
+ * Why `MenuButton` rather than a second `Button`: `MenuTrigger` passes its props to the trigger
+ * through react-aria's `ButtonContext`, and a plain `<button>` does not read that context — the
+ * menu would silently not open. See the docstring of `Menu` for the details.
  *
- * ТРИГГЕР УПРАВЛЯЕМЫЙ, И ЭТО НЕ ПРИХОТЬ. Неуправляемый `MenuTrigger` держит
- * открытую панель независимо от того, что стало с кнопкой: выключенность гасила
- * бы только раскрыватель, а уже раскрытое меню оставалось бы в DOM и его пункты
- * продолжали бы срабатывать. Компонент выглядел бы выключенным, а второй способ
- * сделать действие работал бы — ровно то, что обещание `disabled` отрицает.
+ * THE TRIGGER IS CONTROLLED, AND THIS IS NOT A WHIM. An uncontrolled `MenuTrigger` keeps the panel
+ * open regardless of what happened to the button: disabling would only dim the menu button, while
+ * an already open menu would stay in the DOM and its items would keep firing. The component would
+ * look disabled, while the second way to perform the action would still work — exactly what the
+ * `disabled` promise denies.
  *
- * Остальные пропы наружу НЕ пробрасываются, и это тоже следствие двух
- * элементов: у `id`, `type` или `data-*` здесь нет однозначного адресата.
- * Кнопке, которая обязана отправлять форму, нужен `Button` с `MenuTrigger`
- * рядом, собранные вручную, — у них адресат каждый свой.
+ * The other props are NOT forwarded, and this is also a consequence of the two elements: `id`,
+ * `type` or `data-*` have no unambiguous target here. A button that must submit a form needs a
+ * `Button` with a `MenuTrigger` next to it, assembled by hand — each of them has its own target.
  */
 export function SplitButton({
   label,
@@ -117,13 +117,12 @@ export function SplitButton({
   const [open, setOpen] = useState(false);
 
   /*
-    Выключение не только прячет панель, но и ЗАБЫВАЕТ, что она была открыта.
+    Disabling not only hides the panel but also FORGETS that it was open.
 
-    `isOpen={open && !off}` гасит показ, но управляемая смена `isOpen` не зовёт
-    `onOpenChange`, поэтому само `open` остаётся `true`. Без этой уборки меню
-    раскрывалось бы само по себе, когда выключенность снимут: открыли меню →
-    пошла отправка → панель закрылась → отправка кончилась → панель вернулась,
-    хотя пользователь ничего не нажимал.
+    `isOpen={open && !off}` suppresses the display, but a controlled change of `isOpen` does not
+    call `onOpenChange`, so `open` itself stays `true`. Without this cleanup, the menu would open
+    on its own once the disabled state is lifted: the menu was opened → submission started → the
+    panel closed → submission ended → the panel came back, although the user pressed nothing.
   */
   useEffect(() => {
     if (off) setOpen(false);
@@ -153,9 +152,9 @@ export function SplitButton({
           icon={<ChevronDownIcon size={BUTTON_ICON_SIZE[size ?? "md"]} aria-hidden />}
         />
         {/*
-          Своего `aria-label` панели не даётся: `MenuTrigger` связывает её с
-          триггером, и имя приходит оттуда. Второй источник имени разошёлся бы
-          с первым при правке одного из них. Что имя есть — сторожит тест.
+          The panel gets no `aria-label` of its own: `MenuTrigger` links it to the trigger, and the
+          name comes from there. A second source of the name would drift from the first when one of
+          them is edited. A test guards that the name is there.
         */}
         <Menu placement={placement}>{children}</Menu>
       </MenuTrigger>

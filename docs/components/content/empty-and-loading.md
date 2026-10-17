@@ -7,39 +7,40 @@ source: src/components/content/EmptyState.tsx, src/components/content/ErrorState
 story: src/components/content/EmptyState.stories.tsx, src/components/content/ErrorState.stories.tsx, src/components/content/Skeleton.stories.tsx
 ---
 
-# EmptyState, ErrorState и Skeleton
+# EmptyState, ErrorState and Skeleton
 
-## Кратко для AI
+## Summary for AI
 
-Три состояния экрана, у которых нет содержимого, и они не взаимозаменяемы:
-`Skeleton` показывают, пока результат неизвестен; `EmptyState`, когда запрос
-удался и вернул пусто; `ErrorState`, когда запрос не удался. Не показывайте «Ничего не найдено»,
-пока запрос ещё выполняется, и не показывайте его же вместо отказа: пустой
-список — это результат, отказ — событие.
+Three screen states that have no content, and they are not interchangeable:
+Show `Skeleton` while the result is not known yet, `EmptyState` when the request
+succeeded and returned nothing, and `ErrorState` when the request failed. Do not show "Nothing
+found" while the request is still running, and do not show it in place of a
+failure: an empty list is a result, a failure is an event.
 
-## Когда использовать
+## When to use
 
-- `EmptyState` — после успешной загрузки пустого списка, отсутствия результатов
-  или первого запуска без объектов.
-- `ErrorState` — запрос завершился отказом: сбой сети, ответ 5xx, недоступный бэкенд.
-  Почти всегда вместе с действием «Попробовать снова».
-- `Skeleton` — пока результат неизвестен и место будущих данных уже понятно.
-  Подбирайте его форму по будущему содержимому: строка, аватар, кнопка, превью.
+- `EmptyState` — after a successful load of an empty list, no results, or a
+  first launch with no objects yet.
+- `ErrorState` — the request ended in failure: a network failure, a 5xx response,
+  an unavailable backend. Almost always together with a "Try again" action.
+- `Skeleton` — while the result is unknown and it is already clear where the future data will
+  appear. Match its shape to the future content: a line, an avatar, a
+  button, a preview.
 
-## Когда не использовать
+## When not to use
 
-- Не используйте `EmptyState` для сетевой ошибки — для неё есть `ErrorState`.
-- Не используйте `ErrorState` для сообщения внутри уже отрисованного экрана:
-  там уместнее `Alert` (он живёт в потоке содержимого), а `ErrorState` встаёт
-  **вместо** содержимого.
-- Не используйте `ErrorState` для ошибки валидации поля — это `FormField`.
-- Не используйте `Skeleton` как постоянный декоративный блок или индикатор
-  прогресса. Для неопределённой короткой работы используйте `Spinner`, а для
-  известного хода — `Progress`.
-- Не добавляйте в `EmptyState` бизнес-логику: `action` принимает готовый узел,
-  обычно `Button`, а не callback.
+- Do not use `EmptyState` for a network error — `ErrorState` exists for that.
+- Do not use `ErrorState` for a message inside an already rendered screen: an
+  `Alert` fits better there (it lives in the content flow), while `ErrorState`
+  takes the place **of** the content.
+- Do not use `ErrorState` for a field validation error — that is `FormField`.
+- Do not use `Skeleton` as a permanent decorative block or as a progress
+  indicator. For short work of unknown length use `Spinner`, and for known
+  progress use `Progress`.
+- Do not add business logic to `EmptyState`: `action` takes a ready-made node,
+  usually a `Button`, not a callback.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Button, EmptyState, Skeleton } from "@olddevs/ui";
@@ -49,11 +50,11 @@ import { Button, EmptyState, Skeleton } from "@olddevs/ui";
     <Skeleton width={240} height={16} borderRadius={4} />
   ) : items.length === 0 ? (
     <EmptyState
-      title="Ничего не найдено"
-      description="Попробуйте изменить запрос или сбросить фильтры."
+      title="Nothing found"
+      description="Try changing your query or resetting the filters."
       action={
         <Button variant="soft" onPress={resetFilters}>
-          Сбросить фильтры
+          Reset filters
         </Button>
       }
     />
@@ -67,83 +68,81 @@ import { Button, EmptyState, Skeleton } from "@olddevs/ui";
 
 ### `EmptyState`
 
-| Prop          | По умолчанию | Значение                                                          |
-| ------------- | ------------ | ----------------------------------------------------------------- |
-| `title`       | —            | Обязательное краткое описание пустого состояния.                  |
-| `description` | —            | Дополнительное объяснение или следующий шаг.                      |
-| `icon`        | —            | Готовый декоративный узел; компонент скрывает его от скринридера. |
-| `action`      | —            | Готовый узел действия, например `Button`.                         |
-| `size`        | `md`         | `sm` — пикер или dropdown; `md` — страница либо секция.           |
+| Prop          | Default | Meaning                                                                      |
+| ------------- | ------- | ---------------------------------------------------------------------------- |
+| `title`       | —       | A required short description of the empty state.                             |
+| `description` | —       | An extra explanation or the next step.                                       |
+| `icon`        | —       | A ready-made decorative node; the component hides it from the screen reader. |
+| `action`      | —       | A ready-made action node, for example a `Button`.                            |
+| `size`        | `md`    | `sm` — a picker or dropdown; `md` — a page or section.                       |
 
 ### `ErrorState`
 
-| Prop          | По умолчанию | Значение                                                                                                                       |
-| ------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `title`       | из каталога  | Общая формулировка отказа; умолчание (`errorState.title`) — «Ошибка загрузки» в `locales/ru`, «Failed to load» без провайдера. |
-| `description` | —            | Что именно не удалось: «Не удалось загрузить коллекции».                                                                       |
-| `action`      | —            | Готовый узел, обычно `Button` с «Попробовать снова».                                                                           |
-| `icon`        | `ErrorIcon`  | Своя иконка; `null` убирает её вовсе.                                                                                          |
-| `size`        | `md`         | `sm` — панель или пикер; `md` — вместо содержимого страницы.                                                                   |
+| Prop          | Default                  | Meaning                                                                                                                                         |
+| ------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`       | from the message catalog | A general wording of the failure; the default (`errorState.title`) is "Failed to load" without a provider, "Ошибка загрузки" with `locales/ru`. |
+| `description` | —                        | What exactly failed: "Could not load the collections".                                                                                          |
+| `action`      | —                        | A ready-made node, usually a `Button` with "Try again".                                                                                         |
+| `icon`        | `ErrorIcon`              | A custom icon; `null` removes it entirely.                                                                                                      |
+| `size`        | `md`                     | `sm` — a panel or picker; `md` — in place of the page content.                                                                                  |
 
-Геометрия у `EmptyState` и `ErrorState` общая и живёт в `src/lib/state.ts`;
-различаются они тоном и ролью в дереве доступности.
+`EmptyState` and `ErrorState` share their geometry, which lives in
+`src/lib/state.ts`; they differ in tone and in their role in the accessibility
+tree.
 
 ### `Skeleton`
 
-| Prop                 | По умолчанию  | Значение                                                                   |
-| -------------------- | ------------- | -------------------------------------------------------------------------- |
-| `width`, `height`    | —             | Число — пиксели, строка — CSS-значение.                                    |
-| `borderRadius`       | `var(--r-md)` | Число или CSS-значение. Например, `"50%"` для аватара.                     |
-| `className`, `style` | —             | Стандартные атрибуты `div`; `style` объединяется с вычисленными размерами. |
+| Prop                 | Default       | Meaning                                                               |
+| -------------------- | ------------- | --------------------------------------------------------------------- |
+| `width`, `height`    | —             | A number is pixels, a string is a CSS value.                          |
+| `borderRadius`       | `var(--r-md)` | A number or a CSS value. For example, `"50%"` for an avatar.          |
+| `className`, `style` | —             | Standard `div` attributes; `style` is merged with the computed sizes. |
 
-## Доступность и состояние
+## Accessibility and state
 
-`EmptyState` передаёт текст как обычное видимое содержимое: пустой список —
-это результат, и объявлять его немедленно незачем. Иконка всегда декоративна.
+`EmptyState` renders its text as ordinary visible content: an empty list is a
+result, and there is no need to announce it immediately. The icon is always
+decorative.
 
-`ErrorState`, наоборот, получает `role="alert"`: отказ обязан быть объявлен, иначе
-пользователь скринридера остаётся с тишиной вместо ответа. Отсюда правило
-применения: не держите `ErrorState` в разметке постоянно, скрывая его через
-CSS: он должен появляться в момент отказа, иначе объявление не сработает.
-`Skeleton` не сообщает завершение загрузки сам: владелец состояния должен
-переключить его на фактические данные или статус для скринридера.
+`ErrorState`, by contrast, has `role="alert"`: a failure has to be announced,
+otherwise a screen reader user is left with silence instead of an answer. Hence
+the rule of use: do not keep `ErrorState` in the markup permanently and hide it
+with CSS: it must appear at the moment of the failure, otherwise the
+announcement does not fire. `Skeleton` does not report the end of loading on its
+own: the owner of the state must switch it to the actual data or a status for the screen reader.
 
-## Антипаттерны
+## Anti-patterns
 
 ```tsx
-// Плохо: пользователю сообщают об отсутствии, хотя запрос ещё идёт.
-return <EmptyState title="Ничего не найдено" />;
+// Bad: the user is told there is nothing, though the request is still running.
+return <EmptyState title="Nothing found" />;
 
-// Хорошо: сначала форма будущих данных.
-return isLoading ? (
-  <Skeleton width="100%" height={120} />
-) : (
-  <EmptyState title="Ничего не найдено" />
-);
+// Good: the shape of the future data comes first.
+return isLoading ? <Skeleton width="100%" height={120} /> : <EmptyState title="Nothing found" />;
 ```
 
 ```tsx
-// Плохо: отказ подан как пустой результат — пользователь думает, что данных нет.
-if (isError) return <EmptyState title="Ничего не найдено" />;
+// Bad: a failure is presented as an empty result — the user thinks there is no data.
+if (isError) return <EmptyState title="Nothing found" />;
 
-// Хорошо: отказ назван отказом и предлагает повтор.
+// Good: a failure is called a failure and offers a retry.
 if (isError)
   return (
     <ErrorState
-      description="Не удалось загрузить коллекции."
+      description="Could not load the collections."
       action={
         <Button icon={<RefreshIcon />} onClick={refetch}>
-          Попробовать снова
+          Try again
         </Button>
       }
     />
   );
 ```
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходники: `src/components/content/EmptyState.tsx`, `src/components/content/ErrorState.tsx`,
+- Sources: `src/components/content/EmptyState.tsx`, `src/components/content/ErrorState.tsx`,
   `src/components/content/Skeleton.tsx`.
 - Stories: `src/components/content/EmptyState.stories.tsx`, `src/components/content/ErrorState.stories.tsx`,
   `src/components/content/Skeleton.stories.tsx`.
-- Тесты: `tests/error-state.test.tsx`.
+- Tests: `tests/error-state.test.tsx`.

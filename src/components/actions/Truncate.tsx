@@ -5,33 +5,31 @@ import { cn } from "../../lib/cn.js";
 import { Tooltip } from "../overlays/Tooltip.js";
 
 export interface TruncateProps extends Omit<ComponentPropsWithoutRef<"span">, "children"> {
-  /** Текст. Строка, а не вёрстка: подсказка показывает то же самое значение. */
+  /** The text. A string, not markup: the tooltip shows the same value. */
   children: string;
-  /** Сколько строк показывать. `1` — обрезка в строку с многоточием. */
+  /** How many lines to show. `1` truncates to a single line with an ellipsis. */
   lines?: number;
-  /** Сторона, с которой всплывает подсказка с полным текстом. По умолчанию `top`. */
+  /** The side the tooltip with the full text opens on. Defaults to `top`. */
   side?: "top" | "right" | "bottom" | "left";
 }
 
 /**
- * Текст, обрезанный по ширине, с подсказкой полного значения.
+ * Text truncated to fit its width, with a tooltip showing the full value.
  *
- * ПОДСКАЗКА ПОЯВЛЯЕТСЯ ТОЛЬКО КОГДА ТЕКСТ ДЕЙСТВИТЕЛЬНО ОБРЕЗАН. Подсказка на
- * неусечённом тексте — шум: она повторяет то, что и так видно, и приучает её
- * игнорировать. Обрезанность МЕРЯЕТСЯ (`scrollWidth > clientWidth`), а не
- * угадывается по длине строки: сколько символов влезло, зависит от ширины
- * контейнера и шрифта, а не от числа символов.
+ * THE TOOLTIP APPEARS ONLY WHEN THE TEXT IS ACTUALLY TRUNCATED. A tooltip over untruncated text is
+ * noise: it repeats what is already visible and teaches people to ignore it. Truncation is MEASURED
+ * (`scrollWidth > clientWidth`), not guessed from the string length: how many characters fit depends
+ * on the container width and the font, not on the character count.
  *
- * Замер повторяется при изменении размеров через `ResizeObserver`: колонка
- * таблицы, потянутая мышью, меняет обрезанность, не меняя текста.
+ * The measurement is repeated when the size changes, through a `ResizeObserver`: a table column
+ * dragged with the mouse changes the truncation without changing the text.
  *
- * ПОЛНОЕ ЗНАЧЕНИЕ ДОСТУПНО С КЛАВИАТУРЫ. Обрезанный текст получает
- * `tabIndex={0}`, и подсказка открывается по фокусу так же, как по наведению.
- * Без этого значение было бы доступно только мышью — то есть недоступно вовсе
- * для того, кто мышью не пользуется.
+ * THE FULL VALUE IS AVAILABLE FROM THE KEYBOARD. Truncated text gets `tabIndex={0}`, and the tooltip
+ * opens on focus just as it does on hover. Without this the value would be reachable only with a
+ * mouse, which means not reachable at all for someone who does not use one.
  *
- * Скринридер при этом читает текст ЦЕЛИКОМ и без нашей помощи: обрезка
- * визуальная, в DOM лежит вся строка.
+ * A screen reader reads the text IN FULL without our help: the truncation is visual only, and the
+ * whole string is in the DOM.
  */
 export function Truncate({ children, lines = 1, side = "top", className, ...rest }: TruncateProps) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -44,13 +42,12 @@ export function Truncate({ children, lines = 1, side = "top", className, ...rest
   }, []);
 
   /*
-    `truncated` в зависимостях — не для перерасчёта, а для ПЕРЕПОДПИСКИ. Когда
-    текст впервые оказывается обрезанным, `span` заворачивается в `Tooltip`, и
-    React пересоздаёт узел: старый, на который был подписан наблюдатель,
-    умирает, а новый остаётся без наблюдателя. Колонка, расширенная после
-    обрезки, тогда не снимала ни `tabIndex`, ни подсказку — нашло ревью 2.5.0.
-    Повторный `measure()` при этом ничего не меняет: значение то же, и React
-    перерисовку пропускает.
+    `truncated` is in the dependencies not for recalculation but to RE-SUBSCRIBE. When the text
+    first becomes truncated, the `span` is wrapped in a `Tooltip`, and React recreates the node:
+    the old one, which the observer was attached to, dies, and the new one is left without an
+    observer. A column widened after truncation then did not remove either `tabIndex` or the
+    tooltip: caught in review of 2.5.0. A repeated `measure()` changes nothing here: the value is
+    the same, and React skips the re-render.
   */
   useEffect(() => {
     measure();
@@ -64,18 +61,18 @@ export function Truncate({ children, lines = 1, side = "top", className, ...rest
   const text = (
     <span
       ref={ref}
-      // Фокус — только у обрезанного: неусечённый текст в порядке обхода
-      // клавиатурой не нужен и мешал бы.
+      // Only truncated text gets focus: untruncated text does not need a place in the keyboard
+      // order, and it would get in the way.
       tabIndex={truncated ? 0 : undefined}
       className={cn(
         "focus-visible:outline-accent-strong min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2",
         lines === 1
           ? "block truncate"
-          : // `block` сюда нельзя: в CSS он стоит позже `[display:-webkit-box]`,
-            // перебивает его, и `line-clamp` молча не работает.
-            // Многострочная обрезка: `line-clamp` считает строки сам, и число
-            // приходит переменной — иначе класс собирался бы конкатенацией, а
-            // такого текста в исходниках нет и Tailwind его не увидит.
+          : // `block` must not be added here: in CSS it comes after `[display:-webkit-box]`,
+            // overrides it, and `line-clamp` silently stops working.
+            // Multi-line truncation: `line-clamp` counts the lines itself, and the number comes in
+            // as a variable. Otherwise the class would be built by concatenation, and a class like
+            // that does not exist in the sources, so Tailwind would not see it.
             "[display:-webkit-box] overflow-hidden [-webkit-box-orient:vertical]",
         className
       )}
@@ -86,8 +83,8 @@ export function Truncate({ children, lines = 1, side = "top", className, ...rest
     </span>
   );
 
-  // Без обрезки тултипа нет вовсе: `Tooltip` с пустым `content` рендерит
-  // ребёнка как есть, но лишняя обёртка ни к чему.
+  // Without truncation there is no tooltip at all: a `Tooltip` with empty `content` renders its
+  // child as is, but the extra wrapper would be pointless.
   if (!truncated) return text;
 
   return (

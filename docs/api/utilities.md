@@ -4,77 +4,73 @@ status: stable
 source: src/index.ts
 ---
 
-# Общий API: утилиты, токены, константы и типы
+# Shared API: utilities, tokens, constants and types
 
-## Кратко для AI
+## Summary for AI
 
-`@olddevs/ui` экспортирует несколько программных API помимо компонентов. Они
-предназначены для интеграции с компонентами и общим визуальным словарём; не
-импортируйте внутренние `src/lib/*` напрямую. Все публичные component exports
-и их prop-типы документируются на страницах самих компонентов, а
-`@olddevs/ui/icons` — в [icons.md](../icons.md).
+`@olddevs/ui` exports several programmatic APIs besides components. They are meant for integration with the
+components and the shared visual vocabulary. Do not import the internal `src/lib/*` files directly. All public
+component exports and their prop types are documented on the pages of the components themselves. The
+`@olddevs/ui/icons` export is documented in [icons.md](../icons.md).
 
-## Когда использовать
+## When to use
 
-- `cn` — для объединения классов Tailwind, особенно если вместе встречаются
-  `text-caption` и цвет текста из шкалы кита.
-- `useScrollLock` — для собственной контролируемой overlay-композиции, когда
-  именно она владеет открытым состоянием и должна блокировать прокрутку `body`.
-- `useMediaQuery` — когда от ширины окна зависит состав или поведение (что
-  смонтировать, сколько месяцев показать, свернуть ли `SplitPanel`), а не
-  только вид: показать или спрятать блок по ширине — класс Tailwind. Подробности —
-  в [SplitPanel](../components/app-shell/split-panel.md).
-- `Size`, `Tone`, `Variant`, `TONE_TOKENS` и `variantClasses` — при создании
-  нового примитива дизайн-системы с теми же семантическими осями.
-- helpers периодов — для относительного периода в URL и его преобразования в
-  даты; helpers времени — для ввода `HH:MM` в контролах даты и времени.
-- реестр тем — для переключателя оформления и раннего применения сохранённой
-  темы; списки осей берите оттуда, а не переписывайте константами у себя.
+- `cn`: to merge Tailwind classes, especially when `text-caption` and a text color from the kit's scale appear
+  together.
+- `useScrollLock`: for your own controlled overlay composition, when it owns the open state and must lock the
+  `body` scroll.
+- `useMediaQuery`: when the window width decides what is rendered or how it behaves (what to mount, how many
+  months to show, whether to collapse `SplitPanel`), not only the look. To show or hide a block by width, use
+  a Tailwind class. Details are in [SplitPanel](../components/app-shell/split-panel.md).
+- `Size`, `Tone`, `Variant`, `TONE_TOKENS` and `variantClasses`: when you create a new design-system primitive
+  with the same semantic axes.
+- Period helpers: for a relative preset in the URL and its conversion to dates. Time helpers: for `HH:MM` input
+  in date and time controls.
+- The theme registry: for a theme switcher and for applying the saved theme early. Take the axis lists from
+  there. Do not rewrite them as constants in your own code.
 
-## Когда не использовать
+## When not to use
 
-- Не создавайте второй счётчик блокировки прокрутки `body` в приложении. Несвязанные счётчики
-  ломают вложенные overlays; используйте один `useScrollLock` из пакета.
-- Не собирайте классы Tailwind динамически, например `text-${tone}`. Используйте
-  буквальные токены или `variantClasses`: имена классов, собранные на лету, не
-  попадут в сборку CSS.
-- Не передавайте невалидную строку из URL сразу в `resolvePeriod`: сначала
-  сузьте её `isRelativePeriod`.
-- Не используйте `maskTime` как финальную валидацию: маска работает во время
-  ввода, а нормализация — после него.
+- Do not create a second `body` scroll-lock counter in the app. Unrelated counters break nested overlays. Use
+  the one `useScrollLock` from the package.
+- Do not build Tailwind classes dynamically, for example `text-${tone}`. Use literal tokens or
+  `variantClasses`. Class names built at runtime do not make it into the CSS build.
+- Do not pass an invalid string from the URL straight to `resolvePeriod`. First narrow it with
+  `isRelativePeriod`.
+- Do not use `maskTime` as the final validation. The mask works during input, and normalization works after it.
 
-## Общие варианты
+## Shared variants
 
-Источник общих экспортов — `src/index.ts`; их реализация находится в
-`src/lib/cn.ts`, `src/hooks/useScrollLock.ts`, `src/hooks/useMediaQuery.ts`, `src/lib/variants.ts`,
-`src/lib/period.ts` и `src/lib/time.ts`.
+The source of the shared exports is `src/index.ts`. Their implementations are in `src/lib/cn.ts`,
+`src/hooks/useScrollLock.ts`, `src/hooks/useMediaQuery.ts`, `src/lib/variants.ts`, `src/lib/period.ts` and
+`src/lib/time.ts`.
 
-| Export                               | Назначение                                                                                                                                                |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cn(...inputs)`                      | `clsx` + настроенный Tailwind merge; последний конфликтующий класс побеждает, а `text-caption` не конфликтует с `text-fg-*`.                              |
-| `useScrollLock(isLocked)`            | Блокирует прокрутку `body`, компенсирует ширину scrollbar и считает вложенные замки на уровне модуля. Снимает замок при размонтировании.                  |
-| `useMediaQuery(query, serverValue?)` | Возвращает, выполняется ли медиазапрос сейчас, и перерисовывает компонент при изменении. До гидратации и без `matchMedia` отдаёт `serverValue` (`false`). |
-| `Size`                               | Общая шкала `sm \| md \| lg`; конкретный компонент может поддерживать её подмножество.                                                                    |
-| `Tone`                               | Семантический цвет `neutral \| accent \| success \| warning \| danger`, не имя оттенка.                                                                   |
-| `Variant`                            | Визуальная трактовка `solid \| soft \| outline \| ghost`.                                                                                                 |
-| `Numeric`                            | Начертание цифр: `tabular` — равной ширины. Ось компонентов `Text` и `Heading`, не отдельная утилита.                                                     |
-| `ToneAtoms`                          | Тип набора готовых Tailwind-классов для одного `Tone`.                                                                                                    |
-| `TONE_TOKENS`                        | Карта `Tone → ToneAtoms`; используйте вместо копирования строк токенов.                                                                                   |
-| `variantClasses(variant, tone)`      | Готовые классы пары variant/tone для собственного примитива.                                                                                              |
-| `INVALID_BORDER_CLASS`               | Готовый класс границы invalid-поля.                                                                                                                       |
+| Export                               | Purpose                                                                                                                                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cn(...inputs)`                      | `clsx` plus a configured Tailwind merge. The last conflicting class wins, and `text-caption` does not conflict with `text-fg-*`.                                           |
+| `useScrollLock(isLocked)`            | Locks the scroll of `body`, compensates for the scrollbar width and counts nested locks at the module level. Releases the lock on unmount.                                 |
+| `useMediaQuery(query, serverValue?)` | Returns whether the media query matches now, and re-renders the component when it changes. Before hydration, and without `matchMedia`, it returns `serverValue` (`false`). |
+| `Size`                               | The shared scale `sm \| md \| lg`. A specific component may support a subset of it.                                                                                        |
+| `Tone`                               | The semantic color `neutral \| accent \| success \| warning \| danger`, not a shade name.                                                                                  |
+| `Variant`                            | The visual treatment `solid \| soft \| outline \| ghost`.                                                                                                                  |
+| `Numeric`                            | The digit style: `tabular` gives digits of equal width. An axis of the `Text` and `Heading` components, not a separate utility.                                            |
+| `ToneAtoms`                          | The type of a set of ready Tailwind classes for one `Tone`.                                                                                                                |
+| `TONE_TOKENS`                        | The map `Tone → ToneAtoms`. Use it instead of copying token strings.                                                                                                       |
+| `variantClasses(variant, tone)`      | Ready classes for a variant and tone pair, for your own primitive.                                                                                                         |
+| `INVALID_BORDER_CLASS`               | The ready class for the border of an invalid field.                                                                                                                        |
 
-## Периоды
+## Periods
 
-| Export                                     | Назначение и ограничения                                                                                                                                             |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RELATIVE_PERIODS`, `RelativePeriod`       | Допустимые относительные значения: `7d`, `30d`, `90d`, `180d`, `365d`, `thisMonth`, `lastMonth`, `thisYear`.                                                         |
-| `isRelativePeriod(value)`                  | Runtime type guard для внешней строки, в том числе из URL.                                                                                                           |
-| `resolvePeriod(period, timeZone?, now?)`   | Возвращает включительные ISO-границы `DateRange`; по умолчанию использует локальную timezone. `now` нужен главным образом для детерминированных тестов.              |
-| `DateRange`                                | Пара `{ start, end }` в ISO `YYYY-MM-DD`, обе границы включительны.                                                                                                  |
-| `periodLength(range)`                      | Число дней включительно, вычисленное в UTC; диапазон, перевёрнутый вручную, даёт не меньше одного дня. Неразбираемая граница даёт `0` — «считать нечего».            |
-| `formatPeriodLength(range, messages?)`     | Подпись длины периода из каталога сообщений: `14 дней` или `14 days`; без `messages` — английский фолбэк. При неразбираемой границе — пустая строка, а не «0 дней».  |
-| `PeriodPreset`, `periodPresets(messages?)` | Тип и функция, которая собирает короткий набор стандартных пресетов для UI с подписями из каталога сообщений; без `messages` — английские подписи.                   |
-| `DEFAULT_PERIOD_PRESETS`                   | `@deprecated` с 2.0.0: неизменяемый набор пресетов с английскими подписями, локаль он не знает. Используйте `periodPresets(messages)`; удаляется в следующем мажоре. |
+| Export                                     | Purpose and limits                                                                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RELATIVE_PERIODS`, `RelativePeriod`       | The allowed relative values: `7d`, `30d`, `90d`, `180d`, `365d`, `thisMonth`, `lastMonth`, `thisYear`.                                                                                                   |
+| `isRelativePeriod(value)`                  | A runtime type guard for an external string, including one from the URL.                                                                                                                                 |
+| `resolvePeriod(period, timeZone?, now?)`   | Returns the inclusive ISO bounds of a `DateRange`. Uses the local time zone by default. `now` is needed mainly for deterministic tests.                                                                  |
+| `DateRange`                                | A pair `{ start, end }` in ISO `YYYY-MM-DD`. Both bounds are inclusive.                                                                                                                                  |
+| `periodLength(range)`                      | The number of days, inclusive, computed in UTC. A range that was reversed by hand gives at least one day. An unparseable bound gives `0`, which means "nothing to count".                                |
+| `formatPeriodLength(range, messages?)`     | The label for the range length, from the message catalog: `14 дней` or `14 days`. Without `messages`, the English fallback is used. With an unparseable bound, it returns an empty string, not `0 дней`. |
+| `PeriodPreset`, `periodPresets(messages?)` | A type and a function that builds a short set of standard presets for the UI, with labels from the message catalog. Without `messages`, the labels are in English.                                       |
+| `DEFAULT_PERIOD_PRESETS`                   | `@deprecated` since 2.0.0: an immutable set of presets with English labels. It does not know the locale. Use `periodPresets(messages)`. It is removed in the next major version.                         |
 
 ```ts
 const rawPeriod = searchParams.get("period");
@@ -82,54 +78,52 @@ const period = rawPeriod && isRelativePeriod(rawPeriod) ? rawPeriod : "30d";
 const range = resolvePeriod(period, "Europe/Moscow");
 ```
 
-## Время
+## Time
 
-| Export                            | Назначение                                                                                                                                                         |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `maskTime(value)`                 | Оставляет до четырёх цифр и добавляет `:` после первых двух: `2130 → 21:30`. Применяйте при каждом вводе.                                                          |
-| `normalizeTime(value, fallback?)` | Получает частичный ввод и возвращает значение `HH:MM` в допустимых границах; пустой ввод отдаёт `fallback`, по умолчанию `00:00`. Применяйте при завершении ввода. |
-| `formatDate(isoDate, locale?)`    | Форматирует ISO-день из `DatePicker` для отображения; документирован вместе с [DatePicker](../components/date-time/date-picker.md).                                |
-| `upcomingSlots(step, now)`        | Строит ближайшие слоты времени; документирован вместе с [TimePicker](../components/date-time/time-picker.md).                                                      |
+| Export                            | Purpose                                                                                                                                                               |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maskTime(value)`                 | Keeps up to four digits and adds `:` after the first two: `2130 → 21:30`. Apply it on every input.                                                                    |
+| `normalizeTime(value, fallback?)` | Takes partial input and returns an `HH:MM` value within valid bounds. Empty input returns `fallback`, which defaults to `00:00`. Apply it when the input is complete. |
+| `formatDate(isoDate, locale?)`    | Formats an ISO day from `DatePicker` for display. Documented together with [DatePicker](../components/date-time/date-picker.md).                                      |
+| `upcomingSlots(step, now)`        | Builds the nearest time slots. Documented together with [TimePicker](../components/date-time/time-picker.md).                                                         |
 
-## Маски ввода
+## Input masks
 
-Чистые функции движка маски. Экспортируются отдельно от компонента, потому что
-подготовить значение перед отправкой или проверить заполненность бывает нужно
-без поля на экране.
+These are pure functions of the mask engine. They are exported apart from the component, because you may need
+to prepare a value before you send it, or check whether it is filled in, without a field on the screen.
 
-| Export                  | Назначение                                                                 |
-| ----------------------- | -------------------------------------------------------------------------- |
-| `formatMask(raw, mask)` | Раскладывает сырое значение по маске. Хвост маски не показывается заранее. |
-| `unmask(display, mask)` | Достаёт сырое значение позиционно — литерал-цифра маски в него не утекает. |
-| `maskCapacity(mask)`    | Сколько символов значения вмещает маска: `+7 (999) 999-99-99` → 10.        |
+| Export                  | Purpose                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `formatMask(raw, mask)` | Lays out an unmasked value over the mask. The tail of the mask is not shown in advance.   |
+| `unmask(display, mask)` | Gets the unmasked value by position. A literal digit from the mask does not leak into it. |
+| `maskCapacity(mask)`    | How many value characters the mask holds: `+7 (999) 999-99-99` → 10.                      |
 
-Токены маски: `9` — цифра, `a` — буква, `*` — цифра или буква; остальное —
-литерал. Экранирования нет; подробности — в [MaskedInput](../components/inputs/masked-input.md).
+Mask tokens: `9` is a digit, `a` is a letter, `*` is a digit or a letter. Anything else is a literal. There is
+no escaping. Details are in [MaskedInput](../components/inputs/masked-input.md).
 
-## Темы
+## Themes
 
-Реестр осей оформления и контракт их применения. Компонента переключателя в
-ките **нет**: `Segmented` уже даёт нужную форму, а кнопка завязана на хранилище
-и вёрстку конкретного приложения. Обоснование —
-ADR-0020; готовый код
-двух вариантов переключателя — [рецепт в theming.md](../theming.md#переключатель-темы).
+The registry of theme axes and the contract for applying them. The kit has **no** theme switcher component.
+`Segmented` already gives the right shape, and a button depends on the storage and the markup of a specific
+app. The reasoning is in ADR-0020. The ready code for two variants of a switcher is in
+[the recipe in theming.md](../theming.md#theme-switcher).
 
-| Export                                                | Назначение                                                                                                      |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `UI_THEMES`, `UI_ACCENTS`, `UI_BRANDS`                | Три оси оформления списками. Сверяются со `styles.css` тестом — разойтись молча не могут.                       |
-| `normalizeTheme`, `normalizeAccent`, `normalizeBrand` | Приводят произвольное значение к допустимому. Принимают `unknown`: типичный источник — хранилище.               |
-| `applyTheme(root, prefs)`                             | Выставляет все три оси на элементе. Если ось не передана, она возвращается к умолчанию, а не сохраняет прежнее. |
-| `themeInitScript({ storageKey })`                     | **Строка** JS для раннего применения темы до первой отрисовки.                                                  |
-| `DEFAULT_THEME_PREFS`                                 | Состояние, в котором ни один оверлей не задан: `dark` / `blue` / `base`.                                        |
+| Export                                                | Purpose                                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `UI_THEMES`, `UI_ACCENTS`, `UI_BRANDS`                | The three theme axes as lists. A test checks them against `styles.css`, so they cannot drift apart silently.                   |
+| `normalizeTheme`, `normalizeAccent`, `normalizeBrand` | Turn any value into a valid one. They accept `unknown`. A typical source is storage.                                           |
+| `applyTheme(root, prefs)`                             | Sets all three axes on the element. If an axis is not passed, it returns to its default instead of keeping the previous value. |
+| `themeInitScript({ storageKey })`                     | A **string** of JS for applying the theme early, before the first render.                                                      |
+| `DEFAULT_THEME_PREFS`                                 | The state in which no overlay is set: `dark` / `blue` / `base`.                                                                |
 
-`base` **снимает** `data-brand`, а не пишет `data-brand="base"`: блока с таким
-именем в CSS нет, и оставленный атрибут выглядел бы работающим оверлеем.
+`base` **removes** `data-brand` instead of writing `data-brand="base"`. There is no CSS block with that name,
+and a leftover attribute would look like a working overlay.
 
-### Раннее применение темы
+### Applying the theme early
 
-Без раннего применения темы пользователь видит вспышку не той темы между отрисовкой и гидратацией.
-Кит отдаёт **строку**, а не выполняет код: куда её вставить, знает фреймворк
-потребителя, а не дизайн-система.
+Without early theme application, the user sees a flash of the wrong theme between the first render and
+hydration. The kit returns a **string** and does not run code. The consumer's framework knows where to insert
+it, not the design system.
 
 ```jsx
 import Script from "next/script";
@@ -142,92 +136,80 @@ import { themeInitScript } from "@olddevs/ui";
 />;
 ```
 
-Формат хранения — JSON-объект `{ theme, accent, brand }` по этому ключу. Пишет
-его потребитель (`applyTheme` сохранением не занимается), читает скрипт; любое
-поле может отсутствовать или врать: нормализация отработает, а битый JSON
-страницу не уронит.
+The storage format is a JSON object `{ theme, accent, brand }` under this key. The consumer writes it
+(`applyTheme` does not save anything), and the script reads it. Any field can be missing or hold a wrong value.
+Normalization still runs, and broken JSON does not break the page.
 
-## Состояние таблицы
+## Table state
 
-`useTableState` описывает форму состояния таблицы `DataTable` и связи между его
-частями. Хук **ничего не хранит вне React** и ни на что не подписывается: кит
-даёт форму, а владеет ею потребитель
+`useTableState` describes the shape of the `DataTable` state and the links between its parts. The hook **stores
+nothing outside React** and subscribes to nothing. The kit provides the shape, and the consumer owns it
 (ADR-0023).
 
-| Export          | Назначение                                                                              |
-| --------------- | --------------------------------------------------------------------------------------- |
-| `useTableState` | `{ state, set, reset }`. Одна функция обновления вместо десяти обработчиков — см. ниже. |
-| `TableState`    | Сортировка, страница и её размер, выделение, раскрытие, фильтры, колонки, плотность.    |
-| `TableFilter`   | Применённый фильтр: `id`, `field`, `value`, необязательные `label` и `to`.              |
+| Export          | Purpose                                                                          |
+| --------------- | -------------------------------------------------------------------------------- |
+| `useTableState` | `{ state, set, reset }`. One update function instead of ten handlers. See below. |
+| `TableState`    | Sorting, the page and its size, selection, expansion, filters, columns, density. |
+| `TableFilter`   | An applied filter: `id`, `field`, `value`, and optional `label` and `to`.        |
 
-### Инварианты, ради которых хук существует
+### Invariants the hook exists to keep
 
-- смена **фильтров, сортировки или размера страницы сбрасывает страницу** на первую. Иначе
-  пользователь смотрит на четвёртую страницу выборки из десяти строк и читает
-  пустоту как «ничего не найдено»;
-- **выделение при этом не сбрасывается.** Обратное выглядит аккуратнее и срывает
-  массовое действие ровно тогда, когда оно нужнее всего;
-- плотность и видимость колонок страницу **не трогают**: выборку сужает фильтр,
-  а не оформление;
-- явная `page` в том же вызове сброс отменяет — так восстанавливается состояние
-  из адреса, целиком и за один раз.
+- changing **filters, sorting or the page size resets the page** to the first one. Otherwise the user looks at
+  page four of ten filtered rows, and reads the empty space as "nothing found";
+- **selection is not reset.** The reverse looks tidier, but it breaks a bulk action exactly when that action is
+  needed most;
+- density and column visibility do **not** touch the page. A filter narrows the rows, not the look;
+- an explicit `page` in the same call cancels the reset. This is how the state is restored from the address,
+  in full and in one go.
 
-Обновление идёт через одну функцию, потому что инварианты обязаны срабатывать
-независимо от того, что именно поменяли; разложенные по отдельным обработчикам,
-они разъехались бы.
+The update goes through one function because the invariants must hold no matter what changed. Split into
+separate handlers, they would drift apart.
 
-### Перенос в URL
+### Moving to the URL
 
-| Export                 | Назначение                                                   |
-| ---------------------- | ------------------------------------------------------------ |
-| `tableStateToParams`   | Состояние → `URLSearchParams`. Умолчания не пишутся.         |
-| `tableStateFromParams` | `URLSearchParams` → часть состояния. Мусор не роняет разбор. |
-| `DEFAULT_TABLE_STATE`  | Умолчания, кроме плотности: её даёт провайдер.               |
+| Export                 | Purpose                                                                    |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `tableStateToParams`   | State to `URLSearchParams`. Defaults are not written.                      |
+| `tableStateFromParams` | `URLSearchParams` to part of the state. Junk input does not break parsing. |
+| `DEFAULT_TABLE_STATE`  | Defaults, except density: the provider sets it.                            |
 
-Функции **чистые и без `"use client"`**: разбор URL нужен и на сервере, ведь в
-Next.js состояние восстанавливается из `searchParams` до отрисовки. Применять
-их к URL — дело приложения: у разных маршрутизаторов разные правила записи
-параметров (`replace` или `push`, кодирование массивов, `basePath`), и кит,
-взявшийся их угадывать, ошибётся молча.
+The functions are **pure and have no `"use client"`**. URL parsing is needed on the server too, because in
+Next.js the state is restored from `searchParams` before rendering. Applying them to the URL is the app's job.
+Routers differ in how they write parameters (`replace` or `push`, array encoding, `basePath`). A kit that tried
+to guess them would get it wrong silently.
 
 ```tsx
 const { state, set } = useTableState(tableStateFromParams(searchParams));
 
-// после изменения — записать обратно тем способом, каким умеет ваш роутер
+// after a change, write it back the way your router supports
 router.replace(`?${tableStateToParams(state)}`);
 ```
 
-**Выделение и раскрытие в URL не идут**, хотя в исходной спецификации выделение
-входило в состояние таблицы. Причины две: список ключей ничем не ограничен по длине, и ссылка с
-выделением, открытая назавтра, отмечает записи, которых уже нет. Выделение —
-состояние сеанса, а не URL.
+**Selection and expansion are not kept in the URL**, although the original spec included selection in the table
+state. There are two reasons. The list of keys has no length limit. And a link with a selection, opened the next
+day, marks records that no longer exist. Selection is session state, not URL state.
 
-**Восстановление кладётся в хук целиком**, одним вызовом `set`: инвариант
-«сужение выборки сбрасывает страницу» отменяется явной страницей в том же вызове, иначе
-ссылка всегда открывала бы первую.
+The restored state is passed to the hook as a whole, in one `set` call. The invariant "narrowing the filtered rows
+resets the page" is cancelled by an explicit page in the same call. Otherwise a link would always open the first
+page.
 
-### У токена фильтра свой `id`
+### A filter tag has its own `id`
 
-У фильтра свой `id`, а не пара «поле + значение» и не подпись. Два фильтра по
-одному полю дают одинаковые на вид токены, и по ним не понять, какой из двух
-снимать; подпись же локализуется и обрезается.
+A filter has its own `id`, not a pair of "field + value" and not a label. Two filters on one field give tags
+that look the same, and you cannot tell which of the two to remove. A label, however, is localized and truncated.
 
-Операторов в модели нет намеренно: без `to` токен означает равенство, с `to` —
-диапазон `value…to`, любая граница которого может быть пустой строкой («от 50»,
-«до 100»). Различие несёт само наличие ключа `to`, поэтому проверять его надо
-через `!== undefined`
-(ADR-0063). `contains`
-и `in` можно добавить, когда они понадобятся. В URL `to` едет пятой частью
-токена; ссылки из трёх и четырёх частей читаются как раньше. Как собрать
-диапазон в интерфейсе — [FilterBar](../components/table/filter-bar.md).
+The model has no operators on purpose. Without `to`, the tag means equality. With `to`, it means the range
+`value…to`, where either bound may be an empty string ("from 50", "up to 100"). The presence of the `to` key
+carries the difference, so check it with `!== undefined` (ADR-0063). `contains` and `in` can be added when they
+are needed. In the URL, `to` is the fifth part of the tag. Links with three and four parts are read as before.
+For how to build a range in the UI, see [FilterBar](../components/table/filter-bar.md).
 
-## Константы, классы и публичные типы: где они описаны
+## Constants, classes and public types: where they are documented
 
-Это публичные exports, но не самостоятельные компоненты. Их описывает страница
-семейства, которому они принадлежат, чтобы AI не воспринимал класс как
-универсальный API:
+These are public exports, but not standalone components. The page of the component family they belong to describes them,
+so that AI does not treat a class as a general-purpose API:
 
-| Exports                                                                                                                                       | Документация                                                  |
+| Exports                                                                                                                                       | Documentation                                                 |
 | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `MENU_PANEL_CLASS`, `MENU_ITEM_CLASS`, `MENU_ITEM_ICON_CLASS`, `MENU_ITEM_SHORTCUT_CLASS`, `MENU_SECTION_LABEL_CLASS`, `MENU_SEPARATOR_CLASS` | [Menu](../components/overlays/menu.md)                        |
 | `NAV_BUTTON_CLASS`, `WEEKDAY_CELL_CLASS`                                                                                                      | [Calendar](../components/date-time/calendar.md)               |
@@ -236,17 +218,15 @@ router.replace(`?${tableStateToParams(state)}`);
 | `formatDate`                                                                                                                                  | [DatePicker](../components/date-time/date-picker.md)          |
 | `upcomingSlots`                                                                                                                               | [TimePicker](../components/date-time/time-picker.md)          |
 
-Каждый `*Props` и предметный тип, экспортированный с компонентом (например
-`TableProps`, `CommandItem`, `SelectItem`, `KeyboardSelection` или `DrawerSide`),
-остаётся частью его public API и описывается на странице этого семейства.
-[Каталог компонентов](../components/index.md) связывает public exports со
-страницами семейств; `src/index.ts` — окончательный источник всех экспортов.
+Each `*Props` type and each component-specific type exported with a component (for example `TableProps`,
+`CommandItem`, `SelectItem`, `KeyboardSelection` or `DrawerSide`) stays part of that component's public API. It
+is described on the page of its component family. The [component catalog](../components/index.md) links the public exports
+to the component family pages. `src/index.ts` is the final source for all exports.
 
-## Связанные исходники и проверка
+## Related sources and checks
 
-- Публичная поверхность: `src/index.ts`.
-- Реализации: `src/lib/cn.ts`, `src/hooks/useScrollLock.ts`,
-  `src/hooks/useMediaQuery.ts`, `src/lib/variants.ts`, `src/lib/period.ts`, `src/lib/time.ts`,
-  `src/lib/themes.ts`, `src/lib/table-state.ts`, `src/hooks/useTableState.ts`.
-- `maskTime` и `normalizeTime` также используются в
-  `src/components/date-time/DateTimePicker.tsx`.
+- Public surface: `src/index.ts`.
+- Implementations: `src/lib/cn.ts`, `src/hooks/useScrollLock.ts`, `src/hooks/useMediaQuery.ts`,
+  `src/lib/variants.ts`, `src/lib/period.ts`, `src/lib/time.ts`, `src/lib/themes.ts`, `src/lib/table-state.ts`,
+  `src/hooks/useTableState.ts`.
+- `maskTime` and `normalizeTime` are also used in `src/components/date-time/DateTimePicker.tsx`.

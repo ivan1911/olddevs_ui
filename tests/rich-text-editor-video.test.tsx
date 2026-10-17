@@ -20,12 +20,12 @@ import { PRESETS, TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 /**
- * Видео по ссылке (OLDSUI-281, ADR-0071): Инструменты `youtube` и `twitch`.
+ * Video by link (OLDSUI-281, ADR-0071): the `youtube` and `twitch` Tools.
  *
- * Через публичный `RichTextEditor` и `sanitizeRichText`: вставка — Меню вставки,
- * вставка из буфера и `Enter`, результат — выходной HTML и Markdown Хэндла.
- * Каретка ставится командами движка: jsdom не умеет ввода в `contenteditable`.
- * Чанк видео ленивый, поэтому файл прогревает его один раз.
+ * Through the public `RichTextEditor` and `sanitizeRichText`: insertion goes through the
+ * Slash menu, paste from the clipboard, and `Enter`; the result is the output HTML and the
+ * Handle's Markdown. The caret is placed by engine commands: jsdom cannot handle input in
+ * `contenteditable`. The video chunk is lazy, so this file warms it up once.
  */
 
 const purify = createDOMPurify(window);
@@ -35,13 +35,13 @@ const TW = "https://www.twitch.tv/videos/1234567890";
 const BOTH = ["youtube", "twitch"] as const;
 const FULL_PLUS_VIDEO = [...PRESETS.full, ...BOTH];
 
-/** Блок так, как его пишет Редактор. */
+/** The block as the Editor writes it. */
 const escaped = (value: string) => value.replace(/&/g, "&amp;");
 const video = (provider: string, src: string) =>
   `<div data-block="video" data-provider="${provider}" data-src="${escaped(src)}">` +
   `<a href="${escaped(src)}" rel="noopener noreferrer">${escaped(src)}</a></div>`;
 
-// Ленивые `codeBlock`, `table` и видео: Редактор готов в `render` после загрузки чанков.
+// Lazy `codeBlock`, `table`, and video: the Editor is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -71,13 +71,13 @@ describe("the document form and the round trip", () => {
   });
 });
 
-// ── Помощники ────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────
 
 function focusField() {
   act(() => screen.getByRole("textbox", { name: "Body" }).focus());
 }
 
-/** Каретка — в конец текста `text` (или в его начало). */
+/** Places the caret at the end of the text `text` (or at its start). */
 function caretIn(editor: Editor, text: string, at: "end" | "start" = "end") {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -93,14 +93,14 @@ function type(editor: Editor, text: string) {
   act(() => void editor.commands.insertContent(text));
 }
 
-/** `keydown` на документе; `true` — Редактор отпустил клавишу браузеру. */
+/** `keydown` on the document; `true` means the Editor let the browser handle the key. */
 function press(editor: Editor, key: string, init: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
   act(() => void editor.view.dom.dispatchEvent(event));
   return !event.defaultPrevented;
 }
 
-/** Вставка текста из буфера: событие `paste` с `clipboardData`, как у браузера. */
+/** Pastes text from the clipboard: a `paste` event with `clipboardData`, as in the browser. */
 function pasteText(editor: Editor, text: string) {
   const event = new Event("paste", { bubbles: true, cancelable: true }) as ClipboardEvent;
   Object.defineProperty(event, "clipboardData", {
@@ -116,7 +116,7 @@ function pasteHtml(editor: Editor, html: string) {
 
 const link = (href: string) => `<a href="${href}" rel="noopener noreferrer">${href}</a>`;
 
-// ── Без Инструмента блок становится ссылкой ────────────────────────────────
+// ── Without the Tool, the block becomes a link ────────────────────────────
 
 describe("a video block in value without its tool", () => {
   const value = `<p>before</p>${video("youtube", YT)}<p>after</p>`;
@@ -143,7 +143,7 @@ describe("a video block in value without its tool", () => {
   });
 
   describe("the same document as a JSON envelope", () => {
-    /** Конверт Редактора, у которого есть оба сервиса: в нём лежат узлы `video`. */
+    /** Editor envelope that has both services: it holds the `video` nodes. */
     const envelope = () => {
       const source = renderEditor({
         defaultValue: `<p>before</p>${video("youtube", YT)}${video("twitch", TW)}<p>after</p>`,
@@ -220,7 +220,7 @@ describe("a video block in value without its tool", () => {
   });
 });
 
-// ── Пресеты: вне full и basic ──────────────────────────────────────────────
+// ── Presets: outside full and basic ────────────────────────────────────────
 
 describe("out of the presets", () => {
   test("neither full nor basic names the video tools", () => {
@@ -245,7 +245,7 @@ describe("out of the presets", () => {
   });
 });
 
-// ── Меню вставки: один пункт «Видео» ──────────────────────────────────────
+// ── Slash menu: one "Video" item ──────────────────────────────────────────
 
 async function openVideoPopover(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Insert block" }));
@@ -343,7 +343,7 @@ describe("the insert menu", () => {
 
     expect(await screen.findByText("Enter a link to a YouTube / Twitch video")).toBeTruthy();
     expect(editor.getHTML()).toBe("<p>Intro</p>");
-    // Поповер остался открытым, ошибка уходит с правкой.
+    // The popover stays open, and the error clears with the edit.
     await user.type(field, "x");
     expect(screen.queryByText(/Enter a link to a/)).toBeNull();
   });
@@ -378,7 +378,7 @@ describe("the insert menu", () => {
   });
 });
 
-// ── Голая ссылка в пустом абзаце ──────────────────────────────────────────
+// ── Bare link in an empty paragraph ───────────────────────────────────────
 
 describe("a bare video link", () => {
   test("pasted into an empty paragraph becomes the block", () => {
@@ -390,7 +390,7 @@ describe("a bare video link", () => {
     act(() => void editor.commands.setTextSelection(editor.state.doc.content.size - 1));
     expect(pasteText(editor, `  ${YT}\n`)).toBe(true);
     expect(editor.getHTML()).toBe(`<p>Intro</p>${video("youtube", YT)}<p></p>`);
-    // Одна отмена возвращает пустой абзац.
+    // One undo restores the empty paragraph.
     act(() => void editor.commands.undo());
     expect(editor.getHTML()).toBe("<p>Intro</p><p></p>");
   });
@@ -444,7 +444,8 @@ describe("a bare video link", () => {
     expect(press(editor, "Enter")).toBe(false);
     expect(editor.getHTML()).toBe(`<p>Intro</p>${video("youtube", YT)}<p></p>`);
     expect(editor.state.selection.$from.parent.type.name).toBe("paragraph");
-    // Следующий Enter — уже обычный перенос в пустом абзаце, не вторая вставка.
+    // The next Enter is already an ordinary line break in the empty paragraph, not a second
+    // insertion.
     type(editor, "text");
     expect(editor.getHTML()).toBe(`<p>Intro</p>${video("youtube", YT)}<p>text</p>`);
   });
@@ -478,7 +479,7 @@ describe("a bare video link", () => {
   });
 });
 
-// ── HTML расширений Tiptap ────────────────────────────────────────────────
+// ── HTML of Tiptap extensions ─────────────────────────────────────────────
 
 describe("the HTML of the Tiptap extensions", () => {
   const youtubeNode =
@@ -565,9 +566,12 @@ describe("Markdown", () => {
   });
 });
 
-// ── Плеер сразу (умолчание) ───────────────────────────────────────────────
+// ── Player right away (default) ───────────────────────────────────────────
 
-/** `autoload: false` у обоих сервисов: прежнее поведение, заглушка до щелчка (OLDSUI-287). */
+/**
+ * `autoload: false` on both services: the previous behavior, a placeholder until a click
+ * (OLDSUI-287).
+ */
 const CLICK_TO_PLAY = [
   tool("youtube", { autoload: false }),
   tool("twitch", { autoload: false }),
@@ -577,7 +581,7 @@ describe("the player at once (autoload, the default)", () => {
   test("the node view is the iframe: nocookie src, title, lazy loading, allow, referrerpolicy, no placeholder", () => {
     renderEditor({ defaultValue: video("youtube", YT) });
     const frame = document.querySelector("iframe")!;
-    // Без автозапуска: плеер стоит на странице, а не включается сам.
+    // No autoload: the player sits on the page and does not start on its own.
     expect(frame.getAttribute("src")).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
     expect(frame.getAttribute("title")).toBe("YouTube video");
     expect(frame.getAttribute("loading")).toBe("lazy");
@@ -585,7 +589,7 @@ describe("the player at once (autoload, the default)", () => {
     expect(frame.getAttribute("referrerpolicy")).toBe("strict-origin-when-cross-origin");
     expect(frame.hasAttribute("allowfullscreen")).toBe(true);
     expect(screen.queryByRole("button", { name: /Play/ })).toBeNull();
-    // Фокус не уходит в плеер сам: страница только что открылась.
+    // Focus does not move into the player on its own: the page has just opened.
     expect(document.activeElement).not.toBe(frame);
   });
 
@@ -610,7 +614,7 @@ describe("the player at once (autoload, the default)", () => {
 
   test("the document keeps the link: no player, no parent, no iframe in the value", async () => {
     const { editor } = renderEditor({ defaultValue: video("twitch", TW) + video("youtube", YT) });
-    // Вид узла рисуется порталом после первого прохода: ждём второй блок.
+    // The node view is drawn by a portal after the first pass: wait for the second block.
     await waitFor(() => expect(document.querySelectorAll("iframe")).toHaveLength(2));
     expect(editor.getHTML()).toBe(video("twitch", TW) + video("youtube", YT));
   });
@@ -676,7 +680,7 @@ describe("autoload: false is click-to-play", () => {
     expect(frame.getAttribute("referrerpolicy")).toBe("strict-origin-when-cross-origin");
     expect(frame.hasAttribute("allowfullscreen")).toBe(true);
     expect(screen.queryByRole("button", { name: /Play/ })).toBeNull();
-    // Фокус перешёл с исчезнувшей кнопки в плеер.
+    // Focus moved from the button that disappeared to the player.
     expect(document.activeElement).toBe(frame);
   });
 
@@ -790,12 +794,12 @@ describe("the player does not break editing", () => {
     renderEditor({ defaultValue: video("youtube", YT) });
     const wrapper = document.querySelector<HTMLElement>("[data-video-node]")!;
     expect(wrapper.contains(document.querySelector("iframe"))).toBe(true);
-    // Внутри блока нет ничего, куда ProseMirror поставил бы каретку.
+    // There is nothing inside the block where ProseMirror would put the caret.
     expect(wrapper.querySelector("[contenteditable=true]")).toBeNull();
   });
 });
 
-// ── Атом ─────────────────────────────────────────────────────────────────
+// ── Atom ─────────────────────────────────────────────────────────────────
 
 describe("the block is an atom", () => {
   test("it is selected as a whole and deleted by Backspace in one step", () => {

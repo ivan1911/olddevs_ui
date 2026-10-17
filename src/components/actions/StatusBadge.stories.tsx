@@ -14,15 +14,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Один бейдж с живыми контролами — покрутить пропсы. */
+/** A single badge with live controls. Tweak the props. */
 export const Playground: Story = {
   args: { tone: "success", size: "sm", dot: true },
 };
 
 /**
- * Матрица тон × размер, с точкой и без. Смысл витрины именно в ней: одиночный
- * бейдж не покажет, что `warning` на приглушённой подложке в светлой теме
- * теряет контраст, а `neutral` без точки перестаёт читаться как статус.
+ * Tone × size matrix, with and without a dot. This is the point of the showcase: a single
+ * badge won't show that `warning` on a muted background loses contrast in the light theme,
+ * and that a `neutral` without a dot stops reading as a status.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -70,7 +70,7 @@ export const Matrix: Story = {
   ),
 };
 
-/** Длина подписи: бейдж не переносится (`whitespace-nowrap`) и тянется в ширину. */
+/** Label length: the badge does not wrap (`whitespace-nowrap`) and stretches to fit its width. */
 export const LabelLength: Story = {
   parameters: { layout: "padded" },
   render: () => (

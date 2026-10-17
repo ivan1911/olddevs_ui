@@ -6,7 +6,7 @@ import { devError } from "../../../lib/dev-warn.js";
 import type { InsertItem } from "../../core/insertItems.js";
 import type { ToolDescriptor, ToolEngineContext } from "../../core/toolDescriptor.js";
 import { loaded } from "../../core/toolLoader.js";
-// Только тип: статический импорт модуля втянул бы чанк в «старт».
+// Type only: a static import of the module would pull the chunk into the start bundle.
 import type * as VideoChunkModule from "./videoChunk.js";
 import { videoLinkOf } from "./videoLink.js";
 import { VIDEO_CHECKS, VIDEO_DEFAULTS, type VideoAutoload } from "./videoOptions.js";
@@ -17,16 +17,16 @@ type VideoChunk = typeof VideoChunkModule;
 const loadVideo = () => import("./videoChunk.js");
 
 /**
- * Чанк видео, если он уже загружен. Поповер пункта «Видео» рисуется только при
- * живом движке, а движок с видео создаётся после загрузчика, — поэтому там, где
- * чанк нужен, он уже есть.
+ * The video chunk, if it is already loaded. The popover of the "Video" Insert item is drawn only
+ * while the engine is alive, and an engine with video is created after the loader, so wherever
+ * the chunk is needed, it is already there.
  */
 const videoChunk = (): VideoChunk | undefined => loaded(loadVideo) as VideoChunk | undefined;
 
 /*
-  Форма блока видео для Скелета: тот же узел с тем же разбором `div[data-block]`
-  и той же разметкой (`div > a`), но без вида с плеером, плагинов вставки и
-  Markdown. Скелет показывает ссылку — то же, что видит читатель без JS.
+  The shape of the video Block for the Skeleton: the same node with the same parsing of
+  `div[data-block]` and the same markup (`div > a`), but without the player view, the paste
+  plugins, or Markdown. The Skeleton shows the link, the same as a reader without JS sees.
 */
 const VideoShape = Node.create({
   name: VIDEO_BLOCK,
@@ -40,7 +40,7 @@ const VideoShape = Node.create({
     {
       tag: `div[data-block="${VIDEO_BLOCK}"]`,
       getAttrs: (element) => {
-        // Адрес в Документе уже канонический (`videoLinkOf`): Скелету его переписывать незачем.
+        // The address in the Document is already canonical (`videoLinkOf`), so the Skeleton has no reason to rewrite it.
         const link = videoLinkOf(
           element.getAttribute("data-provider"),
           element.getAttribute("data-src") ?? ""
@@ -60,29 +60,28 @@ const VideoShape = Node.create({
   ],
 });
 
-/** Сервисы, включённые в Редакторе: имена Инструментов `youtube` и `twitch` набора. */
+/** The services enabled in the Editor: the `youtube` and `twitch` Tool names in the set. */
 const providersOf = (has: ToolEngineContext["has"]): VideoProvider[] =>
   VIDEO_PROVIDERS.filter((provider) => has(provider));
 
 /**
- * Грузится ли плеер сразу, по сервисам набора: Опция `autoload` каждого Инструмента
- * читается из его Опций (`optionsOf`), а у сервиса, которого в наборе нет, — умолчание.
+ * Whether the player loads at once, per service in the set: each Tool's `autoload` Option is read
+ * from its Options (`optionsOf`), and a service that is not in the set gets the default.
  */
 const autoloadOf = (optionsOf: ToolEngineContext["optionsOf"]): VideoAutoload => ({
   youtube: optionsOf("youtube")?.autoload ?? VIDEO_DEFAULTS.autoload,
   twitch: optionsOf("twitch")?.autoload ?? VIDEO_DEFAULTS.autoload,
 });
 
-/** Узлы по набору сервисов и их Опциям: один и тот же объект у обоих Инструментов (см. `engineOf`). */
+/** Nodes by the set of services and their Options: the same object for both Tools (see `engineOf`). */
 const NODES = new Map<string, ReturnType<VideoChunk["createVideoNode"]>>();
 
 /**
- * Узел `video` общий у двух Инструментов, а Extensions с тем же именем дважды не
- * регистрируются. Оба описания отдают один и тот же объект: набор сервисов узел
- * берёт из `has`, то есть из того, что включено на самом деле, а Опции `autoload` —
- * из Опций обоих Инструментов (`optionsOf`: `engine` получает только свои, а узел
- * один). По набору и Опциям узел и запоминается. Дубль по ссылке
- * `createEditorExtensions` убирает.
+ * The `video` node is shared by two Tools, and Extensions with the same name are not registered
+ * twice. Both descriptions return the same object: the node takes the set of services from `has`,
+ * that is, from what is actually enabled, and the `autoload` Options from the Options of both
+ * Tools (`optionsOf`: `engine` gets only its own, but the node is one). The node is remembered by
+ * the set and the Options. `createEditorExtensions` removes the duplicate by reference.
  */
 const engineOf = ({ has, optionsOf }: ToolEngineContext) => {
   const providers = providersOf(has);
@@ -90,8 +89,8 @@ const engineOf = ({ has, optionsOf }: ToolEngineContext) => {
   const key = `${providers.join()}:${autoload.youtube}:${autoload.twitch}`;
   let node = NODES.get(key);
   if (!node) {
-    // Движок собирается после загрузчика (`load`), так что чанк здесь есть. Нет — Схема
-    // остаётся без узла, и блоки видео читаются ссылками, как без Инструмента.
+    // The engine is built after the loader (`load`), so the chunk is there. If not, the Schema
+    // stays without the node, and video Blocks are read as links, as they are without the Tool.
     const chunk = videoChunk();
     if (!chunk) {
       devError("RichTextEditor: the video chunk is not loaded when the engine is built");
@@ -103,11 +102,10 @@ const engineOf = ({ has, optionsOf }: ToolEngineContext) => {
 };
 
 /**
- * Единственный пункт «Видео» Меню вставки на оба Инструмента (ADR-0071, п. 6).
- * Он стоит в описании каждого, а `insertItemsFor` склеивает записи с одним `id` в
- * одну и сводит их слова для поиска: слово «twitch» находит пункт, только если
- * Twitch включён. Поповер — поле ссылки: сервис определяется по адресу среди
- * включённых.
+ * The single "Video" Insert item for both Tools (ADR-0071, item 6). It sits in each description,
+ * and `insertItemsFor` merges the entries with one `id` into one item and merges their search
+ * words: the word "twitch" finds the item only if Twitch is enabled. The popover is the link
+ * field: the service is determined by the address, among the enabled ones.
  */
 const videoItem = (alias: VideoProvider): InsertItem => ({
   id: VIDEO_BLOCK,
@@ -115,7 +113,7 @@ const videoItem = (alias: VideoProvider): InsertItem => ({
   label: (m) => m.video,
   icon: VideoIcon,
   aliases: [alias, "embed", "player"],
-  // Пункт с поповером `run` не зовёт: `applyInsertItem` открывает поповер.
+  // An item with a popover does not call `run`: `applyInsertItem` opens the popover.
   run: (chain) => chain,
   popover: ({ editor, close }) => {
     const VideoForm = videoChunk()?.VideoForm;
@@ -124,8 +122,8 @@ const videoItem = (alias: VideoProvider): InsertItem => ({
 });
 
 /**
- * Описание Инструмента сервиса. Оба — одно и то же, кроме имени и слова поиска
- * пункта: блок общий, а сервис решает набор `tools`.
+ * The Tool description for a service. Both are the same, except for the name and the item's
+ * search word: the Block is shared, and the `tools` set decides the service.
  */
 const videoTool = (name: VideoProvider): ToolDescriptor => ({
   name,
@@ -140,14 +138,14 @@ const videoTool = (name: VideoProvider): ToolDescriptor => ({
 });
 
 /**
- * Видео по ссылке на описании Инструментов (ADR-0071, ADR-0048: заказчика при
- * выпуске не было, API по расширениям Youtube и Twitch из Tiptap). Расширения
- * Tiptap не подключаются: распознавание ссылок и адрес плеера — код кита
- * (`videoLink.ts`). Вне пресетов: включаются явной записью в `tools`.
+ * Video by link, in the Tool descriptions (ADR-0071; ADR-0048: there was no client for it at
+ * release, and the API follows the Youtube and Twitch extensions from Tiptap). The Tiptap
+ * extensions are not connected: link recognition and the player address are the kit's own code
+ * (`videoLink.ts`). Outside the presets: they are enabled by an explicit entry in `tools`.
  *
- * Блок общий — `video`; какие сервисы разрешены, решает набор `tools`. Extensions
- * ленивые (чанк `videoChunk.ts`), как у таблицы и блока кода: Скелет показывает
- * ссылку, пока чанк идёт.
+ * The Block is shared, `video`; the `tools` set decides which services are allowed. The
+ * Extensions are lazy (the `videoChunk.ts` chunk), as the table's and the code Block's are: the
+ * Skeleton shows the link while the chunk loads.
  */
 export const YOUTUBE_TOOL: ToolDescriptor = videoTool("youtube");
 

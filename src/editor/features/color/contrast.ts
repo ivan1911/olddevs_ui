@@ -1,21 +1,20 @@
 /**
- * Контраст WCAG 2.x для предупреждения о произвольном цвете.
+ * WCAG 2.x contrast for the custom color warning.
  *
- * ЗАЧЕМ СВОЯ ФОРМУЛА, КОГДА В ПАКЕТЕ ЕСТЬ `scripts/contrast.mjs`. Скрипт — гейт
- * сборки над токенами темы, он живёт в Node и в пакет не входит. Здесь тот же
- * расчёт нужен в браузере, над ОДНИМ цветом автора, поэтому две функции — разбор
- * шестнадцатеричной записи и отношение яркостей — без зависимостей. `react-aria`
- * умеет то же, но это цветовая подсистема на 61 кБ gzip (ADR-0038), и тащить её
- * в Редактор ради двух умножений незачем.
+ * WHY OUR OWN FORMULA WHEN THE PACKAGE HAS `scripts/contrast.mjs`. The script is the build gate over
+ * the theme tokens, and it lives in Node and is not part of the package. Here the same calculation
+ * is needed in the browser, over ONE custom color, so the two functions (parsing the hex notation
+ * and the luminance ratio) have no dependencies. `react-aria` can do the same, but that is a color
+ * subsystem of 61 kB gzip (ADR-0038), and pulling it into the Editor for two multiplications makes
+ * no sense.
  *
- * Принимает только `#rgb` и `#rrggbb` (значения токенов темы — всегда
- * шестнадцатеричные и непрозрачные). Остальное — `NaN`: «измерить нельзя»,
- * а не «контраст плохой», и предупреждение тогда не показывается.
+ * Accepts only `#rgb` and `#rrggbb` (theme token values are always hex and opaque). Anything else
+ * gives `NaN`: "cannot be measured", not "poor contrast", and then no warning is shown.
  *
- * Модуль серверно-безопасен: чистые функции, без импортов.
+ * The module is safe on the server: pure functions, no imports.
  */
 
-/** Порог WCAG 1.4.3 для обычного текста. */
+/** WCAG 1.4.3 threshold for regular text. */
 export const CONTRAST_TEXT = 4.5;
 
 function channels(color: string): [number, number, number] | null {
@@ -25,7 +24,7 @@ function channels(color: string): [number, number, number] | null {
   return [0, 2, 4].map((i) => parseInt(digits.slice(i, i + 2), 16)) as [number, number, number];
 }
 
-/** Относительная яркость sRGB по WCAG 2.x. */
+/** Relative luminance of an sRGB color per WCAG 2.x. */
 function luminance([r, g, b]: [number, number, number]): number {
   const linear = (value: number) => {
     const c = value / 255;
@@ -34,7 +33,7 @@ function luminance([r, g, b]: [number, number, number]): number {
   return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
 }
 
-/** Отношение контраста двух цветов, от 1 до 21; `NaN`, если цвет не разобран. */
+/** Contrast ratio of two colors, from 1 to 21; `NaN` if a color cannot be parsed. */
 export function contrastRatio(first: string, second: string): number {
   const a = channels(first);
   const b = channels(second);
@@ -44,8 +43,8 @@ export function contrastRatio(first: string, second: string): number {
 }
 
 /**
- * Отношение для показа человеку: усечено, а не округлено. «4.5:1 — ниже 4.5:1»
- * читалось бы как ошибка, а 4.49 при округлении именно так и выглядит.
+ * The ratio as shown to a person: truncated, not rounded. Rounding 4.49 gives "4.5", and "4.5:1 is
+ * below 4.5:1" would read as a bug.
  */
 export function formatRatio(ratio: number): string {
   return (Math.floor(ratio * 10) / 10).toFixed(1);

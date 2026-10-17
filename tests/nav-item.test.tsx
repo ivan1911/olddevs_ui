@@ -7,9 +7,10 @@ import { NavCollapsedProvider, NavItem } from "../src/components/app-shell/NavIt
 afterEach(cleanup);
 
 /**
- * `TooltipProvider` обязателен: в схлопнутом режиме пункт разворачивает
- * подсказку, а Radix без провайдера бросает. Это не деталь теста, а требование
- * к потребителю — записано в докстроке компонента и на странице документации.
+ * `TooltipProvider` is required: in collapsed mode the item expands a tooltip,
+ * and Radix throws without a provider. This is not a detail of the test but a
+ * requirement for the consumer, written in the component's JSDoc and on the
+ * documentation page.
  */
 const collapsed = (ui: React.ReactNode) =>
   render(
@@ -35,10 +36,10 @@ describe("NavItem", () => {
     render(<NavItem label="Archive" href="/archive" aria-disabled="true" />);
     const link = screen.getByRole("link", { name: "Archive" });
 
-    // В jsdom нет вычисленных стилей Tailwind, поэтому проверяются классы:
-    // без них пункт с `aria-disabled` выглядел полностью рабочим — `:disabled`
-    // на ссылке не бывает, а вид был завязан только на `active`. Правило то же,
-    // что у `Button` (`lib/button.ts`).
+    // jsdom has no computed Tailwind styles, so the classes are checked instead.
+    // Without them an item with `aria-disabled` looked fully active: `:disabled`
+    // does not exist on a link, and the look depended only on `active`. The rule
+    // is the same as for `Button` (`lib/button.ts`).
     expect(link.getAttribute("aria-disabled")).toBe("true");
     expect(link.classList.contains("aria-disabled:opacity-50")).toBe(true);
     expect(link.classList.contains("aria-disabled:cursor-default")).toBe(true);
@@ -47,7 +48,7 @@ describe("NavItem", () => {
   test("asChild gives the appearance to the consumer element and does not lose its href", () => {
     render(
       <NavItem label="Documents" active asChild>
-        {/* Заглушка вместо роутера: кит о нём и не знает — ADR-0018. */}
+        {/* Stub in place of a router: the kit does not know about one — ADR-0018. */}
         <a href="/docs" data-testid="target" />
       </NavItem>
     );
@@ -72,10 +73,10 @@ describe("NavItem", () => {
 
 describe("NavItem in collapsed mode", () => {
   /**
-   * Главная проверка семейства. Спрятанная подпись — самый вероятный способ
-   * превратить навигацию в набор безымянных значков, и ловится это только
-   * здесь: визуально всё в порядке, аудит истории без схлопнутого состояния
-   * ничего не заметит.
+   * The main check of the family. A hidden label is the most likely way to turn
+   * navigation into a set of nameless icons, and only this test catches it:
+   * visually everything looks fine, and an audit that never sees the collapsed
+   * state will not notice anything.
    */
   test("the label hides from the eye but stays the accessible name", () => {
     collapsed(<NavItem label="Dashboard" href="/dashboard" />);
@@ -91,7 +92,7 @@ describe("NavItem in collapsed mode", () => {
 
   test("the tooltip is bound to the item instead of replacing its name", () => {
     collapsed(<NavItem label="Dashboard" href="/dashboard" />);
-    // Radix вешает описание на триггер; имя при этом остаётся подписью.
+    // Radix attaches the description to the trigger; the name stays the label.
     expect(screen.getByRole("link", { name: "Dashboard" })).toBeTruthy();
   });
 });

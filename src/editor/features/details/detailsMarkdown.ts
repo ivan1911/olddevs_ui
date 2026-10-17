@@ -10,43 +10,42 @@ import type {
 } from "@tiptap/core";
 
 /**
- * Сворачиваемый Блок в Markdown — СЫРЫМ HTML, как на GitHub:
+ * The Details Block in Markdown is raw HTML, as on GitHub:
  *
  * ```
  * <details>
- * <summary>Заголовок</summary>
+ * <summary>Title</summary>
  *
- * Содержимое — Markdown.
+ * Content in Markdown.
  *
  * </details>
  * ```
  *
- * ПОЧЕМУ СВОЙ РАЗБОР. Расширение Tiptap пишет Блок синтаксисом `:::details`
- * (Pandoc), которого не знает ни GitHub, ни другой Markdown. А общий разбор
- * сырого HTML в `@tiptap/markdown` режет Блок на куски по пустым строкам: HTML-блок
- * CommonMark кончается на первой пустой строке, и открывающий тег, Markdown
- * внутри и закрывающий тег приходят тремя токенами, которые обратно не
- * склеиваются. Поэтому Блок разбирает отдельный токенизатор: от `<details>` до
- * парного `</details>` с учётом вложенных Блоков, а содержимое между ними — снова
- * Markdown. Заголовок (`summary`) — строчный Markdown одной строкой; GitHub его
- * как Markdown не читает (звёздочки останутся звёздочками), но круг через
- * `setMarkdown` и `getMarkdown` от этого без потерь.
+ * WHY IT HAS ITS OWN PARSER. The Tiptap extension writes a Block with the `:::details` syntax
+ * (Pandoc), which neither GitHub nor any other Markdown knows. The general parser for raw HTML in
+ * `@tiptap/markdown` cuts the Block into pieces at blank lines: a CommonMark HTML block ends at the
+ * first blank line, so the opening tag, the Markdown inside and the closing tag arrive as three
+ * tokens that cannot be glued back together. So a separate tokenizer parses the Block: from
+ * `<details>` to the matching `</details>`, counting nested Blocks, and the content between them is
+ * Markdown again. The title (`summary`) is one line of inline Markdown. GitHub does not read it as
+ * Markdown (asterisks stay asterisks), but the round trip through `setMarkdown` and `getMarkdown`
+ * loses nothing because of that.
  *
- * Модуль без Tiptap-значений: только типы и чистые функции над строкой.
+ * The module has no Tiptap runtime values: only types and pure functions over a string.
  */
 
-/** Открывающий тег Блока с любыми атрибутами. */
+/** Opening tag of a Block, with any attributes. */
 const OPEN_TAG = /^<details(?:\s[^<>]*)?>/i;
-/** Любой тег Блока — для подсчёта вложенности. */
+/** Any Block tag, for counting nesting. */
 const ANY_TAG = /<(\/?)details(?:\s[^<>]*)?>/gi;
-/** `summary` сразу после открывающего тега, пробелы и переводы строк до него не в счёт. */
+/** `summary` right after the opening tag; whitespace and line breaks before it are ignored. */
 const SUMMARY = /^\s*<summary(?:\s[^<>]*)?>([\s\S]*?)<\/summary>[ \t]*/i;
 
 /**
- * Копия строки, где всё, что тегами Блока быть не может, заменено пробелами:
- * кодовые заборы и строчный код. Длина и позиции те же, поэтому найденные в
- * копии теги указывают в исходную строку. Иначе `<details>` в примере кода внутри
- * Блока сдвинул бы вложенность и Блок закрылся бы не там.
+ * A copy of the string in which everything that cannot be a Block tag is replaced with spaces:
+ * code fences and inline code. The length and positions stay the same, so the tags found in the
+ * copy point into the original string. Otherwise a `<details>` in a code example inside a Block
+ * would shift the nesting, and the Block would close in the wrong place.
  */
 function maskCode(src: string): string {
   let fence: string | null = null;
@@ -65,7 +64,10 @@ function maskCode(src: string): string {
   return lines.join("\n");
 }
 
-/** Позиция конца парного `</details>` (после тега) для Блока, открытого в начале `src`. */
+/**
+ * Position of the end of the matching `</details>` (after the tag) for the Block that is opened
+ * at the start of `src`.
+ */
 function closingEnd(src: string, afterOpen: number): number {
   const masked = maskCode(src);
   let level = 1;
@@ -77,12 +79,12 @@ function closingEnd(src: string, afterOpen: number): number {
   return -1;
 }
 
-/** Заголовок одной строкой: переводы строк и повторы пробелов — в один пробел. */
+/** Title on one line: line breaks and runs of spaces become a single space. */
 function oneLine(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
-/** Токенизатор Блока `details` для `marked` (`markdownTokenizer` расширения). */
+/** Tokenizer for the `details` Block, for `marked` (the extension's `markdownTokenizer`). */
 export const detailsTokenizer: MarkdownTokenizer = {
   name: "details",
   level: "block",
@@ -92,16 +94,16 @@ export const detailsTokenizer: MarkdownTokenizer = {
     if (!open) return undefined;
     const end = closingEnd(src, open[0].length);
     if (end < 0) return undefined;
-    // Конец Блока — строка целиком: хвост после `</details>` не наше дело.
+    // The Block's raw text ends with `</details>` on this line: anything after it is not ours.
     const raw = src.slice(0, end);
     const closeTag = /<\/details(?:\s[^<>]*)?>$/i.exec(raw)?.[0] ?? "";
     const inner = raw.slice(open[0].length, raw.length - closeTag.length);
     const summary = SUMMARY.exec(inner);
     const body = summary ? inner.slice(summary[0].length) : inner;
     const tokens: MarkdownToken[] = body.trim() ? lexer.blockTokens(body) : [];
-    // Строчные токены блоков без своих `tokens` (абзац, заголовок) разбирает
-    // сам `marked` внутри `blockTokens`; здесь дозаполняется только то, что он
-    // оставил текстом, как в `createBlockMarkdownSpec` Tiptap.
+    // Blocks without their own `tokens` (a paragraph, a heading) get their inline tokens from
+    // `marked` itself inside `blockTokens`; here we only fill in what it left as plain text, as
+    // `createBlockMarkdownSpec` in Tiptap does.
     for (const token of tokens) {
       if (token.text && (!token.tokens || token.tokens.length === 0)) {
         token.tokens = lexer.inlineTokens(token.text);
@@ -110,7 +112,7 @@ export const detailsTokenizer: MarkdownTokenizer = {
     return {
       type: "details",
       raw,
-      // `open` — если он в открывающем теге: `<details open>`.
+      // `open` is set when the opening tag has it: `<details open>`.
       open: /^<details(?:\s[^<>]*)?\sopen(?:[\s=>/]|$)/i.test(open[0]),
       summary: summary ? lexer.inlineTokens(oneLine(summary[1] ?? "")) : [],
       tokens,
@@ -119,8 +121,9 @@ export const detailsTokenizer: MarkdownTokenizer = {
 };
 
 /**
- * Токен — в узел Блока: заголовок из текста с Метками, содержимое Блоками (пустое
- * — одним пустым абзацем). Атрибут `open` — только когда он в Схеме (`persist`).
+ * Token → Details node: the title from text with Marks, the content as Blocks (empty content
+ * becomes one empty paragraph). The `open` attribute is kept only when it is in the Schema
+ * (`persist`).
  */
 export function parseDetails(
   token: MarkdownToken,
@@ -129,7 +132,7 @@ export function parseDetails(
 ): JSONContent {
   const title = helpers
     .parseInline((token.summary as MarkdownToken[] | undefined) ?? [])
-    // Заголовок — только текст с Метками: перенос и картинка в нём не живут.
+    // The title is text with Marks only: a line break and an image cannot live in it.
     .filter((node) => node.type === "text");
   const blocks = helpers.parseChildren(token.tokens ?? []);
   return helpers.createNode("details", persist && token.open === true ? { open: true } : {}, [
@@ -139,11 +142,10 @@ export function parseDetails(
 }
 
 /**
- * Узел — в Markdown: открывающий тег с `summary` на своей строке, пустая строка,
- * Блоки через пустую строку, пустая строка, закрывающий тег. Пустая строка после
- * `summary` — то, что заставляет GitHub читать содержимое как Markdown.
- * `<` в заголовке пишется как `&lt;`: иначе текст «a </summary> b» закрыл бы
- * заголовок раньше времени.
+ * Node → Markdown: an opening tag with the `summary` on its own line, a blank line, the Blocks
+ * separated by blank lines, a blank line, the closing tag. The blank line after `summary` is what
+ * makes GitHub read the content as Markdown. A `<` in the title is written as `&lt;`: otherwise
+ * the text "a </summary> b" would close the title too early.
  */
 export function renderDetails(
   node: JSONContent,

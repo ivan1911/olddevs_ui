@@ -3,7 +3,7 @@
 import { Button } from "@olddevs/ui";
 import { useState } from "react";
 
-/** Клиентский компонент потребителя: состояние и обработчик поверх кита. */
+/** The consumer's client component: state and a handler on top of the kit. */
 export function Counter() {
   const [count, setCount] = useState(0);
   return (

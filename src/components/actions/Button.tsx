@@ -14,114 +14,112 @@ import { cn } from "../../lib/cn.js";
 import type { ButtonSize, Tone, Variant } from "../../lib/variants.js";
 
 export interface ButtonProps extends Omit<ComponentPropsWithoutRef<"button">, "children"> {
-  /** Подпись кнопки. При `iconOnly` не рендерится; при `asChild` содержимым распоряжается дочерний элемент. */
+  /** Button label. Not rendered with `iconOnly`; with `asChild` the child element owns the content. */
   children?: ReactNode;
-  /** Подача: `solid`, `soft`, `outline` или `ghost` из словаря кита. По умолчанию `soft`. */
+  /** Variant: `solid`, `soft`, `outline` or `ghost` from the kit's vocabulary. Defaults to `soft`. */
   variant?: Variant;
-  /** Тон: цветовая роль кнопки из словаря кита. По умолчанию `neutral`. */
+  /** Tone: the button's color role from the kit's vocabulary. Defaults to `neutral`. */
   tone?: Tone;
   /**
-   * Размер кнопки из словаря кита. По умолчанию `md`.
+   * Button size from the kit's vocabulary. Defaults to `md`.
    *
-   * `xs` — четвёртая ступень, заведённая под кнопку-иконку в строке
-   * списка: 20 пикселей вместо 30 у `sm`, иначе строка на 32 растягивается до
-   * 42. Подпись в него не предполагается — берите вместе с `iconOnly`.
+   * `xs` is the fourth step, introduced for the icon button in a list row: 20 pixels instead of
+   * 30 for `sm`, otherwise a 32-pixel row grows to 42. A label is not expected in it — use it
+   * together with `iconOnly`.
    */
   size?: ButtonSize;
-  /** Иконка перед подписью. Во время `loading` её место занимает кольцо отправки. */
+  /** Icon before the label. During `loading` its place is taken by the submit ring. */
   icon?: ReactNode;
   /**
-   * Только иконка: квадрат без горизонтальных отступов, подпись не рендерится.
+   * Icon only: a square without horizontal padding; the label is not rendered.
    *
-   * Такой кнопке нужно доступное имя — из `aria-label` или `title`. Компилятор
-   * этого не требует (союзный тип ломает вывод в Storybook и в обёртках, см.
-   * `Toggle`), зато требует аудит axe: безымянная кнопка роняет его как
-   * `critical`. Проверка есть в `tests-visual/a11y.spec.ts`.
+   * Such a button needs an accessible name — from `aria-label` or `title`. The compiler does not
+   * require this (a union type breaks inference in Storybook and in wrappers, see `Toggle`), but
+   * the axe audit does: an unnamed button fails it as `critical`. The check is in
+   * `tests-visual/a11y.spec.ts`.
    */
   iconOnly?: boolean;
   /**
-   * Отправка идёт: вместо иконки крутится кольцо, кнопка не нажимается,
-   * а состояние объявляется через `aria-busy`.
+   * Submission in progress: a ring spins in place of the icon, the button is not pressable,
+   * and the state is announced through `aria-busy`.
    *
-   * Выключенность здесь наступает сама — отдельный `disabled` рядом с
-   * `loading` писать не нужно. Так было в `ConfirmDialog`, и это же руками
-   * повторял экран логина: пятнадцать строк собственной кнопки с shimmer'ом.
+   * The disabled state follows from this by itself — a separate `disabled` next to `loading`
+   * is not needed. It used to be written that way in `ConfirmDialog`, and the login screen
+   * repeated it by hand: fifteen lines of its own button with a shimmer.
    *
-   * Индикатор занимает слот иконки. У кнопки без иконки это добавляет слот на
-   * время отправки, то есть подпись сдвигается — поэтому кнопке, которая
-   * умеет уходить в отправку, иконку лучше дать сразу.
+   * The indicator takes the icon slot. For a button without an icon this adds a slot for the
+   * duration of the submission, so the label shifts — that is why a button that can go into
+   * submission is better off getting its icon up front.
    *
-   * При `asChild` смысл тот же, что у `disabled` там же: настоящего атрибута
-   * у ссылки нет, поэтому выключенность выражается `aria-disabled` и снятием
-   * событий указателя.
+   * With `asChild` the meaning is the same as `disabled` there: a link has no real attribute,
+   * so the disabled state is expressed through `aria-disabled` and by removing pointer events.
    */
   loading?: boolean;
   /**
-   * Нажатое состояние кнопки-переключателя: выставляет `aria-pressed` и нажатый вид.
+   * Pressed state of a toggle button: sets `aria-pressed` and the pressed look.
    *
-   * Нужно панельной кнопке, которая держит открытым что-то ещё. Не `active`: словарь допускает только `selected`.
+   * Needed by a toolbar button that keeps something else open. Not `active`: the vocabulary
+   * allows only `selected`.
    */
   selected?: boolean;
   /**
-   * Вывести кнопку дочерним элементом вместо своей `<button>`: ссылкой,
-   * `next/link`, триггером чужого компонента. Пропы и `ref` сливаются с потомком.
+   * Render the button as its child element instead of its own `<button>`: a link, `next/link`, the
+   * trigger of another component. Props and `ref` are merged into the child.
    *
-   * Нужен там, где элемент выглядит кнопкой, но кнопкой не является: «Создать
-   * кампанию» ведёт на другой экран, и это ссылка — её открывают в новой
-   * вкладке средней кнопкой мыши, копируют адрес, видят в строке состояния.
-   * Кнопка с `onClick={() => router.push(…)}` не умеет ничего из этого.
+   * It is needed where an element looks like a button but is not one: "Create campaign" leads
+   * to another screen, and it is a link — it can be opened in a new tab with the middle mouse
+   * button, its address can be copied, it shows in the status bar. A button with
+   * `onClick={() => router.push(…)}` can do none of that.
    *
-   * ВАЖНО: `type="button"` при `asChild` не проставляется — у ссылки такого
-   * атрибута нет вовсе, и React отрисовал бы его в разметку мусором.
-   * Клавиатура при этом меняется, и это не дефект, а разница ролей: кнопка
-   * жмётся пробелом и Enter, ссылка — только Enter.
+   * IMPORTANT: `type="button"` is not set under `asChild` — a link has no such attribute at all,
+   * and React would render it into the markup as junk. Keyboard behavior changes, and this is
+   * not a defect but a difference of roles: a button is pressed with Space and Enter, a link
+   * only with Enter.
    *
-   * Два пропа при `asChild` меняют поведение, потому что иначе молча врали бы:
+   * Two props change behavior under `asChild`, because otherwise they would silently lie:
    *
-   * - `disabled` у ссылки не существует как атрибут: `<a disabled>` остаётся
-   *   и фокусируемой, и переходимой, а `disabled:opacity-50` не срабатывает,
-   *   потому что `:disabled` — псевдокласс полей формы. Поэтому здесь он
-   *   превращается в `aria-disabled` плюс снятие событий указателя.
-   * - `selected` не превращается в `aria-pressed`: у роли `link` этот атрибут
-   *   запрещён, и аудит axe ловит его как `aria-allowed-attr`. Нажатой ссылки
-   *   не бывает — если состояние нужно, это кнопка, а не ссылка.
+   * - `disabled` does not exist as an attribute on a link: `<a disabled>` stays focusable and
+   *   followable, and `disabled:opacity-50` does not fire, because `:disabled` is a pseudo-class
+   *   of form fields. So here it turns into `aria-disabled` plus removing pointer events.
+   * - `selected` does not turn into `aria-pressed`: the `link` role forbids that attribute, and
+   *   the axe audit catches it as `aria-allowed-attr`. A pressed link does not exist — if the
+   *   state is needed, it is a button, not a link.
    */
   asChild?: boolean;
 }
 
 /**
- * Кнопка.
+ * Button.
  *
- * Единственный проп `kind` из версии во фронте разложен на две оси словаря.
- * Таблица переезда:
+ * The single `kind` prop of the front-end version is split into the two axes of the vocabulary.
+ * Migration table:
  *
  *   kind="primary"  →  variant="solid"   tone="accent"
- *   kind="ghost"    →  variant="soft"    tone="neutral"   (значение по умолчанию)
+ *   kind="ghost"    →  variant="soft"    tone="neutral"   (the default)
  *   kind="quiet"    →  variant="ghost"   tone="neutral"
  *   kind="danger"   →  variant="outline" tone="danger"
  *   kind="success"  →  variant="solid"   tone="success"
  *
- * Главное отличие от прежней версии: она держала hover в `useState` и вешала
- * `onMouseEnter`/`onMouseLeave`, из-за чего наведение курсора вызывало ререндер,
- * а клавиатурный фокус и touch не подсвечивались вовсе. Здесь всё это —
- * псевдоклассы CSS.
+ * The main difference from the previous version: it kept hover in `useState` and attached
+ * `onMouseEnter`/`onMouseLeave`, so a cursor hover caused a re-render, while keyboard focus and
+ * touch were not highlighted at all. Here all of this is CSS pseudo-classes.
  *
- * Проп `iconRight` прежней версии не переносится: из 81 вызова во фронте он не
- * встретился ни разу. `tone="success"` и `size="lg"` тоже не используются, но
- * они часть общих осей словаря и ничего не стоят — в отличие от отдельного
- * пропа, который пришлось бы поддерживать.
+ * The `iconRight` prop of the previous version is not carried over: out of 81 calls in the
+ * front end it did not come up once. `tone="success"` and `size="lg"` are not used either, but
+ * they are part of the shared axes of the vocabulary and cost nothing — unlike a separate prop
+ * that would have to be maintained.
  *
- * `iconOnly` вобрал в себя отдельный примитив `IconButton` из фронта. Тот был
- * конкурирующей реализацией той же кнопки: свой hover на `useState`, свой проп
- * `active` вне словаря, свой набор размеров числами — и вдобавок два вызова
- * `Button` во фронте руками делались квадратными через `style={{ width: 36 }}`.
- * Идиома не новая: у `Chip` `iconOnly` был с самого начала.
+ * `iconOnly` absorbed the separate `IconButton` primitive from the front end. That one was a
+ * competing implementation of the same button: its own hover on `useState`, its own `active`
+ * prop outside the vocabulary, its own set of sizes in numbers — and on top of that, two calls
+ * of `Button` in the front end were made square by hand with `style={{ width: 36 }}`.
+ * The idiom is not new: `Chip` had `iconOnly` from the start.
  */
 /**
- * Снять единственного потомка с обхода.
+ * Removes a single child from the tab order.
  *
- * Не трогаем ничего, кроме `tabIndex`: остальное решает `Slot`. Не элемент —
- * возвращаем как есть, ронять рендер на этом нельзя.
+ * Touches nothing but `tabIndex`; the rest is decided by `Slot`. A non-element is returned as is:
+ * failing the render on this is not acceptable.
  */
 function disableChild(children: ReactNode): ReactNode {
   return isValidElement<{ tabIndex?: number }>(children)
@@ -148,11 +146,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   const Comp = asChild ? Slot : "button";
   const { disabled, ...restWithoutDisabled } = rest;
-  // Отправка выключает кнопку сама: две причины «не нажимается» — одно
-  // состояние на выходе, и вызывающему не нужно держать их синхронными.
+  // Submission disables the button by itself: the two reasons for "not pressable" give a single
+  // state on output, and the caller does not have to keep them in sync.
   const isDisabled = disabled || loading;
-  // При `asChild` выключенность выражается ролью-независимыми средствами, а
-  // сам атрибут наружу не идёт — см. докстроку пропа.
+  // Under `asChild` the disabled state is expressed by role-agnostic means, and the attribute
+  // itself does not go out — see the prop docstring.
   const passthrough = asChild
     ? restWithoutDisabled
     : { ...restWithoutDisabled, disabled: isDisabled };
@@ -160,16 +158,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   return (
     <Comp
       ref={ref}
-      // Умолчание `type="button"` живёт здесь, а не в сигнатуре: у потомка при
-      // `asChild` тега `button` может не быть вовсе, и атрибут ушёл бы в
-      // разметку ссылки. Без умолчания кнопка внутри формы отправляла бы её —
-      // ровно тот дефект, ради которого умолчание и заводилось.
+      // The default `type="button"` lives here, not in the signature: under `asChild` the child
+      // may have no `button` tag at all, and the attribute would end up in the link's markup.
+      // Without the default, a button inside a form would submit it — exactly the defect the
+      // default was introduced to prevent.
       type={asChild ? type : (type ?? "button")}
-      // Кнопка-переключатель обязана сообщать состояние, а не только подпись.
+      // A toggle button must report its state, not only its label.
       aria-pressed={!asChild && selected ? true : undefined}
       aria-disabled={asChild && isDisabled ? true : undefined}
       aria-busy={loading || undefined}
-      // Вид общий с триггером меню — см. `lib/button.ts`.
+      // The look is shared with the menu trigger — see `lib/button.ts`.
       className={cn(
         buttonClasses({ variant, tone, size, iconOnly, selected }),
         asChild && isDisabled && "pointer-events-none opacity-50",
@@ -177,24 +175,22 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       )}
       {...passthrough}
       /*
-        ПОСЛЕ спреда, и ключи добавляются только когда нужны.
+        AFTER the spread, and the keys are added only when they are needed.
 
-        Выключённость при `asChild` выражалась лишь рекомендательным
-        `aria-disabled` и классом `pointer-events-none`, который гасит один
-        указатель: ссылка оставалась в обходе и срабатывала по Enter —
-        `<Button asChild loading><a href="/pay">` уводила пользователя
-        клавиатуры со страницы прямо во время отправки формы.
+        The disabled state under `asChild` used to be expressed only by the advisory
+        `aria-disabled` and the `pointer-events-none` class, which blocks just the pointer: the
+        link stayed in the tab order and fired on Enter — `<Button asChild loading><a href="/pay">`
+        would pull keyboard users away from the page right in the middle of submitting a form.
 
-        Атрибута `disabled` у ссылки нет, поэтому глушим активацию руками.
-        Условный спред, а не пропы со значением `undefined`: такой ключ всё
-        равно попадает в объект и затирает чужой.
+        The link has no `disabled` attribute, so activation is blocked by hand. A conditional
+        spread, not props with the value `undefined`: such a key still ends up in the object and
+        overwrites someone else's.
 
-        ПОРЯДОК ЗДЕСЬ НИ НА ЧТО НЕ ВЛИЯЕТ, и первая версия комментария
-        утверждала обратное. При `asChild` рендерится `Slot`, а он отдаёт
-        приоритет пропам ПОТОМКА независимо от того, где стоит спред: ссылка с
-        собственным `tabIndex={0}` оставалась в обходе, сколько её ни двигай.
-        Поэтому обход снимается не здесь, а на самом потомке — см. `Slottable`
-        ниже.
+        THE ORDER DOES NOT AFFECT ANYTHING HERE, and the first version of this comment claimed the
+        opposite. Under `asChild` `Slot` is rendered, and it gives priority to the CHILD's props
+        regardless of where the spread stands: a link with its own `tabIndex={0}` stayed in the
+        tab order no matter where the spread was placed. That is why the tab order is removed not
+        here but on the child itself — see `Slottable` below.
       */
       {...(asChild && isDisabled
         ? {
@@ -207,30 +203,27 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     >
       {loading ? <span aria-hidden className={cn(SPINNER_BASE, SPINNER_SIZES[size])} /> : icon}
       {/*
-        `Slottable` — не украшение, а единственный способ сохранить иконку.
-        Slot сливает пропы с ЕДИНСТВЕННЫМ потомком, и пара «иконка + ссылка»
-        уронила бы его в рантайме. Обёртка вокруг них решила бы это ценой
-        молчаливой потери: иконку пришлось бы выбросить или заставить
-        потребителя класть её внутрь ссылки руками — то есть проп `icon` при
-        `asChild` перестал бы работать, ничего об этом не сказав.
+        `Slottable` is not decoration but the only way to keep the icon. Slot merges props into a
+        SINGLE child, and the pair "icon + link" would crash it at runtime. A wrapper around them
+        would solve this at the cost of silent loss: the icon would have to be thrown away, or the
+        consumer forced to put it inside the link by hand — that is, the `icon` prop under
+        `asChild` would stop working without saying so.
 
-        С `Slottable` мишенью становится она, а иконка остаётся соседом и
-        уезжает внутрь ссылки вместе с её собственным содержимым.
+        With `Slottable` the target becomes the child, and the icon stays a sibling and moves into
+        the link together with the link's own content.
 
-        Подпись при `asChild` не заворачивается в `<span>`: заворачивать нечего,
-        содержимое принадлежит потомку. На вид это не влияет — раскладка
-        кнопки на `flex` с `gap`, а голый текст участвует в ней анонимным
-        элементом наравне со `span`.
+        A label under `asChild` is not wrapped in a `<span>`: there is nothing to wrap, the content
+        belongs to the child. This does not affect the look — the button's layout is `flex` with
+        `gap`, and bare text takes part in it as an anonymous box on a par with a `span`.
       */}
       {asChild ? (
         /*
-          У ВЫКЛЮЧЕННОЙ ссылки обход снимается на самом потомке.
+          On a DISABLED link the tab order is removed on the child itself.
 
-          `Slot` отдаёт приоритет пропам потомка, поэтому `tabIndex: -1`,
-          переданный кнопке, ссылка с собственным `tabIndex={0}` попросту
-          перебивала — и оставалась достижимой табом, хотя выглядела
-          выключённой. Клонируем потомка, чтобы решение принимал компонент, а
-          не разметка вызывающего.
+          `Slot` gives priority to the child's props, so `tabIndex: -1` passed to the button was
+          simply overridden by a link with its own `tabIndex={0}` — and it stayed reachable with
+          Tab, although it looked disabled. We clone the child so that the component, not the
+          caller's markup, makes the decision.
         */
         <Slottable>{asChild && isDisabled ? disableChild(children) : children}</Slottable>
       ) : children != null && !iconOnly ? (

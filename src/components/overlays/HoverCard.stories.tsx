@@ -34,8 +34,8 @@ const Trigger = () => (
 );
 
 /**
- * Открыто по умолчанию — снимок должен быть детерминированным, а закрытая
- * карточка на нём просто отсутствует.
+ * Open by default: the snapshot must be deterministic, and a closed
+ * card is simply absent from it.
  */
 export const Playground: Story = {
   render: () => (
@@ -51,8 +51,8 @@ export const Playground: Story = {
 };
 
 /**
- * Закрытая: наведите курсор на ссылку или встаньте на неё клавишей Tab. Карточка
- * откроется через 700 мс, а курсор можно перевести на неё — она не закроется.
+ * Closed: hover over the link or move focus to it with the Tab key. The card
+ * opens after 700 ms, and the pointer can move onto it: it will not close.
  */
 export const HoverOrFocus: Story = {
   render: () => (
@@ -69,7 +69,7 @@ export const HoverOrFocus: Story = {
   ),
 };
 
-/** Задержки — пропы: здесь карточка открывается сразу и закрывается через секунду. */
+/** Delays are props: here the card opens at once and closes after a second. */
 export const CustomDelays: Story = {
   render: () => (
     <HoverCard openDelay={0} closeDelay={1000}>
@@ -96,7 +96,7 @@ function ControlledHost() {
   );
 }
 
-/** Управляемый режим: состояние снаружи, задержки по-прежнему считает компонент. */
+/** Controlled mode: the state lives outside, while the component still computes the delays. */
 export const Controlled: Story = {
   render: () => <ControlledHost />,
 };

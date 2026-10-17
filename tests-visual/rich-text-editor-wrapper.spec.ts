@@ -1,14 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Обёртка Редактора в браузере (OLDSUI-77): то, чего jsdom не умеет, —
- * настоящие стили (пунктир в Редакторе, без рамки в Просмотре, отступы между
- * Блоками) и стрелки, которые ведёт сам браузер.
+ * Editor Wrapper in a browser (OLDSUI-77): what jsdom cannot do, namely the real
+ * styles (dashed border in the Editor, no border in the View, spacing between
+ * Blocks) and arrow keys that the browser handles itself.
  */
 
 const STORY = (id: string) => `/iframe.html?id=${id}&globals=theme:dark;accent:blue`;
 
-/** Дать ProseMirror прочитать каретку после щелчка (как в спеке Раскладки). */
+/** Give ProseMirror time to read the caret after a click (as in the Layout spec). */
 async function settle(page: Page) {
   await page.evaluate(
     () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
@@ -27,7 +27,7 @@ test("in the editor a wrapper has a dashed border and inner padding", async ({ p
       border: css.borderTopStyle,
       width: css.borderTopWidth,
       padding: css.paddingLeft,
-      // Отступ первого Блока внутри — как между Блоками Документа.
+      // The spacing of the first Block inside matches the spacing between the Document's Blocks.
       gap: getComputedStyle(element.firstElementChild!).marginBottom,
     };
   });
@@ -57,8 +57,8 @@ test("Enter in an empty last line leaves the wrapper; up from its top goes above
   const field = page.getByRole("textbox", { name: "Document" });
   const wrapper = field.locator('[data-block="wrapper"]').first();
 
-  // Новый пункт, пустой пункт выходит из списка в абзац Обёртки, пустой
-  // последний абзац — из Обёртки.
+  // A new item: an empty item leaves the list into a paragraph of the Wrapper, and an
+  // empty last paragraph leaves the Wrapper.
   await wrapper.getByText("Write the changelog").click();
   await page.keyboard.press("End");
   await settle(page);
@@ -69,22 +69,23 @@ test("Enter in an empty last line leaves the wrapper; up from its top goes above
   await expect(wrapper).not.toContainText("Outside");
   await expect(field.locator(':scope > p:has-text("Outside")')).toHaveCount(1);
 
-  // Из первой строки Обёртки `↑` — к Блоку над ней.
+  // From the first line of the Wrapper, `↑` goes to the Block above it.
   await wrapper.getByRole("heading", { name: "Before the release" }).click();
   await page.keyboard.press("Home");
   await settle(page);
   await page.keyboard.press("ArrowUp");
   await page.keyboard.type("~");
   await expect(wrapper).not.toContainText("~");
-  // Абзац над Обёрткой — первый абзац Документа.
+  // The paragraph above the Wrapper is the Document's first paragraph.
   await expect(field.locator(":scope > p").first()).toContainText("~");
 });
 
 /**
- * Вид Обёртки с тоном (OLDSUI-78): подложка, полоса, отступы — без пунктира.
- * `scope` — где искать: в Редакторе это поле Документа, а не страница. До
- * Готовности Скелет (OLDSUI-110) рисует ту же Обёртку, и движок подменяет её
- * через миг — замер мог достаться уже отцепленному узлу с пустыми стилями.
+ * The look of a Wrapper with a tone (OLDSUI-78): background, stripe and padding, with
+ * no dashed border. `scope` is where to look: in the Editor it is the Document field,
+ * not the page. Until Readiness the Skeleton (OLDSUI-110) draws the same Wrapper, and
+ * the engine replaces it a moment later, so the measurement could land on a node that
+ * has already been detached and has empty styles.
  */
 async function toneLook(page: Page, tone: string, scope = page.locator("body")) {
   const wrapper = scope.locator(`[data-block="wrapper"][data-tone="${tone}"]`).first();
@@ -94,7 +95,7 @@ async function toneLook(page: Page, tone: string, scope = page.locator("body")) 
     return {
       background: css.backgroundColor,
       stripe: `${css.borderLeftStyle} ${css.borderLeftWidth} ${css.borderLeftColor}`,
-      // Пунктира нет: у остальных сторон рамки нет вовсе.
+      // There is no dashed border: the other sides have no border at all.
       top: css.borderTopWidth,
       padding: `${css.paddingTop} ${css.paddingLeft}`,
     };

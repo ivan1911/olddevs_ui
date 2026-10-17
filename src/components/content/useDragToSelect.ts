@@ -5,51 +5,48 @@ import type { Key, Selection } from "react-aria-components";
 import { toPixels } from "../../hooks/useStickyOffset.js";
 
 export interface DragToSelectOptions {
-  /** Жест включён: `dragToSelect` и множественный выбор. */
+  /** The gesture is enabled: `dragToSelect` and multiple selection. */
   enabled: boolean;
-  /** Порядок ячеек в коллекции: диапазон считается по нему, а не по экрану. */
+  /** The order of cells in the collection: the range is computed from it, not from the screen. */
   order: readonly Key[];
-  /** Что прокручивается у края: своя область сетки или окно. */
+  /** What scrolls at the edge: the grid's own area or the window. */
   scroll: "container" | "window";
-  /** Переменная высоты липкой шапки: верхний край окна для автопрокрутки. */
+  /** The sticky header height variable: the top edge of the viewport for autoscroll. */
   offsetVar: string;
-  /** Текущий выбор — основа, к которой жест добавляет диапазон. */
+  /** The current selection: the base that the gesture adds its range to. */
   selection: () => Selection;
-  /** Новый набор: прежний выбор и диапазон от первой ячейки жеста до текущей. */
+  /** The new set: the previous selection plus the range from the gesture's first cell to the current one. */
   onChange: (keys: Selection) => void;
 }
 
-/** Сколько держать палец неподвижно, прежде чем жест станет выделением. */
+/** How long the finger must stay still before the gesture becomes a selection. */
 const HOLD_MS = 300;
-/** Сдвиг до удержания, после которого это прокрутка, а не жест. */
+/** A move before the hold, after which it is a scroll rather than a gesture. */
 const SLOP_PX = 8;
-/** Полоса у края, где начинается автопрокрутка. */
+/** The strip at the edge where autoscroll starts. */
 const EDGE_PX = 56;
-/** Наибольший шаг автопрокрутки за кадр. */
+/** The largest autoscroll step per frame. */
 const MAX_STEP_PX = 18;
 
 /**
- * Выделение протяжкой пальца по ячейкам сетки.
+ * Drag-to-select by finger across the grid's cells.
  *
- * СВОЁ, А НЕ react-aria: у react-aria такого жеста нет
- * (ADR-0028,
- * дополнение). Выбор остаётся осью сетки: жест только сообщает новый набор тем
- * же `onSelectionChange`.
+ * OUR OWN, NOT react-aria: react-aria has no such gesture (ADR-0028, addendum). Selection stays
+ * an axis of the grid: the gesture only reports the new set through the same `onSelectionChange`.
  *
- * НА СОБЫТИЯХ КАСАНИЯ, А НЕ УКАЗАТЕЛЯ. Как только браузер начинает прокрутку,
- * он шлёт `pointercancel`, и жест обрывается. Остановить прокрутку можно только
- * `preventDefault` на `touchmove`, а для этого нужен непассивный слушатель
- * касания.
+ * ON TOUCH EVENTS, NOT POINTER EVENTS. As soon as the browser starts scrolling, it sends
+ * `pointercancel`, and the gesture is cut short. The only way to stop the scroll is
+ * `preventDefault` on `touchmove`, which needs a non-passive touch listener.
  *
- * С ДОЛГИМ НАЖАТИЕМ МЕНЮ НЕ СПОРИТ. Удержание лишь взводит жест (300 мс, меню
- * Radix ждёт 700), а выделение начинается, когда палец перешёл на другую
- * ячейку. Палец, который остался на месте, получает меню.
+ * IT DOES NOT COMPETE WITH THE LONG-PRESS MENU. Holding only arms the gesture (300 ms; the Radix
+ * menu waits 700 ms), and the selection starts when the finger moves on to another cell. A finger
+ * that stays in place gets the menu.
  *
- * НАЧАЛО ЖЕСТА ОТМЕНЯЕТ НАЖАТИЕ — событием `pointercancel` в элемент, где
- * началось касание. Сами они не отменятся: при касании `pointermove` уходит
- * к ячейке под пальцем, а не к стартовой, и таймер меню Radix (он снимается
- * на `pointermove` стартового триггера) открывал меню посреди протяжки;
- * `usePress` ячейки принял бы отпускание за нажатие. Одно событие гасит оба.
+ * THE START OF THE GESTURE CANCELS THE PRESS with a `pointercancel` event on the element where the
+ * touch began. The press would not cancel by itself: during a touch, `pointermove` goes to the cell
+ * under the finger, not to the starting one, so the Radix menu timer (which is cleared on
+ * `pointermove` of the starting trigger) would open the menu in the middle of the drag, and the
+ * cell's `usePress` would treat the release as a click. One event stops both.
  */
 export function useDragToSelect(
   gridRef: RefObject<HTMLElement | null>,
@@ -74,9 +71,8 @@ export function useDragToSelect(
     let base: Set<Key> = new Set();
     let current: Key | null = null;
 
-    // Порядковый номер по строке ключа: на каждом движении пальца и кадре
-    // автопрокрутки — без прохода по тысячам ключей. Пересобирается со сменой
-    // `order` (новая страница).
+    // The index of each key by its string form: on every finger move and autoscroll frame,
+    // without a pass over thousands of keys. Rebuilt when `order` changes (a new page).
     let indexed: readonly Key[] | null = null;
     let positions = new Map<string, number>();
     const positionOf = (key: string) => {
@@ -91,7 +87,7 @@ export function useDragToSelect(
     const keyAt = (x: number, y: number): Key | null => {
       const row = document.elementFromPoint(x, y)?.closest<HTMLElement>('[role="row"]');
       if (!row || !grid.contains(row) || row.dataset.key == null) return null;
-      // `data-key` — строка; ключ коллекции может быть числом.
+      // `data-key` is a string; a collection key can be a number.
       const at = positionOf(row.dataset.key);
       return at == null ? null : optionsRef.current.order[at]!;
     };
@@ -112,7 +108,7 @@ export function useDragToSelect(
       const raw = getComputedStyle(document.documentElement)
         .getPropertyValue(optionsRef.current.offsetVar)
         .trim();
-      // `4rem` и `calc()` — тем же зондом, что у `useStickyOffset`.
+      // `4rem` and `calc()` go through the same probe as `useStickyOffset`.
       return Number.parseFloat(toPixels(raw, "0px")) || 0;
     };
 
@@ -133,7 +129,7 @@ export function useDragToSelect(
       if (step !== 0) {
         if (optionsRef.current.scroll === "container") grid.scrollTop += step;
         else window.scrollBy(0, step);
-        // Под неподвижным пальцем проехали другие ячейки.
+        // Other cells went past under the still finger.
         const key = keyAt(last.x, last.y);
         if (key != null) apply(key);
       }
@@ -170,7 +166,7 @@ export function useDragToSelect(
       if (!touch) return;
       last = { x: touch.clientX, y: touch.clientY };
       if (!armed) {
-        // Палец поехал раньше удержания — это прокрутка, не жест.
+        // The finger moved before the hold: it is a scroll, not a gesture.
         if (Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > SLOP_PX) reset();
         return;
       }
@@ -183,8 +179,8 @@ export function useDragToSelect(
           new PointerEvent("pointercancel", { bubbles: true, pointerId, pointerType: "touch" })
         );
         const selection = optionsRef.current.selection();
-        // «Выделено всё» — основа из всех ключей: пустая основа сузила бы выбор
-        // до диапазона протяжки.
+        // "All selected": the base is all keys. An empty base would narrow the selection
+        // down to the drag range.
         base = new Set(selection === "all" ? optionsRef.current.order : selection);
         current = null;
         apply(start.key);
@@ -195,9 +191,9 @@ export function useDragToSelect(
 
     const onTouchEnd = () => {
       if (dragging) {
-        // Сдвинутое касание щелчка обычно не порождает: флаг, оставшийся
-        // взведённым, съел бы следующий настоящий тап (кнопку «в избранное»).
-        // Синтезированный щелчок приходит сразу — ждать его дольше незачем.
+        // A touch that moved usually produces no click. A flag left set would swallow the next
+        // real tap (the "add to favorites" button). A synthesized click arrives right away, so
+        // there is no point in waiting longer for it.
         suppressClick = true;
         window.clearTimeout(suppressTimer);
         suppressTimer = window.setTimeout(() => {
@@ -207,12 +203,12 @@ export function useDragToSelect(
       reset();
     };
 
-    // Номер указателя нужен отмене: `usePress` сверяет его со своим.
+    // The pointer id is needed for cancellation: `usePress` compares it with its own.
     const rememberPointer = (event: PointerEvent) => {
       if (event.pointerType === "touch") pointerId = event.pointerId;
     };
 
-    // Щелчок, который браузер мог синтезировать после жеста, — не нажатие.
+    // A click the browser may have synthesized after the gesture is not a press.
     const swallowClick = (event: Event) => {
       if (!suppressClick) return;
       suppressClick = false;
@@ -224,11 +220,11 @@ export function useDragToSelect(
     grid.addEventListener("touchmove", onTouchMove, { passive: false });
     grid.addEventListener("touchend", onTouchEnd);
     grid.addEventListener("touchcancel", reset);
-    // Отмена касания до начала протяжки — долгое нажатие ячейки с меню (сетка
-    // гасит им выделение react-aria) или прокрутка браузера. Протяжка не
-    // начнётся, даже если палец поедет потом: человек работает с меню.
-    // Только отмена СВОЕГО касания: стартовый элемент или ячейка, в которой он
-    // лежит. Отмена в соседней ячейке (второй палец) протяжку не трогает.
+    // A touch cancelled before the drag starts: a long press on a cell with a menu (the grid
+    // uses it to suppress react-aria's selection) or a browser scroll. The drag will not start
+    // even if the finger moves later, because the person is working with the menu.
+    // Only the cancellation of OUR touch counts: the starting element or the cell it is in.
+    // A cancellation in a neighboring cell (a second finger) does not affect the drag.
     const disarm = (event: PointerEvent) => {
       if (event.pointerType !== "touch" || dragging || !start) return;
       const own = start.target;

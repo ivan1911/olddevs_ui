@@ -35,7 +35,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Подписи слева: ось приходит полям контекстом, ширина колонки — пропом. */
+/** Labels on the left: the axis reaches the fields through context, and the column width through a prop. */
 export const LabelsOnLeft: Story = {
   render: () => (
     <div className="w-[640px]">
@@ -54,7 +54,7 @@ export const LabelsOnLeft: Story = {
   ),
 };
 
-/** Две колонки и подписи слева вместе — типичная форма редактирования. */
+/** Two columns with labels on the left together: a typical edit form. */
 export const EditForm: Story = {
   render: () => (
     <div className="w-[760px]">
@@ -87,7 +87,7 @@ export const EditForm: Story = {
   ),
 };
 
-/** Раскладка работает и с чужими полями: она задаёт позицию, а не подписи. */
+/** The layout works with foreign fields too: it sets their position, not their labels. */
 export const ForeignFields: Story = {
   render: () => (
     <div className="w-[640px]">

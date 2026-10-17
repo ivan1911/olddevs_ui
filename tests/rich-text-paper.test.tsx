@@ -14,17 +14,17 @@ import { EDITOR_TEXT_COLORS } from "../src/editor/styles/palette.js";
 import { EDITOR_PAPER_TOKENS_CLASS, EDITOR_TOKENS_CLASS } from "../src/editor/styles/tokens.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /*
-  `surface="paper"` (OLDSUI-52): область документа — светлый лист в любой теме
-  приложения. Лист — это сам контейнер Документа (`RichTextView` и
-  редактируемая область Редактора): на нём вложенная тема `data-theme="light"`
-  для маркеров и подсветки и токены `--rte-*` со значениями светлой темы.
-  Панель, поповеры и меню остаются в теме приложения — они вне листа.
+  `surface="paper"` (OLDSUI-52): the Document area is a light Paper in any app theme.
+  The Paper is the Document container itself (`RichTextView` and the editable area of the
+  Editor): it carries a nested `data-theme="light"` for the markers and the code highlight,
+  and the `--rte-*` tokens with the light theme values. The Toolbar, popovers and menus
+  stay in the app theme: they are outside the Paper.
 */
 
 const DOCUMENT =
@@ -70,7 +70,7 @@ describe("surface attributes", () => {
 
     expect(content.getAttribute("data-theme")).toBe("light");
     expect(content.getAttribute("data-surface")).toBe("paper");
-    // Панель, поповеры и меню — в теме приложения: светлая обёртка их не накрывает.
+    // The Toolbar, popovers and menus are in the app theme: the light wrapper does not cover them.
     const toolbar = root.querySelector('[role="toolbar"]');
     expect(toolbar).not.toBeNull();
     expect(toolbar!.closest("[data-theme]")).toBeNull();
@@ -78,7 +78,7 @@ describe("surface attributes", () => {
   });
 });
 
-/** Классы контейнера как множество: порядок и склейка `cn` не важны. */
+/** The container's classes as a set: order and `cn` joining do not matter. */
 const classesOf = (element: Element) => new Set(element.className.split(/\s+/).filter(Boolean));
 
 describe("editor and view wear the same paper", () => {
@@ -106,9 +106,9 @@ describe("editor and view wear the same paper", () => {
         .map((token) => token.slice(1, token.indexOf(":")))
         .sort();
 
-    // Каждая роль, объявленная темой, объявлена и листом — и наоборот.
+    // Every role declared by the theme is also declared by the Paper, and the reverse.
     expect(tokens("paper")).toEqual(tokens("theme"));
-    // Правила те же; лист добавляет только свой край.
+    // The rules are the same; the Paper adds only its own edge.
     const theme = new Set(rules("theme"));
     expect(
       rules("paper")
@@ -131,9 +131,9 @@ describe("editor and view wear the same paper", () => {
 });
 
 /*
-  Значения листа — те же примитивы, что светлая тема назначает токенам кита.
-  Сверка разбором `styles.css`, а не второй таблицей: правка светлой темы без
-  правки листа здесь краснеет.
+  The Paper values are the same primitives that the light theme assigns to the kit tokens.
+  The check parses `styles.css` rather than a second table: a change to the light theme
+  without a change to the Paper turns red here.
 */
 describe("paper tokens are the light theme's values", () => {
   const styles = readFileSync(resolve(import.meta.dirname, "..", "styles.css"), "utf8");
@@ -146,7 +146,7 @@ describe("paper tokens are the light theme's values", () => {
     );
   };
   const light = { ...declarations(":root"), ...declarations(':root[data-theme="light"]') };
-  /** Токен кита в светлой теме — до первого примитива `--od-*`. */
+  /** A kit token in the light theme: up to the first `--od-*` primitive. */
   const inLight = (token: string): string => {
     const value = light[token];
     expect(value, `--${token} in the light theme`).toBeDefined();
@@ -161,10 +161,10 @@ describe("paper tokens are the light theme's values", () => {
   const paper = roles(EDITOR_PAPER_TOKENS_CLASS);
 
   /*
-    Осознанные отступления (`tokens.ts`): фон листа — белая панель светлой
-    темы, а не подложка поля; акцент — заливка темы приложения (светлый
-    `accent-strong` бренда в тёмном приложении не существует) и роли, которые
-    тема не меняет вовсе.
+    Deliberate deviations (`tokens.ts`): the Paper background is the white panel of the
+    light theme, not the field backdrop; the accent is the fill of the app theme (the light
+    brand `accent-strong` does not exist in a dark app), and the roles that the theme
+    does not change at all.
   */
   const DEVIATIONS: Record<string, string> = {
     "rte-background": "var(--od-cloud-12)",
@@ -172,18 +172,18 @@ describe("paper tokens are the light theme's values", () => {
     "rte-link": "var(--accent)",
     "rte-text-accent": "var(--accent)",
     "rte-primary": "var(--accent)",
-    // Выделение (OLDSUI-116): светлый вариант при любой теме приложения —
-    // тёмный `--selection` рассчитан на тёмную подложку и на листе не виден.
+    // Selection (OLDSUI-116): the light variant in any app theme; the dark `--selection`
+    // is meant for a dark backdrop and is invisible on the Paper.
     "rte-selection": "var(--selection-light)",
-    // Выделение поверх маркера: маркер один во всех темах, и роль одна.
+    // Selection over a marker: the marker is one in every theme, and so is the role.
     "rte-selection-marker": "color-mix(in_srgb,var(--accent)_38%,transparent)",
     "rte-radius": "var(--r-xs)",
-    // Тон Обёртки «Заметка» (OLDSUI-78): подложка — как выделение, полоса — как
-    // ссылка: акцент темы приложения.
+    // The "Note" Wrapper tone (OLDSUI-78): the backdrop is the same as the selection, the bar
+    // is the same as a link: the accent of the app theme.
     "rte-tone-accent-background": "var(--accent-soft)",
     "rte-tone-accent-border": "var(--accent)",
-    // Вторичный текст на подложке тона: в теме держит 4.5 только `fg-0`, а на листе
-    // свои ступени `cloud-2` и `cloud-3` проходят и остаются (`tokens.ts`, ⁴).
+    // Secondary text on the tone backdrop: in the theme only `fg-0` holds 4.5, while on the
+    // Paper its own steps `cloud-2` and `cloud-3` pass and stay (`tokens.ts`, ⁴).
     "rte-tone-secondary": "var(--od-cloud-2)",
     "rte-tone-muted": "var(--od-cloud-3)",
     "rte-tone-muted-foreground": "var(--od-cloud-3)",

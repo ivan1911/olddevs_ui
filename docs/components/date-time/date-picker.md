@@ -9,21 +9,21 @@ story: src/components/date-time/DatePicker.stories.tsx
 
 # DatePicker
 
-## Кратко для AI
+## Summary for AI
 
-`DatePicker` — готовый триггер + поповер для одной календарной даты. Значение, которое компонент принимает и отдаёт, — ISO `ГГГГ-ММ-ДД`, а не JS `Date`, поэтому часовой пояс не сдвигает дату.
+`DatePicker` is a ready-made trigger + popover for a single calendar date. The value the component accepts and returns is an ISO `YYYY-MM-DD` string, not a JS `Date`, so the time zone cannot shift the date.
 
-## Когда использовать
+## When to use
 
-- В форме нужен один день с компактным триггером и календарём.
-- API, URL или состояние уже используют ISO-строки.
+- A form needs a single day with a compact trigger and a calendar.
+- Your API, URL or state already uses ISO strings.
 
-## Когда не использовать
+## When not to use
 
-- Для произвольного размещения сетки используйте `Calendar`.
-- Для даты и времени вместе используйте `DateTimePicker`; для периода — `DateRangePicker`.
+- For custom placement of the grid, use `Calendar`.
+- For date and time together, use `DateTimePicker`; for a range, use `DateRangePicker`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <DatePicker value={publishDate} onChange={setPublishDate} minValue="2026-03-09" />
@@ -31,20 +31,21 @@ story: src/components/date-time/DatePicker.stories.tsx
 
 ## Public API
 
-- `value?: string | null`; `onChange(date: string)` получает ISO-строку после выбора.
-- `minValue`, `maxValue`, `isDateUnavailable` ограничивают выбор в календаре; это ограничение интерфейса, серверную валидацию не отменяет.
-- `minValue` и `maxValue` — ISO-строки `ГГГГ-ММ-ДД`, как и `value`: `minValue="2026-03-09"`, импортировать `@internationalized/date` не нужно (сам пакет приезжает с китом). Объект `@internationalized/date` по-прежнему принимается. Неразбираемая строка считается незаданной границей. `isDateUnavailable` получает объект календаря: `date.toString()` возвращает день строкой `ГГГГ-ММ-ДД`.
-- У `DateTimePicker` эти границы календарные, то есть дневные: подробности — в [DateTimePicker](date-time-picker.md#public-api).
-- `placeholder`, `disabled`, `locale`, `triggerClassName` настраивают контрол.
-- `formatDate(isoDate, locale?)` — публичная утилита для того же безопасного отображения календарной ISO-даты; не используйте `new Date("YYYY-MM-DD")`, если дата — не момент UTC.
+- `value?: string | null`; `onChange(date: string)` receives an ISO string after the user picks a date.
+- `minValue`, `maxValue`, `isDateUnavailable` limit the choice in the calendar; this is a UI boundary and does not replace server-side validation.
+- `minValue` and `maxValue` are ISO strings `YYYY-MM-DD`, like `value` (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself comes with the kit). An `@internationalized/date` object is still accepted. An unparsable string is treated as an unset bound. `isDateUnavailable` receives a calendar object: `date.toString()` returns the day as a `YYYY-MM-DD` string.
+- In `DateTimePicker` these bounds are calendar bounds, that is, day bounds: see [DateTimePicker](date-time-picker.md#public-api) for details.
+- `placeholder`, `disabled`, `locale`, `triggerClassName` configure the control.
+- `formatDate(isoDate, locale?)` is a public utility for displaying an ISO calendar date the same safe way; do not use `new Date("YYYY-MM-DD")` unless the date is a UTC instant.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- **Пояснение и ошибка `FormField` объявляются вместе с полем.** Описание
-  приходит контекстом, `aria-describedby` ставится на триггер; значение
-  `aria-describedby` потребителя не вытесняется, а сливается с ним. До версии 3.0.0 семьи react-aria
-  описание формы не забирали — на экране оно было, скринридеру не доставалось
+- **The `FormField` hint and error are announced together with the field.** The
+  description is passed through context, and `aria-describedby` is set on the
+  trigger; the consumer's `aria-describedby` value is not overridden but merged
+  with it. Before version 3.0.0 the react-aria component families did not pick up the form description — it was on
+  screen but never reached the screen reader
   (ADR-0031).
-- Поповер использует `Calendar` с его контрактом сетки и клавиатуры; при выборе закрывается.
-- Внешнюю подпись связывайте через `FormField` и `htmlFor`, только когда триггер к ней привязан в вашей композиции; не полагайтесь на плейсхолдер.
-- См. `src/components/date-time/DatePicker.tsx`, `src/components/date-time/DatePicker.stories.tsx`, `tests/matrix.tsx`.
+- The popover uses `Calendar` with its grid and keyboard contract; it closes on selection.
+- Associate an external label through `FormField` and `htmlFor` only when the trigger is bound to it in your composition; do not rely on the placeholder.
+- See `src/components/date-time/DatePicker.tsx`, `src/components/date-time/DatePicker.stories.tsx`, `tests/matrix.tsx`.

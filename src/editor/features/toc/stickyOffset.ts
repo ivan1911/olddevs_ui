@@ -3,13 +3,14 @@
 import { toPixels } from "../../../hooks/useStickyOffset.js";
 
 /**
- * Последний замер шапки. Подсветка читает отступ на каждом кадре прокрутки, а
- * `toPixels` для значения не в пикселях (`4rem`) меряет зонд — две раскладки.
- * Замер повторяется только при смене сырого значения, как в `useStickyOffset`.
+ * The last measurement of the top bar. The highlight reads the offset on every scroll
+ * frame, and `toPixels` for a value that is not in pixels (`4rem`) measures it with a
+ * probe element, which costs two layout passes. The measurement is repeated only when
+ * the raw value changes, as in `useStickyOffset`.
  */
 let measured: { raw: string; px: number | null } = { raw: "", px: null };
 
-/** Высота липкой шапки в пикселях; переменной нет — `null`. */
+/** Height of the sticky top bar in pixels; if there is no such variable, `null`. */
 export function stickyOffset(offsetVar: string): number | null {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(offsetVar).trim();
   if (!raw) return null;

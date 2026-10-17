@@ -1,4 +1,4 @@
-/** Типы `check-public.mjs` для тестов: сам скрипт — простой JS, как остальные скрипты кита. */
+/** Types of `check-public.mjs` for the tests. The script itself is plain JS, like the kit's other scripts. */
 export interface Violation {
   path: string;
   line: number;

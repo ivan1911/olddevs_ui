@@ -1,47 +1,48 @@
 /**
- * Общий словарь пропсов дизайн-системы.
+ * The kit's shared vocabulary of component props.
  *
- * До выделения пакета одно и то же понятие называлось в каждом примитиве по-своему:
- * `kind` у Button, `active` у Chip, `status` у StatusBadge, `tone` у Tone. Ниже —
- * единственный допустимый набор имён; новые примитивы берут из него, а не изобретают.
+ * Before the package was extracted, the same concept was named differently in each
+ * primitive: `kind` on Button, `active` on Chip, `status` on StatusBadge, `tone` on
+ * Tone. Below is the single permitted set of names. New primitives take from it
+ * rather than inventing their own.
  *
- * Три независимые оси:
+ * Three independent axes:
  *
- *   size    — размер: одинаково означает одно и то же во всех примитивах
- *   tone    — семантический цвет: «что это значит», а не «как выглядит»
- *   variant — визуальная трактовка тона: насколько заметно он подан
+ *   size    — size: means the same thing in every primitive
+ *   tone    — semantic color: "what it means", not "how it looks"
+ *   variant — the visual treatment of a tone: how prominently it is shown
  *
- * Булевы состояния называются `selected`, `disabled`, `loading` — не `active`,
- * не `isOpen`, не `enabled`. Отрицаний в именах не бывает.
+ * Boolean states are named `selected`, `disabled`, `loading`, not `active`, not
+ * `isOpen`, not `enabled`. Names never contain negations.
  */
 
-/** Размер. Не все примитивы поддерживают все три — но имена значат одно и то же. */
+/** Size. Not every primitive supports all three, but the names mean the same thing. */
 export type Size = "sm" | "md" | "lg";
 
 /**
- * Размер кнопки: общая шкала плюс `xs`.
+ * Button size: the shared scale plus `xs`.
  *
- * `xs` вынесен из `Size`, а не добавлен в него, и это решение. `Size` —
- * словарь на весь кит: расширь его, и каждый примитив с осью размера начнёт
- * принимать значение, которого не умеет, а компилятор смолчит. Кнопка —
- * единственный заказчик четвёртой ступени, у неё она и живёт.
+ * `xs` is taken out of `Size` rather than added to it, and that is a deliberate
+ * decision. `Size` is the vocabulary for the whole kit: widen it, and every primitive
+ * with a size axis starts accepting a value it cannot handle, and the compiler stays
+ * silent. The button is the only customer of a fourth step, and that is where it lives.
  */
 export type ButtonSize = Size | "xs";
 
 /**
- * Оттенки пользовательских меток: проект, ярлык, категория.
+ * Hues of user labels: project, tag, category.
  *
- * Это НЕ тоны. Тон описывает смысл (`danger` — «действие разрушительно»), а
- * метка означает ровно то, что в неё вложил человек. Занимать смысловые тоны
- * под метки нельзя: кружок цвета `danger` рядом с проектом прочитается как
- * ошибка, а тон перестанет значить то, что значит.
+ * These are NOT tones. A tone describes meaning (`danger` means "the action is
+ * destructive"), while a label means exactly what the person put into it. Semantic
+ * tones must not be used for labels: a `danger`-colored dot next to a project will
+ * read as an error, and the tone will stop meaning what it means.
  *
- * Имена по оттенку, а не по назначению. Имя уезжает в базу потребителя ключом
- * цвета и переживает смену значений; назначение у каждого потребителя своё, и
- * `label-1` через полгода не скажет никому ничего.
+ * Names come from the hue, not from the purpose. The name is stored in the consumer's
+ * database as a color key and outlives any change of values. The purpose differs for
+ * every consumer, and `label-1` will tell nobody anything six months from now.
  *
- * Набор закрытый и не зависит ни от акцента, ни от бренда: переключив акцент,
- * пользователь не должен обнаружить, что все его проекты сменили цвет.
+ * The set is closed and does not depend on the accent or the brand: after switching
+ * the accent, the user should not discover that all their projects changed color.
  */
 export const LABEL_HUES = [
   "blue",
@@ -57,11 +58,11 @@ export const LABEL_HUES = [
 export type LabelHue = (typeof LABEL_HUES)[number];
 
 /**
- * Класс заливки по оттенку.
+ * Fill class by hue.
  *
- * Словарь, а не склейка `bg-label-${hue}`: Tailwind сканирует исходники как
- * текст, и собранного в рантайме класса в CSS не окажется — молча, без ошибки
- * сборки. Тот же запрет, что в `lib/field.ts`.
+ * A dictionary, not the concatenation `bg-label-${hue}`: Tailwind scans sources as
+ * text, and a class assembled at runtime would never reach the CSS, silently and with
+ * no build error. The same ban applies as in `lib/field.ts`.
  */
 export const LABEL_BG_CLASS: Record<LabelHue, string> = {
   blue: "bg-label-blue",
@@ -74,7 +75,7 @@ export const LABEL_BG_CLASS: Record<LabelHue, string> = {
   steel: "bg-label-steel",
 };
 
-/** Класс текста тем же оттенком — для подписи рядом с меткой, не внутри неё. */
+/** The text class in the same hue, for a caption next to a label, not inside it. */
 export const LABEL_TEXT_CLASS: Record<LabelHue, string> = {
   blue: "text-label-blue",
   violet: "text-label-violet",
@@ -87,137 +88,141 @@ export const LABEL_TEXT_CLASS: Record<LabelHue, string> = {
 };
 
 /**
- * Семантический цвет. Описывает смысл, а не оттенок: `danger` — это «действие
- * разрушительно», а не «красный». Поэтому при смене темы или акцента смысл
- * сохраняется, а цвет меняется.
+ * Semantic color. It describes meaning, not hue: `danger` means "the action is
+ * destructive", not "red". So when the theme or accent changes, the meaning is kept
+ * and the color changes.
  */
 export type Tone = "neutral" | "accent" | "success" | "warning" | "danger";
 
 /**
- * Насколько заметно подан тон.
+ * How prominently a tone is shown.
  *
- *   solid   — заливка цветом тона, текст контрастный
- *   soft    — приглушённая подложка (`*-soft`)
- *   outline — только рамка и текст
- *   ghost   — ни рамки, ни фона; подложка появляется на hover
+ *   solid   — filled with the tone color, contrasting text
+ *   soft    — a muted backing (`*-soft`)
+ *   outline — border and text only
+ *   ghost   — neither border nor background; a backing appears on hover
  */
 export type Variant = "solid" | "soft" | "outline" | "ghost";
 
 /**
- * Плотность раскладки: сколько воздуха внутри строки данных.
+ * Layout density: how much air there is inside a data row.
  *
- * Ось системного уровня, а не таблицы: умолчание задаёт `UiProvider`, а
- * таблица его перекрывает (ADR-0023). Две ступени, а не три: «средняя»
- * плотность неотличима от одной из соседних, и выбор из трёх превращается в
- * гадание.
+ * A system-level axis, not a table one: the default is set by `UiProvider`, and a
+ * table overrides it (ADR-0023). Two steps, not three: a "medium" density is
+ * indistinguishable from one of its neighbors, and choosing among three turns into
+ * guesswork.
  */
 export type Density = "comfortable" | "compact";
 
 /**
- * Начертание цифр.
+ * Numeral style.
  *
- * `tabular` — цифры равной ширины (`font-variant-numeric: tabular-nums`): всё,
- * что тикает, пересчитывается или стоит колонкой, перестаёт ездить вбок при
- * смене знаков. Замер потребителя на Inter, кегль `md`: у строк ОДНОЙ длины
- * («0:00», «0:11», «1:38», «8:21») разбег ширины — 4.65 пикселя, у моноширинных
- * цифр — ноль. То есть секундный таймер ездит туда-сюда на каждом тике.
+ * `tabular` — digits of equal width (`font-variant-numeric: tabular-nums`): anything
+ * that ticks, recalculates or sits in a column stops shifting sideways when the
+ * digits change. A measurement by a consumer on Inter, `md` size: for strings of ONE
+ * length ("0:00", "0:11", "1:38", "8:21") the width varies by 4.65 px, while for
+ * monospaced digits it is zero. In other words, a seconds timer jitters back and
+ * forth on every tick.
  *
- * Это НЕ моноширинное начертание: гарнитура остаётся своя, меняется только
- * ширина цифр. Тем, кому нужен второй шрифт (`font-mono`), он ставится отдельно.
+ * This is NOT a monospace face: the typeface stays the same, and only the digit width
+ * changes. Anyone who needs a second font (`font-mono`) sets it separately.
  *
- * Ось строковая при единственном значении намеренно: рядом со временем встанут
- * `oldstyle` и `slashed-zero`, если появится заказчик, — и это не потребует
- * второго пропа и не превратит булево `tabular` в ложь.
+ * The axis is a string with a single value on purpose: `oldstyle` and `slashed-zero`
+ * will join it over time, if a customer appears, and that will not require a second
+ * prop or turn the boolean `tabular` into a false value.
  */
 export type Numeric = "tabular";
 
-/** Класс на каждое значение оси. Строки литеральные — их сканирует Tailwind. */
+/** One class per axis value. The strings are literal: Tailwind scans them. */
 export const NUMERIC_CLASS: Record<Numeric, string> = {
   tabular: "tabular-nums",
 };
 
 /**
- * Атомы тона — готовые классы Tailwind, из которых примитивы собирают свой вид.
+ * Tone atoms: ready-made Tailwind classes from which the primitives build their look.
  *
- * ВАЖНО: все значения здесь — **литеральные строки целиком**. Tailwind сканирует
- * исходники как текст и не исполняет код, поэтому класс, собранный в рантайме
- * (`hover:${t.bg}`), в CSS не попадёт — молча, без ошибки сборки. По той же
- * причине здесь нет матрицы `variant × tone`, генерируемой на лету: только
- * плоский список готовых строк, каждую из которых сканер видит.
+ * IMPORTANT: every value here is a **whole literal string**. Tailwind scans sources as
+ * text and does not execute code, so a class assembled at runtime (`hover:${t.bg}`)
+ * would never reach the CSS, silently and with no build error. For the same reason
+ * there is no `variant × tone` matrix generated on the fly: only a flat list of
+ * ready-made strings, each of which the scanner sees.
  *
- * Все тона названы полными именами, а не историческими алиасами: `bg-success`,
- * а не `bg-ok`; `bg-danger`, а не `bg-err`; `--accent`, а не телеграмное `--tg`.
- * Значения идентичны (`--ok: var(--success)` и так далее), поэтому вид не
- * меняется — но словарь тонов и словарь классов перестают расходиться в именах.
- * Алиасы остаются в `styles.css` ради фронта, где их ещё десятки.
+ * All tones are named by their full names, not by historical aliases: `bg-success`,
+ * not `bg-ok`; `bg-danger`, not `bg-err`; `--accent`, not the Telegram-era `--tg`.
+ * The values are identical (`--ok: var(--success)` and so on), so the look does not
+ * change, but the tone dictionary and the class dictionary stop diverging in their
+ * names. The aliases remain in `styles.css` for the front end, where there are still
+ * dozens of them.
  */
 export interface ToneAtoms {
-  /** Текст цветом тона. */
+  /** Text in the tone's color. */
   fg: string;
-  /** Приглушённая подложка. */
+  /** Muted backing. */
   bg: string;
-  /** Рамка цветом тона. */
+  /** Border in the tone's color. */
   border: string;
   /**
-   * Заливка тоном + контрастный текст.
+   * Fill with the tone + contrasting text.
    *
-   * Цвет текста здесь НЕ одинаков у всех тонов: `warning` и `success` берут
-   * тёмный (`--text-on-warning`/`--text-on-success`), остальные — белый
-   * `--text-on-accent`. Белый на жёлтом даёт 1.87 при требуемых 4.5, и это
-   * не чинится подбором оттенка. Второе такое отступление после `softFg`
-   * у `neutral`; про текст на `warning` и `success` — docs/palette.md.
+   * The text color here is NOT the same for all tones: `warning` and `success` take a
+   * dark one (`--text-on-warning`/`--text-on-success`), and the rest take white
+   * `--text-on-accent`. White on yellow gives 1.87 against the required 4.5, and this
+   * cannot be fixed by picking a different shade. This is the second such exception,
+   * after `softFg` on `neutral`; for text over `warning` and `success`, see
+   * docs/palette.md.
    */
   solid: string;
-  /** Hover для `solid`. */
+  /** Hover for `solid`. */
   solidHover: string;
-  /** Hover-подложка для `outline` и `ghost`. */
+  /** Hover backing for `outline` and `ghost`. */
   softHover: string;
   /**
-   * Текст поверх приглушённой подложки в `soft`.
+   * Text over the muted backing in `soft`.
    *
-   * Для `neutral` он намеренно контрастнее, чем `fg`: `soft/neutral` — это
-   * вторичная кнопка с полноценной подписью, а `ghost`/`outline` того же тона —
-   * приглушённые. Один `fg` на оба случая делал подпись вторичной кнопки блёклой.
+   * For `neutral` it is deliberately more contrasting than `fg`: `soft/neutral` is a
+   * secondary button with a full-strength label, while `ghost`/`outline` of the same
+   * tone are muted. A single `fg` for both cases made the label of a secondary button
+   * washed out.
    */
   softFg: string;
-  /** Hover-подложка для `soft`. */
+  /** Hover backing for `soft`. */
   softBgHover: string;
-  /** Сплошная заливка тоном без текста — для точек-индикаторов и полосок. */
+  /** A solid fill in the tone, without text: for dot indicators and stripes. */
   dotBg: string;
   /**
-   * Подложка выбранного элемента: пункт меню, опция списка, строка таблицы,
-   * отмеченный флажок.
+   * Backing of a selected element: a menu item, a list option, a table row, a checked
+   * checkbox.
    *
-   * Вариант `selected:` — из плагина `tailwindcss-react-aria-components`, и он
-   * единственный в этом словаре, у которого нет CSS-эквивалента вовсе:
-   * псевдокласса «выбран» в CSS не существует, а элементы react-aria сплошь и
-   * рядом отрисованы дивами с ролью, где не сработал бы даже `:checked`.
-   * Остальные атомы (`hover:`, `disabled:`) плагин переопределяет на двойной
-   * селектор, поэтому их править под RAC не понадобилось — см. `styles.css`.
+   * The `selected:` variant comes from the `tailwindcss-react-aria-components` plugin,
+   * and it is the only one in this dictionary with no CSS equivalent at all: there is
+   * no "selected" pseudo-class in CSS, and react-aria elements are very often rendered
+   * as divs with a role, where even `:checked` would not apply. The plugin rewrites
+   * the other atoms (`hover:`, `disabled:`) to a doubled selector, so they needed no
+   * RAC-specific changes; see `styles.css`.
    */
   selectedBg: string;
-  /** Текст выбранного элемента. Пара к `selectedBg`. */
+  /** Text of a selected element. The pair of `selectedBg`. */
   selectedFg: string;
   /**
-   * Подложка в момент удержания — пункт меню под нажатой кнопкой мыши.
+   * Backing while pressed: a menu item under a held mouse button.
    *
-   * Отложен от T2 до появления `Menu`, который первым его и рендерит: покрытие
-   * классов проверяет только те классы, что есть в разметке примитивов, и атом,
-   * который никто не рисует, лежал бы в словаре непроверенным.
+   * Deferred from T2 until `Menu` appeared, as the first component to render it. Class
+   * coverage checks only the classes present in the primitives' markup, and an atom
+   * that nobody renders would sit in the dictionary unchecked.
    *
-   * `pressed:` вместо `active:` — родной `:active` срабатывает и на мыши, но
-   * react-aria ставит `data-pressed` одинаково для мыши, касания и клавиатуры,
-   * а `:active` от клавиши не срабатывает вовсе.
+   * `pressed:` instead of `active:`: the native `:active` also fires on the mouse, but
+   * react-aria sets `data-pressed` the same way for mouse, touch and keyboard, while
+   * `:active` does not fire from the keyboard at all.
    */
   pressedBg: string;
 }
 
 /**
- * Рамка поля, не прошедшего валидацию.
+ * The border of a field that failed validation.
  *
- * Вне словаря тонов намеренно: «невалидно» — это всегда `danger`, независимо от
- * того, каким тоном покрашен сам контрол. Поле в таблице тонов, одинаковое во
- * всех пяти строках, — это константа, притворившаяся осью.
+ * Deliberately outside the tone dictionary: "invalid" always means `danger`, regardless
+ * of which tone colors the control itself. A field in the tone table that is identical
+ * in all five rows is a constant pretending to be an axis.
  */
 export const INVALID_BORDER_CLASS = "invalid:border-danger-strong";
 
@@ -241,7 +246,7 @@ export const TONE_TOKENS: Record<Tone, ToneAtoms> = {
     bg: "bg-accent-soft",
     border: "border-accent-strong",
     solid: "bg-accent text-text-on-accent",
-    // Единственный тон с собственным hover-токеном; остальные гасятся прозрачностью.
+    // The only tone with its own hover token; the others are dimmed with opacity.
     solidHover: "hover:bg-accent-hover",
     softHover: "hover:bg-accent-soft",
     softFg: "text-accent-strong",
@@ -255,7 +260,7 @@ export const TONE_TOKENS: Record<Tone, ToneAtoms> = {
     fg: "text-success-strong",
     bg: "bg-success-soft",
     border: "border-success-strong",
-    // Не `text-on-accent`: белый на зелёном даёт 2.61. См. docs/palette.md.
+    // Not `text-on-accent`: white on green gives 2.61. See docs/palette.md.
     solid: "bg-success text-text-on-success",
     solidHover: "hover:opacity-90",
     softHover: "hover:bg-success-soft",
@@ -270,7 +275,7 @@ export const TONE_TOKENS: Record<Tone, ToneAtoms> = {
     fg: "text-warning-strong",
     bg: "bg-warning-soft",
     border: "border-warning-strong",
-    // Не `text-on-accent`: белый на жёлтом даёт 1.87 и не чинится подбором оттенка.
+    // Not `text-on-accent`: white on yellow gives 1.87, and it cannot be fixed by picking a different shade.
     solid: "bg-warning text-text-on-warning",
     solidHover: "hover:opacity-90",
     softHover: "hover:bg-warning-soft",
@@ -298,23 +303,24 @@ export const TONE_TOKENS: Record<Tone, ToneAtoms> = {
 };
 
 /**
- * Рамка признака состояния «выбрано / отмечено».
+ * The border of a "selected / checked" state indicator.
  *
- * Отдельный словарь, а не `TONE_TOKENS[tone].border`: у `neutral` там
- * `border-line` — рамка-разделитель, которую гейт контраста пропускает как
- * декоративную. Рамка признака состояния несёт смысл и держит 3:1 по WCAG
- * 1.4.11, поэтому у `neutral` здесь `fg-3`, у остальных — те же `*-strong`.
+ * A separate dictionary, not `TONE_TOKENS[tone].border`: for `neutral` that is
+ * `border-line`, a divider border that the contrast gate lets through as decorative.
+ * The border of a state indicator carries meaning and must hold 3:1 under WCAG
+ * 1.4.11, so here `neutral` gets `fg-3`, and the rest get the same `*-strong` values.
  *
- * Зачем она отмеченному флажку и включённому `Toggle`: их заливка (`solid`,
- * `bg-accent`) против подложки даёт 1.07–2.9 — у четырёх тонов из пяти, в
- * тёмных темах на `surface-elevated` и в светлой у `neutral`/`warning`. Менять
- * значения токенов ради этого — заметное изменение вида всего кита, поэтому
- * границу компонента отдаёт рамка: она и отделяет коробку от подложки. Галочка
- * на заливке проходит порог сама (пары `solid/<тон> — text`).
+ * Why the checked checkbox and the on `Toggle` need it: their fill (`solid`,
+ * `bg-accent`) against the backing gives 1.07–2.9, for four of the five tones, in the
+ * dark themes on `surface-elevated`, and in the light theme for `neutral`/`warning`.
+ * Changing token values for this would visibly alter the look of the whole kit, so the
+ * component's boundary is drawn by the border instead: it is what separates the box
+ * from the backing. A check mark on the fill clears the threshold by itself (the
+ * `solid/<tone> — text` pairs).
  *
- * Литеральные строки целиком: Tailwind сканирует исходники как текст.
- * `scripts/contrast.mjs` читает этот словарь и меряет каждую запись против
- * подложек приложения и против карточки — `bg-2`.
+ * Literal strings in full: Tailwind scans sources as text. `scripts/contrast.mjs`
+ * reads this dictionary and measures each entry against the application's backings
+ * and against the card, `bg-2`.
  */
 export const STATE_BORDER: Record<Tone, string> = {
   neutral: "border-fg-3",
@@ -324,15 +330,15 @@ export const STATE_BORDER: Record<Tone, string> = {
   danger: "border-danger-strong",
 };
 
-/** Классы для пары `variant` + `tone`. Общая логика для всех примитивов с обеими осями. */
+/** Classes for a `variant` + `tone` pair. Shared logic for all primitives with both axes. */
 export function variantClasses(variant: Variant, tone: Tone): string {
   const t = TONE_TOKENS[tone];
   switch (variant) {
     case "solid":
       return `border-transparent ${t.solid} ${t.solidHover}`;
     case "soft":
-      // Рамка и контрастный текст — не украшение: без них вторичная кнопка
-      // сливается с фоном панели. Воспроизводит прежний kind="ghost".
+      // The border and the contrasting text are not decoration: without them a secondary
+      // button blends into the panel background. Reproduces the former `kind="ghost"`.
       return `${t.border} ${t.bg} ${t.softFg} ${t.softBgHover}`;
     case "outline":
       return `${t.border} ${t.fg} bg-transparent ${t.softHover}`;

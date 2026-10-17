@@ -16,84 +16,78 @@ import { EDITOR_WRAPPER_TONES } from "../features/wrapper/wrapperTones.js";
 import { isVideoProvider, isVideoSrc, VIDEO_BLOCK } from "../features/video/videoSrc.js";
 
 /**
- * Схема Редактора ДАННЫМИ: белый список тегов и атрибутов, которые он
- * принимает и отдаёт.
+ * The Editor's Schema as DATA: an allowlist of the tags and attributes it accepts and returns.
  *
- * ЗАЧЕМ ОТДЕЛЬНЫМ СПИСКОМ, ЕСЛИ СХЕМУ И ТАК ЗАДАЮТ РАСШИРЕНИЯ. Расширения
- * Tiptap описывают схему кодом, и прочитать из них «что может прийти в HTML»
- * нельзя ни человеку, ни санитайзеру. А потребителю нужен ровно этот ответ:
- * санитизация на сервере — его ответственность (ADR-0050), и очистку
- * (`sanitizeRichText` ниже) кит строит отсюда, а не из исходника. Совпадение списка с
- * тем, что редактор реально отдаёт, сторожит
- * `tests/rich-text-editor-schema.test.tsx` — в обе стороны.
+ * WHY A SEPARATE LIST WHEN THE EXTENSIONS ALREADY DEFINE THE SCHEMA. Tiptap extensions describe
+ * the schema in code, and neither a person nor a sanitizer can read "what may arrive in HTML"
+ * from them. The consumer needs exactly that answer: sanitizing on the server is its
+ * responsibility (ADR-0050), and the cleanup (`sanitizeRichText` below) is built by the kit from
+ * this list, not from the source. That the list matches what the Editor actually returns is
+ * guarded by `tests/rich-text-editor-schema.test.tsx`, in both directions.
  *
- * Список растёт вместе с набором Блоков и Меток;
- * опубликован он на странице `RichTextView`, и таблица там сверяется с этим
- * файлом тестом (`tests/rich-text-view.test.tsx`). Атрибута `style` в нём нет,
- * кроме одного узкого исключения — произвольного цвета (`customColor` ниже):
- * цвет палитры и выравнивание пишутся в `data-*` (спека, «Схема и
- * безопасность»).
+ * The list grows together with the set of Blocks and Marks. It is published on the
+ * `RichTextView` page, and the table there is checked against this file by a test
+ * (`tests/rich-text-view.test.tsx`). There is no `style` attribute in it, except for one narrow
+ * exception: the arbitrary color (`customColor` below). A palette color and alignment are written
+ * to `data-*` (spec, "Schema and security").
  *
- * Модуль серверно-безопасен: данные, без React и без движка. Его импорты —
- * `palette.ts`, `customColor.ts`, `codeLanguages.ts`, `columnLayouts.ts` и
- * `wrapperTones.ts`, тоже данные: имена палитры, языков, вариантов Раскладки и
- * тонов Обёртки живут там один раз; `videoSrc.ts` — имена видео и проверка
- * его адреса (чистые функции над строкой); ещё `lib/dev-warn.ts` — предупреждение
- * разработчику без зависимостей.
+ * The module is safe to run on the server: it is data, without React and without the engine. Its
+ * imports `palette.ts`, `customColor.ts`, `codeLanguages.ts`, `columnLayouts.ts` and
+ * `wrapperTones.ts` are data too: the palette names, the languages, the Column layout variants
+ * and the Wrapper tones live there once. `videoSrc.ts` holds the video names and the check of
+ * a video address (pure functions over a string). Also `lib/dev-warn.ts`, a developer warning
+ * with no dependencies.
  */
 export const RICH_TEXT_SCHEMA = {
   /**
-   * Блоки. `h1` — только с инструментом `heading1`: экран, у
-   * которого заголовок страницы стоит над Редактором, его выключает, и тогда
-   * Редактор `h1` не отдаёт. Схема-данные перечисляют всё, что кит МОЖЕТ
-   * отдать, а не то, что отдаёт при конкретном наборе `tools`.
-   * `pre` — блок кода, внутри него `code`. `figure` — картинка: внутри неё
-   * `img` и, если подпись не пуста, `figcaption`. Вне `figure` Редактор не
-   * отдаёт ни `img`, ни `figcaption`.
+   * Blocks. `h1` is allowed only with the `heading1` Tool: a screen whose page title sits above
+   * the Editor turns it off, and then the Editor does not return `h1`. The schema data lists
+   * everything the kit CAN return, not what it returns for a given `tools` set.
+   * `pre` is a code Block, with `code` inside it. `figure` is an image: it contains `img` and,
+   * if the caption is not empty, `figcaption`. Outside `figure` the Editor returns neither `img`
+   * nor `figcaption`.
    *
-   * `label`, `input`, `span` и `div` — разметка пункта чек-листа, как её пишет
-   * Tiptap: `<li data-type="taskItem"><label><input type="checkbox"><span>
-   * </span></label><div>…</div></li>`. Вне пункта чек-листа Редактор их не
-   * отдаёт, и `sanitizeRichText` держит их там же — хуком на предка.
+   * `label`, `input`, `span` and `div` are the markup of a task item, as Tiptap writes it:
+   * `<li data-type="taskItem"><label><input type="checkbox"><span>
+   * </span></label><div>…</div></li>`. Outside a task item the Editor does not return them, and
+   * `sanitizeRichText` keeps them there too, with a hook on the ancestor.
    *
-   * `div` с `data-block` — Раскладка: `div[data-block="layout"]`
-   * с вариантом в `data-layout`, внутри от одной до четырёх
-   * `div[data-block="column"]`, в колонке — Блоки, кроме другой Раскладки.
-   * Раскладка — только Блок верхнего уровня: не в колонке, Обёртке, списке,
-   * цитате и ячейке. Ширины колонок — вариантом, а не `style` (`layouts` ниже).
+   * A `div` with `data-block` is a Column layout: `div[data-block="layout"]` with the variant in
+   * `data-layout`, containing one to four `div[data-block="column"]`. A column holds Blocks,
+   * except another Column layout. A Column layout is only a top-level Block: not inside a
+   * column, a Wrapper, a list, a quote, a cell or a Details Block. Column widths are set by the variant, not by
+   * `style` (`layouts` below).
    *
-   * `div[data-block="wrapper"]` — Обёртка, группа Блоков, как у
-   * Redactor; тон, если есть, — в `data-tone` (`wrapperTones` ниже).
-   * Стоит на верхнем уровне и прямо в колонке Раскладки; внутри — Блоки, кроме
-   * другой Обёртки и Раскладки.
+   * `div[data-block="wrapper"]` is a Wrapper, a group of Blocks, as in Redactor. Its tone, if
+   * any, is in `data-tone` (`wrapperTones` below). It sits at the top level and directly in a
+   * Column layout column. Inside it are Blocks, except another Wrapper and a Column layout.
    *
-   * `details` — сворачиваемый Блок: `details > summary` и следом
-   * `div[data-type="detailsContent"]` с Блоками; `open` — только у `details` и
-   * только пустым (`open=""`), так его пишет Редактор с Опцией `persist`.
-   * `summary` вне `details` и обёртка содержимого вне него снимаются —
-   * Блоки остаются подряд. Теги и атрибуты Блока открыты только в этой форме:
-   * `iframe` и ему подобное так не открывается.
+   * `details` is a collapsible Block: `details > summary`, followed by
+   * `div[data-type="detailsContent"]` with Blocks. `open` is only on `details`, and only empty
+   * (`open=""`), as the Editor writes it with the `persist` option. `summary` outside `details`
+   * and a content wrapper outside it are removed; the Blocks stay in place. The tags and
+   * attributes of this Block are allowed only in this form: `iframe` and the like are not
+   * allowed this way.
    *
-   * `div[data-block="video"]` — видео по ссылке (ADR-0071): `data-provider`
-   * (`youtube` или `twitch`), `data-src` — `https`-адрес видео в каноническом
-   * виде, как его пишет Редактор, на хосте этого сервиса (YouTube:
-   * `www.youtube.com`, `watch?v=` или `playlist?list=`; Twitch: `www.twitch.tv`
-   * и `clips.twitch.tv`). Короткие формы (`youtu.be`), адрес без `www.`, `http` и
-   * адреса плееров не проходят (`isVideoSrc`). Внутри — обычная ссылка. Плеера в
-   * Документе нет, `iframe` срезается по-прежнему: плеер рисует кит при показе.
+   * `div[data-block="video"]` is a video by link (ADR-0071): `data-provider` (`youtube` or
+   * `twitch`), and `data-src`, an `https` address of the video in the canonical form the Editor
+   * writes, on this service's host (YouTube: `www.youtube.com`, `watch?v=` or
+   * `playlist?list=`; Twitch: `www.twitch.tv` and `clips.twitch.tv`). Short forms (`youtu.be`),
+   * an address without `www.`, `http`, and player addresses do not pass (`isVideoSrc`). Inside
+   * is an ordinary link. There is no player in the Document, and `iframe` is still removed: the
+   * kit draws the player when the Document is shown.
    *
-   * Формулы — `span[data-type="inline-math"]` в строке и `div[data-type="block-math"]`
-   * Блоком, исходный LaTeX в `data-latex` (ADR-0070). Оба элемента всегда пусты:
-   * отрисованная разметка KaTeX в Документ не попадает, её рисует Редактор и Остров
-   * `RichTextView`. Пара `data-type` и `data-latex` открыта только на этих двух
-   * тегах; `data-latex` — единственное значение атрибута, где допустим `<`.
+   * Formulas: `span[data-type="inline-math"]` inline and `div[data-type="block-math"]` as a Block,
+   * with the LaTeX source in `data-latex` (ADR-0070). Both elements are always empty: the
+   * rendered KaTeX markup does not get into the Document. The Editor and the `RichTextView`
+   * Island draw it. The `data-type` and `data-latex` pair is allowed only on these two tags;
+   * `data-latex` is the only attribute value where `<` is allowed.
    *
-   * Таблица — `table > tbody > tr > th|td`, без `thead`, `colgroup` и
-   * `caption`: строка-заголовок — это обычная первая строка из `th`. На ячейке
-   * бывают только слияние (`colspan`, `rowspan`) и выравнивание столбца
-   * (`data-align`); ширина столбцов не строится, и `style` и `colwidth` на
-   * выходе не бывают. `tbody`, `tr`, `th` и `td` вне таблицы парсер HTML
-   * выбрасывает сам, хук на это не нужен.
+   * A table is `table > tbody > tr > th|td`, without `thead`, `colgroup` or `caption`: a header
+   * row is an ordinary first row of `th` cells. A cell carries only merging (`colspan`,
+   * `rowspan`) and column alignment (`data-align`). Column widths are not built, and `style` and
+   * `colwidth` never appear in the output. The HTML parser drops `tbody`, `tr`, `th` and `td`
+   * outside a table on its own, so no hook is needed for that.
    */
   blocks: [
     "p",
@@ -123,27 +117,27 @@ export const RICH_TEXT_SCHEMA = {
     "summary",
   ],
   /**
-   * Метки и строчные узлы. `br` — мягкий перенос по Shift+Enter. `mark` —
-   * маркер, всегда с `data-color`; `span` с `data-color` — цвет текста (тег
-   * назван в `blocks`: там он же — разметка пункта чек-листа). `a` — ссылка,
-   * её адрес ограничен схемами из `protocols`.
+   * Marks and inline nodes. `br` is a soft line break on Shift+Enter. `mark` is a marker, always
+   * with `data-color`. `span` with `data-color` is a text color (the tag is named in `blocks`
+   * too, where it is task item markup). `a` is a link, its address limited to the schemes in
+   * `protocols`.
    */
   marks: ["strong", "em", "u", "s", "code", "sup", "sub", "mark", "br", "a"],
-  /** Атрибуты по тегам. Всё, чего здесь нет, на выходе не появляется. */
+  /** Attributes by tag. Anything not listed here does not appear in the output. */
   attributes: {
-    /** Номер первого пункта — только когда он не 1. */
+    /** The number of the first item, only when it is not 1. */
     ol: ["start"],
-    /** Чек-лист: `data-type="taskList"`. */
+    /** Task list: `data-type="taskList"`. */
     ul: ["data-type"],
     /**
-     * Раскладка и её колонка: `data-block="layout"` и `data-block="column"`;
-     * `data-layout` — вариант из `layouts`, только у Раскладки. Обёртка —
-     * `data-block="wrapper"` и, если у неё есть тон, `data-tone` — имя из
-     * `wrapperTones`, только у Обёртки. Обёртка содержимого сворачиваемого
-     * Блока — `data-type="detailsContent"`, только прямо в `details`. Блочная
-     * формула — `data-type="block-math"` с `data-latex`, только на `div`. Видео —
-     * `data-block="video"` с `data-provider` (сервис) и `data-src` (ссылка на
-     * видео этого сервиса, `isVideoSrc`). У `div` пункта чек-листа атрибутов нет.
+     * Column layout and its column: `data-block="layout"` and `data-block="column"`.
+     * `data-layout` is a variant from `layouts`, only on a Column layout. A Wrapper is
+     * `data-block="wrapper"` and, if it has a tone, `data-tone`, a name from `wrapperTones`,
+     * only on a Wrapper. The content wrapper of a Details Block is `data-type="detailsContent"`,
+     * only directly inside `details`. A block formula is `data-type="block-math"` with
+     * `data-latex`, only on a `div`. A video by link is `data-block="video"` with `data-provider`
+     * (the service) and `data-src` (a link to a video of that service, `isVideoSrc`). A `div` of
+     * a task item has no attributes.
      */
     div: [
       "data-block",
@@ -154,42 +148,40 @@ export const RICH_TEXT_SCHEMA = {
       "data-src",
       "data-latex",
     ],
-    /** Открытый сворачиваемый Блок: пустой `open`, только с Опцией `persist`. */
+    /** An open Details Block: an empty `open`, only with the `persist` option. */
     details: ["open"],
-    /** Пункт чек-листа: `data-type="taskItem"` и `data-checked="true|false"`. */
+    /** Task item: `data-type="taskItem"` and `data-checked="true|false"`. */
     li: ["data-type", "data-checked"],
-    /** Флажок пункта чек-листа: всегда `type="checkbox"`, `checked` — у отмеченного. */
+    /** Checkbox of a task item: always `type="checkbox"`, `checked` on a checked one. */
     input: ["type", "checked"],
     /**
-     * Язык блока кода: только `language-<имя>` с именем из `codeLanguages` и
-     * только на `code` внутри `pre`. Подсветка в Документ не пишется — токены
-     * `hljs-*` живут декорациями Редактора (ADR-0051). Другие классы Редактор
-     * не отдаёт, блок без языка — `<code>` без класса.
+     * Language of a code Block: only `language-<name>`, with a name from `codeLanguages`, and
+     * only on `code` inside `pre`. Syntax highlighting is not written into the Document: the
+     * `hljs-*` tokens live as Editor Decorations (ADR-0051). The Editor returns no other classes,
+     * and a Block without a language is a bare `<code>` with no class.
      */
     code: ["class"],
     /**
-     * Цвет текста и маркер: имя в `data-color` ИЛИ произвольный цвет в `style`
-     * (`customColor`) — вместе на одном элементе не бывают. Палитры две:
-     * `span[data-color]` — имя из `textColors`, `mark[data-color]` — имя из
-     * `markerColors`; имя чужой палитры на теге не принимается. Другое имя
-     * Редактор не отдаёт и при загрузке отбрасывает вместе с обёрткой (старые
-     * имена маркера он переводит — `legacyMarkerColors`). На `span` без
-     * `data-color` и без `style` он тоже не бывает — пустой `span` есть только
-     * в пункте чек-листа и у строчной формулы: `data-type="inline-math"` с
-     * `data-latex`, только на `span`.
+     * Text color and marker: a name in `data-color` OR an arbitrary color in `style`
+     * (`customColor`). The two never sit together on one element. There are two palettes:
+     * `span[data-color]` takes a name from `textColors`, `mark[data-color]` a name from
+     * `markerColors`. A name from the other palette is not accepted on a tag. The Editor returns
+     * no other name, and on load it drops such a name along with its wrapper. It converts old
+     * marker names (`legacyMarkerColors`). A `span` without `data-color` and without `style` never
+     * occurs either: an empty `span` exists only in a task item and in an inline formula
+     * (`data-type="inline-math"` with `data-latex`, only on `span`).
      */
     span: ["data-color", "style", "data-type", "data-latex"],
     mark: ["data-color", "style"],
     /**
-     * Выравнивание Блока: значение из `alignments`, кроме `left` — оно
-     * умолчание, и Редактор его не пишет (читает как отсутствие атрибута).
+     * Block alignment: a value from `alignments`, except `left`. `left` is the default, and the
+     * Editor does not write it (it reads it as the attribute being absent).
      */
     p: ["data-align"],
     /**
-     * Ячейка таблицы: слияние — `colspan` и `rowspan`, целое больше 1 и не
-     * больше `tableSpans` (1 Редактор не пишет — это умолчание); выравнивание
-     * столбца — `data-align` со значением из `alignments`, кроме `left`, на
-     * каждой ячейке столбца.
+     * Table cell: merging is `colspan` and `rowspan`, an integer greater than 1 and not above
+     * `tableSpans` (the Editor does not write 1, it is the default). Column alignment is
+     * `data-align` with a value from `alignments`, except `left`, on every cell of the column.
      */
     th: ["colspan", "rowspan", "data-align"],
     td: ["colspan", "rowspan", "data-align"],
@@ -198,116 +190,112 @@ export const RICH_TEXT_SCHEMA = {
     h3: ["data-align"],
     h4: ["data-align"],
     /**
-     * Ссылка: `href` только со схемой из `protocols`, `rel` всегда
-     * `"noopener noreferrer"`. `target` Редактор не отдаёт: новая вкладка —
-     * решение страницы показа, а не данных Документа.
+     * Link: `href` only with a scheme from `protocols`, `rel` always `"noopener noreferrer"`.
+     * The Editor does not return `target`: opening a new tab is the decision of the page that
+     * shows the Document, not of the Document's data.
      */
     a: ["href", "rel"],
     /**
-     * Картинка: `src` только абсолютный `http` или `https` (`imageProtocols`),
-     * `alt` есть всегда — пустой у картинки без описания, — `data-width` —
-     * значение из `imageWidths`, только у картинки с заданной шириной.
+     * Image: `src` only an absolute `http` or `https` URL (`imageProtocols`). `alt` is always
+     * present, empty for an image with no description. `data-width` is a value from `imageWidths`,
+     * only on an image with a set width.
      */
     img: ["src", "alt", "data-width"],
   },
   /**
-   * Допустимые значения `span[data-color]` — цвет текста: шесть тонов статуса.
-   * Значение вне списка `sanitizeRichText` снимает вместе с атрибутом:
-   * `ALLOWED_ATTR` у DOMPurify значений не проверяет, и проверять надо по
-   * тегу — имя маркера на `span` не годится.
+   * Allowed values of `span[data-color]`, the text color: six status tones. `sanitizeRichText`
+   * removes a value outside the list together with the attribute. DOMPurify's `ALLOWED_ATTR`
+   * does not check values, so the check has to be done per tag: a marker name is not valid on
+   * a `span`.
    */
   textColors: EDITOR_TEXT_COLOR_NAMES,
   /**
-   * Допустимые значения `mark[data-color]` — маркер: девять названий цвета.
-   * Те же правила, что у `textColors`, и свой тег.
+   * Allowed values of `mark[data-color]`, the marker: nine color names. The same rules as
+   * `textColors`, with its own tag.
    */
   markerColors: EDITOR_MARKER_NAMES,
   /**
-   * Старые имена `mark[data-color]` — шесть имён цвета текста, которыми маркер
-   * назывался до палитры Notion, — и цвет, в который их переводит Редактор при
-   * загрузке и вставке. `sanitizeRichText` делает то же ДО проверки по
-   * `markerColors`: иначе подсветка у сохранённого документа пропадёт. На
-   * `span` перевода нет.
+   * Legacy names of `mark[data-color]`: six text color names that the marker used before the
+   * Notion-style palette, and the color the Editor converts them to on load and on paste.
+   * `sanitizeRichText` does the same BEFORE the check against `markerColors`. Otherwise the
+   * highlight of a saved Document would disappear. There is no conversion on `span`.
    */
   legacyMarkerColors: LEGACY_MARKER_NAMES,
   /**
-   * ЕДИНСТВЕННОЕ место, где в документе бывает `style` — произвольный цвет,
-   * выбранный автором в `ColorPicker`. Исключение узкое и принято
-   * владельцем: у цвета автора нет имени, а носитель значения в HTML — `style`.
+   * The ONLY place in a Document where `style` occurs: the arbitrary color the author selected
+   * in `ColorPicker`. The exception is narrow and was approved by the owner: an author's color
+   * has no name, and the carrier of the value in HTML is `style`.
    *
-   * `styles` — регулярное выражение (строкой) на ВСЁ значение атрибута по
-   * тегу: `span` — только `color:#rrggbb`, `mark` — только
-   * `background-color:#rrggbb`; строчные буквы, шесть цифр, без пробелов и
-   * `;`, ничего больше. Любой другой `style` Редактор при загрузке и вставке
-   * отбрасывает, а `sanitizeRichText` снимает — `ALLOWED_ATTR` у DOMPurify
-   * значений не проверяет, поэтому в голом `richTextSanitizeConfig()` `style`
-   * нет вовсе. `style` не бывает вместе с `data-color` на одном элементе.
+   * `styles` is a regular expression (as a string) matched against the WHOLE attribute value, per
+   * tag: `span` takes only `color:#rrggbb`, `mark` only `background-color:#rrggbb`. Lowercase
+   * letters, six digits, no spaces or `;`, nothing else. The Editor drops any other `style` on
+   * load and on paste, and `sanitizeRichText` removes it. DOMPurify's `ALLOWED_ATTR` does not
+   * check values, so in a bare `richTextSanitizeConfig()` there is no `style` at all. `style`
+   * never occurs together with `data-color` on one element.
    *
-   * Цвет автора НЕ следует за темой — в отличие от `textColors` и `markerColors`: `#ff0000` одинаков
-   * в `dark`, `light` и `dim`, и контраст на какой-то из тем может не держать.
+   * An author's color does NOT follow the theme, unlike `textColors` and `markerColors`:
+   * `#ff0000` is the same in `dark`, `light` and `dim`, and the contrast may fail on one of
+   * the themes.
    */
   customColor: {
     styles: CUSTOM_COLOR_STYLE_PATTERN,
   },
   /**
-   * Языки блока кода — имена после `language-` в `class` у `<pre><code>`.
-   * Псевдонимы (`py`, `yml`) Редактор при загрузке приводит к
-   * имени, неизвестный язык — к блоку без класса; `sanitizeRichText` снимает
-   * `class` со значением вне этого списка, псевдонимы тоже.
+   * Code Block languages: the names after `language-` in the `class` of `<pre><code>`. The
+   * Editor maps aliases (`py`, `yml`) to the name on load, and an unknown language to a Block
+   * without a class. `sanitizeRichText` removes a `class` whose value is outside this list,
+   * aliases included.
    */
   codeLanguages: CODE_LANGUAGE_IDS,
-  /** Допустимые значения `data-align`; `left` читается, но не пишется. */
+  /** Allowed values of `data-align`. `left` is read, but never written. */
   alignments: EDITOR_ALIGNMENTS,
   /**
-   * Варианты Раскладки — значения `div[data-layout]`: доли колонок в процентах
-   * через дефис (`50-50`, `60-40`, `25-25-25-25`). Число колонок Раскладки
-   * Редактор приводит к варианту при загрузке; сервер его не пересчитывает —
-   * лишняя или недостающая колонка в показе ничего не ломает.
+   * Column layout variants: the values of `div[data-layout]`, the column shares in percent,
+   * separated by hyphens (`50-50`, `60-40`, `25-25-25-25`). The Editor maps the number of columns
+   * of a Column layout to a variant on load. The server does not recalculate it, and an extra or
+   * a missing column does not break the display.
    */
   layouts: EDITOR_LAYOUTS,
   /**
-   * Тоны Обёртки — значения `div[data-tone]`: имена словаря `Tone`
-   * кита. Без тона атрибута нет; имя вне списка Редактор при загрузке
-   * отбрасывает (Обёртка остаётся), `sanitizeRichText` снимает атрибут. Цвет
-   * подставляет тема, как у `data-color`: в HTML нет ни `style`, ни роли.
+   * Wrapper Callout tones: the values of `div[data-tone]`, the names from the kit's `Tone`
+   * vocabulary. Without a tone there is no attribute. The Editor drops a name outside the list
+   * on load (the Wrapper stays), and `sanitizeRichText` removes the attribute. The color comes
+   * from the theme, as with `data-color`: HTML has neither `style` nor an ARIA role.
    */
   wrapperTones: EDITOR_WRAPPER_TONES,
   /**
-   * Схемы адреса ссылки. Только абсолютные адреса: `javascript:`, `data:` и
-   * прочие схемы не проходят ни из `value`, ни из вставки, ни из поповера.
+   * Link address schemes. Absolute addresses only: `javascript:`, `data:` and other schemes are
+   * not accepted from `value`, from paste, or from the popover.
    *
-   * ПОЧЕМУ БЕЗ ОТНОСИТЕЛЬНЫХ (`/docs`, `#part`, `page.html`). Документ — данные,
-   * которые уезжают с экрана, где их написали: в `RichTextView` на другом
-   * маршруте, в письмо, в Markdown, в соседний продукт на другом домене.
-   * Относительный адрес там значит другое или ничего, а якорям в Документе не
-   * на что указывать — у заголовков нет `id`. Заодно адрес без схемы в поповере
-   * однозначен: `example.com` — это `https://example.com`, а не путь от
-   * текущей страницы. Ослабить правило потом можно без ломки сохранённого,
-   * ужесточить — уже нет.
+   * WHY NO RELATIVE ADDRESSES (`/docs`, `#part`, `page.html`). A Document is data that travels
+   * away from the screen where it was written: to `RichTextView` on another route, into an
+   * email, into Markdown, into a neighboring product on another domain. A relative address there
+   * means something else or nothing. Anchors in the Document have nothing to point to, because
+   * headings have no `id`. Also, an address without a scheme in the popover is unambiguous:
+   * `example.com` is `https://example.com`, not a path from the current page. The rule can be
+   * loosened later without breaking saved content. Tightening it would no longer be possible.
    */
   protocols: ["http", "https", "mailto"],
   /**
-   * Схемы адреса картинки — строже, чем у ссылки: `mailto:` картинкой не
-   * бывает, а `data:` и `blob:` не пишутся никогда (спека, «Схема и
-   * безопасность»). `data:` — это base64 внутри Документа: мегабайты в базе
-   * потребителя и в каждом `onChange`; `blob:` — адрес, живущий только в
-   * вкладке, где его создали, — после сохранения он ведёт в никуда.
+   * Image address schemes are stricter than link schemes: `mailto:` is never an image, and `data:`
+   * and `blob:` are never written (spec, "Schema and security"). `data:` is base64 inside the
+   * Document: megabytes in the consumer's database and in every `onChange`. `blob:` is an address
+   * that lives only in the tab where it was created, so after saving it leads nowhere.
    */
   imageProtocols: ["http", "https"],
   /**
-   * Ширина картинки — доля ширины Документа в процентах: `data-width="50"`.
-   * Без атрибута картинка показывается в своём размере, но не шире Документа.
-   * Пресеты, а не любое число: ручки мышью прилипают к ним, и тот же набор
-   * доступен с клавиатуры в поповере картинки.
+   * Image width is the share of the Document's width in percent: `data-width="50"`. Without the
+   * attribute the image is shown at its own size, but not wider than the Document. Presets rather
+   * than any number: the mouse resize handles snap to them, and the same set is available from
+   * the keyboard in the image popover.
    */
   imageWidths: ["50", "75", "100"],
   /**
-   * Предел слияния ячейки: `colspan` не больше 20, `rowspan` не больше 50 —
-   * столько же, сколько столбцов и строк у самой большой таблицы, которую
-   * Редактор вставляет. Значение сверх предела, ноль, дробь и не-число
-   * Редактор при загрузке и вставке читает как 1 (ячейка остаётся, слияние
-   * распадается), а санитайзеру стоит снимать атрибут: `colspan="10000"` —
-   * это десять тысяч пустых ячеек в каждом, кто таблицу откроет.
+   * Cell merge limit: `colspan` no more than 20, `rowspan` no more than 50, the same as the number
+   * of columns and rows of the largest table the Editor pastes. On load and on paste the Editor
+   * reads a value above the limit, zero, a fraction or a non-number as 1: the cell stays, and the
+   * merge is undone. The sanitizer should remove the attribute: `colspan="10000"` means ten
+   * thousand empty cells for everyone who opens the table.
    */
   tableSpans: { colspan: 20, rowspan: 50 },
 } as const satisfies {
@@ -329,52 +317,53 @@ export const RICH_TEXT_SCHEMA = {
 };
 
 /**
- * Правила Схемы своего Блока — данные из описания своего Инструмента
- * (`CustomBlock`) с заполненными умолчаниями. Признаков Блока здесь нет: это
- * поведение Редактора, а не то, что может прийти в HTML.
+ * Schema rules of a custom Block: the data from its custom Tool's description (`CustomBlock`),
+ * with the defaults filled in. The Block traits are not here: they are Editor behavior, not what
+ * may arrive in HTML.
  */
 export interface RichTextCustomBlockRules {
-  /** Блочный — `div[data-block="<имя>"]`, строчный — `span[data-block="<имя>"]`. */
+  /** Block-level: `div[data-block="<name>"]`. Inline: `span[data-block="<name>"]`. */
   kind: "block" | "inline";
-  /** `top` — только верхний уровень Документа (бывает только у блочного). */
+  /** `top` means only the top level of the Document (possible only for a block-level Block). */
   place: "anywhere" | "top";
-  /** Свои атрибуты: имя без `data-` — вид значения. */
+  /** Its own attributes: the name without `data-` maps to the kind of value. */
   attributes: Readonly<Record<PrefixedName, CustomAttribute>>;
 }
 
-/** Правила Схемы своей Метки — `span[data-mark="<имя>"]` и её атрибуты. */
+/** Schema rules of a custom Mark: `span[data-mark="<name>"]` and its attributes. */
 export interface RichTextCustomMarkRules {
   attributes: Readonly<Record<PrefixedName, CustomAttribute>>;
 }
 
-/** Схема данными с правилами своих Инструментов — результат `richTextSchema(tools)`. */
+/** The Schema as data with the rules of custom Tools: the result of `richTextSchema(tools)`. */
 export type RichTextSchema = typeof RICH_TEXT_SCHEMA & {
-  /** Свои Блоки и строчные атомы — по имени Блока. */
+  /** Custom Blocks and inline atoms, by Block name. */
   customBlocks: Readonly<Record<PrefixedName, RichTextCustomBlockRules>>;
-  /** Свои Метки — по имени Метки. */
+  /** Custom Marks, by Mark name. */
   customMarks: Readonly<Record<PrefixedName, RichTextCustomMarkRules>>;
 };
 
 /**
- * Имя своего Блока, Метки и Инструмента: Префикс потребителя (буква, буквы и
- * цифры), подчёркивание, остаток-слово — `acme_mergeTag`. В именах кита
- * подчёркивания не бывает, поэтому своё и встроенное не пересекаются.
+ * A name of a custom Block, Mark or Tool: the Consumer prefix (a letter, then letters and
+ * digits), an underscore, and the rest of the word, for example `acme_mergeTag`. Kit names never
+ * contain an underscore, so custom and built-in names never collide.
  *
- * @internal Им же проверяет набор Редактор (`customToolEngine.ts`).
+ * @internal The Editor's tool set also checks names with it (`customToolEngine.ts`).
  */
 export const CUSTOM_NAME = /^[A-Za-z][A-Za-z0-9]*_\w+$/;
 /**
- * Имя своего атрибута — то же, но строчными: в HTML имена атрибутов без регистра.
+ * The name of a custom attribute: the same, but in lowercase, because HTML attribute names are
+ * case-insensitive.
  *
  * @internal
  */
 export const CUSTOM_ATTRIBUTE_NAME = /^[a-z][a-z0-9]*_[a-z0-9_]+$/;
 
 /**
- * HTML-соглашение своего правила (ADR-0058, п. 2): блочный Блок — `div`,
- * строчный Блок и Метка — `span`; Блок помечен `data-block`, Метка —
- * `data-mark`, значение — имя. Одно место на Редактор (`customToolEngine.ts`:
- * разбор, вывод, сверка `renderHTML`) и очистку на сервере.
+ * The HTML convention of a custom rule (ADR-0058, item 2). A block-level Block is a `div`. An
+ * inline Block and a Mark are a `span`. A Block is marked with `data-block`, a Mark with
+ * `data-mark`, and the value is the name. One place for the Editor (`customToolEngine.ts`:
+ * parsing, output, the check against `renderHTML`) and for the sanitization on the server.
  *
  * @internal
  */
@@ -388,7 +377,7 @@ export function customElement(kind: "block" | "inline" | "mark"): {
   };
 }
 
-/** Свои атрибуты с годным именем — остальные сервер не читает. */
+/** Custom attributes with a valid name. The server ignores the rest. */
 function customAttributes(
   attributes: Readonly<Record<string, CustomAttribute>> | undefined
 ): Record<PrefixedName, CustomAttribute> {
@@ -398,28 +387,27 @@ function customAttributes(
 }
 
 /**
- * Схема Редактора данными для набора `tools` — тот же массив, что получает
- * Редактор (ADR-0058, п. 2.3): Схема кита плюс правила своих Блоков и Меток.
+ * The Editor's Schema as data for the `tools` set: the same array the Editor receives (ADR-0058,
+ * item 2.3). It is the kit's Schema plus the rules of its custom Blocks and Marks.
  *
- * ИМЕНА КИТА БЕЛЫЙ СПИСОК НЕ СУЖАЮТ. Схема кита — по-прежнему всё, что кит
- * может отдать, при любом наборе: экраны с `basic` и `full` пишут один
- * Документ, и сервер одного не вправе срезать то, что записал другой. Описания
- * своих Инструментов только добавляют правила. Без аргумента — Схема кита без
- * своих правил; сама константа `RICH_TEXT_SCHEMA` не меняется.
+ * KIT NAMES ARE NOT NARROWED BY THE ALLOWLIST. The kit's Schema is still everything the kit can
+ * return, for any set: screens with `basic` and `full` write one Document, and the server may not
+ * strip what another one wrote. Descriptions of custom Tools only add rules. Without an argument
+ * it returns the kit's Schema with no custom rules. The `RICH_TEXT_SCHEMA` constant itself does
+ * not change.
  *
- * Правила с именем без Префикса потребителя здесь не читаются: Редактор такой
- * набор отвергает ошибкой поля, а у сервера ошибок нет — и описание с именем
- * кита (`wrapper`, атрибут `tone`) не должно открыть обход правил кита.
+ * Rules whose name has no Consumer prefix are not read here. The Editor rejects such a set with
+ * a field error, but the server has no error channel. So a description named like a kit name
+ * (`wrapper`, or an attribute `tone`) must not open a way around the kit's rules.
  *
- * Читаются только данные описания (`blocks`, `marks`), Extensions не
- * трогаются: модуль с описанием своего Инструмента импортируется на сервере,
- * и Tiptap здесь не нужен.
+ * Only the description's data (`blocks`, `marks`) is read. Extensions are not touched: the module
+ * with a custom Tool's description is imported on the server, and Tiptap is not needed there.
  */
 export function richTextSchema(tools: readonly ToolEntry[] = []): RichTextSchema {
   const customBlocks: Record<PrefixedName, RichTextCustomBlockRules> = {};
   const customMarks: Record<PrefixedName, RichTextCustomMarkRules> = {};
   for (const entry of tools) {
-    // Строка — имя кита, Настроенный встроенный — его опции: Схемы у них нет.
+    // A string is a kit name; a configured built-in carries its options, and has no Schema.
     const tool = customToolOf(entry);
     if (!tool) continue;
     for (const [name, block] of Object.entries(tool.blocks ?? {})) {
@@ -440,7 +428,10 @@ export function richTextSchema(tools: readonly ToolEntry[] = []): RichTextSchema
   return { ...RICH_TEXT_SCHEMA, customBlocks, customMarks };
 }
 
-/** Имена атрибутов HTML своих правил: `data-mark` и `data-<имя>` каждого своего атрибута. */
+/**
+ * The HTML attribute names of the custom rules: `data-mark` and `data-<name>` for each custom
+ * attribute.
+ */
 function customAttributeNames(schema: RichTextSchema): string[] {
   const rules = [...Object.values(schema.customBlocks), ...Object.values(schema.customMarks)];
   return [
@@ -450,20 +441,19 @@ function customAttributeNames(schema: RichTextSchema): string[] {
 }
 
 /**
- * Атрибуты и теги Схемы, которые без проверки по тегу и значению опасны.
+ * Schema attributes and tags that are unsafe without a check by tag and by value.
  *
- * `ALLOWED_ATTR` у DOMPurify — один список на все теги, и значений он не
- * проверяет. Для большинства атрибутов Схемы это безвредно: `data-color` на
- * `<p>` или `start` на `<ul>` ничего не красят и ничего не исполняют. Для этих —
- * нет: `style` пропустил бы любой CSS (`position:fixed` поверх страницы),
- * `class` — любой класс Tailwind потребителя (`fixed inset-0 z-50`), `src` у
- * `<img>` DOMPurify пропускает с `data:` в обход `ALLOWED_URI_REGEXP`,
- * `colspan="10000"` — десять тысяч пустых ячеек у каждого читателя, `type` и
- * `checked` делают из флажка любое поле ввода. А `<input>` и `<img>` без своих
- * атрибутов — пустое текстовое поле и битая картинка.
+ * DOMPurify's `ALLOWED_ATTR` is one list for all tags, and it does not check values. For most
+ * Schema attributes this is harmless: `data-color` on a `<p>` or `start` on a `<ul>` paints
+ * nothing and executes nothing. For these it is not harmless. `style` would pass any CSS, for
+ * example `position:fixed` over the page. `class` would pass any Tailwind class of the consumer
+ * (`fixed inset-0 z-50`). DOMPurify passes `src` on `<img>` with `data:` past `ALLOWED_URI_REGEXP`.
+ * `colspan="10000"` means ten thousand empty cells for every reader. `type` and `checked` turn a
+ * checkbox into any input field. And `<input>` and `<img>` without their own attributes are an
+ * empty text field and a broken image.
  *
- * Поэтому они разрешаются ТОЛЬКО вместе с хуками `sanitizeRichText`, которые
- * сверяют тег и значение. Голый `richTextSanitizeConfig()` их не знает.
+ * So they are allowed ONLY together with the `sanitizeRichText` hooks, which check the tag and the
+ * value. A bare `richTextSanitizeConfig()` does not know them.
  */
 const HOOK_GUARDED_ATTRIBUTES: readonly string[] = [
   "style",
@@ -473,59 +463,56 @@ const HOOK_GUARDED_ATTRIBUTES: readonly string[] = [
   "rowspan",
   "type",
   "checked",
-  // Адрес видео: чужой скрипт ленивой загрузки читает именно `data-src`.
+  // The video address: a third-party lazy-loading script reads `data-src` in particular.
   "data-src",
 ];
 const HOOK_GUARDED_TAGS: readonly string[] = ["input", "img"];
 
-/** Атрибуты Схемы, несущие адрес: их DOMPurify сверяет с `ALLOWED_URI_REGEXP`. */
+/** Schema attributes that carry an address: DOMPurify checks them against `ALLOWED_URI_REGEXP`. */
 const URI_ATTRIBUTES: readonly string[] = ["href", "src"];
 
 /**
- * Конфиг очистки для DOMPurify — ЗАКРЫТЫЙ ПО УМОЛЧАНИЮ. Безопасный путь —
- * `sanitizeRichText(html, DOMPurify)` ниже: он ставит хуки Схемы и пропускает
- * разметку Редактора целиком. Этот конфиг — для того, кто передаёт его
- * DOMPurify напрямую: без хуков он не пропустит ничего опасного, но и часть
- * разметки Редактора потеряется (цвет автора, язык блока кода, слияние ячеек,
- * флажки чек-листа и картинки — `HOOK_GUARDED_ATTRIBUTES`).
+ * The DOMPurify cleanup config, CLOSED BY DEFAULT. The safe path is `sanitizeRichText(html,
+ * DOMPurify)` below: it installs the Schema hooks and passes the Editor's markup through in full.
+ * This config is for whoever passes it to DOMPurify directly. Without the hooks it lets nothing
+ * dangerous through, but part of the Editor's markup is lost too: the author's color, the code
+ * block language, cell merging, task checkboxes and images (`HOOK_GUARDED_ATTRIBUTES`).
  *
- * ПОЧЕМУ ФУНКЦИЯ НА МАССИВАХ, А НЕ ЗАВИСИМОСТЬ. DOMPurify кит не ставит и не
- * импортирует: очистка — дело сервера потребителя (ADR-0050), а у него свой
- * выбор — DOMPurify с jsdom, `isomorphic-dompurify`, другой санитайзер. Здесь
- * только данные Схемы в форме, которую DOMPurify принимает, поэтому тип результата
- * свой, а не его `Config`: структурно он ему присваивается.
+ * WHY A FUNCTION OVER ARRAYS, NOT A DEPENDENCY. The kit does not install or import DOMPurify.
+ * Sanitizing is the consumer server's job (ADR-0050), and the consumer chooses its own: DOMPurify
+ * with jsdom, `isomorphic-dompurify`, or another sanitizer. Here there is only the Schema data,
+ * in the shape DOMPurify accepts. So the result type is the kit's own, not DOMPurify's `Config`:
+ * it is structurally assignable to it.
  *
- * ПОЧЕМУ КАЖДЫЙ РАЗ НОВЫЕ МАССИВЫ. DOMPurify и вызывающий код вольны менять
- * конфиг (`ALLOWED_ATTR.push("data-color")`), и общий массив протёк бы такой
- * правкой в соседние вызовы.
+ * WHY NEW ARRAYS EVERY TIME. DOMPurify and the calling code are free to change the config
+ * (`ALLOWED_ATTR.push("data-color")`). A shared array would leak such an edit into neighboring
+ * calls.
  *
- * Что остаётся в общем `ALLOWED_ATTR` — безвредно на любом теге и с любым
- * значением: имена `data-*` Схемы (их читает только типографика, и только свои
- * значения), `start`, `alt`, `rel` и `href` — адрес сверяет выражение ниже.
- * `ALLOW_DATA_ATTR` и `ALLOW_ARIA_ATTR` выключены: по умолчанию DOMPurify
- * пропускает любые `data-*` и `aria-*`, а Схема знает свои `data-*` —
- * `data-type`, `data-checked`, `data-color`, `data-align` и `data-width`, они
- * названы в `ALLOWED_ATTR` поимённо и попадают туда из `attributes`.
+ * What stays in the shared `ALLOWED_ATTR` is harmless on any tag and with any value: the Schema's
+ * `data-*` names (only the styling reads them, and only for their own values), `start`, `alt`,
+ * `rel`, and `href`, whose address the expression below checks. `ALLOW_DATA_ATTR` and
+ * `ALLOW_ARIA_ATTR` are off. By default DOMPurify passes any `data-*` and `aria-*`, while the
+ * Schema knows its own `data-*`: `data-type`, `data-checked`, `data-color`, `data-align` and
+ * `data-width`. They are named one by one in `ALLOWED_ATTR` and get there from `attributes`.
  *
- * АДРЕС ССЫЛКИ — `ALLOWED_URI_REGEXP` по `protocols`, той же политикой, что в
- * Редакторе: `javascript:`, `data:`, `ftp:` и относительные адреса `href` не
- * проходят. DOMPurify сверяет с этим выражением не только `href`, а КАЖДЫЙ
- * разрешённый атрибут, кроме «безопасных для URI», — и строгое выражение
- * срезало бы `start="3"` и `data-type="taskList"`. Поэтому все атрибуты Схемы,
- * кроме адресов (`href` и `src`), объявлены безопасными (`ADD_URI_SAFE_ATTR`)
- * и сверяются только со списком имён. Атрибут, который добавит следующий
- * срез, попадёт туда сам.
+ * THE LINK ADDRESS is `ALLOWED_URI_REGEXP` from `protocols`, with the same policy as in the
+ * Editor: `javascript:`, `data:`, `ftp:` and relative `href` addresses do not pass. DOMPurify
+ * checks this expression not only against `href`, but against EVERY allowed attribute except the
+ * "URI-safe" ones. A strict expression would strip `start="3"` and `data-type="taskList"`. So all
+ * Schema attributes except the addresses (`href` and `src`) are declared URI-safe
+ * (`ADD_URI_SAFE_ATTR`) and are checked only against the list of names. An attribute that the
+ * next change adds will land there by itself.
  *
- * Модуль серверно-безопасен: функция над данными, без React и без движка.
+ * The module is safe to run on the server: a function over data, without React or the engine.
  */
 export function richTextSanitizeConfig(): RichTextSanitizeConfig {
   return sanitizeConfig(false);
 }
 
 /**
- * Конфиг Схемы: закрытый — без охраняемых хуками атрибутов и тегов, полный — с
- * ними и с атрибутами своих Блоков и Меток (`data-mark`, `data-<имя>`): их
- * значения тоже сверяют только хуки.
+ * The Schema config. The closed variant has no attributes or tags guarded by hooks. The full
+ * variant has them, plus the attributes of custom Blocks and Marks (`data-mark`, `data-<name>`).
+ * Their values are also checked only by the hooks.
  */
 function sanitizeConfig(withHooks: boolean, custom?: RichTextSchema): RichTextSanitizeConfig {
   const attributes = [
@@ -546,19 +533,22 @@ function sanitizeConfig(withHooks: boolean, custom?: RichTextSchema): RichTextSa
   };
 }
 
-/** Форма, которую принимает `DOMPurify.sanitize`; подмножество его `Config`. */
+/** The shape that `DOMPurify.sanitize` accepts: a subset of its `Config`. */
 export interface RichTextSanitizeConfig {
   ALLOWED_TAGS: string[];
   ALLOWED_ATTR: string[];
   ALLOW_DATA_ATTR: false;
   ALLOW_ARIA_ATTR: false;
-  /** Схемы адреса ссылки — `RICH_TEXT_SCHEMA.protocols`. */
+  /** The link address schemes: `RICH_TEXT_SCHEMA.protocols`. */
   ALLOWED_URI_REGEXP: RegExp;
-  /** Атрибуты, которые DOMPurify не сверяет с `ALLOWED_URI_REGEXP`: все, кроме `href` и `src`. */
+  /**
+   * Attributes that DOMPurify does not check against `ALLOWED_URI_REGEXP`: all except `href` and
+   * `src`.
+   */
   ADD_URI_SAFE_ATTR: string[];
 }
 
-/** Событие хука `uponSanitizeAttribute`: подмножество того, что передаёт DOMPurify. */
+/** The `uponSanitizeAttribute` hook event: a subset of what DOMPurify passes. */
 export interface RichTextAttributeHookEvent {
   attrName: string;
   attrValue: string;
@@ -566,13 +556,12 @@ export interface RichTextAttributeHookEvent {
 }
 
 /**
- * Экземпляр DOMPurify — ровно то, чем пользуется `sanitizeRichText`.
+ * A DOMPurify instance: exactly what `sanitizeRichText` uses.
  *
- * ПОЧЕМУ СТРУКТУРНЫЙ ТИП, А НЕ ИМПОРТ ИЗ `dompurify`. Пакета в зависимостях кита
- * нет и не будет (ADR-0050): потребитель приносит свой — `dompurify` с jsdom
- * или `isomorphic-dompurify`. Экземпляр любого из них присваивается этому типу
- * без приведений; это сторожит `tests/editor-sanitize.test.tsx` на настоящем
- * DOMPurify.
+ * WHY A STRUCTURAL TYPE, NOT AN IMPORT FROM `dompurify`. The kit has no such package in its
+ * dependencies and never will (ADR-0050). The consumer brings its own: `dompurify` with jsdom, or
+ * `isomorphic-dompurify`. An instance of either is assignable to this type without casts.
+ * `tests/editor-sanitize.test.tsx` guards this against the real DOMPurify.
  */
 export interface RichTextPurifier {
   sanitize(dirty: string, config: RichTextSanitizeConfig): string;
@@ -589,85 +578,79 @@ export interface RichTextPurifier {
 }
 
 /**
- * Очистить HTML Документа по Схеме Редактора — безопасный путь по умолчанию
- * (ADR-0050): `sanitizeRichText(html, DOMPurify)` на сервере потребителя.
+ * Cleans a Document's HTML by the Editor's Schema. This is the safe default path (ADR-0050): the
+ * consumer calls `sanitizeRichText(html, DOMPurify)` on its server.
  *
- * ПОЧЕМУ ХЕЛПЕР, А НЕ РЕЦЕПТ НА СТРАНИЦЕ. Политика по тегам — где `style`
- * бывает и с каким значением, какой `class` у `code`, где живут `label` и
- * `input` — жила только в хуках, которые потребитель копировал со страницы
- * `RichTextView`. Конфиг при этом разрешал `style` и `class` на любом теге:
- * забытый или устаревший при копировании хук молча пропускал любой CSS. Теперь
- * хуки — код кита, они меняются вместе со Схемой, а без них конфиг закрыт.
+ * WHY A HELPER, NOT A RECIPE ON THE PAGE. The policy by tag (where `style` may occur and with which
+ * value, which `class` `code` takes, where `label` and `input` live) used to live only in the hooks
+ * that the consumer copied from the `RichTextView` page. The config then allowed `style` and `class`
+ * on any tag, and a hook forgotten or outdated during copying silently passed any CSS. Now the hooks
+ * are the kit's code: they change together with the Schema, and without them the config is closed.
  *
- * ХУКИ — НА ВРЕМЯ ОДНОГО ВЫЗОВА. DOMPurify держит хуки на экземпляре, а
- * экземпляр у потребителя общий (комментарии, письма, свои правила).
- * Поставленные навсегда, правила Схемы срабатывали бы в чужой очистке. Хелпер
- * ставит их перед `sanitize` и снимает после — по ссылке на функцию, поэтому
- * свои хуки потребителя остаются на месте. Снятие по ссылке — DOMPurify 3.2+;
- * старый `removeHook` без функции снимает последний поставленный, то есть тоже
- * наш. `sanitize` синхронный: чужой вызов между установкой и снятием не
- * вклинится.
+ * THE HOOKS LIVE FOR ONE CALL. DOMPurify keeps hooks on the instance, and the consumer's instance is
+ * shared (comments, emails, its own rules). Hooks installed permanently would fire in someone
+ * else's cleanup. The helper installs them before `sanitize` and removes them after, by function
+ * reference, so the consumer's own hooks stay in place. Removal by reference needs DOMPurify 3.2+.
+ * An old `removeHook` without a function removes the last one installed, which is also ours.
+ * `sanitize` is synchronous: no foreign call can slip in between installing and removing.
  *
- * Что проверяют хуки (всё, что Редактор пишет, проходит без изменений):
+ * What the hooks check (everything the Editor writes passes unchanged):
  *
- * - `label`, `input`, `span`, `div` — только разметка пункта чек-листа; `input`
- *   — только `type="checkbox"`;
- * - `ol[start]` — только на `ol`; `ul`/`li[data-type]`, `li[data-checked]` —
- *   только значения чек-листа;
- * - `code[class]` — только канонический `language-<имя>` из `codeLanguages`;
- * - `span[data-color]` и `mark[data-color]` — только имена своей палитры, старые
- *   имена маркера переводятся (`legacyMarkerColors`); `mark` без цвета
- *   снимается;
- * - `style` — только `color:#rrggbb` на `span` и `background-color:#rrggbb` на
- *   `mark` и никогда вместе с `data-color`;
- * - `data-align` — известное значение на `p`, `h1`–`h4`, `th`, `td`;
- * - Раскладка — `div[data-block="layout"]` с вариантом из `layouts` и только
- *   вне колонки, списка, цитаты и таблицы; `div[data-block="column"]` — только
- *   прямо в ней. Иначе обёртка снимается, Блоки остаются подряд;
- * - Обёртка — `div[data-block="wrapper"]` на верхнем уровне или прямо в
- *   колонке Раскладки, не в другой Обёртке, списке, цитате и таблице; иначе
- *   снимается так же, вместе с тоном; `data-tone` — имя из `wrapperTones` и
- *   только на Обёртке;
- * - сворачиваемый Блок — `details` с `summary` прямо в нём и обёрткой содержимого
- *   `div[data-type="detailsContent"]` тоже прямо в нём; `open` — только пустой и
- *   только на `details`. `summary` и обёртка вне `details` теряют тег, их Блоки
- *   остаются подряд;
- * - формула — `span[data-type="inline-math"]` или `div[data-type="block-math"]` с
- *   `data-latex`: пара открыта только на этих тегах, сам элемент пуст, а в `data-latex`
- *   допустим `<` (это текст LaTeX, не разметка). Без `data-latex` элемент теряет обёртку;
- * - `colspan`, `rowspan` — на `th`/`td`, целое от 1 до `tableSpans`;
- * - видео — `div[data-block="video"]` с `data-provider` из `VIDEO_PROVIDERS` и
- *   `data-src`: `https`-адрес видео на хосте этого сервиса (`isVideoSrc`).
- *   Блок без годного сервиса или адреса, и блок видео внутри блока видео,
- *   теряет обёртку — остаётся ссылка внутри. `iframe` срезается всегда;
- * - ссылка — `href` по `protocols` (выражение конфига), `rel` всегда
- *   `"noopener noreferrer"`, ссылка без адреса становится текстом;
- * - картинка — `img` с абсолютным `http`/`https` прямо в `figure`, без `data:`
- *   и `blob:`, `data-width` — пресет, `alt` есть всегда; `figcaption` — только
- *   в `figure`.
+ * - `label`, `input`, `span`, `div`: only the markup of a task item. `input` only as
+ *   `type="checkbox"`.
+ * - `ol[start]`: only on `ol`. `ul`/`li[data-type]` and `li[data-checked]`: only the task list
+ *   values.
+ * - `code[class]`: only the canonical `language-<name>` from `codeLanguages`.
+ * - `span[data-color]` and `mark[data-color]`: only names from their own palette. Old marker names
+ *   are converted (`legacyMarkerColors`). A `mark` without a color is removed.
+ * - `style`: only `color:#rrggbb` on `span`, and `background-color:#rrggbb` on `mark`, and never
+ *   together with `data-color`.
+ * - `data-align`: a known value on `p`, `h1`–`h4`, `th`, `td`.
+ * - Column layout: `div[data-block="layout"]` with a variant from `layouts`, and only outside a
+ *   column, a Wrapper, a list, a quote, a table or a Details Block. `div[data-block="column"]` only directly inside a Column
+ *   layout. Otherwise the wrapper is removed and the Blocks stay in place.
+ * - Wrapper: `div[data-block="wrapper"]` at the top level or directly in a Column layout column,
+ *   not inside another Wrapper, a list, a quote or a table. Otherwise it is removed the same way,
+ *   along with its tone. `data-tone` is a name from `wrapperTones`, and only on a Wrapper.
+ * - Details Block: `details` with `summary` directly in it, and the content wrapper
+ *   `div[data-type="detailsContent"]` also directly in it. `open` is only empty, and only on
+ *   `details`. `summary` and the wrapper outside `details` lose their tag, and their Blocks stay in
+ *   place.
+ * - Formula: `span[data-type="inline-math"]` or `div[data-type="block-math"]` with `data-latex`.
+ *   The pair is allowed only on these tags. The element itself is empty, and `data-latex` may
+ *   contain `<` (it is LaTeX text, not markup). Without `data-latex` the element loses its wrapper.
+ * - `colspan`, `rowspan`: on `th` and `td`, an integer from 1 to `tableSpans`.
+ * - Video: `div[data-block="video"]` with `data-provider` from `VIDEO_PROVIDERS` and `data-src`,
+ *   an `https` address of a video on that service's host (`isVideoSrc`). A Block without a valid
+ *   service or address, and a video Block inside a video Block, loses its wrapper; the link inside
+ *   remains. `iframe` is always removed.
+ * - Link: `href` by `protocols` (the config's expression), `rel` always `"noopener noreferrer"`.
+ *   A link without an address becomes text.
+ * - Image: `img` with an absolute `http`/`https` address, directly inside `figure`, with no `data:`
+ *   or `blob:`. `data-width` is a preset, and `alt` is always present. `figcaption` only inside
+ *   `figure`.
  *
- * Токенов подсветки `hljs-*` в Схеме нет, и хелпер их снимает: подсветка —
- * после очистки (`highlightCodeBlocks`, ADR-0051).
+ * The Schema has no `hljs-*` highlight tokens, and the helper removes them: highlighting happens
+ * after sanitization (`highlightCodeBlocks`, ADR-0051).
  *
- * СВОИ ИНСТРУМЕНТЫ — ТРЕТЬИМ АРГУМЕНТОМ (ADR-0058, п. 2.3): тот же массив
- * `tools`, что у Редактора. Свой Блок проходит как `div[data-block="<имя>"]`
- * (строчный — `span`), своя Метка — как `span[data-mark="<имя>"]`, их атрибуты
- * `data-<имя>` — только на своём элементе и только со значением по виду из
- * правил (список, шаблон, адрес по политике протоколов ссылки); значение с
- * разметкой не проходит никогда. Чужие теги и атрибуты на своём элементе
- * снимаются, Блок с местом `top` вне верхнего уровня теряет обёртку, как
- * Раскладка. Имена Инструментов кита белый список не сужают (`richTextSchema`).
- * Без третьего аргумента очистка та же, что была до своих Инструментов.
+ * CUSTOM TOOLS ARE THE THIRD ARGUMENT (ADR-0058, item 2.3): the same `tools` array the Editor gets.
+ * A custom Block passes as `div[data-block="<name>"]` (inline: `span`). A custom Mark passes as
+ * `span[data-mark="<name>"]`. Their `data-<name>` attributes pass only on their own element, and
+ * only with a value of the kind set by the rules: a list, a pattern, or an address under the link
+ * protocol policy. A value containing markup never passes. Foreign tags and attributes on a custom
+ * element are removed. A Block with the `top` placement outside the top level loses its wrapper,
+ * as a Column layout does. Kit tool names do not narrow the allowlist (`richTextSchema`). Without
+ * the third argument, the cleanup is the same as it was before custom Tools.
  *
- * Модуль серверно-безопасен: DOM даёт экземпляр DOMPurify, кит его не
- * импортирует.
+ * The module is safe to run on the server: the DOM comes from a DOMPurify instance, which the kit
+ * does not import.
  */
 export function sanitizeRichText(
   html: string,
   purify: RichTextPurifier,
   tools?: readonly ToolEntry[]
 ): string {
-  // Хуки — замыкания на Схему этого вызова: снимаются по ссылке, как и раньше.
+  // The hooks are closures over this call's Schema. They are removed by reference, as before.
   const schema = richTextSchema(tools);
   const onAttribute = (node: Element, event: RichTextAttributeHookEvent) =>
     checkAttribute(node, event, schema);
@@ -684,7 +667,7 @@ export function sanitizeRichText(
 
 const has = (list: readonly string[], value: string) => list.includes(value);
 
-/** Слияние ячеек: только `th` и `td`, только цифры и не больше предела Схемы. */
+/** Cell merging: only `th` and `td`, only digits, and no more than the Schema limit. */
 function isSpan(node: Element, value: string, max: number): boolean {
   return (
     (node.nodeName === "TH" || node.nodeName === "TD") &&
@@ -695,48 +678,48 @@ function isSpan(node: Element, value: string, max: number): boolean {
 }
 
 /**
- * Каждый атрибут Схемы — только на своём теге и со своим значением. Общий
- * `ALLOWED_ATTR` DOMPurify пускает его куда угодно и с любым значением; правило
- * здесь оставляет его там и таким, где и каким его пишет Редактор.
+ * Each Schema attribute is allowed only on its own tag and with its own value. DOMPurify's shared
+ * `ALLOWED_ATTR` lets it through anywhere and with any value. The rule here keeps the attribute
+ * only where, and only as, the Editor writes it.
  */
 const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean> = {
   start: (node) => node.nodeName === "OL",
   "data-type": (node, value) =>
     (node.nodeName === "UL" && value === "taskList") ||
     (node.nodeName === "LI" && value === "taskItem") ||
-    // Обёртка содержимого сворачиваемого Блока: только `div` прямо в `details`.
+    // The content wrapper of a Details Block: only a `div` directly inside `details`.
     (node.nodeName === "DIV" &&
       value === DETAILS_CONTENT &&
       node.parentElement?.nodeName === "DETAILS") ||
-    // Формула: строчная — `span`, блочная — `div`; значение чужого тега не проходит.
+    // Formula: inline is a `span`, block is a `div`. A value on a foreign tag does not pass.
     (node.nodeName === "SPAN" && value === INLINE_FORMULA_TYPE) ||
     (node.nodeName === "DIV" && value === BLOCK_FORMULA_TYPE),
-  // Исходный LaTeX — текст, а не разметка, поэтому правила «без `<`» (ADR-0070) к нему
-  // нет: DOMPurify экранирует его при выводе. Но только у формулы: тот же атрибут на
-  // другом теге или рядом с чужим `data-type` снимается. `data-type` читается из
-  // разметки, а не из решения хука: DOMPurify обходит атрибуты в своём порядке.
+  // The LaTeX source is text, not markup. So the "no `<`" rule (ADR-0070) does not apply to it:
+  // DOMPurify escapes it on output. But it applies only to a formula: the same attribute on another
+  // tag, or next to a foreign `data-type`, is removed. `data-type` is read from the markup, not from
+  // the hook's decision, because DOMPurify walks the attributes in its own order.
   "data-latex": (node) => isFormula(node),
-  // Открытый Блок: `open=""`, как его пишет Редактор; значение `open="open"` из
-  // чужого HTML атрибут теряет, Блок остаётся закрытым.
+  // An open Block: `open=""`, as the Editor writes it. An `open="open"` value from foreign HTML
+  // loses the attribute, and the Block stays closed.
   open: (node, value) => node.nodeName === "DETAILS" && value === "",
   "data-checked": (node, value) =>
     node.nodeName === "LI" &&
     node.getAttribute("data-type") === "taskItem" &&
     (value === "true" || value === "false"),
-  // Цвет — только на `span` и `mark` и только имя ИХ палитры: у цвета текста и у
-  // маркера списки разные, имя маркера на `span` не проходит.
+  // Color: only on `span` and `mark`, and only a name from THEIR OWN palette. The text color and
+  // the marker have different lists, so a marker name does not pass on a `span`.
   "data-color": (node, value) =>
     (node.nodeName === "SPAN" && has(RICH_TEXT_SCHEMA.textColors, value)) ||
     (node.nodeName === "MARK" && has(RICH_TEXT_SCHEMA.markerColors, value)),
-  // `style` — только произвольный цвет автора, выражения — из Схемы. Любой другой
-  // CSS и `style` на других тегах снимаются.
+  // `style`: only the author's arbitrary color, with the expressions from the Schema. Any other
+  // CSS, and `style` on other tags, is removed.
   style: (node, value) => {
     const tag = node.nodeName.toLowerCase();
     const pattern =
       tag === "span" || tag === "mark" ? RICH_TEXT_SCHEMA.customColor.styles[tag] : undefined;
     return pattern !== undefined && new RegExp(pattern).test(value);
   },
-  // Раскладка, колонка и Обёртка — только `div`; вариант — только у Раскладки.
+  // Column layout, column, Wrapper and video: only on `div`. The variant is only on a Column layout.
   "data-block": (node, value) =>
     node.nodeName === "DIV" &&
     (value === LAYOUT_BLOCK ||
@@ -747,13 +730,13 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
     node.nodeName === "DIV" &&
     node.getAttribute("data-block") === LAYOUT_BLOCK &&
     has(RICH_TEXT_SCHEMA.layouts, value),
-  // Тон — только у Обёртки и только имя из словаря тонов.
+  // The tone: only on a Wrapper, and only a name from the tone vocabulary.
   "data-tone": (node, value) =>
     node.nodeName === "DIV" &&
     node.getAttribute("data-block") === WRAPPER_BLOCK &&
     has(RICH_TEXT_SCHEMA.wrapperTones, value),
-  // Видео: сервис из списка и адрес на хосте этого сервиса. Сервис читается с
-  // самого элемента: DOMPurify обходит атрибуты в своём порядке.
+  // Video: a service from the list, and an address on that service's host. The service is read from
+  // the element itself, because DOMPurify walks the attributes in its own order.
   "data-provider": (node, value) =>
     node.nodeName === "DIV" &&
     node.getAttribute("data-block") === VIDEO_BLOCK &&
@@ -769,34 +752,34 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
   rowspan: (node, value) => isSpan(node, value, RICH_TEXT_SCHEMA.tableSpans.rowspan),
   type: (node, value) => node.nodeName === "INPUT" && value === "checkbox",
   checked: (node) => node.nodeName === "INPUT",
-  // Язык блока кода — только канонический «language-<имя>» и только на `code`:
-  // псевдоним, второй класс рядом и класс на других тегах снимаются. Без списка
-  // классов на уровне модуля: вызов `map` там не вытряхивается и ехал бы в каждый
-  // импорт `@olddevs/ui/editor`, даже без очистки.
+  // The code block language: only the canonical "language-<name>", and only on `code`. An alias, a
+  // second class next to it, and a class on other tags are removed. The class list is not built at
+  // module level: a `map` call there would not be tree-shaken, and it would ship in every import of
+  // `@olddevs/ui/editor`, even without sanitization.
   class: (node, value) =>
     node.nodeName === "CODE" &&
     value.startsWith("language-") &&
     has(RICH_TEXT_SCHEMA.codeLanguages, value.slice("language-".length)),
-  // Схему адреса уже сверил `ALLOWED_URI_REGEXP` конфига; здесь — тег.
+  // The address scheme is already checked by the config's `ALLOWED_URI_REGEXP`. Here it is the tag.
   href: (node) => node.nodeName === "A",
   rel: (node) => node.nodeName === "A",
-  // Адрес картинки — только абсолютный http и https. `ALLOWED_URI_REGEXP` здесь не
-  // помогает: `data:` в `src` у `<img>` DOMPurify пропускает в обход него.
+  // Image address: only an absolute http and https. `ALLOWED_URI_REGEXP` does not help here, because
+  // DOMPurify lets `data:` in `src` on `<img>` past it.
   src: (node, value) => node.nodeName === "IMG" && isAllowedImageSrc(value),
   alt: (node) => node.nodeName === "IMG",
   "data-width": (node, value) =>
     node.nodeName === "IMG" && has(RICH_TEXT_SCHEMA.imageWidths, value),
 };
 
-/** Ключ записи — только собственное поле: `constructor` и `__proto__` правилом не станут. */
+/** A record key counts only as an own property: `constructor` and `__proto__` do not become a rule. */
 function own<T>(record: Readonly<Record<string, T>>, key: string | null): T | undefined {
   return key !== null && Object.hasOwn(record, key) ? record[key] : undefined;
 }
 
 /**
- * Правила своего элемента: свой Блок — по `data-block` и тегу своего вида,
- * своя Метка — `span` по `data-mark`. Тег сверяется здесь, а не полагается на
- * уже проверенный `data-block`: DOMPurify обходит атрибуты в своём порядке.
+ * The rules of a custom element: a custom Block by `data-block` and by the tag of its kind. A
+ * custom Mark is a `span` by `data-mark`. The tag is checked here, instead of relying on the
+ * `data-block` that was already checked, because DOMPurify walks the attributes in its own order.
  */
 function customRulesOf(
   node: Element,
@@ -811,10 +794,9 @@ function customRulesOf(
 }
 
 /**
- * Атрибут своего элемента: `true` и `false` — решение, `undefined` — дело
- * правил кита. На своём элементе бывают только `data-block`, `data-mark` и
- * свои `data-<имя>` по его правилам; атрибуты кита (`data-color`, `style`) там
- * чужие.
+ * An attribute of a custom element: `true` and `false` are a decision. `undefined` means it is up
+ * to the kit's rules. A custom element can carry only `data-block`, `data-mark`, and its own
+ * `data-<name>` per its rules. The kit's attributes (`data-color`, `style`) are foreign there.
  */
 function customAttributeAllowed(
   node: Element,
@@ -836,14 +818,15 @@ function customAttributeAllowed(
   return rules ? false : undefined;
 }
 
-/** Хук `uponSanitizeAttribute`: атрибут Схемы — по правилу своего имени. */
+/** The `uponSanitizeAttribute` hook: a Schema attribute is checked by the rule for its name. */
 function checkAttribute(
   node: Element,
   event: RichTextAttributeHookEvent,
   schema: RichTextSchema
 ): void {
-  // Исходник формулы правится ДО проверки `SAFE_FOR_XML` у DOMPurify, которая идёт сразу
-  // после хуков и срезала бы атрибут с `]>` или `</style`: пробел внутрь пары (`mathHtml.ts`).
+  // The formula source is fixed BEFORE DOMPurify's `SAFE_FOR_XML` check, which runs right after the
+  // hooks and would strip an attribute containing `]>` or `</style`: a space goes inside the pair
+  // (`mathHtml.ts`).
   if (event.attrName === "data-latex" && isFormula(node)) {
     event.attrValue = safeLatexSource(event.attrValue);
   }
@@ -852,9 +835,9 @@ function checkAttribute(
     if (!custom) event.keepAttr = false;
     return;
   }
-  // Документ, сохранённый до палитры маркера Notion, несёт на `mark` старое имя
-  // (`accent`, `success`, …). Его переводят до проверки, как Редактор при
-  // загрузке; иначе подсветка пропала бы, а голый `mark` снимается ниже.
+  // A Document saved before the Notion-style marker palette carries an old name on `mark`
+  // (`accent`, `success`, …). It is converted before the check, as the Editor does on load.
+  // Otherwise the highlight would disappear, and a bare `mark` is removed below.
   if (event.attrName === "data-color" && node.nodeName === "MARK") {
     const legacy = RICH_TEXT_SCHEMA.legacyMarkerColors as Record<string, string>;
     if (Object.hasOwn(legacy, event.attrValue)) event.attrValue = legacy[event.attrValue]!;
@@ -864,8 +847,8 @@ function checkAttribute(
 }
 
 /**
- * `label`, `input`, `span` и `div` — разметка пункта чек-листа. Вне пункта
- * обёртка снимается, а содержимое остаётся, как и у любого неразрешённого тега.
+ * `label`, `input`, `span` and `div` are the markup of a task item. Outside an item the wrapper is
+ * removed and the content stays, as with any tag that is not allowed.
  */
 const TASK_ITEM = 'li[data-type="taskItem"]';
 const PARENT_OF: Record<string, string> = {
@@ -875,10 +858,10 @@ const PARENT_OF: Record<string, string> = {
   SPAN: `${TASK_ITEM} > label`,
 };
 
-/** Значение `div[data-type]` обёртки содержимого сворачиваемого Блока (`details.ts`). */
+/** The `div[data-type]` value of a Details content wrapper (`details.ts`). */
 const DETAILS_CONTENT = "detailsContent";
 
-/** Формула в форме, которую пишет Редактор: тег и `data-type` из пары. */
+/** A formula in the form the Editor writes: the tag and `data-type` from the pair. */
 function isFormula(node: Element): boolean {
   const type = node.getAttribute("data-type");
   return (
@@ -887,28 +870,29 @@ function isFormula(node: Element): boolean {
   );
 }
 
-/** Значения `div[data-block]`: Раскладка, её колонка и Обёртка. */
+/** The `div[data-block]` values: Column layout, its column and Wrapper. */
 const LAYOUT_BLOCK = "layout";
 const COLUMN_BLOCK = "column";
 const WRAPPER_BLOCK = "wrapper";
 
 /**
- * Где Раскладки быть не может: в другой Раскладке (её колонке), в Обёртке, в
- * списке, цитате, ячейке и сворачиваемом Блоке. Редактор такую не отдаёт — у колонки и прочих контейнеров
- * в Схеме движка её нет, — и при загрузке разворачивает в Блоки подряд.
+ * Where a Column layout cannot be: inside another Column layout (its column), in a Wrapper, a list,
+ * a quote, a cell or a Details Block. The Editor does not return one there, because the engine's
+ * Schema has no such place for a column or for other containers. On load it unwraps such a layout
+ * into its Blocks, in sequence.
  */
 const NOT_A_LAYOUT_PLACE = "div[data-block], li, blockquote, th, td, details";
 
 /**
- * Раскладка, колонка и Обёртка: `true` — элемент обработан (оставлен или
- * снят). Родитель обходится раньше детей, поэтому колонка снятой Раскладки уже
- * не находит её над собой и снимается тоже, а Обёртка снятой колонки
- * проверяется по новому месту.
+ * Column layout, column and Wrapper: `true` means the element was handled (kept or removed). A
+ * parent is visited before its children. So a column of a removed Column layout no longer finds
+ * it above itself, and it is removed too. The Wrapper of a removed column is checked at its new
+ * position.
  */
 function checkLayout(node: Element): boolean {
   const block = node.nodeName === "DIV" ? node.getAttribute("data-block") : null;
-  // Обёртка — на верхнем уровне или прямо в колонке: тот же список мест, где
-  // нет Раскладки, только колонка её принимает.
+  // A Wrapper is at the top level or directly in a column. It is the same list of places where a
+  // Column layout is not allowed, except that a column does accept it.
   if (block === WRAPPER_BLOCK) {
     const parent = node.parentElement;
     if (
@@ -935,15 +919,15 @@ function checkLayout(node: Element): boolean {
 }
 
 /**
- * Свой элемент: `true` — обработан (оставлен или снят). Блок с местом `top` —
- * только прямо в Документе: вложенный теряет обёртку, содержимое остаётся.
+ * A custom element: `true` means it was handled (kept or removed). A Block with the `top` placement
+ * is allowed only directly in the Document. A nested one loses its wrapper, and its content stays.
  */
 function checkCustom(node: Element, schema: RichTextSchema): boolean {
   const rules = customRulesOf(node, schema);
   if (!rules) return false;
   const parent = node.parentElement;
-  // Верхний уровень — прямо в `body` разбора DOMPurify. По имени, а не по
-  // `ownerDocument.body`: у документа разбора DOMPurify его может не быть.
+  // The top level is directly in DOMPurify's parse `body`. It is checked by name, not via
+  // `ownerDocument.body`, because the parse document of DOMPurify may not have one.
   if ("place" in rules && rules.place === "top" && parent && parent.nodeName !== "BODY") {
     node.replaceWith(...node.childNodes);
   }
@@ -951,9 +935,9 @@ function checkCustom(node: Element, schema: RichTextSchema): boolean {
 }
 
 /**
- * Блок видео: `true` — элемент обработан. Без годного сервиса и адреса (хук
- * атрибутов снял то, чего не должно быть) и внутри другого блока видео он теряет
- * обёртку; остаётся ссылка, которую читатель видит и без плеера.
+ * A video Block: `true` means the element was handled. Without a valid service and address (the
+ * attribute hook removed what should not be there), and inside another video Block, it loses its
+ * wrapper. The link stays, and the reader sees it even without the player.
  */
 function checkVideo(node: Element): boolean {
   if (node.nodeName !== "DIV" || node.getAttribute("data-block") !== VIDEO_BLOCK) return false;
@@ -966,25 +950,25 @@ function checkVideo(node: Element): boolean {
   return true;
 }
 
-/** Хук `afterSanitizeAttributes`: место элемента в Документе. */
+/** The `afterSanitizeAttributes` hook: the element's place in the Document. */
 function checkStructure(node: Element, schema: RichTextSchema): void {
   if (checkLayout(node) || checkVideo(node) || checkCustom(node, schema)) return;
-  // Формула — лист: пустой элемент с `data-latex`. Отрисованная разметка KaTeX в
-  // Документ не попадает (ADR-0070), поэтому дети снимаются; без исходника
-  // элемент теряет обёртку, как любой лишний `span` и `div`.
+  // A formula is a leaf: an empty element with `data-latex`. The rendered KaTeX markup does not get
+  // into the Document (ADR-0070), so its children are removed. Without a source the element loses
+  // its wrapper, like any stray `span` or `div`.
   if (isFormula(node)) {
     if (node.hasAttribute("data-latex")) node.replaceChildren();
     else node.replaceWith(...node.childNodes);
     return;
   }
-  // Без `type="checkbox"` поле ввода — обычное текстовое: такого флажка нет.
+  // Without `type="checkbox"` an input is an ordinary text field: there is no such checkbox.
   if (node.nodeName === "INPUT" && node.getAttribute("type") !== "checkbox") {
     node.remove();
     return;
   }
-  // Цвет у метки один — палитры или автора, поэтому рядом с `data-color` `style`
-  // снимается. `span` с цветом бывает где угодно; `mark` без цвета снимается:
-  // голый маркер браузер красит жёлтым.
+  // A label has one color, from a palette or the author's. So `style` is removed next to
+  // `data-color`. A `span` with a color may appear anywhere. A `mark` without a color is removed,
+  // because the browser paints a bare marker yellow.
   if (node.hasAttribute("data-color")) node.removeAttribute("style");
   const coloured = node.hasAttribute("data-color") || node.hasAttribute("style");
   if (node.nodeName === "MARK" && !coloured) {
@@ -992,17 +976,17 @@ function checkStructure(node: Element, schema: RichTextSchema): void {
     return;
   }
   if (node.nodeName === "SPAN" && coloured) return;
-  // Сворачиваемый Блок: `summary` — только прямо в `details`, обёртка
-  // содержимого с `data-type` — тоже (атрибут уже снят хуком, если она не там).
-  // Вне Блока они теряют обёртку, содержимое остаётся.
+  // Details Block: `summary` only directly in `details`, and the content wrapper with its
+  // `data-type` likewise. (The hook has already removed the attribute if the wrapper is not in
+  // place.) Outside a Block they lose their wrapper, and the content stays.
   if (node.nodeName === "SUMMARY") {
     if (node.parentElement?.nodeName !== "DETAILS") node.replaceWith(...node.childNodes);
     return;
   }
   if (node.nodeName === "DIV" && node.getAttribute("data-type") === DETAILS_CONTENT) return;
-  // Картинка — `img` с адресом прямо внутри `figure`, и только так: `figure`
-  // без годной картинки разворачивается в содержимое, `img` вне `figure` или без
-  // адреса удаляется, `figcaption` вне `figure` теряет обёртку.
+  // An image is an `img` with an address, directly inside a `figure`, and only that way. A `figure`
+  // without a valid image is unwrapped into its content. An `img` outside `figure`, or without an
+  // address, is removed. A `figcaption` outside `figure` loses its wrapper.
   if (node.nodeName === "FIGURE") {
     const img = node.querySelector(":scope > img");
     if (!img || !isAllowedImageSrc(img.getAttribute("src") ?? "")) {
@@ -1022,8 +1006,8 @@ function checkStructure(node: Element, schema: RichTextSchema): void {
     if (node.parentElement?.nodeName !== "FIGURE") node.replaceWith(...node.childNodes);
     return;
   }
-  // Ссылка, у которой адрес срезан (чужая схема), остаётся текстом; у ссылки
-  // с адресом `rel` всегда тот, что пишет Редактор.
+  // A link whose address was stripped (a foreign scheme) stays as text. A link with an address
+  // always gets the `rel` that the Editor writes.
   if (node.nodeName === "A") {
     if (!node.hasAttribute("href")) {
       node.replaceWith(...node.childNodes);
@@ -1036,36 +1020,36 @@ function checkStructure(node: Element, schema: RichTextSchema): void {
 }
 
 /**
- * Символы, которые браузер вырезает из адреса перед разбором: пробелы и
- * управляющие. `java\tscript:` для него — `javascript:`, поэтому схема
- * сверяется после их удаления. Набор тот же, что `ATTR_WHITESPACE` у DOMPurify:
- * Редактор и очистка на сервере обязаны видеть один и тот же адрес.
+ * Characters the browser strips from an address before parsing it: spaces and control characters.
+ * To the browser, `java\tscript:` is `javascript:`, so the scheme is checked after they are
+ * removed. The set is the same as DOMPurify's `ATTR_WHITESPACE`. The Editor and the sanitization on
+ * the server must see the same address.
  */
-// eslint-disable-next-line no-control-regex -- управляющие символы и есть предмет проверки
+// eslint-disable-next-line no-control-regex -- control characters are the very thing being checked
 const URI_WHITESPACE = /[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g;
 
-/** Адрес начинается с разрешённой схемы — из `RICH_TEXT_SCHEMA.protocols`. */
+/** The address starts with an allowed scheme from `RICH_TEXT_SCHEMA.protocols`. */
 function linkProtocolPattern(): RegExp {
   return new RegExp(`^(?:${RICH_TEXT_SCHEMA.protocols.join("|")}):`, "i");
 }
 
 /**
- * Годится ли адрес для ссылки Документа: абсолютный, со схемой из
- * `RICH_TEXT_SCHEMA.protocols`. Им проверяют и Редактор (загрузка, вставка,
- * поповер), и конфиг очистки — правило одно на обе стороны.
+ * Whether an address is valid for a Document link: absolute, with a scheme from
+ * `RICH_TEXT_SCHEMA.protocols`. The Editor (load, paste, popover) and the cleanup config both check
+ * it, so the rule is the same on both sides.
  *
- * @internal Не входит в публичные входы: потребителю хватает конфига.
+ * @internal Not part of the public entry points: the consumer only needs the config.
  */
 export function isAllowedLinkHref(href: string): boolean {
   return linkProtocolPattern().test(href.replace(URI_WHITESPACE, ""));
 }
 
 /**
- * Годится ли адрес для картинки Документа: абсолютный `http` или `https`
- * (`RICH_TEXT_SCHEMA.imageProtocols`) с именем хоста. `https:photo.png` без
- * `//` браузер разобрал бы относительно страницы — такой адрес не проходит.
+ * Whether an address is valid for a Document image: an absolute `http` or `https`
+ * (`RICH_TEXT_SCHEMA.imageProtocols`) with a host name. `https:photo.png` without `//` would be
+ * parsed by the browser relative to the page, so such an address does not pass.
  *
- * @internal Не входит в публичные входы: потребителю хватает `sanitizeRichText`.
+ * @internal Not part of the public entry points: the consumer only needs `sanitizeRichText`.
  */
 export function isAllowedImageSrc(src: string): boolean {
   const pattern = new RegExp(`^(?:${RICH_TEXT_SCHEMA.imageProtocols.join("|")})://[^/?#]`, "i");
@@ -1073,14 +1057,14 @@ export function isAllowedImageSrc(src: string): boolean {
 }
 
 /**
- * Годится ли значение своего атрибута по его виду (`CustomAttribute`). Одна
- * проверка на Редактор (`customToolEngine.ts`) и очистку на сервере.
+ * Whether a custom attribute's value is valid for its kind (`CustomAttribute`). One check serves
+ * the Editor (`customToolEngine.ts`) and the sanitization on the server.
  *
- * Значение с `<` не проходит никогда, какой бы ни был шаблон: HTML в атрибутах
- * запрещён (ADR-0058, п. 2.5) — содержимое Блока живёт разметкой Документа в
- * его детях, где его чистит та же Схема.
+ * A value containing `<` never passes, whatever the pattern. HTML in attributes is forbidden
+ * (ADR-0058, item 2.5). A Block's content lives as Document markup in its children, where the same
+ * Schema cleans it.
  *
- * @internal Наружу отдаётся через `customTool.ts`.
+ * @internal Exposed through `customTool.ts`.
  */
 export function isAllowedAttributeValue(rule: CustomAttribute, value: string): boolean {
   if (value.includes("<")) return false;
@@ -1090,18 +1074,17 @@ export function isAllowedAttributeValue(rule: CustomAttribute, value: string): b
 }
 
 /**
- * Выражения правил `pattern` — по одному на правило: очистка зовёт проверку на
- * каждый атрибут каждого вызова, и компилировать шаблон заново там незачем.
- * Ключ — объект правила (`richTextSchema` его не копирует), `null` — шаблон не
- * выражение.
+ * Regular expressions of `pattern` rules, one per rule. Cleanup calls the check for every attribute
+ * of every call, so there is no point compiling the pattern again each time. The key is the rule
+ * object (`richTextSchema` does not copy it). `null` means the pattern is not a valid expression.
  */
 const PATTERNS = new WeakMap<CustomAttribute, RegExp | null>();
 
 /**
- * Выражение правила или `null`. Битый шаблон Редактор отвергает ошибкой поля
- * (`customToolsError`), а у сервера ошибок нет: очистка не падает, значение по
- * такому правилу не проходит, разработчик видит предупреждение. Шаблон в
- * тексте — данные описания, не меняющиеся от вызова к вызову.
+ * The rule's expression, or `null`. The Editor rejects a broken pattern with a field error
+ * (`customToolsError`), but the server has no error channel. So the cleanup does not crash: no value
+ * passes that rule, and the developer sees a warning. The pattern text is description data that does
+ * not change from call to call.
  */
 function patternOf(rule: Extract<CustomAttribute, { kind: "pattern" }>): RegExp | null {
   let pattern = PATTERNS.get(rule);

@@ -4,18 +4,18 @@ const config: StorybookConfig = {
   stories: ["../src/**/*.stories.tsx"],
   addons: ["@storybook/addon-a11y"],
   framework: {
-    // react-vite, а не nextjs-vite: во всех компонентах пакета нет ни одного
-    // импорта next/*, поэтому Next-специфичный фреймворк только добавил бы
-    // зависимостей и точек отказа.
+    // react-vite, not nextjs-vite: no component in the package has a single next/*
+    // import, so a Next-specific framework would only add dependencies and points
+    // of failure.
     name: "@storybook/react-vite",
     options: {},
   },
-  // Storybook по умолчанию отправляет анонимную телеметрию при каждой сборке,
-  // в том числе из CI. Внутреннему инструменту это не нужно.
+  // Storybook sends anonymous telemetry on every build by default, including builds
+  // from CI. An internal tool does not need that.
   core: { disableTelemetry: true },
-  // Картинки историй Редактора: адрес картинки в Документе —
-  // только абсолютный http(s), поэтому файл раздаётся витриной с того же
-  // адреса, а не встраивается `data:`, и снимки не зависят от сети.
+  // Images for the Editor's stories: an image's address in a Document must be an
+  // absolute http(s) URL, so the file is served by the showcase at that same address
+  // instead of being inlined as `data:`, and the snapshots do not depend on the network.
   staticDirs: ["./static"],
 };
 

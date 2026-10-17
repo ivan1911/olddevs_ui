@@ -17,8 +17,8 @@ export const Playground: Story = {
 };
 
 /**
- * Матрица наполнения. Ось у шапки одна — что в ней есть, кроме заголовка,
- * поэтому матрица перебирает сочетания подписи и действий, а не размеры.
+ * A content matrix. The header has one axis: what it contains besides the title,
+ * so the matrix goes through combinations of subtitle and actions, not sizes.
  */
 export const Matrix: Story = {
   render: () => (

@@ -14,18 +14,18 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Картинки Редактора (OLDSUI-44): Блок `<figure>` с `<img>` и необязательной
- * подписью, вставка по адресу и загрузка через `onUploadImage`, ширина
- * пресетами.
+ * Images in the Editor (OLDSUI-44): a `<figure>` Block with an `<img>` and an
+ * optional caption, insertion by address and upload through `onUploadImage`,
+ * width by presets.
  *
- * Проверяется снаружи — HTML на выходе, роли и имена; движок через `ref.editor`
- * только там, где jsdom не умеет ввода и событий буфера.
+ * The test checks from outside: the HTML on output, roles and names; the engine
+ * through `ref.editor` only where jsdom cannot do input and clipboard events.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -37,7 +37,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 
 const PHOTO = "https://cdn.example.com/photo.png";
 
-/** Тексты, на которые поле ссылается `aria-describedby`: подсказка и ошибка. */
+/** Texts the field refers to through `aria-describedby`: the hint and the error. */
 function describedBy(field: HTMLElement): string[] {
   return (field.getAttribute("aria-describedby") ?? "")
     .split(" ")
@@ -80,14 +80,14 @@ test("the Image button inserts an image by its address with alt text", async () 
   expect(popover.contains(address)).toBe(true);
   expect(document.activeElement).toBe(address);
 
-  // Адрес без схемы — как в строке браузера: получает `https://`.
+  // An address without a scheme, as in the browser's address bar, gets `https://`.
   await user.type(address, "cdn.example.com/photo.png");
   await user.type(screen.getByRole("textbox", { name: "Alternative text" }), "A lake{Enter}");
 
   expect(screen.queryByRole("dialog", { name: "Image" })).toBeNull();
-  // Пустой абзац под кареткой стал картинкой, а не остался пустым рядом с ней.
+  // The empty paragraph under the caret became an image, not an empty one next to it.
   expect(editor.getHTML()).toBe(`<p>Intro</p><figure><img src="${PHOTO}" alt="A lake"></figure>`);
-  // Каретка — в подписи: следующий набор становится подписью.
+  // The caret is in the caption: the next typing becomes the caption.
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
   act(() => void editor.commands.insertContent("Dawn"));
   expect(editor.getHTML()).toBe(
@@ -130,7 +130,7 @@ test("without the image tool there is no button and an <img> is dropped", () => 
   expect(editor.getHTML()).toBe("<p>Text</p><p>Cap</p>");
 });
 
-/** Обещание, которое тест решает сам: загрузка «идёт», пока он не скажет. */
+/** A promise the test settles itself: the upload stays in progress until it says so. */
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: unknown) => void;
@@ -144,9 +144,9 @@ function deferred<T>() {
 const photo = () => new File(["png"], "photo.png", { type: "image/png" });
 
 /**
- * Вставка из буфера — тем же путём, каким её отдаёт движку ProseMirror:
- * `handlePaste` плагинов. `ClipboardEvent` и `DataTransfer` в jsdom нет,
- * поэтому буфер — объект с файлами и `getData`.
+ * A paste from the clipboard, through the same path ProseMirror gives it to the
+ * engine: the `handlePaste` of plugins. jsdom has neither `ClipboardEvent` nor
+ * `DataTransfer`, so the clipboard is an object with files and `getData`.
  */
 function pasteFiles(editor: Editor, files: File[], html = ""): boolean {
   const event = Object.assign(new Event("paste", { cancelable: true }), {
@@ -161,7 +161,7 @@ function pasteFiles(editor: Editor, files: File[], html = ""): boolean {
   return handled;
 }
 
-/** Живой регион сообщений о файлах — `role="status"` Редактора. */
+/** Live region for file messages: the Editor's `role="status"`. */
 function status(): string {
   return screen.getByRole("status").textContent ?? "";
 }
@@ -178,7 +178,7 @@ test("an uploaded file shows a placeholder, then the image; one undo removes it"
   expect(onUploadImage).toHaveBeenCalledWith(file);
   expect(status()).toBe("Uploading photo.png…");
   expect(editor.view.dom.textContent).toContain("Uploading photo.png…");
-  // Пока обещание не решено, в Документе картинки нет — ни `blob:`, ни base64.
+  // While the promise is unsettled, the Document has no image: neither `blob:` nor base64.
   expect(editor.getHTML()).toBe("<p>Text</p>");
 
   await act(async () => upload.resolve(PHOTO));
@@ -206,7 +206,7 @@ test("a failed upload leaves the document as it was and says so", async () => {
   expect(screen.getByRole("alert").textContent).toBe(
     "Couldn't upload photo.png. The document is unchanged."
   );
-  // Откатывать нечего: неудачная загрузка не оставила правки в истории.
+  // Nothing to roll back: the failed upload left no edit in the history.
   expect(editor.can().undo()).toBe(false);
 });
 
@@ -238,7 +238,7 @@ test("without onUploadImage a pasted file is refused with a hint and nothing lan
 });
 
 test("a file that comes with text in the clipboard is left to the HTML paste", () => {
-  // Так кладёт выделение Word: текст в HTML и снимок выделения картинкой.
+  // This is how Word puts a selection on the clipboard: text as HTML and a picture of the selection.
   const onUploadImage = vi.fn(async () => PHOTO);
   const { editor } = renderEditor({ defaultValue: "<p>Text</p>", onUploadImage });
 
@@ -304,7 +304,7 @@ test("with an uploader the popover uploads a chosen file", async () => {
   expect(onUploadImage).toHaveBeenCalledTimes(1);
 });
 
-/** Клавиша в документе — так, как её слышит движок: `keydown` на редактируемой области. */
+/** A key press in the document, as the engine hears it: `keydown` on the editable area. */
 function press(editor: Editor, key: string) {
   act(() => {
     editor.view.dom.dispatchEvent(
@@ -317,7 +317,7 @@ const FIGURE = `<figure><img src="${PHOTO}" alt="A lake"></figure>`;
 
 test("Enter on a selected image enters its caption; Enter in the caption leaves it", () => {
   const { editor } = renderEditor({ defaultValue: `<p>Intro</p>${FIGURE}` });
-  // Картинка — сразу за абзацем «Intro» (0…7).
+  // The image comes right after the "Intro" paragraph (0…7).
   act(() => void editor.commands.setNodeSelection(7));
 
   press(editor, "Enter");
@@ -335,7 +335,7 @@ test("Backspace at the start of a caption selects the image instead of merging",
   const { editor } = renderEditor({
     defaultValue: `<p>Intro</p><figure><img src="${PHOTO}" alt=""><figcaption>Dawn</figcaption></figure>`,
   });
-  // Начало подписи: 7 — картинка, 8 — подпись, 9 — её первая буква.
+  // Start of the caption: 7 is the image, 8 is the caption, 9 is its first letter.
   act(() => void editor.commands.setTextSelection(9));
 
   press(editor, "Backspace");
@@ -365,7 +365,7 @@ test("width presets in the popover work from the keyboard and toggle off", async
   const { editor } = renderEditor({ defaultValue: `<p>Intro</p>${FIGURE}` });
   act(() => void editor.commands.setNodeSelection(7));
   const button = screen.getByRole("button", { name: "Image" });
-  // Выделена картинка — кнопка нажата: поповер будет править её, а не вставлять новую.
+  // The image is selected, so the button is pressed: the popover edits it instead of inserting a new one.
   expect(button.getAttribute("aria-pressed")).toBe("true");
 
   await user.click(button);
@@ -373,7 +373,7 @@ test("width presets in the popover work from the keyboard and toggle off", async
   const half = screen.getByRole("button", { name: "50%" });
   expect(group.contains(half)).toBe(true);
   expect(half.getAttribute("aria-pressed")).toBe("false");
-  // Значения существующей картинки — в полях.
+  // The existing image's values are in the fields.
   expect((screen.getByRole("textbox", { name: "Image address" }) as HTMLInputElement).value).toBe(
     PHOTO
   );
@@ -386,7 +386,7 @@ test("width presets in the popover work from the keyboard and toggle off", async
     `<p>Intro</p><figure><img src="${PHOTO}" alt="A lake" data-width="50"></figure>`
   );
 
-  // Тот же пресет повторно — назад к своему размеру картинки.
+  // The same preset again: back to the image's own size.
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
   await user.click(screen.getByRole("button", { name: "Image" }));
   await user.click(await screen.findByRole("button", { name: "50%" }));
@@ -428,8 +428,8 @@ test("Markdown images become figures within the address policy and leave as ![al
     )
   );
 
-  // Картинка внутри строки — свой Блок между двумя половинами абзаца; чужие
-  // адреса пропадают вместе с картинкой.
+  // An image inside a line is its own Block between the two halves of the
+  // paragraph; foreign addresses disappear together with the image.
   expect(editor.getHTML()).toBe(
     `<p>Before </p><figure><img src="${PHOTO}" alt="A lake"></figure><p> after</p>`
   );
@@ -447,8 +447,8 @@ test("a figure's caption and width do not survive Markdown", () => {
 test("pasted Markdown with an image inserts the figure", () => {
   const { editor } = renderEditor({ defaultValue: "<p></p>" });
 
-  // Обычный `paste` с текстом буфера: `pasteText` движка — это «вставить как
-  // простой текст», и Markdown в нём не разбирается намеренно.
+  // A plain `paste` with the clipboard's text: the engine's `pasteText` is "paste as
+  // plain text", and it deliberately does not parse Markdown.
   const event = Object.assign(new Event("paste", { bubbles: true, cancelable: true }), {
     clipboardData: {
       getData: (type: string) => (type === "text/plain" ? `![Lake](${PHOTO})` : ""),
@@ -474,7 +474,7 @@ test("the insert menu adds an image through the same popover", async () => {
   const address = await screen.findByRole("textbox", { name: "Image address" });
   await user.type(address, `${PHOTO}{Enter}`);
 
-  // Новый Блок — после текущего, как у остальных пунктов «Добавить».
+  // The new Block goes after the current one, as with the other Insert items.
   expect(editor.getHTML()).toBe(`<p>Intro</p><figure><img src="${PHOTO}" alt=""></figure>`);
 });
 
@@ -503,7 +503,7 @@ test("a selected image shows its own toolbar: width presets, edit and remove", a
   expect(editor.getHTML()).toBe(
     `<p>Intro</p><figure><img src="${PHOTO}" alt="A lake" data-width="75"></figure>`
   );
-  // Картинка остаётся выделенной — следующий пресет жмётся сразу.
+  // The image stays selected, so the next preset is pressed right away.
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "75%" }).getAttribute("aria-pressed")).toBe("true")
   );
@@ -549,7 +549,7 @@ test("the image popover and file messages speak the provider's language", async 
     </UiProvider>
   );
   const editor = ref.current!.editor!;
-  // Ожидания — из русского каталога, а не литералами (гейт i18n).
+  // The expectations come from the Russian catalog, not from literals (i18n gate).
   const t = ru.editor;
 
   pasteFiles(editor, [photo()]);

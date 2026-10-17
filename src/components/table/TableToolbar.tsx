@@ -5,40 +5,41 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { cn } from "../../lib/cn.js";
 
 export interface TableToolbarProps extends Omit<ComponentPropsWithoutRef<"div">, "title"> {
-  /** Заголовок таблицы. Обычно `Heading` или строка. */
+  /** Table title. Usually a `Heading` or a string. */
   title?: ReactNode;
   /**
-   * Сколько записей всего. Число, а не готовая строка: склонение делает каталог
-   * по локали, а не вызывающий по своему разумению.
+   * Total number of records. A number, not a ready-made string: pluralization is handled
+   * by the message catalog for the locale, not by the caller.
    */
   count?: number;
   /**
-   * Своя подпись счётчика — когда нужно назвать сущность («12 документов»).
-   * Тот же приём, что у `SelectionBar`: каталог знает про склонение, но не про
-   * предметную область.
+   * Custom count label, for when the entity needs a name ("12 documents").
+   * The same approach as in `SelectionBar`: the catalog knows about pluralization, but not
+   * about the domain.
    */
   countLabel?: (count: number) => ReactNode;
-  /** Действия справа: «Создать», «Экспорт», меню. */
+  /** Actions on the right: "Create", "Export", a menu. */
   actions?: ReactNode;
-  /** Слот фильтров — обычно `FilterBar`. Стоит второй строкой. */
+  /** Filters slot, usually `FilterBar`. Rendered on a second row. */
   filters?: ReactNode;
-  /** Слот настроек — обычно `TablePreferences` внутри `Popover` или `Menu`. */
+  /** Preferences slot, usually `TablePreferences` inside a `Popover` or `Menu`. */
   preferences?: ReactNode;
 }
 
 /**
- * Полоса над таблицей: заголовок, счётчик, действия, фильтры и настройки.
+ * Bar above the table: title, count, actions, filters and preferences.
  *
- * Состояния не хранит вовсе — ни счётчика, ни фильтров: всё приходит сверху,
- * обычно из `useTableState`.
+ * Holds no state at all, neither the count nor the filters: everything comes from above,
+ * usually from `useTableState`.
  *
- * РОЛИ `toolbar` ЗДЕСЬ НЕТ, и это решение. Роль обязывает к клавиатурной
- * навигации стрелками между своими элементами, а ARIA сама её не даёт: объявив
- * роль и не реализовав поведение, мы пообещали бы скринридеру то, чего нет.
- * Обычный контейнер с заголовком внутри честнее и никого не обманывает.
+ * THERE IS NO `toolbar` ROLE HERE, and that is a deliberate decision. The role requires
+ * arrow-key navigation between its own items, and ARIA does not provide that by itself:
+ * declaring the role without implementing the behavior would promise screen readers
+ * something that does not exist. A plain container with a heading inside is more honest
+ * and misleads no one.
  *
- * Работает и без `DataTable` — над обычной `Table` тоже: полоса ничего не знает
- * о том, что под ней.
+ * Works without `DataTable` too, above a plain `Table`: the bar knows nothing about what is
+ * below it.
  */
 export const TableToolbar = forwardRef<HTMLDivElement, TableToolbarProps>(function TableToolbar(
   { title, count, countLabel, actions, filters, preferences, className, ...rest },

@@ -16,7 +16,7 @@ import {
 import { PRESETS, TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table`: `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table`: `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -25,10 +25,11 @@ afterEach(() => {
 });
 
 /**
- * Невидимые символы (OLDSUI-278): Инструмент `invisibleCharacters` на расширении
- * Invisible Characters из Tiptap. Decoration поверх Документа — через публичный
- * `RichTextEditor` с конкретным `tools`: что видит автор (пункт-флажок меню «…»,
- * знаки в DOM) и что получает владелец (`onChange`, `getHTML()`, Состояние и Команда).
+ * Invisible characters (OLDSUI-278): the `invisibleCharacters` Tool on the
+ * Invisible Characters extension from Tiptap. A Decoration on top of the Document,
+ * through the public `RichTextEditor` with a concrete `tools`: what the author sees
+ * (the checkbox item in the More formatting menu, the marks in the DOM) and what
+ * the owner gets (`onChange`, `getHTML()`, Tool state and Tool commands).
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -47,19 +48,19 @@ const MORE = { name: "More formatting" } as const;
 const moreButton = () => screen.queryByRole<HTMLButtonElement>("button", MORE);
 const NAME = { name: "Invisible characters" } as const;
 
-/** Открыть «…» (на фиксированной Панели) и вернуть меню. */
+/** Open the More formatting menu (on the fixed Toolbar) and return it. */
 async function openMore(user: User) {
   await user.click(moreButton()!);
   return screen.getByRole("menu", MORE);
 }
 
-/** Пункт открытого меню «…»; `null` — пункта нет. */
+/** The item of the open More formatting menu; `null` means there is no such item. */
 const itemIn = (menu: HTMLElement) => within(menu).queryByRole("menuitemcheckbox", NAME);
 
 /**
- * Переключить показ пунктом меню «…» одним щелчком; меню закрывается само.
- * Ждём и возврата фокуса в Документ: он приходит кадром позже, и открытое сразу
- * следом меню «…» закрылось бы этим запоздалым фокусом.
+ * Toggle the display with the menu item in one click; the menu closes by itself.
+ * Also wait for focus to return to the Document: it arrives a frame later, and a
+ * More formatting menu opened right after would close on that late focus.
  */
 async function toggleByItem(user: User) {
   await user.click(itemIn(await openMore(user))!);
@@ -68,7 +69,7 @@ async function toggleByItem(user: User) {
   );
 }
 
-/** Отмечен ли пункт сейчас: открыть «…», прочитать, закрыть Escape. */
+/** Whether the item is checked now: open the menu, read it, close it with Escape. */
 async function itemChecked(user: User) {
   const menu = await openMore(user);
   const checked = itemIn(menu)?.getAttribute("aria-checked");
@@ -77,7 +78,7 @@ async function itemChecked(user: User) {
   return checked;
 }
 
-/** Знаки в DOM Документа по виду: `space`, `break`, `paragraph`. */
+/** Invisible characters in the Document's DOM, by kind: `space`, `break`, `paragraph`. */
 function marks() {
   const count = (kind: string) =>
     document.querySelectorAll(`.tiptap-invisible-character--${kind}`).length;
@@ -110,7 +111,7 @@ test("there is no toolbar button for it any more: the row is untouched", () => {
     node.getAttribute("aria-label")
   );
   expect(names).not.toContain("Invisible characters");
-  // Правый край — по-прежнему «Найти» и справочник.
+  // The right edge is still Find and the shortcut reference.
   expect(names.slice(-3)).toEqual(["Redo", "Find", "Keyboard shortcuts"]);
 });
 
@@ -122,7 +123,7 @@ test("the item is a menuitemcheckbox in its own last section, set off by a divid
   const item = itemIn(menu)!;
   const all = Array.from(menu.querySelectorAll('[role^="menuitem"]'));
   expect(all.at(-1)).toBe(item);
-  // Раздел свой: перед ним черта, и «Очистить стили» остаётся прежним пунктом.
+  // The section is its own: a divider comes before it, and "Clear formatting" stays where it was.
   const section = item.closest('[role="group"]')!;
   expect(section.querySelectorAll('[role^="menuitem"]')).toHaveLength(1);
   expect(section.previousElementSibling?.getAttribute("role")).toBe("separator");
@@ -137,7 +138,7 @@ test("choosing the item closes the menu and leaves the focus in the Document", a
 
   await toggleByItem(user);
   expect(screen.queryByRole("menu", MORE)).toBeNull();
-  // Фокус возвращается в Документ кадром позже, как у остальных пунктов «…».
+  // Focus returns to the Document a frame later, as with the other More formatting items.
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Body" }))
   );
@@ -159,13 +160,13 @@ test("showing the marks leaves the value, onChange and the saved HTML alone", as
   expect(handle.getHTML()).not.toContain("tiptap-invisible-character");
   expect(handle.getMarkdown()).not.toContain("·");
 
-  // Правка при включённом показе: знаки следуют за текстом, в HTML их по-прежнему нет.
+  // An edit while the marks are shown: they follow the text, and the HTML still has none.
   act(() => void handle.editor!.chain().insertContentAt(4, " ").run());
   expect(marks().space).toBe(2);
   expect(handle.getHTML()).not.toContain("tiptap-invisible-character");
 
   await toggleByItem(user);
-  // Единственный `onChange` — от вставленного пробела, а не от показа и скрытия.
+  // The only `onChange` comes from the inserted space, not from showing or hiding.
   await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
   expect(String(onChange.mock.calls[0]![0])).toBe(handle.getHTML());
   expect(String(onChange.mock.calls[0]![0])).not.toContain("invisible");
@@ -191,7 +192,7 @@ test("handle.tool().toggle() does the same as the item and reports success", asy
   expect(await itemChecked(user)).toBe("false");
 
   expect(handle.getHTML()).toBe(before);
-  // `onChange` отложенный: даём ему время прийти, если бы переключение его вызвало.
+  // `onChange` is deferred: give it time to arrive, in case toggling had called it.
   await act(() => new Promise((resolve) => setTimeout(resolve, 150)));
   expect(onChange).not.toHaveBeenCalled();
 });
@@ -252,7 +253,7 @@ test("the state hook reports visible and follows the item and the command", asyn
   }
 
   render(<Screen />);
-  // Движок создаётся после первого рендера экрана: до того хук молчит.
+  // The engine is created after the screen's first render: until then the hook is silent.
   expect(seen[0]).toBeNull();
   expect(seen.at(-1)).toEqual({ visible: false });
 
@@ -276,7 +277,7 @@ test("the state hook is null when the tool is not in the set", () => {
 
 test("the item is in the fixed toolbar's «…» only: not floating, not bubble, not read-only", async () => {
   const user = userEvent.setup();
-  // `strike` — чтобы «…» у плавающей Панели и плашки вообще была.
+  // `strike`, so that the floating Toolbar and the Bubble menu have a More formatting button at all.
   const tools = [...TOOLS_WITH, "strike"] as const;
 
   for (const toolbar of ["floating", "bubble"] as const) {
@@ -289,7 +290,7 @@ test("the item is in the fixed toolbar's «…» only: not floating, not bubble,
     await user.click(within(bar).getByRole("button", MORE));
     const menu = screen.getByRole("menu", MORE);
     expect(itemIn(menu), toolbar).toBeNull();
-    // Остальные пункты «…» на месте.
+    // The other More formatting items are in place.
     expect(within(menu).getByRole("menuitemcheckbox", { name: /^Strikethrough/ })).toBeDefined();
     cleanup();
   }
@@ -358,7 +359,7 @@ test("the item is reached from the keyboard and toggled with Enter and Space", a
   moreButton()!.focus();
   await user.keyboard("{Enter}");
   const menu = screen.getByRole("menu", MORE);
-  // `↑` из начала списка уходит в конец: последний пункт — «Невидимые символы».
+  // `↑` from the start of the list goes to the end: the last item is "Invisible characters".
   await user.keyboard("{ArrowUp}");
   expect(document.activeElement).toBe(itemIn(menu));
 
@@ -366,7 +367,7 @@ test("the item is reached from the keyboard and toggled with Enter and Space", a
   expect(marks()).toEqual(SHOWN);
   expect(screen.queryByRole("menu", MORE)).toBeNull();
 
-  // Пробел переключает так же, как Enter.
+  // Space toggles the same way as Enter.
   await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("textbox")));
   moreButton()!.focus();
   await user.keyboard("{Enter}");

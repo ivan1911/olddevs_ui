@@ -11,7 +11,7 @@ beforeAll(() => {
 });
 
 afterEach(() => {
-  // Уход окна из фокуса сбрасывает недоставленное событие и модальность.
+  // When the window loses focus, the undelivered event and the modality are reset.
   fireEvent.blur(window);
   document.body.replaceChildren();
 });
@@ -22,7 +22,7 @@ function button(): HTMLButtonElement {
   return element;
 }
 
-/** Фокус, пришедший вслед за событием; клавишу потом отпускают, как в жизни. */
+/** Focus that arrives right after an event; the key is released afterwards, as in real life. */
 const focusAfter = (fire: () => void, element = button()) => {
   fire();
   element.focus();

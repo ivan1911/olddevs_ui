@@ -7,28 +7,28 @@ import { focusWithin } from "./focusWithin.js";
 import { isImageSelection } from "../features/image/image.js";
 
 /**
- * Общее у всего, что всплывает над выделением на `BubbleMenu` Tiptap: у
- * плавающей Панели (`toolbar="floating"`) и у меню выделения
- * (`toolbar="bubble"`). Условие показа и позиция у них одни: две
- * копии разъехались бы молча, и плашка показывалась бы там, где Панель — нет.
+ * Shared by everything that floats above the selection on Tiptap's `BubbleMenu`: the
+ * floating toolbar (`toolbar="floating"`) and the bubble menu (`toolbar="bubble"`). They
+ * share the show condition and the position. Two copies would drift apart silently, and
+ * the bubble menu would show where the Toolbar does not.
  */
 
 /**
- * Условие показа — умолчание `BubbleMenu` плюс два исключения: над
- * выделенной картинкой стоит её собственная панель (`ImageToolbar`), и меню
- * форматирования спорило бы с ней за одно место; над выделенным своим Блоком
- * с Признаком «атом без меню форматирования» (`plainAtom` в spec узла) Меток
- * не ставят.
+ * The show condition is the `BubbleMenu` default plus two exceptions. Over a selected
+ * image, its own image toolbar (`ImageToolbar`) is shown, and the formatting menu would compete
+ * with it for the same place. Over a selected custom Block with the Block trait "atom
+ * without a formatting menu" (`plainAtom` in the node spec), no Marks are offered.
  *
- * Пустое выделение, пустой текст под выделением, нередактируемое поле и фокус
- * вне документа и вне самого меню — не показывать.
+ * An empty selection, empty text under the selection, a non-editable field, and focus
+ * outside both the document and the menu itself do not show the menu.
  *
- * ОТКРЫТОЕ ИЗ МЕНЮ — ТОЖЕ «ФОКУС ВНУТРИ». Списки «¶», «…», цвета и сетка эмодзи
- * живут в портале, вне узла меню, и фокус в них для `focusWithin` — снаружи.
- * А условие пересчитывается таймером после каждой правки: жирный за миг до
- * открытия «¶» прятал плашку вместе с кнопкой меню, и Escape возвращал фокус в
- * никуда. Пока у кнопки внутри меню `aria-expanded="true"` (его ставят и
- * react-aria, и Radix), человек работает с меню — прятать его нельзя.
+ * OPENED FROM THE MENU IS ALSO "FOCUS WITHIN". The "¶", "…", color and emoji grid menus
+ * live in a portal, outside the menu's node, so for `focusWithin` focus in them is
+ * outside. The condition is also recalculated by a timer after every edit: applying bold
+ * just before opening "¶" hid the bubble menu together with its menu button, and Escape
+ * sent focus nowhere. While the menu button has `aria-expanded="true"` inside the menu
+ * (react-aria and Radix both set it), the user is working with the menu, so it must not
+ * be hidden.
  */
 export const showOverSelection: NonNullable<BubbleMenuProps["shouldShow"]> = ({
   editor,
@@ -40,7 +40,7 @@ export const showOverSelection: NonNullable<BubbleMenuProps["shouldShow"]> = ({
 }) => {
   const { selection } = state;
   if (selection.empty || !editor.isEditable || isImageSelection(selection)) return false;
-  // Признак «атом без меню форматирования» своего Блока (ADR-0058, п. 1.4).
+  // Block trait "atom without a formatting menu" on a custom Block (ADR-0058, item 1.4).
   if (selection instanceof NodeSelection && selection.node.type.spec.plainAtom === true) {
     return false;
   }
@@ -50,13 +50,13 @@ export const showOverSelection: NonNullable<BubbleMenuProps["shouldShow"]> = ({
 };
 
 /**
- * Позиция — над выделением, с переворотом под него у верхнего края окна и
- * сдвигом от боковых краёв.
+ * The position is above the selection. Near the window's top edge it flips below the
+ * selection, and it shifts away from the side edges.
  *
- * `strategy: "absolute"` (умолчание), а не `fixed`: меню лежит в DOM Редактора
- * и едет вместе с текстом в любом контейнере прокрутки — в окне, в ящике, в
- * карточке. `fixed` пересчитывался бы только на прокрутке окна. Цена — предок
- * с `overflow: hidden` срежет меню у края; на странице компонента это сказано.
+ * `strategy: "absolute"` (default), not `fixed`: the menu lives in the Editor's DOM and
+ * moves with the text inside any scroll container, whether the window, a drawer or a
+ * card. `fixed` would only be recalculated on window scroll. The cost: an ancestor with
+ * `overflow: hidden` clips the menu at its edge. The component's page says so.
  */
 export const SELECTION_MENU_OPTIONS = {
   placement: "top",
@@ -66,10 +66,11 @@ export const SELECTION_MENU_OPTIONS = {
 } as const satisfies BubbleMenuProps["options"];
 
 /**
- * Опции плашки с прокруткой области Документа (ADR-0059). Плагин `BubbleMenu`
- * пересчитывает позицию на прокрутке окна; когда Документ прокручивается
- * внутри рамки (`maxHeight`, `resizable`), слушать надо его область, иначе
- * плашка висит на месте, а текст под ней уезжает. Без области — окно.
+ * Options for the bubble menu when the Document's scroll area scrolls (ADR-0059). The
+ * `BubbleMenu` plugin recalculates the position on window scroll. When the Document
+ * scrolls inside its frame (`maxHeight`, `resizable`), the plugin must listen to that
+ * area instead. Otherwise the bubble menu stays in place while the text under it moves
+ * away. Without an area, it listens to the window.
  */
 export function useSelectionMenuOptions(
   scrollTarget: HTMLElement | undefined,
@@ -82,13 +83,13 @@ export function useSelectionMenuOptions(
 }
 
 /**
- * Убрать узел `BubbleMenu` из обхода Tab.
+ * Take the `BubbleMenu` node out of the Tab order.
  *
- * Плагин ставит своему узлу `tabindex="0"` — ради щелчков по пустому месту
- * меню, которые иначе сняли бы фокус с документа. Но это лишняя остановка
- * Tab перед `role="toolbar"`, у которого остановка уже есть. `-1` оставляет
- * узел фокусируемым щелчком и убирает его из обхода. Эффект родителя идёт
- * после эффекта `BubbleMenu`, создающего плагин, — значение доживает.
+ * The plugin sets `tabindex="0"` on its node, so that clicks on empty space in the menu do
+ * not take focus away from the document. But that adds an extra Tab stop before
+ * `role="toolbar"`, which already has one. `-1` keeps the node focusable by click and
+ * removes it from the Tab order. The parent's effect runs after the effect of the
+ * `BubbleMenu` that creates the plugin, so the value survives.
  */
 export function useOutOfTabOrder(ref: RefObject<HTMLElement | null>, dependency: unknown): void {
   useEffect(() => {

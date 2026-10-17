@@ -10,35 +10,36 @@ import { projectRecords, type ToolList } from "./toolDescriptor.js";
 import type { Tool } from "./tools.js";
 
 /**
- * Пункт меню «¶» — тип Блока.
+ * The ¶ menu item — a Block type.
  *
- * Это пункт раздела «Превратить в» Меню вставки (`InsertItem`, `section:
- * "turnInto"`), и применяется он тем же `applyInsertItem`: сначала с Блока
- * снимаются обёртки (список, цитата), потом пункт оборачивает или меняет его
- * заново — одной транзакцией, на одну отмену. Своего пути смены типа у меню
- * нет: два пути разошлись бы на первом же списке внутри цитаты.
+ * It is an item of the "Turn into" section of the Slash menu (`InsertItem`, `section:
+ * "turnInto"`), and it is applied by the same `applyInsertItem`: first the wrappers (a list, a
+ * quote) are removed from the Block, then the item wraps it or changes it again — in one
+ * transaction, one undo step. The ¶ menu has no path of its own for changing the type: two paths
+ * would diverge on the first list inside a quote.
  *
- * Пункты «¶» — поле описания `blockTypes`, а не выборка из `insertItems`,
- * потому что у меню «¶» могут быть другие слова и иконки: «Текст» с иконкой `T`, а не
- * «Абзац» с пилкроу, и уровень заголовка на иконке. Блока кода в нём нет — у
- * него своя кнопка Панели.
+ * The ¶ items are a field of the `blockTypes` descriptor, not a selection from `insertItems`,
+ * because the ¶ menu may have other words and icons: "Text" with the `T` icon, not "Paragraph"
+ * with a pilcrow, and the heading level on the icon. There is no code Block in it — it has its
+ * own Toolbar button.
  */
 export interface BlockTypeItem extends InsertItem {
   section: "turnInto";
   /**
-   * Инструмент, без которого пункта нет. У «Текста» — `null`: абзац есть всегда.
-   * У пункта своего Инструмента — его имя (ADR-0058, п. 5): набор уже отфильтрован.
+   * The Tool without which the item does not exist. "Text" has `null`: a paragraph is always
+   * there. A custom Tool's item has the Tool's name (ADR-0058, item 5): the set is already
+   * filtered.
    */
   tool: Tool | PrefixedName | null;
-  /** Второй нужный инструмент: H1 — надстройка над `heading`. */
+  /** A second required Tool: H1 is an add-on over `heading`. */
   alsoTool?: Tool;
   keys: readonly string[];
 }
 
 /**
- * Пункты «¶» Инструмента из его описания — те же пункты «Превратить в» Меню
- * вставки: слова, иконка, сочетание и команда у них одни, поэтому вторую запись
- * Инструмент не пишет (ADR-0058, п. 5).
+ * The ¶ items of a Tool, from its descriptor — the same "Turn into" items of the Slash menu:
+ * their words, icon, shortcut and command are the same, so the Tool does not write a second
+ * record (ADR-0058, item 5).
  */
 export function turnIntoTypes(
   tool: Tool | PrefixedName,
@@ -50,8 +51,8 @@ export function turnIntoTypes(
 }
 
 /**
- * «Текст» — пункт кита, а не Инструмента: абзац есть в любом наборе. Сочетание —
- * подпись из общей таблицы (`shortcuts.ts`): вешает его расширение движка.
+ * "Text" is a kit item, not a Tool's: a paragraph is in every set. The shortcut is the label from
+ * the shared table (`shortcuts.ts`); the engine's extension binds it.
  */
 const TEXT_ITEM: BlockTypeItem = {
   id: "text",
@@ -64,9 +65,9 @@ const TEXT_ITEM: BlockTypeItem = {
 };
 
 /**
- * Место встроенных Инструментов в «¶». «Текст» стоит первым всегда: абзац —
- * не Инструмент. Пункты живут в описаниях, а место на поверхности — привилегия
- * кита.
+ * The order of the built-in Tools in the ¶ menu. "Text" always comes first: a paragraph is not a
+ * Tool. The items live in the descriptors, but where they appear on the surface is the kit's
+ * privilege.
  */
 const BLOCK_TYPE_ORDER: readonly Tool[] = [
   "heading",
@@ -77,7 +78,7 @@ const BLOCK_TYPE_ORDER: readonly Tool[] = [
 ];
 
 /**
- * Пункты «¶» набора: «Текст» и проекция списка описаний (`blockTypes`).
+ * The ¶ items of a set: "Text" and the projection of the `blockTypes` descriptors.
  */
 function blockTypeItemsOf(tools: ToolList): readonly BlockTypeItem[] {
   return [
@@ -87,17 +88,16 @@ function blockTypeItemsOf(tools: ToolList): readonly BlockTypeItem[] {
 }
 
 /**
- * Пункты, которые «¶» больше не предлагает: списки живут в меню
- * «Списки ▾», цитата — флажком в «…». В «Формат ›» ручки Блока и в «/» они
- * остаются: там Блок превращают во что угодно, а не выбирают тип строки.
+ * Items the ¶ menu no longer offers: lists live in the "Lists ▾" menu, the quote is a checkbox in
+ * "…". They stay in the Block handle's "Format ›" and in the Slash menu: there a Block is turned
+ * into anything, rather than selecting a line type.
  */
 const notInBlockTypeMenu = (id: string) =>
   id === "blockquote" || (LIST_TYPES as readonly string[]).includes(id);
 
 /**
- * Пункты «¶» для набора инструментов: «Текст», заголовки и пункты своих
- * Инструментов. Меню из одного «Текста» ничего не выбирает, и тогда список
- * пуст: кнопки «¶» на Панели нет.
+ * The ¶ items for a set of Tools: "Text", the headings and the items of custom Tools. A menu with
+ * only "Text" selects nothing, and then the list is empty: there is no ¶ button on the Toolbar.
  */
 export function blockTypeItemsFor(tools: ToolList): readonly BlockTypeItem[] {
   const items = blockTypeItemsOf(tools).filter((item) => !notInBlockTypeMenu(item.id));
@@ -105,20 +105,20 @@ export function blockTypeItemsFor(tools: ToolList): readonly BlockTypeItem[] {
 }
 
 /**
- * Пункты «Формат ›» ручки Блока: весь набор «Превратить в» —
- * с цитатой и списками, в отличие от «¶» (решение владельца).
+ * The items of the Block handle's "Format ›" menu: the whole "Turn into" set — with the quote and
+ * the lists, unlike the ¶ menu (the owner's decision).
  */
 export function formatItemsFor(tools: ToolList): readonly BlockTypeItem[] {
   const items = blockTypeItemsOf(tools);
   return items.length > 1 ? items : [];
 }
 
-/** Пункт цитаты набора — для флажка «Цитата» в «…»; без инструмента — `undefined`. */
+/** The quote item of a set — for the "Quote" checkbox in "…"; without the Tool, `undefined`. */
 export function quoteItemFor(tools: ToolList): BlockTypeItem | undefined {
   return blockTypeItemsOf(tools).find((item) => item.id === "blockquote");
 }
 
-/** Обёртки, которые сами — тип Блока в «Формат ›» ручки. */
+/** Wrappers that are themselves a Block type in the Block handle's "Format ›". */
 const WRAPPERS: Record<string, string> = {
   blockquote: "blockquote",
   bulletList: "bulletList",
@@ -126,7 +126,7 @@ const WRAPPERS: Record<string, string> = {
   taskList: "taskList",
 };
 
-/** Тип текстового Блока: `id` пункта «¶», `"codeBlock"` или `null` (не текст). */
+/** The type of a text Block: the `id` of a ¶ item, `"codeBlock"`, or `null` (not text). */
 function textBlockType(block: PmNode): string | null {
   if (block.type.name === "heading") return `heading${String(block.attrs.level)}`;
   if (block.type.name === "codeBlock") return "codeBlock";
@@ -135,37 +135,37 @@ function textBlockType(block: PmNode): string | null {
 }
 
 /**
- * Текущий тип Блока под началом выделения: `id` пункта «¶», `"codeBlock"` или
- * `null` (выделен не текст — картинка, разделитель).
+ * The current Block type at the start of the selection: the `id` of a ¶ item, `"codeBlock"`, or
+ * `null` (the selection is not text — an image, a horizontal rule).
  *
- * РЕШАЕТ СТРОКА ПОД КАРЕТКОЙ (решение владельца). Списков и цитаты
- * в «¶» больше нет, и абзац в пункте списка или в цитате — это «Текст», а
- * заголовок в цитате — его уровень. Список и цитату показывают свои кнопки:
- * «Списки ▾» и флажок «Цитата» в «…». Прежде решала ближайшая обёртка.
+ * THE LINE UNDER THE CARET DECIDES (the owner's decision). The ¶ menu no longer has lists or
+ * quotes: a paragraph in a list item or in a quote is "Text", and a heading in a quote gives its
+ * level. A list and a quote are shown by their own buttons: the "Lists ▾" menu and the "Quote"
+ * checkbox in "…". Previously the nearest wrapper decided.
  */
 export function currentBlockType(state: EditorState): string | null {
   return textBlockType(state.selection.$from.parent);
 }
 
 /**
- * Тип Блока целиком — для «Формат ›» ручки Блока: решает сам
- * Блок, а не текст под кареткой. Цитата со списком внутри — «Цитата»: ручка
- * превращает всю цитату. `null` — Блок, который превратить нельзя (таблица,
- * картинка, линия).
+ * The type of the whole Block — for the Block handle's "Format ›": the Block itself decides, not
+ * the text under the caret. A quote with a list inside is "Quote": the handle turns the whole
+ * quote. `null` — a Block that cannot be turned into anything (a table, an image, a horizontal
+ * rule).
  */
 export function blockTypeOf(block: PmNode): string | null {
   return WRAPPERS[block.type.name] ?? textBlockType(block);
 }
 
-/** Виды списка — id пунктов «Превратить в» Меню вставки и имена узлов Схемы. */
+/** List kinds — the ids of the "Turn into" items of the Slash menu and the Schema's node names. */
 export const LIST_TYPES = ["bulletList", "orderedList", "taskList"] as const;
 
 export type ListType = (typeof LIST_TYPES)[number];
 
 /**
- * Пункты меню «Списки» — те же пункты «Превратить в» Меню вставки,
- * что и виды списка: одни слова, иконки, сочетания и одна команда. В отличие от «¶», меню из одного
- * пункта остаётся меню: «Чек-лист» без соседей — всё равно выбор вида списка.
+ * The items of the "Lists" menu — the same "Turn into" items of the Slash menu as the list kinds:
+ * the same words, icons, shortcuts and one command. Unlike the ¶ menu, a menu with one item stays
+ * a menu: "Checklist" with no neighbours is still a choice of list kind.
  */
 export function listTypeItemsFor(tools: ToolList): readonly BlockTypeItem[] {
   return blockTypeItemsOf(tools).filter((item) =>
@@ -174,9 +174,9 @@ export function listTypeItemsFor(tools: ToolList): readonly BlockTypeItem[] {
 }
 
 /**
- * Вид ближайшего списка вокруг начала выделения или `null` — каретка не в
- * списке. Цитата между текстом и списком не мешает: пункт списка с цитатой
- * внутри всё равно пункт списка, и снимать меню «Списки» должно его.
+ * The kind of the nearest list around the start of the selection, or `null` — the caret is not in
+ * a list. A quote between the text and the list does not matter: a list item with a quote inside
+ * is still a list item, and the "Lists" menu must be able to unset it.
  */
 export function currentListType(state: EditorState): ListType | null {
   const { $from } = state.selection;

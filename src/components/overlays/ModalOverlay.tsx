@@ -6,47 +6,44 @@ import { hasOpenAriaOverlay, OVERLAY_LAYER } from "../../lib/overlay-layer.js";
 import { useOverlayLayer } from "../../hooks/useOverlayLayer.js";
 
 export interface ModalOverlayProps {
-  /** Вызывается по клику на подложку и по Escape. */
+  /** Called on a click on the scrim and on Escape. */
   onClose: () => void;
-  /** Класс z-index: у приложения несколько слоёв оверлеев. */
+  /** z-index class: the application has several overlay layers. */
   zIndex?: string;
-  /** Вертикальное выравнивание содержимого. */
+  /** Vertical alignment of the content. */
   align?: "center" | "start";
-  /** Цвет подложки; по умолчанию `--overlay-scrim`. */
+  /** Scrim color; defaults to `--overlay-scrim`. */
   backdrop?: string;
-  /** Радиус размытия подложки. */
+  /** Blur radius of the scrim. */
   blur?: string;
-  /** Закрывать ли по Escape. */
+  /** Whether to close on Escape. */
   escape?: boolean;
-  /** Классы на обёртку содержимого. */
+  /** Classes for the content wrapper. */
   className?: string;
-  /** Содержимое поверх подложки — само окно. */
+  /** Content on top of the scrim — the dialog itself. */
   children?: ReactNode;
 }
 
 /**
- * Затемнённая подложка под модальным окном.
+ * A dimmed scrim under a modal dialog.
  *
- * ЧЕГО ЗДЕСЬ НЕТ И ПОЧЕМУ. Это не диалог, а только подложка: ни `role="dialog"`,
- * ни `aria-modal`, ни ловушки фокуса, ни блокировки прокрутки. Полноценный
- * диалог требует доступного имени, а имя знает только вызывающий — навесить
- * `role="dialog"` без имени значит сделать хуже, чем без роли вовсе:
- * скринридер объявит безымянный диалог. Ловушка фокуса и блокировка прокрутки
- * во фронте живут отдельными хуками (`useScrollLock`), и тащить их сюда —
- * отдельное решение, а не побочный эффект переезда.
+ * WHAT IS NOT HERE AND WHY. This is not a dialog, only a scrim: no `role="dialog"`, no
+ * `aria-modal`, no focus trap, no scroll lock. A real dialog needs an accessible name, and only
+ * the caller knows the name — adding `role="dialog"` without one would make things worse than
+ * having no role at all: the screen reader would announce an unnamed dialog. The focus trap and
+ * the scroll lock live on the front end as separate hooks (`useScrollLock`), and bringing them
+ * in here would be a separate decision, not a side effect of the move.
  *
- * То есть примитив честно делает одно: гасит фон, ловит Escape и клик мимо.
+ * So the primitive honestly does one thing: it dims the background, catches Escape and clicks outside.
  *
- * ВЫХОДНОЙ АНИМАЦИИ ЗДЕСЬ НЕТ, и это не недоделка. Волна 29 дала уход всем
- * оверлеям кита, кроме этого: у `ModalOverlay` нет пропа `open` — потребитель
- * монтирует его условием (`{isOpen && <ModalOverlay>}`), и в момент закрытия
- * узла уже нет в дереве. Анимировать нечего: уходить должен элемент, а он
- * исчез до того, как о закрытии стало известно.
+ * THERE IS NO EXIT ANIMATION HERE, and this is not an omission. Wave 29 gave an exit to all of the
+ * kit's overlays except this one: `ModalOverlay` has no `open` prop — the consumer mounts it with a
+ * condition (`{isOpen && <ModalOverlay>}`), and by the time it closes the node is already out of the
+ * tree. There is nothing to animate: the element has to leave, and it is gone before the close is known.
  *
- * Дать ему уход можно только одним способом: принять `open` внутрь и удерживать
- * узел самому, пока идёт анимация, — как это делают Radix и react-aria. Это
- * смена контракта и поломка существующих вызовов, то есть отдельное решение, а
- * не побочный эффект волны про движение.
+ * The only way to give it an exit is to accept `open` and keep the node alive itself while the
+ * animation runs, as Radix and react-aria do. That is a change of contract that breaks existing
+ * calls, so it is a separate decision, not a side effect of the motion wave.
  */
 export function ModalOverlay({
   onClose,
@@ -67,13 +64,12 @@ export function ModalOverlay({
       if (e.key !== "Escape") return;
 
       /*
-        Отвечает ТОЛЬКО верхний слой, и только если чужой не занял событие.
+        ONLY the top layer responds, and only if no foreign handler has claimed the event.
 
-        Слушатель висел на `document` в фазе всплытия и реагировал на любой
-        Escape: две вложенные подложки схлопывались одним нажатием, а `Select`
-        или `Popover` внутри подложки закрывался вместе с ней целиком. Radix к
-        этому моменту уже обработал событие в фазе ЗАХВАТА и позвал
-        `preventDefault()` — подложка это игнорировала. Разбор — ADR-0041.
+        The listener sat on `document` in the bubble phase and reacted to any Escape: two nested
+        scrims collapsed on a single press, and a `Select` or `Popover` inside the scrim closed together
+        with it, whole. By then Radix had already handled the event in the CAPTURE phase and called
+        `preventDefault()` — the scrim ignored that. Analysis: ADR-0041.
       */
       if (e.defaultPrevented) return;
       if (hasOpenAriaOverlay()) return;
@@ -96,8 +92,8 @@ export function ModalOverlay({
       style={{ background: backdrop, backdropFilter: `blur(${blur})` }}
     >
       <div
-        // Клик по содержимому не должен закрывать окно — всплытие останавливается
-        // здесь, а не проверкой `e.target === e.currentTarget` снаружи.
+        // A click on the content must not close the dialog — propagation is stopped here,
+        // not by a check `e.target === e.currentTarget` outside.
         onClick={(e) => e.stopPropagation()}
         className={cn("animate-sheetin", className)}
       >

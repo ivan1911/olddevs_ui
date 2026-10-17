@@ -12,8 +12,8 @@ describe("ContextualSaveBar", () => {
 
     expect(screen.queryByRole("group")).toBeNull();
 
-    // Область смонтирована заранее и пуста. Если монтировать её вместе с
-    // текстом, часть скринридеров увидит только пустой узел и промолчит.
+    // The region is mounted in advance and empty. If it were mounted together with
+    // its text, some screen readers would see only an empty node and stay silent.
     const live = screen.getByRole("status");
     expect(live.textContent).toBe("");
   });
@@ -28,8 +28,8 @@ describe("ContextualSaveBar", () => {
   test("the number of edits is named when it is passed", () => {
     render(<ContextualSaveBar visible count={3} onSave={() => {}} />);
 
-    // Текст сознательно есть в двух местах: видимой строкой и живой областью.
-    // Поэтому запросы сужены до полосы, а не ищут по всему документу.
+    // The text is deliberately present in two places: as the visible line and in the
+    // live region. That is why the queries are scoped to the bar, not the whole document.
     const bar = within(screen.getByRole("group"));
     expect(bar.getByText("3 unsaved changes")).toBeTruthy();
     expect(screen.getByRole("status").textContent).toBe("3 unsaved changes");
@@ -68,8 +68,8 @@ describe("ContextualSaveBar", () => {
     expect(within(screen.getByRole("group")).getByText("The server did not answer")).toBeTruthy();
     expect(screen.getByRole("status").textContent).toBe("The server did not answer");
 
-    // Именно status, а не alert: отказ сопровождается видимым текстом в самой
-    // полосе, и перебивать речь скринридера незачем (ADR-0026).
+    // It is status, not alert: a failure comes with visible text in the bar itself,
+    // and there is no need to interrupt the screen reader (ADR-0026).
     expect(screen.queryByRole("alert")).toBeNull();
   });
 

@@ -4,9 +4,9 @@ import { Checkbox, type CheckboxProps } from "./Checkbox.js";
 import { TONE_TOKENS, type Tone } from "../../lib/variants.js";
 
 /**
- * Флажок управляемый, как и `Toggle`: своего состояния он не держит и без
- * внешнего стейта на клик не отзовётся. `checked` в историях задаёт только
- * стартовое положение.
+ * The checkbox is controlled, like `Toggle`: it holds no state of its own, and without
+ * external state a click will not change it. `checked` in the stories sets only
+ * the starting position.
  */
 function ControlledCheckbox({
   checked = false,
@@ -35,7 +35,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Пояснение под подписью — для согласий, где одной строки не хватает. */
+/** A hint under the label, for consents where one line is not enough. */
 export const WithDescription: Story = {
   render: () => (
     <ControlledCheckbox checked description="Arrives by email within a day">
@@ -45,20 +45,19 @@ export const WithDescription: Story = {
 };
 
 /**
- * Без видимой подписи — в шапке таблицы и в строке списка. `label` в этом
- * случае обязателен, и это проверяет компилятор.
+ * Without a visible label: in a table header or a list row. In this case `label` is
+ * required, and the compiler checks it.
  */
 export const WithoutLabel: Story = {
   render: () => <ControlledCheckbox label="Select all rows" />,
 };
 
 /**
- * Матрица состояние × тон × доступность.
+ * Matrix of state × tone × availability.
  *
- * Одиночный флажок не покажет двух вещей, ради которых матрица и заводится:
- * что НЕотмеченный флажок нейтрален при любом тоне (тон окрашивает только
- * согласие, а не рамку), и что третье состояние visually перекрывает
- * отмеченное, а не складывается с ним.
+ * A single checkbox would not show the two things the matrix exists for: that an UNchecked
+ * checkbox is neutral in any tone (the tone colors only the consent, not the outline),
+ * and that the indeterminate state visually covers the checked one instead of adding to it.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -87,7 +86,7 @@ export const Matrix: Story = {
               <Checkbox tone={tone} checked label={`${tone}, checked`} />
             </td>
             <td>
-              {/* Обе ячейки: чёрточка при неотмеченном и при отмеченном флажке. */}
+              {/* Both cells: the dash for an unchecked checkbox and for a checked one. */}
               <div className="flex items-center gap-2">
                 <Checkbox tone={tone} indeterminate label={`${tone}, indeterminate`} />
                 <Checkbox
@@ -111,7 +110,7 @@ export const Matrix: Story = {
   ),
 };
 
-/** Два размера рядом: подпись и коробка обязаны выравниваться по центру в обоих. */
+/** Two sizes side by side: the label and the box must be center-aligned in both. */
 export const Sizes: Story = {
   parameters: { layout: "padded" },
   render: () => (

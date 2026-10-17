@@ -9,66 +9,67 @@ story: src/components/inputs/TextControl.stories.tsx
 
 # TextControl
 
-## Кратко для AI
+## Summary for AI
 
-`TextControl` — базовое текстовое поле или textarea с общей оболочкой формы. Владелец состояния выбирает обычный React-контракт `value`/`onChange` либо `defaultValue`; компонент не преобразует значение в строку домена.
+`TextControl` is a base text field or textarea with a shared form shell. Whoever owns the state uses either the regular React `value`/`onChange` contract or `defaultValue`; the component does not convert the value into a domain string.
 
-## Когда использовать
+## When to use
 
-- Однострочный текст, многострочное описание, пароль или иной нативный input.
-- Нужны слоты `icon` и `trailing`, единая рамка и фокус с другими полями.
-- Для textarea нужен `as="textarea"`; при растущем тексте — `autosize` и при необходимости `maxRows`.
+- Single-line text, a multi-line description, a password or another native input.
+- You need the `icon` and `trailing` slots, a shared border and focus with other fields.
+- For a textarea you need `as="textarea"`; for growing text — `autosize` and, if needed, `maxRows`.
 
-## Когда не использовать
+## When not to use
 
-- Для поиска со встроенной лупой и очисткой используйте `SearchControl`.
-- Для чисел, шага и локального форматирования используйте `NumberInput`.
-- Для закрытого набора используйте `Select`; для свободного значения со списком вариантов — `Combobox`.
+- For search with a built-in magnifier and clearing, use `SearchControl`.
+- For numbers, a step and local formatting, use `NumberInput`.
+- For a closed set, use `Select`; for a free value with a list of options, use `Combobox`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<TextControl id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название" />
+<TextControl id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
 <TextControl as="textarea" rows={3} autosize maxRows={6} showCount maxLength={500} />
 ```
 
 ## Public API
 
-- Принимает нативные input-props. `as` — `input` (по умолчанию) либо `textarea`; `rows` относится только к textarea.
-- `shellClassName` стилизует оболочку, `className` — сам контрол; не смешивайте их, если меняете ширину/рамку.
-- `icon` и `trailing` размещаются внутри общей оболочки. У textarea счётчик из `showCount` показывается снизу; у input — справа.
-- `autosize` действует только с textarea: `rows` становится минимумом, `maxRows` ограничивает рост.
-- `underlay` кладёт слой **под** значение, в ту же строку: трафарет маски, образец формата. Не слот рядом с полем, а слой под ним — поэтому и не `icon`/`trailing`. Выравнивание держится общим классом поля и общей ячейкой сетки, а не подгонкой в пикселях. Компонент сам вешает на слой `aria-hidden` и отключает на нём события указателя и выделение текста: читать там нечего, а перехватывай он клики — поле перестало бы фокусироваться щелчком по собственному тексту. Слой только для однострочного поля: вместе с `autosize` он не действует.
+- Accepts the native input props. `as` is `input` (the default) or `textarea`; `rows` applies only to a textarea.
+- `shellClassName` styles the shell, `className` the control itself; do not mix them if you change the width/border.
+- `icon` and `trailing` sit inside the shared shell. For a textarea the counter from `showCount` is shown at the bottom; for an input — on the right.
+- `autosize` works only with a textarea: `rows` becomes the minimum, `maxRows` limits the growth.
+- `underlay` renders a layer **under** the value, in the same line: a mask guide, a format sample. It is not a slot next to the field but a layer under it — hence not `icon`/`trailing`. Alignment is held by a shared field class and a shared grid cell, not by pixel fitting. The component itself sets `aria-hidden` on the layer and turns off pointer events and text selection on it: there is nothing to read there, and if it intercepted clicks, clicking the field's own text would no longer focus the field. The layer is for a single-line field only: it has no effect together with `autosize`.
 
-## Ступень высоты
+## Height step
 
-| `size` | Высота | Когда                                                      |
-| ------ | ------ | ---------------------------------------------------------- |
-| `md`   | 42 px  | Умолчание. Форма: поле стоит среди подписей и других полей |
-| `sm`   | 36 px  | Панель управления: поле стоит в ряду с кнопкой и `Select`  |
+| `size` | Height | When                                                                |
+| ------ | ------ | ------------------------------------------------------------------- |
+| `md`   | 42 px  | The default. A form: the field sits among labels and other fields   |
+| `sm`   | 36 px  | A control panel: the field sits in a row with a button and `Select` |
 
-Тридцать шесть — не выдуманное число: это рост `Button size="md"` и
-пилюли-триггера `Select`, то есть то, что кит уже дважды выбрал сам. До ступени
-поле выпадало из этого ряда в одиночку.
+Thirty-six is not an invented number: it is the height of `Button size="md"` and of
+the `Select` pill trigger, that is, the height the kit itself has already chosen twice.
+Before the step, this field was the only one that fell out of this row.
 
-Меняется **только вертикальный отступ**: рамка, скругление, тень, шрифт и
-строчный бокс те же. Зона нажатия остаётся выше порога — 36 в полтора раза
-больше минимальной цели WCAG 2.5.8.
+**Only the vertical padding** changes: the border, corner radius, shadow, font and
+line box are the same. The hit area stays above the threshold — 36 is one and a
+half times the minimum WCAG 2.5.8 target.
 
-**Ступень не действует на `as="textarea"`.** Там высотой распоряжаются `rows` и
-`autosize`, и третья система, спорящая с ними за то же число, дала бы поле,
-которое схлопывается после каждого нажатия.
+**The step does not apply to `as="textarea"`.** There the height is governed by
+`rows` and `autosize`, and a third system competing with them for the same number
+would give a field that collapses after every keystroke.
 
-**`shellClassName` и `className` никуда не делись.** Скругление, ширина и фон у
-продуктов разные, и ступень их не заменяет: она закрывает только высоту —
-ту величину, которую два продукта уже вывели порознь и разными числами.
+**`shellClassName` and `className` are still there.** Corner radius, width and
+background genuinely differ between products, and the step does not replace them: it
+covers only the height — the one dimension that two products had already worked out separately,
+arriving at different numbers.
 
-Компактное поле строки `EditableList` — не эта ступень, а 32 px высоты
-самой строки: там число берётся из ряда списка, а не из шкалы.
+The compact field of an `EditableList` row is not this step but 32 px of the row
+height itself: there the number comes from the list row, not from a scale.
 
-## Доступность и форма
+## Accessibility and forms
 
-- Передавайте `id` и связывайте с `FormField htmlFor`; плейсхолдер не заменяет label.
-- Пояснение и ошибка `FormField` объявляются автоматически: поле забирает их `id` из контекста и подставляет в `aria-describedby`. Описание, переданное пропом, при этом не вытесняется, а дополняется — атрибут хранит список (ADR-0026).
-- `disabled` делает неактивной и оболочку, `readOnly` сохраняет читаемое значение.
-- См. `src/components/inputs/TextControl.tsx`, `src/components/inputs/TextControl.stories.tsx`.
+- Pass `id` and tie it to `FormField htmlFor`; a placeholder does not replace a label.
+- The `FormField` hint and error are announced automatically: the field takes their `id` values from context and adds them to `aria-describedby`. A description passed as a prop is not replaced: the ids are added to it — the attribute holds a list (ADR-0026).
+- `disabled` also makes the shell inactive; `readOnly` keeps the value readable.
+- See `src/components/inputs/TextControl.tsx`, `src/components/inputs/TextControl.stories.tsx`.

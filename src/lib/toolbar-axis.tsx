@@ -4,18 +4,19 @@ import type { ComponentType } from "react";
 import { SeparatorContext, ToggleButtonGroupContext } from "react-aria-components";
 
 /**
- * Портал оверлея, через который ось `Toolbar` не проходит.
+ * An overlay portal that the `Toolbar` axis does not pass through.
  *
- * `Toolbar` раздаёт ось через контексты react-aria (`SeparatorContext`,
- * `ToggleButtonGroupContext`), а контекст React идёт сквозь порталы: поповер или
- * окно, открытые из панели, лежат в DOM вне её, но в дереве React — внутри.
- * Без границы `ToggleGroup` в поповере из вертикальной панели вставал столбцом
- * и менял свои стрелки на вертикальные, а `Separator` в окне из горизонтальной
- * становился вертикальной чертой. Панель `Menu` react-aria обнуляет
- * `SeparatorContext` сама; оверлеи кита делают то же для обоих контекстов.
+ * `Toolbar` passes the axis down through react-aria contexts (`SeparatorContext`,
+ * `ToggleButtonGroupContext`), and React context travels through portals: a popover
+ * or a dialog opened from a toolbar sits outside it in the DOM but inside it in the
+ * React tree. Without a boundary, a `ToggleGroup` in a popover opened from a vertical
+ * toolbar would lay out as a column and switch its arrow keys to vertical, and a
+ * `Separator` in a dialog opened from a horizontal toolbar would turn into a vertical
+ * line. react-aria's `Menu` clears `SeparatorContext` on its own; the kit's overlays
+ * do the same for both contexts.
  *
- * Граница — СНАРУЖИ портала, а не внутри: Radix клонирует потомка портала с
- * `ref` (`Presence`, `asChild`), и обёртка на этом месте съела бы ссылку.
+ * The boundary goes OUTSIDE the portal, not inside it: Radix clones the portal's child
+ * with a `ref` (`Presence`, `asChild`), and a wrapper at that spot would swallow the ref.
  */
 export function withoutToolbarAxis<P extends object>(Portal: ComponentType<P>) {
   function AxisBoundaryPortal(props: P) {

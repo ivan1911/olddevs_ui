@@ -4,45 +4,44 @@ import type { ComponentPropsWithRef, CSSProperties } from "react";
 import { cn } from "../../lib/cn.js";
 import { NUMERIC_CLASS, TONE_TOKENS, type Numeric, type Tone } from "../../lib/variants.js";
 
-/** Ступени шкалы, доступные тексту. Заголовочные (`xl`, `2xl`) — у `Heading`. */
+/** Size steps available to text. Heading sizes (`xl`, `2xl`) belong to `Heading`. */
 export type TextSize = "caption" | "xs" | "sm" | "md" | "lg";
 
 export interface TextProps extends Omit<ComponentPropsWithRef<"p">, "color"> {
-  /** Ступень размера текста: `caption`, `xs`, `sm`, `md` или `lg`. По умолчанию `md`. */
+  /** Size step: `caption`, `xs`, `sm`, `md` or `lg`. Defaults to `md`. */
   size?: TextSize;
   /**
-   * Приглушённость: `1` — основной текст, `2` — вторичный, `3` — служебный.
+   * Emphasis: `1` — primary text, `2` — secondary, `3` — supporting.
    *
-   * Это НЕ уровень заголовка, хотя проп `Heading` называется так же. Разводить
-   * их именами было бы честнее, но у `Heading` `level` — понятие HTML, а не
-   * выдумка кита, и переименовывать надо было бы именно его. Здесь же за
-   * «уровнем» стоит ровно то же слово в бытовом смысле: насколько текст важен.
+   * This is NOT a heading level, even though the `Heading` prop has the same name. Giving them
+   * different names would be more honest, but `Heading`'s `level` is an HTML concept rather than
+   * a kit invention, so it is the prop that would need renaming. Here, "level" carries the same
+   * everyday meaning as the word: how important the text is.
    *
-   * Спутать их на практике нечем: у `Text` нет ни `h1`, ни роли заголовка, а у
-   * `Heading` нет приглушённости — заголовок бледнее основного текста не бывает.
+   * In practice they cannot be confused: `Text` has no `h1` and no heading role, and `Heading`
+   * has no emphasis, since a heading is never lighter than body text.
    */
   level?: 1 | 2 | 3;
   /**
-   * Семантический цвет. `neutral` (по умолчанию) означает «цвет по
-   * приглушённости»: тон и `level` — разные оси, и смешивать их нельзя.
+   * Semantic color. `neutral` (default) means "color by emphasis": tone and `level` are
+   * separate axes, and they must not be mixed.
    */
   tone?: Tone;
-  /** Начертание: `regular`, `medium` или `bold`. По умолчанию `regular`. */
+  /** Font weight: `regular`, `medium` or `bold`. Defaults to `regular`. */
   weight?: "regular" | "medium" | "bold";
   /**
-   * Начертание цифр: `tabular` — равной ширины, для того, что тикает,
-   * пересчитывается или стоит колонкой.
+   * Numeral style: `tabular` — equal-width digits, for values that tick, recalculate or sit in a
+   * column.
    *
-   * Умолчания нет намеренно: цифры равной ширины шире пропорциональных, и в
-   * обычном тексте они читаются хуже. Ось включается там, где числа меняются
-   * на месте, а не везде.
+   * No default is set on purpose: tabular digits are wider than proportional ones and read
+   * worse in running text. Turn the axis on where numbers change in place, not everywhere.
    */
   numeric?: Numeric;
   /**
-   * Обрезка многоточием. `true` — одна строка, число — столько строк.
+   * Ellipsis truncation. `true` — one line, a number — that many lines.
    */
   truncate?: boolean | number;
-  /** Тег текста: `p`, `span` или `div`. По умолчанию `p`. */
+  /** Text tag: `p`, `span` or `div`. Defaults to `p`. */
   as?: "p" | "span" | "div";
 }
 
@@ -55,10 +54,10 @@ const SIZE_CLASS: Record<TextSize, string> = {
 };
 
 /**
- * Приглушённость. Ступени взяты те же, что во всём ките: `fg-0` — основной,
- * `fg-1` — вторичный, `fg-2` — служебный. Ниже (`fg-3`, `fg-4`) шкала не идёт:
- * те два уровня не проходят контраст 4.5 на подложках приложения и оставлены
- * для нетекстовых ролей — иконок и разделителей.
+ * Emphasis. The steps are the same as across the kit: `fg-0` is primary, `fg-1` is secondary,
+ * `fg-2` is supporting. The levels below (`fg-3`, `fg-4`) are not used here: they do not reach
+ * 4.5:1 contrast on the app's backgrounds, and they are kept for non-text roles — icons and
+ * dividers.
  */
 const LEVEL_CLASS: Record<1 | 2 | 3, string> = {
   1: "text-fg-0",
@@ -73,15 +72,15 @@ const WEIGHT_CLASS = {
 } as const;
 
 /**
- * Абзац или строка текста на ступени шкалы.
+ * A paragraph or a line of text on a scale step.
  *
- * Компонент существует не ради `<p className="text-sm">`, а ради того, чтобы
- * размер и приглушённость брались из двух конечных наборов. До шкалы кит
- * пользовался восемью размерами, три из которых произвольные, и разница между
- * «служебной подписью» и «вторичным текстом» жила в голове автора экрана.
+ * The component exists not for the sake of `<p className="text-sm">`, but so that size and
+ * emphasis come from two closed sets. Before the scale, the kit used eight sizes, three of
+ * which were arbitrary, and the difference between a "supporting caption" and "secondary
+ * text" lived in the author's head.
  *
- * Тега по умолчанию два не бывает: `as` меняет только тег и ничего в виде —
- * `<span>` внутри строки и `<p>` в абзаце обязаны выглядеть одинаково.
+ * `as` changes only the element, never the look: a `<span>` inside a line and a `<p>` in a
+ * paragraph must look the same.
  */
 export function Text({
   size = "md",
@@ -95,9 +94,9 @@ export function Text({
   style,
   ...rest
 }: TextProps) {
-  // Ноль строк — это не «без предела», а спрятанный текст: `-webkit-line-clamp: 0`
-  // на коробке с `overflow: hidden` не показывает ничего. Считаем это опечаткой
-  // вызывающего и обрезаем как одну строку.
+  // Zero lines does not mean "no limit" but hidden text: `-webkit-line-clamp: 0` on a box with
+  // `overflow: hidden` shows nothing. Treat it as a typo on the caller's side and clamp to one
+  // line.
   const lines = typeof truncate === "number" && truncate > 0 ? truncate : undefined;
   const oneLine = truncate === true || truncate === 0;
 
@@ -105,18 +104,17 @@ export function Text({
     <Comp
       className={cn(
         SIZE_CLASS[size],
-        // Тон перекрывает приглушённость: у окрашенного текста «вторичность»
-        // выражается самим тоном, а не второй краской поверх. Гасить тон
-        // прозрачностью нельзя — тона откалиброваны ровно под 4.5.
+        // Tone overrides emphasis: for colored text, "secondary" is expressed by the tone itself,
+        // not by a second color on top. Dimming the tone with opacity is not allowed: the tones
+        // are calibrated to exactly 4.5:1 contrast.
         tone === "neutral" ? LEVEL_CLASS[level] : TONE_TOKENS[tone].fg,
         WEIGHT_CLASS[weight],
         numeric && NUMERIC_CLASS[numeric],
         oneLine && "truncate",
-        // Многострочная обрезка — классы коробки литеральные, а число строк
-        // уходит в inline-стиль. Собрать `line-clamp-${lines}` нельзя: Tailwind
-        // сканирует исходники как текст, и класс, склеенный в рантайме, молча
-        // не попадёт в CSS. Литеральный словарь на 2–6 строк закрыл бы обычные
-        // случаи и врал бы на седьмой.
+        // Multi-line clamp: the box classes are literal, and the line count goes into an inline
+        // style. `line-clamp-${lines}` cannot be built: Tailwind scans the source as plain text,
+        // and a class assembled at runtime silently misses the CSS. A literal list of 2–6 lines
+        // would cover the usual cases and be wrong at seven.
         lines != null && "[display:-webkit-box] overflow-hidden [-webkit-box-orient:vertical]",
         className
       )}

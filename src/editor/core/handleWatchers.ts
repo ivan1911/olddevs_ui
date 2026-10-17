@@ -2,18 +2,18 @@ import type { RefObject } from "react";
 import type { ToolList } from "./toolDescriptor.js";
 
 /*
-  Хук-селектор не знает, когда у `ref` появится движок: Редактор создаёт его
-  после первого рендера экрана и перерисовывается сам, а экран — нет. Поэтому
-  подписки живут по самому объекту `ref`, который есть с первого рендера, и
-  Редактор сообщает об смене движка по нему.
+  The selector hook cannot tell when the `ref` gets an engine: the Editor creates it after the
+  screen's first render and re-renders itself, while the screen does not. So subscriptions live on
+  the `ref` object itself, which exists from the first render, and the Editor reports an engine
+  change through it.
 
-  Модуль вынесен из `handle.ts` и не знает движка: подписаться на смену движка
-  нужно и `RichTextToc`, а ему Tiptap в бандл не нужен.
+  The module is split out of `handle.ts` and knows nothing about the engine: `RichTextToc` also
+  needs to subscribe to an engine change, and it does not need Tiptap in its bundle.
 */
 
 const watchers = new WeakMap<object, Set<() => void>>();
 
-/** Подписка хука на смену движка у Редактора, привязанного к этому `ref`. */
+/** A hook's subscription to an engine change in the Editor bound to this `ref`. */
 export function watchHandleEditor(ref: RefObject<unknown>, listener: () => void): () => void {
   let set = watchers.get(ref);
   if (!set) watchers.set(ref, (set = new Set()));
@@ -21,32 +21,31 @@ export function watchHandleEditor(ref: RefObject<unknown>, listener: () => void)
   return () => void set.delete(listener);
 }
 
-/** Редактор сообщает: движок у `ref` появился или сменился. */
+/** The Editor reports: the engine on this `ref` appeared or changed. */
 export function notifyHandleEditor(ref: unknown): void {
   if (typeof ref !== "object" || ref === null) return;
   watchers.get(ref)?.forEach((listener) => listener());
 }
 
 /**
- * Сигналы кита для `useRichTextToolState`: то, что меняется не транзакцией
- * движка, а интерфейсом Инструмента, и поэтому в движке его не прочитать.
- * Редактор кладёт их по `ref`, как и сообщение о движке, и хук получает
- * уведомление той же подпиской.
+ * The kit's signals for `useRichTextToolState`: what changes not through an engine transaction but
+ * through a Tool's UI, so it cannot be read from the engine. The Editor puts them by `ref`, like the
+ * engine message, and the hook is notified by the same subscription.
  */
 export interface ToolSignals {
-  /** Набор Инструментов этого Редактора: есть ли Инструмент и с какими Опциями. */
+  /** The Tool set of this Editor: whether a Tool is present and with which options. */
   tools?: ToolList;
-  /** Панель Поиска открыта (состояние React в `RichTextEditor`). */
+  /** The search panel is open (React state in `RichTextEditor`). */
   searchOpen?: boolean;
-  /** Индекс текущего раздела Оглавления (вычисляет `TocCore` от прокрутки). */
+  /** Index of the current Table of contents section (computed by `TocCore` from the scroll position). */
   tocAt?: number;
 }
 
 const signals = new WeakMap<object, ToolSignals>();
 
 /**
- * Редактор сообщает сигналы Инструментов: слитые с прежними, подписчикам идёт то
- * же уведомление, что и о смене движка.
+ * The Editor reports Tool signals: merged with the previous ones; subscribers get the same
+ * notification as for an engine change.
  */
 export function publishToolSignals(ref: unknown, next: ToolSignals): void {
   if (typeof ref !== "object" || ref === null) return;
@@ -55,18 +54,17 @@ export function publishToolSignals(ref: unknown, next: ToolSignals): void {
 }
 
 /**
- * Редактор размонтирован: его сигналы уходят вместе с ним. Иначе они пережили бы
- * его в таблице по `ref`, и хук отдавал бы снимок уже не существующего Редактора
- * (а новый Редактор под тем же `ref` начинал бы с чужих сигналов). Подписчики
- * получают уведомление: компонент, который из-за размонтирования не
- * перерисовывается сам, узнаёт о нём только так.
+ * The Editor is unmounted: its signals go with it. Otherwise they would outlive it in the table keyed
+ * by `ref`, and the hook would return a snapshot of an Editor that no longer exists (and a new Editor
+ * under the same `ref` would start with someone else's signals). Subscribers get a notification: a
+ * component that does not re-render by itself on unmount learns about it only this way.
  */
 export function clearToolSignals(ref: unknown): void {
   if (typeof ref !== "object" || ref === null || !signals.delete(ref)) return;
   notifyHandleEditor(ref);
 }
 
-/** Сигналы Инструментов Редактора, привязанного к `ref`. */
+/** Tool signals of the Editor bound to `ref`. */
 export function toolSignals(ref: object): ToolSignals {
   return signals.get(ref) ?? {};
 }

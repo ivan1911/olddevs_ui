@@ -15,54 +15,57 @@ import {
 import { Popover, PopoverAnchor, PopoverContent } from "../overlays/Popover.js";
 
 export interface TimePickerProps {
-  /** Время в формате `ЧЧ:ММ`. */
+  /** Time in `HH:MM` format. */
   value?: string | null;
-  /** Вызывается со временем `ЧЧ:ММ`, когда ввод закончен (потеря фокуса, Enter) или выбран слот из списка. */
+  /**
+   * Called with the time `HH:MM` when the user finishes typing (blur, Enter) or selects a time slot
+   * from the list.
+   */
   onChange: (time: string) => void;
-  /** Шаг слотов в минутах. Должен делить сутки нацело. */
+  /** Time slot step in minutes. Must divide the day evenly. */
   step?: number;
   /**
-   * Часы поля и списка: `24` (умолчание, `14:30`) или `12` (`2:30 PM`). Влияет только на показ
-   * и ввод: `value` и `onChange` остаются `ЧЧ:ММ`.
+   * Hour cycle of the field and the list: `24` (default, `14:30`) or `12` (`2:30 PM`).
+   * Affects only display and input: `value` and `onChange` stay `HH:MM`.
    */
   hourCycle?: 12 | 24;
-  /** Блокирует поле, список слотов не открывается. */
+  /** Disables the field; the time slot list does not open. */
   disabled?: boolean;
-  /** Плейсхолдер в пустом поле; по умолчанию стандартная подпись кита. */
+  /** Placeholder in an empty field; defaults to the kit's standard label. */
   placeholder?: string;
-  /** Доступное имя поля и списка слотов; по умолчанию стандартная подпись кита. */
+  /** Accessible name of the field and the time slot list; defaults to the kit's standard label. */
   "aria-label"?: string;
   /**
-   * Показывает поле в состоянии ошибки: линия под временем краснеет, ставится
-   * `aria-invalid`. Внутри `FormField` с `error` признак берётся из формы, явный
-   * `invalid={false}` его снимает. Правило проверки остаётся у потребителя.
+   * Shows the field in the error state: the line under the time turns red and
+   * `aria-invalid` is set. Inside a `FormField` with `error` the flag comes from the form;
+   * an explicit `invalid={false}` clears it. The validation rule stays with the consumer.
    */
   invalid?: boolean;
-  /** Классы на поле ввода. */
+  /** Classes on the input field. */
   className?: string;
 }
 
 /**
- * Слоты суток с шагом `step` минут, начиная с первого строго после `now`,
- * дальше по кругу через полночь: в 14:07 список открывается с `14:30`,
- * в 23:45 — с `00:00`, ровно в 14:30 — с `15:00`.
+ * Time slots of the day in steps of `step` minutes, starting with the first one strictly after
+ * `now` and wrapping around midnight: at 14:07 the list opens at `14:30`,
+ * at 23:45 at `00:00`, and at exactly 14:30 at `15:00`.
  *
- * «Сейчас» — часы браузера, не зона сервера: пакет зоны не знает принципиально
- * (см. `timeZoneLabel` у `DateTimePicker`). Функция чистая и отвязана от
- * компонента, чтобы порядок проверялся тестами без рендера.
+ * "Now" is the browser clock, not the server's time zone: the package deliberately does not know
+ * the zone (see `timeZoneLabel` of `DateTimePicker`). The function is pure and kept apart from
+ * the component so that the order can be tested without rendering.
  */
-/** Шаг по умолчанию — он же умолчание пропа. */
+/** Default step, also the default of the `step` prop. */
 const DEFAULT_STEP = 30;
 
 export function upcomingSlots(step: number, now: Date): string[] {
   /*
-    Неположительный шаг ОТБРАСЫВАЕТСЯ на границе.
+    A non-positive step is REJECTED at the boundary.
 
-    Цикл ниже идёт `m += step`: при нуле он не завершается никогда, при
-    отрицательном уходит в минус, и массив растёт до исчерпания памяти — то
-    есть вкладка намертво виснет при первом же фокусе поля (`openList` зовётся
-    из `onFocus`). Проп публичный и типизирован просто числом, а приходит он из
-    настроек: `step={settings.slotMinutes}` с не пришедшей настройкой даёт ноль.
+    The loop below runs `m += step`: with zero it never ends, with a negative
+    value it goes below zero, and the array grows until memory runs out. That is, the tab
+    hangs for good on the first focus of the field (`openList` is called
+    from `onFocus`). The prop is public and typed as a plain number, and it comes from
+    settings: `step={settings.slotMinutes}` with a setting that has not loaded yet gives zero.
   */
   const safeStep = Number.isFinite(step) && step > 0 ? Math.floor(step) : DEFAULT_STEP;
   const all: string[] = [];
@@ -76,21 +79,21 @@ export function upcomingSlots(step: number, now: Date): string[] {
 }
 
 /**
- * Время: поле с маской + список слотов.
+ * Time: a masked field plus a list of slots.
  *
- * Гибрид, а не «или пикер, или ввод»: печатать быстрее тем, кто знает точное
- * время, а список избавляет от попадания в цифры тех, кто выбирает «во сколько
- * примерно». Ручной ввод — прежний контракт поля из `DateTimePicker`: маска
- * на каждое нажатие, нормализация и `onChange` по уходу фокуса.
+ * A hybrid, not "either a picker or typing": people who know the exact time type it faster,
+ * while the list saves those who pick "around what time" from having to hit exact digits.
+ * Manual input keeps the contract of the field from `DateTimePicker`: the mask applies on every
+ * keystroke, normalization and `onChange` happen on blur.
  *
- * Список — паттерн combobox с `aria-activedescendant`, а не roving focus как
- * в `Select`: фокус обязан оставаться в поле, потому что выбор из списка и
- * набор текста здесь одно действие, а не два режима.
+ * The list is a combobox pattern with `aria-activedescendant`, not roving focus as in
+ * `Select`: focus must stay in the field, because picking from the list and typing are one
+ * action here, not two modes.
  *
- * Набранный текст фильтрует слоты по префиксу («21» → 21:00, 21:30); фильтр —
- * только то, что напечатано после открытия, иначе уже выбранное значение
- * сворачивало бы список до самого себя. Пустой результат фильтра прячет
- * панель целиком: подсказать нечего, мешать вводу незачем.
+ * Typed text filters the slots by prefix ("21" → 21:00, 21:30). The filter applies only to
+ * what is typed after opening; otherwise the value already selected would collapse the list
+ * down to itself. An empty filter result hides the panel entirely: there is nothing to suggest,
+ * and it would only get in the way of typing.
  */
 export function TimePicker({
   value,
@@ -104,8 +107,8 @@ export function TimePicker({
   className,
 }: TimePickerProps) {
   const messages = useMessages();
-  // Подсказка и ошибка `FormField`, как у остальных полей кита; явный проп
-  // `invalid` сильнее формы.
+  // Hint and error from `FormField`, as in the kit's other fields; an explicit `invalid` prop
+  // takes precedence over the form.
   const describedBy = useFieldDescribedBy();
   const fieldInvalid = useFieldInvalid();
   const ariaInvalid = invalid ?? (fieldInvalid || undefined);
@@ -114,22 +117,22 @@ export function TimePicker({
     () => ({ am: messages.timePicker.am, pm: messages.timePicker.pm }),
     [messages.timePicker.am, messages.timePicker.pm]
   );
-  /** Как значение выглядит в поле и в списке: `14:30` либо `2:30 PM`. */
+  /** How the value looks in the field and in the list: `14:30` or `2:30 PM`. */
   const display = (time: string) =>
     twelve && /^\d{1,2}:\d{2}$/.test(time) ? formatTime12(time, labels) : time;
   const [inputTime, setInputTime] = useState(display(value ?? ""));
   const [open, setOpen] = useState(false);
-  /** Что напечатано после открытия — по нему фильтруются слоты. */
+  /** What was typed after opening; the slots are filtered by it. */
   const [filter, setFilter] = useState("");
-  /** Индекс подсвеченного слота; −1 — ничего, Enter коммитит набранное. */
+  /** Index of the highlighted slot; −1 means none, and Enter commits what was typed. */
   const [active, setActive] = useState(-1);
 
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
   /**
-   * Порядок вычисляется на открытие, а не на рендер: список, в котором слоты
-   * пересортировываются под курсором из-за тикнувших часов, выглядит сломанным.
+   * The order is computed on open, not on render: a list whose slots re-sort under the cursor
+   * because the clock has ticked over would look broken.
    */
   const [slots, setSlots] = useState<string[]>([]);
   const openList = () => {
@@ -152,7 +155,7 @@ export function TimePicker({
             twelve
               ? formatTime12(s, labels)
                   .toLowerCase()
-                  // Ведущий ноль («02») не часть 12-часового показа («2:00 AM»).
+                  // A leading zero ("02") is not part of the 12-hour display ("2:00 AM").
                   .startsWith(filter.toLowerCase().replace(/^0+(?=\d)/, ""))
               : s.startsWith(filter)
           )
@@ -166,27 +169,25 @@ export function TimePicker({
   };
 
   /*
-    Текст поля следует за `value` — но ПОСЛЕ ответа родителя, а не в момент
-    потери фокуса.
+    The field text follows `value`, but AFTER the parent responds, not at the moment
+    of blur.
 
-    `commit` пишет в локальное состояние сразу, и если родитель значение
-    отклонил (ограничил рабочими часами, подправил), проп не менялся, эффект
-    по `[value]` не срабатывал, и в поле навсегда оставался отвергнутый текст.
-    Первая починка звала синхронизацию прямо в `onBlur` — и затирала только что
-    ПРИНЯТОЕ значение: проп там ещё старый, оба `setState` в одном батче, и
-    побеждал второй. У неуправляемого вызова (`value` необязателен) поле после
-    ввода просто пустело.
+    `commit` writes to local state at once. If the parent rejects the value (clamps it to
+    working hours, adjusts it), the prop does not change, the effect on `[value]` does not run,
+    and the rejected text stayed in the field for good.
+    The first fix called the sync right in `onBlur`, and it overwrote the value that had just been
+    ACCEPTED: the prop was still the old one there, both `setState` calls landed in one batch, and
+    the second one won. In an uncontrolled call (`value` is optional) the field simply emptied
+    after typing.
 
-    Поэтому сверка живёт в эффекте и срабатывает, только когда правка кончилась:
-    к тому моменту родитель либо прислал новый проп, либо не прислал — и тогда
-    поле возвращается к принятому.
+    So the sync lives in an effect and runs only once editing is over: by then the parent has
+    either sent a new prop or has not sent one, and in either case the field goes back to the accepted value.
   */
   const [editing, setEditing] = useState(false);
   /*
-    Сверка только у УПРАВЛЯЕМОГО поля. `value` необязателен, и при
-    неуправляемом вызове «принятого значения» не существует вовсе — правдой
-    остаётся собственный текст поля. Без этого условия набранное просто
-    стиралось на потере фокуса.
+    The sync applies only to a CONTROLLED field. `value` is optional, and in an uncontrolled call
+    there is no "accepted value" at all: the field's own text remains the truth. Without this
+    condition, what was typed was simply erased on blur.
   */
   const controlled = value !== undefined;
   useEffect(() => {
@@ -201,13 +202,12 @@ export function TimePicker({
 
   const commitTyped = () => {
     /*
-      Пустой ввод при пустом значении НЕ коммитится.
+      Empty input with an empty value is NOT committed.
 
-      `normalizeTime("", value ?? "00:00")` на пустом значении отдавал `00:00`,
-      и `next !== value` было истинно (`"00:00" !== null`): пользователь
-      проходил форму табом, задев поле и ничего не напечатав, — и наружу
-      прилетало `onChange("00:00")`. Форма становилась грязной, публикация
-      уезжала на полночь, хотя время не выбирали.
+      `normalizeTime("", value ?? "00:00")` returned `00:00` for an empty value, and
+      `next !== value` was true (`"00:00" !== null`): a user who tabbed through the form, touching
+      the field and typing nothing, sent `onChange("00:00")` outward. The form became dirty, and
+      the publish time jumped to midnight although no time had been selected.
     */
     if (inputTime.trim() === "" && !value) return;
     commit(
@@ -219,11 +219,11 @@ export function TimePicker({
 
   const optionId = (slot: string) => `${listboxId}-${slot.replace(":", "")}`;
 
-  // Подсвеченный слот держится в кадре при навигации стрелками.
+  // Keep the highlighted slot in view while navigating with the arrow keys.
   useEffect(() => {
     if (active < 0) return;
     const slot = visible[active];
-    // `?.` на методе — jsdom в тестах его не реализует.
+    // `?.` on the method: jsdom does not implement it in tests.
     if (slot) document.getElementById(optionId(slot))?.scrollIntoView?.({ block: "nearest" });
   }, [active, visible]);
 
@@ -237,7 +237,7 @@ export function TimePicker({
       case "ArrowUp":
         if (!open) return;
         e.preventDefault();
-        // Края не зацикливаются — как в списке `Select`.
+        // The ends do not wrap around, as in the `Select` list.
         setActive((a) => Math.max(a - 1, 0));
         return;
       case "Enter":
@@ -250,12 +250,12 @@ export function TimePicker({
         }
         return;
       case "Escape":
-        // Закрывается здесь, а не силами Radix: фокус в поле, а не в панели,
-        // и до слоя поповера событие не доходит.
+        // It closes here rather than through Radix: focus is in the field, not in the panel,
+        // so the event never reaches the popover layer.
         //
-        // Всплытие не гасится: в диалоге Escape закроет и его — ровно как
-        // у `Select`. Слой Radix слушает документ на перехвате, до нашего
-        // обработчика, так что `stopPropagation` здесь ничего бы не изменил.
+        // Bubbling is not stopped: inside a dialog, Escape also closes the dialog, just as
+        // it does for `Select`. The Radix dismissable layer listens on the document in the
+        // capture phase, ahead of our handler, so `stopPropagation` here would change nothing.
         if (!open) return;
         e.preventDefault();
         closeList();
@@ -302,9 +302,9 @@ export function TimePicker({
             openList();
           }}
           onBlur={() => {
-            // Правка кончилась. Сверку с принятым значением делает эффект по
-            // `[value]`: здесь проп ещё старый, и синхронизация на месте
-            // затирала бы только что принятое.
+            // Editing is over. The sync with the accepted value is done by the effect on `[value]`:
+            // here the prop is still the old one, and syncing in place would
+            // overwrite the value that had just been accepted.
             setEditing(false);
             commitTyped();
             closeList();
@@ -314,7 +314,8 @@ export function TimePicker({
             twelve ? "w-[88px]" : "w-[60px]",
             "border-line-soft text-fg-2 hover:border-line hover:text-fg-1 placeholder:text-fg-4 cursor-text border-b bg-transparent pb-px font-mono text-[13px] transition-colors outline-none",
             "focus-visible:border-accent-strong disabled:cursor-not-allowed disabled:opacity-50",
-            // Линия под временем и есть «рамка» поля; красная и в фокусе — как оболочка других полей.
+            // The line under the time is the field's "border"; red, including on focus,
+            // matches the wrapper of other fields.
             "aria-[invalid=true]:border-danger-strong",
             className
           )}
@@ -325,18 +326,18 @@ export function TimePicker({
         <PopoverContent
           className={twelve ? "w-[132px]" : "w-[96px]"}
           align="start"
-          // Фокус остаётся в поле: панель — подсказка к вводу, а не отдельный шаг.
+          // Focus stays in the field: the panel is a hint for typing, not a separate step.
           onOpenAutoFocus={(e) => e.preventDefault()}
           onCloseAutoFocus={(e) => e.preventDefault()}
-          // Немодальный поповер закрывает себя, когда фокус или клик «снаружи»
-          // контента — а здесь фокус по определению снаружи: он в поле-якоре.
-          // Без этих двух перехватов панель гаснет в момент открытия.
+          // A non-modal popover dismisses itself when focus or a click lands "outside" the
+          // content. Here focus is outside by definition: it is in the anchor field.
+          // Without these two interceptors the panel vanishes the moment it opens.
           onFocusOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => {
             if (e.target === inputRef.current) e.preventDefault();
           }}
-          // Клик по слоту не должен уводить фокус из поля (и вызывать blur-коммит
-          // раньше выбора) — гасим mousedown до того, как браузер переставит фокус.
+          // A click on a slot must not move focus out of the field (and trigger the blur commit
+          // before the pick), so mousedown is cancelled before the browser moves focus.
           onMouseDown={(e) => e.preventDefault()}
         >
           <div

@@ -4,241 +4,240 @@ status: stable
 source: src/index.ts
 ---
 
-# Совместимость и заметки о миграции
+# Compatibility and migration notes
 
-## Кратко для AI
+## Summary for AI
 
-Публичный контракт `@olddevs/ui` — это входы из `exports` пакета (`@olddevs/ui`,
-`/icons`, `/color`, `/editor`, `/editor/schema`, `/editor/highlight`, `/locales/ru`,
-`/locales/en`), их runtime exports и экспортируемые TypeScript types. При
-изменении этого контракта заметка о миграции обязана объяснить потребителю,
-что изменилось, почему, как заменить старый код и в какой версии это стало
-актуально.
+The public contract of `@olddevs/ui` is the entry points from the package `exports`
+(`@olddevs/ui`, `/icons`, `/color`, `/editor`, `/editor/schema`, `/editor/highlight`,
+`/locales/ru`, `/locales/en`), their runtime exports and the exported TypeScript types. When
+this contract changes, a migration note must explain to the consumer
+what changed, why, how to replace the old code and in which version this
+became relevant.
 
-## Когда использовать
+## When to use
 
-- При удалении, переименовании или изменении значения публичного export/prop.
-- При изменении default, доступности, клавиатурного поведения или формы
-  контролируемого значения: TypeScript может не обнаружить такую миграцию.
-- При замене компонента на другой, например, когда старый API исчезает в пользу
-  существующего семейства.
+- When removing, renaming or changing the value of a public export/prop.
+- When changing a default, accessibility, keyboard behavior or the shape of a
+  controlled value: TypeScript may not detect such a migration.
+- When replacing one component with another, for example, when the old API goes away in favor of
+  an existing component family.
 
-## Когда не использовать
+## When not to use
 
-- Не заводите заметку о миграции для исправления внутреннего файла, не
-  затрагивающего входы пакета, поведение или типы потребителя.
-- Не объявляйте изменение «breaking» только потому, что переименован внутренний
-  файл или функция: сначала проверьте, входят ли они в `src/index.ts`, и реальные
-  сценарии использования.
-- Не оставляйте двусмысленную замену вроде «используйте новый Select» без
-  таблицы старого и нового поведения.
+- Do not create a migration note for a fix to an internal file that does not
+  affect the consumer's entry points, behavior or types.
+- Do not declare a change "breaking" just because an internal file or function was
+  renamed: first check whether they are part of `src/index.ts`, and the real use cases.
+- Do not leave an ambiguous replacement like "use the new Select" without
+  a table of the old and new behavior.
 
-## Минимальный шаблон заметки
+## Minimal note template
 
-Добавьте раздел в release notes или CHANGELOG репозитория и при необходимости
-добавьте в этот файл ссылку на заметку. Каждая заметка содержит:
+Add a section to the repository's release notes or CHANGELOG and, if needed,
+add a link to the note in this file. Each note contains:
 
 ````md
-## X.Y.Z — краткое название
+## X.Y.Z — short name
 
-**Статус:** breaking change | deprecation | behavior change
+**Status:** breaking change | deprecation | behavior change
 
-### Что изменилось
+### What changed
 
-Точный export, prop или поведение.
+The exact export, prop or behavior.
 
-### Кого затрагивает
+### Who is affected
 
-Какие импорты/сценарии потребителя нужно найти.
+Which imports/consumer scenarios to look for.
 
-### До → после
+### Before → after
 
 ```tsx
-// старый код
-// новый код
+// old code
+// new code
 ```
 
-### Семантика и доступность
+### Semantics and accessibility
 
-Что меняется для клавиатуры, фокуса, доступного имени или формы значения.
+What changes for the keyboard, focus, accessible name or value shape.
 
-### Действие до обновления
+### Action before updating
 
-Конкретная проверка или код-мод.
+A concrete check or codemod.
 ````
 
-## Обязательная процедура изменения public API
+## Mandatory procedure for changing the public API
 
-1. Сверьте изменение с файлом нужного входа (`src/index.ts`, `src/icons.ts`,
-   `src/color.ts`, `src/editor/index.ts` и остальные из `exports` пакета) и
-   экспортным типом. Внутренний путь — не альтернатива публичному API.
-2. Обновите страницу компонента: `Кратко для AI`, «Когда не использовать»,
-   минимальный пример, таблицу API и раздел доступности, если затронуты.
-3. Обновите каталог компонентов, если добавился или исчез runtime
-   component export. Полные правила описаны в `AGENTS.md` репозитория кита.
-4. Добавьте заметку о миграции или release note с версией и однозначным до/после. Если
-   замена возможна поэтапно, опишите срок/версию удаления и предупреждение.
-5. Добавьте или обновите тест для прежней границы и нового контракта; для
-   взаимодействия проверяйте фокус, клавиатуру и доступные имена.
+1. Check the change against the file of the relevant entry point (`src/index.ts`, `src/icons.ts`,
+   `src/color.ts`, `src/editor/index.ts` and the rest of the package `exports`) and the
+   exported type. An internal path is not an alternative to the public API.
+2. Update the component page: `Summary for AI`, "When not to use",
+   the minimal example, the API table and the accessibility section, if affected.
+3. Update the component catalog if a runtime
+   component export was added or removed. The full rules are described in the kit repository's
+   `AGENTS.md`.
+4. Add a migration note or release note with the version and an unambiguous before/after. If
+   the replacement can be done in stages, describe the removal date/version and the warning.
+5. Add or update a test for the previous boundary and the new contract; for
+   interaction, check focus, the keyboard and accessible names.
 
-## 4.8.0 — сторонние библиотеки приезжают с китом
+## 4.8.0 — third-party libraries come with the kit
 
-**Статус:** behavior change — minor. Ничего не ломается, действий не требует (ADR-0072).
+**Status:** behavior change — minor. Nothing breaks, and no action is required (ADR-0072).
 
-### Что изменилось
+### What changed
 
-Peer-зависимость кита теперь одна — `react`. Остальные одиннадцать пакетов перешли из `peerDependencies` в
-`dependencies` с теми же диапазонами: `@internationalized/date`, `@radix-ui/react-context-menu`,
+The kit now has a single peer dependency, `react`. The other eleven packages moved from `peerDependencies` to
+`dependencies` with the same ranges: `@internationalized/date`, `@radix-ui/react-context-menu`,
 `@radix-ui/react-dialog`, `@radix-ui/react-popover`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`, `clsx`,
-`lucide-react`, `react-aria-components`, `sonner` и `tailwind-merge`. Вход `@olddevs/ui/icons` экспортирует
+`lucide-react`, `react-aria-components`, `sonner` and `tailwind-merge`. The `@olddevs/ui/icons` entry point exports
 `LucideProvider`.
 
-### Кого затрагивает
+### Who is affected
 
-Всех потребителей — только командой установки. Код, который импортирует `LucideProvider` из `lucide-react` или
-`toast` из `sonner`, и приложения, которые сами используют Radix, `react-aria-components` или
-`@internationalized/date`.
+Every consumer, but only through the install command. Also code that imports `LucideProvider` from `lucide-react`
+or `toast` from `sonner`, and apps that use Radix, `react-aria-components` or `@internationalized/date` directly.
 
-### До → после
+### Before → after
 
 ```bash
-# было
+# before
 npm install @olddevs/ui react clsx tailwind-merge lucide-react sonner \
   react-aria-components @internationalized/date \
   @radix-ui/react-dialog @radix-ui/react-popover @radix-ui/react-tooltip \
   @radix-ui/react-context-menu @radix-ui/react-slot
-# стало
+# after
 npm install @olddevs/ui react
 ```
 
 ```tsx
-// было
+// before
 import { LucideProvider } from "lucide-react";
-// стало
+// after
 import { LucideProvider } from "@olddevs/ui/icons";
 ```
 
-### Семантика и доступность
+### Semantics and accessibility
 
-Не меняются: те же компоненты на тех же версиях библиотек. Разница в том, кто выбирает версию: теперь кит. npm
-больше не останавливает установку при несовпадении мажоров — если приложение само держит Radix или
-`react-aria-components` с несовместимым диапазоном, в сборке окажутся две копии, и слои, контексты и провайдеры
-одной не увидят другую.
+Unchanged: the same components on the same library versions. What changes is who picks the version: now the kit
+does. npm no longer stops the install over a major-version mismatch. If your app keeps Radix or
+`react-aria-components` at an incompatible range, the build ends up with two copies, and the layers, contexts
+and providers of one can't see the other's.
 
-### Действие до обновления
+### Action before upgrading
 
-Не обязательно. Перенесённые пакеты, которые приложение само не импортирует, можно убрать из его `package.json`.
-`LucideProvider` переведите на импорт из `@olddevs/ui/icons`, `toast` — из `@olddevs/ui`. Если приложение
-пользуется Radix или `react-aria-components` напрямую, после обновления проверьте, что копия одна:
+Optional. You can remove the moved packages your app does not import itself from its `package.json`. Switch
+`LucideProvider` to the `@olddevs/ui/icons` import and `toast` to the `@olddevs/ui` import. If your app uses
+Radix or `react-aria-components` directly, check after the upgrade that there is one copy:
 `npm ls @radix-ui/react-dismissable-layer react-aria-components`.
 
 ## 4.5.0 — `handle.openSearch()` → `handle.tool("search")?.open()`
 
-**Статус:** deprecation — minor. Метод работает во всех выпусках 4.x и удаляется в 5.0 (ADR-0058, п. 12.7; ADR-0069).
+**Status:** deprecation — minor. The method works throughout all 4.x releases and is removed in 5.0 (ADR-0058, item 12.7; ADR-0069).
 
-### Что изменилось
+### What changed
 
-Хэндл `RichTextEditor` получает `tool(name)` — единый вход к Командам Инструмента. Команда `open` Инструмента
-`search` делает то же, что `openSearch`, и принимает больше: `open({ replace?, query? })`, где `query` сразу
-ставит запрос. `handle.openSearch(options)` помечен `@deprecated` и в разработке один раз предупреждает в консоли.
-Новые Команды встроенных Инструментов идут через `handle.tool()`, а не новыми методами Хэндла.
+The `RichTextEditor` Handle gets `tool(name)`, a single entry point to a Tool's commands. The `open` command of the
+`search` Tool does what `openSearch` does and accepts more: `open({ replace?, query? })`, where `query` sets the
+query at once. `handle.openSearch(options)` is marked `@deprecated` and warns once in the console in development.
+New commands of built-in Tools go through `handle.tool()`, not through new Handle methods.
 
-### Кого затрагивает
+### Who is affected
 
-Всех, кто вызывает `ref.current.openSearch(…)`, например из кнопки «Найти» в шапке экрана или из ссылки «найти упоминания».
+Everyone who calls `ref.current.openSearch(…)`, for example from a "Find" button in the screen header or a "find mentions" link.
 
-### До → после
+### Before → after
 
 ```tsx
-// было
+// before
 ref.current?.openSearch({ replace: true });
-// стало
+// after
 ref.current?.tool("search")?.open({ replace: true });
 ```
 
-### Семантика и доступность
+### Semantics and accessibility
 
-Не меняются: та же панель, тот же фокус, те же сочетания. Различия мелкие: `tool("search")` — `null` без Инструмента
-`search` в `tools` и до создания движка, поэтому вызов через `?.` ничего не делает, как раньше `openSearch`;
-`open` возвращает `boolean` (`false` — в HTML-режиме) вместо `void`.
+Unchanged: the same panel, the same focus, the same shortcuts. The differences are small: `tool("search")` is `null`
+without the `search` Tool in `tools` and before the engine exists, so a call through `?.` does nothing, just as
+`openSearch` did; `open` returns a `boolean` (`false` in Source mode) instead of `void`.
 
-### Действие до обновления
+### Action before updating
 
-До 5.0 ничего не требуется. Найдите в коде `openSearch(` и замените вызов. Предупреждение в консоли разработки
-появляется один раз за сеанс, поэтому по нему одному все экраны с этим вызовом не найти.
+Nothing is required before 5.0. Search the code for `openSearch(` and replace the call. The development console
+warning appears once per session, so it alone will not find every screen with the call.
 
-## 4.0.0 — первый публичный выпуск
+## 4.0.0 — first public release
 
-**Статус:** breaking change — смена лицензии и реестра; API без изменений.
+**Status:** breaking change — the license and the registry change; the API does not.
 
-### Что изменилось
+### What changed
 
-- Лицензия — MIT (была `UNLICENSED`); сторонние лицензии по-прежнему в `NOTICE`.
-- Пакет публикуется на npmjs.com, исходники — на GitHub.
-- С этого выпуска версии следуют строгому semver: ломающие изменения — только в мажоре; переименование
-  публичного API идёт через deprecated-алиас, который живёт один мажор.
-- `CHANGELOG.md` начинается с этого выпуска.
+- The license is MIT (was `UNLICENSED`); third-party licenses are still in `NOTICE`.
+- The package is published to npmjs.com, and the source is on GitHub.
+- From this release on, versions follow strict semver: breaking changes ship only in a major version, and a
+  public API rename goes through a deprecated alias that lives for one major version.
+- `CHANGELOG.md` starts with this release.
 
-### Кого затрагивает
+### Who is affected
 
-Всех, кто ставил пакет из другого реестра: строка `@olddevs:registry=…` в `.npmrc` проекта или
-пользователя направляет установку скоупа мимо npmjs.
+Everyone who installed the package from another registry: an `@olddevs:registry=…` line in the project or user
+`.npmrc` sends the scope's installs past npmjs.
 
-### До → после
+### Before → after
 
 ```ini
-# .npmrc — было
-@olddevs:registry=https://<прежний реестр>/
-# стало: строки нет, пакет ставится с npmjs.com
+# .npmrc — before
+@olddevs:registry=https://<previous registry>/
+# after: no such line, the package installs from npmjs.com
 ```
 
 ```bash
 npm i @olddevs/ui@4
 ```
 
-### Семантика и доступность
+### Semantics and accessibility
 
-Не меняются: код, экспорты, пропсы, стили и поведение 4.0.0 совпадают с 3.49.
+Unchanged: the code, exports, props, styles and behavior of 4.0.0 are the same as in 3.49.
 
-### Действие до обновления
+### Action before upgrading
 
-Удалите привязку скоупа `@olddevs` к прежнему реестру из `.npmrc`, пересоздайте lock-файл и проверьте, что в
-нём `resolved` у `@olddevs/ui` ведёт на `registry.npmjs.org`.
+Remove the binding of the `@olddevs` scope to the previous registry from `.npmrc`, regenerate the lock file and
+check that `resolved` for `@olddevs/ui` points to `registry.npmjs.org`.
 
-## 3.48.0 — «Карточка у текста»: `callouts` → `textCards`
+## 3.48.0 — "Text card": `callouts` → `textCards`
 
-**Статус:** breaking change — minor, псевдонима нет. Потребитель у API был один (приложение-источник), и
-он заменил имена у себя; правило ADR-0058, п. 12.2 («сначала пометка, потом удаление»)
-здесь не применяется.
+**Status:** breaking change — minor, no alias. The API had one consumer (the source app),
+and it replaced the names on its side; the ADR-0058, section 12.2 rule ("first deprecate, then
+remove") does not apply here.
 
-### Что изменилось
+### What changed
 
-«Callout» у GitHub и Notion — блок-заметка, а в ките так называлась карточка под диапазоном текста.
-Публичные имена переименованы, поведение не менялось:
+A "callout" in GitHub and Notion is a note block, while in the kit the name stood for a card under a range
+of text. The public names are renamed, and the behavior is unchanged:
 
-- поле `callouts` у `CustomTool` → `textCards`;
-- типы `CustomCallout` → `CustomTextCard`, `CustomCalloutRender` → `CustomTextCardRender`,
+- the `callouts` field of `CustomTool` → `textCards`;
+- the types `CustomCallout` → `CustomTextCard`, `CustomCalloutRender` → `CustomTextCardRender`,
   `CalloutRange` → `TextCardRange`, `CalloutRangeAt` → `TextCardRangeAt`;
-- строка каталога `editor.calloutShown` → `editor.textCardShown`.
+- the message catalog string `editor.calloutShown` → `editor.textCardShown`.
 
-Заметка у Обёртки с тоном (`wrapper`, GitHub alert) этого не касается. Запись 3.37.0 ниже называет
-прежние имена как исторические.
+The note of a Wrapper with a tone (`wrapper`, a GitHub alert) is not affected. The 3.37.0 entry below names
+the previous names as historical.
 
-### Кого затрагивает
+### Who is affected
 
-Всех, кто описывает свой Инструмент с полем `callouts`, импортирует перечисленные типы или переопределяет
-строку `calloutShown` в своём каталоге.
+Everyone who describes a custom Tool with the `callouts` field, imports the types above, or overrides the
+`calloutShown` string in their own message catalog.
 
-### До → после
+### Before → after
 
 ```tsx
-// было
+// before
 const tool: CustomTool = {
   name: "acme_comment",
   engine: [],
   callouts: [{ label, rangeAt, render }],
 };
-// стало
+// after
 const tool: CustomTool = {
   name: "acme_comment",
   engine: [],
@@ -246,261 +245,258 @@ const tool: CustomTool = {
 };
 ```
 
-### Действие до обновления
+### Action before updating
 
-Найти в коде и тестах `callouts`, `CustomCallout`, `CalloutRange` и `calloutShown` (без `-webkit-touch-callout`)
-и заменить по таблице. Проверка массива `tools` называет поле `textCards` в сообщениях об ошибках:
-тесты, сверяющие тексты ошибок, обновить.
+Search the code and tests for `callouts`, `CustomCallout`, `CalloutRange` and `calloutShown` (ignoring
+`-webkit-touch-callout`) and replace them per the table. Validation of the `tools` array names the `textCards` field in
+its error messages: update any tests that compare error texts.
 
-## 3.47.0 — `VirtualGrid` на `GridList`: роли `grid`/`row`/`gridcell`
+## 3.47.0 — `VirtualGrid` on `GridList`: roles `grid`/`row`/`gridcell`
 
-**Статус:** behavior change — minor. Пропы прежние, прежний код собирается и
-работает; меняются роли в DOM и второй аргумент `onAction`.
+**Status:** behavior change — minor. The props are the same, existing code builds and
+works; the DOM roles and the second argument of `onAction` change.
 
-### Что изменилось
+### What changed
 
-Сетка построена на `GridList` react-aria, а не на `ListBox`
+The grid is built on react-aria's `GridList`, not `ListBox`
 (ADR-0028,
-дополнение). Сетка — `grid` вместо `listbox`, ячейка — `row` с
-`gridcell` внутри вместо `option`. `onAction` теперь получает второй аргумент
-`{ rect }`. `minItemHeight` теперь задаёт наименьшую высоту ячейки: раньше ячейка
-принимала высоту содержимого.
+addendum). The grid is `grid` instead of `listbox`, a cell is a `row` with a
+`gridcell` inside instead of an `option`. `onAction` now receives a second argument `{ rect }`.
+`minItemHeight` now sets a real minimum cell height: before, a cell took the height of its content.
 
-### Кого затрагивает
+### Who is affected
 
-Тесты потребителя, которые ищут сетку по ролям: `getByRole("listbox")`,
-`getAllByRole("option")`. Проверки `onAction`, сверяющие точный список аргументов
-(`toHaveBeenCalledWith(id)`). Ячейки, содержимое которых ниже `minItemHeight`:
-теперь такие ячейки выше.
+Consumer tests that find the grid by role: `getByRole("listbox")`,
+`getAllByRole("option")`. Assertions on `onAction` that check the exact argument list
+(`toHaveBeenCalledWith(id)`). Cells whose content is shorter than `minItemHeight`: such cells
+are taller now.
 
-### До → после
+### Before → after
 
 ```tsx
-// было
-screen.getByRole("listbox", { name: "Кадры" });
+// before
+screen.getByRole("listbox", { name: "Frames" });
 screen.getAllByRole("option");
 expect(onAction).toHaveBeenCalledWith("7");
-// стало
-screen.getByRole("grid", { name: "Кадры" });
+// after
+screen.getByRole("grid", { name: "Frames" });
 screen.getAllByRole("row");
 expect(onAction).toHaveBeenCalledWith("7", expect.objectContaining({ rect: expect.anything() }));
 ```
 
-### Семантика и доступность
+### Semantics and accessibility
 
-Клавиатура прежняя: стрелки двигают по сетке, Space выбирает, Enter открывает,
-Shift+F10 — меню ячейки. Новое: кнопки внутри ячейки допустимы; в `option` они
-давали нарушение `nested-interactive` уровня serious. Кружок выбора —
-`<Checkbox slot="selection" />` в содержимом ячейки.
+Keyboard behavior is unchanged: arrow keys move through the grid, Space selects, Enter opens, Shift+F10 opens
+the cell menu. New: buttons inside a cell are now valid; inside an `option` they triggered a
+`nested-interactive` violation of serious impact. The selection circle is `<Checkbox slot="selection" />` in the cell
+content.
 
-### Действие до обновления
+### Action before updating
 
-Найти в тестах `"listbox"` и `"option"` рядом с `VirtualGrid` и заменить на
-`"grid"` и `"row"`; ослабить проверки аргументов `onAction`. Проверить вид
-ячеек ниже `minItemHeight`.
+Find `"listbox"` and `"option"` next to `VirtualGrid` in tests and replace them with
+`"grid"` and `"row"`; loosen the `onAction` argument checks. Check how cells shorter than
+`minItemHeight` look.
 
-## 3.46.0 — движок Редактора не в манифесте кита
+## 3.46.0 — The Editor engine is not in the kit manifest
 
-**Статус:** behavior change — minor. API прежнее; меняется то, что npm ставит
-вместе с китом.
+**Status:** behavior change — minor. The API is unchanged; what changes is what
+npm installs together with the kit.
 
-### Что изменилось
+### What changed
 
-21 пакет движка Редактора (`@tiptap/*`, `lowlight`, `highlight.js`, `marked`)
-убран из `peerDependencies`, поле `peerDependenciesMeta` удалено. Они были
-опциональными peer-зависимостями, но при установке из прежнего реестра npm
-ставил движок каждому потребителю — даже приложению, которое Редактор не
-импортирует.
+The 21 Editor engine packages (`@tiptap/*`, `lowlight`, `highlight.js`, `marked`)
+were removed from `peerDependencies`, and the `peerDependenciesMeta` field was
+deleted. They were optional peer dependencies, but when installed from the previous
+registry, npm pulled the engine in for every consumer — even an application that does not
+import the Editor.
 
-### Кого затрагивает
+### Who is affected
 
-Только тех, кто импортирует `@olddevs/ui/editor` и не ставил движок явно: пакеты
-приходили сами. После обновления сборка упадёт
-на неразрешимом `@tiptap/…`. Приложениям без Редактора делать ничего не нужно —
-из их lock-файла уйдёт около 60 пакетов.
+Only those who import `@olddevs/ui/editor` and never installed the engine
+explicitly: the packages arrived on their own. After the update, the build fails on an unresolvable `@tiptap/…`.
+Applications without the Editor need to do nothing — about 60 packages leave their
+lock file.
 
-### Действие до обновления
+### Action before updating
 
-Поставить движок командой из раздела «Установка» страницы
-[RichTextEditor](../components/inputs/rich-text-editor.md#установка). О
-несовпадении версий Tiptap npm больше не предупредит: диапазон `^3.31.4` указан
-там же.
+Install the engine with the command from the "Installation" section of the
+[RichTextEditor](../components/inputs/rich-text-editor.md#installation) page. npm no
+longer warns about mismatched Tiptap versions: the `^3.31.4` range is given on
+the same page.
 
-## 3.37.0 — Редактор, открытый для расширения
+## 3.37.0 — An Editor open to extension
 
-**Статус:** behavior change — minor по разделу «Стабильность»
-[API расширения Редактора](editor-extension.md#стабильность): сохранённый HTML,
-`onChange`, `onUploadImage` и `focus()` не меняются, прежний код собирается.
-Заметка нужна потому, что пять изменений видны нынешним потребителям
-`@olddevs/ui/editor`, а одно требует установки пакетов у pnpm. Новый API
-(свой Инструмент, Хэндл, события, Строка статуса) действий не требует — оно на
-[странице API расширения](editor-extension.md).
+**Status:** behavior change — a minor under the "Stability" section of the
+[Editor extension API](editor-extension.md#stability): the saved HTML,
+`onChange`, `onUploadImage` and `focus()` do not change, and the previous code builds.
+The note is needed because five changes are visible to current consumers
+of `@olddevs/ui/editor`, and one requires installing packages with pnpm. The new API
+(a custom Tool, the Handle, events, the Status bar) requires no action — it is on the
+[extension API page](editor-extension.md).
 
-### 1. Два новых peer-пакета
+### 1. Two new peer packages
 
-Цитата и разделитель берут Extensions из `@tiptap/extension-blockquote` и
-`@tiptap/extension-horizontal-rule` — опциональных peer-зависимостей входа
-`@olddevs/ui/editor` с тем же диапазоном `^3.31.4` (с 3.46.0 пакеты движка из
-манифеста кита убраны, см. запись выше).
+The blockquote and the horizontal rule take their Extensions from `@tiptap/extension-blockquote` and
+`@tiptap/extension-horizontal-rule` — optional peer dependencies of the
+`@olddevs/ui/editor` entry point with the same `^3.31.4` range (since 3.46.0 the engine
+packages are no longer in the kit manifest; see the entry above).
 
-**Кого затрагивает.** Только pnpm (строгий `node_modules`) и установки с
-`--omit=optional`: npm и yarn ставят оба пакета зависимостями
-`@tiptap/starter-kit`, и импорт разрешается.
+**Who is affected.** Only pnpm (strict `node_modules`) and installs with
+`--omit=optional`: npm and yarn install both packages as dependencies of
+`@tiptap/starter-kit`, and the import resolves.
 
-**Действие до обновления.**
+**Action before updating.**
 
 ```bash
 pnpm add @tiptap/extension-blockquote @tiptap/extension-horizontal-rule
 ```
 
-Полная команда — на странице [RichTextEditor](../components/inputs/rich-text-editor.md#установка).
+The full command is on the [RichTextEditor](../components/inputs/rich-text-editor.md#installation) page.
 
-### 2. Разделитель не весит символ в `maxLength`
+### 2. A horizontal rule no longer counts as a character in `maxLength`
 
-**Что изменилось.** Раньше счётчик подставлял пробел вместо листового узла, и
-каждый `<hr>` отнимал у предела один символ. Теперь вес Атома — длина его Текста
-Атома (`renderText`): разделитель весит 0, мягкий перенос — 1, картинка — длину
-подписи. Счётчик совпадает с `getText()` без разделителей Блоков.
+**What changed.** Before, the counter substituted a space for a leaf node, and
+every `<hr>` took one character from the limit. Now an Atom counts as the length of its Atom
+text (`renderText`): a horizontal rule counts as 0, a hard break as 1, an image as the length of its
+caption. The counter matches `getText()` without Block separators.
 
-**Кого затрагивает.** Экраны с `maxLength` и разделителями в Документе. Документ
-с N разделителями вмещает на N символов больше, а Документ, который раньше был
-«превышен» на число разделителей, теперь укладывается в предел. Если сервер
-проверяет длину тем же пределом и считает `<hr>` символом, он отвергнет то, что
-Редактор пропустил.
+**Who is affected.** Screens with `maxLength` and horizontal rules in the Document. A Document
+with N horizontal rules fits N more characters, and a Document that was previously
+"over the limit" by the number of horizontal rules now fits. If the server
+checks length against the same limit and counts `<hr>` as a character, it will reject what the
+Editor let through.
 
-**До → после.**
+**Before → after.**
 
-| Документ                  | Было       | Стало      |
-| ------------------------- | ---------- | ---------- |
-| `<p>abc</p><hr><p>de</p>` | 6 символов | 5 символов |
-| `<p>a<br>b</p>`           | 3          | 3          |
+| Document                  | Before       | After        |
+| ------------------------- | ------------ | ------------ |
+| `<p>abc</p><hr><p>de</p>` | 6 characters | 5 characters |
+| `<p>a<br>b</p>`           | 3            | 3            |
 
-**Вставка за пределом** срезает хвост по символам, а не по позициям; Атом, который
-не поместился, уходит целиком вместе со всем, что после него.
+**A paste past the limit** cuts the tail by characters, not by positions; an Atom that
+did not fit goes away whole, together with everything after it.
 
-**Действие до обновления.** Серверную проверку длины сверьте с правилом кита:
-текст Документа без разметки и разделителей Блоков, Атом — длиной своего текста.
-Серверного счётчика у кита нет: вес своего Атома зависит от его Extensions.
+**Action before updating.** Check the server-side length validation against the kit's rule:
+the Document's text without markup and Block separators, an Atom by the length of its text.
+The kit has no server-side counter: the count of a custom Atom depends on its Extensions.
 
-### 3. Скелет до Готовности
+### 3. Skeleton before Readiness
 
-**Что изменилось.** До Готовности Редактор показывает Скелет: рамку поля, место
-Панели и Документ, очищенный Схемой, статичным HTML без ввода. Раньше на этом
-месте была пустая область; теперь высота поля не прыгает. На сервере и до
-гидратации Скелет — только рамка, Документ появляется после монтирования в
-браузере. В `full` блок кода и таблица теперь приходят отдельным чанком, поэтому
-Готовность наступает после их загрузки, а до неё виден Скелет (в нём блок кода
-показан с шапкой, а таблица — ячейками). Пресет `basic` эти чанки не грузит и
-готов сразу. Сценарий «старт» (статический граф подпути с движком, то, что платит
-`basic`) стал легче: 312,3 → 286,6 кБ gzip. Сценарий «полный» (со всеми ленивыми
-чанками, `full`) весит 327,7 кБ (замер 3.37.0; актуальная таблица —
-[«Размер импорта»](../getting-started.md#размер-импорта)).
+**What changed.** Before Readiness, the Editor shows a Skeleton: the field frame, the place of the
+Toolbar and the Document sanitized by the Schema, as static HTML with no input. Before, this place was an empty
+area; now the field height does not jump. On the server and before hydration, the Skeleton is
+only the frame, and the Document appears after mounting in the browser. In `full`, the code
+block and the table now arrive as a separate chunk, so Readiness comes
+after they load, and the Skeleton is visible until then (in it, the code block is shown with its header
+and the table with its cells). The `basic` Preset does not load these chunks and is ready at once. The "start" scenario
+(the static graph of the subpath with the engine, what `basic` pays) got lighter: 312.3 → 286.6 kB gzip.
+The "full" scenario (with all lazy chunks, `full`) weighs 327.7 kB (measured at 3.37.0; the current table is in
+["Import size"](../getting-started.md#import-size)).
 
-**Кого затрагивает.**
+**Who is affected.**
 
-- Код, который обращается к `ref.current.editor` или зовёт `ref.current.focus()`,
-  `insertHTML()` сразу после монтажа: в `full` движок появляется позже, а до
-  Готовности `editor` — `null`, а методы Хэндла ничего не делают и не бросают
-  ошибок.
-- Тесты потребителя с `full`, которые ищут `role="textbox"` синхронно сразу после
-  `render`: редактируемая область появляется после загрузки чанков. У Скелета роли
-  `textbox` нет.
-- Визуальные снимки страниц с Редактором: на месте пустой области — рамка и
-  Документ.
+- Code that accesses `ref.current.editor` or calls `ref.current.focus()`,
+  `insertHTML()` right after mounting: in `full` the engine appears later, and before
+  Readiness `editor` is `null` and the Handle's methods do nothing and do not throw.
+- Consumer tests with `full` that look for `role="textbox"` synchronously right after
+  `render`: the editable area appears after the chunks load. The Skeleton has no
+  `textbox` role.
+- Visual snapshots of pages with the Editor: in place of the empty area there is the frame and the
+  Document.
 
-**До → после.**
+**Before → after.**
 
 ```tsx
-// было — фокус в эффекте монтажа: в `full` движка в этот момент ещё нет, вызов ничего не делает
+// before — focus in the mount effect: in `full` the engine is not there yet, the call does nothing
 useEffect(() => ref.current?.focus(), []);
 
-// стало — момент Готовности сообщает колбэк
+// after — the callback reports the moment of Readiness
 <RichTextEditor ref={ref} onReady={() => ref.current?.focus()} />;
 ```
 
 ```tsx
-// тест: ждать редактируемую область, а не брать её синхронно
+// test: wait for the editable area, do not grab it synchronously
 expect(await screen.findByRole("textbox")).toBeInTheDocument();
 ```
 
-**Действие до обновления.** Найдите обращения к `ref.current.editor` и методам
-Хэндла в эффектах монтажа и перенесите их в `onReady`; в тестах замените
-`getByRole("textbox")` у Редактора с `full` на `await findByRole`. Чтобы чанки
-пришли вместе со страницей, поставьте на них `modulepreload`
-([рецепт](editor-extension.md#modulepreload-для-ленивых-чанков)).
+**Action before updating.** Find the uses of `ref.current.editor` and the Handle's methods
+in mount effects and move them to `onReady`; in tests, replace
+`getByRole("textbox")` for an Editor with `full` with `await findByRole`. To have the chunks
+arrive with the page, add `modulepreload` for them
+([recipe](editor-extension.md#modulepreload-for-lazy-chunks)).
 
-### 4. Сообщения о картинках — на канале Сообщения поля
+### 4. Image messages go through the Field notice channel
 
-**Что изменилось.** «Загружается…», «загружен», отказ загрузки, «не картинка» и
-«файлы не принимаются» идут тем же каналом, что новая команда движка
-`showNotice`: одно место под полем, новое сообщение заменяет прежнее, ошибка
-(`role="alert"`) держится до следующей Правки автора. Тексты и роли прежние, но
-живой регион `role="status"` теперь есть в **каждом** Редакторе, а не только с
-Инструментом `image`.
+**What changed.** "Uploading…", "uploaded", an upload refusal, "not an image" and
+"files are not accepted" go through the same channel as the new engine command
+`showNotice`: one place under the field, a new message replaces the previous one, and an error
+(`role="alert"`) stays until the next User edit. The texts and roles are the same, but the
+live region `role="status"` is now present in **every** Editor, not only with the
+`image` Tool.
 
-**Кого затрагивает.** Тесты, которые проверяли отсутствие `role="status"` у
-Редактора без `image` или считали живые регионы на странице, и экраны, которые
-рисовали свою строку ошибки вставки рядом с полем.
+**Who is affected.** Tests that checked for the absence of `role="status"` in an
+Editor without `image` or counted live regions on the page, and screens that
+rendered their own paste error line next to the field.
 
-**Действие до обновления.** Ищите регион по тексту сообщения, а не по одному
-факту его наличия. Свою строку ошибки вставки и загрузки замените командой
-`ref.current?.editor?.commands.showNotice({ tone: "error", text })`: иначе
-ошибка прозвучала бы дважды.
+**Action before updating.** Look for the region by the message text, not merely by whether
+it is present. Replace your own paste and upload error line with the command
+`ref.current?.editor?.commands.showNotice({ tone: "error", text })`: otherwise
+the error would be announced twice.
 
-### 5. Тип `Tool` принимает описания своих Инструментов
+### 5. The `Tool` type accepts descriptions of custom Tools
 
-**Что изменилось.** Тип `Tool` (элемент `tools`) теперь `ToolName | CustomTool`;
-имя встроенного Инструмента — новый тип `ToolName`. Прежний `Tool` был строкой
-имени.
+**What changed.** The `Tool` type (a `tools` element) is now `ToolName | CustomTool`;
+the name of a built-in Tool is the new type `ToolName`. The previous `Tool` was a string
+name.
 
-**Кого затрагивает.** TypeScript-код, который обращался с `Tool` как со строкой:
-`tool.startsWith(…)`, ключи `Record<Tool, …>`, сравнение в `switch`.
+**Who is affected.** TypeScript code that treated `Tool` as a string:
+`tool.startsWith(…)`, the keys of `Record<Tool, …>`, comparison in a `switch`.
 
-**До → после.**
+**Before → after.**
 
 ```ts
-// было
+// before
 import type { Tool } from "@olddevs/ui/editor";
 const labels: Record<Tool, string> = { … };
 
-// стало
+// after
 import type { ToolName } from "@olddevs/ui/editor";
 const labels: Record<ToolName, string> = { … };
 ```
 
-**Действие до обновления.** `tsc` найдёт такие места сам; замените в них `Tool` на
-`ToolName`. Массивы имён для `tools` менять не нужно.
+**Action before updating.** `tsc` will find such places on its own; replace `Tool` with
+`ToolName` in them. Arrays of names for `tools` do not need to change.
 
-### Что ещё видно — действий не требует
+### What else is visible — no action needed
 
-- «Снять обёртку» в меню Ручки Блока стоит отдельной секцией Инструмента перед
-  «Удалить»: свои Действия над Блоком встают туда же.
-- Новые строки каталога сообщений, пространство `editor`: `toolsFailed`, `retry`, `calloutShown`. Если вы
-  передаёте свой полный каталог, добавьте их; частичный каталог берёт фолбэк кита.
+- "Unwrap" in the Block handle menu sits in a separate Tool section before
+  "Delete": custom Block actions go to the same place.
+- New strings in the `editor` namespace of the message catalog: `toolsFailed`, `retry`, `calloutShown`. If you
+  pass your own full message catalog, add them; a partial catalog takes the kit's fallback.
 
-## 3.1.0 — выбор в `VirtualGrid` переехал на сетку
+## 3.1.0 — selection in `VirtualGrid` moved to the grid
 
-**Статус:** deprecation — старый код продолжает собираться. Но он
-и порождает нарушение доступности, поэтому заметка здесь, а не
-только в `CHANGELOG.md`.
+**Status:** deprecation — the old code still builds. But it
+also causes an accessibility violation, which is why the note is here and not
+only in `CHANGELOG.md`.
 
-### Что изменилось
+### What changed
 
-`VirtualGrid` получил собственную ось выбора: `selectionMode`, `selectedKeys`,
-`onSelectionChange`. Прежде документация советовала включать выбор внутри
-ячейки, у `MediaCard`. Этот совет отменён.
+`VirtualGrid` gained its own selection axis: `selectionMode`, `selectedKeys`,
+`onSelectionChange`. Before, the documentation advised enabling selection inside the
+cell, on `MediaCard`. That advice is withdrawn.
 
-### Почему
+### Why
 
-Ячейка сетки — это `option` (сетка построена на `ListBox` из react-aria). Кнопка
-выбора внутри `option` даёт вложенный интерактивный элемент: axe зовёт это
-нарушением уровня serious, и оно воспроизводилось на всех темах. Подписью или
-атрибутом это не лечится — лечится только тем, что выбирается сама ячейка.
+A grid cell is an `option` (the grid is built on react-aria's `ListBox`). A selection
+button inside an `option` produces a nested interactive element: axe reports this as a
+violation of serious impact, and it reproduced on all themes. A label or an
+attribute does not fix it; the only fix is to make the cell itself the selectable element.
 
-### Как заменить
+### How to replace
 
 ```tsx
-// было — кнопка выбора внутри ячейки
+// before — a selection button inside the cell
 <VirtualGrid
   items={items.map((it) => ({
     id: it.id,
@@ -513,10 +509,10 @@ const labels: Record<ToolName, string> = { … };
       />
     ),
   }))}
-  aria-label="Кадры"
+  aria-label="Frames"
 />;
 
-// стало — выбирается ячейка, карточка только рисует состояние
+// after — the cell is selected, the card only renders the state
 const [keys, setKeys] = useState<Selection>(new Set());
 
 <VirtualGrid
@@ -525,452 +521,449 @@ const [keys, setKeys] = useState<Selection>(new Set());
     textValue: it.name,
     content: <MediaCard preview={preview} selected={keys === "all" || keys.has(it.id)} />,
   }))}
-  aria-label="Кадры"
+  aria-label="Frames"
   selectionMode="multiple"
   selectedKeys={keys}
   onSelectionChange={setKeys}
 />;
 ```
 
-`Selection` и `Key` — типы `react-aria-components`, она и так в
-`peerDependencies`. Множество выбранных по-прежнему держит потребитель: кит даёт
-форму, а состояние остаётся у потребителя
+`Selection` and `Key` are `react-aria-components` types, and the package is in
+`peerDependencies` anyway. The consumer still holds the set of selected items: the kit provides
+the shape, and the state stays with the consumer
 (ADR-0023).
 
-Вне сетки `MediaCard` менять не нужно: своя ось выбора у карточки осталась и
-нарушения не даёт — `option` вокруг неё там нет.
+Outside the grid, `MediaCard` does not need to change: the card's own selection axis stayed and
+produces no violation — there is no `option` around it there.
 
-## 3.0.0 — один словарь состояний
+## 3.0.0 — one state dictionary
 
-**Статус:** breaking change. Ломается ровно одно и в одном месте: два словаря
-состояний сведены в один. Ничего кроме этого мажор не несёт, и это решение
+**Status:** breaking change. Exactly one thing breaks, in one place: two state
+dictionaries are merged into one. The major carries nothing besides this, and that is a decision
 (ADR-0031).
 
-### Что изменилось
+### What changed
 
-`UploadState` и `TimelineStatus` описывали одну и ту же сущность — состояние
-работы — под двумя именами, с двумя идентичными построчно таблицами тонов. Долг
-нашло ревью 2.5.0; свести его патчем было нельзя, оба типа входили в публичный
+`UploadState` and `TimelineStatus` described the same entity — the status of a
+job — under two names, with two line-for-line identical tone tables. The debt was
+found by the 2.5.0 review; it could not be settled with a patch, as both types were part of the public
 API.
 
-Теперь тип один: **`ProgressStatus`**. Старые имена **удалены**, алиасов не
-осталось: `@deprecated`-алиас в мажоре — это второй словарь, ради устранения
-которого всё и затевалось.
+Now there is one type: **`ProgressStatus`**. The old names are **removed**, no aliases
+are left: a `@deprecated` alias in a major is a second dictionary, and eliminating it
+was the whole point.
 
-### Кого затрагивает
+### Who is affected
 
-Всех, кто импортирует `UploadState` или `TimelineStatus`, и всех, кто передаёт
-`state` в `UploadQueue` — **включая тех, кто не импортирует типы вовсе**.
-Значения `UploadQueue` изменились, и на JavaScript это не увидит ни компилятор,
-ни линтер.
+Everyone who imports `UploadState` or `TimelineStatus`, and everyone who passes
+`state` to `UploadQueue` — **including those who do not import the types at all**.
+The `UploadQueue` values changed, and in a JavaScript project neither the compiler
+nor the linter will catch it.
 
-Найдите у себя:
+Find them in your code:
 
 ```bash
 grep -rn "UploadState\|TimelineStatus" src/
 grep -rn "state: *[\"']\(done\|error\)[\"']" src/
 ```
 
-`Timeline` не затронут ничем, кроме имени типа: его значения победили.
+`Timeline` is affected by nothing except the type name: its values won out.
 
-### До → после
+### Before → after
 
-| Понятие       | `TimelineStatus` | `UploadState` | `ProgressStatus` |
-| ------------- | ---------------- | ------------- | ---------------- |
-| не начиналось | `pending`        | `pending`     | `pending`        |
-| идёт          | `running`        | `running`     | `running`        |
-| успех         | `success`        | **`done`**    | **`success`**    |
-| провал        | `failed`         | **`error`**   | **`failed`**     |
+| Concept     | `TimelineStatus` | `UploadState` | `ProgressStatus` |
+| ----------- | ---------------- | ------------- | ---------------- |
+| not started | `pending`        | `pending`     | `pending`        |
+| in progress | `running`        | `running`     | `running`        |
+| success     | `success`        | **`done`**    | **`success`**    |
+| failure     | `failed`         | **`error`**   | **`failed`**     |
 
 ```tsx
-// было
+// before
 import type { UploadState, TimelineStatus } from "@olddevs/ui";
-<UploadQueue items={[{ id: "1", name: "смета.xlsx", state: "done" }]} />;
+<UploadQueue items={[{ id: "1", name: "estimate.xlsx", state: "done" }]} />;
 
-// стало
+// after
 import type { ProgressStatus } from "@olddevs/ui";
-<UploadQueue items={[{ id: "1", name: "смета.xlsx", state: "success" }]} />;
+<UploadQueue items={[{ id: "1", name: "estimate.xlsx", state: "success" }]} />;
 ```
 
-Победили значения `Timeline`: `success` и `failed` описывают **исход** и
-симметричны друг другу. Пара `done` и `error` несимметрична: первое про
-завершённость, второе про событие, и вместе они читаются так, будто «завершено с
-ошибкой» тоже возможное состояние.
+The `Timeline` values won out: `success` and `failed` describe the **outcome** and
+are symmetric to each other. The pair `done` and `error` is not: the first is about
+completeness, the second about an event, and together they read as if "completed with
+an error" were also a possible state.
 
-Имя типа нейтральное намеренно: `TimelineStatus` у очереди загрузок врал бы —
-никакого timeline у неё нет.
+The type name is neutral on purpose: `TimelineStatus` on an upload queue would lie —
+it has no timeline.
 
-### Семантика и доступность
+### Semantics and accessibility
 
-Для клавиатуры, фокуса и доступных имён не меняется ничего. Тона состояний те
-же: таблица `pending → neutral`, `running → accent`, успех `→ success`,
-провал `→ danger` действовала в обоих компонентах и до сведения — менялись
-только имена ключей.
+Nothing changes for the keyboard, focus and accessible names. The state tones are the same:
+the table `pending → neutral`, `running → accent`, success `→ success`,
+failure `→ danger` applied in both components before the merge — only
+the key names changed.
 
-**Незнакомое значение по-прежнему не роняет экран**: оно даёт нейтральный тон.
-Защита была у обоих компонентов и раньше, теперь она описана в самом словаре, а
-не повторена дважды. Начиная с 3.0.0 её стерегут тесты в обоих компонентах — до
-этого тест был только у `Timeline`.
+**An unknown value still does not crash the screen**: it gets the neutral tone.
+Both components had this protection before, and now it is described in the dictionary itself and
+not repeated twice. Since 3.0.0 tests guard it in both components — before
+that, only `Timeline` had a test.
 
-### Действие до обновления
+### Action before updating
 
-1. Замените импорты типов на `ProgressStatus`.
-2. Замените значения `done` → `success` и `error` → `failed` **в данных**, а не
-   только в типах. Если состояния приходят с бэкенда, сопоставление делайте
-   в своём адаптере: кит доменных словарей не знает и не угадывает.
-3. Прогоните сборку. На TypeScript ошибки будут точными; на JavaScript
-   сломанного значения не увидит никто, кроме тона — упавший файл нарисуется
-   нейтральным вместо красного.
+1. Replace the type imports with `ProgressStatus`.
+2. Replace the values `done` → `success` and `error` → `failed` **in the data**, not
+   only in the types. If states come from a backend, map them
+   in your adapter: the kit does not know domain dictionaries and does not guess.
+3. Run the build. In TypeScript the errors will point to every place; in JavaScript
+   the only symptom is the tone: a failed file will be rendered
+   neutral instead of red.
 
-### Что ещё появилось — действий не требует
+### What else appeared — no action needed
 
-Всё ниже — добавления: старый код продолжает работать без правок.
+Everything below is an addition: the old code keeps working with no edits.
 
-**`SavedViews`** — переключатель именованных снимков состояния. Форма вида
-параметризована вашим состоянием (`SavedView<T>`), а не привязана к
-`TableState`; хранение, шаринг и URL остаются у вас целиком. Подробности — на
-[странице компонента](../components/table/saved-views.md).
+**`SavedViews`** — a switcher of named state snapshots. The shape of a view
+is parameterized by your state (`SavedView<T>`) and is not tied to
+`TableState`; storage, sharing and the URL stay entirely with you. For details, see the
+[component page](../components/table/saved-views.md).
 
-**Подсказка и ошибка `FormField` доходят до семей react-aria.** У
-`Select`, `Combobox`, `DatePicker` и `TagInput` описание от `FormField` теперь
-связано с полем через `aria-describedby`. **Это исправление доступности, и оно меняет
-объявляемое:** там, где подсказка была видна на экране, но скринридеру не
-доставалась, она начнёт читаться. Ваши тесты на доступное описание этих полей
-могут потребовать обновления — раньше его не было вовсе.
+**The `FormField` hint and error reach the react-aria component families.** For
+`Select`, `Combobox`, `DatePicker` and `TagInput`, the description from `FormField` is now tied to
+the field through `aria-describedby`. **This is an accessibility fix, and it changes
+what is announced:** where a hint was visible on screen but did not reach a screen reader, a
+screen reader will now read it. Your tests for the accessible description of these fields
+may need updating — before, there was none at all.
 
-У `Select`, `DatePicker` и `TagInput` заодно появился публичный проп
-`aria-describedby`; своё значение не вытесняет описание от `FormField`, а
-сливается с ним.
+`Select`, `DatePicker` and `TagInput` also gained a public `aria-describedby`
+prop; your own value does not replace the `FormField` description, but is merged with
+it.
 
-**Figma Code Connect** — 16 основных компонентов зеркала привязаны к компонентам кита.
-Потребителя не касается: привязки в пакет не уезжают.
+**Figma Code Connect** — 16 mirror main components are bound to the kit's components.
+This does not affect the consumer: the bindings do not ship in the package.
 
-### Чего в 3.0.0 нет
+### What 3.0.0 does not include
 
-Ни одного изменения, кроме описанного выше. Сознательно **не** вошли в мажор:
+No changes besides those described above. These were deliberately **left out** of the major:
 
-- **RTL** — открытый вопрос спеки; `dir` в провайдере остаётся необъявленным;
-- **peer React 18** — остаётся `react: ^19`; расширение удваивает сборку
-  потребителя в CI и решается отдельно;
-- **компоненты графиков** — не появятся: графики остаются у потребителя
+- **RTL** — an open question of the spec; `dir` in the provider stays undeclared;
+- **peer React 18** — stays `react: ^19`; widening doubles the consumer's CI
+  build and is solved separately;
+- **chart components** — will not appear: charts stay with the consumer
   (ADR-0032);
-- **виртуализация `Table`, экспорт CSV, `JsonViewer`, `LogViewer`** — сняты за
-  отсутствием экрана-заказчика (ADR-0031).
+- **`Table` virtualization, CSV export, `JsonViewer`, `LogViewer`** — dropped for
+  lack of a requesting screen (ADR-0031).
 
-Мажор ломает контракт один раз и в одном месте. Если сгрузить в него всё
-накопленное, пришлось бы перечитывать свой код и тем, кого словарь состояний не
-касается вовсе.
+A major breaks the contract once and in one place. Dumping everything accumulated into it
+would force even users the state dictionary does not affect to reread their code.
 
-## 2.6.0 — пакет проверяется у потребителя
+## 2.6.0 — the package is checked on the consumer's side
 
-Ломающего нет: один новый компонент и одно новое требование к сборке
-потребителя. Действие требуется ровно одно — см. пункт 2.
+Nothing breaking: one new component and one new requirement for the consumer's
+build. Exactly one action is required — see item 2.
 
-**1. `ContextualSaveBar`.** Полоса несохранённых изменений: появляется с первой
-правкой формы, показывает число правок и две кнопки. Долг, оставшийся от волны 20. Чем он отличается
-от `SelectionBar` и `Banner`, сказано на
-[странице компонента](../components/navigation/contextual-save-bar.md).
+**1. `ContextualSaveBar`.** A bar for unsaved changes: it appears with the first
+edit of a form, shows the number of edits and two buttons. Debt carried over from wave 20. How it differs from
+`SelectionBar` and `Banner` is described on the
+[component page](../components/navigation/contextual-save-bar.md).
 
-**2. `optimizePackageImports` становится обязательным в Next.js.** Одна строка в
-конфигурации потребителя:
+**2. `optimizePackageImports` becomes mandatory in Next.js.** One line in the
+consumer's configuration:
 
 ```js
 // next.config.mjs
 export default { experimental: { optimizePackageImports: ["@olddevs/ui"] } };
 ```
 
-Формально это не ломающее изменение: пакет и без неё собирается и работает.
-Но **цена без неё непозволительная**: страница с одной `Button` весит 408 кБ
-вместо 117 при базовой линии 102 (замер выпуска 2.6.0), а серверный компонент с двумя чистыми
-функциями и без единого компонента кита — столько же. Причина в границе
-клиентского графа, а не в упаковке пакета: тот же `dist` на обычном rollup
-отдаёт `Button` за 6 кБ. Обоснование и отвергнутые альтернативы — в
+Formally this is not a breaking change: the package builds and works without it.
+But **the price without it is unacceptable**: a page with one `Button` weighs 408 kB
+instead of 117 at a baseline of 102 (measured at the 2.6.0 release), and a server component with two pure
+functions and not a single kit component weighs the same. The cause is the client
+graph boundary, not the package's packaging: the same `dist` on plain rollup
+ships `Button` at 6 kB.
 ADR-0029.
 
-Проверьте свою конфигурацию при обновлении. Если приложение не на Next.js,
-измерьте цену импорта у себя: кит этот случай пока не проверял.
+Check your configuration when updating. If the app is not on Next.js,
+measure the import cost yourself: the kit has not checked this case yet.
 
-**3. Отдельного входа `@olddevs/ui/server` не появилось и не появится.** Чистые
-утилиты (`cn`, `tableStateToParams`, `formatMask` и прочие) импортируются из
-корня и в клиентский граф не тянут — со строкой из пункта 2.
+**3. A separate `@olddevs/ui/server` entry point did not appear and will not.** Pure
+utilities (`cn`, `tableStateToParams`, `formatMask` and others) are imported from the
+root and are not pulled into the client graph if you add the line from item 2.
 
-**4. Новые проверки пакета** потребителя не касаются, но объясняют, откуда
-взялись числа выше: `npm run check:dist`, `npm run check:consumer`,
-`npm run size`, `npm run release:check`. Версия и `CHANGELOG.md` теперь ведутся
-changesets.
+**4. New package checks** do not affect the consumer, but they explain where the numbers
+above came from: `npm run check:dist`, `npm run check:consumer`,
+`npm run size`, `npm run release:check`. The version and `CHANGELOG.md` are now maintained
+with changesets.
 
-**Отложено сознательно:** Figma Code Connect (приоритет P2 из спецификации,
-только после стабилизации имён и осей); привязка описания у семей react-aria (`Select`,
-`Combobox`, `DatePicker`, `TagInput`) — у них свои слоты описания; сведение
-`UploadState` и `TimelineStatus` — ломает публичный тип и ждёт мажора;
-расширение peer до React 18 — удваивает сборку потребителя в CI.
+**Deliberately postponed:** Figma Code Connect (priority P2 in the specification, only after
+the names and axes stabilize); binding the description for the react-aria component families (`Select`,
+`Combobox`, `DatePicker`, `TagInput`) — they have their own description slots; merging
+`UploadState` and `TimelineStatus` — it breaks a public type and waits for a major;
+widening the peer to React 18 — it doubles the consumer's CI build.
 
-## 2.5.1 — две правки по ревью 2.5.0
+## 2.5.1 — two fixes after the 2.5.0 review
 
-Ломающего нет; действий от потребителя не требуется.
+Nothing breaking; no action is required from the consumer.
 
-**1. `Truncate` снова следит за размером после первой обрезки.** Обёртка в
-`Tooltip` пересоздавала узел, а `ResizeObserver` оставался на старом: колонка,
-расширенная после обрезки, не снимала ни `tabIndex`, ни подсказку.
+**1. `Truncate` once again tracks size changes after the first truncation.** The `Tooltip` wrapper
+recreated the node while `ResizeObserver` stayed on the old one: a column
+widened after truncation removed neither `tabIndex` nor the tooltip.
 
-**2. `SortableList` не теряет строку при сбросе «на себя».** Когда ключ цели
-оказывался среди перемещаемых, перестановка выбрасывала последний элемент
-списка и передавала потребителю испорченный порядок. Теперь такой сброс ничего не
-меняет и потребителю не передаётся. Механика перестановки вынесена в чистую функцию и
-проверена на массивах.
+**2. `SortableList` does not lose a row on a drop "onto itself".** When the target key
+was among the items being moved, the reorder dropped the last item of the
+list and passed a corrupted order to the consumer. Now such a drop changes nothing
+and is not passed to the consumer. The reorder mechanics are extracted into a pure function and
+tested on arrays.
 
-**Долг, названный, но не закрытый:** `UploadState` (`done`/`error`) и
-`TimelineStatus` (`success`/`failed`) — два словаря одного понятия. Сведение к
-одному ломает публичный тип, выпущенный в 2.5.0, и ждёт следующего мажора.
+**A debt that was named but not closed:** `UploadState` (`done`/`error`) and
+`TimelineStatus` (`success`/`failed`) are two dictionaries for one concept. Merging them into
+one breaks the public type released in 2.5.0 and waits for the next major.
 
-## 2.5.0 — данные, загрузки, уведомления
+## 2.5.0 — data, uploads, notifications
 
-Ломающего нет: всё новое — добавления, у `AppShell` прибавился один слот.
+Nothing breaking: everything new is additive, and `AppShell` gained one slot.
 
-**1. Восемь новых семей компонентов.** `Banner`, `UploadQueue`, `NotificationItem` /
+**1. Eight new component families.** `Banner`, `UploadQueue`, `NotificationItem` /
 `NotificationList` / `NotificationCenter`, `MediaCard`, `SortableList`,
 `VirtualGrid`, `CopyButton`, `Truncate`.
 
-**2. У `AppShell` появился слот `banners`** — сообщения уровня приложения над
-шапкой. Без пропа разметка каркаса не меняется ни на узел. Баннеры не липкие, и
-`--topbar-h` продолжает означать ровно высоту шапки: контракт липкости не
-трогается.
+**2. `AppShell` gained a `banners` slot** — app-level messages above the
+header. Without the prop, the shell's markup stays identical node for node. Banners are not sticky, and
+`--topbar-h` still means exactly the header height: the sticky positioning contract
+is not touched.
 
-**3. Новых зависимостей нет.** Перетаскивание и виртуализация стоят на
-`react-aria-components`, уже объявленном peer-зависимостью, а не на `@dnd-kit`
-и `@tanstack/react-virtual`, как во фронтенде приложения-источника
+**3. No new dependencies.** Drag and drop and virtualization are built on
+`react-aria-components`, already declared as a peer dependency, and not on `@dnd-kit`
+and `@tanstack/react-virtual`, as in the source app's frontend
 (ADR-0028).
 
-Два следствия для тех, кто переезжает с этого фронтенда:
+Two consequences for those migrating from that frontend:
 
-- `SortableList` рисует **ручку перетаскивания** в каждой строке. Без неё
-  react-aria не даёт таскать с клавиатуры вовсе — она лишь предупреждает в
-  консоль. Ручка обязательна.
-- `VirtualGrid` **прокручивает свой контейнер, а не окно**. Задайте контейнеру
-  высоту: без неё виртуализация не включится, и сетка отрисует все ячейки разом.
-  Сетка этого фронтенда построена на `useWindowVirtualizer` и прокручивает
-  страницу.
+- `SortableList` renders a **drag handle** in every row. Without it,
+  react-aria does not allow dragging from the keyboard at all — it only warns in the
+  console. The handle is mandatory.
+- `VirtualGrid` **scrolls its own container, not the window**. Give the container
+  a height: without it, virtualization will not turn on, and the grid will render all cells at once.
+  The grid in that frontend is built on `useWindowVirtualizer` and scrolls the page.
 
-**4. Новые пространства каталога сообщений:** `banner`, `uploadQueue`,
-`notifications`, `mediaCard`, `sortableList`, `copyButton`. Ключи аддитивные —
-`PartialUiMessages` глубоко частичный, ломающим это не считается.
+**4. New message catalog namespaces:** `banner`, `uploadQueue`,
+`notifications`, `mediaCard`, `sortableList`, `copyButton`. The keys are additive —
+`PartialUiMessages` is deeply partial, so this does not count as breaking.
 
-**5. Отложено:** `ContextualSaveBar` — в волну 21. `SortableGrid` не заводится:
-сетка получит перетаскивание, когда появится экран-заказчик. Графики,
-`JsonViewer`, `LogViewer` — приоритет P2, берутся под конкретный экран.
+**5. Postponed:** `ContextualSaveBar` — to wave 21. `SortableGrid` is not created:
+the grid will get drag and drop when a requesting screen appears. Charts,
+`JsonViewer`, `LogViewer` — priority P2, taken on for a specific screen.
 
-Состав волны подробно — ADR-0027.
+The scope of the wave is covered in detail in ADR-0027.
 
-## 2.4.0 — формат поля виден и объявлен
+## 2.4.0 — the field format is visible and announced
 
-Ломающего нет, но **вид двух выпущенных компонентов изменился** — прочитайте
-пункт 1, даже если ничего не обновляли в коде.
+Nothing breaking, but **the look of two released components changed** — read
+item 1 even if you updated nothing in the code.
 
-**1. `MaskedInput` и `PhoneInput` показывают формат прямо в поле.** Пустое
-телефонное поле теперь читается `+7 (___) ___-__-__`, и трафарет маски исчезает по мере
-ввода. До 2.4.0 формат не сообщался ничем: пустое поле было пустым
-прямоугольником, а наполовину заполненное обрывалось на последней цифре.
+**1. `MaskedInput` and `PhoneInput` show the format right in the field.** An empty
+phone field now reads `+7 (___) ___-__-__`, and the mask guide disappears as you
+type. Before 2.4.0 nothing communicated the format: an empty field was an empty
+rectangle, and a half-filled one broke off at the last digit.
 
-Умолчание включено сознательно — отсутствие формата было дефектом. Выключается пропом:
+It is on by default, deliberately: the absence of a format was a defect. It is turned off with a prop:
 
 ```tsx
 <MaskedInput mask="99.99.9999" value={value} onChange={setValue} showMask={false} />
 ```
 
-Выключать стоит там, где формат уже сказан рядом и повторять его в поле — шум:
-короткая известная маска в плотной таблице, поле под подписью с примером.
+Turn it off where the format has already been stated nearby and repeating it in the field is noise:
+a short well-known mask in a dense table, a field under a label with an example.
 
-**2. Подсказка и ошибка `FormField` объявляются скринридером.** Раньше они были
-видны только на экране: `FormField` рисовал их `<div>` без `id`, и связать их с
-полем было нечем. Теперь `id` создаёт `FormField`, а поля кита
-забирают его в `aria-describedby`.
+**2. The `FormField` hint and error are announced by a screen reader.** Before, they were
+visible only on screen: `FormField` rendered them as a `<div>` without an `id`, and there was
+no way to tie them to the field. Now `FormField` generates the `id`, and the kit's fields
+pick it up and use it in `aria-describedby`.
 
-Действий от потребителя не требуется. Если вы описывали поле своим узлом —
-описание **дополняется, а не вытесняется**: атрибут хранит список.
+No action is required from the consumer. If you described the field with your own node,
+the description is **supplemented, not replaced**: the attribute holds a list.
 
-Забирают описание `TextControl` и всё, что на нём стоит (`MaskedInput`,
-`PhoneInput`, `PasswordInput`, `SearchControl`), плюс `NumberInput`. Семьи на
-react-aria (`Select`, `Combobox`, `DatePicker`, `TagInput`) несут свои слоты
-описания и подсказку `FormField` пока не забирают.
+`TextControl` and everything built on it (`MaskedInput`,
+`PhoneInput`, `PasswordInput`, `SearchControl`), plus `NumberInput`, pick up the description. The react-aria
+component families (`Select`, `Combobox`, `DatePicker`, `TagInput`) carry their own description slots
+and do not pick up the `FormField` hint yet.
 
-**3. Неподходящий символ объявляется.** Символ, не подошедший под токен маски,
-по-прежнему отбрасывается, но рядом с полем появляется живая область с тем, чего
-здесь ждали. Разбирается ровно один набранный символ; вставка не разбирается.
-Новое пространство каталога — `maskedInput`; ключей два, и в локали `ru` они
-есть.
+**3. A character that does not fit the mask is announced.** A character that did not fit the mask token
+is still dropped, but a live region appears next to the field saying what was
+expected here. Exactly one typed character is parsed; a paste is not parsed.
+The new message catalog namespace is `maskedInput`; it has two keys, and they
+exist in the `ru` locale.
 
-**4. У `TextControl` появился слот `underlay`** — подложка под значением, на той
-же строке. На нём построен трафарет маски. Компонент сам вешает на подложку
-`aria-hidden` и снимает с неё события указателя (`pointer-events: none`): читать
-там нечего.
+**4. `TextControl` gained an `underlay` slot** — a background under the value, on the same
+line. The mask guide is built on it. The component itself puts `aria-hidden` on the background and
+sets `pointer-events: none` on it: there is nothing to read there.
 
-Обоснование решений и источники — в ADR-0026.
+The rationale for the decisions and the sources are in ADR-0026.
 
-## 2.3.0 — продвинутые поля ввода
+## 2.3.0 — advanced input fields
 
-Ломающего нет: всё новое — добавления, а у `FormField` прибавилась одна ось,
-которая включается наличием пропа или контекста.
+Nothing breaking: everything new is additive, and `FormField` gained one axis,
+which is enabled by passing a prop or a context.
 
-**1. Новые компоненты:** `PasswordInput`, `FormLayout` с `FieldRow`,
-`PinInput`, `InlineEdit`, `TreeView`, `MaskedInput`, `PhoneInput`. Новые
-утилиты: `formatMask`, `unmask`, `maskCapacity`, константа `RU_PHONE_MASK`.
+**1. New components:** `PasswordInput`, `FormLayout` with `FieldRow`,
+`PinInput`, `InlineEdit`, `TreeView`, `MaskedInput`, `PhoneInput`. New
+utilities: `formatMask`, `unmask`, `maskCapacity`, the constant `RU_PHONE_MASK`.
 
-**2. `FormField` умеет боковую подпись.** `layout="stack" | "side"`; без пропа
-и без `FormLayout` разметка не меняется ни на узел — это проверяется тестом на
-разметку целиком. Ось живёт у поля, а не у раскладки, потому что подпись рисует
-`FormField` (ADR-0025). Ширина колонки подписей — переменная `--form-label-w`.
+**2. `FormField` supports a side label.** `layout="stack" | "side"`; without the prop
+and without `FormLayout` the markup stays identical node for node — a whole-markup test
+checks this. The axis lives on the field, not on the layout, because the label is rendered
+by `FormField` (ADR-0025). The width of the label column is the variable `--form-label-w`.
 
-**3. `CurrencyInput` не появится.** Это `NumberInput` с `formatOptions`:
-react-aria форматирует валюту, разбирает ввод и берёт разделители разрядов и
-десятичный знак из локали. Отдельный компонент дублировал бы существующий:
+**3. `CurrencyInput` will not appear.** It is a `NumberInput` with `formatOptions`:
+react-aria formats the currency, parses the input and takes the grouping separators and
+the decimal separator from the locale. A separate component would duplicate an existing one:
 
 ```tsx
-<NumberInput label="Сумма" formatOptions={{ style: "currency", currency: "RUB" }} />
+<NumberInput label="Amount" formatOptions={{ style: "currency", currency: "RUB" }} />
 ```
 
-**4. `TreeSelect` отложен до заказчика.** Он собирается из `TreeView` и
-`Popover`; заводить его без единого экрана — значит проектировать вслепую —
-ровно то, за что волна 18 заплатила переделкой `TablePreferences` из меню в
-панель. Появится экран с выбором из иерархии — вернётся и вопрос.
+**4. `TreeSelect` is postponed until a requesting screen appears.** It is assembled from `TreeView` and
+`Popover`; creating it without a single screen means designing blind —
+exactly what wave 18 paid for by redoing `TablePreferences` from a menu into a
+panel. When a screen with a choice from a hierarchy appears, the question will return too.
 
-**5. У `PhoneInput` формат один и фиксированный.** Обещание «формат из локали»
-снято: `Intl` телефоны не форматирует вовсе, а честный разбор — это
-`libphonenumber` весом в сотни килобайт. Формат приходит пропом с умолчанием
-`RU_PHONE_MASK`. Компонент не разбирает номер, не хранит справочник стран и не
-валидирует.
+**5. `PhoneInput` has one fixed format.** The promise of "format from the locale"
+is withdrawn: `Intl` does not format phone numbers at all, and proper parsing is
+`libphonenumber`, weighing hundreds of kilobytes. The format comes as a prop with the default
+`RU_PHONE_MASK`. The component does not parse a number, does not keep a country list and does not
+validate.
 
-**6. `PinInput` отдаёт строку, и дыр в ней не бывает.** Поля — показ одного
-значения, а не N независимых: удаление символа в середине сдвигает остальные
-влево, как в обычном текстовом поле.
+**6. `PinInput` returns a string, and there are no gaps in it.** The cells are a display of one
+value, not N independent ones: deleting a character in the middle shifts the others
+left, as in an ordinary text field.
 
-**7. Роль `TreeView` — `treegrid`, а узлы `row`.** Так устроена react-aria: в
-строке живут кнопка раскрытия и флажок, а `treeitem` второго интерактивного
-элемента внутри себя не предполагает. Если вы ищете узлы в тестах — ищите по
-роли `row`. `useTreeData` кит не реэкспортирует: это хранилище, а состоянием
-кит не владеет.
+**7. The `TreeView` role is `treegrid`, and the nodes are `row`.** That is how react-aria is built: a
+row holds the expand button and a checkbox, and a `treeitem` does not expect a second interactive
+element inside itself. If you look for nodes in tests, query them by the
+`row` role. The kit does not re-export `useTreeData`: it is a store, and the
+kit does not own state.
 
-## 2.2.0 — продуктовая таблица
+## 2.2.0 — the product table
 
-Ломающего нет: всё новое — добавления, а у `Table` прибавилась одна ось, которая
-включается наличием пропа.
+Nothing breaking: everything new is additive, and `Table` gained one axis, which
+is enabled by passing a prop.
 
-**1. `Table` умеет раскрытие строки.** `renderDetail` плюс `expandedKeys` /
-`onExpandedChange`. Без `renderDetail` разметка не меняется ни на узел — это
-проверяется тестом. Раскрытые строки задаются множеством ключей, как выделение: переключателя «одна
-строка или несколько» нет, потому что состояние таблица не хранит и поддержать
-такой проп не может.
+**1. `Table` supports row expansion.** `renderDetail` plus `expandedKeys` /
+`onExpandedChange`. Without `renderDetail` the markup stays identical node for node — a test
+checks this. Expanded rows are held as a set of keys, like selection: there is no "one
+row or several" switch, because the table does not store state and cannot support
+such a prop.
 
-**2. `rowLabel` стоит передавать вместе с раскрытием.** Без него у всех
-раскрывателей одинаковое имя, и скринридер в режиме перечисления кнопок читает
-двадцать одинаковых «Показать подробности».
+**2. `rowLabel` should be passed together with expansion.** Without it, all
+disclosure buttons have the same name, and a screen reader in button-listing mode reads
+twenty identical "Show details".
 
-**3. `UiProvider` принимает `density`.** Умолчание, а не режим: таблица и её
-шестерёнка перекрывают. Проп обещан в 2.0.0 и отложен ADR-0002 до
-появления читателя; им стал `DataTable`.
+**3. `UiProvider` accepts `density`.** A default, not a mode: the table and its
+gear override it. The prop was promised in 2.0.0 and postponed by ADR-0002 until
+something read it; `DataTable` became that reader.
 
-**4. Новые компоненты:** `DataTable`, `TableToolbar`, `TablePreferences`,
-`FilterBar`, `FilterBarAdd`. Новые утилиты: `useTableState`,
+**4. New components:** `DataTable`, `TableToolbar`, `TablePreferences`,
+`FilterBar`, `FilterBarAdd`. New utilities: `useTableState`,
 `tableStateToParams`, `tableStateFromParams`, `DEFAULT_TABLE_STATE`.
 
-**5. Выделение — в пределах страницы.** «Выделить всё» отмечает пришедшие
-`items`; выделения всей выборки кит не поддерживает, и подписи об этом не врут.
-Если вам нужно выделение за пределами страницы — это ваш код, а не кит.
+**5. Selection is within a page.** "Select all" marks the `items` that arrived;
+the kit does not support selecting all the filtered rows, and the labels about it do not lie.
+If you need selection beyond the page, that is your code, not the kit's.
 
-**6. Состояние переносится в URL без выделения и раскрытия.** Список ключей
-ничем не ограничен по длине, а ссылка, открытая назавтра, отметила бы записи,
-которых уже нет.
+**6. State is carried into the URL without selection and expansion.** The list of keys
+has no length limit, and a link opened the next day would mark records
+that no longer exist.
 
-## 2.1.2 — навигация в ящике мобильного режима
+## 2.1.2 — navigation in the mobile-mode drawer
 
-Ломающего нет. `SideNav`, показанная `AppShell` в `Drawer`, больше не
-схлопывается: кнопки сворачивания там нет, а `collapsed` и `defaultCollapsed` в
-оверлее не действуют. Иконочный режим отдаёт ширину содержимому страницы —
-рядом с ящиком отдавать её некому.
+Nothing breaking. `SideNav`, shown by `AppShell` in a `Drawer`, no longer
+collapses: there is no collapse button there, and `collapsed` and `defaultCollapsed` have no effect in the
+overlay. The collapsed mode gives width to the page content —
+there is nothing next to the drawer to give the width to.
 
-Если вы держите состояние свёрнутости у себя и оно пережило перезагрузку, поведение
-изменится к лучшему: раньше ящик открывался иконками без способа их развернуть.
-Колонка на широком экране работает как прежде; `onCollapsedChange` из ящика не
-вызывается.
+If you keep the collapsed state yourself and it survived a reload, the behavior
+changes for the better: before, the drawer opened with icons and no way to expand them.
+The column on a wide screen works as before; `onCollapsedChange` is not
+called from the drawer.
 
-### Две иконки изменили вид
+### Two icons changed their look
 
-`lucide-react` перерисовала `Calendar` и `CircleCheck` между 1.27 и 1.41 —
-у кита это `CalendarIcon` и `SuccessIcon`. Диапазон peer-зависимости
-(`^1.27.0`) не менялся, то есть **это произойдёт и без обновления кита**: любой
-потребитель, у которого `lucide-react` разрешилась в 1.41, увидит новые глифы.
+`lucide-react` redrew `Calendar` and `CircleCheck` between 1.27 and 1.41 —
+in the kit these are `CalendarIcon` and `SuccessIcon`. The peer dependency range
+(`^1.27.0`) did not change, which means **this will happen even without updating the kit**: any
+consumer whose `lucide-react` resolved to 1.41 will see the new glyphs.
 
-Действий не требуется. Строка здесь потому, что вид иконок — часть визуального
-контракта: `icons.ts` решает, какой иконкой обозначен смысл, и когда сама иконка
-перерисована, знать об этом полезно. Имена экспортов при этом целы — сторожит
-`tests/icons.test.ts`.
+No action is required. The line is here because the look of icons is part of the visual
+contract: `icons.ts` decides which glyph represents a meaning, and when the glyph itself
+is redrawn, it is useful to know. The export names stay intact — `tests/icons.test.ts`
+guards that.
 
-Заодно `@playwright/test` привёз более новый Chromium, и тот иначе рисует ручку
-изменения размера у `<textarea>`. На кит это не влияет никак: элемент рисует
-браузер. Упомянуто, потому что вместе с иконками это объясняет все 38
-переписанных снимков витрины.
+Along the way, `@playwright/test` brought a newer Chromium, and it renders the `<textarea>`
+resize handle differently. This does not affect the kit at all: the element is rendered
+by the browser. It is mentioned because, together with the icons, it explains all 38
+rewritten showcase snapshots.
 
-## 2.1.1 — правки по ревью 2.1.0
+## 2.1.1 — fixes after the 2.1.0 review
 
-Четыре дефекта, найденных ревью сразу после выпуска. Ломающего нет.
+Four defects found by the review right after the release. Nothing breaking.
 
-**1. `TopBar` терял подложку**, если потребитель передавал свой `style`:
-атрибут перезаписывался целиком, и липкая шапка с блюром показывала уезжающий
-контент насквозь. Теперь `style` потребителя дополняет подложку, а заданный
-им `background` её осознанно переопределяет.
+**1. `TopBar` lost its background** if the consumer passed their own `style`:
+the attribute was overwritten entirely, and the sticky header with blur showed the scrolling
+content straight through. Now the consumer's `style` supplements the background, and a `background` set
+by them overrides it deliberately.
 
-**2. `themeInitScript` не экранировал `<`.** Ключ хранилища с `</script>`
-закрывал инлайновый тег на месте. Живого XSS не было (ключ задаёт
-разработчик), но кит генерирует код под `dangerouslySetInnerHTML`, и защита
-здесь ставится по умолчанию.
+**2. `themeInitScript` did not escape `<`.** A storage key containing `</script>`
+closed the inline tag on the spot. There was no exploitable XSS (the key is set by the
+developer), but the kit generates code for `dangerouslySetInnerHTML`, and protection
+here is on by default.
 
-**3. `useAppShell` стал публичным.** Раньше `openNavigation` умел читать только
-китовый `TopBar`, и потребитель со своей шапкой получал навигацию, которую ниже
-`md` **нечем открыть**. Если у вас своя шапка — возьмите хук и нарисуйте кнопку;
-пример на странице [AppShell](../components/app-shell/app-shell.md).
+**3. `useAppShell` became public.** Before, `openNavigation` could be read only by the
+kit's `TopBar`, and a consumer with their own header got navigation that **cannot be opened**
+below `md`. If you have your own header, use the hook and render the button;
+there is an example on the [AppShell](../components/app-shell/app-shell.md) page.
 
-**4. Гейт покрытия классов** теперь видит компоненты оболочки. Попутно снят
-мёртвый класс `group` у `NavItem` — вариантов `group-*` у него нет.
+**4. The class coverage gate** now sees the shell components. Along the way, the dead
+`group` class on `NavItem` is removed — it has no `group-*` variants.
 
-## 2.1.0 — оболочка приложения
+## 2.1.0 — the app shell
 
-**Ломающего нет.** Волна только добавляет: `AppShell`, `SideNav`, `NavGroup`,
-`NavItem`, `TopBar`, реестр тем и два токена ширины. Существующий код
-продолжает работать без правок.
+**Nothing breaking.** The wave only adds: `AppShell`, `SideNav`, `NavGroup`,
+`NavItem`, `TopBar`, the theme registry and two width tokens. Existing code
+keeps working with no edits.
 
-Что стоит знать при переходе.
+What to know when upgrading.
 
-**1. `--topbar-h` теперь может публиковать кит.** Раньше переменную объявляло
-только приложение. Если вы поставите `TopBar` кита рядом со своей шапкой,
-обе начнут писать в одну переменную. Разведите их: `heightVar="--my-topbar-h"`
-или `heightVar={null}` у той, что публиковать не должна. Приложение без `TopBar`
-кита не задето вовсе.
+**1. `--topbar-h` can now be published by the kit.** Before, only the app declared the
+variable. If you put the kit's `TopBar` next to your own header,
+both will start writing to the same variable. Separate them: `heightVar="--my-topbar-h"`
+or `heightVar={null}` on the one that should not publish. An app without the kit's
+`TopBar` is not affected at all.
 
-**2. Списки тем можно перестать переписывать у себя.** `UI_THEMES`,
-`UI_ACCENTS`, `UI_BRANDS`, `normalizeTheme`, `applyTheme` и
-`themeInitScript` теперь приходят из кита. Свои константы вида
-`["light","dark","dim"]` заменяйте на них: разойтись с `styles.css` они больше
-не могут — это сторожит тест.
+**2. You can stop duplicating the theme lists in your own code.** `UI_THEMES`,
+`UI_ACCENTS`, `UI_BRANDS`, `normalizeTheme`, `applyTheme` and
+`themeInitScript` now come from the kit. Replace your own constants like
+`["light","dark","dim"]` with them: they can no longer diverge from `styles.css` —
+a test guards that.
 
-**3. Компонента переключателя темы кит не даёт и не даст.** Готовый код двух вариантов
-переключателя — в [рецепте](../theming.md#переключатель-темы). Решение и его причины —
+**3. The kit does not provide and will not provide a theme switcher component.** Ready-made code for both
+variants is in the [recipe](../theming.md#theme-switcher). The decision and its reasons are in
 ADR-0020.
 
-**4. Ширины сайдбара — токены, а не пропы.** `--sidenav-w` (240px) и
-`--sidenav-w-collapsed` (72px). Меняются в одном месте, см.
+**4. Sidebar widths are tokens, not props.** `--sidenav-w` (240px) and
+`--sidenav-w-collapsed` (72px). They change in one place; see
 [theming.md](../theming.md).
 
-**5. Иконка `NavigationIcon`** добавлена в `@olddevs/ui/icons` — «гамбургер»
-шапки.
+**5. The `NavigationIcon` icon** is added to `@olddevs/ui/icons` — the header's
+"hamburger".
 
-## Проверка перед выпуском
+## Pre-release check
 
-- Проверьте, что страница компонента и каталог компонентов обновлены согласно `AGENTS.md`.
-- `npm run typecheck`, `npm test`, `npm run format:check` — API и примеры не
-  расходятся с пакетом.
-- Для изменённого взаимодействия — Storybook и целевой a11y/interaction test.
+- Check that the component page and the component catalog are updated according to `AGENTS.md`.
+- `npm run typecheck`, `npm test`, `npm run format:check` — the API and examples do not
+  diverge from the package.
+- For changed interaction — Storybook and a targeted a11y/interaction test.
 
-## Связанные исходники
+## Related sources
 
-- Корневой вход пакета: `src/index.ts`.
-- Иконки: `src/icons.ts`.
-- Каталог страниц компонентов: `docs/components/index.md`.
+- The root entry point of the package: `src/index.ts`.
+- Icons: `src/icons.ts`.
+- The catalog of component pages: `docs/components/index.md`.

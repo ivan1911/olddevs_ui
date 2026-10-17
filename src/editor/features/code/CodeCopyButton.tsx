@@ -6,29 +6,28 @@ import { Tooltip, TooltipProvider } from "../../../components/overlays/Tooltip.j
 import { useMessages } from "../../../i18n/useMessages.js";
 import { cn } from "../../../lib/cn.js";
 
-/** Сколько держать «Скопировано» — столько же, сколько `CopyButton` по умолчанию. */
+/** How long "Copied" stays: as long as the kit's default `CopyButton` keeps it. */
 const RESET_MS = 2000;
 
 export interface CodeCopyButtonProps extends Omit<
   CopyButtonProps,
   "value" | "children" | "onCopy" | "size" | "variant" | "resetDelay"
 > {
-  /** Текст блока строкой — то, что уйдёт в буфер (ADR-0039: копируется текст, а не DOM). */
+  /** The block's text as a string: what goes into the clipboard (ADR-0039: the text is copied, not the DOM). */
   code: string;
 }
 
 /**
- * Кнопка «Копировать» в шапке блока кода: `CopyButton` кита с подсказкой
- * «Copy code» → «Copied».
+ * The "Copy" button in the header of a code Block: the kit's `CopyButton` with the tooltip
+ * "Copy code" → "Copied".
  *
- * ПОДСКАЗКА НЕ ЗАМЕНЯЕТ ИМЯ. Имя кнопки и объявление результата — дело
- * `CopyButton` («Copy» → «Copied», живая область); подсказка лишь для глаз и
- * уточняет, ЧТО копируется. Состояние для неё берётся из `onCopy`, а не из
- * внутренностей кнопки.
+ * THE TOOLTIP DOES NOT REPLACE THE NAME. The button's name and the announcement of the result
+ * belong to `CopyButton` ("Copy" → "Copied", a live region); the tooltip is only for the eye and
+ * says WHAT is copied. Its state comes from `onCopy`, not from the button's internals.
  *
- * СВОЙ `TooltipProvider`, как у Панели и у панели картинки: корневой кит
- * оставляет потребителю, а Редактор и просмотр без него падали бы на Radix.
- * Подсказка вешается на обёртку — `CopyButton` сам ref не принимает.
+ * ITS OWN `TooltipProvider`, as the Toolbar and the image panel have: the root kit component
+ * leaves the provider to the consumer, while the Editor and the View without it would crash in
+ * Radix. The tooltip wraps the button in a span, because `CopyButton` does not accept a ref.
  */
 export function CodeCopyButton({ code, ...rest }: CodeCopyButtonProps) {
   const messages = useMessages();
@@ -56,9 +55,9 @@ export function CodeCopyButton({ code, ...rest }: CodeCopyButtonProps) {
           <CopyButton
             {...rest}
             value={code}
-            // Иконка — 12 px, как шеврон у кнопки языка напротив: шапка в
-            // строку текста `text-xs`, и стандартная иконка кнопки в ней
-            // выглядел крупнее подписи. Зону нажатия (24 px) держит `xs`.
+            // The icon is 12 px, like the chevron of the language button next to it: the header is
+            // a `text-xs` line of text, and the button's default icon looked larger than the label.
+            // The 24 px hit area is kept by `xs`.
             className={cn("[&_svg]:size-3", rest.className)}
             size="xs"
             variant="ghost"

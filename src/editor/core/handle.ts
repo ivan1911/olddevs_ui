@@ -17,143 +17,138 @@ export {
 } from "./handleWatchers.js";
 
 /**
- * Плоские методы Хэндла (ADR-0058, раздел 8): то, что экран делает с Редактором
- * чаще всего. Остальное — `editor` (команды Меток, Блоков и своих Инструментов).
+ * Flat Handle methods (ADR-0058, section 8): what a screen does with the Editor most often. The rest
+ * is `editor` (commands of Marks, Blocks and custom Tools).
  *
- * Описаны отдельным интерфейсом, а `RichTextEditorHandle` его расширяет: тело
- * `RichTextEditor.tsx` остаётся компактным, а вся логика Хэндла живёт здесь.
+ * They are described by a separate interface, which `RichTextEditorHandle` extends: the body of
+ * `RichTextEditor.tsx` stays compact, and all the Handle logic lives here.
  *
- * ДО МОНТАЖА МЕТОДЫ ТИХИЕ. Движок создаётся в браузере после первого рендера, и
- * на сервере его нет: чтение отдаёт известное значение, запись и фокус ничего не
- * делают, вставка возвращает `false`. Очереди вызовов и исключения отвергнуты —
- * экран, дернувший метод слишком рано, ничего не теряет молча и не падает.
- * Готовность как событие — `onReady`.
+ * BEFORE MOUNT THE METHODS ARE SILENT. The engine is created in the browser after the first render,
+ * and there is none on the server: reads return the known value, writes and focus do nothing, insert
+ * returns `false`. Call queues and exceptions are rejected: a screen that calls a method too early
+ * loses nothing silently and does not crash. Readiness as an event is `onReady`.
  */
 export interface RichTextEditorHandleMethods {
   /**
-   * Фокус в Документ: `"end"` — каретка в конец (по умолчанию, как всегда),
-   * `"start"` — в начало, `"restore"` — туда, где выделение было до ухода
-   * фокуса (после своего диалога, меню, внешней панели). В HTML-режиме — в поле
-   * HTML.
+   * Focus the Document: `"end"` puts the caret at the end (the default), `"start"` at the start,
+   * `"restore"` where the selection was before focus left (for example, after one of the Editor's
+   * own dialogs or menus, or an external panel). In Source mode, the focus goes to the HTML field.
    */
   focus(position?: "start" | "end" | "restore"): void;
-  /** Снять фокус с Документа (в HTML-режиме — с поля HTML). */
+  /** Remove focus from the Document (in Source mode, from the HTML field). */
   blur(): void;
   /**
-   * Вставить HTML у каретки на месте выделения. `true` — вставлено, `false` —
-   * не вставлено: движка ещё нет, поле только для чтения или выключено, вставка
-   * вышла бы за `maxLength`, либо Схема отбросила всё вставленное (например,
-   * Блок выключенного Инструмента).
+   * Insert HTML at the caret, replacing the selection. `true` means inserted; `false` means not
+   * inserted: there is no engine yet, the field is read-only or disabled, the insert would exceed
+   * `maxLength`, or the Schema dropped everything inserted (for example, a Block of a disabled Tool).
    *
-   * Вставка проходит через Схему, как входящий `value`, и сама фокус не берёт.
-   * Это Правка автора: отдельный шаг истории, `onChange` после `changeDelay`,
-   * предел `maxLength` действует — вставка, которая за него вышла, не
-   * выполняется целиком, а не обрезается посередине.
+   * The insert goes through the Schema, like an incoming `value`, and does not take focus itself.
+   * It is a User edit: a separate history step, `onChange` after `changeDelay`, and the `maxLength`
+   * limit applies — an insert that would go over it is not performed at all, rather than cut in the
+   * middle.
    */
   insertHTML(html: string): boolean;
   /**
-   * Вставить текст у каретки на месте выделения — буквально, без разбора HTML.
-   * Перенос строки становится мягким переносом (в блоке кода — символом
-   * переноса). Возвращает и работает как `insertHTML`.
+   * Insert text at the caret, replacing the selection — literally, without parsing HTML. A line break
+   * becomes a hard break (in a code block, the newline character). Returns and behaves like
+   * `insertHTML`.
    */
   insertText(text: string): boolean;
   /**
-   * Текст Документа без разметки; Блоки разделены пустой строкой, атом — его
-   * Текстом атома (`atomText.ts`). До монтажа — `""`. В HTML-режиме сначала
-   * применяет правку поля HTML, как `getHTML()`.
+   * The Document's text without markup; Blocks are separated by a blank line, and an Atom is
+   * represented by its Atom text (`atomText.ts`). Before mount, `""`. In Source mode it first
+   * applies the edit made in the HTML field, as `getHTML()` does.
    */
   getText(): string;
   /**
-   * Выделенный текст по тому же правилу, что `getText()`: атом входит в него
-   * только целиком. Для свёрнутого выделения (каретки) и до монтажа — `""`.
+   * The selected text by the same rule as `getText()`: an Atom is included only in full. For a
+   * collapsed selection (a bare caret) and before mount, `""`.
    */
   getSelectedText(): string;
   /**
-   * Пуст ли Документ — по тому же правилу, что `required`: содержимое — текст,
-   * любой Атом (разделитель, картинка, мягкий перенос, свой — даже без текста)
-   * и таблица, в том числе с пустыми ячейками; пустой абзац, заголовок, список
-   * или цитата — не содержимое. До монтажа судит по
-   * входящему значению по тому же правилу; свой Блок там — всегда содержимое.
+   * Whether the Document is empty, by the same rule as `required`: content is text, any Atom (a
+   * horizontal rule, an image, a hard break, a custom one even without text) and a table, including
+   * one with empty cells; an empty paragraph, heading, list or quote is not content. Before mount,
+   * it evaluates the incoming value under the same rule; a custom Block always counts as content.
    */
   isEmpty(): boolean;
   /**
-   * Отменить правку (Правка автора: `onChange` после `changeDelay`). Работает
-   * при включённом Инструменте `history`, иначе, до монтажа, в HTML-режиме и в
-   * поле, которое автор не может править, — ничего не делает.
+   * Undo an edit (a User edit: `onChange` after `changeDelay`). Works when the `history` Tool is
+   * enabled; otherwise, before mount, in Source mode and in a field the author cannot edit, it does
+   * nothing.
    */
   undo(): void;
-  /** Повторить отменённую правку. Условия — как у `undo()`. */
+  /** Redo an undone edit. The conditions are the same as for `undo()`. */
   redo(): void;
-  /** Есть ли что отменить. Без Инструмента `history` и до монтажа — `false`. */
+  /** Whether there is something to undo. Without the `history` Tool and before mount, `false`. */
   canUndo(): boolean;
-  /** Есть ли что повторить. Без Инструмента `history` и до монтажа — `false`. */
+  /** Whether there is something to redo. Without the `history` Tool and before mount, `false`. */
   canRedo(): boolean;
   /**
-   * Команды Инструмента: `handle.tool("search")?.open({ query: "TODO" })`,
-   * `handle.tool("toc")?.jumpTo(2)`. Тип Команд выводится из имени по карте
-   * `RichTextTools`. `null`, если Инструмента нет в наборе `tools`, у него нет
-   * Команд или движок ещё не создан, — поэтому Команды выключенного Инструмента
-   * недоступны и в типах (`?.`), и во время работы.
+   * Tool commands: `handle.tool("search")?.open({ query: "TODO" })`, `handle.tool("toc")?.jumpTo(2)`.
+   * The type of the commands is derived from the name through the `RichTextTools` map. `null` if the
+   * Tool is not in the `tools` set, it has no commands, or the engine is not created yet — so the
+   * commands of a disabled Tool are unavailable both in the types (`?.`) and at runtime.
    *
-   * Каждая Команда возвращает `boolean`: выполнена или нет (HTML-режим, нет
-   * совпадений, нет заголовка, поле нельзя править) — как `insertHTML`. Имя вне
-   * карты (свой Инструмент без типизации) даёт `unknown`.
+   * Each command returns a `boolean`: performed or not (HTML mode, no matches, no heading, the field
+   * cannot be edited) — as `insertHTML` does. A name outside the map (a custom Tool without typing)
+   * gives `unknown`.
    */
   tool<Name extends keyof RichTextTools>(name: Name): ToolCommandsOf<Name> | null;
   tool(name: string): unknown;
 }
 
-/** Что Хэндлу нужно от Редактора: движок и то, что знает только он. */
+/** What the Handle needs from the Editor: the engine and what only it knows. */
 export interface HandleHost {
   editor: Editor | null;
-  /** Поле принимает правки автора: не `readOnly` и не выключено. */
+  /** The field accepts user edits: not `readOnly` and not disabled. */
   editable: boolean;
-  /** Последний HTML, о котором знает владелец значения, — ответ до монтажа. */
+  /** The last HTML known to the owner of the value; the answer before mount. */
   known: () => string;
   /**
-   * Начальный конверт из `defaultValue`: до монтажа HTML его ещё
-   * нет — Схему знает только движок, — и пустоту решает дерево конверта.
+   * Initial envelope from `defaultValue`: before mount there is no HTML for it yet — only the engine
+   * knows the Schema — and the envelope's tree decides emptiness.
    */
   initialDocument: () => RichTextDocument | undefined;
   /**
-   * Таблица в Схеме: только тогда она содержимое и до монтажа. Без инструмента
-   * `table` Схема выбросит её при разборе, и пустая таблица станет пустым полем.
+   * Table in the Schema: only then is it content, even before mount. Without the `table` Tool the
+   * Schema would drop it on parse, and an empty table would become an empty field.
    */
   tables: boolean;
-  /** HTML-режим открыт: Документ скрыт, правит автор поле HTML. */
+  /** HTML mode is open: the Document is hidden, and the author edits the HTML field. */
   sourceOpen: () => boolean;
   sourceField: () => HTMLTextAreaElement | null;
-  /** Применить правку поля HTML к Документу (то же, что на `getHTML()`). */
+  /** Apply the HTML field edit to the Document (the same as on `getHTML()`). */
   applySource: () => void;
-  /** Переписать поле HTML заново — Документ изменился снаружи поля. */
+  /** Rewrite the HTML field from scratch: the Document changed from outside the field. */
   rewriteSource: (editor: Editor) => void;
-  /** Пуст ли Документ по правилу кита, с учётом неприменённой правки поля HTML. */
+  /** Whether the Document is empty by the kit's rule, taking into account an unapplied edit of the HTML field. */
   fieldEmpty: (editor: Editor) => boolean;
-  /** Команды Инструмента набора; `null` — Инструмента или Команд нет (`ToolDescriptor.commands`). */
+  /** Commands of a Tool in the set; `null` means there is no Tool or no commands (`ToolDescriptor.commands`). */
   commands: (name: string) => object | null;
 }
 
-/** Тег целиком; комментарий и содержимое `script`/`style`/`template` разбор Схемой не видит. */
+/** A whole tag; a comment and the content of `script`/`style`/`template` are not seen by the Schema parse. */
 const TAG = /<[^>]*>/g;
 const UNSEEN = /<!--[\s\S]*?-->|<(script|style|template)\b[\s\S]*?<\/\1\s*>/gi;
 /**
- * Листья Документа — содержимое и без текста: мягкий перенос, линия, картинка,
- * свой Блок. Свой Блок до движка — всегда содержимое: атом ли он, знают только
- * его Extensions, а атом без текста — тоже содержимое.
+ * Leaves of the Document — content even without text: a hard break, a rule, an image, a custom Block.
+ * Before the engine, a custom Block is always content: only its Extensions know whether it is an
+ * Atom, and an Atom without text is content too.
  */
 const LEAF = /<(?:br|hr|img)\b|\sdata-block\s*=\s*["']?[A-Za-z][A-Za-z0-9]*_/i;
-/** Таблица — содержимое и с пустыми ячейками (`emptiness.ts`). */
+/** A table is content even with empty cells (`emptiness.ts`). */
 const TABLE = /<table\b/i;
-/** В блоке кода пробелы — текст; разбор снимает только перенос в конце. */
+/** In a code block spaces are text; parsing strips only the newline at the end. */
 const CODE = /<pre\b[^>]*>([\s\S]*?)<\/pre\s*>/gi;
 
 /**
- * Пустое входящее значение до движка — по правилу пустоты кита (`emptiness.ts`,
- * на нём держатся `required` и `isEmpty()` после монтажа). Разобрать HTML
- * Схемой без движка нельзя (на сервере нет DOM), поэтому судим по строке:
- * пусто, если нет ни листа, ни таблицы (при включённом `table`), ни текста.
- * Пустые обёртки (абзац, заголовок, список, цитата, Метка) — не содержимое; пробелы между тегами
- * разбор схлопывает, а неразрывный пробел и мнемоника — текст.
+ * An empty incoming value before the engine, by the kit's emptiness rule (`emptiness.ts`, which
+ * `required` and `isEmpty()` rely on after mount). The HTML cannot be parsed by the Schema without an
+ * engine (there is no DOM on the server), so we judge by the string: it is empty if there is no leaf,
+ * no table (with `table` enabled) and no text. Empty wrappers (paragraph, heading, list, quote, Mark)
+ * are not content; parsing collapses whitespace between tags, while a non-breaking space and a
+ * character reference are text.
  */
 function isBlankHtml(html: string, tables: boolean): boolean {
   const seen = html.replace(UNSEEN, "");
@@ -164,17 +159,16 @@ function isBlankHtml(html: string, tables: boolean): boolean {
   return /^[ \t\n\f\r]*$/.test(text);
 }
 
-/** Листья дерева — содержимое и без текста; правило то же, что у `LEAF`. */
+/** Leaves of the tree — content even without text; the rule is the same as for `LEAF`. */
 const LEAF_NODES: ReadonlySet<string> = new Set(["hardBreak", "horizontalRule", "image"]);
-/** Свой Блок — имя с префиксом Инструмента, как `data-block` в `LEAF`. */
+/** A custom Block — a name with the Tool prefix, as with `data-block` in `LEAF`. */
 const CUSTOM_NODE = /^[A-Za-z][A-Za-z0-9]*_/;
 
 /**
- * Пустой начальный конверт до движка — по тому же правилу, что `isBlankHtml`,
- * но по дереву: пусто, если нет ни листа, ни таблицы (при включённом `table`),
- * ни своего Блока, ни текста. Пробелы в конверте не схлопываются
- * (`jsonDocument.ts`), поэтому пробел — уже текст. Отвергнутый конверт даст
- * пустой Документ — он пуст.
+ * An empty initial envelope before the engine, by the same rule as `isBlankHtml` but over the tree:
+ * it is empty if there is no leaf, no table (with `table` enabled), no custom Block and no text.
+ * Spaces in the envelope are not collapsed (`jsonDocument.ts`), so a space is already text. A rejected
+ * envelope gives an empty Document, so it counts as empty.
  */
 function isBlankDocument(value: RichTextDocument, tables: boolean): boolean {
   if (!isRichTextDocument(value)) return true;
@@ -193,11 +187,10 @@ function usable(editor: Editor | null): editor is Editor {
 }
 
 /**
- * Правка автора через цепочку команд. `true`, если Документ изменился:
- * транзакцию, которую не пропустил предел, движок отвергает молча, и по
- * неизменной ссылке на документ это видно. `closeHistory` с обеих сторон делает
- * вставку отдельным шагом истории — отмена убирает её одну, а не вместе с
- * набором перед ней.
+ * A User edit through a command chain. `true` if the Document changed: the engine silently rejects a
+ * transaction that the limit did not let through, and this shows as an unchanged document reference.
+ * `closeHistory` on both sides makes the insert a separate history step — undo removes it alone, not
+ * together with the typing before it.
  */
 function authorEdit(
   host: HandleHost,
@@ -220,17 +213,17 @@ function authorEdit(
 }
 
 /**
- * Разбор HTML вставки Схемой — как у входящего `value`. `null`, если Схема
- * отбросила всё: `insertContent` Tiptap в этом случае вставил бы СТРОКУ как
- * текст («<hr>» буквами), а нам нужен отказ.
+ * Parsing the insert's HTML through the Schema, as for an incoming `value`. `null` if the Schema
+ * dropped everything: in that case Tiptap's `insertContent` would insert the STRING as text (the
+ * characters "<hr>"), and we need a refusal.
  */
 function parseHtml(editor: Editor, html: string) {
-  // Для строки Tiptap всегда отдаёт фрагмент.
+  // For a string Tiptap always returns a fragment.
   const content = createNodeFromContent(html, editor.schema) as Fragment;
   return content.size > 0 ? content : null;
 }
 
-/** Текст со строками: перенос — мягкий перенос Документа, а в коде — сам символ. */
+/** Text with lines: a line break is a hard break of the Document, and in code it is the character itself. */
 function textContent(text: string, inCode: boolean): JSONContent[] {
   if (inCode) return [{ type: "text", text }];
   return text
@@ -241,13 +234,13 @@ function textContent(text: string, inCode: boolean): JSONContent[] {
     ]);
 }
 
-/** Методы Хэндла поверх движка Редактора. */
+/** Handle methods on top of the Editor's engine. */
 export function createHandleMethods(host: HandleHost): RichTextEditorHandleMethods {
   const { editor } = host;
   const history = (command: "undo" | "redo") => {
-    // HTML-режим: Документ скрыт, а у поля HTML своя нативная отмена.
+    // HTML mode: the Document is hidden, and the HTML field has its own native undo.
     if (!usable(editor) || !host.editable || host.sourceOpen()) return;
-    // Без Инструмента `history` команды у движка нет — отмена тихая.
+    // Without the `history` Tool the engine has no such command — undo is silent.
     if (typeof editor.commands[command] === "function") editor.commands[command]();
   };
   const available = (command: "undo" | "redo") => {
@@ -266,7 +259,7 @@ export function createHandleMethods(host: HandleHost): RichTextEditorHandleMetho
           field?.setSelectionRange(field.value.length, field.value.length);
         return;
       }
-      // Tiptap: `null` — оставить выделение, где оно было, и вернуть фокус.
+      // Tiptap: `null` keeps the selection where it was and restores focus.
       if (usable(editor)) editor.commands.focus(position === "restore" ? null : position);
     },
     blur: () => {
@@ -308,7 +301,7 @@ export function createHandleMethods(host: HandleHost): RichTextEditorHandleMetho
     redo: () => history("redo"),
     canUndo: () => available("undo"),
     canRedo: () => available("redo"),
-    // Типы Команд выводятся из карты, а реализация знает только имя.
+    // The Command types are derived from the map, while the implementation knows only the name.
     tool: host.commands as RichTextEditorHandleMethods["tool"],
   };
 }

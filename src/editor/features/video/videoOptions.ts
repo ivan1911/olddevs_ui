@@ -9,30 +9,30 @@ import {
 import { VIDEO_PROVIDERS, type VideoProvider } from "./videoSrc.js";
 
 /*
-  Опции видео (ADR-0071, п. 4; OLDSUI-287): умолчания, проверки значений и чтение опций
-  из `tools`. Модуль серверно-безопасен, без Tiptap и React: описания Инструментов
-  берут отсюда умолчания, а `RichTextView` на сервере — опции для своего Острова.
+  Video options (ADR-0071, item 4; OLDSUI-287): defaults, value checks, and reading options from
+  `tools`. The module is safe to run on the server, with no Tiptap and no React: Tool descriptions
+  take their defaults from here, and `RichTextView` on the server takes the options for its island.
 */
 
-/** Умолчания: плеер встаёт сразу. Одни на `youtube` и `twitch`, каждый Инструмент читает свои. */
+/** Defaults: the player renders at once. One value serves both `youtube` and `twitch`; each Tool reads its own. */
 export const VIDEO_DEFAULTS: VideoToolOptions = { autoload: true };
 
-/** Проверки значений Опций по имени поля — по одной на поле `VIDEO_DEFAULTS`. */
+/** Value checks for the Options, by field name: one per field of `VIDEO_DEFAULTS`. */
 export const VIDEO_CHECKS: Readonly<Record<string, (value: unknown) => boolean>> = {
   autoload: (value) => typeof value === "boolean",
 };
 
-/** Грузится ли плеер сразу, по сервисам: данные, их можно отдать острову через границу RSC. */
+/** Whether the player loads at once, per service. Data: it can be passed to the island across the RSC boundary. */
 export type VideoAutoload = Readonly<Record<VideoProvider, boolean>>;
 
 /**
- * Опция `autoload` каждого сервиса из `tools`: запись `tool("youtube", …)` и
- * `tool("twitch", …)` поверх умолчаний. Читает её тем же `resolveToolOptions`, что
- * Редактор (`expandTools`): неверное значение заменяется умолчанием с тем же
- * `console.error` в разработке; записи нет — умолчание (`true`). Опция сервиса
- * действует на блоки только этого сервиса. Две записи одного Инструмента — ошибка
- * набора, на которой Редактор не стартует; Просмотр не выбирает «первую», а берёт
- * умолчание и сообщает.
+ * The `autoload` option of each service, from `tools`: the `tool("youtube", …)` and
+ * `tool("twitch", …)` entries over the defaults. It is read with the same `resolveToolOptions`
+ * as the Editor uses (`expandTools`): an invalid value is replaced by the default, with the same
+ * `console.error` in development. Without an entry the default applies (`true`). A service option
+ * applies only to the Blocks of that service. Two entries for one Tool are a configuration error
+ * that stops the Editor from starting. The View does not select the first one: it takes the
+ * default and reports it.
  */
 export function videoAutoloadOf(tools: readonly ToolEntry[] | undefined): VideoAutoload {
   const configured = configuredBuiltins(tools);

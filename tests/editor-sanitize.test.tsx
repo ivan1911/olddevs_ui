@@ -12,32 +12,32 @@ import {
 } from "../src/editor/schema-entry.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// The lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Очистка HTML Редактора настоящим DOMPurify на jsdom — так, как её делает
- * сервер потребителя (ADR-0050). DOMPurify в зависимостях кита нет: здесь он
- * dev-зависимость тестов, а хелпер получает экземпляр аргументом.
+ * Sanitizing the Editor's HTML with a real DOMPurify on jsdom, the way the
+ * consumer's server does it (ADR-0050). DOMPurify is not a kit dependency: here it is
+ * a dev dependency of the tests, and the helper receives the instance as an argument.
  *
- * Две стороны одного обещания. Безопасный путь — по умолчанию:
- * `sanitizeRichText(html, DOMPurify)` ставит хуки Схемы сам, и всё, что
- * Редактор не пишет, снимается. И ничего лишнего не теряется: то, что Редактор
- * отдал, проходит очистку байт в байт.
+ * Two sides of one promise. The safe path is the default:
+ * `sanitizeRichText(html, DOMPurify)` installs the Schema hooks itself, and everything that
+ * the Editor does not write is stripped. And nothing extra is lost: what the Editor
+ * produced passes sanitizing byte for byte.
  */
 
 /**
- * Свой экземпляр DOMPurify на `window` jsdom тестовой среды. На сервере у
- * потребителя это `new JSDOM("").window` — тот же jsdom, другой документ.
+ * Its own DOMPurify instance on the `window` of the test jsdom. On the consumer's server
+ * it is `new JSDOM("").window`: the same jsdom, a different document.
  */
 function serverPurifier() {
   return createDOMPurify(window);
 }
 
-// Структурный тип хелпера принимает настоящий экземпляр DOMPurify без приведений:
-// это проверяет `npm run typecheck`, а не утверждение в рантайме.
+// The helper's structural type accepts a real DOMPurify instance without casts:
+// `npm run typecheck` checks this, not a runtime assertion.
 const purify: RichTextPurifier = serverPurifier();
 
 function load(html: string): string {
@@ -46,7 +46,7 @@ function load(html: string): string {
   return ref.current!.editor!.getHTML();
 }
 
-/** Документ на всё, что Редактор умеет писать. */
+/** A Document with everything the Editor can write. */
 const EVERYTHING =
   '<h1 data-align="right">Top</h1><h2 data-align="center">Title</h2><h3>Sub</h3><h4 data-align="right">Deep</h4>' +
   '<p data-align="right">Text with <strong>bold</strong>, <em>em</em>, <u>u</u>, <s>s</s>, ' +
@@ -73,7 +73,7 @@ const EVERYTHING =
 
 test("everything the editor writes passes the sanitiser byte for byte", () => {
   const saved = load(EVERYTHING);
-  // Сверка, что документ действительно несёт всё, ради чего написан.
+  // Checks that the document really carries everything it was written for.
   for (const feature of [
     'style="color:#ff0000"',
     'class="language-python"',
@@ -91,8 +91,8 @@ test("everything the editor writes passes the sanitiser byte for byte", () => {
 });
 
 /*
-  Подделки: каждая — то, что запрос в обход интерфейса может принести, и то,
-  во что очистка её превращает. Текст из снятой обёртки остаётся.
+  Forgeries: each one is what a request can bring in bypassing the UI, and what
+  the sanitizer turns it into. The text from a stripped wrapper stays.
 */
 const ATTACKS: [name: string, input: string, output: string][] = [
   ["Tailwind classes on a block", '<p class="fixed inset-0 z-50">x</p>', "<p>x</p>"],
@@ -159,9 +159,9 @@ test.each(ATTACKS)("%s", (_name, input, output) => {
 });
 
 /*
-  Класс языка проходит очистку по списку Схемы, а не по своей копии: язык,
-  добавленный в `codeLanguages.ts` (JSON — OLDSUI-59), обязан сразу дожить до
-  страницы показа, а не сниматься санитайзером.
+  The language class passes sanitizing by the Schema's list, not by its own copy: a language
+  added to `codeLanguages.ts` (JSON — OLDSUI-59) must survive right away until the
+  View page, not be stripped by the sanitizer.
 */
 test("a block in every schema language keeps its class through the sanitiser", () => {
   for (const language of RICH_TEXT_SCHEMA.codeLanguages) {
@@ -171,9 +171,9 @@ test("a block in every schema language keeps its class through the sanitiser", (
 });
 
 /*
-  Хуки ставятся на время одного вызова и снимаются: экземпляр DOMPurify —
-  общий у потребителя (комментарии, письма), и правила Схемы не должны
-  срабатывать в чужой очистке. Свои хуки потребителя при этом остаются.
+  Hooks are installed for the duration of one call and removed afterwards: the DOMPurify instance is
+  shared in the consumer's code (comments, emails), and the Schema rules must not
+  fire in someone else's sanitizing call. The consumer's own hooks stay in place.
 */
 test("the helper leaves the consumer's instance as it found it", () => {
   const own = serverPurifier();
@@ -184,15 +184,15 @@ test("the helper leaves the consumer's instance as it found it", () => {
   expect(own.sanitize('<p class="x">a</p>', { ALLOWED_ATTR: ["class"] })).toBe(
     '<p class="x">a</p>'
   );
-  // Хук потребителя видел обе очистки — и нашу, и свою.
+  // The consumer's hook saw both sanitizing calls: ours and its own.
   expect(seen.filter((name) => name === "P")).toHaveLength(2);
 });
 
 /*
-  Конфиг без хуков — закрыт по умолчанию. Кто передаст его DOMPurify напрямую,
-  забыв хуки, получит меньше разметки, но не чужой CSS, классы, base64 и
-  десять тысяч пустых ячеек: атрибуты, которые без проверки по тегу и значению
-  опасны, в общий список не попадают.
+  A config without hooks is closed by default. Whoever passes it to DOMPurify directly,
+  forgetting the hooks, gets less markup, but not foreign CSS, classes, base64 and
+  ten thousand empty cells: attributes that are dangerous without a check by tag and value
+  are not added to the shared list.
 */
 test("the bare config, used without hooks, admits no style, class, data: image or huge span", () => {
   const bare = serverPurifier();
@@ -209,7 +209,7 @@ test("the bare config, used without hooks, admits no style, class, data: image o
   for (const leak of ["style=", "class=", "data:", "colspan", "<img", "<input", "javascript:"]) {
     expect(out, leak).not.toContain(leak);
   }
-  // Текст и безопасная разметка на месте.
+  // The text and the safe markup are in place.
   expect(out).toContain("<p>x</p>");
   expect(out).toContain("<td><p>z</p></td>");
 });

@@ -8,14 +8,14 @@ import { DataTable } from "../src/components/table/DataTable.js";
 import { DEFAULT_TABLE_STATE } from "../src/lib/table-state.js";
 
 /*
-  Гидратация таблицы с сортировкой (OLDSUI-193).
+  Hydration of a sortable table (OLDSUI-193).
 
-  react-aria в `useTableColumnHeader` решает про `aria-sort` по платформе: на
-  Android (TalkBack атрибут не поддерживает) он не ставится вовсе, на остальных
-  у сортируемой колонки он есть всегда — `none` у несортированной. Сервер
-  платформы не знает и всегда пишет вариант «не Android», поэтому Android-клиент
-  при гидратации видел разметку, не совпадающую с его собственной, и React
-  писал «A tree hydrated but some attributes… didn't match» на каждой колонке.
+  react-aria in `useTableColumnHeader` decides on `aria-sort` by platform: on Android
+  (TalkBack does not support the attribute) it is not set at all, while on the others a
+  sortable column always has it — `none` on an unsorted one. The server does not know the
+  platform and always writes the "not Android" variant, so during hydration an Android
+  client saw markup that did not match its own, and React logged "A tree hydrated but
+  some attributes… didn't match" on every column.
 */
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -76,7 +76,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** Сервер пишет разметку без знания о платформе; клиент гидратирует её под заданным UA. */
+/**
+ * The server writes markup without knowing the platform; the client hydrates it under
+ * the given user agent.
+ */
 async function hydrateAs(userAgent: string, element: React.ReactElement): Promise<HTMLElement> {
   vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue(DESKTOP);
   const html = renderToString(element);
@@ -125,7 +128,8 @@ describe.each([
   test("the server markup carries no aria-sort but already shows the direction mark", () => {
     const html = renderToString(element());
     expect(html).not.toContain("aria-sort");
-    // Значок направления рисует сам компонент, а не react-aria: он не ждёт гидратации.
+    // The direction mark is drawn by the component itself, not by react-aria,
+    // so it does not wait for hydration.
     expect(html).toContain("rotate-180");
   });
 });

@@ -7,56 +7,57 @@ source: src/components/content/TagGroup.tsx
 story: src/components/content/TagGroup.stories.tsx
 ---
 
-# TagGroup и Tag
+# TagGroup and Tag
 
-## Кратко для AI
+## Summary for AI
 
-Набор меток **для показа**: категории записи, проекты, ярлыки. Метке задают
-оттенок палитры (`hue` — точка рядом с подписью), превращают её в ссылку (`href`)
-и разрешают удаление одним обработчиком (`onRemove`). Построен на `TagGroup` из
-`react-aria-components`: стрелки между метками, Delete и Backspace, фокус после
-удаления — от неё. Выбора нет.
+A set of tags **for display**: post categories, projects, labels. A tag can be
+given a palette hue (`hue` — a dot next to the label), turned into a link (`href`)
+and made removable through a single handler (`onRemove`). It is built on `TagGroup` from
+`react-aria-components`: arrow keys between tags, Delete and Backspace, and focus
+after removal all come from it. There is no selection.
 
-## Когда использовать
+## When to use
 
-- Показать категории, проекты или ярлыки записи рядом с её содержимым.
-- Метка — ссылка на список записей этой категории.
-- Форма редактирования, где метки убирает пользователь, а добавляет их другой элемент.
-- Оттенок из палитры меток (`LABEL_HUES`) нужен рядом с подписью.
+- To show the categories, projects or labels of a post next to its content.
+- A tag is a link to the list of posts in that category.
+- An edit form where the user removes tags and another element adds them.
+- A hue from the tag palette (`LABEL_HUES`) is needed next to the label.
 
-## Когда не использовать
+## When not to use
 
-- Метку выбирают или переключают, как фильтр — это `Chip` или `Segmented`.
-  `selectionMode` у `TagGroup` не пробрасывается намеренно.
-- Метка говорит о состоянии объекта (активен, ошибка, черновик) — это `StatusBadge`
-  или `Badge`: у метки смысл вкладывает человек, у статуса — система.
-- Пользователь вводит новые метки текстом — это `TagInput`. Вид метки у них общий.
-- Нужен только цветной образец без подписи — это `SwatchGroup`.
+- The tag is chosen or toggled, like a filter — that is `Chip` or `Segmented`.
+  `selectionMode` is intentionally not passed through on `TagGroup`.
+- The tag expresses the state of an object (active, error, draft) — that is
+  `StatusBadge` or `Badge`: with a tag the meaning is supplied by a person, with a
+  status by the system.
+- The user types new tags as text — that is `TagInput`. They share the tag's look.
+- You only need a color swatch with no label — that is `SwatchGroup`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Tag, TagGroup } from "@olddevs/ui";
 
-<TagGroup label="Категории">
+<TagGroup label="Categories">
   <Tag id="design" hue="teal">
-    Дизайн
+    Design
   </Tag>
   <Tag id="docs" href="/posts?category=docs">
-    Документация
+    Documentation
   </Tag>
 </TagGroup>;
 ```
 
-Удаление и пустая группа:
+Removal and an empty group:
 
 ```tsx
 const [tags, setTags] = useState(["design", "docs"]);
 
 <TagGroup
-  aria-label="Категории записи"
+  aria-label="Post categories"
   onRemove={(keys) => setTags((current) => current.filter((tag) => !keys.has(tag)))}
-  empty="Категорий нет"
+  empty="No categories"
 >
   {tags.map((tag) => (
     <Tag key={tag} id={tag}>
@@ -70,82 +71,87 @@ const [tags, setTags] = useState(["design", "docs"]);
 
 `TagGroup`:
 
-| Проп              | Умолчание | Назначение                                                                                                                                                                                                                                             |
-| ----------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `label`           | —         | Видимая подпись группы. **Имя берётся ровно из одного источника**: `label`, `aria-label` или `aria-labelledby` — TypeScript не пропустит группу без имени (в том числе с `label`, равной `undefined`, `null` или `false`) и с двумя источниками сразу. |
-| `aria-label`      | —         | Имя группы без видимой подписи.                                                                                                                                                                                                                        |
-| `aria-labelledby` | —         | Имя от заголовка в другом месте страницы — `id` заголовка.                                                                                                                                                                                             |
-| `onRemove`        | —         | `(keys: Set<TagKey>) => void`. Задан — у меток есть кнопки удаления и работают Delete/Backspace.                                                                                                                                                       |
-| `empty`           | —         | Что показать, когда меток нет. Без него пустая группа выглядит сбоем.                                                                                                                                                                                  |
-| `className`       | —         | Класс корня; `ref` — на корень группы.                                                                                                                                                                                                                 |
+| Prop              | Default | Purpose                                                                                                                                                                                                                                                                      |
+| ----------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`           | —       | The visible label of the group. **The name comes from exactly one source**: `label`, `aria-label` or `aria-labelledby` — TypeScript does not accept a group without a name (including one with `label` equal to `undefined`, `null` or `false`) or with two sources at once. |
+| `aria-label`      | —       | The group's name without a visible label.                                                                                                                                                                                                                                    |
+| `aria-labelledby` | —       | A name taken from a heading elsewhere on the page — the heading's `id`.                                                                                                                                                                                                      |
+| `onRemove`        | —       | `(keys: Set<TagKey>) => void`. When set, tags have remove buttons and Delete/Backspace work.                                                                                                                                                                                 |
+| `empty`           | —       | What to show when there are no tags. Without it an empty group looks like a failure.                                                                                                                                                                                         |
+| `className`       | —       | The root class; `ref` goes to the group's root.                                                                                                                                                                                                                              |
 
 `Tag`:
 
-| Проп        | Умолчание | Назначение                                                               |
-| ----------- | --------- | ------------------------------------------------------------------------ |
-| `id`        | —         | Ключ метки: его получает `onRemove`. Для удаляемых наборов задавайте.    |
-| `hue`       | —         | Оттенок из `LABEL_HUES`: точка рядом с подписью. Не задан — точки нет.   |
-| `href`      | —         | Метка становится ссылкой. Ещё `target` и `rel`.                          |
-| `textValue` | —         | Текст метки для имени. Обязателен, если содержимое не строка и не число. |
-| `children`  | —         | Подпись метки.                                                           |
+| Prop        | Default | Purpose                                                                                |
+| ----------- | ------- | -------------------------------------------------------------------------------------- |
+| `id`        | —       | The tag's key: `onRemove` receives it. Set it for removable sets.                      |
+| `hue`       | —       | A hue from `LABEL_HUES`: a dot next to the label. If not set, there is no dot.         |
+| `href`      | —       | The tag becomes a link. Also `target` and `rel`.                                       |
+| `textValue` | —       | The tag's text for its name. Required if the content is neither a string nor a number. |
+| `children`  | —       | The tag's label.                                                                       |
 
-Метки переносятся на новую строку целиком: внутри метки перенос не делается. Состояние (набор меток)
-группа не хранит: метку убирает потребитель, перерисовав группу.
+Tags wrap to a new line one whole tag at a time. The group does not store state
+(the set of tags): the consumer removes a tag by re-rendering the group.
 
-## Оттенок — точка рядом с подписью
+## The hue is a dot next to the label
 
-`hue` рисует кружок 10 пикселей слева от подписи. Заливки под текстом нет, и это
-решение палитры меток: восемь оттенков, которые читаются под текстом во всех
-трёх темах, потребовали бы вдвое больше цветов, а потребитель в заявке прямо
-допустил пару «точка и подпись рядом». Класс заливки снаружи не принимается —
-оттенок берётся из закрытого словаря.
+`hue` renders a 10-pixel circle to the left of the label. There is no fill under
+the text, and this is a decision of the tag palette: eight hues that are
+readable under text in all three themes would require twice as many colors, and
+the consumer's request explicitly allowed the "dot and label side by side"
+pair. A fill class from outside is not accepted — the hue is taken from a closed
+vocabulary.
 
-Точка скринридеру не видна (`aria-hidden`): оттенок слова не заменяет. Смысл метки
-несёт текст — иначе её не различит человек с нарушением цветового зрения.
+The dot is invisible to the screen reader (`aria-hidden`): a hue does not replace
+a word. The meaning of the tag is carried by its text — otherwise a person with a
+color vision deficiency could not tell tags apart.
 
-## Метка-ссылка
+## A tag as a link
 
-`href` делает метку ссылкой: Enter и щелчок открывают адрес. react-aria не рисует
-`<a>` — она хранит адрес в `data-href` и открывает его при нажатии, чтобы метка
-оставалась строкой группы со стрелками и удалением. Цена: нет контекстного меню
-«открыть в новой вкладке». Для клиентской маршрутизации оберните приложение в
-`RouterProvider` из `react-aria-components`.
+`href` makes the tag a link: Enter and a click open the URL. react-aria does
+not render an `<a>` — it stores the URL in `data-href` and opens it on press,
+so that the tag stays a row of the group with arrow keys and removal. The trade-off: there is
+no "Open in a new tab" context menu. For client-side routing, wrap the app in
+`RouterProvider` from `react-aria-components`.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-| Клавиша                | Что делает                                        |
-| ---------------------- | ------------------------------------------------- |
-| `←` / `→`              | Между метками                                     |
-| `Delete` / `Backspace` | Удаляют метку под фокусом (если задан `onRemove`) |
-| `Enter`                | Открывает ссылку у метки с `href`                 |
+| Key                    | What it does                                  |
+| ---------------------- | --------------------------------------------- |
+| `←` / `→`              | Move between tags                             |
+| `Delete` / `Backspace` | Remove the focused tag (if `onRemove` is set) |
+| `Enter`                | Opens the link of a tag with `href`           |
 
-- После удаления фокус остаётся в группе, на соседней метке.
-- Роль группы — `grid`, метки — `row`; имя группы обязательно. Видимая подпись
-  вместе с `aria-label` запрещена типом: атрибут перекрыл бы текст на экране, и на
-  слух группа называлась бы иначе
-  ([правило имени](../../conventions.md#доступное-имя)).
-- **Имя кнопки удаления — из каталога сообщений, с подписью метки внутри**
-  («Удалить: Дизайн», `Remove: Design`; ключ `tagGroup.remove`). Подпись вписана
-  в строку, потому что порядок слов принадлежит языку; поэтому у кнопки пустой
-  `aria-labelledby` — иначе react-aria дописала бы подпись метки второй раз.
-- Кнопка удаления — это `Button` из react-aria со `slot="remove"`, а не
-  `<button>`: поведение приходит через контекст react-aria.
+- After removal, focus stays in the group, on a neighboring tag.
+- The group's role is `grid`, the tags' is `row`; the group's name is required. A
+  visible label together with `aria-label` is forbidden by the type: the
+  attribute would override the on-screen text, and a screen reader would announce a different
+  group name
+  ([naming rule](../../conventions.md#accessible-name)).
+- **The remove button's name comes from the message catalog, with the tag's
+  label inside** (`Remove: Design`; the key is `tagGroup.remove`). The label
+  is written into the string because word order depends on the language; that is
+  why the button has an empty `aria-labelledby` — otherwise react-aria would
+  append the tag's label a second time.
+- The remove button is a react-aria `Button` with `slot="remove"`, not a
+  `<button>`: the behavior comes through react-aria's context.
 
-## Антипаттерны
+## Anti-patterns
 
-- Заливать метку цветом оттенка под текстом: контраст в трёх темах не обещан.
-- Делать метки выбираемыми: для этого `Chip` и `Segmented`.
-- Передавать нетекстовое содержимое без `textValue`: у метки и у кнопки удаления
-  не будет имени.
-- Сообщать оттенком смысл («красная — ошибка»): оттенки палитры не тоны, статус —
-  `StatusBadge`.
-- Собирать кнопку удаления руками: теряются Delete/Backspace и возврат фокуса.
+- Filling the tag with the hue color under the text: contrast in the three themes
+  is not guaranteed.
+- Making tags selectable: `Chip` and `Segmented` are for that.
+- Passing non-text content without `textValue`: the tag and its remove button have
+  no name.
+- Conveying meaning by hue ("red means error"): palette hues are not tones, and
+  status is `StatusBadge`.
+- Building the remove button by hand: Delete/Backspace and focus return are lost.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Исходник: `src/components/content/TagGroup.tsx`, общий вид метки — `src/lib/tag.ts`
-  (им же пользуется `TagInput`)
-- Палитра оттенков: `LABEL_HUES`, `LABEL_BG_CLASS` — [`docs/palette.md`](../../palette.md)
-- Тесты: `tests/tag-group.test.tsx`
-- Витрина: `src/components/content/TagGroup.stories.tsx`
-- Соседи: [TagInput](../inputs/tag-input.md), [SwatchGroup](../inputs/swatch-group.md), [Chip](../actions/chip.md)
+- Source: `src/components/content/TagGroup.tsx`; the shared tag look is in
+  `src/lib/tag.ts` (`TagInput` uses it too)
+- Hue palette: `LABEL_HUES`, `LABEL_BG_CLASS` — [`docs/palette.md`](../../palette.md)
+- Tests: `tests/tag-group.test.tsx`
+- Showcase: `src/components/content/TagGroup.stories.tsx`
+- Neighbors: [TagInput](../inputs/tag-input.md), [SwatchGroup](../inputs/swatch-group.md), [Chip](../actions/chip.md)

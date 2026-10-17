@@ -46,7 +46,7 @@ import { TWITCH_TOOL, YOUTUBE_TOOL } from "./video/videoTools.js";
 import { resolveTools, TOOLS, type RichTextEditorPreset, type Tool } from "../core/tools.js";
 import { WRAPPER_TOOL } from "./wrapper/wrapperTool.js";
 
-/** Сочетание цитаты: одна запись на справочник, Меню вставки и «¶». */
+/** Quote shortcut: one entry for the shortcuts popover, the Slash menu and the "¶" control. */
 const BLOCKQUOTE_SHORTCUT: ShortcutCommand = {
   id: "blockquote",
   group: "blockType",
@@ -69,17 +69,17 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
 ];
 
 /**
- * Описания встроенных Инструментов (ADR-0058, п. 10; тип — `toolDescriptor.ts`).
+ * Descriptions of the built-in Tools (ADR-0058, item 10; type — `toolDescriptor.ts`).
  *
- * Запись полная, по каждому имени `TOOLS`: встроенный Инструмент
- * берётся только из описания, старых реестров по имени нет, и компилятор не
- * пропустит новое имя без описания. Виджеты Панели и Меню выделения остаются
- * компонентами кита и спрашивают набор по имени.
+ * Each entry is complete, one per name in `TOOLS`: a built-in Tool is taken only from its
+ * description, there are no legacy registries by name, and the compiler rejects a new name
+ * without a description. The Toolbar and Bubble menu widgets remain kit components and ask
+ * the set by name.
  */
 export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   search: SEARCH_TOOL,
   invisibleCharacters: INVISIBLE_CHARACTERS_TOOL,
-  // Оглавление несёт только Опции: полоса и список рисуются в `RichTextEditor`.
+  // The Table of contents carries only options: its strip and list are drawn in `RichTextEditor`.
   toc: TOC_TOOL,
   layout: LAYOUT_TOOL,
   color: COLOR_TOOL,
@@ -92,9 +92,9 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   youtube: YOUTUBE_TOOL,
   twitch: TWITCH_TOOL,
   /*
-    Разделитель и цитата: Инструмент с пунктом вставки и Инструмент с
-    «Превратить в». Поля `insertItems` и `engine` те же, что у публичного
-    описания своего Инструмента: форму проверяет код кита.
+    The divider and the blockquote: a Tool with a Slash menu item and a Tool with a "Turn into"
+    item. The `insertItems` and `engine` fields are the same as in the public description of a
+    custom Tool: the kit's code checks the shape.
   */
   horizontalRule: {
     name: "horizontalRule",
@@ -115,9 +115,9 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
     name: "blockquote",
     engine: () => [Blockquote],
     insertItems: BLOCKQUOTE_ITEMS,
-    // «¶» — тот же пункт «Превратить в»: те же слова, иконка и сочетание.
+    // "¶" is the same "Turn into" item: the same words, icon and shortcut.
     blockTypes: turnIntoTypes("blockquote", BLOCKQUOTE_ITEMS),
-    // Клавишу вешает расширение Tiptap; строка справочника — подпись к ней.
+    // The shortcut is bound by the Tiptap extension; the reference row is only its label.
     shortcuts: [BLOCKQUOTE_SHORTCUT],
   },
   history: HISTORY_TOOL,
@@ -138,9 +138,9 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   emoji: EMOJI_TOOL,
   insertMenu: INSERT_MENU_TOOL,
   /*
-    Своего расширения у «Очистить форматирование» нет: клавишу `⌘\` держит
-    `BlockCommands` ядра (он спрашивает `has("clearFormatting")`), а кнопка в
-    «…» — виджет кита. В описании — только строка справочника.
+    Clear formatting has no Tiptap extension of its own: the `⌘\` shortcut is held by the core's
+    `BlockCommands` (it asks `has("clearFormatting")`), and the button in the "…" menu is a kit
+    widget. The descriptor carries only the reference row.
   */
   clearFormatting: {
     name: "clearFormatting",
@@ -155,22 +155,22 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
     ],
   },
   /*
-    HTML-режим — виджет «HTML» Панели и режим `RichTextEditor`, показ по
-    `has("source")`. Ни Схемы, ни записей у Инструмента нет, но описание
-    есть у каждого встроенного — даже пустое.
+    The HTML mode is the "HTML" widget of the Toolbar and a mode of `RichTextEditor`, shown by
+    `has("source")`. The Tool has neither a Schema nor entries, but every built-in has a
+    description, even an empty one.
   */
   source: { name: "source" },
   /*
-    Ленивые встроенные (ADR-0058, п. 11.1): их нет в `basic`, а
-    Extensions тяжелее 10 кБ gzip, поэтому они грузятся загрузчиком
-    (`load`) — тем же, что у своего Инструмента. Формулы (`mathematics`) ленивы так
-    же, но стоят выше, рядом с остальными новыми Инструментами, — их нет и в `full`.
+    Lazy built-ins (ADR-0058, item 11.1): they are absent from `basic`, and their Extensions weigh
+    more than 10 kB gzip, so a Loader (`load`) loads them, the same one a custom Tool uses.
+    Formulas (`mathematics`) are lazy in the same way, but sit higher, next to the other newer
+    Tools; they are not in `full` either.
   */
   codeBlock: CODE_BLOCK_TOOL,
   table: TABLE_TOOL,
 };
 
-/** Описание с опциями для Редактора (`resolveToolOptions`: умолчания, поверх них — `tool()`). */
+/** Description with options for the Editor (`resolveToolOptions`: defaults, with `tool()` on top). */
 function resolveOptions(
   descriptor: ToolDescriptor,
   configured: ConfiguredTool | undefined
@@ -185,24 +185,23 @@ function resolveOptions(
 }
 
 /**
- * Развернуть `tools` (или `preset`) в один список описаний.
+ * Expand `tools` (or `preset`) into one list of descriptions.
  *
- * Имена — те же, что у `resolveTools`: точный `tools` или пресет, неизвестная
- * строка отбрасывается молча. Запись `tool()` включает Инструмент так же, как
- * его имя, а если в `tools` есть и имя (из пресета), и запись, побеждает
- * Настроенный Инструмент; две записи с одним именем — ошибка набора
- * (`ToolList.error`). Порядок встроенных — порядок кита (`TOOLS`), а не
- * `tools`: место встроенного на поверхности решает кит, и Настроенный стоит
- * там же, где голое имя. Свои Инструменты (описания в `tools`) идут следом, в
- * порядке `tools` (ADR-0058, п. 5.3); набор имён (`Set`) — только имена кита.
+ * The names are the same as in `resolveTools`: an exact `tools` list or a preset; an unknown
+ * string is dropped silently. A `tool()` entry enables a Tool just as its name does, and if
+ * `tools` holds both a name (from a preset) and an entry, the Configured Tool wins; two entries
+ * with one name are a set error (`ToolList.error`). The built-ins are ordered by the kit
+ * (`TOOLS`), not by `tools`: the kit decides where a built-in stands on the surface, and a
+ * Configured Tool stands where its bare name would. Custom Tools (descriptions in `tools`)
+ * follow, in the `tools` order (ADR-0058, item 5.3); the set of names (`Set`) holds only kit names.
  *
- * Опции Инструментов читаются здесь, один раз, вместе с набором.
+ * The Tool options are read here, once, together with the set.
  */
 export function expandTools(
   preset: RichTextEditorPreset,
   tools: readonly ToolEntry[] | undefined
 ): ToolList {
-  // Настроенные встроенные: запись с определением настраивает свой Инструмент, она ниже.
+  // Configured built-ins: a tool(name, options) entry configures a built-in Tool; a tool(definition) entry is handled below.
   const configured = configuredBuiltins(tools);
   const twice = repeatedConfigured(configured);
   const names = resolveTools(
@@ -218,7 +217,7 @@ export function expandTools(
       configured.find((entry) => entry.name === name)
     )
   );
-  // Свои: определение (с `tool()` и без) и обычное описание; уникальность имени проверяет набор.
+  // Custom Tools: a definition (with or without `tool()`) or a plain description; the set checks name uniqueness.
   const custom = (tools ?? []).flatMap((entry) => {
     if (typeof entry !== "object" || entry === null) return [];
     if (isConfiguredTool(entry)) {

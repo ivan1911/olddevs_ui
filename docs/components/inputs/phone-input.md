@@ -9,68 +9,69 @@ story: src/components/inputs/PhoneInput.stories.tsx
 
 # PhoneInput
 
-## Кратко для AI
+## Summary for AI
 
-`MaskedInput` с телефонной маской, `inputMode="tel"` и `autocomplete="tel"`.
-Формат **один и фиксированный**, задаётся пропом. Номер не разбирается, страна
-не определяется, валидации нет.
+`MaskedInput` with a phone mask, `inputMode="tel"` and `autocomplete="tel"`.
+There is **one fixed format**, set by a prop. The number is not parsed, the
+country is not detected, there is no validation.
 
-## Когда использовать
+## When to use
 
-- Поле телефона в форме, где формат известен заранее.
+- A phone field in a form where the format is known in advance.
 
-## Когда не использовать
+## When not to use
 
-- Для международного ввода с определением страны этот компонент не подходит: он
-  этого не умеет и не будет уметь, см. ниже.
-- Для любого другого формата используйте `MaskedInput` с вашей маской.
+- For international input with country detection, this component is the wrong choice:
+  it cannot do this and never will, see below.
+- For any other format, use `MaskedInput` with your mask.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { PhoneInput } from "@olddevs/ui";
 
 const [phone, setPhone] = useState("");
 
-<PhoneInput value={phone} onChange={(raw) => setPhone(raw)} aria-label="Телефон" />;
+<PhoneInput value={phone} onChange={(raw) => setPhone(raw)} aria-label="Phone" />;
 ```
 
-## Пропы
+## Props
 
-| Проп       | Умолчание            | Назначение                                                     |
-| ---------- | -------------------- | -------------------------------------------------------------- |
-| `mask`     | `+7 (999) 999-99-99` | Формат номера. `RU_PHONE_MASK` экспортирован.                  |
-| `value`    | —                    | Сырые цифры без литералов.                                     |
-| `onChange` | —                    | `(raw, formatted)` — как у `MaskedInput`.                      |
-| `showMask` | `true`               | Формат виден в самом поле: `+7 (___) ___-__-__`.               |
-| остальное  | —                    | Уходит на `input`; `inputMode` и `autoComplete` перекрываются. |
+| Prop       | Default              | Purpose                                                               |
+| ---------- | -------------------- | --------------------------------------------------------------------- |
+| `mask`     | `+7 (999) 999-99-99` | The number format. `RU_PHONE_MASK` is exported.                       |
+| `value`    | —                    | Unmasked digits without literals.                                     |
+| `onChange` | —                    | `(raw, formatted)` — as in `MaskedInput`.                             |
+| `showMask` | `true`               | The format is visible in the field itself: `+7 (___) ___-__-__`.      |
+| the rest   | —                    | Passed to the `input`; `inputMode` and `autoComplete` are overridden. |
 
-## Обещание «формат из локали» снято
+## The "format from the locale" promise is withdrawn
 
-Исходная спецификация кита вводила `PhoneInput` с форматом по локали. Обещание снято сознательно
-(ADR-0024):
+The kit's original specification introduced `PhoneInput` with a locale-based format. The promise was withdrawn
+deliberately (ADR-0024):
 
-- `Intl` телефоны **не форматирует** вовсе — брать формат из локали нечем;
-- настоящий разбор — это `libphonenumber` весом в сотни килобайт, то есть
-  зависимость кита, которую админке без телефонов тащить не за что;
-- маска под один формат неверна для остальных стран, и страница оговаривает
-  это ограничение.
+- `Intl` does **not format** phone numbers at all — there is nothing in the locale to
+  take a format from;
+- proper parsing means `libphonenumber`, which weighs hundreds of kilobytes and would be a
+  kit dependency that an admin panel without phone numbers has no reason to pull in;
+- a mask for one format is wrong for other countries, and this page states that
+  limitation.
 
-Поэтому формат — проп с умолчанием, а не выведенное значение. Умолчание — это
-выбор, а не истина.
+So the format is a prop with a default, not a derived value. A default is a
+choice, not the truth.
 
-## Чего компонент не делает
+## What the component does not do
 
-Не разбирает номер, не хранит справочник стран, **не валидирует**. Кит здесь
-впервые знает о предметной области, и граница проведена узко: маска и два
-атрибута. `Form` от валидации отказался осознанно, и `PhoneInput` этого не
-меняет — правила «настоящий ли это номер» остаются у того, кто его
-отправляет.
+It does not parse the number, does not keep a list of countries, **does not
+validate**. This is the first time the kit deals with a specific domain, and the
+boundary is drawn narrowly: a mask and two attributes. `Form` deliberately declines
+to validate, and `PhoneInput` does not reconsider that: the rules for deciding
+whether a number is real stay with whoever submits it.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/inputs/PhoneInput.tsx` — тонкий слой над
+- Implementation: `src/components/inputs/PhoneInput.tsx` — a thin layer over
   [MaskedInput](masked-input.md).
-- Тесты: `tests/phone-input.test.tsx` — маска по умолчанию, другой формат, оба
-  представления в `onChange`, перекрываемые атрибуты, отсутствие валидации.
-- История: `src/components/inputs/PhoneInput.stories.tsx`.
+- Tests: `tests/phone-input.test.tsx` — the default mask, a non-default format, both
+  representations passed to `onChange`, overridden attributes, no validation.
+- Story: `src/components/inputs/PhoneInput.stories.tsx`.

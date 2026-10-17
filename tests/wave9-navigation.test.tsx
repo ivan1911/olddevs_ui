@@ -88,8 +88,8 @@ test("a toggle group yields a set, not a single value", async () => {
 
   await user.click(screen.getByRole("button", { name: "Queued" }));
 
-  // Пустой набор и набор из двух — оба законны; этим компонент и отличается
-  // от `Segmented`, где выбранное значение есть всегда и ровно одно.
+  // An empty set and a set of two are both legal; that is what distinguishes this component from
+  // `Segmented`, where there is always exactly one selected value.
   expect(onChangeSpy).toHaveBeenCalledWith(["a", "b"]);
 });
 
@@ -114,8 +114,8 @@ test("a description list links the label to the value", () => {
     <DescriptionList items={[{ label: "Resolution", value: "1080 × 2400" }]} />
   );
 
-  // `dl`/`dt`/`dd`, а не два дива: связь смысловая, и скринридер читает пару
-  // целиком, иначе «1080 × 2400» звучит без указания, чего именно.
+  // `dl`/`dt`/`dd`, not two divs: the relation is semantic, and a screen reader reads the pair as a
+  // whole; otherwise "1080 × 2400" is spoken without saying what it is.
   expect(container.firstElementChild!.tagName).toBe("DL");
   expect(container.querySelector("dt")?.textContent).toBe("Resolution");
   expect(container.querySelector("dd")?.textContent).toBe("1080 × 2400");

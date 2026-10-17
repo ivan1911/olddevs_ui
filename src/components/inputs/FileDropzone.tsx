@@ -12,48 +12,48 @@ import { buttonClasses } from "../../lib/button.js";
 import { cn } from "../../lib/cn.js";
 import { useMessages, useUiLocale } from "../../i18n/useMessages.js";
 
-/** Файл, который не приняли, и причина отказа. */
+/** A file that was not accepted, and the reason for rejecting it. */
 export interface RejectedFile {
-  /** Имя отклонённого файла. */
+  /** Name of the rejected file. */
   name: string;
   /**
-   * Причина отказа, уже готовая к показу пользователю: неподходящий тип или
-   * слишком большой размер.
+   * Reason for rejection, already ready to show to the user: a wrong type or a size
+   * that is too large.
    */
   reason: string;
 }
 
 export interface FileDropzoneProps {
-  /** Принятые типы в формате `accept` у `<input type="file">`: `image/*`, `.jpg,.png`. */
+  /** Accepted types in the `accept` format of `<input type="file">`: `image/*`, `.jpg,.png`. */
   accept?: string;
-  /** Разрешает несколько файлов за раз. По умолчанию включено. */
+  /** Allows several files at once. Enabled by default. */
   multiple?: boolean;
-  /** Предел размера одного файла в байтах. */
+  /** Size limit for one file, in bytes. */
   maxSize?: number;
-  /** Вызывается с файлами, прошедшими проверку типа и размера. */
+  /** Called with the files that passed the type and size check. */
   onFiles: (files: File[]) => void;
   /**
-   * Вызывается с файлами, которые не прошли проверку, и причинами отказа.
+   * Called with the files that failed the check, and the reasons for rejecting them.
    *
-   * Отклонённые файлы. Не колбэк-уведомление, а часть возврата: показать их
-   * обязан сам компонент — см. докстроку.
+   * Rejected files. This is not a notification callback but part of the result: the
+   * component itself must show them. See the component's JSDoc.
    */
   onReject?: (rejected: RejectedFile[]) => void;
-  /** Подпись внутри области. */
+  /** Label inside the area. */
   label?: string;
-  /** Пояснение под подписью: допустимые форматы, предел размера. */
+  /** Note under the label: accepted formats, size limit. */
   hint?: ReactNode;
-  /** Выключает область: файлы не принимаются ни перетаскиванием, ни кнопкой. */
+  /** Disables the area: files are not accepted either by dragging or by the button. */
   disabled?: boolean;
-  /** Классы на корневой элемент. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 /*
-  Размер файла — ФОРМАТИРОВАНИЕ, а не перевод: «МБ» и «MB» это одна и та же
-  единица, записанная по правилам локали. Поэтому единица берётся у
-  `Intl.NumberFormat`, а не из каталога сообщений — иначе каждый новый язык
-  требовал бы переводить сокращения СИ вручную и ошибаться в них.
+  The file size is FORMATTING, not translation. "MB" and "megabytes" are the same unit,
+  written by the locale's rules. Therefore the unit comes from `Intl.NumberFormat`, not from
+  the message catalog. Otherwise every new language would require translating SI abbreviations
+  by hand, and making mistakes in them.
 */
 function formatSize(bytes: number, locale: string): string {
   const mega = bytes >= 1024 * 1024;
@@ -66,17 +66,17 @@ function formatSize(bytes: number, locale: string): string {
 }
 
 /**
- * Область для перетаскивания файлов.
+ * Area for dropping files.
  *
- * **Отклонённые файлы показываются с причиной, а не пропадают молча.** Это
- * единственное решение компонента, и оно из опыта: область, которая на десять
- * брошенных файлов принимает семь и ничего не говорит про три, читается как
- * «загрузка сломалась». Причина пишется рядом с именем — «слишком большой,
- * 14 МБ», — потому что «файл не принят» не даёт пользователю ничего исправить.
+ * **Rejected files are shown with a reason, rather than disappearing silently.** This is the
+ * component's only decision, and it comes from experience. An area that accepts seven out of
+ * ten dropped files and says nothing about the other three reads as "the upload is broken".
+ * The reason is written next to the name, as in "too large, 14 MB", because "file not
+ * accepted" gives the user nothing to fix.
  *
- * Мышь и клавиатура равноправны: перетаскивание даёт `DropZone`, кнопка выбора —
- * `FileTrigger`. Область без кнопки была бы недоступна с клавиатуры вовсе, а
- * это не «менее удобно», а «нельзя пользоваться».
+ * Mouse and keyboard are equal. Dragging is handled by `DropZone`, and the choose button comes
+ * from `FileTrigger`. An area without a button would be unavailable from the keyboard altogether.
+ * That is not "less convenient" but "unusable".
  */
 export function FileDropzone({
   accept,
@@ -108,8 +108,8 @@ export function FileDropzone({
     const bad: RejectedFile[] = [...extra];
 
     for (const file of files) {
-      // Через каталог, как и остальные три причины: строкой на месте она
-      // читалась по-русски посреди английского интерфейса.
+      // Through the catalog, like the other three reasons. As an inline string, it would
+      // read in Russian in the middle of an English interface.
       if (!accepts(file)) bad.push({ name: file.name, reason: messages.fileDropzone.wrongType });
       else if (maxSize != null && file.size > maxSize)
         bad.push({
@@ -120,10 +120,9 @@ export function FileDropzone({
     }
 
     /*
-      Предел числа файлов держится ЗДЕСЬ, а не только у `FileTrigger`: его
-      `allowsMultiple` управляет диалогом выбора, а перетаскиванию не указ.
-      На однофайловую область можно было бросить пять файлов, и все пять
-      уезжали вызывающему — молча, вопреки собственному пропу.
+      The file-count limit is held HERE, not only by `FileTrigger`. Its `allowsMultiple` controls
+      the picker dialog, but dragging is not governed by it. A single-file area could be dropped
+      five files, and all five went to the caller, silently and against its own prop.
     */
     const accepted = multiple ? ok : ok.slice(0, 1);
     for (const file of ok.slice(accepted.length))
@@ -140,14 +139,13 @@ export function FileDropzone({
         isDisabled={disabled}
         onDrop={async (e) => {
           /*
-            Каждый файл разрешается ОТДЕЛЬНО.
+            Each file is resolved SEPARATELY.
 
-            `Promise.all` отбрасывал весь массив, если хоть один `getFile()`
-            отклонился: пользователь бросал пять файлов, один из которых лежал на
-            отключившемся сетевом диске или был удалён между началом
-            перетаскивания и дропом, — и не получал ни одного файла, ни одной
-            причины, а отказ уезжал в необработанный rejection. То самое «загрузка
-            сломалась», которого докстрока обещает не допускать.
+            `Promise.all` discarded the whole array if even one `getFile()` rejected. The user
+            dropped five files, one of which lay on a disconnected network drive or was deleted
+            between the start of the drag and the drop, and got neither a file nor a reason. The
+            refusal went to an unhandled rejection: exactly the "the upload broke" that the JSDoc
+            promises to prevent.
           */
           const dropped = e.items.filter(
             (item): item is Extract<typeof item, { kind: "file" }> => item.kind === "file"
@@ -156,18 +154,18 @@ export function FileDropzone({
           const files = settled
             .filter((r): r is PromiseFulfilledResult<File> => r.status === "fulfilled")
             .map((r) => r.value);
-          // Имя берётся у САМОГО ЭЛЕМЕНТА ПЕРЕНОСА, а не у файла: файла-то и
-          // нет — он не прочитался. Порядок `allSettled` совпадает с порядком
-          // входа, поэтому индекс ведёт к нужному элементу.
+          // The name is taken from the DRAG ITEM ITSELF, not from the file, because the file
+          // does not exist: it was not read. The order of `allSettled` matches the input order,
+          // so the index leads to the right item.
           const unreadable: RejectedFile[] = settled.flatMap((r, index) =>
             r.status === "rejected"
               ? [{ name: dropped[index]!.name, reason: messages.fileDropzone.unreadable }]
               : []
           );
           /*
-            Папки отклоняются С ПРИЧИНОЙ, а не отфильтровываются молча.
-            Перетащенная папка иначе не давала ни файлов, ни сообщения —
-            область выглядела сломанной ровно так, как обещано не делать.
+            Folders are rejected WITH A REASON, not filtered out silently. A dropped folder
+            otherwise gave neither files nor a message, and the area looked broken in exactly
+            the way it was promised not to.
           */
           const folders = e.items
             .filter((item) => item.kind === "directory")
@@ -179,14 +177,14 @@ export function FileDropzone({
         }}
         className={cn(
           "border-line-soft bg-bg-1 flex flex-col items-center justify-center gap-2 rounded-md border border-dashed px-6 py-8 transition-colors",
-          // Состояние переноса берётся вариантом плагина: атрибут `data-drop-target`
-          // висит на самой области, и красится она же.
+          // The drop state comes from the plugin's variant. The `data-drop-target` attribute
+          // sits on the area itself, and the area is colored by it.
           "drop-target:border-accent-strong drop-target:bg-accent-soft",
           "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2",
-          // Выключенность выражена ТОНАМИ, а не `opacity-50`, и это не
-          // вкусовщина: область — обычный div, а не поле формы, и аудит axe
-          // меряет её контраст наравне с рабочей. Полупрозрачность роняла
-          // подпись ниже 4.5 — то самое правило, которым уже поплатился `Alert`.
+          // The disabled state is expressed with TONES, not `opacity-50`. This is not a matter
+          // of taste: the area is a plain div, not a form field, and the axe audit measures its
+          // contrast on par with the working content. Opacity dropped the label below 4.5, the
+          // very rule that `Alert` has already paid for.
           disabled && "bg-bg-2 cursor-not-allowed"
         )}
       >
@@ -194,10 +192,9 @@ export function FileDropzone({
           <UploadIcon size={24} strokeWidth={1.5} />
         </span>
         {/*
-          `AriaText slot="label"` — не украшение: `DropZone` берёт отсюда своё
-          доступное имя. Обычный `<span>` оставил бы область безымянной, и
-          скринридер объявил бы «область перетаскивания» без единого слова о том,
-          что сюда класть.
+          `AriaText slot="label"` is not decoration: `DropZone` takes its accessible name from
+          here. A plain `<span>` would leave the area unnamed, and a screen reader would announce
+          "drop zone" without a word about what to drop here.
         */}
         <AriaText slot="label" className={cn("text-sm", disabled ? "text-fg-2" : "text-fg-1")}>
           {label ?? messages.fileDropzone.label}
@@ -210,15 +207,14 @@ export function FileDropzone({
           onSelect={(list) => sort(Array.from(list ?? []))}
         >
           {/*
-            Кнопка — `AriaButton`, а не наша. `FileTrigger` подключает потомка
-            через `PressResponderContext` react-aria, и обычная `<button>` его
-            не читает: диалог выбора файла не открывался ВООБЩЕ, а в консоли
-            висело «A PressResponder was rendered without a pressable child».
-            Проверено: с нашей кнопкой `input.click()` не звался ни разу, с
-            этой — ровно один.
+            The button is an `AriaButton`, not ours. `FileTrigger` connects its child through the
+            react-aria `PressResponderContext`, and a plain `<button>` does not read it. The file
+            picker dialog did NOT open AT ALL, and the console showed "A PressResponder was
+            rendered without a pressable child". Verified: with our button, `input.click()` was
+            never called; with this one, it is called exactly once.
 
-            Вид при этом общий, из `lib/button.ts`, — расходиться им нечем.
-            Та же механика, что у `MenuButton` и у триггера `Combobox`.
+            The look is the same, from `lib/button.ts`. There is nothing for them to diverge on.
+            It is the same mechanism as `MenuButton` and the `Combobox` trigger.
           */}
           <AriaButton
             isDisabled={disabled}
@@ -230,12 +226,12 @@ export function FileDropzone({
       </DropZone>
 
       {/*
-        Область объявления смонтирована ВСЕГДА, а содержимое подменяется.
-        Живая область, вставленная в документ вместе с текстом, объявляется
-        ненадёжно — часть скринридеров успевает её пропустить.
+        The live region is mounted ALWAYS, and only its content is swapped. A live region that is
+        inserted into the document together with its text is announced unreliably: some screen
+        readers manage to skip it.
 
-        `role="alert"` висит на контейнере, а не на списке: роль перебила бы
-        роль `ul`, и число отклонённых файлов потерялось бы.
+        `role="alert"` sits on the container, not on the list. The role would override the role of
+        the `ul`, and the number of rejected files would be lost.
       */}
       <div role="alert" className="empty:hidden">
         {rejected.length > 0 ? (

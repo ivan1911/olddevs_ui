@@ -23,16 +23,17 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Главное действие слева, его родня — в меню справа. Стрелка открывает меню и
- * не зовёт действие; клик по подписи зовёт действие и не открывает меню.
+ * The primary action is on the left, and its relatives are in the menu on the right. The
+ * arrow opens the menu and does not trigger the action; clicking the label triggers the
+ * action and does not open the menu.
  */
 export const Playground: Story = {
   args: { variant: "solid", tone: "accent", icon: <DownloadIcon aria-hidden /> },
 };
 
 /**
- * Оси `variant` и `tone` — те же, что у `Button`, и значат то же самое. Своей
- * палитры компонент не заводит: разойтись с кнопкой ему нечем.
+ * The `variant` and `tone` axes are the same as in `Button` and mean the same thing. The
+ * component has no palette of its own, so there is nothing for it to drift apart from the button.
  */
 export const Variants: Story = {
   render: (args) => (
@@ -46,11 +47,11 @@ export const Variants: Story = {
 };
 
 /**
- * Три размера. Стрелка — квадрат той же высоты, что и главное действие.
+ * Three sizes. The arrow is a square of the same height as the primary action.
  *
- * Подписи разные намеренно: смысл компонента в том, что раскрыватели
- * различимы в речи, и витрина из трёх одинаковых «More actions: Export»
- * показывала бы обратное.
+ * The labels differ on purpose. The point of the component is that its disclosure
+ * triggers are distinguishable by speech, and a showcase of three identical
+ * "More actions: Export" labels would show the opposite.
  */
 export const Sizes: Story = {
   render: (args) => (
@@ -63,20 +64,20 @@ export const Sizes: Story = {
 };
 
 /**
- * Обе кнопки гаснут вместе, и раздельной выключенности здесь нет намеренно.
+ * Both buttons are disabled together. There is no separate disabled state, on purpose.
  *
- * Живая стрелка при мёртвом действии предлагает варианты того, что сделать
- * нельзя; `loading` гасит её по той же причине — открытое меню посреди отправки
- * предлагает второй способ сделать то, что уже делается.
+ * A live arrow on a dead action offers options for things that can't be done. `loading`
+ * disables it for the same reason: an open menu in the middle of a submission offers a
+ * second way to do what is already being done.
  */
 export const DisabledAndLoading: Story = {
   render: (args) => (
     <div className="flex flex-wrap items-center gap-4">
       <SplitButton {...args} variant="solid" tone="accent" disabled />
       {/*
-        Иконка здесь обязательна: у кнопки без неё кольцо отправки добавляет
-        слот, и подпись сдвигается. Витрина не должна закреплять этот сдвиг
-        снимком как канон — предупреждение об этом стоит в докстроке `Button`.
+        The icon is required here: on a button without one, the submitting spinner
+        takes a slot and the label shifts. The showcase must not lock this shift in
+        as the canonical snapshot. The warning about it is in the `Button` doc comment.
       */}
       <SplitButton
         {...args}

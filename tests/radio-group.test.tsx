@@ -32,7 +32,7 @@ test("the group holds the value, not the buttons", async () => {
 
   await user.click(screen.getByRole("radio", { name: "On schedule" }));
 
-  // Отдаётся `string`, а не массив и не событие: выбран ровно один вариант.
+  // A `string` is passed out, not an array or an event: exactly one option is selected.
   expect(onChange).toHaveBeenCalledWith("later");
 });
 
@@ -43,8 +43,8 @@ test("arrows walk the set and CHANGE the value", async () => {
   screen.getByRole("radio", { name: "Right away" }).focus();
   await user.keyboard("{ArrowDown}");
 
-  // Это поведение радиогруппы, а не списка: стрелка не просто переносит фокус,
-  // она выбирает. В списке было бы наоборот.
+  // This is the behavior of a radio group, not of a list: the arrow does not merely
+  // move focus, it selects. In a list it would be the other way round.
   expect((screen.getByRole("radio", { name: "On schedule" }) as HTMLInputElement).checked).toBe(
     true
   );
@@ -57,7 +57,7 @@ test("arrows skip the disabled option", async () => {
   screen.getByRole("radio", { name: "On schedule" }).focus();
   await user.keyboard("{ArrowDown}");
 
-  // «Вручную» выключен, поэтому набор зацикливается на первый доступный.
+  // "Manually" is disabled, so the set wraps around to the first available option.
   expect((screen.getByRole("radio", { name: "Right away" }) as HTMLInputElement).checked).toBe(
     true
   );
@@ -66,11 +66,11 @@ test("arrows skip the disabled option", async () => {
 test("tab cannot enter the set past the selected option", () => {
   render(<Group initial="later" />);
 
-  // Ровно один вариант доступен табу — выбранный. Иначе клавиатурный
-  // пользователь проходил бы через каждую кнопку набора по отдельности.
+  // Exactly one option is reachable by Tab — the selected one. Otherwise a keyboard
+  // user would pass through every button of the set one by one.
   //
-  // Считается `tabindex="0"`, а не «не -1»: у выключенного варианта атрибута
-  // нет вовсе — он и так недостижим, и проставлять ему -1 не за чем.
+  // The check counts `tabindex="0"`, not "anything but -1": a disabled option has no
+  // attribute at all — it is unreachable anyway, so setting -1 on it is pointless.
   const radios = screen.getAllByRole("radio") as HTMLInputElement[];
   const tabbable = radios.filter((el) => el.getAttribute("tabindex") === "0");
   expect(tabbable).toHaveLength(1);
@@ -90,8 +90,8 @@ test("a repeated click cannot clear the selection", async () => {
 
   await user.click(screen.getByRole("radio", { name: "Right away" }));
 
-  // Снять выбор в радиогруппе нельзя по определению: набор отвечает на вопрос,
-  // а «не отвечать» — это отдельный явный вариант, а не пустое значение.
+  // A radio group cannot clear its selection by definition: the set answers the question,
+  // and "no answer" is a separate explicit option, not an empty value.
   expect((screen.getByRole("radio", { name: "Right away" }) as HTMLInputElement).checked).toBe(
     true
   );

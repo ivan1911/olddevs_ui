@@ -14,8 +14,8 @@ const items = [
 
 test("the feed is an ordered list, not a pile of blocks", () => {
   render(<Timeline items={items} aria-label="Task steps" />);
-  // Скринридер обязан сообщить и порядок, и общее число; набор div не сообщает
-  // ни того, ни другого.
+  // The screen reader must announce both the order and the total count; a set of divs
+  // announces neither.
   const list = screen.getByRole("list", { name: "Task steps" });
   expect(list.tagName).toBe("OL");
   expect(screen.getAllByRole("listitem")).toHaveLength(3);
@@ -31,7 +31,7 @@ test("the running step is marked for a screen reader", () => {
 
 test("after the last step there is no line", () => {
   const { container } = render(<Timeline items={items} />);
-  // Линия после последнего обещала бы продолжение, которого нет.
+  // A line after the last step would promise a continuation that does not exist.
   const connectors = container.querySelectorAll(".bg-line-soft");
   expect(connectors).toHaveLength(items.length - 1);
 });
@@ -62,9 +62,9 @@ test("details and the status label are shown when passed", () => {
 });
 
 test("each of the four states yields its own tone", () => {
-  // Словарь общий на весь кит (ADR-0031), и до 3.0.0 у обоих его потребителей
-  // не было ни одного покрывающего теста: сведение двух словарей в один могло
-  // молча потерять ветку.
+  // The vocabulary is shared by the whole kit (ADR-0031), and before 3.0.0 neither of its
+  // two consumers had a single covering test: merging the two vocabularies into one could
+  // silently drop a branch.
   render(
     <Timeline
       items={[
@@ -76,10 +76,10 @@ test("each of the four states yields its own tone", () => {
     />
   );
 
-  // Тон назван ЛИТЕРАЛЬНО, а не выведен из проверяемой таблицы: тест, берущий
-  // ожидание оттуда же, откуда значение, зелен при любом её содержимом — и
-  // первая же версия этой проверки такой и была. Правило волны 21: гейт,
-  // который не умеет краснеть, не считается сделанным.
+  // The tone is named LITERALLY, not derived from the table under test: a test that takes
+  // its expectation from the same place as the value stays green whatever that table holds,
+  // and the very first version of this check was exactly that. Wave 21 rule: a gate that
+  // cannot turn red is not considered done.
   const expected = {
     pending: "neutral",
     running: "accent",
@@ -94,9 +94,9 @@ test("each of the four states yields its own tone", () => {
 });
 
 test("an unknown status does not break the feed", () => {
-  // Дефект, найденный ревью: тон брался как TONE_TOKENS[STATUS_TONE[status]],
-  // и пятый вид шага с бэкенда давал undefined.dotBg — то есть падение всего
-  // экрана активности. Потребитель на JS, компилятор его данные не проверяет.
+  // A defect found in review: the tone was taken as TONE_TOKENS[STATUS_TONE[status]], and
+  // a fifth kind of step from the backend gave undefined.dotBg, which crashed the whole
+  // activity screen. The consumer is in JS, and the compiler does not check its data.
   render(
     <Timeline
       items={[

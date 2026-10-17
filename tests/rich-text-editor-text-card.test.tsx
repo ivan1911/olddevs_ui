@@ -17,10 +17,11 @@ import { messages as ru } from "../src/locales/ru.js";
 import { testRemarkTool, testTopicTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
-// Карточка грузится лениво (`RichTextEditor.tsx`): чанк прогрет заранее, а `render` ждёт его в `act`.
+// The Text card loads lazily (`RichTextEditor.tsx`): the chunk is warmed up in advance,
+// and `render` waits for it in `act`.
 beforeAll(() => import("../src/editor/ui/TextCard.js"));
 
 afterEach(() => {
@@ -30,20 +31,20 @@ afterEach(() => {
 });
 
 /**
- * Карточка у текста (OLDSUI-113, ADR-0058, п. 7.6–7.11).
+ * Text card (OLDSUI-113, ADR-0058, items 7.6–7.11).
  *
- * Через публичный `RichTextEditor` с тестовыми Метками из общего помощника:
- * роли, имена и текст, которые видит автор. Каретка и выделение ставятся
- * командами движка — jsdom не умеет ввода и раскладки. Положение Карточки и
- * переворот у края окна меряет браузер (`tests-visual`).
+ * Through the public `RichTextEditor`, with the test Marks from the shared helper:
+ * the roles, names, and text the author sees. The caret and the selection are set by
+ * engine commands, since jsdom cannot handle input or layout. The Text card's position and
+ * its flip at the window edge are measured by the browser (`tests-visual`).
  *
- * Документ: «One |two three| four», Метка-замечание на «two three» (5–14).
+ * Document: "One |two three| four", a remark Mark on "two three" (5–14).
  */
 const SAMPLE = '<p>One <span data-mark="test_remark">two three</span> four</p>';
 const INSIDE = 8;
 const OUTSIDE = 2;
 
-/** `render`, который дожидается ленивой Карточки. */
+/** `render` that waits for the lazy Text card. */
 async function renderAsync(ui: ReactElement) {
   let view!: ReturnType<typeof render>;
   await act(async () => {
@@ -70,7 +71,7 @@ async function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 
 type Engine = Awaited<ReturnType<typeof renderEditor>>["editor"];
 
-/** Фокус в Документ и каретка в позицию. */
+/** Focus in the Document and the caret at the position. */
 function caretAt(editor: Engine, pos: number) {
   act(() => {
     editor.view.focus();
@@ -78,7 +79,7 @@ function caretAt(editor: Engine, pos: number) {
   });
 }
 
-/** Сочетание в документе — так, как его слышит движок: `keydown` на редактируемой области. */
+/** A shortcut in the document, the way the engine hears it: `keydown` on the editable area. */
 function press(editor: Engine, init: KeyboardEventInit) {
   act(() => {
     editor.view.dom.dispatchEvent(
@@ -88,10 +89,10 @@ function press(editor: Engine, init: KeyboardEventInit) {
 }
 
 /**
- * Щелчок по Метке. Настоящий `user.click` до `click` не доходит: ProseMirror на
- * `mousedown` меряет позицию по координатам, а jsdom их не знает
- * (`elementFromPoint`). Каретку в редактируемом поле ставит `mouseup` браузера
- * — её тест ставит командой, а сам `click` шлёт событием.
+ * A click on the Mark. A real `user.click` never reaches `click`: ProseMirror on `mousedown`
+ * measures the position from the coordinates, and jsdom does not know them
+ * (`elementFromPoint`). The caret in the editable field is placed by the browser's `mouseup`;
+ * the test places it with a command, and sends `click` as an event itself.
  */
 const markOf = (editor: Engine) =>
   editor.view.dom.querySelector('[data-mark="test_remark"]') as HTMLElement;
@@ -99,10 +100,10 @@ const clickMark = (editor: Engine) => act(() => void fireEvent.click(markOf(edit
 
 const card = (name = "Remark") => screen.queryByRole("dialog", { name });
 
-/** Фокус стоит в Документе, а не в Панели или Карточке. */
+/** Focus is in the Document, not in the Toolbar or the Text card. */
 const focusInDocument = (editor: Engine) => expect(document.activeElement).toBe(editor.view.dom);
 
-// ── Открытие ──────────────────────────────────────────────────────────────
+// ── Opening ───────────────────────────────────────────────────────────────
 
 test("the caret inside the range opens the card named after the entry; outside it closes", async () => {
   const { editor } = await renderEditor();
@@ -123,7 +124,7 @@ test("a click on the range opens the card; hovering does not", async () => {
   await user.hover(markOf(editor));
   expect(card()).toBeNull();
 
-  // Щелчок ставит каретку в диапазон (`mouseup`), и `click` застаёт её там.
+  // A click places the caret in the range (`mouseup`), and `click` finds it there.
   act(() => {
     editor.view.focus();
     editor.commands.setTextSelection(INSIDE);
@@ -150,7 +151,7 @@ test("the card follows the range when the text before it changes", async () => {
   expect(screen.getByText("Remark 5-14")).toBeDefined();
 
   act(() => editor.view.dispatch(editor.state.tr.insertText("abc", 1)));
-  // Вставка до диапазона сдвинула его, каретка — вместе с ним.
+  // An insertion before the range shifted it, and the caret moved with it.
   expect(screen.getByText("Remark 8-17")).toBeDefined();
 });
 
@@ -185,7 +186,7 @@ test("the card is a non-modal dialog: the document keeps the focus on open", asy
   focusInDocument(editor);
 });
 
-// ── Несколько Карточек ────────────────────────────────────────────────────
+// ── Several Text cards ────────────────────────────────────────────────────
 
 const OVERLAP =
   '<p>One <span data-mark="test_topic">alpha <span data-mark="test_remark">beta</span> gamma</span> end</p>';
@@ -196,7 +197,7 @@ test("of overlapping ranges the narrowest opens", async () => {
     tools: [...RICH_TEXT_PRESETS.full, testTopicTool, testRemarkTool],
   });
 
-  // «beta» (11–15) внутри «alpha beta gamma» (5–22): самый узкий — замечание.
+  // "beta" (11–15) inside "alpha beta gamma" (5–22): the narrowest one is the remark.
   caretAt(editor, 13);
   expect(card("Remark")).not.toBeNull();
   expect(card("Topic")).toBeNull();
@@ -227,7 +228,7 @@ test("of ranges of equal width the tool earlier in tools opens", async () => {
   expect(card("Topic")).toBeNull();
 });
 
-// ── Клавиатура и фокус ────────────────────────────────────────────────────
+// ── Keyboard and focus ────────────────────────────────────────────────────
 
 test("Alt+F10 moves the focus into the open card, Escape returns the caret and hides it", async () => {
   const { editor } = await renderEditor();
@@ -237,7 +238,7 @@ test("Alt+F10 moves the focus into the open card, Escape returns the caret and h
   expect(card()!.contains(document.activeElement)).toBe(true);
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Reply" }));
 
-  // Escape в Карточке: Radix слушает документ, и верхний слой — она.
+  // Escape in the Text card: Radix listens on the document, and the top layer is the card.
   act(() => {
     document.activeElement!.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })
@@ -245,7 +246,7 @@ test("Alt+F10 moves the focus into the open card, Escape returns the caret and h
   });
   expect(card()).toBeNull();
   focusInDocument(editor);
-  // Каретка на прежнем месте.
+  // The caret stays where it was.
   expect(editor.state.selection.head).toBe(INSIDE);
 });
 
@@ -261,12 +262,12 @@ test("Escape in the document hides the card until the caret leaves the range", a
   });
   expect(card()).toBeNull();
 
-  // Правка внутри диапазона и сдвиг каретки по нему карточку не возвращают…
+  // An edit inside the range, or a caret move within it, does not bring the card back…
   act(() => void editor.commands.insertContent("x"));
   caretAt(editor, 9);
   expect(card()).toBeNull();
 
-  // …а выход из диапазона и возвращение — возвращают.
+  // …but leaving the range and coming back does.
   caretAt(editor, OUTSIDE);
   caretAt(editor, INSIDE);
   expect(card()).not.toBeNull();
@@ -282,7 +283,7 @@ test("close hides the card until the caret leaves; a click on the range opens it
   expect(card()).toBeNull();
   focusInDocument(editor);
 
-  // Каретка не двигалась, но щелчок по диапазону открывает Карточку снова.
+  // The caret did not move, but a click on the range opens the card again.
   clickMark(editor);
   expect(card()).not.toBeNull();
 });
@@ -291,7 +292,7 @@ test("while the card is hidden Alt+F10 leads to the toolbar", async () => {
   const { editor } = await renderEditor();
   caretAt(editor, INSIDE);
 
-  // Открыта — Alt+F10 ведёт в Карточку.
+  // Open: Alt+F10 leads to the Text card.
   press(editor, { key: "F10", altKey: true });
   expect(card()!.contains(document.activeElement)).toBe(true);
   act(() => {
@@ -301,7 +302,7 @@ test("while the card is hidden Alt+F10 leads to the toolbar", async () => {
   });
   expect(card()).toBeNull();
 
-  // Спрятана — та же клавиша ведёт в Панель.
+  // Hidden: the same key leads to the Toolbar.
   press(editor, { key: "F10", altKey: true });
   const toolbar = screen.getByRole("toolbar", { name: "Formatting" });
   expect(toolbar.contains(document.activeElement)).toBe(true);
@@ -371,11 +372,11 @@ test("inside a Dialog Escape closes the card first and the Dialog on the second 
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
-// ── Скринридер и язык ─────────────────────────────────────────────────────
+// ── Screen reader and language ────────────────────────────────────────────
 
 test("the appearance is announced with the entry label and the shortcut", async () => {
   const { editor } = await renderEditor();
-  // Живой регион кита, не регион Сообщения поля: он пуст, пока Карточки нет.
+  // The kit's live region, not the field message region: it is empty while there is no Text card.
   const regions = () => screen.getAllByRole("status").map((region) => region.textContent);
   expect(regions().join("")).toBe("");
 
@@ -400,15 +401,15 @@ test("in a Russian interface the label and the announcement come from the catalo
   );
   caretAt(ref.current!.editor!, INSIDE);
 
-  // Подпись — функция от локали `UiProvider`: `de` даёт «Anmerkung».
+  // The label is a function of the `UiProvider` locale: `de` gives "Anmerkung".
   expect(screen.getByRole("dialog", { name: "Anmerkung" })).toBeDefined();
   const spoken = ru.editor.textCardShown({ label: "Anmerkung", shortcut: "Alt+F10" });
   expect(screen.getAllByRole("status").map((region) => region.textContent)).toContain(spoken);
-  // Фраза ru-каталога — не английская.
+  // The phrase from the ru catalog is not English.
   expect(spoken).not.toMatch(/card opened/);
 });
 
-// ── Режимы поля ───────────────────────────────────────────────────────────
+// ── Field modes ───────────────────────────────────────────────────────────
 
 test("a readOnly field opens the card by a click", async () => {
   const user = userEvent.setup();
@@ -418,7 +419,7 @@ test("a readOnly field opens the card by a click", async () => {
   expect(card()).not.toBeNull();
   expect(screen.queryByRole("toolbar")).toBeNull();
 
-  // Щелчок по тексту мимо диапазона закрывает, щелчок мимо поля — тоже.
+  // A click on the text outside the range closes the card, and so does a click outside the field.
   clickMark(editor);
   expect(card()).not.toBeNull();
   await user.click(document.body);
@@ -448,7 +449,7 @@ test("a tool left out of tools takes its card with it", async () => {
   expect(screen.queryByRole("status", { name: "" })?.textContent ?? "").not.toMatch(/card opened/);
 });
 
-// ── Проверка набора ───────────────────────────────────────────────────────
+// ── Typing check ──────────────────────────────────────────────────────────
 
 test("a card without rangeAt or render fails the field, not the page", async () => {
   vi.spyOn(console, "error").mockImplementation(() => {});
@@ -494,12 +495,13 @@ test("a rangeAt that throws or lies does not break the field", async () => {
   caretAt(editor, INSIDE);
 
   expect(screen.queryAllByRole("dialog")).toHaveLength(0);
-  // Исключение — разработчику, отдельным аргументом: текст остаётся ключом «один раз».
+  // The exception goes to the developer as a separate argument: the text stays the key,
+  // warned about once.
   expect(error).toHaveBeenCalledWith(
     expect.stringMatching(/^RichTextEditor: text card "test_remark-textCard0" threw in rangeAt$/),
     expect.objectContaining({ message: "boom" })
   );
-  // Поле живо.
+  // The field is alive.
   act(() => void editor.commands.insertContent("x"));
   expect(editor.getText()).toContain("x");
 });

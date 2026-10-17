@@ -12,7 +12,7 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -21,14 +21,14 @@ afterEach(() => {
 });
 
 /**
- * Меню выделения — `toolbar="bubble"` (OLDSUI-69): компактная плашка над
- * непустым выделением, на сенсорном экране — фиксированная Панель.
+ * The Bubble menu — `toolbar="bubble"` (OLDSUI-69): a compact pill above a non-empty
+ * selection; on a touch screen, the fixed Toolbar.
  *
- * Через публичный `RichTextEditor`, как тесты плавающей Панели: плашка —
- * `role="toolbar"` со своим именем, кнопки — ролями и именами, результат —
- * выходным HTML. Выделение и фокус ставятся командами движка (`ref.editor`):
- * мышью и клавиатурой jsdom выделять не умеет. Фокус — `view.focus()`, а не
- * команда `focus()`: та ставит его в следующем кадре.
+ * Through the public `RichTextEditor`, like the tests of the floating Toolbar: the pill is
+ * a `role="toolbar"` with its own name, the buttons by roles and names, the result by the
+ * output HTML. The selection and focus are set with engine commands (`ref.editor`): jsdom
+ * cannot select with the mouse or the keyboard. Focus is set with `view.focus()`, not the
+ * `focus()` command: the latter sets it on the next frame.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -53,7 +53,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 const BUBBLE = { name: "Selection formatting" } as const;
 const bubble = () => screen.queryByRole("toolbar", BUBBLE);
 
-/** Имена кнопок плашки по порядку — так их обходят стрелки. */
+/** The button names of the pill in order — that is how the arrows walk them. */
 const names = (toolbar: HTMLElement) =>
   within(toolbar)
     .getAllByRole("button")
@@ -67,7 +67,7 @@ test("the bubble appears over a non-empty selection only", async () => {
 
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
   expect(await screen.findByRole("toolbar", BUBBLE)).toBeDefined();
-  // Это не Панель: её в режиме bubble нет ни над полем, ни над выделением.
+  // This is not the Toolbar: in bubble mode it is absent both above the field and above the selection.
   expect(screen.queryByRole("toolbar", { name: "Formatting" })).toBeNull();
 
   act(() => void editor.commands.setTextSelection(3));
@@ -101,8 +101,8 @@ test("the bubble carries the kit's set: block type, marks, link and emoji — no
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
   const toolbar = await screen.findByRole("toolbar", BUBBLE);
 
-  // «Списки ▾» — за «¶»; цвет — одна кнопка «Цвет» с обеими сетками, «Маркер»
-  // стоит на Панели (OLDSUI-154).
+  // "Lists ▾" is behind "¶"; colour is one "Color" button with both grids, and
+  // "Highlight" sits on the Toolbar (OLDSUI-154).
   expect(names(toolbar)).toEqual([
     "Block type: Text",
     "Lists",
@@ -121,8 +121,8 @@ test("a tool switched off takes its button out of the bubble", async () => {
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
   const toolbar = await screen.findByRole("toolbar", BUBBLE);
 
-  // Без единого Блока из «¶» нет и самого меню, без редких меток и цвета — «…»,
-  // без `emoji` — сетки.
+  // Without a single block tool there is no "¶" menu at all; without the rare marks and
+  // colour there is no "…" button; without `emoji` there is no emoji grid.
   expect(names(toolbar)).toEqual(["Italic", "Link"]);
 });
 
@@ -136,7 +136,7 @@ test("bold, italic and underline are toggles with aria-pressed", async () => {
   expect(button("Bold").getAttribute("aria-pressed")).toBe("true");
   expect(button("Italic").getAttribute("aria-pressed")).toBe("false");
   expect(button("Underline").getAttribute("aria-pressed")).toBe("false");
-  // Подсказка с сочетанием — из общей таблицы; скринридеру — `aria-keyshortcuts`.
+  // The hint with the shortcut comes from the shared table; for the screen reader, `aria-keyshortcuts`.
   expect(button("Italic").getAttribute("aria-keyshortcuts")).toMatch(/\+I$/);
 
   await user.click(button("Italic"));
@@ -148,14 +148,14 @@ test("bold, italic and underline are toggles with aria-pressed", async () => {
 
 test("without the color tool the bubble keeps the highlight button: it opens the row of markers", async () => {
   const user = userEvent.setup();
-  // С инструментом `color` маркер ставится из «Цвета» (OLDSUI-154); без него —
-  // своей кнопкой, иначе в плашке его не поставить.
+  // With the `color` tool the marker is set from "Color" (OLDSUI-154); without it, by its
+  // own button, otherwise the marker could not be set from the pill.
   const { editor } = renderEditor({ tools: ["bold", "italic", "underline", "highlight", "link"] });
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
   const toolbar = await screen.findByRole("toolbar", BUBBLE);
   const highlight = () => within(toolbar).getByRole("button", { name: /^Highlight:/ });
 
-  // Один щелчок жёлтым ушёл (OLDSUI-153): щелчок открывает ряд маркеров.
+  // A single click used to apply yellow (OLDSUI-153): a click now opens the row of markers.
   await user.click(highlight());
   expect(editor.getHTML()).toBe("<p>Hello world</p>");
   const row = await screen.findByRole("menu", { name: "Highlight" });
@@ -175,21 +175,21 @@ test("«…» in the bubble holds strikethrough instead of underline; colours ar
 
   await user.click(within(toolbar).getByRole("button", { name: "More formatting" }));
   const menu = screen.getByRole("menu", { name: "More formatting" });
-  // Подчёркнутый — кнопка ряда, в «…» плашки его нет; зачёркнутый — наоборот.
+  // Underline is a button of the row and is not in the pill's "…"; strikethrough is the other way round.
   expect(within(menu).queryByRole("menuitemcheckbox", { name: /^Underline/ })).toBeNull();
   await user.click(within(menu).getByRole("menuitemcheckbox", { name: /^Strikethrough/ }));
   expect(editor.getHTML()).toBe("<p><s>Hello</s> world</p>");
 
-  // Подменю цвета в «…» больше нет (OLDSUI-153).
+  // The colour submenu in "…" is gone (OLDSUI-153).
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
   await user.click(within(toolbar).getByRole("button", { name: "More formatting" }));
   expect(screen.queryByRole("menuitem", { name: /^Highlight|^Text color/ })).toBeNull();
 });
 
 /*
-  Блок кода — пункт «…» (OLDSUI-76): «…» плашки — то же меню, что у Панели, и
-  пункт в нём есть, хотя кнопки Блока кода у плашки не было. Отдельной кнопки
-  нет и здесь.
+  Code block is an item of "…" (OLDSUI-76): the pill's "…" is the same menu as the
+  Toolbar's, and the item is in it, although the pill never had a Code block button.
+  There is no separate button here either.
 */
 test("«…» in the bubble holds the Code block check item", async () => {
   const user = userEvent.setup();
@@ -219,7 +219,7 @@ test("the link button opens the same link popover as the toolbar", async () => {
   expect(await screen.findByRole("textbox", { name: "Address" })).toBeDefined();
 });
 
-/** Сенсорный экран: `matchMedia("(pointer: coarse)")` совпадает, и о смене сообщается. */
+/** Touch screen: `matchMedia("(pointer: coarse)")` matches, and changes are reported. */
 function stubPointer(initial: "coarse" | "fine") {
   let coarse = initial === "coarse";
   const listeners = new Set<() => void>();
@@ -247,7 +247,7 @@ test("on a touch screen the bubble falls back to the fixed toolbar, and back", a
   const pointer = stubPointer("coarse");
   const { editor } = renderEditor();
 
-  // Фиксированная Панель видна без выделения — это и есть отступление.
+  // The fixed Toolbar is visible without a selection — that is the fallback.
   act(() => void editor.commands.setTextSelection(3));
   expect(screen.getByRole("toolbar", { name: "Formatting" })).toBeDefined();
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
@@ -267,7 +267,7 @@ test("read-only has no bubble", async () => {
   expect(bubble()).toBeNull();
 });
 
-/** `Alt+F10` в документе — так, как его слышит движок. */
+/** `Alt+F10` in the document, as the engine hears it. */
 function pressAltF10(editor: RichTextEditorHandle["editor"]) {
   act(() => {
     editor!.view.dom.dispatchEvent(
@@ -281,7 +281,7 @@ test("Alt+F10 moves focus into the bubble, the arrows walk it, an action returns
   const { editor } = renderEditor();
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
 
-  // Сразу, не дожидаясь задержки показа: клавиатура показывает плашку сама.
+  // Immediately, without waiting for the show delay: the keyboard shows the pill itself.
   pressAltF10(editor);
   const toolbar = screen.getByRole("toolbar", BUBBLE);
   expect(document.activeElement).toBe(
@@ -343,9 +343,10 @@ test("the bubble speaks the provider's language", async () => {
 });
 
 /*
-  Показ пересчитывается по таймеру после каждой правки. Меню из плашки живёт в
-  портале, вне её узла: без исключения правка за миг до открытия меню прятала
-  бы плашку вместе с кнопкой меню, а Escape возвращал бы фокус в никуда.
+  The pill's visibility is recalculated on a timer after every edit. The menu from the pill
+  lives in a portal, outside its node: without the exception, an edit a moment before the
+  menu opens would hide the pill along with the menu button, and Escape would return focus
+  nowhere.
 */
 test("an open menu keeps the bubble, even when an edit lands just before it opens", async () => {
   const user = userEvent.setup();
@@ -354,18 +355,18 @@ test("an open menu keeps the bubble, even when an edit lands just before it open
   const toolbar = await screen.findByRole("toolbar", BUBBLE);
 
   await user.click(within(toolbar).getByRole("button", { name: "Bold" }));
-  // Действие возвращает фокус в Документ кадром позже; таймер показа после
-  // правки (250 мс) ещё идёт, когда открывается меню.
+  // The action returns focus to the Document a frame later; the show timer after the edit
+  // (250 ms) is still running when the menu opens.
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
   await user.click(within(toolbar).getByRole("button", { name: "Block type: Text" }));
   expect(screen.getByRole("menu", { name: "Block type: Text" })).toBeDefined();
   await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
 
-  // Открытое меню react-aria прячет остальное от скринридера (`aria-hidden`),
-  // поэтому плашка проверяется узлом: она на месте, в документе.
+  // An open react-aria menu hides the rest from the screen reader (`aria-hidden`), so the
+  // pill is checked by its node: it is in place, in the document.
   expect(toolbar.isConnected).toBe(true);
-  // Escape закрывает только меню; фокус остаётся в плашке (куда именно —
-  // решает `Toolbar`: он возвращает на последнюю кнопку, где был фокус).
+  // Escape closes only the menu; focus stays in the pill (exactly where is decided by
+  // `Toolbar`: it returns to the last button that had focus).
   await user.keyboard("{Escape}");
   expect(screen.queryByRole("menu")).toBeNull();
   await waitFor(() => expect(toolbar.contains(document.activeElement)).toBe(true));
@@ -373,7 +374,7 @@ test("an open menu keeps the bubble, even when an edit lands just before it open
 
 test("with the fixed toolbar the bubble appears over a selection too; selectionMenu={false} turns it off", async () => {
   const { editor, unmount } = renderEditor({ toolbar: undefined });
-  // Панель сверху на месте — плашка её не заменяет.
+  // The fixed Toolbar above is in place — the pill does not replace it.
   expect(screen.getByRole("toolbar", { name: "Formatting" })).toBeDefined();
 
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
@@ -383,7 +384,7 @@ test("with the fixed toolbar the bubble appears over a selection too; selectionM
 
   const off = renderEditor({ toolbar: "fixed", selectionMenu: false });
   act(() => void off.editor.commands.setTextSelection({ from: 1, to: 6 }));
-  // Таймер показа плашки не должен ничего нарисовать и позже.
+  // The pill's show timer must not draw anything later either.
   await new Promise((resolve) => setTimeout(resolve, 400));
   expect(bubble()).toBeNull();
   expect(screen.getByRole("toolbar", { name: "Formatting" })).toBeDefined();

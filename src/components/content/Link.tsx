@@ -9,51 +9,54 @@ import { TONE_TOKENS, type Tone } from "../../lib/variants.js";
 export type LinkVariant = "inline" | "standalone" | "quiet";
 
 export interface LinkOwnProps {
-  /** Вид ссылки: `inline` (всегда подчёркнута), `standalone` (подчёркивание при наведении) или `quiet` (цвет текста, акцент при наведении). По умолчанию `inline`. */
+  /**
+   * Link style: `inline` (always underlined), `standalone` (underlined on hover) or `quiet` (text
+   * color, accent on hover). Defaults to `inline`.
+   */
   variant?: LinkVariant;
-  /** Цветовой тон ссылки: `neutral`, `accent`, `success`, `warning` или `danger`. По умолчанию `accent`. */
+  /** Link tone: `neutral`, `accent`, `success`, `warning` or `danger`. Defaults to `accent`. */
   tone?: Tone;
   /**
-   * Ссылка ведёт наружу: рядом с подписью появляется иконка.
+   * The link is external: an icon appears next to the label.
    *
-   * `target` этим пропом НЕ выставляется. Открывать ли внешнее в новой вкладке —
-   * решение экрана, а не системы: в одном месте это удобно, в другом уносит
-   * пользователя из наполовину заполненной формы.
+   * This prop does NOT set `target`. Whether an external link opens in a new tab is the screen's
+   * decision, not the kit's: in one place it is convenient, in another it takes the user away from
+   * a half-filled form.
    */
   external?: boolean;
-  /** Содержимое ссылки. */
+  /** Link content. */
   children?: ReactNode;
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 /**
- * Пропсы полиморфны по `as`: с `next/link` компилятор примет и `prefetch`, и
- * объектный `href`, а с обычной `a` — только атрибуты якоря.
+ * The props are polymorphic over `as`: with `next/link` the compiler accepts both `prefetch` and an
+ * object `href`, while with a plain `a` only anchor attributes are accepted.
  *
- * Без этого тип был бы прибит к якорю, и каждый проп маршрутизатора
- * компилятор отвергал бы у компонента, который ради маршрутизатора и заведён.
+ * Without this the type would be pinned to an anchor, and the compiler would reject every router prop
+ * on a component that exists for the sake of the router.
  */
 export type LinkProps<T extends ElementType = "a"> = LinkOwnProps & {
   /**
-   * Тег или компонент ссылки: `next/link`, `Link` роутера, обычная `a`.
+   * The tag or component the link renders as: `next/link`, the router's `Link` or a plain `a`.
    *
-   * Пакет намеренно не знает про маршрутизацию: у потребителя она своя, и
-   * зависимость на неё превратила бы дизайн-систему в часть приложения.
+   * The package deliberately knows nothing about routing: the consumer has its own, and a dependency
+   * on it would turn the design system into part of the application.
    */
   as?: T;
 } & Omit<ComponentPropsWithRef<T>, keyof LinkOwnProps | "as">;
 
 /**
- * Подчёркивание — не украшение, а второй признак ссылки.
+ * Underlining is not decoration but the second sign of a link.
  *
- * `inline` подчёркнут ВСЕГДА: ссылка внутри абзаца, отличающаяся от текста
- * только цветом, для дальтоника не отличается ничем. Это прямое требование
- * WCAG 1.4.1, и оно не смягчается «у нас контрастный акцент».
+ * `inline` is ALWAYS underlined: a link inside a paragraph that differs from the text only by color
+ * is indistinguishable for a person with color blindness. This is a direct requirement of WCAG 1.4.1,
+ * and it is not relaxed by "our accent has enough contrast".
  *
- * `standalone` — ссылка, стоящая отдельной строкой: её и так видно по месту,
- * подчёркивание появляется при наведении. `quiet` — ссылка цветом текста,
- * акцент только при наведении: хлебные крошки, служебные ссылки в подвале.
+ * `standalone` is a link on a line of its own: it is already visible from its position, and underlining
+ * appears on hover. `quiet` is a link in the text color, with the accent only on hover: breadcrumbs and
+ * utility links in the footer.
  */
 const VARIANT_CLASS: Record<LinkVariant, string> = {
   inline: "underline underline-offset-2",
@@ -62,10 +65,9 @@ const VARIANT_CLASS: Record<LinkVariant, string> = {
 };
 
 /**
- * Тон `quiet` при наведении. Отдельная таблица литеральных строк, а не
- * `hover:` + атом словаря: Tailwind сканирует исходники как текст, и класс,
- * склеенный в рантайме, молча не попадёт в CSS — ссылка осталась бы серой
- * навсегда, без единой ошибки сборки.
+ * The `quiet` tone on hover. A separate table of literal strings, not `hover:` combined with a
+ * vocabulary token: Tailwind scans the sources as text, and a class assembled at runtime silently
+ * misses the CSS, so the link would stay gray forever with no build error at all.
  */
 const QUIET_HOVER_CLASS: Record<Tone, string> = {
   neutral: "hover:text-fg-0",
@@ -76,38 +78,35 @@ const QUIET_HOVER_CLASS: Record<Tone, string> = {
 };
 
 /**
- * Схемы, исполняющие код в origin страницы.
+ * Schemes that run code in the page's origin.
  *
- * Пробелы и переводы строк внутри схемы браузер игнорирует
- * (`java\tscript:`), регистр тоже, поэтому сверяется очищенное начало строки.
+ * Browsers ignore spaces and line breaks inside a scheme (`java\tscript:`), and case too, so the
+ * cleaned start of the string is checked.
  */
 function isExecutableHref(href: unknown): boolean {
   /*
-    НЕ СТРОКА — не схема.
+    NOT A STRING, so not a scheme.
 
-    `LinkProps` полиморфны по `as`, и докстрока пропа прямо обещает, что с
-    `next/link` компилятор примет объектный `href` (`{ pathname, query }`).
-    Проверка, добавленная без сужения типа, звала на нём `.replace` и роняла
-    рендер: `TypeError: href.replace is not a function` — причём на том самом
-    способе вызова, ради которого полиморфность и заведена. Исполняемую схему
-    объект выразить не может: у `UrlObject` нет `protocol`, который дошёл бы
-    до `<a>`.
+    `LinkProps` are polymorphic over `as`, and the prop's doc comment promises outright that with
+    `next/link` the compiler accepts an object `href` (`{ pathname, query }`). A check added without
+    narrowing the type called `.replace` on it and broke rendering: `TypeError: href.replace is not a
+    function` — and on exactly the kind of call polymorphism exists for. An object cannot express an
+    executable scheme: `UrlObject` has no `protocol` that would reach the `<a>`.
   */
   if (typeof href !== "string" || !href) return false;
-  // Управляющие символы здесь НУЖНЫ: браузер их из схемы выбрасывает, поэтому
-  // `java\u0000script:` — рабочая ссылка, и вычищать их обязаны и мы.
+  // Control characters NEED to be here: the browser strips them from a scheme, so
+  // `java\u0000script:` is a working link, and we must strip them too.
   // eslint-disable-next-line no-control-regex
   const scheme = href.replace(/[\s\u0000-\u001f]/g, "").toLowerCase();
   return (
     /*
-      Из `data:` блокируются только ИСПОЛНЯЕМЫЕ типы.
+      Only EXECUTABLE types are blocked among `data:` URLs.
 
-      Отвергать схему целиком значило молча ломать законную
-      `<Link href={csvDataUrl} download="report.csv">`: подпись оставалась на
-      экране, но не фокусировалась и не нажималась, а отказ ничем не
-      объяснялся. Код исполняют `text/html`, `application/xhtml+xml` и
-      `image/svg+xml`; картинка или CSV кодом не являются, а навигацию верхнего
-      уровня по `data:` браузеры и так блокируют сами.
+      Rejecting the whole scheme would silently break a legitimate
+      `<Link href={csvDataUrl} download="report.csv">`: the label stayed on screen but could not be
+      focused or pressed, and the rejection gave no explanation. Code is run by `text/html`,
+      `application/xhtml+xml` and `image/svg+xml`; an image or a CSV is not code, and browsers already
+      block top-level navigation to `data:` URLs on their own.
     */
     scheme.startsWith("javascript:") ||
     scheme.startsWith("vbscript:") ||
@@ -118,11 +117,10 @@ function isExecutableHref(href: unknown): boolean {
 }
 
 /**
- * Ссылка.
+ * Link.
  *
- * Тон работает как везде в ките — семантикой, а не оттенком; у `quiet` он
- * проявляется только при наведении, поэтому в покое такая ссылка окрашена
- * приглушённым текстом, а не тоном.
+ * The tone works here as it does everywhere in the kit: as semantics, not as a shade. With `quiet`
+ * it shows only on hover, so at rest such a link is colored with muted text, not with the tone.
  */
 export function Link<T extends ElementType = "a">({
   as,
@@ -137,38 +135,35 @@ export function Link<T extends ElementType = "a">({
   const Comp = (as ?? "a") as ElementType;
 
   /*
-    `rel` выводится из `target`, а не из `external`, и это не педантизм.
-    `noopener` защищает от доступа открытой вкладки к `window.opener` — то есть
-    имеет смысл ровно тогда, когда вкладка открывается. Навесить его на обычную
-    внутристраничную ссылку значит поставить оберег от того, чего не бывает,
-    и приучить читающего код не вчитываться в `rel`.
+    `rel` is derived from `target`, not from `external`, and this is not pedantry.
+    `noopener` stops the opened tab from reaching `window.opener`, so it matters exactly when a tab is
+    opened. Putting it on an ordinary same-page link would be a safeguard against something that cannot
+    happen, and would train the reader to skip `rel` when reading the code.
 
-    Обратное тоже верно: `target="_blank"` получает `rel` независимо от того,
-    объявлена ссылка внешней или нет, — дыра открывается тегом, а не пропом.
+    The reverse is also true: `target="_blank"` gets `rel` whether or not the link is declared external —
+    the hole is opened by a tag, not by a prop.
   */
   const props = rest as { target?: string; rel?: string; href?: unknown };
   const opensNewTab = props.target === "_blank";
   const rel = opensNewTab ? (props.rel ?? "noopener noreferrer") : props.rel;
 
   /*
-    ИСПОЛНЯЕМЫЕ СХЕМЫ не доходят до разметки.
+    EXECUTABLE SCHEMES do not reach the markup.
 
-    Компонент уже взял на себя безопасность ссылки — выводит `rel` из `target`
-    с обоснованием «дыру открывает тег, а не проп», — а схему не смотрел вовсе:
-    `href` уходил на `<a>` как есть. Поле «сайт» в профиле пользователя,
-    нарисованное как `<Link href={profile.website}>`, со значением
-    `javascript:fetch('/api/keys')…` давало РАБОТАЮЩУЮ ссылку: щелчок исполнял
-    код в origin приложения с сессионной кукой.
+    The component already takes care of link safety — it derives `rel` from `target` with the reasoning
+    "the tag opens the hole, not the prop" — but it never checked the scheme: `href` went to the `<a>` as is.
+    A "website" field in a user profile, rendered as `<Link href={profile.website}>` with the value
+    `javascript:fetch('/api/keys')…`, produced a WORKING link: a click ran code in the application's origin
+    with the session cookie.
 
-    ЧЁРНЫЙ СПИСОК, А НЕ БЕЛЫЙ, и это решение владельца. Белый список молча
-    ломает собственные схемы приложений — `slack://`, `ms-teams://`, внутренние
-    протоколы админок. Отвергается только то, что исполняет код: `javascript:`,
-    `vbscript:` и исполняемые типы `data:` (см. `isExecutableHref`). Остальное —
-    `http`, `https`, `mailto`, `tel`, относительные пути, якоря, картинка или
-    CSV в `data:` — проходит без изменений.
+    A BLOCKLIST, NOT AN ALLOWLIST, and this is the owner's decision. An allowlist would silently break the
+    application's own schemes — `slack://`, `ms-teams://`, internal admin protocols. Only what runs code is
+    rejected: `javascript:`, `vbscript:` and executable `data:` types (see `isExecutableHref`). Everything
+    else — `http`, `https`, `mailto`, `tel`, relative paths, anchors, an image or a CSV in `data:` — passes
+    through unchanged.
 
-    Ссылка без `href` остаётся в разметке `<a>` без адреса: так потребитель
-    видит, что значение отвергнуто, а не гадает, почему ничего не происходит.
+    A link without `href` stays in the markup as an `<a>` with no address: this way the consumer sees that
+    the value was rejected, instead of guessing why nothing happens.
   */
   const href = isExecutableHref(props.href) ? undefined : props.href;
 
@@ -178,11 +173,10 @@ export function Link<T extends ElementType = "a">({
       href={href}
       rel={rel}
       className={cn(
-        // Раскладка НЕ флексовая, и это существенно: `inline-flex` — атомарный
-        // бокс, его текст не разрывается между строками. Ссылка в четыре слова
-        // внутри абзаца уезжала бы целиком на следующую строку или вылезала за
-        // край — то есть вариант `inline` не работал бы ровно там, ради чего
-        // заведён. Иконка ниже поэтому свой отступ несёт сама.
+        // The layout is NOT flex, and this matters: `inline-flex` is an atomic box, and its text does not
+        // break across lines. A four-word link inside a paragraph would move whole to the next line or
+        // overflow the edge, so the `inline` variant would fail exactly where it is meant to work. That
+        // is why the icon below carries its own spacing.
         "focus-visible:outline-accent-strong transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
         variant === "quiet" ? cn("text-fg-2", QUIET_HOVER_CLASS[tone]) : TONE_TOKENS[tone].fg,
         VARIANT_CLASS[variant],

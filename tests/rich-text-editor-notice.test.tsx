@@ -11,19 +11,19 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Сообщение поля и Строка статуса (OLDSUI-112, ADR-0058, раздел 7).
+ * Field notice and Status bar (OLDSUI-112, ADR-0058, section 7).
  *
- * Сообщение поля — одна команда движка `showNotice`: свой Инструмент зовёт её
- * из Extensions, экран — через `handle.editor`. Здесь она вызывается из
- * `ref.editor` — так же, как её позовёт код экрана; публичной формы своего
- * Инструмента, откуда её звал бы Инструмент, пока нет (OLDSUI-103). Сообщения о
- * картинках идут тем же каналом — их ожидания в `rich-text-editor-image.test.tsx`.
+ * A field notice is one engine command, `showNotice`: a custom Tool calls it
+ * from its Extensions, and a screen calls it through `handle.editor`. Here it is called from
+ * `ref.editor`, the same way the screen code would call it; a custom Tool has no public
+ * entry point to call it from yet (OLDSUI-103). Notices about
+ * images go through the same channel; their expectations are in `rich-text-editor-image.test.tsx`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -33,7 +33,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor };
 }
 
-/** Живой регион Сообщения поля — его текст озвучивается и невидим. */
+/** The live region of the field notice: its text is announced and not visible. */
 const announced = () => screen.getByRole("status").textContent;
 
 test("a status notice is announced and has no visible line", () => {
@@ -43,7 +43,7 @@ test("a status notice is announced and has no visible line", () => {
 
   expect(announced()).toBe("Draft restored");
   expect(screen.queryByRole("alert")).toBeNull();
-  // Невидим: текст есть только внутри живого региона, видимой копии нет.
+  // Not visible: the text exists only inside the live region, and there is no visible copy.
   expect(screen.getAllByText("Draft restored")).toHaveLength(1);
   expect(screen.getByRole("status").className).toContain("sr-only");
 });
@@ -75,7 +75,7 @@ test("a new notice replaces the previous one: one place, the last message", () =
   expect(screen.getAllByRole("alert")).toHaveLength(1);
   expect(screen.getByRole("alert").textContent).toBe("Second failure");
 
-  // Тон другой — прежнее уходит целиком: ни строки ошибки, ни старого объявления.
+  // The tone is different, so the previous notice goes away entirely: no error line, no old announcement.
   act(() => void editor.commands.showNotice({ tone: "status", text: "Retrying" }));
   expect(screen.queryByRole("alert")).toBeNull();
   expect(announced()).toBe("Retrying");
@@ -167,7 +167,7 @@ test("the image notices go through the same place: one alert for a custom and a 
   const { editor } = renderEditor({ defaultValue: "<p>Text</p>" });
 
   act(() => void editor.commands.showNotice({ tone: "error", text: "Custom failure" }));
-  // Файл без загрузчика отклоняется сообщением кита — оно заменяет своё.
+  // A file with no loader is rejected with the kit's message, which replaces its own.
   const file = new File(["x"], "photo.png", { type: "image/png" });
   act(() => void editor.commands.uploadImages([file]));
 
@@ -191,7 +191,7 @@ test("the live region is there in the Russian locale too, with kit strings from 
   expect(screen.getByRole("alert").textContent).toBe(ru.editor.imageFilesUnsupported);
 });
 
-/* Строка статуса. */
+/* Status bar. */
 
 test("the status line shows the screen's content at the start and the counter at the end", () => {
   renderEditor({
@@ -202,11 +202,11 @@ test("the status line shows the screen's content at the start and the counter at
 
   const saved = screen.getByText("Saved");
   const counter = screen.getByText("1 character left");
-  // Одна строка: ближайший общий предок своего содержимого и счётчика.
+  // One line: the nearest common ancestor of its content and the counter.
   let row = saved.parentElement as HTMLElement;
   while (!row.contains(counter)) row = row.parentElement as HTMLElement;
 
-  // Своё содержимое раньше счётчика кита, счётчик — последний в строке.
+  // Its own content comes before the kit's counter, and the counter is last in the line.
   expect(saved.compareDocumentPosition(counter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(row.lastElementChild?.contains(counter)).toBe(true);
   expect(row.querySelector('[contenteditable="true"]')).toBeNull();
@@ -221,7 +221,7 @@ test("the status line has no role and is not a live region", () => {
     expect(node.getAttribute("aria-live")).toBeNull();
     node = node.parentElement;
   }
-  // Единственный `status` на поле — невидимый регион Сообщения поля, пустой.
+  // The only `status` on the field is the invisible field notice region, and it is empty.
   expect(screen.getByRole("status").textContent).toBe("");
   expect(screen.getByRole("status").contains(screen.getByText("Saved"))).toBe(false);
 });

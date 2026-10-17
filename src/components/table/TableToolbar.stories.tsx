@@ -22,7 +22,7 @@ const COLUMNS = [
   { id: "updated", label: "Updated" },
 ];
 
-/** Заголовок, счётчик и действия. Счётчик склоняется каталогом по локали. */
+/** A title, a count, and actions. The count is declined by the message catalog per locale. */
 export const Playground: Story = {
   args: {
     title: "Documents",
@@ -35,13 +35,13 @@ export const Playground: Story = {
   },
 };
 
-/** Только счётчик — полоса не требует ни заголовка, ни действий. */
+/** Only the count: the bar needs neither a title nor actions. */
 export const CountOnly: Story = { args: { count: 0 } };
 
 /**
- * Шестерёнка с настройками. `TablePreferences` — панель, а не меню: пункт меню
- * не контейнер для кнопок, и вложенные в него кнопки порядка сломали бы
- * клавиатурную семантику меню. Оболочку выбирает потребитель — здесь `Popover`.
+ * A gear with settings. `TablePreferences` is a panel, not a menu: a menu item is not a container
+ * for buttons, and buttons nested in it would break the keyboard semantics of the menu. The consumer
+ * picks the wrapper; here it is a `Popover`.
  */
 export const WithPreferences: Story = {
   args: { title: "Documents", count: 12 },
@@ -55,8 +55,8 @@ export const WithPreferences: Story = {
         {...args}
         preferences={
           <Popover>
-            {/* `asChild` обязателен: без него Radix рисует свою кнопку
-                вокруг нашей, и получается кнопка в кнопке. */}
+            {/* `asChild` is required: without it, Radix draws its own button
+                around ours, and you get a button inside a button. */}
             <PopoverTrigger asChild>
               <Button variant="ghost" iconOnly icon={<SettingsIcon />} aria-label="Settings" />
             </PopoverTrigger>

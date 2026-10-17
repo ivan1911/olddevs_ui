@@ -33,8 +33,8 @@ test("yields a string, not an event", async () => {
 
   await user.type(screen.getByRole("searchbox", { name: "Find" }), "f");
 
-  // У поля поиска значение и есть смысл: все пять рукописных копий во фронте
-  // первым делом доставали `e.target.value`.
+  // For a search field the value is the whole point: all five hand-written copies in the
+  // front end read `e.target.value` first thing.
   expect(onChange).toHaveBeenCalledWith("f");
 });
 
@@ -53,8 +53,8 @@ test("clearing returns focus to the field", async () => {
 
   await user.click(screen.getByRole("button", { name: "Clear search" }));
 
-  // Крестик при очистке размонтируется, и без явного возврата фокус уезжает
-  // на `<body>`: пользователь клавиатуры теряет место в диалоге.
+  // The clear button unmounts on clear, and without an explicit return the focus moves to
+  // `<body>`: a keyboard user loses their place in the dialog.
   expect(document.activeElement).toBe(screen.getByRole("searchbox"));
 });
 
@@ -114,13 +114,12 @@ test("it passes the submit from the on-screen keyboard to the search consumer", 
 });
 
 /**
- * Экранная клавиатура вставляет туда, где каретка СЕЙЧАС.
+ * An on-screen keyboard inserts at the caret's CURRENT position.
  *
- * Позиция жила состоянием и обновлялась по `onChange`, `onSelect` и
- * `onPointerDown` кнопки-триггера — то есть только при указательном
- * взаимодействии. Пользователь клавиатуры доходил до кнопки табом и жал Enter:
- * `pointerdown` не приходил, позиция оставалась с монтирования — `{0,0}`, — и
- * первый же символ вставлялся в НАЧАЛО непустой строки.
+ * The position lived in state and was updated by `onChange`, `onSelect` and the trigger
+ * button's `onPointerDown`: that is, only during pointer interaction. A keyboard user tabbed
+ * to the button and pressed Enter: no `pointerdown` came, the position stayed as it was at
+ * mount, `{0,0}`, and the first character was inserted at the START of a non-empty string.
  */
 test("a keyboard-opened panel types at the caret, not at the start", async () => {
   const user = userEvent.setup();
@@ -132,14 +131,14 @@ test("a keyboard-opened panel types at the caret, not at the start", async () =>
     keyboard: { layout: "en" as const, onLayoutChange: () => {} },
   };
 
-  // Монтируемся ПУСТЫМИ, значение приходит потом — так восстанавливается запрос
-  // из адреса. Состояние позиции считалось один раз на монтировании и оставалось
-  // `{0,0}`, тогда как каретка в поле стоит в конце.
+  // We mount EMPTY and the value arrives later: this is how the query is restored from the
+  // address. The position state was computed once at mount and stayed `{0,0}`, while the caret
+  // in the field sits at the end.
   const { rerender } = render(<SearchControl {...props} value="" />);
   rerender(<SearchControl {...props} value="photo" />);
 
-  // Клавиатура открывается С КЛАВИАТУРЫ: указательных событий, по которым
-  // позиция только и обновлялась, нет вовсе.
+  // The keyboard opens FROM THE KEYBOARD: there are no pointer events at all, which are the
+  // only events that updated the position.
   const trigger = screen.getByRole("button", { name: /keyboard/i });
   trigger.focus();
   await user.keyboard("{Enter}");

@@ -12,7 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<CarouselProps>;
 
-/** Слайд-заглушка: число видно, граница слайда видна, ничего доменного. */
+/** Placeholder slide: the number is visible, the slide edge is visible, nothing domain-specific. */
 function Tile({ n }: { n: number }) {
   return (
     <div className="p-1.5">
@@ -27,9 +27,9 @@ const tiles = (count: number) =>
   Array.from({ length: count }, (_, i) => <Tile key={i} n={i + 1} />);
 
 /**
- * Один слайд в кадре. Листают кнопки, колесо, тачпад, свайп и стрелки
- * клавиатуры на ленте; слайд после жеста встаёт ровно. На краях кнопки
- * выключаются.
+ * One slide in the frame. The strip is paged with the buttons, the wheel, a trackpad, a swipe,
+ * and the keyboard arrows; the slide snaps into place after a gesture. At the edges the buttons
+ * are disabled.
  */
 export const Playground: Story = {
   args: { "aria-label": "Featured" },
@@ -41,9 +41,9 @@ export const Playground: Story = {
 };
 
 /**
- * Несколько слайдов в кадре: число или объект по брейкпойнтам кита. Здесь —
- * один на телефоне, два с `sm`, четыре с `lg`. Лента не едет дальше своего
- * конца: при трёх в кадре и пяти слайдах последний индекс — второй.
+ * Several slides in the frame: a number or an object per the kit's breakpoints. Here it is one
+ * on a phone, two from `sm`, and four from `lg`. The strip does not move past its end: with
+ * three in the frame and five slides, the last index is two.
  */
 export const SlidesPerView: Story = {
   render: () => (
@@ -63,9 +63,9 @@ export const SlidesPerView: Story = {
 };
 
 /**
- * Управляемый режим: `index` — левый видимый слайд. Кнопки снаружи и
- * прокрутка пальцем двигают один и тот же индекс; ровно один вызов
- * `onIndexChange` приходит после остановки ленты, а не на каждый кадр.
+ * Controlled mode: `index` is the leftmost visible slide. The buttons outside and a finger drag
+ * move the same index. Exactly one `onIndexChange` call arrives after the strip stops, not one
+ * per frame.
  */
 export const Controlled: Story = {
   render: () => {
@@ -91,7 +91,7 @@ export const Controlled: Story = {
   },
 };
 
-/** Неуправляемый режим: `defaultIndex` открывает ленту на нужном слайде без анимации. */
+/** Uncontrolled mode: `defaultIndex` opens the strip on the needed slide without animation. */
 export const DefaultIndex: Story = {
   render: () => (
     <div className="max-w-xl">
@@ -102,7 +102,7 @@ export const DefaultIndex: Story = {
   ),
 };
 
-/** Всё помещается в кадр: ехать некуда, обе кнопки выключены. */
+/** Everything fits in the frame: there is nowhere to go, and both buttons are disabled. */
 export const Fits: Story = {
   render: () => (
     <div className="max-w-xl">

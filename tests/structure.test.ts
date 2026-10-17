@@ -3,24 +3,25 @@ import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 /**
- * Ворота раскладки исходников (ADR-0060, п. 18).
+ * Source layout gate (ADR-0060, item 18).
  *
- * ЗАЧЕМ. Раскладка `src/components/` держится на одном обещании: папка модуля
- * называется так же, как папка его страницы в `docs/components/`. Пока оно
- * выполняется, у справочника и кода одна таксономия, а спор о категории
- * компонента решается переносом страницы и кода вместе. Нарушить его легко и
- * молча: файл, положенный «куда привычнее», собирается, проходит типы и тесты,
- * а справочник и код тихо разъезжаются на две схемы — ровно то, ради чего
- * делался перенос. Так же молча возвращаются корневой список в `components/`,
- * барель в категории (лишний слой реэкспортов и риск циклов, п. 15) и свалка
- * файлов в корне `src/editor/`.
+ * WHY. The layout of `src/components/` rests on one promise: a module folder has
+ * the same name as the folder of its page in `docs/components/`. While the promise
+ * holds, the Reference and the code share one taxonomy, and a dispute about a
+ * component's category is settled by moving its page and its code together.
+ * Breaking it is easy and silent: a file placed "where it feels more natural"
+ * builds, passes types and tests, and the Reference and the code quietly drift onto
+ * two schemes, which is exactly what the move was meant to prevent. Just as silently,
+ * a loose file in the root of `components/`, a barrel inside a category (an extra
+ * layer of re-exports and a risk of cycles, item 15) and a dump of files in the root
+ * of `src/editor/` come back.
  *
- * Тест обходит файловую систему и не импортирует ни одного модуля кита: он
- * работает в окружении `node`, как прочие ворота, и читает только имена файлов,
- * `src/index.ts`, `src/color.ts` и каталог `docs/components/index.md`.
+ * The test walks the file system and imports no kit module: it runs in the `node`
+ * environment like the other gates, and reads only file names, `src/index.ts`,
+ * `src/color.ts` and the `docs/components/index.md` catalog.
  *
- * Сообщения говорят, ЧТО сделать, а не «не совпало»: ворота читает автор, у
- * которого красный CI и нет в голове ADR.
+ * The messages say WHAT to do, not "does not match": the gate is read by an author
+ * whose CI is red and who has no ADR in mind.
  */
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -29,12 +30,12 @@ const COMPONENTS = join(SRC, "components");
 const DOCS = join(ROOT, "docs", "components");
 const EDITOR = join(SRC, "editor");
 
-/** Путь относительно корня пакета, с прямыми слэшами. */
+/** Path relative to the package root, with forward slashes. */
 function rel(full: string): string {
   return relative(ROOT, full).split("\\").join("/");
 }
 
-/** Все файлы под папкой, рекурсивно. Нет папки — нет файлов. */
+/** All files under a folder, recursively. No folder means no files. */
 function filesUnder(dir: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -43,7 +44,7 @@ function filesUnder(dir: string): string[] {
   });
 }
 
-/** Подпапки папки, имена. */
+/** Names of the subfolders of a folder. */
 function dirsIn(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -52,14 +53,14 @@ function dirsIn(dir: string): string[] {
 }
 
 /**
- * Категории — подпапки справочника, а не список в этом файле. Второй список
- * разъехался бы с первым ровно тем способом, которым ворота и должны ловить
- * расхождение. Новая категория заводится страницей в справочнике, и код сам
- * получает право на папку с тем же именем.
+ * Categories are the subfolders of the Reference, not a list in this file. A second
+ * list would drift away from the first in exactly the way the gate exists to catch.
+ * A new category starts with a page in the Reference, and the code gets a folder of
+ * the same name automatically.
  */
 const CATEGORIES = dirsIn(DOCS);
 
-/** Модули компонентов: `components/<категория>/X.ts(x)` без историй. */
+/** Component modules: `components/<category>/X.ts(x)`, without stories. */
 const MODULE = /^[^.]+\.tsx?$/;
 
 function categoryModules(): { category: string; name: string; ext: string }[] {
@@ -76,15 +77,15 @@ function categoryModules(): { category: string; name: string; ext: string }[] {
   });
 }
 
-/** Комментарии не должны попадать в разбор экспортов. */
+/** Comments must not leak into the export parsing. */
 function stripComments(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
 /**
- * Публичные ЗНАЧЕНИЯ, которые пакет отдаёт из модулей `components/`: модуль →
- * имена, под которыми они видны потребителю. Типы пропускаются: каталог, по
- * его же первой строке, перечисляет runtime exports.
+ * Public VALUES that the package exports from the `components/` modules: module →
+ * the names under which consumers see them. Types are skipped: the catalog, per its
+ * own first line, lists the runtime exports.
  */
 function publicExportsByModule(): Map<string, string[]> {
   const byModule = new Map<string, string[]>();
@@ -107,10 +108,10 @@ function publicExportsByModule(): Map<string, string[]> {
 }
 
 /**
- * Каталог: имя экспорта → папки страниц, на которые оно указывает. Запись —
- * пункт списка со ссылкой вида `[Dialog](overlays/dialog.md): \`Dialog\``; её
- * продолжение на следующих строках входит в тот же пункт. Ссылки вне
- * `docs/components/<папка>/` (например, на `../api/`) экспортов не закрепляют.
+ * Catalog: export name → the page folders it points to. An entry is a list item with
+ * a link of the form `[Dialog](overlays/dialog.md): \`Dialog\``; its continuation on
+ * the following lines belongs to the same item. Links outside `docs/components/<folder>/`
+ * (for example, to `../api/`) do not pin any exports.
  */
 function catalog(): Map<string, { folders: Set<string>; pages: Set<string> }> {
   const source = readFileSync(join(DOCS, "index.md"), "utf8");
@@ -137,10 +138,10 @@ describe("the source tree follows the docs taxonomy (ADR-0060)", () => {
 
     for (const { category, name, ext } of categoryModules()) {
       const names = exportsByModule.get(`${category}/${name}`);
-      // Внутренний модуль (CheckboxCard, ChoiceCardBody, keyboardEditing): в
-      // публичный API он не входит, значит страницы у него нет и быть не должно.
-      // Файл, унесённый в чужую папку без правки `src/index.ts`, тоже попадает
-      // сюда, но его ловит `npm run typecheck`: импорт перестаёт разрешаться.
+      // Internal module (CheckboxCard, ChoiceCardBody, keyboardEditing): it is not part
+      // of the public API, so it has no page and must not have one. A file moved into
+      // another folder without editing `src/index.ts` also lands here, but
+      // `npm run typecheck` catches it: the import stops resolving.
       if (!names) continue;
 
       const file = `src/components/${category}/${name}${ext}`;
@@ -208,9 +209,9 @@ describe("the source tree follows the docs taxonomy (ADR-0060)", () => {
   });
 
   test("no barrels inside categories, editor layers and features", () => {
-    // Барель — только точка входа пакета: src/index.ts, src/editor/index.ts,
-    // src/color.ts, src/icons.ts. Внутри дерева он добавляет слой реэкспортов и
-    // риск цикла через сам барель (ADR-0060, п. 15).
+    // A barrel is only an entry point of the package: src/index.ts, src/editor/index.ts,
+    // src/color.ts, src/icons.ts. Inside the tree it adds a layer of re-exports and a
+    // risk of a cycle through the barrel itself (ADR-0060, item 15).
     const barrelRoots = [
       COMPONENTS,
       ...["core", "ui", "styles", "hooks", "features"].map((dir) => join(EDITOR, dir)),

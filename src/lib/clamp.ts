@@ -1,17 +1,15 @@
 /**
- * Зажать число между границами.
+ * Clamp a number between bounds.
  *
- * Вынесено, когда выражение написали четвёртый раз: `Pagination`, `Tabs`,
- * `SplitPanel` и `Rating`. Функция тривиальная, и ценность не в экономии
- * строк — в том, что перевёрнутый диапазон везде обрабатывается одинаково.
+ * Extracted when the expression had been written for the fourth time: `Pagination`, `Tabs`,
+ * `SplitPanel` and `Rating`. The function is trivial, and its value is not in saving lines but in the
+ * fact that a reversed range is handled the same way everywhere.
  *
- * При `min > max` возвращается `max`: единственный вариант, при котором
- * результат остаётся внутри объявленного верхнего предела. Компоненту, которому
- * важно не отдать наружу невалидный диапазон, границы надо приводить до вызова
- * — так делает `SplitPanel`.
+ * When `min > max`, `max` is returned: the only variant in which the result stays within the declared
+ * upper limit. A component that must not pass an invalid range outward should normalize the bounds
+ * before the call, as `SplitPanel` does.
  *
- * `@internal` — наружу из пакета не экспортируется: это утилита кита, а не
- * часть его public API.
+ * `@internal`: not exported from the package. It is a utility of the kit, not part of its public API.
  */
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);

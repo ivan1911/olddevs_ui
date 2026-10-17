@@ -30,171 +30,165 @@ import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "../overlays
 import { useDragToSelect } from "./useDragToSelect.js";
 
 export interface VirtualGridItem {
-  /** Идентификатор ячейки: ключ выбора. */
+  /** Cell identifier: the selection key. */
   id: Key;
   /**
-   * Содержимое ячейки — любой узел, обычно `MediaCard`. Кнопки внутри законны:
-   * ячейка — `gridcell`. Кружок выбора — `<Checkbox slot="selection" />`, его
-   * сетка связывает со своим выбором сама.
+   * The cell content: any node, usually a `MediaCard`. Buttons inside are allowed:
+   * the cell is a `gridcell`. The selection checkbox, `<Checkbox slot="selection" />`,
+   * is wired to the selection by the grid itself.
    */
   content: ReactNode;
   /**
-   * Строковое представление ячейки: по нему работает поиск набором с
-   * клавиатуры. Обязателен, потому что содержимое — вёрстка, а не текст.
+   * The text form of the cell: keyboard type-ahead search works on it. Required,
+   * because the content is markup, not text.
    */
   textValue: string;
   /**
-   * Пункты контекстного меню ячейки: `ContextMenuItem`, `ContextMenuSeparator`,
-   * `ContextMenuSub` и прочее из семейства `ContextMenu`. Панель, триггер и
-   * изоляцию от выбора сетка ставит сама. Без поля у ячейки меню нет.
+   * Items of the cell's context menu: `ContextMenuItem`, `ContextMenuSeparator`,
+   * `ContextMenuSub`, and the rest of the `ContextMenu` family. The grid adds the panel,
+   * the trigger and the isolation from selection itself. Without this field, a cell has
+   * no menu.
    *
-   * Открывается правой кнопкой, долгим нажатием и с клавиатуры — Shift+F10 или
-   * клавишей контекстного меню на сфокусированной ячейке.
+   * It opens with the right mouse button, a long press, or the keyboard: Shift+F10 or the
+   * context menu key on the focused cell.
    */
   contextMenu?: ReactNode;
 }
 
-/** Что сетка сообщает о ячейке, которую открыли. */
+/** What the grid reports about the cell that was opened. */
 export interface VirtualGridActionDetails {
   /**
-   * Прямоугольник ячейки в координатах окна в момент действия — для анимации
-   * открытия «из места» (карточка вырастает из превью).
+   * The cell's rectangle in viewport coordinates at the moment of the action, for the
+   * "open from the spot" animation (the card grows out of its preview).
    */
   rect: DOMRect;
 }
 
 export interface VirtualGridProps {
-  /** Ячейки сетки. */
+  /** The grid's cells. */
   items: VirtualGridItem[];
-  /** Доступное имя сетки. Безымянную сетку скринридер называет только по роли. */
+  /** Accessible name of the grid. Without one, a screen reader announces the grid by its role only. */
   "aria-label": string;
   /**
-   * Наименьший размер ячейки в пикселях. Число колонок из него и считается.
+   * Minimum cell width in pixels. The column count is derived from it.
    *
-   * Числами, а не классом `Size` из react-aria: класс библиотеки в публичном
-   * API кита обязал бы потребителя импортировать его ради двух чисел.
+   * Numbers, not the react-aria `Size` class: a third-party class in the kit's public API
+   * would force the consumer to import it just for two numbers.
    */
   minItemWidth?: number;
   /**
-   * Наименьшая высота ячейки в пикселях. По умолчанию 180. Ячейка с более
-   * высоким содержимым вырастает, ниже — не бывает.
+   * Minimum cell height in pixels. Defaults to 180. A cell with taller content grows;
+   * it never gets shorter.
    */
   minItemHeight?: number;
-  /** Зазор между ячейками, пиксели. */
+  /** Gap between cells, in pixels. */
   gap?: number;
   /**
-   * Отступ по краям сетки, равный `gap`. По умолчанию есть; `false` ставит
-   * крайние ячейки вплотную к краям — сетка «1fr без полей».
+   * Padding at the grid's edges, equal to `gap`. On by default; `false` puts the edge cells
+   * flush against the edges: a "1fr without margins" grid.
    */
   edgeGap?: boolean;
-  /** Предел числа колонок. Без него колонок столько, сколько влезает. */
+  /** Upper limit on the number of columns. Without it, as many columns as fit. */
   maxColumns?: number;
-  /** Что показать при пустой сетке. */
+  /** What to show when the grid is empty. */
   emptyText?: ReactNode;
   /**
-   * Что прокручивается: свой контейнер (`container`, по умолчанию) или окно.
+   * What scrolls: the grid's own container (`container`, the default) or the window.
    *
-   * `container` — высоту задаёт потребитель (`h-[600px]`, `flex-1` в колонке):
-   * без неё контейнер вырастет по содержимому и прокрутки не будет.
-   * `window` — сетка растёт по содержимому, прокручивается страница, а в DOM
-   * по-прежнему только ячейки у окна.
+   * `container`: the consumer sets the height (`h-[600px]`, or `flex-1` in a column).
+   * Without it, the container grows with its content and never scrolls.
+   * `window`: the grid grows with its content and the page scrolls; the DOM still holds
+   * only the cells near the viewport.
    */
   scroll?: "container" | "window";
   /**
-   * CSS-переменная с высотой липкой шапки — та же, что у `SelectionBar` и
-   * `useStickyOffset`. В режиме `window` ячейка, к которой ушёл фокус, не
-   * прячется под шапку. По умолчанию `--topbar-h`: её публикует `TopBar`.
+   * CSS variable with the height of the sticky header, the same one that `SelectionBar` and
+   * `useStickyOffset` use. In `window` mode, a cell that receives focus is not hidden under the
+   * header. Defaults to `--topbar-h`, which `TopBar` publishes.
    */
   offsetVar?: string;
   /**
-   * Ось выбора. Включается явно и живёт у самой сетки, а не внутри ячейки.
+   * The selection axis. Enabled explicitly, and it lives on the grid itself, not inside a cell.
    *
-   * Кружок выбора внутри ячейки — `<Checkbox slot="selection" />`: он часть
-   * той же оси, а не своё состояние карточки.
+   * A selection checkbox inside a cell, `<Checkbox slot="selection" />`, is part of the same
+   * axis, not a state of its own on the card.
    */
   selectionMode?: "none" | "single" | "multiple";
   /**
-   * Как клик обращается с выбором — правило react-aria.
+   * How a click treats the selection: the react-aria rule.
    *
-   * `toggle` (по умолчанию): клик добавляет или снимает ячейку, а при
-   * `onAction` клик открывает, выбирает Space. `replace`: как в файловом
-   * менеджере — клик выделяет одну ячейку, Ctrl/Cmd добавляет, а открывают
-   * двойной клик и Enter.
+   * `toggle` (the default): a click adds or removes the cell; with `onAction`, a click
+   * opens and Space selects. `replace`: as in a file manager, a click selects one cell,
+   * Ctrl/Cmd adds to the selection, and double-click or Enter opens.
    */
   selectionBehavior?: "toggle" | "replace";
   /**
-   * Что делает диапазон по Shift (клик, стрелки). `replace` — правило
-   * react-aria: набор заменяется диапазоном от якоря, и выбранное вне его
-   * снимается. `add` — диапазон добавляется к прежнему выбору и ничего не
-   * снимает.
+   * What a Shift range (click, arrows) does. `replace`: the react-aria rule, the set is
+   * replaced by the range from the anchor, and whatever is selected outside it is cleared.
+   * `add`: the range is added to the previous selection, and nothing is cleared.
    */
   rangeSelection?: "replace" | "add";
   /**
-   * Выделение протяжкой пальца: удержать ячейку и вести по соседним — они
-   * добавляются диапазоном, у края окна сетка прокручивается сама. Только
-   * касание и только при `selectionMode="multiple"`.
+   * Drag-to-select by finger: hold a cell and drag over the neighboring ones. They are added as a
+   * range, and the grid scrolls on its own at the edge of the viewport. Touch only, and only with
+   * `selectionMode="multiple"`.
    *
-   * Жест не единственный путь к тому же: кружок выбора и Shift со стрелками
-   * дают его с мыши и клавиатуры.
+   * The gesture is not the only way to the same result: the selection checkbox and Shift with
+   * the arrows give it with a mouse and a keyboard.
    */
   dragToSelect?: boolean;
-  /** Выбранные ключи. Состояние держит потребитель — кит даёт форму (ADR-0023). */
+  /** Selected keys. The consumer holds the state; the kit provides the shape (ADR-0023). */
   selectedKeys?: Selection;
-  /** Вызывается с новым набором выбранных ячеек. */
+  /** Called with the new set of selected cells. */
   onSelectionChange?: (keys: Selection) => void;
   /**
-   * Действие над ячейкой: клик, Enter, касание. Приходит `id` ячейки и её
-   * прямоугольник.
+   * The action on a cell: click, Enter or touch. It receives the cell's `id` and its rectangle.
    *
-   * Это «открыть», а не «выбрать»: ячейка не выделяется, `onSelectionChange`
-   * молчит. Вместе с `selectionMode` оба срабатывают по правилам react-aria —
-   * см. страницу компонента.
+   * This is "open", not "select": the cell is not selected, and `onSelectionChange` stays
+   * silent. Together with `selectionMode`, both fire by the react-aria rules; see the
+   * component page.
    */
   onAction?: (id: Key, details: VirtualGridActionDetails) => void;
   /**
-   * Подгрузка следующей страницы: вызывается, когда до конца загруженного
-   * остаётся меньше высоты окна. Без пропа сетка ничего не подгружает.
+   * Called to load the next page when less than a viewport height is left before the end of the
+   * loaded cells. Without this prop, the grid loads nothing.
    */
   onLoadMore?: () => void;
-  /** Идёт подгрузка: под последней строкой стоит индикатор. */
+  /** Loading is in progress: an indicator is shown below the last row. */
   isLoadingMore?: boolean;
-  /** Свой индикатор подгрузки вместо крутилки кита — например, ряд скелетонов. */
+  /** A custom loading indicator instead of the kit's spinner, for example a row of skeletons. */
   loadingMore?: ReactNode;
   /**
-   * Классы контейнера. В режиме `container` высоту задаёт потребитель — см.
-   * раздел о прокрутке.
+   * Container classes. In `container` mode, the consumer sets the height; see the section on
+   * scrolling.
    */
   className?: string;
 }
 
 /**
- * `GridLayout` без внешнего отступа: крайние ячейки вплотную к краям.
+ * `GridLayout` without the outer gap: the edge cells sit flush against the edges.
  *
- * Раскладка react-aria ставит зазор и снаружи — слева, справа и сверху, — и
- * опции, которая его снимает, нет. Её поля (`layoutInfos`, `margin`) закрыты,
- * поэтому подкласс не пересчитывает раскладку заново, а переводит готовые
- * прямоугольники в публичных методах: колонка остаётся колонкой, а ширина
- * ячейки растёт на долю двух снятых краевых зазоров.
+ * The react-aria layout puts a gap outside as well, on the left, right, and top, and there is
+ * no option that removes it. Its fields (`layoutInfos`, `margin`) are private, so the subclass
+ * does not recompute the layout. It maps the finished rectangles in the public methods instead:
+ * a column stays a column, and the cell width grows by the share of the two removed edge gaps.
  */
 class EdgeToEdgeGridLayout<T = unknown> extends GridLayout<T> {
   /**
-   * Заказанный зазор (`minSpace`), а не тот, что раскладка react-aria
-   * поставила сама. Она вычитает из ширины зазоры по числу колонок, а ставит
-   * на один больше и округляет вниз — её зазор выходит меньше заказанного
-   * (замер Библиотеки: 16 вместо 18). «Вплотную» внешних зазоров нет, и
-   * заказанный помещается всегда.
+   * The requested gap (`minSpace`), not the one the react-aria layout set itself. It subtracts
+   * the gaps from the width by the column count and places one more, rounding down, so its gap
+   * comes out smaller than requested (measured for react-aria: 16 instead of 18). There are no
+   * outer gaps to be flush against, so the requested gap always fits.
    */
   private requestedGap: number | null = null;
 
   /**
-   * Число колонок «вплотную». react-aria считает их как
-   * `floor(ширина / (min + зазор))` — с местом под внешний зазор, которого
-   * здесь нет, и теряет колонку: на телефоне (343 px, min 160, зазор 18)
-   * выходила одна колонка вместо двух, как у CSS-грида `minmax(160px, 1fr)`.
-   * Здесь колонок `floor((ширина + зазор) / (min + зазор))`, а раскладке
-   * react-aria подставляется такая наименьшая ширина, при которой её счёт даёт
-   * то же число. Ячейку всё равно ставит `flush` — шире, на долю снятых
-   * краевых зазоров.
+   * The column count for the flush layout. react-aria counts them as
+   * `floor(width / (min + gap))`, leaving room for an outer gap that this layout does not have,
+   * so it loses a column: on a phone (343 px, min 160, gap 18) it gave one column instead of two,
+   * as the CSS grid `minmax(160px, 1fr)` does. Here the count is `floor((width + gap) / (min + gap))`,
+   * and the react-aria layout is given the smallest source width at which its own count gives the
+   * same number. `flush` still places the cell itself, wider by the share of the removed edge gaps.
    */
   override update(invalidationContext: Parameters<GridLayout<T>["update"]>[0]) {
     const options = invalidationContext.layoutOptions;
@@ -215,12 +209,12 @@ class EdgeToEdgeGridLayout<T = unknown> extends GridLayout<T> {
     });
   }
 
-  /** Ширина ячейки и шаг колонок в исходной раскладке и в «вплотную». */
+  /** The cell width and the column step in the source layout and in the flush one. */
   private columns() {
     const width = this.virtualizer?.size.width ?? 0;
     const columns = Math.max(1, this.numColumns);
-    // Шаг исходной раскладки — по её собственному зазору: по нему ячейка
-    // узнаёт свою колонку. Ставится ячейка уже с заказанным.
+    // The step of the source layout uses its own gap: the cell finds its column by it.
+    // The cell itself is placed with the requested gap.
     const sourceGap = this.gap.width;
     const gap = this.requestedGap ?? sourceGap;
     const first = this.firstItemRect();
@@ -262,9 +256,9 @@ class EdgeToEdgeGridLayout<T = unknown> extends GridLayout<T> {
 
   override getContentSize(): Size {
     const size = super.getContentSize();
-    // Снят верхний зазор; нижний — только когда последним идёт строка ячеек.
-    // Строка подгрузки стоит ПОСЛЕ замыкающего зазора и уезжает вверх на один
-    // зазор вместе со всеми: сними ещё один — и она обрезалась бы снизу.
+    // The top gap is removed; the bottom one only when the last item is a row of cells.
+    // The loading row sits AFTER the trailing gap and moves up by one gap together with
+    // everything else: remove one more and it would be clipped at the bottom.
     const collection = this.virtualizer?.collection;
     const lastKey = collection?.getLastKey();
     const loaderLast = lastKey != null && collection?.getItem(lastKey)?.type === "loader";
@@ -273,7 +267,7 @@ class EdgeToEdgeGridLayout<T = unknown> extends GridLayout<T> {
   }
 }
 
-/** Выбор react-aria: `Set` ключей с якорем и текущим ключом Shift-диапазона. */
+/** react-aria selection: a `Set` of keys, with the anchor and the current key of the Shift range. */
 type RangeSelection = Set<Key> & { anchorKey?: Key | null; currentKey?: Key | null };
 type RangeSelectionClass = new (
   keys: Iterable<Key>,
@@ -282,15 +276,14 @@ type RangeSelectionClass = new (
 ) => Set<Key>;
 
 /**
- * Объединение прежнего выбора с диапазоном react-aria — с ЯКОРЕМ диапазона.
+ * Merges the previous selection with the react-aria range, keeping the range's ANCHOR.
  *
- * Якорь и текущий ключ Shift-диапазона react-aria держит на самом объекте
- * выбора (`Selection` из react-stately — подкласс `Set`) и переносит их в своё
- * состояние, только если получает экземпляр этого класса. Объединение в
- * обычном `Set` якорь теряло: второй Shift+клик подряд выделял одну ячейку
- * вместо диапазона от якоря. Класс не публичный, и react-stately
- * не зависимость кита, поэтому конструктор берётся у `next` — это экземпляр,
- * который react-aria только что отдал в `onSelectionChange`.
+ * react-aria keeps the anchor and the current key of the Shift range on the selection object
+ * itself (`Selection` from react-stately, a subclass of `Set`), and carries them over to its state
+ * only when it gets an instance of that class. Merging into a plain `Set` lost the anchor: a second
+ * Shift+click in a row selected one cell instead of the range from the anchor. The class is not
+ * public, and react-stately is not a dependency of the kit, so the constructor is taken from `next`,
+ * the instance that react-aria has just passed to `onSelectionChange`.
  */
 function unionKeepingAnchor(previous: Set<Key>, next: Set<Key>): Set<Key> {
   const range = next as RangeSelection;
@@ -299,36 +292,32 @@ function unionKeepingAnchor(previous: Set<Key>, next: Set<Key>): Set<Key> {
 }
 
 /**
- * Сетка карточек с виртуализацией: в DOM живут только видимые ячейки.
+ * A card grid with virtualization: only the visible cells live in the DOM.
  *
- * СТОИТ НА `Virtualizer` И `GridLayout` ИЗ react-aria, а не на
- * `@tanstack/react-virtual`
- * (ADR-0028).
- * Замер перед решением: 300 ячеек дали 27 узлов в DOM, при прокрутке на 4000
- * пикселей первой отрисованной оказалась 129-я.
+ * It is built on `Virtualizer` and `GridLayout` from react-aria, not on `@tanstack/react-virtual`
+ * (ADR-0028). Measured before the decision: 300 cells gave 27 nodes in the DOM, and after scrolling
+ * 4000 pixels the first rendered one was the 129th.
  *
- * ДВА РЕЖИМА ПРОКРУТКИ. `container` (по умолчанию) крутит свой контейнер, и
- * высоту ему задаёт потребитель. `window` крутит страницу: `Virtualizer`
- * react-aria 1.21 сам пересекает свою область с окном и держит в DOM только
- * ячейки у окна. Липкой шапке отвечает `scroll-margin-top` ячеек из той же
- * переменной, что у `SelectionBar`: без него стрелка, уводящая фокус за верх
- * окна, ставила ячейку под шапку. Раньше режим был один, и здесь
- * стояло «без высоты виртуализация не включится» — для react-aria 1.21 это
- * уже неправда.
+ * TWO SCROLL MODES. `container` (the default) scrolls its own container, and the consumer sets its
+ * height. `window` scrolls the page: react-aria 1.21's `Virtualizer` intersects its own area with
+ * the window itself and keeps only the cells in the viewport in the DOM. The sticky header is served
+ * by `scroll-margin-top` on the cells, from the same variable as `SelectionBar`: without it, an arrow
+ * key that moved focus above the top of the window put the cell under the header. The mode used to
+ * be single, and here it said "without a height, virtualization will not turn on". For react-aria
+ * 1.21 that is no longer true.
  *
- * ЯЧЕЙКА — `gridcell`, А НЕ `option`. Сетка стоит на `GridList` (раньше
- * на `ListBox`): кнопки внутри `option` давали вложенный
- * интерактив уровня serious, а в `gridcell` они законны. Выбор — ось сетки,
- * кружок выбора — `Checkbox slot="selection"` внутри ячейки.
+ * THE CELL IS A `gridcell`, NOT AN `option`. The grid is built on `GridList` (it used to be
+ * `ListBox`): buttons inside an `option` gave nested interactive content at the serious level, while
+ * in a `gridcell` they are allowed. Selection is an axis of the grid; the selection checkbox is
+ * `Checkbox slot="selection"` inside the cell.
  *
- * КОЛОНКИ СЧИТАЕТ РАСКЛАДКА, а не `matchMedia` и не `ResizeObserver` в нашем
- * коде: `GridLayout` берёт ширину контейнера и наименьший размер ячейки. Роли
- * (`grid`/`row`/`gridcell`), клавиатура и поиск набором — тоже слой поведения.
+ * THE LAYOUT COUNTS THE COLUMNS, not `matchMedia` or `ResizeObserver` in our code: `GridLayout` takes
+ * the container width and the minimum cell size. Roles (`grid`/`row`/`gridcell`), the keyboard, and
+ * type-ahead search are also part of the behavior layer.
  *
- * ПЕРЕТАСКИВАНИЯ ЗДЕСЬ НЕТ. Виртуализация и сортировка вместе в ките не
- * проверены; сетка получит перетаскивание тем же `useDragAndDrop`, когда
- * появится экран-заказчик (ADR-0027). Протяжка пальцем (`dragToSelect`) —
- * выделение, а не перенос.
+ * THERE IS NO DRAGGING HERE. Virtualization and sorting together are not verified in the kit; the grid
+ * will get dragging through the same `useDragAndDrop` when a requesting screen appears (ADR-0027).
+ * Dragging a finger (`dragToSelect`) is selection, not moving.
  */
 export function VirtualGrid({
   items,
@@ -363,8 +352,8 @@ export function VirtualGrid({
 
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // `Size` — класс библиотеки, и новый экземпляр на каждый рендер заставлял бы
-  // раскладку пересчитываться вхолостую.
+  // `Size` is a react-aria class, and a new instance on every render would make the layout
+  // recompute for nothing.
   const layoutOptions = useMemo(
     () => ({
       minItemSize: new Size(minItemWidth, minItemHeight),
@@ -375,10 +364,9 @@ export function VirtualGrid({
   );
 
   /*
-    Shift-диапазон в режиме `add`. react-aria заменяет набор диапазоном от
-    якоря; здесь новый набор складывается с тем, что было до нажатия. Признак
-    Shift ловится на захвате — до того, как react-aria обработает событие и
-    сообщит новый набор.
+    The Shift range in `add` mode. react-aria replaces the set with the range from the anchor;
+    here the new set is merged with what was there before the press. The Shift flag is caught
+    in the capture phase, before react-aria handles the event and reports the new set.
   */
   const shiftRef = useRef(false);
   const lastSelectionRef = useRef<Selection | undefined>(selectedKeys);
@@ -397,8 +385,8 @@ export function VirtualGrid({
       ) {
         keys = unionKeepingAnchor(previous, next);
       }
-      // Признак одного события: иначе он залипал до следующего нажатия, и
-      // смена выбора без клавиши (снаружи, флажком) складывалась бы как диапазон.
+      // The flag covers one event: otherwise it would stick until the next press, and a change
+      // of selection without a key (from outside, with a checkbox) would be merged as a range.
       shiftRef.current = false;
       lastSelectionRef.current = keys;
       onSelectionChange?.(keys);
@@ -421,12 +409,11 @@ export function VirtualGrid({
   }, [rangeSelection]);
 
   /*
-    Липкая шапка в режиме окна. react-aria прокручивает к сфокусированной
-    ячейке, только когда та целиком вне окна, и про `scroll-margin` не знает:
-    ячейка, на которую стрелка перевела фокус и которая видна лишь нижней
-    частью, оставалась под шапкой (замер: верх на 48 px при шапке 56). Здесь
-    окно доворачивается на недостающее — только при фокусе с клавиатуры:
-    щелчок по выглядывающей ячейке страницу не дёргает.
+    The sticky header in window mode. react-aria scrolls to the focused cell only when that cell is
+    entirely outside the viewport, and it does not know about `scroll-margin`: a cell that an arrow
+    key moved focus to, and which is visible only by its lower part, stayed under the header
+    (measured: top at 48 px with a 56 px header). Here the window scrolls the missing part, and only
+    for keyboard focus: a click on a partly visible cell does not jerk the page.
   */
   useEffect(() => {
     const grid = gridRef.current;
@@ -467,11 +454,11 @@ export function VirtualGrid({
   }, [onAction]);
 
   /*
-    Выделяет ли react-aria ячейку долгим нажатием прямо сейчас — его же
-    условие из `useSelectableItem`: есть выбор и действие, и действие главное
-    (выбор пуст при `toggle`) или вторичное (`replace`). Только тогда ячейка с
-    меню гасит его долгое нажатие: в остальных случаях долгое нажатие у
-    react-aria выключено, и отмена отняла бы у медленного тапа его нажатие.
+    Whether react-aria selects a cell on a long press right now: the same condition as in
+    `useSelectableItem`. There is a selection and an action, and the action is either primary
+    (the selection is empty, with `toggle`) or secondary (`replace`). Only then does a cell with a
+    menu suppress that long press. Otherwise the long press is off in react-aria, and cancelling
+    it would take a slow tap's press away.
   */
   const longPressSelectsRef = useRef(false);
   const currentSelection = selectedKeys ?? lastSelectionRef.current;
@@ -496,8 +483,8 @@ export function VirtualGrid({
         onSelectionChange={emitSelection}
         onAction={handleAction}
         renderEmptyState={emptyText != null ? () => emptyText : undefined}
-        // Прокрутка своя только в режиме `container`: там без `overflow-auto` и
-        // заданной высоты прокручивать нечего.
+        // Scrolling is the grid's own only in `container` mode: without `overflow-auto` and a set
+        // height there is nothing to scroll.
         className={cn(scroll === "container" && "overflow-auto", "outline-none", className)}
       >
         <Collection items={items}>
@@ -508,11 +495,11 @@ export function VirtualGrid({
               style={rowStyle}
               className="focus-visible:outline-accent-strong rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2"
             >
-              {/* `gridcell` у react-aria — `display: contents`: высоту держит обёртка. */}
-              {/* Обёртка — сетка из одной строки, а не блок с `min-height`: процентная высота
-                  вложенного узла (`h-full`) от `min-height` не считается и схлопывается до
-                  содержимого, а от строки сетки — считается. `items-start` оставляет ячейку без
-                  `h-full` её естественной высоты. */}
+              {/* react-aria's `gridcell` is `display: contents`: the wrapper holds the height. */}
+              {/* The wrapper is a one-row grid, not a block with `min-height`: a percentage height
+                  of a nested node (`h-full`) is not computed from `min-height` and collapses to the
+                  content, but it is computed from a grid row. `items-start` keeps the cell at its
+                  natural height, without `h-full`. */}
               <div
                 className="grid h-full grid-cols-1 items-start"
                 style={{
@@ -537,11 +524,10 @@ export function VirtualGrid({
         {onLoadMore != null && (
           <GridListLoadMoreItem
             isLoading={isLoadingMore}
-            // В режиме окна датчик свой (ниже): у датчика react-aria корень —
-            // ближайший прокручиваемый предок, а это часто `body` с
-            // `overflow: auto` во всю высоту страницы. Такой датчик «видит»
-            // конец всегда, и сетка подгружала страницы подряд, пока не
-            // кончатся данные (так было в Storybook: 1200 из 1200 без прокрутки).
+            // In window mode the sentinel is our own (below): the react-aria sentinel's root is the
+            // nearest scrollable ancestor, which is often `body` with `overflow: auto` at the full page
+            // height. Such a sentinel always "sees" the end, and the grid kept loading pages one after
+            // another until the data ran out (that happened in Storybook: 1200 of 1200 without scrolling).
             onLoadMore={scroll === "container" ? onLoadMore : undefined}
           >
             <div className="flex h-full items-center justify-center">
@@ -558,12 +544,12 @@ export function VirtualGrid({
 }
 
 /**
- * Датчик подгрузки в режиме окна: пустой узел сразу под сеткой, корень —
- * окно. Срабатывает, когда до конца загруженного меньше высоты окна.
+ * The load-more sentinel in window mode: an empty node right below the grid, with the viewport as
+ * its root. It fires when less than a viewport height is left before the end of the loaded cells.
  *
- * Наблюдатель пересоздаётся на каждую новую страницу (по числу ячеек), как у react-aria: при
- * большом `rootMargin` датчик, оставшийся в зоне после подгрузки, иначе не
- * сообщил бы о себе снова, и короткая страница не дотянула бы следующую.
+ * The observer is recreated for every new page (by the number of cells), as in react-aria. With a
+ * large `rootMargin`, a sentinel that stays in the zone after loading would otherwise not report
+ * itself again, and a short page would not pull in the next one.
  */
 function WindowLoadMoreSentinel({ onLoadMore, count }: { onLoadMore: () => void; count: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -572,7 +558,7 @@ function WindowLoadMoreSentinel({ onLoadMore, count }: { onLoadMore: () => void;
 
   useEffect(() => {
     const node = ref.current;
-    // Без API (сервер, jsdom потребителя) подгрузки по прокрутке нет — не ошибка.
+    // Without the API (on the server, or in the consumer's jsdom) there is no scroll-based loading. That is not an error.
     if (!node || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
       (entries) => {
@@ -582,8 +568,8 @@ function WindowLoadMoreSentinel({ onLoadMore, count }: { onLoadMore: () => void;
     );
     observer.observe(node);
     return () => observer.disconnect();
-    // По числу ячеек, а не по массиву: потребитель собирает `items` в рендере,
-    // и наблюдатель пересоздавался бы на каждый рендер, зовя подгрузку снова.
+    // Keyed by the number of cells, not by the array: the consumer builds `items` in render,
+    // and the observer would be recreated on every render, calling the load again.
   }, [count]);
 
   return <div ref={ref} aria-hidden className="h-px" />;
@@ -591,37 +577,35 @@ function WindowLoadMoreSentinel({ onLoadMore, count }: { onLoadMore: () => void;
 
 const stop = (event: SyntheticEvent) => event.stopPropagation();
 
-/** Отмена долгого нажатия react-aria у ячейки с меню: раньше его 500 мс. */
+/** Cancels react-aria's long press on a cell with a menu; react-aria's own fires at 500 ms. */
 const LONG_PRESS_MS = 450;
-/** Сдвиг пальца, после которого это уже не долгое нажатие. */
+/** How far the finger must move before it is no longer a long press. */
 const LONG_PRESS_SLOP_PX = 8;
 
 /**
- * Контекстное меню ячейки. Внутренняя часть сетки, наружу не выходит.
+ * The cell's context menu. An internal part of the grid, it does not leave it.
  *
- * ТРИГГЕР СТОИТ ВНУТРИ `row`, И ЭТО ТРЕБУЕТ ДВУХ ЗАПЛАТОК, обе — про одно и
- * то же: меню Radix привязано к триггеру, а настоящий фокус у сетки на ячейке.
+ * THE TRIGGER SITS INSIDE THE `row`, AND THIS NEEDS TWO PATCHES, both about the same thing: the Radix
+ * menu is attached to the trigger, while the grid's real focus is on the cell.
  *
- * 1. Клавиатура. Shift+F10 и клавиша меню шлют событие `contextmenu` (или
- *    вовсе ничего — на macOS) в сфокусированный элемент, то есть в `row`, а
- *    триггер лежит ниже. Корень Radix открыться снаружи не умеет, поэтому
- *    сетка ловит клавишу на ячейке и отправляет триггеру то самое событие, в
- *    точку по центру ячейки. Закрывшееся меню возвращает фокус на ячейку само:
- *    Radix запоминает сфокусированный элемент при открытии.
- * 2. Всплытие. Панель меню вынесена порталом, но события React всплывают по
- *    дереву компонентов — до `row`: клик по пункту выбирал бы ячейку и
- *    запускал `onAction`. Обёртка с `display: contents` гасит их на границе.
- *    Экран «Медиатека» обходил это локальной обёрткой; теперь это работа кита.
- * 3. Долгое нажатие на касании — только меню. У сетки с выбором
- *    и `onAction` react-aria по своему правилу выделяет ячейку долгим нажатием
- *    (500 мс), а меню Radix открывается по своему таймеру позже (700 мс) —
- *    человек получал и меню, и выделение. Здесь свой таймер раньше react-aria
- *    (450 мс) шлёт `pointercancel` в `row`: событие всплывает к документу и
- *    снимает нажатие react-aria вместе с его долгим нажатием, но через
- *    триггер Radix не проходит — меню открывает его же таймер. Открыть меню
- *    своим `contextmenu` не выйдет: react-aria гасит это событие на время
- *    касания (`preventDefault`), а Radix отменённое не обрабатывает. Сдвиг
- *    пальца до срабатывания — прокрутка или протяжка, таймер снимается.
+ * 1. Keyboard. Shift+F10 and the menu key send a `contextmenu` event (or nothing at all, on macOS)
+ *    to the focused element, that is, to the `row`, while the trigger is lower. Radix's root cannot
+ *    be opened from outside, so the grid catches the key on the cell and sends the trigger that same
+ *    event at the center point of the cell. A closed menu returns focus to the cell by itself: Radix
+ *    remembers the focused element when it opens.
+ * 2. Bubbling. The menu panel is moved out by a portal, but React events bubble through the component
+ *    tree, up to the `row`: a click on an item would select the cell and fire `onAction`. A wrapper
+ *    with `display: contents` stops them at the boundary. The Media library screen worked around this
+ *    with a local wrapper; now it is the kit's job.
+ * 3. A long press on touch: the menu only. In a grid with selection and `onAction`, react-aria selects
+ *    a cell on a long press by its own rule (500 ms), while the Radix menu opens on its own timer later
+ *    (700 ms), so a person got both the menu and the selection. Here our own timer, earlier than
+ *    react-aria's (450 ms), sends `pointercancel` to the `row`. The event bubbles to the document and
+ *    cancels react-aria's press together with its long press, but it does not pass through the Radix
+ *    trigger, so the Radix timer keeps running and opens the menu. Opening the menu with our own
+ *    `contextmenu` is not possible: react-aria cancels that event for the duration of the touch
+ *    (`preventDefault`), and Radix does not handle a cancelled event. A finger that moves before the
+ *    timer fires means scrolling or dragging, and the timer is cleared.
  */
 function CellContextMenu({
   menu,
@@ -640,7 +624,7 @@ function CellContextMenu({
     if (!trigger || !row) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      // Только сама ячейка: Shift+F10 внутри вложенного поля — не наше дело.
+      // Only the cell itself: Shift+F10 inside a nested field is not ours to handle.
       if (event.target !== row) return;
       const byKey = event.key === "ContextMenu";
       const byShortcut = event.key === "F10" && event.shiftKey;
@@ -672,9 +656,9 @@ function CellContextMenu({
         const at = press;
         cancel();
         if (!at) return;
-        // В `row`, а не в элемент касания: событие всплывает к документу, где
-        // нажатие слушает react-aria, но не проходит через триггер Radix (он
-        // ниже) — его таймер остаётся жить и открывает меню.
+        // Dispatched to the `row`, not to the touched element: the event bubbles to the document,
+        // where react-aria listens for the press, but it does not pass through the Radix trigger
+        // (which is lower), so its timer keeps running and opens the menu.
         row.dispatchEvent(
           new PointerEvent("pointercancel", {
             bubbles: true,
@@ -684,8 +668,8 @@ function CellContextMenu({
         );
       }, LONG_PRESS_MS);
     };
-    // Касание, а не указатель: `pointermove` при касании уходит к элементу
-    // под пальцем, `touchmove` остаётся у стартового.
+    // A touch, not a pointer: during a touch, `pointermove` goes to the element under the finger,
+    // while `touchmove` stays with the starting one.
     const onTouchMove = (event: TouchEvent) => {
       const touch = event.touches[0];
       if (!press || !touch) return;
@@ -698,8 +682,8 @@ function CellContextMenu({
     trigger.addEventListener("touchmove", onTouchMove, { passive: true });
     trigger.addEventListener("touchend", cancel);
     trigger.addEventListener("touchcancel", cancel);
-    // Жест, который забрал браузер (масштаб, системный), отменяет указатель
-    // без `touchmove` за порог — таймер снимается и тут.
+    // A gesture the browser takes over (zoom, a system gesture) cancels the pointer without a
+    // `touchmove` past the threshold, so the timer is cleared here too.
     trigger.addEventListener("pointerup", cancel);
     trigger.addEventListener("pointercancel", cancel);
     return () => {

@@ -10,55 +10,58 @@ import type { EditorView } from "@tiptap/pm/view";
 import { cellAlignment, cellAttributes } from "./tableCells.js";
 
 /**
- * Таблица Редактора: расширения Tiptap, обрезанные до Схемы кита.
+ * The Editor's table: Tiptap extensions trimmed down to the kit's Schema.
  *
- * ЗАЧЕМ ОБРЕЗАТЬ. `@tiptap/extension-table` по умолчанию пишет в разметку
- * то, чего в Схеме нет и быть не должно (спека, «Схема и безопасность»):
+ * WHY TRIM. By default `@tiptap/extension-table` writes markup that the Schema
+ * does not have and must not have (spec, "Schema and security"):
  *
- * - `style` на `<table>` (`min-width: 75px`) и `<colgroup><col style>` —
- *   ширину считает движок для ручек ресайза столбцов;
- * - `colwidth` на ячейках;
- * - `style="text-align"` на ячейке — выравнивание, пришедшее из Markdown
- *   (`:--:`), и `class="tableWrapper"` у обёртки представления узла.
+ * - `style` on `<table>` (`min-width: 75px`) and `<colgroup><col style>`: the
+ *   engine computes widths for the column resize handles;
+ * - `colwidth` on cells;
+ * - `style="text-align"` on a cell, which is alignment that comes from Markdown
+ *   (`:--:`), and `class="tableWrapper"` on the node view's wrapper.
  *
- * Здесь всё это выключено: ширину столбцов в v1 не строим. На выходе
- * `table > tbody > tr > th|td`, и у ячейки бывают только три атрибута Схемы.
+ * All of this is turned off here: column widths are not built in v1. The output
+ * is `table > tbody > tr > th|td`, and a cell has only the Schema's three attributes.
  *
- * СЛИЯНИЕ — `colspan` и `rowspan`, решение владельца (меню «Таблица», пункты
- * «Объединить» и «Разделить»). Первый срез их не читал: расщепить слитую
- * ячейку было нечем. Теперь есть чем, и таблица из Word, Excel или Google Docs
- * вставляется со своими слияниями. Значение — целое от 2 до предела Схемы
- * (`tableSpans`); всё прочее читается как 1: `colspan="10000"` из вставки
- * означал бы десять тысяч пустых ячеек в каждом документе.
+ * MERGING: `colspan` and `rowspan`, a decision of the owner (the Table menu items
+ * "Merge" and "Split"). The first slice did not read them: there was no way to
+ * split a merged cell. Now there is, and a table pasted from Word, Excel or Google
+ * Docs keeps its merges. The value is an integer from 2 up to the Schema limit
+ * (`tableSpans`); anything else reads as 1: a `colspan="10000"` from a paste would
+ * mean ten thousand empty cells in every document.
  *
- * ВЫРАВНИВАНИЕ СТОЛБЦА — `data-align` на каждой ячейке столбца, теми же
- * значениями, что выравнивание Блока (`palette.ts`): `left` не пишется. Атрибут
- * узла назван `align`, как у Tiptap: под этим именем его читает и пишет
- * Markdown (`:---:`), и выгрузку таблицы переписывать не нужно. Кроме
- * `data-align` читаются `style="text-align"` и устаревший `align` из вставки
- * (Word, Excel, Google Docs) — переводом в `data-align`; сами они не пишутся.
+ * COLUMN ALIGNMENT: `data-align` on every cell of a column, with the same values
+ * as Block alignment (`palette.ts`): `left` is not written. The node attribute is
+ * named `align`, as in Tiptap: Markdown reads and writes it under that name
+ * (`:---:`), so the table export does not need rewriting. Besides `data-align`,
+ * `style="text-align"` and the legacy `align` from a paste (Word, Excel, Google
+ * Docs) are read and converted into `data-align`; they are never written.
  *
- * `colwidth` ОСТАЁТСЯ В УЗЛЕ, но не пишется и не читается. Движок таблиц
- * (`prosemirror-tables`) лезет в него при каждой правке и без него падает.
+ * `colwidth` STAYS ON THE NODE, but is neither written nor read. The table engine
+ * (`prosemirror-tables`) touches it on every edit and crashes without it.
  *
- * ПРЕДСТАВЛЕНИЕ УЗЛА ВЫКЛЮЧЕНО (`View: null`). Штатное оборачивает таблицу в
- * `div.tableWrapper` с `colgroup` и выставляет `style` прямо на DOM. Без него
- * таблица в Редакторе — тот же `<table><tbody>`, что `getHTML()` и
- * `RichTextView`, и стили одного модуля (`prose.ts`) работают на всех трёх.
+ * NODE VIEW IS OFF (`View: null`). The stock node view wraps the table in a
+ * `div.tableWrapper` with a `colgroup` and sets `style` directly on the DOM.
+ * Without it, the table in the Editor is the same `<table><tbody>` as in
+ * `getHTML()` and `RichTextView`, and the styles of one module (`prose.ts`) work
+ * on all three.
  *
- * ЯЧЕЙКА ДЕРЖИТ ЛЮБЫЕ БЛОКИ СХЕМЫ (`block+`, как у Tiptap), а не только
- * абзацы. Узкое `paragraph+` ломало бы вставку: ProseMirror не нашёл бы списку
- * в ячейке места и вынес бы его из таблицы, разрезав её надвое.
+ * A CELL HOLDS ANY BLOCKS OF THE SCHEMA (`block+`, as in Tiptap), not only
+ * paragraphs. A narrow `paragraph+` would break pasting: ProseMirror would find no
+ * place for a list inside the cell and would move it out of the table, splitting
+ * the table in two.
  */
 
 /**
- * Таблица со слиянием — для Markdown: каждая ячейка на своём месте сетки.
+ * A table with merges, for Markdown: every cell in its own place on the grid.
  *
- * GFM слияния не знает, а выгрузка Tiptap пишет ячейки строки подряд. Без
- * развёртки `rowspan` сдвигал бы ячейки нижних строк влево, под чужие
- * заголовки. Здесь слитая ячейка остаётся в левом верхнем углу своей области с
- * содержимым, а остальные места области становятся пустыми ячейками того же
- * вида и выравнивания: текст и столбцы на месте, теряется только слияние.
+ * GFM has no merges, and the Tiptap export writes the cells of a row one after
+ * another. Without expanding `rowspan`, the cells of the lower rows would shift
+ * left, under the wrong headers. Here a merged cell stays in the top-left corner
+ * of its area with its content, and the other positions of the area become empty
+ * cells of the same kind and alignment: the text and the columns stay in place,
+ * only the merge is lost.
  */
 export function expandSpans(table: JSONContent): JSONContent {
   const rows = table.content ?? [];
@@ -90,7 +93,7 @@ export function expandSpans(table: JSONContent): JSONContent {
   };
 }
 
-/** Снимает `left` с ячеек разобранной таблицы: в Схеме это умолчание, а не значение. */
+/** Strips `left` from the cells of a parsed table: in the Schema it is the default, not a value. */
 function dropDefaultAlignment(node: JSONContent): JSONContent {
   if (node.attrs && "align" in node.attrs) {
     node = { ...node, attrs: { ...node.attrs, align: cellAlignment(node.attrs.align) } };
@@ -99,23 +102,24 @@ function dropDefaultAlignment(node: JSONContent): JSONContent {
 }
 
 /*
-  Проверка места под щель — та же, что у самого плагина щели. В типах пакета
-  её нет (`@internal`), но плагин зовёт её на каждой стрелке: своя копия
-  разошлась бы с ним молча.
+  The check that a gap cursor fits: the same one the gap cursor plugin uses. The
+  package types do not export it (`@internal`), but the plugin calls it on every
+  arrow key, and a copy of our own would silently drift from it.
 */
 const gapCursorFits = ($pos: ResolvedPos): boolean =>
   (GapCursor as unknown as { valid($pos: ResolvedPos): boolean }).valid($pos);
 
 /**
- * Стрелка из крайней строки таблицы, за которой в документе ничего нет, —
- * курсор-щель за таблицей (или перед ней для `↑`).
+ * An arrow from the edge row of the table, with nothing after it in the document,
+ * puts a gap cursor after the table (or before it for `↑`).
  *
- * `prosemirror-tables` ищет место за таблицей через `Selection.near`, и когда
- * таблица — последний Блок, поиск возвращается назад, в последнюю ячейку:
- * `↓` из первой ячейки последней строки переносил каретку в конец таблицы, и
- * только вторая стрелка выводила из неё. А это ровно путь «Tab в последней
- * ячейке добавил строку → стрелка вниз → набор под таблицей». Здесь стрелка
- * сразу ставит щель; если за таблицей есть куда встать, решает движок таблиц.
+ * `prosemirror-tables` looks for a place past the table with `Selection.near`, and
+ * when the table is the last Block, the search goes back to the last cell: `↓`
+ * from the first cell of the last row moved the caret to the end of the table, and
+ * only a second arrow got out of it. That is exactly the path "Tab in the last
+ * cell added a row → arrow down → typing below the table". Here the arrow places
+ * the gap cursor at once; if there is somewhere to stand after the table, the table
+ * engine decides.
  */
 export function leaveTableVertically(view: EditorView, dir: 1 | -1): boolean {
   const { selection, doc } = view.state;
@@ -148,9 +152,10 @@ export function leaveTableVertically(view: EditorView, dir: 1 | -1): boolean {
 }
 
 /**
- * Строка под текущей, каретка — в тот же столбец новой строки (`Alt+↓`,
- * на Mac `⌥↓`). Одна транзакция — одна отмена. Вне таблицы — `false`: сочетание
- * остаётся браузеру (на Mac `⌥↓` ведёт в конец абзаца).
+ * Inserts a row below the current one, with the caret in the same column of the
+ * new row (`Alt+↓`, `⌥↓` on Mac). One transaction, one undo. Outside a table it
+ * returns `false`: the shortcut stays with the browser (on Mac `⌥↓` moves to the
+ * end of the paragraph).
  */
 export function addRowBelow(state: EditorState, dispatch?: (tr: Transaction) => void): boolean {
   if (!isInTable(state)) return false;
@@ -179,17 +184,19 @@ export const RichTable = Table.extend({
   },
   renderHTML: () => ["table", {}, ["tbody", 0]],
   /*
-    Штатная выгрузка начинается и кончается переводом строки, а менеджер
-    Markdown сам разделяет Блоки пустой строкой: вокруг таблицы выходило по
-    две. Края срезаются, и таблица отделяется от соседей, как любой Блок.
+    The stock export starts and ends with a line break, and the Markdown manager
+    separates Blocks with a blank line on its own: around the table that came to
+    two on each side. The edges are trimmed, and the table is separated from its
+    neighbors like any other Block.
   */
   /*
-    Таблица из `defaultValue` с разным числом ячеек в строках (чужой HTML с
-    ошибкой или со слиянием сверх предела Схемы) приходит в движок как есть: выравнивает
-    `tableEditing` только по транзакции, а вставка и `value` ею служат. Пока
-    её нет, команды таблицы на такой таблице бросают (`toggleHeader` попадает в
-    несуществующую ячейку), и первое же действие из меню роняло бы поле.
-    Выравнивание — не правка автора: без `onChange`, без записи в историю.
+    A table from `defaultValue` with a different number of cells per row (foreign
+    HTML with an error, or with merges beyond the Schema limit) reaches the engine
+    as is: `tableEditing` normalizes it only inside a transaction, and paste and
+    `value` both go through one. Until it does, the table commands throw on such a
+    table (`toggleHeader` lands in a nonexistent cell), and the first action from
+    the menu would crash the field. Normalization is not an edit by the author: no
+    `onChange`, no entry in the history.
   */
   onCreate() {
     const tr = fixTables(this.editor.state);
@@ -200,9 +207,10 @@ export const RichTable = Table.extend({
     return (this.parent?.(expandSpans(node), helpers, context) ?? "").replace(/^\n+|\n+$/g, "");
   },
   /*
-    GFM `:---` — выравнивание влево, а в Схеме лево — умолчание без атрибута.
-    Без снятия разобранная таблица держала бы `align: "left"`, которого в HTML
-    нет: после круга через `value` документ отличался бы от разобранного.
+    GFM `:---` is left alignment, and in the Schema left is the default, with no
+    attribute. Without stripping it, the parsed table would keep `align: "left"`,
+    which does not exist in HTML: after a round trip through `value`, the document
+    would differ from the parsed one.
   */
   parseMarkdown(token, helpers) {
     const result = this.parent?.(token, helpers) ?? [];
@@ -216,5 +224,5 @@ export const RichTableCell = TableCell.extend({ addAttributes: cellAttributes })
 
 export const RichTableHeader = TableHeader.extend({ addAttributes: cellAttributes });
 
-/** Все четыре расширения таблицы: схема не заработает без любого из них. */
+/** All four table extensions: the Schema does not work without any one of them. */
 export const TABLE_EXTENSIONS = [RichTable, RichTableRow, RichTableHeader, RichTableCell];

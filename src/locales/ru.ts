@@ -1,34 +1,35 @@
 import type { UiMessages } from "../i18n/messages.js";
 
 /**
- * Русская локаль.
+ * The Russian locale.
  *
- * Подключается одной строкой и не попадает в бандл к тем, кто её не
- * импортировал:
+ * Import it in one line. It stays out of the bundle of anyone who does not
+ * import it:
  *
  *     import ru from "@olddevs/ui/locales/ru";
  *     <UiProvider locale="ru-RU" messages={ru}>…</UiProvider>
  *
- * `locale` здесь обязателен наравне с `messages`: строки приносит каталог, а
- * формат дат и чисел — локаль, и одно без другого даёт русские подписи с
- * английскими датами.
+ * `locale` is required here, just like `messages`: the catalog supplies the
+ * strings, but the date and number format comes from the locale. Using one
+ * without the other gives Russian labels with English dates.
  *
- * Тексты — те же, что были зашиты в компонентах до 2.0.0, дословно. Это
- * проверяемо: `git log` этого репозитория содержит историю до форка.
+ * The texts are the same ones that were hard-coded in the components before
+ * 2.0.0, verbatim. This can be verified: the `git log` of this repository
+ * contains the history from before the fork.
  */
 
-/** Правила склонения знает локаль, а не компонент. */
+/** The locale, not the component, knows the pluralization rules. */
 const plural = new Intl.PluralRules("ru-RU");
 
-/** «1 день / 2 дня / 5 дней» — по категории, а не по цепочке остатков. */
+/** "1 item / 2 items / 5 items": chosen by plural category, not by a chain of remainders. */
 /**
- * Склонение по числу.
+ * Pluralization by number.
  *
- * Через модульный `plural`, а не через `new Intl.PluralRules(...)` на вызов:
- * конструктор разбирает локаль, и это самая дорогая часть операции. Сообщения
- * зовутся из рендера — `uploadQueue.summary` на каждом тике прогресса загрузки,
- * `notifications.unreadCount` при каждой перерисовке значка, — то есть разбор
- * платился бы заново на каждом кадре.
+ * Through the module-level `plural`, not through `new Intl.PluralRules(...)` per call:
+ * the constructor parses the locale, and that is the most expensive part of the
+ * operation. The message functions run from render: `uploadQueue.summary` on every
+ * upload-progress tick, `notifications.unreadCount` on every re-render of the badge.
+ * Parsing would be paid again on every frame.
  */
 function pluralize(n: number, one: string, few: string, many: string): string {
   const form = plural.select(n);
@@ -175,8 +176,8 @@ export const messages: UiMessages = {
   mobileTabBar: {
     label: "Разделы",
     new: "Есть новое",
-    // «Новых: 3», а не «3 новых»: форма слова не зависит от числа, и склонять
-    // не приходится.
+    // "New: 3" rather than "3 new": the label keeps one form for every count,
+    // so no pluralization is needed.
     newCount: ({ count }) => `Новых: ${count}`,
   },
 
@@ -298,7 +299,7 @@ export const messages: UiMessages = {
     summary: ({ done, total, failed }) => {
       const uploaded = `Загружено ${done} из ${total}`;
       if (failed === 0) return uploaded;
-      // Склонение живёт ЗДЕСЬ, а не в компоненте: правила знает локаль.
+      // The pluralization lives HERE, not in the component: the locale knows the rules.
       return `${uploaded}, ${failed} ${pluralize(failed, "ошибка", "ошибки", "ошибок")}`;
     },
     progress: "Ход загрузки",
@@ -389,8 +390,8 @@ export const messages: UiMessages = {
   editor: {
     label: "Редактор текста",
     placeholder: "Начните писать…",
-    // Глагол согласуется с числом так же, как существительное: «остался 1
-    // символ», но «осталось 2 символа» и «осталось 5 символов».
+    // The verb agrees with the number just as the noun does: "1 character
+    // remains", but "2 characters remain" and "5 characters remain".
     remaining: ({ count }) =>
       `${pluralize(count, "Остался", "Осталось", "Осталось")} ${count} ${pluralize(count, "символ", "символа", "символов")}`,
     overLimit: ({ count }) =>
@@ -525,7 +526,7 @@ export const messages: UiMessages = {
     imageRemove: "Убрать картинку",
     imageEdit: "Изменить картинку",
     imageWidth: "Ширина",
-    // Между числом и знаком процента по-русски ставится неразрывный пробел.
+    // In Russian, a non-breaking space goes between the number and the percent sign.
     imageWidthPreset: ({ percent }) => `${percent}\u00a0%`,
     imageCaption: "Подпись (необязательно)",
     imageUploading: ({ name }) => `Загружается файл ${name}…`,

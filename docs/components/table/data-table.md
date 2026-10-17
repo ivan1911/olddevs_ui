@@ -9,25 +9,25 @@ story: src/components/app-shell/AppShell.stories.tsx
 
 # DataTable
 
-## Кратко для AI
+## Summary for AI
 
-Прикладная таблица с готовым поведением поверх низкоуровневой `Table`: видимость
-и порядок колонок, плотность, состояния загрузки и ошибки, слот полосы над
-таблицей (`toolbar`). Своего состояния не хранит: принимает `state` и отдаёт
-изменения патчем, обычно в `useTableState`.
+An application-level table with ready-made behavior on top of the low-level `Table`:
+column visibility and order, density, loading and error states, a table toolbar slot
+(`toolbar`). It keeps no state of its own: it accepts `state` and reports changes as a
+patch, usually to `useTableState`.
 
-## Когда использовать
+## When to use
 
-- Список сущностей в админке: фильтры, настройки колонок, массовые действия.
-- Везде, где нужны полоса над таблицей и настройки пользователя.
+- A list of entities in an admin panel: filters, column preferences, bulk actions.
+- Anywhere a table needs a table toolbar and user preferences.
 
-## Когда не использовать
+## When not to use
 
-- Для простой таблицы без настроек — это `Table`: она остаётся низкоуровневой и
-  ничего лишнего в разметку не кладёт.
-- Для пар «свойство — значение» — это `DescriptionList`.
+- For a simple table without settings — that is `Table`: it stays low-level and
+  puts nothing extra into the markup.
+- For "property — value" pairs — that is `DescriptionList`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { DataTable, TableToolbar, useTableState } from "@olddevs/ui";
@@ -35,99 +35,102 @@ import { DataTable, TableToolbar, useTableState } from "@olddevs/ui";
 const { state, set } = useTableState();
 
 <DataTable
-  aria-label="Документы"
+  aria-label="Documents"
   columns={columns}
   items={rows}
   state={state}
   onStateChange={set}
   selectable
   loading={isFetching}
-  error={error ? <ErrorState title="Не удалось загрузить" /> : undefined}
-  toolbar={<TableToolbar title="Документы" count={total} />}
+  error={error ? <ErrorState title="Failed to load" /> : undefined}
+  toolbar={<TableToolbar title="Documents" count={total} />}
 />;
 ```
 
-## Пропы
+## Props
 
-| Проп            | Умолчание | Назначение                                                   |
-| --------------- | --------- | ------------------------------------------------------------ |
-| `state`         | —         | Состояние целиком. Обычно из `useTableState`.                |
-| `onStateChange` | —         | Изменения одним патчем: инварианты живут в хуке, а не здесь. |
-| `selectable`    | `false`   | Колонка флажков. Отдельный проп — см. ниже.                  |
-| `loading`       | `false`   | Идёт загрузка. Поведение зависит от наличия данных.          |
-| `error`         | —         | Замещает тело **всегда**, даже когда данные есть.            |
-| `toolbar`       | —         | Полоса над таблицей — обычно `TableToolbar`.                 |
+| Prop            | Default | Purpose                                                              |
+| --------------- | ------- | -------------------------------------------------------------------- |
+| `state`         | —       | The whole state. Usually from `useTableState`.                       |
+| `onStateChange` | —       | Changes as a single patch: invariants live in the hook, not here.    |
+| `selectable`    | `false` | The checkbox column. A separate prop — see below.                    |
+| `loading`       | `false` | Loading is in progress. The behavior depends on whether data exists. |
+| `error`         | —       | **Always** replaces the body, even when there is data.               |
+| `toolbar`       | —       | The table toolbar — usually `TableToolbar`.                          |
 
-Остальные пропы уходят в `Table` — включая `renderDetail`, `rowLabel` и
+The other props go to `Table` — including `renderDetail`, `rowLabel` and
 `onRowAction`.
 
-**Действие по строке рядом с выделением.** `onRowAction(item)` вместе с
-`selectable`: клик по строке и Enter открывают запись, а отмечают её флажки.
-Пока ничего не выделено, клик по строке — действие; когда выделение появилось,
-клик по строке его переключает (правило react-aria), а действие остаётся на
-Enter. Ссылка в ячейке с ручным `stopPropagation` для этого не нужна: ручной
-`stopPropagation` — антипаттерн, он ломает клавиатурную модель строки. Подробности и антипаттерн —
-в [Data display](../content/data-display.md).
+**A row action next to selection.** `onRowAction(item)` together with
+`selectable`: a click on a row and Enter open the record, while the checkboxes
+mark it. While nothing is selected, a click on a row is the action; once a
+selection exists, a click on a row toggles it (react-aria's rule), and the action
+stays on Enter. A link in a cell with a manual `stopPropagation` is not needed
+for this: a manual `stopPropagation` is an anti-pattern, it breaks the row's keyboard model. Details
+and the anti-pattern are in [Data display](../content/data-display.md).
 
-**Гидратация.** `aria-sort` ставит react-aria, и только после гидратации: на
-Android его нет вовсе, на остальных платформах он есть у каждой сортируемой
-колонки, а сервер платформы не знает. Поэтому серверная разметка таблицы с
-сортировкой совпадает с клиентской, и React не пишет о расхождении.
+**Hydration.** `aria-sort` is set by react-aria, and only after hydration: on
+Android it is absent altogether, on other platforms every sortable column has
+it, and the server does not know the platform. So the server markup of a table
+with sorting matches the client's, and React does not report a mismatch.
 
-## Граница с `Table`
+## The boundary with `Table`
 
-**Надстройка, а не замена.** Внутри — та же `Table`, что снаружи: видимость и
-порядок колонок, плотность и состояния выражаются её пропами. В саму `Table`
-пришлось добавить только ось раскрытия: детальная строка живёт
-внутри `<tbody>`, между строками коллекции react-aria, и вставить её надстройкой
-невозможно (ADR-0022).
+**An add-on, not a replacement.** Inside is the same `Table` as outside: column
+visibility and order, density and states are expressed by its props. Only the
+expansion axis had to be added to `Table` itself: the detail
+row lives inside `<tbody>`, between the react-aria collection rows, and an
+add-on cannot insert it
+(ADR-0022).
 
-Признак нарушения границы проверяемый: **если что-то можно было сделать пропами
-снаружи, а оно оказалось внутри `Table`, — граница уже сдвинулась.**
+A boundary violation has a verifiable sign: **if something could have been
+done with props from outside and it ended up inside `Table`, the boundary has
+already shifted.**
 
-**`selectable` — отдельный проп, а не «раз состояние есть, значит нужно».** В
-состоянии `selectedKeys` лежит всегда, и передавай надстройка его безусловно,
-колонка флажков появлялась бы у таблиц, которым выделение не нужно. Правило
-`Table` «ось включается наличием пропа» надстройка не отменяет.
+**`selectable` is a separate prop, not "since there is state, it is needed".**
+`selectedKeys` is always in the state, and if the add-on passed it
+unconditionally, the checkbox column would appear on tables that do not need
+selection. The add-on does not override the `Table` rule "an axis is enabled by the
+presence of a prop".
 
-**Скрытая колонка не попадает в разметку**, а не прячется классом: спрятанная
-колонка остаётся в дереве доступности заголовком без ячеек, и скринридер читает
-таблицу с колонкой, которой на экране нет.
+**A hidden column does not make it into the markup**; it is not hidden with a
+class: a hidden column would stay in the accessibility tree as a header without
+cells, and a screen reader would read a table with a column that is not on screen.
 
-## Данными таблица не владеет
+## The table does not own the data
 
-**`items` не режутся на страницы.** `state.page` и `state.pageSize` — часть
-состояния и переносятся в адрес страницы, но нарезка — работа потребителя: в приложении
-это параметры запроса к серверу, а не срез массива в компоненте. Кит не знает ни
-про общее число записей, ни про то, откуда они приходят.
+**`items` are not split into pages.** `state.page` and `state.pageSize` are part
+of the state and are carried into the URL, but slicing is the consumer's job: in
+an app these are the server request parameters, not an array slice in the
+component. The kit knows neither the total number of records nor where they come
+from.
 
-То же про сортировку и фильтры: `DataTable` сообщает о них патчем состояния и
-показывает то, что ему дали. Отфильтрованные и отсортированные данные приходят
-снаружи.
+The same goes for sorting and filters: `DataTable` reports them as a state patch
+and shows what it is given. Filtered and sorted data arrives from outside.
 
-## Загрузка, пустота и ошибка
+## Loading, empty and error
 
-Различаются **первая загрузка и перезапрос** — единый порядок приоритетов (ошибка, загрузка, пусто) тут неверен:
+**The first load and a refetch** are told apart — a single priority order (error, loading, empty) is wrong here:
 
-| Состояние               | Что на экране                                  |
-| ----------------------- | ---------------------------------------------- |
-| Ошибка                  | Вместо тела **всегда**, даже когда данные есть |
-| Загрузка **без** данных | Скелет вместо тела, заголовки колонок на месте |
-| Загрузка **с** данными  | Данные остаются под `aria-busy`, приглушённые  |
-| Пусто                   | Только когда загрузка кончилась и ошибки нет   |
+| State                    | What is on screen                                       |
+| ------------------------ | ------------------------------------------------------- |
+| Error                    | Instead of the body, **always**, even when data exists  |
+| Loading **without** data | A skeleton instead of the body, the column headers stay |
+| Loading **with** data    | The data stays under `aria-busy`, dimmed                |
+| Empty                    | Only when loading has finished and there is no error    |
 
-Данные, показанные при ошибке, врут: отличить устаревшие от актуальных
-пользователь не может. А схлопывать таблицу в скелет на каждой смене страницы —
-скачок раскладки на каждом шаге, из-за которого правило переписано.
+Data shown alongside an error lies: the user cannot tell stale from current. And
+collapsing the table into a skeleton on every page change is a layout jump on
+every step, and that jump is why the rule was rewritten.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/table/DataTable.tsx`.
-- Тесты: `tests/data-table.test.tsx` — настройки колонок, четыре состояния и
-  отличие первой загрузки от перезапроса, отсутствие колонки флажков без
-  `selectable`, раскрытие через состояние.
-- `tests/table-row-action.test.tsx` — `onRowAction` рядом с выделением;
-  `tests/table-hydration.test.tsx` — серверная разметка и гидратация сортируемых
-  колонок, в том числе под Android.
-- История: `AdminEntityList` в
+- Implementation: `src/components/table/DataTable.tsx`.
+- Tests: `tests/data-table.test.tsx` — column preferences, the four states and
+  telling the first load from a refetch, no checkbox column without
+  `selectable`, expansion through state.
+- `tests/table-row-action.test.tsx` — `onRowAction` next to selection;
+  `tests/table-hydration.test.tsx` — server markup and hydration of sortable
+  columns, including on Android.
+- Story: `AdminEntityList` in
   `src/components/app-shell/AppShell.stories.tsx`.

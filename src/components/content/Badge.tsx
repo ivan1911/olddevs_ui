@@ -5,42 +5,45 @@ import { cn } from "../../lib/cn.js";
 import { TONE_TOKENS, type Tone } from "../../lib/variants.js";
 
 export interface BadgeProps extends Omit<ComponentPropsWithRef<"span">, "children"> {
-  /** Что показать: число или короткая метка. */
+  /** What to show: a number or a short label. */
   children?: ReactNode;
-  /** Цветовой тон значка: `neutral`, `accent`, `success`, `warning` или `danger`. По умолчанию `danger`. */
+  /**
+   * Color tone of the badge: `neutral`, `accent`, `success`, `warning` or `danger`. Defaults to
+   * `danger`.
+   */
   tone?: Tone;
   /**
-   * Точка вместо числа: «есть новое», без указания сколько.
+   * A dot instead of a number: "there is something new", without saying how much.
    *
-   * Нужна там, где число не помогает: значок уведомлений с «237» читается
-   * хуже, чем просто отметка о том, что смотреть есть что.
+   * Needed where a number does not help: a notification badge reading "237" is harder to read
+   * than a plain mark that tells the user there is something to look at.
    */
   dot?: boolean;
-  /** Предел числа: сверх него показывается «99+». */
+  /** Upper limit for the number: anything above it is shown as "99+". */
   max?: number;
   /**
-   * Положить значок поверх иконки: в правый верхний угол родителя, у которого
-   * задан `position` (обычно `relative`).
+   * Whether to place the badge over an icon: in the top-right corner of a parent that has
+   * `position` set (usually `relative`).
    */
   overlay?: boolean;
 }
 
 /**
- * Счётчик или короткая метка.
+ * A counter or a short label.
  *
- * ГРАНИЦА С СОСЕДЯМИ — единственное, что здесь стоит объяснить, потому что
- * три компонента кита выглядят похоже и означают разное:
+ * THE BOUNDARY WITH NEIGHBORS — the only thing worth explaining here, because three kit components
+ * look alike and mean different things:
  *
- *   `Badge`       — СКОЛЬКО. Число рядом с чем-то: непрочитанных пять,
- *                   в очереди двенадцать. Само по себе не кликается.
- *   `StatusBadge` — В КАКОМ СОСТОЯНИИ сущность: черновик, опубликован,
- *                   ошибка. Значение из закрытого набора, не число.
- *   `Chip count`  — счётчик ВНУТРИ фильтра: сколько найдётся, если нажать.
- *                   Часть кликабельной пилюли, а не самостоятельный знак.
+ *   `Badge`       — HOW MANY. A number next to something: five unread, twelve in the queue.
+ *                   Not clickable on its own.
+ *   `StatusBadge` — IN WHICH STATE the entity is: draft, published, error. A value from a closed
+ *                   set, not a number.
+ *   `Chip count`  — a counter INSIDE a filter: how many will match if it is pressed. Part of the
+ *                   clickable pill, not a standalone mark.
  *
- * Перепутать легко, и цена ошибки не косметическая: `StatusBadge` тоном
- * сообщает состояние («ошибка» красным), а `Badge` тоном — важность. Красный
- * счётчик рядом с иконкой означает «срочно», а не «сломалось».
+ * Easy to mix up, and the cost of the mistake is not cosmetic: `StatusBadge` reports a state
+ * through its tone ("error" in red), whereas `Badge` uses the tone for importance. A red counter
+ * next to an icon means "urgent", not "broken".
  */
 export function Badge({
   children,
@@ -62,11 +65,11 @@ export function Badge({
         t.solid,
         dot
           ? "size-2"
-          : // Минимальная ширина равна высоте: счётчик «1» обязан быть кругом,
-            // а не узкой таблеткой, иначе ряд значков выглядит рваным.
+          : // Minimum width equals height: a counter showing "1" has to be a circle,
+            // not a narrow pill, otherwise a row of badges looks ragged.
             "text-caption h-4 min-w-4 px-1",
-        // Наложение — абсолютное позиционирование в углу соседа; кольцо цветом
-        // подложки отделяет значок от иконки под ним.
+        // Overlay is absolute positioning in the corner of a sibling; a ring in the
+        // background color separates the badge from the icon underneath it.
         overlay && "ring-bg-1 absolute -top-1 -right-1 ring-2",
         className
       )}

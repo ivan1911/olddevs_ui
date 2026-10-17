@@ -16,7 +16,10 @@ import { GLASS_PANEL_CLASS } from "../styles/glass.js";
 
 export interface ShortcutsButtonProps {
   tools: ToolList;
-  /** Поле выключено: кнопка видна, но не нажимается — как остальные на Панели. */
+  /**
+   * The field is disabled: the button stays visible but cannot be pressed, like the
+   * other buttons on the Toolbar.
+   */
   disabled: boolean;
 }
 
@@ -24,25 +27,26 @@ const CLOSED_CLASS = buttonClasses({ variant: "ghost", size: "sm", iconOnly: tru
 const OPEN_CLASS = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true, selected: true });
 
 /**
- * Справочник сочетаний клавиш: кнопка с клавиатурой у правого края
- * Панели открывает список «команда — сочетание» только для чтения.
+ * The keyboard shortcuts popover: a keyboard button at the right edge of the Toolbar
+ * opens a read-only list of "command — shortcut" pairs.
  *
- * СОСТАВ — ИЗ ОБЩЕЙ ТАБЛИЦЫ (`shortcuts.ts`), той же, что подписывает кнопки
- * Панели: строка есть только у команды включённого инструмента, а подпись
- * сочетания — `⌘+⌥+⇧` на Apple и `Ctrl+Alt+Shift` у остальных. Справочник сам
- * ничего не назначает и не нажимается: это не палитра команд.
+ * CONTENTS COME FROM THE SHARED TABLE (`shortcuts.ts`), the same one that labels the
+ * Toolbar buttons. A row exists only for a command of an enabled tool, and the shortcut
+ * is labelled `⌘+⌥+⇧` on Apple and `Ctrl+Alt+Shift` elsewhere. The popover assigns no
+ * shortcuts and runs no commands: it is not a command palette.
  *
- * РАЗМЕТКА — ТАБЛИЦА. Скринридер читает пару «команда — сочетание» как строку с
- * заголовками столбцов, а не как два несвязанных списка; сочетание — `Kbd`
- * кита, то есть `<kbd>`.
+ * MARKUP IS A TABLE. A screen reader reads a "command — shortcut" pair as a row with
+ * column headers, not as two unrelated lists. The shortcut is the kit's `Kbd`, that is,
+ * a `<kbd>`.
  *
- * `Popover` КИТА: Radix ведёт стек слоёв, и Escape внутри окна закрывает
- * справочник, а не окно вокруг Редактора (так же, как поповер ссылки, ADR-0041).
+ * The kit's `Popover`: Radix keeps a stack of layers, so Escape inside a dialog closes
+ * the popover, not the dialog around the Editor (the same as the link popover, ADR-0041).
  *
- * ФОКУС. Закрытие возвращает фокус на кнопку — и Escape, и щелчок мимо. Оговорка
- * для щелчка: если он сам поставил фокус на что-то, с чем работают (в документ,
- * в соседнее поле, на кнопку), его не отбирают; на кнопку фокус вернётся, когда
- * щелчок пришёл в пустое место и фокус остался на теле страницы или на окне.
+ * FOCUS. Closing returns focus to the button, on Escape and on a click outside. There is
+ * one caveat for clicks: if the click itself placed focus on something the user works
+ * with (the document, a neighboring field, a button), that focus is not taken back. Focus
+ * returns to the button only when the click landed on empty space and focus stayed on the
+ * page body or on the window.
  */
 export function ShortcutsButton({ tools, disabled }: ShortcutsButtonProps) {
   const messages = useMessages().editor;
@@ -58,8 +62,8 @@ export function ShortcutsButton({ tools, disabled }: ShortcutsButtonProps) {
             type="button"
             aria-label={messages.shortcuts}
             disabled={disabled}
-            // На телефоне сочетаний нет — нет и справочника.
-            // К правому краю Панели кнопку прижимает её группа (`EditorToolbar`).
+            // There are no shortcuts on phones, so there is no popover either.
+            // The button is pushed to the Toolbar's right edge by its group (`EditorToolbar`).
             className={cn(open ? OPEN_CLASS : CLOSED_CLASS, TOUCH_HIDDEN_CLASS)}
           >
             <KeyboardIcon size={16} aria-hidden />
@@ -69,17 +73,17 @@ export function ShortcutsButton({ tools, disabled }: ShortcutsButtonProps) {
       <PopoverContent
         align="end"
         aria-label={messages.shortcuts}
-        // Ширина — по самой длинной строке: фиксированные 384px
-        // оставляли пустое поле между командой и сочетанием.
+        // The width fits the longest row: a fixed 384px left an empty gap between
+        // the command and the shortcut.
         className={cn(
           GLASS_PANEL_CLASS,
           "max-h-[min(32rem,var(--radix-popover-content-available-height))] w-max max-w-[calc(100vw-2rem)] overflow-y-auto p-3"
         )}
         onCloseAutoFocus={(event) => {
-          // Radix после щелчка мимо фокус не возвращает вовсе. Здесь он
-          // возвращается, если щелчок сам не поставил его на что-то, с чем
-          // работают: на тело страницы или на контейнер окна фокус попадает от
-          // щелчка в пустое место.
+          // Radix does not return focus at all after a click outside. Here it is
+          // returned, unless the click itself placed it on something the user works
+          // with. Focus lands on the page body or on the window container from a
+          // click on empty space.
           event.preventDefault();
           const active = document.activeElement;
           if (!active || !active.matches(FOCUS_TARGET)) buttonRef.current?.focus();

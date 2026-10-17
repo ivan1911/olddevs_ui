@@ -12,56 +12,65 @@ import { cn } from "../../lib/cn.js";
 import { Tooltip } from "../overlays/Tooltip.js";
 
 /**
- * Схлопнутость навигации: её задаёт `SideNav`, а читает каждый пункт.
+ * Collapsed state of the navigation: `SideNav` sets it, and every item reads it.
  *
- * Контекст, а не проп на пункте, потому что иначе потребитель протаскивал бы
- * одно и то же значение в каждый из десяти пунктов руками — и однажды забыл бы
- * в одном. Вне `SideNav` пункт считается развёрнутым: это состояние по
- * умолчанию, а не признак ошибки.
+ * It is a context, not a prop on the item: otherwise the consumer would pass the
+ * same value to each of the ten items by hand and sooner or later forget one.
+ * Outside `SideNav` an item counts as expanded: that is the default state, not a
+ * sign of an error.
  */
-/** @internal Читают `NavItem` и `NavGroup`; частью публичного API не является. */
+/** @internal Read by `NavItem` and `NavGroup`; not part of the public API. */
 export const NavCollapsedContext = createContext(false);
 
-/** @internal Провайдер для `SideNav`; частью публичного API не является. */
+/** @internal Provider for `SideNav`; not part of the public API. */
 export const NavCollapsedProvider = NavCollapsedContext.Provider;
 
 export interface NavItemProps extends Omit<ComponentPropsWithoutRef<"a">, "children"> {
   /**
-   * Подпись пункта — и его доступное имя.
+   * The item's label, which is also its accessible name.
    *
-   * Отдельным пропом, а не содержимым, и причина в схлопнутом режиме: там
-   * подпись прячется от глаз, но обязана остаться для скринридера, то есть
-   * компонент должен её ЗАВЕРНУТЬ. Содержимое при `asChild` принадлежит
-   * потомку, и завернуть его нельзя — у `Button` ровно поэтому подпись при
-   * `asChild` и не оборачивается.
+   * It is a separate prop, not children, and the reason is the collapsed mode:
+   * there the label is hidden from sight but must stay for the screen reader, so
+   * the component has to WRAP it itself. The children of an `asChild` item belong
+   * to the descendant, and the component cannot wrap them. That is also why
+   * `Button` does not wrap its label when `asChild` is set.
    */
   label: ReactNode;
-  /** Иконка слева от подписи; скрыта от скринридера, цвет следует за состоянием `active`. */
+  /**
+   * Icon to the left of the label. Hidden from screen readers; its color follows the
+   * `active` state.
+   */
   icon?: ReactNode;
   /**
-   * Пункт ведёт на текущую страницу: подсвечен и получает `aria-current="page"`.
+   * The item leads to the current page: it is highlighted and gets
+   * `aria-current="page"`.
    *
-   * Проп, а не вычисление: кит не знает ни маршрутизатора, ни правил сравнения
-   * путей (хвостовой слэш, query, вложенные маршруты, локаль в префиксе). У
-   * каждого маршрутизатора они свои, а ошибка выражается не падением, а тихо
-   * неподсвеченным пунктом. Решение — ADR-0018.
+   * It is a prop, not a computed value: the kit knows neither the router nor the
+   * rules for comparing paths (trailing slash, query, nested routes, locale in the
+   * prefix). Each router has its own rules, and a mistake shows up not as a crash
+   * but as a silently unhighlighted item. The decision is recorded in ADR-0018.
    */
   active?: boolean;
-  /** Счётчик или отметка справа от подписи: `Badge`, число, точка. */
+  /** Counter or mark to the right of the label: `Badge`, a number, a dot. */
   badge?: ReactNode;
   /**
-   * Слот горячей клавиши — обычно `Kbd`. Прячется вместе с подписью: в
-   * иконочном режиме показывать сочетание некуда, а озвучивать его в имени
-   * пункта значит удлинять имя ради того, чего на экране нет.
+   * Slot for a keyboard shortcut, usually `Kbd`. It hides together with the
+   * label: in icon-only mode there is no room for the key combination, and
+   * announcing it in the item's name would lengthen the name for something that is
+   * not on screen.
    */
   shortcut?: ReactNode;
   /**
-   * Вывести пункт дочерним элементом: `next/link`, `<Link>` роутера, что угодно
-   * ещё. Иконка и подпись уезжают внутрь потомка через `Slottable`, поэтому
-   * потомок передаётся пустым: `<NavItem label="…" asChild><Link href="/x" /></NavItem>`.
+   * Render the item as its child element: `next/link`, a router's `<Link>`, or
+   * anything else. The icon and the label move inside the child through
+   * `Slottable`, so the child is passed empty:
+   * `<NavItem label="…" asChild><Link href="/x" /></NavItem>`.
    */
   asChild?: boolean;
-  /** Нужен только при `asChild`: там это пустой потомок-ссылка, в который уезжают иконка и подпись. */
+  /**
+   * Needed only with `asChild`: there it is the empty child link that the icon and the label move
+   * into.
+   */
   children?: ReactNode;
 }
 
@@ -69,9 +78,9 @@ const BASE =
   "focus-visible:outline-accent-strong flex items-center gap-3 rounded-control border " +
   "px-3 py-[9px] text-[13px] leading-5 no-underline transition-colors " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 " +
-  // Недоступный пункт красится по `aria-disabled`, как у `Button`: у ссылки нет
-  // родного `disabled`, и без этого правила пункт, выключенный атрибутом ARIA,
-  // выглядел бы рабочим — с тем же цветом и курсором-указателем.
+  // A disabled item is styled by `aria-disabled`, as `Button` is: a link has no
+  // native `disabled`, and without this rule an item disabled with the ARIA
+  // attribute would look active, with the same color and a pointer cursor.
   "aria-disabled:opacity-50 aria-disabled:cursor-default " +
   "aria-disabled:hover:bg-transparent aria-disabled:hover:text-fg-1";
 
@@ -81,22 +90,23 @@ const STATE = {
 } as const;
 
 /**
- * Пункт навигации: иконка, подпись, счётчик и слот горячей клавиши.
+ * Navigation item: icon, label, counter and shortcut slot.
  *
- * Маршрутизации не знает вовсе — ни адреса, ни того, какой пункт сейчас
- * открыт. И то и другое приходит снаружи: адрес элементом через `asChild` или
- * `href`, текущий пункт — пропом `active`.
+ * It knows nothing about routing: neither the address nor which item is currently
+ * open. Both come from outside: the address as an element through `asChild` or
+ * `href`, the current item through the `active` prop.
  *
- * В схлопнутом режиме подпись уходит из виду, но остаётся доступным именем, а
- * рядом появляется подсказка. Прятать её `title`-атрибутом было бы дешевле и
- * неверно: `title` не показывается при фокусе с клавиатуры и не читается
- * частью скринридеров.
+ * In collapsed mode the label leaves the view but stays the accessible name, and a
+ * tooltip appears next to the item. Hiding the label with a `title` attribute
+ * would be cheaper and wrong: `title` is not shown on keyboard focus, and some
+ * screen readers do not read it.
  *
- * ТРЕБОВАНИЕ К ПОТРЕБИТЕЛЮ: схлопнутая навигация обязана стоять внутри
- * `TooltipProvider` — иначе Radix бросает на первом же пункте. Провайдер здесь
- * не разворачивается сам по той же причине, по которой его не разворачивает
- * `Segmented`: он задаёт группировку подсказок на всё приложение, и вложенный
- * её ломает. В развёрнутом режиме подсказки нет, и требования тоже нет.
+ * REQUIREMENT FOR THE CONSUMER: collapsed navigation must be placed inside a
+ * `TooltipProvider`, otherwise Radix throws on the first item. This component does
+ * not mount the provider itself, for the same reason `Segmented` does not: the
+ * provider sets up tooltip grouping for the whole application, and a nested one
+ * would break that grouping. In expanded mode there is no tooltip, so there is no
+ * requirement either.
  */
 export const NavItem = forwardRef<HTMLAnchorElement, NavItemProps>(function NavItem(
   { label, icon, active = false, badge, shortcut, asChild = false, children, className, ...rest },
@@ -108,8 +118,8 @@ export const NavItem = forwardRef<HTMLAnchorElement, NavItemProps>(function NavI
   const item = (
     <Comp
       ref={ref}
-      // `page`, а не `true`: пункт ведёт на страницу, и это ровно тот случай,
-      // для которого значение существует.
+      // `page`, not `true`: the item leads to a page, and that is exactly the case
+      // the value exists for.
       aria-current={active ? "page" : undefined}
       className={cn(
         BASE,
@@ -128,10 +138,10 @@ export const NavItem = forwardRef<HTMLAnchorElement, NavItemProps>(function NavI
         </span>
       ) : null}
       {/*
-        В схлопнутом режиме подпись прячется классом `sr-only`, а не
-        выбрасывается из разметки: выброшенная оставила бы пункт без имени, и
-        вся навигация превратилась бы в набор безымянных иконок — тот же
-        дефект, что аудит ловит у кнопок с одной иконкой.
+        In collapsed mode the label is hidden with the `sr-only` class rather than
+        removed from the markup: without it the item would have no name, and the
+        whole navigation would turn into a set of nameless icons, the same defect the
+        audit catches in buttons with a single icon.
       */}
       <span className={cn(collapsed ? "sr-only" : "truncate")}>{label}</span>
       {!collapsed && badge != null ? <span className="ml-auto flex shrink-0">{badge}</span> : null}
@@ -139,16 +149,16 @@ export const NavItem = forwardRef<HTMLAnchorElement, NavItemProps>(function NavI
         <span className={cn("shrink-0", badge == null && "ml-auto")}>{shortcut}</span>
       ) : null}
       {/*
-        `Slottable` — единственный способ сохранить иконку и подпись при
-        `asChild`: Slot сливает пропы с ЕДИНСТВЕННЫМ потомком, и пара «иконка +
-        ссылка» уронила бы его в рантайме. С `Slottable` мишенью становится
-        она, а соседи уезжают внутрь ссылки. Тот же приём — в `Button`.
+        `Slottable` is the only way to keep the icon and the label with `asChild`:
+        Slot merges props into its ONE child, and the pair "icon + link" would break
+        it at runtime. With `Slottable` the target becomes the link, and the siblings
+        move inside it. The same technique is used in `Button`.
       */}
       {asChild ? <Slottable>{children}</Slottable> : children}
     </Comp>
   );
 
-  // Подсказка вешается ТОЛЬКО в схлопнутом режиме: в развёрнутом подпись видна,
-  // и подсказка повторяла бы её — шум, а не помощь.
+  // The tooltip is added ONLY in collapsed mode: in expanded mode the label is
+  // visible, and a tooltip would repeat it: noise, not help.
   return collapsed ? <Tooltip content={label}>{item}</Tooltip> : item;
 });

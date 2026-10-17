@@ -9,35 +9,37 @@ story: src/components/overlays/ShortcutsHelp.stories.tsx
 
 # ShortcutsHelp
 
-## Кратко для AI
+## Summary for AI
 
-Это модальное окно со сводом сочетаний клавиш на `Dialog`. Пропы: `open`,
-`onOpenChange`, `title` (по умолчанию «Горячие клавиши» из каталога сообщений) и
-`groups` — массив групп `{ id, label, items }`, где пункт — `{ keys, description }`.
-Каждая клавиша рисуется своей `Kbd`. Группа объявляется группой с именем
-(`role="group"`), а не заголовком. Кит **не вешает глобальных клавиш**: по какой
-клавише свод открывается и какие сочетания вообще есть — решает приложение.
+A modal dialog with a list of keyboard shortcuts, built on `Dialog`. Props: `open`,
+`onOpenChange`, `title` (by default "Keyboard shortcuts" from the message catalog)
+and `groups` — an array of groups `{ id, label, items }`, where an item is
+`{ keys, description }`. Each key is rendered with its own `Kbd`. A group is
+announced as a named group (`role="group"`), not as a heading. The kit **does not
+register global shortcuts**: which key opens the list and which shortcuts exist at
+all is up to the app.
 
-## Когда использовать
+## When to use
 
-- Экран с клавиатурной навигацией: пользователь должен узнать, что нажимается, не
-  читая справку. Образец — окно «Keyboard shortcuts» у GitHub, Linear, Atlassian.
-- Сочетаний больше нескольких, и их удобно разложить по разделам.
+- A screen with keyboard navigation: the user must find out what to press without
+  reading the docs. The model is the "Keyboard shortcuts" dialog at GitHub,
+  Linear and Atlassian.
+- There are more than a few shortcuts, and it is convenient to lay them out in sections.
 
-## Когда не использовать
+## When not to use
 
-- Сочетание рядом с одним пунктом меню — это `Kbd` внутри пункта; у
-  `CommandPalette` сочетание лежит в поле `shortcut`. Целое окно ради одной
-  клавиши — лишнее.
-- Редактирование сочетаний, привязка клавиш и поиск по своду — не задача
-  компонента: он только показывает список. Это отдельный экран настроек.
-- Не путайте с `Keyboard`: так называется **экранная клавиатура** для ввода
-  текста ([страница `Keyboard`](../content/keyboard.md)), а не способ нарисовать «Ctrl+K».
-  Сочетание собирается из `Kbd`.
-- Список, который не должен перекрывать страницу, — это справка в `Drawer` или
-  отдельная страница; `ShortcutsHelp` модален и закрывает фон.
+- A shortcut next to a single menu item is a `Kbd` inside the item; in
+  `CommandPalette` the shortcut lives in the `shortcut` property. A whole dialog for
+  one key is excessive.
+- Editing shortcuts, binding shortcuts and searching the list are not the
+  component's job: it only shows a list. That is a separate settings screen.
+- Do not confuse it with `Keyboard`: that is the name of the **on-screen
+  keyboard** for entering text ([`Keyboard` page](../content/keyboard.md)), not a way to render
+  "Ctrl+K". A shortcut is assembled from `Kbd`.
+- A list that must not cover the page is a help panel in a `Drawer` or a separate
+  page; `ShortcutsHelp` is modal and covers the background.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Button, ShortcutsHelp, type ShortcutGroup } from "@olddevs/ui";
@@ -45,39 +47,39 @@ import { Button, ShortcutsHelp, type ShortcutGroup } from "@olddevs/ui";
 const groups: ShortcutGroup[] = [
   {
     id: "navigation",
-    label: "Навигация",
+    label: "Navigation",
     items: [
-      { keys: ["Ctrl", "K"], description: "Открыть поиск" },
-      { keys: ["G", "H"], description: "Перейти на главную" },
+      { keys: ["Ctrl", "K"], description: "Open search" },
+      { keys: ["G", "H"], description: "Go to home" },
     ],
   },
   {
     id: "general",
-    label: "Общие",
-    items: [{ keys: ["Esc"], description: "Закрыть окно" }],
+    label: "General",
+    items: [{ keys: ["Esc"], description: "Close the dialog" }],
   },
 ];
 
 const [open, setOpen] = useState(false);
 
 <>
-  <Button onClick={() => setOpen(true)}>Горячие клавиши</Button>
+  <Button onClick={() => setOpen(true)}>Keyboard shortcuts</Button>
   <ShortcutsHelp open={open} onOpenChange={setOpen} groups={groups} />
 </>;
 ```
 
-## Открытие по «?»: рецепт потребителя
+## Opening with "?": a consumer recipe
 
-Кит глобальных обработчиков не ставит, и это решение, а не недоделка: клавиша,
-по которой открывается свод, срабатывает в полях ввода и поверх чужих окон, а что
-делать в этих случаях, знает только приложение. Обработчик живёт у вас; в нём обязательны
-три вещи (рабочий код — история `OpenWithQuestionMark`):
+The kit installs no global handlers, and that is a decision, not an omission: the
+key that opens the list fires in input fields and over other dialogs, and only
+the app knows what to do in those cases. The handler is yours to write; three
+things in it are required (see the `OpenWithQuestionMark` story for working code):
 
 ```tsx
 useEffect(() => {
   const onKeyDown = (event: KeyboardEvent) => {
-    // Знак, а не положение: «?» стоит на разных клавишах (Shift+/ на латинской
-    // раскладке, Shift+7 на русской), и пользователь нажимает именно знак.
+    // The character, not the position: "?" sits on different keys (Shift+/ on a
+    // Latin layout, Shift+7 on a Russian one), and the user presses the character itself.
     if (event.key !== "?" || event.isComposing || event.repeat) return;
     if (event.ctrlKey || event.altKey || event.metaKey) return;
     const target = event.target;
@@ -85,7 +87,7 @@ useEffect(() => {
       target instanceof HTMLElement &&
       (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName))
     ) {
-      return; // в поле ввода знак вопроса — просто знак
+      return; // in an input field a question mark is just a character
     }
     event.preventDefault();
     setOpen(true);
@@ -95,92 +97,93 @@ useEffect(() => {
 }, []);
 ```
 
-1. **Сверять знак для «?» и положение для букв.** Знак вопроса пользователь ищет
-   глазами, и на русской раскладке он стоит на Shift+7 — `event.key` вернёт «?» на
-   обеих раскладках. Буквенные сочетания («G, H») сверяйте по `event.code`
-   (`KeyG`): если сверять по символу, на другой раскладке они перестанут
-   срабатывать.
-2. **Ничего не делать в полях ввода**, иначе вопросительный знак нельзя напечатать.
-3. **Не реагировать** на сочетания с `Ctrl`, `Alt` и `Meta`, автоповтор и ввод
-   через IME (редактор метода ввода, `isComposing`).
+1. **Check the character for "?" and the position for letters.** The user looks for
+   the question mark on the keyboard, and on a Russian layout it sits on Shift+7 —
+   `event.key` returns "?" on both layouts. Check letter shortcuts ("G, H") by
+   `event.code` (`KeyG`): if you compare characters, they stop working on another
+   layout.
+2. **Do nothing in input fields**, otherwise a question mark cannot be typed.
+3. **Do not react to** shortcuts with `Ctrl`, `Alt` and `Meta`, auto-repeat and
+   input through an IME (input method editor, `isComposing`).
 
-Если свод должен открываться и поверх уже открытого окна, это тоже решение
-приложения: `Dialog` кита ведёт стек Escape, Escape закроет верхний.
+If the list must also open over an already open dialog, that is also the app's
+decision: the kit's `Dialog` keeps an Escape stack, and Escape closes the top one.
 
 ## Public API
 
 ### `ShortcutsHelp`
 
-| Проп           | По умолчанию                    | Значение                                                                           |
-| -------------- | ------------------------------- | ---------------------------------------------------------------------------------- |
-| `open`         | —                               | Показано ли окно. Состояние хранит потребитель.                                    |
-| `onOpenChange` | —                               | Окно просит сменить состояние: крестик, Escape и клик мимо вызывают его с `false`. |
-| `title`        | «Горячие клавиши» (из каталога) | Заголовок окна и его доступное имя. `ReactNode`.                                   |
-| `groups`       | —                               | Группы сочетаний. Группа без пунктов не рисуется и не объявляется.                 |
+| Prop           | Default                                         | Meaning                                                                                                            |
+| -------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `open`         | —                                               | Whether the dialog is shown. The consumer owns the state.                                                          |
+| `onOpenChange` | —                                               | Called when the dialog requests a state change: the close button, Escape and a click outside call it with `false`. |
+| `title`        | "Keyboard shortcuts" (from the message catalog) | The dialog's title and its accessible name. `ReactNode`.                                                           |
+| `groups`       | —                                               | Groups of shortcuts. A group with no items is not rendered or announced.                                           |
 
-### `ShortcutGroup` и `ShortcutItem`
+### `ShortcutGroup` and `ShortcutItem`
 
-| Поле               | Значение                                                                                                      |
-| ------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `group.id`         | Стабильный ключ списка React; в разметку как `id` не попадает (для `aria-labelledby` кит берёт номер группы). |
-| `group.label`      | Подпись группы, `ReactNode`.                                                                                  |
-| `group.items`      | Пункты группы.                                                                                                |
-| `item.keys`        | Клавиши по порядку: `["Ctrl", "K"]`. Каждая — своя `Kbd`; слитное «Ctrl+K» не разбирается.                    |
-| `item.description` | Что делает сочетание, `ReactNode`.                                                                            |
+| Property           | Meaning                                                                                                                |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `group.id`         | A stable React list key; it does not reach the markup as an `id` (for `aria-labelledby` the kit uses the group index). |
+| `group.label`      | The group's label, `ReactNode`.                                                                                        |
+| `group.items`      | The group's items.                                                                                                     |
+| `item.keys`        | Keys in order: `["Ctrl", "K"]`. Each one is its own `Kbd`; a merged "Ctrl+K" is not parsed.                            |
+| `item.description` | What the shortcut does, `ReactNode`.                                                                                   |
 
-Строки по умолчанию — `shortcutsHelp.title`, `shortcutsHelp.list` (имя области
-прокрутки) и `shortcutsHelp.keySeparator` (слово между клавишами для слуха) в
-каталоге сообщений `ru` и `en`.
-Другие тексты — `title`, `label` и `description` — приходят пропами: сочетания
-и их названия кит не знает.
+The default strings are `shortcutsHelp.title`, `shortcutsHelp.list` (the name of
+the scroll area) and `shortcutsHelp.keySeparator` (the word read aloud between
+keys) in the `ru` and `en` message catalogs.
+Other strings — `title`, `label` and `description` — come in as props: the kit does
+not know the shortcuts and their names.
 
-## Поведение и доступность
+## Behavior and accessibility
 
-- Окно — `role="dialog"` с именем из заголовка; ловушка фокуса, Escape, клик
-  мимо и возврат фокуса на открывший элемент — от `Dialog`. После закрытия
-  фокус возвращается на кнопку, открывшую свод; если свод открыт сочетанием
-  клавиш, то на элемент, который был в фокусе.
-- **Группа — именованная группа, а не заголовок.** `role="group"` с
-  `aria-labelledby` на подпись — как у `NotificationList`. Уровень заголовка
-  зависит от места, куда окно встало, и кит его не знает; единственный заголовок
-  в окне — его имя.
-- **Пункт — элемент списка** `ul`/`li`: «описание, затем сочетание». Выбран список,
-  а не `dl`: пары «термин — определение» озвучиваются непоследовательно (часть
-  скринридеров не называет ни числа пар, ни их границы), а список читают
-  везде — «список, 3 элемента».
-- **Между клавишами читается слово «плюс».** Каждая клавиша — `<kbd>`, между ними
-  видимый «+» убран из дерева доступности (`aria-hidden`), а вместо него
-  читается слово из каталога: «Ctrl плюс K». Знак «+» озвучивается по настройкам
-  пользователя (NVDA на умолчательном уровне пунктуации его пропускает), и без
-  слова «плюс» сочетание «Ctrl K» звучало бы как две клавиши подряд. Одиночная клавиша разделителя
-  не получает.
-- У `CommandPalette` сочетание пункта целиком `aria-hidden` — это напоминание рядом
-  с пунктом, который и так выбирается. Здесь сочетание — единственное
-  содержимое окна, и скрыть его значило бы дать скринридеру пустую шпаргалку.
-- **Прокрутка внутри окна.** Список лежит в `ScrollArea` с высотой не больше
-  70% высоты экрана и не больше 32rem: шапка с крестиком остаётся на месте. Область — остановка
-  табуляции с отдельным именем («Shortcuts» / «Сочетания клавиш», ключ
-  `shortcutsHelp.list`), её прокручивают стрелками и `PageDown`.
-- Названия клавиш — текст, который вы передаёте. Слово («Ctrl», «Shift») читается
-  везде; глиф («⌘», «⇧») скринридеры озвучивают по-разному, и если в вашем
-  приложении сочетание обозначено только глифом, подпишите его словом в `description`.
+- The dialog is `role="dialog"` named by its title; the focus trap, Escape, a
+  click outside and focus return to the element that opened it come from
+  `Dialog`. After closing, focus returns to the button that opened the list; if
+  the list was opened by a keyboard shortcut, to the element that was focused.
+- **A group is a named group, not a heading.** `role="group"` with
+  `aria-labelledby` pointing at the label — as in `NotificationList`. The heading
+  level depends on where the dialog ends up, and the kit cannot know it; the
+  only heading in the dialog is its name.
+- **An item is a list item** (`ul`/`li`): "description, then the shortcut". A
+  list was chosen over `dl`: "term — definition" pairs are announced
+  inconsistently (some screen readers name neither the number of pairs nor their
+  boundaries), while a list is read everywhere — "list, 3 items".
+- **The word "plus" is read between the keys.** Each key is a `<kbd>`, and the visible "+"
+  between them is removed from the accessibility tree (`aria-hidden`), with a word
+  from the message catalog read in its place: "Ctrl plus K". The "+" sign is voiced
+  according to the user's settings (NVDA skips it at the default punctuation
+  level), and without the word "plus", "Ctrl K" would sound like two keys in a row. A
+  single key gets no separator.
+- In `CommandPalette` an item's shortcut is entirely `aria-hidden` — it is a shortcut hint
+  next to an item that can be chosen anyway. Here the shortcut is the dialog's
+  only content, and hiding it would hand a screen reader an empty keyboard shortcuts dialog.
+- **Scrolling inside the dialog.** The list sits in a `ScrollArea` no taller than
+  70% of the screen height and no taller than 32rem: the header with the close
+  button stays in place. The area is a Tab stop with a separate name ("Shortcuts" /
+  "Сочетания клавиш", key `shortcutsHelp.list`), and it is scrolled with the arrow
+  keys and `PageDown`.
+- Key names are text that you pass. A word ("Ctrl", "Shift") is read everywhere;
+  screen readers voice a glyph ("⌘", "⇧") differently, and if your app shows a shortcut only as a glyph, label it with a word in
+  `description`.
 
-## Антипаттерны
+## Anti-patterns
 
-- Ждать, что компонент сам откроется по «?» или другому сочетанию: он не
-  слушает клавиатуру.
-- Передавать сочетание одной строкой: `keys: ["Ctrl+K"]`. Это одна `Kbd` с
-  длинным текстом и без слова для слуха.
-- Класть в `description` интерактивные элементы: свод — справка, а не меню.
-- Хранить в ките доменные сочетания и их названия — они принадлежат приложению.
-- Заводить заголовки `h3` внутри групп вручную: у групп уже есть имя.
+- Expecting the component to open itself on "?" or another shortcut: it does not
+  listen to the keyboard.
+- Passing a shortcut as one string: `keys: ["Ctrl+K"]`. That is one `Kbd` with
+  long text and no word to read aloud.
+- Putting interactive elements in `description`: the list is a reference, not a menu.
+- Storing domain shortcuts and their names in the kit — they belong to the app.
+- Adding `h3` headings inside groups by hand: the groups already have a name.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходник: `src/components/overlays/ShortcutsHelp.tsx`; клавиша — `src/components/content/Kbd.tsx`,
-  окно — `src/components/overlays/Dialog.tsx`.
-- Тесты: `tests/shortcuts-help.test.tsx`.
-- Витрина: `src/components/overlays/ShortcutsHelp.stories.tsx` (`Playground`,
-  `OpenWithQuestionMark`, `LongList`, `CustomTitle`). Уровень — периферия
-  (ADR-0014): снимков нет. Открытие, Escape, возврат фокуса и прокрутка
-  проверены вручную на собранной витрине.
+- Source: `src/components/overlays/ShortcutsHelp.tsx`; the key is `src/components/content/Kbd.tsx`,
+  the dialog is `src/components/overlays/Dialog.tsx`.
+- Tests: `tests/shortcuts-help.test.tsx`.
+- Showcase: `src/components/overlays/ShortcutsHelp.stories.tsx` (`Playground`,
+  `OpenWithQuestionMark`, `LongList`, `CustomTitle`). Level: periphery
+  (ADR-0014): no snapshots. Opening, Escape, focus return and scrolling were
+  checked by hand on the built showcase.

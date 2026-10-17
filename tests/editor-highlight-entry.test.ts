@@ -10,23 +10,23 @@ const ROOT = resolve(import.meta.dirname, "..");
 const SRC = join(ROOT, "src");
 
 /**
- * Серверная подсветка сохранённого Документа — вход `@olddevs/ui/editor/highlight`
+ * Server-side highlighting of a saved Document: the `@olddevs/ui/editor/highlight` entry point
  * (OLDSUI-50, ADR-0051).
  *
- * Хелпер получает HTML, уже очищенный санитайзером потребителя, и заменяет
- * содержимое `<pre><code class="language-…">` токенами `span class="hljs-…"`.
- * Сверяется то, что видит читатель страницы: текст кода после подсветки тот
- * же, что до, и ни одна строка кода не становится разметкой.
+ * The helper receives HTML already sanitized by the consumer's sanitizer and replaces
+ * the content of `<pre><code class="language-…">` with `span class="hljs-…"` tokens.
+ * The check compares what the page reader sees: the code text after highlighting is the same
+ * as before, and no line of code turns into markup.
  */
 
-/** Текст HTML так, как его покажет браузер: разметка снята, сущности раскрыты. */
+/** The text of HTML as a browser shows it: markup stripped, entities decoded. */
 function textOf(html: string): string {
   const root = document.createElement("div");
   root.innerHTML = html;
   return root.textContent ?? "";
 }
 
-/** Блок кода в форме Редактора: текст экранирован так же, как его пишет `getHTML()`. */
+/** A code Block in the Editor's form: the text is escaped the same way `getHTML()` writes it. */
 function block(language: string | null, code: string): string {
   const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return `<pre><code${language ? ` class="language-${language}"` : ""}>${escaped}</code></pre>`;
@@ -52,7 +52,7 @@ test.each(Object.entries(SAMPLES))(
     expect(html).toMatch(new RegExp(`^<pre><code class="language-${language}"><span class="hljs-`));
     expect(html).toMatch(/<\/code><\/pre>$/);
     expect(textOf(html)).toBe(code);
-    // Только классы `hljs-*` — ни `style`, ни других атрибутов.
+    // Only `hljs-*` classes: no `style` or other attributes.
     expect(html).not.toMatch(/style=/);
     for (const [, attributes] of html.matchAll(/<span([^>]*)>/g)) {
       expect(attributes).toMatch(/^ class="hljs-[\w-]+( [\w-]+)*"$/);
@@ -109,11 +109,11 @@ test("highlighting twice gives the same result as once", () => {
 });
 
 /*
-  Класс на выходе — канонический `language-<имя>` Схемы, а не то, что было в
-  строке: `language-js` и `language-PY` из рукописного Документа санитайзер по
-  рецепту снял бы (он знает только имена Схемы), а шапка и тема блока читают
-  тот же класс. Хелпер, который подсвечивает по псевдониму, обязан и записать
-  имя, по которому подсвечивал.
+  The class on output is the canonical `language-<name>` from the Schema, not what was in
+  the string: `language-js` and `language-PY` from a hand-written Document would be stripped
+  by the sanitizer recipe (it knows only Schema names), while the block header and theme read
+  the same class. A helper that highlights by alias must also write
+  the name it highlighted by.
 */
 test("an alias or odd case in a hand-written document is highlighted and written canonically", () => {
   expect(highlightCodeBlocks(block("py", "def f(): pass"))).toMatch(
@@ -136,7 +136,7 @@ test("the entry exports only the two helpers", () => {
   expect(Object.keys(highlightEntry).sort()).toEqual(["highlightCodeBlocks", "highlightCodeNodes"]);
 });
 
-/** Подключения модуля: `from "…"` и `import "…"`; типовые импорты не в счёт. */
+/** Module dependencies: `from "…"` and side-effect `import "…"`; regular imports do not count. */
 function specifiers(source: string): string[] {
   const found: string[] = [];
   for (const match of source.matchAll(
@@ -171,10 +171,10 @@ function moduleGraph(entry: string): { files: string[]; packages: string[] } {
 }
 
 /*
-  Вход серверный: его импортирует серверный компонент или Node-скрипт без
-  сборщика. В графе — lowlight, грамматики и `react` (узлы для `CodeView`,
-  OLDSUI-58, ADR-0052; это обязательный peer кита) — ни Tiptap, ни директивы
-  клиента.
+  This entry is for the server: a server component or a Node script imports it without
+  a bundler. The graph has lowlight, the grammars and `react` (nodes for `CodeView`,
+  OLDSUI-58, ADR-0052; it is the kit's required peer) - neither Tiptap nor client
+  directives.
 */
 test("the module graph of the entry holds lowlight and the grammars, and nothing else", () => {
   const { files, packages } = moduleGraph(join(SRC, "editor", "highlight-entry.ts"));
@@ -197,8 +197,8 @@ test("the module graph of the entry holds lowlight and the grammars, and nothing
 });
 
 /*
-  Граница ADR-0039 в силе для основного входа (ADR-0052): подсветку для
-  `CodeView` приносит потребитель — импортом хелпера, — а не сам кит.
+  The ADR-0039 boundary still holds for the main entry (ADR-0052): highlighting for
+  `CodeView` is brought in by the consumer, by importing the helper, not by the kit itself.
 */
 test("the main entry and CodeView keep lowlight out of their graph", () => {
   for (const entry of [join(SRC, "index.ts"), join(SRC, "components", "content", "CodeView.tsx")]) {

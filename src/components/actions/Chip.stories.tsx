@@ -14,14 +14,14 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Один чип с живыми контролами — покрутить пропсы. */
+/** A single chip with live controls. Tweak the props. */
 export const Playground: Story = {
   args: { selected: false, tone: "accent", size: "md" },
 };
 
 /**
- * Матрица тон × состояние. Смысл витрины именно в ней: одиночный экземпляр
- * не покажет, что тон `warning` в светлой теме теряет контраст, а матрица покажет.
+ * Tone × state matrix. This is the point of the showcase: a single instance won't
+ * show that the `warning` tone loses contrast in the light theme. The matrix will.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -65,7 +65,7 @@ export const Matrix: Story = {
   ),
 };
 
-/** Размеры и выключенное состояние. */
+/** Sizes and disabled state. */
 export const SizesAndStates: Story = {
   parameters: { layout: "padded" },
   render: () => (

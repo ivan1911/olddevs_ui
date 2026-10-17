@@ -9,36 +9,31 @@ story: src/components/overlays/Drawer.stories.tsx
 
 # Drawer
 
-## Кратко для AI
+## Summary for AI
 
-`Drawer` — модальная панель, выезжающая справа, слева или снизу. Выбирайте её,
-когда контекст основной страницы должен остаться виден, но задача требует
-пространства больше, чем у поповера. Модальность, portal, ловушка и возврат фокуса уже
-реализованы на Radix.
+`Drawer` is a modal panel that slides in from the right, the left or the bottom.
+Choose it when the context of the main page should stay visible but the task
+needs more room than a popover. Modality, the portal, the focus trap and focus
+return are already implemented on Radix.
 
-## Когда использовать
+## When to use
 
-- Просмотр или редактирование сущности без полного перехода на новую страницу.
-- Панель с прокручиваемым содержимым и закреплённым `footer` действий.
-- Боковая панель на desktop: на узком экране она автоматически становится
-  нижней, чтобы не обрезать содержимое.
+- Viewing or editing an entity without a full navigation to a new page.
+- A panel with scrollable content and a pinned action `footer`.
+- A side panel on desktop: on a narrow screen it automatically becomes a bottom
+  one, so it does not clip the content.
 
-## Когда не использовать
+## When not to use
 
-- Для короткого вопроса — `ConfirmDialog`; для обычной компактной формы — `Dialog`.
-- Для выпадающего списка у кнопки, календаря или небольшого списка — `Popover`.
-- Не используйте как немодальную постоянную навигационную sidebar-панель.
+- Use `ConfirmDialog` for a short question and `Dialog` for an ordinary compact form.
+- Use `Popover` for a dropdown anchored to a button, a calendar or a small list.
+- Do not use it as permanent, non-modal sidebar navigation.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<Drawer
-  open={open}
-  onClose={close}
-  title="Редактирование"
-  footer={<Button onClick={save}>Сохранить</Button>}
->
-  <FormField label="Название">
+<Drawer open={open} onClose={close} title="Edit" footer={<Button onClick={save}>Save</Button>}>
+  <FormField label="Name">
     <TextControl />
   </FormField>
 </Drawer>
@@ -46,43 +41,46 @@ story: src/components/overlays/Drawer.stories.tsx
 
 ## Public API
 
-Требуются `open`, `onClose`, `title`. `subtitle` добавляет пояснение; `side`:
-`right` (умолчание), `left` или `bottom`; `size`: `sm`, `md` (умолчание), `lg`.
-У боковых вариантов размер означает ширину, у нижнего — высоту. `footer` всегда
-остаётся внизу, а `children` прокручиваются отдельно. `closeLabel`, `className`
-и `zIndex` доступны для настройки; один `zIndex` применяется и к подложке, и к
-панели.
+`open`, `onClose` and `title` are required. `subtitle` adds an explanation; `side`
+accepts `right` (the default), `left` or `bottom`; `size` accepts `sm`, `md` (the
+default) or `lg`. For the side variants the size means width; for the bottom one, height. `footer`
+always stays at the bottom, while `children` scroll separately. `closeLabel`,
+`className` and `zIndex` are available for tuning; a single `zIndex` applies to
+both the scrim and the panel.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-Заголовок — имя диалога; `ModalHeader` создаёт кнопку закрытия. Radix удерживает
-фокус в ящике, закрывает его Escape, блокирует фон и возвращает фокус к элементу,
-который открыл ящик. Не добавляйте `useScrollLock`. См.
-[исходник Drawer](../../../src/components/overlays/Drawer.tsx).
+The title is the dialog's name; `ModalHeader` creates the close button. Radix
+keeps focus inside the drawer, closes it on Escape, blocks the background and
+returns focus to the element that opened it. Do not add `useScrollLock`.
+See [the Drawer source](../../../src/components/overlays/Drawer.tsx).
 
-**Escape закрывает верхний оверлей (с 3.5.0).** При открытом внутри ящика меню, выпадающем
-списке или подсказке первый Escape закрывает их, а не ящик; до этого одно нажатие
-закрывало и то, и другое — вместе с несохранённой формой. Разбор —
+**Escape closes the topmost overlay (since 3.5.0).** When a menu, a dropdown list or a
+tooltip is open inside the drawer, the first Escape closes it rather than the
+drawer; before that, one press closed both — along with an unsaved form. The
+analysis is in
 ADR-0041.
 
-**Пункты меню и списка react-aria внутри ящика выбираются мышью.** Модальный слой Radix
-отключает указатель у `<body>`, а панель `Menu` и список `Combobox` лежат в
-портале под ним; кит возвращает такому оверлею указатель правилом в
-`@olddevs/ui/styles.css`. До этого исправления пункт выбирался только с клавиатуры. Ящик от щелчка по пункту не закрывается.
+**Items of a react-aria menu and list inside a drawer can be chosen with the mouse.**
+Radix's modal layer turns off pointer events on `<body>`, while the `Menu` panel
+and the `Combobox` list sit in a portal beneath it; the kit gives pointer events
+back to such an overlay with a rule in `@olddevs/ui/styles.css`. Before this fix
+an item could be chosen only with the keyboard. A click on an item
+does not close the drawer.
 
-## Хорошие примеры
+## Good examples
 
-- `side="right"` для редактирования записи, `footer` с отменой и сохранением.
-- `side="bottom"` для панели, удобной на мобильном экране.
-- `zIndex="z-100"`, когда ящик должен быть выше собственного слоя приложения.
+- `side="right"` for editing a record, with a `footer` holding cancel and save.
+- `side="bottom"` for a panel that works well on a mobile screen.
+- `zIndex="z-100"` when the drawer must sit above the app's own layer.
 
-## Антипаттерны
+## Anti-patterns
 
-- Дублировать footer внутри `children`: он уйдёт при прокрутке.
-- Задавать боковому ящику фиксированную ширину через `className`, не проверив мобильный экран.
-- Использовать ящик без заголовка или с пустым заголовком.
+- Duplicating the footer inside `children`: it scrolls away.
+- Setting a fixed width on a side drawer through `className` without checking the mobile screen.
+- Using a drawer without a title or with an empty one.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/overlays/Drawer.tsx`
 - `src/components/overlays/Drawer.stories.tsx`

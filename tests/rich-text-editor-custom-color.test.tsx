@@ -10,12 +10,12 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 /*
-  Шим `CSS.escape` — тот же, что в `color-picker.test.tsx`: поповер react-aria
-  зовёт его при открытии, а в jsdom объекта `CSS` нет.
+  A `CSS.escape` shim, the same as in `color-picker.test.tsx`: the react-aria popover
+  calls it on open, and jsdom has no `CSS` object.
 */
 if (typeof globalThis.CSS === "undefined")
   (globalThis as unknown as { CSS: { escape: (v: string) => string } }).CSS = {
@@ -25,13 +25,13 @@ if (typeof globalThis.CSS === "undefined")
 afterEach(cleanup);
 
 /**
- * Произвольный цвет через `ColorPicker` кита (OLDSUI-46, дополнение): пункт
- * «Свой цвет…» у каждой сетки поповера «Цвет» (OLDSUI-153) открывает поповер с выбором цвета,
- * применением и предупреждением о контрасте. Проверяется через `RichTextEditor`:
- * как это делает человек, а не через внутренности.
+ * Custom color through the kit's `ColorPicker` (OLDSUI-46, addendum): the
+ * 'Custom color…' item in each grid of the 'Color' popover (OLDSUI-153) opens a popover with a color picker,
+ * applying it and a contrast warning. Checked through `RichTextEditor`:
+ * the way a person does it, not through internals.
  *
- * «Цвет» — в меню выделения (OLDSUI-154): плашка всплывает над непустым
- * выделением, пока у Документа фокус, поэтому выделение ставится с фокусом.
+ * 'Color' is in the Bubble menu (OLDSUI-154): the bubble shows up over a non-empty
+ * selection while the Document has focus, so the selection is set with focus.
  */
 function renderEditor(html = "<p>Hello world</p>", props: Record<string, unknown> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -41,7 +41,7 @@ function renderEditor(html = "<p>Hello world</p>", props: Record<string, unknown
   return editor;
 }
 
-/** Выделить «Hello» с фокусом в Документе — так всплывает меню выделения. */
+/** Select 'Hello' with focus in the Document: this is what opens the Bubble menu. */
 function selectHello(editor: NonNullable<RichTextEditorHandle["editor"]>) {
   act(() => {
     editor.view.focus();
@@ -49,10 +49,10 @@ function selectHello(editor: NonNullable<RichTextEditorHandle["editor"]>) {
   });
 }
 
-/** Меню выделения: в нём кнопка «Цвет» (OLDSUI-154). */
+/** The Bubble menu: it has the 'Color' button (OLDSUI-154). */
 const bubble = () => screen.findByRole("toolbar", { name: "Selection formatting" });
 
-/** Тема в jsdom — это значения, которые `prose.ts` кладёт в `--rte-*` на документе. */
+/** A theme in jsdom is the values that `prose.ts` puts into `--rte-*` on the Document. */
 function theme(editor: NonNullable<RichTextEditorHandle["editor"]>, bg: string, fg: string) {
   editor.view.dom.style.setProperty("--rte-background", bg);
   editor.view.dom.style.setProperty("--rte-foreground", fg);
@@ -61,14 +61,14 @@ function theme(editor: NonNullable<RichTextEditorHandle["editor"]>, bg: string, 
 type Kind = "text" | "highlight";
 const SECTION: Record<Kind, string> = { text: "Text color", highlight: "Highlight color" };
 
-/** Поповер «Цвет» (OLDSUI-153) меню выделения › сетка нужного вида. */
+/** The 'Color' popover (OLDSUI-153) of the Bubble menu › the grid of the required kind. */
 async function openColorGrid(user: ReturnType<typeof userEvent.setup>, kind: Kind) {
   await user.click(within(await bubble()).getByRole("button", { name: /^Color:/ }));
   const menu = await screen.findByRole("menu", { name: "Color" });
   return within(menu).getByRole("group", { name: SECTION[kind] });
 }
 
-/** «Цвет» › «Свой цвет…» нужной сетки → поповер выбора. */
+/** 'Color' › 'Custom color…' of the required grid → the color picker popover. */
 async function openCustom(kind: Kind, popoverName: string) {
   const user = userEvent.setup();
   const grid = await openColorGrid(user, kind);
@@ -77,7 +77,7 @@ async function openCustom(kind: Kind, popoverName: string) {
   return { user, popover };
 }
 
-/** Цвет автора отмечен: «Свой цвет…» нужной сетки — `aria-checked`. */
+/** The author's color is checked: 'Custom color…' of the required grid has `aria-checked`. */
 async function expectCustomChecked(user: ReturnType<typeof userEvent.setup>, kind: Kind) {
   const grid = await openColorGrid(user, kind);
   expect(
@@ -86,7 +86,7 @@ async function expectCustomChecked(user: ReturnType<typeof userEvent.setup>, kin
   await user.keyboard("{Escape}");
 }
 
-/** Раскрывает выбор цвета и вводит значение в поле HEX, как это делает человек. */
+/** Opens the color picker and types the value into the HEX field, the way a person does it. */
 async function typeHex(user: ReturnType<typeof userEvent.setup>, hex: string) {
   await user.click(screen.getByRole("button", { name: /^Color #/ }));
   const field = await screen.findByRole("textbox", { name: "HEX" });
@@ -100,13 +100,13 @@ test("both colour grids carry Custom color…", async () => {
   const user = userEvent.setup();
   renderEditor();
 
-  // Палитры разной длины: шесть тонов и девять маркеров; снятие — значком (OLDSUI-160).
+  // Palettes of different lengths: six tones and nine markers; removing is an icon (OLDSUI-160).
   for (const [kind, length] of [
     ["text", 6],
     ["highlight", 9],
   ] as const) {
     const grid = await openColorGrid(user, kind);
-    // Кружки и «Свой цвет…» — варианты одного выбора.
+    // The swatches and 'Custom color…' are options of one choice.
     expect(within(grid).getAllByRole("menuitemradio"), kind).toHaveLength(length + 1);
     expect(within(grid).getByRole("menuitemradio", { name: "Custom color…" })).toBeDefined();
     await user.keyboard("{Escape}");
@@ -123,7 +123,7 @@ test("a custom text colour is applied from the popover as style on a span", asyn
 
   expect(editor.getHTML()).toBe('<p><span style="color:#00aa55">Hello</span> world</p>');
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-  // Цвет автора отмечен у «Свой цвет…» сетки текста.
+  // The author's color is checked on 'Custom color…' of the text grid.
   await expectCustomChecked(user, "text");
 });
 
@@ -136,7 +136,7 @@ test("a custom highlight is applied from the popover as style on a mark", async 
 
   expect(editor.getHTML()).toBe('<p><mark style="background-color:#ffe066">Hello</mark> world</p>');
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-  // Имя кнопки «Маркер» Панели называет цвет автора: образец глазу, имя слуху.
+  // The name of the Toolbar's 'Highlight' button states the author's color: the sample is for the eye, the name is for the ear.
   expect(
     within(screen.getByRole("toolbar", { name: "Formatting" })).getByRole("button", {
       name: "Highlight: Custom #ffe066",
@@ -170,7 +170,7 @@ test("palette and custom are exclusive from the grid too, and the checked item f
   expect(
     within(grid).getByRole("menuitemradio", { name: "Custom color…" }).getAttribute("aria-checked")
   ).toBe("true");
-  // Цвет автора не совпадает ни с одним кружком: отмечен только «Свой цвет…».
+  // The author's color matches none of the swatches: only 'Custom color…' is checked.
   expect(
     within(grid)
       .getAllByRole("menuitemradio")
@@ -198,9 +198,9 @@ test("the popover opens on the current custom colour", async () => {
 });
 
 /*
-  Контраст — предупреждение, а не запрет: человек видит цену выбора и решает
-  сам. Меряется по ТЕКУЩЕЙ теме: фон и основной текст Редактора берутся из
-  `--rte-background` и `--rte-foreground` документа.
+  Contrast is a warning, not a block: the person sees the cost of the choice and decides
+  for themselves. It is measured against the CURRENT theme: the Editor's background and main text come from
+  the Document's `--rte-background` and `--rte-foreground`.
 */
 
 test("a text colour that fails 4.5:1 against the editor background warns, and still applies", async () => {
@@ -233,20 +233,20 @@ test("the warning follows the current theme: the same colour is fine on dark and
 
   await typeHex(user, "#ffff00");
   expect(within(popover).getByRole("status").textContent).toBe("");
-  // Нужная пара считается так же, как её считает WCAG, а не литералом из теста.
+  // The needed pair is computed the way WCAG computes it, not as a literal from the test.
   expect(contrastRatio("#ffff00", "#1a1a1a")).toBeGreaterThan(4.5);
   expect(contrastRatio("#ffff00", "#ffffff")).toBeLessThan(1.1);
 });
 
 test("a highlight is judged by the dark marker text on it, not by the theme's body text", async () => {
   const editor = renderEditor();
-  // Светлый текст темы на тёмной подложке читался бы хорошо, но на маркере он
-  // не стоит: текст на любом маркере тёмный (`--marker-text`).
+  // The theme's light text would read well on a dark background, but on a marker it
+  // is not used: the text on any marker is dark (`--marker-text`).
   theme(editor, "#1a1a1a", "#f5f5f5");
   editor.view.dom.style.setProperty("--marker-text", "#1a1a1a");
   const { user, popover } = await openCustom("highlight", "Custom highlight color");
 
-  // Тёмный маркер: тёмный текст на нём не читается, как бы ни был светел текст темы.
+  // Dark marker: dark text does not read on it, however light the theme's text is.
   await typeHex(user, "#202020");
   expect(within(popover).getByRole("status").textContent).toMatch(
     /Low contrast: dark text on this highlight is 1\.\d:1 \(4\.5:1 needed\)/
@@ -282,11 +282,11 @@ test("contrast helper: black on white is 21:1, same colours are 1:1, junk is NaN
 });
 
 /*
-  Escape в поповере принадлежит поповеру, а не слою под ним (ADR-0041): и
-  `Popover`, и выбор цвета внутри него — Radix, и каждый Escape закрывает
-  ровно один слой. Слой здесь — `ModalOverlay`, как и прежде, когда пункт
-  «Свой цвет…» лежал в меню react-aria. С настоящим `Dialog` сочетание
-  проверяет браузер: `tests-visual/interactions.spec.ts`.
+  Escape inside a popover belongs to the popover, not to the layer under it (ADR-0041): both
+  `Popover` and the color picker inside it are Radix, and each Escape closes
+  exactly one layer. The layer here is `ModalOverlay`, as before, when the item
+  'Custom color…' lived in a react-aria menu. With a real `Dialog`, the combination is
+  checked by the browser: `tests-visual/interactions.spec.ts`.
 */
 test("Escape closes the picker, then the popover, and only then the layer under it", async () => {
   const user = userEvent.setup();
@@ -317,7 +317,7 @@ test("Escape closes the picker, then the popover, and only then the layer under 
   );
   expect(onClose).not.toHaveBeenCalled();
 
-  // Контроль: без поповера тот же Escape закрывает слой.
+  // Control: without a popover, the same Escape closes the layer.
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
@@ -350,7 +350,7 @@ test("the popover speaks the provider's language", async () => {
 test("the colour tools off: no Color button, no Custom color entry", async () => {
   const user = userEvent.setup();
   renderEditor("<p>Hello</p>", { preset: "basic" });
-  // Ни на Панели, ни в меню выделения над «Hello» (OLDSUI-154).
+  // Neither on the Toolbar nor in the Bubble menu over 'Hello' (OLDSUI-154).
   await bubble();
   expect(screen.queryByRole("button", { name: /color/i })).toBeNull();
   await user.click(

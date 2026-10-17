@@ -6,10 +6,9 @@ import { Link } from "../src/components/content/Link.js";
 afterEach(cleanup);
 
 /*
- * Русская локаль подключается ЯВНО: с 2.0.0 фолбэк кита английский, и тест,
- * ожидающий русскую подпись без провайдера, проверял бы не поведение, а язык
- * дефолта. Ожидания при этом не тронуты — строки те же, что были зашиты в
- * компонентах до переезда в каталог, и это здесь и доказывается.
+ * No locale is connected here: since 2.0.0 the kit's fallback is English, so without a
+ * provider the tests read the catalog's English label (`opensInNewTab` in
+ * `src/i18n/defaults.ts`).
  */
 test("an external link without a new tab gets no rel", () => {
   render(
@@ -19,9 +18,9 @@ test("an external link without a new tab gets no rel", () => {
   );
 
   const link = screen.getByRole("link", { name: /documentation/ });
-  // `noopener` защищает от доступа открытой вкладки к `window.opener`. Вкладка
-  // здесь не открывается, и оберег от несуществующей дыры только приучает
-  // не вчитываться в `rel`.
+  // `noopener` protects against the opened tab's access to `window.opener`. No tab is
+  // opened here, and a safeguard against a hole that does not exist only teaches one not
+  // to read `rel` closely.
   expect(link.hasAttribute("rel")).toBe(false);
 });
 
@@ -32,7 +31,7 @@ test("a new tab gets rel even without the external flag", () => {
     </Link>
   );
 
-  // Дыру открывает тег, а не проп: `rel` выводится из `target`.
+  // The tag opens the hole, not the prop: `rel` is derived from `target`.
   expect(screen.getByRole("link", { name: /report/ })).toHaveProperty("rel", "noopener noreferrer");
 });
 
@@ -53,8 +52,8 @@ test("a new tab is announced aloud", () => {
     </Link>
   );
 
-  // Значок внешней ссылки скрыт от скринридера — он рисует стрелку, а не
-  // сообщает факт. Факт сообщает подпись.
+  // The external-link icon is hidden from the screen reader: it draws an arrow and does
+  // not state a fact. The label states the fact.
   expect(screen.getByRole("link", { name: /opens in a new tab/ })).toBeTruthy();
 });
 
@@ -79,20 +78,19 @@ test("as substitutes the routing component", () => {
 test("an inline link does not become an atomic flex box", () => {
   const { container } = render(<Link href="#">a long label inside a paragraph</Link>);
 
-  // `inline-flex` не разрывается между строками: ссылка в несколько слов
-  // уезжала бы целиком на следующую строку или вылезала за край — то есть
-  // вариант `inline` не работал бы ровно там, ради чего заведён.
+  // `inline-flex` does not break between lines: a link of several words would move
+  // whole to the next line or overflow the edge. That is, the `inline` variant would not
+  // work exactly where it exists for.
   expect(container.firstElementChild!.className).not.toContain("inline-flex");
 });
 
 /**
- * Исполняемые схемы не доходят до разметки.
+ * Executable schemes do not reach the markup.
  *
- * Компонент уже взял на себя безопасность ссылки — выводит `rel` из `target`, —
- * а схему не смотрел: `href` уходил на `<a>` как есть. Поле «сайт» в профиле,
- * нарисованное как `<Link href={profile.website}>`, со значением
- * `javascript:…` давало работающую ссылку, исполняющую код в origin приложения
- * с сессионной кукой.
+ * The component already took on the link's safety (it derives `rel` from `target`), but
+ * it did not look at the scheme: `href` went to `<a>` as is. A "website" field in a
+ * profile, rendered as `<Link href={profile.website}>`, with the value `javascript:…`
+ * gave a working link that runs code in the application's origin with the session cookie.
  */
 test.each([
   "javascript:fetch('/api/keys')",
@@ -117,24 +115,24 @@ test.each([
   "mailto:hi@example.com",
   "tel:+79161234567",
   "slack://channel?id=1",
-  // Картинка и CSV кодом не являются: блокировать их значит молча ломать
-  // законную ссылку на скачивание.
+  // An image and a CSV are not code: blocking them would silently break a legitimate
+  // download link.
   "data:image/png;base64,iVBORw0KGgo=",
   "data:text/csv,a,b,c",
 ])("an ordinary href %o passes through untouched", (href) => {
   render(<Link href={href}>Site</Link>);
 
-  // Чёрный список, а не белый: собственные схемы приложений проходят.
+  // A blocklist, not an allowlist: the application's own schemes pass through.
   expect(screen.getByText("Site").getAttribute("href")).toBe(href);
 });
 
 /**
- * Объектный `href` не роняет рендер.
+ * An object `href` does not break rendering.
  *
- * `LinkProps` полиморфны по `as`, и докстрока пропа прямо обещает, что с
- * `next/link` компилятор примет `{ pathname, query }`. Проверка схемы,
- * добавленная без сужения типа, звала на нём `.replace` — `TypeError` на том
- * самом способе вызова, ради которого полиморфность и заведена.
+ * `LinkProps` is polymorphic over `as`, and the prop's docstring explicitly promises that
+ * with `next/link` the compiler accepts `{ pathname, query }`. A scheme check added without
+ * narrowing the type called `.replace` on it: a `TypeError` on the very call style that the
+ * polymorphism exists for.
  */
 test("an object href goes through untouched", () => {
   function FakeNextLink({ href, children, ...rest }: { href: unknown; children?: unknown }) {

@@ -6,16 +6,16 @@ import { DatePicker } from "../src/components/date-time/DatePicker.js";
 afterEach(cleanup);
 
 /**
- * Значение поля живёт в адресе — так его и описывает докстрока компонента, — а
- * адрес правят руками. `parseDate` бросает и на мусоре, и на несуществующей
- * дате: `parseDate("2026-02-29")` — это `RangeError`, потому что 2026 год не
- * високосный.
+ * The field's value lives in the URL, as the component's docstring also says, and
+ * people edit the URL by hand. `parseDate` throws both on garbage and on a date
+ * that does not exist: `parseDate("2026-02-29")` throws a `RangeError`, because
+ * 2026 is not a leap year.
  *
- * До волны 26 разбор стоял выражением в JSX-потомке, то есть выполнялся на
- * КАЖДОМ рендере независимо от того, открыт ли поповер, и одна кривая ссылка
- * роняла всё поддерево. Соседний `DateRangePicker` от этого защищён и в
- * комментарии утверждал, что `DatePicker` на том же вводе показывает
- * плейсхолдер, — утверждение было неверным.
+ * Before wave 26 the parsing was an expression in a JSX child, so it ran on
+ * EVERY render, whether or not the popover was open, and one malformed link
+ * took down the whole subtree. The neighbouring `DateRangePicker` is protected
+ * from this, and its comment claimed that `DatePicker` shows a placeholder on
+ * the same input. That claim was wrong.
  */
 test.each(["2026-02-29", "2026-13-45", "not-a-date", "2026-09", ""])(
   "a hand-edited value %o shows the placeholder instead of bringing the tree down",
@@ -35,12 +35,12 @@ test("a valid value is still shown", () => {
 });
 
 /**
- * Годы меньше сотни.
+ * Years below one hundred.
  *
- * `parseDate` их принимает — `0026-03-05` законная ISO-строка, а из адреса
- * приходит и не такое. Сборка же шла через `new Date(y, m, d)`, где годы 0–99
- * отображаются в 1900+y по легаси-правилу: строгий разбор пропускал значение, а
- * показ всё равно врал.
+ * `parseDate` accepts them: `0026-03-05` is a valid ISO string, and the URL can
+ * carry worse. Assembly, however, went through `new Date(y, m, d)`, where years
+ * 0–99 are mapped to 1900+y by the legacy rule: strict parsing let the value
+ * through, and the display still lied.
  */
 test.each([
   ["0026-03-05", "1926"],

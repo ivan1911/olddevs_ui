@@ -9,17 +9,16 @@ import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { testLazyTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 /**
- * Скелет и безопасность (OLDSUI-110, исправление): до Готовности Скелет
- * показывает Документ, очищенный Схемой кита, и только в браузере — после
- * монтирования. Строка `value` разбирается в инертном документе по Схеме
- * встроенных Инструментов набора, так что обработчики, скрипты и чужие схемы
- * адресов в страницу не попадают и не исполняются. На сервере и до гидратации
- * Скелет — рамка поля и место Панели, без Документа. Через публичный
- * `RichTextEditor`; загрузчик своего Инструмента держит Скелет на экране.
+ * Skeleton and safety (OLDSUI-110, fix): until Readiness, the Skeleton shows the Document
+ * cleaned by the kit's Schema, and only in the browser, after mounting. The `value` string is
+ * parsed in an inert document against the Schema of the kit's built-in Tools in the set, so
+ * handlers, scripts and foreign URL schemes never reach the page or run. On the server and before
+ * hydration the Skeleton is the field frame and the place of the Toolbar, without the Document.
+ * Through the public `RichTextEditor`; a custom Tool's loader keeps the Skeleton on screen.
  */
 
 declare global {
@@ -45,7 +44,7 @@ afterEach(() => {
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 10))));
 
-/** Документ Скелета: статичный блок поля без ввода, где стоит этот текст. */
+/** The Skeleton's Document: a static block of the field with no input, where this text is shown. */
 function skeletonOf(text: string): HTMLElement {
   const node = screen.getByText(text);
   const skeleton = node.closest<HTMLElement>("[class*='min-h-24']");
@@ -73,11 +72,11 @@ test("the Skeleton does not carry handlers, scripts and javascript: links from v
   );
   await settle();
 
-  // Движка ещё нет: на экране Скелет.
+  // The engine does not exist yet: the Skeleton is on screen.
   expect(screen.queryByRole("textbox")).toBeNull();
   const skeleton = skeletonOf("Click me");
 
-  // Ни обработчиков, ни скриптов, ни `javascript:` — нигде в поле.
+  // No handlers, no scripts, and no `javascript:` anywhere in the field.
   expect(container.querySelector("script")).toBeNull();
   for (const element of container.querySelectorAll("*")) {
     for (const attribute of element.getAttributeNames()) {
@@ -87,7 +86,7 @@ test("the Skeleton does not carry handlers, scripts and javascript: links from v
   expect(container.innerHTML).not.toMatch(/javascript:/i);
   expect(container.innerHTML).not.toContain("skeletonSpy");
 
-  // Ссылки остались текстом без адреса, картинка с допустимым адресом — без обработчика.
+  // Links stayed as text without an address, and the image with an allowed address has no handler.
   expect(within(skeleton).getByText("Bad link").closest("a")?.hasAttribute("href") ?? false).toBe(
     false
   );
@@ -125,13 +124,13 @@ test("the Skeleton keeps the markup of the Schema: headings, lists, links with a
   expect(within(skeleton).getByRole("link", { name: "a site" }).getAttribute("href")).toBe(
     "https://example.com/"
   );
-  // Блок ещё не загруженного Инструмента — текстом: его обёртку Схема сняла.
+  // A Block of a Tool that is not loaded yet is text: the Schema removed its wrapper.
   expect(within(skeleton).getByText("Lazy text").closest("[data-block]")).toBeNull();
 
   lazy.resolve();
   await settle();
 
-  // Движок пришёл со своими Extensions: Блок снова Блок, Скелета нет.
+  // The engine arrived with its own Extensions: the Block is a Block again, and there is no Skeleton.
   const document = screen.getByRole("textbox", { name: "Body" });
   expect(within(document).getByText("Lazy text").closest("[data-block=test_lazy]")).not.toBeNull();
   expect(screen.getAllByText("Lazy text")).toHaveLength(1);
@@ -171,7 +170,7 @@ test("the server renders the frame without the Document; after hydration the Ske
   await act(async () => void hydrateRoot(container, ui, { onRecoverableError }));
   await settle();
 
-  // Гидратация без расхождений; Документ в Скелете — уже очищенный.
+  // Hydration with no mismatches; the Document in the Skeleton is already cleaned.
   expect(onRecoverableError).not.toHaveBeenCalled();
   expect(error).not.toHaveBeenCalled();
   expect(container.querySelector("[contenteditable]")).toBeNull();

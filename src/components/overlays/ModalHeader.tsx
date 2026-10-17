@@ -6,76 +6,71 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { CloseIcon } from "../../icons.js";
 import { Button } from "../actions/Button.js";
 
-/** Всё, что нужно от компонента заголовка: принять `id`, класс и содержимое. */
+/** Everything the title component needs: accept an `id`, a class and content. */
 type TitleProps = { id?: string; className?: string; children?: ReactNode };
 
 export interface ModalHeaderProps {
   /**
-   * Заголовок окна: одна строка слева в шапке.
+   * Title of the dialog: one line on the left of the header.
    *
-   * `ReactNode`, а не строка: во фронте рядом с текстом
-   * регулярно стоит счётчик выбранного — «В коллекцию (12)», где скобка
-   * набрана другим кеглем и цветом.
+   * `ReactNode`, not a string: on the front end a counter of the selection often sits next to
+   * the text — "Add to collection (12)", where the parenthesized count is set in a different
+   * size and color.
    */
   title: ReactNode;
   /**
-   * `id` заголовка, чтобы сослаться на него из `aria-labelledby`.
+   * The `id` of the title, so that `aria-labelledby` can point at it.
    *
-   * Нужен вызывающему, чтобы сослаться на него из
-   * `aria-labelledby` своего диалога: имя окна знает только он, и назначить
-   * его здесь мы не можем.
+   * The caller needs it to point `aria-labelledby` of its own dialog at it: only the caller
+   * knows the dialog's name, and we cannot assign it here.
    */
   titleId?: string;
   /**
-   * Строка под заголовком: слаг, дата, счётчик.
+   * A line under the title: a slug, a date, a counter.
    *
-   * Отдельным пропом, а не внутри
-   * `title`, потому что `<h2>` принимает только фразовое содержимое — блочная
-   * разметка внутри заголовка невалидна, а подпись почти всегда блочная.
+   * It is a separate prop, not part of `title`, because `<h2>` accepts only phrasing content —
+   * block markup inside a heading is invalid, and a subtitle is almost always block markup.
    */
   subtitle?: ReactNode;
-  /** Иконка слева от заголовка. Цвет задаёт потребитель — он же знает тон окна. */
+  /** Icon on the left of the title. The consumer sets its color, since it knows the dialog's tone. */
   icon?: ReactNode;
   /**
-   * Обработчик закрытия. Кнопка рисуется, только если он передан.
+   * Close handler. The button is rendered only when it is passed.
    *
-   * Отдельного пропа «скрыть кнопку закрытия» нет намеренно: во фронте кнопка
-   * пропадает на время отправки формы, и это выражается тем же самым —
-   * `onClose={loading ? undefined : закрыть}`. Ещё один булев проп описывал бы
-   * ровно то же состояние вторым способом.
+   * There is deliberately no separate "hide the close button" prop: on a screen the button
+   * disappears while a form is being submitted, and this is expressed by the same thing —
+   * `onClose={loading ? undefined : close}`. One more boolean prop would describe exactly the
+   * same state in a second way.
    */
   onClose?: () => void;
-  /** Доступное имя кнопки закрытия. */
+  /** Accessible name of the close button. */
   closeLabel?: string;
   /**
-   * Чем рендерить заголовок. По умолчанию `<h2>`.
+   * The element that renders the title. Defaults to `<h2>`.
    *
-   * Нужно ровно одному потребителю — `Dialog`, который передаёт сюда
-   * `Dialog.Title` из Radix. Тот не просто рисует заголовок: он регистрирует
-   * его в контексте диалога, и `aria-labelledby` проставляется сам. Без этого
-   * пришлось бы либо дублировать разметку шапки внутри `Dialog` (а она вынесена
-   * сюда именно потому, что повторялась десять раз), либо оставить в консоли
-   * предупреждение Radix о диалоге без заголовка.
+   * Exactly one consumer needs this: `Dialog`, which passes Radix's `Dialog.Title` here. It does
+   * more than draw a title: it registers the title in the dialog's context, and `aria-labelledby`
+   * is set automatically. Without it, one would either have to duplicate the header markup inside
+   * `Dialog` (it was moved here precisely because it was repeated ten times), or leave Radix's
+   * warning in the console about a dialog without a title.
    */
   titleComponent?: ComponentType<TitleProps> | "h2";
-  /** Классы на корень шапки. */
+  /** Classes for the header root. */
   className?: string;
 }
 
 /**
- * Шапка модального окна: заголовок слева, кнопка закрытия справа, линия снизу.
+ * Header of a modal dialog: the title on the left, the close button on the right, a line underneath.
  *
- * Перенесена в кит потому, что повторялась ДЕСЯТЬ раз байт-в-байт — включая
- * набор классов `border-line-soft flex items-center justify-between border-b
- * px-5 py-4` и `m-0 text-base font-bold` на заголовке. Ровно тот случай, когда
- * копия расходится молча: достаточно поправить отступ в одном диалоге, и он
- * начинает отличаться от девяти остальных, а заметит это только глаз.
+ * Moved into the kit because it was repeated TEN times, byte for byte — including the class set
+ * `border-line-soft flex items-center justify-between border-b px-5 py-4` and `m-0 text-base font-bold`
+ * on the title. That is exactly the case where a copy drifts apart silently: fix the padding in one
+ * dialog and it starts to differ from the other nine, and only the eye would notice.
  *
- * Изначально в план был записан другой компонент — проп `closable` у
- * `ModalOverlay`, рисующий крестик в углу подложки. От него отказались, увидев
- * код: НИ ОДИН из пятнадцати крестиков во фронте не стоит в углу, все они
- * лежат в строке шапки рядом с заголовком. Тот проп не убрал бы ни одного
- * повтора и добавил бы неиспользуемый API.
+ * Originally the plan named a different component — a `closable` prop on `ModalOverlay` that draws
+ * a cross in the corner of the scrim. It was dropped after reading the code: NONE of the fifteen
+ * crosses on the front end sits in a corner, all of them are in the header row next to the title.
+ * That prop would not have removed a single repeat and would have added an unused API.
  */
 export function ModalHeader({
   title,
@@ -100,10 +95,10 @@ export function ModalHeader({
         {icon}
         <div className="min-w-0">
           {/*
-            `id` передаётся, ТОЛЬКО если он задан. Явный `id={undefined}`
-            затирает собственный идентификатор `Dialog.Title` из Radix, и
-            `aria-labelledby` окна начинает указывать в пустоту — то есть
-            диалог остаётся без доступного имени, ровно как до этого примитива.
+            `id` is passed ONLY when it is set. An explicit `id={undefined}` overwrites the
+            `Dialog.Title` identifier from Radix, and the dialog's `aria-labelledby` starts pointing
+            at nothing — that is, the dialog is left without an accessible name, exactly as it was
+            before this primitive existed.
           */}
           <Title {...(titleId ? { id: titleId } : {})} className="m-0 truncate text-base font-bold">
             {title}

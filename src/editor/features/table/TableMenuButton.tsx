@@ -61,70 +61,71 @@ import { GLASS_MENU_CLASS } from "../../styles/glass.js";
 
 export interface TableMenuButtonProps {
   editor: Editor;
-  /** Поле выключено: кнопка видна, но не нажимается. */
+  /** The field is disabled: the button is visible but cannot be pressed. */
   disabled: boolean;
-  /** `aria-disabled`: в обходе стрелками, но меню не открывает (HTML-режим). */
+  /** `aria-disabled`: reachable with the arrow keys, but the menu does not open (HTML mode). */
   unavailable?: boolean;
   /**
-   * Пункт «Вставить таблицу…»: окно с числовыми полями держит `RichTextEditor`,
-   * а не Панель — плавающая Панель прячется, когда фокус уходит в окно. Нет —
-   * пункта нет.
+   * The "Insert table…" item. The dialog with numeric fields is held by `RichTextEditor`,
+   * not by the Toolbar: the floating Toolbar hides when focus moves into the dialog. Without
+   * this prop, there is no item.
    */
   onInsertDialog?: () => void;
-  /** Подпись сочетания — от Панели: она знает, Apple ли это. */
+  /** The shortcut label comes from the Toolbar: it knows whether the platform is Apple. */
   shortcut: (keys: readonly string[]) => string;
 }
 
 /**
- * `Alt+↓` (`⌥↓`) — строка ниже (`addRowBelow` в `tables.ts`). Модификатор
- * Панель переводит сама (`alt` → `Alt` или `⌥`), клавиша идёт как есть.
+ * `Alt+↓` (`⌥↓`) — the row below (`addRowBelow` in `tables.ts`). The Toolbar translates
+ * the modifier itself (`alt` → `Alt` or `⌥`); the key is passed as is.
  *
- * `aria-keyshortcuts` у пункта НЕТ: `MenuItem` кита (react-aria) пропускает на
- * DOM только известные ему атрибуты и этот отбрасывает. Сочетание видно в
- * подписи пункта (`kbd`) и названо в справочнике Редактора.
+ * The item has NO `aria-keyshortcuts`: the kit's `MenuItem` (react-aria) passes only the
+ * DOM attributes it knows, and this one is dropped. The shortcut is visible in the item's
+ * label (`kbd`) and is named in the Editor's reference.
  */
 const ROW_BELOW_KEYS = ["alt", "↓"] as const;
 
-/** Ключи пунктов первого уровня, которые сами ничего не делают. */
+/** Keys of the top-level items that do nothing by themselves. */
 const GRID_KEY = "insertGrid";
 const DIALOG_KEY = "insertDialog";
 
 /*
-  Меню react-aria по умолчанию выбрасывает недоступный пункт из обхода
-  стрелками. APG советует обратное — пункт остаётся, но `aria-disabled`: иначе
-  стрелка перепрыгивает его молча, и непонятно, куда он делся. Состояние выбора
-  react-stately умеет это (`disabledBehavior: "selection"`), а тип `Menu`
-  проп не объявляет — отсюда приведение.
+  By default, a react-aria menu drops a disabled item from arrow-key navigation. The
+  APG advises the opposite: the item stays, marked `aria-disabled`. Otherwise the arrow
+  skips it silently, and it is unclear where it went. The react-stately selection state
+  can do this (`disabledBehavior: "selection"`), but the `Menu` type does not declare the
+  prop, hence the cast.
 */
 const KEEP_DISABLED_IN_NAVIGATION = { disabledBehavior: "selection" } as object;
 
 /*
-  RAC ставит триггеру меню `aria-haspopup="true"`. По ARIA 1.2 это то же, что
-  `menu`, но владелец попросил явное значение — оно и читается однозначнее.
+  RAC sets `aria-haspopup="true"` on the menu trigger. In ARIA 1.2 that means the same as
+  `menu`, but the owner asked for an explicit value, which reads more clearly.
 */
 const HAS_POPUP_MENU = { "aria-haspopup": "menu" } as object;
 
 /**
- * Меню «Таблица» на Панели — одна кнопка на вставку и на действия, как у TinyMCE.
+ * The "Table" menu on the Toolbar: one button for inserting and for the actions, as in
+ * TinyMCE.
  *
- * ПОЧЕМУ ОДНА КНОПКА. Прежде их было две: «Таблица» (вставка 3×3) и «Действия
- * с таблицей», которая появлялась только в таблице. Кнопка, возникающая и
- * исчезающая вместе с кареткой, сдвигала остальные и меняла число остановок в
- * обходе Панели; размер таблицы при этом выбрать было негде. Теперь кнопка
- * есть всегда, а пункты, которым вне таблицы нечего делать, недоступны
- * (`aria-disabled`) и остаются в обходе стрелками.
+ * WHY ONE BUTTON. There used to be two: "Table" (insert 3×3) and "Table actions", which
+ * appeared only inside a table. A button that appears and disappears with the caret shifted
+ * the others and changed the number of stops in the Toolbar's arrow-key navigation, and
+ * there was nowhere to pick a table size. Now the button is always there, and the items
+ * with nothing to do outside a table are disabled (`aria-disabled`) and stay in the
+ * arrow-key navigation.
  *
- * ПОЧЕМУ МЕНЮ НА ПАНЕЛИ, А НЕ ПЛАВАЮЩАЯ ПАНЕЛЬ У ТАБЛИЦЫ. Для клавиатуры у неё
- * есть вход: `Alt+F10` переводит фокус в Панель, это одна из её кнопок —
- * `Enter` или стрелка вниз открывают список, `→` — подменю, `←` и `Escape`
- * закрывают его. Курсор при уходе в Панель остаётся в ячейке, так что «строка
- * выше» относится к той строке, из которой пришли.
+ * WHY A MENU ON THE TOOLBAR AND NOT A FLOATING TOOLBAR NEAR THE TABLE. For the keyboard,
+ * the Toolbar has an entry point: `Alt+F10` moves focus to the Toolbar, where this menu is
+ * one of the buttons. `Enter` or Down Arrow opens the list, `→` opens the submenu, and `←`
+ * or `Escape` closes it. The caret stays in the cell when focus moves to the Toolbar, so
+ * "the row above" refers to the row the user came from.
  *
- * СЕТКА РАЗМЕРА — ВТОРОЙ РЕБЁНОК `SubmenuTrigger`: голый поповер react-aria
- * вместо `Menu` (`GridSubmenu`). Внутри — не пункты, а `TableSizeGrid`.
+ * THE SIZE GRID IS THE SECOND CHILD OF `SubmenuTrigger`: a bare react-aria popover instead
+ * of `Menu` (`GridSubmenu`). Inside it are not items but `TableSizeGrid`.
  *
- * Меню управляемое (`isOpen`): выбор в сетке — не пункт меню, и закрыть меню
- * после него react-aria сам не знает.
+ * The menu is controlled (`isOpen`): a pick in the grid is not a menu item, and react-aria
+ * does not know on its own to close the menu after it.
  */
 export function TableMenuButton({
   editor,
@@ -147,11 +148,11 @@ export function TableMenuButton({
     const action = String(key);
     if (action === DIALOG_KEY) {
       /*
-        Фокус — в документ ДО окна: окно запоминает, кто был в фокусе при
-        открытии, и при закрытии возвращает его туда — на каретку. Таймером,
-        а не сразу: react-aria после `onAction` возвращает фокус нажатому
-        пункту, и окно запомнило бы его — а к закрытию окна пункта уже нет.
-        `view.focus()`, а не `commands.focus()`: тот ждёт ещё кадр.
+        Focus goes into the Document BEFORE the dialog. The dialog remembers who had focus
+        when it opened, and on close returns focus there, to the caret. Use a timer, not an
+        immediate call: after `onAction`, react-aria returns focus to the pressed item, and
+        the dialog would remember that item, but the item is gone by the time the dialog
+        closes. `view.focus()`, not `commands.focus()`: the latter waits one more frame.
       */
       setTimeout(() => {
         if (editor.isDestroyed) return;
@@ -165,12 +166,13 @@ export function TableMenuButton({
   };
 
   /*
-    Фокус после выбора в сетке — в документ, но только когда подменю уже снято.
-    Поповер сетки — диалог react-aria и держит фокус в себе: документ, взявший
-    фокус раньше, тут же его отдаёт обратно сетке, а снятый поповер возвращает
-    фокус кнопке «Таблица». Поэтому выбор только поднимает флаг, а фокус ставит
-    `GridHost`, размонтируясь (`onClosed`): сетки в DOM уже нет, фокус ушёл в
-    body, и react-aria, увидев его в документе, ничего не возвращает.
+    Focus after a pick in the grid goes to the Document, but only once the submenu has
+    been removed. The grid's popover is a react-aria dialog and keeps focus inside itself:
+    a Document that took focus earlier would be handed straight back to the grid, and the
+    removed popover would return focus to the "Table" button. So a pick only raises a flag,
+    and focus is set by `GridHost` when it unmounts (`onClosed`): the grid is already out of
+    the DOM, focus has gone to the body, and react-aria, seeing focus in the document,
+    returns nothing.
   */
   const picked = useRef(false);
   const pick = (cols: number, rows: number) => {
@@ -197,7 +199,7 @@ export function TableMenuButton({
     </MenuItem>
   );
 
-  /** Подменю — только в таблице; вне неё пункт недоступен и ничего не раскрывает. */
+  /** The submenu is only for a table: outside one, the item is disabled and expands to nothing. */
   const submenu = (id: string, label: string, children: ReactNode) =>
     state ? (
       <SubmenuTrigger>
@@ -223,7 +225,8 @@ export function TableMenuButton({
 
   return (
     <MenuTrigger {...menu.trigger}>
-      {/* Подсказка — на обёртке: `Button` react-aria не отдаёт Radix обработчики наведения. */}
+      {/* The tooltip sits on the wrapper: react-aria's `Button` does not pass Radix hover
+          handlers. */}
       <Tooltip content={messages.table}>
         <span className="inline-flex">
           <MenuButton
@@ -287,13 +290,14 @@ export function TableMenuButton({
                 "addRowAfter",
                 messages.tableAddRowAfter,
                 <InsertRowBelowIcon size={14} aria-hidden />,
-                // То же действие с клавиатуры, из ячейки (`tables.ts`, `addRowBelow`).
+                // The same action from the keyboard, from a cell (`tables.ts`, `addRowBelow`).
                 ROW_BELOW_KEYS
               )}
               {item("deleteRow", messages.tableDeleteRow, <DeleteIcon size={14} aria-hidden />)}
             </MenuSection>
             <MenuSeparator />
-            {/* Пункт-переключатель по умолчанию меню не закрывает; здесь закрывает, как остальные. */}
+            {/* A toggle item does not close the menu by default; here it closes, like the
+                others. */}
             <MenuSection
               id="header"
               selectionMode="multiple"
@@ -333,7 +337,8 @@ export function TableMenuButton({
               )}
             </MenuSection>
             <MenuSeparator />
-            {/* Радиогруппа: отмечено выравнивание всего столбца; смешанный — ни одно. */}
+            {/* A radio group: the alignment of the whole column is checked; when it is
+                mixed, none is. */}
             <MenuSection
               id="alignment"
               selectionMode="single"
@@ -358,9 +363,9 @@ export function TableMenuButton({
           "sort",
           messages.tableSort,
           /*
-            Слитые ячейки — сортировка недоступна, и подменю говорит почему:
-            подпись раздела читается скринридером при входе в группу, а не
-            только видна глазу. Без неё два серых пункта выглядели бы сбоем.
+            Merged cells: sorting is unavailable, and the submenu says why. The section
+            label is read by the screen reader on entering the group, not only seen by the
+            eye. Without it, the two grey items would look like a bug.
           */
           <MenuSection id="sorting" label={state?.merged ? messages.tableSortMerged : undefined}>
             {item(
@@ -392,28 +397,28 @@ export function TableMenuButton({
 const ALIGN_KEY = { left: "alignLeft", center: "alignCenter", right: "alignRight" } as const;
 
 /**
- * Подменю «Таблица ›»: поповер react-aria с сеткой размера.
+ * The "Table ›" submenu: a react-aria popover with the size grid.
  *
- * ПОПОВЕР react-aria, А НЕ `Popover` КИТА. `SubmenuTrigger` ждёт вторым
- * ребёнком именно его: через контекст он получает место у пункта, слой и
- * состояние подменю. Вид — тот же `MENU_PANEL_CLASS`, что у панели `Menu`.
+ * A react-aria POPOVER, NOT the kit's `Popover`. `SubmenuTrigger` expects exactly this as
+ * its second child: through context it gets the place next to the item, the layer and the
+ * submenu state. The look is the same `MENU_PANEL_CLASS` as the `Menu` panel.
  *
- * ФОКУС — ПОСЛЕ ТОГО, КАК ПОДМЕНЮ ВСТАЛО, и по сигналу самого поповера, а не
- * по часам. Открытое с клавиатуры (`→`, `Enter`) подменю ждёт фокуса внутри, но
- * сетка, взявшая его при монтировании — ещё в том же `keydown`, до того как
- * поповер получил место, — ломает меню: в окне (`Dialog`) оно после выбора
- * оставалось в DOM, и следующее открытие отдавало фокус `body`. Раньше фокус
- * откладывался таймером на 50 мс — это гонка: число ничего не гарантирует
- * медленному устройству и зря ждёт на быстром. Теперь поповер сам сообщает, что встал:
- * рендер-пропсы `placement` (место посчитано, у панели есть `data-placement`)
- * и `isEntering` (анимация входа доиграна — react-aria ждёт её `finished`),
- * и фокус ставится эффектом, когда оба готовы. Только при открытии с
- * клавиатуры — мышью сетку двигают наведением, и фокус остаётся у пункта.
+ * FOCUS goes in AFTER THE SUBMENU HAS SETTLED, on the popover's own signal rather than on
+ * a clock. A submenu opened from the keyboard (`→`, `Enter`) waits for focus inside. But a
+ * grid that takes focus on mount, still in the same `keydown` and before the popover has
+ * its place, breaks the menu: inside the dialog (`Dialog`) the menu stayed in the DOM after
+ * a pick, and the next open handed focus to `body`. Earlier, focus was deferred by a 50 ms
+ * timer, which was a race: the number guarantees nothing on a slow device and waits too
+ * long on a fast one. Now the popover reports that it has settled: the render props
+ * `placement` (the place is computed; the panel has `data-placement`) and `isEntering` (the
+ * entry animation has finished; react-aria waits for its `finished`). Focus is set by an
+ * effect once both are ready. This happens only when opened from the keyboard: with the
+ * mouse the grid moves by hovering, and focus stays on the item.
  *
- * КЛАВИШИ. Стрелки и `Home`/`End` принадлежат сетке и дальше не идут: меню
- * под ней ответило бы на них своим обходом. `Escape` закрывает только подменю
- * и возвращает фокус на пункт «Таблица» — слой за слоем (ADR-0041); `←` в
- * сетке двигает выбор, а не закрывает подменю: у сетки это её ось.
+ * KEYS. Arrows and `Home`/`End` belong to the grid and do not go further: the menu beneath
+ * would answer them with its own navigation. `Escape` closes only the submenu and returns
+ * focus to the "Table" item, layer by layer (ADR-0041). `←` in the grid moves the selection
+ * rather than closing the submenu: for the grid, that is its own axis.
  */
 function GridSubmenu({
   side,
@@ -423,7 +428,7 @@ function GridSubmenu({
   triggerRef,
   label,
 }: {
-  /** Место у пункта — `useSubmenuPlacement`: на телефоне под ним. */
+  /** Place next to the item, from `useSubmenuPlacement`. On a phone, below the item. */
   side: "bottom start" | "right top";
   initial: { cols: number; rows: number };
   onPick: (cols: number, rows: number) => void;
@@ -462,7 +467,8 @@ function GridHost({
   onPick: (cols: number, rows: number) => void;
   onClosed: () => void;
   triggerRef: RefObject<HTMLDivElement | null>;
-  /** Поповер подменю встал: место посчитано, анимация входа доиграна. */
+  /** The submenu popover has settled: its place is computed and the entry animation is
+   * done. */
   settled: boolean;
 }) {
   const submenu = useContext(OverlayTriggerStateContext) as
@@ -470,7 +476,7 @@ function GridHost({
   const gridRef = useRef<HTMLDivElement>(null);
   const fromKeyboard = submenu?.focusStrategy != null;
 
-  // Сетка снята — поповер уже вне DOM (см. `pick` в `TableMenuButton`).
+  // The grid is removed: the popover is already out of the DOM (see `pick` in `TableMenuButton`).
   const onClosedRef = useRef(onClosed);
   onClosedRef.current = onClosed;
   useEffect(() => () => onClosedRef.current(), []);
@@ -495,7 +501,8 @@ function GridHost({
   };
 
   return (
-    // Обёртка ловит всплытие от сетки: клавиши сетки дальше меню не идут.
+    // The wrapper catches events bubbling up from the grid: the grid's keys do not go
+    // past the menu.
     <div onKeyDown={onKeyDown}>
       <TableSizeGrid ref={gridRef} initial={initial} autoFocus={false} onPick={onPick} />
     </div>

@@ -14,9 +14,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Поля приходят пропом — доменного словаря в ките не появляется. Это и
- * отличает компонент от `LibraryFilterBar` во фронте, где 373 строки состоят
- * из зашитых групп и продуктовых пикеров: переносится форма, а не код.
+ * The fields come in as a prop: no domain vocabulary appears in the kit. This is what distinguishes
+ * the component from `LibraryFilterBar` in the front end, where 373 lines consist of hard-coded
+ * groups and product pickers. What gets carried over is the shape, not the code.
  */
 const FIELDS: FilterField[] = [
   {
@@ -38,14 +38,14 @@ const FIELDS: FilterField[] = [
   },
 ];
 
-/** Поля с диапазонами и значениями вперемешку: вид поля задаёт `kind`. */
+/** Fields with ranges and values mixed together: the `kind` sets the look of the field. */
 const RANGE_FIELDS: FilterField[] = [
   { id: "amount", label: "Amount", kind: "number-range", values: [] },
   { id: "created", label: "Created", kind: "date-range", values: [] },
   FIELDS[1]!,
 ];
 
-/** Токены и добавление вместе — рабочий набор целиком. */
+/** Tokens and the add control together: the whole working set. */
 export const Playground: Story = {
   args: { filters: [], onFiltersChange: () => {} },
   render: function Live() {
@@ -70,7 +70,7 @@ export const Playground: Story = {
   },
 };
 
-/** Пусто: остаётся только кнопка добавления. */
+/** Empty: only the add button remains. */
 export const WithoutFilters: Story = {
   args: { filters: [], onFiltersChange: () => {} },
   render: function EmptyDemo() {
@@ -88,8 +88,8 @@ export const WithoutFilters: Story = {
 };
 
 /**
- * Два фильтра по одному полю. Подписи похожи, и снять нужный можно только
- * потому, что у токена свой `id`, а не пара «поле + значение».
+ * Two filters on one field. Their labels look alike, and one of them can be removed only
+ * because the token has its own `id`, not a "field + value" pair.
  */
 export const TwoOnOneField: Story = {
   args: {
@@ -107,12 +107,12 @@ export const TwoOnOneField: Story = {
 };
 
 /**
- * Диапазоны: сумма и дата вместо корзин («до $50», «последние 7 дней»), ADR-0063.
+ * Ranges: an amount and a date instead of buckets ("under $50", "last 7 days"), ADR-0063.
  *
- * `kind: "number-range"` и `"date-range"` дают в поповере два поля «От» и «До».
- * Достаточно одной границы: токен читается «Amount: from 50» или «Created: to
- * March 12, 2026». Фильтр несёт `to` — пустая строка означает открытую границу.
- * Выборку по такому фильтру считает потребитель, кит описывает только его форму.
+ * `kind: "number-range"` and `"date-range"` give the popover two fields, "From" and "To".
+ * One bound is enough: the token reads "Amount: from 50" or "Created: to
+ * March 12, 2026". The filter carries `to`: an empty string means an open bound.
+ * The consumer computes the filtered rows for such a filter; the kit describes only its shape.
  */
 export const Ranges: Story = {
   args: { filters: [], onFiltersChange: () => {} },
@@ -139,7 +139,7 @@ export const Ranges: Story = {
   },
 };
 
-/** Диапазоны с пустого набора: добавление и границы с нуля. */
+/** Ranges from an empty set: adding them and setting their bounds from scratch. */
 export const RangesFromScratch: Story = {
   args: { filters: [], onFiltersChange: () => {} },
   render: function RangesEmptyDemo() {

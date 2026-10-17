@@ -10,35 +10,37 @@ import { showOverSelection, useOutOfTabOrder, useSelectionMenuOptions } from "./
 import type { ToolList } from "../core/toolDescriptor.js";
 import { GLASS_PANEL_CLASS } from "../styles/glass.js";
 
-/** Ключ плагина плавающей Панели: по нему её показывают командой (`Alt+F10`). */
+/** Plugin key of the floating Toolbar, used to show it by command (`Alt+F10`). */
 export const FLOATING_TOOLBAR_KEY = "richTextFloatingToolbar";
 
 export interface FloatingToolbarProps {
   editor: Editor;
   tools: ToolList;
   disabled: boolean;
-  /** Пункт «Вставить таблицу…» меню «Таблица» — окно держит Редактор. */
+  /** The "Insert table…" item of the Table menu: the Editor owns the dialog. */
   onInsertTable?: () => void;
-  /** Область Документа, которая прокручивается сама (ADR-0059); без неё — окно. */
+  /** The Document area that scrolls on its own (ADR-0059); without it, the window scrolls. */
   scrollTarget?: HTMLElement;
 }
 
 /**
- * Плавающая Панель — та же `EditorToolbar`, но над непустым выделением.
+ * Floating Toolbar: the same `EditorToolbar`, shown over a non-empty selection.
  *
- * ПОЗИЦИЯ И ПОКАЗ — `BubbleMenu` Tiptap (`@tiptap/react/menus`, floating-ui
- * внутри). Он прячет Панель на пустом выделении, в нередактируемом поле и без
- * фокуса в документе или в самой Панели, а показывает с задержкой после
- * того, как выделение перестало меняться: пока мышь тянет выделение, Панель не
- * мигает. Узел Панели он вставляет рядом с документом и вынимает из DOM,
- * когда прячет, — скрытой Панели нет ни для скринридера, ни для Tab.
+ * POSITION AND VISIBILITY come from Tiptap's `BubbleMenu` (`@tiptap/react/menus`,
+ * built on floating-ui). It hides the Toolbar on an empty selection, in a non-editable
+ * field, and when focus is neither in the document nor in the Toolbar itself. It shows
+ * the Toolbar after a delay, once the selection has stopped changing: while the mouse is
+ * dragging a selection, the Toolbar does not flicker. It inserts the Toolbar's node next
+ * to the document and removes it from the DOM when it hides, so a hidden Toolbar is in
+ * neither the screen reader's nor the Tab order.
  *
- * Условие показа и позиция — общие с меню выделения (`selectionMenu.ts`):
- * над картинкой Панели нет, у края окна она переворачивается и сдвигается.
+ * The show condition and the position are shared with the selection menu
+ * (`selectionMenu.ts`): there is no Toolbar over an image, and near the window edge it
+ * flips and shifts.
  *
- * СЛОЙ — `OVERLAY_LAYER.popover`: Панель всплывает над текстом, как поповер.
- * В стеке Escape она не участвует: фокуса не держит и закрывать в ней нечего,
- * поэтому Escape остаётся окну или ящику вокруг Редактора.
+ * LAYER: `OVERLAY_LAYER.popover`. The Toolbar floats over the text, like a popover.
+ * It takes no part in the Escape stack: it holds no focus and has nothing to close, so
+ * Escape stays with the dialog or drawer around the Editor.
  */
 export function FloatingToolbar({
   editor,
@@ -62,7 +64,7 @@ export function FloatingToolbar({
         OVERLAY_LAYER.popover,
         GLASS_PANEL_CLASS,
         "border-line-soft shadow-2 rounded-md border px-1.5 py-1",
-        // Узкий экран: Панель переносится на вторую строку, а не уезжает за край.
+        // Narrow screen: the Toolbar wraps onto a second row instead of running past the edge.
         "max-w-[min(40rem,calc(100vw-1rem))]"
       )}
     >

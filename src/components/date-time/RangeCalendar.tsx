@@ -29,46 +29,46 @@ export interface RangeCalendarProps extends Omit<
   "value" | "defaultValue" | "onChange" | "minValue" | "maxValue" | "defaultFocusedValue"
 > {
   /**
-   * Выбранный период: `{ start, end }` объектов `@internationalized/date` или
-   * ISO-строк `ГГГГ-ММ-ДД` — вторые такие же, как `DateRange` у `DateRangePicker`.
-   * `null` — управляемое пустое значение. Если хоть одна граница не разбирается,
-   * период считается пустым: половина диапазона выбранным не бывает.
+   * Selected range: a `{ start, end }` pair of `@internationalized/date` objects or ISO strings
+   * `YYYY-MM-DD` (the same `DateRange` form that `DateRangePicker` uses). `null` is a controlled
+   * empty value. If either bound cannot be parsed, the range counts as empty: a range with only one
+   * end is never treated as selected.
    */
   value?: DateRangeInput | null;
-  /** Начальный период неуправляемого календаря; те же два вида, что у `value`. */
+  /** Initial range of an uncontrolled calendar; the same two forms as `value`. */
   defaultValue?: DateRangeInput | null;
   /**
-   * Вызывается, когда выбраны обе границы. Первый аргумент — объект календаря,
-   * как у React Aria; второй — тот же период парой ISO-строк
-   * `ГГГГ-ММ-ДД`, как `DateRange` у `DateRangePicker`.
+   * Called when both bounds are selected. The first argument is the calendar object,
+   * as in React Aria; the second is the same range as a pair of ISO strings
+   * `YYYY-MM-DD`, like `DateRange` in `DateRangePicker`.
    */
   onChange?: (value: { start: DateValue; end: DateValue }, iso: DateRange) => void;
-  /** Самый ранний доступный день: объект календаря или ISO-строка `ГГГГ-ММ-ДД`. */
+  /** Earliest available day: a calendar object or an ISO string `YYYY-MM-DD`. */
   minValue?: DateInput;
-  /** Самый поздний доступный день; те же два вида, что у `minValue`. */
+  /** Latest available day; the same two forms as `minValue`. */
   maxValue?: DateInput;
-  /** Месяц, на котором открывается неуправляемый календарь; те же два вида, что у `minValue`. */
+  /** Month the uncontrolled calendar opens on; the same two forms as `minValue`. */
   defaultFocusedValue?: DateInput;
-  /** Классы на корень календаря: ширина, отступы, фон. */
+  /** Classes for the calendar root: width, padding, background. */
   className?: string;
-  /** Локаль подписей и первого дня недели — см. `Calendar`. */
+  /** Locale of the labels and the first day of the week; see `Calendar`. */
   locale?: string;
   /**
-   * Сколько месяцев показать рядом: `1` или `2`; по умолчанию `1`.
+   * How many months to show side by side: `1` or `2`; defaults to `1`.
    *
-   * Сколько месяцев показать рядом. Два — рабочий вариант для диапазона:
-   * период, пересекающий границу месяца, иначе требует листать туда-обратно,
-   * теряя из виду уже выбранный конец. Один остаётся для узких экранов.
+   * Two is the practical choice for a range: a period that crosses a month boundary
+   * would otherwise force the user to page back and forth and lose sight of the end already
+   * chosen. One stays for narrow screens.
    */
   months?: 1 | 2;
 }
 
 /**
- * Календарь диапазона.
+ * Range calendar.
  *
- * Концы диапазона заливаются акцентом, середина — приглушённой подложкой:
- * иначе выбранные две недели читаются как двадцать одинаковых кнопок,
- * и по картинке не видно, где начало.
+ * The ends of the range are filled with the accent, the middle with a muted background:
+ * otherwise a selected two-week span reads as twenty identical buttons,
+ * and the picture does not show where it starts.
  */
 export function RangeCalendar({
   className,
@@ -84,8 +84,8 @@ export function RangeCalendar({
 }: RangeCalendarProps) {
   const now = useToday();
 
-  // Ячейка одна на оба месяца — иначе второй месяц пришлось бы описывать
-  // копией из семнадцати классов, и они разъехались бы с первой же правкой.
+  // One cell serves both months. Otherwise the second month would need a copy of the
+  // seventeen classes, and the copies would drift apart at the first edit.
   const cell = (offset?: { months: number }) => (
     <CalendarGrid offset={offset} className="w-fit">
       <CalendarGridHeader>
@@ -150,7 +150,7 @@ export function RangeCalendar({
     </RangeCalendarRac>
   );
 
-  // Тот же приём, что в `Calendar`: провайдер разворачивается только под явный
-  // проп, иначе локаль приходит сверху.
+  // The same approach as in `Calendar`: the provider is rendered only when the `locale` prop
+  // is set; otherwise the locale comes from above.
   return locale ? <I18nProvider locale={locale}>{calendar}</I18nProvider> : calendar;
 }

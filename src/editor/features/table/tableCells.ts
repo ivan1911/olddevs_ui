@@ -9,18 +9,20 @@ import {
 import { RICH_TEXT_SCHEMA } from "../../core/schema.js";
 
 /*
-  Атрибуты ячейки таблицы — слияние и выравнивание столбца (`tables.ts` —
-  почему такие). Отдельно от расширений таблицы: ими же разбирает ячейку форма
-  таблицы в Скелете (`tableTool.ts`), а чанк таблицы с `prosemirror-tables`
-  до Готовности не загружен. Одно определение на оба разбора —
-  иначе Скелет и движок разошлись бы в том, какое слияние допустимо.
+  Table cell attributes: merging and column alignment (`tables.ts` explains why
+  these). They are kept apart from the table extensions: the table's shape in the
+  Skeleton (`tableTool.ts`) parses cells with them too, and the table chunk with
+  `prosemirror-tables` is not loaded before Readiness. One definition serves both
+  parses, otherwise the Skeleton and the engine would disagree on which merges are
+  valid.
 */
 
 /**
- * Слияние из атрибута: целое от 1 до `max`, иначе 1. Только цифры — `"2px"`,
- * `"1.5"` и `"-3"` браузер разбирает по-своему, а Схема их не пишет. Пробелы по
- * краям снимаются, как это делают браузер и DOMPurify: санитайзер на сервере
- * отдаёт `colspan=" 2"` уже как `"2"`, и Редактор обязан прочитать то же.
+ * The span read from an attribute: an integer from 1 to `max`, otherwise 1. Digits
+ * only: browsers parse `"2px"`, `"1.5"` and `"-3"` in their own ways, and the
+ * Schema never writes them. Surrounding whitespace is trimmed, as browsers and
+ * DOMPurify do: the server-side sanitizer already returns `colspan=" 2"` as `"2"`,
+ * and the Editor must read the same.
  */
 export function parseSpan(raw: string | null, max: number): number {
   const trimmed = raw?.trim() ?? "";
@@ -31,7 +33,7 @@ export function parseSpan(raw: string | null, max: number): number {
 
 const knownAlignments: ReadonlySet<string> = new Set(EDITOR_ALIGNMENTS);
 
-/** Выравнивание ячейки, которое пишется: `center` или `right`; `left` и чужое — `null`. */
+/** Cell alignment that is written: `center` or `right`; `left` and unknown values give `null`. */
 export function cellAlignment(value: unknown): Exclude<EditorAlignment, "left"> | null {
   return typeof value === "string" && knownAlignments.has(value) && value !== DEFAULT_ALIGNMENT
     ? (value as Exclude<EditorAlignment, "left">)

@@ -9,26 +9,26 @@ story: src/components/inputs/Combobox.stories.tsx
 
 # Combobox
 
-## Кратко для AI
+## Summary for AI
 
-`Combobox` сочетает свободный текстовый ввод со списком вариантов. Выбор из списка помогает, но значение может не совпадать с `items`; это принципиально отличает его от `Select`.
+`Combobox` combines free text input with a list of options. Picking from the list helps, but the value may not match `items`; this is what fundamentally sets it apart from `Select`.
 
-## Когда использовать
+## When to use
 
-- Пользователь может ввести новый тег, адрес, название или другой допустимый текст.
-- Нужен список вариантов и фильтрация во время набора.
+- The user may type a new tag, address, name or other valid text.
+- You need a list of options and filtering while typing.
 
-## Когда не использовать
+## When not to use
 
-- Нужен строго закрытый словарь — `Select`, в том числе с `searchable`.
-- Нужен ввод нескольких тегов — `TagInput`.
+- You need a strictly closed vocabulary — `Select`, including with `searchable`.
+- You need to enter several tags — `TagInput`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Combobox
-  aria-label="Город"
-  items={[{ id: "msk", label: "Москва" }]}
+  aria-label="City"
+  items={[{ id: "msk", label: "Moscow" }]}
   inputValue={city}
   onInputChange={setCity}
   allowsCustomValue
@@ -37,22 +37,25 @@ story: src/components/inputs/Combobox.stories.tsx
 
 ## Public API
 
-- `items` — массив `{ id, label, meta? }`; `meta` выводится правой колонкой.
-- Остальные поддерживаемые пропы наследуются от React Aria ComboBox: используйте controlled `inputValue`/`onInputChange`, `selectedKey`/`onSelectionChange`, только когда это нужно сценарию.
-- `menuTrigger` по умолчанию `focus`, чтобы список вариантов был виден при входе в поле; `notFoundText` настраивает пустой список.
-- `placeholder` относится к полю, `className` — к корню.
+- `items` is an array of `{ id, label, meta? }`; `meta` is shown in the right column.
+- The other supported props come from React Aria ComboBox: use controlled `inputValue`/`onInputChange`, and `selectedKey`/`onSelectionChange` only when the scenario needs it.
+- `menuTrigger` is `focus` by default, so the list of options is visible on entering the field; `notFoundText` configures the empty list.
+- `placeholder` belongs to the field, `className` to the root.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- **Пояснение и ошибка `FormField` объявляются вместе с полем.** Описание
-  приходит контекстом, `aria-describedby` ставится на поле ввода; переданный
-  потребителем `aria-describedby` не заменяется, а дополняется описанием формы.
-  До версии кита 3.0.0 компоненты на react-aria описание формы не забирали — на экране оно было, скринридеру не доставалось
+- **The hint and error of `FormField` are announced together with the field.** The
+  description arrives through context, and `aria-describedby` is set on the input;
+  an `aria-describedby` passed by the consumer is not overridden but extended with
+  the form description. Before kit version 3.0.0 the react-aria components did
+  not pick up the form description — it was on the screen
+  but did not reach the screen reader
   (ADR-0031).
-- Поведение combobox, фильтрацию и `aria-activedescendant` берёт на себя React Aria.
-- **Внутри `Dialog` и `Drawer` вариант выбирается мышью.** Список живёт в
-  портале react-aria под `<body>`, у которого модальный слой Radix отключает
-  указатель; кит возвращает его оверлею правилом в `@olddevs/ui/styles.css`.
-  До этой починки вариант выбирался только с клавиатуры.
-- Передайте доступное имя через `aria-label` либо связанный label.
-- См. `src/components/inputs/Combobox.tsx`, `src/components/inputs/Combobox.stories.tsx`, `tests/combobox.test.tsx`.
+- React Aria provides the combobox behavior, filtering and `aria-activedescendant`.
+- **Inside `Dialog` and `Drawer` an option can be selected with the mouse.** The list
+  lives in a react-aria portal under `<body>`, where the Radix modal layer disables
+  pointer events; the kit gives it back to the overlay with a rule in
+  `@olddevs/ui/styles.css`. Before this fix an option could be selected only from
+  the keyboard.
+- Provide an accessible name through `aria-label` or an associated label.
+- See `src/components/inputs/Combobox.tsx`, `src/components/inputs/Combobox.stories.tsx`, `tests/combobox.test.tsx`.

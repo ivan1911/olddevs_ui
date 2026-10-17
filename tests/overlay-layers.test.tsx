@@ -27,27 +27,27 @@ import { Dialog } from "../src/components/overlays/Dialog.js";
 afterEach(cleanup);
 
 /**
- * Escape принадлежит ВЕРХНЕМУ слою. Разбор и альтернативы — ADR-0041.
+ * Escape belongs to the TOPMOST layer. For the analysis and the alternatives, see ADR-0041.
  *
- * Кит строит оверлеи на двух библиотеках сразу, и каждая ведёт свой стек.
- * `Dialog` завёл себе заслон против чужого Escape, но его решение никому не
- * досталось: `Drawer` заслона не имел вовсе, а `ModalOverlay` слушал Escape на
- * `document` без стека и без проверки `defaultPrevented`.
+ * The kit builds overlays on two libraries at once, and each keeps its own stack.
+ * `Dialog` set up its own guard against a foreign Escape, but its solution was
+ * never shared: `Drawer` had no guard at all, and `ModalOverlay` listened for
+ * Escape on `document` without a stack and without checking `defaultPrevented`.
  *
- * ЧЕГО ЗДЕСЬ НЕТ. Сочетание «меню react-aria ВНУТРИ модального слоя Radix» в
- * jsdom не воспроизводится: Radix в модальном режиме глушит взаимодействие с
- * соседями `<body>`, и меню не раскрывается ни щелчком, ни с клавиатуры —
- * проверено. В браузере оно раскрывается, и ради этого сочетания ADR и писан.
- * Сторожить его должен `tests-visual/interactions.spec.ts`, где `Drawer` уже
- * есть. Здесь проверяется то, что проверяемо: условие, по которому заслон
- * срабатывает, и поведение слоя при этом условии.
+ * WHAT IS NOT HERE. The combination "a react-aria menu INSIDE a modal Radix layer"
+ * does not reproduce in jsdom: Radix in modal mode blocks interaction with the
+ * `<body>` siblings, and the menu does not open either by click or from the
+ * keyboard (checked). In a browser it opens, and the ADR was written for exactly
+ * this combination. It should be guarded by `tests-visual/interactions.spec.ts`,
+ * where `Drawer` already is. Here we check what is checkable: the condition under
+ * which the guard fires, and the behavior of the layer under that condition.
  */
 describe("the layer registry", () => {
   /**
-   * Верхний слой определяется ПОЛОЖЕНИЕМ В ДОКУМЕНТЕ, а не порядком
-   * регистрации. Эффекты React выполняются снизу вверх: у вложенных подложек
-   * внутренняя регистрируется РАНЬШЕ внешней, и правило «последний
-   * зарегистрировавшийся» объявляло бы верхней ту, что лежит под всеми.
+   * The top layer is determined by POSITION IN THE DOCUMENT, not by registration
+   * order. React runs effects bottom-up: among nested scrims the inner one
+   * registers BEFORE the outer one, so the rule "the last one to register" would
+   * declare the layer beneath all the others to be the top.
    */
   test("a nested layer is topmost, even though it registers first", () => {
     const outerNode = document.createElement("div");
@@ -55,8 +55,8 @@ describe("the layer registry", () => {
     outerNode.appendChild(innerNode);
     document.body.appendChild(outerNode);
 
-    // Порядок регистрации намеренно обратный вложенности — так их и
-    // регистрирует React.
+    // The registration order is deliberately the reverse of the nesting — that is
+    // how React registers them.
     const inner = pushOverlayLayer();
     inner.attach(innerNode);
     const outer = pushOverlayLayer();
@@ -84,8 +84,8 @@ describe("the layer registry", () => {
     expect(b.isTopmost()).toBe(true);
     expect(a.isTopmost()).toBe(false);
 
-    // Слой может уйти не последним: компонент размонтировали из-за смены
-    // маршрута, а не потому, что его закрыли.
+    // A layer may leave without being last: the component was unmounted because
+    // of a route change, not because it was closed.
     b.release();
     expect(a.isTopmost()).toBe(true);
     a.release();
@@ -109,9 +109,8 @@ describe("the foreign-layer predicate", () => {
     );
     await user.click(screen.getByRole("button", { name: "Actions" }));
 
-    // Признак — пара `data-rac` + `data-placement`. Её ставит только
-    // позиционированный оверлей RAC; ни один узел Radix и ни одно поле кита
-    // внутри окна её не несут.
+    // The marker is the pair `data-rac` + `data-placement`. Only a positioned RAC
+    // overlay sets it; no Radix node and no kit field inside a window carries it.
     expect(hasOpenAriaOverlay()).toBe(true);
   });
 
@@ -122,27 +121,27 @@ describe("the foreign-layer predicate", () => {
       </Drawer>
     );
 
-    // `data-rac` есть и у обычных полей RAC — отсюда пара с `data-placement`:
-    // прежний заслон различал слои по положению цели события и на `Combobox`
-    // внутри окна ошибался.
+    // `data-rac` is also present on ordinary RAC fields, hence the pair with
+    // `data-placement`. The old guard told layers apart by the position of the
+    // event target, and it got a `Combobox` inside a window wrong.
     expect(hasOpenAriaOverlay()).toBe(false);
   });
 });
 
 /**
- * Указатель внутри модального слоя Radix (OLDSUI-51).
+ * Pointer inside a modal Radix layer (OLDSUI-51).
  *
- * Модальный Radix ставит `<body>` `pointer-events: none` и возвращает указатель
- * только своим слоям. Оверлей react-aria живёт в портале под `<body>` и без
- * правила кита наследует `none`: меню и список подсказок внутри `Dialog` и
- * `Drawer` не кликались мышью.
+ * A modal Radix sets `<body>` to `pointer-events: none` and returns the pointer
+ * only to its own layers. A react-aria overlay lives in a portal under `<body>`
+ * and, without the kit's rule, inherits `none`: a menu and a suggestion list
+ * inside `Dialog` and `Drawer` did not respond to the mouse.
  *
- * Само поведение в jsdom не проверить — Radix глушит здесь и раскрытие меню
- * (см. шапку файла), а каскада стилей кита нет вовсе. Щелчок сторожит
- * `tests-visual/interactions.spec.ts`. Здесь — связка, которую браузерный тест
- * не назовёт: правило в `styles.css` написано ровно тем селектором, по которому
- * модуль слоёв узнаёт оверлей react-aria. Разъедутся — правило молча
- * перестанет срабатывать.
+ * The behavior itself cannot be checked in jsdom: Radix blocks opening the menu
+ * here too (see the file header), and the kit's style cascade does not exist at
+ * all. The click is guarded by `tests-visual/interactions.spec.ts`. What is here
+ * is the link that the browser test would not name: the rule in `styles.css` is
+ * written with exactly the selector by which the layers module recognizes a
+ * react-aria overlay. If they drift apart, the rule will silently stop firing.
  */
 describe("the pointer returns to a react-aria overlay", () => {
   const css = readFileSync(resolve(import.meta.dirname, "..", "styles.css"), "utf8");
@@ -154,9 +153,9 @@ describe("the pointer returns to a react-aria overlay", () => {
     const body = css.slice(at, css.indexOf("}", at));
     expect(body).toMatch(/pointer-events:\s*auto;/);
 
-    // Слой `base`, а не вне слоёв: правило вне слоя перебило бы любой
-    // утилитарный класс, и `pointer-events-none` на панели потребителя
-    // перестал бы работать.
+    // In the `base` layer, not outside the layers: a rule outside a layer would
+    // override any utility class, and `pointer-events-none` on a consumer's panel
+    // would stop working.
     const layer = css.lastIndexOf("@layer base {", at);
     expect(layer).toBeGreaterThan(-1);
     const between = css.slice(layer, at);
@@ -210,12 +209,13 @@ describe("Escape belongs to the topmost layer", () => {
 });
 
 /**
- * StrictMode монтирует, размонтирует и монтирует снова.
+ * StrictMode mounts, unmounts and mounts again.
  *
- * Слой, положенный в стек из ТЕЛА компонента, после этого цикла обратно не
- * попадал: уборщик снимал его, а повторный рендер видел уже заполненный ref и
- * не регистрировал заново. Подложка переставала считать себя верхней и молча
- * переставала закрываться по Escape — в dev, но не в сборке.
+ * A layer pushed onto the stack from the component BODY did not get back onto it
+ * after this cycle: the cleanup removed it, and the re-render saw a ref that was
+ * already filled and did not register again. The scrim stopped considering itself
+ * topmost and silently stopped closing on Escape: in development, but not in the
+ * production build.
  */
 test("an overlay survives the StrictMode mount cycle", async () => {
   const user = userEvent.setup();
@@ -241,13 +241,13 @@ test("an overlay survives the StrictMode mount cycle", async () => {
 });
 
 /**
- * Слой панели контекстного меню.
+ * The context menu panel's layer.
  *
- * `Popover` и `Tooltip` осознанно взяли `z-[120]`; RAC-попоувер получает
- * `zIndex: 100000` инлайном от библиотеки. Radix-попперу копировать было
- * нечего — он берёт z-index из вычисленного стиля содержимого и получал `auto`.
- * Правый клик внутри `Dialog` рисовал меню ПОД затемнением (`z-90`): размытым и
- * некликабельным.
+ * `Popover` and `Tooltip` deliberately take `z-[120]`; the RAC popover gets
+ * `zIndex: 100000` inline from the library. The Radix popper had nothing to copy:
+ * it takes the z-index from the computed style of its content and got `auto`.
+ * A right-click inside `Dialog` drew the menu UNDER the scrim (`z-90`): blurred
+ * and not clickable.
  */
 test("the menu panel carries the popover layer, not auto", () => {
   expect(MENU_PANEL_CLASS).toContain(OVERLAY_LAYER.popover);
@@ -260,14 +260,14 @@ test("the popover layer sits above the modal one", () => {
 });
 
 /**
- * Подсказка react-aria не считается чужим слоем.
+ * A react-aria tooltip does not count as a foreign layer.
  *
- * `Tooltip` из RAC несёт ту же пару `data-rac` + `data-placement`, что список
- * или меню, но фокуса не забирает и от появления окна не закрывается. Пока
- * курсор стоит на триггере «?», подсказка висит — и Escape переставал закрывать
- * окно ВООБЩЕ. Свой `Tooltip` кита на Radix, поэтому изнутри пакета это не
- * стреляло; но свои подсказки react-aria рисует и потребитель, и такая
- * подсказка в любой части страницы гасила Escape у всех окон кита.
+ * A RAC `Tooltip` carries the same pair `data-rac` + `data-placement` as a list
+ * or a menu, but it does not take focus and does not close when a window opens.
+ * While the cursor rests on the "?" trigger the tooltip hangs, and Escape stopped
+ * closing the window AT ALL. The kit's own `Tooltip` is built on Radix, so inside
+ * the package this never fired. But consumers also draw react-aria tooltips, and
+ * such a tooltip anywhere on the page swallowed Escape for all of the kit's windows.
  */
 test("a react-aria tooltip is not a foreign layer", () => {
   render(
@@ -282,13 +282,13 @@ test("a react-aria tooltip is not a foreign layer", () => {
 });
 
 /**
- * Семейство: КАЖДЫЙ модальный слой кита состоит в стеке.
+ * Family: EVERY modal layer of the kit is in the stack.
  *
- * ADR-0041 обещает это прямо («Новый модальный слой кита обязан
- * зарегистрироваться… Сторожит тест-семейство»), а первая версия обещание не
- * держала: регистрировался один `ModalOverlay`, то есть стек решал «подложка
- * против подложки» и ничего больше. Список ниже и есть тот сторож — забытая
- * регистрация ловится здесь, а не в приложении.
+ * ADR-0041 promises this directly ("A new modal layer of the kit must register
+ * itself… The test family guards it"), but the first version did not keep the
+ * promise: only one `ModalOverlay` registered, so the stack decided "scrim against
+ * scrim" and nothing else. The list below is that guard: a forgotten registration
+ * is caught here, not in the application.
  */
 describe("every modal layer of the kit registers itself", () => {
   const LAYERS = [
@@ -330,8 +330,8 @@ describe("every modal layer of the kit registers itself", () => {
   ] as const;
 
   test.each(LAYERS)("$name takes a place in the stack", ({ render: element }) => {
-    // Свой слой регистрируем ПОСЛЕ компонента: если компонент в стеке не
-    // состоит, наш окажется единственным и объявит себя верхним.
+    // We register our own layer AFTER the component: if the component is not in
+    // the stack, ours would be the only one and would declare itself topmost.
     render(element());
     const mine = pushOverlayLayer();
     const node = document.createElement("div");
@@ -339,9 +339,9 @@ describe("every modal layer of the kit registers itself", () => {
     mine.attach(node);
 
     try {
-      // Узел компонента лежит в документе раньше нашего либо позже — но он
-      // ЕСТЬ, а значит хотя бы один из двух не верхний.
-      // Слой компонента обязан быть в стеке — значит нас там не одни.
+      // The component's node lies in the document either before ours or after it,
+      // but it IS there, so at least one of the two is not topmost.
+      // The component's layer must be in the stack, which means we are not alone there.
       expect(layerCount()).toBeGreaterThan(1);
     } finally {
       mine.release();

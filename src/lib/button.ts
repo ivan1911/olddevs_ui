@@ -2,29 +2,27 @@ import { cn } from "./cn.js";
 import { variantClasses, type ButtonSize, type Tone, type Variant } from "./variants.js";
 
 /**
- * Вид кнопки одной функцией — на два компонента.
+ * The look of a button as one function, shared by two components.
  *
- * Вынесено из `Button` в момент появления `Menu`. Причина конкретная:
- * `MenuTrigger` из react-aria передаёт триггеру свои пропы через `ButtonContext`
- * (`onPress`, `aria-expanded`, `aria-haspopup`, ref), а `Button` пакета — обычный
- * `<button>`, который этого контекста не читает и потому меню не открывает.
+ * Extracted from `Button` when `Menu` appeared. The concrete reason: react-aria's `MenuTrigger` passes
+ * its props to the trigger through `ButtonContext` (`onPress`, `aria-expanded`, `aria-haspopup`, ref),
+ * while the package's `Button` is a plain `<button>` that does not read this context, so the menu would
+ * not open.
  *
- * Переписывать `Button` на react-aria нельзя: решение G спеки прямо запрещает
- * переезд существующих примитивов — они работают и покрыты снимками. Поэтому
- * триггер меню собран на кнопке RAC, а вид у обоих один и тот же и живёт здесь.
- * Копипаст этой таблицы разошёлся бы: у пакета уже есть такая история с полями
- * поиска во фронте.
+ * `Button` cannot be rewritten on react-aria: decision G of the spec explicitly forbids moving existing
+ * primitives, since they work and are covered by snapshots. So the menu trigger is built on the React
+ * Aria Components button, and the look of both is the same and lives here. A copy-paste of this table
+ * would drift apart: the package already has such a history with the search fields in the front-end app.
  *
- * Строки литеральные и целиком — Tailwind сканирует исходники как текст.
+ * The class strings are literal and complete: Tailwind scans the sources as text.
  */
 
 /**
- * Размеры сохранены от версии во фронте — чтобы переезд не сдвинул вёрстку.
+ * Sizes kept from the front-end app's version, so that the move did not shift the layout.
  *
- * `xs` пришёл позже и от заказчика: строка списка рассчитана на 32 пикселя, а
- * самая маленькая кнопка давала 30 и растягивала строку до 42. Подпись в него
- * влезает с трудом и не предполагается — ступень заведена под кнопку-иконку в
- * строке, см. `iconOnly`.
+ * `xs` came later and was requested by the customer: a list row is designed for 32 pixels, while the
+ * smallest button gave 30 and stretched the row to 42. A caption barely fits in it and is not intended to.
+ * The step is set up for an icon button in a row, see `iconOnly`.
  */
 const SIZES: Record<ButtonSize, string> = {
   xs: "h-5 gap-1 px-1.5 text-[11px]",
@@ -34,14 +32,13 @@ const SIZES: Record<ButtonSize, string> = {
 };
 
 /**
- * Те же высоты, но квадрат и без горизонтальных отступов.
+ * The same heights, but square and without horizontal padding.
  *
- * У `xs` зона нажатия РАСШИРЕНА ПСЕВДОЭЛЕМЕНТОМ до 24 пикселей, хотя сама
- * кнопка 20. Без этого ступень нельзя было бы выпускать: 20×20 не проходит
- * WCAG 2.5.8 (минимальная цель — 24×24), а увеличить саму кнопку значит
- * вернуть ту самую растянутую строку, ради которой ступень и заводилась.
- * Псевдоэлемент разводит эти два требования: в раскладке кнопка занимает 20,
- * пальцем и мышью ловится на 24.
+ * For `xs` the press area is EXTENDED BY A PSEUDO-ELEMENT to 24 pixels, although the button itself is 20.
+ * Without this the step could not be shipped: 20×20 fails WCAG 2.5.8 (the minimum target is 24×24), and
+ * enlarging the button itself would bring back the very stretched row for whose sake the step was added.
+ * The pseudo-element separates these two requirements: in the layout the button takes 20, while a finger
+ * or a mouse hits it at 24.
  */
 const ICON_SIZES: Record<ButtonSize, string> = {
   xs: "relative h-5 w-5 px-0 text-[11px] before:absolute before:-inset-0.5 before:content-['']",
@@ -51,12 +48,12 @@ const ICON_SIZES: Record<ButtonSize, string> = {
 };
 
 /**
- * Кольцо спиннера под каждый размер — те же числа, что у `Spinner`.
+ * Spinner ring for each size: the same numbers as `Spinner`.
  *
- * Сам `Spinner` сюда не годится, и причина не в геометрии: у него внутри
- * `role="status"` и невидимая подпись «Загрузка», а она вошла бы в доступное
- * имя кнопки — скринридер прочёл бы «Загрузка Сохранить». Внутри кнопки
- * индикатор обязан быть декоративным: состояние объявляет `aria-busy`.
+ * `Spinner` itself does not fit here, and the reason is not geometry: it has `role="status"` inside and
+ * an invisible "Loading" label, and that label would enter the button's accessible name, so a screen
+ * reader would read "Loading Save". Inside a button the indicator must be decorative: the state is
+ * announced by `aria-busy`.
  */
 export const SPINNER_SIZES: Record<ButtonSize, string> = {
   xs: "size-3 border-[1.5px]",
@@ -74,67 +71,68 @@ const BASE =
   "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 " +
   "disabled:pointer-events-none disabled:opacity-50 " +
   /*
-    ИКОНКА ВНУТРИ КНОПКИ НЕ ЯВЛЯЕТСЯ ЦЕЛЬЮ ПОПАДАНИЯ.
+    THE ICON INSIDE A BUTTON IS NOT A HIT TARGET.
 
-    Иначе `event.target` у щелчка в иконку — сам `<svg>` или его `<path>`, а
-    не кнопка. Кнопке это не мешает: событие всплывает и она отрабатывает. А
-    вот всем, кто РАЗБИРАЕТ цель щелчка, мешает насмерть.
+    Otherwise `event.target` for a click on the icon is the `<svg>` itself or its `<path>`, not the
+    button. This does not hurt the button: the event bubbles up and the button still works. But it
+    badly breaks anyone who ANALYZES the click target.
 
-    Нашлось на строке `EditableList` с действием: react-aria решает, не попал
-    ли щелчок во вложенный интерактивный элемент, проверкой `isTabbable` на
-    самой цели, без обхода предков. Цель — `<svg>`, он не таббабелен, и
-    действие строки срабатывало ВМЕСТЕ с кнопкой: щелчок по «удалить» в
-    списке задач заодно открывал подробности. По краю той же кнопки, где
-    целью была она сама, всё работало правильно — то есть дефект зависел от
-    того, попал ли человек в сами тридцать пикселей рисунка.
+    This was found on an `EditableList` row with an action. react-aria decides whether the click landed
+    on a nested interactive element by checking `isTabbable` on the target itself, without walking up
+    the ancestors. The target is the `<svg>`, which is not tabbable, so the row's action fired TOGETHER
+    with the button: a click on "Delete" in the task list also opened the details. On the button's
+    edge, where the target was the button itself, everything worked correctly. So the defect depended
+    on whether the person hit the thirty pixels of the glyph itself.
 
-    Лечится здесь, а не у потребителя, потому что это свойство кнопки: её
-    содержимое не должно подменять её собой ни для кого.
+    It is fixed here, not in the consumer, because this is a property of the button: its content must
+    not stand in for it for anyone.
   */
   "[&_svg]:pointer-events-none " +
   /*
-    ИКОНКА НЕ СЖИМАЕТСЯ. `<svg>` в кнопке — flex-элемент со `shrink: 1`, и
-    когда кнопку ужимает раскладка вокруг, flex отбирает ширину и у него: в
-    `SelectionBar` на средней ширине карандаш становился 10×18 при подписи,
-    сломанной на две строки. Высота при этом остаётся, поэтому
-    рисунок не уменьшается, а сплющивается. Подпись пусть переносится, но не
-    иконка.
+    THE ICON DOES NOT SHRINK. The `<svg>` in a button is a flex item with `shrink: 1`. When the layout
+    around the button squeezes it, flex takes width from the icon as well: in `SelectionBar` at a medium
+    width, the pencil became 10×18 with a caption broken over two lines. The height stays, so the glyph
+    does not get smaller, it gets flattened. Let the caption wrap, but not the icon.
   */
   "[&_svg]:shrink-0 " +
   /*
-    `aria-disabled` красится ТАК ЖЕ, как родной `disabled`.
+    `aria-disabled` is painted THE SAME WAY as the native `disabled`.
 
-    Кнопка, выключенная только атрибутом ARIA, выглядела полностью рабочей:
-    вид завязан на псевдокласс `:disabled`, а его на такой кнопке нет. Зрячий
-    пользователь мыши видел обычную кнопку с курсором-указателем, жал — и не
-    происходило ничего и не объяснялось ничего. `aria-disabled` берут там, где
-    кнопку нельзя убирать из обхода (край списка: с родным `disabled` браузер
-    снимает фокус с той самой кнопки, на которой он стоит).
+    A button disabled only by the ARIA attribute looked fully working: its look is tied to the
+    `:disabled` pseudo-class, and such a button does not have it. A sighted mouse user saw an ordinary
+    button with a pointer cursor, clicked it, and nothing happened and nothing was explained.
+    `aria-disabled` is used where the button must not be removed from the focus order (the edge of a
+    list: with the native `disabled`, the browser drops focus from the very button it is on).
   */
   "aria-disabled:opacity-50 aria-disabled:cursor-default";
 
 /**
- * Размер иконки внутри кнопки каждой ступени.
+ * The icon size inside a button, for each step.
  *
- * Словарь иконок размера не задаёт — это работа `LucideProvider` потребителя, —
- * и без явного `size` lucide рисует 24 пикселя при толщине 2: в кнопке высотой
- * 30 с подписью 13 пикселей такая иконка в полтора раза выше нужного. Иконки,
- * которые кит кладёт в свои кнопки (копирование, раскрыватель `SplitButton`,
- * переключатель `SideNav`), берут размер отсюда, чтобы следовать ступени кнопки.
- * Числа те же, что в историях кита: 14 в компактных, 16 по умолчанию.
+ * The icon vocabulary does not set sizes: that is the job of the consumer's `LucideProvider`. Without an
+ * explicit `size`, lucide draws 24 pixels at stroke width 2, and in a 30-pixel button with a 13-pixel
+ * caption such an icon is one and a half times taller than it should be. Icons that the kit places in its
+ * own buttons (copy, the `SplitButton` expander, the `SideNav` toggle) take their size from here, to follow
+ * the button's step. The numbers are the same as in the kit's showcase stories: 14 in compact ones, 16 by default.
  */
 export const BUTTON_ICON_SIZE: Record<ButtonSize, number> = { xs: 14, sm: 14, md: 16, lg: 18 };
 
 export interface ButtonLookOptions {
-  /** Подача: `solid`, `soft`, `outline` или `ghost` из словаря кита. По умолчанию `soft`. */
+  /** Treatment (`variant`): `solid`, `soft`, `outline` or `ghost` from the kit's vocabulary. Defaults to `soft`. */
   variant?: Variant;
-  /** Тон: цветовая роль кнопки из словаря кита. По умолчанию `neutral`. */
+  /** Tone: the button's color role from the kit's vocabulary. Defaults to `neutral`. */
   tone?: Tone;
-  /** Размер кнопки: `xs`, `sm`, `md` или `lg`. По умолчанию `md`. */
+  /** Button size: `xs`, `sm`, `md` or `lg`. Defaults to `md`. */
   size?: ButtonSize;
-  /** Только иконка: квадрат без горизонтальных отступов, подпись не показывается. Нужно доступное имя. */
+  /**
+   * Icon only: a square without horizontal padding, and no label is shown. An accessible name is
+   * required.
+   */
   iconOnly?: boolean;
-  /** Нажатое состояние: кнопка подаётся как `soft` своего тона с тенью, какой бы ни был `variant`. */
+  /**
+   * Pressed state: the button renders as the `soft` variant of its tone with a shadow, regardless
+   * of `variant`.
+   */
   selected?: boolean;
 }
 
@@ -148,9 +146,9 @@ export function buttonClasses({
   return cn(
     BASE,
     iconOnly ? ICON_SIZES[size] : SIZES[size],
-    // Нажатое состояние подаётся как `soft` того же тона независимо от варианта:
-    // у `ghost` и `outline` своей заливки нет, а нажатость обязана быть видна.
-    // Тень отделяет её от простого hover.
+    // The pressed state is drawn as the `soft` of the same tone, whatever the variant is:
+    // `ghost` and `outline` have no fill of their own, and the pressed state must be visible.
+    // The shadow separates it from a plain hover.
     selected
       ? cn(variantClasses("soft", tone), "shadow-[var(--shadow-1)]")
       : variantClasses(variant, tone)

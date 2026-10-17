@@ -3,25 +3,25 @@
 import { createContext } from "react";
 
 /**
- * Стоит ли узел в слоте `bottomBar` у `AppShell`.
+ * Whether the node sits in the `bottomBar` slot of `AppShell`.
  *
- * Нужен `MobileTabBar`: его подложка спускается ниже полосы на высоту выреза
- * экрана, потому что отступ под вырез даёт обёртка слота, и подложка,
- * обрезанная по самой полосе, оставляла бы под ней прозрачную щель. Вне слота
- * отступа никто не добавляет, и та же подложка перекрыла бы контент под полосой
- * на высоту выреза — поэтому полоса должна знать, где стоит.
+ * `MobileTabBar` needs it: its backdrop extends below the bar by the height of the screen cutout,
+ * because the padding for the cutout is given by the slot's wrapper. A backdrop cut off at the bar
+ * itself would leave a transparent gap beneath it. Outside the slot nobody adds that padding, and the
+ * same backdrop would cover the content under the bar by the height of the cutout. So the bar has to
+ * know where it stands.
  *
- * КОНТЕКСТ, А НЕ CSS. Переменная или атрибут на обёртке слота решали бы то же
- * каскадом, но разница стала бы невидимой в разметке: jsdom каскада не считает,
- * и обещание «вне каркаса — обычная строка» нечем было бы проверить. Контекст
- * меняет саму разметку, верен с первого кадра и на сервере (матч-медиа не
- * нужен) и не выходит за поддерево слота: полоса, положенная в `<main>` того же
- * каркаса, остаётся «вне слота». Оговорка: контекст React идёт сквозь порталы,
- * и полоса в оверлее, открытом из самой полосы, тоже сочтёт себя «в слоте».
- * Такого сценария у полосы нет; появится — граница ставится на портале, как
- * `withoutToolbarAxis`. Тот же приём — `NavInOverlayProvider`, которым
- * `AppShell` сообщает `SideNav`, что тот в ящике.
+ * CONTEXT, NOT CSS. A variable or attribute on the slot's wrapper would solve the same thing through
+ * the cascade, but the difference would become invisible in the markup: jsdom does not evaluate the
+ * cascade, so the promise "outside the frame, it is an ordinary row" would have nothing to check it
+ * with. Context changes the markup itself, is correct from the first frame and on the server (no media
+ * query needed), and does not leak beyond the slot's subtree: a bar placed in the `<main>` of the same
+ * frame stays "outside the slot". Caveat: React context passes through portals, so a bar inside an
+ * overlay opened from the bar itself would also consider itself "in the slot". The bar has no such
+ * scenario. If one appears, the boundary goes on the portal, as with `withoutToolbarAxis`. The same
+ * technique is used by `NavInOverlayProvider`, with which `AppShell` tells `SideNav` that it is inside
+ * a drawer.
  *
- * `@internal` — наружу из пакета не экспортируется.
+ * `@internal`: not exported from the package.
  */
 export const BottomBarSlotContext = createContext(false);

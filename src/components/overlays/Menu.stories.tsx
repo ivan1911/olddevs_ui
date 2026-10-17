@@ -58,11 +58,11 @@ export const Playground: Story = {
 };
 
 /**
- * Разделы, переключатели и подменю.
+ * Sections, toggles, and submenus.
  *
- * Переключатели — это выбор на РАЗДЕЛЕ, а не проп `checked` у пункта: роли
- * `menuitemcheckbox`/`menuitemradio` и `aria-checked` react-aria проставляет
- * сам, и подпирать их руками означало бы повторять чужую работу.
+ * Toggles are a selection at the SECTION level, not a `checked` prop on the item: react-aria sets
+ * the `menuitemcheckbox`/`menuitemradio` roles and `aria-checked` itself, and setting them by hand
+ * would repeat work that is already done.
  */
 export const SectionsAndSubmenus: Story = {
   render: function Render() {
@@ -110,11 +110,11 @@ export const SectionsAndSubmenus: Story = {
 };
 
 /**
- * Матрица тонов и состояний пункта.
+ * A matrix of item tones and states.
  *
- * Меню открыто принудительно (`isOpen`), иначе снимок показал бы только кнопку.
- * Панель рисуется в портале, поэтому история резервирует под неё место высотой кадра
- * (`layout: "padded"`, не по центру).
+ * The menu is forced open (`isOpen`); otherwise the snapshot would show only the button.
+ * The panel is drawn in a portal, so the story reserves space for it at the height of the frame
+ * (`layout: "padded"`, not centered).
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -148,29 +148,27 @@ export const Matrix: Story = {
 };
 
 /**
- * СТЫК ДВУХ БИБЛИОТЕК: меню react-aria внутри диалога Radix.
+ * THE JUNCTION OF TWO LIBRARIES: a react-aria menu inside a Radix dialog.
  *
- * Единственное место в пакете, где два независимых менеджера фокуса
- * встречаются на одном экране, — и единственный способ узнать, работает ли
- * смешанный кит вообще. Диалог держит ловушку фокуса и слушает Escape; меню
- * держит свою и слушает Escape тоже. Ожидаемое поведение:
+ * The only place in the package where two independent focus managers meet on one screen, and the
+ * only way to find out whether the mixed kit works at all. The dialog holds a focus trap and listens
+ * for Escape; the menu holds its own focus trap and listens for Escape too. The expected behavior:
  *
- *   — Escape при открытом меню закрывает МЕНЮ, но не диалог;
- *   — Escape повторно закрывает диалог;
- *   — после закрытия меню фокус возвращается в диалог, а не на `<body>`;
- *   — Tab не выпускает за пределы диалога, пока меню открыто.
+ *   — Escape with the menu open closes the MENU, not the dialog;
+ *   — Escape again closes the dialog;
+ *   — after the menu closes, focus returns to the dialog, not to `<body>`;
+ *   — Tab does not leave the dialog while the menu is open.
  *
- * Проверяется в браузере (`tests-visual/interactions.spec.ts`): jsdom не
- * двигает фокус по Tab так, как это делает браузер, и проверка ловушки там
- * прошла бы в любом случае — то есть не проверяла бы ничего (ADR-0012).
+ * Verified in a browser (`tests-visual/interactions.spec.ts`): jsdom does not move focus on Tab the
+ * way a browser does, and a focus-trap check there would pass anyway, so it would check nothing (ADR-0012).
  */
 export const MenuInsideDialog: Story = {
   parameters: { layout: "padded" },
   render: function Render() {
     const [open, setOpen] = useState(true);
     const [name, setName] = useState("Daily collection");
-    // Строка появляется только после действия: исходный снимок истории не
-    // меняется, а щелчок мышью по пункту получает видимое следствие.
+    // The row appears only after an action, so the story's original snapshot
+    // does not change, while a mouse click on an item gets a visible result.
     const [action, setAction] = useState<string | null>(null);
     return (
       <div className="h-[420px]">
@@ -220,13 +218,13 @@ export const MenuInsideDialog: Story = {
 };
 
 /**
- * Меню react-aria внутри ящика — тот же стык, что с `Dialog`: `Drawer` стоит
- * на том же модальном слое Radix.
+ * A react-aria menu inside a drawer: the same junction as with `Dialog`, since `Drawer` sits
+ * on the same modal layer of Radix.
  *
- * Отдельная история ради щелчка мышью. Модальный Radix гасит `pointer-events`
- * у `<body>`, а панель меню живёт в портале прямо под ним; пока кит не
- * возвращал ей указатель, пункт выбирался только с клавиатуры.
- * Проверяется в `tests-visual/interactions.spec.ts`.
+ * A separate story for the mouse click. The modal Radix sets `pointer-events` to none on `<body>`,
+ * while the menu panel lives in a portal right under it. Until the kit handed the pointer back to it,
+ * an item could only be chosen from the keyboard.
+ * Checked in `tests-visual/interactions.spec.ts`.
  */
 export const MenuInsideDrawer: Story = {
   parameters: { layout: "padded" },

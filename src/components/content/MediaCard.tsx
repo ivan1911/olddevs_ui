@@ -10,58 +10,54 @@ export interface MediaCardProps extends Omit<
   ComponentPropsWithoutRef<"div">,
   "title" | "onSelect"
 > {
-  /** Превью — обычно `Image`. Своей загрузки и своего скелетона плитка не пишет. */
+  /** The preview, usually an `Image`. The tile does not implement its own loading or skeleton. */
   preview: ReactNode;
-  /** Отношение сторон превью числом: `16 / 9`, `1`, `9 / 16`. */
+  /** Aspect ratio of the preview as a number: `16 / 9`, `1`, `9 / 16`. */
   ratio?: number;
-  /** Подпись под превью. */
+  /** Caption below the preview. */
   title?: ReactNode;
-  /** Вторая строка: размер, автор, дата — что угодно, уже отформатированное. */
+  /** Second line: size, author, date — anything, already formatted. */
   subtitle?: ReactNode;
-  /** Бейджи поверх превью — обычно `StatusBadge`. */
+  /** Badges over the preview, usually `StatusBadge`. */
   badges?: ReactNode;
   /**
-   * Действия поверх превью — обычно `Button iconOnly`.
+   * Actions over the preview, usually `Button iconOnly`.
    *
-   * Они ВСЕГДА в разметке и всегда достижимы с клавиатуры; прячутся они только
-   * прозрачностью, а показываются при наведении, при фокусе внутри, когда
-   * плитка выбрана и всегда на устройствах без наведения (`hover: none`).
-   * Оверлей, появляющийся по `:hover` через `display: none`,
-   * недостижим для клавиатуры вовсе — а это не «менее удобно», а «нельзя
-   * пользоваться».
+   * They are ALWAYS in the markup and always reachable from the keyboard. They are hidden with
+   * opacity only, and shown on hover, on focus within, when the tile is selected, and always on
+   * devices without hover (`hover: none`). An overlay that appears on `:hover` via `display: none`
+   * is not reachable from the keyboard at all — and that is not "less convenient" but "unusable".
    */
   actions?: ReactNode;
   /**
-   * Плитка выбрана.
+   * The tile is selected.
    *
-   * Рамка выбора рисуется по нему. Своя ось (кнопка выбора) включается ЯВНО —
-   * парой `selected` и `onSelectedChange`; один `selected` — показ чужой оси,
-   * как в `VirtualGrid`. Без `selected` рамки в разметке нет.
+   * The selection border is drawn from it. The tile's own axis (a select button) is turned on
+   * EXPLICITLY, as a pair of `selected` and `onSelectedChange`; `selected` alone only displays
+   * someone else's axis, as in `VirtualGrid`. Without `selected` there is no border in the markup.
    */
   selected?: boolean;
-  /** Вызывается при переключении выбора и получает новое значение. Без обработчика оси выбора нет. */
+  /** Called when the selection toggles, with the new value. Without it there is no selection axis. */
   onSelectedChange?: (selected: boolean) => void;
-  /** Своя подпись кнопки выбора. Умолчание — из каталога. */
+  /** Custom label of the select button. The default comes from the message catalog. */
   selectLabel?: string;
 }
 
 /**
- * Плитка с изображением: превью, действия поверх него, бейджи и выбор.
+ * A tile with an image: a preview, actions over it, badges and selection.
  *
- * ГРАНИЦА С `Card`: `Card` — блок содержимого, `MediaCard` — плитка, у которой
- * главное превью, а всё остальное лежит поверх него или под ним
- * (ADR-0027). Общего у них
- * меньше, чем кажется: у карточки нет ни пропорции, ни оверлея, ни выбора.
+ * THE BORDER WITH `Card`: `Card` is a content block, `MediaCard` is a tile whose main element is
+ * the preview, with everything else laid over it or under it (ADR-0027). They share less than it
+ * seems: a card has neither an aspect ratio, nor an overlay, nor selection.
  *
- * ДОМЕННОЕ ОСТАЁТСЯ СНАРУЖИ. Избранное, дубликаты, длинное нажатие и переход по
- * плитке — знание приложения; сюда приходят узлы. Обобщение делалось с `WPCard`
- * фронта (212 строк), и вместе с формой домен не поехал.
+ * THE DOMAIN STAYS OUTSIDE. Favorites, duplicates, long press and navigation by tile are knowledge
+ * of the application; nodes come in here. The generalization was made from the front end's `WPCard`
+ * (212 lines), and the domain did not move together with the shape.
  *
- * ВЫБОР ОБЪЯВЛЯЕТСЯ СОСТОЯНИЕМ, а не рамкой. `aria-pressed` у кнопки говорит
- * скринридеру, выбрана плитка или нет; рамка — сигнал для глаз, и человек,
- * который её не видит, иначе не узнает о выборе вовсе. Подпись кнопки при этом
- * состояние НЕ повторяет: `aria-pressed` уже объявлен, и «Выбрать» вместе с ним
- * читается однозначно.
+ * SELECTION IS DECLARED AS STATE, not as a border. The button's `aria-pressed` tells screen readers
+ * whether the tile is selected; the border is a visual signal, and a person who cannot see it would
+ * otherwise not learn about the selection at all. The button label does NOT repeat the state:
+ * `aria-pressed` is already announced, and "Select" read together with it is unambiguous.
  */
 export const MediaCard = forwardRef<HTMLDivElement, MediaCardProps>(function MediaCard(
   {
@@ -87,11 +83,11 @@ export const MediaCard = forwardRef<HTMLDivElement, MediaCardProps>(function Med
       ref={ref}
       className={cn(
         "group border-line-soft bg-bg-2 relative flex flex-col overflow-hidden rounded-xl border transition-colors",
-        // Рамка выбранной плитки — по `selected`, а не по наличию своей оси.
-        // Внутри `VirtualGrid` ось у сетки, карточка — показ: `selected` без
-        // `onSelectedChange`. Рамка по одной своей оси оставляла выбранную
-        // плитку в сетке без всякого знака — при том что справочник
-        // это обещал. Без `selected` класса выбора в разметке нет, как и было.
+        // The border of a selected tile follows `selected`, not the presence of its own axis.
+        // Inside `VirtualGrid` the axis belongs to the grid and the card only displays: `selected`
+        // without `onSelectedChange`. A border driven only by its own axis left a selected tile in
+        // the grid without any sign, although the Reference promised one. Without `selected` there
+        // is no selection class in the markup, as before.
         selected && "border-accent-strong ring-accent-strong/40 ring-2",
         className
       )}
@@ -109,30 +105,28 @@ export const MediaCard = forwardRef<HTMLDivElement, MediaCardProps>(function Med
 
       {(actions != null || selectable) && (
         /*
-          Оверлей ВСЕГДА в разметке. Прячется прозрачностью, а показывается при
-          наведении, при фокусе внутри (`focus-within`) и когда плитка выбрана —
-          иначе снятая с выбора плитка теряла бы кнопку под курсором.
+          The overlay is ALWAYS in the markup. It is hidden with opacity and shown on hover, on focus
+          within (`focus-within`) and when the tile is selected — otherwise a tile just deselected
+          would lose its button under the cursor.
         */
         <div
           className={cn(
             /*
-              Указатель снимается ВМЕСТЕ с прозрачностью и возвращается вместе
-              с ней. `opacity` на попадание указателя не влияет: невидимый
-              оверлей продолжал ловить касания, и на телефоне — где `:hover` не
-              срабатывает и панель прозрачна навсегда — касание правого верхнего
-              угла плитки попадало в невидимую кнопку выбора вместо перехода по
-              плитке. Соседний блок бейджей эту защиту имеет с самого начала.
+              Pointer events are turned off TOGETHER with the opacity and come back with it. `opacity` does
+              not affect hit testing: an invisible overlay kept catching touches, and on a phone — where
+              `:hover` does not fire and the panel is transparent forever — a touch on the tile's top-right
+              corner landed on the invisible select button instead of opening the tile. The neighboring
+              badges block has had this protection from the start.
             */
             "pointer-events-none absolute top-2 right-2 flex items-center gap-1 opacity-0 transition-opacity",
             "group-focus-within:pointer-events-auto group-focus-within:opacity-100",
             "group-hover:pointer-events-auto group-hover:opacity-100",
-            // Грубый указатель `:hover` не даёт вовсе — там панель открыта
-            // всегда, иначе действия недостижимы.
+            // A coarse pointer gives no `:hover` at all: there the panel is open
+            // always, otherwise the actions would be unreachable.
             "[@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100",
-            // Выбранная плитка держит оверлей открытым: иначе снять выбор можно
-            // было бы только вернув курсор, а с клавиатуры — только вернув фокус.
-            // В сетке в оверлее флажок её оси (`Checkbox slot="selection"`) —
-            // правило то же.
+            // A selected tile keeps the overlay open: otherwise the selection could only be cleared by moving
+            // the cursor back, and from the keyboard only by moving focus back. In a grid the overlay
+            // holds the checkbox of its axis (`Checkbox slot="selection"`) — the same rule applies.
             selected && "pointer-events-auto opacity-100"
           )}
         >

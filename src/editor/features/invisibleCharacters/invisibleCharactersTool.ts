@@ -7,34 +7,32 @@ import type { InvisibleCharactersToolOptions } from "../../core/toolOptions.js";
 import { toggleInvisibleCharacters } from "./invisibleCharactersVisible.js";
 
 /**
- * Умолчание Опции: невидимые символы скрыты. У расширения Tiptap по умолчанию
- * `true`, но Инструмент входит в `full`, и обновление кита не должно менять вид
- * каждого такого Редактора: показ включает автор, кнопкой или Опцией.
+ * The default Tool option: invisible characters are hidden. The Tiptap extension defaults to
+ * `true`, but the Tool is part of `full`, and a kit update must not change how each such Editor
+ * looks. The author turns the display on, with the button or the option.
  */
 export const INVISIBLE_CHARACTERS_DEFAULTS: InvisibleCharactersToolOptions = { visible: false };
 
 /**
- * Показ невидимых символов на описании Инструмента (ADR-0048). Это Decoration
- * поверх Документа: пробелы, мягкие переносы (`Shift+Enter`) и концы абзацев
- * рисуются нулевой ширины виджетами, которых нет в Документе. `value`, `onChange`,
- * `getHTML()`, Markdown и `RichTextView` их не видят, Схема, санитайзер и
- * Markdown не меняются.
+ * Showing invisible characters on the Tool's description (ADR-0048). This is a Decoration over
+ * the Document: spaces, hard breaks (`Shift+Enter`) and paragraph ends are drawn by zero-width
+ * widgets that are not in the Document. `value`, `onChange`, `getHTML()`, Markdown and
+ * `RichTextView` do not see them, and the Schema, the sanitizer and Markdown do not change.
  *
- * «Невидимые символы» — пункт-флажок меню «…» фиксированной Панели
- * (`FormatMenus.tsx`), а не кнопка ряда и не запись `buttons`: отдельная кнопка
- * переносила `full` во вторую строку в колонке 640 px (решение владельца), а
- * записи `buttons` общие у фиксированной и плавающей Панели, где переключатель
- * режима показа Документа над выделением ни к чему. Сочетания и пункта Меню
- * вставки у Инструмента нет.
+ * "Invisible characters" is a checkbox item in the "…" menu of the fixed Toolbar
+ * (`FormatMenus.tsx`), not a button in the row and not a `buttons` entry. A separate button pushed
+ * `full` onto a second row in the 640 px column (the owner's decision). The `buttons` entries are
+ * shared by the fixed and the floating Toolbar, where a switch for showing the Document's
+ * characters makes no sense above a selection. The Tool has no shortcut and no Insert menu item.
  */
 export const INVISIBLE_CHARACTERS_TOOL: ToolDescriptor = {
   name: "invisibleCharacters",
   defaults: INVISIBLE_CHARACTERS_DEFAULTS,
   checks: { visible: (value) => typeof value === "boolean" },
   /*
-    Свой CSS расширения (`injectCSS`) не нужен: оно вешало бы `<style>` в `head`
-    страницы со своим цветом `#aaa`, мимо токенов темы. Вид маркеров задаёт кит
-    (`prose.ts`) по тем же классам.
+    The extension's own CSS (`injectCSS`) is not needed. It would add a `<style>` to the page's
+    `head` with its own `#aaa` color, bypassing the theme tokens. The kit sets the look of the
+    markers (`prose.ts`) through the same classes.
   */
   engine: (_context, options) => [
     InvisibleCharacters.configure({
@@ -43,8 +41,8 @@ export const INVISIBLE_CHARACTERS_TOOL: ToolDescriptor = {
     }),
   ],
   /*
-    `editor.commands` читается при каждом вызове, как у `search`. В HTML-режиме
-    Документа на экране нет, и переключать нечего: `false` (меню «…» в этом режиме заперто).
+    `editor.commands` is read on every call, as in `search`. In Source mode the Document is not
+    on screen, so there is nothing to toggle: `false` (the "…" menu is locked in that mode).
   */
   commands: ({ editor, bridge }): InvisibleCharactersToolCommands => ({
     toggle: () => !bridge.sourceOpen() && toggleInvisibleCharacters(editor),

@@ -9,89 +9,92 @@ story: src/components/inputs/PasswordInput.stories.tsx
 
 # PasswordInput
 
-## Кратко для AI
+## Summary for AI
 
-Поле пароля на слотах `TextControl`: кнопка показа в `trailing`, предупреждение
-о Caps Lock под полем. Своей рамки не рисует. `autocomplete` **обязателен** и
-приходит пропом — кит не знает, вход это или смена пароля.
+A password field built on the slots of `TextControl`: a show button in `trailing`,
+a Caps Lock warning under the field. It renders no border of its own. `autocomplete`
+is **required** and comes as a prop — the kit does not know whether this is a
+sign-in or a password change.
 
-## Когда использовать
+## When to use
 
-- Любое поле пароля: вход, регистрация, смена пароля, подтверждение действия.
+- Any password field: sign-in, sign-up, password change, confirming an action.
 
-## Когда не использовать
+## When not to use
 
-- Для кода из СМС используйте `PinInput`: там N коротких полей и вставка целого кода.
-- Для секрета, который нельзя показывать (токен на экране настроек), используйте
-  обычный `TextControl` с `type="password"` и без кнопки показа.
+- For an SMS code, use `PinInput`: it has N short fields and accepts a whole pasted code.
+- For a secret that must never be shown (a token on a settings screen), use a
+  regular `TextControl` with `type="password"` and no show button.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { FormField, PasswordInput } from "@olddevs/ui";
 
-<FormField label="Пароль" htmlFor="pwd">
+<FormField label="Password" htmlFor="pwd">
   <PasswordInput id="pwd" autoComplete="current-password" />
 </FormField>;
 ```
 
-## Пропы
+## Props
 
-| Проп              | Умолчание         | Назначение                                                          |
-| ----------------- | ----------------- | ------------------------------------------------------------------- |
-| `toggleLabel`     | каталог сообщений | Подпись кнопки показа. Одна на оба состояния.                       |
-| `capsLockWarning` | `true`            | Предупреждение о включённом Caps Lock под полем.                    |
-| `shellClassName`  | —                 | Классы на оболочку с рамкой: ширина, скругление, отступы.           |
-| остальное         | —                 | Уходит на `input` насквозь: `autoComplete`, `required`, `disabled`. |
+| Prop              | Default         | Purpose                                                                         |
+| ----------------- | --------------- | ------------------------------------------------------------------------------- |
+| `toggleLabel`     | message catalog | The label of the show button. One for both states.                              |
+| `capsLockWarning` | `true`          | A warning under the field that Caps Lock is on.                                 |
+| `shellClassName`  | —               | Classes for the shell with the border: width, corner radius, spacing.           |
+| the rest          | —               | Passed straight through to the `input`: `autoComplete`, `required`, `disabled`. |
 
-## `autocomplete` не имеет значения по умолчанию
+## `autocomplete` has no default value
 
-Отсутствие умолчания — решение, а не пропуск. Правильное значение зависит от того, что за форма:
-`current-password` на входе, `new-password` в смене пароля и в регистрации.
-Кит этого не знает, а неверное значение хуже отсутствующего — менеджер паролей
-предложит подставить старый пароль в поле нового.
+The missing default is a decision, not an omission. The right value depends on what kind of
+form it is: `current-password` on sign-in, `new-password` on password change and
+on sign-up. The kit does not know this, and a wrong value is worse than a missing
+one — the password manager would offer to fill the old password into the new
+password field.
 
 ```tsx
-<PasswordInput autoComplete="current-password" />  {/* вход */}
-<PasswordInput autoComplete="new-password" />      {/* смена и регистрация */}
+<PasswordInput autoComplete="current-password" />  {/* sign-in */}
+<PasswordInput autoComplete="new-password" />      {/* password change and sign-up */}
 ```
 
-## Кнопка показа: постоянная подпись плюс `aria-pressed`
+## The show button: a constant label plus `aria-pressed`
 
-Состояние объявляет атрибут `aria-pressed`, а не имя. Кнопка, у которой меняется
-и подпись, и состояние, читается противоречиво — «Скрыть пароль, нажато»;
-правило ARIA Authoring Practices Guide (APG) для переключателей обратное: имя
-постоянно, меняется `aria-pressed`.
+The state is announced by the `aria-pressed` attribute, not by the name. A button
+whose label and state both change reads as contradictory — "Hide password,
+pressed"; the ARIA Authoring Practices Guide (APG) rule for toggles is the
+opposite: the name is constant, `aria-pressed` changes.
 
-Без атрибута скринридер вообще не сообщит, что пароль сейчас открыт на экране.
-Это состояние безопасности.
+Without the attribute, a screen reader does not announce that the password is
+currently visible on the screen. That is a security state.
 
-**Каретка при переключении сохраняется.** Смена `type` сбрасывает выделение в
-конец значения, и пользователь, открывший пароль посреди правки, теряет место.
-Позиция снимается до переключения и возвращается после — **без переноса
-фокуса**: кнопку нажали намеренно, и увозить с неё фокус — значит ломать
-повторное нажатие с клавиатуры.
+**The caret is preserved on toggling.** Changing `type` resets the selection to the
+end of the value, and a user who revealed the password in the middle of an edit
+loses their place. The position is saved before the toggle and restored after it —
+**without moving focus**: the button was pressed on purpose, and taking focus away
+from it would break pressing it again from the keyboard.
 
-## Caps Lock читается у клавиатуры, а не угадывается
+## Caps Lock is read from the keyboard, not guessed
 
-Включён ли Caps Lock, берётся из `getModifierState("CapsLock")` на клавиатурном
-событии. Распространённый приём «символ пришёл заглавным без Shift» здесь не
-работает по двум причинам: в поле пароля символов не видно, а пароль из одних
-заглавных — законный.
+Whether Caps Lock is on comes from `getModifierState("CapsLock")` on the keyboard
+event. The common trick "the character comes in uppercase without Shift" fails
+here for two reasons: in a password field the characters are not visible, and a
+password made of capitals only is legitimate.
 
-Область предупреждения (`role="status"`) существует в разметке **до** появления
-текста: живой регион, вставленный вместе со своим содержимым, скринридер не
-объявляет. Пока текста нет, она скрыта из раскладки и место не занимает.
+The warning area (`role="status"`) exists in the markup **before** the text
+appears: a live region inserted together with its content is not announced by the
+screen reader. While there is no text, it is hidden from the layout and takes no
+space.
 
-Предупреждение снимается при уходе из поля: оно относится к набору текста в
-поле, а не к состоянию клавиатуры вообще.
+The warning is cleared when leaving the field: it concerns typing in the field, not the
+keyboard state in general.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/inputs/PasswordInput.tsx`. Композиция на `TextControl` —
+- Implementation: `src/components/inputs/PasswordInput.tsx`. The composition on `TextControl` is
   ADR-0009,
-  решение по компоненту — ADR-0025,
-  состав волны — ADR-0024.
-- Тесты: `tests/password-input.test.tsx` — объявление состояния, постоянство
-  подписи, каретка, Caps Lock, единственная рамка.
-- История: `src/components/inputs/PasswordInput.stories.tsx`.
+  the decision on the component is in ADR-0025,
+  the wave contents are in ADR-0024.
+- Tests: `tests/password-input.test.tsx` — state announcement, a constant
+  label, the caret, Caps Lock, the single border.
+- Story: `src/components/inputs/PasswordInput.stories.tsx`.

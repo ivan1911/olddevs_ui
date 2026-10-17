@@ -15,61 +15,61 @@ import { placeContainerBlock } from "../../core/containers.js";
 import { detailsTokenizer, parseDetails, renderDetails } from "./detailsMarkdown.js";
 
 /**
- * Сворачиваемый Блок (Details) — Блок-контейнер из двух детей: заголовок
- * (`detailsSummary`, строчное содержимое) и содержимое (`detailsContent`, Блоки).
- * Движок — расширение Details из Tiptap (API по нему, ADR-0048: заказчика при
- * выпуске не было); кит добавляет Схему, санитайзер, Markdown и вставку.
+ * Collapsible block (Details): a container Block of two children, a title (`detailsSummary`, inline
+ * content) and the content (`detailsContent`, Blocks). The engine is the Details extension from
+ * Tiptap (the API follows it, ADR-0048: there was no requesting screen at release time). The kit
+ * adds the Schema, the sanitizer, Markdown and paste.
  *
- * HTML — КАК У TIPTAP, ТЕГАМИ КИТА, без классов и `style`:
+ * HTML IS AS IN TIPTAP, WITH THE KIT'S TAGS, without classes and `style`:
  *
  * ```html
  * <details>
- *   <summary>Заголовок</summary>
- *   <div data-type="detailsContent"><p>Блоки</p></div>
+ *   <summary>Title</summary>
+ *   <div data-type="detailsContent"><p>Blocks</p></div>
  * </details>
  * ```
  *
- * `open` пишется только с Опцией `persist` (по умолчанию нет): раскрытый при
- * правке Блок не публикуется раскрытым без спроса. Обёртка содержимого
- * (`div[data-type="detailsContent"]`) нужна движку, чтобы отличить содержимое от
- * заголовка; чужой HTML без неё (GitHub, браузер: `<details><summary>…</summary>
- * <p>…</p></details>`) читается так же, Схема достраивает её сама.
+ * `open` is written only with the `persist` option (off by default): a Block expanded while editing
+ * is not published expanded without asking. The content wrapper (`div[data-type="detailsContent"]`)
+ * is needed by the engine to tell the content from the title. Foreign HTML without it (GitHub, or
+ * the browser's `<details><summary>…</summary><p>…</p></details>`) is read the same way, because the
+ * Schema supplies the wrapper itself.
  *
- * ВЛОЖЕННОСТЬ — КАК У ЛЮБОГО БЛОКА. Details входит в группу `block`: он бывает на
- * верхнем уровне, в колонке Раскладки, Обёртке, цитате, ячейке и в содержимом
- * другого Details. Раскладки и Обёртки внутри него нет — их принимают только
- * Документ и колонка. `isolating`, как у Обёртки: Backspace в начале Блока не
- * выводит текст наружу.
+ * NESTING IS AS FOR ANY BLOCK. Details belongs to the `block` group: it can sit at the top level, in
+ * a column of a Column layout, in a Wrapper, in a quote, in a cell, and in the content of another
+ * Details. A Column layout and a Wrapper are not allowed inside it: only the Document and a column
+ * accept them. `isolating`, as for a Wrapper: Backspace at the start of the Block does not pull the
+ * text out.
  *
- * Вид Блока в Редакторе — представление узла из Tiptap: `div` с кнопкой
- * раскрытия и классом `is-open`; открытость при `persist: false` живёт только в
- * этом DOM, не в Документе и не в истории правок.
+ * The look of the Block in the Editor is the node view from Tiptap: a `div` with an expand button
+ * and the `is-open` class. With `persist: false` the open state lives only in this DOM, not in the
+ * Document and not in the edit history.
  */
 
-/** Имена узлов Схемы движка. */
+/** Node names in the engine's Schema. */
 export const DETAILS_NODE = "details";
 export const DETAILS_SUMMARY_NODE = "detailsSummary";
 export const DETAILS_CONTENT_NODE = "detailsContent";
 
-/** Имя обёртки содержимого в `data-type`: так её пишет Tiptap. */
+/** Name of the content wrapper in `data-type`: this is how Tiptap writes it. */
 export const DETAILS_CONTENT_TYPE = DETAILS_CONTENT_NODE;
 
 export interface DetailsEngineOptions {
-  /** Пишется ли открытость Блока в Документ (Опция `persist`). */
+  /** Whether the open state of the Block is written into the Document (the `persist` option). */
   persist: boolean;
-  /** Имя кнопки раскрытия по тексту заголовка: из каталога, читается при каждой перерисовке. */
+  /** Name of the expand button by the title's text: from the message catalog, read on every render. */
   toggleLabel: (text: string) => string;
 }
 
-/** Метка транзакции: позиция только что вставленного Блока, который надо раскрыть. */
+/** Transaction meta: the position of the just-inserted Block that has to be expanded. */
 const OPEN_ON_INSERT = new PluginKey<number | null>("detailsOpenOnInsert");
 
 /**
- * Раскрыть Блок, вставленный из Меню вставки: открытость при `persist: false` —
- * класс в DOM представления, а не атрибут узла, поэтому раскрывает её щелчок по
- * кнопке, как у автора. Пустой Блок, который не раскрыт, — заголовок без места
- * под содержимое, а набирать его автор пришёл не в заголовок. Делается после
- * обновления DOM и вне транзакции: кнопка Tiptap возвращает фокус в Документ.
+ * Expand a Block inserted from the Slash menu. With `persist: false` the open state is a class in the
+ * DOM of the node view, not a node attribute, so a click on the button expands it, just as the
+ * author's own click would. An empty Block that stays collapsed is a title with no place for content,
+ * while the author came to type into the content, not into the title. This runs after the DOM update
+ * and outside the transaction, because Tiptap's button returns focus to the Document.
  */
 const openOnInsert = new Plugin<number | null>({
   key: OPEN_ON_INSERT,
@@ -92,12 +92,12 @@ const openOnInsert = new Plugin<number | null>({
   }),
 });
 
-/** Текст заголовка Блока — для имени кнопки. */
+/** Text of the Block's title, for the button's name. */
 function summaryText(node: PmNode): string {
   return node.firstChild?.type.name === DETAILS_SUMMARY_NODE ? node.firstChild.textContent : "";
 }
 
-/** Виден ли узел на позиции: свёрнутое содержимое спрятано, и у него нет `offsetParent`. */
+/** Whether the node at the position is visible: collapsed content is hidden and has no `offsetParent`. */
 function isVisibleAt(editor: Editor, pos: number): boolean {
   const { node } = editor.view.domAtPos(pos);
   const element = node.nodeType === Node.ELEMENT_NODE ? (node as HTMLElement) : node.parentElement;
@@ -105,9 +105,9 @@ function isVisibleAt(editor: Editor, pos: number): boolean {
 }
 
 /**
- * Enter в заголовке раскрытого Блока, где содержимое начинается пустым Блоком:
- * каретка встаёт в него. Не в заголовке, свёрнутый Блок и непустое начало —
- * `false`, дело Tiptap.
+ * Enter in the title of an expanded Block whose content starts with an empty Block: the caret moves
+ * into it. Anywhere else (not in the title, a collapsed Block, or a non-empty start) it returns
+ * `false`, which is Tiptap's business.
  */
 function moveIntoEmptyContent(editor: Editor): boolean {
   const { selection } = editor.state;
@@ -124,10 +124,10 @@ function moveIntoEmptyContent(editor: Editor): boolean {
 }
 
 /**
- * Backspace в заголовке. Safari стирает при нём весь текст `summary` (баг
- * WebKit), поэтому Tiptap удаляет знак сам — но один знак UTF-16, и эмодзи с
- * суррогатной парой терял половину. Здесь удаляется последний графем:
- * `Intl.Segmenter`, а без него — кодовая точка.
+ * Backspace in the title. Safari deletes the whole text of `summary` on it (a WebKit bug), so Tiptap
+ * removes the character itself. But it removes one UTF-16 unit, and an emoji with a surrogate pair
+ * lost half of itself. Here the last grapheme is removed: `Intl.Segmenter`, and without it, a code
+ * point.
  */
 function lastGraphemeLength(text: string): number {
   if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
@@ -143,10 +143,10 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     detailsBlock: {
       /**
-       * Вставить пустой сворачиваемый Блок под текущим Блоком; пустой абзац
-       * заменяется. Каретка — в заголовке. Блок раскрыт: с `persist` — атрибутом,
-       * без него — сразу после вставки. Из заголовка, списка и ячейки он встаёт под
-       * их Блоком, из Обёртки, колонки и цитаты — внутри них.
+       * Insert an empty collapsible Block below the current Block; an empty paragraph is replaced. The
+       * caret goes into the title. The Block is expanded: with `persist`, through an attribute; without
+       * it, right after insertion. From a title, a list or a cell it goes below their Block; from a
+       * Wrapper, a column or a quote, it goes inside them.
        */
       insertDetails: () => ReturnType;
     };
@@ -154,12 +154,12 @@ declare module "@tiptap/core" {
 }
 
 /**
- * Узел Details кита: Tiptap плюс вставка, Backspace без потери знака,
- * раскрытие вставленного и Markdown сырым HTML.
+ * The Details node of the kit: Tiptap plus insertion, Backspace without losing a character, expanding
+ * an inserted Block, and Markdown with raw HTML.
  */
 function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
   return Details.extend({
-    // Свой Markdown (`detailsMarkdown.ts`): вместо `:::details` — сырой HTML.
+    // The kit's own Markdown (`detailsMarkdown.ts`): raw HTML instead of `:::details`.
     markdownTokenizer: detailsTokenizer,
     parseMarkdown(token, helpers) {
       return parseDetails(token, helpers, this.options.persist);
@@ -183,17 +183,17 @@ function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
       return {
         ...upstream,
         /*
-          Enter в заголовке раскрытого Блока Tiptap ставит НОВЫЙ пустой абзац в
-          начало содержимого. У только что вставленного Блока содержимое — уже
-          один пустой абзац, и новый оставил бы пустую строку в конце после
-          набранного: каретка идёт в тот абзац, что есть.
+          Enter in the title of an expanded Block: Tiptap puts a NEW empty paragraph at the start of
+          the content. A just-inserted Block already has one empty paragraph as its content, and a new
+          one would leave an empty line at the end, after what is typed. So the caret goes to the
+          paragraph that is already there.
         */
         Enter: (props) => moveIntoEmptyContent(props.editor) || (upstream.Enter?.(props) ?? false),
         Backspace: () => {
           const { selection } = this.editor.state;
           const { empty, $anchor } = selection;
           if (!empty || $anchor.parent.type.name !== DETAILS_SUMMARY_NODE) return false;
-          // Начало заголовка — Блок распадается (`unsetDetails`).
+          // The start of the title: the Block falls apart (`unsetDetails`).
           if ($anchor.parentOffset === 0) return this.editor.commands.unsetDetails();
           const before = $anchor.parent.textBetween(0, $anchor.parentOffset);
           const size = lastGraphemeLength(before);
@@ -211,28 +211,26 @@ function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
         const view = parentView(props);
         const toggle = view.dom.querySelector<HTMLButtonElement>(":scope > button");
         /*
-          Кнопка раскрытия лежит внутри Документа, и без этого её события
-          забирал бы ProseMirror: `Enter` на кнопке резал бы строку, а щелчок
-          двигал каретку. Кнопку обслуживает только она сама.
+          The expand button lies inside the Document. Without this, ProseMirror would take its
+          events: `Enter` on the button would cut a line, and a click would move the caret. Only the
+          button itself handles them.
         */
         const stopEvent = (event: Event) =>
           event.target instanceof Node && !!toggle && toggle.contains(event.target);
         /*
-          Кнопка стоит внутри редактируемого Документа и без этого сама
-          редактируема. Chrome при любой клавише переводит фокус с такой кнопки
-          на редактируемый корень ещё до `keydown`: Enter и Space не доходили до
-          неё, и Блок не раскрывался с клавиатуры. Нередактируемая кнопка
-          сохраняет фокус и получает клавишу.
+          The button sits inside the editable Document and would be editable itself because of that.
+          On every key, Chrome moves focus from such a button to the editable root before `keydown`,
+          so Enter and Space never reached it and the Block did not expand from the keyboard. A
+          non-editable button keeps focus and gets the key.
         */
         toggle?.setAttribute("contenteditable", "false");
         /*
-          Щелчок Tiptap возвращает фокус в Документ — мышь это не задевает, а
-          клавиатуру выбросило бы с кнопки. Клавиатурный щелчок узнаём по Enter
-          или Space на самой кнопке: `detail` равен нулю и у `click()` из кода
-          (раскрытие вставленного Блока), а там фокус должен остаться в
-          Документе. Фокус Tiptap ставит кадром позже (`requestAnimationFrame`),
-          поэтому и возвращаем его кадром: колбэк стоит в очереди после Tiptap.
-          `aria-expanded` озвучивается там, где человек.
+          Tiptap's click returns focus to the Document. A mouse is not affected by this, but the
+          keyboard would be thrown off the button. A keyboard click is recognized by Enter or Space
+          on the button itself. `detail` is zero for a `click()` called from code too (expanding an
+          inserted Block), and there the focus must stay in the Document. Tiptap sets focus one frame
+          later (`requestAnimationFrame`), so we return it one frame later too: the callback sits in
+          the queue after Tiptap's. `aria-expanded` is announced where the person is.
         */
         let byKey = false;
         toggle?.addEventListener("keydown", (event) => {
@@ -245,10 +243,10 @@ function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
           if (!byKey) return;
           byKey = false;
           /*
-            До кадра человек может уйти дальше (Tab к кнопке следующего Блока),
-            а фокус Tiptap кадром позже утащит его и оттуда в Документ. Поэтому
-            запоминаем, куда фокус перевёл сам человек, и возвращаем туда, а не
-            на эту кнопку: иначе следующая клавиша ушла бы не той кнопке.
+            Until the frame, the person may move on (Tab to the next Block's button), and Tiptap's
+            focus, a frame later, would drag them into the Document from there too. So we remember
+            where the person's own focus moved, and return it there, not to this button: otherwise the
+            next key would reach the wrong button.
           */
           const owner = toggle.ownerDocument;
           const root = view.dom.closest(".ProseMirror");
@@ -260,7 +258,7 @@ function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
           requestAnimationFrame(() => {
             owner.removeEventListener("focusin", follow, true);
             const active = owner.activeElement;
-            // Фокус в Документе — его поставил Tiptap; где-то ещё — его увёл человек.
+            // Focus in the Document: Tiptap put it there. Anywhere else: the person moved it.
             if (target.isConnected && (active === root || active === target)) {
               target.focus({ preventScroll: true });
             }
@@ -275,7 +273,7 @@ function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
   }).configure({
     persist,
     renderToggleButton: ({ element, isOpen, node }) => {
-      // Имя кнопки — заголовок Блока; раскрыт он или нет, говорит `aria-expanded`.
+      // The button's name is the Block's title; whether it is expanded is told by `aria-expanded`.
       element.setAttribute("aria-label", toggleLabel(summaryText(node)));
       element.setAttribute("aria-expanded", String(isOpen));
     },
@@ -283,13 +281,13 @@ function createDetails({ persist, toggleLabel }: DetailsEngineOptions) {
 }
 
 /**
- * Заголовок: `details > summary`. Tiptap разбирает любой `summary`, а `summary`
- * вне Блока — это текст, который не должен превратиться в Блок целиком.
+ * The title: `details > summary`. Tiptap parses any `summary`, and a `summary` outside a Block is
+ * text that must not turn into a Block as a whole.
  */
 const KitSummary = DetailsSummary.extend({
   parseHTML: () => [{ tag: "details > summary" }],
-  // Markdown Блока пишет и читает сам Блок (`detailsMarkdown.ts`): `:::detailsSummary`
-  // Tiptap кит не принимает.
+  // The Block's Markdown is written and read by the Block itself (`detailsMarkdown.ts`). The kit
+  // does not accept Tiptap's `:::detailsSummary`.
   markdownTokenizer: {
     name: DETAILS_SUMMARY_NODE,
     level: "block",
@@ -300,10 +298,10 @@ const KitSummary = DetailsSummary.extend({
 
 const KitContent = DetailsContent.extend({
   /*
-    Содержимое — контейнер Блоков (`isBlockContainer`, `blockCommands.ts`): его
-    дети — Блоки со своей ручкой, и «Вверх», «Вниз», «Добавить ниже» и `⌥⇧↑/↓`
-    остаются внутри него. Флаг в Схеме ставит кит из Признака описания
-    (`blocks`, `extensions.ts`).
+    The content is a container of Blocks (`isBlockContainer`, `blockCommands.ts`). Its children are
+    Blocks with their own handle, and "Move up", "Move down", "Add below" and `⌥⇧↑/↓` stay inside it.
+    The flag in the Schema is set by the kit from the Block trait of the description (`blocks`,
+    `extensions.ts`).
   */
   markdownTokenizer: {
     name: DETAILS_CONTENT_NODE,
@@ -313,15 +311,15 @@ const KitContent = DetailsContent.extend({
   },
 });
 
-/** Всё, что нужно Блоку: узел, заголовок и содержимое. */
+/** Everything a Block needs: the node, the title and the content. */
 export function detailsExtensions(options: DetailsEngineOptions): Extensions {
   return [createDetails(options), KitSummary, KitContent];
 }
 
 /**
- * Пустой Блок с одним абзацем в содержимом — под текущим Блоком, в ближайшем
- * вверх узле, который его принимает (правила места общие с Раскладкой и
- * Обёрткой, `placeContainerBlock`). Каретка — в заголовке.
+ * An empty Block with one paragraph in its content, placed below the current Block, in the nearest
+ * node above that accepts it. The placement rules are shared with the Column layout and the Wrapper
+ * (`placeContainerBlock`). The caret goes into the title.
  */
 function placeDetails(tr: Transaction, persist: boolean): void {
   const { schema } = tr.doc.type;
@@ -331,7 +329,7 @@ function placeDetails(tr: Transaction, persist: boolean): void {
   ]);
   placeContainerBlock(tr, details);
   if (persist) return;
-  // Позиция Блока — над кареткой, в заголовке: два уровня вверх.
+  // The Block's position: the caret is in its title, two levels up.
   const { $from } = tr.selection;
   for (let depth = $from.depth; depth > 0; depth--) {
     if ($from.node(depth).type.name === DETAILS_NODE) {
@@ -341,7 +339,7 @@ function placeDetails(tr: Transaction, persist: boolean): void {
   }
 }
 
-/** Сворачиваемый Блок под позицией `pos`: сам Блок или Блок прямо в его содержимом. */
+/** The collapsible Block at position `pos`: the Block itself, or a Block directly in its content. */
 function detailsAt(tr: Transaction, pos: number): { from: number; node: PmNode } | null {
   const node = tr.doc.nodeAt(pos);
   if (node?.type.name === DETAILS_NODE) return { from: pos, node };
@@ -353,10 +351,10 @@ function detailsAt(tr: Transaction, pos: number): { from: number; node: PmNode }
 }
 
 /**
- * Снять Блок в `pos` (самого Блока или Блока в его содержимом): заголовок
- * становится абзацем, Блоки содержимого идут за ним. Одна правка — отмена одна.
- * Каретка остаётся в своём тексте (в заголовке — в абзаце из него); выделенный
- * узлом Блок исчезает, и каретка встаёт в начало абзаца. `false` — Блока в `pos` нет.
+ * Unset the Block at `pos` (the Block itself, or a Block in its content): the title becomes a
+ * paragraph, and the content's Blocks follow it. One edit, so one undo. The caret stays in its own
+ * text (in the title, that is in the paragraph made from it). A Block selected as a node disappears,
+ * and the caret goes to the start of the paragraph. `false` means there is no Block at `pos`.
  */
 export function unwrapDetailsAt(tr: Transaction, pos: number): boolean {
   const found = detailsAt(tr, pos);
@@ -370,8 +368,9 @@ export function unwrapDetailsAt(tr: Transaction, pos: number): boolean {
   const blocks = content?.type.name === DETAILS_CONTENT_NODE ? content.content : Fragment.empty;
   const before = tr.selection;
   const wasNode = before instanceof NodeSelection && before.from === from;
-  // Позиции внутри Блока после замены: заголовок на шаг левее (нет тега `details`),
-  // Блоки содержимого — за абзацем вместо `details`, `summary` и обёртки.
+  // Positions inside the Block after the replacement: the title is one step left (there is no
+  // `details` tag), and the content's Blocks come after the paragraph instead of the `details`,
+  // `summary` and the wrapper.
   const summaryEnd = from + 1 + (summary?.nodeSize ?? 0);
   const delta = from + lead.nodeSize - (summaryEnd + 1);
   const shift = (at: number) => (at < summaryEnd ? at - 1 : at + delta);

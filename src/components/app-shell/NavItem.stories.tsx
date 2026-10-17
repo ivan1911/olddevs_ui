@@ -11,8 +11,8 @@ const meta = {
   parameters: { layout: "padded" },
   args: { label: "Dashboard", href: "#", icon: <DashboardIcon size={20} /> },
   decorators: [
-    // Декораторы meta оборачивают и декоратор истории, поэтому ширину рамки история
-    // задаёт параметром `frameWidth`, а не второй рамкой внутри.
+    // The meta decorators also wrap the story decorator, so the story sets the frame
+    // width with the `frameWidth` parameter rather than with a second frame inside.
     (Story, { parameters }) => (
       <div
         className="border-line-soft bg-bg-1 rounded-lg border p-2.5"
@@ -27,15 +27,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Один пункт с живыми контролами — покрутить пропсы. */
+/** A single item with live controls. Tweak the props. */
 export const Playground: Story = {
   args: { active: false },
 };
 
 /**
- * Состояния подряд. Смысл витрины в них: одиночный экземпляр не покажет, что
- * активный пункт отличается от соседа не только цветом, но и рамкой с фоном, —
- * а это и есть то, что ломается при правке токенов.
+ * States in a row. This is the point of the showcase: a single instance won't show that the
+ * active item differs from its neighbor not only by color but also by a framed background.
+ * That is exactly what breaks when the tokens are edited.
  */
 export const States: Story = {
   render: (args) => (
@@ -55,12 +55,12 @@ export const States: Story = {
 };
 
 /**
- * Иконочный режим. Подпись прячется от глаз, но остаётся доступным именем — то
- * есть навигация не превращается в набор безымянных иконок; проверяется это
- * тестом, а история показывает, как это выглядит.
+ * Icon-only mode. The label is hidden from sight but remains the accessible name, so the
+ * navigation does not turn into a set of unnamed icons. A test checks this; the story
+ * shows what it looks like.
  *
- * `TooltipProvider` здесь обязателен: схлопнутый пункт разворачивает подсказку,
- * и без провайдера Radix бросает. Требование к потребителю, а не к витрине.
+ * `TooltipProvider` is required here: a collapsed item expands a tooltip, and without a
+ * provider Radix throws. This is a requirement on the consumer, not on the showcase.
  */
 export const Collapsed: Story = {
   parameters: { frameWidth: "var(--sidenav-w-collapsed)" },
@@ -83,9 +83,9 @@ export const Collapsed: Story = {
 };
 
 /**
- * Вид кита на элементе потребителя. Здесь это обычная ссылка, в приложении —
- * `next/link` или `<Link>` роутера: кит о маршрутизаторе не знает вовсе, а
- * активность приходит пропом (ADR-0018).
+ * The kit's look applied to the consumer's element. Here it is a plain link; in the app it
+ * is `next/link` or the router's `<Link>`. The kit knows nothing about the router, and the
+ * active state comes in as a prop (ADR-0018).
  */
 export const AsChild: Story = {
   render: (args) => (

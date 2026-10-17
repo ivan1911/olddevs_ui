@@ -60,12 +60,12 @@ export const FromLeft: Story = { render: (args) => <Demo {...args} side="left" /
 export const FromBottom: Story = { render: (args) => <Demo {...args} side="bottom" size="sm" /> };
 
 /**
- * Ящик над чужим оверлеем.
+ * A drawer over a foreign overlay.
  *
- * Приложение со своими слоями держит окна выше умолчания кита, и ящик обязан
- * уметь встать над ними. Слой поднимается ОДНИМ пропом, потому что подложка и
- * панель должны ехать вместе: подними только панель — и затемнение останется
- * под чужим окном, а ящик повиснет над ним без собственного фона.
+ * An application with its own layers keeps its windows above the kit's default, and the drawer
+ * must be able to sit above them. The layer is raised with ONE prop, because the scrim and the
+ * panel must move together: raise only the panel, and the dimming stays under the foreign window
+ * while the drawer hangs above it without its own background.
  */
 export const OverForeignOverlay: Story = {
   render: (args) => (
@@ -84,15 +84,14 @@ export const OverForeignOverlay: Story = {
 };
 
 /**
- * Список, всплывший ИЗНУТРИ ящика: панель `Select` длиннее своей высоты.
+ * A list that opens INSIDE the drawer: the `Select` panel is taller than the drawer.
  *
- * История нужна замку прокрутки, а не виду. Панель портируется в `body`, то
- * есть лежит вне подложки, на которой висит замок Radix, и попадает в его
- * поддерево только через дерево React — ради этого панель ящика и переехала
- * ВНУТРЬ подложки. Колесо над списком обязано крутить его, пока
- * есть куда, и упираться, когда докрутили до конца.
+ * The story is for the scroll lock, not the look. The panel is portaled into `body`, so it sits
+ * outside the scrim where Radix's scroll lock lives, and it gets into that lock's subtree only
+ * through the React tree. That is why the drawer's panel was moved INSIDE the scrim. The wheel over
+ * the list must scroll it while there is room, and stop when it reaches the end.
  *
- * Ящик открыт сразу: тест колеса начинается с открытой панели, а не с кнопки.
+ * The drawer is open from the start: the wheel test begins with an open panel, not with a button.
  */
 export const SelectInside: Story = {
   render: (args) => {

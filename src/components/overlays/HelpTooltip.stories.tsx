@@ -20,12 +20,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Триггер в покое. Раскрывается по клику — поповер живёт в портале. */
+/** The trigger at rest. It expands on click; the popover lives in a portal. */
 export const Playground: Story = {};
 
 /**
- * С подсказкой о горячей клавише. Комбинация приходит строкой целиком:
- * модификатор зависит от платформы, и знает о ней потребитель, а не пакет.
+ * With a hint about a keyboard shortcut. The combination arrives as one whole string: the modifier
+ * depends on the platform, and the consumer knows about it, not the package.
  */
 export const WithShortcut: Story = {
   args: {
@@ -34,7 +34,7 @@ export const WithShortcut: Story = {
   },
 };
 
-/** Узкая подсказка без заголовка — только текст. */
+/** A narrow hint without a title: just text. */
 export const WithoutTitle: Story = {
   args: {
     title: undefined,

@@ -21,9 +21,9 @@ const FLAGS = ["matchCase", "wholeWord", "regex"] as const;
 export interface SearchPanelProps {
   editor: Editor;
   /**
-   * Запрос на фокус: каждое открытие (кнопка, `Mod+F`, `Mod+Alt+F`, Хэндл)
-   * приносит новый `token`, и панель ставит фокус заново — повторный `Mod+F`
-   * при открытой панели выделяет текст поля поиска.
+   * The focus request: every opening (the button, `Mod+F`, `Mod+Alt+F`, the Handle)
+   * brings a new `token`, and the panel sets the focus again. Pressing `Mod+F` again
+   * while the panel is open selects the text of the search field.
    */
   focus: { token: number; replace: boolean; query: string };
   onClose: () => void;
@@ -31,24 +31,25 @@ export interface SearchPanelProps {
 }
 
 /**
- * Панель «Поиск и замена»: немодальная, в углу поля. Состояние
- * поиска — в плагине движка (`searchPlugin.ts`); панель держит только то, что
- * набрал автор, и шлёт команды.
+ * The "Find and replace" panel: non-modal, in the corner of the field. The search state
+ * is in the engine's plugin (`searchPlugin.ts`); the panel holds only what the author
+ * typed and sends commands.
  *
- * НЕМОДАЛЬНАЯ, БЕЗ ЛОВУШКИ ФОКУСА: автор ищет, правит найденное в Документе и
- * возвращается в поле поиска — как в Google Docs. Escape из любого её поля
- * закрывает панель и ставит каретку на текущее совпадение.
+ * NON-MODAL, WITHOUT A FOCUS TRAP: the author searches, edits what was found in the
+ * Document and returns to the search field, as in Google Docs. Escape from any of its
+ * fields closes the panel and puts the caret on the current match.
  *
- * Грузится лениво, при первом открытии (`RichTextEditor.tsx`): поля, флажки и
- * переключатель не ложатся на «старт» Редактора, а плагин подсветки маленький и
- * стоит в нём.
+ * Loaded lazily, on the first opening (`RichTextEditor.tsx`): the fields, the checkboxes
+ * and the toggle are not part of the Editor's start bundle, while the highlight plugin is
+ * small and is part of it.
  */
 export function SearchPanel({ editor, focus, onClose, className }: SearchPanelProps) {
   const messages = useMessages().editor;
   /*
-    Запрос и флажки панели — зеркало поиска в движке: на открытии она берёт
-    то, что в нём уже есть (стартовые флажки — Опции Инструмента, запрос — если
-    экран задал его командой), а позже подхватывает такие же правки снаружи.
+    The panel's query and checkboxes mirror the search in the engine: on opening, the panel
+    takes what the engine already has (the starting checkboxes are Tool options, and the query
+    is there if the screen set it with a command), and later it picks up the same kind of
+    changes made from outside.
   */
   const [query, setQuery] = useState(() => focus.query || searchState(editor.state)?.query || "");
   const [replacement, setReplacement] = useState("");
@@ -65,7 +66,8 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
       return {
         current: state?.current ?? -1,
         total: state?.total ?? 0,
-        // Формулы поиск находит, но не заменяет: остались одни они — заменять нечего.
+        // Search finds formulas but does not replace them: if only formulas are left, there is
+        // nothing to replace.
         replaceable: state?.matches.some((match) => !match.formula) ?? false,
         error: state?.error,
         engineQuery: state?.query ?? "",
@@ -75,15 +77,15 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
     },
   });
 
-  // Новое открытие: выделенный в Документе текст — в поле.
+  // A new opening: the text selected in the Document goes into the field.
   useEffect(() => {
     if (focus.query) setQuery(focus.query);
   }, [focus.token, focus.query]);
   /*
-    Фокус и выделение текста поля — один раз на открытие и когда новый запрос
-    уже встал в поле: иначе `select()` выделил бы прежний текст, а смена
-    значения тут же сняла бы выделение. Правка поля автором сюда не попадает:
-    её открытие уже обработано.
+    The focus and the selection of the field's text happen once per opening, and when the new
+    query is already in the field: otherwise `select()` would select the old text, and the
+    value change would immediately drop the selection. The author's typing in the field does
+    not reach this code: the opening itself has already been handled.
   */
   const handled = useRef(-1);
   useLayoutEffect(() => {
@@ -96,13 +98,13 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
   }, [focus.token, focus.query, focus.replace, query]);
 
   /*
-    Текущее совпадение — в видимую область (`revealMatch.ts`): ProseMirror сам
-    не прокручивает, пока фокус в поле поиска. Кадр спустя — когда панель уже
-    разложена и её край можно учесть. Панель и её липкий родитель (Панель
-    Редактора) лежат поверх Документа: совпадение под ними не считается видимым.
+    Scroll the current match into view (`revealMatch.ts`): ProseMirror does not scroll by
+    itself while the focus is in the search field. This happens a frame later, once the panel
+    is laid out and its edge can be accounted for. The panel and its sticky parent (the
+    Editor's Toolbar) lie over the Document: a match under them does not count as visible.
   */
   const reveal = () => scheduleRevealMatch(editor);
-  // Команды Инструмента показывают совпадение тем же путём и обходят эту же панель.
+  // Tool commands reveal a match the same way and step around this same panel.
   useEffect(() => {
     const unregister = registerSearchOverlays(editor, () => [
       panelRef.current,
@@ -116,36 +118,38 @@ export function SearchPanel({ editor, focus, onClose, className }: SearchPanelPr
 
   useEffect(() => {
     editor.commands.setSearch(query, options);
-    // Уже при наборе, а не только по Enter. Выделение Документа не трогаем:
-    // фокус в поле поиска, и набор не должен его уводить.
+    // Already while typing, not only on Enter. The Document's selection is left alone:
+    // the focus is in the search field, and typing must not move it.
     reveal();
-    // `reveal` — новая на каждый рендер, но читает только рефы и `editor`.
+    // `reveal` is a new function on every render, but it reads only the refs and `editor`.
   }, [editor, query, options]);
 
   /*
-    Запрос и флажки, заданные в движке мимо панели (команда `setQuery`), встают
-    в поля. Сверка с движком «вживую», а не по снимку `search`: эффект выше уже
-    протолкнул набранное в этом же коммите, и устаревший снимок откатил бы его.
+    The query and the checkboxes set in the engine around the panel (the `setQuery` command)
+    show up in the fields. The check against the engine is live, not against the `search`
+    snapshot: the effect above has already pushed what was typed in this same commit, and a
+    stale snapshot would roll it back.
   */
   useEffect(() => {
     const live = searchState(editor.state);
     if (!live) return;
     if (live.query !== query) setQuery(live.query);
     if (FLAGS.some((flag) => live.options[flag] !== options[flag])) setOptions(live.options);
-    // Только на смену поиска в движке; набор в полях уходит в движок эффектом выше.
+    // Only when the search changes in the engine. Typing in the fields reaches the engine
+    // through the effect above.
   }, [search.engineQuery, search.engineOptions]);
 
   const step = (direction: 1 | -1) => {
     editor.commands.searchStep(direction);
     reveal();
   };
-  // Заменённое уходит, текущим становится следующее — его и показать.
+  // The replaced match goes away and the next one becomes current, so that is the one to reveal.
   const replaceOne = () => {
     editor.commands.replaceMatch(replacement);
     reveal();
   };
 
-  // Каретку на совпадение и фокус в Документ ставит `RichTextEditor` (`closeSearch`).
+  // `RichTextEditor` (`closeSearch`) puts the caret on the match and the focus into the Document.
   const close = onClose;
 
   const onKeyDown = (event: KeyboardEvent) => {

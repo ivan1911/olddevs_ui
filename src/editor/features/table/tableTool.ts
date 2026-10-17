@@ -3,7 +3,7 @@
 import { Node } from "@tiptap/core";
 import { tableItem } from "../../core/insertItems.js";
 import { cellAttributes } from "./tableCells.js";
-// Только тип: статический импорт модуля втянул бы чанк в «старт».
+// Type only: a static import of the module would pull the chunk into the start bundle.
 import type * as TableChunkModule from "./tableChunk.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import { loaded } from "../../core/toolLoader.js";
@@ -13,16 +13,16 @@ type TableChunk = typeof TableChunkModule;
 const loadTable = () => import("./tableChunk.js");
 
 /**
- * Чанк таблицы, если он уже загружен. Меню «Таблица» и окно вставки рисуются
- * только при живом движке, а движок с таблицей создаётся после загрузчика —
- * поэтому там, где они нужны, чанк уже есть.
+ * The table chunk, if it has already loaded. The Table menu and the insert dialog
+ * render only while the engine is live, and the engine with a table is created
+ * after its loader, so wherever they are needed the chunk is already there.
  */
 export const tableChunk = (): TableChunk | undefined => loaded(loadTable) as TableChunk | undefined;
 
 /*
-  Форма таблицы для Скелета: те же четыре узла с той же моделью содержимого,
-  разметкой `table > tbody > tr > th|td` и атрибутами ячейки (`tableCells.ts`),
-  но без `prosemirror-tables`, клавиатуры и правил Markdown (`tables.ts`).
+  The table's shape for the Skeleton: the same four nodes with the same content model,
+  the `table > tbody > tr > th|td` markup and the cell attributes (`tableCells.ts`),
+  but without `prosemirror-tables`, keyboard handling or the Markdown rules (`tables.ts`).
 */
 const cell = (name: "tableCell" | "tableHeader", tag: "td" | "th") =>
   Node.create({
@@ -54,19 +54,20 @@ const TABLE_SHAPE = [
 ];
 
 /**
- * Таблица на описании Инструмента (ADR-0058, п. 11.1): её нет в
- * `basic`, а Extensions с `prosemirror-tables` тяжелее 10 кБ, поэтому они
- * грузятся тем же загрузчиком, что у своего Инструмента. В том же чанке — меню
- * «Таблица» и окно «Вставить таблицу»: код кита меряется и статическим графом.
+ * The table as a Tool descriptor (ADR-0058, item 11.1): it is not in `basic`,
+ * and the Extensions with `prosemirror-tables` weigh over 10 kB, so they load
+ * through the same loader as their Tool. The same chunk holds the Table menu and
+ * the Insert table dialog, and the kit's code is measured through the static
+ * graph as well.
  *
- * Переехали Extensions и пункт Меню вставки. Меню «Таблица» — виджет
- * Панели и остаётся её местом (`EditorToolbar.tsx`), только компонент берёт из
- * чанка.
+ * The Extensions and the Insert item moved here. The Table menu is a Toolbar
+ * widget and stays in its place (`EditorToolbar.tsx`); only the component is
+ * taken from the chunk.
  */
 export const TABLE_TOOL: ToolDescriptor = {
   name: "table",
   load: loadTable,
-  // Четыре узла разом (`tables.ts`): без любого из них Схема не соберётся.
+  // All four nodes at once (`tables.ts`): the Schema does not assemble without any one of them.
   engine: () => [...tableChunk()!.TABLE_EXTENSIONS],
   skeleton: () => TABLE_SHAPE,
   kitTags: ["table", "tbody", "tr", "th", "td"],

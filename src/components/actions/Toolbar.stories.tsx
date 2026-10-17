@@ -35,7 +35,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<ToolbarProps>;
 
-/** Формат текста: набор переключателей, независимых друг от друга. */
+/** Text formatting: a set of toggles that are independent of each other. */
 const FORMAT_OPTIONS = [
   { id: "bold", label: "B", "aria-label": "Bold" },
   { id: "italic", label: "I", "aria-label": "Italic" },
@@ -73,9 +73,9 @@ function Actions() {
 }
 
 /**
- * Одна остановка табуляции на всю панель: Tab входит и выходит, внутри ходят
- * стрелки, `Home` и `End` ведут к краям, а возврат встаёт на последнее
- * использованное действие. Разделитель между группами лёг вертикально сам.
+ * One tab stop for the whole toolbar: Tab enters and leaves, arrow keys move between the
+ * items, `Home` and `End` go to the edges, and returning lands on the last used action.
+ * The separator between groups turned vertical on its own.
  */
 export const Playground: Story = {
   args: { "aria-label": "Document tools" },
@@ -94,7 +94,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Вертикальная панель у края полотна: стрелки вверх и вниз, черта горизонтальна. */
+/** A vertical toolbar at the edge of the canvas: arrows up and down, the divider is horizontal. */
 export const Vertical: Story = {
   args: { "aria-label": "Canvas tools", orientation: "vertical" },
   render: (args: ToolbarProps) => (
@@ -130,8 +130,8 @@ export const Vertical: Story = {
 };
 
 /**
- * Узкая колонка: действия переносятся на вторую строку, а не прячутся в меню
- * «ещё». Порядок стрелок остаётся порядком чтения.
+ * Narrow column: actions wrap onto a second row instead of being hidden in a "more" menu.
+ * The arrow-key order stays the reading order.
  */
 export const Wrapping: Story = {
   args: { "aria-label": "Document tools" },
@@ -145,8 +145,8 @@ export const Wrapping: Story = {
 };
 
 /**
- * Меню и поповеры внутри: триггеры `Menu` (react-aria), `Popover` и
- * `ContextMenu` (Radix) входят в обход стрелок, а содержимое их панелей — нет.
+ * Menus and popovers inside: the triggers of `Menu` (react-aria), `Popover` and
+ * `ContextMenu` (Radix) are part of the arrow-key navigation, but the contents of their panels are not.
  */
 export const WithOverlays: Story = {
   args: { "aria-label": "Row tools" },

@@ -13,11 +13,11 @@ beforeAll(loadLazyBuiltins);
 afterEach(cleanup);
 
 /**
- * Таблица — содержимое, даже пустая (OLDSUI-119). Tiptap считает Документ из
- * одной таблицы с пустыми ячейками пустым (`editor.isEmpty`), и кит повторял
- * за ним: `isEmpty()` давал `true`, значение уходило пустой строкой, и таблица
- * пропадала при сохранении. Правило пустоты кита — атом и таблица содержимое,
- * пустой абзац нет — одно для `isEmpty()`, `required` и значения.
+ * A table is content, even when empty (OLDSUI-119). Tiptap counts a Document made of
+ * a single table with empty cells as empty (`editor.isEmpty`), and the kit followed
+ * it: `isEmpty()` returned `true`, the value went out as an empty string, and the table
+ * disappeared on save. The kit's emptiness rule: an atom and a table are content, and an
+ * empty paragraph is not: one rule for `isEmpty()`, `required` and the value.
  */
 const EMPTY_TABLE =
   "<table><tbody><tr><th><p></p></th><th><p></p></th></tr>" +
@@ -94,9 +94,9 @@ test("before mount a table is content too", () => {
 });
 
 /*
-  Без инструмента `table` Схема выбрасывает таблицу при разборе, и пустая
-  таблица — пустое поле. До монтажа ответ обязан совпасть с ответом после:
-  строка ещё не разобрана, но Хэндл знает, есть ли таблица в Схеме.
+  Without the `table` Tool, the Schema drops the table on parsing, and an empty
+  table is an empty field. Before mounting, the answer must match the answer after:
+  the string is not parsed yet, but the Handle knows whether the table is in the Schema.
 */
 test("with the table tool off an empty table is an empty field, before and after mount", () => {
   let before: boolean | undefined;

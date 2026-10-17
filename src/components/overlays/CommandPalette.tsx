@@ -25,119 +25,122 @@ import { Spinner } from "../actions/Spinner.js";
 import { VisuallyHidden } from "../content/VisuallyHidden.js";
 
 export interface CommandItem {
-  /** Идентификатор пункта: он приходит в `onSelect` палитры, когда пункт выбран. */
+  /** Item identifier. It is passed to the palette's `onSelect` when the item is selected. */
   id: string;
-  /** Название пункта: показывается в списке и участвует в поиске. */
+  /** Item label: shown in the list and used by search. */
   label: string;
-  /** Горячие клавиши пункта: `["⌘", "K"]`. Показываются справа. */
+  /** Keyboard shortcut of the item, for example `["⌘", "K"]`. Shown on the right. */
   shortcut?: string[];
-  /** Дополнительные слова для поиска — синонимы, английское название. */
+  /** Extra search terms: synonyms, an English name. */
   keywords?: string;
-  /** Иконка слева от названия пункта. */
+  /** Icon to the left of the item label. */
   icon?: ReactNode;
 }
 
 export interface CommandSection {
-  /** Идентификатор раздела: ключ списка и признак для `prefiltered`. */
+  /** Section identifier: the list key, and the value `prefiltered` is matched against. */
   id: string;
-  /** Заголовок раздела. */
+  /** Section heading. */
   label: string;
-  /** Пункты раздела. */
+  /** Items of the section. */
   items: CommandItem[];
   /**
-   * Раздел уже отфильтрован снаружи — показывать как есть, не просеивая
-   * локально и не пересортировывая.
+   * The section is already filtered outside: show it as is, without filtering it
+   * locally or re-sorting it.
    *
-   * ЗАЧЕМ ОТКЛЮЧАТЬ СОБСТВЕННЫЙ ПОИСК ПАЛИТРЫ. Для действий приложения он
-   * правильный: набор известен заранее и лежит целиком в памяти. Для находок
-   * сервера — разрушительный: они уже отобраны, причём по другим правилам, и
-   * второе просеивание подстрокой выбрасывает верные.
+   * WHY TURN OFF THE PALETTE'S OWN SEARCH. For application actions it is the right
+   * choice: the set is known in advance and sits entirely in memory. For server
+   * results it is destructive: they are already selected, by other rules, and a second
+   * substring pass throws away the correct ones.
    *
-   * Заявка потребителя показывает это на морфологии: поиск по `tsvector` с
-   * русским словарём находит «Подписать договор» по запросу «договоры», а
-   * `contains` такую пару не сматчит никогда — подстроки в заголовке нет.
-   * Обойти через `keywords` нельзя в принципе: сколько слов туда ни клади,
-   * фильтр по подстроке не станет морфологическим. Это не про объём данных, а
-   * про правила сравнения.
+   * The consumer's case shows this on morphology: a `tsvector` search with the Russian
+   * dictionary finds "Sign the contract" for the query "contracts", while `contains`
+   * never matches such a pair, because the substring is not in the title. `keywords`
+   * cannot fix it in principle: no matter how many words go there, a substring filter
+   * does not become morphological. This is not about the amount of data but about the
+   * comparison rules.
    *
-   * Порядок пунктов тоже сохраняется как передан: ранжирование сделал тот, кто
-   * искал, и пересортировка сломала бы его.
+   * The order of items is also kept as passed: the ranking was done by whoever searched,
+   * and re-sorting would break it.
    */
   prefiltered?: boolean;
 }
 
 export interface CommandPaletteProps {
-  /** Показана ли палитра. */
+  /** Whether the palette is shown. */
   open: boolean;
-  /** Палитра просит закрыться: Escape, клик мимо и сразу после выбора пункта. */
+  /**
+   * The palette asks to close: on Escape, on a click outside and right after an item is selected.
+   */
   onClose: () => void;
-  /** Разделы с пунктами; каждый показан под своим заголовком, сворачиваться разделы не умеют. */
+  /** Sections with items; each is shown under its own heading. Sections cannot be collapsed. */
   sections: CommandSection[];
-  /** Пункт выбран; приходит его `id`. Закрывать палитру отдельно не нужно: `onClose` зовётся следом. */
+  /** An item is selected; its `id` is passed. No need to close the palette separately: `onClose` is called right after. */
   onSelect: (id: string) => void;
-  /** Плейсхолдер в пустом поле поиска. Не задан — строка из каталога сообщений. */
+  /** Placeholder of the empty search field. If not set, the string comes from the message catalog. */
   placeholder?: string;
   /**
-   * Что показывать на пустом запросе.
+   * What to show for an empty query.
    *
-   * `all` — весь список разделами: палитра работает как оглавление, и её
-   * открывают не только чтобы найти, но и чтобы вспомнить, что вообще есть.
-   * `hint` — одна строка подсказки: когда действий сотни и список сам по себе
-   * ничего не сообщает.
+   * `all` — the whole list by sections: the palette works as a table of contents, and it
+   * is opened not only to find something but also to remember what exists.
+   * `hint` — a single hint line: for when there are hundreds of actions and the list
+   * alone tells nothing.
    *
-   * Умолчание `all`: у приложения с двумя десятками действий пустая палитра —
-   * это выброшенная возможность показать их все.
+   * The default is `all`: for an app with twenty actions, an empty palette wastes the
+   * chance to show them all.
    */
   emptyBehaviour?: "all" | "hint";
-  /** Строка подсказки на пустом запросе при `emptyBehaviour="hint"`. Не задана — текст из каталога сообщений. */
+  /** Hint line for an empty query when `emptyBehaviour="hint"`. If not set, the text comes from the message catalog. */
   emptyHint?: ReactNode;
-  /** Текст, когда запрос ничего не нашёл. Не задан — «Ничего не найдено» из каталога сообщений. */
+  /**
+   * Text shown when the query finds nothing. Defaults to "Nothing found" from the message catalog.
+   */
   notFoundText?: string;
-  /** Доступное имя палитры и её списка; видимого заголовка нет. Не задано — строка из каталога сообщений. */
+  /** Accessible name of the palette and its list; there is no visible heading. If not set, the string comes from the message catalog. */
   title?: string;
   /**
-   * Набранный запрос — наружу, на каждое изменение поля.
+   * The typed query, reported on every change of the field.
    *
-   * Уведомление, а не управление: поле остаётся за компонентом. Этого хватает,
-   * чтобы запустить поиск на сервере, и не заводит второй контракт, который
-   * пришлось бы поддерживать.
+   * A notification, not control: the field stays with the component. This is enough to start
+   * a search on the server, and it does not add a second contract to maintain.
    *
-   * Зовётся и на очистку поля кнопкой, и на сброс при закрытии палитры: потребитель
-   * иначе остался бы с запросом, которого в поле уже нет, и продолжил бы по нему
-   * ходить в сеть.
+   * Called both when the field is cleared with the button and when the palette is closed and
+   * reset: otherwise the consumer would keep a query that is no longer in the field and would
+   * keep sending requests for it.
    *
-   * Дребезг — забота потребителя: его величина зависит от цены запроса, а она
-   * киту неизвестна.
+   * Debouncing is the consumer's job: how much to debounce depends on the cost of a query, and
+   * the kit does not know it.
    */
   onQueryChange?: (query: string) => void;
   /**
-   * Идёт поиск на стороне потребителя.
+   * The consumer's search is in progress.
    *
-   * Показанные результаты не прячутся: список, мигающий на каждый символ, хуже
-   * списка, отстающего на полсекунды. Меняются два места — иконка поля и текст
-   * пустого состояния.
+   * Results already shown stay visible: a list that flickers on every character is worse than
+   * a list that lags by half a second. Two places change: the field icon and the empty-state
+   * text.
    */
   loading?: boolean;
-  /** Чем заменить «ничего не найдено», пока идёт поиск. Умолчание — «Загрузка». */
+  /** What to show instead of "Nothing found" while the search runs. The default is "Loading". */
   loadingText?: ReactNode;
 }
 
 /**
- * Командная палитра: поиск по действиям приложения.
+ * Command palette: search over the application's actions.
  *
- * СОБРАНА ИЗ ТРЁХ ГОТОВЫХ ЧАСТЕЙ, и ни одна не написана заново:
- * `Dialog` Radix даёт модальность (ловушка фокуса, возврат фокуса, портал),
- * `Autocomplete` react-aria — связку поля и списка (фильтрация, стрелки,
- * `aria-activedescendant`), `ListBox` — сам список с разделами.
+ * BUILT FROM THREE READY-MADE PARTS, none of them written from scratch:
+ * Radix `Dialog` provides modality (focus trap, focus return, portal), react-aria
+ * `Autocomplete` provides the link between field and list (filtering, arrow keys,
+ * `aria-activedescendant`), and `ListBox` is the list itself, with sections.
  *
- * Своего здесь три решения: что показывать на пустом запросе, как выглядят
- * горячие клавиши пункта и то, что **разделы не сворачиваются**. Последнее
- * важно: палитра открывается на долю секунды, и элемент управления, который
- * надо сначала раскрыть, в этот сценарий не помещается.
+ * Three decisions are the palette's own: what to show for an empty query, how an item's
+ * keyboard shortcut looks, and that **sections do not collapse**. The last one matters: the
+ * palette opens for a fraction of a second, and a control that has to be expanded first does
+ * not fit that scenario.
  *
- * Поле поиска — `SearchField` без видимой подписи: подпись здесь была бы
- * шумом (что ещё делать в палитре, кроме как искать), но скринридеру имя
- * нужно, и оно даётся скрытой подписью.
+ * The search field is a `SearchField` without a visible label: a visible label would be noise
+ * (what else would you do in a palette but search), but a screen reader needs a name, and it
+ * is given by a visually hidden label.
  */
 export function CommandPalette({
   open,
@@ -154,32 +157,31 @@ export function CommandPalette({
   loadingText,
 }: CommandPaletteProps) {
   const messages = useMessages();
-  // `contains` из react-aria, а не `String.includes`: он знает про регистр и
-  // диакритику в текущей локали — «ёлка» находится по «елка».
+  // `contains` from react-aria, not `String.includes`: it knows about case and diacritics
+  // in the current locale, so "café" is found by "cafe".
   const { contains } = useFilter({ sensitivity: "base" });
 
   /*
-    Запрос держится своим состоянием, потому что `emptyBehaviour` — это про
-    ПУСТОЙ запрос, а не про режим компонента. Без него условие ниже было
-    константой: при `hint` список получал пустой набор навсегда, и палитра
-    превращалась в поле поиска, которое ничего не может найти. Ловится только
-    попыткой что-нибудь набрать — ни снимок, ни axe этого не видят.
+    The query holds its own state, because `emptyBehaviour` is about an EMPTY query, not about
+    the component's mode. Without it, the condition below was a constant: with `hint` the list
+    got an empty set for good, and the palette turned into a search field that could never find
+    anything. The bug is caught only by trying to type something: neither a snapshot nor axe
+    sees it.
   */
   const [query, setQuery] = useState("");
   const contentRef = useRef<HTMLDivElement | null>(null);
   const { remember, restore } = useOpenerFocus(open, contentRef);
-  // Слой состоит в общем стеке — ADR-0041 обещает это для ВСЕХ модальных
-  // слоёв кита, а не только для подложки.
+  // The layer joins the shared stack: ADR-0041 promises this for ALL modal layers of the kit,
+  // not only for the scrim.
   useOverlayLayer(open, contentRef);
 
   /*
-    Запрос не переживает закрытие.
+    The query does not survive closing.
 
-    Он живёт состоянием компонента, а не содержимого диалога, и при `open=false`
-    сохранялся: выбрав пункт, пользователь при следующем ⌘K видел прошлый запрос
-    и отфильтрованный по нему список. Через Escape этого было не видно — там
-    `SearchField` из react-aria чистит значение сам, — поэтому дефект
-    воспроизводился только на выборе пункта и клике мимо.
+    It lives in the component's state, not in the dialog content, and it was kept when
+    `open=false`: after selecting an item, the user saw the previous query and the list filtered
+    by it on the next ⌘K. Escape hid this, because the react-aria `SearchField` clears its value
+    itself, so the defect reproduced only when selecting an item and clicking outside.
   */
   useEffect(() => {
     if (open || query === "") return;
@@ -188,9 +190,8 @@ export function CommandPalette({
   }, [open, query, onQueryChange]);
 
   /*
-    Разделы, которые не надо просеивать локально, — множеством `id`, а не
-    поиском по массиву на каждый пункт: фильтр зовётся для каждой строки на
-    каждый набранный символ.
+    Sections that must not be filtered locally are kept as a set of `id`s, not looked up in an
+    array for each item: the filter runs for every row on every typed character.
   */
   const prefilteredIds = useMemo(
     () => new Set(sections.filter((section) => section.prefiltered).map((section) => section.id)),
@@ -217,21 +218,21 @@ export function CommandPalette({
           )}
           aria-label={title ?? messages.commandPalette.title}
         >
-          {/* Имя окна обязано быть в разметке: без `Dialog.Title` Radix ругается
-              в консоль, а скринридер объявляет безымянный диалог. Видимого
-              заголовка у палитры нет — она сама себя объясняет полем поиска. */}
+          {/* The dialog name must be in the markup: without `Dialog.Title` Radix logs a warning
+              to the console, and a screen reader announces an unnamed dialog. The palette has no
+              visible heading: it explains itself with the search field. */}
           <DialogPrimitive.Title asChild>
             <VisuallyHidden>{title ?? messages.commandPalette.title}</VisuallyHidden>
           </DialogPrimitive.Title>
 
           {/*
-            Фильтрация остаётся за react-aria, а раздел выводится из-под неё
-            третьим аргументом — узлом коллекции. Пункт списка лежит внутри
-            `ListBoxSection`, поэтому его `parentKey` и есть `id` раздела.
+            Filtering stays with react-aria, and the section is exempted from it through the third
+            argument, the collection node. A list item sits inside `ListBoxSection`, so its
+            `parentKey` is the section's `id`.
 
-            Так, а не своим просеиванием `sections` до передачи в список: за
-            фильтром висит ещё и фокус первого совпадения, и `aria-activedescendant`.
-            Забрав фильтрацию себе, пришлось бы повторять и это.
+            This is done instead of pre-filtering `sections` before passing them to the list: behind
+            the filter also hang the focus of the first match and `aria-activedescendant`. Taking
+            over the filtering would mean repeating those too.
           */}
           <Autocomplete
             filter={(textValue, inputValue, node) =>
@@ -250,21 +251,19 @@ export function CommandPalette({
               className="border-line-soft flex items-center gap-2 border-b px-4 py-3"
             >
               {/*
-                Спиннер на месте лупы, а не рядом: он же и объявляет занятость —
-                у `Spinner` внутри `role="status"` со скрытой подписью, поэтому
-                отдельная живая область была бы вторым голосом про то же самое.
+                The spinner sits in place of the magnifier, not next to it: it also announces busy
+                state. `Spinner` has `role="status"` with a hidden label, so a separate live region
+                would be a second voice saying the same thing.
 
-                КОРОБКУ ПОД ИКОНКУ ДЕРЖИТ РАЗМЕТКА, А НЕ СОДЕРЖИМОЕ. Лупа — 16
-                пикселей, крутилка ступени `sm` — 14, и пока место занимала сама
-                иконка, поле вместе с набранным текстом уезжало на эти два
-                пикселя туда и обратно на каждое включение загрузки. Поиск в
-                палитре ходит на сервер, запрос уходит на каждое изменение поля — текст
-                дёргался в такт паузам в наборе и читался не как «идёт
-                загрузка», а как «экран перезагружается». Так показал замер
-                потребителя.
+                THE LAYOUT, NOT THE CONTENT, HOLDS THE BOX FOR THE ICON. The magnifier is 16 pixels,
+                the `sm` spinner is 14. While the icon itself took the space, the field and the typed
+                text shifted by those two pixels back and forth every time loading switched on. The
+                palette searches on the server, and a request goes out on every change of the field,
+                so the text jerked in time with the pauses in typing and read as "the screen reloads"
+                rather than "loading is in progress". A consumer's measurement showed this.
 
-                Тот же приём, что у места ручки в `EditableList`: слот держит
-                раскладка, и содержимое может меняться, не двигая соседей.
+                The same trick as the handle slot in `EditableList`: the layout holds the slot, and
+                the content can change without moving its neighbours.
               */}
               <span className="flex size-4 shrink-0 items-center justify-center">
                 {loading ? (
@@ -285,16 +284,15 @@ export function CommandPalette({
               className="flex flex-col gap-1 overflow-y-auto p-2 outline-none"
               onAction={(key) => {
                 onSelect(String(key));
-                // Палитра закрывается сама: действие выбрано, и оставлять её
-                // открытой поверх результата — значит требовать второго жеста
-                // там, где пользователь уже всё сказал.
+                // The palette closes itself: the action is selected, and leaving it open over
+                // the result would require a second gesture where the user has already said it all.
                 onClose();
               }}
               renderEmptyState={() => (
                 <div className="text-fg-2 px-3 py-6 text-center text-sm">
-                  {/* Порядок ветвей важен: пока идёт поиск, пустое состояние не
-                      имеет права утверждать, что ничего не нашлось. Именно это
-                      и происходило на каждый набранный символ. */}
+                  {/* The order of the branches matters: while a search is running, the empty state
+                      must not claim that nothing was found. That is exactly what happened on every
+                      typed character. */}
                   {loading
                     ? (loadingText ?? messages.common.loading)
                     : query === "" && emptyBehaviour === "hint"

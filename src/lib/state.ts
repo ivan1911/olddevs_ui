@@ -1,15 +1,15 @@
 import type { Size } from "./variants.js";
 
 /**
- * Раскладка «состояния экрана»: пусто и отказ.
+ * Layout of the screen state: empty and error.
  *
- * Вынесено из `EmptyState` в момент появления `ErrorState`. Геометрия у них
- * одна и та же — вертикальная центровка, иконка, заголовок, пояснение, слот
- * действия, — а различаются они тоном и ролью в дереве доступности. Копипаст
- * этой таблицы разошёлся бы: у пакета уже есть такая история с полями поиска
- * во фронте, ради которой и заведён `SearchControl`.
+ * Extracted from `EmptyState` when `ErrorState` appeared. The two share one geometry:
+ * vertical centering, icon, title, description and an action slot. They differ in
+ * tone and in their role in the accessibility tree. A copy of this table would drift
+ * apart. The consumer's frontend already went through that with search fields, and that
+ * is why `SearchControl` was created.
  *
- * Строки литеральные и целиком — Tailwind сканирует исходники как текст.
+ * The class strings are literal and complete: Tailwind scans the sources as text.
  */
 export type StateSize = Extract<Size, "sm" | "md">;
 

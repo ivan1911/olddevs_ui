@@ -4,9 +4,9 @@ import type { CustomIslandProps } from "@olddevs/ui/editor";
 import { useState } from "react";
 
 /**
- * Остров своего Блока: клиентский компонент потребителя из модуля с
- * директивой. Серверная страница `/editor` получает от импорта лишь ссылку на
- * него и кладёт её в `tools` просмотра.
+ * The Island of a custom Block: a consumer client component from a module with
+ * the directive. The `/editor` server page gets only a reference to it from the
+ * import and passes that reference in the View's `tools`.
  */
 export function FixtureBadge({ attributes, text }: CustomIslandProps) {
   const [on, setOn] = useState(false);

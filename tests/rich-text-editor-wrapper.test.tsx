@@ -16,18 +16,18 @@ import { sanitizeRichText } from "../src/editor/schema-entry.js";
 import { TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Обёртка — Блок, собирающий группу Блоков (OLDSUI-77), как Wrapper у Redactor.
+ * The Wrapper is a Block that gathers a group of Blocks (OLDSUI-77), like Wrapper in Redactor.
  *
- * Через публичный `RichTextEditor`, `RichTextView` и `sanitizeRichText`, как
- * тесты Раскладки: вставка — Меню вставки и меню ручки, клавиши — настоящие
- * `keydown`, результат — выходной HTML, Markdown и шаг отмены. Каретка
- * ставится командами движка: jsdom не умеет ввода в `contenteditable`.
+ * Through the public `RichTextEditor`, `RichTextView`, and `sanitizeRichText`, as in the
+ * Column layout tests: insertion goes through the Slash menu and the handle menu, keys are
+ * real `keydown` events, and the result is the output HTML, Markdown, and an undo step. The
+ * caret is placed by engine commands: jsdom cannot handle input in `contenteditable`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -39,7 +39,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 
 const wrapper = (...blocks: string[]) => `<div data-block="wrapper">${blocks.join("")}</div>`;
 
-// ── Схема ────────────────────────────────────────────────────────────────
+// ── Schema ───────────────────────────────────────────────────────────────
 
 test("a wrapper of any blocks survives a round trip with no other attributes", () => {
   const html = wrapper(
@@ -128,7 +128,7 @@ test("the basic preset has no wrapper", () => {
   expect(editor.getHTML()).toBe("<p>One</p>");
 });
 
-// ── Санитайзер ───────────────────────────────────────────────────────────
+// ── Sanitizer ────────────────────────────────────────────────────────────
 
 test("sanitizeRichText keeps a wrapper where the schema takes it and unwraps it elsewhere", () => {
   const purify = createDOMPurify(window);
@@ -139,12 +139,12 @@ test("sanitizeRichText keeps a wrapper where the schema takes it and unwraps it 
   expect(sanitizeRichText(saved, purify)).toBe(saved);
 
   for (const [input, output] of [
-    // Чужие атрибуты и обработчики снимаются, Обёртка остаётся.
+    // Foreign attributes and handlers are stripped, and the Wrapper stays.
     [
       '<div data-block="wrapper" style="color:red" onclick="x()"><p>a</p></div>',
       wrapper("<p>a</p>"),
     ],
-    // Обёртка в Обёртке, в списке, цитате и ячейке — Блоками подряд.
+    // A Wrapper inside a Wrapper, in a list, a quote, and a cell: Blocks in a row.
     [wrapper("<p>a</p>", wrapper("<p>b</p>")), wrapper("<p>a</p><p>b</p>")],
     [`<ul><li>${wrapper("<p>a</p>")}</li></ul>`, "<ul><li><p>a</p></li></ul>"],
     [`<blockquote>${wrapper("<p>a</p>")}</blockquote>`, "<blockquote><p>a</p></blockquote>"],
@@ -152,29 +152,30 @@ test("sanitizeRichText keeps a wrapper where the schema takes it and unwraps it 
       `<table><tbody><tr><td>${wrapper("<p>a</p>")}</td></tr></tbody></table>`,
       "<table><tbody><tr><td><p>a</p></td></tr></tbody></table>",
     ],
-    // Прямо в Раскладке, мимо колонки, Обёртки нет; колонки в Обёртке — тоже.
+    // Directly in a Column layout, outside a column, there is no Wrapper; the same goes for
+    // columns inside a Wrapper.
     [
       '<div data-block="layout" data-layout="100">' + wrapper("<p>a</p>") + "</div>",
       '<div data-block="layout" data-layout="100"><p>a</p></div>',
     ],
     [wrapper(column("<p>a</p>")), wrapper("<p>a</p>")],
-    // Раскладка в Обёртке разворачивается, Обёртка остаётся.
+    // A Column layout inside a Wrapper is unwrapped, and the Wrapper stays.
     [wrapper(layout("50-50", column("<p>x</p>"), column("<p>y</p>"))), wrapper("<p>x</p><p>y</p>")],
-    // `data-block="wrapper"` — только у `div`.
+    // `data-block="wrapper"` is only on a `div`.
     ['<p data-block="wrapper">a</p>', "<p>a</p>"],
   ] as [string, string][]) {
     expect(sanitizeRichText(input, purify), input).toBe(output);
   }
 });
 
-// ── Вставка из буфера ────────────────────────────────────────────────────
+// ── Paste from the clipboard ─────────────────────────────────────────────
 
-/** Вставка HTML из буфера: разбор Схемой и транзакция с меткой `paste`. */
+/** Pastes HTML from the clipboard: parsed by the Schema, in a transaction with the `paste` meta. */
 function paste(editor: Editor, html: string) {
   act(() => void editor.view.pasteHTML(html, new Event("paste") as ClipboardEvent));
 }
 
-/** Каретка — в конец текста `text` (или в его начало). */
+/** Places the caret at the end of the text `text` (or at its start). */
 function caretIn(editor: Editor, text: string, at: "end" | "start" = "end") {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -197,7 +198,7 @@ test("a wrapper pasted into a wrapper unfolds and keeps the outer one whole", ()
   const { editor } = renderEditor({ defaultValue: wrapper("<p>One</p>", "<p>Two</p>") });
   caretIn(editor, "One");
   paste(editor, wrapper("<p>x</p>", "<p>y</p>"));
-  // Первый абзац вставки продолжает строку, как у любой вставки текста.
+  // The first paragraph of the paste continues the line, as with any text paste.
   expect(editor.getHTML()).toBe(wrapper("<p>Onex</p>", "<p>y</p>", "<p>Two</p>"));
 });
 
@@ -241,7 +242,7 @@ test("a whole wrapper copied inside the editor and pasted into another unfolds",
   );
 });
 
-// ── Вставка ──────────────────────────────────────────────────────────────
+// ── Paste ────────────────────────────────────────────────────────────────
 
 function focusField() {
   act(() => screen.getByRole("textbox", { name: "Body" }).focus());
@@ -251,16 +252,16 @@ function type(editor: Editor, text: string) {
   act(() => void editor.commands.insertContent(text));
 }
 
-/** `keydown` на документе; `true` — Редактор отпустил клавишу браузеру. */
+/** `keydown` on the document; `true` means the Editor let the browser handle the key. */
 function press(editor: Editor, key: string, init: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
   act(() => void editor.view.dom.dispatchEvent(event));
   return !event.defaultPrevented;
 }
 
-/** Текст Блока, в котором стоит каретка. */
+/** Text of the Block where the caret is. */
 const here = (editor: Editor) => editor.state.selection.$from.parent.textContent;
-/** Имя узла, в котором лежит Блок с кареткой. */
+/** Name of the node that holds the Block with the caret. */
 const container = (editor: Editor) => editor.state.selection.$from.node(-1).type.name;
 
 test("the Wrapper item of the insert menu adds an empty wrapper below, caret inside", () => {
@@ -371,7 +372,7 @@ test("the insert menu has no Wrapper without the wrapper tool", () => {
   expect(screen.queryByRole("option", { name: /Wrapper/ })).toBeNull();
 });
 
-// ── Клавиатура ───────────────────────────────────────────────────────────
+// ── Keyboard ─────────────────────────────────────────────────────────────
 
 test("Backspace at the start of a wrapper keeps the text inside", () => {
   const html = `<p>Above</p>${wrapper("<p>First</p>", "<p>Second</p>")}`;
@@ -391,9 +392,9 @@ test("Backspace in the only empty paragraph removes the wrapper, one undo step",
   act(() => void editor.commands.setTextSelection(9));
   expect(container(editor)).toBe("wrapper");
 
-  // Пустую Обёртку иначе не убрать с клавиатуры: охрана границы глотала
-  // Backspace. На её месте — пустой абзац, каретка в нём; текста нет, выводить
-  // наружу нечего.
+  // Otherwise an empty Wrapper cannot be removed from the keyboard: the boundary guard swallowed
+  // Backspace. Its place is taken by an empty paragraph with the caret in it; there is no text
+  // to pass on.
   expect(press(editor, "Backspace")).toBe(false);
   expect(editor.getHTML()).toBe("<p>Above</p><p></p><p>Below</p>");
   expect(container(editor)).toBe("doc");
@@ -421,7 +422,7 @@ test("an empty wrapper in a column is removed inside that column", () => {
     defaultValue: layout("50-50", column(wrapper("<p></p>")), column("<p>Right</p>")),
   });
   focusField();
-  // Раскладка › колонка › Обёртка › абзац.
+  // Column layout › column › Wrapper › paragraph.
   act(() => void editor.commands.setTextSelection(4));
   expect(container(editor)).toBe("wrapper");
 
@@ -429,7 +430,7 @@ test("an empty wrapper in a column is removed inside that column", () => {
   expect(editor.getHTML()).toBe(layout("50-50", column("<p></p>"), column("<p>Right</p>")));
   expect(container(editor)).toBe("layoutColumn");
 
-  // Дальше — как в любой колонке: Backspace в её начале не сливает колонки.
+  // After that, it works as in any column: Backspace at its start does not merge the columns.
   expect(press(editor, "Backspace")).toBe(false);
   expect(editor.getHTML()).toBe(layout("50-50", column("<p></p>"), column("<p>Right</p>")));
 });
@@ -595,7 +596,7 @@ test("in a wrapper inside a column Tab still moves to the next column", () => {
   expect(here(editor)).toBe("Right");
 });
 
-// ── Команды над Блоками ──────────────────────────────────────────────────
+// ── Commands over Blocks ─────────────────────────────────────────────────
 
 test("moving and duplicating a block stay inside its wrapper", () => {
   const { editor } = renderEditor({
@@ -607,7 +608,7 @@ test("moving and duplicating a block stay inside its wrapper", () => {
   press(editor, "ArrowUp", { altKey: true, shiftKey: true });
   expect(editor.getHTML()).toBe(`<p>Above</p>${wrapper("<p>Two</p>", "<p>One</p>")}`);
 
-  // У края Обёртки соседа нет: Блок остаётся в ней.
+  // At the edge of the Wrapper there is no neighbor: the Block stays in it.
   press(editor, "ArrowUp", { altKey: true, shiftKey: true });
   expect(editor.getHTML()).toBe(`<p>Above</p>${wrapper("<p>Two</p>", "<p>One</p>")}`);
 
@@ -615,17 +616,20 @@ test("moving and duplicating a block stay inside its wrapper", () => {
   expect(editor.getHTML()).toBe(`<p>Above</p>${wrapper("<p>Two</p>", "<p>Two</p>", "<p>One</p>")}`);
 });
 
-// ── Ручка Блока ──────────────────────────────────────────────────────────
+// ── Block handle ─────────────────────────────────────────────────────────
 
 const HANDLE = "Block actions";
 
-/** Фокус в Документ: ручка видна только при нём. */
+/** Focus in the Document: the handle is visible only then. */
 function focusAt(editor: Editor, text: string) {
   caretIn(editor, text);
   act(() => editor.view.focus());
 }
 
-/** Обёртка целиком выделена узлом — так её выделяет Backspace на Блоке под ней. */
+/**
+ * The Wrapper as a whole is selected as a node, the way Backspace on the Block
+ * below it selects it.
+ */
 function selectWrapper(editor: Editor, pos: number) {
   act(() => {
     editor.view.focus();
@@ -703,7 +707,7 @@ test("Unwrap from the handle of a block inside puts the blocks in place, one und
   await user.click(within(await openHandleMenu(user)).getByRole("menuitem", { name: "Unwrap" }));
 
   expect(editor.getHTML()).toBe("<p>Above</p><p>One</p><h2>Two</h2><p>Below</p>");
-  // Каретка осталась в своём тексте.
+  // The caret stayed in its own text.
   expect(here(editor)).toBe("Two");
   act(() => void editor.commands.undo());
   expect(editor.getHTML()).toBe(html);
@@ -726,7 +730,7 @@ test("Unwrap stands in the section of tool actions right before Delete, for the 
   const menu = await openHandleMenu(user);
   const items = within(menu).getAllByRole("menuitem");
   expect(items.slice(-2).map((item) => item.textContent)).toEqual(["Unwrap", "Delete"]);
-  // Отдельная секция: у «Снять обёртку» и «Удалить» свои группы, а не одна.
+  // A separate section: "Unwrap" and "Delete" have their own groups, not one shared group.
   expect(items.at(-2)!.closest('[role="group"]')).not.toBe(items.at(-1)!.closest('[role="group"]'));
 });
 
@@ -737,7 +741,7 @@ test("a wrapper selected as a whole: its handle moves, duplicates and unwraps al
 
   selectWrapper(editor, 7);
   let menu = await openHandleMenu(user);
-  // Типа Блока у Обёртки нет — «Формат» виден, но недоступен.
+  // A Wrapper has no Block type: "Format" is visible but disabled.
   expect(within(menu).getByRole("menuitem", { name: "Format" }).getAttribute("aria-disabled")).toBe(
     "true"
   );
@@ -780,13 +784,13 @@ test("setMarkdown never creates a wrapper, even from raw HTML", () => {
   expect(editor.getHTML()).not.toContain("data-block");
 });
 
-// ── Показ ────────────────────────────────────────────────────────────────
+// ── Display ──────────────────────────────────────────────────────────────
 
 test("RichTextView shows the wrapper as markup with its blocks in order", () => {
   const { container: root } = render(<RichTextView html={wrapper("<p>One</p>", "<p>Two</p>")} />);
   const box = root.querySelector('[data-block="wrapper"]');
   expect(box?.textContent).toBe("OneTwo");
-  // Своей роли у Обёртки нет: это группа Блоков Документа, а не виджет.
+  // The Wrapper has no role of its own: it is a group of the Document's Blocks, not a widget.
   expect(box?.getAttribute("role")).toBeNull();
 });
 

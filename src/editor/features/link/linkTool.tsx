@@ -6,14 +6,13 @@ import { LinkForm } from "./LinkPopover.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 
 /**
- * Ссылка на описании Инструмента (ADR-0058, п. 10.4) — проверка
- * кнопки, Меню выделения и сочетания на той же форме, что у своего
- * Инструмента.
+ * Link on the Tool descriptor (ADR-0058, item 10.4): the button, the Bubble menu entry and
+ * the shortcut are declared in the same form a custom Tool uses.
  *
- * Кнопка не ставит Метку сама, а открывает поповер адреса — и щелчком, и
- * `Mod+K`. `aria-pressed` — каретка в ссылке: поповер тогда правит её адрес.
- * Привилегии кита: группа «Ссылка» справочника сочетаний и рамка поповера у
- * выделения, а не у кнопки (`LinkPopover.tsx` — почему).
+ * The button does not apply the Mark itself. It opens the address popover, both on click
+ * and on `Mod+K`. `aria-pressed` means the caret is inside a link: the popover then edits
+ * its address. Kit-specific exceptions: the "Link" group of the shortcuts reference and the
+ * popover frame belong to the selection, not to the button (see `LinkPopover.tsx` for why).
  */
 export const LINK_TOOL: ToolDescriptor = {
   name: "link",

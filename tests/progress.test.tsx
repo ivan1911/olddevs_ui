@@ -10,8 +10,8 @@ test("unknown progress does not pretend to be zero", () => {
   render(<Progress value={null} label="File upload" />);
 
   const bar = screen.getByRole("progressbar", { name: "File upload" });
-  // Атрибута НЕТ вовсе — так ARIA отличает «полоса на нуле» от «идёт неизвестно
-  // сколько». Ноль на этом месте сообщал бы скринридеру неправду.
+  // There is NO attribute at all — that is how ARIA tells "a bar at zero" from
+  // "in progress for an unknown time". A zero here would tell the screen reader something untrue.
   expect(bar.hasAttribute("aria-valuenow")).toBe(false);
 });
 
@@ -31,7 +31,7 @@ test("the value reaches the attribute", () => {
 
 test("the spinner announces itself instead of staying silent", () => {
   render(<Spinner label="Saving" />);
-  // Без имени вращающийся кружок для скринридера просто не существует.
+  // Without a name, a spinning circle simply does not exist for a screen reader.
   expect(screen.getByRole("status").textContent).toBe("Saving");
 });
 

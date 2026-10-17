@@ -3,30 +3,30 @@ import { expect, test } from "vitest";
 import * as icons from "../src/icons.js";
 
 /**
- * Проверяет, что КАЖДОЕ имя словаря разрешается в настоящий компонент и следует
- * соглашению об именах.
+ * Checks that EVERY dictionary name resolves to a real component and follows the
+ * naming convention.
  *
- * ЧЕСТНО О ГРАНИЦАХ ЭТОГО ТЕСТА. Отсутствующее имя lucide ловит и `tsc` —
- * `export { PendingCw as … } from "lucide-react"` даёт `TS2305`, проверено.
- * Так что от опечатки в имени страхует прежде всего typecheck, а не этот файл.
+ * AN HONEST NOTE ON THE LIMITS OF THIS TEST. `tsc` also catches a missing lucide name:
+ * `export { PendingCw as … } from "lucide-react"` gives `TS2305`, verified.
+ * So a typo in a name is guarded first of all by the typecheck, not by this file.
  *
- * Уникального здесь два:
- *  1. Соглашение «каждое имя словаря заканчивается на `Icon`» — типами
- *     невыразимо, а без него словарь быстро расползётся.
- *  2. Проверка РАНТАЙМА, а не только типов: тест исполняет модуль и убеждается,
- *     что значения существуют. Это страхует случай, когда типы lucide и её
- *     собранные бандлы расходятся.
+ * There are two things unique to this file:
+ *  1. The convention "every dictionary name ends with `Icon`": it cannot be expressed
+ *     in types, and without it the dictionary would quickly sprawl.
+ *  2. A RUNTIME check, not only a types check: the test executes the module and makes
+ *     sure the values exist. This guards the case where lucide's types and its built
+ *     bundles diverge.
  *
- * Почему имена вообще сверяются по установленному пакету, а не по документации:
- * `pending-cw` числится в релиз-нотах lucide 1.27.0, но экспорта в опубликованном
- * пакете нет вовсе.
+ * Why names are checked against the installed package at all, rather than against the
+ * documentation: `pending-cw` is listed in the lucide 1.27.0 release notes, but the
+ * published package does not export it at all.
  */
 
 /**
- * Кроме словаря вход отдаёт `LucideProvider` (ADR-0072): lucide приезжает с
- * китом, и провайдер обязан быть из той же копии, что и иконки словаря. Иначе
- * при двух копиях у потребителя толщина обводки молча перестаёт доходить до
- * иконок кита. Это не иконка, поэтому соглашение об именах его не касается.
+ * Besides the dictionary, the entry point exports `LucideProvider` (ADR-0072): lucide
+ * ships with the kit, and the provider must come from the same copy as the dictionary's
+ * icons. Otherwise, with two copies, the consumer's stroke width silently stops reaching
+ * the kit's icons. It is not an icon, so the naming convention does not apply to it.
  */
 const NOT_ICONS = new Set(["LucideProvider"]);
 
@@ -39,7 +39,7 @@ test("the dictionary is not empty", () => {
 test.each(names)("%s resolves to a component", (name) => {
   const icon = (icons as Record<string, unknown>)[name];
   expect(icon, `${name} is not exported`).toBeDefined();
-  // lucide-иконки — результат forwardRef, то есть объекты, а не функции.
+  // lucide icons are forwardRef results, that is, objects, not functions.
   expect(["function", "object"]).toContain(typeof icon);
 });
 

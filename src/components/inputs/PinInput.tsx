@@ -15,55 +15,56 @@ export interface PinInputProps extends Omit<
   ComponentPropsWithoutRef<"div">,
   "onChange" | "children" | "defaultValue"
 > {
-  /** Введённый код. Значение уходит строкой, а не массивом: потребителю нужен код. */
+  /** The entered code. The value is a string, not an array: consumers need the code as a whole. */
   value: string;
-  /** Вызывается при вводе, стирании и вставке и получает код целиком строкой. */
+  /** Called on typing, deleting and pasting; receives the whole code as a string. */
   onChange: (value: string) => void;
-  /** Сколько полей. */
+  /** Number of fields. */
   length?: number;
   /**
-   * Доступное имя группы. Обязательно и проверяется компилятором — как у
-   * `SearchControl`: без него скринридер объявляет группу безымянной.
+   * The accessible name of the group. Required, and enforced by the compiler, as for
+   * `SearchControl`: without it, screen readers announce the group as unnamed.
    */
   label: string;
-  /** Выключает все поля кода. */
+  /** Disables all code fields. */
   disabled?: boolean;
-  /** Ставит фокус в первое поле при появлении. */
+  /** Moves focus to the first field on mount. */
   autoFocus?: boolean;
   /**
-   * Показывает код в состоянии ошибки: рамки полей краснеют, на каждом поле
-   * стоит `aria-invalid`. Внутри `FormField` с `error` признак берётся из формы,
-   * явный `invalid={false}` его снимает. Правило проверки остаётся у потребителя.
+   * Shows the code in the error state: the field borders turn red and each field
+   * gets `aria-invalid`. Inside a `FormField` with `error`, the flag comes from the form;
+   * an explicit `invalid={false}` overrides it. The validation rule stays with the consumer.
    */
   invalid?: boolean;
 }
 
-/** Код — цифровой: всё, кроме цифр, отбрасывается на вводе и на вставке. */
+/** The code is numeric: anything other than digits is dropped on input and on paste. */
 const digitsOnly = (raw: string) => raw.replace(/\D/g, "");
 
 /**
- * Ввод кода подтверждения: N полей по символу, наружу — одна строка.
+ * Input for a verification code: N fields with one character each, one string outside.
  *
- * ЗНАЧЕНИЕ — СТРОКА, А НЕ МАССИВ. Потребителю нужен код целиком: он уходит в
- * запрос одной строкой, и разбирать массив на стороне вызова пришлось бы
- * каждому. Отсюда следствие, которое стоит знать заранее: **дыр в значении не
- * бывает.** Поля — это показ одного значения, а не N независимых, и удаление
- * символа в середине сдвигает остальные влево, как в обычном текстовом поле.
+ * THE VALUE IS A STRING, NOT AN ARRAY. Consumers need the whole code: it goes into a
+ * request as one string, and each caller would have to parse an array on its own.
+ * A consequence worth knowing up front: **there are no gaps in the value.** The fields
+ * display one value, not N independent ones, and deleting a character in the middle
+ * shifts the rest left, as in an ordinary text field.
  *
- * ВСТАВКА ОБЯЗАТЕЛЬНА, А НЕ ЖЕЛАТЕЛЬНА. Код приходит из СМС целиком, и
- * пользователь вставляет его в первое поле; без разбора вставки он получил бы
- * одну цифру из шести. Браузер здесь не помогает: при `maxLength=1` он сам
- * обрезает вставленное до первого символа, поэтому событие перехватывается.
+ * PASTE IS REQUIRED, NOT OPTIONAL. The code arrives from an SMS as a whole, and the user
+ * pastes it into the first field; without paste handling, they would get one digit out of six.
+ * The browser does not help here: with `maxLength=1` it trims the pasted text to the first
+ * character by itself, so the event is intercepted.
  *
- * `autocomplete="one-time-code"` стоит на ПЕРВОМ поле — так браузер и iOS
- * предлагают код из уведомления. На остальных он не нужен и мешал бы.
+ * `autocomplete="one-time-code"` is set on the FIRST field, so the browser and iOS
+ * suggest the code from the notification. The other fields don't need it, and it would get in the
+ * way.
  *
- * КОД ЦИФРОВОЙ. `inputMode="numeric"` и `one-time-code` — про цифры, и фильтр
- * ввода здесь тот же. Буквенный код потребовал бы второй оси и правил
- * регистра; он придёт вместе с экраном, которому нужен, а не раньше.
+ * THE CODE IS NUMERIC. `inputMode="numeric"` and `one-time-code` are about digits, and the input
+ * filter is the same. A letter code would need a second axis and case rules; it will come
+ * with the screen that needs it, not before.
  *
- * Каждое поле НАЗВАНО («цифра 3 из 6»): иначе скринридер читает шесть
- * безымянных полей подряд и место в коде теряется.
+ * Each field is NAMED ("digit 3 of 6"): otherwise a screen reader reads six unnamed fields
+ * in a row and the position in the code is lost.
  */
 export function PinInput({
   value,
@@ -78,9 +79,9 @@ export function PinInput({
 }: PinInputProps) {
   const messages = useMessages();
   /*
-    Явный проп сильнее формы — как у `TextControl`: потребитель знает про своё
-    поле больше, чем `FormField`. Без `aria-invalid` на самих полях оболочка не
-    краснеет: `FIELD_SHELL_CLASS` ищет атрибут на `input`, а не на группе.
+    An explicit prop wins over the form, as in `TextControl`: the consumer knows more about
+    its field than `FormField` does. Without `aria-invalid` on the fields themselves, the shell
+    does not turn red: `FIELD_SHELL_CLASS` looks for the attribute on the `input`, not on the group.
   */
   const fieldInvalid = useFieldInvalid();
   const ariaInvalid = invalid ?? (fieldInvalid || undefined);
@@ -105,12 +106,13 @@ export function PinInput({
     const tail = chars.slice(index + 1).join("");
 
     if (typed === "") {
-      // Пустая строка и «набрали не цифру» — РАЗНЫЕ события, и различать их
-      // обязательно. Фокус выделяет содержимое поля, поэтому буква поверх
-      // занятого поля приходит сюда как замена: не различая, компонент стирал
-      // цифру за букву, которую даже не показал.
+      // An empty string and "a non-digit was typed" are DIFFERENT events, and they must be
+      // told apart. Focus selects the field's content, so a letter typed over a filled field
+      // arrives here as a replacement. Without the distinction, the component erased the digit
+      // and replaced it with a letter that was never shown.
       if (raw !== "") return;
-      // Поле очистили — символ уходит, остальные сдвигаются: значение одно.
+      // The field was cleared: the character is removed and the rest shift left; the value stays
+      // one.
       commit(head + tail, index);
       return;
     }
@@ -119,8 +121,8 @@ export function PinInput({
 
   const handleKeyDown = (index: number, event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Backspace" && chars[index] === "" && index > 0) {
-      // Backspace на пустом поле — шаг назад с удалением: иначе фокус упирается
-      // в пустое поле и стереть предыдущую цифру нечем.
+      // Backspace on an empty field steps back and deletes there. Otherwise focus gets stuck
+      // in the empty field, and there is nothing to erase the previous digit with.
       event.preventDefault();
       commit(chars.slice(0, index - 1).join("") + chars.slice(index).join(""), index - 1);
       return;
@@ -150,15 +152,13 @@ export function PinInput({
       className={cn("flex gap-2", className)}
       {...rest}
       /*
-        ПОСЛЕ `{...rest}`: значение уже слито с пользовательским выше, и спред
-        не должен его вытеснить. Раньше условный спред стоял ПЕРЕД `rest` —
-        единственный такой в ките — и чужой `aria-describedby` затирал
-        контекстный: поле кода внутри `<FormField error="…">` не объявляло
-        ошибку вовсе.
+        AFTER `{...rest}`: the value is already merged with the user's one above, and the spread
+        must not override it. Previously the conditional spread stood BEFORE `rest` (the only one
+        of its kind in the kit), and a foreign `aria-describedby` overwrote the context one: a code
+        field inside `<FormField error="…">` did not announce the error at all.
 
-        Подсказка `FormField` относится ко ВСЕЙ группе полей кода, а не к одной
-        клетке: шесть `aria-describedby` на шести `input` прочитались бы шесть
-        раз подряд.
+        The `FormField` hint applies to the WHOLE group of code fields, not to one cell: six
+        `aria-describedby` on six `input`s would be read six times in a row.
       */
       {...(describedBy ? { "aria-describedby": describedBy } : {})}
     >
@@ -177,8 +177,8 @@ export function PinInput({
             maxLength={1}
             aria-invalid={ariaInvalid}
             data-disable-focus-ring="true"
-            // Содержимое выделяется на фокусе: при `maxLength=1` набор поверх
-            // занятого поля иначе не проходит вовсе — браузеру некуда писать.
+            // The content is selected on focus: with `maxLength=1`, typing over a filled field
+            // otherwise doesn't go through at all, because the browser has nowhere to write.
             onFocus={(event) => event.currentTarget.select()}
             onChange={(event) => handleChange(index, event.target.value)}
             onKeyDown={(event) => handleKeyDown(index, event)}

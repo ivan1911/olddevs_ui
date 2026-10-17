@@ -83,8 +83,8 @@ describe("ConfirmDialog with typeToConfirm", () => {
   });
 
   test("composed and decomposed letters count as the same text", async () => {
-    // «é» одной буквой и «e» + акцент: вставка имени файла из macOS приносит
-    // вторую форму.
+    // "é" as one character and "e" plus a combining accent: pasting a file name
+    // from macOS brings in the second form.
     const { user } = setup({ typeToConfirm: "Caf\u00e9" });
     await user.type(screen.getByRole("textbox"), "Cafe\u0301");
     expect((confirmButton() as HTMLButtonElement).disabled).toBe(false);
@@ -104,7 +104,7 @@ describe("ConfirmDialog with typeToConfirm", () => {
   test("Enter does nothing while the action is running", async () => {
     const { user, onConfirm } = setup({ typeToConfirm: "Acme", loading: true });
     const field = screen.getByRole("textbox") as HTMLInputElement;
-    // Только чтение: фокус остаётся в поле, но набрать в него уже нельзя.
+    // Read-only: focus stays in the field, but the field no longer accepts typing.
     expect(field.readOnly).toBe(true);
     await user.type(field, "Acme{Enter}");
     expect(field.value).toBe("");
@@ -215,8 +215,8 @@ describe("the name in the field label", () => {
   test("keeps its own case under the uppercase label style, and the field name is unchanged", () => {
     setup({ typeToConfirm: "Acme Labs" });
 
-    // Подписи полей набраны капителью; сверка же регистрозависимая — имя обязано
-    // остаться «Acme Labs», а не стать на вид «ACME LABS».
+    // Field labels are set in uppercase, but the comparison is case-sensitive, so
+    // the name must stay "Acme Labs" and not be rendered as "ACME LABS".
     const name = screen.getByText("Acme Labs", { selector: "span" });
     expect(name.className).toContain("normal-case");
     expect(screen.getByRole("textbox", { name: "Type “Acme Labs” to confirm" })).toBeTruthy();

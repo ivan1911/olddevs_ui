@@ -9,114 +9,117 @@ story: src/components/inputs/ColorPicker.stories.tsx
 
 # ColorPicker
 
-## Кратко для AI
+## Summary for AI
 
-`ColorPicker` — выбор произвольного цвета: область насыщенности, полоса тона, поле формата и необязательные заготовки. **Живёт отдельным входом `@olddevs/ui/color`, не в barrel.** Значение — строка, а не объект.
+`ColorPicker` picks an arbitrary color: a saturation area, a hue strip, a format field and optional presets. **It lives in its own entry point `@olddevs/ui/color`, not in the barrel.** The value is a string, not an object.
 
 ```tsx
 import { ColorPicker } from "@olddevs/ui/color";
 ```
 
-## Когда использовать
+## When to use
 
-- Пользователь называет свой цвет: метка, статус, фирменный цвет арендатора, подсветка категории.
-- Значение уходит в данные и возвращается оттуда строкой.
+- The user names their own color: a label, a status, a tenant's brand color, a category highlight.
+- The value goes into data and comes back from there as a string.
 
-## Минимальный пример
+## Minimal example
 
-Импорт **не из корня** — это и есть главная особенность компонента:
+The import is **not from the root** — that is the main feature of the component:
 
 ```tsx
 import { ColorPicker } from "@olddevs/ui/color";
 
-<ColorPicker value={brand} onChange={setBrand} label="Фирменный цвет" />;
+<ColorPicker value={brand} onChange={setBrand} label="Brand color" />;
 ```
 
-## Когда не использовать
+## When not to use
 
-- Выбор идёт из фиксированного набора — это `Select` или `ToggleGroup` с образцами.
-- Цвет задан темой — берите токен, а не поле выбора.
+- The choice is from a fixed set — that is `Select` or `ToggleGroup` with swatches.
+- The color is set by the theme — use a token, not a picker.
 
-## Почему отдельный вход
+## Why a separate entry point
 
-Цветовая подсистема `react-aria-components` стоит **61 кБ gzip**: это семь
-компонентов, которых кит не использовал больше нигде. Для сравнения: весь
-остальной кит укладывается в 62 кБ.
+The color subsystem of `react-aria-components` costs **61 kB gzip**: it is seven
+components the kit used nowhere else. For comparison: the whole rest of the kit
+fits in 62 kB.
 
-Собственный бюджет кита этого не видит: в `npm run size` react-aria объявлен
-внешним вместе с остальными сторонними библиотеками кита, а страница фикстуры потребителя
-цвет не импортирует. Гейт, который зелёный при любом решении, ничего не проверяет.
+The kit's own budget does not see this: in `npm run size` react-aria is declared
+external together with the kit's other third-party libraries, and the consumer fixture page
+does not import color. A gate that is green whatever the decision checks nothing.
 
-Отдельный вход делает 61 кБ видимыми в самой строке импорта.
-Прецедент в ките заведён по той же причине: каталоги локалей живут как
-`@olddevs/ui/locales/ru`, «чтобы не тянуться в бандл без импорта». Решение и
-числа — ADR-0038.
+A separate entry point makes 61 kB visible in the import line itself. The kit
+has a precedent for the same reason: the locale catalogs live as
+`@olddevs/ui/locales/ru`, "so they are not pulled into the bundle without an
+import". The decision and the numbers are in
+ADR-0038.
 
-Следствие, принимаемое сознательно: `import * as ui from "@olddevs/ui"` цвета не
-даст, и понадобится второй импорт. Это и есть смысл решения.
+A consequence accepted on purpose: `import * as ui from "@olddevs/ui"` does not
+give you color, and you need a second import. That is the point of the decision.
 
 ## Public API
 
-- `value` + `onChange` — **строка**: `#4f7df3`, `rgb(...)`, `hsl(...)`. Объект `Color` библиотеки наружу не выходит: он протащил бы тип react-aria в состояние потребителя и в его сигнатуры.
-- `label` обязателен — это имя контрола. Оно стоит на кнопке всегда, в том числе когда `children` заменяют её содержимое: иначе иконка вместо подписи оставляла бы кнопку безымянной.
-- `outputFormat`: `hex` (по умолчанию), `rgb`, `hsl` — формат **строки в `onChange`**. Поле ввода остаётся шестнадцатеричным всегда, и это названо в имени пропа: `rgb` и `hsl` — это три поля каналов, то есть другой контрол, а не другой формат того же. Подпись поля поэтому тоже всегда `HEX`: подписать его «HSL», когда оно принимает hex, значило бы врать пользователю прямо на экране.
-- `presets` — ряд заготовок. **Умолчания нет намеренно**: набор «фирменных» цветов — это домен потребителя, и подставить сюда значения токенов темы должен тот, кто знает, какие из них применимы к его сущности. Нераспознанная заготовка **пропускается** и не роняет рендер — см. ниже.
-- `children` заменяют содержимое триггера, если образца с подписью мало.
-- `disabled` не даёт панели раскрыться.
+- `value` and `onChange` take a **string**: `#4f7df3`, `rgb(...)`, `hsl(...)`. The library's `Color` object is not exposed: it would drag the react-aria type into the consumer's state and signatures.
+- `label` is required — it is the name of the control. It is always on the button, including when `children` replace its content: otherwise an icon in place of a label would leave the button nameless.
+- `outputFormat`: `hex` (default), `rgb`, `hsl` — the format of the **string in `onChange`**. The input field always stays hexadecimal, and the prop name says so: `rgb` and `hsl` are three channel fields, that is, a different control, not a different format of the same one. So the field label is also always `HEX`: labeling it "HSL" when it accepts hex would be lying to the user right on the screen.
+- `presets` — a row of presets. **There is no default on purpose**: a set of "brand" colors is the consumer's domain, and whoever knows which of the theme tokens apply to their entity should be the one to put them here. An unrecognized preset is **skipped**; it does not crash the render — see below.
+- `children` replace the trigger content when a swatch with a label is not enough.
+- `disabled` keeps the panel from opening.
 
-## Нераспознанная заготовка пропускается, а нераспознанное значение — нет
+## An unrecognized preset is skipped, an unrecognized value is not
 
-Асимметрия намеренная. **Значение** потребитель хранит и отдаёт дальше,
-поэтому нераспознанная строка в `value` становится чёрным (причина — в
-следующем разделе), а кит в это не вмешивается.
+The asymmetry is deliberate. The consumer stores the **value** and passes it on,
+so a string in `value` that is not recognized becomes black (the reason is in the
+next section), and the kit does not step in.
 
-**Заготовка** — оформление. Библиотека на нераспознанной строке **бросает**, причём в
-фазе рендера, то есть уносит поддерево потребителя целиком; падать из-за
-оформления компонент не должен. Ломается при этом не экзотика: `rebeccapurple` —
-законный CSS-цвет, которого библиотека не берёт, а фирменную палитру
-естественно держать именами. Нераспознанные заготовки просто не рисуются; если
-не распознана ни одна, ряда нет вовсе.
+A **preset** is decoration. On a string it does not recognize, the library
+**throws**, and in the render phase at that, so it takes down the whole consumer
+subtree; a component must not fall over because of decoration. And what breaks is
+not an exotic case: `rebeccapurple` is a legal CSS color that the library does not
+accept, and keeping a brand palette as names is natural. Presets that are
+not recognized are not rendered; if none is recognized, there is no row at
+all.
 
-## Нераспознанное значение становится чёрным
+## An unrecognized value becomes black
 
-Так ведёт себя react-aria, и кит это не перехватывает: подменять значение
-потребителя молча — то же самое, что молча его чинить. Последствие стоит знать: первое же
-движение ползунка отдаст в `onChange` чёрный, то есть заменит нераспознанное значение
-распознанным. Проверять строку — обязанность потребителя, он же её и сформировал.
+This is react-aria behavior, and the kit does not intercept it: replacing the
+consumer's value silently is the same as silently repairing it. It is worth knowing the
+consequence: the very first move of the slider passes black to `onChange`, that is,
+it replaces the unrecognized value with a recognized one. Checking the string
+is the consumer's job, since the consumer is the one who built it.
 
-## Обёртка над `react-aria-components`
+## A wrapper over `react-aria-components`
 
-Кит не считает цвет сам. Преобразования пространств, разбор строк, доступные описания оттенков для
-скринридера и клавиатура двумерной области — всё это уже есть в
-`react-aria-components` (общедоступно с 1.4.0). Здесь только словарь токенов
-сверху и раскладка.
+The kit does not do color math itself. Color space conversions, string parsing, accessible shade descriptions for the
+screen reader and the keyboard handling of the two-dimensional area — all of this
+is already in `react-aria-components` (generally available since 1.4.0). The component
+adds only the token vocabulary on top and the layout.
 
-## Компонент выдаёт цвет мимо системы токенов
+## The component produces a color outside the token system
 
-Это его назначение, а не недосмотр. Всё остальное в ките берёт цвет из темы;
-здесь пользователь называет свой — и результат по самому устройству не подчиняется
-ни теме, ни бренду.
+This is its purpose, not an oversight. Everything else in the kit takes color from
+the theme; here the user names their own — and the result by design follows
+neither the theme nor the brand.
 
-Отсюда следует и то, чего кит **не** делает: контраст выбранного цвета он не
-проверяет и проверить не может, потому что не знает, на чём этот цвет окажется.
-Ответственность за читаемость остаётся у потребителя.
+This also means the kit does **not** check the contrast of the chosen color, and
+cannot, because it does not know what the color will end up on. Responsibility for legibility stays with the consumer.
 
-Эту ответственность берёт на себя «Свой цвет…» в
-[`RichTextEditor`](./rich-text-editor.md#свой-цвет): `ColorPicker` стоит в
-поповере, а рядом считается контраст выбранного цвета против фона Редактора
-текущей темы и выводится предупреждение (4.5:1). Редактор грузит его лениво —
-цветовая подсистема react-aria не попадает в вход `@olddevs/ui/editor`.
+"Custom color…" in
+[`RichTextEditor`](./rich-text-editor.md#custom-color) takes on this responsibility:
+`ColorPicker` sits in a popover, and next to it the contrast of the chosen color against the Editor
+background of the current theme is computed and a warning is shown (4.5:1). The
+Editor loads it lazily — the react-aria color subsystem stays out of the
+`@olddevs/ui/editor` entry point.
 
-## Клавиатура
+## Keyboard
 
-- Триггер — обычная кнопка: Enter и Space раскрывают панель, Escape закрывает и возвращает фокус.
-- Двумерная область насыщенности и яркости — один контрол с двумя осями: стрелки ведут по обеим, `Home` и `End` уводят на края текущей оси.
-- Полоса тона и поле формата — отдельные табстопы; ряд заготовок обходят стрелками как единую группу.
-- Всё перечисленное приходит из react-aria вместе с доступными описаниями оттенков; кит своей клавиатуры здесь не пишет.
+- The trigger is a regular button: Enter and Space open the panel, Escape closes it and returns focus.
+- The two-dimensional saturation and brightness area is one control with two axes: arrow keys move along both; `Home` and `End` jump to the ends of the current axis.
+- The hue strip and the format field are separate tab stops; the row of presets is traversed with arrow keys as a single group.
+- All of the above comes from react-aria together with the accessible shade descriptions; the kit writes no keyboard handling of its own here.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Контролы области насыщенности и полосы тона описаны в разделе «Клавиатура»; роли, границы и клавиатура приходят из react-aria.
-- Названия каналов цвета и доступные описания оттенков локализует сама библиотека — своих ключей каталога сообщений кит на них не заводит.
-- Подпись ряда заготовок берётся из каталога сообщений (`colorPicker.presets`).
-- См. `src/color.ts`, `src/components/inputs/ColorPicker.tsx`, `src/components/inputs/ColorPicker.stories.tsx`, `tests/color-picker.test.tsx`.
+- The controls of the saturation area and the hue strip are described in the "Keyboard" section; roles, bounds and keyboard handling come from react-aria.
+- The library itself localizes the color channel names and the accessible shade descriptions — the kit adds no message catalog keys of its own for them.
+- The label of the presets row comes from the message catalog (`colorPicker.presets`).
+- See `src/color.ts`, `src/components/inputs/ColorPicker.tsx`, `src/components/inputs/ColorPicker.stories.tsx`, `tests/color-picker.test.tsx`.

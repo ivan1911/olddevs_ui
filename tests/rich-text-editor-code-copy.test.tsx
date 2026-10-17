@@ -12,15 +12,15 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Кнопка «Копировать» в шапке блока кода (OLDSUI-50, ADR-0039): в буфер идёт
- * текст блока строкой, а не разметка подсветки, и кнопка есть у Редактора в
- * любом режиме — копировать можно и тогда, когда править нельзя.
+ * The "Copy" button in the header of a code block (OLDSUI-50, ADR-0039): the clipboard
+ * gets the block's text as a string, not the highlight markup, and the Editor has the
+ * button in every mode — copying works even when editing is not allowed.
  */
 
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
@@ -35,7 +35,7 @@ async function settle() {
   await act(async () => {});
 }
 
-/** Заглушка ставится ПОСЛЕ `userEvent.setup()`: тот подменяет `navigator.clipboard` сам. */
+/** The stub is set AFTER `userEvent.setup()`: that call replaces `navigator.clipboard` itself. */
 function setupClipboard() {
   const user = userEvent.setup();
   const writeText = vi.fn().mockResolvedValue(undefined);
@@ -56,7 +56,7 @@ test("each block has a copy button in its header, next to the language", async (
   const header = screen.getAllByRole("button", { name: "Copy" })[0]!.closest("[data-code-header]");
   expect(header).not.toBeNull();
   expect(header!.contains(screen.getByRole("button", { name: "Language: Python" }))).toBe(true);
-  // Шапка — хром блока: не контент, каретку в неё не поставить.
+  // The header is block chrome: not content, and the caret cannot be placed in it.
   expect(header!.getAttribute("contenteditable")).toBe("false");
 });
 
@@ -66,7 +66,7 @@ test("clicking copy writes the exact text of a highlighted block, without markup
     defaultValue: `<pre><code class="language-python">${PYTHON.replace(/\n$/, "")}</code></pre>`,
   });
   await settle();
-  // Токены в DOM есть — а в буфер они не идут.
+  // The tokens are in the DOM — but they do not go to the clipboard.
   expect(editor.view.dom.querySelector("pre code [class*='hljs-']")).not.toBeNull();
 
   await user.click(screen.getByRole("button", { name: "Copy" }));
@@ -139,8 +139,8 @@ test("a read-only block without a language has no label: «Plain text» belongs 
   renderEditor({ readOnly: true, defaultValue: "<pre><code>x</code></pre>" });
   await settle();
 
-  // `RichTextView` (серверный) названия у такого блока не имеет — каталога у
-  // него нет; Редактор только для чтения не расходится с ним.
+  // `RichTextView` (the server-side one) gives such a block no name: it has no catalog
+  // either; the read-only Editor does not diverge from it.
   expect(document.querySelector("[data-code-header]")!.firstElementChild?.textContent).toBe("");
 });
 
@@ -160,8 +160,8 @@ test("copy stays out of the Tab order while the editor is editable, and in it wh
 
   rerender(<RichTextEditor ref={ref} aria-label="Body" readOnly defaultValue="x" />);
   await settle();
-  // Только чтение: каретки нет, `Alt+F10` из блока недоступен — кнопка должна
-  // быть достижима обычным Tab.
+  // Read-only: there is no caret, and `Alt+F10` from the block is unavailable — the
+  // button must be reachable with a plain Tab.
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Copy" }).getAttribute("tabindex")).not.toBe("-1")
   );
@@ -179,8 +179,9 @@ test("the tooltip and the name speak Russian with the Russian catalog", async ()
 });
 
 /*
-  Клавиатура. Обе кнопки шапки вне обхода Tab: вход — `Alt+F10` из блока, на
-  язык; дальше `Alt+F10` или стрелки идут по шапке, `Escape` возвращает в код.
+  Keyboard. Both header buttons are outside the Tab order: the entry is `Alt+F10` from
+  the block, to the language; then `Alt+F10` or the arrows move along the header, and
+  `Escape` returns to the code.
 */
 test("Alt+F10 cycles language, copy, toolbar; Escape from copy returns to the code", async () => {
   const user = userEvent.setup();

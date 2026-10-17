@@ -8,19 +8,18 @@ import { SHORTCUT_KEYS, shortcutKeys, type ShortcutCommand } from "../../core/sh
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 
 /**
- * Три вида списка на описаниях Инструментов: маркированный, нумерованный и
- * чек-лист.
+ * Three kinds of list on the Tool descriptors: bulleted, numbered and task list.
  *
- * Пункт один на три поверхности: Меню вставки, «Формат ›» ручки Блока и меню
- * «Списки ▾» читают те же слова, иконку и сочетание (`turnIntoTypes`). Виджет
- * «Списки ▾» (`ListMenu`) и кнопки отступа остаются у кита, показ — по
- * `has(name)`; строки отступа `indentListItem` и `outdentListItem` — общие для
- * трёх списков и лежат в `SHORTCUTS`. Пункт списка (`ListItem`) и клавиши
- * `ListKeymap` — в ядре, они есть в любом наборе.
+ * Each item serves three surfaces: the Slash menu, the "Format ›" of the Block handle, and the
+ * "Lists ▾" menu. All three read the same words, icon and shortcut (`turnIntoTypes`). The
+ * "Lists ▾" widget (`ListMenu`) and the indent buttons stay with the kit and are shown by
+ * `has(name)`. The indent rows `indentListItem` and `outdentListItem` are shared by the three
+ * lists and live in `SHORTCUTS`. The list item (`ListItem`) and the `ListKeymap` keys are in
+ * the core, so they are present in any preset.
  *
  */
 
-/** Строка справочника: клавишу вешает расширение Tiptap, строка — подпись к ней. */
+/** Shortcuts reference row: the Tiptap extension binds the key, and the row is its label. */
 function shortcutOf(id: "bulletList" | "orderedList" | "taskList"): ShortcutCommand {
   return {
     id,
@@ -71,8 +70,8 @@ const TASK_LIST_ITEMS: readonly InsertItem[] = [
 ];
 
 /**
- * Маркированный список. Расширение — доля StarterKit: `{}` включает его
- * умолчание так же, как прежний `undefined`.
+ * Bulleted list. The extension is a part of StarterKit: `{}` turns on its default, the same
+ * as the former `undefined`.
  */
 export const BULLET_LIST_TOOL: ToolDescriptor = {
   name: "bulletList",
@@ -82,7 +81,7 @@ export const BULLET_LIST_TOOL: ToolDescriptor = {
   shortcuts: [shortcutOf("bulletList")],
 };
 
-/** Нумерованный список: `start` и `1.` в Markdown — умолчания StarterKit. */
+/** Numbered list: `start` and `1.` in Markdown are the StarterKit defaults. */
 export const ORDERED_LIST_TOOL: ToolDescriptor = {
   name: "orderedList",
   starterKit: () => ({ orderedList: {} }),
@@ -92,16 +91,16 @@ export const ORDERED_LIST_TOOL: ToolDescriptor = {
 };
 
 /**
- * Чек-лист. Подпись флажка пункта — из каталога, читается при каждой
- * перерисовке пункта (`context.taskCheckbox`), поэтому смена локали не
- * пересоздаёт движок.
+ * Task list. The label of the item's checkbox comes from the catalog and is read on every
+ * re-render of the item (`context.taskCheckbox`), so a locale change does not recreate the
+ * engine.
  */
 export const TASK_LIST_TOOL: ToolDescriptor = {
   name: "taskList",
   engine: (context) => [
     TaskList,
     TaskItem.configure({
-      // Вложенные чек-листы — как вложенные обычные списки: Tab и Shift+Tab.
+      // Nested task lists work like nested regular lists: Tab and Shift+Tab.
       nested: true,
       a11y: { checkboxLabel: (node) => context.taskCheckbox(node.textContent) },
     }),

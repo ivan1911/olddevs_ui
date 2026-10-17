@@ -3,18 +3,18 @@
 import { Node } from "@tiptap/core";
 
 /**
- * Документ с контейнерами Блоков верхнего уровня: Раскладкой (`layout.ts`) и
- * Обёрткой (`wrapper.ts`).
+ * The Document with the containers of top-level Blocks: the Column layout (`layout.ts`) and the
+ * Wrapper (`wrapper.ts`).
  *
- * Оба не входят в группу `block` — так вложить их можно только туда, где их
- * назвали поимённо (ADR-0056, ADR-0057). Документ называет те, чьи
- * инструменты включены: `(block | layout | wrapper)+`. Без обоих Документ —
- * обычный из StarterKit, а content-выражение с узлом, которого нет в Схеме,
- * ProseMirror не собрал бы вовсе.
+ * Neither is in the `block` group, so they can be nested only where they are named by name
+ * (ADR-0056, ADR-0057). The Document names those whose Tools are enabled:
+ * `(block | layout | wrapper)+`. With neither enabled, the Document is the ordinary StarterKit
+ * one, and a content expression that names a node missing from the Schema would not build in
+ * ProseMirror at all.
  *
- * Имя — не `createDocument`: так в `@tiptap/core` зовётся разбор HTML в
- * Документ, которым пользуется HTML-режим (`RichTextEditor.tsx`). Здесь же —
- * фабрика узла Схемы, и одно имя на два смысла путало бы импорты.
+ * The name is not `createDocument`: `@tiptap/core` uses that name for parsing HTML into a
+ * Document, which the source mode (`RichTextEditor.tsx`) relies on. Here it is the factory of a
+ * Schema node, and one name for two meanings would confuse the imports.
  */
 export function createDocumentNode(containers: readonly string[]) {
   return Node.create({

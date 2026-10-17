@@ -6,67 +6,65 @@ import { hasContent } from "../../lib/empty.js";
 import { Tooltip } from "../overlays/Tooltip.js";
 
 export interface SegmentedOption<T extends string = string> {
-  /** Значение сегмента: оно приходит в `onChange` и сравнивается с `value` переключателя. */
+  /** Segment value: it arrives in `onChange` and is compared with the toggle's `value`. */
   value: T;
-  /** Подпись сегмента. Пустая строка считается отсутствием подписи. */
+  /** Segment label. An empty string counts as no label. */
   label?: ReactNode;
-  /** Иконка перед подписью. */
+  /** Icon before the label. */
   icon?: ReactNode;
   /**
-   * Подсказка при наведении на сегмент и доступное имя сегмента без подписи.
+   * Tooltip on hover over the segment, and the accessible name of a segment without a label.
    *
-   * **Обязательна, если у сегмента нет подписи** —
-   * она же становится доступным именем. Отсутствием подписи считается и
-   * `undefined`, и пустая строка.
+   * **Required if the segment has no label** — it becomes the accessible name. Both `undefined`
+   * and an empty string count as having no label.
    */
   tooltip?: string;
-  /** Недоступный сегмент: режим есть, но сейчас применить его нельзя. */
+  /** Disabled segment: the mode exists, but it cannot be applied right now. */
   disabled?: boolean;
 }
 
 export interface SegmentedProps<T extends string = string> {
-  /** Значение выбранного сегмента: переключатель управляемый, своего состояния не держит. */
+  /** Value of the selected segment: the toggle is controlled and keeps no state of its own. */
   value: T;
-  /** Вызывается с `value` сегмента, по которому нажали. */
+  /** Called with the value of the segment that was pressed. */
   onChange: (value: T) => void;
-  /** Сегменты по порядку слева направо. */
+  /** Segments in order, left to right. */
   options: SegmentedOption<T>[];
   /**
-   * На узком экране (< 640 пикселей) у сегмента остаётся одна иконка: подпись
-   * прячется только визуально и остаётся доступным именем кнопки.
+   * On a narrow screen (< 640 pixels) a segment keeps only its icon: the label is only visually
+   * hidden and remains the button's accessible name.
    *
-   * Свойство всего переключателя, а не отдельного сегмента: ряд, где часть
-   * вкладок со словами, а часть без, менял бы ширину при переключении, и
-   * кнопки прыгали бы под пальцем.
+   * A property of the whole toggle, not of a single segment: a row where some tabs have words and
+   * others do not would change width on switching, and the buttons would jump under the finger.
    *
-   * Порог — тот же `sm`, что у `Chip.mobileIconOnly`. Наружу он не выносится:
-   * два потребителя с разными порогами разошлись бы в поведении без причины.
+   * The breakpoint is the same `sm` as `Chip.mobileIconOnly`. It is not exposed outward: two
+   * consumers with different breakpoints would drift apart in behavior for no reason.
    *
-   * `tooltip` при этом НЕ становится обязательным. Требование «сегмент без
-   * подписи обязан иметь подсказку» относится к настоящему отсутствию подписи
-   * (`label: ""`); здесь подпись есть, просто её не видно.
+   * `tooltip` does NOT become required here. The requirement "a segment without a label must
+   * have a tooltip" applies to a genuinely missing label (`label: ""`); here the label exists,
+   * it is just not visible.
    */
   mobileIconOnly?: boolean;
 }
 
 /**
- * Переключатель из нескольких сегментов — вид списка, режим поиска, период.
+ * A toggle of several segments — list view, search mode, date range.
  *
- * Выбранный сегмент помечен `aria-pressed`, а не только фоном. Прежняя версия
- * во фронте различала состояние исключительно цветом: для скринридера все
- * сегменты выглядели одинаковыми безымянными кнопками, и понять, какой из них
- * включён, было нельзя. Это тот же дефект, что был у переключателя тем.
+ * The selected segment is marked with `aria-pressed`, not only by its background. The previous
+ * version in the front end distinguished the state by color alone: to a screen reader all segments
+ * looked like identical unnamed buttons, and it was impossible to tell which one was on. This is
+ * the same defect the theme switcher had.
  *
- * Сегменты без подписи (только иконка) обязаны иметь `tooltip` — он же даёт
- * доступное имя через `aria-label`. Без него кнопка остаётся безымянной,
- * и аудит axe роняет прогон как `critical`. Подписью не считается пустая
- * строка: `label: ""` рядом с иконкой — это «только иконка».
+ * Segments without a label (icon only) MUST have a `tooltip` — it also gives the accessible name
+ * through `aria-label`. Without it the button stays unnamed, and the axe audit fails the run as
+ * `critical`. An empty string does not count as a label: `label: ""` next to an icon means
+ * "icon only".
  *
- * `mobileIconOnly` — ДРУГОЕ: подпись остаётся, её просто не видно на узком
- * экране. Имя кнопки при этом берёт сама подпись, и подсказка не нужна —
- * поэтому режим и живёт в ките, а не собирается у потребителя: спрятать
- * подпись правильно это одна строка классов, а неправильно — три способа
- * получить кнопку без имени, которую видно только аудитом.
+ * `mobileIconOnly` is DIFFERENT: the label stays, it is just not visible on a narrow screen. The
+ * button's name then comes from the label itself, and a tooltip is not needed — which is why the
+ * mode lives in the kit rather than being assembled by the consumer. Hiding the label correctly
+ * is one line of classes, while doing it wrong gives three ways to get a button without a name
+ * that only an audit can see.
  */
 export function Segmented<T extends string = string>({
   value,
@@ -76,28 +74,27 @@ export function Segmented<T extends string = string>({
 }: SegmentedProps<T>) {
   return (
     /*
-      `flex-wrap` — ПОВЕДЕНИЕ, А НЕ ВКУСОВЩИНА. Сегмент не сжимается
-      (`shrink-0` плюс `whitespace-nowrap`, и это правильно: сжатая подпись
-      вкладки читается хуже перенесённой). Без переноса единственный исход на
-      узком экране — выезд за край и горизонтальная прокрутка, то есть
-      нарушение WCAG 1.4.10 у каждого потребителя.
+      `flex-wrap` is BEHAVIOR, NOT TASTE. A segment does not shrink (`shrink-0` plus
+      `whitespace-nowrap`, and this is correct: a squeezed tab label reads worse than a wrapped
+      one). Without wrapping, the only outcome on a narrow screen is overflowing the edge and
+      horizontal scrolling, which is a violation of WCAG 1.4.10 for every consumer.
 
-      Зазор развёрнут по осям: между сегментами 2 пикселя, между рядами 4.
-      Один `gap-0.5` на обе оси поставил бы ряды в те же 2 пикселя, и два ряда
-      прочитались бы слипшейся сеткой, а не одним контролом.
+      The gap is split by axis: 2 pixels between segments, 4 between rows. A single `gap-0.5` on
+      both axes would put rows at the same 2 pixels, and two rows would read as one glued grid
+      rather than as one control.
     */
     <div className="border-line-soft bg-bg-2 rounded-control inline-flex flex-wrap gap-x-0.5 gap-y-1 border p-[3px]">
       {options.map((opt) => {
         const selected = value === opt.value;
         /*
-          ПОДПИСЬ ПРЯЧЕТСЯ ТОЛЬКО У СЕГМЕНТА С ИКОНКОЙ.
+          THE LABEL IS HIDDEN ONLY ON A SEGMENT WITH AN ICON.
 
-          У сегмента без иконки прятать подпись не в пользу чего: кнопка
-          осталась бы пустой — имя есть, на экране ничего. Это хуже неровного
-          ряда с одним словом: пустую кнопку не нажимают, её не видно.
+          On a segment without an icon, hiding the label serves no purpose: the button would stay
+          empty — the name exists, nothing is on screen. That is worse than an uneven row with a
+          single word: an empty button is not pressed, and it cannot be seen.
 
-          Режим при этом остаётся свойством всего переключателя — здесь не
-          выбор потребителя, а защита от набора, в котором иконку забыли.
+          The mode nonetheless stays a property of the whole toggle — here it is not the
+          consumer's choice but a guard against a set in which the icon was forgotten.
         */
         const hideLabel = mobileIconOnly && opt.icon != null;
         const button = (
@@ -106,22 +103,21 @@ export function Segmented<T extends string = string>({
             type="button"
             aria-pressed={selected}
             /*
-              Пустая строка — это ОТСУТСТВИЕ подписи, а не подпись.
+              An empty string is the ABSENCE of a label, not a label.
 
-              Проверка была `opt.label == null`, и потребитель, передавший
-              `label: ""` рядом с иконкой (штатный способ сказать «только
-              иконка»), получал кнопку без имени: пустая строка не `null`,
-              условие не срабатывало, `aria-label` не проставлялся. Докстрока
-              при этом обещала обратное, а аудит ронял прогон как `critical`.
+              The check was `opt.label == null`, and a consumer who passed `label: ""` next to an
+              icon (the usual way to say "icon only") got a button without a name: an empty string
+              is not `null`, so the condition did not fire and `aria-label` was not set. The
+              docstring promised the opposite, and the audit failed the run as `critical`.
             */
             aria-label={hasContent(opt.label) ? undefined : opt.tooltip}
             disabled={opt.disabled}
             onClick={() => onChange(opt.value)}
             className={cn(
               "inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-sm px-3 py-1.5",
-              // Вокруг одной иконки `px-3` читается широким: кнопка выходит
-              // заметно шире своей высоты и перестаёт походить на вкладку.
-              // Отступ режется вместе с подписью и тем же брейкпоинтом.
+              // Around a lone icon `px-3` looks wide: the button ends up noticeably wider than
+              // its height and stops looking like a tab. The padding is cut together with the
+              // label and under the same breakpoint.
               hideLabel && "max-sm:px-2",
               "text-xs font-semibold whitespace-nowrap transition-colors",
               "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2",
@@ -131,12 +127,12 @@ export function Segmented<T extends string = string>({
           >
             {opt.icon}
             {/*
-              Подпись прячется классом «видно только скринридеру», а не
-              `hidden` и не выброшенными детьми: и то и другое убирает узел из
-              дерева доступности, то есть оставляет кнопку БЕЗ ИМЕНИ. Видно
-              это было бы только аудитом — глазами иконка на месте, вкладка
-              работает. Тот же приём и тот же один узел, что у `Chip`: копия
-              подписи рядом читалась бы дважды.
+              The label is hidden with the "visible to screen readers only" class, not with
+              `hidden` and not by dropping its children: both remove the node from the
+              accessibility tree, which leaves the button WITHOUT A NAME. That would be visible
+              only through an audit — by eye the icon is in place and the tab works. The same
+              trick and the same single node as in `Chip`: a copy of the label next to it would
+              be read twice.
             */}
             {hasContent(opt.label) ? (
               <span className={hideLabel ? "sr-only sm:not-sr-only sm:inline" : undefined}>
@@ -146,9 +142,8 @@ export function Segmented<T extends string = string>({
           </button>
         );
 
-        // Ключ живёт на самой кнопке, поэтому обёртка нужна только там, где
-        // есть подсказка: `Tooltip` принимает ровно один элемент и `key`
-        // на нём же и остаётся.
+        // The key lives on the button itself, so the wrapper is needed only where there is a
+        // tooltip: `Tooltip` accepts exactly one element, and the `key` stays on it.
         return opt.tooltip ? (
           <Tooltip key={opt.value} content={opt.tooltip}>
             {button}

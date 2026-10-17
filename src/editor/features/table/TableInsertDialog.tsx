@@ -21,33 +21,33 @@ export interface TableInsertDialogProps {
 }
 
 /**
- * Окно «Вставить таблицу»: столбцы и строки числами, до 20 × 50.
+ * The Insert table dialog: columns and rows as numbers, up to 20 × 50.
  *
- * ЗАЧЕМ ОКНО, ЕСЛИ ЕСТЬ СЕТКА. Сетка в подменю — до 10 × 10, и это её
- * достоинство: размер виден глазу. Таблица больше сетки и точный размер с
- * клавиатуры без двадцати нажатий стрелки — работа полей. В меню полям не
- * место: фокус в поле ввода внутри `Menu` react-aria закрывает меню, а Tab в
- * меню не ходит. Отсюда окно, как у TinyMCE.
+ * WHY A DIALOG WHEN THERE IS A GRID. The grid in the submenu goes up to 10 × 10, and
+ * that is its strength: the size is visible at a glance. A table bigger than the grid,
+ * or an exact size from the keyboard without twenty arrow presses, is the job of fields.
+ * There is no room for fields in a menu: focus in an input inside a react-aria `Menu`
+ * closes the menu, and Tab does not move through a menu. Hence a dialog, as in TinyMCE.
  *
- * `Dialog` КИТА: ловушка фокуса, Escape по слоям и возврат фокуса тому, кто
- * открыл. Открывает его пункт меню, который перед этим возвращает фокус в
- * документ, — и окно при закрытии отдаёт его туда же: после «Вставить» —
- * в первую ячейку новой таблицы, после «Отмена» — на прежнее место каретки.
+ * The kit's `Dialog`: focus trap, Escape across overlay layers, and focus return to
+ * whoever opened it. The menu item that opens it first returns focus to the Document,
+ * and on close the dialog gives focus back there: after Insert, to the first cell of the
+ * new table; after Cancel, to the previous caret position.
  *
- * ENTER ВСТАВЛЯЕТ из любого поля — поля в `<form>`, и отправка формы и есть
- * «Вставить». Значения читаются из ref, а не из состояния: `NumberInput`
- * отдаёт набранное на Enter, и тем же нажатием форма уже отправляется —
- * состояние React к этому моменту ещё не обновилось бы.
+ * ENTER INSERTS from any field. The fields are in a `<form>`, and form submit is Insert.
+ * Values are read from a ref, not from state: `NumberInput` reports what was typed on
+ * Enter, and the same keypress submits the form, so React state would not have been
+ * updated yet at that moment.
  *
- * Пустое поле выбор не меняет: «Вставить» берёт последнее допустимое значение.
+ * An empty field does not change the selection: Insert takes the last valid value.
  */
 export function TableInsertDialog({ editor, open, onClose }: TableInsertDialogProps) {
   const messages = useMessages().editor;
   const fieldsRef = useRef<HTMLDivElement>(null);
   /*
-    Фокус при открытии — в поле «Столбцы», а не на крестик (умолчание окна).
-    `NumberInput` отдаёт ссылку на рамку, а не на поле, поэтому ссылка здесь —
-    геттер, который находит поле внутри в тот момент, когда окно его спросит.
+    Focus on open goes to the Columns field, not to the close button (the dialog default).
+    `NumberInput` gives a ref to the frame, not to the field, so the ref here is a getter
+    that finds the field inside at the moment the dialog asks for it.
   */
   const firstField = useMemo<RefObject<HTMLElement | null>>(
     () => ({
@@ -65,7 +65,7 @@ export function TableInsertDialog({ editor, open, onClose }: TableInsertDialogPr
       initialFocusRef={firstField}
       className="w-full max-w-[340px]"
     >
-      {/* Содержимое монтируется на каждое открытие: поля берут последний размер заново. */}
+      {/* The content mounts on every open: the fields take the last size again. */}
       {open && <TableInsertForm editor={editor} onClose={onClose} fieldsRef={fieldsRef} />}
     </Dialog>
   );

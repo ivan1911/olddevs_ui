@@ -21,10 +21,11 @@ afterEach(() => {
 });
 
 /**
- * Загрузчики своих Инструментов, Готовность, Скелет и «Повторить» (OLDSUI-110,
- * ADR-0058, п. 11.3–11.6). Через публичный `RichTextEditor`: что видит автор
- * (Документ, роли, ошибка поля) и что получает экран (Хэндл, `onReady`).
- * Высота Скелета — в браузере (`tests-visual/rich-text-editor-skeleton.spec.ts`).
+ * Loaders of custom Tools, Readiness, the Skeleton and "Retry" (OLDSUI-110,
+ * ADR-0058, items 11.3–11.6). Through the public `RichTextEditor`: what the author
+ * sees (the Document, roles, the field error) and what the screen gets (the
+ * Handle, `onReady`). The Skeleton's height is checked in the browser
+ * (`tests-visual/rich-text-editor-skeleton.spec.ts`).
  */
 
 const VALUE = '<p>Before</p><div data-block="test_lazy">Lazy text</div>';
@@ -38,7 +39,7 @@ function renderEditor(props: Partial<RichTextEditorProps>) {
   return { ...view, ref, onReady };
 }
 
-/** Промисы загрузчиков и эффекты Редактора отработали. */
+/** The loader promises and the Editor's effects have run. */
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 10))));
 
@@ -51,12 +52,12 @@ test("until the loader settles: the Skeleton shows the Document, no input, a qui
   await settle();
 
   expect(lazy.loader.calls).toBe(1);
-  // Документ виден статичным HTML, Блок своего Инструмента — тоже; ввода нет.
+  // The Document is visible as static HTML, and so is the Block of its Tool; there is no input.
   expect(screen.getByText("Before")).toBeTruthy();
   expect(screen.getByText("Lazy text")).toBeTruthy();
   expect(screen.queryByRole("textbox")).toBeNull();
   expect(container.querySelector("[contenteditable]")).toBeNull();
-  // Хэндл тихий: движка нет, запись не проходит, чтение отдаёт входящее значение.
+  // The Handle is quiet: there is no engine, a write does not go through, and a read returns the incoming value.
   expect(ref.current?.editor).toBeNull();
   expect(ref.current?.insertHTML("<p>Template</p>")).toBe(false);
   expect(ref.current?.getHTML()).toBe(VALUE);
@@ -69,10 +70,10 @@ test("until the loader settles: the Skeleton shows the Document, no input, a qui
   expect(screen.getByRole("textbox", { name: "Body" })).toBeTruthy();
   expect(onReady).toHaveBeenCalledTimes(1);
   expect(ref.current?.editor).not.toBeNull();
-  // Схема собрана уже с Extensions: Блок из `value` не потерялся.
+  // The Schema is built with the Extensions already: the Block from `value` was not lost.
   expect(ref.current?.getHTML()).toBe(VALUE);
   expect(ref.current?.insertHTML("<p>Template</p>")).toBe(true);
-  // Скелет ушёл: Документ на экране один.
+  // The Skeleton is gone: one Document is on screen.
   expect(screen.getAllByText("Lazy text")).toHaveLength(1);
 });
 
@@ -106,7 +107,7 @@ test("a failed loader: a field error with Retry, the Document stays; Retry reach
 
   await userEvent.click(screen.getByRole("button", { name: "Retry" }));
   expect(lazy.loader.calls).toBe(2);
-  // Пока повтор идёт — снова Скелет без ошибки.
+  // While the retry runs, it is the Skeleton again, without an error.
   expect(screen.queryByRole("alert")).toBeNull();
   lazy.resolve();
   await settle();
@@ -137,7 +138,7 @@ test("Retry calls only the loaders that failed", async () => {
 
 test("the loaded engine is checked like an immediate one: a broken set is a field error without Retry", async () => {
   vi.spyOn(console, "error").mockImplementation(() => {});
-  // Загрузчик отдал Extensions без Node для Блока из правил.
+  // The loader returned Extensions with no Node for the Block in the rules.
   const lazy = testLazyTool("test_lazy", []);
   const { ref, onReady } = renderEditor({ tools: [lazy.tool] });
   lazy.resolve();
@@ -146,7 +147,7 @@ test("the loaded engine is checked like an immediate one: a broken set is a fiel
   expect(screen.getByRole("alert").textContent).toBe(
     "The editor couldn't start. The document is unchanged."
   );
-  // Повтор не поможет: набор не изменится.
+  // Retry will not help: the set will not change.
   expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   expect(screen.getByText("Lazy text")).toBeTruthy();
   expect(ref.current?.editor).toBeNull();
@@ -167,7 +168,7 @@ test("the server renders the Skeleton without the Document; hydration matches, t
   container.innerHTML = html;
   document.body.append(container);
   await act(async () => void hydrateRoot(container, ui, { onRecoverableError }));
-  // После гидратации Скелет показывает Документ, очищенный Схемой.
+  // After hydration the Skeleton shows the Document, cleaned by the Schema.
   expect(container.textContent).toContain("Lazy text");
   lazy.resolve();
   await settle();
@@ -182,6 +183,6 @@ test("without loaders the Skeleton is there too: the server renders the frame, n
   const html = renderToString(<RichTextEditor aria-label="Body" value="<p>Static text</p>" />);
 
   expect(html).not.toContain("Static text");
-  // Рамка с местом Панели есть и на сервере: появление Панели поле не сдвигает.
+  // The frame with room for the Toolbar is there on the server too: the Toolbar appearing does not shift the field.
   expect(html).toContain("h-[30px]");
 });

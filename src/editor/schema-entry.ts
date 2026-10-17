@@ -1,27 +1,26 @@
 /**
- * Лёгкий вход `@olddevs/ui/editor/schema`: Схема Редактора данными, очистка по
- * ней (`sanitizeRichText` с DOMPurify потребителя) и закрытый конфиг для
- * DOMPurify — и больше ничего.
+ * The lightweight entry point `@olddevs/ui/editor/schema`: the Editor's Schema as data,
+ * sanitizing against it (`sanitizeRichText` with the consumer's DOMPurify), and the closed
+ * config for DOMPurify, and nothing more.
  *
- * ПОЧЕМУ ОТДЕЛЬНО ОТ `@olddevs/ui/editor`. Очистка HTML — дело сервера
- * потребителя (ADR-0050), и Node-процессу, которому нужен один конфиг, не нужны
- * ни React, ни Tiptap. Вход `./editor` реэкспортирует редактор вместе с
- * движком, а без сборщика (чистый Node, воркер, скрипт миграции) лишнее никто
- * не отбросит. Здесь в графе модулей только `schema.ts` — данные и функция над
- * ними. Сторожит `tests/editor-schema-entry.test.ts`.
+ * WHY SEPARATE FROM `@olddevs/ui/editor`. Sanitizing HTML is the consumer server's job
+ * (ADR-0050), and a Node process that needs only one config needs neither React nor Tiptap.
+ * The `./editor` entry re-exports the editor together with the engine, and without a bundler
+ * (plain Node, a worker, a migration script) nobody drops the excess. Here the module graph
+ * contains only `schema.ts`: the data and the function over it. Guarded by
+ * `tests/editor-schema-entry.test.ts`.
  *
- * Свои Инструменты (ADR-0058, п. 2.3) сюда приходят массивом `tools` в
- * `sanitizeRichText` и `richTextSchema`: читаются только правила Схемы из
- * описания (`customTool.ts`, тоже без движка), Extensions не трогаются.
- * Описание своего Инструмента с Карточкой у текста собирается и на сервере,
- * поэтому её помощник `markRange` (функция над состоянием, Tiptap — только
- * типом) отдаётся и здесь.
+ * Custom Tools (ADR-0058, item 2.3) come here as the `tools` array in `sanitizeRichText` and
+ * `richTextSchema`: only the Schema rules are read from the description (`customTool.ts`, also
+ * without the engine), and Extensions are not touched. A custom Tool's description with a Text
+ * card is also assembled on the server, which is why its helper `markRange` (a function over the
+ * state, with Tiptap only as a type) is exported here too.
  *
- * Те же имена по-прежнему отдаёт и `@olddevs/ui/editor`: это не перенос, а
- * второй, короткий путь к тем же значениям. Список имён здесь явный, чтобы
- * новый экспорт `schema.ts` попадал в публичный вход решением, а не случайно.
+ * The same names are still exported by `@olddevs/ui/editor`: this is not a move but a second,
+ * shorter path to the same values. The list of names here is explicit, so that a new export of
+ * `schema.ts` reaches the public entry by decision, not by accident.
  *
- * Директивы `"use client"` нет, как у остальных входов-реэкспортов.
+ * There is no `"use client"` directive, as in the other re-export entries.
  */
 export {
   RICH_TEXT_SCHEMA,

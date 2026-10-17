@@ -9,58 +9,58 @@ story: src/components/navigation/SectionHeader.stories.tsx
 
 # SectionHeader
 
-## Кратко для AI
+## Summary for AI
 
-`SectionHeader` — heading внутри section или card: title слева, вспомогательный
-узел `right` справа. Семантический `level` выбирайте по иерархии документа
-независимо от визуального `size`.
+`SectionHeader` is a heading inside a section or card: the title on the left, an auxiliary
+`right` node on the right. The semantic `level` is chosen by the document hierarchy,
+independently of the visual `size`.
 
-## Когда использовать
+## When to use
 
-- Заголовок блока внутри страницы или карточки, рядом со счётчиком, ссылкой,
-  переключателем периода или небольшой кнопкой.
-- Требуется настоящий h2/h3/h4, а не стилизованный div.
+- A block heading inside a page or card, next to a counter, a link,
+  a period control or a small button.
+- You need a real h2/h3/h4, not a styled div.
 
-## Когда не использовать
+## When not to use
 
-- Для единственного `h1` страницы используйте `PageHeader`.
-- Для шапки модального окна используйте `ModalHeader`.
-- Не используйте `size` для исправления логической иерархии heading.
+- For the page's single `h1`, use `PageHeader`.
+- For a modal header, use `ModalHeader`.
+- Do not use `size` to fix the logical heading hierarchy.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<SectionHeader title="Состав публикации" level={2} right={<Button size="sm">Добавить</Button>} />
+<SectionHeader title="Publication contents" level={2} right={<Button size="sm">Add</Button>} />
 ```
 
 ## Public API
 
-`title` обязателен и может быть ReactNode. `right` содержит готовый ReactNode
-для action/status. `size` — `sm` или `md` (умолчание): это только кегль.
-`level` — `2 | 3 | 4`, по умолчанию 3; он определяет фактический HTML heading.
-Компонент также принимает native `div` props и ref; нативный `title` от `div` исключён.
+`title` is required and can be a ReactNode. `right` takes a ready-made ReactNode
+for an action/status. `size` is `sm` or `md` (the default): it is only the font size.
+`level` is `2 | 3 | 4`, 3 by default; it determines the actual HTML heading.
+The component also accepts native `div` props and a ref; the `div` `title` prop is excluded.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-Выберите `level` по предыдущему heading: сразу после `PageHeader` (`h1`) обычно
-нужен `level={2}`; h3 по умолчанию подходит для section внутри другого раздела.
-Не меняйте level ради меньшего текста: используйте `size`. У `right` нет
-особой обработки клавиатуры — вложенные контролы обязаны быть доступны сами.
-См. [исходник SectionHeader](../../../src/components/navigation/SectionHeader.tsx).
+Choose `level` based on the previous heading: right after `PageHeader` (`h1`) you usually
+need `level={2}`; the default, h3, fits a section nested in another section.
+Do not change the level to get smaller text: use `size`. `right` has no
+special keyboard handling — nested controls must be accessible on their own.
+See the [SectionHeader source](../../../src/components/navigation/SectionHeader.tsx).
 
-## Хорошие примеры
+## Good examples
 
-- `level={2}` под `PageHeader`, затем `level={3}` в карточке.
-- `right` со ссылкой, маленьким `Button` или нейтральными метаданными.
-- `title` с иконкой и текстом как ReactNode без вложенного heading.
+- `level={2}` under `PageHeader`, then `level={3}` in a card.
+- `right` with a link, a small `Button` or neutral metadata.
+- `title` with an icon and text as a ReactNode without a nested heading.
 
-## Антипаттерны
+## Anti-patterns
 
-- Оставить h3 сразу под h1 только потому, что это default.
-- Вложить `<h2>` в `title` и получить heading внутри heading.
-- Использовать `SectionHeader` как компонент раскладки страницы.
+- Leaving an h3 right under the h1 only because it is the default.
+- Nesting an `<h2>` in `title` and getting a heading inside a heading.
+- Using `SectionHeader` as a page-level layout component.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/navigation/SectionHeader.tsx`
 - `src/components/navigation/SectionHeader.stories.tsx`

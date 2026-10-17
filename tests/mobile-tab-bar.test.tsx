@@ -11,8 +11,8 @@ import {
 } from "../src/components/app-shell/MobileTabBar.js";
 import { resetDevWarnings } from "../src/lib/dev-warn.js";
 
-// Предупреждение показывается один раз на модуль — без сброса порядок тестов
-// решал бы, какой из них его увидит.
+// The warning is shown once per module: without a reset, the order of the tests
+// would decide which of them sees it.
 beforeEach(resetDevWarnings);
 afterEach(() => {
   cleanup();
@@ -49,7 +49,7 @@ describe("MobileTabBar", () => {
       </>
     );
     const nav = screen.getByRole("navigation", { name: "Workspace" });
-    // Второго источника имени нет: строка каталога не лежит рядом мёртвым грузом.
+    // There is no second name source: the catalog string does not sit next to it as dead weight.
     expect(nav.getAttribute("aria-label")).toBeNull();
   });
 
@@ -64,14 +64,14 @@ describe("MobileTabBar", () => {
 
   test("the name is at most one of aria-label and aria-labelledby, and label is not a prop", () => {
     render(
-      // @ts-expect-error — оба источника имени сразу
+      // @ts-expect-error — both name sources at once
       <MobileTabBar aria-label="A" aria-labelledby="b">
         <MobileTabBarItem label="Home" href="/" />
       </MobileTabBar>
     );
     cleanup();
     render(
-      // @ts-expect-error — `label` в ките значит видимую подпись, а у полосы её нет
+      // @ts-expect-error — in the kit `label` means a visible caption, and the bar has none
       <MobileTabBar label="Workspace">
         <MobileTabBarItem label="Home" href="/" />
       </MobileTabBar>
@@ -132,7 +132,7 @@ describe("MobileTabBarItem", () => {
   test("asChild gives the appearance to the consumer element and keeps its href", () => {
     render(
       <MobileTabBarItem label="Documents" active asChild>
-        {/* Заглушка вместо роутера: кит о нём не знает — ADR-0018. */}
+        {/* Stub in place of a router: the kit does not know about one — ADR-0018. */}
         <a href="/docs" data-testid="target" />
       </MobileTabBarItem>
     );
@@ -143,14 +143,14 @@ describe("MobileTabBarItem", () => {
   });
 
   test("asChild without a child does not break the page and keeps the label", () => {
-    // Потребитель на JS забыл ссылку внутри: Slot без потомка уронил бы дерево.
+    // A JS consumer forgot the link inside: a Slot without a child would break the tree.
     expect(() => render(<MobileTabBarItem label="Inbox" asChild />)).not.toThrow();
     expect(screen.getByText("Inbox")).toBeTruthy();
   });
 
   test("without an icon the badge stands next to the label, not over an empty corner", () => {
     render(<MobileTabBarItem label="Inbox" href="/inbox" badge={3} />);
-    // Без иконки углу не за что зацепиться: значок встаёт в строку подписи.
+    // Without an icon there is nothing for the corner to attach to: the badge goes into the label row.
     const row = screen.getByText("Inbox").parentElement!;
     expect(row).not.toBe(screen.getByRole("link"));
     expect(row.contains(screen.getByText("3"))).toBe(true);
@@ -171,8 +171,8 @@ describe("MobileTabBarItem", () => {
 });
 
 describe("MobileTabBarItem badge placement", () => {
-  // Раскладку jsdom не считает: проверяются классы привязки. Как это выглядит,
-  // смотрят глазами: App shell → MobileTabBar → Badges («99+», «Beta», точка, «7»).
+  // jsdom does not compute the layout, so the binding classes are checked. How it
+  // looks is checked by eye: App shell → MobileTabBar → Badges ("99+", "Beta", dot, "7").
   const badgeOf = (text: string | null) => {
     const icon = screen.getByTestId("icon").parentElement!;
     return icon.querySelector(text === null ? "span.size-2" : "span.absolute")!;
@@ -209,7 +209,7 @@ describe("MobileTabBarItem badge", () => {
   test("a number is shown and named for a screen reader with the real count", () => {
     render(<MobileTabBarItem label="Inbox" href="/inbox" badge={3} />);
     expect(screen.getByRole("link", { name: "Inbox 3 new" })).toBeTruthy();
-    // Глазу число, слуху — фраза: видимое число скрыто от скринридера.
+    // A number is for the eye, a phrase is for the ear: the visible number is hidden from the screen reader.
     expect(screen.getByText("3").closest("[aria-hidden]")).toBeTruthy();
   });
 
@@ -257,7 +257,7 @@ describe("MobileTabBarItem badge", () => {
 
   test("a custom element without badgeLabel does not compile", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    // @ts-expect-error — свой узел обязан сказать, что он значит: иначе его слышно как ничего
+    // @ts-expect-error — a custom node must say what it means, otherwise it is heard as nothing
     render(<MobileTabBarItem label="Inbox" href="/inbox" badge={<span>!</span>} />);
     expect(screen.getByRole("link", { name: "Inbox" })).toBeTruthy();
   });
@@ -275,7 +275,7 @@ describe("MobileTabBarItem badge", () => {
   });
 });
 
-/** Подложка полосы: первый потомок навигации, скрытый от скринридера. */
+/** The bar's backdrop: the first child of the navigation, hidden from the screen reader. */
 const backdropOf = (nav: HTMLElement) => nav.querySelector(":scope > [aria-hidden]") as HTMLElement;
 
 describe("MobileTabBar in the AppShell bottomBar slot", () => {
@@ -296,9 +296,9 @@ describe("MobileTabBar in the AppShell bottomBar slot", () => {
     expect(within(nav).getAllByRole("link")).toHaveLength(2);
   });
 
-  // Высоту подложки jsdom не посчитает (`env()` ему неизвестен), поэтому
-  // контракт сверяется со словарём: класс здесь и есть наблюдаемое
-  // (`docs/conventions.md`, «Что проверяют тесты»).
+  // jsdom does not compute the backdrop height (it does not know `env()`), so the
+  // contract is checked against the dictionary: the class here is the observable
+  // (`docs/conventions.md`, "What the tests check").
   test("in the slot the backdrop reaches under the bar by the screen notch", () => {
     render(
       <AppShell
@@ -340,7 +340,7 @@ describe("MobileTabBar in the AppShell bottomBar slot", () => {
 });
 
 describe("MobileTabBarItem custom badge without badgeLabel", () => {
-  // Так передаст потребитель на JS: тип такой вызов не пропускает.
+  // This is how a JS consumer passes it: the type does not let such a call through.
   const Untyped = MobileTabBarItem as unknown as (props: Record<string, unknown>) => ReactElement;
   const custom = <span data-testid="custom-badge">!</span>;
 
@@ -354,7 +354,7 @@ describe("MobileTabBarItem custom badge without badgeLabel", () => {
     expect(text).toContain("`badge`");
     expect(text).toContain("`badgeLabel`");
     expect(text).toMatch(/never announced/);
-    // Значок при этом виден: предупреждение, а не отказ.
+    // The badge is still visible: a warning, not a refusal.
     expect(screen.getByTestId("custom-badge")).toBeTruthy();
   });
 

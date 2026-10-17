@@ -1,9 +1,9 @@
 "use client";
 
-// Происхождение правил ввода и разбора Markdown: `@tiptap/extension-code-block`
-// (MIT, © 2025 Tiptap GmbH, https://github.com/ueberdosis/tiptap) — выражения
-// ограды и разбор токена `code` перенесены, язык приводится к имени Документа.
-// Лицензия — NOTICE в корне пакета.
+// The origin of the input and Markdown parsing rules: `@tiptap/extension-code-block` (MIT,
+// © 2025 Tiptap GmbH, https://github.com/ueberdosis/tiptap). The fence expressions and the
+// parsing of the `code` token are carried over; the language is mapped to the Document's name.
+// License: NOTICE at the package root.
 
 import { textblockTypeInputRule } from "@tiptap/core";
 import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
@@ -14,29 +14,32 @@ import { codeLanguageOf } from "./codeBlockTool.js";
 import { CODE_LANGUAGE_IDS, normalizeCodeLanguage, type CodeLanguageId } from "./codeLanguages.js";
 import { highlightCode, type HighlightTree } from "./lowlight.js";
 
-/** Имя узла — то же, что у блока кода StarterKit: на нём держатся `Tool`, Панель и Меню вставки. */
+/**
+ * The node name is the same as the StarterKit code Block's: the Tool, the Toolbar and the Slash
+ * menu rely on it.
+ */
 export const CODE_BLOCK_NODE = "codeBlock";
 
 export interface RichCodeBlockOptions {
-  /** Перевести фокус в Панель — `Alt+F10` с кнопки языка (`extensions.ts`). */
+  /** Move focus to the Toolbar: `Alt+F10` from the language button (`extensions.ts`). */
   focusToolbar: () => boolean;
 }
 
-/** Блок без языка — текст как есть, одним узлом, без токенов. */
+/** A Block without a language: the text as is, in one node, without tokens. */
 const plain = (value: string): HighlightTree => ({
   type: "root",
   children: [{ type: "text", value }],
 });
 
 /**
- * Что получает расширение вместо голого lowlight.
+ * What the extension gets instead of bare lowlight.
  *
- * ПОЧЕМУ ОБЁРТКА. Расширение Tiptap на блоке без языка зовёт `highlightAuto` —
- * угадывает язык по тексту. «Обычный текст» тогда раскрашивался бы как
- * случайный из шести, а у одинакового текста в Редакторе и в `RichTextView`
- * была бы разная подсветка: серверный хелпер не угадывает, он подсвечивает
- * только блоки с языком. Обёртка отдаёт такой блок текстом, а язык Документа
- * (`html`) переводит в грамматику (`xml`) по `codeLanguages.ts`.
+ * WHY A WRAPPER. The Tiptap extension calls `highlightAuto` on a Block without a language: it
+ * guesses the language from the text. A "Plain text" Block would then be colored as a guessed
+ * language out of six, and the same text would be highlighted differently in the Editor and in
+ * `RichTextView`, because the server helper does not guess: it highlights only Blocks with a
+ * language. The wrapper hands such a Block over as plain text, and maps the Document's language
+ * (`html`) to the grammar (`xml`) via `codeLanguages.ts`.
  */
 const LOWLIGHT = {
   highlight: (language: string, code: string) => {
@@ -47,7 +50,7 @@ const LOWLIGHT = {
   listLanguages: () => [...CODE_LANGUAGE_IDS],
 };
 
-/** Блоки кода с языком не в форме Документа: псевдоним или неизвестное имя. */
+/** Code Blocks with a language that is not in the Document's form: an alias or an unknown name. */
 function strayLanguages(state: EditorState): { pos: number; language: CodeLanguageId | null }[] {
   const found: { pos: number; language: CodeLanguageId | null }[] = [];
   state.doc.descendants((node, pos) => {
@@ -60,21 +63,19 @@ function strayLanguages(state: EditorState): { pos: number; language: CodeLangua
 }
 
 /**
- * Блок кода с языком и подсветкой (ADR-0051) вместо блока кода
- * StarterKit. Имя узла, `Mod+Alt+C`, правило ```` ``` ```` и пункты «Блок кода»
- * в Панели и в Меню вставки остаются прежними.
+ * A code Block with a language and syntax highlighting (ADR-0051), in place of the StarterKit
+ * code Block. The node name, `Mod+Alt+C`, the ```` ``` ```` fence rule and the "Code block" items
+ * in the Toolbar and the Slash menu stay as they were.
  *
- * ЯЗЫК — ТОЛЬКО ИМЯ ИЗ `codeLanguages.ts` ИЛИ НИЧЕГО. Он приходит из пяти
- * мест: `value` и вставка HTML (`class="language-py"`), правило ```` ```py ````,
- * Markdown (```` ```yml ````), вставка из VS Code (`vscode-editor-data`) и
- * команды движка. Первые три приводятся на входе, остальные — дописанной
- * транзакцией (`codeLanguageNormalizer`); неизвестный язык становится
- * «Обычным текстом», и в Документ уходит `<code>` без класса.
+ * THE LANGUAGE IS ONLY A NAME FROM `codeLanguages.ts`, OR NOTHING. It comes from five places:
+ * `value` and HTML paste (`class="language-py"`), the ```` ```py ```` rule, Markdown
+ * (```` ```yml ````), paste from VS Code (`vscode-editor-data`) and engine commands. The first
+ * three are normalized on input; the rest by an appended transaction (`codeLanguageNormalizer`).
+ * An unknown language becomes "Plain text", and the Document gets a `<code>` without a class.
  *
- * ПОДСВЕТКА — ДЕКОРАЦИИ. Расширение размечает токены `span class="hljs-…"`
- * поверх текста блока, и в `getHTML()` их нет: в Документе остаётся только
- * `class="language-…"`. Цвета токенов — тема в `codeTheme.ts`, классами на
- * контейнере.
+ * THE HIGHLIGHTING IS DECORATIONS. The extension marks tokens `span class="hljs-…"` over the
+ * Block's text, and they are absent from `getHTML()`: the Document keeps only `class="language-…"`.
+ * The token colors come from the theme in `codeTheme.ts`, through classes on the container.
  */
 export const RichCodeBlock = CodeBlockLowlight.extend<RichCodeBlockOptions>({
   name: CODE_BLOCK_NODE,
@@ -98,7 +99,7 @@ export const RichCodeBlock = CodeBlockLowlight.extend<RichCodeBlockOptions>({
   },
 
   addInputRules() {
-    // Те же выражения, что у блока кода Tiptap; имя языка — к имени Документа.
+    // The same expressions as the Tiptap code Block; the language name is mapped to the Document's name.
     return [/^```([a-z]+)?[\s\n]$/, /^~~~([a-z]+)?[\s\n]$/].map((find) =>
       textblockTypeInputRule({
         find,
@@ -108,7 +109,7 @@ export const RichCodeBlock = CodeBlockLowlight.extend<RichCodeBlockOptions>({
     );
   },
 
-  // Копия разбора блока кода Tiptap: язык ограды — к имени Документа.
+  // A copy of the Tiptap code Block's parser: the fence language is mapped to the Document's name.
   parseMarkdown: (token, helpers) => {
     if (
       token.raw?.startsWith("```") === false &&
@@ -125,12 +126,11 @@ export const RichCodeBlock = CodeBlockLowlight.extend<RichCodeBlockOptions>({
   },
 
   /*
-    ОГРАДА ДЛИННЕЕ ЛЮБОЙ СЕРИИ ОБРАТНЫХ КАВЫЧЕК ВНУТРИ. У Tiptap ограда всегда
-    ```` ``` ````, и блок, который сам содержит ```` ``` ```` (пример README в
-    блоке Markdown, шаблон в блоке кода), выгружался с внутренней оградой,
-    закрывающей внешнюю: обратная загрузка разваливала его на куски. CommonMark
-    закрывает блок только оградой не короче открывающей — поэтому берём на одну
-    кавычку больше самой длинной серии, но не меньше трёх.
+    THE FENCE IS LONGER THAN ANY RUN OF BACKTICKS INSIDE. Tiptap's fence is always ```` ``` ````,
+    and a Block that itself contains ```` ``` ```` (a README example in a Markdown Block, a template
+    in a code Block) was exported with an inner fence that closed the outer one, so reloading broke
+    it into pieces. CommonMark closes a Block only with a fence no shorter than the opening one, so
+    we take one backtick more than the longest run, but not fewer than three.
   */
   renderMarkdown: (node, helpers) => {
     const text = node.content ? helpers.renderChildren(node.content) : "";
@@ -144,11 +144,12 @@ export const RichCodeBlock = CodeBlockLowlight.extend<RichCodeBlockOptions>({
     return {
       ...this.parent?.(),
       /*
-        `Alt+F10` в блоке кода — в кнопку его языка, как на выделенной
-        картинке — в её панель: действие над тем, где стоит каретка, ближе
-        Панели форматирования. Tab для этого не годится: он уводит фокус из
-        поля, а с кнопки повторный `Alt+F10` ведёт дальше, в Панель. Кнопки
-        нет (только чтение) — сочетание уходит дальше, к Панели.
+      /*
+        `Alt+F10` in a code Block goes to its language button, the same way a selected image sends it
+        to the image's panel: an action on the place of the caret is closer to the Toolbar than Tab.
+        Tab does not suit here, since it moves focus out of the field, while from the button a repeated
+        `Alt+F10` leads on, to the Toolbar. With no button (read-only) the shortcut passes on to the
+        Toolbar.
       */
       "Alt-F10": ({ editor }) => {
         const { $from } = editor.state.selection;

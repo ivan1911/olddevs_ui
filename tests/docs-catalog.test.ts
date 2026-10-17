@@ -10,15 +10,13 @@ import { describe, expect, test } from "vitest";
  * new components arrived as a bare list of exports (16 of 85 entries had a
  * description).
  *
- * The catalog itself is Russian; the i18n gate forbids Cyrillic literals in
- * tests, so Russian words below are written as escapes.
+ * The catalog is English (ADR-0073); its Russian Translation lives on the site.
  */
 const catalog = readFileSync(join(import.meta.dirname, "../docs/components/index.md"), "utf8");
 
-/** Russian "standalone entry": the start of a package-entry note, which is not a description. */
-const ENTRY_NOTE =
-  "\u043e\u0442\u0434\u0435\u043b\u044c\u043d\u044b\u0439 \u0432\u0445\u043e\u0434";
-const CYRILLIC = /[Ѐ-ӿ]/;
+/** "a separate entry point": the start of a package-entry note, which is not a description. */
+const ENTRY_NOTE = "a separate entry point";
+const CYRILLIC = /[\u0400-\u04FF]/;
 
 interface Entry {
   name: string;
@@ -68,20 +66,20 @@ describe("component catalog", () => {
         entry.description.split(/\s+/).length,
         "fewer than three words is not a description"
       ).toBeGreaterThanOrEqual(3);
-      expect(entry.description, "the catalog is written in Russian").toMatch(CYRILLIC);
+      expect(entry.description, "the catalog is written in English").not.toMatch(CYRILLIC);
     }
   );
 
-  test("group headings are written in Russian, like the rest of the catalog and the Reference menu", () => {
+  test("group headings are written in English, like the rest of the catalog and the Reference menu", () => {
     const headings = [...catalog.matchAll(/^## (.+)$/gm)].map((match) => match[1]!);
     expect(headings.length).toBeGreaterThanOrEqual(8);
     for (const heading of headings)
-      expect(heading, "the heading must be Russian").toMatch(CYRILLIC);
+      expect(heading, "the heading must be English").not.toMatch(CYRILLIC);
   });
 
   test("group intros do not carry release history", () => {
     expect(catalog, "version history belongs to the changelog").not.toMatch(
-      /^[^\n]*\u041f\u043e\u044f\u0432\u0438\u043b\u0441\u044f \u0432 \d/m
+      /^[^\n]*\b(?:Added|Appeared|Introduced) in \d/m
     );
   });
 

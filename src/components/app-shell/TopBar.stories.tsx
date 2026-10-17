@@ -39,7 +39,7 @@ const Actions = () => (
   </>
 );
 
-/** Все три слота: бренд, поиск, действия. */
+/** All three slots: brand, search, and actions. */
 export const Playground: Story = {
   args: {
     brand: <Brand />,
@@ -56,22 +56,20 @@ export const Playground: Story = {
   },
 };
 
-/** Только бренд и действия — шапка без поиска. */
+/** Only the brand and actions: a header without search. */
 export const WithoutSearch: Story = {
   args: { brand: <Brand />, actions: <Actions /> },
 };
 
 /**
- * Контракт высоты целиком — и ровно то, ради чего написан [ADR-0019].
+ * The full height contract, and exactly what [ADR-0019] was written for.
  *
- * До 2.1.0 в этой истории «приложение» рисовало свою панель и публиковало её
- * высоту само; здесь панель — `TopBar` кита, и переменную публикует он.
- * Полоса массовых действий её читает и встаёт вплотную, **без единой строки
- * кода у потребителя**.
+ * Before 2.1.0 this story's "app" drew its own bar and published its height itself. Here the
+ * bar is the kit's `TopBar`, and the kit publishes the variable. The bulk-action bar reads it
+ * and sits flush against it, **without a single line of code on the consumer's side**.
  *
- * Проверяется в настоящем браузере: `tests-visual/interactions.spec.ts`. В
- * jsdom проверять нечего — там нет ни прокрутки, ни `position: sticky`, ни
- * работающего `IntersectionObserver`.
+ * Verified in a real browser: `tests-visual/interactions.spec.ts`. There is nothing to verify
+ * in jsdom: it has no scrolling, no `position: sticky`, and no working `IntersectionObserver`.
  */
 export const WithStickyBar: Story = {
   args: { brand: <Brand />, actions: <Actions /> },
@@ -100,19 +98,18 @@ export const WithStickyBar: Story = {
 };
 
 /**
- * Переключатель темы — из рецепта `docs/theming.md`, а не из кита: компонента
- * переключателя в пакете нет и не будет (ADR-0020). Здесь он стоит в слоте
- * действий шапки, потому что это его обычное место.
+ * The theme switcher comes from the recipe in `docs/theming.md`, not from the kit. The package
+ * has no switcher component and never will (ADR-0020). Here it sits in the header's actions
+ * slot, because that is where it normally goes.
  *
- * ОДНО ОТСТУПЛЕНИЕ ОТ РЕЦЕПТА, и оно вынужденное: настоящий переключатель
- * зовёт `applyTheme` и пишет в `localStorage`, а в витрине темой владеет
- * тулбар — декоратор выставляет `data-theme` при каждой отрисовке и тут же
- * перебил бы применённое. Поэтому здесь только локальное состояние: история
- * показывает вид и доступное имя, а рабочую обвязку — рецепт.
+ * ONE DEVIATION FROM THE RECIPE, and it is forced. The real switcher calls `applyTheme` and
+ * writes to `localStorage`, but in the showcase the Storybook toolbar owns the theme: the
+ * decorator sets `data-theme` on every render and would immediately override what was applied.
+ * So only local state is used here. The story shows the look and the accessible name, and
+ * the working plumbing is in the recipe.
  *
- * Что проверяется по-настоящему: подпись называет и текущее состояние, и
- * следующий шаг. Кнопка без состояния — ровно тот дефект, ради которого
- * требование записано.
+ * What is actually verified: the label names both the current state and the next step. A button
+ * without state is exactly the defect this requirement was written to prevent.
  */
 const THEMES = {
   dark: { name: "dark", target: "dark", icon: <ThemeDarkIcon /> },

@@ -23,11 +23,11 @@ export const Playground: Story = {
           {...args}
           accept="image/*"
           maxSize={5 * 1024 * 1024}
-          hint="JPG или PNG, не больше 5 МБ"
+          hint="JPG or PNG, up to 5 MB"
           onFiles={(f) => setFiles(f.map((x) => x.name))}
         />
         <Text size="sm" level={3}>
-          Принято: {files.length ? files.join(", ") : "—"}
+          Accepted: {files.length ? files.join(", ") : "—"}
         </Text>
       </div>
     );
@@ -37,14 +37,14 @@ export const Playground: Story = {
 export const Disabled: Story = {
   render: (args) => (
     <div className="w-[440px]">
-      <FileDropzone {...args} disabled hint="Загрузка приостановлена" />
+      <FileDropzone {...args} disabled hint="Upload paused" />
     </div>
   ),
 };
 
 /**
- * Отклонённые файлы показываются с причиной. Область, которая молча принимает
- * семь файлов из десяти, читается как сломанная.
+ * Rejected files are shown with the reason. A zone that silently accepts seven files out
+ * of ten reads as broken.
  */
 export const WithRejected: Story = {
   render: function Render(args) {

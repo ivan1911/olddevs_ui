@@ -7,71 +7,71 @@ source: src/components/overlays/Tooltip.tsx
 story: src/components/overlays/Tooltip.stories.tsx
 ---
 
-# Tooltip и HelpTooltip
+# Tooltip and HelpTooltip
 
-## Кратко для AI
+## Summary for AI
 
-`Tooltip` добавляет краткое пояснение к одному элементу при hover и focus.
-Он не заменяет видимую подпись, инструкцию или подтверждение. `TooltipProvider`
-ставится один раз у корня приложения. Для обычного случая берите wrapper
-`Tooltip`; primitives `TooltipRoot`, `TooltipTrigger`, `TooltipContent` нужны,
-когда требуется составная разметка Radix. `HelpTooltip` — готовый поповер по клику на
-иконку помощи.
+`Tooltip` adds a short explanation to a single element on hover and focus. It
+does not replace a visible label, an instruction or a confirmation.
+`TooltipProvider` is placed once at the app root. For the ordinary case, use the
+`Tooltip` wrapper; the primitives `TooltipRoot`, `TooltipTrigger` and
+`TooltipContent` are needed when you want Radix's compound markup. `HelpTooltip`
+is a ready-made popover opened by a click on a help icon.
 
-## Когда использовать
+## When to use
 
-- Подписать кнопку только с иконкой или расшифровать незнакомый термин.
-- Дать короткое необязательное уточнение, которое не нужно для завершения задачи.
-- `HelpTooltip` — для стандартной help-иконки рядом с полем или настройкой.
+- To label an icon-only button or to explain an unfamiliar term.
+- To give a short optional clarification that is not needed to complete the task.
+- `HelpTooltip` — for a standard help icon next to a field or a setting.
 
-## Когда не использовать
+## When not to use
 
-- Не прячьте обязательную инструкцию, ошибку или единственное название действия:
-  они должны быть видимы или программно связаны с контролом.
-- Для сложного интерактивного содержимого — `Popover`; для сообщения о состоянии
-  — `Alert`. Для превью с разметкой (аватар, заголовок, пара строк) по наведению
-  на ссылку или имя — `HoverCard`.
-- Не создавайте `TooltipProvider` у каждой кнопки.
+- Do not hide a required instruction, an error or the only name of an action:
+  they must be visible or programmatically tied to the control.
+- Use `Popover` for complex interactive content and `Alert` for a status message.
+  Use `HoverCard` for a preview with markup (an avatar, a title, a couple of
+  lines) on hover over a link or a name.
+- Do not create a `TooltipProvider` for every button.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<Tooltip content="Удалить выбранное">
-  <Button iconOnly aria-label="Удалить" icon={<DeleteIcon />} />
+<Tooltip content="Delete the selection">
+  <Button iconOnly aria-label="Delete" icon={<DeleteIcon />} />
 </Tooltip>
 ```
 
 ## Public API
 
-`Tooltip` принимает `content`, единственный `children: ReactElement`, а также
-`side`, `align` и `delayDuration`. Пустой `content` возвращает ребёнка без
-обёртки. Ребёнок обязан принимать `ref`, потому что он становится trigger.
-`TooltipContent` принимает props Radix `Content`; его `sideOffset` по умолчанию
-равен 6. `TooltipProvider`, `TooltipRoot` и `TooltipTrigger` экспортируют
-примитивы Radix для составного API.
+`Tooltip` accepts `content`, a single `children: ReactElement`, `side`, `align`
+and `delayDuration`. An empty `content` returns the child without a
+wrapper. The child must accept a `ref`, because it becomes the trigger.
+`TooltipContent` accepts the Radix `Content` props; its `sideOffset` is 6 by
+default. `TooltipProvider`, `TooltipRoot` and `TooltipTrigger` export the Radix
+primitives for the compound API.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-Подсказка открывается и при фокусе, а не только при наведении. У icon-only
-trigger всё равно должен быть собственный `aria-label`: подсказка не является
-надёжным доступным именем кнопки. Поставьте один provider на root, чтобы общая
-задержка и переход между подсказками работали согласованно. См.
-[исходник Tooltip](../../../src/components/overlays/Tooltip.tsx) и
+The tooltip opens on focus too, not only on hover. An icon-only trigger must still
+have its own `aria-label`: a tooltip is not a reliable accessible name for a
+button. Put one provider at the root so that the shared delay and the transition
+between tooltips work consistently. See
+[the Tooltip source](../../../src/components/overlays/Tooltip.tsx) and
 [HelpTooltip](../../../src/components/overlays/HelpTooltip.tsx).
 
-## Хорошие примеры
+## Good examples
 
-- Иконка удаления с `aria-label` и уточняющей подсказкой.
-- `content={condition ? text : undefined}` без ручного ветвления DOM.
-- `HelpTooltip` рядом с непонятным параметром, но не вместо его `label`.
+- A delete icon with an `aria-label` and a clarifying tooltip.
+- `content={condition ? text : undefined}` without branching the DOM by hand.
+- `HelpTooltip` next to an unclear parameter, but not instead of its `label`.
 
-## Антипаттерны
+## Anti-patterns
 
-- Подсказка на нефокусируемом `span` как единственный способ прочитать действие.
-- Многоабзацный текст, кнопки или форма внутри подсказки.
-- Вложенный provider в библиотечном компоненте.
+- A tooltip on a non-focusable `span` as the only way to read the action.
+- Multi-paragraph text, buttons or a form inside a tooltip.
+- A nested provider in a library component.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/overlays/Tooltip.tsx`, `src/components/overlays/HelpTooltip.tsx`
 - `src/components/overlays/Tooltip.stories.tsx`

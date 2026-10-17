@@ -4,16 +4,16 @@ import { expect, test, type Page } from "@playwright/test";
 import { stubVideoServices } from "./video-services.js";
 
 /**
- * Визуальный бейзлайн: снимок каждой истории витрины в каждой теме.
+ * Visual baseline: a snapshot of every story in the showcase, in every theme.
  *
- * Зачем именно так, а не скриншоты экранов приложения: экраны требуют бэкенда
- * и живых данных, поэтому их снимки менялись бы от прогона к прогону по причинам,
- * не связанным с кодом. Истории детерминированы.
+ * Why stories and not screenshots of consumer screens: screens need a backend
+ * and live data, so their snapshots would change from run to run for reasons
+ * unrelated to the code. Stories are deterministic.
  *
- * Тема задаётся через URL-параметр `globals` — до первого рендера. Менять её
- * после загрузки страницы нельзя: Chromium пропагирует наследуемые CSS-переменные
- * в поддерево на следующем пересчёте стилей, и снимок, сделанный сразу после
- * переключения, покажет старую тему.
+ * The theme is set with the `globals` URL parameter, before the first render. It must not
+ * be changed after the page has loaded: Chromium propagates inherited CSS variables down
+ * the subtree on the next style recalculation, so a snapshot taken right after the switch
+ * would show the old theme.
  */
 
 type Entry = { id: string; name: string; title: string; type: string; tags?: string[] };
@@ -23,16 +23,16 @@ const index = JSON.parse(
 ) as { entries: Record<string, Entry> };
 
 /**
- * Снимаются только истории ЯДРА.
+ * Only CORE stories are snapshotted.
  *
- * Метка `periphery` — механизм двухуровневой планки из
+ * The `periphery` tag is the two-level threshold mechanism from
  * ADR-0014:
- * у компонентов волн 8–11 почти нет собственных решений, их вид целиком собран
- * из атомов словаря, и снимок сторожил бы атомы — а они уже посторожены
- * снимками ядра. Ставится в `meta.tags` файла историй.
+ * components of waves 8–11 have almost no decisions of their own, their look is assembled
+ * entirely from the vocabulary's atoms, so a snapshot would guard the atoms — and those are
+ * already guarded by the core snapshots. The tag is set in `meta.tags` of the story file.
  *
- * Аудит axe и покрытие классов метку НЕ смотрят: они обязательны на обоих
- * уровнях, потому что ловят молчаливые поломки.
+ * The axe audit and class coverage do NOT look at the tag: they are required on both
+ * levels, because they catch silent breakage.
  */
 const stories = Object.values(index.entries).filter(
   (e) => e.type === "story" && !e.tags?.includes("periphery")
@@ -41,22 +41,21 @@ const stories = Object.values(index.entries).filter(
 const THEMES = ["dark", "light", "dim"] as const;
 
 /**
- * Вьюпорт истории — меткой, а не параметром.
+ * The story viewport is set by a tag, not by a parameter.
  *
- * Спек знает об истории только то, что лежит в `storybook-static/index.json`:
- * id, имя и метки. Параметры истории (`parameters`) туда не попадают, а метка —
- * попадает, поэтому история, которой нужна узкая ширина, говорит об этом
- * меткой `viewport-phone` (`tags` у истории). Без метки снимок на 1280×900
- * проекта.
+ * The spec knows about a story only what is in `storybook-static/index.json`:
+ * id, name and tags. Story parameters (`parameters`) do not get there, but tags do,
+ * so a story that needs a narrow width says so with the `viewport-phone` tag
+ * (the story's `tags`). Without the tag the snapshot is taken at the project's 1280×900.
  *
- * Зачем вообще. Слот `bottomBar` у `AppShell` прячет полосу с `md`, и на 1280px
- * снимок `WithBottomBar` не показывал встраивания полосы вовсе. На телефоне
- * вдобавок эмулируется вырез экрана (`env(safe-area-inset-bottom)` = 34px, как у
- * iPhone с жестовой полосой): без него отступ слота под вырез и подложку полосы
- * под ним снимок тоже не увидел бы. Эмуляция — через CDP: у Playwright своей
- * нет, проект — Chromium.
+ * Why at all. The `bottomBar` slot of `AppShell` hides the bar from `md` up, so at 1280px
+ * the `WithBottomBar` snapshot did not show the bar placed in the slot at all. On a phone
+ * the screen cutout is also emulated (`env(safe-area-inset-bottom)` = 34px, as on an iPhone
+ * with a gesture bar): without it, the slot's inset for the cutout and the bar's backdrop
+ * beneath it would not be visible in the snapshot either. The emulation goes through CDP:
+ * Playwright has none of its own, and the project is Chromium.
  *
- * Имя файла снимка от метки не меняется: история снимается в одном размере.
+ * The snapshot file name does not depend on the tag: the story is snapshotted at one size.
  */
 const PHONE = { width: 375, height: 812 } as const;
 const PHONE_SAFE_AREA_BOTTOM = 34;
@@ -71,34 +70,33 @@ async function applyViewport(page: Page, story: Entry) {
 }
 
 /**
- * ПРАВИЛО ПОКРЫТИЯ СНИМКАМИ, записанное явно — иначе оно расползётся.
+ * SNAPSHOT COVERAGE RULE, written down explicitly, or it would drift.
  *
- * Осей теперь три: тема (3) × акцент (2) × бренд (2) = 12 наборов на историю.
- * Снимать все двенадцать — значит держать бейзлайн вчетверо больше нынешнего и
- * перечитывать вчетверо больше диффов при каждой правке токена. Цена не
- * окупается: бренд и акцент меняют цвет, а не геометрию, а цвет полностью
- * перебирает `npm run contrast` — и делает это по токенам, а не по тому, что
- * какая-то история случайно показала.
+ * There are three axes now: theme (3) × accent (2) × brand (2) = 12 sets per story.
+ * Snapshotting all twelve would mean keeping the baseline four times larger than today and
+ * reviewing four times as many diffs on every token edit. It does not pay off: brand and
+ * accent change color, not geometry, and color is fully covered by `npm run contrast`,
+ * which checks the tokens, not whatever a story happened to show.
  *
- * Поэтому снимается:
- *   — каждая история ядра в трёх темах на синем акценте (полный набор);
- *   — одна история на фиолетовом акценте (доказывает, что ось работает);
- *   — одна история на бренде `teal` (доказывает, что оверлей работает).
+ * So the following is snapshotted:
+ *   — every core story in the three themes on the blue accent (the full set);
+ *   — one story on the violet accent (proves that the axis works);
+ *   — one story on the `teal` brand (proves that the brand block works).
  *
- * Расширять покрытие имеет смысл там, где бренд или акцент меняют РАЗМЕТКУ.
- * Сегодня таких мест нет, и появление первого — повод пересмотреть правило,
- * а не добавить снимок молча.
+ * Coverage is worth extending where brand or accent change the LAYOUT.
+ * There are no such places today; the first one to appear is a reason to revisit
+ * the rule, not to add a snapshot silently.
  */
 
 /**
- * Ленивые чанки — меткой `network-idle`, по той же причине, что и вьюпорт:
- * спек видит только метки. Часть истории может догружаться уже после показа:
- * Карточка у текста (OLDSUI-113) запрашивает свой чанк только после Готовности
- * движка (OLDSUI-111). Пока чанк в пути, экран стоит неподвижно, и сравнение
- * снимков, которое ждёт лишь двух одинаковых кадров подряд, принимает поле без
- * Карточки за готовую историю. Тишина в сети — честный признак, что догружать
- * больше нечего. Только по метке: полсекунды ожидания на каждой из тысяч
- * историй стоили бы минут прогона.
+ * Lazy chunks are marked with the `network-idle` tag, for the same reason as the viewport:
+ * the spec sees only tags. Part of a story may load after it is shown: the Text card
+ * (OLDSUI-113) requests its own chunk only after the engine's Readiness (OLDSUI-111).
+ * While the chunk is in transit, the page stands still, and a snapshot comparison that waits
+ * only for two identical frames in a row would accept a field without the Text card as a
+ * finished story. Network silence is an honest sign that there is nothing left to load.
+ * Only by tag: half a second of waiting on each of thousands of stories would cost minutes
+ * of the run.
  */
 async function waitForLazyChunks(page: Page, story: Entry) {
   if (story.tags?.includes("network-idle")) await page.waitForLoadState("networkidle");
@@ -109,10 +107,10 @@ test("the showcase contains stories", () => {
 });
 
 /**
- * Готовность истории — сигнал самой витрины (`sb-show-main` на body), как в
- * `a11y.spec.ts`. Одной видимости холста мало: история пустого состояния
- * (`RichTextView` с пустым HTML) законно рисует контейнер нулевой высоты, и
- * Playwright такой холст видимым не считает — тест ждал бы до таймаута.
+ * A story is ready when the showcase itself signals it (`sb-show-main` on body), as in
+ * `a11y.spec.ts`. Visibility of the canvas alone is not enough: an empty-state story
+ * (`RichTextView` with empty HTML) legitimately renders a container of zero height, and
+ * Playwright does not count such a canvas as visible — the test would wait until the timeout.
  */
 async function waitForStory(page: Page, story: Entry) {
   await page.locator("body.sb-show-main").waitFor({ state: "attached" });
@@ -129,12 +127,12 @@ async function waitForStory(page: Page, story: Entry) {
 
 for (const story of stories) {
   for (const theme of THEMES) {
-    // Акцент фиксирован: он влияет только на `--accent*`, и матрицы тонов
-    // покрывают его отдельной проверкой ниже. Снимать все 6 сочетаний для
-    // каждой истории — вчетверо больше файлов почти без прироста покрытия.
+    // The accent is fixed: it affects only `--accent*`, and the tone matrices cover it
+    // with a separate check below. Snapshotting all 6 combinations for every story would
+    // mean four times as many files for almost no gain in coverage.
     test(`${story.id} — theme ${theme}`, async ({ page }) => {
       await applyViewport(page, story);
-      // Плеер видео встаёт сразу: чужой сервис в снимок не попадает.
+      // The video player mounts right away: a third-party service does not get into the snapshot.
       if (story.id.includes("video")) await stubVideoServices(page);
       await page.goto(`/iframe.html?id=${story.id}&globals=theme:${theme};accent:blue`);
       await waitForStory(page, story);
@@ -143,9 +141,9 @@ for (const story of stories) {
   }
 }
 
-// Акцент и бренд проверяем только на матрицах: остальные истории их не
-// показывают. Матрица показывает все тона разом — если оверлей что-то сдвинул,
-// видно здесь и больше нигде.
+// The accent and the brand are checked only on the matrices: the other stories do not
+// show them. A matrix shows all tones at once — if the brand block shifted something,
+// it is visible here and nowhere else.
 for (const story of stories.filter((s) => s.name.toLowerCase().includes("matrix"))) {
   test(`${story.id} — accent violet`, async ({ page }) => {
     await applyViewport(page, story);

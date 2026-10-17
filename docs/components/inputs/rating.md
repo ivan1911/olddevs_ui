@@ -9,91 +9,91 @@ story: src/components/inputs/Rating.stories.tsx
 
 # Rating
 
-## Кратко для AI
+## Summary for AI
 
-`Rating` — оценка звёздами. В `value` и `onChange` идёт **число**, а не набор звёзд. Клавиатурная модель — радиогруппа: вся оценка — это один табстоп. Дробных оценок (половины звезды) нет.
+`Rating` is a star rating. `value` and `onChange` work with a **number**, not a set of stars. The keyboard model is a radio group: the whole rating is one tab stop. There are no fractional ratings (half stars).
 
-## Когда использовать
+## When to use
 
-- Пользователь ставит оценку: качество обращения, отзыв, приоритет.
-- Оценку надо показать: средний балл карточки, результат проверки.
+- The user gives a rating: the quality of ticket handling, a review, a priority.
+- A rating has to be shown: the average score of a card, the result of a check.
 
-## Когда не использовать
+## When not to use
 
-- Для отметки «моё» берите `FavoriteIcon` в отдельной кнопке, а не оценку: избранное — отметка «моё», оценка — величина.
-- Если величина непрерывная или диапазон широкий, используйте `Slider`.
-- Если значений два, используйте `Toggle`.
+- For a "mine" mark, use `FavoriteIcon` in a separate button, not a rating: a favorite is a "mine" mark, a rating is a quantity.
+- If the quantity is continuous or the range is wide, use `Slider`.
+- If there are only two values, use `Toggle`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<Rating value={value} onChange={setValue} aria-label="Качество" />
+<Rating value={value} onChange={setValue} aria-label="Quality" />
 ```
 
 ## Public API
 
-- `value` + `onChange` — число. Без `onChange` компонент только показывает оценку и в табуляцию не попадает.
-- `max` — сколько звёзд всего, по умолчанию пять. Значение приводится к целому не меньше единицы: шкала из нуля делений — не шкала, к тому же число приходит из данных потребителя, и падать на нём компонент не должен.
-- Дробное `value` компонент выдерживает (см. ниже), `NaN` принимается за ноль: звёзды не закрашены, объявляется «Оценка 0 из N».
-- `onChange` **не вызывается**, когда значение не изменилось: стрелка у края и щелчок по уже выбранной звезде молчат — вызов без изменения обработчик принял бы за правку.
-- `size`: `sm` для строки таблицы, `md` по умолчанию.
-- `readOnly` — показ без ввода; `disabled` — недоступное действие. Это **разные** состояния, см. ниже.
-- `caption` — подпись рядом («4,2 · 128 оценок»). Кит её не считает: среднее и число голосов знает потребитель.
-- `aria-label` обязателен.
+- `value` and `onChange` work with a number. Without `onChange` the component only shows the rating and does not enter the tab order.
+- `max` — how many stars in total, five by default. The value is coerced to an integer of at least one: a scale of zero divisions is not a scale, and the number comes from the consumer's data, so the component must not crash on it.
+- The component tolerates a fractional `value` (see below); `NaN` is treated as zero: no stars are filled and the announcement is "Rated 0 out of N".
+- `onChange` is **not called** when the value has not changed: an arrow key at the edge and a click on an already selected star stay silent — the handler would read a call without a change as an edit.
+- `size`: `sm` for a table row, `md` by default.
+- `readOnly` — display without input; `disabled` — an unavailable action. These are **different** states, see below.
+- `caption` — a label next to it ("4.2 · 128 ratings"). The kit does not compute it: the average and the number of votes are known to the consumer.
+- `aria-label` is required.
 
-## Клавиатура — радиогруппа, а не набор кнопок
+## Keyboard — a radio group, not a set of buttons
 
-Стрелки меняют значение, `Home` уводит на ноль, `End` — на максимум, Tab выводит
-из группы целиком. Пять табстопов на один вопрос — это пять остановок там, где
-ответ один; отсюда и роль `radiogroup`.
+Arrow keys change the value, `Home` goes to zero, `End` to the maximum, Tab leaves
+the group as a whole. Five tab stops for one question is five stops where the
+answer is one; hence the `radiogroup` role.
 
-В табуляции ровно одна звезда — выбранная, а при нулевой оценке — первая (roving
-`tabindex`). Фокус идёт за значением: иначе следующая стрелка отсчитывала бы от
-прежней звезды, а объявлено было бы новое значение.
+Exactly one star is in the tab order — the selected one, and with a zero rating
+the first (roving `tabindex`). Focus follows the value: otherwise the next arrow key
+would count from the previous star while the new value has already been announced.
 
-Ноль — законное значение: снять оценку можно и стрелкой назад с единицы, и
-`Home`.
+Zero is a legitimate value: the rating can be cleared by decreasing it from one with an arrow key,
+and with `Home`.
 
-## `readOnly` и `disabled` — разные состояния
+## `readOnly` and `disabled` are different states
 
-Только для чтения — это **показанные данные**: приглушить их — значит спрятать то,
-что показано специально. Выключенный контрол — это **недоступное сейчас
-действие**, и его приглушают. Первое остаётся ярким и уходит из табуляции,
-второе гаснет.
+Read-only is **displayed data**: dimming it would hide what is shown on purpose. A
+disabled control is an **action unavailable right now**, and it is dimmed. The
+first stays bright and leaves the tab order, the second fades.
 
-Роль при этом не меняется: выключенная оценка остаётся `radiogroup` и помечается
-`aria-disabled`. `role="img"` прочитался бы как картинка, а не как недоступное
-действие. Роль — свойство контрола, а не его доступности прямо сейчас.
+The role does not change: a disabled rating stays a `radiogroup` and is marked
+`aria-disabled`. `role="img"` would be read as a picture, not as an unavailable
+action. The role is a property of the control, not of its availability right now.
 
-## Дробных оценок нет — но дробное значение компонент выдерживает
+## There are no fractional ratings — but the component tolerates a fractional value
 
-Ось `allowHalf` не заведена, однако тип `value` — обычное число, и дробное
-значение даёт закраску: при `4.2` закрашены четыре звезды. Поэтому
-табстоп ставится по **округлённому** значению. Без округления не совпадала бы ни
-одна звезда, роуминг не поставил бы табстоп никуда, и радиогруппа стала бы
-недостижимой с клавиатуры целиком — молча, без единой красной проверки.
+The `allowHalf` axis was not introduced, yet the type of `value` is a plain
+number, and the component accepts a fractional one for the fill: at `4.2` four
+stars are filled. So the tab stop is set by the **rounded** value. Without
+rounding no star would match, the roving `tabindex` would put the tab stop nowhere, and the
+radio group would become unreachable from the keyboard altogether — silently,
+without a single red check.
 
-## Дробных оценок нет
+## There are no fractional ratings
 
-Половина звезды нужна показу среднего значения, а не вводу. Показ среднего
-решается подписью «4,2 · 128 оценок»: она точнее половины звезды и не
-требует объяснять, что означает наполовину закрашенная звезда при вводе.
+Half a star is needed for displaying an average, not for input. Displaying an
+average is solved by a label ("4.2 · 128 ratings"), which is more precise than
+half a star and does not require explaining what a half-filled star means when it is used for input.
 
-## Цвет звезды — свой токен
+## The star color is its own token
 
-Цвет звезды берёт `--rating-star` компонентного слоя
-(ADR-0040), а не
-`--warning`. Сегодня они указывают на один и тот же янтарный примитив палитры, и в этом
-ловушка: правка цвета предупреждения молча перекрасила бы все оценки в продукте,
-а причину искали бы в `Rating`.
+It is the `--rating-star` token of the component layer
+(ADR-0040), not
+`--warning`. Today they point to the same amber palette primitive, and that is the trap:
+changing the warning color would silently repaint all the ratings in the product,
+and people would look for the cause in `Rating`.
 
-Незакрашенная звезда берёт `--fg-3` (`text/muted-2`): она читается как «не
-выбрано», а не как «недоступно». Под гейтом `npm run contrast` две пары: закрашенная звезда (`--rating-star`) на `--bg-1` и
-пустая звезда (`--fg-3`) на `--bg-1`; порог нетекстовый. Ряд звёзд несёт величину визуально.
+An unfilled star takes `--fg-3` (`text/muted-2`): it reads as "not selected", not
+as "unavailable". The `npm run contrast` gate checks two pairs against the non-text threshold: the filled star
+(`--rating-star`) on `--bg-1` and the empty star (`--fg-3`) on `--bg-1`. The row of stars carries the quantity visually.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Имя группы **склеивается** из подписи потребителя и величины («Качество Оценка 4 из 5» — `aria-labelledby` соединяет части пробелом), а не подменяется одним из двух: величина без предмета не отвечает на вопрос «чего», а предмет без величины не говорит о значении.
-- У интерактивной оценки каждая звезда — `radio` со своим именем «N из M» и своим `aria-checked`; у показа вся группа — `img` с тем же составным именем.
-- Цвет не единственный носитель: число закрашенных звёзд и объявленная строка говорят то же самое.
-- См. `src/components/inputs/Rating.tsx`, `src/components/inputs/Rating.stories.tsx`, `tests/rating.test.tsx`.
+- The group name is **composed** of the consumer's label and the quantity ("Quality Rated 4 out of 5" — `aria-labelledby` joins the parts with a space), and not replaced by one of the two: a quantity without a subject does not answer "of what", and a subject without a quantity does not state the value.
+- In an interactive rating each star is a `radio` with its own name "N of M" and its own `aria-checked`; in the display-only mode the whole group is an `img` with the same composite name.
+- Color is not the only cue: the number of filled stars and the announced text say the same thing.
+- See `src/components/inputs/Rating.tsx`, `src/components/inputs/Rating.stories.tsx`, `tests/rating.test.tsx`.

@@ -16,18 +16,19 @@ import { RICH_TEXT_SCHEMA, sanitizeRichText } from "../src/editor/schema-entry.j
 import { TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Раскладка — Блок из колонок (OLDSUI-74).
+ * Column layout — a Block of columns (OLDSUI-74).
  *
- * Через публичный `RichTextEditor`, как остальные тесты Редактора: вставка —
- * Меню вставки, клавиши — настоящие `keydown`, результат — выходной HTML,
- * Markdown и шаг отмены. Каретка ставится командами движка: jsdom не умеет
- * ввода в `contenteditable`. Подключение к меню ручки Блока — отдельно.
+ * Through the public `RichTextEditor`, as the other Editor tests do: insertion goes
+ * through the Slash menu, keys are real `keydown` events, and the result is the
+ * output HTML, Markdown and an undo step. The caret is set with engine commands:
+ * jsdom cannot type into `contenteditable`. The hookup to the Block handle menu is
+ * covered separately.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -45,14 +46,14 @@ function type(editor: Editor, text: string) {
   act(() => void editor.commands.insertContent(text));
 }
 
-/** `keydown` на документе; `true` — Редактор отпустил клавишу браузеру. */
+/** `keydown` on the document; `true` means the Editor released the key to the browser. */
 function press(editor: Editor, key: string, init: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
   act(() => void editor.view.dom.dispatchEvent(event));
   return !event.defaultPrevented;
 }
 
-/** Каретка — в конец текста `text` (или в его начало). */
+/** Caret at the end of the text `text` (or at its start). */
 function caretIn(editor: Editor, text: string, at: "end" | "start" = "end") {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -64,7 +65,7 @@ function caretIn(editor: Editor, text: string, at: "end" | "start" = "end") {
   act(() => void editor.commands.setTextSelection(found));
 }
 
-/** Текст Блока, в котором стоит каретка. */
+/** Text of the Block that holds the caret. */
 const here = (editor: Editor) => editor.state.selection.$from.parent.textContent;
 
 const column = (...blocks: string[]) => `<div data-block="column">${blocks.join("")}</div>`;
@@ -73,7 +74,7 @@ const layout = (variant: string, ...columns: string[]) =>
 
 const TWO = layout("50-50", column("<p>Left</p>"), column("<p>Right</p>"));
 
-// ── Схема ────────────────────────────────────────────────────────────────
+// ── Schema ────────────────────────────────────────────────────────────────
 
 test("a layout survives a round trip in every variant, with no style", () => {
   for (const [variant, count] of [
@@ -118,7 +119,7 @@ test("the variant follows the number of columns when they disagree", () => {
     defaultValue:
       layout("50-50", column("<p>a</p>"), column("<p>b</p>"), column("<p>c</p>")) +
       layout("25-25-25-25", column("<p>d</p>")) +
-      // Колонка без Раскладки получает Раскладку из одной колонки.
+      // A column without a layout gets a one-column layout.
       column("<p>e</p>"),
   });
 
@@ -182,21 +183,21 @@ test("the schema data and the sanitiser know the layout", () => {
   expect(sanitizeRichText(saved, purify)).toBe(saved);
 
   for (const [input, output] of [
-    // Чужой вариант, `style` и обработчики снимаются; без варианта Раскладки нет.
+    // A foreign variant, `style` and event handlers are stripped; without a variant there is no layout.
     [
       '<div data-block="layout" data-layout="70-30" style="display:flex" onclick="x()">' +
         '<div data-block="column" style="flex-basis:70%"><p>a</p></div></div>',
       "<p>a</p>",
     ],
-    // Колонка — только прямо в Раскладке.
+    // A column is allowed only directly inside a layout.
     ['<div data-block="column"><p>a</p></div>', "<p>a</p>"],
-    // Раскладка в Раскладке, в списке и в цитате — Блоками подряд.
+    // A layout inside a layout, a list or a quote unfolds into Blocks in a row.
     [
       layout("50-50", column(layout("50-50", column("<p>x</p>"))), column("<p>b</p>")),
       layout("50-50", column("<p>x</p>"), column("<p>b</p>")),
     ],
     [`<blockquote>${TWO}</blockquote>`, "<blockquote><p>Left</p><p>Right</p></blockquote>"],
-    // Вариант — только у Раскладки, `data-block` — только у `div`.
+    // The variant belongs only to a layout, and `data-block` only to a `div`.
     ['<p data-layout="50-50" data-block="layout">a</p>', "<p>a</p>"],
     ['<div data-layout="50-50"><p>a</p></div>', "<p>a</p>"],
   ] as [string, string][]) {
@@ -204,7 +205,7 @@ test("the schema data and the sanitiser know the layout", () => {
   }
 });
 
-/** Вставка HTML из буфера: разбор Схемой и транзакция с меткой `paste`. */
+/** Paste HTML from the clipboard: parsing by the Schema and a transaction tagged with the `paste` meta. */
 function paste(editor: Editor, html: string) {
   act(() => void editor.view.pasteHTML(html, new Event("paste") as ClipboardEvent));
 }
@@ -227,13 +228,13 @@ test("a layout pasted into a column unfolds into its blocks and keeps the column
   caretIn(editor, "Left");
   paste(editor, layout("50-50", column("<p>x</p>"), column("<p>y</p>")));
 
-  // Первый абзац вставки продолжает строку, как у любой вставки текста.
+  // The first paragraph of the paste continues the line, as with any text paste.
   expect(editor.getHTML()).toBe(
     layout("50-50", column("<p>Leftx</p><p>y</p>"), column("<p>Right</p>"))
   );
 });
 
-// ── Вставка ──────────────────────────────────────────────────────────────
+// ── Insertion ──────────────────────────────────────────────────────────────
 
 test("the Layout item of the insert menu adds two columns, caret in the first", () => {
   const { editor } = renderEditor({ defaultValue: "<p>Intro</p>" });
@@ -288,7 +289,7 @@ test("a slash typed in an empty line of a column leaves no empty line behind", (
     defaultValue: layout("50-50", column("<p>Left</p>", "<p></p>"), column("<p>Right</p>")),
   });
   focusField();
-  // Пустой абзац левой колонки: сразу за «Left».
+  // The empty paragraph of the left column, right after "Left".
   caretIn(editor, "Left");
   act(() => void editor.commands.setTextSelection(editor.state.selection.from + 2));
   expect(here(editor)).toBe("");
@@ -319,7 +320,7 @@ test("the insert menu has no Layout without the layout tool", () => {
   expect(screen.queryByRole("option", { name: /Layout/ })).toBeNull();
 });
 
-// ── Смена варианта ───────────────────────────────────────────────────────
+// ── Switching the variant ───────────────────────────────────────────────────────
 
 const THREE = layout(
   "33-33-33",
@@ -337,7 +338,7 @@ test("fewer columns merge the extra ones into the last that stays, nothing is lo
   expect(editor.getHTML()).toBe(
     layout("60-40", column("<p>One</p>"), column("<p>Two</p><p>Two more</p><p>Three</p>"))
   );
-  // Каретка уехала вместе со своим текстом.
+  // The caret moved together with its text.
   expect(here(editor)).toBe("Three");
 
   act(() => void editor.commands.setLayout("100"));
@@ -395,7 +396,7 @@ test("outside a layout the variant switch does nothing", () => {
   expect(editor.getHTML()).toBe("<p>Text</p>");
 });
 
-// ── Клавиатура ───────────────────────────────────────────────────────────
+// ── Keyboard ───────────────────────────────────────────────────────────
 
 test("Tab and Shift+Tab move between columns; the edge column leaves Tab to the browser", () => {
   const { editor } = renderEditor({ defaultValue: THREE });
@@ -409,7 +410,7 @@ test("Tab and Shift+Tab move between columns; the edge column leaves Tab to the 
   expect(press(editor, "Tab")).toBe(false);
   expect(here(editor)).toBe("Three");
 
-  // Последняя колонка — Tab уходит браузеру: фокус покидает Редактор, ловушки нет.
+  // The last column: Tab goes to the browser, so focus leaves the Editor, and there is no trap.
   expect(press(editor, "Tab")).toBe(true);
   expect(here(editor)).toBe("Three");
 
@@ -423,7 +424,7 @@ test("Tab and Shift+Tab move between columns; the edge column leaves Tab to the 
 test("a Tab the document took does not reach the window around it, a released one does", () => {
   const { editor, container } = renderEditor({ defaultValue: THREE });
   const reached: string[] = [];
-  // Так слушает Tab ловушка фокуса окна Radix: на своём контейнере, всплытием.
+  // This is how the Radix window focus trap listens to Tab: on its container, by bubbling.
   container.addEventListener("keydown", () => reached.push(here(editor)));
   focusField();
   caretIn(editor, "Two");
@@ -474,7 +475,7 @@ test("up and down leave the layout to the blocks around it", () => {
 
   caretIn(editor, "Two more", "start");
   press(editor, "ArrowUp");
-  // Не первая строка колонки — стрелка остаётся браузеру.
+  // Not the first row of the column: the arrow stays with the browser.
   expect(here(editor)).toBe("Two more");
 
   caretIn(editor, "Two", "start");
@@ -536,7 +537,7 @@ test("Backspace on the block below selects the whole layout, the second one remo
   expect(editor.getHTML()).toBe("<p>Below</p>");
 });
 
-// ── Команды над Блоками ──────────────────────────────────────────────────
+// ── Commands on Blocks ──────────────────────────────────────────────────
 
 test("moving and duplicating a block stay inside its column", () => {
   const { editor } = renderEditor({ defaultValue: THREE });
@@ -546,7 +547,7 @@ test("moving and duplicating a block stay inside its column", () => {
   press(editor, "ArrowUp", { altKey: true, shiftKey: true });
   expect(editor.getHTML()).toContain(column("<p>Two more</p><p>Two</p>"));
 
-  // У края колонки соседа нет: Блок остаётся в ней.
+  // At the edge of the column there is no neighbour: the Block stays in it.
   press(editor, "ArrowUp", { altKey: true, shiftKey: true });
   expect(editor.getHTML()).toContain(column("<p>Two more</p><p>Two</p>"));
 });
@@ -564,7 +565,7 @@ test("setMarkdown never creates a layout", () => {
   expect(editor.getHTML()).not.toContain("data-block");
 });
 
-// ── Показ ────────────────────────────────────────────────────────────────
+// ── Display ────────────────────────────────────────────────────────────────
 
 test("RichTextView keeps the columns in reading order", () => {
   const { container } = render(<RichTextView html={THREE} />);
@@ -576,11 +577,11 @@ test("RichTextView keeps the columns in reading order", () => {
   ]);
 });
 
-// ── Ручка Блока ──────────────────────────────────────────────────────────
+// ── Block handle ──────────────────────────────────────────────────────────
 
 const HANDLE = "Block actions";
 
-/** Фокус в Документ: ручка видна только при нём. */
+/** Focus in the Document: the handle is visible only then. */
 function focusAt(editor: Editor, text: string) {
   caretIn(editor, text);
   act(() => editor.view.focus());
@@ -652,7 +653,7 @@ test("Move down and Delete of a block in a column stay inside the column", async
 
   focusAt(editor, "Three");
   await user.click(within(await openHandleMenu(user)).getByRole("menuitem", { name: "Delete" }));
-  // Единственный Блок колонки уступает место пустому абзацу — колонка остаётся.
+  // The only Block of the column yields its place to an empty paragraph; the column stays.
   expect(editor.getHTML()).toContain(column("<p></p>"));
   expect(editor.getHTML()).toContain('data-layout="33-33-33"');
 });
@@ -662,7 +663,7 @@ test("the handle of a block in a column switches the layout variant from Layout 
   const { editor } = renderEditor({ defaultValue: THREE });
   focusAt(editor, "One");
 
-  // Формат — тип самого Блока, как везде.
+  // Format is the type of the Block itself, as everywhere.
   const format = await openSubmenu(user, await openHandleMenu(user), "Format");
   expect(
     within(format).getByRole("menuitemradio", { name: /Text/ }).getAttribute("aria-checked")

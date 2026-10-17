@@ -10,8 +10,8 @@ import { NavGroup, SideNav, useNavCollapsed } from "../src/components/app-shell/
 afterEach(cleanup);
 
 /**
- * `TooltipProvider` — требование схлопнутого режима, а не удобство теста:
- * пункт разворачивает в нём подсказку, и без провайдера Radix бросает.
+ * `TooltipProvider` is a requirement of the collapsed mode, not a test convenience: the item shows
+ * its hint there, and without the provider Radix throws.
  */
 const shell = (ui: React.ReactNode) => render(<TooltipProvider>{ui}</TooltipProvider>);
 
@@ -42,7 +42,7 @@ describe("SideNav: who owns collapsing", () => {
     expect(screen.getByText("Dashboard").className).not.toContain("sr-only");
     await user.click(screen.getByRole("button", { name: "Collapse navigation" }));
     expect(screen.getByText("Dashboard").className).toContain("sr-only");
-    // Кнопка сменила действие, а не только значок.
+    // The button changed its action, not only its icon.
     expect(screen.getByRole("button", { name: "Expand navigation" })).toBeTruthy();
   });
 
@@ -52,9 +52,9 @@ describe("SideNav: who owns collapsing", () => {
   });
 
   /**
-   * Управляемым режим делает НАЛИЧИЕ пропа, а не его значение. Если перепутать,
-   * `collapsed={false}` начнёт вести себя как «управления нет», и внешняя
-   * кнопка перестанет работать — молча.
+   * Controlled mode is set by the PRESENCE of the prop, not by its value. If the two are mixed up,
+   * `collapsed={false}` starts behaving as if there were no control, and the external button
+   * silently stops working.
    */
   test("controlled mode does not change the state itself", async () => {
     const user = userEvent.setup();
@@ -67,7 +67,7 @@ describe("SideNav: who owns collapsing", () => {
 
     await user.click(screen.getByRole("button", { name: "Collapse navigation" }));
     expect(onCollapsedChange).toHaveBeenCalledWith(true);
-    // Вызывающий не применил — компонент остался развёрнутым.
+    // The caller did not apply the change, so the component stays expanded.
     expect(screen.getByText("Dashboard").className).not.toContain("sr-only");
   });
 
@@ -107,7 +107,7 @@ describe("NavGroup", () => {
 });
 
 describe("SideNav: slots follow the mode", () => {
-  /** Показывает режим словом: так тест читает то, что увидел бы потребитель. */
+  /** Shows the mode as a word, so the test reads what a consumer would see. */
   const Mode = () => <span>{useNavCollapsed() ? "icons" : "full"}</span>;
 
   test("slot content reads the collapsed state", async () => {
@@ -129,8 +129,8 @@ describe("SideNav: slots follow the mode", () => {
   });
 
   /**
-   * Колонка сужается до иконки, а слот потребителя о ширине может не знать.
-   * Без обрезки его текст вылезает поверх содержимого страницы.
+   * The column narrows to an icon, and the consumer's slot may not know its width. Without
+   * clipping, its text overflows onto the page content.
    */
   test("header and footer clip what does not fit", () => {
     shell(

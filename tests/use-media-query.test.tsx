@@ -7,9 +7,9 @@ import { SplitPanel } from "../src/components/app-shell/SplitPanel.js";
 import { useMediaQuery } from "../src/hooks/useMediaQuery.js";
 
 /*
-  В jsdom `matchMedia` нет вовсе. Шим управляемый: тест сам решает, какие
-  запросы сейчас «выполнены», и сам сообщает о смене — как браузер при
-  изменении ширины окна. Это граница окружения, а не подмена компонента.
+  In jsdom `matchMedia` does not exist at all. The shim is controllable: the test decides which
+  queries are currently "matched" and reports the change itself, as a browser does when the window
+  width changes. This is a boundary of the environment, not a replacement of the component.
 */
 type Listener = () => void;
 let matching = new Set<string>();
@@ -33,7 +33,7 @@ function installMatchMedia() {
   });
 }
 
-/** Окно стало такой ширины: меняет, какие запросы выполнены, и будит подписчиков. */
+/** The window became this wide: this changes which queries match and wakes the subscribers. */
 function resizeTo(next: string[]) {
   const touched = new Set([...matching, ...next]);
   matching = new Set(next);
@@ -46,7 +46,7 @@ afterEach(() => {
   cleanup();
   matching = new Set();
   listeners.clear();
-  // @ts-expect-error — возвращаем окружение к исходному: `matchMedia` в jsdom нет.
+  // @ts-expect-error — restore the environment to its original state: `matchMedia` is absent in jsdom.
   delete window.matchMedia;
 });
 
@@ -107,8 +107,8 @@ test("without matchMedia (jsdom, old browsers) it answers with the server value 
 });
 
 test("the server renders the server value: false by default, the given one on request", () => {
-  // Сервер ширины не знает: первый кадр — «узко» (mobile-first, как у Tailwind),
-  // если потребитель не сказал иначе.
+  // The server does not know the width: the first frame is "narrow" (mobile-first, as in Tailwind),
+  // unless the consumer says otherwise.
   installMatchMedia();
   matching = new Set([WIDE]);
   expect(renderToString(<Probe />)).toContain("narrow");
@@ -128,8 +128,8 @@ test("hydration keeps the server markup first, then switches to the real width w
     hydrateRoot(container, <Probe />);
   });
 
-  // Расхождение гидратации React сообщил бы через `console.error`; его нет, а
-  // после гидратации страница уже показывает настоящую ширину.
+  // A React hydration mismatch would be reported via `console.error`; there is none, and after
+  // hydration the page already shows the real width.
   expect(errors).not.toHaveBeenCalled();
   expect(container.textContent).toBe("wide");
   errors.mockRestore();
@@ -148,7 +148,7 @@ test("SplitPanel: collapsed driven by the hook leaves one area on a narrow windo
   }
   render(<Screen />);
 
-  // Панель смонтирована, но из дерева доступности ушла.
+  // The panel is mounted, but it has left the accessibility tree.
   expect(screen.queryByRole("region", { name: "Details" })).toBeNull();
   expect(screen.queryByRole("slider")).toBeNull();
 

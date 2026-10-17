@@ -10,72 +10,73 @@ import { cn } from "../../lib/cn.js";
 
 export interface RatingProps {
   /**
-   * Оценка. Наружу и внутрь идёт число, а не набор звёзд: звёзды это способ
-   * показать величину, а не сама величина.
+   * The rating. The value you pass in and get back is a number, not a set of stars: stars are a way
+   * to show a magnitude, not the magnitude itself.
    */
   value: number;
-  /** Без него компонент только показывает оценку и в табуляцию не попадает. */
+  /** Without it, the component only shows the rating and is not in the tab order. */
   onChange?: (value: number) => void;
   /**
-   * Сколько звёзд всего.
+   * Total number of stars.
    *
-   * Меньше одной не бывает: шкала из нуля делений не шкала, а `max={0}` дал бы
-   * радиогруппу без единой опции и подпись «из 0». Значение приводится, а не
-   * запрещается типом: число приходит из данных потребителя, и падать на нём
-   * компонент не должен.
+   * There can't be fewer than one: a scale with zero steps is not a scale, and `max={0}` would
+   * give a radio group with no options and a label "out of 0". The value is coerced, not ruled
+   * out by the type: the number comes from the consumer's data, and the component must not
+   * break on it.
    */
   max?: number;
   /**
-   * Размер звезды: `sm` или `md`.
+   * Star size: `sm` or `md`.
    *
-   * Размер звезды. Крупнее `md` оценка не бывает: ряд из пяти звёзд в размере
-   * `lg` занимает ширину поля ввода, а величину читают, а не рассматривают.
+   * Star size. A rating never goes larger than `md`: a row of five stars at `lg` would take up
+   * the width of an input field, and a magnitude is read, not inspected.
    */
   size?: Extract<Size, "sm" | "md">;
   /**
-   * Показ без ввода: значение видно, но изменить его нельзя.
+   * Display without input: the value is visible, but cannot be changed.
    *
-   * Не то же, что `disabled`. Только для чтения — это показанные данные, и
-   * гасить их значит прятать то, что показано специально; выключенный контрол —
-   * это недоступное сейчас действие, и его приглушают.
+   * Not the same as `disabled`. Read-only means displayed data, and dimming it would hide what is
+   * shown on purpose. A disabled control is an action that is unavailable right now, and it is
+   * dimmed.
    */
   readOnly?: boolean;
-  /** Выключает ввод и приглушает звёзды. */
+  /** Disables input and dims the stars. */
   disabled?: boolean;
-  /** Подпись рядом: «4,2 · 128 оценок». Домен потребителя, кит её не считает. */
+  /**
+   * A caption next to the rating, e.g. "4.2 · 128 ratings". The consumer's domain; the kit does not
+   * compute it.
+   */
   caption?: string;
-  /** Доступное имя. Обязательно: безымянная группа называется только по роли. */
+  /** The accessible name. Required: an unnamed group is announced only by its role. */
   "aria-label": string;
-  /** Классы на корневой элемент. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 const STAR_SIZE = { sm: 14, md: 20 } as const;
 
 /**
- * Оценка звёздами.
+ * Star rating.
  *
- * КЛАВИАТУРНАЯ МОДЕЛЬ — РАДИОГРУППА, а не набор кнопок. Стрелки меняют
- * значение, `Home` и `End` уводят на края, а Tab выводит из группы целиком:
- * пять табстопов на один вопрос — это пять остановок там, где ответ один.
- * Роль `radiogroup` и берётся именно поэтому.
+ * THE KEYBOARD MODEL IS A RADIO GROUP, not a set of buttons. Arrow keys change the value, `Home`
+ * and
+ * `End` jump to the edges, and Tab leaves the group as a whole: five tab stops for one question are
+ * five stops where there is one answer. That is why the `radiogroup` role is used.
  *
- * ЗНАЧЕНИЕ ОБЪЯВЛЯЕТСЯ СЛОВАМИ. Цвет и число закрашенных звёзд — единственный
- * визуальный носитель величины, и без строки «Оценка 4 из 5» скринридер
- * прочитал бы пять одинаковых элементов. Строка приходит из каталога; склонения
- * ей не нужно — обе подстановки числовые и стоят перед предлогом.
+ * THE VALUE IS ANNOUNCED IN WORDS. The color and the number of filled stars are the only visual
+ * carrier of the magnitude, and without a string like "Rating 4 of 5" a screen reader would read
+ * five identical elements. The string comes from the message catalog; it needs no plural forms,
+ * since both substitutions are numbers that come before the preposition.
  *
- * ЦВЕТ ЗВЕЗДЫ — СВОЙ ТОКЕН `--rating-star` компонентного слоя
- * (ADR-0040), а не
- * `--warning`. Сегодня они указывают на один и тот же янтарный примитив, и в
- * этом ловушка: правка цвета предупреждения молча перекрасила бы все оценки в
- * продукте, а причину искали бы здесь. Незакрашенная звезда берёт
- * `--fg-3` — она читается как «не выбрано», а не как «недоступно».
+ * THE STAR COLOR IS ITS OWN TOKEN `--rating-star` of the component layer (ADR-0040), not
+ * `--warning`. Today both point to the same amber primitive, and that is the trap: changing the
+ * warning color would silently recolor every rating in the product, and the cause would be sought
+ * here. An unfilled star takes `--fg-3`: it reads as "not selected", not as "unavailable".
  *
- * ДРОБНЫХ ОЦЕНОК НЕТ, и это решение. Половина звезды нужна показу среднего
- * значения, а не вводу; показ среднего решается подписью («4,2 · 128 оценок»),
- * которая точнее половины звезды и не требует объяснять, что означает
- * закрашенная наполовину звезда при вводе.
+ * THERE ARE NO FRACTIONAL RATINGS, and this is a deliberate decision. A half star is needed to show
+ * an average value, not to take input. Showing an average is handled by the caption ("4.2 · 128
+ * ratings"), which is more precise than a half star and does not require explaining what a
+ * half-filled star means on input.
  */
 export function Rating({
   value,
@@ -92,40 +93,42 @@ export function Rating({
   const describedBy = useDescribedBy(undefined);
   const groupId = useId();
   const textId = `${groupId}-text`;
-  // Приведение обоих чисел до всякого использования: и `max`, и `value`
-  // приходят из данных потребителя, а тип у них — обычное число.
+  // Coerce both numbers before any use: `max` and `value` both come from the consumer's data,
+  // though their type is a plain number.
   const total = Number.isFinite(max) ? Math.max(1, Math.floor(max)) : 5;
   const stars = Array.from({ length: total }, (_, index) => index + 1);
   const starRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
-  // Роль — свойство контрола, а не его доступности прямо сейчас. Выключенная
-  // оценка остаётся радиогруппой и помечается `aria-disabled`: `role="img"`
-  // прочитался бы как картинка, а не как недоступное действие.
+  // The role is a property of the control, not of its current availability. A disabled rating
+  // stays a radio group and is marked with `aria-disabled`: `role="img"` would be read as a
+  // picture,
+  // not as an unavailable action.
   const isGroup = onChange !== undefined && !readOnly;
   const editable = isGroup && !disabled;
 
-  // Роуминг табиндекса: в табуляции ровно одна звезда — выбранная, а при
-  // нулевой оценке первая. Без него группа объявлена радиогруппой, но
-  // построена как ряд неинтерактивных элементов: стрелка меняла бы значение
-  // молча, потому что фокус остаётся на контейнере, чьё имя не меняется.
-  // Округление обязательно: звёзды целые, и дробное значение не совпадало бы ни
-  // с одной из них — тогда роуминг не ставит табстоп никуда, и радиогруппа
-  // становится недостижимой с клавиатуры целиком. Дробное `value` тип
-  // разрешает, а закраску компонент от него принимает (`star <= 4.2` даёт
-  // четыре звезды), так что запретить его молча нельзя — надо выдержать.
+  // Roving tabindex: exactly one star is in the tab order: the selected one, or the first one when
+  // the
+  // rating is zero. Without it, the group is announced as a radio group but built as a row of
+  // non-interactive elements, and an arrow key would change the value silently, because focus stays
+  // on the container, whose name does not change.
+  // Rounding is required: the stars are whole numbers, and a fractional value would match none of
+  // them. Roving would then place no tab stop anywhere, and the radio group would become entirely
+  // unreachable from the keyboard. The type allows a fractional `value`, and the coloring follows
+  // it
+  // (`star <= 4.2` gives four stars), so it cannot be silently forbidden; it has to be handled.
   const rounded = Number.isFinite(value) ? Math.round(value) : 0;
   const active = rounded >= 1 && rounded <= total ? rounded : 1;
 
   function pick(next: number) {
     if (!editable || !onChange) return;
     const clamped = clamp(next, 0, total);
-    // Молчим, когда сообщать нечего: стрелка у края и щелчок по уже выбранной
-    // звезде значения не меняют, а событие без изменения читается адресатом как
-    // правка.
+    // Stay silent when there is nothing to report: an arrow at the edge and a click on the
+    // already-selected star do not change the value, and an event without a change reads to the
+    // recipient as an edit.
     if (clamped === rounded) return;
     onChange(clamped);
-    // Фокус идёт за значением: иначе следующая стрелка отсчитывала бы от
-    // прежней звезды, а объявлено было бы новое значение.
+    // Focus follows the value: otherwise the next arrow press would count from the old star,
+    // while the announced value is already the new one.
     starRefs.current[Math.max(clamped, 1) - 1]?.focus();
   }
 
@@ -137,19 +140,18 @@ export function Rating({
     const end = event.key === "End";
     if (!back && !forward && !home && !end) return;
     event.preventDefault();
-    // `Home` уводит на ноль, а не на единицу: ноль объявлен законным значением,
-    // и нижний край группы — это он.
+    // `Home` goes to zero, not to one: zero is declared a legitimate value, and it is the group's
+    // lower edge.
     if (home) return pick(0);
     /*
-      `total` и `rounded`, а НЕ сырые `max` и `value`.
+      `total` and `rounded`, NOT the raw `max` and `value`.
 
-      Файл приводит оба числа выше и объявляет это правилом — а здесь считал от
-      пропов. `max={NaN}` давал `pick(NaN)`, и `clamp(NaN, …)` тоже `NaN`:
-      проверка «значение не изменилось» на нём ложна, и наружу уходило
-      `onChange(NaN)` — оценка потребителя портилась навсегда. `max={0}` давал
-      `pick(0)`, то есть НОЛЬ вместо верхнего края шкалы. А шаг от дробного
-      `value` выносил `5.2` за пятизвёздочную шкалу и не переносил фокус:
-      индекс `starRefs` по дробному числу — `undefined`.
+      The file coerces both numbers above and states this as a rule, but here the math ran on the
+      props. `max={NaN}` gave `pick(NaN)`, and `clamp(NaN, …)` is also `NaN`: the "value did not
+      change" check is false on it, and `onChange(NaN)` went out, so the consumer's rating was
+      corrupted for good. `max={0}` gave `pick(0)`, that is, ZERO instead of the top edge of the
+      scale. And a step from a fractional `value` pushed `5.2` past the five-star scale and did not
+      move the focus: the `starRefs` index by a fractional number is `undefined`.
     */
     if (end) return pick(total);
     pick(rounded + (forward ? 1 : -1));
@@ -159,9 +161,9 @@ export function Rating({
     <div className={cn("inline-flex items-center gap-2", className)}>
       <div
         role={isGroup ? "radiogroup" : "img"}
-        // Имя СКЛЕИВАЕТСЯ из подписи потребителя и величины, а не подменяется
-        // ею: «Оценка 4 из 5» без предмета — величина без ответа на вопрос
-        // «чего».
+        // The name is COMPOSED from the consumer's label and the magnitude, not replaced by it:
+        // "Rating 4 of 5" without a subject is a magnitude with no answer to the question "of
+        // what?".
         aria-labelledby={`${groupId}-label ${textId}`}
         {...(describedBy ? { "aria-describedby": describedBy } : {})}
         aria-disabled={isGroup && disabled ? true : undefined}
@@ -183,9 +185,9 @@ export function Rating({
               starRefs.current[star - 1] = node;
             }}
             role={isGroup ? "radio" : undefined}
-            // От `rounded`, как закраска и роуминг: на дробном `value` сравнение с
-            // сырым числом не совпадало ни с одной звездой, и радиогруппа
-            // объявлялась без выбранного варианта.
+            // Taken from `rounded`, like the coloring and the roving tabindex: on a fractional
+            // `value`, a comparison with the raw number matched none of the stars, and the radio
+            // group was announced without a selected option.
             aria-checked={isGroup ? star === rounded : undefined}
             aria-label={isGroup ? messages.rating.star({ index: star, total }) : undefined}
             tabIndex={editable ? (star === active ? 0 : -1) : undefined}
@@ -193,9 +195,8 @@ export function Rating({
             className={cn(
               "inline-flex shrink-0 items-center rounded-sm outline-none",
               editable && "cursor-pointer",
-              // Кольцо фокуса — общий приём кита, а не состояние React:
-              // `:focus-visible` для того и существует, чтобы не рисовать
-              // кольцо по клику мышью.
+              // The focus ring is a shared kit pattern, not React state: `:focus-visible` exists
+              // precisely so that the ring is not drawn on a mouse click.
               "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2",
               star <= rounded ? "text-rating-star" : "text-fg-3"
             )}
@@ -210,9 +211,9 @@ export function Rating({
       </div>
 
       {/*
-        Величина словами. Входит в имя группы через `aria-labelledby` — и в
-        интерактивном режиме тоже: без неё стрелка меняла бы `aria-checked` на
-        элементе, а вслух не звучало бы ничего.
+        The magnitude in words. It is part of the group's name via `aria-labelledby`, in interactive
+        mode too: without it, an arrow would change `aria-checked` on the element, and nothing would
+        be spoken aloud.
       */}
       <span id={textId} className="sr-only">
         {messages.rating.value({ value: rounded, total })}

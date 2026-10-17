@@ -1,9 +1,9 @@
 "use client";
 
-// Происхождение: minimal-tiptap, `minimal-tiptap.tsx` и `hooks/use-minimal-tiptap.ts`
-// (MIT, © 2024 Aslam, https://github.com/Aslam97/minimal-tiptap). Оставлены
-// обёртка над `useEditor` и `EditorContent`, рамка поля и плейсхолдер; Панель —
-// в `EditorToolbar.tsx`. Лицензия — NOTICE в корне пакета.
+// Origin: minimal-tiptap, `minimal-tiptap.tsx` and `hooks/use-minimal-tiptap.ts`
+// (MIT, © 2024 Aslam, https://github.com/Aslam97/minimal-tiptap). Kept the wrapper
+// around `useEditor` and `EditorContent`, the field frame and the placeholder. The Toolbar
+// lives in `EditorToolbar.tsx`. License: NOTICE in the package root.
 
 import { createDocument } from "@tiptap/core";
 import { closeHistory } from "@tiptap/pm/history";
@@ -84,10 +84,10 @@ import { useCoarsePointer } from "./hooks/useCoarsePointer.js";
 import { useFieldsetDisabled } from "./hooks/useFieldsetDisabled.js";
 
 /**
- * Поповер произвольного цвета грузится при первом «Свой цвет…»: он тянет
- * `ColorPicker` и цветовую подсистему `react-aria-components` (61 кБ gzip,
- * ADR-0038), а нужен немногим. Статический импорт поднял бы вход
- * `@olddevs/ui/editor` вдвое для всех.
+ * The custom color popover loads on the first "Custom color…" click. It pulls in
+ * `ColorPicker` and the color subsystem of `react-aria-components` (61 kB gzip,
+ * ADR-0038), and few users need it. A static import would double the
+ * `@olddevs/ui/editor` entry point for everyone.
  */
 const CustomColorPopover = lazy(() =>
   import("./features/color/CustomColorPopover.js").then((module) => ({
@@ -96,24 +96,24 @@ const CustomColorPopover = lazy(() =>
 );
 
 /**
- * Карточка у текста грузится, когда у набора `tools` есть хотя бы одна
- * Карточка: рамка, пересчёт диапазонов и живой регион нужны только тому,
- * кто описал Карточку, а статический импорт лёг бы на всех потребителей.
+ * The Text card loads once the `tools` set has at least one Text card. Its frame,
+ * range recalculation and live region are needed only by whoever declared a Text card,
+ * and a static import would land on every consumer.
  */
 const TextCard = lazy(() =>
   import("./ui/TextCard.js").then((module) => ({ default: module.TextCard }))
 );
 
 /**
- * Панель «Поиск и замена» грузится при первом открытии: поля,
- * флажки и переключатель нужны только тому, кто ищет, а `search` есть и в
- * `basic`, который меряется бюджетом «старта». Плагин подсветки и сочетания
- * маленькие и стоят в движке сразу.
+ * The "Find and replace" panel loads on first open. Its fields, checkboxes and
+ * toggle are needed only by someone searching, while `search` is also in `basic`, which
+ * is held to the "startup" budget. The highlight plugin and the shortcuts are small
+ * and sit in the engine right away.
  */
 /*
-  Ядро Оглавления (Инструмент `toc`) — ленивым чанком: его включают единицы, а
-  полоса со списком и `HoverCard` стоили бы каждому Редактору ~5 kB gzip на
-  старте. Чанк приходит, только когда Инструмент включён и движок готов.
+  The Table of contents core (the `toc` Tool) is a lazy chunk. Few consumers enable it,
+  and the strip with the list and `HoverCard` would cost every Editor ~5 kB gzip at
+  startup. The chunk arrives only when the Tool is enabled and the engine is ready.
 */
 const TocCore = lazy(() =>
   import("./features/toc/RichTextToc.js").then((module) => ({ default: module.TocCore }))
@@ -123,270 +123,261 @@ const SearchPanel = lazy(() =>
   import("./features/search/SearchPanel.js").then((module) => ({ default: module.SearchPanel }))
 );
 
-/** Место панели поиска: под правым краем Панели, на телефоне — во всю ширину поля. */
+/** Position of the search panel: under the right edge of the Toolbar; full field width on phones. */
 const SEARCH_PANEL_PLACE_CLASS = "absolute top-full right-2 left-2 z-[2] mt-2 sm:left-auto sm:w-80";
-/** Место панели поиска без фиксированной Панели — верхний угол поля. */
+/** Position of the search panel without a fixed Toolbar: the top corner of the field. */
 const SEARCH_PANEL_CORNER_CLASS = "absolute top-2 right-2 left-2 sm:left-auto sm:w-80";
 
 export interface RichTextEditorProps {
   /**
-   * Документ — HTML-строка, ограниченная Схемой. Пустой документ — `""`.
+   * The Document: an HTML string constrained by the Schema. An empty Document is `""`.
    *
-   * Всё, чего нет в Схеме (теги, атрибуты, `style`, обработчики, `javascript:`),
-   * отбрасывается при загрузке. Единственный `style`, который Схема знает, —
-   * цвет автора в строгой форме `color:#rrggbb` на `span` и
-   * `background-color:#rrggbb` на `mark` (`customColor.ts`). Это НЕ санитизация: HTML от пользователя
-   * чистит сервер потребителя, клиентская очистка от XSS не защищает.
+   * Anything the Schema does not know (tags, attributes, `style`, event handlers,
+   * `javascript:`) is dropped on load. The only `style` the Schema knows is the author color,
+   * in the strict form `color:#rrggbb` on a `span` and `background-color:#rrggbb` on a `mark`
+   * (`customColor.ts`). This is NOT sanitization: the consumer's server cleans user HTML,
+   * and client-side cleanup does not protect against XSS.
    */
   value?: string;
   /**
-   * Начальный документ неуправляемого режима: HTML-строка или JSON-конверт
-   * (`getJSON()`). Конверт проходит Схему, как `setJSON()`;
-   * отвергнутый — пустой документ и ошибка в консоли разработки. До Готовности
-   * Скелет при конверте — рамка без Документа: HTML конверта знает только движок.
-   * `onChange` и скрытое поле формы получают HTML, как всегда.
+   * The initial Document of an uncontrolled field: an HTML string or a JSON envelope
+   * (`getJSON()`). The envelope passes through the Schema, as `setJSON()` does.
+   * A rejected envelope yields an empty Document and an error in the development console.
+   * Before Readiness, a Skeleton with an envelope is just the frame without a Document:
+   * only the engine knows the envelope's HTML.
+   * `onChange` and the hidden form field still receive HTML, as always.
    */
   defaultValue?: string | RichTextDocument;
   /**
-   * Новый HTML — не чаще раза в `changeDelay` мс, а также сразу на `blur`,
-   * перед отправкой формы и на применение правки HTML-режима. Замена документа
-   * новым `value` сюда не приходит.
+   * Called with the new HTML, at most once per `changeDelay` ms and also immediately on `blur`,
+   * before the form is submitted, and when an edit made in the HTML field is applied. Replacing the
+   * Document with a new `value` does not call it.
    */
   onChange?: (html: string) => void;
   /**
-   * Редактор готов: движок создан, методы Хэндла (`ref`) уже действуют — например,
-   * вставить шаблон. Без аргументов, один раз за монтаж, в том числе при
-   * `readOnly` и `disabled`; перерисовка и смена колбэка повторного вызова не
-   * дают. Ждёт загрузчики Extensions своих Инструментов. Серверный
-   * рендер, ошибка набора `tools` и упавший загрузчик (движка нет) его не вызывают.
+   * The Editor is ready: the engine is created and the Handle methods (`ref`) already work, for
+   * example to insert a template. Takes no arguments and fires once per mount, including with
+   * `readOnly` and `disabled`. Re-renders and a new callback do not trigger it again. It waits for
+   * the Loaders of its Tools. It does not fire on server rendering, on an error in the `tools` set,
+   * or when a loader fails (no engine).
    */
   onReady?: () => void;
   /**
-   * Фокус вошёл в поле. Поле — целиком: Документ, Панель, поповеры кита и поле
-   * HTML; переход между ними фокус поля не теряет и `onFocus` не повторяет.
-   * Без аргументов: DOM-событие не пробрасывается.
+   * Called when focus enters the field. The field includes the Document, the Toolbar, the kit's
+   * popovers and the HTML field, so moving focus between them does not lose field focus and
+   * `onFocus` does not fire again. Takes no arguments; the DOM event is not forwarded.
    */
   onFocus?: () => void;
   /**
-   * Фокус ушёл из поля (см. `onFocus`). Перед вызовом отложенный `onChange`
-   * выталкивается, поэтому автосохранение по `onBlur` получает свежий HTML.
-   * Вызов отложен на такт: за это время фокус может вернуться в поле — из
-   * Документа в Панель или поповер и обратно `onBlur` не даёт.
+   * Called when focus leaves the field (see `onFocus`). Before the call, a pending `onChange` is
+   * flushed, so autosave on `onBlur` gets fresh HTML. The call is deferred by one tick: focus may
+   * return to the field in that time, for example from the Document to the Toolbar or a popover and
+   * back, and `onBlur` does not fire then.
    */
   onBlur?: () => void;
   /**
-   * Задержка `onChange`, мс. По умолчанию 300.
+   * The `onChange` delay in ms. Defaults to 300.
    *
-   * Сериализация в HTML — проход по всему документу, и на документе в десятки
-   * тысяч символов она на каждую букву тормозила бы ввод. `0` — отдавать каждую
-   * правку сразу.
+   * Serializing to HTML walks the whole document. On a document of tens of thousands
+   * of characters, that would slow typing on every keystroke. `0` reports each edit
+   * immediately.
    */
   changeDelay?: number;
-  /** Имя поля формы: рендерит `<input type="hidden">` с текущим HTML. */
+  /** Form field name: renders an `<input type="hidden">` with the current HTML. */
   name?: string;
   /**
-   * `id` редактируемой области — для внешних ссылок и тестов. Имя от подписи
-   * `FormField` от него не зависит: оно приходит контекстом.
+   * The `id` of the editable area, for external links and tests. The name from the `FormField`
+   * label does not depend on it: that name comes from context.
    */
   id?: string;
-  /** Плейсхолдер пустого документа; по умолчанию — из каталога. */
+  /** Placeholder for an empty Document. Defaults to the text from the message catalog. */
   placeholder?: string;
   /**
-   * Предел символов. Счётчик остатка появляется у 80 % предела, ввод сверх
-   * него блокируется, вставка обрезается до предела. Длинный `value` грузится
-   * целиком: его можно сокращать, но не удлинять.
+   * Character limit. A remaining-count indicator appears at 80% of the limit, input past it
+   * is blocked, and a paste is cut at the limit. A long `value` loads in full:
+   * it may be shortened, but not lengthened.
    */
   maxLength?: number;
-  /** Только чтение: текст выделяется и уходит в форму, но не правится. */
+  /** Read-only: the text can be selected and is submitted with the form, but cannot be edited. */
   readOnly?: boolean;
-  /** Выключено, как у прочих полей: не правится, приглушено, не уходит в форму. */
+  /** Disabled, as with other fields: cannot be edited, dimmed, and not submitted with the form. */
   disabled?: boolean;
   /**
-   * Обязательное поле: `aria-required`, а в обычной `<form>` ещё и блокировка
-   * отправки, пока Документ пуст (нет ни текста, ни Атома, ни таблицы).
-   * Браузер покажет сообщение из каталога (`editor.required`) и вернёт фокус
-   * в Редактор. `readOnly` и `disabled` не проверяются — как у нативных полей.
-   * В `Form` из кита (`noValidate`) браузерной проверки нет — ошибку показывает
-   * потребитель.
+   * Required field: `aria-required`. In a regular `<form>`, it also blocks submission while the
+   * Document is empty (no text, no Atom, no table). The browser shows the message from the message
+   * catalog (`editor.required`) and returns focus to the Editor. `readOnly` and `disabled` are not
+   * validated, as with native fields. In the kit's `Form` (`noValidate`) there is no browser
+   * validation: the consumer shows the error.
    */
   required?: boolean;
-  /** Имя поля, когда подписи `FormField` нет. */
+  /** Field name when there is no `FormField` label. */
   "aria-label"?: string;
-  /** Имя поля ссылкой на уже нарисованную подпись. Сильнее `aria-label`. */
+  /** Field name, referencing an existing label element. Takes precedence over `aria-label`. */
   "aria-labelledby"?: string;
-  /** Своё описание. Сливается с подсказкой и ошибкой `FormField`. */
+  /** A custom description. Merged with the `FormField` hint and error. */
   "aria-describedby"?: string;
-  /** Невалидность. Без пропа берётся у `FormField` с `error`. */
+  /** Invalid state. Without the prop, it is taken from a `FormField` with `error`. */
   "aria-invalid"?: boolean;
   /**
-   * Панель форматирования. `"fixed"` (по умолчанию) — над полем, липнет при
-   * прокрутке под шапкой приложения (`--topbar-h`, ADR-0016); `"floating"` —
-   * над непустым выделением, а на сенсорном экране (`pointer: coarse`) —
-   * фиксированная: системное меню выделения iOS и Android она не перекрывает;
-   * `"bubble"` — Меню выделения вместо Панели: компактная плашка на инверсной
-   * поверхности над непустым выделением («¶», жирный, курсив, зачёркнутый,
-   * «…», ссылка, эмодзи), на сенсорном экране — так же фиксированная Панель;
-   * `"none"` — без Панели: форматирование остаётся за клавиатурой. В режиме
-   * `readOnly` Панели нет в любом случае. `Alt+F10` из Документа переводит
-   * фокус в Панель или Меню выделения.
+   * The formatting Toolbar. `"fixed"` (default) sits above the field and sticks under the app
+   * header on scroll (`--topbar-h`, ADR-0016). `"floating"` appears above a non-empty selection.
+   * On a touch screen (`pointer: coarse`) it is fixed instead, so it does not cover the iOS and
+   * Android system selection menu. `"bubble"` replaces the Toolbar with the Bubble menu: a compact
+   * pill on an inverse surface above a non-empty selection ("¶", bold, italic, strikethrough,
+   * "…", link, emoji). On a touch screen it is a fixed Toolbar, as above. `"none"` has no Toolbar,
+   * so formatting is left to the keyboard. In `readOnly` mode there is no Toolbar in any case.
+   * `Alt+F10` from the Document moves focus to the Toolbar or the Bubble menu.
    */
   toolbar?: "fixed" | "floating" | "bubble" | "none";
   /**
-   * Меню выделения поверх фиксированной Панели. По умолчанию `true`: при
-   * `toolbar="fixed"` над непустым выделением появляется то же Меню
-   * выделения, что в режиме `"bubble"` (решение владельца: Панель
-   * сверху — для всего, Меню выделения — чтобы не уводить мышь от текста).
-   * `false` оставляет одну Панель. Остальные режимы проп не меняет: у
-   * `"bubble"` Меню выделения и так есть, у `"floating"` над выделением уже
-   * стоит Панель. На сенсорном экране Меню выделения кита нет — системное
-   * меню выделения iOS и Android занимает то же место.
+   * The Bubble menu on top of the fixed Toolbar. Defaults to `true`: with `toolbar="fixed"`, the
+   * same Bubble menu as in `"bubble"` mode appears above a non-empty selection. The owner decided
+   * this: the fixed Toolbar covers everything, and the Bubble menu saves the mouse a trip away from
+   * the text. `false` keeps just the one Toolbar. The other modes ignore this prop: `"bubble"`
+   * already has the Bubble menu, and `"floating"` already shows the Toolbar above the selection. On
+   * a touch screen the kit has no Bubble menu: the iOS and Android system selection menu takes its
+   * place.
    */
   selectionMenu?: boolean;
   /**
-   * Пресет — готовый набор встроенных Инструментов: `"full"` (по умолчанию) —
-   * всё; `"basic"` — для комментариев: жирный, курсив, зачёркнутый, строчный
-   * код, ссылка, два вида списков, цитата, отмена и повтор. Игнорируется, если
-   * передан `tools`.
+   * A preset: a ready-made set of built-in Tools. `"full"` (default) includes everything.
+   * `"basic"` is for comments: bold, italic, strikethrough, inline code, link, both list kinds,
+   * blockquote, undo and redo. Ignored if `tools` is passed.
    */
   preset?: RichTextEditorPreset;
   /**
-   * Точный список Инструментов; сильнее `preset`. Выключенный Инструмент
-   * убирает и кнопку, и Блок или Метку из Схемы: их не получить ни сочетанием
-   * клавиш, ни markdown-шорткатом, ни вставкой.
+   * The exact list of Tools. Takes precedence over `preset`. A disabled Tool removes both its
+   * button and its Block or Mark from the Schema, so they cannot be reached with a keyboard
+   * shortcut, a Markdown shortcut, or a paste.
    *
-   * Вперемешку с именами кита — описания своих Инструментов (`CustomTool`):
-   * `[...RICH_TEXT_PRESETS.full, mergeTagTool]`. Встроенный Инструмент с
-   * Опциями (`search`, `toc`) настраивается записью `tool()`:
-   * `[...RICH_TEXT_PRESETS.full, tool("toc", { levels: [2, 3] })]` — запись
-   * включает Инструмент и без имени, а имя из пресета уступает ей; две записи
-   * `tool()` с одним именем — ошибка поля. Неизвестное имя отбрасывается
-   * молча; описание с ошибкой (имя без Префикса потребителя, совпадение имён,
-   * Extensions мимо правил Схемы) — ошибка поля: движок не создаётся,
-   * значение формы остаётся входящим, причина — в консоли разработчика.
+   * Mixed in with the kit's names are the descriptions of custom Tools (`CustomTool`):
+   * `[...RICH_TEXT_PRESETS.full, mergeTagTool]`. A built-in Tool with Options (`search`, `toc`)
+   * is configured with a `tool()` entry:
+   * `[...RICH_TEXT_PRESETS.full, tool("toc", { levels: [2, 3] })]`. The entry enables the Tool
+   * even without the name, and the preset's name yields to it. Two `tool()` entries with the same
+   * name are a field error. An unknown name is dropped silently. A description with an error
+   * (a name without the consumer Prefix, a name clash, Extensions that break the Schema rules)
+   * is a field error: the engine is not created, the form value stays as it came in, and the
+   * cause is logged to the developer console.
    *
-   * `preset` и `tools`, а с ними и Опции Инструментов, читаются при создании
-   * движка: Схема ProseMirror после этого не меняется. Чтобы сменить набор у
-   * живого поля, перемонтируйте его (`key`) — история правок при этом теряется.
+   * `preset` and `tools`, with them the Tool Options, are read when the engine is created: the
+   * ProseMirror Schema does not change after that. To change the set on a live field, remount it
+   * with `key`. Edit history is lost in that case.
    */
   tools?: readonly ToolEntry[];
   /**
-   * Загрузка картинки: получает файл, отдаёт абсолютный `http(s)`-адрес, по
-   * которому картинка будет жить, или отклоняет обещание.
+   * The image upload handler: takes a file and returns the absolute `http(s)` URL the image will be
+   * served from, or rejects the promise.
    *
-   * С ним картинку можно вставить из буфера, перетащить в поле и выбрать
-   * файлом в поповере картинки. Пока обещание не решено, на месте картинки
-   * плейсхолдер, а в Документе её нет; при отказе Документ не меняется, под
-   * полем — сообщение. Без него файлы не принимаются — только вставка по
-   * адресу. `data:` и `blob:` в Документ не пишутся никогда: адрес вне
-   * политики считается отказом. Читается в момент вставки — менять можно на
-   * лету.
+   * With it, an image can be pasted from the clipboard, dragged into the field, or picked as a file
+   * in the image popover. While the promise is pending, a placeholder sits where the image will go,
+   * and the Document does not contain it yet. On rejection the Document does not change, and a
+   * message appears under the field. Without it, files are not accepted: only pasting by address.
+   * `data:` and `blob:` are never written to the Document: an address outside the policy counts as
+   * a rejection. It is read at the moment of insertion, so it can be changed on the fly.
    */
   onUploadImage?: (file: File) => Promise<string>;
   /**
-   * Поверхность Документа: `"theme"` (по умолчанию) — в теме приложения;
-   * `"paper"` — светлый Лист в любой теме, для писем, печати и PDF. Лист —
-   * только редактируемая область: Панель, поповеры, меню и рамка фокуса поля
-   * остаются в теме приложения.
+   * The Document surface: `"theme"` (default) uses the app theme. `"paper"` is a light Paper
+   * in any theme, for letters, print and PDF. Paper covers only the editable area: the Toolbar,
+   * popovers, menus and the field's focus frame stay in the app theme.
    */
   surface?: RichTextSurface;
   /**
-   * Строка статуса: React-узел внутри рамки поля, в строке счётчика
-   * `maxLength` — своё содержимое у начала, счётчик кита в конце (число слов,
-   * «Сохранено», соавтор). Видна и при `readOnly`, и при `disabled`.
+   * The Status bar: a React node inside the field frame, in the `maxLength` counter row. The
+   * screen's content (word count, "Saved", co-author) sits at the start and the kit's counter at
+   * the end. Visible with both `readOnly` and `disabled`.
    *
-   * Кит её не озвучивает: контейнер без `role`, и число слов не зачитывается на
-   * каждую правку. Чтобы «Сохранено» прозвучало, оберните его в
-   * `role="status"` сами. Данные берите из своего состояния: Строка статуса —
-   * пропс экрана, у Инструментов к ней доступа нет.
+   * The kit does not announce it: the container has no `role`, so the word count is not read out
+   * on every edit. To have "Saved" announced, wrap it in `role="status"` yourself. Take the data
+   * from your own state: the Status bar is a prop of the screen, and Tools have no access to it.
    */
   status?: ReactNode;
   /**
-   * Предел высоты области Документа (ADR-0059): число — пиксели, строка —
-   * любая CSS-длина (`"32rem"`, `"60vh"`). До предела поле растёт вместе с
-   * Документом, дальше Документ прокручивается внутри рамки; Панель над ним и
-   * Строка статуса под ним остаются на месте. Без пропа своей прокрутки у поля
-   * нет. Предела в строках, как `maxRows` у `TextControl`, здесь нет: у Блоков
-   * разная высота.
+   * The height limit of the Document area (ADR-0059): a number is pixels, a string is any CSS
+   * length (`"32rem"`, `"60vh"`). Up to the limit the field grows with the Document. Beyond it, the
+   * Document scrolls inside the frame, while the Toolbar above and the Status bar below stay in
+   * place. Without this prop the field has no scrolling of its own. There is no row-based limit
+   * like `maxRows` on `TextControl`, because Blocks differ in height.
    */
   maxHeight?: number | string;
   /**
-   * Ручка высоты в углу области Документа: высоту тянут по вертикали. С
-   * `maxHeight` она задаёт стартовую высоту, а не предел — две системы,
-   * одновременно распоряжающиеся высотой, дают прыгающее поле (тот же довод у
-   * `autosize` в `TextControl`). Без `maxHeight` старт — высота Документа.
+   * The resize handle in the corner of the Document area: drag it vertically to change the height.
+   * With `maxHeight`, it sets the starting height rather than a limit. Two systems that both
+   * control the height make the field jump (the same argument applies to `autosize` on
+   * `TextControl`). Without `maxHeight`, the starting height is the height of the Document.
    */
   resizable?: boolean;
-  /** Классы на корень: ширина, отступы снаружи. */
+  /** Classes for the root: width, outer spacing. */
   className?: string;
 }
 
 /**
- * Императивный доступ к Редактору. Вставка, чтение текста, фокус с позицией и
- * история — `RichTextEditorHandleMethods` (`handle.ts`).
+ * Imperative access to the Editor: insert, read text, focus with a position, and history.
+ * See `RichTextEditorHandleMethods` (`handle.ts`).
  */
 export interface RichTextEditorHandle extends RichTextEditorHandleMethods {
   /**
-   * Текущий HTML — сейчас, без ожидания `changeDelay`. Пустой документ — `""`.
-   * В HTML-режиме сначала применяет правку поля HTML (через Схему, с
-   * `onChange`, если Документ изменился).
+   * Current HTML, right now, without waiting for `changeDelay`. An empty Document is `""`. In
+   * Source mode, it first applies the edit made in the HTML field (through the Schema) and calls
+   * `onChange` if the Document changed.
    */
   getHTML(): string;
-  /** Очистить документ. Владелец значения узнаёт об этом через `onChange("")`. */
+  /** Clear the Document. The owner of the value learns about it through `onChange("")`. */
   clear(): void;
   /**
-   * Документ как Markdown — сейчас, без ожидания `changeDelay`. Пустой документ
-   * и вызов до монтажа (в серверном рендере движка нет) — `""`.
+   * The Document as Markdown, right now, without waiting for `changeDelay`. An empty Document,
+   * and a call before mount (the engine does not exist during server rendering), return `""`.
    *
-   * Цвет, выравнивание, подчёркивание и размер картинки в Markdown не
-   * выражаются и при выгрузке теряются. В HTML-режиме — как `getHTML()`:
-   * сначала применяется правка поля HTML.
+   * Color, alignment, underline and image size have no Markdown equivalent, so they are lost
+   * on export. In HTML mode, this behaves like `getHTML()`: the HTML field's edit is applied first.
    */
   getMarkdown(): string;
   /**
-   * Заменить документ разобранным Markdown. Как `clear()`, это замена снаружи:
-   * владелец значения узнаёт о ней через `onChange` сразу, предел `maxLength`
-   * её не режет. Всё, чего нет в Схеме, отбрасывается. До монтажа — ничего.
+   * Replace the Document with parsed Markdown. As with `clear()`, this is a programmatic
+   * replacement: the value's owner learns about it through `onChange` right away, and `maxLength`
+   * does not truncate it. Anything the Schema does not know is dropped. Does nothing before mount.
    */
   setMarkdown(markdown: string): void;
   /**
-   * Документ как JSON-конверт — сейчас, без ожидания `changeDelay`.
-   * В отличие от Markdown, ничего не теряет. До монтажа и в серверном рендере —
-   * `null`. В HTML-режиме — как `getHTML()`: сначала применяется правка поля HTML.
+   * The Document as a JSON envelope, right now, without waiting for `changeDelay`. Unlike Markdown,
+   * nothing is lost. Before mount and during server rendering it returns `null`. In Source mode,
+   * this behaves like `getHTML()`: the HTML field's edit is applied first.
    */
   getJSON(): RichTextDocument | null;
   /**
-   * Заменить документ JSON-конвертом. Параметр — `unknown`: главный источник —
-   * `JSON.parse` файла, и форму проверяет Редактор. `true` — заменён, `false` —
-   * конверт отвергнут (не тот формат или версия, кривое дерево) или движка ещё
-   * нет; тогда Документ не тронут. Замена — снаружи, как `setMarkdown()`:
-   * `onChange` сразу, `maxLength` её не режет, всё, чего нет в Схеме,
-   * отбрасывается по тем же правилам, что у HTML.
+   * Replace the Document with a JSON envelope. The parameter is `unknown`: the usual source is the
+   * result of `JSON.parse` on a file, and the Editor validates the shape. `true` means replaced.
+   * `false` means the envelope was rejected (wrong format or version, malformed tree) or the engine
+   * does not exist yet, and the Document is untouched. This is a programmatic replacement, as with
+   * `setMarkdown()`: `onChange` fires right away, `maxLength` does not truncate it, and anything
+   * the Schema does not know is dropped under the same rules as HTML.
    */
   setJSON(document: unknown): boolean;
   /**
-   * Открыть панель «Поиск и замена» из кода экрана — то же, что
-   * кнопка «Поиск» и `Mod+F`; `replace` — фокус в поле замены. Без Инструмента
-   * `search`, в HTML-режиме и до монтажа — ничего.
+   * Open the "Find and replace" panel from screen code. This is the same as the "Search" button and
+   * `Mod+F`; `replace` moves focus to the replace field. Without the `search` Tool, in Source mode,
+   * or before mount, it does nothing.
    *
-   * @deprecated Работает как `handle.tool("search")?.open(options)`; в разработке
-   * один раз предупреждает об этом в консоли. Будет удалён в 5.0.
+   * @deprecated Works as `handle.tool("search")?.open(options)`. In development it logs a warning
+   * about this once to the console. Will be removed in 5.0.
    */
   openSearch(options?: { replace?: boolean }): void;
   /**
-   * Сырой движок Tiptap: честный выход для команд Меток, Блоков и своих
-   * Инструментов (`editor.chain().focus()…run()`). Его API следует мажору Tiptap,
-   * а не контракту кита. До монтажа и в серверном рендере — `null`.
+   * The raw Tiptap engine: an escape hatch for the commands of Marks, Blocks and custom Tools
+   * (`editor.chain().focus()…run()`). Its API follows the Tiptap major version, not the kit's
+   * contract. Before mount and during server rendering, `null`.
    */
   editor: Editor | null;
 }
 
-/** Пустой документ — пустая строка, а не `<p></p>`: так его видит форма. */
-// Снимок «мы в браузере после гидратации» для `useSyncExternalStore`: не меняется.
+/** An empty Document is an empty string, not `<p></p>`: that is how the form sees it. */
+// Snapshot "we are in the browser after hydration" for `useSyncExternalStore`: never changes.
 const subscribeNever = () => () => {};
 const isBrowser = () => true;
 const isServer = () => false;
 
-/** Длина `maxHeight`: число — пиксели, строка — CSS-длина как есть. */
+/** Length for `maxHeight`: a number is pixels, a string is passed through as a CSS length. */
 const cssLength = (value: number | string) => (typeof value === "number" ? `${value}px` : value);
 
 function serialize(editor: Editor): string {
@@ -394,9 +385,9 @@ function serialize(editor: Editor): string {
 }
 
 /*
-  Плейсхолдер — псевдоэлементом на первом пустом абзаце; текст кладёт
-  расширение в `data-placeholder`. Скринридеру он объявлен `aria-placeholder`
-  на самом поле: содержимое `::before` читается не везде.
+  The placeholder is a pseudo-element on the first empty paragraph. The extension puts the text
+  in `data-placeholder`. For screen readers it is declared as `aria-placeholder` on the field
+  itself, because the `::before` content is not read everywhere.
 */
 const PLACEHOLDER_CLASS =
   "[&_p.is-editor-empty:first-child]:before:pointer-events-none " +
@@ -406,11 +397,11 @@ const PLACEHOLDER_CLASS =
   "[&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]";
 
 /*
-  Картинка в правке — то, чего нет в сохранённом HTML и `RichTextView`:
-  контур выделенной картинки, ручки ширины у неё (только в редактируемом
-  поле), подсказка пустой подписи и пустая подпись, спрятанная в поле только
-  для чтения. Классы `rte-caption-empty` и `rte-resize-handle` ставит
-  `image.ts` — декорацией и в представлении узла, в Документ они не уходят.
+  Image editing covers what the saved HTML and `RichTextView` do not have: the outline of the
+  selected image, its width handles (only in the editable field), the hint for an empty caption,
+  and an empty caption hidden in the read-only field. The `rte-caption-empty` and
+  `rte-resize-handle` classes are set by `image.ts`, as decorations and in the node view.
+  They do not go into the Document.
 */
 const IMAGE_EDITING_CLASS =
   "[&_figure.ProseMirror-selectednode_img]:outline-2 " +
@@ -426,11 +417,11 @@ const IMAGE_EDITING_CLASS =
   "[&[contenteditable=false]_figcaption.rte-caption-empty]:hidden";
 
 /*
-  Подсветка совпадений поиска: классы ставит плагин поиска
-  декорацией, в Документ они не уходят. Все совпадения — мягкой заливкой
-  тона `warning`, как маркер текстовыделителя, текущее — плотнее и с рамкой
-  того же тона: его видно и среди соседних, и на жёлтом маркере. Текст не
-  перекрашивается: заливка полупрозрачная, и цвет Метки под ней читается.
+  Search match highlighting: the search plugin sets these classes as decorations, so they do not
+  go into the Document. All matches get a soft fill in the `warning` tone, like a highlighter
+  marker. The current match is stronger and has a border in the same tone, so it stands out among
+  its neighbors and on a yellow marker. The text is not recolored: the fill is semi-transparent,
+  so the Mark's color stays readable under it.
 */
 const SEARCH_HIGHLIGHT_CLASS =
   "[&_.rte-search-match]:rounded-[2px] " +
@@ -438,19 +429,18 @@ const SEARCH_HIGHLIGHT_CLASS =
   "[&_.rte-search-current]:bg-[color-mix(in_srgb,var(--warning)_60%,transparent)] " +
   "[&_.rte-search-current]:shadow-[0_0_0_1px_var(--warning)]";
 
-// Рамка фиксированной Панели — у неё и у её Скелета (почему такая — у разметки ниже).
+// Frame of the fixed Toolbar and of its Skeleton (the reason for this markup is below).
 const TOOLBAR_SHELL_CLASS =
   "bg-bg-2 border-line-soft rounded-t-control sticky top-[var(--topbar-h,0px)] z-[1] " +
   "-mx-3 border-b px-1.5 py-1";
 
 /*
-  Поле HTML-режима и его зеркало — одна типографика: высоту поля задаёт
-  невидимый близнец в той же ячейке грида, как у `TextControl` с ростом
-  (там же — почему не `scrollHeight`). Поверхность всегда тёмная, цветом кита
-  (`--rte-source-*` в `styles.css`): в тёмных темах — подложка темы, в светлой
-  и на листе — значения тёмной темы. Скругление — как у кода, шрифт —
-  моноширинный 13 px, как у `CodeView`. Режим читается как «код», а не как ещё
-  одно текстовое поле.
+  The HTML-mode field and its mirror share one typography. The field's height is set by an
+  invisible twin in the same grid cell, as in `TextControl` with growing height (see there for
+  why not `scrollHeight`). The surface is always dark, using the kit's colors (`--rte-source-*`
+  in `styles.css`): in dark themes it is the theme background, and in light themes and on Paper
+  it uses the dark theme's values. The corner radius matches code blocks, and the font is a
+  monospace 13 px, as in `CodeView`. The mode reads as "code", not as one more text field.
 */
 const SOURCE_BOX_CLASS =
   "col-start-1 row-start-1 w-full rounded-(--rte-radius) border px-3 py-2 " +
@@ -458,30 +448,28 @@ const SOURCE_BOX_CLASS =
 const SOURCE_FIELD_CLASS =
   "border-(--rte-source-border) bg-(--rte-source-background) text-(--rte-source-foreground) " +
   "caret-(--rte-source-foreground) " +
-  // Выделение — тоже тёмной темы: глобальный `::selection` в
-  // светлой теме — светлая заливка с тёмным текстом, на тёмном поле нечитаемо.
+  // Selection uses the dark theme too: the global `::selection` in the light theme is a light
+  // fill with dark text, which is unreadable on the dark field.
   "selection:bg-(--rte-source-selection) selection:text-(--rte-source-foreground) " +
   "resize-y outline-none disabled:cursor-not-allowed";
 
 /**
- * Поле форматированного текста на Tiptap v3 — отдельный вход
- * `@olddevs/ui/editor` (ADR-0050).
+ * The rich text field on Tiptap v3, a separate entry point of `@olddevs/ui/editor` (ADR-0050).
  *
- * ЗНАЧЕНИЕ И КУРСОР. Последний HTML, о котором знает владелец значения,
- * хранится рядом с движком. Входящий `value`, равный ему, — эхо нашей же
- * правки: документ не пересоздаётся, курсор остаётся на месте. Иначе
- * управляемый режим сбрасывал бы курсор в начало на каждой букве.
+ * VALUE AND CURSOR. The last HTML the value's owner knows about is kept next to the engine. An
+ * incoming `value` equal to it is an echo of our own edit: the document is not recreated and the
+ * cursor stays put. Otherwise, controlled mode would reset the cursor to the start on every
+ * keystroke.
  *
- * ФОРМА. Скрытое поле и `onChange` получают HTML по одному и тому же таймеру;
- * отправка формы и `new FormData(form)` сбрасывают его досрочно, поэтому в
- * отправке значение свежее даже посреди задержки.
+ * FORM. The hidden field and `onChange` receive HTML on the same timer. Submitting the form and
+ * `new FormData(form)` flush it early, so the value is fresh at submit time, even mid-delay.
  *
- * SSR И СКЕЛЕТ. Движок создаётся только в браузере (`immediatelyRender:
- * false`) и после загрузчиков Инструментов: до того — на сервере, после
- * гидратации, при сбое загрузчика — рисуется Скелет: рамка, место Панели и
- * Документ статичным HTML с классом Документа, без ввода и без прыжка высоты.
- * Документ Скелета — `value`, очищенный Схемой (`skeleton.ts`), и только в
- * браузере после монтирования: на сервере Скелет — рамка и место Панели.
+ * SSR AND SKELETON. The engine is created only in the browser (`immediatelyRender: false`) and
+ * after the Tools' loaders. Until then (on the server, after hydration, or if a loader fails) a
+ * Skeleton is rendered: the frame, the Toolbar's place, and the Document as static HTML with the
+ * Document class, without input and without a height jump. The Skeleton's Document is `value`
+ * cleaned by the Schema (`skeleton.ts`), and only in the browser after mount. On the server the
+ * Skeleton is just the frame and the Toolbar's place.
  */
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
   function RichTextEditor(
@@ -519,20 +507,19 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   ) {
     const messages = useMessages();
     /*
-      Набор инструментов замораживается при монтаже: из него собрана Схема, а
-      Схему у живого движка не поменять. Панель читает тот же замороженный
-      набор — иначе новый `tools` показал бы кнопку, которой Схема не знает.
-      Набор — список описаний Инструментов (`features/builtins.ts`), поверхности
-      читают его проекцию.
+      The Tool set is frozen at mount: the Schema is built from it, and a live engine's Schema
+      cannot be changed. The Toolbar reads the same frozen set, otherwise a new `tools` would show
+      a button the Schema does not know. The set is a list of Tool descriptions
+      (`features/builtins.ts`), and the surfaces read its projection.
     */
     const [enabledTools] = useState(() => expandTools(preset, tools));
     /*
-      Загрузчики Extensions (ADR-0058, п. 11.3–11.6). Загрузка стартует
-      в рендере, а не в эффекте: с первого рендера в браузере, ещё до монтажа;
-      на сервере — никогда. Промис кэширован на загрузчике (`toolLoader.ts`):
-      повторный рендер и второй Редактор его не зовут. Набор движка собирается,
-      только когда отработали все (`ready`): Схема фиксируется при создании, и
-      Блоки из `value` без Extensions потерялись бы при разборе.
+      Extension loaders (ADR-0058, items 11.3–11.6). Loading starts during render, not in an
+      effect: from the first render in the browser, before mount. On the server, never. The promise
+      is cached on the loader (`toolLoader.ts`), so a re-render and a second Editor do not call it
+      again. The engine's set is assembled only after all of them have finished (`ready`): the
+      Schema is fixed at creation, and Blocks from `value` would be lost during parsing without
+      their Extensions.
     */
     const loaders = enabledTools.descriptors.flatMap((descriptor) => descriptor.load ?? []);
     const loads = loaders.map((loader) =>
@@ -549,26 +536,25 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       );
       return () => void (live = false);
     }, [loading]);
-    // «Повторить» зовёт заново только упавшие загрузчики: удачные — в кэше.
-    // Сбой виден после первого эффекта (`engine` ниже): строка, которой не было
-    // на сервере, сломала бы гидратацию.
+    // "Retry" calls again only the loaders that failed: the successful ones are in the cache.
+    // A failure becomes visible after the first effect (`engine` below): a string that did not
+    // exist on the server would break hydration.
     const retryLoads = () => {
       for (const loader of loaders) startLoad(loader, true);
       setLoadRound((round) => round + 1);
     };
     const editorRef = useRef<Editor | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
-    // Выключенный `<fieldset>` выключает и редактор, как нативное поле: так
-    // же ведёт себя `Form pending`, а чужой `fieldset` покрывается тем же
-    // правилом.
+    // A disabled `<fieldset>` disables the editor too, like a native field. `Form pending`
+    // behaves the same way, and a foreign `fieldset` is covered by the same rule.
     const inDisabledFieldset = useFieldsetDisabled(rootRef);
     const disabled = disabledProp || inDisabledFieldset;
     const hiddenRef = useRef<HTMLInputElement>(null);
     const proxyRef = useRef<HTMLInputElement>(null);
     /*
-      Начальный конверт: HTML из него собирает только движок по своей Схеме,
-      поэтому до него значение — пустая строка, а Документ встаёт при появлении
-      движка (эффект ниже). `value` главнее, как и HTML-строки в `defaultValue`.
+      The initial envelope: only the engine builds HTML from it, using its own Schema. Until then
+      the value is an empty string, and the Document appears once the engine is ready (the effect
+      below). `value` takes precedence, as HTML strings in `defaultValue` do.
     */
     const initialDocument =
       value === undefined && typeof defaultValue === "object" ? defaultValue : undefined;
@@ -576,15 +562,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     initialDocumentRef.current = initialDocument;
     const initial = value ?? (typeof defaultValue === "string" ? defaultValue : "");
     /*
-      Последний HTML, о котором владелец значения знает: отданный в `onChange`
-      или полученный в `value`. Входящий `value`, равный ему, — эхо нашей же
-      правки, и пересоздавать по нему документ нельзя.
+      The last HTML the value's owner knows about: the one passed to `onChange` or received in
+      `value`. An incoming `value` equal to it is an echo of our own edit, and the document must
+      not be recreated from it.
     */
     const knownRef = useRef(initial);
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
-    // Колбэки событий — тоже через ref: они читаются позже рендера (эффект
-    // готовности, таймер ухода фокуса), а новый колбэк события не повторяет.
+    // Event callbacks also go through refs: they are read after render (the readiness effect,
+    // the focus-leave timer), and a new event callback does not trigger a re-run.
     const onReadyRef = useRef(onReady);
     onReadyRef.current = onReady;
     const onFocusRef = useRef(onFocus);
@@ -592,9 +578,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const onBlurRef = useRef(onBlur);
     onBlurRef.current = onBlur;
     /*
-      Предел и плейсхолдер расширения читают через ref: набор расширений живёт
-      столько же, сколько движок, а пересоздавать движок ради нового числа или
-      смены локали значило бы терять историю правок и курсор.
+      The limit and the placeholder are read by the extension through refs: the extension set lives
+      as long as the engine, and recreating the engine for a new number or a locale change would
+      mean losing edit history and the cursor.
     */
     const limitRef = useRef(maxLength);
     limitRef.current = maxLength;
@@ -605,89 +591,85 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     taskCheckboxRef.current = messages.editor.taskCheckbox;
     const detailsToggleRef = useRef(messages.editor.detailsToggle);
     detailsToggleRef.current = messages.editor.detailsToggle;
-    // Кавычки `typography` читаются в момент ввода: смена каталога движок не пересоздаёт.
+    // `typography` quotes are read at the moment of typing: a catalog change does not recreate the engine.
     const quoteSetRef = useRef(messages.editor.typographyQuotes);
     quoteSetRef.current = messages.editor.typographyQuotes;
-    // Загрузчик и строки картинки — тоже через ref: расширение их читает в
-    // момент вставки файла и при перерисовке подписи, а не при создании движка.
+    // The upload handler and image strings also go through refs: the extension reads them when a
+    // file is inserted and when a caption is redrawn, not when the engine is created.
     const uploadRef = useRef(onUploadImage);
     uploadRef.current = onUploadImage;
     const imageMessagesRef = useRef(messages.editor);
     imageMessagesRef.current = messages.editor;
 
     /*
-      Число символов держится состоянием только при `maxLength`: без предела
-      счётчика нет, и пересчитывать документ на каждую букву незачем. Функции
-      ниже читают только ref и сеттер состояния, поэтому в зависимостях
-      эффектов им делать нечего.
+      The character count is kept in state only when `maxLength` is set: without a limit there is
+      no counter, and recounting the Document on every keystroke would be pointless. The functions
+      below read only the ref and the state setter, so they need nothing in the effect dependencies.
     */
     const [count, setCount] = useState(0);
     /**
-     * Поповер записи описания у выделения или у Блока (`ToolButtonView.tsx`):
-     * его открывают сочетание кнопки, кнопка ссылки, пункт вставки и Действие
-     * над Блоком — командой движка. После закрытия запрос остаётся
-     * (`open: false`), чтобы рамка закрылась штатно.
+     * The popover for a description of a selection or a Block (`ToolButtonView.tsx`). It is opened
+     * by a shortcut, the link button, an Insert item, or a Block action, through an engine command.
+     * After closing, the request stays (`open: false`), so the frame closes normally.
      */
     const [toolPopover, setToolPopover] = useState<{
       request: ToolPopoverRequest;
       open: boolean;
     } | null>(null);
-    // Поповер произвольного цвета: `null` — не открывали; после закрытия остаётся
-    // смонтированным (`open: false`), чтобы не грузить модуль заново.
+    // Custom color popover: `null` means it was never opened. After closing it stays mounted
+    // (`open: false`), so the module is not loaded again.
     const [customColor, setCustomColor] = useState<{
       kind: CustomColorKind;
       open: boolean;
     } | null>(null);
     const openCustomColor = (kind: CustomColorKind) => setCustomColor({ kind, open: true });
-    /** Открыт ли поповер картинки: кнопка Панели, пункт Меню вставки, панель картинки. */
+    /** Whether the image popover is open: from the Toolbar button, the Slash menu item, or the image toolbar. */
     const [imageOpen, setImageOpen] = useState(false);
-    // Окно «Вставить таблицу» — у Редактора, а не у меню: см. `TableInsertDialog`.
-    // Окно — из ленивого чанка таблицы (`tableTool.ts`): движок с таблицей
-    // создаётся после него, а без движка окна нет.
+    // The "Insert table" dialog belongs to the Editor, not to the menu: see `TableInsertDialog`.
+    // The dialog comes from the table's lazy chunk (`tableTool.ts`): the table engine is created
+    // after it, and without the engine there is no dialog.
     const TableInsertDialog = tableChunk()?.TableInsertDialog;
     const [tableDialogOpen, setTableDialogOpen] = useState(false);
     /**
-     * Сообщение поля (`showNotice`, `fieldNotice.ts`): одно, последнее. `status`
-     * — для живого региона, `error` — видимая строка под полем; правка
-     * Документа снимает `error`.
+     * The field message (`showNotice`, `fieldNotice.ts`): one at a time, the latest. `status` is
+     * for the live region. `error` is a visible line under the field. A Document edit clears `error`.
      */
     const [notice, setNotice] = useState<FieldNotice | null>(null);
     /*
-      HTML-режим: `null` — визуальный, иначе текст поля HTML и
-      высота Документа при входе — ниже неё поле не бывает, и страница не
-      прыгает. Режим — состояние Редактора, а не проп: движок остаётся
-      смонтированным и скрытым, история правок живёт.
+      HTML mode: `null` means visual mode. Otherwise it holds the HTML field's text and the
+      Document's height at entry. The field never gets shorter than that, so the page does not jump.
+      The mode is Editor state, not a prop: the engine stays mounted and hidden, and edit history
+      survives.
 
-      Текст и база сравнения дублируются в ref: применение зовут обработчики
-      формы и `ref`-хэндл, у которых нет свежего замыкания. База — текст на
-      входе или после последнего применения: неизменённый текст не порождает
-      ни транзакции, ни шага истории, ни `onChange`.
+      The text and the comparison base are duplicated in a ref: applying is called by form handlers
+      and the `ref` Handle, which have no fresh closure. The base is the text at entry or after the
+      last apply. Unchanged text produces no transaction, no history step and no `onChange`.
     */
     const [source, setSource] = useState<{ text: string; minHeight: number } | null>(null);
     const sourceOpen = source !== null;
     /**
-     * Панель поиска: `token` растёт с каждым открытием — повторный
-     * `Mod+F` при открытой панели заново ставит фокус в поле поиска; `query` —
-     * текст, выделенный в Документе в момент открытия.
+     * The search panel. `token` grows with each open: a repeated `Mod+F` while the panel is open
+     * puts focus back into the search field. `query` is the text selected in the Document when
+     * it was opened.
      */
     const [searchPanel, setSearchPanel] = useState<{
       token: number;
       replace: boolean;
       query: string;
     } | null>(null);
-    /** Переход ядра Оглавления (`TocCore`): есть, пока оно смонтировано. */
+    /** The jump of the Table of contents core (`TocCore`): present while it is mounted. */
     const tocJumpRef = useRef<((index: number) => boolean) | null>(null);
     const sourceFieldRef = useRef<HTMLTextAreaElement>(null);
     const sourceTextRef = useRef<string | null>(null);
     const sourceBaseRef = useRef("");
-    /** Куда поставить фокус после смены режима: вход — в поле, выход кнопкой — в Документ. */
+    /** Where to put focus after the mode switch: entering goes to the field, exiting by the button goes to the Document. */
     const switchFocusRef = useRef<"source" | "document" | null>(null);
-    // Расширение живёт столько же, сколько движок, а режим Панели меняется на
-    // лету (`pointer: coarse`): обработчик `Alt+F10` читается через ref.
+    // The extension lives as long as the engine, and the Toolbar mode changes on the fly
+    // (`pointer: coarse`), so the `Alt+F10` handler is read through a ref.
     const focusToolbarRef = useRef<() => boolean>(() => false);
-    // `Mod+/` — меню ручки Блока; обработчик кладёт сама ручка (`BlockHandle`).
+    // `Mod+/` opens the Block handle's menu. The handle registers that handler itself (`BlockHandle`).
     const openBlockMenuRef = useRef<() => boolean>(() => false);
-    // `Alt+F10` ведёт в открытую Карточку у текста раньше, чем в Панель (`TextCard`).
+    // `Alt+F10` goes to an open Text card before the Toolbar (`TextCard`).
     const textCardRef = useRef<TextCardControl | null>(null);
     const recount = (current: Editor) => {
       if (limitRef.current !== undefined) setCount(countCharacters(current.state.doc));
@@ -699,22 +681,21 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     };
 
     /*
-      Проверка обязательности. Пустым документ считается по правилу кита
-      (`emptiness.ts`): атом (`hr`, картинка, свой атом) и таблица, даже с
-      пустыми ячейками, — содержимое, документ из одного такого блока форму не
-      блокирует. Эта же проверка решает, что в скрытое поле уходит `""`.
+      Required check. An empty Document is defined by the kit's rule (`emptiness.ts`): an atom
+      (`hr`, an image, a custom atom) and a table, even one with empty cells, count as content.
+      So a Document made of just one such Block does not block the form. The same check decides
+      whether `""` goes into the hidden field.
 
-      Вызывается на каждую правку, а не по таймеру `onChange`: отправка может
-      случиться через 50 мс после первой буквы, и запоздавшая валидность
-      заблокировала бы форму с текстом.
+      It runs on every edit, not on the `onChange` timer: a submit can happen 50 ms after the first
+      letter, and a late validity update would block a form that has text.
 
-      В HTML-режиме с неприменённой правкой пустоту решает текст поля, а не
-      Документ: браузер проверяет ограничения ДО события `submit`, а правку
-      применяет его захват — `form.requestSubmit()` с фокусом в поле иначе
-      заблокировал бы форму с текстом в поле как пустую (и пропустил бы
-      очищенное поле). Текст разбирается тем же `createDocument` Tiptap со Схемой, что
-      и при применении, а пустота — то же правило кита, что у Документа.
-      Разбор — только когда проверка включена: без `required` он ни к чему.
+      In HTML mode with an unapplied edit, the field's text decides emptiness, not the Document:
+      the browser checks constraints BEFORE the `submit` event, and the edit is applied by its
+      capture handler. Otherwise `form.requestSubmit()` with focus in the field would block a form
+      with text in the field as empty, and let a cleared field through. The text is parsed with
+      Tiptap's `createDocument` and the Schema, the same way as on apply, and emptiness is the same
+      kit rule as for the Document. Parsing happens only when the check is enabled: without
+      `required` it is not needed.
     */
     const validatableRef = useRef(false);
     const requiredMessageRef = useRef(messages.editor.required);
@@ -737,21 +718,19 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     }, changeDelay);
 
     /*
-      Применение HTML-режима: текст поля проходит тем же разбором Схемой, что
-      входящий `value`, и заменяет Документ одной транзакцией — одним шагом
-      истории, который `Ctrl/⌘+Z` в Документе откатывает целиком. Зовётся на
-      выход из режима, `blur` поля, отправку формы, `formdata`, `getHTML()`,
-      `getMarkdown()` и переход в `readOnly`.
+      Applying the HTML mode: the field's text is parsed with the Schema, the same way as an incoming
+      `value`, and replaces the Document in one transaction. That is one history step, which
+      `Ctrl/⌘+Z` in the Document undoes as a whole. It runs on leaving the mode, on the field's `blur`,
+      on form submit, on `formdata`, on `getHTML()`, on `getMarkdown()`, and on switching to `readOnly`.
 
-      Неизменённый текст и текст, разбор которого дал тот же Документ (только
-      пробелы между Блоками), ничего не меняют: «открыл — посмотрел — закрыл»
-      не пачкает отмену и не зовёт `onChange`.
+      Unchanged text, and text whose parse gives the same Document (only whitespace between Blocks),
+      changes nothing: "open, look, close" does not pollute undo and does not call `onChange`.
 
-      Замена — снаружи для предела (`EXTERNAL_CHANGE`): как `setMarkdown`, она
-      не режется, а счётчик показывает превышение. `onChange` — сразу, как на
-      `blur`, без `changeDelay`; ожидающий таймер снимается после замены, иначе
-      он отдал бы то же значение вторично. `closeHistory` с обеих сторон:
-      применение не сливается ни с правкой до входа, ни с первой правкой после.
+      The replacement is external for the limit (`EXTERNAL_CHANGE`): like `setMarkdown`, it is not
+      truncated, and the counter shows the overage. `onChange` fires right away, as on `blur`, without
+      `changeDelay`. The pending timer is cleared after the replacement, otherwise it would report the
+      same value a second time. `closeHistory` is applied on both sides: the apply does not merge with
+      the edit made before entering, nor with the first edit after it.
     */
     const applySource = () => {
       const current = editorRef.current;
@@ -780,16 +759,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const applySourceRef = useRef(applySource);
     applySourceRef.current = applySource;
     /*
-      Размонтирование применяет правку, как `blur`: Escape в поле HTML внутри
-      `Dialog` закрывает окно, и Редактор уходит из дерева без `blur` поля —
-      правка пропала бы молча. Движок к этому моменту жив: `useEditor` Tiptap
-      уничтожает его таймером после своей очистки, а очистки эффектов идут
-      одним проходом раньше таймера. Отданный `onChange` — тот же, что на
-      `blur`; без правки (`sourceBaseRef`) ничего не зовётся.
+      Unmounting applies the edit, as `blur` does. Escape in the HTML field inside a `Dialog` closes
+      the dialog, and the Editor leaves the tree without a field `blur`, so the edit would vanish
+      silently. The engine is still alive at this point: Tiptap's `useEditor` destroys it with a timer
+      after its own cleanup, and effect cleanups run in one pass before that timer fires. The
+      `onChange` that fires is the same one as on `blur`. With no edit (`sourceBaseRef`), nothing is called.
     */
     useEffect(() => () => applySourceRef.current(), []);
 
-    /** Текст поля HTML — форматированием Документа как есть: вход и замены снаружи. */
+    /** The HTML field's text is the Document's formatted HTML, as is: entry and external replacements. */
     const writeSource = (current: Editor) => {
       const text = formatSourceHtml(serialize(current));
       sourceTextRef.current = text;
@@ -797,9 +775,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       return text;
     };
     /*
-      Документ заменён снаружи в режиме (`value`, `setMarkdown`, `clear`):
-      текст поля перезаписывается новым Документом — владелец значения главнее
-      несохранённой правки, как и в визуальном режиме.
+      The Document is replaced from outside while in this mode (`value`, `setMarkdown`, `clear`):
+      the field's text is overwritten with the new Document. The value's owner takes precedence
+      over an unsaved edit, as in visual mode.
     */
     const rewriteSource = (current: Editor) => {
       if (sourceTextRef.current === null) return;
@@ -809,8 +787,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const openSource = () => {
       const current = editorRef.current;
       if (!current) return;
-      // Документа на экране не будет — искать в нём негде. Подсветка бывает и без
-      // панели (команда `setQuery`): `next()` в скрытом Документе вышла бы удачной.
+      // The Document will not be on screen, so there is nothing to search in. Highlighting can also
+      // exist without the panel (the `setQuery` command): `next()` in a hidden Document would succeed.
       if (enabledTools.has("search")) closeSearch(false);
       const text = writeSource(current);
       switchFocusRef.current = "source";
@@ -822,7 +800,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       switchFocusRef.current = focusDocument ? "document" : null;
       setSource(null);
     };
-    /** Фокус в поле: в HTML-режиме — поле HTML, иначе Документ. */
+    /** Focus the field: the HTML field in HTML mode, otherwise the Document. */
     const focusField = () => {
       if (sourceTextRef.current !== null) sourceFieldRef.current?.focus();
       else editorRef.current?.commands.focus();
@@ -831,12 +809,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     focusFieldRef.current = focusField;
 
     /*
-      Открыть панель поиска: кнопка Панели, `Mod+F`/`Mod+Alt+F` из движка и
-      команда `open` Инструмента. Выделенный текст одного Блока становится запросом,
-      как в редакторах кода; выделение через Блоки — нет: запрос не переходит
-      границу Блока, и такой текст не нашёлся бы. Явный `query` команды главнее
-      выделения. В HTML-режиме Документа на экране нет — искать негде, и `Mod+F`
-      остаётся браузеру.
+      Open the search panel: from the Toolbar button, `Mod+F`/`Mod+Alt+F` from the engine, and the
+      `open` command of the Tool. Selected text inside one Block becomes the query, as in code
+      editors. A selection that spans Blocks does not: the query does not cross a Block boundary, so
+      that text would never be found. An explicit `query` command takes precedence over the selection.
+      In HTML mode there is no Document on screen to search in, so `Mod+F` is left to the browser.
     */
     const openSearch = (replace: boolean, query?: string): boolean => {
       const current = editorRef.current;
@@ -849,17 +826,17 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         replace,
         query: query ?? selected,
       }));
-      // Подсветка и переходы — сразу, не дожидаясь ленивой панели.
+      // Highlighting and jumps happen right away, without waiting for the lazy panel.
       if (query !== undefined) current.commands.setSearch(query);
       return true;
     };
     const openSearchRef = useRef(openSearch);
     openSearchRef.current = openSearch;
     /*
-      Закрыть панель поиска: Escape, «Закрыть», повторная кнопка «Поиск».
-      Каретка — на текущем совпадении, фокус — в Документе: автор продолжает с
-      того места, где искал. При входе в HTML-режим — без фокуса: он уходит в
-      поле HTML.
+      Close the search panel: Escape, the "Close" button, or the search button pressed again.
+      The caret stays on the current match and focus goes to the Document, so the author continues
+      from where they were searching. When entering HTML mode, there is no focus move: focus goes
+      to the HTML field.
     */
     const closeSearch = (focusDocument: boolean) => {
       const current = editorRef.current;
@@ -868,7 +845,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         const match = state?.matches[state.current];
         const chain = current.chain();
         if (focusDocument) chain.focus();
-        // Текст — отрезком, формула — узлом (`matchSelection`).
+        // Text matches are selected as a range, formulas as a node (`matchSelection`).
         if (focusDocument && match) {
           chain.command(({ tr }) => (tr.setSelection(matchSelection(tr.doc, match)), true));
         }
@@ -878,7 +855,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       return true;
     };
 
-    // Пункты Меню вставки — из того же замороженного набора, что и Схема.
+    // Slash menu items come from the same frozen set as the Schema.
     const insertItems = useMemo(() => insertItemsFor(enabledTools), [enabledTools]);
     const textCardEntries = useMemo(() => textCardsOf(enabledTools), [enabledTools]);
     const slash = useSlashMenu(insertItems, editorRef);
@@ -906,11 +883,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           openSearch: (replace) => openSearchRef.current(replace),
           image: {
             /*
-              Поповер открывается кадром позже. Пункт Меню вставки зовёт
-              команду в цепочке после `focus()`, а Tiptap возвращает фокус в
-              документ в следующем кадре: открытый сразу поповер получил бы
-              фокус в поле адреса и тут же потерял его — и закрылся как
-              «фокус ушёл наружу».
+              The popover opens one frame later. The Slash menu item runs its command in a chain
+              after `focus()`, and Tiptap returns focus to the Document on the next frame. A popover
+              opened right away would get focus in the address field and lose it immediately, closing
+              as "focus left outside".
             */
             onOpenEditor: () => requestAnimationFrame(() => setImageOpen(true)),
             captionPlaceholder: () => imageMessagesRef.current.imageCaption,
@@ -922,12 +898,12 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       [enabledTools, slashBridge, triggerBindings, ready]
     );
     /*
-      Ошибка сборки набора своих Инструментов (ADR-0058, п. 1.5, 2.4) — ошибка
-      поля: Схема с таким набором потеряла бы чужие Блоки уже при разборе
-      `value`. Движок тогда собирается из запасного набора и пустым, а наружу
-      не выходит (`editor` ниже — `null`, как до монтажа): Хэндл тихий,
-      скрытое поле несёт входящее значение, `onChange` молчит. Набор с
-      загрузчиками проверяется, когда они отработали: Extensions — их итог.
+      An error while assembling a custom Tool set (ADR-0058, items 1.5, 2.4) is a field error: the
+      Schema built from such a set would lose foreign Blocks already while parsing `value`. The engine
+      is then built from the fallback set and stays empty, and nothing leaks out (`editor` below is
+      `null`, as before mount): the Handle is silent, the hidden field carries the incoming value, and
+      `onChange` stays quiet. The set with its loaders is checked once they have finished, since their
+      Extensions are the final result.
     */
     const toolsError = useMemo(
       () => extensions && customToolsError(enabledTools, extensions),
@@ -938,20 +914,18 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     }, [toolsError]);
 
     /*
-      Имя подписи `FormField`. `<label for>` браузер связывает только с
-      «labelable»-элементами — `input`, `textarea`, `select`, — а
-      `contenteditable` к ним не относится: подпись была бы видна, но поле
-      оставалось бы безымянным.
+      The name of the `FormField` label. The browser links `<label for>` only to labelable elements
+      (`input`, `textarea`, `select`). `contenteditable` is not one of them, so the label would be
+      visible while the field stayed unnamed.
 
-      Поэтому имя идёт ссылкой: `FormField` публикует `id` своей подписи
-      контекстом, и поле ставит его в `aria-labelledby`. Явные `aria-label` и
-      `aria-labelledby` сильнее: потребитель знает про своё поле больше.
+      So the name is passed by reference: `FormField` publishes its label's `id` through context, and
+      the field sets it as `aria-labelledby`. Explicit `aria-label` and `aria-labelledby` take
+      precedence: the consumer knows more about its own field.
 
-      Щелчок по подписи нативно сюда не доходит по той же причине, поэтому
-      слушатель вешается на сам узел подписи — только на чтение: `FormField`
-      остаётся как есть, а правило «подпись фокусирует поле» живёт у поля.
-      Подпись, у которой `for` указывает на настоящий нативный control, не
-      трогаем: её фокус уже решён браузером.
+      A click on the label does not reach the field natively, for the same reason. So the listener is
+      attached to the label node itself, read-only: `FormField` stays as it is, and the rule "a label
+      focuses its field" lives in the field. A label whose `for` points to a real native control is
+      left alone: the browser already handles its focus.
     */
     const fieldLabelId = useFieldLabelId();
     useEffect(() => {
@@ -965,10 +939,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     }, [fieldLabelId]);
 
     /*
-      Счётчик появляется у 80 % предела и до того не занимает места. Пока он
-      виден, он входит в описание поля: скринридер называет остаток при входе
-      в поле, но не объявляет каждую букву — живой регион на счётчике говорил
-      бы поверх набора.
+      The counter appears at 80% of the limit and takes no space before that. While it is visible,
+      it is part of the field's description: a screen reader announces the remainder on entering
+      the field, but does not announce every letter. A live region on the counter would talk over
+      the typing.
     */
     const counterId = useId();
     const counter =
@@ -982,48 +956,47 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       [ariaDescribedBy, counter != null ? counterId : undefined].filter(Boolean).join(" ") ||
         undefined
     );
-    // Явный проп сильнее раскладки формы — тот же порядок, что у `TextControl`.
+    // An explicit prop takes precedence over the form layout, the same order as in `TextControl`.
     const fieldInvalid = useFieldInvalid();
     const invalid = ariaInvalid ?? fieldInvalid;
     const labelledBy = ariaLabelledBy ?? (ariaLabel ? undefined : fieldLabelId);
     const editable = !readOnly && !disabled;
     /*
-      Плавающая Панель и меню выделения на сенсорном экране спорят с системным
-      меню выделения («Копировать / Вставить») за одно место над текстом и
-      проигрывают ему: там вместо них фиксированная Панель (спека, «Панель и
-      Меню вставки»; то же для плашки).
+      On a touch screen, the floating Toolbar and the Bubble menu compete with the system selection
+      menu ("Copy / Paste") for the same spot above the text, and lose: there, a fixed Toolbar is
+      shown instead (spec, "Toolbar and Slash menu"; the same goes for the pill).
     */
     const coarsePointer = useCoarsePointer();
     const toolbarMode =
       (toolbar === "floating" || toolbar === "bubble") && coarsePointer ? "fixed" : toolbar;
-    // Плашка выделения: своим режимом или поверх фиксированной Панели (но не
-    // поверх той, что заменила плавающую на сенсорном экране).
+    // The selection pill: in its own mode, or on top of the fixed Toolbar (but not on top of the
+    // one that replaced the floating Toolbar on a touch screen).
     const bubbleShown =
       toolbarMode === "bubble" || (toolbar === "fixed" && selectionMenu && !coarsePointer);
     /*
-      HTML-режим — только у фиксированной Панели: у плавающей и меню
-      выделения кнопки нет (они живут над выделением в Документе), при `none` и
-      в `readOnly` Панели нет. Пропала кнопка при открытом режиме — режим
-      закрывается с применением: входа без выхода не бывает.
+      The HTML mode exists only with the fixed Toolbar. The floating Toolbar and the Bubble menu have
+      no button for it (they live above the selection in the Document). With `none` and in `readOnly`
+      there is no Toolbar. If the button disappears while the mode is open, the mode closes with an
+      apply: there is no entry without an exit.
     */
     const sourceAvailable = enabledTools.has("source") && toolbarMode === "fixed" && !readOnly;
 
     /*
-      Область Документа (ADR-0059): Документ, его Скелет, поле HTML-режима и
-      ручка Блока. С `maxHeight` или `resizable` она прокручивает их сама —
-      Панель над ней и Строка статуса под ней остаются на месте. `relative`
-      делает её началом координат ручки Блока, и ручка едет вместе с текстом;
-      плашки над выделением слушают её прокрутку (`scrollTarget`). Без пропов
-      это простой блок без стилей: поле растёт с Документом, как раньше.
+      The Document area (ADR-0059): the Document, its Skeleton, the HTML-mode field, and the Block
+      handle. With `maxHeight` or `resizable`, the area scrolls them itself. The Toolbar above it and
+      the Status bar below it stay in place. `relative` makes it the origin for the Block handle's
+      coordinates, so the handle moves with the text. The selection pills listen to its scrolling
+      (`scrollTarget`). Without these props it is a plain block with no styles: the field grows with
+      the Document, as before.
 
-      Поля `-mx-3 px-3` — под горизонтальный отступ оболочки, как у Панели:
-      полоса прокрутки встаёт у рамки, а ручка Блока слева не срезается.
+      The `-mx-3 px-3` margins match the horizontal padding of the shell, as the Toolbar does: the
+      scrollbar sits at the frame, and the Block handle on the left is not clipped.
     */
     const scrolls = maxHeight != null || resizable;
     const [scrollArea, setScrollArea] = useState<HTMLDivElement | null>(null);
     const scrollTarget = scrolls ? (scrollArea ?? undefined) : undefined;
     const areaLength = maxHeight == null ? undefined : cssLength(maxHeight);
-    /** Высота, натянутая ручкой (`FieldResizer`); `null` — стартовая. */
+    /** Height set by the handle (`FieldResizer`); `null` means the starting height. */
     const [areaHeight, setAreaHeight] = useState<number | null>(null);
     const areaStyle: CSSProperties | undefined = !scrolls
       ? undefined
@@ -1035,9 +1008,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         : { maxHeight: areaLength };
 
     /*
-      Оглавление в левом поле (Инструмент `toc`, ADR-0068). Полоса липнет под
-      фиксированной Панелью: её высота меряется, потому что Панель переносит
-      ряд кнопок на узком поле. В прокручиваемом поле край — верх области.
+      The Table of contents in the left margin (`toc` Tool, ADR-0068). Its strip sticks under the
+      fixed Toolbar. The Toolbar's height is measured, because the Toolbar wraps its row of buttons
+      in a narrow field. In a scrolling field, the edge is the top of the area.
     */
     const tocOptions = toolOptions(enabledTools, "toc");
     const tocOn = enabledTools.has("toc") && tocOptions !== undefined;
@@ -1054,20 +1027,20 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       return () => observer.disconnect();
     }, [toolbarShell]);
     /*
-      Нижний край липкого верха поля: шапка приложения и Панель над Документом.
-      Не `null` никогда, даже без шапки: иначе переход ушёл бы в `scrollIntoView`,
-      а тот двигает и страницу вокруг поля с `maxHeight`. В прокручиваемом поле
-      подсветка и переход считают от верха области и этот край не используют.
+      The bottom edge of the field's sticky top: the app header and the Toolbar above the Document.
+      Never `null`, even without a header: otherwise a jump would go to `scrollIntoView`, which also
+      moves the page around a field with `maxHeight`. In a scrolling field, highlighting and jumps
+      measure from the top of the area, and do not use this edge.
     */
     const tocStickyTop = useCallback(
       () => (stickyOffset(tocOffsetVar) ?? 0) + toolbarHeight,
       [tocOffsetVar, toolbarHeight]
     );
     /*
-      Переход в правке ставит каретку в конец заголовка, как структура документа
-      в Google Docs: с ним можно сразу писать. Прокрутку делает Оглавление, а
-      движок не прокручивает, чтобы не спорить с ним.
-      В `readOnly` каретки нет — фокус на заголовок ставит само Оглавление.
+      A jump in edit mode puts the caret at the end of the heading, as Google Docs' document outline
+      does, so the author can type right away. The Table of contents does the scrolling, and the
+      engine does not scroll, so the two do not fight.
+      In `readOnly` there is no caret: the Table of contents itself moves focus to the heading.
     */
     const tocFocusHeading = useCallback((heading: HTMLElement) => {
       const current = editorRef.current;
@@ -1075,32 +1048,32 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       const inside = current.view.posAtDOM(heading, 0);
       const end = inside + current.state.doc.resolve(inside).parent.content.size;
       current.commands.setTextSelection(end);
-      // `view.focus()`, а не команда `focus`: та ставит фокус кадром позже, и
-      // пункт списка, отпускающий фокус после клика, отдал бы его странице.
-      // ProseMirror фокусирует без прокрутки — прокрутку делает Оглавление.
+      // `view.focus()`, not the `focus` command: the command moves focus one frame later, and a list
+      // item that releases focus after a click would hand it back to the page.
+      // ProseMirror focuses without scrolling: the Table of contents does the scrolling.
       current.view.focus();
       return true;
     }, []);
 
     /*
-      `Alt+F10` — фокус на первое доступное действие Панели. Плавающую Панель
-      клавиша показывает сама, не дожидаясь задержки показа: человек с
-      клавиатуры выделил текст и сразу просит Панель. На пустом выделении
-      плавающей Панели нет — клавиша уходит дальше, как без Панели вовсе. Меню
-      выделения (`bubble`) — ровно так же, своим ключом плагина.
+      `Alt+F10` moves focus to the first available action in the Toolbar. The key shows the floating
+      Toolbar itself, without waiting for the show delay: a keyboard user has just selected text and
+      is asking for the Toolbar right away. On an empty selection there is no floating Toolbar, so the
+      key passes on, as if there were no Toolbar at all. The Bubble menu (`bubble`) works the same
+      way, with its own plugin key.
     */
     focusToolbarRef.current = () => {
       const current = editorRef.current;
       const root = rootRef.current;
       if (!current || !root) return false;
-      // Открытая Карточка у текста ближе Панели; спрятанная клавишу не берёт.
+      // An open Text card is closer than the Toolbar; a hidden one does not take the key.
       if (textCardRef.current?.focus()) return true;
       if (readOnly) return false;
       /*
-        HTML-режим (из поля HTML, `onKeyDown` ниже): Документа нет, остальные
-        действия Панели — `aria-disabled`. Фокус — на первое, которое
-        сработает, то есть на саму «HTML»: Enter на ней возвращает визуальный
-        режим, а стрелки ведут по Панели дальше, как обычно.
+        HTML mode (from the HTML field, `onKeyDown` below): there is no Document, and the other
+        Toolbar actions are `aria-disabled`. Focus goes to the first one that works, which is the
+        "HTML" button itself. Enter on it returns to visual mode, and the arrow keys move along the
+        Toolbar as usual.
       */
       if (sourceTextRef.current !== null) {
         const action = root
@@ -1110,8 +1083,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         action.focus();
         return true;
       }
-      // Выделена картинка — `Alt+F10` ведёт в её панель: действия над
-      // выделенным ближе, чем Панель форматирования, которой картинке нечего дать.
+      // An image is selected: `Alt+F10` goes to its toolbar. Actions on the selection are closer
+      // than the formatting Toolbar, which has nothing to offer an image.
       if (isImageSelection(current.state.selection)) {
         const action = root.querySelector<HTMLElement>(
           '[data-image-toolbar] [role="toolbar"] button:not([disabled])'
@@ -1126,10 +1099,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         const key = toolbarMode === "floating" ? FLOATING_TOOLBAR_KEY : SELECTION_BUBBLE_KEY;
         current.view.dispatch(current.state.tr.setMeta(key, "show"));
         /*
-          Плагин на `show` сначала считает позицию, потом показывает, а счёт
-          у спрятанного меню — пустой ход. Без второй команды меню, спрятанное
-          до нажатия, встало бы без координат под полем, куда плагин кладёт
-          свой узел, и доехало бы до выделения только с его таймером (250 мс).
+          On `show`, the plugin computes the position first and only then displays the menu. For a
+          menu that is hidden, that count is a no-op. Without the second command, a menu hidden until
+          the key press would appear with no coordinates under the field, where the plugin places its
+          node, and would reach the selection only after its own timer (250 ms).
         */
         current.view.dispatch(current.state.tr.setMeta(key, "updatePosition"));
       }
@@ -1140,30 +1113,28 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       action.focus();
       return true;
     };
-    // Нативный `required` не проверяется у `readonly` и выключенных полей —
-    // здесь то же правило.
+    // Native `required` is not validated for `readonly` and disabled fields. This applies the same rule.
     const validatable = required && editable;
     validatableRef.current = validatable;
     const requiredMessage = messages.editor.required;
 
     /*
-      Атрибуты редактируемой области. Объект пересобирается только при смене
-      значений: `useEditor` сверяет опции по ссылке и иначе переустанавливал бы
-      их движку на каждом рендере.
+      Attributes of the editable area. The object is rebuilt only when the values change: `useEditor`
+      compares options by reference, and otherwise would push them to the engine on every render.
     */
     const slashAttributes = slash.attributes;
     const triggerAttributes = triggerMenu.attributes;
-    // Класс Документа — общий у движка и Скелета: ритм и отступы одни, и высота не прыгает.
+    // The Document class is shared by the engine and the Skeleton: the rhythm and padding match, so the height does not jump.
     const documentClass = cn(
       proseClass(surface),
       PLACEHOLDER_CLASS,
       IMAGE_EDITING_CLASS,
       SEARCH_HIGHLIGHT_CLASS,
-      // Лист отступает от рамки поля: край листа виден на подложке поля.
+      // Paper is inset from the field frame, so its edge shows against the field background.
       surface === "paper" ? "my-3 min-h-24 outline-none" : "min-h-24 py-2.5 outline-none",
-      // Левое поле под ручку Блока (`BlockHandle`): ручка стоит в нём и
-      // текст не перекрывает. Только там, где ручка бывает, — не в
-      // `readOnly`; у выключенного поля остаётся, чтобы текст не прыгал.
+      // Left margin for the Block handle (`BlockHandle`): the handle sits there, so the text does
+      // not overlap it. Only where the handle can appear, so not in `readOnly`. A disabled field
+      // keeps it, so the text does not jump.
       !readOnly && (surface === "paper" ? "pl-10" : "pl-6")
     );
     const editorProps = useMemo(() => {
@@ -1171,8 +1142,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         role: "textbox",
         "aria-multiline": "true",
         "aria-placeholder": placeholderText,
-        // Глобальный контур `:focus-visible` здесь лишний — фокус показывает
-        // рамка поля, как у `TextControl`.
+        // The global `:focus-visible` outline is redundant here: the field frame shows focus,
+        // as in `TextControl`.
         "data-disable-focus-ring": "true",
         class: documentClass,
         ...surfaceAttributes(surface),
@@ -1185,8 +1156,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       if (required) attributes["aria-required"] = "true";
       if (readOnly) attributes["aria-readonly"] = "true";
       if (disabled) attributes["aria-disabled"] = "true";
-      // Меню вставки открывается только в правке: полю только для чтения
-      // обещать список нечего.
+      // The Slash menu opens only in edit mode: a read-only field has no list to promise.
       if (editable) Object.assign(attributes, slashAttributes, triggerAttributes);
       return { attributes };
     }, [
@@ -1208,11 +1178,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     ]);
 
     /*
-      Пока загрузчики работают или набор с ошибкой, движок `useEditor` собран
-      из запасного набора и наружу не выходит. Набор сменился — запасной
-      уничтожается: живому движку Tiptap только переставляет опции, Схему не
-      пересобирает, а уничтоженный создаёт заново с новым набором. Эффект стоит
-      РАНЬШЕ `useEditor`: эффекты идут в порядке объявления, и его — первым.
+      While the loaders are running or the set has an error, the `useEditor` engine is built from the
+      fallback set and does not leave this component. When the set changes, the fallback engine is
+      destroyed: a live Tiptap engine only gets its options updated and does not rebuild its Schema,
+      so a destroyed one is created again with the new set. This effect must run BEFORE `useEditor`:
+      effects run in declaration order, so this one goes first.
     */
     const engineSet = extensions && !toolsError ? extensions : FALLBACK_EXTENSIONS;
     const engineRef = useRef<Editor | null>(null);
@@ -1226,7 +1196,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       editable,
       editorProps,
       onUpdate: ({ editor: updated }) => {
-        // Правка снимает ошибку: она про прошлое действие.
+        // An edit clears the error: it refers to a past action.
         setNotice((current) => (current?.tone === "error" ? null : current));
         recount(updated);
         syncValidity(updated);
@@ -1239,12 +1209,12 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const editor = engine?.options.extensions === extensions ? engine : null;
     editorRef.current = editor;
     /*
-      Документ Скелета — только в браузере после монтирования: разбор Схемой
-      идёт в DOM браузера, а сервер и гидратация видят пустой Скелет, иначе
-      разметка разошлась бы. Клиентский рендер без SSR получает Документ с
-      первого кадра (`useSyncExternalStore` отдаёт серверный снимок только при
-      гидратации). Пересчёт — на новый `value` и на каждый отработавший
-      загрузчик: их число только растёт (повтор зовёт лишь упавшие).
+      The Skeleton's Document exists only in the browser after mount: parsing with the Schema runs
+      in the browser DOM, while the server and hydration see an empty Skeleton. Otherwise the markup
+      would diverge. Client-only rendering without SSR gets the Document from the first frame
+      (`useSyncExternalStore` returns the server snapshot only during hydration). It is recomputed on
+      a new `value` and on each loader that settles. The number of loaders only grows, since a retry
+      calls just the ones that failed.
     */
     const mounted = useSyncExternalStore(subscribeNever, isBrowser, isServer);
     const settledLoads = loads.filter((load) => load.done).length;
@@ -1261,10 +1231,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     );
 
     /*
-      Начальный конверт встаёт сразу при появлении движка — в фазе компоновки,
-      до первой отрисовки: пустой Документ на экране не мелькает. Это начальное
-      значение, а не правка: ни `onChange`, ни шага истории; предел символов его
-      не режет. Скрытое поле и счётчик сверяются ниже, как для HTML.
+      The initial envelope is applied as soon as the engine appears, in the layout phase, before the
+      first paint, so an empty Document never flashes on screen. This is the initial value, not an
+      edit: no `onChange` and no history step. The character limit does not truncate it. The hidden
+      field and the counter are synced below, as for HTML.
     */
     useLayoutEffect(() => {
       const envelope = initialDocumentRef.current;
@@ -1284,37 +1254,35 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     }, [editor]);
 
     /*
-      Движок появился — скрытое поле и счётчик сверяются с разобранным
-      документом. Не в `onCreate`: Tiptap шлёт его таймером уже после монтажа, и
-      до того счётчик показывал бы ноль при длинном `value`. Скрытое поле до
-      этого момента несёт входящую строку как есть — так её получает и
-      серверный рендер, где движка нет вовсе.
+      Once the engine appears, the hidden field and the counter are synced with the parsed document.
+      Not in `onCreate`: Tiptap fires it on a timer, already after mount, and until then the counter
+      would show zero for a long `value`. Until this point the hidden field carries the incoming
+      string as is. The server render gets the same string, since there is no engine there at all.
     */
     useEffect(() => {
       if (!editor) return;
       if (hiddenRef.current) hiddenRef.current.value = serialize(editor);
-      // Предел мог появиться позже движка — счётчику нужен свежий пересчёт.
+      // The limit may have appeared after the engine: the counter needs a fresh recount.
       if (maxLength !== undefined) setCount(countCharacters(editor.state.doc));
     }, [editor, maxLength]);
 
-    // Прокси появляется и пропадает вместе с `required`, а текст сообщения —
-    // с локалью: валидность сверяется с документом и при этом, не только на
-    // правке.
+    // The proxy appears and disappears together with `required`, and the message text follows the
+    // locale. Validity is checked against the Document here too, not only on an edit.
     useEffect(() => {
       if (editor) syncValidity(editor);
     }, [editor, validatable, requiredMessage]);
 
-    // Плейсхолдер расширение перерисовывает только на транзакции: смена
-    // локали без правки документа оставила бы на экране прежнюю строку.
+    // The extension redraws the placeholder only on a transaction. Without this, a locale change
+    // with no document edit would leave the old string on screen.
     useEffect(() => {
       if (editor && !editor.isDestroyed) editor.view.dispatch(editor.state.tr);
     }, [editor, placeholderText]);
 
     useEffect(() => {
       if (!editor || value === undefined || value === knownRef.current) return;
-      // Документ заменён снаружи — ожидающая правка относится к прежнему и
-      // отдавать её нечего. Замена не правка автора: `onChange` молчит, а
-      // предел символов её не режет (`EXTERNAL_CHANGE`).
+      // The Document was replaced from outside: a pending edit refers to the old content, so there is
+      // nothing to report. A replacement is not a user edit: `onChange` stays silent, and the character
+      // limit does not truncate it (`EXTERNAL_CHANGE`).
       throttle.cancel();
       knownRef.current = value;
       editor.chain().setMeta(EXTERNAL_CHANGE, true).setContent(value, { emitUpdate: false }).run();
@@ -1324,23 +1292,23 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       rewriteSource(editor);
     }, [editor, value, throttle]);
 
-    // `useEditor` переносит в движок все опции, кроме `editable`: её он
-    // намеренно сохраняет у живого движка. Поэтому режим — отдельным вызовом,
-    // и без события `update`: смена режима не правка.
+    // `useEditor` passes every option to the engine except `editable`, which it deliberately keeps
+    // on a live engine. So the mode is set with a separate call, and without an `update` event:
+    // changing the mode is not an edit.
     useEffect(() => {
       if (editor && editor.isEditable !== editable) editor.setEditable(editable, false);
     }, [editor, editable]);
 
-    // Кнопка «HTML» пропала (`readOnly`, смена `toolbar`, сенсорный экран
-    // стал плавающим режимом) — режим закрывается с применением правки.
+    // The "HTML" button disappeared (`readOnly`, a `toolbar` change, or a touch screen switching to
+    // the floating mode): the mode closes and applies the edit.
     useEffect(() => {
       if (!sourceAvailable && sourceTextRef.current !== null) closeSource(false);
     }, [sourceAvailable]);
 
     /*
-      Фокус при смене режима — после рендера: на входе поля ещё нет, на выходе
-      Документ ещё скрыт. Вход — в поле HTML, каретка в начале; выход кнопкой
-      — в Документ, каретка в конце, как `ref.focus()`.
+      Focus moves on a mode change after render: on entry the field does not exist yet, and on exit
+      the Document is still hidden. Entering focuses the HTML field with the caret at the start.
+      Exiting by the button focuses the Document with the caret at the end, as `ref.focus()` does.
     */
     useEffect(() => {
       const target = switchFocusRef.current;
@@ -1357,17 +1325,17 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     useEffect(() => {
       const form = rootRef.current?.closest("form");
       if (!form) return;
-      // Захват на самой форме срабатывает раньше `onSubmit` потребителя:
-      // React слушает всплытие у корня приложения.
-      // Правка HTML-режима применяется первой: форма не теряет её и не
-      // получает несанитизированный HTML.
+      // The capture listener on the form itself runs before the consumer's `onSubmit`:
+      // React listens for bubbling at the app root.
+      // The HTML-mode edit is applied first, so the form does not lose it and does not
+      // receive unsanitized HTML.
       const flush = () => {
         applySourceRef.current();
         throttle.flush();
       };
-      // `formdata` приходит на любой `new FormData(form)` — и на отправке, и
-      // при автосохранении по таймеру, — но ПОСЛЕ сбора записей. Поэтому
-      // свежее значение кладётся прямо в собранный набор.
+      // `formdata` fires on any `new FormData(form)`, both on submit and on timer-based autosave,
+      // but AFTER the entries are collected. So the fresh value is written straight into the
+      // collected set.
       const fill = (event: FormDataEvent) => {
         flush();
         if (name != null && hiddenRef.current && !hiddenRef.current.disabled) {
@@ -1384,7 +1352,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 
     const toolBridge: ToolBridge = {
       openSearch,
-      // Фокус и каретку не трогаем: команду зовёт код экрана, а не автор в панели.
+      // Focus and the caret are left alone: the command is called by screen code, not by the author
+      // in the panel.
       closeSearch: () => closeSearch(false),
       sourceOpen: () => sourceTextRef.current !== null,
       jumpToc: (index) => tocJumpRef.current?.(index) ?? false,
@@ -1422,9 +1391,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         },
         setMarkdown: (markdown) => {
           if (!editor) return;
-          // Та же замена снаружи, что у `clear()`, и предел символов её не режет.
-          // Таймер снимается ПОСЛЕ замены: её транзакция сама ставит `update`,
-          // и отложенный `onChange` отдал бы уже отданное значение вторично.
+          // The same external replacement as `clear()`: the character limit does not truncate it.
+          // The timer is cleared AFTER the replacement: its transaction fires `update` itself, and
+          // a pending `onChange` would report the value that was already reported.
           replaceWithMarkdown(editor, markdown);
           throttle.cancel();
           recount(editor);
@@ -1437,7 +1406,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           return documentToJSON(editor);
         },
         setJSON: (document) => {
-          // Та же Замена снаружи, что у `setMarkdown`, и в том же порядке.
+          // The same external replacement as `setMarkdown`, in the same order.
           if (!editor || !replaceWithJSON(editor, document)) return false;
           throttle.cancel();
           recount(editor);
@@ -1457,34 +1426,33 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           editor.chain().setMeta(EXTERNAL_CHANGE, true).clearContent(false).run();
           recount(editor);
           syncValidity(editor);
-          // Очистку зовёт потребитель, но значение держит владелец: без
-          // `onChange` управляемый режим вернул бы прежний текст следующим
-          // рендером.
+          // The consumer calls the clear, but the owner holds the value: without `onChange`, a
+          // controlled field would restore the old text on the next render.
           emit("");
           rewriteSource(editor);
         },
       };
     }, [editor, editable, throttle]);
     /*
-      Хуки `useRichTextEditorState` и `useRichTextToolState` не видят смену
-      движка у `ref` сами — сообщаем. Тем же сообщением идут сигналы кита для
-      Состояния Инструмента: набор Инструментов и открытость панели Поиска.
+      The `useRichTextEditorState` and `useRichTextToolState` hooks do not notice on their own that the
+      engine behind `ref` changed, so we report it. The kit's signals for Tool state travel in the same
+      message: the Tool set and whether the search panel is open.
     */
     const searchOpen = searchPanel !== null;
     useEffect(
       () => publishToolSignals(ref, { tools: enabledTools, searchOpen }),
       [ref, editor, enabledTools, searchOpen]
     );
-    // Размонтирование (и смена `ref`) забирает сигналы: хук экрана отдаёт `null`.
+    // Unmounting (or a `ref` change) takes the signals back: the screen hook returns `null`.
     useEffect(() => () => clearToolSignals(ref), [ref]);
 
     /*
-      Готовность (спека, словарь): один раз за монтаж, когда движок создан.
-      Эффект идёт после `useImperativeHandle` (он — в фазе компоновки), поэтому
-      `ref` в `onReady` уже действует. Флаг в ref, а не в эффекте: в строгом
-      режиме React гоняет эффекты дважды, а событие одно. Загрузчики уже в
-      условии: `editor` выходит наружу только после них, а ошибка набора и
-      упавший загрузчик (`editor === null`) готовности не дают.
+      Readiness (spec, glossary): once per mount, when the engine has been created. The effect runs
+      after `useImperativeHandle` (which is in the layout phase), so `ref` already works inside
+      `onReady`. The flag lives in a ref, not in the effect: in React's strict mode, effects run twice,
+      but the event fires once. The loaders are already part of the condition: `editor` leaves the
+      component only after them, and a set error or a failed loader (`editor === null`) does not
+      count as ready.
     */
     const readySentRef = useRef(false);
     useEffect(() => {
@@ -1494,24 +1462,23 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     }, [editor]);
 
     /*
-      Фокус поля — Документ, Панель, поповеры кита и поле HTML разом
-      (`onFocus` и `onBlur` — о нём; Фокус Документа, `focus` и `blur` движка,
-      клик в Панель снимает). Слушают корень поля через React: фокусные события
-      React всплывают по дереву компонентов, в том числе из порталов, куда
-      уходят поповеры и окна кита, — DOM-вложенность корня им не нужна.
+      Field focus means the Document, the Toolbar, the kit's popovers and the HTML field together
+      (`onFocus` and `onBlur` are about this). Document focus, which is the engine's `focus` and
+      `blur`, is not the same: a click on the Toolbar removes it. The listener sits on the field's root
+      through React: React focus events bubble through the component tree, including out of the portals
+      that popovers and kit dialogs render into, so the root's DOM nesting does not matter.
 
-      `focusout` приходит раньше `focusin` следующей цели, поэтому уход
-      подтверждается на такт позже: за это время фокус мог вернуться в поле
-      (Документ → Панель → поповер → Документ). Цель в самом корне отсеивается
-      сразу. `onBlur` идёт ПОСЛЕ вытолкнутого `onChange`: автосохранение по
-      `blur` получает свежий Документ, откуда бы фокус ни ушёл — не только из
-      Документа, где `blur` движка выталкивает сам.
+      `focusout` arrives before the `focusin` of the next target, so a departure is confirmed one tick
+      later: in that time, focus may have returned to the field (Document, then Toolbar, then popover,
+      then Document again). A target inside the root itself is filtered out immediately. `onBlur` runs
+      AFTER the pending `onChange` is flushed, so autosave on `blur` gets the fresh Document, wherever
+      focus went, not only from the Document where the engine's `blur` flushes on its own.
     */
     const fieldFocusedRef = useRef(false);
     const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     useEffect(() => () => clearTimeout(leaveTimerRef.current), []);
 
-    /** Цель Оглавления — Документ движка; объект новый с каждым движком. */
+    /** The Table of contents target is the engine's Document. The object is new for each engine. */
     const tocTarget = useMemo(
       () => ({
         get current() {
@@ -1565,15 +1532,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         >
           {editor && toolbarMode === "fixed" && !readOnly && (
             /*
-              Липнет под шапкой приложения: отступ — `--topbar-h`, которую
-              публикует `TopBar` (ADR-0016, ADR-0019); без шапки переменной нет,
-              и Панель липнет к краю окна. Липкость — внутри рамки поля: Панель
-              уходит вместе с полем, когда оно прокручено целиком.
+              Sticks under the app header: the offset is `--topbar-h`, which `TopBar` publishes
+              (ADR-0016, ADR-0019). Without a header the variable does not exist, and the Toolbar
+              sticks to the window edge. The stickiness is inside the field frame: the Toolbar scrolls
+              away with the field when the whole field is scrolled.
 
-              Отрицательные поля — под горизонтальный отступ оболочки: фон
-              Панели закрывает текст, уезжающий под неё, от рамки до рамки.
-              `z-[1]` — внутри поля, а не ступень стека слоёв: Панель не
-              оверлей и должна оставаться ниже любого из них.
+              The negative margins match the horizontal padding of the shell: the Toolbar's background
+              covers text that scrolls under it, from frame edge to frame edge. `z-[1]` is local to the
+              field, not a step in the layer stack: the Toolbar is not an overlay and must stay below
+              any of them.
             */
             <div ref={setToolbarShell} className={TOOLBAR_SHELL_CLASS}>
               <EditorToolbar
@@ -1605,17 +1572,16 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           )}
           {editor && !(toolbarMode === "fixed" && !readOnly) && searchPanel && (
             /*
-              Без фиксированной Панели панель поиска — в верхнем углу поля:
-              липкая обёртка нулевой высоты держит её на виду при прокрутке
-              Документа и не сдвигает его.
+              Without a fixed Toolbar, the search panel sits in the top corner of the field. A sticky
+              wrapper of zero height keeps it in view when the Document scrolls, and does not shift the Document.
             */
             <div className="sticky top-[var(--topbar-h,0px)] z-[2] h-0">
               {searchPanelElement(SEARCH_PANEL_CORNER_CLASS)}
             </div>
           )}
           {!editor && toolbarMode === "fixed" && !readOnly && (
-            // Скелет Панели — её рамка и невидимая копия раскладки: строк
-            // столько же, сколько будет у Панели, и поле не прыгает.
+            // The Toolbar's Skeleton: its frame and an invisible copy of its layout. It has as many
+            // rows as the Toolbar will, so the field does not jump.
             <div className={TOOLBAR_SHELL_CLASS}>
               <ToolbarSkeleton
                 tools={enabledTools}
@@ -1628,21 +1594,21 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           )}
           <div
             /*
-              Реф — только у прокручиваемой области: колбэк ставит состояние и
-              даёт лишний рендер на монтаже, а у обычного поля он сдвигал
-              первый расчёт позиции плавающей Панели (опорой на миг становился
-              весь Документ, и Панель вставала под полем).
+              The ref is set only on the scrolling area. A callback sets state and causes an extra
+              render on mount. On an ordinary field it used to shift the first position calculation of
+              the floating Toolbar: the whole Document briefly became the anchor, and the Toolbar
+              landed under the field.
             */
             ref={scrolls ? setScrollArea : undefined}
             className={cn(scrolls && "relative -mx-3 overflow-y-auto px-3")}
             style={areaStyle}
           >
-            {/* В HTML-режиме Документ скрыт, но смонтирован: движок и история живы. */}
+            {/* In HTML mode the Document is hidden but still mounted: the engine and history stay alive. */}
             {tocOn ? (
               /*
-                Левое поле Оглавления: колонка есть, только пока есть полоса —
-                `TocCore` с меньше чем двумя заголовками не рисует ничего, и
-                текст стоит у края, как без Инструмента (ADR-0068, п. 2).
+                The Table of contents' left margin: the column exists only while the strip does.
+                `TocCore` draws nothing with fewer than two headings, and the text sits at the edge,
+                as it does without the Tool (ADR-0068, item 2).
               */
               <div className="flex items-start">
                 {editor && !sourceOpen && (
@@ -1677,11 +1643,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             )}
             {!editor && (
               /*
-              Скелет (ADR-0058, п. 11.4): до Готовности и при сбое загрузчика —
-              Документ статичным HTML с классом Документа движка, без ввода.
-              HTML — `value`, очищенный Схемой (`skeleton.ts`), а не как есть:
-              до эпика `value` шёл в страницу только через разбор Схемой, и
-              Скелет этого не ломает. На сервере и до гидратации — пусто.
+              Skeleton (ADR-0058, item 11.4): before Readiness, and when a loader fails. The Document
+              is static HTML with the engine's Document class, with no input. The HTML is `value`
+              cleaned by the Schema (`skeleton.ts`), not as is: before the epic, `value` reached the
+              page only through Schema parsing, and the Skeleton does not break that. On the server and
+              before hydration it is empty.
             */
               <div
                 {...surfaceAttributes(surface)}
@@ -1691,23 +1657,21 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             )}
             {source && (
               /*
-              Поле HTML-режима на месте Документа. Отступы — как у области
-              Документа, роли `--rte-*` и вложенная тема листа — те же, что у
-              него, а поле на листе остаётся тёмным, как везде. Высота — не
-              ниже Документа при входе, дальше растёт по содержимому (зеркало),
-              растягивается по вертикали рукой.
+              The HTML-mode field sits where the Document is. The padding matches the Document area, and
+              the `--rte-*` roles and the nested Paper theme are the same as the Document's. On Paper the
+              field stays dark, as everywhere. The height is not less than the Document's at entry; beyond
+              that it grows with its content (the mirror), and can be stretched vertically by hand.
 
-              Имя — из каталога, описание и невалидность — те же, что у
-              Документа: подсказка и ошибка `FormField` не теряются при смене
-              режима. Автоисправления выключены — код ими портится. Tab
-              нативный: табуляцию поле не вставляет, ловушки клавиатуры нет.
+              The name, description and invalid state are the same as the Document's: the `FormField` hint
+              and error are not lost when the mode changes. Autocorrect is off, since it would corrupt code.
+              Tab is native: the field does not insert a tab character, and there is no keyboard trap.
             */
               <div
                 {...surfaceAttributes(surface)}
                 className={cn(
                   "grid",
-                  // На листе светлый лист остаётся под тёмным полем: смена режима
-                  // меняет содержимое листа, а не сам лист.
+                  // On Paper, the light sheet stays under the dark field: a mode switch changes
+                  // the sheet's content, not the sheet itself.
                   surface === "paper"
                     ? cn(EDITOR_PAPER_TOKENS_CLASS, PAPER_SHEET_CLASS, "my-3")
                     : cn(EDITOR_TOKENS_CLASS, "py-2.5")
@@ -1736,10 +1700,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                   }}
                   onBlur={applySource}
                   /*
-                  `Alt+F10` живёт в keymap движка, а фокус здесь — в
-                  `textarea`, мимо ProseMirror. Панель же объявляет сочетание
-                  (`aria-keyshortcuts`): из поля HTML оно обязано работать так
-                  же, как из Документа.
+                  `Alt+F10` lives in the engine's keymap, but focus here is in the `textarea`, outside
+                  ProseMirror. The Toolbar does declare the shortcut (`aria-keyshortcuts`), so from the
+                  HTML field it must work the same way it does from the Document.
                 */
                   onKeyDown={(event) => {
                     if (
@@ -1864,25 +1827,22 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         </div>
         {validatable && (
           /*
-            Прокси для проверки ограничений браузера. `<input type="hidden">`
-            из неё ИСКЛЮЧЁН по спецификации (barred from constraint
-            validation: `willValidate === false`, `setCustomValidity` на нём
-            ничего не блокирует), а `contenteditable` — не form-associated
-            элемент вовсе. Поэтому `required` держит отдельное поле: оно
-            обычное текстовое, без `name`, поэтому в `FormData` не попадает —
-            значение по-прежнему несёт скрытое поле ниже.
+            A proxy for browser constraint validation. An `<input type="hidden">` is EXCLUDED from it
+            by the spec (barred from constraint validation: `willValidate === false`, and
+            `setCustomValidity` on it blocks nothing), and `contenteditable` is not a form-associated
+            element at all. So `required` is held by a separate field: it is an ordinary text input
+            with no `name`, so it does not reach `FormData`. The value is still carried by the hidden
+            field below.
 
-            Валидность задаёт `setCustomValidity` (`syncValidity`), а не атрибут
-            `required`: сообщение берётся из каталога кита, а не из языка
-            браузера. Невидимое поле остаётся фокусируемым (`tabIndex=-1`,
-            не `display:none`) — иначе браузер не покажет пузырь и напишет в
-            консоль «An invalid form control is not focusable». Пузырь встаёт у
-            рамки поля.
+            Validity is set by `setCustomValidity` (`syncValidity`), not by the `required` attribute:
+            the message comes from the kit's catalog, not from the browser's language. The invisible
+            field stays focusable (`tabIndex=-1`, not `display:none`). Otherwise the browser would not
+            show the bubble, and would log "An invalid form control is not focusable" to the console.
+            The bubble appears at the field frame.
 
-            Когда браузер отклоняет отправку, он ставит фокус на первое
-            невалидное поле — здесь на прокси; оттуда фокус пересылается в
-            документ. `invalid` ловит то же ещё до этого: так фокус попадёт в
-            редактор и там, где браузер сам фокус не двигает.
+            When the browser rejects a submit, it focuses the first invalid field, which is the proxy
+            here. From there, focus is forwarded into the Document. `invalid` catches the same case
+            earlier, so focus reaches the editor even where the browser itself does not move focus.
           */
           <input
             ref={proxyRef}
@@ -1901,17 +1861,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             type="hidden"
             name={name}
             /*
-              Значение скрытого поля пишет Редактор (`emit`, эффекты движка), а
-              не React. Но React на КАЖДОМ обновлении заново ставит `defaultValue`,
-              а у `type="hidden"` это и есть его значение: любой рендер родителя
-              откатывал бы поле формы к входящей строке. Поэтому после монтажа в
-              `defaultValue` уходит то, что уже лежит в поле, — React видит равенство
-              и ничего не трогает. Серверный рендер и первый кадр несут `initial`.
+              The Editor writes the hidden field's value (`emit`, the engine's effects), not React. But
+              React re-applies `defaultValue` on EVERY update, and for `type="hidden"` that is its value.
+              So any parent render would roll the form field back to the incoming string. That is why
+              after mount, `defaultValue` receives what the field already holds: React sees equality and
+              leaves it alone. The server render and the first frame carry `initial`.
             */
             defaultValue={hiddenRef.current?.value ?? initial}
-            // Выключенное поле не уходит в форму — как нативное. Поле только
-            // для чтения уходит: это показанное значение, а не недоступный
-            // контрол.
+            // A disabled field is not submitted with the form, the same as a native field. A read-only
+            // field is submitted: its value is shown, and it is not an unavailable control.
             disabled={disabled}
           />
         )}

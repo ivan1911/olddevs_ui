@@ -1,14 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// PW_PORT — для параллельных worktree: при общем порте `reuseExistingServer`
-// подхватил бы витрину соседнего дерева и проверял бы чужой код.
+// PW_PORT is for parallel worktrees: with a shared port, `reuseExistingServer`
+// would pick up the showcase of a neighboring tree and test someone else's code.
 const PORT = Number(process.env.PW_PORT ?? 6007);
 
 export default defineConfig({
   testDir: "./tests-visual",
-  // Снапшоты — единственный артефакт, который коммитится; держим рядом с тестом.
-  // {platform} обязателен: отрисовка шрифтов на macOS и в Linux-образе CI
-  // различается, и без разделения локальный бейзлайн валил бы пайплайн.
+  // Snapshots are the only artifact that gets committed; keep them next to the test.
+  // {platform} is required: font rendering differs between macOS and the Linux CI image,
+  // and without the split the local baseline would fail the pipeline.
   snapshotPathTemplate: "{testDir}/__snapshots__/{platform}/{arg}{ext}",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -17,9 +17,9 @@ export default defineConfig({
 
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
-    // Анимации — главный источник флейка: 6 именованных `--animate-*` плюс
-    // `transition-colors` почти в каждом примитиве. Гасим на уровне браузера,
-    // а не только в момент снимка.
+    // Animations are the main source of flakiness: six named `--animate-*` tokens plus
+    // `transition-colors` in almost every primitive. Turn them off at the browser level,
+    // not only at the moment of the snapshot.
     contextOptions: { reducedMotion: "reduce" },
   },
 
@@ -27,23 +27,22 @@ export default defineConfig({
     toHaveScreenshot: {
       animations: "disabled",
       caret: "hide",
-      // Два порога, и оба откалиброваны по реальным правкам, а не взяты «на глаз».
-      // До калибровки бейзлайн показывал «51 passed» на двух подряд идущих
-      // намеренных изменениях цвета — то есть не работал ровно там, ради чего
-      // заводился: на правке токенов.
+      // Two thresholds, and both are calibrated against real changes, not picked by eye.
+      // Before calibration, the baseline reported "51 passed" on two deliberate colour
+      // changes in a row, so it failed exactly where it was meant to work: on token edits.
       //
-      // `threshold` — попиксельный допуск по цвету, и он важнее. Дефолтные 0.2
-      // означают, что пиксель считается «тем же самым», пока цвет не уехал
-      // заметно; правка `--text-muted` с `#a6a8b3` на `#acaeb8` давала при них
-      // РОВНО НОЛЬ различающихся пикселей на всех 51 снимке. С нулём та же
-      // правка видна как 747 пикселей на снимок.
+      // `threshold` is the per-pixel colour tolerance, and it matters more. The default
+      // 0.2 means a pixel counts as "the same" until its colour has moved noticeably.
+      // With it, the edit of `--text-muted` from `#a6a8b3` to `#acaeb8` produced
+      // EXACTLY ZERO differing pixels on all 51 snapshots. With zero, the same edit
+      // shows up as 747 pixels per snapshot.
       //
-      // `maxDiffPixels` — сколько таких пикселей прощаем. Абсолютное число, не
-      // доля: долевой `maxDiffPixelRatio: 0.002` на снимке 1280×900 — это 2304
-      // пикселя допуска, а самая мелкая правка, которую мы обязаны увидеть
-      // (цвет текста на двух кнопках матрицы), задевает 168. Запас в 32 нужен
-      // только на разброс антиалиасинга между раннерами: локально два прогона
-      // подряд дают снимки байт-в-байт, а бейзлайны и так разведены по платформам.
+      // `maxDiffPixels` is how many such pixels we forgive. An absolute number, not a
+      // share: a relative `maxDiffPixelRatio: 0.002` on a 1280×900 snapshot is 2304 pixels
+      // of tolerance, while the smallest change we must catch (the text colour on two
+      // buttons of the matrix) affects 168. The margin of 32 is only for anti-aliasing
+      // variation between runners: locally, two runs in a row give byte-identical
+      // snapshots, and the baselines are already split by platform.
       threshold: 0,
       maxDiffPixels: 32,
     },

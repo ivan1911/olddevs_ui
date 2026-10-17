@@ -3,125 +3,114 @@ import { TOUCH_HIDDEN_CLASS } from "./touch.js";
 import { TONE_TOKENS, type Tone } from "./variants.js";
 
 /**
- * Вид меню — одной таблицей на две реализации.
+ * The menu look: one table for two implementations.
  *
- * В пакете два меню: `Menu` на react-aria-components и `ContextMenu` на Radix.
- * Разные библиотеки здесь не прихоть — контекстного меню react-aria не даёт
- * вовсе, — но выглядеть они обязаны одинаково, иначе правая кнопка мыши
- * открывала бы «другое» меню, и заметить это можно было бы только поставив оба
- * рядом. Поэтому вид живёт здесь, а обе реализации его только применяют.
+ * The package has two menus: `Menu` on react-aria-components and `ContextMenu` on Radix. The two
+ * libraries are not a whim: react-aria does not provide a context menu at all. But the menus must
+ * look the same, or the right mouse button would open a "different" menu, and that could only be
+ * noticed by putting both side by side. So the look lives here, and both implementations only apply it.
  *
- * Приём не новый для пакета: так же вынесены `NAV_BUTTON_CLASS` и
- * `WEEKDAY_CELL_CLASS` у календаря.
+ * The technique is not new to the package: `NAV_BUTTON_CLASS` and `WEEKDAY_CELL_CLASS` of the
+ * calendar are extracted the same way.
  *
- * ЗДЕСЬ — ТОТ САМЫЙ СЛУЧАЙ, ГДЕ НУЖНЫ ВАРИАНТНЫЕ АТОМЫ. Правило пакета гласит:
- * состояние берут рендер-пропом там, где красят потомка, и вариантом там, где
- * красят сам элемент с `data-*`. Пункт меню — второй случай: вид задаётся одной
- * строкой на все пункты сразу, и рендер-проп взять неоткуда. Отсюда
- * `selected:`, `pressed:`, `open:` в таблице ниже.
+ * THIS IS THE CASE WHERE VARIANT ATOMS ARE NEEDED. The package rule says: state is taken through a
+ * render prop where a descendant is painted, and through a variant where the element itself, with
+ * `data-*`, is painted. A menu item is the second case: the look is set by one string for all items
+ * at once, and there is no render prop to take. Hence `selected:`, `pressed:` and `open:` in the table below.
  */
 
-/** Панель меню: подложка, рамка, тень, отступы. */
+/** Menu panel: background, border, shadow, padding. */
 export const MENU_PANEL_CLASS =
   "bg-surface-elevated border-line min-w-[180px] rounded-md border p-1 " +
   "shadow-[var(--shadow-2)] outline-none " +
   /*
-    ПРОКРУТКА ВНУТРИ ПАНЕЛИ, А НЕ ПОВЕРХ СТРАНИЦЫ.
+    SCROLLING INSIDE THE PANEL, NOT OVER THE PAGE.
 
-    Высоту панели задаёт не она: react-aria ставит поповеру инлайном
-    `max-height` по видимой области, Radix — `--radix-…-available-height`. Без
-    `overflow` всё, что в эту высоту не влезло, рисовалось за рамкой, поверх
-    содержимого и без подложки. На iOS 27 в Safari высота вышла в несколько
-    пикселей — рамка схлопнулась в полоску, а пункты меню легли на текст
-    Документа. `overscroll-contain` — чтобы докрутка до конца списка не
-    прокручивала страницу под меню.
+    This class does not set the panel's height: react-aria sets an inline `max-height` on the
+    popover from the visible area, and Radix sets `--radix-…-available-height`. Without `overflow`,
+    everything that did not fit into that height was drawn outside the border, over the content and
+    without a background. On iOS 27 in Safari the height came out at a few pixels: the border
+    collapsed into a strip, and the menu items landed on top of the page text. `overscroll-contain`
+    keeps scrolling to the end of the list from scrolling the page underneath the menu.
   */
   "overflow-y-auto overscroll-contain " +
   /*
-    НА iOS ВЫСОТУ ЗАДАЁМ САМИ. react-aria считает `max-height`
-    поповера от видимой области (`calculatePosition`, `getMaxHeight`), и на
-    iOS 27 в Safari выходил ноль: от панели оставались рамка и отступы — тонкая
-    полоска под кнопкой, пункты прятались внутри неё. Место самого меню при
-    этом верное, ошибается только высота, поэтому на iOS она перебивается
-    правилом с `!important` (инлайновый стиль react-aria без него сильнее):
-    24rem или 60 % динамической высоты экрана — что меньше. Остальное
-    прокручивается внутри панели. `-webkit-touch-callout` понимает только
-    WebKit на iOS; Android и десктоп считают высоту по-прежнему.
+    ON iOS WE SET THE HEIGHT OURSELVES. react-aria computes the popover's `max-height` from the
+    visible area (`calculatePosition`, `getMaxHeight`), and on iOS 27 in Safari it came out as zero:
+    only the panel's border and padding remained, a thin strip under the button with the items hidden
+    inside it. The position of the menu itself is correct; only the height is wrong. So on iOS the
+    height is overridden by a rule with `!important` (react-aria's inline style is stronger without it):
+    24rem or 60% of the dynamic viewport height, whichever is smaller. The rest scrolls inside the panel.
+    `-webkit-touch-callout` is understood only by WebKit on iOS; Android and desktop still compute the
+    height as before.
   */
   "[@supports(-webkit-touch-callout:none)]:max-h-[min(24rem,60dvh)]! " +
   /*
-    СЛОЙ ОБЯЗАТЕЛЕН, и его здесь не было.
+    THE LAYER IS REQUIRED, AND IT WAS MISSING HERE.
 
-    `Popover` и `Tooltip` осознанно взяли `z-[120]` с комментарием про
-    `ModalOverlay` (`z-90`); RAC-попоувер получает `zIndex: 100000` инлайном от
-    библиотеки. А Radix-попперу копировать было нечего: он берёт z-index из
-    вычисленного стиля содержимого, получал `auto`, и правый клик внутри
-    `Dialog` или `Drawer` рисовал контекстное меню ПОД затемнением — размытым и
-    некликабельным. Шкала слоёв — ADR-0041.
+    `Popover` and `Tooltip` deliberately took `z-[120]`, with a comment about `ModalOverlay`
+    (`z-90`). The RAC popover gets `zIndex: 100000` inline from the library. The Radix popper had
+    nothing to copy: it takes the z-index from the computed style of its content and got `auto`.
+    So a right click inside a `Dialog` or `Drawer` drew the context menu UNDER the scrim, blurred
+    and not clickable. The layer scale is ADR-0041.
   */
   `${OVERLAY_LAYER.popover} ` +
   /*
-    Появление и уход панели — НА ДВУХ ДИАЛЕКТАХ СРАЗУ, и это не дублирование.
+    Panel appearance and exit are on TWO DIALECTS AT ONCE, and this is not duplication.
 
-    `entering:`/`exiting:` — варианты RAC, они разворачиваются в `[data-entering]`
-    и `[data-exiting]`. Radix таких атрибутов не ставит вовсе: у него состояние
-    живёт в `data-state`. Пока здесь стоял только диалект RAC, комментарий
-    обещал, что «значения совпадают намеренно, иначе два меню открывались бы
-    по-разному», — а `ContextMenu` не анимировался НИКАК, потому что ни одно
-    правило до него не доставало. Обещание держалось на слове.
+    `entering:`/`exiting:` are RAC variants: they expand to `[data-entering]`
+    and `[data-exiting]`. Radix does not set these attributes at all: its state lives in
+    `data-state`. While only the RAC dialect was here, the comment promised that "the values
+    match on purpose, otherwise the two menus would open differently". Yet `ContextMenu` was not
+    animated AT ALL, because no rule reached it. The promise rested on a single word.
 
-    Теперь оба диалекта названы явно, и оба меню открываются и закрываются
-    одинаково — проверяется это в браузере, обоими путями сразу.
+    Both dialects are now named explicitly, and both menus open and close the same way.
+    This is checked in the browser, through both paths at once.
 
-    Уход задан токеном, а не `opacity-0`. Прежняя запись выглядела выходом, но
-    им не была: переход в ноль без длительности — то же мгновенное пропадание,
-    записанное длиннее. Токен вдобавок виден гейту `reduce` (ADR-0043), а
-    literal — нет.
+    The exit is set by a token, not `opacity-0`. The earlier entry looked like an exit, but it was
+    not one: a transition to zero with no duration is the same instant disappearance, just written
+    longer. The token is also visible to the `reduce` gate (ADR-0043), while a literal is not.
   */
   "entering:animate-fadein exiting:animate-fadeout " +
   "data-[state=open]:animate-fadein data-[state=closed]:animate-fadeout";
 
 /**
- * Пункт меню.
+ * Menu item.
  *
- * `focus:` здесь равен `hover:` не по лени: в меню клавиатурный курсор и
- * указатель — одно и то же место, и подсвечивать их по-разному значило бы
- * показывать пользователю два курсора сразу. У react-aria это `data-focused`,
- * который ставится и от мыши, и от стрелок.
+ * `focus:` equals `hover:` here not out of laziness. In a menu the keyboard cursor and the pointer
+ * are the same place, and highlighting them differently would show the user two cursors at once.
+ * In react-aria this is `data-focused`, which is set both by the mouse and by the arrow keys.
  */
 export const MENU_ITEM_CLASS =
   "group flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-[13px] " +
   "outline-none select-none " +
-  // Диалект react-aria.
+  // react-aria dialect.
   "hover:bg-bg-2 focus:bg-bg-2 disabled:pointer-events-none disabled:opacity-50 " +
-  // Диалект Radix — см. комментарий ниже, без него ContextMenu разъезжается.
+  // Radix dialect: see the comment below; without it, ContextMenu falls out of line.
   "data-[highlighted]:bg-bg-2 data-[disabled]:pointer-events-none data-[disabled]:opacity-50";
 
 /**
- * Строка списка — одна на все списки кита.
+ * List row: one for all lists in the kit.
  *
- * С волны 26 её используют `Transfer`, `Combobox`, `CommandPalette` и `Select`.
- * Последний долго стоял особняком: его строка — не `ListBoxItem`, а обычная
- * кнопка, и набор классов расходился с общим отступом (`py-[9px]` против
- * `py-1.5`) и цветом выбора (`bg-bg-3` против `selected:bg-accent-soft`).
- * Списки, поставленные рядом, различались высотой строки и тем, как выглядит
- * выбранное.
+ * Since wave 26 it is used by `Transfer`, `Combobox`, `CommandPalette` and `Select`.
+ * The last one stood apart for a long time: its row is not a `ListBoxItem` but a plain button,
+ * and its set of classes diverged from the common padding (`py-[9px]` against `py-1.5`) and the
+ * selection color (`bg-bg-3` against `selected:bg-accent-soft`). Lists placed side by side differed
+ * in row height and in how the selected item looked.
  *
- * Работает это и на не-RAC узле: вариант `selected:` разворачивается в
- * `[data-selected]` без требования `data-rac` — у `selected` нет нативного
- * соответствия, — поэтому кнопке достаточно проставить атрибут.
+ * It also works on a non-RAC node: the `selected:` variant expands to `[data-selected]` without
+ * requiring `data-rac`, because `selected` has no native counterpart. So the button only needs to
+ * set the attribute.
  *
- * Строка списка выбора — `ListBoxItem` react-aria.
+ * The selectable list row is react-aria's `ListBoxItem`.
  *
- * Отличается от `MENU_ITEM_CLASS` одним: у списка есть выбранное состояние, у
- * меню его нет. Вынесена, когда четвёртым её написал `Transfer`, — и написал
- * с `focus-visible:` вместо `focus:`, то есть единственный в репозитории
- * разошёлся с остальными тремя.
+ * It differs from `MENU_ITEM_CLASS` in one respect: a list has a selected state, and a menu does
+ * not. It was extracted when `Transfer` wrote it fourth, and wrote it with `focus-visible:` instead
+ * of `focus:`, so it was the only one in the repository that diverged from the other three.
  *
- * `focus:`, а не `focus-visible:`, и это существенно: у react-aria это
- * `data-focused`, который ставится и стрелками, и мышью. Подсвечивать их
- * по-разному значило бы показывать два курсора сразу — тот же довод, что у
- * пункта меню ниже.
+ * `focus:`, not `focus-visible:`, and this matters: in react-aria it is `data-focused`, which is set
+ * by both the arrow keys and the mouse. Highlighting them differently would mean showing two cursors
+ * at once, the same argument as for the menu item below.
  */
 export const LISTBOX_ITEM_CLASS =
   "flex cursor-pointer items-center rounded-sm px-2.5 py-1.5 text-[13px] outline-none " +
@@ -129,50 +118,48 @@ export const LISTBOX_ITEM_CLASS =
   "disabled:cursor-default disabled:opacity-50";
 
 /*
-  ПОЧЕМУ ЗДЕСЬ ДВА НАБОРА СЕЛЕКТОРОВ.
+  WHY THERE ARE TWO SETS OF SELECTORS HERE.
 
-  Строка одна на две библиотеки, а состояния они называют по-разному, и
-  совпадает далеко не всё:
+  One row serves two libraries, and they name the states differently. Far from all of them match:
 
-    состояние      react-aria          Radix
-    наведение      data-hovered        data-highlighted
-    фокус          data-focused        data-highlighted (то же самое)
-    выключен       data-disabled       data-disabled, но НЕ :disabled
-    отмечен        data-selected       data-state="checked"
+    state          react-aria          Radix
+    hover          data-hovered        data-highlighted
+    focus          data-focused        data-highlighted (the same thing)
+    disabled       data-disabled       data-disabled, but NOT :disabled
+    checked        data-selected       data-state="checked"
 
-  Плагин `tailwindcss-react-aria-components` переопределяет `hover:` и
-  `disabled:` на двойной селектор «элемент RAC ИЛИ нативный псевдокласс».
-  На дивах Radix это спасает только `hover:` — у них есть настоящий `:hover`.
-  А `:disabled` — псевдокласс полей формы, и на диве с `data-disabled` он не
-  срабатывает вовсе: пункт выглядел бы рабочим, оставаясь неработающим.
+  The `tailwindcss-react-aria-components` plugin overrides `hover:` and `disabled:` with a double
+  selector: "a RAC element OR the native pseudo-class". On Radix divs this helps only `hover:`,
+  because they have a real `:hover`. `:disabled` is a pseudo-class of form fields, and on a div
+  with `data-disabled` it never matches: the item would look operable while being inoperable.
 
-  Отсюда правило: общая таблица вида обязана говорить на обоих диалектах.
-  Проверяется это не рассуждением, а снимком «два меню рядом» в
-  `Menu.stories.tsx` — расхождение видно глазами.
+  Hence the rule: a shared look table must speak both dialects. This is checked not by reasoning
+  but by a snapshot of "two menus side by side" in `Menu.stories.tsx`, where a mismatch is visible
+  to the eye.
 */
 
-/** Подпись раздела внутри меню. */
+/** Section label inside the menu. */
 export const MENU_SECTION_LABEL_CLASS =
   "text-fg-3 px-2 pt-2 pb-1 text-[11px] font-bold tracking-wide uppercase";
 
-/** Разделитель между группами пунктов. */
+/** Separator between groups of items. */
 export const MENU_SEPARATOR_CLASS = "bg-line -mx-1 my-1 h-px";
 
-/** Иконка слева от подписи: галочка отмеченного пункта, иконка действия. */
+/** Icon to the left of the label: the check mark of a checked item, or an action icon. */
 export const MENU_ITEM_ICON_CLASS = "flex size-4 shrink-0 items-center justify-center";
 
-/** Горячая клавиша справа. Не действие, а напоминание — отсюда приглушённость. */
+/** Keyboard shortcut on the right. It is a hint, not an action, which is why it is muted. */
 export const MENU_ITEM_SHORTCUT_CLASS = `text-fg-3 ml-auto pl-4 text-[11px] tabular-nums ${TOUCH_HIDDEN_CLASS}`;
 
-/** Стрелка пункта с подменю. */
+/** Arrow of an item that has a submenu. */
 export const MENU_ITEM_SUBMENU_CLASS = "text-fg-3 ml-auto pl-4";
 
 /**
- * Цвет пункта по тону.
+ * Item color by tone.
  *
- * `danger` красит ТЕКСТ И ИКОНКУ, а не подложку. Подложкой пункт красится при
- * наведении, и красный фон на всю строку читался бы как «выбрано», а не как
- * «опасно» — то есть ровно наоборот.
+ * `danger` paints the TEXT AND THE ICON, not the background. An item is painted with its background
+ * on hover, and a red background across the whole row would read as "selected", not "dangerous".
+ * That is exactly the opposite.
  */
 export const MENU_ITEM_TONE: Record<Tone, string> = {
   neutral: "text-fg-0",
@@ -183,14 +170,14 @@ export const MENU_ITEM_TONE: Record<Tone, string> = {
 };
 
 /**
- * Отмеченный пункт-переключатель: подложка и цвет из словаря тонов.
+ * Checked toggle item: background and color come from the tone vocabulary.
  *
- * Второй парой идёт диалект Radix: у него отмеченность выражена не отдельным
- * атрибутом, а значением `data-state="checked"`.
+ * The second pair is the Radix dialect. For Radix, the checked state is expressed not by a separate
+ * attribute but by the value `data-state="checked"`.
  */
 export const MENU_ITEM_SELECTED_CLASS =
   `${TONE_TOKENS.accent.selectedBg} ${TONE_TOKENS.accent.selectedFg} ` +
   "data-[state=checked]:bg-accent-soft data-[state=checked]:text-accent-strong";
 
-/** Нажатый пункт — отдельный сигнал от наведения, ставится и с клавиатуры. */
+/** Pressed item: a signal separate from hover, set from the keyboard as well. */
 export const MENU_ITEM_PRESSED_CLASS = TONE_TOKENS.neutral.pressedBg;

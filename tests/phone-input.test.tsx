@@ -29,7 +29,7 @@ test("a foreign format is set by a prop", async () => {
 
   await user.type(field(), "12125550123");
 
-  // Умолчание — выбор, а не истина: другой стране нужен другой формат.
+  // The default is a choice, not a truth: another country needs another format.
   expect(field().value).toBe("+1 (212) 555-0123");
 });
 
@@ -56,8 +56,8 @@ test("the number is not validated — that is not the kit business", () => {
   const onChange = vi.fn();
   render(<PhoneInput value="000" onChange={onChange} aria-label="Phone" />);
 
-  // Заведомо несуществующий номер показывается как есть: правила «настоящий ли
-  // это номер» остаются у того, кто его отправляет (ADR-0024).
+  // A knowingly non-existent number is shown as is: the rules for "is this a real
+  // number" stay with whoever sends it (ADR-0024).
   expect(field().value).toBe("+7 (000");
   expect(field().getAttribute("aria-invalid")).toBeNull();
 });

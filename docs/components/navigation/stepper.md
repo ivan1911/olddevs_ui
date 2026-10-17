@@ -9,31 +9,31 @@ story: src/components/navigation/Stepper.stories.tsx
 
 # Stepper
 
-## Кратко для AI
+## Summary for AI
 
-`Stepper` показывает порядок шагов мастера; текущий индекс задаёт родитель (controlled). Он не
-управляет переходом вперёд, валидацией или показом панелей с формами. Если передать
-`onStepClick`, только уже пройденные шаги станут кнопками возврата.
+`Stepper` shows the order of a wizard's steps; the parent sets the current index (controlled). It does not
+control moving forward, validation or showing the form panels. If you pass
+`onStepClick`, only steps already completed become buttons for going back.
 
-## Когда использовать
+## When to use
 
-- Линейный мастер, импорт, checkout или onboarding с понятным количеством шагов.
-- Нужно показать текущую позицию и дать вернуться к пройденному шагу.
-- На небольшом экране нужен `orientation="vertical"`.
+- A linear wizard, import, checkout or onboarding with a known number of steps.
+- You need to show the current position and allow going back to a completed step.
+- A small screen needs `orientation="vertical"`.
 
-## Когда не использовать
+## When not to use
 
-- Для равноправных разделов без порядка используйте `Tabs`.
-- Для сворачиваемых деталей используйте `Accordion`.
-- Не используйте вместо pagination: шаг не равен странице выдачи.
+- For peer sections with no order, use `Tabs`.
+- For collapsible details, use `Accordion`.
+- Do not use it instead of pagination: a step is not a page of results.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Stepper
   steps={[
-    { id: "source", label: "Источник" },
-    { id: "review", label: "Проверка" },
+    { id: "source", label: "Source" },
+    { id: "review", label: "Review" },
   ]}
   current={currentStep}
   onStepClick={setCurrentStep}
@@ -42,36 +42,36 @@ story: src/components/navigation/Stepper.stories.tsx
 
 ## Public API
 
-`steps` — массив `{ id, label, hint? }`, `current` — 0-based индекс. Опциональный
-`onStepClick(index)` разрешает возврат только на `index < current`; будущие и
-текущий шаг не становятся кликабельными. Без callback не кликабелен ни один
-шаг. `orientation` — `horizontal` (умолчание) или `vertical`; есть `className`
-и `aria-label` (умолчание «Шаги»).
+`steps` is an array of `{ id, label, hint? }`, `current` is a 0-based index. The optional
+`onStepClick(index)` allows going back only to `index < current`; future steps and
+the current step do not become clickable. Without the callback no step is
+clickable. `orientation` is `horizontal` (the default) or `vertical`; `className`
+and `aria-label` are available (the default is "Steps").
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-Компонент использует `nav` и упорядоченный список, поэтому скринридер знает
-порядок и число шагов. Текущий item имеет `aria-current="step"`; пройденный
-шаг с callback — настоящий button и доступен Tab. Кружок с номером или
-галочкой скрыт от вспомогательных технологий; смысл передают список и два
-механизма. У текущего шага это `aria-current="step"`. У пройденных и ещё не
-начатых шагов есть скрытый текст из каталога сообщений (`stepper.state`):
-«пройден» и «не начат» в русском каталоге.
-См. [исходник Stepper](../../../src/components/navigation/Stepper.tsx).
+The component uses a `nav` and an ordered list, so a screen reader knows
+the order and number of steps. The current item has `aria-current="step"`; a completed
+step with a callback is a real button and reachable by Tab. The circle with the number or
+checkmark is hidden from assistive technology; the meaning comes from the list and two
+mechanisms. The current step has `aria-current="step"`. Completed and not-yet-started
+steps have visually hidden text from the message catalog (`stepper.state`):
+"completed" and "not started" in the default English catalog.
+See the [Stepper source](../../../src/components/navigation/Stepper.tsx).
 
-## Хорошие примеры
+## Good examples
 
-- Не передавать `onStepClick` для необратимой оплаты или импорта.
-- Передать короткий `hint` для дополнительного контекста под label.
-- Синхронизировать `current` с отображаемой формой в родителе.
+- Do not pass `onStepClick` for an irreversible payment or import.
+- Pass a short `hint` for extra context under the label.
+- Keep `current` in sync with the form displayed in the parent.
 
-## Антипаттерны
+## Anti-patterns
 
-- Передавать 1-based current.
-- Считать `onStepClick` разрешением перейти в будущую незаполненную форму.
-- Использовать меняющийся индекс массива вместо стабильного `Step.id`.
+- Passing a 1-based current.
+- Treating `onStepClick` as permission to jump to a future unfilled form.
+- Using a changing array index instead of a stable `Step.id`.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/navigation/Stepper.tsx`
 - `src/components/navigation/Stepper.stories.tsx`

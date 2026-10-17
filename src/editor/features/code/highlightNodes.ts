@@ -6,12 +6,12 @@ import { highlightCode, type HighlightTree } from "./lowlight.js";
 type HighlightNode = HighlightTree["children"][number];
 
 /**
- * Дерево lowlight в узлы React: текст — текстом, токен — `span` с его
- * классами `hljs-…` и больше ничем. Свойства узла, кроме класса, не
- * переносятся, как и в сериализаторе `highlightCodeBlocks` (`highlight.ts`).
+ * Converts a lowlight tree into React nodes: text stays text, and a token becomes a `span` with
+ * its `hljs-…` classes and nothing else. Node properties other than the class are not carried
+ * over, as in the `highlightCodeBlocks` serializer (`highlight.ts`).
  *
- * Дети уходят в `createElement` списком аргументов, а не массивом: так React
- * не просит ключей, а порядок токенов не меняется никогда.
+ * Children go to `createElement` as an argument list, not as an array: React then does not ask for
+ * keys, and the order of tokens never changes.
  */
 function toNodes(nodes: readonly HighlightNode[]): ReactNode[] {
   return nodes.map((node) => {
@@ -24,8 +24,8 @@ function toNodes(nodes: readonly HighlightNode[]): ReactNode[] {
 }
 
 /**
- * Подсветить код для `CodeView` (ADR-0052) — той же грамматикой и
- * той же темой, что блок кода Редактора и `RichTextView`.
+ * Highlights code for `CodeView` (ADR-0052), with the same grammar and the same theme as the
+ * Editor's code block and `RichTextView`.
  *
  * ```tsx
  * <CodeView code={source} title="main.py" copyable>
@@ -33,23 +33,23 @@ function toNodes(nodes: readonly HighlightNode[]): ReactNode[] {
  * </CodeView>
  * ```
  *
- * УЗЛЫ, А НЕ СТРОКА HTML. Код у `CodeView` обычно недоверенный — ответ API,
- * тело вебхука, — и строка вела бы потребителя к `dangerouslySetInnerHTML`.
- * Здесь текст кода становится текстовым узлом React и экранируется им же.
+ * NODES, NOT AN HTML STRING. The code in `CodeView` is usually untrusted (an API response, a
+ * webhook body), and a string would lead the consumer to `dangerouslySetInnerHTML`. Here the code
+ * text becomes a React text node, and React escapes it.
  *
- * Язык — по правилам Редактора (`codeLanguages.ts`): регистр, пробелы и
- * псевдонимы не важны. Неизвестный язык и пустой код дают `null`, а не код
- * строкой: тогда `children` у `CodeView` пуст, и он рисует код как есть — с
- * нумерацией строк, которой при разметке нет.
+ * The language follows the Editor's rules (`codeLanguages.ts`): case, spaces and aliases do not
+ * matter. An unknown language or empty code gives `null`, not the code as a string. Then the
+ * `children` of `CodeView` is empty, and it draws the code as is, without the line numbering that
+ * the markup would have given it.
  *
- * КОРЕНЬ С МАРКЕРОМ И ТЕМОЙ. Токены завёрнуты в один `span` с атрибутом
- * `data-code-highlight` и классами темы (`codeTheme.ts`). Тема стоит на корне,
- * а не на `CodeView`: разметку чужого подсветчика — даже с теми же классами
- * `hljs-…` — она не перекрашивает. Маркер читает `CodeView`, чтобы взять фон
- * темы подсветки: цвета GitHub не держат контраста на подложке кода кита.
+ * ROOT WITH A MARKER AND A THEME. The tokens are wrapped in one `span` with the
+ * `data-code-highlight` attribute and the theme classes (`codeTheme.ts`). The theme sits on the
+ * root, not on `CodeView`: it does not recolor the markup of a foreign highlighter, even one with
+ * the same `hljs-…` classes. `CodeView` reads the marker to take the background of the highlight
+ * theme: GitHub's colors do not keep contrast on the kit's code background.
  *
- * Хуков и `"use client"` нет: хелпер зовут и в серверном компоненте, и в
- * клиентском.
+ * No hooks and no `"use client"`: the helper is called both in a server component and in a client
+ * one.
  */
 export function highlightCodeNodes(code: string, language: string): ReactNode {
   const id = normalizeCodeLanguage(language);

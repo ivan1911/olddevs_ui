@@ -6,11 +6,11 @@ import { Checkbox } from "../src/components/inputs/Checkbox.js";
 
 afterEach(cleanup);
 
-// Клик по ПОДПИСИ здесь не проверяется намеренно: jsdom не воспроизводит
-// активацию `<label>` по клику в его потомка так, как это делает браузер, и
-// тест либо падал бы на исправном компоненте, либо проверял бы не то. Ровно по
-// этой причине в пакете не проверяется в jsdom и ловушка фокуса (ADR-0012).
-// Настоящая проверка — в браузере: `tests-visual/interactions.spec.ts`.
+// Clicks on the LABEL are deliberately not checked here: jsdom does not reproduce the
+// activation of a `<label>` by a click on its descendant the way a browser does, so the
+// test would either fail on a working component or check the wrong thing. For exactly
+// this reason the focus trap is not checked in jsdom either (ADR-0012).
+// The real check is in a browser: `tests-visual/interactions.spec.ts`.
 
 test("onCheckedChange receives a boolean, not an event", async () => {
   const user = userEvent.setup();
@@ -20,8 +20,8 @@ test("onCheckedChange receives a boolean, not an event", async () => {
   await user.click(screen.getByRole("checkbox"));
 
   expect(onCheckedChange).toHaveBeenCalledTimes(1);
-  // Именно значение, а не `ChangeEvent`: словарь кита говорит о состоянии, а
-  // RAC — об `isSelected`; обёртка обязана переводить одно в другое.
+  // The value itself, not a `ChangeEvent`: the kit's vocabulary speaks of state, while
+  // RAC speaks of `isSelected`, so the wrapper has to translate one into the other.
   expect(onCheckedChange).toHaveBeenCalledWith(true);
 });
 
@@ -33,11 +33,11 @@ test("the third state does not pass itself off as checked", () => {
   );
 
   const box = screen.getByRole("checkbox") as HTMLInputElement;
-  // Проверяется СВОЙСТВО `indeterminate`, а не атрибут `aria-checked`: RAC
-  // рендерит нативный `<input type="checkbox">`, у которого «частично» — это
-  // DOM-свойство, а «mixed» браузер выводит в дерево доступности сам. Атрибута
-  // `aria-checked` здесь нет и быть не должно: дублировать родную семантику
-  // ARIA-атрибутом — известный способ рассинхронизировать одно с другим.
+  // The `indeterminate` PROPERTY is checked, not the `aria-checked` attribute: RAC renders
+  // a native `<input type="checkbox">`, for which "partial" is a DOM property, while the
+  // browser exposes "mixed" to the accessibility tree on its own. There must be no
+  // `aria-checked` attribute here: duplicating native semantics with an ARIA attribute is
+  // a known way to let the two drift apart.
   expect(box.indeterminate).toBe(true);
   expect(box.checked).toBe(false);
 });
@@ -52,8 +52,8 @@ test("a click does not clear the third state", async () => {
 
   await user.click(screen.getByRole("checkbox"));
 
-  // Остаётся «частично»: это состояние ставит вызывающий, пересчитав набор.
-  // Снять его кликом означало бы выдумать за пользователя, что он имел в виду.
+  // It stays "partial": the caller sets this state when it recalculates the set.
+  // Clearing it with a click would mean inventing what the user meant.
   expect((screen.getByRole("checkbox") as HTMLInputElement).indeterminate).toBe(true);
 });
 
@@ -88,13 +88,12 @@ test("states sit on the RAC element as data attributes", async () => {
   const user = userEvent.setup();
   const { container } = render(<Checkbox indeterminate>Partly selected</Checkbox>);
 
-  // Это проверка не косметики, а несущего допущения пакета: варианты `hover:`
-  // и `disabled:` из словаря тонов действуют на элементах react-aria только
-  // потому, что плагин переопределяет их на двойной селектор
+  // This is not cosmetic: it is a load-bearing assumption of the package. The `hover:`
+  // and `disabled:` variants from the tone vocabulary act on react-aria elements only
+  // because the plugin overrides them with a double selector
   // `:is(:where([data-rac])[data-hovered], :where(:not([data-rac])):hover)`.
-  // Если `data-rac` со `<label>` однажды исчезнет, словарь тихо перестанет
-  // красить состояния, и ни один снимок этого не покажет — состояния
-  // снимаются в покое.
+  // If `data-rac` on the `<label>` ever disappears, the vocabulary silently stops painting
+  // states, and no snapshot will show it: the states are captured at rest.
   const label = container.querySelector("label")!;
   expect(label.hasAttribute("data-rac")).toBe(true);
   expect(label.hasAttribute("data-indeterminate")).toBe(true);
@@ -107,22 +106,22 @@ test("the hit area is 24px tall even when the control is smaller", () => {
   render(<Checkbox label="Done" />);
 
   /*
-    Замер на 3.12.0: `md` без видимой подписи давал цель 26×22, `sm` с
-    подписью — 20 по высоте. Из четырёх сочетаний размера и подписи порог
-    WCAG 2.5.8 проходило одно.
+    Measured on 3.12.0: `md` without a visible label gave a 26×22 target, and `sm` with
+    a label gave 20 in height. Of the four combinations of size and label, only one
+    passed the WCAG 2.5.8 threshold.
 
-    Высоту в раскладке поднимать нельзя — её держит строка списка, 32
-    пикселя. Поэтому цель дотянута псевдоэлементом: контрол занимает
-    прежнее место, а ловится на 24.
+    The height in the layout cannot be raised: the list row holds it at 32 pixels. So the
+    target is extended with a pseudo-element: the control keeps its place, and the hit
+    area is 24px.
   */
   const control = screen.getByRole("checkbox").closest("label")!;
 
-  // Две полоски по краям, а не слой поверх контрола: слой перехватывал
-  // указатель у собственной подписи, а уведённый под содержимое `-z-10`
-  // уходил за фон предка и переставал ловить клики вовсе.
+  // Two strips along the edges, not a layer over the control: the layer captured the
+  // pointer over its own label, and one pushed under the content with `-z-10` went behind
+  // the ancestor's background and stopped catching clicks altogether.
   expect(control.className).toContain("before:bottom-full");
   expect(control.className).toContain("after:top-full");
-  // Без `relative` полоски отсчитывались бы от чужого предка и уехали бы в
-  // непредсказуемое место.
+  // Without `relative`, the strips would be positioned against a foreign ancestor and
+  // would land somewhere unpredictable.
   expect(control.className).toContain("relative");
 });

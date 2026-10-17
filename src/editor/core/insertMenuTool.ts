@@ -6,14 +6,14 @@ import { SlashCommand } from "./slashCommand.js";
 import type { ToolDescriptor } from "./toolDescriptor.js";
 
 /**
- * Меню вставки (`/` в тексте; «+» на Панели и «Добавить ›» Ручки Блока — виджеты
- * кита, они читают `tools.has("insertMenu")`).
+ * Slash menu (`/` in the text; the "+" button on the Toolbar and "Add ›" in the Block handle
+ * are kit widgets, and they read `tools.has("insertMenu")`).
  *
- * Своего Блока у Инструмента нет: это способ добраться до чужих Блоков. Extensions
- * Инструмента — это `/`, и они есть, только когда `RichTextEditor` дал мост: пунктов
- * для меню нет — моста нет, и `/` остаётся обычным символом. Абзац записан здесь:
- * это не Инструмент, он есть в Схеме всегда, и «Превратить в абзац» нужен, пока
- * есть само меню.
+ * The Tool has no Block of its own: it is a way to reach other Tools' Blocks. The Tool's
+ * Extensions provide `/`, and they exist only when `RichTextEditor` has set up the bridge. With
+ * no insert items there is no bridge, and `/` stays an ordinary character. The paragraph item is
+ * declared here: a paragraph is not a Tool and is always in the Schema, but "Turn into
+ * paragraph" is needed for as long as the menu exists.
  */
 export const INSERT_MENU_TOOL: ToolDescriptor = {
   name: "insertMenu",

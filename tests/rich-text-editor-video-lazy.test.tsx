@@ -12,13 +12,13 @@ import {
 afterEach(cleanup);
 
 /**
- * Чанк видео ленивый (OLDSUI-281, ADR-0058, п. 11.1): плеер, поле ссылки и узел
- * грузятся Загрузчиком, и только у Редактора с `youtube` или `twitch` в `tools`.
- * `full` и `basic` его не грузят; Редактор с видео показывает Скелет — блок
- * ссылкой, как видит его читатель без JS, — и доходит до Готовности после чанка.
+ * The video chunk is lazy (OLDSUI-281, ADR-0058, item 11.1): the player, the link field,
+ * and the node are loaded by the Loader, and only for an Editor with `youtube` or `twitch`
+ * in `tools`. `full` and `basic` do not load it. An Editor with video shows a Skeleton, the
+ * block as a link, as a reader without JS sees it, and reaches Readiness after the chunk loads.
  *
- * Модуль чанка подменён обёрткой, которая только отмечает импорт (как в
- * `rich-text-editor-lazy-builtins.test.tsx`): содержимое чанка — настоящее.
+ * The chunk module is replaced with a wrapper that only records the import (as in
+ * `rich-text-editor-lazy-builtins.test.tsx`); the chunk's contents are the real thing.
  */
 const imported = vi.hoisted(() => [] as string[]);
 
@@ -42,7 +42,8 @@ function renderEditor(props: Partial<RichTextEditorProps>) {
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 20))));
 
-// Порядок тестов значим: кэш загрузчика живёт на модуле, и первый Редактор с видео его греет.
+// Test order matters: the Loader cache lives on the module, and the first Editor with video
+// warms it up.
 
 test("basic does not load the video chunk", async () => {
   const { onReady } = renderEditor({ preset: "basic", value: "<p>Comment</p>" });
@@ -68,16 +69,18 @@ test("an editor with the video tools shows the link as a Skeleton, then is ready
     value: VALUE,
   });
 
-  // Скелет: блок видим как блок со ссылкой, поля ввода и Готовности ещё нет.
+  // Skeleton: the block is visible as a block with a link; there is no input field and no
+  // Readiness yet.
   expect(container.querySelector("[contenteditable]")).toBeNull();
   expect(ref.current?.editor).toBeNull();
   expect(onReady).not.toHaveBeenCalled();
   expect(container.querySelector(`div[data-block="video"] > a[href="${YT}"]`)).not.toBeNull();
-  // До щелчка нет и самого плеера: ни `iframe`, ни кнопки.
+  // Before the click there is no player at all: no `iframe` and no button.
   expect(container.querySelector("iframe")).toBeNull();
-  // Высота (ADR-0071): блок Скелета — рамка 16:9, как заглушка плеера, и чанк роста не даёт.
-  // Скелет — разметка блока (`div > a`), а рамка — правила контейнера Документа, те же, что
-  // у `RichTextView`: каждый класс рамки плеера в них есть.
+  // Height (ADR-0071): the Skeleton block is a 16:9 frame, like the player placeholder,
+  // and the chunk does not make it grow.
+  // The Skeleton is the block markup (`div > a`), and the frame comes from the Document container
+  // rules, the same ones `RichTextView` uses: every player frame class is in them.
   const frame = container.querySelector<HTMLElement>('div[data-block="video"]')!;
   for (const token of PLAYER_FRAME.split(/\s+/)) {
     expect(
@@ -88,11 +91,12 @@ test("an editor with the video tools shows the link as a Skeleton, then is ready
   expect([...frame.children].map((child) => child.localName)).toEqual(["a"]);
 
   expect(await screen.findByRole("textbox", { name: "Body" }, { timeout: 10_000 })).toBeTruthy();
-  // Оба Инструмента делят один чанк: он грузится один раз.
+  // Both Tools share one chunk, which loads once.
   expect(imported).toEqual(["video"]);
   expect(onReady).toHaveBeenCalledTimes(1);
   expect(ref.current?.getHTML()).toBe(VALUE);
-  // Чанк пришёл — на месте ссылки плеер (OLDSUI-287); заглушка с кнопкой — только с `autoload: false`.
+  // The chunk has arrived: the player replaces the link (OLDSUI-287); the placeholder with
+  // a button appears only with `autoload: false`.
   expect(container.querySelector("iframe")?.getAttribute("title")).toBe("YouTube video");
   expect(screen.queryByRole("button", { name: "Play YouTube video" })).toBeNull();
 });

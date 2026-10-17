@@ -34,7 +34,7 @@ function LiveDemo({
 
 export const Playground: Story = { render: () => <LiveDemo /> };
 
-/** Формат отображения — работа `Intl.NumberFormat`, а не компонента. */
+/** The display format is the job of `Intl.NumberFormat`, not of the component. */
 export const Formats: Story = {
   render: () => (
     <div className="flex flex-wrap gap-4">
@@ -46,12 +46,11 @@ export const Formats: Story = {
 };
 
 /**
- * Рядом с `TextControl` — главная проверка компонента.
+ * Next to `TextControl` is the component's main check.
  *
- * Оболочка у обоих одна и та же, из `lib/field.ts`: рамка, подсветка фокуса и
- * гашение выключенного обязаны совпадать пиксель в пиксель. Копипаст классов
- * разошёлся бы, и увидеть это можно было бы только поставив поля рядом — что
- * эта история и делает.
+ * The shell is the same for both, from `lib/field.ts`: the outline, the focus highlight and
+ * the disabled dimming must match pixel for pixel. Copy-pasted classes would drift apart,
+ * and this could be seen only by placing the fields side by side, which is what this story does.
  */
 export const NextToTextControl: Story = {
   render: function Render() {
@@ -82,7 +81,7 @@ export const NextToTextControl: Story = {
   },
 };
 
-/** Матрица состояний: обычное, на границе, невалидное, выключенное, пустое. */
+/** State matrix: normal, at the limit, invalid, disabled, empty. */
 export const Matrix: Story = {
   render: () => (
     <div className="flex flex-wrap gap-4">

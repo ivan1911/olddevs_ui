@@ -21,90 +21,89 @@ import { RangeCalendar } from "./RangeCalendar.js";
 export type { DateRange } from "../../lib/period.js";
 
 export interface DateRangePickerProps {
-  /** Выбранный период: пара ISO-дат `{ start, end }`; пусто или неразбираемое значение показывается как «не выбрано». */
+  /** Selected range: a pair of ISO dates `{ start, end }`; an empty or unparseable value is shown as "not selected". */
   value?: DateRange | null;
   /**
-   * Относительный период (пресет), которым задано значение; подсвечивается в колонке пресетов.
+   * The relative period (preset) the value was set with; it is highlighted in the preset column.
    *
-   * Выбранный относительный период, если период задан пресетом. Когда он
-   * задан, подпись триггера берётся у пресета: «30 дней» честнее пары дат,
-   * которая завтра станет другой.
+   * The selected relative period, if the period was set by a preset. When it is set, the
+   * trigger label comes from the preset: "30 days" is more honest than a pair of dates that
+   * will be a different pair tomorrow.
    */
   period?: RelativePeriod | null;
   /**
-   * Отдаёт и развёрнутые границы, и то, каким пресетом они получены
-   * (`null` — выбраны вручную в календаре). Потребитель сам решает, что
-   * из этого положить в URL; пакет за него не выбирает.
+   * Emits both the expanded bounds and the preset they came from (`null` means the range was
+   * selected by hand in the calendar). The consumer decides what to put into the URL; the package
+   * does not choose it for them.
    */
   onChange: (range: DateRange, period: RelativePeriod | null) => void;
   /**
-   * Пресеты периода в колонке слева от календаря; по умолчанию стандартный набор кита.
+   * Period presets in the column to the left of the calendar; defaults to the kit's standard set.
    *
-   * Пустой список убирает колонку пресетов целиком.
+   * An empty list removes the preset column entirely.
    */
   presets?: readonly PeriodPreset[];
-  /** Зона, в которой считается «сегодня» для пресетов. */
+  /** Time zone used to determine "today" for the presets. */
   timeZone?: string;
   /**
-   * Очистка периода. Кнопка очистки появляется, только когда обработчик передан.
+   * Handler that clears the period. The clear button appears only if it is passed.
    *
-   * Здесь это отдельный проп, а не `clearable` как у `Select`: там очистка
-   * выражается существующим `onChange(null)`, и хватает флага. Тут же
-   * `onChange` отдаёт пару «границы + пресет», и «ничего не выбрано» в неё
-   * не укладывается — потребителю всё равно надо стирать оба своих ключа.
+   * Here it is a separate prop, not `clearable` as on `Select`: there clearing is expressed by
+   * the existing `onChange(null)`, and a flag is enough. Here `onChange` emits a pair of
+   * "bounds + preset", and "nothing selected" does not fit into it — the consumer has to erase
+   * both of its own keys anyway.
    */
   onClear?: () => void;
-  /** Доступное имя кнопки очистки. */
+  /** Accessible name of the clear button. */
   clearLabel?: string;
-  /** Текст триггера, пока период не выбран; по умолчанию стандартная подпись кита. */
+  /** Trigger text until a period is selected; defaults to the kit's standard label. */
   placeholder?: string;
-  /** Блокирует триггер и убирает кнопку очистки. */
+  /** Disables the trigger and hides the clear button. */
   disabled?: boolean;
   /**
-   * Самая ранняя доступная дата; пресеты подрезаются по этой границе, а пресет
-   * целиком вне границ не выбирается. ISO-строка `ГГГГ-ММ-ДД`, как и `value`;
-   * объект `@internationalized/date` тоже принимается.
+   * Earliest available date; presets are clipped to this bound, and a preset that lies entirely
+   * outside the bounds cannot be selected. An ISO string `YYYY-MM-DD`, as with `value`; an
+   * `@internationalized/date` object is accepted too.
    */
   minValue?: DateInput;
-  /** Самая поздняя доступная дата; действует так же, как `minValue`. */
+  /** Latest available date; applies the same way as `minValue`. */
   maxValue?: DateInput;
   /**
-   * Отмечает конкретные дни недоступными (занятые даты, праздники): в календаре
-   * их нельзя выбрать. Получает объект календаря; `date.toString()` даёт ISO-день.
+   * Marks specific days as unavailable (booked dates, holidays): they cannot be selected in the
+   * calendar. Receives a calendar date object; `date.toString()` returns the day as an ISO string.
    *
-   * Пресеты это правило не учитывают: они подрезаются только по `minValue` и
+   * Presets do not take this rule into account: they are clipped only by `minValue` and
    * `maxValue`.
    */
   isDateUnavailable?: (date: DateValue) => boolean;
   /**
-   * Месяц, на котором открывается календарь, когда период ещё не выбран.
-   * По умолчанию текущий; фиксируется в витрине, иначе снимок менялся бы
-   * каждые сутки.
+   * Month the calendar opens on when no range is selected yet. Defaults to the current month;
+   * it is pinned in the showcase, otherwise the visual snapshot would change every day.
    */
   defaultFocusedValue?: DateInput;
-  /** Локаль подписей дат и календаря; по умолчанию локаль `UiProvider`. */
+  /** Locale of the date labels and the calendar; defaults to the `UiProvider` locale. */
   locale?: string;
-  /** Открыта ли панель, когда состоянием управляет потребитель; без него панель открывается сама. */
+  /** Whether the panel is open, when the consumer controls the state; without it the panel opens by itself. */
   open?: boolean;
-  /** Вызывается при каждом открытии и закрытии панели; работает и с `open`, и без него. */
+  /** Called whenever the panel opens or closes; works both with and without `open`. */
   onOpenChange?: (open: boolean) => void;
-  /** Классы на рамку триггера. */
+  /** Classes for the trigger frame. */
   triggerClassName?: string;
-  /** Классы на всплывающую панель с пресетами и календарём. */
+  /** Classes for the popover with the presets and the calendar. */
   contentClassName?: string;
 }
 
 /**
- * Диапазон дат: пресеты слева, календарь справа.
+ * Date range: presets on the left, calendar on the right.
  *
- * Пресеты — не украшение, а основной путь. В админке период выбирают
- * повторяющимися окнами («последние 30 дней»), и календарь нужен реже, чем
- * кажется: до этого компонента в модалке подписчиков вместо него стояли
- * четыре захардкоженные кнопки, а в кампаниях — наоборот, только календарь.
+ * Presets are not decoration but the main path. In the admin, a period is chosen by recurring
+ * windows ("last 30 days"), and the calendar is needed less often than it seems: before this
+ * component, the subscribers dialog had four hardcoded buttons in its place, while in campaigns
+ * it was the other way round, with only the calendar.
  *
- * Незавершённый выбор наружу не отдаётся: `onChange` зовётся, только когда
- * есть обе границы. Иначе потребитель на каждый первый клик получал бы
- * диапазон «с 5 марта по 5 марта» и успевал сходить с ним в сеть.
+ * An unfinished selection is not passed outside: `onChange` is called only when both bounds are
+ * present. Otherwise the consumer would get a range "from March 5 to March 5" on every first
+ * click, and would have time to send it to the network.
  */
 export function DateRangePicker({
   value,
@@ -130,29 +129,27 @@ export function DateRangePicker({
   const months = useTwoMonths();
 
   const open = controlledOpen ?? internalOpen;
-  // Внутреннее состояние обновляется всегда — как в `Select`: иначе тот, кто
-  // передал только колбэк без `open`, получил бы панель, которая не открывается.
+  // The internal state is always updated, as in `Select`: otherwise someone who passed only
+  // the callback without `open` would get a panel that never opens.
   const setOpen = (next: boolean) => {
     setInternalOpen(next);
     onOpenChange?.(next);
   };
 
   /**
-   * Диапазон разбирается один раз и здесь же.
+   * The range is parsed once, right here.
    *
-   * `parseDate` бросает на любой мусор (`parseDate("ерунда")` — это
-   * `Invalid ISO 8601 date string`), а `value` приходит из URL, где его правят
-   * руками. Раньше разбор стоял прямо в разметке, тремя вызовами: одна кривая
-   * ссылка роняла всё поддерево.
+   * `parseDate` throws on any garbage (`parseDate("nonsense")` is `Invalid ISO 8601 date string`),
+   * and `value` comes from the URL, where people edit it by hand. Previously the parsing sat in
+   * the markup, in three calls: one malformed link brought down the whole subtree.
    *
-   * Защита долго стояла ТОЛЬКО здесь, а комментарий утверждал, что соседний
-   * `DatePicker` на том же вводе показывает плейсхолдер. Это было неверно: он
-   * разбирал значение выражением в JSX-потомке, без всякой защиты. С волны 26
-   * оба зовут `parseDateOrNull` из `lib/date.ts`, и утверждение наконец
-   * соответствует коду.
+   * The guard for a long time existed ONLY here, while a comment claimed that the neighboring
+   * `DatePicker` on the same input shows a placeholder. That was wrong: it parsed the value with
+   * an expression in a JSX child, with no guard at all. Since wave 26 both call `parseDateOrNull`
+   * from `lib/date.ts`, and the claim finally matches the code.
    *
-   * Заодно исчезают `value!`: после сужения компилятор сам знает, что дальше
-   * границы есть.
+   * As a side effect the `value!` assertions are gone: after narrowing, the compiler itself
+   * knows that the bounds exist further on.
    */
   const messages = useMessages();
   const uiLocale = useUiLocale();
@@ -161,19 +158,19 @@ export function DateRangePicker({
   const range = parseRange(value);
 
   /**
-   * Подрезать диапазон по объявленным границам поля.
+   * Clip the range to the field's declared bounds.
    *
-   * `null`, если окно с границами НЕ ПЕРЕСЕКАЕТСЯ вовсе. Первая версия двигала
-   * концы независимо и могла выдать перевёрнутый диапазон: при `minValue`
-   * первого числа текущего месяца пресет «прошлый месяц» уезжал наружу как
-   * `{start: "2026-09-01", end: "2026-08-31"}` — заведомо невозможное значение,
-   * которое потребитель писал в адрес и в запрос. Тот же файл строкой ниже
-   * объявляет перевёрнутый диапазон «не значением», так что выдавать его
-   * самим тем более нельзя.
+   * `null` if the span of the bounds does NOT INTERSECT the range at all. The first version moved
+   * the ends independently and could emit a reversed range: with `minValue` at the first day of
+   * the current month, the "last month" preset went outside as
+   * `{start: "2026-09-01", end: "2026-08-31"}` — an obviously impossible value that the consumer
+   * wrote into the address and into the request. A few lines further down the same file, a
+   * reversed range is declared to be "not a value", so emitting one ourselves is even less
+   * acceptable.
    */
   const clampRange = (r: DateRange): DateRange | null => {
-    // Границы приводятся к объектам: неразбираемая строка — «не задано», а не
-    // сравнение с мусором.
+    // The bounds are converted to objects: an unparseable string counts as "not set", rather
+    // than being compared as garbage.
     const min = toDateBound(minValue)?.toString();
     const max = toDateBound(maxValue)?.toString();
     const start = min && r.start < min ? min : r.start;
@@ -192,19 +189,18 @@ export function DateRangePicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       {/*
-        Устройство то же, что у триггера `Select`, и по той же причине: крестик
-        обязан быть отдельной кнопкой рядом, а не внутри — вложенная
-        интерактивность недопустима в разметке и недостижима с клавиатуры.
-        Поэтому рамку несёт обёртка, а кнопка растянута на её площадь
-        псевдоэлементом.
+        The structure is the same as the `Select` trigger's, and for the same reason: the clear
+        button must be a separate button next to the trigger, not inside it — nested interactive
+        content is invalid markup and unreachable from the keyboard. So the frame is carried by
+        the wrapper, and the trigger button is stretched over its area with a pseudo-element.
       */}
       <span
         className={cn(
-          // `leading-5` — тот же объявленный строчный бокс, что у `TextControl`
-          // и триггера `Select` (см. `lib/field.ts`): триггер стоит в форме
-          // рядом с ними и обязан давать те же 42px. Прежний `min-h-[38px]`
-          // убран — он был порогом снизу при выведенной высоте, а при заданной
-          // не срабатывает никогда: 20 + 2×10 отступа + 2 рамки уже 42.
+          // `leading-5` — the same declared line box as `TextControl` and the `Select` trigger
+          // (see `lib/field.ts`): the trigger stands in a form next to them and must give the
+          // same 42px. The old `min-h-[38px]` is removed: it was a floor under the derived
+          // height, and with a set height it never kicks in: 20 + 2×10 padding + 2 border is
+          // already 42.
           "border-line-soft text-fg-2 hover:border-line hover:text-fg-1 rounded-control relative inline-flex w-full items-center gap-2 border px-3 py-2.5 text-[13px] leading-5 transition-colors",
           disabled && "cursor-not-allowed opacity-50",
           triggerClassName
@@ -231,8 +227,8 @@ export function DateRangePicker({
             type="button"
             aria-label={clearLabel ?? messages.common.clear}
             onClick={onClear}
-            // `relative` поднимает крестик над растянутым псевдоэлементом кнопки,
-            // иначе клик по нему открывал бы панель вместо очистки.
+            // `relative` lifts the × above the button's stretched pseudo-element; otherwise a
+            // click on it would open the panel instead of clearing.
             className="bg-bg-3 text-fg-2 hover:text-fg-0 focus-visible:outline-accent-strong relative z-10 flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             <CloseIcon size={10} aria-hidden />
@@ -248,13 +244,12 @@ export function DateRangePicker({
                   key={p.period}
                   type="button"
                   onClick={() => {
-                    // Пресет ПОДРЕЗАЕТСЯ по границам: ограничения применялись
-                    // только к календарю, и «365 дней» уезжали за `minValue`
-                    // — то есть наружу шёл диапазон, который в календаре
-                    // выбрать нельзя вовсе.
+                    // The preset is CLIPPED to the bounds: the limits applied only to the
+                    // calendar, and "365 days" went past `minValue` — so a range went out that
+                    // cannot be selected in the calendar at all.
                     const clamped = clampRange(resolvePeriod(p.period, timeZone));
-                    // Пресет, целиком выпавший за границы, не выбирается: звать
-                    // `onChange` с невозможным диапазоном хуже, чем не ответить.
+                    // A preset that falls entirely outside the bounds cannot be selected: calling
+                    // `onChange` with an impossible range is worse than not answering.
                     if (!clamped) return;
                     onChange(clamped, p.period);
                     setOpen(false);
@@ -275,8 +270,8 @@ export function DateRangePicker({
             <RangeCalendar
               value={range}
               onChange={(next) => {
-                // Первый клик даёт диапазон «с 5 марта по 5 марта» — наружу его
-                // не отдаём: потребитель успел бы сходить с ним в сеть.
+                // The first click produces a range "from March 5 to March 5" — we do not emit
+                // it: the consumer would have time to send it to the network.
                 if (!next?.start || !next?.end) return;
                 onChange({ start: next.start.toString(), end: next.end.toString() }, null);
                 setOpen(false);
@@ -304,35 +299,34 @@ export function DateRangePicker({
 }
 
 /**
- * Разбирает пару ISO-строк в значение календаря; мусор превращает в «не hasValue».
+ * Parses a pair of ISO strings into a calendar value; garbage turns into "no value" (`null`).
  *
- * Обе границы обязаны быть валидны: половина диапазона фильтром не является,
- * а показать её календарём нечем.
+ * Both bounds must be valid: half a range is not a usable filter, and the calendar has nothing
+ * to show it with.
  */
 function parseRange(value: DateRange | null | undefined) {
   const start = parseDateOrNull(value?.start);
   const end = parseDateOrNull(value?.end);
   if (!start || !end) return null;
   /*
-    ПЕРЕВЁРНУТЫЙ диапазон — тоже неразбираемый.
+    A REVERSED range is unparseable too.
 
-    Календарём его не выбрать, но собрать руками в адресе можно:
-    `?from=2026-03-10&to=2026-03-01`. Обе даты разбирались, `hasValue` было
-    истинно, триггер показывал «10 мар 2026 — 01 мар 2026», календарь не
-    подсвечивал ничего (react-aria проверяет диапазон как `>= start && <= end`),
-    а подпись снизу через `periodLength` с её `Math.max(1, …)` уверенно
-    сообщала «1 день». Отбраковываем там же, где мусор.
+    The calendar cannot pick it, but it can be assembled by hand in the address:
+    `?from=2026-03-10&to=2026-03-01`. Both dates parsed, `hasValue` was true, the trigger showed
+    "10 Mar 2026 — 01 Mar 2026", the calendar highlighted nothing (react-aria checks the range
+    as `>= start && <= end`), and the caption below, via `periodLength` with its `Math.max(1, …)`,
+    confidently reported "1 day". We reject it right where the garbage is rejected.
   */
   if (start.compare(end) > 0) return null;
   return { start, end };
 }
 
 /**
- * Два месяца рядом — только когда для них есть место.
+ * Two months side by side — only when there is room for them.
  *
- * Начинаем всегда с одного: на сервере `matchMedia` нет вовсе, и попытка
- * угадать ширину до монтирования даёт расхождение разметки. Второй месяц
- * появляется после первого рендера, когда ширину уже можно спросить.
+ * We always start with one: on the server `matchMedia` does not exist at all, and trying to guess
+ * the width before mount causes a markup mismatch. The second month appears after the first
+ * render, when the width can be queried.
  */
 function useTwoMonths(): 1 | 2 {
   const [two, setTwo] = useState(false);

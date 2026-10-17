@@ -10,15 +10,15 @@ import { videoProviders } from "./video.js";
 import { parseVideoLink, VIDEO_PROVIDER_NAME } from "./videoLink.js";
 
 /**
- * Содержимое поповера пункта «Видео» Меню вставки (ADR-0071, п. 6): поле ссылки.
+ * The content of the popover for the "Video" item of the Insert menu (ADR-0071, item 6): the link field.
  *
- * СЕРВИС ОПРЕДЕЛЯЕТ АДРЕС, а не автор: один пункт на `youtube` и `twitch`, и
- * ссылка разбирается среди сервисов, включённых в этом Редакторе. Ссылка чужого
- * сервиса и ссылка выключенного сервиса — одна ошибка в поле, которая называет,
- * что Редактор принимает. Блок ставится в место каретки (`insertVideo`).
+ * THE SERVICE DECIDES THE ADDRESS, not the author: one item covers `youtube` and `twitch`, and the
+ * link is parsed among the services enabled in this Editor. A link from another service and a link
+ * from a disabled service are the same error in the field, which says what the Editor accepts.
+ * The Block is inserted at the caret (`insertVideo`).
  *
- * Рамку держит кит (`SelectionPopover`): стек слоёв, имя рамки — подпись пункта,
- * возврат фокуса в Документ. Форма монтируется заново на каждое открытие.
+ * The kit holds the frame (`SelectionPopover`): the layer stack, the frame's name is the item's
+ * label, and focus returns to the Document. The form is mounted anew on every opening.
  */
 export function VideoForm({ editor, onDone }: { editor: Editor; onDone: () => void }) {
   const messages = useMessages().editor;
@@ -37,7 +37,7 @@ export function VideoForm({ editor, onDone }: { editor: Editor; onDone: () => vo
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    // Enter, которым IME подтверждает слово, — не «вставить».
+    // Enter that the IME uses to confirm a word is not "insert".
     if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
     event.preventDefault();
     apply();

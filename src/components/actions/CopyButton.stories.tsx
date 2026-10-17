@@ -23,7 +23,7 @@ export const Playground: Story = {
   ),
 };
 
-/** С подписью кнопка перестаёт быть иконочной. */
+/** With a label, the button is no longer icon-only. */
 export const WithLabel: Story = {
   render: (args) => (
     <CopyButton {...args} size="sm" variant="outline">
@@ -33,9 +33,9 @@ export const WithLabel: Story = {
 };
 
 /**
- * Отказ буфера — законный исход, а не исключение: в небезопасном контексте
- * `navigator.clipboard` отсутствует вовсе. Кнопка говорит об этом, а не
- * притворяется успешной.
+ * A clipboard refusal is a legitimate outcome, not an exception: in an insecure
+ * context `navigator.clipboard` is missing altogether. The button reports this
+ * instead of pretending to succeed.
  */
 export const CopyFailed: Story = {
   render: () => (

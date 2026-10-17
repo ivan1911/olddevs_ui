@@ -13,17 +13,18 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Ссылка Редактора (OLDSUI-42): Метка `a` с адресом из разрешённых схем,
- * `rel="noopener noreferrer"` на выходе и поповер с полем адреса.
+ * Link in the Editor (OLDSUI-42): a `a` Mark with an address from the allowed
+ * schemes, `rel="noopener noreferrer"` on output, and a popover with an address field.
  *
- * Проверяется снаружи — HTML на выходе, роли и имена; движок через `ref.editor`
- * только там, где jsdom не умеет ввода: выделение и набор идут командами.
+ * The test checks from outside: the HTML on output, roles and names; the engine
+ * through `ref.editor` only where jsdom cannot do input: selection and typing go
+ * through commands.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -44,7 +45,7 @@ test("a loaded link keeps its address and leaves with rel and nothing else", () 
   );
 });
 
-/** Ссылки с адресами вне Схемы: схема чужая, адрес относительный или спрятан пробелами. */
+/** Links with addresses outside the Schema: the scheme is foreign, the address is relative, or it is hidden by spaces. */
 const HOSTILE_LINKS =
   '<p><a href="javascript:alert(1)">js</a> <a href=" java\tscript:alert(1)">tab</a> ' +
   '<a href="data:text/html,x">data</a> <a href="ftp://example.com">ftp</a> ' +
@@ -60,7 +61,7 @@ test("a link outside the protocol policy loses its wrapper on load and on paste"
   for (const html of [loaded, pasted]) {
     expect(html.match(/<a /g)).toHaveLength(1);
     expect(html).toContain('<a href="mailto:team@example.com" rel="noopener noreferrer">mail</a>');
-    // Текст отброшенной ссылки остаётся — уходит только обёртка.
+    // The text of the dropped link stays; only the wrapper goes away.
     expect(html).toContain("js tab data ftp relative");
   }
 });
@@ -87,7 +88,7 @@ test("without the link tool an anchor is plain text", () => {
 test("an address typed in the text becomes a link once the word ends", () => {
   const { editor } = renderEditor();
 
-  // Набор — как его видит движок: по символу за транзакцию, пробел закрывает слово.
+  // Typing as the engine sees it: one character per transaction, and a space closes the word.
   for (const char of "see example.com and ftp://example.org ") {
     act(() => void editor.commands.insertContent(char));
   }
@@ -113,8 +114,8 @@ test("a pasted address over a selection links it only within the policy", () => 
 
   const html = editor.getHTML();
   expect(html).toContain('<a href="https://example.com/docs" rel="noopener noreferrer">docs</a>');
-  // Ни ссылки на `ftp:`, ни ссылки без адреса — пустой Метки, которую
-  // выход сохранил бы как `<a rel>` без `href`.
+  // Neither a link to `ftp:` nor a link without an address is left: an empty Mark that
+  // the output would save as `<a rel>` without `href`.
   expect(html).not.toMatch(/href="(?!https?:)/);
   expect(html).not.toContain("<a rel=");
 });
@@ -127,9 +128,9 @@ test("a click on a link inside the editor places the caret and opens nothing", (
   const anchor = editor.view.dom.querySelector("a")!;
 
   /*
-    Щелчок — тем же путём, каким его отдаёт движку ProseMirror: `handleClick`
-    плагинов. Настоящий щелчок jsdom до него не доводит — позицию по
-    координатам ему мерить нечем (`elementFromPoint`).
+    The click goes to the engine the same way ProseMirror delivers it: the
+    `handleClick` of plugins. A real click does not reach it in jsdom, which has
+    no way to measure a position from coordinates (`elementFromPoint`).
   */
   const event = new MouseEvent("click", { button: 0, bubbles: true });
   Object.defineProperty(event, "target", { value: anchor });
@@ -150,11 +151,11 @@ test("the Link button reports a link under the caret and names its shortcut", ()
   expect(button.getAttribute("aria-pressed")).toBe("false");
   act(() => void editor.commands.setTextSelection(9));
   expect(button.getAttribute("aria-pressed")).toBe("true");
-  // jsdom — не Apple: `mod` — это Ctrl.
+  // jsdom is not Apple: `mod` is Ctrl.
   expect(button.getAttribute("aria-keyshortcuts")).toBe("Control+K");
 });
 
-/** `Mod+K` в документе — так, как его слышит движок: `keydown` на редактируемой области. */
+/** `Mod+K` in the document, as the engine hears it: `keydown` on the editable area. */
 function pressModK(editor: RichTextEditorHandle["editor"]) {
   act(() => {
     editor!.view.dom.dispatchEvent(
@@ -180,7 +181,7 @@ test("Mod+K opens the address field; Enter links the selection and returns to th
   expect(editor.getHTML()).toBe(
     '<p>Read the <a href="https://example.com/docs" rel="noopener noreferrer">docs</a></p>'
   );
-  // Radix возвращает фокус таймером после размонтирования поповера.
+  // Radix returns focus with a timer after the popover unmounts.
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
 });
 
@@ -196,14 +197,14 @@ test("Escape in the address field cancels and returns to the text", async () => 
   expect(screen.queryByRole("dialog", { name: "Link" })).toBeNull();
   expect(editor.getHTML()).toBe("<p>Read the docs</p>");
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
-  // Выделение то же, что до поповера: можно открыть его снова или писать дальше.
+  // The selection is the same as before the popover: it can be opened again, or typing can go on.
   expect(editor.state.selection.from).toBe(10);
   expect(editor.state.selection.to).toBe(14);
 });
 
 /*
-  Кнопка, сочетание, строка справочника и Метка ссылки приходят из одного
-  описания Инструмента (ADR-0058, п. 10): без `link` нет ни одного из них.
+  The button, the shortcut, the reference row and the link Mark come from one Tool
+  description (ADR-0058, item 10): without `link` none of them exists.
 */
 test("without the link tool there is no Link button, Mod+K opens nothing and the reference has no Link row", async () => {
   const user = userEvent.setup();
@@ -229,7 +230,7 @@ test("on an existing link the field shows its address and can remove the link", 
   const { editor } = renderEditor({
     defaultValue: '<p>See <a href="https://example.com/old">the site</a> now</p>',
   });
-  // Каретка внутри ссылки, без выделения.
+  // The caret is inside the link, with no selection.
   act(() => void editor.commands.setTextSelection(8));
 
   await user.click(screen.getByRole("button", { name: "Link" }));
@@ -285,10 +286,10 @@ test("the field refuses an address outside the policy and says what it accepts",
 });
 
 /**
- * Escape в поповере ссылки принадлежит поповеру, а не окну (ADR-0041, спека,
- * история 23). И `Dialog`, и `Popover` кита — Radix, и стек слоёв Radix
- * решает это сам; тест сторожит, что поповер остаётся в этом стеке, а не
- * становится своим слоем мимо него.
+ * Escape in the link popover belongs to the popover, not to the window (ADR-0041,
+ * spec, story 23). Both the `Dialog` and the `Popover` of the kit are Radix, and the
+ * Radix layer stack decides this on its own; the test guards that the popover stays
+ * in this stack and does not become a layer of its own outside it.
  */
 test("Escape in the link popover inside a Dialog closes the popover, not the window", async () => {
   const user = userEvent.setup();
@@ -300,8 +301,8 @@ test("Escape in the link popover inside a Dialog closes the popover, not the win
     </Dialog>
   );
   const editor = ref.current!.editor!;
-  // `view.focus()`, а не команда `focus()`: команда ставит фокус в следующем
-  // кадре и забрала бы его у уже открытого поповера.
+  // `view.focus()`, not the `focus()` command: the command sets focus on the next
+  // frame and would take it from the popover that is already open.
   act(() => editor.view.focus());
   act(() => void editor.commands.setTextSelection({ from: 10, to: 14 }));
 
@@ -313,7 +314,7 @@ test("Escape in the link popover inside a Dialog closes the popover, not the win
   expect(screen.getByRole("dialog", { name: "Edit article" })).toBeDefined();
   expect(onClose).not.toHaveBeenCalled();
 
-  // Контроль: без поповера тот же Escape закрывает окно.
+  // Control: without the popover, the same Escape closes the dialog.
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
@@ -330,7 +331,7 @@ test("the link popover speaks the provider's language", async () => {
   const editor = ref.current!.editor!;
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
 
-  // Ожидания — из русского каталога, а не литералами (гейт i18n).
+  // The expectations come from the Russian catalog, not from literals (i18n gate).
   const t = ru.editor;
   await user.click(screen.getByRole("button", { name: t.link }));
   expect(screen.getByRole("dialog", { name: t.link })).toBeDefined();

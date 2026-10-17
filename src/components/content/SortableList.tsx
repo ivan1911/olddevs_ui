@@ -18,110 +18,109 @@ import { cn } from "../../lib/cn.js";
 import { insertionIndex, reorder } from "../../lib/reorder.js";
 
 export interface SortableItem {
-  /** Стабильный идентификатор строки: по нему список сообщает новый порядок. */
+  /** Stable identifier of the row: the list reports the new order by it. */
   id: Key;
-  /** Содержимое строки. Может быть вёрсткой — тогда задайте `textValue`. */
+  /** Row content. It may be markup, in which case set `textValue`. */
   label: ReactNode;
   /**
-   * Строковое представление строки.
+   * String representation of the row.
    *
-   * Обязателен, когда `label` — не строка: из него собирается и доступное имя
-   * строки, и имя её ручки перетаскивания («Перетащить Отчёт за март»), и
-   * объявления «Вставить между … и …».
+   * Required when `label` is not a string: from it the row's accessible name is built, as well as
+   * the name of its drag handle ("Drag Report for March") and the announcements ("Insert between
+   * … and …").
    */
   textValue?: string;
 }
 
-/** Переезд строки из одного списка группы в другой — что сообщает `onMove`. */
+/** A row moving from one list of a group to another: what `onMove` reports. */
 export interface SortableMove {
-  /** Идентификатор строки. */
+  /** Row identifier. */
   id: Key;
-  /** `id` списка, из которого строку унесли. */
+  /** `id` of the list the row was moved out of. */
   from: string;
-  /** `id` списка, куда её положили. */
+  /** `id` of the list the row was moved into. */
   to: string;
-  /** Место в списке-приёмнике: индекс, который строка займёт в нём. */
+  /** Position in the receiving list: the index the row takes there. */
   index: number;
 }
 
 export interface SortableListProps {
-  /** Строки в текущем порядке; порядок хранит потребитель. */
+  /** Rows in their current order; the consumer owns the order. */
   items: SortableItem[];
   /**
-   * Новый порядок целиком — список идентификаторов после перестановки.
+   * The whole new order: the list of identifiers after the reordering.
    *
-   * Порядок компонент не хранит: он приходит пропом и уходит отсюда, как
-   * сортировка у таблицы (ADR-0023). Отдаём весь список, а не «что куда
-   * переехало»: применить готовый порядок проще, чем восстановить его из
-   * события, и ошибиться негде.
+   * The component does not store the order: it arrives as a prop and leaves through here, like
+   * table sorting does (ADR-0023). We pass the whole list, not "what moved where": applying a
+   * ready-made order is simpler than rebuilding it from an event, and there is no room for
+   * mistakes.
    */
   onReorder: (ids: Key[]) => void;
-  /** Доступное имя списка. Безымянный список скринридер называет только по роли. */
+  /**
+   * Accessible name of the list. A list without a name is announced by a screen reader
+   * only by its role.
+   */
   "aria-label": string;
-  /** Что показать при пустом списке. */
+  /** What to show for an empty list. */
   emptyText?: ReactNode;
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
   /**
-   * Имя группы списков, которые обмениваются строками, — например, колонок
-   * одной доски. Без группы список только переставляет свои строки.
+   * Name of the group of lists that exchange rows, for example the columns of one board.
+   * Without a group, the list only reorders its own rows.
    */
   group?: string;
   /**
-   * Имя списка внутри группы: его получает `onMove` в `from` и `to`. В DOM не
-   * попадает — это ключ состояния экрана, а не `id` элемента.
+   * The name of the list inside the group: `onMove` receives it in `from` and `to`. It does not
+   * reach the DOM: it is a key of the screen's state, not the `id` of an element.
    */
   id?: string;
   /**
-   * Вызывается у списка-приёмника, когда в него перенесли строку из другого списка группы.
+   * Called on the receiving list when a row from another list of the group is moved into it.
    *
-   * Состав списков компонент не хранит, как и порядок: экран убирает строку
-   * из `from` и ставит её в `to` на `index` — у обоих списков сразу, потому
-   * что состояние доски одно и лежит у него.
+   * The component does not store the membership of the lists, any more than the order: the screen
+   * removes the row from `from` and puts it into `to` at `index`, updating both lists at once,
+   * because the board has one state and the screen holds it.
    */
   onMove?: (move: SortableMove) => void;
 }
 
-/** Тип данных перетаскивания группы: чужая группа его не примет. */
+/** Drag data type of the group: a foreign group will not accept it. */
 const dragType = (group: string) => `application/x-olddevs-sortable+${group}`;
 
-/** Строки, принесённые из другого списка группы, — по одной, в порядке переноса. */
+/** Rows brought in from another list of the group, one entry each, in drop order. */
 async function readMoves(items: DropItem[], type: string): Promise<{ id: Key; from: string }[]> {
   const texts = await Promise.all(items.filter(isTextDropItem).map((item) => item.getText(type)));
   return texts.map((text) => JSON.parse(text) as { id: Key; from: string });
 }
 
 /**
- * Список с перетаскиванием: порядок задаёт пользователь.
+ * A list with drag and drop: the user sets the order.
  *
- * СТОИТ НА `useDragAndDrop` ИЗ react-aria, а не на сторонней библиотеке
- * (ADR-0028).
- * Это не экономия на зависимости: вместе с dnd-kit пришлось бы взять на себя и
- * доступность, которую react-aria отдаёт даром.
+ * BUILT ON `useDragAndDrop` FROM react-aria, not on a third-party library (ADR-0028). This is not
+ * about saving a dependency: with dnd-kit we would have to take on accessibility as well, which
+ * react-aria provides for free.
  *
- * РУЧКА ПЕРЕТАСКИВАНИЯ ОБЯЗАТЕЛЬНА, и она здесь не украшение. Без
- * `<Button slot="drag">` строка получает `draggable="true"` и таскается мышью,
- * а с клавиатуры не берётся ВООБЩЕ — react-aria при этом не падает, а пишет
- * предупреждение в консоль. То есть недоступный список выглядит рабочим.
- * Проверено замером перед решением, поэтому ручку рисует сам компонент, а не
- * потребитель по желанию.
+ * THE DRAG HANDLE IS REQUIRED, and it is not decoration here. Without `<Button slot="drag">` a row
+ * gets `draggable="true"` and can be dragged with a mouse, but from the keyboard it cannot be
+ * picked up AT ALL, and react-aria does not fail: it writes a warning to the console. So an
+ * inaccessible list looks like it works. The component draws the handle itself rather than leaving
+ * it to the consumer's discretion; this was measured before the decision.
  *
- * СВОЕЙ ЖИВОЙ ОБЛАСТИ НЕТ. react-aria объявляет перетаскивание сам и
- * локализованно: под русской локалью замер дал «Начато перетаскивание. Нажмите
- * клавишу Tab для выбора цели…», «Вставить между Строка 1 и Строка 2»,
- * «Перетаскивание завершено». Своя область дублировала бы их и спорила бы с
- * ними. `DragAnnouncer` из фронта не поднимается: он написан под dnd-kit,
- * который молчит.
+ * THERE IS NO LIVE REGION OF ITS OWN. react-aria announces the drag itself, and localized: under
+ * the Russian locale the measurement produced "Drag started. Press Tab to select a drop target…",
+ * "Insert between Row 1 and Row 2", "Drag completed". A region of our own would duplicate these and
+ * contradict them. `DragAnnouncer` is not brought over from the frontend: it was written for
+ * dnd-kit, which stays silent.
  *
- * ИМЯ РУЧКИ НЕ ПОВТОРЯЕТ ПОДПИСЬ СТРОКИ — библиотека дописывает её сама, и
- * замер показал «Перетащить Строка 1». Тот же урок, что с кнопками внутри
- * `TagGroup` в ревью 2.1.0.
+ * THE NAME OF THE HANDLE DOES NOT REPEAT THE ROW'S LABEL: the library appends the label itself, and
+ * the measurement showed "Drag Row 1". The same lesson as with buttons inside `TagGroup` in the
+ * 2.1.0 review.
  *
- * КЛАВИАТУРА: стрелка вправо переводит фокус со строки на ручку, Enter
- * начинает перетаскивание, стрелки выбирают цель, Enter применяет, Escape
- * отменяет. Объявление react-aria предлагает Tab, но в коротком списке Tab
- * уводит фокус из кольца целей и отменяет перетаскивание — проверено в
- * браузере. Всё это — слой поведения, а не наш код.
+ * KEYBOARD: the right arrow moves focus from the row to the handle, Enter starts the drag, the
+ * arrows select the target, Enter applies, Escape cancels. The react-aria announcement suggests
+ * Tab, but in a short list Tab moves focus out of the ring of drop targets and cancels the drag,
+ * as checked in the browser. All of this is the behavior layer, not our code.
  */
 export function SortableList({
   items,
@@ -137,13 +136,13 @@ export function SortableList({
   const type = group != null ? dragType(group) : null;
 
   /*
-    ПЕРЕНОС МЕЖДУ СПИСКАМИ — `onInsert` и `onRootDrop` react-aria, а не свой
-    механизм: клавиатура (Tab ведёт к спискам группы), объявления «Вставить
-    между … и …» и точка вставки приходят те же, что у перестановки.
+    MOVING BETWEEN LISTS uses `onInsert` and `onRootDrop` from react-aria, not a custom mechanism:
+    the keyboard (Tab leads to the lists of the group), the announcements
+    "Insert between … and …" and the drop position are the same as for reordering.
 
-    Строка несёт свой ключ и имя списка-источника в типе данных группы. Список
-    принимает только этот тип: строку чужой группы — как и файл с рабочего
-    стола — он не возьмёт.
+    A row carries its own key and the name of its source list in the group's data type. A list
+    accepts only this type: a row from a foreign group, like a file dragged from the desktop, it
+    will not take.
   */
   async function receive(dropped: DropItem[], target: ItemDropTarget | null) {
     if (type == null || onMove == null) return;
@@ -162,9 +161,9 @@ export function SortableList({
         ...(type != null && { [type]: JSON.stringify({ id: key, from: listId }) }),
       })),
     /*
-      Принимает строки из группы только список с `onMove`: без него бросок
-      показал бы точку вставки и молча ничего не сделал. Отдавать строки
-      список с группой умеет и без `onMove` — в `getItems` выше.
+      Only a list with `onMove` accepts rows from the group: without it, a drop would show the
+      insertion point and silently do nothing. A list in a group can hand out its rows even without
+      `onMove`, see `getItems` above.
     */
     ...(type != null &&
       onMove != null && {
@@ -173,36 +172,32 @@ export function SortableList({
         onRootDrop: (e) => receive(e.items, null),
       }),
     /*
-      ТОЛЬКО `move`, и это не украшение курсора.
+      ONLY `move`, and this is not cosmetic for the cursor.
 
-      По умолчанию разрешены и перемещение, и копирование, а операционная
-      система рисует для копирования «плюс» — пользователь видит его посреди
-      перестановки и ждёт, что строка удвоится. Скопировать строку список не
-      умеет и уметь не должен: он меняет порядок, а не состав.
+      By default both moving and copying are allowed, and the operating system draws a "plus" for
+      copying: the user sees it in the middle of a reordering and expects the row to be duplicated.
+      The list cannot copy a row and must not: it changes the order, not the set of rows.
 
-      В WEBKIT ЗНАЧОК ВСЁ РАВНО МЕЛЬКАЕТ, и починить это отсюда нельзя.
-      Настройка применяется: `effectAllowed` записывается и читается обратно
-      как `move` в обоих движках, react-aria вдобавок пишет `dropEffect: move`
-      на каждом `dragover`. Но WebKit теряет её на уровне сессии
-      перетаскивания и отдаёт приёмнику `all` (bugs.webkit.org/show_bug.cgi
-      ?id=178058), а `all` включает копирование — система и рисует «плюс»,
-      пока её не переубедят. Сама перестановка при этом верна: react-aria
-      держит настоящий набор операций в своей переменной и пересекает с тем,
-      что пришло, — строк после броска столько же, сколько было. Замер обоих
-      движков — в справочнике компонента.
+      IN WEBKIT THE ICON FLICKERS ANYWAY, and it cannot be fixed from here. The setting does apply:
+      `effectAllowed` is written and read back as `move` in both engines, and react-aria also writes
+      `dropEffect: move` on every `dragover`. But WebKit loses it at the drag-session level and
+      hands the receiver `all` (bugs.webkit.org/show_bug.cgi?id=178058), and `all` enables copying,
+      so the system draws the "plus" until it is talked out of it. The reordering itself stays correct:
+      react-aria keeps the real set of operations in its own variable and intersects it with what
+      arrived, so after a drop there are as many rows as there were. The measurement in both engines
+      is in the component's Reference.
     */
     getAllowedDropOperations: () => ["move"],
     onReorder(e) {
-      // Перестановка — чистая функция в `lib/reorder.ts`, проверенная на
-      // массивах, включая сброс «на себя»: там раньше терялся последний
-      // элемент. `null` означает, что сброс ничего не меняет, и наружу
-      // ничего не уходит.
+      // Reordering is a pure function in `lib/reorder.ts`, tested on arrays, including a drop
+      // "onto itself": there the last element used to be lost. `null` means the drop changes
+      // nothing, and nothing is sent out.
       const next = reorder(items, e.keys, e.target);
       if (next != null) onReorder(next.map((item) => item.id));
     },
     renderDropIndicator: (target) => (
-      // Точка вставки видна ГЛАЗАМИ, а не только объявляется: перетаскивая
-      // мышью, пользователь иначе не знает, куда попадёт строка.
+      // The insertion point is SEEN, not just announced: when dragging with a mouse, the user
+      // otherwise does not know where the row will land.
       <DropIndicator
         target={target}
         className="drop-target:bg-accent-strong h-0.5 rounded-full bg-transparent"
@@ -225,14 +220,14 @@ export function SortableList({
           className={cn(
             "border-line-soft bg-bg-2 flex items-center gap-2 rounded-lg border px-2.5 py-2 text-[13px]",
             "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2",
-            // Строка под курсором перетаскивания приглушается: она сейчас не
-            // на своём месте, и показывать её обычной значило бы врать.
+            // The row under the drag cursor is dimmed: it is not in its place right now, and
+            // showing it as normal would be misleading.
             "dragging:opacity-50"
           )}
         >
           {/*
-            Ручка. Имя — только глагол: подпись строки библиотека дописывает
-            сама, и «Перетащить Отчёт Отчёт» прозвучало бы дважды.
+            The drag handle. Its name is only the verb: the library appends the row's label itself,
+            and "Drag Report Report" would be read out twice.
           */}
           <Button
             slot="drag"

@@ -40,9 +40,9 @@ afterEach(() => {
   document.documentElement.removeAttribute("style");
 });
 
-// `TopBar` измеряет себя и публикует высоту: без заглушек jsdom его рендер
-// падает. Условия те же, что в `tests/top-bar.test.tsx`, откуда переехала
-// проверка подписи.
+// `TopBar` measures itself and publishes its height: without these stubs, jsdom
+// fails to render it. The conditions are the same as in `tests/top-bar.test.tsx`,
+// where the caption check was moved from.
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
     configurable: true,
@@ -56,26 +56,26 @@ beforeAll(() => {
 });
 
 /**
- * ЕДИНСТВЕННОЕ МЕСТО, ГДЕ ПРОВЕРЯЮТСЯ САМИ РУССКИЕ СЛОВА.
+ * THE ONLY PLACE WHERE THE RUSSIAN WORDS THEMSELVES ARE CHECKED.
  *
- * Волна 23 перевела витрину, тесты и скрипты на английский, и кириллица в
- * `src/**`, `tests/**`, `scripts/**` стала дефектом — её ловит
- * `tests/i18n-gate.test.ts`. Но часть кириллицы в тестах это ПРЕДМЕТ проверки,
- * а не язык изложения: `[11, "11 дней"]` проверяет `Intl.PluralRules`, и
- * «11 days» на этом месте — не перевод, а удалённая проверка.
+ * Wave 23 moved the showcase, tests and scripts to English, and Cyrillic in
+ * `src/**`, `tests/**`, `scripts/**` became a defect, which `tests/i18n-gate.test.ts`
+ * catches. But some Cyrillic in the tests is the SUBJECT of a check, not the
+ * language of the text: `[11, "11 <many-form>"]` checks `Intl.PluralRules`, and
+ * "11 days" in that spot would not be a translation but a removed check.
  *
- * Такие ожидания сведены сюда, и этот файл — третья и последняя запись белого
- * списка гейта. Разбор — ADR-0034.
+ * Such expectations are gathered here, and this file is the third and last entry
+ * on the gate's allowlist. The reasoning is in ADR-0034.
  *
- * ЧТО СЮДА ЕДЕТ, А ЧТО НЕТ. Сюда — проверки, чей ПРЕДМЕТ есть русское слово:
- * что каталог говорит именно «Закрыть», что формы склонения выбираются
- * правилом. Не сюда — проверки поведения компонента, которым русская локаль
- * досталась исторически: они переходят на английский фолбэк, потому что
- * проверяли поведение, а не язык.
+ * WHAT GOES HERE AND WHAT DOES NOT. Here go checks whose SUBJECT is a Russian word:
+ * that the catalog says exactly the Russian word for "close", that the plural forms are picked by the
+ * rule. Not here go checks of component behavior that happened to get the Russian
+ * locale: those switch to the English fallback, because they checked behavior,
+ * not language.
  *
- * Полноту самого каталога здесь не проверяют: по ключам, по форме значения и
- * по непустоте её сверяет `tests/i18n-gate.test.ts` — и делает это для всех
- * ключей сразу, а не для тех, что кто-то вспомнил.
+ * The completeness of the catalog itself is not checked here: `tests/i18n-gate.test.ts`
+ * verifies it by keys, value shape and non-emptiness, and does so for all keys at
+ * once, not just for the ones someone remembered.
  */
 
 function ShowMessages() {
@@ -118,12 +118,12 @@ describe("склонение", () => {
 });
 
 describe("formatPeriodLength", () => {
-  // Русские формы проверяются с русским каталогом: с 2.0.0 склонение выбирает
-  // локаль через `Intl.PluralRules`, а фолбэк кита английский. Ожидания при
-  // этом те же, что были до переезда, — это здесь и доказывается.
+  // The Russian forms are checked with the Russian catalog: since 2.0.0 the locale
+  // picks the plural form via `Intl.PluralRules`, and the kit's fallback is English.
+  // The expectations are the same as before the move, and that is what this proves.
   //
-  // Одиннадцать и сто одиннадцать в таблице стоят не для полноты: это
-  // классическая ловушка правила, где «один» ведёт себя как «много».
+  // Eleven and one hundred eleven are in the table not for completeness: this is the
+  // classic trap of the rule, where a number that looks like "one" takes the "many" form.
   test.each([
     [1, "1 день"],
     [2, "2 дня"],
@@ -144,16 +144,18 @@ describe("formatPeriodLength", () => {
 });
 
 /*
- * ─── компоненты под русской локалью ───────────────────────────────────────────
+ * ─── components under the Russian locale ─────────────────────────────────────
  *
- * Семь проверок, переехавших сюда из файлов своих компонентов волной 23. Их
- * предмет — не поведение компонента, а то, что подпись и форма склонения
- * приходят ИЗ КАТАЛОГА: компонент, считающий окончания сам, умеет ровно один
- * язык. Проверять это в файле компонента значило бы держать русское слово в
- * двадцати шести местах и ронять их все при правке формулировки.
+ * Seven checks moved here from their components' files in wave 23. Their subject
+ * is not the component's behavior, but that the caption and the plural form come
+ * FROM THE CATALOG: a component that computes the endings itself can handle
+ * exactly one language. Checking this in the component's file would mean keeping
+ * a Russian word in twenty-six places and breaking all of them whenever the wording
+ * changed.
  *
- * Фикстуры здесь свои и намеренно минимальные: тест доказывает подпись, а не
- * раскладку, и общая с файлом компонента фикстура связала бы их без нужды.
+ * The fixtures here are their own and deliberately minimal: the test proves the
+ * caption, not the layout, and a fixture shared with the component's file would
+ * link the two for no reason.
  */
 
 describe("подпись и склонение приходят из каталога", () => {
@@ -242,9 +244,9 @@ describe("подпись и склонение приходят из катал�
         </NotificationCenter>
       )
     );
-    // По тексту, а не по `aria-label`: имя счётчика даётся `sr-only`-строкой,
-    // потому что у `Badge` — `<span>` без роли — имя от автора не
-    // поддерживается и браузером отбрасывается.
+    // Matched by text, not by `aria-label`: the counter's name comes from an
+    // `sr-only` string, because `Badge` is a `<span>` with no role, so an
+    // author-given name is not supported there and the browser discards it.
     expect(screen.getByText("2 непрочитанных")).toBeTruthy();
   });
 
@@ -264,10 +266,10 @@ describe("подпись и склонение приходят из катал�
   });
 
   /*
-    Имя раскрывателя `SplitButton` — единственное собственное решение
-    компонента, и без этой проверки подмена `messages.splitButton.more(...)`
-    литералом не уронила бы ничего: английские тесты сверяют строку,
-    совпадающую с фолбэком.
+    The name of the `SplitButton` toggle is the component's only own decision,
+    and without this check, replacing `messages.splitButton.more(...)` with a
+    literal would break nothing: the English tests compare a string that matches
+    the fallback.
   */
   test("SplitButton: имя раскрывателя берётся из каталога вместе с подписью действия", () => {
     render(withRu(<SplitButton label="Экспорт">{null}</SplitButton>));
@@ -275,9 +277,10 @@ describe("подпись и склонение приходят из катал�
   });
 
   /*
-    Размер ручки объявляется со склонением, и склоняет его локаль, а не
-    компонент: «280 пикселей», но «282 пикселя» и «281 пиксель». Английские
-    тесты этого не сторожат — там строка совпадает с фолбэком.
+    The handle size is announced with a plural form, and the locale, not the
+    component, picks it: 280, 282 and 281 each get a different form (see the
+    assertions below). The English tests do not guard this: there the string
+    matches the fallback.
   */
   test("SplitPanel: размер ручки объявляется со склонением из локали", () => {
     const { rerender } = render(
@@ -316,10 +319,10 @@ describe("подпись и склонение приходят из катал�
 });
 
 /**
- * Склонение в новом ключе `maskedInput.truncated`.
+ * Plural forms in the new key `maskedInput.truncated`.
  *
- * `i18n-gate` ловит ОТСУТСТВИЕ ключа в локали, но не неверную форму: каталог с
- * «1 символов» прошёл бы его насквозь.
+ * `i18n-gate` catches a MISSING key in a locale, but not a wrong form: a catalog
+ * with "1 characters" (English stand-in for a wrong Russian form) would pass it through.
  */
 test("the truncation message declines the count", () => {
   expect(ru.maskedInput.truncated({ count: 1 })).toContain("1 символ ");
@@ -334,14 +337,14 @@ test("the English truncation message agrees in number", () => {
 });
 
 /**
- * Конструктор `Intl.PluralRules` разбирает локаль — это самая дорогая часть
- * операции, и платиться она должна один раз за жизнь модуля. Сообщения зовутся
- * из рендера: `uploadQueue.summary` — на каждом тике прогресса загрузки.
+ * The `Intl.PluralRules` constructor parses the locale: it is the most expensive
+ * part of the operation, and it should be paid once per module lifetime. Messages
+ * are called from render: `uploadQueue.summary` runs on every upload progress tick.
  */
 test("the locale builds its plural rules once, at module level", () => {
   const source = readFileSync(resolve(import.meta.dirname, "../src/locales/ru.ts"), "utf8");
-  // Комментарии выбрасываются: они про этот же конструктор и говорят, но кода
-  // не исполняют — тот же приём, что в `tests/i18n-gate.test.ts`.
+  // Comments are stripped out: they mention this same constructor, but they do not
+  // run as code — the same trick as in `tests/i18n-gate.test.ts`.
   const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
   const constructions = code.match(/new Intl\.PluralRules/g) ?? [];
 
@@ -349,8 +352,8 @@ test("the locale builds its plural rules once, at module level", () => {
 });
 
 /**
- * `aria-roledescription` — текст для слуха, а не токен ARIA: на русском
- * интерфейсе английское «carousel» прозвучало бы чужим словом посреди речи.
+ * `aria-roledescription` is spoken text, not an ARIA token: in a Russian interface,
+ * the English "carousel" would sound like a foreign word in the middle of speech.
  */
 test("the carousel names itself, its slides and its buttons in Russian", () => {
   render(
@@ -372,8 +375,8 @@ test("the carousel names itself, its slides and its buttons in Russian", () => {
 });
 
 /**
- * Диапазон в фильтре (ADR-0063): названия полей и формы подписи токена — из
- * каталога, числа и даты в подписи — по локали провайдера.
+ * A range in a filter (ADR-0063): the field names and the token's label forms
+ * come from the catalog; the numbers and dates in the label follow the provider's locale.
  */
 describe("a filter range in Russian", () => {
   const RANGE_FIELDS = [

@@ -1,28 +1,27 @@
 import type { ReactNode } from "react";
 
 /**
- * Пустота, которую `== null` не видит.
+ * Emptiness that `== null` does not see.
  *
- * Один и тот же дефект кит ловил уже пять раз, и каждый раз чинил ОДНУ точку, а
- * не правило: подпись `""` не считалась отсутствующей (`Segmented`, потом
- * `CopyButton`, потом `ToggleGroup`), пустой массив детей не считался пустым
- * списком (`NotificationList`), `NaN` проходил проверку на «значение задано»
- * (`Progress`). Проверка `== null` ловит ровно `null` и `undefined` — а пустым
- * в разметке бывает ещё и `""`, и `[]`, и `false`, и `NaN`.
+ * The kit has already caught the same defect five times, and each time it fixed ONE spot rather than
+ * the rule: the label `""` was not treated as missing (`Segmented`, then `CopyButton`, then
+ * `ToggleGroup`), an empty array of children was not treated as an empty list (`NotificationList`),
+ * and `NaN` passed the "value is set" check (`Progress`). The `== null` check catches exactly `null`
+ * and `undefined`, but in markup "empty" can also mean `""`, `[]`, `false` or `NaN`.
  *
- * Отсюда общее место и тест-семейство рядом с ним: починка одной кнопки
- * воспроизводит причину, починка предиката — нет.
+ * Hence a shared place for the rule, and a family of tests beside it: fixing one button leaves the
+ * cause in place, while fixing the predicate removes it.
  */
 
 /**
- * Есть ли что показать: подпись, имя, содержимое ячейки.
+ * Whether there is something to show: a label, a name, cell content.
  *
- * `false` тоже пустой — это результат `{flag && <Icon/>}`, самой частой идиомы
- * условного рендера. Ноль НЕ пустой: `0` — законное значение счётчика.
+ * `false` is empty too: it is the result of `{flag && <Icon/>}`, the most common conditional-render
+ * idiom. Zero is NOT empty: `0` is a legitimate counter value.
  *
- * Для пропа типа `string` предикат не нужен: там `value || fallback` выражает
- * то же правило и не спорит с сужением типов. `hasContent` — про `ReactNode`,
- * где пустыми бывают ещё `false` и массив.
+ * A prop of type `string` does not need the predicate: there `value || fallback` expresses the same
+ * rule and does not conflict with type narrowing. `hasContent` is about `ReactNode`, where `false`
+ * and arrays are also empty.
  */
 export function hasContent(value: ReactNode): boolean {
   if (value == null || value === false || value === "") return false;
@@ -31,12 +30,11 @@ export function hasContent(value: ReactNode): boolean {
 }
 
 /**
- * Число, которое можно показать и объявить.
+ * A number that can be shown and announced.
  *
- * `NaN` и бесконечности отсекаются вместе с `null`: они приходят из арифметики
- * потребителя (`loaded / total` при нулевом `total`) и до волны 26 проходили
- * насквозь — `width: NaN%` растягивал полосу прогресса на всю ширину, а
- * скринридер читал «NaN процентов».
+ * `NaN` and infinities are filtered out along with `null`: they come from the consumer's arithmetic
+ * (`loaded / total` with a zero `total`), and until wave 26 they passed straight through. `width: NaN%`
+ * stretched the progress bar across the full width, and the screen reader read "NaN percent".
  */
 export function isShowableNumber(value: number | null | undefined): value is number {
   return value != null && Number.isFinite(value);

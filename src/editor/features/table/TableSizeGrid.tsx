@@ -14,32 +14,36 @@ import { NumberInput } from "../../../components/inputs/NumberInput.js";
 import { useMessages } from "../../../i18n/useMessages.js";
 import { cn } from "../../../lib/cn.js";
 
-/** Размер таблицы в столбцах и строках. */
+/** Table size in columns and rows. */
 export interface TableSize {
   cols: number;
   rows: number;
 }
 
 export interface TableSizeGridProps {
-  /** С какого размера открыться; по умолчанию 3×3. */
+  /** The size to start from; 3×3 by default. */
   initial?: TableSize;
-  /** Наибольшая сторона сетки в ячейках; по умолчанию 10. */
+  /** The largest side of the grid, in cells; 10 by default. */
   max?: number;
   /**
-   * Числовые поля «Столбцы» и «Строки» с кнопкой «Вставить» под сеткой — для
-   * таблиц больше сетки. Значения — пределы полей. Нет — только сетка.
+   * Numeric "Columns" and "Rows" fields with an "Insert" button under the grid, for
+   * tables larger than the grid. The values are the limits of the fields. Without it,
+   * only the grid is shown.
    */
   fields?: { maxCols: number; maxRows: number };
-  /** Размер выбран: `Enter` в сетке, щелчок по ячейке, «Вставить». */
+  /** A size is picked: `Enter` in the grid, a click on a cell, or "Insert". */
   onPick: (cols: number, rows: number) => void;
-  /** `Escape` в сетке. Закрывать ли хозяина — решает он сам. */
+  /** `Escape` in the grid. Whether to close the host is up to the host. */
   onCancel?: () => void;
-  /** Взять фокус при монтировании. Хозяину, который ставит его сам, — `false`. */
+  /** Take focus on mount. A host that sets focus itself passes `false`. */
   autoFocus?: boolean;
   className?: string;
 }
 
-/** Сетка не уже этого, пока выбор мал: пустые ячейки показывают, куда расти. */
+/**
+ * The grid is never smaller than this while the selection is small: empty cells show
+ * where it can grow.
+ */
 const MIN_VISIBLE = 5;
 const DEFAULT_MAX = 10;
 const DEFAULT_SIZE: TableSize = { cols: 3, rows: 3 };
@@ -47,36 +51,38 @@ const DEFAULT_SIZE: TableSize = { cols: 3, rows: 3 };
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /**
- * Сетка выбора размера таблицы: пять на пять ячеек, растёт до десяти на десять.
+ * Table size picker: five by five cells, growing up to ten by ten.
  *
- * РОСТ. Сторона сетки — выбранный размер плюс одна ячейка запаса (не меньше
- * пяти и не больше `max`): дошли до края — появилась следующая, ушли назад —
- * сетка сжалась. Пустые ячейки за выбором — то, ради чего сетка рисуется:
- * она показывает, что можно взять больше.
+ * GROWTH. The grid side is the selected size plus one cell of spare room (never less
+ * than five and never more than `max`): reach the edge and the next cell appears; step
+ * back and the grid shrinks. The empty cells past the selection are the point of drawing
+ * the grid: they show that a bigger size can be picked.
  *
- * ARIA: ШАБЛОН GRID ИЗ APG. `role="grid"` — строки (`row`) и ячейки (`gridcell`);
- * фокус остаётся на самой сетке, а текущую ячейку называет
- * `aria-activedescendant`, как у списков кита. Roving tabindex отвергнут: ячеек
- * до ста, и Tab, проходящий по каждой, — это сто остановок вместо одной. Стрелки
- * двигают выбор и растят сетку, `Home` и `End` — по строке (с `Ctrl` — в углы
- * сетки), `Enter` выбирает, `Escape` отменяет. `Tab` уходит дальше — к полям.
+ * ARIA: THE GRID PATTERN FROM THE APG. `role="grid"` with rows (`row`) and cells
+ * (`gridcell`). Focus stays on the grid itself, and `aria-activedescendant` names the
+ * current cell, as in the kit's lists. Roving tabindex was rejected: there are up to a
+ * hundred cells, and a Tab stop on each would mean a hundred stops instead of one. The
+ * arrows move the selection and grow the grid, `Home` and `End` go along the row (with
+ * `Ctrl`, to the corners of the grid), `Enter` picks, and `Escape` cancels. `Tab` moves
+ * on to the fields.
  *
- * ЧТО ВЫБРАНО — СЛОВАМИ. Имя ячейки и живая область (`role="status"`) читают
- * один текст: «3 столбца, 4 строки», склонение — по локали (`tableSize`).
- * Мышь не единственный путь: наведение лишь двигает тот же выбор, что стрелки.
- * Видимая подпись «3 × 4» скрыта от скринридера — она повторяет живую область.
+ * WHAT IS SELECTED, IN WORDS. The cell's name and the live region (`role="status"`) read
+ * the same text: "3 columns, 4 rows", with plural forms from the locale (`tableSize`).
+ * The mouse is not the only way in: hovering only moves the same selection the arrows
+ * move. The visible label "3 × 4" is hidden from screen readers, because it repeats the
+ * live region.
  *
- * ПЕРВАЯ СТРОКА — ЗАГОЛОВОК. Вставка всегда делает первую строку из `th`, и
- * сетка это показывает: верхний ряд закрашен иначе и подчёркнут. Это подсказка
- * глазам, а не переключатель.
+ * THE FIRST ROW IS A HEADER. Insert always makes the first row out of `th` cells, and the
+ * grid shows it: the top row is shaded differently and underlined. This is a hint to the
+ * eye, not a toggle.
  *
- * ПОЛЯ — для таблиц больше сетки (до `fields.maxCols` × `fields.maxRows`).
- * Выбор один на сетку и поля: правка любого двигает другое. Пустое поле выбор
- * не меняет — «Вставить» берёт последний допустимый размер.
+ * FIELDS are for tables larger than the grid (up to `fields.maxCols` × `fields.maxRows`).
+ * The selection is one for the grid and the fields: an edit to either moves the other. An
+ * empty field does not change the selection: Insert takes the last valid size.
  *
- * ФОКУС НА МОНТИРОВАНИИ — на сетку, а в подменю react-aria (он закрывает меню,
- * если фокус уходит в первый же кадр) хозяин ставит его сам: `autoFocus={false}`
- * и `ref` на сетку.
+ * FOCUS ON MOUNT goes to the grid. Inside a submenu, react-aria closes the menu if focus
+ * leaves it in the very first frame, so the host sets focus itself: `autoFocus={false}`
+ * and a `ref` to the grid.
  */
 export const TableSizeGrid = forwardRef<HTMLDivElement, TableSizeGridProps>(function TableSizeGrid(
   {
@@ -98,7 +104,7 @@ export const TableSizeGrid = forwardRef<HTMLDivElement, TableSizeGridProps>(func
     cols: Math.max(1, initial.cols),
     rows: Math.max(1, initial.rows),
   }));
-  // Поля хранят набранное, в том числе пустоту; выбор — только допустимое.
+  // Fields keep what was typed, including an empty value; the selection takes only valid values.
   const [draft, setDraft] = useState<{ cols: number | null; rows: number | null }>(size);
 
   useEffect(() => {
@@ -113,12 +119,12 @@ export const TableSizeGrid = forwardRef<HTMLDivElement, TableSizeGridProps>(func
     setDraft(next);
   };
 
-  /** Шаг на одну ячейку. Выше `max` (число из поля) вниз — на сторону сетки. */
+  /** One cell per step. A value above `max` (typed in a field) steps down to the grid's edge. */
   const step = (value: number, delta: 1 | -1) =>
     delta > 0 ? Math.min(max, value + 1) : clamp(Math.min(value, max + 1) - 1, 1, max);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    // Enter, которым IME подтверждает слово, и сочетания с Alt и Meta — не наши.
+    // Enter that confirms an IME composition, and chords with Alt or Meta, are not ours.
     if (event.nativeEvent.isComposing || event.altKey || event.metaKey) return;
     const { cols, rows } = size;
     let next: TableSize | null = null;
@@ -160,8 +166,8 @@ export const TableSizeGrid = forwardRef<HTMLDivElement, TableSizeGridProps>(func
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {/*
-        Фокус — на сетке, а не на ячейках: см. «ARIA» в описании. Обработчик
-        клавиш — на ней же; ячейки только мышь.
+        Focus is on the grid, not on the cells: see "ARIA" in the description. The key
+        handler is on the grid too; the cells take the mouse only.
       */}
       <div
         ref={gridRef}
@@ -196,8 +202,8 @@ export const TableSizeGrid = forwardRef<HTMLDivElement, TableSizeGridProps>(func
                     className={cn(
                       "size-5 cursor-pointer rounded-xs border transition-colors",
                       inside ? "border-accent bg-accent-soft" : "border-line bg-bg-1",
-                      // Заголовок — другой оттенок и плотное основание, а не цвет
-                      // один: различие держится и без различения цветов.
+                      // The header uses another shade and a solid base, not color alone:
+                      // the difference holds without telling colors apart.
                       row === 1 && !inside && "bg-bg-3",
                       row === 1 && "border-b-2"
                     )}
@@ -211,7 +217,8 @@ export const TableSizeGrid = forwardRef<HTMLDivElement, TableSizeGridProps>(func
       <div aria-hidden="true" className="text-fg-2 text-caption tabular-nums">
         {size.cols} × {size.rows}
       </div>
-      {/* Живая область есть всегда: скринридер читает смену текста, а не появление узла. */}
+      {/* The live region is always present: a screen reader reads a change of text, not
+          the appearance of a node. */}
       <div role="status" className="sr-only">
         {messages.tableSize(size)}
       </div>

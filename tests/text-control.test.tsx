@@ -6,10 +6,10 @@ import { TextControl } from "../src/components/inputs/TextControl.js";
 afterEach(cleanup);
 
 test("without the underlay the markup does not change by a single node", () => {
-  // Слот добавлен к СТАБИЛЬНОМУ компоненту, и цена такого изменения — обещание,
-  // что без слота он остаётся прежним. Обёртка-сетка не должна появляться у
-  // поля, которое о подложке не просило: на этом компоненте стоит половина
-  // кита, и лишний узел разъехался бы по всем снимкам сразу.
+  // The slot was added to a STABLE component, and the price of such a change is the promise
+  // that without the slot it stays as it was. A wrapper grid must not appear for a field
+  // that did not ask for an underlay: half the kit is built on this component, and an extra
+  // node would shift every snapshot at once.
   const { container } = render(<TextControl aria-label="Plain" />);
 
   const shell = container.firstElementChild!;
@@ -21,8 +21,8 @@ test("the underlay lies under the field, not after it", () => {
   const { container } = render(<TextControl aria-label="With an underlay" underlay="+7 (___)" />);
 
   const grid = container.querySelector(".grid")!;
-  // Порядок в разметке — это порядок отрисовки: подложка, оказавшись сверху,
-  // закрыла бы и значение, и каретку.
+  // Markup order is paint order: an underlay that ended up on top would cover both the
+  // value and the caret.
   expect(grid.children.length).toBe(2);
   expect(grid.firstElementChild!.textContent).toBe("+7 (___)");
   expect(grid.lastElementChild!.tagName).toBe("INPUT");
@@ -31,8 +31,8 @@ test("the underlay lies under the field, not after it", () => {
 test("the underlay is not read aloud", () => {
   render(<TextControl aria-label="With an underlay" underlay="+7 (___)" />);
 
-  // Слой под значением повторяет то, что уже сказано подписью и подсказкой.
-  // Прочитанный вслух, он дал бы «подчёркивание подчёркивание» посреди поля.
+  // The layer under the value repeats what the label and the hint already say. Read aloud,
+  // it would produce "underscore underscore" in the middle of the field.
   expect(screen.getByText("+7 (___)").getAttribute("aria-hidden")).toBe("true");
 });
 
@@ -42,26 +42,25 @@ test("the underlay matches the field in padding and typography", () => {
   const underlay = screen.getByText("+7 (___)");
   const field = container.querySelector("input")!;
 
-  // Выравнивание держится общим классом, а не подгонкой в пикселях: начало
-  // текста совпадает по построению и не разъедется при смене шкалы шрифта.
+  // Alignment is held by a shared class rather than by pixel fitting: the start of the text
+  // matches by construction and does not drift when the font scale changes.
   for (const cls of ["px-0", "py-[10px]", "text-[13px]", "leading-5"]) {
     expect(underlay.className).toContain(cls);
     expect(field.className).toContain(cls);
   }
-  // Пробелы маски не схлопываются — иначе остаток уехал бы влево.
+  // Mask spaces do not collapse: otherwise the remainder would shift to the left.
   expect(underlay.className).toContain("whitespace-pre");
 });
 
 test("the underlay neither intercepts the pointer nor gets selected", () => {
   render(<TextControl aria-label="With an underlay" underlay="+7 (___)" />);
 
-  // Подложка занимает ту же ячейку, что и поле. Перехватывай она указатель —
-  // поле перестало бы фокусироваться щелчком по собственному тексту.
+  // The underlay occupies the same cell as the field. If it caught the pointer, the field
+  // would stop focusing on a click on its own text.
   //
-  // Здесь проверяются КЛАССЫ, а не сам щелчок: в jsdom нет ни раскладки, ни
-  // загруженного CSS, поэтому `pointer-events` там ни на что не влияет и
-  // «сквозной» клик недоказуем в принципе. Настоящая проверка — в браузере,
-  // `tests-visual/interactions.spec.ts`.
+  // The CLASSES are checked here, not the click itself: jsdom has no layout and no loaded
+  // CSS, so `pointer-events` has no effect there, and a "click-through" cannot be proven at
+  // all. The real check is in the browser: `tests-visual/interactions.spec.ts`.
   const underlay = screen.getByText("+7 (___)");
   expect(underlay.className).toContain("pointer-events-none");
   expect(underlay.className).toContain("select-none");
@@ -74,20 +73,20 @@ test("the underlay lives alongside the slots", () => {
 
   const shell = container.firstElementChild!;
   expect(shell.className).toContain("flex");
-  // Сетка становится флекс-ребёнком и ужимается: без `min-w-0` длинное
-  // значение выдавило бы соседний слот за рамку.
+  // The grid becomes a flex child and shrinks: without `min-w-0` a long value would push
+  // the neighboring slot out of the frame.
   const grid = container.querySelector(".grid")!;
   expect(grid.className).toContain("min-w-0");
   expect(grid.className).toContain("flex-1");
 });
 
 /**
- * Счётчик и `trailing` стоят рядом, а не вытесняют друг друга.
+ * The counter and `trailing` sit side by side rather than displacing each other.
  *
- * Было `counter ?? trailing`: при `showCount` переданный `trailing` не попадал
- * в разметку вовсе и без предупреждения — кнопка очистки просто исчезала. На
- * `textarea` тот же вызов работал (счётчик уезжает вниз), и расхождение между
- * двумя формами одного компонента ничем не объяснялось.
+ * It used to be `counter ?? trailing`: with `showCount` the passed `trailing` did not
+ * reach the markup at all, and without a warning — the clear button simply disappeared.
+ * On `textarea` the same call worked (the counter moves down), and the mismatch between
+ * the two forms of one component went unexplained.
  */
 test("showCount does not swallow the trailing slot", () => {
   render(
@@ -106,11 +105,11 @@ test("showCount does not swallow the trailing slot", () => {
 });
 
 /*
-  СТУПЕНЬ ВЫСОТЫ — OLDSUI-16.
+  HEIGHT STEP — OLDSUI-16.
 
-  Здесь только то, что jsdom может сказать: класс отступа стоит там, где нужно,
-  и не стоит там, где не нужно. Сама высота (36 против 42) меряется в живом
-  браузере, в `tests-visual/interactions.spec.ts`: раскладки в jsdom нет.
+  Only what jsdom can tell is checked here: the padding class is where it should be and
+  is absent where it should not be. The height itself (36 vs. 42) is measured in a live
+  browser, in `tests-visual/interactions.spec.ts`: there is no layout in jsdom.
 */
 test("the sm step trades ten pixels of padding for seven, and md stays as it was", () => {
   const { rerender } = render(<TextControl aria-label="Search" size="sm" />);
@@ -131,8 +130,8 @@ test("the underlay keeps the step, or the mask remainder would slide off the typ
     <TextControl aria-label="Phone" size="sm" underlay={<span>+7 (___) ___</span>} />
   );
 
-  // Подложка и поле лежат в одной ячейке сетки и держат выравнивание общими
-  // отступами — разойтись им нельзя.
+  // The underlay and the field sit in the same grid cell and hold their alignment through
+  // shared paddings — they must not diverge.
   const underlay = container.querySelector("[aria-hidden='true']")!;
   expect(underlay.className).toContain("py-[7px]");
 });

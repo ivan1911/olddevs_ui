@@ -27,24 +27,24 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Живой перенос. «Delete records» выключен: показан, но не переносится —
- * скрыть его значило бы соврать про состав прав, а перенести — обойти запрет.
+ * A live transfer. "Delete records" is disabled: it is shown but cannot be moved.
+ * Hiding it would misstate the set of rights, and moving it would bypass the restriction.
  */
 export const Playground: Story = {
   args: { value: ["reports"] },
 };
 
 /**
- * Поиск в каждой колонке. Имя поля параметризовано подписью колонки: полей два,
- * и «Поиск» у обоих не различает их ничем.
+ * Search in each column. The field name is parameterized by the column label: there are
+ * two fields, and a shared "Search" label would not tell them apart.
  */
 export const Searchable: Story = {
   args: { value: ["reports", "billing"], searchable: true },
 };
 
 /**
- * Свои подписи колонок. Домен остаётся у потребителя — кит не знает, что
- * именно раскладывают по колонкам.
+ * Custom column labels. The domain stays with the consumer: the kit does not know
+ * what is being split between the columns.
  */
 export const CustomLabels: Story = {
   args: {
@@ -54,7 +54,7 @@ export const CustomLabels: Story = {
   },
 };
 
-/** Пустая целевая колонка говорит «пусто», а не показывает голую рамку. */
+/** An empty target column says "empty" instead of showing a bare frame. */
 export const Empty: Story = {
   args: { value: [] },
 };

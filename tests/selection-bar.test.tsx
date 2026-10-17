@@ -10,8 +10,8 @@ afterEach(() => {
 
 test("with zero selected there is no bar at all", () => {
   const { container } = render(<SelectionBar count={0}>actions</SelectionBar>);
-  // Правило принадлежит полосе, а не вызывающему: иначе каждое место писало бы
-  // свой `count > 0 &&`, и одно из них однажды его забыло бы.
+  // The rule belongs to the bar, not to the caller: otherwise every call site would write its own
+  // `count > 0 &&`, and one of them would eventually forget it.
   expect(container.firstChild).toBeNull();
 });
 
@@ -55,8 +55,8 @@ test("both slots render", () => {
     </SelectionBar>
   );
   expect(screen.getByRole("button", { name: "Delete" })).toBeTruthy();
-  // Правый край дублируется в разметке для узкого и широкого экрана — обе копии
-  // законны, важно, что он вообще есть.
+  // The end slot is duplicated in the markup for narrow and wide screens. Both copies are valid;
+  // what matters is that it exists at all.
   expect(screen.getAllByRole("button", { name: "Select all" }).length).toBeGreaterThan(0);
 });
 
@@ -68,9 +68,9 @@ test("a custom variable name affects both halves of stickiness", () => {
   );
   const bar = screen.getByRole("group");
 
-  // Дефект, найденный ревью: наблюдатель читал проп, а точка прилипания была
-  // зашита на `--topbar-h`. Полоса липла к одной панели, а углы срезала по
-  // другой — то есть проп, объявленный контрактом, работал наполовину.
+  // A defect found in review: the observer read the prop, but the sticky point was hard-coded to
+  // `--topbar-h`. The bar stuck to one panel and was clipped by the other, so the prop that the
+  // contract declares worked only halfway.
   expect(bar.style.top).toBe("var(--panel-h, 0px)");
   expect(container.querySelector('[aria-hidden="true"]')).toBeTruthy();
 });

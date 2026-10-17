@@ -19,22 +19,22 @@ import {
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 import { testAskTool, testPickerTool, testRemarkTool } from "./editor-test-tools.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
 beforeAll(loadLazyBuiltins);
 
-// Карточка у текста грузится лениво (`RichTextEditor.tsx`): чанк прогрет заранее.
+// The Text card loads lazily (`RichTextEditor.tsx`), so its chunk is warmed up in advance.
 beforeAll(() => import("../src/editor/ui/TextCard.js"));
 
 afterEach(cleanup);
 
 /**
- * Стекло на всплывающих поверхностях Редактора (OLDSUI-118): плавающие
- * панели, меню выделения, списки меню и поповеры — полупрозрачная подложка
- * своей поверхности с размытием фона. Те же `Menu` и `Popover` вне Редактора
- * остаются сплошными.
+ * Glass on the Editor's floating surfaces (OLDSUI-118): the floating Toolbar,
+ * the Bubble menu, menu lists and popovers get a semi-transparent background of
+ * their own surface with a blurred backdrop. The same `Menu` and `Popover`
+ * outside the Editor stay solid.
  *
- * jsdom не считает стили, поэтому проверяется класс поверхности: что из него
- * выходит на экране, показывают истории и визуальные снимки.
+ * jsdom does not compute styles, so the test checks the surface class: what
+ * comes out of it on screen is shown by the stories and visual snapshots.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -46,13 +46,14 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, editor };
 }
 
-/** Сплошные подложки, которые стекло заменяет: остаться рядом с ним они не должны. */
+/** Solid backgrounds that Glass replaces: they must not stay next to it. */
 const SOLID = ["bg-bg-1", "bg-surface-elevated", "bg-surface-inverse"];
 
 /**
- * Классы поверхности целиком: подложка, размытие, сплошной фолбэк — и ни
- * одной сплошной подложки без условия. Оставь `cn` обе, исход решал бы
- * порядок правил в CSS, а не разметка.
+ * The surface's classes as a whole: the background, the blur, the solid
+ * fallback, and not a single solid background without a condition. Keep both
+ * `cn` calls: otherwise the outcome would depend on the order of rules in CSS,
+ * not on the markup.
  */
 function expectSurface(node: Element | null, surface: string) {
   expect(node).not.toBeNull();
@@ -62,7 +63,7 @@ function expectSurface(node: Element | null, surface: string) {
   for (const name of SOLID) expect(classes).not.toContain(name);
 }
 
-/** Панель всплывающего списка: узел попоувера, в котором лежит меню. */
+/** Popover panel of a list: the popover node that holds the menu. */
 const panelOf = (menu: HTMLElement) => menu.closest("[data-trigger]");
 
 test("the floating toolbar sits on the glass panel surface", async () => {
@@ -71,7 +72,7 @@ test("the floating toolbar sits on the glass panel surface", async () => {
   act(() => void editor.commands.setTextSelection({ from: 1, to: 6 }));
 
   const toolbar = await screen.findByRole("toolbar", { name: "Formatting" });
-  // Классы — на узле `BubbleMenu`, обёртке Панели.
+  // The classes sit on the `BubbleMenu` node, the wrapper of the Toolbar.
   expectSurface(toolbar.closest('[class*="backdrop-blur"]'), GLASS_PANEL_CLASS);
 });
 
@@ -102,8 +103,8 @@ test.each([
   ["Link", "Hello", "Formatting"],
   ["Emoji", null, "Formatting"],
   ["Keyboard shortcuts", null, "Formatting"],
-  // Поповеры-сетки цвета (OLDSUI-153) — то же стекло поповеров Редактора.
-  // «Цвет» — в меню выделения, «Маркер» — на Панели (OLDSUI-154).
+  // Color-grid popovers (OLDSUI-153) use the same Glass as the Editor's popovers.
+  // "Color" is in the Bubble menu, "Highlight" is on the Toolbar (OLDSUI-154).
   ["Color: Default", "Hello", "Selection formatting"],
   ["Highlight: None", null, "Formatting"],
 ])("the %s popover opens on the glass panel surface", async (name, selection, toolbar) => {
@@ -119,9 +120,9 @@ test.each([
 });
 
 /*
-  Поверхности эпика OLDSUI-98 — всплывают над Документом так же, как
-  встроенные, и лежат на том же стекле: рамка поповера записи своего
-  Инструмента (у кнопки и у каретки) и Карточка у текста.
+  Surfaces of the OLDSUI-98 epic float above the Document just like the
+  built-in ones and sit on the same Glass: the popover frame of a custom Tool
+  entry (at the button and at the caret) and the Text card.
 */
 test("the popover of a custom tool button opens on the glass panel surface", async () => {
   renderEditor({ tools: [...RICH_TEXT_PRESETS.full, testPickerTool] });
@@ -142,7 +143,7 @@ test("the popover of a custom insert item opens at the caret on the glass panel 
 });
 
 test("the text card opens on the glass panel surface", async () => {
-  // Карточка — ленивый чанк: `render` в `act` дожидается его.
+  // The Text card is a lazy chunk: `render` inside `act` waits for it.
   const ref = createRef<RichTextEditorHandle>();
   await act(async () => {
     render(
@@ -207,10 +208,11 @@ test("every glass surface turns solid when transparency is reduced or contrast r
 });
 
 /*
-  На iOS стекло не держится (OLDSUI-147): в Safari на iOS 27 меню Редактора
-  вышли без подложки — пункты легли на текст Документа в полную силу.
-  `-webkit-touch-callout` понимает только WebKit на iOS (и Chrome там же —
-  это тот же WebKit), поэтому условие ловит ровно его и не трогает десктоп.
+  Glass does not hold on iOS (OLDSUI-147): in Safari on iOS 27 the Editor's
+  menus came out without a background, and the items sat over the Document's
+  text at full strength. `-webkit-touch-callout` is understood only by WebKit
+  on iOS (Chrome there is the same WebKit), so the condition matches exactly
+  that engine and leaves the desktop alone.
 */
 test.each([
   ["panel", GLASS_PANEL_CLASS, "bg-bg-1"],

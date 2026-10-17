@@ -9,25 +9,25 @@ story: src/components/app-shell/AppShell.stories.tsx
 
 # AppShell
 
-## Кратко для AI
+## Summary for AI
 
-Каркас приложения: навигация слева, шапка сверху, содержимое в `<main>`,
-опциональные правая область и нижняя панель. Отвечает за ссылку «к содержимому» (skip-ссылку),
-мобильный режим (навигация уезжает в `Drawer`) и возврат фокуса при смене
-маршрута. О маршрутизаторе не знает: смену экрана обозначает проп `routeKey`.
+The application shell: navigation on the left, a header on top, content in `<main>`,
+an optional right area and a bottom bar. It handles the skip link,
+the mobile mode (navigation moves into a `Drawer`) and focus return on route
+change. It knows nothing about the router: the `routeKey` prop marks a screen change.
 
-## Когда использовать
+## When to use
 
-- Страница приложения с постоянной навигацией: админка, кабинет, консоль.
-- Везде, где нужны landmark'и, skip-ссылка и предсказуемый фокус при переходах.
+- An application page with permanent navigation: an admin panel, an account area, a console.
+- Anywhere you need landmarks, a skip link and predictable focus on navigation.
 
-## Когда не использовать
+## When not to use
 
-- Для отдельной страницы без навигации — каркас там ничего не даёт.
-- Для раскладки внутри страницы (две колонки, сетка карточек) — это обычный CSS.
-- Для модального сценария — это `Dialog` или `Drawer`.
+- For a standalone page without navigation — the shell adds nothing there.
+- For layout inside a page (two columns, a card grid) — that is plain CSS.
+- For a modal scenario — use `Dialog` or `Drawer`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { AppShell, NavGroup, NavItem, SideNav, TopBar } from "@olddevs/ui";
@@ -36,8 +36,8 @@ import { AppShell, NavGroup, NavItem, SideNav, TopBar } from "@olddevs/ui";
   routeKey={pathname}
   sidebar={
     <SideNav>
-      <NavGroup label="Работа">
-        <NavItem label="Дашборд" icon={<DashboardIcon />} active asChild>
+      <NavGroup label="Work">
+        <NavItem label="Dashboard" icon={<DashboardIcon />} active asChild>
           <Link href="/dashboard" />
         </NavItem>
       </NavGroup>
@@ -49,124 +49,123 @@ import { AppShell, NavGroup, NavItem, SideNav, TopBar } from "@olddevs/ui";
 </AppShell>;
 ```
 
-## Пропы
+## Props
 
-| Проп                 | Умолчание         | Назначение                                                                                                                                      |
-| -------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sidebar`            | —                 | Навигация слева. На узких экранах уезжает в `Drawer`.                                                                                           |
-| `header`             | —                 | Шапка. Обычно `TopBar`.                                                                                                                         |
-| `banners`            | —                 | Сообщения уровня приложения над шапкой. Обычно `Banner`.                                                                                        |
-| `aside`              | —                 | Правая область. Безымянный слот без ручки размера.                                                                                              |
-| `bottomBar`          | —                 | Нижняя панель на узких экранах, обычно `MobileTabBar`. Прилипание к нижнему краю экрана, скрытие на `md` и отступ под вырез берёт на себя слот. |
-| `bottomBarHeightVar` | `"--bottombar-h"` | Имя переменной, в которую слот публикует свою высоту. `null` отключает публикацию.                                                              |
-| `routeKey`           | —                 | Ключ маршрута. Когда он меняется, фокус переходит в `<main>`, а ящик навигации закрывается.                                                     |
+| Prop                 | Default           | Purpose                                                                                                                                                   |
+| -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidebar`            | —                 | Navigation on the left. On narrow screens it moves into a `Drawer`.                                                                                       |
+| `header`             | —                 | The header. Usually `TopBar`.                                                                                                                             |
+| `banners`            | —                 | Application-level messages above the header. Usually `Banner`.                                                                                            |
+| `aside`              | —                 | The right area. An unnamed slot with no resize handle.                                                                                                    |
+| `bottomBar`          | —                 | The bottom bar on narrow screens, usually `MobileTabBar`. The slot handles sticking to the bottom edge of the screen, hiding at `md` and the notch inset. |
+| `bottomBarHeightVar` | `"--bottombar-h"` | The name of the variable the slot publishes its height to. `null` switches publishing off.                                                                |
+| `routeKey`           | —                 | The route key. When it changes, focus moves to `<main>` and the navigation drawer closes.                                                                 |
 
-## Баннеры стоят над шапкой и не липнут
+## Banners sit above the header and are not sticky
 
-Слот `banners` кладёт сообщения уровня приложения в колонку содержимого, над
-шапкой. Боковая навигация при этом остаётся во всю высоту: разворачивать каркас
-из строки в колонку ради узла, который бывает пустым, дороже, чем польза от
-баннера поверх боковой навигации.
+The `banners` slot puts application-level messages in the content column, above
+the header. The side navigation still spans the full height: turning the shell
+from a row into a column for a node that is often empty costs more than a banner
+over the side navigation is worth.
 
-**Липкости у баннеров нет, и это решение.** Шапка остаётся на `top: 0`, а
-`--topbar-h` продолжает означать ровно её высоту; контракт липкости
-(ADR-0016) и
-его публикация шапкой
-(ADR-0019) не
-трогаются. Липкая стопка потребовала бы второй переменной смещения, и всё, что
-сегодня считает от `--topbar-h` (`SelectionBar`, липкие заголовки колонок
-`Table`), обязано было бы прибавлять высоту стопки. Разбор —
+**Banners are not sticky, and that is deliberate.** The header stays at `top: 0`, and
+`--topbar-h` keeps meaning exactly its height; the sticky-offset contract
+(ADR-0016) and
+the header publishing it
+(ADR-0019) are
+untouched. A sticky stack would need a second offset variable, and everything that
+currently computes its offset from `--topbar-h` (`SelectionBar`, the sticky column
+headers of `Table`) would have to add the stack's height. The analysis is in
 ADR-0027.
 
-Постоянство сообщения держится на том, что баннер не исчезает из разметки, а не
-на том, что он всегда в кадре: прокрутив список, пользователь его не видит, но
-вернувшись наверх — видит снова.
+A message persists because the banner never leaves the markup,
+not because it is always in view: after scrolling a list the user does not see it,
+but sees it again on returning to the top.
 
-Очереди у слота нет: порядок и состав баннеров задаёт потребитель.
+The slot has no queue: the consumer decides the order and set of banners.
 
-## Решения, которые видно в API
+## Decisions visible in the API
 
-**Скролл остаётся у документа, а не у `<main>`.** Липкие элементы кита,
-например `SelectionBar`, отсчитывают смещение от высоты шапки, и если бы
-содержимое прокручивалось в собственном контейнере, он встал бы с просветом
-ровно в эту высоту. Контракт
-ADR-0016
-продолжает работать без оговорок.
+**Scrolling stays with the document, not with `<main>`.** The kit's sticky elements,
+such as `SelectionBar`, measure their offset from the header height, and
+if the content scrolled in its own container, it would sit with a gap of exactly that
+height. The
+ADR-0016 contract
+keeps working without caveats.
 
-**Корень позиционирован.** При фокусе skip-ссылка получает `focus:absolute`, а
-абсолютное позиционирование отсчитывается от ближайшего позиционированного
-предка: без `relative` на корне ссылка вложенного каркаса оказалась бы не над
-ним, а в другом месте страницы.
+**The root is positioned.** On focus the skip link gets `focus:absolute`, and
+absolute positioning is resolved against the nearest positioned ancestor: without `relative` on
+the root, the link of a nested shell would appear not above that shell but somewhere else on the page.
 
-**Мобильный режим переключает CSS, а не `matchMedia`.** Колонка навигации скрыта
-классом, ящик показан классом. `matchMedia` в SSR даёт неверный первый кадр, и
-пользователь видит скачок раскладки после гидратации.
+**Mobile mode switches CSS, not `matchMedia`.** The navigation column is hidden
+by a class, and the drawer is shown by a class. `matchMedia` produces the wrong first frame in SSR, and
+the user sees a layout jump after hydration.
 
-**Кнопку открытия навигации `TopBar` получает сам** — через контекст каркаса, а
-не слотом: шапку каркас получает уже собранной потребителем и вложить в неё
-ничего не может. Вне `AppShell` кнопки у шапки нет.
+**`TopBar` gets the button that opens the navigation automatically** — through the shell's context, not
+through a slot: the shell receives the header already assembled by the consumer and cannot put
+anything into it. Outside `AppShell` the header has no such button.
 
-**Если шапка не из кита, берите `useAppShell`.** Без `useAppShell` навигация
-ниже `md` недостижима: колонка скрыта, ящик открывать некому, предупреждения
-нет.
+**If your header is not the kit's, use `useAppShell`.** Without `useAppShell`, navigation below
+`md` is unreachable: the column is hidden, nobody can open the drawer,
+and there is no warning.
 
 ```tsx
 import { useAppShell } from "@olddevs/ui";
 
 function OwnHeader() {
   const { openNavigation } = useAppShell();
-  return <header>{openNavigation ? <button onClick={openNavigation}>Меню</button> : null}</header>;
+  return <header>{openNavigation ? <button onClick={openNavigation}>Menu</button> : null}</header>;
 }
 ```
 
-`openNavigation` появляется только когда каркасу передан `sidebar`; проверка на
-наличие — часть контракта, а не защита от `undefined`.
+`openNavigation` appears only when `sidebar` is passed to the shell; the check for
+its presence is part of the contract, not a guard against `undefined`.
 
-**Правая область — без имени и без ручки размера.** Слот `aside` — просто место
-справа от `<main>`: размер в нём не меняется. Ручку размера даёт отдельный
-компонент [`SplitPanel`](split-panel.md)
+**The right area has no name and no resize handle.** The `aside` slot is just a place
+to the right of `<main>`: it cannot be resized. A resize handle comes from a separate
+component, [`SplitPanel`](split-panel.md)
 (ADR-0018).
 
-**Слот нижней панели даёт всё, что принадлежит каркасу:** прилипание к нижнему
-краю экрана, скрытие на `md` и шире, высоту в потоке и отступ
-`env(safe-area-inset-bottom)` под вырез экрана. Поэтому `MobileTabBar`
-([страница](mobile-tab-bar.md)) своих `fixed`, `md:hidden` и отступа не несёт, а
-сторонняя панель в слоте не должна их повторять: отступ вышел бы двойным.
+**The bottom bar slot provides everything that belongs to the shell:** it sticks the bar to the bottom
+edge of the screen, hides it at `md` and wider, reserves its height in the document flow and adds the
+`env(safe-area-inset-bottom)` inset for the screen notch. This is why `MobileTabBar`
+([page](mobile-tab-bar.md)) carries no `fixed`, `md:hidden` or padding of its own, and
+a third-party bar in the slot must not repeat them: the inset would be doubled.
 
-**Слот публикует свою высоту — `--bottombar-h`.** Как `TopBar` публикует
-`--topbar-h`, только для нижнего края: каркас измеряет обёртку слота (вместе с
-рамкой и отступом под вырез экрана) и пишет значение в корень документа. Всё,
-что липнет к нижнему краю экрана, отсчитывает отступ от этой высоты и встаёт над
-панелью, а не под ней: `ContextualSaveBar` и `Toaster` читают её сами (проп
-`offsetVar`), а для ваших липких элементов подойдёт
+**The slot publishes its height — `--bottombar-h`.** Just as `TopBar` publishes
+`--topbar-h`, but for the bottom edge: the shell measures the slot wrapper (with its
+border and the screen notch inset) and writes the value to the document root.
+Whatever sticks to the bottom edge of the screen computes its offset from this height and sits above
+the bar, not under it: `ContextualSaveBar` and `Toaster` read it themselves (the
+`offsetVar` prop), and for your own sticky elements use
 `bottom: var(--bottombar-h, 0px)`.
 
-На `md` и шире панель скрыта, и значение равно `0px`; без слота переменной нет, а
-компоненты, которые её читают, берут запасное `0px`, поэтому вид на широком
-экране не меняется. Имя задаёт проп `bottomBarHeightVar` — по той же причине, что
-`heightVar` у шапки: кит не знает, сколько в документе каркасов; `null` отключает
-публикацию.
+At `md` and wider the bar is hidden and the value is
+`0px`; without the slot the variable does not exist, and the components that read it use the `0px` fallback,
+so nothing changes on a wide screen. The name is set by the `bottomBarHeightVar` prop, for the
+same reason `TopBar` has `heightVar`: the kit does not know how many shells the
+document holds; `null` switches publishing off.
 
-## Требования к потребителю
+## Requirements for the consumer
 
-**Передавайте `routeKey` всегда.** Без него возврата фокуса при переходе не
-будет, и это **молчаливая деградация**: ни ошибки, ни предупреждения не
-появится — фокус просто останется там, где был, и клавиатурный пользователь
-после перехода продолжит с середины прежней страницы.
+**Always pass `routeKey`.** Without it there is no focus return on navigation, and this is a
+**silent degradation**: no error and no warning
+appears — focus just stays where it was, and a keyboard user
+continues from the middle of the previous page after navigating.
 
-На загрузке страницы фокус не трогается — в том числе под `StrictMode`, где эффекты
-в dev отрабатывают дважды. При переходе он уходит в `<main>` без прокрутки к нему:
-прокрутку задаёт маршрутизатор, а своя увела бы верх `<main>` под липкую шапку.
+Focus is left alone on page load, including under `StrictMode`, where effects run twice in dev.
+On navigation it moves to `<main>` without scrolling to it: the router sets the scroll position,
+and a scroll of its own would tuck the top of `<main>` under the sticky header.
 
-**`TooltipProvider` нужен, если навигация схлопывается** — требование
-`NavItem`, см. [SideNav](side-nav.md).
+**`TooltipProvider` is needed if the navigation collapses** — a requirement of
+`NavItem`, see [SideNav](side-nav.md).
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/app-shell/AppShell.tsx`.
-- Тесты: `tests/app-shell.test.tsx` — landmark'и, skip-ссылка как первый
-  фокусируемый элемент, слот нижней панели с safe-area и без него, возврат
-  фокуса по ключу (и его отсутствие на первой отрисовке, в том числе под `StrictMode`; переход без прокрутки), кнопка навигации в
-  шапке.
-- История: `src/components/app-shell/AppShell.stories.tsx` — история `AdminEntityList`
-  без локальных примитивов каркаса.
+- Implementation: `src/components/app-shell/AppShell.tsx`.
+- Tests: `tests/app-shell.test.tsx` — landmarks, the skip link as the first
+  focusable element, the bottom bar slot with and without the safe area, focus
+  return by key (and its absence on first render, including under `StrictMode`; no scroll on navigation), the navigation button in the
+  header.
+- Story: `src/components/app-shell/AppShell.stories.tsx` — the `AdminEntityList`
+  story without local shell primitives.

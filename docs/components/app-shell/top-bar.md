@@ -9,26 +9,27 @@ story: src/components/app-shell/TopBar.stories.tsx
 
 # TopBar
 
-## Кратко для AI
+## Summary for AI
 
-Шапка приложения: слоты бренда, поиска и действий, липкость, полупрозрачная
-подложка на токене темы. Публикует **свою измеренную высоту** в CSS-переменную
-(по умолчанию `--topbar-h`), которую читает `useStickyOffset`. Поэтому
-`SelectionBar` встаёт вплотную под шапку без единой строки кода у потребителя.
+The application header: brand, search and action slots, sticky positioning, a translucent
+background on a theme token. It publishes **its own measured height** to a CSS variable
+(`--topbar-h` by default), which `useStickyOffset` reads. This is why
+`SelectionBar` sits flush under the header without a single line of code from
+the consumer.
 
-## Когда использовать
+## When to use
 
-- Шапка приложения: бренд, глобальный поиск, уведомления, меню пользователя.
-- Внутри `AppShell` или самостоятельно — шапка не требует каркаса.
+- The application's top bar: brand, global search, notifications, the user menu.
+- Inside `AppShell` or on its own — the header does not require the shell.
 
-## Когда не использовать
+## When not to use
 
-- Для заголовка страницы с описанием и действиями — это `PageHeader`.
-- Для действий над выбранными строками — это `SelectionBar`; для заголовка,
-  счётчика, фильтров и настроек таблицы — `TableToolbar` (с 2.2.0).
-- Для шапки диалога — это `ModalHeader`.
+- For a page title with a description and actions — that is `PageHeader`.
+- For actions on selected rows — that is `SelectionBar`; for the title, counter,
+  filters and settings of a table — `TableToolbar` (since 2.2.0).
+- For a dialog header — that is `ModalHeader`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Avatar, Button, SearchControl, TopBar } from "@olddevs/ui";
@@ -36,65 +37,66 @@ import { BellIcon } from "@olddevs/ui/icons";
 
 <TopBar
   brand={<Logo />}
-  search={<SearchControl label="Поиск" value={q} onChange={setQ} />}
+  search={<SearchControl label="Search" value={q} onChange={setQ} />}
   actions={
     <>
-      <Button variant="ghost" iconOnly icon={<BellIcon />} aria-label="Уведомления" />
-      <Avatar name="ИП" />
+      <Button variant="ghost" iconOnly icon={<BellIcon />} aria-label="Notifications" />
+      <Avatar name="JD" />
     </>
   }
 />;
 ```
 
-## Пропы
+## Props
 
-| Проп        | Умолчание      | Назначение                                                      |
-| ----------- | -------------- | --------------------------------------------------------------- |
-| `brand`     | —              | Крайний левый слот: логотип, название продукта.                 |
-| `search`    | —              | Центральный слот. Занимает свободное место; нет — место пустое. |
-| `actions`   | —              | Действия справа: уведомления, настройки, меню пользователя.     |
-| `children`  | —              | Дополнительное содержимое шапки: после слота `actions`.         |
-| `heightVar` | `"--topbar-h"` | Имя переменной с высотой. `null` отключает публикацию.          |
-| `label`     | каталог        | Доступное имя шапки.                                            |
+| Prop        | Default         | Purpose                                                                |
+| ----------- | --------------- | ---------------------------------------------------------------------- |
+| `brand`     | —               | The leftmost slot: a logo, the product name.                           |
+| `search`    | —               | The central slot. Takes the free space; if absent, the space is empty. |
+| `actions`   | —               | Actions on the right: notifications, settings, the user menu.          |
+| `children`  | —               | Extra header content: placed after the `actions` slot.                 |
+| `heightVar` | `"--topbar-h"`  | The name of the height variable. `null` turns publishing off.          |
+| `label`     | message catalog | The header's accessible name.                                          |
 
-## Контракт высоты
+## Height contract
 
-Шапка измеряет себя `ResizeObserver` и пишет высоту в
-`document.documentElement` — туда, где её ищет `useStickyOffset`. Наблюдатель, а
-не разовый замер: высота меняется от брейкпоинта и от переноса содержимого
-слотов, и липкая полоса под шапкой обязана переезжать вместе с ней.
+The header measures itself with a `ResizeObserver` and writes the height to
+`document.documentElement` — where `useStickyOffset` looks for it. An observer,
+not a one-off measurement: the height changes with the breakpoint and with the
+wrapping of slot content, and the sticky bar under the header has to move
+along with it.
 
-**Это не вариант «кит находит и измеряет шапку»** — тот, что отвергнут в
+**This is not the option "the kit finds and measures the header"** — the one rejected in
 ADR-0016.
-Там киту пришлось бы опознавать по селектору или атрибуту элемент, которого он не создавал; здесь
-компонент измеряет себя, и знание «какой элемент в этом приложении шапка» у кита
-не появляется. Разбор —
+There the kit would have to recognize an element it does not own by a selector or attribute; here
+the component measures itself, and the kit never learns which element in
+this application is the header. The analysis is in
 ADR-0019.
 
-**Уходящая шапка не снимает значение, которое не она опубликовала.** Размонтируясь, она убирает
-переменную только если та всё ещё её: две шапки с одним именем сменяют друг
-друга при переходе между экранами, и иначе первая снимала бы значение, уже
-опубликованное второй.
+**A departing header does not remove a value it did not publish.** When it unmounts, it removes
+the variable only if the variable is still its own: two headers with the same name replace
+each other when navigating between screens, and otherwise the first would remove a value already
+published by the second.
 
-**Две шапки в одном документе — реальный случай** (шапка приложения и шапка
-встроенного виджета). Они молча перезаписывали бы переменную друг друга: липкие
-полосы сдвинулись бы на высоту другой шапки, причём проявилось бы это не
-ошибкой, а сбитой раскладкой. Поэтому второй шапке задают другое имя переменной
-либо выключают публикацию:
+**Two headers in one document is a real case** (an application header and the header of
+an embedded widget). They would silently overwrite each other's variable: the sticky
+bars would shift to the other header's height, and it would show up not as an error but as a broken
+layout. So the second header gets a different variable name, or publishing
+is turned off:
 
 ```tsx
 <TopBar heightVar="--widget-topbar-h" />
 <TopBar heightVar={null} />
 ```
 
-**Внешняя шапка продолжает работать.** Приложение с шапкой не из кита, без `TopBar`,
-публикует переменную само, как и до 2.1.0 — контракт ADR-0016 не тронут.
+**An external header keeps working.** An application with a non-kit header and without `TopBar`
+publishes the variable itself, as before 2.1.0 — the ADR-0016 contract is untouched.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/app-shell/TopBar.tsx`.
-- Тесты: `tests/top-bar.test.tsx` — landmark и его имя, публикация и снятие
-  переменной, заданное потребителем имя переменной, отключение публикации.
-- В живом браузере: `tests-visual/interactions.spec.ts` — опубликованное
-  значение совпадает с измеренной высотой, полоса встаёт вплотную.
-- История: `src/components/app-shell/TopBar.stories.tsx`.
+- Implementation: `src/components/app-shell/TopBar.tsx`.
+- Tests: `tests/top-bar.test.tsx` — the landmark and its name, publishing and removing the
+  variable, a custom variable name, turning publishing off.
+- In a live browser: `tests-visual/interactions.spec.ts` — the published
+  value matches the measured height, and the bar sits flush.
+- Story: `src/components/app-shell/TopBar.stories.tsx`.

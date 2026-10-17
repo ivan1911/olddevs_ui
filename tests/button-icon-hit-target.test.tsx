@@ -7,14 +7,13 @@ import { DragHandleIcon } from "../src/icons.js";
 afterEach(cleanup);
 
 /*
-  ИКОНКА ВНУТРИ КНОПКИ НЕ ДОЛЖНА БЫТЬ ОТДЕЛЬНОЙ ЦЕЛЬЮ ПОПАДАНИЯ.
+  AN ICON INSIDE A BUTTON MUST NOT BE A SEPARATE HIT TARGET.
 
-  jsdom событий попадания не моделирует, поэтому здесь проверяется правило, а
-  не поведение: сторож против того, чтобы класс сняли как «мёртвый». Живой
-  дефект, ради которого правило заведено, воспроизводился на строке
-  `EditableList` с действием — щелчок в рисунок иконки давал и кнопку, и
-  действие строки, потому что `event.target` был `<svg>`, а react-aria
-  проверяет цель щелчка, не обходя предков.
+  jsdom does not model hit testing, so this checks the rule, not the behavior: a guard
+  against the class being removed as "dead". The real defect the rule was written for
+  reproduced on an `EditableList` row with an action: a click on the icon's drawing gave
+  both the button and the row action, because `event.target` was the `<svg>`, and
+  react-aria checks the click target without walking up the ancestors.
 */
 test("the icon inside a button is not a hit target of its own", () => {
   render(<Button icon={<DragHandleIcon size={12} />} iconOnly aria-label="Drag" />);

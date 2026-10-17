@@ -1,30 +1,27 @@
 /**
- * HTML Документа → читаемый текст для HTML-режима Редактора.
+ * The Document's HTML → readable text for the Editor's Source mode.
  *
- * ПРАВИЛО ОДНО И ПО СТРУКТУРЕ, А НЕ ПО СПИСКУ БЛОКОВ. Элемент, среди детей
- * которого есть не-строчный элемент и нет текста, раскладывается: открывающий
- * тег на своей строке, каждый ребёнок — на своей строке с отступом в два
- * пробела, закрывающий тег — на своей. Остальное (абзац, заголовок, подпись,
- * `pre`) остаётся одной строкой, как было в HTML. Так верхний уровень,
- * пункты списков, строки и ячейки таблиц, колонки Раскладки и части `figure`
- * раскладываются без перечня, и следующий контейнер Блоков (Обёртка,
- * `div data-block`) — тоже, без правки этого модуля.
+ * ONE RULE FOR STRUCTURE, NOT FOR A LIST OF BLOCKS. An element that has a non-phrasing child and no
+ * text among its children is laid out: the opening tag on its own line, each child on its own line
+ * indented by two spaces, and the closing tag on its own line. Everything else (a paragraph, a
+ * heading, a caption, a `pre`) stays on one line, as it was in the HTML. This way the top level,
+ * list items, table rows and cells, the columns of a Column layout, and parts of a `figure` are
+ * laid out without a list, and so is the next Block container (a Wrapper, a `div data-block`),
+ * without changing this module.
  *
- * «Строчный» — содержимое фразы по HTML (`strong`, `a`, `img`, `br`…): этот
- * список задаёт язык разметки, а не Схема Редактора, и с новыми Блоками не
- * меняется.
+ * "Phrasing" means phrasing content in HTML (`strong`, `a`, `img`, `br`…). This list sets the
+ * markup language, not the Editor's Schema, and it does not change with new Blocks.
  *
- * БЕЗ ПОТЕРЬ. Пробелы и переводы строк добавляются только между детьми
- * раскладываемого элемента — там, где текста нет и разбор Схемой пробелы
- * пропускает. Содержимое строки берётся из исходной строки как есть, `pre` не
- * трогается вовсе. Поэтому разбор результата Схемой даёт тот же Документ, что
- * исходный HTML. На разметке, которую разбор не понял (незакрытый тег —
- * не наш сериализатор), функция возвращает строку без изменений: лучше
- * неотформатированный текст, чем изменённый.
+ * NO LOSS. Spaces and line breaks are added only between the children of the element being laid
+ * out, where there is no text and the Schema parse skips spaces. A line's content is taken from
+ * the source string as-is, and `pre` is not touched at all. So parsing the result with the Schema
+ * gives the same Document as the source HTML. For markup the parse does not understand (an
+ * unclosed tag, which is not our serializer's output), the function returns the string unchanged:
+ * unformatted text is better than changed text.
  *
- * Пустой Документ — пустая строка (его HTML уже `""`).
+ * An empty Document gives an empty string (its HTML is already `""`).
  *
- * Модуль серверно-безопасен: строки, без DOM, без React и без движка.
+ * The module is safe on the server: strings only, no DOM, no React, and no engine.
  */
 export function formatSourceHtml(html: string): string {
   const root = parse(html);
@@ -35,10 +32,13 @@ export function formatSourceHtml(html: string): string {
     .join("\n");
 }
 
-/** Элементы без закрывающего тега (HTML, «void elements»). Списки — строкой: в сборке короче. */
+/**
+ * Elements without a closing tag (HTML "void elements"). The list is a string literal, which is
+ * shorter in the build.
+ */
 const VOID = new Set("area base br col embed hr img input link meta source track wbr".split(" "));
 
-/** Содержимое фразы (HTML, «phrasing content»): такой ребёнок не делает родителя контейнером. */
+/** Phrasing content in HTML: such a child does not make its parent a container. */
 const PHRASING = new Set(
   (
     "a abbr b bdi bdo br button cite code data del dfn em i img input ins kbd label mark q s " +
@@ -46,7 +46,7 @@ const PHRASING = new Set(
   ).split(" ")
 );
 
-/** Содержимое как есть: внутри пробелы — часть текста. */
+/** Content as-is: whitespace inside is part of the text. */
 const VERBATIM = new Set(["pre", "textarea", "script", "style"]);
 
 interface Text {
@@ -58,10 +58,13 @@ interface Text {
 interface Element {
   kind: "element";
   name: string;
-  /** Начало открывающего тега и конец закрывающего (или открывающего у пустого). */
+  /**
+   * Start of the opening tag and end of the closing one (or of the opening one, for an empty
+   * element).
+   */
   start: number;
   end: number;
-  /** Конец открывающего тега и начало закрывающего. */
+  /** End of the opening tag and start of the closing one. */
   openEnd: number;
   closeStart: number;
   children: Child[];
@@ -70,9 +73,9 @@ interface Element {
 type Child = Text | Element;
 
 /**
- * Разбор в дерево позиций. Это не парсер HTML вообще, а разбор того, что
- * отдаёт сериализатор движка: теги закрыты, атрибуты в кавычках. Комментарии
- * и всё, что не тег, считаются текстом — их строка не раскладывается.
+ * Parse into a tree of positions. This is not a general HTML parser, only a parse of what the
+ * engine's serializer outputs: tags are closed, attributes are quoted. Comments and everything that
+ * is not a tag count as text, and their line is not laid out.
  */
 function parse(html: string): Element | null {
   const root: Element = {
@@ -97,7 +100,7 @@ function parse(html: string): Element | null {
 
   while (index < html.length) {
     const top = stack[stack.length - 1]!;
-    // Внутри `pre` и подобных ищется только свой закрывающий тег.
+    // Inside `pre` and similar elements, only their own closing tag is searched for.
     if (VERBATIM.has(top.name)) {
       const close = lower.indexOf(`</${top.name}`, index);
       if (close < 0) return null;
@@ -143,7 +146,7 @@ function parse(html: string): Element | null {
   return stack.length === 1 ? root : null;
 }
 
-/** Конец тега, начатого в `from`: первая `>` вне кавычек значения атрибута. */
+/** End of the tag started at `from`: the first `>` outside an attribute value's quotes. */
 function endOfTag(html: string, from: number): number {
   let quote: string | null = null;
   for (let index = from + 1; index < html.length; index += 1) {
@@ -159,12 +162,15 @@ function endOfTag(html: string, from: number): number {
   return -1;
 }
 
-/** Пробелы между детьми контейнера: разбор Схемой их пропускает, при раскладке они заменяются отступом. */
+/**
+ * Spaces between a container's children. The Schema parse skips them, and during layout they are
+ * replaced by indentation.
+ */
 function isBlank(html: string, child: Child): boolean {
   return child.kind === "text" && html.slice(child.start, child.end).trim() === "";
 }
 
-/** Раскладывается ли элемент: есть не-строчный ребёнок и нет текста. */
+/** Whether an element is laid out: it has a non-phrasing child and no text. */
 function expands(html: string, element: Element): boolean {
   if (VERBATIM.has(element.name)) return false;
   let block = false;

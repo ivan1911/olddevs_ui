@@ -17,8 +17,8 @@ describe("formatMask", () => {
   });
 
   test("the mask tail is not shown ahead of time", () => {
-    // Иначе пустое поле показывало бы «+7 (» до первого символа, а поле с
-    // одной цифрой — хвост из скобок и дефисов.
+    // Otherwise an empty field would show "+7 (" before the first character, and
+    // a field with one digit would show a tail of brackets and dashes.
     expect(formatMask("", PHONE)).toBe("");
     expect(formatMask("9", PHONE)).toBe("+7 (9");
   });
@@ -34,8 +34,8 @@ describe("formatMask", () => {
 
 describe("unmask", () => {
   test("a digit literal does not leak into the value", () => {
-    // В маске `+7 (999)` литерал `7` — тоже цифра, и наивный фильтр «оставим
-    // цифры» утащил бы его в значение.
+    // In the mask `+7 (999)` the literal `7` is a digit too, and a naive "keep only
+    // digits" filter would pull it into the value.
     expect(unmask("+7 (916) 123-45-67", PHONE)).toBe("9161234567");
   });
 
@@ -48,7 +48,7 @@ describe("unmask", () => {
   });
 
   test("an erased literal does not eat a value character", () => {
-    // Пользователь стёр `)` — цифры остаются на месте.
+    // The user erased `)`; the digits stay in place.
     expect(unmask("+7 (916", PHONE)).toBe("916");
     expect(unmask("+7 (916)", PHONE)).toBe("916");
   });
@@ -62,8 +62,8 @@ describe("caret", () => {
   });
 
   test("lands after literals, not before them", () => {
-    // Иначе после третьей цифры каретка вставала перед `)`, и следующая цифра
-    // уезжала за скобку.
+    // Otherwise, after the third digit the caret landed before `)`, and the next
+    // digit would end up past the bracket.
     expect(caretAfter(PHONE, 3)).toBe(9);
     expect(caretAfter(PHONE, 0)).toBe(0);
     expect(caretAfter(PHONE, 10)).toBe(PHONE.length);
@@ -77,8 +77,8 @@ test("mask capacity is counted by tokens", () => {
 
 describe("maskRemainder", () => {
   test("an empty value yields a skeleton together with the literals", () => {
-    // Литералы — половина подсказки: `+7 (` говорит о формате больше, чем
-    // ряд подчёркиваний той же длины.
+    // Literals are half of the hint: `+7 (` says more about the format than
+    // a row of underscores of the same length.
     expect(maskRemainder("", PHONE)).toBe("+7 (___) ___-__-__");
   });
 
@@ -90,7 +90,7 @@ describe("maskRemainder", () => {
 
   test("a filled mask yields an empty tail", () => {
     expect(maskRemainder("9161234567", PHONE)).toBe("");
-    // Переполнение — тоже пустой: лишнее `formatMask` отбрасывает.
+    // Overflow also yields an empty tail: `formatMask` drops the extra characters.
     expect(maskRemainder("91612345678888", PHONE)).toBe("");
   });
 
@@ -99,8 +99,8 @@ describe("maskRemainder", () => {
   });
 
   test("the lengths add up for any value", () => {
-    // Свойство, на котором стоит показ: набранное и остаток лежат друг за
-    // другом и вместе занимают ровно ширину маски.
+    // The property the display relies on: the typed value and the remainder sit
+    // one after another and together take exactly the width of the mask.
     for (const mask of [PHONE, "99.99.9999", "aa-**", "9"]) {
       for (const raw of ["", "9", "91", "916123", "9161234567", "91612345678888"]) {
         expect(formatMask(raw, mask).length + maskRemainder(raw, mask).length).toBe(mask.length);
@@ -110,21 +110,21 @@ describe("maskRemainder", () => {
 });
 
 /**
- * Переполнение при вставке.
+ * Overflow when pasting.
  *
- * `unmask` идёт по маске и молча останавливается на её конце — лишние подходящие
- * символы отбрасывались без следа. На самом частом входе, какой бывает у
- * телефонного поля, это давало не обрезанный, а ЧУЖОЙ номер: `89161234567` —
- * самая распространённая форма российского номера в буфере обмена — под маской
- * `+7 (999) 999-99-99` превращался в `+7 (891) 612-34-56`.
+ * `unmask` walks the mask and silently stops at its end, so extra matching
+ * characters were dropped without a trace. On the most common input a phone
+ * field gets, this produced not a truncated number but a DIFFERENT one:
+ * `89161234567`, the most common form of a Russian number on the clipboard,
+ * under the mask `+7 (999) 999-99-99` turned into `+7 (891) 612-34-56`.
  *
- * Правдоподобный результат хуже пустого: ошибку не видно ни компоненту, ни
- * глазу. Отказ по несовпавшему токену модуль объявлять умел (`maskTokenAt` —
- * «сказать пользователю, ЧЕГО тут ждали»), а переполнение — нет.
+ * A plausible result is worse than an empty one: neither the component nor the
+ * eye sees the error. The module could already reject a token that did not match
+ * (`maskTokenAt`: "tell the user WHAT was expected here"), but not an overflow.
  */
 describe("overflow when pasting", () => {
   test("the most common Russian phone form does not become a different number", () => {
-    // Ведущая «8» — не часть номера, но и молча съесть её с хвостом нельзя.
+    // The leading "8" is not part of the number, but it must not be silently eaten along with the tail.
     expect(unmaskOverflow("89161234567", PHONE)).toBe(1);
   });
 
@@ -139,25 +139,25 @@ describe("overflow when pasting", () => {
   });
 
   test("characters that no token accepts are not overflow", () => {
-    // Хвост из литералов и пробелов — не потерянное значение.
+    // A tail of literals and spaces is not a lost value.
     expect(unmaskOverflow("79161234567   ", PHONE)).toBe(0);
   });
 
   test("unmask itself keeps returning what fits", () => {
-    // Признак переполнения — отдельная функция, а не смена контракта `unmask`:
-    // он публичный и возвращает строку.
+    // The overflow signal is a separate function, not a change to the `unmask` contract:
+    // `unmask` is public and returns a string.
     expect(unmask("89161234567", PHONE)).toBe("8916123456");
   });
 });
 
 /**
- * Потеря значения В СЕРЕДИНЕ прохода, а не только в хвосте.
+ * A value lost IN THE MIDDLE of the walk, not only in the tail.
  *
- * `walkMask` пропускает символы, не подошедшие текущему токену, — так вставка
- * «+7 916 123» раскладывается по цифровой маске. На однородной маске
- * пропускается только оформление, но на смешанной пропускается ЗНАЧЕНИЕ:
- * `123-456` под `999-aaa` отдаёт `123` и теряет вторую половину. Значение при
- * этом изменилось, поэтому отказ по токену эту потерю не видит.
+ * `walkMask` skips characters that do not fit the current token; that is how a
+ * paste like "+7 916 123" gets laid out over a digit mask. On a uniform mask only
+ * the formatting is skipped, but on a mixed mask the VALUE is skipped:
+ * `123-456` under `999-aaa` gives `123` and loses the second half. By then the
+ * value has changed, so rejection by token does not see this loss.
  */
 describe("value lost inside the walk", () => {
   test("digits falling where the mask wants letters count as overflow", () => {

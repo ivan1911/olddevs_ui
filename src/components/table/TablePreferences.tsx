@@ -11,11 +11,11 @@ import { Checkbox } from "../inputs/Checkbox.js";
 import { Segmented } from "../actions/Segmented.js";
 
 export interface TablePreferencesColumn {
-  /** Идентификатор колонки; совпадает с `id` колонки таблицы. */
+  /** Column identifier; matches the `id` of the table column. */
   id: string;
-  /** Подпись. Строка, а не `ReactNode`: она же доступное имя флажка. */
+  /** Label. A string, not a `ReactNode`: it is also the checkbox's accessible name. */
   label: string;
-  /** Колонку нельзя скрыть — например ту, что называет строку. */
+  /** The column cannot be hidden, for example the one that names the row. */
   required?: boolean;
 }
 
@@ -23,38 +23,43 @@ export interface TablePreferencesProps extends Omit<
   ComponentPropsWithoutRef<"div">,
   "onChange" | "children"
 > {
-  /** Колонки таблицы в порядке объявления. */
+  /** Table columns in declaration order. */
   columns: TablePreferencesColumn[];
-  /** Скрытые колонки. Компонент ничего не хранит — значение приходит сверху. */
+  /** Hidden columns. The component stores nothing; the value is passed in from the parent. */
   hiddenColumns: Set<string>;
-  /** Получает новое множество скрытых колонок после смены флажка. */
+  /** Receives the new set of hidden columns after a checkbox changes. */
   onHiddenColumnsChange: (hidden: Set<string>) => void;
-  /** Порядок колонок. Пустой — порядок объявления. Нет обработчика — нет кнопок. */
+  /**
+   * Column order. If empty, columns follow declaration order. Without a handler there are no move
+   * buttons.
+   */
   columnOrder?: string[];
-  /** Получает полный новый порядок после нажатия «выше» или «ниже». Не передан — кнопок порядка нет. */
+  /**
+   * Receives the full new order after "up" or "down" is pressed. If not passed, there are no order
+   * buttons.
+   */
   onColumnOrderChange?: (order: string[]) => void;
-  /** Текущая плотность строк: `comfortable` или `compact`. */
+  /** Current row density: `comfortable` or `compact`. */
   density: Density;
-  /** Получает выбранную плотность. */
+  /** Receives the selected density. */
   onDensityChange: (density: Density) => void;
 }
 
 /**
- * Настройки таблицы: видимость и порядок колонок, плотность.
+ * Table preferences: column visibility and order, and row density.
  *
- * ЭТО ПАНЕЛЬ, А НЕ МЕНЮ, и это решение, а не оплошность. Меню кита включает в
- * себя `Popover` и ждёт триггер; а главное — пункт меню не контейнер для
- * кнопок: вложенные в него кнопки «выше/ниже» ломают клавиатурную семантику
- * меню, где стрелки принадлежат самому меню. Поэтому обычные флажки и
- * `Segmented`, а оболочку — `Popover`, `Drawer` или `Dialog` — выбирает
- * потребитель.
+ * THIS IS A PANEL, NOT A MENU, and that is a deliberate decision. The kit's Menu wraps a
+ * `Popover` and expects a trigger; more importantly, a menu item is not a container for
+ * buttons: buttons nested in it ("up/down") break the menu's keyboard semantics, where the
+ * arrow keys belong to the menu itself. So this uses plain checkboxes and `Segmented`, and
+ * the consumer chooses the shell: `Popover`, `Drawer` or `Dialog`.
  *
- * Состояния не хранит: видимость, порядок и плотность приходят сверху, обычно
- * из `useTableState`.
+ * It holds no state: visibility, order and density come from above, usually from
+ * `useTableState`.
  *
- * ПОРЯДОК МЕНЯЕТСЯ КНОПКАМИ, а не перетаскиванием. Перетаскивание без
- * клавиатурной альтернативы недоступно вовсе, а альтернатива к нему — эти же
- * кнопки; заводить оба способа ради одного экрана несоразмерно.
+ * ORDER CHANGES WITH BUTTONS, not with dragging. Dragging without a keyboard alternative is
+ * inaccessible outright, and the buttons are that alternative; building both for one screen
+ * is out of proportion.
  */
 export const TablePreferences = forwardRef<HTMLDivElement, TablePreferencesProps>(
   function TablePreferences(
@@ -73,9 +78,9 @@ export const TablePreferences = forwardRef<HTMLDivElement, TablePreferencesProps
   ) {
     const messages = useMessages();
 
-    // Список порядка — префикс: не названные в нём колонки встают следом. Прежняя
-    // охрана по совпадению длин пропускала список той же длины с другими
-    // идентификаторами, и часть колонок пропадала из панели.
+    // The order list is a prefix: columns it does not name follow it. The previous guard
+    // compared only lengths, so an order list of the same length with other identifiers
+    // slipped through, and some columns disappeared from the panel.
     const ordered = orderColumns(columns, columnOrder ?? []);
 
     const visibleCount = columns.filter((c) => !hiddenColumns.has(c.id)).length;
@@ -105,9 +110,9 @@ export const TablePreferences = forwardRef<HTMLDivElement, TablePreferencesProps
 
           {ordered.map((column, index) => {
             const visible = !hiddenColumns.has(column.id);
-            // Последнюю видимую колонку снять нельзя: таблица без колонок — не
-            // состояние интерфейса, а поломка, из которой пользователю не
-            // выбраться, потому что скрывать станет нечего.
+            // The last visible column cannot be unchecked: a table with no columns is not a UI
+            // state but a breakage the user cannot get out of, because there would be nothing
+            // left to hide.
             const last = visible && visibleCount === 1;
 
             return (
@@ -128,12 +133,12 @@ export const TablePreferences = forwardRef<HTMLDivElement, TablePreferencesProps
                       icon={<ChevronUpIcon size={12} />}
                       aria-label={messages.tablePreferences.moveUp({ column: column.label })}
                       /*
-                        `aria-disabled`, а НЕ `disabled`: кнопка на краю — та
-                        самая, на которой стоит фокус. Браузер снимает фокус с
-                        отключаемого элемента, и обход панели начинался заново
-                        после второго нажатия подряд. Пустой обработчик здесь
-                        честнее: кнопка остаётся в обходе и объявляется
-                        недоступной, а не исчезает из-под пальца.
+                        `aria-disabled`, NOT `disabled`: a button at the edge is the one
+                        that holds focus. The browser drops focus from a disabled element,
+                        and the focus order through the panel started over after a second
+                        press in a row. A no-op handler is more honest here: the button
+                        stays in the focus order and is announced as unavailable, rather
+                        than disappearing under the user's finger.
                       */
                       aria-disabled={index === 0 || undefined}
                       onClick={() => index !== 0 && move(column.id, -1)}

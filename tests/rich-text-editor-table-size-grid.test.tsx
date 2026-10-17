@@ -13,17 +13,17 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Сетка выбора размера таблицы (OLDSUI-45).
+ * Grid for selecting the table size (OLDSUI-45).
  *
- * Тесты — на самом компоненте: он самостоятельный и ляжет внутрь подменю
- * Панели, поэтому от кнопки Панели не зависит. Клавиши — настоящие, через
- * `user-event`; фокус при монтировании приходит на сетку.
+ * The tests run on the component itself: it is self-contained and is placed inside the
+ * Toolbar's submenu, so it does not depend on the Toolbar button. The keys are real,
+ * through `user-event`; on mount, focus goes to the grid.
  */
 function setup(props: Partial<TableSizeGridProps> = {}) {
   const onPick = vi.fn();
@@ -83,7 +83,7 @@ test("the grid grows by one column or row when the selection reaches its edge", 
 
   await user.keyboard("{ArrowRight}{ArrowRight}");
   expect(status()).toBe("5 columns, 3 rows");
-  // Пять столбцов — край сетки 5x5: появился шестой, строки прежние.
+  // Five columns is the edge of the 5x5 grid: a sixth column appeared, and the rows stayed as they were.
   expect(cellCount()).toBe(6 * 5);
 
   await user.keyboard("{ArrowDown}{ArrowDown}");
@@ -116,7 +116,7 @@ test("Home and End jump along the row, with Ctrl to the corners", async () => {
   await user.keyboard("{Home}");
   expect(status()).toBe("1 column, 3 rows");
   await user.keyboard("{End}");
-  // Последний столбец видимой сетки; она при этом вырастает.
+  // The last column of the visible grid; the grid grows at the same time.
   expect(status()).toBe("5 columns, 3 rows");
   await user.keyboard("{Control>}{Home}{/Control}");
   expect(status()).toBe("1 column, 1 row");
@@ -218,7 +218,7 @@ test("typing in the fields moves the grid, the arrows move the fields, up to 20 
   await user.clear(rows);
   await user.type(rows, "99");
   await user.tab();
-  // Выше предела — предел.
+  // Above the limit, the limit applies.
   expect(rows.value).toBe("50");
   expect(status()).toBe("7 columns, 50 rows");
 
@@ -226,7 +226,7 @@ test("typing in the fields moves the grid, the arrows move the fields, up to 20 
   await user.type(cols, "20");
   await user.tab();
   expect(cols.value).toBe("20");
-  // Сетка не больше 10x10, выбор — больше.
+  // The grid is at most 10x10, and the selection is larger.
   expect(cellCount()).toBe(100);
 
   await user.click(screen.getByRole("button", { name: "Insert" }));

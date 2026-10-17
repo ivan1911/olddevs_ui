@@ -8,64 +8,63 @@ import { hasContent } from "../../lib/empty.js";
 import type { Size, Tone } from "../../lib/variants.js";
 
 export interface ToggleGroupOption {
-  /** Ключ переключателя: по нему набор выбранных попадает в `value` и в `onChange`. */
+  /** The toggle's key: the set of selected ones gets into `value` and `onChange` by it. */
   id: Key;
-  /** Подпись переключателя. Без неё кнопка квадратная, и нужен `aria-label`. */
+  /** Toggle label. Without it the button is square, and an `aria-label` is needed. */
   label?: ReactNode;
-  /** Иконка перед подписью. */
+  /** Icon before the label. */
   icon?: ReactNode;
-  /** Доступное имя, когда подписи нет. */
+  /** Accessible name when there is no label. */
   "aria-label"?: string;
-  /** Гасит один переключатель; остальные остаются рабочими. */
+  /** Disables one toggle; the others stay active. */
   disabled?: boolean;
 }
 
 export interface ToggleGroupProps {
-  /** Переключатели по порядку. */
+  /** The toggles, in order. */
   options: ToggleGroupOption[];
-  /** Ключи (`id`) выбранных переключателей: группа управляемая, своего состояния не держит. */
+  /** Keys (`id`) of the selected toggles: the group is controlled and holds no state of its own. */
   value: Key[];
-  /** Вызывается с полным новым набором ключей выбранных переключателей. */
+  /** Called with the full new set of keys of the selected toggles. */
   onChange: (value: Key[]) => void;
   /**
-   * Сколько можно выбрать одновременно.
+   * How many can be selected at once.
    *
-   * `multiple` — то, ради чего компонент и существует: `Segmented` умеет
-   * ровно один выбранный, потому что это переключатель режима — «список или
-   * плитка», «день, неделя, месяц». Здесь же выбирают НАБОР: фильтр по
-   * нескольким статусам, включённые типы уведомлений.
+   * `multiple` is the very reason the component exists: `Segmented` handles exactly one selected,
+   * because it is a mode switch — "list or tiles", "day, week, month". Here a SET is selected: a
+   * filter by several statuses, enabled notification types.
    *
-   * `single` оставлен не для симметрии, а для случая «один или ни одного»:
-   * у `Segmented` снять выбор нельзя вовсе, а фильтр обязан сниматься.
+   * `single` is kept not for symmetry but for the case "one or none": `Segmented` cannot be cleared
+   * at all, while a filter must be clearable.
    */
   selectionMode?: "multiple" | "single";
-  /** Размер кнопок: `sm` или `md`. По умолчанию `md`. */
+  /** Button size: `sm` or `md`. Defaults to `md`. */
   size?: Extract<Size, "sm" | "md">;
-  /** Тон выбранных переключателей; невыбранные всегда нейтральны. По умолчанию `accent`. */
+  /** Tone of the selected toggles; unselected ones are always neutral. Defaults to `accent`. */
   tone?: Tone;
-  /** Гасит всю группу разом. */
+  /** Disables the whole group at once. */
   disabled?: boolean;
-  /** Классы на контейнер группы. */
+  /** Classes for the group container. */
   className?: string;
-  /** Доступное имя группы. */
+  /** Accessible name of the group. */
   "aria-label"?: string;
 }
 
 /**
- * Группа переключателей: выбирается набор, а не режим.
+ * Toggle group: a set is selected, not a mode.
  *
- * ЧЕМ ОТЛИЧАЕТСЯ ОТ `Segmented` — множественностью, и это единственное
- * отличие, ради которого стоит держать два компонента:
+ * HOW IT DIFFERS FROM `Segmented` — by multiplicity, and this is the only difference for which it is
+ * worth keeping two components:
  *
- *   `Segmented`   — ровно один выбранный, снять нельзя. Переключатель режима:
- *                   «список / плитка», «день / неделя / месяц». Выбранное
- *                   значение всегда есть, потому что режим есть всегда.
- *   `ToggleGroup` — набор от нуля до всех. Фильтр по статусам, включённые
- *                   типы уведомлений. Пустой набор — законное состояние.
+ *   `Segmented`   — exactly one selected, cannot be cleared. A mode switch: "list / tiles",
+ *                   "day / week / month". There is always a selected value, because there is
+ *                   always a mode.
+ *   `ToggleGroup` — a set from none to all. A filter by status, enabled notification types. An
+ *                   empty set is a legitimate state.
  *
- * Свести их в один компонент с пропом `multiple` мешает не техника, а смысл:
- * у режима не бывает «ничего не выбрано», и общий компонент пришлось бы учить
- * состоянию, которое для половины его применений — ошибка.
+ * Merging them into one component with a `multiple` prop is blocked not by technique but by meaning:
+ * a mode never has "nothing selected", and a shared component would have to be taught a state that
+ * is an error for half of its uses.
  */
 export function ToggleGroup({
   options,
@@ -81,12 +80,11 @@ export function ToggleGroup({
   const ref = useRef<HTMLDivElement>(null);
 
   /*
-    Внутри `Toolbar` группа с несколькими выбранными получает роль `group`, а
-    от хука панели — `aria-orientation`. Для `group` этот атрибут недопустим, и
-    axe роняет его как `critical` (`aria-allowed-attr`); react-aria так отдаёт
-    сам, поэтому лишнее снимается здесь. Роль выставляется уже после первого
-    рендера (панель узнаёт о себе в layout-эффекте), так что следим за
-    атрибутами, а не чистим один раз.
+    Inside `Toolbar` a group with several selected gets role `group`, and from the panel's hook —
+    `aria-orientation`. That attribute is not allowed for `group`, and axe reports it as `critical`
+    (`aria-allowed-attr`); react-aria emits it itself, so the extra one is removed here. The role is
+    set only after the first render (the panel learns about itself in a layout effect), so we watch
+    the attributes rather than clear them once.
   */
   useEffect(() => {
     const group = ref.current;
@@ -110,9 +108,9 @@ export function ToggleGroup({
       isDisabled={disabled}
       className={cn(
         "flex flex-wrap items-center gap-1.5",
-        // Ось приходит из `Toolbar` через контекст react-aria; сам по себе
-        // компонент всегда горизонтален. В вертикальной панели группа встаёт
-        // столбцом и не переносится: перенос столбца зависел бы от высоты.
+        // The axis comes from `Toolbar` via react-aria context; on its own the component is always
+        // horizontal. In a vertical panel the group stands as a column and does not wrap: column
+        // wrapping would depend on height.
         "data-[orientation=vertical]:flex-col data-[orientation=vertical]:flex-nowrap data-[orientation=vertical]:items-start",
         className
       )}
@@ -125,10 +123,9 @@ export function ToggleGroup({
           aria-label={option["aria-label"]}
           className={({ isSelected }) =>
             cn(
-              // Вид общий с кнопкой: выбранный переключатель — это `solid`
-              // своего тона, невыбранный — `outline` нейтрального. Собирается
-              // рендер-пропом, потому что вариант зависит от состояния целиком,
-              // а не добавляет к нему класс.
+              // The look is shared with a button: the selected toggle is a `solid` of its tone,
+              // the unselected one is a neutral `outline`. It is assembled by a render prop,
+              // because the variant depends on the state as a whole, rather than adding a class to it.
               buttonClasses({
                 variant: isSelected ? "solid" : "outline",
                 tone: isSelected ? tone : "neutral",

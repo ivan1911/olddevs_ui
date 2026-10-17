@@ -9,31 +9,34 @@ import { toolList, type ToolDescriptor, type ToolList } from "./toolDescriptor.j
 import type { ToolLoader } from "./toolLoader.js";
 
 /*
-  Документ Скелета (ADR-0058, п. 11.4): `value`, очищенный Схемой
-  кита, — тот же разбор, что у движка, только без движка.
+  Skeleton Document (ADR-0058, item 11.4): `value` cleaned by the kit's Schema. It is the same
+  parse the engine does, only without the engine.
 
-  Скелет стоит на месте Документа до Готовности, и до эпика Редактор был
-  безопасен и с неочищенным `value`: строка шла только через разбор Схемой.
-  Вставить её как есть значило бы исполнить `<img onerror>` из чужого значения.
-  Поэтому строка разбирается в инертном документе (`DOMParser` браузера: там не
-  исполняются ни скрипты, ни обработчики и не грузятся картинки) по Схеме
-  набора и выгружается обратно в HTML — в документ, тоже инертный. Что Схема не
-  знает (теги, атрибуты, обработчики, `javascript:`), не доходит до страницы.
+  The Skeleton stands in for the Document until Readiness. Before the Editor epic it was safe even
+  with the uncleaned `value`, since the string went only through the Schema parse. Inserting it
+  as-is would run `<img onerror>` from a foreign value. So the string is parsed in an inert
+  document (the browser's `DOMParser`: no scripts or handlers run there, and no images load)
+  against the tool set's Schema, and serialized back to HTML, into a document that is also inert.
+  Whatever the Schema does not know (tags, attributes, handlers, `javascript:`) does not reach the
+  page.
 
-  Схема — та, что получит движок, но без Extensions, чьи загрузчики ещё
-  не отработали: их Блоки видны текстом, обёртку Схема снимает. Ленивый
-  встроенный (`codeBlock`, `table`) вместо Extensions даёт
-  форму Блоков (`skeleton` описания) — его Блоки видны своей разметкой, и поле
-  не прыгает с приходом чанка. Шапка блока кода — та же, что у `RichTextView`
-  (`withCodeHeaders`): в Редакторе она есть, и без неё Скелет был бы ниже. Набор
-  расширений собирается ради одной Схемы: движка, плагинов и представлений
-  узлов здесь нет, а мосты `RichTextEditor` не нужны — им стоят заглушки.
+  The Schema is the one the engine will get, but without Extensions whose loaders have not run yet:
+  their Blocks show as text, and the Schema strips the wrapper. A lazy built-in Tool (`codeBlock`,
+  `table`) gives its Blocks' shape (the descriptor's `skeleton` field) in place of Extensions. Its
+  Blocks show with their own markup, and the field does not jump when the chunk arrives. The code
+  block header is the same as in `RichTextView` (`withCodeHeaders`): it exists in the Editor, and
+  without it the Skeleton would be shorter. The extension set is assembled for the sake of one
+  Schema alone: there are no engine, plugins, or node views here, and the `RichTextEditor` bridges
+  are not needed, so they get stubs.
 */
 
 const quiet = () => {};
 const no = () => false;
 
-/** Мосты набора движка: Схема их не читает, а картинке без них нет места в Схеме. */
+/**
+ * Bridges of the engine's extension set. The Schema does not read them, but an image has no
+ * place in the Schema without them.
+ */
 const SCHEMA_ONLY: Omit<EditorExtensionOptions, "tools"> = {
   placeholder: () => "",
   limit: () => undefined,
@@ -54,8 +57,8 @@ const SCHEMA_ONLY: Omit<EditorExtensionOptions, "tools"> = {
 };
 
 /**
- * Набор с описаниями, которые оставил `pick` (`undefined` — описание выпадает):
- * имена — те же, Схему решают описания.
+ * A tool set with the descriptors that `pick` keeps (`undefined` drops the descriptor). The names
+ * are the same; the descriptors decide the Schema.
  */
 function narrowed(
   tools: ToolList,
@@ -67,12 +70,12 @@ function narrowed(
   );
 }
 
-/** HTML Документа по Схеме набора; Схема не собралась — `null`. */
+/** The Document's HTML cleaned by the tool set's Schema; `null` if the Schema could not be built. */
 function cleaned(html: string, tools: ToolList): string | null {
   try {
     const schema = getSchema(createEditorExtensions({ tools, ...SCHEMA_ONLY }));
-    // Без `mathematics` формула в Скелете — текстом, как в движке: расширение этого
-    // не сделает, движка у Скелета нет (`mathAsText.ts`).
+    // Without `mathematics`, a formula in the Skeleton is text, as in the engine. The extension
+    // would not do this, and the Skeleton has no engine (`mathAsText.ts`).
     if (!tools.has("mathematics")) readFormulasAsText(schema);
     const inert = document.implementation.createHTMLDocument("");
     const box = inert.createElement("div");
@@ -81,7 +84,7 @@ function cleaned(html: string, tools: ToolList): string | null {
         document: inert,
       })
     );
-    // Пустое гнездо «Копировать»: острова у Скелета нет, гнездо держит место.
+    // An empty "Copy" placeholder: the Skeleton has no island, and the placeholder holds the space.
     return withCodeHeaders(box.innerHTML, "");
   } catch {
     return null;
@@ -89,18 +92,18 @@ function cleaned(html: string, tools: ToolList): string | null {
 }
 
 /**
- * Документ Скелета: `html`, очищенный Схемой набора без Extensions ещё не
- * отработавших загрузчиков (`pending`). Только в браузере.
+ * The Skeleton Document: `html`, cleaned by the tool set's Schema without the Extensions of loaders
+ * that have not run yet (`pending`). Browser only.
  *
- * Набор с ошибкой своих Инструментов Схемы не даёт (ошибка поля, ADR-0058,
- * п. 1.5) — тогда Скелет чистит Схемой встроенных: Документ остаётся виден.
+ * A tool set whose custom Tools break the Schema does not produce one (a field error, ADR-0058,
+ * item 1.5). Then the Skeleton is cleaned with the built-in Schema, so the Document stays visible.
  */
 export function skeletonHtml(
   html: string,
   tools: ToolList,
   pending: readonly ToolLoader[]
 ): string {
-  // Описание, чей загрузчик ещё не отработал, уступает место форме Блоков — или выпадает.
+  // A descriptor whose loader has not run yet gives way to the Block shape, or is dropped.
   const settled = (d: ToolDescriptor): ToolDescriptor | undefined =>
     !d.load || !pending.includes(d.load) ? d : d.skeleton && { name: d.name, engine: d.skeleton };
   return (

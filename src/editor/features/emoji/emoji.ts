@@ -1,36 +1,33 @@
 import type { EmojiCategory, EmojiName } from "../../../i18n/messages.js";
 
 /**
- * Набор эмодзи Редактора: курированные данные, без библиотеки эмодзи.
+ * The Editor's emoji set: curated data, with no emoji library.
  *
- * ЧТО ЗДЕСЬ И ЧЕГО НЕТ. Категории по порядку, у каждого эмодзи — символ и ключ
- * имени. Имён здесь нет: их озвучивает скринридер, а значит они — строки
- * интерфейса и живут в каталоге сообщений `editor` (`emojiName`,
- * `emojiCategory`), по ключу. Полного Unicode-набора, поиска, «недавних» и
- * оттенков кожи нет и не будет: сетка — быстрый путь к дюжине привычных
- * символов, а не палитра ОС.
+ * WHAT IS HERE AND WHAT IS NOT. Categories in order; each emoji has a character and a name key.
+ * The names are not here: a screen reader speaks them, so they are interface strings, and they
+ * live in the `editor` message catalog (`emojiName`, `emojiCategory`), by key. There is no full
+ * Unicode set, no search, no "recent" and no skin tones, and there will not be: the grid is a quick
+ * way to a dozen familiar characters, not the OS emoji picker.
  *
- * МОДУЛЬ СЕРВЕРНО-БЕЗОПАСЕН: ни React, ни `"use client"`, ни DOM. Это данные,
- * и читать их вправе и сервер (например, чтобы проверить, что строка — один
- * из эмодзи набора).
+ * THE MODULE IS SERVER-SAFE: no React, no `"use client"`, no DOM. It is data, and the server may
+ * read it too (for example, to check that a string is one of the set's emoji).
  *
- * ЭМОДЗИ — ОБЫЧНЫЙ ТЕКСТ. Своего Блока и Метки у него нет, как у
- * `clearFormatting`: Схема, санитайзер и Markdown не меняются, а вставленный
- * символ попадает в выходной HTML и в `getMarkdown` как любой другой текст.
- * Символы с вариантом оформления (`❤️`, `✌️`, `✈️`) хранят селектор `U+FE0F`:
- * без него часть платформ рисует их чёрно-белыми.
+ * EMOJI IS PLAIN TEXT. It has no Block and no Mark of its own, like `clearFormatting`: the Schema,
+ * the sanitizer and Markdown do not change, and the inserted character goes into the output HTML
+ * and into `getMarkdown` like any other text. Characters with a presentation variant (`❤️`, `✌️`,
+ * `✈️`) store the `U+FE0F` selector: without it, some platforms draw them in black and white.
  *
- * Типы ключей (`EmojiCategory`, `EmojiName`) живут в каталоге сообщений
- * (`i18n/messages.ts`), а не здесь: каталог — часть главного входа, а ему
- * запрещено тянуться в `src/editor/` (`tests/editor-entry.test.ts`). Каталог
- * обязан назвать каждый ключ, а набор — брать имена только оттуда, и компилятор
- * сводит их: забытое имя в одной из двух сторон не соберётся.
+ * The key types (`EmojiCategory`, `EmojiName`) live in the message catalog (`i18n/messages.ts`),
+ * not here: the catalog is part of the main entry point, and it is not allowed to import from
+ * `src/editor/` (`tests/editor-entry.test.ts`). The catalog must name every key, and the set may
+ * take names only from there; the compiler ties the two together, so a name forgotten on one side
+ * will not build.
  *
- * Один и тот же эмодзи вправе стоять в двух категориях («Избранное» повторяет
- * часть остальных): ключ имени у него тогда общий, а позиция в сетке — своя.
+ * The same emoji may sit in two categories ("Favorites" repeats some of the others): its name key
+ * is then shared, while its position in the grid is its own.
  */
 
-/** Категории набора по порядку показа. */
+/** Categories of the set, in display order. */
 export const EMOJI_CATEGORIES: readonly EmojiCategory[] = [
   "favorites",
   "smileys",
@@ -42,21 +39,21 @@ export const EMOJI_CATEGORIES: readonly EmojiCategory[] = [
 ];
 
 export interface Emoji {
-  /** Сам символ — он и вставляется в Документ. */
+  /** The character itself: it is what gets inserted into the Document. */
   char: string;
-  /** Ключ имени в каталоге сообщений (`editor.emojiName`). */
+  /** Name key in the message catalog (`editor.emojiName`). */
   name: EmojiName;
 }
 
-/** Сколько эмодзи в строке сетки: и ширина сетки, и шаг стрелок вверх и вниз. */
+/** Number of emoji in a grid row: both the grid width and the step of the up and down arrows. */
 export const EMOJI_COLUMNS = 10;
 
 const e = (char: string, name: EmojiName): Emoji => ({ char, name });
 
 /**
- * Сам набор. Размер каждой категории кратен `EMOJI_COLUMNS`: строка сетки не
- * переходит из категории в категорию, и стрелка вниз всегда попадает на
- * эмодзи прямо под текущим.
+ * The set itself. The size of each category is a multiple of `EMOJI_COLUMNS`: a grid row never
+ * crosses from one category into another, and the down arrow always lands on the emoji directly
+ * below the current one.
  */
 export const EMOJI_SET: Readonly<Record<EmojiCategory, readonly Emoji[]>> = {
   favorites: [

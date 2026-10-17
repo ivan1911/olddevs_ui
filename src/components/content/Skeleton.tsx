@@ -4,26 +4,25 @@ import { forwardRef, type ComponentPropsWithoutRef } from "react";
 import { cn } from "../../lib/cn.js";
 
 export interface SkeletonProps extends ComponentPropsWithoutRef<"div"> {
-  /** Ширина. Число трактуется как пиксели, строка — как CSS-значение. */
+  /** Width. A number is treated as pixels, a string as a CSS value. */
   width?: number | string;
-  /** Высота. Число — пиксели, строка — любое CSS-значение. */
+  /** Height. A number is pixels; a string is any CSS value. */
   height?: number | string;
-  /** Скругление. По умолчанию `--r-md`. */
+  /** Border radius. Defaults to `--r-md`. */
   borderRadius?: number | string;
 }
 
 /**
- * Плейсхолдер загрузки: прямоугольник с бегущим бликом.
+ * Loading placeholder: a rectangle with a sweeping shimmer.
  *
- * Единственный примитив пакета, который принимает размеры числами и кладёт их
- * в инлайн-`style`, — и это не недосмотр. Скелетон повторяет форму того, что
- * подменяет: 43 вызова во фронте задают 12 разных сочетаний ширины, высоты
- * и скругления (`4`, `10`, `3`, `6`, `8`, `0`, `"50%"`, `9999`). Шкала из трёх
- * ступеней здесь не описывает предметную область, а мешает: под каждый новый
- * блок пришлось бы заводить ступень.
+ * The only primitive in the package that takes sizes as numbers and puts them into inline
+ * `style`, and this is deliberate, not an oversight. A skeleton repeats the shape of what it
+ * stands in for: 43 calls in the frontend set 12 different combinations of width, height and
+ * radius (`4`, `10`, `3`, `6`, `8`, `0`, `"50%"`, `9999`). A scale of three steps would not
+ * describe this domain, it would get in the way: every new block would need its own step.
  *
- * Сам блик — правило `.skeleton` в `styles.css` (градиент + `shimmer`), а не
- * утилиты: анимация с `background-position` в утилитах не выражается.
+ * The shimmer itself is the `.skeleton` rule in `styles.css` (a gradient plus `shimmer`), not
+ * utilities: an animation on `background-position` cannot be expressed with utilities.
  */
 export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(function Skeleton(
   { width, height, borderRadius, className, style, ...rest },

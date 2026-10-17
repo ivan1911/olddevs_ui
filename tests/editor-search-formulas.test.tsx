@@ -14,16 +14,16 @@ import { searchState } from "../src/editor/features/search/searchPlugin.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 beforeAll(loadLazyBuiltins);
-// Панель — ленивый чанк: прогреваем, чтобы `findBy` не ждал сеть.
+// The panel is a lazy chunk: warm it up so `findBy` does not wait for the network.
 beforeAll(() => import("../src/editor/features/search/SearchPanel.js"));
 afterEach(cleanup);
 
 /**
- * Поиск находит формулы и не заменяет их (OLDSUI-280, решение владельца
- * 2026-10-16; ADR-0070, п. 8): исходный LaTeX формулы ищется, совпадение внутри
- * подсвечивает формулу целиком и считается в «N из M», а «Заменить» и «Заменить
- * все» формул не трогают — формула правится только Поповером. Остальные атомы
- * (перенос, картинка, упоминание) по-прежнему дырки.
+ * Find locates formulas and does not replace them (OLDSUI-280, the owner's decision
+ * 2026-10-16; ADR-0070, section 8): the formula's source LaTeX is searched, and a match inside
+ * highlights the whole formula and is counted as "N of M", while "Replace" and "Replace
+ * all" leave formulas alone: a formula is edited only in its Popover. The other atoms
+ * (hard break, image, mention) are still gaps for search.
  */
 const TOOLS = ["bold", "history", "search", "mathematics"] as const;
 
@@ -35,13 +35,13 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, editor, handle: ref.current! };
 }
 
-// Порядок атрибутов — как пишет Редактор (`getHTML`).
+// Attribute order as the Editor writes it (`getHTML`).
 const inline = (latex: string) => `<span data-latex="${latex}" data-type="inline-math"></span>`;
 const block = (latex: string) => `<div data-latex="${latex}" data-type="block-math"></div>`;
 
 const NONE: SearchOptions = { matchCase: false, wholeWord: false, regex: false };
 
-/** Совпадения запроса: что стоит в Документе на каждом (формула — узлом, текст — строкой). */
+/** The query's matches: what sits in the Document at each one (a formula as a node, text as a string). */
 function found(editor: ReturnType<typeof renderEditor>["editor"], query: string, flags = {}) {
   const { doc } = editor.state;
   const result = findMatches(doc, query, { ...NONE, ...flags });
@@ -65,7 +65,7 @@ test("a match inside a formula is the whole formula, in the order of the documen
     "inlineMath:\\sqrt{2}",
     "blockMath:\\sqrt{x}+\\frac{1}{2}",
   ]);
-  // Текст и формулы — в порядке Документа, а не «сначала тексты».
+  // Text and formulas in Document order, not "texts first".
   expect(found(editor, "s")).toEqual([
     "s",
     "inlineMath:\\sqrt{2}",
@@ -106,7 +106,7 @@ test("a match does not cross the edge of a formula, and other atoms stay holes",
     defaultValue: `<p>ab${inline("cd")}ef</p><p>gh<br>ij</p>`,
   });
 
-  // «abcd» и «cdef» через границу формулы не находятся: у формулы свой исходник.
+  // "abcd" and "cdef" are not found across a formula boundary: a formula has its own source.
   expect(found(editor, "abcd")).toEqual([]);
   expect(found(editor, "cdef")).toEqual([]);
   expect(found(editor, "cd")).toEqual(["inlineMath:cd"]);
@@ -188,7 +188,7 @@ test("Replace and Replace all leave formulas alone: only the text around them ch
   expect(editor.getHTML()).toBe(
     before.replace("<p>sqrt ", "<p>root ").replace("and sqrt</p>", "and root</p>")
   );
-  // Счётчик говорит, что осталось: две формулы, и «sqrt» в них по-прежнему есть.
+  // The counter says what is left: two formulas, and "sqrt" is still in them.
   expect(searchState(editor.state)).toMatchObject({ total: 2 });
   expect(found(editor, "sqrt")).toEqual(["inlineMath:\\sqrt{2}", "blockMath:\\sqrt{x}"]);
   act(() => void editor.commands.undo());
@@ -216,10 +216,10 @@ test("Replace skips a formula that is current and replaces the next text match",
 
   expect(editor.getHTML()).toBe(`<p>${inline("\\sqrt{2}")} then root and sqrt</p>`);
   expect(searchState(editor.state)).toMatchObject({ total: 2 });
-  // Текущим стало следующее за заменённым: Replace не топчется на месте.
+  // The current match is now the one after the replaced one: Replace does not stall in place.
   expect(editor.commands.replaceMatch("root")).toBe(true);
   expect(editor.getHTML()).toBe(`<p>${inline("\\sqrt{2}")} then root and root</p>`);
-  // Остались одни формулы: заменять нечего.
+  // Only formulas are left: there is nothing to replace.
   expect(searchState(editor.state)).toMatchObject({ total: 1 });
   expect(editor.commands.replaceMatch("root")).toBe(false);
 });
@@ -240,7 +240,7 @@ test("the panel counts formulas, Replace all leaves them and the counter says wh
   expect(editor.getHTML()).toBe(`<p>root ${inline("\\sqrt{2}")} root</p>`);
   expect(within(panel).getByRole("status").textContent).toBe("1 of 1");
   expect(screen.getByText("1 / 1")).toBeDefined();
-  // Заменять больше нечего: обе кнопки выключены, а формула осталась в поиске.
+  // Nothing left to replace: both buttons are disabled, and the formula is still in the search.
   expect(screen.getByRole("button", { name: "Replace all" })).toHaveProperty("disabled", true);
   expect(screen.getByRole("button", { name: "Replace" })).toHaveProperty("disabled", true);
 });

@@ -7,40 +7,39 @@ source: src/components/content/Keyboard.tsx, src/components/content/VisuallyHidd
 story: src/components/content/Keyboard.stories.tsx, src/components/content/VisuallyHidden.stories.tsx
 ---
 
-# Keyboard и VisuallyHidden
+# Keyboard and VisuallyHidden
 
-## Кратко для AI
+## Summary for AI
 
-`Keyboard` — контролируемая экранная клавиатура для уже существующего
-текстового поля: она редактирует строку и выделение через обработчики, а не
-получает DOM-ref поля. `VisuallyHidden` оставляет текст в дереве доступности,
-но не показывает его визуально. Это не способ скрыть содержимое от всех.
+`Keyboard` is a controlled on-screen keyboard for an existing text field: it edits
+the string and the selection through handlers, and does not receive the field's
+DOM ref. `VisuallyHidden` keeps text in the accessibility tree but does not show
+it visually. It is not a way to hide content from everyone.
 
-## Когда использовать
+## When to use
 
-- `Keyboard` — когда экран должен дать редактирование текста указателем или
-  касанием и владелец может хранить `value`, `selection` и текущую раскладку.
-  `SearchControl` уже умеет интегрировать её через свой keyboard API.
-- `VisuallyHidden` — чтобы дополнить понятное видимое название деталями для
-  скринридера, например количеством рядом с заголовком.
+- `Keyboard` — when a screen has to offer pointer or touch text editing and the
+  owner can store `value`, `selection` and the current layout. `SearchControl`
+  already knows how to integrate it through its keyboard API.
+- `VisuallyHidden` — to supplement a clear visible name with details for the
+  screen reader, for example a count next to a heading.
 
-## Когда не использовать
+## When not to use
 
-- `Keyboard` — это экранная клавиатура, а не способ показать сочетание клавиш.
-  «Ctrl+K» рисуется `Kbd`, а свод сочетаний — `ShortcutsHelp`
-  ([страница](../overlays/shortcuts-help.md)).
-- Не используйте `Keyboard` как единственный способ ввода: это дополнение к
-  настоящему текстовому контролу, не его замена.
-- Не пытайтесь редактировать поле через ref или искусственный DOM-event:
-  передавайте состояние и обновляйте его через `onChange` и
-  `onSelectionChange`.
-- Не применяйте `VisuallyHidden` для удаления текста из доступности:
-  `display: none`, `visibility: hidden` и элемент, скрытый от вспомогательных
-  технологий, имеют другую семантику.
-- Не скрывайте единственную доступную подпись интерактивного контрола:
-  пользователь без скринридера тоже должен видеть, что делает контрол.
+- `Keyboard` is an on-screen keyboard, not a way to show a keyboard shortcut.
+  "Ctrl+K" is rendered with `Kbd`, and the overview of shortcuts is `ShortcutsHelp`
+  ([page](../overlays/shortcuts-help.md)).
+- Do not use `Keyboard` as the only way to enter text: it is a supplement to a
+  real text control, not a replacement for it.
+- Do not try to edit the field through a ref or an artificial DOM event: pass the
+  state and update it through `onChange` and `onSelectionChange`.
+- Do not use `VisuallyHidden` to remove text from the accessibility tree: `display: none`,
+  `visibility: hidden` and an element hidden from assistive technology have
+  different semantics.
+- Do not hide the only accessible label of an interactive control: a user without
+  a screen reader must also be able to tell what the control does.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Keyboard, type KeyboardSelection } from "@olddevs/ui";
@@ -63,67 +62,67 @@ const [layout, setLayout] = useState<"ru" | "en">("ru");
 
 ```tsx
 <Heading level={2}>
-  Черновики<VisuallyHidden elementType="span"> — восемь штук</VisuallyHidden>
+  Drafts<VisuallyHidden elementType="span"> — eight of them</VisuallyHidden>
 </Heading>
 ```
 
-`elementType="span"` внутри строки **обязателен**: по умолчанию компонент рисует
-`<div>`, и в заголовке или абзаце это невалидная вложенность — React сообщает об
-ошибке гидрации, а браузер разрывает абзац. Для скрываемого поддерева, стоящего
-отдельным блоком, умолчание подходит.
+`elementType="span"` is **required** when `VisuallyHidden` sits inside running text: by default the component
+renders a `<div>`, and in a heading or paragraph that is invalid nesting — React
+reports a hydration error, and the browser splits the paragraph. For a hidden
+subtree that is a block of its own, the default fits.
 
 ## Public API
 
 ### `Keyboard`
 
-| Prop                            | Назначение и ограничения                                                                                                                                                                              |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `value`                         | Текущая контролируемая строка.                                                                                                                                                                        |
-| `selection`                     | Текущий диапазон позиций UTF-16 `{ start, end }` в `value`; обязан обновляться вместе со значением.                                                                                                   |
-| `onChange`, `onSelectionChange` | Обязательные обработчики. Нажатие клавиши вставляет её символ на место выделения, заменяя выделенный текст; Backspace удаляет предыдущий Unicode code point.                                          |
-| `layout`, `onLayoutChange`      | Обязательная раскладка `ru` или `en` и контролируемое переключение.                                                                                                                                   |
-| `onSubmit`                      | Необязательное подтверждение; вызывается без создания искусственного DOM-события submit.                                                                                                              |
-| `disabled`                      | Отключает все клавиши, ручку перемещения и кнопку закрытия.                                                                                                                                           |
-| `preserveFocus`                 | При работе указателем не уводит фокус с внешнего текстового поля; это выбор интеграции.                                                                                                               |
-| `label`                         | Доступное имя панели; по умолчанию из каталога сообщений (`keyboard.label`): «Русская клавиатура» / «Английская клавиатура» в `locales/ru`, без провайдера — «Russian keyboard» / «English keyboard». |
-| `closeLabel`, `onRequestClose`  | Доступное имя и обработчик кнопки закрытия. Без обработчика кнопка закрытия не рендерится.                                                                                                            |
+| Prop                            | Purpose and constraints                                                                                                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`                         | The current controlled string.                                                                                                                                                                                      |
+| `selection`                     | The current range of UTF-16 positions `{ start, end }` in `value`; it must be updated together with the value.                                                                                                      |
+| `onChange`, `onSelectionChange` | Required handlers. Pressing a key inserts its character at the selection, replacing the selected text; Backspace deletes the previous Unicode code point.                                                           |
+| `layout`, `onLayoutChange`      | The required layout, `ru` or `en`, and a controlled switch.                                                                                                                                                         |
+| `onSubmit`                      | An optional confirmation; called without creating an artificial DOM submit event.                                                                                                                                   |
+| `disabled`                      | Disables all keys, the move handle and the close button.                                                                                                                                                            |
+| `preserveFocus`                 | When working with a pointer, it does not take focus away from the external text field; this is an integration choice.                                                                                               |
+| `label`                         | The panel's accessible name; from the message catalog by default (`keyboard.label`): "Russian keyboard" or "English keyboard" without a provider, "Русская клавиатура" / "Английская клавиатура" with `locales/ru`. |
+| `closeLabel`, `onRequestClose`  | The accessible name and the handler of the close button. Without the handler the close button is not rendered.                                                                                                      |
 
-Экспортируемые типы: `KeyboardLayout` (`"en" | "ru"`), `KeyboardSelection`,
+Exported types: `KeyboardLayout` (`"en" | "ru"`), `KeyboardSelection`,
 `KeyboardProps`.
 
 ### `VisuallyHidden`
 
-`VisuallyHidden` реэкспортируется из `react-aria-components` вместе с типом
-`VisuallyHiddenProps`. Оберните скрываемое поддерево в компонент; он не меняет
-его текстовую семантику, а только делает его визуально скрытым.
+`VisuallyHidden` is re-exported from `react-aria-components` together with the
+`VisuallyHiddenProps` type. Wrap the subtree to be hidden in the component; it
+does not change the subtree's text semantics, it only makes it visually hidden.
 
-## Поведение и доступность
+## Behavior and accessibility
 
-- Панель имеет доступное имя, кнопки — доступные названия, а Shift и режим
-  символов отражают состояние через `aria-pressed`.
-- Стрелки, Home и End переводят фокус между клавишами панели; экранная клавиша Enter
-  на панели вызывает `onSubmit`, если обработчик передан.
-- Панель видна от ширины `md`; на узком экране её нет.
-- Ручка перемещения двигает панель мышью и стрелками.
-- Shift, режим символов и Caps Lock — внутреннее состояние панели. Содержимое
-  поля и раскладка остаются у владельца; переключение раскладки панель только
-  запрашивает через `onLayoutChange`.
-- `VisuallyHidden` остаётся в дереве доступности. В отличие от `display: none`,
-  текст будет прочитан скринридером.
+- The panel has an accessible name, the buttons have accessible names, and Shift
+  and the symbols mode reflect their state through `aria-pressed`.
+- The arrow keys, Home and End move focus between the panel's keys; the on-screen Enter key
+  on the panel calls `onSubmit` if a handler is passed.
+- The panel is visible from the `md` width up; on a narrow screen it is not there.
+- The move handle moves the panel with the mouse and the arrow keys.
+- Shift, the symbols mode and Caps Lock are the panel's internal state. The
+  field's content and the layout stay with the owner; the panel only requests a
+  layout switch through `onLayoutChange`.
+- `VisuallyHidden` stays in the accessibility tree. Unlike `display: none`, a
+  screen reader reads the text.
 
-## Антипаттерны
+## Anti-patterns
 
 ```tsx
-// Плохо: новое значение сохраняется, но позиция курсора остаётся старой.
+// Bad: the new value is saved, but the cursor position stays the old one.
 <Keyboard value={value} selection={selection} onChange={setValue} onSelectionChange={() => {}} … />
 
-// Хорошо: оба значения принадлежат одному владельцу состояния.
+// Good: both values belong to the same state owner.
 <Keyboard value={value} selection={selection} onChange={setValue} onSelectionChange={setSelection} … />
 ```
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходники: `src/components/content/Keyboard.tsx`, `src/components/content/VisuallyHidden.tsx`.
+- Sources: `src/components/content/Keyboard.tsx`, `src/components/content/VisuallyHidden.tsx`.
 - Stories: `src/components/content/Keyboard.stories.tsx`, `src/components/content/VisuallyHidden.stories.tsx`.
-- Редактирование, навигация и доступные названия проверяет
-  `tests/keyboard.test.tsx`; скрытый текст — `tests/wave7-layout.test.tsx`.
+- Editing, navigation and accessible names are tested in
+  `tests/keyboard.test.tsx`; the hidden text — in `tests/wave7-layout.test.tsx`.

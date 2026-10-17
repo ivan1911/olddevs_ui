@@ -20,7 +20,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<NotificationListProps>;
 
-/** Картинки в историях — data-URI, а не сеть: снимок не должен зависеть от чужого хоста. */
+/** Pictures in the stories are data URIs, not network requests: a snapshot must not depend on someone else's host. */
 const PREVIEW =
   "data:image/svg+xml;base64," +
   btoa(
@@ -68,8 +68,8 @@ export const Playground: Story = {
 };
 
 /**
- * Группы приходят готовыми: что такое «вчера», знает локаль и часовой пояс
- * потребителя, а не кит.
+ * Groups come ready-made: what "yesterday" means is known to the consumer's locale
+ * and time zone, not to the kit.
  */
 export const WithGroups: Story = {
   render: () => (
@@ -115,7 +115,7 @@ export const WithGroups: Story = {
   ),
 };
 
-/** Пустое состояние приходит пропом: у «нет событий» и «не нашлось» разный текст. */
+/** The empty state comes in as a prop: "no events" and "nothing found" have different text. */
 export const Empty: Story = {
   render: () => (
     <div className="border-line-soft w-[420px] rounded-lg border p-4">
@@ -128,8 +128,8 @@ export const Empty: Story = {
 };
 
 /**
- * Превью объекта — второй слот рядом с текстом, независимый от иконки: иконка
- * говорит, что случилось, превью — с чем.
+ * The preview of an object is a second slot next to the text, independent of the icon:
+ * the icon says what happened, the preview says with what.
  */
 export const WithPreview: Story = {
   render: () => (
@@ -159,8 +159,9 @@ export const WithPreview: Story = {
 };
 
 /**
- * Вся строка — одна кнопка: имя из заголовка (плюс слово «Unread»), время и
- * подробности — описание. Щелчок, Enter и Space. С `actions` не сочетается.
+ * The whole row is one button: the name comes from the heading (plus the word "Unread"),
+ * and the time and details form the description. Click, Enter and Space. Not combined
+ * with `actions`.
  */
 export const RowAsButton: Story = {
   render: function Render() {

@@ -19,50 +19,50 @@ export interface PasswordInputProps extends Omit<
   "type" | "size"
 > {
   /**
-   * Подпись кнопки показа. Одна на оба состояния — состояние объявляет
+   * Label of the show button. One label for both states: the state is announced by
    * `aria-pressed`.
    */
   toggleLabel?: string;
   /**
-   * Показывает предупреждение, когда включён Caps Lock. По умолчанию включено.
+   * Shows a warning when Caps Lock is on. Enabled by default.
    *
-   * Предупреждение о включённом Caps Lock. Выключается пропом, потому что поле
-   * пароля встречается и там, где подсказка неуместна, — например в диалоге
-   * подтверждения из одного поля.
+   * The warning about Caps Lock being on. It can be turned off with the prop, because a password
+   * field also appears where a hint would be out of place, for example in a confirmation dialog
+   * with a single field.
    */
   capsLockWarning?: boolean;
-  /** Классы на оболочку с рамкой — ширина, скругление, внутренние отступы. */
+  /** Classes for the framed wrapper: width, corner radius, inner padding. */
   shellClassName?: string;
 }
 
 /**
- * Поле пароля: кнопка показа в слоте, предупреждение о Caps Lock под полем.
+ * A password field: a show button in the slot, and a Caps Lock warning under the field.
  *
- * СТОИТ НА `TextControl` СЛОТАМИ, а не на своей оболочке — прямой прецедент
- * `SearchControl` (ADR-0009). Рамка, фокус, выключенное и невалидное состояния
- * остаются у `TextControl`; своей рамки компонент не рисует вовсе, иначе
- * поле пароля фокусировалось бы не так, как соседнее поле в той же форме.
+ * IT IS BUILT ON `TextControl` SLOTS, not on its own wrapper: `SearchControl` is a direct
+ * precedent (ADR-0009). The frame, focus, and the disabled and invalid states stay with
+ * `TextControl`. The component draws no frame of its own, otherwise the password field
+ * would take focus differently from a neighboring field in the same form.
  *
- * ЧТО КОМПОНЕНТ ДОБАВЛЯЕТ СВЕРХ СЛОТА — ровно три вещи, и каждая есть причина
- * его существования:
+ * WHAT THE COMPONENT ADDS ON TOP OF THE SLOT: exactly three things, and each one is a reason
+ * for it to exist:
  *
- * 1. **Переключение показа с сохранением каретки.** Смена `type` сбрасывает
- *    выделение в конец значения, и пользователь, открывший пароль посреди
- *    правки, терял место. Позиция снимается до переключения и возвращается
- *    после — без переноса фокуса: кнопку нажали намеренно, и увозить с неё
- *    фокус значит ломать повторное нажатие с клавиатуры.
- * 2. **Предупреждение о Caps Lock** — читается из `getModifierState` на
- *    клавиатурном событии, а не угадывается по регистру введённого: в поле
- *    пароля символов не видно, а «все заглавные» — законный пароль.
- * 3. **`autocomplete` пропом.** Значения по умолчанию нет намеренно: вход это
- *    или смена пароля, знает вызывающий, а кит — нет. Ставьте
- *    `autoComplete="current-password"` на входе и `"new-password"` в смене.
+ * 1. **Toggling visibility while keeping the caret.** Changing `type` resets the selection
+ *    to the end of the value, and a user who reveals the password in the middle of an edit
+ *    loses their place. The position is saved before the switch and restored after it,
+ *    without moving focus: the button was pressed on purpose, and moving focus away from it
+ *    would break a repeated press from the keyboard.
+ * 2. **Caps Lock warning.** It is read from `getModifierState` on the keyboard event, not
+ *    guessed from the case of the typed characters: a password field does not show the characters,
+ *    and "all capitals" is a legitimate password.
+ * 3. **`autocomplete` as a prop.** There is no default on purpose: whether this is a sign-in or a
+ *    password change is known to the caller, not to the kit. Set
+ *    `autoComplete="current-password"` on sign-in and `"new-password"` on a change.
  *
- * У КНОПКИ ПОКАЗА `aria-pressed`, А ПОДПИСЬ ПОСТОЯННАЯ. Без признака
- * скринридер не сообщит, что пароль сейчас открыт на экране, — а это состояние
- * безопасности, а не украшение. Подпись при этом не меняется: кнопка, у
- * которой меняются и имя, и состояние, читается противоречиво («Скрыть
- * пароль, нажато»).
+ * THE SHOW BUTTON HAS `aria-pressed`, BUT ITS LABEL IS CONSTANT. Without the flag, a screen reader
+ * would not say that the password is visible on screen, which is a security state, not
+ * decoration. The label stays the same, because a button whose name and state both change
+ * is read as a contradiction: "Hide password, pressed".
+ * (the state is already announced by `aria-pressed`).
  */
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   function PasswordInput(
@@ -74,21 +74,21 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     useImperativeHandle(ref, () => innerRef.current as HTMLInputElement, []);
     const [visible, setVisible] = useState(false);
     const [capsLock, setCapsLock] = useState(false);
-    // Позиция каретки живёт в `ref`, а не в состоянии: она нужна ровно один
-    // раз, сразу после смены `type`, и лишний рендер ради неё не нужен.
+    // The caret position lives in a `ref`, not in state: it is needed exactly once, right after
+    // `type` changes, and an extra render for it is not needed.
     const caret = useRef<[number, number] | null>(null);
 
     useLayoutEffect(() => {
       const el = innerRef.current;
       const at = caret.current;
       caret.current = null;
-      // `setSelectionRange` не переносит фокус — поле остаётся там, где было,
-      // а нажатая кнопка не теряет своего.
+      // `setSelectionRange` does not move focus: the field stays where it was,
+      // and the pressed button keeps its own.
       if (el && at) el.setSelectionRange(at[0], at[1]);
     }, [visible]);
 
-    // Отслеживание Caps Lock заводится ЛЕНИВО: без предупреждения обработчики
-    // не появляются вовсе, и поле остаётся тем же `TextControl` со слотом.
+    // Caps Lock tracking is set up LAZILY: without a warning the handlers do not appear at all,
+    // and the field stays the same `TextControl` with its slot.
     const track = capsLockWarning
       ? {
           onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
@@ -100,8 +100,8 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             rest.onKeyUp?.(event);
           },
           onBlur: (event: FocusEvent<HTMLInputElement>) => {
-            // Ушли из поля — предупреждение снимается: оно относится к вводу,
-            // а не к состоянию клавиатуры вообще.
+            // Focus left the field: the warning is cleared, because it concerns the input,
+            // not the keyboard state in general.
             setCapsLock(false);
             rest.onBlur?.(event);
           },
@@ -147,10 +147,10 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
       <div className="flex flex-col gap-1">
         {control}
         {/*
-          Область объявляется ПУСТОЙ и существует всегда: живой регион,
-          появившийся в разметке вместе со своим текстом, скринридер не
-          объявляет — он обязан быть на месте до того, как текст в нём
-          возникнет. `empty:hidden` убирает её из раскладки, пока текста нет.
+          The region is declared EMPTY and always exists: a live region that appears in the markup
+          together with its text is not announced by a screen reader:
+          it has to be in place before the text appears in it.
+          `empty:hidden` removes it from the layout while there is no text.
         */}
         <p role="status" className="text-fg-2 flex items-center gap-1 text-[11px] empty:hidden">
           {capsLock ? (

@@ -22,26 +22,22 @@ import {
 } from "../../styles/palette.js";
 
 /**
- * Цвет текста, маркер и выравнивание: расширения Tiptap, переписанные с
- * `style` на `data-*`.
+ * Text color, highlight and alignment: Tiptap extensions rewritten from `style` to `data-*`.
  *
- * ПОЧЕМУ НЕ «ИЗ КОРОБКИ». `Color`, `Highlight` и `TextAlign` пишут
- * `style="color: …"` и читают любое значение CSS, которое пришло. Для кита это
- * два обещания, которые такой разбор нарушает: в сохранённом HTML нет `style`
- * (сервер потребителя может не разрешать его вовсе), и цвет — только из
- * палитры токенов, а не `#ff0000` из вставки из Word. Поэтому пакеты взяты ради
- * команд и разметки Схемы, а атрибуты, разбор и вывод заменены.
+ * WHY NOT "OUT OF THE BOX". `Color`, `Highlight` and `TextAlign` write `style="color: …"` and read
+ * any CSS value that arrives. For the kit these are two promises that such parsing breaks. The
+ * saved HTML has no `style` (the consumer's server may not allow it at all), and the color comes
+ * only from the token palette, not from `#ff0000` pasted from Word. So the packages are taken for
+ * their commands and Schema markup, while the attributes, parsing and output are replaced.
  *
- * ЕДИНСТВЕННОЕ ИСКЛЮЧЕНИЕ — ЦВЕТ АВТОРА (`customColor.ts`): `style="color:#rrggbb"`
- * на `span` и `style="background-color:#rrggbb"` на `mark`, и только в этой
- * строгой форме, никогда вместе с `data-color`. Остальной `style` по-прежнему не
- * разбирается.
+ * THE ONE EXCEPTION IS THE CUSTOM COLOR (`customColor.ts`): `style="color:#rrggbb"` on a `span` and
+ * `style="background-color:#rrggbb"` on a `mark`, and only in this strict form, never together with
+ * `data-color`. Any other `style` is still not parsed.
  *
- * ЧТО НЕ ИЗ ПАЛИТРЫ — ОТБРАСЫВАЕТСЯ ВМЕСТЕ С ОБЁРТКОЙ, ТЕКСТ ОСТАЁТСЯ.
- * `<span data-color="hotpink">` разбирается без метки, `<span style="…">` не
- * разбирается вовсе: значение CSS из чужого HTML не переводится в ближайший
- * цвет палитры. Перевод угадывал бы за автора, а в тёмной теме угаданный цвет
- * мог бы оказаться нечитаемым.
+ * ANYTHING NOT FROM THE PALETTE IS DROPPED TOGETHER WITH ITS WRAPPER, AND THE TEXT STAYS.
+ * `<span data-color="hotpink">` is parsed without the Mark, and `<span style="…">` is not parsed at
+ * all: a CSS value from foreign HTML is not mapped to the nearest palette color. Such mapping would
+ * guess for the author, and in a dark theme the guessed color could turn out unreadable.
  */
 
 const textColorNames: ReadonlySet<string> = new Set(EDITOR_TEXT_COLOR_NAMES);
@@ -52,11 +48,11 @@ const knownAlignments: ReadonlySet<string> = new Set(EDITOR_ALIGNMENTS);
 type ColorProperty = (typeof CUSTOM_COLOR_PROPERTY)[keyof typeof CUSTOM_COLOR_PROPERTY];
 
 /**
- * Что считать именем палитры на метке. Палитр две (`palette.ts`): `span`
- * берёт имена цвета текста, `mark` — имена маркера, и чужое имя на теге не
- * принимается. `named` — имя в том виде, в каком оно пишется в документ;
- * `parsed` — то же из чужого или сохранённого HTML: маркер там переводит
- * старое имя в новое (`LEGACY_MARKER_NAMES`), текст — нет.
+ * What counts as a palette name on a Mark. There are two palettes (`palette.ts`): `span` takes the
+ * text color names, `mark` takes the highlight names, and a foreign name on a tag is not accepted.
+ * `named` is the name as it is written into the Document. `parsed` is the same from foreign or saved
+ * HTML: for a highlight it maps an old name to the new one (`LEGACY_MARKER_NAMES`), for text it
+ * does not.
  */
 interface ColorKind {
   property: ColorProperty;
@@ -77,14 +73,14 @@ const MARKER_KIND: ColorKind = {
 };
 
 /**
- * Значение цвета метки: имя её палитры или произвольный `#rrggbb` (регистр
- * приводится к нижнему). Метка хранит одну строку, и это же делает палитру и
- * произвольный цвет взаимоисключающими: второй не может «добавиться» к первому.
+ * The value of a Mark's color: the name from its palette, or a custom `#rrggbb` (the case is
+ * lowered). A Mark stores one string, and that is what makes a palette color and a custom color
+ * mutually exclusive: the second cannot be "added" to the first.
  */
 const colorValue = (value: unknown, kind: ColorKind): string | null =>
   typeof value === "string" ? (kind.named(value) ?? normalizeCustomColor(value)) : null;
 
-/** Атрибуты HTML для значения цвета метки: `data-color` ИЛИ `style`, не оба. */
+/** HTML attributes for a Mark's color value: `data-color` OR `style`, never both. */
 const renderColor = (value: string | null | undefined, kind: ColorKind): Record<string, string> => {
   const color = colorValue(value, kind);
   if (color === null) return {};
@@ -94,15 +90,14 @@ const renderColor = (value: string | null | undefined, kind: ColorKind): Record<
 };
 
 /**
- * Разметка метки со `style`, которая сохраняет его ДОСЛОВНО.
+ * A Mark's markup with `style` that is kept VERBATIM.
  *
- * ПОЧЕМУ НЕ МАССИВ `["span", { style }, 0]`. ProseMirror пишет ключ `style`
- * через `element.style.cssText`, и браузер возвращает значение в своей записи:
- * `color:#ff0000` выходит как `color: rgb(255, 0, 0);`. Такой документ при
- * следующей загрузке не прошёл бы строгий разбор, а правило «в `style` только
- * `color:#rrggbb`» для очистки на сервере (`sanitizeRichText`) перестало бы быть правдой.
- * `setAttribute("style", …)` строку не трогает, поэтому элемент собирается
- * руками, а ProseMirror получает готовый узел и место для содержимого.
+ * WHY NOT THE ARRAY `["span", { style }, 0]`. ProseMirror writes the `style` key through
+ * `element.style.cssText`, and the browser returns the value in its own notation: `color:#ff0000`
+ * comes out as `color: rgb(255, 0, 0);`. Such a Document would not pass the strict parse on the next
+ * load, and the rule "`style` only `color:#rrggbb`" for the server-side sanitization
+ * (`sanitizeRichText`) would stop being true. `setAttribute("style", …)` leaves the string alone, so
+ * the element is built by hand, and ProseMirror gets a ready node and a place for the content.
  */
 const renderMark = (tag: "span" | "mark", attributes: Record<string, string>): DOMOutputSpec => {
   const { style, ...rest } = attributes;
@@ -114,9 +109,9 @@ const renderMark = (tag: "span" | "mark", attributes: Record<string, string>): D
 };
 
 /**
- * Цвет элемента из чужого HTML. Имя палитры метки в `data-color` — первым;
- * `style` читается, только когда `data-color` нет вовсе: элемент с чужим именем
- * и со `style` не получает ничего, а не «хотя бы style».
+ * The color of an element from foreign HTML. A palette name in `data-color` goes first. `style` is
+ * read only when there is no `data-color` at all, so an element with a foreign name and a `style`
+ * gets nothing, not "at least the style".
  */
 const colorOf = (element: HTMLElement, kind: ColorKind): string | null => {
   const name = element.getAttribute("data-color");
@@ -125,17 +120,16 @@ const colorOf = (element: HTMLElement, kind: ColorKind): string | null => {
 };
 
 /**
- * Метка цвета текста: `<span data-color="danger">`.
+ * Text color Mark: `<span data-color="danger">`.
  *
- * Метка движка называется `textStyle` — под этим именем её знает `Color`,
- * поэтому имя не меняется. Правило разбора берёт только `span` с именем из
- * палитры: пустая обёртка `<span>` (разметка пункта чек-листа) и `span` со
- * `style` метки не получают.
+ * The engine's Mark is called `textStyle`, and `Color` knows it under that name, so the name does
+ * not change. The parse rule takes only a `span` with a name from the palette: an empty `<span>`
+ * wrapper (the markup of a task list item) and a `span` with a Mark's `style` do not get it.
  */
 const TextColorMark: Mark = TextStyle.extend({
-  // Снаружи маркера (у него 1001): `span[data-color]` › `mark` › `sup`. Тёмный
-  // текст маркера (`prose.ts`) стоит на `mark` и потому сильнее цвета автора
-  // вокруг — на яркой подложке текст читается в любой теме.
+  // Outside the highlight (its priority is 1001): `span[data-color]` › `mark` › `sup`. The dark
+  // text of the highlight (`prose.ts`) sits on `mark` and so takes precedence over the author's
+  // color around it. On a bright background the text is readable in any theme.
   priority: 1002,
   renderHTML({ HTMLAttributes }) {
     return renderMark("span", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes));
@@ -150,7 +144,7 @@ const TextColorMark: Mark = TextStyle.extend({
   },
 });
 
-/** Значение метки цвета: имя палитры в `data-color` или `#rrggbb` в `style`. */
+/** Value of the text color Mark: a palette name in `data-color`, or `#rrggbb` in `style`. */
 const TextColorValue: Extension = Color.extend({
   addGlobalAttributes() {
     return [
@@ -170,8 +164,8 @@ const TextColorValue: Extension = Color.extend({
   addCommands() {
     return {
       ...this.parent?.(),
-      // Ни имя палитры, ни `#rrggbb` — не ставится: метка без значения вышла
-      // бы пустым `<span>` в сохранённом HTML.
+      // Neither a palette name nor `#rrggbb` is set: a Mark without a value would come out as an
+      // empty `<span>` in the saved HTML.
       setColor:
         (color) =>
         ({ chain }) => {
@@ -182,29 +176,28 @@ const TextColorValue: Extension = Color.extend({
   },
 });
 
-/** Инструмент `color`: метка и её значение вместе. */
+/** The `color` Tool: the Mark and its value together. */
 export const TEXT_COLOR_EXTENSIONS = [TextColorMark, TextColorValue];
 
 /**
- * Маркер: `<mark data-color="yellow">`. Маркер без цвета из палитры не
- * существует: голый `<mark>` браузер красит жёлтым с чёрным текстом, и в
- * тёмной теме это светящаяся плашка поверх всего документа. Поэтому разбор
- * берёт только `mark[data-color]` с известным именем, а команда без цвета
- * ничего не ставит.
+ * Highlight: `<mark data-color="yellow">`. A highlight without a color from the palette does not
+ * exist: a bare `<mark>` is painted yellow by the browser with black text, and in a dark theme that
+ * is a glowing patch over the whole document. So parsing takes only `mark[data-color]` with a known
+ * name, and a command without a color sets nothing.
  *
- * Выключены и всё, что ставило маркер без цвета: `Mod-Shift-H`, правило ввода
- * и вставки `==текст==`, разбор Markdown. Последнее ещё и закрывает утечку
- * между Редакторами: правила Markdown живут в общем `marked`, и маркер одного
- * Редактора разбирал бы `==` у другого — без инструмента.
+ * Also switched off is everything that set a highlight without a color: `Mod-Shift-H`, the input and
+ * paste rule `==text==`, and Markdown parsing. The last one also closes a leak between Editors: the
+ * Markdown rules live in a shared `marked`, so one Editor's highlight rule would parse `==` in
+ * another Editor, with no Tool enabled.
  */
 export const HighlightExtension: Mark = Highlight.configure({ multicolor: true }).extend({
   /*
-    Маркер — САМАЯ ВНЕШНЯЯ Метка. Вложенность Меток в DOM задаёт порядок в
-    Схеме, а его — приоритет расширения. С обычным приоритетом маркер ложился
-    внутрь `<sup>`/`<sub>` и поднимался вместе с индексом: полоса прыгала
-    вверх-вниз посреди строки. Снаружи его подложка остаётся на строке, а индекс
-    поднимается внутри неё. Выше и ссылки (у `RichLink` приоритет 1000), чтобы
-    помеченная ссылка тоже не рвала полосу.
+    The highlight is the OUTERMOST Mark. The nesting of Marks in the DOM is set by the order in the
+    Schema, and that order follows the extension's priority. At the default priority the highlight
+    sat inside `<sup>`/`<sub>` and rose with the index, so the strip jumped up and down in the
+    middle of a line. Outside, its background stays on the line, and the index rises inside it.
+    It is also above the link (`RichLink` has priority 1000), so a marked link does not break the
+    strip either.
   */
   priority: 1001,
   addAttributes() {
@@ -232,8 +225,8 @@ export const HighlightExtension: Mark = Highlight.configure({ multicolor: true }
     const parent = this.parent?.();
     return {
       ...parent!,
-      // Маркер без цвета (палитры или `#rrggbb`) не ставится: см. комментарий
-      // к расширению.
+      // A highlight without a color (palette or `#rrggbb`) is not set: see the comment on the
+      // extension above.
       setHighlight:
         (attributes) =>
         ({ commands }) => {
@@ -245,29 +238,29 @@ export const HighlightExtension: Mark = Highlight.configure({ multicolor: true }
   addKeyboardShortcuts: () => ({}),
   addInputRules: () => [],
   addPasteRules: () => [],
-  // Расширение-родитель держит свой токенайзер, а `undefined` в `extend`
-  // родителя не заглушает, поэтому подменяется токенайзером, который не находит
-  // ничего: `start` без совпадения не даёт разбору остановиться на `==`.
+  // The parent extension holds its own tokenizer, and `undefined` in `extend` does not switch the
+  // parent's tokenizer off. So it is replaced with one that finds nothing: a `start` with no match
+  // does not let parsing stop at `==`.
   markdownTokenizer: {
     name: "highlight",
     level: "inline",
     start: () => -1,
     tokenize: () => undefined,
   },
-  // Цвет при экспорте в Markdown теряется (спека, «Markdown»): остаётся текст.
+  // The color is lost on export to Markdown (see the spec, "Markdown"): the text stays.
   renderMarkdown: (node, helpers) => helpers.renderChildren(node),
   parseMarkdown: (token, helpers) => helpers.parseInline(token.tokens ?? []),
 });
 
 /**
- * Выравнивание Блока: `<p data-align="center">`.
+ * Block alignment: `<p data-align="center">`.
  *
- * `left` — умолчание, и в разметку не пишется: документ без выравнивания
- * остаётся прежним, а `setTextAlign("left")` снимает атрибут, а не ставит
- * «явно слева». Читается `left` из чужого HTML как отсутствие атрибута.
+ * `left` is the default and is not written into the markup: a Document without alignment stays as
+ * it was, and `setTextAlign("left")` removes the attribute rather than setting "explicitly left".
+ * `left` from foreign HTML is read as the absence of the attribute.
  *
- * Типы — абзац и заголовок. Заголовков Схема знает четыре уровня (первый — с `heading1`),
- * поэтому выравниваются `p` и `h1`–`h4`; абзац внутри списка или цитаты — тоже `p`.
+ * The types are paragraph and heading. The Schema knows four heading levels (the first one is
+ * `heading1`), so `p` and `h1`–`h4` are aligned. A paragraph inside a list or a quote is a `p` too.
  */
 export const TextAlignExtension: Extension = TextAlign.extend({
   addGlobalAttributes() {
@@ -277,7 +270,7 @@ export const TextAlignExtension: Extension = TextAlign.extend({
         attributes: {
           textAlign: {
             default: null,
-            // `data-align`, а из чужого HTML — `text-align` и `align` (`palette.ts`).
+            // `data-align`; from foreign HTML, `text-align` and `align` (`palette.ts`).
             parseHTML: (element: HTMLElement): EditorAlignment | null =>
               alignmentFromElement(element),
             renderHTML: (attributes: { textAlign?: string | null }) =>

@@ -2,24 +2,22 @@ import { type CalendarDate, parseDate } from "@internationalized/date";
 import type { DateValue } from "react-aria-components";
 
 /**
- * Разбор ISO-даты, не бросающий на неразбираемом значении.
+ * Parse an ISO date without throwing on an unparseable value.
  *
- * `parseDate` бросает ДВА разных исключения, и оба достижимы из адреса:
- * `parseDate("ерунда")` — это `Error: Invalid ISO 8601 date string`, а
- * `parseDate("2026-02-29")` — `RangeError: Value out of range`, потому что 2026
- * год не високосный. Второе особенно коварно: строка выглядит правильной, и
- * ссылка с ней живёт до первого не-високосного года.
+ * `parseDate` throws TWO different exceptions, and both are reachable from the URL:
+ * `parseDate("nonsense")` gives `Error: Invalid ISO 8601 date string`, and
+ * `parseDate("2026-02-29")` gives `RangeError: Value out of range`, because 2026 is not a leap year.
+ * The second is especially treacherous: the string looks correct, and a link carrying it works until
+ * the first non-leap year.
  *
- * Вынесено, когда выяснилось, что защита стоит в одном месте из трёх.
- * `DateRangePicker` заворачивал разбор в `try/catch` и в комментарии
- * утверждал, что соседний `DatePicker` на том же вводе показывает
- * плейсхолдер, — а `DatePicker` разбирал значение выражением в JSX-потомке,
- * то есть на каждом рендере и без всякой защиты. Комментарий описывал
- * инвариант, которого не было: ровно так и разъезжаются три копии одной мысли.
+ * Extracted when it turned out that the guard sat in one of three places.
+ * `DateRangePicker` wrapped the parse in `try/catch`, and its comment claimed that the neighboring
+ * `DatePicker` shows a placeholder on the same input. But `DatePicker` parsed the value with an
+ * expression in a JSX child, that is, on every render and with no guard at all. The comment described
+ * an invariant that did not exist: that is exactly how three copies of one idea drift apart.
  *
- * `@internal` — наружу не экспортируется: у потребителя есть `parseDate`
- * библиотеки, и решать за него, что делать с неразбираемым значением, кит не
- * должен.
+ * `@internal`: not exported from the package. The consumer has the library's `parseDate`, and the kit
+ * must not decide for them what to do with an unparseable value.
  */
 export function parseDateOrNull(value: string | null | undefined): CalendarDate | null {
   if (!value) return null;
@@ -31,23 +29,22 @@ export function parseDateOrNull(value: string | null | undefined): CalendarDate 
 }
 
 /**
- * Дата в любом из двух видов, которые принимают календари кита: ISO-строка
- * `ГГГГ-ММ-ДД` или объект `@internationalized/date`.
+ * A date in either of the two forms the kit's calendars accept: an ISO string `YYYY-MM-DD`
+ * or an `@internationalized/date` object.
  *
- * Строка нужна потребителю, у которого этого пакета нет: `@internationalized/date`
- * не входит в публичные точки входа кита, и ради одной границы `minValue`
- * тянуть его в зависимости приложения незачем. Объект остаётся — им уже
- * пользуются.
+ * The string is needed by a consumer that does not have this package. `@internationalized/date` is not
+ * among the kit's public entry points, and for a single `minValue` bound there is no reason to pull it
+ * into the application's dependencies. The object form stays, since it is already in use.
  */
 export type DateInput = DateValue | string;
 
 /**
- * Приводит `DateInput` к объекту календаря.
+ * Converts a `DateInput` to a calendar object.
  *
- * `undefined` и `null` проходят насквозь — у react-aria это разные вещи
- * (`value={undefined}` — неуправляемое поле, `value={null}` — управляемое
- * пустое), и стирать различие здесь нельзя. Неразбираемая строка даёт `null`:
- * «значения нет», а не исключение, как у `DatePicker` с мусором из адреса.
+ * `undefined` and `null` pass straight through. In react-aria these are different things
+ * (`value={undefined}` is an uncontrolled field, `value={null}` is a controlled empty one), and the
+ * difference must not be erased here. An unparseable string gives `null`: "no value", not an exception,
+ * as `DatePicker` does with garbage from the URL.
  */
 export function toDateValue(value: DateInput | null | undefined): DateValue | null | undefined {
   if (value === undefined || value === null) return value;
@@ -55,28 +52,28 @@ export function toDateValue(value: DateInput | null | undefined): DateValue | nu
 }
 
 /**
- * То же для границы и фокуса: пустое и неразбираемое — одинаково «не задано».
- * Граница из мусора не должна превращаться в `null`: react-aria читает `null`
- * как ошибку типа, а не как отсутствие.
+ * The same for a bound and for the focus value: empty and unparseable are equally "not set".
+ * A bound made of garbage must not turn into `null`: react-aria reads `null` as a type error,
+ * not as an absence.
  */
 export function toDateBound(value: DateInput | undefined): DateValue | undefined {
   return toDateValue(value) ?? undefined;
 }
 
-/** Календарный день объекта календаря в виде ISO-строки `ГГГГ-ММ-ДД`. */
+/** The calendar day of a calendar object, as an ISO string `YYYY-MM-DD`. */
 export function toIsoDate(value: DateValue): string {
-  // `toString()` у `CalendarDateTime` и `ZonedDateTime` несёт время и зону;
-  // наружу идёт день, как у `DatePicker`.
+  // `toString()` of `CalendarDateTime` and `ZonedDateTime` carries the time and the zone;
+  // only the day goes out, as it does for `DatePicker`.
   return value.toString().slice(0, 10);
 }
 
-/** Диапазон в любом из двух видов: пара ISO-строк или `{ start, end }` объектов. */
+/** A range in either form: a pair of ISO strings or `{ start, end }` objects. */
 export interface DateRangeInput {
   start: DateInput;
   end: DateInput;
 }
 
-/** Пара границ диапазона в виде объектов календаря; половина диапазона — не диапазон. */
+/** A pair of range bounds as calendar objects. Half a range is not a range. */
 export function toRangeValue(
   value: DateRangeInput | null | undefined
 ): { start: DateValue; end: DateValue } | null | undefined {

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
-// Половина файла обходится без DOM (сверка реестра со `styles.css`), но
-// `applyTheme` и скрипт раннего применения без него не проверить, а держать
-// два файла ради одной прагмы дороже, чем поднять jsdom один раз.
+// Half of the file runs without the DOM (checking the registry against `styles.css`), but
+// `applyTheme` and the early-apply script cannot be checked without it, and keeping two
+// files for the sake of one pragma costs more than starting jsdom once.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
@@ -20,16 +20,16 @@ import {
 
 const css = readFileSync(resolve(import.meta.dirname, "..", "styles.css"), "utf8");
 
-/** Значения оси, у которых в CSS есть свой блок. Умолчание блока не имеет. */
+/** Axis values that have their own block in the CSS. The default has no block of its own. */
 const declaredIn = (attr: string) =>
   new Set([...css.matchAll(new RegExp(`\\[${attr}="([\\w-]+)"\\]`, "g"))].map((m) => m[1] ?? ""));
 
 /**
- * Реестр против `styles.css` — ровно тот дефект, ради которого реестр заведён.
+ * The registry against `styles.css` — exactly the defect the registry exists to prevent.
  *
- * Проверяется в обе стороны, и это не педантизм. Лишнее значение в реестре —
- * пункт переключателя, который ничего не меняет; недостающее — тема, которая в
- * CSS есть, а через кит недоступна. Обе поломки молчаливые.
+ * It is checked in both directions, and that is not pedantry. An extra value in the
+ * registry is a switch item that changes nothing; a missing one is a theme that is in
+ * the CSS but unavailable through the kit. Both breakages are silent.
  */
 describe.each([
   ["data-theme", UI_THEMES, DEFAULT_THEME_PREFS.theme],
@@ -92,7 +92,7 @@ describe("applyTheme", () => {
   });
 
   test("an omitted axis returns to the default instead of keeping the previous value", () => {
-    // Иначе бренд остался бы от прошлого экрана, и никто не понял бы почему.
+    // Otherwise the brand would stay from the previous screen, and nobody would understand why.
     applyTheme(root, { theme: "dim", brand: "teal" });
     applyTheme(root, { theme: "light" });
     expect(root.getAttribute("data-theme")).toBe("light");
@@ -107,18 +107,18 @@ describe("applyTheme", () => {
 });
 
 /**
- * Скрипт обязан быть ИСПОЛНИМЫМ, а не выглядеть исполнимым: он уезжает к
- * потребителю строкой, и опечатка в нём не ловится ни компилятором, ни линтером.
+ * The script must be EXECUTABLE, not merely look executable: it travels to the consumer
+ * as a string, and a typo in it is caught neither by the compiler nor by the linter.
  */
 describe("themeInitScript", () => {
   const KEY = "ui-prefs";
 
   /**
-   * Хранилище подставляется своё, а не берётся у окружения: `localStorage` в
-   * jsdom этой версии есть по имени, но без методов `Storage`, и тест падал бы
-   * на инфраструктуре, а не на проверяемом коде. Скрипт при этом остаётся
-   * ровно тем, что уедет к потребителю, — обращается к голому `localStorage`,
-   * как и положено коду в браузере.
+   * The storage is a stub of its own, not taken from the environment: `localStorage` in
+   * this version of jsdom exists by name but has no `Storage` methods, and the test would
+   * fail on the infrastructure rather than on the code under test. The script itself stays
+   * exactly what travels to the consumer: it accesses a bare `localStorage`, as code in a
+   * browser should.
    */
   const store = new Map<string, string>();
   vi.stubGlobal("localStorage", {
@@ -166,9 +166,9 @@ describe("themeInitScript", () => {
   });
 
   /**
-   * Регрессия: `JSON.stringify` закрывает кавычки, но не `<`. Ключ с
-   * `</script>` закрывал тег на месте, и остаток кода вываливался в разметку
-   * текстом. Прежний тест проверял только кавычки и давал ложную уверенность.
+   * Regression: `JSON.stringify` escapes quotes but not `<`. A key with `</script>` closed
+   * the tag in place, and the rest of the code spilled into the markup as text. The earlier
+   * test checked only quotes and gave false confidence.
    */
   test("a key containing </script> does not tear the inline tag", () => {
     const script = themeInitScript({ storageKey: "a</script><script>alert(1)</script>" });
@@ -184,8 +184,8 @@ describe("themeInitScript", () => {
   });
 
   test("the storage key is escaped, not concatenated", () => {
-    // Ключ приходит от потребителя и попадает в ТЕКСТ кода. Незакавыченная
-    // кавычка сломала бы скрипт синтаксически — молча, на проде.
+    // The key comes from the consumer and lands in the TEXT of the code. An unescaped quote
+    // would break the script's syntax — silently, in production.
     const nasty = 'a"; alert(1); var b="';
     store.set(nasty, JSON.stringify({ theme: "dim" }));
     run(themeInitScript({ storageKey: nasty }));

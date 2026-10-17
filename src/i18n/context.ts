@@ -6,25 +6,26 @@ import type { UiMessages } from "./messages.js";
 
 export interface UiContextValue {
   /**
-   * Локаль, заданная ЯВНО. `undefined` значит «не задана», и это не то же
-   * самое, что `en-US`: без явной локали кит не спорит с потребителем, а берёт
-   * её у `I18nProvider` из react-aria (то есть у внешнего провайдера или у
-   * браузера). См. `useUiLocale`.
+   * The locale set EXPLICITLY. `undefined` means "not set", and that is not the
+   * same as `en-US`: without an explicit locale the kit does not override the
+   * consumer, but takes the locale from react-aria's `I18nProvider` (that is, from
+   * an outer provider or from the browser). See `useUiLocale`.
    */
   locale: string | undefined;
   messages: UiMessages;
   dir: "ltr" | "rtl";
   portalContainer: HTMLElement | null;
   /**
-   * Плотность раскладки по умолчанию. Именно **умолчание**: таблица и её
-   * шестерёнка перекрывают значение, а провайдер избавляет приложение с пятью
-   * таблицами от пяти одинаковых пропов (ADR-0023).
+   * The default layout density. It is a **default**, not a mode: a table and its
+   * gear override it, and the provider spares an app with five tables from five
+   * identical props (ADR-0023).
    */
   density: Density;
 }
 
 /**
- * Контекст лежит отдельным модулем, чтобы `UiProvider` и хуки не тянули друг
- * друга по кругу: провайдер импортирует хук слияния, а хуки — контекст.
+ * The context lives in its own module so that `UiProvider` and the hooks do not
+ * import each other in a cycle: the provider imports the merge hook, and the hooks
+ * import the context.
  */
 export const UiContext = createContext<UiContextValue | null>(null);

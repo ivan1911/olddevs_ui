@@ -4,261 +4,261 @@ source: src/icons.ts
 status: stable
 ---
 
-# Иконки `@olddevs/ui/icons`
+# Icons `@olddevs/ui/icons`
 
-## Кратко для AI
+## Summary for AI
 
-Импортируйте иконки только из `@olddevs/ui/icons`, выбирая имя по смыслу действия
-или сущности: `DeleteIcon`, а не геометрию вроде `Trash`. Геометрию словаря
-даёт `lucide-react`; словарь пакета фиксирует единое системное значение.
+Import icons only from `@olddevs/ui/icons`, choosing the name by the meaning of the action
+or entity: `DeleteIcon`, not a shape such as `Trash`. The vocabulary's geometry
+comes from `lucide-react`; the package vocabulary fixes one system-wide meaning.
 
-## Когда использовать
+## When to use
 
-- Когда у UI уже есть общеупотребимый смысл: закрыть, удалить, искать,
-  настройки, ошибка, успех, переключить тему и т. п.
-- Когда нужно единообразное обозначение одного действия во всех экранах.
-- С `Button` для иконки без текста: обязательно передайте доступное имя самой
-  кнопке (`aria-label`), а иконку сделайте декоративной через `aria-hidden`.
+- When the UI already has a commonly understood meaning: close, delete, search,
+  settings, error, success, switch theme, and so on.
+- When you need one consistent symbol for one action across all screens.
+- With `Button` for an icon without text: be sure to give the button itself an accessible
+  name (`aria-label`) and make the icon decorative with `aria-hidden`.
 
-## Когда не использовать
+## When not to use
 
-- Не импортируйте напрямую иконки из `lucide-react` под их геометрическими
-  именами (`Trash`) для смысла, который уже есть в словаре. Иначе последующая смена метафоры не будет
-  централизованной.
-- Не выбирайте иконку по похожему контуру: `CheckIcon` означает отмеченный
-  элемент, `SuccessIcon` — успешный результат; `DeleteIcon` — удалить,
-  `CloseIcon` — закрыть.
-- Не полагайтесь на иконку как единственную подпись незнакомого действия.
-  Добавьте видимый текст, подсказку или доступное имя по контексту.
+- Do not import icons from `lucide-react` under their shape names (`Trash`) for a meaning
+  the vocabulary already has. Otherwise a later change of metaphor will not be
+  centralized.
+- Do not pick an icon by a similar outline: `CheckIcon` means a checked
+  item, `SuccessIcon` a successful result; `DeleteIcon` means delete,
+  `CloseIcon` means close.
+- Do not rely on an icon as the only label of an unfamiliar action.
+  Add visible text, a tooltip or an accessible name suited to the context.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Button } from "@olddevs/ui";
 import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 
-<Button aria-label="Удалить кампанию" tone="danger" variant="ghost">
+<Button aria-label="Delete campaign" tone="danger" variant="ghost">
   <DeleteIcon aria-hidden />
 </Button>
 <SearchIcon aria-hidden size={16} />
 ```
 
-## Контракт входа
+## Entry point contract
 
-- Публичный вход — `@olddevs/ui/icons`; не импортируйте `src/icons.ts` или
-  `lucide-react` через внутренние пути пакета.
-- Имена словаря оканчиваются на `Icon`; тест гарантирует, что каждое имя
-  разрешается в компонент установленной версии `lucide-react`.
-- Размер, толщина линии и цвет не фиксируются словарём. Их задаёт потребитель
-  через props Lucide или `LucideProvider`. Провайдер берите из этого же входа,
-  а не из `lucide-react`: lucide приезжает вместе с китом, и провайдер из второй
-  копии в приложении до иконок кита не дойдёт (ADR-0072).
-- Также экспортируется тип `IconProps` — это `LucideProps` из `lucide-react`.
+- The public entry point is `@olddevs/ui/icons`; do not import `src/icons.ts` or
+  `lucide-react` through the package's internal paths.
+- Vocabulary names end in `Icon`; a test guarantees that every name
+  resolves to a component of the installed `lucide-react` version.
+- Size, stroke width and color are not fixed by the vocabulary. The consumer sets them
+  through Lucide props or `LucideProvider`. Import the provider from this same entry point,
+  not from `lucide-react`: lucide comes with the kit, and a provider from a second copy in
+  your app never reaches the kit's icons (ADR-0072).
+- The `IconProps` type is also exported — it is `LucideProps` from `lucide-react`.
 
-## Семантические различия
+## Semantic differences
 
-| Нужный смысл                         | Используйте                                     | Не подменяйте                  |
-| ------------------------------------ | ----------------------------------------------- | ------------------------------ |
-| Закрыть панель, окно или тег         | `CloseIcon`                                     | `DeleteIcon`                   |
-| Удалить сущность                     | `DeleteIcon`                                    | `CloseIcon`                    |
-| Отмеченный флажок или выбор          | `CheckIcon`                                     | `SuccessIcon`                  |
-| Успешный итог операции               | `SuccessIcon`                                   | `CheckIcon`                    |
-| Сообщить об ошибке                   | `ErrorIcon`                                     | `WarningIcon`                  |
-| Найти визуально похожее              | `FindSimilarIcon`                               | общий `SearchIcon`             |
-| Внешняя ссылка                       | `ExternalLinkIcon`                              | `LinkIcon`                     |
-| Выйти из аккаунта                    | `LogoutIcon`                                    | `CloseIcon`                    |
-| Перечень записей                     | `ListIcon`                                      | `NavigationIcon`               |
-| Цель, за которую берутся             | `TargetIcon`                                    | `PlayIcon`                     |
-| Приостановить отсчёт                 | `PauseIcon`                                     | `CloseIcon`                    |
-| Приступил к работе (отметка статуса) | `FirstStepIcon`                                 | `PlayIcon`                     |
-| Здоровье как тема дела               | `HealthIcon`                                    | `FavoriteIcon`                 |
-| Письмо как тема дела                 | `MailIcon`                                      | `SendIcon`                     |
-| Поездка как тема дела                | `TripIcon`                                      | `SendIcon`                     |
-| Чтение как тема дела                 | `ReadingIcon`                                   | `LibraryIcon`                  |
-| Встреча как тема дела                | `MeetingIcon`                                   | `ProfileIcon`, `CalendarIcon`  |
-| Разработка как тема дела             | `CodeIcon`                                      | `AutomationIcon`               |
-| Срок, к которому нужно сделать       | `DeadlineIcon`                                  | `CalendarIcon`, `BellIcon`     |
-| Повторяется по правилу               | `RecurringIcon`                                 | `RefreshIcon`                  |
-| Помощь, справка                      | `HelpIcon`                                      | `InfoIcon`                     |
-| Совет                                | `TipIcon`                                       | `InfoIcon`                     |
-| Назад по истории                     | `BackIcon`                                      | `ChevronLeftIcon`              |
-| Главная, корень приложения           | `HomeIcon`                                      | `DashboardIcon`                |
-| Сортировать                          | `SortIcon`                                      | `SelectIcon`                   |
-| Отменить действие                    | `UndoIcon`                                      | `RefreshIcon`                  |
-| Повторить отменённое                 | `RedoIcon`                                      | `RecurringIcon`                |
-| Настроить вид                        | `AdjustIcon`                                    | `SettingsIcon`, `FilterIcon`   |
-| Поделиться                           | `ShareIcon`                                     | `SendIcon`, `UploadIcon`       |
-| Вложение                             | `AttachmentIcon`                                | `LinkIcon`                     |
-| Заперто, только чтение               | `LockIcon`                                      | `SecurityIcon`                 |
-| Команда, участники                   | `TeamIcon`                                      | `ProfileIcon`, `MeetingIcon`   |
-| Время вообще                         | `TimeIcon`                                      | `DeadlineIcon`                 |
-| Пометить проблему                    | `FlagIcon`                                      | `FirstStepIcon`                |
-| Запрещено                            | `BlockedIcon`                                   | `ErrorIcon`                    |
-| Строчный код (Метка в тексте)        | `InlineCodeIcon`                                | `CodeIcon`, `CodeBlockIcon`    |
-| Исходный HTML Документа              | `SourceIcon`                                    | `CodeBlockIcon`, `CodeIcon`    |
-| Маркированный список в тексте        | `ListIcon`                                      | `TaskListIcon`                 |
-| Чек-лист                             | `TaskListIcon`                                  | `ListIcon`, `SuccessIcon`      |
-| Разделитель между Блоками            | `DividerIcon`                                   | `MinusIcon`                    |
-| Снять форматирование                 | `ClearFormattingIcon`                           | `DeleteIcon`                   |
-| Цвет текста                          | `TextColorIcon`                                 | `PaletteIcon`                  |
-| Маркер (цветная заливка)             | `HighlightIcon`                                 | `TextColorIcon`                |
-| Обычный абзац, «просто текст»        | `ParagraphIcon`                                 | `HeadingIcon`                  |
-| Заголовок уровня 1–4                 | `Heading1Icon` … `Heading4Icon`                 | `HeadingIcon`                  |
-| «Текст» в меню типа Блока            | `TextIcon`                                      | `ParagraphIcon`, `HeadingIcon` |
-| Вставить строку выше / ниже          | `InsertRowAboveIcon`, `InsertRowBelowIcon`      | `AddIcon`                      |
-| Вставить столбец слева / справа      | `InsertColumnLeftIcon`, `InsertColumnRightIcon` | `ColumnsIcon`                  |
-| Объединить ячейки таблицы            | `MergeCellsIcon`                                | `TableIcon`                    |
-| Разделить объединённую ячейку        | `SplitCellIcon`                                 | `TableIcon`                    |
-| Первая строка — заголовки            | `HeaderRowIcon`                                 | `TableIcon`                    |
-| Эмодзи (сетка символов)              | `EmojiIcon`                                     | —                              |
-| «Ещё» в столбец: меню Блока          | `MoreVerticalIcon`                              | `MoreIcon`, `DragHandleIcon`   |
-| Дублировать рядом с оригиналом       | `DuplicateIcon`                                 | `CopyIcon`                     |
-| Стрелка вверх / вниз                 | `ArrowUpIcon`, `ArrowDownIcon`                  | `ChevronUpIcon`, `SortIcon`    |
-| Раскладка Документа колонками        | `ColumnLayoutIcon`                              | `ColumnsIcon`                  |
-| Обёртка: группа Блоков               | `WrapperIcon`                                   | `ColumnLayoutIcon`             |
-| Снять Обёртку, Блоки остаются        | `UnwrapIcon`                                    | `DeleteIcon`                   |
-| Сворачиваемый Блок Редактора         | `DetailsIcon`                                   | `ChevronDownIcon`              |
-| Строчная и блочная формула Редактора | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
-| Показ невидимых символов Редактора   | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
-| Видео по ссылке в Редакторе          | `VideoIcon`                                     | `PlayIcon`                     |
+| Meaning needed                      | Use                                             | Do not substitute              |
+| ----------------------------------- | ----------------------------------------------- | ------------------------------ |
+| Close a panel, dialog or tag        | `CloseIcon`                                     | `DeleteIcon`                   |
+| Delete an entity                    | `DeleteIcon`                                    | `CloseIcon`                    |
+| Checked checkbox or choice          | `CheckIcon`                                     | `SuccessIcon`                  |
+| Successful outcome of an operation  | `SuccessIcon`                                   | `CheckIcon`                    |
+| Report an error                     | `ErrorIcon`                                     | `WarningIcon`                  |
+| Find visually similar               | `FindSimilarIcon`                               | the generic `SearchIcon`       |
+| External link                       | `ExternalLinkIcon`                              | `LinkIcon`                     |
+| Sign out of the account             | `LogoutIcon`                                    | `CloseIcon`                    |
+| List of records                     | `ListIcon`                                      | `NavigationIcon`               |
+| A goal being pursued                | `TargetIcon`                                    | `PlayIcon`                     |
+| Pause the countdown                 | `PauseIcon`                                     | `CloseIcon`                    |
+| Started work (a status flag)        | `FirstStepIcon`                                 | `PlayIcon`                     |
+| Health as a task topic              | `HealthIcon`                                    | `FavoriteIcon`                 |
+| A letter as a task topic            | `MailIcon`                                      | `SendIcon`                     |
+| A trip as a task topic              | `TripIcon`                                      | `SendIcon`                     |
+| Reading as a task topic             | `ReadingIcon`                                   | `LibraryIcon`                  |
+| A meeting as a task topic           | `MeetingIcon`                                   | `ProfileIcon`, `CalendarIcon`  |
+| Development as a task topic         | `CodeIcon`                                      | `AutomationIcon`               |
+| A due date to meet                  | `DeadlineIcon`                                  | `CalendarIcon`, `BellIcon`     |
+| Repeats according to a rule         | `RecurringIcon`                                 | `RefreshIcon`                  |
+| Help, reference                     | `HelpIcon`                                      | `InfoIcon`                     |
+| Tip                                 | `TipIcon`                                       | `InfoIcon`                     |
+| Back through history                | `BackIcon`                                      | `ChevronLeftIcon`              |
+| Home, the app root                  | `HomeIcon`                                      | `DashboardIcon`                |
+| Sort                                | `SortIcon`                                      | `SelectIcon`                   |
+| Undo an action                      | `UndoIcon`                                      | `RefreshIcon`                  |
+| Redo what was undone                | `RedoIcon`                                      | `RecurringIcon`                |
+| Adjust the view                     | `AdjustIcon`                                    | `SettingsIcon`, `FilterIcon`   |
+| Share                               | `ShareIcon`                                     | `SendIcon`, `UploadIcon`       |
+| Attachment                          | `AttachmentIcon`                                | `LinkIcon`                     |
+| Locked, read-only                   | `LockIcon`                                      | `SecurityIcon`                 |
+| Team, members                       | `TeamIcon`                                      | `ProfileIcon`, `MeetingIcon`   |
+| Time in general                     | `TimeIcon`                                      | `DeadlineIcon`                 |
+| Flag a problem                      | `FlagIcon`                                      | `FirstStepIcon`                |
+| Forbidden                           | `BlockedIcon`                                   | `ErrorIcon`                    |
+| Inline code (a Mark in text)        | `InlineCodeIcon`                                | `CodeIcon`, `CodeBlockIcon`    |
+| The Document's source HTML          | `SourceIcon`                                    | `CodeBlockIcon`, `CodeIcon`    |
+| Bulleted list in text               | `ListIcon`                                      | `TaskListIcon`                 |
+| Task list                           | `TaskListIcon`                                  | `ListIcon`, `SuccessIcon`      |
+| Horizontal rule between Blocks      | `DividerIcon`                                   | `MinusIcon`                    |
+| Clear formatting                    | `ClearFormattingIcon`                           | `DeleteIcon`                   |
+| Text color                          | `TextColorIcon`                                 | `PaletteIcon`                  |
+| Highlight (colored fill)            | `HighlightIcon`                                 | `TextColorIcon`                |
+| Plain paragraph, "just text"        | `ParagraphIcon`                                 | `HeadingIcon`                  |
+| Heading of level 1–4                | `Heading1Icon` … `Heading4Icon`                 | `HeadingIcon`                  |
+| "Text" in the Block type menu       | `TextIcon`                                      | `ParagraphIcon`, `HeadingIcon` |
+| Insert a row above / below          | `InsertRowAboveIcon`, `InsertRowBelowIcon`      | `AddIcon`                      |
+| Insert a column left / right        | `InsertColumnLeftIcon`, `InsertColumnRightIcon` | `ColumnsIcon`                  |
+| Merge table cells                   | `MergeCellsIcon`                                | `TableIcon`                    |
+| Split a merged cell                 | `SplitCellIcon`                                 | `TableIcon`                    |
+| First row is headings               | `HeaderRowIcon`                                 | `TableIcon`                    |
+| Emoji (symbol grid)                 | `EmojiIcon`                                     | —                              |
+| Vertical "more": the Block menu     | `MoreVerticalIcon`                              | `MoreIcon`, `DragHandleIcon`   |
+| Duplicate next to the original      | `DuplicateIcon`                                 | `CopyIcon`                     |
+| Arrow up / down                     | `ArrowUpIcon`, `ArrowDownIcon`                  | `ChevronUpIcon`, `SortIcon`    |
+| A Column layout of the Document     | `ColumnLayoutIcon`                              | `ColumnsIcon`                  |
+| Wrapper: a group of Blocks          | `WrapperIcon`                                   | `ColumnLayoutIcon`             |
+| Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
+| Details Block of the Editor         | `DetailsIcon`                                   | `ChevronDownIcon`              |
+| Editor formula, inline and block    | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
+| Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
+| Video by link in the Editor         | `VideoIcon`                                     | `PlayIcon`                     |
 
-## Предметные темы
+## Subject topics
 
-С 3.21.0 в словаре есть раздел, описывающий не интерфейс, а **то, о чём дело**:
-`CodeIcon`, `GameIcon`, `PurchaseIcon`, `HealthIcon`, `CallIcon`, `MailIcon`,
+Since 3.21.0 the vocabulary has a section that describes not the interface but **what a task
+is about**: `CodeIcon`, `GameIcon`, `PurchaseIcon`, `HealthIcon`, `CallIcon`, `MailIcon`,
 `MeetingIcon`, `TripIcon`, `PaymentIcon`, `ReadingIcon`.
 
-Раздел заведён не ради одного продукта, а потому что альтернатива хуже: без него
-каждый потребитель выбирает иконку «позвонить» заново, и через полгода в двух
-приложениях одного кита она нарисована по-разному. Раздел расширяется заявкой.
-Значения «без темы» в словаре нет: отсутствие темы — это отсутствие значения, а не
-одиннадцатая иконка.
+The section was created not for one product but because the alternative is worse: without it
+every consumer picks the "call" icon anew, and half a year later it looks different in two
+apps of the same kit. The section grows by request.
+There is no "no topic" value in the vocabulary: the absence of a topic is the absence of a value, not
+an eleventh icon.
 
-Ставьте их **рядом с текстом, а не вместо него**: тема дела не выводится из
-рисунка однозначно, и `aria-hidden` здесь обязателен — доступное имя несёт
-подпись. Все десять проверены столбцом на 16 пикселях (`MeetingIcon` с новым
-рисунком — заново, в 3.29.0): по отдельности
-различимы любые иконки, а проверяется именно столбец.
+Place them **next to text, not instead of it**: the topic of a task cannot be unambiguously inferred from
+the picture, and `aria-hidden` is mandatory here — the label carries the accessible name. All ten were checked as a
+column at 16 pixels (`MeetingIcon` with its new
+glyph — again, in 3.29.0): any icons can be told apart
+one at a time, and it is the column that is checked.
 
-Полный перечень намеренно не дублируется в документации: авторитетный и
-версионируемый список — [src/icons.ts](../src/icons.ts), сгруппированный по
-навигации, настройкам, действиям, шевронам, состояниям, файлам и общению, людям и
-доступу, времени и месту, виду данных, предметным темам, форматированию текста и теме оформления.
+The full list is intentionally not duplicated in the documentation: the authoritative and
+versioned list is [src/icons.ts](../src/icons.ts), grouped by
+navigation, settings, actions, chevrons, states, files and communication, people and
+access, time and place, data view, subject topics, text formatting and theme.
 
-## Базовый набор и заявки
+## Baseline set and requests
 
-С 3.29.0 в словаре есть **базовый набор**: смыслы, которые есть в наборах иконок
-почти всех крупных систем (Material Symbols, Carbon, Atlassian, Polaris, Fluent,
-Primer). Это навигация (`BackIcon`, `HomeIcon`, `SidebarIcon`), правка
-(`UndoIcon`, `PasteIcon`, `SortIcon`), файлы и общение (`AttachmentIcon`,
-`CommentIcon`), люди и доступ (`TeamIcon`, `LockIcon`, `LoginIcon`), время,
-место и вид данных. Решение и критерий отбора — ADR-0049.
+Since 3.29.0 the vocabulary has a **baseline set**: meanings found in the icon sets of
+almost all major systems (Material Symbols, Carbon, Atlassian, Polaris, Fluent,
+Primer). These are navigation (`BackIcon`, `HomeIcon`, `SidebarIcon`), editing
+(`UndoIcon`, `PasteIcon`, `SortIcon`), files and communication (`AttachmentIcon`,
+`CommentIcon`), people and access (`TeamIcon`, `LockIcon`, `LoginIcon`), time,
+place and data view. The decision and the selection criterion are in ADR-0049.
 
-Всё, чего в словаре нет, по-прежнему добавляется **заявкой**: с экраном и
-сравнением с похожими иконками словаря. Брать «что-то похожее» из `lucide-react` в обход
-словаря нельзя — смысл перестанет быть общим.
+Anything the vocabulary lacks is still added **by request**: with a screen and
+a comparison with similar existing icons. Taking "something similar" from `lucide-react` bypassing the
+vocabulary is not allowed — the meaning would stop being shared.
 
-Вместе с базовым набором три прежние иконки приведены к виду, принятому в большинстве систем;
-имена не изменились: `HiddenIcon` — перечёркнутый глаз, `TagIcon` — ценник,
-`MeetingIcon` — рукопожатие (`Users` теперь у `TeamIcon`). А `HelpTooltip`
-по умолчанию показывает `HelpIcon` вместо `InfoIcon`. `DragIcon` устарел: это тот
-же рисунок, что `DragHandleIcon`, и в 4.0.0 он будет удалён.
+Together with the baseline set, three earlier icons were brought in line with most systems;
+the names did not change: `HiddenIcon` is a crossed-out eye, `TagIcon` is a price tag,
+`MeetingIcon` is a handshake (`Users` now belongs to `TeamIcon`). And `HelpTooltip`
+now renders `HelpIcon` by default instead of `InfoIcon`. `DragIcon` is deprecated: it is the same
+glyph as `DragHandleIcon`, and it will be removed in 4.0.0.
 
-## Форматирование текста
+## Text formatting
 
-Раздел появился по заявке Панели `RichTextEditor`: `HeadingIcon`,
+The section was added at the request of the `RichTextEditor` Toolbar: `HeadingIcon`,
 `BoldIcon`, `ItalicIcon`, `UnderlineIcon`, `StrikethroughIcon`, `InlineCodeIcon`,
 `CodeBlockIcon`, `SuperscriptIcon`, `SubscriptIcon`, `ClearFormattingIcon`,
-`OrderedListIcon`, `TaskListIcon`, `QuoteIcon`, `DividerIcon`; цвет, маркер и
-выравнивание добавили `TextColorIcon`, `HighlightIcon`,
-`AlignLeftIcon`, `AlignCenterIcon`, `AlignRightIcon`, `AlignJustifyIcon`. Уже занятые
-смыслы не повторяются: маркированный список — `ListIcon`, отменить и повторить
-— `UndoIcon` и `RedoIcon`.
+`OrderedListIcon`, `TaskListIcon`, `QuoteIcon`, `DividerIcon`; color, highlight and
+alignment added `TextColorIcon`, `HighlightIcon`,
+`AlignLeftIcon`, `AlignCenterIcon`, `AlignRightIcon`, `AlignJustifyIcon`. Existing meanings
+are not repeated: a bulleted list is `ListIcon`, undo and redo
+are `UndoIcon` and `RedoIcon`.
 
-Цвет текста (`TextColorIcon`, буква с полосой) и маркер (`HighlightIcon`,
-выделитель) — разные действия: первый красит буквы, второй подкладывает цвет под
-них. `PaletteIcon` — выбор цветовой схемы, не цвет текста. `AlignJustifyIcon`
-в Панели Редактора не используется («по ширине» в v1 нет), но смысл в словаре
-есть для потребителя.
+Text color (`TextColorIcon`, a letter with a bar) and highlight (`HighlightIcon`,
+a highlighter) are different actions: the first colors the letters, the second puts color under
+them. `PaletteIcon` is the choice of a color scheme, not a text color. `AlignJustifyIcon`
+is not used in the Editor Toolbar ("justify" is absent in v1), but the meaning is in the vocabulary
+for the consumer.
 
-Два различия стоит держать в голове. Строчный код (`InlineCodeIcon`, `< >`) —
-не `CodeIcon` (`</>`): тот — предметная тема «разработка», а не действие над
-текстом. Чек-лист (`TaskListIcon`) — список с галочками; `ListIcon` флажков
-намеренно не рисует, чтобы перечень записей не читался как «выполнено».
+Two distinctions are worth keeping in mind. Inline code (`InlineCodeIcon`, `< >`) is
+not `CodeIcon` (`</>`): that one is the subject topic "development", not an action on
+text. A task list (`TaskListIcon`) is a list with checkmarks; `ListIcon` deliberately
+has no checkboxes, so that a list of records does not read as "done".
 
-На кнопках Панели видна только иконка; имя кнопке даёт `aria-label`, а сочетание
-клавиш показывает подсказка.
+The only visible label on the Toolbar buttons is the icon; the button's name
+comes from `aria-label`, and the keyboard shortcut is shown by a tooltip.
 
-Меню вставки добавило `ParagraphIcon` (¶) — пункт «Превратить в
-абзац». `HeadingIcon` для него не годится: тот — заголовок вообще, без
-уровня. Кнопка «+» Меню вставки берёт уже занятый `AddIcon`.
+The Slash menu added `ParagraphIcon` (¶) — the "Turn into
+paragraph" item. `HeadingIcon` does not fit it: that one is a heading in general, with no
+level. The "+" button of the Slash menu reuses the existing `AddIcon`.
 
-Меню типа Блока «¶» (по ADR-0049) добавило
-`Heading1Icon`–`Heading4Icon` (заголовок с цифрой уровня) и `TextIcon` (буква
-«T», пункт «Текст»). `HeadingIcon` остаётся иконкой заголовка без уровня: так он нужен пунктам
-Меню вставки. `TextIcon` не повторяет `ParagraphIcon`: тот —
-пилкроу «абзац» в Меню вставки, а этот — «Текст» в меню типа Блока. Кнопка «¶»
-на Панели показывает иконку текущего типа: иконку его пункта меню,
-`CodeBlockIcon` в Блоке кода или пилкроу `ParagraphIcon`, когда под кареткой нет
-текстового Блока (выделена картинка).
+The Block type menu "¶" (under ADR-0049) added
+`Heading1Icon`–`Heading4Icon` (a heading with the level digit) and `TextIcon` (the letter
+"T", the "Text" item). `HeadingIcon` remains the icon of a heading without a level: the items of the
+Slash menu need it that way. `TextIcon` does not repeat `ParagraphIcon`: that one is
+the "paragraph" pilcrow in the Slash menu, and this one is "Text" in the Block type menu. The "¶" button
+on the Toolbar shows the icon of the current type: the icon of its menu item,
+`CodeBlockIcon` in a code Block, or the pilcrow `ParagraphIcon` when there is no text
+Block under the caret (an image is selected).
 
-Таблица добавила семь имён: `InsertRowAboveIcon`,
+The table added seven names: `InsertRowAboveIcon`,
 `InsertRowBelowIcon`, `InsertColumnLeftIcon`, `InsertColumnRightIcon` —
-вставка строки и столбца, у каждой стороны свой рисунок (полоса со стрелкой с
-нужной стороны), — `MergeCellsIcon` и `SplitCellIcon` для слияния ячеек и
-`HeaderRowIcon` (рамка с выделенной верхней полосой). Остальное меню
-«Таблица» берёт уже занятые смыслы: вставка таблицы — `TableIcon`, удаление
-строки, столбца и таблицы — `DeleteIcon`, сортировка — `SortAscendingIcon` и
-`SortDescendingIcon`, выравнивание столбца — `AlignLeftIcon`,
+inserting a row and a column, each side with its own glyph (a bar with an arrow on the
+matching side) — `MergeCellsIcon` and `SplitCellIcon` for merging cells, and
+`HeaderRowIcon` (a frame with a highlighted top bar). The rest of the "Table" menu reuses
+existing meanings: inserting a table is `TableIcon`, deleting
+a row, column and table is `DeleteIcon`, sorting is `SortAscendingIcon` and
+`SortDescendingIcon`, column alignment is `AlignLeftIcon`,
 `AlignCenterIcon`, `AlignRightIcon`.
 
-Ручка Блока добавила четыре имени: `MoreVerticalIcon` — «⋮», кнопка меню действий у Блока (не `MoreIcon`: тот в ряду кнопок; не `DragHandleIcon`: за эту ручку не тянут), `ArrowUpIcon` и `ArrowDownIcon` — названы по форме, как велит ADR-0049 для голой стрелки, — и `DuplicateIcon` (копия рядом с оригиналом; не `CopyIcon` — тот про буфер обмена). «Добавить», «Формат» и «Удалить» её меню берут уже занятые `AddIcon`, `ParagraphIcon` и `DeleteIcon`.
+The Block handle added four names: `MoreVerticalIcon` — "⋮", the button of the Block's action menu (not `MoreIcon`: that one is in a row of buttons; not `DragHandleIcon`: this handle is not dragged), `ArrowUpIcon` and `ArrowDownIcon` — named by shape, as ADR-0049 requires for a bare arrow — and `DuplicateIcon` (a copy next to the original; not `CopyIcon` — that one is about the clipboard). "Add", "Format" and "Delete" in its menu reuse the existing `AddIcon`, `ParagraphIcon` and `DeleteIcon`.
 
-Эмодзи добавило `EmojiIcon` — лицо-смайл, кнопка сетки эмодзи в Панели. Имя по смыслу «эмодзи», а не по рисунку: лицо в другом месте означало бы настроение или оценку, и это было бы другое решение по ADR-0049.
+Emoji added `EmojiIcon` — a smiley face, the button of the emoji grid in the Toolbar. The name is by the meaning "emoji", not by the glyph: a face elsewhere would mean mood or rating, and that would be a different decision under ADR-0049.
 
-HTML-режим добавил `SourceIcon` — лист с `</>` (`FileCode`), кнопка «HTML» Панели: исходный код всего Документа. `CodeBlockIcon` уже значит Блок кода внутри Документа, а `CodeIcon` — предметную тему «разработка»; третий смысл на них не вешается (ADR-0049).
+Source mode added `SourceIcon` — a sheet with `</>` (`FileCode`), the "HTML" button of the Toolbar: the source code of the whole Document. `CodeBlockIcon` already means a code Block inside a Document, and `CodeIcon` the subject topic "development"; a third meaning is not attached to them (ADR-0049).
 
-Раскладка добавила `ColumnLayoutIcon` — две колонки, пункт «Раскладка» Меню вставки. `ColumnsIcon` с тремя колонками уже значит «выбор колонок таблицы данных», и второй смысл на него не вешается (ADR-0049): у Раскладки свой рисунок.
+Column layout added `ColumnLayoutIcon` — two columns, the "Layout" item of the Slash menu. `ColumnsIcon` with three columns already means "choosing the columns of a data table", and a second meaning is not attached to it (ADR-0049): the Column layout has its own glyph.
 
-Обёртка добавила пару `WrapperIcon` и `UnwrapIcon` — `Group` и `Ungroup` у lucide: рамка пунктирными углами вокруг двух Блоков и те же Блоки без рамки. Иконки стоят у пункта «Обёртка» Меню вставки и пункта «Снять обёртку» в меню Ручки Блока. Это не `ColumnLayoutIcon`: колонки ставят Блоки рядом, а Обёртка группирует их, не меняя порядка. Для снятия не подходит `DeleteIcon`: удаляется только контейнер, а не содержимое.
+Wrapper added the pair `WrapperIcon` and `UnwrapIcon` — lucide's `Group` and `Ungroup`: a frame with dashed corners around two Blocks and the same Blocks without a frame. The icons sit at the "Wrapper" item of the Slash menu and the "Remove Wrapper" item in the Block handle menu. This is not `ColumnLayoutIcon`: columns put Blocks side by side, while a Wrapper groups them without changing their order. `DeleteIcon` does not fit removal: only the container is deleted, not the content.
 
-Сворачиваемый Блок добавил `DetailsIcon` — `ListCollapse` у lucide: список со стрелками сворачивания, пункт «Сворачиваемый блок» Меню вставки. Подходящего имени в словаре не было: `ChevronDownIcon` — шаг и вложенность, `CollapseIcon` — свернуть окно, а здесь Блок целиком с заголовком и спрятанным содержимым. Снять Блок — уже занятый `UnwrapIcon` (ADR-0049).
+The Details Block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Slash menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
 
-Формулы добавили пару `FormulaIcon` и `BlockFormulaIcon` — `Sigma` и `SquareSigma` у lucide: сигма — пункт «Формула» Меню вставки, сигма в рамке — «Блочная формула». `CodeIcon` не подходит: он значит предметную тему «разработка», а сигма читается как математика (ADR-0049).
+Formulas added the pair `FormulaIcon` and `BlockFormulaIcon` — lucide's `Sigma` and `SquareSigma`: the sigma is the "Formula" item of the Slash menu, the sigma in a frame is "Block formula". `CodeIcon` does not fit: it means the subject theme "development", while a sigma reads as math (ADR-0049).
 
-Невидимые символы добавили `InvisibleCharactersIcon` — `PilcrowRight` у lucide: пилкроу со стрелкой, пункт «Невидимые символы» меню «…» фиксированной Панели Редактора. Это не `ParagraphIcon`: тот — просто пилкроу, «обычный абзац», и стоит на той же Панели в меню «¶»; стрелка отделяет переключатель показа от типа Блока.
+Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`: a pilcrow with an arrow, the "Invisible characters" item of the "…" menu on the Editor's fixed Toolbar. This is not `ParagraphIcon`: that one is a plain pilcrow, "an ordinary paragraph", and sits on the same Toolbar in the "¶" menu; the arrow tells the display toggle from a Block type.
 
-Видео добавило `VideoIcon` — `SquarePlay` у lucide: квадрат с треугольником «играть», пункт «Видео» Меню вставки Редактора (Инструменты `youtube` и `twitch`). Это не `PlayIcon`: тот — кнопка запуска, и в заглушке плеера (Опция `autoload: false`) стоит именно он у кнопки «Воспроизвести» (ADR-0049).
+Video added `VideoIcon` — lucide's `SquarePlay`: a square with a play triangle, the "Video" item of the Editor's Insert menu (the `youtube` and `twitch` Tools). This is not `PlayIcon`: that one is a start button, and the player placeholder's own "Play" button (the `autoload: false` option) carries exactly that icon (ADR-0049).
 
-Первый срез таблицы обходился двумя рисунками на четыре направления
-(`AddRowIcon`, `AddColumnIcon`) и иконкой отдельной кнопки «Действия с
-таблицей» (`TableEditIcon`). С меню «Таблица» кнопка ушла, а направление
-теперь передаёт сама иконка; три имени до выпуска заменены и в словаре не остались.
+The first iteration of the table made do with two icons for four directions
+(`AddRowIcon`, `AddColumnIcon`) and an icon for the separate "Table
+actions" button (`TableEditIcon`). With the "Table" menu the button went away, and the direction
+is now conveyed by the icon itself; the three names were replaced before release and did not stay in the vocabulary.
 
-## Две даты у записи, а не одна
+## Two dates on a record, not one
 
-`CalendarIcon` означает дату вообще — и этого хватает, пока дата у записи одна.
-Когда их две и они ортогональны («когда станет актуально» и «когда горит»),
-один рисунок помечает одинаково ровно то, что различают. Поэтому у срока
-теперь своё имя — `DeadlineIcon`, песочные часы. Календарный силуэт для него не
-годится: на 14 пикселях он читается как «дата», и в соседней колонке с
-`CalendarIcon` разница исчезает.
+`CalendarIcon` means a date in general — and that is enough while a record has one date.
+When there are two and they are orthogonal ("when it becomes relevant" and "when it is due"),
+one icon would mark identically the very things that need to be told apart. That is why a due date
+now has its own name — `DeadlineIcon`, an hourglass. A calendar silhouette does not
+fit it: at 14 pixels it reads as "date", and in a neighboring column with
+`CalendarIcon` the difference disappears.
 
-Рядом с ним `RecurringIcon` — «повторяется по правилу». Это свойство самой
-записи, а не действие: круговые стрелки `RefreshIcon` в интерфейсе означают
-«обнови то, что видишь», и один рисунок на оба смысла закрыл бы второй для всех
-потребителей.
+Next to it is `RecurringIcon` — "repeats according to a rule". It is a property of the record itself,
+not an action: the circular arrows of `RefreshIcon` in the interface mean
+"refresh what you see", and one icon for both meanings would make the second unavailable to all
+consumers.
 
-Ни тот, ни другой не описывают состояние: просрочка — вычисленное состояние, у
-неё бейдж со словом (`StatusBadge`), а не иконка.
+Neither describes a state: being overdue is a computed state, and it
+gets a badge with a word, not an icon.
 
-## Доступность
+## Accessibility
 
-Одна иконка почти никогда не даёт достаточного имени действию. Если она
-декоративна рядом с текстом, передайте `aria-hidden`. Если она — единственное
-содержимое кнопки, имя должно быть на `Button`, а не выведено из формы SVG.
+An icon alone is almost never enough to name an action. If it is decorative
+next to text, pass `aria-hidden`. If it is the only content of a button, the name
+must be on `Button` and not derived from the SVG shape.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Источник: `src/icons.ts`.
-- Совместимость экспорта и соглашение `*Icon` проверяет `tests/icons.test.ts`.
+- Source: `src/icons.ts`.
+- Export compatibility and the `*Icon` convention are checked by `tests/icons.test.ts`.

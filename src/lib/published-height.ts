@@ -3,43 +3,43 @@
 import { useEffect, type RefObject } from "react";
 
 /*
- * Публикация высоты панели в CSS-переменную корня документа (ADR-0016,
- * ADR-0019). Раньше жила внутри `TopBar`; вынесена, когда ту же роль для
- * нижней панели получил слот `bottomBar` у `AppShell` (`--bottombar-h`).
- * Реестр общий и ключуется именем переменной, поэтому две панели с разными
- * именами друг другу не мешают, а с одним именем — делят владение по стеку.
+ * Publishes a panel's height to a CSS variable on the document root (ADR-0016,
+ * ADR-0019). It used to live inside `TopBar`. It was moved out when the bottom panel got the
+ * same role through the `bottomBar` slot of `AppShell` (`--bottombar-h`). The registry is
+ * shared and keyed by the variable name, so two panels with different names do not interfere
+ * with each other, while panels with one name share ownership by stack order.
  */
 
 /**
- * Кто сейчас владеет переменной высоты.
+ * Who currently owns the height variable.
  *
- * Реестр модульный — по той же причине, что счётчик в `useScrollLock`: шапки
- * ПЕРЕКРЫВАЮТСЯ. При переходе между экранами новая монтируется раньше, чем
- * размонтируется старая; то же даёт шапка приложения плюс шапка встроенного
- * виджета с тем же именем переменной.
+ * The registry is module-level, for the same reason as the counter in `useScrollLock`: the
+ * headers OVERLAP. When navigating between screens, the new one mounts before the old one
+ * unmounts. The same happens with the application's header plus the header of an embedded
+ * widget that uses the same variable name.
  *
- * ВЛАДЕНИЕ ПО ИДЕНТИЧНОСТИ, А НЕ ПО ЗНАЧЕНИЮ, и это разбор дефекта, а не вкус.
- * Уборщик сверял опубликованное значение со значением в стиле корня — но две
- * шапки одного компонента дают ОДИНАКОВУЮ высоту, и по значению они
- * неразличимы: уходящая снимала переменную, которую только что опубликовала
- * оставшаяся, и липкие полосы уезжали к верху окна.
+ * OWNERSHIP IS BY IDENTITY, NOT BY VALUE, and this is the analysis of a defect, not a matter of
+ * taste. The cleanup compared the published value with the value in the root's style. But two
+ * headers of the same component produce the SAME height, so by value they cannot be told apart:
+ * the header that was leaving removed the variable that the remaining one had just published,
+ * and the sticky bars drifted to the top of the window.
  *
- * (До волны 26 дефекта не было видно по другой причине: уборщик перезамерял
- * `offsetHeight` уже отцепленного узла, получал ноль, и ветка снятия не
- * срабатывала никогда — переменная просто переживала шапку.)
+ * (Before wave 26 the defect was not visible, for another reason: the cleanup re-measured
+ * `offsetHeight` of an already detached node, got zero, and the removal branch never ran. The
+ * variable simply outlived the header.)
  *
- * Пишет в корень только последний зарегистрировавшийся; уходящий отдаёт
- * публикацию предыдущему, а последний — снимает переменную.
+ * Only the last one registered writes to the root. A header that is leaving hands publishing
+ * over to the previous one, and the last one removes the variable.
  */
 const heightOwners = new Map<string, { token: symbol; value: string }[]>();
 
 /**
- * Что стояло в переменной ДО первой шапки.
+ * What was in the variable BEFORE the first header.
  *
- * Публиковать высоту может и само приложение — кит не единственный, кто вправе
- * писать в эту переменную (ADR-0016: имя переменной здесь проп именно потому,
- * что кит не знает, чья это шапка). Ушедшая шапка возвращает прежнее значение,
- * а не стирает чужое.
+ * The application itself may publish a height too. The kit is not the only one entitled to
+ * write to this variable (ADR-0016: the variable name is a prop here precisely because the kit
+ * does not know whose header it is). A header that leaves restores the previous value rather
+ * than erasing someone else's.
  */
 const heightBeforeFirstOwner = new Map<string, string>();
 
@@ -61,8 +61,8 @@ export function publishHeight(heightVar: string) {
       const own = owners?.find((entry) => entry.token === token);
       if (!own || !owners) return;
       own.value = value;
-      // Чужую публикацию не перебиваем: наверху стека тот, кто смонтирован
-      // последним, и переменная принадлежит ему.
+      // We do not overwrite someone else's publication: the top of the stack is whoever was
+      // mounted last, and the variable belongs to it.
       if (owners.at(-1)?.token === token) root.style.setProperty(heightVar, value);
     },
     release(root: HTMLElement) {
@@ -72,17 +72,17 @@ export function publishHeight(heightVar: string) {
       const rest = owners.filter((entry) => entry.token !== token);
 
       /*
-        Чужую запись не трогаем. Владение стеком отвечает на вопрос «кто из
-        ШАПОК верхний», но переменную может переписать и не шапка — приложение,
-        виджет, отладочный скрипт. Если в корне лежит не то, что публиковали мы,
-        значит владелец сменился мимо реестра, и снимать это значение нельзя.
+        We do not touch someone else's record. Stack ownership answers the question of which
+        HEADER is on top, but the variable can be rewritten by something other than a header:
+        the application, a widget, a debug script. If the root holds something other than what
+        we published, the owner changed outside the registry, and that value must not be removed.
       */
       const inDom = root.style.getPropertyValue(heightVar);
       if (own && inDom !== own.value) {
-        // Проверка идёт ДО любой ветки. Под условием «я последний» она пропускала
-        // случай с тремя участниками: уходила не последняя шапка, и реестр
-        // безусловно перезаписывал переменную значением следующего владельца —
-        // чужая запись терялась молча.
+        // The check runs BEFORE any branch. Under the condition "I am the last one", it skipped
+        // the case with three participants: a header that was not the last one was leaving, and
+        // the registry unconditionally overwrote the variable with the next owner's value, so
+        // someone else's record was silently lost.
         heightOwners.set(heightVar, rest);
         if (rest.length === 0) {
           heightOwners.delete(heightVar);
@@ -95,9 +95,9 @@ export function publishHeight(heightVar: string) {
         heightOwners.delete(heightVar);
         const before = heightBeforeFirstOwner.get(heightVar) ?? "";
         heightBeforeFirstOwner.delete(heightVar);
-        // Оставленная переменная заставила бы липкие полосы отступать от
-        // несуществующего элемента — но если значение публиковало приложение,
-        // возвращаем его, а не стираем.
+        // A variable left behind would make the sticky bars offset from an element that no
+        // longer exists. But if the application published the value, we restore it rather
+        // than erase it.
         if (before) root.style.setProperty(heightVar, before);
         else root.style.removeProperty(heightVar);
         return;
@@ -111,13 +111,13 @@ export function publishHeight(heightVar: string) {
 }
 
 /**
- * Публикует измеренную высоту узла в переменную корня документа и держит её
- * актуальной: замер на монтировании плюс `ResizeObserver` — высота меняется от
- * брейкпоинта (панель скрыта классом, и тогда она 0), от переноса содержимого
- * и от выреза экрана.
+ * Publishes the measured height of the node to a variable on the document root and keeps it
+ * current: a measurement on mount plus a `ResizeObserver`. The height changes with the
+ * breakpoint (the panel is hidden by a class, and then it is 0), with content wrapping, and
+ * with the screen notch.
  *
- * `heightVar === null` отключает публикацию. `enabled = false` — узла сейчас
- * нет в разметке (слот не передан): переменной не должно быть вовсе.
+ * `heightVar === null` disables publishing. `enabled = false` means the node is not in the
+ * markup right now (the slot is not passed), so the variable must not exist at all.
  */
 export function usePublishedHeight(
   ref: RefObject<HTMLElement | null>,
@@ -133,9 +133,9 @@ export function usePublishedHeight(
     const apply = () => token.publish(`${el.offsetHeight}px`, root);
     apply();
 
-    // Окружение без `ResizeObserver` (тестовый jsdom потребителя, старый
-    // движок): остаётся замер на монтировании. Падать из-за наблюдателя
-    // нельзя — слот `bottomBar` теперь измеряется у каждого каркаса.
+    // In an environment without `ResizeObserver` (the consumer's test jsdom, an old engine),
+    // only the measurement on mount remains. The code must not fail because of the observer:
+    // the `bottomBar` slot is now measured in every AppShell.
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(apply);
     observer?.observe(el);
 

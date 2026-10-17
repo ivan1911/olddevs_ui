@@ -10,15 +10,15 @@ import {
 } from "../src/editor/index.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /*
-  Захват указателя — бухгалтерия, которая есть в любом браузере, а в jsdom её
-  нет: двойной щелчок по ручке высоты шлёт `pointerdown`, и без заплатки падало
-  бы окружение. Та же заплатка, что в `split-panel.test.tsx`.
+  Pointer capture is bookkeeping every browser has but jsdom lacks: a double click
+  on the height handle sends `pointerdown`, and without the shim the test environment
+  would crash. The same shim as in `split-panel.test.tsx`.
 */
 for (const method of ["setPointerCapture", "releasePointerCapture", "hasPointerCapture"] as const) {
   if (!(method in Element.prototype)) {
@@ -30,14 +30,14 @@ for (const method of ["setPointerCapture", "releasePointerCapture", "hasPointerC
 }
 
 /**
- * Высота поля (OLDSUI-123, ADR-0059): `maxHeight` ограничивает область
- * Документа, и длинный Документ прокручивается внутри рамки; `resizable` даёт
- * ей ручку высоты. Панель над областью и Строка статуса под ней не
- * прокручиваются. Без пропов поле растёт вместе с Документом, как раньше.
+ * Field height (OLDSUI-123, ADR-0059): `maxHeight` limits the Document area,
+ * and a long Document scrolls inside the frame; `resizable` gives the area
+ * a height handle. The Toolbar above the area and the Status bar below it do not
+ * scroll. Without the props the field grows with the Document, as before.
  *
- * Через публичный `RichTextEditor`. Раскладки в jsdom нет, поэтому видно
- * устройство поля — что внутри области прокрутки и что снаружи, — а сама
- * прокрутка и ручка проверяются в браузере (`tests-visual`).
+ * Through the public `RichTextEditor`. jsdom has no layout, so these tests check the
+ * structure of the field (what is inside the scroll area and what is outside), while
+ * the scrolling and the handle are checked in the browser (`tests-visual`).
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -56,7 +56,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 
 const textbox = () => screen.getByRole("textbox", { name: "Body" });
 
-/** Ближайший предок Документа, который прокручивает его сам. */
+/** The nearest ancestor of the Document that scrolls it itself. */
 function scrollArea(from: HTMLElement = textbox()): HTMLElement | null {
   for (let node = from.parentElement; node; node = node.parentElement) {
     if (node.className.includes("overflow-y-auto")) return node;
@@ -92,8 +92,8 @@ test("maxHeight takes any CSS length as a string", () => {
 const resizer = () => screen.getByRole("slider", { name: "Resize the editor" });
 
 /**
- * Раскладки в jsdom нет: высота области на экране подставляется, как её
- * отдал бы браузер, и ползунок меряет её на фокусе.
+ * jsdom has no layout: the area's height on screen is set to what the browser
+ * would report, and the slider measures it on focus.
  */
 function laidOut(area: HTMLElement, height: number) {
   area.getBoundingClientRect = () => ({ height }) as DOMRect;
@@ -105,7 +105,7 @@ test("resizable: maxHeight becomes the starting height, and the handle is the ki
   const area = areaOf();
   expect(area.style.height).toBe("320px");
   expect(area.style.maxHeight).toBe("");
-  // Нативный уголок `resize` не берёт тему — его нет.
+  // The native `resize` corner ignores the theme, so there is none.
   expect(area.className).not.toContain("resize-y");
   laidOut(area, 320);
   expect(resizer().getAttribute("aria-valuetext")).toBe("320 pixels high");

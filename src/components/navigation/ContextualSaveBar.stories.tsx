@@ -22,33 +22,32 @@ type Story = StoryObj<ContextualSaveBarProps>;
 
 export const Playground: Story = {};
 
-/** Число правок называется, когда потребитель его считает. */
+/** The edit count is shown when the consumer computes it. */
 export const WithCount: Story = {
   args: { count: 3 },
 };
 
-/** Ход сохранения: кнопка занята, отмена выключена, состояние объявляется. */
+/** Saving in progress: the button is busy, the Cancel button is disabled, and the state is announced. */
 export const Saving: Story = {
   args: { count: 3, saving: true },
 };
 
-/** Отказ сохранения виден в самой полосе, а не только в тосте. */
+/** A failed save is shown in the bar itself, not only in a toast. */
 export const SaveFailed: Story = {
   args: { count: 3, error: "The server did not answer. Try again." },
 };
 
 /**
- * Полоса в работе: появляется с первой правкой и исчезает вместе с ней.
+ * The bar in use: it appears with the first edit and disappears with it.
  *
- * Что считать правкой — решение потребителя; здесь это несовпадение с исходным
- * значением.
+ * What counts as an edit is the consumer's decision; here it is any difference from the original
+ * value.
  *
- * Прокручиваемая область здесь ЯВНАЯ, и это не украшение истории. Полоса липнет
- * к низу ближайшей области прокрутки — окна или предка с `overflow`. В витрине
- * окном воспользоваться нельзя: `body` витрины несёт `overflow: auto` и сам
- * становится такой областью, не прокручиваясь при этом. В настоящем приложении
- * работают оба случая: окно, если прокручивается страница, и контейнер, если
- * прокручивается только рабочая область — как в большинстве админок.
+ * The scroll area is EXPLICIT here, and this is not decoration for the story. The bar sticks to
+ * the bottom of the nearest scroll area: the window, or an ancestor with `overflow`. In the
+ * showcase the window cannot be used: the showcase's `body` has `overflow: auto` and becomes such
+ * an area itself, without actually scrolling. In a real application both cases work: the window,
+ * if the page scrolls, and a container, if only the work area scrolls, as in most admin panels.
  */
 export const InForm: Story = {
   render: () => {
@@ -87,12 +86,12 @@ export const InForm: Story = {
 };
 
 /**
- * Над нижней панелью телефона. `AppShell` публикует высоту слота `bottomBar` в
- * `--bottombar-h`, а полоса прилипает на эту высоту выше края окна, вместо того
- * чтобы уйти под `MobileTabBar`. Сузьте окно ниже 768px: на широком экране
- * панели нет, переменная равна нулю, и полоса стоит у самого низа.
+ * Above the phone's bottom bar. `AppShell` publishes the height of the `bottomBar` slot in
+ * `--bottombar-h`, and the bar sticks that far above the window edge instead of sliding under
+ * `MobileTabBar`. Narrow the window below 768px: on a wide screen there is no bar, the variable
+ * is zero, and the bar sits at the very bottom.
  *
- * Прокручиваемая область явная по той же причине, что в `InForm`.
+ * The scroll area is explicit for the same reason as in `InForm`.
  */
 export const AboveBottomBar: Story = {
   tags: ["viewport-phone"],

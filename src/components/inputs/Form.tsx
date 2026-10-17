@@ -6,51 +6,50 @@ import { cn } from "../../lib/cn.js";
 
 export interface FormProps {
   /**
-   * Вызывается при отправке формы; перезагрузка страницы уже отменена. Пока
-   * идёт `pending`, не вызывается.
+   * Called on submit. The page reload is already canceled. Not called while a request
+   * is in progress, that is, while `pending` is set.
    */
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   /**
-   * Идёт отправка.
+   * Submission is in progress.
    *
-   * Выключает форму целиком через `<fieldset disabled>`, а не перебором полей.
-   * Перебор потребовал бы, чтобы форма знала свой состав, — а она его не знает
-   * и не должна: поля приходят в `children`. Плюс родной `fieldset` выключает
-   * и то, что появится позже, без единой строки кода.
+   * Disables the whole form through `<fieldset disabled>`, rather than iterating over the
+   * fields. Iteration would require the form to know its own contents, and it does not know
+   * them and should not: the fields arrive in `children`. Also, the native `fieldset` disables
+   * even what appears later, without a single line of code.
    */
   pending?: boolean;
-  /** Поля формы и кнопка отправки. */
+  /** Form fields and the submit button. */
   children?: ReactNode;
-  /** Классы на элемент `form`. */
+  /** Classes on the `form` element. */
   className?: string;
 }
 
 /**
- * Обвязка формы: отправка и блокировка на время запроса.
+ * Form wrapper: submission, and locking while the request is in flight.
  *
- * СВОЕЙ ВАЛИДАЦИИ НЕТ И НЕ БУДЕТ. Правила «название обязательно», «дата не
- * раньше сегодня», «канал должен быть подключён» — знание предметной области.
- * Кит, взявшийся их описывать, превратился бы в библиотеку форм, а его словарь
- * тонов и размеров к валидации отношения не имеет.
+ * THERE IS NO VALIDATION OF ITS OWN, AND THERE WILL NOT BE. Rules like "name is required",
+ * "date not earlier than today", or "channel must be connected" are domain knowledge. A kit
+ * that undertook to describe them would turn into a form library, and its vocabulary of tones
+ * and sizes has nothing to do with validation.
  *
- * ПРОПА `validationErrors` ЗДЕСЬ НЕТ, хотя react-aria его принимает, и это
- * решение, а не упущение. Он раздаёт ошибки полям через свой контекст — то
- * есть доходит до `Checkbox`, `CheckboxGroup`, `RadioGroup` и `NumberInput`,
- * но не до `TextControl` и `Select`: те в ките рукописные и контекста не
- * читают. Проп, который для половины полей формы не делает ничего и молча, —
- * хуже отсутствующего: потребитель узнал бы об этом на проде.
+ * THERE IS NO `validationErrors` PROP HERE, although react-aria accepts one. This is a decision,
+ * not an oversight. It distributes errors to fields through its context, so it reaches
+ * `Checkbox`, `CheckboxGroup`, `RadioGroup` and `NumberInput`, but not `TextControl` or `Select`.
+ * Those are hand-written in the kit and do not read that context. A prop that does nothing for
+ * half the fields of a form, and does so silently, is worse than no prop at all: the consumer
+ * would find out in production.
  *
- * Ошибки поэтому передаются явно, пропами, и это уже идиома пакета:
- * `FormField error`, `CheckboxGroup errorMessage`, `RadioGroup errorMessage`.
- * Один канал вместо двух, и компилятор видит оба конца.
+ * Errors are therefore passed explicitly, through props. This is already the package's idiom:
+ * `FormField error`, `CheckboxGroup errorMessage`, `RadioGroup errorMessage`. One channel instead
+ * of two, and the compiler sees both ends.
  *
- * Что кит берёт на себя: показать ошибку в нужном месте, объявить её
- * скринридеру и не дать отправить форму дважды.
+ * What the kit does take on: showing the error in the right place, announcing it to the screen
+ * reader, and not letting the form be submitted twice.
  *
- * `validationBehavior="aria"` — а не родное `native`. Браузерные пузырьки
- * появляются у первого невалидного поля, выглядят системно, не переводятся и
- * не поддаются стилизации; аккуратно оформленное сообщение под полем рядом с
- * таким пузырьком выглядит ошибкой вёрстки, а не решением.
+ * `validationBehavior="aria"`, not the native `native`. Browser bubbles appear at the first
+ * invalid field, look system-level, are not translated, and cannot be styled. A neatly styled
+ * message under the field, placed next to such a bubble, looks like a layout bug, not a decision.
  */
 export const Form = forwardRef<HTMLFormElement, FormProps>(function Form(
   { onSubmit, pending, children, className },
@@ -61,8 +60,8 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(function Form(
       ref={ref}
       onSubmit={(event) => {
         event.preventDefault();
-        // Повторная отправка во время запроса отсекается здесь, а не только
-        // выключением кнопки: Enter в текстовом поле отправляет форму мимо неё.
+        // A repeated submission during a request is cut off here, not only by disabling the
+        // button: Enter in a text field submits the form past it.
         if (pending) return;
         onSubmit(event);
       }}

@@ -1,20 +1,22 @@
 import type { EditorWrapperTone } from "../../../i18n/messages.js";
 
 /**
- * Тоны Обёртки — ДАННЫМИ: их читают Схема-данные и очистка на
- * сервере (`schema.ts`), узел Обёртки и Markdown Редактора (`wrapper.ts`,
- * `markdown.ts`), меню ручки и гейт контраста (`scripts/contrast.mjs`).
+ * Callout tones are DATA: they are read by the data Schema and by server-side
+ * sanitizing (`schema.ts`), by the Wrapper node and the Editor's Markdown
+ * (`wrapper.ts`, `markdown.ts`), by the Block handle menu and the contrast gate
+ * (`scripts/contrast.mjs`).
  *
- * ИМЕНА — СЛОВАРЬ `Tone` КИТА, а не слова меню. В Документ уходит
- * `data-tone="warning"`: имя переживает смену подписи и языка интерфейса, а
- * значение цвета подставляет тема, как у `data-color` (`palette.ts`). Подписи
- * меню — словами GitHub alerts («Заметка», «Совет», «Важно», «Внимание»,
- * «Осторожно»): тон выбирают по смыслу заметки, а не по цвету.
+ * THE NAMES ARE the kit's `Tone` vocabulary, not the words of the menu. The
+ * Document gets `data-tone="warning"`: the name survives a change of label and
+ * interface language, while the color value comes from the theme, as with
+ * `data-color` (`palette.ts`). The menu labels are the GitHub alert words: Note,
+ * Tip, Important, Warning, Caution. A tone is chosen by the meaning of the note,
+ * not by its color.
  *
- * Порядок — порядок меню и GitHub alerts: NOTE, TIP, IMPORTANT, WARNING,
- * CAUTION.
+ * The order is the menu order and the GitHub alert order: NOTE, TIP, IMPORTANT,
+ * WARNING, CAUTION.
  *
- * Модуль серверно-безопасен: данные и чистые функции, без движка.
+ * The module is server-safe: data and pure functions, without the engine.
  */
 export const EDITOR_WRAPPER_TONES = [
   "accent",
@@ -27,20 +29,20 @@ export const EDITOR_WRAPPER_TONES = [
 const known: ReadonlySet<string> = new Set(EDITOR_WRAPPER_TONES);
 
 /**
- * Тон из атрибута `data-tone` или `null`. Значение — точно, как его пишет
- * Редактор: `Accent`, ` accent` и имена вне словаря отбрасываются, Обёртка
- * остаётся без тона.
+ * The tone from the `data-tone` attribute, or `null`. The value must match exactly
+ * as the Editor writes it: `Accent`, ` accent` and names outside the vocabulary are
+ * dropped, and the Wrapper stays without a tone.
  */
 export function wrapperToneFrom(value: unknown): EditorWrapperTone | null {
   return typeof value === "string" && known.has(value) ? (value as EditorWrapperTone) : null;
 }
 
 /**
- * Метка GitHub alert для тона: Обёртка с тоном в Markdown — цитата с этой
- * меткой первой строкой (`> [!NOTE]`). Соответствие — по смыслу метки, как в
- * меню: NOTE — акцент, TIP — успех, IMPORTANT — нейтральный (у GitHub он
- * фиолетовый, но такого тона у кита нет), WARNING — предупреждение, CAUTION —
- * опасность.
+ * The GitHub alert label for a tone: a Wrapper with a tone in Markdown is a quote
+ * whose first line is this label (`> [!NOTE]`). The mapping follows the meaning of
+ * each label, as in the menu: NOTE is accent, TIP is success, IMPORTANT is neutral
+ * (GitHub shows it purple, but the kit has no such tone), WARNING is warning,
+ * CAUTION is danger.
  */
 export const WRAPPER_TONE_ALERTS = {
   accent: "NOTE",

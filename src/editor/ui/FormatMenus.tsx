@@ -56,77 +56,77 @@ import { GLASS_MENU_CLASS } from "../styles/glass.js";
 type EditorMessages = UiMessages["editor"];
 
 /**
- * Что меню форматирования берёт от места, где стоит.
+ * What a format menu takes from the place where it is rendered.
  *
- * Меню «¶», «…», «Выравнивание» и «Списки» живут и на Панели, и в плашке
- * меню выделения. Поэтому всё, что зависит от места, приходит
- * пропами — движок, набор инструментов, выключенность и подпись сочетаний, —
- * а само меню не знает ни про `Toolbar`, ни про `BubbleMenu`. Подпись сочетания
- * отдаёт хозяин: он знает, Apple ли это (`shortcutLabel` в `EditorToolbar`).
+ * The "¶", "…", "Align" and "Lists" menus live both in the Toolbar and in the Bubble menu
+ * (the selection menu). So everything that depends on the place arrives as props: the
+ * engine, the Tool set, the disabled state and the shortcut label. The menu itself knows
+ * neither `Toolbar` nor `BubbleMenu`. The host supplies the shortcut label: it knows whether
+ * this is an Apple device (`shortcutLabel` in `EditorToolbar`).
  */
 export interface FormatMenuHostProps {
   editor: Editor;
   tools: ToolList;
-  /** Кнопка видна, но не нажимается: поле выключено или движок не правится. */
+  /** The button is visible but cannot be pressed: the field is disabled or the engine is not editable. */
   disabled: boolean;
   /**
-   * Кнопка недоступна, но в обходе стрелками (`aria-disabled`): HTML-режим —
-   * Документа на экране нет, и меню применять не к чему.
+   * The button is unavailable but stays in the arrow-key navigation (`aria-disabled`):
+   * in Source mode there is no Document on screen, so there is nothing for the menu to act on.
    */
   unavailable?: boolean;
   shortcut: (keys: readonly string[]) => string;
 }
 
-/** Пункт меню форматирования: слова и иконка уже на языке интерфейса. */
+/** A format menu item: its words and icon are already in the interface language. */
 export interface FormatMenuItem {
   id: string;
   label: string;
   icon?: ComponentType<IconProps>;
-  /** Сочетание в нотации движка (`mod` — `⌘` или `Ctrl`); только подпись. */
+  /** Shortcut in the engine notation (`mod` is `⌘` or `Ctrl`); used for the label only. */
   keys?: readonly string[];
   disabled?: boolean;
-  /** Классы подписи: образец вокруг имени (подменю «Тон ›» ручки Блока). */
+  /** Label classes: a swatch around the name (the "Tone ›" submenu of the Block handle). */
   swatch?: string;
-  /** Разрушительное действие — тон `danger` пункта `Menu` кита («Удалить» ручки Блока). */
+  /** A destructive action: the `danger` tone of the kit's `Menu` item ("Delete" in the Block handle). */
   tone?: "danger";
   /**
-   * Пункт раскрывает подменю с этими разделами (`SubmenuTrigger`, как у меню
-   * «Таблица»): `→` открывает, `←` и Escape закрывают по одному уровню.
+   * The item opens a submenu with these sections (`SubmenuTrigger`, as in the Table menu):
+   * `→` opens it, and `←` or Escape closes it one level at a time.
    */
   submenu?: readonly FormatMenuSection[];
 }
 
 /**
- * Раздел меню. Состояние — выбором на разделе, как велит `Menu` кита:
- * `single` даёт пункты `menuitemradio`, `multiple` — `menuitemcheckbox`, и
- * `aria-checked` react-aria ставит сам. Без `selectionMode` пункты — простые
- * действия (`menuitem`).
+ * A menu section. Checked state is set by selection on the section, as the kit's `Menu`
+ * requires: `single` gives `menuitemradio` items, `multiple` gives `menuitemcheckbox`, and
+ * react-aria sets `aria-checked` itself. Without `selectionMode` the items are plain
+ * actions (`menuitem`).
  */
 export interface FormatMenuSection {
   id: string;
   label?: string;
   selectionMode?: "single" | "multiple";
-  /** Отмеченные пункты. Пусто — не отмечен ни один (смешанное, чужой Блок). */
+  /** The checked items. Empty means none is checked (a mixed selection, or a Block the menu does not apply to). */
   selected?: readonly string[];
   items: readonly FormatMenuItem[];
 }
 
 export interface FormatMenuProps {
   /**
-   * Имя кнопки — с текущим значением: «Тип блока: Заголовок 2». Меню
-   * называется им же: react-aria связывает меню с кнопкой (`aria-labelledby`),
-   * как в паттерне APG «кнопка меню».
+   * The button's name includes the current value, e.g. "Block type: Heading 2". The menu
+   * takes the same name: react-aria links the menu to the button (`aria-labelledby`),
+   * as in the APG menu button pattern.
    */
   label: string;
-  /** Иконка кнопки — текущее значение глазу. */
+  /** The button icon: the current value, shown visually. */
   icon: ComponentType<IconProps>;
   /**
-   * Кнопка — одна иконка, без стрелки ▾. «…» и так читается как «ещё»; стрелка
-   * у меню со значением («¶») говорит, что значение выбирается из списка.
+   * The button is a single icon, without the ▾ arrow. "…" already reads as "more"; the
+   * arrow on a menu with a value ("¶") says that the value is selected from a list.
    */
   iconOnly?: boolean;
   disabled: boolean;
-  /** `aria-disabled`: кнопка в обходе стрелками, но меню не открывает. */
+  /** `aria-disabled`: the button stays in the arrow-key navigation but does not open the menu. */
   unavailable?: boolean;
   sections: readonly FormatMenuSection[];
   shortcut: (keys: readonly string[]) => string;
@@ -134,25 +134,25 @@ export interface FormatMenuProps {
 }
 
 /*
-  RAC ставит триггеру меню `aria-haspopup="true"`. По ARIA 1.2 это то же, что
-  `menu`, но явное значение читается однозначнее — как у меню «Таблица».
+  RAC sets `aria-haspopup="true"` on the menu trigger. In ARIA 1.2 that is the same as
+  `menu`, but the explicit value reads less ambiguously, as in the Table menu.
 */
 export const HAS_POPUP_MENU = { "aria-haspopup": "menu" } as object;
 
 /**
- * Кнопка с меню форматирования — общий каркас «¶», «…», «Выравнивания» и
- * «Списков».
+ * The format menu button: the common frame for "¶", "…", "Align" and "Lists".
  *
- * МЕНЮ, А НЕ РЯД КНОПОК. Прежде Панель держала каждое действие кнопкой в ряд:
- * скрытое в меню действие не показывало `aria-pressed`, и скринридер не узнал
- * бы, включён ли курсив, не открыв меню. Довод снят: пункт с отметкой
- * (`menuitemradio`, `menuitemcheckbox`) объявляет состояние так же, как
- * `aria-pressed`, а кнопка меню несёт текущее значение в имени и в иконке —
- * его слышно и видно без открытия. Решение — ADR-0054.
+ * A MENU, NOT A ROW OF BUTTONS. Before, the Toolbar gave every action its own button in a
+ * row: an action hidden in a menu did not expose `aria-pressed`, so a screen reader could
+ * not tell whether italic was on without opening the menu. That reason no longer holds: an
+ * item with a check mark (`menuitemradio`, `menuitemcheckbox`) announces its state just as
+ * `aria-pressed` does, and the menu button carries the current value in its name and icon,
+ * so it is heard and seen without opening the menu. The decision is ADR-0054.
  *
- * Клавиатура и слой — `Menu` кита (react-aria): Enter, пробел и `↓` открывают,
- * стрелки ходят, Escape закрывает только меню и возвращает фокус на кнопку —
- * через стек слоёв ADR-0041, поэтому внутри `Dialog` окно остаётся открытым.
+ * The keyboard and the layer come from the kit's `Menu` (react-aria): Enter, Space and `↓`
+ * open it, the arrow keys move between items, and Escape closes only the menu and returns
+ * focus to the button, through the layer stack (ADR-0041). So inside a `Dialog`, the dialog
+ * stays open.
  */
 export function FormatMenu({
   label,
@@ -170,7 +170,7 @@ export function FormatMenu({
 
   return (
     <MenuTrigger {...menu.trigger}>
-      {/* Подсказка — на обёртке: `Button` react-aria не отдаёт Radix обработчики наведения. */}
+      {/* The tooltip sits on the wrapper: react-aria's `Button` does not pass Radix hover handlers through. */}
       <Tooltip content={label}>
         <span className="inline-flex">
           <MenuButton
@@ -196,19 +196,19 @@ export function FormatMenu({
 }
 
 /**
- * Разделы меню форматирования — содержимое `Menu`. Общее у кнопок меню выше и
- * у ручки Блока (`BlockHandle.tsx`): у ручки своя кнопка и своё открытие с
- * клавиатуры, а пункты, подменю и отметки — те же.
+ * The sections of a format menu, that is, the content of `Menu`. Shared by the menu buttons
+ * above and by the Block handle (`BlockHandle.tsx`): the handle has its own button and its
+ * own keyboard opening, but the items, submenus and check marks are the same.
  *
- * Разделы — через разделитель. Выбор закрывает меню в любом разделе, и в
- * `multiple` тоже: метка ставится одним щелчком, и дальше человек пишет, а не
- * ставит вторую. Подменю — тот же каркас уровнем ниже.
+ * Sections are separated by a divider. Selecting an item closes the menu in any section,
+ * and in `multiple` too: a Mark is applied with one click, and the user goes back to typing
+ * instead of applying a second one. A submenu is the same frame, one level down.
  */
 export function formatMenuSections(
   list: readonly FormatMenuSection[],
   shortcut: (keys: readonly string[]) => string,
   run: (key: unknown) => void,
-  /** Место подменю — `useSubmenuPlacement` вызывающего: на телефоне под пунктом. */
+  /** Submenu placement, from the caller's `useSubmenuPlacement`: below the item on a phone. */
   submenuPlacement: "bottom start" | "right top" = "right top"
 ): ReactNode {
   return list.map((section, index) => (
@@ -235,12 +235,12 @@ export function formatMenuSections(
             >
               {item.swatch ? (
                 /*
-                  Образец не должен брать вид выбранной строки: её голубой текст
-                  и подложка перекрашивали цвета тона. Текст задан образцу
-                  самому, а непрозрачная основа под ним не даёт полупрозрачной
-                  подложке тона смешаться с подложкой строки. Основа — только в
-                  отмеченной строке: у остальных образец лежит на панели меню,
-                  как обёртка в документе, и выглядит так же.
+                  The swatch must not take on the look of the selected row: its blue text
+                  and background would repaint the tone colors. The text is set on the
+                  swatch itself, and an opaque base under it stops the semi-transparent
+                  tone background from mixing with the row's background. The base appears
+                  only on the checked row: on the others the swatch sits on the menu panel,
+                  like a wrapper element in the document, and looks the same.
                 */
                 <span className="in-[[aria-checked=true]]:bg-surface-elevated rounded-xs">
                   <span className={cn(item.swatch, "text-fg-0")}>{item.label}</span>
@@ -271,31 +271,31 @@ export function formatMenuSections(
   ));
 }
 
-/** Есть ли у набора инструментов меню «¶»: Панель решает по нему о разделителе. */
+/** Whether the Tool set has the "¶" menu: the Toolbar uses it to decide on the divider. */
 export function hasBlockTypeMenu(tools: ToolList): boolean {
   return blockTypeItemsFor(tools).length > 0;
 }
 
 /**
- * Меню «¶» — тип строки: Текст, Заголовок 1–4 и пункты
- * своих Инструментов, только из включённых. Списков и цитаты здесь нет: у
- * списков — «Списки ▾», у цитаты — флажок в «…»; в «Формат ›» ручки и в «/»
- * они остаются. Отмечен тип строки под кареткой (абзац в списке или цитате —
- * «Текст»), а текущее имя — в доступном имени кнопки.
+ * The "¶" menu: the type of the line. Text, Heading 1–4, and the items of the custom Tools,
+ * enabled ones only. Lists and quotes are not here: lists are in "Lists ▾", and the quote is a
+ * checkbox in "…". They stay in the Block handle's "Format ›" and in the Slash menu. The menu
+ * marks the line type under the caret (a paragraph inside a list or a quote shows as "Text"),
+ * and the current name is in the button's accessible name.
  *
- * ИКОНКА — ПО СТРОКЕ ПОД КАРЕТКОЙ (решение владельца; прежде она
- * была всегда «¶», ADR-0054, п. 8): уровень заголовка или иконка пункта своего
- * Инструмента, у текста — пилкроу. Пунктов теперь мало и они узнаваемы, а
- * кнопка показывает, что под кареткой, не открываясь.
+ * THE ICON FOLLOWS THE LINE UNDER THE CARET (the owner's decision; before, it was always "¶",
+ * ADR-0054, item 8): the heading level, or the icon of a custom Tool's item; for text, the
+ * pilcrow. There are few items now and they are recognisable, and the button shows what is
+ * under the caret without opening.
  *
- * Выбор меняет тип строки на месте — заголовок в цитате остаётся в цитате; где
- * Схема его не даёт (заголовок первым в пункте списка), действует пункт
- * «Превратить в» Меню вставки (`applyInsertItem`) и снимает обёртки. Текст
- * остаётся, правка одна на отмену, фокус возвращается в Документ. Выбор
- * текущего типа ничего не меняет и пустой правки в историю не кладёт.
+ * Selecting an item changes the line type in place: a heading inside a quote stays in the
+ * quote. Where the Schema does not allow the type (a heading as the first item of a list), the
+ * "Turn into" item of the Slash menu (`applyInsertItem`) applies instead and removes the wrappers.
+ * The text stays, the change is one undo step, and focus returns to the Document. Selecting the
+ * current type changes nothing and adds no empty edit to history.
  *
- * Блок кода в меню не входит (он пункт «…»), но под кареткой он
- * называется на кнопке, а отметки нет ни у одного пункта.
+ * The code Block is not in this menu (it is an item of "…"), but under the caret the button
+ * names it, and no item is checked.
  */
 export function BlockTypeMenu({
   editor,
@@ -323,8 +323,8 @@ export function BlockTypeMenu({
   return (
     <FormatMenu
       label={currentName ? messages.blockType({ current: currentName }) : messages.blockTypeMenu}
-      // Иконка — по строке под кареткой: уровень заголовка, иконка
-      // пункта своего Инструмента; у текста и вне пунктов «¶» — пилкроу.
+      // Icon: from the line under the caret, the heading level or the icon of a custom
+      // Tool's item; for text, and outside those items, the pilcrow.
       icon={active && active.id !== "text" ? active.icon : ParagraphIcon}
       disabled={disabled}
       unavailable={unavailable}
@@ -347,11 +347,11 @@ export function BlockTypeMenu({
         if (!item) return;
         if (item.id === current) return void editor.commands.focus();
         /*
-          Текст и заголовки кита меняют тип строки на месте:
-          заголовок в цитате остаётся в цитате. Где Схема строке этот тип не
-          даёт (заголовок первым в пункте списка), и у пунктов своих
-          Инструментов (их команда может оборачивать и делать своё) — путь
-          «Превратить в»: обёртки снимаются, тип ставится, правка одна на отмену.
+          The kit's text and heading types change the line type in place:
+          a heading inside a quote stays in the quote. Where the Schema does not allow
+          the type on the line (a heading as the first item of a list), and for the items
+          of custom Tools (their command may wrap and do its own work), the "Turn into"
+          path is used: the wrappers are removed, the type is applied, and the change is one undo step.
         */
         const lineType = item.tool === null || item.tool === "heading";
         if (lineType && item.run(editor.can().chain(), editor).run())
@@ -362,7 +362,7 @@ export function BlockTypeMenu({
   );
 }
 
-/** Пункт меню «Выравнивание»: иконка, подпись и строка таблицы сочетаний. */
+/** The "Align" menu items: icon, label and the row in the shortcuts table. */
 const ALIGN_ITEMS: Record<
   EditorAlignment,
   { icon: ComponentType<IconProps>; label: (m: EditorMessages) => string; shortcut: string }
@@ -373,9 +373,9 @@ const ALIGN_ITEMS: Record<
 };
 
 /**
- * Выравнивание Блоков под выделением. Смешанное (один Блок по центру, другой
- * влево) читается умолчанием: отметка «По левому краю» тогда честнее, чем ни
- * одной, — выбор любого пункта выровняет все Блоки одинаково.
+ * The alignment of the Blocks under the selection. A mixed selection (one Block centered,
+ * another left) reads as the default: the "Align left" check is then more honest than no
+ * check at all, and choosing any item aligns all the Blocks the same way.
  */
 function alignmentOf(editor: Editor): EditorAlignment {
   return (
@@ -386,18 +386,17 @@ function alignmentOf(editor: Editor): EditorAlignment {
 }
 
 /**
- * Меню «Выравнивание»: По левому краю, По центру, По правому краю
- * с сочетаниями из общей таблицы. По ширине нет — решение со страницы
- * компонента (WCAG 1.4.8: рваные пробелы мешают читать) остаётся.
+ * The "Align" menu: Align left, Align center, Align right, with the shortcuts from the shared
+ * table. There is no justify option: the decision from the component's page (WCAG 1.4.8: ragged
+ * spacing hurts reading) still stands.
  *
- * В отличие от «¶», иконка кнопки — иконка ТЕКУЩЕГО выравнивания (образец
- * эпика): вариантов три, и картинка «по центру» на кнопке говорит больше, чем
- * общая иконка. Имя называет его словами: «Выравнивание: по центру».
+ * Unlike "¶", the button icon is the icon of the CURRENT alignment (the epic's pattern): there
+ * are three options, and a centered-text picture on the button says more than a generic icon.
+ * The name spells it out: "Alignment: center".
  *
- * Прежде выравнивание было тремя кнопками-переключателями, и повторный щелчок
- * по включённому возвращал к умолчанию. В меню-радио так не бывает: выбор
- * отмеченного пункта ничего не меняет и не кладёт в историю пустую правку, а к
- * умолчанию ведёт пункт «По левому краю».
+ * Previously, alignment was three toggle buttons, and pressing an active one again returned to
+ * the default. A radio menu does not work that way: selecting the checked item changes nothing
+ * and adds no empty edit to history, and the default is reached through the "Align left" item.
  */
 export function AlignMenu({ editor, tools, disabled, unavailable, shortcut }: FormatMenuHostProps) {
   const messages = useMessages().editor;
@@ -443,22 +442,21 @@ export function AlignMenu({ editor, tools, disabled, unavailable, shortcut }: Fo
   );
 }
 
-/** Есть ли у набора инструментов меню «Списки»: хоть один вид списка. */
+/** Whether the Tool set has the "Lists" menu: at least one list kind. */
 export function hasListMenu(tools: ToolList): boolean {
   return listTypeItemsFor(tools).length > 0;
 }
 
 /**
- * Меню «Списки»: Маркированный, Нумерованный, Чек-лист — те же
- * виды, что в «Формат ›» Ручки Блока, только из включённых Инструментов.
- * Отмечен вид ближайшего списка вокруг каретки, он же — иконка и имя кнопки
- * («Список: нумерованный»); вне списка иконка — общая иконка списка.
+ * The "Lists" menu: Bulleted, Numbered, Checklist. These are the same kinds as in the Block
+ * handle's "Format ›", but only from the enabled Tools. The kind of the nearest list around the
+ * caret is checked; it is also the button's icon and name ("List: numbered"). Outside a list,
+ * the icon is the generic list icon.
  *
- * Выбор другого вида — тем же путём, что «Превратить в» Меню вставки
- * (`applyInsertItem`): Блок выходит из списка и цитаты и оборачивается заново,
- * одной правкой на отмену. Выбор ОТМЕЧЕННОГО вида снимает список, как прежняя
- * кнопка-переключатель: в «Формат ›» для этого есть «Текст», а здесь другого
- * пути снять список нет.
+ * Choosing another kind takes the same path as "Turn into" in the Slash menu (`applyInsertItem`):
+ * the Block leaves the list or quote and is wrapped again, in one undo step. Choosing the CHECKED
+ * kind removes the list, as the former toggle button did. In "Format ›" the "Text" item does this,
+ * and here there is no other way to remove a list.
  */
 export function ListMenu({ editor, tools, disabled, unavailable, shortcut }: FormatMenuHostProps) {
   const messages = useMessages().editor;
@@ -495,7 +493,7 @@ export function ListMenu({ editor, tools, disabled, unavailable, shortcut }: For
       onAction={(id) => {
         const item = items.find((candidate) => candidate.id === id);
         if (!item) return;
-        // Тот же `toggle…List`, что у пункта: на своём виде он снимает список.
+        // The same `toggle…List` as the item: on its own kind, it removes the list.
         if (item.id === current) item.run(editor.chain().focus(), editor).run();
         else applyInsertItem(editor, item, null);
       }}
@@ -504,10 +502,10 @@ export function ListMenu({ editor, tools, disabled, unavailable, shortcut }: For
 }
 
 /**
- * Редкая метка меню «…»: id совпадает с именем Метки в движке и с id строки
- * таблицы сочетаний (`shortcuts.ts`), откуда берётся подпись.
+ * A rarely used Mark in the "…" menu: its id matches the Mark's name in the engine and the id of
+ * the shortcuts table row (`shortcuts.ts`) that supplies its label.
  */
-/** Id редкой метки «…» — имя Метки в движке и строки таблицы сочетаний. */
+/** Id of a rarely used Mark in "…": the Mark's name in the engine and of the shortcuts table row. */
 export type MoreMarkId = "code" | "underline" | "strike" | "superscript" | "subscript";
 
 interface MoreMark {
@@ -556,14 +554,14 @@ const MORE_MARKS: readonly MoreMark[] = [
   },
 ];
 
-/** Метка ли «…» — для хозяина, который выводит свой ряд и не повторяет его в «…». */
+/** Whether the id is a "…" Mark, for a host that renders its own row and does not repeat it in "…". */
 export function isMoreMarkId(id: string): id is MoreMarkId {
   return MORE_MARKS.some((mark) => mark.id === id);
 }
 
 /**
- * Инструменты меню «…» без Меток, что у хозяина стоят в ряду (`omit`): кнопка
- * есть, если включён хоть один.
+ * The Tools of the "…" menu, without the Marks the host already shows in its row (`omit`):
+ * the button is present if at least one of them is enabled.
  */
 export function moreFormatTools(omit: readonly MoreMarkId[] = []): readonly Tool[] {
   return [
@@ -576,50 +574,48 @@ export function moreFormatTools(omit: readonly MoreMarkId[] = []): readonly Tool
 
 export interface MoreFormatMenuProps extends FormatMenuHostProps {
   /**
-   * Метки, которые у хозяина уже стоят кнопками в ряду: в «…» их нет. Панель
-   * держит в ряду только жирный и курсив, плашка — ещё и подчёркнутый
-   * (`rowMarks.ts`).
+   * Marks that the host already shows as buttons in its row, so they are not in "…". The
+   * Toolbar keeps only bold and italic in its row; the bubble also keeps underline (`rowMarks.ts`).
    */
   omit?: readonly MoreMarkId[];
   /**
-   * Пункт «Невидимые символы» в конце меню. Только у фиксированной Панели:
-   * плавающая Панель и плашка меню выделения рисуют то же «…», но переключатель
-   * режима показа Документа над выделением ни к чему. Проп — «пункт есть»;
-   * без Инструмента `invisibleCharacters` в `tools` пункта нет и при `true`.
+   * The "Invisible characters" item at the end of the menu. Only for the fixed Toolbar: the
+   * floating Toolbar and the selection bubble draw the same "…", but a display-mode switch for
+   * the Document makes no sense over a selection. The prop means "the item is present"; without
+   * the `invisibleCharacters` Tool in `tools` there is no item, even when `true`.
    */
   invisibleCharacters?: boolean;
 }
 
 /**
- * Меню «…» — More formatting: Строчный код, Подчёркивание (не
- * у плашки), Зачёркнутый, Верхний и Нижний индекс | Блок кода | Очистить
- * стили — только из включённых инструментов; без
- * единого пункта кнопки нет.
+ * The "…" menu, More formatting: Inline code, Underline (not in the bubble), Strikethrough,
+ * Superscript and Subscript | Code block | Clear formatting, only from the enabled Tools.
+ * Without a single item there is no button.
  *
- * Метки — `menuitemcheckbox`: отметка у включённых на выделении или у каретки,
- * выбор ставит или снимает Метку одной правкой и возвращает фокус в Документ.
- * Подписи сочетаний — из общей таблицы (`shortcuts.ts`), как у кнопок Панели.
+ * Marks are `menuitemcheckbox` items: an item is checked when its Mark is on for the selection
+ * or the caret. Choosing it applies or removes the Mark in one edit and returns focus to the
+ * Document. Shortcut labels come from the shared table (`shortcuts.ts`), as for the Toolbar buttons.
  *
- * БЛОК КОДА — ПУНКТ «…», А НЕ КНОПКА ПАНЕЛИ: пользуются им нечасто
- * (решение владельца). Это Блок, а не Метка, поэтому раздел свой, но стоит он
- * сразу за Метками: такой же пункт-флажок с сочетанием (`Ctrl/⌘+Alt+C`), и
- * все переключатели «…» идут подряд, а очистка — после них.
- * Отметка — каретка в Блоке кода; выбор переключает его, как прежняя кнопка
- * (`toggleCodeBlock`). «Очистить стили» Блок кода не трогает — она снимает
- * Метки, — и остаётся последней.
+ * THE CODE BLOCK IS AN ITEM OF "…", NOT A TOOLBAR BUTTON: it is used rarely (the owner's decision).
+ * It is a Block, not a Mark, so it gets a section of its own; but that section sits right after
+ * the Marks, as the same checkbox item with a shortcut (`Ctrl/⌘+Alt+C`), so all the toggles in
+ * "…" come one after another, and clearing comes after them.
+ * The check mark is set when the caret is inside a code Block; choosing the item toggles it, as the
+ * former button did (`toggleCodeBlock`). "Clear formatting" does not touch the code Block (it removes
+ * Marks), and stays last.
  *
- * ЦВЕТОВ ЗДЕСЬ НЕТ. Прежде маркер и цвет текста были подменю
- * «…»; теперь это кнопки «Маркер» и «Цвет» с поповерами-сетками рядом с «…»
- * (`ColorMenus.tsx`): цвет выбирают глазами, по кружкам.
+ * COLORS ARE NOT HERE. The highlight and the text color used to be submenus of "…"; now they are the
+ * "Highlight" and "Color" buttons with popover grids beside "…" (`ColorMenus.tsx`): a color is
+ * chosen by eye, from swatches.
  *
- * «НЕВИДИМЫЕ СИМВОЛЫ» — последний раздел, и только у фиксированной Панели
- * (проп `invisibleCharacters`). Это режим показа Документа, а не форматирование
- * выделенного, поэтому он отделён чертой от очистки и стоит в самом конце.
- * Отметка — символы показаны; выбор переключает показ тем же путём, что команда
- * `tool("invisibleCharacters").toggle()`, и `value` с `onChange` не трогает.
+ * INVISIBLE CHARACTERS is the last section, and only on the fixed Toolbar (the `invisibleCharacters`
+ * prop). It is a display mode of the Document, not formatting of the selection, so it is separated
+ * from clearing by a divider and sits at the very end. The check mark is set when the characters are
+ * shown. Choosing it toggles the display the same way as the `tool("invisibleCharacters").toggle()`
+ * command, and does not touch `value` or `onChange`.
  *
- * Хозяин — Панель или плашка меню выделения: всё место-зависимое приходит
- * пропами (`FormatMenuHostProps`).
+ * The host is the Toolbar or the selection bubble: everything that depends on the place arrives as
+ * props (`FormatMenuHostProps`).
  */
 export function MoreFormatMenu({
   editor,
@@ -634,12 +630,12 @@ export function MoreFormatMenu({
   const locale = useUiLocale();
   const marks = MORE_MARKS.filter((mark) => tools.has(mark.id) && !omit.includes(mark.id));
   const codeBlock = tools.has("codeBlock");
-  // Цитата — флажок рядом с Блоком кода: из «¶» она ушла.
+  // The quote is a checkbox next to the code Block: it has moved out of the "¶" menu.
   const quote = quoteItemFor(tools);
   const clear = tools.has("clearFormatting");
   const view = invisibleCharacters && tools.has("invisibleCharacters");
 
-  // Сравнение результата глубокое (умолчание `useEditorState`): рендер — только при смене.
+  // The result is compared deeply (the default of `useEditorState`): it re-renders only on change.
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => ({
@@ -650,7 +646,7 @@ export function MoreFormatMenu({
       inQuote: quote !== undefined && current.isActive("blockquote"),
       canQuote: quote !== undefined && current.can().toggleBlockquote(),
       canClear: clear && current.can().unsetAllMarks(),
-      // Показ невидимых символов — состояние плагина движка, а не Метка или Блок.
+      // Showing invisible characters is a plugin state of the engine, not a Mark or a Block.
       invisible: view && invisibleCharactersVisible(current),
     }),
   });
@@ -671,7 +667,7 @@ export function MoreFormatMenu({
         })),
       },
       {
-        // Не `codeBlock`: ключи разделов и пунктов в коллекции react-aria общие.
+        // Not `codeBlock`: the keys of sections and items are shared in a react-aria collection.
         id: "block",
         selectionMode: "multiple",
         selected: [
@@ -718,7 +714,7 @@ export function MoreFormatMenu({
           : [],
       },
       {
-        // Свой раздел-флажок в конце: режим показа Документа, не форматирование.
+        // A checkbox section of its own, at the end: the display mode of the Document, not formatting.
         id: "view",
         selectionMode: "multiple",
         selected: state.invisible ? ["invisibleCharacters"] : [],

@@ -30,7 +30,7 @@ describe("useTableState: the shape of the state", () => {
 
     expect(result.current.state.pageSize).toBe(50);
     expect(result.current.state.sort?.column).toBe("name");
-    // Незаданное осталось умолчанием, а не пропало.
+    // Fields that were not set kept their defaults instead of disappearing.
     expect(result.current.state.page).toBe(1);
   });
 
@@ -45,8 +45,8 @@ describe("useTableState: the shape of the state", () => {
 });
 
 /**
- * Инварианты — то, ради чего хук существует. Без них тулбар и фильтры завели бы
- * каждый своё состояние, и связи между частями разъехались бы.
+ * Invariants are what the hook exists for. Without them the toolbar and the filters would
+ * each keep their own state, and the links between the parts would drift apart.
  */
 describe("useTableState: invariants", () => {
   test("changing the filters resets to the first page", () => {
@@ -57,8 +57,8 @@ describe("useTableState: invariants", () => {
       result.current.set({ filters: [{ id: "f1", field: "section", value: "Contracts" }] })
     );
 
-    // Иначе пользователь смотрит на четвёртую страницу выборки из десяти строк
-    // и читает пустоту как «ничего не найдено».
+    // Otherwise the user is looking at the fourth page of a selection of ten rows and reads
+    // the emptiness as "no results found".
     expect(result.current.state.page).toBe(1);
   });
 
@@ -71,7 +71,7 @@ describe("useTableState: invariants", () => {
     expect(result.current.state.page).toBe(1);
   });
 
-  /** Главный инвариант: обратное поведение срывает массовое действие. */
+  /** The main invariant: the opposite behavior would break the bulk action. */
   test("selection survives both a filter change and a page change", () => {
     const { result } = renderHook(() => useTableState());
 
@@ -89,7 +89,7 @@ describe("useTableState: invariants", () => {
     act(() => result.current.set({ density: "compact" }));
     act(() => result.current.set({ hiddenColumns: new Set(["section"]) }));
 
-    // Сужает выборку фильтр и сортировка, а не оформление.
+    // It is the filter and the sort that narrow the selection, not the look.
     expect(result.current.state.page).toBe(3);
   });
 
@@ -97,8 +97,8 @@ describe("useTableState: invariants", () => {
     const { result } = renderHook(() => useTableState());
 
     act(() => result.current.set({ filters: [{ id: "f", field: "s", value: "v" }], page: 7 }));
-    // Вызывающий сказал прямо — значит он знает, что делает: восстановление
-    // состояния из адреса приходит именно так, целиком.
+    // The caller said so directly, which means they know what they are doing: restoring
+    // the state from the address comes in exactly this way, whole.
     expect(result.current.state.page).toBe(7);
   });
 
@@ -138,9 +138,9 @@ describe("useTableState: density", () => {
 });
 
 /**
- * Перенос в адрес — пара ЧИСТЫХ функций: применять их к адресу дело
- * приложения (ADR-0023). У каждого маршрутизатора свои правила записи
- * параметров, и кит, взявшийся их угадывать, ошибётся молча.
+ * Carrying state into the address is a pair of PURE functions: applying them to the address
+ * is the application's job (ADR-0023). Each router has its own rules for writing parameters,
+ * and a kit that tried to guess them would get it wrong silently.
  */
 describe("carrying state into the address", () => {
   test("wrapping around returns the original", () => {
@@ -169,8 +169,8 @@ describe("carrying state into the address", () => {
       columnOrder: [],
       density: "comfortable",
     });
-    // Иначе ссылка на первую страницу без фильтров обрастает шестью
-    // параметрами, и скопировать её человеку неудобно.
+    // Otherwise a link to the first page without filters would grow six parameters, and it
+    // would be inconvenient for a person to copy it.
     expect(params.toString()).toBe("");
   });
 
@@ -179,8 +179,8 @@ describe("carrying state into the address", () => {
       selectedKeys: new Set(["1", "2"]),
       expandedKeys: new Set(["1"]),
     });
-    // Список ключей ничем не ограничен по длине, а ссылка, открытая назавтра,
-    // отметила бы записи, которых уже нет.
+    // The list of keys has no length limit, and a link opened tomorrow would mark records
+    // that no longer exist.
     expect(params.toString()).toBe("");
   });
 
@@ -209,8 +209,8 @@ describe("carrying state into the address", () => {
 
   test("sorting by a column with a colon in its name parses correctly", () => {
     const params = new URLSearchParams("sort=meta:created:desc");
-    // Направление отделяется по ПОСЛЕДНЕМУ двоеточию: имя колонки задаёт
-    // потребитель, и запрещать ему двоеточие кит не вправе.
+    // The direction is split off at the LAST colon: the consumer names the column, and the
+    // kit has no right to forbid it a colon.
     expect(tableStateFromParams(params).sort).toEqual({
       column: "meta:created",
       direction: "descending",
@@ -226,32 +226,32 @@ describe("carrying state into the address", () => {
 
     act(() => result.current.set(tableStateFromParams(params)));
 
-    // Инвариант «фильтр сбрасывает страницу» отменяется явной страницей в том
-    // же вызове — иначе восстановление ссылки всегда открывало бы первую.
+    // The "a filter resets the page" invariant is overridden by an explicit page in the same
+    // call; otherwise restoring a link would always open the first page.
     expect(result.current.state.page).toBe(4);
     expect(result.current.state.filters).toHaveLength(1);
   });
 });
 
 /**
- * Адрес правят руками, и это записано в докстроке `tableStateFromParams`:
- * «мусор не роняет разбор и не даёт сломанного состояния». До волны 26 обещание
- * держалось наполовину — `decodeFilter` звал `decodeURIComponent` без защиты и
- * бросал `URIError` на одном символе `%`.
+ * The address is edited by hand, and this is written in the docstring of
+ * `tableStateFromParams`: "junk does not break parsing and does not yield a broken state".
+ * Before wave 26 that promise held only halfway — `decodeFilter` called
+ * `decodeURIComponent` without protection and threw `URIError` on a single `%` character.
  *
- * Цена ошибки здесь выше, чем кажется: модуль намеренно без `"use client"` и
- * зовётся на сервере из `searchParams`, то есть это 500 на маршруте, а не
- * кривая таблица. Соседний `hide=%25zz` всё это время разбирался тихо.
+ * The cost of an error here is higher than it seems: the module is deliberately without
+ * `"use client"` and is called on the server from `searchParams`, so that is a 500 on the
+ * route, not a crooked table. The neighboring `hide=%25zz` had been parsed silently all along.
  */
 describe("a hand-edited address does not bring down the parse", () => {
   test("a filter with a malformed escape is dropped, not thrown on", () => {
-    // `URLSearchParams` превращает `%25` в `%`, после чего `decodeURIComponent`
-    // видит `%zz` — незавершённую escape-последовательность.
+    // `URLSearchParams` turns `%25` into `%`, after which `decodeURIComponent` sees `%zz`,
+    // an incomplete escape sequence.
     const params = new URLSearchParams("f=%25zz%3Aa%3Ab");
 
     expect(() => tableStateFromParams(params)).not.toThrow();
-    // Ключ не пишется вовсе, когда фильтров не осталось, — умолчания в
-    // результат не попадают, как и при разборе адреса без `f`.
+    // The key is not written at all when no filters are left: defaults do not make it into
+    // the result, just as when an address without `f` is parsed.
     expect(tableStateFromParams(params).filters).toBeUndefined();
   });
 
@@ -264,8 +264,8 @@ describe("a hand-edited address does not bring down the parse", () => {
   });
 
   test("a malformed escape in the remaining parameters is already tolerated", () => {
-    // Сторож против регресса в обратную сторону: `hide` и `cols` не кодируются
-    // и потому не бросали никогда — правка фильтра не должна это изменить.
+    // A guard against a regression in the other direction: `hide` and `cols` are not encoded
+    // and therefore never threw — the filter fix must not change that.
     const state = tableStateFromParams(new URLSearchParams("hide=%25zz&cols=%25zz"));
 
     expect(state.hiddenColumns).toEqual(new Set(["%zz"]));
@@ -274,14 +274,14 @@ describe("a hand-edited address does not bring down the parse", () => {
 });
 
 /**
- * Смена размера страницы сбрасывает страницу.
+ * Changing the page size resets the page.
  *
- * `pageSize` — единственное поле хука, которое меняет число страниц напрямую, и
- * в условие сброса оно не входило. 200 строк, `pageSize` 25 → 100 со страницы 8:
- * `slice(700, 800)` пуст, и таблица рисует «ничего не найдено». Это дословно тот
- * отказ, ради предотвращения которого инвариант и заведён («видит пустоту,
- * приняв её за „ничего не найдено“»). Само не чинится: `Pagination` зажимает
- * страницу только у себя и подсвечивает «2», пока таблица пуста.
+ * `pageSize` is the only field of the hook that changes the number of pages directly, and
+ * the reset condition did not include it. 200 rows, `pageSize` 25 → 100 from page 8:
+ * `slice(700, 800)` is empty, and the table draws "no results found". This is word for word
+ * the failure the invariant exists to prevent (it "sees emptiness and takes it for
+ * 'no results found'"). It does not fix itself: `Pagination` clamps the page only on its own
+ * side, and it highlights "2" while the table is empty.
  */
 describe("changing the page size", () => {
   test("resets the page", () => {
@@ -303,8 +303,8 @@ describe("changing the page size", () => {
   test("an explicit page in the same patch wins", () => {
     const { result } = renderHook(() => useTableState({ page: 8, pageSize: 25 }));
 
-    // Тот же приём, что у фильтров: вызывающий, назвавший страницу явно,
-    // знает, чего хочет.
+    // The same trick as with the filters: a caller who names the page explicitly knows
+    // what they want.
     act(() => result.current.set({ pageSize: 100, page: 3 }));
 
     expect(result.current.state.page).toBe(3);
@@ -312,13 +312,12 @@ describe("changing the page size", () => {
 });
 
 /**
- * Подпись фильтра переживает адрес.
+ * The filter label survives the address.
  *
- * Кодировались только `id`, `field` и `value`. `FilterBarAdd` всегда
- * проставляет `label` («Section: Contracts»), и пользователь, скопировавший
- * ссылку и открывший её заново, получал «section: contracts» — сырые
- * идентификаторы бэкенда. Round-trip-тест выше этого не ловил, потому что
- * брал фильтры без подписи.
+ * Only `id`, `field` and `value` were encoded. `FilterBarAdd` always sets a `label`
+ * ("Section: Contracts"), and a user who copied the link and opened it again got
+ * "section: contracts" — the raw backend identifiers. The round-trip test above did not
+ * catch this, because it took filters without a label.
  */
 test("a filter label survives the round trip", () => {
   const filters = [{ id: "f1", field: "section", value: "contracts", label: "Section: Contracts" }];
@@ -327,7 +326,7 @@ test("a filter label survives the round trip", () => {
 });
 
 test("a link saved before the label existed still parses", () => {
-  // Три части — ссылка из прошлой версии. Отбрасывать её нельзя.
+  // Three parts: a link from the previous version. It must not be discarded.
   const params = new URLSearchParams("f=f1%3Asection%3Acontracts");
 
   expect(tableStateFromParams(params).filters).toEqual([
@@ -336,9 +335,9 @@ test("a link saved before the label existed still parses", () => {
 });
 
 /**
- * Диапазон — необязательное `to` у токена (ADR-0063). В адресе это ПЯТАЯ часть:
- * ссылки из трёх и четырёх частей читаются как раньше, а `to` присутствует
- * тогда и только тогда, когда пятая часть есть — даже пустая.
+ * A range is the optional `to` on the token (ADR-0063). In the address it is the FIFTH part:
+ * links with three or four parts are read as before, and `to` is present if and only if
+ * the fifth part is there — even an empty one.
  */
 describe("a range filter in the address", () => {
   test.each([
@@ -363,8 +362,8 @@ describe("a range filter in the address", () => {
     const filter = { id: "r", field: "amount", value: "50", to: "" };
     const [back] = tableStateFromParams(tableStateToParams({ filters: [filter] })).filters ?? [];
 
-    // `to: ""` — «от 50» без верха; потерять ключ значило бы превратить
-    // диапазон в равенство «сумма = 50».
+    // `to: ""` is "from 50" with no upper bound; losing the key would turn the range into
+    // the equality "amount = 50".
     expect(back).toHaveProperty("to", "");
   });
 
@@ -412,7 +411,7 @@ describe("a range filter in the hook", () => {
       })
     );
 
-    // Диапазон — такая же смена выборки, как и равенство (ADR-0023, ADR-0063).
+    // A range is the same change of the selection as an equality (ADR-0023, ADR-0063).
     expect(result.current.state.page).toBe(1);
     expect(result.current.state.filters[0]).toMatchObject({ to: "100" });
     expect([...result.current.state.selectedKeys]).toEqual(["1"]);

@@ -3,18 +3,18 @@ import { AddIcon } from "@olddevs/ui/icons";
 import { Counter } from "./counter";
 
 /**
- * Серверный компонент — здесь и проверяется главное обещание пакета.
+ * A Server Component. This is where the package's main promise is verified.
  *
- * `Button` импортируется прямо сюда, без обёртки с "use client": директиву
- * несёт сам пакет. `cn` и `tableStateToParams` считаются на сервере и в
- * клиентский граф не уходят. `Counter` — граница клиента, объявленная
- * потребителем.
+ * `Button` is imported right here, without a wrapper with "use client": the
+ * directive is carried by the package itself. `cn` and `tableStateToParams` are
+ * computed on the server and do not go into the client graph. `Counter` is a
+ * client boundary declared by the consumer.
  *
- * `Alert` стоит здесь не для полноты картины, а как проба на потерю директивы.
- * Он зовёт `useMessages`, то есть `useContext`, прямо в теле — и если файл
- * компонента лишится `"use client"`, сборка упадёт на этом месте. У `Button`
- * хуков нет, и без директивы он молча отрендерился бы на сервере: одной кнопки
- * для такой пробы недостаточно.
+ * `Alert` is here not for completeness but as a probe for a lost directive. It
+ * calls `useMessages`, that is `useContext`, right in the body. If the component
+ * file loses `"use client"`, the build fails at that spot. `Button` has no hooks,
+ * and without the directive it would silently render on the server, so one
+ * button is not enough for such a probe.
  */
 export default function Page() {
   const query = tableStateToParams(DEFAULT_TABLE_STATE).toString();

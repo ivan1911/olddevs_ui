@@ -5,15 +5,15 @@ import { cn } from "../../lib/cn.js";
 import { TONE_TOKENS, type Size, type Tone } from "../../lib/variants.js";
 
 export interface StatusBadgeProps extends Omit<ComponentPropsWithoutRef<"span">, "children"> {
-  /** Подпись состояния. Сопоставление «статус → тон и подпись» остаётся за потребителем. */
+  /** Status label. The mapping "status → tone and label" stays with the consumer. */
   children: ReactNode;
-  /** Цвет подложки, текста и точки из словаря тонов. По умолчанию `neutral`. */
+  /** Background, text and dot color from the tone vocabulary. Defaults to `neutral`. */
   tone?: Tone;
-  // Через Extract от общего Size, а не собственным union: если в словарь добавят
-  // размер, здесь это увидит компилятор, а не читатель кода.
-  /** Высота бейджа: `sm` — компактный, `md` — выше. По умолчанию `sm`. */
+  // Via Extract from the shared Size, not its own union: if a size is added to the vocabulary,
+  // the compiler will flag it here, not the reader of the code.
+  /** Badge height: `sm` — compact, `md` — taller. Defaults to `sm`. */
   size?: Extract<Size, "sm" | "md">;
-  /** Точка-индикатор слева, цвета тона. По умолчанию показана. */
+  /** Indicator dot on the left, in the tone's color. Shown by default. */
   dot?: boolean;
 }
 
@@ -23,16 +23,16 @@ const SIZES = {
 } as const;
 
 /**
- * Бейдж состояния: приглушённая подложка тона, текст цветом тона, точка слева.
+ * Status badge: a muted tone background, text in the tone's color, a dot on the left.
  *
- * Версия во фронте держала внутри словарь из 11 доменных статусов вместе с
- * русскими подписями — `in_progress` → «В процессе», `duplicate` → «Дубль».
- * Пакету знать о доменных статусах нельзя: он не про обои и не про публикации.
- * Поэтому здесь остаётся только форма, а сопоставление «статус → тон + подпись»
- * живёт во фронте, рядом с доменом.
+ * The previous version on the frontend kept inside it a dictionary of 11 domain statuses together
+ * with Russian labels — `in_progress` → "In progress", `duplicate` → "Duplicate". The package
+ * cannot know about domain statuses: it has nothing to do with images or publications. So only
+ * the shape remains here, and the mapping "status → tone + label" lives on the frontend, next to
+ * the domain.
  *
- * Размеры и отступы прежней версии задавались инлайн-числами (`fontSize: 11`,
- * `padding: "3px 8px 3px 6px"`) мимо шкалы токенов — здесь это утилиты.
+ * The previous version's sizes and paddings were set with inline numbers (`fontSize: 11`,
+ * `padding: "3px 8px 3px 6px"`) outside the token scale — here they are utilities.
  */
 export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(function StatusBadge(
   { children, tone = "neutral", size = "sm", dot = true, className, ...rest },

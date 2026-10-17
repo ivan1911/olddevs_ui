@@ -19,8 +19,8 @@ import { sanitizeRichText } from "../src/editor/schema-entry.js";
 import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Чанк формул и ленивые `codeBlock`, `table`: Редактор с ними готов в `render`.
-// Сам путь Скелета до загрузки сторожит `rich-text-editor-mathematics-lazy.test.tsx`.
+// The formula chunk and the lazy `codeBlock` and `table`: the Editor with them is ready in `render`.
+// The Skeleton path before the load is covered by `rich-text-editor-mathematics-lazy.test.tsx`.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -30,12 +30,12 @@ afterEach(() => {
 });
 
 /**
- * Инструмент `mathematics` (OLDSUI-280, ADR-0070): формулы LaTeX на расширении
- * Mathematics из Tiptap и KaTeX.
+ * The `mathematics` Tool (OLDSUI-280, ADR-0070): LaTeX formulas on the Mathematics extension
+ * from Tiptap and KaTeX.
  *
- * Через публичный `RichTextEditor` с конкретным `tools`: Меню вставки, Поповер,
- * настоящие `keydown` и щелчки, результат — выходной HTML, Markdown и шаг отмены.
- * Каретка ставится командами движка: jsdom не умеет ввода в `contenteditable`.
+ * Through the public `RichTextEditor` with a concrete `tools`: the insert menu, the popover,
+ * real `keydown` events and clicks; the result is the output HTML, Markdown and an undo step.
+ * The caret is placed with engine commands: jsdom cannot type into `contenteditable`.
  */
 const TOOLS_WITH_MATH = ["bold", "history", "insertMenu", "search", "mathematics"] as const;
 
@@ -49,11 +49,11 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, editor, handle: ref.current! };
 }
 
-/** Формула так, как её пишет Редактор. */
+/** A formula as the Editor writes it. */
 const inline = (latex: string) => `<span data-latex="${latex}" data-type="inline-math"></span>`;
 const block = (latex: string) => `<div data-latex="${latex}" data-type="block-math"></div>`;
 
-/** Каретка в конец текста `text`. */
+/** Moves the caret to the end of the text `text`. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -80,7 +80,7 @@ function press(editor: Editor, key: string, modifiers: KeyboardEventInit = {}) {
 
 type User = ReturnType<typeof userEvent.setup>;
 
-/** Пункт меню по имени без подписи сочетания. */
+/** Finds a menu item by its name, without the shortcut label. */
 function itemNamed(menu: HTMLElement, name: string) {
   const found = Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]')).find(
     (item) =>
@@ -90,14 +90,14 @@ function itemNamed(menu: HTMLElement, name: string) {
   return found;
 }
 
-/** Выбрать пункт «+» Панели и дождаться Поповера формулы. */
+/** Selects the item in the Toolbar's "+" menu and waits for the formula popover. */
 async function openFromMenu(user: User, item: string, dialog = item) {
   await user.click(screen.getByRole("button", { name: "Insert block" }));
   await user.click(itemNamed(await screen.findByRole("menu", { name: "Insert block" }), item));
   return screen.findByRole("dialog", { name: dialog });
 }
 
-/** Вписать LaTeX в поле Поповера: `paste`, а не набор — в наборе скобки это управляющие символы. */
+/** Enters LaTeX into the popover field with `paste`, not by typing: typed brackets are control characters. */
 async function enterLatex(user: User, popover: HTMLElement, latex: string) {
   const field = within(popover).getByRole("textbox", { name: "LaTeX" });
   await user.clear(field);
@@ -107,14 +107,14 @@ async function enterLatex(user: User, popover: HTMLElement, latex: string) {
 }
 
 /**
- * Щелчок по формуле. Только `click`: полная последовательность мыши доходит до
- * `elementFromPoint`, которого в jsdom нет, а обработчик формулы слушает именно `click`.
+ * Clicks a formula. Only `click`: the full mouse sequence reaches `elementFromPoint`, which jsdom
+ * does not have, and the formula handler listens for `click` specifically.
  */
 function clickOn(element: HTMLElement) {
   act(() => void fireEvent.click(element));
 }
 
-/** Позиция первого узла с таким именем. */
+/** Position of the first node with this name. */
 function positionOf(editor: Editor, name: string): number {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -127,14 +127,14 @@ function positionOf(editor: Editor, name: string): number {
 const formula = (editor: Editor, selector: string) =>
   editor.view.dom.querySelector<HTMLElement>(selector)!;
 
-// ── Схема, HTML и круг ──────────────────────────────────────────────────────
+// ── Schema, HTML and the round trip ──────────────────────────────────────────────────────
 
 test("a formula is a node whose HTML holds only the LaTeX source, never the KaTeX markup", () => {
   const html = `<p>a ${inline("x^2")} b</p>${block("\\frac{a}{b}")}<p>end</p>`;
   const { editor } = renderEditor({ defaultValue: html });
 
   expect(editor.getHTML()).toBe(html);
-  // Вид узла рисует KaTeX (HTML и MathML), а в Документ его разметка не попадает.
+  // KaTeX draws the node's view (HTML and MathML), and its markup does not get into the Document.
   expect(editor.view.dom.querySelectorAll(".katex")).toHaveLength(2);
   expect(editor.view.dom.querySelector("annotation")?.textContent).toBe("x^2");
   expect(editor.getHTML()).not.toMatch(/katex|<math|class=/);
@@ -153,12 +153,12 @@ test("value, engine, HTML, sanitizer and value again lose nothing", () => {
   const saved = first.editor.getHTML();
   const sanitized = sanitizeRichText(saved, purify, tools);
 
-  // Санитайзер не снял ни символа, и второй проход движка отдаёт те же байты.
+  // The sanitizer removed no character, and the engine's second pass returns the same bytes.
   expect(sanitized).toBe(saved);
   cleanup();
   const second = renderEditor({ tools, defaultValue: sanitized });
   expect(second.editor.getHTML()).toBe(saved);
-  // Исходник в Документе — буквально то, что набрал автор, а не экранированное.
+  // The source in the Document is literally what the author typed, not an escaped form.
   const attributes = [...second.editor.view.dom.querySelectorAll("[data-latex]")].map((element) =>
     element.getAttribute("data-latex")
   );
@@ -182,7 +182,7 @@ test("the Editor writes data-latex that DOMPurify keeps: ]>, -->, --!> and </ ge
   expect(saved).toBe(
     `<p>${inline("\\left[0,1\\right] >x")} ${inline("a-- >b")} ${inline("a--! >b")}</p>${block("p< /style>q")}`
   );
-  // Уже безопасный HTML санитайзер не меняет, и второй проход движка отдаёт те же байты.
+  // The sanitizer leaves already-safe HTML unchanged, and the engine's second pass returns the same bytes.
   const sanitized = sanitizeRichText(saved, purify, tools);
   expect(sanitized).toBe(saved);
   cleanup();
@@ -208,7 +208,7 @@ test("the text of a formula is its LaTeX: getText, the counter and the selected 
   });
 
   expect(handle.getText()).toBe("a x^2 b\n\n\\pi");
-  // «a x^2 b» — 7, «\pi» — 3: счётчик считает то, что отдаёт `getText`.
+  // "a x^2 b" is 7 characters and "\pi" is 3: the counter counts what `getText` returns.
   expect(screen.getByText("2 characters left")).toBeTruthy();
   act(() => void editor.commands.selectAll());
   expect(handle.getSelectedText()).toContain("x^2");
@@ -217,7 +217,7 @@ test("the text of a formula is its LaTeX: getText, the counter and the selected 
 test("search finds the LaTeX of a formula as a whole formula, and the text around it as text", () => {
   const { handle } = renderEditor({ defaultValue: `<p>see ${inline("\\sqrt{2}")} and see</p>` });
 
-  // Подробности (подсветка, переходы, замена) — `editor-search-formulas.test.tsx`.
+  // Details (highlighting, navigation, replace) are in `editor-search-formulas.test.tsx`.
   const search = handle.tool("search");
   expect(search?.setQuery("sqrt")).toBe(true);
   expect(search?.next()).toBe(true);
@@ -236,7 +236,7 @@ test("a formula without the source or with a hostile one stays a leaf", () => {
   expect(editor.view.dom.querySelectorAll('[data-type="inline-math"]').length).toBeGreaterThan(0);
 });
 
-// ── Ошибка KaTeX в Документе ────────────────────────────────────────────────
+// ── KaTeX error in the Document ────────────────────────────────────────────────
 
 test("a formula KaTeX cannot read stays in the document as source with an error mark", () => {
   const html = `<p>${inline("\\frac{1")}</p>${block("\\badcommand")}`;
@@ -251,7 +251,7 @@ test("a formula KaTeX cannot read stays in the document as source with an error 
   );
 });
 
-// ── Опции ───────────────────────────────────────────────────────────────────
+// ── Options ───────────────────────────────────────────────────────────────────
 
 test("tool('mathematics') macros apply, and a wrong value falls back to the default", () => {
   const macros = { "\\RR": "\\mathbb{R}" };
@@ -271,7 +271,7 @@ test("tool('mathematics') macros apply, and a wrong value falls back to the defa
 
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
   const wrong = renderEditor({
-    // Из JS без типов: макрос без обратной косой черты и строгость не из списка.
+    // From plain JS without types: a macro without a backslash, and a strictness value not in the list.
     tools: [tool("mathematics", { macros: { RR: "x" }, strict: "loud" as never })],
     defaultValue: html,
   });
@@ -292,12 +292,12 @@ test("a \\gdef in one formula does not reach the next: the Editor agrees with th
 
   const [defining, inlineUser] = [...editor.view.dom.querySelectorAll('[data-type="inline-math"]')];
   expect(defining!.classList.contains("inline-math-error")).toBe(false);
-  // Макрос из первой формулы второй неизвестен: `\foo` — ошибка, как в Просмотре.
+  // The second formula does not know the macro from the first one: `\foo` is an error, as in the View.
   expect(inlineUser!.classList.contains("inline-math-error")).toBe(true);
   expect(formula(editor, '[data-type="block-math"]').classList.contains("block-math-error")).toBe(
     true
   );
-  // Макросы из `tool("mathematics")` при этом работают.
+  // Macros from `tool("mathematics")` still work.
   act(
     () =>
       void editor.commands.updateInlineMath({
@@ -322,7 +322,7 @@ test("a \\gdef typed in the popover does not leak into the next preview of the p
   expect(
     within(popover).getByRole("group", { name: "Preview" }).querySelector(".katex")
   ).not.toBeNull();
-  // Следующий разбор в том же Поповере начинает с чистых макросов: `\foo` больше не определён.
+  // The next parse in the same popover starts with clean macros: `\foo` is no longer defined.
   await enterLatex(user, popover, "\\foo");
   expect(within(popover).getByRole("textbox", { name: "LaTeX" }).getAttribute("aria-invalid")).toBe(
     "true"
@@ -340,7 +340,7 @@ test("$…$ and $$…$$ round trip through setMarkdown and getMarkdown", () => {
     `<p>Euler: ${inline("e^{i\\pi}+1=0")} and ${inline("x")}.</p>${block("\\int_0^1 x\\,dx")}<p>Last line.</p>`
   );
   expect(handle.getMarkdown().trim()).toBe(markdown);
-  // Круг устойчив: Markdown → Документ → Markdown → Документ.
+  // The round trip is stable: Markdown → Document → Markdown → Document.
   const html = editor.getHTML();
   act(() => handle.setMarkdown(handle.getMarkdown()));
   expect(editor.getHTML()).toBe(html);
@@ -351,7 +351,7 @@ test("money in the text is not a formula: the Pandoc rules for the dollar sign",
 
   act(() => handle.setMarkdown("It costs $5 and $6, or $ 7 and 8 $; also $9$."));
 
-  // `$5 and $` кончается пробелом, `$ 7 and 8 $` — начинается с него; `$9$` — деньги: за закрывающим идёт точка, но внутри цифра — формула по Pandoc.
+  // `$5 and $` ends with a space, and `$ 7 and 8 $` starts with one; `$9$` looks like money, but the closing dollar is followed by a period, so Pandoc reads it as a formula.
   expect(editor.getHTML()).toBe(`<p>It costs $5 and $6, or $ 7 and 8 $; also ${inline("9")}.</p>`);
 });
 
@@ -372,7 +372,7 @@ test("a block formula needs its own lines, a line with text around it stays text
   expect(editor.getHTML()).not.toContain("block-math");
 });
 
-// ── JSON и набор ────────────────────────────────────────────────────────────
+// ── JSON and typing ────────────────────────────────────────────────────────────
 
 test("the JSON envelope carries the LaTeX and goes back through the schema", () => {
   const html = `<p>a ${inline("x^2")}</p>${block("\\pi")}`;
@@ -387,7 +387,7 @@ test("the JSON envelope carries the LaTeX and goes back through the schema", () 
 
 test("the typing rules of the extension still work: $$x$$ in a line, $$$x$$$ as a block", () => {
   const { editor } = renderEditor({ defaultValue: "<p></p>" });
-  // Тот же путь, что у ввода с клавиатуры: правило ввода слушает `handleTextInput`.
+  // The same path as keyboard input: the input rule listens to `handleTextInput`.
   const type = (text: string) => {
     for (const char of text) {
       const { from, to } = editor.state.selection;
@@ -412,7 +412,7 @@ test("the typing rules of the extension still work: $$x$$ in a line, $$$x$$$ as 
   expect(editor.getHTML()).toBe(block("\\pi"));
 });
 
-// ── Меню вставки и Поповер ─────────────────────────────────────────────────
+// ── Insert menu and popover ─────────────────────────────────────────────────
 
 test("the insert menu lists the inline and the block formula with their icons", async () => {
   const user = userEvent.setup();
@@ -436,7 +436,7 @@ test("the inline formula: the popover previews the LaTeX and inserts it at the c
   caretIn(editor, "One");
 
   const popover = await openFromMenu(user, "Formula");
-  // Пока поля нет — подсказка вместо предпросмотра, вставлять нечего.
+  // While there is no field, a hint is shown instead of the preview, and there is nothing to insert.
   expect(within(popover).getByText("The formula appears here")).toBeTruthy();
   expect(within(popover).getByRole("button", { name: "Insert" })).toHaveProperty("disabled", true);
 
@@ -464,7 +464,7 @@ test("the block formula lands after the block with the caret and leaves a paragr
   await user.click(within(popover).getByRole("button", { name: "Insert" }));
 
   expect(editor.getHTML()).toBe(`<p>One</p>${block("\\sum_{i=1}^n i")}<p>Two</p>`);
-  // Каретка ушла в абзац за формулой.
+  // The caret moved to the paragraph after the formula.
   expect(editor.state.selection.$from.parent.textContent).toBe("Two");
 });
 
@@ -491,17 +491,17 @@ test("LaTeX KaTeX cannot read shows the error in the field and never reaches the
   const popover = await openFromMenu(user, "Formula");
   const field = await enterLatex(user, popover, "\\frac{1");
 
-  // Ошибка — в самом поле: `aria-invalid` и текст, который читает скринридер.
+  // The error is in the field itself: `aria-invalid` and the text a screen reader reads.
   await waitFor(() => expect(field.getAttribute("aria-invalid")).toBe("true"));
   expect(within(popover).getByText(/^Invalid LaTeX: /)).toBeTruthy();
   const insert = within(popover).getByRole("button", { name: "Insert" });
   expect(insert).toHaveProperty("disabled", true);
-  // Enter в поле тоже ничего не вставляет.
+  // Enter in the field does not insert anything either.
   await user.keyboard("{Enter}");
   expect(editor.getHTML()).toBe("<p>One</p>");
   expect(screen.getByRole("dialog", { name: "Formula" })).toBeTruthy();
 
-  // Исправил — ошибка ушла, формулу можно вставить.
+  // Fixed: the error is gone, and the formula can be inserted.
   await enterLatex(user, popover, "\\frac{1}{2}");
   expect(field.getAttribute("aria-invalid")).not.toBe("true");
   await user.keyboard("{Enter}");
@@ -530,7 +530,7 @@ test("from the keyboard alone: / formula Enter, type, Enter", async () => {
 
   press(editor, "Enter");
   const popover = await screen.findByRole("dialog", { name: "Formula" });
-  // Фокус сразу в поле LaTeX: мышь не нужна.
+  // Focus goes straight to the LaTeX field: no mouse needed.
   await waitFor(() =>
     expect(document.activeElement).toBe(within(popover).getByRole("textbox", { name: "LaTeX" }))
   );
@@ -555,7 +555,7 @@ test("in the block field Enter breaks the line and Ctrl+Enter applies", async ()
   expect(editor.getHTML()).toBe(`<p>One</p>${block("a\nb")}<p></p>`);
 });
 
-// ── Правка существующей формулы ─────────────────────────────────────────────
+// ── Editing an existing formula ─────────────────────────────────────────────
 
 test("a click on a formula opens the popover with its LaTeX; Apply updates it in place in one undo step", async () => {
   const user = userEvent.setup();
@@ -567,7 +567,7 @@ test("a click on a formula opens the popover with its LaTeX; Apply updates it in
   const popover = await screen.findByRole("dialog", { name: "Formula" });
   const field = within(popover).getByRole("textbox", { name: "LaTeX" });
   expect((field as HTMLInputElement).value).toBe("x^2");
-  // Правка: «Применить» вместо «Вставить» и «Убрать формулу».
+  // Editing: "Apply" instead of "Insert", and "Remove formula".
   expect(within(popover).queryByRole("button", { name: "Insert" })).toBeNull();
   expect(within(popover).getByRole("button", { name: "Remove formula" })).toBeTruthy();
 
@@ -623,7 +623,7 @@ test("Enter on a formula selected with the keyboard opens its popover", async ()
   const popover = await screen.findByRole("dialog", { name: "Formula" });
   expect(within(popover).getByRole("textbox", { name: "LaTeX" })).toHaveProperty("value", "x^2");
   await user.keyboard("{Escape}");
-  // Enter не расщепил абзац.
+  // Enter did not split the paragraph.
   expect(editor.getHTML()).toBe(`<p>a ${inline("x^2")} b</p>`);
 });
 
@@ -659,7 +659,7 @@ test("Shift+Right before a formula and Shift+Left after it select exactly the fo
   expect(press(editor, "ArrowLeft", { shiftKey: true })).toBe(true);
   expect([editor.state.selection.anchor, editor.state.selection.head]).toEqual([pos + 1, pos]);
 
-  // Не у формулы — выделение расширяет браузер, как обычно.
+  // Not at a formula: the browser extends the selection as usual.
   caret(pos - 1);
   expect(press(editor, "ArrowLeft", { shiftKey: true })).toBe(false);
 });
@@ -692,7 +692,7 @@ test("the selection menu stays off a selected formula, over text it is there", a
   await waitFor(() => expect(screen.queryByRole("toolbar", BUBBLE)).toBeNull());
 });
 
-// ── Подписи ru ──────────────────────────────────────────────────────────────
+// ── Labels in ru ──────────────────────────────────────────────────────────────
 
 test("the labels and the popover speak Russian under the ru catalog", async () => {
   const user = userEvent.setup();
@@ -725,7 +725,7 @@ test("the labels and the popover speak Russian under the ru catalog", async () =
   expect(within(popover).getByRole("button", { name: ru.editor.mathInsert })).toBeTruthy();
 });
 
-// ── Без Инструмента ─────────────────────────────────────────────────────────
+// ── Without the Tool ─────────────────────────────────────────────────────────
 
 test("without the tool a formula from value stays as text and survives a save", () => {
   const html =
@@ -736,13 +736,13 @@ test("without the tool a formula from value stays as text and survives a save", 
     defaultValue: html,
   });
 
-  // Инлайн — текстом `$…$`, Блок — абзацем `$$…$$`; LaTeX не потерян и не экранирован дважды.
+  // Inline becomes text in `$…$`, and a Block becomes a paragraph in `$$…$$`; the LaTeX is neither lost nor escaped twice.
   expect(editor.getHTML()).toBe(
     "<p>Euler $e^{i\\pi}+1=0$ done</p><p>$$a&lt;b$$</p><ul><li><p>$\\alpha$</p></li></ul>"
   );
   expect(editor.view.dom.querySelector('[data-type="inline-math"]')).toBeNull();
   expect(handle.getText()).toContain("$e^{i\\pi}+1=0$");
-  // Тот же Документ снова через движок с Инструментом: текст остаётся текстом, формулой он не становится.
+  // The same Document again through an engine with the Tool: the text stays text and does not become a formula.
   cleanup();
   const again = renderEditor({ defaultValue: editor.getHTML() });
   expect(again.editor.view.dom.querySelector('[data-type="inline-math"]')).toBeNull();
@@ -770,12 +770,12 @@ test("without the tool a pasted formula and HTML mode do the same", () => {
   expect(editor.getHTML()).toBe("<p>p $x^2$</p>");
   expect(handle.insertHTML(`<p>${inline("y")}</p>`)).toBe(true);
   expect(editor.getHTML()).toContain("$y$");
-  // Пустая формула без исходника — ничего, а не `$$`.
+  // An empty formula with no source inserts nothing, not `$$`.
   act(() => handle.setMarkdown(""));
   expect(handle.insertHTML('<span data-type="inline-math" data-latex=" "></span>')).toBe(false);
 });
 
-// ── Пресеты ─────────────────────────────────────────────────────────────────
+// ── Presets ─────────────────────────────────────────────────────────────────
 
 test("the tool is enabled by a plain name in tools, next to a preset", () => {
   const { editor } = renderEditor({

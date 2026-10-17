@@ -9,68 +9,72 @@ import { CheckboxGroupStyleContext } from "./Checkbox.js";
 import { CheckboxCard, CheckboxCardLayoutContext } from "./CheckboxCard.js";
 
 export interface CheckboxGroupProps {
-  /** Отмеченные пункты: массив `value` отмеченных флажков группы. */
+  /** Checked items: the array of `value`s of the group's checked checkboxes. */
   value: string[];
-  /** Вызывается при смене набора и получает новый массив значений. */
+  /** Called when the set changes, with the new array of values. */
   onChange: (value: string[]) => void;
-  /** Подпись всей группы. Обязательна: набор флажков без общего вопроса нечитаем. */
+  /**
+   * Label of the whole group. Required: a set of checkboxes without a shared question is hard to
+   * make sense of.
+   */
   label: ReactNode;
-  /** Пояснение под подписью. */
+  /** Description under the label. */
   description?: ReactNode;
-  /** Сообщение об ошибке. Заменяет `description`, когда задано. */
+  /** Error message. Replaces `description` when set. */
   errorMessage?: ReactNode;
-  /** Раскладка флажков. Горизонтальная — для двух-трёх коротких подписей. */
+  /** Layout of the checkboxes. Horizontal is for two or three short labels. */
   orientation?: "vertical" | "horizontal";
   /**
-   * Выключает всю группу целиком: недоступен каждый её пункт.
+   * Disables the whole group: every item in it is unavailable.
    *
-   * Выключает всю группу целиком. Перекрывает `disabled` отдельных флажков, а
-   * не складывается с ним: недоступна вся группа — недоступен каждый её пункт,
-   * и обратного прочтения тут быть не может.
+   * Disables the whole group. It overrides the `disabled` of individual checkboxes
+   * rather than combining with it. If the whole group is unavailable, every item in it
+   * is unavailable, and there can be no other reading.
    */
   disabled?: boolean;
-  /** Помечает группу обязательной для заполнения (передаётся в `react-aria-components`). */
+  /** Marks the group as required (passed to `react-aria-components`). */
   isRequired?: boolean;
   /**
-   * Тон отмеченных флажков набора — один на всех.
+   * Tone of the set's checked checkboxes, one for all.
    *
-   * Цвет отмеченных флажков набора (в карточках — ещё и рамки отмеченной
-   * карточки). Один на весь набор и приходит флажкам контекстом, как у
-   * `RadioGroup`: тон `Checkbox` внутри группы с этим пропом игнорируется —
-   * набор не может разъехаться по виду. Не задан — каждый флажок красится своим
-   * `tone`, как и вне группы. Неотмеченные всегда нейтральны.
+   * The color of the set's checked checkboxes (in cards, also the border of the checked
+   * card). It is one for the whole set, and it reaches the checkboxes through context, as
+   * with `RadioGroup`. A `Checkbox` tone inside a group with this prop is ignored: the set
+   * cannot diverge in look. If it is not set, each checkbox is colored by its own `tone`,
+   * as it is outside a group. Unchecked ones are always neutral.
    */
   tone?: Tone;
   /**
-   * Вид группы: `default` — строки с коробкой, `card` — карточки.
+   * Appearance of the group: `default` for rows with a checkbox, `card` for cards.
    *
-   * Вид группы: `default` — строки с коробкой, `card` — карточки с подписью,
-   * описанием и необязательной иконкой. Живёт у группы и приходит флажкам
-   * контекстом. Не `variant`: тот в ките уже значит подачу тона.
+   * Appearance of the group: `default` for rows with a box, `card` for cards with a label,
+   * a description and an optional icon. It lives on the group and reaches the checkboxes
+   * through context. It is not called `variant`, because in the kit that already means the
+   * tone's prominence.
    */
   appearance?: ChoiceAppearance;
-  /** `<Checkbox value="…">` — по одному на пункт. */
+  /** `<Checkbox value="…">`, one per item. */
   children?: ReactNode;
-  /** Классы на корневой элемент группы. */
+  /** Classes on the group's root element. */
   className?: string;
 }
 
 /**
- * Группа флажков.
+ * Checkbox group.
  *
- * СОБИРАЕТСЯ ИЗ `children`, А НЕ ИЗ МАССИВА `items` — и это осознанное
- * расхождение с `Select` и `Segmented`.
+ * IT IS ASSEMBLED FROM `children`, NOT FROM AN `items` ARRAY. This is a deliberate
+ * divergence from `Select` and `Segmented`.
  *
- * Те два рисуют однородные строки: у пункта есть подпись, иногда картинка и
- * счётчик, и всё это описывается объектом. У флажка в группе бывает своё
- * пояснение, свой `disabled`, своя иконка и своя вложенная разметка подписи —
- * описать это объектом можно только заведя второй язык разметки рядом с JSX,
- * который уже есть.
+ * Those two render uniform rows: an item has a label, sometimes a picture and a counter,
+ * and all of it is described by an object. A checkbox inside a group may have its own
+ * description, its own `disabled`, its own icon and its own nested label markup. Describing
+ * that with an object would require a second markup language next to JSX, and JSX is
+ * already there.
  *
- * Значение группы — массив, а состояние отдельного флажка внутри неё
- * определяется вхождением его `value` в этот массив: `checked` у детей группы
- * не задаётся вовсе. Это тот же принцип, по которому `RadioGroup` держит
- * значение у группы, а не у каждой кнопки.
+ * The group's value is an array. The state of an individual checkbox inside it is
+ * determined by whether its `value` is in that array, so the children of the group have no
+ * `checked` set at all. This is the same principle by which `RadioGroup` holds the value on
+ * the group, not on each button.
  */
 export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(function CheckboxGroup(
   {
@@ -89,8 +93,8 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(func
   },
   ref
 ) {
-  // Значение контекста не пересоздаётся на каждый рендер: иначе каждый флажок
-  // набора перерисовывался бы от любого рендера группы.
+  // The context value is not recreated on every render. Otherwise every checkbox in the
+  // set would re-render on any render of the group.
   const style = useMemo(
     () => ({ tone, Card: appearance === "card" ? CheckboxCard : undefined }),
     [tone, appearance]
@@ -122,9 +126,9 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(func
         </CheckboxGroupStyleContext.Provider>
       </div>
       {/*
-          Ошибка ВЫТЕСНЯЕТ пояснение, а не встаёт под ним: две строки под
-          группой, одна из которых противоречит другой, — источник шума.
-          То же правило, что у `FormField`.
+          The error REPLACES the description rather than sitting under it. Two lines under
+          a group, one of which contradicts the other, are a source of noise.
+          The same rule as `FormField`.
         */}
       {errorMessage != null ? (
         <FieldError className="text-danger-strong text-[11px]">{errorMessage}</FieldError>

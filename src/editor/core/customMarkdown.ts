@@ -10,25 +10,25 @@ import {
 import { devWarn } from "../../lib/dev-warn.js";
 
 /*
-  Markdown своего Инструмента по умолчанию (ADR-0058, п. 3.1).
+  The default Markdown of a custom Tool (ADR-0058, item 3.1).
 
-  Свои правила Markdown — в Extensions: `renderMarkdown` и токенайзер
-  Tiptap, отдельного поля в описании нет. Без них `@tiptap/markdown` молча
-  выгрузил бы узел пустой строкой — вместе со всем текстом внутри. Поэтому
-  Node и Mark без `renderMarkdown` кит дописывает сам: Блок выгружается своим
-  содержимым (как `conform` при разборе Markdown разворачивает чужой узел),
-  атом — Текстом атома (`renderText`, ADR-0058, п. 4), Метка — своим текстом.
-  Пропадает только атом без текста. Обратно такой Блок из Markdown не
-  создаётся: правил разбора у него нет, его текст встаёт абзацами.
+  The Tool's own Markdown rules live in the Extensions: `renderMarkdown` and the Tiptap
+  tokenizer; the descriptor has no separate field for them. Without them `@tiptap/markdown`
+  would silently export the node as an empty string, along with all the text inside it. So a
+  Node and a Mark without `renderMarkdown` get a fallback from the kit: a Block is exported
+  with its content (the way `conform` unwraps a foreign node when parsing Markdown), an atom
+  with its atom text (`renderText`, ADR-0058, item 4), and a Mark with its own text. Only an
+  atom with no text is lost. Such a Block is not created back from Markdown: it has no parsing
+  rules, so its text becomes paragraphs.
 
-  Предупреждение — одно на Инструмент и только когда умолчание сработало:
-  потребителю, который Markdown не выгружает, оно ни к чему.
+  One warning per Tool, and only when the default has kicked in: a consumer who does not
+  export Markdown has no use for it.
 */
 
-/** Поле конфигурации атома своего Инструмента без правил Markdown: имя Инструмента. */
+/** Field on the config of an atom of a custom Tool without Markdown rules: the Tool's name. */
 export const MARKDOWN_FALLBACK = "kitMarkdownFallback";
 
-/** Предупреждение о Markdown по умолчанию — одно на Инструмент (`devWarn` помнит текст). */
+/** Warning about the default Markdown — one per Tool (`devWarn` remembers the text). */
 export function warnNoMarkdown(tool: string): void {
   devWarn(
     `custom tool "${tool}" has no Markdown rules (renderMarkdown in its Extensions): ` +
@@ -36,12 +36,12 @@ export function warnNoMarkdown(tool: string): void {
   );
 }
 
-/** Поля Node или Mark, дописывающие Markdown по умолчанию; `{}`, если свои правила есть. */
+/** Fields of a Node or a Mark that supply the default Markdown; `{}` if it has its own rules. */
 export function markdownFallback(extension: AnyExtension, tool: string): object {
   if (getExtensionField(extension, "renderMarkdown") !== undefined) return {};
-  // Атом (лист или `atom: true`) выгружает `markdownOf` (`atomText.ts`) — тем же
-  // Текстом атома, что у встроенных, и без пустого Блока на месте атома без
-  // текста. Здесь — только метка, чтобы `markdownOf` предупредил о нём сам.
+  // An atom (a leaf or `atom: true`) is exported by `markdownOf` (`atomText.ts`) — with the same
+  // atom text as the built-in ones, and without an empty Block in place of an atom with no text.
+  // Here only the marker field is set, so that `markdownOf` warns about it itself.
   if (
     extension.type === "node" &&
     (getExtensionField(extension, "atom") === true ||
@@ -49,9 +49,9 @@ export function markdownFallback(extension: AnyExtension, tool: string): object 
   ) {
     return { [MARKDOWN_FALLBACK]: tool };
   }
-  // Редактор, в чьей Схеме живёт узел: Markdown получает JSON, а Текст атома
-  // считает `renderText` по узлу ProseMirror. Описание своего Инструмента
-  // разворачивается на каждый Редактор (`expandTools`), поэтому Редактор один.
+  // The Editor whose Schema holds the node: Markdown gets JSON, and `renderText` computes the atom
+  // text from the ProseMirror node. A custom Tool's descriptor is expanded for each Editor
+  // (`expandTools`), so there is exactly one Editor here.
   let editor: Editor | null = null;
   return {
     onBeforeCreate(
@@ -63,8 +63,8 @@ export function markdownFallback(extension: AnyExtension, tool: string): object 
     },
     renderMarkdown(node: JSONContent, helpers: MarkdownRendererHelpers): string {
       warnNoMarkdown(tool);
-      // Метка: Tiptap вызывает это ради открывающей и закрывающей разметки
-      // вокруг заглушки — их нет, остаётся текст.
+      // A Mark: Tiptap calls this for the opening and closing markup around the stub. There is
+      // none, so only the text remains.
       if (extension.type === "mark") return helpers.renderChildren(node);
       const type = editor?.schema.nodes[node.type ?? ""];
       if (!node.content) return "";

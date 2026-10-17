@@ -6,39 +6,38 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { Link } from "../content/Link.js";
 
 export interface Crumb {
-  /** Подпись звена. */
+  /** Crumb label. */
   label: string;
-  /** Адрес. У последнего звена его не бывает — см. докстроку. */
+  /** Address. The last crumb never has one; see the doc comment. */
   href?: string;
 }
 
 export interface BreadcrumbsProps {
-  /** Звенья пути по порядку, от корня к текущему экрану. */
+  /** Crumbs in order, from the root to the current screen. */
   items: Crumb[];
   /**
-   * Сколько звеньев показывать целиком, прежде чем свернуть середину.
+   * How many crumbs to show in full before the middle is collapsed.
    *
-   * Цепочка длиннее предела сворачивается в «первое … последние два»: середина
-   * пути ничего не говорит о том, где пользователь находится, а вот первое
-   * звено (корень) и ближайшие к текущему — говорят.
+   * A chain longer than the limit collapses to the first crumb, an ellipsis and the last two.
+   * The middle of the path says nothing about where the user is, while the first crumb (the
+   * root) and the crumbs nearest to the current screen do.
    */
   maxItems?: number;
-  /** Дополнительные классы на `nav`. */
+  /** Extra classes on the `nav`. */
   className?: string;
-  /** Доступное имя навигации. По умолчанию берётся из словаря сообщений. */
+  /** Accessible name of the navigation. Defaults to the message catalog's string. */
   "aria-label"?: string;
 }
 
 /**
- * Хлебные крошки: путь до текущего экрана.
+ * Breadcrumbs: the path to the current screen.
  *
- * **Последнее звено — не ссылка**, и это не мелочь: ссылка на страницу, на
- * которой уже находишься, ничего не делает по нажатию, а скринридер объявляет
- * её ссылкой — то есть обещает переход, которого не будет. Текущее звено
- * помечается `aria-current="page"`.
+ * **The last crumb is not a link**, and that is not a minor detail: a link to the page you are
+ * already on does nothing when pressed, but a screen reader announces it as a link, which
+ * promises a navigation that will not happen. The current crumb is marked `aria-current="page"`.
  *
- * Разметка — `nav` со списком: скринридер даёт по ней прыжок «к навигации» и
- * читает число звеньев. Строка из ссылок через «/» ни того, ни другого не даёт.
+ * The markup is a `nav` with a list: a screen reader can jump to it as a navigation landmark
+ * and read the number of crumbs. A row of links separated by "/" gives neither.
  */
 export function Breadcrumbs({
   items,
@@ -48,21 +47,20 @@ export function Breadcrumbs({
 }: BreadcrumbsProps) {
   const messages = useMessages();
   /*
-    Сворачивание: первое звено, многоточие, последние два. Многоточие — не
-    ссылка и не кнопка: раскрывать середину некуда, а кнопка обещала бы
-    действие. Оно помечено `aria-hidden`, потому что «…» вслух не значит
-    ничего; число пропущенных звеньев сообщает подпись рядом.
+    Collapsing: the first crumb, an ellipsis, the last two. The ellipsis is not a link and not
+    a button: there is nowhere to expand the middle, and a button would promise an action. It is
+    marked `aria-hidden`, because "…" says nothing when read aloud; the caption next to it gives
+    the number of skipped crumbs.
   */
   /*
-    Сворачивать имеет смысл, только когда есть ЧТО прятать.
+    Collapsing only makes sense when there is something TO HIDE.
 
-    Условие было просто `items.length > maxItems`, а свёрнутый вид всегда
-    собирался как «первое + … + последние два» — три звена. На коротких
-    цепочках это ломалось: при двух звеньях и `maxItems={1}` первое попадало и
-    в начало, и в хвост (корень рисовался ДВАЖДЫ), а `skipped` уходил в минус,
-    и подпись читалась как «Пропущено звеньев: −1». Вход достижим по
-    документации — страница крошек прямо советует уменьшать `maxItems` в узком
-    хедере.
+    The condition used to be just `items.length > maxItems`, but the collapsed view was always
+    built as "first + … + last two", which is three crumbs. Short chains broke: with two crumbs
+    and `maxItems={1}` the first crumb landed both at the start and at the end (the root was
+    drawn TWICE), and `skipped` went negative, so the caption read "-1 more". The
+    input is reachable through the docs: the Breadcrumbs page explicitly advises lowering
+    `maxItems` in a narrow header.
   */
   const collapsed = items.length > maxItems && items.length > 3;
   const shown: (Crumb | "gap")[] = collapsed ? [items[0]!, "gap", ...items.slice(-2)] : [...items];
@@ -80,9 +78,9 @@ export function Breadcrumbs({
               className="flex min-w-0 items-center gap-1.5"
             >
               {item === "gap" ? (
-                // `aria-hidden` обязателен: без него `title` даёт многоточию
-                // доступное имя, и скринридер читает «Пропущено звеньев: 3»
-                // как звено пути. Число он и так знает по длине списка.
+                // `aria-hidden` is required: without it, `title` gives the ellipsis an
+                // accessible name, and a screen reader reads "3 more" as a crumb
+                // of the path. It already knows the count from the length of the list.
                 <span
                   aria-hidden
                   className="text-fg-3"
@@ -91,7 +89,7 @@ export function Breadcrumbs({
                   …
                 </span>
               ) : last || !item.href ? (
-                // Текущее звено: не ссылка, но объявлено текущим.
+                // Current crumb: not a link, but announced as the current item.
                 <span aria-current={last ? "page" : undefined} className="text-fg-0 truncate">
                   {item.label}
                 </span>

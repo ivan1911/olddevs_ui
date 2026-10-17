@@ -4,14 +4,14 @@ import { Extension, type Editor, type Range } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import { exitSuggestion, Suggestion } from "@tiptap/suggestion";
 
-/** Ключ плагина: по нему меню закрывает сессию снаружи (`closeSlashMenu`). */
+/** Plugin key: the menu closes the session from outside through it (`closeSlashMenu`). */
 const SLASH_KEY = new PluginKey("olddevsSlashMenu");
 
 /**
- * Ключ плагина своего триггера — свой на каждый символ (ADR-0064): плагинам
- * `@tiptap/suggestion` в одном состоянии нужны разные ключи, а сессию
- * закрывают снаружи по тому же ключу. Один ключ на символ на весь модуль:
- * ключ — идентификатор, а не состояние, и разные Редакторы делят его без вреда.
+ * Plugin key of its own trigger, one for each character (ADR-0064). The `@tiptap/suggestion`
+ * plugins in one state need different keys, and the session is closed from outside by the same
+ * key. One key per character for the whole module: the key is an identifier, not state, and
+ * different Editors share it without harm.
  */
 const TRIGGER_KEYS = new Map<string, PluginKey>([["/", SLASH_KEY]]);
 
@@ -24,51 +24,54 @@ function triggerKey(char: string): PluginKey {
   return key;
 }
 
-/** Сессия символа-триггера: что набрано, где и как найти курсор на экране. */
+/** Session of a trigger character: what was typed, where, and how to find the caret on screen. */
 export interface SlashSession {
-  /** Набранное после символа, без него самого. */
+  /** What was typed after the character, without the character itself. */
   query: string;
-  /** Диапазон `символ+запрос` в документе — его заменяет выбранный пункт. */
+  /** The `character+query` range in the document; the selected item replaces it. */
   range: Range;
-  /** Прямоугольник набранного на экране — якорь списка. */
+  /** The rectangle of the typed text on screen: the menu's anchor. */
   rect: () => DOMRect | null;
 }
 
 /**
- * Мост между плагином и React. Расширение живёт столько же, сколько движок,
- * а меню — компонент, поэтому мост — объект с подменяемыми полями, а не
- * колбэки в опциях: пересоздавать движок ради нового обработчика нельзя.
+ * Bridge between the plugin and React. The extension lives as long as the engine, while the menu
+ * is a component, so the bridge is an object with replaceable fields rather than callbacks in the
+ * options: the engine cannot be recreated for a new handler.
  */
 export interface SlashBridge {
   open: (session: SlashSession) => void;
   close: () => void;
-  /** Клавиша при открытом меню; `true` — меню её съело, движку она не нужна. */
+  /**
+   * Key press while the menu is open. `true` means the menu consumed it, so the engine does not need
+   * it.
+   */
   keyDown: (event: KeyboardEvent) => boolean;
 }
 
-/** Закрыть сессию `/`, оставив набранное в тексте (Escape, щелчок мимо). */
+/** Closes the `/` session, leaving the typed text in place (Escape, click outside). */
 export function closeSlashMenu(view: Parameters<typeof exitSuggestion>[0]): void {
   exitSuggestion(view, SLASH_KEY);
 }
 
-/** Закрыть сессию своего триггера `char`, оставив набранное в тексте. */
+/** Closes the session of its own trigger `char`, leaving the typed text in place. */
 export function closeTrigger(view: Parameters<typeof exitSuggestion>[0], char: string): void {
   exitSuggestion(view, triggerKey(char));
 }
 
 /**
- * Плагин символа-триггера: общая механика «/» и своих символов. Сопоставление
- * — `@tiptap/suggestion`: символ в начале Блока или после пробела, запрос — до
- * пробела. Внутри слова (`и/или`, `a@b.com`) список молчит: перед символом нет
- * разрешённого префикса. Неразрывный пробел — тоже пробел: браузер ставит его
- * в `contenteditable` на месте конечного.
+ * Plugin of a trigger character: the common mechanics of `/` and of custom characters. Matching is
+ * `@tiptap/suggestion`'s: the character at the start of a Block or after a space, and the query
+ * runs up to the next space. Inside a word (`and/or`, `a@b.com`) the menu stays silent, since
+ * there is no allowed prefix before the character. A non-breaking space is a space too: the
+ * browser inserts it in a `contenteditable` in place of a regular trailing one.
  *
- * В блоке кода и в строчном коде список не открывается: там символ — это пути,
- * комментарии и деление, а не команда.
+ * Inside a code block or inline code the menu does not open: there the character means a path, a
+ * comment or a division, not a command.
  *
- * Escape до плагина обычно не доходит: открытый список — слой Radix, и стек
- * слоёв забирает Escape раньше движка (`SlashMenu`). Ветка плагина остаётся
- * на случай, когда списка на экране нет, — сессия тогда закрывается так же.
+ * Escape usually does not reach the plugin: an open menu is a Radix layer, and the Escape stack
+ * takes Escape before the engine does (`SlashMenu`). The plugin's branch stays for the case when
+ * there is no menu on screen: the session then closes the same way.
  */
 function triggerPlugin(editor: Editor, char: string, bridge: SlashBridge) {
   const open = (props: {
@@ -101,7 +104,7 @@ function triggerPlugin(editor: Editor, char: string, bridge: SlashBridge) {
 }
 
 /**
- * Открытие Меню вставки по `/`: правила символа-триггера (`triggerPlugin`).
+ * Opening the Slash menu on `/`: the rules of the trigger character (`triggerPlugin`).
  */
 export const SlashCommand = Extension.create<{ bridge: SlashBridge | null }>({
   name: "slashCommand",
@@ -117,16 +120,15 @@ export const SlashCommand = Extension.create<{ bridge: SlashBridge | null }>({
   },
 });
 
-/** Символ своего триггера и мост его списка. */
+/** A custom trigger character and the bridge of its menu. */
 export interface TriggerBinding {
   char: string;
   bridge: SlashBridge;
 }
 
 /**
- * Свои символы-триггеры Инструментов (ADR-0064): по плагину на символ, у
- * каждого свой ключ. Символ проверяет набор Инструментов (`customToolsError`),
- * здесь он уже годный и уникальный.
+ * Custom trigger characters of Tools (ADR-0064): a plugin per character, each with its own key.
+ * The tool set checks the character (`customToolsError`); here it is already valid and unique.
  */
 export const TriggerCommand = Extension.create<{ triggers: readonly TriggerBinding[] }>({
   name: "triggerCommand",

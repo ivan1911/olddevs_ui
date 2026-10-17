@@ -10,36 +10,36 @@ import type { TableFilter } from "../../lib/table-state.js";
 import { Button } from "../actions/Button.js";
 
 export interface FilterBarProps extends Omit<ComponentPropsWithoutRef<"div">, "onChange"> {
-  /** Применённые фильтры; каждый рисуется снимаемым токеном. */
+  /** Applied filters; each is rendered as a removable tag. */
   filters: TableFilter[];
-  /** Получает новый список фильтров после снятия одного токена или всех сразу. */
+  /** Receives the new list of filters after one tag, or all of them at once, is removed. */
   onFiltersChange: (filters: TableFilter[]) => void;
   /**
-   * Подпись токена. Не задана — «поле: значение», а у диапазона (есть `to`) —
-   * «поле: 50–100», «поле: от 50», «поле: до 100» словами каталога сообщений.
+   * The tag label. If not set, it is "field: value"; for a range (when `to` is set), it uses the
+   * words from the message catalog: "field: 50–100", "field: from 50", "field: to 100".
    *
-   * Подпись **не является** идентификатором: снятие идёт по `filter.id`.
-   * Иначе два фильтра по одному полю с одинаковыми на вид подписями стали бы
-   * неразличимы, а локализованная или обрезанная подпись — вовсе непригодной.
+   * The label is **not** an identifier: removal goes by `filter.id`. Otherwise two filters on the
+   * same field with labels that look the same would be indistinguishable, and a localized or
+   * truncated label would be useless altogether.
    */
   renderLabel?: (filter: TableFilter) => string;
-  /** Доступное имя набора. Не задано — из каталога сообщений. */
+  /** Accessible name of the set. If not set, it is taken from the message catalog. */
   label?: string;
-  /** Слот добавления фильтра — обычно `FilterBarAdd`. */
+  /** The slot for adding a filter, usually `FilterBarAdd`. */
   children?: ReactNode;
 }
 
 /**
- * Применённые фильтры снимаемыми токенами.
+ * Applied filters as removable tags.
  *
- * Компонент **не знает, какие бывают фильтры**: их список приходит пропом, а
- * доменного словаря в ките не появляется. Это и отличает его от `LibraryFilterBar`
- * во фронте, где 373 строки состоят из зашитых групп и продуктовых пикеров, —
- * переносится форма, а не код.
+ * The component **does not know what kinds of filters exist**: their list comes in as a prop, and
+ * no domain vocabulary appears in the kit. That is what distinguishes it from `LibraryFilterBar`
+ * in the front app, where 373 lines consist of hardcoded groups and product pickers: the shape is
+ * carried over, not the code.
  *
- * Токены стоят на `TagGroup` из react-aria, тем же приёмом, что `TagInput`, а не
- * на `Chip`: у чипа нет снятия, и он про переключение, а не про снятие. Заодно
- * бесплатно приходит клавиатура: Delete и Backspace на токене.
+ * The tags are built on react-aria's `TagGroup`, the same approach as `TagInput`, rather than on
+ * `Chip`: a chip has no removal, and it is about toggling, not removing. Keyboard support also
+ * comes for free: Delete and Backspace on a tag.
  */
 export const FilterBar = forwardRef<HTMLDivElement, FilterBarProps>(function FilterBar(
   { filters, onFiltersChange, renderLabel, label, className, children, ...rest },
@@ -47,9 +47,9 @@ export const FilterBar = forwardRef<HTMLDivElement, FilterBarProps>(function Fil
 ) {
   const messages = useMessages();
 
-  // Диапазон без своей подписи нельзя показать как «поле: значение»: «от 50»
-  // выглядело бы равенством «= 50» (ADR-0063). Подпись, собранная
-  // `FilterBarAdd`, приходит в `filter.label` и сюда не доходит.
+  // A range without its own label cannot be shown as "field: value": "from 50" would look like
+  // the equality "= 50" (ADR-0063). The label built by `FilterBarAdd` arrives in `filter.label`
+  // and does not reach this point.
   const labelOf =
     renderLabel ??
     ((filter: TableFilter) =>
@@ -75,15 +75,15 @@ export const FilterBar = forwardRef<HTMLDivElement, FilterBarProps>(function Fil
               >
                 {labelOf(filter)}
                 {/*
-                  Кнопка ОБЯЗАНА быть `Button` из react-aria: поведение снятия
-                  подключается через `ButtonContext`, и голая `<button>` его не
-                  читает — разметка валидна, axe доволен, а нажатие не делает
-                  ничего. Ровно эта ловушка уже описана в `TagInput`.
+                  The button MUST be react-aria's `Button`: the removal behavior is wired through
+                  `ButtonContext`, and a bare `<button>` does not read it. The markup is valid, axe
+                  is happy, and clicking does nothing. This exact trap is already described for
+                  `TagInput`.
 
-                  Подпись здесь ОБЩАЯ, без имени фильтра: react-aria дописывает
-                  к имени кнопки подпись своего тега сам, и «Снять фильтр
-                  Раздел: Договоры» читалось бы с задвоением. Проверено
-                  вычисленным доступным именем, а не глазами по разметке.
+                  The label here is generic, without the filter's name: react-aria adds its tag's
+                  label to the button's name itself, and "Remove filter Section: Contracts" would
+                  be read with the label duplicated. Verified by the computed accessible name, not
+                  by eyeballing the markup.
                 */}
                 <AriaButton
                   slot="remove"
@@ -101,8 +101,8 @@ export const FilterBar = forwardRef<HTMLDivElement, FilterBarProps>(function Fil
       {children}
 
       {/*
-        Кнопка «снять все» появляется со второго фильтра: при одном она делает
-        ровно то же, что его крестик, и только удлиняет обход с клавиатуры.
+        The "clear all" button appears from the second filter on: with one filter it does exactly
+        what that filter's cross does, and it only lengthens keyboard navigation.
       */}
       {filters.length > 1 ? (
         <Button variant="ghost" size="sm" onClick={() => onFiltersChange([])}>

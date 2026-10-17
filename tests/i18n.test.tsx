@@ -20,26 +20,26 @@ import type { PartialUiMessages } from "../src/i18n/messages.js";
 afterEach(cleanup);
 
 /**
- * Порядок разрешения строки и стыковка с react-aria.
+ * String resolution order and the join with react-aria.
  *
- * Проверяется не «строка совпала», а три вещи, которые ломаются молча:
- * фолбэк без провайдера, слияние частичного каталога и то, что кит не перебивает
- * локаль потребителя своей.
+ * The check is not "the string matched" but three things that break silently:
+ * the fallback without a provider, the merge of a partial catalog, and the kit not
+ * overriding the consumer's locale with its own.
  *
- * Сами русские СЛОВА проверяются не здесь, а в `tests/locale-ru.test.tsx`:
- * волна 23 свела их в один файл, чтобы правка формулировки в `locales/ru.ts`
- * не роняла двадцать шесть чужих файлов (ADR-0034).
+ * The Russian WORDS themselves are checked not here but in `tests/locale-ru.test.tsx`:
+ * wave 23 gathered them into one file, so that a rewording in `locales/ru.ts` does not
+ * break twenty-six unrelated files (ADR-0034).
  */
 
 /**
- * Каталог-двойник вместо `locales/ru`.
+ * A twin catalog instead of `locales/ru`.
  *
- * Здесь проверяется ПОРЯДОК разрешения строки, а не язык: провайдер обязан
- * перебить фолбэк, проп — провайдера, вложенный провайдер — внешний. Для этого
- * годится любой каталог, отличный от фолбэка, и русский достался этим проверкам
- * исторически — до 2.0.0 он и был дефолтом. Сами русские слова проверяются в
- * `tests/locale-ru.test.tsx`, и правка формулировки в `locales/ru.ts` этот файл
- * больше не роняет.
+ * What is checked here is the ORDER of string resolution, not the language: a provider
+ * must override the fallback, a prop must override the provider, and a nested provider
+ * must override the outer one. Any catalog other than the fallback will do for this.
+ * The Russian catalog got these checks by history: before 2.0.0 it was the default.
+ * The Russian words themselves are checked in `tests/locale-ru.test.tsx`, and a rewording
+ * in `locales/ru.ts` no longer breaks this file.
  */
 const custom = {
   common: { close: "Shut", notFound: "No matches" },
@@ -87,7 +87,7 @@ describe("provider catalog", () => {
       </UiProvider>
     );
     expect(screen.getByTestId("close").textContent).toBe("Folded");
-    // Соседний ключ того же пространства имён обязан остаться английским.
+    // The neighboring key in the same namespace must stay English.
     expect(screen.getByTestId("notFound").textContent).toBe("Nothing found");
   });
 
@@ -115,8 +115,9 @@ describe("docking with react-aria", () => {
   });
 
   test("without an explicit locale the kit does NOT override the consumer provider", () => {
-    // Главный случай: приложение уже держит свой I18nProvider. Кит, навязавший
-    // здесь `en-US`, заставил бы датапикеры говорить не на языке приложения.
+    // The main case: the application already holds its own I18nProvider. A kit that
+    // forced `en-US` here would make the date pickers speak a language other than the
+    // application's.
     render(
       <I18nProvider locale="de-DE">
         <UiProvider messages={{ common: { close: "Schließen" } }}>
@@ -196,14 +197,14 @@ describe("resolution order: prop → provider → fallback", () => {
 });
 
 /**
- * Цена провайдера на каждый рендер.
+ * The provider's cost on every render.
  *
- * Докстрока пропа `messages` прямо благословляет литерал на месте
- * (`messages={{ common: { close: "Закрыть" } }}`) — а `useMemo` держал каталог
- * в зависимостях ПО ССЫЛКЕ. Литерал даёт новый объект на каждый рендер, значит
- * новое значение контекста, значит перерисовку каждого компонента кита,
- * читающего `useMessages`. Под провайдером стоит всё дерево приложения, поэтому
- * любой тик состояния в корне обходился в перерисовку всего кита разом.
+ * The `messages` prop's docstring explicitly endorses an inline literal
+ * (`messages={{ common: { close: "Close" } }}`), while `useMemo` kept the catalog in
+ * its dependencies BY REFERENCE. A literal gives a new object on every render, so a new
+ * context value, so a re-render of every kit component that reads `useMessages`. The
+ * whole application tree sits under the provider, so any state tick at the root cost a
+ * re-render of the entire kit at once.
  */
 describe("the provider does not churn its consumers", () => {
   let renders = 0;
@@ -214,10 +215,10 @@ describe("the provider does not churn its consumers", () => {
     return null;
   });
 
-  // Литерал строится ВНУТРИ компонента, который перерисовывается: именно так
-  // его и пишет потребитель, и именно поэтому объект каждый раз новый. Тот же
-  // каталог, переданный пропом снаружи, ссылку сохраняет и дефекта не
-  // воспроизводит — на этом первая версия теста и прошла впустую.
+  // The literal is built INSIDE the component that re-renders: that is how a consumer
+  // writes it, and that is why the object is new every time. The same catalog passed
+  // in as a prop from outside keeps its reference and does not reproduce the defect;
+  // the first version of this test passed for that very reason and proved nothing.
   function App({ close = "Close" }: { close?: string }) {
     const [tick, setTick] = useState(0);
     return (
@@ -231,7 +232,7 @@ describe("the provider does not churn its consumers", () => {
   test("an unrelated state change in the parent does not re-render a memoised consumer", async () => {
     const user = userEvent.setup();
     renders = 0;
-    // Литерал на месте — ровно тот вызов, который разрешает докстрока.
+    // The inline literal is exactly the call that the docstring permits.
     render(<App />);
     const afterMount = renders;
 
@@ -248,20 +249,20 @@ describe("the provider does not churn its consumers", () => {
 
     rerender(<App close="Dismiss" />);
 
-    // Сравнение по содержимому, а не «не обновлять никогда»: смена значения
-    // обязана дойти, иначе экономия куплена сломанным контрактом.
+    // The comparison is by content, not "never update": a changed value must get
+    // through, or the saving is bought with a broken contract.
     expect(renders).toBeGreaterThan(afterMount);
   });
 });
 
 /**
- * Явный `undefined` в частичном каталоге.
+ * An explicit `undefined` in a partial catalog.
  *
- * `{ ...base[ns], ...values }` копирует и ключи со значением `undefined`, а
- * `exactOptionalPropertyTypes` в `tsconfig.json` выключен — компилятор такой
- * вызов пропускает. Реальная форма — `messages={{ common: { close: dict[key] }}}`,
- * где ключа в словаре потребителя нет: крестик закрытия молча терял доступное
- * имя.
+ * `{ ...base[ns], ...values }` also copies keys whose value is `undefined`, and
+ * `exactOptionalPropertyTypes` is off in `tsconfig.json`, so the compiler lets such a
+ * call through. The real shape is `messages={{ common: { close: dict[key] }}}`, where
+ * the consumer's dictionary has no such key: the close button's cross silently lost its
+ * accessible name.
  */
 test("an explicit undefined does not wipe the fallback", () => {
   function Probe() {

@@ -1,73 +1,75 @@
-# Доступность: обязательный контракт
+# Accessibility: a mandatory contract
 
-Доступность — часть публичного поведения компонента. Нельзя компенсировать
-нарушение видимым дизайном, TypeScript или проходящей сборкой.
+Accessibility is part of a component's public behavior. A violation cannot be
+made up for by visual design, TypeScript or a passing build.
 
-## Имя
+## Name
 
-- Каждый интерактивный контрол получает доступное имя через видимую подпись,
-  текст потомка или точный `aria-label`.
-- Плейсхолдер — не подпись: он исчезает после ввода.
-- `iconOnly` не означает «без имени». Подпись может быть визуально скрыта, но
-  должна оставаться в accessibility tree.
-- Не используйте `display: none` для текста, который должен дать имя контролу;
-  используйте `VisuallyHidden` или документированную реализацию компонента.
-- Спрятанная подпись — это `sr-only`, а не `hidden` и не выброшенные дети. Так
-  устроены `Chip.iconOnly`, `Chip.mobileIconOnly` и `Segmented.mobileIconOnly`:
-  узел остаётся в дереве и остаётся именем кнопки, поэтому `tooltip` такому
-  сегменту не нужен.
-- Подсказка не должна повторять имя контрола. Radix вешает на триггер
-  `aria-describedby`, и подсказка с тем же словом, которым контрол уже
-  называется, читается дважды. В `SwatchGroup.tooltips` триггером служит
-  обёртка варианта, а не сама радиокнопка: `aria-describedby` Radix повисает на
-  обёртке, а радиокнопка от предка его не наследует.
+- Every interactive control gets an accessible name from a visible label,
+  descendant text or a precise `aria-label`.
+- A placeholder is not a label: it disappears once the user types.
+- `iconOnly` does not mean "nameless". The label may be visually hidden, but
+  it must stay in the accessibility tree.
+- Do not use `display: none` for text that has to name a control; use
+  `VisuallyHidden` or the component's documented implementation.
+- A hidden label is `sr-only`, not `hidden` and not dropped children. That is
+  how `Chip.iconOnly`, `Chip.mobileIconOnly` and `Segmented.mobileIconOnly`
+  work: the node stays in the tree and stays the button's name, so such a
+  segment needs no `tooltip`.
+- A tooltip must not repeat the control's name. Radix puts
+  `aria-describedby` on the trigger, and a tooltip that repeats the word the
+  control is already named with is read twice. In `SwatchGroup.tooltips` the
+  trigger is the option's wrapper, not the radio itself: Radix attaches
+  `aria-describedby` to the wrapper, and the radio does not inherit it from an
+  ancestor.
 
-## Семантика
+## Semantics
 
-- Ссылка остаётся `<a href>`; для навигации не подменяйте её кнопкой с
-  `onClick`.
-- Кнопка выполняет действие и обычно имеет `type="button"` вне формы.
-- Используйте `Button asChild` для ссылки, которая выглядит как
-  кнопка, сохраняя семантику ссылки.
-- Не вкладывайте интерактивный элемент в другой интерактивный элемент.
+- A link stays an `<a href>`; do not replace it with a button with `onClick`
+  for navigation.
+- A button performs an action and is usually `type="button"` outside a form.
+- Use `Button asChild` for a link that looks like a button: it keeps the link
+  semantics.
+- Do not nest an interactive element inside another interactive element.
 
-## Фокус и клавиатура
+## Focus and keyboard
 
-- Видимый focus indicator обязателен; не скрывайте его `overflow: hidden`,
-  если это обрезает ring.
-- Оверлей возвращает фокус триггеру после закрытия. Начальный фокус и Escape
-  определяются страницей конкретного оверлея.
-- Вложенные оверлеи закрываются послойно: Escape не должен закрывать родителя
-  одновременно с дочерним слоем.
-- Не имитируйте клавиатурное поведение `div`-обработчиками, если есть
-  документированный native или ARIA-компонент.
+- A visible focus indicator is mandatory; do not hide it with
+  `overflow: hidden` if that clips the ring.
+- An overlay returns focus to its trigger after closing. Initial focus and
+  Escape are defined on the page of the specific overlay.
+- Nested overlays close layer by layer: Escape must not close the parent together
+  with the child layer.
+- Do not imitate keyboard behavior with `div` handlers when a documented native
+  or ARIA component exists.
 
-## Контраст и состояния
+## Contrast and states
 
-`tone` выражает значение, но это не единственный канал: текст, иконка,
-форма и доступное имя должны сохранять смысл. Проверяйте disabled, selected,
-loading и error состояния, а не только default.
+`tone` expresses meaning but is not the only channel: text, icon, shape and the
+accessible name must keep the meaning. Check the disabled, selected, loading and
+error states, not just the default one.
 
-## Движение
+## Motion
 
-Кит уважает системную настройку `prefers-reduced-motion: reduce` без участия
-потребителя: перемещающие анимации теряют перемещение, но элемент всё равно появляется;
-вращение шевронов раскрытия становится мгновенным.
+The kit honors the system setting `prefers-reduced-motion: reduce` without any
+action from the consumer: moving animations lose the movement and still make
+the element appear; the rotation of disclosure chevrons becomes instant.
 
-Два исключения названы, и оба — индикаторы занятости: `Spinner` и `Progress` с
-неизвестной долей продолжают двигаться. Движение здесь и есть сообщение, а
-остановленный индикатор читается как поломка. Формально это допустимо: критерий
-2.3.3 WCAG 2.2 относится к уровню AAA, а существенное движение выведено из-под
-правила.
+There are two exceptions, and both are loading indicators: `Spinner` and an
+indeterminate `Progress` keep moving. Here the motion is the message,
+and a stopped indicator reads as broken. Formally this is allowed: WCAG 2.2
+criterion 2.3.3 is level AAA, and essential motion is exempt from the rule.
 
-Что требуется от вас: **не задавайте собственное движение мимо токенов кита**.
-Анимация, заданная литералом в вашем коде (`animation: spin 1s`, `animate-[…]`),
-системной настройке не подчиняется, её гасите вы. Как это сделать — в [Темах и токенах](theming.md#движение);
-решение целиком — ADR-0043.
+What you need to do: **do not add your own motion that bypasses the kit's
+tokens**. An animation defined as a literal in your code (`animation: spin 1s`,
+`animate-[…]`) does not obey the system setting; you have to turn it off
+yourself. How to do it is in
+[Theming and tokens](theming.md#motion); the full decision is
+ADR-0043.
 
-## Доказательство
+## Evidence
 
-Поведенческие страницы ссылаются на Storybook и тесты. При изменении компонента
-запускайте соответствующие unit tests, затем полный `npm test`; для витрины
-дополнительно применяйте `npm run test:a11y` и visual/interactions
-проверки, когда изменение их затрагивает.
+Behavior pages link to Storybook and tests. When you change a component, run
+the related unit tests, then the full `npm test`; for the showcase surface also
+run `npm run test:a11y` and the visual/interaction checks when the change
+touches them.

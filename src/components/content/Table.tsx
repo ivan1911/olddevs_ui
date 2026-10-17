@@ -12,7 +12,7 @@ import {
   TableHeader,
   type ColumnProps,
   type Key,
-  // Имя `Selection` занято глобальным типом DOM — берём под псевдонимом.
+  // The name `Selection` is taken by the global DOM type — import it under an alias.
   type Selection as AriaSelection,
   type SortDescriptor,
 } from "react-aria-components";
@@ -22,155 +22,152 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { Checkbox } from "../inputs/Checkbox.js";
 
 export interface TableColumn<T> {
-  /** Идентификатор колонки: по нему сообщается сортировка. */
+  /** Column identifier: sorting is reported by it. */
   id: string;
-  /** Подпись в шапке. */
+  /** Header label. */
   header: ReactNode;
-  /** Как достать содержимое ячейки из строки. */
+  /** How to get the cell content from a row. */
   cell: (item: T) => ReactNode;
-  /** Колонку можно сортировать: заголовок становится нажимаемым и показывает направление. */
+  /** The column can be sorted: the header becomes clickable and shows the direction. */
   sortable?: boolean;
   /**
-   * Ширина: число пикселей, доля (`1fr`) или проценты.
+   * Width: a number of pixels, a fraction (`1fr`), or a percentage.
    *
-   * Тип взят у react-aria (`ColumnSize`), а не расширен до `string`: там он
-   * шаблонный (`${number}fr`, `${number}%`), и опечатку вроде `"1 fr"`
-   * компилятор ловит на месте, а не таблица — молчаливой раскладкой.
+   * The type comes from react-aria (`ColumnSize`) rather than being widened to `string`: there
+   * it is a template type (`${number}fr`, `${number}%`), so a typo like `"1 fr"` is caught by
+   * the compiler on the spot, not as a silent layout in the table.
    *
-   * Куда она уходит, зависит от режима, и это не деталь реализации: у
-   * react-aria проп `width` действует ТОЛЬКО внутри `ResizableTableContainer`,
-   * то есть при `resizable`. В обычной таблице он не делает ничего — молча.
-   * Поэтому при `resizable` ширина уходит в `defaultWidth` (начальный размер,
-   * который пользователь потом меняет ручкой), а без него — в CSS-стиль
-   * ячейки шапки, потому что иначе её просто не существует.
+   * Where it goes depends on the mode, and this is not an implementation detail: in react-aria
+   * the `width` prop works ONLY inside `ResizableTableContainer`, that is, with `resizable`. In
+   * a regular table it does nothing — silently. So with `resizable`, the width goes to
+   * `defaultWidth` (the initial size, which the user later changes with the handle), and without
+   * it, the width goes into the CSS style of the header cell, because otherwise it would have
+   * no effect.
    */
   width?: ColumnProps["width"];
-  /** Выравнивание содержимого колонки: `start` или `end`. */
+  /** Cell content alignment: `start` or `end`. */
   align?: "start" | "end";
 }
 
 export interface TableProps<T extends { id: Key }> {
-  /** Колонки таблицы в порядке показа. */
+  /** Table columns, in display order. */
   columns: TableColumn<T>[];
-  /** Строки таблицы; у каждой есть `id`. */
+  /** Table rows; each has an `id`. */
   items: T[];
-  /** Доступное имя таблицы. Обязательно: безымянную таблицу скринридер называет только по роли. */
+  /**
+   * Accessible name of the table. Required: a table without a name is announced by its role
+   * alone.
+   */
   "aria-label": string;
-  /** Сортировка. Включается только при наличии — таблица её сама не хранит. */
+  /** Sorting. Enabled only when provided: the table does not store it itself. */
   sort?: SortDescriptor;
-  /** Вызывается с новым описанием сортировки после клика на заголовок. */
+  /** Called with the new sort descriptor after a header click. */
   onSortChange?: (sort: SortDescriptor) => void;
-  /** Выделение строк. Без пропа колонка с флажками не рисуется вовсе. */
+  /** Row selection. Without this prop, the checkbox column is not rendered at all. */
   selectedKeys?: Set<Key>;
-  /** Вызывается с новым набором выбранных ключей. */
+  /** Called with the new set of selected keys. */
   onSelectionChange?: (keys: Set<Key>) => void;
   /**
-   * Действие по строке: открыть запись, перейти к ней. Ось включается наличием
-   * пропа; получает строку из `items`.
+   * Row action: open a record, navigate to it. The axis is enabled by the presence of the prop;
+   * it receives the row from `items`.
    *
-   * Работает РЯДОМ с выделением, а не вместо него: выделяют флажки, а клик по
-   * строке и Enter на сфокусированной строке вызывают действие. Пробел на строке
-   * по-прежнему переключает выделение. Это правило `react-aria` («selection
-   * mode»): пока ничего не выделено, клик по строке — действие; как только
-   * выделение появилось, клик по строке его переключает, и продолжить отмечать
-   * можно по всей строке, не целясь во флажок. Действие тогда остаётся на Enter.
+   * It works ALONGSIDE selection, not instead of it: checkboxes select, and a click on a row or
+   * Enter on a focused row triggers the action. Space on a row still toggles selection. This is
+   * the react-aria "selection mode" rule: while nothing is selected, a click on a row is the
+   * action; once something is selected, a click on a row toggles it, so you can keep marking by
+   * clicking the whole row without aiming at a checkbox. The action then stays on Enter.
    *
-   * Элементы внутри ячеек (кнопка, ссылка, меню) сохраняют свой клик и строку
-   * не активируют. Ссылку с ручным `stopPropagation` ради этого заводить не
-   * нужно. Строки раскрытия (`renderDetail`) и кнопка-раскрыватель действие не
-   * вызывают.
+   * Elements inside cells (a button, a link, a menu) keep their own click and do not activate the
+   * row. There is no need to add a link with a manual `stopPropagation` for this. Expansion rows
+   * (`renderDetail`) and the expander button do not trigger the action.
    */
   onRowAction?: (item: T) => void;
   /**
-   * Раскрытие строки: что показать под ней. Ось включается наличием пропа —
-   * без него нет ни колонки-раскрывателя, ни детальных строк в разметке.
+   * Row expansion: what to show below the row. The axis is enabled by the presence of the prop —
+   * without it there is neither an expander column nor detail rows in the markup.
    */
   renderDetail?: (item: T) => ReactNode;
   /**
-   * Раскрытые строки: множество ключей строк, у которых показаны подробности.
+   * Expanded rows: a set of keys of the rows whose details are shown.
    *
-   * Множеством, как `selectedKeys`, и **без переключателя
-   * «одна или несколько»**: сколько строк открыто разом, решает тот, у кого
-   * лежит состояние, кладя сюда один ключ или несколько (ADR-0022).
+   * A set, like `selectedKeys`, and **with no single-or-multiple switch**: how many rows are open
+   * at once is decided by whoever holds the state, by putting one key or several here (ADR-0022).
    *
-   * НЕОБЯЗАТЕЛЕН. Без него раскрытие работает на собственном состоянии
-   * таблицы: `renderDetail` без состояния снаружи — законная и самая частая
-   * форма вызова, и отнимать её ради чистоты правила «таблица ничего не
-   * хранит» значило бы оставить живую на вид кнопку, не делающую ничего.
+   * OPTIONAL. Without it, expansion works on the table's own state: `renderDetail` without
+   * external state is a legitimate and the most common form of use, and removing it for the sake
+   * of the rule "the table stores nothing" would leave a button that looks alive but does nothing.
    *
-   * РЕЖИМ ОПРЕДЕЛЯЕТСЯ НАЛИЧИЕМ ПРОПА, как у `InlineEdit` с `editing`. Если
-   * состояние появляется лениво (`expandedKeys={saved?.expanded}`), первый
-   * рендер выйдет неуправляемым, второй — управляемым, и раскрытые строки
-   * схлопнутся. Передавайте пустое множество, а не `undefined`.
+   * THE MODE IS SET BY THE PRESENCE OF THE PROP, as with `InlineEdit` and `editing`. If the state
+   * appears lazily (`expandedKeys={saved?.expanded}`), the first render is uncontrolled and the
+   * second is controlled, and the expanded rows collapse. Pass an empty set, not `undefined`.
    */
   expandedKeys?: Set<Key>;
-  /** Вызывается с новым набором раскрытых строк. */
+  /** Called with the new set of expanded rows. */
   onExpandedChange?: (keys: Set<Key>) => void;
   /**
-   * Имя строки для подписей построчных кнопок.
+   * Row name for the labels of the per-row buttons.
    *
-   * Без него у всех раскрывателей одинаковое имя, и скринридер в режиме
-   * перечисления кнопок читает двадцать одинаковых «Показать подробности».
-   * Первую колонку в качестве имени взять нельзя: её `cell` возвращает
-   * `ReactNode` — там бывает аватар или вёрстка, и в имя попал бы мусор.
+   * Without it, all expanders share one name, and a screen reader in button-list mode reads
+   * twenty identical "Show details". The first column cannot serve as the name: its `cell`
+   * returns a `ReactNode`, which can be an avatar or markup, and that junk would end up in the
+   * name.
    */
   rowLabel?: (item: T) => string;
-  /** Липкая шапка. Требует, чтобы у контейнера была своя высота и прокрутка. */
+  /** Sticky header. Requires the container to have its own height and scrolling. */
   stickyHeader?: boolean;
-  /** Изменение ширины колонок мышью и с клавиатуры. */
+  /** Resizing columns with the mouse and the keyboard. */
   resizable?: boolean;
-  /** Что показать, когда строк нет. По умолчанию — стандартный текст пустой таблицы. */
+  /** What to show when there are no rows. Defaults to the standard empty-table text. */
   emptyText?: ReactNode;
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 /**
- * Таблица.
+ * A table.
  *
- * ОСИ ВКЛЮЧАЮТСЯ ЯВНО, и это главное решение компонента. Таблица, которая
- * умеет всё сразу, на экране из трёх строк тащит сортировку, флажки и ручки
- * изменения ширины — всё нерабочее и всё в разметке. Поэтому каждая ось
- * появляется только вместе со своим пропом:
+ * AXES ARE ENABLED EXPLICITLY, and this is the component's main decision. A table that does
+ * everything at once, on a screen with three rows, drags along sorting, checkboxes, and resize
+ * handles — all non-functional and all in the markup. So each axis appears only together with
+ * its own prop:
  *
- *   сортировка       — `sort` + `onSortChange`
- *   выделение строк  — `selectedKeys` + `onSelectionChange`
- *   липкая шапка     — `stickyHeader`
- *   изменение ширины — `resizable`
+ *   sorting          — `sort` + `onSortChange`
+ *   row selection    — `selectedKeys` + `onSelectionChange`
+ *   sticky header    — `stickyHeader`
+ *   column resizing  — `resizable`
  *
- * Состояние осей таблица, как правило, НЕ ХРАНИТ (исключение — раскрытие, см. `expandedKeys`): сортировка почти всегда уходит
- * в запрос к серверу, а выделение — в панель массовых действий снаружи.
- * Внутреннее состояние здесь означало бы две копии правды.
+ * As a rule the table does NOT STORE the state of its axes (expansion is the exception, see
+ * `expandedKeys`): sorting almost always goes to a server request, and selection goes to a bulk
+ * actions panel outside. Internal state here would mean two copies of the truth.
  *
- * **Виртуализации нет намеренно.** `Virtualizer` в react-aria есть, и включить
- * его недолго, но пока нет экрана, где список настолько длинный, это
- * оптимизация без задачи: она усложняет разметку, ломает поиск по странице и
- * печать, а выигрыш измерить не на чем.
+ * **Virtualization is deliberately absent.** react-aria has `Virtualizer`, and turning it on
+ * would be quick, but until there is a screen with a list this long, it is an optimization
+ * without a task: it complicates the markup, breaks page search and printing, and there is
+ * nothing to measure the gain on.
  *
- * Поведение — RAC `Table`: клавиатурная навигация по ячейкам, `aria-sort`,
- * роли строк и заголовков, выделение с Shift и Ctrl.
+ * Behavior comes from react-aria's RAC `Table`: keyboard navigation between cells, `aria-sort`,
+ * row and header roles, selection with Shift and Ctrl.
  */
 /**
- * Префикс ключа колонки.
+ * Column key prefix.
  *
- * У react-aria ключи колонок и строк лежат в ОДНОМ пространстве имён
- * коллекции, и колонка с `id="b"` схлопывается со строкой `id="b"`: одна из
- * них молча исчезает, а таблица падает с «Cell count must match column count»,
- * где числа не сходятся на единицу и ни слова про причину.
+ * In react-aria, column and row keys live in ONE namespace of the collection, so a column with
+ * `id="b"` collides with a row with `id="b"`: one of them silently disappears, and the table
+ * fails with "Cell count must match column count", where the numbers differ by one and there is
+ * no word about the cause.
  *
- * Совпадение это не экзотика: у строк идентификаторы приходят из данных, у
- * колонок их пишет разработчик, и `id: "name"` рядом со строкой `name` —
- * вопрос времени. Поэтому ключи колонок разведены здесь, внутри, а наружу
- * по-прежнему отдаются и принимаются исходные (`sort.column`).
+ * Collisions are not exotic: row identifiers come from data, while the developer writes column
+ * ids, and `id: "name"` next to a row `name` is a matter of time. So column keys are kept apart
+ * here, internally, while the original keys (`sort.column`) are still passed in and out.
  */
 const COLUMN_KEY = "od-col:";
 
-/** Префикс ключа детальной строки — см. `detailKey` ниже. */
+/** Prefix of the detail row key — see `detailKey` below. */
 const DETAIL_PREFIX = "od-detail:";
 
 /*
-  Снимки для `useSyncExternalStore`: на сервере и при гидратации — `false`,
-  после неё — `true`, без подписки (значение больше не меняется).
+  Snapshots for `useSyncExternalStore`: on the server and during hydration, `false`; after it,
+  `true`; no subscription, since the value no longer changes.
 */
 const subscribeNever = () => () => {};
 const isHydrated = () => true;
@@ -197,23 +194,21 @@ export function Table<T extends { id: Key }>({
   const messages = useMessages();
 
   /*
-    Сортировка включается для react-aria ПОСЛЕ гидратации, а не с первого кадра.
+    Sorting is turned on for react-aria AFTER hydration, not from the first frame.
 
-    `useTableColumnHeader` решает про `aria-sort` по платформе: на Android
-    (TalkBack атрибут не поддерживает) он не ставится вовсе, на остальных у
-    сортируемой колонки он есть всегда — `none` у несортированной. Сервер
-    платформы не знает и пишет вариант «не Android», поэтому Android-клиент
-    при гидратации видел разметку, не совпадающую с его собственной, и React
-    писал «A tree hydrated but some attributes… didn't match» на каждой
-    сортируемой колонке. Обойти это снаружи нельзя: `aria-sort`
-    строит сама библиотека и пропсами колонки он не перекрывается.
+    `useTableColumnHeader` decides `aria-sort` per platform: on Android (TalkBack does not support
+    the attribute) it is not set at all; on other platforms a sortable column always has it —
+    `none` on an unsorted one. The server does not know the platform, so it writes the "not
+    Android" variant, and an Android client during hydration saw markup that did not match its own,
+    and React printed "A tree hydrated but some attributes… didn't match" on every sortable
+    column. This cannot be worked around from outside: `aria-sort` is built by the library itself,
+    and the column props do not override it.
 
-    Поэтому первый кадр — и серверный, и гидратационный — рисует колонки как
-    несортируемые, то есть без `aria-sort` у всех клиентов, а уже смонтированная
-    таблица включает сортировку, и атрибут ставится по правилам платформы.
-    Цена: в статичной разметке нет `aria-sort`; до гидратации сортировка и так
-    не работает, а направление видно по иконке (её рисуем мы, она от этого флага
-    не зависит).
+    So the first frame — both server and hydration — renders the columns as non-sortable, that is,
+    without `aria-sort`, for all clients, and an already mounted table turns sorting on, and the
+    attribute is set by the platform rules. The cost: static markup has no `aria-sort`; before
+    hydration sorting does not work anyway, and the direction is visible from the icon (which we
+    draw ourselves and which does not depend on this flag).
   */
   const hydrated = useSyncExternalStore(subscribeNever, isHydrated, isServer);
 
@@ -221,68 +216,64 @@ export function Table<T extends { id: Key }>({
   const expandable = renderDetail != null;
 
   /*
-    Раскрытие работает и БЕЗ `expandedKeys`.
+    Expansion works WITHOUT `expandedKeys` too.
 
-    Раньше ось включалась одним `renderDetail`, а `toggleExpanded` строил
-    `new Set(undefined)` и звал необязательный колбэк в никуда: рисовалась живая
-    на вид кнопка — `aria-expanded="false"`, рабочее наведение — и клик, не
-    делающий ничего. Три пропа необязательны независимо, компилятор такой вызов
-    пропускал, и получался «недоступный список, который выглядит рабочим», о
-    котором предупреждает докстрока `SortableList`.
+    Previously the axis was enabled by `renderDetail` alone, and `toggleExpanded` built
+    `new Set(undefined)` and called an optional callback into nothing: a live-looking button —
+    `aria-expanded="false"`, working hover — and a click that did nothing. The three props are
+    optional independently, the compiler allowed such a call, and the result was an "inaccessible
+    list that looks functional", which the `SortableList` docstring warns about.
 
-    Убрать колонку было бы проще, но это отняло бы простую форму вызова, которой
-    пользуются: `renderDetail` без состояния снаружи — законный и самый частый
-    случай. Поэтому вторая ветка контролируемости, как у `InlineEdit`: состояние
-    держится внутри, пока его не ведут снаружи.
+    Removing the column would have been simpler, but it would take away the simple call form people
+    actually use: `renderDetail` without external state is a legitimate and the most common case.
+    So the second branch of controllability, as in `InlineEdit`: the state lives inside until it
+    is driven from outside.
   */
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState<Set<Key>>(new Set());
   const currentExpanded = expandedKeys ?? uncontrolledExpanded;
 
   /**
-   * Префикс ключа детальной строки — по той же причине, что `COLUMN_KEY`: у
-   * react-aria строки лежат в одном пространстве имён, и деталь строки `b`
-   * схлопнулась бы со строкой `b`, если бы взяла её ключ.
+   * Prefix of the detail row key — for the same reason as `COLUMN_KEY`: in react-aria rows live
+   * in one namespace, so the detail of row `b` would collide with row `b` if it took that
+   * row's key.
    */
   const detailKey = (id: Key) => `${DETAIL_PREFIX}${String(id)}`;
 
   /**
-   * Что отдать наружу по ответу react-aria.
+   * What to hand out in response to react-aria's selection.
    *
-   * `'all'` — не строка-ключ, а отдельное значение `Selection`, и отдаёт его
-   * `toggleSelectAll()`. Приведение к `Set` разбирало эту строку ПО БУКВАМ и
-   * отдавало наружу `["a","l"]`: выделение молча не срабатывало, а панель
-   * массовых действий получала два ключа, которых нет ни в одной строке.
+   * `'all'` is not a key string but a separate `Selection` value, and it is returned by
+   * `toggleSelectAll()`. Converting it to a `Set` parsed this string letter by letter and handed
+   * out `["a","l"]`: selection silently failed, and the bulk actions panel received two keys that
+   * exist in no row.
    *
-   * Но и перечислить текущую страницу недостаточно, и это второй, более дорогой
-   * дефект. `items` — ЭТО ОДНА СТРАНИЦА: выше стоит `useTableState`, который
-   * режет набор. Отдавая наружу только её, «выделить всё» стирало отметки,
-   * сделанные на других страницах, — то есть ломало ровно тот инвариант,
-   * который `useTableState` объявляет своей главной ценностью («отметил строки,
-   * перелистнул — потерял всё»). Пользователь видел, как счётчик массовых
-   * действий уменьшается после нажатия «выделить всё».
+   * But listing the current page is not enough either, and that is the second, more costly defect.
+   * `items` is ONE PAGE: above it sits `useTableState`, which slices the set. By handing out
+   * only the page, "select all" erased marks made on other pages — which broke exactly the
+   * invariant that `useTableState` declares its main value ("you checked rows, turned the page,
+   * lost everything").
+   * The user saw the bulk actions counter drop after clicking "select all".
    *
-   * Поэтому «всё» — это ОБЪЕДИНЕНИЕ с уже пришедшим, а снятие — вычитание
-   * ключей текущей страницы, а не обнуление набора.
+   * So "all" is a UNION with what has already arrived, and deselecting is a subtraction of the
+   * current page's keys, not a reset of the set.
    *
-   * Детальные строки из выделения вычитаются здесь же: их синтетический ключ
-   * (`detailKey`) наружу уходить не может — он не соответствует ни одной
-   * записи, и массовое действие ушло бы на бэкенд с несуществующим id.
+   * Detail rows are subtracted from the selection here too: their synthetic key (`detailKey`) must
+   * never leave the component — it matches no record, and a bulk action would go to the backend
+   * with a nonexistent id.
    */
   const resolveSelection = (keys: AriaSelection): Set<Key> => {
-    // `Set`, а не массив: перебор ниже идёт по ВСЕМУ выделению, а оно теперь
-    // межстраничное — то есть ровно эта правка и делает большой набор
-    // достижимым. С `includes` пять тысяч отмеченных строк против сотни на
-    // странице давали бы полмиллиона сравнений на каждый щелчок.
+    // A `Set`, not an array: the loop below walks ALL of the selection, and it now spans pages —
+    // that is exactly what makes a large set reachable. With `includes`, five thousand marked rows
+    // against a hundred on the page would mean half a million comparisons on every click.
     const page = new Set(items.map((i) => i.id));
     if (keys === "all") return new Set([...(selectedKeys ?? []), ...page]);
 
     const next = new Set<Key>();
     for (const key of keys) if (!String(key).startsWith(DETAIL_PREFIX)) next.add(key);
 
-    // Ключи чужих страниц доносим САМИ. react-aria их как раз возвращает —
-    // она строит набор из пропа `selectedKeys` как есть, — но полагаться на это
-    // нельзя: в наборе, пришедшем от неё, чужих ключей может и не оказаться,
-    // если выделение пересобрали. Дубли снимает `Set`.
+    // Keys from other pages are carried over ON PURPOSE. react-aria does return them — it builds
+    // the set from the `selectedKeys` prop as is — but we must not rely on that: the set it
+    // returns may lack foreign keys if the selection was rebuilt. Duplicates are removed by the `Set`.
     for (const key of selectedKeys ?? []) if (!page.has(key)) next.add(key);
     return next;
   };
@@ -295,13 +286,13 @@ export function Table<T extends { id: Key }>({
     onExpandedChange?.(next);
   };
 
-  /** Сколько ячеек в строке — столько же обязана занять детальная. */
+  /** The number of cells in a row — the detail row must span the same count. */
   const span = columns.length + (selectable ? 1 : 0) + (expandable ? 1 : 0);
 
   /*
-    Ширина служебных колонок (выбор, раскрытие) идёт тем же путём, что и
-    `column.width`: `width` действует только внутри `ResizableTableContainer`,
-    вне его колонка растягивается наравне с данными, поэтому нужен CSS-стиль.
+    The width of service columns (selection, expansion) goes the same route as `column.width`:
+    `width` takes effect only inside `ResizableTableContainer`; outside it the column stretches
+    with the data, so a CSS style is needed.
   */
   const serviceWidth = resizable ? { width: 40 } : { style: { width: 40 } };
 
@@ -315,23 +306,23 @@ export function Table<T extends { id: Key }>({
       }
       selectionMode={selectable ? "multiple" : "none"}
       /*
-        Детальные строки ВЫЧЕРКИВАЮТСЯ ИЗ КОЛЛЕКЦИИ, а не только из ответа.
+        Detail rows are removed FROM THE COLLECTION, not just from the response.
 
-        Они входили в подсчёт `isSelectAll` у react-aria, но попасть в
-        выделение не могли (их ключ вычитается ниже), поэтому «выделено всё» не
-        наступало НИКОГДА: флажок шапки всегда шёл по ветке `selectAll`, и снять
-        выделение им было нельзя вовсе — оставалось снимать по строке.
+        They were counted in react-aria's `isSelectAll`, but could never enter the selection (their
+        key is subtracted below), so "everything selected" NEVER happened: the header checkbox
+        always took the `selectAll` branch, and you could not deselect everything from the header —
+        only row by row.
 
-        `disabledBehavior="selection"` оставляет строку интерактивной (кнопка
-        раскрытия и содержимое детали работают), запрещая ровно выделение.
+        `disabledBehavior="selection"` keeps a row interactive (the expander button and the detail
+        content work), forbidding exactly selection.
       */
       disabledBehavior="selection"
       disabledKeys={expandable ? items.map((item) => detailKey(item.id)) : undefined}
       selectedKeys={selectedKeys}
       onSelectionChange={(keys) => onSelectionChange?.(resolveSelection(keys))}
       /*
-        Строка детали сюда не попадает: её синтетический ключ (`detailKey`) не
-        соответствует ни одной записи, и `find` вернул бы `undefined`.
+        A detail row does not get here: its synthetic key (`detailKey`) matches no record, and
+        `find` would return `undefined`.
       */
       onRowAction={
         onRowAction
@@ -349,10 +340,9 @@ export function Table<T extends { id: Key }>({
             {...serviceWidth}
           >
             {/*
-              Флажок «выделить всё» — родной RAC (`slot="selection"`), а не наш
-              `Checkbox`: он читает состояние выделения таблицы из контекста,
-              включая третье состояние «выделено не всё». Наш встал бы сюда
-              немым.
+              The select-all checkbox is RAC's native one (`slot="selection"`), not our `Checkbox`:
+              it reads the table's selection state from context, including the third "not everything
+              selected" state. Ours would sit here as a dead control.
             */}
             <Checkbox slot="selection" label={messages.table.selectAll} />
           </Column>
@@ -365,9 +355,9 @@ export function Table<T extends { id: Key }>({
             className="border-line-soft bg-bg-1 border-b px-3 py-2"
           >
             {/*
-              Заголовок у колонки-раскрывателя пустой на вид, но не пустой для
-              скринридера: безымянная колонка объявляется только по роли, и
-              таблица начинается с непонятного столбца.
+              The header of the expander column looks empty but is not empty for screen readers:
+              an unnamed column is announced by its role alone, and the table would start with a
+              column that means nothing.
             */}
             <span className="sr-only">{messages.table.expandColumn}</span>
           </Column>
@@ -393,10 +383,10 @@ export function Table<T extends { id: Key }>({
               >
                 {column.header}
                 {column.sortable ? (
-                  // Иконка направления рисуется ТОЛЬКО у колонки, по которой
-                  // сортируют: иконка на каждой колонке превращает шапку в
-                  // ряд стрелок, где текущую не найти. Само направление
-                  // скринридеру сообщает `aria-sort`, который ставит RAC.
+                  // The direction icon is drawn ONLY on a sortable column: an icon on every
+                  // column turns the header into a row of arrows where the current one cannot be
+                  // found. The direction itself is announced to screen readers by `aria-sort`,
+                  // which RAC sets.
                   <ChevronDownIcon
                     size={12}
                     aria-hidden
@@ -422,9 +412,9 @@ export function Table<T extends { id: Key }>({
       </TableHeader>
 
       {/*
-        Строки перечисляются явно, а не отдаются `items`: детальная строка —
-        это вторая `Row` рядом с обычной, а функция-рендер `items` отдаёт
-        ровно одну. Без раскрытия результат тот же, что был.
+        Rows are listed explicitly rather than handed to `items`: a detail row is a second `Row`
+        next to the regular one, while the render function for `items` returns exactly one. Without
+        expansion, the result is the same as before.
       */}
       <TableBody
         renderEmptyState={() => (
@@ -505,8 +495,7 @@ export function Table<T extends { id: Key }>({
     </AriaTable>
   );
 
-  // Контейнер изменения ширины нужен только при `resizable`: он оборачивает
-  // таблицу своим боксом, и ставить его вхолостую значит добавлять лишний узел
-  // в раскладку каждой таблицы приложения.
+  // The resize container is needed only with `resizable`: it wraps the table in its own box, and
+  // rendering it for nothing adds an extra node to the layout of every table in the app.
   return resizable ? <ResizableTableContainer>{table}</ResizableTableContainer> : table;
 }

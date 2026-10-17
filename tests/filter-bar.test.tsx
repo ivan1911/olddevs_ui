@@ -32,15 +32,15 @@ describe("FilterBar", () => {
   });
 
   /**
-   * Имя кнопки обязано называть фильтр — три «Снять» подряд скринридер читает
-   * неразличимо. Но собирает его react-aria: подпись тега дописывается к нашей
-   * автоматически, и своя вставка давала задвоение.
+   * The button name has to name its filter: three "Remove" buttons in a row are
+   * indistinguishable to a screen reader. But react-aria assembles the name: the tag's
+   * label is appended to ours automatically, and our own insertion doubled it.
    */
   test("the remove button is named together with its filter", () => {
     render(<FilterBar filters={FILTERS} onFiltersChange={() => {}} />);
     expect(screen.getByRole("button", { name: "Remove filter Section: Contracts" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Remove filter Section: Reports" })).toBeTruthy();
-    // И ровно один раз: своя вставка имени давала задвоение.
+    // And exactly once: our own insertion of the name doubled it.
     expect(
       screen.queryByRole("button", { name: /Section: Contracts Section: Contracts/ })
     ).toBeNull();
@@ -52,7 +52,7 @@ describe("FilterBar", () => {
     render(<FilterBar filters={FILTERS} onFiltersChange={onFiltersChange} />);
 
     await user.click(screen.getByRole("button", { name: "Remove filter Section: Reports" }));
-    // Снятие идёт по `id`, а не по подписи: у двух фильтров одно поле.
+    // Removal goes by `id`, not by label: two filters share one field.
     expect(onFiltersChange).toHaveBeenCalledWith([FILTERS[0]]);
   });
 
@@ -68,8 +68,8 @@ describe("FilterBar", () => {
 
   test("“clear all” appears from the second filter on", () => {
     const { rerender } = render(<FilterBar filters={[FILTERS[0]!]} onFiltersChange={() => {}} />);
-    // При одном фильтре кнопка делает то же, что его крестик, и только
-    // удлиняет обход с клавиатуры.
+    // With a single filter the button does what its × does, and it only
+    // lengthens the keyboard navigation.
     expect(screen.queryByRole("button", { name: "Clear all" })).toBeNull();
 
     rerender(<FilterBar filters={FILTERS} onFiltersChange={() => {}} />);
@@ -127,16 +127,16 @@ describe("FilterBarAdd", () => {
     await user.click(screen.getByRole("option", { name: "Section" }));
     await user.click(screen.getByRole("button", { name: /Value/ }));
 
-    // «Договоры» уже применены: второй такой же токен выборку не изменит, а
-    // различить их пользователь не сможет.
+    // "Contracts" is already applied: a second identical token would not change the
+    // filtered rows, and the user would not be able to tell them apart.
     expect(screen.getByRole("option", { name: "Reports" })).toBeTruthy();
     expect(screen.queryByRole("option", { name: "Contracts" })).toBeNull();
   });
 
   test("the “field + value” key does not glue: ab+c and a+bc are different pairs", async () => {
     const user = userEvent.setup();
-    // Пары дают одну строку при склейке без разделителя: "ab" + "c" и "a" + "bc".
-    // Если разделитель потеряется, применённая первая пара спрячет вторую.
+    // The pairs give one string when glued without a separator: "ab" + "c" and "a" + "bc".
+    // If the separator were lost, the applied first pair would hide the second.
     const crossFields: FilterField[] = [
       { id: "ab", label: "AB", values: [{ id: "c", label: "C" }] },
       { id: "a", label: "A", values: [{ id: "bc", label: "BC" }] },
@@ -189,8 +189,8 @@ describe("FilterBarAdd", () => {
       value: "contracts",
       label: "Section: Contracts",
     });
-    // Потерянный фокус уезжает в начало документа, и обход страницы
-    // начинается заново.
+    // Lost focus jumps to the start of the document, and the page's tab order
+    // starts over.
     expect(document.activeElement).toBe(trigger);
   });
 });

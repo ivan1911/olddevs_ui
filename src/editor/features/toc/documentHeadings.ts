@@ -4,43 +4,43 @@ import { WRAPPER_NODE } from "../../core/nodeNames.js";
 import type { TocLevel, TocToolOptions } from "../../core/toolOptions.js";
 
 /*
-  Модуль без Tiptap в рантайме (только типы): его читает ядро Оглавления
-  (`TocCore`, `RichTextToc.tsx`), которому движок в бандл не нужен.
+  A module without Tiptap at runtime (types only). The table-of-contents core
+  (`TocCore`, `RichTextToc.tsx`) reads it, and the core does not need the engine in its bundle.
 */
 
-/** Заголовок Документа с позицией: по ней команда `jumpTo` находит DOM-узел. */
+/** A Document heading with its position: the `jumpTo` command finds the DOM node by it. */
 export interface TocDocumentHeading {
   level: TocLevel;
   text: string;
-  /** Позиция узла заголовка в Документе (для `editor.view.nodeDOM`). */
+  /** Position of the heading node in the Document (for `editor.view.nodeDOM`). */
   pos: number;
 }
 
 /**
- * Заголовки Оглавления по Документу движка, а не по DOM: ядро Оглавления
- * (`TocCore`) — ленивый чанк, и пока он не пришёл (или нарисован HTML-режим),
- * узлов для обхода нет, а данные экран просит с первого кадра. Это единственный
- * обход, по которому считаются индексы: и снимок Состояния `toc`, и команда
- * `jumpTo` берут заголовок отсюда, поэтому индекс из снимка ведёт к тому же
- * заголовку сразу после правки, не дожидаясь, пока ядро пересоберёт свой список
- * из DOM (`REBUILD_DELAY`).
+ * Table-of-contents headings taken from the engine's Document, not from the DOM. The
+ * table-of-contents core (`TocCore`) is a lazy chunk: until it arrives (or while the
+ * HTML mode is shown), there are no nodes to traverse, yet the screen asks for the data
+ * from the first frame. This is the only traversal the indices are counted by. Both the
+ * `toc` state snapshot and the `jumpTo` command take the heading from here, so an index
+ * from the snapshot leads to the same heading right after an edit, without waiting for
+ * the core to rebuild its list from the DOM (`REBUILD_DELAY`).
  *
- * ТЕ ЖЕ ПРАВИЛА, ЧТО У `collectHeadings` (`headings.ts`), иначе индексы разойдутся
- * с пунктами списка: заголовок на верхнем уровне или внутри Обёрток (колонки
- * Раскладки, свои Блоки, цитаты и списки — нет), уровень из `levels`, текст без
- * крайних пробелов не пуст. Текст — тот же, что у `textContent` DOM: мягкий
- * перенос в него не входит, а Текст атома — входит.
+ * THE SAME RULES AS `collectHeadings` (`headings.ts`), otherwise the indices diverge from
+ * the list items: a heading at the top level or inside Wrappers (not inside Layout
+ * columns, custom Blocks, quotes, or lists), a level from `levels`, and text that is
+ * not empty after trimming the outer spaces. The text is the same as the DOM's
+ * `textContent`: a soft hyphen is not part of it, but Atom text is.
  *
- * Обход по верхнему уровню и Обёрткам, а не по всему Документу: стоимость — число
- * Блоков верхнего уровня, она не растёт от вложенности и заметна не будет даже
- * на каждой транзакции.
+ * The traversal goes through the top level and Wrappers, not the whole Document: the cost
+ * is the number of top-level Blocks. It does not grow with nesting and will not be noticeable
+ * even on every transaction.
  */
 export function tocDocumentHeadings(
   editor: Editor,
   { levels }: Pick<TocToolOptions, "levels">
 ): TocDocumentHeading[] {
   const headings: TocDocumentHeading[] = [];
-  // `start` — позиция, с которой начинается содержимое `parent`.
+  // `start` is the position where the content of `parent` begins.
   const visit = (parent: PmNode, start: number) =>
     parent.forEach((node, offset) => {
       const pos = start + offset;

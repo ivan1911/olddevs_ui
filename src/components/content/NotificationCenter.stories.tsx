@@ -96,7 +96,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Массовые действия — существующий `SelectionBar`, а не своя полоса. */
+/** Bulk actions use the existing `SelectionBar`, not a bar of their own. */
 export const WithHighlight: Story = {
   render: function Render() {
     const [count, setCount] = useState(3);
@@ -120,11 +120,11 @@ export const WithHighlight: Story = {
 };
 
 /**
- * Поверхности у центра нет: он содержимое. Здесь — существующий `Popover`;
- * с тем же успехом это `Drawer` или страница.
+ * The center has no surface of its own: it is content. Here it sits in the existing
+ * `Popover`; it could just as well be a `Drawer` or a page.
  *
- * Имя поповера приходит от заголовка центра: `titleId` ложится на настоящий
- * `<h2>` (`level`), а `aria-labelledby` поповера ссылается на него.
+ * The popover takes its name from the center's heading: `titleId` goes on a real
+ * `<h2>` (`level`), and the popover's `aria-labelledby` points to it.
  */
 export const InPopover: Story = {
   render: function Render() {
@@ -147,7 +147,7 @@ export const InPopover: Story = {
   },
 };
 
-/** Строки с превью и строки-кнопки в центре; заголовок — `<h3>`. */
+/** Rows with a preview and button rows in the center; the heading is an `<h3>`. */
 export const WithPreviewRows: Story = {
   render: function Render() {
     const [unread, setUnread] = useState([true, true, false]);
@@ -179,7 +179,7 @@ export const WithPreviewRows: Story = {
   },
 };
 
-/** Пустое состояние приходит списку, а не центру: центр остаётся оболочкой. */
+/** The empty state goes to the list, not to the center: the center stays a shell. */
 export const Empty: Story = {
   render: () => (
     <div className="border-line-soft bg-bg-1 h-[320px] w-[420px] rounded-lg border">

@@ -22,7 +22,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Смена пароля: два поля, и `autocomplete` у обоих свой. */
+/** Password change: two fields, each with its own `autocomplete`. */
 export const ChangePassword: Story = {
   render: () => (
     <div className="flex w-[360px] flex-col gap-4">
@@ -36,7 +36,7 @@ export const ChangePassword: Story = {
   ),
 };
 
-/** Ошибка красит ту же оболочку, что и у остальных полей. */
+/** An error paints the same shell as the other fields. */
 export const WithError: Story = {
   render: () => (
     <div className="w-[360px]">
@@ -47,7 +47,7 @@ export const WithError: Story = {
   ),
 };
 
-/** Без предупреждения о Caps Lock: обработчиков клавиатуры не появляется вовсе. */
+/** Without the Caps Lock warning: no keyboard handlers are added at all. */
 export const WithoutWarning: Story = {
   render: () => (
     <div className="w-[360px]">

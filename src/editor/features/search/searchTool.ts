@@ -7,17 +7,20 @@ import type { SearchToolOptions } from "../../core/toolOptions.js";
 import { SearchExtension } from "./searchPlugin.js";
 
 /**
- * Поиск и замена на описании Инструмента. Extensions —
- * плагин состояния и подсветки с сочетаниями `Mod+F` и `Mod+Alt+F`; панель
- * держит `RichTextEditor` и открывает её мостом `openSearch`. Кнопка «Поиск» —
- * виджет фиксированной Панели у правого края (`EditorToolbar.tsx`), как
- * справочник сочетаний, а не запись `buttons`: панель встаёт в угол поля, а не
- * у кнопки или выделения.
+ * Find and replace, described in the Tool description. Extensions: the state and
+ * highlight plugin with the `Mod+F` and `Mod+Alt+F` shortcuts. The panel is held by
+ * `RichTextEditor` and opened through the `openSearch` bridge. The "Search" button is a
+ * widget of the fixed Toolbar at its right edge (`EditorToolbar.tsx`), like the shortcut
+ * reference rather than a `buttons` entry: the panel attaches to the corner of the field,
+ * not to the button or the selection.
  */
-/** Сочетание кнопки «Поиск»: строка справочника и подсказка кнопки — из одной записи. */
+/**
+ * Keys of the "Search" button: the shortcut reference row and the button hint come from
+ * one entry.
+ */
 export const SEARCH_KEYS = ["mod", "F"] as const;
 
-/** Стартовые флажки панели: все выключены. */
+/** Starting flags of the panel: all off. */
 export const SEARCH_DEFAULTS: SearchToolOptions = {
   matchCase: false,
   wholeWord: false,
@@ -27,12 +30,12 @@ export const SEARCH_DEFAULTS: SearchToolOptions = {
 const isFlag = (value: unknown) => typeof value === "boolean";
 
 /*
-  Показать текущее совпадение после команды. ProseMirror прокручивает только
-  при фокусе в Документе, а команды зовут и с кнопки экрана. Код прокрутки
-  (`revealMatch.ts`) лежит в ленивом куске панели и в старт не входит:
-  грузится при первом вызове, поэтому прокрутка приходит на микрозадачу и кадр
-  позже. Открытая панель уже подгрузила его, и её переходы сливаются с этим
-  вызовом в одну прокрутку.
+  Show the current match after a command. ProseMirror scrolls only when focus is in the
+  Document, while commands can also come from a screen button. The scroll code
+  (`revealMatch.ts`) sits in the panel's lazy chunk and is not part of the initial
+  bundle: it loads on the first call, so the scroll arrives a microtask and a frame
+  later. An open panel has already loaded it, and its moves merge with this call into
+  one scroll.
 */
 const reveal = (editor: Editor, done: boolean) => {
   if (done) void import("./revealMatch.js").then((module) => module.scheduleRevealMatch(editor));
@@ -44,10 +47,10 @@ export const SEARCH_TOOL: ToolDescriptor = {
   defaults: SEARCH_DEFAULTS,
   checks: { matchCase: isFlag, wholeWord: isFlag, regex: isFlag },
   /*
-    Запрос, переходы и замена — команды движка, как у панели; панель и HTML-режим
-    знает мост. `editor.commands` читается при каждом вызове, а не один раз:
-    Tiptap собирает его вместе с транзакцией, и сохранённый набор отправил бы
-    устаревшую.
+    Query, navigation and replacement are engine commands, as for the panel; the panel
+    and the HTML mode reach them through the bridge. `editor.commands` is read on every
+    call, not once: Tiptap builds it together with the transaction, and a saved set
+    would be stale.
   */
   commands: ({ editor, bridge }): SearchToolCommands => ({
     open: (options) => bridge.openSearch(options?.replace === true, options?.query),

@@ -1,27 +1,25 @@
 /**
- * Сборка приложения-потребителя: доказательство, что пакет годен снаружи.
+ * Builds a consumer application: proof that the package works from the outside.
  *
- * ЧТО ИМЕННО ЗДЕСЬ ПРОВЕРЯЕТСЯ И ЧЕГО НЕ ВИДЯТ ОСТАЛЬНЫЕ ВОРОТА.
+ * WHAT IS CHECKED HERE, AND WHAT THE OTHER GATES CANNOT SEE.
  *
- * `npm test` и `npm run build` смотрят на пакет изнутри: там весь код
- * клиентский, резолвинг идёт по путям репозитория, а Tailwind сканирует
- * исходники. Ни одна из этих проверок не может увидеть, что у потребителя
- * компонент не импортируется в серверный файл, что `exports` закрыл нужный
- * путь или что классы не доехали до CSS.
+ * `npm test` and `npm run build` look at the package from the inside. There all the code is
+ * client code, resolution goes through the repository's paths, and Tailwind scans the
+ * sources. None of those checks can see that a component is imported into a server file in
+ * the consumer's app, that `exports` closed the path it needs, or that the classes never
+ * reached the CSS.
  *
- * ПОЧЕМУ ТАРБОЛ, А НЕ АЛИАС НА `src`. Алиас проверял бы исходники, то есть не
- * то, что уезжает в реестр: он не заметит ни забытого файла в `files`, ни
- * закрытого `exports`, ни потерянной при сборке директивы. Гейт, который
- * зелёный независимо от содержимого пакета, — это гейт, который проходит
- * всегда. Поэтому: `npm pack`, установка `.tgz`, сборка.
+ * WHY A TARBALL AND NOT AN ALIAS TO `src`. An alias would check the sources, which is not
+ * what goes to the registry. It would not notice a file missing from `files`, a closed
+ * `exports`, or a directive lost in the build. A gate that is green regardless of what is in
+ * the package always passes. So: `npm pack`, install the `.tgz`, build.
  *
- * Пакет ставится с `--no-save`: `package.json` фикстуры о ките не знает вовсе,
- * поэтому её lock-файл не переписывается на каждый выпуск и кеш CI остаётся
- * пригодным. Из зависимостей кита фикстура объявляет только React — ровно как
- * настоящий потребитель (ADR-0072). Остальное npm ставит по диапазонам из
- * манифеста тарбола, то есть свежими версиями на каждый прогон, как новому
- * потребителю: выпуск Radix или react-aria, который ломает сборку или бюджет,
- * виден здесь раньше, чем у пользователей.
+ * The package is installed with `--no-save`. The fixture's `package.json` does not know about
+ * the kit at all, so its lock file is not rewritten on every release and the CI cache stays
+ * usable. Of the kit's dependencies, the fixture declares only React, just as a real consumer
+ * does (ADR-0072). npm installs the rest by the ranges in the tarball's manifest, so each run
+ * gets fresh versions, as a new consumer would. A Radix or react-aria release that breaks the
+ * build or the budget shows up here before it reaches users.
  */
 
 import { execFileSync } from "node:child_process";
@@ -37,12 +35,12 @@ const FIXTURE = join(ROOT, "fixtures", "consumer");
 const TARBALL = join(FIXTURE, "olddevs-ui.tgz");
 
 /**
- * Классы-пробы для итогового CSS.
+ * Probe classes for the final CSS.
  *
- * Взяты из `lib/button.ts`: их нет в разметке самой фикстуры, поэтому попасть в
- * CSS они могут только через `@source` на `dist` пакета. `rounded-control` вдобавок
- * определён в `styles.css` кита — то есть проба заодно доказывает, что
- * `@import "@olddevs/ui/styles.css"` сработал.
+ * Taken from `lib/button.ts`. They are not in the fixture's own markup, so they can reach
+ * the CSS only through `@source` pointing at the package's `dist`. `rounded-control` is also
+ * defined in the kit's `styles.css`, so the probe additionally proves that
+ * `@import "@olddevs/ui/styles.css"` worked.
  */
 const CSS_PROBES = ["rounded-control", "outline-accent-strong"];
 
@@ -54,7 +52,7 @@ function run(command, args, cwd) {
   execFileSync(command, args, { cwd, stdio: "inherit" });
 }
 
-/** То же самое, но с перехватом вывода: из него читается таблица маршрутов. */
+/** The same as `run`, but captures the output: the route table is read from it. */
 function runCaptured(command, args, cwd) {
   const output = execFileSync(command, args, {
     cwd,
@@ -66,11 +64,11 @@ function runCaptured(command, args, cwd) {
 }
 
 /**
- * `First Load JS` маршрута из таблицы `next build`.
+ * The `First Load JS` of a route, from the `next build` table.
  *
- * Разбор вывода — способ хрупкий, и потому он обязан ПАДАТЬ, когда формат
- * изменится: молча вернуть «ноль килобайт» значило бы отчитаться об успехе
- * ровно тогда, когда проверять перестали.
+ * Parsing the output is a fragile method, so it MUST fail when the format changes. Silently
+ * returning "zero kilobytes" would report success exactly when the check has stopped
+ * checking.
  */
 function firstLoadKb(output, route) {
   const line = output
@@ -109,20 +107,20 @@ const packed = execFileSync("npm", ["pack", "--json", "--pack-destination", FIXT
   encoding: "utf8",
 });
 const packedName = JSON.parse(packed)[0].filename;
-// Имя тарбола несёт версию; фикстура ставит его под постоянным именем, иначе
-// команда установки менялась бы каждый выпуск.
+// The tarball's name carries the version. The fixture installs it under a fixed name,
+// otherwise the install command would change with every release.
 const versioned = join(FIXTURE, packedName);
 if (!existsSync(versioned)) fail(`npm pack did not create ${packedName}`);
 writeFileSync(TARBALL, readFileSync(versioned));
 rmSync(versioned, { force: true });
 
 /**
- * Манифест тарбола глазами реестра GitLab (OLDSUI-195): реестр отдаёт npm
- * зависимости, но не `peerDependenciesMeta`, поэтому опциональный peer у
- * потребителя становится обязательным. Проверка читает манифест так же — без
- * этого поля — и требует, чтобы движка Редактора в нём не было: иначе
- * потребитель без Редактора снова получит весь Tiptap в lock-файл. Сама
- * установка тарбола этого не покажет: из `.tgz` npm читает полный манифест.
+ * The tarball's manifest as the GitLab registry serves it (OLDSUI-195). The registry passes
+ * the npm dependencies through but not `peerDependenciesMeta`, so an optional peer becomes
+ * required for the consumer. The check reads the manifest the same way, without that field,
+ * and requires that the Editor engine is not in it. Otherwise a consumer without the Editor
+ * would get all of Tiptap in its lock file again. Installing the tarball itself would not
+ * show this: from a `.tgz`, npm reads the full manifest.
  */
 step("the published manifest does not make the Editor engine a dependency");
 const packedManifest = JSON.parse(
@@ -143,11 +141,11 @@ if (engineDeclared.length > 0) {
 }
 
 /*
- * Фикстура ставит движок так же, как потребитель по команде со страницы
- * Редактора: каждый пакет `EDITOR_ENGINE` — в её зависимостях. Пропуск не
- * роняет сборку: Next.js находит пакет в `node_modules` кита выше по дереву, и
- * с ним приезжает вторая копия `@tiptap/core` и `@tiptap/pm` — страница
- * Редактора молча тяжелеет на десятки килобайт (OLDSUI-277: +93 кБ из-за
+ * The fixture installs the engine the same way a consumer does, with the command from the
+ * Editor page: every package in `EDITOR_ENGINE` is in its dependencies. A missing package
+ * does not break the build. Next.js finds it in the kit's `node_modules` higher up the tree,
+ * and a second copy of `@tiptap/core` and `@tiptap/pm` arrives with it. The Editor page then
+ * silently grows by tens of kilobytes (OLDSUI-277: +93 kB because of
  * `@tiptap/extension-details`).
  */
 step("the fixture installs every Editor engine package");
@@ -189,14 +187,14 @@ if (missing.length > 0) {
 }
 
 /**
- * CSS и шрифты KaTeX доехали до потребителя (OLDSUI-280, ADR-0070, п. 9).
+ * KaTeX styles and fonts reached the consumer (OLDSUI-280, ADR-0070, item 9).
  *
- * Кит собирается голым `tsc`, и стили KaTeX у него не файл, а импорт
- * `katex/dist/katex.min.css` в ленивом модуле формул: сборщик потребителя выпускает
- * CSS ленивого чанка и переписывает `url(fonts/…)` на шрифты из пакета `katex`
- * потребителя. Сборка зелёная и тогда, когда импорт потерялся, — формулы бы
- * отрисовались без стилей и шрифтов, поэтому читается результат: правила `.katex`
- * в CSS и файлы шрифтов в `static/media`.
+ * The kit is built with plain `tsc`, and its KaTeX styles are not a file: they are an import
+ * of `katex/dist/katex.min.css` in the lazy formula module. The consumer's bundler emits the
+ * CSS of the lazy chunk and rewrites `url(fonts/…)` to the fonts of the consumer's `katex`
+ * package. The build stays green even when the import is lost, and then formulas render
+ * without styles or fonts. So the result is read: the `.katex` rules in the CSS and the font
+ * files in `static/media`.
  */
 step("KaTeX styles and fonts reached the consumer build");
 const katexCssLost = [".katex", "KaTeX_Main"].filter((probe) => !css.includes(probe));
@@ -220,21 +218,20 @@ if (katexFonts.length === 0) {
 }
 
 /**
- * Исключение Редактора из `@source` (OLDSUI-197): строка из getting-started
- * снимает его классы, а классы основного входа оставляет.
+ * Excluding the Editor from `@source` (OLDSUI-197). The line from getting-started removes
+ * its classes and keeps the classes of the main entry.
  *
- * Фикстура Редактор импортирует, поэтому её собранный CSS классы Редактора
- * обязан содержать — это заодно доказывает, что проба вообще что-то ловит:
- * проба, которой нет и в полном CSS, прошла бы и при сломанном исключении.
- * Вторая сборка Next ради одной строки CSS дорога, поэтому вариант
- * «потребитель без Редактора» — это тот же `globals.css` с четвёртой строкой,
- * прогнанный через PostCSS и Tailwind фикстуры. Строка берётся из
- * getting-started дословно (путь — от `app/` фикстуры, как у её `@source`):
- * проверка своей копии строки пропустила бы опечатку в справочнике.
+ * The fixture imports the Editor, so its built CSS must contain the Editor's classes. That
+ * also proves the probe catches anything at all: a probe that is absent even from the full
+ * CSS would pass with a broken exclusion. A second Next build just for one line of CSS is
+ * expensive, so the "consumer without the Editor" variant is the same `globals.css` with a
+ * fourth line, run through the fixture's PostCSS and Tailwind. The line is taken from
+ * getting-started verbatim (the path is relative to the fixture's `app/`, like its `@source`).
+ * A check with its own copy of the line would miss a typo in the Reference.
  *
- * Автопоиск источников Tailwind (`base`) сужен до `app/`: в корне фикстуры
- * после сборки лежит `.next` с Редактором внутри, и проверка зависела бы от
- * того, игнорирует ли его `.gitignore`.
+ * Tailwind's automatic source detection (`base`) is narrowed to `app/`. After the build, the
+ * fixture root holds `.next` with the Editor inside it, and the check would depend on whether
+ * `.gitignore` ignores it.
  */
 const EDITOR_CSS_PROBE = "ProseMirror";
 const documented = /^@source not "\.\/node_modules\/@olddevs\/ui\/dist\/editor";$/m.exec(
@@ -277,25 +274,24 @@ if (lost.length > 0) {
 }
 
 /**
- * Страница редактора, отрисованная на сервере: конвейер показа дошёл до HTML.
+ * The Editor page, rendered on the server: the display pipeline reached HTML.
  *
- * Сборка зелёная и тогда, когда очистка ничего не сняла или подсветка не
- * сработала, — поэтому читается сам пререндер `/editor`. В нём обязаны быть
- * токены подсветки (`highlightCodeBlocks` на сервере), гнездо кнопки и метка
- * острова «Копировать» (`RichTextView` с блоком кода) — и не должно быть ни
- * одной подделки из документа страницы: `sanitizeRichText` с DOMPurify
- * потребителя их снял.
+ * The build stays green when the cleanup removed nothing or the highlighting did not run,
+ * so the prerender of `/editor` itself is read. It must contain the highlighting tokens
+ * (`highlightCodeBlocks` on the server), the copy button's slot and the marker of the "Copy"
+ * island (`RichTextView` with a code Block). It must not contain any forgery from the page's
+ * document: `sanitizeRichText` with the consumer's DOMPurify has removed them.
  */
 const EDITOR_PROBES = [
   '<span class="hljs-keyword">def</span>',
   "data-code-copy=",
   "<template data-code-copy-island",
-  // Остров своего Блока (OLDSUI-114): метку ставит клиентский остров, и ссылка на
-  // компонент потребителя прошла границу RSC; серверный HTML Блока — на месте.
+  // A custom Block's island (OLDSUI-114): the client island sets this marker, and the
+  // reference to the consumer's component crossed the RSC boundary. The Block's server HTML is in place.
   "<template data-block-island",
   "Server badge",
-  // Формула (OLDSUI-280, ADR-0070): сервер кладёт в пустой элемент исходный LaTeX,
-  // метка острова формул стоит в разметке; отрисованного KaTeX на сервере нет.
+  // A formula (OLDSUI-280, ADR-0070): the server puts the LaTeX source into an empty element,
+  // and the marker of the formula island is in the markup. There is no rendered KaTeX on the server.
   "<template data-math-island",
   'data-latex="e^{i\\pi}+1=0">e^{i\\pi}+1=0</span>',
 ];

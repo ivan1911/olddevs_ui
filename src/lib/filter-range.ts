@@ -2,11 +2,11 @@ import type { UiMessages } from "../i18n/messages.js";
 import { parseDateOrNull } from "./date.js";
 
 /**
- * Подпись границ диапазона: «50–100», «от 50», «до 12 марта».
+ * Label for the range bounds: "50–100", "from 50", "to 12 March".
  *
- * Принимает границы уже ОТФОРМАТИРОВАННЫМИ, а слова «от» и «до» берёт из
- * каталога сообщений: порядок слов в подписи — дело языка, а не кода
- * (ADR-0063). Пустая граница значит «не ограничено» и в подпись не попадает.
+ * Takes the bounds ALREADY FORMATTED, and takes the words for "from" and "to" from the message
+ * catalog. Word order in a label is a matter of language, not of code (ADR-0063). An empty bound
+ * means "unbounded" and does not appear in the label.
  */
 export function rangeText(messages: UiMessages, from: string, to: string): string {
   if (from !== "" && to !== "") return messages.filterBar.rangeBetween({ from, to });
@@ -15,8 +15,8 @@ export function rangeText(messages: UiMessages, from: string, to: string): strin
 }
 
 /**
- * Число-граница для подписи по правилам локали. Не число — как есть: значение
- * могло прийти из адреса, и выдумывать за него «NaN» нельзя.
+ * A bound number for a label, formatted by the locale's rules. A non-number is returned as is:
+ * the value could have come from the URL, and it is wrong to invent a "NaN" for it.
  */
 export function formatRangeNumber(value: string, locale: string): string {
   if (value === "") return value;
@@ -25,20 +25,19 @@ export function formatRangeNumber(value: string, locale: string): string {
 }
 
 /**
- * Дата-граница для подписи: «12 марта 2026 г.».
+ * Date bound for a label: "12 March 2026".
  *
- * Год пишется всегда, даже в текущем: подпись переживает адрес и сохранённый
- * вид, и «до 12 марта», открытое годом позже, молча означало бы другую дату.
- * Строка из адреса разбирается строго (`parseDateOrNull`), неразбираемая
- * остаётся как есть.
+ * The year is always written, even in the current one. The label outlives the URL and a saved view,
+ * and "to 12 March", opened a year later, would silently mean a different date. A string from the URL
+ * is parsed strictly (`parseDateOrNull`), and an unparseable one is kept as is.
  */
 export function formatRangeDate(value: string, locale: string): string {
   const parsed = parseDateOrNull(value);
   if (!parsed) return value;
-  // Сборка по частям в местном полудне, как в `formatDate`: `new Date("ГГГГ-ММ-ДД")`
-  // — полночь UTC, и восточнее Гринвича дата сдвинулась бы на сутки.
+  // Build the date from its parts at local noon, as in `formatDate`: `new Date("YYYY-MM-DD")`
+  // is UTC midnight, and east of Greenwich the date would shift by a day.
   const date = new Date(parsed.year, parsed.month - 1, parsed.day);
-  // Годы 0–99 конструктор отображает в 1900+y.
+  // The Date constructor maps years 0–99 to 1900+y.
   date.setFullYear(parsed.year);
   return new Intl.DateTimeFormat(locale, {
     day: "numeric",

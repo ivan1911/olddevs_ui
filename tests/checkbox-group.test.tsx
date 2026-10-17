@@ -64,8 +64,8 @@ test("picking appends to the array instead of replacing it", async () => {
 test("group disabled overrides the individual one instead of adding to it", () => {
   render(<GroupDemo disabled />);
 
-  // Оба выключены, включая тот, у кого своего `disabled` нет: недоступна вся
-  // группа — недоступен каждый пункт. Обратного прочтения тут быть не может.
+  // Both are disabled, including the one with no `disabled` of its own: the whole group
+  // is unavailable, so every item is unavailable. There is no other reading here.
   expect((screen.getByRole("checkbox", { name: "Telegram" }) as HTMLInputElement).disabled).toBe(
     true
   );
@@ -99,7 +99,7 @@ test("the error displaces the hint instead of standing under it", () => {
   render(<GroupDemo errorMessage="Pick at least one channel" />);
 
   expect(screen.getByText("Pick at least one channel")).toBeTruthy();
-  // Две строки под группой, одна из которых противоречит другой, — источник шума.
+  // Two lines under the group, one contradicting the other, are a source of noise.
   expect(screen.queryByText("Pick more than one")).toBeNull();
 });
 
@@ -109,16 +109,19 @@ const classesOf = (el: Element) => el.className.split(/\s+/);
 const hasAll = (el: Element, classes: string) =>
   classes.split(/\s+/).every((c) => classesOf(el).includes(c));
 
-/** Находит узел или роняет тест: отрицательные проверки не должны проходить по пустоте. */
+/** Finds the node or fails the test: negative checks must not pass on an empty result. */
 function must<T extends Element>(el: T | null | undefined, what: string): T {
   if (!el) throw new Error(`Not found: ${what}`);
   return el;
 }
 
-/** Корень карточки (поле react-aria): рамка висит на нём, а не на `input`. */
+/** The card root (the react-aria field): the frame hangs on it, not on the `input`. */
 const cardOf = (name: string) =>
   must(screen.getByRole("checkbox", { name }).closest("div[data-rac]"), `card of ${name}`);
-/** Коробка флажка в обычном виде: `span` с рамкой (первый `span` метки прячет `input`). */
+/**
+ * The checkbox box in its default form: a `span` with a border. The label's first
+ * `span` hides the `input`.
+ */
 const boxOf = (name: string) =>
   must(cardOf(name).querySelector("label > span.border"), `box of ${name}`);
 const indicatorOf = (name: string) =>
@@ -166,7 +169,7 @@ test("an unchecked card stays neutral under any group tone", () => {
 });
 
 test("the group tone wins over the tone of a single checkbox inside it", () => {
-  // Набор не может разъехаться по виду: как у `RadioGroup`, тон один на всех.
+  // The set cannot drift apart visually: as in `RadioGroup`, one tone for all.
   render(<ToneGroup tone="success" appearance="card" boxTone="danger" />);
 
   expect(classesOf(cardOf("Checked"))).toContain(CHOICE_CARD_SELECTED_BORDER.success);

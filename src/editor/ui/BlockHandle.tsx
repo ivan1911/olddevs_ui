@@ -45,26 +45,25 @@ import { EDITOR_WRAPPER_TONES, wrapperToneFrom } from "../features/wrapper/wrapp
 import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
 import { GLASS_MENU_CLASS } from "../styles/glass.js";
 
-/** Размер ручки и зазор до текста, px: ручка `h-6 w-5` стоит в левом поле Документа. */
+/** Handle size and the gap to the text, in px: the handle `h-6 w-5` sits in the Document's left margin. */
 const HANDLE_WIDTH = 20;
 const HANDLE_HEIGHT = 24;
 const HANDLE_GAP = 4;
 
 /*
-  Ручка — вне обхода Tab: в Документе Tab сдвигает пункт списка, а к ручке
-  ведёт `Mod+/`. Кит не пробрасывает `excludeFromTabOrder` и `onFocusChange` в
-  типах `MenuButton`, а `Button` react-aria их понимает.
+  The handle is outside the Tab order: in the Document, Tab moves a list item, and
+  the handle is reached with `Mod+/`. The kit does not pass `excludeFromTabOrder` and
+  `onFocusChange` through the `MenuButton` types, but react-aria's `Button` understands them.
 */
 const buttonExtras = (onFocusChange: (focused: boolean) => void) =>
   ({ excludeFromTabOrder: true, onFocusChange }) as object;
 
 /**
- * Где стоит ручка относительно `anchor.offsetParent` (корня Редактора или
- * области прокрутки Документа): слева от левого края контейнера Блоков — у
- * Документа это его левое поле, у колонки
- * раскладки будет край колонки, — по высоте на середине первой
- * строки Блока. У картинки строки нет — ручка у её верхнего края; у линии —
- * на ней самой. `null` — мерить нечего.
+ * Where the handle sits relative to `anchor.offsetParent` (the Editor root or the Document's
+ * scroll area): to the left of the Blocks container's left edge. For the Document that is its
+ * left margin; for a Column layout's column it is the column's edge. Vertically it sits at
+ * the middle of the Block's first line. An image has no line, so its handle sits at the top
+ * edge; a horizontal rule's handle sits on the rule itself. `null` means there is nothing to measure.
  */
 function handlePlace(view: EditorView, anchor: HTMLElement): { top: number; left: number } | null {
   const block = handleBlock(view.state);
@@ -76,15 +75,15 @@ function handlePlace(view: EditorView, anchor: HTMLElement): { top: number; left
   const node = block.parent.child(block.startIndex);
   const win = container.ownerDocument.defaultView;
   /*
-    Первая строка — первый текстовый Блок внутри (у списка — первый пункт, у
-    таблицы — первая ячейка): верх его рамки и высота строки из стилей. У
-    картинки текст есть — подпись, — но она под картинкой, поэтому узел-атом
-    меряется своей рамкой.
+    The first line is the first text Block inside (for a list, its first item; for a table,
+    its first cell): the top of its box and the line height from the styles. An image has
+    a caption, which is text, but it sits under the image, so an atom node is measured by
+    its own box.
 
-    ТОЛЬКО DOM, БЕЗ `view.coordsAtPos`. Тот сначала сбрасывает наблюдатель DOM
-    ProseMirror, а замер идёт на каждой транзакции — и на той, что приходит с
-    фокусом посреди двойного щелчка: сброс в этот миг читал ещё схлопнутое
-    выделение, и выделенное двойным щелчком слово терялось.
+    DOM ONLY, WITHOUT `view.coordsAtPos`. That one first flushes ProseMirror's DOM observer,
+    and the measurement runs on every transaction, including the one that arrives with focus
+    in the middle of a double click. The flush at that moment read the selection before it had
+    collapsed, and the word selected by the double click was lost.
   */
   let first = -1;
   if (node.isTextblock) first = block.start;
@@ -110,10 +109,9 @@ function handlePlace(view: EditorView, anchor: HTMLElement): { top: number; left
   }
 
   /*
-    Началом координат бывает и прокручиваемая область Документа (`maxHeight`,
-    ADR-0059): тогда позиция — в координатах её содержимого, со сдвигом
-    прокрутки, и ручка едет вместе с текстом без пересчёта на каждый кадр. У
-    корня Редактора сдвиг нулевой.
+    The origin can also be the Document's scrollable area (`maxHeight`, ADR-0059). Then the
+    position is in the coordinates of its content, offset by the scroll, and the handle moves
+    with the text without recalculating on every frame. For the Editor root the offset is zero.
   */
   const box = origin.getBoundingClientRect();
   const frame = container.getBoundingClientRect();
@@ -137,37 +135,37 @@ export interface BlockHandleProps {
   editor: Editor;
   tools: ToolList;
   /**
-   * Сюда ручка кладёт «открыть меню» для `Mod+/` из Документа: сочетание
-   * слушает расширение (`blockCommands.ts`), а меню живёт здесь. `false` —
-   * ручки нет, и клавиша идёт дальше.
+   * The handle stores its "open menu" action here, for `Mod+/` from the Document. The
+   * shortcut is listened for by the extension (`blockCommands.ts`), while the menu lives here.
+   * `false` means there is no handle, and the key goes on.
    */
   openRef: RefObject<() => boolean>;
 }
 
 /**
- * Ручка Блока «⋮»: кнопка слева от первой строки Блока с кареткой
- * и меню действий над ним — Добавить ›, Формат ›, Вверх, Вниз, Дублировать,
- * Удалить.
+ * The Block handle "⋮": a button to the left of the Block's first line, where the caret is,
+ * and a menu of actions on the Block: Add ›, Format ›, Move up, Move down, Duplicate,
+ * Delete.
  *
- * ТОЛЬКО ПО КАРЕТКЕ (решение владельца). Наведение мыши ручку не показывает:
- * она не мелькает у каждого абзаца под курсором и не спорит с выделением
- * текста. Видна, пока фокус в Документе, на самой ручке или в её меню; в
- * `readOnly` её не монтирует Редактор, у выключенного поля Блока ручки нет.
+ * ONLY BY CARET (owner's decision). Hovering the mouse does not show the handle: it does not
+ * flicker at every paragraph under the cursor, and it does not compete with the text
+ * selection. It is visible while focus is in the Document, on the handle itself, or in its
+ * menu. In `readOnly` the Editor does not mount it, and a disabled field has no Block handles.
  *
- * БЛОК — ЦЕЛИКОМ. Действия идут над Блоком ручки (`handleBlock`): весь список,
- * вся цитата, вся таблица, а не пункт под кареткой. Поэтому подпись сочетания
- * у пункта — только когда сочетание делает то же самое (`handleShortcutsMatch`):
- * в пункте списка `⌥⇧↑` двигает пункт, и там подписи нет. Каждое действие —
- * одна правка на отмену, фокус после него — в Документе. Перетаскивания за
- * ручку нет (решение владельца).
+ * THE WHOLE BLOCK. Actions apply to the handle's Block (`handleBlock`): the whole list, the
+ * whole blockquote, the whole table, not the item under the caret. That is why a shortcut
+ * label on an item appears only when the shortcut does the same thing (`handleShortcutsMatch`).
+ * On a list item, `⌥⇧↑` moves the item, so there is no label there. Each action is one edit
+ * for undo, and focus after it is in the Document. Dragging by the handle is not supported
+ * (owner's decision).
  *
- * СЛОЙ — В ПОТОКЕ ПОЛЯ, А НЕ ОВЕРЛЕЙ. Ручка — часть поля, как полоса прокрутки:
- * она лежит в DOM Редактора абсолютно от его корня и едет с текстом в любом
- * контейнере прокрутки, в `Dialog` и `Drawer` без пересчёта на прокрутке.
- * Ступени `OVERLAY_LAYER` у неё нет намеренно: липкая Панель (`z-[1]`) и любые
- * поповеры должны её перекрывать, а не наоборот. Меню — `Menu` кита, у него
- * свой слой и стек Escape (ADR-0041): Escape закрывает подменю и меню по
- * одному уровню, а окно вокруг Редактора остаётся открытым.
+ * THE LAYER IS IN THE FIELD'S FLOW, NOT AN OVERLAY. The handle is part of the field, like a
+ * scrollbar. It lies in the Editor's DOM, absolutely positioned from its root, and moves with
+ * the text in any scroll container, in `Dialog` and `Drawer`, without recalculation on scroll.
+ * It has no `OVERLAY_LAYER` step on purpose: the sticky Toolbar (`z-[1]`) and any popovers must
+ * cover it, not the other way round. The menu is the kit's `Menu`. It has its own layer and
+ * Escape stack (ADR-0041): Escape closes the submenu and the menu one level at a time, while
+ * the window around the Editor stays open.
  */
 export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   const messages = useMessages().editor;
@@ -179,20 +177,20 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   const [place, setPlace] = useState<{ top: number; left: number } | null>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  /** Выбран ли пункт: тогда фокус в Документ возвращает само действие. */
+  /** Whether an item was selected: in that case the action itself returns focus to the Document. */
   const actedRef = useRef(false);
 
-  // «Добавить ›» — пункты Меню вставки без повторов: «Блок кода» там есть и в
-  // «Добавить» (`codeBlock`), и в «Превратить в» (`codeBlockFromText`), а новый
-  // Блок ниже один и тот же. Двойник отсекается по id, а не по подписи: подпись
-  // зависит от каталога потребителя, и совпадение слов не значит одно действие.
+  // "Add ›": the Slash menu items without repeats. "Code block" is in "Add"
+  // (`codeBlock`) and in "Turn into" (`codeBlockFromText`), but the new Block
+  // below is the same one. A duplicate is dropped by id, not by label: the label
+  // depends on the consumer's catalog, and matching words do not mean one action.
   const addItems = useMemo(
     () => insertItemsFor(tools).filter((item) => item.id !== "codeBlockFromText"),
     [tools]
   );
   const formatItems = useMemo(() => formatItemsFor(tools), [tools]);
-  // Действия Инструментов — проекция списка описаний; «Тон ›» и «Раскладка ›»
-  // — меню-виджеты без своего Инструмента, они собираются ниже по-старому.
+  // Tool actions are a projection of the description list. "Tone ›" and "Layout ›"
+  // are menu widgets without a Tool of their own, so they are still assembled below, as before.
   const toolActions = useMemo(() => blockActionsOf(tools), [tools]);
 
   const state = useEditorState({
@@ -201,8 +199,8 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       const block = current.isEditable ? handleBlock(current.state) : null;
       if (!block) return null;
       const node = block.parent.child(block.startIndex);
-      // Раскладка: её вариант — у ручки самой Раскладки (выделена
-      // целиком) и у ручки Блока в её колонке.
+      // Column layout: its variant is on the handle of the Column layout itself (selected
+      // as a whole) and on the handle of a Block in its column.
       const layout =
         node.type.name === LAYOUT_NODE
           ? node
@@ -218,15 +216,15 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       return {
         focused: current.view.hasFocus(),
         type: blockTypeOf(node),
-        // Признак «можно превратить в» своего Блока (ADR-0058, п. 1.4).
+        // The "can be turned into" trait of a custom Block (ADR-0058, item 1.4).
         turnInto: node.type.spec.turnInto === true,
         layout: layout ? layoutOfNode(layout) : null,
         isLayout: node.type.name === LAYOUT_NODE,
-        // Обёртка: ручка самой Обёртки (выделена целиком) или Блока
-        // прямо в ней — у обеих есть «Тон ›».
+        // Wrapper: the handle of the Wrapper itself (selected as a whole), or of a Block
+        // right inside it. Both have "Tone ›".
         inWrapper: wrapper !== null,
         tone: wrapper ? wrapperToneFrom(wrapper.attrs.tone) : null,
-        // Действия над Блоком: у Блока Ручки и у контейнера, где он стоит (`BlockAction.blocks`).
+        // Block actions apply to the handle's Block and to the container it sits in (`BlockAction.blocks`).
         actions: toolActions
           .filter((action) =>
             blockActionVisible(action, current, block.start, {
@@ -251,9 +249,9 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   };
 
   /*
-    Позиция — заново на каждой транзакции (Блок сменился, текст выше вырос) и
-    на смене размера Документа (окно, догрузка картинки, перенос строк). До
-    отрисовки, чтобы ручка не мелькала в прежнем месте.
+    The position is recalculated on every transaction (the Block has changed, the text above
+    has grown) and on a change of the Document's size (window resize, a late image load, line
+    wrapping). It runs before painting, so the handle does not flicker in its old place.
   */
   useLayoutEffect(() => {
     if (!shown) return;
@@ -279,7 +277,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     };
   }, [editor, shown]);
 
-  // `aria-keyshortcuts` — на узел: `Button` react-aria атрибут в DOM не пропускает.
+  // `aria-keyshortcuts` is set on the node: react-aria's `Button` does not pass the attribute into the DOM.
   const openKeys = findShortcutKeys("blockActions");
   useEffect(() => {
     if (openKeys)
@@ -293,8 +291,8 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   const active = formatItems.find((item) => item.id === state.type);
 
   /*
-    Варианты Раскладки — одним списком для «Добавить › Раскладка ›»
-    и для выбора варианта: «Одна колонка», «Две колонки», …, «60/40», «40/60».
+    The Column layout variants form one list, for "Add › Layout ›" and for
+    selecting a variant: "Single column", "Two columns", …, "60/40", "40/60".
   */
   const layoutVariants = (prefix: string) =>
     EDITOR_LAYOUTS.map((variant) => ({
@@ -316,9 +314,9 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       id: "add",
       label: messages.blockAdd,
       icon: AddIcon,
-      // Сочетания Меню вставки меняют текущий Блок, а «Добавить» ставит новый
-      // ниже — подписей здесь нет. «Раскладка» — подменю вариантов: в Меню
-      // вставки она одним пунктом (две колонки), здесь — любой из шести.
+      // The shortcuts of the Slash menu items change the current Block, while "Add" inserts a new
+      // one below, so there are no labels here. "Column layout" is a submenu of variants: in the
+      // Slash menu it is one item (two columns), here it is any of the six.
       submenu: [
         {
           id: "addItems",
@@ -337,8 +335,8 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     });
   }
   if (state.isLayout) {
-    // «Формат ›» Раскладки целиком — её варианты с отметкой текущего: типа Блока
-    // у неё нет, а вариант и есть её формат.
+    // "Format ›" of the Column layout as a whole: its variants, with the current one marked.
+    // It has no Block type, and the variant is its format.
     blockItems.push({
       id: "format",
       label: messages.blockFormat,
@@ -350,8 +348,8 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       id: "format",
       label: messages.blockFormat,
       icon: ParagraphIcon,
-      // Таблицу, картинку и линию в текст не превратить: пункт виден, но
-      // недоступен. Свой Блок — только с Признаком «можно превратить в».
+      // A table, an image, and a rule cannot be turned into text: the item is visible but
+      // disabled. A custom Block gets it only with the "can be turned into" trait.
       disabled: state.type === null && !state.turnInto,
       submenu: [
         {
@@ -369,10 +367,10 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     });
   }
   /*
-    Блок в колонке: «Формат ›» — его тип, как везде, а вариант своей Раскладки —
-    отдельным пунктом «Раскладка ›». Ручка самой Раскладки есть, только когда она
-    выделена целиком (Backspace на Блоке под ней), а каретка почти всегда в
-    колонке: без этого пункта вариант было бы не сменить.
+    A Block in a column: "Format ›" is its type, as everywhere, while the variant of its
+    Column layout is a separate item, "Layout ›". The Column layout's own handle exists only
+    when it is selected as a whole (Backspace on the Block under it), and the caret is almost
+    always in the column. Without this item the variant could not be changed.
   */
   if (!state.isLayout && state.layout) {
     blockItems.push({
@@ -383,16 +381,16 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     });
   }
   /*
-    «Тон ›» — и у ручки самой Обёртки, и у Блока прямо в ней. Как с
-    «Раскладка ›»: ручка по каретке, а каретка почти всегда внутри, и ручку
-    Обёртки целиком видно редко (Backspace на Блоке под ней). «Снять обёртку» —
-    Действие над Блоком Инструмента `wrapper` (`features/builtins.ts`), оно в
-    секции действий ниже.
+    "Tone ›" is on the Wrapper's own handle and on a Block right inside it. As with
+    "Layout ›", the handle follows the caret, and the caret is almost always inside. The whole
+    Wrapper handle is rarely visible (Backspace on the Block under it). "Unwrap" is an action
+    on a Block of the `wrapper` Tool (`features/builtins.ts`), and it is in the actions
+    section below.
   */
   if (state.inWrapper) {
     /*
-      Пункты — радио: «Без тона» и пять тонов словами, текущий отмечен, а имя
-      пункта несёт текущий тон, как имя кнопки «¶» — текущий тип.
+      The items are radio items: "None" and the five tones by name. The current one is marked,
+      and the menu item's name carries the current tone, as the "¶" button's name carries the current type.
     */
     const toneName = state.tone ? messages.wrapperToneName[state.tone] : messages.wrapperToneNone;
     blockItems.push({
@@ -444,7 +442,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
           },
         ],
       },
-      // Действия Инструментов — своя секция перед «Удалить» (ADR-0058, п. 10.3).
+      // Tool actions get their own section, before "Delete" (ADR-0058, item 10.3).
       {
         id: "toolActions",
         items: toolActions
@@ -493,14 +491,14 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       return;
     }
     if (kind === "layout") {
-      // Выбор текущего варианта ничего не меняет — как в «¶».
+      // Selecting the current variant changes nothing, as with "¶".
       const variant = itemId as EditorLayout;
       if (variant !== state.layout) editor.chain().focus().setLayout(variant).run();
       else editor.commands.focus();
       return;
     }
     if (kind === "tone") {
-      // Выбор текущего тона ничего не меняет — как в «¶»: пустой правки в истории нет.
+      // Selecting the current tone changes nothing, as with "¶": there is no empty edit in history.
       const tone = wrapperToneFrom(itemId);
       if (tone !== state.tone) editor.chain().focus().setWrapperTone(tone).run();
       else editor.commands.focus();
@@ -515,7 +513,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     }
     if (kind === "format") {
       const item = formatItems.find((candidate) => candidate.id === itemId);
-      // Выбор текущего типа ничего не меняет — как в «¶».
+      // Selecting the current type changes nothing, as with "¶".
       if (item && item.id !== state.type) turnBlockInto(editor, item);
       else editor.commands.focus();
       return;
@@ -534,12 +532,12 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     }
     if (actedRef.current) return;
     /*
-      Закрыто без выбора — Escape или щелчок мимо. Фокус — в Документ, а не на
-      ручку: она вне обхода Tab, и человек с клавиатуры застрял бы на ней.
-      Кадром позже, когда меню снято, и только если фокус не поставлен
-      осознанно на другое поле или кнопку (`FOCUS_TARGET`): его оставляют.
-      Тело страницы и контейнер `Dialog` (туда фокус кладёт ловушка окна,
-      когда меню исчезло) — не цель, и оттуда фокус возвращается в Документ.
+      Closed without a selection, by Escape or a click outside. Focus goes to the Document, not
+      to the handle: the handle is outside the Tab order, and a keyboard user would get stuck on it.
+      One frame later, when the menu is gone, and only if focus has not been deliberately put on
+      another field or button (`FOCUS_TARGET`), which is then left alone. The page body and the
+      `Dialog` container (where the window's focus trap puts focus when the menu disappears) are
+      not a target, and focus returns to the Document from there.
     */
     const anchor = anchorRef.current;
     const doc = editor.view.dom.ownerDocument;
@@ -568,7 +566,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     <div
       ref={anchorRef}
       data-block-handle=""
-      // До первого замера — невидимо: место ещё не известно.
+      // Invisible until the first measurement: the position is not known yet.
       className={cn("absolute", !place && "invisible")}
       style={place ?? undefined}
     >
@@ -585,8 +583,8 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
                 icon={<MoreVerticalIcon size={16} aria-hidden />}
                 className="text-fg-2 h-6 w-5"
                 {...HAS_POPUP_MENU}
-                // Фокус на самой ручке держит её видимой: касание пальцем
-                // открывает меню на отпускании, а Документ теряет фокус раньше.
+                // Focus on the handle itself keeps it visible: a finger tap opens
+                // the menu on release, while the Document loses focus earlier.
                 {...buttonExtras(setButtonFocused)}
               />
             </span>

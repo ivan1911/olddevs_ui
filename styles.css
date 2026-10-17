@@ -1,51 +1,51 @@
 /*
- * Токены, темы и базовые стили дизайн-системы @olddevs/ui.
+ * Tokens, themes and base styles of the @olddevs/ui design system.
  *
- * ВАЖНО: здесь НЕТ `@import "tailwindcss"` — и это намеренно.
- * Tailwind импортирует потребитель, у себя, один раз:
+ * IMPORTANT: there is NO `@import "tailwindcss"` here, and that is deliberate.
+ * The consumer imports Tailwind once, in its own stylesheet:
  *
  *     @import "tailwindcss";
  *     @import "@olddevs/ui/styles.css";
  *
- * Tailwind 4 обрабатывает `@theme` из импортированных файлов, поэтому мост
- * токенов работает. Если бы Tailwind импортировался и отсюда, у потребителя
- * оказалось бы два preflight и задвоенные утилиты.
+ * Tailwind 4 processes `@theme` from imported files, so the token bridge
+ * works. If Tailwind were also imported from here, the consumer would end up with
+ * two preflights and duplicated utilities.
  *
- * Что сюда НЕ входит и остаётся у потребителя: стили конкретных экранов —
- * фоновые блобы дашборда, оформление собственного сёрчбара, safe-area
- * мобильного таб-бара. Это прикладной слой, а не система.
+ * What is NOT included here and stays with the consumer: styles of specific screens,
+ * such as the dashboard's background blobs, a custom search bar's styling, and the safe area
+ * of the mobile tab bar. This is the application layer, not the system.
  *
- * В 2.0.0 отсюда убраны 22 токена прежнего продукта (`--gsb-*`, `--thumb-*`,
+ * In 2.0.0, 22 tokens of the previous product were removed from here (`--gsb-*`, `--thumb-*`,
  * `--favorite*`, `--mobile-nav-*`, `--image-chrome*`, `--overlay-scrim-strong`):
- * их не читал ни один компонент кита — только CSS его приложения. Список и
- * действие для потребителя — в `docs/api/migration-notes.md`.
+ * no component of the kit read them, only the application's own CSS. The list and
+ * the action for the consumer are in `docs/api/migration-notes.md`.
  */
 
 /*
- * Варианты состояний react-aria-components.
+ * State variants for react-aria-components.
  *
- * Строка стоит ЗДЕСЬ, а не у потребителя, и это проверено: Tailwind 4
- * обрабатывает `@plugin` из импортированного файла так же, как `@theme`, —
- * потребителю по-прежнему достаточно двух строк, `@import "tailwindcss"` и
- * `@import "@olddevs/ui/styles.css"`. Пакет плагина лежит в обычных
- * `dependencies`, поэтому резолвится от этого файла в любой раскладке
+ * This line lives HERE, not in the consumer's stylesheet, and this is verified: Tailwind 4
+ * processes `@plugin` from an imported file the same way as `@theme`,
+ * so the consumer still needs only two lines: `@import "tailwindcss"` and
+ * `@import "@olddevs/ui/styles.css"`. The plugin package lives in regular
+ * `dependencies`, so it resolves from this file in any node_modules layout.
  * node_modules.
  *
- * Плагин не добавляет новых имён поверх штатных, а ПЕРЕОПРЕДЕЛЯЕТ их на
- * двойной селектор:
+ * The plugin adds no new names on top of the standard ones; it OVERRIDES them with a
+ * double selector:
  *
  *     .hover\:bg-x:is(:where([data-rac])[data-hovered], :where(:not([data-rac])):hover)
  *
- * Отсюда главное следствие для словаря тонов: `hover:`, `focus-visible:`,
- * `disabled:`, `invalid:`, `indeterminate:` и `open:` из `TONE_TOKENS`
- * работают и на нативных элементах, и на элементах RAC — а те сплошь и рядом
- * отрисованы дивами с ролью (`MenuItem`, `ListBoxItem`, `Row`), где ни
- * `:hover`, ни `:disabled` не сработали бы. Дублировать словарь в форме
- * `data-*` не нужно.
+ * The main consequence for the tone vocabulary: `hover:`, `focus-visible:`,
+ * `disabled:`, `invalid:`, `indeterminate:` and `open:` from `TONE_TOKENS`
+ * work on native elements and on RAC elements alike. The latter are often
+ * rendered as divs with a role (`MenuItem`, `ListBoxItem`, `Row`), where neither
+ * `:hover` nor `:disabled` would match. There is no need to duplicate the vocabulary in the
+ * `data-*` form.
  *
- * Пишется `hover:`, а не `hovered:` — имя варианта штатное, атрибут
- * `data-hovered`. Собственные имена есть только у состояний без
- * CSS-эквивалента: `selected:`, `pressed:`, `entering:`/`exiting:`,
+ * Write `hover:`, not `hovered:`: the variant name is the standard one, and the attribute is
+ * `data-hovered`. Custom names exist only for states without a
+ * CSS equivalent: `selected:`, `pressed:`, `entering:`/`exiting:`,
  * `placement-*:`.
  */
 @plugin "tailwindcss-react-aria-components";
@@ -77,12 +77,12 @@
   --color-accent-on-inverse: var(--accent-on-inverse);
 
   /*
-   * Тона под полными именами — целевой словарь. Заливка (`--success`) и её
-   * «читаемый» вариант под текст, рамки и индикаторы (`--success-strong`):
-   * две несовместимые роли одного тона, см. комментарий у переменных ниже.
+   * Tones under their full names are the target vocabulary. The fill (`--success`) and its
+   * "readable" variant for text, borders and indicators (`--success-strong`):
+   * two incompatible roles of one tone; see the comment on the variables below.
    *
-   * Исторические алиасы `ok`/`warn`/`err`/`tg` объявлены дальше и остаются
-   * рабочими, но примитивы пакета ими больше не пользуются.
+   * Legacy aliases `ok`/`warn`/`err`/`tg` are declared below and remain
+   * working, but the package primitives no longer use them.
    */
   --color-accent-strong: var(--accent-strong);
 
@@ -94,10 +94,10 @@
   --color-warning-soft: var(--warning-soft);
   --color-warning-strong: var(--warning-strong);
 
-  /* Звезда `Rating` — компонентный слой: смысл принадлежит одному компоненту,
-     а не системе (ADR-0040). Стоит после семантических групп, рядом с
-     остальными компонентными токенами, а не внутри `warning`: цвет сегодня тот
-     же, но правка предупреждения не должна перекрашивать оценки. */
+  /* The `Rating` star is a component-level token: its meaning belongs to one component,
+     not to the system (ADR-0040). It sits after the semantic groups, next to
+     the other component tokens, not inside `warning`: the color is the same today, but
+     editing the warning must not recolor the ratings. */
   --color-rating-star: var(--rating-star);
 
   --color-danger: var(--danger);
@@ -124,9 +124,9 @@
   --color-line-soft: var(--line-soft);
 
   /*
-   * Исторические алиасы. Держатся ради фронта, где их ещё десятки; примитивы
-   * пакета на них не ссылаются, и новый код тоже не должен — только полные
-   * имена выше. Удаляются, когда потребитель выйдет на ноль по ним.
+   * Legacy aliases. They are kept for the front end, where dozens of them remain; the primitives
+   * of the package do not reference them, and new code must not either: only the full
+   * names above. They are removed once the consumer's usage drops to zero.
    */
   --color-tg-2: var(--tg-2);
   --color-tg: var(--tg);
@@ -141,7 +141,7 @@
   --color-err: var(--err);
   --color-err-soft: var(--err-soft);
 
-  /* Метки пользователя: утилиты `bg-label-blue`, `text-label-blue`, `border-label-blue`. */
+  /* User labels: the `bg-label-blue`, `text-label-blue` and `border-label-blue` utilities. */
   --color-label-blue: var(--label-blue);
   --color-label-violet: var(--label-violet);
   --color-label-teal: var(--label-teal);
@@ -165,46 +165,47 @@
   --shadow-2: var(--shadow-2);
 
   /*
-   * `--font-inter` ставит потребитель — или не ставит. Без запасного значения
-   * ссылка на неё делала недействительным весь токен, и `font-sans` молча
-   * наследовал шрифт предка: в шапке блока кода и в знаках `Kbd` это
-   * моноширинный.
+   * The consumer sets `--font-inter` or does not. Without a fallback value,
+   * a reference to it invalidated the whole token, and `font-sans` silently
+   * inherited the ancestor's font: in the code block header and in `Kbd` keys this
+   * was a monospace font.
    */
   --font-sans: var(--font-inter, Inter), system-ui, sans-serif;
   /*
-   * Моноширинный — системный стек: SF Mono на Apple, Consolas на Windows,
-   * Liberation/DejaVu Mono на Linux. Кит своих файлов шрифта не грузит.
-   * Потребитель подставляет свой шрифт переменной `--font-code` (как
-   * `--font-inter` для основного, например из `next/font`).
+   * The monospace font is a system stack: SF Mono on Apple, Consolas on Windows,
+   * Liberation/DejaVu Mono on Linux. The kit does not load its own font files.
+   * The consumer supplies its own font through the `--font-code` variable (as
+   * `--font-inter` does for the main font, for example from `next/font`).
    *
-   * Раньше здесь стояло `var(--font-mono)` — ссылка токена на самого себя.
-   * Цикл делает переменную недействительной целиком, и `font-mono` во всём
-   * ките (CodeView, Kbd, блок кода Редактора) молча рисовался Inter.
+   * This used to be `var(--font-mono)`, a token referencing itself.
+   * A cycle invalidates the variable entirely, and `font-mono` across the whole
+   * kit (CodeView, Kbd, the Editor's code block) silently rendered in Inter.
    */
   --font-mono:
     var(--font-code, ui-monospace), "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono",
     monospace;
 
   /*
-   * Типографическая шкала.
+   * Typographic scale.
    *
-   * Выведена из фактически используемого, а не изобретена: до неё размеры
-   * стояли восемью значениями, три из которых произвольные (`text-[13px]`,
-   * `text-[11px]`, `text-[26px]`). Семь ступеней покрывают все восемь.
+   * Derived from what is actually used, not invented: before it, sizes
+   * came in eight values, three of which were arbitrary (`text-[13px]`,
+   * `text-[11px]`, `text-[26px]`). Seven steps cover all eight.
    *
-   * СТРОЧНЫЙ БОКС ЗАДАН У КАЖДОЙ СТУПЕНИ, и это не украшение. Во-первых, без
-   * него высота выводится из множителя `1.5` и получается дробной — ровно так
-   * триггер `Select` разошёлся с полем на 2.5px. Во-вторых, `--text-sm` здесь
-   * ПЕРЕОПРЕДЕЛЯЕТ штатные 14/20 Tailwind на 13/20, и без явного бокса
-   * переопределение утащило бы за собой ещё и высоту строки.
+   * EVERY STEP HAS AN EXPLICIT LINE BOX, and this is not decoration. First, without
+   * it the height is derived from the `1.5` multiplier and comes out fractional, which is exactly
+   * how
+   * the `Select` trigger drifted 2.5px from its field. Second, `--text-sm` here
+   * OVERRIDES Tailwind's default 14/20 with 13/20, and without an explicit box
+   * the override would also carry the line height along.
    *
-   * Числа боксов взяты у Tailwind, чтобы ступени совпадали с привычными:
-   * 12/16, 14/20, 16/24, 20/28 — его же пары. Своих два: `caption` 11/16 и
+   * The box values are taken from Tailwind so the steps match familiar ones:
+   * 12/16, 14/20, 16/24, 20/28 are Tailwind's own pairs. The kit adds two: `caption` 11/16 and
    * `2xl` 26/32.
    *
-   * `--text-md` — ступень, которой у Tailwind нет (у него `base`). Заведена,
-   * потому что шкала кита начинается ниже: рабочий размер здесь 13px, и
-   * называть 14px «базовым» значило бы врать про то, что чаще всего стоит.
+   * `--text-md` is a step that Tailwind does not have (it calls it `base`). It is added
+   * because the kit's scale starts lower: the working size here is 13px, and
+   * calling 14px "base" would misstate what is most often used.
    */
   --text-caption: 11px;
   --text-caption--line-height: 16px;
@@ -222,106 +223,109 @@
   --text-2xl--line-height: 32px;
 
   /*
-   * ШКАЛА ДВИЖЕНИЯ: ступени длительности и кривые — ADR-0047.
+   * MOTION SCALE: duration steps and easing curves, see ADR-0047.
    *
-   * Стоит ПЕРЕД токенами анимаций намеренно: они на неё ссылаются, и читатель
-   * файла встречает объявление раньше ссылки. Для CSS порядок здесь безразличен,
-   * для человека — нет.
+   * It sits BEFORE the animation tokens on purpose: they reference it, and the reader
+   * meets the declaration before the reference. For CSS the order does not matter here,
+   * for a human it does.
    *
-   * Обе шкалы ЗАКРЫТЫ: четыре ступени и три кривые, и это сторожит
-   * `tests/motion.test.ts`. Пятая ступень — разбор в ADR, а не строка здесь;
-   * приём взят у белого списка исключений `reduce`.
+   * Both scales are CLOSED: four steps and three curves, and this is guarded by
+   * `tests/motion.test.ts`. A fifth step is a decision for an ADR, not a line here;
+   * the technique is borrowed from the `reduce` exception allowlist.
    *
-   * Имена по роли, а не по значению: `--duration-fast`, не `--duration-100`.
-   * Смена значения ступени тогда не требует переименования, и вызов в
-   * компоненте продолжает сообщать, ЗАЧЕМ выбрана эта ступень.
+   * Names follow the role, not the value: `--duration-fast`, not `--duration-100`.
+   * Changing a step's value then needs no rename, and the call site in
+   * a component still says WHY this step was chosen.
    */
   --duration-fast: 100ms;
   --duration-base: 150ms;
   --duration-moderate: 250ms;
   /*
-   * Без потребителя сегодня — и заведена намеренно. Шкала это не только выбор,
-   * но и граница: медленнее 400ms кит не двигает ничего. Не будь верхней
-   * ступени, первая же шторка во весь экран принесла бы 500ms «как исключение».
+   * No consumer uses it today, and it is there on purpose. The scale is not only a choice,
+   * but also a boundary: the kit moves nothing slower than 400ms. Without the top
+   * step, the first full-screen sheet would bring in 500ms as an "exception".
    */
   --duration-slow: 400ms;
 
   /*
-   * Кривые. `enter` и `exit` численно совпадают со штатными `--ease-out` и
-   * `--ease-in` Tailwind, и объявлены всё равно — по тому же доводу, что и
-   * `--animate-spin` ниже: имя обязано нести роль, а связь — быть видимой в
-   * файле кита, а не держаться на совпадении с дефолтной темой. Утилиты
-   * `ease-in` / `ease-out` в компонентах кита после этого не используются:
-   * «вход» и «выход» — это про оверлей, а не про направление кривой.
+   * Curves. `enter` and `exit` numerically match Tailwind's built-in `--ease-out` and
+   * `--ease-in`, but are declared anyway, for the same reason as
+   * `--animate-spin` below: a name must carry its role, and the link must be visible in
+   * the kit's file, not rest on a coincidence with the default theme. The utilities
+   * `ease-in` / `ease-out` are not used in kit components after this:
+   * "enter" and "exit" are about overlays, not about the direction of a curve.
    */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-enter: cubic-bezier(0, 0, 0.2, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
   /*
-   * Умолчание переходов Tailwind переводится на шкалу — половина смысла всей
-   * работы. Без этих двух строк `transition-colors` без явного класса
-   * длительности продолжал бы идти зашитые 150ms: число, совпадающее со
-   * ступенью случайно, а не по ссылке. Потребитель, переопределивший
-   * `--duration-base`, не сдвинул бы ни один такой переход — а их в ките
-   * тридцать с лишним.
+   * The Tailwind default transition is moved onto the scale, and that is half of the whole
+   * point of this work. Without these two lines, `transition-colors` with no explicit
+   * duration would keep the hard-coded 150ms: a number that matches the
+   * step by accident, not by reference. A consumer that overrode
+   * `--duration-base` would not shift a single such transition, and the kit has over
+   * thirty of them.
    *
-   * Следствие для компонента: длительность называется ТОЛЬКО там, где она
-   * отличается от умолчания. `transition-colors duration-base` — лишнее слово.
+   * For a component this means a duration is named ONLY where it differs from the default.
+   * `transition-colors duration-base`: the `duration-base` is redundant.
    */
   --default-transition-duration: var(--duration-base);
   --default-transition-timing-function: var(--ease-standard);
 
   /*
-   * Подложка окна. `standard`, а не `enter`: затемнение не «приходит на место»,
-   * оно меняет состояние всего экрана.
+   * Window scrim. `standard`, not `enter`: the dimming does not "arrive in place";
+   * it changes the state of the whole screen.
    *
-   * Было 0.4s — самая медленная анимация кита, и заметно медленная для
-   * подложки: фон дотемневал ПОЗЖЕ, чем появлялось само окно (0.3s), то есть
-   * порядок читался задом наперёд. Теперь обе на `moderate`, и подложка не
-   * отстаёт от окна.
+   * It was 0.4s, the kit's slowest animation, and noticeably slow for
+   * a scrim: the background finished darkening LATER than the window itself appeared (0.3s), so the
+   * order read backwards. Now both use `moderate`, and the scrim no longer
+   * lags behind the window.
    */
   --animate-fadein: fadein var(--duration-moderate) var(--ease-standard);
   --animate-sheetin: sheetin var(--duration-moderate) var(--ease-enter);
   --animate-shimmer: shimmer 1.6s linear infinite;
-  /* Бегущая треть полосы при неизвестном прогрессе. Едет положение, а не
-     ширина: анимация ширины дёргала бы полосу на каждом кадре. */
+  /* A moving third of the bar for unknown progress. It animates the position, not the
+     width: animating the width would jerk the bar on every frame. */
   --animate-progress-indeterminate: progressIndeterminate 1.2s ease-in-out infinite;
   --animate-imgFadeIn: imgFadeIn var(--duration-moderate) var(--ease-enter);
   /*
-   * Кастомная кривая `cubic-bezier(0.32, 0.72, 0, 1)` здесь была, и её не
-   * заменили на похожую — её сняли. Четвёртого имени она не заслужила: токен не
-   * читает ни один компонент, а «почти `enter`, но своя» — это не роль.
+   * A custom curve `cubic-bezier(0.32, 0.72, 0, 1)` used to be here, and it was not
+   * replaced with a similar one, it was removed. It did not earn a fourth name: no component
+   * reads the token, and "almost `enter`, but its own" is not a role.
    */
   --animate-modalExpand: modalExpand var(--duration-moderate) var(--ease-enter);
   --animate-tooltipIn: tooltipIn var(--duration-base) var(--ease-enter);
 
-  /* Вход якорной панели: `Popover`. Заведён по образцу `tooltipIn`, но
-     не равен ему — панель крупнее подсказки, поэтому смещение вдвое больше, а
-     сжатие вдвое меньше: сильный `scale` на большой поверхности читается как
-     колыхание, а не как появление. Прежде панель входила общим `fadein` (0.4s),
-     и для якорной панели это заметно медленно.
+  /* Anchored panel entrance: `Popover`. Modelled on `tooltipIn`, but
+     not identical to it: the panel is larger than a tooltip, so the offset is twice as large, and
+     the scale-down is half as large: a strong `scale` on a big surface reads as
+     a wobble, not an appearance. The panel used to enter with the shared `fadein` (0.4s),
+     which is noticeably slow for an anchored panel.
 
-     По ВРЕМЕНИ панель и подсказка теперь равны — обе `base`. Прежние 0.16 против
-     0.14 не были решением: разницу в 20 миллисекунд не различает ни глаз, ни
-     ревьюер, а объяснения ей не было ни в комментарии, ни в ADR. Панель
-     отличается от подсказки формой входа, и этого достаточно. */
+     In DURATION the panel and the tooltip are now equal: both `base`. The former 0.16 against
+     0.14 was not a decision: nobody can tell a 20 ms difference apart, neither by eye nor in
+     review,
+     and the difference had no explanation in either the comment or the ADR. The panel
+     differs from the tooltip by the shape of its entrance, and that is enough. */
   --animate-popoverIn: popoverIn var(--duration-base) var(--ease-enter);
 
   /*
-   * ВЫХОД ОВЕРЛЕЕВ — зеркала входа, но не покадровые.
+   * OVERLAY EXITS mirror the entrances, but are not frame-by-frame reversals.
    *
-   * Каждый короче своего входа на ступень: 250→150 у подложки и окна, 150→100 у
-   * подсказки и панели. Правило «выход короче входа» берётся у Carbon и M3, и на
-   * шкалу оно легло без новой ступени — довод в пользу её состава, а не
-   * совпадение.
+   * Each is one step shorter than its entrance: 250→150 for the scrim and the window, 150→100 for
+   * the
+   * tooltip and the panel. The "exit is shorter than entrance" rule comes from Carbon and M3, and
+   * it fit the
+   * scale without a new step: an argument for its makeup, not a
+   * coincidence.
    *
-   * Кривая у всех `exit`: уход ускоряется прочь, тогда как вход замедлялся к
-   * месту. До этой волны `--ease-exit` не читал никто.
+   * All `exit` curves accelerate away, whereas entrances decelerate into
+   * place. Before this change, nothing read `--ease-exit`.
    *
-   * Смещение при уходе ВДВОЕ МЕНЬШЕ, чем при входе, и в ту же сторону, откуда
-   * панель пришла. Полное зеркало читается как отскок: элемент словно
-   * отталкивается от места, на котором только что стоял.
+   * The offset on exit is HALF the entrance offset, and it goes the same way the panel came from.
+   * A full mirror reads as a bounce: the element seems to push off
+   * from the spot it has just left.
    */
   --animate-fadeout: fadeout var(--duration-base) var(--ease-exit);
   --animate-sheetout: sheetout var(--duration-base) var(--ease-exit);
@@ -329,17 +333,17 @@
   --animate-popoverOut: popoverOut var(--duration-fast) var(--ease-exit);
 
   /*
-   * УХОД СТРОКИ СПИСКА — тот же уход, но со смыканием соседей.
+   * LIST ROW EXIT is the same exit, but with the neighbors closing up.
    *
-   * У оверлея место не освобождается: он лежит над содержимым. У строки —
-   * наоборот, и в этом вся цена резкого исчезновения: соседние строки смыкаются
-   * в один кадр, а вместе с ними подпрыгивает всё, что ниже. Поэтому высота,
-   * отступы и линия разделителя схлопываются ТЕМ ЖЕ движением, а не после него.
+   * An overlay does not free up space: it sits on top of the content. A row does: the
+   * opposite. That is the whole cost of an abrupt disappearance: the neighboring rows close up
+   * in a single frame, and everything below them jumps with them. So the height,
+   * the padding and the divider line collapse with THE SAME motion, not after it.
    *
-   * Высота приходит переменной `--row-exit-h`, и иначе быть не может: `height`
-   * не интерполируется от `auto`, а высота строки зависит от содержимого
-   * потребителя — списку задач с флажком и списку с аватаром она разная.
-   * Ставит её компонент, замерив строку в момент пропажи.
+   * The height comes in through the `--row-exit-h` variable, and it cannot be otherwise: `height`
+   * does not interpolate from `auto`, and a row's height depends on the consumer's content:
+   * a task list with checkboxes and a list with avatars have different heights.
+   * The component sets it by measuring the row at the moment it disappears.
    */
   --animate-rowout: rowout var(--duration-base) var(--ease-exit);
 
@@ -400,23 +404,24 @@
     }
   }
   /*
-   * НАМЕРЕННО переопределяет дефолтный `pulse` Tailwind: наш вариант добавляет
-   * scale(0.85) к штатному миганию прозрачности. Токен объявлен явно (тайминг —
-   * штатный tailwind-овский), чтобы связь `animate-pulse` → эти keyframes была
-   * видна здесь, а не держалась на совпадении имён с дефолтной темой.
+   * DELIBERATELY overrides Tailwind's default `pulse`: our variant adds
+   * scale(0.85) to the standard opacity blink. The token is declared explicitly (the timing is
+   * Tailwind's standard one), so the link `animate-pulse` → these keyframes is
+   * visible here, rather than resting on a coincidence of names with the default theme.
    */
   --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
   /*
-   * Объявлен по той же причине, что и `pulse`, но ради другого: `spin` —
-   * ИСКЛЮЧЕНИЕ из правила `prefers-reduced-motion` (ADR-0043). Спиннер
-   * продолжает вращаться при `reduce`, потому что это единственное, чем кит
-   * сообщает «идёт работа»: остановленный кружок выглядит не спокойнее, а
-   * сломанным.
+   * Declared for the same reason as `pulse`, but for a different purpose: `spin` is
+   * an EXCEPTION to the `prefers-reduced-motion` rule (ADR-0043). The spinner
+   * keeps spinning under `reduce`, because it is the only signal the kit uses to show that work is
+   * in progress: a stopped spinner looks not calmer but
+   * broken.
    *
-   * Исключение, которого нет в файле, проверить нечем — гейт читает `styles.css`
-   * и о дефолтной теме Tailwind не знает. Значение и кейфреймы штатные, то есть
-   * поведение не меняется ни на кадр; меняется то, что теперь это видно.
+   * An exception that is not in the file cannot be verified: the gate reads `styles.css`
+   * and knows nothing about Tailwind's default theme. The value and the keyframes are the standard
+   * ones, so
+   * the behavior does not change by a single frame; what changes is that it is now visible.
    */
   --animate-spin: spin 1s linear infinite;
 
@@ -515,22 +520,22 @@
 }
 
 /*
- * Утилиты ступеней длительности — ADR-0047.
+ * Duration step utilities: ADR-0047.
  *
- * Объявлены руками, потому что у Tailwind 4 НЕТ пространства имён `--duration-*`:
- * `--ease-*` он читает из темы и заводит `ease-standard` сам, а `duration-*`
- * принимает только числа (`duration-150`) и произвольные значения. Без этих
- * четырёх правил ступень писалась бы как `duration-(--duration-fast)` — длиннее,
- * без подсказок редактора и без единого места, где её можно было бы найти.
+ * Declared by hand, because Tailwind 4 has NO `--duration-*` namespace:
+ * it reads `--ease-*` from the theme and generates `ease-standard` itself, but `duration-*`
+ * accepts only numbers (`duration-150`) and arbitrary values. Without these
+ * four rules, a step would be written as `duration-(--duration-fast)`: longer,
+ * with no editor hints and no single place where it could be found.
  *
- * `@utility` из ИМПОРТИРОВАННОГО файла работает — проверено сборкой, как в своё
- * время `@plugin` и `@theme` (комментарий в начале файла). Потребителю
- * по-прежнему хватает двух строк импорта.
+ * `@utility` from an IMPORTED file works: verified by the build, as was the case for
+ * `@plugin` and `@theme` (see the comment at the top of the file). The consumer
+ * still needs only the two import lines.
  *
- * `--tw-duration` ставится наравне с `transition-duration` — ровно так устроены
- * штатные `duration-*`. Через эту переменную `transition-*` читает длительность,
- * и без неё ступень зависела бы от того, в каком порядке Tailwind разложил
- * утилиты в собранном файле.
+ * `--tw-duration` is set alongside `transition-duration`, which is exactly how the
+ * built-in `duration-*` utilities work. Through this variable `transition-*` reads the duration,
+ * and without it the step would depend on the order in which Tailwind laid out
+ * the utilities in the built file.
  */
 @utility duration-fast {
   --tw-duration: var(--duration-fast);
@@ -568,43 +573,46 @@
 }
 
 /*
- * ── Слой 1: примитивы ────────────────────────────────────────────────────────
+ * ── Layer 1: primitives ──────────────────────────────────────────────────────
  *
- * Палитра: цвет как значение, без роли и без темы. Здесь НЕТ семантики —
- * `--od-slate-1` не знает, что он фон приложения; это знает слой 2.
+ * The palette: color as a raw value, with no role and no theme. There is NO semantics here:
+ * `--od-slate-1` does not know it is the app background; layer 2 knows that.
  *
- * Устройство ramp'ов. Их три, по одному на тему, и это не дублирование:
- * нейтрали каждой темы подобраны руками под свою подложку (тёмная холодно-серая,
- * светлая с голубой нотой, сумрак сине-стальной), и свести их к одной шкале
- * значило бы перекрасить две темы из трёх. Внутри ramp'а шаг растёт по
- * светлоте: 1 — самый тёмный, 12 — самый светлый. У тонов та же логика, шагов
- * меньше — ровно столько, сколько реально используется.
+ * How the ramps are built. There are three, one per theme, and this is not duplication:
+ * the neutrals of each theme are picked by hand for its own background (a cool dark gray,
+ * a light one with a blue note, and the dim one in blue-steel), and merging them into one scale
+ * would recolor two of the three themes. Within a ramp, the step grows with
+ * lightness: 1 is the darkest, 12 is the lightest. Tones follow the same logic, with fewer steps,
+ * exactly as many as are actually used.
  *
- * Полупрозрачный примитив называется `--od-<семья>-<шаг базы>-a<альфа>`:
- * `--od-blue-4-a16` — четвёртый шаг синего с альфой 0.16. Альфа не вычисляется
- * из сплошного цвета через `color-mix`, а зашита в значение, и это осознанно:
- * `scripts/contrast.mjs` разбирает `var(--x)` и готовые цвета, но не
- * вычисляемые выражения. Считай кит `*-soft` через `color-mix` — гейт контраста
- * ослеп бы ровно на тех токенах, ради которых написан.
+ * A translucent primitive is named `--od-<family>-<base step>-a<alpha>`:
+ * `--od-blue-4-a16` is the fourth blue step with alpha 0.16. The alpha is not computed
+ * from the solid color via `color-mix`; it is baked into the value, and this is deliberate:
+ * `scripts/contrast.mjs` parses `var(--x)` and literal colors, but not
+ * computed expressions. If the kit's `*-soft` tokens were computed via `color-mix`, the contrast
+ * gate
+ * would be blind on exactly the tokens it exists for.
  *
- * Два шага объявлены только как база для полупрозрачных и сплошными не
- * используются — `--od-blue-4` (#1f7ae0) и `--od-red-4` (#e0594b). Они на
- * полтона отличаются от соседних `--od-blue-3` (#1e76da) и `--od-red-2`
- * (#da3c2b), которыми покрашены сами тона. Расхождение историческое: заливка и
- * её полупрозрачная версия калибровались в разные заходы. Здесь оно не
- * чинится — правка сдвинула бы контраст, а волна 16 обещает не менять ни
- * одного вычисляемого значения; см. `tasks/plan.md`, Task 6.
+ * Two steps are declared only as a base for translucent ones and are not used solid:
+ * `--od-blue-4` (#1f7ae0) and `--od-red-4` (#e0594b). They differ by half a tone from the
+ * neighboring
+ * `--od-blue-3` (#1e76da) and `--od-red-2`
+ * (#da3c2b), which paint the tones themselves. The gap is historical: the fill and its
+ * translucent version were calibrated in different passes. It is not fixed here, because a fix
+ * would shift the contrast, and wave 16 promises not to change a single computed value;
+ * see `tasks/plan.md`, Task 6.
  *
- * Чего в этом слое НЕТ и почему. Радиусы, кегли и анимации остаются там, где
- * лежали: они и так примитивны и от темы не зависят, второе имя для них было бы
- * обрядом. Тени и градиенты — композиции из геометрии и цвета, а не палитра:
- * они остаются литеральными на слое 2.
+ * What this layer does NOT contain, and why. Radii, type sizes and animations stay where
+ * they were: they are primitive already and do not depend on the theme, so a second name for them
+ * would be
+ * ritual. Shadows and gradients are compositions of geometry and color, not a palette:
+ * they stay literal in layer 2.
  *
- * Потребителю переопределять примитивы не нужно и не поддерживается: точка
- * правки — семантика и блок бренда, см. `docs/theming.md`.
+ * The consumer does not need to override primitives, and it is not supported: the place to change
+ * things is semantics and the brand block, see `docs/theming.md`.
  */
 :root {
-  /* Нейтрали тёмной темы */
+  /* Dark theme neutrals */
   --od-slate-1: #26272d;
   --od-slate-1-a72: rgba(38, 39, 45, 0.72);
   --od-slate-2: #2e2f36;
@@ -619,7 +627,7 @@
   --od-slate-11: #dadce4;
   --od-slate-12: #f4f5f8;
 
-  /* Нейтрали светлой темы */
+  /* Light theme neutrals */
   --od-cloud-1: #17212b;
   --od-cloud-2: #45515f;
   --od-cloud-3: #545f6e;
@@ -634,7 +642,7 @@
   --od-cloud-11: #f8fafc;
   --od-cloud-12: #ffffff;
 
-  /* Нейтрали сумрака */
+  /* Dim theme neutrals */
   --od-navy-1: #15202b;
   --od-navy-1-a72: rgba(21, 32, 43, 0.72);
   --od-navy-2: #1e2732;
@@ -649,7 +657,7 @@
   --od-navy-11: #afb8c1;
   --od-navy-12: #f7f9f9;
 
-  /* Синий — акцент по умолчанию */
+  /* Blue: the default accent */
   --od-blue-1: #1767c2;
   --od-blue-2: #1c6cc6;
   --od-blue-3: #1e76da;
@@ -663,7 +671,7 @@
   --od-blue-6: #7fc1ff;
   --od-blue-7: #e8f1ff;
 
-  /* Зелёный — тон success */
+  /* Green: the success tone */
   --od-green-1: #17724c;
   --od-green-2: #1f9d68;
   --od-green-2-a12: rgba(31, 157, 104, 0.12);
@@ -671,7 +679,7 @@
   --od-green-3-a12: rgba(63, 180, 127, 0.12);
   --od-green-4: #7ad1a9;
 
-  /* Янтарный — тон warning */
+  /* Amber: the warning tone */
   --od-amber-1: #895a0d;
   --od-amber-2: #c98512;
   --od-amber-2-a14: rgba(201, 133, 18, 0.14);
@@ -679,7 +687,7 @@
   --od-amber-3-a13: rgba(240, 179, 65, 0.13);
   --od-amber-4: #f2bf5f;
 
-  /* Красный — тон danger */
+  /* Red: the danger tone */
   --od-red-1: #b82d2d;
   --od-red-2: #da3c2b;
   --od-red-3: #d14343;
@@ -688,7 +696,7 @@
   --od-red-4-a12: rgba(224, 89, 75, 0.12);
   --od-red-5: #eea8a0;
 
-  /* Фиолетовый — второй акцент */
+  /* Violet: the second accent */
   --od-violet-1: #5947e0;
   --od-violet-2: #5744e9;
   --od-violet-3: #6d5df0;
@@ -698,22 +706,22 @@
   --od-violet-4: #b8b2f8;
   --od-violet-4-a30: rgba(184, 178, 248, 0.3);
 
-  /* Индиго — дополнительный тон (`accent-alt`) */
+  /* Indigo: an extra tone (`accent-alt`) */
   --od-indigo-1: #4f7be8;
   --od-indigo-1-a14: rgba(79, 123, 232, 0.14);
   --od-indigo-2: #7d63ef;
   --od-indigo-2-a14: rgba(125, 99, 239, 0.14);
 
-  /* Лаймовый — тон draft */
+  /* Lime: the draft tone */
   /*
-   * Оттенки пользовательских меток.
+   * Colors of user labels.
    *
-   * СВОИ СТУПЕНИ, А НЕ ПЕРЕИСПОЛЬЗОВАННЫЕ СТУПЕНИ ТОНОВ, и это решение.
-   * Заявка просит зелёный, янтарный и красный — то есть ровно те оттенки,
-   * которыми кит обозначает успех, предупреждение и ошибку. Возьми метка
-   * значение тона буквально — и кружок рядом с проектом прочитается как
-   * статус. Поэтому ступени сдвинуты: метка узнаётся как метка по месту и
-   * форме, а по цвету не совпадает со смыслом ни в одной теме.
+   * THEIR OWN STEPS, NOT REUSED TONE STEPS: this is a deliberate decision.
+   * The brief names green, amber and red, that is, exactly the shades
+   * the kit uses for success, warning and error. If a label took the tone value literally,
+   * the dot next to a project would read as a status.
+   * So the steps are shifted: a label is recognized as a label by its place and
+   * shape, and in no theme does its color match a status meaning.
    */
   --od-label-blue-d: #4c9aff;
   --od-label-violet-d: #9b8cff;
@@ -734,14 +742,14 @@
   --od-label-steel-l: #4b6b8a;
 
   /*
-   * Подложки маркера Редактора. Яркие — `yellow`, `green`, `pink`:
-   * как у настоящего текстовыделителя, одни и те же во всех темах, HSL со
-   * светлотой 75 % и насыщенностью 100 % (оттенки 50°, 100°, 330°), а текст на
-   * них всегда тёмный — `--od-marker-text`. Остальные шесть — прежние названия
-   * цвета, как в Notion, «читаемые»: Схема и показ их понимают, меню
-   * не предлагает, а значения не менялись. Суффикс `-d` — тёмные приглушённые
-   * (под `fg-0` светлого текста), `-l` — пастель (под `fg-0` тёмного). Читает их
-   * токен `--marker-<имя>` компонентного слоя.
+   * Backgrounds of the Editor's marker. Bright ones: `yellow`, `green`, `pink`:
+   * like a real text highlighter, the same in every theme: HSL with
+   * 75% lightness and 100% saturation (hues 50°, 100°, 330°), and the text on
+   * them is always dark, `--od-marker-text`. The other six keep their former names,
+   * as in Notion, "readable": the Scheme and the Showcase understand them, the menu
+   * does not offer them, and their values have not changed. The `-d` suffix means dark, muted
+   * (for light `fg-0` text), `-l` means pastel (for dark `fg-0` text). The component-layer
+   * token `--marker-<name>` reads them.
    */
   --od-marker-yellow: #ffea80;
   --od-marker-green: #aaff80;
@@ -770,36 +778,36 @@
   --od-lime-4: #d9f99d;
 
   /*
-   * Тушь — нейтральная тёмная подложка инверсной поверхности в светлой теме.
-   * Своя ступень, а не `cloud-1`: тот синеват и читается как
-   * цвет текста, а плашке над выделением нужен чистый тёмно-серый, как у
-   * меню выделения Notion и Google Docs.
+   * Ink: a neutral dark background for the inverse surface in the light theme.
+   * Its own step, not `cloud-1`: that one is bluish and reads as
+   * text color, while the chip above a selection needs a clean dark gray, like the
+   * selection menus in Notion and Google Docs.
    */
   --od-ink-1: #1f1f1f;
   --od-ink-2: #333333;
   --od-ink-3: #4a4a4a;
 
-  /* Подложка оверлеев */
+  /* Overlay scrim */
   --od-scrim-dark: rgba(6, 7, 9, 0.78);
   --od-scrim-light: rgba(236, 242, 248, 0.78);
 
   /*
-   * ── Слой 2: семантика ──────────────────────────────────────────────────────
+   * ── Layer 2: semantics ─────────────────────────────────────────────────────
    *
-   * Роль как значение: что чем красится. Каждый токен — присвоение примитива
-   * роли, и только здесь тема имеет смысл. Блоки ниже (`[data-theme]`,
-   * `[data-accent]`) переопределяют те же роли другими примитивами.
+   * A role as a value: what paints what. Each token assigns a primitive
+   * to a role, and only here does the theme have meaning. The blocks below (`[data-theme]`,
+   * `[data-accent]`) override the same roles with other primitives.
    *
-   * Слои живут в ОДНОМ блоке `:root`, а не в двух, и это не небрежность:
-   * `scripts/contrast.mjs` собирает базовые значения по ПЕРВОМУ совпадению
-   * селектора `:root`. Раздели слои на два блока — и гейт контраста прочитал
-   * бы палитру вместо ролей, упав на первом же токене. Разделение остаётся
-   * комментарием, а не селектором.
+   * The layers live in ONE `:root` block, not two, and this is not carelessness:
+   * `scripts/contrast.mjs` collects the base values from the FIRST match of the
+   * `:root` selector. Split the layers into two blocks and the contrast gate would read
+   * the palette instead of the roles and fail on the first token. The separation stays
+   * a comment, not a selector.
    *
-   * По той же причине в комментариях этого файла не пишется открывающая
-   * фигурная скобка: разбор в скрипте считает скобки в тексте, не отличая
-   * комментарий от кода, и одна лишняя уводит счётчик в бесконечный цикл.
-   * Проверено дорого — на этой самой правке.
+   * For the same reason, this file's comments do not contain an opening curly brace:
+   * the script's parser counts braces in the text without telling a comment from code,
+   * and one extra brace sends the counter into an infinite loop.
+   * This was verified the hard way, on this very edit.
    */
   --surface-app: var(--od-slate-1);
   --surface-panel: var(--od-slate-2);
@@ -808,19 +816,19 @@
   --surface-contrast: var(--od-slate-7);
 
   /*
-   * Инверсная поверхность — плашка, которая обязана отличаться от
-   * всего вокруг: меню выделения Редактора над текстом. Светлая в тёмных
-   * темах, тёмная в светлой. Четыре роли: подложка, текст и значки на ней,
-   * наведение и нажатие; пятая — `--accent-on-inverse` ниже, контур фокуса.
+   * The inverse surface is a chip that must stand out from
+   * everything around it: the Editor's selection menu over text. Light in the dark
+   * themes, dark in the light one. Four roles: the background, the text and icons on it,
+   * hover and pressed; the fifth is `--accent-on-inverse` below, the focus ring.
    *
-   * СВОЯ ГРУППА, А НЕ `surface-contrast`. Тот — ступень той же шкалы
-   * подложек (полоса прокрутки, `bg-4`) и отличается от панели на шаг, а не
-   * знаком. Плашка над текстом шагом не обходится: она стоит прямо на
-   * Документе, и одна ступень яркости слилась бы с ним.
+   * ITS OWN GROUP, NOT `surface-contrast`. That one is a step of the same surface scale
+   * (the scrollbar, `bg-4`) and differs from the panel by one step, not
+   * by sign. A chip over text cannot get by with a step: it sits right on
+   * the Document, and one brightness step would merge into it.
    *
-   * Сумрак не переопределяет: светлая плашка годится обеим тёмным темам.
-   * Бренд и акцент меняют только контур фокуса — подложка нейтральна.
-   * Пары контраста — `scripts/contrast.mjs`; решение — ADR-0055.
+   * The dim theme does not override it: the light chip suits both dark themes.
+   * Brand and accent change only the focus ring; the background is neutral.
+   * Contrast pairs: `scripts/contrast.mjs`; the decision is ADR-0055.
    */
   --surface-inverse: var(--od-cloud-11);
   --surface-inverse-hover: var(--od-cloud-8);
@@ -828,12 +836,12 @@
   --text-on-inverse: var(--od-cloud-1);
 
   /*
-   * Шкала подписей держит три ступени контраста в каждой теме: secondary ≥ 7.5,
-   * muted ≥ 6.0, muted-2 ≥ 4.5 (по худшей из подложек `--surface-app` /
-   * `--surface-panel`). Нижняя ступень — это AA для текста; две верхние взяты
-   * с запасом не ради нормы, а чтобы ступени остались различимы. Подтянуть
-   * только muted-2 было дешевле, но тогда в `light` и `dim` он сравнялся бы
-   * с muted (4.51 против 4.52), и три уровня иерархии превратились бы в два.
+   * The caption scale holds three contrast steps in every theme: secondary ≥ 7.5,
+   * muted ≥ 6.0, muted-2 ≥ 4.5 (against the worst of the backgrounds `--surface-app` /
+   * `--surface-panel`). The lowest step is AA for text; the two upper ones are taken
+   * with headroom not for the norm's sake, but so the steps stay distinguishable. Raising
+   * only muted-2 would have been cheaper, but then in `light` and `dim` it would equal
+   * muted (4.51 against 4.52), and the three levels of hierarchy would collapse into two.
    */
   --text-primary: var(--od-slate-12);
   --text-secondary: var(--od-slate-11);
@@ -843,14 +851,14 @@
   --text-on-accent: var(--od-cloud-12);
 
   /*
-   * Текст на заливках `warning` и `success`. Белый на них недостижим: на жёлтом
-   * он даёт 1.87 при требуемых 4.5, и подбором оттенка это не чинится — чтобы
-   * дотянуть, жёлтый пришлось бы затемнить до коричневого. Поэтому у этих двух
-   * тонов `solid` устроен иначе, чем у остальных: тёмный текст вместо
-   * `--text-on-accent`. Отступление осознанное, см. docs/palette.md.
+   * Text on the `warning` and `success` fills. White is unreachable on them: on yellow
+   * it gives 1.87 against the required 4.5, and tweaking the shade does not fix this: to get there
+   * the yellow would have to be darkened to brown. So these two tones have a `solid` that
+   * is built differently from the others: dark text instead of
+   * `--text-on-accent`. The deviation is deliberate, see docs/palette.md.
    *
-   * Объявлены один раз и не переопределяются по темам: значение проходит 4.5:1
-   * против обеих заливок во всех трёх темах (5.31–8.71).
+   * Declared once and not overridden per theme: the value passes 4.5:1
+   * against both fills in all three themes (5.31–8.71).
    */
   --text-on-warning: var(--od-cloud-1);
   --text-on-success: var(--od-cloud-1);
@@ -859,16 +867,16 @@
   --border-soft: var(--od-slate-4);
 
   /*
-   * У каждого тона два токена, потому что у него две несовместимые роли.
+   * Each tone has two tokens, because it has two incompatible roles.
    *
-   *   --tone         заливка `solid`: под белым текстом, поэтому ТЕМНЕЕ
-   *   --tone-strong  тот же тон как текст, рамка и индикатор: на подложке,
-   *                  поэтому в тёмных темах СВЕТЛЕЕ, в светлой темнее
+   *   --tone         the `solid` fill: under white text, so DARKER
+   *   --tone-strong  the same tone as text, border and indicator: on a background,
+   *                  so LIGHTER in dark themes and darker in the light one
    *
-   * Одним значением обе роли не закрыть: `#e0594b` даёт 3.68 под белым текстом
-   * (нужно темнее) и 3.18 как текст на панели (нужно светлее). Пара `accent` /
-   * `accent-strong` жила так с самого начала — остальные тона просто приведены
-   * к тому же устройству.
+   * One value cannot cover both roles: `#e0594b` gives 3.68 under white text
+   * (it needs to be darker) and 3.18 as text on a panel (it needs to be lighter). The `accent` /
+   * `accent-strong` pair has worked this way from the start; the other tones were simply brought
+   * to the same setup.
    */
   --accent: var(--od-blue-3);
   --accent-hover: var(--od-blue-5);
@@ -876,38 +884,39 @@
   --accent-strong: var(--od-blue-6);
   --focus-ring: var(--od-blue-4-a20);
   /*
-   * Акцент НА инверсной поверхности — контур фокуса в меню выделения. Это
-   * `accent-strong` противоположной темы: плашка в тёмной теме светлая, и
-   * ей нужен тёмный синий, как светлой теме. Поэтому у бренда и акцента он
-   * переопределяется зеркально к `accent-strong`.
+   * The accent ON the inverse surface is the focus ring in the selection menu. This is
+   * the `accent-strong` of the opposite theme: the chip is light in a dark theme, and
+   * it needs a dark blue, as in the light theme. So for the brand and the accent it is
+   * overridden as a mirror of `accent-strong`.
    */
   --accent-on-inverse: var(--od-blue-2);
   /*
-   * Заливка выделенного текста: глобальный `::selection` и роль
-   * `--rte-selection` Редактора. Раньше это был `accent-soft`, и выделение
-   * терялось во всех темах: 14–16 % альфы давали 1.1–1.3:1 к подложке, а в
-   * светлой `#e8f1ff` на `#edf2f7` не отличался от фона вовсе.
+   * Fill of selected text: the global `::selection` and the
+   * `--rte-selection` role of the Editor. It used to be `accent-soft`, and the selection
+   * was lost in every theme: 14–16% alpha gave 1.1–1.3:1 against the background, and in the
+   * light theme `#e8f1ff` on `#edf2f7` was not distinguishable from the background at all.
    *
-   * СВОЙ ТОКЕН, А НЕ ПЛОТНЕЕ `accent-soft`: на том держатся тона, плашки и
-   * выбранные пункты, и правка затронула бы их все.
+   * ITS OWN TOKEN, NOT A DENSER `accent-soft`: tones, chips and
+   * selected items rely on that one, and an edit would affect all of them.
    *
-   * 3:1 к подложке здесь НЕ ЦЕЛЬ, и это не уступка. В тёмной теме заливка,
-   * отличная от фона на 3:1, уже не держит 4.5:1 светлого текста поверх, а
-   * читаемость выделенного текста важнее. Ориентир — системные выделения:
-   * VS Code тёмный 1.96:1, macOS и VS Code светлые 1.5:1. Отсюда:
-   * в тёмных темах — светлая ступень акцента (1.7–2.0:1, текст ≥ 5.2),
-   * в светлой — насыщенная (1.5–1.6:1, текст ≥ 9.3). Текст поверх меряет
+   * A 3:1 ratio against the background is NOT the goal here, and this is not a concession. In a
+   * dark theme, a fill
+   * that differs from the background by 3:1 no longer holds 4.5:1 for the light text on top, while
+   * the readability of the selected text matters more. The reference is the system selections:
+   * VS Code dark is 1.96:1, macOS and VS Code light are 1.5:1. Hence:
+   * in dark themes, a light accent step (1.7–2.0:1, text ≥ 5.2),
+   * in the light one, a saturated step (1.5–1.6:1, text ≥ 9.3). The text on top is measured by
    * `npm run contrast`.
    *
-   * `--selection-light` — светлый вариант ПРИ ЛЮБОЙ теме приложения: его
-   * берёт белый лист Редактора (`surface="paper"`) в тёмном приложении, где
-   * `--selection` тёмный. Светлая тема присваивает его `--selection`, поэтому
-   * значение у них одно и рассинхрониться не может.
+   * `--selection-light` is the light variant under ANY app theme: it is
+   * used by the Editor's white sheet (`surface="paper"`) in a dark app, where
+   * `--selection` is dark. The light theme assigns it to `--selection`, so
+   * the two values are the same and cannot drift apart.
    *
-   * `--selection-dark` — зеркально: тёмный вариант ПРИ ЛЮБОЙ теме. Его берёт
-   * поле HTML-режима Редактора, тёмное и в светлой теме: светлое
-   * выделение с тёмным текстом светлой темы читалось на нём тёмным по
-   * тёмно-синему. Тёмные темы присваивают его `--selection`.
+   * `--selection-dark` is the mirror: the dark variant under ANY theme. It is used by
+   * the Editor's HTML-mode field, which is dark even in the light theme: a light
+   * selection with the dark text of the light theme read on it as dark on
+   * dark navy. Dark themes assign it to `--selection`.
    */
   --selection-dark: var(--od-blue-5-a45);
   --selection: var(--selection-dark);
@@ -927,59 +936,59 @@
   --danger-strong: var(--od-red-5);
 
   /*
-   * Несохранённые правки: «здесь тебя ждут», а не «здесь ошибка».
+   * Unsaved edits: "you are expected here", not "an error here".
    *
-   * Отдельный тон, а не `accent`, `warning` или `danger`, и каждое «не» —
-   * купленное. `accent` — цвет кнопки, которая эту пометку снимает: пометка и
-   * действие сливались бы в одно пятно. `warning` — янтарный, и на экране
-   * кампаний он уже занят живой валидацией («выберите день недели»); два
-   * тёплых тона с разным смыслом рядом не различаются. `danger` обещает, что
-   * что-то сломано, а несохранённый черновик — нормальное состояние работы.
+   * A separate tone, not `accent`, `warning` or `danger`, and each "not" was earned the hard way.
+   * `accent` is the color of the button that clears this mark: the mark and
+   * the action would merge into one blob. `warning` is amber, and on the campaigns screen
+   * it is already taken by live validation ("choose a day of the week"); two
+   * warm tones with different meanings side by side are not told apart. `danger` promises that
+   * something is broken, while an unsaved draft is a normal state of work.
    *
-   * ПОЧЕМУ ЛАЙМ. Круг оттенков занят почти целиком: красный 6°, янтарь 39°,
-   * зелёный 153°, бренд teal 173°, акцент 212°, индиго и ось violet 247–251°.
-   * Свободных промежутков два, и лайм (83°) стоит посередине большего: 57° до
-   * янтаря, 70° до зелёного, 116° до акцента. Пурпурный промежуток шире по
-   * числам, но упирается в ось `data-accent="violet"` — 20° при включённом
-   * фиолетовом акценте.
+   * WHY LIME. The hue wheel is almost fully taken: red 6°, amber 39°,
+   * green 153°, brand teal 173°, accent 212°, indigo and the violet axis 247–251°.
+   * There are two free gaps, and lime (83°) sits in the middle of the larger one: 57° to
+   * amber, 70° to green, 116° to the accent. The magenta gap is wider by
+   * the numbers, but it runs into the `data-accent="violet"` axis: only 20° remain
+   * with the violet accent on.
    *
-   * Прежде тон держала маджента (#f472b6): 117° до акцента против 116° у лайма,
-   * то есть по разносу с акцентом замена равноценна — разменяны 37° до красного
-   * на 57° до янтаря. Контраст замена улучшает вдвое: худшая пара тона была 3.76
-   * (`draft` как рамка в dark), стала 6.61.
+   * The tone used to be held by magenta (#f472b6): 117° to the accent against 116° for lime,
+   * so in separation from the accent the swap is equivalent: 37° to red was traded
+   * for 57° to amber. The swap also doubles the contrast gain: the worst pair of the tone was 3.76
+   * (`draft` as a border in dark), now 6.61.
    *
-   * Возражение против жёлтого, из-за которого пара «синий + жёлтый» отклонена,
-   * лайма не касается: оно было про соседство с живой валидацией на одном
-   * экране, а не про тёплые оттенки вообще. От янтаря валидации лайм отделён и
-   * оттенком, и насыщенностью.
+   * The objection to yellow, which is why the "blue + yellow" pair was rejected,
+   * does not apply to lime: it was about sitting next to live validation on one
+   * screen, not about warm shades in general. Lime is separated from the validation amber both
+   * by hue and by saturation.
    *
-   * От алой пометки «в избранном» (#fb7185, жила в прикладном слое) отличается
-   * теперь настолько, что спутать их нельзя вовсе: сердечки в библиотеке и
-   * пометка правок не должны читаться как одно.
+   * It differs from the scarlet "favorite" mark (#fb7185, which lived in the application layer)
+   * now enough that they cannot be confused at all: hearts in the library and
+   * the draft mark must not read as the same thing.
    */
   --draft: var(--od-lime-3);
   --draft-soft: var(--od-lime-3-a14);
   --draft-strong: var(--od-lime-4);
 
   /*
-   * ── Метки пользователя ─────────────────────────────────────────────────────
+   * ── User labels ─────────────────────────────────────────────────────────────
    *
-   * Закрытый набор оттенков под то, что красит сам человек: проект, ярлык,
-   * категорию. Смысловые тоны для этого занимать нельзя — метка цвета
-   * `danger` читалась бы как ошибка, а тон перестал бы значить то, что значит.
+   * A closed set of shades for what the user colors themselves: a project, a tag,
+   * a category. Semantic tones must not be taken for this: a color label
+   * `danger` would read as an error, and the tone would stop meaning what it means.
    *
-   * НЕ ЗАВИСЯТ НИ ОТ АКЦЕНТА, НИ ОТ БРЕНДА. Оба оверлея переопределяют только
-   * `--accent*`, а метки смотрят прямо в примитивы: переключив акцент с синего
-   * на фиолетовый, пользователь не должен обнаружить, что все его проекты
-   * сменили цвет. Поэтому здесь `var(--od-label-…)`, а не `var(--accent)` —
-   * ссылка на роль внесла бы сюда чужую ось.
+   * They do NOT depend on the accent or the brand. Both overlays override only
+   * `--accent*`, while labels point straight at the primitives: switch the accent from blue
+   * to violet, and the user should not find that all their projects
+   * changed color. That is why this uses `var(--od-label-…)`, not `var(--accent)`:
+   * a reference to a role would bring in a foreign axis.
    *
-   * Имена по оттенку, а не по назначению (`label-1`, `project-a`): имя уезжает
-   * в базу потребителя ключом и переживает смену значений, а назначение у
-   * каждого потребителя своё.
+   * Names follow the shade, not the purpose (`label-1`, `project-a`): the name goes
+   * into the consumer's database as a key and survives a change of values, while the purpose
+   * is each consumer's own.
    *
-   * Сумрак их не переопределяет: подложки у него темнее тёмной темы, и
-   * оттенки, прошедшие порог на ней, проходят и здесь. Проверяет `npm run contrast`.
+   * The dim theme does not override them: its backgrounds are darker than the dark theme's, and
+   * shades that clear the threshold there clear it here too. Checked by `npm run contrast`.
    */
   --label-blue: var(--od-label-blue-d);
   --label-violet: var(--od-label-violet-d);
@@ -997,58 +1006,58 @@
   --shadow-2: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
 
   /*
-   * ── Слой 3: компонентные токены ────────────────────────────────────────────
+   * ── Layer 3: component tokens ──────────────────────────────────────────────
    *
-   * Единственные точки правки вида, специфичные для семьи компонентов, а не
-   * для системы. Список закрытый и намеренно короткий: компонентный токен
-   * заводится тогда, когда у семьи есть НАСТОЯЩАЯ причина отличаться от
-   * семантики, а не «на всякий случай». Токен без читателя не заводится вовсе.
+   * The only places to change the look that are specific to a component family, not to
+   * the system. The list is closed and deliberately short: a component token is added
+   * only when the family has a REAL reason to differ from
+   * the semantics, not "just in case". A token with no reader is not added at all.
    *
-   * Кто их читает:
-   *   --overlay-scrim   Dialog, Drawer, CommandPalette, ModalOverlay (подложка)
-   *   --modal-shadow    Dialog (тень модальной поверхности)
-   *   --topbar-bg       SelectionBar в прилипшем состоянии; с волны 17 — TopBar
-   *   --sidenav-w       SideNav и сетка AppShell (развёрнутая ширина)
-   *   --sidenav-w-collapsed  они же в иконочном режиме
+   * Who reads them:
+   *   --overlay-scrim   Dialog, Drawer, CommandPalette, ModalOverlay (scrim)
+   *   --modal-shadow    Dialog (shadow of the modal surface)
+   *   --topbar-bg       SelectionBar in the sticky state; from wave 17, TopBar
+   *   --sidenav-w       SideNav and the AppShell grid (expanded width)
+   *   --sidenav-w-collapsed  the same, in icon-only mode
    *
-   * `--topbar-bg` назван по роли, а не по единственному сегодняшнему читателю:
-   * это полупрозрачный фон поверхности уровня шапки. Переименовывать его в
-   * `--sticky-bar-bg` под текущего потребителя было бы правдой ровно до волны
-   * 17, где приезжает собственный `TopBar`.
+   * `--topbar-bg` is named by its role, not by its single reader today:
+   * it is the translucent background of a header-level surface. Renaming it to
+   * `--sticky-bar-bg` for the current consumer would be true only until wave
+   * 17, when the own `TopBar` arrives.
    *
-   * Что компонентным токеном НЕ является. `--shadow-1` и `--shadow-2` — шкала
-   * высоты уровня системы, их читают восемь семей и мост `@theme`; они лежат
-   * на слое 2. `--topbar-h` вообще не объявляется здесь: её публикует
-   * ПРИЛОЖЕНИЕ, а кит читает (`useStickyOffset`, ADR-0016) — это входящий
-   * контракт, а не токен кита. Радиусы и кегли — общая шкала, см. слой 1.
+   * What is NOT a component token: `--shadow-1` and `--shadow-2` are the elevation scale
+   * of the system level, read by eight families and the `@theme` bridge; they live
+   * in layer 2. `--topbar-h` is not declared here at all: the APP publishes it,
+   * and the kit reads it (`useStickyOffset`, ADR-0016): this is an incoming
+   * contract, not a kit token. Radii and type sizes are a shared scale, see layer 1.
    */
   --overlay-scrim: var(--od-scrim-dark);
   --topbar-bg: var(--od-slate-1-a72);
   --modal-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
 
   /*
-   * Ширины сайдбара — переменные, а НЕ пропы, и причина та же, по которой
-   * `--topbar-h` не пробрасывается через React (ADR-0016): значение нужно
-   * одновременно сайдбару и сетке `AppShell`, а раскладку мобильного режима
-   * переключает CSS, а не JavaScript (ADR-0018). Число, идущее пропом в два
-   * компонента, — это ререндер ради того, что CSS умеет прочитать сам.
+   * Sidebar widths are variables, NOT props, and the reason is the same as why
+   * `--topbar-h` is not passed through React (ADR-0016): the value is needed
+   * by the sidebar and the `AppShell` grid at once, and CSS, not JavaScript, switches the mobile
+   * layout (ADR-0018). A number passed as a prop to two
+   * components is a re-render for something CSS can read on its own.
    *
-   * От темы не зависят и в блоках тем не повторяются: ширина не цвет.
-   * Значения — замер прежней оболочки во фронте, где они стояли инлайном.
+   * They do not depend on the theme and are not repeated in theme blocks: width is not color.
+   * The values were measured from the previous shell in the front end, where they were inline.
    */
   --sidenav-w: 240px;
   --sidenav-w-collapsed: 72px;
 
   /*
-    Шкала радиусов покрывает то, что действительно рисуется, а не то, что
-    хотелось бы. Две ступени добавлены задним числом, когда выяснилось, что
-    половина кита живёт мимо шкалы: `rounded-[10px]` встречался 21 раз, а
-    `rounded-[6px]` — семь, и ни того ни другого в ряду 8/12/16/20 не было.
+    The radius scale covers what is actually drawn, not what one would like.
+    Two steps were added after the fact, when it turned out that
+    half the kit lives outside the scale: `rounded-[10px]` appeared 21 times, and
+    `rounded-[6px]` seven times, and neither was in the 8/12/16/20 row.
 
-    `--r-control` названа по роли, а не по размеру, и это осознанно: 10px —
-    не «ступень между sm и md», а высота скругления самих контролов. Её носят
-    кнопка, оболочка поля, триггер Select, сегмент и тултип; менять её значит
-    менять вид всего продукта разом, и имя должно об этом говорить.
+    `--r-control` is named by role, not by size, deliberately: 10px is not
+    "a step between sm and md" but the corner radius of the controls themselves. It is used by
+    the button, the field shell, the Select trigger, the segment and the tooltip; changing it means
+    changing the look of the whole product at once, and the name should say so.
   */
   --r-xs: 6px;
   --r-sm: 8px;
@@ -1136,7 +1145,7 @@
   --draft-soft: var(--od-lime-2-a10);
   --draft-strong: var(--od-lime-1);
 
-  /* Метки: на светлых подложках те же оттенки берутся глубокими ступенями. */
+  /* Labels: on light backgrounds the same shades use the deep steps. */
   --label-blue: var(--od-label-blue-l);
   --label-violet: var(--od-label-violet-l);
   --label-teal: var(--od-label-teal-l);
@@ -1152,7 +1161,7 @@
   --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.72) inset, 0 1px 2px rgba(23, 33, 43, 0.06);
   --shadow-2: 0 18px 44px rgba(23, 33, 43, 0.1), 0 4px 10px rgba(23, 33, 43, 0.06);
 
-  /* Слой 3 — компонентные токены темы */
+  /* Layer 3: the theme's component tokens */
   --overlay-scrim: var(--od-scrim-light);
   --topbar-bg: var(--od-cloud-10-a84);
   --modal-shadow: 0 24px 60px rgba(23, 33, 43, 0.16);
@@ -1179,35 +1188,36 @@
   --shadow-2: 0 12px 40px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.45);
 
   /*
-   * Слой 3 — компонентные токены темы. `--overlay-scrim` сумрак не
-   * переопределяет: тёмная подложка модалки годится обеим тёмным темам.
+   * Layer 3: the theme's component tokens. The dim theme does not
+   * override `--overlay-scrim`: a dark modal scrim suits both dark themes.
    */
   --topbar-bg: var(--od-navy-1-a72);
   --modal-shadow: 0 30px 80px rgba(0, 0, 0, 0.75);
 }
 
 /*
- * Слой 3 — токены маркера Редактора (`--marker-<имя>`).
+ * Layer 3: Editor marker tokens (`--marker-<name>`).
  *
- * ОБЪЯВЛЕНЫ НА `[data-theme]` ЛЮБОГО ЭЛЕМЕНТА, а не на `:root[data-theme]`, как
- * остальные темы, и это нужно вложенной теме: область документа с
- * `surface="paper"` оборачивается в `data-theme="light"` внутри тёмного
- * приложения, и маркер в ней обязан взять светлое значение. Переменная
- * наследуется от ближайшего предка с темой, поэтому правил под каждую тему
- * потомком (`[data-theme] mark`) нет — проза читает только `var(--marker-…)`.
+ * DECLARED ON `[data-theme]` OF ANY ELEMENT, not on `:root[data-theme]` like
+ * the other themes. This is needed by a nested theme: a document area with
+ * `surface="paper"` is wrapped in `data-theme="light"` inside a dark
+ * app, and a marker inside it must take the light value. The variable
+ * is inherited from the nearest ancestor with a theme, so there are no rules per theme for
+ * a descendant (`[data-theme] mark`): prose reads only `var(--marker-…)`.
  *
- * Тёмный блок назван «любая тема, кроме светлой», а не по именам `dark` и
- * `dim`: так значения возвращаются и тёмной обёртке внутри светлой, а реестр
- * тем (`tests/themes.test.ts`) по-прежнему видит блок только у тех тем, у
- * которых он есть, — у тёмной его нет.
+ * The dark block is named "any theme except light", not by the names `dark` and
+ * `dim`: this way the values also reach a dark wrapper inside a light one. The theme registry
+ * (`tests/themes.test.ts`) still sees the block only in the themes that declare it: the dark
+ * theme does not declare it.
  *
- * Моста `@theme` (`--color-marker-*`) у них нет намеренно: мост объявлен на
- * корне, и `var()` в нём подставляется там, то есть вложенная тема его не
- * меняет. Сумрак маркерам своих значений не даёт: тёмные подложки годятся
- * обеим тёмным темам, как у `--overlay-scrim`. Порядок значим: светлый блок
- * стоит ниже и перекрывает тёмный на корне с `data-theme="light"`. Блок ярких
- * маркеров темы не различает и от порядка не зависит: имён в тёмном и светлом
- * блоках у него нет.
+ * They have no `@theme` bridge (`--color-marker-*`) on purpose: the bridge is declared on
+ * the root, and `var()` is substituted there, so a nested theme does not
+ * change it. The dim theme gives the markers no values of their own: dark backgrounds suit
+ * both dark themes, as with `--overlay-scrim`. Order matters: the light block
+ * comes below and overrides the dark one on the root with `data-theme="light"`. The block of bright
+ * markers does not distinguish themes and does not depend on order: it has no names in the dark or
+ * light
+ * blocks.
  */
 :root,
 [data-theme]:not([data-theme="light"]) {
@@ -1220,10 +1230,10 @@
 }
 
 /*
- * Яркие маркеры (`yellow`, `green`, `pink`) и тёмный текст на них — ОДНО
- * значение во всех темах: блок без `:not(light)` и без светлой
- * пары, а значит, и в обёртке `surface="paper"`, и в тёмной вложенной теме.
- * Читаются прямой ссылкой `var(--marker-…)`, как остальные.
+ * Bright markers (`yellow`, `green`, `pink`) and the dark text on them are ONE
+ * value in all themes: a block without `:not(light)` and without a light
+ * pair, so it applies in the `surface="paper"` wrapper and in a dark nested theme alike.
+ * They are read by a direct `var(--marker-…)` reference, like the rest.
  */
 :root,
 [data-theme] {
@@ -1255,48 +1265,49 @@
 }
 
 /*
- * Единственное место, где тема и акцент не независимы.
+ * The only place where theme and accent are not independent.
  *
- * `--accent-strong` читается на подложке, а «читается» значит разное в тёмной
- * теме и в светлой: тёмной нужен светлый фиолетовый, светлой — тёмный. Одним
- * значением обе не закрыть, поэтому светлая тема переопределяет его отдельно.
- * Селектор из двух атрибутов специфичнее блока выше и стоит после него —
- * порядок здесь значим.
+ * `--accent-strong` is read on the background, and "readable" means different things in a dark
+ * and in a light theme: dark needs a light violet, light needs a dark one. One
+ * value cannot cover both, so the light theme overrides it separately.
+ * A selector with two attributes is more specific than the block above and comes after it:
+ * the order matters here.
  */
 :root[data-theme="light"][data-accent="violet"] {
   --accent-strong: var(--od-violet-2);
   --accent-on-inverse: var(--od-violet-4);
-  /* Блок акцента стоит ниже светлой темы и вернул бы тёмное выделение. */
+  /* The accent block sits below the light theme and would bring back the dark selection. */
   --selection: var(--selection-light);
 }
 
 /*
- * ── Слой 4: бренд ────────────────────────────────────────────────────────────
+ * ── Layer 4: brand ───────────────────────────────────────────────────────────
  *
- * Оверлей `[data-brand="…"]` — способ одеть кит в чужие цвета, не трогая ни
- * одного компонента. Блок ниже показывает механику целиком: он единственный,
- * что нужно написать, чтобы завести бренд.
+ * The `[data-brand="…"]` overlay is a way to dress the kit in another brand's colors without
+ * touching
+ * a single component. The block below shows the mechanism in full: it is the only
+ * thing you need to write to set up a brand.
  *
- * ПОРЯДОК В ФАЙЛЕ ЗНАЧИМ, и это не стиль, а работающее правило каскада.
- * `:root[data-brand]` и `:root[data-accent]` имеют ОДИНАКОВУЮ специфичность
- * (0,2,0) — при равной специфичности побеждает тот, кто ниже. Поэтому бренд
- * стоит после акцента: заданный бренд отменяет ось акцента целиком, а не
- * смешивается с ней. Для тем, где бренду нужно своё значение, селектор берёт
- * два атрибута (0,3,0) и стоит после парного блока темы с акцентом — по той же
- * причине. Сторожит `tests/token-layers.test.ts`.
+ * THE ORDER IN THE FILE MATTERS, and this is not a style choice but a working cascade rule.
+ * `:root[data-brand]` and `:root[data-accent]` have the SAME specificity
+ * (0,2,0): at equal specificity, the one lower in the file wins. So the brand
+ * comes after the accent: a set brand overrides the accent axis entirely, rather than
+ * mixing with it. For themes where the brand needs its own value, the selector takes
+ * two attributes (0,3,0) and comes after the paired theme-and-accent block, for the same
+ * reason. Guarded by `tests/token-layers.test.ts`.
  *
- * КАК ЗАВЕСТИ СВОЙ БРЕНД. Скопируйте два блока ниже, замените имя и значения.
- * Правило одно: бренд объявляет СВОИ примитивы внутри своего блока и
- * присваивает их семантике. Не переопределяйте чужие примитивы — `--od-blue-3`
- * принадлежит палитре кита, и его правка задела бы всё, что на нём стоит.
- * Полный разбор — `docs/theming.md`.
+ * HOW TO SET UP YOUR OWN BRAND. Copy the two blocks below and replace the name and the values.
+ * The rule is one: the brand declares ITS OWN primitives inside its block and
+ * assigns them to the semantics. Do not override someone else's primitives: `--od-blue-3`
+ * belongs to the kit's palette, and an edit there would affect everything that sits on it.
+ * The full walkthrough is in `docs/theming.md`.
  *
- * `teal` живёт в пакете как доказательство механики и как образец для копии.
- * Гейт контраста проверяет его наравне с базовым: бренд, не проходящий по
- * контрасту, — это бренд, которого нет.
+ * `teal` lives in the package as proof of the mechanism and as a template to copy.
+ * The contrast gate checks it on par with the base theme: a brand that fails
+ * the contrast check is a brand that does not exist.
  */
 :root[data-brand="teal"] {
-  /* Примитивы бренда: собственные, а не правка палитры кита. */
+  /* Brand primitives: their own, not an edit of the kit's palette. */
   --od-teal-1: #115e59;
   --od-teal-2: #0f766e;
   --od-teal-3: #14b8a6;
@@ -1306,13 +1317,13 @@
   --od-teal-3-a35: rgba(20, 184, 166, 0.35);
   --od-teal-2-a30: rgba(15, 118, 110, 0.3);
 
-  /* Семантика: те же роли, другие примитивы. */
+  /* Semantics: the same roles, other primitives. */
   --accent: var(--od-teal-2);
   --accent-hover: var(--od-teal-1);
   --accent-soft: var(--od-teal-3-a16);
   --accent-strong: var(--od-teal-4);
   --focus-ring: var(--od-teal-3-a20);
-  /* Контур фокуса на инверсной плашке — зеркально к `accent-strong`. */
+  /* The focus ring on the inverse chip mirrors `accent-strong`. */
   --accent-on-inverse: var(--od-teal-1);
   --selection-dark: var(--od-teal-3-a35);
   --selection: var(--selection-dark);
@@ -1320,49 +1331,49 @@
 }
 
 /*
- * Светлая тема ломает независимость бренда ровно там же, где ломала её у
- * фиолетового акцента: `--accent-strong` читается НА подложке, и светлому
- * фону нужен тёмный бирюзовый вместо светлого.
+ * The light theme breaks brand independence in exactly the place it broke it for the
+ * violet accent: `--accent-strong` is read ON the background, and the light
+ * background needs a dark teal instead of a light one.
  *
- * Взят самый тёмный шаг, а не второй: на `--accent-soft` поверх
- * `surface-panel-hover` второй давал 4.26 при требуемых 4.5 — гейт это и
- * показал. Пример не подогнан задним числом: бренд проходит контраст так же,
- * как его обязан проходить любой другой.
+ * The darkest step is taken, not the second: on `--accent-soft` over
+ * `surface-panel-hover` the second gave 4.26 against the required 4.5, and the gate
+ * showed exactly that. The example is not tuned after the fact: the brand passes contrast
+ * just as any other brand is required to.
  */
 :root[data-theme="light"][data-brand="teal"] {
   --accent-strong: var(--od-teal-1);
   --accent-on-inverse: var(--od-teal-4);
-  /* Блок бренда стоит ниже светлой темы и вернул бы тёмное выделение. */
+  /* The brand block sits below the light theme and would bring back the dark selection. */
   --selection: var(--selection-light);
 }
 
 /*
- * Тема подсветки блока кода Редактора (ADR-0051): GitHub Dark в
- * `dark` и `dim`, GitHub Light в `light`. Цвета взяты из `styles/github*.css`
- * highlight.js (BSD-3-Clause, NOTICE); `--rte-hl-variable` светлой темы —
- * `#953800` вместо `#e36209`, у которого 3.49:1 на белом.
+ * Syntax theme for the Editor's code block (ADR-0051): GitHub Dark in
+ * `dark` and `dim`, GitHub Light in `light`. The colors come from the `styles/github*.css`
+ * highlight.js files (BSD-3-Clause, NOTICE); the light theme's `--rte-hl-variable` is
+ * `#953800` instead of `#e36209`, which has 3.49:1 on white.
  *
- * ВТОРАЯ СИСТЕМА ЦВЕТА, И ОНА ОТДЕЛЬНО ОТ ТОКЕНОВ. Значения — литералы, а не
- * примитивы `--od-*`: это чужая готовая тема, и ни один токен кита на неё не
- * ссылается. Правила `.hljs-*` живут классами на контейнере Документа
- * (`src/editor/styles/codeTheme.ts`) и читают только эти переменные.
+ * A SECOND COLOR SYSTEM, SEPARATE FROM THE TOKENS. The values are literals, not
+ * `--od-*` primitives: this is a ready-made theme from elsewhere, and no kit token refers to it.
+ * The `.hljs-*` rules are classes on the Document container, and they read only
+ * these variables (`src/editor/styles/codeTheme.ts`).
  *
- * ПЕРЕМЕННЫЕ — НА ЭЛЕМЕНТЕ С `data-theme`, А НЕ ПРАВИЛА ПОД НИМ. Блок кода
- * наследует их от БЛИЖАЙШЕГО предка с темой: Документ в светлой «бумаге»
- * (`data-theme="light"` внутри тёмного приложения) получает GitHub Light, а
- * тёмный остров внутри светлой страницы — GitHub Dark. Правила вида
- * «тёмная тема → `.hljs-keyword` под ней» так не умеют: при вложенных темах они
- * спорят порядком в файле, и светлая бумага показала бы тёмные токены.
- * Живой каскад сторожит `tests-visual/interactions.spec.ts` («code theme»),
- * порядок блоков — `tests/rich-text-view.test.tsx`.
+ * VARIABLES ARE SET ON THE ELEMENT WITH `data-theme`, NOT ON RULES UNDER IT. The code block
+ * inherits them from the NEAREST ancestor with a theme: a Document on a light "paper"
+ * (`data-theme="light"` inside a dark app) gets GitHub Light, and a dark island inside a light
+ * page gets GitHub Dark. Rules of the form "dark theme → `.hljs-keyword` under it" do not work:
+ * with nested themes they compete by order in the file, and the light paper would show
+ * dark tokens.
+ * The live cascade is guarded by `tests-visual/interactions.spec.ts` ("code theme"),
+ * and the block order by `tests/rich-text-view.test.tsx`.
  *
- * `:where` держит специфичность нулевой: на `<html data-theme="light">`
- * совпадают оба блока, и светлый побеждает тем, что стоит ниже, — а
- * потребитель перекрывает любую переменную без борьбы за специфичность.
- * Тёмный блок назван «любая тема, кроме светлой», а не `dark` и `dim`
- * поимённо: `dark` — умолчание оси и своего блока не имеет
- * (`tests/themes.test.ts`), `dim` берёт GitHub Dark, а без атрибута — тёмная
- * тема, как у токенов кита.
+ * `:where` keeps the specificity at zero: on `<html data-theme="light">` both blocks match,
+ * and the light one wins by being lower in the file, while
+ * the consumer overrides any variable without a specificity fight.
+ * The dark block is named "any theme except light", not `dark` and `dim` by name:
+ * `dark` is the default of the axis and has no block of its own
+ * (`tests/themes.test.ts`), `dim` takes GitHub Dark, and without the attribute it is the dark
+ * theme, as with the kit's tokens.
  */
 :where(:root, [data-theme]:not([data-theme="light"])) {
   --rte-code-block-background: #0d1117;
@@ -1391,16 +1402,16 @@
 }
 
 /*
- * Поле HTML-режима Редактора — ВСЕГДА ТЁМНОЕ, ЦВЕТОМ КИТА. Решение
- * владельца: режим читается как «код», и поле тёмное в любой теме, но не
- * чужой GitHub-палитрой Блока кода, а своей. В тёмных темах — самая глубокая
- * подложка текущей темы (`slate` у `dark`, `navy` у `dim`) с её текстом и
- * рамкой; в светлой теме и на листе `paper` — те же значения тёмной темы кита,
- * примитивами `slate`, потому что светлая тема своих тёмных подложек не имеет.
- * Ссылки на семантику вычисляются на элементе с `data-theme`, поэтому `dim`
- * получает свой `navy`, а вложенная светлая тема — тёмный `slate`. Новых пар
- * цвета нет: это текст тёмной темы на её подложке, их уже меряет гейт
- * контраста (`scripts/contrast.mjs`, `surface-app`).
+ * The Editor's HTML-mode field is ALWAYS DARK, IN THE KIT'S OWN COLOR. This is the owner's
+ * decision: the mode reads as "code", and the field is dark in any theme, but not in
+ * the Code block's foreign GitHub palette, rather in the kit's own. In dark themes, the deepest
+ * background of the current theme (`slate` for `dark`, `navy` for `dim`) with its text and
+ * border; in the light theme and on the `paper` sheet, the same values as the kit's dark theme,
+ * as `slate` primitives, because the light theme has no dark backgrounds of its own.
+ * Semantic references are resolved on the element with `data-theme`, so `dim`
+ * gets its own `navy`, and a nested light theme gets the dark `slate`. There are no new color
+ * pairs: this is the dark theme's text on its own background, and the contrast gate
+ * (`scripts/contrast.mjs`, `surface-app`) already measures them.
  */
 :where(:root, [data-theme]:not([data-theme="light"])) {
   --rte-source-background: var(--surface-app);
@@ -1413,7 +1424,8 @@
   --rte-source-background: var(--od-slate-1);
   --rte-source-foreground: var(--od-slate-12);
   --rte-source-border: var(--od-slate-6);
-  /* Выделение тёмной темы текущего акцента: поле тёмное, светлое выделение на нём тонуло. */
+  /* The dark theme's selection for the current accent: the field is dark, and a light selection
+     sank into it. */
   --rte-source-selection: var(--selection-dark);
 }
 
@@ -1458,17 +1470,17 @@
   }
 
   /*
-    Оверлей react-aria принимает указатель и внутри модального слоя Radix.
+    A react-aria overlay accepts the pointer inside a Radix modal layer.
 
-    Модальный `Dialog`/`Drawer` ставит `<body>` инлайновое `pointer-events: none`
-    и возвращает указатель только своим слоям. Панель `Menu` и список `Combobox`
-    живут в портале react-aria прямо под `<body>`, наследовали `none` и
-    выбирались только с клавиатуры. Селектор — тот же, по которому
-    `src/lib/overlay-layer.ts` узнаёт чужой слой (`ARIA_OVERLAY_SELECTOR`);
-    связку сторожит `tests/overlay-layers.test.tsx`.
+    A modal `Dialog`/`Drawer` sets an inline `pointer-events: none` on `<body>`
+    and returns the pointer only to its own layers. The `Menu` panel and the `Combobox` list
+    live in a react-aria portal directly under `<body>`, inherited `none` and
+    could be selected only with the keyboard. The selector is the same one by which
+    `src/lib/overlay-layer.ts` recognizes a foreign layer (`ARIA_OVERLAY_SELECTOR`);
+    the pairing is guarded by `tests/overlay-layers.test.tsx`.
 
-    Вне модального слоя правило ничего не меняет: `auto` там и так наследуется.
-    Слой `base` — чтобы утилитарный `pointer-events-none` по-прежнему побеждал.
+    Outside a modal layer the rule changes nothing: `auto` is inherited there anyway.
+    The `base` layer is so that the utility `pointer-events-none` still wins.
   */
   [data-rac][data-placement] {
     pointer-events: auto;
@@ -1504,11 +1516,12 @@ html[data-theme="dim"] {
   background: var(--surface-contrast);
 }
 
-/* Выделение — в слое base: вне слоя правило побеждало любую утилиту
-   `selection:` — каскад ставит неслоёное CSS выше слоёв при любой специфичности.
-   Редактор красит выделение своими ролями (`--rte-selection`, плотнее — поверх
-   маркера), и без слоя они молча не применялись: на маркере выделение было не
-   видно, а на светлом листе в тёмном приложении текст выделения шёл светлым. */
+/* The selection lives in the base layer: outside a layer, the rule beat any
+   `selection:` utility, because unlayered CSS outranks layers at any specificity.
+   The Editor paints the selection with its own roles (`--rte-selection`, denser on top of
+   the marker), and without a layer they were silently not applied: on a marker the selection was
+   not
+   visible, and on a light sheet in a dark app the selected text came out light. */
 @layer base {
   ::selection {
     background: var(--selection);
@@ -1517,8 +1530,9 @@ html[data-theme="dim"] {
 }
 
 :focus-visible {
-  /* Индикатор фокуса — не-текст под порогом 3:1, поэтому читаемый вариант тона,
-     а не заливка: `--accent` рассчитан на белый текст поверх и на подложке тусклее. */
+  /* The focus indicator is non-text under the 3:1 threshold, so it uses the readable variant of
+     the tone, not the fill: `--accent` is designed for white text on top, and on the background
+     it is too dim. */
   outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
   border-radius: 6px;
@@ -1532,45 +1546,47 @@ html[data-theme="dim"] {
 .skeleton {
   background: linear-gradient(90deg, var(--bg-2) 0%, var(--bg-3) 50%, var(--bg-2) 100%);
   background-size: 800px 100%;
-  /* Через токен, а не строкой: иначе блик не подчиняется блоку
-     `prefers-reduced-motion` выше — тот переопределяет `--animate-shimmer`, и
-     правило, не читающее переменную, просто продолжает бежать (ADR-0043).
-     Значение токена совпадает с прежней строкой один в один. */
+  /* Through a token rather than a literal string: otherwise the shimmer would not obey the
+     `prefers-reduced-motion` block above: that block overrides `--animate-shimmer`, and a
+     rule that does not read the variable would just keep running (ADR-0043).
+     The token's value matches the old string exactly, one to one. */
   animation: var(--animate-shimmer);
   border-radius: var(--r-md);
 }
 
 /*
- * ВНИМАНИЕ: блок обязан лежать в конце файла, после `:root` со смысловым слоем.
- * `tests/token-layers.test.ts` берёт ТЕКСТОМ первый `:root {` в файле; блок,
- * поставленный выше, подменял бы собой словарь ролей, и проверка слоёв падала
- * на бренде с сообщением про необъявленный `--accent`. Проверено — падала.
+ * WARNING: this block must sit at the end of the file, after the `:root` with the semantic layer.
+ * `tests/token-layers.test.ts` takes the first `:root {` in the file as plain text; a block
+ * placed above would replace the role dictionary, and the layer check would fail
+ * on the brand with a message about an undeclared `--accent`. Verified: it did fail.
  */
 /*
- * Движение при `prefers-reduced-motion: reduce` — ADR-0043.
+ * Motion under `prefers-reduced-motion: reduce` — ADR-0043.
  *
- * Переопределяются СОБСТВЕННЫЕ токены кита, а не всё подряд. Глобального сброса
- * `*, ::before, ::after { animation-duration: 0.01ms !important }` здесь нет и
- * не будет: кит владеет своими компонентами, а не документом, в который его
- * поставили, — таким правилом он погасил бы анимации приложения и чужих
- * библиотек на той же странице, и снять это потребитель не смог бы ничем.
+ * Only the kit's OWN tokens are overridden, not everything. There is no global reset
+ * like `*, ::before, ::after { animation-duration: 0.01ms !important }` here, and there never will
+ * be:
+ * the kit owns its components, not the document it is placed in. With such a rule it would switch
+ * off the animations of the application and of foreign libraries on the same page, and the consumer
+ * could not undo that in any way.
  *
- * Движение снимается, появление — нет. `animation: none` у входной анимации дал
- * бы не покой, а рывок: элемент возникал бы мгновенно там, где секунду назад
- * ничего не было. Поэтому перемещающие кейфреймы заменяются на `fadeOnly` — та
- * же длительность, та же кривая, только прозрачность.
+ * Motion is removed, appearance is not. `animation: none` on an entrance animation would not give
+ * stillness but a jolt: the element would pop in instantly where a second earlier there was
+ * nothing.
+ * So the moving keyframes are replaced with `fadeOnly`: the same duration and the same curve,
+ * opacity only.
  *
- * Два токена НЕ гасятся, и это исключение названо в ADR-0043:
- * `--animate-progress-indeterminate` и `--animate-spin`. Оба сообщают «идёт
- * работа», и оба остановленными читаются как поломка, а не как тишина. W3C
- * выводит существенное движение из-под правила — здесь оно существенное.
+ * Two tokens are NOT stopped, and this exception is named in ADR-0043:
+ * `--animate-progress-indeterminate` and `--animate-spin`. Both say "work is in progress", and both
+ * read as breakage rather than silence when stopped. W3C
+ * excludes essential motion from the rule; here the motion is essential.
  *
- * Не трогаются и переходы цвета (`transition-colors`, `transition-shadow`,
- * `transition-opacity`): правило про движение, а смена цвета ничего не
- * перемещает. Мгновенное переключение наведения — ухудшение, а не улучшение.
- * Перемещающие переходы гасятся вариантом `motion-reduce:` по месту: за ними
- * стоят зашитые значения Tailwind, а не переменная кита, и переопределить их
- * отсюда нечем.
+ * Color transitions are not touched either (`transition-colors`, `transition-shadow`,
+ * `transition-opacity`): the rule is about motion, and a color change moves nothing. An instant
+ * hover switch would be a regression, not an improvement.
+ * Moving transitions are switched off by the `motion-reduce:` variant in place: their values
+ * are the hard-coded Tailwind values, not a kit variable, so there is no way to override them
+ * from here.
  */
 @keyframes fadeOnly {
   from {
@@ -1603,12 +1619,12 @@ html[data-theme="dim"] {
 @media (prefers-reduced-motion: reduce) {
   :root {
     /*
-     * Меняются ТОЛЬКО кейфреймы. Ступень и кривая повторяют объявление в
-     * `@theme` — и теперь это не обещание в комментарии, а ссылка: разойтись
-     * они могут только вместе, и `tests/motion.test.ts` сверяет обе стороны.
+     * Only the keyframes change. The step and the curve repeat the declaration in
+     * `@theme`, and now this is not a promise in a comment but a reference: they can drift apart
+     * only together, and `tests/motion.test.ts` checks both sides.
      *
-     * Прежде здесь стояли те же числа, скопированные руками, и сверить их можно
-     * было только глазами по двум концам файла.
+     * The same numbers used to be here, copied by hand, and they could be checked
+     * only by eye, across the two ends of the file.
      */
     --animate-fadein: fadeOnly var(--duration-moderate) var(--ease-standard);
     --animate-sheetin: fadeOnly var(--duration-moderate) var(--ease-enter);
@@ -1618,11 +1634,11 @@ html[data-theme="dim"] {
     --animate-modalExpand: fadeOnly var(--duration-moderate) var(--ease-enter);
 
     /*
-     * Выход гасится так же, как вход: снимается перемещение, а не само
-     * событие. `animation: none` убрал бы исчезновение вовсе — панель
-     * пропадала бы в кадр, то есть резче, чем без правила.
+     * Exit is muted the same way as entrance: the movement is removed, not the
+     * event itself. `animation: none` would remove the disappearance entirely: the panel
+     * would vanish within a frame, that is, more abruptly than without the rule.
      *
-     * Ступень и кривая повторяют объявление в `@theme` — это сверяет гейт.
+     * The step and the curve repeat the declaration in `@theme`; the gate checks this.
      */
     --animate-fadeout: fadeOutOnly var(--duration-base) var(--ease-exit);
     --animate-sheetout: fadeOutOnly var(--duration-base) var(--ease-exit);
@@ -1630,21 +1646,21 @@ html[data-theme="dim"] {
     --animate-popoverOut: fadeOutOnly var(--duration-fast) var(--ease-exit);
 
     /*
-     * У строки списка гасится СМЫКАНИЕ, а не сам уход: остаётся прозрачность,
-     * место освобождается в один кадр, когда строка снимается.
+     * For a list row, the COLLAPSE is muted, not the exit itself: the opacity stays,
+     * and the space is freed within one frame when the row is removed.
      *
-     * Смыкание — это движение всего, что ниже строки, то есть ровно то, от чего
-     * настройка и защищает. Прозрачность при этом остаётся по общему доводу
-     * ADR-0043: `animation: none` дал бы не покой, а рывок.
+     * The collapse is the movement of everything below the row, which is exactly what the
+     * setting protects against. The opacity stays for the shared reason in
+     * ADR-0043: `animation: none` would give a jolt, not stillness.
      */
     --animate-rowout: fadeOutOnly var(--duration-base) var(--ease-exit);
 
-    /* Бесконечный блик по скелетону — украшение без сообщения. Гасится совсем:
-       форму держит сам скелетон, а не его блик. */
+    /* An endless shimmer on the skeleton is decoration without a message. It is muted entirely:
+       the skeleton itself holds the shape, not its shimmer. */
     --animate-shimmer: none;
 
-    /* Мигание остаётся, сжатие уходит: «что-то грузится» сообщает прозрачность,
-       а масштаб только добавляет к этому движение. */
+    /* Blinking stays, the scale-down goes: "something is loading" is conveyed by opacity,
+       and the scale only adds motion on top of it. */
     --animate-pulse: pulseOpacity 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }

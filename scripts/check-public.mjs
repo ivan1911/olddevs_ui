@@ -1,19 +1,19 @@
 /**
- * Ворота открытого пакета: в том, что уезжает на npmjs и в публичный
- * репозиторий, не должно быть ссылок внутрь — внутренних адресов, прежнего реестра, путей с машины разработчика, следов
- * продукта, от которого кит отпочковался, и относительных ссылок в закрытый
- * репозиторий решений.
+ * The gate for the open package. Nothing that goes to npmjs or the public repository may
+ * link inward: no internal addresses, no former registry, no paths from a developer's
+ * machine, no traces of the product the kit was forked from, and no relative links into the
+ * closed repository of decisions.
  *
- * ПОЧЕМУ ДВА РЕЖИМА. Пакет — это то, что получает потребитель (`npm pack`), а
- * публичный репозиторий шире: истории, тесты, корневые файлы в пакет не едут,
- * но видны всем. Поэтому один и тот же набор правил прогоняется и по списку
- * файлов пакета, и по `git ls-files`.
+ * WHY TWO MODES. The package is what the consumer gets (`npm pack`), while the public
+ * repository is wider: histories and tests are visible to everyone, and the root files do
+ * not go into the package. So the same rules run both over the package's file list and over
+ * `git ls-files`.
  *
- *   npm run check:public                — файлы пакета (сначала `npm run build`: иначе `dist` пуст)
- *   npm run check:public -- --repo      — все файлы репозитория
- *   npm run check:public -- --summary   — только счётчики по правилам и папкам
+ *   npm run check:public                — package files (run `npm run build` first, or `dist` is empty)
+ *   npm run check:public -- --repo      — all files in the repository
+ *   npm run check:public -- --summary   — counts by rule and folder only
  *
- * Выход с кодом 1, если есть хотя бы одно нарушение.
+ * Exits with code 1 if there is at least one violation.
  */
 
 import { execFileSync } from "node:child_process";
@@ -23,18 +23,19 @@ import { join, resolve } from "node:path";
 const ROOT = resolve(import.meta.dirname, "..");
 
 /**
- * Сам скрипт обязан произнести всё, что ищет, — читать его бессмысленно. Тест
- * ворот этого исключения не получает: его образцы склеены из кусков.
+ * The script itself has to spell out everything it searches for, so reading it would be
+ * pointless. The gate's test does not get this exemption: its samples are assembled from
+ * fragments.
  */
 const SELF = "scripts/check-public.mjs";
 
 /*
- * Ключи задач трекера (`OLDSUI-N`) ворота не ищут: владелец разрешил их в
- * коммитах, коде и документации (решение 2026-10-11, подтверждено 2026-10-15) —
- * они связывают правку с задачей в Bitbucket и Jira.
+ * The gate does not search for tracker keys (`OLDSUI-N`): the owner allowed them in commits,
+ * code and documentation (decision of 2026-10-11, confirmed 2026-10-15). They tie a change
+ * to its task in Bitbucket and Jira.
  */
 
-/** Публичен у домена только сайт документации; трекер, вики и Bitbucket — нет. */
+/** Only the documentation site is public under the domain; the tracker, the wiki and Bitbucket are not. */
 const PUBLIC_HOST = "ui.olddevs.ru";
 const DOMAIN_HOST = /(?:[\w-]+\.)*olddevs\.ru\b/g;
 
@@ -44,23 +45,23 @@ const RULES = [
     test: (line) => (line.match(DOMAIN_HOST) ?? []).some((host) => host !== PUBLIC_HOST),
   },
   {
-    // Прежний реестр пакета: группа на GitLab и id её проекта в адресе API.
+    // The package's former registry: the GitLab group and its project id in the API address.
     name: "private-registry",
     test: (line) => /gitlab\.com\/olddevs-ui\b|\b86141926\b/.test(line),
   },
   { name: "local-path", test: (line) => /\/Users\/[\w.-]+/.test(line) },
   {
-    // Кит заведён форком чужого продукта; в открытом коде, примерах и тестах
-    // его имени и области пакетов быть не должно — включая тесты: они тоже
-    // лежат в публичном репозитории. Голое слово ловится намеренно: доменные
-    // примеры прежнего продукта — это обои, и нейтральный пример их не берёт.
+    // The kit was started as a fork of someone else's product. Its name and package scope must
+    // not appear in open code, examples or tests, and that includes the tests, since they are
+    // in the public repository too. The bare word is matched on purpose: the former product's
+    // domain examples are its wallpapers, and a neutral example does not pick them up.
     name: "forked-product",
     test: (line) => /wallpaper|@wpp\/|\bwpp-ui\b/i.test(line),
   },
   {
-    // Репозиторий решений закрыт: путь в него — относительная ссылка или имя
-    // файла `olddevs_ui_docs/…` — битый и с GitHub, и из `node_modules`. Само
-    // название в тексте — не путь, его не трогаем.
+    // The decisions repository is closed: a path into it, a relative link or a file name
+    // `olddevs_ui_docs/…`, is broken both on GitHub and from `node_modules`. The name itself
+    // in plain text is not a path, so it is left alone.
     name: "private-docs-link",
     test: (line) => /(?:\.\.\/)+olddevs_ui_docs\b|\bolddevs_ui_docs\//.test(line),
   },
@@ -68,25 +69,25 @@ const RULES = [
 
 const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot|pdf|zip|tgz|gz)$/i;
 
-/** Читать ли файл как текст: картинки, шрифты и архивы — нет. */
+/** Whether to read the file as text: images, fonts and archives are not read. */
 export function isTextFile(path) {
   return !BINARY.test(path);
 }
 
-/** Пути файлов пакета из JSON, который печатает `npm pack --dry-run --json`. */
+/** The package's file paths, from the JSON that `npm pack --dry-run --json` prints. */
 export function packedPaths(json) {
   return JSON.parse(json).flatMap((pack) => pack.files.map((file) => file.path));
 }
 
 /**
- * Пакет без `dist` не собран: типы с JSDoc, которые получает потребитель, не
- * прочитаны, и «чисто» было бы неправдой.
+ * A package without `dist` is not built: the JSDoc types the consumer gets were never read,
+ * so "clean" would be a lie.
  */
 export function isUnbuilt(paths) {
   return !paths.some((path) => path.startsWith("dist/"));
 }
 
-/** Нарушения по файлам: `files` — путь → текст. */
+/** Violations by file: `files` maps a path to its text. */
 export function findViolations(files) {
   const found = [];
   for (const [path, text] of files) {
@@ -107,9 +108,9 @@ function listPaths(repo) {
       .split("\0")
       .filter(Boolean);
   }
-  // `--ignore-scripts`: список файлов не зависит от хуков, а сборку пакета
-  // делает `release:check` до этого шага. Поток ошибок забираем, а не
-  // выбрасываем: при удаче там только уведомления npm, при сбое — причина.
+  // `--ignore-scripts`: the file list does not depend on hooks, and `release:check` builds
+  // the package before this step. The error stream is captured, not discarded: on success it
+  // holds only npm notices, on failure it holds the reason.
   try {
     const json = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
       cwd: ROOT,
@@ -127,7 +128,7 @@ function readFiles(paths) {
   const files = new Map();
   for (const path of paths) {
     const full = join(ROOT, path);
-    // Файл из индекса может быть удалён в рабочей копии — его просто нет.
+    // A file from the index may be deleted in the working copy; if so, it is simply absent.
     if (!isTextFile(path) || !existsSync(full)) continue;
     files.set(path, readFileSync(full, "utf8"));
   }

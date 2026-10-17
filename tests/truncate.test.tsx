@@ -10,10 +10,10 @@ afterEach(() => {
 });
 
 /*
-  В jsdom нет раскладки: `scrollWidth` и `clientWidth` всегда нули, и текст
-  никогда не выглядит обрезанным. Поэтому обрезанность подделывается прямо на
-  прототипе — иначе проверить главное правило («подсказка только у обрезанного»)
-  в jsdom нельзя вовсе. Настоящий замер ширины — в браузере.
+  In jsdom there is no layout: `scrollWidth` and `clientWidth` are always zero, so text never
+  looks truncated. That is why truncation is faked directly on the prototype: otherwise the main
+  rule ("the hint only for truncated text") could not be checked in jsdom at all. A real width
+  measurement is done in the browser.
 */
 function fakeOverflow(overflowing: boolean) {
   vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(overflowing ? 200 : 100);
@@ -30,8 +30,8 @@ test("untruncated text gets no tooltip", () => {
     </TooltipProvider>
   );
 
-  // Подсказка на неусечённом тексте — шум: она повторяет то, что и так видно,
-  // и приучает её игнорировать.
+  // A hint on untruncated text is noise: it repeats what is already visible and
+  // teaches users to ignore hints.
   const text = screen.getByText("Short");
   expect(text.hasAttribute("tabindex")).toBe(false);
   expect(text.hasAttribute("data-state")).toBe(false);
@@ -45,8 +45,8 @@ test("truncated text gets focus and a tooltip", () => {
     </TooltipProvider>
   );
 
-  // Без фокуса полное значение было бы доступно только мышью — то есть
-  // недоступно вовсе тому, кто мышью не пользуется.
+  // Without focus, the full value would be reachable only by mouse, which means it would be
+  // unreachable for anyone who does not use a mouse.
   const text = screen.getByText("A very long value that does not fit");
   expect(text.getAttribute("tabindex")).toBe("0");
 });
@@ -59,7 +59,7 @@ test("the text sits in the DOM in full: truncation is visual", () => {
     </TooltipProvider>
   );
 
-  // Скринридер читает строку целиком и без нашей помощи.
+  // A screen reader reads the whole line on its own, without our help.
   expect(screen.getByText("Full value").textContent).toBe("Full value");
 });
 
@@ -79,14 +79,14 @@ test("one line is truncated with an ellipsis, several by line count", () => {
   );
   const multi = screen.getByText("Value");
   expect(multi.className).toContain("[display:-webkit-box]");
-  // `block` стоит в CSS позже и перебил бы `-webkit-box`: строки не обрезались бы.
+  // `block` comes later in the CSS and would override `-webkit-box`: lines would not truncate.
   expect(multi.classList.contains("block")).toBe(false);
   expect(multi.style.webkitLineClamp).toBe("3");
 });
 
 test("after truncation the observer watches the new node, not a dead one", async () => {
-  // Обёртка в `Tooltip` пересоздаёт `span`. Наблюдатель, оставшийся на старом
-  // узле, не увидел бы расширения колонки — нашло ревью 2.5.0.
+  // The `Tooltip` wrapper re-creates the `span`. An observer left on the old node would not see
+  // the column growing: found in review 2.5.0.
   let scrollWidth = 100;
   vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(() => scrollWidth);
   vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(100);

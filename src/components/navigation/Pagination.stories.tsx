@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Pagination } from "./Pagination.js";
 import { Text } from "../content/Text.js";
 
-/** Волна 9: примитивы навигации по облегчённой планке. */
+/** Wave 9: navigation primitives for the lighter bar. */
 const meta = {
   title: "Navigation/Pagination",
   component: Pagination,

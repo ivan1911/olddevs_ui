@@ -22,7 +22,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Обычное окно с формой и футером: подпись слева, действия справа. */
+/** A regular window with a form and a footer: the label on the left, the actions on the right. */
 export const Playground: Story = {
   render: (args) => (
     <div className="h-[420px]">
@@ -46,7 +46,7 @@ export const Playground: Story = {
   ),
 };
 
-/** С иконкой, подписью под заголовком и выравниванием от верхнего края. */
+/** With an icon, a subtitle below the title, and alignment to the top edge. */
 export const WithIcon: Story = {
   args: {
     subtitle: "12 photos · updated yesterday",
@@ -66,8 +66,8 @@ export const WithIcon: Story = {
 };
 
 /**
- * Идёт отправка. Крестик убран, Escape и клик мимо не закрывают — одно
- * состояние `loading`, а не три отдельных запрета.
+ * Submission in progress. The close button is removed, and Escape and a click outside do not close
+ * the dialog: one `loading` state, not three separate bans.
  */
 export const Submitting: Story = {
   args: { loading: true },
@@ -84,12 +84,11 @@ export const Submitting: Story = {
 };
 
 /**
- * Вложенность — то, ради чего примитив и заводился.
+ * Nesting is the reason the primitive was created.
  *
- * Диалог подтверждения открывается ПОВЕРХ окна, и Escape закрывает верхний
- * слой, а не оба сразу. Проверять руками: открыть подтверждение, нажать
- * Escape — внешнее окно обязано остаться. Tab при этом не должен уходить
- * в фон ни на одном слое.
+ * The confirmation dialog opens ON TOP of the window, and Escape closes the top layer, not both at
+ * once. Check it by hand: open the confirmation, press Escape, and the outer window must stay open.
+ * Tab must not move to the background on any layer.
  */
 export const Nested: Story = {
   render: (args) => {
@@ -120,14 +119,14 @@ export const Nested: Story = {
 };
 
 /**
- * Список, всплывший ИЗНУТРИ окна, и длинная страница под ним.
+ * A list that opens INSIDE the window, with a long page behind it.
  *
- * История нужна замку прокрутки, а не виду: панель `Select` портируется в
- * `body`, то есть лежит вне подложки, на которой висит замок Radix. Колесо над
- * ней обязано крутить список, пока есть куда, и упираться, когда докрутили до
- * конца, — а не уходить сквозь окно на страницу под ним.
+ * The story is for the scroll lock, not the look: the `Select` panel is portaled into `body`, so it
+ * sits outside the scrim where Radix's scroll lock lives. The wheel over it must scroll the list while
+ * there is room, and stop when it reaches the end, instead of passing through the window onto the page
+ * behind it.
  *
- * Страница нарочно высокая: без неё уход прокрутки некуда было бы заметить.
+ * The page is deliberately tall: without it, a scroll leak would go unnoticed.
  */
 export const SelectInside: Story = {
   render: (args) => {

@@ -20,8 +20,8 @@ const TONES: Tone[] = ["neutral", "accent", "success", "warning", "danger"];
 export const Playground: Story = {};
 
 /**
- * `inline` подчёркнут всегда: внутри абзаца ссылка обязана отличаться от текста
- * не только цветом — иначе для дальтоника она не отличается ничем.
+ * `inline` is always underlined: inside a paragraph the link has to differ from the text
+ * by more than color, otherwise a color-blind reader cannot tell it apart at all.
  */
 export const InParagraph: Story = {
   render: (args) => (
@@ -45,7 +45,7 @@ export const Variants: Story = {
   ),
 };
 
-/** Внешняя ссылка: иконка рядом с подписью. */
+/** External link: an icon next to the label. */
 export const External: Story = {
   render: (args) => (
     <div className="flex flex-col items-start gap-3">
@@ -60,8 +60,8 @@ export const External: Story = {
 };
 
 /**
- * Полиморфный `as`: компонент маршрутизации потребителя. Здесь заглушка с той
- * же сигнатурой, что у `next/link`, — пакет про маршрутизацию не знает.
+ * Polymorphic `as`: the consumer's routing component. Here it is a stub with the same
+ * signature as `next/link`, because the package knows nothing about routing.
  */
 function OurLink({
   href,

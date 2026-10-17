@@ -17,7 +17,7 @@ import {
 import { TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -26,14 +26,14 @@ afterEach(() => {
 });
 
 /**
- * Ручка Блока «⋮» и её меню (OLDSUI-72).
+ * The Block handle "⋮" and its menu (OLDSUI-72).
  *
- * Через публичный `RichTextEditor`: ручка и пункты — ролями и именами, как их
- * слышит скринридер, результат — выходным HTML и шагом отмены. Каретка
- * ставится командами движка (jsdom не умеет ввода в `contenteditable`), фокус —
- * `view.focus()`: ручка видна только при фокусе в Документе. Раскладки в jsdom
- * нет, поэтому место ручки здесь не проверяется — его смотрят снимки и
- * `tests-visual/rich-text-editor-block-handle.spec.ts`.
+ * Through the public `RichTextEditor`: the handle and the items by roles and names, as a
+ * screen reader hears them; the result by the output HTML and one undo step. The caret is
+ * set with engine commands (jsdom cannot type into `contenteditable`), and focus with
+ * `view.focus()`: the handle is visible only when the Document has focus. jsdom has no
+ * layout, so the handle's position is not checked here — snapshots and
+ * `tests-visual/rich-text-editor-block-handle.spec.ts` check it.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -48,7 +48,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, editor };
 }
 
-/** Фокус в Документ и каретка в конец текста `text`. */
+/** Focus in the Document and the caret at the end of the text `text`. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -61,7 +61,7 @@ function caretIn(editor: Editor, text: string) {
   });
 }
 
-/** Фокус в Документ и выделение узлом Блока Документа с номером `index`. */
+/** Focus in the Document and a selection of the Document's Block number `index` as a node. */
 function selectNode(editor: Editor, index: number) {
   const { doc } = editor.state;
   let pos = 0;
@@ -82,11 +82,11 @@ async function openMenu(user: ReturnType<typeof userEvent.setup>) {
   return screen.findByRole("menu", { name: HANDLE });
 }
 
-/** Пункты меню любой роли: `menuitem`, `menuitemradio`. */
+/** Items of any menu role: `menuitem`, `menuitemradio`. */
 const menuItems = (menu: HTMLElement) =>
   Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]'));
 
-/** Пункты меню: имя без подписи сочетания, подпись, недоступность. */
+/** The menu items: the name without the shortcut label, the shortcut, and whether the item is unavailable. */
 function itemsOf(menu: HTMLElement) {
   return menuItems(menu).map((item) => {
     const shortcut = item.querySelector("kbd")?.textContent ?? null;
@@ -101,7 +101,7 @@ function itemsOf(menu: HTMLElement) {
 const shortcutOf = (menu: HTMLElement, name: string) =>
   itemsOf(menu).find((item) => item.name === name)?.shortcut ?? null;
 
-/** Открыть подменю пункта `name` и вернуть его. */
+/** Open the submenu of item `name` and return it. */
 async function openSubmenu(
   user: ReturnType<typeof userEvent.setup>,
   menu: HTMLElement,
@@ -111,7 +111,7 @@ async function openSubmenu(
   return screen.findByRole("menu", { name });
 }
 
-/** Выбрать пункт `name` меню ручки (подменю — `path`). */
+/** Choose item `name` of the handle's menu (a submenu is `path`). */
 async function choose(user: ReturnType<typeof userEvent.setup>, ...path: string[]) {
   let menu = await openMenu(user);
   for (const step of path.slice(0, -1)) menu = await openSubmenu(user, menu, step);
@@ -131,7 +131,7 @@ const TABLE =
   "<table><tbody><tr><th><p>h1</p></th></tr><tr><td><p>c1</p></td></tr></tbody></table>";
 const LIST = "<ul><li><p>a</p></li><li><p>b</p></li></ul>";
 
-// --- Видимость --------------------------------------------------------------
+// --- Visibility --------------------------------------------------------------
 
 test("the handle shows only with the caret in the document, not before focus and not after it leaves", async () => {
   const user = userEvent.setup();
@@ -196,7 +196,7 @@ test("the handle is out of the Tab order", () => {
   expect(handle().tabIndex).toBe(-1);
 });
 
-// --- Состав меню ------------------------------------------------------------
+// --- Menu items ------------------------------------------------------------
 
 test("the menu: Add, Format, Move up, Move down, Duplicate, Delete — Delete in the danger tone", async () => {
   const user = userEvent.setup();
@@ -214,7 +214,7 @@ test("the menu: Add, Format, Move up, Move down, Duplicate, Delete — Delete in
   ]);
   const remove = within(menu).getByRole("menuitem", { name: "Delete" });
   for (const token of MENU_ITEM_TONE.danger.split(" ")) expect(remove.className).toContain(token);
-  // У последнего Блока ниже некуда.
+  // The last Block has nowhere further down to go.
   expect(itemsOf(menu).find((item) => item.name === "Move down")?.disabled).toBe(true);
   expect(itemsOf(menu).find((item) => item.name === "Move up")?.disabled).toBe(false);
 });
@@ -240,16 +240,16 @@ test("Add offers the insert menu items once each, without shortcut hints", async
     "Divider",
     "Table",
     "Image",
-    // Раскладка (OLDSUI-74) — подменю шести вариантов: `rich-text-editor-layout.test.tsx`.
+    // Layout (OLDSUI-74) — the submenu of six variants: `rich-text-editor-layout.test.tsx`.
     "Layout",
-    // Обёртка (OLDSUI-77): `rich-text-editor-wrapper.test.tsx`.
+    // Wrapper (OLDSUI-77): `rich-text-editor-wrapper.test.tsx`.
     "Wrapper",
-    // Сворачиваемый Блок (OLDSUI-277): `rich-text-editor-details.test.tsx`.
+    // Collapsible block (OLDSUI-277): `rich-text-editor-details.test.tsx`.
     "Collapsible block",
-    // Формулы (OLDSUI-280) — в `TOOLS`, вне пресетов: `rich-text-editor-mathematics.test.tsx`.
+    // Formulas (OLDSUI-280) — in `TOOLS`, outside the presets: `rich-text-editor-mathematics.test.tsx`.
     "Formula",
     "Block formula",
-    // Видео (OLDSUI-281): `rich-text-editor-video.test.tsx`.
+    // Video (OLDSUI-281): `rich-text-editor-video.test.tsx`.
     "Video",
   ]);
   expect(items.every((item) => item.shortcut === null)).toBe(true);
@@ -266,7 +266,7 @@ test("without the insert menu tool there is no Add", async () => {
   expect(itemsOf(menu).map((item) => item.name)).not.toContain("Add");
 });
 
-// --- Подписи сочетаний ------------------------------------------------------
+// --- Shortcut labels ------------------------------------------------------
 
 test("shortcuts are signed when they do the same: a top-level paragraph", async () => {
   const user = userEvent.setup();
@@ -316,9 +316,9 @@ test("on Apple the shortcuts are signed with symbols", async () => {
   expect(shortcutOf(menu, "Duplicate")).toBe("⌘+⇧+D");
 });
 
-// --- Действия ---------------------------------------------------------------
+// --- Actions ---------------------------------------------------------------
 
-/** Действие — одна правка на отмену и фокус в Документе после неё. */
+/** An action is one edit for undo, and focus in the Document after it. */
 async function expectOneUndoAndFocus(editor: Editor, before: string) {
   await waitFor(() => expect(document.activeElement).toBe(textbox()));
   undo(editor);
@@ -366,7 +366,7 @@ test("Duplicate copies the whole block under it — the whole list from an item"
 
   await choose(user, "Duplicate");
   expect(editor.getHTML()).toBe(`${LIST}${LIST}<p>After</p>`);
-  // Каретка — в копии.
+  // The caret is in the copy.
   expect(editor.state.selection.$from.index(0)).toBe(1);
   await expectOneUndoAndFocus(editor, before);
 });
@@ -486,7 +486,7 @@ test("Format marks the current type and turns the whole block", async () => {
   expect(checked).toEqual(["Bulleted list"]);
   await user.click(within(format).getByRole("menuitemradio", { name: "Heading 3" }));
 
-  // Весь список, а не только пункт под кареткой; каретка там же, где была.
+  // The whole list, not only the item under the caret; the caret stays where it was.
   expect(editor.getHTML()).toBe("<p>One</p><h3>a</h3><h3>b</h3>");
   expect(editor.state.selection.$from.parent.textContent).toBe("b");
   await expectOneUndoAndFocus(editor, before);
@@ -526,9 +526,9 @@ test.each([
   expect(format.getAttribute("aria-disabled")).toBe("true");
 });
 
-// --- Клавиатура -------------------------------------------------------------
+// --- Keyboard -------------------------------------------------------------
 
-/** `Mod+/` из Документа; jsdom — не Apple, поэтому `Ctrl`. */
+/** `Mod+/` from the Document; jsdom is not Apple, so `Ctrl`. */
 function pressOpen(editor: Editor) {
   const event = new KeyboardEvent("keydown", {
     key: "/",
@@ -553,8 +553,8 @@ test("Mod+/ opens the menu from the document and moves focus into it", async () 
 test('on a Russian layout the slash key types ".": Mod+/ still opens the menu, not superscript', async () => {
   const { editor } = renderEditor({ defaultValue: "<p>One</p>" });
   caretIn(editor, "One");
-  // ЙЦУКЕН: физическая клавиша «/» даёт «.», и по символу это был бы `Mod-.` —
-  // верхний индекс. Меню ловит клавишу по месту (`code: "Slash"`).
+  // Russian (JCUKEN) layout: the physical "/" key gives ".", and by character this would
+  // be `Mod-.` — a superscript. The menu catches the key by its position (`code: "Slash"`).
   const event = new KeyboardEvent("keydown", {
     key: ".",
     code: "Slash",
@@ -584,7 +584,7 @@ test("Escape closes the submenu, then the menu, and returns focus to the documen
   const { editor } = renderEditor({ defaultValue: "<p>One</p>" });
   caretIn(editor, "One");
 
-  // Подменю — с клавиатуры: `→` на пункте ставит фокус внутрь подменю.
+  // The submenu from the keyboard: `→` on an item moves focus inside the submenu.
   const menu = await openMenu(user);
   act(() => within(menu).getByRole("menuitem", { name: "Format" }).focus());
   await user.keyboard("{ArrowRight}");
@@ -602,10 +602,10 @@ test("Escape closes the submenu, then the menu, and returns focus to the documen
 });
 
 /**
- * Escape в меню принадлежит меню, а не слою под ним (ADR-0041). Слой —
- * `ModalOverlay`, а не `Dialog`: меню react-aria внутри модального окна Radix
- * в jsdom не раскрывается (разбор — `tests/overlay-layers.test.tsx`). С
- * настоящим `Dialog` то же проверяет `tests-visual/rich-text-editor-block-handle.spec.ts`.
+ * Escape in the menu belongs to the menu, not to the layer under it (ADR-0041). The layer
+ * is `ModalOverlay`, not `Dialog`: a react-aria menu inside a Radix modal does not open in
+ * jsdom (the analysis is in `tests/overlay-layers.test.tsx`). With a real `Dialog` the same
+ * thing is checked by `tests-visual/rich-text-editor-block-handle.spec.ts`.
  */
 test("Escape in the menu closes the menu, not the layer under it", async () => {
   const user = userEvent.setup();
@@ -634,7 +634,7 @@ test("the handle and its menu speak the provider's language", async () => {
   );
   caretIn(ref.current!.editor!, "Two");
 
-  // Ожидания — из русского каталога: гейт i18n держит кириллицу в каталоге.
+  // The expectations come from the Russian catalog: the i18n gate keeps Cyrillic inside the catalog.
   const t = ru.editor;
   await user.click(screen.getByRole("button", { name: t.blockActions }));
   const menu = await screen.findByRole("menu", { name: t.blockActions });

@@ -3,47 +3,46 @@
 import { cn } from "../../lib/cn.js";
 import { Avatar } from "./Avatar.js";
 
-/** Участник стопки с фотографией. Строка в `names` — то же самое без `src`. */
+/** A member of the stack with a photo. A string in `names` is the same thing without `src`. */
 export interface AvatarGroupMember {
-  /** Имя участника: из него выводятся инициалы, оттенок и альтернативный текст аватара. */
+  /** Member name: the initials, the hue and the avatar's alt text are derived from it. */
   name: string;
-  /** Адрес фотографии; без него или при ошибке загрузки — инициалы. */
+  /** Photo URL; without it, or if loading fails, the initials are shown. */
   src?: string | null;
 }
 
 export interface AvatarGroupProps {
   /**
-   * Участники: имя строкой или объект `{ name, src? }`. Инициалы и оттенок
-   * Avatar выведет сам, фотографию нарисует по `src`.
+   * Members: a name as a string, or an object `{ name, src? }`. The Avatar derives the initials
+   * and the hue itself; the photo is drawn from `src`.
    */
   names: Array<string | AvatarGroupMember>;
   /**
-   * Сколько аватаров показать до «+N».
+   * How many avatars to show before "+N".
    *
-   * Умолчание — три. Ряд из десяти перекрывающихся кругов не сообщает ни
-   * одного имени и занимает место, а число сверх предела говорит ровно то же
-   * самое короче.
+   * The default is three. A row of ten overlapping circles does not convey a single name and
+   * takes up space, while a number beyond the limit says the same thing more briefly.
    */
   max?: number;
-  /** Размер аватаров в стопке: `md` или `lg`. По умолчанию `md`. */
+  /** Size of the avatars in the stack: `md` or `lg`. Defaults to `md`. */
   size?: "md" | "lg";
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
-  /** Доступное имя стопки для скринридера. */
+  /** Accessible name of the stack for screen readers. */
   "aria-label"?: string;
 }
 
 /**
- * Стопка аватаров с остатком «+N».
+ * A stack of avatars with a "+N" remainder.
  *
- * Аватары перекрываются отрицательным отступом, и порядок наложения обратный
- * (`z-index` убывает): первый круг лежит поверх второго — иначе последний
- * закрывал бы всех, и глаз читал бы ряд справа налево.
+ * The avatars overlap through a negative margin, and the stacking order is reversed (`z-index`
+ * decreases): the first circle lies on top of the second. Otherwise the last one would cover
+ * everyone, and the eye would read the row from right to left.
  *
- * **Список объявляется целиком, а не по кругам.** У каждого аватара нет своей
- * подписи: скринридеру он не сообщает ничего полезного («АБ» — это не имя).
- * Поэтому круги скрыты, а группа несёт одно имя со всеми участниками — так
- * читающий получает список, а не набор двухбуквенных обрывков.
+ * **The list is announced as a whole, not circle by circle.** Each avatar has no label of its own:
+ * it tells a screen reader nothing useful ("JD" is not a name). So the circles are hidden, and the
+ * group carries one name with all the members. The reader gets a list, not a set of two-letter
+ * fragments.
  */
 export function AvatarGroup({
   names,
@@ -52,12 +51,12 @@ export function AvatarGroup({
   className,
   "aria-label": ariaLabel,
 }: AvatarGroupProps) {
-  // Единая форма участника: дальше код не различает строку и объект.
+  // A single shape for members: the rest of the code does not distinguish a string from an object.
   const members = names.map((entry) => (typeof entry === "string" ? { name: entry } : entry));
   const shown = members.slice(0, max);
   const rest = members.length - shown.length;
-  // Перекрытие по размеру круга: на 28px прежние 8px плюс кольцо срезали
-  // инициалы слева и плюс у «+N»; на 64px они не мешают.
+  // Overlap depends on the circle size: at 28px the earlier 8px plus the ring clipped the initials
+  // on the left and also the "+N" badge; at 64px they do not get in the way.
   const overlap = size === "lg" ? "-ml-2" : "-ml-1";
 
   return (
@@ -73,7 +72,10 @@ export function AvatarGroup({
           className={cn("ring-bg-1 relative rounded-full ring-2", index > 0 && overlap)}
           style={{ zIndex: shown.length - index }}
         >
-          {/* `alt=""`: круг скрыт, имя объявляет группа — подпись у фото была бы вторым чтением. */}
+          {/*
+            `alt=""`: the circle is hidden and the group announces the name; a caption on the
+            photo would be a second reading.
+          */}
           <Avatar name={name} src={src} alt="" size={size} />
         </span>
       ))}
@@ -81,8 +83,8 @@ export function AvatarGroup({
         <span
           aria-hidden
           className={cn(
-            // `text-fg-1`, а не `fg-2`: на подложке `bg-3` вторая ступень не держит 4.5 —
-            // поймал аудит axe. Остаток «+N» это содержимое, а не подсказка.
+            // `text-fg-1`, not `fg-2`: on the `bg-3` background the second step does not
+            // reach 4.5 — caught by the axe audit. The "+N" remainder is content, not a hint.
             "bg-bg-3 text-fg-1 ring-bg-1 relative flex items-center justify-center rounded-full font-semibold ring-2",
             overlap,
             size === "lg" ? "text-md h-16 w-16" : "text-caption h-7 w-7"

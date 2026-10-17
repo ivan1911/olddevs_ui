@@ -4,72 +4,72 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface StickyOffsetOptions {
   /**
-   * Имя CSS-переменной, в которой приложение публикует высоту своей верхней
-   * панели. Проп, а не константа: пакет не знает, что у потребителя есть
-   * шапка, как она называется и есть ли она вообще ([ADR-0016]).
+   * The name of the CSS variable in which the application publishes the height of its top
+   * bar. A prop, not a constant: the package does not know whether the consumer has a header,
+   * what it is called, or whether it exists at all ([ADR-0016]).
    */
   offsetVar?: string;
-  /** Смещение, когда переменной нет. Это законное состояние, а не ошибка. */
+  /** The offset used when the variable is absent. This is a legitimate state, not an error. */
   fallback?: string;
 }
 
 export interface StickyOffset {
   /**
-   * Вешается на пустой блок нулевой высоты **прямо перед** липким элементом.
-   * Пересечение именно этого блока и означает, что полоса встала на место.
+   * Attached to an empty zero-height block placed **right before** the sticky element.
+   * The intersection of exactly this block is what means the bar has settled in place.
    *
-   * Callback-ref, а не объект: полоса бывает условной и появляется позже самой
-   * страницы, а эффект на монтировании такой маркер попросту не застаёт.
+   * A callback ref, not an object: the bar is sometimes conditional and appears after the
+   * page itself, and an effect on mount simply never sees such a marker.
    */
   sentinelRef: (node: HTMLElement | null) => void;
-  /** Полоса прижалась к верхней границе. */
+  /** The bar is pressed against the top edge. */
   isStuck: boolean;
 }
 
 /**
- * Отступ со сменённым знаком.
+ * An offset with its sign flipped.
  *
- * Приписывать минус строкой НЕЛЬЗЯ: опубликованное значение само бывает
- * отрицательным, и `-` + `-10px` давало `--10px` — `SyntaxError` в конструкторе
- * наблюдателя, то есть падение поддерева. Ровно тот отказ, ради которого писан
- * `toPixels`, только через другой вход.
+ * You CANNOT do this by prefixing a minus sign to the string: the published value can itself
+ * be negative, and `-` + `-10px` gave `--10px`, a `SyntaxError` in the observer constructor,
+ * which took down the subtree. That is exactly the failure `toPixels` exists to prevent, only
+ * through a different entry point.
  */
 function negate(value: string): string {
   return value.startsWith("-") ? value.slice(1) : `-${value}`;
 }
 
 /**
- * Приводит опубликованную длину к пикселям.
+ * Converts a published length to pixels.
  *
- * `IntersectionObserver` принимает ТОЛЬКО пиксели и проценты и бросает
- * `SyntaxError` на всём остальном. Значение уходило в `rootMargin` как есть, а
- * кит нигде не требует от приложения публиковать высоту именно в пикселях:
- * `--topbar-h: 4rem` роняло полосу и всё поддерево во время коммита.
+ * `IntersectionObserver` accepts ONLY pixels and percentages and throws a `SyntaxError` on
+ * anything else. The value went into `rootMargin` as is, and the kit nowhere requires the
+ * application to publish its height in pixels: `--topbar-h: 4rem` took the bar and the whole
+ * subtree down during commit.
  *
- * Единицы, которые браузер понимает сам, пропускаются без работы; остальные
- * меряются одноразовым элементом. Мерить приходится в документе — вне его
- * раскладки нет. Вызывающий обязан отсечь повтор ДО вызова (см. `rawRef`):
- * замер стоит двух принудительных пересчётов раскладки.
+ * Units the browser understands on its own pass through without any work. Others are measured
+ * with a one-off element. Measuring has to happen in the document, because there is no layout
+ * outside it. The caller must filter out a repeat BEFORE calling (see `rawRef`): a measurement
+ * costs two forced layout recalculations.
  *
- * Пределы, принятые осознанно: `em` меряется относительно шрифта `body`, а не
- * шапки; отрицательное значение в неизвестных единицах браузер отбрасывает, и
- * получается `0px` (в пикселях знак сохраняется).
+ * Deliberately accepted limits: `em` is measured against the `body` font, not the top bar's
+ * font. A negative value in unknown units is discarded by the browser and becomes `0px` (in
+ * pixels the sign is kept).
  */
 export function toPixels(value: string, fallback: string): string {
   const raw = value || fallback;
-  // Пустая строка сюда доходит, когда потребитель передал пустой `fallback`:
-  // тип пропа этого не запрещает. Без нормализации получался `rootMargin`
-  // вида `"- 0px 0px 0px"` — то есть ровно то падение, ради которого функция и
-  // написана, только через другой вход.
+  // An empty string gets here when the consumer passed an empty `fallback`: the prop type
+  // does not forbid it. Without normalization, a `rootMargin` like `"- 0px 0px 0px"` would
+  // come out, which is exactly the crash this function exists to prevent, only through a
+  // different entry point.
   if (raw === "") return "0px";
-  // Число, а не `[\d.]+`: тот класс принимает `1.2.3` и `..`, то есть пропускал
-  // бы мимо замера значение, которое браузер отвергнет, — и падение возвращалось
-  // бы тем же путём, каким пришло с `4rem`.
+  // A number, not `[\d.]+`: that class accepts `1.2.3` and `..`, so it would let through a
+  // value the browser rejects without measuring it, and the crash would come back the same way
+  // it came in with `4rem`.
   if (/^-?(\d+(\.\d+)?|\.\d+)(px|%)$/.test(raw)) return raw;
 
   const probe = document.createElement("div");
-  // `setProperty`, а не `cssText`: значение приходит из CSS приложения, и
-  // собственные объявления внутри него затёрли бы защитные свойства зонда.
+  // `setProperty`, not `cssText`: the value comes from the application's CSS, and its own
+  // declarations inside it would overwrite the probe's protective properties.
   probe.style.position = "absolute";
   probe.style.visibility = "hidden";
   probe.style.pointerEvents = "none";
@@ -81,15 +81,15 @@ export function toPixels(value: string, fallback: string): string {
 }
 
 /**
- * Липкая полоса: знает, прижалась ли она уже к верхней панели приложения.
+ * Sticky bar: knows whether it has already stuck to the application's top bar.
  *
- * Отсчёт идёт от НАСТОЯЩЕЙ высоты панели, а не от зашитого числа: на узких
- * экранах шапка ниже, чем на широких, и константа оставляет просвет, сквозь
- * который видно уезжающий контент. Высоту публикует приложение — в CSS-переменной,
- * имя которой здесь проп. Решение и отвергнутые варианты — [ADR-0016].
+ * The offset is measured from the ACTUAL height of the bar, not from a hard-coded number: on
+ * narrow screens the header is shorter than on wide ones, and a constant leaves a gap through
+ * which the scrolling content shows. The application publishes the height in a CSS variable,
+ * whose name is a prop here. The decision and the rejected alternatives are in [ADR-0016].
  *
- * Потребитель обычно использует `isStuck`, чтобы убрать верхние скругления:
- * у прижавшейся полосы они приоткрывают фон страницы уголками на стыке.
+ * Consumers usually use `isStuck` to remove the top rounded corners: at the seam, a stuck
+ * bar's corners would expose the page background.
  */
 export function useStickyOffset({
   offsetVar = "--topbar-h",
@@ -98,29 +98,28 @@ export function useStickyOffset({
   const [isStuck, setIsStuck] = useState(false);
   const nodeRef = useRef<HTMLElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  /** Последний применённый отступ: пересоздавать наблюдателя ради того же числа незачем. */
+  /** The last applied offset. There is no point recreating the observer for the same number. */
   const appliedRef = useRef<string | null>(null);
-  /** Сырое значение переменной, из которого этот отступ получен. */
+  /** The raw value of the variable that this offset was derived from. */
   const rawRef = useRef<string | null>(null);
 
   const connect = useCallback(() => {
     const node = nodeRef.current;
     if (!node) return;
-    // Отсутствие API — законное состояние, а не ошибка: на сервере его нет
-    // вовсе, а в тестах потребителя jsdom его не подкладывает. Полоса просто
-    // никогда не считается прижатой.
+    // The absence of the API is a legitimate state, not an error: the server has no such
+    // API at all, and a consumer's jsdom tests do not stub it. The bar simply never counts
+    // as stuck.
     if (typeof IntersectionObserver === "undefined") return;
 
     /*
-      Сначала сравниваем СЫРУЮ строку — до всякой работы.
+      Compare the RAW string first, before any work.
 
-      Отсечка стояла после `toPixels`, и это расходилось с её же комментарием
-      («только при смене значения»): `getComputedStyle` корня и цикл зонда
-      платились на каждый вызов. А вызовов много: наблюдатель за `style` корня
-      будят и `usePreventScroll` из react-aria (он пишет туда `overflow` и
-      `padding-right` при открытии ЛЮБОГО оверлея — то есть половина кита), и
-      переключатель темы приложения, и `--vh`-полифилл. С `4rem` это давало два
-      принудительных пересчёта раскладки на каждое такое пробуждение.
+      The check used to sit after `toPixels`, which contradicted its own comment ("only when the
+      value changes"): the root's `getComputedStyle` and the probe loop were paid on every call.
+      And there are many calls. Changes to the root's `style` wake the observer: `usePreventScroll`
+      from react-aria (it writes `overflow` and `padding-right` when ANY overlay opens, which is
+      half the kit), the application's theme switcher, and the `--vh` polyfill. With `4rem` this
+      meant two forced layout recalculations on every such wake-up.
     */
     const raw = getComputedStyle(document.documentElement).getPropertyValue(offsetVar).trim();
     if (raw === rawRef.current && observerRef.current) return;
@@ -158,15 +157,14 @@ export function useStickyOffset({
 
   useEffect(() => {
     /*
-      Пересборка сводится к одной на кадр.
+      Rebuilding is reduced to at most one per frame.
 
-      Обработчиком `resize` стоял сам `connect`, а он делает синхронный
-      `getComputedStyle` корня (принудительный пересчёт стилей) и полный цикл
-      жизни наблюдателя. Протягивание рамки окна мышью даёт десятки событий в
-      секунду, и каждый новый наблюдатель выдавал стартовый колбэк — скругления
-      липкой полосы подрагивали. Вдобавок значение переменной при этом почти
-      всегда одно и то же: высота меняется на брейкпоинте, а не на каждом
-      пикселе.
+      The `resize` handler was `connect` itself, which makes a synchronous `getComputedStyle` of
+      the root (a forced style recalculation) and runs a full observer lifecycle. Dragging a window
+      edge with the mouse fires dozens of events per second, and each new observer delivered its
+      initial callback, so the rounded corners of the sticky bar jittered. Besides, the variable's
+      value is almost always the same during a drag: the height changes at a breakpoint, not on
+      every pixel.
     */
     let frame = 0;
     const schedule = () => {
@@ -180,15 +178,14 @@ export function useStickyOffset({
     window.addEventListener("resize", schedule);
 
     /*
-      Ширины окна НЕДОСТАТОЧНО. Парная сторона контракта (`TopBar`) публикует
-      высоту через `ResizeObserver` и в комментарии прямо называет причины, не
-      связанные с шириной: перенос содержимого слотов и вторая строка в поиске.
-      Шапка становится двухстрочной, `--topbar-h` уезжает с 56 на 96, а
-      `rootMargin` оставался прежним — полоса считала себя прижатой на 40px
-      раньше, чем прижималась.
+      The window width is NOT ENOUGH. The paired side of the contract (`TopBar`) publishes its
+      height through a `ResizeObserver`, and its comment names causes unrelated to the width:
+      content wrapping in the slots and a second row in search. The header becomes two lines,
+      `--topbar-h` goes from 56 to 96, but `rootMargin` stayed the same, so the bar considered
+      itself stuck 40px before it actually was.
 
-      Наблюдаем не за шапкой (хук про неё ничего не знает — ADR-0016), а за
-      атрибутом `style` корня: переменную публикуют именно туда.
+      We observe not the header (this hook knows nothing about it, ADR-0016) but the root's `style`
+      attribute: that is exactly where the variable gets published.
     */
     const mutations =
       typeof MutationObserver === "undefined" ? null : new MutationObserver(schedule);
@@ -198,16 +195,14 @@ export function useStickyOffset({
     });
 
     /*
-      Наблюдатель ставится ЗДЕСЬ, а не только из callback-ref.
+      The observer is set up HERE, not only from the callback ref.
 
-      Смена `offsetVar` меняет идентичность `connect`, а с ней и `sentinelRef`.
-      React отцепляет старый ref (обнуляя рефы), цепляет новый — тот создаёт
-      живой наблюдатель, — и ТОЛЬКО ПОТОМ гоняет уборщик старого пассивного
-      эффекта, который этот свежий наблюдатель и отключал. Пока отсечек в
-      `connect` не было, следующий `resize` пересоздавал его безусловно, и сбой
-      сам собой лечился. Отсечки по значению (выше) эту страховку убрали:
-      мёртвый, но не обнулённый `observerRef` выглядит для них живым, и полоса
-      замирала НАВСЕГДА.
+      Changing `offsetVar` changes the identity of `connect`, and with it of `sentinelRef`. React
+      detaches the old ref (nulling the refs) and attaches the new one, which creates a live
+      observer. ONLY AFTER THAT does it run the cleanup of the old passive effect, which disconnects
+      that very fresh observer. While `connect` had no guards, the next `resize` recreated it
+      unconditionally, so the failure healed itself. The guards by value (above) removed that safety
+      net: a dead but not nulled `observerRef` looks alive to them, and the bar froze FOREVER.
     */
     connect();
 
@@ -216,8 +211,8 @@ export function useStickyOffset({
       window.removeEventListener("resize", schedule);
       mutations?.disconnect();
       observerRef.current?.disconnect();
-      // Сброс тот же, что в ветке отключения узла: иначе отсечки принимают
-      // отключённый наблюдатель за действующий.
+      // The reset is the same as in the branch that handles node detachment. Otherwise the
+      // guards take a disconnected observer for a live one.
       observerRef.current = null;
       appliedRef.current = null;
       rawRef.current = null;

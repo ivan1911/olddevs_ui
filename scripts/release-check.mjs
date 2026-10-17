@@ -1,25 +1,25 @@
 /**
- * Один вход, который прогоняет всё обязательное до тега.
+ * A single entry point that runs everything required before the tag.
  *
- * ЗАЧЕМ. Версия 1.6.0 упала в CI на `format:check` и axe — не потому, что
- * версию поставили руками, а потому, что перед тегом прогнали не всё. Список из
- * восьми команд в документации эту дыру не закрывает: пропустить одну из восьми
- * легко, пропустить одну из одной — нет.
+ * WHY. Version 1.6.0 failed in CI on `format:check` and axe. The version was not set by hand
+ * the problem: the checks before the tag did not all run. A list of eight commands in the
+ * docs does not close that gap. It is easy to skip one of eight, and impossible to skip the
+ * only one.
  *
- * ЧЕГО ЗДЕСЬ НЕТ И ПОЧЕМУ. Браузерных проверок (`test:a11y`,
- * `test:interactions`, `test:visual`). Они ручные по ADR-0013, а снимки вообще
- * локальные и зависят от платформы. Молчаливо добавить их сюда значило бы
- * сделать preflight неисполнимым на чистой машине — то есть необязательным, а
- * необязательные ворота не ворота. Их прогоняют отдельно; скрипт об этом
- * напоминает в конце.
+ * WHAT IS NOT HERE, AND WHY. The browser checks (`test:a11y`, `test:interactions`,
+ * `test:visual`). They are manual under ADR-0013, and the snapshots are local and depend on
+ * the platform. Adding them here quietly would make the preflight impossible to run on a
+ * clean machine, so it would no longer be required, and a gate that is not required is not
+ * a gate. They run separately; the script reminds you of this at the end.
  *
- * Порядок шагов — от дешёвого к дорогому: незачем собирать потребителя, если не
- * сходятся типы.
+ * The steps run from cheap to expensive: there is no point building the consumer if the
+ * types do not agree.
  */
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { readmeTranslationLag } from "./readme-translation.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
 
@@ -27,15 +27,15 @@ const STEPS = [
   { name: "types", command: "npm", args: ["run", "typecheck"] },
   { name: "linter", command: "npm", args: ["run", "lint"] },
   { name: "formatting", command: "npm", args: ["run", "format:check"] },
-  // Рядом с форматированием, а не рядом с документацией: проверка такая же
-  // текстовая и такая же дешёвая, а роняет по той же причине — файл в
-  // репозитории разошёлся с тем, что выводит генератор.
+  // Next to formatting, not next to the docs: the check is textual and just as cheap,
+  // and it fails for the same reason, a file in the repo has drifted from what the
+  // generator prints.
   { name: "docs index", command: "npm", args: ["run", "llms:check"] },
   { name: "tests", command: "npm", args: ["test"] },
   { name: "package build", command: "npm", args: ["run", "build"] },
-  // Сразу после сборки: проверка пакета читает `dist`. Ссылки внутрь —
-  // закрытый трекер, внутренние адреса, следы прежнего продукта — не должны
-  // уехать ни в пакет, ни в публичный репозиторий.
+  // Right after the build: the package check reads `dist`. Links inward (the private
+  // tracker, internal addresses, traces of the former product) must not leak into the
+  // package or the public repository.
   { name: "public package", command: "npm", args: ["run", "check:public"] },
   { name: "public repository", command: "npm", args: ["run", "check:public", "--", "--repo"] },
   { name: "directives in dist", command: "npm", args: ["run", "check:dist"] },
@@ -62,8 +62,8 @@ const manifest = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
 const version = manifest.version;
 const tag = `v${version}`;
 
-// 1. Непринятые changeset'ы означают, что версия ещё не поднята: тег ушёл бы на
-//    код, о котором CHANGELOG молчит.
+// 1. Unreleased changesets mean the version has not been bumped yet: the tag would
+//    point at code that the CHANGELOG does not describe.
 const pending = readdirSync(join(ROOT, ".changeset")).filter(
   (name) => name.endsWith(".md") && name !== "README.md"
 );
@@ -75,20 +75,20 @@ if (pending.length > 0) {
   );
 }
 
-// 2. Запись о версии в CHANGELOG — то, что прочтёт потребитель.
+// 2. The version entry in the CHANGELOG is what the consumer reads.
 const changelog = readFileSync(join(ROOT, "CHANGELOG.md"), "utf8");
 if (!changelog.includes(`## ${version}`)) {
   fail("release readiness", `CHANGELOG.md has no “## ${version}” section.`);
 }
 
-// 3. Тег не должен существовать: повторный тег молча ничего не опубликует.
+// 3. The tag must not exist yet: a repeated tag would silently publish nothing.
 const tags = spawnSync("git", ["tag", "--list", tag], { cwd: ROOT, encoding: "utf8" });
 if (tags.stdout.trim() === tag) {
   fail("release readiness", `Tag ${tag} already exists. Was the version not bumped?`);
 }
 
-// 4. Мажор без заметки о миграции — это выпуск, после которого потребитель
-//    остаётся один на один со сломанным приложением.
+// 4. A major release without a migration note leaves the consumer alone with a broken
+//    application after the release.
 const isMajor = version.endsWith(".0.0");
 if (isMajor) {
   const notes = join(ROOT, "docs", "api", "migration-notes.md");
@@ -100,6 +100,14 @@ if (isMajor) {
     );
   }
 }
+
+// 5. A lagging README translation is a report, not a gate (ADR-0073): the release does
+//    not wait for the translation.
+const lag = readmeTranslationLag(
+  readFileSync(join(ROOT, "README.md"), "utf8"),
+  readFileSync(join(ROOT, "README.ru.md"), "utf8")
+);
+if (lag) console.log(`\n⚠ ${lag}. A report only: the release goes on.`);
 
 console.log(`\n✓ All green. Version ${version}, tag ${tag} is free.`);
 console.log(

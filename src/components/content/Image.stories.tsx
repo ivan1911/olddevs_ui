@@ -2,9 +2,9 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Image, type ImageProps } from "./Image.js";
 
 /**
- * Картинки в историях — data-URI, а не сеть: снимок витрины не должен зависеть
- * от доступности чужого хоста, иначе бейзлайн начинает падать по причинам,
- * не связанным с кодом.
+ * Images in the stories are data URIs, not network requests. The showcase snapshot must not
+ * depend on the availability of a third-party host, or the baseline starts failing for reasons
+ * unrelated to the code.
  */
 const PHOTO =
   "data:image/svg+xml;base64," +
@@ -31,11 +31,11 @@ export const LoadFailed: Story = {
 };
 
 /**
- * Размер задаёт сама картинка, коробка её обнимает.
+ * The image sets its own size, and the box wraps it.
  *
- * Так устроен просмотр кадра: своей высоты у него нет, есть только потолок —
- * и вешать этот потолок нужно на картинку (`imgClassName`), а не на коробку.
- * На коробке он обрезал бы кадр вместо того, чтобы его уменьшить.
+ * This is how the frame preview is built: it has no height of its own, only a ceiling. That
+ * ceiling belongs on the image (`imgClassName`), not on the box. On the box it would crop the
+ * frame instead of shrinking it.
  */
 export const IntrinsicSize: Story = {
   args: {

@@ -15,17 +15,15 @@ const items: UploadItem[] = [
 test("the queue is a real named list", () => {
   render(<UploadQueue items={items} />);
 
-  // Набор `div` не сообщает скринридеру ни того, что это очередь, ни того,
-  // сколько в ней элементов.
+  // A set of `div`s tells a screen reader neither that this is a queue nor how many items it holds.
   expect(screen.getByRole("list", { name: "Upload queue" })).toBeTruthy();
   expect(screen.getAllByRole("listitem")).toHaveLength(3);
 });
 
 test("the summary is announced by a live region and counts partial success", () => {
-  // Очередь ОТСТОЯВШАЯСЯ: с волны 26 объявляется итог, а не ход. Прежний
-  // набор содержал `running`, и текст менялся на каждом переходе файла —
-  // двенадцать файлов давали двенадцать сообщений подряд, а `polite` их не
-  // схлопывает.
+  // The queue announces a SETTLED result: since wave 26 it announces the total, not each step. The
+  // previous set contained `running`, and the text changed on every file transition: twelve files
+  // produced twelve messages in a row, and `polite` does not collapse them.
   render(
     <UploadQueue
       items={[
@@ -36,7 +34,7 @@ test("the summary is announced by a live region and counts partial success", () 
     />
   );
 
-  // Частичный успех иначе виден только тому, кто просматривает список глазами.
+  // Partial success is otherwise visible only to someone who scans the list by eye.
   expect(screen.getByRole("status").textContent).toBe("2 of 3 uploaded, 1 failed");
 });
 
@@ -48,8 +46,8 @@ test("without errors the summary says nothing about them", () => {
 test("an empty queue yields no summary, but the region is mounted", () => {
   render(<UploadQueue items={[]} empty={<p>The queue is empty</p>} />);
 
-  // «Ноль из нуля» — не сообщение. А область, вставленная вместе с текстом,
-  // объявляется ненадёжно, поэтому она смонтирована всегда.
+  // "Zero of zero" is not a message. And a live region inserted together with its text is announced
+  // unreliably, so it is always mounted.
   expect(screen.getByRole("status").textContent).toBe("");
   expect(screen.getByText("The queue is empty")).toBeTruthy();
 });
@@ -65,8 +63,8 @@ test("unknown progress differs from zero", () => {
   );
 
   const bars = screen.getAllByRole("progressbar");
-  // `null` означает «сколько всего работы, неизвестно», и ARIA отличает это от
-  // полосы на нуле отсутствием `aria-valuenow`.
+  // `null` means "the total amount of work is unknown", and ARIA distinguishes this from a bar at
+  // zero by the absence of `aria-valuenow`.
   expect(bars[0]!.hasAttribute("aria-valuenow")).toBe(false);
   expect(bars[1]!.getAttribute("aria-valuenow")).toBe("0");
 });
@@ -98,7 +96,7 @@ test("the kit invents neither a domain label nor domain actions", () => {
     />
   );
 
-  // «Дубль» — знание приложения; кит хранит только механику состояния.
+  // "Duplicate" is application knowledge; the kit stores only the state mechanics.
   expect(screen.getByText("Duplicate")).toBeTruthy();
   expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
 });
@@ -107,14 +105,14 @@ test("the queue does not store itself", () => {
   const { rerender } = render(<UploadQueue items={items} />);
   expect(screen.getAllByRole("listitem")).toHaveLength(3);
 
-  // Элементы приходят пропами: убрал снаружи — исчезли внутри.
+  // Items come in as props: remove one from outside and it disappears inside.
   rerender(<UploadQueue items={items.slice(0, 1)} />);
   expect(screen.getAllByRole("listitem")).toHaveLength(1);
 });
 
 test("each of the four states yields its own tone", () => {
-  // Словарь общий с `Timeline` начиная с 3.0.0 (ADR-0031). До сведения у обоих
-  // типов не было покрывающих тестов вовсе — ветка терялась бы молча.
+  // The vocabulary has been shared with `Timeline` since 3.0.0 (ADR-0031). Before the merge, neither
+  // type had any covering tests, so the branch would be silently lost.
   render(
     <UploadQueue
       items={[
@@ -126,8 +124,8 @@ test("each of the four states yields its own tone", () => {
     />
   );
 
-  // Тона названы литерально — см. тот же тест у `Timeline`: ожидание, взятое
-  // из проверяемой таблицы, делает гейт вечнозелёным.
+  // The tones are named literally — see the same test in `Timeline`: an expectation taken from the
+  // table under test makes the gate permanently green.
   for (const [label, tone] of [
     ["queued", "neutral"],
     ["in progress", "accent"],
@@ -139,9 +137,9 @@ test("each of the four states yields its own tone", () => {
 });
 
 test("an unknown state does not break the queue", () => {
-  // Та же защита, что у `Timeline`: потребитель на JS, состояния приходят с
-  // бэкенда, и пятый их вид не должен стоить экрана. При сведении словарей
-  // страховка обязана была уцелеть у обоих, а не только у ленты.
+  // The same safeguard as in `Timeline`: a consumer in JS gets states from the backend, and a fifth
+  // kind of them must not cost the screen. When the dictionaries were merged, the safeguard had to
+  // survive in both, not only in the Timeline.
   render(
     <UploadQueue
       items={[
@@ -156,12 +154,11 @@ test("an unknown state does not break the queue", () => {
 });
 
 /**
- * Объявляется устоявшийся итог, а не каждый промежуточный переход.
+ * The settled total is announced, not every intermediate transition.
  *
- * Текст живой области менялся при каждом переходе файла в `success`/`failed`:
- * отправка двенадцати файлов давала двенадцать сообщений подряд. Очередь
- * `polite` их не схлопывает, и пользователь скринридера получал минуту
- * непрерывной речи вместо одного сообщения о результате.
+ * The text of the live region changed on every file transition to `success` / `failed`: sending
+ * twelve files produced twelve messages in a row. The queue is `polite` and does not collapse them,
+ * so a screen reader user got a minute of continuous speech instead of one message about the result.
  */
 test("a queue still running announces nothing", () => {
   render(
@@ -190,9 +187,9 @@ test("the summary appears once the queue has settled", () => {
 });
 
 /**
- * Тон статуса отдельно от подписи: «Дубль» при технически успешной загрузке —
- * предупреждение, а не успех. Заказчик намеренно не заполнял `statusLabel`,
- * потому что бейдж горел зелёным.
+ * The tone of the status is separate from its label: "Duplicate" on a technically successful upload
+ * is a warning, not a success. The customer deliberately did not fill in `statusLabel`, because the
+ * badge glowed green.
  */
 test("a domain tone overrides the badge tone derived from the state", () => {
   render(
@@ -237,8 +234,8 @@ test("an unknown state with a tone takes the tone; without it, stays neutral", (
 });
 
 test("an unknown tone is ignored instead of breaking the queue", () => {
-  // Потребитель на JS собирает тон из своего словаря статусов: опечатка или
-  // пятый вид тона не должны стоить экрана (та же страховка, что у `state`).
+  // A JS consumer builds the tone from its own status dictionary: a typo or a fifth kind of tone
+  // must not cost the screen (the same safeguard as for `state`).
   render(
     <UploadQueue
       items={[
@@ -274,8 +271,8 @@ test("the failed meta text follows the state, not the tone", () => {
     />
   );
 
-  // Текст ошибки — механика отправки: упало — значит упало, что бы ни говорил
-  // домен. И наоборот: красный бейдж не превращает успешный элемент в сбой.
+  // Error text is the mechanics of sending: it failed means it failed, whatever the domain says.
+  // And the reverse: a red badge does not turn a successful item into a failure.
   expect(screen.getByText("The server rejected the file").className).toContain(
     TONE_TOKENS.danger.fg
   );
@@ -300,16 +297,16 @@ test("the progress bar shares the tone of the badge in the same row", () => {
     />
   );
 
-  // Строка одного цвета: зелёная полоса рядом с жёлтым бейджем говорит два
-  // разных слова об одном и том же элементе.
+  // A row of one color: a green stripe next to a yellow badge says two different things about the
+  // same item.
   const bar = screen.getByRole("progressbar");
   expect(bar.querySelector(`.${TONE_TOKENS.warning.dotBg}`)).not.toBeNull();
   expect(bar.querySelector(`.${TONE_TOKENS.success.dotBg}`)).toBeNull();
 });
 
 test("a state named after an inherited object key stays neutral", () => {
-  // Состояние приходит с бэкенда: `"constructor"` нашлось бы в обычном объекте
-  // унаследованной функцией, и бейдж упал бы на несуществующем токене.
+  // The state comes from the backend: `"constructor"` would be found in a plain object as an
+  // inherited function, and the badge would fail on a nonexistent token.
   render(
     <UploadQueue
       items={[

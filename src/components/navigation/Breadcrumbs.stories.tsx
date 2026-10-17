@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Breadcrumbs } from "./Breadcrumbs.js";
 
-/** Волна 9: примитивы навигации по облегчённой планке. */
+/** Wave 9: navigation primitives for the lighter bar. */
 const meta = {
   title: "Navigation/Breadcrumbs",
   component: Breadcrumbs,

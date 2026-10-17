@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DescriptionList } from "./DescriptionList.js";
 
-/** Волна 10: данные. Облегчённая планка, снимков нет. */
+/** Wave 10: data. A lighter quality bar, no snapshots. */
 const meta = {
   title: "Content/DescriptionList",
   component: DescriptionList,

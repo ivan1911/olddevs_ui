@@ -8,79 +8,77 @@ import { hasContent } from "../../lib/empty.js";
 import { TONE_TOKENS, type Tone } from "../../lib/variants.js";
 
 interface NotificationItemBaseProps extends Omit<ComponentPropsWithoutRef<"li">, "title"> {
-  /** О чём событие. Первая строка. */
+  /** What the event is about. The first line. */
   title: ReactNode;
-  /** Подробности. Вторая строка. */
+  /** Details. The second line. */
   description?: ReactNode;
   /**
-   * Когда — уже отформатированное.
+   * When it happened, already formatted.
    *
-   * «5 минут назад» и «вчера в 14:03» кит не считает: относительное время
-   * зависит от локали и часового пояса потребителя, а не от дизайн-системы.
+   * The kit does not compute "5 minutes ago" or "yesterday at 14:03": relative time depends on
+   * the consumer's locale and time zone, not on the design system.
    */
   time?: ReactNode;
-  /** Иконка слева. Тип события — знание приложения, поэтому иконка приходит. */
+  /** Icon on the left. The application knows the event type, so it passes the icon in. */
   icon?: ReactNode;
   /**
-   * Превью объекта, о котором событие, — второй визуальный слот рядом с
-   * текстом.
+   * Preview of the object the event is about: a second visual slot next to the text.
    *
-   * Независим от `icon`: иконка говорит, ЧТО случилось, превью — С ЧЕМ. Размер
-   * задаёт потребитель самим элементом (картинка 36px, `Avatar`); слот лишь не
-   * даёт ему сжаться и ставит по верхнему краю. Декоративное превью — с
-   * `alt=""`: заголовок уже называет объект.
+   * Independent of `icon`: the icon says WHAT happened, the preview says WITH WHAT. The consumer
+   * sets the size on the element itself (a 36px image, an `Avatar`); the slot only keeps it from
+   * shrinking and aligns it to the top edge. A decorative preview gets `alt=""`: the title
+   * already names the object.
    */
   media?: ReactNode;
-  /** Тон иконки и точки непрочитанного. */
+  /** Tone of the icon and the unread dot. */
   tone?: Tone;
   /**
-   * Непрочитанное.
+   * Unread.
    *
-   * Отличается НЕ ТОЛЬКО ЦВЕТОМ: рядом с заголовком встаёт слово для
-   * скринридера. Точка и подложка — сигнал для глаз, и человек, который их не
-   * видит, иначе не отличит новое событие от старого вовсе.
+   * Not signalled by COLOR ALONE: a word for screen readers goes next to the title. The dot and
+   * the background are a signal for the eyes, and someone who cannot see them would otherwise
+   * not tell a new event from an old one at all.
    */
   unread?: boolean;
 }
 
 /**
- * Действие строки: либо `actions` справа, либо `onAction` на всю строку.
+ * Row action: either `actions` on the right, or `onAction` on the whole row.
  *
- * Вместе нельзя, и это сказано типом: кнопки внутри кнопки — недопустимая
- * разметка, на которой потребитель уже забраковал свою строку очереди.
+ * They cannot be combined, and the type says so: buttons inside a button are invalid markup,
+ * the kind a consumer has already rejected in their own queue row.
  */
 export type NotificationItemProps = NotificationItemBaseProps &
   (
     | {
-        /** Действия справа — «отметить прочитанным», «перейти». */
+        /** Actions on the right, such as "mark as read" or "open". */
         actions?: ReactNode;
         onAction?: never;
       }
     | {
         actions?: never;
         /**
-         * Вся строка — одна кнопка: щелчок, Enter и Space вызывают обработчик.
+         * The whole row is one button: a click, Enter and Space call the handler.
          *
-         * Доступное имя кнопки — заголовок (и слово «Не прочитано»), а время и
-         * подробности — её описание: полным содержимым имя получилось бы на
-         * полстраницы. Строка остаётся `<li>`, кнопка лежит внутри неё.
+         * The button's accessible name is the title (plus the word "Unread"), and the time and
+         * description are its description: the full content as the name would be half a page
+         * long. The row stays an `<li>`; the button sits inside it.
          */
         onAction: () => void;
       }
   );
 
 /**
- * Строка события: что произошло, когда и прочитано ли.
+ * An event row: what happened, when, and whether it was read.
  *
- * ТИПОВ СОБЫТИЙ КИТ НЕ ЗНАЕТ. «Публикация не прошла», «канал отключён»,
- * «модерация завершена» — словарь приложения; сюда приходят иконка, тон и
- * текст. Тот же раздел обязанностей, что у `StatusBadge`, который приехал из
- * фронта, оставив снаружи одиннадцать доменных статусов
- * (ADR-0027).
+ * The kit does NOT KNOW EVENT TYPES. "Publish failed", "Channel disconnected", "Moderation
+ * complete" are the application's vocabulary; the kit receives an icon, a tone and text. It
+ * follows the same split of responsibilities as `StatusBadge`, which came from the frontend and
+ * left its eleven domain statuses behind (ADR-0027).
  *
- * Строка не навигирует и не отмечает себя прочитанной: и переход, и отметка —
- * действия потребителя. Они приходят в `actions`, в `onAction` (вся строка —
- * кнопка) или оборачивают строку.
+ * The row neither navigates nor marks itself as read: both navigation and marking are the
+ * consumer's actions. They arrive in `actions`, in `onAction` (the whole row is a button), or
+ * wrap the row.
  */
 export const NotificationItem = forwardRef<HTMLLIElement, NotificationItemProps>(
   function NotificationItem(
@@ -103,13 +101,12 @@ export const NotificationItem = forwardRef<HTMLLIElement, NotificationItemProps>
     const baseId = useId();
     const t = TONE_TOKENS[tone];
 
-    // Оба пропа пришли только у потребителя на JS: типы это запрещают. `actions`
-    // побеждает — вложенная кнопка в кнопке недопустима, а `actions` может быть
-    // единственным путём к действию (удалить, открыть), и прятать его из-за
-    // лишнего `onAction` хуже, чем потерять щелчок по всей строке. Сбой виден
-    // сразу — строка не реагирует на щелчок, — а в разработке о нём ещё и
-    // говорит консоль: у потребителя на JS это единственное, что заменяет ошибку
-    // типов.
+    // Both props can only arrive together from a consumer in plain JS: the types forbid it.
+    // `actions` wins: a button nested in a button is invalid, and `actions` may be the only way
+    // to reach an action (delete, open). Hiding it because of a stray `onAction` is worse than
+    // losing the click on the whole row. The failure is visible right away: the row does not
+    // respond to clicks. In development the console also reports it, because for a JS consumer
+    // that is the only thing standing in for a type error.
     if (onAction != null && actions != null) {
       devWarn(
         "NotificationItem: both `onAction` and `actions` were passed, but they are mutually " +
@@ -120,17 +117,16 @@ export const NotificationItem = forwardRef<HTMLLIElement, NotificationItemProps>
     }
     const asButton = onAction != null && actions == null;
 
-    // `id` нужны только кнопке (имя и описание). Обычной строке они не ставятся:
-    // без `onAction` разметка не должна меняться ни на атрибут.
+    // The ids are needed only by the button (its name and description). A plain row gets none:
+    // without `onAction` the markup must not change by a single attribute.
     const idOf = (part: string) => (asButton ? `${baseId}-${part}` : undefined);
     const titleId = idOf("title");
     const unreadId = idOf("unread");
     const descriptionId = idOf("description");
     const timeId = idOf("time");
 
-    // Внутри кнопки допустим только фразовый контент, поэтому блоки строки в
-    // режиме кнопки — `span` (у `span` блочность дают классы). Без `onAction`
-    // остаются `div`, как были.
+    // Inside a button only phrasing content is allowed, so the row's blocks are `span`s in button
+    // mode (their block layout comes from classes). Without `onAction` they stay `div`s, as before.
     const Block = asButton ? "span" : "div";
 
     const layout = "flex items-start gap-3 px-3 py-2.5";
@@ -178,8 +174,8 @@ export const NotificationItem = forwardRef<HTMLLIElement, NotificationItemProps>
     );
 
     if (asButton) {
-      // `hasContent`, а не `!= null`: `""` и `false` из `{note && ...}` рисуют
-      // пустой узел, и ссылка на него объявлялась бы пустым описанием.
+      // `hasContent`, not `!= null`: `""` and `false` from `{note && ...}` render an empty node,
+      // and a reference to that node would announce an empty description.
       const describedBy = [hasContent(description) && descriptionId, hasContent(time) && timeId]
         .filter(Boolean)
         .join(" ");
@@ -187,28 +183,27 @@ export const NotificationItem = forwardRef<HTMLLIElement, NotificationItemProps>
       return (
         <li
           ref={ref}
-          // Подложка непрочитанного — на `li`, а наведение и кольцо фокуса — на
-          // кнопке: так они занимают всю строку, а не её внутренность.
-          // Отступы и раскладка тоже на кнопке, поэтому `className` потребителя
-          // (подложка, граница) их не меняет — это сказано в справочнике.
+          // The unread background is on the `li`; the hover and the focus ring are on the button,
+          // so they cover the whole row rather than its inside. Padding and layout are on the
+          // button too, so the consumer's `className` (background, border) does not change them.
+          // The Reference says so.
           className={cn(unread && "bg-accent-soft", className)}
           {...rest}
         >
           <button
             type="button"
             onClick={() => onAction()}
-            // Имя из заголовка и слова «Не прочитано», а не `aria-label`: тот
-            // продублировал бы текст в разметке и разошёлся бы с ним при правке.
+            // The name comes from the title and the word "Unread", not from `aria-label`: that
+            // would duplicate the text in the markup and drift apart from it on edits.
             aria-labelledby={unread ? `${titleId} ${unreadId}` : titleId}
             aria-describedby={describedBy || undefined}
             className={cn(
               layout,
               "focus-visible:outline-accent-strong w-full cursor-pointer text-left transition-colors",
-              // Наведение у непрочитанного — затемнение поверх подложки, а не
-              // нейтральная заливка: иначе строка на время наведения выглядела
-              // бы прочитанной.
+              // Hover on an unread row darkens over the background instead of using the neutral
+              // fill: otherwise the row would look read while it is hovered.
               unread ? "hover:bg-accent/10" : "hover:bg-bg-2",
-              // Кольцо внутрь строки: снаружи его срежет прокрутка центра.
+              // The focus ring is drawn inward: outside, the scrolling of the center would clip it.
               "focus-visible:outline-2 focus-visible:-outline-offset-2"
             )}
           >
@@ -223,8 +218,8 @@ export const NotificationItem = forwardRef<HTMLLIElement, NotificationItemProps>
         ref={ref}
         className={cn(
           layout,
-          // Подложка у непрочитанного — сигнал для глаз, и он не единственный:
-          // слово рядом с заголовком говорит то же самое скринридеру.
+          // The unread background is a visual signal, and not the only one: the word next to the
+          // title says the same thing to a screen reader.
           unread && "bg-accent-soft",
           className
         )}
@@ -239,42 +234,42 @@ export const NotificationItem = forwardRef<HTMLLIElement, NotificationItemProps>
 );
 
 export interface NotificationGroup {
-  /** Идентификатор группы. */
+  /** Group identifier. */
   id: string;
-  /** Подпись группы: «Сегодня», «Вчера», «Раньше». */
+  /** Group label: "Today", "Yesterday", "Earlier". */
   label: ReactNode;
-  /** Строки группы — обычно `NotificationItem`. */
+  /** The rows of the group, usually `NotificationItem`s. */
   children: ReactNode;
 }
 
 export interface NotificationListProps extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
   /**
-   * Группы событий — уже собранные потребителем.
+   * Event groups, already assembled by the consumer.
    *
-   * Что такое «вчера», знает локаль и часовой пояс потребителя, а не кит: у
-   * приложения с ночными сменами граница суток своя, и считать её здесь значило
-   * бы навязать чужой календарь.
+   * The consumer's locale and time zone decide what "yesterday" means, not the kit: an application
+   * with night shifts has its own day boundary, and computing it here would impose someone
+   * else's calendar.
    */
   groups?: NotificationGroup[];
-  /** Строки без группировки. Используется вместо `groups`, а не вместе с ними. */
+  /** Rows without grouping. Used instead of `groups`, not together with them. */
   children?: ReactNode;
-  /** Что показать при пустом списке — обычно `EmptyState`. */
+  /** What to show for an empty list, usually an `EmptyState`. */
   empty?: ReactNode;
-  /** Доступное имя списка для скринридера. По умолчанию — стандартная подпись пакета. */
+  /** Accessible name of the list for screen readers. Defaults to the package's standard label. */
   "aria-label"?: string;
 }
 
 /**
- * Список событий с группировкой по времени и пустым состоянием.
+ * A list of events, grouped by time, with an empty state.
  *
- * ГРУППА — НАСТОЯЩАЯ ГРУППА (`role="group"` с подписью), а не заголовок над
- * набором строк. Заголовок уровня `h3` здесь поставить нельзя: уровень зависит
- * от того, куда список встал — в попап, в ящик или на страницу, — и кит этого
- * не знает. Группа с именем сообщает структуру, не занимая уровня.
+ * A GROUP IS A REAL GROUP (`role="group"` with a label), not a heading above a set of rows. An
+ * `h3`-level heading cannot be used here: the level depends on where the list is placed (in a
+ * popover, a drawer or on a page), and the kit does not know that. A named group conveys the
+ * structure without taking up a heading level.
  *
- * ПУСТОЕ СОСТОЯНИЕ — существующий `EmptyState`, приходящий пропом: у пустоты
- * «нет уведомлений» и пустоты «ничего не нашлось по фильтру» разный текст и
- * разные действия, и выбирает их потребитель.
+ * THE EMPTY STATE is the existing `EmptyState`, passed as a prop: "no notifications" and
+ * "nothing matched the filter" have different text and different actions, and the consumer
+ * chooses between them.
  */
 export const NotificationList = forwardRef<HTMLDivElement, NotificationListProps>(
   function NotificationList(
@@ -285,16 +280,16 @@ export const NotificationList = forwardRef<HTMLDivElement, NotificationListProps
     const baseId = useId();
     const label = ariaLabel ?? messages.notifications.label;
 
-    // `hasContent`, а не `== null`: основной способ вызова — `{items.map(...)}`,
-    // и при пустом `items` сюда приходит ПУСТОЙ МАССИВ. Он не `null`, поэтому
-    // список считался непустым и рисовался пустой `<ul>` вместо слота `empty`.
+    // `hasContent`, not `== null`: the usual call is `{items.map(...)}`, and with empty `items`
+    // an EMPTY ARRAY arrives here. It is not `null`, so the list counted as non-empty and an empty
+    // `<ul>` was drawn instead of the `empty` slot.
     const isEmpty = groups != null ? groups.length === 0 : !hasContent(children);
     if (isEmpty) return <>{empty}</>;
 
     return (
-      // Имя стоит на внешнем узле, а не на внутреннем списке: с группами
-      // списков несколько, и назвать надо всё вместе. Роль обязательна — у
-      // голого `div` с `aria-label` имени нет, атрибут просто игнорируется.
+      // The name goes on the outer node, not on an inner list: with groups there are several
+      // lists, and the name must cover them all. The role is required: a bare `div` with
+      // `aria-label` has no name, and the attribute is simply ignored.
       <div
         ref={ref}
         role="group"

@@ -22,8 +22,8 @@ test("an empty field yields null, not zero and not NaN", async () => {
   await user.clear(input);
   await user.tab();
 
-  // Именно `null`: `NaN` не равен сам себе, и потребитель, сравнивший его с
-  // чем угодно, получил бы тихо неверный результат.
+  // Exactly `null`: `NaN` is not equal to itself, so a consumer comparing the
+  // value with anything would get a silently wrong result.
   expect(onChange).toHaveBeenCalledWith(null);
 });
 
@@ -51,7 +51,7 @@ test("min and max clamp the value instead of blocking input", async () => {
   const user = userEvent.setup();
   render(<NumberInput label="Count" value={100} min={0} max={100} onChange={() => {}} />);
 
-  // На верхней границе кнопка «больше» недоступна — это и есть зажим.
+  // At the upper bound the "increase" button is disabled: that is the clamp.
   expect(
     (screen.getByRole("button", { name: "Count: increase" }) as HTMLButtonElement).disabled
   ).toBe(true);

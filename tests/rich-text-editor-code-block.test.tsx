@@ -16,15 +16,15 @@ import {
 import { RICH_TEXT_SCHEMA } from "../src/editor/core/schema.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Блок кода с языком и подсветкой (OLDSUI-50, ADR-0051). В Документ пишется
- * только язык — `class="language-…"`, а разметка токенов живёт декорациями
- * Редактора и в сохранённый HTML не попадает.
+ * A code block with a language and highlighting (OLDSUI-50, ADR-0051). Only the language
+ * is written into the Document — `class="language-…"`; the token markup lives in the
+ * Editor's decorations and does not get into the saved HTML.
  */
 
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
@@ -36,14 +36,14 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 }
 
 /**
- * Представление узла Tiptap рисует React-порталом в микрозадаче: кнопка языка
- * и обёртка блока появляются после неё, а не сразу после транзакции.
+ * The React portal renders a Tiptap node view in a microtask: the language button and the
+ * block wrapper appear after it, not right after the transaction.
  */
 async function settle() {
   await act(async () => {});
 }
 
-/** Ввод текста тем путём, которым его получает ProseMirror от браузера. */
+/** Types text along the same path ProseMirror receives it from the browser. */
 function typeText(editor: Editor, text: string) {
   act(() => {
     for (const char of text) {
@@ -82,9 +82,9 @@ test.each([
 });
 
 /*
-  JSON (OLDSUI-59): ограда ```json — то, что пишет любой README с примером
-  ответа API. Псевдонима нет: `jsonc` с комментариями грамматика JSON не
-  разберёт, и честнее «Обычный текст», чем подсветка с ошибками.
+  JSON (OLDSUI-59): the ```json fence is what any README with an API response example
+  writes. There is no alias: the JSON grammar cannot parse `jsonc` with comments, and it
+  is more honest to show "Plain text" than highlighting with errors.
 */
 test("a json fence opens a JSON block, and jsonc stays plain text", () => {
   const { editor } = renderEditor();
@@ -130,7 +130,7 @@ test("a block given an alias by an engine command is stored by its name", () => 
   expect(editor.getHTML()).toBe('<pre><code class="language-typescript"></code></pre>');
 });
 
-/** По образцу на язык: в каждом есть ключевое слово или тег — то, что точно получит токен. */
+/** One sample per language: each has a keyword or a tag — something that is sure to get a token. */
 const SAMPLES = {
   python: "def greet(name):\n    return f'hi {name}'",
   typescript: "const total: number = 1;",
@@ -142,7 +142,8 @@ const SAMPLES = {
   markdown: "# Title\n\n- item",
 } as const;
 
-/* Образец на каждый язык списка: новый язык без образца уронит этот тест, а не пройдёт непроверенным. */
+/* A sample for every language in the list: a new language without a sample breaks this test
+   instead of passing unchecked. */
 test("the samples cover every code block language", () => {
   expect(Object.keys(SAMPLES)).toEqual(RICH_TEXT_SCHEMA.codeLanguages);
 });
@@ -162,7 +163,7 @@ test.each(Object.entries(SAMPLES))(
 
     const tokens = editor.view.dom.querySelectorAll("pre code [class*='hljs-']");
     expect(tokens.length).toBeGreaterThan(0);
-    // Токены — только классы `hljs-*`: ни `style`, ни чужих классов.
+    // Tokens are only `hljs-*` classes: no `style`, no foreign classes.
     for (const token of tokens) {
       expect(token.getAttribute("style")).toBeNull();
       expect(token.className).toMatch(/^hljs-[\w-]+( [\w-]+)*$/);
@@ -191,7 +192,7 @@ test("each block carries a language button named after its language", async () =
   const python = screen.getByRole("button", { name: "Language: Python" });
   expect(python.getAttribute("aria-haspopup")).toBe("menu");
   expect(screen.getByRole("button", { name: "Language: Plain text" })).toBeTruthy();
-  // Вне обхода Tab: вход — `Alt+F10` из блока.
+  // Outside the Tab order: the entry is `Alt+F10` from the block.
   expect(python.getAttribute("tabindex")).toBe("-1");
   expect(python.getAttribute("aria-keyshortcuts")).toBe("Alt+F10");
 });
@@ -203,7 +204,7 @@ test("choosing a language changes the class in one undo step and returns focus t
   });
   await settle();
   act(() => void editor.commands.setTextSelection(2));
-  // Набор прямо перед выбором: история склеила бы его со сменой языка.
+  // Typing right before the choice: history would merge it with the language change.
   act(() => void editor.commands.insertContent("b"));
 
   await user.click(screen.getByRole("button", { name: "Language: Python" }));
@@ -251,10 +252,10 @@ test("Alt+F10 inside a code block focuses its language button, Escape returns to
 });
 
 /*
-  Внутри окна Escape шапки тоже возвращает в код, а окно остаётся. Radix слушает
-  Escape на документе в фазе перехвата, раньше шапки, и закрывал окно, как
-  только меню языка успевало исчезнуть, — то есть всегда, кроме самого быстрого
-  повтора клавиши.
+  Inside the dialog, Escape on the header buttons also returns to the code, and the
+  dialog stays. Radix listens for Escape on the document in the capture phase, before the
+  header does, and closed the dialog as soon as the language menu had time to disappear —
+  that is, always, except for the fastest key repeat.
 */
 test("inside a Dialog Escape on the header buttons returns to the code and keeps the window", async () => {
   const user = userEvent.setup();
@@ -286,14 +287,14 @@ test("inside a Dialog Escape on the header buttons returns to the code and keeps
   expect(editor.view.hasFocus()).toBe(true);
   expect(onClose).not.toHaveBeenCalled();
 
-  // Escape из самого кода — обычный: окно закрывается.
+  // Escape from the code itself is the usual one: the dialog closes.
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
 /*
-  Ящик (OLDSUI-120) — тот же модальный слой Radix со своим заслоном от чужого
-  Escape: шапка блока кода не должна закрывать и его.
+  The Drawer (OLDSUI-120) is the same Radix modal layer with its own guard against a
+  foreign Escape: the code block's header must not close it either.
 */
 test("inside a Drawer Escape on the language button returns to the code and keeps the drawer", async () => {
   const user = userEvent.setup();
@@ -400,10 +401,9 @@ test("a Markdown code block shows its language and is highlighted as Markdown", 
 });
 
 /*
-  Блок Markdown почти всегда сам содержит ограду ```` ``` ````: пример README
-  с кодом внутри. Выгрузка обязана взять ограду длиннее любой внутренней, иначе
-  внутренняя ``` закроет внешний блок и документ при обратной загрузке
-  развалится.
+  A Markdown block almost always contains its own fence ```` ``` ````: a README example
+  with code inside. The export must take a fence longer than any inner one, otherwise the
+  inner ``` would close the outer block and the document would break on reload.
 */
 test("a Markdown block that contains its own fence survives getMarkdown and setMarkdown", () => {
   const inner = "Install:\n\n```bash\nnpm i\n```";

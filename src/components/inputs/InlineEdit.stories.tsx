@@ -23,7 +23,7 @@ export const Playground: Story = {
   },
 };
 
-/** Пустое значение: на кнопке подпись пустоты, а не пустая мишень. */
+/** An empty value: the button shows an empty-state label, not an empty hit area. */
 export const Empty: Story = {
   render: function Render() {
     const [value, setValue] = useState("");
@@ -35,7 +35,7 @@ export const Empty: Story = {
   },
 };
 
-/** Список правок по месту — типичный случай: карточка со свойствами. */
+/** A list of inline edits is the typical case: a card with properties. */
 export const List: Story = {
   render: function Render() {
     const [values, setValues] = useState({

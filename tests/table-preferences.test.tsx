@@ -71,8 +71,8 @@ describe("TablePreferences: column visibility", () => {
   });
 
   /**
-   * Таблица без колонок — не состояние интерфейса, а поломка: скрывать станет
-   * нечего, и пользователю из неё не выбраться.
+   * A table without columns is not a state of the interface but a breakage: there would be
+   * nothing left to hide, and the user could not get out of it.
    */
   test("the last visible column cannot be unchecked", () => {
     render(
@@ -90,7 +90,7 @@ describe("TablePreferences: column visibility", () => {
     expect(
       (screen.getByRole("checkbox", { name: "A" }) as HTMLElement & { disabled?: boolean }).disabled
     ).toBe(true);
-    // Скрытую вернуть при этом можно — запрет односторонний.
+    // A hidden column can still be shown again: the restriction is one-way.
     expect(
       (screen.getByRole("checkbox", { name: "B" }) as HTMLElement & { disabled?: boolean }).disabled
     ).toBe(false);
@@ -123,7 +123,7 @@ describe("TablePreferences: column order", () => {
         onDensityChange={noop}
       />
     );
-    // Иначе в списке из десяти колонок двадцать кнопок «Выше» и «Ниже».
+    // Otherwise a list of ten columns would have twenty buttons labeled "Up" and "Down".
     expect(screen.getByRole("button", { name: "Move Section up" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Move Section down" })).toBeTruthy();
   });
@@ -140,18 +140,18 @@ describe("TablePreferences: column order", () => {
         onDensityChange={noop}
       />
     );
-    // Прежняя охрана по совпадению длин пропускала список той же длины с
-    // другими идентификаторами, и часть колонок пропадала из панели.
+    // The previous guard, which compared lengths, let through a list of the same length with
+    // other identifiers, and some columns disappeared from the panel.
     expect(screen.getAllByRole("checkbox")).toHaveLength(3);
     expect(screen.getByRole("button", { name: "Move Updated up" })).toBeTruthy();
   });
 
   /**
-   * На краю кнопка объявляется недоступной, но ОСТАЁТСЯ В ОБХОДЕ.
+   * At the edge the button is announced as unavailable, but it STAYS IN THE TAB ORDER.
    *
-   * С родным `disabled` браузер снимал фокус с той самой кнопки, на которой он
-   * стоял: два нажатия Enter подряд на «выше» доводили колонку до края, кнопка
-   * гасла, фокус уезжал на документ, и обход панели начинался заново.
+   * With the native `disabled`, the browser removed focus from the very button it stood
+   * on: two Enter presses in a row on "up" moved the column to the edge, the button went
+   * dim, focus moved to the document, and the tab order of the panel started over.
    */
   test("the edge buttons announce themselves unavailable without leaving the tab order", async () => {
     const user = userEvent.setup();
@@ -172,7 +172,7 @@ describe("TablePreferences: column order", () => {
     expect(up.getAttribute("aria-disabled")).toBe("true");
     expect((up as HTMLButtonElement).disabled).toBe(false);
 
-    // Нажатие на краю не двигает ничего и не роняет фокус.
+    // A press at the edge moves nothing and does not drop focus.
     up.focus();
     await user.click(up);
     expect(onColumnOrderChange).not.toHaveBeenCalled();
@@ -183,7 +183,7 @@ describe("TablePreferences: column order", () => {
     ).toBe("true");
   });
 
-  /** Порядок меняется с клавиатуры — перетаскивания без неё не бывает. */
+  /** Order is changed from the keyboard: there is no drag-only path. */
   test("the order changes by buttons and works from the keyboard", async () => {
     const user = userEvent.setup();
     function Controlled() {
@@ -212,8 +212,8 @@ describe("TablePreferences: column order", () => {
   });
 
   /**
-   * Таблица без колонок — не состояние интерфейса, а поломка: скрывать станет
-   * нечего, и пользователю из неё не выбраться.
+   * A table without columns is not a state of the interface but a breakage: there would be
+   * nothing left to hide, and the user could not get out of it.
    */
   test("the last visible column cannot be unchecked", () => {
     render(
@@ -231,7 +231,7 @@ describe("TablePreferences: column order", () => {
     expect(
       (screen.getByRole("checkbox", { name: "A" }) as HTMLElement & { disabled?: boolean }).disabled
     ).toBe(true);
-    // Скрытую вернуть при этом можно — запрет односторонний.
+    // A hidden column can still be shown again: the restriction is one-way.
     expect(
       (screen.getByRole("checkbox", { name: "B" }) as HTMLElement & { disabled?: boolean }).disabled
     ).toBe(false);
@@ -273,12 +273,12 @@ describe("TablePreferences: density", () => {
 });
 
 /**
- * Кнопка на краю ВЫГЛЯДИТ недоступной, а не только объявляется такой.
+ * The edge button LOOKS unavailable, not just announces itself as such.
  *
- * Переход с `disabled` на `aria-disabled` сохранил объявление и обход, но вид
- * завязан на псевдокласс `:disabled`, которого у такой кнопки нет: зрячий
- * пользователь мыши видел обычную кнопку с курсором-указателем, жал — и не
- * происходило ничего.
+ * The move from `disabled` to `aria-disabled` kept the announcement and the tab order, but
+ * the look depends on the `:disabled` pseudo-class, which such a button does not match: a
+ * sighted mouse user saw an ordinary button with a pointer cursor, pressed it, and nothing
+ * happened.
  */
 test("an edge button is dimmed, not just announced unavailable", () => {
   render(

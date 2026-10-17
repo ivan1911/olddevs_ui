@@ -2,12 +2,12 @@ import { expect, test } from "@playwright/test";
 import { focusToolbarButton } from "./editor-toolbar.js";
 
 /**
- * Меню «Таблица» Редактора в браузере (OLDSUI-45): то, чего jsdom не умеет.
+ * Editor "Table" menu in a browser (OLDSUI-45): what jsdom cannot do.
  *
- * Меню react-aria внутри окна Radix в jsdom не раскрывается — ловушка фокуса
- * окна возвращает фокус (`tests/rich-text-editor-toolbar.test.tsx`), поэтому
- * стек слоёв ADR-0041 с настоящим `Dialog` проверяется здесь: подменю, сетка
- * размера и Escape слой за слоем.
+ * A react-aria menu inside a Radix dialog does not open in jsdom: the dialog's focus
+ * trap sends focus back (`tests/rich-text-editor-toolbar.test.tsx`). So the overlay
+ * layer stack of ADR-0041 is checked here, with a real `Dialog`: the submenu, the size
+ * grid, and Escape one layer at a time.
  */
 
 const STORY = (id: string) =>
@@ -17,16 +17,16 @@ test("inside a Dialog: the keyboard reaches the size grid, picks a size, and foc
   page,
 }) => {
   await page.goto(STORY("inside-dialog"));
-  // Имя обязательно: подменю react-aria — тоже `role="dialog"` («Table»).
+  // The name is required: the react-aria submenu is also a `role="dialog"` ("Table").
   const dialog = page.getByRole("dialog", { name: "Edit the note" });
   const field = page.getByRole("textbox", { name: "Document" });
   await expect(dialog).toBeVisible();
   await field.click();
-  // Указатель — прочь с поля: сетка следует за наведением, а подменю может
-  // встать прямо под ним (так вышло, когда «…» укоротило ряд Панели, OLDSUI-65).
+  // The pointer moves off the field: the grid follows hover, and the submenu may open
+  // right under it (this happened when "…" shortened the Toolbar row, OLDSUI-65).
   await page.mouse.move(0, 0);
 
-  // Alt+F10 — в Панель, стрелками до «Таблица ▾».
+  // Alt+F10 moves focus into the Toolbar, then arrow keys to "Table ▾".
   await expect(await focusToolbarButton(page, "Table")).toBeFocused();
 
   await page.keyboard.press("Enter");
@@ -34,8 +34,8 @@ test("inside a Dialog: the keyboard reaches the size grid, picks a size, and foc
   await expect(menu).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Table", exact: true })).toBeFocused();
 
-  // → открывает подменю с сеткой; фокус приходит в сетку, когда подменю встало,
-  // и меню под ней при этом не закрывается.
+  // → opens the submenu with the grid; focus moves into the grid once the submenu is
+  // placed, and the menu beneath it stays open.
   await page.keyboard.press("ArrowRight");
   const grid = page.getByRole("grid", { name: "Table size" });
   await expect(grid).toBeFocused();
@@ -56,9 +56,9 @@ test("inside a Dialog: the keyboard reaches the size grid, picks a size, and foc
 });
 
 /*
-  Фокус в сетку ждёт сигнала поповера (место посчитано, анимация входа
-  доиграна), а не таймера. Проверка — с включённой анимацией и процессором,
-  замедленным вшестеро: на таком устройстве прежние 50 мс были гонкой.
+  Focus moves into the grid on a signal from the popover (the position is computed and
+  the entrance animation has finished), not on a timer. The check runs with animation
+  on and the CPU slowed six times: on such a device the old 50 ms was a race.
 */
 test.describe("with motion and a slow CPU", () => {
   test.use({ contextOptions: { reducedMotion: "no-preference" } });
@@ -71,8 +71,8 @@ test.describe("with motion and a slow CPU", () => {
     await page.goto(STORY("inside-dialog"));
     const field = page.getByRole("textbox", { name: "Document" });
     await field.click();
-    // Указатель — прочь с поля: сетка следует за наведением, а подменю может
-    // встать прямо под ним (так вышло, когда «…» укоротило ряд Панели, OLDSUI-65).
+    // The pointer moves off the field: the grid follows hover, and the submenu may open
+    // right under it (this happened when "…" shortened the Toolbar row, OLDSUI-65).
     await page.mouse.move(0, 0);
 
     await page.getByRole("button", { name: "Table", exact: true }).focus();
@@ -94,7 +94,7 @@ test("inside a Dialog: Escape closes the grid, then the menu, then the window �
   page,
 }) => {
   await page.goto(STORY("inside-dialog"));
-  // Имя обязательно: подменю react-aria — тоже `role="dialog"` («Table»).
+  // The name is required: the react-aria submenu is also a `role="dialog"` ("Table").
   const dialog = page.getByRole("dialog", { name: "Edit the note" });
   await page.getByRole("textbox", { name: "Document" }).click();
 
@@ -113,8 +113,8 @@ test("inside a Dialog: Escape closes the grid, then the menu, then the window �
   await expect(page.getByRole("menu")).toBeHidden();
   await expect(dialog).toBeVisible();
 
-  // Фокус вернулся на «Таблица ▾», и у кнопки, пришедшей с клавиатуры,
-  // открылась подсказка — тоже слой (ADR-0041): Escape снимает сначала её.
+  // Focus returned to "Table ▾", and the button, reached by keyboard, opened its tooltip,
+  // which is a layer too (ADR-0041): Escape dismisses the tooltip first.
   await expect(page.getByRole("button", { name: "Table", exact: true })).toBeFocused();
   const tooltip = page.getByRole("tooltip", { name: "Table" });
   await expect(tooltip).toBeVisible();
@@ -130,18 +130,18 @@ test("inside a Dialog: → and ← walk the Row submenu, Escape closes only the 
   page,
 }) => {
   await page.goto(STORY("inside-dialog"));
-  // Имя обязательно: подменю react-aria — тоже `role="dialog"` («Table»).
+  // The name is required: the react-aria submenu is also a `role="dialog"` ("Table").
   const dialog = page.getByRole("dialog", { name: "Edit the note" });
   const field = page.getByRole("textbox", { name: "Document" });
   await field.click();
-  // Курсор мыши — прочь с поля: путь клавиатурный, а меню «Таблица» после
-  // перекладки Панели (OLDSUI-64) раскрывается прямо под точкой щелчка, и
-  // наведение открыло бы соседнее подменю, как только `←` закроет «Строку».
+  // The mouse pointer moves off the field: the path is by keyboard, and after the Toolbar
+  // was rearranged (OLDSUI-64) the "Table" menu opens right under the click point, so
+  // hovering would open a neighboring submenu as soon as `←` closes "Row".
   await page.mouse.move(0, 0);
 
-  // Сначала таблица — с клавиатуры, через сетку: пункты меню кита внутри
-  // `Dialog` здесь мышью не трогаем (щелчок по ним в окне — отдельная задача
-  // кита), сетку 3×3 берём как есть.
+  // First the table, by keyboard, through the grid: the kit's menu items inside the
+  // `Dialog` are not clicked with the mouse here (clicking them inside the window is a
+  // separate task for the kit), so the 3×3 grid is used as is.
   await page.getByRole("button", { name: "Table", exact: true }).focus();
   await page.keyboard.press("Enter");
   await page.keyboard.press("ArrowRight");
@@ -183,7 +183,7 @@ test("Insert table… opens a window over the Dialog; Enter inserts, focus retur
   const field = page.getByRole("textbox", { name: "Document" });
   await field.click();
 
-  // «Вставить таблицу…» — второй пункт; с клавиатуры, не мышью (см. выше).
+  // "Insert table…" is the second item; by keyboard, not by mouse (see above).
   await page.getByRole("button", { name: "Table", exact: true }).focus();
   await page.keyboard.press("Enter");
   await page.keyboard.press("ArrowDown");

@@ -4,29 +4,29 @@ import type { PrefixedName } from "./customTool.js";
 import type { Tool } from "./tools.js";
 
 /**
- * Таблица сочетаний клавиш Редактора: одна запись на команду.
+ * The Editor's keyboard shortcut table: one entry per command.
  *
- * ОДНА ТАБЛИЦА НА ВСЕХ ПОТРЕБИТЕЛЕЙ. Подсказки и `aria-keyshortcuts` Панели,
- * подписи в Меню вставки и справочник сочетаний читают отсюда. Раньше сочетания
- * жили в `GROUPS` Панели, в `insertItems.ts` и в самих расширениях, и подпись
- * могла разойтись с движком молча. Расширения по-прежнему САМИ вешают клавиши
- * (`blockCommands.ts`, `styleExtensions.ts`, Tiptap), поэтому записи здесь —
- * ПОДПИСИ, а не привязки: совпадение с движком сторожит
- * `tests/rich-text-editor-shortcuts.test.tsx`, нажимая каждое сочетание в живом
- * Редакторе. Запись без привязки — подпись, которая обещает то, чего нет.
+ * ONE TABLE FOR ALL CONSUMERS. The Toolbar's hints and `aria-keyshortcuts`, the labels in the
+ * Slash menu, and the keyboard shortcuts popover all read from here. Before, the shortcuts lived
+ * in the Toolbar's `GROUPS`, in `insertItems.ts` and in the extensions themselves, and a label
+ * could silently drift from the engine. The extensions still bind the keys themselves
+ * (`blockCommands.ts`, `styleExtensions.ts`, Tiptap), so the entries here are LABELS, not
+ * bindings. That they match the engine is guarded by `tests/rich-text-editor-shortcuts.test.tsx`,
+ * which presses every shortcut in a live Editor. An entry without a binding is a label that
+ * promises something that does not exist.
  *
- * Модуль серверно-безопасен: данные и две чистые функции, без React и Tiptap —
- * его читают и меню выделения, и справочник, и скрипты.
+ * The module is safe on the server: data and two pure functions, without React and Tiptap. The
+ * Bubble menu, the shortcuts popover, and the scripts all read it.
  *
- * `keys` — в нотации Панели: `mod` — `⌘` на Apple и `Ctrl` у остальных, `alt` и
- * `shift`, дальше сама клавиша как надпись (`Z`, `↑`, `F10`).
+ * `keys` use the Toolbar's notation: `mod` is `⌘` on Apple and `Ctrl` on other platforms, then
+ * `alt` and `shift`, then the key itself as a label (`Z`, `↑`, `F10`).
  */
 
 type EditorMessages = UiMessages["editor"];
 
 /**
- * Группы справочника — в порядке показа. Группа «Ссылка» — место кита для
- * сочетания кнопки ссылки: само сочетание живёт в её описании (`linkTool.tsx`).
+ * Groups of the reference, in display order. The "link" group is the kit's place for the link
+ * button's shortcut: the shortcut itself lives in that button's description (`linkTool.tsx`).
  */
 export const SHORTCUT_GROUPS = [
   "selection",
@@ -45,31 +45,30 @@ export const SHORTCUT_GROUPS = [
 export type ShortcutGroup = (typeof SHORTCUT_GROUPS)[number];
 
 export interface ShortcutCommand {
-  /** Стабильный ключ; совпадает с id кнопки Панели и пункта Меню вставки, где они есть. */
+  /** Stable key; matches the id of the Toolbar button and the Slash menu item where they exist. */
   id: string;
   group: ShortcutGroup;
   /**
-   * Инструмент, при котором сочетание живёт: строка в справочнике есть только
-   * у включённого. Массив — достаточно любого из них (сдвиг пункта живёт в
-   * любом списке); `null` — команда есть всегда (Блоки, выделение, `Alt+F10`).
+   * The Tool the shortcut lives with: the row shows in the reference only when that Tool is
+   * enabled. An array means any one of them is enough (the list item shift lives with any list);
+   * `null` means the command always exists (Blocks, selection, `Alt+F10`).
    */
   tool: Tool | readonly Tool[] | null;
-  /** Дополнительное условие: заголовок первого уровня есть только вместе с `heading`. */
+  /** An extra condition: the first-level heading command exists only together with `heading`. */
   requires?: Tool;
   keys: readonly string[];
-  /** Подпись из каталога — та же, что на кнопке или в пункте меню. */
+  /** Label from the catalog: the same one as on the button or in the menu item. */
   label: (messages: EditorMessages) => string;
 }
 
-/** Инструменты со списками: у любого есть пункты, а значит — что сдвигать. */
+/** Tools with lists: each of them has items, and so there is something to shift. */
 const LIST_TOOLS: readonly Tool[] = ["bulletList", "orderedList", "taskList"];
 
 /**
- * Сочетания встроенных команд по id — данные, а не привязки. Строка справочника
- * берёт клавиши отсюда, где бы она ни жила: в `SHORTCUTS` или в описании
- * Инструмента (`shortcuts`, `keys` кнопки). Поэтому подписи Меню вставки и «¶»,
- * которые читаются при загрузке модуля (`shortcutKeys`), не зависят от того,
- * где лежит строка.
+ * Built-in command shortcuts by id: data, not bindings. A reference row takes its keys from here,
+ * wherever the row lives: in `SHORTCUTS` or in a Tool's description (the `shortcuts` field, and
+ * the button's `keys`). That is why the Slash menu and the '¶' button labels, which are read when
+ * the module loads (`shortcutKeys`), do not depend on where the row lives.
  */
 export const SHORTCUT_KEYS = {
   selectBlock: ["mod", "A"],
@@ -106,14 +105,14 @@ export const SHORTCUT_KEYS = {
   focusToolbar: ["alt", "F10"],
 } as const satisfies Record<string, readonly string[]>;
 
-/** Id строки справочника из таблицы кита. */
+/** Id of a reference row from the kit's table. */
 export type ShortcutId = keyof typeof SHORTCUT_KEYS;
 
 /**
- * Порядок строк справочника внутри групп — привилегия кита, как `INSERT_ORDER`
- * у Меню вставки, и не зависит от того, где живёт строка: в `SHORTCUTS` или в
- * описании Инструмента. Строки вне списка (кнопки описаний, свои Инструменты)
- * встают в конец своей группы в порядке набора.
+ * The order of reference rows within groups is the kit's privilege, like `INSERT_ORDER` in the
+ * Slash menu, and does not depend on where the row lives: in `SHORTCUTS` or in a Tool's
+ * description. Rows outside the list (buttons in descriptions, custom Tools) go to the end of
+ * their group, in registration order.
  */
 export const SHORTCUT_ORDER: readonly ShortcutId[] = [
   "selectBlock",
@@ -151,13 +150,14 @@ export const SHORTCUT_ORDER: readonly ShortcutId[] = [
 ];
 
 /**
- * Таблица — сочетания кита: команды, которые есть при любом наборе (выделение,
- * Блоки, сдвиг пункта списка, `Alt+F10`). Строки Инструментов — в их описаниях.
- * Сочетание кнопки описания — поле самой кнопки (`toolDescriptor.ts`): её
- * строку справочник берёт оттуда, клавишу вешает `toolButtons.ts`.
+ * The table holds the kit's shortcuts: commands that exist in any configuration (selection,
+ * Blocks, list item shift, `Alt+F10`). Tool rows live in their descriptions. A button
+ * description's shortcut is a field of the button itself (`toolDescriptor.ts`): the reference
+ * takes its row from there, and `toolButtons.ts` binds the key.
  */
 export const SHORTCUTS: readonly ShortcutCommand[] = [
-  // Выделение: первое `⌘A` берёт текст Блока, второе — весь Документ (`blockCommands.ts`).
+  // Selection: the first `⌘A` selects the text of the Block, the second selects the whole
+  // Document (`blockCommands.ts`).
   {
     id: "selectBlock",
     group: "selection",
@@ -194,7 +194,7 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
     keys: SHORTCUT_KEYS.moveBlockDown,
     label: (m) => m.moveBlockDown,
   },
-  // Меню ручки Блока: ручка есть в любой правке, при любой Панели.
+  // The Block handle's menu: the handle exists in any editing session, with any Toolbar setup.
   {
     id: "blockActions",
     group: "blocks",
@@ -228,18 +228,17 @@ export const SHORTCUTS: readonly ShortcutCommand[] = [
 ];
 
 /**
- * Сочетание команды по id или `undefined`, если у команды его нет. Панель
- * спрашивает так про каждую свою кнопку: у горизонтальной линии, картинки и
- * меню цвета сочетаний нет.
+ * The command's shortcut by id, or `undefined` if the command has none. The Toolbar asks this
+ * about each of its buttons: the horizontal rule, image and color menu have no shortcuts.
  */
 export function findShortcutKeys(id: string): readonly string[] | undefined {
   return Object.hasOwn(SHORTCUT_KEYS, id) ? SHORTCUT_KEYS[id as ShortcutId] : undefined;
 }
 
 /**
- * Сочетание команды по id — для мест, где оно обязано быть (Меню вставки).
- * Неизвестный id — ошибка разработчика, а не пустая подсказка: подпись, которой
- * нет, молча пропала бы из меню.
+ * The command's shortcut by id, for places where it must exist (the Slash menu). An unknown id is
+ * a developer error, not an empty hint: a label that is missing would silently disappear from the
+ * menu.
  */
 export function shortcutKeys(id: string): readonly string[] {
   const keys = findShortcutKeys(id);
@@ -247,7 +246,7 @@ export function shortcutKeys(id: string): readonly string[] {
   return keys;
 }
 
-/** Включена ли команда при данном наборе инструментов. */
+/** Whether the command is enabled for the given set of Tools. */
 function enabled(command: ShortcutCommand, tools: ReadonlySet<Tool>): boolean {
   if (command.requires && !tools.has(command.requires)) return false;
   if (command.tool === null) return true;
@@ -256,28 +255,27 @@ function enabled(command: ShortcutCommand, tools: ReadonlySet<Tool>): boolean {
     : command.tool.some((tool) => tools.has(tool));
 }
 
-/** Строка справочника: подпись команды и её сочетание. */
+/** Reference row: a command's label and its shortcut. */
 export type ShortcutRow = Pick<ShortcutCommand, "id" | "keys" | "label">;
 
-/** Группа справочника: группа кита или группа одного Инструмента — без заголовка. */
+/** Reference group: a kit group, or the group of a single Tool, without a heading. */
 export interface ShortcutSection {
   group: ShortcutGroup | Tool | PrefixedName;
   commands: readonly ShortcutRow[];
 }
 
 /**
- * Команды включённых инструментов по группам; пустые группы не возвращаются.
+ * Commands of the enabled Tools by group; empty groups are not returned.
  *
- * Проекция списка описаний: строки кита — из `SHORTCUTS`, строки Инструментов —
- * из их описаний (`toolDescriptor.ts`): клавиши
- * Extensions — поле `shortcuts`, сочетания кнопок — поле кнопки. Место
- * строки в группе — `SHORTCUT_ORDER`, а строки вне него — следом в порядке набора;
- * кнопка без группы кита — в группу своего Инструмента после групп кита, в
- * порядке списка (ADR-0058, п. 6.8).
+ * A projection of the descriptor list: the kit rows come from `SHORTCUTS`, and the Tool rows come
+ * from their descriptions (`toolDescriptor.ts`). The Extensions' keys come from the `shortcuts`
+ * field, and button shortcuts come from the button's field. A row's place in its group is set by
+ * `SHORTCUT_ORDER`; rows outside it follow in registration order. A button without a kit group
+ * goes to its Tool's group, after the kit groups, in list order (ADR-0058, item 6.8).
  */
 export function shortcutGroupsFor(
   tools: ToolList,
-  /** Локаль `UiProvider` — для подписи кнопки, заданной функцией от контекста. */
+  /** The `UiProvider` locale, for a button label given as a function of the context. */
   locale = "en-US"
 ): readonly ShortcutSection[] {
   const described = tools.descriptors;
@@ -294,13 +292,13 @@ export function shortcutGroupsFor(
         keys,
         label: (messages) => toolLabel(button.label, { locale, messages }),
       };
-      // Набор уже отфильтрован: кнопка есть только у включённого Инструмента.
+      // The set is already filtered: a button exists only for an enabled Tool.
       if (button.shortcutGroup) {
-        // Группа справочника — привилегия кита: она бывает только у встроенного.
+        // A reference group is the kit's privilege: only built-in Tools have one.
         commands.push({ ...row, group: button.shortcutGroup, tool: descriptor.name as Tool });
       } else own.push(row);
     }
-    // Пункты вставки и Действия над Блоком: сочетание — их поле (ADR-0058, п. 5.7).
+    // Insert items and Block actions: the shortcut is their own field (ADR-0058, item 5.7).
     for (const entry of [...(descriptor.insertItems ?? []), ...(descriptor.blockActions ?? [])]) {
       if (entry.shortcut) {
         own.push({
@@ -312,7 +310,7 @@ export function shortcutGroupsFor(
     }
     if (own.length > 0) ownGroups.push({ group: descriptor.name, commands: own });
   }
-  // Сортировка устойчивая: строки вне `SHORTCUT_ORDER` сохраняют порядок набора.
+  // The sort is stable: rows outside `SHORTCUT_ORDER` keep their registration order.
   const rank = (id: string) => {
     const index = (SHORTCUT_ORDER as readonly string[]).indexOf(id);
     return index === -1 ? SHORTCUT_ORDER.length : index;
@@ -329,12 +327,11 @@ export function shortcutGroupsFor(
 }
 
 /**
- * Apple ли это — ТЕМ ЖЕ признаком, что у ProseMirror (`prosemirror-keymap`):
- * `mod` там значит `⌘` ровно тогда, когда `navigator.platform` похож на Mac или
- * iOS. Подпись, выведенная иначе, разошлась бы с тем, что движок реально
- * слушает. Панель рисуется только в браузере (движок создаётся после
- * гидратации), поэтому `navigator` здесь есть всегда; проверка `typeof` — ради
- * серверного импорта модуля.
+ * Whether this is Apple, by the SAME check ProseMirror uses (`prosemirror-keymap`): there `mod`
+ * means `⌘` exactly when `navigator.platform` looks like a Mac or iOS. A label derived any other
+ * way would drift from what the engine actually listens for. The Toolbar is rendered only in the
+ * browser (the Editor is created after hydration), so `navigator` is always present here; the
+ * `typeof` check is for importing the module on the server.
  */
 export function isApple(): boolean {
   return typeof navigator !== "undefined" && /Mac|iP(hone|[oa]d)/.test(navigator.platform);
@@ -344,13 +341,13 @@ const APPLE_SYMBOLS: Record<string, string> = { mod: "⌘", alt: "⌥", shift: "
 const OTHER_NAMES: Record<string, string> = { mod: "Ctrl", alt: "Alt", shift: "Shift" };
 
 /**
- * Сочетание для глаз: `⌘+⇧+S` на Apple, `Ctrl+Shift+S` у остальных. Названия
- * клавиш не переводятся: это надписи на клавишах.
+ * Shortcut for the eye: `⌘+⇧+S` on Apple, `Ctrl+Shift+S` elsewhere. Key names are not translated:
+ * they are the labels printed on the keys.
  *
- * Плюс между клавишами — и на Apple, хотя меню macOS пишут
- * сочетание слитно: в справочнике из трёх десятков строк `⌘⌥⇧↑` читается
- * как одно слово, а `⌘+⌥+⇧+↑` — как клавиши, которые нажимают вместе. Одна
- * функция на все подписи Редактора, поэтому тултип и справочник не расходятся.
+ * The plus sign between keys is used on Apple too, even though macOS menus write shortcuts
+ * together. In a reference of thirty-odd rows, `⌘⌥⇧↑` reads as one word, while `⌘+⌥+⇧+↑` reads
+ * as keys pressed together. One function serves all Editor labels, so the tooltip and the
+ * reference do not diverge.
  */
 export function shortcutLabel(keys: readonly string[], apple: boolean): string {
   const names = apple ? APPLE_SYMBOLS : OTHER_NAMES;
@@ -358,9 +355,9 @@ export function shortcutLabel(keys: readonly string[], apple: boolean): string {
 }
 
 /**
- * Сочетание для `aria-keyshortcuts`: имена клавиш по спецификации ARIA
- * (`Control`, `Meta`, `Shift`, `Alt`), а не символы — скринридер читает их сам.
- * Стрелки по ARIA называются `ArrowUp` и `ArrowDown`.
+ * Shortcut for `aria-keyshortcuts`: key names from the ARIA spec (`Control`, `Meta`, `Shift`,
+ * `Alt`), not symbols, since the screen reader reads them itself. ARIA names the arrows
+ * `ArrowUp` and `ArrowDown`.
  */
 export function ariaShortcut(keys: readonly string[], apple: boolean): string {
   const names: Record<string, string> = {

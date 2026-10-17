@@ -1,28 +1,29 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-// Именованный импорт, не дефолтный: пакет экспортирует оба, но при `moduleResolution`
-// этого проекта дефолтный резолвится в пространство имён модуля и не конструируется.
+// Named import, not the default one: the package exports both, but under this project's
+// `moduleResolution` the default resolves to the module namespace object and cannot be constructed.
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { stubVideoServices } from "./video-services.js";
 import type { Result } from "axe-core";
 
 /**
- * Аудит доступности каждой истории в каждой теме — тем же axe-core, на котором
- * работает аддон a11y в Storybook.
+ * Accessibility audit of every story in every theme, with the same axe-core that
+ * powers the a11y addon in Storybook.
  *
- * Зачем дублировать аддон: аддон показывает результат человеку, открывшему
- * историю. Здесь их 17 × 3 темы = 51 экран, и «проверено глазами» для такого
- * количества означает «проверено выборочно». Автомат проверяет все и падает
- * в CI, а не в чьей-то памяти.
+ * Why duplicate the addon: the addon shows its result to the person who opened the
+ * story. Here every story runs in all three themes and once more in the brand teal
+ * (`RUNS` below), and "checked by eye" at that scale means "checked by sampling". The check covers all of them and fails
+ * in CI, not in someone's memory.
  *
- * Порог — `serious` и `critical`. `moderate` и `minor` не роняют прогон
- * намеренно: среди них есть замечания к разметке самих историй (таблицы-матрицы),
- * а не к примитивам, и красить ими пайплайн значит приучить его игнорировать.
+ * The threshold is `serious` and `critical`. `moderate` and `minor` deliberately do
+ * not fail the run: some of them point at the markup of the stories themselves (matrix
+ * tables), not at the primitives, and making the pipeline red on them would teach it
+ * to be ignored.
  *
- * Отношение к `npm run contrast`: axe меряет отрендеренный DOM конкретной
- * истории, скрипт — все сочетания токенов, включая не показанные ни в одной
- * истории. Второе — надмножество, но только axe видит реальные наложения.
+ * How this relates to `npm run contrast`: axe measures the rendered DOM of one
+ * particular story, while the script measures every combination of tokens, including
+ * those no story shows. The script is the superset, but only axe sees real overlaps.
  */
 
 type Entry = { id: string; name: string; title: string; type: string; tags?: string[] };
@@ -36,26 +37,25 @@ const THEMES = ["dark", "light", "dim"] as const;
 const BLOCKING = new Set(["serious", "critical"]);
 
 /**
- * Аддон a11y в витрине запускает axe сам, как только история отрендерилась,
- * а axe-core не переносит двух одновременных прогонов и падает с «Axe is
- * already running». Чей прогон окажется первым — гонка, и чем больше историй,
- * тем чаще она проигрывается: на 21 истории падало от одного до пяти тестов
- * за прогон.
+ * The a11y addon in the showcase starts axe by itself as soon as a story renders,
+ * and axe-core does not support two runs at once: it fails with "Axe is
+ * already running". Whose run finishes first is a race, and the more stories there
+ * are, the more often it is lost: with 21 stories, one to five tests failed per run.
  *
- * Ждём, пока чужой прогон закончится, и повторяем. Ретрай только на этой
- * ошибке: любое другое падение обязано оставаться падением.
+ * We wait for the other run to finish and try again. Retry only on this error:
+ * any other failure must stay a failure.
  */
 /**
- * Досматривает входные анимации до конца, прежде чем мерить цвета.
+ * Lets the entrance animations finish before colors are measured.
  *
- * `animate-fadein` и `animate-sheetin` начинаются с `opacity: 0`, и axe,
- * запущенный сразу после появления DOM, считает цвет полупрозрачного текста
- * поверх подложки: белая подпись на карточке оказывалась `#2c2d33` при
- * контрасте 1.11. Дефект был бы у любого анимированного примитива, а выглядел
- * бы как провал контраста — то есть отправил бы чинить совершенно не то.
+ * `animate-fadein` and `animate-sheetin` start at `opacity: 0`. If axe runs right after
+ * the DOM appears, it measures the color of semi-transparent text over its background:
+ * a white caption on a card came out as `#2c2d33` with a contrast of 1.11. Any
+ * animated primitive would have this defect, and it would look like a contrast failure,
+ * so it would send someone to fix the wrong thing.
  *
- * У снимков та же проблема решена `animations: "disabled"` в конфиге, но на
- * axe эта настройка не распространяется — она про момент съёмки.
+ * Snapshots solve the same problem with `animations: "disabled"` in the config, but
+ * that setting does not reach axe: it applies to the moment of capture.
  */
 async function freezeAnimations(page: Page) {
   await page.addStyleTag({
@@ -81,18 +81,18 @@ async function analyzeWhenFree(page: Page, scope: string) {
 }
 
 /**
- * Оси прогона: три темы базового кита плюс один бренд-оверлей.
+ * Runs along two axes: the three themes of the base kit plus one brand overlay.
  *
- * Полное произведение (3 темы × 2 акцента × 2 бренда) дало бы 12 наборов на
- * историю — вчетверо дороже при том же классе находок: акцент и бренд меняют
- * ЦВЕТ, а не разметку, и нарушения уровня serious/critical у axe — почти
- * целиком контраст. Контраст же меряется полностью и дешевле в
- * `npm run contrast`: там перебираются все сочетания токенов, включая не
- * показанные ни одной историей.
+ * The full product (3 themes × 2 accents × 2 brands) would give 12 sets per
+ * story: four times the cost for the same kind of findings. Accent and brand change
+ * the COLOR, not the markup, and axe's serious/critical violations are almost
+ * entirely contrast. Contrast is measured in full, and more cheaply, by
+ * `npm run contrast`: it goes through every combination of tokens, including
+ * those no story shows.
  *
- * Поэтому здесь бренд проверяется на тёмной теме — одном наборе, который
- * доказывает, что оверлей не ломает разметку и не гасит имена, — а полнота
- * цветовых сочетаний остаётся за гейтом контраста.
+ * So the brand is checked here in the dark theme only: one set, which proves that the
+ * overlay does not break the markup or hide the names. Completeness of the color
+ * combinations stays with the contrast gate.
  */
 const RUNS = [
   ...THEMES.map((theme) => ({ label: `theme ${theme}`, globals: `theme:${theme};accent:blue` })),
@@ -102,19 +102,19 @@ const RUNS = [
 for (const story of stories) {
   for (const run of RUNS) {
     test(`a11y: ${story.id} — ${run.label}`, async ({ page }) => {
-      // Плеер видео встаёт сразу: чужой сервис в аудит не попадает.
+      // The video player mounts right away, so no external service ends up in the audit.
       if (story.id.includes("video")) await stubVideoServices(page);
       await page.goto(`/iframe.html?id=${story.id}&globals=${run.globals}`);
       const canvas = page.locator("#storybook-root");
-      // Готовность — сигнал самой витрины: `sb-show-main` на body ставится,
-      // когда история отрисовалась. Одной видимости холста мало: история
-      // пустого состояния (`RichTextView` с пустым HTML) законно рисует
-      // контейнер нулевой высоты, и Playwright такой холст видимым не считает.
-      // Пустой холст при открытом окне — не пустая история, а окно, которое ещё
-      // не скрыло холст: его ждём, как прежде.
+      // Readiness is the showcase's own signal: `sb-show-main` is set on body once the
+      // story has rendered. Canvas visibility alone is not enough: the empty-state story
+      // (`RichTextView` with empty HTML) legitimately renders a container of zero height,
+      // and Playwright does not count such a canvas as visible. An empty canvas while a
+      // dialog is open is not an empty story: it is a dialog that has not yet hidden the
+      // canvas, so we wait for it, as before.
       await page.locator("body.sb-show-main").waitFor({ state: "attached" });
-      // Метка `network-idle`: история догружает ленивый чанк после показа
-      // (как в `stories.spec.ts`), и без ожидания axe проверил бы экран без него.
+      // The `network-idle` tag: the story loads a lazy chunk after it is shown
+      // (as in `stories.spec.ts`), and without waiting, axe would audit a screen missing it.
       if (story.tags?.includes("network-idle")) await page.waitForLoadState("networkidle");
       await expect
         .poll(async () => {
@@ -131,9 +131,9 @@ for (const story of stories) {
         .toBe(true);
       await freezeAnimations(page);
 
-      // Модальный Dialog рендерится portal-ом и корректно скрывает canvas от
-      // assistive technology. В этом случае canvas нельзя ни ждать видимым,
-      // ни сканировать: область аудита — активное окно в portal-е.
+      // A modal Dialog renders through a portal and correctly hides the canvas from
+      // assistive technology. In that case the canvas must neither be waited on as visible
+      // nor be scanned: the audit scope is the active dialog in the portal.
       const scope =
         (await canvas.getAttribute("data-aria-hidden")) === "true"
           ? '[role="dialog"], [role="alertdialog"]'
@@ -141,8 +141,8 @@ for (const story of stories) {
       const { violations } = await analyzeWhenFree(page, scope);
       const blocking = violations.filter((v: Result) => BLOCKING.has(v.impact ?? ""));
 
-      // Сообщение называет НЕ ТОЛЬКО правило, но и узел: без селектора
-      // «label — 1 nodes» отправляет искать по всей истории руками.
+      // The message names not only the rule but also the node: without a selector,
+      // "label — 1 nodes" sends you hunting through the whole story by hand.
       expect(
         blocking.map(
           (v: Result) =>

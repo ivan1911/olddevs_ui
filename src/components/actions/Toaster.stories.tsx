@@ -12,11 +12,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Четыре тона словаря — и ничего сверх них.
+ * Four tones from the shared vocabulary, and nothing beyond them.
  *
- * `toast.custom` и произвольный JSX у sonner есть, а здесь их нет намеренно:
- * тост, умеющий всё, перестаёт быть частью системы, и через полгода в
- * приложении оказывается пять разных тостов.
+ * sonner has `toast.custom` and arbitrary JSX, but they are deliberately absent here: a toast
+ * that can do everything stops being part of the system, and half a year later the app has
+ * five different kinds of toast.
  */
 export const Tones: Story = {
   render: () => (

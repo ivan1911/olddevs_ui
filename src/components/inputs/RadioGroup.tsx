@@ -27,58 +27,63 @@ import {
 import { TONE_TOKENS, type Size, type Tone } from "../../lib/variants.js";
 
 export interface RadioGroupProps {
-  /** `null` — не выбрано ничего. Такое состояние бывает только начальным. */
+  /** `null` means nothing is selected. This state only occurs as the initial value. */
   value: string | null;
-  /** Вызывается при выборе варианта и получает его `value`. */
+  /** Called when an option is selected; receives its `value`. */
   onChange: (value: string) => void;
-  /** Вопрос, на который отвечает набор. Обязателен: кнопки без вопроса нечитаемы. */
+  /**
+   * The question the set answers. Required: buttons without a question are hard to make sense of.
+   */
   label: ReactNode;
-  /** Пояснение под подписью набора. */
+  /** Hint under the label of the set. */
   description?: ReactNode;
-  /** Сообщение об ошибке. Заменяет `description`, когда задано. */
+  /** Error message. Replaces `description` when set. */
   errorMessage?: ReactNode;
-  /** Раскладка вариантов: `vertical` — столбцом, `horizontal` — в ряд. По умолчанию `vertical`. */
+  /**
+   * Option layout: `vertical` stacks them in a column, `horizontal` in a row. Defaults to
+   * `vertical`.
+   */
   orientation?: "vertical" | "horizontal";
-  /** Выключает весь набор. Перекрывает `disabled` отдельных кнопок. */
+  /** Disables the whole set. Overrides the `disabled` of individual buttons. */
   disabled?: boolean;
-  /** Размер кружков и подписей: `sm` или `md`. По умолчанию `md`. */
+  /** Size of the radio buttons and labels: `sm` or `md`. Defaults to `md`. */
   size?: Extract<Size, "sm" | "md">;
   /**
-   * Цвет выбранной кнопки (в карточке — рамки выбранной карточки). Невыбранные
-   * всегда нейтральны — правило `Checkbox`.
+   * Color of the selected button (in the card view, the border of the selected card).
+   * Unselected buttons are always neutral: the same rule as `Checkbox`.
    */
   tone?: Tone;
   /**
-   * Вид набора: `default` — строки с кружком, `card` — карточки.
+   * Appearance of the set: `default` shows rows with a radio button, `card` shows cards.
    *
-   * Вид набора: `default` — строки с кружком, `card` — карточки с подписью,
-   * описанием и необязательной иконкой. Живёт у группы и приходит вариантам
-   * контекстом: набор не может разъехаться по виду. Не `variant`: тот в ките
-   * уже значит подачу тона.
+   * Appearance of the set: `default` shows rows with a circle, `card` shows cards with a label,
+   * a description and an optional icon. It lives on the group and reaches the options through
+   * context, so the set cannot come out of sync in appearance. Not `variant`: in the kit,
+   * that already means how the tone is presented.
    */
   appearance?: ChoiceAppearance;
-  /** `<Radio value="…">` — по одной на вариант. */
+  /** `<Radio value="…">`, one per option. */
   children?: ReactNode;
-  /** Классы на корневой элемент набора. */
+  /** Classes for the root element of the set. */
   className?: string;
 }
 
 export interface RadioProps {
-  /** Значение варианта; именно оно приходит в `onChange` группы. */
+  /** The option's value; this is what the group's `onChange` receives. */
   value: string;
-  /** Подпись варианта. */
+  /** The option's label. */
   children?: ReactNode;
-  /** Пояснение под подписью варианта. */
+  /** Hint under the option's label. */
   description?: ReactNode;
   /**
-   * Иконка варианта. Декоративная: из доступного имени исключена, имя несёт
-   * подпись. В карточке стоит в её начале, в обычном виде — между кружком и
-   * подписью.
+   * Icon of the option. Decorative: it is excluded from the accessible name, which the label
+   * carries. In a card it sits at the start of the card; in the default view, between the radio
+   * button and the label.
    */
   icon?: ReactNode;
-  /** Выключает один вариант; остальные работают. */
+  /** Disables one option; the others keep working. */
   disabled?: boolean;
-  /** Классы на элемент варианта. */
+  /** Classes for the option's element. */
   className?: string;
 }
 
@@ -88,11 +93,11 @@ const SIZES: Record<"sm" | "md", { box: string; dot: string; label: string }> = 
 };
 
 /**
- * Тон и размер идут от группы к вариантам контекстом, а не пропами на каждой
- * кнопке: набор обязан выглядеть одинаково, и позволить одному варианту
- * разъехаться с соседями — значит завести дефект, который никто не заметит.
- * Контекст свой, а не `data-*` на группе: из CSS достать тон можно было бы
- * только склейкой класса из префикса и атома, а склейку Tailwind не видит.
+ * Tone and size reach the options from the group through context, not as props on each button:
+ * the set must look the same, and letting one option drift away from its neighbors would
+ * introduce a defect nobody notices. The context is its own, not `data-*` on the group: from CSS,
+ * the tone could only be read back by gluing a class together from a prefix and an atom, and
+ * Tailwind does not see such glued names.
  */
 const RadioStyleContext = createContext<{
   size: "sm" | "md";
@@ -107,22 +112,21 @@ const RadioStyleContext = createContext<{
 });
 
 /**
- * Радиогруппа: выбор одного из набора.
+ * Radio group: selects one option from a set.
  *
- * ЗНАЧЕНИЕ ДЕРЖИТ ГРУППА, а не каждая кнопка: `value`/`onChange` здесь, а у
- * `Radio` нет ни `checked`, ни `selected`. Выбор одного из набора — это
- * значение, и словарь кита для этого уже имеет форму (`Select`, `Segmented`).
- * Хранить его по кнопкам означало бы допустить состояние «выбраны две».
+ * THE GROUP HOLDS THE VALUE, not each button: `value`/`onChange` live here, and `Radio` has neither
+ * `checked` nor `selected`. Which option is selected is a single value, and the kit's vocabulary
+ * already has this shape for it (`Select`, `Segmented`). Storing it per button would allow the
+ * state "two selected".
  *
- * ОЧИСТКИ НЕТ, и это не упущение: снять выбор в радиогруппе нельзя по
- * определению — набор отвечает на вопрос, а «не отвечать» это тоже ответ и
- * заводится явным вариантом («не важно», «любой»). Поэтому `onChange` отдаёт
- * `string`, а не `string | null`: `null` бывает только начальным значением,
- * пришедшим снаружи.
+ * THERE IS NO CLEARING, and this is not an oversight: a radio group cannot be cleared by
+ * definition.
+ * The set answers a question, and "no answer" is also an answer, so it is declared as an explicit
+ * option ("doesn't matter", "any"). That is why `onChange` gives a `string`, not `string | null`:
+ * `null` only occurs as an initial value passed in from outside.
  *
- * Собрана на `RadioField` + `RadioButton`, а не на `Radio` из
- * react-aria-components: последний в 1.19 помечен `@deprecated` в пользу этой
- * пары — ровно как `Checkbox`.
+ * Built on `RadioField` + `RadioButton`, not on `Radio` from react-aria-components: in 1.19 the
+ * latter is marked `@deprecated` in favor of this pair, exactly like `Checkbox`.
  */
 export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function RadioGroup(
   {
@@ -142,8 +146,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function R
   ref
 ) {
   const card = appearance === "card";
-  // Значение контекста — новым объектом только при смене осей: иначе каждый
-  // рендер группы перерисовывал бы все варианты, даже когда вид не менялся.
+  // The context value is a new object only when one of its fields changes: otherwise every render
+  // of the group would re-render all options, even when the appearance had not changed.
   const style = useMemo(
     () => ({ size, tone, appearance, orientation }),
     [size, tone, appearance, orientation]
@@ -151,8 +155,9 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function R
   return (
     <AriaRadioGroup
       ref={ref}
-      // `null` в RAC означает «управляемая группа без значения», а `undefined` —
-      // неуправляемая. Разница видна только в консоли React, поэтому сводим явно.
+      // In RAC, `null` means "a controlled group without a value", and `undefined` means
+      // uncontrolled. The difference only shows up in the React console, so we normalize it
+      // explicitly.
       value={value ?? null}
       onChange={onChange}
       isDisabled={disabled}
@@ -167,8 +172,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function R
           card ? "gap-3" : "gap-2",
           orientation === "vertical"
             ? "flex-col"
-            : // Карточки в строке тянутся до высоты самой высокой, а обычные
-              // варианты выравниваются по центру.
+            : // Cards in a row stretch to the height of the tallest one, while regular
+              // options are centered.
               cn("flex-row flex-wrap", card ? "items-stretch" : "items-center")
         )}
       >
@@ -188,12 +193,12 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function R
 });
 
 /**
- * Вариант радиогруппы.
+ * An option of the radio group.
  *
- * Вне `RadioGroup` не работает и не должен: react-aria берёт состояние из
- * контекста группы, и одиночная кнопка без него — это флажок, притворившийся
- * радио. Тон и размер тоже приходят от группы — контекстом: держать их пропами
- * на каждой кнопке значило бы позволить набору разъехаться по виду.
+ * It does not work outside `RadioGroup` and must not: react-aria takes the state from the group's
+ * context, and a lone button without it is a checkbox pretending to be a radio. Tone and size also
+ * come from the group through context: keeping them as props on each button would let the set
+ * drift apart visually.
  */
 export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio(
   { value, children, description, icon, disabled, className },
@@ -279,16 +284,15 @@ export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio(
 });
 
 /**
- * Кружок с точкой.
+ * The circle with a dot.
  *
- * Состояние приходит рендер-пропом, а тон и размер — контекстом группы. Иначе
- * не сходится: точка это потомок, а `data-selected` висит на `<label>` снаружи,
- * и дотянуться до него из CSS можно было бы только формой `group-selected:`,
- * склеенной из префикса и атома тона. Склейку Tailwind не видит — он сканирует
- * исходники как текст.
+ * The state comes in as a render prop, and tone and size come from the group context. Otherwise
+ * the two do not fit together: the dot is a descendant, while `data-selected` sits on the outer
+ * `<label>`, and CSS could reach it only with a `group-selected:` form glued together from a prefix
+ * and a tone atom. Tailwind does not see that glue: it scans the sources as plain text.
  *
- * В карточке кружок остаётся: выбранность не должна жить одним цветом рамки.
- * Кольца фокуса у него в этом случае нет — ориентир клавиатуры там вся карточка.
+ * In a card the circle stays: selection must not live on the border color alone. In this case the
+ * circle has no focus ring of its own: the whole card serves as the keyboard focus indicator.
  */
 function RadioBox({
   selected,
@@ -312,7 +316,7 @@ function RadioBox({
         "flex shrink-0 items-center justify-center rounded-full border transition-colors",
         card && "mt-0.5",
         s.box,
-        // Невыбранный вариант нейтрален при любом тоне — правило `Checkbox`.
+        // An unselected option is neutral in any tone: the `Checkbox` rule.
         selected ? t.border : "border-line bg-bg-2",
         invalid && "border-danger-strong",
         focusVisible && "ring-accent-strong ring-offset-bg-1 ring-2 ring-offset-1"
@@ -323,7 +327,7 @@ function RadioBox({
   );
 }
 
-/** Подпись обычного варианта. */
+/** Label of a regular option. */
 function RadioLabel({ label }: { label: ReactNode }) {
   const { size } = useContext(RadioStyleContext);
   if (!hasContent(label)) return null;

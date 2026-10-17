@@ -9,22 +9,22 @@ story: src/components/inputs/FileDropzone.stories.tsx
 
 # FileDropzone
 
-## Кратко для AI
+## Summary for AI
 
-`FileDropzone` принимает файлы через drag-and-drop или кнопку выбора. Он проверяет тип и размер, не принимает больше одного файла при `multiple={false}`, показывает причины отказа и возвращает принятые `File[]` потребителю.
+`FileDropzone` accepts files through drag-and-drop or a file selection button. It checks the type and size, rejects more than one file when `multiple={false}`, shows the reasons for rejection and returns the accepted `File[]` to the consumer.
 
-## Когда использовать
+## When to use
 
-- Нужна доступная область загрузки с поддержкой мыши и клавиатуры.
-- Нужны клиентские ограничения `accept`, `maxSize`, `multiple` и объяснение отказов.
+- You need an accessible upload area with mouse and keyboard support.
+- You need the client-side limits `accept`, `maxSize`, `multiple` and an explanation of rejections.
 
-## Когда не использовать
+## When not to use
 
-- Не показывайте в области состояние загрузки уже выбранных файлов — это `UploadQueue`. Область даёт файлы, очередь показывает, что с ними стало.
-- Не считайте `FileDropzone` реализацией загрузки: сеть, прогресс, повторные попытки и серверная проверка остаются у потребителя.
-- Для единственного простого file input без зоны перетаскивания достаточно нативного `<input type="file">`.
+- Do not show the upload state of already chosen files in the area — that is `UploadQueue`. The area supplies files; the queue shows what happened to them.
+- Do not treat `FileDropzone` as an upload implementation: networking, progress, retries and server-side validation stay with the consumer.
+- For a single plain file input without a drop zone, a native `<input type="file">` is enough.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <FileDropzone
@@ -32,19 +32,19 @@ story: src/components/inputs/FileDropzone.stories.tsx
   maxSize={10 * 1024 * 1024}
   onFiles={enqueueFiles}
   onReject={showRejected}
-  hint="PNG или JPEG до 10 МБ"
+  hint="PNG or JPEG up to 10 MB"
 />
 ```
 
 ## Public API
 
-- `onFiles` обязателен и получает только принятые файлы; `onReject` получает `{ name, reason }[]`.
-- `accept` использует синтаксис input accept (`image/*`, `.jpg,.png`), `multiple` по умолчанию true, `maxSize` — байты.
-- `label` формирует доступное имя DropZone; `hint` задаёт пояснение под подписью, `disabled` выключает область, `className` меняет вид корневого элемента.
-- Папки, неподходящий тип, слишком большой файл и лишние файлы при `multiple={false}` получают причину отказа.
+- `onFiles` is required and receives only the accepted files; `onReject` receives `{ name, reason }[]`.
+- `accept` uses the syntax of the `accept` attribute of a file input (`image/*`, `.jpg,.png`), `multiple` is true by default, `maxSize` is in bytes.
+- `label` sets the accessible name of the DropZone; `hint` sets the text under the label, `disabled` disables the area, `className` changes the look of the root element.
+- Folders, a wrong type, a file that is too large and extra files with `multiple={false}` each get a rejection reason.
 
-## Доступность и форма
+## Accessibility and forms
 
-- Не убирайте кнопку «Выбрать файлы»: по ней выбирают файлы с клавиатуры.
-- Отказ выводится в живой области `role="alert"`; не отбрасывайте файлы молча.
-- См. `src/components/inputs/FileDropzone.tsx`, `src/components/inputs/FileDropzone.stories.tsx`, `tests/file-dropzone.test.tsx`.
+- Do not remove the "Choose files" button: it lets keyboard users choose files.
+- A rejection is shown in a live region `role="alert"`; do not discard files silently.
+- See `src/components/inputs/FileDropzone.tsx`, `src/components/inputs/FileDropzone.stories.tsx`, `tests/file-dropzone.test.tsx`.
