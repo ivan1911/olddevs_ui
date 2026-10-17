@@ -53,14 +53,14 @@
  * `mathematics` is LaTeX formulas, inline and block, on the Mathematics extension from Tiptap
  * (ADR-0070; ADR-0048: no customer had asked for it at release). It has no Toolbar button: it is
  * inserted from the Slash menu items ("Formula" and "Block formula") and opened by a click or Enter
- * on a formula, which edits it in the kit's Popover. The Document holds only the source LaTeX
- * (`data-latex`); KaTeX draws it: in the Editor as a node view, in `RichTextView` as an Island.
+ * on a formula, which edits it in the kit's popover. The Document holds only the source LaTeX
+ * (`data-latex`); KaTeX renders it: in the Editor as a node view, in `RichTextView` as an Island.
  * KaTeX is heavy, so the Tool is lazy: its engine parts and KaTeX with its CSS are loaded by the
  * Loader (ADR-0058, item 11.1). It is not in the presets, neither `full` nor `basic`: presets must
  * not load KaTeX; it is enabled by an explicit entry in `tools`. A disabled Tool leaves a formula
  * from an insert and from `value` as the text `$…$` / `$$…$$`, so the LaTeX is not lost.
  *
- * `source` is HTML mode: the "HTML" button on the fixed Toolbar replaces the Document with a field
+ * `source` is Source mode: the "HTML" button on the fixed Toolbar replaces the Document with a field
  * holding its HTML, and on exit the field's content is applied through the Schema, like an
  * incoming `value`. It has no Schema of its own, like `clearFormatting`: the Schema governs the
  * markup, and the mode does not extend it. It is not in `basic`: in a comment, an "HTML" button
@@ -82,7 +82,7 @@
  *
  * `youtube` and `twitch` are video by link (ADR-0071; based on the Youtube and Twitch extensions
  * from Tiptap, ADR-0048: no customer had asked for them at release). They share one `video` Block:
- * the Document holds a link to the video, and the kit draws the player at display time, as a
+ * the Document holds a link to the video, and the kit renders the player at display time, as a
  * placeholder with a "Play" button, with no request to the service until a click. Which services
  * are allowed is decided by the `tools` set: `youtube`, `twitch`, or both. There is no Toolbar
  * button: a single "Video" item in the Slash menu, and a bare link in an empty paragraph. A
@@ -204,7 +204,7 @@ export const RICH_TEXT_PRESETS: Readonly<Record<RichTextEditorPreset, readonly T
  * which is built from these names.
  *
  * Unknown names are dropped silently: they come from JS without types, or from a name of a later
- * slice in an older kit version. There is no point in failing over an extra name: no extra Tool
+ * slice in an older kit version. There is no point in throwing an error over an extra name: no extra Tool
  * will appear in the Editor because of it.
  */
 export function resolveTools(

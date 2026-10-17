@@ -21,8 +21,8 @@
  *
  * TEXT COLOR. The `strong` step of a tone is chosen for 4.5:1 on all of the app's backings.
  * The label shades (`--label-*`) were chosen for 3:1 (the dot next to a name), and as text on
- * `surface-elevated` in the dark themes they do not hold: blue 3.5, red 3.56. The price is the
- * binding to the accent: `accent` is the app's brand color, not a fixed blue. Indigo
+ * `surface-elevated` in the dark themes they do not hold: blue 3.5, red 3.56. The cost is that the color is
+ * tied to the accent: `accent` is the app's brand color, not a fixed blue. Indigo
  * (`accent-alt`) is not in the list: the token has no `strong` step and gives 2.3–3.5:1 as text.
  *
  * MARKER. Bright, like a real highlighter pen: yellow `#ffea80`, bright green `#aaff80`, pink
@@ -113,7 +113,7 @@ export const EDITOR_PALE_MARKER_NAMES: readonly EditorMarkerName[] = EDITOR_MARK
  * The mapping goes by the hue of the backing, not by the meaning of the tone:
  *
  * - `accent` → `blue`: the kit's accent is blue (the brand's is a different one, but a saved
- *   document saw blue);
+ *   document showed blue);
  * - `success` → `green`, `danger` → `red`, `muted` → `gray`: colors with the same names;
  * - `warning` → `yellow`: the amber of `warning-soft` is closer to Notion's yellow than to
  *   orange, which is redder;

@@ -31,7 +31,7 @@ export interface BlockTypeItem extends InsertItem {
    * filtered.
    */
   tool: Tool | PrefixedName | null;
-  /** A second required Tool: H1 is an add-on over `heading`. */
+  /** A second required Tool: H1 is an add-on to `heading`. */
   alsoTool?: Tool;
   keys: readonly string[];
 }
@@ -67,7 +67,7 @@ const TEXT_ITEM: BlockTypeItem = {
 /**
  * The order of the built-in Tools in the ¶ menu. "Text" always comes first: a paragraph is not a
  * Tool. The items live in the descriptors, but where they appear on the surface is the kit's
- * privilege.
+ * decision.
  */
 const BLOCK_TYPE_ORDER: readonly Tool[] = [
   "heading",
@@ -97,7 +97,7 @@ const notInBlockTypeMenu = (id: string) =>
 
 /**
  * The ¶ items for a set of Tools: "Text", the headings and the items of custom Tools. A menu with
- * only "Text" selects nothing, and then the list is empty: there is no ¶ button on the Toolbar.
+ * only "Text" offers no choice, and then the list is empty: there is no ¶ button on the Toolbar.
  */
 export function blockTypeItemsFor(tools: ToolList): readonly BlockTypeItem[] {
   const items = blockTypeItemsOf(tools).filter((item) => !notInBlockTypeMenu(item.id));

@@ -46,7 +46,7 @@ import { TWITCH_TOOL, YOUTUBE_TOOL } from "./video/videoTools.js";
 import { resolveTools, TOOLS, type RichTextEditorPreset, type Tool } from "../core/tools.js";
 import { WRAPPER_TOOL } from "./wrapper/wrapperTool.js";
 
-/** Quote shortcut: one entry for the shortcuts popover, the Slash menu and the "¶" control. */
+/** Quote shortcut: one entry for the keyboard shortcuts popover, the Slash menu and the "¶" control. */
 const BLOCKQUOTE_SHORTCUT: ShortcutCommand = {
   id: "blockquote",
   group: "blockType",
@@ -73,7 +73,7 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
  *
  * Each entry is complete, one per name in `TOOLS`: a built-in Tool is taken only from its
  * description, there are no legacy registries by name, and the compiler rejects a new name
- * without a description. The Toolbar and Bubble menu widgets remain kit components and ask
+ * without a description. The Toolbar and Bubble menu widgets remain kit components and query
  * the set by name.
  */
 export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {

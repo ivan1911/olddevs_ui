@@ -24,7 +24,7 @@ export const EDITOR_LAYOUTS = [
 
 export type EditorLayout = (typeof EDITOR_LAYOUTS)[number];
 
-/** The default variant, used by the Column layout item of the Insert menu: two equal columns. */
+/** The default variant, used by the Column layout item of the Slash menu: two equal columns. */
 export const DEFAULT_LAYOUT: EditorLayout = "50-50";
 
 /** The column limit: the Schema has no more than four. */

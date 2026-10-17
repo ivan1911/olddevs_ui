@@ -37,7 +37,7 @@ const HEIGHTS: Record<"sm" | "md", string> = { sm: "h-1", md: "h-1.5" };
  * React Aria does this if no value is passed; putting `0` there would tell the screen reader
  * something untrue.
  *
- * When a bar, and when a `Skeleton` or a `Spinner`: a bar is needed where the fraction of work
+ * When to use a bar, and when a `Skeleton` or a `Spinner`: a bar is needed where the fraction of work
  * can be named — a file upload, processing a batch. If the fraction cannot be named but the shape
  * of the future content is known — `Skeleton`; if neither is known — `Spinner`.
  */

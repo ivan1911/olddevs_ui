@@ -27,12 +27,12 @@ const CLOSED_CLASS = buttonClasses({ variant: "ghost", size: "sm", iconOnly: tru
 const OPEN_CLASS = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true, selected: true });
 
 /**
- * The keyboard shortcuts popover: a keyboard button at the right edge of the Toolbar
+ * The keyboard shortcuts popover: a keyboard-icon button at the right edge of the Toolbar
  * opens a read-only list of "command — shortcut" pairs.
  *
  * CONTENTS COME FROM THE SHARED TABLE (`shortcuts.ts`), the same one that labels the
  * Toolbar buttons. A row exists only for a command of an enabled tool, and the shortcut
- * is labelled `⌘+⌥+⇧` on Apple and `Ctrl+Alt+Shift` elsewhere. The popover assigns no
+ * is labeled `⌘+⌥+⇧` on Apple and `Ctrl+Alt+Shift` elsewhere. The popover assigns no
  * shortcuts and runs no commands: it is not a command palette.
  *
  * MARKUP IS A TABLE. A screen reader reads a "command — shortcut" pair as a row with

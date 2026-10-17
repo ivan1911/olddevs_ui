@@ -16,7 +16,7 @@ import { trimPaste } from "./pasteTrim.js";
  * `clear()`.
  *
  * Such a replacement is not subject to the limit: it is the consumer's data, not the author's
- * input. A limit that silently rejected a long `value` would leave the old text on screen next to
+ * input. A limit that silently rejected a long `value` would leave the old text on screen while
  * a new value in the consumer's state.
  */
 export const EXTERNAL_CHANGE = "olddevsExternalChange";
@@ -34,7 +34,7 @@ export function replaceDocument(editor: Editor, content: Fragment): void {
 
 /**
  * Characters in the Document: `getText` without the Block separators. An Atom weighs the length
- * of its Atom text (`atomText.ts`): a separator counts 0, a soft break 1, an image the length of
+ * of its Atom text (`atomText.ts`): a separator counts 0, a hard break 1, an image the length of
  * its caption, a Merge Tag the length of `{{key}}`.
  */
 export function countCharacters(doc: ProseMirrorNode): number {
@@ -50,7 +50,7 @@ export interface MaxLengthOptions {
  *
  * WHY NOT `CharacterCount` AS IS. Its limit is set once, when the engine is created, while
  * `maxLength` is a prop and may change. Recreating the engine for a new number would lose the
- * edit history and the caret. It also rejects ANY transaction past the limit, including a
+ * edit history and the caret. It also rejects any transaction past the limit, including a
  * replacement of the Document with a new `value`. And with `autoTrim` on by default, it cuts the
  * start of an over-long initial value, silently corrupting the consumer's data.
  *

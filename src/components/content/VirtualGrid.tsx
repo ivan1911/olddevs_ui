@@ -303,7 +303,7 @@ function unionKeepingAnchor(previous: Set<Key>, next: Set<Key>): Set<Key> {
  * the window itself and keeps only the cells in the viewport in the DOM. The sticky header is served
  * by `scroll-margin-top` on the cells, from the same variable as `SelectionBar`: without it, an arrow
  * key that moved focus above the top of the window put the cell under the header. The mode used to
- * be single, and here it said "without a height, virtualization will not turn on". For react-aria
+ * be the only one, and here it said "without a height, virtualization will not turn on". For react-aria
  * 1.21 that is no longer true.
  *
  * THE CELL IS A `gridcell`, NOT AN `option`. The grid is built on `GridList` (it used to be

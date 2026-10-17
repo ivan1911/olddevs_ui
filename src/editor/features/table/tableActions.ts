@@ -39,7 +39,7 @@ export interface TableSize {
 }
 
 /**
- * Limits of the Insert table dialog. The same as the merge limits in the Schema:
+ * Limits of the Insert table dialog. They match the merge limits in the Schema:
  * a cell wider than the widest table that can be inserted cannot be merged, and
  * the reverse holds too.
  */
@@ -249,7 +249,7 @@ export function parseCellDate(text: string): number | null {
  * sorts before "item 10", and accented letters such as "é" sort next to their base
  * letter). The kind is decided over all non-empty cells at once, not pair by pair:
  * a pairwise comparison of a mixed column is not transitive, and the order would
- * depend on the original one.
+ * depend on the input order.
  */
 function comparatorFor(keys: readonly string[], locale: string): (a: string, b: string) => number {
   const filled = keys.filter((key) => key !== "");

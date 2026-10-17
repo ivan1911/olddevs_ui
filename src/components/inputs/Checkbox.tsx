@@ -75,7 +75,7 @@ export interface CheckboxProps {
    * unselected `Chip`. Here the tone means "what agreeing means", not "what color the
    * border is".
    *
-   * Inside a `CheckboxGroup` with a set `tone`, it is ignored: the group's tone is one
+   * Inside a `CheckboxGroup` with a set `tone`, it is ignored: the group's tone is the same
    * for all. A group without `tone`, and a checkbox outside a group, work as before.
    */
   tone?: Tone;

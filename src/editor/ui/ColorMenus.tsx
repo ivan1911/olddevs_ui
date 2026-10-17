@@ -540,7 +540,7 @@ export function ColorMenuButton({
 /**
  * The "Highlight" button: a click opens a row of nine highlights and "Remove highlight".
  * It looks pressed while the selection has a highlight. Its name gives the current one,
- * "Highlight: Pink", and it is heard without opening the popover.
+ * "Highlight: Pink", and screen readers announce it without opening the popover.
  */
 export function HighlightMenuButton({
   editor,

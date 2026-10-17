@@ -71,8 +71,8 @@ export default function VideoIslandSlots({ docKey, autoload }: VideoIslandSlotsP
 }
 
 /**
- * The 16:9 frame is already held by the Block itself (`VIDEO_CLASS` in `prose.ts`): the player
- * fills it instead of drawing a second frame or adding height. The island does not change the
+ * The Block itself already sets the 16:9 frame (`VIDEO_CLASS` in `prose.ts`): the player
+ * fills it instead of rendering a second frame or adding height. The island does not change the
  * Block's height.
  */
 const IN_FRAME = "absolute inset-0 aspect-auto size-full rounded-none border-0 bg-transparent";

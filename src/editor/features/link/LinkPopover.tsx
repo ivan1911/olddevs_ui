@@ -18,7 +18,7 @@ import { normalizeLinkInput } from "./link.js";
  * Content of the link address popover: opened by `Mod+K` and by the "Link" button of the
  * Toolbar and of the Bubble menu (the description is in `linkTool.tsx`).
  *
- * The kit draws the frame (`ToolButtonView.tsx`): a `Popover` in the layer stack. The frame's
+ * The kit renders the frame (`ToolButtonView.tsx`): a `Popover` in the layer stack. The frame's
  * name is the button's label, and focus returns to the Document's previous selection.
  *
  * THE ANCHOR IS THE SELECTION, not the button. The popover is also opened from the keyboard,

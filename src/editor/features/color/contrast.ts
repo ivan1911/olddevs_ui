@@ -14,7 +14,7 @@
  * The module is safe on the server: pure functions, no imports.
  */
 
-/** WCAG 1.4.3 threshold for regular text. */
+/** WCAG 1.4.3 threshold for normal text. */
 export const CONTRAST_TEXT = 4.5;
 
 function channels(color: string): [number, number, number] | null {

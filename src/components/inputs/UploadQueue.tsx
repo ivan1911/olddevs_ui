@@ -25,7 +25,7 @@ export interface UploadItem {
   /** File name or address. */
   name: ReactNode;
   /**
-   * Size — ALREADY formatted.
+   * The size is already formatted.
    *
    * The kit does not format sizes: "2.4 MB" and "2,4 MB" differ not only in the decimal separator
    * but also in units, and choosing units (MB or MiB) is the application's decision, not the design
@@ -54,7 +54,7 @@ export interface UploadItem {
    * The row tone is a DOMAIN status layered over the mechanical `state`: "Duplicate" on a
    * technically successful upload is `"warning"`, not green success.
    *
-   * Colors the badge and the progress bar. If absent, the tone is derived from `state` by the shared
+   * It colors the badge and the progress bar. If absent, the tone is derived from `state` by the shared
    * `ProgressStatus` table, as before. The text color of `meta` on a failed item does not react to
    * `tone`: it follows `state`.
    */
@@ -96,7 +96,7 @@ export interface UploadQueueProps extends Omit<ComponentPropsWithoutRef<"div">, 
  *
  * STATE IS MECHANICS, LABEL AND TONE ARE DOMAIN. The four states describe the fate of the work;
  * "Duplicate" and "Under review" arrive as a label (`statusLabel`), and their color, if it must
- * differ from the state's color, is `tone`. The same as `StatusBadge`, which was moved into the kit
+ * differ from the state's color, is `tone`. `StatusBadge` follows the same rule: it was moved into the kit
  * from the app, leaving the dictionary of eleven domain statuses behind.
  */
 export const UploadQueue = forwardRef<HTMLDivElement, UploadQueueProps>(function UploadQueue(

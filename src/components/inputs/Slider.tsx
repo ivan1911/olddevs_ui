@@ -30,7 +30,7 @@ interface SliderLookProps {
    *
    * `side` — in the label row on the right: the value is always visible and does not jump.
    * `none` — do not show it: when a field with the same number sits next to the slider,
-   * two copies of one value would disagree in the reader's eyes.
+   * two copies of one value would look inconsistent to the reader.
    *
    * The value is intentionally NOT shown above the thumb: it moves with the thumb, and at the
    * ends of the track it would stick out past the control's bounds.
@@ -261,7 +261,7 @@ function WheelStep({
  *
  * The behavior is entirely react-aria's: pointer and touch drag, keyboard (arrows step,
  * Shift for a large step, Home/End to the ends), `aria-valuetext` and the label announcement.
- * The kit owns the look and the two decisions above: where the value sits and what to do with
+ * The kit controls the look and the two decisions above: where the value sits and what to do with
  * a zero-length range in a pair.
  */
 export function Slider({

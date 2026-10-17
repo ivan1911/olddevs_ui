@@ -26,8 +26,8 @@ interface Found {
  * `island`. It is built like `CodeCopyIsland`, the "Copy" button on code Blocks.
  *
  * SERVER HTML COMES FIRST. A Block arrives in the markup as a whole and can be read without
- * JS and before hydration. Here, after mounting, the consumer's component takes the Block's
- * place in place of its content. When the Island unmounts (a change of `tools`, or the Block
+ * JS and before hydration. Here, after mounting, the consumer's component replaces
+ * its content. When the Island unmounts (a change of `tools`, or the Block
  * going away), the content comes back. The component receives the Block's name, the declared
  * attributes and the text, all taken from the server HTML before it is replaced.
  *

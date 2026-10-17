@@ -83,7 +83,7 @@ export interface SuggestionListProps {
 export const suggestionOptionId = (listboxId: string, rowId: string) => `${listboxId}-${rowId}`;
 
 /**
- * The suggestion list at the caret, shared by the `/` Insert menu (`SlashMenu`) and by
+ * The suggestion list at the caret, shared by the Slash menu (`SlashMenu`) and by
  * custom trigger characters (`TriggerMenu`, ADR-0064).
  *
  * FOCUS STAYS IN THE FIELD. The list is a floating part of the field, following the APG

@@ -17,7 +17,7 @@ type VideoChunk = typeof VideoChunkModule;
 const loadVideo = () => import("./videoChunk.js");
 
 /**
- * The video chunk, if it is already loaded. The popover of the "Video" Insert item is drawn only
+ * The video chunk, if it is already loaded. The popover of the "Video" Insert item is rendered only
  * while the engine is alive, and an engine with video is created after the loader, so wherever
  * the chunk is needed, it is already there.
  */
@@ -138,7 +138,7 @@ const videoTool = (name: VideoProvider): ToolDescriptor => ({
 });
 
 /**
- * Video by link, in the Tool descriptions (ADR-0071; ADR-0048: there was no client for it at
+ * Video by link, in the Tool descriptions (ADR-0071; ADR-0048: there was no requesting screen for it at
  * release, and the API follows the Youtube and Twitch extensions from Tiptap). The Tiptap
  * extensions are not connected: link recognition and the player address are the kit's own code
  * (`videoLink.ts`). Outside the presets: they are enabled by an explicit entry in `tools`.

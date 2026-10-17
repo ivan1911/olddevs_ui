@@ -23,8 +23,8 @@ interface ToggleBaseProps extends Omit<
 /**
  * The switch's name: either `label` with no visible text, or a visible label in `children` with an
  * optional `description`. Exactly one source of the name — as with `TagGroup`: two would drift
- * apart silently when edited, and by ear the switch would be called something other than on the
- * screen.
+ * apart silently when edited, and a screen reader would announce the switch under a different
+ * name than the one on the screen.
  *
  * THE RULE "EXACTLY ONE" IS CHECKED IN DEVELOPMENT, NOT BY THE TYPE. A `label | children` union
  * would break the consumer: `interface X extends ToggleProps` does not compile from a union, and
@@ -72,7 +72,7 @@ export interface ToggleProps extends ToggleBaseProps {
  * the standard. `selected` stays with the choice elements: chips, tabs, list items.
  *
  * THE LABEL ON SCREEN GOES THROUGH `children`. The settings row "title and description on the left,
- * switch on the right" repeats in every cabinet, and it was assembled by hand (`SettingRow` on the
+ * switch on the right" repeats in every account area, and it was assembled by hand (`SettingRow` on the
  * "Account (SaaS)" screen), along with the link of the description to the switch and the press on
  * the text. Now this is the standard path: the same component, with new semantics (a visible name
  * and description), not a new primitive for the layout. With a label, `className` applies to the

@@ -156,7 +156,7 @@ export interface BlockHandleProps {
  * whole blockquote, the whole table, not the item under the caret. That is why a shortcut
  * label on an item appears only when the shortcut does the same thing (`handleShortcutsMatch`).
  * On a list item, `⌥⇧↑` moves the item, so there is no label there. Each action is one edit
- * for undo, and focus after it is in the Document. Dragging by the handle is not supported
+ * for undo, and focus ends up in the Document. Dragging by the handle is not supported
  * (owner's decision).
  *
  * THE LAYER IS IN THE FIELD'S FLOW, NOT AN OVERLAY. The handle is part of the field, like a

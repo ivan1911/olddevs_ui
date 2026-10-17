@@ -24,7 +24,7 @@ interface NotificationItemBaseProps extends Omit<ComponentPropsWithoutRef<"li">,
   /**
    * Preview of the object the event is about: a second visual slot next to the text.
    *
-   * Independent of `icon`: the icon says WHAT happened, the preview says WITH WHAT. The consumer
+   * Independent of `icon`: the icon says what happened, the preview says with what. The consumer
    * sets the size on the element itself (a 36px image, an `Avatar`); the slot only keeps it from
    * shrinking and aligns it to the top edge. A decorative preview gets `alt=""`: the title
    * already names the object.
@@ -35,7 +35,7 @@ interface NotificationItemBaseProps extends Omit<ComponentPropsWithoutRef<"li">,
   /**
    * Unread.
    *
-   * Not signalled by COLOR ALONE: a word for screen readers goes next to the title. The dot and
+   * Not signaled by color alone: a word for screen readers goes next to the title. The dot and
    * the background are a signal for the eyes, and someone who cannot see them would otherwise
    * not tell a new event from an old one at all.
    */

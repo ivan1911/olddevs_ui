@@ -102,12 +102,12 @@ export interface DialogProps {
  *
  * Here the name is known (it is `title`), so the dialog takes care of everything at once.
  *
- * BEHAVIOUR — `@radix-ui/react-dialog` from the package's `dependencies` (ADR-0072), on the same
+ * BEHAVIOR — `@radix-ui/react-dialog` from the package's `dependencies` (ADR-0072), on the same
  * logic as the tooltip and the popover (ADR-0004): the focus trap, focus return to the trigger,
  * `aria-modal`, the portal, Escape by layers and `inert` for the background are not things to write
  * again. A custom focus trap is not a primitive but a second library.
  *
- * THE BACKGROUND SCROLL IS LOCKED BY RADIX, not by `useScrollLock`. Inside it has
+ * THE BACKGROUND SCROLL IS LOCKED BY RADIX, not by `useScrollLock`. Under the hood it uses
  * `react-remove-scroll`, and two locks on one `body` are two independent counters that cannot see
  * each other. That is why `Dialog` does not call the hook; `useScrollLock` remains for overlays
  * assembled by hand.
@@ -156,7 +156,7 @@ export function Dialog({
    * the dialog — that is, it took the form away with the unsaved changes. The "Menu inside Dialog"
    * case is where this was found.
    *
-   * The sign was the position of the event target: "`data-rac` and outside the dialog". For menus it
+   * The test was the position of the event target: "`data-rac` and outside the dialog". For menus it
    * worked, but for a `Combobox` INSIDE the dialog it did not: focus sits in the `Input`, which lies
    * inside the content, the list is in the portal, and the second condition was false. Escape closed
    * the dialog instead of the suggestion list.

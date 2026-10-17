@@ -12,7 +12,7 @@ import { isVideoSrc, type VideoLink } from "./videoSrc.js";
  *
  * The Block's chrome (`contentEditable={false}`): ProseMirror does not put the caret in it and
  * does not read it as content. The Block is an Atom: a click outside the player selects it, and
- * the Block handle moves and deletes it, as it does an image. The selection draws a ring in the
+ * the Block handle moves and deletes it, as it does an image. The selection shows a ring in the
  * `--rte-primary` role. Clicks and keys INSIDE the `iframe` go to the player, not to the Editor:
  * the browser does not pass events of a foreign document to the page's document. So both
  * selecting the Block and the arrow keys around it work while focus is in the Editor. To leave

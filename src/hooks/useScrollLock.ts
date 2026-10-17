@@ -18,7 +18,7 @@ import { useEffect, useRef } from "react";
 let lockCount = 0;
 
 /**
- * Whose padding was on `<body>` before the first lock.
+ * The padding `<body>` had before the first lock.
  *
  * The lock RETURNS the previous value instead of erasing it. Previously the release
  * assigned `paddingRight = ""` unconditionally, so an app that kept its own inline padding

@@ -109,7 +109,7 @@ export const SHORTCUT_KEYS = {
 export type ShortcutId = keyof typeof SHORTCUT_KEYS;
 
 /**
- * The order of reference rows within groups is the kit's privilege, like `INSERT_ORDER` in the
+ * The order of reference rows within groups is the kit's prerogative, like `INSERT_ORDER` in the
  * Slash menu, and does not depend on where the row lives: in `SHORTCUTS` or in a Tool's
  * description. Rows outside the list (buttons in descriptions, custom Tools) go to the end of
  * their group, in registration order.
@@ -341,7 +341,7 @@ const APPLE_SYMBOLS: Record<string, string> = { mod: "⌘", alt: "⌥", shift: "
 const OTHER_NAMES: Record<string, string> = { mod: "Ctrl", alt: "Alt", shift: "Shift" };
 
 /**
- * Shortcut for the eye: `⌘+⇧+S` on Apple, `Ctrl+Shift+S` elsewhere. Key names are not translated:
+ * Display form of the shortcut: `⌘+⇧+S` on Apple, `Ctrl+Shift+S` elsewhere. Key names are not translated:
  * they are the labels printed on the keys.
  *
  * The plus sign between keys is used on Apple too, even though macOS menus write shortcuts

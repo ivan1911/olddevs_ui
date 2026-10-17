@@ -86,7 +86,7 @@ import { useFieldsetDisabled } from "./hooks/useFieldsetDisabled.js";
 /**
  * The custom color popover loads on the first "Custom color…" click. It pulls in
  * `ColorPicker` and the color subsystem of `react-aria-components` (61 kB gzip,
- * ADR-0038), and few users need it. A static import would double the
+ * ADR-0038), and few users need it. A static import would double the size of the
  * `@olddevs/ui/editor` entry point for everyone.
  */
 const CustomColorPopover = lazy(() =>
@@ -250,17 +250,17 @@ export interface RichTextEditorProps {
    * button and its Block or Mark from the Schema, so they cannot be reached with a keyboard
    * shortcut, a Markdown shortcut, or a paste.
    *
-   * Mixed in with the kit's names are the descriptions of custom Tools (`CustomTool`):
+   * Descriptions of custom Tools (`CustomTool`) can be mixed in with the kit's names:
    * `[...RICH_TEXT_PRESETS.full, mergeTagTool]`. A built-in Tool with Options (`search`, `toc`)
    * is configured with a `tool()` entry:
    * `[...RICH_TEXT_PRESETS.full, tool("toc", { levels: [2, 3] })]`. The entry enables the Tool
    * even without the name, and the preset's name yields to it. Two `tool()` entries with the same
    * name are a field error. An unknown name is dropped silently. A description with an error
-   * (a name without the consumer Prefix, a name clash, Extensions that break the Schema rules)
+   * (a name without the consumer prefix, a name clash, Extensions that break the Schema rules)
    * is a field error: the engine is not created, the form value stays as it came in, and the
    * cause is logged to the developer console.
    *
-   * `preset` and `tools`, with them the Tool Options, are read when the engine is created: the
+   * `preset` and `tools`, along with the Tool Options, are read when the engine is created: the
    * ProseMirror Schema does not change after that. To change the set on a live field, remount it
    * with `key`. Edit history is lost in that case.
    */
@@ -330,7 +330,7 @@ export interface RichTextEditorHandle extends RichTextEditorHandleMethods {
    * and a call before mount (the engine does not exist during server rendering), return `""`.
    *
    * Color, alignment, underline and image size have no Markdown equivalent, so they are lost
-   * on export. In HTML mode, this behaves like `getHTML()`: the HTML field's edit is applied first.
+   * on export. In Source mode, this behaves like `getHTML()`: the HTML field's edit is applied first.
    */
   getMarkdown(): string;
   /**
@@ -623,7 +623,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       open: boolean;
     } | null>(null);
     const openCustomColor = (kind: CustomColorKind) => setCustomColor({ kind, open: true });
-    /** Whether the image popover is open: from the Toolbar button, the Slash menu item, or the image toolbar. */
+    /** Whether the image popover is open: from the Toolbar button, an Insert item, or the image toolbar. */
     const [imageOpen, setImageOpen] = useState(false);
     // The "Insert table" dialog belongs to the Editor, not to the menu: see `TableInsertDialog`.
     // The dialog comes from the table's lazy chunk (`tableTool.ts`): the table engine is created
@@ -631,7 +631,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const TableInsertDialog = tableChunk()?.TableInsertDialog;
     const [tableDialogOpen, setTableDialogOpen] = useState(false);
     /**
-     * The field message (`showNotice`, `fieldNotice.ts`): one at a time, the latest. `status` is
+     * The field message (`showNotice`, `fieldNotice.ts`): only the latest one is kept. `status` is
      * for the live region. `error` is a visible line under the field. A Document edit clears `error`.
      */
     const [notice, setNotice] = useState<FieldNotice | null>(null);
@@ -767,7 +767,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     */
     useEffect(() => () => applySourceRef.current(), []);
 
-    /** The HTML field's text is the Document's formatted HTML, as is: entry and external replacements. */
+    /** The HTML field's text is the Document's formatted HTML as it is, on entry and on external replacement. */
     const writeSource = (current: Editor) => {
       const text = formatSourceHtml(serialize(current));
       sourceTextRef.current = text;
@@ -800,7 +800,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       switchFocusRef.current = focusDocument ? "document" : null;
       setSource(null);
     };
-    /** Focus the field: the HTML field in HTML mode, otherwise the Document. */
+    /** Focus the field: the HTML field in Source mode, otherwise the Document. */
     const focusField = () => {
       if (sourceTextRef.current !== null) sourceFieldRef.current?.focus();
       else editorRef.current?.commands.focus();
@@ -996,7 +996,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const [scrollArea, setScrollArea] = useState<HTMLDivElement | null>(null);
     const scrollTarget = scrolls ? (scrollArea ?? undefined) : undefined;
     const areaLength = maxHeight == null ? undefined : cssLength(maxHeight);
-    /** Height set by the handle (`FieldResizer`); `null` means the starting height. */
+    /** Height set by the resize handle (`FieldResizer`); `null` means the starting height. */
     const [areaHeight, setAreaHeight] = useState<number | null>(null);
     const areaStyle: CSSProperties | undefined = !scrolls
       ? undefined

@@ -23,7 +23,7 @@ const SIZES: Record<Size, string> = {
 };
 
 /**
- * A spinning indicator, for when it is unknown both how long the wait will be and what will appear.
+ * A spinning indicator, for waits where neither the duration nor the content is known.
  *
  * THE BOUNDARY WITH ITS NEIGHBORS, keep it in mind:
  *
@@ -40,7 +40,7 @@ const SIZES: Record<Size, string> = {
  *
  * The spin is NOT disabled under `prefers-reduced-motion`. This is one of the two named
  * exceptions in the kit (ADR-0043; the other is the indeterminate `Progress`). The reasoning is
- * the same as for `role="status"` above: the spinner is the only thing by which the kit reports
+ * the same as for `role="status"` above: the spinner is the only way the kit reports
  * "work in progress". A frozen circle is no calmer than a spinning one; it looks broken, and
  * the user loses information rather than removing an irritant. W3C exempts essential motion
  * from the rule; here the motion is essential.

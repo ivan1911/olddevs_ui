@@ -68,7 +68,7 @@ export interface EditableListProps {
     /**
      * The addition is still being saved.
      *
-     * The field is NOT disabled while this is true, and that is deliberate. A disabled field
+     * The field is not disabled while this is true, and that is deliberate. A disabled field
      * loses focus and does not get it back, and a series of tasks entered one after another is
      * the only reason the add row exists: it would break on the first one as soon as saving goes
      * over the network. The busy state is announced with `aria-busy`, and typing continues.
@@ -83,7 +83,7 @@ export interface EditableListProps {
      * `leading` would have the field's frame sitting in the checkbox column while the row
      * titles shift to the right, and the bottom of the list would look ragged.
      *
-     * Put a SPACER of the same geometry here, not a live control: there is nothing to check
+     * Put a spacer of the same geometry here, not a live control: there is nothing to check
      * on a task that does not exist yet, and a control would take focus. Hide the spacer from
      * screen readers with `aria-hidden`.
      */
@@ -109,7 +109,7 @@ export interface EditableListProps {
    * turning each row into an object of its own, and that is the difference in cost between it
    * and a framed background.
    *
-   * The line goes BETWEEN rows, not under each one: under the last row it would underline a
+   * The line goes between rows, not under each one: under the last row it would underline a
    * list that nobody underlined.
    *
    * The row's rounded corners are removed as well, and this is not a side effect: with a
@@ -173,15 +173,15 @@ const ROW_CLASS =
 const DIVIDED_ROW_CLASS = "border-line-soft rounded-none border-b last:border-b-0";
 
 /**
- * A row that has disappeared from `items` and is living out its exit.
+ * A row that has disappeared from `items` and is exiting.
  *
- * A SNAPSHOT of the element is stored, not a reference to it in `items`: the element is no
- * longer there, and there would be nothing to take the label, icon and slots from. Drawing the
+ * A snapshot of the element is stored, not a reference to it in `items`: the element is no
+ * longer there, and there would be nothing to take the label, icon and slots from. Rendering the
  * leaving row as empty would show a flicker rather than an exit.
  */
 interface LeavingRow {
   item: EditableListItem;
-  /** The place where the row stood: it lives out its exit there. */
+  /** The place where the row stood: it plays out its exit there. */
   index: number;
   /**
    * The height at the moment of disappearance: the collapse runs from it.
@@ -196,7 +196,7 @@ interface LeavingRow {
 /**
  * The list together with the ghosts, each in its former place.
  *
- * Places are counted by the indexes of the DISAPPEARANCE, not by neighbors: the neighbors may
+ * Places are counted by the indexes of the disappearance, not by neighbors: the neighbors may
  * not be there at all, since a bulk action removes a dozen rows at once.
  */
 function withLeaving(items: EditableListItem[], leaving: LeavingRow[]): EditableListItem[] {
@@ -231,7 +231,7 @@ function withLeaving(items: EditableListItem[], leaving: LeavingRow[]): Editable
  *   focus to the row; a click elsewhere confirms and does not take focus: the `InlineEdit`
  *   contract, carried over verbatim;
  * - `↓` from the last row moves into the add row, and `↑` from the add row returns to the last row;
- * - in the add row, `Enter` confirms and LEAVES the field open, so a series of tasks can be typed
+ * - in the add row, `Enter` confirms and leaves the field open, so a series of tasks can be typed
  *   one after another. An empty confirmation creates nothing.
  *
  * WHILE A ROW IS BEING EDITED IT CANNOT BE DRAGGED: the handle is disabled, and the arrows belong
@@ -240,7 +240,7 @@ function withLeaving(items: EditableListItem[], leaving: LeavingRow[]): Editable
  * covered by a separate browser test.
  *
  * THE COMPONENT DOES NOT KNOW THE DOMAIN STATES. Striking through completed items, dimming
- * deferred ones, and the status badge are drawn by the consumer in `leading` and `trailing`.
+ * deferred ones, and the status badge are rendered by the consumer in `leading` and `trailing`.
  */
 export const EditableList = forwardRef<EditableListHandle, EditableListProps>(function EditableList(
   {

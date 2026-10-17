@@ -15,7 +15,7 @@ import { placeContainerBlock } from "../../core/containers.js";
 import { detailsTokenizer, parseDetails, renderDetails } from "./detailsMarkdown.js";
 
 /**
- * Collapsible block (Details): a container Block of two children, a title (`detailsSummary`, inline
+ * Collapsible Block (Details): a container Block of two children, a title (`detailsSummary`, inline
  * content) and the content (`detailsContent`, Blocks). The engine is the Details extension from
  * Tiptap (the API follows it, ADR-0048: there was no requesting screen at release time). The kit
  * adds the Schema, the sanitizer, Markdown and paste.

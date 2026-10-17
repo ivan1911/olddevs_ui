@@ -10,7 +10,7 @@ import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 /**
  * Three kinds of list on the Tool descriptors: bulleted, numbered and task list.
  *
- * Each item serves three surfaces: the Slash menu, the "Format ›" of the Block handle, and the
+ * Each item appears on three surfaces: the Slash menu, the "Format ›" of the Block handle, and the
  * "Lists ▾" menu. All three read the same words, icon and shortcut (`turnIntoTypes`). The
  * "Lists ▾" widget (`ListMenu`) and the indent buttons stay with the kit and are shown by
  * `has(name)`. The indent rows `indentListItem` and `outdentListItem` are shared by the three

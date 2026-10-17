@@ -58,7 +58,7 @@ type EditorMessages = UiMessages["editor"];
 /**
  * What a format menu takes from the place where it is rendered.
  *
- * The "¶", "…", "Align" and "Lists" menus live both in the Toolbar and in the Bubble menu
+ * The "¶", "…", "Alignment" and "Lists" menus live both in the Toolbar and in the Bubble menu
  * (the selection menu). So everything that depends on the place arrives as props: the
  * engine, the Tool set, the disabled state and the shortcut label. The menu itself knows
  * neither `Toolbar` nor `BubbleMenu`. The host supplies the shortcut label: it knows whether
@@ -140,7 +140,7 @@ export interface FormatMenuProps {
 export const HAS_POPUP_MENU = { "aria-haspopup": "menu" } as object;
 
 /**
- * The format menu button: the common frame for "¶", "…", "Align" and "Lists".
+ * The format menu button: the common frame for "¶", "…", "Alignment" and "Lists".
  *
  * A MENU, NOT A ROW OF BUTTONS. Before, the Toolbar gave every action its own button in a
  * row: an action hidden in a menu did not expose `aria-pressed`, so a screen reader could
@@ -285,7 +285,7 @@ export function hasBlockTypeMenu(tools: ToolList): boolean {
  *
  * THE ICON FOLLOWS THE LINE UNDER THE CARET (the owner's decision; before, it was always "¶",
  * ADR-0054, item 8): the heading level, or the icon of a custom Tool's item; for text, the
- * pilcrow. There are few items now and they are recognisable, and the button shows what is
+ * pilcrow. There are few items now and they are recognizable, and the button shows what is
  * under the caret without opening.
  *
  * Selecting an item changes the line type in place: a heading inside a quote stays in the
@@ -362,7 +362,7 @@ export function BlockTypeMenu({
   );
 }
 
-/** The "Align" menu items: icon, label and the row in the shortcuts table. */
+/** The "Alignment" menu items: icon, label and the row in the shortcuts table. */
 const ALIGN_ITEMS: Record<
   EditorAlignment,
   { icon: ComponentType<IconProps>; label: (m: EditorMessages) => string; shortcut: string }
@@ -386,7 +386,7 @@ function alignmentOf(editor: Editor): EditorAlignment {
 }
 
 /**
- * The "Align" menu: Align left, Align center, Align right, with the shortcuts from the shared
+ * The "Alignment" menu: Align left, Align center, Align right, with the shortcuts from the shared
  * table. There is no justify option: the decision from the component's page (WCAG 1.4.8: ragged
  * spacing hurts reading) still stands.
  *

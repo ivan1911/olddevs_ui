@@ -18,7 +18,7 @@ import { Checkbox } from "../inputs/Checkbox.js";
 /**
  * Sets or removes `aria-current` on the tree row that contains `inside`.
  *
- * Done by hand, because `TreeItem` filters its props: only `data-*` and a pair of named `aria-*`
+ * Done by hand, because `TreeItem` filters its props: only `data-*` and two specific `aria-*`
  * attributes reach the markup, and `aria-current` is silently dropped. Writing
  * `aria-current="page"` in JSX would look like it works and do nothing. The attribute is outside
  * the set that React owns on this row, so re-rendering does not erase it.
@@ -36,12 +36,12 @@ function markCurrent(inside: HTMLElement | null, current: boolean) {
 }
 
 export interface TreeNode {
-  /** Unique node key. Expansion, selection, and `onAction` all work by it. */
+  /** Unique node key. Expansion, selection, and `onAction` all use it. */
   id: Key;
   /** Node label. It can be markup, in which case set `textValue`. */
   label: ReactNode;
   /**
-   * String form of the node. Keyboard type-ahead search works by it. Required when `label` is not
+   * String form of the node. Keyboard type-ahead search uses it. Required when `label` is not
    * a string.
    */
   textValue?: string;
@@ -128,7 +128,7 @@ export interface TreeViewProps {
  * category tree that is only browsed should not carry a selection column.
  *
  * THE CURRENT NODE IS A SEPARATE AXIS FROM SELECTION. `activeKey` sets `aria-current="page"` on the
- * row and the background, and draws no checkboxes. A tree of articles that is browsed shows "you
+ * row and the background, and renders no checkboxes. A tree of articles that is browsed shows "you
  * are here", not a set of checked items. The `dependencies` on the root are needed because
  * react-aria caches rows by `items`. If only the key changed, the mark would stay on the old row.
  *

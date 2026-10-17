@@ -85,7 +85,7 @@ const narrowest = (found: readonly Shown[]): Shown | null =>
 export interface TextCardProps {
   editor: Editor;
   entries: readonly TextCardEntry[];
-  /** The field is disabled or in HTML mode: there are no cards. */
+  /** The field is disabled or in Source mode: there are no cards. */
   enabled: boolean;
   readOnly: boolean;
   /** The field root: a click inside it does not by itself close the card. */

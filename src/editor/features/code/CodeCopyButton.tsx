@@ -22,7 +22,7 @@ export interface CodeCopyButtonProps extends Omit<
  * "Copy code" → "Copied".
  *
  * THE TOOLTIP DOES NOT REPLACE THE NAME. The button's name and the announcement of the result
- * belong to `CopyButton` ("Copy" → "Copied", a live region); the tooltip is only for the eye and
+ * belong to `CopyButton` ("Copy" → "Copied", a live region); the tooltip is only for sighted users and
  * says WHAT is copied. Its state comes from `onCopy`, not from the button's internals.
  *
  * ITS OWN `TooltipProvider`, as the Toolbar and the image panel have: the root kit component

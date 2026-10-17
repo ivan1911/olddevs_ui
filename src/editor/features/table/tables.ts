@@ -118,7 +118,7 @@ const gapCursorFits = ($pos: ResolvedPos): boolean =>
  * from the first cell of the last row moved the caret to the end of the table, and
  * only a second arrow got out of it. That is exactly the path "Tab in the last
  * cell added a row → arrow down → typing below the table". Here the arrow places
- * the gap cursor at once; if there is somewhere to stand after the table, the table
+ * the gap cursor at once; if there is a valid caret position after the table, the table
  * engine decides.
  */
 export function leaveTableVertically(view: EditorView, dir: 1 | -1): boolean {

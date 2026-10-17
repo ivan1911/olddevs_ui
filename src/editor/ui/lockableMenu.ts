@@ -13,7 +13,7 @@ export function unavailableProps(unavailable: boolean | undefined): object {
 }
 
 /**
- * A Toolbar menu that can become unavailable (HTML mode, `aria-disabled`): a controlled
+ * A Toolbar menu that can become unavailable (Source mode, `aria-disabled`): a controlled
  * `MenuTrigger`. An unavailable button can still be pressed (it keeps focus and arrow
  * keys), but it does not open the menu, and an open menu that becomes unavailable is
  * closed. The shared scaffold for "¶", "…", "Alignment", "Lists", "+" and "Table":

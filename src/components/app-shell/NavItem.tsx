@@ -93,7 +93,7 @@ const STATE = {
  * Navigation item: icon, label, counter and shortcut slot.
  *
  * It knows nothing about routing: neither the address nor which item is currently
- * open. Both come from outside: the address as an element through `asChild` or
+ * active. Both come from outside: the address as an element through `asChild` or
  * `href`, the current item through the `active` prop.
  *
  * In collapsed mode the label leaves the view but stays the accessible name, and a

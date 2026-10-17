@@ -11,7 +11,7 @@ export function maskTime(value: string): string {
   return `${digits.slice(0, 2)}:${digits.slice(2)}`;
 }
 
-/** Brings a partial entry to a valid `HH:MM`, clamping it to the bounds of the day. */
+/** Normalizes a partial entry to a valid `HH:MM`, clamping it to the bounds of the day. */
 export function normalizeTime(value: string, fallback = "00:00"): string {
   const digits = String(value).replace(/\D/g, "");
   if (digits.length === 0) return fallback;
@@ -79,7 +79,7 @@ export function maskTime12(
 }
 
 /**
- * Brings 12-hour input to `HH:MM`. If a 24-hour time is typed (hours above twelve),
+ * Normalizes 12-hour input to `HH:MM`. If a 24-hour time is typed (hours above twelve),
  * the period is ignored. Without a period, the period of the previous value
  * (`fallback`) is used, and if there is none, AM: "2:30" typed into a field that held
  * `15:00` stays in the afternoon.

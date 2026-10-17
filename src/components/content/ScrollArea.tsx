@@ -21,7 +21,7 @@ export interface ScrollAreaProps extends ComponentPropsWithoutRef<"div"> {
  * A scrollable area with a styled scrollbar.
  *
  * Built in-house, not a dependency. `@radix-ui/react-scroll-area` replaces the native scrolling
- * with its own: it draws the scrollbar with divs and computes the position in JS. That gives the
+ * with its own: it renders the scrollbar with divs and computes the position in JS. That gives the
  * same look in every browser, but it takes away touchpad scroll momentum, `scroll-behavior`,
  * find-in-page and Shift+wheel scrolling. The kit takes behavior from a library only where its
  * own version would amount to a second library (see ADR-0005), and here the native behavior

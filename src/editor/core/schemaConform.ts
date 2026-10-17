@@ -38,7 +38,7 @@ const isInline = (node: JSONContent, schema: Schema) =>
   node.type === "text" || (!!node.type && !!schema.nodes[node.type]?.isInline);
 
 /**
- * Bare text in a block that holds only blocks is hidden in a paragraph. This is what a list item
+ * Bare text in a block that holds only blocks is wrapped in a paragraph. This is what a list item
  * looks like when the engine has no extension for its markup: `- [ ] todo` without a task list
  * arrives as a list item with text and no paragraph, and without the wrapper the paste would lose
  * it entirely.

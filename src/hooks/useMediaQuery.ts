@@ -14,7 +14,7 @@ import { useCallback, useSyncExternalStore } from "react";
  *
  * BEFORE HYDRATION THE HOOK RETURNS `serverValue`, which defaults to `false`. The server
  * does not know the width, and guessing it would produce a markup mismatch. `false` is
- * the choice because the scale is mobile-first, like Tailwind itself: a `min-width`
+ * the choice because the breakpoints are mobile-first, like Tailwind itself: a `min-width`
  * query is "not matched yet" on the server, so the first frame is always narrow. During
  * hydration React takes the server value by itself and swaps in the real one right
  * after, with no mismatch error but with one extra render. On a wide screen that is a

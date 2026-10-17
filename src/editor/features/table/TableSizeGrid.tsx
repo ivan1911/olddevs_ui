@@ -77,7 +77,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
  * eye, not a toggle.
  *
  * FIELDS are for tables larger than the grid (up to `fields.maxCols` × `fields.maxRows`).
- * The selection is one for the grid and the fields: an edit to either moves the other. An
+ * The grid and the fields share one selection: an edit to either moves the other. An
  * empty field does not change the selection: Insert takes the last valid size.
  *
  * FOCUS ON MOUNT goes to the grid. Inside a submenu, react-aria closes the menu if focus

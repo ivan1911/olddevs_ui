@@ -44,7 +44,7 @@ export interface TableFilter {
 }
 
 export interface TableState {
-  /** Not set: the table is not sorted, and the sort axis is not enabled. */
+  /** Not set: the table is not sorted, and sorting is not enabled. */
   sort?: SortDescriptor;
   /** Numbering starts at one, the same way `Pagination` counts. */
   page: number;
@@ -52,7 +52,7 @@ export interface TableState {
   selectedKeys: Set<Key>;
   expandedKeys: Set<Key>;
   filters: TableFilter[];
-  /** Column order by identifiers. Empty means declaration order. */
+  /** Column order as a list of identifiers. Empty means declaration order. */
   columnOrder: string[];
   hiddenColumns: Set<string>;
   density: Density;

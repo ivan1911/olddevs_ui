@@ -69,7 +69,7 @@ const ICON_COLOR: Record<ConfirmKind, string> = {
 };
 
 /**
- * Brings text to the form in which it is compared: without leading and trailing spaces and in
+ * Normalizes text into the form used for comparison: without leading and trailing spaces and in
  * canonical Unicode form. Case is NOT changed — see `typeToConfirm`.
  */
 const normalize = (value: string) => value.trim().normalize("NFC");
@@ -79,7 +79,7 @@ const normalize = (value: string) => value.trim().normalize("NFC");
  *
  * `FormField` labels are set in uppercase, so "Acme Labs" would look like "ACME LABS" there, even
  * though the comparison is case-sensitive and the hint says so directly. The name inside the label
- * is taken out of the uppercase, while the rest of the text is styled like all fields.
+ * is shown outside the uppercase transform, while the rest of the text is styled like all fields.
  */
 function keepCase(label: string, name: string): ReactNode {
   const at = name ? label.indexOf(name) : -1;

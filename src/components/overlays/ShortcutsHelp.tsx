@@ -12,7 +12,7 @@ export interface ShortcutItem {
    * The keys of the shortcut, in order: `["Ctrl", "K"]`.
    *
    * One line per key, not "Ctrl+K" as a whole: each key is drawn with its own `Kbd`, and a
-   * separator for the eyes and a word for the ear go between them. The kit does not try to split
+   * visible separator and a spoken word go between them. The kit does not try to split
    * the string on `+`, because the key itself can be the plus sign.
    */
   keys: string[];
@@ -46,7 +46,7 @@ export interface ShortcutsHelpProps {
  * THE KIT DOES NOT KNOW THE SHORTCUTS AND DOES NOT BIND GLOBAL KEYS. Which keys the screen has,
  * and which one opens this summary ("?", as in GitHub and Linear), is decided by the application:
  * it also matches the key presses, and the kit can do nothing about that. Letter chords ("G, H")
- * should be matched by key position (`event.code`), otherwise they stay silent on a Cyrillic
+ * should be matched by key position (`event.code`), otherwise they do not fire on a Cyrillic
  * layout; the "?" sign is matched by its character (`event.key`). A global key handler set up here
  * would fire both in an input field and over someone else's dialog: exactly where the consumer
  * knows what to do and the kit does not.

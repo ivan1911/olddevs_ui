@@ -31,7 +31,7 @@ export interface EmptyStateProps {
 /**
  * An empty state: "No matches found", "Nothing here yet", "No results".
  *
- * Before this package, every place in the front end drew its own version: eight variants of
+ * Before this package, every place in the front end rendered its own version: eight variants of
  * the same thing with different spacing and tones. The component is deliberately plain:
  * vertical centering, muted tones, no illustrations or animations. An empty screen is not an
  * event and is not supposed to attract attention.

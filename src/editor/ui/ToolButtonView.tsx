@@ -54,10 +54,10 @@ const OPEN_CLASS = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true,
  *
  * The kit's `Popover`. Radix keeps the stack of layers, and the kit's `Dialog` is Radix
  * too: Escape inside a popover within a dialog closes the popover, not the dialog
- * (ADR-0041). Mouse selection in `Dialog` and `Drawer` works for the same reason: the
+ * (ADR-0041). Clicking an item in `Dialog` and `Drawer` works for the same reason: the
  * popover's layer is above the dialog's layer and enables `pointer-events` itself.
  *
- * FOCUS. Closing with the keyboard or by a selection returns focus to the Document, to the
+ * FOCUS. Closing with the keyboard or by selecting an item returns focus to the Document, to the
  * previous selection, not to the button: the user came to edit the text and continues from
  * the same place. A click outside does not touch focus, because the user chose where to put
  * it. Radix itself moves focus inside, to the first focusable element. That cannot be done
@@ -109,7 +109,7 @@ export interface ToolButtonViewProps {
   label: string;
   /** The `isActive` state; not read for a button that has no `isActive`. */
   pressed: boolean;
-  /** `aria-disabled`: the `can` check fails, or the field is in HTML mode. */
+  /** `aria-disabled`: the `can` check fails, or the field is in Source mode. */
   unavailable: boolean;
   /** The field is disabled: the button stays visible but cannot be pressed or take focus. */
   disabled: boolean;

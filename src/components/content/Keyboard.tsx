@@ -288,7 +288,10 @@ function keyClassName(key: KeyboardKey) {
     .join(" ");
 }
 
-/** The on-screen keyboard controls the value and selection of the calling field, but not its DOM ref. */
+/**
+ * The on-screen keyboard controls the value and selection of the field that opened it, but not its
+ * DOM ref.
+ */
 export function Keyboard({
   value,
   selection,

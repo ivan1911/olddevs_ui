@@ -52,7 +52,7 @@ const HAS_POPUP_MENU = { "aria-haspopup": "menu" } as object;
  *
  * WHY NOT `editor.isEditable` ONCE. `readOnly` and `disabled` change on the fly through
  * `setEditable` without a transaction, and the node view re-renders only when the node itself
- * changes: the button would stay by a field that can no longer be edited. ProseMirror mirrors
+ * changes: the button would stay next to a field that can no longer be edited. ProseMirror mirrors
  * the mode in the root's `contenteditable`, so that is what we watch.
  */
 function useEditable(editor: Editor): boolean {

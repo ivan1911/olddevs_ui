@@ -12,7 +12,7 @@ import type { ToolDescriptor } from "../../core/toolDescriptor.js";
  * The Tiptap extension itself binds the key and the Markdown shortcut. The shortcuts
  * reference row is only the label for it (`SHORTCUT_KEYS`). The widgets stay with the kit
  * and are shown by `has(name)`: the B·I·U row of Marks (`rowMarks.ts`), the "…" button
- * (`MORE_MARKS` in `FormatMenus.tsx`), and the Mark slots in the Bubble menu.
+ * (`MORE_MARKS` in `FormatMenus.tsx`), and the places for Marks in the Bubble menu.
  *
  * THE ORDER OF MARKS in saved HTML is set by StarterKit: the rank and nesting of Marks depend
  * on the order of its extensions, not on the order of the Tools. So the five Marks from

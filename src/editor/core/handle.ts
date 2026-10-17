@@ -25,7 +25,7 @@ export {
  *
  * BEFORE MOUNT THE METHODS ARE SILENT. The engine is created in the browser after the first render,
  * and there is none on the server: reads return the known value, writes and focus do nothing, insert
- * returns `false`. Call queues and exceptions are rejected: a screen that calls a method too early
+ * returns `false`. Calls are not queued and nothing is thrown: a screen that calls a method too early
  * loses nothing silently and does not crash. Readiness as an event is `onReady`.
  */
 export interface RichTextEditorHandleMethods {
@@ -90,7 +90,7 @@ export interface RichTextEditorHandleMethods {
    * Tool is not in the `tools` set, it has no commands, or the engine is not created yet — so the
    * commands of a disabled Tool are unavailable both in the types (`?.`) and at runtime.
    *
-   * Each command returns a `boolean`: performed or not (HTML mode, no matches, no heading, the field
+   * Each command returns a `boolean`: performed or not (Source mode, no matches, no heading, the field
    * cannot be edited) — as `insertHTML` does. A name outside the map (a custom Tool without typing)
    * gives `unknown`.
    */
@@ -101,7 +101,7 @@ export interface RichTextEditorHandleMethods {
 /** What the Handle needs from the Editor: the engine and what only it knows. */
 export interface HandleHost {
   editor: Editor | null;
-  /** The field accepts user edits: not `readOnly` and not disabled. */
+  /** The field accepts User edits: not `readOnly` and not disabled. */
   editable: boolean;
   /** The last HTML known to the owner of the value; the answer before mount. */
   known: () => string;
@@ -115,10 +115,10 @@ export interface HandleHost {
    * Schema would drop it on parse, and an empty table would become an empty field.
    */
   tables: boolean;
-  /** HTML mode is open: the Document is hidden, and the author edits the HTML field. */
+  /** Source mode is open: the Document is hidden, and the author edits the HTML field. */
   sourceOpen: () => boolean;
   sourceField: () => HTMLTextAreaElement | null;
-  /** Apply the HTML field edit to the Document (the same as on `getHTML()`). */
+  /** Apply the HTML field edit to the Document (as `getHTML()` does). */
   applySource: () => void;
   /** Rewrite the HTML field from scratch: the Document changed from outside the field. */
   rewriteSource: (editor: Editor) => void;
@@ -132,7 +132,7 @@ export interface HandleHost {
 const TAG = /<[^>]*>/g;
 const UNSEEN = /<!--[\s\S]*?-->|<(script|style|template)\b[\s\S]*?<\/\1\s*>/gi;
 /**
- * Leaves of the Document — content even without text: a hard break, a rule, an image, a custom Block.
+ * Leaves of the Document — content even without text: a hard break, a horizontal rule, an image, a custom Block.
  * Before the engine, a custom Block is always content: only its Extensions know whether it is an
  * Atom, and an Atom without text is content too.
  */

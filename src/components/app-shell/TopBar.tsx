@@ -19,7 +19,7 @@ export interface TopBarProps extends Omit<ComponentPropsWithoutRef<"header">, "c
   /**
    * The name of the CSS variable the measured header height is published to.
    *
-   * This is the paired side of the contract: the same name is read by
+   * This is the other half of the contract: the same name is read by
    * `useStickyOffset` (there it is called `offsetVar`), and `SelectionBar` expects it
    * by default.
    *

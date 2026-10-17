@@ -9,7 +9,7 @@ import type { PartialUiMessages, UiMessages } from "./messages.js";
 
 export interface UiProviderProps {
   /**
-   * The formatting locale: dates, numbers, plural forms. If not set, the kit does
+   * The formatting locale: dates, numbers, plural rules. If not set, the kit does
    * not impose its own: the value is taken from react-aria's `I18nProvider`, that is,
    * from the consumer's outer provider or from the browser.
    *
@@ -19,7 +19,7 @@ export interface UiProviderProps {
    */
   locale?: string;
   /**
-   * The message catalog, whole or partial. Branches that are not supplied are taken
+   * The message catalog, whole or partial. Namespaces that are not supplied are taken
    * from the English fallback, so `messages={{ common: { close: "Dismiss" } }}` is a
    * legitimate call.
    */
@@ -32,14 +32,14 @@ export interface UiProviderProps {
    * The default layout density for the whole app.
    *
    * A default, not a mode: a table and its gear override the value. The field
-   * appeared in 2.2.0 — ADR-0002 deferred it until a reader appeared, and
-   * `DataTable` became that reader.
+   * appeared in 2.2.0 — ADR-0002 deferred it until a component needed it, and
+   * `DataTable` was the first to need it.
    */
   density?: Density;
   children: ReactNode;
 }
 
-/** Two-level merge: namespace → key. The structure goes no deeper. */
+/** Two-level merge: namespace → key. The merge does not go deeper. */
 function mergeMessages(base: UiMessages, patch: PartialUiMessages | undefined): UiMessages {
   if (!patch) return base;
   const out = { ...base } as Record<string, unknown>;
@@ -66,7 +66,7 @@ function mergeMessages(base: UiMessages, patch: PartialUiMessages | undefined): 
  * Whether two partial catalogs match BY CONTENT.
  *
  * Needed so that a literal written in place is not treated as a new catalog on every
- * render. The depth is the same as the merge's: two levels, the structure goes no deeper.
+ * render. The depth is the same as the merge's: two levels, the merge does not go deeper.
  */
 function sameMessages(a: PartialUiMessages | undefined, b: PartialUiMessages | undefined): boolean {
   if (a === b) return true;
@@ -92,7 +92,7 @@ function sameMessages(a: PartialUiMessages | undefined, b: PartialUiMessages | u
  * The kit's provider: locale, message catalog, writing direction and portal container.
  *
  * Resolution order for a string: `prop → provider message → fallback`. A component's
- * prop always wins: it is a point override, not the only way it was done before 2.0.0.
+ * prop always wins: it is a targeted override, not the only way it was done before 2.0.0.
  *
  * NESTING WORKS. An inner provider inherits the locale and messages of the outer one
  * and overrides only what it sets itself. The case is not contrived: a dialog with its

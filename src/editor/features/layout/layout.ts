@@ -29,7 +29,7 @@ import { containerFreeContext, placeContainerBlock, WRAPPER_NODE } from "../../c
  *
  * THE ATTRIBUTE NAMES COME FROM THE OWNER'S SAMPLE (`data-block="layout"`,
  * `data-block="column"`). This is how the editors that most often supply pasted HTML mark up
- * their columns. The kit's own difference is one: the widths. In the sample they are in
+ * their columns. The kit differs in one respect: the widths. In the sample they are in
  * `style="flex-basis: 50%"`, but the kit's Schema does not know `style` (ADR-0050). So the
  * shares are carried by the variant name (`columnLayouts.ts`), and the `flex-basis` of a paste
  * is mapped to the nearest variant.
@@ -78,7 +78,7 @@ function columnShare(column: Element): number | null {
 /**
  * Column layout variant from the markup. The element's own `data-layout` is used if its column
  * count matches; otherwise the variant is picked by the number of columns and their shares. This
- * is how the HTML of another editor with `flex-basis` is read, and a Column layout whose column
+ * is how the HTML of another editor with `flex-basis` is read, and so is a Column layout whose column
  * was deleted by hand.
  */
 function layoutOf(element: HTMLElement): EditorLayout {

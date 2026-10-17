@@ -25,7 +25,7 @@ const loadMath = () => import("./mathChunk.js");
 
 /**
  * The formula chunk, if it is already loaded. The engine with formulas is created after
- * the Loader, and the Slash menu items are visible only while the engine is alive, so
+ * the Loader, and the Slash menu items are visible only while the engine is running, so
  * where the chunk is needed, it is already there.
  */
 const chunk = () => loaded(loadMath) as typeof MathChunkModule;
@@ -85,7 +85,7 @@ const MATH_SHAPE = [
  *
  * There is no Toolbar button: two formulas in a row would push `full` onto a second line.
  * The inline and block formulas are two Slash menu items ("+" and "/"); each opens a popover
- * with a LaTeX field and does not prepare the Document itself (`popover`). Editing an existing
+ * with a LaTeX field and does not change the Document itself (`popover`). Editing an existing
  * formula is a click or Enter on it (`mathChunk.tsx`).
  *
  * Without the Tool, a formula from `value` and from paste is read as `$…$` text (the Schema of

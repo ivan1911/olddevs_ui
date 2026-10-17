@@ -13,9 +13,9 @@ import type { Tool } from "./tools.js";
 type EditorMessages = UiMessages["editor"];
 
 /**
- * Slash menu item.
+ * Insert item.
  *
- * The section decides WHAT happens to the document, and the item decides only WHICH Block:
+ * The section decides what happens to the document, and the item decides only which Block:
  *
  * - `insert` — a new Block after the current one. The menu first finds the place: the current
  *   paragraph if it is empty, otherwise a new paragraph right after the current top-level Block
@@ -33,7 +33,7 @@ export interface InsertItem {
   section: "insert" | "turnInto";
   /**
    * Label in the `UiProvider` locale. For built-in items it is a catalog string, and `locale` is
-   * not needed for them. For a custom Tool's items it is a string or a function of `{ locale,
+   * not needed for them. For a custom Tool's items it is a string or a function that receives `{ locale,
    * messages }` (ADR-0058, item 6.1), which the menu calls when it renders.
    */
   label: (messages: EditorMessages, locale: string) => string;
@@ -95,7 +95,7 @@ export function insertTableOfSize(editor: Editor, cols: number, rows: number): v
 }
 
 /**
- * The caret is in a cell, so the new table goes AFTER it, not inside.
+ * The caret is in a cell, so the new table goes after it, not inside.
  *
  * The menu itself steps away from the current Block, but an empty paragraph counts as a ready
  * place. An empty cell is a paragraph too, so the table would land inside it as a second, nested
@@ -228,7 +228,7 @@ export type InsertPlace = "caret" | "below";
  * place for a new Block. One path serves "+", `/` and "Add ›": a divider or a table inserted from
  * the middle of a quote or a list would end up inside them, and one inserted after a selected
  * image would land before it. A selection that spans several handle Blocks has no such paragraph.
- * In that case the new Block goes after the top Block under the start of the selection.
+ * In that case the new Block goes after the top-level Block that holds the start of the selection.
  */
 function openParagraphBelow(tr: Transaction): void {
   const after = handleBlock(tr)?.end ?? tr.selection.$from.after(1);

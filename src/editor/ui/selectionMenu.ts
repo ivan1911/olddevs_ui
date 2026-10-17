@@ -22,7 +22,7 @@ import { isImageSelection } from "../features/image/image.js";
  * An empty selection, empty text under the selection, a non-editable field, and focus
  * outside both the document and the menu itself do not show the menu.
  *
- * OPENED FROM THE MENU IS ALSO "FOCUS WITHIN". The "¶", "…", color and emoji grid menus
+ * A MENU OPENED FROM THE BUBBLE COUNTS AS "FOCUS WITHIN" TOO. The "¶", "…", color and emoji grid menus
  * live in a portal, outside the menu's node, so for `focusWithin` focus in them is
  * outside. The condition is also recalculated by a timer after every edit: applying bold
  * just before opening "¶" hid the bubble menu together with its menu button, and Escape

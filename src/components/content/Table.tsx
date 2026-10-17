@@ -240,7 +240,7 @@ export function Table<T extends { id: Key }>({
   const detailKey = (id: Key) => `${DETAIL_PREFIX}${String(id)}`;
 
   /**
-   * What to hand out in response to react-aria's selection.
+   * What to report in response to react-aria's selection.
    *
    * `'all'` is not a key string but a separate `Selection` value, and it is returned by
    * `toggleSelectAll()`. Converting it to a `Set` parsed this string letter by letter and handed
@@ -248,13 +248,13 @@ export function Table<T extends { id: Key }>({
    * exist in no row.
    *
    * But listing the current page is not enough either, and that is the second, more costly defect.
-   * `items` is ONE PAGE: above it sits `useTableState`, which slices the set. By handing out
+   * `items` is ONE PAGE: above it sits `useTableState`, which slices the set. By reporting
    * only the page, "select all" erased marks made on other pages — which broke exactly the
    * invariant that `useTableState` declares its main value ("you checked rows, turned the page,
    * lost everything").
    * The user saw the bulk actions counter drop after clicking "select all".
    *
-   * So "all" is a UNION with what has already arrived, and deselecting is a subtraction of the
+   * So "all" is a UNION with the keys already selected, and deselecting is a subtraction of the
    * current page's keys, not a reset of the set.
    *
    * Detail rows are subtracted from the selection here too: their synthetic key (`detailKey`) must

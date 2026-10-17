@@ -24,7 +24,7 @@ export interface TooltipProps {
 }
 
 /**
- * A hint on hover and focus.
+ * A tooltip that shows on hover and focus.
  *
  * The behavior is `@radix-ui/react-tooltip` from the package's `dependencies`: it ships with the
  * kit, and the consumer does not install it (ADR-0072). The tooltip manages focus, Escape, portals

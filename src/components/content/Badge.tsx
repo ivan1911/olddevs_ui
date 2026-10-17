@@ -38,7 +38,7 @@ export interface BadgeProps extends Omit<ComponentPropsWithRef<"span">, "childre
  *                   Not clickable on its own.
  *   `StatusBadge` — IN WHICH STATE the entity is: draft, published, error. A value from a closed
  *                   set, not a number.
- *   `Chip count`  — a counter INSIDE a filter: how many will match if it is pressed. Part of the
+ *   `Chip count`  — a counter inside a filter: how many will match if it is pressed. Part of the
  *                   clickable pill, not a standalone mark.
  *
  * Easy to mix up, and the cost of the mistake is not cosmetic: `StatusBadge` reports a state

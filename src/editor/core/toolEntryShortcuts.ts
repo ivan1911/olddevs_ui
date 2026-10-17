@@ -20,7 +20,7 @@ export interface ToolEntryShortcutsOptions {
  * An item is applied the same way as from the Slash menu at the caret (`applyInsertItem`: one edit,
  * one undo). An action runs on the Block under the caret, the same Block that the Block handle picks
  * (`handleBlock`), and only where the action is visible in the handle's menu. On another Block the
- * key goes on, into the Document.
+ * key falls through to the Document.
  */
 export const ToolEntryShortcuts = Extension.create<ToolEntryShortcutsOptions>({
   name: "toolEntryShortcuts",

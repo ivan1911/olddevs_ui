@@ -2,7 +2,7 @@
 
 import { useMediaQuery } from "./useMediaQuery.js";
 
-/** Already `sm` (640): at this width a submenu does not fit beside its item. */
+/** Narrower than `sm` (640): at this width a submenu does not fit beside its item. */
 const NARROW_QUERY = "(max-width: 639px)";
 
 /**

@@ -140,7 +140,7 @@ const COLOR_CLASS =
  * HORIZONTAL SCROLLING IS ON THE `<table>` ITSELF: `display: block` with `overflow-x: auto`
  * and `max-width: 100%`. A table cannot have a wrapper: `RichTextView` puts the saved HTML on
  * the page as it is, and the Schema knows neither `div.tableWrapper` nor `tabindex`. Inside
- * the block the browser builds an unnamed table, and its width is set by the columns:
+ * the block the browser builds an anonymous table, and its width is set by the columns:
  * `min-w-24` on the cell (6 rem) keeps the columns from shrinking into a slit, so a five-column
  * table on a 375 px screen scrolls inside its own block instead of pushing the page wider.
  * A short table stays as wide as its content.
@@ -188,7 +188,7 @@ const TABLE_CLASS =
  * stack in reading order. The threshold depends on the column count, not one common value: a
  * two-column layout fits a 560 px Dialog, while four columns there would be 110 px each.
  * The container is the Document root, and only when it contains a layout (`:has`):
- * `container-type: inline-size` takes the element's width away from its content, and in a
+ * `container-type: inline-size` stops the element's width from depending on its content, and in a
  * shrinking context (an element of a flex row with no width) a Document without a layout could
  * still shrink. The layout itself cannot be the container: a container query does not measure
  * the element it applies to, and the layout has no wrapper in the Schema.
@@ -281,7 +281,7 @@ const WRAPPER_CLASS =
  *
  * EDITOR. The `summary` marker is removed (`list-none`): a button on the left replaces it. Its
  * chevron is drawn by CSS (`border-r` + `border-b`, rotated 45°), and the open state is the
- * `is-open` class on the `div`. The button is a real `button` with a name from the catalog and
+ * `is-open` class on the `div`. The button is a real `button` with a name from the message catalog and
  * `aria-expanded`. The hidden content is hidden by the `hidden` attribute, which the Tiptap node
  * view sets itself.
  */
@@ -336,7 +336,7 @@ const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
  *
  * EDITOR. The node view (`tiptap-mathematics-render--editable`) is clickable: a click opens the
  * popover, and hovering highlights it. A formula selected with the arrow keys is outlined: Enter
- * works on it.
+ * acts on it.
  */
 const MATH_CLASS =
   "[&_:is(span[data-type=inline-math],div[data-type=block-math]):not(:has(.katex))]:font-mono " +
@@ -445,7 +445,7 @@ const CUSTOM_BLOCK_CLASS =
  * sanitizer. Here the HTML stays clean, and the styling lives outside it.
  *
  * Spacing between Blocks applies only to the direct children of the container and inside a quote:
- * a "all but the last" rule at any depth would push apart the paragraphs inside a list item.
+ * an "all but the last" rule at any depth would push apart the paragraphs inside a list item.
  *
  * The module is server-safe: class strings, with no React and no engine.
  */

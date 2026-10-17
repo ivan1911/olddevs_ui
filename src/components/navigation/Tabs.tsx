@@ -31,7 +31,7 @@ export interface TabsProps {
 
 /**
  * Tab strip. Controlled-only: the one consumer already keeps the active tab in its own state, and
- * an uncontrolled mode would be code kept in reserve.
+ * an uncontrolled mode would be speculative code.
  *
  * Selection follows focus (automatic activation): panels render instantly here, so there is no
  * reason to wait for a separate Enter after an arrow. Focus moves through a roving tabindex, so

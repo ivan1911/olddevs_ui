@@ -1,5 +1,5 @@
 /**
- * The registry of the kit's themes: which axes exist, how to bring a value to an
+ * The registry of the kit's themes: which axes exist, how to coerce a value to an
  * allowed one, and how to apply it to the document.
  *
  * Why this lives in the kit and not in the consumer. The axes are declared in

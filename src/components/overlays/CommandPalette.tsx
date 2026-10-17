@@ -53,7 +53,7 @@ export interface CommandSection {
    * results it is destructive: they are already selected, by other rules, and a second
    * substring pass throws away the correct ones.
    *
-   * The consumer's case shows this on morphology: a `tsvector` search with the Russian
+   * The consumer's case shows this with word forms: a `tsvector` search with the Russian
    * dictionary finds "Sign the contract" for the query "contracts", while `contains`
    * never matches such a pair, because the substring is not in the title. `keywords`
    * cannot fix it in principle: no matter how many words go there, a substring filter

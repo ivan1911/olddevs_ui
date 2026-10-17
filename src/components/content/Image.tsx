@@ -39,7 +39,7 @@ export interface ImageProps extends Omit<
    *
    * `intrinsic`: the image sets the size and the box wraps it. This is how the frame viewer works:
    * it has no height of its own, only a ceiling (`max-h-[45vh]`), and the ceiling must go on the
-   * IMAGE, via `imgClassName`. Putting it on the box is wrong: the box would crop the frame instead
+   * image, via `imgClassName`. Putting it on the box is wrong: the box would crop the frame instead
    * of scaling it down.
    *
    * The difference is not cosmetic: in `fill` mode the image gets `h-full w-full`, that is percentages

@@ -16,7 +16,7 @@ declare const process: { env: { NODE_ENV?: string } };
  * Without a bundler (Node, a browser with native modules) `process` is not defined: a reference to it
  * throws a `ReferenceError`, which is also "silent". So it is `try/catch`, not
  * `typeof process !== "undefined"`: a bundler does not replace that check, and in a Vite browser build,
- * where `process` does not exist, the warning would never fire, not even in development. For `try/catch`,
+ * where `process` does not exist, the warning would never fire, not even in development. With `try/catch`,
  * the substitution of the form `"development" !== "production"` remains a constant, not a function call.
  *
  * Read on every call, not at module load: tests replace the value through `vi.stubEnv`.

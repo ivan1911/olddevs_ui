@@ -78,7 +78,7 @@ export interface FormFieldProps extends Omit<ComponentPropsWithoutRef<"div">, "c
    * the component's own flex container. See ADR-0025.
    *
    * Without the prop, the axis comes from the nearest `FormLayout`, and without one it is `stack`,
-   * and the markup does not change by a single node.
+   * and the markup does not change at all.
    */
   layout?: FieldLayout;
   /** The field the label belongs to. */

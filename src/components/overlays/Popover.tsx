@@ -7,7 +7,7 @@ import { OVERLAY_LAYER } from "../../lib/overlay-layer.js";
 import { withoutToolbarAxis } from "../../lib/toolbar-axis.js";
 
 /**
- * The popover panel: a surface for dropdown lists, calendars and rich hints.
+ * The popover panel: a surface for dropdown lists, calendars and rich help content.
  *
  * The compound API (`Popover` / `PopoverTrigger` / `PopoverContent`) is justified here, unlike
  * in `SearchSelect`: the panel has no content of its own, it only positions someone else's, and

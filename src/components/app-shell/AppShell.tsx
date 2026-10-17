@@ -69,7 +69,7 @@ export interface AppShellProps extends Omit<ComponentPropsWithoutRef<"div">, "ch
    * variable, and everything that today computes from `--topbar-h` (`SelectionBar`, the sticky
    * header of `Table`) would have to add its height too.
    *
-   * The slot has no queue of its own: the consumer sets the order and the contents.
+   * The slot has no ordering of its own: the consumer sets the order and the contents.
    */
   banners?: ReactNode;
   /**

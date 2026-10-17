@@ -126,7 +126,7 @@ export const DEFAULT_PERIOD_PRESETS: readonly PeriodPreset[] = periodPresets();
  * the same offset, and the difference is always a whole number of days. In the local time
  * zone the same calculation would be off by a day twice a year.
  *
- * A reversed range cannot be picked in the calendar, but it can be assembled by hand. That is
+ * A reversed range cannot be selected in the calendar, but it can be assembled by hand. That is
  * why the length never goes negative: "-8 days" under the calendar would look like the result
  * of the component's arithmetic, not like a sign that the input is invalid.
  */

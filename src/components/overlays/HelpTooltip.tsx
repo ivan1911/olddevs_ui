@@ -48,7 +48,7 @@ export interface HelpTooltipProps {
  * A help button that expands an explanatory text.
  *
  * It differs from `Tooltip` not in its look but in its behavior: a tooltip shows on hover
- * and disappears, while here a paragraph of text goes in that has to be readable in time —
+ * and disappears, while here the content is a paragraph the user needs time to read —
  * so this is a popover opened by a click, with a focusable trigger.
  */
 export function HelpTooltip({

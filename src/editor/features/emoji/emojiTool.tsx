@@ -34,10 +34,10 @@ export function insertEmoji(editor: Editor, char: string): boolean {
 }
 
 /**
- * Emoji on the Tool description (ADR-0058, item 10.4): a proof that a button with a popover fits
+ * Emoji on the Tool description (ADR-0058, item 10.4): a check that a button with a popover fits
  * the same shape as a Tool of its own. It has no Schema and no Extensions: an emoji is plain text.
  *
- * The popover is the `EmojiGrid` in the kit's frame, attached to the button. Picking an emoji
+ * The popover is the `EmojiGrid` in the kit's frame, attached to the button. Selecting an emoji
  * inserts it and closes the popover. Focus goes back to the Document, not to the button: the person
  * came to put a smiley into the text and keeps writing. The button is disabled when there is nowhere
  * to insert: a selected image or table cells.

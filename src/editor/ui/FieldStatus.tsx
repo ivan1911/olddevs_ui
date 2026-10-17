@@ -51,7 +51,7 @@ function hasContent(status: ReactNode): boolean {
  * Status bar: the screen's own content at the start, the kit's counter at the end.
  *
  * The container has no `role` and no `aria-live`: a word count that updates on every
- * User edit must not be read aloud. A screen that wants a "Saved" note announced wraps
+ * Edit must not be read aloud. A screen that wants a "Saved" note announced wraps
  * it in `role="status"` itself. The bar sits inside the field frame, so it stays visible
  * with `readOnly` and `disabled`. `counterId` stays on the counter, since the field's
  * `aria-describedby` points to it; the screen's own content is not part of that description.

@@ -122,7 +122,7 @@ const HAS_POPUP_MENU = { "aria-haspopup": "menu" } as object;
  * "the row above" refers to the row the user came from.
  *
  * THE SIZE GRID IS THE SECOND CHILD OF `SubmenuTrigger`: a bare react-aria popover instead
- * of `Menu` (`GridSubmenu`). Inside it are not items but `TableSizeGrid`.
+ * of `Menu` (`GridSubmenu`). It holds `TableSizeGrid`, not items.
  *
  * The menu is controlled (`isOpen`): a pick in the grid is not a menu item, and react-aria
  * does not know on its own to close the menu after it.

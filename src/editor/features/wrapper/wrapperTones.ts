@@ -29,7 +29,7 @@ export const EDITOR_WRAPPER_TONES = [
 const known: ReadonlySet<string> = new Set(EDITOR_WRAPPER_TONES);
 
 /**
- * The tone from the `data-tone` attribute, or `null`. The value must match exactly
+ * The tone from the `data-tone` attribute, or `null`. The value is exactly
  * as the Editor writes it: `Accent`, ` accent` and names outside the vocabulary are
  * dropped, and the Wrapper stays without a tone.
  */

@@ -131,7 +131,7 @@ export interface ToolDescriptor {
   blockTypes?: readonly BlockTypeItem[];
   /**
    * Rows of the shortcut reference for keys that Extensions bind (`shortcuts.ts`): for an entry, the
-   * shortcut is its field; a Mark from the engine has none.
+   * shortcut comes from its own field; a Mark from the engine has none.
    */
   shortcuts?: readonly ShortcutCommand[];
 
@@ -440,7 +440,7 @@ export function blockActionVisible(
  *
  * - `order` is the place of the built-in Tools on the surface, a kit privilege. The set's Tools that are not
  *   in it follow, in list order: this is how an entry with no place of its own on the surface lands.
- * - `own` is the field of a description with that surface's entries.
+ * - `own` is the description's field that holds that surface's entries.
  *
  * There is no filter by enabled Tools here: the list itself holds it.
  */

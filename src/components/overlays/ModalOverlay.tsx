@@ -31,7 +31,7 @@ export interface ModalOverlayProps {
  * `aria-modal`, no focus trap, no scroll lock. A real dialog needs an accessible name, and only
  * the caller knows the name — adding `role="dialog"` without one would make things worse than
  * having no role at all: the screen reader would announce an unnamed dialog. The focus trap and
- * the scroll lock live on the front end as separate hooks (`useScrollLock`), and bringing them
+ * the scroll lock live in the front app as separate hooks (`useScrollLock`), and bringing them
  * in here would be a separate decision, not a side effect of the move.
  *
  * So the primitive honestly does one thing: it dims the background, catches Escape and clicks outside.

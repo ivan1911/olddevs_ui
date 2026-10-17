@@ -6,7 +6,7 @@ import { cn } from "../../../lib/cn.js";
 import { EMOJI_CATEGORIES, EMOJI_COLUMNS, EMOJI_SET, type Emoji } from "./emoji.js";
 
 export interface EmojiGridProps {
-  /** An emoji is picked: `Enter` or Space in the grid, or a click on a cell. */
+  /** An emoji is selected: `Enter` or Space in the grid, or a click on a cell. */
   onPick: (emoji: Emoji) => void;
   /**
    * Take focus on mount. For a host whose focus is set by a focus trap (a Radix popover), pass
@@ -35,7 +35,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
  * it the Escape stack (ADR-0041).
  *
  * THE CELL NAME IS WORDS. Screen readers read an emoji character differently, or not at all, so the
- * cell name comes from the message catalog (`emojiName`), and the character itself is only drawn.
+ * cell name comes from the message catalog (`emojiName`), and the character itself is only rendered.
  * The category label is visible to the eye, and screen readers hear it as the name of the row group:
  * a duplicate in the accessibility tree would be noise.
  *
