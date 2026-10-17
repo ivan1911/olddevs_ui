@@ -19,121 +19,115 @@ import { Drawer } from "../overlays/Drawer.js";
 import { NavInOverlayProvider } from "./SideNav.js";
 
 /**
- * Связь каркаса с шапкой: единственное, что им нужно знать друг о друге, —
- * как открыть навигацию на узком экране.
+ * The link between the shell and the header. The only thing they need to know about each other is
+ * how to open the navigation on a narrow screen.
  *
- * Контекст, а не слот в `TopBar`, потому что шапку в каркас передаёт
- * потребитель уже собранной, и вложить в неё кнопку снаружи нельзя.
+ * A context, not a slot in `TopBar`: the consumer passes the header to the shell already built, so
+ * a button cannot be put inside it from the outside.
  *
- * @internal Значение контекста; читать его следует через `useAppShell`.
+ * @internal The context value; read it through `useAppShell`.
  */
 const AppShellContext = createContext<AppShellContextValue>({});
 
 export interface AppShellContextValue {
   /**
-   * Открыть навигацию ящиком. Есть, когда каркас получил `sidebar`. Ширину
-   * экрана каркас не проверяет, поэтому свою кнопку показывают только там, где
-   * колонка скрыта, то есть ниже `md`.
+   * Opens the navigation as a drawer. Present when the shell received a `sidebar`. The shell does
+   * not check the screen width, so a consumer shows its own button only where the column is hidden,
+   * that is, below `md`.
    */
   openNavigation?: () => void;
 }
 
 /**
- * Доступ к каркасу из своей шапки.
+ * Access to the shell from your own header.
  *
- * Публичный, а не внутренний, и это исправление дефекта, а не удобство:
- * `openNavigation` умел читать только китовый `TopBar`, и потребитель со своей
- * шапкой получал навигацию, которую ниже `md` **нечем открыть** — колонка
- * скрыта, ящик открывать некому, предупреждения нет. Молчаливая недостижимость
- * целого раздела интерфейса.
+ * Public, not internal, and this is a fix for a defect rather than a convenience: `openNavigation`
+ * could only be read by the kit's `TopBar`, so a consumer with its own header got a navigation that
+ * **had no way to be opened** below `md`. The column is hidden, nothing opens the drawer, and there
+ * is no warning. A whole section of the interface was silently unreachable.
  *
- * Вне `AppShell` возвращает пустой объект: своя шапка проверяет
- * `openNavigation` на наличие и рисует кнопку только когда та осмысленна.
+ * Outside `AppShell` it returns an empty object: a custom header checks `openNavigation` for presence
+ * and draws its button only when that makes sense.
  */
 export const useAppShell = (): AppShellContextValue => useContext(AppShellContext);
 
 export interface AppShellProps extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
-  /** Боковая навигация — обычно `SideNav`. */
+  /** The side navigation, usually a `SideNav`. */
   sidebar?: ReactNode;
-  /** Шапка — обычно `TopBar`. */
+  /** The header, usually a `TopBar`. */
   header?: ReactNode;
   /**
-   * Сообщения уровня приложения над шапкой — обычно один или несколько `Banner`.
+   * Application-level messages above the header, usually one or more `Banner`s.
    *
-   * Стоят НАД шапкой, в колонке содержимого: деградация сервиса касается всего
-   * приложения, но боковая навигация остаётся во всю высоту — иначе каркас
-   * пришлось бы разворачивать из строки в колонку целиком ради узла, который
-   * бывает пустым.
+   * They sit ABOVE the header, in the content column: a service outage affects the whole
+   * application, but the side navigation stays full height. Otherwise the shell would have to switch
+   * from a row to a column for the whole layout just for a node that is often empty.
    *
-   * НЕ ЛИПКИЕ, и это решение, а не упущение (ADR-0027).
-   * Шапка остаётся на `top: 0`, а `--topbar-h` продолжает означать ровно её
-   * высоту — контракт липкости (ADR-0016)
-   * и его публикация шапкой (ADR-0019)
-   * не трогаются. Липкая стопка потребовала бы второй переменной смещения, и
-   * всё, что сегодня считает от `--topbar-h` — `SelectionBar`, липкая шапка
-   * `Table`, — обязано было бы прибавлять её высоту.
+   * NOT STICKY, and this is a decision, not an oversight (ADR-0027). The header stays at `top: 0`,
+   * and `--topbar-h` keeps meaning exactly its height: the stickiness contract (ADR-0016) and its
+   * publication by the header (ADR-0019) are untouched. A sticky stack would need a second offset
+   * variable, and everything that today computes from `--topbar-h` (`SelectionBar`, the sticky
+   * header of `Table`) would have to add its height too.
    *
-   * Очереди у слота нет: порядок и состав задаёт потребитель.
+   * The slot has no queue of its own: the consumer sets the order and the contents.
    */
   banners?: ReactNode;
   /**
-   * Правая область рядом с содержимым: детали, справка, что угодно ещё.
+   * The right-hand area next to the content: details, help, anything else.
    *
-   * Безымянный слот без ручки изменения размера — и это решение, а не
-   * недоделка. Ручку размера даёт отдельный компонент `SplitPanel`
-   * (ADR-0018).
+   * An unnamed slot with no resize handle, and that is a decision, not an omission. The resize
+   * handle comes from the separate `SplitPanel` component (ADR-0018).
    */
   aside?: ReactNode;
   /**
-   * Нижняя панель на узких экранах — обычно `MobileTabBar`; на `md` и шире скрыта.
+   * The bottom bar on narrow screens, usually `MobileTabBar`; hidden from `md` up.
    *
-   * Слот даёт панели всё, что принадлежит каркасу, а не ей: прилипание к низу
-   * окна, скрытие на `md` и шире, где есть боковая навигация, высоту в потоке и
-   * отступ `env(safe-area-inset-bottom)` под вырез экрана. Поэтому
-   * `MobileTabBar` своих `fixed`, `md:hidden` и отступа не несёт, а чужая
-   * панель, поставленная сюда, не должна их повторять — отступ вышел бы
-   * двойным.
+   * The slot provides everything that belongs to the shell rather than to the bar: pinning to the
+   * bottom of the window, hiding from `md` up (where the side navigation is), its height in the
+   * flow, and the `env(safe-area-inset-bottom)` padding for the screen notch. So `MobileTabBar`
+   * carries no `fixed`, `md:hidden` or padding of its own, and a foreign bar placed here must not
+   * repeat them: the padding would be doubled.
    */
   bottomBar?: ReactNode;
   /**
-   * Имя переменной, в которую слот `bottomBar` публикует свою высоту (вместе с
-   * отступом под вырез экрана). По умолчанию `--bottombar-h`.
+   * The name of the variable the `bottomBar` slot publishes its height to (including the padding
+   * for the screen notch). Defaults to `--bottombar-h`.
    *
-   * Парная сторона контракта, как `heightVar` у `TopBar`: то же имя по
-   * умолчанию читают `ContextualSaveBar` и `Toaster` (их проп `offsetVar`), и
-   * они встают над панелью, а не под ней. На `md` и шире панель скрыта и высота
-   * равна `0px`; без слота переменной нет вовсе, и читатели берут запасное `0px`.
+   * The other half of the contract, like `heightVar` on `TopBar`: the same default name is read by
+   * `ContextualSaveBar` and `Toaster` (through their `offsetVar` prop), and they sit above the bar,
+   * not under it. From `md` up the bar is hidden and the height is `0px`. Without the slot the
+   * variable is not set at all, and readers fall back to `0px`.
    *
-   * `null` отключает публикацию — когда в документе два каркаса и они не должны
-   * перебивать друг друга.
+   * `null` turns the publishing off, for when a document has two shells that must not override
+   * each other.
    */
   bottomBarHeightVar?: string | null;
   /**
-   * Ключ текущего маршрута: при его смене фокус уезжает в `<main>`, а ящик навигации закрывается.
+   * The key of the current route: when it changes, focus moves to `<main>` and the navigation drawer
+   * closes.
    *
-   * Проп, а не подписка на роутер: кит не знает, какой это роутер, и что
-   * считать сменой экрана, знает только приложение. Не передан — возврата
-   * фокуса не будет, и это **молчаливая деградация**: ни ошибки, ни
-   * предупреждения не появится, поэтому проп стоит передавать всегда.
+   * A prop, not a subscription to a router: the kit does not know which router is used, and only the
+   * application knows what counts as a change of screen. If it is not passed, focus return will not
+   * happen, and this is a **silent degradation**: no error and no warning appears, so always pass
+   * the prop.
    */
   routeKey?: string;
-  /** Содержимое страницы — попадает в `<main>`. */
+  /** The page content; it goes into `<main>`. */
   children: ReactNode;
 }
 
 /**
- * Каркас приложения: навигация слева, шапка сверху, содержимое, опциональные
- * правая область и нижняя панель.
+ * The app shell: navigation on the left, header on top, the content, and the optional right-hand
+ * area and bottom bar.
  *
- * СКРОЛЛ ОСТАЁТСЯ У ДОКУМЕНТА, а не у `<main>`. Это не мелочь раскладки: липкие
- * элементы кита (`SelectionBar`) отсчитывают смещение от высоты шапки, и если
- * бы содержимое прокручивалось в собственном контейнере, полоса встала бы с
- * просветом в эту самую высоту. Прежняя оболочка во фронте устроена так же, и
- * контракт ADR-0016 продолжает работать без оговорок.
+ * SCROLLING STAYS WITH THE DOCUMENT, not with `<main>`. This is not a layout detail: the kit's
+ * sticky elements (`SelectionBar`) measure their offset from the header's height, and if the content
+ * scrolled in its own container, the bar would stick with a gap of exactly that height. The previous
+ * front-end shell was built the same way, and the ADR-0016 contract keeps working without caveats.
  *
- * МОБИЛЬНЫЙ РЕЖИМ переключает CSS, а не `matchMedia`: колонка навигации скрыта
- * классом, ящик показан классом. `matchMedia` в SSR даёт неверный первый кадр,
- * и пользователь видит скачок раскладки после гидратации (ADR-0018).
+ * MOBILE MODE is switched by CSS, not by `matchMedia`: the navigation column is hidden by a class,
+ * and the drawer is shown by a class. `matchMedia` in SSR gives a wrong first frame, and the user
+ * sees the layout jump after hydration (ADR-0018).
  */
 export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppShell(
   {
@@ -157,29 +151,27 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   const lastRouteKey = useRef(routeKey);
   const bottomBarRef = useRef<HTMLDivElement>(null);
 
-  // Высота обёртки слота, а не самой полосы: в неё входят рамка и отступ под
-  // вырез — ровно столько нижнего края окна панель занимает. Скрытая на `md`
-  // обёртка (`display: none`) измеряется нулём, и переменная это отражает.
+  // The height of the slot wrapper, not of the bar itself: it includes the border and the notch
+  // padding, which is exactly how much of the window's bottom edge the bar takes. A wrapper hidden
+  // at `md` (`display: none`) measures zero, and the variable reflects that.
   usePublishedHeight(bottomBarRef, bottomBarHeightVar, bottomBar != null);
 
   useEffect(() => {
-    // Загрузка страницы пропускается: фокус на ней принадлежит документу, и
-    // забирать его в `<main>` значит красть его у пользователя, который уже
-    // начал что-то делать.
+    // The first page load is skipped: focus there belongs to the document, and taking it into
+    // `<main>` would steal it from a user who has already started doing something.
     //
-    // Сравнение с прошлым ключом, а не флаг «первый проход»: StrictMode в dev
-    // запускает эффект дважды, а реф переживает повторное монтирование. Флаг
-    // ко второму запуску был уже сброшен, и фокус уходил в `<main>` прямо на
-    // загрузке.
+    // The comparison is with the previous key, not a "first pass" flag: StrictMode in dev runs the
+    // effect twice, and a ref survives the remount. A flag would already have been reset by the
+    // second run, and focus would move to `<main>` right on load.
     if (lastRouteKey.current === routeKey) return;
     lastRouteKey.current = routeKey;
-    // Без прокрутки: при переходе её задаёт роутер. Своя прокрутка к фокусу
-    // уводила верх `<main>` под липкую шапку.
+    // No scrolling here: on navigation the router sets the scroll position. Our own scroll-to-focus
+    // pushed the top of `<main>` under the sticky header.
     mainRef.current?.focus({ preventScroll: true });
   }, [routeKey]);
 
-  // Ящик закрывается при смене маршрута сам: оставленный открытым, он
-  // перекрыл бы экран, на который пользователь только что перешёл.
+  // The drawer closes itself on a route change: if left open, it would cover the screen the user
+  // has just navigated to.
   useEffect(() => setNavOpen(false), [routeKey]);
 
   return (
@@ -188,14 +180,13 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
     >
       <div ref={ref} className={cn("relative flex min-h-dvh", className)} {...rest}>
         {/*
-          Первый фокусируемый элемент страницы. Виден только под фокусом, но это
-          НЕ текст для скринридера: им пользуется клавиатурный пользователь без
-          скринридера, и увидеть ссылку он должен глазами.
+          The first focusable element on the page. It is visible only when focused, but it is
+          NOT text for screen readers: a keyboard user without a screen reader relies on it and has
+          to see the link.
 
-          Корень позиционирован (`relative`) ради этой ссылки: `focus:absolute`
-          иначе отсчитывается от ближайшего позиционированного предка, и у
-          вложенного каркаса ссылка всплывала бы не над ним, а где-то на
-          странице.
+          The root is positioned (`relative`) for the sake of this link: `focus:absolute` is
+          otherwise measured from the nearest positioned ancestor, and inside a nested shell the link
+          would appear not over that shell but somewhere on the page.
         */}
         <a
           href={`#${mainId}`}
@@ -215,10 +206,9 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
               title={messages.nav.label}
             >
               {/*
-                Та же навигация, но в ящике: `SideNav` внутри разворачивается
-                принудительно и прячет кнопку сворачивания. Иконочный режим
-                отдаёт ширину содержимому страницы, а в оверлее содержимого
-                рядом нет — отдавать некому.
+                The same navigation, but in the drawer: `SideNav` inside expands by force and hides
+                its collapse button. The icon-only mode hands its width to the page content, and an
+                overlay has no page content beside it to give the width to.
               */}
               <NavInOverlayProvider value={true}>{sidebar}</NavInOverlayProvider>
             </Drawer>
@@ -227,9 +217,9 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
 
         <div className="flex min-w-0 flex-1 flex-col">
           {/*
-            Без слота узла нет вовсе — не пустой `div`, а ничего: каркас без
-            баннеров обязан давать ровно ту разметку, что и до появления слота.
-            Тот же приём, что у `bottomBar` и `aside`.
+            Without the slot there is no node at all: not an empty `div`, but nothing. A shell without
+            banners must render exactly the markup it rendered before the slot existed. The same trick
+            as with `bottomBar` and `aside`.
           */}
           {banners}
           {header}
@@ -242,20 +232,20 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           </div>
 
           {/*
-            Панель стоит в потоке, а не `fixed`: так она сама съедает высоту и
-            содержимое над ней не приходится отодвигать измеренным отступом.
-            Отсутствует — в разметку не попадает и высоты не занимает.
+            The bar sits in the flow, not `fixed`: it takes up its own height, so the content above
+            does not have to be pushed aside by a measured offset. When absent, it is not rendered
+            into the markup and takes no height.
 
-            Вырез экрана добирается классом, а не инлайновым стилем: так отступ
-            попадает в гейт покрытия классов и виден в тестах, а jsdom
-            выбрасывает `env()` из инлайнового стиля целиком.
+            The notch padding comes from a class, not an inline style: that way the padding goes
+            through the class-coverage gate and is visible in tests, while jsdom drops `env()` from
+            an inline style altogether.
           */}
           {bottomBar != null ? (
             <div
               ref={bottomBarRef}
               className="border-line-soft sticky bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)] md:hidden"
             >
-              {/* Полоса узнаёт, что отступ под вырез даёт слот, — см. `BottomBarSlotContext`. */}
+              {/* The bar learns that the slot provides the notch padding: see `BottomBarSlotContext`. */}
               <BottomBarSlotContext.Provider value={true}>
                 {bottomBar}
               </BottomBarSlotContext.Provider>

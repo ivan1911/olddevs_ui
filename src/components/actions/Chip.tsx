@@ -5,21 +5,24 @@ import { cn } from "../../lib/cn.js";
 import { TONE_TOKENS, type Size, type Tone } from "../../lib/variants.js";
 
 export interface ChipProps extends Omit<ComponentPropsWithoutRef<"button">, "children"> {
-  /** Подпись чипа. Спрятанная `iconOnly`/`mobileIconOnly`, остаётся доступным именем кнопки. */
+  /**
+   * Chip label. When hidden by `iconOnly` or `mobileIconOnly`, it remains the button's
+   * accessible name.
+   */
   children?: ReactNode;
-  /** Только `sm` и `md`: чип крупнее среднего перестаёт читаться как чип. */
+  /** Only `sm` and `md`: a chip larger than medium stops reading as a chip. */
   size?: Extract<Size, "sm" | "md">;
-  /** Цвет выбранного состояния. На невыбранный чип не влияет — он всегда нейтрален. */
+  /** Color of the selected state. Does not affect an unselected chip — that one is always neutral. */
   tone?: Tone;
-  /** Было `active`. Переименовано: словарь допускает только `selected`. */
+  /** Was `active`. Renamed: the vocabulary allows only `selected`. */
   selected?: boolean;
-  /** Иконка перед подписью. */
+  /** Icon before the label. */
   icon?: ReactNode;
-  /** Счётчик справа. Ноль отображается, `null`/`undefined` — нет. */
+  /** Counter on the right. Zero is shown; `null`/`undefined` is not. */
   count?: number | null;
-  /** Скрыть подпись всегда, оставив иконку. */
+  /** Always hide the label, leaving the icon. */
   iconOnly?: boolean;
-  /** Скрыть подпись только на узких экранах (< 640px). */
+  /** Hide the label only on narrow screens (< 640px). */
   mobileIconOnly?: boolean;
 }
 
@@ -29,18 +32,17 @@ const SIZES: Record<"sm" | "md", string> = {
 };
 
 /**
- * Фильтрующий чип — эталон variant-API дизайн-системы.
+ * Filter chip — the reference implementation of the kit's variant API.
  *
- * Три вещи, которые отличают его от версии во фронте и которым следуют
- * остальные примитивы:
+ * Three things that set it apart from the front-end version, and that the other primitives follow:
  *
- * 1. Все состояния — CSS, а не React. Ни `useState`, ни обработчиков мыши:
- *    hover, focus-visible, disabled и нажатие описаны псевдоклассами. Компонент
- *    не перерисовывается от наведения курсора.
- * 2. Ни одного инлайн-`style`. Только Tailwind-утилиты поверх токенов, поэтому
- *    смена темы работает без участия JS.
- * 3. Явный `:focus-visible`. Глобальное правило в `styles.css` его тоже даёт,
- *    но примитив не должен зависеть от того, подключил ли потребитель базовые стили.
+ * 1. All states are CSS, not React. No `useState`, no mouse handlers: hover, focus-visible,
+ *    disabled and press are described by pseudo-classes. The component does not re-render on
+ *    cursor hover.
+ * 2. No inline `style` at all. Only Tailwind utilities on top of tokens, so a theme switch works
+ *    without JS.
+ * 3. An explicit `:focus-visible`. The global rule in `styles.css` gives it too, but a primitive
+ *    must not depend on whether the consumer included the base styles.
  */
 export const Chip = forwardRef<HTMLButtonElement, ChipProps>(function Chip(
   {
@@ -64,7 +66,7 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(function Chip(
     <button
       ref={ref}
       type={type}
-      // Кнопка-переключатель: скринридер должен сообщать состояние, а не только подпись.
+      // A toggle button: screen readers must announce the state, not only the label.
       aria-pressed={selected}
       className={cn(
         "inline-flex shrink-0 cursor-pointer items-center rounded-full border font-semibold",
@@ -81,15 +83,15 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(function Chip(
     >
       {icon ? <span className="shrink-0 opacity-70">{icon}</span> : null}
       {/*
-        Спрятанная подпись остаётся в дереве доступности, а не исчезает из
-        разметки. Раньше `iconOnly` выбрасывал `children` совсем, а
-        `mobileIconOnly` гасил их через `hidden` (`display: none`) — и то и
-        другое убирает узел из дерева, то есть кнопка остаётся БЕЗ ИМЕНИ.
-        Видно это было только аудитом: глазами иконка на месте, чип работает.
+        The hidden label stays in the accessibility tree instead of disappearing from the markup.
+        Previously `iconOnly` dropped `children` altogether, and `mobileIconOnly` hid them with
+        `hidden` (`display: none`) — and both remove the node from the tree, which leaves the
+        button WITHOUT A NAME. This was visible only through an audit: by eye the icon is in
+        place and the chip works.
 
-        `sr-only` прячет визуально, оставляя для скринридера; `sm:not-sr-only`
-        возвращает подпись на широком экране. Один узел вместо двух — копия
-        рядом читалась бы дважды.
+        `sr-only` hides it visually while leaving it for screen readers; `sm:not-sr-only` brings
+        the label back on a wide screen. One node instead of two — a copy next to it would be
+        read twice.
       */}
       {children != null ? (
         <span
@@ -101,11 +103,10 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(function Chip(
         </span>
       ) : null}
       {/*
-        Счётчик отличается от подписи начертанием, а не цветом. Свой `text-fg-3`
-        здесь был фиксированным серым поверх подложки, которая меняется вместе
-        с тоном: на `accent-soft` он давал 4.26, на `warning-soft` — 3.85.
-        Наследуемый цвет проходит по определению — он тот же, что у подписи,
-        а её контраст уже проверен.
+        The counter differs from the label by weight, not by color. Its own `text-fg-3` was a
+        fixed gray on top of a background that changes with the tone: on `accent-soft` it gave
+        4.26, on `warning-soft` — 3.85. The inherited color passes by definition: it is the same
+        as the label's, whose contrast is already verified.
       */}
       {count != null ? <span className="font-mono tabular-nums">{count}</span> : null}
     </button>

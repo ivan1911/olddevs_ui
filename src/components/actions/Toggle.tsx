@@ -11,77 +11,73 @@ interface ToggleBaseProps extends Omit<
   ComponentPropsWithoutRef<"button">,
   "onChange" | "value" | "children" | "aria-label"
 > {
-  /** Включён ли переключатель. Управляемое значение: своего состояния компонент не держит. */
+  /** Whether the switch is on. A controlled value: the component holds no state of its own. */
   checked: boolean;
-  /** Вызывается с новым значением при нажатии, если чужой `onClick` не отменил его через `preventDefault`. */
+  /** Called with the new value on press, unless someone else's `onClick` cancelled it via `preventDefault`. */
   onCheckedChange: (checked: boolean) => void;
 }
 
 /**
- * Имя переключателя: либо `label` без видимого текста, либо видимая подпись
- * в `children` с необязательным `description`. Ровно один источник имени —
- * как у `TagGroup`: два при правке расходятся молча, а на слух переключатель
- * назывался бы иначе, чем на экране.
+ * The switch's name: either `label` with no visible text, or a visible label in `children` with an
+ * optional `description`. Exactly one source of the name — as with `TagGroup`: two would drift
+ * apart silently when edited, and by ear the switch would be called something other than on the
+ * screen.
  *
- * ПРАВИЛО «РОВНО ОДИН» ПРОВЕРЯЕТСЯ В РАЗРАБОТКЕ, А НЕ ТИПОМ. Объединение
- * `label | children` сломало бы потребителя: `interface X extends ToggleProps`
- * не компилируется от объединения, а `Omit<ToggleProps, …>` над ним склеивает
- * ветки в тип, который не подходит ни одной. Это был бы мажор ради minor-оси.
+ * THE RULE "EXACTLY ONE" IS CHECKED IN DEVELOPMENT, NOT BY THE TYPE. A `label | children` union
+ * would break the consumer: `interface X extends ToggleProps` does not compile from a union, and
+ * `Omit<ToggleProps, …>` over it merges the branches into a type that fits none of them. That would
+ * mean a major version for the sake of a minor change.
  */
 export interface ToggleProps extends ToggleBaseProps {
   /**
-   * Доступное имя, когда подписи на экране нет.
+   * Accessible name for when there is no visible label.
    *
-   * Переключатель — `<button role="switch">` без текста внутри. Обёртка в
-   * `<label>` имени ему не даёт: `<label>` связывается с полями формы, а не с
-   * кнопкой. Без имени скринридер объявит безымянный переключатель, и глазами
-   * этот дефект не виден.
+   * The switch is a `<button role="switch">` with no text inside. Wrapping it in a `<label>` does
+   * not give it a name: `<label>` associates with form fields, not with a button. Without a name, a
+   * screen reader announces an unnamed switch, and this defect is invisible to the eye.
    *
-   * Сделано отдельным пропом, а не обязательным `aria-label`: союзный тип из
-   * `aria-label | aria-labelledby` ломает вывод типов в Storybook и в любой
-   * обёртке через `ComponentProps`. Если нужен именно `aria-labelledby` —
-   * он проходит насквозь через `...rest`.
+   * It is a separate prop, not a required `aria-label`: a union type of `aria-label |
+   * aria-labelledby` breaks type inference in Storybook and in any wrapper via `ComponentProps`. If
+   * `aria-labelledby` is specifically needed, it passes straight through `...rest`.
    *
-   * Когда подпись нужна и на экране, передайте её в `children` вместо `label`:
-   * имя тогда берётся из неё.
+   * When the label is needed on screen too, pass it in `children` instead of `label`: the name is
+   * then taken from it.
    */
   label?: string;
   /**
-   * Видимая подпись. Рисуется слева от дорожки, нажатие по ней переключает, и
-   * она же становится доступным именем — отдельный `label` тогда не нужен.
+   * The visible label. Drawn to the left of the track; a press on it toggles, and it is also the
+   * accessible name — a separate `label` is not needed then.
    *
-   * Так же устроен `Checkbox`: подпись в `children`, `label` — имя на случай,
-   * когда подписи на экране нет.
+   * `Checkbox` is built the same way: the label goes in `children`, and `label` is the name for the
+   * case when there is no visible label.
    */
   children?: ReactNode;
   /**
-   * Пояснение под подписью: что именно включается и к чему это приведёт. Связано
-   * с переключателем через `aria-describedby` и сливается с описанием
-   * `FormField` и своим `aria-describedby`, а не заменяет их. Нажатие по нему
-   * тоже переключает. Без видимой подписи не рисуется.
+   * A note under the label: what exactly is switched on and what it will lead to. Linked to the
+   * switch via `aria-describedby` and merged with the description of `FormField` and its own
+   * `aria-describedby`, rather than replacing them. A press on it toggles too. Not drawn without a
+   * visible label.
    */
   description?: ReactNode;
 }
 
 /**
- * Переключатель.
+ * Switch.
  *
- * Здесь `checked`, а не `selected` из общего словаря: у переключателя есть
- * родное ARIA-понятие (`role="switch"` + `aria-checked`), и подменять его
- * своим термином — значит расходиться со стандартом. `selected` остаётся
- * за элементами выбора: чипами, вкладками, пунктами списка.
+ * Here `checked`, not `selected` from the shared vocabulary: a switch has a native ARIA concept
+ * (`role="switch"` + `aria-checked`), and replacing it with our own term would mean diverging from
+ * the standard. `selected` stays with the choice elements: chips, tabs, list items.
  *
- * ПОДПИСЬ НА ЭКРАНЕ — ЧЕРЕЗ `children`. Строка настройки «заголовок и описание
- * слева, переключатель справа» повторяется в каждом кабинете, и собирать её
- * приходилось руками (`SettingRow` на экране «Аккаунт SaaS»), а вместе с ней —
- * связь описания с переключателем и нажатие по тексту. Теперь это штатный путь:
- * тот же компонент, новая семантика (видимое имя и описание), а не новый
- * примитив ради раскладки. С подписью `className` относится к строке целиком,
- * без неё — к самой дорожке, как и раньше.
+ * THE LABEL ON SCREEN GOES THROUGH `children`. The settings row "title and description on the left,
+ * switch on the right" repeats in every cabinet, and it was assembled by hand (`SettingRow` on the
+ * "Account (SaaS)" screen), along with the link of the description to the switch and the press on
+ * the text. Now this is the standard path: the same component, with new semantics (a visible name
+ * and description), not a new primitive for the layout. With a label, `className` applies to the
+ * whole row; without one, to the track itself, as before.
  *
- * Прежняя версия во фронте была `<button>` без роли и без `aria-checked` —
- * скринридер объявлял её просто кнопкой без состояния. Плюс не поддерживала
- * `disabled`. Смещение бегунка и тень фокуса задавались инлайн-стилями.
+ * The previous version on the frontend was a `<button>` with no role and no `aria-checked` — a
+ * screen reader announced it as a plain button with no state. Also it did not support `disabled`.
+ * The thumb offset and focus shadow were set with inline styles.
  */
 export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle(
   {
@@ -102,9 +98,8 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle
   const switchId = rest.id ?? `${ownId}-switch`;
   const labelId = `${ownId}-label`;
   const descriptionId = `${ownId}-description`;
-  // Пустая строка и `false` — не подпись: без этой проверки получилась бы
-  // строка с пустым узлом и безымянный переключатель (docs/conventions.md,
-  // «Пустое значение»).
+  // An empty string and `false` are not a label: without this check there would be a string with
+  // an empty node and an unnamed switch (docs/conventions.md, "Empty value").
   const visible = hasContent(children);
   const showDescription = visible && hasContent(description);
   const labelledBy = (rest as { "aria-labelledby"?: string })["aria-labelledby"];
@@ -132,18 +127,17 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle
   const control = (
     <button
       /*
-        СПРЕД ИДЁТ ПЕРВЫМ, а `onClick` вынут из него отдельно.
+        THE SPREAD GOES FIRST, and `onClick` is pulled out of it separately.
 
-        Раньше `{...rest}` стоял последним и перекрывал `onClick`, `role` и
-        `aria-checked`. Вызов `<Toggle … onClick={track} />` компилировался,
-        переключатель рисовался, аналитика срабатывала — а `onCheckedChange` не
-        вызывался никогда. Хуже того, хватало и `onClick={undefined}`: ключ
-        всё равно попадал в `rest` и затирал собственный обработчик.
+        Previously `{...rest}` stood last and overrode `onClick`, `role` and `aria-checked`. A call
+        `<Toggle … onClick={track} />` compiled, the switch rendered, analytics fired — but
+        `onCheckedChange` was never called. Worse, even `onClick={undefined}` was enough: the key
+        still got into `rest` and overwrote the component's own handler.
 
-        Чужой обработчик не выбрасывается, а вызывается ПЕРВЫМ и может отменить
-        переключение через `preventDefault` — тот же приём и по той же причине,
-        что в `MaskedInput`. Роль и состояние спредом больше не перебиваются:
-        переключатель, потерявший `role="switch"`, перестаёт быть переключателем.
+        A foreign handler is not discarded: it is called FIRST and can cancel the toggle via
+        `preventDefault` — the same technique, for the same reason, as in `MaskedInput`. The role
+        and state are no longer overridden by the spread: a toggle that loses `role="switch"` stops
+        being a switch.
       */
       {...rest}
       ref={ref}
@@ -164,8 +158,8 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle
         "transition-colors",
         "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",
-        // Рамка включённой дорожки — `STATE_BORDER`: заливка `bg-accent` против
-        // подложки не дотягивает до 3:1, и границу даёт рамка (WCAG 1.4.11).
+        // The border of the active track — `STATE_BORDER`: a `bg-accent` fill against the background
+        // does not reach 3:1, and the border provides the boundary (WCAG 1.4.11).
         checked ? cn(STATE_BORDER.accent, "bg-accent") : "border-line bg-bg-3",
         !visible && className
       )}
@@ -183,22 +177,22 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle
   if (!visible) return control;
 
   /*
-    Подпись — настоящий `<label for>` на кнопку: `button` относится к
-    «labelable»-элементам, поэтому нажатие по тексту активирует переключатель
-    средствами браузера, без своего обработчика, и у выключенного не
-    срабатывает. Имя при этом задано `aria-labelledby` явно — не полагаясь на то,
-    как скринридер соберёт имя из `<label for>`.
+    The label is a real `<label for>` pointing at the button: `button` is a "labelable" element, so a
+    press on the text activates the switch by the browser's own means, without a handler of its own,
+    and is not triggered when disabled. The name is set explicitly with `aria-labelledby` — not
+    relying on how a screen reader assembles the name from `<label for>`.
 
-    Описание — отдельный узел вне `<label>`: иначе оно вошло бы в имя
-    переключателя, а нужно в описание. Нажатие по нему переключает тоже, поэтому
-    оно обёрнуто в свой `<label for>`.
+    The description is a separate node outside the `<label>`: otherwise it would join the switch's
+    name, while it is needed in the description. A press on it toggles too, so it is wrapped in its
+    own `<label for>`.
   */
   return (
     <div className={cn("group/toggle flex items-center justify-between gap-4", className)}>
-      {/* Приглушается только текст: дорожка приглушает себя сама (`disabled:opacity-50`),
-          и общая прозрачность строки дала бы ей 25 % вместо 50 % — иначе, чем без подписи.
-          `group-has-[[role=switch]:disabled]/toggle:` — для кнопки, выключенной предком-`fieldset`:
-          свойство `disabled` у неё при этом ложно, и одно оно текст не погасило бы. */}
+      {/* Only the text is dimmed: the track dims itself (`disabled:opacity-50`), and an overall
+          opacity on the row would give it 25 % instead of 50 % — differently than without a label.
+          `group-has-[[role=switch]:disabled]/toggle:` is for the button disabled by an ancestor
+          `fieldset`: its `disabled` property is false then, and that property alone would not have
+          dimmed the text. */}
       <div
         className={cn(
           "flex min-w-0 flex-col group-has-[[role=switch]:disabled]/toggle:opacity-50",

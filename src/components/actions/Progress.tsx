@@ -8,39 +8,38 @@ import { TONE_TOKENS, type Size, type Tone } from "../../lib/variants.js";
 
 export interface ProgressProps {
   /**
-   * 0–100. `null` — прогресс неизвестен: бегущая полоса вместо доли.
+   * 0–100. `null` — progress is unknown: a moving bar instead of a fraction.
    *
-   * Это не то же самое, что `0`. Ноль означает «начали и пока ничего не
-   * сделали», `null` — «сколько всего работы, неизвестно». Второе бывает у
-   * запроса без длины ответа, и показывать его нулём значит врать.
+   * This is not the same as `0`. Zero means "started, nothing done yet"; `null` means "how much
+   * work there is in total is unknown". The second case happens with a request that has no
+   * response length, and showing it as zero would be lying.
    */
   value: number | null;
-  /** Цвет заполненной части полосы из словаря тонов. По умолчанию `accent`. */
+  /** Color of the filled part of the bar, from the tone vocabulary. Defaults to `accent`. */
   tone?: Tone;
-  /** Толщина полосы: `sm` — тоньше, `md` — толще. По умолчанию `md`. */
+  /** Bar thickness: `sm` is thinner, `md` is thicker. Defaults to `md`. */
   size?: Extract<Size, "sm" | "md">;
-  /** Что именно идёт. Обязательно: безымянный индикатор ни о чём не сообщает. */
+  /** What is in progress. Required: an unnamed indicator says nothing. */
   label: string;
-  /** Показать процент справа от полосы. */
+  /** Show the percentage to the right of the bar. */
   showValue?: boolean;
-  /** Классы на корневой элемент, в который собраны полоса и процент. */
+  /** Classes for the root element that holds the bar and the percentage. */
   className?: string;
 }
 
 const HEIGHTS: Record<"sm" | "md", string> = { sm: "h-1", md: "h-1.5" };
 
 /**
- * Полоса прогресса.
+ * Progress bar.
  *
- * `aria-valuenow` при неизвестном прогрессе ОТСУТСТВУЕТ, а не равен нулю —
- * так ARIA отличает «полоса на нуле» от «идёт неизвестно сколько». Это делает
- * react-aria, если не передать значение; подставить туда `0` значило бы
- * сообщить скринридеру неправду.
+ * `aria-valuenow` is ABSENT when progress is unknown, not equal to zero — this is how ARIA
+ * distinguishes "a bar at zero" from "something is running for an unknown amount of time".
+ * React Aria does this if no value is passed; putting `0` there would tell the screen reader
+ * something untrue.
  *
- * Когда полоса, а когда `Skeleton` или `Spinner`: полоса нужна там, где долю
- * работы можно назвать — загрузка файла, обработка пачки. Если долю назвать
- * нельзя, а форма будущего содержимого известна — `Skeleton`; если неизвестна и
- * она — `Spinner`.
+ * When a bar, and when a `Skeleton` or a `Spinner`: a bar is needed where the fraction of work
+ * can be named — a file upload, processing a batch. If the fraction cannot be named but the shape
+ * of the future content is known — `Skeleton`; if neither is known — `Spinner`.
  */
 export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progress(
   { value, tone = "accent", size = "md", label, showValue, className },
@@ -48,23 +47,22 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
 ) {
   const t = TONE_TOKENS[tone];
   /*
-    `NaN` — это ТОЖЕ неизвестный прогресс, а не значение.
+    `NaN` is ALSO unknown progress, not a value.
 
-    Проверка `value == null` его не ловила, и `?? 0` ниже тоже: `??` отвечает
-    только за null/undefined. В разметку уходило `width: NaN%` — объявление
-    невалидно, браузер его отбрасывает, и блочный div растягивался на всю
-    ширину: пользователь видел 100% у работы, которая не начиналась, а
-    скринридер читал «NaN процентов». Приходит это из обычной арифметики
-    потребителя: `loaded / total * 100` при нулевом `total`.
+    The check `value == null` did not catch it, and neither does `?? 0` below: `??` handles only
+    null and undefined. The markup got `width: NaN%` — the declaration is invalid, the browser
+    discards it, and the block div stretched to the full width: the user saw 100% for work that
+    had not started, and the screen reader read "NaN percent". It comes from ordinary arithmetic
+    on the consumer's side: `loaded / total * 100` with a zero `total`.
   */
   const indeterminate = !isShowableNumber(value);
 
   return (
     <ProgressBar
       ref={ref}
-      // Через тот же предикат, что и `indeterminate` выше: `?? undefined` пропускает
-      // `NaN` внутрь react-aria, и спасает только то, что при неизвестном
-      // прогрессе она не читает `percentage`. Один предикат на оба места.
+      // Through the same predicate as `indeterminate` above: `?? undefined` lets `NaN` through
+      // into react-aria, and it is saved only by the fact that with unknown progress it does not
+      // read `percentage`. One predicate for both places.
       value={isShowableNumber(value) ? value : undefined}
       isIndeterminate={indeterminate}
       aria-label={label}
@@ -79,13 +77,12 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
               className={cn(
                 "duration-moderate h-full rounded-full transition-[width]",
                 t.dotBg,
-                // Неизвестный прогресс — бегущая треть полосы. Ширина при этом
-                // не анимируется: анимируется положение, иначе полоса дёргалась
-                // бы шириной на каждом кадре.
-                // Бегущая треть НЕ останавливается при `prefers-reduced-motion`:
-                // второе из двух исключений кита (ADR-0043, первое — `Spinner`).
-                // Когда доля неизвестна, движение полосы и есть всё сообщение —
-                // застывшая треть читается как «зависло», а не как «спокойно».
+                // Unknown progress — a moving third of the bar. The width is not animated here:
+                // the position is, otherwise the bar would jitter in width on every frame.
+                // The moving third is NOT stopped by `prefers-reduced-motion`: it is the second
+                // of the kit's two exceptions (ADR-0043; the first is `Spinner`). When the
+                // fraction is unknown, the motion of the bar is the whole message — a frozen
+                // third reads as "stuck", not as "calm".
                 indeterminate && "animate-progress-indeterminate w-1/3"
               )}
               style={indeterminate ? undefined : { width: `${percentage ?? 0}%` }}

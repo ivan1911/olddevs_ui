@@ -10,45 +10,46 @@ import { Button } from "../actions/Button.js";
 import { BUTTON_ICON_SIZE } from "../../lib/button.js";
 
 export interface TopBarProps extends Omit<ComponentPropsWithoutRef<"header">, "children"> {
-  /** Крайний левый слот: логотип, название продукта. */
+  /** Leftmost slot: logo, product name. */
   brand?: ReactNode;
-  /** Центральный слот: поиск. Занимает свободное место. */
+  /** Center slot: search. Takes up the free space. */
   search?: ReactNode;
-  /** Действия справа: уведомления, настройки, меню пользователя. */
+  /** Actions on the right: notifications, settings, user menu. */
   actions?: ReactNode;
   /**
-   * Имя переменной, в которую публикуется измеренная высота шапки.
+   * The name of the CSS variable the measured header height is published to.
    *
-   * Парная сторона контракта: то же имя читает `useStickyOffset` (там оно
-   * зовётся `offsetVar`), и его же по умолчанию ждёт `SelectionBar`.
+   * This is the paired side of the contract: the same name is read by
+   * `useStickyOffset` (there it is called `offsetVar`), and `SelectionBar` expects it
+   * by default.
    *
-   * `null` **отключает публикацию**. Нужно там, где шапок в документе две —
-   * шапка приложения и шапка встроенного виджета: молча перебивая значение
-   * друг друга, они сдвинули бы липкие полосы на чужую высоту, причём это
-   * проявилось бы не ошибкой, а кривой раскладкой.
+   * `null` **disables publishing**. It is needed where there are two headers in the
+   * document: the application header and the header of an embedded widget. If they
+   * silently overwrote each other's value, they would shift the sticky bars to the other
+   * one's height. That would show up not as an error but as a broken layout.
    */
   heightVar?: string | null;
-  /** Доступное имя шапки. Не задано — берётся из каталога сообщений. */
+  /** Accessible name of the header. If not set, it is taken from the message catalog. */
   label?: string;
-  /** Дополнительное содержимое шапки: выводится после слота `actions`. */
+  /** Extra header content, rendered after the `actions` slot. */
   children?: ReactNode;
 }
 
 /**
- * Шапка приложения: бренд, поиск, действия.
+ * Application header: brand, search, actions.
  *
- * ПУБЛИКУЕТ СВОЮ ВЫСОТУ в CSS-переменную — то, чего до 2.1.0 кит делать не мог,
- * потому что шапки у него не было, и контракт [ADR-0016] был односторонним:
- * высоту публиковало приложение, кит только читал.
+ * IT PUBLISHES ITS HEIGHT into a CSS variable. Before 2.1.0 the kit could not do this,
+ * because it had no header then, and the contract [ADR-0016] was one-way: the
+ * application published the height, and the kit only read it.
  *
- * Это НЕ отвергнутый в ADR-0016 вариант «кит измеряет шапку сам». Там кит
- * опознавал бы чужой элемент — искал бы по селектору или атрибуту то, что
- * приложение считает шапкой. Здесь компонент измеряет себя, и знание «какой
- * элемент в этом приложении шапка» у кита так и не появляется. Разбор —
- * [ADR-0019].
+ * This is NOT the option rejected in ADR-0016, where the kit measures the header itself.
+ * There the kit would have to identify a foreign element, looking up by selector or
+ * attribute what the application considers its header. Here the component measures
+ * itself, and the kit never gains the knowledge of which element is the header in a
+ * given application. The analysis is in [ADR-0019].
  *
- * Высота идёт в `document.documentElement`, а не в ближайшего предка: там её
- * ищет `useStickyOffset`, и разойтись эти два места не должны.
+ * The height goes to `document.documentElement`, not to the nearest ancestor: that is
+ * where `useStickyOffset` looks for it, and these two places must not diverge.
  */
 export const TopBar = forwardRef<HTMLElement, TopBarProps>(function TopBar(
   { brand, search, actions, heightVar = "--topbar-h", label, className, style, children, ...rest },
@@ -58,9 +59,9 @@ export const TopBar = forwardRef<HTMLElement, TopBarProps>(function TopBar(
   const { openNavigation } = useAppShell();
   const innerRef = useRef<HTMLElement | null>(null);
 
-  // Наблюдатель, а не замер на монтировании: высота меняется от брейкпоинта,
-  // от переноса содержимого слотов и от появления второй строки в поиске —
-  // и каждый раз липкая полоса под шапкой должна переехать вместе с ней.
+  // An observer, not a one-time measurement on mount: the height changes with the
+  // breakpoint, with the content of the slots wrapping, and with a second row appearing
+  // in the search. Each time, the sticky bar below the header has to move with it.
   usePublishedHeight(innerRef, heightVar);
 
   return (
@@ -78,22 +79,22 @@ export const TopBar = forwardRef<HTMLElement, TopBarProps>(function TopBar(
       )}
       {...rest}
       /*
-       * Токен, а не класс: подложка шапки полупрозрачная и меняется вместе с
-       * темой без участия JS.
+       * A token, not a class: the header background is semi-transparent and changes with
+       * the theme without any JS.
        *
-       * СТОИТ ПОСЛЕ `{...rest}`, и `style` вынут из него в пропсы отдельно.
-       * Раньше было наоборот, и `style` потребителя перезаписывал атрибут
-       * целиком: шапка теряла подложку, а липкий блюр показывал уезжающий
-       * контент насквозь. Слияние `...rest.style` внутри объекта при этом
-       * выглядело работающим, хотя его результат тут же затирался.
+       * It goes AFTER `{...rest}`, and `style` is pulled out of `rest` into its own prop.
+       * It used to be the other way round: the consumer's `style` overwrote the whole
+       * attribute, so the header lost its background and the sticky blur showed the
+       * scrolling content through. Merging `...rest.style` inside the object looked like
+       * it worked, even though its result was immediately overwritten.
        */
       style={{ background: "var(--topbar-bg)", ...style }}
     >
       {/*
-        Кнопка появляется САМА, когда шапка стоит в `AppShell` с навигацией:
-        каркас сообщает через контекст, как её открыть. Слотом это не сделать —
-        шапку каркас получает уже собранной потребителем и вложить в неё ничего
-        не может. Вне каркаса кнопки нет вовсе.
+        The button appears BY ITSELF when the header sits in an `AppShell` with
+        navigation: the shell reports through context how to open it. A slot cannot do
+        this. The shell receives the header already assembled by the consumer and cannot
+        insert anything into it. Outside the shell there is no button at all.
       */}
       {openNavigation ? (
         <Button

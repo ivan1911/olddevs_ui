@@ -8,36 +8,37 @@ import { TONE_TOKENS, type Tone, type Variant } from "../../lib/variants.js";
 
 export interface AlertProps extends Omit<ComponentPropsWithoutRef<"div">, "title"> {
   /**
-   * Тон сообщения: задаёт цвет, иконку по умолчанию и роль для скринридера. По умолчанию `accent`.
+   * Tone of the message: sets the color, the default icon and the role for screen readers.
+   * Defaults to `accent`.
    *
-   * `danger` получает `role="alert"`, остальные тона — `role="status"`.
+   * `danger` gets `role="alert"`, the other tones get `role="status"`.
    */
   tone?: Tone;
   /**
-   * Подача: `soft` — с подложкой, `outline` — только рамка. По умолчанию `soft`.
+   * Variant: `soft` — with a background tint, `outline` — border only. Defaults to `soft`.
    *
-   * Только `soft` и `outline`, и это ограничение типа, а не забывчивость.
+   * Only `soft` and `outline`, and that is a restriction of the type, not an oversight.
    *
-   * `solid` на всю ширину блока — плашка, перебивающая содержимое страницы;
-   * `ghost` без рамки и подложки перестаёт читаться как сообщение вовсе. Обе
-   * подачи существуют у кнопки, где размер другой, и туда же не годятся здесь.
+   * `solid` at full width is a block that overrides the page content; `ghost` without a border
+   * and without a background stops reading as a message at all. Both variants exist on the
+   * button, where the size is different, and they do not suit a message either.
    */
   variant?: Extract<Variant, "soft" | "outline">;
-  /** Заголовок сообщения: жирная строка над текстом. Необязателен: без него выводится только текст. */
+  /** Message title: a bold line above the text. Optional: without it only the text is shown. */
   title?: ReactNode;
-  /** Текст сообщения под заголовком. */
+  /** Message text below the title. */
   children?: ReactNode;
-  /** Иконка слева. По умолчанию выбирается по тону. */
+  /** Icon on the left. Chosen by tone by default. */
   icon?: ReactNode;
-  /** Кнопка закрытия. Без обработчика не рисуется вовсе. */
+  /** Close button. Not rendered at all without a handler. */
   onDismiss?: () => void;
-  /** Действие справа — обычно `Button size="sm"`. */
+  /** Action on the right — usually `Button size="sm"`. */
   action?: ReactNode;
-  /** Доступное имя кнопки закрытия. По умолчанию берётся из словаря сообщений кита. */
+  /** Accessible name of the close button. Taken from the kit's message catalog by default. */
   closeLabel?: string;
 }
 
-/** Иконка по умолчанию — по тону. Словарь, а не догадка места вызова. */
+/** Default icon, by tone. A lookup table, not a guess based on where the component is called. */
 const TONE_ICONS: Record<Tone, ReactNode> = {
   neutral: <InfoIcon size={16} />,
   accent: <InfoIcon size={16} />,
@@ -47,16 +48,16 @@ const TONE_ICONS: Record<Tone, ReactNode> = {
 };
 
 /**
- * Сообщение на месте — в отличие от тоста, который всплывает и уходит.
+ * An inline message — as opposed to a toast, which pops up and goes away.
  *
- * Когда что: тост сообщает о СОБЫТИИ («сохранено»), а `Alert` описывает
- * СОСТОЯНИЕ («канал не подключён, публикации не пойдут»). Состояние не должно
- * исчезать по таймеру, а событие не должно занимать место на экране навсегда.
+ * When to use which: a toast reports an EVENT ("Saved"), while `Alert` describes a STATE
+ * ("The channel is not connected, posts will not go out"). A state must not disappear on a timer,
+ * and an event must not take up space on the screen forever.
  *
- * РОЛЬ ВЫБИРАЕТСЯ ПО ТОНУ, и это не косметика. `danger` получает `role="alert"`
- * — скринридер перебивает им текущую речь; остальные тона получают
- * `role="status"`, который дожидается паузы. Путать их означает либо потерять
- * сообщение об ошибке, либо орать про успешное сохранение.
+ * THE ROLE IS CHOSEN BY TONE, and this is not cosmetic. `danger` gets `role="alert"` — a screen
+ * reader interrupts its current speech with it; the other tones get `role="status"`, which waits
+ * for a pause. Mixing them up means either losing an error message or shouting about a
+ * successful save.
  */
 export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
   {
@@ -82,11 +83,11 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
       role={tone === "danger" ? "alert" : "status"}
       className={cn(
         "flex items-start gap-2.5 rounded-md border px-3 py-2.5 text-[13px]",
-        // Вид собирается из АТОМОВ тона, а не через `variantClasses()`, и это
-        // не оптимизация. Тот отдаёт ещё и классы наведения — сообщение же не
-        // кнопка, наводить на него не на что. Гасить их поверх нельзя:
-        // `hover:bg-inherit` не убирает подложку, а подменяет её родительской,
-        // и сообщение мигало бы фоном страницы под курсором.
+        // The look is built from the tone's ATOMS, not through `variantClasses()`, and this is
+        // not an optimization. That one also returns hover classes — a message is not a button,
+        // there is nothing to hover over. Cancelling them on top is not possible:
+        // `hover:bg-inherit` does not remove the background, it replaces it with the parent's,
+        // and the message would flicker with the page background under the cursor.
         t.border,
         variant === "soft" ? cn(t.bg, t.softFg) : cn("bg-transparent", t.fg),
         className
@@ -97,11 +98,10 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {title != null && <div className="font-semibold">{title}</div>}
         {/*
-          Текст сообщения НЕ приглушается прозрачностью. Тона откалиброваны
-          ровно под порог 4.5 на своей подложке (`npm run contrast`), и любое
-          `opacity` поверх молча уводит пару ниже него: `opacity-90` давал
-          3.89–4.08 в светлой теме. Иерархия между заголовком и текстом держится
-          на насыщенности шрифта, а не на приглушении.
+          The message text is NOT dimmed with opacity. The tones are calibrated to exactly the 4.5
+          threshold on their own background (`npm run contrast`), and any `opacity` on top silently
+          drops the pair below it: `opacity-90` gave 3.89–4.08 in the light theme. The hierarchy
+          between the title and the text rests on font weight, not on dimming.
         */}
         {children != null && <div>{children}</div>}
       </div>

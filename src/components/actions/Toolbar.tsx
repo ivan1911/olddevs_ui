@@ -10,36 +10,36 @@ import type { AccessibleName } from "../../lib/accessible-name.js";
 import { cn } from "../../lib/cn.js";
 
 interface ToolbarBaseProps {
-  /** Действия панели и `Separator` между их группами. */
+  /** The toolbar's actions and the `Separator` between their groups. */
   children?: ReactNode;
   /**
-   * Куда идут стрелки: `horizontal` — влево и вправо, `vertical` — вверх и вниз.
-   * Вертикальная панель кладёт действия столбцом (боковая панель у полотна).
+   * Arrow key direction: `horizontal` moves left and right, `vertical` moves up and down.
+   * A vertical toolbar stacks its actions in a column (a side toolbar next to the canvas).
    */
   orientation?: "horizontal" | "vertical";
-  /** Классы на корневой элемент панели. */
+  /** Classes for the toolbar's root element. */
   className?: string;
 }
 
 /**
- * Имя панели обязательно: либо строкой, либо ссылкой на видимый заголовок.
+ * The toolbar must have a name: either a string or a reference to a visible heading.
  *
- * Безымянная `toolbar` объявляется скринридером просто «панель инструментов» —
- * без указания, к чему она относится, а на экране их обычно несколько. Тип
- * требует ровно одно из двух — общее правило кита (`AccessibleName`).
+ * A screen reader announces an unnamed `toolbar` as just "toolbar", with no hint of what it
+ * controls, and a screen usually has several of them. The type requires exactly one of the two:
+ * this is the kit-wide rule (`AccessibleName`).
  */
 export type ToolbarProps = ToolbarBaseProps & AccessibleName;
 
 /**
- * Что считается «действием панели» для Home и End: тот же круг, по которому
- * идут стрелки `useToolbar`, — любой фокусируемый узел, включая `tabindex="-1"`
- * внутри вложенных групп, а не только табстопы.
+ * What counts as a toolbar action for Home and End: the same set the arrow keys walk through in
+ * `useToolbar` — any focusable node, including `tabindex="-1"` inside nested groups, not only tab
+ * stops.
  *
- * Селектор и проверки повторяют `isFocusable` react-aria (видимость, `inert`,
- * `hidden`): сам хелпер пакет наружу не отдаёт, а разойтись с ним нельзя —
- * иначе Home ставит фокус туда, где стрелки не останавливаются. Поэтому
- * `aria-disabled` здесь НЕ отсеивается: стрелки на таком действии стоят, и
- * APG советует оставлять недоступные действия панели фокусируемыми.
+ * The selector and checks repeat react-aria's `isFocusable` (visibility, `inert`, `hidden`). The
+ * helper itself is not exported from the package, and the two must not drift apart: otherwise Home
+ * would move focus to a place where the arrow keys do not stop. So `aria-disabled` is NOT filtered
+ * out here: arrow keys do stop on such an action, and APG advises keeping unavailable toolbar
+ * actions focusable.
  */
 const FOCUSABLE = [
   "input:not([disabled]):not([type=hidden])",
@@ -61,15 +61,15 @@ const FOCUSABLE = [
   .join(", ");
 
 /**
- * Там, где Home и End принадлежат самому элементу: каретка в поле, край
- * ползунка, начало и конец списка, вкладок, сетки. Перехватить их здесь значит
- * сломать ввод или навигацию виджета.
+ * Places where Home and End belong to the element itself: a caret in a field, the edge of a
+ * slider, the start and end of a list, of tabs, or of a grid. Intercepting them here would break
+ * text input or the widget's own navigation.
  *
- * Составные виджеты перечислены поимённо, а не узнаются по `defaultPrevented`:
- * слушатель висит на элементе панели и срабатывает РАНЬШЕ их обработчиков —
- * React слушает клавиши на корне, куда событие всплывает позже. Поля ввода —
- * только текстовые: у флажка, радио и кнопки-`input` каретки нет, и клавиши
- * должны вести к краям панели.
+ * Composite widgets are listed by name rather than detected through `defaultPrevented`: the
+ * listener sits on the toolbar element and fires BEFORE their handlers, because React listens for
+ * keys on the root, which the event reaches later. Input fields count only when they take text: a
+ * checkbox, a radio, or a button-type `input` has no caret, so keys there should go to the
+ * toolbar's edges.
  */
 const OWN_HOME_END = [
   "input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]):not([type=image]):not([type=file]):not([type=color])",
@@ -91,12 +91,12 @@ const OWN_HOME_END = [
   '[role="tree"]',
 ].join(", ");
 
-/** Видим ли узел — так же, как его видит обход стрелок react-aria. */
+/** Whether the element is visible, the same way react-aria's arrow-key traversal sees it. */
 function isVisible(el: HTMLElement): boolean {
   if (el.closest("[data-react-aria-prevent-focus]")) return false;
   if (typeof el.checkVisibility === "function")
     return el.checkVisibility({ visibilityProperty: true });
-  // jsdom и старые движки без `checkVisibility`: стиль по цепочке предков.
+  // jsdom and older engines without `checkVisibility`: check styles along the ancestor chain.
   const view = el.ownerDocument.defaultView;
   if (!view) return true;
   const { visibility } = view.getComputedStyle(el);
@@ -114,40 +114,38 @@ function actions(toolbar: HTMLElement): HTMLElement[] {
 }
 
 /**
- * Панель действий с одной остановкой табуляции.
+ * A toolbar with a single tab stop.
  *
- * ПОВЕДЕНИЕ — ОТ `Toolbar` REACT-ARIA, и оно не роуминг табиндекса. Хук
- * перехватывает клавиши на погружении: стрелка по оси панели двигает фокус на
- * соседний фокусируемый узел, а Tab уводит фокус на край панели и отдаёт его
- * браузеру, поэтому панель входит и выходит одной остановкой. Уходя, панель
- * запоминает, где был фокус, и возвращает его туда же. Всё, что вынесено
- * порталом (панель `Menu`, `Popover`, `ContextMenu`), в DOM панели не лежит,
- * и стрелки внутри открытого меню остаются меню.
+ * THE BEHAVIOR COMES FROM react-aria's `Toolbar`, not from roving tabindex. The hook intercepts
+ * keys in the capture phase: an arrow key along the toolbar's axis moves focus to the next
+ * focusable node, and Tab moves focus to the edge of the toolbar and hands it to the browser. So
+ * the toolbar is entered and left through one tab stop. On leaving, the toolbar remembers where
+ * focus was and returns it there. Everything rendered through a portal (the `Menu`, `Popover` and
+ * `ContextMenu` panels) is not in the toolbar's DOM, so arrow keys inside an open menu stay in the
+ * menu.
  *
- * HOME И END ДОБАВЛЕНЫ ЗДЕСЬ: `useToolbar` их не обрабатывает, хотя образец
- * панели инструментов в APG их требует. Берём край среди тех же элементов,
- * что обходят стрелки. В полях ввода, на ползунках и в составных виджетах
- * (вкладки, сетка, список) клавиши остаются за ними.
+ * HOME AND END ARE ADDED HERE: `useToolbar` does not handle them, although the APG toolbar pattern
+ * requires them. The edge is taken among the same elements the arrow keys walk through. In input
+ * fields, on sliders, and in composite widgets (tabs, grid, list) the keys stay with the widget.
  *
- * СТРЕЛКИ — ТОЛЬКО ПО ОСИ ПАНЕЛИ. Поперечные клавиши не трогаются, поэтому
- * в горизонтальной панели `ArrowDown` по-прежнему открывает `Menu`, а в
- * вертикальной — нет: стрелки вниз там заняты обходом, меню открывает Enter
- * или пробел.
+ * ARROW KEYS MOVE ONLY ALONG THE TOOLBAR'S AXIS. Keys on the cross axis are left alone, so in a
+ * horizontal toolbar `ArrowDown` still opens a `Menu`, while in a vertical one it does not: there
+ * the down arrow is taken by traversal, and Enter or Space opens the menu.
  *
- * РАЗДЕЛИТЕЛЬ И `ToggleGroup` ПОЛУЧАЮТ ОСЬ ЧЕРЕЗ КОНТЕКСТЫ react-aria. Черта
- * между группами лежит поперёк оси панели, поэтому `Separator` без своего
- * `orientation` ложится вертикально в горизонтальной панели и наоборот.
- * Контекст идёт и через порталы, поэтому оверлеи кита (`PopoverContent`,
- * `Dialog`, `Drawer`) обнуляют его на своей границе — `withoutToolbarAxis`.
- * В чужом портале (Radix напрямую) `Separator` задают с `orientation` явно.
+ * THE SEPARATOR AND `ToggleGroup` GET THE AXIS THROUGH react-aria CONTEXTS. The separator between
+ * groups runs across the toolbar's axis, so a `Separator` without its own `orientation` would lay
+ * out vertically in a horizontal toolbar, and the other way round. The contexts pass through
+ * portals too, so the kit's overlays (`PopoverContent`, `Dialog`, `Drawer`) reset them at their
+ * boundary: `withoutToolbarAxis`. In a foreign portal (Radix directly) the `Separator` is given
+ * `orientation` explicitly.
  */
 export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(function Toolbar(
   { orientation = "horizontal", className, children, ...rest },
   forwardedRef
 ) {
   const vertical = orientation === "vertical";
-  // Значения контекстов — по оси, а не новым объектом на каждый рендер панели:
-  // иначе мемоизированные `Separator` и `ToggleGroup` внутри перерисовывались бы зря.
+  // Context values are keyed by axis, not a new object on every render of the toolbar: otherwise
+  // memoized `Separator` and `ToggleGroup` components inside would re-render for nothing.
   const groupContext = useMemo(() => ({ orientation }), [orientation]);
   const separatorContext = useMemo(
     () => ({ orientation: vertical ? ("horizontal" as const) : ("vertical" as const) }),
@@ -155,13 +153,13 @@ export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(function Toolbar
   );
 
   const ref = useRef<HTMLDivElement>(null);
-  // Своя ссылка нужна слушателю Home и End; наружу отдаётся тот же узел.
+  // The Home and End listener needs its own ref; the same node is passed outward.
   useImperativeHandle(forwardedRef, () => ref.current as HTMLDivElement, []);
 
   /*
-    Слушатель нативный, а не проп: `Toolbar` react-aria не принимает
-    `onKeyDown`. Заодно событие из портала сюда не доходит вовсе — DOM-всплытие
-    не знает о дереве React, и проверка «внутри ли панели» не нужна.
+    The listener is native, not a prop: react-aria's `Toolbar` does not accept `onKeyDown`.
+    As a side effect, events from a portal never reach it at all: DOM bubbling does not know
+    about the React tree, so no "is it inside the toolbar?" check is needed.
   */
   useEffect(() => {
     const toolbar = ref.current;
@@ -177,8 +175,8 @@ export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(function Toolbar
       )
         return;
       const target = event.target as HTMLElement;
-      // Виджет СНАРУЖИ панели (строка списка, корень редактора) клавиши у неё
-      // не отнимает: в счёт идёт только то, что лежит внутри.
+      // A widget OUTSIDE the toolbar (a list row, the editor root) does not take those keys
+      // away from it: only what lies inside counts.
       const owner = target.closest(OWN_HOME_END);
       if (owner && toolbar.contains(owner)) return;
       const list = actions(toolbar);
@@ -201,16 +199,16 @@ export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(function Toolbar
           className={cn(
             "flex gap-1.5",
             /*
-              Вертикальная черта иначе схлопывается в ноль. У `Separator` высота
-              `h-full`, и против строки без заданной высоты процент не считается:
-              значение перестаёт быть `auto`, и `self-stretch` не растягивает
-              черту до высоты строки. jsdom раскладки не считает — поймано в
-              браузере. Правило касается прямых детей: так черту кладут между
-              группами.
+              A vertical separator would otherwise collapse to zero. A `Separator` has
+              `h-full`, and a percentage height does not resolve against a row with no
+              set height: the value stops being `auto`, and `self-stretch` does not stretch
+              the separator to the row's height. jsdom does not compute layout, so this was
+              caught in a browser. The rule targets direct children, which is where
+              separators go between groups.
             */
             "[&>[role=separator][aria-orientation=vertical]]:h-auto",
-            // Вертикальная панель по ширине содержимого: боковая колонка не должна
-            // растягиваться на всю раскладку, а черта (`w-full`) — на всю её ширину.
+            // A vertical toolbar sizes to its content: a side column must not stretch across
+            // the whole layout, and the separator (`w-full`) spans the column's full width.
             vertical ? "w-fit flex-col items-start" : "flex-row flex-wrap items-center",
             className
           )}

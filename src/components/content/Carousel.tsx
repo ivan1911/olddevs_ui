@@ -24,7 +24,10 @@ import {
 } from "../../lib/responsive.js";
 import { Button } from "../actions/Button.js";
 
-/** Сколько слайдов видно разом. Закрытый набор: класс на каждое значение написан в словаре. */
+/**
+ * How many slides are visible at once. A closed set: a class for each value is written out in the
+ * dictionary.
+ */
 export type CarouselSlidesPerView = 1 | 2 | 3 | 4;
 
 interface CarouselBaseProps extends Omit<
@@ -32,56 +35,54 @@ interface CarouselBaseProps extends Omit<
   "children" | "aria-label" | "aria-labelledby" | "aria-roledescription"
 > {
   /**
-   * Слайды: каждый прямой потомок — один слайд. Фрагмент считается одним
-   * потомком, поэтому слайды в нём не разойдутся; `null`, `false` и пустые
-   * строки слайдом не становятся.
+   * Slides: each direct child is one slide. A fragment counts as one child, so the slides inside
+   * it will not drift apart; `null`, `false` and empty strings do not become slides.
    */
   children?: ReactNode;
   /**
-   * Сколько слайдов видно разом: число или объект по брейкпойнтам кита —
-   * `{ base: 1, md: 2, xl: 4 }`. По умолчанию 1.
+   * How many slides are visible at once: a number, or an object keyed by the kit's breakpoints —
+   * `{ base: 1, md: 2, xl: 4 }`. Defaults to 1.
    *
-   * Зазора между слайдами нет намеренно: ширина слайда — доля строки, и зазор
-   * сделал бы её зависимой от числа слайдов в видимой части. Отступ между
-   * карточками — внутренний отступ содержимого слайда.
+   * There is intentionally no gap between slides: a slide's width is a fraction of the row, and a
+   * gap would make it depend on the number of slides in view. The spacing between cards is the
+   * inner padding of the slide's content.
    */
   slidesPerView?: Responsive<CarouselSlidesPerView>;
   /**
-   * Текущий слайд — управляемый режим. Это левый видимый слайд, считая с нуля:
-   * при `slidesPerView={3}` и пяти слайдах достижимы индексы 0–2, потому что
-   * карусель не прокручивается дальше своего конца.
+   * The current slide — controlled mode. This is the leftmost visible slide, counting from zero:
+   * with `slidesPerView={3}` and five slides, indexes 0–2 are reachable, because the carousel does
+   * not scroll past its end.
    */
   index?: number;
-  /** Слайд при первом показе — неуправляемый режим. */
+  /** The slide shown on first render — uncontrolled mode. */
   defaultIndex?: number;
   /**
-   * Сообщает индекс слайда, на котором пользователь остановил карусель.
+   * Reports the index of the slide where the user stopped the carousel.
    *
-   * Вызывается, когда прокрутка остановилась на другом слайде, — по кнопке, по
-   * жесту или по клавише. Не вызывается на каждый кадр прокрутки и не
-   * вызывается, когда карусель доехала до слайда, который назначили ей сами через
-   * `index` или `defaultIndex`. В управляемом режиме родитель, не принявший
-   * новый индекс, получит карусель обратно на прежнем.
+   * Called when scrolling has stopped on a different slide — via a button, a gesture or a key. Not
+   * called on every scroll frame, and not called when the carousel has reached a slide that was
+   * assigned to it through `index` or `defaultIndex`. In controlled mode, a parent that does not
+   * accept the new index gets the carousel back at the previous one.
    */
   onIndexChange?: (index: number) => void;
 }
 
 /**
- * Имя региона обязательно, и это сказано типом: без него скринридер объявит
- * просто «регион» (а при `aria-roledescription` — безымянную «карусель»), и
- * пользователь не узнает, какая из двух каруселей на экране перед ним.
+ * The region name is required, and the type says so: without it a screen reader would announce
+ * just "region" (or, with `aria-roledescription`, an unnamed "carousel"), and the user would not
+ * know which of two carousels on the screen they are in.
  *
- * Видимой подписи у карусели нет, поэтому имя — ровно одно из `aria-label` и
- * `aria-labelledby` (`AccessibleName`); `label` в ките значит только видимую
- * подпись. `aria-labelledby` — когда над лентой уже стоит заголовок.
+ * A carousel has no visible caption, so the name is exactly one of `aria-label` and
+ * `aria-labelledby` (`AccessibleName`); in the kit, `label` means only a visible caption.
+ * Use `aria-labelledby` when a heading already sits above the strip.
  */
 export type CarouselProps = CarouselBaseProps & AccessibleName;
 
 /*
-  Ширина слайда — доля строки, целиком и литералом, включая префикс брейкпойнта:
-  Tailwind сканирует исходник как текст, и `md:basis-1/${n}` в CSS не попал бы.
-  Матрица `tests/matrix.tsx` перебирает все клетки, и тест покрытия классов
-  уронит прогон, если хоть одна не дошла до собранного CSS.
+  The slide width is a fraction of the row, written out whole and as a literal, including the
+  breakpoint prefix: Tailwind scans the source as text, and `md:basis-1/${n}` would never reach the
+  CSS. The matrix in `tests/matrix.tsx` iterates over every cell, and the class coverage test fails
+  the run if any of them does not make it into the built CSS.
 */
 const BASIS_CLASS: ResponsiveClassMap<CarouselSlidesPerView> = {
   base: { 1: "basis-full", 2: "basis-1/2", 3: "basis-1/3", 4: "basis-1/4" },
@@ -92,27 +93,26 @@ const BASIS_CLASS: ResponsiveClassMap<CarouselSlidesPerView> = {
 };
 
 /**
- * Пауза после последнего события прокрутки, по истечении которой лента считается
- * остановившейся. Короче кадра анимации быть не может, длиннее — заметна
- * задержка отклика; 100 мс — запас над промежутком между событиями при
- * плавной прокрутке и инерции тачпада.
+ * The pause after the last scroll event, after which the strip is considered to have stopped.
+ * It cannot be shorter than an animation frame; if it is longer, the response delay becomes
+ * noticeable. 100 ms is a margin above the gap between events during smooth scrolling and
+ * trackpad inertia.
  */
 const SETTLE_MS = 100;
 
-/** Допуск в пикселях: положение прокрутки дробное, а `scrollWidth` целый. */
+/** Pixel tolerance: the scroll position is fractional, while `scrollWidth` is an integer. */
 const EDGE_EPSILON = 1;
 
 /**
- * Что знает о ленте её раскладка.
+ * What the strip's layout tells us.
  *
- * Все слайды ОДНОЙ ширины и без зазора, поэтому шаг — это `scrollWidth /
- * count`, а не измерение каждого слайда. Так положение читается из трёх
- * чисел (`scrollLeft`, `scrollWidth`, `clientWidth`), и jsdom, который
- * раскладки не считает, подменяет ровно их.
+ * All slides are of ONE width and without a gap, so the step is `scrollWidth / count`, not a
+ * measurement of each slide. This way the position is read from three numbers (`scrollLeft`,
+ * `scrollWidth`, `clientWidth`), and jsdom, which does not compute layout, stubs exactly those.
  */
 function measure(viewport: HTMLElement, count: number) {
   const stride = count > 0 ? viewport.scrollWidth / count : 0;
-  // `scrollLeft` в RTL отрицателен — модуль отдаёт расстояние от начала ленты.
+  // `scrollLeft` is negative in RTL — the modulus gives the distance from the start of the strip.
   const offset = Math.abs(viewport.scrollLeft);
   const perView = stride > 0 ? Math.max(1, Math.round(viewport.clientWidth / stride)) : 1;
   const max = Math.max(0, count - perView);
@@ -126,13 +126,13 @@ function measure(viewport: HTMLElement, count: number) {
 }
 
 /**
- * Плавно — если пользователь не просил обратного.
+ * Smoothly — unless the user has asked for reduced motion.
  *
- * Предпочтение читается В МОМЕНТ прокрутки, а не подпиской: оно нужно только
- * здесь, и подписка принесла бы состояние, которое не рисуется. ADR-0043 гасит
- * движение CSS-вариантом `motion-reduce:`, но прокрутку, начатую из JS, класс не
- * остановит — `behavior` задаётся вызовом. `"auto"` без `scroll-behavior` в CSS
- * — мгновенный переход. Метода `matchMedia` нет в jsdom и на сервере.
+ * The preference is read AT THE MOMENT of scrolling, not through a subscription: it is needed only
+ * here, and a subscription would bring in state that is never rendered. ADR-0043 turns motion off
+ * with the CSS variant `motion-reduce:`, but a scroll started from JS is not stopped by a class —
+ * `behavior` is set by the call itself. `"auto"` without `scroll-behavior` in CSS is an instant
+ * jump. The `matchMedia` method does not exist in jsdom or on the server.
  */
 function scrollBehavior(): ScrollBehavior {
   const reduce =
@@ -142,77 +142,79 @@ function scrollBehavior(): ScrollBehavior {
 }
 
 /**
- * Карусель: лента слайдов на нативной прокрутке с привязкой.
+ * Carousel: a strip of slides on native scrolling with snap points.
  *
- * ЛИСТАЕТ БРАУЗЕР, А НЕ МЫ. Лента — обычный контейнер с `overflow-x` и CSS
- * scroll-snap: колесо, тачпад, свайп и стрелки клавиатуры работают сами, с
- * инерцией и с остановкой ровно на слайде. Компонент их не перехватывает —
- * только читает результат и добавляет кнопки. Поэтому нет ни автопрокрутки, ни
- * бесконечной ленты, ни точек-индикаторов (вне объёма), и кнопка паузы не нужна.
+ * THE BROWSER SCROLLS, NOT US. The strip is an ordinary container with `overflow-x` and CSS
+ * scroll-snap: the wheel, trackpad, swipe and keyboard arrows work on their own, with inertia and
+ * stopping exactly on a slide. The component does not intercept them — it only reads the result and
+ * adds buttons. Hence there is no autoplay, no infinite strip, no dot indicators (out of scope),
+ * and
+ * no pause button is needed.
  *
- * ТЕКУЩИЙ СЛАЙД ЧИТАЕТСЯ ИЗ ПОЛОЖЕНИЯ ПРОКРУТКИ (событие `scroll` и геометрия),
- * а не из `IntersectionObserver`. Наблюдатель отвечает на вопрос «какая часть
- * слайда видна», а нам нужен «какой слайд у начального края» — для двух и более
- * слайдов в кадре он потребовал бы порогов и выбора из нескольких. Положение
- * даёт ответ одним делением. Плюс наблюдателя нет в jsdom, а положение там
- * подменяется тремя числами.
+ * THE CURRENT SLIDE IS READ FROM THE SCROLL POSITION (the `scroll` event and geometry), not from an
+ * `IntersectionObserver`. The observer answers "how much of a slide is visible", while we need
+ * "which slide is at the leading edge" — with two or more slides in view it would require
+ * thresholds and a choice among several. The position gives the answer with one division. Plus the
+ * observer is absent in jsdom, while the position there is stubbed with three numbers.
  *
- * О ТЕКУЩЕМ СЛАЙДЕ СООБЩАЕТСЯ ПОСЛЕ ОСТАНОВКИ, а не на каждый кадр. Иначе при
- * управляемом режиме смена `index` запускала бы плавную прокрутку, та по пути
- * вызывала бы `onIndexChange` с промежуточными слайдами, родитель выставлял бы
- * их обратно — и прокрутка бодалась бы сама с собой.
+ * THE CURRENT SLIDE IS REPORTED AFTER STOPPING, not on every frame. Otherwise, in controlled mode,
+ * changing `index` would start a smooth scroll, which on its way would call `onIndexChange` with
+ * intermediate slides; the parent would set them back — and the scroll would fight itself.
  *
- * ДОСТУПНОСТЬ — паттерн APG Carousel: регион с `aria-roledescription` и именем,
- * слайды — группы с `aria-roledescription="slide"` и именем «N из M». Слайды,
- * не попавшие в кадр, от скринридера НЕ скрываются: без автопрокрутки лента
- * читается целиком, и фокус из невидимого слайда браузер сам докрутит до виду.
+ * ACCESSIBILITY — the APG Carousel pattern: a region with `aria-roledescription` and a name; slides
+ * are groups with `aria-roledescription="slide"` and a name "N of M". Slides outside the view are
+ * NOT hidden from screen readers: with no autoplay, the strip is read in full, and the browser
+ * itself scrolls focus from an invisible slide into view.
  */
 export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel(
   { children, slidesPerView = 1, index, defaultIndex = 0, onIndexChange, className, ...rest },
   ref
 ) {
   const messages = useMessages().carousel;
-  // `Children.toArray` отбрасывает `null` и `false`, но оставляет пустую строку:
-  // `{title && <Slide />}` при пустом `title` иначе давал бы пустой слайд и
-  // сбивал шаг (`scrollWidth / count`), а с ним и каждый индекс.
+  // `Children.toArray` drops `null` and `false` but keeps the empty string: `{title && <Slide />}`
+  // with an empty `title` would otherwise produce an empty slide and throw off the step
+  // (`scrollWidth / count`), and with it every index.
   const slides = Children.toArray(children).filter((slide) => slide !== "");
   const count = slides.length;
-  // Строка классов ширины — и разметка, и ключ зависимости: объект по
-  // брейкпойнтам новый на каждый рендер, а строка меняется только по делу.
+  // The width class string serves as both the markup and the dependency key: the breakpoints
+  // object is new on every render, while the string changes only when it actually should.
   const basis = responsiveClasses(slidesPerView, BASIS_CLASS);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const previousRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
 
-  // Края до первого замера: на нуле «назад» выключена. «Вперёд» включена, пока
-  // не доказано обратное, — первый замер идёт до отрисовки (`useLayoutEffect`).
+  // Edges before the first measurement: with zero, "back" is disabled. "Forward" stays enabled
+  // until
+  // proven otherwise — the first measurement runs before render (`useLayoutEffect`).
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
 
-  /** Слайд, о котором наружу уже сообщено (или который задан снаружи). */
+  /** The slide that has already been reported outward (or that was set from outside). */
   const known = useRef(index ?? defaultIndex);
-  /** Слайд, к которому лента едет по нашей команде, пока не остановилась. */
+  /** The slide the strip is heading to by our command, until it stops. */
   const pending = useRef<number | null>(null);
   const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   /**
-   * Слайд, который не удалось поставить: у ленты ещё нет раскладки. Карусель,
-   * смонтированная в скрытом контейнере (неактивная вкладка, `display: none`),
-   * меряет `scrollWidth` нулём — и начальный слайд терялся бы молча. Его ставит
-   * первый замер с ненулевой шириной (`ResizeObserver`).
+   * The slide that could not be applied yet: the strip has no layout. A carousel mounted in a
+   * hidden
+   * container (an inactive tab, `display: none`) measures `scrollWidth` as zero, and the initial
+   * slide would be silently lost. The first measurement with a non-zero width (`ResizeObserver`)
+   * applies it.
    */
   const deferred = useRef<number | null>(null);
 
-  // Обработчик читается через ссылку: таймер остановки живёт дольше рендера, и
-  // замкнутая в нём копия вызвала бы устаревший колбэк.
+  // The handler is read through a ref: the stop timer outlives the render, and a copy captured in
+  // it
+  // would call a stale callback.
   const onIndexChangeRef = useRef(onIndexChange);
   const controlledRef = useRef(index !== undefined);
   useLayoutEffect(() => {
     onIndexChangeRef.current = onIndexChange;
     controlledRef.current = index !== undefined;
   });
-  // Счётчик остановок: перерисовка после колбэка, чтобы управляемый `index`
-  // был применён заново, даже если родитель оставил его прежним.
+  // A stop counter: a re-render after the callback, so that a controlled `index` is applied again
+  // even if the parent left it unchanged.
   const [stops, setStops] = useState(0);
 
   const updateEdges = useCallback(() => {
@@ -229,16 +231,17 @@ export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel
     settleTimer.current = setTimeout(() => {
       const viewport = viewportRef.current;
       if (!viewport) return;
-      // Остановка — это «положение перестало меняться», а не «событий не было
-      // 100 мс»: при долгом простое потока событие опаздывает, а плавная
-      // прокрутка тем временем едет. Сдвинулось — ждём ещё.
+      // A stop means "the position stopped changing", not "there were no events for 100 ms": when
+      // the
+      // event stream is idle, the event arrives late while a smooth scroll keeps moving meanwhile.
+      // If it has moved, wait again.
       if (Math.abs(viewport.scrollLeft) !== armedAt) {
         armSettle();
         return;
       }
       pending.current = null;
       const { index: reached, stride } = measure(viewport, count);
-      // Спрятанная лента (ширина ноль) стоит «на нуле» не по воле пользователя.
+      // A hidden strip (width zero) sits "at zero" not by the user's choice.
       if (stride === 0 || reached === known.current) return;
       known.current = reached;
       onIndexChangeRef.current?.(reached);
@@ -252,18 +255,22 @@ export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel
       if (!viewport) return;
       const m = measure(viewport, count);
       const to = clamp(target, 0, m.max);
-      // В RTL лента растёт влево, и `scrollTo` принимает отрицательное смещение.
+      // In RTL the strip grows to the left, and `scrollTo` takes a negative offset.
       const sign = getComputedStyle(viewport).direction === "rtl" ? -1 : 1;
       pending.current = to;
       viewport.scrollTo({ left: sign * to * m.stride, behavior });
-      // Событий прокрутки может не быть вовсе (уже на месте): таймер всё равно
-      // снимет `pending`, иначе следующая кнопка считала бы от несуществующей цели.
+      // There may be no scroll events at all (already in place): the timer will still clear
+      // `pending`,
+      // otherwise the next button would count from a target that does not exist.
       armSettle();
     },
     [count, armSettle]
   );
 
-  /** «Назад» и «вперёд»: от цели текущей прокрутки, если она идёт, — быстрые нажатия копятся. */
+  /**
+   * "Back" and "forward": counted from the target of the current scroll if one is running, so rapid
+   * presses accumulate.
+   */
   const step = (delta: 1 | -1) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
@@ -271,8 +278,9 @@ export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel
     scrollToIndex(base + delta, scrollBehavior());
   };
 
-  // Первое положение и смена `index` снаружи. На монтировании — мгновенно:
-  // анимация от нуля к начальному слайду выглядела бы как ошибка.
+  // The first position and an external change of `index`. On mount — instant: an animation from
+  // zero
+  // to the initial slide would look like a bug.
   const mounted = useRef(false);
   useLayoutEffect(() => {
     const first = !mounted.current;
@@ -282,38 +290,47 @@ export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel
     const viewport = viewportRef.current;
     if (!viewport) return;
     const m = measure(viewport, count);
-    // Раскладки нет — ставить не на что: цель ждёт первого замера с шириной.
-    // Запоминается как известная, чтобы и до того не сойти за смену слайда.
+    // There is no layout — nothing to scroll to yet: the target waits for the first measurement
+    // with a
+    // width. It is remembered as known, so that even before then it is not mistaken for a slide
+    // change.
     if (m.stride === 0 && count > 0) {
       deferred.current = target;
       known.current = target;
       return;
     }
     deferred.current = null;
-    // Недостижимый индекс заменяется ближайшим достижимым ДО запоминания:
-    // иначе остановка на нём выглядела бы сменой слайда и порождала колбэк о
-    // прокрутке, которую начали мы сами.
+    // An unreachable index is replaced with the nearest reachable one BEFORE it is remembered:
+    // otherwise stopping on it would look like a slide change and would produce a callback about a
+    // scroll that we started ourselves.
     const reachable = clamp(target, 0, m.max);
     known.current = reachable;
-    // Уже там: прокручивать нечего.
+    // Already there: nothing to scroll.
     if (m.index === reachable) return;
     scrollToIndex(reachable, first ? "instant" : scrollBehavior());
-    // `count` и `defaultIndex` в зависимостях нет намеренно: слайд меняет
-    // только `index`, а смена числа слайдов не должна дёргать ленту. `stops` —
-    // есть: управляемый режим возвращает ленту на `index`, если родитель
-    // отклонил смену, — иначе лента показывала бы слайд, которого нет в
-    // состоянии родителя, и вернуть её было бы нечем.
+    // `count` and `defaultIndex` are intentionally absent from the dependencies: a slide changes
+    // only
+    // `index`, and a change in the number of slides must not jerk the strip. `stops` is present: in
+    // controlled mode the strip returns to `index` if the parent rejected the change — otherwise
+    // the
+    // strip would show a slide that is not in the parent's state, and there would be no way to
+    // bring
+    // it back.
   }, [index, stops]);
 
-  /** Размер ленты сменился: края заново; получив ширину — слайд, который ждёт. */
+  /**
+   * The strip's size changed: edges are recomputed; once it gets a width, the waiting slide is
+   * applied.
+   */
   const onResize = useCallback(() => {
     updateEdges();
     const viewport = viewportRef.current;
     if (!viewport) return;
     const m = measure(viewport, count);
     if (m.stride === 0) {
-      // Ленту спрятали (`display: none` сбрасывает прокрутку в ноль): при
-      // следующем показе она вернётся на известный слайд, а не на первый.
+      // The strip was hidden (`display: none` resets scroll to zero): on the next show it returns
+      // to
+      // the known slide, not to the first one.
       if (count > 0 && deferred.current === null) deferred.current = known.current;
       return;
     }
@@ -322,32 +339,32 @@ export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel
     deferred.current = null;
     const reachable = clamp(target, 0, m.max);
     known.current = reachable;
-    // Мгновенно, как на монтировании: для пользователя это первый показ ленты.
+    // Instant, as on mount: for the user this is the first showing of the strip.
     if (m.index !== reachable) scrollToIndex(reachable, "instant");
   }, [updateEdges, count, scrollToIndex]);
 
-  // Края: после отрисовки слайдов, при смене `slidesPerView` и при изменении
-  // размера ленты. Смена `slidesPerView` пропом ширину ленты не меняет —
-  // меняется ширина слайдов, и наблюдатель её не видит; поэтому `basis` в
-  // зависимостях. Брейкпойнт меняет и ширину ленты — это ловит наблюдатель.
+  // Edges: after the slides are rendered, when `slidesPerView` changes, and when the strip's size
+  // changes. A change to `slidesPerView` through the prop does not change the strip's width — the
+  // width of the slides changes, and the observer does not see that; hence `basis` is in the
+  // dependencies. A breakpoint does change the strip's width too — the observer catches that.
   useLayoutEffect(() => {
     updateEdges();
     const viewport = viewportRef.current;
-    // Наблюдателя нет в jsdom и на сервере; без него края обновляет прокрутка.
+    // There is no observer in jsdom or on the server; without it, edges are updated by scrolling.
     if (!viewport || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(onResize);
     observer.observe(viewport);
     return () => observer.disconnect();
   }, [updateEdges, onResize, basis]);
 
-  // Таймер остановки не должен пережить компонент.
+  // The stop timer must not outlive the component.
   useEffect(() => () => clearTimeout(settleTimer.current), []);
 
   /*
-    Нажатая кнопка, ставшая выключенной на краю, роняла бы фокус на `body`:
-    пользователь клавиатуры дошёл до конца и оказался в начале страницы. Фокус
-    переходит к противоположной кнопке, а если и та выключена — на ленту.
-    `useLayoutEffect`: до того, как браузер сам разберётся с выключенным элементом.
+    A pressed button that becomes disabled at an edge would drop focus to `body`: a keyboard user
+    who reached the end would land at the top of the page. Focus moves to the opposite button, and
+    if that one is disabled too — to the strip. `useLayoutEffect`: before the browser sorts out
+    the disabled element itself.
   */
   useLayoutEffect(() => {
     const active = document.activeElement;
@@ -378,10 +395,10 @@ export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel
       <div
         ref={viewportRef}
         /*
-          `tabIndex={0}`: прокручиваемый блок обязан быть достижим с клавиатуры
-          (axe `scrollable-region-focusable`), и стрелки на нём листают родной
-          прокруткой, с привязкой. Кнопки этого не заменяют: на слайдах без
-          фокусируемого содержимого лента иначе осталась бы без остановки в обходе.
+          `tabIndex={0}`: a scrollable block must be reachable from the keyboard (axe
+          `scrollable-region-focusable`), and the arrows on it scroll natively, with snapping. The
+          buttons do not replace this: on slides without focusable content the strip would otherwise
+          have no stop in the tab order.
         */
         tabIndex={0}
         onScroll={() => {
@@ -390,18 +407,19 @@ export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel
         }}
         className={cn(
           "flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto",
-          // Не отдавать горизонтальный перелёт браузеру: свайп у края ленты
-          // иначе уходил бы в «назад по истории».
+          // Do not hand the horizontal overscroll to the browser: a swipe at the strip's edge would
+          // otherwise go "back in history".
           "overscroll-x-contain",
-          // Полосы нет: листают кнопки, жесты и клавиши, а полоса в ленте
-          // карточек — шум. Firefox и WebKit прячут её разными способами.
+          // No scrollbar: navigation is by buttons, gestures and keys, and a scrollbar on a strip
+          // of
+          // cards is just noise. Firefox and WebKit hide it in different ways.
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2"
         )}
       >
         {slides.map((slide, i) => (
           <div
-            // Ключ даёт `Children.toArray`: он стабилен для данного потомка.
+            // The key is given by `Children.toArray`: it is stable for the given child.
             key={isValidElement(slide) ? slide.key : i}
             role="group"
             aria-roledescription={messages.slideRoleDescription}

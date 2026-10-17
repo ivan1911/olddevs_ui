@@ -15,139 +15,140 @@ import { cn } from "../../lib/cn.js";
 
 export interface SplitPanelProps {
   /**
-   * Где встаёт панель: сбоку от содержимого или под ним.
+   * Where the panel sits: to the side of the content or below it.
    *
-   * Ось меняет направление раскладки, а не только классы: при `bottom` панель
-   * занимает всю ширину, а тянется по высоте, и ручка поворачивается вместе с
-   * ней.
+   * The axis changes the direction of the layout, not just the classes: with
+   * `bottom` the panel takes the full width and is resized along the height, and the
+   * handle turns with it.
    */
   position?: "side" | "bottom";
-  /** Основная область — список, таблица, сетка. */
+  /** The main area: a list, a table, a grid. */
   children?: ReactNode;
-  /** Содержимое панели деталей. */
+  /** The content of the details panel. */
   panel?: ReactNode;
   /**
-   * Размер панели в пикселях: ширина при `side`, высота при `bottom`.
+   * Panel size in pixels: width for `side`, height for `bottom`.
    *
-   * Управляемый размер. Без него панель помнит размер сама, начиная с
-   * `defaultSize`, — но помнит только пока жива. Долгая память (адрес страницы,
-   * профиль пользователя) остаётся у потребителя: у него состояние уже где-то
-   * лежит, и второе хранилище внутри кита разошлось бы с первым молча
-   * (ADR-0023).
+   * A controlled size. Without it the panel remembers its size itself, starting from
+   * `defaultSize`, but only for as long as it lives. Long-term memory (the page
+   * address, the user profile) stays with the consumer: the consumer already keeps
+   * that state somewhere, and a second store inside the kit would drift apart from
+   * the first one silently (ADR-0023).
    */
   size?: number;
   /**
-   * Начальный размер, когда `size` не передан. К нему же возвращает двойной
-   * щелчок по ручке.
+   * The initial size when `size` is not passed. A double-click on the handle also
+   * returns to it.
    *
-   * Читается **один раз, при монтировании**: смена пропа потом стартовый размер
-   * не двигает — иначе панель прыгала бы под пользователем от чужой
-   * перерисовки. Цель двойного щелчка при этом берётся текущая, и в управляемом
-   * режиме щелчок зовёт `onSizeChange(defaultSize)` — то есть умолчание кита,
-   * если своё не передали.
+   * It is read **once, on mount**: changing the prop later does not move the initial
+   * size, otherwise the panel would jump under the user because of someone else's
+   * re-render. The double-click target, however, is the current size, and in
+   * controlled mode a double-click calls `onSizeChange(defaultSize)`: the kit's
+   * default, if the consumer did not pass its own.
    */
   defaultSize?: number;
   /**
-   * Зовётся при каждом изменении размера — и на каждом кадре
-   * перетаскивания тоже.
+   * Called on every size change, including every frame of a drag.
    *
-   * Тому, кто пишет размер в адрес страницы или на сервер, отсюда нужен не
-   * каждый кадр: throttle или запись по `pointerup` — забота потребителя, кит
-   * сообщает намерение так часто, как оно возникает.
+   * Whoever writes the size to the page address or to the server does not need every
+   * frame: throttling or saving on `pointerup` is the consumer's concern. The kit
+   * reports the intent as often as it occurs.
    *
-   * Сужение границ на лету картинку исправляет, но этого колбэка НЕ зовёт:
-   * хранимое у потребителя значение остаётся прежним, а показывается зажатое.
-   * Молчание здесь намеренное — событие без действия пользователя выглядело бы
-   * как чужая правка его состояния.
+   * Narrowing the bounds on the fly corrects the displayed size, but this callback is
+   * NOT called for it: the value the consumer stores stays the same, while the clamped
+   * value is shown. The silence is deliberate: an event without a user action would
+   * look like someone else editing its state.
    */
   onSizeChange?: (size: number) => void;
   /**
-   * Нижняя граница. Панель не станет уже ни перетаскиванием, ни пропом.
+   * Lower bound. The panel cannot become narrower, either by dragging or by the prop.
    *
-   * Перевёрнутый диапазон (`minSize > maxSize`) не роняет ничего: верхняя
-   * граница поднимается до нижней. Иначе получился бы контрол, из которого нет
-   * выхода ни стрелками, ни тягой, и без единого сообщения о причине.
+   * An inverted range (`minSize > maxSize`) breaks nothing: the upper bound is raised
+   * to the lower one. Otherwise you would get a control with no way out, neither by
+   * arrow keys nor by dragging, and without a single message about the cause.
    */
   minSize?: number;
   /**
-   * Верхняя граница.
+   * Upper bound.
    *
-   * В пикселях, а не в долях: доля потребовала бы знать размер контейнера, то
-   * есть измерять его на каждом кадре перетаскивания.
+   * In pixels, not fractions: a fraction would require knowing the container size,
+   * that is, measuring it on every frame of a drag.
    */
   maxSize?: number;
   /**
-   * Панель схлопнута.
+   * The panel is collapsed.
    *
-   * Содержимое **не размонтируется** — состояние форм и прокрутки внутри
-   * переживает схлопывание. Из дерева доступности панель при этом уходит:
-   * скрытая панель, до которой доходит Tab, — это фокус, уехавший в невидимое.
-   * Ручка вместе с ней тоже исчезает: тянуть нечего.
+   * The content is **not unmounted**: the state of forms and scroll positions inside
+   * survives the collapse. The panel is removed from the accessibility tree: a hidden
+   * panel that Tab can reach is focus that has moved into the invisible. The handle
+   * disappears with it: there is nothing to drag.
    */
   collapsed?: boolean;
   /**
-   * Доступное имя панели. С ним панель объявляется областью, без него — нет.
+   * Accessible name of the panel. With it the panel is announced as a region; without
+   * it, it is not.
    *
-   * Безымянная область — лишнее объявление в речи, за которым не следует
-   * ничего; то же правило, что у `ButtonGroup`.
+   * An unnamed region is an extra announcement in speech with nothing following it;
+   * the same rule as for `ButtonGroup`.
    */
   "aria-label"?: string;
-  /** Классы на корневой элемент раскладки. */
+  /** Classes for the root layout element. */
   className?: string;
 }
 
-/** Толщина полосы-ручки в пикселях. */
+/** Thickness of the handle strip in pixels. */
 const HANDLE = 10;
 
 /**
- * Шаг стрелки. Мельче — и дотянуть до нужного размера стоит полусотни нажатий.
+ * Arrow-key step. Any smaller, and reaching the needed size would take fifty-odd presses.
  *
- * Живёт в обработчике клавиш, а НЕ в атрибуте `step`. Шаговая база у
- * `input[type=range]` — это `min`, поэтому `step=16` разрешил бы только
- * значения `min + 16n`: `maxSize` не взялся бы ни `End`, ни стрелками, а
- * попиксельный результат тяги браузер молча округлял бы — и `aria-valuenow`
- * разошёлся бы с шириной панели на экране.
+ * It lives in the key handler, NOT in a `step` attribute. The step base of
+ * `input[type=range]` is `min`, so `step=16` would allow only values `min + 16n`:
+ * `maxSize` would not be reachable with `End` or the arrows, and the browser would
+ * silently round the pixel-by-pixel result of a drag, so `aria-valuenow` would drift
+ * from the panel width on screen.
  */
 const STEP = 16;
 
-/** Точный шаг — для тех, кому нужен ровно тот пиксель. */
+/** The exact step, for those who need precisely that pixel. */
 const FINE_STEP = 1;
 
 /**
- * Две области с изменяемой границей: содержимое и панель деталей.
+ * Two areas with a movable boundary: the content and the details panel.
  *
- * РАЗМЕР ЖИВЁТ У ПОТРЕБИТЕЛЯ, кит даёт форму — то же разделение, что у
- * состояния таблицы (ADR-0023). Панель умеет помнить размер сама, но только на
- * время своей жизни: у заказчика он обычно уже лежит в адресе страницы или в
- * профиле, и второе хранилище внутри кита разошлось бы с первым молча.
+ * THE SIZE LIVES WITH THE CONSUMER; the kit provides the shape. This is the same
+ * split as for table state (ADR-0023). The panel can remember its size itself, but
+ * only for as long as it lives: the consumer usually already keeps it in the page
+ * address or in the profile, and a second store inside the kit would drift apart
+ * from the first one silently.
  *
- * РУЧКА — ВИДИМАЯ ПОЛОСА ПЛЮС НАСТОЯЩИЙ `input[type=range]` ПОД НЕЙ, и это
- * главное решение компонента. Резайзера общего назначения react-aria не даёт:
- * `ColumnResizer` и `ResizableTableContainer`, которые уже работают в `Table`,
- * привязаны к таблице и вне её не живут. Взята их модель, а не они сами.
+ * THE HANDLE IS A VISIBLE STRIP PLUS A REAL `input[type=range]` UNDER IT, and this is
+ * the central decision of the component. react-aria does not provide a general-purpose
+ * resizer: `ColumnResizer` and `ResizableTableContainer`, which already work in
+ * `Table`, are tied to the table and do not live outside it. Their model was taken,
+ * not the components themselves.
  *
- * Почему именно так, а не `div` с `role="separator"` и обработчиком стрелок:
- * ползунок платформы приносит с собой всё, что иначе пишется руками и
- * забывается по частям — роль, объявление значения и границ, шаг, повтор при
- * удержании, поддержку скринридеров на сенсорном экране. Своя реализация
- * повторяет это в лучшем случае наполовину.
+ * Why not a `div` with `role="separator"` and an arrow-key handler: the platform slider
+ * brings with it everything that otherwise gets written by hand and forgotten piece by
+ * piece: the role, the announcement of the value and bounds, the step, repeat on hold,
+ * screen reader support on touch screens. A custom implementation repeats this at best
+ * halfway.
  *
- * Ползунок лежит поверх полосы, прозрачный и без событий указателя: перетаскивание
- * ведёт сама полоса. Если оставить события ползунку, он начнёт менять значение
- * по своей, горизонтальной логике — и при `position="bottom"` панель поедет не
- * в ту сторону. Фокус при этом остаётся настоящим: полоса подсвечивается через
- * `focus-within`.
+ * The slider lies over the strip, transparent and without pointer events: the strip
+ * itself drives the dragging. If the slider kept the events, it would change the value
+ * by its own horizontal logic, and with `position="bottom"` the panel would move in the
+ * wrong direction. Focus stays real: the strip is highlighted through `focus-within`.
  *
- * ЗНАЧЕНИЕ ПОЛЗУНКА — РАЗМЕР ПАНЕЛИ, А НЕ КООРДИНАТА ГРАНИЦЫ. Поэтому стрелка
- * вправо всегда увеличивает панель, хотя граница при этом уезжает влево. Модель
- * та же, что у резайзера колонки: пользователь тянет размер, а не разделитель.
+ * THE SLIDER VALUE IS THE PANEL SIZE, NOT THE BOUNDARY COORDINATE. So pressing Right
+ * always enlarges the panel, even though the boundary moves left. The model is the same
+ * as the column resizer's: the user drags the size, not the divider.
  *
- * Обе области получают `min-w-0 min-h-0`. Без этого flex-потомок отказывается
- * становиться меньше своего содержимого, и панель, которую тянут, не
- * уменьшается — вместо неё уезжает вся раскладка.
+ * Both areas get `min-w-0 min-h-0`. Without them a flex child refuses to become smaller
+ * than its content, and the panel being dragged does not shrink. Instead, the whole
+ * layout gets pushed away.
  *
- * `--topbar-h` компонент не трогает вовсе (ADR-0016): он занимает данную ему
- * область и наверх ни к чему не липнет.
+ * The component does not touch `--topbar-h` at all (ADR-0016): it occupies the area it
+ * is given and does not stick to the top.
  */
 export function SplitPanel({
   position = "side",
@@ -167,32 +168,32 @@ export function SplitPanel({
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ from: number; size: number } | null>(null);
   const slider = useRef<HTMLInputElement>(null);
-  /** Область содержимого — куда переезжает фокус при сворачивании. */
+  /** The content area: where focus moves when the panel collapses. */
   const contentRef = useRef<HTMLDivElement>(null);
-  /** Сворачиваемая панель — чтобы понять, стоял ли фокус внутри неё. */
+  /** The collapsible panel, used to tell whether focus was inside it. */
   const collapsingRef = useRef<HTMLDivElement>(null);
-  /** Был ли фокус внутри сворачиваемой части — считается ДО сворачивания. */
+  /** Whether focus was inside the collapsible part; computed BEFORE collapsing. */
   const focusWasInside = useRef(false);
-  /** Ручка: она размонтируется вместе со сворачиванием. */
+  /** The handle: it unmounts together with the collapse. */
   const handleRef = useRef<HTMLDivElement>(null);
 
   const side = position === "side";
-  // Перевёрнутый диапазон не роняет ничего и молча даёт мёртвый контрол:
-  // `min > max` в разметке ползунка — состояние, из которого нет выхода ни
-  // стрелками, ни тягой. Верхняя граница поднимается до нижней, чтобы наружу
-  // ушёл хотя бы валидный диапазон.
+  // An inverted range breaks nothing, but it silently produces a dead control:
+  // `min > max` in the slider markup is a state with no way out, neither by arrow
+  // keys nor by dragging. The upper bound is raised to the lower one, so at least a
+  // valid range goes outward.
   const hi = Math.max(minSize, maxSize);
   const current = clamp(size ?? ownSize, minSize, hi);
 
   /*
-    Уборка привязана к `collapsed`, а НЕ к размонтированию компонента.
+    The cleanup is tied to `collapsed`, NOT to unmounting the component.
 
-    Тяга живёт в ref компонента, а не элемента, и переживает размонтирование
-    одной только ручки — например, когда `collapsed` переключился прямо во время
-    тяги. Уборщик с пустым списком зависимостей срабатывал бы, когда следующей
-    ручки уже нет, то есть не делал бы ничего: `select-none` оставался бы на
-    корне навсегда, а НАВЕДЕНИЕ на новую ручку двигало бы границу без единого
-    нажатия.
+    The drag state lives in the component's ref, not in the element's, and survives the
+    unmounting of the handle alone. For example, `collapsed` may be switched in the
+    middle of a drag. A cleanup with an empty dependency list would run when the next
+    handle no longer exists, so it would do nothing: `select-none` would stay on the
+    root forever, and HOVERING over a new handle would move the boundary without a
+    single press.
   */
   useEffect(() => {
     if (!collapsed) return;
@@ -200,18 +201,18 @@ export function SplitPanel({
     setDragging(false);
 
     /*
-      Фокус, стоявший ВНУТРИ сворачиваемой части, переводится в содержимое.
+      Focus that was INSIDE the collapsible part is moved to the content.
 
-      Признак ведётся ЗАРАНЕЕ, а не спрашивается постфактум. Первая починка
-      смотрела `document.activeElement` в эффекте — то есть уже ПОСЛЕ коммита
-      DOM, когда спрашивать поздно: ручка к этому моменту размонтирована
-      (она рендерится соседом, под `{!collapsed && …}`), а поле под `hidden`
-      браузер уже разфокусировал. Условие было ложным в обоих случаях, ради
-      которых писалось, а тест это пропускал, потому что jsdom `hidden` фокус
-      не снимает — то есть опирался на расхождение с браузером.
+      The flag is kept IN ADVANCE, not checked afterwards. The first fix looked at
+      `document.activeElement` in the effect, that is, AFTER the DOM was committed, when
+      it was too late to ask: by then the handle was unmounted (it renders as a sibling,
+      under `{!collapsed && …}`), and the browser had already blurred the field under
+      `hidden`. The condition was false in both cases it was written for. The test missed
+      this because jsdom does not remove focus from `hidden` elements, so it depended on
+      the difference from the browser.
 
-      Область содержимого уже фокусируема (`tabIndex={0}` ради правила axe
-      `scrollable-region-focusable`), так что новой мишени не заводится.
+      The content area is already focusable (`tabIndex={0}` for the axe rule
+      `scrollable-region-focusable`), so no new target is needed.
     */
     if (!focusWasInside.current) return;
     focusWasInside.current = false;
@@ -220,44 +221,44 @@ export function SplitPanel({
 
   function commit(next: number) {
     const value = clamp(Math.round(next), minSize, hi);
-    // Тяга за границу зажимается в то же число, и сообщать об этом нечего:
-    // тот же довод, по которому сужение границ на лету колбэка не зовёт.
-    // Без этой строки одно движение мимо предела давало десятки одинаковых
-    // событий подряд — а адресат у них, по документации, запись в адрес
-    // страницы или на сервер.
+    // A drag past the limit is clamped to the same number, and there is nothing to
+    // report: the same reason why narrowing the bounds on the fly does not call the
+    // callback. Without this line, one movement past the limit gave dozens of identical
+    // events in a row, and their recipient, per the documentation, is a write to the
+    // page address or to the server.
     if (value === current) return;
-    // Управляемый размер внутрь не пишется: два источника правды разошлись бы
-    // ровно на том кадре, где потребитель отклонит значение.
+    // A controlled size is not written inside: two sources of truth would diverge
+    // on exactly the frame where the consumer rejects the value.
     if (size === undefined) setOwnSize(value);
     onSizeChange?.(value);
   }
 
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
-    // Только основная кнопка: перетаскивание правой кнопкой оставляет полосу
-    // приклеенной к курсору после того, как откроется контекстное меню.
+    // Only the main button: dragging with the right button leaves the strip stuck to
+    // the cursor after the context menu opens.
     if (event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = { from: side ? event.clientX : event.clientY, size: current };
     setDragging(true);
-    // Фокус переводится на ползунок руками: сама полоса не фокусируема, а
-    // ползунок под ней без событий указателя. Иначе «потянул мышью, дотяну
-    // стрелками» не работает вовсе — фокус остаётся на `<body>`.
+    // Focus is moved to the slider by hand: the strip itself is not focusable, and the
+    // slider under it has no pointer events. Otherwise "drag with the mouse, fine-tune
+    // with the arrows" would not work at all, and focus would stay on `<body>`.
     slider.current?.focus();
   }
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
     const from = drag.current;
     if (!from) return;
-    // Кнопка отпущена, а `pointerup` до полосы не дошёл — захват потерян где-то
-    // ещё. Без этой проверки граница ездит за курсором без нажатия.
+    // The button was released, but `pointerup` did not reach the strip, so the capture
+    // was lost somewhere else. Without this check the boundary follows the cursor with
+    // no press.
     if (event.buttons === 0) {
       endDrag(event);
       return;
     }
     const delta = (side ? event.clientX : event.clientY) - from.from;
-    // Панель стоит после содержимого, поэтому движение вправо и вниз её
-    // УМЕНЬШАЕТ. Знак здесь, а не в вызове, — чтобы он был один на оба
-    // направления.
+    // The panel comes after the content, so moving right or down SHRINKS it. The sign
+    // is here, not at the call site, so that it is one and the same for both directions.
     commit(from.size - delta);
   }
 
@@ -265,15 +266,16 @@ export function SplitPanel({
     if (!drag.current) return;
     drag.current = null;
     setDragging(false);
-    // Событие есть не всегда: `onLostPointerCapture` приходит уже без цели,
-    // за которую можно ухватиться, а очистка обязана произойти всё равно.
+    // The event is not always there: `onLostPointerCapture` arrives without a target to
+    // hold on to, but the cleanup must happen anyway.
     if (event && event.currentTarget.hasPointerCapture(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
   /*
-    Стрелки перехватываются, потому что при `step=1` родная реакция ползунка —
-    один пиксель за нажатие. Shift оставляет её: он и есть «точно тот пиксель».
+    Arrow keys are intercepted because with `step=1` the slider's native reaction is one
+    pixel per press. Shift leaves the native reaction alone: that is what "exactly that
+    pixel" means.
   */
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     const back = event.key === "ArrowLeft" || event.key === "ArrowDown";
@@ -289,9 +291,9 @@ export function SplitPanel({
   return (
     <div
       /*
-        Признак «фокус внутри сворачиваемой части» ведётся ЗАРАНЕЕ: в момент
-        сворачивания спрашивать уже поздно — ручка размонтирована, а поле под
-        `hidden` разфокусировано браузером.
+        The "focus is inside the collapsible part" flag is kept IN ADVANCE: by the time
+        the panel collapses, it is too late to ask. The handle is unmounted, and the
+        browser has blurred the field under `hidden`.
       */
       onFocusCapture={(event) => {
         focusWasInside.current =
@@ -301,17 +303,16 @@ export function SplitPanel({
       className={cn(
         "flex h-full w-full overflow-hidden",
         side ? "flex-row" : "flex-col",
-        // Пока тянут, выделение текста в соседних областях выключается: иначе
-        // движение мимо полосы подсвечивает половину списка.
+        // While dragging, text selection in the neighboring areas is turned off:
+        // otherwise moving away from the strip highlights half the list.
         dragging && "select-none",
         className
       )}
     >
       {/*
-        Обе области объявлены прокручиваемыми самим компонентом, поэтому он же
-        обязан сделать их достижимыми с клавиатуры: до содержимого, которое
-        прокручивается только указателем, Tab не доводит. Правило axe
-        `scrollable-region-focusable`.
+        Both areas are declared scrollable by the component itself, so it must also make
+        them reachable from the keyboard: Tab does not reach content that scrolls only
+        with the pointer. The axe rule is `scrollable-region-focusable`.
       */}
       <div ref={contentRef} tabIndex={0} className="min-h-0 min-w-0 flex-1 overflow-auto">
         {children}
@@ -329,9 +330,9 @@ export function SplitPanel({
           className={cn(
             "bg-bg-2 border-line relative flex shrink-0 touch-none items-center justify-center",
             "focus-within:bg-accent-strong focus-within:ring-[3px] focus-within:ring-[color:var(--focus-ring)]",
-            // Видимая полоса — 10 px, но зона попадания расширена
-            // псевдоэлементом до 26: WCAG 2.5.8 требует 24, и на сенсорном
-            // экране десятипиксельная цель это не формальность.
+            // The visible strip is 10 px, but the hit area is widened to 26 px by a
+            // pseudo-element: WCAG 2.5.8 requires 24, and on a touch screen a
+            // ten-pixel target is no formality.
             "before:absolute before:content-['']",
             side
               ? "cursor-col-resize border-x before:-inset-x-2 before:inset-y-0"
@@ -339,7 +340,7 @@ export function SplitPanel({
           )}
           style={side ? { width: HANDLE } : { height: HANDLE }}
         >
-          {/* Хват: единственное, что отличает полосу от обычной границы. */}
+          {/* The grip: the only thing that distinguishes the strip from a plain border. */}
           <span
             aria-hidden
             className={cn("bg-fg-1 rounded-full", side ? "h-7 w-0.5" : "h-0.5 w-7")}

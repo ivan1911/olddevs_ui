@@ -1,21 +1,21 @@
 /**
- * Отдельный вход для цвета: `@olddevs/ui/color`.
+ * Separate entry point for color: `@olddevs/ui/color`.
  *
- * ПОЧЕМУ МИМО BARREL. Цветовая подсистема `react-aria-components` — семь
- * компонентов, которых кит не использовал больше нигде, — стоит **61 кБ gzip**
- * (замер волны 25, метод `scripts/bundle-size.mjs` с невнешним RAC). Для
- * сравнения: весь кит целиком укладывается в 62 кБ.
+ * WHY NOT THE BARREL. The color subsystem of `react-aria-components` — seven components
+ * the kit used nowhere else — costs **61 kB gzip** (the wave 25 measurement, method
+ * `scripts/bundle-size.mjs`, with RAC not treated as external). For comparison: the whole
+ * kit fits into 62 kB.
  *
- * Собственный бюджет кита этого не видит: в `npm run size` RAC объявлен
- * внешним вместе с остальными сторонними библиотеками кита, а страница фикстуры цвет не
- * импортирует. Гейт, зелёный независимо от решения, — не гейт.
+ * The kit's own budget does not see this: in `npm run size`, RAC is declared external together
+ * with the kit's other third-party libraries, and the fixture page does not import color.
+ * A gate that passes regardless of the decision is not a gate.
  *
- * Отдельный вход делает шестьдесят килобайт видимыми в самой строке импорта, а
- * не только в замере, который их не меряет. Прецедент в ките заведён ровно по
- * этой причине: каталоги локалей живут как `@olddevs/ui/locales/ru`, «чтобы не
- * тянуться в бандл без импорта».
+ * A separate entry point makes the sixty kilobytes visible in the import line itself, not only
+ * in a measurement that does not count them. The kit has a precedent for exactly this reason:
+ * the locale catalogs live as `@olddevs/ui/locales/ru`, "so that they are not pulled into the
+ * bundle without an import".
  *
- * Решение и числа — ADR-0038.
+ * The decision and the numbers are in ADR-0038.
  */
 export { ColorPicker } from "./components/inputs/ColorPicker.js";
 export type { ColorPickerProps } from "./components/inputs/ColorPicker.js";

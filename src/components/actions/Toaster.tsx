@@ -6,38 +6,37 @@ import { ErrorIcon, InfoIcon, SuccessIcon, WarningIcon } from "../../icons.js";
 import { TONE_TOKENS } from "../../lib/variants.js";
 
 export interface ToasterProps {
-  /** Угол или край экрана, в котором стекаются тосты. По умолчанию `bottom-right`. */
+  /** Corner or edge of the screen where toasts stack. Defaults to `bottom-right`. */
   position?: "top-right" | "top-center" | "bottom-right" | "bottom-center";
-  /** Сколько тост держится на экране, мс. По умолчанию 4000. */
+  /** How long a toast stays on screen, in ms. Defaults to 4000. */
   duration?: number;
-  /** Тема. Нужна витрине; в приложении цвета и так приходят из токенов. */
+  /** Theme. Needed by the showcase; in an application the colors come from tokens anyway. */
   theme?: "light" | "dark" | "system";
   /**
-   * Имя CSS-переменной с высотой нижней панели приложения. Тосты у нижнего края
-   * встают на эту высоту выше обычного отступа, а не под панель. По умолчанию
-   * `--bottombar-h` — её публикует слот `bottomBar` у `AppShell`. Переменной нет
-   * (панели нет или она скрыта на широком экране) — отступ прежний. Для верхних
-   * позиций не имеет значения.
+   * Name of the CSS variable with the height of the application's bottom bar. Toasts at the bottom
+   * edge stand this much higher than the usual offset, rather than under the bar. Defaults to
+   * `--bottombar-h` — the `bottomBar` slot of `AppShell` publishes it. If there is no variable (no
+   * bar, or it is hidden on a wide screen), the offset stays as it was. Irrelevant for the top
+   * positions.
    */
   offsetVar?: string;
 }
 
-/** Умолчание общее с `AppShell` (`bottomBarHeightVar`). */
+/** The default is shared with `AppShell` (`bottomBarHeightVar`). */
 const DEFAULT_OFFSET_VAR = "--bottombar-h";
 
 /**
- * Область, в которой всплывают тосты. Ставится один раз рядом с корнем.
+ * The area in which toasts pop up. Placed once, next to the root.
  *
- * СОБРАН НА `sonner`, а не написан заново, и не на react-aria: тостов она не
- * даёт вовсе. Стек, очередь, свайп, пауза при наведении, схлопывание пачки —
- * всё это у sonner уже есть и проверено; своя реализация была бы не примитивом,
- * а второй библиотекой. Ровно та же логика, по которой порталы арендованы у
- * Radix, а поведение полей — у react-aria.
+ * BUILT ON `sonner`, not written from scratch, and not on react-aria: it provides no toasts at
+ * all. The stack, the queue, the swipe, pausing on hover, collapsing a group — sonner already has
+ * all of this, and it is tested; our own implementation would be not a primitive but a second
+ * library. It is the same logic by which portals are borrowed from Radix and the behavior of
+ * fields from react-aria.
  *
- * Вид задаётся токенами пакета через `--normal-*`, которые sonner подставляет
- * в свои внутренние классы. Умолчания sonner при этом не отключаются наполовину:
- * `unstyled` увёл бы за собой и раскладку, и анимации, а вместе с ними смысл
- * брать библиотеку.
+ * The look is set by the package's tokens through `--normal-*`, which sonner substitutes into its
+ * own internal classes. The sonner defaults are not disabled halfway: `unstyled` would take the
+ * layout and animations with it, and along with them the point of taking the library.
  */
 export function Toaster({
   position = "bottom-right",
@@ -48,25 +47,25 @@ export function Toaster({
   return (
     <SonnerToaster
       position={position}
-      // Отступ sonner по умолчанию (24px, на узком экране 16px) сохраняется,
-      // к нему прибавляется высота нижней панели: тост поверх `MobileTabBar`
-      // перекрывал бы вкладки. `calc` с запасным `0px` не меняет вид там, где
-      // панели нет. Ширина, на которой sonner переключается на `mobileOffset`,
-      // его собственная (600px), а панель скрывается на `md` — поэтому на
-      // промежутке 600–768px нужны обе записи.
+      // sonner's default offset (24px, 16px on a narrow screen) is kept, and the height of the
+      // bottom bar is added to it: a toast above `MobileTabBar` would cover the tabs. `calc` with
+      // a fallback of `0px` does not change the look where there is no bar. The width at which
+      // sonner switches to `mobileOffset` is its own (600px), while the bar hides at `md` — so the
+      // range 600–768px needs both entries.
       offset={{ bottom: `calc(var(${offsetVar}, 0px) + 24px)` }}
       mobileOffset={{ bottom: `calc(var(${offsetVar}, 0px) + 16px)` }}
       duration={duration}
       theme={theme}
-      // `--normal-*` — публичные переменные sonner: он красит ими подложку,
-      // текст и рамку тоста. Отдаём токены пакета, и тост едет за темой
-      // приложения сам, без переключателя внутри библиотеки.
+      // `--normal-*` are sonner's public variables: it paints the toast's background, text and
+      // border with them. We hand over the package's tokens, and the toast follows the
+      // application's theme by itself, with no switch inside the library.
       style={
         {
-          // Подложка полупрозрачная и с размытием — так тост выглядел во фронте
-          // до переезда, и этот вид уезжает в пакет, а не теряется: размытие
-          // уже часть словаря системы (подложка диалога), а «стеклянность»
-          // всплывающего слоя — решение дизайн-системы, а не отдельного экрана.
+          // The background is semi-transparent and blurred. This is how the toast looked on the
+          // frontend before the move, and this look moves into the package rather than being lost:
+          // blur is already part of the system's vocabulary (the dialog background), while the
+          // "glassiness" of the popup layer is a decision of the design system, not of a separate
+          // screen.
           "--normal-bg": "color-mix(in srgb, var(--surface-elevated) 82%, transparent)",
           "--normal-text": "var(--fg-0)",
           "--normal-border": "var(--line-soft)",
@@ -92,29 +91,29 @@ export function Toaster({
 }
 
 export interface ToastOptions {
-  /** Вторая строка — подробности. У ошибки сюда идёт текст с сервера. */
+  /** Second line — details. For an error, the server's text goes here. */
   description?: ReactNode;
-  /** Сколько этот тост держится на экране, мс. Перекрывает `duration` области `Toaster`. */
+  /** How long this toast stays on screen, in ms. Overrides the `duration` of the `Toaster` area. */
   duration?: number;
-  /** Кнопка действия в тосте: подпись и обработчик нажатия. */
+  /** Action button in the toast: label and press handler. */
   action?: { label: string; onClick: () => void };
 }
 
 /**
- * Тосты по тонам словаря.
+ * Toasts by the tones of the vocabulary.
  *
- * ЧЕТЫРЕ МЕТОДА, А НЕ ПРОИЗВОЛЬНЫЙ JSX. У sonner есть и `toast.custom`, и
- * произвольное содержимое — здесь их нет намеренно: тост, умеющий всё,
- * перестаёт быть частью системы, и через полгода в приложении оказывается
- * пять разных тостов. Тон — это словарь пакета, а не оформление места вызова.
+ * FOUR METHODS, NOT ARBITRARY JSX. sonner has both `toast.custom` and arbitrary content — they are
+ * deliberately absent here: a toast that can do everything stops being part of the system, and in
+ * half a year the application has five different toasts. The tone is the package's vocabulary, not
+ * the styling of the call site.
  *
- * `neutral` выражается `info`: отдельного «никакого» тона у события не бывает.
+ * `neutral` is expressed as `info`: an event never has a tone of its own called "none".
  *
- * ЧТО СЮДА НЕ ВХОДИТ: разбор ошибки API. `extractErrorMessage` остаётся у
- * потребителя — формат ответов сервера это его знание, а не дизайн-системы.
- * Вызов выглядит так:
+ * WHAT IS NOT INCLUDED HERE: parsing API errors. `extractErrorMessage` stays with the consumer —
+ * the format of server responses is its knowledge, not the design system's. The call looks like
+ * this:
  *
- *     toast.error("Не удалось сохранить", { description: extractErrorMessage(err) })
+ *     toast.error("Could not save", { description: extractErrorMessage(err) })
  */
 export const toast = {
   success: (message: ReactNode, options?: ToastOptions) => sonnerToast.success(message, options),
@@ -122,18 +121,17 @@ export const toast = {
   warning: (message: ReactNode, options?: ToastOptions) => sonnerToast.warning(message, options),
   info: (message: ReactNode, options?: ToastOptions) => sonnerToast.info(message, options),
   /**
-   * Тост, следящий за промисом: ожидание → успех или ошибка.
+   * A toast that follows a promise: waiting → success or error.
    *
-   * Сигнатура СВОЯ, а не проброшенная у sonner, и это вынужденно: его тип
-   * ссылается на внутренний, неэкспортированный (`PromiseIExtendedResult`), и
-   * компилятор отказывается порождать `.d.ts` пакета — «cannot be named».
-   * Пакет всё равно обязан объявлять свой контракт, так что здесь он написан
-   * явно и заодно сужен до того, что действительно нужно.
+   * The signature is OWN, not sonner's passed through, and this is forced: its type refers to an
+   * internal, unexported type (`PromiseIExtendedResult`), and the compiler refuses to generate the
+   * package's `.d.ts` — "cannot be named". The package must declare its contract anyway, so it is
+   * written out here and at the same time narrowed to what is actually needed.
    *
-   * Подписи задаёт вызывающий: только он знает, что именно сохраняется.
+   * The labels are set by the caller: only it knows what is being saved.
    */
-  // Запятая в `<T,>` обязательна: в `.tsx` дженерик-стрелка иначе неотличима
-  // от JSX-тега, и парсер спотыкается.
+  // The comma in `<T,>` is required: in a `.tsx` file a generic arrow is otherwise
+  // indistinguishable from a JSX tag, and the parser stumbles.
   promise: <T,>(
     promise: Promise<T>,
     messages: {
