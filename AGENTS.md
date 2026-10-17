@@ -72,13 +72,25 @@ stays in code only where it is the text itself: in strings, comments and
 documentation. This holds everywhere, including story exports and showcase
 sections.
 
-For which language goes where, see ADR-0034 and [`docs/conventions.en.md`](docs/conventions.en.md).
-In short: comments, the Originals in `docs/` and ADRs are in Russian; the
-showcase, tests and scripts are in English. `AGENTS.md`, `README.md` and the
-community files (`CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, the
-issue templates) are in English as well. Cyrillic in a line of code is allowed
-only where it is the **subject** of a check or input data; `tests/i18n-gate.test.ts`
-enforces this with an allowlist of three justified reasons.
+For which language goes where, see ADR-0073 (English first), ADR-0034 and
+[`docs/conventions.en.md`](docs/conventions.en.md). In short: **English is the
+Original, Russian is the Translation.** New and edited comments (JSDoc included),
+the showcase, tests, scripts, `AGENTS.md`, `README.md` and the community files
+(`CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, the issue templates) are
+written in English straight away; the author may think in Russian, the agent writes
+English. ADRs, `SPEC.md` and the archive stay in Russian (ADR-0067). A file you
+touch gets its Russian comments translated, so no file ends up half-and-half.
+Translate the meaning and the reasoning, not the words; keep industry terms as
+their source names them, and take kit terms from [`docs/glossary.en.md`](docs/glossary.en.md).
+The brief for translating subagents is in `olddevs_ui_docs/agents/translation-brief.md`.
+Cyrillic in a line of code is allowed only where it is the **subject** of a check or
+input data; `tests/i18n-gate.test.ts` enforces this with an allowlist of three
+justified reasons.
+
+Transition (ADR-0073): until OLDSUI-295 lands, `docs/**` keeps the current pairing
+(Russian `X.md` is the Original, `X.en.md` its Translation) and the gates for it; the
+comment ratchet arrives with OLDSUI-297. Write new text in English anyway, and do not
+leave a Russian comment in a place you edited.
 
 ## Documentation is part of the public API
 
