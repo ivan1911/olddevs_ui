@@ -503,7 +503,7 @@ export function Select<T extends SelectItem>(props: SelectProps<T>) {
       <PopoverAnchor asChild>
         <span
           className={cn(
-            "relative inline-flex items-center gap-2 rounded-full border px-3 py-[7px]",
+            "rounded-pill relative inline-flex items-center gap-2 border px-3 py-[7px]",
             // `leading-5` sets the height rather than inheriting it: a 20px line box plus padding gives
             // exactly 36 — the height of a `md` `Button`, next to which the pill sits in the filter bar.
             // With the form's padding (`py-2.5` from the consumer) the same 20 gives 42 — the height of

@@ -218,7 +218,7 @@ export function TreeSelect({
                     {shownChips.map((chip) => (
                       <span
                         key={String(chip.id)}
-                        className="bg-bg-3 text-fg-1 text-caption inline-flex max-w-[150px] items-center rounded-full px-2 py-0.5"
+                        className="bg-bg-3 text-fg-1 text-caption rounded-pill inline-flex max-w-[150px] items-center px-2 py-0.5"
                       >
                         <span className="truncate">{chip.caption}</span>
                       </span>
