@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render } from "@testing-library/react";
+import { Extension } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -9,6 +11,7 @@ import {
   RICH_TEXT_PRESETS,
   RichTextEditor,
   type RichTextEditorHandle,
+  type CustomTool,
   type RichTextEditorProps,
 } from "../src/editor/index.js";
 import {
@@ -156,4 +159,109 @@ describe("the cleanup function", () => {
 test("pasteCleanup is in both presets", () => {
   expect(RICH_TEXT_PRESETS.full).toContain("pasteCleanup");
   expect(RICH_TEXT_PRESETS.basic).toContain("pasteCleanup");
+});
+
+/*
+  Fixes after the review of the merged steps. Synthetic HTML in the Word 2007 shape (class and
+  `supportLists` comments, no `mso-list`), where no capture has the case.
+*/
+const wordItem = (marker: string, text: string) =>
+  `<p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt'><![if !supportLists]>` +
+  `<span>${marker}<span>&nbsp;&nbsp;&nbsp;</span></span><![endif]>${text}<o:p></o:p></p>`;
+const wordHtml = (body: string) =>
+  `<html xmlns:o="urn:schemas-microsoft-com:office:office" ` +
+  `xmlns:w="urn:schemas-microsoft-com:office:word"><body>${body}</body></html>`;
+
+function pastedHtml(html: string, props: Partial<RichTextEditorProps> = {}): string {
+  const { editor, handle } = renderEditor(props);
+  paste(editor, { html, text: "" });
+  return handle.getHTML();
+}
+
+describe("after the review", () => {
+  test("Word markup quoted as text in a web page does not make the page a Word paste", () => {
+    const article =
+      `<pre style="background:#f6f8fa">&lt;p class="MsoNormal"&gt;hi&lt;/p&gt;</pre>` +
+      `<p>use data-sheets-value or docs-internal-guid in <span style="background:#ffff00">x</span></p>`;
+
+    expect(cleanPastedHtml(article)).toBe(article);
+  });
+
+  test("a text color next to a background is dropped, as the Schema dropped it before", () => {
+    const html = wordHtml(
+      `<p class=MsoNormal><span style="color:#C00000;background:yellow">red on yellow</span></p>`
+    );
+
+    expect(pastedHtml(html)).toBe('<p><mark data-color="yellow">red on yellow</mark></p>');
+  });
+
+  test("a roman list without a list rule starts at one", () => {
+    const html = wordHtml(
+      wordItem("i.", "One") + wordItem("ii.", "Two") + wordItem("iii.", "Three")
+    );
+
+    expect(pastedHtml(html)).toBe(
+      "<ol><li><p>One</p></li><li><p>Two</p></li><li><p>Three</p></li></ol>"
+    );
+  });
+
+  test("a Russian lettered list without a list rule is a numbered list", () => {
+    const html = wordHtml(wordItem("а)", "One") + wordItem("б)", "Two"));
+
+    expect(pastedHtml(html)).toBe("<ol><li><p>One</p></li><li><p>Two</p></li></ol>");
+  });
+
+  test("a numbered Word heading keeps the heading and loses the typed number", () => {
+    const html = wordHtml(
+      `<h2 style='mso-list:l0 level1 lfo1'><![if !supportLists]><span style='mso-list:Ignore'>` +
+        `1.<span>&nbsp;</span></span><![endif]>Intro<o:p></o:p></h2>`
+    );
+
+    expect(pastedHtml(html)).toBe("<h2>Intro</h2>");
+  });
+
+  test("a long Word list is cleaned in linear time", () => {
+    const html = wordHtml(
+      Array.from({ length: 3000 }, (_, i) => wordItem("·", `Item ${i}`)).join("")
+    );
+
+    const started = performance.now();
+    const cleaned = cleanPastedHtml(html);
+    const took = performance.now() - started;
+
+    expect(cleaned.match(/<li>/g)).toHaveLength(3000);
+    // Quadratic Range bookkeeping took seconds here (15 s and more in jsdom); linear is well under one.
+    expect(took).toBeLessThan(2000);
+  });
+
+  test("a custom Tool's transformPastedHTML sees the raw paste, and the cleanup works on its result", () => {
+    const seen: string[] = [];
+    const recorder: CustomTool = {
+      name: "test_recorder",
+      engine: [
+        Extension.create({
+          name: "test_recorder",
+          addProseMirrorPlugins: () => [
+            new Plugin({
+              key: new PluginKey("test_recorder"),
+              props: {
+                transformPastedHTML: (html) => {
+                  seen.push(html);
+                  return html;
+                },
+              },
+            }),
+          ],
+        }),
+      ],
+    };
+
+    const html = pasted("word-mac-chrome-lists-bullet", {
+      tools: [...RICH_TEXT_PRESETS.full, recorder],
+    });
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toContain("mso-list");
+    expect(html).toContain("<ul><li><p>Apples</p>");
+  });
 });

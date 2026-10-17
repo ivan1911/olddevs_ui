@@ -33,8 +33,8 @@ import {
 
   SAFARI does not lose the cell styles, as it was assumed: it drops the `<style>` block and the Office
   namespaces, but writes the resolved values into each cell's own `style`. So bold, italic and
-  alignment arrive without this step. The fill does not, because the source is then not recognised
-  as Excel (`pasteSources.ts`).
+  alignment arrive without this step, and the fill reaches `backgroundMarkers` the same way. The copy
+  is recognised as Excel by the `xl65`-style class Safari keeps on each cell (`pasteSources.ts`).
 */
 
 /** One rule of the stylesheet that can apply to a cell: the `td` rule or a class rule. */

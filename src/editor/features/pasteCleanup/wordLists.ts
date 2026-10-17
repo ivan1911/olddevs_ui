@@ -25,8 +25,19 @@ const MSO_LIST = /mso-list:\s*(?:l(\d+)\s+)?level(\d+)/i;
 const MSO_IGNORE = /mso-list:\s*ignore/i;
 /** `MsoListParagraph`, `MsoListParagraphCxSpFirst`, older `MsoListBullet` and `MsoListNumber`. */
 const LIST_CLASS = /\bMsoList/i;
-/** A marker of a numbered item: `1.`, `a)`, `(iv)`. Anything else (`•`, `·`, `o`, `§`) is a bullet. */
-const NUMBERED_MARKER = /^\(?([0-9]+|[a-z]{1,4})[.)]$/i;
+/**
+ * The letters Word numbers a Russian list with: the alphabet without the five it skips (yo, short i,
+ * the hard and soft signs, yery). Input data, allowed by the Cyrillic gate (`tests/i18n-gate.test.ts`).
+ */
+const RUSSIAN_LETTERS = "абвгдежзиклмнопрстуфхцчшщэюя";
+/**
+ * A marker of a numbered item: `1.`, `a)`, `(iv)`, or a Russian letter with `)` or `.`. Anything else
+ * (`•`, `·`, `o`, `§`) is a bullet.
+ */
+const NUMBERED_MARKER = new RegExp(
+  "^\\(?([0-9]+|[a-z]{1,4}|[" + RUSSIAN_LETTERS + "]{1,2})[.)]$",
+  "i"
+);
 const ROMAN = /^[ivxlcdm]+$/i;
 /** Word indents each level by half an inch: 36pt. */
 const LEVEL_INDENT_PT = 36;
@@ -56,13 +67,11 @@ function takeMarker(paragraph: HTMLElement): string | null {
     const data = (node as Comment).data.trim();
     if (!start && /^\[if !supportLists\]$/i.test(data)) start = node as Comment;
     else if (start && /^\[endif\]$/i.test(data)) {
-      const range = paragraph.ownerDocument.createRange();
-      range.setStartAfter(start);
-      range.setEndBefore(node);
-      const text = range.toString();
-      range.deleteContents();
+      const end = node as Comment;
+      const text =
+        start.parentNode === end.parentNode ? takeSiblings(start, end) : takeRange(start, end);
       start.remove();
-      (node as Comment).remove();
+      end.remove();
       return normalizeMarker(text);
     }
   }
@@ -73,6 +82,31 @@ function takeMarker(paragraph: HTMLElement): string | null {
   const text = ignored.textContent ?? "";
   ignored.remove();
   return normalizeMarker(text);
+}
+
+/*
+  Removing what lies between the two comments. In every capture they are siblings, so the nodes are
+  taken one by one. A `Range` is only the fallback for comments at different depths: a live Range stays
+  attached to the document, and with one per item every later change updates all of them, which made
+  a list of thousands of items take seconds.
+*/
+function takeSiblings(start: Comment, end: Comment): string {
+  let text = "";
+  for (let node = start.nextSibling; node && node !== end; node = start.nextSibling) {
+    text += node.textContent ?? "";
+    node.remove();
+  }
+  return text;
+}
+
+function takeRange(start: Comment, end: Comment): string {
+  const range = start.ownerDocument.createRange();
+  range.setStartAfter(start);
+  range.setEndBefore(end);
+  const text = range.toString();
+  range.deleteContents();
+  range.detach();
+  return text;
 }
 
 /** The marker without the non-breaking spaces and the tab Word puts after it. */
@@ -95,7 +129,12 @@ function marginLevel(style: string): number {
 }
 
 function letterValue(letters: string): number {
-  return [...letters.toLowerCase()].reduce((sum, char) => sum * 26 + char.charCodeAt(0) - 96, 0);
+  const lower = letters.toLowerCase();
+  if (RUSSIAN_LETTERS.includes(lower[0]!)) {
+    const base = RUSSIAN_LETTERS.length;
+    return [...lower].reduce((sum, char) => sum * base + RUSSIAN_LETTERS.indexOf(char) + 1, 0);
+  }
+  return [...lower].reduce((sum, char) => sum * 26 + char.charCodeAt(0) - 96, 0);
 }
 
 function romanValue(roman: string): number {
@@ -107,13 +146,16 @@ function romanValue(roman: string): number {
 /**
  * The number an item shows. The marker is the truth: Word continues a list after an interruption,
  * and only the marker says it is "3." and not "1.". The format from the rule tells `i` the roman one
- * from `i` the letter; without a rule a single letter is read as a letter.
+ * from `i` the letter. Without a rule a lone `i` is roman (a list that starts at the letter i is far
+ * rarer than one that starts at i.), and any other single letter is a letter.
  */
 function itemNumber(marker: string | null, format: string | null, startAt: number): number {
   const label = marker?.match(NUMBERED_MARKER)?.[1];
   if (!label) return startAt;
   if (/^\d+$/.test(label)) return Number(label);
-  const roman = format ? /roman/i.test(format) : label.length > 1 && ROMAN.test(label);
+  const roman = format
+    ? /roman/i.test(format)
+    : (label.length > 1 || label.toLowerCase() === "i") && ROMAN.test(label);
   return roman && ROMAN.test(label) ? romanValue(label) : letterValue(label);
 }
 
@@ -182,6 +224,11 @@ export const wordLists: PasteCleanupStep = {
   name: "wordLists",
   applies: (sources) => sources.word,
   run(document, { styles }) {
+    // A numbered Word heading carries its typed number the same way. The heading stays a heading and
+    // only the number goes: the Schema has no numbered headings.
+    for (const heading of document.body.querySelectorAll<HTMLElement>("h1, h2, h3, h4, h5, h6")) {
+      if (MSO_LIST.test(heading.getAttribute("style") ?? "")) takeMarker(heading);
+    }
     const items = Array.from(document.body.querySelectorAll("p"))
       .map((paragraph) => readItem(paragraph, styles))
       .filter((item): item is ListItem => item !== null);

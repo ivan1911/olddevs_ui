@@ -150,7 +150,13 @@ export const backgroundMarkers: PasteCleanupStep = {
       if (NOT_MARKED.has(element.tagName)) continue;
       const marker = markerOf(element);
       if (marker === null) continue;
-      rewriteStyle(element, ["background", "background-color", "mso-highlight"]);
+      /*
+        The text color goes together with the background. The Schema keeps a `style` only in the
+        strict form of the author's color (a lone `color:#rrggbb`): `color:#C00000;background:yellow`
+        is rejected whole, and with the background taken out it would suddenly pass. The cleanup
+        must not keep a text color the Schema would have dropped (ADR-0075: no text color mapping).
+      */
+      rewriteStyle(element, ["background", "background-color", "mso-highlight", "color"]);
       markContent(element, marker);
     }
   },

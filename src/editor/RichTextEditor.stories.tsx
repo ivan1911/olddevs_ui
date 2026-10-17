@@ -19,6 +19,7 @@ import { FLOATING_TOOLBAR_KEY } from "./ui/FloatingToolbar.js";
 import { SELECTION_BUBBLE_KEY } from "./ui/SelectionBubble.js";
 import { TableSizeGrid as SizeGrid } from "./features/table/TableSizeGrid.js";
 import { defineTool } from "./core/toolDefinition.js";
+import { loadPasteCleanup } from "./features/pasteCleanup/pasteCleanupTool.js";
 import { tool } from "./core/toolOptions.js";
 import { useRichTextToolState } from "./hooks/useRichTextToolState.js";
 import { RICH_TEXT_PRESETS, TOOLS } from "./core/tools.js";
@@ -3737,6 +3738,8 @@ const PASTE_SAMPLES = [
 const WITHOUT_PASTE_CLEANUP = RICH_TEXT_PRESETS.full.filter((name) => name !== "pasteCleanup");
 
 async function pasteSample(handles: (RichTextEditorHandle | null)[], file: string) {
+  // The cleanup steps come in their own chunk: wait for it, or the first paste would go in uncleaned.
+  await loadPasteCleanup();
   const response = await fetch(new URL(`paste-fixtures/${file}.json`, document.baseURI));
   const sample = (await response.json()) as { "text/html": string };
   for (const handle of handles) {

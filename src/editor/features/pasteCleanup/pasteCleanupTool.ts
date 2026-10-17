@@ -2,6 +2,7 @@
 
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { devWarn } from "../../../lib/dev-warn.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 // Type only: a static import of the module would pull the steps into the start bundle.
 import type * as CleanupModule from "./cleanPastedHtml.js";
@@ -26,9 +27,21 @@ export function loadPasteCleanup(): Promise<void> {
     () => {
       // A failed chunk leaves pastes uncleaned; the next Editor tries again.
       loading = undefined;
+      devWarn(
+        "RichTextEditor: the paste cleanup chunk failed to load, so pastes go in without cleanup."
+      );
     }
   );
   return loading;
+}
+
+function transformPastedHTML(html: string): string {
+  if (cleanup) return cleanup(html);
+  devWarn(
+    "RichTextEditor: a paste came before the paste cleanup chunk had loaded, so it goes in " +
+      "without cleanup."
+  );
+  return html;
 }
 
 /**
@@ -46,7 +59,7 @@ const PasteCleanup = Extension.create({
           void loadPasteCleanup();
           return {};
         },
-        props: { transformPastedHTML: (html) => (cleanup ? cleanup(html) : html) },
+        props: { transformPastedHTML },
       }),
     ];
   },

@@ -36,8 +36,10 @@ export interface PasteCleanupStep {
 
 /**
  * The steps, in order. The order matters where one step reads what another one removes: Excel's
- * class rules are resolved before backgrounds are read, and lists are rebuilt before the Office junk
- * is cleared, because the list markers sit inside that junk.
+ * class rules are resolved before backgrounds are read; backgrounds are marked before the Word lists
+ * are rebuilt, so the marker step leaves the list markers (`mso-list:Ignore`, the `supportLists`
+ * comments) outside its marks; and lists are rebuilt before the Office junk is cleared, because the
+ * list markers sit inside that junk.
  */
 export const PASTE_CLEANUP_STEPS: readonly PasteCleanupStep[] = [
   appleConvertedSpaces,
@@ -64,26 +66,32 @@ export function cleanPastedHtml(
   html: string,
   steps: readonly PasteCleanupStep[] = PASTE_CLEANUP_STEPS
 ): string {
-  const sources = detectPasteSources(html);
-  const active = steps.filter((step) => step.applies(sources));
-  if (active.length === 0) return html;
-  const document = new DOMParser().parseFromString(html, "text/html");
-  const context: PasteCleanupContext = {
-    sources,
-    styles: Array.from(document.querySelectorAll("style"), (style) => style.textContent ?? "").join(
-      "\n"
-    ),
-  };
-  for (const step of active) {
-    try {
+  // The step that is running, for the warning; `null` while the pipeline itself works (detection,
+  // parse, serialization), which can fail too and must not take the paste down with it.
+  let current: string | null = null;
+  try {
+    const sources = detectPasteSources(html);
+    const active = steps.filter((step) => step.applies(sources));
+    if (active.length === 0) return html;
+    const document = new DOMParser().parseFromString(html, "text/html");
+    const context: PasteCleanupContext = {
+      sources,
+      styles: Array.from(
+        document.querySelectorAll("style"),
+        (style) => style.textContent ?? ""
+      ).join("\n"),
+    };
+    for (const step of active) {
+      current = step.name;
       step.run(document, context);
-    } catch {
-      devWarn(
-        `RichTextEditor: the "${step.name}" paste cleanup step failed, so the paste goes in ` +
-          "without cleanup. Please report it with the clipboard HTML."
-      );
-      return html;
     }
+    current = null;
+    return document.body.innerHTML;
+  } catch {
+    devWarn(
+      `RichTextEditor: ${current === null ? "the paste cleanup" : `the "${current}" paste cleanup step`} ` +
+        "failed, so the paste goes in without cleanup. Please report it with the clipboard HTML."
+    );
+    return html;
   }
-  return document.body.innerHTML;
 }

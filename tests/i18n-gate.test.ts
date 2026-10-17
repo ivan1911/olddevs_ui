@@ -40,12 +40,18 @@ const ROOTS = ["src", "tests", "tests-visual", ".storybook"];
  */
 const ALLOWED = [
   {
-    files: ["src/components/content/Keyboard.tsx", "tests/keyboard.test.tsx"],
+    files: [
+      "src/components/content/Keyboard.tsx",
+      "tests/keyboard.test.tsx",
+      "src/editor/features/pasteCleanup/wordLists.ts",
+    ],
     why:
       "The layout is input DATA, not a translation. The letter rows say which characters " +
       "the keyboard types; they stay Cyrillic under an English interface because `layout` " +
       "and the interface language are independent. The same holds for the label of the key " +
-      "that returns to letters, and for the test that drives that layout end to end.",
+      "that returns to letters, and for the test that drives that layout end to end. The " +
+      "paste cleanup reads the letters Word numbers a Russian list with: a marker from the " +
+      "clipboard, input data again.",
   },
   {
     files: ["src/locales/ru.ts"],
@@ -57,6 +63,7 @@ const ALLOWED = [
       "tests/rich-text-editor-table-size-grid.test.tsx",
       "tests/rich-text-editor-table-menu.test.tsx",
       "tests/editor-search.test.tsx",
+      "tests/rich-text-editor-paste-cleanup.test.tsx",
       "tests-visual/interactions.spec.ts",
     ],
     why:
@@ -68,7 +75,8 @@ const ALLOWED = [
       "The table menu test sorts Russian cell text and Russian number formats: the order " +
       "of `yo` after `e`, not after `ya`, and `1 234,5` read as a number are the check. " +
       "The search test pins whole-word matching in Cyrillic: `\\b` of JS knows only Latin, " +
-      "so a Russian word inside a longer one is the case the Unicode boundary exists for.",
+      "so a Russian word inside a longer one is the case the Unicode boundary exists for. " +
+      "The paste cleanup test pins a Word list lettered in Russian, which must stay numbered.",
   },
 ];
 

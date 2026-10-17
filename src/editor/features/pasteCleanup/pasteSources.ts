@@ -30,14 +30,26 @@ export interface PasteSources {
   sharePoint: boolean;
 }
 
-const WORD =
-  /urn:schemas-microsoft-com:office:word|\bcontent=["']?Word\.Document|\bclass=["']?Mso[A-Z]/i;
-const EXCEL =
-  /urn:schemas-microsoft-com:office:excel|\bcontent=["']?Excel\.Sheet|<td\b[^>]*\bclass=["']?xl\d+\b/i;
-const GOOGLE_DOCS = /\bid=["']?docs-internal-guid-/;
-const GOOGLE_SHEETS = /<google-sheets-html-origin|\bdata-sheets-/;
-const SHARE_POINT =
-  /\bdata-ccp-props=|\bclass=["']?(?:[^"'>]*\s)?(?:OutlineElement|ListContainerWrapper|NormalTextRun)(?=[\s"'>])/;
+/*
+  Every sign is anchored to a tag: `<` followed by the tag's own attributes, with no `<` or `>` in
+  between. Text cannot hold a literal `<`, so a blog post that quotes `class="MsoNormal"` as escaped
+  text is not taken for Word, and its backgrounds are not turned into markers. `[^<>]*` also keeps
+  each attempt inside one tag, so the scan stays linear on any input.
+*/
+const TAG = String.raw`<[a-z][\w:-]*\b[^<>]*`;
+const WORD = new RegExp(
+  `${TAG}(?:urn:schemas-microsoft-com:office:word|\\bcontent=["']?Word\\.Document|\\bclass=["']?Mso[A-Z])`,
+  "i"
+);
+const EXCEL = new RegExp(
+  `${TAG}(?:urn:schemas-microsoft-com:office:excel|\\bcontent=["']?Excel\\.Sheet)|<td\\b[^<>]*\\bclass=["']?xl\\d+\\b`,
+  "i"
+);
+const GOOGLE_DOCS = new RegExp(`${TAG}\\bid=["']?docs-internal-guid-`);
+const GOOGLE_SHEETS = new RegExp(`<google-sheets-html-origin|${TAG}\\bdata-sheets-`);
+const SHARE_POINT = new RegExp(
+  `${TAG}(?:\\bdata-ccp-props=|\\bclass=["']?(?:[^"'<>]*\\s)?(?:OutlineElement|ListContainerWrapper|NormalTextRun)(?=[\\s"'>]))`
+);
 
 /** The sources of a clipboard's HTML, read from the string: no parse is needed to tell them apart. */
 export function detectPasteSources(html: string): PasteSources {
