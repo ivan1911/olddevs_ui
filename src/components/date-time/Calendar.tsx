@@ -26,55 +26,56 @@ export interface CalendarProps extends Omit<
   "value" | "defaultValue" | "onChange" | "minValue" | "maxValue" | "defaultFocusedValue"
 > {
   /**
-   * Выбранный день: объект `@internationalized/date` или ISO-строка `ГГГГ-ММ-ДД`.
-   * `null` — управляемое пустое значение. Неразбираемая строка считается пустой.
+   * Selected day: an `@internationalized/date` object or an ISO string `YYYY-MM-DD`.
+   * `null` — a controlled empty value. An unparseable string counts as empty.
    */
   value?: DateInput | null;
-  /** Начальный день неуправляемого календаря; те же два вида, что у `value`. */
+  /** Initial day of an uncontrolled calendar; accepts the same two forms as `value`. */
   defaultValue?: DateInput | null;
   /**
-   * Вызывается при выборе дня. Первый аргумент — объект календаря, как у React
-   * Aria; второй — тот же день ISO-строкой `ГГГГ-ММ-ДД`, для
-   * тех, у кого значение хранится строкой, как в `DatePicker`.
+   * Called when a day is selected. The first argument is the calendar's date object, as in
+   * React Aria; the second is the same day as an ISO string `YYYY-MM-DD`, for those who
+   * store the value as a string, as `DatePicker` does.
    */
   onChange?: (value: DateValue, iso: string) => void;
-  /** Самый ранний доступный день: объект календаря или ISO-строка `ГГГГ-ММ-ДД`. */
+  /** Earliest available day: a calendar object or an ISO string `YYYY-MM-DD`. */
   minValue?: DateInput;
-  /** Самый поздний доступный день; те же два вида, что у `minValue`. */
+  /** Latest available day; the same two forms as `minValue`. */
   maxValue?: DateInput;
-  /** Месяц, на котором открывается неуправляемый календарь; те же два вида, что у `minValue`. */
+  /** Month the uncontrolled calendar opens on; the same two forms as `minValue`. */
   defaultFocusedValue?: DateInput;
-  /** Классы на корень календаря: ширина, отступы, фон. */
+  /** Classes for the calendar root: width, padding, background. */
   className?: string;
   /**
-   * Локаль подписей и первого дня недели. По умолчанию русская: подписи
-   * примитивов кита русские везде, и календарь не исключение.
+   * Locale for labels and the first day of the week. Defaults to Russian: the kit's
+   * primitive labels are Russian everywhere, and the calendar is no exception.
    */
   locale?: string;
 }
 
-/** Кнопки листания месяцев — одинаковые в обоих календарях. */
+/** Month navigation buttons, shared by both calendars. */
 export const NAV_BUTTON_CLASS =
   "text-fg-3 hover:bg-bg-3 hover:text-fg-1 data-[focus-visible]:ring-accent-strong flex size-8 cursor-pointer items-center justify-center rounded-lg transition-colors outline-none data-[focus-visible]:ring-2";
 
-/** Подписи дней недели — тоже общие. */
+/** Weekday header cells, shared as well. */
 export const WEEKDAY_CELL_CLASS = "text-fg-3 size-9 p-0 text-[11px] font-medium";
 
 /**
- * Пробелы, которые Intl разных сборок ICU ставит по-разному: тонкий (U+2009)
- * вокруг тире в диапазоне и узкий неразрывный (U+202F). Обычный неразрывный
- * не трогается — он одинаков у сервера и браузера и держит «2026 г.» вместе.
+ * Spaces that Intl places differently across ICU builds: a thin space (U+2009) around the
+ * dash in a range, and a narrow no-break space (U+202F). A regular no-break space is left
+ * alone: it is the same on server and browser, and it keeps a number and its unit together,
+ * as in "10 km".
  */
 const INTL_SPACES = /[\u2009\u202f]/g;
 
 /**
- * Заголовок календаря — месяц или диапазон месяцев над сеткой.
+ * Calendar heading: the month, or the range of months, above the grid.
  *
- * Текст берётся у react-aria (`HeadingContext`), а там он — `formatRange` из
- * Intl, и Intl у сервера и браузера разный: ICU в Node ставит вокруг тире
- * тонкие пробелы, Chrome — обычные. Отрисованный на сервере `RangeCalendar`
- * с двумя месяцами не проходил гидратацию (React #418). Здесь
- * пробелы приводятся к обычным, и строка одна на обеих сторонах.
+ * The text comes from react-aria (`HeadingContext`), where it is `formatRange` from Intl, and
+ * Intl differs between server and browser: ICU in Node puts thin spaces around the dash,
+ * Chrome puts regular ones. A server-rendered `RangeCalendar` with two months did not pass
+ * hydration (React #418). Here the spaces are normalized to regular ones, so the string is
+ * the same on both sides.
  */
 export function CalendarHeading() {
   const title = useSlottedContext(HeadingContext)?.children;
@@ -86,11 +87,11 @@ export function CalendarHeading() {
 }
 
 /**
- * Сегодняшний день — только в браузере, после монтирования.
+ * Today's date — browser only, after mount.
  *
- * На сервере «сегодня» неизвестно: статику собирают в другой день и в другом
- * часовом поясе, и точка в HTML стояла бы не на том дне, что у читателя, а
- * гидратация расходилась бы классами ячеек. Первый кадр без точки.
+ * On the server "today" is unknown: static pages are built on another day and in another
+ * time zone, so the dot in the HTML would sit on a different day than the reader's, and
+ * hydration would mismatch on the cell classes. The first frame renders without the dot.
  */
 export function useToday(): CalendarDate | null {
   const [now, setNow] = useState<CalendarDate | null>(null);
@@ -99,16 +100,15 @@ export function useToday(): CalendarDate | null {
 }
 
 /**
- * Календарь одной даты.
+ * Single-date calendar.
  *
- * Поведение — `react-aria-components`: клавиатура, роль `grid`, объявление
- * полной даты у ячейки, локаль и первый день недели. Своя реализация этого
- * была бы не примитивом, а второй библиотекой — та же логика, что у Radix
- * для тултипа и поповера (ADR-0004).
+ * Behavior comes from `react-aria-components`: keyboard, the `grid` role, the full date
+ * announced for each cell, locale and first day of the week. A home-made implementation would
+ * be not a primitive but a second library, the same reasoning Radix applies to tooltips and
+ * popovers (ADR-0004).
  *
- * Сегодняшний день помечается точкой под числом, а не заливкой: заливка
- * занята выбранным значением, и два разных состояния одним приёмом
- * различить нельзя.
+ * Today is marked with a dot under the number rather than with a fill: the fill is taken by the
+ * selected value, and two different states cannot be told apart by the same means.
  */
 export function Calendar({
   className,
@@ -124,10 +124,10 @@ export function Calendar({
   const now = useToday();
 
   /*
-    Свой `I18nProvider` разворачивается ТОЛЬКО под точечный проп `locale`.
-    До 2.0.0 он стоял всегда и жёстко на `ru-RU` — то есть календарь перебивал
-    локаль приложения собственной. Теперь без пропа локаль приходит сверху:
-    от `UiProvider` кита, от `I18nProvider` потребителя или от браузера.
+    The calendar's own `I18nProvider` is rendered ONLY when the `locale` prop is passed.
+    Up to 2.0.0 it was always there, hard-coded to `ru-RU`, so the calendar overrode the app's
+    locale with its own. Now, without the prop, the locale comes from above: from the kit's
+    `UiProvider`, from the consumer's `I18nProvider`, or from the browser.
   */
   const calendar = (
     <CalendarRac

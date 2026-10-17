@@ -4,60 +4,65 @@ import type { DateInput } from "../../lib/date.js";
 import { DatePicker } from "./DatePicker.js";
 import { TimePicker } from "./TimePicker.js";
 
-// Функции жили в этом файле; re-export — чтобы не ломать публичный API.
+// These functions used to live in this file; the re-export keeps the public API intact.
 export { maskTime, normalizeTime } from "../../lib/time.js";
 
 export interface DateTimePickerProps {
-  /** Дата в ISO-формате `ГГГГ-ММ-ДД`. */
+  /** Date in ISO format `YYYY-MM-DD`. */
   date?: string | null;
-  /** Время в формате `ЧЧ:ММ`. */
+  /** Time in `HH:MM` format. */
   time?: string | null;
-  /** Вызывается с ISO-датой `ГГГГ-ММ-ДД`, когда в календаре выбран день. */
+  /** Called with the ISO date `YYYY-MM-DD` when a day is selected in the calendar. */
   onDateChange: (date: string) => void;
-  /** Вызывается со временем `ЧЧ:ММ`, когда ввод закончен или выбран слот из списка. */
+  /** Called with the time `HH:MM` when the input is finished or a slot is selected from the list. */
   onTimeChange: (time: string) => void;
-  /** Блокирует оба поля — дату и время. */
+  /** Disables both fields: the date and the time. */
   disabled?: boolean;
   /**
-   * Границы календарные, то есть дневные, и ко времени не относятся.
+   * The bounds are calendar bounds, that is, per day, and do not apply to time.
    *
-   * Ячейки календаря — `CalendarDate` без времени, и сравнение идёт по дню:
-   * `parseDate("2026-09-11").compare(parseDateTime("2026-09-11T14:00"))` — это
-   * ноль. Поэтому `minValue={…T14:00}` в смысле «не раньше чем через час» НЕ
-   * РАБОТАЕТ: тот же день с девятью утра пройдёт.
+   * Calendar cells are `CalendarDate` values with no time, and the comparison works by day:
+   * `parseDate("2026-09-11").compare(parseDateTime("2026-09-11T14:00"))` is
+   * zero. So `minValue={…T14:00}` meant as "not earlier than an hour from now" does NOT
+   * WORK: the same day at nine in the morning gets through.
    *
-   * Границ времени компонент не принимает намеренно. «Не раньше чем через час»
-   * — это правило бизнес-логики, а не свойство поля: оно зависит от часового
-   * пояса, который кит не знает принципиально (см. `timeZoneLabel`), и от
-   * момента отправки, а не отрисовки. Проверять его должен потребитель, там же,
-   * где он проверяет остальную форму.
+   * The component does not accept time bounds on purpose. "Not earlier than an hour from now"
+   * is a business rule, not a property of the field: it depends on the time zone, which the kit
+   * deliberately does not know (see `timeZoneLabel`), and on the moment of submission, not of
+   * rendering. The consumer validates it, in the same place where it validates the rest
+   * of the form.
    *
-   * Значение — ISO-строка `ГГГГ-ММ-ДД`, как `date`; объект `@internationalized/date`
-   * тоже принимается.
+   * The value is an ISO string `YYYY-MM-DD`, like `date`; an `@internationalized/date` object
+   * is accepted too.
    */
   minValue?: DateInput;
-  /** Самый поздний доступный день; граница календарная, как и `minValue`, ко времени не относится. */
+  /**
+   * Latest available day. Like `minValue`, the bound is calendar-based and does not apply
+   * to time.
+   */
   maxValue?: DateInput;
   /**
-   * Подпись зоны справа от времени: `MSK`, `UTC`.
+   * Time zone label shown to the right of the time: `MSK`, `UTC`.
    *
-   * Проп, а не строка в разметке. До переезда в пакет здесь стоял хардкод
-   * `(MSK)` — надпись, никак не связанная с зоной, по которой сервер на самом
-   * деле публикует. Пакет зоны не знает и знать не должен: он показывает то,
-   * что ему передали, и по умолчанию — ничего.
+   * A prop, not a string in the markup. Before the move into the package, the code hardcoded
+   * `(MSK)`: a label with no link to the zone the server actually publishes in. The package
+   * does not know the zone and must not: it shows what it is given, and by default nothing.
    */
   timeZoneLabel?: string;
-  /** Часы поля времени: `24` (умолчание) или `12`, как у `TimePicker`. */
+  /** Hour cycle of the time field: `24` (default) or `12`, as in `TimePicker`. */
   hourCycle?: 12 | 24;
-  /** Локаль подписи даты и календаря; по умолчанию локаль `UiProvider`. На поле времени не влияет. */
+  /**
+   * Locale of the date label and the calendar; defaults to the `UiProvider` locale.
+   * Does not affect the time field.
+   */
   locale?: string;
 }
 
 /**
- * Дата и время одной строкой.
+ * Date and time on one line.
  *
- * Время — `TimePicker`: то же поле с маской, что жило здесь раньше (ввод
- * нормализуется по уходу фокуса, а не на каждое нажатие), плюс список слотов.
+ * The time is a `TimePicker`: the same masked field that used to live here (input is
+ * normalized on blur, not on every keystroke), plus a list of time slots.
  */
 export function DateTimePicker({
   date,
