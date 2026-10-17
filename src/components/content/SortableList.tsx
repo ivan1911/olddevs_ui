@@ -200,7 +200,7 @@ export function SortableList({
       // otherwise does not know where the row will land.
       <DropIndicator
         target={target}
-        className="drop-target:bg-accent-strong h-0.5 rounded-full bg-transparent"
+        className="drop-target:bg-accent-strong rounded-pill h-0.5 bg-transparent"
       />
     ),
   });
