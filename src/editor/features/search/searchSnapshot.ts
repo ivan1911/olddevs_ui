@@ -5,14 +5,15 @@ import type { SearchToolState } from "../../core/toolState.js";
 import { searchState } from "./searchPlugin.js";
 
 /**
- * Снимок Состояния `search` для `useRichTextToolState`: открытые поля
- * `searchState` плагина плюс открытость панели, без позиций совпадений. Лежит
- * отдельно от `searchPlugin.ts`: вычисление нужно только хуку и не должно
- * попадать в статический граф Редактора.
+ * Snapshot of the `search` Tool state for `useRichTextToolState`: the open fields of
+ * the plugin's `searchState` plus whether the Find panel is open, without match
+ * positions. It lives apart from `searchPlugin.ts`: only the hook needs this
+ * calculation, and it must not end up in the Editor's static graph.
  *
- * Флажки — из плагина и при закрытой панели: их держит движок, а не панель.
- * Закрытие возвращает их к стартовым из Опций, а `setQuery` без панели ставит
- * свои. `null` — плагина нет (Инструмент `search` не вошёл в движок).
+ * The flags come from the plugin even when the panel is closed: the engine holds them,
+ * not the panel. Closing resets them to the starting Tool options, and `setQuery`
+ * without the panel sets its own. `null` means there is no plugin (the `search` Tool is
+ * not in the engine).
  */
 export function searchSnapshot(editor: Editor, open: boolean): SearchToolState | null {
   const state = searchState(editor.state);

@@ -3,56 +3,56 @@
 import type { Node as PmNode } from "@tiptap/pm/model";
 import { isFormulaNodeName } from "../mathematics/mathNames.js";
 
-/** Опции поиска — флажки панели «Поиск и замена». */
+/** Search options: the flags of the Find and replace panel. */
 export interface SearchOptions {
-  /** Учитывать регистр: без флажка «Cat» и «cat» — одно и то же. */
+  /** Match case: without it, "Cat" and "cat" are the same. */
   matchCase: boolean;
-  /** Слово целиком: «cat» не находится внутри «category». */
+  /** Whole word: "cat" does not match inside "category". */
   wholeWord: boolean;
-  /** Запрос — регулярное выражение JavaScript, а не текст. */
+  /** The query is a JavaScript regular expression, not plain text. */
   regex: boolean;
 }
 
-/** Совпадение — отрезок Документа в позициях ProseMirror. */
+/** A match is a range of the Document in ProseMirror positions. */
 export interface SearchMatch {
   from: number;
   to: number;
   /**
-   * Найденный текст и группы регулярного выражения (`[0]` — совпадение
-   * целиком) — из той строки Блока, где его нашли. Замена раскрывает `$1…$9`
-   * по ним, а не прогоняет выражение по одному найденному куску: просмотр
-   * назад и вперёд (`(?<=a)b`) без соседнего текста не сработал бы.
+   * The found text and the regular expression groups (`[0]` is the whole match) come
+   * from the Block's line where the match was found. Replace expands `$1…$9` from them
+   * instead of running the expression again on the found piece: lookbehind and lookahead
+   * (`(?<=a)b`) would not work without the neighboring text.
    */
   captures: readonly string[];
   /**
-   * Совпадение внутри исходного LaTeX формулы: `from`–`to` — вся формула как узел,
-   * а не отрезок текста. Подсвечивается и выделяется узлом, а «Заменить» и
-   * «Заменить все» его пропускают: формула правится только Поповером.
+   * A match inside a formula's LaTeX source: `from`–`to` cover the whole formula as a
+   * node, not a text range. It is highlighted and selected as a node, but Replace and
+   * Replace all skip it: a formula is edited only in its popover.
    */
   formula: boolean;
 }
 
 export interface SearchResult {
   matches: SearchMatch[];
-  /** Регулярное выражение не разобралось: текст ошибки движка JS, совпадений нет. */
+  /** The regular expression did not parse: the JS engine's error text, no matches. */
   error?: string;
 }
 
 /**
- * Заместитель строчного не-текста (атома, мягкого переноса) в строке Блока.
- * Совпадение через него не проходит: символ вне языков, и ни текст, ни
- * разумное регулярное выражение его не содержат.
+ * A stand-in for an inline non-text node (an atom, a soft hyphen) in a Block's text line.
+ * A match does not pass through it: the character is outside any alphabet, so neither
+ * the text nor a reasonable regular expression contains it.
  */
 const ATOM = "￼";
 
-/** Буква, цифра или подчёркивание любого алфавита — граница слова для кириллицы тоже. */
+/** A letter, digit or underscore of any script: the word boundary covers Cyrillic too. */
 const WORD = "[\\p{L}\\p{N}_]";
 
 /**
- * Регулярное выражение запроса или ошибка. Без `regex` запрос — текст:
- * спецсимволы экранируются. «Слово целиком» — просмотр назад и вперёд по
- * классу букв Юникода, а не `\b`: `\b` в JS знает только латиницу, и «кот»
- * в «котик» для него — целое слово.
+ * The query's regular expression, or the error. Without `regex` the query is text:
+ * special characters are escaped. "Whole word" uses lookbehind and lookahead on the
+ * Unicode letter class, not `\b`: JS `\b` knows only Latin letters, so for it "cat" is
+ * a whole word inside "cats".
  */
 export function searchPattern(
   query: string,
@@ -66,28 +66,28 @@ export function searchPattern(
     return { pattern: new RegExp(wrapped, `${flags}u`) };
   } catch (cause) {
     /*
-      Флаг `u` строже: `a\-b` и `\_` без него — обычные экранирования, с
-      ним — ошибка. Привычное по JS выражение не должно падать, поэтому без
-      «Слова целиком» (ему `u` нужен для `\p{L}`) пробуем и без флага.
+      The `u` flag is stricter: `a\-b` and `\_` are ordinary escapes without it and an
+      error with it. An expression that works in plain JS must not throw, so without
+      "Whole word" (which needs `u` for `\p{L}`) we try again without the flag.
     */
     if (!options.wholeWord) {
       try {
         return { pattern: new RegExp(wrapped, flags) };
       } catch {
-        // Ошибка — та, что дал строгий разбор: она понятнее.
+        // Report the error from the strict parse: it is the clearer one.
       }
     }
     return { error: cause instanceof Error ? cause.message : String(cause) };
   }
 }
 
-/** Исходный LaTeX формулы — строка, в которой её ищут (ADR-0070, п. 8). */
+/** The formula's LaTeX source: the string the formula is searched in (ADR-0070, item 8). */
 const sourceOf = (node: PmNode): string => String(node.attrs.latex ?? "");
 
 /**
- * Совпадение запроса внутри формулы: одно на формулу, сколько бы раз запрос в ней
- * ни повторялся, — подсвечивается и считается формула целиком. `null` — запрос в
- * её исходнике не найден.
+ * A match of the query inside a formula: one per formula, however many times the query
+ * repeats in it. The whole formula is highlighted and counted. `null` means the query
+ * is not found in its source.
  */
 function formulaMatch(node: PmNode, pos: number, pattern: RegExp): SearchMatch | null {
   pattern.lastIndex = 0;
@@ -99,22 +99,21 @@ function formulaMatch(node: PmNode, pos: number, pattern: RegExp): SearchMatch |
 }
 
 /**
- * Все совпадения запроса в Документе, по порядку.
+ * All matches of the query in the Document, in order.
  *
- * ОБЛАСТЬ — ТЕКСТ ВНУТРИ ТЕКСТОВЫХ БЛОКОВ: абзацы, заголовки, ячейки таблиц,
- * блоки кода. Каждый текстовый Блок — своя строка, поэтому совпадение не
- * пересекает его границу. Метки внутри Блока не мешают: текст их узлов
- * склеивается, и «bo**ld**» находится как «bold». Строчные атомы (картинка,
- * упоминание, мягкий перенос) встают в строку заместителем `ATOM`, и через них
- * совпадение не идёт.
+ * SCOPE IS THE TEXT INSIDE TEXT BLOCKS: paragraphs, headings, table cells and code
+ * Blocks. Each text Block is its own line, so a match never crosses its boundary. Marks
+ * inside a Block do not get in the way: the text of their nodes is joined, so "bo**ld**"
+ * is found as "bold". Inline atoms (an image, a mention, a soft hyphen) stand in the line
+ * as the `ATOM` placeholder, and a match does not pass through them.
  *
- * ФОРМУЛЫ — ЕДИНСТВЕННЫЕ АТОМЫ С ТЕКСТОМ: их исходник LaTeX ищется отдельной
- * строкой, как отдельный Блок, и совпадение внутри — вся формула целиком
- * (`SearchMatch.formula`). Через границу формулы совпадение с текстом рядом тоже
- * не идёт, как и через любой другой атом.
+ * FORMULAS ARE THE ONLY ATOMS WITH TEXT: their LaTeX source is searched as a separate
+ * line, like a separate Block, and a match inside one covers the whole formula
+ * (`SearchMatch.formula`). A match with text next to a formula does not cross the
+ * formula's boundary either, the same as with any other atom.
  *
- * Пустые совпадения регулярного выражения (`x*`) пропускаются: подсвечивать и
- * заменять там нечего.
+ * Empty regular expression matches (`x*`) are skipped: there is nothing to highlight or
+ * replace.
  */
 export function findMatches(doc: PmNode, query: string, options: SearchOptions): SearchResult {
   const compiled = searchPattern(query, options);
@@ -124,14 +123,14 @@ export function findMatches(doc: PmNode, query: string, options: SearchOptions):
 
   const matches: SearchMatch[] = [];
   doc.descendants((node, pos) => {
-    // Блочная формула — атом без детей: ищется по своему исходнику.
+    // A block formula is an atom without children: it is searched by its own source.
     if (isFormulaNodeName(node.type.name)) {
       const inFormula = formulaMatch(node, pos, pattern);
       if (inFormula) matches.push(inFormula);
       return false;
     }
     if (!node.isTextblock) return true;
-    // Строка Блока и позиция Документа для каждого её символа (+1 — конец).
+    // The Block's text line, and the Document position of each of its characters (+1 is the end).
     let text = "";
     const positions: number[] = [];
     node.forEach((child, offset) => {
@@ -165,7 +164,8 @@ export function findMatches(doc: PmNode, query: string, options: SearchOptions):
     }
     return false;
   });
-  // Формулы внутри строки встали в конец своего Блока: порядок Документа — по позиции.
+  // Formulas inside a line were pushed to the end of their Block, so the Document order
+  // is by position.
   matches.sort((a, b) => a.from - b.from);
   return { matches };
 }

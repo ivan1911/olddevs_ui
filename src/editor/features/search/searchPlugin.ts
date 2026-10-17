@@ -8,16 +8,16 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { findMatches, type SearchMatch, type SearchOptions } from "./searchMatch.js";
 
 /**
- * Состояние поиска в движке: запрос, опции, совпадения и текущее.
- * Держит его плагин, а не React: совпадения пересчитываются в той же
- * транзакции, что меняет Документ, и подсветка не отстаёт от текста ни на
- * кадр. Панель только читает его (`searchState`) и шлёт команды.
+ * Find state in the engine: the query, the options, the matches and the current match.
+ * The plugin holds it, not React: matches are recalculated in the same transaction that
+ * changes the Document, so the highlight never lags behind the text, not even by a frame.
+ * The panel only reads it (`searchState`) and sends commands.
  */
 interface SearchPluginState {
   query: string;
   options: SearchOptions;
   matches: SearchMatch[];
-  /** Индекс текущего совпадения; −1 — совпадений нет. */
+  /** Index of the current match; −1 means there are no matches. */
   current: number;
   error?: string;
   decorations: DecorationSet;
@@ -26,7 +26,10 @@ interface SearchPluginState {
 type SearchMeta =
   | { type: "set"; query: string; options?: Partial<SearchOptions> }
   | { type: "select"; index: number }
-  /** «Заменить» заменило не текущее совпадение (текущая — формула): искать дальше от каретки. */
+  /**
+   * Replace changed a match other than the current one (the current one is a formula):
+   * search on from the caret.
+   */
   | { type: "replaced" }
   | { type: "clear" };
 
@@ -34,7 +37,10 @@ const SEARCH_KEY = new PluginKey<SearchPluginState>("search");
 
 const EMPTY_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: false };
 
-/** Что панели нужно знать о поиске; `undefined` — инструмента `search` в наборе нет. */
+/**
+ * What the panel needs to know about the search. `undefined` means the `search` Tool is
+ * not in the set.
+ */
 export function searchState(state: EditorState):
   | {
       query: string;
@@ -52,9 +58,9 @@ export function searchState(state: EditorState):
 }
 
 /**
- * Выделение совпадения: текст — отрезок, формула — узел целиком. Отрезок через
- * блочную формулу был бы выделением вне текста, а на строчной — не отличался бы
- * от выделения узла только в Chromium.
+ * Selection of a match: text is a range, a formula is the whole node. A range across a
+ * block formula would select something outside the text, and across an inline one it
+ * would differ from a node selection only in Chromium.
  */
 export function matchSelection(doc: PmNode, { from, to, formula }: SearchMatch): Selection {
   return formula ? NodeSelection.create(doc, from) : TextSelection.create(doc, from, to);
@@ -68,7 +74,7 @@ function decorate(state: EditorState, matches: SearchMatch[], current: number): 
       const attributes = {
         class: index === current ? "rte-search-match rte-search-current" : "rte-search-match",
       };
-      // Формула — атом с видом узла: подсветка узла целиком, а не отрезок текста в нём.
+      // A formula is an atom rendered as a node: highlight the whole node, not a text range in it.
       return formula
         ? Decoration.node(from, to, attributes)
         : Decoration.inline(from, to, attributes);
@@ -76,7 +82,10 @@ function decorate(state: EditorState, matches: SearchMatch[], current: number): 
   );
 }
 
-/** Индекс первого совпадения не раньше позиции; нет такого — первое по кругу. */
+/**
+ * Index of the first match at or after the position. If there is none, the first match,
+ * wrapping around.
+ */
 function indexFrom(matches: SearchMatch[], pos: number): number {
   if (matches.length === 0) return -1;
   const found = matches.findIndex((match) => match.from >= pos);
@@ -102,10 +111,10 @@ function build(
 }
 
 /**
- * Флажки после `setSearch`: названные в `named` заменяют прежние, остальные
- * остаются. Ключ со значением `undefined` — не названный: обычное слияние
- * `{ ...a, ...b }` стёрло бы им флажок, а вызов `setQuery(q, { matchCase: value })`
- * с необязательным значением экрана не просит ничего менять.
+ * Flags after `setSearch`: the ones named in `named` replace the previous values, the rest
+ * stay. A key with the value `undefined` counts as not named: a plain merge
+ * `{ ...a, ...b }` would erase the flag, and a call like `setQuery(q, { matchCase: value })`
+ * with an optional value from the screen changes nothing.
  */
 function withNamedFlags(current: SearchOptions, named: Partial<SearchOptions> = {}): SearchOptions {
   const next = { ...current };
@@ -117,8 +126,8 @@ function withNamedFlags(current: SearchOptions, named: Partial<SearchOptions> = 
 }
 
 /**
- * @param flags флажки без запроса: до первого `setSearch` и после `clearSearch`
- * (Опции Инструмента). Поиск, который идёт, держит свои.
+ * @param flags flags without a query: until the first `setSearch` and after `clearSearch`
+ * (the Tool options). A search in progress keeps its own.
  */
 function searchPlugin(flags: SearchOptions) {
   return new Plugin<SearchPluginState>({
@@ -145,9 +154,9 @@ function searchPlugin(flags: SearchOptions) {
         }
         if (!tr.docChanged || previous.query === "") return previous;
         /*
-          Правка Документа: совпадения пересчитываются целиком — запрос мог
-          найтись в новом тексте или исчезнуть в старом. Текущим остаётся то,
-          что стоит на месте прежнего текущего (или первое после него).
+          Document edit: the matches are recalculated in full, because the query may have
+          found a match in the new text or lost one in the old. The current match stays at
+          the place of the previous current one (or the first one after it).
         */
         const anchor = previous.matches[previous.current];
         const pos =
@@ -164,10 +173,10 @@ function searchPlugin(flags: SearchOptions) {
 }
 
 /**
- * Текст замены для совпадения. С регулярным выражением работают `$1…$9`,
- * `$&` (совпадение целиком) и `$$` (знак доллара) — по группам, которые поиск
- * сохранил у совпадения (`SearchMatch.captures`). Без выражения замена —
- * текст как есть, и «$1» остаётся «$1».
+ * Replacement text for a match. With a regular expression, `$1…$9`, `$&` (the whole match)
+ * and `$$` (a dollar sign) work from the groups the search kept for the match
+ * (`SearchMatch.captures`). Without an expression the replacement is used as is, so `$1`
+ * stays `$1`.
  */
 function replacementFor(match: SearchMatch, replacement: string, options: SearchOptions) {
   if (!options.regex) return replacement;
@@ -179,7 +188,10 @@ function replacementFor(match: SearchMatch, replacement: string, options: Search
   });
 }
 
-/** Заменить отрезок текстом с Метками начала совпадения; пустая замена — удалить. */
+/**
+ * Replace the range with text, keeping the Marks at the start of the match. An empty
+ * replacement deletes the range.
+ */
 function replaceRange(tr: Transaction, { from, to }: SearchMatch, text: string) {
   if (text === "") {
     tr.delete(from, to);
@@ -193,49 +205,50 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     search: {
       /**
-       * Новый запрос или флажки: совпадения пересчитываются, текущее — первое после
-       * каретки. Не названные флажки остаются как были.
+       * A new query or flags: the matches are recalculated, and the current match becomes
+       * the first one after the caret. Flags that are not named stay as they were.
        */
       setSearch: (query: string, options?: Partial<SearchOptions>) => ReturnType;
       /**
-       * Следующее (`1`) или предыдущее (`-1`) совпадение по кругу; выделяет его.
-       * Прокрутка ProseMirror срабатывает, только когда фокус в Документе; из
-       * поля поиска к совпадению прокручивает панель (`revealMatch.ts`).
+       * The next (`1`) or previous (`-1`) match, wrapping around; selects it. ProseMirror
+       * scrolls only when focus is in the Document; from the search field the panel
+       * scrolls to the match (`revealMatch.ts`).
        */
       searchStep: (step: 1 | -1) => ReturnType;
       /**
-       * Заменить текущее совпадение — одна правка, одна отмена. Формулы пропускаются:
-       * если текущая — формула, заменяется следующее за ней совпадение с текстом;
-       * заменять нечего — `false`.
+       * Replace the current match: one edit, one undo. Formulas are skipped: if the
+       * current match is a formula, the next text match after it is replaced. If there
+       * is nothing to replace, `false`.
        */
       replaceMatch: (replacement: string) => ReturnType;
       /**
-       * Заменить все совпадения с текстом — одна транзакция, одна отмена. Формулы не
-       * трогаются и остаются совпадениями: счётчик после замены показывает их.
+       * Replace all text matches: one transaction, one undo. Formulas are not touched and
+       * stay matches: the counter after the replacement still counts them.
        */
       replaceAllMatches: (replacement: string) => ReturnType;
-      /** Убрать запрос и подсветку; флажки вернутся к Опциям Инструмента. */
+      /** Clear the query and the highlight; the flags return to the Tool options. */
       clearSearch: () => ReturnType;
     };
   }
 }
 
 export interface SearchExtensionOptions {
-  /** Флажки, с которых стартует поиск и к которым он возвращается: Опции Инструмента. */
+  /** The flags the search starts with and returns to: the Tool options. */
   flags: SearchOptions;
   /**
-   * Открыть панель поиска (`replace` — с фокусом в поле замены). Панель держит
-   * `RichTextEditor`; `false` — панели нет, и `Mod+F` уходит браузеру.
+   * Open the Find panel (`replace`: with focus in the replace field). The panel is held
+   * by `RichTextEditor`. `false` means there is no panel, and `Mod+F` goes to the browser.
    */
   open: (replace: boolean) => boolean;
 }
 
 /**
- * Поиск и замена по Документу: состояние и подсветка в плагине,
- * команды для панели и сочетания. Своей Схемы нет, как у `clearFormatting`.
+ * Find and replace in the Document: the state and the highlight live in the plugin,
+ * along with the commands for the panel and the shortcuts. It has no Schema of its own,
+ * the same as `clearFormatting`.
  *
- * `Mod+F` берётся, только когда фокус в Документе: вне поля браузер ищет по
- * странице как обычно — так у Google Docs и Notion.
+ * `Mod+F` is taken only when focus is in the Document: outside the field the browser
+ * searches the page as usual, as Google Docs and Notion do.
  */
 export const SearchExtension = Extension.create<SearchExtensionOptions>({
   name: "search",
@@ -278,7 +291,7 @@ export const SearchExtension = Extension.create<SearchExtensionOptions>({
           const search = SEARCH_KEY.getState(state);
           const current = search?.matches[search.current];
           if (!search || !current || !editor.isEditable) return false;
-          // Формулы Заменить не трогает: берётся ближайшее совпадение с текстом по кругу.
+          // Replace skips formulas: the nearest text match, wrapping around, is taken.
           const total = search.matches.length;
           const match = [...search.matches.keys()]
             .map((offset) => search.matches[(search.current + offset) % total]!)
@@ -288,7 +301,7 @@ export const SearchExtension = Extension.create<SearchExtensionOptions>({
             if (match !== current)
               tr.setMeta(SEARCH_KEY, { type: "replaced" } satisfies SearchMeta);
             replaceRange(tr, match, replacementFor(match, replacement, search.options));
-            // Каретка — за заменой: текущим станет следующее совпадение.
+            // The caret moves past the replacement, so the next match becomes current.
             tr.setSelection(TextSelection.create(tr.doc, tr.mapping.map(match.to)));
           }
           return true;
@@ -300,7 +313,7 @@ export const SearchExtension = Extension.create<SearchExtensionOptions>({
           const texts = search?.matches.filter((match) => !match.formula) ?? [];
           if (!search || texts.length === 0 || !editor.isEditable) return false;
           if (dispatch) {
-            // С конца: замена не сдвигает ещё не заменённые отрезки.
+            // Back to front: a replacement does not shift the ranges not yet replaced.
             for (const match of texts.reverse()) {
               replaceRange(tr, match, replacementFor(match, replacement, search.options));
             }

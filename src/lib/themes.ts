@@ -1,28 +1,29 @@
 /**
- * Реестр тем кита: какие оси существуют, как привести значение к допустимому и
- * как применить его к документу.
+ * The registry of the kit's themes: which axes exist, how to bring a value to an
+ * allowed one, and how to apply it to the document.
  *
- * Зачем это в ките, а не у потребителя. Оси объявлены в `styles.css`, но наружу
- * до 2.1.0 не отдавались — и каждый потребитель переписывал списки константами
- * у себя. В продукте-потребителе это `["light","dark","dim"]` в одном месте
- * и `value === "violet" ? "violet" : "blue"` в другом; второй проект написал бы
- * их третий раз, и разошлись бы они молча. Решение — ADR-0020.
+ * Why this lives in the kit and not in the consumer. The axes are declared in
+ * `styles.css`, but until 2.1.0 they were not exported, so every consumer rewrote
+ * the lists as constants of its own. In one consumer product that is
+ * `["light","dark","dim"]` in one place and `value === "violet" ? "violet" : "blue"`
+ * in another; a second project would write them a third time, and they would drift
+ * apart silently. The decision is recorded in ADR-0020.
  *
- * Компонента переключателя здесь нет и не будет: `Segmented` уже даёт нужную
- * форму, а кнопка завязана на хранилище и раскладку конкретного приложения.
- * Готовый рецепт — `docs/recipes/theme-switcher.md`.
+ * There is no theme switcher component here, and there will not be one: `Segmented`
+ * already gives the right shape, and a button ties to the storage and layout of a
+ * particular application. The ready-made recipe is `docs/recipes/theme-switcher.md`.
  */
 
 /**
- * Темы. Порядок значим ровно в одном месте — первая считается умолчанием,
- * потому что именно она живёт в `:root` без своего атрибута.
+ * Themes. The order matters in exactly one place: the first one is the default,
+ * because it is the one that lives in `:root` without its own attribute.
  */
 export const UI_THEMES = ["dark", "light", "dim"] as const;
 
-/** Акценты. `blue` — база `:root`, `violet` — оверлей `[data-accent]`. */
+/** Accents. `blue` is the base of `:root`, `violet` is an overlay on `[data-accent]`. */
 export const UI_ACCENTS = ["blue", "violet"] as const;
 
-/** Бренды. `base` — отсутствие оверлея, а не оверлей с таким именем. */
+/** Brands. `base` means no overlay, not an overlay with that name. */
 export const UI_BRANDS = ["base", "teal"] as const;
 
 export type UiTheme = (typeof UI_THEMES)[number];
@@ -35,7 +36,7 @@ export interface UiThemePrefs {
   brand?: UiBrand;
 }
 
-/** Умолчания каждой оси — то состояние, в котором ни один оверлей не задан. */
+/** The defaults of each axis: the state in which no overlay is set. */
 export const DEFAULT_THEME_PREFS: Required<UiThemePrefs> = {
   theme: "dark",
   accent: "blue",
@@ -43,12 +44,12 @@ export const DEFAULT_THEME_PREFS: Required<UiThemePrefs> = {
 };
 
 /**
- * Приведение значения к допустимому.
+ * Coercion of a value to an allowed one.
  *
- * Аргумент типизирован как `unknown` намеренно: единственный интересный вызов —
- * из хранилища, а `localStorage` возвращает что угодно, включая строку от
- * прошлой версии приложения. Функция, принимающая `UiTheme`, защищала бы ровно
- * тот случай, где защита не нужна.
+ * The argument is typed as `unknown` on purpose: the only interesting call comes
+ * from storage, and `localStorage` returns anything, including a string left by an
+ * earlier version of the application. A function that takes `UiTheme` would only
+ * protect the case where no protection is needed.
  */
 function normalize<T extends string>(list: readonly T[], value: unknown, fallback: T): T {
   return list.includes(value as T) ? (value as T) : fallback;
@@ -64,17 +65,17 @@ export const normalizeBrand = (value: unknown): UiBrand =>
   normalize(UI_BRANDS, value, DEFAULT_THEME_PREFS.brand);
 
 /**
- * Выставить оси на элементе — обычно `document.documentElement`.
+ * Set the axes on an element, usually `document.documentElement`.
  *
- * Применяются ВСЕ ТРИ оси, а недоданные берутся из умолчаний: функция задаёт
- * состояние целиком, а не правит одну ось поверх неизвестного текущего.
- * Частичное применение выглядело бы удобнее ровно до первого случая, когда
- * бренд остался от прошлого экрана, и никто не понял почему.
+ * ALL THREE axes are applied, and missing values are taken from the defaults: the
+ * function sets the state as a whole rather than patching one axis over an unknown
+ * current state. Partial application would look more convenient right up to the first
+ * time a brand was left over from a previous screen and nobody understood why.
  *
- * `base` СНИМАЕТ `data-brand`, а не пишет `data-brand="base"`: блока с таким
- * именем в CSS нет, и оставленный атрибут выглядел бы работающим оверлеем.
- * Тот же выбор сделан в декораторе витрины — иначе снимки и приложение
- * расходились бы на пустом месте.
+ * `base` REMOVES `data-brand` rather than writing `data-brand="base"`: there is no
+ * block with that name in the CSS, and a leftover attribute would look like a working
+ * overlay. The showcase decorator makes the same choice; otherwise snapshots and the
+ * application would differ for no reason.
  */
 export function applyTheme(root: HTMLElement, prefs: UiThemePrefs = {}): void {
   root.setAttribute("data-theme", normalizeTheme(prefs.theme));
@@ -86,35 +87,35 @@ export function applyTheme(root: HTMLElement, prefs: UiThemePrefs = {}): void {
 }
 
 /**
- * Строка скрипта, применяющего сохранённую тему ДО первой отрисовки.
+ * A script string that applies the saved theme BEFORE the first render.
  *
- * Возвращается строка, а не выполняется код: куда её вставить, знает фреймворк
- * потребителя, а не кит. В Next это `<Script strategy="beforeInteractive">`, в
- * обычном приложении — `<script>` в шаблоне. Кит остаётся
- * фреймворк-нейтральным и при этом закрывает место, где ошибаются: без раннего
- * применения пользователь видит вспышку чужой темы между отрисовкой и
- * гидратацией.
+ * A string is returned, not code executed: the consumer's framework, not the kit,
+ * knows where to insert it. In Next it is `<Script strategy="beforeInteractive">`;
+ * in a regular application it is a `<script>` in the template. The kit stays
+ * framework-neutral and still covers the spot where people usually go wrong: without
+ * early application the user sees a flash of the wrong theme between rendering and
+ * hydration.
  *
- * Кит здесь начинает отдавать исполняемый JavaScript, и это осознанное
- * расширение его границы — разбор и цена в ADR-0020.
+ * The kit now starts emitting executable JavaScript here, a deliberate extension of
+ * its boundary; the analysis and its cost are in ADR-0020.
  *
- * Формат хранения: JSON-объект `{ theme, accent, brand }` по ключу
- * `storageKey`. Пишет его потребитель, читает этот скрипт; любое поле может
- * отсутствовать или врать — normalize отработает.
+ * Storage format: a JSON object `{ theme, accent, brand }` under the key `storageKey`.
+ * The consumer writes it and this script reads it; any field may be missing or wrong,
+ * and normalize handles that.
  *
- * Списки осей подставляются из констант выше, а не пишутся в шаблоне руками:
- * иначе скрипт разошёлся бы с реестром — тем самым дефектом, ради которого
- * реестр и заведён.
+ * The axis lists are substituted from the constants above, not written into the
+ * template by hand: otherwise the script would drift from the registry, which is
+ * exactly the defect the registry exists to prevent.
  */
 /**
- * Литерал для вставки в ТЕЛО `<script>`.
+ * A literal to insert into the BODY of a `<script>`.
  *
- * `JSON.stringify` закрывает кавычки, но не `<`, а этого мало: значение
- * попадает внутрь тега, и последовательность `</script>` закрывает его на
- * месте — остаток кода вываливается в разметку как текст. Живого XSS здесь
- * нет, ключ задаёт разработчик; но кит генерирует код под
- * `dangerouslySetInnerHTML`, и защита в один символ здесь ставится по
- * умолчанию, а не по факту нападения.
+ * `JSON.stringify` closes the quotes but not `<`, and that is not enough: the value
+ * lands inside a tag, and the sequence `</script>` closes it in place, so the rest of
+ * the code spills into the markup as text. There is no live XSS here, because the
+ * developer sets the key. But the kit generates code for `dangerouslySetInnerHTML`,
+ * so a one-character guard is applied here by default, not in response to an actual
+ * attack.
  */
 const scriptLiteral = (value: string) => JSON.stringify(value).replace(/</g, "\\u003c");
 
@@ -125,11 +126,11 @@ export function themeInitScript({ storageKey }: { storageKey: string }): string 
   const d = DEFAULT_THEME_PREFS;
 
   //
-  // `try` обнимает ТОЛЬКО чтение и разбор — то единственное, что здесь умеет
-  // бросить: `localStorage` недоступен в приватном режиме, а в ключе может
-  // лежать что угодно от прошлой версии приложения. Общий `try` вокруг всего
-  // тела выглядел бы осторожнее, но при битом JSON не выставлял бы НИ ОДНОГО
-  // атрибута, и документ оставался бы без осей вовсе — тест поймал ровно это.
+  // `try` wraps ONLY the reading and parsing, the only things here that can throw:
+  // `localStorage` is unavailable in private mode, and the key may hold anything left
+  // by an earlier version of the application. A single `try` around the whole body
+  // would look more careful, but on broken JSON it would set NO attribute at all, and
+  // the document would be left with no axes. The test caught exactly that.
   return (
     `(function(){` +
     `var r=document.documentElement,p={};` +

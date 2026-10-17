@@ -2,62 +2,63 @@ import type { Key, SortDescriptor } from "react-aria-components";
 import type { Density } from "./variants.js";
 
 /**
- * Контракт состояния таблицы и его перенос в адрес.
+ * The table state contract and its transfer to the address.
  *
- * Модуль намеренно БЕЗ `"use client"`: разбор адреса нужен и на сервере — в
- * Next.js состояние восстанавливается из `searchParams` до отрисовки. Хук
- * `useTableState` — React-обвязка поверх этих же типов.
+ * The module is deliberately WITHOUT `"use client"`: parsing the address is needed on
+ * the server too. In Next.js the state is restored from `searchParams` before
+ * rendering. The `useTableState` hook is a React wrapper over these same types.
  */
 
 /**
- * Применённый фильтр.
+ * An applied filter.
  *
- * У токена СВОЙ идентификатор, а не пара «поле + значение», и это не
- * педантизм: два фильтра по одному полю дают одинаковые на вид токены, и снять
- * нужный станет нечем. Подпись источником правды тоже не является — она
- * локализуется и обрезается, а снимать по обрезанной подписи нельзя.
+ * A token has ITS OWN identifier, not a "field + value" pair, and this is not
+ * pedantry: two filters on the same field produce tokens that look alike, and there
+ * would be no way to remove the right one. The label is not the source of truth
+ * either: it is localized and truncated, and a removal cannot be keyed on a truncated
+ * label.
  *
- * Операторов здесь нет намеренно (ADR-0023, ADR-0063): без `to` токен означает
- * равенство, с `to` — диапазон `value…to`. `gte` и `lte` — тот же диапазон с
- * пустой границей, поэтому отдельной оси не заводится. `contains` и `in`
- * по-прежнему ждут своего заказчика, а не догадки.
+ * There are no operators here on purpose (ADR-0023, ADR-0063): without `to` a token
+ * means equality, and with `to` it means the range `value…to`. `gte` and `lte` are the
+ * same range with an empty bound, so no separate axis is added. `contains` and `in`
+ * still wait for a real requester, not guesses.
  */
 export interface TableFilter {
   id: string;
-  /** Поле данных. Как оно называется на сервере, решает потребитель. */
+  /** The data field. What it is called on the server is up to the consumer. */
   field: string;
   /**
-   * Значение — или нижняя граница диапазона, если задано `to`. Для диапазона
-   * пустая строка значит «снизу не ограничено».
+   * The value, or the lower bound of the range if `to` is set. For a range, an empty
+   * string means "no lower bound".
    */
   value: string;
   /**
-   * Верхняя граница диапазона. **Не задано — токен равенства; пустая строка —
-   * диапазон без верха** («от 50»). Различие несёт сам факт наличия ключа,
-   * поэтому проверять его надо через `!== undefined`, а не по истинности.
-   * Числа и даты ходят строками: ISO-даты `ГГГГ-ММ-ДД`, как везде в ките.
+   * The upper bound of the range. **Not set: an equality token. An empty string: a
+   * range with no upper bound** ("from 50"). The difference is carried by the key's
+   * presence itself, so check it with `!== undefined`, not by truthiness. Numbers and
+   * dates travel as strings: ISO dates `YYYY-MM-DD`, as everywhere in the kit.
    */
   to?: string;
-  /** Что показать в токене. Нет — потребитель покажет `field: value`. */
+  /** What to show in the token. If absent, the consumer shows `field: value`. */
   label?: string;
 }
 
 export interface TableState {
-  /** Не задана — таблица не отсортирована; ось сортировки не включается. */
+  /** Not set: the table is not sorted, and the sort axis is not enabled. */
   sort?: SortDescriptor;
-  /** Нумерация с единицы: так же считает `Pagination`. */
+  /** Numbering starts at one, the same way `Pagination` counts. */
   page: number;
   pageSize: number;
   selectedKeys: Set<Key>;
   expandedKeys: Set<Key>;
   filters: TableFilter[];
-  /** Порядок колонок идентификаторами. Пустой — порядок объявления. */
+  /** Column order by identifiers. Empty means declaration order. */
   columnOrder: string[];
   hiddenColumns: Set<string>;
   density: Density;
 }
 
-/** Умолчания состояния, кроме плотности: её даёт провайдер. */
+/** State defaults, except density: the provider supplies that. */
 export const DEFAULT_TABLE_STATE: Omit<TableState, "density"> = {
   page: 1,
   pageSize: 25,
@@ -79,18 +80,18 @@ const PARAM = {
 } as const;
 
 /**
- * Части фильтра кодируются по отдельности: `:` внутри значения не помешает.
+ * Filter parts are encoded separately, so a `:` inside a value does not break things.
  *
- * Подпись едет ЧЕТВЁРТОЙ частью. Раньше кодировались только три, и `label`
- * терялся: `FilterBarAdd` всегда проставляет его («Раздел: Договоры»), а
- * пользователь, скопировавший ссылку и открывший её заново, видел
- * «section: contracts» — сырые идентификаторы бэкенда вместо человеческой
- * подписи. Round-trip-тест этого не ловил, потому что брал фильтры без `label`.
+ * The label travels as the FOURTH part. Previously only three parts were encoded, and
+ * `label` was lost: `FilterBarAdd` always sets it ("Section: Contracts"), and a user
+ * who copied the link and opened it again saw "section: contracts" — the raw backend
+ * identifiers instead of the human label. A round-trip test did not catch this,
+ * because it used filters without `label`.
  *
- * Верхняя граница диапазона едет ПЯТОЙ частью (ADR-0063). Её присутствие и
- * есть признак диапазона, поэтому пустая пятая часть пишется, а не
- * опускается: «от 50» иначе стало бы равенством «= 50». У равенства пятой
- * части нет, и его адрес остался прежним.
+ * The upper bound of a range travels as the FIFTH part (ADR-0063). Its presence is
+ * itself the mark of a range, so an empty fifth part is written rather than dropped:
+ * "from 50" would otherwise become the equality "= 50". An equality has no fifth
+ * part, and its address stayed the same.
  */
 const encodeFilter = (f: TableFilter) => {
   const parts = [f.id, f.field, f.value, f.label ?? ""];
@@ -99,13 +100,13 @@ const encodeFilter = (f: TableFilter) => {
 };
 
 /**
- * `decodeURIComponent`, не бросающий на битой escape-последовательности.
+ * A `decodeURIComponent` that does not throw on a broken escape sequence.
  *
- * `URLSearchParams` уже раскодировал параметр один раз, поэтому `%25zz`
- * приходит сюда как `%zz` — незавершённая последовательность, на которой
- * штатный `decodeURIComponent` бросает `URIError`. Раньше он бросал его прямо
- * в `tableStateFromParams`, а модуль намеренно без `"use client"` и зовётся на
- * сервере из `searchParams`: один символ `%` в ссылке давал 500 на маршруте.
+ * `URLSearchParams` has already decoded the parameter once, so `%25zz` arrives here
+ * as `%zz`, an incomplete sequence on which the standard `decodeURIComponent` throws a
+ * `URIError`. It used to throw right inside `tableStateFromParams`, and the module is
+ * deliberately without `"use client"` and is called on the server from `searchParams`:
+ * a single `%` character in a link produced a 500 on the route.
  */
 function decodeOrNull(part: string): string | null {
   try {
@@ -117,13 +118,12 @@ function decodeOrNull(part: string): string | null {
 
 function decodeFilter(raw: string): TableFilter | null {
   const parts = raw.split(":");
-  // Три части — ссылка, сохранённая до волны 26: подписи там нет, и это не
-  // повод отбросить фильтр. Пять — диапазон (ADR-0063); четыре и три читаются
-  // как раньше.
+  // Three parts: a link saved before wave 26. It has no label, and that is no reason
+  // to drop the filter. Five: a range (ADR-0063). Four and three are read as before.
   if (parts.length < 3 || parts.length > 5) return null;
   const decoded = parts.map(decodeOrNull);
-  // Битая часть отбраковывает фильтр целиком — так же, как это уже делает
-  // неверное число частей. Отбрасывается один токен, не весь разбор.
+  // A broken part rejects the whole filter, the same way a wrong number of parts
+  // already does. Only one token is dropped, not the whole parse.
   if (decoded.some((part) => part == null)) return null;
   const [id, field, value, label, to] = decoded as [
     string,
@@ -140,15 +140,15 @@ function decodeFilter(raw: string): TableFilter | null {
 }
 
 /**
- * Состояние → параметры адреса.
+ * State → address parameters.
  *
- * **Умолчания не пишутся.** Иначе ссылка на первую страницу без фильтров
- * обрастает шестью параметрами, и скопировать её человеку неудобно.
+ * **Defaults are not written.** Otherwise a link to the first page without filters
+ * grows six parameters, and it becomes awkward for a person to copy.
  *
- * **Выделение и раскрытие в адрес не идут**, хотя спека называла выделение
- * среди состояния. Причины две: список ключей ничем не ограничен по длине, и
- * ссылка с выделением, открытая назавтра, отмечает записи, которых уже нет.
- * Выделение — состояние сеанса, а не адреса.
+ * **Selection and expansion do not go into the address**, although the spec listed
+ * selection as part of the state. There are two reasons: the list of keys has no
+ * length limit, and a link with a selection, opened the next day, would mark records
+ * that no longer exist. Selection is session state, not address state.
  */
 export function tableStateToParams(state: Partial<TableState>): URLSearchParams {
   const params = new URLSearchParams();
@@ -175,11 +175,12 @@ export function tableStateToParams(state: Partial<TableState>): URLSearchParams 
 }
 
 /**
- * Параметры адреса → состояние.
+ * Address parameters → state.
  *
- * Возвращает ЧАСТЬ состояния: адрес несёт не всё, и недостающее берётся из
- * умолчаний вызывающего. Мусор не роняет разбор и не даёт сломанного
- * состояния — адрес приходит от пользователя, а он правит его руками.
+ * Returns PART of the state: the address does not carry everything, and the missing
+ * parts come from the caller's defaults. Garbage does not break parsing and does not
+ * produce a broken state, because the address comes from the user, who edits it by
+ * hand.
  */
 export function tableStateFromParams(params: URLSearchParams): Partial<TableState> {
   const state: Partial<TableState> = {};
@@ -196,8 +197,8 @@ export function tableStateFromParams(params: URLSearchParams): Partial<TableStat
       };
   }
 
-  // `Number` на мусоре даёт `NaN`, а на «-3» — отрицательную страницу: обе
-  // ведут к пустому экрану, который пользователь прочтёт как «ничего нет».
+  // `Number` on garbage gives `NaN`, and on "-3" a negative page. Both lead to an
+  // empty screen that the user will read as "nothing here".
   const page = Number(params.get(PARAM.page));
   if (Number.isInteger(page) && page > 0) state.page = page;
 
@@ -223,17 +224,16 @@ export function tableStateFromParams(params: URLSearchParams): Partial<TableStat
 }
 
 /**
- * Упорядочить колонки по списку идентификаторов.
+ * Order columns by a list of identifiers.
  *
- * Список — **префикс, а не полный перечень**. Не названные в нём колонки
- * встают следом в порядке объявления, а неизвестные идентификаторы
- * пропускаются.
+ * The list is a **prefix, not a full enumeration**. Columns it does not name follow
+ * in declaration order, and unknown identifiers are skipped.
  *
- * Иначе порядок, пришедший из адреса, молча выбрасывал бы колонки: ссылка,
- * сохранённая до появления новой колонки, показывала бы урезанную таблицу — и
- * выглядело бы это как рабочая таблица, а не как ошибка. Ровно это ловится
- * тестом; поведение общее для `DataTable` и `TablePreferences`, поэтому живёт
- * здесь, а не двумя копиями.
+ * Otherwise an order that arrived from the address would silently drop columns: a
+ * link saved before a new column appeared would show a truncated table, and it would
+ * look like a working table rather than an error. A test catches exactly this. The
+ * behavior is shared by `DataTable` and `TablePreferences`, so it lives here, not in
+ * two copies.
  */
 export function orderColumns<T extends { id: string }>(columns: T[], order: string[]): T[] {
   if (order.length === 0) return columns;
@@ -246,17 +246,17 @@ export function orderColumns<T extends { id: string }>(columns: T[], order: stri
     return [column];
   });
 
-  // Остаток — в порядке объявления: он и есть умолчание.
+  // The remainder goes in declaration order: that is the default.
   return [...listed, ...columns.filter((c) => byId.has(c.id))];
 }
 
 /**
- * Отсеять скрытые колонки, не доводя таблицу до нуля.
+ * Filter out hidden columns without taking the table to zero.
  *
- * Панель настроек снять последнюю видимую не даёт, но состояние приходит и из
- * адреса, где такой охраны нет: `?hide=` со всеми колонками давал таблицу без
- * единого заголовка. Пустая таблица — не состояние интерфейса, а поломка,
- * поэтому скрытие целиком игнорируется.
+ * The settings panel does not let you hide the last visible column, but the state
+ * also comes from the address, where no such guard exists: `?hide=` with all the
+ * columns gave a table with no headers at all. An empty table is not a UI state but a
+ * breakage, so hiding everything is ignored.
  */
 export function visibleColumns<T extends { id: string }>(columns: T[], hidden: Set<string>): T[] {
   const visible = columns.filter((c) => !hidden.has(c.id));

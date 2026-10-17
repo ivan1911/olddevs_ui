@@ -8,27 +8,27 @@ interface Band {
 }
 
 /**
- * Показать текущее совпадение поиска.
+ * Show the current search match.
  *
- * ПОЧЕМУ НЕ `tr.scrollIntoView()`. ProseMirror прокручивает к выделению, только
- * когда выделение браузера стоит внутри Документа, а при переходе по совпадениям
- * фокус остаётся в поле поиска — прокрутка молча пропускалась. Поэтому панель
- * показывает узел подсветки сама.
+ * WHY NOT `tr.scrollIntoView()`. ProseMirror scrolls to the selection only when the
+ * browser selection is inside the Document. While the user moves between matches, focus
+ * stays in the search field, so that scroll was silently skipped. The panel therefore
+ * scrolls the highlight node itself.
  *
- * СВОБОДНАЯ ОБЛАСТЬ — окно, суженное прокручиваемыми предками совпадения (поле с
- * `maxHeight` или `resizable`, контейнер экрана) и тем, что лежит поверх
- * Документа: липкой Панелью и самой панелью поиска, если она перекрывает
- * совпадение по горизонтали. Если под ними не остаётся и строки (низкое поле с
- * `maxHeight`), панель не учитывается: совпадение хотя бы в поле.
+ * FREE AREA — the window narrowed by the scrollable ancestors of the match (a field with
+ * `maxHeight` or `resizable`, the screen container) and by whatever lies on top of the
+ * Document: the sticky Toolbar and the Find panel itself, if it overlaps the match
+ * horizontally. If no room is left under them even for one line (a short field with
+ * `maxHeight`), the panel is not counted: the match is at least inside the field.
  *
- * Видимое целиком совпадение не двигается — переход между соседними строками
- * не дёргает страницу. Невидимое встаёт посередине свободной области, как у
- * поиска Chrome. Не `scrollIntoView({ block: "center" })`: тот центрирует по
- * прокручиваемому предку целиком и ставит совпадение ровно под панель поиска.
- * Сдвиг раздаётся по цепочке: сначала поле, остаток — окну.
+ * A match that is fully visible does not move, so stepping between neighboring lines
+ * does not jerk the page. An invisible one is placed in the middle of the free area, as
+ * Chrome's find does. Not `scrollIntoView({ block: "center" })`: that centers within the
+ * whole scrollable ancestor and puts the match exactly under the Find panel. The shift is
+ * distributed along the chain: the field first, the rest goes to the window.
  *
- * @param documentRoot корень Документа движка (`editor.view.dom`)
- * @param overlays элементы поверх Документа: панель поиска и её липкий родитель
+ * @param documentRoot root of the engine's Document (`editor.view.dom`)
+ * @param overlays elements on top of the Document: the Find panel and its sticky parent
  */
 export function revealCurrentMatch(
   documentRoot: HTMLElement,
@@ -70,14 +70,14 @@ export function revealCurrentMatch(
   }
 }
 
-/** Что лежит поверх Документа у каждого поля: панель поиска, пока она открыта. */
+/** What lies on top of each field's Document: the Find panel while it is open. */
 const overlayProviders = new WeakMap<Editor, () => readonly (Element | null | undefined)[]>();
 const frames = new WeakMap<Editor, number>();
 
 /**
- * Панель поиска сообщает, что лежит поверх Документа, пока открыта. Команды
- * Инструмента (`next`, `previous`, `setQuery`) живут вне панели, но должны
- * обходить её так же. Возвращает снятие регистрации.
+ * The Find panel reports what lies on top of the Document while it is open. The Tool
+ * commands (`next`, `previous`, `setQuery`) live outside the panel but must skip those
+ * elements the same way. Returns the unregister function.
  */
 export function registerSearchOverlays(
   editor: Editor,
@@ -90,10 +90,9 @@ export function registerSearchOverlays(
 }
 
 /**
- * Показать текущее совпадение кадром позже, когда панель уже разложена. Вызовы
- * одного поля в пределах кадра сливаются в одну прокрутку: панель и команда
- * Инструмента, сработавшие на один переход, не прокручивают дважды. Фокус не
- * трогает.
+ * Show the current match one frame later, once the panel has been laid out. Calls for
+ * the same field within one frame are merged into a single scroll: the panel and a Tool
+ * command that fire on the same move do not scroll twice. Focus is left alone.
  */
 export function scheduleRevealMatch(editor: Editor): void {
   cancelAnimationFrame(frames.get(editor) ?? 0);
@@ -107,7 +106,7 @@ export function scheduleRevealMatch(editor: Editor): void {
   );
 }
 
-/** Отменить отложенную прокрутку (панель закрылась или поле разобрано). */
+/** Cancel a pending scroll (the panel was closed or the field was torn down). */
 export function cancelRevealMatch(editor: Editor): void {
   cancelAnimationFrame(frames.get(editor) ?? 0);
   frames.delete(editor);
