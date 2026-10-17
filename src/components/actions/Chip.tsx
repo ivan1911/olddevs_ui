@@ -69,7 +69,7 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(function Chip(
       // A toggle button: screen readers must announce the state, not only the label.
       aria-pressed={selected}
       className={cn(
-        "inline-flex shrink-0 cursor-pointer items-center rounded-full border font-semibold",
+        "rounded-pill inline-flex shrink-0 cursor-pointer items-center border font-semibold",
         "transition-colors",
         "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",

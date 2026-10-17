@@ -21,7 +21,7 @@
  * ring without the offset would eat into the neighboring tags.
  */
 export const TAG_CLASS =
-  "bg-bg-3 text-fg-1 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm outline-none " +
+  "bg-bg-3 text-fg-1 flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-sm outline-none " +
   "data-[allows-removing]:pr-1 " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent-strong)]";
 

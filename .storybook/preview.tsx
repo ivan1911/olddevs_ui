@@ -22,11 +22,12 @@ import "./preview.css";
 import "react-aria-components";
 
 /**
- * Switching the theme, the accent and the brand.
+ * Switching the theme, the accent, the brand and the radius preset.
  *
  * `withThemeByDataAttribute` from `@storybook/addon-themes` does not fit here: it manages ONE
- * attribute, while there are three axes (`data-theme` × 3, `data-accent` × 2,
- * `data-brand` × 2). So this is a custom decorator plus three buttons in the toolbar.
+ * attribute, while there are four axes (`data-theme` × 3, `data-accent` × 2,
+ * `data-brand` × 2, `data-radius` × 4). So this is a custom decorator plus four buttons in
+ * the toolbar.
  *
  * The attributes are set directly during render, not in `useEffect`: setting them is
  * idempotent, while `useEffect` would produce a frame with the old theme when switching.
@@ -40,6 +41,7 @@ const withThemeAndAccent: Decorator = (Story, context) => {
   const root = document.documentElement;
   root.dataset.theme = String(context.globals.theme);
   root.dataset.accent = String(context.globals.accent);
+  root.dataset.radius = String(context.globals.radius);
   const brand = String(context.globals.brand);
   if (brand === "base") delete root.dataset.brand;
   else root.dataset.brand = brand;
@@ -104,8 +106,22 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    radius: {
+      description: "Corner-shape preset (ADR-0074), independent of the theme",
+      toolbar: {
+        title: "Radius",
+        icon: "component",
+        items: [
+          { value: "none", title: "None" },
+          { value: "small", title: "Small" },
+          { value: "medium", title: "Medium" },
+          { value: "large", title: "Large" },
+        ],
+        dynamicTitle: true,
+      },
+    },
   },
-  initialGlobals: { theme: "dark", accent: "blue", brand: "base" },
+  initialGlobals: { theme: "dark", accent: "blue", brand: "base", radius: "medium" },
   parameters: {
     // Our themes set the background through --surface-app; Storybook's built-in background
     // switcher would override them and show a false picture.

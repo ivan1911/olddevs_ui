@@ -44,7 +44,7 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(functio
     <span
       ref={ref}
       className={cn(
-        "inline-flex items-center rounded-full font-semibold tracking-wider whitespace-nowrap",
+        "rounded-pill inline-flex items-center font-semibold tracking-wider whitespace-nowrap",
         SIZES[size],
         t.bg,
         t.fg,

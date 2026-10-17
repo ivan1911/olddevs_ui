@@ -280,7 +280,7 @@ function keyClassName(key: KeyboardKey) {
   return [
     KEY_CLASS,
     key.wide && "w-14 min-w-14 px-2",
-    (key.action === "symbols" || key.action === "symbolShift") && "w-14 min-w-14 rounded-full px-2",
+    (key.action === "symbols" || key.action === "symbolShift") && "w-14 min-w-14 rounded-pill px-2",
     key.space && "w-[8.75rem] max-w-full flex-none",
     key.icon && "inline-flex items-center justify-center",
   ]

@@ -157,7 +157,8 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle
         onCheckedChange(!checked);
       }}
       className={cn(
-        "relative h-[22px] w-[38px] shrink-0 cursor-pointer rounded-full border",
+        // The track is a pill and follows the `radius` axis; the knob below is a circle in every preset.
+        "rounded-pill relative h-[22px] w-[38px] shrink-0 cursor-pointer border",
         "transition-colors",
         "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",

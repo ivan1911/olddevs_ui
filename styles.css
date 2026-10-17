@@ -154,12 +154,14 @@
   --color-purple: var(--purple);
   --color-purple-soft: var(--purple-soft);
 
+  --radius-2xs: var(--r-2xs);
   --radius-xs: var(--r-xs);
   --radius-sm: var(--r-sm);
   --radius-control: var(--r-control);
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
   --radius-xl: var(--r-xl);
+  --radius-pill: var(--r-pill);
 
   --shadow-1: var(--shadow-1);
   --shadow-2: var(--shadow-2);
@@ -1058,13 +1060,21 @@
     "a step between sm and md" but the corner radius of the controls themselves. It is used by
     the button, the field shell, the Select trigger, the segment and the tooltip; changing it means
     changing the look of the whole product at once, and the name should say so.
+
+    These values are the `medium` preset of the `radius` axis (ADR-0074); the other presets
+    are the `[data-radius]` blocks right after this rule. `--r-2xs` covers the 4px that
+    Tailwind's bare `rounded` used to draw. `--r-pill` is the shape of pills (badge, chip,
+    tag, toggle track): a pill here, a plain corner in `small`, square in `none`. Circles
+    (avatar, spinner, radio) are not on the scale at all: they stay `rounded-full`.
   */
+  --r-2xs: 4px;
   --r-xs: 6px;
   --r-sm: 8px;
   --r-control: 10px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 20px;
+  --r-pill: 9999px;
 
   /* compatibility tokens for the current Tailwind utility layer */
   --bg-0: var(--surface-app);
@@ -1097,6 +1107,78 @@
 
   --purple: var(--accent-alt);
   --purple-soft: var(--accent-alt-soft);
+}
+
+/*
+ * The `radius` axis (ADR-0074): corner-shape presets, independent of the theme.
+ *
+ * The selectors are `[data-radius]` of ANY element, not `:root[data-radius]` like the
+ * accent: a preset on a subtree is part of the contract. That needs the first block.
+ * `@theme` declares `--radius-xs: var(--r-xs)` on `:root`, and a custom property is
+ * resolved where it is declared, so a descendant inherits the computed 6px, not the
+ * reference. Re-binding the bridge on every `[data-radius]` makes the utilities read the
+ * preset of the nearest element that sets one.
+ *
+ * `medium` repeats the `:root` scale in a block of its own: on `<html>` it changes nothing, but on
+ * a subtree inside another preset it has to RESET the steps. Without it, `data-radius="medium"`
+ * inside a `large` page would only re-bind the bridge and inherit `large`.
+ */
+[data-radius] {
+  --radius-2xs: var(--r-2xs);
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-control: var(--r-control);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-pill: var(--r-pill);
+}
+
+[data-radius="medium"] {
+  --r-2xs: 4px;
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-control: 10px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 9999px;
+}
+
+[data-radius="none"] {
+  --r-2xs: 0;
+  --r-xs: 0;
+  --r-sm: 0;
+  --r-control: 0;
+  --r-md: 0;
+  --r-lg: 0;
+  --r-xl: 0;
+  --r-pill: 0;
+}
+
+[data-radius="small"] {
+  --r-2xs: 2px;
+  --r-xs: 3px;
+  --r-sm: 4px;
+  --r-control: 5px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 10px;
+  /* In a strict preset a pill is a plain small corner, as in Radix Themes. */
+  --r-pill: 4px;
+}
+
+[data-radius="large"] {
+  /* `2xs` and `xs` stay near `medium`: they draw the small parts (checkbox, swatch, focus ring),
+     and 8px on a 16px checkbox made it a circle, indistinguishable from a radio. */
+  --r-2xs: 5px;
+  --r-xs: 6px;
+  --r-sm: 12px;
+  --r-control: 14px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-xl: 28px;
+  --r-pill: 9999px;
 }
 
 :root[data-theme="light"] {
@@ -1509,7 +1591,7 @@ html[data-theme="dim"] {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--surface-elevated);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   border: 2px solid var(--surface-app);
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -1535,7 +1617,7 @@ html[data-theme="dim"] {
      it is too dim. */
   outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: var(--r-xs);
 }
 
 [data-disable-focus-ring="true"]:focus-visible {

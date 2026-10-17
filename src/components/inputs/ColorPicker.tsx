@@ -158,7 +158,7 @@ export function ColorPicker({
           >
             {children ?? (
               <>
-                <ColorSwatch className="border-line h-[18px] w-[18px] shrink-0 rounded border" />
+                <ColorSwatch className="border-line rounded-2xs h-[18px] w-[18px] shrink-0 border" />
                 <span className="text-fg-0 text-[13px]">{label}</span>
               </>
             )}
@@ -177,7 +177,7 @@ export function ColorPicker({
             </ColorArea>
 
             <ColorSlider colorSpace="hsb" channel="hue">
-              <SliderTrack className="h-3 w-full rounded-full">
+              <SliderTrack className="rounded-pill h-3 w-full">
                 <ColorThumb className={cn(THUMB_CLASS, "top-1/2")} />
               </SliderTrack>
             </ColorSlider>
@@ -201,9 +201,9 @@ export function ColorPicker({
                     <ColorSwatchPickerItem
                       key={preset}
                       color={preset}
-                      className="focus-visible:outline-accent-strong selected:ring-accent-strong selected:ring-2 selected:ring-offset-1 cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-2"
+                      className="focus-visible:outline-accent-strong selected:ring-accent-strong selected:ring-2 selected:ring-offset-1 rounded-2xs cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2"
                     >
-                      <ColorSwatch className="border-line h-[22px] w-[22px] rounded border" />
+                      <ColorSwatch className="border-line rounded-2xs h-[22px] w-[22px] border" />
                     </ColorSwatchPickerItem>
                   ))}
                 </ColorSwatchPicker>

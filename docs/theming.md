@@ -302,6 +302,90 @@ The axes are independent except in exactly one place: `--accent-strong` is read
 file has the paired block `:root[data-theme="light"][data-accent="violet"]` — it is more
 specific and comes after both.
 
+Shape is a separate axis, `data-radius`, described in [Radius](#radius).
+
+## Radius
+
+The `radius` axis sets how rounded the corners are across the whole kit. It is **shape, not a theme**:
+a theme changes colors, and the radius changes none of them. `dark` with square corners and `light` with
+generous ones are both valid, and the axis is independent of the theme, the accent and the brand.
+
+There are four presets. `medium` is the default and matches how the kit looked before the axis
+existed, so an app that sets nothing changes nothing. The one exception is `SelectionBar` and
+`ContextualSaveBar`: their 14px corners were off the scale and now use the `lg` step, 16px.
+
+| Preset   | `2xs` | `xs` | `sm` | `control` | `md` | `lg` | `xl` | `pill` |
+| -------- | ----- | ---- | ---- | --------- | ---- | ---- | ---- | ------ |
+| `none`   | 0     | 0    | 0    | 0         | 0    | 0    | 0    | 0      |
+| `small`  | 2     | 3    | 4    | 5         | 6    | 8    | 10   | 4      |
+| `medium` | 4     | 6    | 8    | 10        | 12   | 16   | 20   | 9999   |
+| `large`  | 5     | 6    | 12   | 14        | 18   | 24   | 28   | 9999   |
+
+Values are in pixels. `large` keeps `2xs` and `xs` close to `medium` on purpose: small details such as a
+checkbox or a color swatch stop reading as what they are when their corners grow with the containers.
+`pill` is the shape of badges, chips, tags and the Toggle track: a full pill in `medium` and `large`, a plain
+small corner in `small`, square in `none`.
+
+Circles do not follow the axis. Avatar, Spinner, Radio and the Timeline dots stay round in every preset.
+
+### Setting the preset
+
+Put `data-radius` on `<html>`, as with the accent:
+
+```html
+<html data-theme="dark" data-radius="small"></html>
+```
+
+The attribute works on **any element**, so a subtree can have its own shape:
+
+```html
+<section data-radius="none">…</section>
+```
+
+Components inside read the preset of the nearest ancestor that sets one, and `data-radius="medium"` on a
+subtree resets an ancestor's preset back to the default.
+
+Overlays are the exception. Popovers, menus, dialogs, tooltips and the Select list render into
+`document.body` by default, outside the subtree, so they take the preset of `<html>`. To keep them in
+the subtree's shape, set the preset on `<html>` instead, or point `portalContainer` of `UiProvider` at an
+element inside the subtree.
+
+In code, use the registry from [api/utilities.md](api/utilities.md): `UI_RADII` lists the presets,
+`normalizeRadius` turns any value (storage, a query string) into a valid one, and `applyTheme` and
+`themeInitScript` handle the axis together with the others. The field in storage is called `radius`.
+`applyTheme` sets the state as a whole, so a call without `radius` writes `medium`; pass the field
+every time, like the theme:
+
+```ts
+import { applyTheme, normalizeRadius } from "@olddevs/ui";
+
+applyTheme(document.documentElement, { theme: "dark", radius: normalizeRadius("small") });
+```
+
+A brand block may override the `--r-*` steps like any other token. On `<html>` it takes precedence over the
+preset, because `:root[data-brand]` is more specific than `[data-radius]`; a subtree with its own
+`data-radius` still gets the preset's values. Use it to adjust one step; to change the whole shape, set a
+preset. Do not override the steps in a plain `:root { … }` block: it has the same specificity as a preset
+block, so the result depends on which stylesheet loads last.
+
+### Rounding in new components
+
+Pick the corner from the scale. There are three options, and a number is not one of them:
+
+- a scale step: `rounded-2xs`, `rounded-xs`, `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-xl`, or
+  `rounded-control` for the corner of controls themselves (buttons, fields, the Select trigger);
+- `rounded-pill` for a pill;
+- `rounded-full` only for a real circle.
+
+Do not write `rounded-[10px]`, a bare `rounded` or a `border-radius` in pixels: such a corner ignores the
+preset and stays the same in every one. `rounded-full` on a pill is the same mistake in another form, because
+the pill would stay a pill in `none`.
+
+The guard is `tests/radius-scale.test.ts`. It checks that every preset defines every step and that no
+source file or `styles.css` sets a radius off the scale. Text marks in the Editor (the search match
+highlight and the table of contents stroke) are named exceptions, and the test checks that each exception
+still exists.
+
 ## How to add a brand
 
 A brand is **one block of CSS**. No component is edited; if

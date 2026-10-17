@@ -177,7 +177,7 @@ test("?123 shows Russian symbols and returns to letters", async () => {
 
   const symbols = screen.getByRole("button", { name: "Show symbols" });
   expect(symbols.className).toContain("w-14");
-  expect(symbols.className).toContain("rounded-full");
+  expect(symbols.className).toContain("rounded-pill");
   await user.click(symbols);
 
   const letters = screen.getByRole("button", { name: "Show Russian letters" });

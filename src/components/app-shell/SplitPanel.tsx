@@ -343,7 +343,7 @@ export function SplitPanel({
           {/* The grip: the only thing that distinguishes the strip from a plain border. */}
           <span
             aria-hidden
-            className={cn("bg-fg-1 rounded-full", side ? "h-7 w-0.5" : "h-0.5 w-7")}
+            className={cn("bg-fg-1 rounded-pill", side ? "h-7 w-0.5" : "h-0.5 w-7")}
           />
           <input
             ref={slider}

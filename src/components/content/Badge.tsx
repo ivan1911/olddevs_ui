@@ -61,13 +61,14 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full font-semibold",
+        "inline-flex shrink-0 items-center justify-center font-semibold",
         t.solid,
+        // A dot is a circle in every preset; a counter is a pill and follows the `radius` axis.
         dot
-          ? "size-2"
+          ? "size-2 rounded-full"
           : // Minimum width equals height: a counter showing "1" has to be a circle,
             // not a narrow pill, otherwise a row of badges looks ragged.
-            "text-caption h-4 min-w-4 px-1",
+            "text-caption rounded-pill h-4 min-w-4 px-1",
         // Overlay is absolute positioning in the corner of a sibling; a ring in the
         // background color separates the badge from the icon underneath it.
         overlay && "ring-bg-1 absolute -top-1 -right-1 ring-2",

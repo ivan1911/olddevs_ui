@@ -440,7 +440,7 @@ describe("panel anchor", () => {
     ) {
       const w = this.matches("button[aria-haspopup]")
         ? 100
-        : this.matches("span.rounded-full")
+        : this.matches("span.rounded-pill")
           ? 200
           : 0;
       return {

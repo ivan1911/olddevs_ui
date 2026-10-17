@@ -26,14 +26,23 @@ export const UI_ACCENTS = ["blue", "violet"] as const;
 /** Brands. `base` means no overlay, not an overlay with that name. */
 export const UI_BRANDS = ["base", "teal"] as const;
 
+/**
+ * Corner-shape presets (ADR-0074). Shape, not color: the axis is independent of the theme,
+ * the accent and the brand. `medium` is the scale of `:root`, the others are overlays on
+ * `[data-radius]` of any element, so a preset also works on a subtree.
+ */
+export const UI_RADII = ["medium", "none", "small", "large"] as const;
+
 export type UiTheme = (typeof UI_THEMES)[number];
 export type UiAccent = (typeof UI_ACCENTS)[number];
 export type UiBrand = (typeof UI_BRANDS)[number];
+export type UiRadius = (typeof UI_RADII)[number];
 
 export interface UiThemePrefs {
   theme?: UiTheme;
   accent?: UiAccent;
   brand?: UiBrand;
+  radius?: UiRadius;
 }
 
 /** The defaults of each axis: the state in which no overlay is set. */
@@ -41,6 +50,7 @@ export const DEFAULT_THEME_PREFS: Required<UiThemePrefs> = {
   theme: "dark",
   accent: "blue",
   brand: "base",
+  radius: "medium",
 };
 
 /**
@@ -64,10 +74,13 @@ export const normalizeAccent = (value: unknown): UiAccent =>
 export const normalizeBrand = (value: unknown): UiBrand =>
   normalize(UI_BRANDS, value, DEFAULT_THEME_PREFS.brand);
 
+export const normalizeRadius = (value: unknown): UiRadius =>
+  normalize(UI_RADII, value, DEFAULT_THEME_PREFS.radius);
+
 /**
  * Set the axes on an element, usually `document.documentElement`.
  *
- * ALL THREE axes are applied, and missing values are taken from the defaults: the
+ * ALL FOUR axes are applied, and missing values are taken from the defaults: the
  * function sets the state as a whole rather than patching one axis over an unknown
  * current state. Partial application would look more convenient right up to the first
  * time a brand was left over from a previous screen and nobody understood why.
@@ -80,6 +93,7 @@ export const normalizeBrand = (value: unknown): UiBrand =>
 export function applyTheme(root: HTMLElement, prefs: UiThemePrefs = {}): void {
   root.setAttribute("data-theme", normalizeTheme(prefs.theme));
   root.setAttribute("data-accent", normalizeAccent(prefs.accent));
+  root.setAttribute("data-radius", normalizeRadius(prefs.radius));
 
   const brand = normalizeBrand(prefs.brand);
   if (brand === "base") root.removeAttribute("data-brand");
@@ -99,7 +113,7 @@ export function applyTheme(root: HTMLElement, prefs: UiThemePrefs = {}): void {
  * The kit now starts emitting executable JavaScript here, a deliberate extension of
  * its boundary; the analysis and its cost are in ADR-0020.
  *
- * Storage format: a JSON object `{ theme, accent, brand }` under the key `storageKey`.
+ * Storage format: a JSON object `{ theme, accent, brand, radius }` under the key `storageKey`.
  * The consumer writes it and this script reads it; any field may be missing or wrong,
  * and normalize handles that.
  *
@@ -123,6 +137,7 @@ export function themeInitScript({ storageKey }: { storageKey: string }): string 
   const t = JSON.stringify(UI_THEMES);
   const a = JSON.stringify(UI_ACCENTS);
   const b = JSON.stringify(UI_BRANDS);
+  const rd = JSON.stringify(UI_RADII);
   const d = DEFAULT_THEME_PREFS;
 
   //
@@ -138,6 +153,7 @@ export function themeInitScript({ storageKey }: { storageKey: string }): string 
     `var n=function(l,v,f){return l.indexOf(v)===-1?f:v};` +
     `r.setAttribute("data-theme",n(${t},p.theme,${JSON.stringify(d.theme)}));` +
     `r.setAttribute("data-accent",n(${a},p.accent,${JSON.stringify(d.accent)}));` +
+    `r.setAttribute("data-radius",n(${rd},p.radius,${JSON.stringify(d.radius)}));` +
     `var b=n(${b},p.brand,${JSON.stringify(d.brand)});` +
     `if(b==="base"){r.removeAttribute("data-brand")}else{r.setAttribute("data-brand",b)}` +
     `})();`

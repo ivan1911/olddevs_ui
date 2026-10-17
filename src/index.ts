@@ -25,13 +25,15 @@ export {
   DEFAULT_THEME_PREFS,
   normalizeAccent,
   normalizeBrand,
+  normalizeRadius,
   normalizeTheme,
   themeInitScript,
   UI_ACCENTS,
   UI_BRANDS,
+  UI_RADII,
   UI_THEMES,
 } from "./lib/themes.js";
-export type { UiAccent, UiBrand, UiTheme, UiThemePrefs } from "./lib/themes.js";
+export type { UiAccent, UiBrand, UiRadius, UiTheme, UiThemePrefs } from "./lib/themes.js";
 
 export { Alert } from "./components/actions/Alert.js";
 export type { AlertProps } from "./components/actions/Alert.js";
