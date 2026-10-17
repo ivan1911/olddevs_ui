@@ -45,7 +45,7 @@ export interface EditorExtensionOptions {
    */
   detailsToggle: (text: string) => string;
   /**
-   * Quote set of the message catalog language (`UiMessages.editor.typographyQuotes`) for the
+   * Quotation marks for the message catalog language (`UiMessages.editor.typographyQuotes`) for the
    * `typography` Tool with the `quotes: "auto"` option. Read on every quote typed: a catalog
    * change does not recreate the engine.
    */
@@ -88,7 +88,7 @@ export interface EditorExtensionOptions {
 /**
  * `Alt+F10` moves focus from the Document to the Toolbar. CKEditor, TinyMCE and Google Docs work
  * this way (`Alt+F10` / `Alt+/`): the WAI-ARIA APG has no shortcut of its own, and keyboard users
- * are better served by one shortcut across editors than by a different one in each. Tab does not
+ * are more familiar with one shortcut across editors than with a different one in each. Tab does not
  * work for this: inside the Document it moves a list item.
  */
 const ToolbarFocus = Extension.create<{ focus: () => boolean }>({
@@ -240,7 +240,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
 
 /**
  * The extension set is the Schema in code: what is not registered here, ProseMirror cannot parse
- * from `value` or from the clipboard. The allowlist as DATA, matching the full set, lives in
+ * from `value` or from the clipboard. The allowlist as data, matching the full set, lives in
  * `schema.ts`.
  *
  * A DISABLED TOOL IS A DISABLED EXTENSION. Along with the node or Mark go its keyboard shortcut, its

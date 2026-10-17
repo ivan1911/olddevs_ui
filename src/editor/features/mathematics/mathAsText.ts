@@ -76,7 +76,7 @@ class FormulaTextParser extends ProseMirrorParser {
 }
 
 /**
- * The Schema reads formulas as text: it is set on the Schema of a `tools` list without
+ * The Schema reads formulas as text: it is applied to the Schema of a `tools` list without
  * `mathematics`.
  */
 export function readFormulasAsText(schema: Schema): void {

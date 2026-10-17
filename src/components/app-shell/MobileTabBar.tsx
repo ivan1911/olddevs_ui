@@ -131,7 +131,7 @@ interface MobileTabBarItemBaseProps extends Omit<ComponentPropsWithoutRef<"a">, 
  *
  * BUILT-IN — a number, `true`, or a string. A number shows a counter (above 99, "99+"), `true`
  * shows a dot for "new", and a string shows a short label in the same pill as `Badge`. `0`, `false`
- * and an empty string show nothing: an item with no news must not carry an empty dot. The position,
+ * and an empty string show nothing: an item with nothing new must not carry an empty dot. The position,
  * the limit and the text for screen readers are decided by the component: on a tab the badge sits
  * over the icon.
  *

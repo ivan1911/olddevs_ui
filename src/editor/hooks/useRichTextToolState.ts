@@ -89,11 +89,11 @@ function sameValue(a: unknown, b: unknown): boolean {
  * is compared the same way: `(state) => state.total` subscribes the screen to a single number.
  *
  * `null` is returned before mount and in the screen's first render, on the server, and when the
- * Tool is not in the `tools` set: the `toc` presets do not include it, and it is enabled by name
+ * Tool is not in the `tools` set: the presets do not include `toc`, and it is enabled by name
  * or by the `tool("toc")` entry. The selector is not called on `null`. The same `ref` is passed to
  * `RichTextEditor`.
  *
- * The snapshot is data without DOM nodes or ProseMirror positions, and it should not be modified.
+ * The snapshot is data without DOM nodes or ProseMirror positions, and there is no need to modify it.
  * The hook is not part of the starting graph of `RichTextEditor`: its cost falls only on the screen
  * that imported it.
  *

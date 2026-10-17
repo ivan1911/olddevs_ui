@@ -18,7 +18,7 @@ export interface ErrorStateProps {
    * Heading of the error state: a general phrase above the explanation.
    *
    * The default comes from the message catalog (`errorState.title`). In the Russian catalog
-   * it reads "Failed to load" (an English stand-in for the original phrase; all four front-end
+   * it reads "Loading error" (a gloss of the Russian phrase; all four front-end
    * places used exactly these words). Without a provider, it is the English string.
    */
   title?: string;

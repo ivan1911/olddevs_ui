@@ -75,12 +75,12 @@ export const RICH_TEXT_SCHEMA = {
    * `playlist?list=`; Twitch: `www.twitch.tv` and `clips.twitch.tv`). Short forms (`youtu.be`),
    * an address without `www.`, `http`, and player addresses do not pass (`isVideoSrc`). Inside
    * is an ordinary link. There is no player in the Document, and `iframe` is still removed: the
-   * kit draws the player when the Document is shown.
+   * kit renders the player when the Document is shown.
    *
    * Formulas: `span[data-type="inline-math"]` inline and `div[data-type="block-math"]` as a Block,
    * with the LaTeX source in `data-latex` (ADR-0070). Both elements are always empty: the
    * rendered KaTeX markup does not get into the Document. The Editor and the `RichTextView`
-   * Island draw it. The `data-type` and `data-latex` pair is allowed only on these two tags;
+   * Island render it. The `data-type` and `data-latex` pair is allowed only on these two tags;
    * `data-latex` is the only attribute value where `<` is allowed.
    *
    * A table is `table > tbody > tr > th|td`, without `thead`, `colgroup` or `caption`: a header
@@ -794,7 +794,7 @@ function customRulesOf(
 }
 
 /**
- * An attribute of a custom element: `true` and `false` are a decision. `undefined` means it is up
+ * An attribute of a custom element: `true` and `false` decide it. `undefined` means it is up
  * to the kit's rules. A custom element can carry only `data-block`, `data-mark`, and its own
  * `data-<name>` per its rules. The kit's attributes (`data-color`, `style`) are foreign there.
  */

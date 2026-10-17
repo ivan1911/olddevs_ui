@@ -39,8 +39,8 @@ function toNodes(nodes: readonly HighlightNode[]): ReactNode[] {
  *
  * The language follows the Editor's rules (`codeLanguages.ts`): case, spaces and aliases do not
  * matter. An unknown language or empty code gives `null`, not the code as a string. Then the
- * `children` of `CodeView` is empty, and it draws the code as is, without the line numbering that
- * the markup would have given it.
+ * `children` of `CodeView` is empty, and it renders the code as is, with line numbers, which
+ * the markup would not have.
  *
  * ROOT WITH A MARKER AND A THEME. The tokens are wrapped in one `span` with the
  * `data-code-highlight` attribute and the theme classes (`codeTheme.ts`). The theme sits on the

@@ -5,7 +5,7 @@ import type { SearchToolState } from "../../core/toolState.js";
 import { searchState } from "./searchPlugin.js";
 
 /**
- * Snapshot of the `search` Tool state for `useRichTextToolState`: the open fields of
+ * Snapshot of the `search` Tool state for `useRichTextToolState`: the public properties of
  * the plugin's `searchState` plus whether the Find panel is open, without match
  * positions. It lives apart from `searchPlugin.ts`: only the hook needs this
  * calculation, and it must not end up in the Editor's static graph.

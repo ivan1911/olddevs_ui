@@ -19,7 +19,7 @@ import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "./mathNames.js";
  * LaTeX legitimately contains such sequences: `\left[0,1\right]>x`, arrows `-->`. Without
  * the fix the formula would vanish on the consumer's server together with its wrapper. A
  * space breaks the pair: `]>` → `] >`, `-->` → `-- >`, `--!>` → `--! >`, `</` → `< /`. In
- * math mode KaTeX draws no spaces, so the formula looks the same; inside `\text{…}` the
+ * math mode KaTeX renders no spaces, so the formula looks the same; inside `\text{…}` the
  * space is visible — a limit, and it is recorded in the Reference.
  *
  * ONE FUNCTION FOR TWO PLACES. The Editor already writes `data-latex` in this form (the
@@ -32,7 +32,7 @@ export function safeLatexSource(latex: string): string {
 }
 
 /**
- * Whether the Document contains a formula: `RichTextView` decides by it whether to mount
+ * Whether the Document contains a formula: `RichTextView` uses it to decide whether to mount
  * the Island.
  */
 export function hasMath(html: string): boolean {
@@ -57,7 +57,7 @@ function formulaSource(tag: string, attributes: string): string | null {
 }
 
 /**
- * The LaTeX source inside empty formula elements, string for string, on the server.
+ * The LaTeX source inside empty formula elements, verbatim, on the server.
  *
  * WHY. Without JS, and before the Island has rendered the formula, the reader sees its
  * source (ADR-0070, item 6), and the text is selected and searched like ordinary text.

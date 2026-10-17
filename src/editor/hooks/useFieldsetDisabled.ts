@@ -9,9 +9,9 @@ import { useEffect, useState, type RefObject } from "react";
  * through `<fieldset disabled>` (`Form pending`), and a field that reads the `Form`
  * context stays blind to any foreign `fieldset`, while the consumer may disable a
  * group of fields on their own. Native fields react to both cases the same way, and
- * so that the editor does not differ, it reads what the browser reads: the ancestor's
+ * so that the Editor does not differ, it reads what the browser reads: the ancestor's
  * attribute. A second channel through the `Form` context would duplicate this rule
- * and still would not cover foreign `fieldset`s.
+ * and still would not cover foreign `fieldset` elements.
  *
  * The walk goes up through the ancestors, not just to the nearest `fieldset`: a node
  * nested in a disabled one is disabled too. The browser's exception is repeated here:

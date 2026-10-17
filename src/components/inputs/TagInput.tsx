@@ -48,8 +48,8 @@ export interface TagInputProps {
  * 2. **Duplicates are not added.** A repeated tag means nothing, and on screen it looks like an input
  *    error. We ignore it silently: reporting "already exists" would scold the person for an action that
  *    broke nothing.
- * 3. **Backspace in an empty input removes the last tag.** An idiom familiar from email clients; without
- *    it, removing tags means clicking the crosses.
+ * 3. **Backspace in an empty input removes the last tag.** A convention familiar from email clients; without
+ *    it, removing tags means clicking each tag's remove button.
  *
  * A space is NOT a separator: tags can have two words ("night city"), and splitting on space would forbid
  * them altogether. A comma is: it never occurs in a tag, and pasting a list from the clipboard comes
@@ -76,7 +76,7 @@ export function TagInput({
    *
    * The target is the INPUT FIELD, not the `TagGroup`. The description under the field explains what to
    * type; it does not describe the set of tags already added. For the same reason, `aria-describedby` is
-   * taken out of the spread: two carriers of one id would make the screen reader read the hint twice in
+   * taken out of the spread: two elements with one id would make the screen reader read the hint twice in
    * one pass.
    */
   const fieldDescribedBy = useFieldDescribedBy();

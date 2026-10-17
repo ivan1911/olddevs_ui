@@ -21,7 +21,7 @@ const SPACING_CLASS = {
 /**
  * A separator line.
  *
- * Taken from react-aria, not drawn as `<div className="border-t">`, for exactly one reason: the
+ * Based on react-aria, not drawn as `<div className="border-t">`, for exactly one reason: the
  * role. A line that separates **groups** (menu items, panel blocks) must be `role="separator"`:
  * a screen reader announces the boundary of the group with it. A line that is purely decorative
  * must be hidden from assistive technology completely.

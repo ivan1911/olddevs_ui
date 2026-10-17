@@ -66,11 +66,11 @@ export interface SavedViewsProps<T = unknown> {
  * not for where it is kept. The opposite would mean that a hook which deliberately stores nothing
  * acquires storage through a neighbor.
  *
- * Selection hands over the whole snapshot in one call, and this is not a matter of style. At the
+ * Selecting a view hands over the whole snapshot in one call, and this is not a matter of style. At the
  * consumer, the state is carried in the URL, and sequential writes by key build the URL from the
  * same snapshot of the current render: the last write wins, and the edits of the previous ones
  * are lost. That is exactly how the lower bound of a date range was lost in the front app when a
- * range was picked on top of a preset, and it is why `setMany` exists there. A component that
+ * range was selected on top of a preset, and it is why `setMany` exists there. A component that
  * applies a view key by key would reproduce the same defect for every consumer.
  *
  * THE ACTIVE VIEW IS ANNOUNCED, not just highlighted: `Chip` carries `aria-pressed`. Color

@@ -56,13 +56,12 @@ export interface PasswordInputProps extends Omit<
  *    and "all capitals" is a legitimate password.
  * 3. **`autocomplete` as a prop.** There is no default on purpose: whether this is a sign-in or a
  *    password change is known to the caller, not to the kit. Set
- *    `autoComplete="current-password"` on sign-in and `"new-password"` on a change.
+ *    `autoComplete="current-password"` on sign-in and `"new-password"` for a password change.
  *
  * THE SHOW BUTTON HAS `aria-pressed`, BUT ITS LABEL IS CONSTANT. Without the flag, a screen reader
  * would not say that the password is visible on screen, which is a security state, not
  * decoration. The label stays the same, because a button whose name and state both change
  * is read as a contradiction: "Hide password, pressed".
- * (the state is already announced by `aria-pressed`).
  */
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   function PasswordInput(

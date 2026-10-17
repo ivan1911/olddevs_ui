@@ -44,7 +44,7 @@ const TONE_ICONS: Record<Tone, ReactNode> = {
  * An APPLICATION-level message: service degradation, work on the server, an expired
  * subscription.
  *
- * A THREE-LINE BOUNDARY, worth keeping in mind:
+ * A three-way boundary, worth keeping in mind:
  *
  *   `toast`  — an EVENT: "Saved". It pops up and goes away on a timer.
  *   `Alert`  — the STATE OF A PLACE: "this campaign has no channel". It lives inside the content,

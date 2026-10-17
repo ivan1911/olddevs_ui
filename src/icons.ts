@@ -7,19 +7,19 @@
  * We rent the icon geometry from lucide, but the design-system decision lives not in the SVG
  * paths and not in the glyph shapes, it lives in the vocabulary: "deleting is a bin, not a cross;
  * AI is `WandSparkles`; finding similar items is `ScanSearch`". That decision belongs to the
- * design system, so it must live in one place, not be scattered across half a hundred consumer
+ * design system, so it must live in one place, not be scattered across fifty consumer
  * files.
  *
  * This gives three consequences:
  *
  * 1. Replacing the whole visual language (moving from lucide to Phosphor, or drawing our own)
- *    is an edit to ONE file, not a fork of the components.
+ *    is an edit to one file, not a fork of the components.
  * 2. A point replacement ("the cog is not liked, I want another one") is one line here, and it
  *    propagates to every call site at once.
  * 3. The consumer does not decide again which icon marks deletion. That is why names are semantic
  *    (`DeleteIcon`), not geometric (`Trash2Icon`), wherever meaning matters more than shape.
  *
- * STYLE (size, stroke width, color) is NOT set here. It is the job of the consumer's
+ * STYLE (size, stroke width, color) is not set here. It is the job of the consumer's
  * `LucideProvider`. The split is intentional: the vocabulary answers "what", the provider answers
  * "how". The consumer takes the provider from here too, not from `lucide-react` (ADR-0072): lucide
  * ships with the kit, and if the application had a second copy, the provider would silently fail
@@ -53,7 +53,7 @@ export {
    * nesting, this one is about the list itself.
    *
    * The "several horizontal lines" glyph was already in the set: it is `NavigationIcon`, the
-   * hamburger. A second meaning is not hung on it, because in a row of tabs it would read as "menu".
+   * hamburger. A second meaning is not assigned to it, because in a row of tabs it would read as "menu".
    *
    * Bullets, not checkboxes (`ListTodo` in lucide): a tick inside the icon reads as "done" and
    * conflicts with `SuccessIcon`, which usually stands next to it in such a row.
@@ -239,13 +239,13 @@ export {
    * The other neighbors were rejected, each with its own meaning: `TargetIcon` is a target to aim
    * for; `BellIcon` is a reminder; `WarningIcon` is overdue, a computed state rather than a field;
    * `Clock` and `ClockAlert` read as "time in general" and "alarm"; `FlagTriangleRight` at 14 pixels
-   * turns into a play triangle, the same trap that makes `FirstStepIcon` draw the start-of-work mark.
+   * turns into a play triangle, the same trap that is why the start-of-work mark is `FirstStepIcon`.
    */
   Hourglass as DeadlineIcon,
   /**
    * Repeats on a schedule: the record comes back by itself.
    *
-   * NOT `RefreshIcon`, and the difference is not in the glyph but in the meaning. Circular arrows in
+   * Not `RefreshIcon`, and the difference is not in the glyph but in the meaning. Circular arrows in
    * an interface mean reload: "refresh what you see". Repetition means a property of the record
    * itself. One glyph for both would close the second meaning for every consumer, the same fork on
    * which the vocabulary already separated `CheckIcon` and `SuccessIcon`.
@@ -258,12 +258,12 @@ export {
   /**
    * Started work: the first step is done.
    *
-   * This is a MARK, not a button: a history entry saying that the matter has moved forward.
+   * This is a mark, not a button: a history entry saying that the matter has moved forward.
    * Previously `PlayIcon` stood here, and the product owner read it as a transport button and asked
    * to "pause it" by clicking the mark. Once pause sits in the same row, two play glyphs would be
    * indistinguishable in meaning.
    *
-   * Footprints, not a flag: in trackers a flag means "problem, blocked" (that is how Jira draws it),
+   * Footprints, not a flag: in trackers a flag means "problem, blocked" (that is how Jira shows it),
    * and a mark about starting work would read as an alarm. `FlagTriangleRight` was rejected for its
    * glyph: in a row at 14 pixels it is exactly a play triangle, which would repeat the very mistake
    * the icon exists to avoid. `Hourglass` means waiting, not starting; `CircleDot` in a row reads as
@@ -275,7 +275,7 @@ export {
   /**
    * Drag handle.
    *
-   * @deprecated The same glyph as `DragHandleIcon`: use that one instead. Removed in 4.0.0.
+   * @deprecated The same glyph as `DragHandleIcon`: use that one instead. Will be removed in 4.0.0.
    */
   GripVertical as DragIcon,
   Layers as LayersIcon,
@@ -395,7 +395,7 @@ export {
   /**
    * Trip: an airplane.
    *
-   * Its silhouette borders `SendIcon`, the paper plane of send. Better not to place them side by side:
+   * Its silhouette resembles `SendIcon`, the paper plane of send. Better not to place them side by side:
    * the meanings differ, a business subject versus an action.
    */
   Plane as TripIcon,
@@ -431,7 +431,7 @@ export {
   AlignLeft as AlignLeftIcon,
   AlignCenter as AlignCenterIcon,
   AlignRight as AlignRightIcon,
-  /** Justified. The Editor's Toolbar has none (ragged spaces), but the meaning is there for the consumer. */
+  /** Justified. The Editor's Toolbar has none (uneven word spacing), but the meaning is there for the consumer. */
   AlignJustify as AlignJustifyIcon,
   /** Code block. Not `InlineCodeIcon`: that one is a label inside a line, this one is a separate Block in a frame. */
   SquareCode as CodeBlockIcon,
@@ -540,7 +540,7 @@ export {
    * The Editor's collapsible Block (Details): a list with collapse arrows.
    * Not `ChevronDownIcon` or `CollapseIcon`: a chevron is a step and nesting, `CollapseIcon` collapses
    * a window; here it is a whole Block with a title and hidden content.
-   * It stands at the "Collapsible block" item of the Slash menu; to unwrap the Block, use `UnwrapIcon`.
+   * It is the icon of the "Collapsible block" item in the Slash menu; to unwrap the Block, use `UnwrapIcon`.
    */
   ListCollapse as DetailsIcon,
   /**
@@ -563,7 +563,7 @@ export {
   /**
    * Show invisible characters in the Editor: a pilcrow with an arrow, the "Invisible characters" item
    * of the "…" menu of the fixed Toolbar. Not `ParagraphIcon`: that one already means "plain paragraph"
-   * and stands in the same Toolbar, in the "¶" menu on the left; the arrow tells the show toggle apart
+   * and appears in the same Toolbar, in the "¶" menu on the left; the arrow tells the show toggle apart
    * from a Block type.
    */
   PilcrowRight as InvisibleCharactersIcon,

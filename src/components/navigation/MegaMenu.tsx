@@ -1125,7 +1125,7 @@ const DROPDOWN_CONTENT_CLASS =
 /**
  * Scrolling of the column and the flyout in the overlay: the height runs from the button to the edge of
  * the window (Radix `available-height`). `MegaMenu` applies the classes itself, having learned from the
- * context that it is in an overlay. It does not rely on overlay selectors against foreign markup, which
+ * context that it is in an overlay. It does not rely on overlay selectors that match foreign markup, which
  * would silently break at the first edit to it.
  *
  * The iOS height workaround is the same as in `MENU_PANEL_CLASS`: in Safari on iOS 27, `available-height`

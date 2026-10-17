@@ -199,7 +199,7 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
  *
  * The look comes from the shared table `lib/menu.ts` — the same one `ContextMenu` on Radix is built from.
  * The states are set as variants (`hover:`, `selected:`, `pressed:`), not as a render prop: the item is the
- * element itself with `data-*`, not its child, and it is more correct to paint it with a class than with a condition in JS.
+ * element itself with `data-*`, not its child, and it is more correct to style it with a class than with a condition in JS.
  */
 export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuItem(
   { children, icon, shortcut, tone = "neutral", disabled, className, ...rest },
@@ -263,7 +263,7 @@ export interface MenuSectionProps<T extends object = object> extends Omit<
   className?: string;
 }
 
-/** Menu section. It is also the carrier of selection for checkable items. */
+/** Menu section. It also holds the selection state of checkable items. */
 export const MenuSection = forwardRef<HTMLElement, MenuSectionProps>(function MenuSection(
   { label, children, className, ...rest },
   ref

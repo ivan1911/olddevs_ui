@@ -16,7 +16,7 @@ export type ChoiceAppearance = "default" | "card";
  *
  * Its own table, not `TONE_TOKENS[tone].border`: for `neutral` there it is `border-line`, a neutral
  * divider border that the contrast gate deliberately does not measure, because it carries no meaning.
- * A selected card's border CONVEYS its state, so it is a signal under WCAG 1.4.11 with a 3:1 threshold,
+ * A selected card's border conveys its state, so it is a signal under WCAG 1.4.11 with a 3:1 threshold,
  * and for `neutral` `fg-3` is used. The other tones are the same `*-strong` as the kit's borders.
  *
  * The same values as `STATE_BORDER` in `variants.ts` (the border of a checked checkbox box and of an

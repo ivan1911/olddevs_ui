@@ -7,7 +7,7 @@
  * would drift away from it at the first edit. Tooltips do not count: they have
  * their own 85 % and 10px, and the Editor does not touch them.
  *
- * THE COLOR IS THE TOKEN OF ITS OWN SURFACE, not a new one. The Panel sits on
+ * THE COLOR IS THE TOKEN OF ITS OWN SURFACE, not a new one. The Toolbar sits on
  * `bg-1`, menu lists on `surface-elevated`, the Bubble menu on the inverse
  * surface. A theme changes the token, and the glass changes with it, without
  * separate values per theme. Inside the Bubble menu only the `--color-*` bridge
@@ -16,7 +16,7 @@
  *
  * WHY ONLY IN THE EDITOR. Surfaces get the glass through a class: `Menu` and
  * `PopoverContent` accept `className`, and `tailwind-merge` in `cn` removes the
- * solid backing of the Panel. The same components outside the Editor stay solid,
+ * solid backing of the Toolbar. The same components outside the Editor stay solid,
  * and the public API does not change.
  *
  * SOLID FALLBACK. `prefers-reduced-transparency` (the system's request to remove
@@ -46,7 +46,7 @@ const BLUR =
   "backdrop-blur-[14px] [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none " +
   "contrast-more:backdrop-blur-none [@supports(-webkit-touch-callout:none)]:backdrop-blur-none";
 
-/** Floating Panel, image panel and Editor popovers: the `bg-1` surface. */
+/** Floating Toolbar, image panel and Editor popovers: the `bg-1` surface. */
 export const GLASS_PANEL_CLASS =
   "bg-[color-mix(in_srgb,var(--bg-1)_82%,transparent)] " +
   "[@media(prefers-reduced-transparency:reduce)]:bg-bg-1 contrast-more:bg-bg-1 " +

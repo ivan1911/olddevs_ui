@@ -35,7 +35,7 @@ const SIZES = {
 /**
  * Section header inside a card: a label on the left, actions on the right.
  *
- * `title` is typed as `ReactNode`, not as a string, because on the frontend markup is put into it:
+ * `title` is typed as `ReactNode`, not as a string, because callers put markup into it:
  * an icon with a label, a counter, a range switch. Narrowing the type to a string would break
  * eight of the seventeen call sites.
  */

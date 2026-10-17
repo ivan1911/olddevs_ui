@@ -37,7 +37,7 @@ export interface SlashMenu {
 }
 
 /**
- * The `/` Insert menu: a list at the caret.
+ * The Slash menu (`/`): a list at the caret.
  *
  * FOCUS STAYS IN THE FIELD. The user keeps typing the query, so the list is not a
  * separate focus stop. It is a floating part of the field, following the APG combobox

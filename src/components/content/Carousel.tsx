@@ -106,7 +106,7 @@ const EDGE_EPSILON = 1;
 /**
  * What the strip's layout tells us.
  *
- * All slides are of ONE width and without a gap, so the step is `scrollWidth / count`, not a
+ * All slides are of one width and without a gap, so the step is `scrollWidth / count`, not a
  * measurement of each slide. This way the position is read from three numbers (`scrollLeft`,
  * `scrollWidth`, `clientWidth`), and jsdom, which does not compute layout, stubs exactly those.
  */
@@ -128,7 +128,7 @@ function measure(viewport: HTMLElement, count: number) {
 /**
  * Smoothly — unless the user has asked for reduced motion.
  *
- * The preference is read AT THE MOMENT of scrolling, not through a subscription: it is needed only
+ * The preference is read at the moment of scrolling, not through a subscription: it is needed only
  * here, and a subscription would bring in state that is never rendered. ADR-0043 turns motion off
  * with the CSS variant `motion-reduce:`, but a scroll started from JS is not stopped by a class —
  * `behavior` is set by the call itself. `"auto"` without `scroll-behavior` in CSS is an instant
@@ -154,7 +154,7 @@ function scrollBehavior(): ScrollBehavior {
  * THE CURRENT SLIDE IS READ FROM THE SCROLL POSITION (the `scroll` event and geometry), not from an
  * `IntersectionObserver`. The observer answers "how much of a slide is visible", while we need
  * "which slide is at the leading edge" — with two or more slides in view it would require
- * thresholds and a choice among several. The position gives the answer with one division. Plus the
+ * thresholds and a choice among several. The position gives the answer with one division. Also, the
  * observer is absent in jsdom, while the position there is stubbed with three numbers.
  *
  * THE CURRENT SLIDE IS REPORTED AFTER STOPPING, not on every frame. Otherwise, in controlled mode,
@@ -163,8 +163,8 @@ function scrollBehavior(): ScrollBehavior {
  *
  * ACCESSIBILITY — the APG Carousel pattern: a region with `aria-roledescription` and a name; slides
  * are groups with `aria-roledescription="slide"` and a name "N of M". Slides outside the view are
- * NOT hidden from screen readers: with no autoplay, the strip is read in full, and the browser
- * itself scrolls focus from an invisible slide into view.
+ * not hidden from screen readers: with no autoplay, the strip is read in full, and the browser
+ * itself scrolls an invisible slide into view when it gets focus.
  */
 export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel(
   { children, slidesPerView = 1, index, defaultIndex = 0, onIndexChange, className, ...rest },
@@ -192,7 +192,7 @@ export const Carousel = forwardRef<HTMLElement, CarouselProps>(function Carousel
 
   /** The slide that has already been reported outward (or that was set from outside). */
   const known = useRef(index ?? defaultIndex);
-  /** The slide the strip is heading to by our command, until it stops. */
+  /** The slide the strip is scrolling to at the component's request, until it stops. */
   const pending = useRef<number | null>(null);
   const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   /**

@@ -125,7 +125,7 @@ const ImageCaption = Node.create({
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     richImage: {
-      /** Open the image popover: the Toolbar button and the Insert menu item. */
+      /** Open the image popover: the Toolbar button and the Slash menu item. */
       openImageEditor: () => ReturnType;
       /**
        * Insert an image in place of the selection. An empty paragraph is replaced; otherwise the
@@ -171,7 +171,7 @@ export type ImageNotice =
   | { kind: "notImage"; name: string }
   | { kind: "unsupported" };
 
-/** Report files through the Field notice channel. If the Editor has been removed from the screen, do it silently. */
+/** Report files through the Field notice channel. If the Editor has unmounted, do it silently. */
 function notify(editor: Editor, options: RichImageOptions, notice: ImageNotice): void {
   if (!editor.isDestroyed) editor.commands.showNotice(options.describeNotice(notice));
 }
@@ -225,7 +225,7 @@ function selectCaption(tr: Transaction, pos: number): void {
  * of its own inside the image. Marks and links work in it, and "Turn into heading" or the lists
  * leave it alone, since the `figure` Schema lets nothing inside except the caption.
  *
- * `atom: true` — the image is selected as a whole (a click on it, the arrows, Backspace after
+ * With `atom: true`, the image is selected as a whole (a click on it, the arrows, Backspace after
  * it), like a divider. This also makes a Document holding one image non-empty for the engine's
  * `isEmpty`, which `required` and the empty value `""` rely on.
  *

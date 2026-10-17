@@ -42,7 +42,7 @@ export interface PinInputProps extends Omit<
 const digitsOnly = (raw: string) => raw.replace(/\D/g, "");
 
 /**
- * Input for a verification code: N fields with one character each, one string outside.
+ * Input for a verification code: N fields with one character each, exposed as one string.
  *
  * THE VALUE IS A STRING, NOT AN ARRAY. Consumers need the whole code: it goes into a
  * request as one string, and each caller would have to parse an array on its own.

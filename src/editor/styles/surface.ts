@@ -5,7 +5,7 @@
  *   Confluence and Slack.
  * - `"paper"` — a light sheet in any app theme (dark, dim, brand), like "Switch
  *   Mode" in Word: text, links, markers, tables, code and author colors look as
- *   in the light theme. The Panel, popovers, menus and dialogs stay in the app
+ *   in the light theme. The Toolbar, popovers, menus and dialogs stay in the app
  *   theme, and so does the field focus ring.
  *
  * The module is server-safe: it holds data and a type, with no React and no engine.

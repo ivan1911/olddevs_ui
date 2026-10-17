@@ -12,7 +12,7 @@ import { CODE_LANGUAGES, type CodeLanguageGrammar, type CodeLanguageId } from ".
 /**
  * Code block highlighter: lowlight with the highlight.js grammars (ADR-0051). One instance serves
  * both the Editor and the server helper `highlightCodeBlocks`, so the tokens in an edit and on the
- * view page are cut by the same grammar.
+ * view page are tokenized by the same grammar.
  *
  * GRAMMARS ONE BY ONE, NOT lowlight's `common`. `common` has 37 languages, and each of them would
  * ship to the consumer, although the Editor supports eight. A `Record` keyed by

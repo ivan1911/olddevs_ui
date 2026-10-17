@@ -15,7 +15,7 @@ export const INVISIBLE_CHARACTERS_DEFAULTS: InvisibleCharactersToolOptions = { v
 
 /**
  * Showing invisible characters on the Tool's description (ADR-0048). This is a Decoration over
- * the Document: spaces, hard breaks (`Shift+Enter`) and paragraph ends are drawn by zero-width
+ * the Document: spaces, hard breaks (`Shift+Enter`) and paragraph ends are rendered by zero-width
  * widgets that are not in the Document. `value`, `onChange`, `getHTML()`, Markdown and
  * `RichTextView` do not see them, and the Schema, the sanitizer and Markdown do not change.
  *
@@ -23,7 +23,7 @@ export const INVISIBLE_CHARACTERS_DEFAULTS: InvisibleCharactersToolOptions = { v
  * (`FormatMenus.tsx`), not a button in the row and not a `buttons` entry. A separate button pushed
  * `full` onto a second row in the 640 px column (the owner's decision). The `buttons` entries are
  * shared by the fixed and the floating Toolbar, where a switch for showing the Document's
- * characters makes no sense above a selection. The Tool has no shortcut and no Insert menu item.
+ * characters makes no sense above a selection. The Tool has no shortcut and no Slash menu item.
  */
 export const INVISIBLE_CHARACTERS_TOOL: ToolDescriptor = {
   name: "invisibleCharacters",

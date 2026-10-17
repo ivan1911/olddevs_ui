@@ -35,7 +35,7 @@ export interface VideoLink {
  * Top-level `twitch.tv` names that are not channels: a link to them is not a video. The list
  * holds the site's service sections, not the full dictionary of forbidden names. ONE list serves
  * both sanitizing and link parsing (`videoLink.ts`): otherwise a `twitch.tv/videos` Block would
- * pass sanitizing and stay in the Document as something the player cannot be built from.
+ * pass sanitizing and stay in the Document with no player that can be built from it.
  */
 const TWITCH_RESERVED = new Set([
   "directory",

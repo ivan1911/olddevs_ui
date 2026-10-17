@@ -47,7 +47,7 @@ export interface TextControlProps extends Omit<ComponentPropsWithoutRef<"input">
    * `left: 2px`, and breaks on the first field with an icon.
    *
    * THERE IS NOTHING TO READ IN IT: the component sets `aria-hidden` itself. The layer under the value
-   * repeats what the caption and hint already say; read aloud, it would produce "underscore underscore
+   * repeats what the label and hint already say; read aloud, it would produce "underscore underscore
    * underscore" in the middle of the field.
    *
    * It does not intercept clicks or selection — otherwise the field would stop focusing on a click into
@@ -84,7 +84,7 @@ export interface TextControlProps extends Omit<ComponentPropsWithoutRef<"input">
  *
  * The focus highlight is on the shell via `focus-within`, and the color comes from `--accent-strong`, not
  * `--accent`: the focus indicator is a non-text element under the 3:1 threshold, while `--accent` is designed
- * for text on top and on the underlay it is dimmer than needed.
+ * for white text on top of it and on the underlay it is dimmer than needed.
  *
  * `icon` and `trailing` are exactly the slots the frame was moved to the shell for. The layout switches to
  * `flex` only when a slot is actually passed: a bare field must produce the same markup as before slots

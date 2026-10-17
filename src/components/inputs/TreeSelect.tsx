@@ -89,7 +89,7 @@ function captionOf(id: Key, node: TreeNode | undefined): string {
  * A field that selects a node of a hierarchy: a `TreeView` inside a `Popover`.
  *
  * COMPOSITION, NOT A SECOND TREE. This is a direct implementation of ADR-0024, which deferred
- * `TreeSelect` until a consumer screen needed it, worded exactly this way. The component builds no
+ * `TreeSelect` until a requesting screen needed it, worded exactly this way. The component builds no
  * traversal, keyboard handling or roles of its own: all of it already exists in `TreeView`, and a
  * divergence between two trees would only be noticed by someone who placed them side by side.
  *
@@ -101,14 +101,14 @@ function captionOf(id: Key, node: TreeNode | undefined): string {
  * through `aria-labelledby`.
  *
  * THE CLEAR BUTTON IS A SIBLING OF THE TRIGGER, NOT ITS CHILD. The same approach as `Select`. A
- * button inside a button is `nested-interactive`, and an `aria-hidden` cross inside it drops out of
+ * button inside a button is `nested-interactive`, and an `aria-hidden` "×" icon inside it drops out of
  * the accessibility tree entirely: an AT user does not learn that clearing exists at all.
  *
  * THE VALUE IS ALWAYS AN ARRAY, even with `single`. A union type `Key | Key[]` would force the
  * consumer to parse the shape in every handler, and it would buy exactly one thing: a shorter look
  * in the example.
  *
- * MARKING A BRANCH DOES NOT MARK ITS DESCENDANTS, and this is not an oversight. Such behavior would
+ * SELECTING A BRANCH DOES NOT SELECT ITS DESCENDANTS, and this is not an oversight. Such behavior would
  * mean the kit decides for the consumer whether "department" covers all its staff; in access rights
  * these are exactly opposite policies. `TreeView` tracks selection by keys, and the consumer is free
  * to expand the branch into its descendants itself.

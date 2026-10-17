@@ -122,7 +122,7 @@ export const EDITOR_TOKENS_CLASS =
  *
  * ³ THE WRAPPER TONE uses the kit's status tokens: the soft step of the tone is the backing,
  * and the strong one is the stripe on the left, as `soft` in `Alert`. The neutral tone is
- * set off from `TONE_TOKENS.neutral` in both places. The backing is `bg-3` (the step of the
+ * differs from `TONE_TOKENS.neutral` in both places. The backing is `bg-3` (the step of the
  * chosen neutral), not `bg-2`: `bg-2` is the Editor's own field, and the Important Wrapper
  * would have no backing on it. Not `bg-4` either: `bg-3` is the app's backing, which ALL text
  * tokens are calibrated for. The link, quote, caption and text color inside Important hold

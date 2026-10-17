@@ -87,7 +87,7 @@ export type TagGroupProps = TagGroupBaseProps &
  * tags, Delete and Backspace, focus moving to a neighboring tag after removal. Tab from a tag
  * goes to its remove button — `TagInput` works the same way.
  *
- * THIS IS NOT A FILTER, NOT A STATUS, AND NOT INPUT. Picking from a set is `Chip` and
+ * THIS IS NOT A FILTER, NOT A STATUS, AND NOT INPUT. Selecting from a set is `Chip` and
  * `Segmented`, which is why `selectionMode` is NOT passed through: a tag that can be selected
  * becomes a second toggle with different keyboard behavior. A state of an object is
  * `StatusBadge`. Entering new tags is `TagInput`.

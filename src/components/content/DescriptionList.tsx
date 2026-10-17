@@ -17,7 +17,7 @@ export interface DescriptionListProps {
    * Layout on a wide screen.
    *
    * `columns` puts the label on the left and the value on the right; `stack` puts the value
-   * under the label. On a NARROW screen both stack regardless of the prop: two columns at
+   * under the label. On a narrow screen both stack regardless of the prop: two columns at
    * 360 pixels mean the label is squeezed down to a single word and the value wraps letter
    * by letter.
    */

@@ -61,7 +61,7 @@ export interface MathExtensionsContext {
  * - **Atom text is LaTeX.** `renderText` gives the source to the counter, to copying as
  *   text and to search (ADR-0058, item 4), the way `data-latex` gives it to the HTML.
  * - **Markdown.** The tokenizers and the export are in `mathMarkdown.ts`.
- * - **A block formula is drawn in `display` mode**: the Tiptap extension passes one set of
+ * - **A block formula is rendered in `display` mode**: the Tiptap extension passes one set of
  *   KaTeX options to both nodes, but a block needs the formula large and centered.
  */
 export function mathExtensions({ options, openPopover }: MathExtensionsContext): Extensions {

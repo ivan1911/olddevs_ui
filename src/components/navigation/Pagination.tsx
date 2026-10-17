@@ -80,7 +80,7 @@ export function pageRange(page: number, pageCount: number, siblings: number): (n
   return build(from, to, first, last);
 }
 
-/** The row of cells for a finished window. Pulled out so that the width can be measured. */
+/** The row of cells for a computed window. Pulled out so that the width can be measured. */
 function build(from: number, to: number, first: number, last: number): (number | "gap")[] {
   const out: (number | "gap")[] = [];
 

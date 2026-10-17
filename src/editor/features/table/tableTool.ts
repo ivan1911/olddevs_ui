@@ -54,7 +54,7 @@ const TABLE_SHAPE = [
 ];
 
 /**
- * The table as a Tool descriptor (ADR-0058, item 11.1): it is not in `basic`,
+ * The table as a Tool description (ADR-0058, item 11.1): it is not in `basic`,
  * and the Extensions with `prosemirror-tables` weigh over 10 kB, so they load
  * through the same loader as their Tool. The same chunk holds the Table menu and
  * the Insert table dialog, and the kit's code is measured through the static

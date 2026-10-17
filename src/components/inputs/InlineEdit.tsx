@@ -39,7 +39,7 @@ export interface InlineEditProps extends Omit<
  * In-place value editing: the value button → the field → confirmation.
  *
  * THE CONFIRMED VALUE IS NOT STORED. Only the edit draft lives inside: what is being typed
- * right now. The confirmation goes out, and on the next frame the value arrives as a prop.
+ * right now. The confirmation goes out, and on the next render the value arrives as a prop.
  * A component that stored the confirmed value would keep showing its own after the server
  * refused to save.
  *

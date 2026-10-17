@@ -23,7 +23,7 @@ import { keyGlyphs } from "../content/Kbd.js";
  *
  * BUILT ON RADIX, NOT ON react-aria, and this was forced: react-aria does not provide a context
  * menu at all. The Radix family is already in the package (dialog, popover, tooltip), so the new
- * dependency does not bring a new vendor.
+ * dependency adds no new vendor.
  *
  * The look comes from the same table, `lib/menu.ts`, as the react-aria `Menu`. This is the only
  * thing that keeps the two menus from drifting apart: the libraries differ, while the user must
@@ -107,10 +107,10 @@ export interface ContextMenuCheckboxItemProps extends Omit<ContextMenuItemProps,
  * Checkbox item.
  *
  * Here `checked`/`onCheckedChange` are on the item itself, unlike `Menu`, where toggles are set by
- * a selection on the section. The difference is not a whim: the libraries are built this way, and
+ * the section's selection. The difference is not a whim: the libraries are built this way, and
  * making one match the other would mean adding a state layer of our own on top of it. Each of them
  * sets the `menuitemcheckbox` role and `aria-checked` itself, and that is exactly why they were
- * taken.
+ * chosen.
  */
 export const ContextMenuCheckboxItem = forwardRef<HTMLDivElement, ContextMenuCheckboxItemProps>(
   function ContextMenuCheckboxItem(
@@ -150,7 +150,7 @@ export interface ContextMenuRadioGroupProps {
 /**
  * Single-choice section.
  *
- * The selection is set ON THE SECTION, not on the item — unlike the neighbouring checkbox item,
+ * The selection is set ON THE SECTION, not on the item — unlike the neighboring checkbox item,
  * where `checked` lives on the item itself. The difference is not cosmetic: "exactly one is
  * selected" is a property of the group, and only by knowing the group can Radix set
  * `aria-checked="false"` on the others. An item that knows only about itself would announce the
@@ -179,7 +179,7 @@ export interface ContextMenuRadioItemProps extends Omit<ContextMenuItemProps, "i
 /**
  * Single-choice item. Lives only inside `ContextMenuRadioGroup`.
  *
- * Radix sets the `menuitemradio` role and `aria-checked` — that is why it was taken. The mark is
+ * Radix sets the `menuitemradio` role and `aria-checked` — that is why we chose it. The mark is
  * drawn by the indicator in the same slot as the icon of a regular item, so a radio item has no icon
  * of its own: two icons on the left would read as two different states.
  */

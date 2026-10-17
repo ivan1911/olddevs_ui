@@ -19,7 +19,7 @@ export interface LinkOwnProps {
   /**
    * The link is external: an icon appears next to the label.
    *
-   * This prop does NOT set `target`. Whether an external link opens in a new tab is the screen's
+   * This prop does not set `target`. Whether an external link opens in a new tab is the screen's
    * decision, not the kit's: in one place it is convenient, in another it takes the user away from
    * a half-filled form.
    */
@@ -50,7 +50,7 @@ export type LinkProps<T extends ElementType = "a"> = LinkOwnProps & {
 /**
  * Underlining is not decoration but the second sign of a link.
  *
- * `inline` is ALWAYS underlined: a link inside a paragraph that differs from the text only by color
+ * `inline` is always underlined: a link inside a paragraph that differs from the text only by color
  * is indistinguishable for a person with color blindness. This is a direct requirement of WCAG 1.4.1,
  * and it is not relaxed by "our accent has enough contrast".
  *

@@ -8,7 +8,7 @@ import { hasContent } from "../../lib/empty.js";
 import type { Size, Tone } from "../../lib/variants.js";
 
 export interface ToggleGroupOption {
-  /** The toggle's key: the set of selected ones gets into `value` and `onChange` by it. */
+  /** The toggle's key: the set of selected ones gets into `value` and `onChange` through it. */
   id: Key;
   /** Toggle label. Without it the button is square, and an `aria-label` is needed. */
   label?: ReactNode;
@@ -16,7 +16,7 @@ export interface ToggleGroupOption {
   icon?: ReactNode;
   /** Accessible name when there is no label. */
   "aria-label"?: string;
-  /** Disables one toggle; the others stay active. */
+  /** Disables one toggle; the others stay enabled. */
   disabled?: boolean;
 }
 

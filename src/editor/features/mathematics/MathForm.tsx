@@ -26,7 +26,7 @@ export interface MathFormProps {
 
 /**
  * Content of the formula popover (ADR-0070, item 7): the LaTeX field, a live preview and the
- * error inside the field itself. The kit draws the frame (`SelectionPopover`): a `Popover` in
+ * error inside the field itself. The kit renders the frame (`SelectionPopover`): a `Popover` in
  * the layer stack. The frame's name is the item's label, and focus returns to the Document.
  *
  * TWO MODES, SET BY `pos`, as in the image popover. With `pos`, the form edits the formula
@@ -35,8 +35,8 @@ export interface MathFormProps {
  *
  * AN INVALID LaTeX DOES NOT CHANGE THE DOCUMENT. Parsing runs on every keystroke. While KaTeX
  * reports an error, the apply button is disabled and its message stays in the field, so a
- * formula that cannot be drawn never reaches the Document. The preview and the Document are
- * drawn by the same KaTeX with the same options the Editor uses (`tool("mathematics")`), so
+ * formula that cannot be rendered never reaches the Document. The preview and the Document are
+ * rendered by the same KaTeX with the same options the Editor uses (`tool("mathematics")`), so
  * "correct in the preview" means "correct in the Document".
  *
  * The field of a block formula is multiline (`aligned` and matrices are easier to write as a

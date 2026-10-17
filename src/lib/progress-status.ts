@@ -29,9 +29,9 @@ export type ProgressStatus = "pending" | "running" | "success" | "failed";
  *
  * `pending` is deliberately neutral and muted: work that has not started yet is not an event.
  *
- * It is ALWAYS read with the `?? "neutral"` fallback. The consumer of the package is an app in
+ * It is always looked up with the `?? "neutral"` fallback. The consumer of the package is an app in
  * JS, the compiler does not check its data, and the states come from the backend. A fifth kind
- * of status must not cost a screen. Without the fallback, `TONE_TOKENS[…]` gives
+ * of status must not crash a screen. Without the fallback, `TONE_TOKENS[…]` gives
  * `undefined.dotBg`, that is, the whole activity screen crashes.
  */
 export const PROGRESS_STATUS_TONE: Record<ProgressStatus, Tone> = {

@@ -98,7 +98,7 @@ const REBUILD_DELAY = 150;
  * Step between the strip's strokes, and its bounds. A stroke cell is 2px, exactly
  * the stroke's width (see the strip; the owner's decision on the 4.7.0 preview,
  * OLDSUI-289: it was 3px). The gap between cells is 5px. `p-1` gives 4px above and
- * below; the remaining space leaves air above and below the strip.
+ * below; the remaining space is margin above and below the strip.
  */
 const STRIP_GAP = 5;
 const STRIP_CELL = 2;
@@ -142,7 +142,7 @@ const FLASH_DURATION = 1600;
  * appears in the Document, so the Schema and the saved HTML stay as they were, and
  * the Editor does not mistake the highlight for an edit. The color is read from a
  * token on the heading itself, so it is correct on the Paper surface and inside a
- * nested theme. No API, no highlight.
+ * nested theme. Without the Web Animations API, there is no highlight.
  */
 /** Easing curve of the motion scale, read from the node; without the token, the default `ease`. */
 function scaleCurve(node: HTMLElement, token: string): string {
@@ -369,7 +369,7 @@ export interface TocCoreProps extends RichTextTocProps {
    */
   editor?: Editor;
   /**
-   * Where the core puts the jump to a heading by index of the state snapshot (the Tool's
+   * The core's jump to a heading by its index in the state snapshot (the Tool's
    * `jumpTo` command): it behaves like a click on an item. While the core is mounted, this
    * holds a function; after unmounting, `null`. For an index with no heading, `false`.
    */

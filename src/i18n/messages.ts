@@ -12,7 +12,7 @@
  * openly: a locale file stops being data and becomes code, so it is not handed to an
  * external TMS as is. See ADR-0002.
  *
- * Plural forms live INSIDE the locale file and are done with `Intl.PluralRules`: the
+ * Plural forms live INSIDE the locale file and are handled with `Intl.PluralRules`: the
  * locale knows the rules, not the component. A component that counts word endings is a
  * component that speaks only one language.
  */
@@ -369,7 +369,7 @@ export interface UiMessages {
   copyButton: {
     /** Normal state of the button. */
     copy: string;
-    /** Succeeded. It is announced, not just changes the icon. */
+    /** Succeeded. It is announced, not just shown as an icon change. */
     copied: string;
     /**
      * Failed.
@@ -437,11 +437,11 @@ export interface UiMessages {
     label: string;
     /** Default when the number of edits is not passed. */
     unsaved: string;
-    /** The same, with a number: the locale does the plural forms, not the component. */
+    /** The same, with a number: the locale handles the plurals, not the component. */
     changes: (vars: { count: number }) => string;
     save: string;
     cancel: string;
-    /** Save in progress: it is announced, not just drawn on the button. */
+    /** Save in progress: it is announced, not just shown on the button. */
     saving: string;
   };
 
@@ -457,7 +457,7 @@ export interface UiMessages {
      * The queue summary for the screen reader: a partial success is otherwise visible
      * only to the eyes.
      *
-     * The plural forms are done by the locale file through `Intl.PluralRules`: the locale
+     * The locale file handles the plurals through `Intl.PluralRules`: the locale
      * knows the rules, not the component.
      */
     summary: (vars: { done: number; total: number; failed: number }) => string;
@@ -660,7 +660,7 @@ export interface UiMessages {
      *
      * @deprecated The Toolbar no longer reads it: the Block type is chosen in the "¶" menu
      * (`blockType`). The key stays so that a consumer's partial catalog with it still
-     * compiles; it goes in 4.0.0.
+     * compiles; it is removed in 4.0.0.
      */
     textStyle: (vars: { current: string }) => string;
     /**
@@ -759,7 +759,7 @@ export interface UiMessages {
     undo: string;
     redo: string;
     /**
-     * The name of the checkbox on a checklist item. The engine draws the checkbox, and without
+     * The name of the checkbox on a checklist item. The engine renders the checkbox, and without
      * this string the screen reader would hear the English "Task item checkbox for …". An empty
      * item comes with `text: ""`.
      */
@@ -767,7 +767,7 @@ export interface UiMessages {
     /**
      * The name of the "Highlight" button includes the current color as a word: a sample for the
      * eye, the name for the ear. The color is named by its shade, not by its token role: the
-     * author picks "red", not `danger`, and the name is translated.
+     * author selects "red", not `danger`, and the name is translated.
      */
     highlight: (vars: { current: string }) => string;
     /** The "remove text color" item and its label on a trigger without a color. */
@@ -957,7 +957,7 @@ export interface UiMessages {
      */
     retry: string;
     /**
-     * Live region: a Text card of a custom Tool has appeared on the text (ADR-0058, item 6.8).
+     * Live region: a Text card of a custom Tool has appeared in the text (ADR-0058, item 6.8).
      * `label` is the record's label, `shortcut` is the key combination that leads to the Text
      * card (`Alt+F10`). A function: the label and the key stand in the middle of the sentence.
      */
@@ -1003,7 +1003,7 @@ export interface UiMessages {
      * A collapsible Block (Details). `details` is the Slash menu item and the "Add ›" submenu
      * of the Block handle. `unwrapDetails` is the handle's menu item: the Block stops being
      * collapsible, its title becomes a paragraph, and the content stays in place.
-     * `detailsToggle` is the name of the expand button: the engine draws the button without
+     * `detailsToggle` is the name of the expand button: the engine renders the button without
      * text, and without a name the screen reader would say "button". The name identifies the
      * Block by its title (`text` is the summary text, empty for a Block without a title), and
      * whether it is expanded is said by `aria-expanded`. A function: the title stands in the
@@ -1014,7 +1014,7 @@ export interface UiMessages {
     detailsToggle: (vars: { text: string }) => string;
     /**
      * Formulas (Mathematics, ADR-0070). `mathInline` and `mathBlock` are the items of the Slash
-     * menu and of the "Add ›" submenu of the Block handle; they are also the names of the frame
+     * menu and of the "Add ›" submenu of the Block handle; they are also the names of the formula popover
      * of the formula popover. In the popover: `mathLatex` is the label of the field, `mathPreview`
      * is the name of the preview area, `mathEmpty` is its hint while the field is empty,
      * `mathInvalid` is the error in the field (`detail` is the KaTeX message: the engine does not
@@ -1043,7 +1043,7 @@ export interface UiMessages {
     emojiCategory: Record<EmojiCategory, string>;
     emojiName: Record<EmojiName, string>;
     /**
-     * HTML mode. `source` is the name and the hint of the Toolbar's toggle button; `sourceField`
+     * Source mode. `source` is the name and the hint of the Toolbar's toggle button; `sourceField`
      * is the name of the field with the Document's source HTML, which replaces the Document in
      * this mode. The button's label is "HTML" in every language: that is what Redactor and the
      * CMSs call the mode, and "Source code" would be longer and explain no better.
@@ -1079,7 +1079,7 @@ export interface UiMessages {
     searchNoMatches: string;
     searchInvalid: string;
     /**
-     * The height handle of a field (`resizable`): `resizeField` is the name of the slider,
+     * The resize handle of a field (`resizable`): `resizeField` is the name of the slider,
      * `fieldHeight` is its current height in words (`aria-valuetext`).
      */
     resizeField: string;
@@ -1127,7 +1127,7 @@ export interface UiMessages {
      * Video by link (the `youtube` and `twitch` Tools, ADR-0071). `video` is the Slash menu item
      * and the "Add ›" submenu of the Block handle; `videoLink` is the name of the link field in the
      * popover; `videoInsert` is the popover's button; `videoNotFound` is the field's error for a
-     * link that does not lead to a video of an enabled service (`services` is the names of the
+     * link that does not lead to a video of an enabled service (`services` holds the names of the
      * services joined by " / ": "YouTube" or "YouTube / Twitch". The separator is the same in every
      * language, and the phrase reads the same with it). `videoPlay` is the label of the placeholder
      * button; `videoPlayLabel` is its accessible name (the visible word "Play" is included in it

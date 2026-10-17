@@ -58,7 +58,7 @@ const DENSITY_CLASS = {
 } as const;
 
 /**
- * A product table: column settings, density, loading and error states on top of the
+ * A high-level table: column settings, density, loading and error states on top of the
  * low-level `Table`.
  *
  * A WRAPPER, NOT A REPLACEMENT. Inside is the same `Table` as outside: column visibility and

@@ -22,7 +22,7 @@ import { useEffect, useRef, type RefObject } from "react";
 /**
  * Whether this node can be the one that opened the layer.
  *
- * TWO cases are excluded, and both were found through live defects:
+ * TWO cases are excluded, and both were found through real defects:
  *
  * - **`<body>`.** In StrictMode the layer mounts twice, and on the second pass focus has
  *   already moved away: `document.activeElement` is `body`. The naive version overwrote

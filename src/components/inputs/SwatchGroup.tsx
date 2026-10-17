@@ -18,7 +18,7 @@ export interface SwatchOption<T extends string = string> {
   /**
    * The hue from the label palette.
    *
-   * Not set: the swatch is empty, an outline without a fill. That is how the "no color" option is
+   * If the hue is not set, the swatch is empty, an outline without a fill. That is how the "no color" option is
    * built, and it needs no separate support: the absence of a color is the same kind of answer to
    * the set's question as any hue.
    */

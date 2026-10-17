@@ -9,7 +9,7 @@
  * Document saved in the admin area would show a broken player on a public site with another
  * domain. YouTube always goes through `youtube-nocookie.com`.
  *
- * MODELLED ON THE TIPTAP YOUTUBE AND TWITCH EXTENSIONS (the owner's decision of 2026-10-16: our
+ * MODELED ON THE TIPTAP YOUTUBE AND TWITCH EXTENSIONS (the owner's decision of 2026-10-16: our
  * own code, the extension packages are not installed). Which links count as video, and how the
  * identifier is taken from them, follows the rules of their `utils`, rewritten for parsing `URL`
  * rather than for a single expression. The host is matched by name, not by substring, so

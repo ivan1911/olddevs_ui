@@ -7,7 +7,7 @@ import type { MathRenderOptions } from "./mathOptions.js";
 export interface MathIslandProps {
   /**
    * Fingerprint of the View's HTML. When the Document changes, the formulas are new and the
-   * Island redraws them.
+   * Island re-renders them.
    */
   docKey: string;
   /** KaTeX options from the screen's `tools` (`mathOptionsOf`): macros and strictness, as data. */
@@ -15,7 +15,7 @@ export interface MathIslandProps {
 }
 
 /**
- * Formula Island of `RichTextView` (ADR-0070, item 6): draws each formula from its
+ * Formula Island of `RichTextView` (ADR-0070, item 6): renders each formula from its
  * `data-latex` in place.
  *
  * SERVER HTML COMES FIRST. A formula element arrives with its LaTeX source as text

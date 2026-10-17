@@ -74,7 +74,7 @@ export interface CodeViewProps {
  * stay out of both the selection and the copy, a monospace font from a token, and copying
  * via the existing `CopyButton`.
  *
- * LINE NUMBERS are `aria-hidden` and `select-none`. In speech they are noise, since every
+ * LINE NUMBERS are `aria-hidden` and `select-none`. For a screen reader they are noise, since every
  * line would start with a number, and in the clipboard they are garbage: copied code with
  * numbers does not compile. The number column sticks to the left edge: without that, it
  * would scroll out of view when the content is scrolled to the right, exactly when it is

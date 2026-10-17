@@ -65,7 +65,7 @@ export interface ColorPickerProps {
  * Presets that the library can actually parse.
  *
  * `parseColor` throws on an unrecognized string, and the throw happens in the render phase.
- * And it is not an exotic case that breaks: `rebeccapurple` is a legitimate CSS color that
+ * And the breakage is not an exotic edge case: `rebeccapurple` is a legitimate CSS color that
  * the library does not take, while keeping a brand palette as names is perfectly natural.
  */
 function parsablePresets(presets: string[] | undefined): string[] {
@@ -108,7 +108,7 @@ const THUMB_CLASS =
  * subsystem weighs 61 kB gzip, as much as the rest of the kit. The reasoning is in ADR-0038
  * and in the JSDoc of `src/color.ts`.
  *
- * IN AND OUT IT IS A STRING, not the library's `Color` object. The object would leak the
+ * ON INPUT AND ON OUTPUT IT IS A STRING, not the library's `Color` object. The object would leak the
  * RAC type into the consumer's signatures and state. The string is what the component stores
  * anyway, and what it sends to the server.
  *

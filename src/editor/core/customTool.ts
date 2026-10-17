@@ -197,7 +197,7 @@ export interface TriggerContext {
  * The opening rules are the same as for "/": the character must stand at the start of a Block or
  * after a space (inside a word, as in `a@b.com`, the list stays closed); it does not open in a
  * code Block or in inline code. The query runs up to the next space. Focus stays in the Document;
- * the arrows, `Enter` and `Escape` work as in the Insert menu. An empty response shows the row
+ * the arrows, `Enter` and `Escape` work as in the Slash menu. An empty response shows the row
  * "Nothing found".
  */
 export interface CustomTrigger {
@@ -263,9 +263,9 @@ export type CustomTextCardRender = (props: {
  * A Text card is the fourth kind of UI contribution (ADR-0058, items 7.6–7.11): for example, a
  * comment card under a Mark-highlighted range.
  *
- * The kit holds the frame: the layer and the Escape stack as in the kit's `Popover`, the anchor
+ * The kit holds the frame: the overlay layer and the Escape stack as in the kit's `Popover`, the anchor
  * under the range, a flip at the edge of the window. The body is the React node `render`; the
- * frame has no header and no data buttons, and the entry has no icon. The Text card is non-modal:
+ * frame has no header and no data buttons, and the Text card has no icon. The Text card is non-modal:
  * focus stays in the Document and typing goes on; `Alt+F10` moves into the Text card, and Escape
  * moves back to the Document.
  *
@@ -385,7 +385,7 @@ interface CustomBlockActionFields {
 }
 
 /**
- * The label of an entry: a string or a function of the context (ADR-0058, item 6.1). The kit
+ * The label of a UI contribution: a string or a function of the context (ADR-0058, item 6.1). The kit
  * calls the function on render with the `UiProvider` locale, so a change of locale re-renders the
  * entry. A string suits a single-language application.
  */
@@ -393,8 +393,8 @@ export type CustomToolLabel = string | ((context: { locale: string }) => string)
 
 /**
  * The content of the popover of a button, an Insert item or a Block action. The kit holds the
- * frame: the layer, the anchor, the Escape stack, and returning focus and the selection to the
- * Document. `close` closes the popover the same way Escape does. `Extra` is what the entry adds
+ * frame: the overlay layer, the anchor, the Escape stack, and returning focus and the selection to the
+ * Document. `close` closes the popover the same way Escape does. `Extra` is what the UI contribution adds
  * to `editor` and `close`: for a Block action, the Block's `{ pos }`.
  */
 export type CustomToolPopover<Extra extends object = object> = (

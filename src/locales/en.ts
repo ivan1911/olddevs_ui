@@ -3,7 +3,7 @@
  *
  * There is no need to import it: without a provider the kit already speaks English.
  * The module exists for symmetry with `@olddevs/ui/locales/ru`. Code that picks a
- * catalog by the user's locale should not trip over the fact that one language has
+ * message catalog by the user's locale should not trip over the fact that one language has
  * an import and another does not.
  */
 export { DEFAULT_MESSAGES as messages, DEFAULT_LOCALE as locale } from "../i18n/defaults.js";

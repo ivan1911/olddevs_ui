@@ -35,7 +35,7 @@ export interface FilterField {
   /** Field label. A string: it also goes into the tag label. */
   label: string;
   /**
-   * Field kind (ADR-0063). `"values"` is a choice from the `values` list, an equality;
+   * Field kind (ADR-0063). `"values"` is a choice from the `values` list, an exact match;
    * `"number-range"` and `"date-range"` are two fields, "from" and "to", and a tag with `to`.
    * If not set, `"values"`.
    */
@@ -78,7 +78,7 @@ export interface FilterBarAddProps extends Omit<
  * in `FilterBar`.
  *
  * AN ALREADY APPLIED VALUE IS NOT OFFERED AGAIN. Otherwise the user adds a second identical tag,
- * the selection does not change, and they are left with two filters that look the same, with no
+ * the filtered rows do not change, and they are left with two filters that look the same, with no
  * way to tell which one to remove.
  *
  * The tag identifier is built from the field and the value: the pair is unique precisely because
@@ -89,7 +89,7 @@ export interface FilterBarAddProps extends Omit<
  * 50") cannot be applied: it would select nothing, and the user would read the emptiness as "no
  * data". A field with an already applied range is not offered again: two ranges on the same field
  * would be an intersection, not an addition, and the tags would be indistinguishable. The tag
- * label ("Amount: 50–100", "Date: until 12 March 2026") is built here, from the messages catalog
+ * label ("Amount: 50–100", "Date: until 12 March 2026") is built here, from the message catalog
  * and the locale of `UiProvider`, and goes into `label`.
  */
 export const FilterBarAdd = forwardRef<HTMLDivElement, FilterBarAddProps>(function FilterBarAdd(

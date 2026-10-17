@@ -17,7 +17,7 @@ import { emptyRect, SuggestionList, suggestionOptionId } from "./SuggestionList.
 export interface TriggerMenu {
   /** Characters and bridges for the extension. Empty means the set has no triggers of its own. */
   bindings: readonly TriggerBinding[];
-  /** Field attributes: the combobox part of the pattern, as in the Insert menu. */
+  /** Field attributes: the combobox part of the pattern, as in the Slash menu. */
   attributes: Record<string, string>;
   /** The list itself, rendered next to the field. */
   element: ReactNode;
@@ -31,7 +31,7 @@ interface Opened {
 
 /**
  * Lists for custom trigger characters (ADR-0064). They use the same `SuggestionList` as the
- * `/` Insert menu: a popover at the caret, the rows, and "Nothing found". Focus stays in the
+ * Slash menu (`/`): a popover at the caret, the rows, and "Nothing found". Focus stays in the
  * field, and the engine hears the arrow keys and `Enter` and passes them here through a
  * bridge.
  *

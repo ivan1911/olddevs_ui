@@ -51,7 +51,7 @@ export interface ContextualSaveBarProps {
   className?: string;
 }
 
-/** Shared with `AppShell` (`bottomBarHeightVar`): this is the name of the `bottomBar` slot height. */
+/** Shared with `AppShell` (`bottomBarHeightVar`): this is what the height of the `bottomBar` slot is called. */
 const DEFAULT_OFFSET_VAR = "--bottombar-h";
 
 const PANEL =

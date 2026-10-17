@@ -79,8 +79,8 @@ export interface ButtonProps extends Omit<ComponentPropsWithoutRef<"button">, "c
    * Two props change behavior under `asChild`, because otherwise they would silently lie:
    *
    * - `disabled` does not exist as an attribute on a link: `<a disabled>` stays focusable and
-   *   followable, and `disabled:opacity-50` does not fire, because `:disabled` is a pseudo-class
-   *   of form fields. So here it turns into `aria-disabled` plus removing pointer events.
+   *   still navigates when clicked, and `disabled:opacity-50` does not fire, because `:disabled`
+   *   is a pseudo-class of form fields. So here it turns into `aria-disabled` plus removing pointer events.
    * - `selected` does not turn into `aria-pressed`: the `link` role forbids that attribute, and
    *   the axe audit catches it as `aria-allowed-attr`. A pressed link does not exist — if the
    *   state is needed, it is a button, not a link.
@@ -111,7 +111,7 @@ export interface ButtonProps extends Omit<ComponentPropsWithoutRef<"button">, "c
  *
  * `iconOnly` absorbed the separate `IconButton` primitive from the front end. That one was a
  * competing implementation of the same button: its own hover on `useState`, its own `active`
- * prop outside the vocabulary, its own set of sizes in numbers — and on top of that, two calls
+ * prop outside the vocabulary, its own sizes as plain numbers — and on top of that, two calls
  * of `Button` in the front end were made square by hand with `style={{ width: 36 }}`.
  * The idiom is not new: `Chip` had `iconOnly` from the start.
  */

@@ -5,7 +5,7 @@
  *
  * WHY SEPARATE FROM `@olddevs/ui/editor`. Sanitizing HTML is the consumer server's job
  * (ADR-0050), and a Node process that needs only one config needs neither React nor Tiptap.
- * The `./editor` entry re-exports the editor together with the engine, and without a bundler
+ * The `./editor` entry re-exports the Editor together with the engine, and without a bundler
  * (plain Node, a worker, a migration script) nobody drops the excess. Here the module graph
  * contains only `schema.ts`: the data and the function over it. Guarded by
  * `tests/editor-schema-entry.test.ts`.

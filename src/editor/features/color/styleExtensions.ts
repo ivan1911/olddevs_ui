@@ -185,8 +185,8 @@ export const TEXT_COLOR_EXTENSIONS = [TextColorMark, TextColorValue];
  * is a glowing patch over the whole document. So parsing takes only `mark[data-color]` with a known
  * name, and a command without a color sets nothing.
  *
- * Also switched off is everything that set a highlight without a color: `Mod-Shift-H`, the input and
- * paste rule `==text==`, and Markdown parsing. The last one also closes a leak between Editors: the
+ * Everything that set a highlight without a color is also switched off: `Mod-Shift-H`, the input
+ * and paste rule `==text==`, and Markdown parsing. The last one also closes a leak between Editors: the
  * Markdown rules live in a shared `marked`, so one Editor's highlight rule would parse `==` in
  * another Editor, with no Tool enabled.
  */

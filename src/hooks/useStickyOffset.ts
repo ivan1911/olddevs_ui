@@ -22,7 +22,7 @@ export interface StickyOffset {
    * page itself, and an effect on mount simply never sees such a marker.
    */
   sentinelRef: (node: HTMLElement | null) => void;
-  /** The bar is pressed against the top edge. */
+  /** The bar is stuck to the top edge. */
   isStuck: boolean;
 }
 

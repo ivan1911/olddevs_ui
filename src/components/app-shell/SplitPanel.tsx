@@ -79,7 +79,7 @@ export interface SplitPanelProps {
    *
    * The content is **not unmounted**: the state of forms and scroll positions inside
    * survives the collapse. The panel is removed from the accessibility tree: a hidden
-   * panel that Tab can reach is focus that has moved into the invisible. The handle
+   * panel that Tab can reach is focus that has gone somewhere invisible. The handle
    * disappears with it: there is nothing to drag.
    */
   collapsed?: boolean;
@@ -87,7 +87,7 @@ export interface SplitPanelProps {
    * Accessible name of the panel. With it the panel is announced as a region; without
    * it, it is not.
    *
-   * An unnamed region is an extra announcement in speech with nothing following it;
+   * An unnamed region is an extra announcement to the screen reader with nothing after it;
    * the same rule as for `ButtonGroup`.
    */
   "aria-label"?: string;
@@ -124,7 +124,7 @@ const FINE_STEP = 1;
  * THE HANDLE IS A VISIBLE STRIP PLUS A REAL `input[type=range]` UNDER IT, and this is
  * the central decision of the component. react-aria does not provide a general-purpose
  * resizer: `ColumnResizer` and `ResizableTableContainer`, which already work in
- * `Table`, are tied to the table and do not live outside it. Their model was taken,
+ * `Table`, are tied to the table and do not work outside it. Their model was taken,
  * not the components themselves.
  *
  * Why not a `div` with `role="separator"` and an arrow-key handler: the platform slider
@@ -136,7 +136,8 @@ const FINE_STEP = 1;
  * The slider lies over the strip, transparent and without pointer events: the strip
  * itself drives the dragging. If the slider kept the events, it would change the value
  * by its own horizontal logic, and with `position="bottom"` the panel would move in the
- * wrong direction. Focus stays real: the strip is highlighted through `focus-within`.
+ * wrong direction. Focus still goes to the real slider: the strip is highlighted through
+ * `focus-within`.
  *
  * THE SLIDER VALUE IS THE PANEL SIZE, NOT THE BOUNDARY COORDINATE. So pressing Right
  * always enlarges the panel, even though the boundary moves left. The model is the same

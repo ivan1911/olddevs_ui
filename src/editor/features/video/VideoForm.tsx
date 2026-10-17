@@ -17,7 +17,7 @@ import { parseVideoLink, VIDEO_PROVIDER_NAME } from "./videoLink.js";
  * from a disabled service are the same error in the field, which says what the Editor accepts.
  * The Block is inserted at the caret (`insertVideo`).
  *
- * The kit holds the frame (`SelectionPopover`): the layer stack, the frame's name is the item's
+ * The kit provides the frame (`SelectionPopover`): the layer stack, the frame's name is the item's
  * label, and focus returns to the Document. The form is mounted anew on every opening.
  */
 export function VideoForm({ editor, onDone }: { editor: Editor; onDone: () => void }) {

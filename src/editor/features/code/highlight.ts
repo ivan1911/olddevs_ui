@@ -27,7 +27,7 @@ const NAMED: Record<string, string> = {
 };
 
 /**
- * The text of a block from HTML. `null` means an entity outside this list was met (`&copy;`):
+ * The text of a block from HTML. `null` means a named entity outside this list was met (`&copy;`):
  * without the full HTML table it cannot be decoded the way a browser decodes it, so it is better
  * to leave the block unhighlighted than to show different text.
  */

@@ -47,7 +47,7 @@ export const PLAYER_FRAME =
  * no autoplay: the player is on the page, but it does not play.
  *
  * WITH `autoload: false` THE PLACEHOLDER IS SHOWN, AND THERE IS NOT A SINGLE REQUEST TO THE
- * SERVICE UNTIL A CLICK. It draws only what the Document knows: the service name, the link, and
+ * SERVICE UNTIL A CLICK. It renders only what the Document knows: the service name, the link, and
  * the Play button. The `iframe` appears after the click and starts at once. So reading the page
  * or editing the Document does not send the reader to YouTube or Twitch until they decide to
  * watch. This is for screens where privacy matters.
@@ -62,7 +62,7 @@ export const PLAYER_FRAME =
  * in place of the player (or the button), so the video can be opened at the service.
  *
  * Colors are the `--rte-*` roles of the Document container: the frame looks the same in the
- * Editor, in `RichTextView`, and on the `paper` sheet.
+ * Editor, in `RichTextView`, and on the `paper` surface.
  */
 export function VideoPlayer({ link, autoload = true, className }: VideoPlayerProps) {
   const messages = useMessages().editor;

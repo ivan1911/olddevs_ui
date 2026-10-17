@@ -23,7 +23,7 @@ export interface MediaCardProps extends Omit<
   /**
    * Actions over the preview, usually `Button iconOnly`.
    *
-   * They are ALWAYS in the markup and always reachable from the keyboard. They are hidden with
+   * They are always in the markup and always reachable from the keyboard. They are hidden with
    * opacity only, and shown on hover, on focus within, when the tile is selected, and always on
    * devices without hover (`hover: none`). An overlay that appears on `:hover` via `display: none`
    * is not reachable from the keyboard at all — and that is not "less convenient" but "unusable".
@@ -32,8 +32,8 @@ export interface MediaCardProps extends Omit<
   /**
    * The tile is selected.
    *
-   * The selection border is drawn from it. The tile's own axis (a select button) is turned on
-   * EXPLICITLY, as a pair of `selected` and `onSelectedChange`; `selected` alone only displays
+   * The selection border is derived from it. The tile's own axis (a select button) is turned on
+   * explicitly, as a pair of `selected` and `onSelectedChange`; `selected` alone only displays
    * someone else's axis, as in `VirtualGrid`. Without `selected` there is no border in the markup.
    */
   selected?: boolean;
@@ -56,7 +56,7 @@ export interface MediaCardProps extends Omit<
  *
  * SELECTION IS DECLARED AS STATE, not as a border. The button's `aria-pressed` tells screen readers
  * whether the tile is selected; the border is a visual signal, and a person who cannot see it would
- * otherwise not learn about the selection at all. The button label does NOT repeat the state:
+ * otherwise not learn about the selection at all. The button label does not repeat the state:
  * `aria-pressed` is already announced, and "Select" read together with it is unambiguous.
  */
 export const MediaCard = forwardRef<HTMLDivElement, MediaCardProps>(function MediaCard(

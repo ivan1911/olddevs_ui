@@ -54,7 +54,7 @@ const SIZE_CLASS: Record<TextSize, string> = {
 };
 
 /**
- * Emphasis. The steps are the same as across the kit: `fg-0` is primary, `fg-1` is secondary,
+ * Emphasis. The steps match the rest of the kit: `fg-0` is primary, `fg-1` is secondary,
  * `fg-2` is supporting. The levels below (`fg-3`, `fg-4`) are not used here: they do not reach
  * 4.5:1 contrast on the app's backgrounds, and they are kept for non-text roles — icons and
  * dividers.

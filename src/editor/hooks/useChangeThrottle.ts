@@ -10,15 +10,15 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
  * Runs at most once per `delay` ms, and only on the trailing edge.
  *
  * WHY THE TRAILING EDGE, NOT THE LEADING ONE, unlike the original. Handing over the value
- * means serializing the document to HTML, which walks the whole tree. A leading edge would
+ * means serializing the Document to HTML, which walks the whole tree. A leading edge would
  * pay that cost on the first letter after a pause, which means almost every keystroke during
  * normal typing. The trailing edge accumulates edits and serializes once, when typing settles.
- * `emit` reads the document itself, at the moment of the call, instead of receiving a value
+ * `emit` reads the Document itself, at the moment of the call, instead of receiving a value
  * computed on every keystroke.
  *
  * `flush` does the same, but right away and only if something is pending: on `blur` and before
  * a form is submitted the value must be fresh, not lagging behind by `delay`. `cancel` drops a
- * pending call when the document was replaced from outside and there is no previous edit left
+ * pending call when the Document was replaced from outside and there is no previous edit left
  * to hand over.
  *
  * Unmounting also flushes any pending call: otherwise the last letters typed before the form

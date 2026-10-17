@@ -123,7 +123,7 @@ const slot = (tool: Tool): Slot => ({ kind: "slot", id: tool, tool });
  * MENUS INSTEAD OF A ROW OF BUTTONS. There used to be a rule: "every action is a button in a
  * row, with no dropdowns, not even "More" or "Lists"". An action hidden in a menu did not
  * expose `aria-pressed`, so a screen reader could not tell whether italic was on without
- * opening the menu. ADR-0054 lifted that argument: an item with a check mark
+ * opening the menu. ADR-0054 withdrew that argument: an item with a check mark
  * (`menuitemradio`, `menuitemcheckbox`) announces its state, and the menu button carries the
  * current value in its name and icon (`FormatMenus.tsx`). The Block type and the blockquote
  * are in "¶". Rare Marks, colors and clearing are in "…". Alignment and lists are in their
@@ -140,8 +140,7 @@ const slot = (tool: Tool): Slot => ({ kind: "slot", id: tool, tool });
  *
  * When the row is wider than the Toolbar, it wraps via the primitive's `flex-wrap` rather
  * than running past the edge, and it wraps by whole groups. With the "Highlight" and "Color"
- * buttons, the `full` Toolbar in a 640 px column takes two rows, and no group is split into
- * orphans.
+ * buttons, the `full` Toolbar in a 640 px column takes two rows, and no group leaves a lone button on its own row.
  *
  * DESCRIPTION BUTTONS (ADR-0058, item 5.3). Link, image and emoji sit in the places the kit
  * reserved for their Tools (`slot`). Description buttons without a place in the kit get their
@@ -243,7 +242,7 @@ export interface EditorToolbarProps {
    */
   shortcutsReference?: boolean;
   /**
-   * HTML mode: the "HTML" button and its state. The mode is held by `RichTextEditor`.
+   * Source mode: the "HTML" button and its state. The mode is held by `RichTextEditor`.
    * Without the prop there is no button, as on the floating Toolbar.
    */
   source?: { active: boolean; onToggle: () => void };

@@ -91,11 +91,11 @@ export function layerCount(): number {
  * THE POINTER IS THE FOURTH THING AT THE SEAM, after the stack, Escape and the scale. A modal Radix
  * component (`Dialog`, `Drawer`) sets an inline `pointer-events: none` on `<body>` and gives the
  * pointer back only to its OWN layers, also with an inline `auto`. A react-aria overlay is portaled
- * directly under `<body>` and inherited `none`, so clicks fell through to the scrim: a menu item and
+ * directly under `<body>` and inherits `none`, so clicks fell through to the scrim: a menu item and
  * a list option inside the dialog could only be selected from the keyboard. For the RAC overlay, the
  * kit does what Radix does for its own: it gives it back `auto`.
  *
- * The rule lives in CSS, not in a class on the kit's panels, because the consumer also draws its own
+ * The rule lives in CSS, not in a class on the kit's panels, because the consumer also renders its own
  * react-aria overlays: its popover broke the same way, and the kit's class does not reach it. A click
  * into the portal does not close the dialog, though: Radix decides "click outside" by the React tree,
  * and the portal remains its descendant. The link between the selector and `styles.css` is guarded by
@@ -107,7 +107,7 @@ export const ARIA_OVERLAY_SELECTOR = "[data-rac][data-placement]";
  * Whether a react-aria overlay is open above us, by `ARIA_OVERLAY_SELECTOR`.
  *
  * The former guard in `Dialog` identified a foreign layer by the POSITION OF THE EVENT TARGET:
- * "`data-rac` and outside the window". That worked for menus, but not for a `Combobox` inside the
+ * "`data-rac` and outside the dialog". That worked for menus, but not for a `Combobox` inside the
  * dialog: focus sits in an `Input` that is INSIDE the content, so the second condition was false.
  * Escape closed the dialog instead of the suggestion list.
  *

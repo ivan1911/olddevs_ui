@@ -3,7 +3,7 @@
  *
  * Before the package was extracted, the same concept was named differently in each
  * primitive: `kind` on Button, `active` on Chip, `status` on StatusBadge, `tone` on
- * Tone. Below is the single permitted set of names. New primitives take from it
+ * Tone. Below is the single permitted set of names. New primitives use it
  * rather than inventing their own.
  *
  * Three independent axes:
@@ -25,7 +25,7 @@ export type Size = "sm" | "md" | "lg";
  * `xs` is taken out of `Size` rather than added to it, and that is a deliberate
  * decision. `Size` is the vocabulary for the whole kit: widen it, and every primitive
  * with a size axis starts accepting a value it cannot handle, and the compiler stays
- * silent. The button is the only customer of a fourth step, and that is where it lives.
+ * silent. The button is the only one that needs a fourth step, and that is where it lives.
  */
 export type ButtonSize = Size | "xs";
 
@@ -128,8 +128,8 @@ export type Density = "comfortable" | "compact";
  * changes. Anyone who needs a second font (`font-mono`) sets it separately.
  *
  * The axis is a string with a single value on purpose: `oldstyle` and `slashed-zero`
- * will join it over time, if a customer appears, and that will not require a second
- * prop or turn the boolean `tabular` into a false value.
+ * will join it over time, if the need appears, and that will not require a second
+ * prop or make the boolean `tabular` a misnomer.
  */
 export type Numeric = "tabular";
 
@@ -310,7 +310,7 @@ export const TONE_TOKENS: Record<Tone, ToneAtoms> = {
  * The border of a state indicator carries meaning and must hold 3:1 under WCAG
  * 1.4.11, so here `neutral` gets `fg-3`, and the rest get the same `*-strong` values.
  *
- * Why the checked checkbox and the on `Toggle` need it: their fill (`solid`,
+ * Why the checked checkbox and the `Toggle` in its on state need it: their fill (`solid`,
  * `bg-accent`) against the backing gives 1.07–2.9, for four of the five tones, in the
  * dark themes on `surface-elevated`, and in the light theme for `neutral`/`warning`.
  * Changing token values for this would visibly alter the look of the whole kit, so the

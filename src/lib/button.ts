@@ -21,7 +21,7 @@ import { variantClasses, type ButtonSize, type Tone, type Variant } from "./vari
  * Sizes kept from the front-end app's version, so that the move did not shift the layout.
  *
  * `xs` came later and was requested by the customer: a list row is designed for 32 pixels, while the
- * smallest button gave 30 and stretched the row to 42. A caption barely fits in it and is not intended to.
+ * smallest button was 30 pixels tall and stretched the row to 42. A caption barely fits in it and is not intended to.
  * The step is set up for an icon button in a row, see `iconOnly`.
  */
 const SIZES: Record<ButtonSize, string> = {
@@ -34,7 +34,7 @@ const SIZES: Record<ButtonSize, string> = {
 /**
  * The same heights, but square and without horizontal padding.
  *
- * For `xs` the press area is EXTENDED BY A PSEUDO-ELEMENT to 24 pixels, although the button itself is 20.
+ * For `xs` the press area is extended by a pseudo-element to 24 pixels, although the button itself is 20.
  * Without this the step could not be shipped: 20×20 fails WCAG 2.5.8 (the minimum target is 24×24), and
  * enlarging the button itself would bring back the very stretched row for whose sake the step was added.
  * The pseudo-element separates these two requirements: in the layout the button takes 20, while a finger
@@ -110,7 +110,7 @@ const BASE =
  * The icon size inside a button, for each step.
  *
  * The icon vocabulary does not set sizes: that is the job of the consumer's `LucideProvider`. Without an
- * explicit `size`, lucide draws 24 pixels at stroke width 2, and in a 30-pixel button with a 13-pixel
+ * explicit `size`, lucide renders it at 24 pixels with a stroke width of 2, and in a 30-pixel button with a 13-pixel
  * caption such an icon is one and a half times taller than it should be. Icons that the kit places in its
  * own buttons (copy, the `SplitButton` expander, the `SideNav` toggle) take their size from here, to follow
  * the button's step. The numbers are the same as in the kit's showcase stories: 14 in compact ones, 16 by default.

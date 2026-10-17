@@ -103,8 +103,8 @@ async function readMoves(items: DropItem[], type: string): Promise<{ id: Key; fr
  *
  * THE DRAG HANDLE IS REQUIRED, and it is not decoration here. Without `<Button slot="drag">` a row
  * gets `draggable="true"` and can be dragged with a mouse, but from the keyboard it cannot be
- * picked up AT ALL, and react-aria does not fail: it writes a warning to the console. So an
- * inaccessible list looks like it works. The component draws the handle itself rather than leaving
+ * picked up at all, and react-aria does not fail: it writes a warning to the console. So an
+ * inaccessible list looks like it works. The component renders the handle itself rather than leaving
  * it to the consumer's discretion; this was measured before the decision.
  *
  * THERE IS NO LIVE REGION OF ITS OWN. react-aria announces the drag itself, and localized: under

@@ -33,8 +33,8 @@ const NOT_FROM_MARKDOWN: ReadonlySet<string> = new Set([LAYOUT_NODE, COLUMN_NODE
 
 /**
  * GitHub alert: a blockquote whose first line is a tone label, one of `[!NOTE]`, `[!TIP]`,
- * `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]`, on a line of its own. The case is free, as on
- * GitHub. A label with text on the same line (`> [!NOTE] text`) and a foreign label (`[!INFO]`)
+ * `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]`, on a line of its own. The case does not matter, as on
+ * GitHub. A label with text on the same line (`> [!NOTE] text`) and an unknown label (`[!INFO]`)
  * are an ordinary blockquote: GitHub does not show them as alerts either.
  */
 const ALERT_LABEL = /^\[!(\w+)\][ \t]*(?:\n|$)/;
@@ -73,7 +73,7 @@ function alertOf(node: JSONContent): { tone: string; content: JSONContent[] } | 
 /**
  * A video Block outside the top level of the Document (in a list, in a quote) becomes a paragraph
  * with its link. Markdown does not know the player: a line that is only a link becomes a Block by
- * itself, while a link in a list item stays a link. A Block in the first place of a list item does
+ * itself, while a link in a list item stays a link. A Block at the start of a list item does
  * not fit the Schema either, since there a paragraph is expected.
  */
 function demoteNestedVideo(node: JSONContent, schema: Schema): JSONContent {
@@ -214,7 +214,7 @@ function hasMonospaceBlock(root: Element): boolean {
   return false;
 }
 
-/** Whether the buffer's `text/html` looks like highlighted source of its `text/plain`. */
+/** Whether the clipboard's `text/html` looks like highlighted source of its `text/plain`. */
 function isHighlightedSource(html: string, text: string): boolean {
   // `DOMParser` is an inert document: images do not load, and scripts do not run.
   const { body } = new DOMParser().parseFromString(html, "text/html");

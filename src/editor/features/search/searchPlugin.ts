@@ -174,7 +174,7 @@ function searchPlugin(flags: SearchOptions) {
 
 /**
  * Replacement text for a match. With a regular expression, `$1…$9`, `$&` (the whole match)
- * and `$$` (a dollar sign) work from the groups the search kept for the match
+ * and `$$` (a dollar sign) are filled in from the groups the search kept for the match
  * (`SearchMatch.captures`). Without an expression the replacement is used as is, so `$1`
  * stays `$1`.
  */

@@ -13,7 +13,7 @@ export interface ModalHeaderProps {
   /**
    * Title of the dialog: one line on the left of the header.
    *
-   * `ReactNode`, not a string: on the front end a counter of the selection often sits next to
+   * `ReactNode`, not a string: in the front app a counter of the selection often sits next to
    * the text — "Add to collection (12)", where the parenthesized count is set in a different
    * size and color.
    */
@@ -67,9 +67,9 @@ export interface ModalHeaderProps {
  * on the title. That is exactly the case where a copy drifts apart silently: fix the padding in one
  * dialog and it starts to differ from the other nine, and only the eye would notice.
  *
- * Originally the plan named a different component — a `closable` prop on `ModalOverlay` that draws
- * a cross in the corner of the scrim. It was dropped after reading the code: NONE of the fifteen
- * crosses on the front end sits in a corner, all of them are in the header row next to the title.
+ * Originally the plan named a different component — a `closable` prop on `ModalOverlay` that renders
+ * a close button in the corner of the scrim. It was dropped after reading the code: NONE of the fifteen
+ * close buttons in the front app sits in a corner, all of them are in the header row next to the title.
  * That prop would not have removed a single repeat and would have added an unused API.
  */
 export function ModalHeader({

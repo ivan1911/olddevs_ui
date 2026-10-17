@@ -125,9 +125,10 @@ function bareLinkNode(editor: Editor): ProseMirrorNode | null {
 }
 
 /**
- * Parsing of the paired Tiptap HTML extensions (`div[data-youtube-video] iframe`,
- * `div[data-twitch-video] iframe`) and of a lone player `iframe`: the player address is turned back
- * into a link to the video. The player does not get into the Document.
+ * Parsing of the HTML that the Tiptap YouTube and Twitch extensions write
+ * (`div[data-youtube-video] iframe`, `div[data-twitch-video] iframe`) and of a lone player `iframe`:
+ * the player address is turned back into a link to the video. The player does not get into the
+ * Document.
  */
 function attrsFromPlayer(
   element: HTMLElement,
@@ -172,7 +173,7 @@ function markdownTokenizer(providers: readonly VideoProvider[]): MarkdownTokeniz
 
 /**
  * The video Block (ADR-0071): an Atom `div[data-block="video"]` with a service, a link to the video,
- * and an ordinary link inside. The node has no player: the node view (`VideoView`) draws it, and in
+ * and an ordinary link inside. The node has no player: the node view (`VideoView`) renders it, and in
  * the View, the island does. The `providers` Option decides which services are enabled: a link to a
  * disabled service does not become a Block, and a Block from `value` unwraps into its link.
  */

@@ -66,7 +66,7 @@ interface SelectCommonProps<T extends SelectItem> {
    * Whether to highlight the trigger with the accent when a value is selected.
    *
    * In filters — yes, and that is the default: there the highlight means "filter applied", and it
-   * is looked for by eye while scanning the popover. In a form it would mean "field filled" — and
+   * is spotted at a glance while scanning the popover. In a form it would mean "field filled" — and
    * a filled field is the norm, not an event, and next to ordinary `TextControl`s an accent pill
    * looks like an alarm on an empty spot.
    *
@@ -154,7 +154,7 @@ interface SelectCommonProps<T extends SelectItem> {
   /**
    * Name of the trigger, as a reference to the `id` of a label that is already shown.
    *
-   * It is the same name, but as a reference to a label that is already drawn: the consumer has it
+   * It is the same name, but as a reference to a label that is already rendered: the consumer has it
    * on screen, and repeating its text here would create a second source that silently drifts
    * apart from the first.
    *
@@ -405,7 +405,7 @@ export function Select<T extends SelectItem>(props: SelectProps<T>) {
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   /**
-   * The live buttons of the list. Filtering out holes is required: React nulls a ref on unmount, so
+   * The mounted buttons of the list. Filtering out holes is required: React nulls a ref on unmount, so
    * after narrowing the search the array keeps `null`s in the places of the items that dropped out —
    * and `End` would send focus into such a hole, that is, nowhere. We compute it here rather than
    * trimming the array in render: writing to a ref during render is not allowed.

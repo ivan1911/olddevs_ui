@@ -80,7 +80,7 @@ const LIST_CLASS = "flex flex-col gap-px overflow-y-auto p-1.5 outline-none";
  *
  * A local copy here was the fourth in the repository, and the only one using `focus-visible:`
  * instead of `focus:`. In react-aria the state is `data-focused`, which is set by both the arrow
- * keys and the mouse; separating them would mean showing two cursors at once.
+ * keys and the mouse; separating them would mean showing two highlights at once.
  */
 const ITEM_CLASS = LISTBOX_ITEM_CLASS;
 

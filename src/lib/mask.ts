@@ -186,16 +186,16 @@ export function maskTokenAt(mask: string, index: number): MaskToken | undefined 
 }
 
 /**
- * The tail of the mask after what is already shown: a format hint.
+ * The tail of the mask after what is already shown: a mask guide.
  *
  * `formatMask` stops where the value ends, so an empty field shows nothing, and a field with one digit
  * does not say how many are still missing. This function fills in the remainder: unoccupied tokens are
- * replaced with a placeholder, and literals stay as themselves. An empty phone value gives
- * `+7 (___) ___-__-__`, not a bare row of underscores. The literals are half of the hint.
+ * replaced with a filler character, and literals stay as they are. An empty phone value gives
+ * `+7 (___) ___-__-__`, not a bare row of underscores. The literals are half of the guide.
  *
  * THE LENGTHS ALWAYS MATCH: `formatMask(raw, mask).length + maskRemainder(...).length` equals the length
  * of the mask for any value. The display relies on this. The typed part and the remainder lie one after
- * another and together take exactly the width of the mask. The placeholder is therefore one character;
+ * another and together take exactly the width of the mask. The filler is therefore one character;
  * a longer string would break the equality.
  *
  * Not exported, like `caretAfter` and `rawLengthBefore`: this is display mechanics, not a vocabulary

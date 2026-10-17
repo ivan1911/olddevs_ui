@@ -41,8 +41,8 @@ export const MATH_CHECKS: Readonly<Record<string, (value: unknown) => boolean>> 
  * Formula options from `tools`: the `tool("mathematics", …)` entry over the defaults. They are
  * read by the same `resolveToolOptions` as the Editor (`expandTools`): a value that fails the
  * check is replaced with the default, with the same `console.error` in development; without an
- * entry, the defaults. Two `tool("mathematics")` entries are a mistake in the list, on which the
- * Editor does not start; the View does not pick the "first" one, but takes the defaults and
+ * entry, the defaults. Two `tool("mathematics")` entries are a mistake in the list that stops the
+ * Editor from starting; the View does not select the "first" one, but takes the defaults and
  * reports it. `RichTextView` reads the formulas with them the same way the Editor does: a macro
  * given to the Editor works in the View too.
  */

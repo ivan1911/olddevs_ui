@@ -15,7 +15,7 @@ import type { EmojiCategory, EmojiName } from "../../../i18n/messages.js";
  * EMOJI IS PLAIN TEXT. It has no Block and no Mark of its own, like `clearFormatting`: the Schema,
  * the sanitizer and Markdown do not change, and the inserted character goes into the output HTML
  * and into `getMarkdown` like any other text. Characters with a presentation variant (`❤️`, `✌️`,
- * `✈️`) store the `U+FE0F` selector: without it, some platforms draw them in black and white.
+ * `✈️`) store the `U+FE0F` selector: without it, some platforms render them in black and white.
  *
  * The key types (`EmojiCategory`, `EmojiName`) live in the message catalog (`i18n/messages.ts`),
  * not here: the catalog is part of the main entry point, and it is not allowed to import from

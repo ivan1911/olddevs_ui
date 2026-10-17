@@ -403,7 +403,7 @@ export function repeatedConfigured(
  * ONE READ FOR THE EDITOR AND THE VIEW. The Editor reads options when it assembles the set
  * (`expandTools`), and the server-side `RichTextView` reads the formula options for its Island
  * (`mathOptionsOf`). It is one rule, so that whatever the Editor accepts, the View accepts too.
- * `owner` is whose name appears in the message.
+ * `owner` is the name that appears in the message.
  */
 export function resolveToolOptions(
   owner: "RichTextEditor" | "RichTextView",

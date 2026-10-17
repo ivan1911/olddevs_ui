@@ -23,7 +23,7 @@ export interface SearchKeyboardConfig {
    * Called when the user switches the layout; the consumer is responsible for saving the new one.
    */
   onLayoutChange: (nextLayout: KeyboardLayout) => void;
-  /** Opens the panel on the first render, for a scenario where it is expanded in advance. */
+  /** Opens the panel on the first render, for when it should be open from the start. */
   defaultOpen?: boolean;
   /** Submits the query on the Enter key of the on-screen keyboard. */
   onSubmit?: () => void;
@@ -81,7 +81,7 @@ export interface SearchControlProps extends Omit<
 }
 
 /**
- * Search field: a magnifier on the left, a clear cross on the right.
+ * Search field: a magnifier on the left, a clear button on the right.
  *
  * IT SITS ON `TextControl`, NOT ON ITS OWN SHELL, and this is the main decision here.
  * The front end had five hand-written fields of this kind (the category-change dialog, the
@@ -103,9 +103,9 @@ export interface SearchControlProps extends Omit<
  *   of an array in a dialog needs no delay at all, while an API request does. The package does not
  *   know which one it is, and a built-in delay cannot be turned off.
  *
- * CLEARING RETURNS FOCUS TO THE FIELD. The cross unmounts at that moment, and without an explicit
- * return focus moves to `<body>`: a keyboard user loses their place in the dialog and has to start
- * navigating again from the beginning.
+ * CLEARING RETURNS FOCUS TO THE FIELD. The clear button unmounts at that moment, and without an
+ * explicit focus return, focus moves to `<body>`: a keyboard user loses their place in the dialog
+ * and has to start navigating again from the beginning.
  */
 export const SearchControl = forwardRef<HTMLInputElement, SearchControlProps>(
   function SearchControl(
