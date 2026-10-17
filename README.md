@@ -106,6 +106,8 @@ The theme is an attribute on `<html>`: `data-theme` accepts `dark` (the default)
 <html data-theme="light" data-accent="violet"></html>
 ```
 
+Corner shape is a separate axis, `data-radius`: `none`, `small`, `medium` (the default) or `large`. See [Radius](docs/theming.md#radius).
+
 The interface language defaults to English. Russian labels are added with one provider:
 
 ```tsx

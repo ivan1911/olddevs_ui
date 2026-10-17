@@ -108,13 +108,13 @@ The registry of theme axes and the contract for applying them. The kit has **no*
 app. The reasoning is in ADR-0020. The ready code for two variants of a switcher is in
 [the recipe in theming.md](../theming.md#theme-switcher).
 
-| Export                                                | Purpose                                                                                                                        |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `UI_THEMES`, `UI_ACCENTS`, `UI_BRANDS`                | The three theme axes as lists. A test checks them against `styles.css`, so they cannot drift apart silently.                   |
-| `normalizeTheme`, `normalizeAccent`, `normalizeBrand` | Turn any value into a valid one. They accept `unknown`. A typical source is storage.                                           |
-| `applyTheme(root, prefs)`                             | Sets all three axes on the element. If an axis is not passed, it returns to its default instead of keeping the previous value. |
-| `themeInitScript({ storageKey })`                     | A **string** of JS for applying the theme early, before the first render.                                                      |
-| `DEFAULT_THEME_PREFS`                                 | The state in which no overlay is set: `dark` / `blue` / `base`.                                                                |
+| Export                                                                   | Purpose                                                                                                                       |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `UI_THEMES`, `UI_ACCENTS`, `UI_BRANDS`, `UI_RADII`                       | The four theme axes as lists. A test checks them against `styles.css`, so they cannot drift apart silently.                   |
+| `normalizeTheme`, `normalizeAccent`, `normalizeBrand`, `normalizeRadius` | Turn any value into a valid one. They accept `unknown`. A typical source is storage.                                          |
+| `applyTheme(root, prefs)`                                                | Sets all four axes on the element. If an axis is not passed, it returns to its default instead of keeping the previous value. |
+| `themeInitScript({ storageKey })`                                        | A **string** of JS for applying the theme early, before the first render.                                                     |
+| `DEFAULT_THEME_PREFS`                                                    | The state in which no overlay is set: `dark` / `blue` / `base` / `medium`.                                                    |
 
 `base` **removes** `data-brand` instead of writing `data-brand="base"`. There is no CSS block with that name,
 and a leftover attribute would look like a working overlay.
@@ -136,7 +136,7 @@ import { themeInitScript } from "@olddevs/ui";
 />;
 ```
 
-The storage format is a JSON object `{ theme, accent, brand }` under this key. The consumer writes it
+The storage format is a JSON object `{ theme, accent, brand, radius }` under this key. The consumer writes it
 (`applyTheme` does not save anything), and the script reads it. Any field can be missing or hold a wrong value.
 Normalization still runs, and broken JSON does not break the page.
 
