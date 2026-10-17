@@ -55,7 +55,7 @@ export interface ContextualSaveBarProps {
 const DEFAULT_OFFSET_VAR = "--bottombar-h";
 
 const PANEL =
-  "border-line z-20 mt-4 flex flex-col gap-2 rounded-[14px] border p-[10px_14px] " +
+  "border-line z-20 mt-4 flex flex-col gap-2 rounded-lg border p-[10px_14px] " +
   "backdrop-blur-md shadow-[var(--shadow-1)] sm:flex-row sm:items-center sm:gap-[14px]";
 
 /**

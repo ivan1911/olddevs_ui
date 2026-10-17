@@ -11,10 +11,12 @@ import {
   DEFAULT_THEME_PREFS,
   normalizeAccent,
   normalizeBrand,
+  normalizeRadius,
   normalizeTheme,
   themeInitScript,
   UI_ACCENTS,
   UI_BRANDS,
+  UI_RADII,
   UI_THEMES,
 } from "../src/lib/themes.js";
 
@@ -35,6 +37,7 @@ describe.each([
   ["data-theme", UI_THEMES, DEFAULT_THEME_PREFS.theme],
   ["data-accent", UI_ACCENTS, DEFAULT_THEME_PREFS.accent],
   ["data-brand", UI_BRANDS, DEFAULT_THEME_PREFS.brand],
+  ["data-radius", UI_RADII, DEFAULT_THEME_PREFS.radius],
 ] as const)("axis %s", (attr, list, fallback) => {
   test("every block in styles.css is listed in the registry", () => {
     const extra = [...declaredIn(attr)].filter((v) => !list.includes(v as never));
@@ -62,12 +65,14 @@ describe("normalisation", () => {
     expect(normalizeTheme(value)).toBe(DEFAULT_THEME_PREFS.theme);
     expect(normalizeAccent(value)).toBe(DEFAULT_THEME_PREFS.accent);
     expect(normalizeBrand(value)).toBe(DEFAULT_THEME_PREFS.brand);
+    expect(normalizeRadius(value)).toBe(DEFAULT_THEME_PREFS.radius);
   });
 
   test("a valid value passes through as is", () => {
     expect(normalizeTheme("light")).toBe("light");
     expect(normalizeAccent("violet")).toBe("violet");
     expect(normalizeBrand("teal")).toBe("teal");
+    expect(normalizeRadius("large")).toBe("large");
   });
 });
 
@@ -78,11 +83,18 @@ describe("applyTheme", () => {
     root = document.createElement("div");
   });
 
-  test("sets all three axes", () => {
-    applyTheme(root, { theme: "light", accent: "violet", brand: "teal" });
+  test("sets all four axes", () => {
+    applyTheme(root, { theme: "light", accent: "violet", brand: "teal", radius: "none" });
     expect(root.getAttribute("data-theme")).toBe("light");
     expect(root.getAttribute("data-accent")).toBe("violet");
     expect(root.getAttribute("data-brand")).toBe("teal");
+    expect(root.getAttribute("data-radius")).toBe("none");
+  });
+
+  test("an omitted radius returns to the default", () => {
+    applyTheme(root, { radius: "large" });
+    applyTheme(root, {});
+    expect(root.getAttribute("data-radius")).toBe(DEFAULT_THEME_PREFS.radius);
   });
 
   test("the base brand removes the attribute instead of writing it as a value", () => {
@@ -136,11 +148,16 @@ describe("themeInitScript", () => {
     document.documentElement.removeAttribute("data-theme");
     document.documentElement.removeAttribute("data-accent");
     document.documentElement.removeAttribute("data-brand");
+    document.documentElement.removeAttribute("data-radius");
   });
 
   test("applies the stored preferences before rendering", () => {
-    store.set(KEY, JSON.stringify({ theme: "light", accent: "violet", brand: "teal" }));
+    store.set(
+      KEY,
+      JSON.stringify({ theme: "light", accent: "violet", brand: "teal", radius: "small" })
+    );
     run(themeInitScript({ storageKey: KEY }));
+    expect(document.documentElement.getAttribute("data-radius")).toBe("small");
     expect(document.documentElement.getAttribute("data-theme")).toBe("light");
     expect(document.documentElement.getAttribute("data-accent")).toBe("violet");
     expect(document.documentElement.getAttribute("data-brand")).toBe("teal");
@@ -150,6 +167,7 @@ describe("themeInitScript", () => {
     run(themeInitScript({ storageKey: KEY }));
     expect(document.documentElement.getAttribute("data-theme")).toBe(DEFAULT_THEME_PREFS.theme);
     expect(document.documentElement.hasAttribute("data-brand")).toBe(false);
+    expect(document.documentElement.getAttribute("data-radius")).toBe(DEFAULT_THEME_PREFS.radius);
   });
 
   test("broken JSON does not break the page", () => {

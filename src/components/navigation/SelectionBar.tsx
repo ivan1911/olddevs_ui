@@ -106,7 +106,7 @@ export function SelectionBar({
         style={{
           top: sticky ? `var(${offsetVar}, 0px)` : undefined,
           background: "var(--topbar-bg)",
-          borderRadius: sticky && isStuck ? "0 0 14px 14px" : "14px",
+          borderRadius: sticky && isStuck ? "0 0 var(--r-lg) var(--r-lg)" : "var(--r-lg)",
           transition: "border-radius 120ms ease",
         }}
       >

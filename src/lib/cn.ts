@@ -21,13 +21,14 @@ import { extendTailwindMerge } from "tailwind-merge";
  * role, not by size (see `--r-control` in styles.css), so the t-shirt rule does not fit it. Without the
  * registration below, `twMerge` does not recognize it as a radius at all and stops resolving the
  * conflict: `cn("rounded-control", "rounded-full")` would return BOTH classes, and the one that comes
- * later in the CSS would win, not the one passed last.
+ * later in the CSS would win, not the one passed last. `rounded-pill` (the pill shape of the `radius`
+ * axis, ADR-0074) is the same case again; `rounded-2xs` is a t-shirt size and needs nothing.
  */
 const merge = extendTailwindMerge({
   extend: {
     classGroups: {
       "font-size": [{ text: ["caption"] }],
-      rounded: [{ rounded: ["control"] }],
+      rounded: [{ rounded: ["control", "pill"] }],
     },
   },
 });
