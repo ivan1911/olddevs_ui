@@ -70,8 +70,8 @@ export type RangeSliderProps = SliderLookProps &
 */
 const DIMMED_WHEN_DISABLED = "disabled:opacity-50 has-[input:disabled]:opacity-50";
 const ROOT_CLASS = `flex w-full flex-col gap-2 ${DIMMED_WHEN_DISABLED}`;
-const TRACK_CLASS = "bg-bg-3 relative h-1.5 w-full rounded-full";
-const FILL_CLASS = "bg-accent absolute h-full rounded-full";
+const TRACK_CLASS = "bg-bg-3 relative h-1.5 w-full rounded-pill";
+const FILL_CLASS = "bg-accent absolute h-full rounded-pill";
 const THUMB_BASE_CLASS =
   "border-accent bg-bg-1 size-4 cursor-grab rounded-full border-2 shadow-[var(--shadow-1)] transition-shadow " +
   "dragging:cursor-grabbing focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 " +
@@ -99,8 +99,8 @@ const GEOMETRY = {
   },
   vertical: {
     root: `flex h-48 w-max flex-col gap-2 ${DIMMED_WHEN_DISABLED}`,
-    track: "bg-bg-3 relative w-1.5 flex-1 self-center rounded-full",
-    fill: "bg-accent absolute bottom-0 w-full rounded-full",
+    track: "bg-bg-3 relative w-1.5 flex-1 self-center rounded-pill",
+    fill: "bg-accent absolute bottom-0 w-full rounded-pill",
     fillSize: "height",
     thumb: `${THUMB_BASE_CLASS} left-1/2`,
   },

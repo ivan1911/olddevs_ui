@@ -177,7 +177,7 @@ export function ColorPicker({
             </ColorArea>
 
             <ColorSlider colorSpace="hsb" channel="hue">
-              <SliderTrack className="h-3 w-full rounded-full">
+              <SliderTrack className="rounded-pill h-3 w-full">
                 <ColorThumb className={cn(THUMB_CLASS, "top-1/2")} />
               </SliderTrack>
             </ColorSlider>
