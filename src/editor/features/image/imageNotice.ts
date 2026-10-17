@@ -1,13 +1,13 @@
 "use client";
 
-// Тексты Сообщения поля для событий файлов: каталог сообщений вместо строк
-// в коде расширения. Вынесено из `RichTextEditor.tsx`.
+// Texts of the Field notice for file events. They come from the message catalog instead of
+// strings in the extension's code. Moved out of `RichTextEditor.tsx`.
 
 import type { UiMessages } from "../../../i18n/messages.js";
 import type { FieldNotice } from "../../core/fieldNotice.js";
 import type { ImageNotice } from "./image.js";
 
-/** Событие файлов — строкой каталога и тоном: живой регион или ошибка под полем. */
+/** File event, as a catalog string and a tone: a live region, or an error under the field. */
 export function describeImageNotice(
   notice: ImageNotice,
   messages: UiMessages["editor"]

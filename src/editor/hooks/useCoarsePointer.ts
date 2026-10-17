@@ -17,19 +17,20 @@ function snapshot(): boolean {
 }
 
 /**
- * Основной указатель — палец (`pointer: coarse`): телефон, планшет.
+ * The primary pointer is a finger (`pointer: coarse`): a phone or a tablet.
  *
- * ПОЧЕМУ JS, А НЕ МЕДИАЗАПРОС В CSS. Медиазапрос спрятал бы плавающую Панель,
- * но не заменил бы её фиксированной: это разные узлы с разной раскладкой, и
- * выбор между ними — ветка рендера. До гидратации ветки нет вовсе — движок и
- * Панели появляются только в браузере (`immediatelyRender: false`), — поэтому
- * мигания «не та Панель до гидратации» здесь не бывает.
+ * WHY JS, NOT A CSS MEDIA QUERY. A media query would hide the floating Toolbar but
+ * would not replace it with the fixed one: they are different nodes with different
+ * layouts, and choosing between them is a render branch. Before hydration the branch
+ * does not exist at all: the engine and the Toolbars appear only in the browser
+ * (`immediatelyRender: false`), so a flicker of "the wrong Toolbar before hydration"
+ * never happens here.
  *
- * Подписка, а не разовый замер: планшет с подключённой мышью и ноутбук-
- * трансформер меняют основной указатель на лету.
+ * It is a subscription, not a one-time measurement: a tablet with a mouse connected
+ * and a convertible laptop change the primary pointer on the fly.
  *
- * На сервере и без `matchMedia` — `false`: устройство неизвестно, и
- * остаётся то, что выбрал потребитель.
+ * On the server, and without `matchMedia`, it is `false`: the device is unknown, so
+ * whatever the consumer chose stays in effect.
  */
 export function useCoarsePointer(): boolean {
   return useSyncExternalStore(subscribe, snapshot, () => false);

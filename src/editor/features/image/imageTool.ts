@@ -5,20 +5,20 @@ import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import { RichImage } from "./image.js";
 
 /**
- * Картинка на описании Инструмента (ADR-0058, п. 10).
+ * The image on the Tool's description (ADR-0058, item 10).
  *
- * Картинка — `figure` с подписью (`image.ts`). Без Инструмента `<img>` из
- * вставки и `value` отбрасывается, а файлы из буфера не перехватываются:
- * расширения нет в списке, пока нет моста `image` (его даёт `RichTextEditor`
- * только с Инструментом).
+ * The image is a `figure` with a caption (`image.ts`). Without the Tool, an `<img>` from pasted
+ * content or from `value` is discarded, and files from the clipboard are not intercepted. The
+ * extension is not in the list until there is an `image` bridge, which `RichTextEditor` provides
+ * only when the Tool is enabled.
  *
- * Картинке нужен адрес, и ни кнопка, ни пункт его не знают: оба готовят пустой
- * абзац и открывают поповер картинки (`ImagePopover`), команда `openImageEditor`
- * — из `image.ts`. Картинка из поповера встаёт на место этого абзаца. Закрытый
- * без адреса поповер оставляет пустой абзац — как Блок, который передумали
- * писать. Сам поповер и панель выделенной картинки (`ImageToolbar`) — виджеты
- * кита, у описания их нет. Форма Блока для Скелета не нужна: его Схеме мост
- * картинки подставлен заглушкой (`skeleton.ts`), и расширение то же.
+ * An image needs an address, and neither the button nor the item knows it. Both prepare an empty
+ * paragraph and open the image popover (`ImagePopover`) with the `openImageEditor` command from
+ * `image.ts`. The image from the popover takes the place of that paragraph. A popover closed
+ * without an address leaves the empty paragraph, as a Block that was started and then dropped
+ * would. The popover itself and the selected image's toolbar (`ImageToolbar`) are the kit's
+ * widgets, and the description has neither. The Block form is not needed for the Skeleton: its
+ * Schema gets a stub in place of the image bridge (`skeleton.ts`), and the extension is the same.
  */
 export const IMAGE_TOOL: ToolDescriptor = {
   name: "image",
@@ -28,11 +28,11 @@ export const IMAGE_TOOL: ToolDescriptor = {
       id: "image",
       label: ({ messages }) => messages.image,
       icon: ImageIcon,
-      // Как у ссылки: кнопка открывает поповер, а не вставляет сама.
+      // As with the link, the button opens the popover and does not insert anything itself.
       run: (editor) => editor.commands.openImageEditor(),
       can: (editor) => editor.can().openImageEditor(),
-      // `aria-pressed` — выделена картинка или каретка в её подписи: поповер
-      // тогда правит её, а не вставляет новую.
+      // `aria-pressed` is set when the image is selected or the caret is in its caption. The
+      // popover then edits that image instead of inserting a new one.
       isActive: (editor) => editor.isActive("image"),
     },
   ],

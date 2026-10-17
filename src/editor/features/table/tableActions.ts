@@ -23,24 +23,25 @@ import { RICH_TEXT_SCHEMA } from "../../core/schema.js";
 import { cellAlignment } from "./tableCells.js";
 
 /**
- * Действия меню «Таблица» — данными и командами ProseMirror, без React.
+ * The Table menu's actions, as data and ProseMirror commands, without React.
  *
- * ДОСТУПНОСТЬ ДЕЙСТВИЯ — ПРОБНЫЙ ПРОГОН КОМАНДЫ с пустым `dispatch`, а не
- * `editor.can()`: проверка «это вся таблица» у `prosemirror-tables` стоит
- * внутри ветки с `dispatch`, и без него `can().deleteRow()` отвечает «да» на
- * удаление единственной строки, которая потом молча не удалится. Пробный
- * прогон идёт тем же путём, что настоящий, и отвечает честно.
+ * ACTION AVAILABILITY IS A DRY RUN OF THE COMMAND with an empty `dispatch`, not
+ * `editor.can()`: the "this is the whole table" check in `prosemirror-tables` sits
+ * inside the branch with `dispatch`, so without it `can().deleteRow()` answers
+ * "yes" to deleting the only row, which would then silently not be deleted. The dry
+ * run takes the same path as the real command and answers honestly.
  */
 
-/** Размер таблицы в столбцах и строках. */
+/** Table size in columns and rows. */
 export interface TableSize {
   cols: number;
   rows: number;
 }
 
 /**
- * Пределы окна «Вставить таблицу». Те же, что у слияния в Схеме: ячейку шире
- * самой широкой вставляемой таблицы не слить, и наоборот.
+ * Limits of the Insert table dialog. The same as the merge limits in the Schema:
+ * a cell wider than the widest table that can be inserted cannot be merged, and
+ * the reverse holds too.
  */
 export const TABLE_MAX_SIZE: TableSize = {
   cols: RICH_TEXT_SCHEMA.tableSpans.colspan,
@@ -50,14 +51,14 @@ export const TABLE_MAX_SIZE: TableSize = {
 const DEFAULT_SIZE: TableSize = { cols: 3, rows: 3 };
 
 /*
-  Последний выбранный размер — у каждого Редактора свой. `WeakMap` по движку,
-  а не состояние React: размер нужен и сетке в меню Панели (фиксированной или
-  плавающей — это два разных экземпляра), и окну, которое держит
-  `RichTextEditor`. Движок у них общий, а с его уничтожением уходит и запись.
+  The last selected size is kept per Editor. It is a `WeakMap` keyed by the engine,
+  not React state: the size is needed both by the grid in the Toolbar's menu (fixed
+  or floating, these are two separate instances) and by the dialog that
+  `RichTextEditor` holds. They share one engine, and the entry goes away with it.
 */
 const lastSizes = new WeakMap<Editor, TableSize>();
 
-/** Последний выбранный в этом Редакторе размер; сначала — 3×3. */
+/** The size last selected in this Editor; 3×3 at first. */
 export function lastTableSize(editor: Editor): TableSize {
   return lastSizes.get(editor) ?? DEFAULT_SIZE;
 }
@@ -66,12 +67,12 @@ export function rememberTableSize(editor: Editor, size: TableSize): void {
   lastSizes.set(editor, size);
 }
 
-/** Таблица под кареткой (или под выделением ячеек) и её прямоугольник. */
+/** The table under the caret (or under a cell selection) and its rectangle. */
 function rectOf(state: EditorState) {
   return isInTable(state) ? selectedRect(state) : null;
 }
 
-/** Первая строка — вся из ячеек-заголовков. */
+/** The first row consists entirely of header cells. */
 function hasHeaderRow(table: PMNode): boolean {
   const first = table.firstChild;
   if (!first || first.childCount === 0) return false;
@@ -82,7 +83,7 @@ function hasHeaderRow(table: PMNode): boolean {
   return all;
 }
 
-/** Есть ли в таблице слитая ячейка. */
+/** Whether the table has a merged cell. */
 export function hasMergedCells(table: PMNode): boolean {
   let merged = false;
   table.descendants((node) => {
@@ -94,9 +95,9 @@ export function hasMergedCells(table: PMNode): boolean {
 }
 
 /**
- * Слить выделенные ячейки — в пределах Схемы. Слияние шире 20 столбцов или
- * выше 50 строк записалось бы атрибутом, который при следующей загрузке
- * читается как 1, и таблица развалилась бы молча.
+ * Merges the selected cells, within the Schema's limits. A merge wider than 20
+ * columns or taller than 50 rows would be written as an attribute that reads back
+ * as 1 on the next load, and the table would fall apart silently.
  */
 const mergeWithinLimits: Command = (state, dispatch) => {
   if (!(state.selection instanceof CellSelection)) return false;
@@ -106,9 +107,9 @@ const mergeWithinLimits: Command = (state, dispatch) => {
   return mergeCells(state, dispatch);
 };
 
-/* ── Выравнивание столбца ───────────────────────────────────────────────── */
+/* ── Column alignment ───────────────────────────────────────────────── */
 
-/** Позиции ячеек в столбцах прямоугольника — во всех строках таблицы. */
+/** Positions of the cells in the rectangle's columns, across all rows of the table. */
 function columnCells(state: EditorState): { pos: number; node: PMNode }[] {
   const rect = rectOf(state);
   if (!rect) return [];
@@ -119,8 +120,9 @@ function columnCells(state: EditorState): { pos: number; node: PMNode }[] {
 }
 
 /**
- * Выравнивание столбца под кареткой: общее у всех его ячеек, иначе `null` —
- * тогда в меню не отмечен ни один вариант, и это правда: столбец смешанный.
+ * Alignment of the column under the caret: the value shared by all of its cells,
+ * otherwise `null`. In that case no option is marked in the menu, and that is
+ * accurate: the column is mixed.
  */
 export function columnAlignment(state: EditorState): EditorAlignment | null {
   const values = new Set(columnCells(state).map(({ node }) => cellAlignment(node.attrs.align)));
@@ -129,9 +131,9 @@ export function columnAlignment(state: EditorState): EditorAlignment | null {
 }
 
 /**
- * Выровнять столбец под кареткой (при выделении ячеек — все его столбцы):
- * `data-align` на каждой ячейке, сверху донизу, одной правкой. `left` снимает
- * атрибут — это умолчание.
+ * Aligns the column under the caret (with a cell selection, all of its columns):
+ * `data-align` on every cell, top to bottom, in one edit. `left` removes the
+ * attribute, since it is the default.
  */
 export function setColumnAlignment(alignment: EditorAlignment): Command {
   return (state, dispatch) => {
@@ -148,11 +150,11 @@ export function setColumnAlignment(alignment: EditorAlignment): Command {
   };
 }
 
-/* ── Сортировка ─────────────────────────────────────────────────────────── */
+/* ── Sorting ─────────────────────────────────────────────────────────── */
 
 const SPACES = /[\s\u00a0\u202f\u2009']/g;
 
-/** Десятичный знак локали: `,` у `ru`, `.` у `en`. */
+/** The locale's decimal separator: `,` for `ru`, `.` for `en`. */
 function decimalSeparator(locale: string): string {
   try {
     return (
@@ -165,16 +167,18 @@ function decimalSeparator(locale: string): string {
 }
 
 /**
- * Число из текста ячейки или `null`.
+ * The number parsed from the cell text, or `null`.
  *
- * Разряды — пробелом (в том числе неразрывным и узким, как пишет `ru`),
- * апострофом, запятой или точкой; дробная часть — запятой или точкой. Где
- * знака два, дробный — последний (`1,234.5` и `1.234,5`). Где он один и
- * встречается раз, решает локаль интерфейса: `1,234` у `en` — тысяча двести
- * тридцать четыре, у `ru` — одна целая с дробью; знак чужой локали с тремя
- * цифрами после — разряд, с другим числом цифр — дробь (`1.5` у `ru`).
- * Повторённый знак — только разряды по три цифры: `1.2.3` — версия, а не число.
- * Минус — дефис или `−`, процент в конце допустим.
+ * Digit groups are separated by a space (including the no-break and thin spaces,
+ * as `ru` writes them), an apostrophe, a comma or a dot; the fraction separator is
+ * a comma or a dot. Where both marks occur, the fraction is the last one
+ * (`1,234.5` and `1.234,5`). Where there is a single mark that occurs once, the UI
+ * locale decides: `1,234` in `en` is one thousand two hundred thirty-four, in `ru`
+ * it is one with a fraction. A mark from another locale followed by three digits is
+ * a digit group, and followed by any other number of digits it is a fraction
+ * (`1.5` in `ru`). A repeated mark can only be a digit group of three digits: `1.2.3`
+ * is a version, not a number. The minus is a hyphen or `−`; a trailing percent sign
+ * is allowed.
  */
 export function parseCellNumber(text: string, locale: string): number | null {
   let value = text.replace(SPACES, "").replace(/^\u2212/, "-");
@@ -209,10 +213,10 @@ const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?$
 const DOTTED_DATE = /^(\d{2})\.(\d{2})\.(\d{4})(?: (\d{2}):(\d{2})(?::(\d{2}))?)?$/;
 
 /**
- * Дата из текста ячейки — миллисекунды или `null`. Две записи без
- * двусмысленности: ISO (`2026-10-06`, с временем через `T` или пробел) и
- * `ДД.ММ.ГГГГ`, как пишут даты по-русски. `10/06/2026` не читается: у `en-US`
- * это октябрь, у остальных — июнь, и угадывать порядок нельзя.
+ * The date parsed from the cell text, as milliseconds, or `null`. Two formats
+ * are unambiguous: ISO (`2026-10-06`, with the time after `T` or a space) and
+ * `DD.MM.YYYY`, the way Russian dates are written. `10/06/2026` is not parsed: in
+ * `en-US` it means October, elsewhere June, and the order cannot be guessed.
  */
 export function parseCellDate(text: string): number | null {
   const iso = ISO_DATE.exec(text);
@@ -233,18 +237,19 @@ export function parseCellDate(text: string): number | null {
   ];
   const time = Date.UTC(year, month - 1, day, hour, minute, second);
   const check = new Date(time);
-  // 31.02 — не дата, а опечатка: `Date.UTC` молча перенёс бы её в март.
+  // 31.02 is not a date but a typo: `Date.UTC` would silently roll it over into March.
   if (check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
   if (hour > 23 || minute > 59 || second > 59) return null;
   return time;
 }
 
 /**
- * Сравнение для столбца целиком: числа — как числа, даты — как даты, иначе —
- * текст по `Intl.Collator` локали интерфейса с `numeric` («пункт 2» раньше
- * «пункта 10», «ё» на месте). Вид решается по всем непустым ячейкам сразу, а
- * не попарно: попарное сравнение смешанного столбца нетранзитивно, и порядок
- * зависел бы от исходного.
+ * Comparison for a whole column: numbers compare as numbers, dates as dates,
+ * anything else as text by the UI locale's `Intl.Collator` with `numeric` ("item 2"
+ * sorts before "item 10", and accented letters such as "é" sort next to their base
+ * letter). The kind is decided over all non-empty cells at once, not pair by pair:
+ * a pairwise comparison of a mixed column is not transitive, and the order would
+ * depend on the original one.
  */
 function comparatorFor(keys: readonly string[], locale: string): (a: string, b: string) => number {
   const filled = keys.filter((key) => key !== "");
@@ -264,16 +269,15 @@ function comparatorFor(keys: readonly string[], locale: string): (a: string, b: 
 }
 
 /**
- * Отсортировать строки таблицы по столбцу под кареткой.
+ * Sorts the table rows by the column under the caret.
  *
- * - Строка-заголовок остаётся первой: она подписывает столбцы, а не данные.
- * - Таблица со слитыми ячейками не сортируется (команда недоступна): строку
- *   со слиянием нельзя переставить, не разрезав его.
- * - Пустые ячейки — в конце при любом направлении: пустота не «меньше» всех.
- * - Порядок устойчивый: равные строки остаются в прежнем порядке, и повторная
- *   сортировка ничего не перемешивает.
- * - Вся перестановка — одна правка, и `Ctrl/⌘+Z` отменяет её целиком.
- * - Каретка остаётся в той же строке, уехавшей на новое место.
+ * - The header row stays first: it labels the columns, not the data.
+ * - A table with merged cells is not sorted (the command is unavailable): a row
+ *   with a merge cannot be moved without splitting the merge.
+ * - Empty cells go last in either direction: emptiness is not "less than" everything.
+ * - The sort is stable: equal rows keep their order, and sorting again reorders nothing.
+ * - The whole reordering is one edit, and `Ctrl/⌘+Z` undoes it in one step.
+ * - The caret stays in the same row, which has moved to its new place.
  */
 export function sortTable(direction: "ascending" | "descending", locale: string): Command {
   return (state, dispatch) => {
@@ -300,7 +304,7 @@ export function sortTable(direction: "ascending" | "descending", locale: string)
 
     const sorted = table.copy(Fragment.from([...rows.slice(0, fixed), ...order.map((e) => e.row)]));
     const tr = state.tr.replaceWith(tableStart - 1, tableStart - 1 + table.nodeSize, sorted);
-    // Строка с кареткой — на её новое место; в шапке каретка и так не двигалась.
+    // The row with the caret moves to its new place; in the header the caret never moves anyway.
     const caretRow = top < fixed ? top : fixed + order.findIndex((e) => e.index === top - fixed);
     let pos = tableStart;
     for (let index = 0; index < caretRow; index++) pos += sorted.child(index).nodeSize;
@@ -315,9 +319,9 @@ export function sortTable(direction: "ascending" | "descending", locale: string)
   };
 }
 
-/* ── Реестр действий ────────────────────────────────────────────────────── */
+/* ── Action registry ────────────────────────────────────────────────────── */
 
-/** Действие меню «Таблица» → команда ProseMirror. Ключи — `id` пунктов меню. */
+/** Table menu action → ProseMirror command. Keys are the `id`s of the menu items. */
 export function tableCommands(locale: string) {
   return {
     mergeCells: mergeWithinLimits,
@@ -341,9 +345,9 @@ export function tableCommands(locale: string) {
 export type TableAction = keyof ReturnType<typeof tableCommands>;
 
 /**
- * Пробный прогон: с `dispatch`, который ничего не делает, — не без него (см.
- * шапку модуля). Таблица, которую движок ещё не выровнял (`tables.ts`): команда
- * на ней бросает, а Панель при этом не должна падать — действие недоступно.
+ * The dry run passes a `dispatch` that does nothing, not no `dispatch` at all (see
+ * the module header). A table the engine has not yet repaired (`tables.ts`): the
+ * command throws on it, but the Toolbar must not crash, so the action is unavailable.
  */
 export function canRun(command: Command, state: EditorState): boolean {
   try {
@@ -354,15 +358,15 @@ export function canRun(command: Command, state: EditorState): boolean {
 }
 
 /**
- * Выполнить действие и вернуть фокус в документ: каретка остаётся в таблице,
- * и набор продолжается там, откуда пришли в меню.
+ * Runs the action and returns focus to the document: the caret stays in the table,
+ * and typing continues where the user was before opening the menu.
  */
 export function runTableCommand(editor: Editor, command: Command): void {
   editor.commands.focus();
   command(editor.state, editor.view.dispatch);
 }
 
-/** Состояние меню для текущего выделения: пусто вне таблицы. */
+/** Menu state for the current selection: empty outside a table. */
 export function tableMenuState(state: EditorState, locale: string) {
   const rect = rectOf(state);
   if (!rect) return null;

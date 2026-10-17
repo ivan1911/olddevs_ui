@@ -3,23 +3,23 @@
 import { useEffect, useState, type RefObject } from "react";
 
 /**
- * Лежит ли узел внутри выключенного `<fieldset disabled>` — и следит за ним.
+ * Whether the node sits inside a disabled `<fieldset disabled>`, and it watches for changes.
  *
- * ЗАЧЕМ DOM, А НЕ КОНТЕКСТ. Кит выключает форму на время запроса именно через
- * `<fieldset disabled>` (`Form pending`), и поле, которое смотрит в `Form`,
- * остаётся слепым к любому чужому `fieldset` — а потребитель вправе
- * выключить группу полей сам. Родные поля реагируют на оба случая одинаково, и
- * чтобы редактор не отличался, он читает то, что читает браузер, — атрибут
- * предка. Второй канал через контекст `Form` дублировал бы это правило и всё
- * равно не покрыл бы чужие `fieldset`.
+ * WHY THE DOM, NOT CONTEXT. The kit disables a form while a request is in flight
+ * through `<fieldset disabled>` (`Form pending`), and a field that reads the `Form`
+ * context stays blind to any foreign `fieldset`, while the consumer may disable a
+ * group of fields on their own. Native fields react to both cases the same way, and
+ * so that the editor does not differ, it reads what the browser reads: the ancestor's
+ * attribute. A second channel through the `Form` context would duplicate this rule
+ * and still would not cover foreign `fieldset`s.
  *
- * Обход идёт по предкам, а не по ближайшему `fieldset`: вложенный в выключенный
- * тоже выключен. Исключение браузера повторено — потомки ПЕРВОГО `<legend>`
- * выключенного набора остаются доступными.
+ * The walk goes up through the ancestors, not just to the nearest `fieldset`: a node
+ * nested in a disabled one is disabled too. The browser's exception is repeated here:
+ * the descendants of the FIRST `<legend>` of a disabled set stay enabled.
  *
- * Переключения ловит `MutationObserver` на атрибуте `disabled` каждого предка:
- * `Form pending` переключает его без перемонтажа детей. Перенос самого узла в
- * другой `fieldset` не отслеживается — такое DOM-перемещение React не делает.
+ * A `MutationObserver` on the `disabled` attribute of each ancestor catches the toggles:
+ * `Form pending` flips it without remounting the children. Moving the node itself into
+ * another `fieldset` is not tracked, since React does not make such DOM moves.
  */
 export function useFieldsetDisabled(ref: RefObject<HTMLElement | null>): boolean {
   const [disabled, setDisabled] = useState(false);

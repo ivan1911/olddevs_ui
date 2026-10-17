@@ -1,28 +1,28 @@
 "use client";
 
-// Происхождение: minimal-tiptap, `hooks/use-throttle.ts` (MIT, © 2024 Aslam,
-// https://github.com/Aslam97/minimal-tiptap). Переписан: добавлены `flush` и
-// `cancel`, вызов идёт по заднему фронту. Лицензия — NOTICE в корне пакета.
+// Origin: minimal-tiptap, `hooks/use-throttle.ts` (MIT, © 2024 Aslam,
+// https://github.com/Aslam97/minimal-tiptap). Rewritten: `flush` and `cancel`
+// are added, and the call runs on the trailing edge. License: see NOTICE at the package root.
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 /**
- * Не чаще раза в `delay` мс — и только по заднему фронту.
+ * Runs at most once per `delay` ms, and only on the trailing edge.
  *
- * ПОЧЕМУ ЗАДНИЙ ФРОНТ, А НЕ ПЕРЕДНИЙ, как в оригинале. Отдать значение — значит
- * сериализовать документ в HTML, а это проход по всему дереву. Передний фронт
- * платил бы его на первой же букве после паузы, то есть почти на каждой при
- * обычном наборе. Задний копит правки и сериализует один раз, когда набор
- * улёгся, — `emit` читает документ сам, в момент вызова, а не получает
- * значение, посчитанное на каждую букву.
+ * WHY THE TRAILING EDGE, NOT THE LEADING ONE, unlike the original. Handing over the value
+ * means serializing the document to HTML, which walks the whole tree. A leading edge would
+ * pay that cost on the first letter after a pause, which means almost every keystroke during
+ * normal typing. The trailing edge accumulates edits and serializes once, when typing settles.
+ * `emit` reads the document itself, at the moment of the call, instead of receiving a value
+ * computed on every keystroke.
  *
- * `flush` — то же самое, но сейчас и только если что-то ждёт: на `blur` и
- * перед отправкой формы значение обязано быть свежим, а не отставать на
- * `delay`. `cancel` — отказ от ожидающего вызова, когда документ заменили
- * снаружи и отдавать прежнюю правку уже нечего.
+ * `flush` does the same, but right away and only if something is pending: on `blur` and before
+ * a form is submitted the value must be fresh, not lagging behind by `delay`. `cancel` drops a
+ * pending call when the document was replaced from outside and there is no previous edit left
+ * to hand over.
  *
- * Размонтирование тоже сбрасывает ожидание: иначе последние буквы перед
- * закрытием формы молча терялись бы.
+ * Unmounting also flushes any pending call: otherwise the last letters typed before the form
+ * closes would be silently lost.
  */
 export function useChangeThrottle(emit: () => void, delay: number) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,7 +56,7 @@ export function useChangeThrottle(emit: () => void, delay: number) {
 
   useEffect(() => flush, [flush]);
 
-  // Один объект на всю жизнь при неизменной задержке: эффекты потребителя
-  // держат его в зависимостях и не должны перезапускаться на каждом рендере.
+  // One object for the whole lifetime while the delay is unchanged: consumer effects
+  // keep it in their dependencies and must not re-run on every render.
   return useMemo(() => ({ schedule, flush, cancel }), [schedule, flush, cancel]);
 }

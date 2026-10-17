@@ -5,24 +5,24 @@ import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import { unwrapWrapperAt, WRAPPER_EXTENSIONS, WRAPPER_NODE } from "./wrapper.js";
 
 /**
- * Обёртка на описании Инструмента: узел и выход из неё по Enter (`wrapper.ts`),
- * пункт Меню вставки, Действие «Снять обёртку» и место в модели содержимого
- * Документа.
+ * The Wrapper in the Tool descriptor: the node and the exit from it on Enter
+ * (`wrapper.ts`), the Insert item, the "Unwrap" Block action and the place in the
+ * Document's content model.
  *
- * «Тон ›» — меню-виджет Ручки Блока: своего Инструмента у него нет, и он
- * остаётся в `BlockHandle.tsx`, показ — по `has("wrapper")`.
+ * "Tone ›" is a menu widget of the Block handle: it has no Tool of its own, so it
+ * stays in `BlockHandle.tsx`, shown when `has("wrapper")` holds.
  */
 export const WRAPPER_TOOL: ToolDescriptor = {
   name: "wrapper",
-  // Без инструмента `div[data-block="wrapper"]` из вставки и `value` не
-  // разбирается, и её Блоки встают на её место подряд.
+  // Without the Tool, `div[data-block="wrapper"]` is not parsed from paste or `value`,
+  // and its Blocks take its place in a row.
   engine: () => WRAPPER_EXTENSIONS,
-  // Обёртка не в группе `block`: принять её может только Документ, назвав поимённо.
+  // A Wrapper is not in the `block` group: only the Document can accept it, by naming it.
   documentContent: [WRAPPER_NODE],
   /*
-    Обёртка — пустая, с одним абзацем, каретка внутри. Место —
-    Документ или колонка: из Обёртки, списка, цитаты и ячейки она встаёт под
-    их Блоком (`insertWrapper`).
+    The Wrapper is empty, with one paragraph and the caret inside. Its place is
+    the Document or a column: from a Wrapper, list, quote or cell it goes below
+    their Block (`insertWrapper`).
   */
   insertItems: [
     {
@@ -40,7 +40,7 @@ export const WRAPPER_TOOL: ToolDescriptor = {
       label: (messages) => messages.unwrap,
       icon: UnwrapIcon,
       blocks: [WRAPPER_NODE],
-      // Одна правка: Блоки встают на место Обёртки, отмена — одна.
+      // One transaction: the Blocks take the Wrapper's place, and undo is one step.
       run: (editor, pos) =>
         void editor
           .chain()

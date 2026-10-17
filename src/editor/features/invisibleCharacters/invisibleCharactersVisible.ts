@@ -3,14 +3,14 @@
 import type { Editor } from "@tiptap/core";
 
 /**
- * Показаны ли невидимые символы: плагин расширения держит флаг в своём
- * состоянии, а наружу отдаёт его через `storage` (`visibility()`). Читается при
- * каждом вызове: после создания движка расширение подменяет `visibility` на
- * чтение состояния плагина. `false` — расширения в движке нет.
+ * Whether invisible characters are shown. The extension's plugin keeps the flag in its own state
+ * and exposes it through `storage` (`visibility()`). It is read on every call: once the engine is
+ * created, the extension replaces `visibility` with a read of the plugin's state. `false` means
+ * the extension is not in the engine.
  *
- * Лежит отдельно от `invisibleCharactersTool.ts` и от снимка Состояния: чтение
- * нужно и меню «…» Панели (она в стартовом графе), и хуку (в стартовый граф не входит), а
- * пакет Tiptap им не нужен — Панель его не импортирует.
+ * It lives apart from `invisibleCharactersTool.ts` and from the Tool state snapshot. The read is
+ * needed both by the "…" menu of the Toolbar (which is in the starting graph) and by the hook
+ * (which is not). Neither needs the Tiptap package: the Toolbar does not import it.
  */
 export function invisibleCharactersVisible(editor: Editor): boolean {
   const storage = editor.storage as {
@@ -20,10 +20,10 @@ export function invisibleCharactersVisible(editor: Editor): boolean {
 }
 
 /**
- * Переключить показ: единственный путь и у пункта «Невидимые символы» меню «…»,
- * и у команды `tool("invisibleCharacters").toggle()`. Лежит рядом с чтением, а не
- * в описании Инструмента: пункт живёт в Панели из стартового графа, а пакет
- * Tiptap ему не нужен. `false` — расширения в движке нет.
+ * Toggle the display. This is the only path, both for the "Invisible characters" item of the "…"
+ * menu and for the `tool("invisibleCharacters").toggle()` command. It sits next to the read, not
+ * in the Tool's description: the item lives in the Toolbar from the starting graph, and it does
+ * not need the Tiptap package. `false` means the extension is not in the engine.
  */
 export function toggleInvisibleCharacters(editor: Editor): boolean {
   return editor.commands.toggleInvisibleCharacters();

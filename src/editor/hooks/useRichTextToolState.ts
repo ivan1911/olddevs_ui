@@ -11,9 +11,9 @@ import { searchSnapshot } from "../features/search/searchSnapshot.js";
 import { tocSnapshot } from "../features/toc/tocSnapshot.js";
 
 /**
- * Состояние Инструмента по имени: тип из карты `RichTextTools`. Имя, которого в
- * карте нет, — `unknown`: типизация добровольна, и Инструмент без записи в карте
- * не ломает сборку.
+ * The state of a Tool by name: the type comes from the `RichTextTools` map. A name that is
+ * not in the map gives `unknown`: typing is optional, and a Tool without an entry in the map
+ * does not break the build.
  */
 export type RichTextToolState<Name extends string> = Name extends keyof RichTextTools
   ? RichTextTools[Name] extends { state: infer State }
@@ -21,7 +21,7 @@ export type RichTextToolState<Name extends string> = Name extends keyof RichText
     : unknown
   : unknown;
 
-/** Снимок встроенного Инструмента; `null` — Инструмента в движке нет. */
+/** The snapshot of a built-in Tool; `null` means the Tool is not in the engine. */
 const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
   [
     "search",
@@ -47,18 +47,17 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
   ],
 ]);
 
-/** Простой объект: литерал или `Object.create(null)`, не экземпляр класса. */
+/** A plain object: an object literal or `Object.create(null)`, not a class instance. */
 function isPlainObject(value: object): boolean {
   const prototype = Object.getPrototypeOf(value) as unknown;
   return prototype === Object.prototype || prototype === null;
 }
 
 /**
- * Равенство для снимков. По значению сравниваются только простые данные:
- * примитивы, массивы и простые объекты. Всё прочее — `Date`, `Map`, `Set`,
- * экземпляры классов — по ссылке: у них нет собственных ключей, по которым можно
- * было бы увидеть разницу, и «равными по значению» оказались бы любые два, то есть
- * экран тихо не обновлялся бы. Новый экземпляр — новый снимок.
+ * Equality for snapshots. Only plain data is compared by value: primitives, arrays and plain
+ * objects. Everything else (`Date`, `Map`, `Set`, class instances) is compared by reference.
+ * They have no own keys by which a difference could be seen, so any two of them would count as
+ * "equal by value", and the screen would silently never update. A new instance is a new snapshot.
  */
 function sameValue(a: unknown, b: unknown): boolean {
   if (Object.is(a, b)) return true;
@@ -75,29 +74,28 @@ function sameValue(a: unknown, b: unknown): boolean {
 }
 
 /**
- * Состояние встроенного Инструмента для своего экрана: «3 из 12» в Строке
- * статуса из Поиска, внешняя навигация из заголовков Оглавления. Имя —
- * Инструмент из набора `tools`, а тип снимка выводится из карты
- * `RichTextTools`: `search` отдаёт `SearchToolState`, `toc` — `TocToolState`,
- * `invisibleCharacters` — `InvisibleCharactersToolState` (`{ visible }`).
+ * The state of a built-in Tool for the screen's own use: "3 of 12" in the Status bar from Find,
+ * and external navigation from the Table of contents headings. The name is a Tool from the
+ * `tools` set, and the snapshot type comes from the `RichTextTools` map: `search` gives
+ * `SearchToolState`, `toc` gives `TocToolState`, and `invisibleCharacters` gives
+ * `InvisibleCharactersToolState` (`{ visible }`).
  *
- * ПЕРЕРИСОВКА — ТОЛЬКО ПРИ СМЕНЕ СНИМКА. Снимок пересчитывается на каждую
- * транзакцию движка и на сигналы кита, которых в движке нет: открытие и закрытие
- * панели Поиска, смена текущего раздела Оглавления при прокрутке. Экран
- * перерисовывается, когда результат стал другим (простые данные — примитивы,
- * массивы, простые объекты — сравниваются по значению, как у
- * `useRichTextEditorState`; `Date`, `Map`, `Set` и экземпляры классов — по
- * ссылке), поэтому набор текста, не меняющий снимок, его не трогает. Срез из `selector` сравнивается так же: `(state) => state.total`
- * подписывает экран на одно число.
+ * RE-RENDERS ONLY ON A SNAPSHOT CHANGE. The snapshot is recomputed on every engine transaction
+ * and on kit signals that the engine does not have: opening and closing the Find panel, a change
+ * of the current Table of contents section on scroll. The screen re-renders when the result has
+ * become different. Plain data (primitives, arrays, plain objects) is compared by value, as in
+ * `useRichTextEditorState`; `Date`, `Map`, `Set` and class instances are compared by reference.
+ * So typing that does not change the snapshot does not touch the screen. A slice from `selector`
+ * is compared the same way: `(state) => state.total` subscribes the screen to a single number.
  *
- * `null` — до монтажа и в первом рендере экрана, на сервере, а также когда
- * Инструмента нет в наборе `tools`: пресеты `toc` не включают, его включают
- * именем или записью `tool("toc")`. Селектор при `null` не вызывается. Один и
- * тот же `ref` отдаётся в `RichTextEditor`.
+ * `null` is returned before mount and in the screen's first render, on the server, and when the
+ * Tool is not in the `tools` set: the `toc` presets do not include it, and it is enabled by name
+ * or by the `tool("toc")` entry. The selector is not called on `null`. The same `ref` is passed to
+ * `RichTextEditor`.
  *
- * Снимок — данные без DOM-узлов и позиций ProseMirror; изменять его не нужно.
- * Хук в стартовый граф `RichTextEditor` не входит: его цена — только у экрана,
- * который его импортировал.
+ * The snapshot is data without DOM nodes or ProseMirror positions, and it should not be modified.
+ * The hook is not part of the starting graph of `RichTextEditor`: its cost falls only on the screen
+ * that imported it.
  *
  * @example
  * const ref = useRef<RichTextEditorHandle>(null);
@@ -122,7 +120,7 @@ export function useRichTextToolState(
 
   const subscribe = useCallback(
     (listener: () => void) => {
-      // Транзакции движка — на текущем движке; он меняется — пересаживаем слушателя.
+      // Engine transactions are watched on the current engine; when it changes, the listener is moved over.
       let followed: Editor | null = null;
       const follow = () => {
         followed?.off("transaction", listener);
@@ -145,14 +143,14 @@ export function useRichTextToolState(
 
   const read = (): unknown => {
     const editor = ref.current?.editor;
-    // Своё Состояние — функция описания из набора этого Редактора; встроенное — таблица.
+    // A custom Tool's own state is the `state` function from this Editor's set; a built-in one is the table.
     const own = toolSignals(ref).tools?.descriptors.find((entry) => entry.name === name)?.state;
     const snapshot =
       editor && !editor.isDestroyed
         ? ((own ? own(editor) : SNAPSHOTS.get(name)?.(editor, ref)) ?? null)
         : null;
     const value = snapshot === null || !selector ? snapshot : selector(snapshot as never);
-    // Прежняя ссылка, пока значение то же: иначе React видит новый снимок на каждый рендер.
+    // Keep the previous reference while the value is the same: otherwise React sees a new snapshot on every render.
     if (last.current && sameValue(last.current.value, value)) return last.current.value;
     last.current = { value };
     return value;

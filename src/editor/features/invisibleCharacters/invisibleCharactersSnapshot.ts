@@ -5,9 +5,9 @@ import type { InvisibleCharactersToolState } from "../../core/toolState.js";
 import { invisibleCharactersVisible } from "./invisibleCharactersVisible.js";
 
 /**
- * Снимок Состояния `invisibleCharacters` для `useRichTextToolState`. Лежит
- * отдельно, как `searchSnapshot.ts`: нужен только хуку и не должен попадать в
- * статический граф Редактора.
+ * The Tool state snapshot of `invisibleCharacters` for `useRichTextToolState`. It lives in its
+ * own file, like `searchSnapshot.ts`: only the hook needs it, and it must not end up in the
+ * Editor's static import graph.
  */
 export function invisibleCharactersSnapshot(editor: Editor): InvisibleCharactersToolState {
   return { visible: invisibleCharactersVisible(editor) };
