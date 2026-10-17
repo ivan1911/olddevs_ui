@@ -1156,8 +1156,10 @@
 }
 
 [data-radius="large"] {
-  --r-2xs: 6px;
-  --r-xs: 8px;
+  /* `2xs` and `xs` stay near `medium`: they draw the small parts (checkbox, swatch, focus ring),
+     and 8px on a 16px checkbox made it a circle, indistinguishable from a radio. */
+  --r-2xs: 5px;
+  --r-xs: 6px;
   --r-sm: 12px;
   --r-control: 14px;
   --r-md: 18px;

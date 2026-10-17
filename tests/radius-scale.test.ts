@@ -39,8 +39,8 @@ const EXPECTED: Record<(typeof UI_RADII)[number], Record<Step, string>> = {
     pill: PILL,
   },
   large: {
-    "2xs": "6px",
-    xs: "8px",
+    "2xs": "5px",
+    xs: "6px",
     sm: "12px",
     control: "14px",
     md: "18px",
