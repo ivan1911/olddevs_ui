@@ -8,23 +8,27 @@ import type { ToolEntry } from "../../core/customTool.js";
 import { devError } from "../../../lib/dev-warn.js";
 
 /*
-  Опции формул (ADR-0070): умолчания, проверки значений и чтение опций из `tools`.
-  Модуль серверно-безопасен, без Tiptap и KaTeX: описание Инструмента берёт отсюда
-  умолчания, а `RichTextView` на сервере — опции для своего Острова.
+  Formula options (ADR-0070): the defaults, the checks of values and the reading of
+  options from `tools`. The module is safe for the server, with no Tiptap and KaTeX: the
+  Tool's descriptor takes the defaults from here, and `RichTextView` on the server takes
+  the options for its Island.
 */
 
-/** Опции KaTeX, которые задаёт экран (`tool("mathematics", …)`); умолчания — кит. */
+/**
+ * The KaTeX options that the screen sets (`tool("mathematics", …)`); the defaults are
+ * the kit's.
+ */
 export type MathRenderOptions = Pick<MathematicsToolOptions, "macros" | "strict">;
 
-/** Умолчания: макросов нет, не-LaTeX ввод принимается молча (в отличие от `"warn"` у KaTeX). */
+/** The defaults: no macros, and non-LaTeX input is accepted silently (unlike KaTeX's `"warn"`). */
 export const MATH_DEFAULTS: MathematicsToolOptions = { macros: {}, strict: "ignore" };
 
 const STRICT_VALUES: readonly unknown[] = ["ignore", "warn", "error"];
 
-/** Проверки значений Опций по имени поля — по одной на поле `MATH_DEFAULTS`. */
+/** The checks of Tool option values by field name, one per field of `MATH_DEFAULTS`. */
 export const MATH_CHECKS: Readonly<Record<string, (value: unknown) => boolean>> = {
-  // Имя макроса KaTeX — управляющая последовательность: `\RR`, `\d`. Остальные ключи
-  // KaTeX молча не использует, и значение с таким ключом — опечатка экрана.
+  // A KaTeX macro name is a control sequence: `\RR`, `\d`. KaTeX silently ignores any
+  // other key, so a value with such a key is a typo in the screen's code.
   macros: (value) =>
     typeof value === "object" &&
     value !== null &&
@@ -34,13 +38,13 @@ export const MATH_CHECKS: Readonly<Record<string, (value: unknown) => boolean>> 
 };
 
 /**
- * Опции формул из `tools`: запись `tool("mathematics", …)` поверх умолчаний.
- * Читает их тем же `resolveToolOptions`, что Редактор (`expandTools`): значение, не
- * прошедшее проверку, заменяется умолчанием с тем же `console.error` в разработке;
- * записи нет — умолчания. Две записи `tool("mathematics")` — ошибка набора, на
- * которой Редактор не стартует; Просмотр не выбирает «первую», а берёт умолчания и
- * сообщает. `RichTextView` читает ими формулы так же, как Редактор: макрос, заданный
- * Редактору, работает и в Просмотре.
+ * Formula options from `tools`: the `tool("mathematics", …)` entry over the defaults. They are
+ * read by the same `resolveToolOptions` as the Editor (`expandTools`): a value that fails the
+ * check is replaced with the default, with the same `console.error` in development; without an
+ * entry, the defaults. Two `tool("mathematics")` entries are a mistake in the list, on which the
+ * Editor does not start; the View does not pick the "first" one, but takes the defaults and
+ * reports it. `RichTextView` reads the formulas with them the same way the Editor does: a macro
+ * given to the Editor works in the View too.
  */
 export function mathOptionsOf(tools: readonly ToolEntry[] | undefined): MathRenderOptions {
   const configured = configuredBuiltins(tools).filter((entry) => entry.name === "mathematics");

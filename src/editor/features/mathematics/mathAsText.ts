@@ -6,28 +6,30 @@ import { DOMParser as ProseMirrorParser, type ParseOptions, type Schema } from "
 import { BLOCK_FORMULA_NODE, FORMULA_SELECTOR, INLINE_FORMULA_NODE } from "./mathNames.js";
 
 /*
-  ФОРМУЛА БЕЗ ИНСТРУМЕНТА `mathematics` — ТЕКСТОМ (ADR-0070, «поведение без
-  Инструмента»).
+  A FORMULA WITHOUT THE `mathematics` TOOL IS TEXT (ADR-0070, "behavior without a Tool").
 
-  Формула лежит в HTML пустым элементом, а исходник — в `data-latex`. В Схеме без
-  Инструмента узла для неё нет, и обычный разбор выбросил бы пустой `span` вместе
-  с формулой: Редактор без `mathematics`, открывший чужой Документ, при
-  сохранении стёр бы её молча. Поэтому такой Редактор читает формулу текстом
-  `$…$` (в строке) и абзацем `$$…$$` (Блок): LaTeX не пропадает, виден автору и
-  при включённом Инструменте вставляется обратно формулой.
+  The formula sits in the HTML as an empty element, and its source is in `data-latex`.
+  A Schema without the Tool has no node for it, and the ordinary parse would drop the
+  empty `span` together with the formula: an Editor without `mathematics` that opened
+  someone else's Document would silently erase the formula on save. So such an Editor
+  reads the formula as text: `$…$` inside a line and `$$…$$` as a paragraph (a Block).
+  The LaTeX is not lost, the author sees it, and with the Tool on it is turned back
+  into a formula.
 
-  КАК. Разбор HTML в Документ — один `DOMParser` ProseMirror, закэшированный на
-  Схеме, и им идут все пути: `value`, вставка, HTML-режим, Скелет. Подменяется он,
-  а не каждая точка входа: формулы в DOM заменяются текстом перед разбором, дальше
-  всё как обычно. Кэш — `schema.cached.domParser`, штатное место
-  `DOMParser.fromSchema`; тест `rich-text-editor-mathematics.test.tsx` держит
-  поведение, если ProseMirror переедет.
+  HOW. Parsing HTML into a Document goes through a single ProseMirror `DOMParser`,
+  cached on the Schema, and every path uses it: `value`, paste, Source mode, the
+  Skeleton. It is replaced as a whole, not at each entry point: formulas in the DOM
+  become text before the parse, and everything after it works as usual. The cache is
+  `schema.cached.domParser`, the standard place of `DOMParser.fromSchema`; the test
+  `rich-text-editor-mathematics.test.tsx` keeps the behavior in place if ProseMirror
+  changes.
 */
 
 /**
- * Формула в дереве JSON (`inlineMath`, `blockMath`) — текстом: тот же путь для
- * конверта Документа (`jsonDocument.ts`), что `formulasToText` для HTML. `null` —
- * это не формула или исходника нет. Зовёт `conformToSchema`, когда узла в Схеме нет.
+ * A formula in the JSON tree (`inlineMath`, `blockMath`) as text: the same path for the
+ * Document's JSON envelope (`jsonDocument.ts`) as `formulasToText` for HTML. `null` means
+ * the node is not a formula, or that it has no source. It is called by `conformToSchema`
+ * when the node is not in the Schema.
  */
 export function formulaJsonAsText(node: JSONContent): JSONContent[] | null {
   const latex = node.attrs?.latex;
@@ -42,7 +44,10 @@ export function formulaJsonAsText(node: JSONContent): JSONContent[] | null {
   return [{ type: "paragraph", content: [{ type: "text", text: `$$${latex}$$` }] }];
 }
 
-/** Формулы поддерева — текстом. Меняет `dom` на месте: разбор получает свежий DOM. */
+/**
+ * Turns the formulas of a subtree into text. Changes `dom` in place: the parse gets a fresh
+ * DOM.
+ */
 function formulasToText(dom: Node): Node {
   const root = dom as Partial<ParentNode>;
   for (const element of [...(root.querySelectorAll?.(FORMULA_SELECTOR) ?? [])]) {
@@ -70,7 +75,10 @@ class FormulaTextParser extends ProseMirrorParser {
   }
 }
 
-/** Схема читает формулы текстом: ставится на Схему набора без `mathematics`. */
+/**
+ * The Schema reads formulas as text: it is set on the Schema of a `tools` list without
+ * `mathematics`.
+ */
 export function readFormulasAsText(schema: Schema): void {
   if (schema.cached.domParser instanceof FormulaTextParser) return;
   schema.cached.domParser = new FormulaTextParser(
@@ -80,9 +88,10 @@ export function readFormulasAsText(schema: Schema): void {
 }
 
 /**
- * Расширение набора без `mathematics`: Схема читает формулы текстом. Без разметки
- * и без узлов — Схема набора от него не меняется. `onBeforeCreate` идёт раньше
- * первого разбора `value` (Tiptap разбирает его в конце сборки движка).
+ * An extension of a `tools` list without `mathematics`: the Schema reads formulas as text.
+ * It adds no markup and no nodes, so the list's Schema does not change because of it.
+ * `onBeforeCreate` runs before the first parse of `value` (Tiptap parses it at the end of
+ * building the engine).
  */
 export const FormulasAsText = Extension.create({
   name: "formulasAsText",
