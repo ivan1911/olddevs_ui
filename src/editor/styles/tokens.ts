@@ -1,68 +1,67 @@
 /**
- * Сопоставление переменных shadcn и minimal-tiptap с токенами кита — в одном
- * месте (ADR-0050, контракт «токены»).
+ * Mapping of shadcn and minimal-tiptap variables to the kit's tokens, in one place
+ * (ADR-0050, the "tokens" contract).
  *
- * КАК ЭТО РАБОТАЕТ. Перенесённый код говорит на языке shadcn: `--primary`,
- * `--muted-foreground`, `--border`, а оформление minimal-tiptap — ещё и своими
- * `--mt-hr`, `--mt-code-background`, `--mt-secondary`, у которых значения
- * литеральные и раздельные для `.dark`. Здесь каждая такая роль получает
- * переменную с префиксом `--rte-`, а значение — переменную кита. Классы
- * Документа ссылаются только на `--rte-*` (`bg-(--rte-hr)`), литеральных цветов и
- * радиусов в них нет.
+ * HOW IT WORKS. The transferred code speaks the shadcn language: `--primary`,
+ * `--muted-foreground`, `--border`. The minimal-tiptap styling also has its own
+ * `--mt-hr`, `--mt-code-background` and `--mt-secondary`, whose values are literal and
+ * separate for `.dark`. Here each such role gets a variable with the `--rte-` prefix,
+ * and its value is a kit variable. The Document's classes refer only to `--rte-*`
+ * (`bg-(--rte-hr)`); they contain no literal colors or radii.
  *
- * ПОЧЕМУ ПРЕФИКС, А НЕ СОБСТВЕННЫЕ ИМЕНА shadcn. Приложение потребителя вполне
- * может само стоять на shadcn и объявлять `--primary` в своём формате (HSL без
- * обёртки). Переобъявление на корне Редактора перекрасило бы чужие компоненты,
- * оказавшиеся внутри него, а чужое значение — наш.
+ * WHY A PREFIX AND NOT THE shadcn NAMES THEMSELVES. The consumer's app may well be built
+ * on shadcn and declare `--primary` in its own format (HSL without a wrapper). Redeclaring
+ * it at the Editor's root would recolor foreign components placed inside it, and the
+ * consumer's values are not ours to change.
  *
- * ПОЧЕМУ КЛАССАМИ, А НЕ `style`. Произвольные свойства Tailwind
- * (`[--rte-hr:var(--line)]`) работают и в серверном рендере `RichTextView`, и
- * без единого инлайн-стиля в разметке. Каждое имя записано целиком — Tailwind
- * читает исходник как текст и склейку имени не увидел бы.
+ * WHY CLASSES AND NOT `style`. Tailwind arbitrary properties (`[--rte-hr:var(--line)]`)
+ * work both in the server render of `RichTextView` and without a single inline style in
+ * the markup. Each name is written in full: Tailwind reads the source as text and would
+ * not see a name assembled by concatenation.
  *
- * ТЕМЫ. Значения — переменные кита, а не цвета, поэтому `dark`, `light` и `dim`
- * переключаются сами, без второй таблицы под `.dark`, как было в оригинале.
+ * THEMES. The values are kit variables, not colors, so `dark`, `light` and `dim` switch by
+ * themselves, without a second table under `.dark` as in the original.
  *
- * | Роль (`--rte-*`)          | Где в Документе                        | Токен кита         | Лист (`paper`)     |
+ * | Role (`--rte-*`)          | Where in the Document                  | Kit token          | Sheet (`paper`)    |
  * | ------------------------- | -------------------------------------- | ------------------ | ------------------ |
- * | `background`              | фон листа, мерка цвета автора          | `--bg-2`           | `--od-cloud-12`    |
- * | `foreground`              | основной текст, курсор-щель            | `--fg-0`           | `--od-cloud-1`     |
- * | `secondary`               | цитата, шапка блока кода (язык, копия) | `--fg-1`           | `--od-cloud-2`     |
- * | `muted`                   | подпись картинки, выполненный пункт    | `--fg-2`           | `--od-cloud-3`     |
- * | `muted-foreground`        | плейсхолдеры                           | `--fg-3`           | `--od-cloud-4`     |
- * | `primary`                 | флажок, контур и ручка картинки        | `--accent`         | `--accent`         |
- * | `ring`                    | фокус контролов внутри Документа       | `--accent-strong`  | `--accent` ¹       |
- * | `link`                    | ссылка                                 | `--accent-strong`  | `--accent` ¹       |
- * | `text-accent`             | цвет текста `accent`                   | `--accent-strong`  | `--accent` ¹       |
- * | `text-success`            | цвет текста `success`                  | `--success-strong` | `--od-green-1`     |
- * | `text-warning`            | цвет текста `warning`                  | `--warning-strong` | `--od-amber-1`     |
- * | `text-danger`             | цвет текста `danger`                   | `--danger-strong`  | `--od-red-1`       |
- * | `text-lime`               | цвет текста `lime`                     | `--draft-strong`   | `--od-lime-1`      |
- * | `text-muted`              | цвет текста `muted`                    | `--fg-2`           | `--od-cloud-3`     |
- * | `selection`               | выделение текста и ячеек               | `--selection`      | `--selection-light` ¹ |
- * | `selection-marker`        | выделение поверх яркого маркера ²      | `--accent` 38 %    | `--accent` 38 %    |
- * | `control-hover`           | наведение на кнопку внутри Документа   | `--bg-2`           | `--od-cloud-9`     |
- * | `quote`                   | полоса цитаты                          | `--line`           | `--od-cloud-6`     |
- * | `hr`                      | черта, рамки ячеек                     | `--line`           | `--od-cloud-6`     |
- * | `code-background`         | строчный код, шапка таблицы            | `--bg-3`           | `--od-cloud-11`    |
- * | `code-border`             | рамка кода                             | `--line-soft`      | `--od-cloud-8`     |
- * | `radius`                  | скругления                             | `--r-xs`           | `--r-xs`           |
- * | `tone-neutral-background` | подложка Обёртки «Важно» ³             | `--bg-3`           | `--od-cloud-11`    |
- * | `tone-neutral-border`     | полоса Обёртки «Важно» ³               | `--fg-3`           | `--od-cloud-4`     |
- * | `tone-accent-background`  | подложка Обёртки «Заметка»             | `--accent-soft`    | `--accent-soft`    |
- * | `tone-accent-border`      | полоса Обёртки «Заметка»               | `--accent-strong`  | `--accent` ¹       |
- * | `tone-success-background` | подложка Обёртки «Совет»               | `--success-soft`   | `--od-green-2-a12` |
- * | `tone-success-border`     | полоса Обёртки «Совет»                 | `--success-strong` | `--od-green-1`     |
- * | `tone-warning-background` | подложка Обёртки «Внимание»            | `--warning-soft`   | `--od-amber-2-a14` |
- * | `tone-warning-border`     | полоса Обёртки «Внимание»              | `--warning-strong` | `--od-amber-1`     |
- * | `tone-danger-background`  | подложка Обёртки «Осторожно»           | `--danger-soft`    | `--od-red-3-a12`   |
- * | `tone-danger-border`      | полоса Обёртки «Осторожно»             | `--danger-strong`  | `--od-red-1`       |
- * | `tone-link`               | ссылка в Обёртке с тоном ⁴             | `--fg-0`           | `--od-cloud-1`     |
- * | `tone-secondary`          | цитата и шапка кода в Обёртке с тоном ⁴ | `--fg-0`          | `--od-cloud-2`     |
- * | `tone-muted`              | подпись, пункт, серый текст в тоне ⁴   | `--fg-0`           | `--od-cloud-3`     |
- * | `tone-muted-foreground`   | подсказки в Обёртке с тоном ⁴          | `--fg-0`           | `--od-cloud-3`     |
+ * | `background`              | sheet background, author color marker  | `--bg-2`           | `--od-cloud-12`    |
+ * | `foreground`              | main text, gap cursor                  | `--fg-0`           | `--od-cloud-1`     |
+ * | `secondary`               | quote, code Block header (language, copy) | `--fg-1`        | `--od-cloud-2`     |
+ * | `muted`                   | image caption, completed task item     | `--fg-2`           | `--od-cloud-3`     |
+ * | `muted-foreground`        | placeholders                           | `--fg-3`           | `--od-cloud-4`     |
+ * | `primary`                 | checkbox, image outline and handle     | `--accent`         | `--accent`         |
+ * | `ring`                    | focus of controls inside the Document  | `--accent-strong`  | `--accent` ¹       |
+ * | `link`                    | link                                   | `--accent-strong`  | `--accent` ¹       |
+ * | `text-accent`             | `accent` text color                    | `--accent-strong`  | `--accent` ¹       |
+ * | `text-success`            | `success` text color                   | `--success-strong` | `--od-green-1`     |
+ * | `text-warning`            | `warning` text color                   | `--warning-strong` | `--od-amber-1`     |
+ * | `text-danger`             | `danger` text color                    | `--danger-strong`  | `--od-red-1`       |
+ * | `text-lime`               | `lime` text color                      | `--draft-strong`   | `--od-lime-1`      |
+ * | `text-muted`              | `muted` text color                     | `--fg-2`           | `--od-cloud-3`     |
+ * | `selection`               | text and cell selection                | `--selection`      | `--selection-light` ¹ |
+ * | `selection-marker`        | selection on top of a bright marker ²  | `--accent` 38 %    | `--accent` 38 %    |
+ * | `control-hover`           | hover on a button inside the Document  | `--bg-2`           | `--od-cloud-9`     |
+ * | `quote`                   | quote bar                              | `--line`           | `--od-cloud-6`     |
+ * | `hr`                      | rule, cell borders                     | `--line`           | `--od-cloud-6`     |
+ * | `code-background`         | inline code, table header              | `--bg-3`           | `--od-cloud-11`    |
+ * | `code-border`             | code border                            | `--line-soft`      | `--od-cloud-8`     |
+ * | `radius`                  | corner radii                           | `--r-xs`           | `--r-xs`           |
+ * | `tone-neutral-background` | backing of the Important-tone Wrapper ³ | `--bg-3`          | `--od-cloud-11`    |
+ * | `tone-neutral-border`     | stripe of the Important-tone Wrapper ³ | `--fg-3`           | `--od-cloud-4`     |
+ * | `tone-accent-background`  | backing of the Note-tone Wrapper       | `--accent-soft`    | `--accent-soft`    |
+ * | `tone-accent-border`      | stripe of the Note-tone Wrapper        | `--accent-strong`  | `--accent` ¹       |
+ * | `tone-success-background` | backing of the Tip-tone Wrapper        | `--success-soft`   | `--od-green-2-a12` |
+ * | `tone-success-border`     | stripe of the Tip-tone Wrapper         | `--success-strong` | `--od-green-1`     |
+ * | `tone-warning-background` | backing of the Warning-tone Wrapper    | `--warning-soft`   | `--od-amber-2-a14` |
+ * | `tone-warning-border`     | stripe of the Warning-tone Wrapper     | `--warning-strong` | `--od-amber-1`     |
+ * | `tone-danger-background`  | backing of the Caution-tone Wrapper    | `--danger-soft`    | `--od-red-3-a12`   |
+ * | `tone-danger-border`      | stripe of the Caution-tone Wrapper     | `--danger-strong`  | `--od-red-1`       |
+ * | `tone-link`               | link in a toned Wrapper ⁴              | `--fg-0`           | `--od-cloud-1`     |
+ * | `tone-secondary`          | quote and code header in a toned Wrapper ⁴ | `--fg-0`       | `--od-cloud-2`     |
+ * | `tone-muted`              | caption, item, gray text in a tone ⁴  | `--fg-0`           | `--od-cloud-3`     |
+ * | `tone-muted-foreground`   | hints in a toned Wrapper ⁴             | `--fg-0`           | `--od-cloud-3`     |
  *
- * Модуль серверно-безопасен: строки классов, без React и без движка.
+ * The module is server-safe: class strings, with no React and no engine.
  */
 export const EDITOR_TOKENS_CLASS =
   "[--rte-background:var(--bg-2)] [--rte-foreground:var(--fg-0)] " +
@@ -83,71 +82,66 @@ export const EDITOR_TOKENS_CLASS =
   "[--rte-tone-muted:var(--fg-0)] [--rte-tone-muted-foreground:var(--fg-0)]";
 
 /**
- * Те же роли для листа `surface="paper"`: значения СВЕТЛОЙ темы в
- * любой теме приложения.
+ * The same roles for the `surface="paper"` sheet: the values of the LIGHT theme in
+ * any app theme.
  *
- * ПОЧЕМУ ПРИМИТИВЫ, А НЕ ВЛОЖЕННЫЙ `data-theme="light"`. Семантические токены
- * кита (`--fg-0`, `--bg-2`, `--accent-strong`) объявлены только на
- * `:root[data-theme]` и на вложенную тему не отзываются; мост `@theme`
- * (`text-fg-0` → `--color-fg-0`) подставляет значение корня. Менять это —
- * решение уровня кита (ADR-0003, ADR-0020), а не Редактора. Поэтому лист
- * назначает ролям `--rte-*` те же примитивы `--od-*`, что светлая тема
- * назначает своим токенам: примитивы объявлены на `:root` без темы и видны
- * везде. Совпадение со светлой темой сторожит `tests/rich-text-paper.test.tsx`
- * — разбором `styles.css`, а не копией значений.
+ * WHY PRIMITIVES AND NOT A NESTED `data-theme="light"`. The kit's semantic tokens
+ * (`--fg-0`, `--bg-2`, `--accent-strong`) are declared only on `:root[data-theme]` and do
+ * not react to a nested theme; the `@theme` bridge (`text-fg-0` → `--color-fg-0`) substitutes
+ * the root's value. Changing that is a decision for the kit (ADR-0003, ADR-0020), not for the
+ * Editor. So the sheet assigns the `--rte-*` roles the same `--od-*` primitives that the light
+ * theme assigns to its tokens: the primitives are declared on `:root` without a theme and are
+ * visible everywhere. Matching the light theme is checked by `tests/rich-text-paper.test.tsx`,
+ * which parses `styles.css` rather than comparing copies of the values.
  *
- * Вложенный `data-theme="light"` на листе всё равно стоит — для того, что
- * объявлено на `[data-theme]` любого элемента: маркеры (`--marker-*`) и тема
- * подсветки (`--rte-hl-*`, `--rte-code-block-*`, `styles.css`).
+ * The nested `data-theme="light"` on the sheet stays anyway, for whatever is declared on
+ * `[data-theme]` of any element: the markers (`--marker-*`) and the highlight theme
+ * (`--rte-hl-*`, `--rte-code-block-*`, `styles.css`).
  *
- * ¹ АКЦЕНТ — ЗАЛИВКА ТЕМЫ ПРИЛОЖЕНИЯ, А НЕ СВЕТЛАЯ `accent-strong`. Светлый
- * `accent-strong` у бренда и у фиолетового акцента объявлен только парным
- * блоком `:root[data-theme="light"][data-…]` и в тёмном приложении не
- * существует ни в одной переменной. `--accent` же рассчитан под белый текст
- * поверх (4.5:1 с `--text-on-accent`, гейт контраста) — значит, и как текст на
- * белом листе держит 4.5:1, у любого бренда и акцента. В светлом приложении
- * лист берёт ровно светлый `accent-strong` — вариантом по корню.
+ * ¹ ACCENT IS THE APP THEME'S FILL, NOT THE LIGHT `accent-strong`. The light `accent-strong`
+ * of the brand and of the violet accent is declared only as a paired block
+ * `:root[data-theme="light"][data-…]`, and in the dark app it does not exist as a variable at
+ * all. `--accent`, however, is calibrated for white text on top of it (4.5:1 with
+ * `--text-on-accent`, the contrast gate), so as text on a white sheet it also holds 4.5:1,
+ * for any brand and accent. In a light app the sheet takes exactly the light `accent-strong`,
+ * through a variant on the root.
  *
- * `primary` и подложка тона «Заметка» не меняются: полупрозрачная `accent-soft`
- * ложится и на белый лист, а заливка флажка — тот же `--accent`. Выделение —
- * `--selection-light`: `--selection` тёмного приложения — светлая
- * ступень акцента под тёмную подложку, и на белом листе она почти не видна;
- * светлый вариант объявлен при любой теме ровно для листа.
- * Полоса «Заметки» — как текст акцентом: `--accent`, в светлом приложении —
- * светлый `accent-strong`.
+ * `primary` and the Note tone's backing do not change: the semi-transparent `accent-soft`
+ * also lies well on a white sheet, and the checkbox fill is the same `--accent`. The selection
+ * is `--selection-light`: the dark app's `--selection` is a light step of the accent for a dark
+ * backing, and on a white sheet it is almost invisible. The light variant is declared under any
+ * theme, exactly for the sheet. The Note stripe is treated as accent text: `--accent`, and in a
+ * light app, the light `accent-strong`.
  *
- * ² ВЫДЕЛЕНИЕ НА МАРКЕРЕ. Обычное выделение полупрозрачно и рассчитано на фон
- * документа; поверх яркого маркера (`#ffea80`) прежнее `accent-soft` (14–16 %
- * альфы) пропадало, и казалось, что помеченный текст не выделен. Маркер один во всех темах, поэтому
- * и роль одна: `--accent` на 38 % — жёлтый под ним уходит в заметный
- * серо-зелёный, а тёмный текст маркера остаётся читаемым. Акцент, а не
- * фиксированный синий: выделение следует бренду, как и везде.
+ * ² SELECTION ON A MARKER. The ordinary selection is semi-transparent and calibrated for the
+ * document's background. On top of a bright marker (`#ffea80`) the previous `accent-soft`
+ * (14–16 % alpha) disappeared, and the marked text looked unselected. There is one bright
+ * marker in all themes, so the role is one too: `--accent` at 38 %. The yellow under it turns
+ * into a visible gray-green, and the dark marker text stays readable. It is the accent, not a
+ * fixed blue: the selection follows the brand, as everywhere else.
  *
- * ³ ТОН ОБЁРТКИ — статусные токены кита: мягкая ступень тона —
- * подложка, сильная — полоса слева, как `soft` у `Alert`. Нейтральный тон
- * отступает от `TONE_TOKENS.neutral` в обоих местах. Подложка — `bg-3`
- * (ступень выбранного нейтрального), а не `bg-2`: на `bg-2` стоит само поле
- * Редактора, и Обёртка «Важно» в нём была бы без подложки. Не `bg-4`: `bg-3` —
- * подложка приложения, под которую откалиброваны ВСЕ текстовые токены, и
- * ссылка, цитата, подпись и цвет текста внутри «Важно» держат 4.5:1, а на
- * `bg-4` приглушённый текст падает до 3.7. Цена — в светлой теме подложка
- * почти белая на белой панели, тон там держит полоса. Полоса — `fg-3`, а не
- * `line`: полоса тона несёт смысл и держит 3:1 (WCAG 1.4.11), а `line` —
- * декоративная черта (так же рамка признака состояния, `STATE_BORDER`).
- * Контраст — `npm run contrast`, пары тонов.
+ * ³ THE WRAPPER TONE uses the kit's status tokens: the soft step of the tone is the backing,
+ * and the strong one is the stripe on the left, as `soft` in `Alert`. The neutral tone is
+ * set off from `TONE_TOKENS.neutral` in both places. The backing is `bg-3` (the step of the
+ * chosen neutral), not `bg-2`: `bg-2` is the Editor's own field, and the Important Wrapper
+ * would have no backing on it. Not `bg-4` either: `bg-3` is the app's backing, which ALL text
+ * tokens are calibrated for. The link, quote, caption and text color inside Important hold
+ * 4.5:1, while on `bg-4` the muted text drops to 3.7. The price: in the light theme the backing
+ * is almost white on a white panel, and there the tone is carried by the stripe. The stripe is
+ * `fg-3`, not `line`: the tone stripe carries meaning and holds 3:1 (WCAG 1.4.11), while `line`
+ * is a decorative rule (as is the border of a state indicator, `STATE_BORDER`).
+ * The contrast is checked by `npm run contrast`, on the tone pairs.
  *
- * ⁴ ВТОРИЧНЫЙ ТЕКСТ НА ПОДЛОЖКЕ ТОНА. Ступени `fg-1`–`fg-3` и `accent-strong`
- * откалиброваны под 4.5:1 на подложках приложения, а не на цветных подложках
- * тонов: на них цитата падала до 4.23, ссылка — до 3.97, подпись и серый текст
- * — до 3.59, подсказка — до 3.61. Поэтому в Обёртке с тоном `prose.ts` подменяет
- * роли `link`, `secondary`, `muted`, `text-muted` и `muted-foreground` этими. В
- * теме приложения 4.5:1 на всех пяти подложках держит только `fg-0` — промежуточной
- * ступени нет (`fg-1` даёт 4.23 на «Заметке» и 4.27 на «Внимании»), поэтому
- * внутри тона весь вторичный текст — основной; иерархию держат форма (полоса
- * цитаты, зачёркивание, кегль подписи), а ссылку — подчёркивание. На листе
- * `cloud-2` и `cloud-3` проходят и на подложках тона — цитата и подпись остаются
- * своей ступенью, поднимаются только ссылка (акцент давал 3.68) и подсказка
- * (`cloud-4` давал 4.25).
+ * ⁴ SECONDARY TEXT ON A TONE BACKING. The steps `fg-1`–`fg-3` and `accent-strong` are calibrated
+ * for 4.5:1 on the app's backings, not on the colored tone backings. There the quote dropped to
+ * 4.23, the link to 3.97, the caption and gray text to 3.59, and the hint to 3.61. So in a
+ * Wrapper with a tone, `prose.ts` substitutes the `link`, `secondary`, `muted`, `text-muted` and
+ * `muted-foreground` roles with these. In the app theme only `fg-0` holds 4.5:1 on all five
+ * backings. There is no intermediate step (`fg-1` gives 4.23 on Note and 4.27 on Warning), so
+ * inside a tone all secondary text is the main text color. The hierarchy is kept by form (the
+ * quote bar, strikethrough, the caption's size), and the link by underlining. On the sheet,
+ * `cloud-2` and `cloud-3` pass on the tone backings too: the quote and the caption keep their own
+ * step, and only the link (the accent gave 3.68) and the hint (`cloud-4` gave 4.25) are raised.
  */
 export const EDITOR_PAPER_TOKENS_CLASS =
   "[--rte-background:var(--od-cloud-12)] [--rte-foreground:var(--od-cloud-1)] " +

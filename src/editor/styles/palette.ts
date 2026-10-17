@@ -1,46 +1,42 @@
 /**
- * Палитры цвета текста и маркера Редактора ДАННЫМИ: имена, токены кита и
- * выравнивания.
+ * Editor text and marker color palettes as DATA: names, kit tokens and alignments.
  *
- * ПАЛИТРЫ ДВЕ, И ИМЁН У НИХ НЕТ ОБЩИХ. Цвет текста — шесть тонов
- * статуса кита; маркер — девять цветов: три ярких и шесть прежних. Оба пишутся в
- * `data-color`, но на разных тегах: `span[data-color]` берёт имя из текстовой
- * палитры, `mark[data-color]` — из палитры маркера. Имя чужой палитры на теге не
- * принимается.
+ * THERE ARE TWO PALETTES, AND THEY SHARE NO NAMES. The text color palette has six status
+ * tones of the kit; the marker palette has nine colors: three bright ones and six older ones.
+ * Both are written to `data-color`, but on different tags: `span[data-color]` takes its name
+ * from the text palette, `mark[data-color]` from the marker palette. A name from the other
+ * palette is not accepted on a tag.
  *
- * ОДНА ТАБЛИЦА НА ЧЕТЫРЕХ ПОТРЕБИТЕЛЕЙ: Схема (`schema.ts`) берёт отсюда белый
- * список имён, расширения (`extensions.ts`) — допустимые значения атрибутов,
- * Панель (`EditorToolbar.tsx`) — набор образцов, а `scripts/contrast.mjs` —
- * пары для проверки контраста. Имя цвета, добавленное в одном месте и
- * забытое в другом, было бы молчаливым дефектом: образец есть, а в сохранённом
- * HTML его нет. Поэтому место одно, а совпадение с классами `prose.ts` сторожит
- * `tests/rich-text-editor-color.test.tsx`.
+ * ONE TABLE FOR FOUR CONSUMERS: the Schema (`schema.ts`) takes the allowlist of names from
+ * here, the extensions (`extensions.ts`) take the allowed attribute values, the Toolbar
+ * (`EditorToolbar.tsx`) takes the set of swatches, and `scripts/contrast.mjs` takes the pairs
+ * to check the contrast of. A color name added in one place and forgotten in another would be
+ * a silent defect: the swatch exists, but the saved HTML does not have it. So there is one
+ * place, and `tests/rich-text-editor-color.test.tsx` checks that the names match the classes
+ * in `prose.ts`.
  *
- * ЗАЧЕМ ИМЕНА, А НЕ ЗНАЧЕНИЯ. В документ уходит `data-color="danger"`, а не
- * `#eea8a0`: значение — дело темы (`dark`, `light`, `dim`), и один и тот же
- * сохранённый текст читается в каждой из них. Имя уезжает в базу потребителя и
- * переживает смену значений токенов.
+ * WHY NAMES AND NOT VALUES. The Document stores `data-color="danger"`, not `#eea8a0`: the value
+ * is the theme's business (`dark`, `light`, `dim`), and the same saved text reads correctly in
+ * each of them. The name goes into the consumer's database and survives changes to token values.
  *
- * ЦВЕТ ТЕКСТА. `strong`-ступень тона подобрана под 4.5:1 на всех подложках
- * приложения. Оттенки меток (`--label-*`) подбирались под 3:1 (кружок рядом с
- * названием) и на `surface-elevated` в тёмных темах текстом не держат: синий
- * 3.5, красный 3.56. Ценой стала привязка к акценту: `accent` — цвет бренда
- * приложения, а не фиксированный синий. Индиго (`accent-alt`) в список не
- * вошёл: токен не имеет `strong`-ступени и даёт 2.3–3.5:1 текстом.
+ * TEXT COLOR. The `strong` step of a tone is chosen for 4.5:1 on all of the app's backings.
+ * The label shades (`--label-*`) were chosen for 3:1 (the dot next to a name), and as text on
+ * `surface-elevated` in the dark themes they do not hold: blue 3.5, red 3.56. The price is the
+ * binding to the accent: `accent` is the app's brand color, not a fixed blue. Indigo
+ * (`accent-alt`) is not in the list: the token has no `strong` step and gives 2.3–3.5:1 as text.
  *
- * МАРКЕР. Яркий, как настоящий текстовыделитель: жёлтый
- * `#ffea80`, ярко-зелёный `#aaff80`, розовый `#ff80bf`, одинаковые во всех темах
- * (`dark`, `light`, `dim`) и на листе `surface="paper"`. Текст на маркере всегда
- * тёмный — токен `--marker-text` (около 14:1 на жёлтом и зелёном, 7.5:1 на
- * розовом), и порог 4.5:1 держит он, а не `fg-0`. Шесть прежних цветов Notion
- * живут со своими значениями (`--marker-*` компонентного слоя, ADR-0003): у каждой
- * темы своё, и текст на них — основной. Их снова предлагает меню
- * (сетка «Цвет маркера», решение владельца) — см. `EDITOR_MARKERS`. Токен цветом
- * статуса не назван и от акцента с брендом не зависит: `blue` не меняется вслед
- * за `data-accent`.
+ * MARKER. Bright, like a real highlighter pen: yellow `#ffea80`, bright green `#aaff80`, pink
+ * `#ff80bf`, the same in all themes (`dark`, `light`, `dim`) and on the `surface="paper"` sheet.
+ * Text on a marker is always dark: the `--marker-text` token (about 14:1 on yellow and green,
+ * 7.5:1 on pink) is what holds the 4.5:1 threshold, not `fg-0`. The six older Notion colors
+ * live with their own values (the component layer's `--marker-*`, ADR-0003): each theme has
+ * its own, and the text on them is the main text color. The menu offers them again (the
+ * "Marker color" grid, the owner's decision): see `EDITOR_MARKERS`. The token is not named
+ * after a status color and does not depend on the brand accent: `blue` does not change along
+ * with `data-accent`.
  *
- * Модуль серверно-безопасен: данные, без React и без движка, и без импортов —
- * `scripts/contrast.mjs` читает его напрямую.
+ * The module is server-safe: data, with no React, no engine and no imports. `scripts/contrast.mjs`
+ * reads it directly.
  */
 export const EDITOR_TEXT_COLORS = [
   { name: "accent", text: "accent-strong" },
@@ -51,29 +47,29 @@ export const EDITOR_TEXT_COLORS = [
   { name: "muted", text: "fg-2" },
 ] as const;
 
-/** Имя цвета текста: то, что пишется в `span[data-color]`. */
+/** Text color name: what is written to `span[data-color]`. */
 export type EditorTextColorName = (typeof EDITOR_TEXT_COLORS)[number]["name"];
 
-/** Имена цвета текста по порядку палитры — белый список `span[data-color]`. */
+/** Text color names in palette order: the allowlist for `span[data-color]`. */
 export const EDITOR_TEXT_COLOR_NAMES: readonly EditorTextColorName[] = EDITOR_TEXT_COLORS.map(
   (color) => color.name
 );
 
 /**
- * Маркер: имя, токен подложки (`--marker-<имя>`) и признак «яркий».
+ * Marker: a name, a backing token (`--marker-<name>`) and a "bright" flag.
  *
- * ВСЕ ДЕВЯТЬ В МЕНЮ (решение владельца). До того меню предлагало
- * только три ярких, а шесть прежних цветов Notion оставались читаемыми: Схема,
- * `RichTextView` и prose-стили их понимали, но выбрать их было нельзя. Сетка
- * «Цвет маркера» кружками показывает все девять: цвет выбирают глазами, и
- * девять различимых кружков — не перегруз, в отличие от девяти строк меню.
+ * ALL NINE IN THE MENU (the owner's decision). Before that the menu offered only the three
+ * bright ones, while the six older Notion colors stayed readable: the Schema, `RichTextView`
+ * and the prose styles understood them, but they could not be chosen. The "Marker color" grid
+ * shows all nine as dots: colors are picked by eye, and nine distinct dots are not clutter,
+ * unlike nine rows of a menu.
  *
- * ЯРКИЙ — ДРУГОЕ ОФОРМЛЕНИЕ ТЕКСТА. Подложка яркого (жёлтый, зелёный, розовый)
- * одна во всех темах, и текст на нём всегда тёмный — `--marker-text`. Подложки
- * прежних — свои у каждой темы (в тёмных — тёмные), текст на них основной. Это
- * же различает пары в `scripts/contrast.mjs`.
+ * BRIGHT MEANS A DIFFERENT TEXT TREATMENT. The backing of a bright marker (yellow, green, pink)
+ * is the same in all themes, and text on it is always dark: `--marker-text`. The backings of the
+ * older ones are their own in each theme (dark in the dark themes), and text on them is the main
+ * text color. The same distinction is made by the pairs in `scripts/contrast.mjs`.
  *
- * Порядок меню — порядок этого массива: по оттенку, как в Notion.
+ * The menu order is the order of this array: by hue, as in Notion.
  */
 export const EDITOR_MARKERS = [
   { name: "gray", token: "marker-gray", bright: false },
@@ -87,45 +83,45 @@ export const EDITOR_MARKERS = [
   { name: "red", token: "marker-red", bright: false },
 ] as const;
 
-/** Имя маркера: то, что пишется в `mark[data-color]`. */
+/** Marker name: what is written to `mark[data-color]`. */
 export type EditorMarkerName = (typeof EDITOR_MARKERS)[number]["name"];
 
-/** Имена маркера по порядку меню — белый список `mark[data-color]`. */
+/** Marker names in menu order: the allowlist for `mark[data-color]`. */
 export const EDITOR_MARKER_NAMES: readonly EditorMarkerName[] = EDITOR_MARKERS.map(
   (marker) => marker.name
 );
 
-/** Яркие маркеры: подложка одна во всех темах, текст на ней — `--marker-text`. */
+/** Bright markers: one backing in all themes, with `--marker-text` as the text color on it. */
 export const EDITOR_BRIGHT_MARKER_NAMES: readonly EditorMarkerName[] = EDITOR_MARKERS.filter(
   (marker) => marker.bright
 ).map((marker) => marker.name);
 
-/** Прежние маркеры Notion: подложка своя у каждой темы, текст на ней основной. */
+/** The older Notion markers: each theme has its own backing, and the main text color is used on it. */
 export const EDITOR_PALE_MARKER_NAMES: readonly EditorMarkerName[] = EDITOR_MARKERS.filter(
   (marker) => !marker.bright
 ).map((marker) => marker.name);
 
 /**
- * Имена маркера ДО палитры Notion и их перевод в ближайший цвет.
+ * Marker names from BEFORE the Notion palette, and their mapping to the nearest color.
  *
- * Прежний маркер делил имена с цветом текста и красил подложку `soft`-ступенью
- * тона. Документы, сохранённые тогда, несут на `mark` одно из шести имён, и
- * отбросить их значило бы молча снять подсветку с чужого текста. Поэтому имя
- * переводится при загрузке и вставке, а `RichTextView` красит его тем же цветом
- * (`prose.ts`), если сервер сохранил старый HTML как есть.
+ * An older marker shared its names with the text color and painted the backing with the
+ * `soft` step of a tone. Documents saved then carry one of the six names on `mark`, and
+ * dropping them would silently remove the highlight from someone's text. So the name is
+ * mapped on load and on paste, and `RichTextView` paints it with the same color (`prose.ts`)
+ * when the server kept the old HTML as it is.
  *
- * Перевод — по оттенку подложки, а не по смыслу тона:
+ * The mapping goes by the hue of the backing, not by the meaning of the tone:
  *
- * - `accent` → `blue`: акцент кита синий (у бренда другой, но сохранённый
- *   документ видел синий);
- * - `success` → `green`, `danger` → `red`, `muted` → `gray`: одноимённые цвета;
- * - `warning` → `yellow`: янтарь `warning-soft` ближе к жёлтому Notion, чем к
- *   оранжевому — тот красноватее;
- * - `lime` → `green`: подложка лайма читается зелёной (оттенок 83° лежит между
- *   жёлтым и зелёным, но у `warning` жёлтый уже занят, и слить с ним «черновик»
- *   значило бы отдать ему смысл предупреждения).
+ * - `accent` → `blue`: the kit's accent is blue (the brand's is a different one, but a saved
+ *   document saw blue);
+ * - `success` → `green`, `danger` → `red`, `muted` → `gray`: colors with the same names;
+ * - `warning` → `yellow`: the amber of `warning-soft` is closer to Notion's yellow than to
+ *   orange, which is redder;
+ * - `lime` → `green`: the lime backing reads as green (hue 83° lies between yellow and green,
+ *   but `warning` already takes yellow, and merging "draft" into it would give it the meaning
+ *   of a warning).
  *
- * Работает только на `mark`: на `span` цвета текста не переименовываются.
+ * This works only on `mark`: text colors on `span` are not renamed.
  */
 export const LEGACY_MARKER_NAMES = {
   accent: "blue",
@@ -136,7 +132,7 @@ export const LEGACY_MARKER_NAMES = {
   muted: "gray",
 } as const satisfies Record<EditorTextColorName, EditorMarkerName>;
 
-/** Имя маркера из атрибута `mark[data-color]`: новое как есть, старое — переведённое. */
+/** Marker name from the `mark[data-color]` attribute: a current name as is, an older one mapped. */
 export function markerNameFromAttribute(value: string | null | undefined): EditorMarkerName | null {
   if (value === null || value === undefined) return null;
   if ((EDITOR_MARKER_NAMES as readonly string[]).includes(value)) return value as EditorMarkerName;
@@ -146,22 +142,22 @@ export function markerNameFromAttribute(value: string | null | undefined): Edito
 }
 
 /**
- * Выравнивание Блока. `left` — умолчание: атрибут не пишется, и документ без
- * выравнивания остаётся таким, каким был до среза. `justify` намеренно нет:
- * текст «по ширине» без переносов по слогам рвётся «реками» пробелов, а WCAG
- * (1.4.8, AAA) советует его не использовать.
+ * Block alignment. `left` is the default: the attribute is not written, so a document
+ * without alignment stays as it was before the cutover. `justify` is deliberately absent:
+ * justified text without hyphenation breaks into "rivers" of spaces, and WCAG (1.4.8, AAA)
+ * advises against it.
  */
 export const EDITOR_ALIGNMENTS = ["left", "center", "right"] as const;
 
-/** Значение `data-align`. */
+/** The `data-align` value. */
 export type EditorAlignment = (typeof EDITOR_ALIGNMENTS)[number];
 
-/** Выравнивание по умолчанию — то, что не пишется в атрибут. */
+/** The default alignment: the value that is not written to the attribute. */
 export const DEFAULT_ALIGNMENT: EditorAlignment = "left";
 
 /**
- * Выравнивание, которое пишется в Схему, из чужого атрибута: `center` или
- * `right`; `left` (умолчание), `start`, `justify` и прочее — `null`.
+ * Alignment that is written to the Schema, from a foreign attribute: `center` or `right`.
+ * `left` (the default), `start`, `justify` and anything else give `null`.
  */
 function writtenAlignment(value: string | null | undefined): EditorAlignment | null {
   const normalized = value?.trim().toLowerCase();
@@ -169,12 +165,12 @@ function writtenAlignment(value: string | null | undefined): EditorAlignment | n
 }
 
 /**
- * Выравнивание элемента входящего HTML (`value` и вставка).
+ * Alignment of an element of incoming HTML (`value` and paste).
  *
- * Своё — `data-align`, точным значением, как его пишет Редактор. Чужое
- * читается тоже, но только переводом в имя Схемы: `style="text-align: …"` (так
- * выравнивают Word, Excel и Google Docs) и устаревший атрибут `align`. Сами
- * `style` и `align` в документ не попадают — на выходе только `data-align`.
+ * The Editor's own is `data-align`, with the exact value the Editor writes. A foreign one is
+ * read too, but only by mapping it to a Schema name: `style="text-align: …"` (this is how Word,
+ * Excel and Google Docs align) and the obsolete `align` attribute. The `style` and `align`
+ * themselves do not get into the document: the output has only `data-align`.
  */
 export function alignmentFromElement(element: HTMLElement): EditorAlignment | null {
   const own = element.getAttribute("data-align");
@@ -183,9 +179,9 @@ export function alignmentFromElement(element: HTMLElement): EditorAlignment | nu
       ? (own as EditorAlignment)
       : null;
   }
-  // Разбор строки, а не `element.style`: регистр имени свойства и пробелы
-  // вокруг двоеточия CSSOM разных сред (браузер, jsdom, сервер) понимает
-  // по-разному, а значение здесь нужно одно.
+  // Parse the string instead of `element.style`: CSSOM in different environments
+  // (browser, jsdom, server) handles the case of the property name and the spaces
+  // around the colon differently, and here one value is needed.
   const style = /(?:^|;)\s*text-align\s*:\s*([a-z-]+)/i.exec(element.getAttribute("style") ?? "");
   return writtenAlignment(style?.[1]) ?? writtenAlignment(element.getAttribute("align"));
 }

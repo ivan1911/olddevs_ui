@@ -1,7 +1,7 @@
-// Происхождение: minimal-tiptap, `styles/partials/typography.css`, `lists.css`,
-// `code.css` и `styles/index.css` (MIT, © 2024 Aslam,
-// https://github.com/Aslam97/minimal-tiptap). Переписано Tailwind-классами на
-// токенах кита. Лицензия — NOTICE в корне пакета.
+// Origin: minimal-tiptap, `styles/partials/typography.css`, `lists.css`,
+// `code.css` and `styles/index.css` (MIT, © 2024 Aslam,
+// https://github.com/Aslam97/minimal-tiptap). Rewritten with Tailwind classes
+// on the kit's tokens. The license is in NOTICE at the package root.
 
 import { CODE_THEME_CLASS } from "./codeTheme.js";
 import type { EditorWrapperTone } from "../../i18n/messages.js";
@@ -10,16 +10,16 @@ import type { RichTextSurface } from "./surface.js";
 import { EDITOR_PAPER_TOKENS_CLASS, EDITOR_TOKENS_CLASS } from "./tokens.js";
 
 /**
- * Классы цвета текста и маркера по именам палитр (`palette.ts`).
+ * Text and marker color classes, by palette names (`palette.ts`).
  *
- * ПОЧЕМУ ЛИТЕРАЛЫ, А НЕ СБОРКА ИЗ ИМЕНИ ТОКЕНА. Tailwind читает исходник как
- * текст: `text-${token}` он не увидит, и класса в сборке не будет. Поэтому
- * каждый класс записан целиком, а соответствие записей токенам палитры держит
- * тест (`tests/rich-text-editor-color.test.tsx`), и `Record` не даёт забыть имя
- * при добавлении цвета.
+ * WHY LITERALS AND NOT ASSEMBLY FROM A TOKEN NAME. Tailwind reads the source as text:
+ * it would not see `text-${token}`, and the class would be missing from the build. So
+ * each class is written in full. A test (`tests/rich-text-editor-color.test.tsx`) keeps
+ * the entries in line with the palette tokens, and `Record` stops a name from being
+ * forgotten when a color is added.
  *
- * Используются дважды: селекторами на контейнере документа (ниже) и образцами
- * в меню Панели.
+ * Used in two places: by selectors on the Document container (below) and by the
+ * swatches in the Toolbar menu.
  */
 export const EDITOR_TEXT_COLOR_CLASS: Record<EditorTextColorName, string> = {
   accent: "text-accent-strong",
@@ -31,22 +31,22 @@ export const EDITOR_TEXT_COLOR_CLASS: Record<EditorTextColorName, string> = {
 };
 
 /**
- * Подложка маркера: токен `--marker-<имя>` компонентного слоя, значение у
- * каждой темы своё (`styles.css`).
+ * Marker background: the `--marker-<name>` token of the component layer, with a value of
+ * its own in each theme (`styles.css`).
  *
- * ПЕРЕМЕННАЯ ЧИТАЕТСЯ НАПРЯМУЮ — `bg-(--marker-gray)`, а не `bg-marker-gray`
- * через мост `@theme`. Мост (`--color-x: var(--x)`) объявлен на корне, и
- * `var()` в нём подставляется ТАМ: вложенная тема (`data-theme="light"` на
- * обёртке внутри тёмного приложения) значения моста уже не меняет. Прямая
- * ссылка подставляется на самом `mark` и берёт значение ближайшего предка с
- * `data-theme`. Класс читает глобальный токен, а не `--rte-*`: меню Панели
- * открывается порталом вне контейнера документа, где `--rte-*` нет.
+ * THE VARIABLE IS READ DIRECTLY: `bg-(--marker-gray)`, not `bg-marker-gray` through the
+ * `@theme` bridge. The bridge (`--color-x: var(--x)`) is declared on the root, and `var()`
+ * in it is substituted THERE: a nested theme (`data-theme="light"` on a wrapper inside a
+ * dark app) no longer changes the bridge's values. A direct reference is substituted on
+ * the `mark` itself and takes the value of the nearest ancestor with `data-theme`. The class
+ * reads the global token, not `--rte-*`: the Toolbar menu opens in a portal outside the
+ * Document container, where `--rte-*` does not exist.
  *
- * ТЕКСТ НА МАРКЕРЕ. У трёх ярких маркеров образец несёт и
- * `text-(--marker-text)`: их подложка одна во всех темах и яркая, а светлый
- * текст тёмной темы на ней не читался бы. У шести прежних цветов Notion подложки
- * свои у каждой темы (в тёмных — тёмные) и остаются под наследуемый основной
- * текст (`EDITOR_BRIGHT_MARKER_NAMES` в `palette.ts`).
+ * TEXT ON A MARKER. For the three bright markers the swatch also carries
+ * `text-(--marker-text)`: their background is the same and bright in all themes, and the
+ * light text of the dark theme would not be readable on it. The six older Notion colors have
+ * backgrounds of their own in each theme (dark ones in the dark themes), and they keep the
+ * inherited main text (`EDITOR_BRIGHT_MARKER_NAMES` in `palette.ts`).
  */
 export const EDITOR_MARKER_CLASS: Record<EditorMarkerName, string> = {
   yellow: "bg-(--marker-yellow) text-(--marker-text)",
@@ -61,14 +61,15 @@ export const EDITOR_MARKER_CLASS: Record<EditorMarkerName, string> = {
 };
 
 /**
- * Образец тона Обёртки в подменю «Тон ›» ручки: подпись пункта на
- * мягкой подложке тона с полосой слева — тот же вид, что у Обёртки в
- * Документе, только в миниатюре. Имя тона — словом, образец его только
- * подкрепляет.
+ * Swatch of a Wrapper tone in the "Tone ›" submenu of the Block handle: the item's label on
+ * the soft tone backing with a stripe on the left. It has the same look as the Wrapper in
+ * the Document, only in miniature. The tone's name is given in words; the swatch only
+ * reinforces it.
  *
- * Токены кита напрямую, а не роли `--rte-tone-*`: меню открывается порталом вне
- * контейнера Документа, где ролей нет (как у `EDITOR_MARKER_CLASS`). Совпадение
- * токенов образца с ролями темы сторожит `tests/rich-text-editor-wrapper-tone.test.tsx`.
+ * The kit's tokens directly, not the `--rte-tone-*` roles: the menu opens in a portal outside
+ * the Document container, where the roles do not exist (as with `EDITOR_MARKER_CLASS`). The
+ * match between the swatch tokens and the theme's roles is checked by
+ * `tests/rich-text-editor-wrapper-tone.test.tsx`.
  */
 export const EDITOR_WRAPPER_TONE_CLASS: Record<EditorWrapperTone, string> = {
   neutral: "rounded-xs border-l-[3px] border-(--fg-3) bg-(--bg-3) px-1.5",
@@ -79,16 +80,16 @@ export const EDITOR_WRAPPER_TONE_CLASS: Record<EditorWrapperTone, string> = {
 };
 
 /**
- * Цвет и маркер в документе: `span[data-color]` и `mark[data-color]`.
+ * Color and marker in the document: `span[data-color]` and `mark[data-color]`.
  *
- * Селектор на каждое имя, а не одна переменная `--rte-color`: переменную
- * пришлось бы задавать тем же перечнем, а литеральный класс при этом остаётся
- * проверяемым гейтом контраста, который мерит те же пары токенов.
+ * A selector for each name, not one `--rte-color` variable: the variable would have to be
+ * set from the same list, while a literal class stays checkable by the contrast gate, which
+ * measures the same token pairs.
  *
- * СТАРЫЕ ИМЕНА МАРКЕРА (`mark[data-color=accent]` и ещё пять) красятся цветом,
- * в который их переводит Редактор при загрузке (`LEGACY_MARKER_NAMES`). Показ
- * HTML заново не разбирает: если сервер сохранил документ до новой палитры и
- * не перевёл имена очисткой (`sanitizeRichText`), без этих правил подсветка исчезла бы.
+ * OLD MARKER NAMES (`mark[data-color=accent]` and five more) are painted with the color the
+ * Editor maps them to on load (`LEGACY_MARKER_NAMES`). The View does not parse the HTML again:
+ * if the server saved a document from before the new palette and did not map its names with
+ * the cleanup (`sanitizeRichText`), the highlight would disappear without these rules.
  */
 const COLOR_CLASS =
   "[&_span[data-color=accent]]:text-(--rte-text-accent) [&_span[data-color=success]]:text-(--rte-text-success) " +
@@ -102,22 +103,22 @@ const COLOR_CLASS =
   "[&_mark[data-color=accent]]:bg-(--marker-blue) [&_mark[data-color=success]]:bg-(--marker-green) " +
   "[&_mark[data-color=warning]]:bg-(--marker-yellow) [&_mark[data-color=danger]]:bg-(--marker-red) " +
   "[&_mark[data-color=lime]]:bg-(--marker-green) [&_mark[data-color=muted]]:bg-(--marker-gray) " +
-  // Текст на маркере тёмный (`--marker-text`), а не наследуемый:
-  // подложка яркая и одна во всех темах, а браузерное `color: MarkText` иначе
-  // перекрасило бы текст в чёрный на любой теме. Правило общее, поэтому тёмный
-  // текст получает и цвет автора. Исключение — шесть прежних цветов Notion и старые
-  // имена, которые переводятся в них: подложки прежние, в тёмных темах тёмные, и под
-  // ними остаётся наследуемый основной текст.
+  // The text on a marker is dark (`--marker-text`), not inherited: the background is bright
+  // and the same in all themes, and the browser's `color: MarkText` would otherwise turn the
+  // text black in any theme. The rule is general, so the dark text gets the author's color too.
+  // The exception is the six older Notion colors and the old names that map to them: their
+  // backgrounds are their own (dark in the dark themes), and the inherited main text stays
+  // under them.
   //
-  // Без скругления и бокового отступа (решение владельца): ProseMirror режет
-  // один маркер на несколько `mark` на каждой границе другой метки (жирный,
-  // курсив, ссылка), и у каждого куска были свои углы и поля — сплошная пометка
-  // распадалась на «пузыри» с просветами у точек и пробелов. Прямоугольные
-  // куски без полей сливаются в одну полосу, как след текстовыделителя.
+  // No rounded corners and no side padding (the owner's decision): ProseMirror splits one
+  // marker into several `mark`s at each boundary of another mark (bold, italic, link), and each
+  // piece had its own corners and margins, so a solid highlight broke up into "bubbles" with
+  // gaps at the dots and spaces. Rectangular pieces without margins merge into one band, like
+  // the trail of a highlighter pen.
   "[&_mark]:text-(--marker-text) " +
-  // Выделение поверх яркого маркера — плотнее общего (`selection-marker`,
-  // `tokens.ts`), текст — тёмный текст маркера. Читаемые имена исключены: их
-  // подложки в тёмных темах тёмные, и общее выделение на них видно.
+  // The selection on top of a bright marker is denser than the common one (`selection-marker`,
+  // `tokens.ts`), and its text is the marker's dark text. The readable names are excluded: their
+  // backgrounds are dark in the dark themes, and the common selection is visible on them.
   "[&_mark:not(:is([data-color=gray],[data-color=brown],[data-color=orange],[data-color=blue],[data-color=purple],[data-color=red],[data-color=accent],[data-color=danger],[data-color=muted]))]:selection:bg-(--rte-selection-marker) " +
   "[&_mark:not(:is([data-color=gray],[data-color=brown],[data-color=orange],[data-color=blue],[data-color=purple],[data-color=red],[data-color=accent],[data-color=danger],[data-color=muted]))]:selection:text-(--marker-text) " +
   "[&_mark[data-color=gray]]:text-inherit [&_mark[data-color=brown]]:text-inherit " +
@@ -125,45 +126,42 @@ const COLOR_CLASS =
   "[&_mark[data-color=purple]]:text-inherit [&_mark[data-color=red]]:text-inherit " +
   "[&_mark[data-color=accent]]:text-inherit [&_mark[data-color=danger]]:text-inherit " +
   "[&_mark[data-color=muted]]:text-inherit " +
-  // Выравнивание Блока (`p`, `h1`–`h4`) и столбца таблицы (`th`, `td`): `left`
-  // не пишется. Селектор по атрибуту специфичнее `text-left` ячейки ниже
-  // (`[&_:is(th,td)]`), поэтому столбец выравнивается без `!important`, а абзац
-  // со своим `data-align` внутри ячейки — сильнее столбца: он ближе к тексту.
+  // Alignment of a Block (`p`, `h1`–`h4`) and of a table column (`th`, `td`): `left` is not
+  // written. The attribute selector is more specific than the `text-left` of the cell below
+  // (`[&_:is(th,td)]`), so a column is aligned without `!important`. A paragraph with its own
+  // `data-align` inside a cell outranks the column, because it is closer to the text.
   "[&_[data-align=center]]:text-center [&_[data-align=right]]:text-right ";
 
 /**
- * Таблица Документа: `table > tbody > tr > th|td` без единого класса и `style`
- * в разметке (`tables.ts`), поэтому всё оформление — отсюда, и один и тот же
- * текст выглядит одинаково в Редакторе и в `RichTextView`.
+ * Document table: `table > tbody > tr > th|td` with no class and no `style` in the markup
+ * (`tables.ts`), so all the styling comes from here, and the same text looks the same in the
+ * Editor and in `RichTextView`.
  *
- * ПРОКРУТКА ПО ГОРИЗОНТАЛИ — НА САМОЙ `<table>`: `display: block` с
- * `overflow-x: auto` и `max-width: 100%`. Обёртки у таблицы быть не может:
- * `RichTextView` кладёт в страницу сохранённый HTML как есть, а Схема не знает
- * ни `div.tableWrapper`, ни `tabindex`. Внутри блока браузер строит
- * безымянную таблицу, и ширину ей задают столбцы: `min-w-24` на ячейке
- * (6 rem) не даёт столбцам сжаться в щель, и таблица из пяти столбцов на
- * экране в 375 px прокручивается внутри своего блока, а не раздвигает
- * страницу. Короткая таблица остаётся по ширине содержимого.
+ * HORIZONTAL SCROLLING IS ON THE `<table>` ITSELF: `display: block` with `overflow-x: auto`
+ * and `max-width: 100%`. A table cannot have a wrapper: `RichTextView` puts the saved HTML on
+ * the page as it is, and the Schema knows neither `div.tableWrapper` nor `tabindex`. Inside
+ * the block the browser builds an unnamed table, and its width is set by the columns:
+ * `min-w-24` on the cell (6 rem) keeps the columns from shrinking into a slit, so a five-column
+ * table on a 375 px screen scrolls inside its own block instead of pushing the page wider.
+ * A short table stays as wide as its content.
  *
- * ЦЕНА `display: block`. Часть скринридеров на `table` с таким `display` теряет
- * табличную семантику (ячейки читаются без строк и столбцов); в Chrome и
- * Firefox это давно исправлено, в Safari с VoiceOver — по версиям. Другой
- * способ — `table-layout: fixed` без прокрутки — делает столбцы одинаковыми и
- * узкими, а длинный столбец режет по слогам; для документа, который читают с
- * телефона, прокрутка меньшее зло. Прокручиваемая область без
- * фокусируемого содержимого в `RichTextView` (axe: `scrollable-region-focusable`)
- * срабатывает только когда таблица реально шире экрана; в Редакторе внутри
- * каждой ячейки есть каретка.
+ * THE PRICE OF `display: block`. Some screen readers lose the table semantics of a `table`
+ * with this `display` (the cells are read without rows and columns). Chrome and Firefox fixed
+ * it long ago; Safari with VoiceOver depends on the version. The other approach,
+ * `table-layout: fixed` without scrolling, makes the columns equal and narrow and cuts a long
+ * column into syllables. For a document read on a phone, scrolling is the lesser evil. A
+ * scrollable region without focusable content in `RichTextView` (axe:
+ * `scrollable-region-focusable`) fires only when the table is actually wider than the screen;
+ * in the Editor each cell has a caret in it.
  *
- * `.selectedCell` — класс, которым движок таблиц помечает ячейки при выделении
- * мышью поперёк ячеек; без правила выделение не видно.
+ * `.selectedCell` is the class the table engine marks cells with when they are selected by
+ * mouse across cells; without the rule the selection is not visible.
  *
- * `.ProseMirror-gapcursor` — «курсор-щель»: после стрелки вниз из последней
- * ячейки таблицы, которая стоит последним Блоком, каретке негде быть, и
- * движок рисует тонкую черту между Блоками (набор текста там создаёт абзац).
- * Своего стиля у расширения нет: без правила черта невидима, и человек с
- * клавиатуры не понял бы, где он. Показывается только в сфокусированном
- * поле.
+ * `.ProseMirror-gapcursor` is the "gap cursor": after an arrow down from the last cell of a
+ * table that is the last Block, the caret has nowhere to be, and the engine draws a thin line
+ * between Blocks (typing there creates a paragraph). The extension has no style of its own:
+ * without the rule the line is invisible, and a keyboard user would not know where they are.
+ * It is shown only in a focused field.
  */
 const TABLE_CLASS =
   "[&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse " +
@@ -178,33 +176,32 @@ const TABLE_CLASS =
   "[&_.ProseMirror-gapcursor]:after:border-(--rte-foreground)";
 
 /**
- * Раскладка: `div[data-block=layout]` — сетка, колонки — её ячейки,
- * доли — по варианту в `data-layout` (`columnLayouts.ts`). Ни классов, ни
- * `style` в разметке нет, поэтому сетка одна в Редакторе и в `RichTextView`.
+ * Column layout: `div[data-block=layout]` is a grid, its columns are its cells, and the
+ * shares come from the variant in `data-layout` (`columnLayouts.ts`). There are no classes
+ * and no `style` in the markup, so the grid is the same in the Editor and in `RichTextView`.
  *
- * УЗКИЙ ЭКРАН — КОНТЕЙНЕРНЫЙ ЗАПРОС, А НЕ ПОРОГ ЭКРАНА. Документ живёт в
- * колонке страницы, в Dialog и в Drawer, и ширина окна о его ширине не говорит:
- * Drawer в 400 px на мониторе в 1920 px получил бы четыре колонки по 80 px.
- * Поэтому колонки встают рядом, только когда на каждую из них у самого
- * Документа есть около 14 rem: две — с 30 rem (480 px), три — с 40 rem
- * (640 px), четыре — с 48 rem (768 px); уже — столбцом, в порядке чтения.
- * Порог по числу колонок, а не общий: Раскладка в две колонки помещается в
- * Dialog шириной 560 px, а четыре колонки там были бы по 110 px. Контейнер — корень Документа, и только
- * когда в нём есть Раскладка (`:has`): `container-type: inline-size` отнимает у
- * элемента ширину по содержимому, и в сжимающем контексте (элемент flex-ряда
- * без ширины) Документ без Раскладки сжиматься по-прежнему может. Сама
- * Раскладка контейнером быть не может — запрос не меряет элемент, к которому
- * применяется, а обёртки у неё в Схеме нет.
+ * NARROW SCREEN IS A CONTAINER QUERY, NOT A SCREEN BREAKPOINT. The Document lives in a page
+ * column, in a Dialog and in a Drawer, and the window width says nothing about its width: a
+ * 400 px Drawer on a 1920 px monitor would get four 80 px columns. So the columns sit side by
+ * side only when the Document itself has about 14 rem for each of them: two from 30 rem
+ * (480 px), three from 40 rem (640 px), four from 48 rem (768 px). Narrower than that, they
+ * stack in reading order. The threshold depends on the column count, not one common value: a
+ * two-column layout fits a 560 px Dialog, while four columns there would be 110 px each.
+ * The container is the Document root, and only when it contains a layout (`:has`):
+ * `container-type: inline-size` takes the element's width away from its content, and in a
+ * shrinking context (an element of a flex row with no width) a Document without a layout could
+ * still shrink. The layout itself cannot be the container: a container query does not measure
+ * the element it applies to, and the layout has no wrapper in the Schema.
  *
- * `minmax(0, …)` и `min-w-0` у колонки — длинное слово, таблица и блок кода
- * прокручиваются внутри своей колонки, а не раздвигают сетку.
+ * `minmax(0, …)` and `min-w-0` on the column: a long word, a table and a code Block scroll
+ * inside their own column instead of pushing the grid apart.
  *
- * РАМКА — ТОЛЬКО В РЕДАКТОРЕ (`.ProseMirror`): пунктир показывает автору, где
- * кончается одна колонка и начинается другая, особенно пустая (образец
- * владельца). Читателю `RichTextView` граница не нужна — там колонки разделяет
- * только промежуток. Цвет — серый плейсхолдера (`--rte-muted-foreground`), а не
- * черты (`--rte-hr`): рамка пустой колонки — единственное, что показывает, где
- * её область, и бледная черта таблицы в светлой теме терялась на фоне поля.
+ * THE FRAME IS IN THE EDITOR ONLY (`.ProseMirror`): the dashed line shows the author where one
+ * column ends and another begins, especially an empty one (the owner's reference). The reader
+ * of `RichTextView` does not need the border: there the columns are separated by the gap alone.
+ * The color is the placeholder gray (`--rte-muted-foreground`), not the rule color (`--rte-hr`):
+ * the frame of an empty column is the only thing that shows where its area is, and the pale
+ * rule of a table was lost against the field background in the light theme.
  */
 const LAYOUT_CLASS =
   "[&:has(>[data-block=layout])]:[container-type:inline-size] " +
@@ -223,23 +220,23 @@ const LAYOUT_CLASS =
   "[&.ProseMirror_[data-block=column]]:p-2";
 
 /**
- * Обёртка: `div[data-block=wrapper]` — группа Блоков без своего
- * вида, как у Redactor. Отступы между её Блоками — те же, что в Документе, и в
- * Редакторе, и в `RichTextView`: читатель видит текст так, будто обёртки нет.
+ * Wrapper: `div[data-block=wrapper]` is a group of Blocks with no look of its own, as in
+ * Redactor. The spacing between its Blocks is the same as in the Document, both in the Editor
+ * and in `RichTextView`: the reader sees the text as if there were no Wrapper.
  *
- * РАМКА БЕЗ ТОНА — ТОЛЬКО В РЕДАКТОРЕ, как у колонки Раскладки, и тем же
- * видом: серый пунктир плейсхолдера и внутренний отступ. Без неё автор не
- * видит, где кончается группа, а пустая Обёртка была бы невидима вовсе.
+ * THE FRAME WITHOUT A TONE IS IN THE EDITOR ONLY, as for the column of a Column layout, and
+ * with the same look: a gray dashed placeholder line and inner padding. Without it the author
+ * cannot see where the group ends, and an empty Wrapper would be invisible altogether.
  *
- * ТОН (`data-tone`) — вид и для читателя, ОДИН в Редакторе и в
- * `RichTextView`: мягкая подложка тона и полоса 3 px слева сильной ступенью,
- * как callout GitHub и Notion и `soft` у `Alert`; текст — обычный текст
- * Документа. Пунктира у тонированной Обёртки нет и в Редакторе: границу и так
- * видно по подложке и полосе, а пунктир поверх подложки рисовал бы вторую
- * рамку, которой у читателя нет, — и автор видел бы не то, что опубликует.
- * Цвета — роли `--rte-tone-*` (`tokens.ts`): на листе `paper` у них свои
- * значения. Вид — только у пяти имён словаря: чужое имя в несанитизированном
- * HTML остаётся без вида, как неизвестный `data-color`.
+ * TONE (`data-tone`) IS THE LOOK FOR THE READER TOO, the SAME in the Editor and in
+ * `RichTextView`: a soft tone backing and a 3 px stripe on the left in the strong step, as in
+ * the GitHub and Notion callouts and `soft` in `Alert`. The text is the Document's ordinary
+ * text. A toned Wrapper has no dashed line even in the Editor: the boundary is already visible
+ * from the backing and the stripe, and a dashed line over the backing would draw a second frame
+ * that the reader does not have, so the author would see something other than what they
+ * publish. The colors are the `--rte-tone-*` roles (`tokens.ts`); on the `paper` sheet they have
+ * values of their own. Only the five names of the vocabulary get a look: a foreign name in
+ * unsanitized HTML stays without one, like an unknown `data-color`.
  */
 const WRAPPER_CLASS =
   "[&_[data-block=wrapper]>*:not(:last-child)]:mb-3 " +
@@ -253,7 +250,7 @@ const WRAPPER_CLASS =
   "[&_[data-block=wrapper]:is([data-tone=neutral],[data-tone=accent],[data-tone=success],[data-tone=warning],[data-tone=danger])]:border-l-[3px] " +
   "[&_[data-block=wrapper]:is([data-tone=neutral],[data-tone=accent],[data-tone=success],[data-tone=warning],[data-tone=danger])]:px-3 " +
   "[&_[data-block=wrapper]:is([data-tone=neutral],[data-tone=accent],[data-tone=success],[data-tone=warning],[data-tone=danger])]:py-2.5 " +
-  // Вторичный текст на подложке тона — более контрастными ролями (`tokens.ts`, ⁴).
+  // Secondary text on a tone backing uses the more contrasting roles (`tokens.ts`, ⁴).
   "[&_[data-block=wrapper]:is([data-tone=neutral],[data-tone=accent],[data-tone=success],[data-tone=warning],[data-tone=danger])]:[--rte-link:var(--rte-tone-link)] " +
   "[&_[data-block=wrapper]:is([data-tone=neutral],[data-tone=accent],[data-tone=success],[data-tone=warning],[data-tone=danger])]:[--rte-secondary:var(--rte-tone-secondary)] " +
   "[&_[data-block=wrapper]:is([data-tone=neutral],[data-tone=accent],[data-tone=success],[data-tone=warning],[data-tone=danger])]:[--rte-muted:var(--rte-tone-muted)] " +
@@ -271,22 +268,22 @@ const WRAPPER_CLASS =
   "[&_[data-block=wrapper][data-tone=danger]]:border-(--rte-tone-danger-border)";
 
 /**
- * Сворачиваемый Блок (Details): в Просмотре — родной `details > summary` с
- * `div[data-type=detailsContent]`, в Редакторе — `div[data-type=details]` с
- * кнопкой раскрытия, заголовком `summary` и содержимым в обёртке (представление
- * узла Tiptap). Рамка, отступы и ритм Блоков внутри — одни в обоих видах, чтобы
- * читатель видел то, что набирал автор.
+ * Collapsible Block (Details): in the View, the native `details > summary` with a
+ * `div[data-type=detailsContent]`; in the Editor, `div[data-type=details]` with an expand
+ * button, the `summary` heading and the content in a wrapper (the Tiptap node view). The
+ * frame, the padding and the rhythm of the Blocks inside are the same in both views, so the
+ * reader sees what the author typed.
  *
- * ПРОСМОТР — БЕЗ JAVASCRIPT. Раскрывает и скрывает сам браузер, маркер
- * `summary` — его, родной: он доступен скринридеру и с клавиатуры (Tab, Enter,
- * Space) без единой строки кита. Свёрнутое содержимое прячет `details`, а не
- * наше правило.
+ * VIEW — WITHOUT JAVASCRIPT. The browser expands and collapses it by itself, and the
+ * `summary` marker is its own native one: it is available to screen readers and from the
+ * keyboard (Tab, Enter, Space) without a single line of kit code. The collapsed content is
+ * hidden by `details`, not by our rule.
  *
- * РЕДАКТОР. Маркер `summary` снят (`list-none`): его заменяет кнопка слева,
- * шеврон которой рисует CSS (`border-r` + `border-b`, повёрнутые на 45°), а
- * раскрытость — класс `is-open` на `div`. Кнопка — настоящий `button` с именем
- * из каталога и `aria-expanded`. Скрытое содержимое прячет атрибут `hidden`,
- * который ставит само представление Tiptap.
+ * EDITOR. The `summary` marker is removed (`list-none`): a button on the left replaces it. Its
+ * chevron is drawn by CSS (`border-r` + `border-b`, rotated 45°), and the open state is the
+ * `is-open` class on the `div`. The button is a real `button` with a name from the catalog and
+ * `aria-expanded`. The hidden content is hidden by the `hidden` attribute, which the Tiptap node
+ * view sets itself.
  */
 const DETAILS_BOX =
   "[&_:is(details,div[data-type=details])]:rounded-(--rte-radius) " +
@@ -318,27 +315,28 @@ const DETAILS_EDITOR =
 const DETAILS_CLASS = DETAILS_BOX + DETAILS_EDITOR;
 
 /**
- * Формулы (Инструмент `mathematics`, ADR-0070): `span[data-type=inline-math]` в строке
- * и `div[data-type=block-math]` Блоком. Вид один в Редакторе и в Просмотре.
+ * Formulas (the `mathematics` Tool, ADR-0070): `span[data-type=inline-math]` inline and
+ * `div[data-type=block-math]` as a Block. The look is the same in the Editor and in the View.
  *
- * ИСХОДНИК И ОТРИСОВКА. До отрисовки (Скелет Редактора, `RichTextView` без JS и до
- * Острова) внутри элемента стоит исходный LaTeX текстом, и такой элемент — без
- * `.katex` внутри — красится моноширинным: автор видит, где формула, а читатель
- * читает исходник. Отрисованная формула — разметка KaTeX, ей своего шрифта не
- * нужно: его несёт CSS KaTeX. Формула с ошибкой (`inline-math-error`,
- * `block-math-error` у вида узла, `data-math-error` у Острова) остаётся исходником
- * — он моноширинный по тому же правилу — и подчёркнута волной цветом ошибки.
+ * SOURCE AND RENDERING. Before rendering (the Editor's Skeleton, `RichTextView` without JS and
+ * before the Island) the element holds the LaTeX source as text. Such an element, without a
+ * `.katex` inside, is painted in monospace: the author sees where the formula is, and the reader
+ * reads the source. A rendered formula is KaTeX markup and needs no font of its own, because the
+ * KaTeX CSS brings it. A formula with an error (`inline-math-error`, `block-math-error` on the
+ * node view, `data-math-error` on the Island) stays as source, which is monospace by the same
+ * rule, and is underlined with a wavy line in the error color.
  *
- * БЛОК. Центрируется и прокручивается по горизонтали, если шире Документа; поля
- * `.katex-display` сняты, ритм Блоков задаёт Документ. Исходник блока — слева и с
- * переносами строк, как набрал автор, и не ниже 4 rem (`min-h-16`): отрисованная
- * дробь или интеграл в разы выше строки исходника, и без запаса поле прыгало бы по
- * высоте с приходом чанка (Скелет, ADR-0070, п. 5). Формула без дроби чуть ниже
- * запаса, с матрицей — выше; точной высоты до отрисовки не знает никто.
+ * BLOCK. It is centered and scrolls horizontally if it is wider than the Document. The
+ * `.katex-display` margins are removed, and the Document sets the rhythm of the Blocks. The
+ * block's source is left-aligned and keeps the line breaks the author typed. It is at least 4 rem
+ * (`min-h-16`) tall: a rendered fraction or integral is many times taller than a line of source,
+ * and without the reserve the field would jump in height when the chunk arrives (Skeleton,
+ * ADR-0070, item 5). A formula without a fraction is a bit under the reserve, and one with a
+ * matrix is above it; nobody knows the exact height before rendering.
  *
- * РЕДАКТОР. Вид узла (`tiptap-mathematics-render--editable`) кликабелен: щелчок
- * открывает Поповер, наведение подсвечивает. Выбранная стрелками формула
- * обведена — на ней работает Enter.
+ * EDITOR. The node view (`tiptap-mathematics-render--editable`) is clickable: a click opens the
+ * popover, and hovering highlights it. A formula selected with the arrow keys is outlined: Enter
+ * works on it.
  */
 const MATH_CLASS =
   "[&_:is(span[data-type=inline-math],div[data-type=block-math]):not(:has(.katex))]:font-mono " +
@@ -361,21 +359,20 @@ const MATH_CLASS =
   "[&_.tiptap-mathematics-render.ProseMirror-selectednode]:outline-(--rte-ring) ";
 
 /**
- * Невидимые символы (Инструмент `invisibleCharacters`): расширение Tiptap
- * вставляет в разметку виджеты `span.tiptap-invisible-character` с модификатором
- * `--space`, `--break` или `--paragraph`; пустой `span` несёт знак в `::before`.
- * Собственный CSS расширения кит не подключает (`injectCSS: false`) и рисует
- * знаки сам, токенами.
+ * Invisible characters (the `invisibleCharacters` Tool): the Tiptap extension puts
+ * `span.tiptap-invisible-character` widgets into the markup, with a `--space`, `--break` or
+ * `--paragraph` modifier; the empty `span` carries the mark in `::before`. The kit does not
+ * load the extension's own CSS (`injectCSS: false`) and draws the marks itself, with tokens.
  *
- * НЕ ДВИГАЮТ ТЕКСТ. Знак — `inline-block` нулевой ширины, а высота строки — `1em`,
- * поэтому перенос строк и высота абзацев такие же, как со скрытыми знаками.
- * Выделение и мышь знаки не видят (`select-none`, `pointer-events-none`), копирование
- * их не берёт: их нет в Документе. Цвет — приглушённый (`--rte-muted-foreground`),
- * а на тонированной Обёртке он уже пересчитан под её фон (`WRAPPER_CLASS`).
+ * THEY DO NOT MOVE THE TEXT. A mark is an `inline-block` of zero width, and the line height is
+ * `1em`, so line breaks and paragraph heights are the same as with hidden marks. Selection and
+ * the mouse do not see the marks (`select-none`, `pointer-events-none`), and copying does not
+ * take them: they are not in the Document. The color is muted (`--rte-muted-foreground`), and on
+ * a toned Wrapper it is already recalculated for that backing (`WRAPPER_CLASS`).
  *
- * В пустом первом абзаце знак абзаца скрыт: его место занимает подсказка поля
- * (`is-editor-empty`, `RichTextEditor.tsx`), и «¶» лёг бы поверх её текста.
- * Знаки в Просмотре не появляются: класса там нет ни у кого.
+ * In an empty first paragraph the paragraph mark is hidden: the field's placeholder takes its
+ * place (`is-editor-empty`, `RichTextEditor.tsx`), and "¶" would lie on top of its text. The
+ * marks do not appear in the View: nothing there has the class.
  */
 const INVISIBLE_CHARACTERS_CLASS =
   "[&_.tiptap-invisible-character]:pointer-events-none [&_.tiptap-invisible-character]:select-none " +
@@ -389,14 +386,14 @@ const INVISIBLE_CHARACTERS_CLASS =
   "[&_p.is-editor-empty:first-child>.tiptap-invisible-character--paragraph]:hidden ";
 
 /**
- * Видео (Инструменты `youtube` и `twitch`, ADR-0071): серверный блок
- * `div[data-block=video]` со ссылкой внутри — рамка 16:9, те же классы, что у
- * заглушки плеера (`PLAYER_FRAME`, `VideoPlayer.tsx`; тест сверяет списки). Так
- * Скелет Редактора и серверный HTML `RichTextView` с первого кадра занимают ту высоту,
- * что и заглушка, и приход чанка или острова её не меняет. Ссылка стоит по центру,
- * читается и нажимается без JS; остров кладёт плеер в эту же рамку.
+ * Video (the `youtube` and `twitch` Tools, ADR-0071): a server-rendered `div[data-block=video]`
+ * block with a link inside, a 16:9 frame with the same classes as the player placeholder
+ * (`PLAYER_FRAME`, `VideoPlayer.tsx`; a test compares the two lists). So the Editor's Skeleton
+ * and the server HTML of `RichTextView` take the same height as the placeholder from the first
+ * frame, and the arrival of a chunk or an island does not change it. The link is centered, and
+ * it is readable and clickable without JS. The island puts the player into this same frame.
  *
- * Классы выписаны литералами: Tailwind не видит классы, собранные из строки.
+ * The classes are written out as literals: Tailwind does not see classes assembled from a string.
  */
 const VIDEO_CLASS =
   "[&_div[data-block=video]]:relative [&_div[data-block=video]]:aspect-video " +
@@ -407,107 +404,104 @@ const VIDEO_CLASS =
   "[&_div[data-block=video]]:flex [&_div[data-block=video]]:items-center " +
   "[&_div[data-block=video]]:justify-center [&_div[data-block=video]]:p-4 " +
   "[&_div[data-block=video]>a]:max-w-full [&_div[data-block=video]>a]:truncate " +
-  // Ссылка на сером фоне рамки — основным цветом, как в Обёртке с тоном: акцент Листа
-  // откалиброван под белый лист и на `code-background` давал меньше 4.5:1 (axe, тёмная тема).
+  // On the gray frame background the link takes the main text color, as in a toned Wrapper: the
+  // sheet's accent is calibrated for a white sheet, and on `code-background` it gave less than
+  // 4.5:1 (axe, dark theme).
   "[&_div[data-block=video]]:[--rte-link:var(--rte-tone-link)] ";
 
 /**
- * Свой Блок потребителя (ADR-0058, п. 3.2): `div[data-block]` с
- * именем, которого нет у кита. Кит даёт ему ритм абзаца и больше ничего — вид
- * задаёт CSS потребителя по `data-block` и токенам кита. Сам Блок отступ уже
- * получает как любой Блок своего места (`[&>*:not(:last-child)]:mb-3` и
- * соседи); здесь — Блоки ВНУТРИ своего Блока-контейнера, с тем же ритмом, что
- * в Документе и Обёртке. Иначе абзацы контейнера слипались бы.
+ * The consumer's own Block (ADR-0058, item 3.2): a `div[data-block]` with a name the kit does
+ * not have. The kit gives it the paragraph rhythm and nothing more: the look is set by the
+ * consumer's CSS, through `data-block` and the kit's tokens. The Block itself already gets
+ * spacing like any Block in its place (`[&>*:not(:last-child)]:mb-3` and its neighbors). Here
+ * it is about the Blocks INSIDE a container Block, with the same rhythm as in the Document and
+ * in the Wrapper. Otherwise the paragraphs of the container would stick together.
  *
- * ТОЛЬКО БЛОКИ, А НЕ ЛЮБОЙ РЕБЁНОК. У своего Блока со строчным содержимым
- * дети — текст, Метки и атомы, и правило `>*` дало бы отступ атому, которому
- * CSS потребителя поставил `inline-block`. Блоки Документа — теги Схемы кита и
- * `div` (свои Блоки и контейнеры кита).
+ * ONLY BLOCKS, NOT ANY CHILD. In a consumer's Block with inline content the children are text,
+ * Marks and Atoms, and the `>*` rule would give spacing to an Atom that the consumer's CSS has
+ * set to `inline-block`. The Document's Blocks are the kit Schema's tags and `div`s (the kit's
+ * own Blocks and containers).
  *
- * ПОЧЕМУ ПЕРЕЧЕНЬ ИМЁН КИТА, А НЕ «ИМЯ С ПОДЧЁРКИВАНИЕМ». Своё имя отличает
- * подчёркивание (Префикс потребителя), но `_` в произвольном варианте Tailwind
- * читает как пробел, а экранирование ломает класс (`tests/rich-text-view.test.tsx`).
- * Раскладка исключена — её дети колонки сетки, Обёртка и колонка имеют то же
- * правило своё.
+ * WHY A LIST OF THE KIT'S NAMES AND NOT "A NAME WITH AN UNDERSCORE". A consumer's name is told
+ * apart by an underscore (the Consumer prefix), but in an arbitrary Tailwind variant `_` reads
+ * as a space, and escaping breaks the class (`tests/rich-text-view.test.tsx`). The Column layout
+ * is excluded: its children are the columns of the grid, and the Wrapper and the column have
+ * their own rule for the same case.
  */
 const CUSTOM_BLOCK_CLASS =
   "[&_div[data-block]:not([data-block=layout],[data-block=column],[data-block=wrapper])>:is(p,h1,h2,h3,h4,ul,ol,blockquote,hr,pre,table,figure,div):not(:last-child)]:mb-3 " +
   "[&_div[data-block]:not([data-block=layout],[data-block=column],[data-block=wrapper])>:is(h1,h2,h3,h4):not(:first-child)]:mt-6";
 
 /**
- * Типографика Документа — общая для Редактора и будущего `RichTextView`.
+ * Document typography, shared by the Editor and the future `RichTextView`.
  *
- * ОДИН МОДУЛЬ НА ДВОИХ, потому что обещание спеки — «текст в Редакторе и на
- * странице выглядит одинаково». Две копии классов разошлись бы на первой же
- * правке отступа, и заметил бы это только автор, открывший документ после
- * сохранения.
+ * ONE MODULE FOR BOTH, because the spec promises that the text looks the same in the Editor and
+ * on the page. Two copies of the classes would drift apart at the first edit of a margin, and
+ * only an author who opened the document after saving would notice.
  *
- * КЛАССЫ ВЕШАЮТСЯ НА КОНТЕЙНЕР и находят теги по имени (`[&_h2]:…`), а не на
- * узлы Документа. Оригинал помечал узлы классами (`heading-node`, `list-node`),
- * и они уезжали в сохранённый HTML — в базу потребителя и в белый список его
- * санитайзера. Здесь HTML остаётся чистым, а оформление живёт снаружи.
+ * THE CLASSES ARE PUT ON THE CONTAINER and find tags by name (`[&_h2]:…`), not on the Document's
+ * nodes. The original marked the nodes with classes (`heading-node`, `list-node`), and those
+ * classes ended up in the saved HTML, in the consumer's database and in the allowlist of its
+ * sanitizer. Here the HTML stays clean, and the styling lives outside it.
  *
- * Отступы между Блоками — только у прямых детей контейнера и внутри цитаты:
- * правило «у всех, кроме последнего» на любой глубине раздвигало бы абзацы
- * внутри пункта списка.
+ * Spacing between Blocks applies only to the direct children of the container and inside a quote:
+ * a "all but the last" rule at any depth would push apart the paragraphs inside a list item.
  *
- * Модуль серверно-безопасен: строка классов, без React и без движка.
+ * The module is server-safe: class strings, with no React and no engine.
  */
 const PROSE_RULES =
   "text-(--rte-foreground) text-md leading-6 break-words " +
-  // Выделение текста и фокус контролов внутри Документа — ролями `--rte-*`, а
-  // не глобальными правилами `styles.css` (`::selection` красит текст в
-  // `--text-primary`, `:focus-visible` — контур в `--accent-strong`): на
-  // светлом листе в тёмном приложении те дали бы светлый текст на светлом
-  // выделении и бледный контур на белом.
+  // Text selection and focus of controls inside the Document use the `--rte-*` roles, not the
+  // global rules of `styles.css` (`::selection` paints text in `--text-primary`, `:focus-visible`
+  // paints the outline in `--accent-strong`). On a light sheet in a dark app, those global rules
+  // would give light text on a light selection and a pale outline on white.
   "selection:bg-(--rte-selection) selection:text-(--rte-foreground) " +
   "[&_:focus-visible]:outline-(--rte-ring) " +
   COLOR_CLASS +
   CODE_THEME_CLASS +
-  // Блоки верхнего уровня и внутри цитаты.
+  // Top-level Blocks, and Blocks inside a quote.
   "[&>*:not(:last-child)]:mb-3 [&_blockquote>*:not(:last-child)]:mb-2 " +
-  // Заголовки. H1 — только у Документа с инструментом `heading1`:
-  // одна типографика для Редактора и `RichTextView`, ступенью выше H2.
+  // Headings. H1 is only for a Document with the `heading1` Tool. One typography serves both the
+  // Editor and `RichTextView`, one step above H2.
   "[&_:is(h1,h2,h3,h4)]:font-semibold [&>:is(h1,h2,h3,h4):not(:first-child)]:mt-6 " +
   "[&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_h4]:text-md " +
-  // Списки: маркеры снимает preflight Tailwind, здесь они возвращаются.
+  // Lists: Tailwind's preflight removes the bullets, and they are restored here.
   "[&_:is(ul,ol)]:pl-6 [&_ul]:list-disc [&_ol]:list-decimal " +
   "[&_ul_ul]:list-[circle] [&_ol_ol]:list-[lower-alpha] [&_li+li]:mt-1 " +
-  // Цитата: полоса слева вместо псевдоэлемента оригинала — тот же вид без
-  // `position: relative` на каждом Блоке.
+  // Quote: a bar on the left instead of the original's pseudo-element. It looks the same, without
+  // `position: relative` on each Block.
   "[&_blockquote]:border-l-4 [&_blockquote]:border-(--rte-quote) [&_blockquote]:pl-3.5 " +
   "[&_blockquote]:text-(--rte-secondary) " +
   "[&_hr]:my-4 [&_hr]:h-0.5 [&_hr]:border-0 [&_hr]:bg-(--rte-hr) " +
-  // Ссылка — как `Link variant="inline"` кита: акцентом и ВСЕГДА с
-  // подчёркиванием. Ссылка внутри абзаца, отличная от текста одним цветом,
-  // для дальтоника не отличается ничем (WCAG 1.4.1).
+  // Link: as `Link variant="inline"` of the kit, in the accent color and ALWAYS underlined. A link
+  // inside a paragraph that differs from the text only by color is not distinguished at all by a
+  // colorblind reader (WCAG 1.4.1).
   "[&_a]:text-(--rte-link) [&_a]:underline [&_a]:underline-offset-2 " +
   "[&_code]:rounded-(--rte-radius) [&_code]:border [&_code]:border-(--rte-code-border) " +
   "[&_code]:bg-(--rte-code-background) [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono " +
   "[&_code]:text-[0.9em] " +
-  // Блок кода: блоком с прокруткой по горизонтали — длинная строка кода не
-  // переносится. Фон и основной цвет — темы подсветки, а не токенов кита
-  // (`codeTheme.ts`, ADR-0051): цвета токенов GitHub держат контраст только на
-  // своём фоне. Внутренний `code` сбрасывает оформление строчного, иначе рамка
-  // рисовалась бы дважды, а шрифт уменьшался бы второй раз.
+  // Code Block: a block that scrolls horizontally, so a long line of code does not wrap. The
+  // background and the base color come from the highlight theme, not the kit's tokens
+  // (`codeTheme.ts`, ADR-0051): the GitHub token colors keep their contrast only on their own
+  // background. The inner `code` resets the inline style, otherwise the frame would be drawn twice
+  // and the font would shrink a second time.
   "[&_pre]:rounded-(--rte-radius) [&_pre]:border [&_pre]:border-(--rte-code-border) " +
   "[&_pre]:bg-(--rte-code-block-background) [&_pre]:text-(--rte-code-block-foreground) " +
   "[&_pre]:overflow-x-auto [&_pre]:px-3 [&_pre]:py-2 " +
   "[&_pre]:font-mono [&_pre]:text-[0.9em] [&_pre]:leading-5 " +
   "[&_pre_code]:rounded-none [&_pre_code]:border-0 [&_pre_code]:bg-transparent " +
   "[&_pre_code]:p-0 [&_pre_code]:text-[length:inherit] " +
-  // Кнопки и подпись в шапке блока кода красятся ролями `--rte-*` в самой
-  // шапке (`CODE_HEADER_CLASS`, `codeHeader.ts`).
-  // Чек-лист: флажок рядом с текстом пункта вместо маркера. Флажок — родной
-  // `input` движка, цвет — акцентом через `accent-color`. Выполненный пункт
-  // зачёркнут и приглушён до `fg-2`, а не `fg-3`: на `bg-2` третья ступень не
-  // держит 4.5, а текст пункта остаётся текстом, который читают.
+  // The buttons and the caption in the code Block header are painted with `--rte-*` roles in the
+  // header itself (`CODE_HEADER_CLASS`, `codeHeader.ts`).
+  // Task list: a checkbox next to the item's text instead of a bullet. The checkbox is the
+  // engine's native `input`, and its color is the accent, through `accent-color`. A completed item
+  // is struck through and muted to `fg-2`, not `fg-3`: on `bg-2` the third step does not hold 4.5,
+  // and the item's text is still text that people read.
   //
-  // Пункт ищется как ребёнок `ul[data-type=taskList]`, а не по своему
-  // `data-type`: в сохранённом HTML атрибут у пункта есть, а в Редакторе его
-  // рисует представление узла движка — и `data-type` на `li` не ставит.
-  // `relative` — опора для скрытой подписи флажка, которую движок
-  // позиционирует абсолютно.
+  // The item is found as a child of `ul[data-type=taskList]`, not by its own `data-type`: the
+  // attribute is on the item in the saved HTML, but in the Editor the engine's node view draws the
+  // item, and does not set `data-type` on the `li`. `relative` is the anchor for the checkbox's
+  // hidden label, which the engine positions absolutely.
   "[&_ul[data-type=taskList]]:list-none [&_ul[data-type=taskList]]:pl-1 " +
   "[&_ul[data-type=taskList]>li]:relative [&_ul[data-type=taskList]>li]:flex " +
   "[&_ul[data-type=taskList]>li]:items-start [&_ul[data-type=taskList]>li]:gap-2 " +
@@ -517,23 +511,21 @@ const PROSE_RULES =
   "[&_li[data-checked=true]>div]:text-(--rte-muted) [&_li[data-checked=true]>div]:line-through " +
   "[&_input[type=checkbox]]:size-3.5 [&_input[type=checkbox]]:cursor-pointer " +
   "[&_input[type=checkbox]]:accent-(--rte-primary) " +
-  // Картинка: по центру, не шире Документа, своего размера без `data-width`.
-  // Ширина пресетом задаётся `figure` — по ней же идёт подпись, — а `img`
-  // заполняет её. Селектор через `:has`, потому что атрибут лежит на `img`
-  // (Схема: `img[data-width]`), а в Редакторе между `figure` и `img` ещё
-  // рамка с ручками.
+  // Image: centered, no wider than the Document, at its own size without `data-width`. The width
+  // from a preset is set on the `figure` (the caption follows it too), and the `img` fills it. The
+  // selector uses `:has`, because the attribute sits on the `img` (Schema: `img[data-width]`), while
+  // in the Editor there is still a frame with handles between the `figure` and the `img`.
   //
-  // Значение атрибута — В КАВЫЧКАХ. Без них `[data-width=50]` — невалидный
-  // селектор (значение без кавычек обязано быть идентификатором, а он не
-  // начинается с цифры): браузер правило отбрасывает, а оптимизатор Tailwind
-  // молча собирает из него `figure:has()`. Пресеты ширины тогда не работали ни
-  // в Редакторе, ни в Просмотре — картинка шла своей шириной.
+  // The attribute value is IN QUOTES. Without them `[data-width=50]` is an invalid selector: an
+  // unquoted value must be an identifier, and this one starts with a digit. The browser drops the
+  // rule, and the Tailwind optimizer silently builds `figure:has()` from it. The width presets then
+  // did not work in either the Editor or the View, and the image kept its own width.
   "[&_figure]:mx-auto [&_figure]:w-fit [&_figure]:max-w-full " +
   "[&_figure_img]:block [&_figure_img]:h-auto [&_figure_img]:max-w-full " +
   "[&_figure_img]:rounded-(--rte-radius) [&_figure_img[data-width]]:w-full " +
   "[&_figure:has(img[data-width='50'])]:w-1/2 [&_figure:has(img[data-width='75'])]:w-3/4 " +
   "[&_figure:has(img[data-width='100'])]:w-full " +
-  // Подпись — `fg-2`, как выполненный пункт чек-листа: на `bg-2` она держит 4.5.
+  // Caption: `fg-2`, like a completed checklist item. On `bg-2` it holds 4.5.
   "[&_figcaption]:mt-1.5 [&_figcaption]:text-center [&_figcaption]:text-sm " +
   "[&_figcaption]:text-(--rte-muted) " +
   TABLE_CLASS +
@@ -550,26 +542,26 @@ const PROSE_RULES =
   CUSTOM_BLOCK_CLASS;
 
 /**
- * Типографика Документа — общая для Редактора и `RichTextView` — на токенах
- * темы приложения (`surface="theme"`, по умолчанию).
+ * Document typography, shared by the Editor and `RichTextView`, on the app theme's tokens
+ * (`surface="theme"`, the default).
  */
 export const PROSE_CLASS = EDITOR_TOKENS_CLASS + " " + PROSE_RULES;
 
 /**
- * Край листа `surface="paper"`: светлый фон, рамка и тень. Рамка и тень — токены
- * ТЕМЫ ПРИЛОЖЕНИЯ, а не листа: они отделяют лист от того, что вокруг него, и
- * видны на тёмной подложке так же, как на светлой. `scheme-light` — родной
- * флажок чек-листа и полосы прокрутки рисуются светлыми.
+ * Edge of the `surface="paper"` sheet: a light background, a border and a shadow. The border
+ * and the shadow are tokens of the APP THEME, not of the sheet: they separate the sheet from
+ * what surrounds it, and they are visible on a dark backing just as on a light one.
+ * `scheme-light` makes the native checkbox and scrollbar draw in light colors.
  */
 export const PAPER_SHEET_CLASS =
   "rounded-(--r-sm) border border-(--line) bg-(--rte-background) px-4 py-3 " +
   "shadow-[var(--shadow-1)] scheme-light";
 
-/** Та же типографика на светлом листе (`surface="paper"`). */
+/** The same typography on the light sheet (`surface="paper"`). */
 export const PAPER_PROSE_CLASS =
   EDITOR_PAPER_TOKENS_CLASS + " " + PAPER_SHEET_CLASS + " " + PROSE_RULES;
 
-/** Классы контейнера Документа для поверхности. */
+/** Document container classes for the given surface. */
 export function proseClass(surface: RichTextSurface): string {
   return surface === "paper" ? PAPER_PROSE_CLASS : PROSE_CLASS;
 }
