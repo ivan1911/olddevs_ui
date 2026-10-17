@@ -57,7 +57,7 @@ export function ScrollArea({
         // WebKit: scrollbar, track, thumb.
         "[&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar]:w-2",
         "[&::-webkit-scrollbar-track]:bg-transparent",
-        "[&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb]:rounded-full",
+        "[&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb]:rounded-pill",
         "[&::-webkit-scrollbar-thumb:hover]:bg-fg-4",
         className
       )}

@@ -71,11 +71,11 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
       {({ percentage, valueText }) => (
         <>
           <div
-            className={cn("bg-bg-3 relative w-full overflow-hidden rounded-full", HEIGHTS[size])}
+            className={cn("bg-bg-3 rounded-pill relative w-full overflow-hidden", HEIGHTS[size])}
           >
             <div
               className={cn(
-                "duration-moderate h-full rounded-full transition-[width]",
+                "duration-moderate rounded-pill h-full transition-[width]",
                 t.dotBg,
                 // Unknown progress — a moving third of the bar. The width is not animated here:
                 // the position is, otherwise the bar would jitter in width on every frame.

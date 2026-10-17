@@ -651,7 +651,7 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
     renderDropIndicator: (target) => (
       <DropIndicator
         target={target}
-        className="drop-target:bg-accent-strong h-0.5 rounded-full bg-transparent"
+        className="drop-target:bg-accent-strong rounded-pill h-0.5 bg-transparent"
       />
     ),
   });
