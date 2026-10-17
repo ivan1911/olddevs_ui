@@ -27,7 +27,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Живой переключатель: состояние настоящее, а не нарисованное. */
+/** A live switch: the state is real, not drawn. */
 export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = useState(args.value);
@@ -36,10 +36,10 @@ export const Playground: Story = {
 };
 
 /**
- * Недоступный сегмент. Режим существует, но сейчас его применить нельзя —
- * например, семантический поиск при выключенных эмбеддингах. Убирать такой
- * сегмент из набора нельзя: пропавший режим выглядит как поломка, а
- * приглушённый честно говорит «есть, но не сейчас».
+ * An unavailable segment. The mode exists, but it can't be applied right now, for example
+ * semantic search while embeddings are turned off. Such a segment must not be removed from
+ * the set: a vanished mode looks like a bug, while a dimmed one honestly says it is there,
+ * just not right now.
  */
 export const Disabled: Story = {
   args: {
@@ -51,9 +51,8 @@ export const Disabled: Story = {
 };
 
 /**
- * Матрица наполнения: подписи, иконки с подсказками, смешанный набор,
- * и по строке на каждый выбранный сегмент — чтобы было видно, что выделение
- * ездит, а не нарисовано на первом.
+ * Content matrix: labels, icons with tooltips, a mixed set, and one row for each selected
+ * segment, so you can see the selection move rather than being painted on the first one.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
@@ -102,12 +101,12 @@ export const Matrix: Story = {
 };
 
 /**
- * Пять сегментов в колонке шириной с телефон. Сегменты не сжимаются, поэтому
- * лишние уезжают на вторую строку — без этого единственным исходом была бы
- * горизонтальная прокрутка, то есть нарушение WCAG 1.4.10.
+ * Five segments in a column the width of a phone. Segments do not shrink, so the extra ones
+ * wrap onto a second row. Without that, the only outcome would be horizontal scrolling,
+ * which violates WCAG 1.4.10.
  *
- * Рамка вокруг — это не часть контрола, а замер: она показывает границу
- * доступной ширины, за которую переключатель не должен выходить.
+ * The frame around it is not part of the control but a measurement: it shows the boundary
+ * of the available width that the switch must not exceed.
  */
 export const Wrapping: Story = {
   parameters: { layout: "padded" },
@@ -129,15 +128,16 @@ export const Wrapping: Story = {
 };
 
 /**
- * Режим «только иконка на узком экране» (`mobileIconOnly`).
+ * The "icons only on a narrow screen" mode (`mobileIconOnly`).
  *
- * СУЗЬТЕ ОКНО ДО 640 ПИКСЕЛЕЙ — иначе оба переключателя выглядят одинаково, и
- * это не дефект истории, а суть режима: порог берётся от ШИРИНЫ ЭКРАНА, а не
- * от ширины родителя. Рамка в 359 пикселей вокруг — замер доступной ширины,
- * она на брейкпоинт не влияет (медиазапрос про экран ничего не знает о ней).
+ * NARROW THE WINDOW TO 640 PIXELS. Otherwise both switches look the same. That is not a
+ * defect of the story but the point of the mode: the threshold is taken from the SCREEN
+ * WIDTH, not from the width of the parent. The 359-pixel frame around is a measurement of
+ * the available width; it does not affect the breakpoint, because the media query knows
+ * nothing about it.
  *
- * На широком экране справа обязано быть ровно то же, что слева: подписи на
- * месте. На узком слева останутся три ряда, справа — один.
+ * On a wide screen the right one must be exactly the same as the left one, with labels in
+ * place. On a narrow screen the left one keeps three rows, and the right one has one.
  */
 export const MobileIconOnly: Story = {
   parameters: { layout: "padded" },
@@ -150,11 +150,11 @@ export const MobileIconOnly: Story = {
       { value: "available", icon: <span aria-hidden>◎</span>, label: "Available now" },
     ];
     return (
-      // Колонкой, а не в ряд: на телефоне две рамки по 359 рядом не помещаются
-      // и сжимаются — сравнивать было бы нечего.
+      // Stacked in a column, not side by side: on a phone two 359-pixel frames
+      // would not fit next to each other and would shrink, leaving nothing to compare.
       <div className="flex flex-col items-start gap-6">
         <div className="border-line-soft w-[359px] max-w-full border border-dashed p-2">
-          {/* Как было: подписи всегда видны. */}
+          {/* As before: labels are always visible. */}
           <Segmented value="available" onChange={() => {}} options={options} />
         </div>
         <div className="border-line-soft w-[359px] max-w-full border border-dashed p-2">

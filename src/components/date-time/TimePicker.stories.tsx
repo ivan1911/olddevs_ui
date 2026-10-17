@@ -35,7 +35,7 @@ export const FifteenMinuteStep: Story = {
   },
 };
 
-/** 12-часовые часы: поле и список показывают `2:30 PM`, а `value` остаётся `ЧЧ:ММ`. */
+/** The 12-hour hour cycle: the field and the list show `2:30 PM`, while `value` stays `HH:MM`. */
 export const TwelveHour: Story = {
   render: (args) => {
     const [time, setTime] = useState("14:30");
@@ -71,7 +71,7 @@ export const Matrix: Story = {
   ),
 };
 
-/** Ошибка: линия под временем красная, на поле `aria-invalid`. */
+/** Error: the underline under the time is red, and the field has `aria-invalid`. */
 export const Invalid: Story = {
   render: (args) => (
     <div className="flex flex-col gap-4">

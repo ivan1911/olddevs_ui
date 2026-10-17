@@ -7,11 +7,11 @@ import { Select } from "./Select.js";
 import { TextControl } from "./TextControl.js";
 
 /**
- * Вид контрола внутри формы: нейтральная рамка, ширина по колонке.
+ * The look of a control inside a form: a neutral outline, width by column.
  *
- * Акцентная подсветка выбранного значения здесь выключена намеренно. В панели
- * фильтров она означает «фильтр применён» и её ищут глазами; в форме то же
- * самое означало бы «поле заполнено» — а это норма, а не событие.
+ * The accent highlight of the selected value is turned off here on purpose. In the filter
+ * panel it means "filter applied", and people look for it with their eyes; in a form the
+ * same thing would mean "field filled in", which is the norm, not an event.
  */
 const FORM_TRIGGER = "border-line bg-bg-2 w-full rounded-control px-3 py-2.5";
 
@@ -26,9 +26,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Канонический вызов: `htmlFor` блока и `id` поля — одна и та же строка.
- * Клик по подписи фокусирует поле, скринридер называет поле её словами,
- * и отдельный `aria-label` на поле становится не нужен.
+ * The canonical call: the block's `htmlFor` and the field's `id` are the same string.
+ * A click on the label focuses the field, the screen reader names the field with its words,
+ * and a separate `aria-label` on the field is not needed.
  */
 export const Playground: Story = {
   args: {
@@ -39,19 +39,18 @@ export const Playground: Story = {
 };
 
 /**
- * Матрица наполнения: с пояснением и без, с разными контролами внутри.
+ * Content matrix: with a hint and without, with different controls inside.
  *
- * Смысл перебора именно в разнородности содержимого. `FormField` не знает,
- * что у него внутри, — он даёт подпись, отступ и пояснение чему угодно, что
- * занимает ширину колонки. Матрица из одних текстовых полей этого не
- * показывала и оставляла впечатление, что `FormField` и `TextControl` —
- * одно и то же с разных сторон.
+ * The point of the sweep is the variety of content. `FormField` does not know what is
+ * inside it: it gives a label, spacing and a hint to anything that takes up the width of
+ * the column. A matrix of text fields alone did not show this and left the impression that
+ * `FormField` and `TextControl` are the same thing seen from two sides.
  *
- * Чего здесь нет и не будет — `Toggle`. У переключателя подпись стоит слева
- * от контрола, а не над ним; положить его сюда значит узаконить раскладку,
- * которой в интерфейсах не бывает. Плюс у него есть собственный обязательный
- * `label` (`aria-label` на `role="switch"`), и внутри `FormField` имён стало
- * бы два — видимое сверху и объявляемое скринридером.
+ * Not included here, and never will be: `Toggle`. A switch has its label to the left of
+ * the control, not above it; putting it here would legitimize a layout that does not occur
+ * in interfaces. Besides, it has its own required `label` (`aria-label` on `role="switch"`),
+ * and inside `FormField` there would be two names: the visible one above and the one
+ * the screen reader announces.
  */
 export const Matrix: Story = {
   render: () => (
@@ -97,11 +96,10 @@ export const Matrix: Story = {
 };
 
 /**
- * Ошибка и обязательность.
+ * Error and required.
  *
- * Ошибка ВЫТЕСНЯЕТ пояснение, а не встаёт под ним: две строки под полем, одна
- * из которых противоречит другой, заставляют читать обе, чтобы понять, какая
- * ещё действует.
+ * An error REPLACES the hint rather than sitting under it: two lines under the field, one of
+ * which contradicts the other, force the reader to read both to see which one still applies.
  */
 export const ErrorAndRequired: Story = {
   parameters: { layout: "padded" },
@@ -127,10 +125,10 @@ export const ErrorAndRequired: Story = {
 };
 
 /**
- * Боковая раскладка: подпись в колонке слева, пояснение и ошибка — под полем.
+ * Side layout: the label in a column on the left, the hint and the error under the field.
  *
- * Ось живёт у поля, а не у раскладки: подпись рисует `FormField`, и перенести
- * её снаружи невозможно. Ширина колонки — переменная `--form-label-w`.
+ * The axis belongs to the field, not to the layout: `FormField` draws the label, and it
+ * cannot be moved from outside. The column width is the `--form-label-w` variable.
  */
 export const LabelOnLeft: Story = {
   parameters: { layout: "padded" },

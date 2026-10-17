@@ -12,7 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Живая оценка: стрелки меняют значение, вся группа — один табстоп. */
+/** Live rating: the arrow keys change the value, and the whole group is one tab stop. */
 export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = useState(args.value);
@@ -20,7 +20,7 @@ export const Playground: Story = {
   },
 };
 
-/** Все значения подряд, включая ноль: снять оценку — законное действие. */
+/** All values in a row, including zero: clearing the rating is a legitimate action. */
 export const Values: Story = {
   render: (args) => (
     <div className="flex flex-col gap-2">
@@ -32,9 +32,9 @@ export const Values: Story = {
 };
 
 /**
- * Показ и запрет — разные состояния. `readOnly` показывает данные и не гасит
- * их: приглушить показанное значит спрятать то, что показано специально.
- * `disabled` гасит, потому что это недоступное сейчас действие.
+ * Showing and blocking are different states. `readOnly` shows the data and does not dim
+ * it: dimming the displayed value would hide what is shown on purpose.
+ * `disabled` dims the control, because the action is unavailable right now.
  */
 export const ReadOnlyAndDisabled: Story = {
   render: (args) => (
@@ -45,7 +45,7 @@ export const ReadOnlyAndDisabled: Story = {
   ),
 };
 
-/** Малый размер — для строки таблицы и карточки. */
+/** A small size: for a table row and a card. */
 export const Small: Story = {
   args: { size: "sm", value: 4 },
   render: (args) => <Rating {...args} onChange={() => {}} />,

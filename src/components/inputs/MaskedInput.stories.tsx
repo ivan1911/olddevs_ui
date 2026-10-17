@@ -33,7 +33,7 @@ export const Playground: Story = {
   },
 };
 
-/** Другие маски: дата, серия и номер, код. Кит о предметной области не знает. */
+/** Other masks: a date, a series and number, a code. The kit knows nothing about the domain. */
 export const OtherMasks: Story = {
   render: function Render() {
     const [date, setDate] = useState("");
@@ -106,14 +106,14 @@ export const Disabled: Story = {
 };
 
 /**
- * Трафарет маски выключен.
+ * The mask guide is turned off.
  *
- * Умолчание — включённый трафарет: без него поле не сообщало формат вовсе.
- * Выключается там, где формат уже сказан рядом и повторять его в поле — шум:
- * короткая известная маска в плотной таблице, поле под подписью с примером.
+ * The default is an enabled guide: without it the field did not show the format at all.
+ * It is turned off where the format is already stated nearby and repeating it in the field
+ * is noise: a short, well-known mask in a dense table, or a field under a label with an example.
  *
- * Рядом стоит поле с трафаретом: разница видна только в сравнении, а история из
- * одного пустого прямоугольника не показывает ничего.
+ * Next to it stands a field with the guide: the difference shows only in comparison, and
+ * a story made of a single empty rectangle shows nothing.
  */
 export const WithoutSkeleton: Story = {
   render: function Render() {

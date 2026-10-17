@@ -73,15 +73,14 @@ function Demo({
                   setNextId(nextId + 1);
                 },
                 /*
-                  Тот же флажок, что в строке, но невидимый: `visibility:
-                  hidden` сохраняет коробку целиком, а из порядка обхода и из
-                  дерева доступности элемент убирает. Отмечать у задачи,
-                  которой ещё нет, нечего.
+                  The same checkbox as in the row, but invisible: `visibility:
+                  hidden` keeps the whole box and removes the element from the tab
+                  order and from the accessibility tree. There is nothing to tick on
+                  a task that does not exist yet.
 
-                  Зеркало, а не распорка на глаз, и это не педантизм: у
-                  `Checkbox size="sm"` рамка 16 пикселей, а занимает он 24 —
-                  подпись-обёртка добавляет свои отступы. Распорка `size-4`
-                  промахнулась бы на 8.
+                  A mirror, not a spacer set by eye, and this is not pedantry:
+                  `Checkbox size="sm"` has a 16-pixel box but takes up 24, because the
+                  label wrapper adds its own padding. A `size-4` spacer would be off by 8.
                 */
                 leading: (
                   <span className="invisible shrink-0">
@@ -111,10 +110,9 @@ function Demo({
                 </StatusBadge>
               ) : null}
               {/*
-                `size="xs"` — единственная ступень, которая не растягивает
-                строку: `sm` даёт 30 пикселей против 20 под содержимое, и
-                строка на 32 превращается в 42. Зона нажатия у неё всё равно
-                24 — расширена псевдоэлементом.
+                `size="xs"` is the only step that does not stretch the row: `sm` gives
+                30 pixels against 20 for the content, and a 32-pixel row becomes 42.
+                The hit area is 24 pixels anyway, expanded by a pseudo-element.
               */}
               <Button
                 size="xs"
@@ -226,9 +224,9 @@ export const FocusFromOutside: Story = {
 export const WithoutAddRow: Story = { render: () => <Demo withAdd={false} /> };
 
 /**
- * Под русской локалью объявления о переносе приходят по-русски от самой
- * react-aria: «Начато перетаскивание…», «Вставить между…». Своей живой области
- * у списка нет — она дублировала бы их.
+ * Under the Russian locale, react-aria itself announces drag and drop in Russian, for example
+ * "Drag started…" and "Insert between…". The list has no live region of its own, because it
+ * would duplicate those announcements.
  */
 export const RussianLocale: Story = { render: () => <Demo locale="ru-RU" /> };
 
@@ -249,18 +247,16 @@ export const Empty: Story = {
 };
 
 /**
- * Рецепт «действия по наведению» из справочника, целиком и в работе.
+ * The "hover actions" recipe from the Reference, in full and in action.
  *
- * История существует ради проверки: рецепт, который стоит только в тексте,
- * тихо портится. Предыдущая его версия предписывала `group-focus-within:` на
- * содержимом слота — и утилита не срабатывала НИКОГДА, потому что строка несёт
- * `data-rac`, а плагин react-aria метит такой элемент атрибутом
- * `data-focus-within`, которого строка не выставляет. Кнопка, до которой дошёл
- * таб, оставалась невидимой.
+ * The story exists for the sake of a check: a recipe that lives only in the text silently rots.
+ * Its previous version prescribed `group-focus-within:` on the slot's content, and the utility
+ * NEVER fired. The row carries `data-rac`, and the react-aria plugin marks such an element with
+ * a `data-focus-within` attribute, which the row does not set. A button reached by Tab stayed
+ * invisible.
  *
- * Поэтому `focus-within:` здесь — на собственной обёртке потребителя, без
- * `group-`. Обёртка не несёт `data-rac`, попадает во вторую ветку селектора и
- * работает обычным CSS.
+ * So `focus-within:` is here on the consumer's own wrapper, without `group-`. The wrapper
+ * carries no `data-rac`, falls into the second branch of the selector, and works with plain CSS.
  */
 export const HoverActions: Story = {
   render: () => {
@@ -299,14 +295,14 @@ export const HoverActions: Story = {
 };
 
 /**
- * Уход строки: пропавшая из `items` доживает свой уход, а место под ней
- * освобождается тем же движением.
+ * Row exit: a row removed from `items` finishes its exit, and the space under it is released
+ * by the same motion.
  *
- * История нужна браузерным проверкам, а не снимкам: на статичном кадре уход
- * неотличим от его отсутствия. «Done» в строке снимает её так же, как это
- * делает флажок у потребителя, — то есть фокус в момент пропажи стоит ВНУТРИ
- * уходящей строки, и видно, куда он уходит дальше. Кнопка «Remove three»
- * снимает три разом: уходы идут одновременно, без волны с задержками.
+ * The story is for browser checks, not snapshots: on a static frame the exit is indistinguishable
+ * from its absence. "Done" on a row removes it the same way the consumer's checkbox does. So the
+ * focus at the moment of removal sits INSIDE the leaving row, and you can see where it goes next.
+ * The "Remove three" button removes three rows at once: the exits run simultaneously, with no
+ * wave of delays.
  */
 export const Leaving: Story = {
   render: () => {

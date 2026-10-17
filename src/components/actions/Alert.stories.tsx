@@ -22,7 +22,7 @@ export const Playground: Story = {
   ),
 };
 
-/** С действием и крестиком: и то и другое — узлы, а не колбэки с подписью. */
+/** With an action and a close button. Both are nodes, not callbacks with a label. */
 export const WithAction: Story = {
   render: () => (
     <div className="max-w-[520px]">
@@ -43,11 +43,11 @@ export const WithAction: Story = {
 };
 
 /**
- * Матрица тон × вид.
+ * Tone × variant matrix.
  *
- * `solid` и `ghost` в матрице отсутствуют не по недосмотру: они исключены
- * типом. Сплошная заливка на всю ширину блока — плашка, перебивающая
- * содержимое; `ghost` без рамки и подложки перестаёт читаться как сообщение.
+ * `solid` and `ghost` are missing from the matrix on purpose: the type excludes
+ * them. A solid fill across the full width of the block is a bar that overpowers
+ * the content; `ghost` without a border or background stops reading as a message.
  */
 export const Matrix: Story = {
   render: () => (
@@ -66,7 +66,7 @@ export const Matrix: Story = {
   ),
 };
 
-/** Без заголовка — короткое сообщение одной строкой. */
+/** Without a title, a short message on one line. */
 export const WithoutTitle: Story = {
   render: () => (
     <div className="max-w-[520px]">

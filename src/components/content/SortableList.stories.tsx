@@ -43,8 +43,8 @@ function Demo({ locale }: { locale?: string }) {
     </div>
   );
 
-  // Локаль передаётся вместе с каталогом: react-aria возьмёт из неё свои
-  // объявления, кит — свои подписи. Одну без другого показывать нечестно.
+  // The locale is passed together with the catalog: react-aria takes its announcements
+  // from it, the kit its labels. Showing one without the other would be misleading.
   return locale ? (
     <UiProvider locale={locale} messages={ru}>
       {list}
@@ -55,16 +55,15 @@ function Demo({ locale }: { locale?: string }) {
 }
 
 /**
- * Перетащите мышью — или возьмите с клавиатуры: стрелка вправо переводит фокус
- * на ручку, Enter начинает перетаскивание, Tab выбирает цель, Enter применяет,
- * Escape отменяет.
+ * Drag with the mouse, or grab with the keyboard: Right Arrow moves focus to the handle,
+ * Enter starts the drag, Tab selects a target, Enter applies it, and Escape cancels.
  */
 export const Playground: Story = { render: () => <Demo /> };
 
 /**
- * Под русской локалью объявления react-aria приходят по-русски: «Начато
- * перетаскивание. Нажмите клавишу Tab для выбора цели…». Своей живой области у
- * списка нет — она дублировала бы эти строки.
+ * Under the Russian locale react-aria announces in Russian, for example "Drag started.
+ * Press the Tab key to select a target…". The list has no live region of its own:
+ * it would duplicate these messages.
  */
 export const RussianLocale: Story = { render: () => <Demo locale="ru-RU" /> };
 
@@ -106,7 +105,7 @@ function BoardDemo() {
       )
     );
 
-  // Состав колонок хранит экран: строка уходит из `from` и встаёт в `to` за один шаг.
+  // The screen owns the column contents: a row leaves `from` and lands in `to` in one step.
   const move = ({ id, from, to, index }: SortableMove) =>
     setColumns((all) => {
       const row = all.find((c) => c.id === from)?.items.find((i) => i.id === id);
@@ -146,8 +145,8 @@ function BoardDemo() {
 }
 
 /**
- * Списки одной `group` обмениваются строками: перетащите карточку в соседнюю
- * колонку — или возьмите её с клавиатуры и Tab'ом перейдите к другому списку.
- * Пустая колонка принимает строку броском на сам список.
+ * Lists in one `group` exchange rows: drag a card into the neighboring column, or grab it
+ * with the keyboard and move to another list with Tab. An empty column accepts a row
+ * when it is dropped onto the list itself.
  */
 export const Board: Story = { render: () => <BoardDemo /> };

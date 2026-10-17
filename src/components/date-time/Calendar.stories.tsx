@@ -5,12 +5,11 @@ import type { DateValue } from "react-aria-components";
 import { Calendar, type CalendarProps } from "./Calendar.js";
 
 /**
- * Месяц зафиксирован намеренно.
+ * The month is fixed on purpose.
  *
- * Календарь по умолчанию открывается на текущем месяце и помечает сегодняшний
- * день точкой — то есть его снимок менялся бы каждые сутки, и визуальный
- * бейзлайн краснел бы сам по себе, без единой правки кода. Истории показывают
- * март 2026 и никогда не совпадут с «сегодня».
+ * By default the calendar opens on the current month and marks today with a dot, so its
+ * snapshot would change every day and the visual baseline would turn red on its own,
+ * without a single code change. The stories show March 2026 and never match "today".
  */
 const MONTH = parseDate("2026-03-01");
 
@@ -24,7 +23,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<CalendarProps>;
 
-/** Живой выбор даты. */
+/** Live example: a date selection. */
 export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = useState<DateValue>(parseDate("2026-03-12"));
@@ -64,8 +63,8 @@ export const Matrix: Story = {
 };
 
 /**
- * Строки вместо объектов: границы, значение и ответ — ISO `ГГГГ-ММ-ДД`, как у
- * `DatePicker`. `@internationalized/date` потребителю не нужен.
+ * Strings instead of objects: the bounds, the value and the answer are ISO `YYYY-MM-DD`,
+ * as in `DatePicker`. The consumer does not need `@internationalized/date`.
  */
 export const StringApi: Story = {
   render: (args) => {

@@ -32,10 +32,10 @@ const CELLS: VirtualGridItem[] = Array.from({ length: 600 }, (_, i) => ({
 }));
 
 /**
- * Шестьсот ячеек, в DOM — несколько десятков.
+ * Six hundred cells, only a few dozen of them in the DOM.
  *
- * Высоту контейнера задаёт ПОТРЕБИТЕЛЬ: без неё контейнер растянется по
- * содержимому, виртуализация не включится, и сетка отрисует всё разом.
+ * The CONSUMER sets the height of the container: without it the container stretches to
+ * its content, virtualization does not turn on, and the grid renders everything at once.
  */
 export const Playground: Story = {
   render: () => (
@@ -49,7 +49,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Ячейка — любой узел, не только `MediaCard`. */
+/** A cell is any node, not only a `MediaCard`. */
 export const PlainCells: Story = {
   render: () => (
     <VirtualGrid
@@ -70,7 +70,7 @@ export const PlainCells: Story = {
   ),
 };
 
-/** С выбором: состояние держит потребитель, как и везде в ките. */
+/** With selection: the consumer holds the state, as everywhere in the kit. */
 export const WithSelection: Story = {
   render: function Render() {
     const [selected, setSelected] = useState<Selection>(new Set<Key>());
@@ -103,11 +103,11 @@ export const WithSelection: Story = {
 };
 
 /**
- * Действие над ячейкой и контекстное меню — рядом с выбором, но не вместо него.
+ * An action on a cell and a context menu sit next to selection, but do not replace it.
  *
- * Клик и Enter открывают ячейку (`onAction`), Space выбирает её. Меню ячейки
- * (`contextMenu`) открывается правой кнопкой, долгим нажатием и Shift+F10 на
- * сфокусированной ячейке; пункт меню не выбирает ячейку и не «открывает» её.
+ * A click and Enter open the cell (`onAction`), Space selects it. The cell's menu
+ * (`contextMenu`) opens with the right mouse button, a long press and Shift+F10 on the
+ * focused cell; a menu item neither selects the cell nor "opens" it.
  */
 export const ActionsAndMenu: Story = {
   render: function Render() {
@@ -135,8 +135,8 @@ export const ActionsAndMenu: Story = {
                   selected={selected === "all" || selected.has(id)}
                 />
               ),
-              // У ячейки «2» меню нет: на ней видно правило react-aria для касания —
-              // долгое нажатие на ячейку без меню начинает выбор.
+              // Cell "2" has no menu: it shows the react-aria touch rule —
+              // a long press on a cell without a menu starts a selection.
               contextMenu:
                 id === "2" ? undefined : (
                   <>
@@ -182,13 +182,12 @@ const LIBRARY_PAGE = 120;
 const LIBRARY_TOTAL = 1200;
 
 /**
- * Библиотека: сетка на прокрутке окна под липкой шапкой.
+ * Library: a grid that scrolls with the window, under a sticky header.
  *
- * Здесь всё, ради чего сетка росла: `scroll="window"` (шапка публикует
- * `--topbar-h`, фокус под неё не уходит), кружок выбора и кнопка в ячейке
- * (`gridcell`, а не `option`), подгрузка страниц у конца, протяжка пальцем,
- * Shift только добавляет, крайние ячейки вплотную. По этой истории ходят
- * браузерные проверки.
+ * Here is everything the grid grew for: `scroll="window"` (the header publishes
+ * `--topbar-h`, and focus does not go under it), the selection circle and a button in a
+ * cell (`gridcell`, not `option`), loading pages near the end, drag-to-select by touch,
+ * Shift only adds, and the edge cells sit flush. Browser checks run through this story.
  */
 export const Library: Story = {
   parameters: { layout: "fullscreen" },
@@ -200,7 +199,7 @@ export const Library: Story = {
     const [opened, setOpened] = useState("none");
 
     useEffect(() => {
-      // Так же это делает `TopBar` приложения: публикует измеренную высоту.
+      // The app's `TopBar` does the same: it publishes the measured height.
       document.documentElement.style.setProperty("--topbar-h", `${LIBRARY_BAR}px`);
       return () => {
         document.documentElement.style.removeProperty("--topbar-h");

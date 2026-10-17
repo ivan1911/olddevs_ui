@@ -12,7 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<DatePickerProps>;
 
-/** Живой выбор: раскрытый календарь живёт в портале и в матрицу не попадает. */
+/** Live example: the expanded calendar lives in a portal and is not part of the matrix. */
 export const Playground: Story = {
   render: (args) => {
     const [value, setValue] = useState<string | null>("2026-03-12");

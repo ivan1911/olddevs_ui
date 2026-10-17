@@ -86,21 +86,21 @@ function KeyboardScenario({
   );
 }
 
-/** Живая панель: выбор в поле сохраняется, а EN/RU и Shift меняют клавиши. */
+/** Live panel: the selection in the field is kept, and EN/RU and Shift change the keys. */
 export const Playground: Story = { render: () => <KeyboardPlayground /> };
 
 /**
- * Матрица «панель × раскладка × содержимое поля» для реального SearchControl.
- * Открытые состояния показаны сразу, а закрытые оставляют видимой иконку
- * клавиатуры: так видно и место входа, и то, какое поле редактирует каждая
- * конкретная панель. На мобильной ширине и иконка, и сама панель скрываются.
+ * Matrix of panel × layout × field content, for a real SearchControl.
+ * Open states are shown at once, while closed ones keep the keyboard icon visible:
+ * that shows both where the panel is opened from and which field each panel edits.
+ * On a mobile width both the icon and the panel are hidden.
  */
 export const Matrix: Story = {
   parameters: { layout: "padded" },
   render: () => (
-    // Один столбец шириной с прежнюю колонку: в двух колонках открытые панели
-    // налезали друг на друга, а растянутое на весь кадр поле уводило панель,
-    // привязанную к кнопке клавиатуры, за правый край.
+    // One column as wide as the former one: in two columns the open panels overlapped,
+    // and a field stretched across the whole frame pushed the panel attached to
+    // the keyboard button past the right edge.
     <div className="grid w-full max-w-[30rem] grid-cols-1 gap-y-6">
       <KeyboardScenario
         title="open · Russian · query"

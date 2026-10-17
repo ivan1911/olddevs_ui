@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { Key, SortDescriptor } from "react-aria-components";
 import { Table } from "./Table.js";
 
-/** Волна 10: данные. Облегчённая планка, снимков нет. */
+/** Wave 10: data. A lighter bar, no snapshots. */
 const meta = {
   title: "Content/Table",
   component: Table,
@@ -49,7 +49,7 @@ export const BasicTable: Story = {
   },
 };
 
-/** Без пропов осей — ни сортировки, ни флажков в разметке нет вовсе. */
+/** Without the axis props there is no sorting and no checkboxes in the markup at all. */
 export const TableWithoutAxes: Story = {
   render: () => (
     <Table
@@ -64,13 +64,12 @@ export const TableWithoutAxes: Story = {
 };
 
 /**
- * Раскрытие строки — ось `Table` (ADR-0022). Единственная, ради которой
- * пришлось трогать стабильный компонент: детальная строка живёт внутри
- * `<tbody>`, между строками коллекции react-aria, и вставить её надстройкой
- * снаружи невозможно.
+ * Row expansion is the `Table` axis (ADR-0022). It is the only one that required
+ * touching the stable component: the detail row lives inside `<tbody>`, between the
+ * react-aria collection rows, and it cannot be inserted from outside as a wrapper.
  *
- * Состояние, как и у остальных осей, таблица не хранит — здесь его держит
- * история, в приложении будет держать `useTableState`.
+ * As with the other axes, the table does not store the state: here the story holds it,
+ * and in an app `useTableState` will hold it.
  */
 export const TableWithExpansion: Story = {
   render: function ExpandDemo() {
@@ -111,10 +110,10 @@ export const EmptyTable: Story = {
 };
 
 /**
- * Две оставшиеся оси: липкая шапка и изменение ширины колонок.
+ * The two remaining axes: the sticky header and column resizing.
  *
- * Липкая шапка работает только внутри контейнера со своей высотой и
- * прокруткой — сама таблица высоты не знает и знать не может.
+ * The sticky header works only inside a container with its own height and scrolling:
+ * the table itself does not know its height and cannot know it.
  */
 export const StickyHeaderAndWidths: Story = {
   render: () => (
@@ -141,12 +140,12 @@ export const StickyHeaderAndWidths: Story = {
 };
 
 /**
- * Действие по строке рядом с выделением: клик по строке и Enter «открывают»
- * запись, а отмечают её флажки. Пока ничего не выделено, клик по строке —
- * действие; когда выделение появилось, клик по строке его переключает (правило
- * react-aria), а действие остаётся на Enter.
+ * A row action next to the selection: a click on the row and Enter "open" the record,
+ * while the checkboxes check it. While nothing is selected, a click on the row is the
+ * action; once a selection exists, a click on the row toggles it (the react-aria rule),
+ * and the action stays on Enter.
  *
- * Ссылка в ячейке с `stopPropagation` для этого не нужна.
+ * A link in a cell with `stopPropagation` is not needed for this.
  */
 export const TableWithRowAction: Story = {
   render: function RowActionDemo() {

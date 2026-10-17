@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { DateValue, RangeValue } from "react-aria-components";
 import { RangeCalendar, type RangeCalendarProps } from "./RangeCalendar.js";
 
-/** Месяц зафиксирован — почему именно так, объяснено в историях `Calendar`. */
+/** The month is fixed; the reason for this is explained in the `Calendar` stories. */
 const MONTH = parseDate("2026-03-01");
 const RANGE = { start: parseDate("2026-03-09"), end: parseDate("2026-03-22") };
 
@@ -26,8 +26,8 @@ export const Playground: Story = {
 };
 
 /**
- * Два месяца рядом — рабочий вид для диапазона: период, пересекающий границу
- * месяца, иначе требует листать туда-обратно, теряя из виду выбранный конец.
+ * Two months side by side are the working view for a range: a range that crosses a month
+ * boundary would otherwise require paging back and forth and losing sight of the selected end.
  */
 export const TwoMonths: Story = {
   render: (args) => (
@@ -70,9 +70,9 @@ export const Matrix: Story = {
 };
 
 /**
- * Строки вместо объектов: период — `{ start, end }` ISO-строк `ГГГГ-ММ-ДД`, как
- * `DateRange` у `DateRangePicker`; границы тоже строки. `@internationalized/date`
- * потребителю не нужен.
+ * Strings instead of objects: the range is `{ start, end }` of ISO strings `YYYY-MM-DD`,
+ * like the `DateRange` of `DateRangePicker`; the bounds are strings too. The consumer
+ * does not need `@internationalized/date`.
  */
 export const StringApi: Story = {
   render: (args) => {

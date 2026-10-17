@@ -11,7 +11,7 @@ const meta = {
   args: { children: null },
   decorators: [
     (Story) => (
-      // Узкая рамка вместо вьюпорта: полоса считает ширину колонки, а не окна.
+      // A narrow frame instead of the viewport: the bar measures the column width, not the window's.
       <div className="border-line-soft w-[375px] max-w-full overflow-hidden rounded-lg border">
         <Story />
       </div>
@@ -29,7 +29,7 @@ const SECTIONS = [
   { id: "settings", label: "Settings", icon: <SettingsIcon size={20} /> },
 ];
 
-/** Полоса с переключаемым текущим разделом — нажмите на пункт. */
+/** A bar with a switchable current section. Click an item. */
 export const Playground: Story = {
   render: () => {
     const [route, setRoute] = useState("home");
@@ -51,9 +51,9 @@ export const Playground: Story = {
 };
 
 /**
- * Счётчик, точка «есть новое», строка и свой элемент. Значок лежит поверх
- * иконки, а для скринридера у него есть текст — «3 new», «New», сама строка,
- * либо свой через `badgeLabel` (у своего элемента он обязателен).
+ * A counter, a "new" dot, a string badge, and a custom element. The badge sits on top of the
+ * icon. For a screen reader it has text: "3 new", "New", the string itself, or a custom one
+ * via `badgeLabel` (required for a custom element).
  */
 export const Badges: Story = {
   render: () => (
@@ -86,8 +86,8 @@ export const Badges: Story = {
 };
 
 /**
- * Пункт без иконки: значку не за что зацепиться, он встаёт в строку подписи,
- * после неё. Подпись обрезается раньше значка.
+ * An item without an icon: the badge has nothing to attach to, so it sits in the label row,
+ * after the label. The label is truncated before the badge is.
  */
 export const BadgesWithoutIcon: Story = {
   render: () => (
@@ -107,9 +107,9 @@ export const BadgesWithoutIcon: Story = {
 };
 
 /**
- * Длинная подпись обрезается многоточием и не ломает полосу; полная подпись
- * остаётся доступным именем. Пять пунктов на 375px — предел, при котором
- * подписи на 11px начинают обрезаться (известный компромисс, см. справочник).
+ * A long label is truncated with an ellipsis and does not break the bar. The full label
+ * remains the accessible name. Five items at 375px is the limit before 11px labels start
+ * to truncate (a known trade-off, see the Reference).
  */
 export const LongLabels: Story = {
   render: () => (

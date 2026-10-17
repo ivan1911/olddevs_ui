@@ -25,7 +25,7 @@ const NAMES: Record<(typeof LABEL_HUES)[number], string> = {
   steel: "Steel",
 };
 
-/** Метки для показа: без оттенка и с ним. */
+/** Tags for display: without a hue and with one. */
 export const Playground: Story = {
   render: () => (
     <TagGroup label="Categories">
@@ -40,7 +40,7 @@ export const Playground: Story = {
   ),
 };
 
-/** Все восемь оттенков палитры: точка рядом с подписью, а не заливка под ней. */
+/** All eight hues of the palette: a dot next to the label, not a fill under it. */
 export const Hues: Story = {
   render: () => (
     <TagGroup label="Label hues">
@@ -54,8 +54,8 @@ export const Hues: Story = {
 };
 
 /**
- * Удаление: `onRemove` включает кнопки, Delete и Backspace работают с
- * клавиатуры, фокус остаётся на соседней метке.
+ * Removal: `onRemove` turns the buttons on, Delete and Backspace work from the keyboard,
+ * and focus stays on the neighboring tag.
  */
 export const Removable: Story = {
   render: () => {
@@ -81,7 +81,7 @@ export const Removable: Story = {
   },
 };
 
-/** Метка-ссылка: Enter и щелчок переходят по адресу. */
+/** A link tag: Enter and a click go to the address. */
 export const Links: Story = {
   render: () => (
     <TagGroup label="Related categories">
@@ -96,12 +96,12 @@ export const Links: Story = {
   ),
 };
 
-/** Пустая группа показывает `empty`, а не пропадает. */
+/** An empty group shows `empty` instead of disappearing. */
 export const Empty: Story = {
   render: () => <TagGroup label="No categories yet" empty="Nothing here yet" />,
 };
 
-/** Набор переносится на новую строку целиком, по метке. */
+/** The group wraps onto a new line tag by tag. */
 export const Wrapping: Story = {
   render: () => (
     <div className="w-64">

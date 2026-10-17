@@ -43,8 +43,8 @@ export const Disabled: Story = {
 };
 
 /**
- * Отклонённые файлы показываются с причиной. Область, которая молча принимает
- * семь файлов из десяти, читается как сломанная.
+ * Rejected files are shown with the reason. A zone that silently accepts seven files out
+ * of ten reads as broken.
  */
 export const WithRejected: Story = {
   render: function Render(args) {

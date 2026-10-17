@@ -19,8 +19,8 @@ const meta = {
   parameters: { layout: "fullscreen" },
   decorators: [
     (Story) => (
-      // Провайдер подсказок нужен схлопнутому режиму — требование к
-      // потребителю, а не к витрине.
+      // The tooltip provider is needed by the collapsed mode. It is a requirement
+      // on the consumer, not on the showcase.
       <TooltipProvider delayDuration={0}>
         <div className="bg-bg-0 flex h-[520px]">
           <Story />
@@ -41,9 +41,9 @@ const BrandSlot = () => (
   </div>
 );
 
-// В иконочном режиме колонке хватает места только на аватар: имя и роль,
-// оставленные как есть, переносились по словам и вылезали за край. Имя уходит
-// с экрана, но не из доступного текста — так же, как подпись пункта.
+// In icon-only mode the column has room only for the avatar. A name and a role left
+// as they are would wrap word by word and spill past the edge. The name leaves the
+// screen but not the accessible text, the same as an item's label.
 const UserSlot = () =>
   useNavCollapsed() ? (
     <div className="mb-2 flex justify-center">
@@ -81,18 +81,18 @@ const NavSections = (
 );
 
 /**
- * Неуправляемый режим: схлопнутость держит сам компонент, кнопка в подвале
- * переключает её. Персистентность при этом остаётся у потребителя — кит не
- * знает ни про хранилище приложения, ни про `localStorage` (ADR-0018).
+ * Uncontrolled mode: the component keeps the collapsed state itself, and the button in the
+ * footer toggles it. Persistence stays with the consumer. The kit knows nothing about the
+ * app's storage or about `localStorage` (ADR-0018).
  */
 export const Playground: Story = {
   args: { header: <BrandSlot />, footer: <UserSlot />, children: NavSections },
 };
 
 /**
- * Иконочный режим. Подписи уходят с экрана, но остаются доступными именами, а
- * заголовки разделов заменяются чертой: без неё навигация теряет структуру
- * целиком, а с подписью — не помещается в ширину.
+ * Icon-only mode. The labels leave the screen but remain accessible names, and section
+ * headings are replaced by a divider. Without the divider the navigation loses its structure
+ * entirely, and with a label it does not fit the width.
  */
 export const Collapsed: Story = {
   args: {
@@ -103,7 +103,7 @@ export const Collapsed: Story = {
   },
 };
 
-/** Без слотов и без кнопки — минимум, который вообще имеет смысл. */
+/** No slots and no button: the minimum that makes any sense at all. */
 export const Bare: Story = {
   args: { collapsible: false, children: NavSections },
 };
