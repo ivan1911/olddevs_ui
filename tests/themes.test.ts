@@ -37,7 +37,6 @@ describe.each([
   ["data-theme", UI_THEMES, DEFAULT_THEME_PREFS.theme],
   ["data-accent", UI_ACCENTS, DEFAULT_THEME_PREFS.accent],
   ["data-brand", UI_BRANDS, DEFAULT_THEME_PREFS.brand],
-  ["data-radius", UI_RADII, DEFAULT_THEME_PREFS.radius],
 ] as const)("axis %s", (attr, list, fallback) => {
   test("every block in styles.css is listed in the registry", () => {
     const extra = [...declaredIn(attr)].filter((v) => !list.includes(v as never));
@@ -50,6 +49,17 @@ describe.each([
   test("without a block exactly the axis default remains", () => {
     const withoutBlock = list.filter((v) => !declaredIn(attr).has(v));
     expect(withoutBlock).toEqual([fallback]);
+  });
+});
+
+/**
+ * The radius axis is the exception to "the default has no block": a preset is also set on a
+ * subtree, and `data-radius="medium"` inside a `large` page has to RESET the steps. Without its own
+ * block it would only inherit the ancestor's preset (found in review).
+ */
+describe("axis data-radius", () => {
+  test("every preset, the default included, has a block and is listed in the registry", () => {
+    expect([...declaredIn("data-radius")].sort()).toEqual([...UI_RADII].sort());
   });
 });
 
@@ -167,6 +177,13 @@ describe("themeInitScript", () => {
     run(themeInitScript({ storageKey: KEY }));
     expect(document.documentElement.getAttribute("data-theme")).toBe(DEFAULT_THEME_PREFS.theme);
     expect(document.documentElement.hasAttribute("data-brand")).toBe(false);
+    expect(document.documentElement.getAttribute("data-radius")).toBe(DEFAULT_THEME_PREFS.radius);
+  });
+
+  test("a stored preset that no longer exists falls back to medium", () => {
+    // `full` was a preset during the pilot of OLDSUI-300 and never shipped, but storage keeps anything.
+    store.set(KEY, JSON.stringify({ radius: "full" }));
+    run(themeInitScript({ storageKey: KEY }));
     expect(document.documentElement.getAttribute("data-radius")).toBe(DEFAULT_THEME_PREFS.radius);
   });
 

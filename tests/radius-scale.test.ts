@@ -88,14 +88,15 @@ function rootScale(): Record<string, string> {
 }
 
 describe("radius presets", () => {
-  test("medium is the :root scale and has no block of its own", () => {
+  test("medium is the :root scale", () => {
     const scale = rootScale();
     for (const step of STEPS)
       expect(scale[`--r-${step}`], `--r-${step}`).toBe(EXPECTED.medium[step]);
-    expect(block('[data-radius="medium"]')).toEqual({});
   });
 
-  test.each(UI_RADII.filter((r) => r !== "medium"))("preset %s declares every step", (preset) => {
+  // `medium` needs its own block as well: on a subtree inside another preset it must reset the
+  // steps, not inherit them.
+  test.each(UI_RADII)("preset %s declares every step", (preset) => {
     const decls = block(`[data-radius="${preset}"]`);
     for (const step of STEPS)
       expect(decls[`--r-${step}`], `${preset} --r-${step}`).toBe(EXPECTED[preset][step]);
@@ -180,6 +181,14 @@ const OFF_SCALE: { name: string; hit: (line: string) => boolean }[] = [
     hit: (line) =>
       /borderRadius:\s*\d/.test(line) || (/borderRadius:/.test(line) && /\d+px/.test(line)),
   },
+  {
+    // `el.style.borderRadius = "8px"`, `setProperty("border-radius", "8px")`, `[border-radius:8px]`
+    name: "imperative or arbitrary border-radius",
+    hit: (line) =>
+      /\.borderRadius\s*=\s*["'`][^"'`]*\d+px/.test(line) ||
+      /setProperty\(\s*["']border(?:-[a-z]+)*-radius["']\s*,\s*["'`][^"'`]*\d+px/.test(line) ||
+      /\[border(?:-[a-z]+)*-radius:[^\]]*\d+px/.test(line),
+  },
 ];
 
 describe("radii stay on the scale", () => {
@@ -199,7 +208,8 @@ describe("radii stay on the scale", () => {
   });
 
   test("no literal border-radius in styles.css", () => {
-    const hits = [...css.matchAll(/border-radius:\s*([^;]+);/g)]
+    // Shorthand and the per-corner longhands alike.
+    const hits = [...css.matchAll(/border(?:-[a-z]+)*-radius:\s*([^;]+);/g)]
       .map((m) => (m[1] ?? "").trim())
       .filter((v) => /\d+px/.test(v) && !/^var\(--/.test(v));
     expect(hits).toEqual([]);

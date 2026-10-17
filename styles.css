@@ -1119,7 +1119,9 @@
  * reference. Re-binding the bridge on every `[data-radius]` makes the utilities read the
  * preset of the nearest element that sets one.
  *
- * `medium` has no block: it is the `:root` scale above.
+ * `medium` repeats the `:root` scale in a block of its own: on `<html>` it changes nothing, but on
+ * a subtree inside another preset it has to RESET the steps. Without it, `data-radius="medium"`
+ * inside a `large` page would only re-bind the bridge and inherit `large`.
  */
 [data-radius] {
   --radius-2xs: var(--r-2xs);
@@ -1130,6 +1132,17 @@
   --radius-lg: var(--r-lg);
   --radius-xl: var(--r-xl);
   --radius-pill: var(--r-pill);
+}
+
+[data-radius="medium"] {
+  --r-2xs: 4px;
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-control: 10px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 9999px;
 }
 
 [data-radius="none"] {

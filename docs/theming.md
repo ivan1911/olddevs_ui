@@ -311,7 +311,8 @@ a theme changes colors, and the radius changes none of them. `dark` with square 
 generous ones are both valid, and the axis is independent of the theme, the accent and the brand.
 
 There are four presets. `medium` is the default and matches how the kit looked before the axis
-existed, so an app that sets nothing changes nothing.
+existed, so an app that sets nothing changes nothing. The one exception is `SelectionBar` and
+`ContextualSaveBar`: their 14px corners were off the scale and now use the `lg` step, 16px.
 
 | Preset   | `2xs` | `xs` | `sm` | `control` | `md` | `lg` | `xl` | `pill` |
 | -------- | ----- | ---- | ---- | --------- | ---- | ---- | ---- | ------ |
@@ -341,11 +342,19 @@ The attribute works on **any element**, so a subtree can have its own shape:
 <section data-radius="none">…</section>
 ```
 
-Components inside read the preset of the nearest ancestor that sets one.
+Components inside read the preset of the nearest ancestor that sets one, and `data-radius="medium"` on a
+subtree resets an ancestor's preset back to the default.
+
+Overlays are the exception. Popovers, menus, dialogs, tooltips and the Select list render into
+`document.body` by default, outside the subtree, so they take the preset of `<html>`. To keep them in
+the subtree's shape, set the preset on `<html>` instead, or point `portalContainer` of `UiProvider` at an
+element inside the subtree.
 
 In code, use the registry from [api/utilities.md](api/utilities.md): `UI_RADII` lists the presets,
 `normalizeRadius` turns any value (storage, a query string) into a valid one, and `applyTheme` and
-`themeInitScript` handle the axis together with the others. The field in storage is called `radius`:
+`themeInitScript` handle the axis together with the others. The field in storage is called `radius`.
+`applyTheme` sets the state as a whole, so a call without `radius` writes `medium`; pass the field
+every time, like the theme:
 
 ```ts
 import { applyTheme, normalizeRadius } from "@olddevs/ui";
@@ -354,8 +363,10 @@ applyTheme(document.documentElement, { theme: "dark", radius: normalizeRadius("s
 ```
 
 A brand block may override the `--r-*` steps like any other token. On `<html>` it takes precedence over the
-preset, because `:root[data-brand]` is more specific than `[data-radius]`. Use it to adjust one step; to
-change the whole shape, set a preset.
+preset, because `:root[data-brand]` is more specific than `[data-radius]`; a subtree with its own
+`data-radius` still gets the preset's values. Use it to adjust one step; to change the whole shape, set a
+preset. Do not override the steps in a plain `:root { … }` block: it has the same specificity as a preset
+block, so the result depends on which stylesheet loads last.
 
 ### Rounding in new components
 
