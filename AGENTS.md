@@ -82,7 +82,7 @@ English. ADRs, `SPEC.md` and the archive stay in Russian (ADR-0067). A file you
 touch gets its Russian comments translated, so no file ends up half-and-half.
 Translate the meaning and the reasoning, not the words; keep industry terms as
 their source names them, and take kit terms from [`docs/glossary.md`](docs/glossary.md).
-The brief for translating subagents is in `olddevs_ui_docs/agents/translation-brief.md`.
+When a subagent translates, tell it to keep the meaning and the "why", to use select (not pick), popover and the kit terms from the glossary, and check afterwards that the code is unchanged.
 Cyrillic in a line of code is allowed only where it is the **subject** of a check or
 input data; `tests/i18n-gate.test.ts` enforces this with an allowlist of three
 justified reasons.
