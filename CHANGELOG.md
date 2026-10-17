@@ -1,5 +1,11 @@
 # @olddevs/ui
 
+## 4.8.3
+
+### Patch Changes
+
+- 55a1589: The README now states how many components the kit has: 122, counted by the package's exports without the parts of compound components.
+
 ## 4.8.2
 
 ### Patch Changes
