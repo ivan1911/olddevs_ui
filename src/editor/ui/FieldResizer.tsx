@@ -129,7 +129,7 @@ export function FieldResizer({ area, height, onHeight, disabled }: FieldResizerP
       <span
         aria-hidden
         className={cn(
-          "bg-line duration-fast h-0.5 w-7 rounded-full transition-colors",
+          "bg-line duration-fast rounded-pill h-0.5 w-7 transition-colors",
           !disabled && "group-hover:bg-fg-2",
           dragging && "bg-accent-strong",
           "group-has-[:focus-visible]:bg-accent-strong group-has-[:focus-visible]:ring-[3px] group-has-[:focus-visible]:ring-[color:var(--focus-ring)]"

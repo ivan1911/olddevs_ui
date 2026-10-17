@@ -71,7 +71,7 @@ export const FilterBar = forwardRef<HTMLDivElement, FilterBarProps>(function Fil
               <Tag
                 id={filter.id}
                 textValue={labelOf(filter)}
-                className="border-line-soft bg-bg-2 text-fg-1 focus-visible:outline-accent-strong flex items-center gap-1 rounded-full border py-0.5 pr-1 pl-2.5 text-[13px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="border-line-soft bg-bg-2 text-fg-1 focus-visible:outline-accent-strong rounded-pill flex items-center gap-1 border py-0.5 pr-1 pl-2.5 text-[13px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {labelOf(filter)}
                 {/*
