@@ -7,43 +7,43 @@ import { Popover, PopoverContent, PopoverTrigger } from "./Popover.js";
 import { keyGlyphs } from "../content/Kbd.js";
 
 export interface HelpTooltipProps {
-  /** Доступное имя кнопки-вопросика: «Что показывает дашборд». */
+  /** Accessible name of the help button: "What the dashboard shows". */
   label: string;
-  /** Заголовок внутри поповера. */
+  /** Title inside the popover. */
   title?: ReactNode;
-  /** Содержимое подсказки. */
+  /** Content of the help text. */
   children: ReactNode;
   /**
-   * Комбинация клавиш целиком — строкой, как её надо показать: `⌘+Shift+L`.
+   * The whole key combination as a string, in the form it should be shown: `⌘+Shift+L`.
    *
-   * Именно целиком, а не буквой: раньше компонент сам собирал
-   * `${модификатор}+Shift+${буква}` и тем самым знал, что все горячие клавиши
-   * приложения устроены как Mod+Shift+буква. Дизайн-системе такое знать неоткуда,
-   * а сочетание без Shift в неё бы уже не поместилось.
+   * The whole string, not just the letter: the component used to build
+   * `${modifier}+Shift+${letter}` itself, and so knew that every shortcut of the app
+   * was Mod+Shift+letter. A design system has no way to know that, and a combination
+   * without Shift would no longer fit into it.
    *
-   * По той же причине модификатор не вычисляется здесь: определение платформы —
-   * это `react-device-detect` у потребителя, и тащить его в пакет ради одного
-   * символа не за чем.
+   * For the same reason the modifier is not computed here: platform detection is
+   * `react-device-detect` in the consumer, and there is no point pulling it into the package
+   * for one symbol.
    */
   shortcut?: string;
-  /** Подпись слева от комбинации: «Открыть раздел». Без домена пакет не угадает. */
+  /** Label to the left of the combination: "Open section". Without the domain the package cannot guess it. */
   shortcutLabel?: ReactNode;
-  /** Своя иконка вместо вопросика. */
+  /** Own icon instead of the question mark. */
   icon?: ReactNode;
-  /** Выравнивание панели относительно кнопки-вопросика: `start`, `center` или `end`. По умолчанию `start`. */
+  /** Alignment of the panel relative to the help button: `start`, `center` or `end`. Defaults to `start`. */
   align?: "start" | "center" | "end";
-  /** Расстояние от кнопки до панели, в пикселях. По умолчанию 8. */
+  /** Distance from the button to the panel, in pixels. Defaults to 8. */
   sideOffset?: number;
-  /** Ширина панели классом: пояснения бывают разной длины. По умолчанию `w-[340px]`. */
+  /** Width of the panel as a class: explanations come in different lengths. Defaults to `w-[340px]`. */
   widthClassName?: string;
 }
 
 /**
- * Кнопка-вопросик, раскрывающая поясняющий текст.
+ * A help button that expands an explanatory text.
  *
- * Отличается от `Tooltip` не оформлением, а поведением: тултип всплывает по
- * наведению и исчезает, а сюда кладут абзац текста, который надо успеть
- * прочитать, — поэтому это поповер по клику, с фокусируемым триггером.
+ * It differs from `Tooltip` not in its look but in its behavior: a tooltip shows on hover
+ * and disappears, while here a paragraph of text goes in that has to be readable in time —
+ * so this is a popover opened by a click, with a focusable trigger.
  */
 export function HelpTooltip({
   label,
@@ -61,9 +61,9 @@ export function HelpTooltip({
       <PopoverTrigger asChild>
         <button
           type="button"
-          // Кольцо фокуса — своё, а не от глобального `:focus-visible` в
-          // styles.css: примитив не должен зависеть от того, подключил ли
-          // потребитель базовые стили. Тот же принцип, что у `Chip`.
+          // The focus ring is its own, not the global `:focus-visible` from styles.css: the
+          // primitive must not depend on whether the consumer loaded the base styles. The same
+          // principle as in `Chip`.
           className={cn(
             "text-fg-3 hover:text-fg-1 focus-visible:text-fg-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-full transition-colors",
             "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2"

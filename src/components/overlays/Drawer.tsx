@@ -11,39 +11,38 @@ import { ModalHeader } from "./ModalHeader.js";
 
 export type DrawerSide = "right" | "left" | "bottom";
 
-/** Портал ящика: ось `Toolbar`, из которой открыт ящик, внутрь не проходит. */
+/** Portal of the drawer: the `Toolbar` axis the drawer was opened from does not pass into it. */
 const Portal = withoutToolbarAxis(DialogPrimitive.Portal);
 
 export interface DrawerProps {
-  /** Показан ли ящик. */
+  /** Whether the drawer is shown. */
   open: boolean;
-  /** Закрытие: кнопка закрытия, Escape и клик мимо — всё сюда. */
+  /** Close: the close button, Escape and a click outside all call this. */
   onClose: () => void;
-  /** Заголовок. Он же — доступное имя ящика. */
+  /** Title. It is also the drawer's accessible name. */
   title: ReactNode;
-  /** Строка под заголовком в шапке: слаг, дата, счётчик. */
+  /** A line under the title in the header: a slug, a date, a counter. */
   subtitle?: ReactNode;
-  /** С какого края выезжает ящик: `right`, `left` или `bottom`. По умолчанию `right`; на узком экране боковой ящик становится нижним. */
+  /** The edge the drawer slides in from: `right`, `left` or `bottom`. Defaults to `right`; on a narrow screen a side drawer becomes a bottom one. */
   side?: DrawerSide;
-  /** Ширина у боковых, высота у нижнего. */
+  /** Width for side drawers, height for the bottom one. */
   size?: "sm" | "md" | "lg";
-  /** Подвал: кнопки действий. Прижат к низу и не уезжает при прокрутке. */
+  /** Footer: action buttons. Pinned to the bottom and does not scroll away. */
   footer?: ReactNode;
-  /** Доступное имя кнопки закрытия. Не задано — «Закрыть» из каталога сообщений. */
+  /** Accessible name of the close button. When not set, "Close" comes from the message catalog. */
   closeLabel?: string;
-  /** Классы на саму панель ящика — например, свою ширину. */
+  /** Classes for the drawer panel itself, for example its own width. */
   className?: string;
   /**
-   * Слой ящика. Отдельные оверлеи приложения живут выше обычных.
+   * Overlay layer of the drawer. Application-specific overlays sit above the usual ones.
    *
-   * Проп тот же и с тем же умолчанием, что у `Dialog`: оба стоят на одном
-   * примитиве Radix и оба обязаны уметь встать над чужим оверлеем. Пока его
-   * здесь не было, потребитель с собственным слоем выше `z-90` получал ящик
-   * ПОД своим же окном — причём подложку было не поднять вовсе, она брала
-   * `z-90` из зашитого класса.
+   * The prop is the same as on `Dialog`, with the same default: both are built on one
+   * Radix primitive and both must be able to stack above someone else's overlay. Until
+   * it existed here, a consumer with its own layer above `z-90` got the drawer BELOW its
+   * own dialog, and the scrim could not be raised at all: it took `z-90` from a hard-coded class.
    */
   zIndex?: string;
-  /** Содержимое ящика между шапкой и подвалом; прокручивается внутри. */
+  /** Drawer content between the header and the footer; scrolls inside. */
   children?: ReactNode;
 }
 
@@ -60,21 +59,21 @@ const SIZE_CLASS: Record<DrawerSide, Record<"sm" | "md" | "lg", string>> = {
 };
 
 /**
- * Выезжающая панель: те же обязанности, что у `Dialog`, другая геометрия.
+ * A sliding panel: the same job as `Dialog`, different geometry.
  *
- * СТОИТ НА ТОМ ЖЕ `@radix-ui/react-dialog`, а не заводит зависимость. Ящик — это
- * модальный слой: ловушка фокуса, возврат фокуса, `aria-modal`, портал, Escape
- * по стеку слоёв и замок прокрутки нужны ему ровно так же. Отличается он только
- * тем, откуда выезжает.
+ * BUILT ON THE SAME `@radix-ui/react-dialog` rather than adding a dependency. A drawer is a
+ * modal layer: the focus trap, focus return, `aria-modal`, the portal, Escape through the
+ * overlay layer stack and the scroll lock are needed here exactly as they are for a dialog.
+ * It differs only in the edge it slides in from.
  *
- * По той же причине здесь НЕ зовётся `useScrollLock`: замок внутри Radix
- * (`react-remove-scroll`), и второй счётчик на том же `body` не видел бы первый.
+ * For the same reason `useScrollLock` is NOT called here: the lock lives inside Radix
+ * (`react-remove-scroll`), and a second counter on the same `body` would not see the first.
  *
- * **На узком экране боковой ящик становится нижним.** Панель в 420 пикселей на
- * экране в 360 — это не «узкая панель», а окно, вылезшее за край: пользователь
- * видит обрезанное содержимое и не может прокрутить его вбок. Переключение
- * сделано классами (`max-sm:`), а не замером ширины в JS: замер даёт скачок
- * после первого кадра, и панель на глазах перепрыгивает.
+ * **On a narrow screen a side drawer becomes a bottom one.** A 420-pixel panel on a
+ * 360-pixel screen is not a "narrow panel" but a window pushed past the edge: the user
+ * sees clipped content and cannot scroll it sideways. The switch is done with classes
+ * (`max-sm:`), not by measuring the width in JS: a measurement jumps after the first frame,
+ * and the panel visibly jumps with it.
  */
 export function Drawer({
   open,
@@ -90,43 +89,40 @@ export function Drawer({
   children,
 }: DrawerProps) {
   /*
-   * Кто открыл ящик — тому и вернуть фокус при закрытии.
+   * Focus goes back to whoever opened the drawer when it closes.
    *
-   * Radix сам этого не делает, когда открытием управляют снаружи (`open` без
-   * `Dialog.Trigger`): возвращать ему некуда, и фокус уезжает на `body`.
-   * Пользователь с клавиатуры после закрытия оказывается в начале страницы.
+   * Radix does not do this itself when opening is controlled from outside (`open` without a
+   * `Dialog.Trigger`): it has nowhere to return focus, so focus falls to `body`. A keyboard
+   * user ends up at the top of the page after closing.
    *
-   * Ровно та же связка стоит в `Dialog` — ящик просто про неё забыли.
+   * The same pairing is in `Dialog`; the drawer simply forgot about it.
    */
   const contentRef = useRef<HTMLDivElement | null>(null);
   const { remember, restore } = useOpenerFocus(open, contentRef);
-  // Слой состоит в общем стеке — ADR-0041 обещает это для ВСЕХ модальных
-  // слоёв кита, а не только для подложки.
+  // The layer joins the shared stack: ADR-0041 promises this for ALL modal layers of the kit,
+  // not only for the scrim.
   useOverlayLayer(open, contentRef);
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(v) => !v && onClose()}>
       <Portal>
         {/*
-          ПАНЕЛЬ ЛЕЖИТ ВНУТРИ ПОДЛОЖКИ, А НЕ РЯДОМ С НЕЙ. Выглядит одинаково,
-          но это не косметика — от этого зависит прокрутка внутри ящика.
+          THE PANEL LIVES INSIDE THE SCRIM, NOT NEXT TO IT. It looks the same, but this is not
+          cosmetic: scrolling inside the drawer depends on it.
 
-          Замок прокрутки (`react-remove-scroll`) Radix вешает на ОВЕРЛЕЙ, а не
-          на контент: `shards: [contentRef]` в `DialogOverlayImpl`. Пока панель
-          была СОСЕДОМ подложки, она оказывалась вне поддерева замка — и любая
-          всплывающая панель, открытая изнутри ящика, теряла колесо мыши.
-          Событие не доходило до проверки «а можно ли тут крутить»: замок гасил
-          его в ветке «цель вне шардов» безусловно.
+          Radix puts the scroll lock (`react-remove-scroll`) on the OVERLAY, not on the content:
+          `shards: [contentRef]` in `DialogOverlayImpl`. While the panel was a SIBLING of the
+          scrim it sat outside the lock's subtree, and any popover opened from inside the drawer
+          lost the mouse wheel. The event never reached the check "may this scroll here": the
+          lock swallowed it unconditionally in the "target outside the shards" branch.
 
-          Видно это становится не сразу: панель `Select` с тремя пунктами в
-          высоту укладывается, и крутить в ней нечего. Дефект вылез на списке
-          из одиннадцати у продукта-потребителя.
+          This shows up late: a `Select` panel with three items fits its height and there is
+          nothing to scroll. The defect surfaced on a list of eleven in a consumer product.
 
-          Вложенность лечит это тем же способом, каким `Dialog` кита живёт с
-          самого начала: содержимое ящика попадает в React-поддерево замка, а
-          портированная панель наследует его через дерево React, а не через
-          DOM. Геометрию это не трогает: подложка — `fixed inset-0`, то есть
-          ровно вьюпорт, и `fixed` у панели считается от того же прямоугольника.
+          Nesting fixes it the same way `Dialog` in the kit has worked from the start: the drawer's
+          content falls into the React subtree of the lock, and a portaled panel inherits it through
+          the React tree, not through the DOM. The geometry is untouched: the scrim is `fixed inset-0`,
+          that is exactly the viewport, and the panel's `fixed` is computed from the same rectangle.
         */}
         <DialogPrimitive.Overlay
           className={cn("animate-fadein data-[state=closed]:animate-fadeout fixed inset-0", zIndex)}
@@ -135,21 +131,19 @@ export function Drawer({
           <DialogPrimitive.Content
             ref={contentRef}
             /*
-            Заслон против ЧУЖОГО Escape — тот же, что у `Dialog`, и до волны 26
-            его здесь не было вовсе.
+            A guard against a FOREIGN Escape: the same as in `Dialog`; until wave 26 it was not here at all.
 
-            Radix слушает `keydown` на `document` в фазе ЗАХВАТА, поэтому
-            `stopPropagation` внутри react-aria до неё не доходит принципиально,
-            а слой RAC в стек Radix не входит. Один Escape при открытом меню
-            внутри ящика закрывал и меню, и ящик — вместе с несохранённой
-            формой. Разбор — ADR-0041.
+            Radix listens for `keydown` on `document` in the CAPTURE phase, so `stopPropagation`
+            inside react-aria never reaches it, by design; and the RAC layer is not part of Radix's
+            stack. One Escape with a menu open inside the drawer closed both the menu and the drawer,
+            along with an unsaved form. Analysis: ADR-0041.
           */
             onEscapeKeyDown={(event) => {
               if (hasOpenAriaOverlay()) event.preventDefault();
             }}
-            // Обе проверки — «не `body`» и «не содержимое самого слоя» — переехали
-            // в `useOpenerFocus` вместе с остальной связкой: третья копия и была
-            // поводом её вынести.
+            // Both checks, "not `body`" and "not the layer's own content", moved into
+            // `useOpenerFocus` together with the rest of the pairing: a third copy was
+            // the reason to extract it.
             onOpenAutoFocus={remember}
             onCloseAutoFocus={restore}
             className={cn(
@@ -157,17 +151,16 @@ export function Drawer({
               zIndex,
               SIDE_CLASS[side],
               SIZE_CLASS[side][size],
-              // Узкий экран: боковой ящик уезжает вниз во всю ширину.
+              // Narrow screen: a side drawer slides down to full width.
               side !== "bottom" &&
                 "max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:h-[70vh] max-sm:w-full max-sm:rounded-t-lg max-sm:border-t max-sm:border-r-0 max-sm:border-l-0",
               className
             )}
           >
             {/*
-            Заголовок обязан быть `Dialog.Title` из Radix, а не своим `h2`:
-            из него берётся `aria-labelledby`, и без него ящик остаётся
-            безымянным — скринридер объявит «диалог» и замолчит. Та же связка,
-            что в `Dialog`.
+            The title must be Radix's `Dialog.Title`, not its own `h2`: `aria-labelledby` is taken
+            from it, and without it the drawer stays unnamed — the screen reader announces a dialog
+            and then falls silent. The same pairing as in `Dialog`.
           */}
             <ModalHeader
               title={title}

@@ -12,63 +12,61 @@ import { BUTTON_ICON_SIZE } from "../../lib/button.js";
 
 export interface TransferItem {
   /**
-   * Ключ элемента. Обязан быть уникальным в пределах `items`.
+   * Item key. Must be unique within `items`.
    *
-   * Дубликат кит не чинит и не сообщает о нём: два `ListBoxItem` с одним `id`
-   * схлопывает сама коллекция react-aria, и один из элементов молча пропадает
-   * с экрана. Уникальность — контракт потребителя.
+   * The kit neither repairs nor reports duplicates: two `ListBoxItem`s with the same `id` are
+   * collapsed by the react-aria collection itself, and one of them silently disappears from the
+   * screen. Uniqueness is the consumer's contract.
    */
   id: string;
-  /** Подпись элемента в колонке. */
+  /** Item label shown in the column. */
   label: string;
-  /** Элемент показан, но не переносится и не выбирается. */
+  /** The item is shown but cannot be moved or selected. */
   disabled?: boolean;
 }
 
 export interface TransferProps {
   /**
-   * Все элементы разом, независимо от того, в какой они сейчас колонке.
+   * All items at once, regardless of which column they are currently in.
    *
-   * Один список, а не два: два разъехались бы при первой же правке — элемент,
-   * забытый в обоих или пропавший из обоих, никак себя не проявит.
+   * One list, not two: two lists would drift apart at the first edit. An item forgotten in both,
+   * or lost from both, would show no symptom at all.
    */
   items: TransferItem[];
   /**
-   * Ключи, оказавшиеся в целевой колонке. Порядок значим и сохраняется:
-   * назначенные права показываются в том порядке, в каком их назначали.
+   * Keys that are in the target column. Order matters and is preserved: assigned permissions are
+   * shown in the order they were assigned.
    *
-   * Ключ, которого нет в `items`, кит **не выбрасывает**: он не показывается,
-   * не считается в счётчике и переживает переносы нетронутым. Выбросить его
-   * значило бы молча править чужое значение — а знать, почему потребитель
-   * прислал незнакомый ключ, кит не может.
+   * A key that is not in `items` is **not dropped** by the kit: it is not shown, not counted in
+   * the counter, and it survives moves untouched. Dropping it would silently rewrite a value the
+   * kit does not own, and the kit cannot know why the consumer sent an unknown key.
    */
   value: string[];
-  /** Вызывается при переносе и получает новый список ключей целевой колонки. */
+  /** Called on a move; receives the new list of target-column keys. */
   onChange: (value: string[]) => void;
-  /** Подпись левой колонки. Без неё берётся из каталога. */
+  /** Label of the left (source) column. Without it, the label comes from the message catalog. */
   sourceLabel?: string;
-  /** Подпись правой колонки. Без неё берётся из каталога. */
+  /** Label of the right (target) column. Without it, the label comes from the message catalog. */
   targetLabel?: string;
-  /** Поле поиска над каждым списком. */
+  /** Search field above each list. */
   searchable?: boolean;
   /**
-   * Гасит обе колонки и обе кнопки разом.
+   * Disables both columns and both buttons at once.
    *
-   * Отличается от `TransferItem.disabled`: тот про один элемент, который
-   * показан, но не переносится; этот про весь контрол — переносить нельзя
-   * ничего.
+   * Differs from `TransferItem.disabled`: that one is about a single item that is shown but cannot
+   * be moved; this one is about the whole control, where nothing can be moved.
    */
   disabled?: boolean;
   /**
-   * Доступное имя всей пары колонок. С ним контрол объявляется группой, без
-   * него — нет.
+   * Accessible name of the whole pair of columns. With it, the control is announced as a group;
+   * without it, it is not.
    *
-   * Без имени пользователь AT слышит два несвязанных списка и две стрелки между
-   * ними, и что это один вопрос, а не два, ниоткуда не следует. Безымянная
-   * группа при этом хуже её отсутствия — то же правило, что у `ButtonGroup`.
+   * Without a name, an AT user hears two unrelated lists and two arrows between them, and nothing
+   * tells them that this is one question, not two. An unnamed group is worse than no group at
+   * all, the same rule as for `ButtonGroup`.
    */
   "aria-label"?: string;
-  /** Классы на корневой элемент. */
+  /** Classes applied to the root element. */
   className?: string;
 }
 
@@ -78,32 +76,31 @@ const PANEL_CLASS =
 const LIST_CLASS = "flex flex-col gap-px overflow-y-auto p-1.5 outline-none";
 
 /**
- * Вид строки списка — общий с меню и палитрой (`lib/menu.ts`).
+ * Row style shared with the menu and the command palette (`lib/menu.ts`).
  *
- * Своя копия здесь была четвёртой в репозитории и единственной с
- * `focus-visible:` вместо `focus:`: у react-aria это `data-focused`, который
- * ставится и стрелками, и мышью, и разводить их значило бы показывать два
- * курсора сразу.
+ * A local copy here was the fourth in the repository, and the only one using `focus-visible:`
+ * instead of `focus:`. In react-aria the state is `data-focused`, which is set by both the arrow
+ * keys and the mouse; separating them would mean showing two cursors at once.
  */
 const ITEM_CLASS = LISTBOX_ITEM_CLASS;
 
 /**
- * Что именно уедет по нажатию стрелки: пересечение подсветки с тем, что в
- * колонке **сейчас видно**, за вычетом недоступного.
+ * What exactly moves when the arrow is pressed: the intersection of the highlight with what is
+ * **currently visible** in the column, minus disabled items.
  *
- * Три вещи, каждая из которых иначе даёт свой дефект.
+ * Three things, each of which would otherwise cause its own bug.
  *
- * `'all'` — не экзотика: `Ctrl`/`Cmd`+`A` внутри списка это штатная клавиша
- * `useSelectableCollection`, и она отдаёт именно строку, а не набор ключей.
- * Пустой ответ на неё гасил бы обе кнопки ровно в самом частом сценарии —
- * «выделить всё и перенести».
+ * `'all'` is not an edge case: `Ctrl`/`Cmd`+`A` inside a list is the standard
+ * `useSelectableCollection` shortcut, and it yields the string `'all'`, not a set of keys. An empty
+ * answer to it would disable both buttons in the most common scenario: select everything and move
+ * it.
  *
- * Пересечение с колонкой — от рассинхрона: подсветка живёт внутри и переживает
- * внешнюю смену `value`. Ключ, уехавший в другую колонку чужой правкой,
- * остался бы «переносимым» и приехал бы в `value` вторым экземпляром.
+ * Intersecting with the column guards against drift: the highlight lives inside the component and
+ * survives an external change of `value`. A key moved to the other column by an outside edit would
+ * otherwise stay "movable" and arrive in `value` a second time.
  *
- * Пересечение именно с ВИДИМЫМ — от поиска: кнопка не должна переносить то,
- * чего на экране нет. Пользователь отвечает за то, что видит.
+ * Intersecting specifically with what is VISIBLE guards against search: the button must not move
+ * what is not on screen. The user acts on what they see.
  */
 function movableKeys(selection: Selection, visible: TransferItem[]): string[] {
   const ids = visible.filter((item) => !item.disabled).map((item) => item.id);
@@ -112,7 +109,7 @@ function movableKeys(selection: Selection, visible: TransferItem[]): string[] {
   return ids.filter((id) => picked.has(id));
 }
 
-/** Отбор по подстроке, регистр не важен. */
+/** Filters by substring; case-insensitive. */
 function filterItems(list: TransferItem[], query: string): TransferItem[] {
   if (!query) return list;
   const needle = query.toLowerCase();
@@ -120,26 +117,25 @@ function filterItems(list: TransferItem[], query: string): TransferItem[] {
 }
 
 /**
- * Две колонки и перенос между ними: доступное слева, выбранное справа.
+ * Two columns with moves between them: available on the left, selected on the right.
  *
- * Списки — `ListBox` из react-aria: клавиатура, типизация по первым буквам,
- * множественное выделение и роли приходят оттуда, своей коллекции компонент не
- * заводит.
+ * The lists are react-aria `ListBox`es: keyboard handling, type-ahead, multiple selection and
+ * roles come from there; the component does not create a collection of its own.
  *
- * СОБСТВЕННОЕ РЕШЕНИЕ ЗДЕСЬ ОДНО, И ОНО ПРО ФОКУС. После переноса выделенные
- * элементы из списка исчезают — вместе с элементом, на котором стоял фокус.
- * react-aria на этот случай ответа не даёт: у неё коллекция сменилась, и фокус
- * уходит на `body`, то есть в начало документа.
+ * THERE IS ONE COMPONENT-SPECIFIC DECISION HERE, AND IT IS ABOUT FOCUS. After a move, the moved
+ * items disappear from the list, together with the item that had focus. react-aria gives no
+ * answer for this case: its collection has changed, and focus falls back to `body`, that is, to
+ * the top of the document.
  *
- * Правило компонента: **фокус идёт за элементами**. Он переходит в список, куда
- * они переехали, а сами перенесённые становятся там выделением. Отсюда сразу
- * работает возврат: нажать «назад» можно не выделяя заново. Альтернатива —
- * оставить фокус на кнопке — ломается на первом же полном переносе: кнопка
- * гаснет, потому что переносить больше нечего, и фокус всё равно теряется.
+ * The component's rule: **focus follows the items**. It moves to the list the items were moved to,
+ * and the moved items become the selection there. This makes moving back work right away: you can
+ * press the back button without selecting again. The alternative, leaving focus on the button,
+ * breaks on the first full move: the button gets disabled because there is nothing left to move,
+ * and focus is lost anyway.
  *
- * Выделение (что подсвечено) и значение (что в какой колонке) — РАЗНЫЕ вещи, и
- * компонент их не смешивает: подсветка живёт внутри и не переживает перенос,
- * значение приходит и уходит пропами.
+ * Selection (what is highlighted) and value (what is in which column) are DIFFERENT things, and
+ * the component does not mix them: the highlight lives inside the component and does not survive a
+ * move, while the value comes and goes through props.
  */
 export function Transfer({
   items,
@@ -161,17 +157,17 @@ export function Transfer({
   const targetList = useRef<HTMLDivElement>(null);
   const headingId = useId();
 
-  // Счётчик переносов, а не `value`: потребитель управляемого компонента вправе
-  // отклонить изменение, и тогда `value` не сменится — а фокус увести всё равно
-  // надо, иначе он останется на исчезнувшем элементе.
+  // A move counter rather than `value`: a consumer of a controlled component may reject a change,
+  // in which case `value` does not change, but focus still has to be moved, or it would stay on an
+  // item that has disappeared.
   const [moves, setMoves] = useState(0);
   const pending = useRef<{ side: "source" | "target"; key: string } | null>(null);
 
   const byId = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
   const chosen = useMemo(() => new Set(value), [value]);
 
-  // Порядок целевой колонки задаёт `value`, а не `items`: он и есть порядок
-  // назначения. Исходная колонка, наоборот, идёт в порядке `items`.
+  // The order of the target column is set by `value`, not by `items`: it is the assignment order.
+  // The source column, conversely, follows the order of `items`.
   const source = items.filter((item) => !chosen.has(item.id));
   const target = value.map((id) => byId.get(id)).filter((item) => item !== undefined);
 
@@ -182,12 +178,12 @@ export function Transfer({
   const toSource = movableKeys(targetPicked, targetShown);
 
   /*
-    Фокус переводится ПОСЛЕ коммита, а не в обработчике.
+    Focus is moved AFTER the commit, not in the handler.
 
-    Синхронный `focus()` попадает в ещё старую коллекцию: react-aria делегирует
-    фокус с контейнера внутрь по первому выделенному ключу, а нового выделения
-    в тот момент ещё нет. Фокус вставал на случайный элемент, лежавший в колонке
-    до переноса, — то есть ровно мимо правила «фокус идёт за элементами».
+    A synchronous `focus()` lands in the still-old collection: react-aria delegates focus from the
+    container to the first selected key inside it, and at that moment there is no new selection
+    yet. Focus would land on a random item that was in the column before the move, that is, exactly
+    against the "focus follows the items" rule.
   */
   useEffect(() => {
     const next = pending.current;
@@ -195,25 +191,24 @@ export function Transfer({
     pending.current = null;
 
     /*
-      Кадром позже, а не сразу в эффекте.
+      One frame later, not synchronously in the effect.
 
-      `ListBox` строит свою коллекцию отдельным проходом, и на момент этого
-      эффекта она ещё прежняя: перенесённого элемента в ней нет, зато есть тот,
-      что лежал в колонке до переноса. Синхронная наводка попадала именно в
-      него — фокус вставал на случайный старый элемент вместо приехавшего.
+      `ListBox` builds its collection in a separate pass, and at the time of this effect the
+      collection is still the old one: the moved item is not in it yet, but the item that was in the
+      column before the move is. A synchronous focus call hit exactly that one: focus landed on a
+      random old item instead of the one that had arrived.
     */
     const frame = requestAnimationFrame(() => {
       const list = (next.side === "target" ? targetList : sourceList).current;
       if (!list) return;
-      // Опция ищется перебором `data-key`, а не селектором: ключ приходит от
-      // потребителя и может содержать что угодно, а `CSS.escape` есть не во
-      // всяком окружении.
+      // The option is found by scanning `data-key` attributes rather than by a selector: the key
+      // comes from the consumer and may contain anything, and `CSS.escape` is not available in
+      // every environment.
       const option = [...list.querySelectorAll<HTMLElement>("[data-key]")].find(
         (node) => node.getAttribute("data-key") === next.key
       );
-      // Контейнер — запасной путь: если приехавший элемент отфильтрован
-      // поиском принимающей колонки, наводить не на что, но и отпускать фокус
-      // на `body` нельзя.
+      // The container is the fallback: if the arrived item is filtered out by the receiving
+      // column's search, there is nothing to focus, but focus must not be released to `body`.
       (option ?? list).focus();
     });
     return () => cancelAnimationFrame(frame);
@@ -262,10 +257,10 @@ export function Transfer({
             {label}
           </span>
           {/*
-            Счётчик — всё, что лежит в колонке, а не то, что осталось после
-            поиска: он отвечает на вопрос «сколько всего прав доступно», а
-            фильтр это лишь взгляд на них. Он же входит в имя списка, иначе
-            число на экране есть, а в речи его нет.
+            The counter shows everything in the column, not what is left after the search: it
+            answers "how many permissions are available in total", and the filter is just a view
+            of them. It is also part of the list name, otherwise the number is on screen but not
+            in speech.
           */}
           <span id={countId} className="text-fg-2 text-caption">
             {total}

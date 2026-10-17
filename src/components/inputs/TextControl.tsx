@@ -16,103 +16,91 @@ import {
 } from "../../lib/field.js";
 
 export interface TextControlProps extends Omit<ComponentPropsWithoutRef<"input">, "size"> {
-  /** `input` — однострочное поле, `textarea` — многострочное. */
+  /** `input` — a single-line field, `textarea` — a multi-line one. */
   as?: "input" | "textarea";
   /**
-   * Ступень высоты: `md` — 42 пикселя, `sm` — 36.
+   * Size step: `md` — 42 pixels, `sm` — 36.
    *
-   * Тридцать шесть — рост `Button size="md"` и пилюли-триггера `Select`: в
-   * одной строке панели управления поле до этой ступени выпадало из ряда в
-   * одиночку. Меняется ровно вертикальный отступ; рамка, скругление, тень,
-   * шрифт и строчный бокс те же.
+   * Thirty-six is the height of `Button size="md"` and of the `Select` trigger pill: in a single row of
+   * a toolbar, a field at this step stuck out of the row on its own. Only the vertical padding changes;
+   * the frame, corner radius, shadow, font and line box stay the same.
    *
-   * ТОЛЬКО ДЛЯ ОДНОСТРОЧНОГО ПОЛЯ. У `as="textarea"` высотой распоряжаются
-   * `rows` и `autosize`, и ступень там означала бы третью систему, спорящую с
-   * ними за одно и то же число.
+   * FOR SINGLE-LINE FIELDS ONLY. With `as="textarea"` the height is controlled by `rows` and `autosize`,
+   * and a step there would be a third system competing with them for the same number.
    */
   size?: "sm" | "md";
-  /** Высота в строках. Имеет смысл только при `as="textarea"`. */
+  /** Height in rows. Only meaningful with `as="textarea"`. */
   rows?: number;
-  /** Классы на оболочку с рамкой — ширина, скругление, внутренние отступы. */
+  /** Classes for the framed shell: width, corner radius, inner padding. */
   shellClassName?: string;
-  /** Иконка слева внутри рамки: лупа у поиска, единица измерения у числа. */
+  /** Icon on the left inside the frame: a magnifier for search, a unit for a number. */
   icon?: ReactNode;
-  /** Элемент справа внутри рамки: кнопка очистки, счётчик символов. */
+  /** Element on the right inside the frame: a clear button, a character counter. */
   trailing?: ReactNode;
   /**
-   * Подложка под значением, в той же строке: трафарет маски, подсказка формата.
+   * Underlay behind the value, on the same line: a mask guide, a format hint.
    *
-   * Не слот рядом с полем, а слой под ним — поэтому и не `icon`/`trailing`.
-   * Выравнивание держится тем, что подложка несёт тот же `FIELD_INPUT_CLASS`,
-   * что и поле, и лежит с ним в одной ячейке сетки: отступы и типографика
-   * совпадают по построению, а не по подгонке. Эталонная реализация USWDS
-   * ставит такой слой абсолютно, с необъяснённым `left: 2px`, — и ломается на
-   * первом же поле с иконкой.
+   * Not a slot next to the field but a layer under it — which is why it is not `icon`/`trailing`.
+   * Alignment holds because the underlay carries the same `FIELD_INPUT_CLASS` as the field and sits
+   * with it in the same grid cell: padding and typography match by construction, not by adjustment.
+   * The USWDS reference implementation places such a layer absolutely, with an unexplained
+   * `left: 2px`, and breaks on the first field with an icon.
    *
-   * ЧИТАТЬ ЕЁ НЕЧЕГО: `aria-hidden` вешает сам компонент. Слой под значением
-   * повторяет то, что уже сказано подписью и подсказкой; прочитанный вслух, он
-   * дал бы «подчёркивание подчёркивание подчёркивание» посреди поля.
+   * THERE IS NOTHING TO READ IN IT: the component sets `aria-hidden` itself. The layer under the value
+   * repeats what the caption and hint already say; read aloud, it would produce "underscore underscore
+   * underscore" in the middle of the field.
    *
-   * Кликов и выделения не перехватывает — иначе поле переставало бы
-   * фокусироваться по щелчку в собственный текст.
+   * It does not intercept clicks or selection — otherwise the field would stop focusing on a click into
+   * its own text.
    *
-   * Только для однострочного поля: вместе с `autosize` не действует, потому что
-   * ту же ячейку сетки занимает зеркало, считающее высоту.
+   * Only for single-line fields: it has no effect together with `autosize`, because the mirror that
+   * measures the height occupies the same grid cell.
    */
   underlay?: ReactNode;
   /**
-   * Растёт по содержимому. Имеет смысл только при `as="textarea"`.
+   * Grows with its content. Only meaningful with `as="textarea"`.
    *
-   * `rows` при этом становится МИНИМУМОМ, а не фиксированной высотой, и ручная
-   * тяга за угол выключается: две системы, одновременно распоряжающиеся высотой,
-   * дают поле, которое схлопывается после каждого нажатия.
+   * `rows` becomes a MINIMUM here rather than a fixed height, and manual corner resizing is turned off:
+   * two systems controlling the height at once produce a field that collapses after every keystroke.
    */
   autosize?: boolean;
-  /** Предел роста в строках; дальше появляется прокрутка. Только с `autosize`. */
+  /** Growth limit in rows; beyond it a scrollbar appears. Only with `autosize`. */
   maxRows?: number;
   /**
-   * Счётчик символов. С `maxLength` показывает «N/M», без него — просто «N».
+   * Character counter. With `maxLength` it shows "N/M", without it just "N".
    *
-   * Компилятор `maxLength` не требует: союзный тип ради этого сломал бы `Omit`
-   * в обёртках — тот же случай, что у `Checkbox.label`. Да и «сколько уже
-   * набрано» осмысленно само по себе, без предела.
+   * The compiler does not require `maxLength`: a union type made for that would break `Omit` in wrappers —
+   * the same case as `Checkbox.label`. And "how much has been typed" makes sense on its own, without a limit.
    */
   showCount?: boolean;
 }
 
 /**
- * Текстовое поле: рамка живёт на оболочке, а не на самом `input`.
+ * Text field: the frame lives on the shell, not on the `input` itself.
  *
- * Разделение не косметическое. Рамка на оболочке позволяет положить внутрь
- * иконку или счётчик символов, не воюя с браузерным оформлением поля; сам
- * `input` при этом полностью обнулён (`appearance: none`, снятые тени и
- * контуры) — иначе Safari и Chrome рисуют разное.
+ * The split is not cosmetic. A frame on the shell lets you put an icon or a character counter inside without
+ * fighting the browser's own styling of the field; the `input` itself is fully reset (`appearance: none`,
+ * no shadows or outlines), otherwise Safari and Chrome draw it differently.
  *
- * Подсветка фокуса — на оболочке через `focus-within`, и цвет берётся из
- * `--accent-strong`, а не из `--accent`: индикатор фокуса это не-текст под
- * порогом 3:1, а `--accent` рассчитан на белый текст поверх и на подложке
- * тусклее нужного.
+ * The focus highlight is on the shell via `focus-within`, and the color comes from `--accent-strong`, not
+ * `--accent`: the focus indicator is a non-text element under the 3:1 threshold, while `--accent` is designed
+ * for text on top and on the underlay it is dimmer than needed.
  *
- * `icon` и `trailing` — те самые слоты, ради которых рамка вынесена на
- * оболочку. Раскладка переключается на `flex` только когда слот действительно
- * передан: голое поле обязано давать ту же разметку, что и до появления
- * слотов, иначе визуальный бейзлайн разъезжается на компоненте, который никто
- * не трогал.
+ * `icon` and `trailing` are exactly the slots the frame was moved to the shell for. The layout switches to
+ * `flex` only when a slot is actually passed: a bare field must produce the same markup as before slots
+ * appeared, otherwise the visual baseline shifts on a component that nobody touched.
  *
- * Цвет иконки задаётся на обёртке слота, а не на самой иконке: словарь
- * `@olddevs/ui/icons` рисует `currentColor`, и потребителю, которому нужен другой
- * цвет, достаточно передать иконку с собственным классом.
+ * The icon's color is set on the slot's wrapper, not on the icon itself: the `@olddevs/ui/icons` set draws
+ * `currentColor`, so a consumer who needs another color only has to pass an icon with its own class.
  *
- * ВЫКЛЮЧЕННОЕ СОСТОЯНИЕ ГАСИТСЯ НА ОБОЛОЧКЕ (см. `lib/field.ts`), а не на
- * самом поле. `disabled:opacity-50` на `input` приглушил бы только текст, а
- * рамка осталась бы такой же яркой, как у соседнего рабочего поля — то есть
- * ровно того сигнала, который отличает выключенное поле от пустого, и не было
- * бы. До этой правки состояния не было вовсе: в матрице строка «выключено»
- * отличалась от обычной только тем, что в неё нельзя печатать.
+ * THE DISABLED STATE IS DIMMED ON THE SHELL (see `lib/field.ts`), not on the field itself. `disabled:opacity-50`
+ * on the `input` would dim only the text, while the frame would stay as bright as a neighboring working field —
+ * that is, exactly the signal that tells a disabled field from an empty one would be missing. Before this fix
+ * there was no state at all: in the matrix, the "disabled" row differed from the normal one only in that you
+ * could not type into it.
  *
- * `readOnly` намеренно не гасится: поле только для чтения — это показанное
- * значение, а не недоступный контрол, и приглушать его значит прятать данные,
- * которые показаны специально.
+ * `readOnly` is deliberately not dimmed: a read-only field is a shown value, not an unavailable control, and
+ * dimming it would hide data that is shown on purpose.
  */
 export const TextControl = forwardRef<HTMLInputElement, TextControlProps>(function TextControl(
   {
@@ -134,35 +122,34 @@ export const TextControl = forwardRef<HTMLInputElement, TextControlProps>(functi
   const Comp = as as "input";
   const grows = autosize === true && as === "textarea";
   /*
-    Ступень идёт ВО ВСЕ ТРИ копии `FIELD_INPUT_CLASS` — поле, зеркало автороста
-    и подложку маски: у них общая типографика и общие отступы, и разойтись им
-    нельзя, иначе остаток маски уедет относительно набранного. Многострочное
-    поле ступени не знает: там высотой распоряжаются `rows` и `autosize`.
+    The size step goes into ALL THREE copies of `FIELD_INPUT_CLASS` — the field, the autosize mirror and the
+    mask underlay: they share typography and padding and must not diverge, or the rest of the mask would drift
+    away from the typed text. A multi-line field does not know the size step: there the height is controlled
+    by `rows` and `autosize`.
   */
   const compact = size === "sm" && as === "input" ? FIELD_INPUT_COMPACT_CLASS : undefined;
 
-  // Текст нужен зеркалу и счётчику. Управляемое поле отдаёт его пропом,
-  // неуправляемое — только через события, поэтому второй источник заводится
-  // ЛЕНИВО: без `autosize` и без `showCount` ни состояния, ни обёртки над
-  // `onChange` не появляется, и разметка обычного поля остаётся прежней.
+  // The text is needed by the mirror and the counter. A controlled field hands it over as a prop; an
+  // uncontrolled one only through events, so the second source is set up LAZILY: without `autosize` and
+  // without `showCount` neither state nor a wrapper around `onChange` appears, and the markup of a plain
+  // field stays the same.
   const [inner, setInner] = useState(() => String(rest.defaultValue ?? ""));
   const tracks = grows || showCount === true;
   const text = rest.value !== undefined ? String(rest.value) : inner;
 
   /*
-    Подсказка или ошибка `FormField`. СЛИВАЕТСЯ с описанием, пришедшим пропом,
-    а не заменяет его: `aria-describedby` — список, и потребитель, описавший
-    поле своим узлом, вправе рассчитывать, что тот никуда не денется.
+    The hint or error from `FormField`. MERGED with the description passed as a prop, not replacing it:
+    `aria-describedby` is a list, and a consumer who described the field with its own node is entitled to
+    expect that node to stay.
 
-    Вне `FormField` значение `undefined`, спред пустой, и разметка та же, что
-    и до появления описаний.
+    Outside `FormField` the value is `undefined`, the spread is empty, and the markup is the same as before
+    descriptions existed.
   */
   const fieldDescribedBy = useFieldDescribedBy();
   /*
-    Невалидность объявляет раскладка формы, но ЯВНЫЙ проп сильнее: потребитель
-    знает про своё поле больше, чем `FormField`. Без этого `FIELD_SHELL_CLASS`
-    не мог покраснеть — он ищет `aria-invalid` на самом поле, а ставить его
-    было некому.
+    Invalidity is declared by the form layout, but an EXPLICIT prop takes precedence: the consumer knows more
+    about its own field than `FormField` does. Without this, `FIELD_SHELL_CLASS` could not turn red — it looks
+    for `aria-invalid` on the field itself, and nothing was setting it.
   */
   const fieldInvalid = useFieldInvalid();
   const invalid = rest["aria-invalid"] ?? (fieldInvalid || undefined);
@@ -170,23 +157,21 @@ export const TextControl = forwardRef<HTMLInputElement, TextControlProps>(functi
     [rest["aria-describedby"], fieldDescribedBy].filter(Boolean).join(" ") || undefined;
 
   const counter = showCount ? (
-    // `text-fg-2`, а не `text-fg-3`: счётчик стоит ВНУТРИ поля, на `bg-2`, а
-    // не на фоне страницы. `fg-3` рассчитан на второе и на первом даёт 4.0 при
-    // требуемых 4.5 — нашёл аудит axe.
+    // `text-fg-2`, not `text-fg-3`: the counter sits INSIDE the field, on `bg-2`, not on the page background.
+    // `fg-3` is meant for the latter and gives 4.0 on the former where 4.5 is required — an axe audit found it.
     <span className="text-fg-2 shrink-0 text-[11px] tabular-nums">
       {rest.maxLength != null ? `${text.length}/${rest.maxLength}` : text.length}
     </span>
   ) : null;
 
-  // У однострочного поля счётчик встаёт в слот справа, у многострочного — под
-  // текстом: в строке он отъедал бы ширину у самого длинного значения.
+  // In a single-line field the counter goes into the slot on the right; in a multi-line one, under the text:
+  // inline, it would eat width from the longest value.
   /*
-    Счётчик и `trailing` стоят РЯДОМ, а не вытесняют друг друга.
+    The counter and `trailing` stand SIDE BY SIDE, not replacing each other.
 
-    Было `counter ?? trailing`: при `showCount` переданный `trailing` не попадал
-    в разметку вовсе и без предупреждения — кнопка очистки просто исчезала. На
-    `textarea` тот же вызов работал, потому что счётчик уезжает вниз, и
-    расхождение между двумя формами одного компонента ничем не объяснялось.
+    It used to be `counter ?? trailing`: with `showCount`, a passed `trailing` never reached the markup, and
+    silently — the clear button simply vanished. On `textarea` the same call worked, because the counter moves
+    down there, and the difference between the two forms of one component was unexplained.
   */
   const inlineTrailing =
     as === "input" && counter != null ? (
@@ -203,28 +188,27 @@ export const TextControl = forwardRef<HTMLInputElement, TextControlProps>(functi
     <Comp
       ref={ref}
       {...(as === "textarea" && rows ? { rows } : {})}
-      // Глобальное правило `:focus-visible` в styles.css рисует контур вокруг
-      // самого поля — здесь он лишний, подсветку даёт оболочка.
+      // The global `:focus-visible` rule in styles.css draws an outline around the field itself — here it is
+      // redundant, the shell provides the highlight.
       data-disable-focus-ring="true"
       className={cn(
         FIELD_INPUT_CLASS,
         as === "textarea" && !grows && "min-h-[96px] resize-y",
-        // Тяга за угол выключена: высотой распоряжается содержимое, и две
-        // системы, одновременно ею командующие, дают поле, которое схлопывается
-        // после каждого нажатия.
+        // Corner resizing is turned off: the content controls the height, and two systems commanding it at
+        // once give a field that collapses after every keystroke.
         grows && "col-start-1 row-start-1 resize-none overflow-y-auto",
-        // Поле ложится поверх подложки: фон у него прозрачный, и сквозь него
-        // виден остаток маски, а набранное рисуется самим полем.
+        // The field lies over the underlay: its background is transparent, so the rest of the mask shows
+        // through, and the typed text is drawn by the field itself.
         underlay != null && "col-start-1 row-start-1",
-        // `w-full` сам по себе не ужимается ниже содержимого — рядом со
-        // слотами поле выдавило бы крестик за рамку на длинном значении.
+        // `w-full` alone does not shrink below its content — next to the slots the field would push the clear
+        // button outside the frame on a long value.
         hasSlots && "min-w-0 flex-1",
         compact,
         className
       )}
       {...rest}
-      // После спреда: значение слито выше, и спред не должен его вытеснить —
-      // тот же порядок, что у `onChange` ниже.
+      // After the spread: the value was merged above, and the spread must not override it — the same order as
+      // `onChange` below.
       {...(fieldDescribedBy ? { "aria-describedby": describedBy } : {})}
       {...(invalid != null ? { "aria-invalid": invalid } : {})}
       {...(tracks
@@ -241,7 +225,7 @@ export const TextControl = forwardRef<HTMLInputElement, TextControlProps>(functi
   return (
     <div
       className={cn(
-        // Классы оболочки и поля общие с `NumberInput` — см. `lib/field.ts`.
+        // The shell and field classes are shared with `NumberInput` — see `lib/field.ts`.
         FIELD_SHELL_CLASS,
         as === "textarea" && "py-0.5",
         hasSlots && "flex items-center gap-2",
@@ -251,21 +235,18 @@ export const TextControl = forwardRef<HTMLInputElement, TextControlProps>(functi
       {icon != null && <span className="text-fg-3 flex shrink-0 items-center">{icon}</span>}
       {grows ? (
         /*
-          Зеркало вместо измерения высоты.
+          A mirror instead of measuring the height.
 
-          Обычный способ — на каждое нажатие сбросить height в auto, прочитать
-          `scrollHeight` и выставить обратно; это принудительный пересчёт
-          раскладки в обработчике ввода, то есть на каждый символ. Здесь высоту
-          считает сам браузер: невидимый близнец с той же типографикой лежит в
-          той же ячейке грида и задаёт её высоту, а поле растянуто на ячейку.
-          JS-измерений ноль.
+          The usual way is to reset `height` to auto on every keystroke, read `scrollHeight` and set it back;
+          that is a forced layout recalculation inside the input handler, that is, on every character. Here the
+          browser computes the height itself: an invisible twin with the same typography sits in the same grid
+          cell and sets its height, and the field is stretched to fill the cell. Zero JS measurements.
 
-          Хвостовой перевод строки обязателен: без него последняя пустая строка
-          не учитывается, и поле дёргается на каждом Enter.
+          The trailing newline is required: without it the last empty line is not counted, and the field jumps
+          on every Enter.
 
-          `maxRows` в строках, а не в пикселях, потому что предел задаётся
-          единицей `lh` — высотой строки этого самого поля. Пересчитывать её в
-          пиксели пришлось бы вручную и заново при каждой смене шрифта.
+          `maxRows` is in rows, not pixels, because the limit is set in the `lh` unit — the line height of this
+          very field. Converting it to pixels would mean doing it by hand, again with every font change.
         */
         <div
           className="grid w-full"
@@ -277,15 +258,13 @@ export const TextControl = forwardRef<HTMLInputElement, TextControlProps>(functi
             className={cn(
               FIELD_INPUT_CLASS,
               "invisible col-start-1 row-start-1 break-words whitespace-pre-wrap",
-              // Потолок стоит НА ЗЕРКАЛЕ, а не на гриде: высоту ячейки задаёт
-              // зеркало, и ограничение контейнера дорожку не сжимает — поле
-              // просто вылезло бы наружу. Здесь же `1lh` разрешается по строке
-              // самого зеркала, а его типографика совпадает с полем; на гриде
-              // это была строка контейнера, то есть другое число.
+              // The cap sits ON THE MIRROR, not on the grid: the mirror sets the cell's height, and a container
+              // limit does not shrink the track — the field would simply overflow. Here `1lh` resolves against
+              // the mirror's own line, and its typography matches the field; on the grid it would be the
+              // container's line, which is a different number.
               //
-              // `+1.25rem` компенсирует `py-[10px]` из `FIELD_INPUT_CLASS`:
-              // `box-sizing: border-box`, и без добавки предел в четыре строки
-              // показывал бы три с половиной.
+              // `+1.25rem` compensates for `py-[10px]` from `FIELD_INPUT_CLASS`: with `box-sizing: border-box`,
+              // without the addition a four-row limit would show three and a half rows.
               maxRows != null && "max-h-[calc(var(--tc-max-rows)*1lh+1.25rem)] overflow-hidden",
               compact,
               className
@@ -296,16 +275,15 @@ export const TextControl = forwardRef<HTMLInputElement, TextControlProps>(functi
         </div>
       ) : underlay != null ? (
         /*
-          Подложка и поле — в одной ячейке сетки, а не друг поверх друга через
-          `position: absolute`. Отступы и типографика приходят обоим одним и тем
-          же `FIELD_INPUT_CLASS`, поэтому начало текста совпадает по построению:
-          подгонять нечего, и подгонка не разъедется при смене шкалы или шрифта.
+          The underlay and the field sit in one grid cell, not on top of each other via `position: absolute`.
+          Padding and typography come to both from the same `FIELD_INPUT_CLASS`, so the start of the text matches
+          by construction: there is nothing to adjust, and the adjustment would not drift when the type scale or
+          font changes.
 
-          `whitespace-pre` обязателен: в маске есть пробелы (`+7 (___) ___`), и
-          схлопывание их сдвинуло бы остаток влево относительно набранного.
+          `whitespace-pre` is required: the mask has spaces (`+7 (___) ___`), and collapsing them would shift the
+          rest to the left relative to the typed text.
 
-          Подложка идёт ПЕРВОЙ, то есть под полем: иначе она закрыла бы и текст,
-          и каретку.
+          The underlay comes FIRST, that is, below the field: otherwise it would cover both the text and the caret.
         */
         <div className={cn("grid w-full", hasSlots && "min-w-0 flex-1")}>
           <div

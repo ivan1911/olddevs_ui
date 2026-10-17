@@ -6,47 +6,46 @@ import { cn } from "../../lib/cn.js";
 import { useMessages } from "../../i18n/useMessages.js";
 
 export interface Step {
-  /** Стабильный идентификатор шага, ключ списка. */
+  /** Stable step identifier; the list key. */
   id: string;
-  /** Подпись шага. */
+  /** Step label. */
   label: string;
-  /** Короткое пояснение под подписью. */
+  /** Short note under the label. */
   hint?: ReactNode;
 }
 
 export interface StepperProps {
-  /** Шаги мастера по порядку. */
+  /** Wizard steps, in order. */
   steps: Step[];
-  /** Индекс текущего шага, с нуля. */
+  /** Index of the current step, counted from zero. */
   current: number;
   /**
-   * Вызывается по клику на пройденный шаг и получает его индекс.
+   * Called on a click on a completed step, with that step's index.
    *
-   * Не задан — шаги некликабельны вовсе, и это умолчание. Вернуться назад
-   * можно **только на пройденный** шаг: будущий шаг требует данных, которых
-   * ещё нет, и пустить туда — значит показать форму, которая не сможет
-   * ни отправиться, ни объяснить, чего ей не хватает.
+   * If not set, the steps are not clickable at all, and that is the default. You can go back
+   * **only to a completed** step: a future step needs data that does not exist yet, and letting
+   * the user into it would show a form that could neither be submitted nor explain what it lacks.
    *
-   * Мастер, где возвращаться нельзя вовсе (оплата, необратимый импорт),
-   * просто не передаёт колбэк.
+   * A wizard that must not go back at all (payment, an irreversible import) simply does not pass
+   * this callback.
    */
   onStepClick?: (index: number) => void;
-  /** Направление ряда: `horizontal` — шаги в строку (по умолчанию), `vertical` — в колонку. */
+  /** Direction of the row: `horizontal` puts the steps in a line (default), `vertical` in a column. */
   orientation?: "horizontal" | "vertical";
-  /** Дополнительные классы на `nav`. */
+  /** Extra classes on the `nav`. */
   className?: string;
-  /** Доступное имя навигации. По умолчанию берётся из словаря сообщений. */
+  /** Accessible name of the navigation. Defaults to the message catalog value. */
   "aria-label"?: string;
 }
 
 /**
- * Шаги мастера: где пользователь сейчас и сколько осталось.
+ * Wizard steps: where the user is now and how many remain.
  *
- * Собран руками: в react-aria такого компонента нет, а из поведения здесь —
- * только переход по клику, который целиком принадлежит вызывающему.
+ * Built by hand: react-aria has no such component. Of the behavior here, only the click-to-navigate
+ * belongs to the caller, and it belongs to the caller entirely.
  *
- * Разметка — упорядоченный список внутри `nav`: шаги идут по порядку, и
- * скринридер обязан сообщить и порядок, и общее число. Текущий помечается
+ * The markup is an ordered list inside `nav`: the steps go in order, and the screen reader must
+ * announce both the order and the total count. The current step is marked with
  * `aria-current="step"`.
  */
 export function Stepper({
@@ -79,10 +78,10 @@ export function Stepper({
                 className={cn(
                   "text-caption flex size-6 shrink-0 items-center justify-center rounded-full border font-semibold",
                   done && "border-accent-strong bg-accent-soft text-accent-strong",
-                  // `text-text-on-accent`, а не `text-on-accent`: второго класса не
-                  // существует вовсе, и номер активного шага красился ничем
-                  // поверх акцентной заливки. Поймала матрица покрытия классов —
-                  // ровно то, ради чего она заведена.
+                  // `text-text-on-accent`, not `text-on-accent`: the second class does not exist
+                  // at all, so the number of the active step was painted with nothing on top of
+                  // the accent fill. The class-coverage matrix caught it, which is exactly why it
+                  // was set up.
                   active && "border-accent-strong bg-accent text-text-on-accent",
                   !done && !active && "border-line text-fg-3"
                 )}
@@ -90,18 +89,18 @@ export function Stepper({
                 {done ? <CheckIcon size={12} /> : index + 1}
               </span>
               {/*
-                Состояние шага — ТЕКСТОМ, а не только кружком.
+                The step state is TEXT, not only the circle.
 
-                Кружок с номером или галочкой помечен `aria-hidden`, а больше
-                признак «пройден / текущий / впереди» нигде не выражен: у `li`
-                есть только `aria-current` у активного. Скринридер читал мастер
-                из пяти одинаковых пунктов и текущий — какие уже заполнены, а
-                какие впереди, не сообщалось никак.
+                The circle with a number or a check mark is marked `aria-hidden`, and nothing else
+                expresses "completed / current / upcoming": the `li` has only `aria-current` on the
+                active item. A screen reader read a wizard of five identical items, and it
+                announced no difference between the ones already filled in, the current one, and
+                the ones still ahead.
               */}
               {/*
-                Текущий шаг СВОЕЙ строки не получает: его объявляет
-                `aria-current="step"` на `li`, и вторая строка давала «current
-                step, current step, Оплата» — состояние читалось дважды.
+                The current step does not get a row of its own: `aria-current="step"` on the `li`
+                announces it. A second row gave "current step, current step, Payment", so the state
+                was read twice.
               */}
               {active ? null : (
                 <span className="sr-only">
@@ -129,8 +128,8 @@ export function Stepper({
                 "flex min-w-0 flex-1 items-start gap-2",
                 orientation === "vertical" && "flex-none"
               )}
-              // Текущий шаг объявляется шагом, а не страницей: `aria-current`
-              // различает эти значения, и «step» — ровно этот случай.
+              // The current step is announced as a step, not as a page: `aria-current` tells these
+              // values apart, and "step" is exactly this case.
               aria-current={active ? "step" : undefined}
             >
               {clickable ? (

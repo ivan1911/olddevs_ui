@@ -3,44 +3,44 @@
 import { useCallback, useEffect, useRef, type RefObject } from "react";
 
 /*
-  ПРИЦЕЛ МЕГАМЕНЮ — приём Amazon, разобранный Беном Каменсом в 2013 году.
+  MENU AIM. This is the Amazon technique, described by Ben Kamens in 2013.
 
-  Курсор идёт от Категории к её Полке наискосок и по пути задевает соседние
-  Категории. Наивное «наведение открывает» сменило бы Полку у человека под
-  рукой. Прицел смотрит, КУДА движется курсор: пока он идёт в сторону открытой
-  Полки, соседняя Категория наведение не перехватывает.
+  The pointer moves from a category diagonally toward its flyout, and along the way it crosses the
+  neighboring categories. A naive "hover opens" would switch the flyout the user is still reaching
+  for. Aim looks at WHERE the pointer is moving: while it moves toward the open flyout, a
+  neighboring category does not take the hover.
 
-  Модель — как у `useSafelyMouseToSubmenu` в react-aria, чтобы подменю `Menu` и
-  мегаменю вели себя одинаково: направление последнего шага сравнивается с
-  сектором от предыдущей точки к двум углам ближнего края Полки; смена
-  направления прощается; обработка прорежена до кадра; только мышь.
+  The model is the same as `useSafelyMouseToSubmenu` in react-aria, so that the `Menu` submenu and
+  the mega menu behave alike. The direction of the last step is compared with the sector from the
+  previous point to the two corners of the flyout's near edge. A change of direction is forgiven.
+  Processing is throttled to one frame. Mouse only.
 
-  Два осознанных расхождения с react-aria:
+  There are two deliberate deviations from react-aria:
 
-  1. Механизм — ОТЛОЖЕННАЯ СМЕНА Категории, а не `pointer-events: none` на
-     Столбце. Отключённые события гасят подсветку под курсором и съедают щелчок
-     по соседней Категории, а щелчок должен открывать сразу.
-  2. Время сброса — 300 мс (значение Каменса), а не 1000 мс react-aria. Его
-     подменю узкое и короткое; Столбец каталога листают, и секунда ожидания на
-     каждой остановке ощущается как залипание.
+  1. The mechanism is a DEFERRED CATEGORY SWITCH, not `pointer-events: none` on the category
+     column. Disabled events suppress the highlight under the pointer and swallow a click on a
+     neighboring category, but a click must open at once.
+  2. The reset time is 300 ms (Kamens's value), not react-aria's 1000 ms. Its submenu is narrow and
+     short. The category column is scrolled through, and a one-second wait at every stop feels like
+     a stall.
 */
 
-/** Курсор стоит дольше — Категория под ним открывается, даже если он «целился». */
+/** The pointer rests longer than this: the category under it opens even if it was aiming. */
 export const AIM_SETTLE_MS = 300;
 
-/** Прореживание: один шаг на кадр. Чаще направление шумит пиксельной дрожью. */
+/** Throttling: one step per frame. More often, the direction is noisy with pixel-level jitter. */
 const THROTTLE_MS = 16;
 
 /**
- * Сколько шагов «не туда» подряд прощается. Счётчик растёт на шаг к Полке и
- * падает на шаг мимо; целится курсор, пока счётчик выше нуля. Отсюда: одно
- * случайное движение вбок прицел не сбрасывает, два подряд — сбрасывают.
+ * How many consecutive "wrong" steps are forgiven. The counter rises by one for a step toward the
+ * flyout and falls by one for a step away from it. The pointer is aiming while the counter is above
+ * zero. Hence one random sideways move does not reset the aim, but two in a row do.
  */
 const ALLOWED_INVALID_MOVES = 2;
 
 /**
- * Запас сектора по вертикали, пиксели. Без него курсор, идущий точно в угол
- * Полки, выпадал бы из сектора на дрожании руки.
+ * Vertical padding of the sector, in pixels. Without it, a pointer heading exactly for the corner of
+ * the flyout would fall out of the sector on a shaky hand.
  */
 const SECTOR_PADDING = 24;
 
@@ -50,27 +50,27 @@ interface Point {
 }
 
 /**
- * Идёт ли шаг `from → to` к Полке: направление шага лежит внутри сектора от
- * `from` к двум углам её ближнего края.
+ * Whether the step `from → to` moves toward the flyout: the step's direction lies inside the sector
+ * from `from` to the two corners of the flyout's near edge.
  *
- * Векторное произведение, а не `atan2`: тот же сектор без разрыва угла на ±π.
- * Ось y экрана направлена вниз, отсюда знаки.
+ * A cross product, not `atan2`, gives the same sector without a break in the angle at ±π. The
+ * screen's y axis points down, hence the signs.
  */
 export function isMovingToward(from: Point, to: Point, rect: DOMRect, side: "left" | "right") {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   if (dx === 0 && dy === 0) return false;
   const edge = side === "right" ? rect.left : rect.right;
-  // Курсор уже за ближним краем — он в Полке, а не на пути к ней.
+  // The pointer is already past the near edge: it is inside the flyout, not on the way to it.
   if (side === "right" ? from.x >= edge : from.x <= edge) return false;
-  // Шаг от Полки по горизонтали не может к ней вести.
+  // A step horizontally away from the flyout cannot lead toward it.
   if (side === "right" ? dx <= 0 : dx >= 0) return false;
   const top = { x: edge - from.x, y: rect.top - SECTOR_PADDING - from.y };
   const bottom = { x: edge - from.x, y: rect.bottom + SECTOR_PADDING - from.y };
   const cross = (a: Point, b: Point) => a.x * b.y - a.y * b.x;
   const step = { x: dx, y: dy };
-  // Справа: шаг «ниже» луча к верхнему углу и «выше» луча к нижнему. Слева
-  // ориентация лучей зеркальна, и знаки меняются местами.
+  // For the right side: a step "below" the ray to the top corner, and "above" the ray to the bottom
+  // corner. For the left side the rays are mirrored, and the signs swap places.
   return side === "right"
     ? cross(top, step) >= 0 && cross(step, bottom) >= 0
     : cross(top, step) <= 0 && cross(step, bottom) <= 0;
@@ -79,25 +79,25 @@ export function isMovingToward(from: Point, to: Point, rect: DOMRect, side: "lef
 const NONE = Symbol("none");
 
 interface MenuAimOptions {
-  /** Открытая Категория; `null` — Полки нет, и целиться не во что. */
+  /** The open category. `null` means there is no flyout, so there is nothing to aim at. */
   value: string | null;
-  /** Открытая сейчас Полка: её прямоугольник — цель. */
+  /** The flyout open now. Its rectangle is the target. */
   showcaseRef: RefObject<HTMLElement | null>;
-  /** Сменить Категорию (или закрыть Полку — `null`). */
+  /** Switch the category, or close the flyout with `null`. */
   commit: (next: string | null) => void;
 }
 
 /**
- * Прицел: решает, сменить Категорию под курсором сейчас или отложить.
+ * Menu aim: decides whether to switch the category under the pointer now or defer the switch.
  *
- * `request` зовётся из наведения на строку Столбца. Если Полки нет или
- * курсор не целится — смена сразу. Если целится — смена откладывается: курсор
- * перестал целиться или стоит `AIM_SETTLE_MS` — открывается то, что под ним
- * сейчас; дошёл до Полки — смена отменяется.
+ * `request` is called from hovering a row of the category column. If there is no flyout, or the
+ * pointer is not aiming, the switch happens at once. If it is aiming, the switch is deferred. Once
+ * the pointer stops aiming or stays still for `AIM_SETTLE_MS`, whatever is under it opens. If it
+ * reaches the flyout, the switch is cancelled.
  *
- * Прямоугольник Полки берётся заново на каждом шаге, а не кешируется:
- * прокрутка страницы и смена размера окна не оставляют его устаревшим, а цена
- * — одно чтение раскладки на кадр, и только пока Полка открыта.
+ * The flyout's rectangle is read anew on every step rather than cached. Page scrolling and window
+ * resizing do not leave it stale. The cost is one layout read per frame, and only while the flyout
+ * is open.
  */
 export function useMenuAim({ value, showcaseRef, commit }: MenuAimOptions) {
   const previous = useRef<Point | null>(null);
@@ -125,7 +125,7 @@ export function useMenuAim({ value, showcaseRef, commit }: MenuAimOptions) {
     timer.current = setTimeout(flush, AIM_SETTLE_MS);
   }, [flush]);
 
-  // Новая Полка — новая цель: прежний счёт к ней отношения не имеет.
+  // A new flyout is a new target: the previous count toward it means nothing.
   useEffect(() => {
     aim.current = 0;
     previous.current = null;
@@ -148,7 +148,7 @@ export function useMenuAim({ value, showcaseRef, commit }: MenuAimOptions) {
       previous.current = point;
       if (!showcase || !from) return;
 
-      // Курсор дошёл до Полки — отложенная смена больше не нужна.
+      // The pointer reached the flyout, so the deferred switch is no longer needed.
       if (event.target instanceof Node && showcase.contains(event.target)) {
         pending.current = NONE;
         clearTimer();
@@ -162,8 +162,8 @@ export function useMenuAim({ value, showcaseRef, commit }: MenuAimOptions) {
         : Math.max(aim.current - 1, 0);
 
       if (pending.current === NONE) return;
-      // Перестал целиться — открывается то, над чем он сейчас; иначе ждём
-      // остановки заново: каждый шаг откладывает срок.
+      // The pointer stopped aiming, so whatever it is over now opens. Otherwise we wait for a stop
+      // again: each step postpones the deadline.
       if (aim.current === 0) flush();
       else settleLater();
     };
@@ -171,11 +171,11 @@ export function useMenuAim({ value, showcaseRef, commit }: MenuAimOptions) {
     return () => document.removeEventListener("pointermove", onPointerMove);
   }, [value, showcaseRef, flush, settleLater]);
 
-  /** Курсор наведён на строку Столбца: открыть её (`null` — закрыть Полку). */
+  /** The pointer is over a row of the category column: open it (`null` closes the flyout). */
   const request = useCallback(
     (next: string | null) => {
       if (next === value) {
-        // Вернулся на открытую Категорию — отложенная смена отменяется.
+        // Returned to the open category, so the deferred switch is cancelled.
         pending.current = NONE;
         clearTimer();
         return;
@@ -192,7 +192,7 @@ export function useMenuAim({ value, showcaseRef, commit }: MenuAimOptions) {
     [value, settleLater]
   );
 
-  /** Отменить отложенную смену: щелчок, клавиатура, уход из меню решают сами. */
+  /** Cancel the deferred switch. A click, the keyboard, or leaving the menu decides on its own. */
   const cancel = useCallback(() => {
     pending.current = NONE;
     clearTimer();

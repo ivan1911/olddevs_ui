@@ -7,46 +7,49 @@ import { TONE_TOKENS } from "../../lib/variants.js";
 import { Button } from "../actions/Button.js";
 
 export interface ContextualSaveBarProps {
-  /** Есть ли несохранённое. При `false` полоса не рисуется. */
+  /** Whether there are unsaved changes. When `false`, the bar is not rendered. */
   visible: boolean;
   /**
-   * Сколько полей изменено. Без него полоса говорит «есть несохранённые
-   * изменения»; с ним — называет число, и это заметно полезнее в длинной форме,
-   * где изменённое поле уехало из кадра.
+   * How many fields have changed. Without it the bar says "You have unsaved changes"; with it,
+   * the bar shows the number, which is much more useful in a long form where the changed field
+   * has scrolled out of view.
    */
   count?: number;
-  /** Своя формулировка вместо умолчания — например, имя правимой сущности. */
+  /** Custom wording in place of the default, for example the name of the entity being edited. */
   message?: ReactNode;
-  /** Вызывается по кнопке сохранения. */
+  /** Called by the save button. */
   onSave: () => void;
-  /** Вызывается по кнопке отмены. Без обработчика кнопка не рисуется вовсе. */
+  /** Called by the cancel button. Without a handler, the button is not rendered at all. */
   onCancel?: () => void;
-  /** Идёт сохранение: кнопка показывает ход, обе кнопки выключены. */
+  /** Saving is in progress: the save button shows progress and both buttons are disabled. */
   saving?: boolean;
-  /** Текст отказа сохранения. Показывается в полосе и объявляется. */
+  /** Save failure text. Shown in the bar and announced. */
   error?: ReactNode;
-  /** Подпись кнопки сохранения. По умолчанию берётся из словаря сообщений. */
+  /** Save button label. Defaults to the message catalog's string. */
   saveLabel?: ReactNode;
-  /** Подпись кнопки отмены. По умолчанию берётся из словаря сообщений. */
+  /** Cancel button label. Defaults to the message catalog's string. */
   cancelLabel?: ReactNode;
-  /** Липнуть к нижнему краю окна браузера. Выключается там, где полоса стоит внутри окна (`Dialog`). */
+  /**
+   * Stick to the bottom edge of the browser window. Turn it off where the bar sits inside
+   * a window (`Dialog`).
+   */
   sticky?: boolean;
   /**
-   * Имя CSS-переменной с высотой нижней панели приложения; полоса прилипает на
-   * эту высоту выше края окна. По умолчанию `--bottombar-h`, которую публикует
-   * слот `bottomBar` у `AppShell`. Переменной нет (панели нет, или она скрыта на
-   * широком экране) — отступ `0px`, и полоса прилипает к самому низу.
+   * Name of the CSS variable with the height of the app's bottom bar. The bar sticks at this
+   * height above the window edge. Defaults to `--bottombar-h`, which the `bottomBar` slot of
+   * `AppShell` publishes. If the variable is absent (there is no bottom bar, or it is hidden on
+   * wide screens), the offset is `0px` and the bar sticks to the very bottom.
    *
-   * Работает только вместе со `sticky`.
+   * Works only together with `sticky`.
    */
   offsetVar?: string;
-  /** Доступное имя полосы. */
+  /** Accessible name of the bar. */
   "aria-label"?: string;
-  /** Дополнительные классы на полосу. */
+  /** Extra classes on the bar. */
   className?: string;
 }
 
-/** Умолчание общее с `AppShell` (`bottomBarHeightVar`): так зовётся высота слота `bottomBar`. */
+/** Shared with `AppShell` (`bottomBarHeightVar`): this is the name of the `bottomBar` slot height. */
 const DEFAULT_OFFSET_VAR = "--bottombar-h";
 
 const PANEL =
@@ -54,52 +57,50 @@ const PANEL =
   "backdrop-blur-md shadow-[var(--shadow-1)] sm:flex-row sm:items-center sm:gap-[14px]";
 
 /**
- * Полоса несохранённых изменений: «есть что сохранить» и две кнопки.
+ * Unsaved changes bar: "there is something to save", plus two buttons.
  *
- * ГРАНИЦА ИЗ ТРЁХ СТРОК — как у `Banner`, и держать её стоит в голове:
+ * THE BOUNDARY IN THREE LINES, the same as for `Banner`; keep it in mind:
  *
- *   `SelectionBar`      — про ВЫБОР: «Выбрано 12» и что с ними сделать.
- *   `Banner`            — про ПРИЛОЖЕНИЕ: «идут работы», переживает навигацию.
- *   `ContextualSaveBar` — про ТЕКУЩУЮ ФОРМУ: правки сделаны, но не отправлены.
+ *   `SelectionBar`      — about the SELECTION: "12 selected" and what to do with those items.
+ *   `Banner`            — about the APP: "Work in progress", survives navigation.
+ *   `ContextualSaveBar` — about the CURRENT FORM: edits are made but not submitted.
  *
- * Отсюда и время жизни: полоса появляется с первой правкой и исчезает вместе с
- * ней — сохранением или отменой. Она не переживает уход со страницы, и об уходе
- * не предупреждает: перехват навигации принадлежит приложению, которое знает
- * свой маршрутизатор, а не киту.
+ * Hence its lifetime: the bar appears with the first edit and disappears together with it,
+ * on save or on cancel. It does not survive leaving the page, and it does not warn about
+ * leaving: intercepting navigation belongs to the app, which knows its own router, not to the kit.
  *
- * ДАННЫХ ФОРМЫ КОМПОНЕНТ НЕ ЗНАЕТ. Он принимает «грязно или нет», число правок
- * и два обработчика. Что считать правкой — решение потребителя: сравнение с
- * исходным значением, счётчик касаний поля или ответ формы.
+ * THE COMPONENT DOES NOT KNOW THE FORM'S DATA. It takes a flag for whether there are changes,
+ * the number of changes and two handlers. What counts as a change is the consumer's decision:
+ * a comparison with the original value, a counter of field touches, or the form's response.
  *
- * НАД НИЖНЕЙ ПАНЕЛЬЮ, А НЕ ПОД НЕЙ. На телефоне нижнюю границу окна занимает
- * `MobileTabBar` в слоте `bottomBar`; его высоту публикует `AppShell`
- * (`--bottombar-h`), и полоса прилипает на эту высоту выше края — так же, как
- * `SelectionBar` отсчитывает липкость от `--topbar-h`. Подпирать полосу
- * `max-md:bottom-14` на глаз больше не нужно: зашитое число расходится с
- * настоящей высотой панели (вырез экрана, перенос подписей).
+ * ABOVE THE BOTTOM BAR, NOT BELOW IT. On a phone, the bottom edge of the window is taken by
+ * `MobileTabBar` in the `bottomBar` slot. `AppShell` publishes its height (`--bottombar-h`), and
+ * the bar sticks at that height above the edge, the same way `SelectionBar` measures its
+ * stickiness from `--topbar-h`. There is no longer any need to nudge the bar with
+ * `max-md:bottom-14` by eye: a hard-coded number drifts from the real height of the panel
+ * (a screen notch, labels that wrap onto a second line).
  *
- * ЛИПНЕТ К НИЗУ, А НЕ К ВЕРХУ, И ЭТО РЕШЕНИЕ, А НЕ ВКУС. Наверху уже стоят
- * шапка и `SelectionBar`, обе отсчитывают липкость от `--topbar-h`
- * (ADR-0016, ADR-0019). Третий липкий слой сверху потребовал бы второй
- * переменной высоты и пересмотра контракта — то есть цены, несопоставимой с
- * задачей. Внизу свободно, и там же полосу ждут по привычке из админок.
+ * IT STICKS TO THE BOTTOM, NOT THE TOP, AND THAT IS A DECISION, NOT A TASTE. The top already
+ * holds the app bar and `SelectionBar`, both measuring stickiness from `--topbar-h`
+ * (ADR-0016, ADR-0019). A third sticky layer at the top would need a second height variable and
+ * a revision of the contract: a cost out of all proportion to the task. The bottom is free, and
+ * that is where admin panels have taught people to expect the bar.
  *
- * ПОЯВЛЕНИЕ СЛЫШНО, А НЕ ТОЛЬКО ВИДНО. Область объявления смонтирована всегда,
- * содержимое подменяется — тот же приём, что в `UploadQueue`. Живая область,
- * вставленная в дерево ВМЕСТЕ со своим текстом, объявляется ненадёжно: часть
- * скринридеров успевает увидеть только пустой узел.
+ * THE APPEARANCE IS ANNOUNCED, NOT ONLY SHOWN. The live region is mounted at all times and only
+ * its content changes, the same technique as in `UploadQueue`. A live region inserted into the
+ * tree together with its text is announced unreliably: some screen readers manage to see only
+ * an empty node.
  *
- * `role="status"`, а не `alert`, даже при отказе сохранения. Отказ здесь
- * сопровождает видимый текст в самой полосе, и перебивать им речь незачем;
- * `alert` в этом месте дал бы то самое двойное чтение, о котором предупреждает
- * ADR-0026.
+ * `role="status"`, not `alert`, even when a save fails. The failure is accompanied by visible
+ * text in the bar itself, and there is no reason to interrupt speech with it. `alert` here would
+ * produce the same double reading that ADR-0026 warns about.
  *
- * ЦЕНА ЭТОГО РЕШЕНИЯ НАЗВАНА ВСЛУХ: текст полосы попадает в дерево дважды —
- * видимой строкой и скрытой живой областью. В режиме обзора скринридер прочтёт
- * его два раза подряд. Размен сознательный: ненадёжное объявление появления
- * хуже лишнего повтора, а другого способа получить оба свойства сразу нет.
- * Тот же вопрос открыт у `MaskedInput` (ADR-0026) и закрывается одним прогоном
- * с NVDA и VoiceOver — на оба компонента разом, а не по отдельности.
+ * THE COST OF THIS DECISION IS STATED OUT LOUD: the bar's text enters the tree twice, as a
+ * visible line and as a hidden live region. In browse mode a screen reader reads it two times in
+ * a row. The trade-off is deliberate: an unreliable announcement of the appearance is worse than
+ * an extra repeat, and there is no other way to get both properties at once. The same question
+ * is open for `MaskedInput` (ADR-0026) and will be settled by one pass with NVDA and VoiceOver,
+ * for both components at once rather than separately.
  */
 export function ContextualSaveBar({
   visible,
@@ -128,10 +129,10 @@ export function ContextualSaveBar({
         <div
           role="group"
           aria-label={ariaLabel ?? bar.label}
-          // Отступ — КЛАССОМ, читающим переменную, а не инлайновым `bottom`: инлайн
-          // сильнее любого класса, и `bottom-*` потребителя (своя нижняя панель вне
-          // `AppShell`) молча проигрывал бы ему. Класс же `cn` сводит с классом
-          // потребителя, и побеждает потребитель.
+          // The offset is a CLASS that reads the variable, not an inline `bottom`: an inline
+          // style beats any class, so a consumer's `bottom-*` (its own bottom panel outside
+          // `AppShell`) would silently lose to it. The `cn` helper merges this class with the
+          // consumer's, and the consumer's class wins.
           className={cn(PANEL, sticky && "sticky bottom-[var(--od-savebar-bottom)]", className)}
           style={
             {
@@ -163,8 +164,8 @@ export function ContextualSaveBar({
       ) : null}
 
       {/*
-        Смонтирована всегда — см. заголовок файла. Пустая строка, пока
-        сохранять нечего: «нет изменений» не сообщение, а шум.
+        Always mounted: see the file header. Empty while there is nothing to save, because
+        "No changes" is not a message, it is noise.
       */}
       <div role="status" aria-live="polite" className="sr-only">
         {announcement}

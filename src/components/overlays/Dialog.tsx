@@ -9,118 +9,114 @@ import { useOverlayLayer } from "../../hooks/useOverlayLayer.js";
 import { withoutToolbarAxis } from "../../lib/toolbar-axis.js";
 import { ModalHeader } from "./ModalHeader.js";
 
-/** Портал окна: ось `Toolbar`, из которой открыто окно, внутрь не проходит. */
+/** The dialog's portal: the `Toolbar` axis the dialog was opened from does not pass into it. */
 const Portal = withoutToolbarAxis(DialogPrimitive.Portal);
 
 export interface DialogProps {
-  /** Показано ли окно. */
+  /** Whether the dialog is shown. */
   open: boolean;
-  /** Закрытие: кнопка закрытия, Escape, клик мимо — всё сюда. */
+  /** Close request: the close button, Escape, a click outside — all of them go here. */
   onClose: () => void;
-  /** Заголовок окна. Он же становится доступным именем диалога. */
+  /** Dialog title. It also becomes the dialog's accessible name. */
   title: ReactNode;
-  /** Строка под заголовком в шапке: слаг, дата, счётчик. */
+  /** A line under the title in the header: a slug, a date, a counter. */
   subtitle?: ReactNode;
   /**
-   * `id` узла, который служит окну описанием — текстом, который скринридер
-   * читает следом за именем.
+   * The `id` of the node that serves as the dialog's description — the text the screen reader
+   * reads right after the name.
    *
-   * Идентификатор, а не сам текст, и это разбор дефекта. Первая версия
-   * принимала `ReactNode` и рисовала его скрытой копией: `ConfirmDialog`
-   * передавал туда свой `message` и тут же рисовал его же видимым абзацем —
-   * текст оказывался в документе ДВАЖДЫ. `message` типизирован как `ReactNode`,
-   * поэтому ссылка внутри него давала невидимый лишний табстоп, а компонент с
-   * собственным `id` — дубль идентификатора в документе.
+   * An identifier, not the text itself, and this comes from a defect. The first version accepted
+   * a `ReactNode` and rendered it as a hidden copy: `ConfirmDialog` passed its `message` there and
+   * rendered the same `message` as a visible paragraph — the text ended up in the document TWICE.
+   * `message` is typed as `ReactNode`, so a link inside it created an invisible extra tab stop, and
+   * a component with its own `id` created a duplicate identifier in the document.
    *
-   * Описание обязано указывать на ТОТ ЖЕ узел, который видит глаз. Нужен текст
-   * только для озвучки — положите его в `children` под `sr-only` и сошлитесь
-   * сюда.
+   * The description must point at the SAME node the eye sees. If you need text for speech only, put
+   * it in `children` under `sr-only` and reference it here.
    *
-   * Для `role="alertdialog"` описание требует APG: подтверждение, объявившее
-   * только имя и кнопку, вынуждает подтверждать вслепую.
+   * For `role="alertdialog"` the description is required by APG: a confirmation that announces only
+   * the name and the button forces the user to confirm blindly.
    */
   describedBy?: string;
-  /** Иконка слева от заголовка. Цвет задаёт потребитель — он знает тон окна. */
+  /** Icon to the left of the title. The consumer sets its color, because the consumer knows the dialog's tone. */
   icon?: ReactNode;
   /**
-   * Идёт отправка: окно нельзя закрыть ни кнопкой закрытия, ни Escape, ни кликом мимо.
+   * Submission is in progress: the dialog cannot be closed by the close button, by Escape, or by a
+   * click outside.
    *
-   * Одно свойство вместо трёх запретов намеренно: «форма отправляется» — это
-   * одно состояние, а не три независимых решения, и разводить их значит
-   * позволить окну оказаться в состоянии «Escape закрывает, а кнопки закрытия нет».
+   * One prop instead of three bans is deliberate: "the form is being submitted" is one state, not
+   * three independent decisions, and splitting them would allow the dialog to end up in a state
+   * where "Escape closes it, but there is no close button".
    */
   loading?: boolean;
-  /** Вертикальное выравнивание: по центру или от верхнего края. */
+  /** Vertical alignment: centered or from the top edge. */
   align?: "center" | "start";
-  /** Классы на само окно — ширина, скругление, рамка. */
+  /** Classes for the dialog itself: width, corner radius, border. */
   className?: string;
-  /** Классы на подложку — для окон с особой геометрией или анимацией. */
+  /** Classes for the scrim — for dialogs with special geometry or animation. */
   overlayClassName?: string;
-  /** Стили подложки — например, цвет и размытие для особого окна. */
+  /** Scrim styles — for example, color and blur for a special dialog. */
   overlayStyle?: CSSProperties;
-  /** Динамические стили на само окно. */
+  /** Dynamic styles for the dialog itself. */
   contentStyle?: CSSProperties;
-  /** Рисовать ли стандартную шапку. Особые окна оставляют собственную. */
+  /** Whether to draw the standard header. Special dialogs keep their own. */
   header?: boolean;
-  /** Слой окна. Отдельные оверлеи приложения живут выше обычных. */
+  /** The dialog's layer. Individual app overlays sit above the regular ones. */
   zIndex?: string;
   /**
-   * `alertdialog` — для окна, которое прерывает работу и требует ответа:
-   * подтверждение удаления, предупреждение о несохранённом. Обычные окна
-   * с формой остаются `dialog`.
+   * `alertdialog` — for a dialog that interrupts the work and requires an answer: a delete
+   * confirmation, a warning about unsaved changes. Regular dialogs with a form stay `dialog`.
    *
-   * Отдельного примитива под это не заводится: `@radix-ui/react-alert-dialog`
-   * отличается от обычного диалога ровно ролью и тем, что его нельзя закрыть
-   * кликом мимо, — а второе у нас и так решается пропом `loading`.
+   * No separate primitive is added for this: `@radix-ui/react-alert-dialog` differs from a regular
+   * dialog only in its role and in that it cannot be closed by a click outside — and we already
+   * solve the second with the `loading` prop.
    */
   role?: "dialog" | "alertdialog";
   /**
-   * Куда поставить фокус при открытии. По умолчанию — на первый элемент,
-   * до которого доходит Tab, а это кнопка закрытия в шапке.
+   * Where to place focus when the dialog opens. By default, the first element that Tab reaches,
+   * which is the close button in the header.
    *
-   * Проп нужен потому, что «куда смотрит пользователь, когда окно открылось» —
-   * решение самого окна, а не деталь реализации. Сделать это эффектом на
-   * стороне вызывающего нельзя: Radix ставит фокус позже, чем отрабатывают
-   * эффекты, и молча перебивает чужой вызов `focus()`. Проверено в витрине —
-   * фокус уезжал на кнопку закрытия.
+   * The prop is needed because "where the user looks when the dialog opens" is the dialog's own
+   * decision, not an implementation detail. It cannot be done with an effect on the caller's side:
+   * Radix sets focus later than effects run, and silently overrides someone else's `focus()` call.
+   * Verified in the showcase: focus kept moving to the close button.
    */
   initialFocusRef?: RefObject<HTMLElement | null>;
-  /** Дополнительная реакция на Escape для окон со своим внутренним состоянием. */
+  /** An extra Escape handler for dialogs with their own internal state. */
   onEscapeKeyDown?: DialogPrimitive.DialogContentProps["onEscapeKeyDown"];
-  /** Доступное имя кнопки закрытия. Не задано — «Закрыть» из каталога сообщений. */
+  /** Accessible name of the close button. If not set, "Close" from the message catalog. */
   closeLabel?: string;
-  /** Содержимое окна под шапкой. */
+  /** Dialog content below the header. */
   children?: ReactNode;
 }
 
 /**
- * Модальное окно целиком: подложка, ловушка фокуса, шапка и блокировка фона.
+ * A complete modal dialog: scrim, focus trap, header and background lock.
  *
- * ПОЧЕМУ ЭТО ОТДЕЛЬНЫЙ ПРИМИТИВ, А НЕ ПРОП У `ModalOverlay`. Подложка честно
- * делает одно — гасит фон и ловит клик мимо, — и `role="dialog"` она взять не
- * может: диалогу нужно доступное имя, а имя знает только вызывающий. Из-за
- * этого каждый диалог во фронте собирал модальность руками, и собрал по-разному:
- * из десяти окон роль и `aria-modal` были у одного, а ловушки фокуса не было
- * ни у одного — Tab уводил в фон под затемнением, к кнопкам, которых не видно.
+ * WHY THIS IS A SEPARATE PRIMITIVE AND NOT A PROP OF `ModalOverlay`. The scrim honestly does one
+ * thing — dims the background and catches a click outside — and it cannot take `role="dialog"`: a
+ * dialog needs an accessible name, and only the caller knows the name. Because of this, every
+ * dialog in the frontend assembled modality by hand, and it did so differently: of ten dialogs, one
+ * had the role and `aria-modal`, and none had a focus trap — Tab led into the background under the
+ * scrim, to buttons that were not visible.
  *
- * Здесь имя известно (это `title`), поэтому окно берёт на себя всё сразу.
+ * Here the name is known (it is `title`), so the dialog takes care of everything at once.
  *
- * ПОВЕДЕНИЕ — `@radix-ui/react-dialog` из `dependencies` пакета (ADR-0072), по
- * той же логике, что у тултипа и поповера (ADR-0004):
- * ловушка фокуса, возврат фокуса на триггер, `aria-modal`, портал, Escape по
- * слоям и `inert` для фона — это не то, что стоит писать заново. Своя ловушка
- * фокуса — не примитив, а вторая библиотека.
+ * BEHAVIOUR — `@radix-ui/react-dialog` from the package's `dependencies` (ADR-0072), on the same
+ * logic as the tooltip and the popover (ADR-0004): the focus trap, focus return to the trigger,
+ * `aria-modal`, the portal, Escape by layers and `inert` for the background are not things to write
+ * again. A custom focus trap is not a primitive but a second library.
  *
- * ПРОКРУТКУ ФОНА БЛОКИРУЕТ RADIX, а не `useScrollLock`. Внутри у него
- * `react-remove-scroll`, и два замка на одном `body` — это два независимых
- * счётчика, которые не видят друг друга. Поэтому `Dialog` хук не зовёт;
- * `useScrollLock` остаётся для оверлеев, собранных вручную.
+ * THE BACKGROUND SCROLL IS LOCKED BY RADIX, not by `useScrollLock`. Inside it has
+ * `react-remove-scroll`, and two locks on one `body` are two independent counters that cannot see
+ * each other. That is why `Dialog` does not call the hook; `useScrollLock` remains for overlays
+ * assembled by hand.
  *
- * ВЛОЖЕННОСТЬ РАБОТАЕТ САМА. Диалог подтверждения поверх окна редактирования —
- * обычное дело, и Escape закрывает верхний слой, а не оба сразу: Radix ведёт
- * стек слоёв. О ЧУЖОМ стеке он при этом не знает — меню пакета собраны на
- * react-aria, и их слой окно различает отдельно (см. `escapeBelongsToAriaLayer`). Прежней версии для этого приходилось ловить Escape на фазе
- * захвата и гасить событие `stopImmediatePropagation`.
+ * NESTING WORKS ON ITS OWN. A confirmation dialog on top of an editing dialog is an ordinary case,
+ * and Escape closes the top layer, not both: Radix manages the layer stack. It does not know about a
+ * FOREIGN stack, though — the package's menus are built on react-aria, and the dialog tells their
+ * layer apart separately (see `escapeBelongsToAriaLayer`). The earlier version had to catch Escape
+ * in the capture phase and stop the event with `stopImmediatePropagation`.
  */
 export function Dialog({
   open,
@@ -143,48 +139,48 @@ export function Dialog({
   closeLabel,
   children,
 }: DialogProps) {
-  // Во время отправки закрывать нечем — но обработчики не снимаются, а
-  // гасятся: снятый `onOpenChange` оставил бы Radix в состоянии, где он
-  // считает окно закрытым, а мы его всё ещё рисуем.
+  // While submitting there is nothing to close with — but the handlers are not removed, they are
+  // suppressed: removing `onOpenChange` would leave Radix in a state where it thinks the dialog is
+  // closed while we still render it.
   const block = loading ? (e: Event) => e.preventDefault() : undefined;
 
-  /** Само окно — чтобы отличить «Escape внутри» от «Escape в чужом слое». */
+  /** The dialog itself — to tell "Escape inside" from "Escape in a foreign layer". */
   const contentRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Escape, адресованный слою react-aria, до окна доходить не должен.
+   * An Escape addressed to a react-aria layer must not reach the dialog.
    *
-   * Radix ведёт стек СВОИХ слоёв, и вложенные диалоги закрываются по одному.
-   * Но меню и списки пакета собраны на react-aria, а она ведёт свой стек, и о
-   * чужом ни одна из библиотек не знает: один Escape при открытом меню внутри
-   * окна закрывал и меню, и окно — то есть уносил форму вместе с несохранённым.
-   * Нашла история «Menu внутри Dialog».
+   * Radix manages the stack of ITS OWN layers, and nested dialogs close one at a time. But the
+   * package's menus and lists are built on react-aria, which keeps its own stack, and neither library
+   * knows about the other's: one Escape with a menu open inside the dialog closed both the menu and
+   * the dialog — that is, it took the form away with the unsaved changes. The "Menu inside Dialog"
+   * case is where this was found.
    *
-   * Признаком СЛУЖИЛО положение цели события: «`data-rac` и вне окна». Для
-   * меню это работало, а для `Combobox` ВНУТРИ окна — нет: фокус стоит в
-   * `Input`, который лежит внутри контента, список — в портале, и второе
-   * условие было ложным. Escape закрывал окно вместо списка подсказок.
+   * The sign was the position of the event target: "`data-rac` and outside the dialog". For menus it
+   * worked, but for a `Combobox` INSIDE the dialog it did not: focus sits in the `Input`, which lies
+   * inside the content, the list is in the portal, and the second condition was false. Escape closed
+   * the dialog instead of the suggestion list.
    *
-   * С волны 26 чужой слой определяется наличием открытого оверлея RAC в
-   * документе, а не положением цели, и живёт это в `lib/overlay-layer.ts`
-   * вместе со стеком слоёв — ADR-0041.
+   * From wave 26 a foreign layer is detected by the presence of an open RAC overlay in the document,
+   * not by the position of the target; this lives in `lib/overlay-layer.ts` together with the layer
+   * stack — ADR-0041.
    */
   const escapeBelongsToAriaLayer = () => hasOpenAriaOverlay();
 
   /**
-   * Кто открыл окно — чтобы вернуть ему фокус при закрытии.
+   * Who opened the dialog — to return focus to them on close.
    *
-   * Radix возвращает фокус на свой `Dialog.Trigger`, а его здесь нет: окна
-   * открываются из состояния приложения, а не из обёрнутой кнопки. Без этого
-   * фокус после закрытия уезжает на `<body>` — проверено и в витрине, и в
-   * приложении, — и пользователь клавиатуры начинает обход страницы заново.
+   * Radix returns focus to its own `Dialog.Trigger`, and there is none here: dialogs are opened from
+   * application state, not from a wrapped button. Without this, focus after closing drifts to
+   * `<body>` — verified both in the showcase and in the application — and keyboard users start
+   * tabbing through the page from the beginning.
    *
-   * Запоминаем в `onOpenAutoFocus`: он срабатывает ДО того, как Radix уведёт
-   * фокус внутрь окна, то есть `activeElement` там ещё тот, кто открыл.
+   * It is remembered in `onOpenAutoFocus`: that fires BEFORE Radix moves focus inside the dialog, so
+   * `activeElement` is still the one who opened it.
    */
   const { remember, restore } = useOpenerFocus(open, contentRef);
-  // Слой состоит в общем стеке — ADR-0041 обещает это для ВСЕХ модальных
-  // слоёв кита, а не только для подложки.
+  // The layer joins the shared stack — ADR-0041 promises this for ALL modal layers of the kit,
+  // not only for the scrim.
   useOverlayLayer(open, contentRef);
 
   return (
@@ -196,9 +192,9 @@ export function Dialog({
     >
       <Portal>
         {/*
-          Окно лежит ВНУТРИ подложки, а не рядом с ней. Так высокое содержимое
-          прокручивается вместе с затемнением, а не вылезает за экран: подложка
-          здесь одновременно и скролл-контейнер, и центрирующий флекс.
+          The dialog sits INSIDE the scrim, not next to it. That way tall content scrolls together
+          with the dimming instead of spilling off the screen: the scrim here is both the scroll
+          container and the centering flex container.
         */}
         <DialogPrimitive.Overlay
           className={cn(
@@ -214,22 +210,20 @@ export function Dialog({
           }}
         >
           <DialogPrimitive.Content
-            // Роль ставится после спреда самого Radix, поэтому переопределяет
-            // его `dialog` — отдельный примитив ради одного атрибута не нужен.
+            // The role is set after Radix's own spread, so it overrides its `dialog` —
+            // a separate primitive for a single attribute is not needed.
             role={role}
             /*
-              Описание — проп, а не «его не бывает».
+              The description is a prop, not "there is none".
 
-              Здесь стоял жёсткий `undefined` ради подавления предупреждения
-              Radix, и следствие было шире, чем задумано: ни одно окно кита не
-              могло иметь описания вовсе. Для `ConfirmDialog` это значило, что
-              сам вопрос — «Удалить 12 элементов безвозвратно?» — скринридеру не
-              читался: он объявлял имя окна и кнопку, на которую уехал фокус.
-              Для роли `alertdialog` APG требует описание прямо.
+              A hard-coded `undefined` used to be here to suppress a Radix warning, and the consequence
+              was broader than intended: no dialog of the kit could have a description at all. For
+              `ConfirmDialog` this meant that the question itself — "Delete 12 items permanently?" —
+              was not read to the screen reader: it announced the dialog's name and the button the
+              focus had moved to. For the `alertdialog` role, APG requires a description outright.
 
-              `undefined` остаётся умолчанием: окно без описания не должно
-              ссылаться в пустоту, и предупреждение Radix тогда по-прежнему
-              подавляется.
+              `undefined` remains the default: a dialog without a description must not point at
+              nothing, and Radix's warning is then still suppressed.
             */
             aria-describedby={describedBy}
             onOpenAutoFocus={(e) => {
@@ -262,8 +256,8 @@ export function Dialog({
           >
             {header ? (
               <ModalHeader
-                // Заголовок рисует Radix: он же регистрирует его как имя окна,
-                // поэтому `aria-labelledby` проставляется без нашего участия.
+                // Radix renders the title: it also registers it as the dialog's name, so
+                // `aria-labelledby` is set without our involvement.
                 titleComponent={DialogPrimitive.Title}
                 title={title}
                 subtitle={subtitle}

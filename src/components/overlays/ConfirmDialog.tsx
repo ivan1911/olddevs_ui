@@ -10,52 +10,51 @@ import { Dialog } from "./Dialog.js";
 import { useMessages } from "../../i18n/useMessages.js";
 
 /**
- * Характер вопроса. Это СОБСТВЕННАЯ ось диалога, а не кнопочная: «удаляем
- * безвозвратно» и «кнопка красная» — разные утверждения, и вызывающий обязан
- * говорить первое, а перевод во второе — работа компонента.
+ * The nature of the question. This is the dialog's OWN axis, not a button axis: "we delete it
+ * permanently" and "the button is red" are different statements, and the caller must say the
+ * first, while turning it into the second is the component's job.
  */
 export type ConfirmKind = "danger" | "warning" | "info";
 
 export interface ConfirmDialogProps {
-  /** Показано ли окно подтверждения. */
+  /** Whether the confirmation dialog is shown. */
   open: boolean;
-  /** Отмена: кнопка «Отменить», кнопка закрытия, Escape и клик мимо. Пока `loading`, не вызывается. */
+  /** Cancel: the "Cancel" button, the close button, Escape, and a click outside. Not called while `loading`. */
   onClose: () => void;
-  /** Пользователь подтвердил действие. Окно само не закрывается — закрыть его должен потребитель. */
+  /** The user confirmed the action. The dialog does not close by itself: the consumer must close it. */
   onConfirm: () => void;
-  /** Заголовок окна: коротко называет действие. Он же — доступное имя диалога. */
+  /** Dialog title: names the action briefly. It is also the dialog's accessible name. */
   title: ReactNode;
-  /** Вопрос или пояснение последствий. Выводится абзацем и служит описанием диалога для скринридера. */
+  /** The question or an explanation of the consequences. Rendered as a paragraph and serves as the dialog's description for screen readers. */
   message: ReactNode;
-  /** Подпись кнопки подтверждения. Не задана — «Подтвердить» из каталога сообщений. */
+  /** Label of the confirm button. If not set, "Confirm" from the message catalog. */
   confirmLabel?: string;
-  /** Подпись кнопки отмены. Не задана — «Отменить» из каталога сообщений. */
+  /** Label of the cancel button. If not set, "Cancel" from the message catalog. */
   cancelLabel?: string;
   /**
-   * Характер вопроса: `danger` и `warning` рисуют кнопку подтверждения контурной
-   * красной, `info` — сплошной акцентной. По умолчанию `danger`.
+   * The nature of the question: `danger` and `warning` draw the confirm button with the outline
+   * variant in the danger tone, `info` with the solid accent. Defaults to `danger`.
    *
-   * Тон иконки слева от заголовка тоже берётся из `kind`: красный, жёлтый или акцентный.
+   * The tone of the icon to the left of the title also comes from `kind`: red, yellow or accent.
    */
   kind?: ConfirmKind;
-  /** Идёт подтверждённое действие: кнопки заблокированы, закрыть нельзя. */
+  /** The confirmed action is running: the buttons are locked, the dialog cannot be closed. */
   loading?: boolean;
   /**
-   * Подтверждение вводом: текст, который пользователь должен набрать, чтобы
-   * кнопка подтверждения включилась, — обычно название удаляемой сущности
-   * («Удалить пространство Acme»). В окне появляется поле с подписью из
-   * каталога сообщений, фокус при открытии встаёт в него, а Enter подтверждает
-   * только при совпадении.
+   * Confirmation by typing: the text the user must type for the confirm button to be enabled,
+   * usually the name of the entity being deleted ("Delete workspace Acme"). The dialog shows a
+   * field with a label from the message catalog, focus goes into it on open, and Enter confirms
+   * only when the text matches.
    *
-   * Сверка точная и регистрозависимая: смысл приёма в том, чтобы пользователь
-   * прочёл название и набрал именно его, а «acme» вместо «Acme» отличает одно
-   * пространство от другого. Пробелы по краям набранного не считаются
-   * (вставка из буфера часто приносит хвост), `NFC`-нормализация сглаживает
-   * разницу между «é» одной буквой и «e» с акцентом. Пустая строка — не
-   * название: поля нет, окно подтверждается как обычно.
+   * The comparison is exact and case-sensitive: the point of the technique is that the user reads
+   * the name and types exactly that, and "acme" instead of "Acme" tells one workspace apart from
+   * another. Leading and trailing spaces are ignored (a paste from the clipboard often brings a
+   * tail), and `NFC` normalization smooths over the difference between "é" as one code point and
+   * "e" followed by a combining accent. An empty string is not a name: there is no field, and the
+   * dialog confirms as usual.
    *
-   * Набранный текст живёт внутри окна и не переживает его закрытия; снаружи
-   * его знать незачем — `onConfirm` вызывается уже после совпадения.
+   * The typed text lives inside the dialog and does not survive its closing; outside it does not
+   * need to be known — `onConfirm` is called only after the match.
    */
   typeToConfirm?: string;
 }
@@ -67,18 +66,17 @@ const ICON_COLOR: Record<ConfirmKind, string> = {
 };
 
 /**
- * Приводит текст к виду, в котором его сверяют: без пробелов по краям и в
- * канонической форме Unicode. Регистр НЕ трогается — см. `typeToConfirm`.
+ * Brings text to the form in which it is compared: without leading and trailing spaces and in
+ * canonical Unicode form. Case is NOT changed — see `typeToConfirm`.
  */
 const normalize = (value: string) => value.trim().normalize("NFC");
 
 /**
- * Подпись поля с набираемым именем в его собственном регистре.
+ * A field label with the name to type shown in its own case.
  *
- * Подписи `FormField` набраны капителью, и «Acme Labs» в них выглядело бы как
- * «ACME LABS» — при том, что сверка регистрозависимая и подсказка прямо это
- * говорит. Имя внутри подписи выводится из-под капители, остальной текст —
- * как у всех полей.
+ * `FormField` labels are set in uppercase, so "Acme Labs" would look like "ACME LABS" there, even
+ * though the comparison is case-sensitive and the hint says so directly. The name inside the label
+ * is taken out of the uppercase, while the rest of the text is styled like all fields.
  */
 function keepCase(label: string, name: string): ReactNode {
   const at = name ? label.indexOf(name) : -1;
@@ -93,19 +91,18 @@ function keepCase(label: string, name: string): ReactNode {
 }
 
 /**
- * Диалог подтверждения необратимого действия.
+ * Confirmation dialog for an irreversible action.
  *
- * СТОИТ НА `Dialog`, А НЕ НА ПОДЛОЖКЕ. Раньше он собирал модальность сам:
- * `ModalOverlay` + своя роль + свой `aria-labelledby` + `useScrollLock` +
- * перехват Escape на фазе захвата с `stopImmediatePropagation`. Последнее —
- * не перестраховка, а вынужденная мера: диалог почти всегда открыт ПОВЕРХ
- * другого окна со своим обработчиком Escape, и без захвата одно нажатие
- * закрывало оба. Radix ведёт стек слоёв сам, поэтому весь этот механизм
- * исчез вместе с переносом.
+ * BUILT ON `Dialog`, NOT ON THE SCRIM. It used to assemble modality by itself: `ModalOverlay` +
+ * its own role + its own `aria-labelledby` + `useScrollLock` + an Escape handler in the capture
+ * phase with `stopImmediatePropagation`. The last one was not an overcaution but a necessity: the
+ * dialog is almost always open ON TOP of another dialog with its own Escape handler, and without
+ * capture a single press closed both. Radix manages the layer stack itself, so the whole mechanism
+ * disappeared with the move.
  *
- * Роль остаётся `alertdialog`: окно прерывает работу и требует ответа, а не
- * показывает форму. С `typeToConfirm` форма в нём всё же появляется — но ради
- * одного поля-замка, а не ввода данных, и роль остаётся прежней.
+ * The role stays `alertdialog`: the dialog interrupts the work and requires an answer, rather than
+ * showing a form. With `typeToConfirm` a form does appear in it, but only for one locking field,
+ * not for data entry, and the role stays the same.
  */
 export function ConfirmDialog({
   open,
@@ -122,7 +119,7 @@ export function ConfirmDialog({
   const messageId = useId();
   const confirmRef = useRef<HTMLButtonElement>(null);
   const fieldRef = useRef<HTMLInputElement>(null);
-  // Пустая строка и строка из пробелов — не название: сверять не с чем.
+  // An empty string and a string of spaces are not a name: there is nothing to compare with.
   const expected = normalize(typeToConfirm ?? "");
 
   return (
@@ -132,25 +129,25 @@ export function ConfirmDialog({
       loading={loading}
       role="alertdialog"
       /*
-        Описание указывает на ВИДИМЫЙ абзац с вопросом, а не на его копию.
+        The description points at the VISIBLE paragraph with the question, not at a copy of it.
 
-        Без описания скринридер объявлял имя окна и кнопку, на которую уехал
-        фокус, и пользователь подтверждал вслепую. Первая починка передавала
-        сам `message` и рисовала его скрытой копией — текст оказывался в
-        документе дважды, а ссылка внутри него давала невидимый лишний табстоп.
+        Without a description the screen reader announced the dialog's name and the button the
+        focus had moved to, and the user confirmed blindly. The first fix passed `message` itself
+        and rendered it as a hidden copy: the text ended up in the document twice, and a link
+        inside it added an invisible extra tab stop.
       */
       describedBy={messageId}
       zIndex={OVERLAY_LAYER.alert}
-      // Фокус — на кнопке подтверждения: вопрос уже задан, и ответ на него
-      // должен быть в одном нажатии. Умолчание Radix увело бы фокус на крестик.
-      // С подтверждением вводом ответ начинается с набора, и фокус ждёт в поле.
+      // Focus goes to the confirm button: the question is already asked, and the answer must be
+      // one press away. Radix's default would move focus to the close button.
+      // With confirmation by typing the answer starts with typing, and focus waits in the field.
       initialFocusRef={expected ? fieldRef : confirmRef}
       title={title}
       icon={<WarningIcon size={18} style={{ color: ICON_COLOR[kind] }} />}
       className="w-full max-w-[380px]"
     >
-      {/* Тело — отдельный компонент: набранный текст живёт ровно столько, сколько
-          содержимое окна, и не переживает закрытие (Radix размонтирует его). */}
+      {/* The body is a separate component: the typed text lives exactly as long as the dialog
+          content, and does not survive closing (Radix unmounts it). */}
       <ConfirmBody
         message={message}
         messageId={messageId}
@@ -174,7 +171,7 @@ interface ConfirmBodyProps extends Pick<
 > {
   messageId: string;
   loading: boolean;
-  /** Нормализованный текст, который надо набрать; пустая строка — подтверждение без поля. */
+  /** The normalized text to type; an empty string means confirmation without a field. */
   expected: string;
   confirmRef: RefObject<HTMLButtonElement | null>;
   fieldRef: RefObject<HTMLInputElement | null>;
@@ -205,8 +202,8 @@ function ConfirmBody({
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    // Enter в поле приходит сюда даже при выключенной кнопке (если браузер
-    // решил, что отправлять нечем): совпадение проверяется ещё раз.
+    // Enter in the field reaches here even when the button is disabled (if the browser decides
+    // there is nothing to submit): the match is checked once more.
     if (!matches || loading) return;
     onConfirm();
   }
@@ -228,8 +225,8 @@ function ConfirmBody({
               id={`${messageId}-field`}
               value={typed}
               onChange={(event) => setTyped(event.target.value)}
-              // Только чтение, а не `disabled`: Enter в поле запускает действие, и
-              // выключенное поле унесло бы фокус на `body` прямо из-под пальцев.
+              // Read-only rather than `disabled`: Enter in the field triggers the action, and a
+              // disabled field would move focus to `body` right out from under the user's fingers.
               readOnly={loading}
               autoComplete="off"
               autoCapitalize="off"
@@ -249,8 +246,8 @@ function ConfirmBody({
           ref={confirmRef}
           variant={confirmStyle.variant}
           tone={confirmStyle.tone}
-          // С полем подтверждает отправка формы, а не клик: так Enter в поле и
-          // кнопка идут одним путём и одной проверкой совпадения.
+          // With a field, confirmation is form submission rather than a click: this way Enter in
+          // the field and the button go through one path and one match check.
           type={withField ? "submit" : undefined}
           onClick={withField ? undefined : onConfirm}
           disabled={!matches}

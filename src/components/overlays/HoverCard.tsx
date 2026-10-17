@@ -21,20 +21,18 @@ import {
 import { Popover, PopoverAnchor, PopoverContent, type PopoverContentProps } from "./Popover.js";
 
 /**
- * Карточка-превью: подробности о том, на что навели курсор или поставили фокус.
+ * A preview card: details about whatever the pointer hovers or focus lands on.
  *
- * Собрана на китовом `Popover`, а не на `@radix-ui/react-hover-card`: новая
- * зависимость ради ста строк таймеров — цена выше пользы (решение
- * владельца, ADR-0048 запрещает компоненту «на будущее» стоить потребителю
- * зависимость). Слой, вид, анимации и позиционирование — те же, что у
- * `PopoverContent`.
+ * Built on the kit's `Popover`, not on `@radix-ui/react-hover-card`: a new dependency for
+ * a hundred lines of timers costs more than it gives (the owner's decision; ADR-0048 forbids
+ * a component from costing the consumer a dependency "for the future"). The layer, look,
+ * animations and positioning are the same as in `PopoverContent`.
  *
- * Радикс-поповер здесь УПРАВЛЯЕМЫЙ, а триггер — `PopoverAnchor`, а не
- * `PopoverTrigger`. Триггер поповера переключает панель по клику и вешает на
- * элемент `aria-haspopup="dialog"` с `aria-expanded`. Для ссылки, у которой
- * есть своё действие, это двойная ложь: клик должен вести по ссылке, а не
- * открывать панель, и скринридер не должен обещать диалог. Якорь только даёт
- * панели точку привязки.
+ * The Radix popover is CONTROLLED here, and the trigger is a `PopoverAnchor`, not a
+ * `PopoverTrigger`. A popover trigger toggles the panel on click and puts
+ * `aria-haspopup="dialog"` with `aria-expanded` on the element. For a link that has its own
+ * action this is a double lie: a click must follow the link, not open a panel, and the screen
+ * reader must not promise a dialog. The anchor only gives the panel a point to attach to.
  */
 
 const DEFAULT_OPEN_DELAY = 700;
@@ -42,26 +40,26 @@ const DEFAULT_CLOSE_DELAY = 300;
 
 export interface HoverCardProps {
   /**
-   * Сколько миллисекунд курсор или фокус должны задержаться на триггере, чтобы
-   * карточка открылась. Не даёт ей выскакивать от случайного пролёта курсора.
-   * Ориентир — `HoverCard` из Radix.
+   * How many milliseconds the pointer or focus must stay on the trigger before the card opens.
+   * It keeps the card from popping up on an accidental pass of the pointer.
+   * The reference is Radix's `HoverCard`.
    */
   openDelay?: number;
   /**
-   * Сколько миллисекунд карточка живёт после того, как курсор ушёл и с триггера,
-   * и с карточки. За это время курсор успевает перейти с одного на другое.
+   * How many milliseconds the card stays open after the pointer has left both the trigger and
+   * the card. The pointer has time to move from one to the other in that interval.
    */
   closeDelay?: number;
-  /** Управляемое состояние. Задержки при этом по-прежнему считает компонент. */
+  /** Controlled state. The component still computes the delays itself. */
   open?: boolean;
-  /** Открыта ли карточка в начале, если состоянием управляет сам компонент. По умолчанию закрыта. */
+  /** Whether the card starts open, when the component manages the state itself. Closed by default. */
   defaultOpen?: boolean;
   /**
-   * Вызывается, когда карточка просит открыться или закрыться: по таймеру
-   * наведения и фокуса, по Escape, по клику и фокусу вне карточки.
+   * Called when the card asks to open or close: by the hover and focus timers, by Escape,
+   * by a click and by focus outside the card.
    */
   onOpenChange?: (open: boolean) => void;
-  /** Состав карточки: `HoverCardTrigger` и `HoverCardContent`. */
+  /** The card's parts: `HoverCardTrigger` and `HoverCardContent`. */
   children: ReactNode;
 }
 
@@ -75,7 +73,7 @@ interface HoverCardContextValue {
   onContentLeave: (event: PointerEvent) => void;
   onContentFocus: () => void;
   onContentBlur: () => void;
-  /** Узел триггера: нужен панели, чтобы отличить фокус на нём от фокуса «вовне». */
+  /** The trigger node: the panel needs it to tell focus on the trigger apart from focus "outside". */
   triggerRef: MutableRefObject<HTMLElement | null>;
 }
 
@@ -88,17 +86,15 @@ function useHoverCardContext(part: string): HoverCardContextValue {
 }
 
 /**
- * Устройство без наведения: основной указатель — палец. Запрещает открытие по
- * НАВЕДЕНИЮ; клавиатурный фокус это не отменяет — у планшета бывает аппаратная
- * клавиатура, и Tab на ссылке должен открывать карточку так же, как на
- * компьютере. Тап по ссылке — нажатие, а не клавиша, поэтому карточку по-прежнему
- * не открывает.
+ * A device without hover: the primary pointer is a finger. It forbids opening on HOVER;
+ * keyboard focus does not cancel that — a tablet may have a hardware keyboard, and Tab on a
+ * link must open the card just as it does on a computer. A tap on a link is a press, not a
+ * key, so the card still does not open from it.
  *
- * Медиазапрос здесь осознанно читается из JS, в отличие от раскладок
- * (ADR-0018): карточка и без того появляется только после взаимодействия,
- * гидратации ждать нечего, а CSS управлять таймерами не умеет. Проверка идёт в
- * момент запроса открытия, а не подпиской: пользователь может подключить мышь к
- * планшету между двумя наведениями.
+ * The media query is deliberately read from JS here, unlike layouts (ADR-0018): the card
+ * appears only after an interaction anyway, there is nothing to wait for during hydration,
+ * and CSS cannot drive timers. The check runs at the moment an open is requested, not through
+ * a subscription: the user may connect a mouse to a tablet between two hovers.
  */
 function hoverUnavailable(): boolean {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
@@ -114,14 +110,14 @@ export function HoverCard({
   children,
 }: HoverCardProps) {
   const [innerOpen, setInnerOpen] = useState(defaultOpen);
-  // Слушатели модальности должны стоять до первого фокуса на триггере: событие,
-  // что уже прошло, задним числом не прочитать. Ставятся лениво и один раз.
+  // The input-modality listeners must be in place before the first focus on the trigger: an event
+  // that has already passed cannot be read after the fact. They are attached lazily, once.
   useEffect(trackInteractionModality, []);
   const controlled = openProp !== undefined;
   const open = controlled ? openProp : innerOpen;
 
-  // Таймеры срабатывают позже рендера и должны видеть актуальные значения, а не
-  // замкнутые на момент установки. Ссылки обновляются после коммита.
+  // Timers fire after the render and must see current values, not the ones captured when they
+  // were set. The refs are updated after the commit.
   const latest = useRef({ open, controlled, openDelay, closeDelay, onOpenChange });
   useEffect(() => {
     latest.current = { open, controlled, openDelay, closeDelay, onOpenChange };
@@ -129,20 +125,19 @@ export function HoverCard({
 
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Кто сейчас «держит» карточку: курсор на триггере, курсор на карточке,
-  // фокус на любом из них. Закрытие запрашивается, когда не держит никто.
+  // Who is currently "holding" the card: the pointer on the trigger, the pointer on the card,
+  // focus on either. A close is requested when nobody holds it.
   const holds = useRef({ triggerHover: false, contentHover: false, focus: false });
   const triggerRef = useRef<HTMLElement | null>(null);
 
   /*
-    Закрытая карточка никого не держит.
+    A closed card holds nothing.
 
-    Закрыть её можно, пока курсор лежит на панели или фокус стоит в ней, — по
-    Escape или из управляемого родителя. Узел панели при этом уходит из
-    документа, и ни `pointerleave`, ни `blur` React уже не пошлёт: флаг
-    остался бы поднятым, и при следующем наведении `requestClose` видел бы
-    «держат» и не закрывал карточку никогда. Тот же след оставляет Escape при
-    фокусе на триггере: фокус остался, флаг тоже.
+    It can be closed while the pointer lies on the panel or focus sits in it — by Escape or
+    from a controlled parent. The panel's node then leaves the document, and React sends neither
+    `pointerleave` nor `blur` any more: the flag would stay raised, and on the next hover
+    `requestClose` would see "held" and never close the card. Escape with focus on the trigger
+    leaves the same trace: the focus stayed, and so did the flag.
   */
   useEffect(() => {
     if (open) return;
@@ -168,9 +163,9 @@ export function HoverCard({
   const requestOpen = useCallback(
     (source: "hover" | "focus") => {
       clearCloseTimer();
-      // Запрет `(hover: none)` касается только наведения. Фокус сюда доходит уже
-      // отфильтрованным по модальности (только от клавиши), так что на планшете
-      // с клавиатурой Tab карточку открывает, а тап и скринридер — нет.
+      // The `(hover: none)` ban applies only to hover. Focus reaches here already filtered by modality
+      // (keyboard only), so on a tablet with a keyboard Tab opens the card, while a tap and a screen
+      // reader do not.
       if (source === "hover" && hoverUnavailable()) return;
       if (latest.current.open || openTimer.current !== null) return;
       openTimer.current = setTimeout(() => {
@@ -193,8 +188,8 @@ export function HoverCard({
     }, latest.current.closeDelay);
   }, [change, clearCloseTimer, clearOpenTimer]);
 
-  // Размонтирование с висящим таймером не должно звать `onOpenChange` и
-  // трогать состояние уже убранного компонента.
+  // Unmounting with a pending timer must not call `onOpenChange` or touch the state of an
+  // already removed component.
   useEffect(() => {
     return () => {
       clearOpenTimer();
@@ -203,11 +198,10 @@ export function HoverCard({
   }, [clearOpenTimer, clearCloseTimer]);
 
   /*
-    Радикс просит закрыть сам: Escape, щелчок вне карточки, фокус ушёл на другой
-    элемент. Это закрытие немедленное и перебивает любые таймеры. Escape при
-    этом идёт тем же путём, что у `Popover` и `Tooltip`: слушает его Radix, а
-    не отдельный обработчик здесь (ADR-0041 стек слоёв кита не оборачивает
-    Radix, а решает стык двух библиотек).
+    Radix asks to close on its own: Escape, a click outside the card, focus moved to another
+    element. This close is immediate and overrides any timers. Escape takes the same path as in
+    `Popover` and `Tooltip`: Radix listens for it, not a separate handler here (ADR-0041: the
+    kit's overlay layer stack does not wrap Radix; it resolves the seam between the two libraries).
   */
   const handleRadixOpenChange = useCallback(
     (next: boolean) => {
@@ -222,7 +216,7 @@ export function HoverCard({
     () => ({
       open,
       onTriggerEnter: (event) => {
-        // Касание — не наведение: браузеры шлют `pointerenter` и от пальца.
+        // A touch is not a hover: browsers send `pointerenter` for a finger too.
         if (event.pointerType === "touch") return;
         holds.current.triggerHover = true;
         requestOpen("hover");
@@ -234,13 +228,12 @@ export function HoverCard({
       },
       onTriggerFocus: () => {
         /*
-          Открывает только фокус от клавиши. Нажатие мышью или пальцем — действие
-          уже совершено, и карточка поверх него мигала бы. Фокус без клавиши и
-          указателя пришёл от скринридера (свайп, виртуальный курсор): он не
-          должен всплывать с содержимым без объявления, а при экранной лупе —
-          закрывать соседний текст. Содержимое карточки по контракту
-          дополнительное и доступно иначе. `:focus-visible` для этого не годится:
-          он истинен и для фокуса скринридера.
+          Only focus from the keyboard opens the card. A mouse or finger press is an action that
+          has already happened, and a card on top of it would flicker. Focus with neither a key nor
+          a pointer came from a screen reader (swipe, virtual cursor): it must not pop up content
+          without an announcement, and with a screen magnifier it must not close the neighboring text.
+          By contract, the card's content is supplementary and reachable in another way.
+          `:focus-visible` does not fit here: it is also true for screen-reader focus.
         */
         if (getInteractionModality() !== "keyboard") return;
         holds.current.focus = true;
@@ -253,7 +246,7 @@ export function HoverCard({
       onContentEnter: (event) => {
         if (event.pointerType === "touch") return;
         holds.current.contentHover = true;
-        // Курсор дошёл до карточки — запланированное закрытие отменяется.
+        // The pointer reached the card — the scheduled close is cancelled.
         clearCloseTimer();
       },
       onContentLeave: (event) => {
@@ -284,8 +277,8 @@ export function HoverCard({
 }
 
 /**
- * Четыре обработчика принадлежат карточке: потребительские на самом триггере
- * ставятся на потомка (`asChild`) и сохраняются, а здесь они затёрли бы таймеры.
+ * The four handlers belong to the card: the consumer's own handlers on the trigger are kept
+ * on the child (`asChild`), while here they would overwrite the timers.
  */
 type RadixAnchorProps = Omit<
   ComponentPropsWithoutRef<typeof PopoverAnchor>,
@@ -293,18 +286,19 @@ type RadixAnchorProps = Omit<
 >;
 
 export interface HoverCardTriggerProps extends RadixAnchorProps {
-  /** Отдать роль триггера вашему элементу вместо встроенного `div`: свойства и `ref` сливаются с его собственными. Здесь по умолчанию `true` — триггер должен быть ссылкой или кнопкой. */
+  /** Hand the trigger role to your element instead of the built-in `div`: props and `ref` are merged with its own. Defaults to `true` here — the trigger must be a link or a button. */
   asChild?: RadixAnchorProps["asChild"];
-  /** Элемент или объект с `getBoundingClientRect`, возле которого открывается карточка вместо самого триггера. */
+  /** An element or an object with `getBoundingClientRect` next to which the card opens instead of the trigger itself. */
   virtualRef?: RadixAnchorProps["virtualRef"];
 }
 
 /**
- * Триггер карточки (`asChild` по умолчанию включён: обёртка `div` без роли и без
- * фокуса была бы триггером, до которого не добраться с клавиатуры): слушает наведение и фокус, ничего не переключает по клику.
+ * The card trigger (`asChild` is on by default: a `div` wrapper with no role and no focus would
+ * be a trigger that cannot be reached from the keyboard). It listens for hover and focus and
+ * toggles nothing on click.
  *
- * Потомок обязан быть интерактивным (ссылка, кнопка) и принимать `ref` и
- * обработчики событий: собственные его обработчики сохраняются.
+ * The child must be interactive (a link, a button) and accept `ref` and event handlers: its own
+ * handlers are kept.
  */
 export const HoverCardTrigger = forwardRef<HTMLDivElement, HoverCardTriggerProps>(
   function HoverCardTrigger({ asChild = true, ...rest }, ref) {
@@ -331,16 +325,16 @@ export const HoverCardTrigger = forwardRef<HTMLDivElement, HoverCardTriggerProps
 export type HoverCardContentProps = PopoverContentProps;
 
 /**
- * Панель карточки. Вид, слой и анимации — `PopoverContent`.
+ * The card panel. Look, layer and animations are those of `PopoverContent`.
  *
- * Отличия от поповера, и все они про то, что карточка дополняет триггер, а не
- * забирает управление:
- * - фокус при открытии остаётся на месте (`onOpenAutoFocus` отменён), а при
- *   закрытии не возвращается на триггер — закрытие от указателя не должно
- *   перетаскивать фокус; при Escape он и так стоит на триггере;
- * - роли `dialog` нет: диалог без перехода фокуса — обещание, которого панель не
- *   держит, а безымянный `role="dialog"` ещё и нарушает axe;
- * - курсор на панели удерживает её открытой.
+ * Differences from a popover. All of them share one point: the card complements its trigger
+ * rather than taking control.
+ * - Focus stays where it is on open (`onOpenAutoFocus` is cancelled), and on close it does not
+ *   return to the trigger — a close by the pointer must not move focus; on Escape it is already
+ *   on the trigger.
+ * - There is no `dialog` role: a dialog without a focus move is a promise the panel does not
+ *   keep, and an unnamed `role="dialog"` also violates axe.
+ * - The pointer on the panel keeps it open.
  */
 export const HoverCardContent = forwardRef<HTMLDivElement, HoverCardContentProps>(
   function HoverCardContent(
@@ -374,10 +368,9 @@ export const HoverCardContent = forwardRef<HTMLDivElement, HoverCardContentProps
         onFocusOutside={(event) => {
           onFocusOutside?.(event);
           /*
-            Фокус на самом триггере — не «вовне». Якорь Radix, в отличие от
-            `PopoverTrigger`, не числится триггером, и без этого Tab на ссылку
-            при уже открытой (от курсора) карточке закрывал её, после чего
-            таймер фокуса открывал снова — карточка мигала.
+            Focus on the trigger itself is not "outside". The Radix anchor, unlike `PopoverTrigger`,
+            is not counted as a trigger, and without this a Tab onto the link, with the card already
+            open (from the pointer), closed it; then the focus timer opened it again — the card flickered.
           */
           if (context.triggerRef.current?.contains(event.target as Node)) event.preventDefault();
         }}

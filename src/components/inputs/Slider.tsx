@@ -16,30 +16,29 @@ import { useFieldDescribedBy } from "../../hooks/useFieldDescription.js";
 import { cn } from "../../lib/cn.js";
 
 /**
- * `orientation` есть только у `Slider`. Раньше его не было нигде:
- * дорожка и заливка были заданы одной горизонтальной геометрией, и
- * вертикальный ползунок просто отрисовался бы горизонтальным. У одиночного
- * ползунка теперь своя вертикальная геометрия; у `RangeSlider` её нет, и проп
- * из его типа по-прежнему убран — проп, который компилируется и ничего не
- * делает, хуже отсутствующего.
+ * `orientation` exists only on `Slider`. Before this change there was no such prop anywhere:
+ * the track and the fill had one horizontal geometry, so a vertical slider would simply
+ * render horizontally. A single slider now has its own vertical geometry; `RangeSlider` has
+ * none, and the prop is still removed from its type — a prop that compiles and does nothing
+ * is worse than no prop at all.
  */
 interface SliderLookProps {
-  /** Подпись в шапке ползунка, слева от значения. */
+  /** Label in the slider header, to the left of the value. */
   label?: string;
   /**
-   * Где показывать значение.
+   * Where to show the value.
    *
-   * `side` — в строке подписи справа: значение видно всегда и не прыгает.
-   * `none` — не показывать: когда рядом стоит поле с тем же числом, две копии
-   * одного значения расходятся в глазах читающего.
+   * `side` — in the label row on the right: the value is always visible and does not jump.
+   * `none` — do not show it: when a field with the same number sits next to the slider,
+   * two copies of one value would disagree in the reader's eyes.
    *
-   * Подписи НАД ползунком нет намеренно: она ездит вместе с ним, и на краях
-   * шкалы вылезает за габарит контрола.
+   * The value is intentionally NOT shown above the thumb: it moves with the thumb, and at the
+   * ends of the track it would stick out past the control's bounds.
    */
   valuePosition?: "side" | "none";
-  /** Формат значения. По умолчанию — как есть. */
+  /** Value formatter. Defaults to the raw value. */
   formatValue?: (value: number) => string;
-  /** Классы на корневой элемент. */
+  /** Classes for the root element. */
   className?: string;
 }
 
@@ -49,25 +48,25 @@ export type SliderProps = SliderLookProps &
 export type RangeSliderProps = SliderLookProps &
   Omit<AriaSliderProps<number[]>, "children" | "className" | "style" | "orientation"> & {
     /**
-     * Наименьшее расстояние между концами в единицах значения.
+     * The smallest distance between the two ends, in value units.
      *
-     * react-aria не даёт концам перепрыгнуть друг друга, но упереться вплотную
-     * позволяет, а нулевой диапазон почти всегда бессмыслен: «от 500 до 500»
-     * это не фильтр, а точное совпадение, которого в данных нет.
+     * react-aria keeps the ends from jumping over each other, but lets them touch.
+     * A zero-length range is almost always meaningless: "from 500 to 500" is not a filter
+     * but an exact match that the data never contains.
      */
     minGap?: number;
   };
 
 /*
-  Выключенный ползунок приглушается ЦЕЛИКОМ, на корне: подпись, значение,
-  дорожка и бегунок — одной прозрачностью, как прочие поля кита и как
-  `State=disabled` в Figma. `disabled:` здесь срабатывает на `data-disabled`,
-  который react-aria ставит на корень. Раньше вида не было вовсе —
-  отличался только курсор над бегунком.
+  A disabled slider is dimmed AS A WHOLE, at the root: label, value, track and thumb share
+  one opacity, like the other fields of the kit and `State=disabled` in Figma. `disabled:`
+  here matches `data-disabled`, which react-aria sets on the root. Previously there was no
+  visual disabled state at all — only the cursor over the thumb differed.
 
-  `has-[input:disabled]:` — для ползунка внутри `<fieldset disabled>` (так `Form` с
-  `pending` гасит поля): react-aria о таком предке не знает и `data-disabled`
-  на корне не ставит, а нативное состояние видит только скрытый `input` бегунка.
+  `has-[input:disabled]:` covers a slider inside `<fieldset disabled>` (this is how `Form`
+  with `pending` disables its fields): react-aria does not know about such an ancestor and
+  does not set `data-disabled` on the root, while the native state is visible only on the
+  thumb's hidden `input`.
 */
 const DIMMED_WHEN_DISABLED = "disabled:opacity-50 has-[input:disabled]:opacity-50";
 const ROOT_CLASS = `flex w-full flex-col gap-2 ${DIMMED_WHEN_DISABLED}`;
@@ -77,20 +76,18 @@ const THUMB_BASE_CLASS =
   "border-accent bg-bg-1 size-4 cursor-grab rounded-full border-2 shadow-[var(--shadow-1)] transition-shadow " +
   "dragging:cursor-grabbing focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 " +
   "disabled:cursor-not-allowed has-[input:disabled]:cursor-not-allowed";
-// Вдоль оси бегунок ставит react-aria (`left` или `top`), поперёк — мы.
+// Along the axis react-aria sets the thumb position (`left` or `top`); across it, we do.
 const THUMB_CLASS = `${THUMB_BASE_CLASS} top-1/2`;
 
 /*
-  Геометрия одиночного ползунка по ориентации — одна карта вместо ветвления
-  в каждом узле. `RangeSlider` берёт горизонтальные классы напрямую: вертикали
-  у него нет.
+  The geometry of a single slider by orientation: one map instead of a branch in every node.
+  `RangeSlider` takes the horizontal classes directly: it has no vertical orientation.
 
-  Вертикаль. Высоту задаёт корень: вертикальной дорожке, в отличие от
-  горизонтальной, не во что тянуться, и без явной высоты она схлопывается в
-  точку. Умолчание `h-48`, потребитель меняет его через `className`. Ширина —
-  по шапке, а не `w-full`: столбик на всю ширину формы выглядит ошибкой
-  вёрстки. Заливка растёт от нижнего края: «больше» на вертикальной шкале —
-  выше.
+  Vertical. The root sets the height: unlike a horizontal track, a vertical track has nothing
+  to stretch against, and without an explicit height it collapses to a point. The default is
+  `h-48`; the consumer changes it through `className`. The width follows the header, not
+  `w-full`: a column as wide as the form looks like a layout bug. The fill grows from the
+  bottom edge: "more" on a vertical scale is up.
 */
 const GEOMETRY = {
   horizontal: {
@@ -110,13 +107,13 @@ const GEOMETRY = {
 } as const;
 
 /**
- * Корень, объявляющий группу выключенной (`aria-disabled`).
+ * The root that declares the group disabled (`aria-disabled`).
  *
- * Приглушённые подпись и значение — текст неактивного элемента, к контрасту
- * по WCAG 1.4.3 не обязанный; но узнать об этом и скринридер, и axe могут
- * только по `aria-disabled` у группы. react-aria его не ставит, а переданный
- * пропом — отфильтровывает, поэтому атрибут кладётся через `render`.
- * `render` потребителя не теряется: он получает уже дополненные пропсы.
+ * The dimmed label and value are the text of an inactive control, which is not required to meet
+ * the WCAG 1.4.3 contrast ratio. But both a screen reader and axe can learn about the disabled
+ * state only from `aria-disabled` on the group. react-aria does not set it, and filters out
+ * one passed as a prop, so the attribute is put on through `render`.
+ * The consumer's `render` is not lost: it receives the already augmented props.
  */
 function withDisabledGroup(
   render?: DOMRenderFunction<"div", SliderRenderProps>
@@ -143,10 +140,9 @@ function Header({
       {valuePosition === "side" ? (
         <SliderOutput className="text-fg-2 text-caption font-mono">
           {/*
-            Своё форматирование идёт через рендер-проп, а не подменяет вывод
-            снаружи: `SliderOutput` — это и есть `<output>`, связанный с
-            ползунком, и текст обязан лежать внутри него, иначе связь теряется
-            и скринридер читает пустой вывод.
+            Custom formatting goes through the render prop, not by replacing the output from
+            outside: `SliderOutput` is the `<output>` linked to the slider, and the text must
+            sit inside it, otherwise the link is lost and a screen reader reads an empty output.
           */}
           {formatValue
             ? ({ state }) => state.values.map((v) => formatValue(v)).join(" — ")
@@ -158,15 +154,15 @@ function Header({
 }
 
 /*
-  Колесо двигает значение на шаг. react-aria колеса не знает, поэтому слушатель
-  вешается на корень и ходит в состояние ползунка через контекст: так `onChange`,
-  `onChangeEnd` и зажим концов у `RangeSlider` отрабатывают как от клавиатуры.
+  The wheel changes the value by one step. react-aria does not handle the wheel, so the listener
+  is attached to the root and reads the slider state through context: this way `onChange`,
+  `onChangeEnd` and the clamping of the ends in `RangeSlider` behave as they do for the keyboard.
 
-  Слушатель нативный и не пассивный: React вешает `wheel` пассивным, и
-  `preventDefault` в нём молча не работает — страница ехала бы вместе со значением.
+  The listener is native and non-passive: React attaches `wheel` as passive, and
+  `preventDefault` in it silently does nothing — the page would scroll along with the value.
 */
 const WHEEL_NOTCH = 40;
-// Пауза, после которой недокрученный остаток жеста считается чужим.
+// Idle time after which the unfinished remainder of a wheel gesture is treated as a new gesture.
 const WHEEL_IDLE_MS = 200;
 
 function WheelStep({
@@ -179,7 +175,7 @@ function WheelStep({
   vertical: boolean;
 }) {
   const state = useContext(SliderStateContext);
-  // Свежее состояние читается из ref: слушатель вешается один раз.
+  // The fresh state is read from a ref: the listener is attached once.
   const stateRef = useRef(state);
   stateRef.current = state;
   const accumulated = useRef(0);
@@ -190,9 +186,9 @@ function WheelStep({
     if (!root) return;
     const onWheel = (event: WheelEvent) => {
       const current = stateRef.current;
-      // Ctrl + колесо — это зум страницы (и щипок тачпада тоже): не отнимаем его.
+      // Ctrl + wheel is page zoom (and a trackpad pinch too): do not take it over.
       if (!current || current.isDisabled || event.ctrlKey) return;
-      // Ось ползунка главная; на горизонтальном берём и боковую прокрутку тачпада.
+      // The slider's axis is the primary one; on a horizontal slider we also take the trackpad's sideways scroll.
       const raw = vertical
         ? -event.deltaY
         : Math.abs(event.deltaX) > Math.abs(event.deltaY)
@@ -213,8 +209,8 @@ function WheelStep({
           const at =
             current.getThumbMinValue(0) +
             fraction * (current.getThumbMaxValue(0) - current.getThumbMinValue(0));
-          // При равном расстоянии (концы сошлись) берём тот, что может уйти
-          // в сторону прокрутки: вверх — верхний, вниз — нижний.
+          // On equal distance (the ends have met), pick the one that can move in the scroll direction:
+          // up — the upper one, down — the lower one.
           index = current.values.reduce((best, value, i) => {
             const distance = Math.abs(value - at);
             const bestDistance = Math.abs(current.values[best]! - at);
@@ -230,13 +226,13 @@ function WheelStep({
         direction > 0
           ? value >= current.getThumbMaxValue(index)
           : value <= current.getThumbMinValue(index);
-      // На краю шкалы колесо не держим: иначе курсор «залипает» и страница не листается.
+      // At the edge of the scale the wheel does not capture the scroll: otherwise the cursor gets stuck and the page cannot scroll.
       if (atEdge) return;
       event.preventDefault();
 
-      // Один щелчок мыши — один шаг; тачпад сыплет мелкие дельты, их копим.
-      // Остаток старого жеста не переносим: после паузы или при смене
-      // направления копим заново, иначе первый щелчок «съедается».
+      // One mouse click is one step; a trackpad sends small deltas, so we accumulate them.
+      // The leftover of an old gesture is not carried over: after a pause, or when the direction
+      // changes, we accumulate from zero, otherwise the first click gets swallowed.
       const now = Date.now();
       if (
         now - lastWheelAt.current > WHEEL_IDLE_MS ||
@@ -261,12 +257,12 @@ function WheelStep({
 }
 
 /**
- * Ползунок одного значения.
+ * A single-value slider.
  *
- * Поведение целиком у react-aria: перетаскивание указателем и касанием,
- * клавиатура (стрелки на шаг, Shift — крупным шагом, Home/End на края),
- * `aria-valuetext` и объявление подписи. Кит держит вид и два решения выше —
- * где стоит значение и что делать с нулевым диапазоном у пары.
+ * The behavior is entirely react-aria's: pointer and touch drag, keyboard (arrows step,
+ * Shift for a large step, Home/End to the ends), `aria-valuetext` and the label announcement.
+ * The kit owns the look and the two decisions above: where the value sits and what to do with
+ * a zero-length range in a pair.
  */
 export function Slider({
   label,
@@ -275,19 +271,19 @@ export function Slider({
   className,
   ...rest
 }: SliderProps) {
-  // Подсказка и ошибка `FormField` не доходили до ползунка вовсе: он не читал
-  // контекст описания, хотя в форме стоит рядом с полями, которые читают.
+  // The `FormField` hint and error did not reach the slider at all: it did not read
+  // the description context, although it sits in a form next to fields that do.
   /*
-    Здесь берётся ТОЛЬКО описание формы, без склейки с пользовательским.
+    Only the form description is taken here, without merging with the user's one.
 
-    Склеивать не надо: `aria-describedby` потребителя уезжает в `{...rest}` на
-    группу, а react-aria сама сносит его на бегунок и объединяет со своим.
-    Добавив к этому ещё и слитое значение, мы получали `own own _r_0_` — тот же
-    идентификатор дважды, и подсказка читалась два раза подряд.
+    Do not merge: the consumer's `aria-describedby` goes into `{...rest}` on the group,
+    and react-aria itself moves it onto the thumb and combines it with its own.
+    If we added the merged value on top, we got `own own _r_0_` — the same id twice,
+    and the hint was read twice in a row.
   */
   const describedBy = useFieldDescribedBy();
-  // Ориентацию читаем, а не деструктурируем: проп обязан доехать до
-  // react-aria в `{...rest}` — от него зависят стрелки и `aria-orientation`.
+  // Read orientation rather than destructuring it: the prop must reach
+  // react-aria through `{...rest}` — arrows and `aria-orientation` depend on it.
   const geometry = GEOMETRY[rest.orientation ?? "horizontal"];
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -309,9 +305,9 @@ export function Slider({
               style={{ [geometry.fillSize]: `${state.getThumbPercent(0) * 100}%` }}
             />
             {/*
-              Описание висит на БЕГУНКЕ, а не на группе: фокусируется он, и
-              `role="slider"` тоже на нём. Группе react-aria атрибут не ставит
-              вовсе — проверено, он туда не доходит.
+              The description sits on the THUMB, not on the group: the thumb is what gets focus,
+              and `role="slider"` is on it too. react-aria does not set the attribute on the group
+              at all — verified, it does not reach it.
             */}
             <SliderThumb
               className={geometry.thumb}
@@ -325,12 +321,12 @@ export function Slider({
 }
 
 /**
- * Ползунок диапазона: два конца на одной дорожке.
+ * A range slider: two ends on one track.
  *
- * Отдельный компонент, а не проп `range` у `Slider`: у пары другой тип значения
- * (`number[]` против `number`), и уния по булеву пропу превратила бы `onChange`
- * в «что-то одно из двух» для каждого вызывающего. Та же логика, по которой у
- * `Select` оси `multiple` разведены типами.
+ * A separate component, not a `range` prop on `Slider`: a pair has a different value type
+ * (`number[]` versus `number`), and a union over a boolean prop would turn `onChange` into
+ * "one of two things" for every caller. It is the same logic by which `Select`'s `multiple`
+ * axis is kept apart by types.
  */
 export function RangeSlider({
   label,
@@ -343,16 +339,15 @@ export function RangeSlider({
 }: RangeSliderProps) {
   const min = rest.minValue ?? 0;
   const max = rest.maxValue ?? 100;
-  // Как и выше: склейку делает react-aria, наше дело — описание формы.
+  // As above: react-aria merges the description; our job is the form description.
   const describedBy = useFieldDescribedBy();
   /*
-    ПРЕДЫДУЩАЯ пара, а не начальная.
+    The PREVIOUS pair, not the initial one.
 
-    База для «какой конец двигали» бралась из `rest.value ?? rest.defaultValue`.
-    У НЕУПРАВЛЯЕМОГО ползунка `value` всегда `undefined`, а `defaultValue` не
-    меняется никогда — после первого же движения сравнение шло с начальным
-    значением, и зажимался не тот конец: пользователь тянул верхний, а уезжал
-    тоже верхний.
+    The base for "which end was moved" was taken from `rest.value ?? rest.defaultValue`.
+    For an UNCONTROLLED slider `value` is always `undefined`, and `defaultValue` never changes —
+    after the first move the comparison ran against the initial value, and the wrong end got
+    clamped: the user dragged the upper end, and it was the upper end that got pushed away.
   */
   const previous = useRef<[number, number] | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -365,30 +360,27 @@ export function RangeSlider({
       render={withDisabledGroup(rest.render)}
       onChange={(value) => {
         /*
-          Зазор держится ЗДЕСЬ: react-aria не даёт концам поменяться местами,
-          но сводит их вплотную, и «от 500 до 500» уезжает в фильтр как
-          валидное значение.
+          The gap is enforced HERE: react-aria does not let the ends swap places, but it does
+          let them touch, and "from 500 to 500" goes into the filter as a valid value.
 
-          Значение ЗАЖИМАЕТСЯ, а не отбрасывается. Отбрасывание ломалось двумя
-          способами сразу, и оба нашлись ревью:
+          The value is CLAMPED, not discarded. Discarding broke in two ways at once, and both
+          were found in review:
 
-          1. Управляемый ползунок заклинивало насмерть. Проверка смотрела на
-             итоговый зазор, а не на то, стало ли лучше: из состояния, уже
-             нарушающего `minGap` (сохранённый фильтр, умолчание сервера),
-             отвергались ВСЕ движения, включая те, что его исправляют.
-          2. У неуправляемого расходились вид и данные. Внутреннее состояние
-             react-aria меняется независимо от нашего колбэка: ползунки
-             съезжались вплотную на экране, а вызывающий не получал ничего и
-             считал значение прежним.
+          1. A controlled slider froze completely. The check looked at the resulting gap, not at
+             whether the move made things better: from a state that already violated `minGap`
+             (a saved filter, a server default), ALL moves were rejected, including the ones
+             that fix it.
+          2. An uncontrolled one had its view and data diverge. react-aria's internal state
+             changes independently of our callback: the thumbs slid together on screen, while
+             the caller got nothing and kept considering the value unchanged.
 
-          ЧТО ОСТАЁТСЯ. Зажатая пара уходит в `onChange`, но внутреннее
-          состояние react-aria мы поправить не можем — им владеет библиотека.
-          У НЕУПРАВЛЯЕМОГО ползунка концы на экране всё ещё могут встать ближе
-          зазора, хотя наружу уехало правильное значение. С `minGap` держите
-          ползунок управляемым; это записано и на странице компонента.
+          WHAT REMAINS. The clamped pair goes to `onChange`, but react-aria's internal state
+          cannot be corrected by us — the library owns it. For an UNCONTROLLED slider the ends
+          on screen can still end up closer than the gap, although the correct value went out.
+          With `minGap`, keep the slider controlled; this is also documented on the component page.
 
-          Зажимаем тот конец, которого не касались: двигавшийся остаётся под
-          пальцем, а уезжает сосед.
+          We clamp the end that was not touched: the one being moved stays under the finger,
+          and the neighbor is pushed away.
         */
         if (minGap > 0 && Array.isArray(value) && value.length === 2) {
           const [low, high] = value as [number, number];
@@ -424,8 +416,8 @@ export function RangeSlider({
                 width: `${(state.getThumbPercent(1) - state.getThumbPercent(0)) * 100}%`,
               }}
             />
-            {/* Описание на ПЕРВОМ бегунке: повторять его на обоих значило бы
-                прочитать подсказку дважды при переходе между концами. */}
+            {/* The description sits on the FIRST thumb: repeating it on both would mean
+                reading the hint twice when moving between the ends. */}
             <SliderThumb
               index={0}
               className={THUMB_CLASS}

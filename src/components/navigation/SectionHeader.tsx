@@ -5,39 +5,39 @@ import { cn } from "../../lib/cn.js";
 import type { Size } from "../../lib/variants.js";
 
 export interface SectionHeaderProps extends Omit<ComponentPropsWithoutRef<"div">, "title"> {
-  /** Заголовок: строка или разметка, например иконка с подписью, счётчик, переключатель периода. */
+  /** Title: a string or markup, for example an icon with a label, a counter, or a range switch. */
   title: ReactNode;
-  /** Действия справа: ссылка, кнопка, счётчик. */
+  /** Actions on the right: a link, a button, or a counter. */
   right?: ReactNode;
-  /** Кегль заголовка: `sm` — мельче, `md` — крупнее (по умолчанию). */
+  /** Title font size: `sm` is smaller, `md` is larger (default). */
   size?: Extract<Size, "sm" | "md">;
   /**
-   * Уровень заголовка в документе: `h2`, `h3` (по умолчанию) или `h4`.
+   * Heading level in the document: `h2`, `h3` (default), or `h4`.
    *
-   * Уровень заголовка в документе — отдельно от размера, по тому же правилу,
-   * что у `Heading`: порядок заголовков обязан быть непрерывным, а кегль к
-   * нему не привязан.
+   * The heading level in the document is separate from the size, by the same rule as for
+   * `Heading`: heading levels must follow one another without gaps, while the font size is not
+   * tied to them.
    *
-   * Умолчание `3` — то, что компонент рисовал всегда. Оно верно для секции
-   * внутри карточки, стоящей под заголовком секции страницы, и неверно сразу
-   * под `PageHeader`: там между `h1` и `h3` образуется дыра, и оглавление для
-   * скринридера рвётся. На таком экране передавайте `level={2}`.
+   * The default `3` is what the component always rendered. It is right for a section inside a
+   * card that sits under a page section heading, and wrong directly under `PageHeader`: there a
+   * gap forms between `h1` and `h3`, and the outline for screen readers breaks. On such a screen
+   * pass `level={2}`.
    */
   level?: 2 | 3 | 4;
 }
 
-/** Шкала заголовков секции. Обе ступени взяты из фактических вызовов. */
+/** Scale of title sizes. Both steps are taken from actual call sites. */
 const SIZES = {
   sm: "text-[13px]",
   md: "text-[15px]",
 } as const;
 
 /**
- * Заголовок секции внутри карточки: подпись слева, действия справа.
+ * Section header inside a card: a label on the left, actions on the right.
  *
- * `title` типизирован как `ReactNode`, а не как строка, потому что во фронте
- * в него кладут разметку — иконку с подписью, счётчик, переключатель периода.
- * Сузить тип до строки значило бы сломать восемь вызовов из семнадцати.
+ * `title` is typed as `ReactNode`, not as a string, because on the frontend markup is put into it:
+ * an icon with a label, a counter, a range switch. Narrowing the type to a string would break
+ * eight of the seventeen call sites.
  */
 export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(function SectionHeader(
   { title, right, size = "md", level = 3, className, ...rest },

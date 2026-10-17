@@ -19,29 +19,29 @@ import type { Tone } from "../../lib/variants.js";
 import { keyGlyphs } from "../content/Kbd.js";
 
 /**
- * Контекстное меню — по правой кнопке мыши и по клавише контекстного меню.
+ * Context menu: opened by the right mouse button and by the context menu key.
  *
- * СОБРАНО НА RADIX, А НЕ НА react-aria, и это вынужденно: контекстного меню
- * react-aria не даёт вовсе. Семейство Radix в пакете уже есть (диалог,
- * попоувер, тултип), поэтому новая зависимость не приводит нового поставщика.
+ * BUILT ON RADIX, NOT ON react-aria, and this was forced: react-aria does not provide a context
+ * menu at all. The Radix family is already in the package (dialog, popover, tooltip), so the new
+ * dependency does not bring a new vendor.
  *
- * Вид берётся из той же таблицы `lib/menu.ts`, что и у `Menu` на react-aria.
- * Это единственное, что удерживает два меню от расхождения: библиотеки разные,
- * а пользователь должен видеть одно и то же меню независимо от того, открыл он
- * его кнопкой или правой кнопкой мыши. Сторожит снимок «два меню рядом».
+ * The look comes from the same table, `lib/menu.ts`, as the react-aria `Menu`. This is the only
+ * thing that keeps the two menus from drifting apart: the libraries differ, while the user must
+ * see the same menu whether they opened it with a button or with the right mouse button. The
+ * "two menus side by side" snapshot guards it.
  */
 export const ContextMenu = Primitive.Root;
 export const ContextMenuTrigger = Primitive.Trigger;
 export const ContextMenuSub = Primitive.Sub;
 
 export interface ContextMenuContentProps {
-  /** Пункты, разделы и разделители меню. */
+  /** Menu items, sections and separators. */
   children?: ReactNode;
-  /** Классы на панель меню — например, ширина. */
+  /** Classes for the menu panel, for example the width. */
   className?: string;
 }
 
-/** Панель контекстного меню. Портал внутри — как у `Menu`. */
+/** Context menu panel. Portal inside, as in `Menu`. */
 export const ContextMenuContent = forwardRef<HTMLDivElement, ContextMenuContentProps>(
   function ContextMenuContent({ children, className }, ref) {
     return (
@@ -55,19 +55,19 @@ export const ContextMenuContent = forwardRef<HTMLDivElement, ContextMenuContentP
 );
 
 export interface ContextMenuItemProps {
-  /** Подпись пункта. Длинная обрезается многоточием. */
+  /** Item label. A long label is truncated with an ellipsis. */
   children?: ReactNode;
-  /** Иконка слева от подписи. */
+  /** Icon to the left of the label. */
   icon?: ReactNode;
-  /** Горячая клавиша справа — напоминание, а не действие. */
+  /** Keyboard shortcut on the right — a hint, not an action. */
   shortcut?: ReactNode;
-  /** Цвет подписи и иконки. `danger` — для разрушительных действий. */
+  /** Color of the label and icon. `danger` is for destructive actions. */
   tone?: Tone;
-  /** Пункт неактивен: не выбирается и пропускается при навигации. */
+  /** The item is inactive: it cannot be selected and is skipped during navigation. */
   disabled?: boolean;
-  /** Пункт выбран мышью или клавишей; меню после этого закрывается. */
+  /** The item is selected with the mouse or the keyboard; the menu closes after that. */
   onSelect?: () => void;
-  /** Классы на пункт. */
+  /** Classes for the item. */
   className?: string;
 }
 
@@ -81,11 +81,10 @@ export const ContextMenuItem = forwardRef<HTMLDivElement, ContextMenuItemProps>(
         ref={ref}
         disabled={disabled}
         onSelect={onSelect}
-        // Пункт Radix получает настоящий DOM-фокус, и глобальное правило
-        // `:focus-visible` рисует вокруг него контур — которого у пункта
-        // react-aria нет, потому что подсветка там задана подложкой. Без этого
-        // атрибута два меню выглядят по-разному, и снимок «два меню рядом»
-        // ловит это первым же прогоном.
+        // The Radix item gets real DOM focus, and the global `:focus-visible` rule draws an outline
+        // around it, which a react-aria item does not have, because there the highlight comes from
+        // the item background. Without this attribute the two menus look different, and the "two
+        // menus side by side" snapshot catches it on the first run.
         data-disable-focus-ring="true"
         className={cn(MENU_ITEM_CLASS, MENU_ITEM_TONE[tone], className)}
       >
@@ -98,20 +97,20 @@ export const ContextMenuItem = forwardRef<HTMLDivElement, ContextMenuItemProps>(
 );
 
 export interface ContextMenuCheckboxItemProps extends Omit<ContextMenuItemProps, "icon"> {
-  /** Отмечен ли пункт. Управляется снаружи: меняется только вместе с этим свойством. */
+  /** Whether the item is checked. Controlled from outside: it changes only together with this prop. */
   checked?: boolean;
-  /** Пользователь переключил пункт; приходит новое значение. */
+  /** The user toggled the item; the new value is passed. */
   onCheckedChange?: (checked: boolean) => void;
 }
 
 /**
- * Пункт-переключатель.
+ * Checkbox item.
  *
- * Здесь `checked`/`onCheckedChange` у самого пункта — в отличие от `Menu`, где
- * переключатели заданы выбором на разделе. Расхождение не по прихоти: так
- * устроены сами библиотеки, и подгонять одну под другую значило бы городить
- * поверх неё свой слой состояния. Роль `menuitemcheckbox` и `aria-checked`
- * каждая из них проставляет сама — а это и есть то, ради чего они взяты.
+ * Here `checked`/`onCheckedChange` are on the item itself, unlike `Menu`, where toggles are set by
+ * a selection on the section. The difference is not a whim: the libraries are built this way, and
+ * making one match the other would mean adding a state layer of our own on top of it. Each of them
+ * sets the `menuitemcheckbox` role and `aria-checked` itself, and that is exactly why they were
+ * taken.
  */
 export const ContextMenuCheckboxItem = forwardRef<HTMLDivElement, ContextMenuCheckboxItemProps>(
   function ContextMenuCheckboxItem(
@@ -140,25 +139,25 @@ export const ContextMenuCheckboxItem = forwardRef<HTMLDivElement, ContextMenuChe
 );
 
 export interface ContextMenuRadioGroupProps {
-  /** Пункты `ContextMenuRadioItem` этой группы. */
+  /** The `ContextMenuRadioItem` items of this group. */
   children?: ReactNode;
-  /** Выбранное значение. `undefined` — не выбрано ничего. */
+  /** The selected value. `undefined` means nothing is selected. */
   value?: string;
-  /** Выбран другой пункт; приходит его `value`. */
+  /** Another item was selected; its `value` is passed. */
   onValueChange?: (value: string) => void;
 }
 
 /**
- * Раздел одиночного выбора.
+ * Single-choice section.
  *
- * Выбор задан НА РАЗДЕЛЕ, а не на пункте, — в отличие от соседнего
- * переключателя, где `checked` живёт у самого пункта. Разница не косметическая:
- * «выбран ровно один» — свойство группы, и только зная группу, Radix может
- * проставить `aria-checked="false"` остальным. Пункт, знающий лишь про себя,
- * объявил бы невыбранных просто командами.
+ * The selection is set ON THE SECTION, not on the item — unlike the neighbouring checkbox item,
+ * where `checked` lives on the item itself. The difference is not cosmetic: "exactly one is
+ * selected" is a property of the group, and only by knowing the group can Radix set
+ * `aria-checked="false"` on the others. An item that knows only about itself would announce the
+ * unselected ones as plain commands.
  *
- * Берите это, а не `ContextMenuCheckboxItem`, везде, где значение одно:
- * флажок обещает, что можно отметить несколько, и обещание это ложное.
+ * Use this, not `ContextMenuCheckboxItem`, wherever the value is one: a checkbox item promises that
+ * several can be checked, and that promise would be false here.
  */
 export function ContextMenuRadioGroup({
   children,
@@ -173,17 +172,16 @@ export function ContextMenuRadioGroup({
 }
 
 export interface ContextMenuRadioItemProps extends Omit<ContextMenuItemProps, "icon" | "onSelect"> {
-  /** Значение пункта. Совпало со значением раздела — пункт выбран. */
+  /** The item's value. When it matches the section's value, the item is selected. */
   value: string;
 }
 
 /**
- * Пункт одиночного выбора. Живёт только внутри `ContextMenuRadioGroup`.
+ * Single-choice item. Lives only inside `ContextMenuRadioGroup`.
  *
- * Роль `menuitemradio` и `aria-checked` проставляет Radix — ради этого он и
- * взят. Отметку рисует индикатор в том же слоте, что иконка у обычного пункта,
- * поэтому своей иконки у пункта выбора нет: две иконки слева читались бы как
- * два разных состояния.
+ * Radix sets the `menuitemradio` role and `aria-checked` — that is why it was taken. The mark is
+ * drawn by the indicator in the same slot as the icon of a regular item, so a radio item has no icon
+ * of its own: two icons on the left would read as two different states.
  */
 export const ContextMenuRadioItem = forwardRef<HTMLDivElement, ContextMenuRadioItemProps>(
   function ContextMenuRadioItem(
@@ -210,14 +208,14 @@ export const ContextMenuRadioItem = forwardRef<HTMLDivElement, ContextMenuRadioI
   }
 );
 
-/** Подпись раздела. */
+/** Section label. */
 export function ContextMenuLabel({
   children,
   className,
 }: {
-  /** Текст подписи раздела. */
+  /** Text of the section label. */
   children?: ReactNode;
-  /** Классы на подпись. */
+  /** Classes for the label. */
   className?: string;
 }) {
   return (
@@ -227,27 +225,27 @@ export function ContextMenuLabel({
   );
 }
 
-/** Разделитель. */
+/** Separator. */
 export function ContextMenuSeparator({
   className,
 }: {
-  /** Классы на линию разделителя. */
+  /** Classes for the separator line. */
   className?: string;
 }) {
   return <Primitive.Separator className={cn(MENU_SEPARATOR_CLASS, className)} />;
 }
 
-/** Пункт, открывающий подменю. */
+/** Item that opens a submenu. */
 export function ContextMenuSubTrigger({
   children,
   icon,
   className,
 }: {
-  /** Подпись пункта. Длинная обрезается многоточием. */
+  /** Item label. A long label is truncated with an ellipsis. */
   children?: ReactNode;
-  /** Иконка слева от подписи. */
+  /** Icon to the left of the label. */
   icon?: ReactNode;
-  /** Классы на пункт. */
+  /** Classes for the item. */
   className?: string;
 }) {
   return (
@@ -264,14 +262,14 @@ export function ContextMenuSubTrigger({
   );
 }
 
-/** Панель подменю. */
+/** Submenu panel. */
 export function ContextMenuSubContent({
   children,
   className,
 }: {
-  /** Пункты подменю. */
+  /** Submenu items. */
   children?: ReactNode;
-  /** Классы на панель подменю. */
+  /** Classes for the submenu panel. */
   className?: string;
 }) {
   return (

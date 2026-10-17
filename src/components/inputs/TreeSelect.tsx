@@ -11,53 +11,60 @@ import { TreeView, type TreeNode } from "../navigation/TreeView.js";
 import { VisuallyHidden } from "../content/VisuallyHidden.js";
 
 export interface TreeSelectProps {
-  /** Узлы дерева. Формат тот же, что у `TreeView`, — это он и есть. */
+  /** Tree nodes. The format is the same as `TreeView`'s: it is the same type. */
   items: TreeNode[];
   /**
-   * Выбранные узлы. Всегда массив, даже при `single`: одна форма значения
-   * избавляет потребителя от развилки в каждом обработчике.
+   * Selected nodes. Always an array, even with `single`: one value shape spares the consumer a
+   * branch in every handler.
    */
   value: Key[];
-  /** Вызывается при выборе узла и получает массив выбранных ключей. */
+  /** Called when a node is selected; receives the array of selected keys. */
   onChange: (value: Key[]) => void;
-  /** Несколько узлов вместо одного. Меняет и вид закрытого поля: чипы вместо подписи. */
+  /**
+   * Several nodes instead of one. Also changes the look of the closed field: chips instead of a
+   * caption.
+   */
   multiple?: boolean;
-  /** Подпись поля, когда ничего не выбрано. */
+  /** Text shown in the field when nothing is selected. */
   placeholder?: string;
-  /** Доступное имя поля. Обязательно: безымянное поле скринридер называет только по роли. */
+  /**
+   * Accessible name of the field. Required: a screen reader announces an unnamed field by its role
+   * alone.
+   */
   "aria-label": string;
-  /** Раскрытые при первом показе узлы. */
+  /** Nodes expanded on first render. */
   defaultExpandedKeys?: Iterable<Key>;
   /**
-   * Раскрытые узлы, когда раскрытием управляют снаружи; обновлять в
-   * `onExpandedChange`.
+   * Expanded nodes, when expansion is controlled from outside; update them in `onExpandedChange`.
    *
-   * Управляемое раскрытие. Нужно тому, кто раскрывает дерево до текущего
-   * значения или подгружает ветки лениво: без него глубоко лежащий выбранный
-   * узел открывается на свёрнутом дереве, где на него ничто не указывает.
+   * Controlled expansion. Needed by whoever expands the tree down to the current value or loads
+   * branches lazily: without it, a deeply nested selected node stays hidden inside a collapsed
+   * tree, where nothing points to it.
    */
   expandedKeys?: Iterable<Key>;
-  /** Вызывается при раскрытии и сворачивании узлов и получает все раскрытые ключи. */
+  /** Called when nodes are expanded or collapsed; receives all expanded keys. */
   onExpandedChange?: (keys: Set<Key>) => void;
-  /** Выключает поле: список не открывается. */
+  /** Disables the field: the list does not open. */
   disabled?: boolean;
-  /** Показать кнопку очистки, когда что-то выбрано. */
+  /** Show the clear button when something is selected. */
   clearable?: boolean;
-  /** Имя кнопки очистки. Без него берётся `common.clear` — как у `Select`. */
+  /** Accessible name of the clear button. Without it, `common.clear` is used, as in `Select`. */
   clearLabel?: string;
-  /** Классы на оболочку поля. */
+  /** Classes applied to the field wrapper. */
   className?: string;
 }
 
-/** Сколько чипов показывать до того, как остальные свернутся в «ещё N». */
+/** How many chips to show before the rest collapse into a "more" counter. */
 const CHIP_LIMIT = 3;
 
-/** Плоская карта узлов: подпись выбранного нужна закрытому полю, а лежит она в глубине. */
+/**
+ * A flat node map: the closed field needs the caption of the selected node, and that node may sit
+ * deep in the tree.
+ */
 function flatten(nodes: TreeNode[], into = new Map<Key, TreeNode>()): Map<Key, TreeNode> {
   for (const node of nodes) {
-    // Узел, встреченный второй раз, дальше не разворачивается: цикл в `items`
-    // это испорченные данные потребителя, но переполнение стека — плохой способ
-    // ему об этом сказать.
+    // A node met a second time is not expanded further: a cycle in `items` is corrupt consumer
+    // data, but a stack overflow is a poor way to tell the consumer so.
     if (into.has(node.id)) continue;
     into.set(node.id, node);
     if (node.children) flatten(node.children, into);
@@ -66,12 +73,11 @@ function flatten(nodes: TreeNode[], into = new Map<Key, TreeNode>()): Map<Key, T
 }
 
 /**
- * Строковая подпись выбранного ключа для закрытого поля.
+ * The string caption of a selected key, for the closed field.
  *
- * Ключ, которого нет в `items`, показывается САМИМ КЛЮЧОМ, а не прячется.
- * Спрятать его значило бы дать поле, которое говорит «ничего не выбрано» и при
- * этом отдаёт непустое значение наружу; выбросить — молча править значение
- * потребителя. Показанный ключ хотя бы виден и снимается очисткой.
+ * A key that is not in `items` is shown AS THE KEY ITSELF, not hidden. Hiding it would give a field
+ * that says "nothing is selected" while reporting a non-empty value; dropping it would silently
+ * rewrite the consumer's value. A shown key is at least visible, and the clear button removes it.
  */
 function captionOf(id: Key, node: TreeNode | undefined): string {
   if (!node) return String(id);
@@ -80,35 +86,32 @@ function captionOf(id: Key, node: TreeNode | undefined): string {
 }
 
 /**
- * Поле, выбирающее узел иерархии: `TreeView` внутри `Popover`.
+ * A field that selects a node of a hierarchy: a `TreeView` inside a `Popover`.
  *
- * КОМПОЗИЦИЯ, А НЕ ВТОРОЕ ДЕРЕВО, и это прямое исполнение
- * ADR-0024, который
- * отложил `TreeSelect` до заказчика именно с такой формулировкой. Своего обхода
- * узлов, своей клавиатуры и своих ролей компонент не заводит: всё это уже есть
- * у `TreeView`, а расхождение двух деревьев было бы заметно только тому, кто
- * поставит их рядом.
+ * COMPOSITION, NOT A SECOND TREE. This is a direct implementation of ADR-0024, which deferred
+ * `TreeSelect` until a consumer screen needed it, worded exactly this way. The component builds no
+ * traversal, keyboard handling or roles of its own: all of it already exists in `TreeView`, and a
+ * divergence between two trees would only be noticed by someone who placed them side by side.
  *
- * ИМЯ ПОЛЯ СОБИРАЕТСЯ ИЗ ПОДПИСИ И СОДЕРЖИМОГО, а не берётся из `aria-label` на
- * кнопке. `aria-label` побеждает содержимое при вычислении имени, и поле
- * объявлялось бы «Подразделение, кнопка» — без единого слова о том, что
- * выбрано. Для поля выбора это отказ основной функции, и аудит axe его не
- * ловит: имя у кнопки есть. Раскладка повторяет `Select`: скрытая подпись плюс
- * узел со значением, оба через `aria-labelledby`.
+ * THE FIELD NAME IS BUILT FROM THE LABEL AND THE CONTENT, not taken from `aria-label` on the button.
+ * `aria-label` overrides content when computing the name, and the field would be announced as
+ * "Department, button" — without a word about what is selected. For a select field this is a
+ * failure of its main function, and the axe audit does not catch it, since the button does have a
+ * name. The markup repeats `Select`: a hidden label plus a node with the value, both referenced
+ * through `aria-labelledby`.
  *
- * КНОПКА ОЧИСТКИ — СОСЕД ТРИГГЕРА, А НЕ ЕГО ПОТОМОК. Тот же приём, что у
- * `Select`. Кнопка внутри кнопки это `nested-interactive`, а `aria-hidden`-крестик
- * внутри выпадает из дерева доступности целиком — пользователь AT не узнаёт,
- * что очистка вообще есть.
+ * THE CLEAR BUTTON IS A SIBLING OF THE TRIGGER, NOT ITS CHILD. The same approach as `Select`. A
+ * button inside a button is `nested-interactive`, and an `aria-hidden` cross inside it drops out of
+ * the accessibility tree entirely: an AT user does not learn that clearing exists at all.
  *
- * ЗНАЧЕНИЕ ВСЕГДА МАССИВ, даже при `single`. Союзный тип `Key | Key[]` заставил
- * бы потребителя разбирать форму в каждом обработчике, а выигрыш дал бы ровно
- * один — короче выглядит в примере.
+ * THE VALUE IS ALWAYS AN ARRAY, even with `single`. A union type `Key | Key[]` would force the
+ * consumer to parse the shape in every handler, and it would buy exactly one thing: a shorter look
+ * in the example.
  *
- * ОТМЕТКА ВЕТКИ НЕ ОТМЕЧАЕТ ПОТОМКОВ, и это не упущение. Такое поведение
- * означало бы, что кит решает за потребителя, значит ли «отдел» всех его
- * сотрудников; в правах доступа это ровно противоположные политики. `TreeView`
- * ведёт выбор ключами, и потребитель волен раскрыть ветку в потомков сам.
+ * MARKING A BRANCH DOES NOT MARK ITS DESCENDANTS, and this is not an oversight. Such behavior would
+ * mean the kit decides for the consumer whether "department" covers all its staff; in access rights
+ * these are exactly opposite policies. `TreeView` tracks selection by keys, and the consumer is free
+ * to expand the branch into its descendants itself.
  */
 export function TreeSelect({
   items,
@@ -129,13 +132,13 @@ export function TreeSelect({
   const [open, setOpen] = useState(false);
 
   /*
-    Выключение поля ЗАКРЫВАЕТ панель, а не прячет её.
+    Disabling the field CLOSES the panel, rather than hiding it.
 
-    `Popover open={open && !disabled}` гасил показ, но управляемая смена `open`
-    у Radix не зовёт `onOpenChange`, и внутреннее состояние оставалось `true`:
-    форма ушла в отправку — панель исчезла, отправка кончилась — панель
-    вернулась сама, хотя пользователь ничего не нажимал. Тот же приём и по той
-    же причине, что в `SplitButton`.
+    `Popover open={open && !disabled}` suppressed the display, but a controlled change of `open` in
+    Radix does not call `onOpenChange`, and the internal state stayed `true`: the form went into
+    submission and the panel disappeared; submission ended and the panel came back on its own, even
+    though the user had not clicked anything. The same approach and for the same reason as in
+    `SplitButton`.
   */
   useEffect(() => {
     if (disabled) setOpen(false);
@@ -147,33 +150,32 @@ export function TreeSelect({
 
   const selected = useMemo(() => new Set<Key>(value), [value]);
 
-  // Пустота считается по `value`, а не по найденным узлам: иначе поле с
-  // незнакомым ключом показывало бы подсказку пустого состояния и при этом
-  // отказывалось очищаться.
+  // Emptiness is computed from `value`, not from the found nodes: otherwise a field with an unknown
+  // key would show the placeholder for an empty state while refusing to clear.
   const empty = value.length === 0;
   const captions = value.map((id) => ({ id, caption: captionOf(id, byId.get(id)) }));
   const shownChips = captions.slice(0, CHIP_LIMIT);
   const hidden = captions.length - shownChips.length;
 
   function onSelectionChange(keys: Selection) {
-    // `all` у дерева не встречается: `Ctrl+A` живёт в списках, не в `Tree`.
+    // `all` never occurs for a tree: `Ctrl+A` lives in lists, not in `Tree`.
     const next = keys === "all" ? value : [...keys];
     onChange(next);
-    // Одиночный выбор закрывает поповер: цель достигнута, и держать его
-    // открытым значит требовать второго жеста там, где всё уже сказано.
-    // Множественный оставляет открытым по обратной причине — выбор не закончен.
+    // Single selection closes the popover: the goal is reached, and keeping it open would demand a
+    // second gesture where everything is already said. Multiple selection keeps it open for the
+    // opposite reason: the selection is not finished.
     if (!multiple) setOpen(false);
   }
 
   return (
-    // `open && !disabled`, а не условный `onOpenChange`: выключение при открытом
-    // поповере иначе заклинивало бы его — и Escape, и клик снаружи идут через
-    // обработчик, а открыться заново мешает атрибут `disabled` на кнопке.
+    // `open && !disabled`, rather than a conditional `onOpenChange`: disabling an open popover would
+    // otherwise jam it — both Escape and an outside click go through the handler, and reopening is
+    // blocked by the `disabled` attribute on the button.
     <Popover open={open && !disabled} onOpenChange={setOpen}>
       {/*
-        Якорь на ОБОЛОЧКЕ, а не на кнопке: `--radix-popover-trigger-width` меряет
-        триггер, а при видимой кнопке очистки триггер уже поля — панель
-        оказывалась короче того, под чем висит.
+        The anchor is on the WRAPPER, not on the button: `--radix-popover-trigger-width` measures
+        the trigger, and with the clear button visible the trigger is narrower than the field — the
+        panel came out shorter than the field it hangs under.
       */}
       <PopoverAnchor asChild>
         <span
@@ -190,15 +192,15 @@ export function TreeSelect({
             <button
               type="button"
               disabled={disabled}
-              // `grid`, а не `tree`: `TreeView` объявляет `treegrid` с узлами-`row`
-              // (в строке живут раскрыватель и флажок), и объявленный тип
-              // всплывающего обязан совпадать с тем, что там на самом деле.
+              // `grid`, not `tree`: `TreeView` declares a `treegrid` with `row` nodes (the expander
+              // and the checkbox live in the row), and the declared type of the popup must match
+              // what is actually inside.
               aria-haspopup="grid"
               aria-expanded={open && !disabled}
               aria-labelledby={`${labelId} ${valueId}`}
               onKeyDown={(event) => {
-                // Клавиатурный путь к очистке. Кнопка очистки рядом — тоже
-                // табстоп, но пара Delete/Backspace короче и привычнее полю.
+                // Keyboard path to clearing. The clear button next to it is also a tab stop, but
+                // the Delete/Backspace pair is shorter and more familiar for a field.
                 if (!clearable || empty || disabled) return;
                 if (event.key !== "Delete" && event.key !== "Backspace") return;
                 event.preventDefault();
@@ -222,9 +224,9 @@ export function TreeSelect({
                       </span>
                     ))}
                     {/*
-                    Свёрнутый хвост, а не все чипы подряд: поле, вырастающее на
-                    пять строк, перестаёт быть полем. Порог низкий намеренно —
-                    точный состав смотрят в раскрытом дереве.
+                    A collapsed tail instead of all chips in a row: a field that grows five lines
+                    tall stops being a field. The threshold is deliberately low — the exact
+                    selection is checked in the expanded tree.
                   */}
                     {hidden > 0 && (
                       <span className="text-fg-2 text-caption">
@@ -263,10 +265,10 @@ export function TreeSelect({
           defaultExpandedKeys={defaultExpandedKeys}
           expandedKeys={expandedKeys}
           onExpandedChange={onExpandedChange}
-          // `empty`, а не `notFound`: своего поиска у поля нет, и запроса, по
-          // которому «ничего не найдено», пользователь не делал. Словарь кита
-          // разводит эти две строки прямо: `notFound` — есть запрос, `empty` —
-          // данных нет вовсе.
+          // `empty`, not `notFound`: the field has no search of its own, so the user never made a
+          // query that could produce "nothing found". The kit's message catalog separates these two
+          // strings explicitly: `notFound` means there is a query, `empty` means there is no data
+          // at all.
           emptyText={messages.common.empty}
         />
       </PopoverContent>

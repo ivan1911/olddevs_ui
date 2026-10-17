@@ -36,34 +36,33 @@ import { keyGlyphs } from "../content/Kbd.js";
 export { MenuTrigger, SubmenuTrigger } from "react-aria-components";
 
 export interface MenuButtonProps extends ButtonLookOptions {
-  /** Подпись кнопки. С `iconOnly` не показывается. */
+  /** Button label. Not shown with `iconOnly`. */
   children?: ReactNode;
-  /** Иконка слева. С `iconOnly` — единственное содержимое. */
+  /** Icon on the left. With `iconOnly` it is the only content. */
   icon?: ReactNode;
-  /** Кнопка заблокирована: меню не открывается. */
+  /** The button is disabled: the menu does not open. */
   disabled?: boolean;
-  /** Доступное имя. Обязательно, когда подписи нет. */
+  /** Accessible name. Required when there is no label. */
   "aria-label"?: string;
-  /** Классы на кнопку. */
+  /** Classes for the button. */
   className?: string;
 }
 
 /**
- * Кнопка, открывающая меню.
+ * A button that opens a menu.
  *
- * ОТДЕЛЬНЫЙ КОМПОНЕНТ, А НЕ ОБЫЧНЫЙ `Button`, и причина техническая.
- * `MenuTrigger` передаёт триггеру свои пропы через `ButtonContext` react-aria —
- * `onPress`, `aria-expanded`, `aria-haspopup`, ref. Обычный `<button>` этого
- * контекста не читает, и меню на нём просто не открывается: ни ошибки, ни
- * предупреждения, кнопка молча ничего не делает.
+ * A SEPARATE COMPONENT, NOT A PLAIN `Button`, and the reason is technical.
+ * `MenuTrigger` passes its props to the trigger through react-aria's `ButtonContext` —
+ * `onPress`, `aria-expanded`, `aria-haspopup`, the ref. A plain `<button>` does not read
+ * this context, and the menu simply does not open on it: no error, no warning, the button
+ * silently does nothing.
  *
- * Переписать `Button` на react-aria было бы «правильнее» на первый взгляд, но
- * это прямо запрещено решением G спеки: существующие примитивы не переезжают —
- * они работают и покрыты снимками. Поэтому здесь кнопка RAC, а вид у обеих один
- * и тот же, из `lib/button.ts`. Разъехаться им нечем.
+ * Rewriting `Button` on react-aria would look "more correct" at first glance, but decision G
+ * of the spec explicitly forbids it: existing primitives are not moved — they work and are
+ * covered by snapshots. So this one is a RAC button, and both share the same look from
+ * `lib/button.ts`. They have no way to drift apart.
  *
- * Когда в W7 у `Button` появится `asChild`, эти два компонента можно будет
- * свести в один — но не раньше.
+ * When `Button` gets `asChild` in W7, these two components can be merged into one — but not earlier.
  */
 export const MenuButton = forwardRef<HTMLButtonElement, MenuButtonProps>(function MenuButton(
   { children, icon, disabled, variant, tone, size, iconOnly, selected, className, ...rest },
@@ -83,15 +82,14 @@ export const MenuButton = forwardRef<HTMLButtonElement, MenuButtonProps>(functio
 });
 
 export interface MenuProps<T extends object = object> extends AriaMenuProps<T> {
-  /** Отступ панели от кнопки, в пикселях. */
+  /** Offset of the panel from the button, in pixels. */
   offset?: number;
   /**
-   * Сторона, с которой панель раскрывается. Корневое меню по умолчанию — под
-   * кнопкой слева (`bottom start`); вложенное, внутри `SubmenuTrigger`, —
-   * сбоку от своего пункта, а на узком экране под ним. Явное значение
-   * побеждает оба умолчания. `end top` и `start top` — сбоку по концу или
-   * началу строки: при письме справа налево они меняются местами, а
-   * `right top` и `left top` — нет.
+   * The side the panel opens from. By default a root menu opens below the button on the left
+   * (`bottom start`); a nested one, inside `SubmenuTrigger`, opens beside its own item, and below
+   * it on a narrow screen. An explicit value wins over both defaults. `end top` and `start top`
+   * are beside the end or start of the line: in right-to-left writing they swap places, while
+   * `right top` and `left top` do not.
    */
   placement?:
     | "bottom start"
@@ -105,73 +103,70 @@ export interface MenuProps<T extends object = object> extends AriaMenuProps<T> {
 }
 
 export interface MenuItemProps extends Omit<AriaMenuItemProps, "children" | "className"> {
-  /** Подпись пункта. Длинная обрезается многоточием. */
+  /** Item label. A long one is cut off with an ellipsis. */
   children?: ReactNode;
-  /** Иконка слева. У отмеченного пункта заменяется галочкой. */
+  /** Icon on the left. On a selected item it is replaced by a checkmark. */
   icon?: ReactNode;
-  /** Горячая клавиша справа — напоминание, а не действие. */
+  /** Keyboard shortcut on the right — a reminder, not an action. */
   shortcut?: ReactNode;
-  /** Цвет подписи и иконки. `danger` — для разрушительных действий. */
+  /** Color of the label and icon. `danger` is for destructive actions. */
   tone?: Tone;
-  /** Пункт неактивен: не выбирается и пропускается при навигации. */
+  /** The item is inactive: it cannot be selected and is skipped in navigation. */
   disabled?: boolean;
-  /** Классы на пункт. */
+  /** Classes for the item. */
   className?: string;
 }
 
 /**
- * Панель меню.
+ * Menu panel.
  *
- * СОСТАВНОЙ API, а не массив `items`, — и это не отход от конвенции пакета:
- * `Popover` и `Tooltip` здесь уже составные. Меню с подменю, разделами и
- * пунктами-переключателями, описанное объектом, превращается в отдельный язык
- * разметки рядом с JSX, который уже есть; у `Select` items-based потому, что он
- * рисует однородные строки списка, а здесь однородности нет.
+ * A COMPOSITE API, not an `items` array — and this is not a departure from the package convention:
+ * `Popover` and `Tooltip` are already composite here. A menu with submenus, sections and
+ * checkbox or radio items, described as an object, turns into a separate markup language
+ * next to the JSX that already exists; `Select` is items-based because it renders uniform list
+ * rows, and here there is no uniformity.
  *
- * Компонент включает в себя `Popover`, поэтому потребителю не нужно оборачивать
- * меню руками. Это же делает работоспособным `SubmenuTrigger`: он ждёт вторым
- * ребёнком именно попоувер.
+ * The component includes `Popover`, so the consumer does not need to wrap the menu by hand.
+ * This is also what makes `SubmenuTrigger` work: it expects the popover as its second child.
  *
- * ПОДМЕНЮ раскрывается сбоку от своего пункта, и это умолчание нужно
- * выставлять самим. `SubmenuTrigger` отдаёт вложенному поповеру место
- * `end top` через контекст, но явный проп поповера важнее контекста, а корневое
- * умолчание кита `bottom start` — как раз явный проп: вложенное меню без
- * особого случая раскрывалось бы под пунктом. Поэтому `Menu` узнаёт подменю по
- * контексту (`trigger: "SubmenuTrigger"`, публичное поле `PopoverContext`) и
- * спрашивает общий хук `useSubmenuPlacement` — тот же, что в Редакторе: на
- * телефоне подменю встаёт под пунктом, на широком экране кит своего места не
- * передаёт, и действует `end top` react-aria — сбоку, с учётом направления
- * письма. Переворот у края экрана
- * (`shouldFlip`) и «Прицел» — движение курсора к подменю по диагонали не
- * закрывает его — остаются у react-aria, кит их не трогает.
+ * A SUBMENU opens beside its own item, and this default has to be set explicitly.
+ * `SubmenuTrigger` hands the nested popover the `end top` placement through context, but an
+ * explicit popover prop wins over context, and the kit's root default `bottom start` is exactly
+ * such a prop: without a special case, a nested menu would open below its item. So `Menu` detects
+ * a submenu from context (`trigger: "SubmenuTrigger"`, the public field of `PopoverContext`) and
+ * asks the shared hook `useSubmenuPlacement` — the same one the Editor uses: on a phone a submenu
+ * opens below its item; on a wide screen the kit passes no placement of its own, and react-aria's
+ * `end top` applies — beside the item, respecting the writing direction. Flipping at the screen
+ * edge (`shouldFlip`) and menu aim — moving the pointer diagonally toward the submenu does not
+ * close it — stay with react-aria; the kit does not touch them.
  *
- * ПЕРЕКЛЮЧАТЕЛИ — через выбор на разделе, а не через `checked` у пункта:
+ * CHECKABLE ITEMS are driven by selection on the section, not by `checked` on the item:
  *
- *     <MenuSection label="Вид" selectionMode="multiple"
+ *     <MenuSection label="View" selectionMode="multiple"
  *                  selectedKeys={keys} onSelectionChange={setKeys}>
- *       <MenuItem id="dense">Плотно</MenuItem>
+ *       <MenuItem id="dense">Compact</MenuItem>
  *     </MenuSection>
  *
- * Так устроен react-aria, и так правильно: роли `menuitemcheckbox`/
- * `menuitemradio` и атрибут `aria-checked` он проставляет сам. Проп `checked` у
- * пункта пришлось бы подпирать этими атрибутами вручную — то есть повторять
- * чужую работу и расходиться с ней при первом же обновлении.
+ * That is how react-aria works, and it is the right way: it sets the `menuitemcheckbox`/
+ * `menuitemradio` roles and the `aria-checked` attribute itself. A `checked` prop on the item would
+ * have to be propped up with those attributes by hand — repeating someone else's work and drifting
+ * away from it at the first update.
  */
 export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
   { offset = 6, placement, className, ...rest },
   ref
 ) {
   const popoverContext = useContext(PopoverContext);
-  // Контекст бывает пустым, со слотами или с самими пропами поповера; «подменю»
-  // говорит только последнее.
+  // The context can be empty, carry slots, or carry the popover's own props; only the last
+  // one says "submenu".
   const isSubmenu =
     popoverContext != null &&
     "trigger" in popoverContext &&
     popoverContext.trigger === "SubmenuTrigger";
   const submenuPlacement = useSubmenuPlacement();
-  // Широкий экран — место не передаётся вовсе: тогда действует `end top` из
-  // контекста `SubmenuTrigger`. Оно логическое, и при письме справа налево
-  // подменю раскрывается слева, а `right top` хука уводило бы его вправо.
+  // On a wide screen no placement is passed at all: then `end top` from the `SubmenuTrigger` context
+  // applies. It is logical, so in right-to-left writing the submenu opens on the left, whereas the
+  // hook's `right top` would push it to the right.
   const resolvedPlacement =
     placement ??
     (isSubmenu
@@ -187,13 +182,12 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
       className={cn(MENU_PANEL_CLASS, className)}
     >
       {/*
-        `data-disable-focus-ring` — механизм пакета, тот же, что у `TextControl`.
-        Глобальное правило `:focus-visible` в styles.css рисует контур вокруг
-        любого фокусируемого элемента, а react-aria при открытии ставит фокус на
-        саму панель меню: без этого атрибута пользователь видел бы синюю рамку
-        вокруг всего меню вместо подсветки пункта. Класс `outline-none` тут не
-        помогает — у глобального правила `!important` нет, но специфичность
-        псевдокласса выше утилиты.
+        `data-disable-focus-ring` is the package's own mechanism, the same as in `TextControl`.
+        The global `:focus-visible` rule in styles.css draws an outline around any focusable element,
+        and react-aria puts focus on the menu panel itself when it opens: without this attribute the
+        user would see a blue frame around the whole menu instead of the item highlight. The
+        `outline-none` class does not help here — the global rule has no `!important`, but the
+        specificity of the pseudo-class is higher than the utility's.
       */}
       <AriaMenu ref={ref} data-disable-focus-ring="true" className="outline-none" {...rest} />
     </Popover>
@@ -201,12 +195,11 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
 });
 
 /**
- * Пункт меню.
+ * Menu item.
  *
- * Вид берётся из общей таблицы `lib/menu.ts` — той же, из которой собран
- * `ContextMenu` на Radix. Состояния заданы вариантами (`hover:`, `selected:`,
- * `pressed:`), а не рендер-пропом: пункт — это сам элемент с `data-*`, а не
- * его потомок, и красить его классом правильнее, чем условием в JS.
+ * The look comes from the shared table `lib/menu.ts` — the same one `ContextMenu` on Radix is built from.
+ * The states are set as variants (`hover:`, `selected:`, `pressed:`), not as a render prop: the item is the
+ * element itself with `data-*`, not its child, and it is more correct to paint it with a class than with a condition in JS.
  */
 export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuItem(
   { children, icon, shortcut, tone = "neutral", disabled, className, ...rest },
@@ -216,11 +209,10 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
     <AriaMenuItem
       ref={ref}
       isDisabled={disabled}
-      // Пункт получает настоящий DOM-фокус, и глобальное правило
-      // `:focus-visible` рисует вокруг него контур. В меню подсветка задана
-      // подложкой, и контур поверх неё — второй курсор на том же месте.
-      // Тот же атрибут стоит у пунктов `ContextMenu`: без него две реализации
-      // выглядят по-разному, и снимок «два меню рядом» это показывает.
+      // The item gets real DOM focus, and the global `:focus-visible` rule draws an outline around it.
+      // In a menu the highlight is set by the background fill, and an outline on top of it is a second
+      // cursor in the same place. The same attribute is on `ContextMenu` items: without it the two
+      // implementations look different, and the "two menus side by side" snapshot shows it.
       data-disable-focus-ring="true"
       className={cn(
         MENU_ITEM_CLASS,
@@ -257,22 +249,21 @@ export interface MenuSectionProps<T extends object = object> extends Omit<
   AriaMenuSectionProps<T>,
   "className" | "children"
 > {
-  /** Подпись раздела. Без неё раздел остаётся просто группировкой. */
+  /** Section label. Without it the section stays a plain grouping. */
   label?: ReactNode;
   /**
-   * Пункты раздела — только статической разметкой.
+   * Section items — static markup only.
    *
-   * У react-aria `children` может быть ещё и функцией: так описываются
-   * динамические коллекции, где пункты приходят массивом. Кит эту форму не
-   * пробрасывает — он весь построен на составном API, и второй способ задавать
-   * то же самое означал бы два языка разметки в одном компоненте.
+   * In react-aria `children` can also be a function: that is how dynamic collections are described,
+   * where items arrive as an array. The kit does not pass this form through — it is built entirely on
+   * the composite API, and a second way to express the same thing would mean two markup languages in one component.
    */
   children?: ReactNode;
-  /** Классы на раздел. */
+  /** Classes for the section. */
   className?: string;
 }
 
-/** Раздел меню. Он же носитель выбора для пунктов-переключателей. */
+/** Menu section. It is also the carrier of selection for checkable items. */
 export const MenuSection = forwardRef<HTMLElement, MenuSectionProps>(function MenuSection(
   { label, children, className, ...rest },
   ref
@@ -285,11 +276,11 @@ export const MenuSection = forwardRef<HTMLElement, MenuSectionProps>(function Me
   );
 });
 
-/** Разделитель между группами пунктов. */
+/** Separator between groups of items. */
 export function MenuSeparator({
   className,
 }: {
-  /** Классы на линию разделителя. */
+  /** Classes for the separator line. */
   className?: string;
 }) {
   return <Separator className={cn(MENU_SEPARATOR_CLASS, className)} />;

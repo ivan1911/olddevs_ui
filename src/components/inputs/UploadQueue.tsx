@@ -9,97 +9,95 @@ import { Progress } from "../actions/Progress.js";
 import { StatusBadge } from "../actions/StatusBadge.js";
 
 /*
-  Тон по состоянию со страховкой от незнакомого значения.
+  Tone by state, with protection against unknown values.
 
-  `??` отвечает только за отсутствующий ключ, а `state` приходит с бэкенда:
-  строка `"constructor"` или `"toString"` нашла бы в обычном объекте унаследованную
-  функцию, и `TONE_TOKENS[функция]` дал бы `undefined.fg`. Поэтому ключ
-  проверяется на собственность — так же, как явный `tone`.
+  `??` only handles a missing key, and `state` comes from the backend: a string like `"constructor"`
+  or `"toString"` would find an inherited function on a plain object, and the lookup would yield
+  `undefined.fg`. So the key is checked for an own property — the same as for an explicit `tone`.
 */
 function stateTone(state: ProgressStatus): Tone {
   return Object.hasOwn(PROGRESS_STATUS_TONE, state) ? PROGRESS_STATUS_TONE[state] : "neutral";
 }
 
 export interface UploadItem {
-  /** Ключ строки, уникальный в пределах `items`. */
+  /** Row key, unique within `items`. */
   id: string;
-  /** Имя файла или адрес. */
+  /** File name or address. */
   name: ReactNode;
   /**
-   * Размер — УЖЕ отформатированный.
+   * Size — ALREADY formatted.
    *
-   * Кит не форматирует: «2,4 МБ» и «2.4 MB» отличаются не только
-   * разделителем, но и единицами, а выбор единиц (МБ или МиБ) — решение
-   * приложения, а не дизайн-системы.
+   * The kit does not format sizes: "2.4 MB" and "2,4 MB" differ not only in the decimal separator
+   * but also in units, and choosing units (MB or MiB) is the application's decision, not the design
+   * system's.
    */
   size?: ReactNode;
-  /** Превью — обычно `Image`. Без него место не занимается. */
+  /** Preview, usually an `Image`. Without it, no space is reserved. */
   preview?: ReactNode;
-  /** Состояние элемента. Словарь общий на весь кит — `ProgressStatus`. */
+  /** Item state. The vocabulary is shared across the whole kit — `ProgressStatus`. */
   state: ProgressStatus;
   /**
-   * `0`–`100`, `null` — прогресс НЕИЗВЕСТЕН, `undefined` — полосы нет вовсе.
+   * `0`–`100`; `null` — progress is UNKNOWN; `undefined` — no bar at all.
    *
-   * Разница между `null` и `0` та же, что у `Progress`: ноль означает «начали и
-   * пока ничего не сделали», `null` — «сколько всего работы, неизвестно».
+   * The difference between `null` and `0` is the same as in `Progress`: zero means "started, nothing
+   * done yet", `null` means "the total amount of work is unknown".
    */
   progress?: number | null;
-  /** Подпись состояния бейджем: «Дубль», «Обработка». Нет — бейджа нет. */
+  /**
+   * State label shown as a badge, for example "Duplicate" or "Processing". Without it, there is no
+   * badge.
+   */
   statusLabel?: ReactNode;
   /**
-   * Тон бейджа и полосы прогресса строки.
+   * Tone of the row's badge and progress bar.
    *
-   * Тон строки — ДОМЕННЫЙ статус поверх механического `state`: «Дубль» при
-   * технически успешной загрузке — `"warning"`, а не зелёный успех.
+   * The row tone is a DOMAIN status layered over the mechanical `state`: "Duplicate" on a
+   * technically successful upload is `"warning"`, not green success.
    *
-   * Красит бейдж и полосу прогресса. Нет — тон выводится из `state` общей
-   * таблицей `ProgressStatus`, как раньше. Цвет текста `meta` упавшего элемента
-   * на `tone` не реагирует: он следует `state`.
+   * Colors the badge and the progress bar. If absent, the tone is derived from `state` by the shared
+   * `ProgressStatus` table, as before. The text color of `meta` on a failed item does not react to
+   * `tone`: it follows `state`.
    */
   tone?: Tone;
-  /** Вторая строка: текст ошибки, идентификатор задачи. */
+  /** Second line: error text, task ID. */
   meta?: ReactNode;
-  /** Действия справа — обычно `Button size="sm"`: повтор, отмена, убрать. */
+  /** Actions on the right, usually `Button size="sm"`: retry, cancel, remove. */
   actions?: ReactNode;
 }
 
 export interface UploadQueueProps extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
-  /** Строки очереди в порядке показа. */
+  /** Queue rows in display order. */
   items: UploadItem[];
-  /** Доступное имя списка. */
+  /** Accessible name of the list. */
   "aria-label"?: string;
-  /** Что показать при пустой очереди. Нет — не рисуется ничего. */
+  /** What to show when the queue is empty. If absent, nothing is rendered. */
   empty?: ReactNode;
 }
 
 /**
- * Менеджер загрузок: что уже отправлено, что идёт и что упало.
+ * Upload manager: what has already been sent, what is in progress, and what has failed.
  *
- * ГРАНИЦА С `FileDropzone`: область — это ВЫБОР файла, очередь — его судьба.
- * Их часто путают, потому что на экране они стоят рядом; но выбор кончается в
- * тот момент, когда файлы получены, а очередь с этого момента только
- * начинается.
+ * THE BOUNDARY WITH `FileDropzone`: the zone is the CHOICE of a file, the queue is its FATE. They
+ * are often confused because they sit side by side on screen; but the choice ends the moment the
+ * files are received, and the queue begins only from that point.
  *
- * ТРАНСПОРТА ЗДЕСЬ НЕТ. Отправка, повтор, отмена и опрос задач на сервере —
- * знание потребителя: формат ответов, адреса и правила повтора принадлежат
- * приложению (ADR-0027).
- * Кит даёт форму элемента, прогресс, состояния и объявление итога; очереди он
- * не хранит — элементы и обработчики приходят пропами. Прецедент — владение
- * состоянием таблицы (ADR-0023).
+ * THERE IS NO TRANSPORT HERE. Sending, retrying, cancelling and polling tasks on the server is the
+ * consumer's knowledge: response formats, addresses and retry rules belong to the application
+ * (ADR-0027). The kit provides the item shape, progress, states and the summary announcement; it
+ * does not store the queue — items and handlers come in through props. Precedent: ownership of
+ * table state (ADR-0023).
  *
- * ИТОГ ОБЪЯВЛЯЕТСЯ ЖИВОЙ ОБЛАСТЬЮ, и это не украшение. Частичный успех —
- * «девять из двенадцати, одна ошибка» — иначе виден только тому, кто
- * просматривает список глазами; пользователь скринридера, отправив дюжину
- * файлов, не узнаёт о единственной упавшей вовсе. Область смонтирована ВСЕГДА,
- * подменяется только текст: вставленная вместе с сообщением, она объявляется
- * ненадёжно — часть скринридеров успевает её пропустить. Тот же приём, что в
- * `FileDropzone`.
+ * THE SUMMARY IS ANNOUNCED IN A LIVE REGION, and this is not decoration. A partial success — "nine
+ * of twelve, one failed" — is otherwise visible only to someone scanning the list by eye; a screen
+ * reader user who has sent a dozen files does not learn that the single file has failed at all. The
+ * region is mounted ALWAYS, and only its text is swapped: when it is inserted together with the
+ * message, it is announced unreliably — some screen readers manage to skip it. The same approach as
+ * in `FileDropzone`.
  *
- * СОСТОЯНИЕ — МЕХАНИКА, ПОДПИСЬ И ТОН — ДОМЕН. Четыре состояния описывают
- * судьбу работы; «Дубль» и «На модерации» приходят подписью (`statusLabel`), а
- * их цвет, если он должен отличаться от цвета состояния, — `tone`. Как у
- * `StatusBadge`, который приехал из фронта, оставив снаружи словарь из
- * одиннадцати доменных статусов.
+ * STATE IS MECHANICS, LABEL AND TONE ARE DOMAIN. The four states describe the fate of the work;
+ * "Duplicate" and "Under review" arrive as a label (`statusLabel`), and their color, if it must
+ * differ from the state's color, is `tone`. The same as `StatusBadge`, which was moved into the kit
+ * from the app, leaving the dictionary of eleven domain statuses behind.
  */
 export const UploadQueue = forwardRef<HTMLDivElement, UploadQueueProps>(function UploadQueue(
   { items, empty, className, "aria-label": ariaLabel, ...rest },
@@ -111,14 +109,13 @@ export const UploadQueue = forwardRef<HTMLDivElement, UploadQueueProps>(function
   const failed = items.filter((i) => i.state === "failed").length;
 
   /*
-    Объявляется УСТОЯВШИЙСЯ итог, а не каждый промежуточный переход.
+    The SETTLED total is announced, not every intermediate transition.
 
-    Текст области — это `summary({done, total, failed})`, и он менялся при
-    каждом переходе файла в `success`/`failed`. Отправка двенадцати файлов
-    давала двенадцать сообщений подряд — «1 of 12 uploaded», «2 of 12
-    uploaded», … Очередь `polite` их не схлопывает, и пользователь скринридера
-    получал минуту непрерывной речи вместо одного сообщения о результате.
-    Докстрока обосновывала объявление ИТОГА, а объявлялся ход.
+    The region text is `summary({done, total, failed})`, and it changed on every file transition to
+    `success`/`failed`. Sending twelve files produced twelve messages in a row — "1 of 12 uploaded",
+    "2 of 12 uploaded", … A `polite` queue does not collapse them, so a screen reader user heard a
+    minute of continuous speech instead of one result message. The doc comment above justified
+    announcing the TOTAL, but what got announced was each step.
   */
   const pending = items.some((i) => i.state === "pending" || i.state === "running");
   const settled =
@@ -132,19 +129,17 @@ export const UploadQueue = forwardRef<HTMLDivElement, UploadQueueProps>(function
         empty
       ) : (
         /*
-          Настоящий список, а не набор `div`. Скринридер обязан сообщить, что
-          это очередь и сколько в ней элементов; набор карточек не сообщает ни
-          того, ни другого.
+          A real list, not a set of `div`s. A screen reader must announce that this is a queue and
+          how many items it has; a set of cards announces neither.
         */
         <ul aria-label={ariaLabel ?? messages.uploadQueue.label} className="flex flex-col gap-2">
           {items.map((item) => {
             /*
-              Тон строки: явный `tone`, иначе из `state`, иначе нейтральный.
+              Row tone: an explicit `tone`, otherwise from `state`, otherwise neutral.
 
-              Явный тон проверяется по словарю: потребитель на JS собирает его из
-              собственной таблицы статусов, и неизвестное значение дало бы
-              `undefined.fg` внутри бейджа, то есть падение всего экрана. Такой
-              тон считается незаданным — как и неизвестный `state`.
+              An explicit tone is checked against the dictionary: a consumer in JS builds it from its
+              own status table, and an unknown value would give `undefined.fg` inside the badge, that
+              is, crash the whole screen. Such a tone is treated as unset — like an unknown `state`.
             */
             const tone: Tone =
               item.tone !== undefined && Object.hasOwn(TONE_TOKENS, item.tone)
@@ -174,18 +169,16 @@ export const UploadQueue = forwardRef<HTMLDivElement, UploadQueueProps>(function
                   {item.progress !== undefined && (
                     <div className="mt-1.5">
                       {/*
-                        Имя полосы собирается из имени файла, а не задаётся
-                        безликим «Загрузка»: в очереди из дюжины строк
-                        одинаковые имена не говорят, о каком файле речь.
-                        Строка сюда годится не всегда — `name` это `ReactNode`,
-                        — поэтому берётся текст, только когда он текст.
+                        The bar's name is built from the file name, rather than a generic
+                        "Uploading": in a queue of a dozen rows, identical names don't say which
+                        file is meant. A string does not always fit here — `name` is a `ReactNode` —
+                        so the text is taken only when it is text.
                       */}
                       {/*
-                        Полоса следует `tone`, а не `state`: она сидит в одной
-                        строке с бейджем, и зелёная полоса рядом с жёлтым
-                        «Дубль» говорит о том же элементе два разных слова.
-                        Механику (идёт, не идёт, неизвестно) полоса показывает
-                        сама — формой и `aria-valuenow`, а не цветом.
+                        The bar follows `tone`, not `state`: it sits on the same row as the badge,
+                        and a green bar next to a yellow "Duplicate" would say two different things
+                        about the same item. The bar shows the mechanics (running, not started,
+                        unknown) by itself — through its shape and `aria-valuenow`, not through color.
                       */}
                       <Progress
                         value={item.progress}
@@ -204,7 +197,7 @@ export const UploadQueue = forwardRef<HTMLDivElement, UploadQueueProps>(function
                     <div
                       className={cn(
                         "mt-0.5 text-[11px]",
-                        // Цвет сбоя — из словаря тонов: тест сверяет его со словарём.
+                        // The failure color comes from the tone dictionary: a test checks it there.
                         item.state === "failed" ? TONE_TOKENS.danger.fg : "text-fg-2"
                       )}
                     >
@@ -226,11 +219,11 @@ export const UploadQueue = forwardRef<HTMLDivElement, UploadQueueProps>(function
       )}
 
       {/*
-        Область объявления смонтирована всегда, а содержимое подменяется.
-        `role="status"`, а не `alert`: очередь — это ход работы, а не сбой, и
-        перебивать им текущую речь незачем даже при упавшем файле.
+        The announcement region is always mounted; only its content changes. `role="status"`, not
+        `alert`: the queue is the progress of work, not a failure, and there is no reason to
+        interrupt current speech with it, even when a file has failed.
 
-        Пустая очередь итога не даёт: «ноль из нуля» — не сообщение.
+        An empty queue produces no summary: "0 of 0" is not a message.
       */}
       <div role="status" aria-live="polite" className="sr-only">
         {settled}

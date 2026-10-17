@@ -10,48 +10,47 @@ import { FIELD_INPUT_CLASS, FIELD_SHELL_CLASS } from "../../lib/field.js";
 import { TAG_CLASS, TAG_REMOVE_CLASS } from "../../lib/tag.js";
 
 export interface TagInputProps {
-  /** Текущие теги. */
+  /** The current tags. */
   value: string[];
-  /** Вызывается при добавлении и удалении тега и получает новый массив. */
+  /** Called when a tag is added or removed; receives the new array. */
   onChange: (value: string[]) => void;
-  /** Видимая подпись над полем; служит и доступным именем, если нет `aria-label`. */
+  /** The visible caption above the field; also serves as the accessible name when there is no `aria-label`. */
   label?: string;
-  /** Плейсхолдер в пустом поле ввода. */
+  /** Placeholder in the empty input field. */
   placeholder?: string;
-  /** Предел числа тегов. По достижении ввод выключается. */
+  /** The maximum number of tags. Once it is reached, the input is turned off. */
   max?: number;
-  /** Выключает поле ввода тега. */
+  /** Disables the tag input field. */
   disabled?: boolean;
-  /** Классы на корневой элемент. */
+  /** Classes for the root element. */
   className?: string;
-  /** Доступное имя поля, когда видимой подписи `label` нет. */
+  /** The field's accessible name when there is no visible `label`. */
   "aria-label"?: string;
   /**
-   * Своё описание поля ввода. Сливается с описанием `FormField`, а не
-   * заменяет его.
+   * The input's own description. Merged with the `FormField` description, not replacing it.
    */
   "aria-describedby"?: string;
 }
 
 /**
- * Ввод набора тегов: печатаешь — Enter превращает в тег.
+ * Tag input: you type, and Enter turns the text into a tag.
  *
- * Три решения, которые компонент принимает за потребителя, потому что иначе
- * каждый экран решал бы их по-своему:
+ * Three decisions that the component makes on the consumer's behalf, because otherwise every screen
+ * would decide them its own way:
  *
- * 1. **Enter на пустом вводе не делает ничего.** Соблазн отправить форму велик,
- *    но поле тегов почти всегда стоит внутри формы, и «Enter в пустом поле
- *    отправляет» означает случайную отправку на полпути: набрал три тега,
- *    задумался, нажал Enter по привычке — форма ушла.
- * 2. **Дубли не добавляются.** Повторный тег ничего не значит, а на экране
- *    выглядит как ошибка ввода. Молча игнорируем: сообщать «такой уже есть»
- *    значит ругаться на действие, которое ничего не сломало.
- * 3. **Backspace на пустом вводе снимает последний тег.** Идиома, знакомая по
- *    почтовым клиентам; без неё удалять приходится мышью по крестикам.
+ * 1. **Enter in an empty input does nothing.** The temptation to submit the form is strong, but the
+ *    tag field almost always sits inside a form, and "Enter in an empty field submits" would mean an
+ *    accidental submit halfway through: you type three tags, pause, press Enter out of habit, and the
+ *    form is gone.
+ * 2. **Duplicates are not added.** A repeated tag means nothing, and on screen it looks like an input
+ *    error. We ignore it silently: reporting "already exists" would scold the person for an action that
+ *    broke nothing.
+ * 3. **Backspace in an empty input removes the last tag.** An idiom familiar from email clients; without
+ *    it, removing tags means clicking the crosses.
  *
- * Пробел разделителем НЕ считается: теги бывают из двух слов («ночной город»),
- * и разделять по пробелу значит запретить их вовсе. Запятая считается — её ни
- * в одном теге не бывает, а вставка списка из буфера через неё и приходит.
+ * A space is NOT a separator: tags can have two words ("night city"), and splitting on space would forbid
+ * them altogether. A comma is: it never occurs in a tag, and pasting a list from the clipboard comes
+ * through it.
  */
 export function TagInput({
   value,
@@ -67,15 +66,15 @@ export function TagInput({
   const messages = useMessages();
 
   /**
-   * Описание поля из `FormField` плюс своё, если потребитель его передал.
+   * The field's description from `FormField`, plus the consumer's own if they passed one.
    *
-   * Тот же приём, что у `TextControl` и `NumberInput`: значения СЛИВАЮТСЯ, а
-   * не заменяют друг друга.
+   * The same approach as in `TextControl` and `NumberInput`: the values are MERGED, not replacing each
+   * other.
    *
-   * Мишень — ПОЛЕ ВВОДА, а не `TagGroup`. Описание под полем объясняет, что
-   * набирать; набор уже добавленных тегов оно не описывает. По той же причине
-   * `aria-describedby` вынут из спреда: два носителя одного идентификатора
-   * заставили бы скринридер прочитать подсказку дважды за один обход.
+   * The target is the INPUT FIELD, not the `TagGroup`. The description under the field explains what to
+   * type; it does not describe the set of tags already added. For the same reason, `aria-describedby` is
+   * taken out of the spread: two carriers of one id would make the screen reader read the hint twice in
+   * one pass.
    */
   const fieldDescribedBy = useFieldDescribedBy();
   const describedBy = [ariaDescribedBy, fieldDescribedBy].filter(Boolean).join(" ") || undefined;
@@ -85,9 +84,8 @@ export function TagInput({
 
   const add = (raw: string) => {
     /*
-      Разбор по запятой живёт ЗДЕСЬ, а не в обработчике клавиш: список из
-      буфера («небо,море,лес») приходит вставкой, минуя клавиатуру, и раньше
-      становился одним тегом с запятыми внутри.
+      Comma parsing lives HERE, not in the key handler: a list from the clipboard ("sky,sea,forest")
+      arrives by paste, bypassing the keyboard, and used to become one tag with commas inside.
     */
     const parts = raw
       .split(",")
@@ -98,8 +96,8 @@ export function TagInput({
     const next = [...value];
     for (const tag of parts) {
       if (max != null && next.length >= max) break;
-      // Дубли игнорируются молча: повторный тег ничего не значит, а ругаться
-      // на действие, которое ничего не сломало, — лишний шум.
+      // Duplicates are ignored silently: a repeated tag means nothing, and scolding for an action that
+      // broke nothing is just noise.
       if (!next.includes(tag)) next.push(tag);
     }
     setDraft("");
@@ -109,11 +107,10 @@ export function TagInput({
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
       /*
-        Событие гасится ВСЕГДА, включая пустой ввод, — и это то самое решение
-        из докстроки. Пропускать пустой Enter дальше значит отправлять форму
-        из поля тегов: набрал три тега, задумался, нажал Enter по привычке —
-        форма ушла. Раньше здесь стояло обратное, и обещание докстроки
-        расходилось с кодом.
+        The event is ALWAYS prevented, including on empty input — this is the very decision from the
+        JSDoc. Letting an empty Enter through would submit the form from the tag field: you type three
+        tags, pause, press Enter out of habit, and the form is gone. This used to be the opposite, and
+        the JSDoc promise did not match the code.
       */
       e.preventDefault();
       if (draft.trim()) add(draft);
@@ -139,23 +136,19 @@ export function TagInput({
             <Tag id={item.id} textValue={item.id} className={TAG_CLASS}>
               {item.id}
               {/*
-                Кнопка ОБЯЗАНА быть `Button` из react-aria, а не обычной
-                `<button>`. Поведение снятия подключается через `ButtonContext`,
-                и голая кнопка его не читает: `slot="remove"` на ней выглядит
-                правильно, разметка выходит валидной, axe доволен — а нажатие
-                не делает НИЧЕГО. Тег снимался только Backspace'ом, то есть с
-                клавиатуры; мышью — никак.
+                The button MUST be react-aria's `Button`, not a plain `<button>`. The removal behavior is
+                wired through `ButtonContext`, and a bare button does not read it: `slot="remove"` on it
+                looks correct, the markup is valid, axe is happy — and a press does NOTHING. Tags were
+                removed only with Backspace, that is, from the keyboard; with the mouse, not at all.
 
-                Та же ловушка, что у `FileTrigger` с выбором файла. Правило
-                одно: если react-aria обещает потомку поведение, потомок берётся
-                у react-aria.
+                The same trap as `FileTrigger` with file selection. The rule is one: if react-aria promises
+                a behavior to a descendant, the descendant takes it from react-aria.
 
-                Имя кнопке нужно своё — подпись react-aria не придумывает, языка
-                приложения он не знает. А вот имя тега вставлять НЕ нужно:
-                react-aria дописывает подпись своего тега к имени кнопки сам, и
-                «Убрать тег альфа» читалось как «Убрать тег альфа альфа».
-                Найдено ревью волны 18 вычислением доступного имени — по
-                разметке этого не видно.
+                The button needs its own name — react-aria does not invent a caption, it does not know the
+                app's language. But the tag's name must NOT be inserted: react-aria appends its own tag
+                caption to the button's name by itself, and "Remove tag alpha" was read as "Remove tag alpha
+                alpha". Found by the wave 18 review by computing the accessible name — the markup alone does
+                not show it.
               */}
               <AriaButton
                 slot="remove"
@@ -174,22 +167,19 @@ export function TagInput({
           aria-describedby={describedBy}
           disabled={disabled}
           /*
-            Набор добран — поле становится ТОЛЬКО ДЛЯ ЧТЕНИЯ, а не выключается.
+            The set is full — the field becomes READ-ONLY, not disabled.
 
-            `disabled` на поле, в котором стоит каретка, снимает с него фокус:
-            пользователь набирал последний тег, жал Enter — и фокус улетал на
-            документ, а обход формы начинался заново. Заодно переставал работать
-            Backspace для снятия последнего тега: события выключенного поля не
-            приходят вовсе.
+            `disabled` on the field that holds the caret removes focus from it: the user typed the last tag
+            and pressed Enter, and focus flew to the document and the form's tab order started over. Backspace
+            for removing the last tag also stopped working: a disabled field receives no events at all.
           */
           readOnly={full || undefined}
           placeholder={full ? undefined : placeholder}
           data-disable-focus-ring="true"
           /*
-            Имя у поля СВОЁ, а не общее с группой. Ярлык «Теги» принадлежит
-            набору тегов (`TagGroup`), и повесить его же на поле — значит
-            выдать скринридеру две разные мишени с одним именем: «Теги, список»
-            и «Теги, поле ввода». Тест на это и споткнулся.
+            The field has its OWN name, not the group's shared one. The label "Tags" belongs to the tag set
+            (`TagGroup`), and putting the same label on the field would give the screen reader two different
+            targets with one name: "Tags, list" and "Tags, input field". A test caught this.
           */
           aria-label={
             rest["aria-label"]
@@ -200,14 +190,13 @@ export function TagInput({
           }
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
-          // Ввод дописывается по остатку строки, а не занимает её целиком:
-          // теги и поле стоят в одном потоке, и `w-full` вытолкнул бы поле на
-          // новую строку даже при одном коротком теге.
+          // The input continues along the rest of the line rather than taking all of it: the tags and
+          // the field sit in one flow, and `w-full` would push the field onto a new line even with a
+          // single short tag.
           /*
-            Уход фокуса ВНУТРИ поля тегов черновик не коммитит. Иначе клик по
-            крестику соседнего тега сначала добавлял набранное новым тегом:
-            пользователь просил удалить, а получал лишнее. Проверяем, куда
-            ушёл фокус, — если в ту же оболочку, это не окончание ввода.
+            Focus leaving WITHIN the tag field does not commit the draft. Otherwise a click on the cross of a
+            neighboring tag would first add the typed text as a new tag: the user asked to remove a tag and got
+            an extra one. We check where focus went: if it went to the same shell, this is not the end of input.
           */
           onBlur={(e) => {
             if (e.currentTarget.parentElement?.contains(e.relatedTarget)) return;
