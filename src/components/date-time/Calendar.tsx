@@ -47,8 +47,7 @@ export interface CalendarProps extends Omit<
   /** Classes for the calendar root: width, padding, background. */
   className?: string;
   /**
-   * Locale for labels and the first day of the week. Defaults to Russian: the kit's
-   * primitive labels are Russian everywhere, and the calendar is no exception.
+   * Locale for labels and the first day of the week; defaults to the `UiProvider` locale.
    */
   locale?: string;
 }
