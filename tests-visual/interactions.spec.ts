@@ -1368,7 +1368,7 @@ test("SelectionBar: the bar lands under the panel and loses its top rounding", a
   await expect(bar).toBeVisible();
 
   // Before scrolling, the bar lies in the flow: its corners are round on all sides.
-  await expect(bar).toHaveCSS("border-top-left-radius", "14px");
+  await expect(bar).toHaveCSS("border-top-left-radius", "16px");
   const beforeTop = (await bar.boundingBox())?.y ?? 0;
   expect(beforeTop).toBeGreaterThan(56);
 
@@ -1379,11 +1379,11 @@ test("SelectionBar: the bar lands under the panel and loses its top rounding", a
   await expect.poll(async () => Math.round((await bar.boundingBox())?.y ?? -1)).toBe(56);
 
   await expect(bar).toHaveCSS("border-top-left-radius", "0px");
-  await expect(bar).toHaveCSS("border-bottom-left-radius", "14px");
+  await expect(bar).toHaveCSS("border-bottom-left-radius", "16px");
 
   // Back up: the rounding returns, so the state does not stick.
   await page.mouse.wheel(0, -600);
-  await expect(bar).toHaveCSS("border-top-left-radius", "14px");
+  await expect(bar).toHaveCSS("border-top-left-radius", "16px");
 });
 
 test("SelectionBar: without the panel variable the bar sticks to the top of the window", async ({
