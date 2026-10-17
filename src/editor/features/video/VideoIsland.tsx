@@ -4,14 +4,15 @@ import { lazy, Suspense } from "react";
 import type { VideoIslandSlotsProps } from "./VideoIslandSlots.js";
 
 /*
-  Остров видео у `RichTextView` (ADR-0071, п. 3) — оболочка.
+  The video Island of `RichTextView` (ADR-0071, item 3) is the shell.
 
-  ПОЧЕМУ ТЕЛО ГРУЗИТСЯ ОТДЕЛЬНО. Плеер, поиск блоков и портал нужны только
-  Документу с видео, а `RichTextView` читают и без него: страница с текстом и кодом
-  платит за остров лишь тем, что здесь стоит `lazy`, а сам `RichTextView`
-  монтирует остров только когда видео есть в HTML (`hasVideoBlocks`). Пока чанк
-  идёт, виден серверный HTML блока — ссылка, она же «до загрузки острова». Опция
-  `autoload` приходит данными с сервера (`videoAutoloadOf(tools)`).
+  WHY THE BODY LOADS SEPARATELY. The player, block search and the portal are needed
+  only by a Document with video, while `RichTextView` is read without them. A page
+  with text and code pays for the Island only through the `lazy` here, and
+  `RichTextView` mounts the Island only when the HTML contains video
+  (`hasVideoBlocks`). While the chunk loads, the server-rendered HTML of the Block is
+  visible: a link, which is also the "before the Island loads" state. The `autoload`
+  option arrives as data from the server (`videoAutoloadOf(tools)`).
 */
 const Slots = lazy(() => import("./VideoIslandSlots.js"));
 
