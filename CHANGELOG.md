@@ -1,5 +1,11 @@
 # @olddevs/ui
 
+## 4.10.0
+
+### Minor Changes
+
+- 398cd58: Add the `radius` axis: set `data-radius` to `none`, `small`, `medium` (the default) or `large` on `<html>` or on any element to change the corner shape of the whole kit, the Editor included. Without the attribute nothing changes. The theme registry gains `UI_RADII`, `normalizeRadius` and `UiRadius`; `applyTheme` and `themeInitScript` handle the axis, and the storage format gets a `radius` field. New utilities: `rounded-2xs` and `rounded-pill`. Pills (Badge, Chip, Tag, the Toggle track) follow the preset; circles do not. One visible change in the default look: `SelectionBar` and `ContextualSaveBar` had 14px corners outside the scale and now use the `lg` step, 16px.
+
 ## 4.9.1
 
 ### Patch Changes
