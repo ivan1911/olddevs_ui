@@ -9,15 +9,15 @@ const ROOT = resolve(import.meta.dirname, "..");
 const SRC = join(ROOT, "src");
 
 /**
- * Ворота отдельного входа `@olddevs/ui/editor`.
+ * The guard of the separate `@olddevs/ui/editor` entry point.
  *
- * ЗАЧЕМ. Движок редактора ставит только тот, кто импортирует подпуть
- * (ADR-0050, список — `scripts/editor-engine.mjs`): остальные Tiptap не ставят.
- * Обещание держится на одном: ни один модуль вне `src/editor/` не тянется к
- * Tiptap и к самому редактору. Одна забытая строка в barrel — и у каждого
- * потребителя без Tiptap сборка падает на неразрешимом импорте. Ни `npm run
- * size` (Tiptap там внешний), ни фикстура потребителя (Tiptap у неё стоит: она
- * импортирует редактор) этого не увидели бы до установки у живого потребителя.
+ * WHY. Only a consumer who imports the subpath installs the editor engine
+ * (ADR-0050, list in `scripts/editor-engine.mjs`): everyone else does not install Tiptap.
+ * The promise rests on one thing: no module outside `src/editor/` reaches for
+ * Tiptap or the editor itself. One forgotten line in the barrel, and every
+ * consumer without Tiptap fails to build on an unresolvable import. Neither `npm run
+ * size` (Tiptap is external there) nor the consumer fixture (it has Tiptap installed, since it
+ * imports the editor) would notice this until a live consumer installs the package.
  */
 
 function sourceFiles(dir: string): string[] {
@@ -77,11 +77,11 @@ test("the custom tool API is part of the editor entry, not of the barrel", async
 
   expect(Object.keys(editor)).toContain("RICH_TEXT_PRESETS");
   expect(Object.keys(barrel)).not.toContain("RICH_TEXT_PRESETS");
-  // Помощник диапазона Карточки у текста для Метки (OLDSUI-113).
+  // The Text card range helper for a Mark (OLDSUI-113).
   expect(Object.keys(editor)).toContain("markRange");
   expect(Object.keys(barrel)).not.toContain("markRange");
 
-  // Типы входа: `Tool` принимает и имя кита, и описание своего Инструмента.
+  // Entry types: `Tool` accepts both the kit's name and the description of a custom Tool.
   const mergeTag: CustomTool = {
     name: "acme_mergeTag",
     engine: [],
@@ -98,7 +98,7 @@ test("tool() is part of the editor entry, not of the barrel", async () => {
 
   expect(Object.keys(editor)).toContain("tool");
   expect(Object.keys(barrel)).not.toContain("tool");
-  // Запись `tools` — Настроенный Инструмент: данные, без функций.
+  // A `tools` entry is a Configured Tool: data, without functions.
   expect(editor.tool("toc", { levels: [2, 3] })).toEqual({
     configured: true,
     name: "toc",
@@ -121,10 +121,10 @@ test("the tool State hook is part of the editor entry, not of the barrel", async
 });
 
 /**
- * Статический граф `RichTextEditor` (без `import()`): модули, которые он тянет
- * сразу. Бюджет «старта» Редактора почти исчерпан, поэтому хук Состояния и
- * вычисление снимков в нём быть не должны (OLDSUI-268): ими платит экран,
- * который их импортировал.
+ * The static graph of `RichTextEditor` (no `import()`): the modules it pulls in
+ * right away. The editor's startup budget is nearly used up, so the state hook and
+ * snapshot computation must not live there (OLDSUI-268): the screen pays for them,
+ * the one that imported them.
  */
 function staticGraph(entry: string): Set<string> {
   const seen = new Set<string>();
@@ -141,7 +141,7 @@ function staticGraph(entry: string): Set<string> {
           visit(candidate);
           break;
         } catch {
-          // Не тот суффикс: у модуля одно расширение.
+          // Wrong suffix: the module has only one extension.
         }
       }
     }
@@ -155,7 +155,7 @@ test("the static graph of RichTextEditor does not carry the State hook or the sn
     relative(SRC, file).split("\\").join("/")
   );
 
-  // Граф найден: иначе проверка ниже молча стала бы пустой.
+  // The graph was found: otherwise the check below would silently become empty.
   expect(graph).toContain("editor/features/search/searchPlugin.ts");
   expect(graph).toContain("editor/core/handleWatchers.ts");
   expect(graph.filter((path) => /useRichTextToolState|Snapshot\.ts$/.test(path))).toEqual([]);

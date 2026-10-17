@@ -6,10 +6,10 @@ import { RichTextEditor, type RichTextEditorHandle } from "../src/editor/index.j
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 /**
- * Команды Поиска показывают текущее совпадение сами, не дожидаясь панели:
- * экран собирает свою панель на `next()`, и фокус у него на кнопке, а не в
- * Документе. В jsdom нет раскладки — место совпадения задаёт подменённый
- * `getBoundingClientRect`, а прокрутку окна видно по записи `scrollTop` корня.
+ * The Find commands reveal the current match on their own, without waiting for the panel:
+ * the screen builds its own panel on `next()`, and its focus is on the button, not in
+ * the Document. jsdom has no layout, so the match position comes from a stubbed
+ * `getBoundingClientRect`, and window scrolling is seen in the `scrollTop` of the root.
  */
 
 beforeAll(loadLazyBuiltins);

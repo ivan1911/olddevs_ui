@@ -10,10 +10,10 @@ import {
 } from "../src/editor/schema-entry.js";
 
 /**
- * Формулы в санитайзере (OLDSUI-280, ADR-0070): `span[data-type="inline-math"]` и
- * `div[data-type="block-math"]` с `data-latex`, настоящий DOMPurify на jsdom, как на
- * сервере потребителя. Главное — граница `<`: в `data-latex` он допустим (это текст
- * LaTeX), в любом другом значении атрибута Схемы по-прежнему нет.
+ * Formulas in the sanitizer (OLDSUI-280, ADR-0070): `span[data-type="inline-math"]` and
+ * `div[data-type="block-math"]` with `data-latex`, a real DOMPurify on jsdom, as on
+ * the consumer's server. The key point is the `<` boundary: it is allowed in `data-latex`
+ * (it is LaTeX text), but any other Schema attribute value still does not allow it.
  */
 
 const purify = createDOMPurify(window);
@@ -33,7 +33,7 @@ test("a formula the Editor writes passes unchanged, whatever the attribute order
 });
 
 test("a less-than sign survives in data-latex, and only there", () => {
-  // `<` и `>` в тексте LaTeX: DOMPurify экранирует их при выводе, разметкой они не становятся.
+  // `<` and `>` in LaTeX text: DOMPurify escapes them on output, so they do not become markup.
   const survived = clean(`<p>${inline("a<b")}</p>${block("1 &lt; 2 > 0 \\text{<b>x</b>}")}`);
   const probe = document.createElement("div");
   probe.innerHTML = survived;
@@ -42,11 +42,11 @@ test("a less-than sign survives in data-latex, and only there", () => {
   expect(probe.querySelector("div")?.getAttribute("data-latex")).toBe(
     "1 < 2 > 0 \\text{<b>x< /b>}"
   );
-  // Разметки из атрибута не выросло: ни `b`, ни лишних элементов.
+  // No markup grew out of the attribute: no `b`, no extra elements.
   expect(probe.querySelector("b")).toBeNull();
   expect(probe.querySelectorAll("span, div")).toHaveLength(2);
 
-  // Тот же `<` в других атрибутах Схемы не проходит: свой атрибут по правилу «без разметки»…
+  // The same `<` in other Schema attributes does not pass: its own attribute by the "no markup" rule…
   const note: CustomTool = {
     name: "test_note",
     engine: [],
@@ -57,12 +57,12 @@ test("a less-than sign survives in data-latex, and only there", () => {
   expect(clean('<div data-block="test_note" data-test_text="a<b">x</div>', [note])).toBe(
     '<div data-block="test_note">x</div>'
   );
-  // …`data-latex` на другом теге или рядом с чужим `data-type` — тоже нет.
+  // …`data-latex` on another tag or next to a foreign `data-type` does not pass either.
   expect(clean('<p data-latex="a<b">x</p>')).toBe("<p>x</p>");
   expect(clean('<span data-latex="a<b">x</span>')).toBe("x");
   expect(clean('<div data-type="inline-math" data-latex="a<b">x</div>')).toBe("x");
   expect(clean('<span data-type="block-math" data-latex="a<b">x</span>')).toBe("x");
-  // Значения других атрибутов формулы, кроме пары, не появляются.
+  // Values of the formula's other attributes, other than the pair, do not show up.
   expect(clean('<span data-type="inline-math" data-latex="x" title="a<b" id="i"></span>')).toBe(
     '<span data-type="inline-math" data-latex="x"></span>'
   );
@@ -71,7 +71,7 @@ test("a less-than sign survives in data-latex, and only there", () => {
 test("data-type admits exactly the two formula values, each on its own tag", () => {
   expect(clean(`<p>${inline("x")}</p>`)).toContain('data-type="inline-math"');
   expect(clean(block("x"))).toContain('data-type="block-math"');
-  // Чужое значение и чужой тег теряют обёртку, текст внутри остаётся.
+  // A foreign value and a foreign tag lose the wrapper, and the text inside stays.
   expect(clean('<span data-type="detailsContent">t</span>')).toBe("t");
   expect(clean('<span data-type="evil" data-latex="x">t</span>')).toBe("t");
   expect(clean('<p data-type="inline-math" data-latex="x">t</p>')).toBe("<p>t</p>");
@@ -120,10 +120,10 @@ test("the formula rules do not depend on tools, and tool() entries change nothin
 });
 
 /*
-  SAFE_FOR_XML у DOMPurify 3 срезает атрибут, значение которого содержит `]>`, `-->`,
-  `--!>` или `</style|script|title|…`, — раньше хуков кита. LaTeX такое законно содержит
-  (`\left[0,1\right]>x`), поэтому кит ставит пробел внутрь пары (`] >`, `-- >`, `< /`):
-  в математическом режиме пробел не рисуется, и формула выглядит так же.
+  DOMPurify 3's SAFE_FOR_XML strips an attribute whose value contains `]>`, `-->`,
+  `--!>` or `</style|script|title|…`, before the kit's hooks run. LaTeX legitimately contains such
+  (`\left[0,1\right]>x`), so the kit puts a space inside each pair (`] >`, `-- >`, `< /`):
+  math mode does not render the space, so the formula looks the same.
 */
 const HOSTILE_TO_DOMPURIFY = [
   ["\\left[0,1\\right]>x", "\\left[0,1\\right] >x"],
@@ -137,7 +137,7 @@ const HOSTILE_TO_DOMPURIFY = [
   ["<</", "<< /"],
 ] as const;
 
-/** Значение атрибута как в HTML: без `"` и `&`, а `<` и `>` остаются голыми, как пишет сериализатор. */
+/** An attribute value as in HTML: no `"` and `&`, but `<` and `>` stay bare, as the serializer writes them. */
 const attribute = (latex: string) => latex.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 test.each(HOSTILE_TO_DOMPURIFY)(
@@ -151,11 +151,11 @@ test.each(HOSTILE_TO_DOMPURIFY)(
     ] as const) {
       probe.innerHTML = clean(html);
       const element = probe.querySelector(tag);
-      // Формула осталась, и исходник в ней — тот же, но с пробелом в паре, которую DOMPurify режет.
+      // The formula is kept, and its source is the same but with a space in the pair that DOMPurify cuts.
       expect(element?.getAttribute("data-type")).toMatch(/-math$/);
       expect(element?.getAttribute("data-latex")).toBe(spaced);
-      // Пробел в математическом режиме не рисуется: видимая разметка KaTeX та же, что у исходника
-      // без него; в MathML отличается только `annotation` — там лежит сам исходник с пробелом.
+      // The space is not drawn in math mode: the visible KaTeX markup is the same as for the source
+      // without it; only the `annotation` differs in MathML, and it holds the source itself, with the space.
       const visual = { throwOnError: false, strict: "ignore", output: "html" } as const;
       expect(katex.renderToString(spaced, visual)).toBe(katex.renderToString(source, visual));
       const mathml = { ...visual, output: "mathml" } as const;

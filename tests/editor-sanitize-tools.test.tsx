@@ -26,7 +26,7 @@ import {
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 import { resetDevWarnings } from "../src/lib/dev-warn.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// The lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -36,13 +36,13 @@ afterEach(() => {
 });
 
 /**
- * Свой Инструмент вне движка: серверная очистка и Схема данными с тем же
- * массивом `tools`, что у Редактора (OLDSUI-104, ADR-0058, п. 2.3 и 2.5).
+ * A custom Tool outside the engine: server-side sanitizing and the Schema as data, with the same
+ * `tools` array as the Editor (OLDSUI-104, ADR-0058, sections 2.3 and 2.5).
  *
- * Шов — лёгкий вход `@olddevs/ui/editor/schema` и настоящий DOMPurify на
- * jsdom, как на сервере потребителя. Обещаний три: то, что Редактор со своими
- * Инструментами отдал, проходит очистку байт в байт; всё прочее срезается по
- * правилам Схемы своего Инструмента; без третьего аргумента очистка прежняя.
+ * The seam is the light `@olddevs/ui/editor/schema` entry point and a real DOMPurify on
+ * jsdom, as on the consumer's server. There are three promises: what the Editor produced with its own
+ * Tools passes sanitizing byte for byte; everything else is stripped by the
+ * rules of its custom Tool's Schema; without a third argument, sanitizing stays as before.
  */
 
 const purify = createDOMPurify(window);
@@ -82,9 +82,9 @@ test("without the third argument the sanitiser keeps the kit schema only, as bef
 });
 
 /*
-  Имена Инструментов кита белый список не сужают: экраны с разными наборами
-  пишут один Документ, и сервер с `basic` не вправе срезать таблицу, которую
-  записал экран с `full`.
+  Kit Tool names do not narrow the allowlist: screens with different sets
+  write the same Document, and a server with `basic` has no right to strip a table that
+  a screen with `full` wrote.
 */
 test("kit tool names in tools do not narrow the allow list", () => {
   const kitOnly = "<h1>T</h1><table><tbody><tr><td><p>x</p></td></tr></tbody></table><hr>";
@@ -96,9 +96,9 @@ test("kit tool names in tools do not narrow the allow list", () => {
 });
 
 /*
-  Подделки в обход Редактора: каждая — что запрос может принести и во что её
-  превращает очистка с `tools`. Свой элемент с недопустимым значением
-  остаётся, теряя атрибут, — как в Редакторе (`load` ниже сверяет).
+  Forgeries that bypass the Editor: each one shows what a request can carry and what the
+  sanitizer with `tools` turns it into. A custom element with an invalid value
+  stays, losing the attribute, as it does in the Editor (`load` checks this below).
 */
 const ATTACKS: [name: string, input: string, output: string][] = [
   [
@@ -172,8 +172,8 @@ test("the server drops what the editor drops: one rule on both sides", () => {
 });
 
 /*
-  Место `top` — только верхний уровень Документа, как Раскладка: вложенный
-  Блок теряет обёртку, его содержимое остаётся.
+  The `top` place is only the top level of the Document, like a Column layout: a nested
+  Block loses its wrapper, and its content stays.
 */
 test("a top-level custom block nested anywhere loses its wrapper, its content stays", () => {
   const topBox: CustomTool = {
@@ -192,9 +192,9 @@ test("a top-level custom block nested anywhere loses its wrapper, its content st
 });
 
 /*
-  Имя без Префикса потребителя Редактор отвергает ошибкой поля. Сервер
-  ошибок не показывает — он такие правила просто не читает, чтобы описание с
-  именем кита (`wrapper`, `tone`) не открыло обход правил Схемы кита.
+  The Editor rejects a name without the consumer prefix with a field error. The server
+  shows no errors: it simply does not read such rules, so that a description with
+  a kit name (`wrapper`, `tone`) cannot open a bypass of the kit's Schema rules.
 */
 test("rules named without a consumer prefix do not widen the allow list", () => {
   const bad = {
@@ -212,9 +212,9 @@ test("rules named without a consumer prefix do not widen the allow list", () => 
 });
 
 /*
-  Сервер ошибок набора не показывает: правило с шаблоном, который не выражение,
-  у Редактора — ошибка поля, а очистку оно ронять не вправе. Значение по такому
-  правилу не проходит, разработчик видит одно предупреждение на правило.
+  The server shows no errors for the set: a rule with a pattern that is not a valid expression,
+  is a field error in the Editor, and it has no right to break sanitizing. A value under such
+  a rule does not pass, and the developer sees one warning per rule.
 */
 test("a pattern that is not a regular expression drops the value, not the server", () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -235,8 +235,8 @@ test("a pattern that is not a regular expression drops the value, not the server
 test("the helper with tools leaves the consumer's instance as it found it", () => {
   const own = createDOMPurify(window);
   expect(sanitizeRichText(card, own, ALL_TOOLS)).toBe(card);
-  // Своя очистка потребителя после вызова — без хуков кита: значение вне
-  // правил своего Блока ей не помеха.
+  // The consumer's own sanitizing after the call, without the kit's hooks: a value outside
+  // its own Block's rules does not get in its way.
   const foreign = '<div data-block="test_card" data-test_size="xl">Card</div>';
   expect(own.sanitize(foreign)).toBe(foreign);
 });
@@ -281,9 +281,9 @@ test("richTextSchema adds the rules of custom blocks and marks with their defaul
   expect(schema.customMarks).toEqual({
     test_note: { attributes: { test_author: { kind: "pattern", pattern: "[A-Za-z ]+" } } },
   });
-  // Признаки Блока — поведение Редактора, а не Схема: в данные они не идут.
+  // Block traits are Editor behavior, not Schema: they do not go into the data.
   expect(schema.customBlocks.test_box).not.toHaveProperty("container");
-  // Константа Схемы кита не меняется.
+  // The kit's Schema constant does not change.
   expect(RICH_TEXT_SCHEMA).not.toHaveProperty("customBlocks");
   expect(richTextSanitizeConfig().ALLOWED_ATTR).not.toContain("data-mark");
 });

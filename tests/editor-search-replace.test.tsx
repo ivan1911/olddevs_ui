@@ -15,8 +15,8 @@ beforeAll(loadLazyBuiltins);
 afterEach(cleanup);
 
 /**
- * Состояние поиска в движке, подсветка, переходы и замена (OLDSUI-151). Панель
- * — отдельно; здесь — команды, которыми она пользуется.
+ * Find state in the engine, highlighting, navigation and replace (OLDSUI-151). The panel
+ * is separate; this file covers the commands it uses.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();

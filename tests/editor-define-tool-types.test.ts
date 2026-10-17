@@ -13,9 +13,9 @@ import {
 } from "../src/editor/index.js";
 
 /**
- * Типы `defineTool` (OLDSUI-268): опции выводятся из `defaults`, дописанный в
- * карту Инструмент типизирован в `tool()`, хуке и `handle.tool()`, не дописанный
- * — `unknown`. Проверяет `npm run typecheck`, а не Vitest.
+ * Types of `defineTool` (OLDSUI-268): options are inferred from `defaults`, and a Tool added to
+ * the tools map is typed in `tool()`, the hook and `handle.tool()`; one not added
+ * is `unknown`. Checked by `npm run typecheck`, not by Vitest.
  */
 
 declare module "@olddevs/ui/editor" {
@@ -43,7 +43,7 @@ const mention = defineTool({
   commands: ({ options }) => ({ insert: (name: string) => name.length < options.limit }),
 });
 
-// Определение без карты: Инструмент не дописан, типы его Состояния и Команд — `unknown`.
+// A definition without a map: the Tool is not added, so its state and command types are `unknown`.
 const plain = defineTool({
   name: "acme_plain",
   defaults: { size: 1 },
@@ -71,13 +71,13 @@ test("tool(definition, options) takes a partial of the defaults, nested ones too
 });
 
 test("a wrong option of a definition does not compile", () => {
-  // @ts-expect-error такой опции в `defaults` нет
+  // @ts-expect-error there is no such option in `defaults`
   tool(mention, { colour: "red" });
-  // @ts-expect-error лимит — число
+  // @ts-expect-error the limit is a number
   tool(mention, { limit: "ten" });
-  // @ts-expect-error вложенная опция — строка
+  // @ts-expect-error the nested option is a string
   tool(mention, { labels: { insert: 1 } });
-  // @ts-expect-error вложенной опции в `defaults` нет
+  // @ts-expect-error there is no nested option in `defaults`
   tool(mention, { labels: { insert2: "x" } });
 });
 
@@ -95,7 +95,7 @@ test("a definition and a Configured Tool of a definition are elements of tools",
 });
 
 test("the name of a definition needs a consumer prefix in the type", () => {
-  // @ts-expect-error имя без Префикса потребителя
+  // @ts-expect-error a name without the consumer prefix
   defineTool({ name: "mention", defaults: {}, create: () => ({ engine: [] }) });
 });
 
@@ -103,7 +103,7 @@ test("the body of create() is the shape of CustomTool without the name", () => {
   defineTool({
     name: "acme_body",
     defaults: {},
-    // @ts-expect-error Extensions обязательны
+    // @ts-expect-error Extensions are required
     create: () => ({}),
   });
 });
