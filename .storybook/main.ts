@@ -16,7 +16,10 @@ const config: StorybookConfig = {
   // Images for the Editor's stories: an image's address in a Document must be an
   // absolute http(s) URL, so the file is served by the showcase at that same address
   // instead of being inlined as `data:`, and the snapshots do not depend on the network.
-  staticDirs: ["./static"],
+  //
+  // The paste cleanup story (OLDSUI-274) pastes real clipboard captures: they are served from the
+  // fixtures folder as they are, so the showcase and the tests read the same files.
+  staticDirs: ["./static", { from: "../fixtures/paste", to: "/paste-fixtures" }],
 };
 
 export default config;

@@ -3719,3 +3719,85 @@ export const VideoRussian: Story = {
     </UiProvider>
   ),
 };
+
+/*
+  Paste cleanup (OLDSUI-274). The buttons paste real clipboard captures (`fixtures/paste/`, served by
+  the showcase at `paste-fixtures/`) into two Editors: on the left with `pasteCleanup`, as in the
+  presets, on the right without it, as the Editor pasted before the Tool existed. The address is built
+  from the showcase's own, as for the sample image: it may be published in a subdirectory.
+*/
+const PASTE_SAMPLES = [
+  { label: "Word for Mac", file: "word-mac-chrome-whole" },
+  { label: "Word on Windows", file: "word-win-firefox-lists" },
+  { label: "Excel", file: "excel-mac-chrome-range" },
+  { label: "Google Docs", file: "gdocs-chrome-whole" },
+  { label: "Google Sheets", file: "gsheets-chrome-range" },
+] as const;
+
+const WITHOUT_PASTE_CLEANUP = RICH_TEXT_PRESETS.full.filter((name) => name !== "pasteCleanup");
+
+async function pasteSample(handles: (RichTextEditorHandle | null)[], file: string) {
+  const response = await fetch(new URL(`paste-fixtures/${file}.json`, document.baseURI));
+  const sample = (await response.json()) as { "text/html": string };
+  for (const handle of handles) {
+    const editor = handle?.editor;
+    if (!editor) continue;
+    editor.commands.clearContent();
+    editor.view.pasteHTML(sample["text/html"]);
+  }
+}
+
+function PasteCleanupDemo() {
+  const withCleanup = useRef<RichTextEditorHandle>(null);
+  const withoutCleanup = useRef<RichTextEditorHandle>(null);
+  const [current, setCurrent] = useState<string>(PASTE_SAMPLES[0].file);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      if (!withCleanup.current?.editor || !withoutCleanup.current?.editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      void pasteSample([withCleanup.current, withoutCleanup.current], current);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [current]);
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Clipboard sample">
+        {PASTE_SAMPLES.map((sample) => (
+          <Button
+            key={sample.file}
+            size="sm"
+            variant="soft"
+            selected={current === sample.file}
+            onClick={() => setCurrent(sample.file)}
+          >
+            {sample.label}
+          </Button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <RichTextEditor ref={withCleanup} aria-label="With pasteCleanup" maxHeight={560} />
+        <RichTextEditor
+          ref={withoutCleanup}
+          aria-label="Without pasteCleanup"
+          tools={WITHOUT_PASTE_CLEANUP}
+          maxHeight={560}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Pasting from Word, Excel, Google Docs and Google Sheets: on the left with the `pasteCleanup` Tool
+ * (in both presets), on the right without it. The buttons paste real clipboard captures. A Word list
+ * stays a list, a highlight stays a marker, an Excel header stays bold.
+ */
+export const PasteFromOffice: Story = {
+  // The sample is fetched from the showcase: the snapshot waits for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => <PasteCleanupDemo />,
+};
