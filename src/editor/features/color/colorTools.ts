@@ -9,35 +9,34 @@ import {
 } from "./styleExtensions.js";
 
 /*
-  Цвет, маркер и выравнивание пишут `data-color` и `data-align`, а не `style`
-  (`styleExtensions.ts`; единственное исключение — цвет автора, `customColor.ts`):
-  выключенный Инструмент не отдаёт ни атрибута, ни правила разбора, и такой
-  атрибут из вставки отбрасывается.
+  Text color, highlight and alignment write `data-color` and `data-align`, not `style`
+  (`styleExtensions.ts`; the only exception is the custom color, `customColor.ts`). A disabled
+  Tool emits neither the attribute nor a parse rule, so such an attribute from a paste is dropped.
 
-  Виджеты — «Маркер» на Панели, «Цвет» и «Маркер» в Меню выделения
-  (`ColorMenus.tsx`, `SelectionBubble.tsx`) и ленивый поповер своего цвета —
-  остаются у кита, показ по `has(name)`. Сочетаний и пунктов вставки у цвета
-  и маркера нет, поэтому их описания — только Extensions.
+  The widgets (the "Highlight" button on the Toolbar, "Color" and "Highlight" in the Bubble menu
+  (`ColorMenus.tsx`, `SelectionBubble.tsx`), and the lazy popover for a custom color) stay in the
+  kit and are shown by `has(name)`. Color and highlight have no shortcuts and no Slash menu items,
+  so their descriptions are Extensions only.
 */
 
-/** Цвет текста: Метка `textStyle` с `data-color` и цвет автора. */
+/** Text color: a `textStyle` Mark with `data-color`, and the custom color. */
 export const COLOR_TOOL: ToolDescriptor = {
   name: "color",
   engine: () => TEXT_COLOR_EXTENSIONS,
 };
 
-/** Маркер: Метка `highlight` с `data-color` (несколько цветов). */
+/** Highlight: a `highlight` Mark with `data-color` (several colors). */
 export const HIGHLIGHT_TOOL: ToolDescriptor = {
   name: "highlight",
   engine: () => [HighlightExtension],
 };
 
 /**
- * Выравнивание: `data-align` на абзаце и заголовке.
+ * Alignment: `data-align` on a paragraph and a heading.
  *
- * Клавиши `Mod-Shift-L/E/R` вешает само расширение, а три строки справочника —
- * подпись к ним. Меню «Выравнивание ▾» (`AlignMenu`, `FormatMenus.tsx`) — виджет
- * кита, он читает те же сочетания из `SHORTCUT_KEYS`.
+ * The `Mod-Shift-L/E/R` keys are bound by the extension itself, and the three rows of the Reference
+ * are the labels for them. The "Align ▾" menu (`AlignMenu`, `FormatMenus.tsx`) is a kit widget: it
+ * reads the same shortcuts from `SHORTCUT_KEYS`.
  */
 export const ALIGN_TOOL: ToolDescriptor = {
   name: "align",
