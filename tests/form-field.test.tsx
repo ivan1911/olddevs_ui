@@ -8,7 +8,7 @@ import { TextControl } from "../src/components/inputs/TextControl.js";
 
 afterEach(cleanup);
 
-/** Читает `id` подписи так, как читает поле, которое `<label for>` не называет. */
+/** Reads the label's `id` the way a field does when `<label for>` does not name it. */
 function LabelIdProbe() {
   return <span data-testid="probe">{useFieldLabelId() ?? ""}</span>;
 }
@@ -21,7 +21,7 @@ test("the error displaces the hint instead of standing under it", () => {
   );
 
   expect(screen.getByText("Name is required")).toBeTruthy();
-  // Две строки под полем, одна из которых противоречит другой, — источник шума.
+  // Two lines under the field, one of which contradicts the other, are a source of noise.
   expect(screen.queryByText("How subscribers will see it")).toBeNull();
 });
 
@@ -32,8 +32,8 @@ test("the error is announced as an alert", () => {
     </FormField>
   );
 
-  // Без роли скринридер не объявит ошибку вовсе: она появляется после отправки,
-  // когда фокус уже ушёл с поля.
+  // Without the role, a screen reader would not announce the error at all: it appears after
+  // submit, when focus has already left the field.
   expect(screen.getByRole("alert").textContent).toBe("Name is required");
 });
 
@@ -55,12 +55,11 @@ test("the required asterisk is not read aloud", () => {
     </FormField>
   );
 
-  // Проверяется ВЫЧИСЛЕННОЕ доступное имя, а не текст подписи: `aria-hidden`
-  // исключается именно вычислением, и `getByLabelText`, который матчит по
-  // тексту, увидел бы «Название *».
+  // The COMPUTED accessible name is checked, not the label's text: `aria-hidden` is excluded
+  // by the computation itself, and `getByLabelText`, which matches by text, would see "Name *".
   //
-  // Имя поля — «Название», а не «Название звёздочка»: обязательность объявляет
-  // само поле, а не украшение рядом с подписью.
+  // The field's name is "Name", not "Name asterisk": the field itself declares it is required,
+  // not the decoration next to the label.
   expect(screen.getByRole("textbox", { name: "Name" })).toBeTruthy();
   expect(screen.getByText("*").getAttribute("aria-hidden")).toBe("true");
 });
@@ -72,20 +71,20 @@ test("without the prop and without context the markup does not change by a singl
     </FormField>
   );
 
-  // Ось добавлена к СТАБИЛЬНОМУ компоненту, и цена такого изменения — обещание,
-  // что без оси он остаётся прежним. Проверяется разметкой целиком, а не
-  // отдельными классами: иначе обещание держится на том, что мы догадались
-  // проверить нужный узел.
+  // The layout axis was added to a STABLE component, and the price of that change is a promise
+  // that without the axis it stays as it was. It is checked against the whole markup, not
+  // against individual classes: otherwise the promise would rest on our having guessed
+  // the right node to check.
   //
-  // Идентификатор описания приходит из `useId` и зависит от порядка тестов —
-  // сравнивать с ним буквально нельзя. Он подменяется своим именем, и
-  // подстановка заодно доказывает, что ссылка и цель — один и тот же узел:
-  // будь их два, вторая осталась бы в строке непереименованной.
+  // The description's id comes from `useId` and depends on the test order, so it cannot be
+  // compared literally. It is replaced with a name of its own, and the substitution also proves
+  // that the reference and the target are one and the same node: were there two, the second
+  // would stay unrenamed in the string.
   const description = container.querySelector("input")!.getAttribute("aria-describedby")!;
-  // Единственное СОЗНАТЕЛЬНОЕ изменение разметки — `id` на подписи (OLDSUI-40):
-  // поле, которое нельзя назвать через `<label for>` (`contenteditable`),
-  // ссылается на неё `aria-labelledby`. Он тоже из `useId`, поэтому подменяется
-  // по тому же приёму; больше ни один узел и ни один атрибут не добавлен.
+  // The ONE deliberate change to the markup is the `id` on the label (OLDSUI-40): a field that
+  // cannot be named through `<label for>` (`contenteditable`) refers to it via `aria-labelledby`.
+  // That one too comes from `useId`, so it is replaced by the same trick; no other node or
+  // attribute was added.
   const labelId = container.querySelector("label")!.id;
   expect(
     container.innerHTML.replaceAll(description, "DESCRIPTION").replaceAll(labelId, "LABEL")
@@ -119,8 +118,8 @@ test("without FormField there is no label id", () => {
 });
 
 test("without a hint and without an error no description appears at all", () => {
-  // Висящий `id` в никуда хуже отсутствия: скринридер молча пропускает такую
-  // ссылку, и дефект не виден ни в разметке, ни в тесте, который его ищет.
+  // A dangling `id` pointing nowhere is worse than none: a screen reader silently skips such
+  // a reference, and the defect is visible neither in the markup nor in the test that looks for it.
   const { container } = render(
     <FormField label="Name" htmlFor="ff-plain">
       <TextControl id="ff-plain" />
@@ -137,8 +136,8 @@ test("the hint is announced on entering the field", () => {
     </FormField>
   );
 
-  // Проверяется не наличие атрибута, а то, что он ведёт к нужному ТЕКСТУ:
-  // связь с пустым или чужим узлом атрибут бы прошла, а пользователь — нет.
+  // The check is not that the attribute is present, but that it leads to the right TEXT:
+  // a link to an empty or foreign node would pass the attribute check, but not the user.
   expect(screen.getByRole("textbox", { description: "Including the country code" })).toBeTruthy();
 });
 
@@ -154,8 +153,8 @@ test("the description follows the error that displaced the hint", () => {
     </FormField>
   );
 
-  // Под полем нарисовано ровно одно сообщение, и описание указывает на него,
-  // а не на скрытую подсказку.
+  // Exactly one message is drawn under the field, and the description points to it,
+  // not to the hidden hint.
   expect(screen.getByRole("textbox", { description: "Not enough digits" })).toBeTruthy();
   expect(screen.queryByText("Including the country code")).toBeNull();
 });
@@ -170,8 +169,8 @@ test("a foreign description is appended to, not displaced", () => {
     </>
   );
 
-  // `aria-describedby` — список, и потребитель, описавший поле своим узлом,
-  // вправе рассчитывать, что тот никуда не денется.
+  // `aria-describedby` is a list, and a consumer who described the field with its own node
+  // is entitled to expect that it will not go away.
   expect(screen.getByRole("textbox", { description: "Latin only Visible to others" })).toBeTruthy();
 });
 
@@ -194,8 +193,8 @@ test('layout="side" moves the label into a column, not into another node', () =>
 
   const root = container.firstElementChild as HTMLElement;
   expect(root.className).toContain("grid-cols-[var(--form-label-w,12rem)_minmax(0,1fr)]");
-  // Подпись остаётся тем же `<label htmlFor>`: боковая раскладка меняет место,
-  // а не владельца подписи.
+  // The label stays the same `<label htmlFor>`: the side layout changes its place,
+  // not the label's owner.
   expect(root.querySelector("label")?.getAttribute("for")).toBe("ff-b");
 });
 
@@ -206,8 +205,8 @@ test("in the side layout the error stands under the field, not under the label",
     </FormField>
   );
 
-  // Проверяется место в разметке, а не класс: ошибка относится к вводу и живёт
-  // в колонке поля вместе с ним.
+  // The check is of the place in the markup, not of a class: the error belongs to the input
+  // and lives in the field's column together with it.
   const column = (container.firstElementChild as HTMLElement).children[1] as HTMLElement;
   expect(column.contains(screen.getByRole("alert"))).toBe(true);
 });
@@ -221,8 +220,8 @@ test("the axis comes from the layout context", () => {
     </FieldLayoutProvider>
   );
 
-  // Иначе потребитель проставлял бы `layout="side"` каждому полю руками, и
-  // первое забытое давало бы кривой ряд.
+  // Otherwise the consumer would have to set `layout="side"` on every field by hand, and the
+  // first one that was forgotten would give a crooked row.
   expect((container.firstElementChild as HTMLElement).className).toContain("grid");
 });
 
@@ -245,15 +244,15 @@ test('layout="side" works outside FormLayout', () => {
     </FormField>
   );
 
-  // Ширина колонки — переменная, а не `subgrid`: `subgrid` потребовал бы
-  // внешнего грида, а поле обязано работать само по себе.
+  // The column width is a variable, not `subgrid`: `subgrid` would need an outer grid,
+  // while the field must work on its own.
   expect((container.firstElementChild as HTMLElement).className).toContain("var(--form-label-w");
 });
 
 /**
- * Регрессия. Грид раскладывает детей по ячейкам, а не по смыслу: второй
- * ребёнок (диапазон «от» и «до», поле с кнопкой рядом) попадал в следующий ряд
- * ПОД ПОДПИСЬ. Поле, пояснение и ошибка уезжают в одну колонку целиком.
+ * Regression. A grid lays children out into cells, not by meaning: the second child
+ * (a "from" and "to" range, a field with a button beside it) fell into the next row
+ * UNDER THE LABEL. The field, its hint and its error are now kept together in one column.
  */
 test("in the side layout two fields stay in their own column", () => {
   const { container } = render(
@@ -264,7 +263,7 @@ test("in the side layout two fields stay in their own column", () => {
   );
 
   const root = container.firstElementChild as HTMLElement;
-  // У грида ровно две ячейки: подпись и колонка поля.
+  // The grid has exactly two cells: the label and the field column.
   expect(root.children).toHaveLength(2);
   const column = root.children[1] as HTMLElement;
   expect(column.querySelectorAll("input")).toHaveLength(2);
@@ -278,18 +277,18 @@ test("the stack layout adds no extra wrapper", () => {
     </FormField>
   );
 
-  // Ветка side не должна протечь в stack: там дети лежат прямо в корне.
+  // The side branch must not leak into stack: there the children sit directly in the root.
   expect(container.firstElementChild?.children).toHaveLength(3);
 });
 
 /**
- * Ошибка формы доводится ДО ПОЛЯ, а не только до текста под ним.
+ * The form's error is carried TO THE FIELD, not only to the text under it.
  *
- * `FIELD_SHELL_CLASS` красит рамку по `has-[input[aria-invalid=true]]`, то есть
- * ищет атрибут на самом поле. В контекст уходило только описание, и поле
- * атрибут не ставило: под полем был красный текст, а рамка обычная. Чтобы она
- * покраснела, потребитель обязан был передать `aria-invalid` сам — а строки
- * `aria-invalid` нет ни в одном файле `docs/`.
+ * `FIELD_SHELL_CLASS` paints the frame by `has-[input[aria-invalid=true]]`, that is, it looks
+ * for the attribute on the field itself. Only the description went into the context, and the
+ * field did not set the attribute: there was red text under the field, but the frame stayed
+ * normal. For the frame to turn red, the consumer had to pass `aria-invalid` itself, and the
+ * `aria-invalid` string is not in any file in `docs/`.
  */
 test("a field inside an errored FormField marks itself invalid", () => {
   render(
@@ -348,7 +347,7 @@ describe("hintPersistent (ADR-0065)", () => {
     const error = screen.getByRole("alert");
     expect(hint.compareDocumentPosition(error) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-    // Обе строки описывают поле, ошибка — последней: её дочитывают в конце.
+    // Both lines describe the field, the error last: it is read through to the end.
     const field = screen.getByRole("textbox");
     expect(field.getAttribute("aria-describedby")).toBe(`${hint.id} ${error.id}`);
     expect(field.getAttribute("aria-invalid")).toBe("true");

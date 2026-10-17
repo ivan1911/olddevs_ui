@@ -2,14 +2,13 @@ import { expect, expectTypeOf, test } from "vitest";
 import type { RichTextEditorHandle, RichTextTools } from "../src/editor/index.js";
 
 /**
- * Типы Команд Инструмента (OLDSUI-268): `handle.tool(name)` на публичном входе.
- * Проверяет `npm run typecheck`, а не Vitest: `expectTypeOf` и
- * `@ts-expect-error` во время работы ничего не делают. Настоящего Хэндла здесь
- * нет, поэтому проверки лежат в функциях, которые тест не зовёт: `tsc` читает их
- * тела так же, как исполняемый код.
+ * Tool commands types (OLDSUI-268): `handle.tool(name)` on the public entry point.
+ * Checked by `npm run typecheck`, not by Vitest: `expectTypeOf` and `@ts-expect-error`
+ * do nothing at run time. There is no real Handle here, so the checks live in functions
+ * that the test does not call: `tsc` reads their bodies the same way as executable code.
  *
- * Свой Инструмент `acme_note` дописан в карту в `editor-tool-options-types.test.ts`:
- * объявление модуля общее на всю программу `tsc`.
+ * The custom Tool `acme_note` is added to the map in `editor-tool-options-types.test.ts`:
+ * a module declaration is shared by the whole `tsc` program.
  */
 
 function nameInTheMap(handle: RichTextEditorHandle) {
@@ -37,28 +36,28 @@ function booleanAnswers(handle: RichTextEditorHandle) {
 }
 
 function mistakes(handle: RichTextEditorHandle) {
-  // @ts-expect-error `jumpTo` — Команда Оглавления, а не Поиска
+  // @ts-expect-error `jumpTo` is a Table of contents command, not a Find one
   handle.tool("search")?.jumpTo(1);
-  // @ts-expect-error `open` — Команда Поиска, а не Оглавления
+  // @ts-expect-error `open` is a Find command, not a Table of contents one
   handle.tool("toc")?.open();
-  // @ts-expect-error у невидимых символов одна Команда, `toggle`: `show` и `hide` не заведены
+  // @ts-expect-error invisible characters have one command, `toggle`: `show` and `hide` are not defined
   handle.tool("invisibleCharacters")?.show();
-  // @ts-expect-error такой Команды нет ни у кого
+  // @ts-expect-error no Tool has such a command
   handle.tool("search")?.highlight("TODO");
-  // @ts-expect-error индекс — число
+  // @ts-expect-error the index is a number
   handle.tool("toc")?.jumpTo("2");
-  // @ts-expect-error запрос — строка
+  // @ts-expect-error the query is a string
   handle.tool("search")?.setQuery(1);
-  // @ts-expect-error неизвестный флажок
+  // @ts-expect-error an unknown flag
   handle.tool("search")?.setQuery("TODO", { fuzzy: true });
-  // @ts-expect-error замена — строка
+  // @ts-expect-error the replacement is a string
   handle.tool("search")?.replace();
 }
 
 function outsideTheMap(handle: RichTextEditorHandle) {
-  // Имя вне карты не ломает сборку: типизация добровольна.
+  // A name outside the map does not break the build: typing is optional.
   expectTypeOf(handle.tool("some_other")).toEqualTypeOf<unknown>();
-  // Свой Инструмент, дописанный в карту, получает свои Команды.
+  // A custom Tool added to the map gets its own commands.
   expectTypeOf(handle.tool("acme_note")).toEqualTypeOf<{ clear(): boolean } | null>();
   expectTypeOf(handle.tool("acme_note")?.clear()).toEqualTypeOf<boolean | undefined>();
 }

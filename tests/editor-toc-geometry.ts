@@ -1,15 +1,15 @@
 /**
- * Геометрия страницы для подсветки раздела Оглавления. В jsdom у всего нулевой
- * прямоугольник и нулевая высота страницы, и ядро Оглавления считает страницу
- * докрученной до конца: текущим становится последний заголовок. Здесь заголовки
- * стоят в столбик по 200 пикселей, а `page.scrolledTo` — индекс заголовка, что
- * стоит у верхнего края (строки отсчёта).
+ * Page geometry for highlighting a section of the Table of contents. In jsdom everything has
+ * a zero rectangle and the page has zero height, so the Table of contents core counts the page
+ * as scrolled all the way down: the last heading becomes current. Here the headings stand
+ * in a column, 200 pixels each, and `page.scrolledTo` is the index of the heading at the top
+ * edge (the reference line).
  */
 export const page = { scrolledTo: 0 };
 
 const nativeRect = Element.prototype.getBoundingClientRect;
 
-/** Включить геометрию; вернуть функцию, что её снимает. */
+/** Turn the geometry on; return a function that turns it off. */
 export function installPageGeometry(): () => void {
   page.scrolledTo = 0;
   Object.defineProperty(document.documentElement, "scrollHeight", {

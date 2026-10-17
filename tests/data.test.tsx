@@ -24,8 +24,8 @@ test("table axes do not appear without their props", () => {
     />
   );
 
-  // Ни флажков выделения, ни кнопок сортировки в разметке нет вовсе — таблица
-  // из трёх строк не тащит то, чего у неё не просили.
+  // There are no selection checkboxes or sort buttons in the markup at all: a table
+  // of three rows does not pull in what was never asked for.
   expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
   expect(screen.getByRole("columnheader", { name: "Name" }).getAttribute("aria-sort")).toBeNull();
 });
@@ -57,7 +57,7 @@ test("selection appears with the prop", () => {
     />
   );
 
-  // Флажок в шапке плюс по одному на строку.
+  // A checkbox in the header plus one per row.
   expect(screen.getAllByRole("checkbox")).toHaveLength(3);
 });
 
@@ -70,7 +70,7 @@ test("a count above the limit is collapsed", () => {
 test("a dot shows no number", () => {
   const { container } = render(<Badge dot>{5}</Badge>);
 
-  // «Есть новое» без указания сколько: 237 непрочитанных читается хуже отметки.
+  // "New" without a count: "237 unread" reads worse than a plain marker.
   expect(container.textContent).toBe("");
 });
 
@@ -79,8 +79,8 @@ test("the delta tone is not derived from the sign", () => {
     <Stat label="Unsubscribes" value="184" delta="+12" deltaTone="danger" />
   );
 
-  // Рост отписок — плохая новость, и красить плюс в зелёный автоматически
-  // значит врать ровно там, где ошибиться дороже всего.
+  // A rise in unsubscribes is bad news, and colouring the plus sign green automatically
+  // would mean lying exactly where a mistake costs the most.
   expect(container.querySelector(".text-danger-strong")?.textContent).toBe("+12");
 });
 
@@ -96,8 +96,8 @@ test("an avatar group is announced as a list of names, not a set of initials", (
   expect(group.getAttribute("aria-label")).toBe(
     "Ada Lovelace, Grace Hopper, Alan Turing, Barbara Liskov"
   );
-  // Показаны двое и остаток. Инициалы кругов в текст попадают, но от
-  // скринридера они скрыты — имя группе даёт `aria-label` выше.
+  // Shows two and the remainder. The initials of the circles do get into the text, but
+  // the screen reader hides them: the group's name comes from `aria-label` above.
   expect(group.textContent).toContain("+2");
   expect(group.querySelectorAll("[aria-hidden]").length).toBe(3);
 });
@@ -117,9 +117,9 @@ test("a column id may coincide with a row id", () => {
     />
   );
 
-  // Ключи колонок и строк у react-aria лежат в одном пространстве имён, и
-  // совпадение схлопывало одну из них: таблица падала с «Cell count must match
-  // column count». Ключи колонок разведены префиксом внутри компонента.
+  // React-aria keeps column and row keys in one namespace, and a collision collapsed
+  // one of them: the table threw "Cell count must match column count". The column
+  // keys are kept apart by a prefix inside the component.
   expect(screen.getAllByRole("columnheader")).toHaveLength(2);
   expect(screen.getAllByRole("row")).toHaveLength(3);
 });
@@ -135,9 +135,9 @@ test("the internal column key does not leak into aria-sort", () => {
     />
   );
 
-  // Снаружи компонент говорит на исходных идентификаторах; префикс — его
-  // внутреннее дело. Возврат ключа наружу проверяется в браузере: клик по
-  // заголовку в jsdom требует `CSS.escape`, которого там нет.
+  // Outside, the component speaks in the source identifiers; the prefix is its own
+  // internal concern. Returning the key outwards is verified in the browser: a click on
+  // the header in jsdom requires `CSS.escape`, which is not there.
   expect(screen.getByRole("columnheader", { name: /Name/ }).getAttribute("aria-sort")).toBe(
     "ascending"
   );
@@ -152,27 +152,27 @@ test("width without resizable reaches the style instead of vanishing", () => {
     />
   );
 
-  // У react-aria проп `width` действует только внутри `ResizableTableContainer`;
-  // в обычной таблице он молча не делал ничего.
+  // React-aria's `width` prop only works inside `ResizableTableContainer`;
+  // in a plain table it silently did nothing.
   expect((screen.getByRole("columnheader") as HTMLElement).style.width).toBe("200px");
 });
 
 /**
- * Ось раскрытия строки (ADR-0022) — единственная, ради которой пришлось трогать
- * `Table`: детальная строка живёт внутри `<tbody>`, между строками коллекции
- * react-aria, и вставить её снаружи невозможно.
+ * The row expansion axis (ADR-0022) is the only one that required changing
+ * `Table`: the detail row lives inside `<tbody>`, between the rows of the
+ * react-aria collection, and it cannot be inserted from outside.
  */
 describe("Table: row expansion", () => {
   const COLUMNS = [{ id: "name", header: "Name", cell: (w: { name: string }) => w.name }];
 
   /**
-   * Главная проверка правки. Ось включается наличием пропа, и «без пропа
-   * ничего не изменилось» — не пожелание, а условие, на котором правку
-   * стабильного компонента вообще приняли.
+   * The main check of this change. The axis is turned on by the presence of the prop, and
+   * "without the prop nothing changed" is not a wish but the condition on which
+   * changing a stable component was accepted at all.
    */
   test("without renderDetail the markup does not change by a single node", () => {
-    // react-aria раздаёт узлам автоидентификаторы, и они различны у любых двух
-    // рендеров — сравнивать их значило бы сравнивать счётчик, а не разметку.
+    // React-aria assigns auto ids to nodes, and they differ between any two
+    // renders: comparing them would mean comparing a counter, not the markup.
     const withoutId = (html: string) => html.replace(/react-aria-[\w]+/g, "RA");
 
     const { container: withoutDetail } = render(
@@ -190,7 +190,7 @@ describe("Table: row expansion", () => {
         onExpandedChange={() => {}}
       />
     );
-    // `expandedKeys` без `renderDetail` не включает ось: показывать нечего.
+    // `expandedKeys` without `renderDetail` does not turn the axis on: there is nothing to show.
     expect(withoutId(withDetail.innerHTML)).toBe(snapshot);
   });
 
@@ -217,7 +217,7 @@ describe("Table: row expansion", () => {
       />
     );
     expect(screen.queryByText(/Details/)).toBeNull();
-    expect(screen.getAllByRole("row")).toHaveLength(3); // шапка + две строки
+    expect(screen.getAllByRole("row")).toHaveLength(3); // header + two rows
   });
 
   test("an expanded row shows the detail and announces the state", () => {
@@ -232,7 +232,7 @@ describe("Table: row expansion", () => {
       />
     );
     expect(screen.getByText("Details Night city")).toBeTruthy();
-    expect(screen.getAllByRole("row")).toHaveLength(4); // прибавилась детальная
+    expect(screen.getAllByRole("row")).toHaveLength(4); // the detail row was added
     expect(screen.getByRole("button", { name: "Hide details" }).getAttribute("aria-expanded")).toBe(
       "true"
     );
@@ -251,11 +251,11 @@ describe("Table: row expansion", () => {
         onExpandedChange={() => {}}
       />
     );
-    // Выделение + раскрыватель + две колонки = четыре ячейки.
+    // Selection + expander + two columns = four cells.
     expect(container.querySelector("[colspan='4']")).toBeTruthy();
   });
 
-  /** Состояние таблица не хранит — по тому же правилу, что сортировку. */
+  /** The table does not store this state, under the same rule as sorting. */
   test("a click reports outwards and expands nothing itself", async () => {
     const user = userEvent.setup();
     const onExpandedChange = vi.fn();
@@ -299,9 +299,9 @@ describe("Table: row expansion", () => {
   });
 
   /**
-   * Без `rowLabel` у двадцати строк двадцать одинаковых «Show details», и в
-   * режиме перечисления кнопок скринридер не различит их вовсе. Находка
-   * внешней разведки по аудитам доступности.
+   * Without `rowLabel`, twenty rows have twenty identical "Show details" buttons,
+   * and in the mode that lists buttons a screen reader cannot tell them apart at all.
+   * A finding from an external review of accessibility audits.
    */
   test("rowLabel names the row in the expander label", () => {
     render(

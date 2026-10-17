@@ -7,8 +7,8 @@ afterEach(cleanup);
 
 test("a failure is announced by a live region, an empty screen is not", () => {
   render(<ErrorState description="Could not load the collections." />);
-  // Ровно этого не было ни в одной из четырёх рукописных копий во фронте:
-  // без роли пользователь скринридера остаётся с тишиной вместо ответа.
+  // None of the four hand-written copies on the frontend had exactly this: without a role,
+  // a screen reader user is left with silence instead of an answer.
   const alert = screen.getByRole("alert");
   expect(alert.textContent).toContain("Failed to load");
   expect(alert.textContent).toContain("Could not load the collections.");
@@ -33,6 +33,6 @@ test("null removes the icon, undefined puts the standard one", () => {
   const { container: withIcon } = render(<ErrorState />);
   const svg = withIcon.querySelector("svg");
   expect(svg).toBeTruthy();
-  // Иконка декоративна: имя состояния несёт заголовок, а не она.
+  // The icon is decorative: the state's name is carried by the title, not by the icon.
   expect(svg?.closest("[aria-hidden]")).toBeTruthy();
 });

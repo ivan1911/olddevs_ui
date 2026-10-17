@@ -15,18 +15,17 @@ import { AddIcon } from "../src/icons.js";
 afterEach(cleanup);
 
 /**
- * Семейство «пустое — это не только `null`».
+ * The family of "empty is more than just `null`".
  *
- * Кит ловил этот дефект пять раз в пяти компонентах и каждый раз чинил одну
- * точку: `Segmented` завёл себе локальный `hasLabel`, а `CopyButton`,
- * `ToggleGroup`, `NotificationList` и `Progress` остались на `== null`. Тест
- * перечисляет компоненты, обязанные следовать правилу, — чтобы шестой случай
- * ловился здесь, а не в приложении.
+ * The kit caught this defect five times in five components, and each time fixed one
+ * spot: `Segmented` gave itself a local `hasLabel`, while `CopyButton`, `ToggleGroup`,
+ * `NotificationList` and `Progress` stayed on `== null`. The test lists the components
+ * that must follow the rule, so that a sixth case is caught here and not in the consumer's app.
  *
- * Проверяется НАБЛЮДАЕМОЕ следствие, а не вызов предиката: доступное имя у
- * кнопки, слот пустого состояния у списка, валидность атрибутов у полосы.
- * Проверка «зовёт ли компонент `hasContent`» сломалась бы на безобидном
- * рефакторинге и ничего не сказала бы о пользователе.
+ * The test checks the OBSERVABLE effect, not a call of the predicate: the accessible name of a
+ * button, the empty-state slot of a list, the validity of the attributes on a progress bar.
+ * A check of "does the component call `hasContent`" would break on a harmless refactor
+ * and say nothing about the user.
  */
 describe("the predicate itself", () => {
   test.each([null, undefined, "", false, [], [null, false]])("%o counts as empty", (value) => {
@@ -34,8 +33,8 @@ describe("the predicate itself", () => {
   });
 
   test.each([0, "0", "text", ["", "text"]])("%o counts as content", (value) => {
-    // Ноль — законное значение счётчика, а не пустота: `<Badge>{0}</Badge>`
-    // обязан нарисовать ноль.
+    // Zero is a legitimate counter value, not emptiness: `<Badge>{0}</Badge>`
+    // must render zero.
     expect(hasContent(value as never)).toBe(true);
   });
 
@@ -67,19 +66,19 @@ describe("an empty label is an absent label, not a label", () => {
   });
 
   test("CopyButton: an empty child does not leave the button nameless", () => {
-    // `children == null` не ловит `""`: `iconOnly` становился ложным,
-    // `aria-label` не проставлялся, и рисовалась кнопка с одной декоративной
-    // иконкой и нулевым доступным именем — `button-name` уровня critical в axe.
-    // Реальная форма вызова — подпись из конфига, которая пришла пустой.
+    // `children == null` does not catch `""`: `iconOnly` became false, `aria-label`
+    // was not set, and a button with one decorative icon and an empty accessible name
+    // was rendered, a critical-level `button-name` violation in axe.
+    // The real call shape is a label from the config that arrived empty.
     render(<CopyButton value="token">{""}</CopyButton>);
 
     expect(screen.getByRole("button").getAttribute("aria-label")).toBeTruthy();
   });
 
   test("ToggleGroup: an empty label makes an icon-only button, as in Segmented", () => {
-    // `{ label: "", icon }` — штатный по словарю `Segmented` способ сказать
-    // «только значок». В `ToggleGroup` он давал кнопку с текстовыми отступами и
-    // пустым `<span>` внутри: рядом в одной панели они разъезжались.
+    // `{ label: "", icon }` is the standard way, per the `Segmented` vocabulary, to say
+    // "icon only". In `ToggleGroup` it gave a button with text padding and an empty `<span>`
+    // inside: side by side in one panel, they came out misaligned.
     render(
       <ToggleGroup
         value={["add"]}
@@ -95,10 +94,10 @@ describe("an empty label is an absent label, not a label", () => {
 
 describe("an empty name is an absent name", () => {
   test("Avatar: an empty name falls back instead of rendering a blank circle", () => {
-    // Умолчание срабатывало только на `undefined`. Для `""` —
-    // `"".charCodeAt(0)` даёт `NaN`, градиент становился
-    // `oklch(0.55 0.13 NaN)`, браузер отбрасывал его целиком, и на светлой теме
-    // получался пустой круг белым по белому.
+    // The fallback fired only for `undefined`. For `""`,
+    // `"".charCodeAt(0)` gives `NaN`, the gradient became `oklch(0.55 0.13 NaN)`,
+    // the browser dropped it whole, and on the light theme the result was an empty
+    // circle, white on white.
     const { container } = render(<Avatar name="" />);
     const root = container.firstElementChild as HTMLElement;
 
@@ -109,9 +108,9 @@ describe("an empty name is an absent name", () => {
 
 describe("empty content is an empty list, not a rendered one", () => {
   test("NotificationList: an empty array of children shows the empty slot", () => {
-    // `children == null` не считает `[]` пустым, а основной способ вызова —
-    // именно `{items.map(...)}`. При пустом `items` рисовался `<div role=group>`
-    // с пустым `<ul>` внутри, а слот `empty` не появлялся вовсе.
+    // `children == null` does not treat `[]` as empty, and the main way to call it is
+    // exactly `{items.map(...)}`. With empty `items` a `<div role=group>` was rendered
+    // with an empty `<ul>` inside, and the `empty` slot did not appear at all.
     const items: string[] = [];
     render(
       <NotificationList empty={<span>Nothing here</span>}>
@@ -125,9 +124,9 @@ describe("empty content is an empty list, not a rendered one", () => {
   });
 
   test("CodeView: a falsy child falls back to the plain code, with its gutter", () => {
-    // `children === undefined` и `children ?? code` расходились на `null` и
-    // `false`. Идиома `{ready && <Highlighted/>}` при ложном `ready` давала
-    // `false ?? code` — то есть `false`, и панель оказывалась пустой.
+    // `children === undefined` and `children ?? code` diverged on `null` and
+    // `false`. The idiom `{ready && <Highlighted/>}` with a falsy `ready` gave
+    // `false ?? code`, that is `false`, and the panel came out empty.
     const ready = false;
     render(
       <CodeView code={"const a = 1;\nconst b = 2;"} lineNumbers>
@@ -141,10 +140,10 @@ describe("empty content is an empty list, not a rendered one", () => {
 
 describe("a number that cannot be shown is not a value", () => {
   test("Progress: NaN behaves as unknown progress, not as a full bar", () => {
-    // `loaded / total * 100` при нулевом `total` даёт `NaN`. Проверка
-    // `value == null` его не ловит, `?? 0` тоже — `??` ловит только
-    // null/undefined. В разметку уходило `width: NaN%`: объявление
-    // отбрасывалось, и блочный div растягивался на всю ширину контейнера.
+    // `loaded / total * 100` with a zero `total` gives `NaN`. The check
+    // `value == null` does not catch it, and neither does `?? 0`: `??` catches only
+    // null/undefined. The markup got `width: NaN%`: the declaration was dropped,
+    // and the block div stretched across the full width of the container.
     const { container } = render(<Progress label="Upload" value={Number.NaN} />);
 
     expect(container.innerHTML).not.toContain("NaN");

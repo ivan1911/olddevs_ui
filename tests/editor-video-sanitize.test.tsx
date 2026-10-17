@@ -9,10 +9,10 @@ import {
 } from "../src/editor/schema-entry.js";
 
 /*
-  Очистка блока видео (ADR-0071): `iframe` срезается всегда, и с Инструментами
-  `youtube` и `twitch` тоже; новые правила — обычные: `data-block="video"`,
-  `data-provider` из списка, `data-src` — `https`-адрес хоста сервиса. Настоящий
-  DOMPurify на jsdom, как у сервера потребителя.
+  Sanitizing the video Block (ADR-0071): `iframe` is always stripped, and with the `youtube`
+  and `twitch` Tools too; the new rules are ordinary: `data-block="video"`,
+  `data-provider` from the list, `data-src` is an `https` address of the service's host. A real
+  DOMPurify on jsdom, as on the consumer's server.
 */
 
 const purify: RichTextPurifier = createDOMPurify(window);
@@ -76,7 +76,7 @@ describe("data-src", () => {
     ["a look-alike host", "https://youtube.com.evil.example/watch?v=dQw4w9WgXcQ"],
     ["a login in front of the host", "https://youtube.com@evil.example/watch?v=dQw4w9WgXcQ"],
     ["http", "http://www.youtube.com/watch?v=dQw4w9WgXcQ"],
-    // Читаемые, но не канонические формы: Редактор пишет только канонический вид.
+    // Readable but non-canonical forms: the Editor writes only the canonical one.
     ["a short form", "https://youtu.be/dQw4w9WgXcQ"],
     ["a host without www", "https://youtube.com/watch?v=dQw4w9WgXcQ"],
     ["a javascript: address", "javascript:alert(1)"],

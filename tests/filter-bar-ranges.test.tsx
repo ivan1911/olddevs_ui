@@ -10,9 +10,9 @@ import type { TableFilter } from "../src/lib/table-state.js";
 afterEach(cleanup);
 
 /**
- * Диапазоны в фильтрах (ADR-0063): `FilterField.kind` и необязательное `to`
- * у `TableFilter`. Выборку считает потребитель — здесь проверяется только форма
- * фильтра, который кит собирает, и подпись его токена.
+ * Ranges in filters (ADR-0063): `FilterField.kind` and the optional `to` on `TableFilter`.
+ * The consumer computes the filtered rows; here only the shape of the filter that the kit
+ * builds, and the label of its token, are checked.
  */
 const FIELDS: FilterField[] = [
   { id: "amount", label: "Amount", kind: "number-range", values: [] },
@@ -44,7 +44,7 @@ describe("a number range in FilterBarAdd", () => {
 
     expect(screen.getByRole("textbox", { name: "From" })).toBeTruthy();
     expect(screen.getByRole("textbox", { name: "To" })).toBeTruthy();
-    // Список значений здесь не нужен: «Значение» остаётся только у `values`.
+    // No value list is needed here: "Value" stays only for `values`.
     expect(screen.queryByRole("button", { name: /Value/ })).toBeNull();
   });
 
@@ -57,7 +57,7 @@ describe("a number range in FilterBarAdd", () => {
 
     await user.type(screen.getByRole("textbox", { name: "To" }), "100");
     await user.tab();
-    // Одной границы достаточно: «до 100» — полноправный фильтр.
+    // One bound is enough: "to 100" is a full-fledged filter.
     expect(applyButton().disabled).toBe(false);
   });
 
@@ -90,7 +90,7 @@ describe("a number range in FilterBarAdd", () => {
     await user.type(screen.getByRole("textbox", { name: "From" }), "50");
     await user.click(applyButton());
 
-    // `to: ""`, а не отсутствие ключа: без него токен стал бы равенством.
+    // `to: ""`, not a missing key: without it the token would become an equality.
     expect(onAdd).toHaveBeenCalledWith({
       id: "amount:range",
       field: "amount",
@@ -128,8 +128,8 @@ describe("a number range in FilterBarAdd", () => {
     await user.type(screen.getByRole("textbox", { name: "To" }), "50");
     await user.tab();
 
-    // «От 100 до 50» не выберет ничего, и пользователь прочтёт пустоту как
-    // «данных нет».
+    // "From 100 to 50" selects nothing, and the user reads the emptiness as
+    // "no data".
     expect(applyButton().disabled).toBe(true);
   });
 
@@ -158,8 +158,8 @@ describe("a number range in FilterBarAdd", () => {
     await user.click(screen.getByRole("button", { name: /Add filter/ }));
     await user.click(screen.getByRole("button", { name: /Field/ }));
 
-    // Два диапазона по одному полю — это пересечение, а не добавление; второго
-    // токена пользователь бы не отличил от первого.
+    // Two ranges on one field are an intersection, not an addition; the user would not
+    // be able to tell the second token from the first.
     expect(screen.queryByRole("option", { name: "Amount" })).toBeNull();
     expect(screen.getByRole("option", { name: "Created" })).toBeTruthy();
   });
@@ -230,7 +230,7 @@ describe("a date range in FilterBarAdd", () => {
       new Date(MONTH.getFullYear(), MONTH.getMonth(), 15)
     );
 
-  /** Выбрать 15-е число текущего месяца в открытом календаре. */
+  /** Pick the 15th of the current month in the open calendar. */
   async function pickFifteenth(user: ReturnType<typeof userEvent.setup>) {
     const grid = screen.getByRole("grid");
     const cell = within(grid)
@@ -259,8 +259,8 @@ describe("a date range in FilterBarAdd", () => {
     await pickFifteenth(user);
     await user.click(applyButton());
 
-    // Календарь вложен в поповер добавления, и выбор даты не закрыл его:
-    // «Применить» остался на месте.
+    // The calendar is nested in the add popover, and picking a date did not close it:
+    // "Apply" stayed in place.
     expect(onAdd).toHaveBeenCalledWith({
       id: "created:range",
       field: "created",
@@ -296,7 +296,7 @@ describe("a range token in FilterBar", () => {
       <FilterBar filters={[{ id: "r", field: "amount", ...bounds }]} onFiltersChange={() => {}} />
     );
 
-    // Раньше здесь вышло бы «amount: 50» — диапазон выглядел равенством.
+    // Before, this would have come out as "amount: 50": the range looked like an equality.
     expect(screen.getByText(text)).toBeTruthy();
   });
 

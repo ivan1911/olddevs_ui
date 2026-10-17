@@ -7,9 +7,9 @@ import {
 import { hasVideoBlocks, isVideoSrc } from "../src/editor/features/video/videoSrc.js";
 
 /*
-  Распознавание ссылок на видео (ADR-0071): правила расширений Tiptap Youtube и
-  Twitch, переписанные на разбор `URL`. Поведение чистых функций; то, как их
-  читают Редактор, очистка и Просмотр, — в соседних файлах.
+  Recognizing video links (ADR-0071): the rules of the Tiptap Youtube and Twitch
+  extensions, rewritten to parse `URL`. The behavior of pure functions; how the Editor,
+  the sanitizer and the View read them is in the neighboring files.
 */
 
 const yt = (id: string) => ({ provider: "youtube", src: `https://www.youtube.com/watch?v=${id}` });
@@ -178,11 +178,11 @@ describe("a data-src value", () => {
 });
 
 /*
-  ДВА НАБОРА ПРАВИЛ — ОДИН СМЫСЛ. Очистка (`isVideoSrc`) и разбор ссылок
-  (`parseVideoLink`) написаны по-разному: очистке нужно выражение без `URL`, разбору —
-  разбор. Расходиться в том, что считается видео, они не вправе: блок, прошедший
-  очистку, но не ставший плеером, — мёртвый блок в Документе. Одна таблица адресов
-  идёт через оба.
+  TWO RULE SETS, ONE MEANING. The sanitizer (`isVideoSrc`) and the link parser
+  (`parseVideoLink`) are written differently: the sanitizer needs an expression without
+  `URL`, while the parser needs real parsing. They must not diverge on what counts as a video:
+  a Block that passes the sanitizer but does not become a player is a dead Block in the Document.
+  One table of addresses goes through both.
 */
 describe("the sanitizer rule and the parser agree", () => {
   const YT = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
@@ -204,7 +204,7 @@ describe("the sanitizer rule and the parser agree", () => {
     "https://clips.twitch.tv/FunnyClip-AbC123",
     "https://clips.twitch.tv/embed",
     "https://clips.twitch.tv/",
-    // Служебные разделы сайта и их написание в другом регистре — не каналы.
+    // Site service sections, and their spelling in another case, are not channels.
     ...[
       "directory",
       "Videos",
@@ -238,9 +238,9 @@ describe("the sanitizer rule and the parser agree", () => {
     for (const provider of ["youtube", "twitch"]) {
       const parsed = parseVideoLink(src);
       const accepted = isVideoSrc(provider, src);
-      // Что очистка пропустила, разбор обязан узнать — тем же сервисом.
+      // What the sanitizer accepts, the parser must recognize, as the same service.
       if (accepted) expect(parsed?.provider, "sanitizer accepts, parser rejects").toBe(provider);
-      // Что разбор записал бы в Документ, очистка обязана пропустить.
+      // What the parser would write to the Document, the sanitizer must accept.
       if (parsed?.provider === provider) {
         expect(isVideoSrc(provider, parsed.src), "parser writes, sanitizer rejects").toBe(true);
       }
@@ -355,7 +355,7 @@ describe("the player address built at display time", () => {
         false
       )
     ).toBe("https://www.youtube-nocookie.com/embed/videoseries?list=PL1");
-    // Twitch стартует сам, если не сказано иначе: `autoplay=false` называется явно.
+    // Twitch starts on its own unless told otherwise: `autoplay=false` is named explicitly.
     const parent = "docs.example.com";
     expect(
       playerUrl(

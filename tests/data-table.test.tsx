@@ -34,8 +34,8 @@ const base = {
 
 describe("DataTable: column preferences", () => {
   /**
-   * Спрятанный классом столбец остаётся в дереве доступности заголовком без
-   * ячеек, и скринридер читает таблицу с колонкой, которой на экране нет.
+   * A column hidden by a class stays in the accessibility tree as a header without
+   * cells, and the screen reader reads the table with a column that is not on screen.
    */
   test("a hidden column stays out of the markup instead of being hidden by a class", () => {
     render(<DataTable {...base} state={state({ hiddenColumns: new Set(["section"]) })} />);
@@ -59,9 +59,9 @@ describe("DataTable: column preferences", () => {
   });
 
   /**
-   * Регрессия. Порядок из адреса перечислял только часть колонок, и `flatMap`
-   * выбрасывал остальные: ссылка, сохранённая до появления новой колонки,
-   * показывала урезанную таблицу — и выглядело это как рабочая таблица.
+   * Regression. The order from the URL listed only some of the columns, and `flatMap`
+   * dropped the rest: a link saved before a new column appeared showed a truncated
+   * table, and it looked like a working table.
    */
   test("a partial order does not drop columns, it appends the rest", () => {
     render(<DataTable {...base} state={state({ columnOrder: ["section"] })} />);
@@ -80,9 +80,9 @@ describe("DataTable: column preferences", () => {
   });
 
   /**
-   * Панель настроек снять последнюю не даёт, но из адреса это состояние
-   * достижимо в обход: `?hide=` со всеми колонками давал таблицу без единого
-   * заголовка.
+   * The settings panel does not let you hide the last column, but this state is
+   * reachable from the URL around it: `?hide=` with every column gave a table with
+   * no header at all.
    */
   test("hiding ALL columns is ignored — there is no table without columns", () => {
     render(<DataTable {...base} state={state({ hiddenColumns: new Set(["name", "section"]) })} />);
@@ -100,8 +100,8 @@ describe("DataTable: column preferences", () => {
 });
 
 /**
- * Ради этого блока в ADR-0022 и переписан плоский порядок состояний: на смене
- * страницы данные уже на экране, и скелет вместо них — скачок на каждом шаге.
+ * This is why the flat order of states was rewritten in ADR-0022: on a page change
+ * the data is already on screen, and a skeleton in its place is a jump at every step.
  */
 describe("DataTable: loading, emptiness, error", () => {
   test("loading without data gives a skeleton and the header stays", () => {
@@ -113,15 +113,15 @@ describe("DataTable: loading, emptiness, error", () => {
 
   test("loading WITH data leaves it in place under aria-busy", () => {
     const { container } = render(<DataTable {...base} loading state={state()} />);
-    // Данные никуда не делись — таблица не схлопнулась в скелет.
+    // The data is still there: the table did not collapse into a skeleton.
     expect(screen.getByText("Contract")).toBeTruthy();
     expect(container.querySelector("[aria-busy='true']")).toBeTruthy();
   });
 
   test("an error replaces the body even when data is there", () => {
     render(<DataTable {...base} error={<span>Could not load</span>} state={state()} />);
-    // Показанные при ошибке данные врут: отличить устаревшие от актуальных
-    // пользователь не может.
+    // Data shown alongside an error is misleading: the user cannot tell stale data
+    // from current data.
     expect(screen.getByText("Could not load")).toBeTruthy();
     expect(screen.queryByText("Contract")).toBeNull();
     expect(screen.getByRole("columnheader", { name: "Name" })).toBeTruthy();
@@ -162,7 +162,7 @@ describe("DataTable: state goes outwards", () => {
 
   test("without renderDetail the expansion axis stays off", () => {
     render(<DataTable {...base} state={state({ expandedKeys: new Set(["1"]) })} />);
-    // Ось включается наличием пропа у `Table`, и надстройка это правило не ломает.
+    // The axis is turned on by the presence of the prop on `Table`, and the wrapper does not break this rule.
     expect(screen.queryByRole("button", { name: /details/ })).toBeNull();
   });
 
@@ -190,20 +190,20 @@ describe("DataTable: state goes outwards", () => {
 });
 
 /**
- * Ось выделения `Table`.
+ * The selection axis of `Table`.
  *
- * Два дефекта одного механизма, оба найдены ревью волны 26 и оба не покрывались
- * ничем: в `tests/` `selectable` и `renderDetail` не встречались вместе ни разу.
+ * Two defects of one mechanism, both found by the wave 26 review, and neither was
+ * covered by anything: in `tests/`, `selectable` and `renderDetail` were never combined, not once.
  */
 describe("the selection axis keeps what it was given", () => {
   test("selecting all adds the current page instead of replacing everything", async () => {
     const user = userEvent.setup();
     const onSelectionChange = vi.fn();
 
-    // Выделение переживает смену страницы — это главный инвариант, объявленный
-    // в докстроке `useTableState`. «Выделить всё» отдавало наружу ТОЛЬКО
-    // текущую страницу, и три отметки со страницы 1 исчезали молча: массовое
-    // удаление применялось к двум записям вместо пяти.
+    // Selection survives a page change: this is the main invariant, stated in the
+    // `useTableState` docstring. "Select all" passed out ONLY the current page, and
+    // three marks from page 1 vanished silently: a bulk delete was applied to two
+    // records instead of five.
     render(
       <Table
         aria-label="Documents"
@@ -248,10 +248,10 @@ describe("the selection axis keeps what it was given", () => {
     const user = userEvent.setup();
     const onSelectionChange = vi.fn();
 
-    // `od-detail:` — внутренний префикс, разведённый как раз чтобы деталь не
-    // столкнулась со строкой. Наружу он уходить не может: `SelectionBar`
-    // посчитал бы его выбранной записью, а массовое действие ушло бы на бэкенд
-    // с идентификатором, которого нет ни в одной записи.
+    // `od-detail:` is an internal prefix, kept apart precisely so that the detail does
+    // not collide with the row. It must never leave the component: `SelectionBar` would
+    // count it as a selected record, and a bulk action would go to the backend with an
+    // id that exists in no record.
     render(
       <Table
         aria-label="Documents"
@@ -268,13 +268,13 @@ describe("the selection axis keeps what it was given", () => {
     await user.click(screen.getByText("Detail body"));
 
     /*
-      Щелчок по детали не даёт события выделения ВООБЩЕ.
+      A click on the detail gives NO selection event at all.
 
-      Раньше он его давал — с синтетическим ключом внутри, — и проверка ловила
-      утечку на выходе. Теперь детальные строки вычеркнуты из коллекции
-      (`disabledKeys` + `disabledBehavior="selection"`), то есть выделяться им
-      нечем: фильтр на выходе остался страховкой. Заодно это чинит флажок
-      «выделить всё», который без этого не снимался никогда.
+      Previously it did, with a synthetic key inside, and the check caught the
+      leak on the way out. Now the detail rows are removed from the collection
+      (`disabledKeys` + `disabledBehavior="selection"`), so they have nothing to be
+      selected with: the filter on the way out remains as a safety net. It also fixes
+      the "select all" checkbox, which never cleared without this.
     */
     expect(onSelectionChange).not.toHaveBeenCalled();
     for (const call of onSelectionChange.mock.calls) {
@@ -283,22 +283,22 @@ describe("the selection axis keeps what it was given", () => {
       }
     }
 
-    // И деталь не выглядит выбранной: выделение управляемое, а в него ключ
-    // детали не попал — значит, кольца выбора на ней тоже нет.
+    // The detail does not look selected either: the selection is controlled, and the
+    // detail's key is not in it, so there is no selection ring on it either.
     const detailRow = screen.getByText("Detail body").closest("tr")!;
     expect(detailRow.getAttribute("aria-selected")).toBe("false");
   });
 });
 
 /**
- * Ошибка загрузки объявляется вслух.
+ * A loading error is announced aloud.
  *
- * Текст ошибки подставлялся в `emptyText` и попадал внутрь `renderEmptyState` —
- * обычный `div` без живой области. Пользователь клавиатуры жал «Обновить»,
- * запрос падал, строки исчезали, на их месте появлялся текст — и не
- * произносилось НИЧЕГО: таблица молча пустела и читалась как «ничего не
- * найдено». Докстрока компонента берёт состояние ошибки на себя, значит и
- * объявление — его ответственность.
+ * The error text was substituted into `emptyText` and landed inside `renderEmptyState` —
+ * a plain `div` with no live region. A keyboard user pressed "Refresh", the request
+ * failed, the rows disappeared and text appeared in their place, and NOTHING was
+ * announced: the table silently emptied and read as "nothing found". The component
+ * docstring now takes the error state on itself, so the announcement is its
+ * responsibility too.
  */
 test("a load error is announced, an empty result is not", () => {
   const { rerender } = render(
@@ -326,19 +326,18 @@ test("a load error is announced, an empty result is not", () => {
     />
   );
 
-  // Пустой результат — не сбой, перебивать им речь нельзя.
+  // An empty result is not a failure, so it must not interrupt the screen reader.
   expect(screen.queryByRole("alert")).toBeNull();
 });
 
 /**
- * Раскрытие работает и без состояния снаружи.
+ * Expansion works without state from outside.
  *
- * Ось включалась одним `renderDetail`, а `toggleExpanded` строил
- * `new Set(undefined)` и звал `onExpandedChange?.()` в никуда: рисовалась живая
- * на вид кнопка с `aria-expanded="false"` и рабочим наведением, клик не делал
- * ничего. Три пропа необязательны независимо, поэтому компилятор молчал — тот
- * самый «недоступный список, который выглядит рабочим», о котором предупреждает
- * докстрока `SortableList`.
+ * The axis was turned on by `renderDetail` alone, while `toggleExpanded` built
+ * `new Set(undefined)` and called `onExpandedChange?.()` into the void: a button that
+ * looked live, with `aria-expanded="false"` and working hover, was drawn, and a click did
+ * nothing. The three props are each optional, so the compiler stayed silent. This is the
+ * very "inaccessible list that looks working" that the `SortableList` docstring warns about.
  */
 test("renderDetail alone gives a WORKING expander, not a dead one", async () => {
   const user = userEvent.setup();
@@ -351,8 +350,8 @@ test("renderDetail alone gives a WORKING expander, not a dead one", async () => 
     />
   );
 
-  // Кнопка есть — простая форма вызова остаётся, — но теперь она РАБОТАЕТ:
-  // состояние держится внутри, пока его не ведут снаружи.
+  // The button is there and the simple call form remains, but now it WORKS:
+  // the state is held inside until it is driven from outside.
   await user.click(screen.getByRole("button", { expanded: false }));
   expect(screen.getByText("Detail")).toBeDefined();
 });
@@ -377,12 +376,12 @@ test("the full trio draws a working expander", async () => {
 });
 
 /**
- * Ложный `error` не гасит таблицу с данными.
+ * A falsy `error` does not hide the table with data.
  *
- * `error != null` истинно для `false`, а `error={isError && <Text/>}` — самая
- * частая идиома условного рендера. При отсутствии ошибки строки заменялись
- * пустым телом, и таблица С ДАННЫМИ показывала пустоту плюс `role="alert"` без
- * текста. Волна завела `hasContent` ровно против этого, и здесь его пропустили.
+ * `error != null` is true for `false`, and `error={isError && <Text/>}` is the most
+ * common idiom for conditional rendering. With no error, the rows were replaced by an
+ * empty body, and a table WITH DATA showed emptiness plus a `role="alert"` with no
+ * text. The wave introduced `hasContent` precisely against this, and here it was missed.
  */
 test.each([false, "", null, undefined])("error=%o leaves the rows alone", (error) => {
   render(
@@ -401,13 +400,13 @@ test.each([false, "", null, undefined])("error=%o leaves the rows alone", (error
 });
 
 /**
- * «Выделить всё» снимается тем же флажком — даже когда строка раскрыта.
+ * "Select all" is cleared by the same checkbox, even when a row is expanded.
  *
- * Детальная строка входила в подсчёт `isSelectAll` у react-aria, но попасть в
- * выделение не могла (её ключ вычитается на выходе), поэтому «выделено всё» не
- * наступало НИКОГДА: флажок шапки всегда шёл по ветке `selectAll`, и снять
- * выделение им было нельзя вовсе. Сочетание стало достижимым в самой простой
- * форме вызова после того, как раскрытие заработало без внешнего состояния.
+ * The detail row was counted in react-aria's `isSelectAll`, but it could not get into
+ * the selection (its key is subtracted on the way out), so "all selected" NEVER
+ * happened: the header checkbox always took the `selectAll` branch, so it could not
+ * clear the selection at all. The combination became reachable in the simplest call form
+ * once expansion started working without external state.
  */
 test("select all is reversible with an expanded detail row", async () => {
   const user = userEvent.setup();
