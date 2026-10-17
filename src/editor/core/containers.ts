@@ -5,28 +5,27 @@ import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import { WRAPPER_NODE } from "./nodeNames.js";
 
 /**
- * Общее у контейнерных Блоков — Раскладки (`layout.ts`, ADR-0056) и Обёртки
- * (`wrapper.ts`, ADR-0057): где их нет и куда встаёт новый.
+ * What the container Blocks have in common — the Column layout (`layout.ts`, ADR-0056) and the
+ * Wrapper (`wrapper.ts`, ADR-0057): where they are missing and where a new one goes.
  *
- * Оба не входят в группу `block`: их принимают только узлы, назвавшие их
- * поимённо, — Документ, а Обёртку ещё и колонка Раскладки. Поэтому правила
- * разбора и вставки у них одни и те же, и живут здесь, чтобы списки и
- * арифметика позиций не разъезжались молча.
+ * Neither is in the `block` group: only nodes that name them one by one accept them — the
+ * Document, and a Wrapper also a Column layout's column. So the parsing and insertion rules are
+ * the same for both, and they live here, so that the lists and the position arithmetic cannot
+ * silently drift apart.
  */
 
 /*
-  Имя узла Обёртки живёт в `nodeNames.ts`, без Tiptap: его читает и Оглавление.
-  Не в `wrapper.ts`: оно же входит в общий список ниже, а `wrapper.ts`
-  импортирует этот модуль — определение там дало бы цикл импортов. `wrapper.ts`
-  его реэкспортирует.
+  The name of the Wrapper node lives in `nodeNames.ts`, without Tiptap: the Table of contents
+  reads it too. Not in `wrapper.ts`: it is also in the common list below, and `wrapper.ts`
+  imports this module, so a definition there would make an import cycle. `wrapper.ts`
+  re-exports it.
 */
 export { WRAPPER_NODE };
 
 /**
- * Узлы, внутри которых контейнерного Блока нет ни одного: Обёртка, цитата,
- * пункты списков, ячейки таблицы и содержимое сворачиваемого Блока
- * (`details.ts`). Колонки здесь нет — Обёртку она принимает; Раскладка
- * добавляет её своим аргументом.
+ * Nodes inside which there is no container Block at all: a Wrapper, a quote, list items, table
+ * cells and the content of a Details Block (`details.ts`). The column is not here — a Wrapper
+ * accepts it; a Column layout adds it with its argument.
  */
 const CONTAINER_FREE_NODES = [
   WRAPPER_NODE,
@@ -39,20 +38,19 @@ const CONTAINER_FREE_NODES = [
 ];
 
 /**
- * Контекст правила разбора (`context` в `parseHTML`), где контейнерный Блок
- * снимается: правило с `skip` отдаёт его Блоки подряд, а не режет контейнер
- * вставки надвое. `more` — узлы, где нет именно этого Блока (колонка — для
- * Раскладки). Имена выключенных инструментов безвредны: контекст сверяется по
- * имени узла.
+ * The context of a parse rule (`context` in `parseHTML`) in which a container Block is unwrapped:
+ * a rule with `skip` hands its Blocks over one after another, instead of cutting the inserted
+ * container in two. `more` — nodes where this Block is not present (the column — for a Column
+ * layout). Names of disabled Tools are harmless: the context is matched by node name.
  */
 export function containerFreeContext(...more: string[]): string {
   return [...more, ...CONTAINER_FREE_NODES].map((name) => `${name}//`).join(" | ");
 }
 
 /**
- * Лежит ли позиция в узле, где контейнерного Блока нет (`CONTAINER_FREE_NODES`):
- * то же правило, что `containerFreeContext` для разбора HTML, — для путей, где
- * Блоки строятся не разбором HTML (вставка Markdown, `markdown.ts`).
+ * Whether the position lies inside a node where there is no container Block
+ * (`CONTAINER_FREE_NODES`): the same rule as `containerFreeContext` for parsing HTML, for the
+ * paths where Blocks are built without parsing HTML (Markdown paste, `markdown.ts`).
  */
 export function inContainerFreeNode($pos: ResolvedPos): boolean {
   for (let depth = $pos.depth; depth > 0; depth--) {
@@ -61,20 +59,20 @@ export function inContainerFreeNode($pos: ResolvedPos): boolean {
   return false;
 }
 
-/** Может ли узел держать узел типа `type` ребёнком. */
+/** Whether the node can hold a child of type `type`. */
 function holds(node: PmNode, type: NodeType): boolean {
   return node.type.contentMatch.matchType(type) !== null;
 }
 
 /**
- * Поставить контейнерный Блок `container` под текущим Блоком — в ближайший
- * вверх узел, который его принимает (Документ; для Обёртки — и колонку).
+ * Place the container Block `container` under the current Block — in the nearest node up the tree
+ * that accepts it (the Document; for a Wrapper, also a column).
  *
- * Пустой абзац прямо в нём (его готовит Меню вставки) заменяется. Из Обёртки,
- * колонки, списка, цитаты или ячейки Блок встаёт под их Блоком в этом узле;
- * пустой абзац контейнера Блоков (Обёртки или колонки), в котором набрали `/`,
- * при этом убирается, если там есть что-то ещё, — иначе от вставки оставался
- * бы пустой хвост. Каретка — в первый текстовый Блок нового контейнера.
+ * An empty paragraph right in it (prepared by the Slash menu) is replaced. From a Wrapper, a
+ * column, a list, a quote or a cell, the Block goes under their Block in that node; an empty
+ * paragraph of a container of Blocks (a Wrapper or a column) in which `/` was typed is removed in
+ * that case, if there is something else there — otherwise the insertion would leave an empty
+ * tail. The caret goes into the first text Block of the new container.
  */
 export function placeContainerBlock(tr: Transaction, container: PmNode): void {
   const { selection } = tr;
@@ -96,8 +94,8 @@ export function placeContainerBlock(tr: Transaction, container: PmNode): void {
     }
     tr.insert(pos, container);
   }
-  // По шагу внутрь на каждый уровень до текстового Блока: Обёртка › абзац —
-  // два, Раскладка › колонка › абзац — три.
+  // One step inward per level, down to the text Block: Wrapper › paragraph — two;
+  // Column layout › column › paragraph — three.
   let inner = pos + 1;
   for (let node = container; !node.isTextblock && node.firstChild; node = node.firstChild) inner++;
   tr.setSelection(TextSelection.create(tr.doc, inner)).scrollIntoView();

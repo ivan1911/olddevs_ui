@@ -13,19 +13,21 @@ import type { Node as ProseMirrorNode, Schema } from "@tiptap/pm/model";
 import { MARKDOWN_FALLBACK, warnNoMarkdown } from "./customMarkdown.js";
 
 /*
-  Текст атома (ADR-0058, раздел 4). Одно правило для встроенных и
-  своих атомов, и всё, что выдаёт текст Документа, читает его отсюда:
+  The atom text (ADR-0058, section 4). One rule for built-in and custom atoms, and everything
+  that outputs the Document's text reads it from here:
 
-  - Текст атома даёт `renderText` из Extensions. Листовой атом без него —
-    пустая строка, атом с содержимым (картинка с подписью) — текст своих детей;
-  - вес атома в `maxLength` — длина этого текста (`countCharacters`);
-  - `getText`, `getSelectedText`, копирование текстом и Markdown отдают тот же
-    текст.
+  - The atom text is given by `renderText` in the Extensions. A leaf atom without it gives an
+    empty string; an atom with content (an image with a caption) gives the text of its children;
+  - an atom's weight in `maxLength` is the length of this text (`countCharacters`);
+  - `getText`, `getSelectedText`, copying as text and copying as Markdown all return the same text.
 
-  Отдельного поля веса нет: оно разошлось бы с текстом, а счётчик — с `getText`.
+  There is no separate weight field: it would drift from the text, and the counter from `getText`.
 */
 
-/** Сериализаторы текста Схемы — `renderText` узлов. Схема не меняется, а набор берётся на каждой правке. */
+/**
+ * The Schema's text serializers — the `renderText` of its nodes. The Schema does not change, so the
+ * set is looked up on every edit rather than rebuilt.
+ */
 const SERIALIZERS = new WeakMap<Schema, Record<string, TextSerializer>>();
 
 export function textSerializers(schema: Schema): Record<string, TextSerializer> {
@@ -34,7 +36,7 @@ export function textSerializers(schema: Schema): Record<string, TextSerializer> 
   return found;
 }
 
-/** `renderText` самого узла; `undefined` — у его типа сериализатора нет. */
+/** The node's own `renderText`; `undefined` — its type has no serializer. */
 function ownText(node: ProseMirrorNode): string | undefined {
   return textSerializers(node.type.schema)[node.type.name]?.({
     node,
@@ -46,14 +48,14 @@ function ownText(node: ProseMirrorNode): string | undefined {
 }
 
 /**
- * `leafText` Схемы из `renderText`: так читают Текст атома и ProseMirror
- * (`textContent`, `textBetween`, текст при копировании), и Tiptap, у которого
- * `renderText` сам становится только `toText`.
+ * The Schema's `leafText` from `renderText`: this is how the atom text and ProseMirror read it
+ * (`textContent`, `textBetween`, the text on copy), and Tiptap, for which `renderText` itself
+ * becomes only `toText`.
  *
- * У `leafText` нет позиции и родителя — их нет и у вызова ProseMirror, — поэтому
- * сериализатор получает лишь узел: `renderText` атома по документации читает
- * его атрибуты. Поле лежит на каждом узле Схемы, а читает `toText` лениво: на
- * сборке Схемы функция `renderText` у узла ещё не видна.
+ * `leafText` has no position or parent — neither does ProseMirror's call — so the serializer
+ * gets only the node: an atom's `renderText` reads its attributes, per the documentation.
+ * The field sits on every node of the Schema, and `toText` reads it lazily: while the Schema is
+ * being built, a node's `renderText` function is not yet visible.
  */
 export const AtomText = Extension.create({
   name: "atomText",
@@ -63,7 +65,10 @@ export const AtomText = Extension.create({
   },
 });
 
-/** Текст Документа между позициями: Блоки разделены `blockSeparator`, атом — своим Текстом атома. */
+/**
+ * The Document's text between positions: Blocks are separated by `blockSeparator`, and an atom
+ * gives its own atom text.
+ */
 export function textBetween(
   doc: ProseMirrorNode,
   from: number,
@@ -77,21 +82,24 @@ export function textBetween(
   );
 }
 
-/** Текст атома: его `renderText`, а без него — текст детей (у листа — пустая строка). */
+/**
+ * Atom text: its `renderText`, and without one the text of its children (a leaf gives an empty
+ * string).
+ */
 export function atomText(node: ProseMirrorNode): string {
   return ownText(node) ?? textBetween(node, 0, node.content.size, "");
 }
 
 /*
-  Markdown. Узел без `renderMarkdown` менеджер Markdown Tiptap выгружает
-  пустой строкой, и свой атом пропал бы из `getMarkdown`, хотя `getText` его
-  видит. Поэтому перед выгрузкой такой атом заменяется своим Текстом атома
-  (в абзаце, если он Блок); пропадает только атом без текста.
+  Markdown. A Node without `renderMarkdown` is exported by Tiptap's Markdown manager as an empty
+  string, and its own atom would vanish from `getMarkdown` even though `getText` sees it. So
+  before export such an atom is replaced by its atom text (in a paragraph, if it is a Block);
+  only an atom with no text is lost.
 */
 
 /**
- * Узлы по выгрузке в Markdown: `true` — Extensions умеют сами, строка —
- * атом своего Инструмента без правил (имя Инструмента — для предупреждения).
+ * Nodes for Markdown export: `true` — the Extensions handle it themselves; a string — an atom
+ * of a custom Tool without rules (the Tool's name, for the warning).
  */
 function markdownHandled(editor: Editor): Map<string, true | string> {
   const names = new Map<string, true | string>();
@@ -133,7 +141,10 @@ function markdownJson(
   ];
 }
 
-/** Markdown Документа: `getMarkdown` Tiptap, где атом без своей выгрузки идёт его Текстом атома. */
+/**
+ * The Document's Markdown: Tiptap's `getMarkdown`, where an atom without its own export goes out
+ * as its atom text.
+ */
 export function markdownOf(editor: Editor): string {
   const [doc] = markdownJson(editor.state.doc, markdownHandled(editor));
   return editor.markdown?.serialize(doc as JSONContent) ?? "";

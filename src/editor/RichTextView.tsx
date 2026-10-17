@@ -19,42 +19,40 @@ export interface RichTextViewProps extends Omit<
   "children" | "dangerouslySetInnerHTML"
 > {
   /**
-   * Сохранённый Документ — HTML-строка в формате Редактора.
+   * The saved Document: an HTML string in the Editor's format.
    *
-   * **НЕ САНИТИЗИРУЕТСЯ.** Строка кладётся в разметку как есть, через
-   * `dangerouslySetInnerHTML`: компонент принимает HTML, который сервер
-   * потребителя уже очистил по белому списку Схемы. Строка от пользователя,
-   * не прошедшая серверную очистку, — XSS на вашей странице. Очистка —
-   * `sanitizeRichText(html, DOMPurify)` из `@olddevs/ui/editor/schema`.
+   * **NOT SANITIZED.** The string is put into the markup as is, through
+   * `dangerouslySetInnerHTML`: the component expects HTML that your server has already cleaned
+   * against the Schema's allowlist. A user-supplied string that has skipped server-side
+   * sanitization is an XSS hole on your page. Sanitize it with
+   * `sanitizeRichText(html, DOMPurify)` from `@olddevs/ui/editor/schema`.
    */
   html: string;
   /**
-   * Поверхность Документа: `"theme"` (по умолчанию) — в теме приложения;
-   * `"paper"` — светлый Лист в любой теме, для писем, печати и PDF.
-   * Как у `RichTextEditor`: один Документ на Листе выглядит одинаково в Редакторе
-   * и в Просмотре.
+   * The Document's surface: `"theme"` (default) — in the app's theme; `"paper"` — a light Paper
+   * in any theme, for emails, print and PDF. As with `RichTextEditor`, one Document on Paper
+   * looks the same in the Editor and in the View.
    */
   surface?: RichTextSurface;
   /**
-   * Свои Инструменты Документа — тот же массив, что у `RichTextEditor` и
-   * `sanitizeRichText`; Настроенный Инструмент (`tool()`) в нём допустим.
-   * Просмотр читает из него Острова своих Блоков (`blocks[имя].island`): Блок, у
-   * которого он есть и который есть в Документе, оживает клиентским компонентом,
-   * а серверный HTML Блока виден до загрузки и без JS. И опции формул —
-   * `tool("mathematics", { macros })`, чтобы макрос работал в Просмотре так же,
-   * как в Редакторе; самих формул для этого в `tools` называть не нужно, они
-   * рисуются у любого Документа с формулами. И опцию `autoload` видео:
-   * `tool("youtube", { autoload: false })` оставляет заглушку «Воспроизвести» вместо
-   * плеера, по сервису; без записи плеер встаёт сразу. Остальное в описании Просмотру не
-   * нужно. Без `tools`, и у Документа без таких Блоков и формул, Просмотр прежний
-   * и клиентского кода не тянет.
+   * The Document's custom Tools — the same array as for `RichTextEditor` and `sanitizeRichText`;
+   * a Configured Tool (`tool()`) is allowed in it. The View reads the Islands of custom Blocks
+   * from it (`blocks[name].island`): a Block that has one and is present in the Document comes
+   * alive as a client component, while the Block's server HTML is visible before loading and
+   * without JS. Also the formula options — `tool("mathematics", { macros })`, so that a macro
+   * works in the View the same way as in the Editor; the formulas themselves need not be named
+   * in `tools` for this, they are drawn for any Document with formulas. And the video `autoload`
+   * option: `tool("youtube", { autoload: false })` keeps the "Play" placeholder instead of the
+   * player, per service; without the option the player appears at once. The rest of the
+   * descriptor is not needed by the View. Without `tools`, and for a Document with no such
+   * Blocks and formulas, the View works as before and pulls in no client code.
    */
   tools?: readonly ToolEntry[];
 }
 
 /**
- * Короткий отпечаток строки — FNV-1a по кодовым единицам и длина. Нужен острову
- * только затем, чтобы заметить смену Документа; криптографии здесь нет.
+ * A short fingerprint of a string — FNV-1a over the code units, plus the length. Islands need it
+ * only to notice that the Document has changed; there is no cryptography here.
  */
 function fingerprint(html: string): string {
   let hash = 0x811c9dc5;
@@ -66,55 +64,52 @@ function fingerprint(html: string): string {
 }
 
 /**
- * Просмотр сохранённого Документа: та же типографика, что в Редакторе, и никакого
- * движка.
+ * View of a saved Document: the same typography as in the Editor, and no engine.
  *
- * ПОЧЕМУ ОТДЕЛЬНЫЙ КОМПОНЕНТ, А НЕ `readOnly` РЕДАКТОРА. `readOnly` держит
- * Tiptap и ProseMirror живыми ради страницы, где нужен только показ, а это
- * 130–170 кБ gzip на чтение. Здесь в графе модулей нет ни Tiptap, ни lowlight:
- * компонент годится для серверного рендера и не несёт `"use client"` (ADR-0029,
- * ADR-0050). Граф держит `tests/rich-text-view.test.tsx`.
+ * WHY A SEPARATE COMPONENT RATHER THAN THE EDITOR'S `readOnly`. `readOnly` keeps Tiptap and
+ * ProseMirror alive for a page that only displays content, and that costs 130–170 kB gzipped to
+ * load. Here the module graph has neither Tiptap nor lowlight: the component works for server
+ * rendering and carries no `"use client"` (ADR-0029, ADR-0050). The module graph is guarded by
+ * `tests/rich-text-view.test.tsx`.
  *
- * КНОПКА «КОПИРОВАТЬ» У БЛОКОВ КОДА — КЛИЕНТСКИЙ КУСОК. Сам
- * компонент остаётся серверным: он кладёт HTML с шапками блоков (подпись языка
- * и пустое гнездо — `withCodeHeaders`) и рядом рисует остров `CodeCopyIsland`,
- * который после монтирования вставляет кнопки в гнёзда. Только если блок кода
- * есть (`hasCodeBlocks`): текстовому Документу остров ни к чему — ни метки в
- * разметке, ни эффекта на клиенте. Остров — отдельный файл
- * со своей директивой, поэтому граница клиента проходит по нему, а не по
- * `RichTextView`. Проп для отключения не заведён: кнопка есть всегда
- * (решение владельца).
+ * THE "COPY" BUTTON ON CODE BLOCKS IS A CLIENT PIECE. The component itself stays on the server:
+ * it emits HTML with the Block headers (the language label and an empty mount point —
+ * `withCodeHeaders`) and renders next to it the `CodeCopyIsland`, which inserts the buttons into
+ * the mount points after mounting. Only if a code Block is present (`hasCodeBlocks`): a
+ * text-only Document needs no island — neither a label in the markup nor an effect on the
+ * client. The island is a separate file with its own directive, so the client boundary runs
+ * along it, not along `RichTextView`. There is no prop to turn it off: the button is always
+ * there (the owner's decision).
  *
- * ОСТРОВ СВОЕГО БЛОКА — ВТОРОЙ И ТАКОЙ ЖЕ (`BlockIsland`). `tools`
- * из пропсов не уходит на клиент целиком: `islandsFor` берёт из описаний только
- * Острова Блоков, которые есть в Документе, и отдаёт острову ссылки на
- * клиентские компоненты и имена объявленных атрибутов. Нет такого Блока —
- * нет острова, и код Острова потребителя не грузится. Серверный HTML Блока
- * приходит всегда; Остров заменяет его после монтирования.
+ * THE ISLAND OF A CUSTOM BLOCK IS THE SECOND ONE, AND THE SAME (`BlockIsland`). `tools` is not
+ * sent to the client whole: `islandsFor` takes from the descriptors only the Islands of Blocks
+ * that are present in the Document, and passes the island the references to its client
+ * components and the names of the declared attributes. No such Block — no island, and the
+ * consumer's island code is not loaded. The server HTML of the Block always arrives; the Island
+ * replaces it after mounting.
  *
- * ОСТРОВ ФОРМУЛ — ТРЕТИЙ (ADR-0070, `MathIsland`). Формула лежит в Документе
- * пустым элементом с `data-latex`; сервер дописывает в него исходный LaTeX
- * (`withMathSource`), и без JS читатель видит его. Остров, только если
- * формула в Документе есть (`hasMath`), грузит KaTeX с CSS ленивым `import()` и
- * рисует формулы на месте — в чанк, который страница без формул не получает.
+ * THE FORMULA ISLAND IS THE THIRD (ADR-0070, `MathIsland`). A formula sits in the Document as an
+ * empty element with `data-latex`; the server writes the source LaTeX into it (`withMathSource`),
+ * so without JS the reader sees it. The island exists only if a formula is in the Document
+ * (`hasMath`); it loads KaTeX and its CSS through a lazy `import()` and draws the formulas in
+ * place, in a chunk that a page without formulas never receives.
  *
- * ОСТРОВ ВИДЕО — ЧЕТВЁРТЫЙ, ТАКОЙ ЖЕ (`VideoIsland`, ADR-0071). Блок видео приходит
- * в HTML ссылкой (`div[data-block="video"]` со ссылкой внутри), её видит читатель без
- * JS. Если блок в Документе есть (`hasVideoBlocks`), остров после монтирования
- * ставит на его место плеер сервиса сразу (`iframe` с `loading="lazy"`). Опция
- * `tool("youtube", { autoload: false })` в `tools` возвращает заглушку кита с кнопкой
- * «Воспроизвести»: плеер появляется после щелчка, и до него к сервису не уходит
- * ни одного запроса. Нет блока — нет острова, и код плеера не грузится.
+ * THE VIDEO ISLAND IS THE FOURTH, AND THE SAME (`VideoIsland`, ADR-0071). A video Block arrives in
+ * the HTML as a link (`div[data-block="video"]` with a link inside), which the reader sees without
+ * JS. If the Block is in the Document (`hasVideoBlocks`), the island puts the service's player in
+ * its place right after mounting (an `iframe` with `loading="lazy"`). The option
+ * `tool("youtube", { autoload: false })` in `tools` brings back the kit's placeholder with a "Play"
+ * button: the player appears after a click, and until then not a single request goes to the
+ * service. No Block — no island, and the player's code is not loaded.
  *
- * ХУКИ — `useId` и `useMemo`, оба разрешены серверным компонентам. Идентификатор
- * связывает остров со своими гнёздами и совпадает на сервере и клиенте; `useMemo`
- * держит объект разметки стабильным (см. ниже). Состояния и эффектов в самом
- * компоненте нет.
+ * HOOKS — `useId` and `useMemo`, both allowed in server components. The identifier links the
+ * island to its mount points and is the same on the server and the client; `useMemo` keeps the
+ * markup object stable (see below). The component has no state and no effects.
  *
- * ТИПОГРАФИКА — `proseClass(surface)`, тот же модуль, что вешает классы на содержимое
- * Редактора. Классы лежат на контейнере и находят теги по имени, поэтому в HTML
- * Документа ни классов, ни `style` нет и санитайзеру их разрешать не нужно;
- * шапка блока кода — разметка самого компонента, собранная после очистки.
+ * TYPOGRAPHY — `proseClass(surface)`, the same module that sets the classes on the Editor's
+ * content. The classes sit on the container and find tags by name, so the Document's HTML has no
+ * classes or `style`, and the sanitizer need not allow them; the code Block header is the
+ * component's own markup, assembled after sanitization.
  */
 export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(function RichTextView(
   { html, surface = "theme", tools, className, ...rest },
@@ -125,13 +120,13 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
   const code = hasCodeBlocks(html);
   const math = hasMath(html);
   const video = hasVideoBlocks(html);
-  // Отпечаток нужен каждому острову, а считается по всему HTML: один раз на отрисовку и
-  // только если остров есть, иначе тексту без островов пришлось бы платить за него зря.
+  // Every island needs the fingerprint, but it is computed over the whole HTML: once per render,
+  // and only if an island exists; otherwise text without islands would pay for it for nothing.
   const docKey = code || islands[0] || math || video ? fingerprint(html) : "";
-  // Объект один на пару (Документ, просмотр): React сверяет `dangerouslySetInnerHTML`
-  // по ссылке и при новом объекте переписывает `innerHTML` — вместе с кнопками и
-  // Островами, которые острова вставили порталом. Перерисовка родителя с тем же
-  // Документом (смена `className`, новый литерал `tools`) разметку трогать не должна.
+  // One object per pair (Document, view): React compares `dangerouslySetInnerHTML` by reference,
+  // and a new object makes it rewrite `innerHTML` — along with the buttons and Islands that the
+  // islands inserted through portals. A parent re-render with the same Document (a new
+  // `className`, a new `tools` literal) must not touch the markup.
   const inner = useMemo(
     () => ({ __html: withMathSource(withCodeHeaders(html, hostId)) }),
     [html, hostId]
@@ -145,13 +140,13 @@ export const RichTextView = forwardRef<HTMLDivElement, RichTextViewProps>(functi
         {...rest}
         dangerouslySetInnerHTML={inner}
       />
-      {/* Остров — только у Документа с кодом: тексту без блоков кода он не нужен. */}
+      {/* Only a Document with code needs this island; text without code Blocks does not. */}
       {code && <CodeCopyIsland hostId={hostId} docKey={docKey} />}
-      {/* И острова своих Блоков — только у Документа, где такой Блок есть. */}
+      {/* Custom Block islands too — only for a Document where such a Block exists. */}
       {islands[0] && <BlockIsland islands={islands} docKey={docKey} />}
-      {/* Формулы — третий: только у Документа с формулами, и KaTeX грузит сам остров. */}
+      {/* The formula island is the third: only for a Document with formulas (it loads KaTeX). */}
       {math && <MathIsland docKey={docKey} options={mathOptionsOf(tools)} />}
-      {/* И остров видео (ADR-0071) — только у Документа, где есть блок видео. */}
+      {/* The video island (ADR-0071) too — only for a Document with a video Block. */}
       {video && <VideoIsland docKey={docKey} autoload={videoAutoloadOf(tools)} />}
     </>
   );

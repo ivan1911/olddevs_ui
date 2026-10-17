@@ -13,46 +13,45 @@ import {
 import { StepMap } from "@tiptap/pm/transform";
 
 /**
- * Команды над Блоками: дублировать, переставить, выделить текст
- * Блока, сдвинуть пункт списка, очистить стили — как в Notion и Google Docs.
+ * Commands over Blocks: duplicate, move, select the text of a Block, shift a list item, clear
+ * styles — as in Notion and Google Docs.
  *
- * Своей разметки у расширения нет, поэтому оно включено всегда, как
- * `ToolbarFocus`; инструмент нужен только очистке стилей — её сочетание живёт
- * и умирает вместе с кнопкой `clearFormatting`. Каждая команда — одна
- * транзакция, то есть один шаг отмены. В `readOnly` и `disabled` правящие
- * команды отдают клавишу браузеру: ProseMirror слушает клавиатуру и в
- * нередактируемом поле, и без проверки сочетание правило бы Документ «только
- * для чтения».
+ * It has no markup of its own, so the extension is always on, like `ToolbarFocus`; the Tool is
+ * needed only for clearing styles — its shortcut lives and dies together with the
+ * `clearFormatting` button. Each command is one transaction, that is, one undo step. In `readOnly`
+ * and `disabled` the editing commands hand the key to the browser: ProseMirror listens to the
+ * keyboard even in a non-editable field, and without the check the shortcut would edit a read-only
+ * Document.
  *
- * СОЧЕТАНИЯ — ТЕ, ЧТО НЕ ОТНИМАЮТ У СИСТЕМЫ СВОЁ. Перестановка — `⌥⇧↑/↓`, как
- * в VS Code, а не `⌘⇧↑/↓` образца: на Mac это «выделить до начала/конца
- * документа». Выделение Блока — первое `⌘A`, а не `⌘⇧A`: в Chrome это поиск по
- * вкладкам. Меню ручки Блока — `⌘/`, как «действия с Блоком» в Notion: у
- * браузеров и систем это сочетание в поле ввода свободно.
+ * SHORTCUTS ARE CHOSEN SO THAT THEY DO NOT TAKE OVER THE SYSTEM'S OWN KEYS. Moving is `⌥⇧↑/↓`,
+ * as in VS Code, not the reference app's `⌘⇧↑/↓`: on a Mac that means "select to the start/end
+ * of the document". Selecting a Block is the first `⌘A`, not `⌘⇧A`: in Chrome that is tab
+ * search. The Block handle's menu is `⌘/`, like "Block actions" in Notion: browsers and systems
+ * leave this shortcut free in an input field.
  */
 
 const LIST_NODES: ReadonlySet<string> = new Set(["bulletList", "orderedList", "taskList"]);
 const LIST_ITEMS: ReadonlySet<string> = new Set(["listItem", "taskItem"]);
 
 /**
- * Контейнер Блоков — узел, чьи дети и есть Блоки: сам Документ и всякий узел,
- * чья Схема помечена `blockContainer: true`.
+ * A container of Blocks — a node whose children are the Blocks: the Document itself, and any node
+ * whose Schema is marked `blockContainer: true`.
  *
- * ШОВ ДЛЯ РАСКЛАДКИ. Колонка раскладки держит свои Блоки, и у них
- * должна быть своя ручка у левого края колонки, а не одна на всю раскладку. Узел
- * колонки объявит себя контейнером флагом в Схеме (в Tiptap — через
- * `extendNodeSchema`), и ручка, её позиция и все её действия (вверх, вниз,
- * дублировать, удалить, добавить ниже, формат) заработают внутри колонки без
- * правки этого модуля: «Блок» везде вычисляет `handleBlock` ниже.
+ * A SEAM FOR THE COLUMN LAYOUT. A column of a Column layout holds its own Blocks, and they should
+ * each have their own handle at the column's left edge, not one for the whole layout. The column
+ * node will declare itself a container with a flag in the Schema (in Tiptap — through
+ * `extendNodeSchema`), and the handle, its position and all its actions (up, down, duplicate,
+ * delete, add below, format) will work inside the column without changing this module:
+ * `handleBlock` below computes "Block" everywhere.
  */
 export function isBlockContainer(node: PmNode): boolean {
   return node.type.name === "doc" || node.type.spec.blockContainer === true;
 }
 
 /**
- * Лежит ли выделение целиком в одной таблице: там `⌥⇧↑/↓` не переставляет
- * (`Alt+↓` — строка), а Блок — вся таблица. Выделение, которое начинается или
- * кончается вне таблицы, переставляет её вместе с соседями.
+ * Whether the selection lies entirely inside one table: there `⌥⇧↑/↓` does not move anything
+ * (`Alt+↓` is the row), and the Block is the whole table. A selection that starts or ends outside
+ * a table moves the table itself along with its neighbours.
  */
 function inTable(state: Pick<EditorState, "selection">): boolean {
   const { $from, $to } = state.selection;
@@ -63,22 +62,21 @@ function inTable(state: Pick<EditorState, "selection">): boolean {
 }
 
 /**
- * Чьи Блоки берёт команда.
+ * Whose Blocks the command takes.
  *
- * - `selection` — сочетания клавиш: Блоки под выделением, а в списке — пункт;
- *   дублирование и перестановка пункта остаются внутри его списка.
- * - `handle` — ручка Блока: Блок контейнера целиком (весь список,
- *   вся таблица), ровно один — тот, у которого стоит ручка (`handleBlock`).
+ * - `selection` — keyboard shortcuts: the Blocks under the selection, and in a list — the item;
+ *   duplicating and moving an item stay within its list.
+ * - `handle` — the Block handle: the whole container Block (the whole list, the whole table);
+ *   exactly one — the one the handle stands on (`handleBlock`).
  */
 export type BlockScope = "selection" | "handle";
 
 /**
- * Блок ручки — ребёнок ближайшего контейнера Блоков (`isBlockContainer`), в
- * котором лежит выделение: абзац, заголовок, список целиком, цитата, блок кода,
- * таблица, картинка, линия. ОДНА функция на всё, что ручка знает о Блоке: где
- * её рисовать, что двигать, копировать, удалять, под чем добавлять и что
- * превращать. Выделение через несколько Блоков и курсор-щель между ними — `null`:
- * ручке не у чего стоять.
+ * The handle's Block — a child of the nearest container of Blocks (`isBlockContainer`) that holds
+ * the selection: a paragraph, a heading, a whole list, a quote, a code Block, a table, an image, a
+ * horizontal rule. ONE function for everything the handle knows about a Block: where to draw it,
+ * what to move, copy, delete, insert under, and what to turn into. A selection across several
+ * Blocks, and a caret in the gap between them, give `null`: the handle has nothing to attach to.
  */
 export function handleBlock(state: Pick<EditorState, "selection">): NodeRange | null {
   const { $from, $to } = state.selection;
@@ -87,14 +85,14 @@ export function handleBlock(state: Pick<EditorState, "selection">): NodeRange | 
 }
 
 /**
- * Блоки под выделением — ряд соседей у одного родителя.
+ * The Blocks under the selection — a row of siblings under one parent.
  *
- * Блок — ребёнок контейнера Блоков, а в списке — пункт. В колонке Раскладки
- * Блок — ребёнок колонки: перестановка не выводит его из колонки, а
- * выделение через две колонки берёт Раскладку целиком. Таблица — один Блок
- * целиком, даже если в её ячейке есть список. Выделение через несколько Блоков
- * берёт их все: ряд считается там, где начало и конец выделения расходятся.
- * Курсор-щель между Блоками ни в каком Блоке не стоит — `null`.
+ * A Block is a child of a container of Blocks, and in a list it is an item. In a Column layout's
+ * column the Block is a child of the column: moving does not take it out of the column, while a
+ * selection across two columns takes the whole Column layout. A table is one Block as a whole,
+ * even if its cell contains a list. A selection across several Blocks takes all of them: the row
+ * is counted where the start and the end of the selection diverge. A caret in the gap between
+ * Blocks is inside no Block — `null`.
  */
 function blockRange(state: EditorState, scope: BlockScope): NodeRange | null {
   if (scope === "handle") return handleBlock(state);
@@ -104,7 +102,7 @@ function blockRange(state: EditorState, scope: BlockScope): NodeRange | null {
     $to,
     (parent) => isBlockContainer(parent) || (!table && LIST_NODES.has(parent.type.name))
   );
-  // Курсор-щель на уровне Документа даёт пустой ряд, а не `null`.
+  // A caret in the gap at the Document level gives an empty row, not `null`.
   return range && range.startIndex < range.endIndex ? range : null;
 }
 
@@ -117,9 +115,9 @@ function blocksOf(range: NodeRange): PmNode[] {
 }
 
 /**
- * Выделение, перенесённое на `shift` позиций, — тем же классом (каретка,
- * узел, ячейки), что было: сдвиг всего Документа на величину — это и есть
- * отображение позиций, и каждый вид выделения переносит себя по нему сам.
+ * The selection moved by `shift` positions — of the same kind (a caret, a node, cells) as it was:
+ * shifting the whole Document by some amount is exactly the position mapping, and each kind of
+ * selection maps itself through it.
  */
 function shifted(state: EditorState, tr: Transaction, shift: number): Transaction {
   const map = shift >= 0 ? new StepMap([0, 0, shift]) : new StepMap([0, -shift, 0]);
@@ -129,7 +127,7 @@ function shifted(state: EditorState, tr: Transaction, shift: number): Transactio
 type Dispatch = ((tr: Transaction) => void) | undefined;
 type Command = (state: EditorState, dispatch?: Dispatch) => boolean;
 
-/** `⌘⇧D` — копия Блоков под ними, выделение переходит в копию. */
+/** `⌘⇧D` — a copy of the Blocks under the selection; the selection moves to the copy. */
 export function duplicateBlock(scope: BlockScope = "selection"): Command {
   return (state, dispatch) => {
     const range = blockRange(state, scope);
@@ -144,10 +142,10 @@ export function duplicateBlock(scope: BlockScope = "selection"): Command {
 }
 
 /**
- * `⌥⇧↑/↓` — Блоки меняются местами с соседом сверху или снизу. На краю
- * Документа или списка соседа нет: Документ не меняется, но клавиша поглощена —
- * иначе на Mac она тихо растягивала бы выделение. В таблице сочетание — `false`
- * (`Alt+↓` — её строка), а ручка двигает таблицу целиком.
+ * `⌥⇧↑/↓` — Blocks swap places with the neighbour above or below. At the edge of the Document or
+ * the list there is no neighbour: the Document does not change, but the key is still consumed —
+ * otherwise on a Mac it would quietly stretch the selection. In a table the shortcut gives `false`
+ * (`Alt+↓` is its row), while the handle moves the whole table.
  */
 export function moveBlock(dir: -1 | 1, scope: BlockScope = "selection"): Command {
   return (state, dispatch) => {
@@ -170,10 +168,10 @@ export function moveBlock(dir: -1 | 1, scope: BlockScope = "selection"): Command
 }
 
 /**
- * «Удалить» ручки — Блок целиком; каретка — в соседа сверху, у первого Блока —
- * в соседа снизу. Единственный Блок контейнера уступает место пустому Блоку по
- * умолчанию (абзацу): Схема не держит пустой Документ, а пустая колонка ничем
- * не лучше.
+ * The handle's "Delete" — the whole Block; the caret goes to the neighbour above, and for the
+ * first Block to the neighbour below. The only Block of a container yields its place to an empty
+ * default Block (a paragraph): the Schema does not allow an empty Document, and an empty column is
+ * no better.
  */
 export const deleteBlock: Command = (state, dispatch) => {
   const range = handleBlock(state);
@@ -195,14 +193,14 @@ export const deleteBlock: Command = (state, dispatch) => {
 };
 
 /**
- * Делают ли сочетания Блоков то же, что пункты ручки (подпись сочетания у
- * пункта — только тогда).
+ * Whether the Block shortcuts do the same as the handle's items (the item's shortcut label is
+ * shown only then).
  *
- * - `duplicate` — `⌘⇧D` берёт тот же Блок: каретка не в пункте списка.
- * - `move` — то же и не в таблице: там `⌥⇧↑/↓` отдано строкам.
- * - `type` — сочетания «¶» (`⌘⌥2`) меняют текстовый Блок под кареткой, а
- *   «Формат» — Блок ручки: одно и то же, только когда это один Блок (не пункт
- *   списка, не абзац в цитате).
+ * - `duplicate` — `⌘⇧D` takes the same Block: the caret is not in a list item.
+ * - `move` — the same, and not in a table: there `⌥⇧↑/↓` belongs to the rows.
+ * - `type` — the ¶ shortcuts (`⌘⌥2`) change the text Block under the caret, while "Format" changes
+ *   the handle's Block: the same thing only when it is one Block (not a list item, not a paragraph
+ *   in a quote).
  */
 export function handleShortcutsMatch(state: EditorState): {
   duplicate: boolean;
@@ -220,10 +218,10 @@ export function handleShortcutsMatch(state: EditorState): {
 }
 
 /**
- * `⌘A` как в Notion: первое нажатие — текст текущего Блока, второе — весь
- * Документ. Сразу весь Документ, если текст Блока уже выделен, Блок пуст или
- * выделение уже шире одного Блока. Документ не меняется — работает и в
- * `readOnly`, как штатное `⌘A`.
+ * `⌘A` as in Notion: the first press selects the text of the current Block, the second — the whole
+ * Document. It selects the whole Document at once if the Block's text is already selected, the
+ * Block is empty, or the selection is already wider than one Block. The Document does not change —
+ * it also works in `readOnly`, like the usual `⌘A`.
  */
 export function selectBlockText(editor: Editor): boolean {
   const { selection } = editor.state;
@@ -241,7 +239,7 @@ export function selectBlockText(editor: Editor): boolean {
   return editor.commands.selectAll();
 }
 
-/** Пункт списка под кареткой — ближайший; его тип и сдвигается. */
+/** The nearest list item under the caret; its type is the one that gets shifted. */
 function listItemType(state: EditorState): string | null {
   const { $from } = state.selection;
   for (let depth = $from.depth; depth > 0; depth--) {
@@ -252,7 +250,7 @@ function listItemType(state: EditorState): string | null {
 }
 
 export interface BlockCommandsOptions {
-  /** Включён ли инструмент `clearFormatting`: без него `⌘\` не снимает стили. */
+  /** Whether the `clearFormatting` Tool is on: without it `⌘\` does not clear the styles. */
   clearFormatting: boolean;
 }
 
@@ -264,11 +262,11 @@ export const BlockCommands = Extension.create<BlockCommandsOptions>({
     const run = (command: Command) => () =>
       editable() && command(this.editor.state, this.editor.view.dispatch);
     /*
-      `⌘]` и `⌘[` — то же, что Tab и Shift+Tab в списке. В пункте клавиша
-      поглощается, даже если сдвигать некуда (первый пункт): в Chrome на Mac
-      `⌘[` — «Назад», и промах на краю списка уводил бы со страницы с
-      несохранённым текстом. Вне списка — `false`, сочетание браузеру: отступа
-      абзаца в Схеме нет.
+      `⌘]` and `⌘[` do what Tab and Shift+Tab do in a list. In an item the key is consumed even
+      if there is nowhere to shift (the first item): in Chrome on a Mac `⌘[` means "Back", and a
+      miss at the edge of the list would navigate away from a page with unsaved text. Outside a
+      list it returns `false`, and the shortcut goes to the browser: a paragraph has no indent in
+      the Schema.
     */
     const shiftItem = (dir: "sink" | "lift") => () => {
       const type = editable() ? listItemType(this.editor.state) : null;
@@ -294,15 +292,13 @@ export const BlockCommands = Extension.create<BlockCommandsOptions>({
 });
 
 /**
- * `⌘/` (`Ctrl+/`) — меню ручки Блока, ПО МЕСТУ КЛАВИШИ, а не по
- * символу.
+ * `⌘/` (`Ctrl+/`) — the Block handle's menu, BY THE KEY'S POSITION, not by the character.
  *
- * Карта клавиш ProseMirror сверяет символ: на русской раскладке клавиша «/»
- * печатает «.», и `Mod-/` превращался в `Mod-.` — верхний индекс. Поэтому
- * клавиша узнаётся по `event.code` («Slash» на любой раскладке), а расширение
- * стоит выше обычного приоритета: его обработчик опрашивается раньше карт
- * Меток, и индекс не успевает перехватить нажатие. Alt — мимо: это другое
- * сочетание.
+ * ProseMirror's keymap matches the character: on a Russian layout the "/" key types ".", so
+ * `Mod-/` turned into `Mod-.`, which is the superscript shortcut. So the key is recognised by
+ * `event.code` ("Slash" on any layout), and the extension sits above the usual priority: its
+ * handler is polled before the Marks' keymaps, so the superscript does not get the keystroke in
+ * time. Alt is ignored: it is a different shortcut.
  */
 export const BlockMenuKey = Extension.create<{ openBlockMenu: () => boolean }>({
   name: "blockMenuKey",
