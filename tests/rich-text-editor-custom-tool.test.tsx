@@ -25,7 +25,7 @@ import {
 } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -35,14 +35,14 @@ afterEach(() => {
 });
 
 /**
- * Свой Инструмент: Блок, строчный атом и Метка в Редакторе (OLDSUI-103,
- * ADR-0058, разделы 1 и 2).
+ * A custom Tool: a Block, an inline atom and a Mark in the Editor (OLDSUI-103,
+ * ADR-0058, sections 1 and 2).
  *
- * Через публичный `RichTextEditor`: описание своего Инструмента приходит в
- * `tools` вперемешку с именами кита, результат — выходной HTML, `onChange`,
- * скрытое поле формы, Ручка Блока ролями и именами и ошибка поля. Тестовые
- * Инструменты — общий помощник `editor-test-tools.ts`. Каретка ставится
- * командами движка: jsdom не умеет ввода в `contenteditable`.
+ * Through the public `RichTextEditor`: the description of a custom Tool goes into
+ * `tools` mixed with the kit's names; the result is the output HTML, `onChange`,
+ * the hidden form field, the Block handle by roles and names, and the field error. The test
+ * Tools come from the shared helper `editor-test-tools.ts`. The caret is set by
+ * engine commands: jsdom does not support typing into `contenteditable`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -54,12 +54,12 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, editor, handle: ref.current! };
 }
 
-/** Вставка HTML из буфера: разбор Схемой и транзакция с меткой `paste`. */
+/** Paste HTML from the clipboard: parsed by the Schema, in a transaction tagged `paste`. */
 function paste(editor: Editor, html: string) {
   act(() => void editor.view.pasteHTML(html, new Event("paste") as ClipboardEvent));
 }
 
-/** Фокус в Документ и каретка в конец текста `text`. */
+/** Focus the Document and move the caret to the end of the `text` text. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -80,7 +80,7 @@ const card =
 const note = '<span data-mark="test_note" data-test_author="Ann">noted</span>';
 const DOCUMENT = `<p>Hi ${tag} and ${note}</p>${box("<p>a</p>", "<p>b</p>")}${card}`;
 
-// ── HTML-соглашение ────────────────────────────────────────────────────────
+// ── HTML convention ────────────────────────────────────────────────────────
 
 test("a custom block, inline atom and mark load from value and come back by the convention", () => {
   const { editor, handle } = renderEditor({ defaultValue: DOCUMENT });
@@ -156,14 +156,14 @@ test("pasted custom blocks pass by the same rules", () => {
   expect(handle.getHTML()).toContain(card);
 });
 
-// ── Выключенный свой Инструмент ───────────────────────────────────────────
+// ── Disabled custom Tool ───────────────────────────────────────────
 
 test("a custom tool that is not passed removes its blocks from the schema", () => {
   const { editor, handle } = renderEditor({
     defaultValue: DOCUMENT,
     tools: [...TOOLS, testNoteTool],
   });
-  // Атом без своего Инструмента пропадает, Блок разворачивается в содержимое.
+  // An atom without its Tool is dropped, and a Block is unwrapped into its content.
   expect(handle.getHTML()).toBe(`<p>Hi and ${note}</p><p>a</p><p>b</p><p>Card</p>`);
 
   caretIn(editor, "Card");
@@ -171,10 +171,10 @@ test("a custom tool that is not passed removes its blocks from the schema", () =
   expect(handle.getHTML()).not.toContain("data-block");
 });
 
-// ── Набор: пресеты и порядок ──────────────────────────────────────────────
+// ── Set: presets and order ──────────────────────────────────────────────
 
 test("the presets are exported as frozen arrays of tool names", () => {
-  // Все встроенные, кроме Оглавления, типографики, формул и видео: их включают только явно
+  // All built-in Tools except the Table of contents, Typography, Formula and Video: they are enabled only explicitly
   // (ADR-0068, ADR-0070, ADR-0071).
   expect(RICH_TEXT_PRESETS.full).toEqual(
     TOOLS.filter(
@@ -234,7 +234,7 @@ test("a top-level custom block stays out of nested blocks", () => {
   expect(html).not.toContain(`<blockquote>${box("<p>b</p>")}`);
 });
 
-// ── Ручка Блока и Признаки ────────────────────────────────────────────────
+// ── Block handle and Block traits ────────────────────────────────────────────────
 
 const HANDLE = "Block actions";
 
@@ -243,7 +243,7 @@ async function openHandleMenu(user: ReturnType<typeof userEvent.setup>) {
   return screen.findByRole("menu", { name: HANDLE });
 }
 
-/** Пункт меню по началу имени: в имя входит подпись сочетания. */
+/** A menu item by the start of its name: the name includes the shortcut label. */
 function item(menu: HTMLElement, name: string): HTMLElement {
   const found = Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]')).find(
     (candidate) => candidate.textContent?.startsWith(name)
@@ -261,7 +261,7 @@ test("the container trait gives the blocks inside their own block handle", async
   await user.click(item(await openHandleMenu(user), "Move up"));
   expect(handle.getHTML()).toBe(`<p>out</p>${box("<p>b</p>", "<p>a</p>")}`);
 
-  // Первый Блок контейнера выше не уходит: Ручка — у Блока внутри, а не у контейнера.
+  // The container's first Block does not move up: the handle is on the Block inside, not on the container.
   caretIn(editor, "b");
   const menu = await openHandleMenu(user);
   expect(item(menu, "Move up").getAttribute("aria-disabled")).toBe("true");
@@ -275,7 +275,7 @@ test("a block without traits gets the handle with add, move, duplicate and delet
   for (const name of ["Add", "Move up", "Move down", "Duplicate", "Delete"]) {
     expect(item(menu, name)).toBeTruthy();
   }
-  // Без Признака «можно превратить в» «Формат ›» виден, но недоступен.
+  // Without the 'can be turned into' trait, 'Format ›' is visible but unavailable.
   expect(item(menu, "Format").getAttribute("aria-disabled")).toBe("true");
   await user.click(item(menu, "Duplicate"));
   expect(handle.getHTML()).toBe(`<p>x</p>${card}${card}`);
@@ -316,7 +316,7 @@ test("the plain-atom trait keeps the selection menu off a selected custom atom",
     return editor;
   };
 
-  // Без Признака Меню выделения над атомом остаётся.
+  // Without the trait, the Bubble menu over the atom stays.
   let editor = selectAtom(false);
   await screen.findByRole("toolbar", BUBBLE);
   act(() => void editor.commands.setNodeSelection(4));
@@ -330,9 +330,9 @@ test("the plain-atom trait keeps the selection menu off a selected custom atom",
   await waitFor(() => expect(screen.queryByRole("toolbar", BUBBLE)).toBeNull());
 });
 
-// ── Ошибка сборки набора ──────────────────────────────────────────────────
+// ── Set build error ──────────────────────────────────────────────────
 
-/** Набор с ошибкой: поле с ошибкой, без движка, с прежним значением формы. */
+/** A set with an error: a field error, without the engine, with the previous form value. */
 function expectFieldError(tools: RichTextEditorProps["tools"], reason: RegExp) {
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
   const ref = createRef<RichTextEditorHandle>();
@@ -346,7 +346,7 @@ function expectFieldError(tools: RichTextEditorProps["tools"], reason: RegExp) {
   expect(ref.current?.editor).toBeNull();
   expect(ref.current?.getHTML()).toBe(DOCUMENT);
   expect(container.querySelector<HTMLInputElement>('input[name="body"]')?.value).toBe(DOCUMENT);
-  // Исключение движка, если было, идёт вторым аргументом (`devError`).
+  // An engine exception, if there was one, comes as the second argument (`devError`).
   expect(error.mock.calls.some(([message]) => reason.test(String(message)))).toBe(true);
 }
 

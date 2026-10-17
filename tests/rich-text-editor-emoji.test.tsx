@@ -16,16 +16,16 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Эмодзи: кнопка Панели, поповер с сеткой и вставка обычным текстом (OLDSUI-68).
+ * Emoji: the Toolbar button, a popover with the grid, and insertion as plain text (OLDSUI-68).
  *
- * Всё — через публичный `RichTextEditor`. Выбор — настоящими щелчками и
- * клавишами `user-event`, потому что именно их видит и сетка, и Radix.
+ * Everything goes through the public `RichTextEditor`. Selection uses real clicks and
+ * `user-event` keys, because those are what both the grid and Radix see.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -38,7 +38,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 const field = () => screen.getByRole("textbox", { name: "Body" });
 const button = () => screen.getByRole("button", { name: "Emoji" });
 const grid = () => screen.getByRole("grid", { name: "Choose an emoji" });
-// «Избранное» повторяет часть категорий: берётся первая ячейка с таким именем.
+// 'Favorites' repeats some of the categories: the first cell with that name is taken.
 const cell = (name: string) => within(grid()).getAllByRole("gridcell", { name })[0]!;
 const activeCell = () => {
   const id = grid().getAttribute("aria-activedescendant");
@@ -89,7 +89,7 @@ test("the grid shows Favorites (20) and six categories of ten, each named", asyn
   expect(groups.map((group) => within(group).getAllByRole("gridcell").length)).toEqual([
     20, 10, 10, 10, 10, 10, 10,
   ]);
-  // Ячейка называется именем эмодзи, а не символом.
+  // The cell is named by the emoji name, not by the character.
   expect(within(groups[0]!).getAllByRole("gridcell")[0]?.getAttribute("aria-label")).toBe(
     "Face with tears of joy"
   );
@@ -124,7 +124,7 @@ test("a click inserts the emoji as plain text at the caret and puts the caret af
   expect(editor.state.selection.empty).toBe(true);
   expect(editor.state.selection.from).toBe(3 + "🔥".length);
   expect(screen.queryByRole("grid")).toBeNull();
-  // Набор продолжается в документе.
+  // Typing continues in the Document.
   await waitFor(() => expect(document.activeElement).toBe(field()));
   act(() => void editor.commands.insertContent("!"));
   expect(editor.getHTML()).toBe("<p>Hi🔥!</p>");
@@ -181,7 +181,7 @@ test("at maxLength nothing is inserted", async () => {
 
 test("an emoji that does not fit into what is left is not inserted either", async () => {
   const user = userEvent.setup();
-  // Остался один символ, а эмодзи — два кодовых блока: половинки не бывает.
+  // One character is left, and an emoji takes two UTF-16 code units: a half of an emoji is not possible.
   const { editor } = renderEditor({ maxLength: 5, defaultValue: "<p>1234</p>" });
   act(() => void editor.commands.setTextSelection(5));
 
@@ -212,7 +212,7 @@ test("the keyboard walks the grid with aria-activedescendant, Enter inserts", as
   act(() => void editor.commands.setTextSelection(2));
 
   await user.click(button());
-  // Фокус — на сетке, активна первая ячейка.
+  // Focus is on the grid, and the first cell is active.
   await waitFor(() => expect(document.activeElement).toBe(grid()));
   expect(grid().getAttribute("tabindex")).toBe("0");
   expect(activeCell()?.getAttribute("aria-label")).toBe("Face with tears of joy");
@@ -220,10 +220,10 @@ test("the keyboard walks the grid with aria-activedescendant, Enter inserts", as
   await user.keyboard("{ArrowRight}");
   expect(activeCell()?.getAttribute("aria-label")).toBe("Red heart");
   await user.keyboard("{ArrowDown}");
-  // Ширина сетки — десять: вниз — на эмодзи прямо под текущим.
+  // The grid is ten cells wide: down moves to the emoji directly below the current one.
   expect(activeCell()?.getAttribute("aria-label")).toBe("Fire");
   await user.keyboard("{ArrowUp}{ArrowLeft}{ArrowLeft}");
-  // Левее первой ячейки сетка не уходит.
+  // The grid does not move left of the first cell.
   expect(activeCell()?.getAttribute("aria-label")).toBe("Face with tears of joy");
 
   await user.keyboard("{End}");
@@ -245,7 +245,7 @@ test("arrows cross from one category to the next", async () => {
   await user.click(button());
   await waitFor(() => expect(document.activeElement).toBe(grid()));
 
-  // Две строки «Избранного», третья — «Смайлы».
+  // Two rows of 'Favorites', the third is 'Smileys'.
   await user.keyboard("{ArrowDown}{ArrowDown}");
   expect(activeCell()?.getAttribute("aria-label")).toBe("Slightly smiling face");
   await user.keyboard("{ArrowLeft}");
@@ -284,7 +284,7 @@ test("inside a Dialog Escape closes only the grid and a click still picks", asyn
   expect(screen.queryByRole("grid")).toBeNull();
   expect(onClose).not.toHaveBeenCalled();
 
-  // Выбор мышью внутри окна: `pointer-events` окна на сетку не распространяется.
+  // Mouse selection inside the window: the window's `pointer-events` does not propagate to the grid.
   await user.click(button());
   await user.click(cell("Fire"));
   expect(editor.getHTML()).toBe("<p>x🔥</p>");

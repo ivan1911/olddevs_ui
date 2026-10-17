@@ -30,17 +30,17 @@ import {
 import { TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(cleanup);
 
 /**
- * Цвет текста, маркер и выравнивание Блока (OLDSUI-46).
+ * Text color, highlight and alignment of a Block (OLDSUI-46).
  *
- * Обещание одно: в документ уходят имена палитры в `data-color` и `data-align`,
- * а `style` не появляется никогда (спека, «Схема и безопасность»). Проверяется
- * через `RichTextEditor`: загрузкой, вставкой и командами, как это делает Панель.
+ * One promise: the Document gets palette names in `data-color` and `data-align`,
+ * and `style` never appears (spec, 'Schema and security'). Checked
+ * through `RichTextEditor`: by loading, pasting and commands, the way the Toolbar does it.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -91,7 +91,7 @@ test("the text palette is the six status tones, the marker palette offers nine c
     "lime",
     "muted",
   ]);
-  // Порядок сетки «Цвет маркера» — по оттенку, как в Notion (OLDSUI-153).
+  // The 'Highlight color' grid is ordered by hue, as in Notion (OLDSUI-153).
   expect([...EDITOR_MARKER_NAMES]).toEqual([
     "gray",
     "brown",
@@ -103,7 +103,7 @@ test("the text palette is the six status tones, the marker palette offers nine c
     "pink",
     "red",
   ]);
-  // Яркие — с тёмным текстом поверх, прежние цвета Notion — с основным.
+  // The bright ones take dark text on top; the legacy Notion colors keep the main text color.
   expect([...EDITOR_BRIGHT_MARKER_NAMES]).toEqual(["yellow", "green", "pink"]);
   expect([...EDITOR_PALE_MARKER_NAMES]).toEqual([
     "gray",
@@ -117,7 +117,7 @@ test("the text palette is the six status tones, the marker palette offers nine c
 
 type Editor = NonNullable<RichTextEditorHandle["editor"]>;
 
-/** Выделить «Hello» с фокусом в Документе — так всплывает меню выделения. */
+/** Select 'Hello' with focus in the Document: this is what opens the Bubble menu. */
 function selectHello(editor: Editor) {
   act(() => {
     editor.view.focus();
@@ -125,11 +125,11 @@ function selectHello(editor: Editor) {
   });
 }
 
-/** Панель и меню выделения: «Маркер» — на первой, «Цвет» — во втором (OLDSUI-154). */
+/** The Toolbar and the Bubble menu: 'Highlight' is on the first, 'Color' on the second (OLDSUI-154). */
 const toolbar = (name = "Formatting") => screen.getByRole("toolbar", { name });
 const bubble = (name = "Selection formatting") => screen.findByRole("toolbar", { name });
 
-/** Поповер «Цвет» (OLDSUI-153) меню выделения над «Hello» › сетка нужного вида. */
+/** The 'Color' popover (OLDSUI-153) of the Bubble menu over 'Hello' › the grid of the required section. */
 async function openColorGrid(
   user: ReturnType<typeof userEvent.setup>,
   editor: Editor,
@@ -172,7 +172,7 @@ test("a document saved with an old marker name opens with its migrated colour na
     within(grid).getByRole("menuitemradio", { name: "Blue" }).getAttribute("aria-checked")
   ).toBe("true");
 
-  // Выбор из сетки перекрашивает; прежнее имя из Документа уходит.
+  // Selecting a color in the grid recolors the text; the old name leaves the Document.
   await user.click(within(grid).getByRole("menuitemradio", { name: "Green" }));
   expect(editor.getHTML()).toBe('<p><mark data-color="green">Hello</mark> world</p>');
 });
@@ -189,11 +189,11 @@ test("a pale marker name in a saved document keeps its name through load and exp
 test("the full preset has colour, highlight and alignment, the basic one does not", async () => {
   const user = userEvent.setup();
   const { editor } = renderEditor({ defaultValue: "<p>Hello world</p>" });
-  // Выравнивание — меню «Выравнивание» (OLDSUI-66); его пункты проверяет
+  // Alignment is the 'Alignment' menu (OLDSUI-66); its items are checked by
   // `rich-text-editor-align-list-menus.test.tsx`.
   expect(screen.getByRole("button", { name: "Alignment: left" })).toBeDefined();
-  // Цвет и маркер — кнопки с поповерами (OLDSUI-153), а не подменю «…». Без
-  // дублей (OLDSUI-154): «Маркер» — на Панели, «Цвет» — в меню выделения.
+  // Color and highlight are buttons with popovers (OLDSUI-153), not items of a submenu under 'More formatting'. Without
+  // duplicates (OLDSUI-154): 'Highlight' is on the Toolbar, 'Color' is in the Bubble menu.
   expect(within(toolbar()).getByRole("button", { name: "Highlight: None" })).toBeDefined();
   expect(within(toolbar()).queryByRole("button", { name: /^Color:/ })).toBeNull();
   selectHello(editor);
@@ -216,10 +216,10 @@ test("a disabled field switches colour, highlight and alignment off", async () =
   for (const name of ["Highlight: None", "More formatting", "Alignment: left"]) {
     expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled, name).toBe(true);
   }
-  // «Цвет» — в меню выделения (OLDSUI-154), а над выключенным полем оно не
-  // всплывает: кнопки «Цвет» нет вовсе, даже при выделении.
+  // 'Color' is in the Bubble menu (OLDSUI-154), and the Bubble menu does not appear over a disabled field:
+  // there is no 'Color' button at all, even with a selection.
   selectHello(editor);
-  // Кадр на показ плашки — и её нет; без ожидания таймаута `findByRole`.
+  // Wait one frame for the bubble to show up: it is not there, and no `findByRole` timeout is needed.
   await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
   expect(screen.queryByRole("toolbar", { name: "Selection formatting" })).toBeNull();
   expect(screen.queryByRole("button", { name: /^Color:/ })).toBeNull();
@@ -235,14 +235,14 @@ test("names come from the provider's catalog", async () => {
   );
   const t = ru.editor;
 
-  // Меню закрывает остальную страницу от скринридера, поэтому имена кнопок — до открытия.
+  // An open menu hides the rest of the page from screen readers, so button names are read before it opens.
   expect(screen.getByRole("button", { name: t.alignMenu({ current: "left" }) })).toBeDefined();
   expect(
     within(toolbar(t.toolbar)).getByRole("button", {
       name: t.highlight({ current: t.highlightNone }),
     })
   ).toBeDefined();
-  // «Цвет» — в меню выделения (OLDSUI-154): «Text» выделен с фокусом в Документе.
+  // 'Color' is in the Bubble menu (OLDSUI-154): 'Text' is selected with focus in the Document.
   act(() => {
     ref.current!.editor!.view.focus();
     ref.current!.editor!.commands.setTextSelection({ from: 1, to: 5 });
@@ -277,7 +277,7 @@ test("names come from the provider's catalog", async () => {
     t.markerPink,
     t.markerRed,
   ]);
-  // Снятие — значком в конце каждой сетки (OLDSUI-160).
+  // Removing is an icon at the end of each grid (OLDSUI-160).
   expect(
     within(within(menu).getByRole("group", { name: t.textColorSection })).getByRole("menuitem", {
       name: t.colorRemove,
@@ -291,9 +291,9 @@ test("names come from the provider's catalog", async () => {
 });
 
 /*
-  Палитра ⇔ классы. Tailwind читает исходник текстом, поэтому классы записаны
-  литералами, и сверка с токенами палитры — единственное, что не даёт им
-  разойтись. Пары токенов меряет `npm run contrast` по тем же данным.
+  Palette ⇔ classes. Tailwind reads the source as text, so the classes are written as
+  literals, and the check against the palette tokens is the only thing that keeps them in sync.
+  `npm run contrast` measures the token pairs from the same data.
 */
 
 test("every text colour has its class, every marker has its token class, in the editor and in the view", () => {
@@ -303,9 +303,9 @@ test("every text colour has its class, every marker has its token class, in the 
   expect(Object.keys(EDITOR_MARKER_CLASS).sort()).toEqual([...EDITOR_MARKER_NAMES].sort());
   for (const { name, text } of EDITOR_TEXT_COLORS) {
     expect(EDITOR_TEXT_COLOR_CLASS[name]).toBe(`text-${text}`);
-    // Документ читает роль `--rte-text-<имя>`, а не токен кита: на листе
-    // `surface="paper"` у роли светлое значение (OLDSUI-52). Роль ⇔ токен
-    // палитры сверяет `tests/rich-text-paper.test.tsx`.
+    // The Document reads the role `--rte-text-<name>`, not a kit token: on paper
+    // (`surface="paper"`) the role has a light value (OLDSUI-52). The role ⇔ palette token
+    // check is in `tests/rich-text-paper.test.tsx`.
     expect(
       prose.has(`[&_span[data-color=${name}]]:text-(--rte-text-${name})`),
       `${name} text`
@@ -313,9 +313,9 @@ test("every text colour has its class, every marker has its token class, in the 
   }
   for (const { name, token } of EDITOR_MARKERS) {
     expect(token).toBe(`marker-${name}`);
-    // Образец яркого маркера несёт и тёмный текст: подложка яркая во всех
-    // темах. Прежние цвета Notion оставляют цвет текста наследуемым — их
-    // подложки свои у каждой темы.
+    // A bright marker sample also carries dark text: its background is bright in every
+    // theme. The legacy Notion colors leave the text color inherited; their backgrounds
+    // are specific to each theme.
     expect(EDITOR_MARKER_CLASS[name]).toBe(
       (EDITOR_BRIGHT_MARKER_NAMES as readonly string[]).includes(name)
         ? `bg-(--${token}) text-(--marker-text)`
@@ -338,8 +338,8 @@ test("the view paints an old marker name with the colour it migrates to", () => 
 test("a pale marker keeps its own text colour, any other mark gets the dark marker text", () => {
   const prose = new Set(PROSE_CLASS.split(/\s+/));
 
-  // Прежние шесть подложек тёмные в тёмной теме и рассчитаны под светлый
-  // основной текст: тёмный токен их бы погасил.
+  // The six legacy backgrounds are dark in the dark theme and designed for the light main text:
+  // a dark token would hide them.
   for (const name of EDITOR_PALE_MARKER_NAMES) {
     expect(prose.has(`[&_mark[data-color=${name}]]:text-inherit`), name).toBe(true);
   }
@@ -358,12 +358,12 @@ test("a text colour token has a Tailwind bridge", () => {
 });
 
 /*
-  Маркер следует за БЛИЖАЙШЕЙ темой, а не только за корнем: на `surface="paper"`
-  область документа оборачивается во вложенный `data-theme="light"` внутри
-  тёмного приложения. Поэтому значения токенов объявлены на `[data-theme]`
-  любого элемента (не на `:root[data-theme]`), а читаются переменной напрямую —
-  без моста `@theme`, который подставил бы значение корня. Каскад в браузере
-  проверяет `tests-visual/` (вложенная тема), здесь — устройство CSS.
+  A marker follows the NEAREST theme, not only the root: with `surface="paper"`, the Document
+  area is wrapped in a nested `data-theme="light"` inside the dark app. So the token values are
+  declared on `[data-theme]` of any element (not on `:root[data-theme]`) and read directly through
+  the variable directly, without
+  an `@theme` bridge, which would substitute the root value. The cascade in the browser
+  is checked by `tests-visual/` (nested theme); here, the CSS structure.
 */
 describe("marker tokens follow the nearest theme", () => {
   const styles = readFileSync(resolve(import.meta.dirname, "..", "styles.css"), "utf8");
@@ -391,8 +391,8 @@ describe("marker tokens follow the nearest theme", () => {
       expect(light, `${name} light`).toMatch(
         new RegExp(`--${token}:\\s*var\\(--od-marker-${name}-l\\);`)
       );
-      // Моста `@theme` у маркера нет: он подставил бы значение корня и в
-      // обёртке с другой темой.
+      // The marker has no `@theme` bridge: it would substitute the root value in a
+      // wrapper with another theme.
       expect(styles).not.toContain(`--color-${token}:`);
     }
   );
@@ -418,7 +418,7 @@ describe("marker tokens follow the nearest theme", () => {
     expect(bright).toMatch(/--marker-text:\s*var\(--od-marker-text\);/);
     expect(dark).not.toContain("--marker-text:");
     expect(light).not.toContain("--marker-text:");
-    // Тёмный текст: контраст с каждым ярким маркером не ниже 4.5:1.
+    // Dark text: contrast with each bright marker is at least 4.5:1.
     const text = /--od-marker-text:\s*(#[0-9a-f]{6});/i.exec(styles)?.[1];
     expect(text).toBeDefined();
     for (const name of ["yellow", "green", "pink"]) {
@@ -434,8 +434,8 @@ describe("marker tokens follow the nearest theme", () => {
   });
 
   test("a nested data-theme wrapper gets its own marker values; the app around it keeps its own", () => {
-    // Настоящий каскад на настоящих правилах `styles.css` (jsdom умеет и
-    // сопоставление селекторов, и наследование пользовательских свойств).
+    // A real cascade over the real rules of `styles.css` (jsdom supports both selector matching and
+    // custom property inheritance).
     const style = document.createElement("style");
     style.textContent = `${dark}\n}\n${light}\n}\n${bright}\n}`;
     document.head.append(style);
@@ -459,7 +459,7 @@ describe("marker tokens follow the nearest theme", () => {
           `var(--od-marker-${name}-d)`
         );
       }
-      // Яркие маркеры и тёмный текст на них одинаковы в любой обёртке.
+      // Bright markers and the dark text on them are the same in any wrapper.
       for (const { name, token } of brightMarkers) {
         for (const id of ["outside", "inside", "deep"]) {
           expect(marker(id, token), `${name} in #${id}`).toBe(`var(--od-marker-${name})`);
@@ -483,9 +483,9 @@ describe("marker tokens follow the nearest theme", () => {
 });
 
 /*
-  Произвольный цвет (OLDSUI-46, дополнение): единственное место, где в сохранённом
-  HTML есть `style`. Пишется строго `color:#rrggbb` на `span` и
-  `background-color:#rrggbb` на `mark`, и никогда вместе с `data-color`.
+  Custom color (OLDSUI-46, addendum): the only place where the saved HTML has a `style`. It is
+  written strictly as `color:#rrggbb` on `span` and `background-color:#rrggbb` on `mark`, and never
+  together with `data-color`.
 */
 
 test("a custom text colour round-trips as style on a span, lowercase six-digit hex", () => {
@@ -561,7 +561,7 @@ test("setColor and setHighlight take a custom colour; palette and custom replace
     '<p><span style="color:#00ff00"><mark style="background-color:#ffee00">Hello</mark></span> world</p>'
   );
 
-  // Не `#rrggbb` — не ставится.
+  // Anything other than `#rrggbb` is not applied.
   for (const bad of ["#fff", "rgb(0,0,0)", "chartreuse", "#ggg000", "#ff0000; x:y"]) {
     act(() => void editor.commands.setColor(bad));
     act(() => void editor.commands.setHighlight({ color: bad }));
@@ -605,25 +605,25 @@ test("palette classes never reach a custom colour: every span and mark colour ru
     (token) =>
       /^\[&_(span|mark)\b.*\]:(text|bg)-/.test(token) &&
       !token.endsWith(":text-inherit") &&
-      // Общее правило `mark` — тёмный текст на любой подложке, в том числе цвета автора.
+      // The shared `mark` rule: dark text on any background, including the author's custom colors.
       token !== "[&_mark]:text-(--marker-text)"
   );
 
-  // Текст — по правилу на имя; маркер — по правилу на имя и на старое имя
-  // (`LEGACY_MARKER_NAMES`: документ, сохранённый до новой палитры, читается без миграции).
+  // Text has one rule per name; a marker has one rule per name and one per legacy name
+  // (`LEGACY_MARKER_NAMES`: a Document saved before the new palette loads without migration).
   expect(colouring.length).toBe(
     EDITOR_TEXT_COLORS.length + EDITOR_MARKERS.length + Object.keys(LEGACY_MARKER_NAMES).length
   );
   for (const rule of colouring) expect(rule, rule).toContain("[data-color=");
-  // Текст на маркере тёмный: и у ярких маркеров, и у цвета автора. Прежние
-  // шесть имён оставляют свой наследуемый цвет (`text-inherit` по имени).
+  // Text on a marker is dark: on bright markers and on the author's custom color. The six legacy
+  // names keep their own inherited color (`text-inherit` by name).
   expect(PROSE_CLASS.split(/\s+/)).toContain("[&_mark]:text-(--marker-text)");
 });
 
 test("selection over a bright marker is denser, and the kit's global ::selection is layered so it can be overridden", () => {
   const styles = readFileSync(resolve(import.meta.dirname, "..", "styles.css"), "utf8");
-  // Вне слоя глобальное `::selection` побеждало бы любую утилиту `selection:`
-  // и роли Редактора (`--rte-selection`, `--rte-selection-marker`) не работали бы.
+  // Outside the layer, the global `::selection` would beat any `selection:` utility, and the
+  // Editor's roles (`--rte-selection`, `--rte-selection-marker`) would not work.
   const unlayered = styles.replace(/@layer base \{[\s\S]*?\n\}/g, "");
   expect(unlayered).not.toMatch(/^::selection\s*\{/m);
   expect(styles).toMatch(/@layer base \{\s*::selection \{/);
@@ -632,8 +632,8 @@ test("selection over a bright marker is denser, and the kit's global ::selection
 });
 
 test("the dense marker selection skips exactly the pale markers and the old names for them", () => {
-  // Прежние цвета Notion и старые имена, ведущие в них, — подложки прежние и в тёмных
-  // темах тёмные: на них общее выделение, а не плотное с тёмным текстом.
+  // The legacy Notion colors and the old names that lead to them keep their backgrounds, which
+  // stay dark in dark themes: they get the shared selection, not the dense one with dark text.
   const pale = new Set<string>(EDITOR_PALE_MARKER_NAMES);
   const dark = [
     ...EDITOR_PALE_MARKER_NAMES,

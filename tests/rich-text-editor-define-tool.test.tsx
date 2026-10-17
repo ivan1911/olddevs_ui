@@ -17,9 +17,9 @@ import { testLazyTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 /**
- * Свой Инструмент через `defineTool` (OLDSUI-268): умолчания и слияние опций,
- * Состояние на транзакции, Команды через Хэндл и правила набора. Проверки идут
- * через публичный `RichTextEditor`, как их увидит экран.
+ * A custom Tool through `defineTool` (OLDSUI-268): defaults and merging of options,
+ * State on transactions, Commands through the Handle, and the rules of the set. The checks go
+ * through the public `RichTextEditor`, as the screen will see them.
  */
 
 beforeAll(loadLazyBuiltins);
@@ -38,7 +38,7 @@ afterEach(() => {
 
 const noteNode = Node.create({ name: "test_note", group: "block", content: "inline*" });
 
-/** Заметка с вложенными подписями, списком и функцией — все виды значений для правила слияния. */
+/** A note with nested labels, a list and a function: every kind of value for the merge rule. */
 const note = defineTool({
   name: "test_note",
   defaults: {
@@ -101,11 +101,11 @@ function renderEditor(props: EditorProps = {}) {
   return { ...view, ref, handle: () => ref.current! };
 }
 
-/** Опции, которые увидели Команды Инструмента: слитые умолчания и `tool()`. */
+/** The options that the Tool's commands see: the merged defaults and `tool()`. */
 const optionsOf = (handle: RichTextEditorHandle) =>
   (handle.tool("test_note") as { options(): Record<string, unknown> }).options();
 
-// ---------------------------------------------------------------- умолчания и слияние
+// ---------------------------------------------------------------- defaults and merging
 
 test("a definition in tools works with its defaults and no tool()", () => {
   const { handle } = renderEditor();
@@ -123,12 +123,12 @@ test("tool(definition, options) merges nested objects and replaces arrays and fu
     ],
   });
 
-  // Своя подпись видна в UI-записи, нетронутая — осталась умолчанием.
+  // The custom label shows in the UI item; the untouched one stays the default.
   expect(screen.getByRole("button", { name: "Delete note" })).toBeDefined();
   expect(screen.queryByRole("button", { name: "Remove note" })).toBeNull();
   const options = optionsOf(handle());
   expect(options.labels).toEqual({ insert: "Add note", remove: "Delete note" });
-  // Массив и функция — значением целиком.
+  // An array and a function are taken as a whole value.
   expect(options.tags).toEqual(["new"]);
   expect(options.format).toBe(format);
   expect(options.tone).toBe("info");
@@ -141,7 +141,7 @@ test("an undefined option falls back to the default, and the defaults object sta
   expect(optionsOf(handle()).tone).toBe("info");
   cleanup();
 
-  // Слияние не пишет в умолчания: следующий Редактор видит их прежними.
+  // Merging does not write into the defaults: the next Editor sees them unchanged.
   const second = renderEditor();
   expect(optionsOf(second.handle()).labels).toEqual({
     insert: "Add note",
@@ -158,9 +158,9 @@ test("built-in options keep their flat behaviour: an array replaces the default 
   expect(error).not.toHaveBeenCalled();
 });
 
-// ---------------------------------------------------------------- Состояние
+// ---------------------------------------------------------------- State
 
-/** Экран с хуком: замер всего, что хук отдал, и числа рендеров. */
+/** A screen with the hook: records everything the hook returned, and the render counts. */
 function mountState<Result>(
   read: (ref: RefObject<RichTextEditorHandle | null>) => Result,
   props: EditorProps = {}
@@ -191,7 +191,7 @@ function mountState<Result>(
 test("the State of a defined tool follows transactions and is read by useRichTextToolState", async () => {
   const screenResult = mountState((ref) => useRichTextToolState(ref, "test_note"));
 
-  // До монтажа — `null`, затем снимок от `state` с опциями.
+  // Before mounting: `null`; then a snapshot from `state` with the options.
   expect(screenResult.seen.results[0]).toBeNull();
   expect(screenResult.last()).toEqual({ notes: 0, tone: "info" });
 
@@ -215,7 +215,7 @@ test("the State sees the options of the Editor, and a slice re-renders only on c
   expect(screenResult.last()).toBe("warning");
 
   const rendersBefore = screenResult.seen.renders;
-  // Правка, не меняющая срез: экран не перерисовывается.
+  // An edit that does not change the slice: the screen does not re-render.
   act(() => void screenResult.ref.current!.editor!.commands.insertContent("text"));
   expect(screenResult.seen.renders).toBe(rendersBefore);
 });
@@ -232,7 +232,7 @@ test("the State is null without the tool in the set and is not found for an unkn
 });
 
 test("the State compares plain data by value and everything else by reference", async () => {
-  // Значения, которые Состояние отдаёт на каждую транзакцию; тест подменяет их между правками.
+  // The values that the State returns on each transaction; the test swaps them between edits.
   const held: { value: unknown } = { value: undefined };
   const stateful = defineTool({
     name: "test_stateful",
@@ -251,7 +251,7 @@ test("the State compares plain data by value and everything else by reference", 
     edit();
   };
 
-  // Date, Map и Set не имеют своих ключей, но это не «один и тот же»: новый экземпляр — новый снимок.
+  // Date, Map and Set have no keys of their own, but they are not 'the same': a new instance is a new snapshot.
   for (const make of [
     (n: number) => new Date(2026, 0, n),
     (n: number) => new Map([["key", n]]),
@@ -263,13 +263,13 @@ test("the State compares plain data by value and everything else by reference", 
     const second = make(2);
     setValue(second);
     expect(screenResult.last()).toBe(second);
-    // Тот же экземпляр — экран не трогается.
+    // The same instance: the screen is left alone.
     const rendersBefore = screenResult.seen.renders;
     setValue(second);
     expect(screenResult.seen.renders).toBe(rendersBefore);
   }
 
-  // Простые данные — по значению: новые, но равные объекты и массивы снимок не меняют.
+  // Plain data is compared by value: new but equal objects and arrays do not change the snapshot.
   setValue({ list: [1, { deep: "a" }], flag: true });
   const plain = screenResult.last();
   const rendersBefore = screenResult.seen.renders;
@@ -279,7 +279,7 @@ test("the State compares plain data by value and everything else by reference", 
   setValue({ list: [1, { deep: "b" }], flag: true });
   expect(screenResult.last()).not.toBe(plain);
 
-  // Объект без прототипа — тоже простые данные.
+  // An object without a prototype is plain data too.
   setValue(Object.assign(Object.create(null), { a: 1 }));
   const bare = screenResult.last();
   setValue(Object.assign(Object.create(null), { a: 1 }));
@@ -299,7 +299,7 @@ test("a tool with no state function has a null State and no Commands", () => {
   expect(screenResult.ref.current!.tool("test_bare")).toBeNull();
 });
 
-// ---------------------------------------------------------------- Команды
+// ---------------------------------------------------------------- Commands
 
 test("the Commands of a defined tool are called through handle.tool() with the merged options", () => {
   const { handle } = renderEditor({
@@ -317,9 +317,9 @@ test("handle.tool() gives null for a defined tool outside the set", () => {
   expect(handle().tool("test_note")).toBeNull();
 });
 
-// ---------------------------------------------------------------- правила набора
+// ---------------------------------------------------------------- rules of the set
 
-/** Набор с ошибкой: поле с ошибкой и сообщение в консоли. */
+/** A set with an error: a field error and a message in the console. */
 function expectFieldError(tools: EditorProps["tools"], reason: RegExp) {
   render(<RichTextEditor aria-label="Body" defaultValue="<p>Hello</p>" tools={tools} />);
   expect(screen.getByRole("alert").textContent).toBe(
@@ -361,7 +361,7 @@ test("a definition and a plain CustomTool with one name are a tool set error", (
 });
 
 test("the checks of a set apply to the body that create() returned", () => {
-  // Node без правил Схемы: тело отдало Extensions, но не `blocks`.
+  // A Node without Schema rules: the body gave Extensions but not `blocks`.
   const loose = defineTool({
     name: "test_loose",
     defaults: {},
@@ -378,7 +378,7 @@ test("the engine loader of a definition holds the field until it resolves, and i
   const lazyTool = defineTool({
     name: "test_lazy",
     defaults: {},
-    // Загрузчик — константа модуля, а не новая функция на каждый `create`: кэш — на ней.
+    // The loader is a module constant, not a new function on each `create`: the cache is kept on it.
     create: () => ({ engine: lazy.loader, blocks: lazy.tool.blocks }),
     commands: () => ({ ping: () => true }),
   });
@@ -392,7 +392,7 @@ test("the engine loader of a definition holds the field until it resolves, and i
   await waitFor(() => expect(first.ref.current?.editor).not.toBeNull());
   expect(first.handle().tool("test_lazy")).not.toBeNull();
 
-  // Второй Редактор с тем же определением загрузчик не зовёт.
+  // A second Editor with the same definition does not call the loader.
   renderEditor({ tools });
   expect(lazy.loader.calls).toBe(1);
 });

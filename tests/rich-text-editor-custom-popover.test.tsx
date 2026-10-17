@@ -17,7 +17,7 @@ import { TOOLS } from "../src/editor/core/tools.js";
 import { testAskTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -27,13 +27,13 @@ afterEach(() => {
 });
 
 /**
- * Поповер пункта вставки и Действия над Блоком (история 39, ADR-0058, п. 5.6).
+ * Popover of an insert item and a Block action (story 39, ADR-0058, section 5.6).
  *
- * Через публичный `RichTextEditor`: поповер, вызванный из «/», «+», «Добавить ›»
- * и «Формат ›» Ручки, из меню Ручки и сочетанием, — та же рамка кита, что у
- * кнопки: имя — подпись записи, Escape, возврат фокуса и выделения в Документ.
- * Положение у каретки и у Блока меряет браузер (`tests-visual`): jsdom
- * раскладки не знает.
+ * Through the public `RichTextEditor`: a popover opened from '/', '+', 'Add ›'
+ * and 'Format ›' of the Block handle, from the Block handle menu or by a shortcut, has the same kit frame as a
+ * button: the name is the item's label, plus Escape, and focus and selection return to the Document.
+ * The position at the caret and at the Block is measured by the browser (`tests-visual`); jsdom
+ * does not know layout.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -45,7 +45,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, editor };
 }
 
-/** Фокус в Документ и каретка в конец текста `text`. */
+/** Focus the Document and move the caret to the end of the `text` text. */
 function caretIn(editor: Editor, text: string) {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -79,7 +79,7 @@ const HANDLE = "Block actions";
 
 type User = ReturnType<typeof userEvent.setup>;
 
-/** Пункт меню по имени без подписи сочетания. */
+/** A menu item by name, without its shortcut label. */
 function itemNamed(menu: HTMLElement, name: string) {
   const found = Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]')).find(
     (item) =>
@@ -89,7 +89,7 @@ function itemNamed(menu: HTMLElement, name: string) {
   return found;
 }
 
-/** Выбрать пункт в меню Ручки; `path` — подменю по пути. */
+/** Select an item in the Block handle menu; `path` is the submenu path. */
 async function choose(user: User, ...path: string[]) {
   await user.click(screen.getByRole("button", { name: HANDLE }));
   let menu = await screen.findByRole("menu", { name: HANDLE });
@@ -100,7 +100,7 @@ async function choose(user: User, ...path: string[]) {
   await user.click(itemNamed(menu, path.at(-1)!));
 }
 
-/** Поповер записи открыт, меню закрыты, Документ не тронут открытием. */
+/** The item's popover is open, the menus are closed, and opening it does not touch the Document. */
 async function expectPopover(name: string) {
   const popover = await screen.findByRole("dialog", { name });
   expect(screen.queryByRole("menu")).toBeNull();
@@ -108,7 +108,7 @@ async function expectPopover(name: string) {
   return popover;
 }
 
-// ── Меню вставки ───────────────────────────────────────────────────────────
+// ── Slash menu ───────────────────────────────────────────────────────────
 
 test("an own item with a popover in / removes the typed command and opens the popover at its place", async () => {
   const user = userEvent.setup();
@@ -118,7 +118,7 @@ test("an own item with a popover in / removes the typed command and opens the po
   press(editor, "Enter");
 
   const popover = await expectPopover("Ask");
-  // Набранная «/команда» убрана, как у обычного пункта; Блок кит не готовит.
+  // The typed '/command' is removed, as for a regular item; the kit does not prepare a Block.
   expect(editor.getHTML()).toBe("<p>One </p>");
   expect(editor.state.selection.from).toBe(5);
 
@@ -170,7 +170,7 @@ test("the shortcut of an own item opens its popover at the caret", async () => {
   expect(editor.getHTML()).toBe("<p>One</p>");
 });
 
-// ── Действие над Блоком ────────────────────────────────────────────────────
+// ── Block action ────────────────────────────────────────────────────
 
 test("an own action with a popover opens it for the block of the handle, with its position", async () => {
   const user = userEvent.setup();
@@ -179,7 +179,7 @@ test("an own action with a popover opens it for the block of the handle, with it
 
   await choose(user, "Inspect");
   const popover = await expectPopover("Inspect");
-  // `pos` — позиция Блока Ручки: второй абзац стоит за первым (5 позиций).
+  // `pos` is the position of the Block in the Block handle: the second paragraph follows the first (5 positions).
   expect(within(popover).getByText("Block at 5")).toBeDefined();
 
   await user.click(within(popover).getByRole("button", { name: "Prefix Beta" }));
@@ -234,7 +234,7 @@ test("Escape in the popover of an item inside a Dialog closes the popover, not t
   expect(onClose).not.toHaveBeenCalled();
 });
 
-// ── Проверка набора ────────────────────────────────────────────────────────
+// ── Definition check ────────────────────────────────────────────────────────
 
 function expectFieldError(tool: CustomTool, reason: RegExp) {
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -247,7 +247,7 @@ function expectFieldError(tool: CustomTool, reason: RegExp) {
   );
   expect(ref.current?.editor).toBeNull();
   expect(error).toHaveBeenCalledWith(expect.stringMatching(reason));
-  // Ошибка разработчика пишется один раз на текст: следующая проверка — с чистого листа.
+  // A developer error is logged once per text: the next check starts from a clean slate.
   cleanup();
   vi.restoreAllMocks();
   resetDevWarnings();

@@ -14,7 +14,7 @@ import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { TEST_TOOLS, testAsideTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -24,13 +24,13 @@ afterEach(() => {
 });
 
 /**
- * Свой Инструмент в Markdown (OLDSUI-104, ADR-0058, п. 3.1).
+ * A custom Tool in Markdown (OLDSUI-104, ADR-0058, section 3.1).
  *
- * Свои правила Markdown — в Extensions (`renderMarkdown`, токенайзер
- * Tiptap), отдельного поля нет. Без них `getMarkdown` не теряет текст: Блок
- * выгружается своим содержимым, атом — Текстом атома (`renderText`), Метка —
- * своим текстом; пропадает только атом без текста. В разработке — одно
- * предупреждение на Инструмент.
+ * Markdown rules live in the Extensions (`renderMarkdown`, the tokenizer of
+ * Tiptap); there is no separate field. Without them `getMarkdown` does not lose text: a Block
+ * is exported with its own content, an atom with its Atom text (`renderText`), a Mark
+ * with its own text; only an atom without text is lost. In development, there is one
+ * warning per Tool.
  */
 function renderEditor(defaultValue: string, tools: readonly Tool[] = [...TOOLS, ...TEST_TOOLS]) {
   const ref = createRef<RichTextEditorHandle>();
@@ -50,7 +50,7 @@ test("without Markdown rules a block is written as its content, an atom as its t
     `<p>Hi ${tag} and ${note}</p>${box("<p>a</p>", "<h2>b</h2>")}${card}`
   );
 
-  // Текст атома — Markdown-текст: подчёркивание экранируется, как в любом тексте.
+  // The Atom text is Markdown text: the underscore is escaped, as in any text.
   expect(handle.getMarkdown()).toBe("Hi {{first\\_name}} and noted\n\na\n\n## b\n\nCard *text*");
 });
 
@@ -64,8 +64,8 @@ test("the text survives a trip through Markdown even though the blocks do not", 
 });
 
 /*
-  Листовой атом без `renderText` — без текста: в Markdown ему нечем быть, и он
-  пропадает. Это единственная потеря, и о ней предупреждение тоже говорит.
+  A leaf atom without `renderText` has no text: it has nothing to become in Markdown, so it
+  is lost. This is the only loss, and the warning mentions it too.
 */
 test("an atom without text is the only thing that disappears", () => {
   vi.spyOn(console, "warn").mockImplementation(() => {});

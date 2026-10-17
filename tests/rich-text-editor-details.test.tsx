@@ -19,14 +19,14 @@ import { sanitizeRichText } from "../src/editor/schema-entry.js";
 import { PRESETS, TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 /*
-  jsdom не считает раскладку: `offsetParent` у него всегда `null`, и Tiptap
-  (`isNodeVisible`) принимает всё содержимое Блока за скрытое. Здесь «видим»
-  всё, что не лежит внутри `[hidden]`, — так же решает браузер для содержимого
-  свёрнутого Блока.
+  jsdom does not compute layout: its `offsetParent` is always `null`, so Tiptap
+  (`isNodeVisible`) treats all of a Block's content as hidden. Here 'visible' means
+  anything that is not inside `[hidden]`, which is also how the browser decides for the content
+  of a collapsed Block.
 */
 const realOffsetParent = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetParent");
 beforeAll(() => {
@@ -48,13 +48,13 @@ afterEach(() => {
 });
 
 /**
- * Сворачиваемый Блок (OLDSUI-277): Инструмент `details` на расширении Details из
+ * The Details Block (OLDSUI-277): the `details` Tool on the Details extension from
  * Tiptap.
  *
- * Через публичный `RichTextEditor`, `RichTextView` и `sanitizeRichText`, как тесты
- * Обёртки: вставка — Меню вставки и меню ручки, клавиши — настоящие `keydown`,
- * результат — выходной HTML, Markdown и шаг отмены. Каретка ставится командами
- * движка: jsdom не умеет ввода в `contenteditable`.
+ * Through the public `RichTextEditor`, `RichTextView` and `sanitizeRichText`, the way the Wrapper tests do:
+ * insertion goes through the Slash menu and the Block handle menu, keys are real `keydown` events,
+ * the result is the output HTML, Markdown and the undo step. The caret is set by
+ * engine commands: jsdom does not support typing into `contenteditable`.
  */
 function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
@@ -64,7 +64,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, editor, handle: ref.current! };
 }
 
-/** Блок так, как его пишет Редактор (без `persist`). */
+/** A Block as the Editor writes it (without `persist`). */
 const details = (title: string, ...blocks: string[]) =>
   `<details><summary>${title}</summary><div data-type="detailsContent">${blocks.join("")}</div></details>`;
 const openDetails = (title: string, ...blocks: string[]) =>
@@ -72,7 +72,7 @@ const openDetails = (title: string, ...blocks: string[]) =>
 
 const PERSIST = [...TOOLS.filter((name) => name !== "details"), tool("details", { persist: true })];
 
-// ── Схема и HTML ─────────────────────────────────────────────────────────
+// ── Schema and HTML ─────────────────────────────────────────────────────────
 
 test("a details block of any content survives a round trip with no other attributes", () => {
   const html = details(
@@ -105,7 +105,7 @@ test("with persist the open attribute is read and written", () => {
 test("a value that is not a boolean falls back to the default persist", () => {
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
   const { editor } = renderEditor({
-    // Из JS без типов: строка вместо булева значения.
+    // From JS without types: a string instead of a boolean.
     tools: [
       ...TOOLS.filter((name) => name !== "details"),
       tool("details", { persist: "yes" as never }),
@@ -172,7 +172,7 @@ test("a layout or a wrapper inside a details block unfolds into its blocks", () 
   expect(editor.getHTML()).toBe(details("T", "<p>a</p>", "<p>b</p>", "<p>c</p>"));
 });
 
-// ── Без Инструмента и пресеты ────────────────────────────────────────────
+// ── No Tool and presets ────────────────────────────────────────────
 
 test("without the details tool the title becomes a paragraph and the content follows", () => {
   const { editor } = renderEditor({
@@ -204,7 +204,7 @@ test("an unknown option of the details tool is ignored", () => {
   expect(error).toHaveBeenCalled();
 });
 
-// ── Санитайзер ───────────────────────────────────────────────────────────
+// ── Sanitizer ───────────────────────────────────────────────────────────
 
 test("a value goes through the engine, the sanitizer and back without loss", () => {
   const purify = createDOMPurify(window);
@@ -231,28 +231,28 @@ test("a value goes through the engine, the sanitizer and back without loss", () 
 test("sanitizeRichText keeps the details markup only in the shape the schema produces", () => {
   const purify = createDOMPurify(window);
   for (const [input, output] of [
-    // Каноническая форма и пустой `open`.
+    // The canonical form and an empty `open`.
     [openDetails("T", "<p>a</p>"), openDetails("T", "<p>a</p>")],
-    // Чужие атрибуты и обработчики снимаются.
+    // Foreign attributes and handlers are stripped.
     [
       '<details class="c" style="color:red" onclick="x()"><summary id="s" onclick="x()">T</summary><div data-type="detailsContent" class="k"><p>a</p></div></details>',
       details("T", "<p>a</p>"),
     ],
-    // `open` с чужим значением не проходит: пишется только пустой.
+    // An `open` with a foreign value does not pass: only an empty one is written.
     [
       '<details open="open"><summary>T</summary><p>a</p></details>',
       "<details><summary>T</summary><p>a</p></details>",
     ],
-    // `open` — только на `details`.
+    // `open` is only allowed on `details`.
     ['<p open="">a</p>', "<p>a</p>"],
-    // `summary` вне `details` и обёртка содержимого вне него теряют тег.
+    // A `summary` outside `details`, and the content wrapper outside it, lose their tag.
     ["<summary>T</summary><p>a</p>", "T<p>a</p>"],
     ['<div data-type="detailsContent"><p>a</p></div>', "<p>a</p>"],
     [
       '<blockquote><div data-type="detailsContent"><p>a</p></div></blockquote>',
       "<blockquote><p>a</p></blockquote>",
     ],
-    // `data-type` обёртки — только это значение и только прямо в `details`.
+    // The wrapper's `data-type` is only this value, and only directly inside `details`.
     [
       `<details><summary>T</summary><div data-type="other"><p>a</p></div></details>`,
       "<details><summary>T</summary><p>a</p></details>",
@@ -261,17 +261,17 @@ test("sanitizeRichText keeps the details markup only in the shape the schema pro
       '<details><summary>T</summary><blockquote><div data-type="detailsContent"><p>a</p></div></blockquote></details>',
       "<details><summary>T</summary><blockquote><p>a</p></blockquote></details>",
     ],
-    // `div` без метки — не обёртка содержимого.
+    // A `div` without a label is not a content wrapper.
     [
       "<details><summary>T</summary><div><p>a</p></div></details>",
       "<details><summary>T</summary><p>a</p></details>",
     ],
-    // Опасное в заголовке и содержимом срезается, как везде.
+    // Dangerous markup in the title and the content is stripped, as everywhere else.
     [
       '<details><summary>T<img src="x" onerror="x()"><script>x()</script></summary><iframe src="https://example.com"></iframe><p>a</p></details>',
       "<details><summary>T</summary><p>a</p></details>",
     ],
-    // `data-type` вне Блока остаётся только у чек-листа.
+    // `data-type` outside a Block is kept only for the task list.
     ['<div data-type="taskList"><p>a</p></div>', "<p>a</p>"],
   ] as [string, string][]) {
     expect(sanitizeRichText(input, purify), input).toBe(output);
@@ -380,7 +380,7 @@ test("without the details tool Markdown with a details block unfolds into blocks
   expect(html).not.toContain("details");
 });
 
-// ── Просмотр ─────────────────────────────────────────────────────────────
+// ── View ─────────────────────────────────────────────────────────────
 
 test("RichTextView shows the block as native details and summary, closed unless open is saved", () => {
   const { container } = render(
@@ -394,18 +394,18 @@ test("RichTextView shows the block as native details and summary, closed unless 
   expect(blocks[0]!.querySelector(':scope > div[data-type="detailsContent"]')?.textContent).toBe(
     "a"
   );
-  // Без движка и без роли: родной элемент отдаёт скринридеру сам браузер.
+  // No engine and no role: the browser exposes the native element to screen readers itself.
   expect(container.querySelector("button")).toBeNull();
   expect(blocks[0]!.getAttribute("role")).toBeNull();
 });
 
-// ── Вставка и набор ──────────────────────────────────────────────────────
+// ── Insertion and typing ──────────────────────────────────────────────────────
 
 function focusField() {
   act(() => screen.getByRole("textbox", { name: "Body" }).focus());
 }
 
-/** Каретка — в конец текста `text` (или в его начало). */
+/** The caret goes to the end of the `text` text (or to its start). */
 function caretIn(editor: Editor, text: string, at: "end" | "start" = "end") {
   let found = -1;
   editor.state.doc.descendants((node, pos) => {
@@ -421,14 +421,14 @@ function type(editor: Editor, text: string) {
   act(() => void editor.commands.insertContent(text));
 }
 
-/** `keydown` на документе; `true` — Редактор отпустил клавишу браузеру. */
+/** A `keydown` on the Document; `true` means the Editor released the key to the browser. */
 function press(editor: Editor, key: string, init: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
   act(() => void editor.view.dom.dispatchEvent(event));
   return !event.defaultPrevented;
 }
 
-/** Раскрыть все закрытые Блоки щелчком по кнопке — так, как это делает автор. */
+/** Expands all closed Blocks by clicking the button, the way the author does it. */
 function openAll() {
   for (const button of screen.getAllByRole("button", { name: /^Details:/ })) {
     if (button.getAttribute("aria-expanded") === "false") act(() => button.click());
@@ -450,7 +450,7 @@ test("the Details item of the insert menu adds an empty block below, caret in th
 
   expect(editor.getHTML()).toBe("<p>Intro </p>" + details("", "<p></p>"));
   expect(nodeName(editor)).toBe("detailsSummary");
-  // Открытость без `persist` живёт в представлении: после вставки Блок раскрыт.
+  // Openness without `persist` lives in the view: after insertion the Block is expanded.
   await waitFor(() => expect(blockDom(editor).classList.contains("is-open")).toBe(true));
   expect(
     blockDom(editor).querySelector('div[data-type="detailsContent"]')?.hasAttribute("hidden")
@@ -527,7 +527,7 @@ test("from a list or a quote the block goes below the whole block, from a wrappe
   caretIn(editor, "Quoted");
   type(editor, " /collapsible");
   press(editor, "Enter");
-  // Цитата — не контейнер Блоков: новый Блок встаёт под ней целиком, как Разделитель.
+  // A quote is not a container of Blocks: the new Block goes below it as a whole, like a Horizontal rule.
   expect(editor.getHTML()).toContain(
     "<blockquote><p>Quoted </p></blockquote>" + details("", "<p></p>")
   );
@@ -558,7 +558,7 @@ test("a block is filled like a document: title first, then lines and a list in t
   await waitFor(() => expect(blockDom(editor).classList.contains("is-open")).toBe(true));
 
   type(editor, "Heading");
-  // Блок раскрыт: Enter в заголовке уходит в содержимое.
+  // The Block is expanded: Enter in the title goes into the content.
   press(editor, "Enter");
   expect(nodeName(editor)).toBe("paragraph");
   expect(editor.state.selection.$from.node(-1).type.name).toBe("detailsContent");
@@ -568,11 +568,11 @@ test("a block is filled like a document: title first, then lines and a list in t
   type(editor, "Item");
 
   const html = editor.getHTML();
-  // Enter из заголовка встал в пустой абзац содержимого, а не добавил второй.
+  // Enter from the title created an empty paragraph in the content, not a second one.
   expect(html).not.toContain("<p></p>");
   expect(html).toContain("<summary>Heading</summary>");
   expect(html).toContain("<p>Text</p><ul><li><p>Item</p></li></ul>");
-  // Всё это — в содержимом Блока, а не рядом с ним.
+  // All of this is inside the Block's content, not next to it.
   expect(html.indexOf('<div data-type="detailsContent">')).toBeLessThan(
     html.indexOf("<p>Text</p>")
   );
@@ -597,7 +597,7 @@ test("other blocks from the insert menu stay inside the content: a divider and a
   expect(editor.state.doc.childCount).toBe(1);
 });
 
-// ── Раскрытие ────────────────────────────────────────────────────────────
+// ── Expanding ────────────────────────────────────────────────────────────
 
 test("the toggle button is named by the title, expands and collapses the content", async () => {
   const user = userEvent.setup();
@@ -606,7 +606,7 @@ test("the toggle button is named by the title, expands and collapses the content
   const content = () =>
     editor.view.dom.querySelector<HTMLElement>('div[data-type="detailsContent"]')!;
 
-  // Закрыт: содержимое спрятано, кнопка это говорит.
+  // Closed: the content is hidden, and the button says so.
   expect(button.getAttribute("aria-expanded")).toBe("false");
   expect(content().hasAttribute("hidden")).toBe(true);
 
@@ -685,7 +685,7 @@ test("the toggle button name follows the title and the locale", () => {
   expect(screen.getByRole("button", { name: ru.editor.detailsToggle({ text: "" }) })).toBeTruthy();
 });
 
-// ── Клавиатура ───────────────────────────────────────────────────────────
+// ── Keyboard ───────────────────────────────────────────────────────────
 
 test("the toggle button is reachable by Tab and works with Enter and Space", async () => {
   const user = userEvent.setup();
@@ -694,7 +694,7 @@ test("the toggle button is reachable by Tab and works with Enter and Space", asy
   });
   const first = screen.getByRole("button", { name: "Details: First" });
   const second = screen.getByRole("button", { name: "Details: Second" });
-  // Не `tabindex="-1"`: кнопка в порядке обхода Документа.
+  // Not `tabindex="-1"`: the button is in the Document's tab order.
   expect(first.tabIndex).toBe(0);
 
   first.focus();
@@ -719,7 +719,7 @@ test("a keyboard toggle does not pull focus back once it has moved to another bu
 
   first.focus();
   await user.keyboard("{Enter}");
-  // До кадра, в котором возвращается фокус, человек уже на следующей кнопке.
+  // Before the frame in which focus is returned, the person is already on the next button.
   second.focus();
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   expect(document.activeElement).toBe(second);
@@ -819,7 +819,7 @@ test("moving and duplicating a block inside the content stay inside it", () => {
   expect(editor.getHTML()).toBe(`<p>Above</p>${details("Title", "<p>Two</p>", "<p>One</p>")}`);
 });
 
-// ── Ручка Блока ──────────────────────────────────────────────────────────
+// ── Block handle ──────────────────────────────────────────────────────────
 
 const HANDLE = "Block actions";
 
@@ -939,7 +939,7 @@ test("a details block has no Wrapper-style tone submenu", async () => {
   expect(within(await openHandleMenu(user)).queryByRole("menuitem", { name: /Tone/ })).toBeNull();
 });
 
-// ── Вставка из буфера ────────────────────────────────────────────────────
+// ── Paste from the clipboard ────────────────────────────────────────────────────
 
 function paste(editor: Editor, html: string) {
   act(() => void editor.view.pasteHTML(html, new Event("paste") as ClipboardEvent));

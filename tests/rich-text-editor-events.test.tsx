@@ -16,7 +16,7 @@ import { resetDevWarnings } from "../src/lib/dev-warn.js";
 import { testPasteFilterTool, testVideoLinkTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
-// Ленивые `codeBlock` и `table` (OLDSUI-111): `full` готов в `render` после загрузки чанков.
+// Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
 afterEach(() => {
@@ -26,11 +26,11 @@ afterEach(() => {
 });
 
 /**
- * События Редактора (OLDSUI-108, ADR-0058, раздел 9): колбэки `onReady`,
- * `onFocus`, `onBlur` и порядок обработчиков вставки и drop.
+ * Editor events (OLDSUI-108, ADR-0058, section 9): the `onReady` callbacks,
+ * `onFocus`, `onBlur` and the order of the paste and drop handlers.
  *
- * Через публичный `RichTextEditor`. Фокус переводится настоящим `focus()` и
- * кликами `user-event`: `focusin` и `focusout` в jsdom идут, как в браузере.
+ * Through the public `RichTextEditor`. Focus moves with a real `focus()` and
+ * `user-event` clicks: `focusin` and `focusout` fire in jsdom, as they do in the browser.
  */
 function renderEditor(
   props: Partial<RichTextEditorProps> = {},
@@ -44,7 +44,7 @@ function renderEditor(
   return { ...view, ref, editor };
 }
 
-/** Редактор рядом с внешней кнопкой: уйти фокусом из поля, не покидая страницы. */
+/** An Editor next to an external button: move focus out of the field without leaving the page. */
 function renderBeside(props: Partial<RichTextEditorProps> = {}) {
   const ref = createRef<RichTextEditorHandle>();
   const view = render(
@@ -56,10 +56,10 @@ function renderBeside(props: Partial<RichTextEditorProps> = {}) {
   return { ...view, ref, editor: ref.current!.editor! };
 }
 
-/** Фокус в Документ настоящим `focus()`: команда движка ставит его кадром позже. */
+/** Focus the Document with a real `focus()`: the engine command sets it a frame later. */
 const focusDocument = (editor: Editor) => act(() => editor.view.dom.focus());
 
-/** Пустая цепочка событий: даём таймерам и эффектам отработать. */
+/** Waits for pending events: lets timers and effects run. */
 const settle = () =>
   act(async () => void (await new Promise((resolve) => setTimeout(resolve, 10))));
 
@@ -82,7 +82,7 @@ test("onReady fires once, with the handle already working", () => {
   expect(inside).toEqual({ insert: true, empty: true });
   expect(ref.current?.getHTML()).toBe("<p>Template</p>");
 
-  // Новый колбэк и перерисовка движок не пересоздают: повторного `onReady` нет.
+  // A new callback and a re-render do not recreate the engine: there is no second `onReady`.
   rerender(<RichTextEditor ref={ref} aria-label="Body" onReady={onReady} placeholder="Other" />);
   expect(onReady).toHaveBeenCalledTimes(1);
 });
@@ -138,7 +138,7 @@ test("onFocus fires once when focus enters the field, onBlur once when it leaves
   expect(onBlur).toHaveBeenCalledWith();
   expect(onFocus).toHaveBeenCalledTimes(1);
 
-  // И обратно: новый вход в поле — новый `onFocus`.
+  // And back: a new entry into the field is a new `onFocus`.
   focusDocument(editor);
   expect(onFocus).toHaveBeenCalledTimes(2);
 });
@@ -161,7 +161,7 @@ test("moving from the text to the toolbar and back is not a blur", async () => {
   expect(onFocus).toHaveBeenCalledTimes(1);
   expect(onBlur).not.toHaveBeenCalled();
 
-  // Уход из поля после этого всё ещё даёт один `onBlur`.
+  // Leaving the field after that still gives one `onBlur`.
   await user.click(screen.getByRole("button", { name: "Outside" }));
   await waitFor(() => expect(onBlur).toHaveBeenCalledTimes(1));
 });
@@ -273,9 +273,9 @@ test("onChange keeps its contract: throttled, once with the latest HTML", () => 
   }
 });
 
-/* ------------------------------------------------- порядок вставки и drop */
+/* ------------------------------------------------- order of paste and drop */
 
-/** Вставка из буфера целым событием `paste`: данные буфера — объектом, как в тестах Markdown. */
+/** Paste from the clipboard as a whole `paste` event: the clipboard data is an object, as in the Markdown tests. */
 function pasteEvent(
   editor: Editor,
   payload: { text?: string; html?: string; files?: File[] }
@@ -296,7 +296,7 @@ function pasteEvent(
   return event.defaultPrevented;
 }
 
-/** Drop через `handleDrop` плагинов: позиции по координатам в jsdom нет. */
+/** Drop through the plugins' `handleDrop`: there are no coordinate positions in jsdom. */
 function dropFiles(editor: Editor, files: File[]): boolean {
   const event = Object.assign(new Event("drop", { cancelable: true }), {
     dataTransfer: { files },
@@ -356,7 +356,7 @@ test("without the custom tool the same text is pasted by the built-in paste", ()
 });
 
 test("the order does not depend on where the custom tool stands in tools", () => {
-  // Свой Инструмент — первым в списке, встроенные — после: он всё равно раньше.
+  // The custom Tool is first in the list and the built-in ones come after it, yet it still runs first.
   const { editor } = renderEditor({
     tools: [testVideoLinkTool, ...RICH_TEXT_PRESETS.full],
     defaultValue: "<p>Intro</p>",
@@ -379,7 +379,7 @@ test("a custom paste filter runs first, and the Schema still parses its result",
   pasteEvent(editor, { html: "<p>keep <s>struck</s></p>", text: "keep struck" });
 
   expect(trace).toContain("transformPastedHTML");
-  // Фильтр дописал `<script>` и `onclick`: Схема их не знает и отбрасывает.
+  // The filter added `<script>` and `onclick`: the Schema does not know them and drops them.
   expect(editor.getHTML()).toBe("<p>keep <s>struck</s></p><p>added</p>");
 });
 
@@ -391,15 +391,15 @@ test("a custom transaction past maxLength is rejected whole; the built-in paste 
   });
   act(() => void editor.commands.setTextSelection(5));
 
-  // Своя вставка за пределом: транзакция отклонена целиком, ни одного символа.
+  // A custom paste beyond the limit: the transaction is rejected as a whole, not a single character.
   pasteEvent(editor, { text: "!!abcdefgh" });
   expect(editor.getHTML()).toBe("<p>1234</p>");
 
-  // Своя вставка в пределе проходит.
+  // A custom paste within the limit goes through.
   pasteEvent(editor, { text: "!!ab" });
   expect(editor.getHTML()).toBe("<p>1234ab</p>");
 
-  // Встроенная вставка за пределом режет хвост, как раньше.
+  // A built-in paste beyond the limit cuts the tail, as before.
   pasteEvent(editor, { text: "cdefgh" });
   expect(editor.getHTML()).toBe("<p>1234abcd</p>");
 });
