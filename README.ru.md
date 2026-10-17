@@ -108,6 +108,8 @@ export function CreateProject() {
 <html data-theme="light" data-accent="violet"></html>
 ```
 
+Скругление углов — отдельная ось, `data-radius`: `none`, `small`, `medium` (по умолчанию) или `large`. См. раздел [Radius](docs/theming.md#radius).
+
 Язык интерфейса по умолчанию — английский. Русские подписи подключаются одним провайдером:
 
 ```tsx
