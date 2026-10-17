@@ -14,47 +14,46 @@ import { Popover, PopoverContent, PopoverTrigger } from "../overlays/Popover.js"
 import { Select } from "../inputs/Select.js";
 
 /**
- * Разделитель составного ключа «поле + значение».
+ * The separator of the composite "field + value" key.
  *
- * Ключ нужен, чтобы за один проход узнать, какие пары уже выбраны: искать
- * пару перебором списка на каждый пункт меню — квадрат по числу фильтров.
- * Разделителем взят символ, которого не бывает в идентификаторе поля или
- * значения, иначе пары `a` + `bc` и `ab` + `c` дали бы один ключ.
+ * The key is needed to find in a single pass which pairs are already selected: finding the pair
+ * by scanning the list for each menu item is quadratic in the number of filters. The separator is
+ * a character that cannot occur in a field identifier or a value, otherwise the pairs `a` + `bc`
+ * and `ab` + `c` would produce one key.
  *
- * Записан ИМЕННО escape-последовательностью, а не самим символом. Сырой
- * нулевой байт в исходнике делает файл бинарным для `file` и `grep`: `grep`
- * такой файл молча пропускает, выходя с кодом 1 и без сообщения, — то есть
- * любой текстовый гейт обходит его стороной, не сказав об этом ни слова.
+ * It is written AS an escape sequence, not as the character itself. A raw null byte in the source
+ * makes the file binary for `file` and `grep`: `grep` silently skips such a file, exiting with
+ * code 1 and no message, so any text-based check would bypass it without a word of warning.
  */
 const KEY_SEPARATOR = "\u0000";
 
 const filterKey = (field: string | undefined, value: string) => `${field}${KEY_SEPARATOR}${value}`;
 
 export interface FilterField {
-  /** Идентификатор поля; попадает в `field` создаваемого фильтра. */
+  /** Field identifier; it goes into the `field` of the filter being created. */
   id: string;
-  /** Подпись поля. Строка: она же попадает в подпись токена. */
+  /** Field label. A string: it also goes into the tag label. */
   label: string;
   /**
-   * Вид поля (ADR-0063). `"values"` — выбор из списка `values`, равенство;
-   * `"number-range"` и `"date-range"` — два поля «от» и «до», токен с `to`.
-   * Не задан — `"values"`.
+   * Field kind (ADR-0063). `"values"` is a choice from the `values` list, an equality;
+   * `"number-range"` and `"date-range"` are two fields, "from" and "to", and a tag with `to`.
+   * If not set, `"values"`.
    */
   kind?: "values" | "number-range" | "date-range";
   /**
-   * Допустимые значения для `kind: "values"`. Пустой список — поле в выборе не
-   * появится. У диапазонов не используется: передайте `[]`.
+   * Allowed values for `kind: "values"`. An empty list means the field will not appear in the
+   * field picker. Not used for ranges: pass `[]`.
    *
-   * Обязательно и у диапазонов: необязательное поле сломало бы потребителя,
-   * который читает `field.values.length` у своих полей (minor не ломает типы).
+   * Required for ranges too: an optional field would break a consumer that reads
+   * `field.values.length` on its own fields (a minor release does not break the types).
    */
   values: { id: string; label: string }[];
 }
 
-/** Строка границы диапазона → число для `NumberInput`; пусто — `null`. */
+/** A range bound as a string → a number for `NumberInput`; empty → `null`. */
 const toNumber = (bound: string) => (bound === "" ? null : Number(bound));
 
-/** Перевёрнутый диапазон: обе границы заданы, и нижняя больше верхней. ISO-даты сравнимы как строки. */
+/** An inverted range: both bounds are set, and the lower one is greater than the upper one. ISO dates compare as strings. */
 function isInverted(kind: FilterField["kind"], from: string, to: string) {
   if (from === "" || to === "") return false;
   return kind === "number-range" ? Number(from) > Number(to) : from > to;
@@ -64,35 +63,34 @@ export interface FilterBarAddProps extends Omit<
   ComponentPropsWithoutRef<"div">,
   "onChange" | "children"
 > {
-  /** Поля, по которым можно добавить фильтр, со своими значениями. */
+  /** Fields a filter can be added by, each with its own values. */
   fields: FilterField[];
-  /** Уже применённые: их значения повторно не предлагаются. */
+  /** Filters already applied: their values are not offered again. */
   filters: TableFilter[];
-  /** Получает собранный фильтр после нажатия «Применить». */
+  /** Receives the assembled filter after "Apply" is pressed. */
   onAdd: (filter: TableFilter) => void;
 }
 
 /**
- * Добавление фильтра: выбор поля, затем значения.
+ * Adding a filter: choose a field, then a value.
  *
- * Список полей и значений приходит пропом — доменного словаря в ките не
- * появляется, как и в `FilterBar`.
+ * The list of fields and values comes in as a prop: no domain vocabulary appears in the kit, as
+ * in `FilterBar`.
  *
- * УЖЕ ПРИМЕНЁННОЕ ЗНАЧЕНИЕ ПОВТОРНО НЕ ПРЕДЛАГАЕТСЯ. Иначе пользователь
- * добавляет второй такой же токен, выборка не меняется, и он остаётся с двумя
- * одинаковыми на вид фильтрами, из которых непонятно, какой снимать.
+ * AN ALREADY APPLIED VALUE IS NOT OFFERED AGAIN. Otherwise the user adds a second identical tag,
+ * the selection does not change, and they are left with two filters that look the same, with no
+ * way to tell which one to remove.
  *
- * Идентификатор токена собирается из поля и значения: пара уникальна как раз
- * потому, что дубли запрещены выше.
+ * The tag identifier is built from the field and the value: the pair is unique precisely because
+ * duplicates are forbidden above.
  *
- * ДИАПАЗОН (`kind: "number-range" | "date-range"`) — два поля вместо списка
- * значений, ADR-0063. «Применить» доступно, когда задана хотя бы одна граница;
- * перевёрнутый диапазон («от 100 до 50») применить нельзя — он ничего не
- * выберет, а пустоту пользователь прочтёт как «данных нет». Поле с уже
- * применённым диапазоном повторно не предлагается: два диапазона по одному
- * полю — пересечение, а не добавление, и токены были бы неразличимы. Подпись
- * токена («Сумма: 50–100», «Дата: до 12 марта 2026 г.») собирается здесь, из
- * каталога сообщений и локали `UiProvider`, и едет в `label`.
+ * A RANGE (`kind: "number-range" | "date-range"`) is two fields instead of a list of values,
+ * ADR-0063. "Apply" is available when at least one bound is set. An inverted range ("from 100 to
+ * 50") cannot be applied: it would select nothing, and the user would read the emptiness as "no
+ * data". A field with an already applied range is not offered again: two ranges on the same field
+ * would be an intersection, not an addition, and the tags would be indistinguishable. The tag
+ * label ("Amount: 50–100", "Date: until 12 March 2026") is built here, from the messages catalog
+ * and the locale of `UiProvider`, and goes into `label`.
  */
 export const FilterBarAdd = forwardRef<HTMLDivElement, FilterBarAddProps>(function FilterBarAdd(
   { fields, filters, onAdd, className, ...rest },
@@ -103,7 +101,7 @@ export const FilterBarAdd = forwardRef<HTMLDivElement, FilterBarAddProps>(functi
   const [open, setOpen] = useState(false);
   const [field, setField] = useState<string | null>(null);
   const [value, setValue] = useState<string | null>(null);
-  // Границы диапазона строками, как они уйдут в фильтр; пусто — не задана.
+  // The range bounds as strings, the way they will go into the filter; empty means not set.
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -128,9 +126,8 @@ export const FilterBarAdd = forwardRef<HTMLDivElement, FilterBarAddProps>(functi
     setValue(null);
     setFrom("");
     setTo("");
-    // Фокус возвращается на кнопку, а не теряется в закрывшемся попоувере:
-    // потерянный фокус уезжает в начало документа, и клавиатурный пользователь
-    // начинает обход страницы заново.
+    // Focus returns to the button rather than being lost in the closing popover: lost focus jumps
+    // to the start of the document, and a keyboard user starts navigating the page from scratch.
     triggerRef.current?.focus();
   };
 
@@ -147,8 +144,8 @@ export const FilterBarAdd = forwardRef<HTMLDivElement, FilterBarAddProps>(functi
         id: `${current.id}:range`,
         field: current.id,
         value: from,
-        // Пустая строка, а не отсутствие ключа: именно `to` отличает «от 50»
-        // от равенства «= 50».
+        // An empty string rather than a missing key: it is `to` that tells "from 50" apart
+        // from the equality "= 50".
         to,
         label: `${current.label}: ${rangeText(messages, format(from, locale), format(to, locale))}`,
       });
@@ -173,8 +170,8 @@ export const FilterBarAdd = forwardRef<HTMLDivElement, FilterBarAddProps>(functi
       <Popover open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
         <PopoverTrigger asChild>
           {/*
-            `asChild` обязателен: без него Radix рисует свою кнопку вокруг
-            нашей, и получается кнопка в кнопке — аудит роняет прогон.
+            `asChild` is required: without it Radix draws its own button around ours, and the result
+            is a button inside a button, which fails the audit run.
           */}
           <Button
             ref={triggerRef}
@@ -202,9 +199,8 @@ export const FilterBarAdd = forwardRef<HTMLDivElement, FilterBarAddProps>(functi
           />
 
           {/*
-            Второй шаг рисуется ТОЛЬКО после выбора поля: пустой выключенный
-            селект рядом с заполненным читается как ошибка, а не как «шаг ещё
-            не пройден».
+            The second step is rendered ONLY after a field is chosen: an empty, disabled select next
+            to a filled one reads as an error, not as "a step not yet completed".
           */}
           {current && kind === "values" ? (
             <Select
@@ -236,8 +232,8 @@ export const FilterBarAdd = forwardRef<HTMLDivElement, FilterBarAddProps>(functi
           {current && kind === "date-range" ? (
             <>
               {/*
-                У `DatePicker` нет пропа с именем, а триггер показывает дату, а
-                не подпись поля: имя несёт группа вокруг него.
+                The `DatePicker` has no name prop, and its trigger shows a date rather than the
+                field label: the group around it carries the name.
               */}
               <div role="group" aria-label={messages.filterBar.fromField}>
                 <DatePicker

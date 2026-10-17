@@ -7,59 +7,55 @@ import { OVERLAY_LAYER } from "../../lib/overlay-layer.js";
 import { withoutToolbarAxis } from "../../lib/toolbar-axis.js";
 
 /**
- * Всплывающая панель — подложка для выпадающих списков, календарей и подсказок
- * со сложным содержимым.
+ * The popover panel: a surface for dropdown lists, calendars and rich hints.
  *
- * Составной API (`Popover` / `PopoverTrigger` / `PopoverContent`) здесь оправдан,
- * в отличие от `SearchSelect`: у панели нет своего содержимого, она только
- * позиционирует чужое, и «один компонент с пропсами» превратился бы в проброс
- * десятка пропсов радикса наружу.
+ * The compound API (`Popover` / `PopoverTrigger` / `PopoverContent`) is justified here, unlike
+ * in `SearchSelect`: the panel has no content of its own, it only positions someone else's, and
+ * a "one component with props" design would turn into forwarding a dozen Radix props outward.
  *
- * Поведение — `@radix-ui/react-popover` из `dependencies` пакета (ADR-0072).
- * Позиционирование у края экрана, порталы, возврат фокуса и закрытие по Escape —
- * не то, что стоит писать заново.
+ * The behavior comes from `@radix-ui/react-popover` in the package's `dependencies` (ADR-0072).
+ * Edge-aware positioning, portals, focus return and closing on Escape are not worth rewriting.
  */
 export const Popover = PopoverPrimitive.Root;
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverAnchor = PopoverPrimitive.Anchor;
 export const PopoverClose = PopoverPrimitive.Close;
 
-/** Портал панели: ось `Toolbar`, из которой открыта панель, внутрь не проходит. */
+/** Portal for the panel. The `Toolbar` axis the panel is opened from does not pass inside it. */
 const Portal = withoutToolbarAxis(PopoverPrimitive.Portal);
 
 type RadixContentProps = ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>;
 
 /**
- * Свойства панели: всё, что принимает `Content` из Radix, и те же свойства
- * позиционирования, объявленные заново с описанием. У самой библиотеки на них
- * нет документации, а таблицы Справочника строятся из неё. Типы — ровно Radix'а
- * (`RadixContentProps[...]`): потребитель, передающий пропсы Radix, не получит
- * новой ошибки компиляции.
+ * Panel props: everything `Content` from Radix accepts, plus the same positioning props,
+ * redeclared with descriptions. The library itself documents none of them, while the Reference
+ * tables are built from these comments. The types are exactly Radix's
+ * (`RadixContentProps[...]`): a consumer who passes Radix props gets no new compile error.
  */
 export interface PopoverContentProps extends RadixContentProps {
-  /** Отдать роль панели вашему элементу вместо встроенного `div`: свойства и `ref` сливаются с его собственными. По умолчанию `false`. */
+  /** Render the panel's role on your element instead of the default `div`: props and `ref` are merged with its own. Defaults to `false`. */
   asChild?: RadixContentProps["asChild"];
-  /** С какой стороны от триггера открывается панель: `top`, `right`, `bottom` или `left`. По умолчанию `bottom`; не хватает места — панель переходит на противоположную сторону. */
+  /** Side of the trigger the panel opens on: `top`, `right`, `bottom` or `left`. Defaults to `bottom`; if there is no room, the panel flips to the opposite side. */
   side?: RadixContentProps["side"];
-  /** Расстояние от триггера до панели, в пикселях. По умолчанию 4. */
+  /** Distance from the trigger to the panel, in pixels. Defaults to 4. */
   sideOffset?: RadixContentProps["sideOffset"];
-  /** Выравнивание панели вдоль выбранной стороны: `start`, `center` или `end`. По умолчанию `start`. */
+  /** Alignment of the panel along the chosen side: `start`, `center` or `end`. Defaults to `start`. */
   align?: RadixContentProps["align"];
-  /** Сдвиг панели вдоль выравнивания, в пикселях. По умолчанию 0. */
+  /** Offset of the panel along the alignment axis, in pixels. Defaults to 0. */
   alignOffset?: RadixContentProps["alignOffset"];
-  /** Минимальный отступ стрелки от края панели, в пикселях. Кит стрелку не рисует: нужен, только если вы вставляете её сами. По умолчанию 0. */
+  /** Minimum distance from the arrow to the panel's edge, in pixels. The kit does not draw an arrow: this matters only if you insert one yourself. Defaults to 0. */
   arrowPadding?: RadixContentProps["arrowPadding"];
-  /** Сдвигать и переворачивать панель, чтобы она не выходила за край окна. По умолчанию `true`. */
+  /** Shift and flip the panel so that it stays inside the window edge. Defaults to `true`. */
   avoidCollisions?: RadixContentProps["avoidCollisions"];
-  /** Элемент или список элементов, за границы которых панель не выходит. По умолчанию — окно браузера. */
+  /** Element or list of elements the panel may not extend beyond. Defaults to the browser window. */
   collisionBoundary?: RadixContentProps["collisionBoundary"];
-  /** Зазор до границы, за которую панель не выходит, в пикселях: число для всех сторон или объект по сторонам. По умолчанию 0. */
+  /** Padding from the collision boundary, in pixels: a number for all sides or an object per side. Defaults to 0. */
   collisionPadding?: RadixContentProps["collisionPadding"];
-  /** Удерживать панель на виду, когда триггер прокручен за край: `partial` — пока виден хотя бы край триггера, `always` — всегда. По умолчанию `partial`. */
+  /** Keep the panel in view while the trigger is scrolled past an edge: `partial` while at least an edge of the trigger is visible, `always` always. Defaults to `partial`. */
   sticky?: RadixContentProps["sticky"];
-  /** Скрывать панель, когда триггер полностью ушёл из видимой области. По умолчанию `false`. */
+  /** Hide the panel when the trigger has fully left the visible area. Defaults to `false`. */
   hideWhenDetached?: RadixContentProps["hideWhenDetached"];
-  /** Когда пересчитывать положение панели: `optimized` — при изменении размеров и прокрутке, `always` — на каждом кадре. По умолчанию `optimized`. */
+  /** When to recalculate the panel position: `optimized` on resize and scroll, `always` on every frame. Defaults to `optimized`. */
   updatePositionStrategy?: RadixContentProps["updatePositionStrategy"];
 }
 
@@ -73,41 +69,36 @@ export const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
           sideOffset={sideOffset}
           className={cn(
             /*
-              `z-[120]` — выше слоя окон, а не ниже него.
+              `z-[120]` is above the window layer, not below it.
 
-              Поповер всегда открывают из того, что уже на экране, поэтому под
-              оверлеем он не нужен никогда: при `z-50` панель уходила под
-              `ModalOverlay` (`z-90`) и под ящик редактирования во фронте
-              (`z-100`) — в разметке она есть, на экране её нет. Потребитель
-              лечил это по месту вызова: в четырёх местах фронта висели
-              `contentClassName="z-[200]"` и `"!z-[110]"`. Значит, неверным
-              было умолчание, а не вызовы.
+              A popover is always opened from something already on screen, so it never needs to sit
+              under an overlay. At `z-50` the panel went under `ModalOverlay` (`z-90`) and under the
+              edit drawer in the front app (`z-100`): it was in the markup, but not on screen.
+              Consumers worked around this at the call site: in four places in the front app,
+              `contentClassName="z-[200]"` and `"!z-[110]"` lived. So the default was wrong, not the
+              call sites.
             */
             OVERLAY_LAYER.popover,
             "border-line-soft bg-bg-1 text-fg-0 shadow-2 rounded-md border p-0 outline-hidden",
             /*
-              Вход — токеном кита, а не утилитами `tailwindcss-animate`.
+              The enter animation is a kit token, not `tailwindcss-animate` utilities.
 
-              Здесь стояли десять классов (`animate-in`, `zoom-in-95`,
-              `fade-in-0`, четыре `slide-in-from-*` и пара `-out`), и ни один из
-              них не давал ни единого правила: плагина, который их объявляет, в
-              зависимостях кита нет и не было. Сборка Tailwind поверх
-              `styles.css` и `src/` не содержала ни одного такого селектора, а у
-              открытой панели `animationName` был `none`. Три строки описывали
-              анимацию, которой не существовало.
+              Ten classes stood here (`animate-in`, `zoom-in-95`, `fade-in-0`, four `slide-in-from-*`
+              and a pair of `-out`), and not one of them produced a rule: the plugin that declares
+              them is not in the kit's dependencies and never was. The Tailwind build over
+              `styles.css` and `src/` contained no such selector, and an open panel had
+              `animationName` set to `none`. Those three lines described an animation that did not
+              exist.
 
-              Замена — свой токен `animate-popoverIn`, заведённый по образцу
-              `tooltipIn`: 0,16 с против 0,4 с у общего `fadein`, которым входят
-              меню и `Select` (`lib/menu.ts`). Общий токен подошёл бы по смыслу,
-              но не по скорости: он рассчитан на подложку окна во весь экран, а
-              якорная панель на четыреста миллисекунд — это заметно вяло.
-              Направленный въезд со стороны триггера при этом теряется: у токенов
-              кита осей `data-side` нет, а четыре токена ради четырёх сторон —
-              цена выше пропажи.
+              The replacement is the kit's own token `animate-popoverIn`, modeled on `tooltipIn`:
+              0.16 s against 0.4 s of the shared `fadein` that menus and `Select` use
+              (`lib/menu.ts`). The shared token would fit in meaning but not in speed: it is designed
+              for a full-screen window backdrop, while an anchored panel at four hundred milliseconds
+              looks sluggish. The directional slide in from the trigger's side is lost: the kit's
+              tokens have no `data-side` axis, and four tokens for four sides cost more than the loss.
 
-              Выхода нет намеренно: `Tooltip` устроен так же (только вход), и
-              закрытие панели остаётся мгновенным — ровно таким, каким было всё
-              это время.
+              There is no exit animation on purpose: `Tooltip` is built the same way (enter only), and
+              closing the panel stays instant, exactly as it has been all along.
             */
             "data-[state=open]:animate-popoverIn data-[state=closed]:animate-popoverOut",
             className

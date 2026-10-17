@@ -9,79 +9,77 @@ import { ScrollArea } from "../content/ScrollArea.js";
 
 export interface ShortcutItem {
   /**
-   * Клавиши сочетания по порядку: `["Ctrl", "K"]`.
+   * The keys of the shortcut, in order: `["Ctrl", "K"]`.
    *
-   * Одна строка на клавишу, а не «Ctrl+K» целиком: каждая рисуется своей `Kbd`,
-   * а между ними встают разделитель для глаз и слово для слуха. Разбирать
-   * строку по `+` кит не берётся — сама клавиша бывает плюсом.
+   * One line per key, not "Ctrl+K" as a whole: each key is drawn with its own `Kbd`, and a
+   * separator for the eyes and a word for the ear go between them. The kit does not try to split
+   * the string on `+`, because the key itself can be the plus sign.
    */
   keys: string[];
-  /** Что делает сочетание: «Открыть поиск». */
+  /** What the shortcut does: "Open search". */
   description: ReactNode;
 }
 
 export interface ShortcutGroup {
-  /** Стабильный ключ группы для списка React; в разметку как `id` не попадает. */
+  /** Stable group key for the React list; it is not rendered into the markup as `id`. */
   id: string;
-  /** Подпись группы: «Навигация», «Редактирование». */
+  /** Group label: "Navigation", "Editing". */
   label: ReactNode;
-  /** Сочетания группы в порядке показа. */
+  /** The group's shortcuts, in display order. */
   items: ShortcutItem[];
 }
 
 export interface ShortcutsHelpProps {
-  /** Показано ли окно со сводом. */
+  /** Whether the dialog with the summary is open. */
   open: boolean;
-  /** Окно просит сменить состояние: кнопка закрытия, Escape и клик мимо дают `false`. */
+  /** The dialog asks to change state: the close button, Escape and a click outside give `false`. */
   onOpenChange: (open: boolean) => void;
-  /** Заголовок окна. Не задан — «Горячие клавиши» из каталога сообщений. */
+  /** Dialog title. If not set, "Keyboard shortcuts" from the messages catalog. */
   title?: ReactNode;
-  /** Группы сочетаний — уже собранные: что и под какой клавишей — знает приложение. */
+  /** The shortcut groups, already assembled: the application knows which action is bound to which key. */
   groups: ShortcutGroup[];
 }
 
 /**
- * Свод горячих клавиш в модальном окне.
+ * A summary of keyboard shortcuts in a modal dialog.
  *
- * КИТ НЕ ЗНАЕТ СОЧЕТАНИЙ И НЕ ВЕШАЕТ ГЛОБАЛЬНЫХ КЛАВИШ. Какие клавиши есть у
- * экрана и по какой из них открывается свод («?», как у GitHub и Linear), решает
- * приложение: оно же сопоставляет нажатия, и с этим кит ничего сделать не может.
- * Буквенные сочетания («G, H») стоит сверять по положению клавиши (`event.code`),
- * иначе на русской раскладке они молчат; знак «?» — по символу (`event.key`). Обработчик глобальной
- * клавиши, поставленный здесь, срабатывал бы и в поле ввода, и поверх чужого
- * диалога — ровно там, где потребитель знает, что делать, а кит нет.
+ * THE KIT DOES NOT KNOW THE SHORTCUTS AND DOES NOT BIND GLOBAL KEYS. Which keys the screen has,
+ * and which one opens this summary ("?", as in GitHub and Linear), is decided by the application:
+ * it also matches the key presses, and the kit can do nothing about that. Letter chords ("G, H")
+ * should be matched by key position (`event.code`), otherwise they stay silent on a Cyrillic
+ * layout; the "?" sign is matched by its character (`event.key`). A global key handler set up here
+ * would fire both in an input field and over someone else's dialog: exactly where the consumer
+ * knows what to do and the kit does not.
  *
- * СОЧЕТАНИЕ СОБИРАЕТ `Kbd`, А НЕ `Keyboard`. Одноимённый `Keyboard` — экранная
- * клавиатура для ввода текста, а не способ нарисовать «Ctrl+K»; формулировка
- * задачи путала их из-за имени.
+ * THE CHORD IS BUILT BY `Kbd`, NOT `Keyboard`. The namesake `Keyboard` is an on-screen keyboard
+ * for typing text, not a way to draw "Ctrl+K"; the task statement mixed them up because of the name.
  *
- * ЧТО УСЛЫШИТ СКРИНРИДЕР. Видимый «+» между клавишами убран из дерева
- * доступности, вместо него читается слово из каталога: «Ctrl плюс K». Знак
- * «+» озвучивается по настройкам пользователя — NVDA на умолчательном уровне
- * пунктуации его пропускает, и «Ctrl K» звучало бы как две клавиши подряд, а не
- * как сочетание. В отличие от `CommandPalette`, где сочетание у пункта целиком
- * `aria-hidden`: там это подсказка рядом с пунктом, который и так выбирается.
- * Здесь сочетание — единственное содержимое окна, скрыть его значило бы
- * показать слепому пустую шпаргалку.
+ * WHAT A SCREEN READER ANNOUNCES. The visible "+" between keys is removed from the accessibility
+ * tree, and the word from the catalog is read instead: "Ctrl plus K". Whether the "+" is spoken
+ * depends on the user's settings: NVDA at its default punctuation level skips it, and "Ctrl K"
+ * would sound like two keys in a row, not a chord. Unlike `CommandPalette`, where the whole chord
+ * of an item is `aria-hidden`: there it is a hint next to an item the user selects anyway. Here
+ * the chord is the only content of the dialog; hiding it would mean showing a blind user an
+ * empty cheat sheet.
  *
- * ПУНКТ — СТРОКА СПИСКА, А НЕ `dl`. Пары «термин — определение» выглядят точнее,
- * но их озвучка непоследовательна: часть пар скринридер/браузер читает без числа
- * элементов и без границ пары. Список читают везде — «список, 3 элемента» — и
- * порядок «описание, затем сочетание» в нём естественен.
+ * AN ITEM IS A LIST ITEM, NOT A `dl`. Term–definition pairs look more precise, but their
+ * announcement is inconsistent: some screen reader and browser combinations read them without the
+ * element count and without the pair boundaries. A list is read the same everywhere ("list, 3
+ * items"), and the order "description, then chord" is natural in it.
  *
- * ГРУППА — ГРУППА С ИМЕНЕМ, а не заголовок. Уровень заголовка зависит от того,
- * куда окно встало; тот же довод и тот же разбор, что у `NotificationList`.
+ * A GROUP IS A NAMED GROUP, not a heading. The heading level depends on where the dialog sits in
+ * the page; the same argument and the same analysis as for `NotificationList`.
  *
- * ПРОКРУТКА — ВНУТРИ ОКНА, на `ScrollArea` кита. Длинный свод не выталкивает
- * шапку с крестиком за экран. Область получает остановку табуляции и имя: без
- * первой пользователь клавиатуры не прокрутит её стрелками, без второй
- * остановка безымянна.
+ * SCROLLING IS INSIDE THE DIALOG, on the kit's `ScrollArea`. A long summary does not push the
+ * header with the close button off the screen. The area gets a tab stop and a name: without the
+ * first, a keyboard user cannot scroll it with the arrow keys; without the second, the stop would
+ * be unnamed.
  */
 export function ShortcutsHelp({ open, onOpenChange, title, groups }: ShortcutsHelpProps) {
   const messages = useMessages();
   const baseId = useId();
-  // `hasContent`, а не `??`: пустая строка оставила бы окно без заголовка, а
-  // с ним — без доступного имени.
+  // `hasContent`, not `??`: an empty string would leave the dialog without a title, and with it
+  // without an accessible name.
   const heading = hasContent(title) ? title : messages.shortcutsHelp.title;
   return (
     <Dialog
@@ -92,18 +90,18 @@ export function ShortcutsHelp({ open, onOpenChange, title, groups }: ShortcutsHe
     >
       <ScrollArea
         label={messages.shortcutsHelp.list}
-        // Рамка фокуса внутри области: снаружи её срезало бы краем самой области.
-        // `relative` — не косметика: слова-разделители под `sr-only` абсолютно
-        // позиционированы, и без опорного предка они уезжали к подложке окна и
-        // растягивали её прокрутку на всю длину списка (нашла ручная проверка).
+        // The focus ring sits inside the area: outside it, the area's own edge would clip it.
+        // `relative` is not cosmetic: the separator words under `sr-only` are absolutely
+        // positioned, and without a positioned ancestor they drifted to the dialog's backdrop and
+        // stretched its scroll to the full length of the list (caught by manual testing).
         className="relative max-h-[min(70vh,32rem)] rounded-b-lg px-5 py-4 focus-visible:-outline-offset-2"
       >
         <div className="flex flex-col gap-5">
           {groups
             .filter((group) => group.items.length > 0)
             .map((group, groupIndex) => {
-              // Номер, а не `group.id`: `aria-labelledby` — список идентификаторов
-              // через пробел, и `id` с пробелом оставил бы группу без имени.
+              // An index, not `group.id`: `aria-labelledby` is a space-separated list of IDs,
+              // and an `id` containing a space would leave the group without a name.
               const labelId = `${baseId}-${groupIndex}`;
               return (
                 <div key={group.id} role="group" aria-labelledby={labelId}>

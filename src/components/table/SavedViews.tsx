@@ -6,86 +6,81 @@ import { cn } from "../../lib/cn.js";
 import { Chip } from "../actions/Chip.js";
 
 /**
- * Сохранённый вид: имя и СНИМОК состояния, каким его дал потребитель.
+ * A saved view: a name and a SNAPSHOT of the state, as the consumer provided it.
  *
- * Тип параметризован снимком, а не привязан к `TableState`, и это результат
- * чтения заказчика, а не запас на будущее
- * (ADR-0033).
- * У известного заказчика — `features/library/useFilters.js` во фронте —
- * состояние живёт в АДРЕСЕ и экран вовсе не таблица, а сетка карточек.
- * Привязка к `TableState` отрезала бы единственного потребителя от компонента,
- * написанного ради него же.
+ * The type is parameterized by the snapshot, not bound to `TableState`. This is the result of
+ * reading the consumer's code, not a hedge for the future (ADR-0033). In the one known consumer,
+ * `features/library/useFilters.js` in the front app, the state lives in the URL, and the screen is
+ * not a table at all but a grid of cards. Binding to `TableState` would cut the only consumer off
+ * from a component written for it.
  *
- * Кит внутрь `state` не заглядывает и ничего в нём не понимает: хранит как
- * непрозрачное значение и отдаёт обратно при выборе. Сравнение видов между
- * собой, вычисление «текущий вид изменён» и сериализация — знание потребителя.
+ * The kit does not look inside `state` and understands nothing in it: it stores it as an opaque
+ * value and hands it back on selection. Comparing views with each other, computing "the current
+ * view has changed", and serialization are the consumer's knowledge.
  */
 export interface SavedView<T = unknown> {
-  /** Идентификатор вида: ключ в списке и значение для сравнения с `activeId`. */
+  /** The view identifier: the key in the list and the value compared with `activeId`. */
   id: string;
-  /** Имя вида — оно же подпись чипа. */
+  /** The view name; it is also the chip label. */
   name: ReactNode;
-  /** Снимок состояния. Кит его не читает и не интерпретирует. */
+  /** The state snapshot. The kit does not read or interpret it. */
   state: T;
 }
 
 export interface SavedViewsProps<T = unknown> {
-  /** Список сохранённых видов; пустой список не рисуется вовсе. */
+  /** The list of saved views; an empty list is not rendered at all. */
   views: SavedView<T>[];
   /**
-   * Идентификатор активного вида, который подсвечивается и объявляется нажатым.
+   * Identifier of the active view, which is highlighted and announced as pressed.
    *
-   * `null` и `undefined` означают «активного
-   * нет» — состояние, которое у заказчика называется «вид по умолчанию» и
-   * получается сбросом адреса.
+   * `null` and `undefined` mean "no active view": the state that the consumer calls "the default
+   * view", which is reached by resetting the URL.
    *
-   * Возврат к умолчанию делается видом, который потребитель кладёт в список
-   * сам: его снимок — это пустое состояние. Своего понятия «сброс» кит не
-   * заводит, потому что не знает, что для приложения пусто.
+   * Returning to the default is done by a view that the consumer puts into the list itself: its
+   * snapshot is the empty state. The kit does not introduce a concept of "reset" of its own,
+   * because it does not know what is empty for the application.
    */
   activeId?: string | null;
   /**
-   * Выбран вид. Приходит вид целиком, а не его идентификатор: применять
-   * снимок потребитель обязан одним действием.
+   * A view was selected. The whole view comes in, not its identifier: the consumer must apply the
+   * snapshot in a single action.
    */
   onSelect: (view: SavedView<T>) => void;
-  /** Доступное имя группы. Без него берётся строка из каталога. */
+  /** The accessible name of the group. If not set, the string is taken from the messages catalog. */
   "aria-label"?: string;
-  /** Класс контейнера группы. */
+  /** The class of the group container. */
   className?: string;
 }
 
 /**
- * Переключатель сохранённых видов: набор именованных снимков состояния.
+ * A switcher for saved views: a set of named state snapshots.
  *
- * ХРАНЕНИЯ ЗДЕСЬ НЕТ ВОВСЕ. Компонент ничего не пишет — ни в `localStorage`,
- * ни в адрес, ни в сеть — и ни на что не подписывается. Модель та же, что у
- * `useTableState` (ADR-0023): кит описывает форму, владеет потребитель. Выбор
- * между адресом, локальным хранилищем и сервером остаётся приложению, а шаринг
- * видов между пользователями — вообще бэкенд.
+ * STORAGE IS NOT HERE AT ALL. The component writes nothing (not to `localStorage`, not to the
+ * URL, not to the network) and subscribes to nothing. The model is the same as `useTableState`
+ * (ADR-0023): the kit describes the shape, and the consumer owns the data. The choice between
+ * the URL, local storage and a server stays with the application, and sharing views between
+ * users is a backend concern altogether.
  *
- * Соблазн здесь сильнее обычного: «сохранённый вид», который ничего не
- * сохраняет, на первый взгляд выглядит бессмыслицей. Он ею не является — кит
- * отвечает за то, как вид ВЫГЛЯДИТ И ПЕРЕКЛЮЧАЕТСЯ, а не за то, где он лежит.
- * Обратное означало бы, что хук, специально ничего не хранящий, обзаводится
- * хранилищем через соседа.
+ * The temptation here is stronger than usual: a "saved view" that saves nothing looks like
+ * nonsense at first glance. It is not. The kit is responsible for how a view LOOKS AND SWITCHES,
+ * not for where it is kept. The opposite would mean that a hook which deliberately stores nothing
+ * acquires storage through a neighbor.
  *
- * Выбор отдаёт весь снимок за один вызов, и это не стилистика. У заказчика
- * состояние переносится в адрес, а последовательные записи по ключу строят
- * адрес из одного и того же снимка текущего рендера: побеждает последняя, а
- * правки предыдущих пропадают. Ровно так во фронте терялась нижняя граница
- * периода при выборе диапазона поверх пресета, и ради этого там появился
- * `setMany`. Компонент, применяющий вид по ключу за раз, воспроизвёл бы тот же
- * дефект у каждого потребителя.
+ * Selection hands over the whole snapshot in one call, and this is not a matter of style. At the
+ * consumer, the state is carried in the URL, and sequential writes by key build the URL from the
+ * same snapshot of the current render: the last write wins, and the edits of the previous ones
+ * are lost. That is exactly how the lower bound of a date range was lost in the front app when a
+ * range was picked on top of a preset, and it is why `setMany` exists there. A component that
+ * applies a view key by key would reproduce the same defect for every consumer.
  *
- * АКТИВНЫЙ ВИД ОБЪЯВЛЯЕТСЯ, а не только подсвечивается: `Chip` несёт
- * `aria-pressed`. Подсветка цветом — не сообщение для скринридера, и это тот
- * же дефект, который чинили у `Segmented` и у переключателя тем.
+ * THE ACTIVE VIEW IS ANNOUNCED, not just highlighted: `Chip` carries `aria-pressed`. Color
+ * highlighting is not a message for a screen reader, and it is the same defect that was fixed
+ * in `Segmented` and in the theme switcher.
  *
- * ЧТО ОСТАЁТСЯ У ПОТРЕБИТЕЛЯ помимо хранения: создание, переименование и
- * удаление вида, доменные ключи внутри снимка и правила их разбора. Из
- * прочитанного экрана в кит не приехало ничего доменного — ни отображение имён
- * сортировки в поля бэкенда, ни ключи фильтров обоев, ни часовой пояс сервера.
+ * WHAT STAYS WITH THE CONSUMER besides storage: creating, renaming and deleting a view, the domain
+ * keys inside the snapshot, and the rules for parsing them. Nothing domain-specific from the
+ * screen that was read came into the kit: neither the mapping of sort names to backend fields,
+ * nor the wallpaper filter keys, nor the server's time zone.
  */
 export function SavedViews<T = unknown>({
   views,
@@ -96,8 +91,8 @@ export function SavedViews<T = unknown>({
 }: SavedViewsProps<T>) {
   const messages = useMessages();
 
-  // Пустой список не рисуется вовсе: пустая группа объявила бы себя
-  // скринридеру, не имея внутри ничего. Тот же приём, что у `Timeline`.
+  // An empty list is not rendered at all: an empty group would announce itself to a screen
+  // reader with nothing inside. The same approach as in `Timeline`.
   if (views.length === 0) return null;
 
   return (
@@ -110,8 +105,8 @@ export function SavedViews<T = unknown>({
         <Chip
           key={view.id}
           selected={view.id === activeId}
-          // Весь вид целиком, а не `view.id`: потребитель обязан получить
-          // снимок и применить его одним действием (см. докстроку выше).
+          // The whole view, not `view.id`: the consumer must receive the snapshot and apply it in
+          // a single action (see the doc comment above).
           onClick={() => onSelect(view)}
         >
           {view.name}
