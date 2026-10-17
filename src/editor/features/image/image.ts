@@ -813,4 +813,4 @@ class ImageView implements NodeView {
 */
 const RESIZE_HANDLE_CLASS =
   "rte-resize-handle absolute top-1/2 hidden h-10 w-2 -translate-y-1/2 cursor-ew-resize " +
-  "rounded-full border border-(--rte-background) bg-(--rte-primary)";
+  "rounded-pill border border-(--rte-background) bg-(--rte-primary)";

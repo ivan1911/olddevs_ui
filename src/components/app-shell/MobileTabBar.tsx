@@ -175,7 +175,7 @@ const BASE =
 const STATE = {
   active:
     "text-accent-strong before:bg-accent-strong before:absolute before:inset-x-3 " +
-    "before:top-0 before:h-0.5 before:rounded-full",
+    "before:top-0 before:h-0.5 before:rounded-pill",
   idle: "text-fg-2 hover:text-fg-0",
 } as const;
 

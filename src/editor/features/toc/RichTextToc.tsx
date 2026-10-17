@@ -746,7 +746,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
                   data-depth={heading.depth}
                   data-current={index === current || undefined}
                   className={cn(
-                    "rounded-full transition-[width,height,background-color]",
+                    "rounded-pill transition-[width,height,background-color]",
                     index === current
                       ? CURRENT_STROKE
                       : cn("bg-fg-3 h-0.5", strokeWidth(heading.depth))
@@ -805,7 +805,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
                     <span aria-hidden className="flex w-4 shrink-0 items-center">
                       <span
                         className={cn(
-                          "rounded-full",
+                          "rounded-pill",
                           index === current
                             ? CURRENT_STROKE
                             : cn("bg-fg-3 h-0.5", strokeWidth(heading.depth))
