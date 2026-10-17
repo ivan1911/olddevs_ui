@@ -40,13 +40,13 @@ test("while submitting the form does not submit again", async () => {
 test("pending disables every field at once instead of one by one", () => {
   render(<FormDemo pending onSubmit={() => {}} />);
 
-  // Родной `<fieldset disabled>` выключает и то, что появится позже, — форме
-  // не нужно знать свой состав.
+  // The native `<fieldset disabled>` also disables fields that are added later,
+  // so the form does not need to know its own contents.
   //
-  // Проверяется `:disabled`, а не свойство `disabled`: последнее отражает
-  // СОБСТВЕННЫЙ атрибут элемента и остаётся `false` внутри выключенного
-  // fieldset — так и в браузере. Унаследованное состояние видно только
-  // псевдоклассу, и именно по нему срабатывают `disabled:` из словаря.
+  // We check `:disabled`, not the `disabled` property: the property reflects the
+  // element's OWN attribute and stays `false` inside a disabled fieldset, as it
+  // does in the browser. Only the pseudo-class sees the inherited state, and that
+  // is what the `disabled:` variants from the dictionary match.
   expect(screen.getByRole("textbox", { name: "Name" }).matches(":disabled")).toBe(true);
   expect(screen.getByRole("checkbox", { name: "Pin" }).matches(":disabled")).toBe(true);
   expect(screen.getByRole("button", { name: "Save" }).matches(":disabled")).toBe(true);
@@ -57,7 +57,7 @@ test("Enter in a text field does not get through while submitting either", async
   const onSubmit = vi.fn();
   const { rerender } = render(<FormDemo onSubmit={onSubmit} />);
 
-  // Сначала убеждаемся, что Enter вообще отправляет форму.
+  // First, make sure Enter submits the form at all.
   await user.type(screen.getByRole("textbox", { name: "Name" }), "{Enter}");
   expect(onSubmit).toHaveBeenCalledTimes(1);
 
@@ -69,8 +69,9 @@ test("Enter in a text field does not get through while submitting either", async
 
 test("a fieldset does not break the layout", () => {
   const { container } = render(<FormDemo onSubmit={() => {}} />);
-  // `contents` убирает сам бокс fieldset из раскладки: поля остаются прямыми
-  // детьми формы с её `gap`, иначе вертикальные отступы схлопнулись бы.
+  // `contents` removes the fieldset box itself from the layout: the fields stay
+  // direct children of the form with its `gap`, otherwise the vertical spacing
+  // would collapse.
   const fieldset = container.querySelector("fieldset")!;
   expect(fieldset.className).toContain("contents");
 });

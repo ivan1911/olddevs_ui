@@ -6,17 +6,17 @@ import { Grid } from "../src/index.js";
 import { resetDevWarnings } from "../src/lib/dev-warn.js";
 
 /**
- * Сетка равных колонок: тег, роли и проброс атрибутов.
+ * Equal-column grid: tag, roles and pass-through of attributes.
  *
- * Число колонок здесь НЕ проверяется: в jsdom нет ни раскладки, ни
- * медиазапросов, и `grid-template-columns` он не вычисляет. Колонки меряются в
- * живом браузере на разной ширине окна (`tests-visual/interactions.spec.ts`), а
- * то, что каждый класс словаря попадает в собранный CSS, стережёт
- * `tests/class-coverage.test.ts` через матрицу.
+ * The column count is NOT checked here: jsdom has no layout and no media queries,
+ * so it does not compute `grid-template-columns`. Columns are measured in a live
+ * browser at different window widths (`tests-visual/interactions.spec.ts`), and
+ * `tests/class-coverage.test.ts` guards, through a matrix, that every class from
+ * the dictionary ends up in the built CSS.
  */
 
-// Предупреждение показывается один раз на модуль — без сброса порядок тестов
-// решал бы, какой из них его увидит.
+// The warning is shown once per module. Without the reset, the test order
+// would decide which of them sees it.
 beforeEach(resetDevWarnings);
 afterEach(() => {
   cleanup();
@@ -24,7 +24,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-/** Так передаст потребитель на JS: тип запись с обеими осями не пропускает. */
+/** How a consumer passes it from JS: the type does not let an entry with both axes through. */
 const Untyped = Grid as unknown as (props: Record<string, unknown>) => ReactElement;
 
 test("by default the grid is a plain block that keeps its children in order", () => {
@@ -37,8 +37,8 @@ test("by default the grid is a plain block that keeps its children in order", ()
   );
 
   const grid = screen.getByTestId("grid");
-  // Тег по умолчанию — `div`: сетка ничего не объявляет, пока её об этом не
-  // попросили. Набор карточек не обязан быть списком.
+  // The default tag is `div`: the grid declares nothing until it is asked to.
+  // A set of cards does not have to be a list.
   expect(grid.tagName).toBe("DIV");
   expect(grid.getAttribute("role")).toBeNull();
   expect([...grid.children].map((child) => child.textContent)).toEqual([
@@ -59,8 +59,8 @@ test("as='ul' announces the set as a list of its items", () => {
 
   const list = screen.getByRole("list", { name: "Plans" });
   expect(list.tagName).toBe("UL");
-  // Роль явная: preflight Tailwind снимает маркеры, и без неё WebKit с
-  // VoiceOver не объявляет такой список списком.
+  // The role is explicit: Tailwind's preflight removes the list markers, and
+  // without the role, WebKit with VoiceOver does not announce such a list as a list.
   expect(list.getAttribute("role")).toBe("list");
   expect(screen.getAllByRole("listitem")).toHaveLength(3);
 });
@@ -96,20 +96,20 @@ test("the consumer's attributes and class reach the element", () => {
 
   const grid = screen.getByTestId("grid");
   expect(grid.id).toBe("cards");
-  // Класс потребителя не теряется при слиянии со словарём.
+  // The consumer's class is not lost when it is merged with the dictionary.
   expect(grid.classList.contains("consumer-class")).toBe(true);
 });
 
 test("columns and minItemWidth exclude each other in the type", () => {
-  // Обе оси сразу — противоречие: колонок либо столько, сколько сказано, либо
-  // столько, сколько влезает. Тип запрещает такую запись, а не выбирает
-  // победителя молча.
-  // @ts-expect-error — columns и minItemWidth взаимоисключающие
+  // Both axes at once is a contradiction: there are either as many columns as
+  // stated, or as many as fit. The type forbids such an entry rather than
+  // silently picking a winner.
+  // @ts-expect-error — columns and minItemWidth are mutually exclusive
   const both = <Grid columns={2} minItemWidth={200} />;
   expect(both).toBeTruthy();
 
-  // Вне закрытого набора значений тип тоже не пропускает.
-  // @ts-expect-error — колонок от одной до шести
+  // Outside the closed set of values, the type does not let it through either.
+  // @ts-expect-error — columns from one to six
   const seven = <Grid columns={7} />;
   expect(seven).toBeTruthy();
 });

@@ -53,24 +53,24 @@ import {
 } from "./icons.js";
 
 /**
- * Kitchen sink — четыре экрана, собранные ТОЛЬКО из экспортов пакета.
+ * Kitchen sink: four screens built ONLY from the package's exports.
  *
- * Это приёмка волн, а не витрина. У новых компонентов нет потребителя: пакет
- * растёт под будущие проекты, а не под текущий фронт, поэтому обычная проверка
- * «внедрено и работает» здесь недоступна. Экран её заменяет — компонент
- * попадает в `index.ts` только после того, как отработал в одном из них.
+ * This is acceptance testing for the waves, not a showcase. New components have no
+ * consumer yet: the package grows for future projects, not for the current front end,
+ * so the usual check of "shipped and working" is not available here. The screen takes
+ * its place: a component reaches `index.ts` only after it has worked in one of them.
  *
- * ПРАВИЛО, по которому экран считается собранным:
+ * THE RULE for a screen to count as built:
  *
- *   можно — раскладочные классы: `flex`, `grid`, `gap-*`, `w-*`, `max-w-*`,
- *           `col-span-*`. Это работа потребителя, и она остаётся ему.
- *   нельзя — всё, что задаёт вид: цвета, рамки, тени, скругления, размеры
- *           текста, состояния. Если экрану это понадобилось, значит в пакете
- *           дырка, и волна не закрыта.
+ *   allowed: layout classes: `flex`, `grid`, `gap-*`, `w-*`, `max-w-*`,
+ *           `col-span-*`. That is the consumer's job, and it stays with the consumer.
+ *   not allowed: anything that sets the look: colors, borders, shadows, radii, text
+ *           sizes, states. If a screen needed one, the package has a gap, and the
+ *           wave is not closed.
  *
- * Экраны — каркасы: волны их дописывают, а не переписывают. Что чем
- * дополняется, отмечено комментарием TODO у каждого экрана; в снимках видно
- * ровно то, что волна добавила.
+ * The screens are scaffolds: the waves extend them, they do not rewrite them. What each
+ * wave adds is marked with a TODO comment on each screen; the snapshots show exactly
+ * what the wave added.
  */
 const meta = {
   title: "Screens/Kitchen sink",
@@ -87,16 +87,16 @@ const CATEGORIES = [
 ];
 
 /**
- * Форма настроек.
+ * Settings form.
  *
- * TODO W8: `Combobox` для категории, `Slider` для лимита.
+ * TODO W8: `Combobox` for the category, `Slider` for the limit.
  */
 export const SettingsForm: Story = {
   render: function Render() {
     const [name, setName] = useState("Daily album");
-    // `string | number | null` руками, а не `SelectId | null`: тип есть в
-    // сигнатуре `SelectProps`, но из пакета не экспортирован. Первая дырка,
-    // которую нашёл kitchen-sink; чинится отдельной задачей.
+    // `string | number | null` is written by hand instead of `SelectId | null`: the type
+    // appears in the `SelectProps` signature but is not exported from the package. This
+    // is the first gap the kitchen sink found; it is fixed in a separate task.
     const [category, setCategory] = useState<string | number | null>("nature");
     const [perDay, setPerDay] = useState<number | null>(3);
     const [caption, setCaption] = useState("Album of the week: peaks and fog");
@@ -202,10 +202,10 @@ export const SettingsForm: Story = {
 };
 
 /**
- * Экран данных: фильтры, поиск, список.
+ * Data screen: filters, search, list.
  *
- * TODO W9: `Pagination`, `Breadcrumbs`. TODO W10: настоящая `Table` вместо
- * карточек-строк, `Badge`-счётчик у фильтров.
+ * TODO W9: `Pagination`, `Breadcrumbs`. TODO W10: a real `Table` instead of card rows,
+ * a `Badge` counter on the filters.
  */
 export const DataScreen: Story = {
   render: function Render() {
@@ -219,9 +219,9 @@ export const DataScreen: Story = {
       { id: 3, title: "Geometry of light", tone: "neutral" as const, status: "Draft" },
     ];
 
-    // `TooltipProvider` обязателен вокруг `Segmented` с подсказками: провайдер
-    // намеренно не встроен в каждый экземпляр (см. докстроку `Tooltip`), и без
-    // него сегменты с одной лишь иконкой остаются без доступного имени.
+    // `TooltipProvider` is required around a `Segmented` that has tooltips. The provider is
+    // deliberately not built into each instance (see the `Tooltip` docstring), and without
+    // it, segments with only an icon have no accessible name.
     return (
       <TooltipProvider delayDuration={0}>
         <div className="flex flex-col gap-4">
@@ -298,10 +298,9 @@ export const DataScreen: Story = {
                   </Card>
                 </ContextMenuTrigger>
                 {/*
-                  Те же действия по правой кнопке мыши. Состав пунктов повторён
-                  намеренно: это два способа добраться до одного и того же, и
-                  расхождение между ними было бы дефектом, а не экономией. Вид у
-                  обоих общий, из `lib/menu.ts`.
+                  The same actions on right-click. The item list is repeated on purpose:
+                  these are two ways to reach the same actions, and a mismatch between
+                  them would be a defect, not a saving. Both share the look from `lib/menu.ts`.
                 */}
                 <ContextMenuContent>
                   <ContextMenuItem icon={<EditIcon size={14} />}>Rename</ContextMenuItem>
@@ -324,10 +323,10 @@ export const DataScreen: Story = {
 };
 
 /**
- * Мастер из шагов.
+ * Multi-step wizard.
  *
- * Навигация шагов пока на `Tabs` — это заглушка. TODO W9: настоящий `Stepper`
- * с пройденными и недоступными шагами.
+ * Step navigation uses `Tabs` for now; this is a placeholder. TODO W9: a real `Stepper`
+ * with completed and unavailable steps.
  */
 export const Wizard: Story = {
   render: function Render() {
@@ -348,9 +347,8 @@ export const Wizard: Story = {
       <div className="mx-auto flex max-w-[560px] flex-col gap-4">
         <PageHeader title="New campaign" subtitle="Step 1 of 3" />
         <Tabs items={steps} value={step} onChange={setStep} />
-        {/* `id` и `role` обязательны: `Tabs` проставляет выбранной вкладке
-            `aria-controls="${id}-panel"`, и без такой панели axe роняет
-            прогон на `aria-valid-attr-value`. */}
+        {/* `id` and `role` are required: `Tabs` sets `aria-controls="${id}-panel"` on the
+            selected tab, and without such a panel axe fails the run on `aria-valid-attr-value`. */}
         <Form onSubmit={() => setPending(true)} pending={pending}>
           <Card id={`${step}-panel`} role="tabpanel" className="flex flex-col gap-4">
             <FormField label="Where photos come from" htmlFor="ks-source" required>
@@ -411,17 +409,17 @@ export const Wizard: Story = {
 };
 
 /**
- * Дашборд: плитки, состояния и сообщения.
+ * Dashboard: tiles, states and messages.
  *
- * Экран собран на типографической шкале волны 7: ни одного `text-[…]` и ни
- * одного размера мимо неё — весь текст идёт через `Text` и `Heading`.
+ * The screen is built on the type scale of wave 7: no `text-[…]` and no size outside
+ * it. All text goes through `Text` and `Heading`.
  *
- * Уровни заголовков непрерывны: `PageHeader` даёт `h1`, заголовки карточек
- * стоят вторым уровнем (`SectionHeader level={2}`), подписи внутри плитки —
- * третьим. Между `h1` и `h3` дыры нет, и оглавление для скринридера читается
- * подряд — это проверяет аудит axe.
+ * Heading levels run without gaps: `PageHeader` renders `h1`, card headings are the
+ * second level (`SectionHeader level={2}`), and labels inside a tile are the third. There
+ * is no gap between `h1` and `h3`, so a screen reader reads the outline in sequence; the
+ * axe audit checks this.
  *
- * TODO W10: `Stat` вместо самодельных плиток.
+ * TODO W10: `Stat` instead of hand-made tiles.
  */
 export const Dashboard: Story = {
   render: function Render() {

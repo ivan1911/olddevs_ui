@@ -30,9 +30,9 @@ export const Swatches: Story = {
         {LABEL_HUES.map((hue) => (
           <div key={hue} className="flex w-[104px] flex-col gap-1.5">
             {/*
-              Именно 10 пикселей: заявка просила различимость на площади метки,
-              а не на образце в половину экрана. Большой квадрат показал бы
-              разными даже те оттенки, которые на кружке сливаются.
+              Exactly 10 pixels: the request asked for the hues to be told apart at the
+              size of a label, not on a swatch that fills half the screen. A large square
+              would make even the shades that blend into a dot look different.
             */}
             <div className="flex items-center gap-2">
               <span className={`size-2.5 shrink-0 rounded-full ${LABEL_BG_CLASS[hue]}`} />

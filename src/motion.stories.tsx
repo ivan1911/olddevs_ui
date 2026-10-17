@@ -11,12 +11,12 @@ export default meta;
 type Story = StoryObj;
 
 /*
- * Классы шкалы перечислены здесь ЦЕЛИКОМ и не случайно.
+ * The scale classes are listed here in full, on purpose.
  *
- * Tailwind собирает утилиту, только встретив её имя в исходнике. Ступень,
- * которую сегодня не пишет ни один компонент (`duration-slow` — верхняя
- * граница шкалы), иначе не попала бы в собранный CSS вовсе, и проверить её в
- * браузере было бы нечем. Витрина — законное место, где шкала показана вся.
+ * Tailwind generates a utility only when it finds its name in the source. A step
+ * that no component uses today (`duration-slow`, the top of the scale) would
+ * otherwise never reach the built CSS, and there would be no way to check it in
+ * the browser. The showcase is the right place to show the whole scale.
  */
 const STEPS = [
   { name: "duration-fast", value: "100ms", role: "hover, press, chevron, checkbox" },
