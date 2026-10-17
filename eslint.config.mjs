@@ -12,15 +12,15 @@ export default tseslint.config(
       "storybook-static/**",
       "test-results/**",
       "playwright-report/**",
-      // Фикстура-потребитель: чужой проект со своими правилами и своим tsconfig.
-      // Её проверяет `npm run check:consumer` сборкой, а не линтером кита.
+      // Consumer fixture: a foreign project with its own rules and its own tsconfig.
+      // It is checked by `npm run check:consumer` through a build, not by the kit's linter.
       "fixtures/**",
     ],
   },
   js.configs.recommended,
   {
-    // Скрипты и конфиги исполняются Node напрямую: у них есть `process` и `console`,
-    // которых нет у кода пакета — тот уезжает в браузер потребителя.
+    // Scripts and configs run in Node directly: they have `process` and `console`,
+    // which the package code does not have, because that code ships to the consumer's browser.
     files: ["scripts/**/*.mjs", "*.config.{ts,mjs}"],
     languageOptions: {
       globals: { console: "readonly", process: "readonly", fetch: "readonly" },
@@ -32,21 +32,21 @@ export default tseslint.config(
     rules: {
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "warn",
-      // Согласовано с фронтом: verbatimModuleSyntax в tsconfig требует того же.
+      // Aligned with the front end: verbatimModuleSyntax in tsconfig requires the same.
       "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
       "no-console": "warn",
     },
   },
   storybook.configs["flat/recommended"],
   {
-    // Плагин пришёл с апгрейдом до 10.5.6 и полезен: он ловит забытый
-    // `export default meta`, истории без имени, `play` без `expect`.
+    // The plugin came with the upgrade to 10.5.6 and is useful: it catches a forgotten
+    // `export default meta`, stories without a name, and `play` without `expect`.
     //
-    // Кроме одного правила. `prefer-pascal-case` проверяет первую букву
-    // регулярным выражением на латиницу и потому считает `Мастер` и `Дашборд`
-    // нарушением — а кит одноязычный, и это решение, а не недосмотр (см. docs/conventions.md).
-    // 183 предупреждения на ровном месте прячут настоящие: правило выключено,
-    // а не заглушено построчно.
+    // One rule is the exception. `prefer-pascal-case` checks the first letter with a
+    // Latin-only regular expression, so it flags `Éclair` and `Ångström` as violations.
+    // The kit is single-language, so this is a deliberate choice, not an oversight
+    // (see docs/conventions.md). 183 warnings from nothing would bury the real ones:
+    // the rule is turned off, not silenced line by line.
     files: ["**/*.stories.tsx"],
     rules: { "storybook/prefer-pascal-case": "off" },
   }

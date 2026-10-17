@@ -1,22 +1,21 @@
 /**
- * Проверка собранного пакета: директивы `"use client"` пережили сборку.
+ * Checks the built package: the `"use client"` directives survived the build.
  *
- * Почему отдельно от `tests/rsc-gate.test.ts`, а не там же. Тот тест смотрит
- * исходники и отвечает за раскладку, которую пишет автор. Здесь проверяется
- * другое и другим: **что директива уцелела в `dist`**. Терять её умеет сборщик,
- * а не человек — Next.js прямо предупреждает авторов библиотек, что конфигурация
- * сборки не должна срезать директиву. Сегодня `tsc` её сохраняет; проверка
- * существует ровно на тот день, когда сборщик сменится.
+ * Why this is separate from `tests/rsc-gate.test.ts` and not in it. That test reads the
+ * sources and covers the layout the author writes. This check covers something else, and
+ * with a different tool: **whether the directive survived into `dist`**. The bundler can
+ * drop it, not the author. Next.js warns library authors directly that the build config
+ * must not strip the directive. Today `tsc` keeps it; this check exists for the day the
+ * bundler changes.
  *
- * Почему скриптом, а не тестом. `dist/` лежит в `.gitignore`, и на свежей копии
- * его нет. Тест, который в этом случае «проходит», был бы зелёным ровно тогда,
- * когда проверять нечего, — то есть бесполезным. Скрипт вместо этого падает с
- * внятным сообщением и ставится сразу после `npm run build`: в джобе CI и в
- * `release:check`.
+ * Why a script and not a test. `dist/` is in `.gitignore`, so a fresh checkout has none of
+ * it. A test that "passes" in that case would be green exactly when there is nothing to
+ * check, which makes it useless. The script fails with a clear message instead, and runs
+ * right after `npm run build`: in the CI job and in `release:check`.
  *
- * Соответствие исходнику проверяется по факту: у каждого `.js` в `dist`
- * ищется парный `.ts`/`.tsx` в `src`, и директивы обязаны совпадать. Свой
- * список здесь не заводится намеренно — два списка разошлись бы молча.
+ * Each `.js` in `dist` is matched to its `.ts`/`.tsx` counterpart in `src`, and the
+ * directives must agree. The list of files is not kept here on purpose: two lists would
+ * drift apart silently.
  */
 
 import { readdirSync, readFileSync, existsSync } from "node:fs";
@@ -45,7 +44,7 @@ function jsFiles(dir) {
   });
 }
 
-/** Первая значащая строка файла: директива обязана стоять до импортов. */
+/** The first meaningful line of the file: the directive must come before any imports. */
 function hasDirective(file) {
   return readFileSync(file, "utf8").trimStart().startsWith(DIRECTIVE);
 }

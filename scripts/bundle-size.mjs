@@ -1,20 +1,20 @@
 /**
- * Бюджет размера: сколько пакет стоит потребителю.
+ * The size budget: what the package costs the consumer.
  *
- * МЕТОД — ЧАСТЬ ПРОВЕРКИ, поэтому он зафиксирован здесь, а не подразумевается.
+ * THE METHOD IS PART OF THE CHECK, so it is written down here rather than implied.
  *
- * - Меряется собранный `dist`, а не `src`: потребитель ставит именно его.
- * - Сборка — rollup внутри vite, тот же сборщик, что у большинства потребителей.
- * - React и все зависимости пакета, peer и `dependencies`, объявлены внешними.
- *   Иначе в числе оказались бы react-aria и Radix, а не кит, и бюджет
- *   реагировал бы на чужие релизы.
- * - Минификация включена, метрика — **gzip**: по сети едет именно он.
+ * - The built `dist` is measured, not `src`: that is what the consumer installs.
+ * - The build is Rollup inside Vite, the same bundler most consumers use.
+ * - React and all of the package's dependencies, peer and `dependencies`, are declared
+ *   external. Otherwise the number would include react-aria and Radix rather than the kit,
+ *   and the budget would react to other projects' releases.
+ * - Minification is on, and the metric is **gzip**, since that is what goes over the wire.
  *
- * Числа этого скрипта отвечают за деревотряску внутри пакета. Они НЕ отвечают
- * за то, сколько получит пользователь Next.js: там граница клиентского графа
- * добавляет своё, и импорт одной кнопки умеет стоить 306 кБ при 6 кБ по этому
- * замеру (ADR-0029). Ту, вторую, величину меряет `npm run check:consumer` — по
- * бюджетам из того же файла, что и здесь.
+ * The numbers from this script cover tree shaking inside the package. They do NOT cover
+ * what a Next.js user receives: there the boundary of the client graph adds its own cost,
+ * and importing one button can cost 306 kB against 6 kB in this measurement (ADR-0029).
+ * The second figure is measured by `npm run check:consumer`, against the budgets in the
+ * same file as here.
  */
 
 import { Buffer } from "node:buffer";
@@ -36,10 +36,10 @@ if (!existsSync(join(DIST, "index.js"))) {
 }
 
 /**
- * Внешние: всё, что не код кита, — peer, `dependencies` и движок Редактора.
- * Список выведен из `package.json`, а не выписан руками, — иначе новая
- * зависимость молча попала бы в замер.
- * Движок Редактора в манифесте не объявлен (OLDSUI-195), его список — в
+ * External: everything that is not the kit's code, meaning peer dependencies,
+ * `dependencies` and the Editor engine. The list is derived from `package.json`, not
+ * written by hand, so that a new dependency cannot slip into the measurement unnoticed.
+ * The Editor engine is not declared in the manifest (OLDSUI-195); its list is in
  * `editor-engine.mjs`.
  */
 const manifest = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
@@ -51,14 +51,15 @@ const EXTERNAL = [
   "react-dom",
 ];
 
-// Временная папка внутри пакета: резолвинг peer-зависимостей идёт от входного
-// файла, а в системном tmp никакого node_modules нет.
+// A temporary folder inside the package: peer dependencies are resolved from the entry
+// file, and the system tmp directory has no node_modules.
 const tmp = mkdtempSync(join(ROOT, ".tmp-size-"));
 
 /**
- * Входы пакета — точными именами, а не префиксом. Строковый алиас vite
- * срабатывает и на подпуть: `@olddevs/ui/editor` превратился бы в
- * `dist/index.js/editor`. Поэтому каждое имя — регулярным выражением целиком.
+ * Package entries are matched by their exact names, not by a prefix. A string alias in
+ * Vite also fires on a subpath: `@olddevs/ui/editor` would turn into
+ * `dist/index.js/editor`. So each name is a regular expression that matches the whole
+ * specifier.
  */
 const ENTRIES = [
   {
@@ -78,11 +79,11 @@ async function measure(scenario) {
   writeFileSync(entry, scenario.source, "utf8");
 
   /*
-    Сценарий вправе ВНЕСТИ в замер часть внешних пакетов — `bundled`, список
-    префиксов имён. Так меряется цена движка редактора: Tiptap ставит
-    потребитель, но выбор расширений принадлежит киту, и лишнее расширение стоит
-    потребителю ровно столько же, сколько лишний код самого кита. Внешними
-    остаются и подпути (`@tiptap/pm/state`): сравнение идёт по началу имени.
+    A scenario may BRING some external packages into the measurement: `bundled`, a list
+    of name prefixes. This is how the cost of the Editor engine is measured. The consumer
+    installs Tiptap, but the choice of extensions belongs to the kit, and an extra
+    extension costs the consumer exactly as much as extra code in the kit itself. Subpaths
+    (`@tiptap/pm/state`) stay external: the comparison matches the start of the name.
   */
   const bundled = scenario.bundled ?? [];
   const external = (id) =>
@@ -100,29 +101,29 @@ async function measure(scenario) {
       target: "es2022",
       lib: { entry, formats: ["es"], fileName: "bundle" },
       rollupOptions: { external },
-      // В память: чанки считаются ниже по признаку, а не по имени файла.
+      // In memory: the chunks are classified below by their role, not by file name.
       write: false,
     },
   });
 
   /*
-    Два числа на сценарий (ADR-0058, п. 11.7). «Старт» — то, что едет
-    потребителю сразу: чанк входа и всё, что он импортирует статически.
-    «Полный» — весь граф, вместе с чанками по `import()`: поповер своего цвета
-    (OLDSUI-46, `ColorPicker`), ленивые `codeBlock` и `table` (OLDSUI-111),
-    загрузчики своих Инструментов. Раньше ленивые чанки молча отбрасывались, и
-    перенос кода за `import()` выглядел как чистая экономия; теперь их вес
-    печатается у каждого сценария, а сценарий с `chunks: "all"` им и меряется.
-    Без разбора на чанки сборщик оставлял бы в `bundle.js` заглушку, а код
-    уходил в соседний файл — и замер показывал бы ноль на любом входе с
-    динамическим импортом. Чанки склеиваются в одну строку: так же gzip видел
-    один файл до разбора.
+    Two numbers per scenario (ADR-0058, item 11.7). "Start" is what the consumer downloads
+    right away: the entry chunk and everything it imports statically. "Full" is the whole
+    graph, including the chunks loaded by `import()`: the popover of a custom color
+    (OLDSUI-46, `ColorPicker`), the lazy `codeBlock` and `table` (OLDSUI-111), and the
+    loaders of custom Tools. Lazy chunks used to be dropped silently, which made moving
+    code behind `import()` look like pure savings. Now their weight is printed for every
+    scenario, and a scenario with `chunks: "all"` is measured by it. Without splitting into
+    chunks, the bundler would leave a stub in `bundle.js` and put the code into a neighbouring
+    file, so the measurement would show zero for any entry with a dynamic import. The
+    chunks are concatenated into one string, so that gzip sees one file, as it did before
+    the split.
   */
   const outputs = (Array.isArray(result) ? result : [result]).flatMap((entry) => entry.output);
   const chunks = outputs.filter((file) => file.type === "chunk");
   const byName = new Map(chunks.map((chunk) => [chunk.fileName, chunk]));
-  // Статические импорты от входа: `isDynamicEntry` не годится — общий чанк
-  // ленивого и статического графа тоже бывает целью `import()`.
+  // Static imports from the entry: `isDynamicEntry` does not work here, because a chunk
+  // shared by the lazy and the static graph can also be the target of an `import()`.
   const initial = new Set();
   const visit = (chunk) => {
     if (!chunk || initial.has(chunk)) return;
@@ -146,10 +147,10 @@ async function measure(scenario) {
 }
 
 /**
- * Шов «старта» (ADR-0058, п. 11.1, 11.7): модулей ленивых встроенных нет в
- * статическом графе, но они есть в полном. Вторая половина проверки — против
- * вечно зелёного гейта: шаблон, который ничему не соответствует (модуль
- * переименован, путь сменился), обязан ронять проверку, а не проходить.
+ * The "start" seam (ADR-0058, items 11.1 and 11.7): the lazy built-in modules are absent
+ * from the static graph, but present in the full one. The second half of the check guards
+ * against an always-green gate: a pattern that matches nothing (a module was renamed, a path
+ * changed) must fail the check, not pass it.
  */
 function startLeaks(scenario, { startModules, allModules }) {
   return (scenario.notInStart ?? []).flatMap((pattern) => {
@@ -237,14 +238,14 @@ try {
     exitCode = 1;
   }
 
-  // Числа в документации — часть контракта с читателем, и устаревают они молча.
-  // Поэтому таблица «Размер импорта» сверяется с замером: расхождение
-  // больше десятой доли килобайта роняет проверку, а не остаётся на совести.
+  // The numbers in the docs are part of the contract with the reader, and they go stale
+  // silently. So the "Import size" table is checked against the measurement: a discrepancy
+  // of more than a tenth of a kilobyte fails the check, rather than being left to chance.
   const doc = readFileSync(join(ROOT, "docs", "getting-started.md"), "utf8");
-  // Именно раздел, а не весь файл: на странице есть вторая таблица — про цену
-  // границы клиентского графа, — и строки в ней называются почти так же.
-  // Заголовок раздела и единица «kB» разбираются как есть: справочник английский
-  // (ADR-0073). Переименовать их значит разорвать сверку и получить вечно зелёный гейт.
+  // Only the section, not the whole file: the page has a second table, about the cost of
+  // the client graph boundary, and its rows are named almost the same way.
+  // The section heading and the unit "kB" are parsed as they are: the Reference is in
+  // English (ADR-0073). Renaming them would break the check and leave an always-green gate.
   const section = doc.split("## Import size")[1]?.split("\n## ")[0];
 
   if (!section) {
@@ -287,9 +288,9 @@ try {
     );
   }
 } finally {
-  // Уборка обязана случиться при любом исходе. Поэтому здесь нет ни одного
-  // `process.exit` выше по течению: он обходит finally, и временная папка
-  // остаётся в репозитории — линтер следующего прогона падает уже на ней.
+  // Cleanup must happen whatever the outcome. That is why there is no `process.exit` earlier
+  // in the flow: it skips `finally`, the temporary folder stays in the repository, and the
+  // linter of the next run fails on it.
   rmSync(tmp, { recursive: true, force: true });
 }
 

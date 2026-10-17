@@ -294,6 +294,32 @@ describe("the Reference is English (ADR-0073)", () => {
   });
 });
 
+/** Scripts, the consumer fixture and the root configs carry comments too (not the string gate's concern). */
+const COMMENT_ROOTS = ["scripts", "fixtures"];
+const COMMENT_ROOT_FILES = [
+  "eslint.config.mjs",
+  "vitest.config.ts",
+  "vite.config.ts",
+  "playwright.config.ts",
+  "styles.css",
+];
+
+function walkFiles(dir: string, pattern: RegExp): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) return entry.name === "node_modules" ? [] : walkFiles(full, pattern);
+    return pattern.test(entry.name) ? [full] : [];
+  });
+}
+
+function commentFiles(): string[] {
+  return [
+    ...ROOTS.flatMap((root) => sourceFiles(resolve(ROOT, root))),
+    ...COMMENT_ROOTS.flatMap((root) => walkFiles(resolve(ROOT, root), /\.(tsx?|mjs|mts|css)$/)),
+    ...COMMENT_ROOT_FILES.map((file) => resolve(ROOT, file)),
+  ];
+}
+
 /**
  * Comment ratchet (ADR-0073, OLDSUI-297). Comments are written in English; the Russian
  * ones that remain are counted per file in `tests/comment-debt.json` and can only go
@@ -314,7 +340,7 @@ describe("the comment ratchet", () => {
     readFileSync(join(ROOT, "tests/comment-debt.json"), "utf8")
   );
   const actual: Record<string, number> = {};
-  for (const file of ROOTS.flatMap((root) => sourceFiles(resolve(ROOT, root)))) {
+  for (const file of commentFiles()) {
     const n = commentLinesWithCyrillic(readFileSync(file, "utf8"));
     if (n > 0) actual[relative(ROOT, file).split("\\").join("/")] = n;
   }

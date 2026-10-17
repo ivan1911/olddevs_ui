@@ -1,20 +1,19 @@
 /**
- * Движок Редактора: пакеты, которые ставит только тот, кто импортирует
- * `@olddevs/ui/editor` (ADR-0050).
+ * The Editor engine: the packages that only a consumer who imports
+ * `@olddevs/ui/editor` installs (ADR-0050).
  *
- * ПОЧЕМУ СПИСОК ЗДЕСЬ, А НЕ В `peerDependenciesMeta`. До OLDSUI-195 движок был
- * опциональными peer-зависимостями. Но реестр GitLab отдаёт из `package.json`
- * только поля своего белого списка, `peerDependenciesMeta` в него не входит
- * (`PACKAGE_JSON_ALLOWED_FIELDS` в `generate_metadata_service.rb`), и npm
- * ставил все 21 пакет каждому потребителю, Редактор он импортирует или нет
- * (OLDSUI-195). Поэтому в манифесте пакета движка нет вовсе: версии держит
- * `devDependencies` (кит сам на них собирается и тестируется), а команду
- * установки — страница Редактора.
+ * WHY THE LIST LIVES HERE AND NOT IN `peerDependenciesMeta`. Before OLDSUI-195 the engine
+ * was a set of optional peer dependencies. But the GitLab registry returns only the fields
+ * of its allowlist from `package.json`, and `peerDependenciesMeta` is not on it
+ * (`PACKAGE_JSON_ALLOWED_FIELDS` in `generate_metadata_service.rb`). npm then installed all
+ * 21 packages for every consumer, whether or not they import the Editor (OLDSUI-195).
+ * So the package manifest has no engine entry at all: `devDependencies` pins the versions
+ * (the kit builds and tests against them), and the Editor's page gives the install command.
  *
- * Список читают замер размера (движок для него внешний, как peer) и тесты:
- * каждый пакет есть в `devDependencies`, ни одного нет в `peerDependencies` и
- * `dependencies`, команда на странице Редактора называет ровно их, а
- * `src/editor` не импортирует ничего сверх них и объявленных пакетов кита.
+ * The size measurement reads this list (the engine is external to it, like a peer), and so
+ * do the tests: every package is in `devDependencies`, none is in `peerDependencies` or
+ * `dependencies`, the command on the Editor's page names exactly these packages, and
+ * `src/editor` imports nothing beyond them and the kit's declared packages.
  */
 export const EDITOR_ENGINE = [
   "@tiptap/core",

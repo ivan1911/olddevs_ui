@@ -1,19 +1,20 @@
 import { RICH_TEXT_PRESETS, RichTextEditor, tool } from "@olddevs/ui/editor";
 
 /**
- * `RichTextEditor` с пресетом `full` прямо из серверного компонента (ADR-0058, п. 11.7): директиву несёт сам компонент, обёртки потребителю не нужно.
+ * `RichTextEditor` with the `full` preset right from a Server Component (ADR-0058,
+ * item 11.7). The component carries the directive itself, so the consumer needs no wrapper.
  *
- * Страница проверяет, что ленивые чанки `codeBlock` и `table` собираются
- * сборщиком Next.js из `dist` пакета (динамический `import()` внутри кита), а
- * `First Load JS` держит свой бюджет: чанки едут после загрузки страницы, до них
- * Редактор показывает Скелет. Блок кода и таблица в документе — затем, чтобы
- * Скелету и движку было что разбирать.
+ * The page checks that the lazy chunks `codeBlock` and `table` are bundled by the Next.js
+ * bundler from the package's `dist` (a dynamic `import()` inside the kit), and that the
+ * `First Load JS` holds its budget. The chunks load after the page loads, and until then
+ * the Editor shows the Skeleton. A code Block and a table in the Document are there so
+ * that the Skeleton and the engine have something to process.
  *
- * Второй Редактор — с формулами (OLDSUI-280, ADR-0070): `mathematics` не входит в
- * пресеты, его называют в `tools`, а опции `tool("mathematics", …)` — данные и
- * проходят границу RSC. Чанк с KaTeX и его CSS собирается Next.js из `dist` и
- * шрифты берёт из пакета `katex` фикстуры: `scripts/check-consumer.mjs` ищет их
- * в `.next`.
+ * The second Editor carries Formulas (OLDSUI-280, ADR-0070). `mathematics` is not in the
+ * presets: it is named in `tools`, and the options of `tool("mathematics", …)` are data
+ * that cross the RSC boundary. Next.js bundles the chunk with KaTeX and its CSS from
+ * `dist`, and takes the fonts from the fixture's `katex` package. `scripts/check-consumer.mjs`
+ * looks for them in `.next`.
  */
 const DOCUMENT =
   "<h2>Release notes</h2><p>Text with <strong>bold</strong>.</p>" +
@@ -22,10 +23,10 @@ const DOCUMENT =
   "<tr><td><p>Ada</p></td><td><p>Author</p></td></tr></tbody></table>";
 
 /**
- * Набор `tools`, собранный в серверном модуле (OLDSUI-285): пресет разворачивается
- * в массив прямо здесь, а `tool()` добавляет Настроенный Инструмент. Если бы
- * `RICH_TEXT_PRESETS` лежал в файле с "use client", сервер получил бы вместо массива
- * клиентскую ссылку, и `next build` упал бы на `is not iterable`.
+ * The `tools` set assembled in the server module (OLDSUI-285). The preset is expanded
+ * into an array right here, and `tool()` adds a Configured Tool. If `RICH_TEXT_PRESETS`
+ * lived in a file with "use client", the server would get a client reference instead of
+ * an array, and `next build` would fail with `is not iterable`.
  */
 const SERVER_TOOLS = [...RICH_TEXT_PRESETS.basic, tool("search", { matchCase: true })];
 

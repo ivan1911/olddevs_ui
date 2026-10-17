@@ -6,27 +6,28 @@ import { JSDOM } from "jsdom";
 import { FixtureBadge } from "../fixture-badge";
 
 /**
- * Серверный компонент со вторым обещанием пакета — подпутём `@olddevs/ui/editor`.
+ * A Server Component with the package's second promise: the `@olddevs/ui/editor` subpath.
  *
- * Конвейер показа ровно тот, что на странице `RichTextView`: очистка на сервере
- * (`sanitizeRichText` с DOMPurify на jsdom), потом подсветка (`highlightCodeBlocks`),
- * потом `RichTextView` прямо здесь, без обёртки с "use client". Блок кода в
- * документе нужен затем, чтобы просмотр нарисовал свой клиентский остров с
- * кнопкой «Копировать»: граница клиента идёт по файлу острова, и сборка
- * проверяет, что она доезжает до потребителя.
+ * The rendering pipeline is exactly the one on the `RichTextView` page: sanitizing on the
+ * server (`sanitizeRichText` with DOMPurify on jsdom), then highlighting
+ * (`highlightCodeBlocks`), then `RichTextView` right here, without a wrapper with
+ * "use client". A code Block in the Document is needed so that the View renders its own
+ * client Island with a "Copy" button. The client boundary runs along the Island's file,
+ * and the build checks that it reaches the consumer.
  *
- * Свой Блок с Островом: описание лежит в серверном модуле, а
- * компонент Острова — в модуле с директивой (`../fixture-badge.tsx`), и через
- * границу RSC он проходит ссылкой. Extensions тут пусты: просмотру они не
- * нужны, а Tiptap в графе страницы появляться не должен.
+ * A custom Block with an Island: the description lives in a server module, and the Island
+ * component is in a module with the directive (`../fixture-badge.tsx`). It crosses the RSC
+ * boundary as a reference. The Extensions here are empty: the View does not need them, and
+ * Tiptap must not appear in the page's module graph.
  *
- * Формула (OLDSUI-280, ADR-0070) лежит в документе пустым элементом с `data-latex`:
- * сервер дописывает в него исходный LaTeX, метка острова формул стоит в разметке, а
- * KaTeX и его CSS грузит клиент — в HTML страницы отрисованной формулы нет.
+ * A Formula (OLDSUI-280, ADR-0070) is stored in the Document as an empty element with
+ * `data-latex`. The server writes the source LaTeX into it, the Formula's Island marker
+ * stands in the markup, and the client loads KaTeX and its CSS. The rendered formula is
+ * not in the page's HTML.
  *
- * Подделки в документе — не для красоты: `scripts/check-consumer.mjs` читает
- * отрисованный HTML и требует, чтобы их там не было, а токены подсветки и
- * гнездо кнопки — были.
+ * The fake markup in the Document is not there for looks: `scripts/check-consumer.mjs`
+ * reads the rendered HTML and requires that it is absent, while the highlight tokens and
+ * the Mount point of the button must be present.
  */
 const DOMPurify = createDOMPurify(new JSDOM("").window);
 

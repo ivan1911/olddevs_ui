@@ -1,26 +1,26 @@
 /**
- * Собирает `llms.txt` — индекс справочника для агента, работающего в чужом
- * репозитории (ADR-0044).
+ * Builds `llms.txt`, the index of the Reference for an agent working in someone
+ * else's repository (ADR-0044).
  *
- * ЗАЧЕМ ИНДЕКС, ЕСЛИ СТРАНИЦЫ И ТАК В ПАКЕТЕ. Агент не перечисляет файлы, он
- * читает то, на что ему указали. Восемьдесят пять страниц без указателя — это
- * либо «прочитай всё» (565 кБ контекста), либо «угадай имя файла».
+ * WHY AN INDEX WHEN THE PAGES ARE IN THE PACKAGE ANYWAY. An agent does not list
+ * files; it reads what it is pointed at. Eighty-five pages without an index are
+ * either "read everything" (565 kB of context) or "guess the file name".
  *
- * ЧЕГО ЗДЕСЬ НЕТ. `llms-full.txt` — склейки всего текста в один файл. Она нужна
- * сайтам, где файлов не перечислить; у кита страницы лежат рядом, в
- * `node_modules/@olddevs/ui/docs/`, и склейка была бы второй копией тех же
- * 565 кБ, расходящейся с первой молча.
+ * WHAT IS NOT HERE. `llms-full.txt` concatenates all the text into one file. It
+ * is for sites where the files cannot be listed. The kit's pages sit side by
+ * side in `node_modules/@olddevs/ui/docs/`, and a concatenation would be a second
+ * copy of the same 565 kB, drifting silently away from the first.
  *
- * ПОЧЕМУ ГЕНЕРАТОР, А НЕ ФАЙЛ РУКАМИ. Индекс, написанный руками, протухает на
- * первой же добавленной странице, и заметить это нечем: он не компилируется и
- * не тестируется сам по себе. Здесь он выводится из `docs/`, а `llms:check`
- * роняет сборку, если вывод разошёлся с файлом в репозитории.
+ * WHY A GENERATOR AND NOT A HAND-WRITTEN FILE. An index written by hand goes
+ * stale with the first page added, and nothing catches it: it neither compiles
+ * nor tests itself. Here it is derived from `docs/`, and `llms:check` fails the
+ * build if the output differs from the file in the repository.
  *
- * ПОРЯДОК РАЗДЕЛОВ берётся у кураторских индексов — `docs/index.md` и
- * `docs/components/index.md`: это тот порядок, в котором страницы читает
- * человек, и придумывать второй незачем. Страница, не попавшая ни в один из
- * них, не теряется — она уходит в последний раздел. Потерять страницу индекс не
- * может по устройству.
+ * SECTION ORDER is taken from the curated indexes, `docs/index.md` and
+ * `docs/components/index.md`: that is the order in which a person reads the
+ * pages, so inventing a second one makes no sense. A page that is in neither
+ * index is not lost: it goes into the last section. By design, the index cannot
+ * lose a page.
  */
 
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -30,7 +30,7 @@ const ROOT = resolve(import.meta.dirname, "..");
 const DOCS = join(ROOT, "docs");
 const OUT = join(ROOT, "llms.txt");
 
-/** Все страницы справочника, путями от корня пакета: `docs/…`. */
+/** All Reference pages, as paths from the package root: `docs/…`. */
 function pages(dir = DOCS) {
   return readdirSync(dir).flatMap((name) => {
     const full = join(dir, name);
@@ -41,11 +41,12 @@ function pages(dir = DOCS) {
 }
 
 /**
- * Заголовок и первая фраза страницы.
+ * The title and the first sentence of a page.
  *
- * Отсутствие `# ` — отказ, а не пропуск: страница без заголовка попала бы в
- * индекс безымянной строкой, и агент не понял бы, что за ней. Молчаливый
- * пропуск здесь хуже падения: он оставляет дыру, которую никто не ищет.
+ * A missing `# ` heading is a refusal, not a skip: a page without a title would
+ * get into the index as a nameless line, and the agent would not understand what
+ * it refers to. A silent skip is worse here than a crash: it leaves a hole that
+ * nobody looks for.
  */
 function describe(page) {
   const text = readFileSync(join(ROOT, page), "utf8");
@@ -57,30 +58,31 @@ function describe(page) {
     .split(/\n\s*\n/)
     .map((block) => block.trim())
     /*
-      Заголовки, цитаты, списки, таблицы и блоки кода описанием не служат:
-      первым абзацем `getting-started.md` идёт пример импорта, и в индексе он
-      выглядел как строка кода вместо фразы о странице.
+      Headings, quotes, lists, tables and code blocks do not serve as a
+      description: the first paragraph of `getting-started.md` is an import
+      example, and in the index it looked like a line of code instead of a
+      sentence about the page.
 
-      А вот ОДИНОЧНАЯ обратная кавычка — это имя компонента в начале фразы
-      («`TextControl` — базовое текстовое поле…»), и отбрасывать такой абзац
-      нельзя: ровно так начинается «Кратко для AI» у половины страниц, и в
-      индексе они оставались вовсе без описания. Исключается только ограда
-      блока кода — три кавычки подряд.
+      But a SINGLE backtick is the name of a component at the start of a sentence
+      ("`TextControl` is the base text field…"), and such a paragraph must not be
+      dropped. That is exactly how the "Summary for AI" section opens on half of
+      the pages, and in the index they were left without any description. Only
+      the code block fence (three backticks in a row) is excluded.
     */
     .find((block) => block && !/^(?:[#>|\-*\d]|```)/.test(block));
 
   const sentence = (paragraph ?? "")
     .replace(/\n/g, " ")
     .replace(/\s+/g, " ")
-    // Ссылки разворачиваются в текст: в описании они вели бы относительно
-    // страницы, а читают описание из корня пакета.
+    // Links are unwrapped to plain text: inside a description they would resolve
+    // relative to the page, while the description is read from the package root.
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .split(/(?<=\.)\s/)[0];
 
   return { title: title[1].trim(), sentence: sentence.slice(0, 200) };
 }
 
-/** Разделы кураторского индекса: `## Заголовок` и ссылки под ним. */
+/** Sections of a curated index: `## Heading` and the links under it. */
 function sectionsOf(index) {
   const text = readFileSync(join(ROOT, index), "utf8");
   const out = [];
@@ -95,9 +97,9 @@ function sectionsOf(index) {
     const link = /\]\(([^)#]+\.md)\)/.exec(line);
     if (link && current) {
       const page = normalize(join(dirname(index), link[1]));
-      // Только то, что уезжает в пакет. `docs/index.md` ссылается и наружу — на
-      // макет в соседнем репозитории, на `CLAUDE.md` рядом с манифестом; ни
-      // того, ни другого у потребителя нет, и строка индекса вела бы в пустоту.
+      // Only what ships in the package. `docs/index.md` also links outward: to a
+      // mockup in a neighboring repository, to `CLAUDE.md` next to the manifest.
+      // The consumer has neither, and the index line would lead nowhere.
       if (page.startsWith("docs/") && !current.pages.includes(page)) current.pages.push(page);
     }
   }
@@ -108,8 +110,8 @@ const all = pages();
 const indexes = ["docs/index.md", "docs/components/index.md"];
 const sections = indexes.flatMap(sectionsOf);
 
-// Корневой указатель ставится первой строкой первого раздела: сам он себя не
-// перечисляет, а агенту нужен — там лежат правила обращения с китом.
+// The root index goes first in the first section: it does not list itself, but
+// the agent needs it, since the rules for working with the kit live there.
 if (sections[0] && !sections[0].pages.includes("docs/index.md"))
   sections[0].pages.unshift("docs/index.md");
 
