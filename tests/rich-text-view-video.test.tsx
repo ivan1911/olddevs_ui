@@ -17,10 +17,10 @@ afterEach(() => {
 });
 
 /**
- * Видео в `RichTextView` (OLDSUI-281, ADR-0071): остров кита, без движка. Блок
- * приходит ссылкой; остров монтируется, только когда он есть в HTML, и ставит на его
- * место плеер сразу (OLDSUI-287). С `autoload: false` в `tools` — заглушку, а плеер
- * после щелчка: до него к сервису ни одного запроса.
+ * Video in `RichTextView` (OLDSUI-281, ADR-0071): a kit Island, no engine. The Block
+ * arrives as a link; the Island mounts only when it is in the HTML and puts the player in
+ * its place right away (OLDSUI-287). With `autoload: false` in `tools` it shows a
+ * placeholder, and the player appears after a click: no request reaches the service before it.
  */
 const YT = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 const TW = "https://www.twitch.tv/videos/1234567890";
@@ -47,7 +47,7 @@ test("by default the island puts the player in place of the link at once: no pla
   );
   await waitFor(() => expect(container.querySelectorAll("iframe")).toHaveLength(2));
   const [youtube, twitch] = [...container.querySelectorAll("iframe")];
-  // Без автозапуска: плеер стоит на странице, а не включается сам.
+  // No autoload: the player sits on the page and does not start on its own.
   expect(youtube!.getAttribute("src")).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
   expect(youtube!.getAttribute("title")).toBe("YouTube video");
   expect(twitch!.getAttribute("src")).toBe(
@@ -60,7 +60,7 @@ test("by default the island puts the player in place of the link at once: no pla
     expect(frame.getAttribute("allow")).toMatch(/fullscreen/);
   }
   expect(screen.queryByRole("button")).toBeNull();
-  // Ссылка уступила место плееру; текст документа остался.
+  // The link gave way to the player; the Document text stayed.
   expect(container.querySelector('div[data-block="video"] a')).toBeNull();
   expect(container.textContent).toContain("Hi");
 });
@@ -71,7 +71,7 @@ test("the page host is read at display time, not stored in the document", async 
   await waitFor(() => expect(container.querySelector("iframe")).not.toBeNull());
   expect(container.querySelector("iframe")!.getAttribute("src")).toContain("parent=localhost");
   unmount();
-  // Тот же HTML на другой странице: другой `parent`, Документ тот же.
+  // The same HTML on another page: a different `parent`, the same Document.
   vi.stubGlobal("location", { ...window.location, hostname: "docs.example.com" });
   const second = render(<RichTextView html={html} />);
   await waitFor(() => expect(second.container.querySelector("iframe")).not.toBeNull());
@@ -93,7 +93,7 @@ test("the catalog language reaches the player title", async () => {
   );
 });
 
-// ── autoload: false — заглушка до щелчка ────────────────────────────────────
+// ── autoload: false — placeholder until click ───────────────────────────────
 
 test("autoload: false in the View's tools: the placeholder in place of the link, with no iframe", async () => {
   const fetchSpy = vi.fn();
@@ -107,7 +107,7 @@ test("autoload: false in the View's tools: the placeholder in place of the link,
   expect(await screen.findByRole("button", { name: "Play YouTube video" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Play Twitch video" })).toBeTruthy();
   expect(container.querySelector("iframe")).toBeNull();
-  // Ссылка уступила место заглушке; текст ссылки остался виден в заглушке.
+  // The link gave way to the placeholder; the link text stayed visible in the placeholder.
   expect(container.querySelector('div[data-block="video"] a')).toBeNull();
   expect(container.textContent).toContain(YT);
   expect(container.textContent).toContain("Hi");
@@ -227,17 +227,17 @@ test("a new document with another video replaces the players", async () => {
   expect(view.container.querySelectorAll("iframe")).toHaveLength(1);
 });
 
-// ── Высота: рамка 16:9 с первого кадра ──────────────────────────────────────
+// ── Height: 16:9 frame from the first frame ─────────────────────────────────
 
 const PROSE_TOKENS = new Set(PROSE_CLASS.split(/\s+/).filter(Boolean));
 
 test("the server block is the same 16:9 frame as the player placeholder, so the island changes no height", () => {
-  // HTML Документа классов не несёт: рамка блока — правила контейнера Документа
-  // по `div[data-block=video]`, и каждый класс рамки плеера в них есть.
+  // The Document's HTML carries no classes: the Block frame comes from the Document
+  // container rules on `div[data-block=video]`, and every player frame class is in them.
   for (const token of PLAYER_FRAME.split(/\s+/)) {
     expect(PROSE_TOKENS.has(`[&_div[data-block=video]]:${token}`), token).toBe(true);
   }
-  // Ссылка в рамке остаётся ссылкой: читается и нажимается без JS.
+  // The link inside the frame stays a link: it can be read and clicked without JS.
   const html = renderToString(<RichTextView html={block("youtube", YT)} />);
   expect(html).toContain(`<div data-block="video"`);
   expect(html).toContain(`<a href="${YT}"`);

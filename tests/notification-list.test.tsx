@@ -6,8 +6,8 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { NotificationItem, NotificationList } from "../src/components/content/NotificationList.js";
 import { resetDevWarnings } from "../src/lib/dev-warn.js";
 
-// Предупреждение показывается один раз на модуль — без сброса порядок тестов
-// решал бы, какой из них его увидит.
+// The warning is shown once per module: without a reset, the order of the tests
+// would decide which of them sees it.
 beforeEach(resetDevWarnings);
 afterEach(() => {
   cleanup();
@@ -24,8 +24,8 @@ test("unread is audible, not only visible", () => {
   );
 
   const rows = screen.getAllByRole("listitem");
-  // Точка и подложка — сигнал для глаз. Без слова человек, который их не видит,
-  // не отличит новое событие от старого вовсе.
+  // The dot and the tint are signals for the eye. Without the word, a person who
+  // cannot see them would not tell a new event from an old one at all.
   expect(within(rows[0]!).getByText("Unread")).toBeTruthy();
   expect(within(rows[1]!).queryByText("Unread")).toBeNull();
 });
@@ -37,7 +37,7 @@ test("the unread dot is not read aloud separately", () => {
     </NotificationList>
   );
 
-  // Иначе скринридер объявил бы её как безымянный узел рядом со словом.
+  // Otherwise a screen reader would announce it as an unnamed node next to the word.
   const dot = container.querySelector('[aria-hidden="true"]');
   expect(dot).toBeTruthy();
   expect(dot!.textContent).toBe("");
@@ -65,7 +65,7 @@ test("groups arrive ready-made and are announced by a label", () => {
     />
   );
 
-  // Что такое «вчера», знает локаль и часовой пояс потребителя, а не кит.
+  // What "yesterday" means is known to the consumer's locale and time zone, not to the kit.
   const today = screen.getByRole("group", { name: "Today" });
   expect(within(today).getByText("One")).toBeTruthy();
   expect(screen.getByRole("group", { name: "Earlier" })).toBeTruthy();
@@ -78,8 +78,8 @@ test("a group does not take a heading level", () => {
     />
   );
 
-  // Уровень зависит от того, куда встал список — в попап, в ящик или на
-  // страницу, — и кит этого не знает.
+  // The level depends on where the list sits (in a popover, in a drawer, or on a
+  // page), and the kit does not know that.
   expect(screen.queryByRole("heading")).toBeNull();
 });
 
@@ -107,7 +107,7 @@ test("a row neither marks itself read nor navigates", () => {
     </NotificationList>
   );
 
-  // Действия приходят снаружи: и переход, и отметка принадлежат приложению.
+  // Actions come from outside: both the navigation and the marking belong to the application.
   expect(screen.getByRole("button", { name: "Read" })).toBeTruthy();
   expect(screen.getByText("5 minutes ago")).toBeTruthy();
   expect(screen.getByText("Details")).toBeTruthy();
@@ -124,7 +124,7 @@ test("media sits beside the text and does not replace the icon", () => {
     </NotificationList>
   );
 
-  // Значок — тип события, превью — объект, о котором оно. Два независимых слота.
+  // The icon is the event type, the preview is the object it is about. Two independent slots.
   const row = screen.getByRole("listitem");
   expect(within(row).getByTestId("icon")).toBeTruthy();
   expect(within(row).getByTestId("media")).toBeTruthy();
@@ -137,7 +137,7 @@ test("an empty media is no media: no blank slot beside the text", () => {
     </NotificationList>
   );
 
-  // Пустой слот — лишний зазор перед заголовком: строка выглядит сдвинутой.
+  // An empty slot is an extra gap before the heading: the row looks shifted.
   const row = screen.getByRole("listitem");
   expect(row.querySelector("span:empty")).toBeNull();
 });
@@ -165,13 +165,13 @@ test("onAction turns the whole row into one button named by the title", () => {
     </NotificationList>
   );
 
-  // Строка остаётся элементом списка, кнопка лежит внутри неё.
+  // The row stays a list item; the button sits inside it.
   const row = screen.getByRole("listitem");
   const button = within(row).getByRole("button", { name: "Publishing failed Unread" });
-  // Имя — заголовок и слово «непрочитано», а не всё содержимое строки.
+  // The name is the title and the word "unread", not the whole content of the row.
   expect(button.getAttribute("aria-label")).toBeNull();
   expect(screen.queryByRole("button", { name: /disconnected/ })).toBeNull();
-  // Остальной текст не теряется: он описание кнопки.
+  // The rest of the text is not lost: it is the button's description.
   expect(button.getAttribute("aria-describedby")).toBeTruthy();
   expect(screen.getByRole("button", { description: /disconnected.*5 minutes ago/ })).toBe(button);
 });
@@ -195,7 +195,7 @@ test("the row button is activated by click, Enter and Space", async () => {
     </NotificationList>
   );
 
-  // Клавиатура — штатная кнопка, без своего обработчика клавиш.
+  // The keyboard is the standard button behavior, with no key handler of its own.
   await user.tab();
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Event" }));
   await user.keyboard("{Enter}");
@@ -222,7 +222,7 @@ test("the row button holds no nested interactive elements", () => {
 
   const button = screen.getByRole("button");
   expect(button.querySelector("a, button, input, select, textarea, [tabindex]")).toBeNull();
-  // Внутри кнопки допустим только фразовый контент.
+  // Only phrasing content is allowed inside a button.
   expect(button.querySelector("div, p, ul, h1, h2, h3, h4")).toBeNull();
 });
 
@@ -236,16 +236,16 @@ test("onAction together with actions (plain JS): actions win, the page does not 
     </NotificationList>
   );
 
-  // Вложенная кнопка в кнопке недопустима, а `actions` — единственный путь к
-  // действию, который потребитель мог не продублировать: отказываемся от
-  // `onAction`, а не прячем управляющие элементы.
+  // A nested button inside a button is invalid, and `actions` is the only path to
+  // an action that the consumer might not have duplicated. We drop `onAction`
+  // rather than hide the controls.
   const buttons = screen.getAllByRole("button");
   expect(buttons.map((b) => b.textContent)).toEqual(["Read"]);
   await user.click(buttons[0]!);
   expect(onAction).not.toHaveBeenCalled();
 });
 
-// Untyped — так передаёт потребитель на JS: типы сочетание запрещают.
+// Untyped: this is how a JS consumer passes it, and the types forbid the combination.
 const Untyped = NotificationItem as unknown as ComponentType<Record<string, unknown>>;
 
 test("onAction together with actions warns in development: what was passed, who won, the fix", () => {
@@ -310,9 +310,9 @@ test("one of the two props is not a contract violation: no warning", () => {
 });
 
 test("types forbid onAction together with actions", () => {
-  // Проверка на этапе `typecheck`: директива упадёт, если сочетание разрешат.
+  // Checked at the `typecheck` stage: the directive fails if the combination is ever allowed.
   const element = (
-    // @ts-expect-error — `actions` и `onAction` взаимоисключающие
+    // @ts-expect-error — `actions` and `onAction` are mutually exclusive
     <NotificationItem title="Event" onAction={() => {}} actions={<span />} />
   );
   expect(element).toBeTruthy();

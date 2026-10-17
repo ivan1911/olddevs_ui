@@ -4,12 +4,11 @@ import { afterEach, expect, test } from "vitest";
 import { useScrollLock } from "../src/hooks/useScrollLock.js";
 
 /**
- * Счётчик замков модульный, и проверяется здесь ровно то, ради чего он такой.
+ * The lock counter is module-level, and this test checks exactly what it is designed for.
  *
- * Модалки вкладываются: поверх окна редактирования открывается подтверждение.
- * Закрываясь, вложенное окно не должно разблокировать прокрутку, пока внешнее
- * ещё открыто. Глазами этот дефект не виден — страница просто начинает
- * прокручиваться под открытым окном.
+ * Modals nest: a confirmation opens on top of the editing dialog. When it closes, the nested
+ * dialog must not unlock scrolling while the outer one is still open. This defect is not
+ * visible to the eye: the page simply starts scrolling under the open dialog.
  */
 
 function Lock({ locked }: { locked: boolean }) {
@@ -44,7 +43,7 @@ test("nested locks: the last to close releases, not the first", () => {
   );
   expect(locked()).toBe(true);
 
-  // Закрылось вложенное окно — внешнее ещё открыто.
+  // The nested dialog closed; the outer one is still open.
   rerender(
     <>
       <Lock locked />
@@ -63,8 +62,8 @@ test("nested locks: the last to close releases, not the first", () => {
 });
 
 test("unmounting with the lock raised does not leave the page locked", () => {
-  // Обычное дело: компонент с модалкой исчезает вместе с ней, и без снятия
-  // замка на размонтировании счётчик залипал бы навсегда.
+  // A common case: a component with a modal disappears together with it, and without
+  // releasing the lock on unmount the counter would stick forever.
   const { unmount } = render(<Lock locked />);
   expect(locked()).toBe(true);
 
@@ -73,13 +72,12 @@ test("unmounting with the lock raised does not leave the page locked", () => {
 });
 
 /**
- * Свой inline-отступ приложения переживает замок.
+ * The app's own inline padding survives the lock.
  *
- * Компенсация ширины полосы прокрутки писалась в `body.style.paddingRight`, а
- * снималась присваиванием пустой строки — то есть замок не ВОЗВРАЩАЛ прежнее
- * значение, а стирал его. Приложение, держащее на `<body>` собственный
- * inline-отступ (например, под свою фиксированную панель), теряло его навсегда
- * после первого же открытого диалога кита.
+ * The scrollbar-width compensation was written to `body.style.paddingRight` and cleared by
+ * assigning an empty string: that is, the lock did not RESTORE the previous value, it erased
+ * it. An app that keeps its own inline padding on `<body>` (for example, to make room for its
+ * fixed panel) lost it for good after the first kit dialog was opened.
  */
 test("an inline padding of the application survives the lock", () => {
   document.body.style.paddingRight = "17px";
@@ -106,7 +104,7 @@ test("nested locks restore the original padding once, at the outermost release",
   const inner = render(<Lock locked />);
 
   inner.rerender(<Lock locked={false} />);
-  // Внешний замок ещё стоит — отступ приложения возвращать рано.
+  // The outer lock is still held: it is too early to restore the app's padding.
   expect(document.body.classList.contains("scroll-locked")).toBe(true);
 
   outer.rerender(<Lock locked={false} />);
@@ -117,8 +115,8 @@ test("a padding changed by the application while locked is not clobbered", () =>
   document.body.style.paddingRight = "17px";
 
   const { rerender } = render(<Lock locked />);
-  // Приложение поменяло отступ, пока замок стоял: своя панель появилась поверх
-  // открытого диалога. Восстанавливать «как было» тут уже нельзя.
+  // The app changed its padding while the lock was held: its own panel appeared on top of the
+  // open dialog. Restoring the "old value" is no longer allowed here.
   document.body.style.paddingRight = "33px";
   rerender(<Lock locked={false} />);
 
@@ -126,9 +124,9 @@ test("a padding changed by the application while locked is not clobbered", () =>
 });
 
 test("with no scrollbar the lock neither adds nor erases a padding", () => {
-  // В jsdom `clientWidth` равен нулю, поэтому во всех остальных тестах ширина
-  // полосы выходит 1024 и ветка «полосы нет» не исполняется ни разу — а это
-  // самый частый случай у macOS с наложенными полосами прокрутки.
+  // In jsdom `clientWidth` is zero, so in every other test the scrollbar width comes out as 1024
+  // and the "no scrollbar" branch never runs. That is the most common case on macOS with
+  // overlay scrollbars.
   const clientWidth = Object.getOwnPropertyDescriptor(Element.prototype, "clientWidth");
   Object.defineProperty(document.documentElement, "clientWidth", {
     configurable: true,

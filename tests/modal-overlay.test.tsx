@@ -8,8 +8,8 @@ import { ModalOverlay } from "../src/components/overlays/ModalOverlay.js";
 afterEach(cleanup);
 
 /**
- * До волны 26 у компонента не было ни одного теста, при том что он держит и
- * Escape, и закрытие по подложке — два места, где отказ молчит.
+ * Until wave 26 the component had no tests at all, although it handles both
+ * Escape and closing by the scrim: two places where a failure is silent.
  */
 test("a click on the scrim closes, a click on the content does not", async () => {
   const user = userEvent.setup();
@@ -61,8 +61,8 @@ test("the layer is released on unmount, so the next overlay is topmost", async (
   await user.keyboard("{Escape}");
   expect(screen.getByText("Second")).toBeTruthy();
 
-  // Если ушедший слой остался бы в реестре, второй не считал бы себя верхним и
-  // молча перестал бы закрываться.
+  // If the unmounted layer stayed in the registry, the second overlay would not
+  // consider itself topmost and would silently stop closing.
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });

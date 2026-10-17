@@ -21,8 +21,8 @@ function Rights({ initial = [] as string[], searchable = false }) {
 }
 
 /*
-  Имя списка складывается из подписи колонки и счётчика: число на экране есть, и
-  в речи оно тоже должно быть. Отсюда поиск по началу имени.
+  A list's accessible name combines the column label and the counter: the number is on screen, so
+  it must be in the spoken name too. Hence the lookup by the start of the name.
 */
 const available = () => screen.getByRole("listbox", { name: /^Available/ });
 const selected = () => screen.getByRole("listbox", { name: /^Selected/ });
@@ -52,9 +52,9 @@ test("an item moves back", async () => {
 });
 
 /*
-  Счётчик проверяется через доступное имя колонки, а не через класс вёрстки:
-  привязка к `.text-caption` ломалась бы от смены шкалы кегля, не меняя
-  поведения, и не утверждала бы, какой колонке принадлежит число.
+  The counter is checked through the column's accessible name, not through a layout class: binding
+  to `.text-caption` would break when the type scale changes without any change in behavior, and
+  would not assert which column the number belongs to.
 */
 test("the counters follow the columns", async () => {
   const user = userEvent.setup();
@@ -71,8 +71,8 @@ test("the counters follow the columns", async () => {
 });
 
 /*
-  Счётчик — вся колонка, а не то, что осталось после поиска: он отвечает на
-  вопрос «сколько всего доступно», а фильтр это взгляд на них.
+  The counter covers the whole column, not what is left after a search: it answers "how many are
+  available in total", while a filter is only a view of them.
 */
 test("the counter counts the column, not the filtered view", async () => {
   const user = userEvent.setup();
@@ -85,16 +85,16 @@ test("the counter counts the column, not the filtered view", async () => {
 });
 
 /*
-  Недоступный элемент показан, но не переносится: скрыть его значило бы соврать
-  про состав прав, а перенести — обойти запрет.
+  An unavailable item is shown but cannot be moved: hiding it would misstate the set of rights, and
+  moving it would bypass the restriction.
 */
 test("a disabled item is shown but never moves", async () => {
   const user = userEvent.setup();
 
-  // Кликом выключенный элемент не выделяется вовсе, поэтому «кликнуть и
-  // убедиться, что кнопка мертва» проходило бы и на компоненте без всякой
-  // защиты: до клика она мертва точно так же. Единственный содержательный
-  // сценарий — выделить доступный элемент и выключить его пропом.
+  // A disabled item cannot be selected by a click at all, so "click and check that the button is
+  // dead" would also pass on a component with no guard: before the click, the button is dead in
+  // the same way. The only meaningful scenario is to select an available item and disable it with
+  // the prop.
   function Switchable() {
     const [items, setItems] = useState(RIGHTS);
     const [value, setValue] = useState<string[]>([]);
@@ -132,10 +132,9 @@ test("a disabled item is shown but never moves", async () => {
 });
 
 /*
-  `Ctrl`/`Cmd`+`A` внутри списка — штатная клавиша react-aria, и она отдаёт
-  строку `'all'`, а не набор ключей. Пока она возвращала пустой список,
-  «выделить всё и перенести» гасило обе кнопки: самый частый сценарий
-  оказывался тупиковым.
+  `Ctrl`/`Cmd`+`A` inside the list is react-aria's standard shortcut, and it yields the string
+  `'all'` rather than a set of keys. While it returned an empty list, "select all and move" disabled
+  both buttons: the most common scenario was a dead end.
 */
 test("select-all inside a column moves the whole column", async () => {
   const user = userEvent.setup();
@@ -147,16 +146,15 @@ test("select-all inside a column moves the whole column", async () => {
   expect(toRight().hasAttribute("disabled")).toBe(false);
   await user.click(toRight());
 
-  // Недоступный «Delete records» остаётся слева: выделить всё — не значит
-  // обойти запрет.
+  // An unavailable "Delete records" stays on the left: selecting everything does not mean
+  // bypassing the restriction.
   expect(within(available()).getAllByRole("option")).toHaveLength(1);
   expect(within(selected()).getAllByRole("option")).toHaveLength(4);
 });
 
 /*
-  Кнопка не должна переносить то, чего на экране нет: пользователь отвечает за
-  то, что видит. До починки скрытый фильтром выделенный элемент переезжал
-  вместе с видимыми.
+  The button must not move what is not on screen: the user is responsible for what they see.
+  Before the fix, a selected item hidden by the filter moved along with the visible ones.
 */
 test("a selection hidden by the filter does not travel with the visible ones", async () => {
   const user = userEvent.setup();
@@ -170,9 +168,9 @@ test("a selection hidden by the filter does not travel with the visible ones", a
 });
 
 /*
-  Подсветка живёт внутри и переживает внешнюю смену `value`. Ключ, уехавший в
-  другую колонку чужой правкой, оставался «переносимым» — и приезжал в `value`
-  вторым экземпляром, невидимым на экране.
+  The highlight lives inside the component and survives an external change of `value`. A key that
+  was moved to another column by someone else's edit stayed "movable" and arrived in `value` as a
+  second copy, invisible on screen.
 */
 test("an external change to value does not let a stale selection duplicate a key", async () => {
   const user = userEvent.setup();
@@ -210,16 +208,16 @@ test("the move buttons are off while there is nothing to move", async () => {
 });
 
 /*
-  Фокус после переноса проверяется В БРАУЗЕРЕ, а не здесь (ADR-0012): react-aria
-  делегирует его с контейнера внутрь коллекции, и в jsdom этот путь достоверно
-  не воспроизводится. Прежняя версия теста была зелёной лишь потому, что
-  принимающая колонка в фикстуре была пуста — делегировать было некуда. См.
+  Focus after a move is checked IN THE BROWSER, not here (ADR-0012): react-aria delegates it from
+  the container into the collection, and in jsdom this path is not faithfully reproduced. The
+  previous version of the test was green only because the receiving column in the fixture was
+  empty: there was nowhere to delegate to. See
   `tests-visual/interactions.spec.ts`.
 */
 
 /*
-  Следствие того же правила: перенесённые становятся выделением там, куда
-  приехали, — поэтому вернуть их можно не выделяя заново.
+  A consequence of the same rule: moved items become the selection where they arrive, so they can
+  be moved back without selecting them again.
 */
 test("moved items arrive selected, so the return move needs no reselection", async () => {
   const user = userEvent.setup();
@@ -235,8 +233,8 @@ test("moved items arrive selected, so the return move needs no reselection", asy
 });
 
 /*
-  Порядок целевой колонки — это порядок назначения, а не порядок `items`.
-  Иначе список назначенных прав перетасовывался бы сам собой.
+  The order of the target column is the order of assignment, not the order of `items`. Otherwise
+  the list of assigned rights would reshuffle itself.
 */
 test("the target column keeps the order in which items were added", async () => {
   const user = userEvent.setup();
@@ -272,9 +270,9 @@ test("a search with no matches says so instead of showing an empty box", async (
 });
 
 /*
-  Без имени пользователь AT слышит два несвязанных списка и две стрелки между
-  ними, и что это один вопрос, а не два, ниоткуда не следует. Безымянная группа
-  при этом хуже её отсутствия — то же правило, что у `ButtonGroup`.
+  Without a name, an AT user hears two unrelated lists and two arrows between them, and nothing
+  says that this is one question rather than two. An unnamed group is worse than no group at all,
+  the same rule as for `ButtonGroup`.
 */
 test("a name turns the pair into one announced group", () => {
   const { rerender } = render(
@@ -287,12 +285,12 @@ test("a name turns the pair into one announced group", () => {
 });
 
 /*
-  Свой `disabled` — про весь контрол, в отличие от `TransferItem.disabled`,
-  который про один показанный, но непереносимый элемент.
+  The component's own `disabled` applies to the whole control, unlike `TransferItem.disabled`,
+  which applies to one shown but non-movable item.
 */
 /*
-  Выделение делается ДО выключения: иначе кнопка мертва и так, потому что
-  переносить нечего, и тест был бы истинным при любом коде.
+  Selection is done BEFORE disabling: otherwise the button is dead anyway, because there is nothing
+  to move, and the test would pass with any code.
 */
 test("a disabled transfer moves nothing at all", async () => {
   const user = userEvent.setup();
@@ -320,9 +318,9 @@ test("searchable is an axis: without it there is no search field", () => {
 });
 
 /*
-  Запрос набран строчными, а подпись начинается с прописной: только так проверка
-  ловит потерю приведения регистра у ПОДПИСИ. Запрос приводится отдельно, и
-  «ROLES» против «Manage roles» прошло бы и без него.
+  The query is typed in lowercase, while the label starts with a capital: only this way does the
+  check catch the loss of case folding on the LABEL. The query is lowercased separately, and
+  "ROLES" against "Manage roles" would pass even without it.
 */
 test("search ignores case on the label, not just on the query", async () => {
   const user = userEvent.setup();

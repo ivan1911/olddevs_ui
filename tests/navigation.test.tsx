@@ -11,21 +11,21 @@ afterEach(cleanup);
 test("with a single page nothing is drawn", () => {
   const { container } = render(<Pagination page={1} pageCount={1} onChange={() => {}} />);
 
-  // Пагинация из единственной кнопки сообщает о переходе там, где переходить
-  // некуда.
+  // A pagination made of a single button reports a navigation where there is
+  // nowhere to go.
   expect(container.firstChild).toBeNull();
 });
 
 test("page range: the edges are always visible, the middle collapses", () => {
-  // Пять страниц помещаются в ряд целиком, и с волны 26 ряд добивается до
-  // постоянной ширины: прятать за многоточием третью и четвёртую, когда для них
-  // есть место, — это и есть та скачущая ширина, из-за которой кнопка уезжала
-  // из-под курсора. Правило файла «одну пропущенную дешевле показать» здесь
-  // просто доведено до конца.
+  // Five pages fit in the row whole, and since wave 26 the row is padded to a
+  // constant width. Hiding the third and fourth behind an ellipsis when there is
+  // room for them is exactly the jumping width that made the button slide out
+  // from under the cursor. The file's rule "one skipped page is cheaper to show"
+  // is simply taken to its end here.
   expect(pageRange(1, 5, 1)).toEqual([1, 2, 3, 4, 5]);
   expect(pageRange(12, 24, 1)).toEqual([1, "gap", 11, 12, 13, "gap", 24]);
-  // Одну пропущенную страницу дешевле показать, чем спрятать за многоточием.
-  // А здесь слева прячется ровно одна (вторая) — её показываем.
+  // One skipped page is cheaper to show than to hide behind an ellipsis.
+  // Here exactly one page (the second) is hidden on the left, so we show it.
   expect(pageRange(4, 9, 1)).toEqual([1, 2, 3, 4, 5, "gap", 9]);
   expect(pageRange(3, 5, 1)).toEqual([1, 2, 3, 4, 5]);
 });
@@ -34,14 +34,14 @@ test("the row width does not grow with the number of pages", () => {
   const narrow = pageRange(50, 100, 1).length;
   const wide = pageRange(50, 10000, 1).length;
 
-  // Кнопки под курсором не должны прыгать при переходе на соседнюю страницу.
+  // Buttons under the cursor must not jump when moving to an adjacent page.
   expect(narrow).toBe(wide);
 });
 
 test("the last crumb is not a link", () => {
   render(<Breadcrumbs items={[{ label: "Library", href: "/lib" }, { label: "Sunsets" }]} />);
 
-  // Ссылка на текущую страницу обещает переход, которого не будет.
+  // A link to the current page promises a navigation that will not happen.
   expect(screen.queryByRole("link", { name: "Sunsets" })).toBeNull();
   expect(screen.getByText("Sunsets").getAttribute("aria-current")).toBe("page");
   expect(screen.getByRole("link", { name: "Library" })).toBeTruthy();
@@ -62,7 +62,7 @@ test("a long trail collapses and the edges remain", () => {
 
   expect(screen.getByRole("link", { name: "Root" })).toBeTruthy();
   expect(screen.getByText("Current")).toBeTruthy();
-  // Середина пути не говорит о том, где пользователь находится.
+  // The middle of the trail does not say where the user is.
   expect(screen.queryByRole("link", { name: "Second" })).toBeNull();
 });
 
@@ -82,11 +82,11 @@ test("you can go back only to a completed step", async () => {
     />
   );
 
-  // Пройденный — кликается.
+  // A completed step is clickable.
   await user.click(screen.getByRole("button", { name: /Files/ }));
   expect(onStep).toHaveBeenCalledWith(0);
 
-  // Будущий — нет: он требует данных, которых ещё нет.
+  // A future step is not: it requires data that does not exist yet.
   expect(screen.queryByRole("button", { name: /Schedule/ })).toBeNull();
 });
 
@@ -106,12 +106,13 @@ test("the current step is announced as a step, not as a page", () => {
 });
 
 /**
- * Состояние шага звучит, а не только рисуется.
+ * The step state is spoken, not only drawn.
  *
- * Кружок с номером или галочкой помечен `aria-hidden`, а больше признак
- * «пройден / текущий / впереди» нигде не выражен: у `li` есть только
- * `aria-current` у активного. Скринридер читал мастер из пяти одинаковых
- * пунктов и текущий — какие уже заполнены, а какие впереди, не сообщалось.
+ * The numbered circle or checkmark is `aria-hidden`, and beyond that the state
+ * "completed / current / upcoming" is expressed nowhere: the `li` has only
+ * `aria-current` on the active one. A screen reader read the wizard as five
+ * identical items plus the current one, and did not report which steps were
+ * already filled in and which were still ahead.
  */
 test("each step announces whether it is done, current or upcoming", () => {
   render(
@@ -130,8 +131,9 @@ test("each step announces whether it is done, current or upcoming", () => {
   expect(texts[0]).toContain("completed");
   expect(texts[2]).toContain("not started");
 
-  // Текущий шаг своей строки НЕ получает: его объявляет `aria-current`, и
-  // вторая строка читалась бы как «current step, current step, Оплата».
+  // The current step does NOT get the "current step" text in its own row:
+  // `aria-current` announces it. Otherwise the second row would read as
+  // "current step, current step, Payment".
   expect(items[1]?.getAttribute("aria-current")).toBe("step");
   expect(texts[1]).not.toContain("current step");
 });

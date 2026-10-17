@@ -17,11 +17,11 @@ beforeEach(() => {
 });
 
 /**
- * Остров своего Блока в `RichTextView` (OLDSUI-114, ADR-0058, п. 3.3). Образец —
- * кнопка «Копировать» блока кода (`rich-text-view-code-copy.test.tsx`): просмотр
- * остаётся серверным компонентом, серверный HTML Блока приходит всегда, а
- * клиентский остров оживляет Блок после монтирования — и только если такой Блок
- * есть в Документе.
+ * An Island for a custom Block in `RichTextView` (OLDSUI-114, ADR-0058, section 3.3). The
+ * model is the "Copy" button of the code Block (`rich-text-view-code-copy.test.tsx`): the
+ * View stays a server component, the Block's server HTML always arrives, and the client
+ * Island brings the Block to life after mounting, and only if such a Block is in the
+ * Document.
  */
 
 const player = (src: string, caption: string, kind = "video") =>
@@ -39,7 +39,7 @@ test("the server markup carries the block as plain HTML, with no island content"
   const blocks = [...host.querySelectorAll("[data-block='test_player']")];
   expect(blocks.map((block) => block.textContent)).toEqual(["First", "Second"]);
   expect(blocks[0]!.getAttribute("data-test_src")).toBe("https://example.com/a.mp4");
-  // Без JS остров не работал: ни кнопки, ни вызова компонента.
+  // Without JS the Island did not work: no button and no component call.
   expect(host.querySelectorAll("button")).toHaveLength(0);
   expect(testPlayerCalls).toHaveLength(0);
 });
@@ -53,7 +53,7 @@ test("every occurrence of the block comes alive with its own attributes and text
     "https://example.com/a.mp4",
     "https://example.com/b.mp3",
   ]);
-  // Остров занял место серверного HTML Блока: текст подписи не дублируется.
+  // The Island took the place of the Block's server HTML: the caption text is not duplicated.
   const blocks = [...container.querySelectorAll("[data-block='test_player']")];
   expect(blocks).toHaveLength(2);
   expect(within(blocks[0] as HTMLElement).getByTestId("player")).toBe(players[0]);
@@ -154,7 +154,7 @@ test("the island keeps its state while the view re-renders with the same documen
   await user.click(await screen.findByTestId("player"));
   expect(screen.getByTestId("player").textContent).toBe("Play First 1");
 
-  // Новый массив `tools` с тем же содержимым — как инлайновый литерал у родителя.
+  // A new `tools` array with the same contents, like an inline literal in the parent.
   rerender(<RichTextView html={html} tools={[testPlayerTool]} className="y" />);
   await new Promise((resolve) => setTimeout(resolve, 20));
   expect(screen.getByTestId("player").textContent).toBe("Play First 1");
@@ -239,9 +239,9 @@ test("unmounting the view removes its islands", async () => {
 });
 
 /*
-  Перерисовка родителя с тем же Документом не должна переписывать разметку:
-  React сверяет `dangerouslySetInnerHTML` по ссылке, и новый объект стёр бы
-  вместе с текстом и порталы островов (кнопку «Копировать» — тоже).
+  A parent re-render with the same Document must not rewrite the markup:
+  React compares `dangerouslySetInnerHTML` by reference, and a new object would wipe out
+  the Islands' portals along with the text (the "Copy" button too).
 */
 test("a parent re-render with the same document keeps the islands and the copy buttons", async () => {
   const html = `${ONE}<pre><code>x = 1</code></pre>`;

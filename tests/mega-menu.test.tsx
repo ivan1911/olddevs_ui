@@ -12,10 +12,10 @@ import {
 } from "../src/components/navigation/MegaMenu.js";
 
 /*
-  Мегаменю — навигация по шаблону WAI-ARIA Disclosure Navigation: Категория
-  с Полкой — кнопка, раскрывающая регион ссылок, а не пункт меню команд.
-  Тесты смотрят только на то, что видно снаружи: роли, атрибуты, фокус,
-  смонтированное содержимое.
+  Mega menu: navigation that follows the WAI-ARIA Disclosure Navigation pattern.
+  A Category with its flyout is a button that expands a region of links, not a
+  menu item of commands. The tests look only at what is visible from outside:
+  roles, attributes, focus, and mounted content.
 */
 
 afterEach(() => {
@@ -62,11 +62,11 @@ test("the catalog is a navigation landmark of disclosure buttons, each controlli
   const electronics = category("Electronics");
   expect(electronics.getAttribute("aria-expanded")).toBe("false");
   const panel = document.getElementById(electronics.getAttribute("aria-controls") ?? "");
-  // Регион существует и закрытым: `aria-controls` не должен указывать в пустоту.
+  // The region exists even when closed: `aria-controls` must not point into the void.
   expect(panel).not.toBeNull();
   expect(panel?.hidden).toBe(true);
-  // Содержимое закрытой Полки не смонтировано: каталог из сотни ссылок не
-  // грузит всё сразу.
+  // The content of a closed flyout is not mounted: a catalog of a hundred links
+  // does not load everything at once.
   expect(screen.queryByRole("link", { name: "Phone A" })).toBeNull();
 });
 
@@ -88,10 +88,10 @@ test("hovering a category opens its showcase right away and only its content is 
 });
 
 /*
-  Без user-event: его `asyncWrapper` ждёт настоящий `setTimeout`, а под
-  поддельными таймерами тот не наступает (тот же обход — в `hover-card`).
-  `fireEvent.pointerEnter` у Testing Library шлёт и `pointerover`, из которого
-  React собирает свой `onPointerEnter`.
+  Not user-event: its `asyncWrapper` waits for a real `setTimeout`, which does
+  not fire under fake timers (the same workaround is used in `hover-card`).
+  Testing Library's `fireEvent.pointerEnter` also sends `pointerover`, from which
+  React builds its own `onPointerEnter`.
 */
 test("leaving both the column and the showcase closes it after a short grace, coming back cancels", () => {
   vi.useFakeTimers();
@@ -108,7 +108,7 @@ test("leaving both the column and the showcase closes it after a short grace, co
 
   pointer("pointerLeave", nav);
   act(() => vi.advanceTimersByTime(100));
-  // Курсор вернулся в зазор — закрытие отменено.
+  // The cursor is back in the gap — the close is cancelled.
   pointer("pointerEnter", nav);
   act(() => vi.advanceTimersByTime(200));
   expect(category("Books").getAttribute("aria-expanded")).toBe("true");
@@ -128,7 +128,7 @@ test("the column is a single tab stop; arrows, Home and End move between categor
 
   await user.keyboard("{ArrowDown}");
   expect(document.activeElement).toBe(category("Books"));
-  // «Garden» выключена — стрелка её пропускает.
+  // "Garden" is disabled — the arrow skips it.
   await user.keyboard("{ArrowDown}");
   expect(document.activeElement).toBe(screen.getByRole("link", { name: "Sale" }));
   await user.keyboard("{Home}");
@@ -138,10 +138,10 @@ test("the column is a single tab stop; arrows, Home and End move between categor
   await user.keyboard("{ArrowUp}");
   expect(document.activeElement).toBe(category("Books"));
 
-  // Одна остановка Tab: следующий Tab уходит со Столбца, а не на соседнюю Категорию.
+  // A single Tab stop: the next Tab leaves the Column, not the neighboring Category.
   await user.tab();
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "after" }));
-  // Вернувшись, пользователь попадает туда, где был.
+  // Coming back, the user lands where they were.
   await user.tab({ shift: true });
   expect(document.activeElement).toBe(category("Books"));
 });
@@ -178,7 +178,7 @@ test("the arrow towards the showcase opens it, the arrow back returns to the cat
 
   category("Electronics").focus();
   await user.keyboard("{ArrowRight}");
-  // Первой в Полке стоит ссылка самой Категории — у неё есть `href`.
+  // The first item in the flyout is the Category's own link — it has an `href`.
   expect(document.activeElement).toBe(screen.getByRole("link", { name: "Electronics" }));
 
   await user.keyboard("{ArrowLeft}");
@@ -244,7 +244,7 @@ test("the current link is marked for assistive tech, the category link heads its
   expect(screen.getByRole("link", { name: "Electronics" }).getAttribute("href")).toBe(
     "/electronics"
   );
-  // Колонка — список ссылок, подписанный своим заголовком.
+  // The column is a list of links, labelled by its heading.
   expect(screen.getByRole("list", { name: "Phones" })).toBeTruthy();
 });
 
@@ -331,9 +331,9 @@ test("the catalog renders on the server", () => {
 });
 
 /*
-  Находки ревью ветки эпика (OLDSUI-259): фокус при закрытии указателем,
-  выключенная ссылка-Категория, остановка Tab при чужом `value` и при обёрнутых
-  Категориях.
+  Findings from the review of the epic branch (OLDSUI-259): focus on closing
+  with the pointer, a disabled link Category, the Tab stop with a foreign
+  `value`, and with wrapped Categories.
 */
 
 test("when the pointer leaves while keyboard focus is in the showcase, focus returns to its category", () => {
@@ -371,10 +371,10 @@ test("a disabled link category does not navigate", () => {
     </MegaMenu>
   );
 
-  // Без адреса у `a` нет роли ссылки — ищем по тексту.
+  // Without an address the `a` has no link role, so look it up by text.
   expect(screen.getByText("Sale").closest("a")?.hasAttribute("href")).toBe(false);
-  // Ссылку роутера выключенная Категория не рисует: её обработчик перешёл бы
-  // раньше любой отмены.
+  // A disabled Category does not render the router link: its handler would run
+  // before any cancellation.
   const deals = screen.getByText("Deals").closest("a");
   expect(deals?.hasAttribute("data-router")).toBe(false);
   expect(deals?.hasAttribute("href")).toBe(false);
@@ -419,10 +419,10 @@ test("categories wrapped in the consumer's own component still get a tab stop", 
 });
 
 /*
-  Доработки 4.3.0 (OLDSUI-262): ссылка роутера у заголовка колонки, фрагменты
-  в колонке, текущий раздел (`active`), поиск по первой букве и Категории,
-  которые Столбец не видит среди прямых детей (обёрнутые или пришедшие из
-  серверного компонента).
+  Changes in 4.3.0 (OLDSUI-262): the router link on the column heading,
+  fragments inside the column, the current section (`active`), search by first
+  letter, and Categories that the Column does not see among its direct children
+  (wrapped, or coming from a server component).
 */
 
 test("a group title renders as the router's element through its link prop", () => {
@@ -439,7 +439,7 @@ test("a group title renders as the router's element through its link prop", () =
   const title = screen.getByRole("link", { name: "Fiction" });
   expect(title.hasAttribute("data-router")).toBe(true);
   expect(title.getAttribute("href")).toBe("/books/fiction");
-  // Заголовок-ссылка по-прежнему подписывает список колонки.
+  // The heading link still labels the column's list.
   expect(screen.getByRole("list", { name: "Fiction" })).toBeTruthy();
 });
 
@@ -497,10 +497,10 @@ test("an active category is marked as the current section, whether or not it is 
 
   expect(category("Books").getAttribute("aria-current")).toBe("true");
   expect(category("Electronics").getAttribute("aria-current")).toBeNull();
-  // Категория-ссылка — тоже.
+  // So is a link Category.
   expect(screen.getByRole("link", { name: "Sale" }).getAttribute("aria-current")).toBe("true");
 
-  // Открытие другой Категории отметку не снимает: текущий раздел задаёт маршрут.
+  // Opening another Category does not clear the mark: the route sets the current section.
   await user.hover(category("Electronics"));
   expect(category("Books").getAttribute("aria-current")).toBe("true");
 });
@@ -553,13 +553,13 @@ test("typing a letter moves focus to the next category starting with it, skippin
 
   await user.keyboard("b");
   expect(document.activeElement).toBe(category("Books"));
-  // Та же буква ещё раз — следующая на неё, выключенная пропускается.
+  // The same letter again moves to the next one starting with it; disabled ones are skipped.
   await user.keyboard("b");
   expect(document.activeElement).toBe(category("Beauty"));
-  // По кругу — снова первая.
+  // Wrapping around — the first one again.
   await user.keyboard("b");
   expect(document.activeElement).toBe(category("Books"));
-  // Категория-ссылка находится так же.
+  // A link Category is found the same way.
   await user.keyboard("g");
   expect(document.activeElement).toBe(screen.getByRole("link", { name: "Garden" }));
 });
@@ -575,7 +575,7 @@ test("several letters typed quickly match the start of a label", () => {
   });
   expect(document.activeElement).toBe(category("Beauty"));
 
-  // Пауза сбрасывает набранное: «b» снова ищет с начала слова.
+  // A pause resets what was typed: "b" searches from the start of the word again.
   act(() => vi.advanceTimersByTime(1000));
   act(() => {
     fireEvent.keyDown(document.activeElement as Element, { key: "b" });
@@ -612,8 +612,8 @@ test("wrapped categories render a tab stop on the server, before hydration", () 
       <WrappedCategory id="b" label="Beta" />
     </MegaMenu>
   );
-  // До гидратации Столбцу не на что опереться, кроме самих строк: без остановки
-  // Tab клавиатура проскочила бы каталог, пока не загрузится клиент.
+  // Before hydration the Column has nothing to rely on except the rows themselves.
+  // Without a tab stop the keyboard would skip the catalog until the client loads.
   expect(html).toMatch(
     /data-mega-category="a"[^>]*tabindex="0"|tabindex="0"[^>]*data-mega-category="a"/
   );

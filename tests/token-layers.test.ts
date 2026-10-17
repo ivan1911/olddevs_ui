@@ -3,18 +3,18 @@ import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 /**
- * Слои токенов: примитивы → семантика → компонентные → бренд.
+ * Token layers: palette primitives → roles → component tokens → brand.
  *
- * Почему тест текстовый, а не через `getComputedStyle`: jsdom не разрешает
- * `var()` и не считает каскад по подключённой таблице, а поднимать ради четырёх
- * инвариантов настоящий браузер дороже, чем они стоят. Проверяется то, что
- * действительно можно проверить по файлу, — и ровно то, что ломается молча.
+ * Why the test is textual rather than based on `getComputedStyle`: jsdom does not resolve
+ * `var()` and does not compute the cascade over a linked stylesheet, and standing up a real browser
+ * for four invariants costs more than they are worth. The test checks what can really be checked
+ * from the file, and exactly what breaks silently.
  *
- * Живой каскад в браузере сторожит `tests-visual/interactions.spec.ts`.
+ * The live cascade in a browser is guarded by `tests-visual/interactions.spec.ts`.
  */
 const css = readFileSync(resolve(import.meta.dirname, "..", "styles.css"), "utf8");
 
-/** Тело блока по селектору. Скобки считаются: внутри лежат вложенные правила. */
+/** The body of a block for a selector. Braces are counted: the block contains nested rules. */
 function blockBody(selector: string): string {
   const at = css.indexOf(selector + " {");
   if (at === -1) throw new Error(`styles.css has no block ${selector}`);
@@ -49,8 +49,8 @@ describe("the primitive layer", () => {
   });
 
   test("semantics and themes hold no raw colours — only references to primitives", () => {
-    // Тени и градиенты — композиции из геометрии и цвета, а не палитра:
-    // у них цвет вписан в значение и примитивом не выражается. См. слой 1.
+    // Shadows and gradients are compositions of geometry and color, not palette entries:
+    // their color is inlined in the value and cannot be expressed as a primitive. See layer 1.
     const isComposite = (token: string) => token.includes("shadow");
     const raw: string[] = [];
     const scopes: [string, Record<string, string>][] = [
@@ -73,8 +73,8 @@ describe("the brand overlay", () => {
   });
 
   test("brand blocks come after accent blocks", () => {
-    // При равной специфичности побеждает тот, кто ниже. Переставь блоки — и
-    // заданный бренд перестанет отменять ось акцента, причём молча.
+    // With equal specificity the later one wins. Reorder the blocks and the brand stops
+    // overriding the accent axis, silently.
     const lastAccent = Math.max(
       css.lastIndexOf(':root[data-accent="violet"] {'),
       css.lastIndexOf(':root[data-theme="light"][data-accent="violet"] {')
@@ -100,7 +100,7 @@ describe("the brand overlay", () => {
   test("a brand overrides only the roles declared in the base", () => {
     for (const sel of BRAND_SELECTORS) {
       for (const token of Object.keys(declsOf(blockBody(sel)))) {
-        if (token.startsWith("od-")) continue; // свои примитивы бренда
+        if (token.startsWith("od-")) continue; // the brand's own primitives
         expect(ROOT[token], `${sel}: role --${token} is not declared in :root`).toBeDefined();
       }
     }
@@ -116,19 +116,19 @@ describe("the brand overlay", () => {
 });
 
 /*
-  Токен, ссылающийся на самого себя (`--font-mono: var(--font-mono), …`),
-  по спецификации CSS недействителен целиком: значение пустое, а Tailwind-класс
-  на нём молча откатывается к унаследованному. Так `font-mono` во всём ките
-  годами рисовался Inter. Сторож ловит любую такую ссылку, а не одну эту.
+  A token that references itself (`--font-mono: var(--font-mono), …`) is invalid as a whole
+  under the CSS spec: its value is empty, and a Tailwind class built on it silently falls back to
+  the inherited value. That is how `font-mono` was drawn in Inter across the whole kit for years.
+  The guard catches any such reference, not just this one.
 */
 test("no custom property refers only to itself", () => {
   const decls = [...css.matchAll(/(--[\w-]+)\s*:\s*([^;{}]*);/g)].map(([, name, value]) => ({
     name: name!,
     self: new RegExp(`var\\(\\s*${name}\\s*[,)]`).test(value!),
   }));
-  // Мост `@theme` вида `--shadow-1: var(--shadow-1)` законен, пока у токена есть
-  // настоящее объявление в теме: оно позже в каскаде и перебивает цикл. Ошибка —
-  // токен, у которого ВСЕ объявления ссылаются на него самого.
+  // An `@theme` bridge such as `--shadow-1: var(--shadow-1)` is legal as long as the token has a
+  // real declaration in the theme: it comes later in the cascade and breaks the loop. The error
+  // is a token whose EVERY declaration references itself.
   const onlySelf = [...new Set(decls.filter((d) => d.self).map((d) => d.name))].filter((name) =>
     decls.filter((d) => d.name === name).every((d) => d.self)
   );
@@ -137,20 +137,19 @@ test("no custom property refers only to itself", () => {
 });
 
 /*
-  Переменная, которую кит сам не объявляет (`--font-inter`, `--font-code`),
-  ставится потребителем — или не ставится вовсе. Ссылка на неё без запасного
-  значения делает недействительным весь токен: `--font-sans: var(--font-inter), …`
-  без `--font-inter` пуст, и `font-sans` молча наследует шрифт предка — в `Kbd`
-  и шапке блока кода это моноширинный (OLDSUI-117). Запасное значение у такой
-  ссылки обязательно.
+  A variable the kit does not declare itself (`--font-inter`, `--font-code`) is set by the
+  consumer, or not set at all. A reference to it without a fallback value makes the whole token
+  invalid: `--font-sans: var(--font-inter), …` is empty without `--font-inter`, and `font-sans`
+  silently inherits the ancestor's font. In `Kbd` and in the code block header that is the
+  monospace font (OLDSUI-117). Such a reference must have a fallback value.
 */
 test("a token never reads a variable the kit leaves undeclared without a fallback", () => {
-  // Комментарии вырезаются: в них `var(--x)` — пример, а не ссылка.
+  // Comments are stripped first: inside them, `var(--x)` is an example, not a reference.
   const code = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const tokens = [...code.matchAll(/(--[\w-]+)\s*:\s*([^;{}]*);/g)];
   const declared = new Set(tokens.map(([, name]) => name!));
-  // Только значения токенов: переменную, которую ставит инлайн-стиль компонента
-  // (`height: var(--row-exit-h)`), обычное свойство читает законно.
+  // Token values only. A plain property may legitimately read a variable that a component's
+  // inline style sets (`height: var(--row-exit-h)`).
   const bare = tokens.flatMap(([, , value]) =>
     [...value!.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)]
       .map(([, name]) => name!)

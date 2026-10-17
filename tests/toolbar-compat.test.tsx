@@ -17,10 +17,10 @@ import { ToggleGroup } from "../src/components/actions/ToggleGroup.js";
 import { Toolbar } from "../src/components/actions/Toolbar.js";
 
 /*
-  ПЕРВЫЙ ТЕСТ ЗАДАЧИ OLDSUI-26: совместимость стрелок `Toolbar` react-aria с
-  тем, что кит и Radix кладут внутрь. Стрелки там — не роуминг табиндекса, а
-  перехват клавиш на погружении (`useToolbar`): всё, что фокусируемо в DOM
-  панели, попадает в обход, а то, что вынесено порталом, — нет.
+  OLDSUI-26, first test: arrow-key compatibility of react-aria's `Toolbar` with what the kit and
+  Radix render inside it. Arrows here are not tabindex roving but a capture-phase key handler
+  (`useToolbar`): everything focusable in the bar's DOM gets visited, while content moved out by a
+  portal does not.
 */
 if (typeof globalThis.CSS === "undefined")
   (globalThis as unknown as { CSS: { escape: (v: string) => string } }).CSS = {
@@ -116,7 +116,7 @@ test("Tab enters the toolbar once and leaves it once", async () => {
   await user.tab();
   expect(focusedName()).toBe("after");
   await user.tab({ shift: true });
-  // Возврат встаёт на то, с чего ушли, а не на край панели.
+  // Focus returns to the element it came from, not to the edge of the bar.
   expect(focusedName()).toBe("Two");
 });
 
@@ -129,12 +129,12 @@ test("a RAC Menu inside opens by Enter, closes by Escape and gives focus back", 
   expect(focusedName()).toBe("Menu");
   await user.keyboard("{Enter}");
   expect(await screen.findByRole("menu")).toBeTruthy();
-  // Стрелки внутри меню принадлежат меню: портал не входит в DOM панели.
+  // Arrow keys inside a menu belong to the menu: its portal is not part of the bar's DOM.
   await user.keyboard("{ArrowRight}");
   expect(screen.getByRole("menu")).toBeTruthy();
   await user.keyboard("{Escape}");
   await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
-  // Фокус возвращается на триггер уже после закрытия, не вместе с ним.
+  // Focus returns to the trigger after the menu closes, not together with it.
   await waitFor(() => expect(focusedName()).toBe("Menu"));
   await user.keyboard("{ArrowRight}");
   expect(focusedName()).toBe("Split");
@@ -206,7 +206,7 @@ test("a ContextMenu trigger without asChild is not a stop of the walk", async ()
   );
   await user.tab();
   await user.keyboard("{ArrowRight}");
-  // Клавиатурного пути к такому меню из панели нет — это записано на странице
-  // справочника, и тест держит запись честной.
+  // There is no keyboard path to such a menu from the bar. This is recorded on the Reference
+  // page, and the test keeps that entry honest.
   expect(focusedName()).toBe("Three");
 });

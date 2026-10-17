@@ -11,9 +11,9 @@ import { messages as ru } from "../src/locales/ru.js";
 afterEach(cleanup);
 
 /**
- * «Копировать» в блоках кода просмотра (OLDSUI-50, ADR-0039). Просмотр —
- * серверный компонент: шапка с подписью языка приходит в HTML, а кнопку вставляет
- * клиентский остров после монтирования.
+ * The "Copy" button in the code Blocks of the View (OLDSUI-50, ADR-0039). The View is
+ * a server component: the header with the language label arrives in the HTML, and the
+ * client Island inserts the button after mounting.
  */
 
 const PYTHON = "def greet(name):\n    return f'hi {name}' if name < 3 else None";
@@ -29,7 +29,7 @@ function setupClipboard() {
   return { user, writeText };
 }
 
-/** Мост: контейнер просмотра — предок `pre`, но не остров. */
+/** Bridge: the View container is an ancestor of `pre`, but not an Island. */
 function blocksOf(container: HTMLElement) {
   return [...container.querySelectorAll<HTMLElement>("[data-code-block]")];
 }
@@ -48,18 +48,18 @@ test("the server markup carries the header, the language label and an empty copy
     const slot = block.querySelector("[data-code-copy]")!;
     expect(slot.textContent).toBe("");
     expect(slot.getAttribute("data-code-copy")).toBeTruthy();
-    // Код под шапкой — как был, шапка не внутри `pre`.
+    // The code under the header is unchanged: the header is not inside `pre`.
     expect(block.querySelector("pre")!.contains(slot)).toBe(false);
   }
-  // Без JS кнопки нет и разметка цела: ни одного `button`.
+  // Without JS there is no button and the markup is intact: not a single `button`.
   expect(host.querySelectorAll("button")).toHaveLength(0);
   expect(host.querySelector("pre code")!.textContent).toBe(PYTHON);
   expect(host.querySelector("p")!.textContent).toBe("Intro");
 });
 
 /*
-  Без блоков кода острова нет вовсе: ни его метки в разметке, ни эффекта,
-  который обошёл бы контейнер в поисках гнёзд.
+  Without code Blocks there is no Island at all: no label for it in the markup and no effect
+  that would walk the container looking for Mount points.
 */
 test("a view without code blocks is untouched and renders no island", () => {
   const markup = renderToStaticMarkup(<RichTextView html="<p>Text</p>" className="x" />);
@@ -147,9 +147,9 @@ test("two views on a page do not share copy slots", async () => {
 });
 
 /*
-  Остров ищет гнёзда от своего места в дереве, а не по глобальному `document`:
-  просмотр внутри теневого корня (веб-компонент, изолированный виджет) или в
-  `iframe` для `document` не виден, и кнопки бы не появились.
+  The Island looks for Mount points from its own place in the tree, not through the global
+  `document`: a view inside a shadow root (a web component, an isolated widget) or in an
+  `iframe` is not visible to `document`, and the buttons would never appear.
 */
 test("a view inside a shadow root gets its copy buttons", async () => {
   const { user, writeText } = setupClipboard();
@@ -172,8 +172,8 @@ test("a view inside a shadow root gets its copy buttons", async () => {
 });
 
 /*
-  И только в своём просмотре: гнездо с тем же идентификатором вне контейнера
-  просмотра (чужой HTML, вставленный рядом) кнопки не получает.
+  Only inside its own view: a Mount point with the same id outside the view container
+  (foreign HTML inserted next to it) does not get a button.
 */
 test("the island fills only the slots inside its own view", async () => {
   const stray = document.createElement("div");
@@ -183,7 +183,7 @@ test("the island fills only the slots inside its own view", async () => {
   stray.innerHTML = `<span data-code-copy="${own.dataset.codeCopy}"></span>`;
 
   try {
-    // Документ сменился — остров ищет гнёзда заново и видит в `document` оба.
+    // The Document changed: the Island looks for Mount points again and sees both in `document`.
     render(<RichTextView html="<pre><code>own</code></pre><p>changed</p>" />, { container });
     await waitFor(() => expect(within(container).getAllByRole("button")).toHaveLength(1));
     expect(stray.querySelector("button")).toBeNull();

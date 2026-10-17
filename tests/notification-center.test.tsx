@@ -23,24 +23,23 @@ test("the count arrives as a prop instead of being counted from rows", () => {
     </NotificationCenter>
   );
 
-  // Список бывает страницей коллекции: «2» вместо «300» — не округление,
-  // а неправда.
+  // A list can be a collection page: "2" instead of "300" is not rounding, it is a lie.
   //
-  // Глазами `Badge` обрезает большое число до «99+», но ИМЯ остаётся точным:
-  // усечение — это экономия места, а не потеря данных, и скринридер слышит
-  // настоящий счёт.
+  // To the eye, `Badge` truncates the large number to "99+", but the NAME stays
+  // exact: truncation saves space and does not lose data, and a screen reader
+  // hears the real count.
   /*
-    Проверяется ТЕКСТ, который действительно озвучивается, а не атрибут.
+    The TEXT that is actually spoken is checked, not an attribute.
 
-    Было `getByLabelText("300 unread")` — а имя стояло `aria-label`-ом на
-    `Badge`, то есть на `<span>` без роли: у роли `generic` имя от автора не
-    поддерживается, браузер его отбрасывает, и скринридер объявлял голое «3».
-    Запрос по labelText читает DOM-атрибут напрямую и проходил независимо от
-    того, признаёт ли его дерево доступности, — ложная уверенность ровно того
-    же рода, что у заглушек `offsetHeight` и `IntersectionObserver`.
+    It was `getByLabelText("300 unread")`, but the name sat as an `aria-label` on
+    `Badge`, that is on a `<span>` with no role. A `generic` role does not support
+    an author-given name, the browser discards it, and the screen reader announced
+    a bare "3". A labelText query reads the DOM attribute directly and passed
+    whether or not the accessibility tree recognised it: the same kind of false
+    confidence as the `offsetHeight` and `IntersectionObserver` stubs.
   */
   expect(screen.getByText("300 unread")).toBeTruthy();
-  // Глазами число обрезано, и от озвучки оно скрыто, чтобы не читаться дважды.
+  // To the eye the number is truncated, and it is hidden from speech so it is not read twice.
   expect(screen.getByText("99+").getAttribute("aria-hidden")).toBe("true");
 });
 
@@ -76,7 +75,7 @@ test("bulk actions go through SelectionBar, not through a bar of its own", async
 
 test("the selection bar does not stick: there is nothing to stick to in a popover", () => {
   const { container } = render(<NotificationCenter selectedCount={1}>{feed}</NotificationCenter>);
-  // Зашитое `--topbar-h` увело бы полосу под чужую шапку приложения.
+  // A hard-coded `--topbar-h` would push the bar under someone else's app header.
   const bar = container.querySelector('[role="group"][class*="border"]') as HTMLElement;
   expect(bar.className).not.toContain("sticky");
 });
@@ -84,7 +83,7 @@ test("the selection bar does not stick: there is nothing to stick to in a popove
 test("the centre neither opens nor closes itself", () => {
   const { container } = render(<NotificationCenter>{feed}</NotificationCenter>);
 
-  // Поверхности у центра нет: он содержимое `Popover`, `Drawer` или страницы.
+  // The center has no surface of its own: it is the content of a `Popover`, a `Drawer`, or a page.
   expect(container.querySelector('[role="dialog"]')).toBeNull();
   expect(screen.queryByRole("button", { name: /close|close/i })).toBeNull();
 });
@@ -110,7 +109,7 @@ test("filters, actions and the footer are slots", () => {
 test("without the new props the title stays a plain text node, not a heading", () => {
   const { container } = render(<NotificationCenter title="Events">{feed}</NotificationCenter>);
 
-  // Без `level` и `titleId` разметка не меняется: ни заголовка, ни id.
+  // Without `level` and `titleId` the markup does not change: no heading, no id.
   expect(screen.queryByRole("heading")).toBeNull();
   expect(screen.getByText("Events").tagName).toBe("SPAN");
   expect(container.querySelector("[id]")).toBeNull();
@@ -142,7 +141,7 @@ test("titleId lands on the heading so a popover can be named by it", () => {
 
   const heading = screen.getByRole("heading", { level: 2 });
   expect(heading.id).toBe("bell-title");
-  // Имя поповера приходит от заголовка, а не от `aria-label` рядом.
+  // The popover's name comes from the heading, not from an `aria-label` next to it.
   expect(screen.getByRole("dialog", { name: "Notifications" })).toBeTruthy();
 });
 
@@ -155,7 +154,7 @@ test("titleId without level goes on the plain title element", () => {
     </div>
   );
 
-  // Уровень не задан — структуру заголовков центр не трогает, но имя даёт.
+  // No level is set: the center leaves the heading structure alone, but it still supplies the name.
   expect(screen.queryByRole("heading")).toBeNull();
   expect(screen.getByRole("dialog", { name: "Events" })).toBeTruthy();
 });
@@ -172,7 +171,7 @@ test("an empty title is not a title: the catalog default names the centre", () =
 
 test("a level outside 2-4 falls back to plain text instead of a bogus element", () => {
   render(
-    // Типы такое запрещают — так передаст потребитель на JS.
+    // Types forbid it, so a JS consumer will pass it this way.
     <NotificationCenter title="Events" level={7 as never}>
       {feed}
     </NotificationCenter>

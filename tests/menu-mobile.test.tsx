@@ -10,14 +10,14 @@ beforeAll(loadLazyBuiltins);
 afterEach(cleanup);
 
 /*
-  Меню на телефоне (OLDSUI-147, OLDSUI-148). jsdom медиазапросы и `@supports`
-  не считает, поэтому проверяется класс: что он делает на устройстве, видно
-  только на устройстве.
+  Menu on a phone (OLDSUI-147, OLDSUI-148). jsdom does not evaluate media queries
+  or `@supports`, so the class is checked instead: what it does on a real
+  device can be seen only on a device.
 */
 
 test("on iOS WebKit the menu panel overrides the max-height react-aria computes", () => {
-  // react-aria на iOS 27 посчитал панели высоту около нуля: рамка схлопнулась
-  // в полоску, пункты оказались спрятаны внутри неё.
+  // react-aria on iOS 27 computed the panel height as almost zero: the frame
+  // collapsed into a strip, and the items ended up hidden inside it.
   expect(MENU_PANEL_CLASS.split(/\s+/)).toContain(
     "[@supports(-webkit-touch-callout:none)]:max-h-[min(24rem,60dvh)]!"
   );

@@ -7,20 +7,20 @@ import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 import { RichTextView, type RichTextSurface } from "../src/editor/index.js";
 
 /*
-  Лист `surface="paper"` на НАСТОЯЩЕМ каскаде (OLDSUI-52): `styles.css` кита и
-  классы Документа, собранные Tailwind из исходников, — в jsdom, внутри тёмного
-  приложения. Проверяется то, что увидит глаз: цвет текста, фон листа, маркер и
-  подсветка кода — светлые, а та же разметка без листа — тёмная.
+  The Paper `surface="paper"` on the REAL cascade (OLDSUI-52): the kit's `styles.css` and
+  the Document classes, built by Tailwind from the sources, run in jsdom inside a dark
+  app. The test checks what the eye sees: the text color, the Paper background, the marker
+  and the code highlight are light, while the same markup without the Paper is dark.
 
-  ДВЕ ПОДГОНКИ ПОД jsdom, обе без изменения смысла правил:
-  - `@layer` разворачивается: jsdom правила внутри слоёв не применяет.
-  - Классы Tailwind получают короткие псевдонимы (`.c12`). Селекторный движок
-    jsdom не находит класс с `[`, `&` и `:` в имени — ни экранированным, ни
-    через `[class~=…]`, — а у Документа такие все (`[&_a]:text-(--rte-link)`).
-    Псевдоним ставится и в CSS, и на элементы, поэтому совпадения те же.
+  TWO ADJUSTMENTS FOR jsdom, both without changing the meaning of the rules:
+  - `@layer` is unwrapped: jsdom does not apply rules inside layers.
+  - Tailwind classes get short aliases (`.c12`). The jsdom selector engine does not find
+    a class with `[`, `&` or `:` in its name, neither escaped nor through
+    `[class~=…]`, and all of the Document's classes have them (`[&_a]:text-(--rte-link)`).
+    The alias is set in both the CSS and the elements, so the matches are the same.
 
-  `var()` jsdom не подставляет: значение раскрывается цепочкой
-  пользовательских свойств на том же элементе — так, как его увидел бы браузер.
+  jsdom does not substitute `var()`: the value is resolved through the chain of custom
+  properties on the same element, the way a browser would see it.
 */
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -28,7 +28,7 @@ const tmp = mkdtempSync(join(ROOT, ".tmp-coverage-paper-"));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 afterEach(cleanup);
 
-/** Тело блоков `@layer …` — на место самих блоков. */
+/** The body of `@layer …` blocks, in place of the blocks themselves. */
 function unlayer(css: string): string {
   let out = "";
   let from = 0;
@@ -62,8 +62,8 @@ beforeAll(() => {
   writeFileSync(
     input,
     [
-      // `source(none)`: только исходники ниже, без ранее собранных `dist/` и
-      // `storybook-static/` (см. `tests/class-coverage.test.ts`).
+      // `source(none)`: only the sources below, without previously built `dist/` and
+      // `storybook-static/` (see `tests/class-coverage.test.ts`).
       '@import "tailwindcss" source(none);',
       `@import "${join(ROOT, "styles.css")}";`,
       `@source "${join(ROOT, "src", "editor")}";`,
@@ -86,7 +86,7 @@ beforeAll(() => {
 
 afterAll(() => style.remove());
 
-/** Псевдонимы классов Tailwind на всех элементах внутри. */
+/** Tailwind class aliases on all the elements inside. */
 function alias(root: Element) {
   for (const element of [root, ...root.querySelectorAll("*")]) {
     for (const name of [...element.classList]) {
@@ -95,7 +95,7 @@ function alias(root: Element) {
   }
 }
 
-/** Значение свойства с раскрытыми `var()` — как его покажет браузер. */
+/** The property value with `var()` resolved, as the browser would show it. */
 function computed(element: Element, property: string): string {
   const styles = getComputedStyle(element);
   let value = styles.getPropertyValue(property).trim();
@@ -126,8 +126,8 @@ function renderView(surface: RichTextSurface) {
     marker: computed(at("mark"), "background-color"),
     keyword: computed(at(".hljs-keyword"), "color"),
     code: computed(at("pre"), "background-color"),
-    // Шапка блока кода (OLDSUI-50): фон — тема подсветки, подпись языка и
-    // «Копировать» (её вставляет остров) — роль `--rte-secondary`.
+    // The code Block header (OLDSUI-50): the background is the highlight theme, the language
+    // label and "Copy" (inserted by the Island) use the `--rte-secondary` role.
     header: computed(at("[data-code-header]"), "background-color"),
     language: computed(at("[data-code-header] > span"), "color"),
     copy: computed(at("[data-code-header] button"), "color"),
@@ -144,17 +144,17 @@ function inApp(attributes: Record<string, string>, run: () => void) {
   }
 }
 
-/** Светлая тема кита: значения примитивов из `styles.css`, записанные руками. */
+/** The kit's light theme: primitive values from `styles.css`, copied by hand. */
 const LIGHT_PAPER = {
   sheet: "#ffffff", // --od-cloud-12
-  text: "#17212b", // --od-cloud-1 = светлый --fg-0
-  quote: "#45515f", // --od-cloud-2 = светлый --fg-1
-  danger: "#b82d2d", // --od-red-1 = светлый --danger-strong
-  marker: "#ffea80", // --od-marker-yellow: яркий, один во всех темах
+  text: "#17212b", // --od-cloud-1 = light --fg-0
+  quote: "#45515f", // --od-cloud-2 = light --fg-1
+  danger: "#b82d2d", // --od-red-1 = light --danger-strong
+  marker: "#ffea80", // --od-marker-yellow: bright, one in every theme
   keyword: "#d73a49", // GitHub Light
   code: "#ffffff", // GitHub Light
   header: "#ffffff", // GitHub Light
-  language: "#45515f", // --od-cloud-2 = светлый --fg-1
+  language: "#45515f", // --od-cloud-2 = light --fg-1
   copy: "#45515f",
 };
 
@@ -184,11 +184,11 @@ describe("paper resolves light values inside a dark app", () => {
   test("the same document without paper follows the dark app", () => {
     inApp({ "data-theme": "dark" }, () => {
       expect(renderView("theme")).toMatchObject({
-        sheet: "rgba(0, 0, 0, 0)", // лист не красится: фон — у того, кто показывает
+        sheet: "rgba(0, 0, 0, 0)", // the Paper is not painted: the background belongs to the host
         text: "#f4f5f8", // --od-slate-12
-        link: "#7fc1ff", // --od-blue-6 = тёмный --accent-strong
+        link: "#7fc1ff", // --od-blue-6 = dark --accent-strong
         danger: "#eea8a0", // --od-red-5
-        marker: "#ffea80", // --od-marker-yellow: тот же яркий в тёмном приложении
+        marker: "#ffea80", // --od-marker-yellow: the same bright one in a dark app
         keyword: "#ff7b72", // GitHub Dark
         code: "#0d1117",
         header: "#0d1117",
@@ -198,10 +198,10 @@ describe("paper resolves light values inside a dark app", () => {
 });
 
 /*
-  Тон Обёртки (OLDSUI-78): на цветной подложке ссылка, цитата, приглушённый
-  текст и подсказка пустой подписи берут более контрастные роли
-  `--rte-tone-*` (`tokens.ts`) — их пары держит гейт контраста. Снаружи
-  Обёртки и в Обёртке без тона роли прежние.
+  Wrapper tone (OLDSUI-78): on a colored backdrop the link, the quote, the muted text and
+  the hint of an empty label take the higher-contrast `--rte-tone-*` roles (`tokens.ts`);
+  their pairs are held by the contrast gate. Outside a Wrapper, and in a Wrapper without a
+  tone, the roles stay as before.
 */
 const TONED =
   '<div data-block="wrapper" data-tone="warning">' +
@@ -233,7 +233,7 @@ function renderToned(surface: RichTextSurface) {
 describe("a toned wrapper raises the secondary roles on its fill", () => {
   test("in the dark app every secondary role takes the body text", () => {
     inApp({ "data-theme": "dark" }, () => {
-      const fg0 = "#f4f5f8"; // --od-slate-12 = тёмный --fg-0
+      const fg0 = "#f4f5f8"; // --od-slate-12 = dark --fg-0
       expect(renderToned("theme")).toEqual({
         text: fg0,
         link: fg0,
@@ -242,7 +242,7 @@ describe("a toned wrapper raises the secondary roles on its fill", () => {
         done: fg0,
         caption: fg0,
         placeholder: fg0,
-        // Снаружи Обёртки ссылка — прежний акцент.
+        // Outside a Wrapper the link keeps the previous accent.
         outsideLink: "#7fc1ff",
       });
     });
@@ -252,12 +252,12 @@ describe("a toned wrapper raises the secondary roles on its fill", () => {
     inApp({ "data-theme": "dark" }, () => {
       expect(renderToned("paper")).toEqual({
         text: "#17212b", // --od-cloud-1
-        link: "#17212b", // --od-cloud-1: акцент на подложке тона 4.5 не держит
+        link: "#17212b", // --od-cloud-1: the accent does not hold 4.5 on a tone backdrop
         gray: "#545f6e", // --od-cloud-3
         quote: "#45515f", // --od-cloud-2
         done: "#545f6e", // --od-cloud-3
         caption: "#545f6e", // --od-cloud-3
-        placeholder: "#545f6e", // --od-cloud-3, а не --od-cloud-4
+        placeholder: "#545f6e", // --od-cloud-3, not --od-cloud-4
         outsideLink: "#1e76da",
       });
     });
@@ -265,12 +265,12 @@ describe("a toned wrapper raises the secondary roles on its fill", () => {
 });
 
 /*
-  Свой Блок в Просмотре (OLDSUI-104, ADR-0058, п. 3.2): кит даёт ему тот же
-  вертикальный ритм, что абзацу, и больше ничего — остальное CSS потребителя
-  по `data-block`. Блоки внутри своего Блока-контейнера стоят с ритмом
-  Документа, как в Обёртке; строчное содержимое своего Блока отступов не
-  получает, даже если CSS потребителя сделает атом `inline-block`. Сверка —
-  с абзацем того же Документа, на обеих поверхностях.
+  A custom Block in the View (OLDSUI-104, ADR-0058, section 3.2): the kit gives it the same
+  vertical rhythm as a paragraph, and nothing more: the rest is the consumer's CSS, keyed
+  on `data-block`. Blocks inside a custom container Block keep the Document's rhythm, as in
+  a Wrapper; the inline content of a custom Block gets no spacing, even if the consumer's
+  CSS makes the atom `inline-block`. The check is against a paragraph of the same
+  Document, on both surfaces.
 */
 const CUSTOM =
   "<p>Before</p>" +
@@ -300,7 +300,8 @@ describe("a custom block keeps the paragraph rhythm in the view", () => {
   test.each(["theme", "paper"] as const)("%s surface", (surface) => {
     inApp({ "data-theme": "dark" }, () => {
       const rhythm = renderCustom(surface);
-      // Сверка, что ритм вообще есть: у абзаца отступ, у последнего Блока — нет.
+      // Sanity check that the rhythm exists at all: the paragraph has a margin,
+      // the last Block does not.
       expect(rhythm.paragraph).not.toBe(rhythm.noMargin);
 
       expect(rhythm).toEqual({

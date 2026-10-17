@@ -23,8 +23,8 @@ test("the button announces the state, not only swaps the icon", async () => {
 
   await user.click(screen.getByRole("button", { name: "Show password" }));
 
-  // Без `aria-pressed` скринридер не сообщит, что пароль сейчас на экране
-  // открыт, — а это состояние безопасности.
+  // Without `aria-pressed` a screen reader will not announce that the password
+  // is currently shown, and that is a security state.
   expect(field().type).toBe("text");
   expect(screen.getByRole("button", { name: "Show password" }).getAttribute("aria-pressed")).toBe(
     "true"
@@ -38,8 +38,8 @@ test("the button label does not change with the state", async () => {
   const button = screen.getByRole("button", { name: "Show password" });
   await user.click(button);
 
-  // Кнопка, у которой меняются и имя, и состояние, читается противоречиво:
-  // «Скрыть пароль, нажато». Правило APG — имя постоянно, меняется признак.
+  // A button whose name and state both change reads contradictorily: "Hide
+  // password, pressed". The APG rule: the name stays constant, the state changes.
   expect(button.getAttribute("aria-label")).toBe("Show password");
 });
 
@@ -50,8 +50,8 @@ test("toggling visibility does not reset the caret to the end", async () => {
   field().setSelectionRange(3, 3);
   await user.click(screen.getByRole("button", { name: "Show password" }));
 
-  // Смена `type` сбрасывает выделение в конец значения, и пользователь,
-  // открывший пароль посреди правки, терял место.
+  // Changing `type` resets the selection to the end of the value, so a user who
+  // revealed the password in the middle of an edit lost their place.
   expect(field().selectionStart).toBe(3);
   expect(field().selectionEnd).toBe(3);
 });
@@ -59,8 +59,8 @@ test("toggling visibility does not reset the caret to the end", async () => {
 test("Caps Lock is read from getModifierState instead of being guessed from input", () => {
   render(<PasswordInput aria-label="Password" />);
 
-  // В поле пароля символов не видно, а «все заглавные» — законный пароль:
-  // угадывать по регистру нечем.
+  // A password field shows no characters, and "all capitals" is a legitimate
+  // password: there is nothing to infer the case from.
   expect(screen.queryByText("Caps Lock is on")).toBeNull();
 
   fireEvent.keyDown(field(), { key: "A", modifierCapsLock: true });
@@ -82,8 +82,8 @@ test("the warning is cleared on leaving the field", () => {
 test("the warning region exists before the text appears", () => {
   const { container } = render(<PasswordInput aria-label="Password" />);
 
-  // Живой регион, появившийся в разметке вместе со своим текстом, скринридер
-  // не объявляет — он обязан быть на месте заранее.
+  // A live region that appears in the markup together with its text is not
+  // announced by a screen reader, so it has to be in place in advance.
   const region = container.querySelector("[role='status']");
   expect(region).toBeTruthy();
   expect(region?.textContent).toBe("");
@@ -101,15 +101,15 @@ test("without capsLockWarning no wrapper and no handlers appear", () => {
   const { container } = render(<PasswordInput aria-label="Password" capsLockWarning={false} />);
 
   expect(container.querySelector("[role='status']")).toBeNull();
-  // Разметка та же, что у `TextControl` со слотом: корень — оболочка поля.
+  // The markup is the same as `TextControl` with a slot: the root is the field's wrapper.
   expect(container.firstElementChild?.querySelector("input")).toBeTruthy();
 });
 
 test("the component draws no border of its own — it stays with TextControl", () => {
   const { container } = render(<PasswordInput aria-label="Password" />);
 
-  // Рамка живёт ровно на одной оболочке: вторая означала бы, что поле пароля
-  // фокусируется не так, как соседнее поле в той же форме.
+  // The border lives on exactly one wrapper: a second one would mean the password
+  // field gets focus differently from a neighboring field in the same form.
   expect(container.querySelectorAll(".border-line")).toHaveLength(1);
 });
 
