@@ -1,23 +1,22 @@
 /**
- * Видео по ссылке — правила распознавания и адрес плеера (ADR-0071): узел
- * Редактора, поле ссылки и Остров Просмотра. Лёгкая часть — имена и проверка
- * `data-src` для очистки — лежит в `videoSrc.ts` и в «старт» тянет только её.
+ * Video by link: the recognition rules and the player address (ADR-0071). These serve the Editor's
+ * node, the link field, and the View's island. The light part (the names and the `data-src` check
+ * for sanitizing) lives in `videoSrc.ts`, and the start bundle pulls in only that.
  *
- * ЧТО ЛЕЖИТ В ДОКУМЕНТЕ. Не плеер, а ссылка: `data-provider` (сервис) и
- * `data-src` — ссылка на видео в каноническом виде (`parseVideoLink`). Адрес
- * плеера собирается при показе (`playerUrl`): у Twitch в нём домен страницы
- * (`parent`), и Документ, сохранённый в админке, на публичном сайте с другим
- * доменом показывал бы неработающий плеер. YouTube всегда идёт через
- * `youtube-nocookie.com`.
+ * WHAT LIVES IN THE DOCUMENT. Not the player, but the link: `data-provider` (the service) and
+ * `data-src`, a link to the video in canonical form (`parseVideoLink`). The player's address is
+ * built at display time (`playerUrl`). For Twitch it contains the page's domain (`parent`), and a
+ * Document saved in the admin area would show a broken player on a public site with another
+ * domain. YouTube always goes through `youtube-nocookie.com`.
  *
- * ПО ОБРАЗЦУ РАСШИРЕНИЙ TIPTAP YOUTUBE И TWITCH (решение владельца 2026-10-16:
- * свой код, пакеты расширений не ставятся): какие ссылки считаются видео и как из
- * них достаётся идентификатор — правила их `utils`, переписанные на разбор `URL`,
- * а не на одно выражение: хост сверяется по имени, а не по подстроке, поэтому
- * `youtube.com.evil.example` и `youtube.com@evil.example` видео не дают.
+ * MODELLED ON THE TIPTAP YOUTUBE AND TWITCH EXTENSIONS (the owner's decision of 2026-10-16: our
+ * own code, the extension packages are not installed). Which links count as video, and how the
+ * identifier is taken from them, follows the rules of their `utils`, rewritten for parsing `URL`
+ * rather than for a single expression. The host is matched by name, not by substring, so
+ * `youtube.com.evil.example` and `youtube.com@evil.example` give no video.
  *
- * Модуль серверно-безопасен: данные и чистые функции над строкой, без React и
- * без движка. Нужен глобальный `URL`: он есть в браузере и в Node.
+ * The module is safe to run on the server: data and pure functions over strings, with no React
+ * and no engine. It needs the global `URL`, which exists in the browser and in Node.
  */
 
 import {
@@ -31,22 +30,22 @@ import {
 
 export type { VideoLink, VideoProvider } from "./videoSrc.js";
 
-/** Название сервиса словами — подпись заглушки и имя плеера. Это имена брендов: не переводятся. */
+/** The service name in words: the placeholder's label and the player's name. These are brand names and are not translated. */
 export const VIDEO_PROVIDER_NAME: Readonly<Record<VideoProvider, string>> = {
   youtube: "YouTube",
   twitch: "Twitch",
 };
 
-/** Идентификатор видео, плейлиста, клипа: буквы, цифры, `_` и `-`. */
+/** Identifier of a video, playlist, or clip: letters, digits, `_` and `-`. */
 const ID = /^[\w-]{1,64}$/;
-/** Номер записи Twitch: цифры, перед ними допускается `v` (так пишет сам плеер). */
+/** Twitch recording number: digits, optionally preceded by `v` (the player itself writes it that way). */
 const TWITCH_VIDEO_ID = /^v?(\d{1,20})$/;
-/** Метка времени Twitch: `1h2m3s`, `45m`, `30s`; хотя бы одна часть. */
+/** Twitch time offset: `1h2m3s`, `45m`, `30s`; at least one part. */
 const TWITCH_TIME = /^(?=\d)(?:\d+h)?(?:\d+m)?(?:\d+s)?$/;
 
 /**
- * Разобрать текст как адрес: `https://…`, `http://…`, `//…` или без схемы
- * (`youtu.be/…`). Другая схема, пробелы, логин, пароль и порт — не адрес видео.
+ * Parse text as an address: `https://…`, `http://…`, `//…`, or without a scheme (`youtu.be/…`).
+ * Another scheme, spaces, a login, a password, or a port means it is not a video address.
  */
 function toUrl(input: string): URL | null {
   const text = input.trim();
@@ -64,10 +63,10 @@ function toUrl(input: string): URL | null {
   }
 }
 
-/** Сегменты пути без пустых: `/a//b/` → `["a", "b"]`. */
+/** Path segments without the empty ones: `/a//b/` → `["a", "b"]`. */
 const segments = (url: URL) => url.pathname.split("/").filter(Boolean);
 
-/** Секунды из метки времени YouTube: `90`, `90s`, `1h2m3s`. `null` — метки нет или она не годится. */
+/** Seconds from a YouTube time offset: `90`, `90s`, `1h2m3s`. `null` means there is no offset, or it is not valid. */
 function youtubeStart(value: string | null): number | null {
   if (!value) return null;
   const parts = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/.exec(value);
@@ -91,7 +90,7 @@ function youtubePlaylist(list: string | null): VideoLink | null {
     : null;
 }
 
-/** Имя хоста без `www.` и мобильных поддоменов. */
+/** Host name without `www.` and mobile subdomains. */
 function bareHost(url: URL, ...prefixes: string[]): string {
   const host = url.hostname.toLowerCase();
   for (const prefix of prefixes) if (host.startsWith(prefix)) return host.slice(prefix.length);
@@ -99,9 +98,9 @@ function bareHost(url: URL, ...prefixes: string[]): string {
 }
 
 /**
- * Ссылка на YouTube: ролик (`watch?v=`, `youtu.be/`, `/shorts/`, `/live/`,
- * `/embed/`, `/v/`) или плейлист (`/playlist?list=`). `embed` разбирается
- * потому, что это тоже ссылка на видео, хотя кит её не пишет.
+ * A YouTube link: a video (`watch?v=`, `youtu.be/`, `/shorts/`, `/live/`, `/embed/`, `/v/`) or a
+ * playlist (`/playlist?list=`). `embed` is parsed because it is also a link to a video, although
+ * the kit does not write it.
  */
 function fromYoutube(url: URL, hosts: readonly string[]): VideoLink | null {
   const host = bareHost(url, "www.", "m.", "music.");
@@ -133,8 +132,8 @@ function twitchTime(url: URL): string {
 }
 
 /**
- * Ссылка на Twitch: запись (`/videos/<число>`), клип (`clips.twitch.tv/<имя>`,
- * `/<канал>/clip/<имя>`) или канал (`/<канал>`).
+ * A Twitch link: a recording (`/videos/<number>`), a clip (`clips.twitch.tv/<name>`,
+ * `/<channel>/clip/<name>`), or a channel (`/<channel>`).
  */
 function fromTwitch(url: URL): VideoLink | null {
   const host = bareHost(url, "www.", "m.");
@@ -164,10 +163,10 @@ function fromTwitch(url: URL): VideoLink | null {
 const YOUTUBE_HOSTS = ["youtube.com", "youtu.be"] as const;
 
 /**
- * Ссылка на видео в каноническом виде или `null`, если это не видео. Хосты —
- * из ADR-0071: YouTube — `youtube.com`, `youtu.be`; Twitch — `twitch.tv`,
- * `clips.twitch.tv` (с `www.`, а у YouTube ещё `m.` и `music.`). Схема `http`
- * и ссылка без схемы принимаются, канонический вид всегда `https`.
+ * The video link in canonical form, or `null` if this is not a video. The hosts come from
+ * ADR-0071: YouTube is `youtube.com` and `youtu.be`; Twitch is `twitch.tv` and `clips.twitch.tv`
+ * (with `www.`, and for YouTube also `m.` and `music.`). The `http` scheme and a link without a
+ * scheme are accepted; the canonical form is always `https`.
  */
 export function parseVideoLink(input: string): VideoLink | null {
   const url = toUrl(input);
@@ -175,11 +174,11 @@ export function parseVideoLink(input: string): VideoLink | null {
 }
 
 /**
- * Блок видео из Документа (`data-provider` и `data-src`) — ссылкой, если он годится:
- * сервис кита, канонический адрес этого сервиса (`isVideoSrc`) и разбор, который
- * узнаёт его тем же сервисом. Одна проверка на разбор HTML (`video.ts`), Скелет и
- * Остров (`VideoIslandSlots.tsx`): у чужого сервиса, чужого хоста и значения с
- * разметкой плеера нет. `null` — блок остаётся ссылкой.
+ * A video Block from the Document (`data-provider` and `data-src`) as a link, if it is valid: a
+ * service of the kit, the canonical address of that service (`isVideoSrc`), and a parse that
+ * recognizes it as the same service. One check serves the HTML parsing (`video.ts`), the Skeleton,
+ * and the island (`VideoIslandSlots.tsx`). An unknown service, an unknown host, and a value with
+ * player markup do not pass. `null` means the Block stays a link.
  */
 export function videoLinkOf(provider: string | null, src: string): VideoLink | null {
   if (!isVideoProvider(provider) || !isVideoSrc(provider, src)) return null;
@@ -188,11 +187,11 @@ export function videoLinkOf(provider: string | null, src: string): VideoLink | n
 }
 
 /**
- * Адрес плеера из адреса, который пишут расширения Tiptap (`iframe src`), —
- * обратно в ссылку на видео. Узнаются плеер YouTube (`/embed/<id>`,
- * `/embed/videoseries?list=`, в том числе `youtube-nocookie.com`) и плееры
- * Twitch (`player.twitch.tv/?video=` или `?channel=`, `clips.twitch.tv/embed`).
- * Параметры плеера (`autoplay`, `parent`, `origin`…) не переносятся.
+ * Turns a player address, as the Tiptap extensions write it (`iframe src`), back into a link to the
+ * video. The YouTube player (`/embed/<id>`, `/embed/videoseries?list=`, including
+ * `youtube-nocookie.com`) and the Twitch players (`player.twitch.tv/?video=` or `?channel=`,
+ * `clips.twitch.tv/embed`) are recognized. Player parameters (`autoplay`, `parent`, `origin`, …)
+ * are not carried over.
  */
 export function videoLinkFromPlayer(input: string | null | undefined): VideoLink | null {
   const url = input ? toUrl(input) : null;
@@ -217,16 +216,16 @@ export function videoLinkFromPlayer(input: string | null | undefined): VideoLink
     const clip = url.searchParams.get("clip");
     return clip && ID.test(clip) ? parseVideoLink(`https://clips.twitch.tv/${clip}`) : null;
   }
-  // Ссылка на сам ролик в `src` (YouTube принимает и такое) — обычная ссылка.
+  // A link to the video itself in `src` (YouTube accepts that too) is an ordinary link.
   return fromYoutube(url, YOUTUBE_HOSTS) ?? fromTwitch(url);
 }
 
 /**
- * Адрес плеера для показа. `parentHost` — имя хоста текущей страницы
- * (`location.hostname`): Twitch не запускает плеер без него. `autoplay` — стартовать
- * ли воспроизведение сразу: после щелчка «Воспроизвести» да (читатель только что
- * решил смотреть), а плеер, который встал на страницу сам (`autoload`), сам не
- * включается — это видео на странице, а не реклама.
+ * The player address for display. `parentHost` is the host name of the current page
+ * (`location.hostname`): Twitch does not start the player without it. `autoplay` says whether
+ * playback starts at once. After a click on Play it does (the reader has just decided to watch).
+ * A player that appeared on the page by itself (`autoload`) does not start on its own: it is a
+ * video on the page, not an ad.
  */
 export function playerUrl(link: VideoLink, parentHost: string, autoplay = true): string | null {
   const url = parseVideoLink(link.src);
@@ -234,7 +233,7 @@ export function playerUrl(link: VideoLink, parentHost: string, autoplay = true):
   const source = new URL(url.src);
   if (url.provider === "youtube") {
     const list = source.searchParams.get("list");
-    // YouTube: `autoplay=1` или ничего — без параметра плеер ждёт нажатия.
+    // YouTube: `autoplay=1` or nothing. Without the parameter the player waits for a click.
     const play = autoplay ? "autoplay=1" : "";
     if (list) {
       return (
@@ -249,7 +248,7 @@ export function playerUrl(link: VideoLink, parentHost: string, autoplay = true):
     );
   }
   const parent = encodeURIComponent(parentHost);
-  // Twitch по умолчанию стартует сам: без явного `autoplay=false` плеер встанет играющим.
+  // Twitch starts on its own by default: without an explicit `autoplay=false` the player would start playing.
   const play = `&autoplay=${autoplay}`;
   if (source.hostname === "clips.twitch.tv") {
     return (

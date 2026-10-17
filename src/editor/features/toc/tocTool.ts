@@ -5,17 +5,17 @@ import type { TocToolCommands } from "../../core/toolCommands.js";
 import type { TocLevel, TocToolOptions } from "../../core/toolOptions.js";
 
 /**
- * Оглавление на описании Инструмента (ADR-0068). Extensions и UI-записей
- * у него нет: полосу и список рисует `RichTextEditor` в левом поле рамки
- * (`TocCore`, ленивым чанком), а описание несёт Опции — умолчания и проверки,
- * из которых `expandTools` собирает Опции Редактора.
+ * The table of contents as a Tool descriptor (ADR-0068). It has no Extensions or UI
+ * entries: `RichTextEditor` draws the strip and the list in the left column of the
+ * field's frame (`TocCore`, as a lazy chunk), while the descriptor carries the Options,
+ * the defaults and the checks, from which `expandTools` builds the Editor's Options.
  *
- * Тяжёлых импортов нет: описание лежит в стартовом куске Редактора, а UI
- * Оглавления — нет.
+ * There are no heavy imports: the descriptor sits in the Editor's starter chunk, and the
+ * table-of-contents UI does not.
  */
 const TOC_LEVELS: readonly TocLevel[] = [1, 2, 3, 4];
 
-/** Умолчания Опций: переменная `TopBar` (ADR-0016), все четыре уровня, список в 240 пикселей. */
+/** Option defaults: the `TopBar` variable (ADR-0016), all four levels, a 240-pixel list. */
 export const TOC_DEFAULTS: TocToolOptions = {
   offsetVar: "--topbar-h",
   levels: TOC_LEVELS,
@@ -26,7 +26,7 @@ export const TOC_TOOL: ToolDescriptor = {
   name: "toc",
   defaults: TOC_DEFAULTS,
   checks: {
-    // Имя вставляется в `var(…)` стиля поля, поэтому — только слово с дефисами.
+    // The name is inserted into `var(…)` in the field's style, so it must be a plain word with hyphens.
     offsetVar: (value) => typeof value === "string" && /^--[\w-]+$/.test(value),
     levels: (value) =>
       Array.isArray(value) &&
@@ -36,6 +36,6 @@ export const TOC_TOOL: ToolDescriptor = {
       (typeof value === "number" && Number.isFinite(value) && value > 0) ||
       (typeof value === "string" && value.trim() !== ""),
   },
-  // Переход живёт в ленивом ядре Оглавления: мост зовёт его, пока оно смонтировано.
+  // The jump lives in the lazy table-of-contents core: the bridge calls it while the core is mounted.
   commands: ({ bridge }): TocToolCommands => ({ jumpTo: bridge.jumpToc }),
 };

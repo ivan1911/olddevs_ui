@@ -8,9 +8,9 @@ import type { VideoAutoload } from "./videoOptions.js";
 import { VIDEO_BLOCK, type VideoLink } from "./videoSrc.js";
 
 export interface VideoIslandSlotsProps {
-  /** Отпечаток HTML просмотра: сменился Документ — блоки новые, и остров ищет их заново. */
+  /** Fingerprint of the View's HTML. When the Document changes, its Blocks are new, and the island looks for them again. */
   docKey: string;
-  /** Опция `autoload` каждого сервиса из `tools` экрана (`videoAutoloadOf`): данные. */
+  /** The `autoload` option of each service, from the screen's `tools` (`videoAutoloadOf`). Data only. */
   autoload: VideoAutoload;
 }
 
@@ -20,25 +20,26 @@ interface Found {
 }
 
 /**
- * Тело острова видео (ADR-0071, п. 3); оболочка и ленивая загрузка —
- * `VideoIsland.tsx`. Устроен как остров своих Блоков (`BlockIslandSlots.tsx`).
+ * The body of the video island (ADR-0071, item 3). The shell and the lazy loading live in
+ * `VideoIsland.tsx`. It is built the same way as the island for Blocks (`BlockIslandSlots.tsx`).
  *
- * СЕРВЕРНЫЙ HTML ПЕРВИЧЕН. Блок приходит в разметке целиком — со ссылкой внутри — и
- * читается без JS, до гидрации и в Markdown. После монтирования его содержимое
- * заменяет `VideoPlayer`: плеер сразу или, с `autoload: false`, заглушка с кнопкой
- * «Воспроизвести» и плеер после щелчка; адрес собирается здесь же. Размонтирование острова возвращает ссылку.
- * Блок, у которого сервис или адрес не годятся (HTML не прошёл очистку, чужой
- * сервис), остаётся ссылкой: плеер строится только из того, что узнаёт `isVideoSrc`.
+ * SERVER HTML COMES FIRST. The Block arrives in the markup whole, with its link inside, and it
+ * can be read without JS, before hydration, and in Markdown. After mounting, its content is
+ * replaced by `VideoPlayer`: the player at once or, with `autoload: false`, a Play placeholder
+ * and the player after a click. The address is built right here. Unmounting the island brings
+ * the link back.
+ * A Block whose service or address is not usable (the HTML did not pass sanitizing, or the
+ * service is unknown) stays a link: the player is built only from what `isVideoSrc` recognizes.
  *
- * ПОИСК — ОТ СВОЕГО МЕСТА В ДЕРЕВЕ, как у «Копировать»: пустой инертный
- * `<template>` стоит сразу за контейнером просмотра (или за метками других
- * островов), поэтому просмотр в теневом корне или `iframe` находит свои блоки.
- * Метка есть и в разметке сервера, и в первом клиентском проходе — гидрация
- * совпадает; порталы появляются только после эффекта.
+ * THE SEARCH STARTS FROM ITS OWN PLACE IN THE TREE, as the Copy button does: an empty, inert
+ * `<template>` sits right after the View's container (or after the markers of other islands),
+ * so a View inside a shadow root or an `iframe` finds its own Blocks. The marker is present both
+ * in the server markup and in the first client pass, so hydration matches. Portals appear only
+ * after an effect runs.
  *
- * ЭФФЕКТ ЗАВИСИТ ОТ ДОКУМЕНТА (`docKey`), а не от пропсов просмотра: новый литерал у
- * родителя не должен перемонтировать плееры и обрывать воспроизведение. Опция
- * `autoload` — данные в пропсах и читается при отрисовке плеера.
+ * THE EFFECT DEPENDS ON THE DOCUMENT (`docKey`), not on the View's props: a new object literal
+ * passed by the parent must not remount the players and cut off playback. The `autoload` option
+ * is data in the props and is read when the player is rendered.
  */
 export default function VideoIslandSlots({ docKey, autoload }: VideoIslandSlotsProps) {
   const [found, setFound] = useState<Found[]>([]);
@@ -51,7 +52,7 @@ export default function VideoIslandSlots({ docKey, autoload }: VideoIslandSlotsP
     for (const element of view?.querySelectorAll<HTMLElement>(`div[data-block="${VIDEO_BLOCK}"]`) ??
       []) {
       const link = videoLinkOf(element.dataset.provider ?? null, element.dataset.src ?? "");
-      // Блок внутри блока видео — вложенность, которой нет: оживает внешний.
+      // A Block nested inside a video Block is not a supported case: only the outer one comes alive.
       if (link && !element.parentElement?.closest(`div[data-block="${VIDEO_BLOCK}"]`)) {
         list.push({ element, link });
       }
@@ -70,15 +71,16 @@ export default function VideoIslandSlots({ docKey, autoload }: VideoIslandSlotsP
 }
 
 /**
- * Рамку 16:9 уже держит сам блок (`VIDEO_CLASS` в `prose.ts`): плеер заполняет её, а
- * не рисует вторую рамку и не добавляет высоты — остров высоту блока не меняет.
+ * The 16:9 frame is already held by the Block itself (`VIDEO_CLASS` in `prose.ts`): the player
+ * fills it instead of drawing a second frame or adding height. The island does not change the
+ * Block's height.
  */
 const IN_FRAME = "absolute inset-0 aspect-auto size-full rounded-none border-0 bg-transparent";
 
 /**
- * Одно вхождение блока. Содержимое серверного HTML снимается и заменяется пустым
- * корнем острова; корень встаёт ДО отрисовки плеера (`ready`), чтобы его эффекты
- * видели себя в документе. Размонтирование возвращает содержимое.
+ * One occurrence of the Block. The server HTML's content is removed and replaced by an empty
+ * island root. The root is inserted BEFORE the player renders (`ready`), so its effects can see
+ * it in the document. Unmounting puts the content back.
  */
 function Slot({ item, autoload }: { item: Found; autoload: boolean }) {
   const { element, link } = item;

@@ -27,88 +27,88 @@ import { stickyOffset } from "./stickyOffset.js";
 
 export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /**
-   * Ref на Просмотр (`RichTextView`) или на Хэндл Редактора (`RichTextEditor`),
-   * чьи заголовки показывает Оглавление. Заголовки читаются из DOM цели после
-   * монтирования: до гидратации полосы нет.
+   * Ref to the View (`RichTextView`) or to the Editor's handle (`RichTextEditor`)
+   * whose headings the table of contents shows. The headings are read from the
+   * target's DOM after mount: until hydration there is no strip.
    *
-   * Список следит за Документом: новый `html` Просмотра, новое значение
-   * Редактора и правка в нём пересобирают его с короткой задержкой. Редактор
-   * в `readOnly` работает так же, как Просмотр. Редактор в правке тоже
-   * поддержан — список пересобирается, а переход не двигает каретку, — но
-   * контрактом этот режим не обещан. Движок Редактора появляется после
-   * монтирования, и Оглавление ждёт его само.
+   * The list follows the Document: a new `html` on the View, a new value in the
+   * Editor, and an edit in it rebuild the list after a short delay. An Editor with
+   * `readOnly` works the same way as the View. An Editor that is being edited is
+   * supported too: the list rebuilds, and a jump does not move the caret, but the
+   * contract does not promise this mode. The Editor's engine appears after mount,
+   * and the table of contents waits for it by itself.
    */
   target: RefObject<HTMLElement | RichTextEditorHandle | null>;
   /**
-   * Имя CSS-переменной с высотой липкой шапки экрана ([ADR-0016]). Переход
-   * ставит заголовок под шапку, а не за неё, и подсветка считает раздел
-   * текущим от нижнего края шапки. Переменной нет — отступом служит
-   * `scroll-margin-top` заголовка. По умолчанию `--topbar-h`: её публикует `TopBar`.
+   * Name of the CSS variable with the height of the sticky top bar ([ADR-0016]).
+   * A jump puts the heading below the bar, not behind it, and the highlight counts
+   * the current section from the bar's bottom edge. Without the variable, the offset
+   * is the heading's `scroll-margin-top`. Defaults to `--topbar-h`, which `TopBar` publishes.
    */
   offsetVar?: string;
   /**
-   * Ширина списка — длина CSS или пиксели. Постоянная, а не по самому длинному
-   * заголовку: список не меняет размер от Документа к Документу. Заголовок, что
-   * не помещается, обрезается многоточием, полный текст — в подсказке пункта.
-   * По умолчанию 240px.
+   * List width: a CSS length or pixels. It is fixed, not sized to the longest
+   * heading, so the list does not change size from Document to Document. A heading
+   * that does not fit is cut with an ellipsis; the full text is in the item's tooltip.
+   * Defaults to 240px.
    */
   listWidth?: number | string;
   /**
-   * Уровни заголовков, которые попадают в Оглавление: подмножество 1–4. Заголовка
-   * другого уровня нет ни в полосе, ни в списке, а отступ пунктов считается от
-   * самого крупного из оставшихся. Читается при каждой сборке списка, поэтому
-   * смена набора уровней пересобирает его. По умолчанию все четыре.
+   * Heading levels that go into the table of contents: a subset of 1–4. Headings of
+   * any other level appear neither in the strip nor in the list, and item indents are
+   * measured from the largest of the remaining levels. Read on every list build, so
+   * changing the set of levels rebuilds the list. Defaults to all four.
    */
   levels?: readonly (1 | 2 | 3 | 4)[];
 }
 
 /**
- * Длина штриха по глубине: чем глубже уровень, тем короче штрих. Ступеней
- * четыре — по числу уровней H1–H4, так что у каждого уровня своя длина.
+ * Stroke length by depth: the deeper the level, the shorter the stroke. There are
+ * four steps, one per heading level H1–H4, so each level has its own length.
  */
 const STROKE_WIDTH = ["w-3.5", "w-3", "w-2.5", "w-2"] as const;
 /**
- * Штрих текущего раздела той же толщины, что остальные (ячейка 2px), но длиннее
- * старшего уровня и цвета акцента: его видно в полосе с первого взгляда, а он не
- * выпирает из неё.
+ * The current section's stroke has the same thickness as the others (a 2px cell),
+ * but it is longer than the top-level stroke and uses the accent color. It is
+ * visible in the strip at a glance, yet does not stick out of it.
  */
 const CURRENT_STROKE = "bg-accent-strong h-0.5 w-4";
-/** Отступ текста пункта по глубине. */
+/** Text indent of an item by depth. */
 const ITEM_INDENT = ["pl-0", "pl-2.5", "pl-5", "pl-7.5"] as const;
 
 const strokeWidth = (depth: number) => STROKE_WIDTH[Math.min(depth, STROKE_WIDTH.length - 1)];
 const itemIndent = (depth: number) => ITEM_INDENT[Math.min(depth, ITEM_INDENT.length - 1)];
 
 /*
-  Задержки наведения короче, чем у `HoverCard` по умолчанию (700 и 300 мс).
-  Карточка висит на ссылке посреди текста, и курсор пролетает её случайно;
-  полоса Оглавления стоит в своей колонке, и навели на неё — значит, хотят
-  список. Механика та же, что у карточки, — компонент собран на ней.
+  Hover delays are shorter than the `HoverCard` defaults (700 and 300 ms). The card
+  sits on a link in the middle of the text, and the cursor sweeps over it by accident;
+  the table of contents strip stands in its own column, so when someone hovers it,
+  they want the list. The mechanism is the same as the card's: the component is built on it.
 */
 const OPEN_DELAY = 200;
 const CLOSE_DELAY = 300;
 
-/** Все уровни заголовков: Оглавление без `levels`. */
+/** All heading levels: the table of contents without `levels`. */
 const ALL_LEVELS = [1, 2, 3, 4] as const;
 
-/** Пауза после последней правки Документа, по которой список пересобирается. */
+/** Pause after the last edit of the Document, after which the list is rebuilt. */
 const REBUILD_DELAY = 150;
 
 /**
- * Шаг между штрихами полосы и его границы. Ячейка штриха — 2px, ровно в штрих
- * (см. полосу; решение владельца на превью 4.7.0, OLDSUI-289: было 3px), между
- * ячейками — 5px. `p-1` даёт по 4px сверху и снизу; запас оставляет воздух над
- * и под полосой.
+ * Step between the strip's strokes, and its bounds. A stroke cell is 2px, exactly
+ * the stroke's width (see the strip; the owner's decision on the 4.7.0 preview,
+ * OLDSUI-289: it was 3px). The gap between cells is 5px. `p-1` gives 4px above and
+ * below; the remaining space leaves air above and below the strip.
  */
 const STRIP_GAP = 5;
 const STRIP_CELL = 2;
 const STRIP_PADDING = 8;
 const STRIP_MARGIN = 16;
 
-/** Сколько прокрутка от перехода должна молчать, чтобы считаться законченной. */
+/** How long the scroll caused by a jump must stay quiet to count as finished. */
 const PIN_SETTLE = 150;
 
-/** Запас под строкой отсчёта: заголовок, вставший вплотную под шапку, уже текущий. */
+/** Slack below the reference line: a heading that has risen right under the top bar is already current. */
 const SPY_SLACK = 8;
 
 function prefersReducedMotion(): boolean {
@@ -118,7 +118,7 @@ function prefersReducedMotion(): boolean {
   );
 }
 
-/** Ближайший прокручиваемый предок цели; `null` — прокручивается окно. */
+/** Nearest scrollable ancestor of the target; `null` means the window scrolls. */
 function scrollParent(node: HTMLElement): HTMLElement | null {
   for (let parent = node.parentElement; parent; parent = parent.parentElement) {
     if (parent === document.body || parent === document.documentElement) return null;
@@ -130,20 +130,21 @@ function scrollParent(node: HTMLElement): HTMLElement | null {
   return null;
 }
 
-/** Сколько гаснет подсветка заголовка после перехода. */
+/** How long the jumped-to heading's highlight takes to fade. */
 const FLASH_DURATION = 1600;
 
 /**
- * Подсветить заголовок, к которому перешли: фон цветом акцента гаснет до
- * прозрачного. Глаз находит, куда приехала страница, — особенно когда
- * заголовок не встал к верхнему краю (конец Документа).
+ * Highlight the heading that was jumped to: its background fades from the accent
+ * color to transparent. The eye finds where the page has moved, especially when
+ * the heading could not be brought to the top edge (the end of the Document).
  *
- * Анимацией Web Animations, а не классом: в Документе не появляется ни класса,
- * ни `style` — Схема и сохранённый HTML прежние, а Редактор не принимает
- * подсветку за правку. Цвет читается из токена на самом заголовке: так он
- * верен и на Листе, и во вложенной теме. Нет API — нет и подсветки.
+ * It uses a Web Animations API animation, not a class: no class and no `style`
+ * appears in the Document, so the Schema and the saved HTML stay as they were, and
+ * the Editor does not mistake the highlight for an edit. The color is read from a
+ * token on the heading itself, so it is correct on the Paper surface and inside a
+ * nested theme. No API, no highlight.
  */
-/** Кривая шкалы движения, прочитанная с узла; нет токена — штатная `ease`. */
+/** Easing curve of the motion scale, read from the node; without the token, the default `ease`. */
 function scaleCurve(node: HTMLElement, token: string): string {
   return getComputedStyle(node).getPropertyValue(token).trim() || "ease";
 }
@@ -152,27 +153,28 @@ function flash(heading: HTMLElement) {
   if (typeof heading.animate !== "function") return;
   const accent = getComputedStyle(heading).getPropertyValue("--accent-strong").trim();
   const color = accent ? `color-mix(in srgb, ${accent} 24%, transparent)` : "transparent";
-  // Поле вокруг текста — тенью без размытия, а не `padding`: заголовок не
-  // сдвигается ни на пиксель, пока подсветка гаснет.
+  // The field around the text is a shadow without blur, not `padding`: the
+  // heading does not shift by a pixel while the highlight fades.
   heading.animate(
     [
       { backgroundColor: color, boxShadow: `0 0 0 6px ${color}`, borderRadius: "4px" },
       { backgroundColor: "transparent", boxShadow: "0 0 0 6px transparent", borderRadius: "4px" },
     ],
-    // Кривая — ступень шкалы `--ease-enter` (ADR-0047): гаснет быстро и
-    // дотягивает медленно. Длительность вне шкалы намеренно: это не переход
-    // между состояниями, а след, который глаз должен успеть заметить.
+    // The curve is a step of the `--ease-enter` motion scale (ADR-0047): it fades
+    // fast and settles slowly. The duration is deliberately outside the scale: this
+    // is not a transition between states but a trace the eye should have time to notice.
     { duration: FLASH_DURATION, easing: scaleCurve(heading, "--ease-enter") }
   );
 }
 
 /**
- * Перейти к заголовку: прокрутить к нему и поставить на него фокус.
+ * Jump to a heading: scroll to it and move focus onto it.
  *
- * Без якорей: адрес страницы не меняется, `id` в Документе не появляются
- * (ADR-0066). Фокус нужен скринридеру и клавиатуре — следующий Tab идёт от
- * заголовка, а не от Оглавления. `tabindex="-1"` ставится только на время
- * фокуса: в Документе после ухода фокуса не остаётся следа.
+ * No anchors: the page address does not change, and no `id`s appear in the
+ * Document (ADR-0066). Screen readers and the keyboard need the focus — the next
+ * Tab goes from the heading, not from the table of contents. `tabindex="-1"` is
+ * set only for the duration of the focus, so no trace is left in the Document
+ * after focus moves away.
  */
 function jumpTo(
   heading: HTMLElement,
@@ -180,16 +182,16 @@ function jumpTo(
   focusHeading?: (heading: HTMLElement) => boolean
 ) {
   /*
-    В Редакторе в правке заголовок лежит внутри `contenteditable`, и ProseMirror
-    следит за его DOM: чужой `tabindex` он счёл бы правкой, перерисовал заголовок
-    без атрибута, и фокус пропал бы вместе с ним. Фокус на заголовок здесь и не
-    нужен: поставить его, не тронув каретку, нельзя, а каретка остаётся там, где
-    её оставил автор. Прокрутка работает как обычно.
+    In an Editor being edited, the heading sits inside a `contenteditable`, and
+    ProseMirror watches its DOM: it would count a foreign `tabindex` as an edit and
+    re-render the heading without the attribute, and focus would be lost with it.
+    Focus on the heading is not needed here anyway: it cannot be set without moving
+    the caret, and the caret stays where the author left it. Scrolling works as usual.
   */
-  // Хозяин поля (Инструмент `toc` Редактора) может поставить фокус сам — каретку
-  // в заголовок; иначе — фокус на сам заголовок, если он не в правке.
+  // The consumer of the field (the Editor's `toc` Tool) may set focus itself, moving
+  // the caret into the heading; otherwise focus goes to the heading itself, unless it is being edited.
   if (focusHeading?.(heading)) {
-    // Фокус поставлен.
+    // Focus was set.
   } else if (!heading.parentElement?.closest('[contenteditable="true"]')) {
     if (!heading.hasAttribute("tabindex")) {
       heading.setAttribute("tabindex", "-1");
@@ -197,17 +199,17 @@ function jumpTo(
     }
     heading.focus({ preventScroll: true });
   }
-  // Подсветка — анимацией, без следа в DOM: годится и Редактору в правке.
+  // The highlight is an animation with no trace in the DOM, so it also suits an Editor being edited.
   flash(heading);
 
   const behavior: ScrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
   const scroller = scrollParent(heading);
   if (offset === null) {
-    // Без шапки отступ задаёт `scroll-margin-top` заголовка (ADR-0016). Окно
-    // прокручивает браузер. Но `scrollIntoView` двигает ещё и всех
-    // прокручиваемых предков, а значит, при Документе в своей прокручиваемой
-    // области уехала бы и страница, — поэтому область прокручивается сама,
-    // а окно не трогается.
+    // Without a top bar, the offset is set by the heading's `scroll-margin-top`
+    // (ADR-0016). The browser scrolls the window. But `scrollIntoView` also moves
+    // every scrollable ancestor, so with the Document in its own scroll container
+    // the page itself would move too. That is why the container is scrolled on its
+    // own and the window is left alone.
     if (!scroller) {
       heading.scrollIntoView({ behavior, block: "start" });
       return;
@@ -228,10 +230,11 @@ function jumpTo(
 }
 
 /**
- * Текущий раздел: последний заголовок, поднявшийся до строки отсчёта — нижнего
- * края шапки или верха прокручиваемого контейнера. Ни один не поднялся —
- * текущий первый. Документ докручен до конца — текущий последний видимый:
- * короткие последние разделы до строки отсчёта не доезжают никогда.
+ * Current section: the last heading that has risen to the reference line, which is
+ * the bottom edge of the top bar or the top of the scroll container. If none has
+ * risen, the first heading is current. If the Document is scrolled to the end, the
+ * current one is the last visible heading: short final sections never reach the
+ * reference line on their own.
  */
 function currentIndex(headings: TocHeading[], offset: number | null): number {
   const first = headings[0];
@@ -253,7 +256,7 @@ function currentIndex(headings: TocHeading[], offset: number | null): number {
   return current;
 }
 
-/** Прокрутить `box` ровно настолько, чтобы `item` был виден целиком. */
+/** Scroll `box` by exactly as much as needed for `item` to be fully visible. */
 function keepVisible(item: HTMLElement | undefined, box: HTMLElement | null) {
   if (!item || !box) return;
   const itemRect = item.getBoundingClientRect();
@@ -263,9 +266,10 @@ function keepVisible(item: HTMLElement | undefined, box: HTMLElement | null) {
 }
 
 /**
- * Элемент Документа по ref цели. Просмотр — сам элемент; Редактор — корень
- * ProseMirror его движка: Панель и строка статуса вокруг в Документ не входят.
- * Движка ещё нет (или он уничтожен) — `null`.
+ * The Document element behind the target's ref. For the View, it is the element
+ * itself; for the Editor, it is the root ProseMirror node of its engine: the Toolbar
+ * and the status line around it are not part of the Document. If the engine does
+ * not exist yet (or is destroyed), returns `null`.
  */
 function resolveTarget(target: RefObject<HTMLElement | RichTextEditorHandle | null>) {
   const value = target.current;
@@ -275,7 +279,7 @@ function resolveTarget(target: RefObject<HTMLElement | RichTextEditorHandle | nu
   return editor && !editor.isDestroyed ? editor.view.dom : null;
 }
 
-/** Тот же набор заголовков: правка текста вне заголовков не должна ничего перерисовывать. */
+/** The same set of headings: editing text outside the headings must not re-render anything. */
 function sameHeadings(a: TocHeading[], b: TocHeading[]): boolean {
   return (
     a.length === b.length &&
@@ -289,11 +293,11 @@ function sameHeadings(a: TocHeading[], b: TocHeading[]): boolean {
 }
 
 /**
- * Шаг между штрихами, при котором полоса не выше окна. Хватает места — обычный
- * шаг; не хватает — он сжимается вплоть до нуля. Ячейки остаются постоянного
- * размера, меняется только промежуток между ними, и считается он лишь от
- * размера окна и числа заголовков, но не от текущего раздела: полоса не
- * вздрагивает при прокрутке.
+ * Step between strokes, chosen so that the strip is no taller than the window. If
+ * there is room, the normal step is used; if there is not, the step shrinks down to
+ * zero. The cells stay a constant size and only the gap between them changes. The
+ * gap is computed only from the window size and the number of headings, not from the
+ * current section, so the strip does not jitter while scrolling.
  */
 function stripGap(count: number, offset: number | null): number {
   if (count < 2) return STRIP_GAP;
@@ -303,9 +307,10 @@ function stripGap(count: number, offset: number | null): number {
 }
 
 /**
- * Помещается ли полоса слева от текста: целиком в окне и не заходит на
- * Документ. Колонка под Оглавление бывает полем страницы, которое сужается
- * вместе с окном, — тогда полоса наползла бы на текст или ушла за край.
+ * Whether the strip fits to the left of the text: entirely inside the window and
+ * not overlapping the Document. The column under the table of contents can be a page
+ * margin that narrows along with the window; in that case the strip would overlap the
+ * text or run off the edge.
  */
 function fitsBeside(strip: HTMLElement, target: HTMLElement): boolean {
   const own = strip.getBoundingClientRect();
@@ -314,13 +319,14 @@ function fitsBeside(strip: HTMLElement, target: HTMLElement): boolean {
 }
 
 /**
- * Оглавление Документа: полоса штрихов, по одному на заголовок, штрих текущего
- * раздела подсвечен. Наведение раскрывает список заголовков, пункт ведёт к
- * заголовку.
+ * The Document's table of contents: a strip of strokes, one per heading, with the
+ * current section's stroke highlighted. Hovering expands the list of headings, and
+ * an item leads to its heading.
  *
- * Отдельный компонент, а не проп Просмотра (ADR-0066): `RichTextView` остаётся
- * серверным, а место Оглавления — колонку, липкость, скрытие на узком экране —
- * решает вёрстка экрана. Меньше двух заголовков — компонент ничего не рисует.
+ * It is a separate component, not a View prop (ADR-0066): `RichTextView` stays
+ * server-rendered, while the screen's layout decides where the table of contents
+ * goes — the column, stickiness, hiding on a narrow screen. With fewer than two
+ * headings, the component renders nothing.
  */
 export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(
   function RichTextToc(props, ref) {
@@ -329,42 +335,43 @@ export const RichTextToc = forwardRef<HTMLDivElement, RichTextTocProps>(
 );
 
 /**
- * Ядро Оглавления: общее у `RichTextToc` и Инструмента `toc` Редактора
- * (ADR-0068). Две настройки — только для кита, наружу не выходят: Редактор
- * сам знает, где край его липкой Панели, и сам ставит каретку при переходе.
+ * The core of the table of contents, shared by `RichTextToc` and the Editor's `toc`
+ * Tool (ADR-0068). The two settings below are internal to the kit and are not exposed:
+ * the Editor itself knows where the edge of its sticky Toolbar is, and it places the
+ * caret on a jump.
  */
 export interface TocCoreProps extends RichTextTocProps {
   /**
-   * Нижний край липкого верха в пикселях: от него считают подсветка, переход и
-   * шаг полосы. Нет — высота из `offsetVar`.
+   * Bottom edge of the sticky top, in pixels: the highlight, the jump, and the
+   * strip's step are computed from it. If absent, the height comes from `offsetVar`.
    */
   stickyTop?: () => number | null;
-  /** Поставить фокус при переходе самому; `true` — поставлен. */
+  /** Sets focus on the heading during a jump by itself; `true` means focus was set. */
   focusHeading?: (heading: HTMLElement) => boolean;
   /**
-   * Опустить полосу так, чтобы первый штрих стоял на середине первой строки
-   * первого заголовка: в поле Редактора полоса и заголовок начинаются с одного
-   * уровня, а не полоса выше текста.
+   * Lowers the strip so that the first stroke sits in the middle of the first line
+   * of the first heading. In the Editor's field, the strip and the heading start
+   * at the same level, not with the strip above the text.
    */
   alignToFirstHeading?: boolean;
   /**
-   * Текущий раздел сменился (в том числе при первом показе): Редактор кладёт
-   * индекс в Состояние Инструмента `toc`. Индекс считается по списку, который
-   * видит `TocCore`; пока заголовков меньше двух, он остаётся прежним.
+   * The current section changed (including on the first show): the Editor writes the
+   * index into the state of the `toc` Tool. The index is counted over the list that
+   * `TocCore` sees; while there are fewer than two headings, it keeps its previous value.
    */
   onCurrentChange?: (index: number) => void;
   /**
-   * Движок Редактора. Нужен команде `jumpTo` (`jumpRef`): индекс команды — это
-   * индекс заголовка в снимке Состояния `toc`, а снимок читает Документ движка
-   * на каждой транзакции. Список ядра пересобирается из DOM с задержкой
-   * (`REBUILD_DELAY`), и сразу после правки индексы двух списков расходились бы.
-   * Без движка `jumpTo` считает по списку ядра.
+   * The Editor's engine. It is needed by the `jumpTo` command (`jumpRef`): the command's
+   * index is the heading's index in the snapshot of the `toc` state, and the snapshot is
+   * read from the engine's Document on every transaction. The core's list is rebuilt from
+   * the DOM with a delay (`REBUILD_DELAY`), so right after an edit the indices of the two
+   * lists would diverge. Without an engine, `jumpTo` counts against the core's list.
    */
   editor?: Editor;
   /**
-   * Куда ядро кладёт переход к заголовку по индексу снимка Состояния (команда
-   * `jumpTo` Инструмента): ведёт себя как клик по пункту. Пока ядро смонтировано,
-   * там функция, после — `null`. Нет заголовка с таким индексом — `false`.
+   * Where the core puts the jump to a heading by index of the state snapshot (the Tool's
+   * `jumpTo` command): it behaves like a click on an item. While the core is mounted, this
+   * holds a function; after unmounting, `null`. For an index with no heading, `false`.
    */
   jumpRef?: MutableRefObject<((index: number) => boolean) | null>;
 }
@@ -387,13 +394,13 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
   },
   ref
 ) {
-  // Настройки хозяина читаются в обработчиках прокрутки: последние значения —
-  // через ссылку, чтобы новая функция на каждом рендере не пересоздавала слушателей.
+  // The consumer's settings are read in the scroll handlers. The latest values are
+  // passed through a ref, so that a new function on each render does not recreate the listeners.
   const latest = useRef({ stickyTop, focusHeading, offsetVar, levels, onCurrentChange, editor });
   useEffect(() => {
     latest.current = { stickyTop, focusHeading, offsetVar, levels, onCurrentChange, editor };
   });
-  // Набор уровней сравнивается по значению: массив-литерал новый на каждом рендере.
+  // The set of levels is compared by value: an array literal is new on every render.
   const levelsKey = levels ? levels.join(",") : "";
   const offsetNow = useCallback(() => {
     const own = latest.current;
@@ -404,32 +411,32 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
   const [headings, setHeadings] = useState<TocHeading[]>([]);
   const [gap, setGap] = useState(STRIP_GAP);
   const [current, setCurrent] = useState(0);
-  // Текущий раздел — в Состояние Инструмента (`useRichTextToolState`).
+  // The current section lives in the Tool state (`useRichTextToolState`).
   useEffect(() => {
     latest.current.onCurrentChange?.(current);
   }, [current]);
   const [open, setOpen] = useState(false);
   const [fits, setFits] = useState(true);
   const stripRef = useRef<HTMLButtonElement>(null);
-  /** Список открыт с клавиатуры: фокус уходит в него, на текущий пункт. */
+  /** The list was opened from the keyboard: focus moves into it, onto the current item. */
   const focusOnOpen = useRef(false);
   const navRef = useRef<HTMLElement | null>(null);
-  /** Enter или Space уже открыли список: следующий за ними клик — их же эхо. */
+  /** Enter or Space has already opened the list: the click that follows is their echo. */
   const keyHandled = useRef(false);
 
-  // Элемент цели. У Редактора движок появляется после монтирования (и лениво),
-  // поэтому на его смену подписка: Редактор сообщает по тому же `ref`.
+  // The target's element. The Editor's engine appears after mount (and lazily), so
+  // there is a subscription for its change: the Editor reports through the same `ref`.
   useEffect(() => {
     const resolve = () => setElement(resolveTarget(target));
     resolve();
     return watchHandleEditor(target, resolve);
   }, [target]);
 
-  // Заголовки следуют за Документом. Наблюдатель стоит на корне Документа и не
-  // зависит от того, нарисована ли полоса: меньше двух заголовков она не
-  // рисуется, а появиться должна, когда пришёл второй. Атрибуты не наблюдаются:
-  // переход сам ставит и снимает `tabindex` на заголовке, и пересборка по нему
-  // подменила бы узлы списка под рукой.
+  // Headings follow the Document. The observer sits on the Document's root and does
+  // not depend on whether the strip is drawn: with fewer than two headings the strip
+  // is not drawn, but it must appear as soon as the second one arrives. Attributes are
+  // not observed: a jump sets and removes `tabindex` on the heading itself, and a
+  // rebuild triggered by that would replace the list nodes in use.
   useEffect(() => {
     if (!element) {
       setHeadings((prev) => (prev.length ? [] : prev));
@@ -456,7 +463,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     };
   }, [element, levelsKey]);
 
-  // Шаг полосы зависит от высоты окна и числа заголовков.
+  // The strip's step depends on the window height and the number of headings.
   useEffect(() => {
     if (headings.length < 2) return;
     let frame = 0;
@@ -476,15 +483,14 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
   }, [headings.length, offsetVar, offsetNow]);
 
   /*
-    Раздел, выбранный переходом, держится подсвеченным, пока идёт прокрутка от
-    самого перехода. Иначе у конца Документа правило «докручено до конца —
-    текущий последний видимый» отдавало подсветку соседнему заголовку, и
-    читатель, выбравший «Поверхности», видел подсвеченным «Что дальше».
-    Пересчёт возвращается со следующей прокрутки после того, как переход
-    улёгся (`settled`).
+    The section chosen by a jump stays highlighted while the scroll caused by the jump
+    itself is in progress. Otherwise, near the end of the Document, the rule "scrolled
+    to the end: the current one is the last visible" handed the highlight to the
+    neighboring heading, and a reader who chose "Surfaces" saw "What's next" highlighted.
+    The recalculation resumes on the next scroll, after the jump has settled (`settled`).
   */
   const pinned = useRef<{ heading: HTMLElement; settled: boolean; timer: number } | null>(null);
-  /** (Пере)запустить ожидание: прокрутка перехода молчит `PIN_SETTLE` — переход улёгся. */
+  /** (Re)start the wait: the jump's scroll stays quiet for `PIN_SETTLE`, meaning the jump has settled. */
   const settle = (lock: { settled: boolean; timer: number }) => {
     window.clearTimeout(lock.timer);
     lock.timer = window.setTimeout(() => {
@@ -492,9 +498,9 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     }, PIN_SETTLE);
   };
   /*
-    Раздел перехода помнится узлом, а не индексом: список может пересобраться,
-    пока идёт прокрутка (правка моложе `REBUILD_DELAY`), и индекс повёл бы к
-    соседнему заголовку.
+    The jump's section is remembered as a node, not as an index: the list may rebuild
+    while the scroll is in progress (an edit younger than `REBUILD_DELAY`), and an index
+    would lead to the neighboring heading.
   */
   const pin = (index: number, heading: HTMLElement) => {
     if (pinned.current) window.clearTimeout(pinned.current.timer);
@@ -503,9 +509,9 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     setCurrent(index);
   };
   /*
-    Переход к пункту списка: клик и команда `jumpTo` Инструмента идут одним
-    путём. Заголовок, уже вышедший из Документа (правка моложе `REBUILD_DELAY`),
-    не пункт: список вот-вот пересоберётся.
+    A jump to a list item: a click and the Tool's `jumpTo` command take the same path.
+    A heading that has already left the Document (an edit younger than `REBUILD_DELAY`)
+    is not an item: the list is about to rebuild.
   */
   const go = (index: number): boolean => {
     const heading = headings[index];
@@ -515,12 +521,12 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     return true;
   };
   /*
-    Команда `jumpTo(index)`: индекс — из снимка Состояния, а снимок читает
-    Документ движка (`tocDocumentHeadings`, тот же обход), поэтому заголовок
-    берётся оттуда: `view.nodeDOM` отдаёт его узел, ProseMirror обновляет DOM
-    синхронно с транзакцией. Список ядра при этом может отставать до
-    `REBUILD_DELAY`, поэтому читается заново, а не из состояния: от него нужен
-    только индекс пункта для подсветки.
+    The `jumpTo(index)` command: the index comes from the state snapshot, and the snapshot
+    is read from the engine's Document (`tocDocumentHeadings`, the same traversal), so the
+    heading is taken from there: `view.nodeDOM` returns its node, and ProseMirror updates
+    the DOM synchronously with the transaction. The core's list may lag behind by up to
+    `REBUILD_DELAY`, so it is read again rather than taken from the state: only the item's
+    index is needed from it, for the highlight.
   */
   const goToSnapshotIndex = (index: number): boolean => {
     const { editor: engine, levels: shown } = latest.current;
@@ -548,32 +554,32 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     };
   }, [jumpRef]);
 
-  // Подсветка текущего раздела. Слушатель прокрутки — на документе с захватом:
-  // так его достигает прокрутка и окна, и любого контейнера вокруг цели.
+  // Highlight of the current section. The scroll listener sits on the document in the
+  // capture phase, so both window scrolling and scrolling of any container around the target reach it.
   useEffect(() => {
     if (headings.length < 2) return;
     let frame = 0;
     const update = () => {
       frame = 0;
-      // Список пересобрался, пока идёт прокрутка перехода: раздел перехода тот
-      // же заголовок, но под новым индексом. Замер посреди прокрутки назвал бы
-      // соседний, и он остался бы текущим, когда прокрутка уляжется.
+      // The list rebuilt while the jump's scroll was in progress: the jump's section is
+      // the same heading, but under a new index. A measurement taken mid-scroll would name
+      // the neighbor, and that one would stay current once the scroll settled.
       const lock = pinned.current;
       const held =
         lock && !lock.settled ? headings.findIndex((h) => h.element === lock.heading) : -1;
       setCurrent(held >= 0 ? held : currentIndex(headings, offsetNow()));
     };
     const schedule = (event?: Event) => {
-      // Считается только прокрутка, которая двигает Документ: окна или
-      // контейнера вокруг него. Прокрутка самого списка или чужой карусели на
-      // странице подсветку не трогает — и не снимает раздел перехода.
+      // Only a scroll that moves the Document counts: the window's, or that of a container
+      // around it. Scrolling the list itself, or someone else's carousel on the page, does not
+      // touch the highlight, and does not clear the jump's section.
       const scrolled = event?.target;
       if (scrolled instanceof Element && !scrolled.contains(headings[0]!.element)) {
         return;
       }
       const lock = pinned.current;
       if (lock && !lock.settled) {
-        // Прокрутка самого перехода: ждём, пока она уляжется.
+        // The jump's own scroll: wait until it settles.
         settle(lock);
         return;
       }
@@ -590,12 +596,12 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     };
   }, [headings, offsetVar, offsetNow]);
 
-  // Уборка таймера выбранного раздела при размонтировании.
+  // Clear the timer of the selected section on unmount.
   useEffect(() => () => window.clearTimeout(pinned.current?.timer), []);
 
-  // Места слева нет — Оглавление прячется само (ADR-0066). `visibility`, а не
-  // размонтирование: полоса продолжает занимать своё место, и замер остаётся
-  // верным, когда место появится снова.
+  // No room on the left: the table of contents hides itself (ADR-0066). It uses
+  // `visibility`, not unmounting: the strip keeps its place, and the measurement stays
+  // valid when room appears again.
   useEffect(() => {
     const strip = stripRef.current;
     const node = element;
@@ -622,9 +628,9 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     };
   }, [element, headings.length]);
 
-  // Выравнивание по первому заголовку: отступ сверху меряется от верха колонки,
-  // в которой стоит Оглавление, до середины первой строки заголовка, и
-  // пересчитывается при смене Документа и ширины поля (перенос строк).
+  // Alignment to the first heading: the top offset is measured from the top of the
+  // column that holds the table of contents to the middle of the heading's first line.
+  // It is recalculated when the Document or the field's width changes (line wrapping).
   const [lead, setLead] = useState(0);
   useEffect(() => {
     const first = headings[0]?.element;
@@ -649,9 +655,9 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
       navRef.current = node;
       if (!node) return;
       const items = node.querySelectorAll<HTMLButtonElement>("button");
-      // Длинный список прокручивается: текущий пункт держится в видимой части
-      // списка, когда он открылся и когда раздел сменился при открытом списке.
-      // Прокручивается только сам список: `scrollIntoView` двигал бы и страницу.
+      // A long list scrolls: the current item stays in the visible part of the list, both
+      // when the list opens and when the section changes while it is open. Only the list
+      // itself scrolls: `scrollIntoView` would move the page too.
       keepVisible(items[current], node.parentElement);
       if (!focusOnOpen.current) return;
       focusOnOpen.current = false;
@@ -669,7 +675,7 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
     event.preventDefault();
     keyHandled.current = true;
     if (open && navRef.current) {
-      // Список уже открыт наведением: фокус переводится в него сразу.
+      // The list is already open from hovering: focus moves into it at once.
       const items = navRef.current.querySelectorAll<HTMLButtonElement>("button");
       (items[current] ?? items[0])?.focus();
       return;
@@ -712,16 +718,16 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
             aria-label={label}
             aria-expanded={open}
             onClick={() => {
-              // Enter и Space уже разобраны в `onKeyDown`; их клик пропускается.
+              // Enter and Space are already handled in `onKeyDown`; their click is skipped.
               if (keyHandled.current) {
                 keyHandled.current = false;
                 return;
               }
               /*
-                Мышь, касание — и скринридер: NVDA, JAWS и VoiceOver нажимают
-                кнопку синтетическим кликом без клавиши (`detail === 0`). Для
-                него фокус уходит в список, как с клавиатуры: иначе открытый
-                список остался бы ему недоступен.
+                Mouse, touch, and screen readers: NVDA, JAWS, and VoiceOver press the
+                button with a synthetic click that has no key (`detail === 0`). For
+                them, focus moves into the list, as it does from the keyboard; otherwise
+                the open list would stay unavailable to them.
               */
               if (!open) focusOnOpen.current = true;
               setOpen(true);
@@ -730,9 +736,9 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
             style={{ rowGap: gap }}
             className="focus-visible:outline-accent-strong flex cursor-pointer flex-col items-start rounded-sm p-1 outline-offset-2 focus-visible:outline-2"
           >
-            {/* Ячейка штриха постоянного размера: толщина и длина текущего
-                анимируются, а габариты полосы — нет. Иначе список, привязанный
-                к её краю, вздрагивал бы при каждой смене раздела. */}
+            {/* A stroke cell has a constant size: the thickness and length of the
+                current one animate, but the strip's dimensions do not. Otherwise the
+                list anchored to its edge would jitter on every section change. */}
             {headings.map((heading, index) => (
               <span key={index} className="flex h-0.5 w-4 items-center">
                 <span
@@ -758,15 +764,15 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
           style={{ width: listWidth }}
           onEscapeKeyDown={() => stripRef.current?.focus()}
           onFocusOutside={(event) => {
-            // Переход ставит фокус на заголовок, а список остаётся открытым:
-            // его закрывает уход курсора, а не выбор пункта. С клавиатуры фокус
-            // в списке больше не держит его, и он закрывается тем же таймером.
+            // The jump moves focus to the heading, but the list stays open: it is closed
+            // by the cursor leaving, not by choosing an item. From the keyboard, focus in
+            // the list no longer keeps it open, and it closes on the same timer.
             if (element?.contains(event.target as Node)) event.preventDefault();
           }}
           onPointerDownOutside={(event) => {
-            // Полоса — якорь, а не триггер Radix: без этого нажатие на неё при
-            // открытом от наведения списке считалось бы нажатием «вовне» и
-            // закрывало список, который это же нажатие просит открыть.
+            // The strip is an anchor, not a Radix trigger. Without this check, a press on
+            // it while the list is open from hovering would count as a press "outside"
+            // and close the list that this same press is asking to open.
             if (stripRef.current?.contains(event.target as Node)) event.preventDefault();
           }}
         >
@@ -785,17 +791,17 @@ export const TocCore = forwardRef<HTMLDivElement, TocCoreProps>(function TocCore
                     onClick={(event) => {
                       go(index);
                       /*
-                        В Редакторе в правке фокус на заголовок не переходит и
-                        остаётся на пункте, а фокус в списке держит его открытым:
-                        уход курсора его бы не закрыл. После клика мышью пункт
-                        фокус отпускает; с клавиатуры (`detail === 0`) фокус
-                        остаётся в списке — по нему ещё ходят стрелками.
+                        In an Editor being edited, focus does not move to the heading and
+                        stays on the item, and focus inside the list keeps it open: the
+                        cursor leaving would not close it. After a mouse click, the item
+                        releases focus; from the keyboard (`detail === 0`), focus stays in
+                        the list, since arrow keys still move through it.
                       */
                       const item = event.currentTarget;
                       if (event.detail > 0 && document.activeElement === item) item.blur();
                     }}
                   >
-                    {/* Штрихи стоят в колонке одной ширины: текст пунктов начинается ровно, а отступ даёт глубина. */}
+                    {/* Strokes sit in a column of one width: the item text starts flush, and the depth sets the indent. */}
                     <span aria-hidden className="flex w-4 shrink-0 items-center">
                       <span
                         className={cn(

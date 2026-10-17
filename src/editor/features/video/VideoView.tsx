@@ -7,21 +7,21 @@ import { VideoPlayer } from "./VideoPlayer.js";
 import { isVideoSrc, type VideoLink } from "./videoSrc.js";
 
 /**
- * Видео в Редакторе: плеер сервиса (`VideoPlayer`) — сразу или, с `autoload: false`,
- * заглушка кита и плеер после щелчка.
+ * Video in the Editor: the service's player (`VideoPlayer`), rendered at once or, with
+ * `autoload: false`, the kit's placeholder and the player after a click.
  *
- * Хром блока (`contentEditable={false}`): ProseMirror не ставит в него каретку и
- * не читает его за содержимое. Блок — Атом, его выделяет щелчок вне плеера,
- * двигает и удаляет Ручка, как картинку; выделение рисует кольцо роли
- * `--rte-primary`. Щелчки и клавиши ВНУТРИ `iframe` идут плееру, а не Редактору:
- * браузер не отдаёт документу страницы события чужого документа. Поэтому и
- * выделение блока, и стрелки вокруг него работают, пока фокус в Редакторе; чтобы
- * выйти из плеера, достаточно Tab/Shift+Tab, как из любого `iframe`.
- * С `autoload: false` заглушка не обращается к сервису, пока автор не нажал
- * «Воспроизвести»: правка Документа не тянет плеер.
+ * The Block's chrome (`contentEditable={false}`): ProseMirror does not put the caret in it and
+ * does not read it as content. The Block is an Atom: a click outside the player selects it, and
+ * the Block handle moves and deletes it, as it does an image. The selection draws a ring in the
+ * `--rte-primary` role. Clicks and keys INSIDE the `iframe` go to the player, not to the Editor:
+ * the browser does not pass events of a foreign document to the page's document. So both
+ * selecting the Block and the arrow keys around it work while focus is in the Editor. To leave
+ * the player, Tab or Shift+Tab is enough, as with any `iframe`.
+ * With `autoload: false` the placeholder does not reach the service until the author clicks
+ * Play: editing the Document does not load the player.
  *
- * Узел с чужой ссылкой (его мог поставить только сырой `ref.editor`) плеер не
- * рисует: остаётся пустая рамка без кнопки.
+ * A node with a link the kit does not recognize (only the raw `ref.editor` could have set it)
+ * does not render the player: an empty frame without a button stays.
  */
 export function VideoView({ node, selected, extension }: NodeViewProps) {
   const { provider, link } = node.attrs as { provider: VideoLink["provider"]; link: string };

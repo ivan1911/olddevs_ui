@@ -6,9 +6,10 @@ import type { TocToolHeading, TocToolState } from "../../core/toolState.js";
 import { tocDocumentHeadings } from "./documentHeadings.js";
 
 /**
- * Снимок Состояния `toc` для `useRichTextToolState`: заголовки из
- * `tocDocumentHeadings` без позиций (они в контракт не входят) и текущий раздел.
- * `at` — индекс текущего раздела, который сообщило ядро Оглавления.
+ * Snapshot of the `toc` state for `useRichTextToolState`: the headings from
+ * `tocDocumentHeadings`, without positions (positions are not part of the contract),
+ * and the current section. `at` is the index of the current section, as reported by
+ * the table-of-contents core.
  */
 export function tocSnapshot(
   editor: Editor,
@@ -18,7 +19,7 @@ export function tocSnapshot(
   const headings: TocToolHeading[] = tocDocumentHeadings(editor, options).map(
     ({ level, text }, index) => ({ level, text, index })
   );
-  // Прокрутка сообщает индекс по прежнему списку: после правки он мог выйти за край.
+  // The index was reported against the previous list: after an edit it may be past the end.
   const current = headings.length ? Math.min(Math.max(at ?? 0, 0), headings.length - 1) : -1;
   return { headings, current };
 }

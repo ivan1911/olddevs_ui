@@ -21,37 +21,38 @@ import {
   type VideoProvider,
 } from "./videoSrc.js";
 
-/** Имя узла в Схеме движка. */
+/** The node name in the engine's Schema. */
 export const VIDEO_NODE = VIDEO_BLOCK;
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     video: {
-      /** Поставить блок видео на место каретки (`placeVideo`). Ссылка — из `parseVideoLink`. */
+      /** Put a video Block at the caret (`placeVideo`). The link comes from `parseVideoLink`. */
       insertVideo: (link: VideoLink) => ReturnType;
     };
   }
 }
 
 export interface VideoOptions {
-  /** Сервисы, чьи ссылки Редактор принимает: решает набор `tools` (`youtube`, `twitch`). */
+  /** The services whose links the Editor accepts: the `tools` set decides (`youtube`, `twitch`). */
   providers: readonly VideoProvider[];
   /**
-   * Опция `autoload` каждого сервиса (`tool("youtube", { autoload })`): плеер сразу или
-   * заглушка до щелчка. Её читает вид узла; Документ от неё не меняется.
+   * The `autoload` option of each service (`tool("youtube", { autoload })`): the player renders
+   * at once, or a placeholder until a click. The node view reads it; the Document does not change
+   * because of it.
    */
   autoload: VideoAutoload;
 }
 
-/** Сервисы Редактора, в котором живёт движок: их читают поповер и правила вставки. */
+/** The services of the Editor the engine lives in: the popover and the paste rules read them. */
 export function videoProviders(editor: Editor): readonly VideoProvider[] {
   const extension = editor.extensionManager.extensions.find((item) => item.name === VIDEO_NODE);
   return (extension?.options as VideoOptions | undefined)?.providers ?? [];
 }
 
 /**
- * Узел блока видео из ссылки, если сервис включён в этом Редакторе. Ссылка
- * приводится к каноническому виду, её сервис — к `provider`.
+ * A video Block node built from a link, if the service is enabled in this Editor. The link is
+ * brought to its canonical form, and its service becomes `provider`.
  */
 function videoNode(editor: Editor, input: string): ProseMirrorNode | null {
   const link = parseVideoLink(input);
@@ -62,11 +63,11 @@ function videoNode(editor: Editor, input: string): ProseMirrorNode | null {
 }
 
 /**
- * Поставить блок видео. Пустой абзац под кареткой (или абзац, в котором набрана
- * голая ссылка — `replaceCurrent`) и есть место блока; иначе блок встаёт за
- * текущим Блоком, на ближайшем уровне, где ему позволено стоять (не внутри
- * цитаты, если там нельзя). За блоком всегда есть абзац с кареткой: видео —
- * Атом, и если оно последнее, дальше писать было бы негде.
+ * Put a video Block. The empty paragraph under the caret (or the paragraph where a bare link was
+ * typed, `replaceCurrent`) is the Block's place. Otherwise the Block goes after the current Block,
+ * at the nearest level where it is allowed to stand (not inside a quote, if it cannot be there).
+ * After the Block there is always a paragraph with the caret: a video is an Atom, and if it were
+ * last, there would be nowhere to type next.
  */
 export function placeVideo(tr: Transaction, node: ProseMirrorNode, replaceCurrent: boolean) {
   const { $from } = tr.selection;
@@ -101,21 +102,21 @@ export function placeVideo(tr: Transaction, node: ProseMirrorNode, replaceCurren
     tr.insert(end, node);
     end += node.nodeSize;
   }
-  // За блоком — абзац: готовый, если он есть, иначе новый пустой.
+  // After the Block comes a paragraph: the existing one if there is one, otherwise a new empty one.
   if (!tr.doc.resolve(end).nodeAfter?.isTextblock) tr.insert(end, paragraph.create());
   tr.setSelection(TextSelection.create(tr.doc, end + 1));
   return true;
 }
 
 /**
- * Голая ссылка на видео под кареткой: единственное содержимое абзаца верхнего
- * для него уровня (текст, ссылка или то и другое), сервис которой включён.
+ * A bare video link under the caret: the only content of the top-level paragraph (text, a link,
+ * or both), whose service is enabled.
  */
 function bareLinkNode(editor: Editor): ProseMirrorNode | null {
   const { selection } = editor.state;
   const { $from } = selection;
   if (!selection.empty || $from.parent.type.name !== "paragraph") return null;
-  // Абзац, где кроме текста есть перенос или иной узел, ссылкой-плеером не станет.
+  // A paragraph with a line break or any other node besides text does not become a player link.
   let onlyText = $from.parent.childCount > 0;
   $from.parent.forEach((child) => {
     if (!child.isText) onlyText = false;
@@ -124,9 +125,9 @@ function bareLinkNode(editor: Editor): ProseMirrorNode | null {
 }
 
 /**
- * Разбор сопряжённых HTML-расширений Tiptap (`div[data-youtube-video] iframe`,
- * `div[data-twitch-video] iframe`) и одиночного `iframe` плеера: адрес плеера
- * переводится обратно в ссылку на видео. Плеер в Документ не попадает.
+ * Parsing of the paired Tiptap HTML extensions (`div[data-youtube-video] iframe`,
+ * `div[data-twitch-video] iframe`) and of a lone player `iframe`: the player address is turned back
+ * into a link to the video. The player does not get into the Document.
  */
 function attrsFromPlayer(
   element: HTMLElement,
@@ -141,17 +142,17 @@ function attrsFromPlayer(
 }
 
 /**
- * Markdown (ADR-0071, п. 7): видео — ссылка. Блок пишется адресом на своей
- * строке, и такая же строка (голая или в `<…>`) среди абзацев читается обратно
- * блоком, если её сервис включён. Ссылка в тексте абзаца, `[текст](адрес)` и
- * ссылка в списке остаются обычными ссылками: Markdown плеера не знает.
+ * Markdown (ADR-0071, item 7): a video is a link. The Block is written as an address on its own
+ * line, and the same line (bare or inside `<…>`) among paragraphs is read back as the Block, if its
+ * service is enabled. A link inside paragraph text, `[text](address)`, and a link in a list stay
+ * ordinary links: Markdown does not know about the player.
  */
 function markdownTokenizer(providers: readonly VideoProvider[]): MarkdownTokenizer {
   return {
     name: VIDEO_NODE,
     level: "block",
-    // Абзац строкой-ссылкой не прерывается (как в CommonMark), а без `start` менеджер
-    // Markdown подставляет свой, и он ломает разбор строчных токенов у соседних абзацев.
+    // A link line does not interrupt a paragraph (as in CommonMark). Without `start` the Markdown
+    // manager substitutes its own, and that breaks the parsing of inline tokens in neighboring paragraphs.
     start: () => -1,
     tokenize(src) {
       const line =
@@ -170,11 +171,10 @@ function markdownTokenizer(providers: readonly VideoProvider[]): MarkdownTokeniz
 }
 
 /**
- * Блок видео (ADR-0071): Атом `div[data-block="video"]` с сервисом, ссылкой на
- * видео и обычной ссылкой внутри. Плеера в узле нет: его рисует вид узла
- * (`VideoView`) и, в Просмотре, Остров. Какие сервисы включены, решает Опция
- * `providers`: ссылка выключенного сервиса не становится блоком, и блок из
- * `value` разворачивается в свою ссылку.
+ * The video Block (ADR-0071): an Atom `div[data-block="video"]` with a service, a link to the video,
+ * and an ordinary link inside. The node has no player: the node view (`VideoView`) draws it, and in
+ * the View, the island does. The `providers` Option decides which services are enabled: a link to a
+ * disabled service does not become a Block, and a Block from `value` unwraps into its link.
  */
 export const RichVideo = Node.create<VideoOptions>({
   name: VIDEO_NODE,
@@ -189,8 +189,8 @@ export const RichVideo = Node.create<VideoOptions>({
   }),
 
   addAttributes() {
-    // Свои имена, не `src`: у `iframe`, из которого блок разбирается, есть `src`, и
-    // Tiptap подставил бы его вместо рассчитанной ссылки.
+    // Own names, not `src`: the `iframe` the Block is parsed from has a `src`, and Tiptap
+    // would substitute it for the computed link.
     return {
       provider: { default: null, rendered: false, parseHTML: () => null },
       link: { default: null, rendered: false, parseHTML: () => null },
@@ -203,7 +203,7 @@ export const RichVideo = Node.create<VideoOptions>({
       {
         tag: `div[data-block="${VIDEO_BLOCK}"]`,
         getAttrs: (element) => {
-          // Сервис блока, адрес на его хосте и включённый сервис — всё вместе.
+          // The Block's service, the address on its host, and the enabled service: all checked together.
           const link = videoLinkOf(
             element.getAttribute("data-provider"),
             element.getAttribute("data-src") ?? ""
@@ -213,7 +213,7 @@ export const RichVideo = Node.create<VideoOptions>({
             : false;
         },
       },
-      // HTML расширений Tiptap и одиночный `iframe` плеера — ссылкой на видео.
+      // The HTML of the Tiptap extensions and a lone player `iframe` become a link to the video.
       {
         tag: "div[data-youtube-video]",
         getAttrs: (element) => attrsFromPlayer(element, providers, "youtube"),
@@ -228,7 +228,7 @@ export const RichVideo = Node.create<VideoOptions>({
 
   renderHTML({ node }) {
     const { provider, link } = node.attrs as { provider: string | null; link: string | null };
-    // Чужие значения (сырой `ref.editor`) на выходе блоком не бывают.
+    // Unknown values (from a raw `ref.editor`) never come out as a Block.
     if (!isVideoProvider(provider) || !link || !isVideoSrc(provider, link)) return ["div", {}];
     return [
       "div",
@@ -237,7 +237,7 @@ export const RichVideo = Node.create<VideoOptions>({
     ];
   },
 
-  // Текст атома (ADR-0058, п. 4): ссылка — для счётчика, копирования и поиска.
+  // The text of the Atom (ADR-0058, item 4): the link, for the counter, copying, and search.
   renderText: ({ node }) => String(node.attrs.link ?? ""),
 
   addNodeView() {
@@ -260,7 +260,7 @@ export const RichVideo = Node.create<VideoOptions>({
 
   addKeyboardShortcuts() {
     return {
-      // Голая ссылка на видео и `Enter` — блок: так её набирают, не заходя в меню.
+      // A bare video link and `Enter` make a Block: that is how it is typed, without opening a menu.
       Enter: ({ editor }) => {
         if (!editor.isEditable) return false;
         const node = bareLinkNode(editor);
@@ -279,8 +279,8 @@ export const RichVideo = Node.create<VideoOptions>({
       new Plugin({
         key: new PluginKey("videoPaste"),
         props: {
-          // Голая ссылка на видео, вставленная в пустой абзац, — блок. Ссылка в
-          // тексте и в непустом абзаце остаётся вставкой обычной ссылкой.
+          // A bare video link pasted into an empty paragraph becomes a Block. A link pasted into
+          // text, or into a non-empty paragraph, stays an ordinary pasted link.
           handlePaste: (view, event) => {
             const { selection } = view.state;
             const { $from } = selection;
@@ -317,9 +317,9 @@ export const RichVideo = Node.create<VideoOptions>({
 });
 
 /**
- * Узел блока видео для набора сервисов и их Опций. Токенизатор Markdown зависит
- * от включённых сервисов, а `Node.create` берёт его один раз, поэтому узел
- * собирается под набор: настроенный `extend` с токенизатором этого набора.
+ * The video Block node for a set of services and their Options. The Markdown tokenizer depends on
+ * the enabled services, and `Node.create` takes it only once, so the node is built for the set: a
+ * configured `extend` with the tokenizer of this set.
  */
 export function createVideoNode(providers: readonly VideoProvider[], autoload: VideoAutoload) {
   return RichVideo.extend({ markdownTokenizer: markdownTokenizer(providers) }).configure({

@@ -5,21 +5,21 @@ import type { Schema } from "@tiptap/pm/model";
 import { isVideoProvider, isVideoSrc, VIDEO_BLOCK } from "./videoSrc.js";
 
 /*
-  БЛОК ВИДЕО БЕЗ ИНСТРУМЕНТОВ `youtube` И `twitch` — ССЫЛКОЙ (ADR-0071, «поведение
-  без Инструмента»).
+  A VIDEO BLOCK WITHOUT THE `youtube` AND `twitch` TOOLS IS A LINK (ADR-0071, "behavior
+  without a Tool").
 
-  HTML, Markdown и вставка уже читают такой блок как его ссылку: `div` снимается
-  разбором, остаётся `a`. JSON-конверт идёт мимо разбора HTML, и узел `video`,
-  которого нет в Схеме, `conformToSchema` разворачивал в его содержимое — а у
-  Атома его нет, так что ссылка пропадала молча. Здесь он становится абзацем со
-  ссылкой (или с адресом текстом, если Инструмента `link` нет), как формула без
-  `mathematics` становится текстом (`mathAsText.ts`).
+  HTML, Markdown and paste already read such a Block as its link: the `div` is removed by
+  parsing and the `a` stays. The JSON envelope skips HTML parsing, and a `video` node that is not
+  in the Schema was unwrapped by `conformToSchema` into its content. An Atom has no content, so
+  the link disappeared silently. Here the node becomes a paragraph with the link (or with the
+  address as plain text, if there is no `link` Tool), the same way a formula without
+  `mathematics` becomes text (`mathAsText.ts`).
 */
 
 /**
- * Узел `video` из JSON — абзацем со ссылкой на видео. `null` — это не блок видео
- * или его сервис и адрес не годятся (`isVideoSrc`): чужой адрес не оживает ссылкой.
- * Зовёт `conformToSchema`, когда узла `video` в Схеме нет.
+ * A `video` node from JSON becomes a paragraph with a link to the video. `null` means this is not
+ * a video Block, or its service or address is not usable (`isVideoSrc`): an unknown address is not
+ * turned into a link. Called by `conformToSchema` when there is no `video` node in the Schema.
  */
 export function videoJsonAsLink(node: JSONContent, schema: Schema): JSONContent[] | null {
   if (node.type !== VIDEO_BLOCK) return null;

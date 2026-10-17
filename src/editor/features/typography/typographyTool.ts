@@ -6,10 +6,10 @@ import type { TypographyToolOptions } from "../../core/toolOptions.js";
 import { TypographyQuotes } from "./typography.js";
 
 /**
- * Умолчания Опций: набор кавычек берётся у каталога, одиночные кавычки и
- * остальные правила — символы Tiptap (все правила включены). Двойных кавычек
- * в умолчаниях нет сознательно: явная строка перекрывает набор `quotes`, и
- * «не задана» отличается от «равна умолчанию Tiptap».
+ * Option defaults: the quote set is taken from the catalog; the single quotes and the
+ * other rules are Tiptap's symbols (all rules enabled). The defaults deliberately have no
+ * double quotes: an explicit string overrides the `quotes` set, and "not set" differs from
+ * "equal to the Tiptap default".
  */
 export const TYPOGRAPHY_DEFAULTS: TypographyToolOptions = {
   quotes: "auto",
@@ -35,20 +35,20 @@ export const TYPOGRAPHY_DEFAULTS: TypographyToolOptions = {
   superscriptThree: "³",
 };
 
-/** Правило: `false` выключает, непустая строка — символ замены (пустая стёрла бы набранное). */
+/** A rule: `false` disables it; a non-empty string is the replacement symbol (an empty one would erase what was typed). */
 const isRule = (value: unknown) => value === false || (typeof value === "string" && value !== "");
 
 /**
- * Автозамены при наборе на описании Инструмента (ADR-0048): расширение
- * Typography из Tiptap и правило двойной кавычки кита (`typography.ts`). Только
- * правила ввода: Схемы, кнопки, пункта вставки, Состояния и Команд нет, а в
- * `value` уходят обычные символы. Вне пресетов — включается явной записью в `tools`.
+ * Typing replacements on the Tool descriptor (ADR-0048): the Typography extension from
+ * Tiptap and the kit's double-quote rule (`typography.ts`). These are input rules only:
+ * there is no Schema, no buttons, no Insert item, no state and no commands, and only
+ * plain symbols go into `value`. Outside the presets, it is enabled by an explicit entry in `tools`.
  */
 export const TYPOGRAPHY_TOOL: ToolDescriptor = {
   name: "typography",
   defaults: TYPOGRAPHY_DEFAULTS,
   checks: {
-    // Остальные поля умолчаний — правила; двойные кавычки в умолчаниях нет, проверка у них своя.
+    // The other default fields are rules. The defaults have no double quotes, so those get their own checks.
     ...Object.fromEntries(Object.keys(TYPOGRAPHY_DEFAULTS).map((key) => [key, isRule])),
     openDoubleQuote: isRule,
     closeDoubleQuote: isRule,
@@ -58,7 +58,7 @@ export const TYPOGRAPHY_TOOL: ToolDescriptor = {
     const { quotes, openDoubleQuote, closeDoubleQuote, ...rules } =
       options as TypographyToolOptions;
     return [
-      // Двойные кавычки у Typography выключены: их ставит `TypographyQuotes`.
+      // Typography's double quotes are disabled: `TypographyQuotes` sets them instead.
       Typography.configure({ ...rules, openDoubleQuote: false, closeDoubleQuote: false }),
       TypographyQuotes.configure({
         set: quotes === "auto" ? context.quoteSet : () => quotes,
