@@ -2,7 +2,7 @@
 
 import { Node } from "@tiptap/core";
 import { CodeBlockIcon } from "../../../icons.js";
-// Только тип: статический импорт модуля втянул бы чанк в «старт».
+// Type only: a static import of the module would pull the chunk into the "start" bundle.
 import type * as CodeBlockChunk from "./codeBlock.js";
 import { normalizeCodeLanguage, type CodeLanguageId } from "./codeLanguages.js";
 import { SHORTCUT_KEYS, shortcutKeys } from "../../core/shortcuts.js";
@@ -10,18 +10,18 @@ import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import { loaded } from "../../core/toolLoader.js";
 
 /*
-  Чанк блока кода: расширение с языком и подсветкой, представление узла с
-  шапкой (`CodeBlockView`), lowlight и грамматики highlight.js — около 30 кБ
-  gzip, которые `basic` не платит (ADR-0058, п. 11.1).
+  The code block chunk: the extension with language and highlighting, the node view with the
+  header (`CodeBlockView`), lowlight and the highlight.js grammars: about 30 kB gzip, which
+  `basic` does not pay for (ADR-0058, item 11.1).
 */
 const loadCodeBlock = () => import("./codeBlock.js");
 
 /**
- * Язык блока кода из разметки `<pre><code class="…">`: первый класс
- * `language-*`, который знает Редактор. `evil language-js` даёт JavaScript,
- * `language-rust` — «Обычный текст». Один разбор у движка (`codeBlock.ts`) и у
- * формы блока в Скелете (здесь). Не в `codeLanguages.ts`: тот едет и в
- * `RichTextView`, и в серверный вход Схемы, а им разбор DOM не нужен.
+ * The language of a code Block from the `<pre><code class="…">` markup: the first `language-*`
+ * class that the Editor knows. `evil language-js` gives JavaScript, `language-rust` gives
+ * "Plain text". One parser serves the engine (`codeBlock.ts`) and the Block's shape in the
+ * Skeleton (here). It is not in `codeLanguages.ts`: that file also goes to `RichTextView` and to
+ * the server-side Schema input, and they need no DOM parsing.
  */
 export function codeLanguageOf(pre: Element): CodeLanguageId | null {
   for (const name of pre.firstElementChild?.classList ?? []) {
@@ -33,10 +33,9 @@ export function codeLanguageOf(pre: Element): CodeLanguageId | null {
 }
 
 /**
- * Форма блока кода для Скелета: тот же узел `codeBlock` с тем же разбором языка
- * и той же разметкой `<pre><code class="language-…">`, но без подсветки,
- * представления узла и lowlight. Шапку над ним Скелет дописывает сам
- * (`withCodeHeaders`, `skeleton.ts`).
+ * The shape of the code Block for the Skeleton: the same `codeBlock` node, with the same language
+ * parsing and the same `<pre><code class="language-…">` markup, but without highlighting, the node
+ * view and lowlight. The Skeleton adds the header above it itself (`withCodeHeaders`, `skeleton.ts`).
  */
 const CodeBlockShape = Node.create({
   name: "codeBlock",
@@ -56,15 +55,14 @@ const CodeBlockShape = Node.create({
 });
 
 /**
- * Блок кода на описании Инструмента (ADR-0058, п. 11.1): его нет в
- * `basic`, а Extensions тяжелее 10 кБ, поэтому они грузятся тем же
- * загрузчиком, что у своего Инструмента. До загрузки Редактор с блоком кода —
- * Скелет (`RichTextEditor.tsx`).
+ * The code Block as a built-in Tool's description (ADR-0058, item 11.1): it is absent from `basic`,
+ * and its Extensions weigh more than 10 kB, so they are loaded by the same Loader a custom Tool
+ * uses. Until it loads, the Editor with a code Block shows the Skeleton (`RichTextEditor.tsx`).
  *
- * Сочетание `Mod+Alt+C` вешает расширение, поэтому строка справочника — только
- * подпись (`shortcuts`); клавиши пунктов меню и «Формат ›» берутся из
- * `SHORTCUT_KEYS`, место строки — из `SHORTCUT_ORDER`. Кнопка «Блок кода» меню
- * «…» и «¶» — виджеты Панели и остаются у кита.
+ * The `Mod+Alt+C` shortcut is bound by the extension, so the reference row is only a label
+ * (`shortcuts`); the keys of the menu items and of "Format ›" come from `SHORTCUT_KEYS`, and the
+ * row's place from `SHORTCUT_ORDER`. The "Code block" button in the "…" menu and in "¶" are Toolbar
+ * widgets and remain the kit's.
  */
 export const CODE_BLOCK_TOOL: ToolDescriptor = {
   name: "codeBlock",
@@ -79,10 +77,9 @@ export const CODE_BLOCK_TOOL: ToolDescriptor = {
     },
   ],
   /*
-    `Alt+F10` блока кода (в кнопку языка) обязан сработать раньше общего
-    `ToolbarFocus`: Extensions описаний регистрируются после него
-    (`extensions.ts`), а из равных по приоритету Tiptap первым опрашивает
-    зарегистрированное последним.
+    The `Alt+F10` of the code Block (into the language button) must fire before the general
+    `ToolbarFocus`: the descriptors' Extensions are registered after it (`extensions.ts`), and among
+    equal-priority Tiptap extensions the one registered last is asked first.
   */
   engine: ({ focusToolbar }) => [
     (loaded(loadCodeBlock) as typeof CodeBlockChunk).RichCodeBlock.configure({

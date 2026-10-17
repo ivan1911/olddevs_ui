@@ -5,9 +5,12 @@ import { createPortal } from "react-dom";
 import { CodeCopyButton } from "./CodeCopyButton.js";
 
 export interface CodeCopyIslandProps {
-  /** Идентификатор просмотра: гнёзда его блоков помечены им же (`withCodeHeaders`). */
+  /** Identifier of the view: its Block mount points are marked with the same id (`withCodeHeaders`). */
   hostId: string;
-  /** Отпечаток HTML просмотра: сменился Документ — гнёзда новые, и остров ищет их заново. */
+  /**
+   * Fingerprint of the view's HTML: when the Document changes, the mount points are new, and the
+   * Island looks for them again.
+   */
   docKey: string;
 }
 
@@ -17,33 +20,31 @@ interface Slot {
 }
 
 /**
- * Островок клиента у `RichTextView`: вставляет кнопку «Копировать» в гнёзда
- * шапок блоков кода.
+ * Client Island of `RichTextView`: puts a "Copy" button into the mount points of the code Block
+ * headers.
  *
- * ЗАЧЕМ ОН. `RichTextView` — серверный компонент, и обработчика клика у него
- * быть не может. Шапка с подписью языка и пустым гнездом приходит в HTML от
- * сервера; здесь, после монтирования, в каждое гнездо своего просмотра
- * вставляется порталом `CodeCopyButton`. До гидрации и без JS кнопки нет, а
- * документ читается так же.
+ * WHY IT EXISTS. `RichTextView` is a server component and cannot have a click handler. The header
+ * with the language label and an empty mount point comes in the HTML from the server; here, after
+ * mounting, a `CodeCopyButton` is inserted with a portal into each mount point of its own view.
+ * Before hydration, and without JS, there is no button, and the document reads the same.
  *
- * ЧТО КОПИРУЕТСЯ — `textContent` элемента `code` рядом с гнездом. Для текста
- * без разметки и для блока, уже подсвеченного `highlightCodeBlocks` (токены —
- * `span` внутри `code`), это один и тот же исходный код: токены текста не
- * добавляют (ADR-0039: копируется текст, а не разметка).
+ * WHAT IS COPIED is the `textContent` of the `code` element next to the mount point. For text
+ * without markup, and for a Block already highlighted by `highlightCodeBlocks` (the tokens are
+ * `span`s inside `code`), this is the same source code: the tokens add nothing (ADR-0039: the
+ * text is copied, not the markup).
  *
- * ГНЁЗДА ИЩУТСЯ ОТ СВОЕГО МЕСТА В ДЕРЕВЕ, а не по глобальному `document`. У
- * серверного компонента нет ссылки, которую можно передать клиентскому, поэтому
- * остров рисует пустой инертный `<template>` сразу за контейнером просмотра
- * (`RichTextView` ставит их соседями) и после монтирования берёт его соседа
- * слева. Так просмотр в теневом корне или в `iframe`, которых глобальный
- * `document` не видит, получает свои кнопки, а обход идёт только по своему
- * контейнеру, а не по всей странице. Идентификатор гнезда сверяется всё равно:
- * гнездо с чужим идентификатором кнопку не получает.
+ * MOUNT POINTS ARE FOUND FROM THEIR OWN PLACE IN THE TREE, not from the global `document`. A
+ * server component has no reference it can pass to a client one, so the Island renders an empty
+ * inert `<template>` right after the view's container (`RichTextView` places them as siblings)
+ * and, after mounting, takes its left sibling. A view in a shadow root or in an `iframe`, which
+ * the global `document` does not see, thus gets its own buttons, and the search covers only its
+ * own container rather than the whole page. The mount point's identifier is still checked: a
+ * mount point with someone else's identifier does not get a button.
  *
- * `<template>` есть и в разметке сервера, и в первом клиентском проходе, а
- * порталы появляются только после эффекта — разметка сервера и гидрации
- * совпадают. `<template>` браузер не показывает и в дерево доступности не
- * кладёт; во флексе и гриде родителя он не занимает ячейку.
+ * `<template>` is present both in the server markup and in the first client pass, while portals
+ * appear only after the effect, so the server markup and the hydrated tree match. The browser does
+ * not show `<template>` and does not put it in the accessibility tree; in a flex or grid parent it
+ * takes no cell.
  */
 export function CodeCopyIsland({ hostId, docKey }: CodeCopyIslandProps) {
   const [slots, setSlots] = useState<Slot[]>([]);

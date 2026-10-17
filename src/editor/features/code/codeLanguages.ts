@@ -1,22 +1,21 @@
 /**
- * Языки блока кода ДАННЫМИ (ADR-0051): единственное место, где
- * Редактор знает, какие языки бывают.
+ * Code Block languages as DATA (ADR-0051): the only place where the Editor knows which languages exist.
  *
- * НОВЫЙ ЯЗЫК — СТРОКА ЗДЕСЬ И ГРАММАТИКА В `lowlight.ts`. Схема
- * (`RICH_TEXT_SCHEMA.codeLanguages`), меню языка у блока, разбор вставки и
- * Markdown, серверный хелпер подсветки читают этот список, а не свои копии.
- * Забытую грамматику ловит тип: `lowlight.ts` держит `Record` по `grammar`.
+ * A NEW LANGUAGE IS A ROW HERE AND A GRAMMAR IN `lowlight.ts`. The Schema
+ * (`RICH_TEXT_SCHEMA.codeLanguages`), the Block's language menu, paste and Markdown parsing, and
+ * the server-side highlighting helper all read this list rather than keeping copies. A forgotten
+ * grammar is caught by the type: `lowlight.ts` keeps a `Record` keyed by `grammar`.
  *
- * `id` — то, что уходит в Документ (`class="language-<id>"`) и в Markdown
- * (```` ```<id> ````); `grammar` — имя грамматики highlight.js, когда оно не
- * совпадает с `id` (HTML подсвечивает грамматика `xml`). `aliases` — короткие
- * и чужие имена, которые приходят из Markdown, вставки и сохранённого HTML и
- * приводятся к `id` при загрузке: `py` в Документе не остаётся.
+ * `id` is what goes into the Document (`class="language-<id>"`) and into Markdown
+ * (```` ```<id> ````). `grammar` is the highlight.js grammar name when it differs from `id` (HTML
+ * is highlighted by the `xml` grammar). `aliases` are the short and foreign names that come from
+ * Markdown, paste and saved HTML, and they are mapped to `id` on load: `py` does not stay in the
+ * Document.
  *
- * ИМЕНА ЯЗЫКОВ — ДАННЫЕ, А НЕ СТРОКИ КАТАЛОГА. «Python» и «YAML» не
- * переводятся; через каталог идёт только «Обычный текст» — блок без языка.
+ * LANGUAGE NAMES ARE DATA, NOT CATALOG STRINGS. "Python" and "YAML" are not translated; only
+ * "Plain text", a Block without a language, goes through the message catalog.
  *
- * Модуль серверно-безопасен: данные и чистая функция, без импортов.
+ * The module is safe for the server: data and a pure function, no imports.
  */
 export const CODE_LANGUAGES = [
   { id: "python", label: "Python", grammar: "python", aliases: ["py"] },
@@ -24,10 +23,9 @@ export const CODE_LANGUAGES = [
   { id: "javascript", label: "JavaScript", grammar: "javascript", aliases: ["js"] },
   { id: "go", label: "Go", grammar: "go", aliases: ["golang"] },
   { id: "html", label: "HTML", grammar: "xml", aliases: ["htm"] },
-  // JSON — рядом с YAML: оба про данные. Псевдонимов нет намеренно:
-  // `jsonc` и `json5` — это комментарии и хвостовые запятые, которых грамматика
-  // JSON не знает, и такой блок честнее показать «Обычным текстом», чем
-  // подсвеченным с ошибками.
+  // JSON sits next to YAML: both are about data. The aliases are left out on purpose:
+  // `jsonc` and `json5` mean comments and trailing commas, which the JSON grammar does not know,
+  // and such a Block is more honest shown as "Plain text" than highlighted with errors.
   { id: "json", label: "JSON", grammar: "json", aliases: [] },
   { id: "yaml", label: "YAML", grammar: "yaml", aliases: ["yml"] },
   { id: "markdown", label: "Markdown", grammar: "markdown", aliases: ["md"] },
@@ -37,14 +35,14 @@ export type CodeLanguage = (typeof CODE_LANGUAGES)[number];
 export type CodeLanguageId = CodeLanguage["id"];
 export type CodeLanguageGrammar = CodeLanguage["grammar"];
 
-/** Имена языков в порядке меню — то, что бывает в `class="language-…"`. */
+/** Language names in menu order: what appears in `class="language-…"`. */
 export const CODE_LANGUAGE_IDS: readonly CodeLanguageId[] = CODE_LANGUAGES.map(({ id }) => id);
 
 /**
- * Имя языка из чужого источника — к имени Документа. Регистр и пробелы по
- * краям не важны (```` ```Python ````), псевдоним становится именем (`yml` →
- * `yaml`). Неизвестный язык — `null`, то есть «Обычный текст»: блок остаётся,
- * класса у него нет, и санитайзеру такой класс пропускать незачем.
+ * A language name from a foreign source, mapped to the Document's name. Case and surrounding
+ * spaces do not matter (```` ```Python ````), and an alias becomes its name (`yml` → `yaml`).
+ * An unknown language gives `null`, that is "Plain text": the Block stays, it has no class, and
+ * the sanitizer has no reason to let such a class through.
  */
 export function normalizeCodeLanguage(raw: unknown): CodeLanguageId | null {
   if (typeof raw !== "string") return null;
@@ -56,7 +54,7 @@ export function normalizeCodeLanguage(raw: unknown): CodeLanguageId | null {
   return found?.id ?? null;
 }
 
-/** Описание языка по имени Документа; `null` — «Обычный текст». */
+/** Description of a language by the Document's name; `null` means "Plain text". */
 export function codeLanguage(id: CodeLanguageId | null): CodeLanguage | null {
   return CODE_LANGUAGES.find((language) => language.id === id) ?? null;
 }

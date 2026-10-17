@@ -22,38 +22,38 @@ import {
 } from "./codeLanguages.js";
 import { GLASS_MENU_CLASS } from "../../styles/glass.js";
 
-/** Атрибут кнопки языка у блока: по нему `Alt+F10` находит её в DOM блока. */
+/** Attribute of the Block's language button: `Alt+F10` finds the button in the Block's DOM by it. */
 export const CODE_LANGUAGE_TRIGGER = "data-code-language-trigger";
 
-/** Атрибут кнопки «Копировать»: по нему стрелки и `Alt+F10` ходят между кнопками шапки. */
+/** Attribute of the "Copy" button: arrow keys and `Alt+F10` move between the header buttons by it. */
 export const CODE_COPY_TRIGGER = "data-code-copy-trigger";
 
 /**
- * Сменить язык блока на позиции `pos` — одной транзакцией, то есть одним шагом
- * отмены. Шаг меняет только атрибут (`AttrStep`) и не задевает текст, поэтому
- * история не склеивает его с набором перед ним: `Mod+Z` возвращает язык, а код
- * остаётся (сторожит `tests/rich-text-editor-code-block.test.tsx`).
+ * Change the language of the Block at `pos` in one transaction, so it is a single undo step.
+ * The step changes only the attribute (`AttrStep`) and does not touch the text, so the history
+ * does not merge it with the typing before it: `Mod+Z` restores the language and the code stays
+ * (guarded by `tests/rich-text-editor-code-block.test.tsx`).
  */
 function setCodeLanguage(editor: Editor, pos: number, language: CodeLanguageId | null) {
   editor.view.dispatch(editor.state.tr.setNodeAttribute(pos, "language", language));
 }
 
-/** Ключ пункта «Обычный текст» в меню: у блока без языка имени нет. */
+/** Key of the "Plain text" item in the menu: a Block without a language has no name to show. */
 const PLAIN_KEY = "plain";
 
 /*
-  RAC ставит триггеру меню `aria-haspopup="true"`; явное `menu` — как у меню
-  «Таблица» на Панели.
+  react-aria sets `aria-haspopup="true"` on the menu trigger; the explicit `menu` matches
+  the "Table" menu in the Toolbar.
 */
 const HAS_POPUP_MENU = { "aria-haspopup": "menu" } as object;
 
 /**
- * Можно ли править Документ — по атрибуту `contenteditable` корня.
+ * Whether the Document can be edited, read from the `contenteditable` attribute of the root.
  *
- * ПОЧЕМУ НЕ `editor.isEditable` ОДИН РАЗ. `readOnly` и `disabled` меняются на
- * лету через `setEditable` без транзакции, а представление узла перерисовывается
- * только при смене самого узла: кнопка осталась бы у поля, которое уже нельзя
- * править. ProseMirror отражает режим в `contenteditable` корня — за ним и следим.
+ * WHY NOT `editor.isEditable` ONCE. `readOnly` and `disabled` change on the fly through
+ * `setEditable` without a transaction, and the node view re-renders only when the node itself
+ * changes: the button would stay by a field that can no longer be edited. ProseMirror mirrors
+ * the mode in the root's `contenteditable`, so that is what we watch.
  */
 function useEditable(editor: Editor): boolean {
   return useSyncExternalStore(
@@ -71,35 +71,36 @@ function useEditable(editor: Editor): boolean {
 }
 
 /**
- * Блок кода в Редакторе: шапка с языком слева и «Копировать» справа, под ней код.
+ * The code Block in the Editor: a header with the language on the left and "Copy" on the
+ * right, with the code below it.
  *
- * ШАПКА — ХРОМ БЛОКА (`contentEditable={false}`): ProseMirror не ставит в неё
- * каретку и не принимает её текст за содержимое блока; выделение и копия
- * Документа её не захватывают (`select-none`). Полоса в потоке, а не поверх
- * кода: первая строка не уходит под кнопки, как бы длинна ни была.
+ * THE HEADER IS BLOCK CHROME (`contentEditable={false}`): ProseMirror puts no caret into it and
+ * does not take its text for the Block's content; selection and copying of the Document do not
+ * capture it (`select-none`). The bar sits in the flow, not over the code: the first line never
+ * runs under the buttons, however long it is.
  *
- * Язык — `Menu` кита: стек оверлеев ADR-0041, стрелки, `Escape` и радиогруппа с
- * отмеченным языком достаются от него. Имя — «Language: Python»: язык слышен на
- * самой кнопке, не открывая меню. Выбор меняет язык одним шагом отмены и
- * возвращает фокус в код.
+ * The language is the kit's `Menu`: the ADR-0041 overlay stack, the arrows, `Escape` and the
+ * radio group with the chosen language come from it. The name is "Language: Python", so the
+ * language is announced on the button itself, without opening the menu. A choice changes the
+ * language in one undo step and returns focus to the code.
  *
- * «КОПИРОВАТЬ» ЕСТЬ В ЛЮБОМ РЕЖИМЕ — и при `readOnly`, и при `disabled`: править
- * нельзя, а скопировать код можно. Копируется `node.textContent`, то есть текст
- * блока как набран, без токенов подсветки (они — декорации) и без хвостового
- * перевода строки, которого в узле нет (ADR-0039: копируется текст, а не DOM).
+ * "COPY" IS AVAILABLE IN ANY MODE, with both `readOnly` and `disabled`: the code cannot be
+ * edited, but it can be copied. `node.textContent` is copied, that is the Block's text as typed,
+ * without the highlight tokens (they are Decorations) and without the trailing line break, which
+ * the node does not hold (ADR-0039: the text is copied, not the DOM).
  *
- * КЛАВИАТУРА. Обе кнопки вне обхода Tab (`tabindex="-1"`): иначе каждый блок
- * кода добавлял бы две остановки между полем и следующим элементом формы. Вход —
- * `Alt+F10` из блока (`codeBlock.ts`) на язык; `Alt+F10` или стрелка вправо —
- * дальше, на «Копировать»; стрелка влево — назад; `Alt+F10` с «Копировать» — в
- * Панель. `Escape` с любой из двух возвращает фокус в код, каретка там же, где
- * была. Редактор только для чтения не принимает фокус в текст, и `Alt+F10` из
- * блока недостижим, — там «Копировать» остаётся в обычном порядке Tab.
+ * KEYBOARD. Both buttons are outside the Tab order (`tabindex="-1"`): otherwise every code Block
+ * would add two stops between the field and the next form element. The entry point is `Alt+F10`
+ * from the Block (`codeBlock.ts`) to the language; `Alt+F10` or the Right arrow moves on to
+ * "Copy"; the Left arrow goes back; `Alt+F10` from "Copy" goes to the Toolbar. `Escape` from
+ * either button returns focus to the code, and the caret stays where it was. A read-only Editor
+ * does not take focus into the text, so `Alt+F10` from the Block is unreachable there, and "Copy"
+ * stays in the normal Tab order.
  *
- * Только чтение и выключенное поле — вместо кнопки языка подпись: менять нечего,
- * а сказать, на каком языке код, по-прежнему стоит. У блока без языка подписи
- * нет: «Обычный текст» — строка каталога, и нужна она кнопке меню, а не метке.
- * Так же ведёт себя `RichTextView`, где каталога нет вовсе.
+ * Read-only and disabled fields show a label instead of the language button: there is nothing
+ * to change, but the language of the code is still worth stating. A Block without a language has
+ * no label: "Plain text" is a catalog string, and it is needed by the menu button, not by a label.
+ * `RichTextView` behaves the same way, where there is no catalog at all.
  */
 export function CodeBlockView({ editor, node, getPos, extension }: NodeViewProps) {
   const messages = useMessages().editor;
@@ -110,21 +111,21 @@ export function CodeBlockView({ editor, node, getPos, extension }: NodeViewProps
   const label = language?.label ?? messages.codeLanguagePlain;
   const options = extension.options as RichCodeBlockOptions;
 
-  // `tabIndex` и `aria-keyshortcuts` RAC-кнопка пропами не принимает — ставим
-  // атрибутами, как `ImageToolbar` убирает лишнюю остановку у узла плагина.
+  // The `tabIndex` and `aria-keyshortcuts` props are not accepted by the RAC button, so they are
+  // set as attributes, the way `ImageToolbar` removes an extra stop from a plugin node.
   useEffect(() => {
     triggerRef.current?.setAttribute("tabindex", "-1");
     triggerRef.current?.setAttribute("aria-keyshortcuts", "Alt+F10");
   }, [editable]);
 
   /*
-    Escape шапки — «обратно в код», и окно кита под Редактором его не получает.
-    Radix слушает Escape на документе в фазе перехвата, то есть раньше
-    `onKeyDown` шапки: внутри `Dialog` или `Drawer` уход из шапки закрывал окно,
-    стоило меню языка исчезнуть. Перехват на `window` идёт раньше документа;
-    `preventDefault` слой Radix читает как «закрывать не нужно», а всплытие не
-    останавливается — фокус в код вернёт `onKeyDown` ниже. Только у правки: без
-    неё каретки нет, и Escape с «Копировать» остаётся окну.
+    The header's Escape means "back to the code", and the kit's dialog around the Editor must not
+    get it. Radix listens for Escape on the document in the capture phase, that is before the
+    header's `onKeyDown`: inside a `Dialog` or `Drawer`, leaving the header would close the window
+    as soon as the language menu disappeared. The capture listener on `window` runs before the
+    document's one; `preventDefault` tells the Radix layer not to close, and bubbling is not
+    stopped, so `onKeyDown` below still returns focus to the code. This applies only while editing:
+    without a caret there is nothing to return to, and Escape from "Copy" stays with the window.
   */
   useEffect(() => {
     const header = headerRef.current;
@@ -144,9 +145,9 @@ export function CodeBlockView({ editor, node, getPos, extension }: NodeViewProps
     const id = key === PLAIN_KEY ? null : normalizeCodeLanguage(String(key));
     if (id !== normalizeCodeLanguage(node.attrs.language)) setCodeLanguage(editor, pos, id);
     /*
-      Фокус — в код таймером: react-aria после выбора возвращает фокус кнопке,
-      и поставленный сразу он ушёл бы обратно к ней. `view.focus()` вернёт
-      каретку туда, где она была до кнопки.
+      Focus goes to the code via a timer: after a choice react-aria returns focus to the button,
+      and focus set right away would go back to it. `view.focus()` puts the caret back where it
+      was before the button.
     */
     setTimeout(() => {
       if (!editor.isDestroyed) editor.view.focus();
@@ -154,8 +155,8 @@ export function CodeBlockView({ editor, node, getPos, extension }: NodeViewProps
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    // Меню — в портале, но события React всплывают и из него: клавиши самого
-    // меню (его `Escape`) сюда не относятся. Подсказка — тоже в портале.
+    // The menu is in a portal, but React events bubble through it too, so the menu's own keys
+    // (its `Escape`) do not apply here. The tooltip is in a portal as well.
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
     const onLanguage = target === triggerRef.current;
@@ -198,13 +199,13 @@ export function CodeBlockView({ editor, node, getPos, extension }: NodeViewProps
               {...{ [CODE_LANGUAGE_TRIGGER]: "" }}
               {...HAS_POPUP_MENU}
             >
-              {/* Подпись и шевроном в строку: `MenuButton` кладёт детей в один `span`. */}
+              {/* The label and the chevron in one row: `MenuButton` wraps its children in a single `span`. */}
               <span className="inline-flex items-center gap-1">
                 {label}
                 <ChevronDownIcon size={12} aria-hidden />
               </span>
             </MenuButton>
-            {/* Имя меню react-aria берёт у кнопки (`aria-labelledby`): «Language: Python». */}
+            {/* react-aria takes the menu's name from the button (`aria-labelledby`): "Language: Python". */}
             <Menu className={GLASS_MENU_CLASS} placement="bottom start" onAction={choose}>
               <MenuSection selectionMode="single" selectedKeys={[language?.id ?? PLAIN_KEY]}>
                 <MenuItem id={PLAIN_KEY} textValue={messages.codeLanguagePlain}>
@@ -223,8 +224,8 @@ export function CodeBlockView({ editor, node, getPos, extension }: NodeViewProps
         )}
         <CodeCopyButton
           code={node.textContent}
-          // Вне обхода Tab, пока Редактор правится: туда ведёт `Alt+F10`. Без
-          // каретки (только чтение, выключено) другого пути к кнопке нет.
+          // Out of the Tab order while the Editor is editable: `Alt+F10` leads here. Without a caret
+          // (read-only, disabled) there is no other way to reach the button.
           tabIndex={editable ? -1 : undefined}
           {...{ [CODE_COPY_TRIGGER]: "" }}
         />
