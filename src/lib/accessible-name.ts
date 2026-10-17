@@ -19,14 +19,26 @@
  */
 export type AccessibleName =
   | {
-      /** Accessible name as a string, when there is no visible label. Not set together with `aria-labelledby`: two sources of one name. */
+      /**
+       * Accessible name as a string, when there is no visible label. Do not set it together with
+       * `aria-labelledby`: that gives the name two sources.
+       */
       "aria-label": string;
-      /** `id` of the element whose text serves as the accessible name, when there is no visible label. Not set together with `aria-label`: two sources of one name. */
+      /**
+       * `id` of the element whose text serves as the accessible name, when there is no visible
+       * label. Do not set it together with `aria-label`: that gives the name two sources.
+       */
       "aria-labelledby"?: never;
     }
   | {
-      /** `id` of the element whose text serves as the accessible name, when there is no visible label. Not set together with `aria-label`: two sources of one name. */
+      /**
+       * `id` of the element whose text serves as the accessible name, when there is no visible
+       * label. Do not set it together with `aria-label`: that gives the name two sources.
+       */
       "aria-labelledby": string;
-      /** Accessible name as a string, when there is no visible label. Not set together with `aria-labelledby`: two sources of one name. */
+      /**
+       * Accessible name as a string, when there is no visible label. Do not set it together with
+       * `aria-labelledby`: that gives the name two sources.
+       */
       "aria-label"?: never;
     };

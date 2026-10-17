@@ -35,7 +35,7 @@ export interface ModalHeaderProps {
   /** Icon on the left of the title. The consumer sets its color, since it knows the dialog's tone. */
   icon?: ReactNode;
   /**
-   * Close handler. The button is drawn only when it is passed.
+   * Close handler. The button is rendered only when it is passed.
    *
    * There is deliberately no separate "hide the close button" prop: on a screen the button
    * disappears while a form is being submitted, and this is expressed by the same thing —
@@ -46,7 +46,7 @@ export interface ModalHeaderProps {
   /** Accessible name of the close button. */
   closeLabel?: string;
   /**
-   * What to render the title with. Defaults to `<h2>`.
+   * The element that renders the title. Defaults to `<h2>`.
    *
    * Exactly one consumer needs this: `Dialog`, which passes Radix's `Dialog.Title` here. It does
    * more than draw a title: it registers the title in the dialog's context, and `aria-labelledby`

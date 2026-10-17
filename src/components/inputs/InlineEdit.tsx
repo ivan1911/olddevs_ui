@@ -17,17 +17,17 @@ export interface InlineEditProps extends Omit<
 > {
   /** The confirmed value. The component does not store it. */
   value: string;
-  /** Confirms an edit. Called only when the value has changed. */
+  /** Called when an edit is confirmed, and only if the value has changed. */
   onChange: (value: string) => void;
   /**
-   * The accessible name of the field. Required, and checked by the compiler: without it,
-   * in-place editing gives a field with no name at the very moment of typing. The button's name
-   * is built from the value and the word "edit" from the message catalog.
+   * The accessible name of the field. Required, and enforced by the compiler: without it, in-place
+   * editing produces a field with no name at the very moment of typing. The button's name is built
+   * from the value and the word "edit" from the message catalog.
    */
   label: string;
   /** Edit mode. If the prop is omitted, the component manages it itself. */
   editing?: boolean;
-  /** Called on entering and leaving edit mode, and receives the new state. */
+  /** Called when edit mode is entered or left; receives the new state. */
   onEditingChange?: (editing: boolean) => void;
   /** What to show on the button when the value is empty. */
   placeholder?: string;

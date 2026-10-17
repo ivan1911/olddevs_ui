@@ -13,7 +13,10 @@ export interface CheckboxGroupProps {
   value: string[];
   /** Called when the set changes, with the new array of values. */
   onChange: (value: string[]) => void;
-  /** Label of the whole group. Required: a set of checkboxes without a shared question is unreadable. */
+  /**
+   * Label of the whole group. Required: a set of checkboxes without a shared question is hard to
+   * make sense of.
+   */
   label: ReactNode;
   /** Description under the label. */
   description?: ReactNode;
@@ -29,7 +32,7 @@ export interface CheckboxGroupProps {
    * is unavailable, and there can be no other reading.
    */
   disabled?: boolean;
-  /** Marks the group as required to fill in (passed to `react-aria-components`). */
+  /** Marks the group as required (passed to `react-aria-components`). */
   isRequired?: boolean;
   /**
    * Tone of the set's checked checkboxes, one for all.
@@ -42,7 +45,7 @@ export interface CheckboxGroupProps {
    */
   tone?: Tone;
   /**
-   * Appearance of the group: `default` for rows with a box, `card` for cards.
+   * Appearance of the group: `default` for rows with a checkbox, `card` for cards.
    *
    * Appearance of the group: `default` for rows with a box, `card` for cards with a label,
    * a description and an optional icon. It lives on the group and reaches the checkboxes

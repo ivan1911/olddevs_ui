@@ -10,7 +10,7 @@ import { cn } from "../../lib/cn.js";
 
 export interface RatingProps {
   /**
-   * The rating. The value going in and out is a number, not a set of stars: stars are a way
+   * The rating. The value you pass in and get back is a number, not a set of stars: stars are a way
    * to show a magnitude, not the magnitude itself.
    */
   value: number;

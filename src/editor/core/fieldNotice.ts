@@ -21,7 +21,7 @@ export type FieldNoticeTone = "status" | "error";
 export interface FieldNotice {
   /** Tone of the notice: `status` is only announced, `error` is shown as a line under the field. */
   tone: FieldNoticeTone;
-  /** The ready text in the screen's language; the kit does not translate it. */
+  /** Text that is already in the screen's language; the kit does not translate it. */
   text: string;
 }
 

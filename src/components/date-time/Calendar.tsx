@@ -26,8 +26,8 @@ export interface CalendarProps extends Omit<
   "value" | "defaultValue" | "onChange" | "minValue" | "maxValue" | "defaultFocusedValue"
 > {
   /**
-   * Selected day: an `@internationalized/date` object or an ISO string `YYYY-MM-DD`.
-   * `null` — a controlled empty value. An unparseable string counts as empty.
+   * Selected day: an `@internationalized/date` object or an ISO string `YYYY-MM-DD`. `null` is a
+   * controlled empty value. An unparseable string counts as empty.
    */
   value?: DateInput | null;
   /** Initial day of an uncontrolled calendar; accepts the same two forms as `value`. */

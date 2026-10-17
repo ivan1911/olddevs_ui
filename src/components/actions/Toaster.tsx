@@ -14,10 +14,10 @@ export interface ToasterProps {
   theme?: "light" | "dark" | "system";
   /**
    * Name of the CSS variable with the height of the application's bottom bar. Toasts at the bottom
-   * edge stand this much higher than the usual offset, rather than under the bar. Defaults to
-   * `--bottombar-h` — the `bottomBar` slot of `AppShell` publishes it. If there is no variable (no
-   * bar, or it is hidden on a wide screen), the offset stays as it was. Irrelevant for the top
-   * positions.
+   * edge sit this much higher than the usual offset instead of going under the bar. Defaults to
+   * `--bottombar-h`, which the `bottomBar` slot of `AppShell` publishes. If the variable is not
+   * defined (there is no bar, or it is hidden on a wide screen), the offset is unchanged. Has no
+   * effect on the top positions.
    */
   offsetVar?: string;
 }

@@ -13,7 +13,10 @@ interface ToggleBaseProps extends Omit<
 > {
   /** Whether the switch is on. A controlled value: the component holds no state of its own. */
   checked: boolean;
-  /** Called with the new value on press, unless someone else's `onClick` cancelled it via `preventDefault`. */
+  /**
+   * Called with the new value on press, unless a consumer-supplied `onClick` cancelled it via
+   * `preventDefault`.
+   */
   onCheckedChange: (checked: boolean) => void;
 }
 
@@ -45,18 +48,18 @@ export interface ToggleProps extends ToggleBaseProps {
    */
   label?: string;
   /**
-   * The visible label. Drawn to the left of the track; a press on it toggles, and it is also the
-   * accessible name — a separate `label` is not needed then.
+   * The visible label. Rendered to the left of the track. Pressing it toggles the switch, and it
+   * also serves as the accessible name, so a separate `label` is not needed.
    *
    * `Checkbox` is built the same way: the label goes in `children`, and `label` is the name for the
    * case when there is no visible label.
    */
   children?: ReactNode;
   /**
-   * A note under the label: what exactly is switched on and what it will lead to. Linked to the
+   * A note under the label: what exactly gets switched on and what it leads to. Linked to the
    * switch via `aria-describedby` and merged with the description of `FormField` and its own
-   * `aria-describedby`, rather than replacing them. A press on it toggles too. Not drawn without a
-   * visible label.
+   * `aria-describedby`, rather than replacing them. Pressing it toggles the switch too. Not
+   * rendered without a visible label.
    */
   description?: ReactNode;
 }

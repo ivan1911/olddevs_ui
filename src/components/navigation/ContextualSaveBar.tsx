@@ -17,9 +17,11 @@ export interface ContextualSaveBarProps {
   count?: number;
   /** Custom wording in place of the default, for example the name of the entity being edited. */
   message?: ReactNode;
-  /** Called by the save button. */
+  /** Called when the save button is pressed. */
   onSave: () => void;
-  /** Called by the cancel button. Without a handler, the button is not rendered at all. */
+  /**
+   * Called when the cancel button is pressed. Without a handler, the button is not rendered at all.
+   */
   onCancel?: () => void;
   /** Saving is in progress: the save button shows progress and both buttons are disabled. */
   saving?: boolean;
@@ -30,8 +32,8 @@ export interface ContextualSaveBarProps {
   /** Cancel button label. Defaults to the message catalog's string. */
   cancelLabel?: ReactNode;
   /**
-   * Stick to the bottom edge of the browser window. Turn it off where the bar sits inside
-   * a window (`Dialog`).
+   * Stick to the bottom edge of the browser window. Turn it off where the bar sits inside a dialog
+   * (`Dialog`).
    */
   sticky?: boolean;
   /**

@@ -22,7 +22,7 @@ export interface PinInputProps extends Omit<
   /** Number of fields. */
   length?: number;
   /**
-   * The accessible name of the group. Required, and checked by the compiler, as in
+   * The accessible name of the group. Required, and enforced by the compiler, as for
    * `SearchControl`: without it, screen readers announce the group as unnamed.
    */
   label: string;

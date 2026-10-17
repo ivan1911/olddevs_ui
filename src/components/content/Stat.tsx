@@ -11,7 +11,7 @@ export interface StatProps {
   value: ReactNode;
   /** Note under the value: a time frame, a share, anything short. */
   hint?: ReactNode;
-  /** Change: a number or a ready string ("+320", "−4%"). */
+  /** Change: a number or a preformatted string ("+320", "−4%"). */
   delta?: ReactNode;
   /**
    * Tone of the delta. It is set by a prop, not derived from the sign.

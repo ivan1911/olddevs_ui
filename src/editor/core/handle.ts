@@ -30,12 +30,12 @@ export {
  */
 export interface RichTextEditorHandleMethods {
   /**
-   * Focus the Document: `"end"` puts the caret at the end (the default, as always), `"start"` at the
-   * start, `"restore"` where the selection was before focus left (after its own dialog, menu or an
-   * external panel). In HTML mode, the focus goes to the HTML field.
+   * Focus the Document: `"end"` puts the caret at the end (the default), `"start"` at the start,
+   * `"restore"` where the selection was before focus left (for example, after one of the Editor's
+   * own dialogs or menus, or an external panel). In Source mode, the focus goes to the HTML field.
    */
   focus(position?: "start" | "end" | "restore"): void;
-  /** Remove focus from the Document (in HTML mode, from the HTML field). */
+  /** Remove focus from the Document (in Source mode, from the HTML field). */
   blur(): void;
   /**
    * Insert HTML at the caret, replacing the selection. `true` means inserted; `false` means not
@@ -56,8 +56,8 @@ export interface RichTextEditorHandleMethods {
   insertText(text: string): boolean;
   /**
    * The Document's text without markup; Blocks are separated by a blank line, and an Atom is
-   * represented by its Atom text (`atomText.ts`). Before mount, `""`. In HTML mode it first applies
-   * the edit of the HTML field, as `getHTML()` does.
+   * represented by its Atom text (`atomText.ts`). Before mount, `""`. In Source mode it first
+   * applies the edit made in the HTML field, as `getHTML()` does.
    */
   getText(): string;
   /**
@@ -68,13 +68,13 @@ export interface RichTextEditorHandleMethods {
   /**
    * Whether the Document is empty, by the same rule as `required`: content is text, any Atom (a
    * horizontal rule, an image, a hard break, a custom one even without text) and a table, including
-   * one with empty cells; an empty paragraph, heading, list or quote is not content. Before mount it
-   * judges the incoming value by the same rule; a custom Block there is always content.
+   * one with empty cells; an empty paragraph, heading, list or quote is not content. Before mount,
+   * it evaluates the incoming value under the same rule; a custom Block always counts as content.
    */
   isEmpty(): boolean;
   /**
    * Undo an edit (a User edit: `onChange` after `changeDelay`). Works when the `history` Tool is
-   * enabled; otherwise, before mount, in HTML mode and in a field the author cannot edit, it does
+   * enabled; otherwise, before mount, in Source mode and in a field the author cannot edit, it does
    * nothing.
    */
   undo(): void;

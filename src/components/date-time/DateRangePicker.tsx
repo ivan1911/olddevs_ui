@@ -32,9 +32,9 @@ export interface DateRangePickerProps {
    */
   period?: RelativePeriod | null;
   /**
-   * Emits both the expanded bounds and the preset they came from (`null` — selected by hand in
-   * the calendar). The consumer decides what to put into the URL; the package does not choose
-   * it for them.
+   * Emits both the expanded bounds and the preset they came from (`null` means the range was
+   * selected by hand in the calendar). The consumer decides what to put into the URL; the package
+   * does not choose it for them.
    */
   onChange: (range: DateRange, period: RelativePeriod | null) => void;
   /**
@@ -43,10 +43,10 @@ export interface DateRangePickerProps {
    * An empty list removes the preset column entirely.
    */
   presets?: readonly PeriodPreset[];
-  /** Time zone in which "today" is counted for the presets. */
+  /** Time zone used to determine "today" for the presets. */
   timeZone?: string;
   /**
-   * Clearing the period. The clear button appears only when the handler is passed.
+   * Handler that clears the period. The clear button appears only if it is passed.
    *
    * Here it is a separate prop, not `clearable` as on `Select`: there clearing is expressed by
    * the existing `onChange(null)`, and a flag is enough. Here `onChange` emits a pair of
@@ -62,7 +62,7 @@ export interface DateRangePickerProps {
   disabled?: boolean;
   /**
    * Earliest available date; presets are clipped to this bound, and a preset that lies entirely
-   * outside the bounds cannot be selected. An ISO string `YYYY-MM-DD`, as with `value`; a
+   * outside the bounds cannot be selected. An ISO string `YYYY-MM-DD`, as with `value`; an
    * `@internationalized/date` object is accepted too.
    */
   minValue?: DateInput;
@@ -70,7 +70,7 @@ export interface DateRangePickerProps {
   maxValue?: DateInput;
   /**
    * Marks specific days as unavailable (booked dates, holidays): they cannot be selected in the
-   * calendar. Receives a calendar date object; `date.toString()` gives the ISO day.
+   * calendar. Receives a calendar date object; `date.toString()` returns the day as an ISO string.
    *
    * Presets do not take this rule into account: they are clipped only by `minValue` and
    * `maxValue`.
@@ -85,7 +85,7 @@ export interface DateRangePickerProps {
   locale?: string;
   /** Whether the panel is open, when the consumer controls the state; without it the panel opens by itself. */
   open?: boolean;
-  /** Called on every open and close of the panel; works both with `open` and without it. */
+  /** Called whenever the panel opens or closes; works both with and without `open`. */
   onOpenChange?: (open: boolean) => void;
   /** Classes for the trigger frame. */
   triggerClassName?: string;

@@ -25,15 +25,18 @@ export interface TablePreferencesProps extends Omit<
 > {
   /** Table columns in declaration order. */
   columns: TablePreferencesColumn[];
-  /** Hidden columns. The component stores nothing; the value comes from above. */
+  /** Hidden columns. The component stores nothing; the value is passed in from the parent. */
   hiddenColumns: Set<string>;
   /** Receives the new set of hidden columns after a checkbox changes. */
   onHiddenColumnsChange: (hidden: Set<string>) => void;
-  /** Column order. Empty means declaration order. No handler means no move buttons. */
+  /**
+   * Column order. If empty, columns follow declaration order. Without a handler there are no move
+   * buttons.
+   */
   columnOrder?: string[];
   /**
-   * Receives the full new order after "up" or "down" is pressed. Not passed means there are
-   * no order buttons.
+   * Receives the full new order after "up" or "down" is pressed. If not passed, there are no order
+   * buttons.
    */
   onColumnOrderChange?: (order: string[]) => void;
   /** Current row density: `comfortable` or `compact`. */

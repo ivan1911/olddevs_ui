@@ -60,7 +60,10 @@ export interface TreeViewProps {
    * Accessible name of the tree. Required: an unnamed tree is announced by its role alone.
    */
   "aria-label": string;
-  /** Expanded nodes. The tree does not store them, like sorting and selection in a table. */
+  /**
+   * Expanded nodes. The tree does not store them, just as a table does not store sorting and
+   * selection.
+   */
   expandedKeys?: Iterable<Key>;
   /** Called with the new set of expanded nodes after expanding or collapsing. */
   onExpandedChange?: (keys: Set<Key>) => void;
@@ -71,11 +74,11 @@ export interface TreeViewProps {
    * and no `aria-selected` in the markup. This is the same rule as for `Table`.
    */
   selectionMode?: "single" | "multiple";
-  /** Selected nodes (controlled value). Works when `selectionMode` is set. */
+  /** Selected nodes (controlled value). Applies when `selectionMode` is set. */
   selectedKeys?: Selection;
   /** Called with the new set of selected nodes. */
   onSelectionChange?: (keys: Selection) => void;
-  /** Keys of blocked nodes. Works together with the `disabled` field of the nodes themselves. */
+  /** Keys of disabled nodes. Applies together with the `disabled` field of the nodes themselves. */
   disabledKeys?: Iterable<Key>;
   /**
    * Current navigation node: the key of the node whose page is open. The node gets

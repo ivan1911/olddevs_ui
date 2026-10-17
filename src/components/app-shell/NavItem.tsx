@@ -68,8 +68,8 @@ export interface NavItemProps extends Omit<ComponentPropsWithoutRef<"a">, "child
    */
   asChild?: boolean;
   /**
-   * Needed only with `asChild`: there it is the empty child link into which the icon and
-   * the label move.
+   * Needed only with `asChild`: there it is the empty child link that the icon and the label move
+   * into.
    */
   children?: ReactNode;
 }

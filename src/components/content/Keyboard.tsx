@@ -34,7 +34,7 @@ export interface KeyboardProps {
   onLayoutChange: (nextLayout: KeyboardLayout) => void;
   /** Submits the entered query without synthesizing a DOM event. */
   onSubmit?: () => void;
-  /** Disables all keys, the move handle and the close button. Default `false`. */
+  /** Disables all keys, the move handle and the close button. Defaults to `false`. */
   disabled?: boolean;
   /** With a pointer, does not move focus away from the external text field. */
   preserveFocus?: boolean;
@@ -42,7 +42,9 @@ export interface KeyboardProps {
   label?: string;
   /** Accessible name of the close button; without it, the standard label is used. */
   closeLabel?: string;
-  /** Called by the close button. Without this handler the close button is not rendered. */
+  /**
+   * Called when the close button is pressed. Without this handler the close button is not rendered.
+   */
   onRequestClose?: () => void;
 }
 

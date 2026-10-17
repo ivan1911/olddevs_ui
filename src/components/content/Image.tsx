@@ -18,7 +18,7 @@ export interface ImageProps extends Omit<
   ComponentPropsWithoutRef<"img">,
   "className" | "loading" | "src" | "alt"
 > {
-  /** Image URL. An empty value is the same as a failed load: the fallback is drawn. */
+  /** Image URL. An empty value is the same as a failed load: the fallback is rendered. */
   src?: string | null;
   /**
    * Alternative text, required.
@@ -48,13 +48,13 @@ export interface ImageProps extends Omit<
    */
   sizing?: "fill" | "intrinsic";
   /**
-   * The box aspect ratio as a number (`16 / 9`). Without it, the height is set by the layout
-   * outside, as it is for every tile in a grid.
+   * The box aspect ratio as a number (`16 / 9`). Without it, the height is set by the surrounding
+   * layout, as it is for every tile in a grid.
    */
   ratio?: number;
   /**
-   * What to show instead of the image when it is missing or failed to load.
-   * By default, a muted icon on a muted backdrop; `null` leaves an empty box.
+   * What to show instead of the image when it is missing or fails to load. By default, a muted icon
+   * on a muted backdrop; `null` leaves an empty box.
    *
    * A custom node gets only centering and space: no backdrop or text color is imposed on it.
    * Otherwise a fallback with its own background (a category letter colored by the category name)
@@ -64,15 +64,16 @@ export interface ImageProps extends Omit<
   /** Skeleton under the image while it loads. */
   skeleton?: boolean;
   /**
-   * Load right away, without deferring. By default loading is deferred, but for an image in the
-   * first screen this is harmful: the browser postpones it and worsens the LCP (Largest Contentful Paint) metric.
+   * Whether to load the image right away, without deferring. Loading is deferred by default, but
+   * for an image on the first screen that hurts: the browser postpones it, which worsens the LCP
+   * (Largest Contentful Paint) metric.
    */
   eager?: boolean;
   /** Box classes: size, corner radius, border. */
   className?: string;
   /**
-   * Classes of the image itself. Rarely needed in `fill` mode, where fitting is set by `fit`;
-   * in `intrinsic` mode, size constraints go here.
+   * Classes for the image itself. Rarely needed in `fill` mode, where fitting is set by `fit`; in
+   * `intrinsic` mode, size constraints go here.
    */
   imgClassName?: string;
   /** Inline style of the image. Needed where the visual element is the image, not the box. */

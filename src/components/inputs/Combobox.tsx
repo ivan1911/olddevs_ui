@@ -37,7 +37,7 @@ export interface ComboboxProps extends Omit<
   placeholder?: string;
   /** Text shown when nothing matches the input. */
   notFoundText?: string;
-  /** Classes on the root element. */
+  /** Classes for the root element. */
   className?: string;
 }
 

@@ -16,7 +16,7 @@ export interface NumberInputProps {
   min?: number;
   /** The largest allowed value. */
   max?: number;
-  /** The step for the buttons and the keyboard arrows. */
+  /** The step by which the buttons and the arrow keys change the value. */
   step?: number;
   /** The display format: percentages, currency, units. Passed to `Intl.NumberFormat`. */
   formatOptions?: Intl.NumberFormatOptions;
@@ -27,14 +27,14 @@ export interface NumberInputProps {
   /** Shows the field in the error state. */
   invalid?: boolean;
   /**
-   * The accessible name. Required, and checked by the compiler, the same as for `Toggle`.
+   * The accessible name. Required, and enforced by the compiler, as for `Toggle`.
    *
    * The label from `FormField` cannot reach here: react-aria generates the `id` of the inner
    * field itself, and there is no way to link a foreign `<label htmlFor>` to it.
    * So the component keeps the name itself.
    */
   label: string;
-  /** Classes for the wrapper around the frame: width, radius, inner padding. */
+  /** Classes for the framed wrapper: width, corner radius, inner padding. */
   shellClassName?: string;
   /** Classes for the root element. */
   className?: string;

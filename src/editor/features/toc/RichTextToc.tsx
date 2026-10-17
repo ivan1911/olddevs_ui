@@ -27,9 +27,9 @@ import { stickyOffset } from "./stickyOffset.js";
 
 export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /**
-   * Ref to the View (`RichTextView`) or to the Editor's handle (`RichTextEditor`)
-   * whose headings the table of contents shows. The headings are read from the
-   * target's DOM after mount: until hydration there is no strip.
+   * Ref to the View (`RichTextView`) or to the Editor's Handle (`RichTextEditor`) whose headings
+   * the Table of contents shows. The headings are read from the target's DOM after mount: until
+   * hydration there is no strip.
    *
    * The list follows the Document: a new `html` on the View, a new value in the
    * Editor, and an edit in it rebuild the list after a short delay. An Editor with
@@ -40,10 +40,10 @@ export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "
    */
   target: RefObject<HTMLElement | RichTextEditorHandle | null>;
   /**
-   * Name of the CSS variable with the height of the sticky top bar ([ADR-0016]).
-   * A jump puts the heading below the bar, not behind it, and the highlight counts
-   * the current section from the bar's bottom edge. Without the variable, the offset
-   * is the heading's `scroll-margin-top`. Defaults to `--topbar-h`, which `TopBar` publishes.
+   * Name of the CSS variable with the height of the sticky top bar ([ADR-0016]). Jumping to a
+   * heading places it below the bar, not behind it, and the highlight measures the current section
+   * from the bar's bottom edge. Without the variable, the offset is the heading's
+   * `scroll-margin-top`. Defaults to `--topbar-h`, which `TopBar` publishes.
    */
   offsetVar?: string;
   /**
@@ -54,10 +54,10 @@ export interface RichTextTocProps extends Omit<HTMLAttributes<HTMLDivElement>, "
    */
   listWidth?: number | string;
   /**
-   * Heading levels that go into the table of contents: a subset of 1–4. Headings of
-   * any other level appear neither in the strip nor in the list, and item indents are
-   * measured from the largest of the remaining levels. Read on every list build, so
-   * changing the set of levels rebuilds the list. Defaults to all four.
+   * Heading levels that go into the Table of contents: a subset of 1–4. Headings of any other level
+   * appear neither in the strip nor in the list, and item indents are measured from the largest of
+   * the remaining levels. The prop is read every time the list is built, so changing the set of
+   * levels rebuilds the list. Defaults to all four.
    */
   levels?: readonly (1 | 2 | 3 | 4)[];
 }

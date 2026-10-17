@@ -42,7 +42,7 @@ export interface TransferProps {
    * kit does not own, and the kit cannot know why the consumer sent an unknown key.
    */
   value: string[];
-  /** Called on a move; receives the new list of target-column keys. */
+  /** Called when items are moved; receives the new list of keys in the target column. */
   onChange: (value: string[]) => void;
   /** Label of the left (source) column. Without it, the label comes from the message catalog. */
   sourceLabel?: string;
@@ -66,7 +66,7 @@ export interface TransferProps {
    * all, the same rule as for `ButtonGroup`.
    */
   "aria-label"?: string;
-  /** Classes applied to the root element. */
+  /** Classes for the root element. */
   className?: string;
 }
 

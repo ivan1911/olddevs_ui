@@ -31,8 +31,8 @@ export interface SegmentedProps<T extends string = string> {
   /** Segments in order, left to right. */
   options: SegmentedOption<T>[];
   /**
-   * On a narrow screen (< 640 pixels) a segment keeps only its icon: the label is hidden
-   * visually only and remains the button's accessible name.
+   * On a narrow screen (< 640 pixels) a segment keeps only its icon: the label is only visually
+   * hidden and remains the button's accessible name.
    *
    * A property of the whole toggle, not of a single segment: a row where some tabs have words and
    * others do not would change width on switching, and the buttons would jump under the finger.

@@ -26,15 +26,21 @@ export interface HelpTooltipProps {
    * for one symbol.
    */
   shortcut?: string;
-  /** Label to the left of the combination: "Open section". Without the domain the package cannot guess it. */
+  /**
+   * Label to the left of the key combination: "Open section". The package cannot guess it, since it
+   * has no knowledge of the domain.
+   */
   shortcutLabel?: ReactNode;
-  /** Own icon instead of the question mark. */
+  /** Custom icon instead of the question mark. */
   icon?: ReactNode;
   /** Alignment of the panel relative to the help button: `start`, `center` or `end`. Defaults to `start`. */
   align?: "start" | "center" | "end";
   /** Distance from the button to the panel, in pixels. Defaults to 8. */
   sideOffset?: number;
-  /** Width of the panel as a class: explanations come in different lengths. Defaults to `w-[340px]`. */
+  /**
+   * A class that sets the panel width, because explanations differ in length. Defaults to
+   * `w-[340px]`.
+   */
   widthClassName?: string;
 }
 

@@ -53,7 +53,7 @@ export interface SearchControlProps extends Omit<
    */
   onChange: (value: string) => void;
   /**
-   * The accessible name. Required, and the compiler enforces it, as with `Toggle`.
+   * The accessible name. Required, and enforced by the compiler, as for `Toggle`.
    *
    * A placeholder is not a name: it disappears at the first character, and the screen reader is
    * left with an unnamed field exactly when there is something in it to read. If `aria-labelledby`
@@ -66,7 +66,7 @@ export interface SearchControlProps extends Omit<
    * The accessible name of the clear button. Without it, the name comes from the message catalog.
    */
   clearLabel?: string;
-  /** Classes for the bordered shell: width, corner rounding, vertical inner padding. */
+  /** Classes for the framed wrapper: width, corner radius, vertical inner padding. */
   shellClassName?: string;
   /**
    * The height step of the field: `md` is 42 px, `sm` is 36. Forwarded to `TextControl`.

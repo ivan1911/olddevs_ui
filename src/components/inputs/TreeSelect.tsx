@@ -11,7 +11,7 @@ import { TreeView, type TreeNode } from "../navigation/TreeView.js";
 import { VisuallyHidden } from "../content/VisuallyHidden.js";
 
 export interface TreeSelectProps {
-  /** Tree nodes. The format is the same as `TreeView`'s: it is the same type. */
+  /** Tree nodes. The format is the same as in `TreeView`: it is the same type. */
   items: TreeNode[];
   /**
    * Selected nodes. Always an array, even with `single`: one value shape spares the consumer a
@@ -46,7 +46,7 @@ export interface TreeSelectProps {
   onExpandedChange?: (keys: Set<Key>) => void;
   /** Disables the field: the list does not open. */
   disabled?: boolean;
-  /** Show the clear button when something is selected. */
+  /** Whether to show the clear button when something is selected. */
   clearable?: boolean;
   /** Accessible name of the clear button. Without it, `common.clear` is used, as in `Select`. */
   clearLabel?: string;

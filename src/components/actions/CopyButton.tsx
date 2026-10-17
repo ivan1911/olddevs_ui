@@ -20,7 +20,7 @@ export interface CopyButtonProps extends Omit<
   children?: ReactNode;
   /** How long to keep the "copied" state, in ms. */
   resetDelay?: number;
-  /** Report the outcome to the outside. Logs and metrics are the consumer's concern. */
+  /** Report the outcome outside the component. Logging and metrics are left to the consumer. */
   onCopy?: (ok: boolean) => void;
 }
 

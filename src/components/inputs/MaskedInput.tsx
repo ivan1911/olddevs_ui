@@ -49,10 +49,10 @@ export interface MaskedInputProps extends Omit<
    * Passing only one would force half of the consumers to format it again.
    */
   onChange: (raw: string, formatted: string) => void;
-  /** Classes for the wrapper around the frame. */
+  /** Classes for the framed wrapper. */
   shellClassName?: string;
   /**
-   * Shows the format right in the field: `+7 (___) ___-__-__`.
+   * Whether to show the format right in the field: `+7 (___) ___-__-__`.
    *
    * ON BY DEFAULT, and this is not cosmetic. Before the mask guide existed, the field did not
    * show the format AT ALL: `formatMask` inserts literals only while there is something to place

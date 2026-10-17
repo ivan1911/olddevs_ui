@@ -20,7 +20,7 @@ interface MobileTabBarBaseProps extends Omit<
   ComponentPropsWithoutRef<"nav">,
   "aria-label" | "aria-labelledby"
 > {
-  /** The bar's items, usually `MobileTabBarItem`s; they share the width equally. */
+  /** The bar's items, usually `MobileTabBarItem` components; they share the width equally. */
   children: ReactNode;
 }
 
@@ -95,8 +95,8 @@ export const MobileTabBar = forwardRef<HTMLElement, MobileTabBarProps>(function 
 
 interface MobileTabBarItemBaseProps extends Omit<ComponentPropsWithoutRef<"a">, "children"> {
   /**
-   * The item's label, and its accessible name in full, even when the screen truncates it with an
-   * ellipsis.
+   * The item's label. It is also the item's full accessible name, even when the label is truncated
+   * with an ellipsis on screen.
    *
    * A separate prop rather than children, for the same reason as `NavItem`: the component has to
    * wrap the label itself, while with `asChild` the children belong to the descendant.
@@ -115,11 +115,14 @@ interface MobileTabBarItemBaseProps extends Omit<ComponentPropsWithoutRef<"a">, 
   active?: boolean;
   /**
    * Render the item as its child element: `next/link`, or a router's `<Link>`. The icon and the
-   * label move inside the descendant through `Slottable`, so the descendant is passed empty:
+   * label move inside the child through `Slottable`, so the child is passed empty:
    * `<MobileTabBarItem label="…" asChild><Link href="/x" /></MobileTabBarItem>`.
    */
   asChild?: boolean;
-  /** Only needed with `asChild`: there it is the empty descendant link that the icon and label move into. */
+  /**
+   * Needed only with `asChild`: there it is the empty child link that the icon and the label move
+   * into.
+   */
   children?: ReactNode;
 }
 

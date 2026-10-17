@@ -31,7 +31,7 @@ export interface PasswordInputProps extends Omit<
    * with a single field.
    */
   capsLockWarning?: boolean;
-  /** Classes for the wrapper around the frame: width, radius, inner padding. */
+  /** Classes for the framed wrapper: width, corner radius, inner padding. */
   shellClassName?: string;
 }
 

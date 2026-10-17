@@ -50,8 +50,8 @@ interface SelectCommonProps<T extends SelectItem> {
   /** Trigger label when nothing is selected: "Category", "Author". */
   placeholder: string;
   /**
-   * The search field in the popover. Off by default: there is no reason to search a list of
-   * three statuses, and a field there is one extra step to the goal.
+   * The search field in the popover. Off by default: there is no reason to search a list of three
+   * statuses, and a field there is just an extra step.
    */
   searchable?: boolean;
   /** Placeholder of the search field in the popover. */
@@ -105,7 +105,7 @@ interface SelectCommonProps<T extends SelectItem> {
   /** Called when the list opens and closes. */
   onOpenChange?: (open: boolean) => void;
   /**
-   * Classes for the trigger: layout, inner padding, rounding, background.
+   * Classes for the trigger: layout, inner padding, border radius, background.
    *
    * This is also where the label's width limit is lifted if the trigger is wide:
    * `[--select-label-max:none]`. By default the label is truncated at 110px, so that a filter pill
@@ -152,7 +152,7 @@ interface SelectCommonProps<T extends SelectItem> {
    */
   "aria-label"?: string;
   /**
-   * The trigger's name is a reference to the `id` of an already shown label.
+   * Name of the trigger, as a reference to the `id` of a label that is already shown.
    *
    * It is the same name, but as a reference to a label that is already drawn: the consumer has it
    * on screen, and repeating its text here would create a second source that silently drifts
@@ -164,7 +164,7 @@ interface SelectCommonProps<T extends SelectItem> {
   "aria-labelledby"?: string;
   /**
    * The trigger's own description. It is merged with the `FormField` description rather than
-   * replacing it: both the form hint and the consumer's note must be read.
+   * replacing it: the form hint and the consumer's note must both be announced.
    */
   "aria-describedby"?: string;
 }
@@ -189,12 +189,12 @@ export type SelectProps<T extends SelectItem> =
       /** Single-item selection. The default. */
       multiple?: false;
       /**
-       * The selected `id`, or with `multiple` an array of `id`s. Compared as strings: `1` and `"1"`
-       * are the same; the order in the array is as it came.
+       * The selected `id` or, with `multiple`, an array of `id` values. Compared as strings: `1`
+       * and `"1"` are the same; the array keeps the order in which the values arrived.
        */
       value?: SelectId | null;
       /**
-       * An item is selected — its `id` comes in; cleared — `null` comes in.
+       * Receives the `id` of the selected item, or `null` when the selection is cleared.
        *
        * Previously clearing returned an empty string, and the agreement held only through a comment:
        * in the type, `""` cannot be told apart from any other `string`. `null` is visible to the
@@ -206,8 +206,8 @@ export type SelectProps<T extends SelectItem> =
       /** Multiple-item selection: `value` is an array of `id`s, `onChange` receives an array. */
       multiple: true;
       /**
-       * The selected `id`, or with `multiple` an array of `id`s. Compared as strings: `1` and `"1"`
-       * are the same; the order in the array is as it came.
+       * The selected `id` or, with `multiple`, an array of `id` values. Compared as strings: `1`
+       * and `"1"` are the same; the array keeps the order in which the values arrived.
        */
       value?: SelectId[];
       /** Always an array: clearing gives an empty one, not `null`. */

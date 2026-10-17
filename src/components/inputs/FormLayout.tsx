@@ -5,7 +5,7 @@ import { cn } from "../../lib/cn.js";
 import { FieldLayoutProvider } from "./FormField.js";
 
 export interface FormLayoutProps extends ComponentPropsWithoutRef<"div"> {
-  /** The number of columns. On narrow screens there is always one column; CSS does this. */
+  /** The number of columns. On narrow screens there is always one column, handled by CSS. */
   columns?: 1 | 2;
   /** Where the field labels sit: above the field, or in a column on the left. */
   labels?: "top" | "side";

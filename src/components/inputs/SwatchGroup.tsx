@@ -59,7 +59,7 @@ export interface SwatchGroupProps<T extends string = string> {
    */
   columns?: number;
   /**
-   * Show the option's name as a tooltip on hover and on focus.
+   * Whether to show the option's name as a tooltip on hover and on focus.
    *
    * The content is the same `name` that goes to the screen reader: the consumer translates the
    * name, and the kit knows nothing about the language. The tooltip has no timing of its own; the

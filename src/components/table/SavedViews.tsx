@@ -31,7 +31,7 @@ export interface SavedViewsProps<T = unknown> {
   /** The list of saved views; an empty list is not rendered at all. */
   views: SavedView<T>[];
   /**
-   * Identifier of the active view, which is highlighted and announced as pressed.
+   * Identifier of the active view. That view is highlighted and announced as pressed.
    *
    * `null` and `undefined` mean "no active view": the state that the consumer calls "the default
    * view", which is reached by resetting the URL.
@@ -42,11 +42,11 @@ export interface SavedViewsProps<T = unknown> {
    */
   activeId?: string | null;
   /**
-   * A view was selected. The whole view comes in, not its identifier: the consumer must apply the
-   * snapshot in a single action.
+   * Called when a view is selected. It receives the whole view, not its identifier: the consumer
+   * must apply the snapshot in a single action.
    */
   onSelect: (view: SavedView<T>) => void;
-  /** The accessible name of the group. If not set, the string is taken from the messages catalog. */
+  /** The accessible name of the group. If not set, the string is taken from the message catalog. */
   "aria-label"?: string;
   /** The class of the group container. */
   className?: string;

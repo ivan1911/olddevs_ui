@@ -59,7 +59,7 @@ export interface ContextMenuItemProps {
   children?: ReactNode;
   /** Icon to the left of the label. */
   icon?: ReactNode;
-  /** Keyboard shortcut on the right — a hint, not an action. */
+  /** Keyboard shortcut on the right — a reminder, not an action. */
   shortcut?: ReactNode;
   /** Color of the label and icon. `danger` is for destructive actions. */
   tone?: Tone;

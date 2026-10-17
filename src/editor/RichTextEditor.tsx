@@ -149,31 +149,30 @@ export interface RichTextEditorProps {
    */
   defaultValue?: string | RichTextDocument;
   /**
-   * New HTML is reported at most once per `changeDelay` ms, and also immediately on `blur`,
-   * before the form is submitted, and when an edit made in the HTML field is applied.
-   * Replacing the Document with a new `value` does not come through here.
+   * Called with the new HTML, at most once per `changeDelay` ms and also immediately on `blur`,
+   * before the form is submitted, and when an edit made in the HTML field is applied. Replacing the
+   * Document with a new `value` does not call it.
    */
   onChange?: (html: string) => void;
   /**
-   * The Editor is ready: the engine is created and the Handle methods (`ref`) already work,
-   * for example to insert a template. Takes no arguments and fires once per mount, including
-   * with `readOnly` and `disabled`. Re-renders and a new callback do not trigger it again.
-   * It waits for the Extensions loaders of its Tools. It does not fire on server rendering,
-   * on an error in the `tools` set, or when a loader fails (no engine).
+   * The Editor is ready: the engine is created and the Handle methods (`ref`) already work, for
+   * example to insert a template. Takes no arguments and fires once per mount, including with
+   * `readOnly` and `disabled`. Re-renders and a new callback do not trigger it again. It waits for
+   * the Loaders of its Tools. It does not fire on server rendering, on an error in the `tools` set,
+   * or when a loader fails (no engine).
    */
   onReady?: () => void;
   /**
-   * Focus entered the field. "The field" means the whole thing: the Document, the Toolbar,
-   * the kit's popovers and the HTML field. Moving between them does not lose field focus,
-   * so `onFocus` does not fire again.
-   * Takes no arguments: the DOM event is not passed on.
+   * Called when focus enters the field. The field includes the Document, the Toolbar, the kit's
+   * popovers and the HTML field, so moving focus between them does not lose field focus and
+   * `onFocus` does not fire again. Takes no arguments; the DOM event is not forwarded.
    */
   onFocus?: () => void;
   /**
-   * Focus left the field (see `onFocus`). Before the call, a pending `onChange` is flushed,
-   * so autosave on `onBlur` gets fresh HTML.
-   * The call is deferred by one tick: focus may return to the field in that time, for example
-   * from the Document to the Toolbar or a popover and back, and `onBlur` does not fire then.
+   * Called when focus leaves the field (see `onFocus`). Before the call, a pending `onChange` is
+   * flushed, so autosave on `onBlur` gets fresh HTML. The call is deferred by one tick: focus may
+   * return to the field in that time, for example from the Document to the Toolbar or a popover and
+   * back, and `onBlur` does not fire then.
    */
   onBlur?: () => void;
   /**
@@ -191,7 +190,7 @@ export interface RichTextEditorProps {
    * label does not depend on it: that name comes from context.
    */
   id?: string;
-  /** Placeholder for an empty Document. Defaults to the catalog text. */
+  /** Placeholder for an empty Document. Defaults to the text from the message catalog. */
   placeholder?: string;
   /**
    * Character limit. A remaining-count indicator appears at 80% of the limit, input past it
@@ -199,17 +198,16 @@ export interface RichTextEditorProps {
    * it may be shortened, but not lengthened.
    */
   maxLength?: number;
-  /** Read-only: the text can be selected and goes into the form, but cannot be edited. */
+  /** Read-only: the text can be selected and is submitted with the form, but cannot be edited. */
   readOnly?: boolean;
   /** Disabled, as with other fields: cannot be edited, dimmed, and not submitted with the form. */
   disabled?: boolean;
   /**
-   * Required field: `aria-required`. In a regular `<form>`, it also blocks submission while
-   * the Document is empty (no text, no Atom, no table).
-   * The browser shows the message from the catalog (`editor.required`) and returns focus
-   * to the Editor. `readOnly` and `disabled` are not validated, as with native fields.
-   * In the kit's `Form` (`noValidate`) there is no browser validation: the consumer shows
-   * the error.
+   * Required field: `aria-required`. In a regular `<form>`, it also blocks submission while the
+   * Document is empty (no text, no Atom, no table). The browser shows the message from the message
+   * catalog (`editor.required`) and returns focus to the Editor. `readOnly` and `disabled` are not
+   * validated, as with native fields. In the kit's `Form` (`noValidate`) there is no browser
+   * validation: the consumer shows the error.
    */
   required?: boolean;
   /** Field name when there is no `FormField` label. */
@@ -232,13 +230,13 @@ export interface RichTextEditorProps {
    */
   toolbar?: "fixed" | "floating" | "bubble" | "none";
   /**
-   * The Bubble menu on top of the fixed Toolbar. Defaults to `true`: with `toolbar="fixed"`,
-   * the same Bubble menu as in `"bubble"` mode appears above a non-empty selection. The owner
-   * decided this: the Toolbar stays on top for everything, and the Bubble menu keeps the mouse
-   * from leaving the text.
-   * `false` keeps just the one Toolbar. The other modes ignore this prop: `"bubble"` already has
-   * the Bubble menu, and `"floating"` already shows the Toolbar above the selection. On a touch
-   * screen the kit has no Bubble menu: the iOS and Android system selection menu takes its place.
+   * The Bubble menu on top of the fixed Toolbar. Defaults to `true`: with `toolbar="fixed"`, the
+   * same Bubble menu as in `"bubble"` mode appears above a non-empty selection. The owner decided
+   * this: the fixed Toolbar covers everything, and the Bubble menu saves the mouse a trip away from
+   * the text. `false` keeps just the one Toolbar. The other modes ignore this prop: `"bubble"`
+   * already has the Bubble menu, and `"floating"` already shows the Toolbar above the selection. On
+   * a touch screen the kit has no Bubble menu: the iOS and Android system selection menu takes its
+   * place.
    */
   selectionMenu?: boolean;
   /**
@@ -268,8 +266,8 @@ export interface RichTextEditorProps {
    */
   tools?: readonly ToolEntry[];
   /**
-   * The image upload handler: takes a file and returns an absolute `http(s)` address where the
-   * image will live, or rejects the promise.
+   * The image upload handler: takes a file and returns the absolute `http(s)` URL the image will be
+   * served from, or rejects the promise.
    *
    * With it, an image can be pasted from the clipboard, dragged into the field, or picked as a file
    * in the image popover. While the promise is pending, a placeholder sits where the image will go,
@@ -286,9 +284,9 @@ export interface RichTextEditorProps {
    */
   surface?: RichTextSurface;
   /**
-   * The Status bar: a React node inside the field frame, in the `maxLength` counter row. Its own
-   * content sits at the start, and the kit's counter at the end (word count, "Saved", co-author).
-   * Visible with both `readOnly` and `disabled`.
+   * The Status bar: a React node inside the field frame, in the `maxLength` counter row. The
+   * screen's content (word count, "Saved", co-author) sits at the start and the kit's counter at
+   * the end. Visible with both `readOnly` and `disabled`.
    *
    * The kit does not announce it: the container has no `role`, so the word count is not read out
    * on every edit. To have "Saved" announced, wrap it in `role="status"` yourself. Take the data
@@ -297,17 +295,17 @@ export interface RichTextEditorProps {
   status?: ReactNode;
   /**
    * The height limit of the Document area (ADR-0059): a number is pixels, a string is any CSS
-   * length (`"32rem"`, `"60vh"`). Up to the limit the field grows with the Document. Beyond it,
-   * the Document scrolls inside the frame, while the Toolbar above and the Status bar below stay
-   * in place. Without this prop the field has no scrolling of its own. There is no row-based limit,
-   * as `maxRows` on `TextControl`, because Blocks have different heights.
+   * length (`"32rem"`, `"60vh"`). Up to the limit the field grows with the Document. Beyond it, the
+   * Document scrolls inside the frame, while the Toolbar above and the Status bar below stay in
+   * place. Without this prop the field has no scrolling of its own. There is no row-based limit
+   * like `maxRows` on `TextControl`, because Blocks differ in height.
    */
   maxHeight?: number | string;
   /**
-   * The height handle in the corner of the Document area: drag it vertically to change the height.
-   * With `maxHeight`, it sets the starting height rather than a limit. Two systems that both control
-   * the height make the field jump (the same argument applies to `autosize` on `TextControl`).
-   * Without `maxHeight`, the starting height is the height of the Document.
+   * The resize handle in the corner of the Document area: drag it vertically to change the height.
+   * With `maxHeight`, it sets the starting height rather than a limit. Two systems that both
+   * control the height make the field jump (the same argument applies to `autosize` on
+   * `TextControl`). Without `maxHeight`, the starting height is the height of the Document.
    */
   resizable?: boolean;
   /** Classes for the root: width, outer spacing. */
@@ -320,9 +318,9 @@ export interface RichTextEditorProps {
  */
 export interface RichTextEditorHandle extends RichTextEditorHandleMethods {
   /**
-   * Current HTML, right now, without waiting for `changeDelay`. An empty Document is `""`.
-   * In HTML mode, it first applies the edit made in the HTML field (through the Schema, and
-   * calls `onChange` if the Document changed).
+   * Current HTML, right now, without waiting for `changeDelay`. An empty Document is `""`. In
+   * Source mode, it first applies the edit made in the HTML field (through the Schema) and calls
+   * `onChange` if the Document changed.
    */
   getHTML(): string;
   /** Clear the Document. The owner of the value learns about it through `onChange("")`. */
@@ -336,29 +334,29 @@ export interface RichTextEditorHandle extends RichTextEditorHandleMethods {
    */
   getMarkdown(): string;
   /**
-   * Replace the Document with parsed Markdown. As with `clear()`, this is an external replacement:
-   * the value's owner learns about it through `onChange` right away, and `maxLength` does not
-   * truncate it. Anything the Schema does not know is dropped. Does nothing before mount.
+   * Replace the Document with parsed Markdown. As with `clear()`, this is a programmatic
+   * replacement: the value's owner learns about it through `onChange` right away, and `maxLength`
+   * does not truncate it. Anything the Schema does not know is dropped. Does nothing before mount.
    */
   setMarkdown(markdown: string): void;
   /**
-   * The Document as a JSON envelope, right now, without waiting for `changeDelay`.
-   * Unlike Markdown, nothing is lost. Before mount and during server rendering it returns `null`.
-   * In HTML mode, this behaves like `getHTML()`: the HTML field's edit is applied first.
+   * The Document as a JSON envelope, right now, without waiting for `changeDelay`. Unlike Markdown,
+   * nothing is lost. Before mount and during server rendering it returns `null`. In Source mode,
+   * this behaves like `getHTML()`: the HTML field's edit is applied first.
    */
   getJSON(): RichTextDocument | null;
   /**
-   * Replace the Document with a JSON envelope. The parameter is `unknown`: the main source is the
-   * file's `JSON.parse`, and the Editor validates the shape. `true` means replaced. `false` means
-   * the envelope was rejected (wrong format or version, malformed tree) or the engine does not
-   * exist yet, and the Document is untouched. The replacement is external, as with `setMarkdown()`:
-   * `onChange` fires right away, `maxLength` does not truncate it, and anything the Schema does not
-   * know is dropped under the same rules as HTML.
+   * Replace the Document with a JSON envelope. The parameter is `unknown`: the usual source is the
+   * result of `JSON.parse` on a file, and the Editor validates the shape. `true` means replaced.
+   * `false` means the envelope was rejected (wrong format or version, malformed tree) or the engine
+   * does not exist yet, and the Document is untouched. This is a programmatic replacement, as with
+   * `setMarkdown()`: `onChange` fires right away, `maxLength` does not truncate it, and anything
+   * the Schema does not know is dropped under the same rules as HTML.
    */
   setJSON(document: unknown): boolean;
   /**
    * Open the "Find and replace" panel from screen code. This is the same as the "Search" button and
-   * `Mod+F`; `replace` moves focus to the replace field. Without the `search` Tool, in HTML mode,
+   * `Mod+F`; `replace` moves focus to the replace field. Without the `search` Tool, in Source mode,
    * or before mount, it does nothing.
    *
    * @deprecated Works as `handle.tool("search")?.open(options)`. In development it logs a warning
@@ -366,9 +364,9 @@ export interface RichTextEditorHandle extends RichTextEditorHandleMethods {
    */
   openSearch(options?: { replace?: boolean }): void;
   /**
-   * The raw Tiptap engine: an honest escape hatch for the commands of Marks, Blocks and custom
-   * Tools (`editor.chain().focus()…run()`). Its API follows the Tiptap major version, not the
-   * kit's contract. Before mount and during server rendering, `null`.
+   * The raw Tiptap engine: an escape hatch for the commands of Marks, Blocks and custom Tools
+   * (`editor.chain().focus()…run()`). Its API follows the Tiptap major version, not the kit's
+   * contract. Before mount and during server rendering, `null`.
    */
   editor: Editor | null;
 }

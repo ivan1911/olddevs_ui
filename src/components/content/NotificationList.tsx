@@ -19,7 +19,7 @@ interface NotificationItemBaseProps extends Omit<ComponentPropsWithoutRef<"li">,
    * the consumer's locale and time zone, not on the design system.
    */
   time?: ReactNode;
-  /** Icon on the left. The event type is application knowledge, so the icon is passed in. */
+  /** Icon on the left. The application knows the event type, so it passes the icon in. */
   icon?: ReactNode;
   /**
    * Preview of the object the event is about: a second visual slot next to the text.

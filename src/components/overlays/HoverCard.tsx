@@ -40,9 +40,9 @@ const DEFAULT_CLOSE_DELAY = 300;
 
 export interface HoverCardProps {
   /**
-   * How many milliseconds the pointer or focus must stay on the trigger before the card opens.
-   * It keeps the card from popping up on an accidental pass of the pointer.
-   * The reference is Radix's `HoverCard`.
+   * How many milliseconds the pointer or focus must stay on the trigger before the card opens. It
+   * keeps the card from popping up when the pointer passes over the trigger by accident. Modeled on
+   * Radix's `HoverCard`.
    */
   openDelay?: number;
   /**
@@ -286,7 +286,11 @@ type RadixAnchorProps = Omit<
 >;
 
 export interface HoverCardTriggerProps extends RadixAnchorProps {
-  /** Hand the trigger role to your element instead of the built-in `div`: props and `ref` are merged with its own. Defaults to `true` here — the trigger must be a link or a button. */
+  /**
+   * Delegate the trigger role to your own element instead of the built-in `div`: props and `ref`
+   * are merged with the element's own. Defaults to `true` for this component, because the trigger
+   * must be a link or a button.
+   */
   asChild?: RadixAnchorProps["asChild"];
   /** An element or an object with `getBoundingClientRect` next to which the card opens instead of the trigger itself. */
   virtualRef?: RadixAnchorProps["virtualRef"];

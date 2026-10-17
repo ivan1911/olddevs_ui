@@ -27,7 +27,7 @@ export interface ColorPickerProps {
   value: string;
   /** Called when the color changes, with a string in the `outputFormat` format. */
   onChange: (value: string) => void;
-  /** Field label. Required: an unnamed control is named only by its role for a screen reader. */
+  /** Field label. Required: a screen reader announces an unnamed control by its role alone. */
   label: string;
   /**
    * Presets below the color area.

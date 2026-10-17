@@ -165,7 +165,7 @@ export interface MegaMenuProps extends Omit<
   value?: string | null;
   /** The category open on mount, uncontrolled. */
   defaultValue?: string | null;
-  /** Another category opened, or the flyout closed. */
+  /** Called when another category opens or the flyout closes. */
   onValueChange?: (value: string | null) => void;
   /**
    * The flyout width: a CSS length or pixels. One width for all categories, so the menu does not jump
@@ -730,8 +730,8 @@ export interface MegaMenuCategoryProps {
   /** Icon to the left of the label; hidden from screen readers. */
   icon?: ReactNode;
   /**
-   * The address of the whole section. With a flyout, it is a heading link at the top of the flyout;
-   * without one, the column row itself becomes the link.
+   * The URL of the section as a whole. With a flyout, it is a heading link at the top of the
+   * flyout; without one, the category's row in the category column becomes the link.
    */
   href?: string;
   /**
@@ -739,18 +739,18 @@ export interface MegaMenuCategoryProps {
    * it. It is a separate prop rather than `asChild`, because the children of a category are its flyout.
    */
   link?: ReactElement;
-  /** Visible, but cannot be opened, and skipped by the arrow keys. */
+  /** Visible but cannot be opened; the arrow keys skip it. */
   disabled?: boolean;
   /**
-   * The current page is in this section: `aria-current="true"` and the current look, whether or not the
-   * flyout is open. It opens nothing; without an open flyout, Tab reaches this category in the column.
-   * The consumer computes it, like `active` on `NavItem`: each router has its own rules for comparing
-   * addresses.
+   * The current page is in this section: `aria-current="true"` and the current-item styling,
+   * whether or not the flyout is open. It opens nothing; without an open flyout, Tab reaches this
+   * category in the category column. The consumer computes it, like `active` on `NavItem`: each
+   * router has its own rules for comparing URLs.
    */
   active?: boolean;
   /** Flyout content: `MegaMenuGroup` or anything custom. Without children there is no flyout. */
   children?: ReactNode;
-  /** Classes for the column row. */
+  /** Classes for the row in the category column. */
   className?: string;
 }
 
@@ -964,7 +964,7 @@ function ShowcaseHeading({
 export interface MegaMenuGroupProps {
   /** The column title; it also labels the column's list of links. */
   title: ReactNode;
-  /** The address of the whole subsection: the title becomes a link. */
+  /** The URL of the subsection as a whole: the title becomes a link. */
   href?: string;
   /**
    * A router link instead of `href`: an empty element (`<Link href="/x" />`), and the title moves inside
@@ -1019,7 +1019,7 @@ export function MegaMenuGroup({ title, href, link, children, className }: MegaMe
 }
 
 export interface MegaMenuLinkProps extends ComponentPropsWithoutRef<"a"> {
-  /** The link points to the current page: `aria-current="page"` and the current look. */
+  /** The link points to the current page: `aria-current="page"` and the current-item styling. */
   active?: boolean;
   /**
    * @deprecated Use `active`: the current navigation item in the kit is `active`, as on `NavItem`.
@@ -1161,7 +1161,7 @@ export interface MegaMenuTriggerProps {
   open?: boolean;
   /** Whether the mega menu is open on mount. Uncontrolled. */
   defaultOpen?: boolean;
-  /** The mega menu opened or closed: by click, by key, or by following a link. */
+  /** Called when the mega menu opens or closes: by click, by key, or by following a link. */
   onOpenChange?: (open: boolean) => void;
   /**
    * The first child is `MegaMenuButton`; the rest are `MegaMenu`, and they render in the overlay below

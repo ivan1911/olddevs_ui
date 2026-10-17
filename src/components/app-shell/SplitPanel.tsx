@@ -37,8 +37,7 @@ export interface SplitPanelProps {
    */
   size?: number;
   /**
-   * The initial size when `size` is not passed. A double-click on the handle also
-   * returns to it.
+   * The initial size when `size` is not passed. Double-clicking the handle also restores it.
    *
    * It is read **once, on mount**: changing the prop later does not move the initial
    * size, otherwise the panel would jump under the user because of someone else's
@@ -61,7 +60,7 @@ export interface SplitPanelProps {
    */
   onSizeChange?: (size: number) => void;
   /**
-   * Lower bound. The panel cannot become narrower, either by dragging or by the prop.
+   * Lower bound. The panel cannot become narrower, whether by dragging or through the prop.
    *
    * An inverted range (`minSize > maxSize`) breaks nothing: the upper bound is raised
    * to the lower one. Otherwise you would get a control with no way out, neither by

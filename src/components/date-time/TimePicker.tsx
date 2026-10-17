@@ -18,22 +18,22 @@ export interface TimePickerProps {
   /** Time in `HH:MM` format. */
   value?: string | null;
   /**
-   * Called with the time `HH:MM` when the input is finished (blur, Enter) or a slot is selected
+   * Called with the time `HH:MM` when the user finishes typing (blur, Enter) or selects a time slot
    * from the list.
    */
   onChange: (time: string) => void;
-  /** Slot step in minutes. Must divide the day evenly. */
+  /** Time slot step in minutes. Must divide the day evenly. */
   step?: number;
   /**
    * Hour cycle of the field and the list: `24` (default, `14:30`) or `12` (`2:30 PM`).
    * Affects only display and input: `value` and `onChange` stay `HH:MM`.
    */
   hourCycle?: 12 | 24;
-  /** Disables the field; the slot list does not open. */
+  /** Disables the field; the time slot list does not open. */
   disabled?: boolean;
   /** Placeholder in an empty field; defaults to the kit's standard label. */
   placeholder?: string;
-  /** Accessible name of the field and the slot list; defaults to the kit's standard label. */
+  /** Accessible name of the field and the time slot list; defaults to the kit's standard label. */
   "aria-label"?: string;
   /**
    * Shows the field in the error state: the line under the time turns red and

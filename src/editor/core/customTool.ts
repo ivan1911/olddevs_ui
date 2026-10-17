@@ -55,7 +55,7 @@ export interface CustomBlock {
    * can go; `top` — only at the top level of the Document, like a Column layout.
    */
   place?: "anywhere" | "top";
-  /** Custom attributes: a name with the consumer prefix, mapped to the kind of value. */
+  /** Custom attributes: a name with the Consumer prefix, mapped to the kind of value. */
   attributes?: Readonly<Record<PrefixedName, CustomAttribute>>;
   /** The "container" trait: Blocks inside get their own Block handle, as in a Wrapper. */
   container?: boolean;
@@ -64,7 +64,8 @@ export interface CustomBlock {
    */
   turnInto?: boolean;
   /**
-   * The "plain Atom" trait: the Bubble menu is not shown above a selected Block of this kind.
+   * The "Atom without a formatting menu" trait: the Bubble menu is not shown above a selected Block
+   * of this kind.
    */
   plainAtom?: boolean;
   /**
@@ -99,7 +100,7 @@ export interface CustomIslandProps {
 /** Schema rules of a custom Mark: the HTML is `span[data-mark="<name>"]`. */
 export interface CustomMark {
   /**
-   * Custom attributes of the Mark: a name with the consumer prefix, mapped to the kind of value.
+   * Custom attributes of the Mark: a name with the Consumer prefix, mapped to the kind of value.
    */
   attributes?: Readonly<Record<PrefixedName, CustomAttribute>>;
 }
@@ -113,7 +114,7 @@ export interface CustomMark {
  * contributions.
  */
 export interface CustomTool {
-  /** The name with the consumer prefix, unique within `tools`. */
+  /** The name with the Consumer prefix, unique within `tools`. */
   name: PrefixedName;
   /**
    * Extensions: Tiptap extensions, that is Node, Mark, Extension, ProseMirror plugins, a React
@@ -155,7 +156,7 @@ export interface CustomTool {
   textCards?: readonly CustomTextCard[];
   /**
    * A custom trigger character (ADR-0064): typing `char` at the start of a Block or after a space
-   * opens a list of items at the caret, the same list the "/" Slash menu draws. One trigger per
+   * opens a list of items at the caret, the same list the "/" Slash menu renders. One trigger per
    * Tool; the character is unique within `tools`.
    */
   trigger?: CustomTrigger;
@@ -275,13 +276,14 @@ export type CustomTextCardRender = (props: {
  */
 export interface CustomTextCard {
   /**
-   * The label: a string or a function of `{ locale }`. It is the accessible name of the frame and
-   * part of the phrase the kit uses to announce the Text card to screen readers. There is no icon.
+   * The label: a string or a function that receives `{ locale }`. It is the accessible name of the
+   * frame and part of the phrase the kit uses to announce the Text card to screen readers. There is
+   * no icon.
    */
   label: CustomToolLabel;
   /** The range under the caret: for a Mark, `markRange("acme_comment")`. */
   rangeAt: TextCardRangeAt;
-  /** The body of the Text card; it is mounted again on each opening. */
+  /** The body of the Text card; it is remounted each time the card opens. */
   render: CustomTextCardRender;
 }
 
@@ -313,9 +315,9 @@ export type CustomInsertItem = CustomInsertItemFields &
       }
     | {
         /**
-         * A popover instead of a command: it opens at the caret (from "/", where the "/" stood). The
-         * kit does not prepare the Document: it removes the typed "/command", and the popover itself
-         * puts the content into the Document through `editor`.
+         * A popover instead of a command: it opens at the caret (when opened from "/", at the spot
+         * where the "/" was). The kit does not prepare the Document beyond removing the typed
+         * "/command"; the popover itself puts the content into the Document through `editor`.
          */
         popover: CustomToolPopover;
         run?: undefined;
@@ -323,9 +325,9 @@ export type CustomInsertItem = CustomInsertItemFields &
   );
 
 interface CustomInsertItemFields {
-  /** "Insert": a new Block after the current one. "Turn into": change the current one. */
+  /** "Insert" adds a new Block after the current one; "Turn into" changes the current one. */
   section: "insert" | "turnInto";
-  /** The label: a string or a function of `{ locale }`; search matches it too. */
+  /** The label: a string or a function that receives `{ locale }`; search matches it too. */
   label: CustomToolLabel;
   /**
    * A component with the `IconProps` contract: from the `@olddevs/ui/icons` set, or your own.
@@ -334,8 +336,9 @@ interface CustomInsertItemFields {
   /** Extra search words beyond the label, in any language; the kit searches the labels itself. */
   aliases?: readonly string[];
   /**
-   * A shortcut in the Toolbar notation (`mod`, `alt`, `shift`, a key). It is the only source: the
-   * kit binds the key itself and writes it in the item's hint and in the shortcuts reference.
+   * A shortcut in the Toolbar notation (`mod`, `alt`, `shift`, a key). This is the single source of
+   * truth: the kit binds the key itself and shows it in the item's hint and in the shortcuts
+   * reference.
    */
   shortcut?: readonly string[];
 }
@@ -366,13 +369,13 @@ export type CustomBlockAction = CustomBlockActionFields &
   );
 
 interface CustomBlockActionFields {
-  /** The label: a string or a function of `{ locale }`. */
+  /** The label: a string or a function that receives `{ locale }`. */
   label: CustomToolLabel;
   /** The icon: a component with the `IconProps` contract. */
   icon: ComponentType<IconProps>;
   /**
    * The names of the Blocks for which the action is shown: the name of the handle's Block, or of
-   * the container it stands directly in.
+   * the container it sits directly in.
    */
   blocks: readonly string[];
   /** The shortcut in the Toolbar notation; the kit binds it to the Block under the caret. */
@@ -405,8 +408,8 @@ interface CustomToolButtonFields {
    */
   id: string;
   /**
-   * The caption: the button's name for screen readers, the tooltip text and the popover's name.
-   * An empty one means the Tool's name.
+   * The label: the button's name for screen readers, the tooltip text and the popover's name. If
+   * empty, the Tool's name is used.
    */
   label: CustomToolLabel;
   /**
@@ -416,7 +419,7 @@ interface CustomToolButtonFields {
   icon: ComponentType<IconProps>;
   /**
    * Whether the button is available now. In a read-only field the kit disables the buttons itself,
-   * so the check does not belong here.
+   * so you do not need to check it here.
    */
   can: (editor: Editor) => boolean;
   /** Present: a toggle button with `aria-pressed`. Absent: a one-off action. */
@@ -426,9 +429,9 @@ interface CustomToolButtonFields {
   /** The button is also placed in the Bubble menu. */
   selectionMenu?: boolean;
   /**
-   * A shortcut in the Toolbar notation: `mod`, `alt`, `shift` and a key, for example
-   * `["mod", "shift", "Y"]`. It is the only source: the kit binds the key itself and writes it in
-   * the hint, in `aria-keyshortcuts` and in the shortcuts reference.
+   * A shortcut in the Toolbar notation: `mod`, `alt`, `shift` and a key, for example `["mod",
+   * "shift", "Y"]`. This is the single source of truth: the kit binds the key itself and shows it
+   * in the hint, in `aria-keyshortcuts` and in the shortcuts reference.
    */
   shortcut?: readonly string[];
 }
@@ -442,17 +445,19 @@ interface CustomToolButtonFields {
 export type CustomToolButton = CustomToolButtonFields &
   (
     | {
-        /** The button's action: runs over the editor on a click and on a shortcut. */
+        /**
+         * The button's action: runs against the editor on click and when the shortcut is pressed.
+         */
         run: (editor: Editor) => void;
-        /** Not set together with `run`: a button has one action. */
+        /** Cannot be combined with `run`: a button has one action. */
         popover?: undefined;
       }
     | {
         /**
-         * The button's popover: opens on a click at the button, and on a shortcut at the caret.
+         * The button's popover: opens at the button on click, and at the caret on a shortcut.
          */
         popover: CustomToolPopover;
-        /** Not set together with `popover`: a button has one action. */
+        /** Cannot be combined with `popover`: a button has one action. */
         run?: undefined;
       }
   );

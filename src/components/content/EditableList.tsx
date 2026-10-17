@@ -47,7 +47,7 @@ export interface EditableListProps {
   items: EditableListItem[];
   /** The whole new order: the list of identifiers after the move. */
   onReorder: (ids: Key[]) => void;
-  /** Confirms an edit. Called only when the value has changed. */
+  /** Called when an edit is confirmed, and only if the value has changed. */
   onValueChange: (id: Key, value: string) => void;
   /**
    * The accessible name of the edit field. Required and checked by the compiler: without it,
@@ -94,15 +94,15 @@ export interface EditableListProps {
   /** A slot on the right: a status badge, the row's action buttons. */
   trailing?: (item: EditableListItem) => ReactNode;
   /**
-   * Called on a click on the row and on Space on the row. The component does not handle these
-   * itself.
+   * Called when the row is clicked or Space is pressed on it. The component does not handle these
+   * events itself.
    *
    * A single click is left to the consumer on purpose: Enter opens the edit, and if a click did
    * the same thing, the row would have no way to open its details.
    */
   onRowAction?: (id: Key) => void;
   /**
-   * Divides the rows with a hairline.
+   * Whether to divide the rows with a hairline.
    *
    * Without it, the rows are held together by spacing alone, and on a dense list they read as
    * one solid block: only the drag handles act as anchors. The line breaks up the rows without

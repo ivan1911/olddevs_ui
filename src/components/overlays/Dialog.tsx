@@ -15,7 +15,7 @@ const Portal = withoutToolbarAxis(DialogPrimitive.Portal);
 export interface DialogProps {
   /** Whether the dialog is shown. */
   open: boolean;
-  /** Close request: the close button, Escape, a click outside — all of them go here. */
+  /** Close request: the close button, Escape and a click outside all call this. */
   onClose: () => void;
   /** Dialog title. It also becomes the dialog's accessible name. */
   title: ReactNode;
@@ -41,7 +41,7 @@ export interface DialogProps {
   /** Icon to the left of the title. The consumer sets its color, because the consumer knows the dialog's tone. */
   icon?: ReactNode;
   /**
-   * Submission is in progress: the dialog cannot be closed by the close button, by Escape, or by a
+   * Submission is in progress: the dialog cannot be closed by the close button, by Escape or by a
    * click outside.
    *
    * One prop instead of three bans is deliberate: "the form is being submitted" is one state, not
@@ -59,12 +59,12 @@ export interface DialogProps {
   overlayStyle?: CSSProperties;
   /** Dynamic styles for the dialog itself. */
   contentStyle?: CSSProperties;
-  /** Whether to draw the standard header. Special dialogs keep their own. */
+  /** Whether to render the standard header. Special dialogs keep their own. */
   header?: boolean;
-  /** The dialog's layer. Individual app overlays sit above the regular ones. */
+  /** The dialog's layer. Some of the application's overlays sit above the regular ones. */
   zIndex?: string;
   /**
-   * `alertdialog` — for a dialog that interrupts the work and requires an answer: a delete
+   * Use `alertdialog` for a dialog that interrupts the work and requires an answer: a delete
    * confirmation, a warning about unsaved changes. Regular dialogs with a form stay `dialog`.
    *
    * No separate primitive is added for this: `@radix-ui/react-alert-dialog` differs from a regular
@@ -84,7 +84,7 @@ export interface DialogProps {
   initialFocusRef?: RefObject<HTMLElement | null>;
   /** An extra Escape handler for dialogs with their own internal state. */
   onEscapeKeyDown?: DialogPrimitive.DialogContentProps["onEscapeKeyDown"];
-  /** Accessible name of the close button. If not set, "Close" from the message catalog. */
+  /** Accessible name of the close button. Defaults to "Close" from the message catalog. */
   closeLabel?: string;
   /** Dialog content below the header. */
   children?: ReactNode;

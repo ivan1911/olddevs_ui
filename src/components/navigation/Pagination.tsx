@@ -7,11 +7,14 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { Button } from "../actions/Button.js";
 
 export interface PaginationProps {
-  /** Current page number, counted from 1. A value outside the range is clamped to it. */
+  /** Current page number, counted from 1. A value outside the range is clamped to the range. */
   page: number;
   /** Total number of pages. With a value of 1 or less, the component renders nothing. */
   pageCount: number;
-  /** Called with the number of the page the user moved to, by a number or by an arrow. */
+  /**
+   * Called with the number of the page the user navigated to, whether by clicking a page number or
+   * an arrow.
+   */
   onChange: (page: number) => void;
   /** How many pages to show on each side of the current page. */
   siblings?: number;

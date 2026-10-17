@@ -24,14 +24,14 @@ export interface DataTableProps<T extends { id: Key }> extends Omit<
   /** The whole state, usually from `useTableState`. */
   state: TableState;
   /**
-   * Called on any state change (sorting, selection, expansion) and receives a partial patch.
+   * Called on any state change (sorting, selection, expansion) with a partial patch.
    *
    * Changes are sent as a single patch: the invariants live in the hook, not here.
    */
   onStateChange: (patch: Partial<TableState>) => void;
-  /** Loading in progress. With data on screen, the data stays; without data, a skeleton. */
+  /** Loading in progress. If data is already on screen, it stays; otherwise a skeleton is shown. */
   loading?: boolean;
-  /** An error. If passed, it is shown instead of the body, always, even when there is data. */
+  /** An error. If passed, it is always shown instead of the body, even when there is data. */
   error?: ReactNode;
   /** The bar above the table, usually `TableToolbar`. */
   toolbar?: ReactNode;

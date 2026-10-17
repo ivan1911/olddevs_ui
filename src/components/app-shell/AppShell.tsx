@@ -57,7 +57,7 @@ export interface AppShellProps extends Omit<ComponentPropsWithoutRef<"div">, "ch
   /** The header, usually a `TopBar`. */
   header?: ReactNode;
   /**
-   * Application-level messages above the header, usually one or more `Banner`s.
+   * Application-level messages above the header, usually one or more `Banner` components.
    *
    * They sit ABOVE the header, in the content column: a service outage affects the whole
    * application, but the side navigation stays full height. Otherwise the shell would have to switch

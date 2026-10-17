@@ -107,8 +107,8 @@ export interface SideNavProps extends Omit<ComponentPropsWithoutRef<"nav">, "chi
   /** Footer slot: user, links, anything else. */
   footer?: ReactNode;
   /**
-   * Collapsed state in controlled mode. When it is set, the component holds no
-   * state of its own and follows the consumer.
+   * Collapsed state in controlled mode. When it is set, the component keeps no state of its own at
+   * all and defers to the consumer.
    */
   collapsed?: boolean;
   /** Initial collapsed state in uncontrolled mode. */
@@ -119,9 +119,8 @@ export interface SideNavProps extends Omit<ComponentPropsWithoutRef<"nav">, "chi
    */
   onCollapsedChange?: (collapsed: boolean) => void;
   /**
-   * Shows the built-in collapse button. `false`: the navigation collapses only from
-   * outside (for example from a button in the application header), or it does not
-   * collapse at all.
+   * Shows the built-in collapse button. `false`: the navigation can be collapsed only from outside
+   * the component (for example, by a button in the application header), or not at all.
    */
   collapsible?: boolean;
   /** Accessible name of the navigation. If not set, it is taken from the message catalog. */

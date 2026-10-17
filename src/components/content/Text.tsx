@@ -30,8 +30,8 @@ export interface TextProps extends Omit<ComponentPropsWithRef<"p">, "color"> {
   /** Font weight: `regular`, `medium` or `bold`. Defaults to `regular`. */
   weight?: "regular" | "medium" | "bold";
   /**
-   * Numeral width: `tabular` — equal-width digits, for values that tick, recalculate, or sit
-   * in a column.
+   * Numeral style: `tabular` — equal-width digits, for values that tick, recalculate or sit in a
+   * column.
    *
    * No default is set on purpose: tabular digits are wider than proportional ones and read
    * worse in running text. Turn the axis on where numbers change in place, not everywhere.

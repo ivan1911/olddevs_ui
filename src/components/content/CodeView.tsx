@@ -7,8 +7,8 @@ import { CopyButton } from "../actions/CopyButton.js";
 
 export interface CodeViewProps {
   /**
-   * The source as plain text, without markup. Required even when `children` is passed,
-   * and this is not redundancy:
+   * The source as plain text, without markup. Required even when `children` is passed, and that is
+   * not redundant:
    *
    * - the line count for the gutter is taken from it: a gutter that counted lines from
    *   the markup would drift out of sync with the content on the first highlighter that

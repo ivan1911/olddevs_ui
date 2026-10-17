@@ -35,7 +35,9 @@ export interface NotificationCenterProps extends Omit<ComponentPropsWithoutRef<"
    * the center would show "3" where there are three hundred unread.
    */
   unreadCount?: number;
-  /** Filters — a slot. Their content is domain-specific: the application knows the event types. */
+  /**
+   * Slot for the filters. Their content is domain-specific: the application knows the event types.
+   */
   filters?: ReactNode;
   /** Header actions — usually "mark all as read". */
   actions?: ReactNode;

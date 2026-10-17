@@ -27,14 +27,14 @@ export interface DrawerProps {
   side?: DrawerSide;
   /** Width for side drawers, height for the bottom one. */
   size?: "sm" | "md" | "lg";
-  /** Footer: action buttons. Pinned to the bottom and does not scroll away. */
+  /** Footer with action buttons. It stays pinned to the bottom and does not scroll away. */
   footer?: ReactNode;
   /** Accessible name of the close button. When not set, "Close" comes from the message catalog. */
   closeLabel?: string;
-  /** Classes for the drawer panel itself, for example its own width. */
+  /** Classes for the drawer panel itself, for example a custom width. */
   className?: string;
   /**
-   * Overlay layer of the drawer. Application-specific overlays sit above the usual ones.
+   * Overlay layer of the drawer. Some of the application's overlays sit above the regular ones.
    *
    * The prop is the same as on `Dialog`, with the same default: both are built on one
    * Radix primitive and both must be able to stack above someone else's overlay. Until

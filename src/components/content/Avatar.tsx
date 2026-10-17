@@ -8,7 +8,7 @@ import { Image } from "./Image.js";
 export interface AvatarProps extends Omit<ComponentPropsWithoutRef<"span">, "children"> {
   /** Name or login. The initials and the hue are derived from it. */
   name?: string;
-  /** `md` — in lists and headers, `lg` — in a profile card. */
+  /** `md` for lists and headers, `lg` for a profile card. */
   size?: Extract<Size, "md" | "lg">;
   /**
    * Photo URL. While it loads, a circle in the name's hue is shown; if there is no photo or it

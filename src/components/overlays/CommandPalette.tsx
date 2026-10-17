@@ -69,7 +69,9 @@ export interface CommandSection {
 export interface CommandPaletteProps {
   /** Whether the palette is shown. */
   open: boolean;
-  /** The palette asks to close: on Escape, on a click outside, and right after an item is selected. */
+  /**
+   * The palette asks to close: on Escape, on a click outside and right after an item is selected.
+   */
   onClose: () => void;
   /** Sections with items; each is shown under its own heading. Sections cannot be collapsed. */
   sections: CommandSection[];
@@ -91,12 +93,14 @@ export interface CommandPaletteProps {
   emptyBehaviour?: "all" | "hint";
   /** Hint line for an empty query when `emptyBehaviour="hint"`. If not set, the text comes from the message catalog. */
   emptyHint?: ReactNode;
-  /** Text shown when the query finds nothing. If not set, "Nothing found" from the message catalog. */
+  /**
+   * Text shown when the query finds nothing. Defaults to "Nothing found" from the message catalog.
+   */
   notFoundText?: string;
   /** Accessible name of the palette and its list; there is no visible heading. If not set, the string comes from the message catalog. */
   title?: string;
   /**
-   * The typed query, passed out on every change of the field.
+   * The typed query, reported on every change of the field.
    *
    * A notification, not control: the field stays with the component. This is enough to start
    * a search on the server, and it does not add a second contract to maintain.

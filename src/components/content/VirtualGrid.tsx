@@ -103,8 +103,8 @@ export interface VirtualGridProps {
   scroll?: "container" | "window";
   /**
    * CSS variable with the height of the sticky header, the same one that `SelectionBar` and
-   * `useStickyOffset` use. In `window` mode, a cell that focus moved to is not hidden under
-   * the header. Defaults to `--topbar-h`, which `TopBar` publishes.
+   * `useStickyOffset` use. In `window` mode, a cell that receives focus is not hidden under the
+   * header. Defaults to `--topbar-h`, which `TopBar` publishes.
    */
   offsetVar?: string;
   /**
@@ -129,9 +129,9 @@ export interface VirtualGridProps {
    */
   rangeSelection?: "replace" | "add";
   /**
-   * Drag-to-select by finger: hold a cell and drag over the neighboring ones. They are added
-   * as a range, and the grid scrolls itself at the edge of the viewport. Touch only, and only
-   * with `selectionMode="multiple"`.
+   * Drag-to-select by finger: hold a cell and drag over the neighboring ones. They are added as a
+   * range, and the grid scrolls on its own at the edge of the viewport. Touch only, and only with
+   * `selectionMode="multiple"`.
    *
    * The gesture is not the only way to the same result: the selection checkbox and Shift with
    * the arrows give it with a mouse and a keyboard.
@@ -142,8 +142,7 @@ export interface VirtualGridProps {
   /** Called with the new set of selected cells. */
   onSelectionChange?: (keys: Selection) => void;
   /**
-   * The action on a cell: click, Enter, or touch. It receives the cell's `id` and its
-   * rectangle.
+   * The action on a cell: click, Enter or touch. It receives the cell's `id` and its rectangle.
    *
    * This is "open", not "select": the cell is not selected, and `onSelectionChange` stays
    * silent. Together with `selectionMode`, both fire by the react-aria rules; see the
@@ -151,8 +150,8 @@ export interface VirtualGridProps {
    */
   onAction?: (id: Key, details: VirtualGridActionDetails) => void;
   /**
-   * Loading the next page: called when less than a viewport height is left before the end of
-   * the loaded cells. Without this prop, the grid loads nothing.
+   * Called to load the next page when less than a viewport height is left before the end of the
+   * loaded cells. Without this prop, the grid loads nothing.
    */
   onLoadMore?: () => void;
   /** Loading is in progress: an indicator is shown below the last row. */

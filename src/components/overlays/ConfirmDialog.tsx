@@ -19,7 +19,10 @@ export type ConfirmKind = "danger" | "warning" | "info";
 export interface ConfirmDialogProps {
   /** Whether the confirmation dialog is shown. */
   open: boolean;
-  /** Cancel: the "Cancel" button, the close button, Escape, and a click outside. Not called while `loading`. */
+  /**
+   * Cancel: the "Cancel" button, the close button, Escape and a click outside. Not called while
+   * `loading`.
+   */
   onClose: () => void;
   /** The user confirmed the action. The dialog does not close by itself: the consumer must close it. */
   onConfirm: () => void;
@@ -27,18 +30,18 @@ export interface ConfirmDialogProps {
   title: ReactNode;
   /** The question or an explanation of the consequences. Rendered as a paragraph and serves as the dialog's description for screen readers. */
   message: ReactNode;
-  /** Label of the confirm button. If not set, "Confirm" from the message catalog. */
+  /** Label of the confirm button. Defaults to "Confirm" from the message catalog. */
   confirmLabel?: string;
-  /** Label of the cancel button. If not set, "Cancel" from the message catalog. */
+  /** Label of the cancel button. Defaults to "Cancel" from the message catalog. */
   cancelLabel?: string;
   /**
-   * The nature of the question: `danger` and `warning` draw the confirm button with the outline
-   * variant in the danger tone, `info` with the solid accent. Defaults to `danger`.
+   * The kind of question: `danger` and `warning` render the confirm button with the outline variant
+   * in the danger tone, `info` with the solid variant in the accent tone. Defaults to `danger`.
    *
    * The tone of the icon to the left of the title also comes from `kind`: red, yellow or accent.
    */
   kind?: ConfirmKind;
-  /** The confirmed action is running: the buttons are locked, the dialog cannot be closed. */
+  /** The confirmed action is running: the buttons are disabled, the dialog cannot be closed. */
   loading?: boolean;
   /**
    * Confirmation by typing: the text the user must type for the confirm button to be enabled,

@@ -17,7 +17,7 @@ export interface AccordionProps extends Omit<
   "className" | "style" | "allowsMultipleExpanded"
 > {
   /**
-   * Expand several sections at once.
+   * Allow several sections to be expanded at once.
    *
    * The native `allowsMultipleExpanded` is removed from the type on purpose: `{...rest}`
    * is spread BEFORE the kit's default, so a prop passed from outside would silently lose,
@@ -36,7 +36,7 @@ export interface AccordionProps extends Omit<
 }
 
 export interface AccordionItemProps {
-  /** Section identifier: `expandedKeys` works through it. */
+  /** Section identifier: `expandedKeys` refers to sections by it. */
   id: string;
   /** Section title: the content of the disclosure button. Can be markup. */
   title: ReactNode;

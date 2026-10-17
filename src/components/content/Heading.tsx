@@ -31,8 +31,8 @@ export interface HeadingProps extends ComponentPropsWithRef<"h2"> {
    */
   as?: `h${1 | 2 | 3 | 4 | 5 | 6}`;
   /**
-   * Numeral style: `tabular` makes digits equal width. It is the same axis as on `Text`, and
-   * it is also the answer to a large number in a heading, such as a dashboard summary that
+   * Numeral style: `tabular` makes digits equal width. It is the same axis as on `Text`, and it
+   * also solves the case of a large number in a heading, such as a dashboard summary that
    * recalculates in place.
    */
   numeric?: Numeric;

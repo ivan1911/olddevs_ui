@@ -9,12 +9,15 @@ import { TONE_TOKENS, type Tone } from "../../lib/variants.js";
 export type LinkVariant = "inline" | "standalone" | "quiet";
 
 export interface LinkOwnProps {
-  /** Link style: `inline` (always underlined), `standalone` (underlined on hover) or `quiet` (text color, accent on hover). Default `inline`. */
+  /**
+   * Link style: `inline` (always underlined), `standalone` (underlined on hover) or `quiet` (text
+   * color, accent on hover). Defaults to `inline`.
+   */
   variant?: LinkVariant;
-  /** Link tone: `neutral`, `accent`, `success`, `warning` or `danger`. Default `accent`. */
+  /** Link tone: `neutral`, `accent`, `success`, `warning` or `danger`. Defaults to `accent`. */
   tone?: Tone;
   /**
-   * The link goes outside: an icon appears next to the label.
+   * The link is external: an icon appears next to the label.
    *
    * This prop does NOT set `target`. Whether an external link opens in a new tab is the screen's
    * decision, not the kit's: in one place it is convenient, in another it takes the user away from
@@ -23,7 +26,7 @@ export interface LinkOwnProps {
   external?: boolean;
   /** Link content. */
   children?: ReactNode;
-  /** Classes of the root element. */
+  /** Classes for the root element. */
   className?: string;
 }
 
@@ -36,7 +39,7 @@ export interface LinkOwnProps {
  */
 export type LinkProps<T extends ElementType = "a"> = LinkOwnProps & {
   /**
-   * The tag or component the link renders as: `next/link`, the router's `Link`, or a plain `a`.
+   * The tag or component the link renders as: `next/link`, the router's `Link` or a plain `a`.
    *
    * The package deliberately knows nothing about routing: the consumer has its own, and a dependency
    * on it would turn the design system into part of the application.

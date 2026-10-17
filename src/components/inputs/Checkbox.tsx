@@ -16,7 +16,7 @@ import { hasContent } from "../../lib/empty.js";
 import { STATE_BORDER, TONE_TOKENS, type Size, type Tone } from "../../lib/variants.js";
 
 export interface CheckboxProps {
-  /** Visible label to the right of the box. */
+  /** Visible label to the right of the checkbox. */
   children?: ReactNode;
   /**
    * Accessible name for a checkbox without a visible label: in a table header or
@@ -52,15 +52,14 @@ export interface CheckboxProps {
   /** Description under the label. */
   description?: ReactNode;
   /**
-   * Item icon. Decorative: it is excluded from the accessible name, which the label
-   * carries. In a card it sits at the start; in the regular view, between the box
-   * and the label.
+   * Item icon. Decorative: it is excluded from the accessible name, which the label carries. In a
+   * card it sits at the start; in the default view, between the checkbox and the label.
    */
   icon?: ReactNode;
-  /** Checkbox size: `sm` is a smaller box, `md` a larger one. Defaults to `md`. */
+  /** Checkbox size: `sm` is smaller, `md` larger. Defaults to `md`. */
   size?: Extract<Size, "sm" | "md">;
   /**
-   * react-aria slot: `selection` marks a checkbox of selection in a table or a list.
+   * React Aria slot: `selection` marks a selection checkbox in a table or a list.
    *
    * Through it the component takes its state from the collection context, including
    * "some but not all selected" for a checkbox in the header. Without the slot, such a
@@ -91,7 +90,7 @@ export interface CheckboxProps {
    * in the group's array.
    */
   value?: string;
-  /** Classes on the root element. */
+  /** Classes for the root element. */
   className?: string;
 }
 

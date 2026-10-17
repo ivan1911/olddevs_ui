@@ -27,8 +27,9 @@ interface GridBaseProps extends ComponentPropsWithoutRef<"div"> {
    */
   gap?: GridGap;
   /**
-   * The tag. Use `ul`/`ol` when the set is itself a list: a screen reader will then announce
-   * the number of items. The children are `<li>` elements, which is the consumer's job.
+   * The tag. Use `ul`/`ol` when the set is itself a list: a screen reader then announces the number
+   * of items. In that case the children must be `<li>` elements, and providing them is the
+   * consumer's job.
    */
   as?: "div" | "ul" | "ol";
 }
@@ -43,9 +44,9 @@ export type GridProps = GridBaseProps &
   (
     | {
         /**
-         * The number of columns. A number is a responsive ladder (see `COLUMNS_LADDER`);
-         * an object is an exact number per breakpoint: `{ base: 1, md: 3 }`.
-         * A constant number at every width is `{ base: 3 }`.
+         * The number of columns. A number is a responsive ladder (see `COLUMNS_LADDER`); an object
+         * is an exact number per breakpoint: `{ base: 1, md: 3 }`. For a constant number at every
+         * width, use `{ base: 3 }`.
          */
         columns?: Responsive<GridColumns>;
         minItemWidth?: never;

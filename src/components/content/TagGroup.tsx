@@ -67,11 +67,13 @@ export type TagGroupProps = TagGroupBaseProps &
         /** Visible group label; it is also the group's accessible name. */
         label: TagGroupLabel;
         /**
-         * Accessible name as a string, when there is no visible label. Not set together with `aria-labelledby`: two sources of one name.
+         * Accessible name as a string, when there is no visible label. Do not set it together with
+         * `aria-labelledby`: that gives the name two sources.
          */
         "aria-label"?: never;
         /**
-         * `id` of the element whose text serves as the accessible name, when there is no visible label. Not set together with `aria-label`: two sources of one name.
+         * `id` of the element whose text serves as the accessible name, when there is no visible
+         * label. Do not set it together with `aria-label`: that gives the name two sources.
          */
         "aria-labelledby"?: never;
       }
@@ -142,9 +144,9 @@ interface TagBaseProps {
    * react-aria's `RouterProvider`.
    */
   href?: string;
-  /** Where to open the link (`_blank`, etc.); works together with `href`. */
+  /** Where to open the link (`_blank`, etc.); applies together with `href`. */
   target?: string;
-  /** The `rel` attribute of the link; works together with `href`. */
+  /** The `rel` attribute of the link; applies together with `href`. */
   rel?: string;
 }
 
@@ -155,7 +157,7 @@ interface TagBaseProps {
 export type TagProps = TagBaseProps &
   (
     | {
-        /** Tag content: a text or a node label. */
+        /** Tag content: a label as text or as a node. */
         children: string | number;
         /**
          * Text name of the tag for the remove button and screen readers; defaults to `children`,
@@ -164,7 +166,7 @@ export type TagProps = TagBaseProps &
         textValue?: string;
       }
     | {
-        /** Tag content: a text or a node label. */
+        /** Tag content: a label as text or as a node. */
         children: ReactNode;
         /**
          * Text name of the tag for the remove button and screen readers; defaults to `children`,

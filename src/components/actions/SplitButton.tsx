@@ -38,7 +38,10 @@ export interface SplitButtonProps {
    * open menu in the middle of a submission offers a second way to do what is already being done.
    */
   loading?: boolean;
-  /** Appearance of both buttons: the axes of the vocabulary are the same as for `Button`. Without a value, `Button`'s default applies. */
+  /**
+   * Variant of both buttons: the same axis as in `Button`. Without a value, the default of `Button`
+   * applies.
+   */
   variant?: Variant;
   /** Tone of both buttons: the axis is the same as in `Button`. Without a value, `Button`'s default applies. */
   tone?: Tone;

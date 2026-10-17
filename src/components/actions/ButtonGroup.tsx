@@ -4,7 +4,7 @@ import type { ComponentPropsWithRef, ReactNode } from "react";
 import { cn } from "../../lib/cn.js";
 
 export interface ButtonGroupProps extends ComponentPropsWithRef<"div"> {
-  /** Buttons. Plain `Button`s — the group does not impose its own look on them. */
+  /** Buttons. Plain `Button` elements; the group does not impose its own look on them. */
   children?: ReactNode;
   /**
    * Direction of the row: `horizontal` — in a line, `vertical` — in a column.

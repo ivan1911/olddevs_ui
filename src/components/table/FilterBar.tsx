@@ -10,20 +10,20 @@ import type { TableFilter } from "../../lib/table-state.js";
 import { Button } from "../actions/Button.js";
 
 export interface FilterBarProps extends Omit<ComponentPropsWithoutRef<"div">, "onChange"> {
-  /** Applied filters; each is drawn as a removable tag. */
+  /** Applied filters; each is rendered as a removable tag. */
   filters: TableFilter[];
   /** Receives the new list of filters after one tag, or all of them at once, is removed. */
   onFiltersChange: (filters: TableFilter[]) => void;
   /**
-   * The tag label. If not set, "field: value"; for a range (when `to` is set), the words from the
-   * messages catalog: "field: 50–100", "field: from 50", "field: to 100".
+   * The tag label. If not set, it is "field: value"; for a range (when `to` is set), it uses the
+   * words from the message catalog: "field: 50–100", "field: from 50", "field: to 100".
    *
    * The label is **not** an identifier: removal goes by `filter.id`. Otherwise two filters on the
    * same field with labels that look the same would be indistinguishable, and a localized or
    * truncated label would be useless altogether.
    */
   renderLabel?: (filter: TableFilter) => string;
-  /** Accessible name of the set. If not set, taken from the messages catalog. */
+  /** Accessible name of the set. If not set, it is taken from the message catalog. */
   label?: string;
   /** The slot for adding a filter, usually `FilterBarAdd`. */
   children?: ReactNode;

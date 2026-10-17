@@ -35,17 +35,17 @@ export interface RichTextViewProps extends Omit<
    */
   surface?: RichTextSurface;
   /**
-   * The Document's custom Tools — the same array as for `RichTextEditor` and `sanitizeRichText`;
-   * a Configured Tool (`tool()`) is allowed in it. The View reads the Islands of custom Blocks
-   * from it (`blocks[name].island`): a Block that has one and is present in the Document comes
-   * alive as a client component, while the Block's server HTML is visible before loading and
-   * without JS. Also the formula options — `tool("mathematics", { macros })`, so that a macro
-   * works in the View the same way as in the Editor; the formulas themselves need not be named
-   * in `tools` for this, they are drawn for any Document with formulas. And the video `autoload`
-   * option: `tool("youtube", { autoload: false })` keeps the "Play" placeholder instead of the
-   * player, per service; without the option the player appears at once. The rest of the
-   * descriptor is not needed by the View. Without `tools`, and for a Document with no such
-   * Blocks and formulas, the View works as before and pulls in no client code.
+   * The Document's custom Tools — the same array as for `RichTextEditor` and `sanitizeRichText`; a
+   * Configured Tool (`tool()`) is allowed in it. The View reads the Islands of custom Blocks from
+   * it (`blocks[name].island`): a Block that has one and is present in the Document comes alive as
+   * a client component, while the Block's server HTML is visible before loading and without JS. The
+   * View also takes the formula options — `tool("mathematics", { macros })`, so that a macro works
+   * in the View the same way as in the Editor; the formulas themselves need not be named in `tools`
+   * for this, they are rendered for any Document with formulas. It also takes the video `autoload`
+   * option, per service: `tool("youtube", { autoload: false })` keeps the "Play" placeholder
+   * instead of the player; without the option the player appears at once. The rest of the
+   * descriptor is not needed by the View. Without `tools`, and for a Document with no such Blocks
+   * and formulas, the View works as before and pulls in no client code.
    */
   tools?: readonly ToolEntry[];
 }

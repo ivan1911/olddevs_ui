@@ -14,7 +14,10 @@ export interface TagInputProps {
   value: string[];
   /** Called when a tag is added or removed; receives the new array. */
   onChange: (value: string[]) => void;
-  /** The visible caption above the field; also serves as the accessible name when there is no `aria-label`. */
+  /**
+   * The visible label above the field; it also serves as the accessible name when there is no
+   * `aria-label`.
+   */
   label?: string;
   /** Placeholder in the empty input field. */
   placeholder?: string;

@@ -32,9 +32,9 @@ export interface ShortcutGroup {
 export interface ShortcutsHelpProps {
   /** Whether the dialog with the summary is open. */
   open: boolean;
-  /** The dialog asks to change state: the close button, Escape and a click outside give `false`. */
+  /** The dialog asks to change state: the close button, Escape and a click outside pass `false`. */
   onOpenChange: (open: boolean) => void;
-  /** Dialog title. If not set, "Keyboard shortcuts" from the messages catalog. */
+  /** Dialog title. Defaults to "Keyboard shortcuts" from the message catalog. */
   title?: ReactNode;
   /** The shortcut groups, already assembled: the application knows which action is bound to which key. */
   groups: ShortcutGroup[];

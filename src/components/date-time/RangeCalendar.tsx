@@ -30,9 +30,9 @@ export interface RangeCalendarProps extends Omit<
 > {
   /**
    * Selected range: a `{ start, end }` pair of `@internationalized/date` objects or ISO strings
-   * `YYYY-MM-DD`, the latter the same as `DateRange` of `DateRangePicker`.
-   * `null` is a controlled empty value. If either bound cannot be parsed, the range counts as
-   * empty: a range with only one end is never treated as selected.
+   * `YYYY-MM-DD` (the same `DateRange` form that `DateRangePicker` uses). `null` is a controlled
+   * empty value. If either bound cannot be parsed, the range counts as empty: a range with only one
+   * end is never treated as selected.
    */
   value?: DateRangeInput | null;
   /** Initial range of an uncontrolled calendar; the same two forms as `value`. */

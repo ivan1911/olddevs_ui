@@ -45,7 +45,7 @@ export interface FileDropzoneProps {
   hint?: ReactNode;
   /** Disables the area: files are not accepted either by dragging or by the button. */
   disabled?: boolean;
-  /** Classes on the root element. */
+  /** Classes for the root element. */
   className?: string;
 }
 

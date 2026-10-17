@@ -124,9 +124,15 @@ export interface ButtonLookOptions {
   tone?: Tone;
   /** Button size: `xs`, `sm`, `md` or `lg`. Defaults to `md`. */
   size?: ButtonSize;
-  /** Icon only: a square without horizontal padding, and no caption is shown. An accessible name is required. */
+  /**
+   * Icon only: a square without horizontal padding, and no label is shown. An accessible name is
+   * required.
+   */
   iconOnly?: boolean;
-  /** Pressed state: the button is drawn as the `soft` of its tone with a shadow, whatever `variant` is. */
+  /**
+   * Pressed state: the button renders as the `soft` variant of its tone with a shadow, regardless
+   * of `variant`.
+   */
   selected?: boolean;
 }
 

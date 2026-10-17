@@ -19,7 +19,7 @@ export interface TextControlProps extends Omit<ComponentPropsWithoutRef<"input">
   /** `input` — a single-line field, `textarea` — a multi-line one. */
   as?: "input" | "textarea";
   /**
-   * Size step: `md` — 42 pixels, `sm` — 36.
+   * Height step: `md` is 42 px, `sm` is 36.
    *
    * Thirty-six is the height of `Button size="md"` and of the `Select` trigger pill: in a single row of
    * a toolbar, a field at this step stuck out of the row on its own. Only the vertical padding changes;
@@ -31,9 +31,9 @@ export interface TextControlProps extends Omit<ComponentPropsWithoutRef<"input">
   size?: "sm" | "md";
   /** Height in rows. Only meaningful with `as="textarea"`. */
   rows?: number;
-  /** Classes for the framed shell: width, corner radius, inner padding. */
+  /** Classes for the framed wrapper: width, corner radius, inner padding. */
   shellClassName?: string;
-  /** Icon on the left inside the frame: a magnifier for search, a unit for a number. */
+  /** Icon on the left inside the frame: a magnifying glass for search, a unit for a number. */
   icon?: ReactNode;
   /** Element on the right inside the frame: a clear button, a character counter. */
   trailing?: ReactNode;

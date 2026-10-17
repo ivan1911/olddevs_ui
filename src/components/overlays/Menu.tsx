@@ -252,7 +252,7 @@ export interface MenuSectionProps<T extends object = object> extends Omit<
   /** Section label. Without it the section stays a plain grouping. */
   label?: ReactNode;
   /**
-   * Section items — static markup only.
+   * Section items. Pass static markup only.
    *
    * In react-aria `children` can also be a function: that is how dynamic collections are described,
    * where items arrive as an array. The kit does not pass this form through — it is built entirely on

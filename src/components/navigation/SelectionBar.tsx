@@ -16,8 +16,8 @@ export interface SelectionBarProps {
    */
   countLabel?: (count: number) => ReactNode;
   /**
-   * Called when the user clears the selection. The button sits to the left of the count and is
-   * drawn as a "×" icon. Without a handler there is no button.
+   * Called when the user clears the selection. The button sits to the left of the count and renders
+   * as a "×" icon. Without a handler there is no button.
    */
   onClear?: () => void;
   /** Actions on the selection, usually `Button size="sm"`. */

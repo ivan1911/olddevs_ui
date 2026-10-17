@@ -14,7 +14,10 @@ export interface DateTimePickerProps {
   time?: string | null;
   /** Called with the ISO date `YYYY-MM-DD` when a day is selected in the calendar. */
   onDateChange: (date: string) => void;
-  /** Called with the time `HH:MM` when the input is finished or a slot is selected from the list. */
+  /**
+   * Called with the time `HH:MM` when the user finishes typing or selects a time slot from the
+   * list.
+   */
   onTimeChange: (time: string) => void;
   /** Disables both fields: the date and the time. */
   disabled?: boolean;

@@ -31,7 +31,9 @@ export interface RadioGroupProps {
   value: string | null;
   /** Called when an option is selected; receives its `value`. */
   onChange: (value: string) => void;
-  /** The question the set answers. Required: buttons without a question are unreadable. */
+  /**
+   * The question the set answers. Required: buttons without a question are hard to make sense of.
+   */
   label: ReactNode;
   /** Hint under the label of the set. */
   description?: ReactNode;
@@ -44,7 +46,7 @@ export interface RadioGroupProps {
   orientation?: "vertical" | "horizontal";
   /** Disables the whole set. Overrides the `disabled` of individual buttons. */
   disabled?: boolean;
-  /** Size of the circles and labels: `sm` or `md`. Defaults to `md`. */
+  /** Size of the radio buttons and labels: `sm` or `md`. Defaults to `md`. */
   size?: Extract<Size, "sm" | "md">;
   /**
    * Color of the selected button (in the card view, the border of the selected card).
@@ -52,7 +54,7 @@ export interface RadioGroupProps {
    */
   tone?: Tone;
   /**
-   * Appearance of the set: `default` shows rows with a circle, `card` shows cards.
+   * Appearance of the set: `default` shows rows with a radio button, `card` shows cards.
    *
    * Appearance of the set: `default` shows rows with a circle, `card` shows cards with a label,
    * a description and an optional icon. It lives on the group and reaches the options through
@@ -74,9 +76,9 @@ export interface RadioProps {
   /** Hint under the option's label. */
   description?: ReactNode;
   /**
-   * Icon of the option. Decorative: it is excluded from the accessible name, which the
-   * label carries. In a card it sits at the start of the card; in the default view, between
-   * the circle and the label.
+   * Icon of the option. Decorative: it is excluded from the accessible name, which the label
+   * carries. In a card it sits at the start of the card; in the default view, between the radio
+   * button and the label.
    */
   icon?: ReactNode;
   /** Disables one option; the others keep working. */

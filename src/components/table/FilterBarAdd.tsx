@@ -63,7 +63,7 @@ export interface FilterBarAddProps extends Omit<
   ComponentPropsWithoutRef<"div">,
   "onChange" | "children"
 > {
-  /** Fields a filter can be added by, each with its own values. */
+  /** Fields a filter can be added for, each with its own values. */
   fields: FilterField[];
   /** Filters already applied: their values are not offered again. */
   filters: TableFilter[];

@@ -33,7 +33,10 @@ type RadixContentProps = ComponentPropsWithoutRef<typeof PopoverPrimitive.Conten
  * (`RadixContentProps[...]`): a consumer who passes Radix props gets no new compile error.
  */
 export interface PopoverContentProps extends RadixContentProps {
-  /** Render the panel's role on your element instead of the default `div`: props and `ref` are merged with its own. Defaults to `false`. */
+  /**
+   * Delegate the panel role to your own element instead of the default `div`: props and `ref` are
+   * merged with the element's own. Defaults to `false`.
+   */
   asChild?: RadixContentProps["asChild"];
   /** Side of the trigger the panel opens on: `top`, `right`, `bottom` or `left`. Defaults to `bottom`; if there is no room, the panel flips to the opposite side. */
   side?: RadixContentProps["side"];
@@ -43,15 +46,24 @@ export interface PopoverContentProps extends RadixContentProps {
   align?: RadixContentProps["align"];
   /** Offset of the panel along the alignment axis, in pixels. Defaults to 0. */
   alignOffset?: RadixContentProps["alignOffset"];
-  /** Minimum distance from the arrow to the panel's edge, in pixels. The kit does not draw an arrow: this matters only if you insert one yourself. Defaults to 0. */
+  /**
+   * Minimum distance from the arrow to the panel's edge, in pixels. The kit does not render an
+   * arrow: this matters only if you insert one yourself. Defaults to 0.
+   */
   arrowPadding?: RadixContentProps["arrowPadding"];
-  /** Shift and flip the panel so that it stays inside the window edge. Defaults to `true`. */
+  /**
+   * Shift and flip the panel so that it does not extend past the edge of the window. Defaults to
+   * `true`.
+   */
   avoidCollisions?: RadixContentProps["avoidCollisions"];
-  /** Element or list of elements the panel may not extend beyond. Defaults to the browser window. */
+  /** An element or list of elements that the panel stays within. Defaults to the browser window. */
   collisionBoundary?: RadixContentProps["collisionBoundary"];
   /** Padding from the collision boundary, in pixels: a number for all sides or an object per side. Defaults to 0. */
   collisionPadding?: RadixContentProps["collisionPadding"];
-  /** Keep the panel in view while the trigger is scrolled past an edge: `partial` while at least an edge of the trigger is visible, `always` always. Defaults to `partial`. */
+  /**
+   * Keep the panel in view while the trigger is scrolled past an edge: `partial` while at least the
+   * edge of the trigger is still visible, `always` at all times. Defaults to `partial`.
+   */
   sticky?: RadixContentProps["sticky"];
   /** Hide the panel when the trigger has fully left the visible area. Defaults to `false`. */
   hideWhenDetached?: RadixContentProps["hideWhenDetached"];

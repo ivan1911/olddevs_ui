@@ -22,8 +22,8 @@ export interface BadgeProps extends Omit<ComponentPropsWithRef<"span">, "childre
   /** Upper limit for the number: anything above it is shown as "99+". */
   max?: number;
   /**
-   * Place the badge over an icon: in the top-right corner of a parent that has `position` set
-   * (usually `relative`).
+   * Whether to place the badge over an icon: in the top-right corner of a parent that has
+   * `position` set (usually `relative`).
    */
   overlay?: boolean;
 }

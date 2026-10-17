@@ -63,8 +63,8 @@ export interface ButtonProps extends Omit<ComponentPropsWithoutRef<"button">, "c
    */
   selected?: boolean;
   /**
-   * Render the button as its child element instead of its own `<button>`: a link, `next/link`,
-   * the trigger of a foreign component. Props and `ref` are merged into the child.
+   * Render the button as its child element instead of its own `<button>`: a link, `next/link`, the
+   * trigger of another component. Props and `ref` are merged into the child.
    *
    * It is needed where an element looks like a button but is not one: "Create campaign" leads
    * to another screen, and it is a link — it can be opened in a new tab with the middle mouse
