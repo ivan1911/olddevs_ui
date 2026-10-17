@@ -7,7 +7,7 @@
 [![npm version](https://img.shields.io/npm/v/@olddevs/ui)](https://www.npmjs.com/package/@olddevs/ui)
 [![license](https://img.shields.io/npm/l/@olddevs/ui)](LICENSE)
 
-Olddevs UI — дизайн-система для React: токены, темы и доступные компоненты для админок и других продуктов с большим объёмом данных. Поведение берётся из [React Aria Components](https://react-aria.adobe.com/) и [Radix UI](https://www.radix-ui.com/), оформление — на [Tailwind CSS](https://tailwindcss.com/) 4. Классы компонентов компилирует Tailwind вашего приложения.
+Olddevs UI — дизайн-система для React: токены, темы и 122 доступных компонента для админок и других продуктов с большим объёмом данных. Поведение берётся из [React Aria Components](https://react-aria.adobe.com/) и [Radix UI](https://www.radix-ui.com/), оформление — на [Tailwind CSS](https://tailwindcss.com/) 4. Классы компонентов компилирует Tailwind вашего приложения.
 
 Документация: **[ui.olddevs.ru](https://ui.olddevs.ru)** · Витрина: **[Storybook](https://ivan1911.github.io/olddevs_ui/)**
 
