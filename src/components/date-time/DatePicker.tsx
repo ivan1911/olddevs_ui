@@ -11,43 +11,46 @@ import { useFieldDescribedBy } from "../../hooks/useFieldDescription.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../overlays/Popover.js";
 
 export interface DatePickerProps {
-  /** Дата в ISO-формате `ГГГГ-ММ-ДД` либо пусто. */
+  /** Date in ISO format `YYYY-MM-DD`, or empty. */
   value?: string | null;
-  /** Вызывается с выбранной датой в виде ISO-строки `ГГГГ-ММ-ДД`, как `value`. Компонент не знает про `Date` и таймзоны. */
+  /**
+   * Called with the selected date as an ISO string `YYYY-MM-DD`, the same form as `value`.
+   * The component knows nothing about `Date` or time zones.
+   */
   onChange: (date: string) => void;
-  /** Текст триггера, пока дата не выбрана; по умолчанию стандартная подпись кита. */
+  /** Trigger text until a date is selected; defaults to the kit's standard label. */
   placeholder?: string;
-  /** Блокирует кнопку-триггер: календарь не открывается. */
+  /** Disables the trigger button: the calendar does not open. */
   disabled?: boolean;
   /**
-   * Самая ранняя доступная дата.
+   * Earliest available date.
    *
-   * Ограничения показываются в календаре, а не проверяются после выбора.
-   * ISO-строка `ГГГГ-ММ-ДД`, как и `value`; объект `@internationalized/date`
-   * тоже принимается.
+   * The limits are shown in the calendar rather than checked after a date is selected.
+   * An ISO string `YYYY-MM-DD`, as with `value`; a `@internationalized/date` object
+   * is accepted too.
    */
   minValue?: DateInput;
-  /** Самая поздняя доступная дата; показывается в календаре так же, как `minValue`. */
+  /** Latest available date; shown in the calendar the same way as `minValue`. */
   maxValue?: DateInput;
-  /** Отмечает конкретные дни недоступными (праздники, занятые даты): их нельзя выбрать. */
+  /** Marks specific days as unavailable (holidays, booked dates): they cannot be selected. */
   isDateUnavailable?: (date: DateValue) => boolean;
-  /** Локаль подписи даты и календаря; по умолчанию локаль `UiProvider`. */
+  /** Locale of the date label and the calendar; defaults to the `UiProvider` locale. */
   locale?: string;
-  /** Классы на кнопку-триггер. */
+  /** Classes for the trigger button. */
   triggerClassName?: string;
   /**
-   * Своё описание триггера. Сливается с описанием `FormField`, а не заменяет
-   * его: подсказка формы и пояснение потребителя обязаны звучать обе.
+   * The trigger's own description. It is merged with the `FormField` description rather than
+   * replacing it: the form's hint and the consumer's note must both be announced.
    */
   "aria-describedby"?: string;
 }
 
 /**
- * Дата с подчёркнутым триггером — компактный вид для строки формы.
+ * Date with an underlined trigger — a compact look for a form row.
  *
- * Значение ходит ISO-строкой, а не объектом `@internationalized/date`:
- * потребитель хранит дату в URL и шлёт в API, и заставлять его конвертировать
- * туда-обратно значит переложить на него внутреннюю кухню календаря.
+ * The value travels as an ISO string, not as an `@internationalized/date` object: the consumer
+ * keeps the date in the URL and sends it to the API, and making it convert back and forth
+ * would hand it the calendar's internal plumbing.
  */
 export function DatePicker({
   value,
@@ -65,11 +68,11 @@ export function DatePicker({
   const uiLocale = useUiLocale();
   const effectiveLocale = locale ?? uiLocale;
   /**
-   * Описание поля из `FormField` плюс своё, если потребитель его передал.
+   * The field description from `FormField`, plus the consumer's own if it passed one.
    *
-   * Тот же приём, что у `TextControl` и `NumberInput`: значения СЛИВАЮТСЯ, а
-   * не заменяют друг друга. Вне `FormField` контекст пуст, и разметка та же,
-   * что была до появления описаний.
+   * The same approach as `TextControl` and `NumberInput`: the values are MERGED, not replacing
+   * each other. Outside `FormField` the context is empty, and the markup is the same as it was
+   * before descriptions existed.
    */
   const fieldDescribedBy = useFieldDescribedBy();
   const describedBy = [ariaDescribedBy, fieldDescribedBy].filter(Boolean).join(" ") || undefined;
@@ -113,27 +116,27 @@ export function DatePicker({
 }
 
 /**
- * Дата разбирается по частям, а не через `new Date(iso)`.
+ * The date is parsed piece by piece, not through `new Date(iso)`.
  *
- * `new Date("2026-03-05")` — это полночь **UTC**, и восточнее Гринвича строка
- * превращается в предыдущий день. Компонент оперирует календарной датой без
- * времени, поэтому и собирать её надо в местном полудне календаря.
+ * `new Date("2026-03-05")` is midnight **UTC**, and east of Greenwich the string turns into
+ * the previous day. The component works with a calendar date without time, so it has to be
+ * assembled at the calendar's local noon.
  *
- * НО СОБИРАТЬ МОЖНО ТОЛЬКО РАЗОБРАННОЕ. Сборка по частям ничего не проверяет, и
- * до волны 26 функция отвечала на мусор правдоподобной ложью: `2026-02-29`
- * (год не високосный) молча становился `Mar 01, 2026`, `2026-09` — `Sep 01,
- * 2026`, а `ерунда` — строкой `Invalid Date` прямо на кнопке. Значение
- * приходит из адреса, поэтому сначала строгий разбор, и только потом сборка.
+ * BUT ONLY PARSED VALUES MAY BE ASSEMBLED. Assembling piece by piece checks nothing, and before
+ * wave 26 the function answered garbage input with plausible-looking lies: `2026-02-29` (not a
+ * leap year) silently became `Mar 01, 2026`, `2026-09` became `Sep 01, 2026`, and `"nonsense"`
+ * became the string `Invalid Date` right on the button. The value comes from the URL, so a
+ * strict parse comes first, and only then the assembly.
  */
 export function formatDate(isoDate: string | null | undefined, locale = "en-US"): ReactNode {
   const parsed = parseDateOrNull(isoDate);
   if (!parsed) return null;
 
   const date = new Date(parsed.year, parsed.month - 1, parsed.day);
-  // Годы 0–99 конструктор `Date` отображает в 1900+y — легаси-правило, живое до
-  // сих пор. `parseDate` такие годы принимает (`0026-03-05` — законная строка из
-  // адреса), и без этой строки кнопка показывала бы «Mar 05, 1926»: та же
-  // правдоподобная ложь, ради устранения которой разбор и сделан строгим.
+  // Years 0–99 are mapped by the `Date` constructor to 1900+y — a legacy rule that is still in
+  // effect. `parseDate` accepts such years (`0026-03-05` is a valid string from the URL), and
+  // without this line the button would show "Mar 05, 1926": the same plausible lie that the
+  // strict parse exists to eliminate.
   date.setFullYear(parsed.year);
   return date.toLocaleDateString(locale, {
     day: "2-digit",
