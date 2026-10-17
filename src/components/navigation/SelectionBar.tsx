@@ -12,7 +12,7 @@ export interface SelectionBarProps {
   count: number;
   /**
    * Count label. The default is "Selected N". Supply your own where the count is in domain units
-   * ("12 wallpapers selected"): the word has to agree with the number.
+   * ("12 photos selected"): the word has to agree with the number.
    */
   countLabel?: (count: number) => ReactNode;
   /**

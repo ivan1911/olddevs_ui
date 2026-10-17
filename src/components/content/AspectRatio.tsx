@@ -15,7 +15,7 @@ export interface AspectRatioProps extends ComponentPropsWithoutRef<"div"> {
 }
 
 /**
- * A box with a fixed aspect ratio, for wallpaper previews, avatars and thumbnails.
+ * A box with a fixed aspect ratio, for image previews, avatars and thumbnails.
  *
  * Built on the native `aspect-ratio`, not on the `padding-bottom: 56.25%` trick: that trick
  * requires absolutely positioned content, which dictates the layout inside the box and breaks

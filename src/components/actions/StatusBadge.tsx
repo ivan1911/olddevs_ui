@@ -27,7 +27,7 @@ const SIZES = {
  *
  * The previous version on the frontend kept inside it a dictionary of 11 domain statuses together
  * with Russian labels — `in_progress` → "In progress", `duplicate` → "Duplicate". The package
- * cannot know about domain statuses: it has nothing to do with wallpapers or publications. So only
+ * cannot know about domain statuses: it has nothing to do with images or publications. So only
  * the shape remains here, and the mapping "status → tone + label" lives on the frontend, next to
  * the domain.
  *

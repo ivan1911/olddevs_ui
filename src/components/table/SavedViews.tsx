@@ -80,7 +80,7 @@ export interface SavedViewsProps<T = unknown> {
  * WHAT STAYS WITH THE CONSUMER besides storage: creating, renaming and deleting a view, the domain
  * keys inside the snapshot, and the rules for parsing them. Nothing domain-specific from the
  * screen that was read came into the kit: neither the mapping of sort names to backend fields,
- * nor the wallpaper filter keys, nor the server's time zone.
+ * nor the product filter keys, nor the server's time zone.
  */
 export function SavedViews<T = unknown>({
   views,

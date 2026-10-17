@@ -85,7 +85,7 @@ export interface SearchControlProps extends Omit<
  *
  * IT SITS ON `TextControl`, NOT ON ITS OWN SHELL, and this is the main decision here.
  * The front end had five hand-written fields of this kind (the category-change dialog, the
- * collections dialog, the wallpaper picker, the library filter, the global search in the header),
+ * collections dialog, the image picker, the library filter, the global search in the header),
  * and all five painted focus in `--tg`, while regular fields via `TextControl` used
  * `--accent-strong`. So search across the whole app was focused differently from the other fields,
  * and this could not be spotted from the code: the divergence is visible only if you open five

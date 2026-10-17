@@ -27,7 +27,7 @@ export interface DescriptionListProps {
 }
 
 /**
- * A "property — value" list: wallpaper metadata, campaign parameters.
+ * A "property — value" list: file metadata, campaign parameters.
  *
  * The markup is a `dl` with `dt`/`dd` pairs, not a table and not two columns of divs: the
  * link between a label and its value is semantic here, and a screen reader reads the pair

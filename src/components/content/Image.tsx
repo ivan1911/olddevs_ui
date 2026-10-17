@@ -23,7 +23,7 @@ export interface ImageProps extends Omit<
   /**
    * Alternative text, required.
    *
-   * An empty string is a valid value and means "the image is decorative": a wallpaper tile next to
+   * An empty string is a valid value and means "the image is decorative": a photo tile next to
    * its name, a category preview next to the category name. The requirement is about the choice, not
    * the text: `alt=""` is a decision, while a missing attribute is an oversight, and in that case a
    * screen reader reads the file name aloud.
@@ -128,7 +128,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
 ) {
   // The state is tied to the address: when it changes, everything starts over.
   // Without a reset, a tile that failed once would keep the fallback forever, including after
-  // "Try again" and after pagination that reuses the same node for another wallpaper.
+  // "Try again" and after pagination that reuses the same node for another image.
   const [state, setState] = useState<"loading" | "loaded" | "failed">(src ? "loading" : "failed");
   const imgRef = useRef<HTMLImageElement | null>(null);
 
