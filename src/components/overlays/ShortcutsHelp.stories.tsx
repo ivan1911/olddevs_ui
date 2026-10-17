@@ -43,7 +43,7 @@ const GROUPS: ShortcutGroup[] = [
   },
 ];
 
-/** Открытие кнопкой: после закрытия фокус возвращается на неё. */
+/** Opened by a button: after closing, focus returns to it. */
 export const Playground: Story = {
   args: { open: false, onOpenChange: () => {}, groups: GROUPS },
   render: (args: ShortcutsHelpProps) => {
@@ -57,20 +57,20 @@ export const Playground: Story = {
   },
 };
 
-/** Окно открыто сразу: так его видно без взаимодействия. */
+/** The window is open from the start, so it can be seen without any interaction. */
 export const Open: Story = {
   args: { open: true, onOpenChange: () => {}, groups: GROUPS },
 };
 
 /**
- * Рецепт: открытие по «?». Кит глобальных клавиш не вешает — обработчик живёт у
- * потребителя, и вот что в нём обязательно:
+ * Recipe: open on "?". The kit does not bind global keys: the handler lives with the consumer,
+ * and it must do the following:
  *
- * - знак, а не положение клавиши (`event.key`): «?» стоит на разных клавишах
- *   (Shift+/ на латинской раскладке, Shift+7 на русской), а пользователь нажимает
- *   именно знак. Для букв («G, H») — наоборот, положение (`event.code`);
- * - молчать в полях ввода — иначе вопросительный знак нельзя напечатать;
- * - не перехватывать сочетания с Ctrl, Alt и Meta, автоповтор и ввод через IME.
+ * - match the character, not the key position (`event.key`): "?" sits on different keys
+ *   (Shift+/ on a Latin layout, Shift+7 on a Russian one), and the user presses the character
+ *   itself. For letters ("G, H") it is the opposite: the position (`event.code`);
+ * - stay silent in input fields, otherwise a question mark cannot be typed;
+ * - do not intercept Ctrl, Alt, and Meta combinations, auto-repeat, or IME input.
  */
 export const OpenWithQuestionMark: Story = {
   args: { open: false, onOpenChange: () => {}, groups: GROUPS },
@@ -107,12 +107,12 @@ export const OpenWithQuestionMark: Story = {
   },
 };
 
-/** Заголовок из пропа вместо умолчания каталога. */
+/** A title from the prop instead of the catalog default. */
 export const CustomTitle: Story = {
   args: { open: true, onOpenChange: () => {}, title: "Cheat sheet", groups: GROUPS },
 };
 
-/** Длинный свод: шапка с крестиком остаётся на месте, прокручивается список. */
+/** A long list of shortcuts: the header with the close button stays in place, and the list scrolls. */
 export const LongList: Story = {
   args: {
     open: true,

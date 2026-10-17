@@ -30,10 +30,10 @@ export const Playground: Story = {
 };
 
 /**
- * Матрица сторон. Тултип живёт в портале и появляется по наведению, поэтому
- * на снимке его не видно — матрица показывает якоря и сам факт, что обёртка
- * не ломает вёрстку. Появление и позиционирование проверяются вручную
- * в витрине: детерминированного снимка у наведения курсора не бывает.
+ * A matrix of sides. The tooltip lives in a portal and appears on hover, so it is not visible
+ * in the snapshot: the matrix shows the anchors and the fact that the wrapper does not break the
+ * layout. Showing and positioning are checked by hand in the showcase: a hover never produces
+ * a deterministic snapshot.
  */
 export const Matrix: Story = {
   args: { children: <Button variant="outline">Anchor</Button> },
@@ -55,20 +55,19 @@ export const Matrix: Story = {
 };
 
 /**
- * Подсказка внутри модального окна.
+ * A tooltip inside a modal window.
  *
- * Здесь проверяется слой: при `z-[60]` подсказка уходила под подложку
- * (`z-90`) — в разметке она есть, на экране её нет. Наводить нужно вручную,
- * снимка у наведения не бывает; смотреть надо на то, что подсказка
- * появляется ПОВЕРХ окна, а не за ним.
+ * This checks the layer: with `z-[60]` the tooltip went under the scrim (`z-90`), so it is in the
+ * markup but not on screen. Hover it by hand, since a hover has no snapshot; check that the tooltip
+ * appears ABOVE the window, not behind it.
  */
 export const UnderOverlay: Story = {
   args: { children: <Button variant="soft">Hover here</Button> },
   parameters: { layout: "fullscreen" },
   render: () => (
-    // Обёртка с высотой обязательна: подложка позиционируется `fixed`, и без
-    // неё корень витрины остаётся коробкой нулевой высоты — то есть «скрытым»
-    // для Playwright, и прогон падает по таймауту вместо проверки.
+    // A wrapper with a height is required: the scrim is positioned `fixed`, and without
+    // it the root of the showcase stays a box of zero height, that is, "hidden"
+    // to Playwright, and the run fails by timeout instead of checking anything.
     <div className="h-[320px]">
       <ModalOverlay
         onClose={() => {}}

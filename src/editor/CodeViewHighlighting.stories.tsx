@@ -3,15 +3,15 @@ import { CodeView } from "../components/content/CodeView.js";
 import { highlightCodeNodes } from "./highlight-entry.js";
 
 /*
-  Подсветка кита для `CodeView` (ADR-0052) — отдельным файлом в
-  `src/editor/`, а не в историях `CodeView`: хелпер живёт в подпути
-  `@olddevs/ui/editor/highlight`, и ворота `tests/editor-entry.test.ts` не
-  пускают импорт из `editor/` ни в один модуль вне него.
+  The kit's highlighting for `CodeView` (ADR-0052) lives in a separate file in
+  `src/editor/`, not in the `CodeView` stories: the helper lives in the subpath
+  `@olddevs/ui/editor/highlight`, and the gate `tests/editor-entry.test.ts` does not
+  let imports from `editor/` reach any module outside it.
 */
 const meta = {
   title: "Content/CodeView highlighting",
   component: CodeView,
-  // Периферия, как и сам `CodeView` (ADR-0038): снимков нет, axe — во всех темах.
+  // Periphery, like `CodeView` itself (ADR-0038): no snapshots, and axe runs in all themes.
   tags: ["periphery"],
   parameters: { layout: "padded" },
   args: { code: "" },
@@ -21,9 +21,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /*
-  Подсветка кита (ADR-0052): по одному образцу на каждый язык
-  Редактора. В образцах есть ключевые слова, строки, числа, комментарии и
-  теги — чтобы axe мерил контраст каждой роли токена во всех трёх темах.
+  Kit highlighting (ADR-0052): one sample for each language
+  of the Editor. The samples include keywords, strings, numbers, comments, and
+  tags, so that axe measures the contrast of every token role in all three themes.
 */
 const SAMPLES = [
   [
@@ -69,10 +69,10 @@ const SAMPLES = [
 ] as const;
 
 /**
- * Подсветка кита: `highlightCodeNodes` из `@olddevs/ui/editor/highlight` в
- * `children`. Тема та же, что у блока кода в Редакторе и `RichTextView`, —
- * GitHub Light в `light`, GitHub Dark в `dark` и `dim`; фон блока берётся у
- * темы. `code` по-прежнему строкой: из него копирование.
+ * Kit highlighting: `highlightCodeNodes` from `@olddevs/ui/editor/highlight` in
+ * `children`. The theme is the same as for a code Block in the Editor and in `RichTextView`:
+ * GitHub Light in `light`, GitHub Dark in `dark` and `dim`; the Block's background comes from the
+ * theme. `code` is still a string, because copying works from it.
  */
 export const KitHighlighting: Story = {
   render: () => (
@@ -91,9 +91,9 @@ const LONG_JS = `await fetch("https://api.example.com/v1/orders", { method: "POS
 const RUST = 'fn main() {\n    println!("hi");\n}';
 
 /**
- * Подсветка кита с переносом длинных строк и язык, которого кит не знает:
- * для него хелпер не отдаёт ничего, и `CodeView` рисует код как есть — с
- * нумерацией строк.
+ * Kit highlighting with long lines wrapped, and a language the kit does not know:
+ * for that language the helper returns nothing, and `CodeView` draws the code as is, with
+ * line numbers.
  */
 export const KitHighlightingEdgeCases: Story = {
   render: () => (

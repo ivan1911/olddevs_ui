@@ -45,7 +45,7 @@ const ITEMS: UploadItem[] = [
     name: "passport-scan.jpg",
     size: "5.1 MB",
     state: "running",
-    // Прогресс неизвестен: у ответа нет длины. Это не то же самое, что ноль.
+    // Progress is unknown: the response has no length. That is not the same as zero.
     progress: null,
     statusLabel: "Processing",
   },
@@ -67,9 +67,9 @@ const ITEMS: UploadItem[] = [
 export const Playground: Story = { args: { items: ITEMS } };
 
 /**
- * Доменный статус поверх механического: файл дошёл до сервера (`success`), но
- * это дубль, и зелёный бейдж был бы неправдой. Тон задаёт приложение, без него
- * цвет по-прежнему выводится из `state`.
+ * A domain status on top of the mechanical one: the file reached the server (`success`), but
+ * it is a duplicate, and a green badge would be misleading. The app sets the tone; without it,
+ * the color is still derived from `state`.
  */
 export const DomainToneOverState: Story = {
   args: {
@@ -96,14 +96,14 @@ export const DomainToneOverState: Story = {
         state: "failed",
         statusLabel: "Skipped",
         tone: "neutral",
-        // Цвет текста ошибки следует `state`, а не `tone`.
+        // The error text color follows `state`, not `tone`.
         meta: "The server rejected the file: too large",
       },
     ],
   },
 };
 
-/** Пустая очередь: что показывать — решает потребитель. Итог при этом молчит. */
+/** An empty queue: the consumer decides what to show. The summary stays silent here. */
 export const Empty: Story = {
   args: {
     items: [],
@@ -112,8 +112,8 @@ export const Empty: Story = {
 };
 
 /**
- * Граница с `FileDropzone`: область — это ВЫБОР файла, очередь — его судьба.
- * На экране они стоят рядом, и путают их именно поэтому.
+ * The boundary with `FileDropzone`: the area is for selecting a file, the queue is for what happens to it.
+ * The two sit side by side on screen, which is exactly why they get confused.
  */
 export const NextToDropzone: Story = {
   args: { items: [] },

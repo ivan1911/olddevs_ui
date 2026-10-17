@@ -68,19 +68,18 @@ function Demo(args: Partial<CommandPaletteProps>) {
   );
 }
 
-/** Пустой запрос показывает весь список разделами — палитра как оглавление. */
+/** An empty query shows the full list by section: the palette works as a table of contents. */
 export const Playground: Story = { render: (args) => <Demo {...args} /> };
 
-/** Когда действий сотни, пустой список ничего не сообщает — вместо него подсказка. */
+/** When there are hundreds of actions, an empty list says nothing, so a hint is shown instead. */
 export const EmptyHint: Story = {
   render: (args) => <Demo {...args} emptyBehaviour="hint" />,
 };
 
 /*
-  Ненастоящий сервер: отвечает с задержкой и ищет по основе слова, а не по
-  подстроке. Именно ради этой пары строк история и существует — запрос
-  «meetings» находит «Schedule a meeting», а локальный `contains` такую пару
-  не сматчит никогда.
+  A fake server: it replies after a delay and matches on the word stem, not on a
+  substring. This pair of strings is the whole reason the story exists: the query
+  "meetings" finds "Schedule a meeting", and a local `contains` never matches that pair.
 */
 const TASKS = [
   "Schedule a meeting with the design team",
@@ -171,19 +170,19 @@ function ServerDemo() {
 }
 
 /**
- * Результаты сервера рядом с локальными командами: раздел `prefiltered` не
- * просеивается второй раз, запрос уходит наружу через `onQueryChange`, а на
- * время ответа пустое состояние говорит «загрузка», а не «ничего не найдено».
+ * Server results next to local commands: the `prefiltered` section is not filtered a second time,
+ * the query goes out through `onQueryChange`, and while the response is pending the empty state
+ * says "loading", not "nothing found".
  */
 export const ServerResults: Story = { render: () => <ServerDemo /> };
 
 /**
- * Состояние загрузки — отдельной историей, потому что его нужно МЕРИТЬ.
+ * The loading state gets its own story, because it has to be MEASURED.
  *
- * Раньше крутилка была на два пикселя уже лупы, и поле вместе с набранным
- * текстом уезжало на эти два пикселя при каждом включении загрузки. На статичном
- * кадре такое не видно вовсе, поэтому браузерный тест открывает эту историю
- * дважды — с `loading` и без — и сравнивает положение поля.
+ * The spinner used to be two pixels narrower than the magnifier, and the field, along with the typed
+ * text, shifted by those two pixels each time loading turned on. A static frame does not show this at
+ * all, so the browser test opens this story twice (with `loading` and without) and compares the
+ * position of the field.
  */
 export const Loading: Story = {
   args: { loading: true },

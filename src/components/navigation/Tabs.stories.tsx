@@ -65,7 +65,7 @@ export const WithoutIcons: Story = {
           value={tab}
           onChange={setTab}
         />
-        {/* Панель обязательна: на неё ссылается `aria-controls` активной вкладки. */}
+        {/* The panel is required: the active tab's `aria-controls` points to it. */}
         <div id={`${tab}-panel`} role="tabpanel" className="text-fg-2 text-[13px]">
           The “{ITEMS.find((t) => t.id === tab)?.label}” panel
         </div>

@@ -4,21 +4,18 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
 /**
- * Ворота идентификаторов: каждый `id=` в браузерных тестах ведёт на живую
- * историю.
+ * Identifier gate: every `id=` in the browser tests leads to a live story.
  *
- * ЗАЧЕМ ОТДЕЛЬНАЯ ПРОВЕРКА. Неверный id не роняет ни компилятор, ни линтер:
- * Storybook отдаёт страницу «Story not found» с кодом 200, и тест падает
- * позже — на `waitForSelector` или на клике по кнопке, которой нет. Сообщение
- * при этом говорит про селектор, а не про причину, и поиск начинается не с
- * того конца. Волна 23 переименовала 300 историй разом, и цена такой
- * диагностики стала очевидной.
+ * WHY A SEPARATE CHECK. A wrong id breaks neither the compiler nor the linter:
+ * Storybook serves a "Story not found" page with status 200, and the test fails later —
+ * on `waitForSelector` or on a click on a button that does not exist. The message then
+ * talks about the selector, not the cause, so the search starts from the wrong end.
+ * Wave 23 renamed 300 stories at once, and the cost of such diagnosis became obvious.
  *
- * Файл лежит в `tests-visual/`, а не в `tests/`: он читает
- * `storybook-static/index.json` — артефакт сборки витрины. В `vitest` он
- * требовал бы либо собранной витрины на каждом прогоне, либо молчаливого
- * пропуска, а проверка, умеющая тихо не запуститься, в этом репозитории не
- * считается сделанной.
+ * The file lives in `tests-visual/`, not `tests/`: it reads `storybook-static/index.json`,
+ * the artifact of the showcase build. In `vitest` it would need either a built showcase on
+ * every run or a silent skip, and a check that can quietly fail to run is not considered
+ * done in this repository.
  */
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -27,13 +24,13 @@ const entries: Record<string, unknown> = JSON.parse(
   readFileSync(resolve(ROOT, "storybook-static/index.json"), "utf8")
 ).entries;
 
-/** Ссылка на историю: файл, строка и сам id — чтобы чинить, не ища. */
+/** A reference to a story: the file, the line and the id itself, so it can be fixed without searching. */
 type Ref = { file: string; line: number; id: string };
 
 /**
- * Собственный файл пропускается: регулярное выражение ниже само выглядит
- * ссылкой на историю. Имя берётся из `import.meta.url`, а не из литерала:
- * переименование файла иначе тихо вернуло бы самоловлю.
+ * The file itself is skipped: the regular expression below looks like a story reference
+ * itself. The name comes from `import.meta.url`, not from a literal: renaming the file
+ * would otherwise quietly bring back the self-match.
  */
 const SELF = basename(fileURLToPath(import.meta.url));
 
@@ -44,7 +41,7 @@ function references(): Ref[] {
     const lines = readFileSync(resolve(ROOT, "tests-visual", name), "utf8").split("\n");
     lines.forEach((line, i) => {
       for (const m of line.matchAll(/id=([^&"'`\s]+)/g)) {
-        // Шаблонная подстановка — это перебор индекса, а не жёсткая ссылка.
+        // A template substitution is a loop over an index, not a hard-coded reference.
         if (m[1]!.includes("$")) continue;
         out.push({ file: name, line: i + 1, id: m[1]! });
       }
@@ -53,7 +50,7 @@ function references(): Ref[] {
   return out;
 }
 
-/** Ближайшие по написанию id — без подсказки поиск начинается с нуля. */
+/** IDs closest in spelling: without a hint, the search starts from zero. */
 function nearest(id: string): string[] {
   const [, story = ""] = id.split("--");
   return Object.keys(entries)
@@ -63,7 +60,7 @@ function nearest(id: string): string[] {
 
 test("every id= in the browser tests leads to an existing story", () => {
   const refs = references();
-  // Пустое множество ссылок означает сломанный поиск, а не порядок в тестах.
+  // An empty set of references means the search is broken, not the tests.
   expect(refs.length, "no story references found — the parsing is broken").toBeGreaterThan(0);
 
   const broken = refs

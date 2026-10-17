@@ -1,13 +1,14 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 /**
- * Клавиатурный путь к кнопке Панели Редактора: `Alt+F10` из документа, `Home`
- * и `→`, пока фокус не встанет на кнопку с именем `name`.
+ * Keyboard path to a button on the Editor's Toolbar: `Alt+F10` from the document,
+ * then `Home` and `→` until focus lands on the button named `name`.
  *
- * Путь тот же, что у пользователя без мыши, но число шагов не зашито: раньше
- * сценарии считали «четвёртая с конца» и «седьмая», и каждая перестановка
- * Панели (меню «…», раскладка OLDSUI-66) роняла их, не задевая проверяемое
- * поведение. Теперь ряд можно переставлять — сценарий ищет кнопку по имени.
+ * It is the same path a keyboard-only user takes, but the number of steps is not
+ * hard-coded. Scenarios used to count "fourth from the end" and "seventh", and every
+ * reordering of the Toolbar (the "…" menu, the OLDSUI-66 layout) broke them without
+ * touching the behavior under test. Now the row can be reordered: the scenario
+ * looks the button up by name.
  */
 export async function focusToolbarButton(page: Page, name: string): Promise<Locator> {
   const toolbar = page.getByRole("toolbar", { name: "Formatting", exact: true });

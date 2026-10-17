@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "../actions/Button.js";
 import { Stepper } from "./Stepper.js";
 
-/** Волна 9: примитивы навигации по облегчённой планке. */
+/** Wave 9: navigation primitives for the lighter bar. */
 const meta = {
   title: "Navigation/Stepper",
   component: Stepper,

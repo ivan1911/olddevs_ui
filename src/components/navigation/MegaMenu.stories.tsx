@@ -45,7 +45,7 @@ function Group({ title, links }: { title: string; links: string[] }) {
   );
 }
 
-/** Промо-карточка — своё содержимое Полки рядом с колонками. */
+/** A promo card: its own content in the flyout, alongside the link columns. */
 function Promo({ children }: { children: ReactNode }) {
   return (
     <div className="bg-accent-soft text-accent-strong rounded-md p-3 text-[13px]">
@@ -56,9 +56,9 @@ function Promo({ children }: { children: ReactNode }) {
 }
 
 /**
- * Каталог магазина: десяток Категорий, колонки ссылок, промо, ссылка без Полки,
- * выключенная. Текущая страница — «Laptops», поэтому «Computers» отмечена как
- * текущий раздел (`active`).
+ * A store catalog: about ten categories, link columns, a promo, a link without a flyout,
+ * and a disabled category. The current page is "Laptops", so "Computers" is marked as
+ * the current section (`active`).
  */
 function StoreCatalog(props: { defaultValue?: string | null }) {
   return (
@@ -112,7 +112,7 @@ function StoreCatalog(props: { defaultValue?: string | null }) {
   );
 }
 
-/** Наведите курсор на Категорию: Полка открывается сразу. */
+/** Hover over a category: its flyout opens right away. */
 export const Catalog: Story = {
   render: () => (
     <div className="min-h-[480px]">
@@ -121,7 +121,7 @@ export const Catalog: Story = {
   ),
 };
 
-/** Открытая Полка — для снимков и обзора вида. */
+/** An open flyout, for snapshots and for reviewing the look. */
 export const Open: Story = {
   render: () => (
     <div className="min-h-[480px]">
@@ -131,9 +131,9 @@ export const Open: Story = {
 };
 
 /**
- * Выпадающий вид: кнопка «Catalog» в шапке открывает ту же разметку в оверлее
- * под собой. Щелчок или Enter, Пробел, стрелка вниз; наведение не открывает.
- * Escape, щелчок снаружи, второй щелчок по кнопке и переход по ссылке закрывают.
+ * The dropdown variant: the "Catalog" button in the top bar opens the same markup in an overlay
+ * below it. A click, Enter, Space, or Down Arrow opens it; hovering does not.
+ * Escape, a click outside, a second click on the button, and following a link all close it.
  */
 export const DropdownInTopBar: Story = {
   parameters: { layout: "fullscreen" },
@@ -162,9 +162,9 @@ function ShopTopBar(props: { defaultOpen?: boolean; defaultValue?: string | null
 }
 
 /**
- * Выпадающий вид на ширине телефона: оверлей на всю ширину окна, а не по
- * содержимому — подписи переносятся, а ширина не прыгает при спуске.
- * Метка `viewport-phone`: снимок на 375px.
+ * The dropdown variant at phone width: the overlay spans the full window width, not the content
+ * width, so labels wrap and the width does not jump when it drops down.
+ * The `viewport-phone` tag: a snapshot at 375px.
  */
 export const PhoneDropdown: Story = {
   tags: ["viewport-phone"],
@@ -172,7 +172,7 @@ export const PhoneDropdown: Story = {
   render: () => <ShopTopBar defaultOpen />,
 };
 
-/** Выпадающий вид на телефоне после касания Категории: её Полка вместо Столбца, внутри оверлея. */
+/** The dropdown variant on a phone after a tap on a category: its flyout replaces the category column, inside the overlay. */
 export const PhoneDropdownDrillDown: Story = {
   tags: ["viewport-phone"],
   parameters: { layout: "fullscreen" },
@@ -180,10 +180,10 @@ export const PhoneDropdownDrillDown: Story = {
 };
 
 /**
- * Столбец на ширине телефона: на всю ширину, подписи переносятся, а не обрезаются.
+ * The category column at phone width: full width, labels wrap rather than being cut off.
  *
- * Метка `viewport-phone`: визуальный тест снимает историю на 375px, где
- * узкое правило и работает. В обычном окне сузьте его ниже 640px.
+ * The `viewport-phone` tag: the visual test takes a snapshot of this story at 375px, where
+ * the narrow rule applies. In a regular window, narrow it below 640px.
  */
 export const PhoneColumn: Story = {
   tags: ["viewport-phone"],
@@ -195,9 +195,9 @@ export const PhoneColumn: Story = {
 };
 
 /**
- * Узкий экран: касание Категории заменяет Столбец её Полкой со строкой «Назад»
- * и именем Категории. Здесь Полка открыта сразу, для снимка; в живой истории
- * коснитесь «Computers».
+ * Narrow screen: a tap on a category replaces the category column with its flyout, which has a
+ * "Back" row and the category's name. Here the flyout is open right away, for the snapshot; in the
+ * live story, tap "Computers".
  */
 export const PhoneDrillDown: Story = {
   tags: ["viewport-phone"],

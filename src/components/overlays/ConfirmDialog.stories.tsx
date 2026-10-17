@@ -12,7 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Живой диалог: открыть, закрыть, нажать Escape, потыкать табом. */
+/** A live dialog: open it, close it, press Escape, and tab through it. */
 export const Playground: Story = {
   args: {
     open: false,
@@ -40,8 +40,8 @@ export const Playground: Story = {
 };
 
 /**
- * Три характера вопроса. `kind` — собственная ось диалога: вызывающий говорит
- * «это опасно», а не «сделай кнопку красной». Перевод в кнопочные оси — здесь.
+ * Three kinds of question. `kind` is the dialog's own axis: the caller says "this is dangerous",
+ * not "make the button red". The mapping to button axes happens here.
  */
 export const Kinds: Story = {
   args: {
@@ -96,8 +96,9 @@ export const Kinds: Story = {
 };
 
 /**
- * Идёт отправка: кнопки заблокированы, крестик скрыт, клик мимо и Escape
- * не закрывают. Открыт сразу — иначе состояние не поймать глазом.
+ * Submission in progress: the buttons are disabled, the close button is hidden, and a click
+ * outside or Escape does not close the dialog. It is open from the start, otherwise the state
+ * would be hard to catch by eye.
  */
 export const Submitting: Story = {
   args: {
@@ -112,9 +113,9 @@ export const Submitting: Story = {
 };
 
 /**
- * Подтверждение вводом: кнопка выключена, пока не набрано название. Фокус при
- * открытии встаёт в поле, Enter подтверждает только при совпадении, регистр
- * важен. Подпись и подсказку поля даёт каталог сообщений.
+ * Typed confirmation: the button stays disabled until the name is typed. Focus lands in the
+ * field on open, Enter confirms only on an exact match, and the case matters. The label and the
+ * field hint come from the message catalog.
  */
 export const TypeToConfirm: Story = {
   args: {
