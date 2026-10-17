@@ -7,13 +7,13 @@ import { SplitPanel } from "../src/components/app-shell/SplitPanel.js";
 import { clamp } from "../src/lib/clamp.js";
 
 /*
-  Шим захвата указателя. В jsdom этих трёх методов нет вовсе, а компонент зовёт
-  их при начале тяги — без шима падало бы окружение, а не компонент.
+  Pointer capture shim. jsdom has none of these three methods, and the component calls them when
+  a drag starts. Without the shim, the environment would crash, not the component.
 
-  Допустим ровно по тому же основанию, что и шим `CSS.escape` в `menu.test.tsx`:
-  он делает окружение БЛИЖЕ к браузеру, а не дальше. Это чистая бухгалтерия
-  захвата, которая есть везде; координаты и настоящий фокус так подменять
-  нельзя, и проверки, которые от них зависят, живут в браузере (ADR-0012).
+  It is allowed on exactly the same grounds as the `CSS.escape` shim in `menu.test.tsx`: it moves
+  the environment CLOSER to a browser, not further away. It is pure capture bookkeeping that every
+  browser has. Coordinates and real focus must not be faked this way, and the checks that depend on
+  them live in the browser (ADR-0012).
 */
 for (const method of ["setPointerCapture", "releasePointerCapture", "hasPointerCapture"] as const) {
   if (!(method in Element.prototype)) {
@@ -27,10 +27,9 @@ for (const method of ["setPointerCapture", "releasePointerCapture", "hasPointerC
 afterEach(cleanup);
 
 /*
-  Перетаскивание указателем здесь НЕ проверяется, и это не пробел: в jsdom нет
-  ни `setPointerCapture`, ни настоящих координат, поэтому такой тест либо
-  проходил бы всегда, либо падал бы на исправном компоненте (ADR-0012). Тяга и
-  стрелки клавиатуры живут в `tests-visual/interactions.spec.ts`.
+  Pointer dragging is NOT tested here, and this is not a gap. jsdom has neither `setPointerCapture`
+  nor real coordinates, so such a test would either always pass or fail on a working component
+  (ADR-0012). Dragging and the arrow keys are covered in `tests-visual/interactions.spec.ts`.
 */
 
 function Panel(props: Partial<React.ComponentProps<typeof SplitPanel>> = {}) {
@@ -42,9 +41,8 @@ function Panel(props: Partial<React.ComponentProps<typeof SplitPanel>> = {}) {
 }
 
 /*
-  Утилита переехала в `lib/clamp.ts`: то же выражение было написано в ките
-  четырежды. Компонент больше не расширяет свою публичную поверхность ради
-  одного юнит-теста.
+  The utility moved to `lib/clamp.ts`: the same expression had been written four times in the kit.
+  The component no longer widens its public surface just for one unit test.
 */
 test("clamp keeps the value inside the bounds", () => {
   expect(clamp(50, 120, 720)).toBe(120);
@@ -82,22 +80,21 @@ test("a size outside the bounds is clamped rather than applied", () => {
 });
 
 /*
-  Схлопывание не размонтирует содержимое: состояние форм и прокрутки внутри
-  панели переживает его. Но из дерева доступности панель уходит — иначе Tab
-  доходил бы до невидимого.
+  Collapsing does not unmount the content: form and scroll state inside the panel survives it. But
+  the panel does leave the accessibility tree, otherwise Tab would reach invisible elements.
 */
 test("collapsed takes the panel out of the accessibility tree with its handle", () => {
   render(<Panel collapsed />);
 
   expect(screen.queryByRole("region", { name: "Details" })).toBeNull();
-  // Тянуть нечего — ручка исчезает вместе с панелью.
+  // There is nothing to drag: the handle disappears together with the panel.
   expect(screen.queryByRole("slider")).toBeNull();
 });
 
 /*
-  Один рендер это не доказывает: компонент, который при схлопывании
-  размонтирует панель и монтирует её заново, прошёл бы такую проверку. Обещание
-  пропа — «состояние внутри переживает схлопывание», и сторожить надо его.
+  A single render does not prove this: a component that unmounts the panel on collapse and mounts
+  it again would pass such a check. The prop's promise is "state inside survives collapsing", and
+  that is what the test must guard.
 */
 test("collapsing and reopening keeps the state inside the panel", async () => {
   const user = userEvent.setup();
@@ -126,9 +123,8 @@ test("collapsing and reopening keeps the state inside the panel", async () => {
 });
 
 /*
-  Перевёрнутый диапазон не роняет ничего и молча давал бы контрол, из которого
-  нет выхода: `min > max` у ползунка — состояние без единого сообщения о
-  причине.
+  An inverted range does not crash anything, but it silently produces a control with no way out:
+  `min > max` on a slider is a state with no message explaining why.
 */
 test("an inverted range does not produce a dead control", () => {
   render(<Panel minSize={400} maxSize={200} />);
@@ -141,17 +137,17 @@ test("an inverted range does not produce a dead control", () => {
 });
 
 /*
-  Шаг стрелки живёт в обработчике клавиш, а не в атрибуте `step`: шаговая база
-  ползунка — это `min`, и `step=16` разрешил бы только значения `min + 16n`.
-  Тогда `maxSize` не взялся бы с клавиатуры вовсе, а попиксельный результат тяги
-  браузер молча округлял бы — и объявленное значение разошлось бы с шириной.
+  The arrow step lives in the key handler, not in the `step` attribute. A slider's step base is
+  `min`, so `step=16` would allow only the values `min + 16n`. Then `maxSize` could not be reached
+  from the keyboard at all, and the browser would silently round the pixel-level result of a drag.
+  The announced value would then differ from the width.
 */
 test("the slider accepts every pixel, so the bounds are reachable exactly", () => {
   render(<Panel defaultSize={260} minSize={120} maxSize={725} />);
   const handle = screen.getByRole("slider") as HTMLInputElement;
 
   expect(handle.getAttribute("step")).toBe("1");
-  // Значение ползунка совпадает с размером панели, а не округляется до сетки.
+  // The slider value matches the panel size, rather than being rounded to a grid.
   expect(handle.value).toBe("260");
 
   fireEvent.change(handle, { target: { value: "725" } });
@@ -202,9 +198,9 @@ test("an uncontrolled panel remembers the size it was given", () => {
 });
 
 /*
-  Управляемый размер внутрь не пишется: два источника правды разошлись бы ровно
-  на том кадре, где потребитель отклонит значение. Здесь потребитель молчит —
-  и панель обязана остаться на своём.
+  A controlled size is not written internally: two sources of truth would diverge on exactly the
+  frame where the consumer rejects the value. Here the consumer stays silent, and the panel must keep
+  its own size.
 */
 test("a controlled panel does not move on its own", () => {
   const onSizeChange = vi.fn();
@@ -233,9 +229,9 @@ test("a controlled panel follows the consumer", () => {
 });
 
 /*
-  `fireEvent.doubleClick`, а не `user.dblClick`: второй тянет за собой
-  pointerdown, а в jsdom нет `setPointerCapture` — падало бы окружение, а не
-  компонент. Сам захват указателя проверяется в браузере.
+  `fireEvent.doubleClick` is used instead of `user.dblClick`: the latter also fires pointerdown, and
+  jsdom has no `setPointerCapture`, so the environment would crash, not the component. Pointer
+  capture itself is checked in the browser.
 */
 test("double-clicking the handle returns the default size", () => {
   render(<Panel defaultSize={280} />);
@@ -249,9 +245,9 @@ test("double-clicking the handle returns the default size", () => {
 });
 
 /*
-  Уборщик с пустым списком зависимостей срабатывал на размонтировании ВСЕГО
-  компонента, когда следующей ручки уже нет, — то есть не делал ничего.
-  Схлопывание посреди тяги оставляло `select-none` на корне навсегда.
+  A cleanup with an empty dependency list ran only when the WHOLE component unmounted, when the
+  next handle no longer existed, so it did nothing. Collapsing in the middle of a drag left
+  `select-none` on the root forever.
 */
 test("collapsing during a drag clears the dragging state", () => {
   function Collapsible() {
@@ -264,7 +260,7 @@ test("collapsing during a drag clears the dragging state", () => {
     );
   }
   const { container } = render(<Collapsible />);
-  // Первый `div` — корень самой панели; следующие принадлежат её областям.
+  // The first `div` is the panel's own root; the following ones belong to its regions.
   const root = container.querySelectorAll("div")[0] as HTMLElement;
 
   fireEvent.pointerDown(screen.getByRole("slider").parentElement as HTMLElement, {
@@ -279,9 +275,8 @@ test("collapsing during a drag clears the dragging state", () => {
 });
 
 /*
-  Объявленная ось обязана совпадать с той, по которой работают стрелки: при
-  нижнем положении ползунок вертикальный. Расхождение ловится только ухом, и до
-  сих пор его не сторожило ничто.
+  The announced axis must match the one the arrow keys work on: when the panel is at the bottom,
+  the slider is vertical. A mismatch is caught only by ear, and until now nothing guarded it.
 */
 test("the slider announces the axis it actually works on", () => {
   const { rerender } = render(<Panel position="side" />);
@@ -292,9 +287,9 @@ test("the slider announces the axis it actually works on", () => {
 });
 
 /*
-  Нажатие на полосу переводит фокус на ползунок — без этого сценарий «потянул
-  мышью, дотяну стрелками» не работает вовсе. Браузерный тест ставит фокус
-  явно и потому этот переход обходит.
+  Pressing the handle moves focus to the slider. Without this, the flow "drag with the mouse, then
+  finish with the arrow keys" does not work at all. The browser test sets focus explicitly, so it
+  skips this transition.
 */
 test("pressing the handle moves focus to the slider", () => {
   render(<Panel />);
@@ -310,18 +305,18 @@ test("pressing the handle moves focus to the slider", () => {
 });
 
 /*
-  Тяга за границу зажимается в то же число, и сообщать об этом нечего: прежде
-  одно движение мимо предела давало десятки одинаковых событий подряд, а
-  адресат у них — запись в адрес страницы или на сервер.
+  A drag past the limit is clamped to the same number, and there is nothing to report. Previously,
+  one movement past the limit produced dozens of identical events in a row, and their target is a
+  write to the page URL or to the server.
 */
 test("a value clamped to the same number is not reported again", async () => {
   const user = userEvent.setup();
   const onSizeChange = vi.fn();
   render(<Panel defaultSize={400} minSize={120} maxSize={400} onSizeChange={onSizeChange} />);
 
-  // Стрелка у самого предела: значение зажимается в то же число, и сообщать
-  // нечего. `fireEvent.change` тем же числом здесь не годится — React не
-  // считает это изменением и обработчик не зовёт вовсе.
+  // An arrow key at the limit: the value is clamped to the same number, so there is nothing to
+  // report. `fireEvent.change` with the same number does not work here: React does not treat it as
+  // a change, so the handler is never called.
   screen.getByRole("slider").focus();
   await user.keyboard("{ArrowRight}");
   expect(onSizeChange).not.toHaveBeenCalled();
@@ -331,9 +326,8 @@ test("a value clamped to the same number is not reported again", async () => {
 });
 
 /*
-  Внутреннее состояние не пишется, пока размер управляется, — иначе при
-  возврате к неуправляемому режиму панель прыгнула бы на значение, которого
-  потребитель никогда не принимал.
+  Internal state is not written while the size is controlled. Otherwise, when switching back to
+  uncontrolled mode, the panel would jump to a value the consumer never accepted.
 */
 test("an uncontrolled panel does not inherit a rejected controlled value", () => {
   const { rerender } = render(<Panel size={300} defaultSize={280} />);
@@ -342,30 +336,28 @@ test("an uncontrolled panel does not inherit a rejected controlled value", () =>
   fireEvent.change(screen.getByRole("slider"), { target: { value: "500" } });
   expect(region().style.width).toBe("300px");
 
-  // Потребитель снял управление: панель обязана вернуться к своему умолчанию,
-  // а не к отвергнутым 500.
+  // The consumer removed control: the panel must return to its default, not to the rejected 500.
   rerender(<Panel defaultSize={280} />);
   expect(region().style.width).toBe("280px");
 });
 
 /**
- * Сворачивание не роняет фокус на `<body>`.
+ * Collapsing does not drop focus onto `<body>`.
  *
- * При `collapsed` ручка размонтируется целиком, а панель уходит под `hidden`, и
- * компонент не смотрел, не стоял ли на них фокус. Пользователь клавиатуры стоял
- * в поле внутри панели и нажимал внешнюю кнопку «Свернуть»: фокусируемый узел
- * исчезал, фокус уезжал на `<body>`, и следующий Tab начинал обход с начала
- * страницы.
+ * With `collapsed`, the handle is unmounted entirely and the panel goes under `hidden`. The
+ * component did not check whether focus was on either of them. A keyboard user was in a field
+ * inside the panel and pressed the external "Collapse" button: the focused node disappeared, focus
+ * fell to `<body>`, and the next Tab started from the top of the page.
  */
 /**
- * ЧЕГО ЗДЕСЬ НЕТ: перевода фокуса при сворачивании.
+ * NOT TESTED HERE: moving focus when collapsing.
  *
- * В jsdom атрибут `hidden` фокус не снимает, а ручка к моменту эффекта уже
- * размонтирована — то есть проверка «фокус не на `<body>`» проходила бы и на
- * неисправленном коде, опираясь на расхождение jsdom с браузером. По ADR-0012
- * такая проверка обязана быть браузерной, и она живёт в
- * `tests-visual/interactions.spec.ts` («SplitPanel: collapsing moves focus into
- * the content instead of dropping it») — проверено откатом: там она валится.
+ * In jsdom, the `hidden` attribute does not remove focus, and the handle is already unmounted by
+ * the time the effect runs. So a check "focus is not on `<body>`" would pass even on unfixed code,
+ * relying on the difference between jsdom and a browser. Under ADR-0012 such a check must be a
+ * browser test. It lives in `tests-visual/interactions.spec.ts` ("SplitPanel: collapsing moves
+ * focus into the content instead of dropping it"). It was verified by reverting the fix: the test
+ * fails there.
  */
 test("the collapsible panel is hidden, not unmounted", () => {
   function Host({ collapsed }: { collapsed: boolean }) {
@@ -379,7 +371,7 @@ test("the collapsible panel is hidden, not unmounted", () => {
   const { rerender } = render(<Host collapsed={false} />);
   rerender(<Host collapsed />);
 
-  // Содержимое панели остаётся в разметке — иначе состояние полей внутри
-  // терялось бы на каждом сворачивании.
+  // The panel content stays in the markup. Otherwise, the state of the fields inside would be lost
+  // on every collapse.
   expect(screen.getByLabelText("Note")).toBeTruthy();
 });

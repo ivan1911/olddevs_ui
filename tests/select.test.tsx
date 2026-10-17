@@ -5,12 +5,12 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { Select, type SelectItem } from "../src/components/inputs/Select.js";
 
 /**
- * Поведение `Select` — то, что не видно ни на снимке, ни в аудите axe.
+ * The behavior of `Select` is what neither a snapshot nor an axe audit can see.
  *
- * Снимок показывает, как выглядит закрытый триггер; axe — что роли на месте.
- * Ни один из них не скажет, что очистка отдала `""` вместо `null`, что клик
- * по второму пункту закрыл панель мультивыбора или что стрелка вниз никуда
- * не ведёт. Это и проверяется здесь.
+ * A snapshot shows how the closed trigger looks; axe checks that the roles are in place. Neither
+ * one will say that clearing returned `""` instead of `null`, that a click on the second item
+ * closed the multiple-selection panel, or that arrow down leads nowhere. That is what this file
+ * tests.
  */
 
 afterEach(cleanup);
@@ -22,11 +22,11 @@ const ITEMS: SelectItem[] = [
 ];
 
 /**
- * Открывает панель и отдаёт её пункты.
+ * Opens the panel and returns its items.
  *
- * Триггер ищется по `aria-haspopup`, а не по подписи: подпись у него разная —
- * плейсхолдер, когда ничего не выбрано, название пункта при одном выбранном
- * и счётчик при нескольких.
+ * The trigger is found by `aria-haspopup`, not by its label. The label varies: it is the
+ * placeholder when nothing is selected, the item name when one is selected, and a count when
+ * several are.
  */
 async function open(user: ReturnType<typeof userEvent.setup>) {
   await user.click(document.querySelector("[aria-haspopup='listbox']") as HTMLElement);
@@ -53,16 +53,16 @@ describe("single value selection", () => {
 
     await user.click(screen.getByRole("button", { name: "Clear" }));
 
-    // Договорённость держится типом, а не комментарием: `""` в типе
-    // неотличима от любого другого `string`, а `null` виден компилятору.
+    // The contract is enforced by the type, not by a comment: `""` in the type is indistinguishable
+    // from any other `string`, while `null` is visible to the compiler.
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
   test("an empty string from the URL means “nothing selected”, not a value", () => {
     render(<Select items={ITEMS} placeholder="Category" value="" onChange={vi.fn()} />);
 
-    // Потребители держат фильтры в URL, где пусто выражается именно `""`.
-    // Счёл бы компонент это выбором — показал бы крестик очистки на пустом фильтре.
+    // Consumers keep filters in the URL, where "empty" is expressed as exactly `""`. If the component
+    // treated it as a selection, it would show the clear button on an empty filter.
     expect(screen.getByRole("button", { name: /Category/ })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
   });
@@ -80,8 +80,8 @@ describe("multiple selection", () => {
     await user.click(options[1]!);
 
     expect(onChange).toHaveBeenCalledWith([1, 2]);
-    // Мультивыбор из одного элемента бессмыслен: закрытие после каждого клика
-    // заставляло бы открывать панель заново.
+    // Multiple selection that closes after each click would make no sense: the user would have to
+    // reopen the panel every time.
     expect(screen.getByRole("listbox")).toBeTruthy();
   });
 
@@ -119,7 +119,7 @@ describe("search", () => {
     );
     await open(user);
 
-    // «лес» есть только в keywords «Природы» — по подписи это не найти.
+    // "forest" appears only in the keywords of "Nature", so a label search cannot find it.
     await user.type(screen.getByRole("textbox"), "forest");
 
     const options = within(screen.getByRole("listbox")).getAllByRole("option");
@@ -159,14 +159,14 @@ describe("keyboard", () => {
     await user.keyboard("{ArrowUp}");
     expect(document.activeElement).toBe(options[0]);
 
-    // Вверх с первого без поиска — фокус остаётся на месте, а не прыгает вниз.
+    // ArrowUp from the first item, without a search field: focus stays put and does not jump down.
     await user.keyboard("{ArrowUp}");
     expect(document.activeElement).toBe(options[0]);
 
     await user.keyboard("{End}");
     expect(document.activeElement).toBe(options[2]);
 
-    // Вниз с последнего — тоже на месте: список не карусель.
+    // ArrowDown from the last item also stays in place: the list is not a carousel.
     await user.keyboard("{ArrowDown}");
     expect(document.activeElement).toBe(options[2]);
 
@@ -221,12 +221,11 @@ describe("keyboard", () => {
 });
 
 /**
- * Счётчик — строго за множественным выбором.
+ * The count is strictly for multiple selection.
  *
- * Ветка счётчика ловила и одиночный `Select`, у которого значение есть, а
- * элемента для него в `items` не нашлось: значение пришло из адреса, пока
- * список грузится, или указывает на удалённую запись. Триггер показывал
- * «Категория: 1» — счётчик там, где считать нечего.
+ * The count branch also caught a single `Select` that had a value but no matching item in `items`.
+ * The value came from the URL while the list was still loading, or it pointed to a deleted record.
+ * The trigger showed "Category: 1", which means a count where there was nothing to count.
  */
 test("a single select with a value outside items shows the key, not a count", () => {
   render(
@@ -263,15 +262,15 @@ test("a multiple select still counts", () => {
 });
 
 /**
- * Выбранная строка красится тем же, чем во всех списках кита.
+ * The selected row is styled with the same classes as every list in the kit.
  *
- * Свой набор классов расходился с общим и отступом (`py-[9px]` против
- * `py-1.5`), и цветом выбора (`bg-bg-3` против `selected:bg-accent-soft`):
- * списки кита, поставленные рядом, различались высотой строки и тем, как
- * выглядит выбранное. Решение владельца — свести к общему.
+ * Its own class set had drifted from the shared one in padding (`py-[9px]` against `py-1.5`) and in
+ * the selection color (`bg-bg-3` against `selected:bg-accent-soft`). Kit lists placed side by side
+ * differed in row height and in how the selected row looked. The owner decided to consolidate on
+ * the shared classes.
  *
- * Вариант `selected:` разворачивается в `[data-selected]` и не требует
- * `data-rac`, поэтому общая строка работает и на обычной кнопке.
+ * The `selected:` variant expands to `[data-selected]` and does not need `data-rac`, so the shared
+ * row also works on a plain button.
  */
 test("the selected row uses the shared listbox row, not its own colours", async () => {
   const user = userEvent.setup();
@@ -297,11 +296,11 @@ test("the selected row uses the shared listbox row, not its own colours", async 
 });
 
 /**
- * Подпись отсутствующего значения задаёт потребитель.
+ * The consumer supplies the label for a missing value.
  *
- * Ключ честнее плейсхолдера, когда он человекочитаем, и хуже него, когда это
- * UUID: пользователь видит `9f2c1b04-…` там, где ждал подпись. Кит не знает,
- * как выглядят идентификаторы приложения, — поэтому решает приложение.
+ * A key is more honest than a placeholder when it is human-readable, and worse than one when it is
+ * a UUID: the user sees `9f2c1b04-…` where they expected a label. The kit does not know what the
+ * application's identifiers look like, so the application decides.
  */
 test("missingLabel names a value that is not in items", () => {
   render(
@@ -330,8 +329,8 @@ describe("field name", () => {
       />
     );
 
-    // Обычный `aria-label` на кнопке победил бы содержимое, и поле объявлялось
-    // бы «Section, кнопка» — без единого слова о том, что в нём выбрано.
+    // A plain `aria-label` on the button would win over its content, and the field would be
+    // announced as "Section, button" with no word about what is selected in it.
     expect(screen.getByRole("button", { name: "Section Space" })).toBeTruthy();
   });
 
@@ -351,8 +350,8 @@ describe("field name", () => {
     );
 
     expect(screen.getByRole("button", { name: "Section Space" })).toBeTruthy();
-    // Скрытая подпись не рисуется вовсе: второй источник того же имени разошёлся
-    // бы с видимым молча.
+    // A hidden label is not rendered at all: a second source of the same name would silently drift
+    // apart from the visible one.
     expect(screen.queryByText("Ignored")).toBeNull();
   });
 
@@ -396,9 +395,8 @@ describe("disabled", () => {
     );
     expect(screen.queryByRole("listbox")).toBeNull();
 
-    // Панель не возвращается сама: внутреннее состояние закрыто, а не перекрыто
-    // разметкой. Иначе форма, вышедшая из отправки, показала бы список, которого
-    // никто не открывал.
+    // The panel does not come back on its own: the internal state is closed, not merely covered by
+    // markup. Otherwise a form that came out of submission would show a list that nobody opened.
     rerender(<Select items={ITEMS} placeholder="Category" value={null} onChange={vi.fn()} />);
     expect(screen.queryByRole("listbox")).toBeNull();
   });
@@ -413,8 +411,8 @@ describe("disabled with a controlled panel", () => {
 
     rerender(<Select {...props} open disabled onOpenChange={onOpenChange} />);
 
-    // Иначе панель исчезла бы с экрана, а `open` у потребителя остался бы
-    // `true` — и вернулась бы сама, едва поле снова включат.
+    // Otherwise the panel would disappear from the screen while the consumer's `open` stayed `true`,
+    // and it would come back on its own as soon as the field was enabled again.
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.queryByRole("listbox")).toBeNull();
   });
@@ -432,10 +430,10 @@ describe("disabled with a controlled panel", () => {
 
 describe("panel anchor", () => {
   test("the panel is anchored to the whole pill, not to the button inside it", async () => {
-    // Кнопка лежит внутри пилюли с рамкой и отступами: от её нижней кромки панель
-    // заходила на пилюлю. jsdom не раскладывает, поэтому размеры подменены, а
-    // якорь узнаётся по ширине, которую Radix кладёт в `--radix-popper-anchor-width`.
-    // Как выглядит зазор, смотрят глазами: Inputs/Select → Open.
+    // The button sits inside a bordered, padded pill, and the panel overlapped the pill from the
+    // button's bottom edge. jsdom does not lay out the page, so the sizes are stubbed. The anchor is
+    // recognized by the width Radix puts into `--radix-popper-anchor-width`. The gap is checked by
+    // eye: Inputs/Select → Open.
     const user = userEvent.setup();
     const spy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
       this: Element

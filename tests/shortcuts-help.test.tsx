@@ -65,8 +65,8 @@ test("groups are named groups, not headings of a fixed level", () => {
   const editing = screen.getByRole("group", { name: "Editing" });
   expect(within(editing).getByText("Close the window")).toBeTruthy();
 
-  // Уровень заголовка зависит от того, куда окно встало, — кит его не знает.
-  // Единственный заголовок на странице — имя самого окна.
+  // The heading level depends on where the window is placed, and the kit does not know that.
+  // The only heading on the page is the window's own name.
   expect(screen.queryByRole("heading", { name: "Navigation" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "Editing" })).toBeNull();
 });
@@ -93,7 +93,7 @@ test("a combination is read as a combination: the word sits between keys, the gl
   render(<ShortcutsHelp open onOpenChange={vi.fn()} groups={GROUPS} />);
 
   const row = screen.getAllByRole("listitem")[0]!;
-  // Видимый «+» — для глаз и из дерева доступности убран; слово «plus» читается.
+  // The visible "+" is hidden from sight and from the accessibility tree. The word "plus" is read.
   const glyph = within(row).getByText("+");
   expect(glyph.closest('[aria-hidden="true"]')).toBeTruthy();
   const word = within(row).getByText("plus");
@@ -160,7 +160,7 @@ test("the consumer's own `?` handler opens the window and focus returns to what 
 
   function Harness() {
     const [open, setOpen] = useState(false);
-    // Рецепт из справочника: обработчик у потребителя, а не в ките.
+    // The recipe from the Reference: the handler lives in the consumer, not in the kit.
     useEffect(() => {
       const onKeyDown = (event: KeyboardEvent) => {
         if (event.key !== "?" || event.ctrlKey || event.altKey || event.metaKey) return;
@@ -238,9 +238,9 @@ test("a long list scrolls inside the window and the scroller is reachable by key
   ];
   render(<ShortcutsHelp open onOpenChange={vi.fn()} groups={many} />);
 
-  // Без остановки табуляции пользователь клавиатуры не прокрутит область
-  // стрелками; безымянная остановка — шум для слуха, поэтому у области есть имя,
-  // и оно не повторяет имя окна: два одинаковых имени подряд — шум.
+  // Without a tab stop, a keyboard user cannot scroll the region with the arrow keys. An unnamed
+  // stop is noise for screen readers, so the region has a name, and the name does not repeat the
+  // window's name: two identical names in a row are noise.
   const region = screen.getByRole("region", { name: "Shortcuts" });
   expect(region.getAttribute("tabindex")).toBe("0");
   expect(within(region).getAllByRole("listitem")).toHaveLength(40);
