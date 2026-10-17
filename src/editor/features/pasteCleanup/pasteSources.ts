@@ -19,8 +19,10 @@ export interface PasteSources {
   /** Google Sheets: the `<google-sheets-html-origin>` marker and the `data-sheets-*` attributes. */
   googleSheets: boolean;
   /**
-   * SharePoint and Word Online (Word in the browser): their own markup, with `data-ccp-props` and the
-   * `OutlineElement` / `TextRun` classes. No real capture yet: the step is checked on synthetic HTML.
+   * SharePoint and Word Online (Word in the browser): their own markup, with the `data-ccp-props`
+   * attribute and the `OutlineElement`, `ListContainerWrapper` and `NormalTextRun` classes (as class
+   * tokens, anywhere in the class list). No real capture yet: the step is checked on synthetic HTML
+   * shaped after what public editors quote from real copies.
    */
   sharePoint: boolean;
 }
@@ -30,7 +32,8 @@ const WORD =
 const EXCEL = /urn:schemas-microsoft-com:office:excel|\bcontent=["']?Excel\.Sheet/i;
 const GOOGLE_DOCS = /\bid=["']?docs-internal-guid-/;
 const GOOGLE_SHEETS = /<google-sheets-html-origin|\bdata-sheets-/;
-const SHARE_POINT = /\bdata-ccp-props=|\bclass=["']?(?:OutlineElement|TextRun)\b/;
+const SHARE_POINT =
+  /\bdata-ccp-props=|\bclass=["']?(?:[^"'>]*\s)?(?:OutlineElement|ListContainerWrapper|NormalTextRun)(?=[\s"'>])/;
 
 /** The sources of a clipboard's HTML, read from the string: no parse is needed to tell them apart. */
 export function detectPasteSources(html: string): PasteSources {

@@ -30,3 +30,10 @@ the following disclaimer are retained; neither the name of the copyright holder 
 of its contributors may be used to endorse or promote products derived from this software
 without specific prior written permission. The software is provided "as is", without warranty
 of any kind.
+
+sharepoint-synthetic-*
+  Written by hand for OLDSUI-274: there is no public capture of Word Online / SharePoint clipboard
+  HTML. The markup (class names, attributes, the one wrapper per list item, the end-of-paragraph
+  spans) follows what contentful/field-editors (MIT) and ueberdosis/tiptap issue 3751 (MIT)
+  quote from real copies; the markup is rebuilt, nothing is copied, and the text is neutral English
+  written for this kit. Licence: the kit's licence (MIT).
