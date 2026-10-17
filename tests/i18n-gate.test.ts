@@ -94,7 +94,7 @@ function sourceFiles(dir: string): string[] {
   return out;
 }
 
-/** Комментарии в этом репозитории русские по решению — гейт их не смотрит. */
+/** The string gate does not read comments; the comment ratchet below does (ADR-0073). */
 function stripComments(source: string): string {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
@@ -289,5 +289,60 @@ describe("the Reference is English (ADR-0073)", () => {
       .map((line, i) => ({ line, number: i + 1 }))
       .filter(({ line }) => CYRILLIC.test(line) && !README_SWITCHER.test(line));
     expect(found.map(({ line, number }) => `README.md:${number}: ${line}`)).toEqual([]);
+  });
+});
+
+/**
+ * Comment ratchet (ADR-0073, OLDSUI-297). Comments are written in English; the Russian
+ * ones that remain are counted per file in `tests/comment-debt.json` and can only go
+ * down. A file not listed there has a debt of zero, so `src/**` (shipped code) stays clean
+ * and a new Russian comment anywhere fails the build. Translating a file means lowering or
+ * removing its line in the JSON; the test asks for that, so the number never lies.
+ */
+function commentLinesWithCyrillic(source: string): number {
+  const code = stripComments(source).split("\n");
+  return source.split("\n").filter((line, i) => {
+    const comment = [...line].map((ch, j) => (ch !== code[i]![j] ? ch : " ")).join("");
+    return CYRILLIC.test(comment);
+  }).length;
+}
+
+describe("the comment ratchet", () => {
+  const debt: Record<string, number> = JSON.parse(
+    readFileSync(join(ROOT, "tests/comment-debt.json"), "utf8")
+  );
+  const actual: Record<string, number> = {};
+  for (const file of ROOTS.flatMap((root) => sourceFiles(resolve(ROOT, root)))) {
+    const n = commentLinesWithCyrillic(readFileSync(file, "utf8"));
+    if (n > 0) actual[relative(ROOT, file).split("\\").join("/")] = n;
+  }
+
+  test("no file has more Russian comment lines than its baseline", () => {
+    const grew = Object.entries(actual)
+      .filter(([file, n]) => n > (debt[file] ?? 0))
+      .map(([file, n]) => `${file}: ${n} Russian comment lines, baseline ${debt[file] ?? 0}`);
+    expect(
+      grew,
+      "Write comments in English (ADR-0073). Do not raise the baseline in tests/comment-debt.json.\n" +
+        grew.join("\n")
+    ).toEqual([]);
+  });
+
+  test("a translated file lowers its baseline", () => {
+    const stale = Object.entries(debt)
+      .filter(([file, n]) => (actual[file] ?? 0) < n)
+      .map(([file, n]) => `${file}: baseline ${n}, now ${actual[file] ?? 0}`);
+    expect(
+      stale,
+      "Lower or remove these lines in tests/comment-debt.json so the ratchet keeps its grip.\n" +
+        stale.join("\n")
+    ).toEqual([]);
+  });
+
+  test("the debt lives only in tests, stories and the showcase", () => {
+    const shipped = Object.keys(debt).filter(
+      (file) => file.startsWith("src/") && !file.includes(".stories.")
+    );
+    expect(shipped, "Shipped source must have no Russian comments at all.").toEqual([]);
   });
 });

@@ -80,6 +80,9 @@ the showcase, tests, scripts, `AGENTS.md`, `README.md` and the community files
 written in English straight away; the author may think in Russian, the agent writes
 English. ADRs, `SPEC.md` and the archive stay in Russian (ADR-0067). A file you
 touch gets its Russian comments translated, so no file ends up half-and-half.
+The comment ratchet enforces it: `tests/comment-debt.json` counts the Russian comment lines left per
+file (tests, stories, showcase); `src/**` shipped code has none. The number only goes down: a new
+Russian comment fails `tests/i18n-gate.test.ts`, and a translated file must lower its line in the JSON.
 Translate the meaning and the reasoning, not the words; keep industry terms as
 their source names them, and take kit terms from [`docs/glossary.md`](docs/glossary.md).
 When a subagent translates, tell it to keep the meaning and the "why", to use select (not pick), popover and the kit terms from the glossary, and check afterwards that the code is unchanged.
