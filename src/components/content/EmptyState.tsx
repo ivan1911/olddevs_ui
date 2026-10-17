@@ -11,33 +11,33 @@ import {
 } from "../../lib/state.js";
 
 export interface EmptyStateProps {
-  /** Иконка над заголовком. */
+  /** Icon above the title. */
   icon?: ReactNode;
-  /** Заголовок: что именно пусто. */
+  /** Title: what exactly is empty. */
   title: string;
-  /** Пояснение под заголовком: почему пусто или что можно сделать. */
+  /** Explanation under the title: why it is empty or what can be done about it. */
   description?: string;
   /**
-   * Готовый узел (обычно `Button`), а не колбэк с подписью: что делает
-   * действие и как выглядит — знает потребитель, компонент лишь отводит место.
+   * A ready-made node (usually a `Button`), not a callback with a label: what the action
+   * does and how it looks is known to the consumer; the component only reserves the space.
    */
   action?: ReactNode;
-  /** `sm` — внутри пикеров и дропдаунов; `md` — пустая страница или секция. */
+  /** `sm` for use inside pickers and dropdowns; `md` for an empty page or section. */
   size?: "sm" | "md";
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 /**
- * Пустое состояние: «ничего не найдено», «пока пусто», «нет результатов».
+ * An empty state: "No matches found", "Nothing here yet", "No results".
  *
- * До пакета каждое место фронта рисовало свою версию — восемь вариантов
- * одного и того же с разными отступами и тонами. Компонент нарочно скучный:
- * вертикальная центровка, приглушённые тона, никаких иллюстраций и анимаций —
- * пустой экран не событие, ему не положено привлекать внимание.
+ * Before this package, every place in the front end drew its own version: eight variants of
+ * the same thing with different spacing and tones. The component is deliberately plain:
+ * vertical centering, muted tones, no illustrations or animations. An empty screen is not an
+ * event and is not supposed to attract attention.
  *
- * Геометрия общая с `ErrorState` и живёт в `lib/state.ts`; здесь остаются тон
- * и роль — то, чем эти два состояния и различаются.
+ * The geometry is shared with `ErrorState` and lives in `lib/state.ts`; what remains here is
+ * the tone and the role, which are what tell these two states apart.
  */
 export function EmptyState({
   icon,

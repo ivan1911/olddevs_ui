@@ -26,178 +26,178 @@ import { reorder } from "../../lib/reorder.js";
 import { TextControl } from "../inputs/TextControl.js";
 
 export interface EditableListItem {
-  /** Стабильный идентификатор строки: по нему список сообщает о правке и новом порядке. */
+  /** A stable row identifier: the list reports edits and the new order by it. */
   id: Key;
-  /** Правимое по месту название. */
+  /** The name, editable in place. */
   value: string;
   /**
-   * Строковое представление строки для доступного имени и объявлений о переносе.
+   * The string representation of the row, used for the accessible name and for reorder
+   * announcements.
    *
-   * По умолчанию — `value`. Задавать имеет смысл там, где голое значение
-   * неинформативно: «12.05» вместо «Срок сдачи, 12 мая».
+   * Defaults to `value`. Worth setting where the bare value is uninformative: "6/5" instead
+   * of "Due date, June 5".
    */
   textValue?: string;
-  /** Строка отключена: её нельзя править и перетаскивать. */
+  /** The row is disabled: it cannot be edited or dragged. */
   disabled?: boolean;
 }
 
 export interface EditableListProps {
-  /** Строки списка в текущем порядке; порядок хранит потребитель. */
+  /** The rows in their current order; the consumer owns the order. */
   items: EditableListItem[];
-  /** Новый порядок целиком — список идентификаторов после перестановки. */
+  /** The whole new order: the list of identifiers after the move. */
   onReorder: (ids: Key[]) => void;
-  /** Подтверждение правки. Вызывается, только когда значение изменилось. */
+  /** Confirms an edit. Called only when the value has changed. */
   onValueChange: (id: Key, value: string) => void;
   /**
-   * Доступное имя поля правки. Обязательно и проверяется компилятором: без него
-   * правка по месту даёт поле без имени ровно в момент ввода.
+   * The accessible name of the edit field. Required and checked by the compiler: without it,
+   * an in-place edit would produce an unnamed field at the very moment of typing.
    */
   editLabel: (item: EditableListItem) => string;
-  /** Доступное имя списка. Безымянный список скринридер называет только по роли. */
+  /** The accessible name of the list. A list without a name is announced by its role alone. */
   "aria-label": string;
   /**
-   * Строка добавления в конце списка. Без пропа её нет вовсе.
+   * The add row at the end of the list. Without this prop, there is no add row at all.
    *
-   * `label` — доступное имя поля; плейсхолдер именем не считается.
+   * `label` is the accessible name of the field; a placeholder does not count as one.
    */
   add?: {
     label: string;
     placeholder?: string;
     onAdd: (value: string) => void;
     /**
-     * Добавление ещё сохраняется.
+     * The addition is still being saved.
      *
-     * Поле при этом НЕ выключается, и это не упущение. Выключенное поле
-     * теряет фокус, а обратно его не получает: серия задач подряд — то
-     * единственное, ради чего строка добавления и существует, — обрывалась
-     * бы на первой же, как только сохранение идёт через сеть. Занятость
-     * объявляется `aria-busy`, а ввод продолжается.
+     * The field is NOT disabled while this is true, and that is deliberate. A disabled field
+     * loses focus and does not get it back, and a series of tasks entered one after another is
+     * the only reason the add row exists: it would break on the first one as soon as saving goes
+     * over the network. The busy state is announced with `aria-busy`, and typing continues.
      */
     pending?: boolean;
     /**
-     * Ведущие колонки строки добавления — ровно то же место, что занимает
-     * `leading` у строк списка.
+     * The leading columns of the add row: exactly the same space that `leading` takes in the
+     * list rows.
      *
-     * Место ручки перетаскивания компонент резервирует сам; про `leading` он
-     * знать не может — его ширину задаёт потребитель. Без этого слота у
-     * списка с `leading` рамка поля встаёт на колонку флажка, а названия
-     * строк уезжают правее, и низ списка выглядит рваным.
+     * The component reserves the space for the drag handle itself; it cannot know about
+     * `leading`, since its width is set by the consumer. Without this slot, a list with
+     * `leading` would have the field's frame sitting in the checkbox column while the row
+     * titles shift to the right, and the bottom of the list would look ragged.
      *
-     * Кладите РАСПОРКУ той же геометрии, а не живой контрол: флажок у задачи,
-     * которой ещё нет, нечего отмечать, а фокус он бы забирал. Распорку
-     * прячьте от скринридера — `aria-hidden`.
+     * Put a SPACER of the same geometry here, not a live control: there is nothing to check
+     * on a task that does not exist yet, and a control would take focus. Hide the spacer from
+     * screen readers with `aria-hidden`.
      */
     leading?: ReactNode;
   };
-  /** Слот слева от названия: флажок выполнения, аватар исполнителя. */
+  /** A slot to the left of the name: a completion checkbox, an assignee avatar. */
   leading?: (item: EditableListItem) => ReactNode;
-  /** Слот справа: бейдж состояния, кнопки действий строки. */
+  /** A slot on the right: a status badge, the row's action buttons. */
   trailing?: (item: EditableListItem) => ReactNode;
   /**
-   * Вызывается по щелчку на строке и по пробелу на ней. Компонент сам их не трактует.
+   * Called on a click on the row and on Space on the row. The component does not handle these
+   * itself.
    *
-   * Одиночный щелчок оставлен потребителю намеренно: правку открывает Enter, и
-   * если бы щелчок делал то же, строке нечем было бы открыть подробности.
+   * A single click is left to the consumer on purpose: Enter opens the edit, and if a click did
+   * the same thing, the row would have no way to open its details.
    */
   onRowAction?: (id: Key) => void;
   /**
-   * Разделять строки волосяной линией.
+   * Divides the rows with a hairline.
    *
-   * Без неё ряд держится одними отступами и на плотном списке читается
-   * сплошным полотном: опорой остаются только плашки ручек. Линия разбивает
-   * ряд, не превращая каждую строку в предмет, — это и есть разница в цене
-   * между ней и подложкой с рамкой.
+   * Without it, the rows are held together by spacing alone, and on a dense list they read as
+   * one solid block: only the drag handles act as anchors. The line breaks up the rows without
+   * turning each row into an object of its own, and that is the difference in cost between it
+   * and a framed background.
    *
-   * Линия идёт МЕЖДУ строками, а не под каждой: под последней она подчеркнула
-   * бы список, которого никто не подчёркивал.
+   * The line goes BETWEEN rows, not under each one: under the last row it would underline a
+   * list that nobody underlined.
    *
-   * Скругление строки при этом снимается, и это не побочный эффект: у прямой
-   * линии под скруглённой строкой углы загибаются вместе с рамкой, и
-   * разделитель перестаёт быть прямым. Заодно подсветка по наведению
-   * становится полосой во всю ширину — привычный вид разделённого списка.
+   * The row's rounded corners are removed as well, and this is not a side effect: with a
+   * straight line under a rounded row, the corners curl along with the frame, and the divider
+   * stops being straight. As a bonus, the hover highlight becomes a full-width band, the usual
+   * look of a divided list.
    *
-   * Подложки с рамкой у строки компонент не умеет намеренно: у такой подачи
-   * сейчас нет заказчика, а ось, заведённая на будущее, — это API, который
-   * придётся поддерживать без спроса (ADR-0031).
+   * The component deliberately does not support framed row backgrounds: nobody needs that style
+   * yet, and an axis reserved for the future is an API that would have to be maintained without
+   * a request for it (ADR-0031).
    */
   divided?: boolean;
-  /** Что показать при пустом списке. */
+  /** What to show when the list is empty. */
   emptyText?: ReactNode;
-  /** Классы корневого элемента. */
+  /** Class names for the root element. */
   className?: string;
 }
 
 /*
-  ПОЛЕ В СПИСКЕ КОМПАКТНЕЕ ОБЫЧНОГО, и это не вкусовщина.
+  A FIELD IN THE LIST IS MORE COMPACT THAN A STANDARD ONE, and this is not a matter of taste.
 
-  У `TextControl` высота 42 пикселя: 20 строчного бокса, 2×10 отступа и 2
-  рамки. Строка списка — 32. Разница видна ровно там, где поле стоит в одном
-  ряду со строками: ряд начинает «дышать» неровно, а при открытии правки строка
-  подпрыгивает на четырнадцать пикселей вместе со всем, что под ней.
+  `TextControl` is 42 pixels tall: a 20-pixel line box, 2×10 of padding and 2 for the border.
+  A list row is 32. The difference shows exactly where the field sits in one line with the rows:
+  the line starts to "breathe" unevenly, and when the edit opens, the row jumps fourteen
+  pixels together with everything below it.
 
-  Отступ снимается с САМОГО ПОЛЯ, а не с оболочки: рамка и подсветка фокуса
-  живут на оболочке, и обнулять её отступ значило бы прижать текст к рамке.
-  `20 + 2×5 + 2 = 32` — ровно высота строки.
+  The padding is removed from the FIELD ITSELF, not from the wrapper: the border and the focus
+  highlight live on the wrapper, and zeroing its padding would press the text against the border.
+  `20 + 2×5 + 2 = 32`, exactly the row height.
 */
 const FIELD_COMPACT_CLASS = "py-[5px]";
 
 export interface EditableListHandle {
   /**
-   * Поставить фокус в строку добавления.
+   * Moves focus to the add row.
    *
-   * Строки нет (`add` не передан) — вызов молча ничего не делает. Молча, а не
-   * исключением: вызывающий приходит из палитры команд или горячей клавиши и
-   * как раз НЕ хочет знать, в каком состоянии список. Исключение здесь
-   * означало бы проверку на стороне каждого вызова.
+   * If there is no row (`add` is not passed), the call silently does nothing. Silently rather
+   * than with an exception: the caller comes from a command palette or a hotkey and does NOT
+   * want to know what state the list is in. An exception here would mean a check at every call
+   * site.
    *
-   * `select` выделяет набранное: повторный вызов тогда начинает ввод заново, а
-   * не дописывает к прошлому. Без него поле, уже бывшее в фокусе, остаётся как
-   * есть — ни каретка, ни текст не трогаются.
+   * `select` selects the typed text: a repeated call then starts typing afresh rather than
+   * appending to the previous text. Without it, a field that already had focus stays as it is:
+   * neither the caret nor the text is touched.
    */
   focusAdd: (options?: { select?: boolean }) => void;
 }
 
-//: `group` ЗДЕСЬ — КОНТРАКТ, А НЕ ВЁРСТКА (ADR-0046). Внутри кита им никто не
-//: пользуется, но содержимое слотов `leading` и `trailing` у потребителя
-//: опирается на `group-hover:` и `group-focus-within:`, чтобы показывать
-//: действия строки по наведению. Снимете как мёртвый класс — у потребителя
-//: молча сломается: кнопки просто станут видны всегда. Закреплено тестом
-//: «строка остаётся корнем Tailwind-группы».
+//: `group` HERE IS A CONTRACT, NOT STYLING (ADR-0046). Nothing inside the kit uses it, but the
+//: content of the `leading` and `trailing` slots in consumer code relies on `group-hover:` and
+//: `group-focus-within:` to show the row's actions on hover. If you remove it as a dead class,
+//: consumers break silently: the buttons simply become always visible. Pinned by the test
+//: "the row stays the root of the Tailwind group".
 const ROW_CLASS =
   "group hover:bg-bg-2 flex items-center gap-1.5 rounded-lg px-1 py-1.5 text-[13px] " +
   "focus-visible:outline-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 " +
   "dragging:opacity-50";
 
-//: Разделитель — рамка снизу у всех строк, кроме последней. Скругление
-//: снимается: под скруглённой строкой линия загнулась бы по углам.
+//: The divider is a bottom border on all rows except the last. Rounding is removed: under a
+//: rounded row, the line would curl at the corners.
 const DIVIDED_ROW_CLASS = "border-line-soft rounded-none border-b last:border-b-0";
 
 /**
- * Строка, пропавшая из `items` и доживающая свой уход.
+ * A row that has disappeared from `items` and is living out its exit.
  *
- * Хранится СНИМОК элемента, а не ссылка на него в `items`: элемента там уже
- * нет, и взять подпись, иконку и слоты будет неоткуда — а рисовать уходящую
- * строку пустой значит показать не уход, а мигание.
+ * A SNAPSHOT of the element is stored, not a reference to it in `items`: the element is no
+ * longer there, and there would be nothing to take the label, icon and slots from. Drawing the
+ * leaving row as empty would show a flicker rather than an exit.
  */
 interface LeavingRow {
   item: EditableListItem;
-  /** Место, на котором строка стояла: на нём она и доживает. */
+  /** The place where the row stood: it lives out its exit there. */
   index: number;
   /**
-   * Высота в момент пропажи — от неё идёт смыкание.
+   * The height at the moment of disappearance: the collapse runs from it.
    *
-   * Замеряется, потому что `height` не интерполируется от `auto`, а высота
-   * строки зависит от содержимого потребителя: у списка с флажком она одна, у
-   * списка с аватаром другая, и знать её заранее компонент не может.
+   * It is measured, because `height` does not interpolate from `auto`, and the height of a row
+   * depends on the consumer's content: a list with a checkbox has one height, a list with an
+   * avatar another, and the component cannot know it in advance.
    */
   height: number;
 }
 
 /**
- * Список вместе с призраками, каждый на своём прежнем месте.
+ * The list together with the ghosts, each in its former place.
  *
- * Места считаются по индексам ПРОПАЖИ, а не по соседям: соседей могло не
- * остаться вовсе — массовое действие снимает десяток строк разом.
+ * Places are counted by the indexes of the DISAPPEARANCE, not by neighbors: the neighbors may
+ * not be there at all, since a bulk action removes a dozen rows at once.
  */
 function withLeaving(items: EditableListItem[], leaving: LeavingRow[]): EditableListItem[] {
   const merged = [...items];
@@ -207,45 +207,40 @@ function withLeaving(items: EditableListItem[], leaving: LeavingRow[]): Editable
 }
 
 /**
- * Список, строки которого правят по месту, пополняют снизу и переставляют
- * перетаскиванием.
+ * A list whose rows are edited in place, appended to from the bottom, and reordered by dragging.
  *
- * ПОЧЕМУ ЭТО НЕ `SortableList` С ПОЛЕМ ВНУТРИ — разбор в
- * ADR-0045.
- * Коротко: строка добавления не является элементом коллекции `GridList`, и у
- * перехода фокуса в неё и обратно не остаётся владельца, если собирать это
- * композицией. Клавиши внутри строки — тоже контракт, а не вёрстка.
+ * WHY THIS IS NOT A `SortableList` WITH A FIELD INSIDE: see ADR-0045.
+ * In short: the add row is not an element of the `GridList` collection, and if you assemble
+ * this by composition, moving focus into the add row and back has no owner. The keys inside a
+ * row are also part of the contract, not styling.
  *
- * ЧТО ВЫБИРАТЬ. Нужен только порядок — `SortableList`: он проще и его строка не
- * умеет ничего лишнего. Нужно дерево — `TreeView`. Порядок вычисляется из
- * значения колонки, а не назначается человеком, — `Table` и `DataTable`.
+ * WHAT TO CHOOSE. If you only need an order, use `SortableList`: it is simpler, and its row
+ * does not do anything extra. If you need a tree, use `TreeView`. If the order is computed from
+ * a column value rather than assigned by a person, use `Table` and `DataTable`.
  *
- * СОСТОЯНИЕ НЕ ХРАНИТСЯ. Порядок и значения приходят пропами и уходят наружу
- * целиком (ADR-0023); внутри живут только два черновика — правки и добавления.
- * Компонент, хранящий подтверждённое, показывал бы своё после отказа сервера
- * сохранить.
+ * STATE IS NOT STORED. The order and the values arrive as props and leave as a whole (ADR-0023);
+ * only two drafts live inside: the edit draft and the add draft. A component that stored the
+ * confirmed state would keep showing its own version after the server refused to save.
  *
- * КЛАВИАТУРА:
+ * KEYBOARD:
  *
- * - `↑`/`↓` ходят по строкам, `→` уводит фокус на ручку, `Enter` на ручке
- *   начинает перенос — всё это даёт `GridList` (ADR-0028);
- * - `Enter` на строке открывает правку, двойной щелчок — то же мышью;
- * - в поле правки `Enter` подтверждает, `Escape` возвращает прежнее значение,
- *   и оба возвращают фокус на строку; щелчок мимо подтверждает и фокус не
- *   забирает — контракт `InlineEdit` перенесён дословно;
- * - `↓` с последней строки приводит в строку добавления, `↑` из неё —
- *   обратно на последнюю строку;
- * - в строке добавления `Enter` подтверждает и ОСТАВЛЯЕТ поле открытым: серия
- *   задач вводится подряд. Пустое подтверждение не создаёт ничего.
+ * - `↑`/`↓` move between rows, `→` moves focus to the drag handle, and `Enter` on the drag handle
+ *   starts a move. All of this is provided by `GridList` (ADR-0028);
+ * - `Enter` on a row opens the edit; a double-click does the same with the mouse;
+ * - in the edit field, `Enter` confirms and `Escape` restores the previous value, and both return
+ *   focus to the row; a click elsewhere confirms and does not take focus: the `InlineEdit`
+ *   contract, carried over verbatim;
+ * - `↓` from the last row moves into the add row, and `↑` from the add row returns to the last row;
+ * - in the add row, `Enter` confirms and LEAVES the field open, so a series of tasks can be typed
+ *   one after another. An empty confirmation creates nothing.
  *
- * ПОКА СТРОКА В ПРАВКЕ, ТАЩИТЬ ЕЁ НЕЛЬЗЯ: ручка выключена, а стрелки
- * принадлежат каретке. Без второго `↑`/`↓` из открытого поля уезжали бы по
- * списку — ради этого перехвата компонент и заводился, поэтому он проверяется
- * отдельным браузерным тестом.
+ * WHILE A ROW IS BEING EDITED IT CANNOT BE DRAGGED: the handle is disabled, and the arrows belong
+ * to the caret. Without a second `↑`/`↓` handler, the arrows from an open field would move
+ * through the list. That handler is the reason the component was built this way, so it is
+ * covered by a separate browser test.
  *
- * ДОМЕННЫХ СОСТОЯНИЙ КОМПОНЕНТ НЕ ЗНАЕТ. Зачёркивание выполненного,
- * приглушение отложенного, бейдж статуса рисует потребитель в `leading` и
- * `trailing`.
+ * THE COMPONENT DOES NOT KNOW THE DOMAIN STATES. Striking through completed items, dimming
+ * deferred ones, and the status badge are drawn by the consumer in `leading` and `trailing`.
  */
 export const EditableList = forwardRef<EditableListHandle, EditableListProps>(function EditableList(
   {
@@ -272,39 +267,37 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
   const fieldRef = useRef<HTMLInputElement>(null);
   const addRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  // Escape снимает режим сам, и вслед за ним не должно сработать подтверждение
-  // по потере фокуса.
+  // Escape exits the mode by itself, and the commit on focus loss must not fire right after it.
   const cancelling = useRef(false);
-  // Возврат фокуса нужен НЕ всегда: после щелчка мимо забирать его обратно
-  // значит уводить оттуда, куда пользователь только что ушёл.
+  // Returning focus is NOT always wanted: after a click elsewhere, taking focus back would pull
+  // it away from where the user has just gone.
   const returnTo = useRef<Key | null>(null);
   /*
-    ЧЕРНОВИКИ ЖИВУТ В САМИХ ПОЛЯХ, А НЕ В СОСТОЯНИИ — и это не экономия на
-    ре-рендерах, а единственный способ, которым правка вообще работает.
+    THE DRAFTS LIVE IN THE FIELDS THEMSELVES, NOT IN STATE. This is not a saving on re-renders;
+    it is the only way the edit works at all.
 
-    `GridList` перемонтирует содержимое строки на каждый рендер компонента.
-    Черновик в состоянии означал бы рендер на каждое нажатие, а значит — новый
-    узел поля, повторный вызов callback-ref и возврат исходного значения:
-    набранное стиралось прямо во время набора. Проверено в живом браузере, и
-    видно это было только там — в jsdom коллекция ведёт себя иначе.
+    `GridList` remounts the row's content on every render of the component. A draft in state
+    would mean a render on every keystroke, and therefore a new field node, a repeated call of
+    the callback ref, and a reset to the original value: the typed text would be erased in the
+    middle of typing. Verified in a live browser, and it was visible only there, since jsdom
+    behaves differently with collections.
 
-    Отсюда правило: пока печатают, состояние здесь не меняется. Компонент
-    перерисовывается ровно на переходе режима правки.
+    Hence the rule: while typing, the state does not change here. The component re-renders
+    exactly at the transition into edit mode.
   */
   const openSeed = useRef("");
 
   /*
-    Наружу отдаётся ОДНА ручка, а не сам элемент ввода.
+    ONE handle is exposed to the outside, not the input element itself.
 
-    Отдай компонент `HTMLInputElement` — и его разметка станет публичным
-    контрактом: потребитель начнёт читать `value`, вешать обработчики и
-    полагаться на то, что поле именно `input`, а не, скажем, пара из поля и
-    подложки. Узкий хэндл говорит ровно то, что нужно вызывающему: «поставь
-    курсор туда, куда человек собирается печатать».
+    If the component handed out the `HTMLInputElement`, its markup would become a public contract:
+    the consumer would start reading `value`, attaching handlers, and relying on the field being
+    an `input` rather than, say, a pair of a field and a backdrop. A narrow handle says exactly
+    what the caller needs: "put the caret where the person is about to type".
 
-    Фокус ставится без `preventScroll`: если строка добавления за пределами
-    видимой области, браузер сам приведёт её на экран — ради этого умолчание и
-    существует, переопределять его нечем.
+    Focus is set without `preventScroll`: if the add row is outside the visible area, the browser
+    will bring it onto the screen itself. That default exists for exactly this reason, and there
+    is no way to override it here.
   */
   useImperativeHandle(
     ref,
@@ -323,12 +316,11 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
   const last = items.length > 0 ? items[items.length - 1] : null;
 
   /*
-    Строка ищется в DOM по `data-key`, а не по карте рефов.
+    The row is found in the DOM by `data-key`, not through a map of refs.
 
-    `GridListItem` проп `ref` до своего элемента не доносит — проверено в живом
-    браузере: карта оставалась пустой, и `Enter` на строке молча ничего не
-    открывал. Атрибут же react-aria ставит сама, и он и так нужен обработчику
-    клавиш, чтобы понять, на какой строке стоит фокус.
+    `GridListItem` does not pass the `ref` prop down to its element: verified in a live browser,
+    where the map stayed empty and `Enter` on a row silently opened nothing. The attribute is set
+    by react-aria itself, and the key handler needs it anyway, to know which row has focus.
   */
   const rowNode = (id: Key) =>
     listRef.current?.querySelector<HTMLElement>(`[data-key="${CSS.escape(String(id))}"]`) ?? null;
@@ -336,26 +328,24 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
   const focusRow = (id: Key) => rowNode(id)?.focus();
 
   /*
-    СТРОКА, ПРОПАВШАЯ ИЗ `items`, ДОЖИВАЕТ СВОЙ УХОД.
+    A ROW THAT HAS DISAPPEARED FROM `items` LIVES OUT ITS EXIT.
 
-    Довод тот же, по которому оверлеи получили уход в 3.23: исчезновение в кадр
-    читается как сбой. У строки списка цена выше — она исчезает не одна:
-    соседние смыкаются мгновенно, и вместе с ними подпрыгивает всё, что ниже.
-    Человек отметил задачу выполненной, а список под курсором переложился
-    рывком, и следующая строка оказалась под указателем раньше, чем он понял,
-    какая ушла.
+    The reasoning is the same as the one by which overlays got their exit in 3.23: a disappearance
+    that happens in one frame reads as a failure. For a list row the cost is higher: it is not the
+    only element that disappears. Neighbors close up instantly, and everything below jumps with
+    them. A person marked a task as done, and the list under the cursor shifted with a jolt, so the
+    next row ended up under the pointer before the person understood which one had gone.
 
-    ПРИДЕРЖАТЬ СТРОКУ МОЖЕТ ТОЛЬКО КОМПОНЕНТ. Разметка строк — его: наружу не
-    выдаётся ни узел, ни `ref`, ни класс. Потребителю остаётся единственный
-    способ — соврать, что запись ещё в списке; тогда на время ухода она
-    остаётся настоящей строкой: её найдёт перетаскивание, по ней пойдёт фокус,
-    её объявит скринридер, и `onReorder` вернёт её ключ в новом порядке.
+    ONLY THE COMPONENT CAN HOLD A ROW. The row markup belongs to it: no node, no `ref`, and no
+    class is exposed to the consumer. That leaves the consumer one option: pretend the record is
+    still in the list. Then, for the duration of the exit, it remains a real row: drag-and-drop
+    finds it, focus goes to it, a screen reader announces it, and `onReorder` returns its key in
+    the new order.
 
-    СРАВНЕНИЕ ИДЁТ В РЕНДЕРЕ, А НЕ В ЭФФЕКТЕ. Эффект стреляет после коммита, а
-    к тому моменту строки в DOM уже нет: она пропала бы на кадр и вернулась
-    призраком — то самое мигание, ради устранения которого всё и делается.
-    Здесь же прежний DOM ещё на месте, и его можно и замерить, и спросить про
-    фокус.
+    THE COMPARISON RUNS IN THE RENDER, NOT IN AN EFFECT. An effect fires after the commit, and by
+    then the row is already gone from the DOM: it would vanish for a frame and come back as a
+    ghost, which is exactly the flicker this exists to eliminate. Here the previous DOM is still
+    in place, so it can be measured and asked about focus.
   */
   const shownItems = useRef(items);
   const focusFrom = useRef<number | null>(null);
@@ -366,12 +356,12 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
     const present = new Set(items.map((item) => String(item.id)));
     const gone: LeavingRow[] = [];
     /*
-      Место берётся из DOM, а не из индекса в прежнем `items`.
+      The place is taken from the DOM, not from the index in the previous `items`.
 
-      Прежний массив призраков не знает: строка, ушедшая секунду назад, в нём
-      уже не числится, и индексы следующих сдвинуты на неё. Две пропажи подряд
-      в разных местах от этого менялись местами на экране. На экране же порядок
-      настоящий — его и спрашиваем.
+      The previous array of ghosts does not know about a row that left a second ago: it is no
+      longer counted there, and the indexes of the following rows are shifted by it. Two
+      disappearances in a row at different places swapped their positions on the screen. The
+      screen has the real order, so that is what we ask.
     */
     const shown = [...(listRef.current?.querySelectorAll<HTMLElement>("[data-key]") ?? [])];
     previous.forEach((item, fallbackIndex) => {
@@ -379,13 +369,13 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
       const node = rowNode(item.id);
       const index = node != null ? shown.indexOf(node) : fallbackIndex;
       /*
-        Фокус спрашивается ДО коммита. После него строка уже `inert`, браузер
-        снимает с неё фокус сам, и узнать, стоял ли он здесь, будет негде:
-        `document.activeElement` к этому времени — `body`.
+        Focus is asked about BEFORE the commit. After it, the row is already `inert`, the browser
+        removes focus from it by itself, and there would be no way to tell whether it had been
+        here: by then `document.activeElement` is `body`.
 
-        Место берётся ЗДЕСЬ из прежнего `items`, а не с экрана: по нему потом
-        ищется сосед в новом `items`, и экранный индекс, считающий призраков,
-        указал бы мимо — через строку от ушедшей.
+        The place is taken HERE from the previous `items`, not from the screen: the neighbor is
+        later looked up in the new `items` by it, and a screen index that counts ghosts would point
+        past the target, through the row that left.
       */
       if (node != null && node.contains(document.activeElement))
         focusFrom.current = Math.min(focusFrom.current ?? fallbackIndex, fallbackIndex);
@@ -396,9 +386,8 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
       });
     });
     /*
-      Вернувшийся ключ снимает своего призрака немедленно: двух строк с одним
-      `id` в коллекции быть не может, а «удалил и сразу вернул» — обычный
-      случай отмены у потребителя.
+      A key that returns removes its ghost at once: two rows with the same `id` cannot exist in
+      the collection, and "deleted and immediately restored" is a common undo case for the consumer.
     */
     const kept = leaving.filter((row) => !present.has(String(row.item.id)));
     if (gone.length > 0 || kept.length !== leaving.length) setLeaving([...kept, ...gone]);
@@ -407,15 +396,14 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
   const rows = leaving.length === 0 ? items : withLeaving(items, leaving);
 
   /*
-    ФОКУС УХОДИТ ВПЕРЁД, а не остаётся на призраке: с `inert` он провалится в
-    `body`, и клавиатурная работа со списком оборвётся на каждом выполнении.
+    FOCUS MOVES FORWARD, rather than staying on the ghost: while `inert`, it would fall into
+    `body`, and keyboard work with the list would break on every deletion.
 
-    Вперёд — это на строку, занявшую место ушедшей: фокус остаётся там же, где
-    был. Её нет (ушла последняя) — предыдущая; списка не осталось вовсе —
-    строка добавления.
+    Forward means the row that has taken the place of the one that left: focus stays where it was.
+    If there is none (the last row left), the previous row; if no rows remain at all, the add row.
 
-    Без списка зависимостей: эффект стреляет на коммите, где строка пропала, а
-    сторожит его ref, а не сравнение пропсов.
+    No dependency list: the effect fires at the commit where the row disappeared, and it is guarded
+    by a ref, not by a comparison of props.
   */
   useLayoutEffect(() => {
     const from = focusFrom.current;
@@ -430,25 +418,23 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
     setLeaving((current) => current.filter((row) => String(row.item.id) !== key));
 
   /*
-    ПРИЗРАК СНИМАЕТСЯ ПО КОНЦУ СВОЕЙ АНИМАЦИИ, а не по таймеру на ту же ступень:
-    таймер пришлось бы держать в согласии со шкалой числом, то есть завести
-    вторую запись длительности вне `styles.css`.
+    A GHOST IS REMOVED AT THE END OF ITS ANIMATION, not by a timer set to the same duration: the timer
+    would have to stay in sync with the scale, which means a second duration value outside `styles.css`.
 
-    Слушатель висит на обёртке, а не на строке: `animationend` всплывает, а
-    `GridListItem` своих обработчиков анимации наружу не отдаёт. И он НАСТОЯЩИЙ,
-    а не синтетический: React-обработчик `onAnimationEnd` на это событие в jsdom
-    не срабатывает вовсе (проверено), то есть единственный способ проверить уход
-    вне браузера пропал бы вместе с ним.
+    The listener is on the wrapper, not on the row: `animationend` bubbles up, and `GridListItem` does
+    not expose its own animation handlers. And it is a REAL event, not a synthetic one: React's
+    `onAnimationEnd` handler does not fire on this event in jsdom at all (verified), so without this
+    the only way to test the exit outside a browser would be lost along with it.
 
-    Второй путь — для случая «анимации нет вовсе»: её нет в jsdom и у браузера,
-    которому движение отключили настолько, что правило не применилось. Без него
-    строка осталась бы на экране навсегда.
+    The second path covers the case where there is no animation at all: that happens in jsdom, and
+    in a browser that has had motion turned off to the point where the rule did not apply. Without
+    it, the row would stay on the screen forever.
 
-    КАДР ЗДЕСЬ ОБЯЗАТЕЛЕН. `GridList` монтирует строки отдельным проходом, позже
-    нашего коммита: на момент эффекта узла призрака ещё нет, и пустой ответ
-    `getAnimations` означал бы «не анимируется» для каждой уходящей строки.
-    Проверено в живом браузере: без кадра уход не начинался вовсе — строка
-    пропадала в тот же кадр, как и до правки.
+    A FRAME IS REQUIRED HERE. `GridList` mounts the rows in a separate pass, later than our commit:
+    at the moment of the effect the ghost's node is not there yet, and an empty answer from
+    `getAnimations` would mean "not animated" for every leaving row. Verified in a live browser:
+    without the frame, the exit did not start at all, and the row disappeared in the same frame as
+    before the change.
   */
   useLayoutEffect(() => {
     if (leaving.length === 0) return;
@@ -456,15 +442,15 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
     const ids = new Set(leaving.map((row) => String(row.item.id)));
 
     const onAnimationEnd = (event: AnimationEvent) => {
-      // Своя анимация строки, а не чужая: у потребителя в слотах бывает
-      // собственная, и она всплывает сюда же.
+      // The row's own animation, not someone else's: the consumer's slots may have an animation
+      // of their own, and it bubbles up here too.
       const key = (event.target as HTMLElement | null)?.getAttribute?.("data-key");
       if (key != null && ids.has(key)) dropLeaving(key);
     };
     node?.addEventListener("animationend", onAnimationEnd);
-    // `animationcancel` — не перестраховка: анимацию прерывает любая правка
-    // разметки строки у потребителя, а прерванная не досылает `animationend`,
-    // и призрак остался бы на экране навсегда.
+    // `animationcancel` is not a precaution: any change to the consumer's row markup interrupts
+    // the animation, and an interrupted one does not send `animationend`, so the ghost would stay
+    // on the screen forever.
     node?.addEventListener("animationcancel", onAnimationEnd);
 
     const dropWhatDoesNotAnimate = () => {
@@ -484,25 +470,23 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
   }, [leaving]);
 
   /*
-    ФОКУС СТАВИТСЯ В CALLBACK-REF, А НЕ В ЭФФЕКТЕ — и это тоже находка живого
-    браузера, а не вкусовщина.
+    FOCUS IS SET IN THE CALLBACK REF, NOT IN AN EFFECT, and this too is a finding from a live browser,
+    not a matter of taste.
 
-    `GridList` монтирует содержимое строки отдельным проходом, позже собственного
-    коммита: к моменту `useLayoutEffect` реф поля ещё пуст, и фокус уходил в
-    никуда — поле открывалось, а печатать в него было нельзя. Callback-ref
-    срабатывает ровно тогда, когда узел появился.
+    `GridList` mounts the row's content in a separate pass, later than its own commit: by the time
+    `useLayoutEffect` runs, the field's ref is still empty, and focus went nowhere. The field opened,
+    but it was not possible to type into it. The callback ref fires exactly when the node has appeared.
 
-    Ссылка стабильна внутри одной правки (`useCallback` по `editingId`), иначе
-    React отцеплял бы и прицеплял реф на каждый ввод символа и `select()`
-    сбрасывал бы набранное.
+    The reference is stable within one edit (`useCallback` keyed on `editingId`); otherwise React would
+    detach and reattach the ref on every typed character, and `select()` would reset the typed text.
   */
   const attachField = useCallback(
     (node: HTMLInputElement | null) => {
       fieldRef.current = node;
       if (node == null) return;
       cancelling.current = false;
-      // Значение кладётся в DOM СИНХРОННО, до `select()`: `setDraft` — запрос на
-      // рендер, а не запись, и к моменту выделения в поле стоял бы прежний текст.
+      // The value is written into the DOM SYNCHRONOUSLY, before `select()`: `setDraft` is a render
+      // request, not a write, and at the moment of selection the field would still hold the old text.
       node.value = openSeed.current;
       node.focus();
       node.select();
@@ -516,9 +500,9 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
     const id = returnTo.current;
     returnTo.current = null;
     focusRow(id);
-    // Зависимость ТОЛЬКО `editingId`: правка значения снаружи при открытом поле
-    // не должна затирать набранное. Эффект стреляет на переходе режима, а не на
-    // смене значения — то же решение, что в `InlineEdit`.
+    // The ONLY dependency is `editingId`: changing the value from outside while the field is open
+    // must not overwrite the typed text. The effect fires on the transition of the mode, not on a
+    // change of value: the same decision as in `InlineEdit`.
   }, [editingId]);
 
   const startEdit = (item: EditableListItem) => {
@@ -530,7 +514,7 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
   const commit = (withFocus: boolean) => {
     if (!editing) return;
     const { id, value } = editing;
-    // Набранное читается из DOM: своей копии у компонента нет.
+    // The typed text is read from the DOM: the component has no copy of its own.
     const next = fieldRef.current?.value ?? value;
     returnTo.current = withFocus ? id : null;
     setEditingId(null);
@@ -545,30 +529,27 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
   };
 
   /*
-    ВСЕ КЛАВИШИ СПИСКА РАЗБИРАЮТСЯ ЗДЕСЬ, В ОДНОМ МЕСТЕ И В ФАЗЕ ПОГРУЖЕНИЯ.
+    ALL THE LIST'S KEYS ARE HANDLED HERE, IN ONE PLACE AND IN THE CAPTURE PHASE.
 
-    Так вышло не от любви к единому обработчику, а по замеру в живом браузере:
-    `GridList` слушает клавиши САМ и делает это на погружении, то есть раньше
-    любого обработчика на поле внутри строки. Обработчик, висевший на поле,
-    отрабатывал уже после того, как список успевал увести фокус: `↓` из
-    открытого поля прыгала на следующую строку вместо движения каретки. Ровно
-    этот дефект компонент и обязан не допускать.
+    This did not come from a love of a single handler; it came from a measurement in a live browser:
+    `GridList` listens to the keys ITSELF and does so during capture, that is, before any handler on
+    the field inside a row. A handler attached to the field ran only after the list had already moved
+    focus: `↓` from an open field jumped to the next row instead of moving the caret. Preventing
+    exactly this defect is what the component has to guarantee.
 
-    Обёртка — предок списка, поэтому её погружение идёт первым: событие,
-    остановленное тут, до react-aria не доходит вовсе.
+    The wrapper is an ancestor of the list, so its capture phase runs first: an event stopped here
+    never reaches react-aria at all.
   */
   const handleListKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
-    // Поле опознаётся по атрибуту, а не по совпадению с рефом: `GridList`
-    // перемонтирует содержимое строки, и сравнение по ссылке нет-нет да и
-    // промахивалось — Escape уходил в список, тот уводил фокус, и правка
-    // подтверждалась по потере фокуса вместо отмены.
+    // The field is recognized by its attribute, not by matching the ref: `GridList` remounts the
+    // row's content, and a reference comparison occasionally missed. Escape went to the list, the
+    // list moved focus, and the edit was confirmed on focus loss instead of being cancelled.
     const field = target.getAttribute("data-field");
 
     if (field === "edit") {
-      // Гасится ВСЁ, а не только Enter и Escape: стрелки, пробел и буквы
-      // принадлежат каретке, а список забрал бы их себе под навигацию и набор
-      // по первым буквам.
+      // Everything is stopped, not only Enter and Escape: arrows, Space and letters belong to the
+      // caret, and the list would take them for its own navigation and type-to-select.
       event.stopPropagation();
       if (event.key === "Enter") {
         event.preventDefault();
@@ -586,18 +567,18 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
       if (event.key === "Enter") {
         event.preventDefault();
         const value = (addRef.current?.value ?? "").trim();
-        // Пустое подтверждение — не создание пустой строки, а отсутствие ввода.
+        // An empty confirmation is not the creation of an empty row; it is the absence of input.
         if (value === "") return;
-        // Поле чистится и ОСТАЁТСЯ открытым и в фокусе: в этом вся разница с
-        // `InlineEdit`, который по Enter закрывается.
+        // The field is cleared and STAYS open and focused: that is the whole difference from
+        // `InlineEdit`, which closes on Enter.
         if (addRef.current != null) addRef.current.value = "";
         add?.onAdd(value);
         return;
       }
       if (event.key === "Escape") {
         event.preventDefault();
-        // Первый Escape чистит черновик, второй уводит фокус: иначе из поля,
-        // которое всегда на экране, некуда выйти с клавиатуры.
+        // The first Escape clears the draft, the second moves focus away: otherwise there would be no
+        // way to leave the field from the keyboard, since it is always on the screen.
         if ((addRef.current?.value ?? "") !== "") {
           if (addRef.current != null) addRef.current.value = "";
           return;
@@ -606,7 +587,7 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
         return;
       }
       if (event.key === "ArrowUp" && last != null) {
-        // Однострочному полю вертикальные стрелки не нужны, а список наверху.
+        // A single-line field does not need vertical arrows, and the list is above it.
         event.preventDefault();
         focusRow(last.id);
       }
@@ -614,18 +595,17 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
     }
 
     /*
-      КЛАВИШИ НИЖЕ ПРИНАДЛЕЖАТ СТРОКЕ, А НЕ ТОМУ, ЧТО В НЕЙ ЛЕЖИТ.
+      THE KEYS BELOW BELONG TO THE ROW, NOT TO WHATEVER IS INSIDE IT.
 
-      Раньше цель искалась через `closest("[data-key]")`, то есть срабатывала
-      на любом потомке строки. Первой под это попадала собственная ручка
-      переноса: `Enter` на ней гасился здесь и открывал правку, а до
-      react-aria не доходил — перенос с клавиатуры не начинался никогда, хотя
-      справочник его обещает. Следом попадало всё, что потребитель кладёт в
-      `leading` и `trailing`: флажок и кнопки действий строки по `Enter`
-      открывали правку вместо своего действия.
+      The target used to be found through `closest("[data-key]")`, so it fired on any descendant of
+      the row. The first to match was the row's own move handle: `Enter` on it was stopped here and
+      opened the edit, and it never reached react-aria, so a keyboard move never started, even though
+      the reference promises it. Next, everything the consumer puts into `leading` and `trailing`
+      was matched: `Enter` on the checkbox or the row's action buttons opened the edit instead of
+      their own action.
 
-      Строка в фокусе — это она сама: `GridList` вешает `data-key` на элемент
-      строки, и `event.target` при этом равен ему. Поэтому условие строгое.
+      The row in focus is the row itself: `GridList` puts `data-key` on the row element, and
+      `event.target` is equal to it. That is why the condition is strict.
     */
     const key = target.getAttribute("data-key");
     if (key == null) return;
@@ -648,23 +628,20 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
   const { dragAndDropHooks } = useDragAndDrop({
     getItems: (keys) => [...keys].map((key) => ({ "text/plain": String(key) })),
     /*
-      ТОЛЬКО `move`, и это не украшение курсора.
+      ONLY `move`, and this is not a cursor decoration.
 
-      По умолчанию разрешены и перемещение, и копирование, а операционная
-      система рисует для копирования «плюс» — пользователь видит его посреди
-      перестановки и ждёт, что строка удвоится. Скопировать строку список не
-      умеет и уметь не должен: он меняет порядок, а не состав.
+      By default, both moving and copying are allowed, and the operating system draws a "plus" for
+      copying: the person sees it in the middle of a reorder and expects the row to be duplicated.
+      The list cannot copy a row and must not: it changes the order, not the set of items.
 
-      В WEBKIT ЗНАЧОК ВСЁ РАВНО МЕЛЬКАЕТ, и починить это отсюда нельзя.
-      Настройка применяется: `effectAllowed` записывается и читается обратно
-      как `move` в обоих движках, react-aria вдобавок пишет `dropEffect: move`
-      на каждом `dragover`. Но WebKit теряет её на уровне сессии
-      перетаскивания и отдаёт приёмнику `all` (bugs.webkit.org/show_bug.cgi
-      ?id=178058), а `all` включает копирование — система и рисует «плюс»,
-      пока её не переубедят. Сама перестановка при этом верна: react-aria
-      держит настоящий набор операций в своей переменной и пересекает с тем,
-      что пришло, — строк после броска столько же, сколько было. Замер обоих
-      движков — в справочнике компонента.
+      IN WEBKIT THE ICON STILL FLICKERS, and it cannot be fixed from here.
+      The setting does take effect: `effectAllowed` is written and read back as `move` in both engines,
+      and react-aria additionally writes `dropEffect: move` on every `dragover`. But WebKit loses it at
+      the level of the drag session and hands the drop target `all` (bugs.webkit.org/show_bug.cgi
+      ?id=178058), and `all` includes copying, so the system draws the "plus" until it is talked out
+      of it. The reorder itself is correct: react-aria keeps the real set of operations in its own
+      variable and intersects it with what arrived, so after the drop there are as many rows as there
+      were. The measurements for both engines are in the component's reference.
     */
     getAllowedDropOperations: () => ["move"],
     onReorder(event) {
@@ -681,9 +658,9 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
 
   return (
     /*
-      Перехват клавиш висит на ОБЁРТКЕ, а не на `GridList`: своих DOM-пропов
-      событий он не принимает. Обёртка и без того нужна под строку добавления,
-      а погружение до самого списка всё равно проходит через неё.
+      The key handler is on the WRAPPER, not on `GridList`: it does not accept DOM event props of its
+      own. The wrapper is needed for the add row anyway, and the capture phase down to the list still
+      passes through it.
     */
     <div
       ref={listRef}
@@ -692,17 +669,16 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
     >
       <GridList
         aria-label={ariaLabel}
-        // Призраки идут в коллекцию наравне со строками: место в ряду у них
-        // настоящее, иначе уход шёл бы не там, где строка стояла.
+        // Ghosts go into the collection on a par with the rows: their place in the sequence is real,
+        // otherwise the exit would run somewhere other than where the row stood.
         items={rows}
         /*
-          БЕЗ ЭТОГО ПРАВКА НЕ ОТКРЫВАЕТСЯ ВОВСЕ — проверено в живом браузере.
+          WITHOUT THIS, THE EDIT DOES NOT OPEN AT ALL: verified in a live browser.
 
-          `GridList` строит коллекцию один раз и кеширует строки по элементам:
-          смена внешнего состояния строки не перерисовывает. `editingId` в
-          элементе не живёт (и жить не должен: он про режим, а не про данные),
-          поэтому он объявляется зависимостью явно. Обработчик клавиш при этом
-          отрабатывал исправно — дефект был бы тихим.
+          `GridList` builds the collection once and caches the rows by element: a change to external
+          row state does not re-render it. `editingId` does not live in the element (and must not: it
+          describes the mode, not the data), so it is declared as a dependency explicitly. The key
+          handler, meanwhile, worked correctly; the defect would have been silent.
         */
         dependencies={[editingId, leaving]}
         dragAndDropHooks={dragAndDropHooks}
@@ -712,29 +688,28 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
         {(item) => {
           const leavingRow = leaving.find((row) => row.item.id === item.id);
           const isLeaving = leavingRow != null;
-          // Призрак не правится: поле в уходящей строке успело бы забрать
-          // фокус и осталось бы открытым над пустым местом.
+          // A ghost is not editable: the field in a leaving row could take focus and would stay open
+          // above an empty place.
           const isEditing = !isLeaving && item.id === editingId;
           return (
             <GridListItem
               id={item.id}
               /*
-                УХОДЯЩАЯ СТРОКА НЕЖИВАЯ НЕМЕДЛЕННО, а не в конце анимации.
+                THE LEAVING ROW IS DEAD IMMEDIATELY, not at the end of the animation.
 
-                `inert` разом закрывает всё, что иначе пришлось бы закрывать
-                по отдельности: строка не фокусируется, не отвечает на щелчок
-                и не попадает в дерево доступности — для незрячего запись
-                исчезла в момент действия, и держать её лишние 150 мс незачем.
-                `isDisabled` добавлен рядом не для красоты: `inert` не знает
-                про коллекцию react-aria, и без него стрелки продолжали бы
-                считать призрака остановкой на пути.
+                `inert` closes at once everything that would otherwise need to be closed one by one: the
+                row takes no focus, does not respond to clicks, and does not appear in the accessibility
+                tree. For a blind user, the record vanished at the moment of the action, and there is no
+                reason to keep it for an extra 150 ms.
+                `isDisabled` is added alongside not for decoration: `inert` does not know about the
+                react-aria collection, and without it the arrows would keep counting the ghost as a stop
+                on the way.
               */
               inert={isLeaving}
               isDisabled={isLeaving}
               /*
-                Высота уезжает переменной, а не классом: она разная у каждой
-                строки, а классы Tailwind собираются на сборке (см. запрет на
-                `` `h-[${n}px]` `` в `lib/variants.ts`).
+                The height is passed as a variable, not as a class: it differs for each row, and Tailwind
+                classes are built at build time (see the ban on `` `h-[${n}px]` `` in `lib/variants.ts`).
               */
               style={
                 isLeaving
@@ -742,10 +717,9 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
                   : undefined
               }
               /*
-                У пустого значения имя берётся из подписи-заглушки, а не
-                остаётся пустым: react-aria на безымянную строку отвечает
-                предупреждением в консоль, и список с такой строкой выглядит
-                рабочим, а набором по первым буквам до неё не добраться.
+                An empty value takes its name from a placeholder label rather than being left empty:
+                react-aria answers a row without a name with a console warning, and a list with such a row
+                looks working, yet type-to-select by the first letters cannot reach it.
               */
               textValue={
                 item.textValue ??
@@ -753,46 +727,40 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
               }
               onAction={onRowAction != null ? () => onRowAction(item.id) : undefined}
               /*
-                В правке строка отдаёт свои вертикальные отступы полю: поле
-                несёт собственную рамку и отступ, и сложенные вместе они давали
-                44 пикселя против 32 у соседей — строка подпрыгивала, а вместе с
-                ней уезжал вниз весь список.
+                In edit mode the row gives its vertical padding to the field: the field carries its own
+                border and padding, and stacked together they made 44 pixels against 32 for the neighbors.
+                The row jumped, and the whole list below it moved down with it.
               */
               className={cn(
                 ROW_CLASS,
                 divided && DIVIDED_ROW_CLASS,
                 isEditing && "py-0",
-                // `overflow-hidden` — часть смыкания: без него содержимое
-                // строки торчало бы из схлопывающейся высоты.
+                // `overflow-hidden` is part of the collapse: without it, the row's content would stick
+                // out of the shrinking height.
                 isLeaving && "animate-rowout overflow-hidden"
               )}
             >
               {/*
-                Ручка — часть контракта, а не опция: без `<Button slot="drag">`
-                строка таскается мышью, с клавиатуры не берётся вовсе, и
-                react-aria лишь пишет предупреждение в консоль (ADR-0028).
+                The drag handle is part of the contract, not an option: without `<Button slot="drag">`,
+                the row can be dragged with the mouse, cannot be picked up from the keyboard at all, and
+                react-aria only writes a warning to the console (ADR-0028).
 
-                КУРСОР И ЩЕЛЧОК ЖИВУТ НА ОБЁРТКЕ, А НЕ НА САМОЙ РУЧКЕ.
+                THE CURSOR AND THE CLICK LIVE ON THE WRAPPER, NOT ON THE HANDLE ITSELF.
 
-                react-aria принудительно ставит кнопке переноса
-                `pointer-events: none` — она нужна ему как цель для клавиатуры
-                и скринридера, а не как цель указателя. Следствие, которое
-                легко не заметить: `cursor-grab` на ней не применялся НИКОГДА.
-                Замер: `getComputedStyle` у кнопки честно отдаёт `grab`, а
-                `elementFromPoint` в центре шести точек возвращает саму строку
-                с `cursor: auto`. То есть единственный видимый признак «здесь
-                берут и тащат» отсутствовал, хотя в исходнике выглядел
-                написанным.
+                react-aria forces `pointer-events: none` onto the move button: it needs it as a target for
+                the keyboard and for screen readers, not as a pointer target. The consequence, which is easy
+                to miss: `cursor-grab` on it was NEVER applied. Measured: `getComputedStyle` on the button
+                honestly returns `grab`, but `elementFromPoint` at the center of six points returns the row
+                itself with `cursor: auto`. So the only visible sign of "grab and drag here" was missing,
+                although the source looked as if it was written.
 
-                Обёртка же указатель ловит, поэтому курсор стоит на ней.
+                The wrapper catches the pointer, so the cursor is set on it.
 
-                Она же гасит щелчок: сквозь выключенную для указателя кнопку
-                он попадал в строку и звал её действие — то есть щелчок по
-                ручке делал то же, что щелчок по строке. Гасится pointerdown,
-                а не click: действие строки react-aria вызывает из `usePress`
-                по pointerup, до click. Перенос от этого не страдает — его
-                ведёт нативный `draggable` на строке, а он о всплытии
-                синтетических событий React ничего не знает.
+                It also stops the click: through the button, which is disabled for the pointer, the click fell
+                into the row and triggered its action, so a click on the handle did the same thing as a click
+                on the row. What gets stopped is pointerdown, not click: react-aria calls the row's action from
+                `usePress` on pointerup, before click. The move is not affected by this: it is driven by the
+                native `draggable` on the row, which knows nothing about the bubbling of React's synthetic events.
               */}
               <span
                 className={cn(
@@ -851,16 +819,15 @@ export const EditableList = forwardRef<EditableListHandle, EditableListProps>(fu
       {add != null ? (
         <div className="flex items-center gap-1.5 px-1">
           {/*
-            Строка добавления НЕ элемент коллекции: у неё нет ни ключа, ни
-            места в порядке, и перетаскивать её нечем. Место ручки при этом
-            занято пустым слотом — иначе поле разъезжается с названиями строк.
+            The add row is NOT a collection element: it has neither a key nor a place in the order, and
+            there is nothing to drag. The drag handle's place is still occupied by an empty slot, otherwise
+            the field would drift out of line with the row titles.
           */}
           <span aria-hidden className="size-5 shrink-0" />
           {/*
-            Вторая ведущая колонка. Ширину `leading` задаёт потребитель, и
-            вычислить её компонент не может: замерять чужую разметку значило
-            бы читать раскладку в каждом рендере и всё равно промахиваться на
-            первом кадре. Поэтому колонку сообщает тот, кто её и создал.
+            The second leading column. The width of `leading` is set by the consumer, and the component
+            cannot calculate it: measuring someone else's markup would mean reading the layout on every
+            render and still missing on the first frame. So the one who created the column reports it.
           */}
           {add.leading}
           <TextControl

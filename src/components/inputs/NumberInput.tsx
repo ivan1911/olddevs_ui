@@ -8,35 +8,35 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { FIELD_INPUT_CLASS, FIELD_SHELL_CLASS } from "../../lib/field.js";
 
 export interface NumberInputProps {
-  /** `null` — поле пусто. Это не то же самое, что введённый ноль. */
+  /** `null` means the field is empty. This is not the same as an entered zero. */
   value: number | null;
-  /** Вызывается при смене числа; `null` — поле очищено. */
+  /** Called when the number changes; `null` means the field was cleared. */
   onChange: (value: number | null) => void;
-  /** Наименьшее допустимое значение. */
+  /** The smallest allowed value. */
   min?: number;
-  /** Наибольшее допустимое значение. */
+  /** The largest allowed value. */
   max?: number;
-  /** Шаг изменения кнопками и стрелками клавиатуры. */
+  /** The step for the buttons and the keyboard arrows. */
   step?: number;
-  /** Формат отображения: проценты, валюта, единицы. Идёт в `Intl.NumberFormat`. */
+  /** The display format: percentages, currency, units. Passed to `Intl.NumberFormat`. */
   formatOptions?: Intl.NumberFormatOptions;
-  /** Плейсхолдер в пустом поле. */
+  /** The placeholder in an empty field. */
   placeholder?: string;
-  /** Выключает поле и кнопки шага. */
+  /** Disables the field and the step buttons. */
   disabled?: boolean;
-  /** Показывает поле в состоянии ошибки. */
+  /** Shows the field in the error state. */
   invalid?: boolean;
   /**
-   * Доступное имя. Обязательно и проверяется компилятором — как у `Toggle`.
+   * The accessible name. Required, and checked by the compiler, the same as for `Toggle`.
    *
-   * Подпись из `FormField` сюда не дотягивается: react-aria генерирует `id`
-   * внутреннему полю сам, и связать с ним чужой `<label htmlFor>` нечем.
-   * Поэтому имя компонент держит у себя.
+   * The label from `FormField` cannot reach here: react-aria generates the `id` of the inner
+   * field itself, and there is no way to link a foreign `<label htmlFor>` to it.
+   * So the component keeps the name itself.
    */
   label: string;
-  /** Классы на оболочку с рамкой — ширина, скругление, внутренние отступы. */
+  /** Classes for the wrapper around the frame: width, radius, inner padding. */
   shellClassName?: string;
-  /** Классы на корневой элемент. */
+  /** Classes for the root element. */
   className?: string;
 }
 
@@ -45,23 +45,23 @@ const STEP_BUTTON_CLASS =
   "rounded-xs text-[15px] leading-none transition-colors disabled:pointer-events-none disabled:opacity-40";
 
 /**
- * Числовое поле со ступенями.
+ * A numeric field with step buttons.
  *
- * ПУСТОЕ ПОЛЕ ОТДАЁТ `null`, А НЕ НОЛЬ. Ноль — это введённое значение, и
- * отличать его от «ничего не введено» обязано само значение, а не догадка
- * потребителя. Та же логика, по которой `Select` отдаёт `null` при очистке.
- * Внутри react-aria пустоту выражает `NaN`; наружу он не выходит — `NaN`
- * не равен сам себе, и потребитель, сравнивший его с чем угодно, получил бы
- * тихо неверный результат.
+ * AN EMPTY FIELD RETURNS `null`, NOT ZERO. Zero is an entered value, and the value itself
+ * must tell it apart from "nothing entered", not a guess by the consumer. It is the same
+ * logic by which `Select` returns `null` when it is cleared.
+ * Inside react-aria, emptiness is expressed as `NaN`; it does not leave the component,
+ * because `NaN` is not equal to itself, and a consumer who compared it with anything
+ * would silently get a wrong result.
  *
- * Вид рамки, фокуса и выключенного состояния — общий с `TextControl`, из
- * `lib/field.ts`. Не копия: два поля, стоящие в одной форме рядом, обязаны
- * фокусироваться одинаково, а копипаст классов расходится — во фронте до
- * пакета так и вышло с пятью полями поиска.
+ * The frame, focus, and disabled look are shared with `TextControl`, from `lib/field.ts`.
+ * This is not a copy: two fields side by side in one form must focus the same way, and copied
+ * classes drift apart. That is exactly what happened on the front end with five search fields
+ * before the package existed.
  *
- * Разбор и форматирование по `formatOptions` держит react-aria: локаль, разряды,
- * знак процента, ввод «1 234,5» — всё это его работа, и повторять её здесь
- * означало бы писать вторую библиотеку.
+ * Parsing and formatting by `formatOptions` belong to react-aria: the locale, digit grouping,
+ * the percent sign, input such as "1 234,5". All of that is its job, and repeating it here
+ * would mean writing a second library.
  */
 export const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(function NumberInput(
   {
@@ -81,11 +81,11 @@ export const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(function
   ref
 ) {
   const messages = useMessages();
-  // Подсказка или ошибка `FormField`. `NumberField` доводит атрибут до своего
-  // `Input` сам — своего пропа описания у компонента нет, и сливать нечего.
+  // A hint or error from `FormField`. `NumberField` passes the attribute down to its own
+  // `Input` itself: the component has no description prop of its own, so there is nothing to merge.
   const describedBy = useFieldDescribedBy();
-  // Ошибка `FormField` доходит до поля так же, как у `TextControl`; явный
-  // `invalid` сильнее формы.
+  // The error from `FormField` reaches the field the same way as in `TextControl`; an explicit
+  // `invalid` takes precedence over the form.
   const fieldInvalid = useFieldInvalid();
   return (
     <NumberField
@@ -106,10 +106,10 @@ export const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(function
         className={cn(
           FIELD_SHELL_CLASS,
           "flex items-center gap-1",
-          // Красная рамка невалидного поля переехала в `FIELD_SHELL_CLASS`: там
-          // же живёт сама рамка, и там правило достаётся всем полям на этой
-          // оболочке, а не одному числовому. Атрибут `data-invalid`, который
-          // ловит вариант `invalid:`, по-прежнему висит на этой группе.
+          // The red frame of an invalid field moved to `FIELD_SHELL_CLASS`: the frame itself
+          // lives there too, so the rule applies to every field on this shell, not
+          // only to the number field. The `data-invalid` attribute, which the `invalid:` variant
+          // matches, is still on this group.
           shellClassName
         )}
       >

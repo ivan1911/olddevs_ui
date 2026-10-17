@@ -7,76 +7,78 @@ import { CopyButton } from "../actions/CopyButton.js";
 
 export interface CodeViewProps {
   /**
-   * Исходник простым текстом, без разметки. Обязателен даже когда передан
-   * `children`, и это не избыточность:
+   * The source as plain text, without markup. Required even when `children` is passed,
+   * and this is not redundancy:
    *
-   * - из него считается число строк для нумерации — гутер, считающий себя по
-   *   разметке, разъедется с содержимым на первом же подсветчике, который
-   *   завернёт строку в два элемента;
-   * - из него же берётся содержимое для копирования. Копирование из DOM
-   *   утащило бы в буфер обмена номера строк и границы токенов подсветки, то
-   *   есть текст, который не компилируется.
+   * - the line count for the gutter is taken from it: a gutter that counted lines from
+   *   the markup would drift out of sync with the content on the first highlighter that
+   *   wraps a line in two elements;
+   * - the text copied to the clipboard also comes from it. Copying from the DOM would
+   *   carry line numbers and highlight token boundaries into the clipboard, that is,
+   *   text that does not compile.
    */
   code: string;
   /**
-   * Подсвеченная разметка — необязательный слой отображения.
+   * Highlighted markup, an optional display layer.
    *
-   * Сюда потребитель кладёт то, что вернул подсветчик: свой или
-   * `highlightCodeNodes` из `@olddevs/ui/editor/highlight` — подсветку кита
-   * той же темой, что в Редакторе (ADR-0052).
-   * Без неё рисуется `code` как есть, моноширинным шрифтом и без подсветки.
-   * Сам компонент подсветчика не импортирует — ADR-0039.
+   * The consumer passes here what its highlighter returned: either its own, or
+   * `highlightCodeNodes` from `@olddevs/ui/editor/highlight`, which gives the kit's
+   * highlighting the same theme as in the Editor (ADR-0052).
+   * Without it, `code` is rendered as is, in a monospace font and without highlighting.
+   * The component does not import a highlighter itself (ADR-0039).
    */
   children?: ReactNode;
-  /** Заголовок панели: имя файла, адрес запроса. Без него шапки нет вовсе. */
+  /** Panel title: a file name, a request URL. Without it, there is no header at all. */
   title?: ReactNode;
-  /** Кнопка копирования в шапке. */
+  /** Copy button in the header. */
   copyable?: boolean;
   /**
-   * Нумерация строк.
+   * Line numbers.
    *
-   * Работает только вместе с простым `code` и только без `wrap`. Когда передана
-   * разметка, кит не знает, где в ней границы строк: подсветчик волен завернуть строку во
-   * сколько угодно элементов, а перенос длинной строки добавляет ей высоты, о
-   * которой соседняя колонка номеров не догадывается. Номер напротив чужой
-   * строки хуже, чем его отсутствие, — поэтому с `children` гутер не рисуется.
+   * Works only together with plain `code`, and only without `wrap`. When markup is passed,
+   * the kit does not know where its line boundaries are: a highlighter may wrap a line in
+   * any number of elements, and wrapping a long line adds height to it that the adjacent
+   * number column cannot anticipate. A number next to the wrong line is worse than no
+   * number, so with `children` the gutter is not rendered.
    */
   lineNumbers?: boolean;
   /**
-   * Перенос длинных строк.
+   * Line wrapping.
    *
-   * Без него появляется горизонтальная прокрутка, а не обрезка: обрезанная
-   * строка кода молча теряет то, ради чего её открыли.
+   * Without it, the code gets a horizontal scrollbar instead of being clipped: a clipped
+   * line of code silently drops the very thing it was opened to show.
    */
   wrap?: boolean;
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 /**
- * Просмотр кода: JSON ответа, YAML конфига, тело вебхука.
+ * Code viewer: a JSON response, a YAML config, a webhook body.
  *
- * ПРОСМОТР, А НЕ РЕДАКТОР, и подсветку компонент сам не делает. Подсветчик —
- * это Shiki, Prism, highlight.js или Monaco, и любой из них приезжал бы с китом
- * каждому потребителю из-за одного компонента периферии (ADR-0072). Довод ADR-0032 против слоя графиков применим дословно —
- * обёртка не убрала бы у потребителя ни библиотеки, ни зависимости, а добавила
- * бы слой. К нему добавляется свой: тема подсветчика это вторая система цвета
- * рядом с токенами кита, и согласовывать их пришлось бы вечно.
+ * A VIEWER, NOT AN EDITOR, and the component does not do highlighting itself. A highlighter
+ * is Shiki, Prism, highlight.js or Monaco, and any of them would ship with the kit to every
+ * consumer because of one peripheral component (ADR-0072). The argument of ADR-0032 against
+ * the chart layer applies word for word: a wrapper would not remove a library or a dependency
+ * from the consumer, it would only add a layer. One more layer would be added on top of that:
+ * the highlighter's theme is a second color system next to the kit's tokens, and keeping the
+ * two in agreement would be an endless job.
  *
- * Граница записана в ADR-0039.
- * Подсветка кита приходит так же, слоем `children`: хелпер `highlightCodeNodes`
- * живёт в подпути `@olddevs/ui/editor/highlight`, и lowlight едет только к
- * тому, кто его импортировал (ADR-0052).
+ * The boundary is recorded in ADR-0039.
+ * The kit's own highlighting arrives the same way, through the `children` layer: the
+ * `highlightCodeNodes` helper lives in the `@olddevs/ui/editor/highlight` subpath, and
+ * lowlight is shipped only to whoever imported it (ADR-0052).
  *
- * ЧТО КИТ ВСЁ-ТАКИ ДЕЛАЕТ — то, чего подсветчик не решает и что иначе каждый
- * потребитель пишет заново: перенос или прокрутка вместо обрезки, нумерация
- * строк, не попадающая ни в выделение, ни в копию, моноширинный шрифт из
- * токена и копирование существующей `CopyButton`.
+ * WHAT THE KIT DOES ANYWAY: the things a highlighter does not solve and that every consumer
+ * would otherwise write again: wrapping or scrolling instead of clipping, line numbers that
+ * stay out of both the selection and the copy, a monospace font from a token, and copying
+ * via the existing `CopyButton`.
  *
- * НОМЕРА СТРОК `aria-hidden` И `select-none`. В речи они шум — каждая строка
- * начиналась бы с числа, — а в буфере обмена мусор: скопированный код с
- * номерами не компилируется. Колонка номеров липнет к левому краю: без этого
- * при прокрутке вправо она уезжает за край ровно тогда, когда нужнее всего.
+ * LINE NUMBERS are `aria-hidden` and `select-none`. In speech they are noise, since every
+ * line would start with a number, and in the clipboard they are garbage: copied code with
+ * numbers does not compile. The number column sticks to the left edge: without that, it
+ * would scroll out of view when the content is scrolled to the right, exactly when it is
+ * most needed.
  */
 export function CodeView({
   code,
@@ -88,33 +90,31 @@ export function CodeView({
   className,
 }: CodeViewProps) {
   /*
-    Гутер живёт только при простом `code` И без переноса.
+    The gutter exists only when `code` is plain AND there is no wrapping.
 
-    Обе причины названы в докстроке пропа, но условие проверяло лишь первую.
-    Перенос добавляет строке высоты, о которой соседняя колонка номеров не
-    догадывается, и номер встаёт напротив чужой строки — а это хуже, чем его
-    отсутствие.
+    Both reasons are named in the prop's doc comment, but the condition checked only the first.
+    Wrapping adds height to a line that the adjacent number column cannot anticipate, and the
+    number lands next to the wrong line, which is worse than no number at all.
   */
   /*
-    ОДИН предикат «разметка есть» на оба места.
+    ONE predicate "markup is present" for both places.
 
-    Условие гутера проверяло строгий `undefined`, а отрисовка ниже — нулевое
-    слияние (`children ?? code`), и на `null`/`false` они расходились:
-    `children={null}` рисовал код, но молча терял нумерацию, а идиома
-    `{ready && <Highlighted/>}` при ложном `ready` давала `false ?? code`, то
-    есть `false` — пустую панель с заголовком и кнопкой копирования.
+    The gutter condition checked strict `undefined`, while the render below used nullish
+    coalescing (`children ?? code`), and the two disagreed on `null` and `false`:
+    `children={null}` rendered the code but silently lost the line numbers, and the idiom
+    `{ready && <Highlighted/>}` with a falsy `ready` gave `false ?? code`, that is `false`:
+    an empty panel with a title and a copy button.
   */
   const highlighted = hasContent(children);
   const gutter = lineNumbers && !highlighted && !wrap;
 
   /*
-    Число строк считается по `code`, а не по потомкам, и режется ТОЛЬКО когда
-    гутер нужен: без нумерации содержимое уходит в разметку одним узлом, и
-    массив на мегабайтном JSON был бы чистой тратой на каждый рендер.
+    The line count comes from `code`, not from the children, and is computed ONLY when the
+    gutter is needed: without numbering, the content goes into the markup as a single node,
+    and an array built for a multi-megabyte JSON would be pure waste on every render.
 
-    Завершающие переводы строки срезаются все: файл, прочитанный с диска, почти
-    всегда кончается хотя бы одним, а бывает и двумя, — и каждый давал бы лишний
-    номер у пустой строки в конце.
+    All trailing newlines are stripped: a file read from disk almost always ends with at least
+    one, sometimes two, and each would produce an extra number for an empty last line.
   */
   const lines = gutter ? code.replace(/\n+$/, "").split("\n") : [];
 
@@ -130,18 +130,17 @@ export function CodeView({
       )}
 
       {/*
-        Прокручиваемая область обязана быть фокусируемой: до содержимого,
-        которое можно прокрутить только указателем, клавиатура не доберётся.
-        Это правило axe `scrollable-region-focusable`, и оно тем важнее, что
-        прокрутка здесь — единственный способ дочитать длинную строку.
+        The scrollable area must be focusable: keyboard users cannot reach content that can
+        be scrolled only with a pointer. This is the axe rule `scrollable-region-focusable`,
+        and it matters all the more because scrolling is the only way to read a long line here.
       */}
       {/*
-        Фон темы подсветки — только под токенами кита (ADR-0052).
-        Хелпер `highlightCodeNodes` ставит на корень токенов маркер
-        `data-code-highlight`; компонент хелпера не импортирует и узнаёт о нём
-        только по маркеру. Цвета GitHub не держат 4.5:1 на подложке кода кита,
-        поэтому фон берётся у темы — как у блока кода в Документе. Разметка
-        чужого подсветчика маркера не несёт, и её фон не меняется.
+        The highlighting theme's background applies only under the kit's tokens (ADR-0052).
+        The `highlightCodeNodes` helper puts a `data-code-highlight` marker on the root of the
+        tokens; the component does not import the helper and recognizes it only by the marker.
+        GitHub's colors do not reach the 4.5:1 contrast ratio on the kit's code background,
+        so the background comes from the theme, as it does for a code Block in a Document.
+        Markup from someone else's highlighter carries no marker, and its background is not changed.
       */}
       <div
         tabIndex={wrap ? undefined : 0}

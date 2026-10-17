@@ -19,11 +19,11 @@ import { useMessages } from "../../i18n/useMessages.js";
 import { FIELD_INPUT_CLASS, FIELD_SHELL_CLASS } from "../../lib/field.js";
 
 export interface ComboboxItem {
-  /** Ключ пункта, уникальный в пределах `items`. */
+  /** Key of the item, unique within `items`. */
   id: Key;
-  /** Подпись пункта в списке и в поле ввода. */
+  /** Label of the item in the list and in the input field. */
   label: string;
-  /** Правая колонка пункта: счётчик, дата, что угодно короткое. */
+  /** Right column of the item: a counter, a date, anything short. */
   meta?: ReactNode;
 }
 
@@ -31,34 +31,34 @@ export interface ComboboxProps extends Omit<
   AriaComboBoxProps<ComboboxItem>,
   "children" | "items" | "className" | "defaultItems" | "style"
 > {
-  /** Пункты-подсказки; список сужается по введённому тексту. */
+  /** Suggested items; the list narrows as the text is typed. */
   items: ComboboxItem[];
-  /** Плейсхолдер в пустом поле ввода. */
+  /** Placeholder in the empty input field. */
   placeholder?: string;
-  /** Текст, когда под введённое ничего не подошло. */
+  /** Text shown when nothing matches the input. */
   notFoundText?: string;
-  /** Классы на корневой элемент. */
+  /** Classes on the root element. */
   className?: string;
 }
 
 /**
- * Поле с подсказками: свободный ввод плюс список.
+ * Field with suggestions: free input plus a list.
  *
- * НЕ ЗАМЕНА `Select` и не его развитие. Разница — в том, откуда берётся
- * значение:
+ * NOT A REPLACEMENT FOR `Select`, and not an extension of it. The difference is where the
+ * value comes from:
  *
- *   `Select`   — выбор из ЗАКРЫТОГО набора. Значения вне списка не бывает,
- *                и вводить ничего нельзя: поиск внутри (`searchable`) только
- *                фильтрует, а результат всё равно один из пунктов.
- *   `Combobox` — ввод С ПОДСКАЗКАМИ. Список помогает, но не ограничивает:
- *                значение может не совпасть ни с одним пунктом (`allowsCustomValue`).
+ *   `Select`   — choosing from a CLOSED set. There is no value outside the list, and nothing
+ *                can be typed in: search inside (`searchable`) only filters, and the result
+ *                is still one of the items.
+ *   `Combobox` — input WITH SUGGESTIONS. The list helps but does not restrict: the value may
+ *                match none of the items (`allowsCustomValue`).
  *
- * Отсюда правило выбора: набор известен и конечен — `Select`; пользователь
- * вправе ввести своё (тег, название, адрес) — `Combobox`. Без этой границы
- * через полгода в проекте оказываются оба вперемешку на одной задаче.
+ * Hence the rule for choosing: if the set is known and finite, use `Select`. If the user may
+ * enter their own value (a tag, a name, an address), use `Combobox`. Without this boundary,
+ * after six months a project ends up with both mixed together on one task.
  *
- * Поведение целиком у react-aria: фильтрация, клавиатура, `aria-activedescendant`,
- * объявление числа подсказок. Кит держит вид и границу применения.
+ * The behavior is entirely react-aria's: filtering, keyboard handling, `aria-activedescendant`,
+ * and announcing the number of suggestions. The kit holds the look and the boundary of use.
  */
 export function Combobox({
   items,
@@ -71,11 +71,11 @@ export function Combobox({
   const messages = useMessages();
 
   /**
-   * Описание поля из `FormField` плюс своё, если потребитель его передал.
+   * The field's description from `FormField`, plus its own if the consumer passed one.
    *
-   * Тот же приём, что у `TextControl` и `NumberInput`: значения СЛИВАЮТСЯ, а не
-   * заменяют друг друга. Вне `FormField` контекст пуст, спред пустой, и разметка
-   * та же, что была до появления описаний.
+   * The same technique as `TextControl` and `NumberInput`: the values are MERGED, not replacing
+   * each other. Outside `FormField` the context is empty, the spread is empty, and the markup
+   * is the same as it was before descriptions appeared.
    */
   const fieldDescribedBy = useFieldDescribedBy();
   const describedBy =
@@ -83,14 +83,14 @@ export function Combobox({
 
   return (
     /*
-      `menuTrigger="focus"` вместо умолчания react-aria (`input`) — осознанно.
-      При `input` список появляется только после первого напечатанного знака, и
-      щелчок по полю не показывает ничего: подсказки, ради которых компонент и
-      заведён, невидимы, пока не угадаешь первую букву. Проверено в браузере.
+      `menuTrigger="focus"` instead of react-aria's default (`input`) is deliberate.
+      With `input`, the list appears only after the first typed character, and a click on the
+      field shows nothing. The suggestions, which are the reason the component exists, stay
+      invisible until you guess the first letter. Verified in the browser.
 
-      Кнопка справа раскрывает список при любом значении пропа; менять его
-      обратно потребитель вправе — например, когда подсказок тысячи и показывать
-      их все бессмысленно.
+      The button on the right opens the list with any value of the prop. The consumer may change
+      it back, for example when there are thousands of suggestions and showing them all is
+      pointless.
     */
     <AriaComboBox
       {...rest}
@@ -106,15 +106,15 @@ export function Combobox({
           className={cn(FIELD_INPUT_CLASS, "min-w-0 flex-1")}
         />
         {/*
-          Кнопка раскрытия — `AriaButton`, а не своя: `ComboBox` передаёт ей
-          состояние через контекст react-aria, и обычная `<button>` его не
-          читает — список молча не открывался бы. Та же механика, что у
-          `MenuButton`.
+          The toggle button is an `AriaButton`, not our own. `ComboBox` passes it the state
+          through the react-aria context, and a plain `<button>` does not read that state: the
+          list would silently never open. The same mechanism as `MenuButton`.
         */}
         <AriaButton
           className="text-fg-3 hover:text-fg-1 flex shrink-0 cursor-pointer items-center outline-none"
-          // Подпись у кнопки своя: без неё аудит объявляет её безымянной, а
-          // подпись поля к ней не относится — поле и кнопка разные мишени.
+          // It has its own label. Without one, the audit reports it as unnamed, and the
+          // field's label does not apply to the button: the field and the button are
+          // different targets.
           aria-label={messages.combobox.showSuggestions}
         >
           <SelectIcon size={14} />
@@ -135,10 +135,9 @@ export function Combobox({
               id={item.id}
               textValue={item.label}
               className={cn(
-                // Общая строка списка — та же, что у `Transfer` и
-                // `CommandPalette`. Собственный набор здесь расходился с ней
-                // отступом (`py-[9px]` против `py-1.5`) и кеглем, и списки
-                // кита, поставленные рядом, различались высотой строки.
+                // The common list row, the same as in `Transfer` and `CommandPalette`. Our
+                // own set diverged from it in padding (`py-[9px]` against `py-1.5`) and in
+                // font size, so the kit's lists placed side by side differed in row height.
                 LISTBOX_ITEM_CLASS,
                 "selected:text-fg-0 justify-between gap-3"
               )}

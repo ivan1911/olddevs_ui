@@ -6,52 +6,51 @@ import { PROGRESS_STATUS_TONE, type ProgressStatus } from "../../lib/progress-st
 import { TONE_TOKENS } from "../../lib/variants.js";
 
 export interface TimelineItem {
-  /** Идентификатор шага. */
+  /** Step identifier. */
   id: string;
-  /** Что произошло. Обычно короткое имя шага. */
+  /** What happened. Usually a short step name. */
   label: ReactNode;
-  /** Состояние шага. Порядок в ленте задаёт потребитель, а не статус. */
+  /** Step state. The consumer sets the order in the list, not the status. */
   status: ProgressStatus;
-  /** Подпись состояния — «выполнен», «ошибка». Рисуется пилюлей справа от имени. */
+  /** Status label, such as "done" or "error". Rendered as a pill to the right of the name. */
   statusLabel?: ReactNode;
-  /** Подробности: сообщение об ошибке, длительность, идентификатор. */
+  /** Details: an error message, a duration, an identifier. */
   details?: ReactNode;
-  /** Время шага — уходит вправо, моноширинным. */
+  /** Step time. Pushed to the right, in monospace. */
   time?: ReactNode;
 }
 
 export interface TimelineProps {
-  /** Шаги в порядке показа; пустой список ничего не выводит. */
+  /** Steps in display order; an empty list renders nothing. */
   items: TimelineItem[];
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
-  /** Доступное имя списка шагов для скринридера. */
+  /** Accessible name of the step list for screen readers. */
   "aria-label"?: string;
 }
 
 /**
- * Лента шагов процесса: что уже произошло и чем закончилось.
+ * A timeline of process steps: what has already happened and how it ended.
  *
- * ГРАНИЦА СО `Stepper`, и её стоит держать в голове:
+ * THE BOUNDARY WITH `Stepper` is worth keeping in mind:
  *
- *   `Stepper`  — мастер: линейный `current`, шаги впереди ещё не случались,
- *                провалиться шаг не может, назад ведёт клик.
- *   `Timeline` — наблюдение: у КАЖДОГО шага своё состояние, любой может
- *                провалиться, кликать не по чему.
+ *   `Stepper`  — a wizard: a linear `current`, the steps ahead have not happened yet,
+ *                a step cannot fail, going back is a click.
+ *   `Timeline` — an observation log: EACH step has its own state, any of them can fail,
+ *                there is nothing to click.
  *
- * Именно из-за этой разницы конвейер шагов задачи во фронте не переехал на
- * `Stepper` и жил там рукописным: 122 строки инлайн-стилей с захардкоженными
- * `rgba`, то есть цветами мимо токенов, которые не менялись ни с темой, ни со
- * сменой акцента.
+ * The task's step pipeline on the frontend never moved to `Stepper`, and it stayed
+ * hand-written: 122 lines of inline styles with hardcoded `rgba` values, that is, colors
+ * outside the tokens, which did not change with the theme or with a change of accent.
  *
- * РАЗМЕТКА — упорядоченный список. Шаги идут по порядку, и скринридер обязан
- * сообщить и порядок, и общее число; набор `div` не сообщает ни того, ни
- * другого. Идущий шаг помечается `aria-current="step"`.
+ * MARKUP is an ordered list. The steps come in order, and a screen reader must announce both
+ * the order and the total count; a set of `div`s announces neither. The running step is
+ * marked with `aria-current="step"`.
  *
- * ЦВЕТА БЕРУТСЯ ИЗ АТОМОВ ТОНА (`TONE_TOKENS`), а не задаются заново: «ошибка»
- * означает один и тот же цвет здесь, в `Alert`, в `StatusBadge` и на кнопке
- * удаления. Свечение у идущего шага снято намеренно — оно было единственным
- * местом в ленте, где цвет задавался тенью, а не токеном.
+ * COLORS COME FROM THE TONE TOKENS (`TONE_TOKENS`) and are not redefined: an error is the
+ * same color here, in `Alert`, in `StatusBadge`, and on the remove button. The glow on the
+ * running step was removed on purpose: it was the only place in the timeline where a color
+ * came from a shadow instead of a token.
  */
 export function Timeline({ items, className, "aria-label": ariaLabel }: TimelineProps) {
   if (items.length === 0) return null;
@@ -59,11 +58,10 @@ export function Timeline({ items, className, "aria-label": ariaLabel }: Timeline
   return (
     <ol aria-label={ariaLabel} className={cn("flex flex-col", className)}>
       {items.map((item, index) => {
-        // Незнакомый статус подаётся нейтральным, а не роняет ленту целиком.
-        // Потребитель пакета — приложение на JS, компилятор его данные не
-        // проверяет, а статусы приходят с бэкенда: пятый вид шага не должен
-        // стоить экрана. Прежняя рукописная версия этот случай закрывала, и
-        // терять защиту при переезде нельзя.
+        // An unknown status gets a neutral tone instead of breaking the whole timeline.
+        // The consumer is a JS app: the compiler does not check its data, and statuses come
+        // from the backend, so a fifth kind of step must not cost the screen. The previous
+        // hand-written version covered this case, and the guard must not be lost in the move.
         const tone = TONE_TOKENS[PROGRESS_STATUS_TONE[item.status] ?? "neutral"];
         const isLast = index === items.length - 1;
 
@@ -73,8 +71,8 @@ export function Timeline({ items, className, "aria-label": ariaLabel }: Timeline
             aria-current={item.status === "running" ? "step" : undefined}
             className="relative flex items-start gap-2.5"
           >
-            {/* Колонка маркера: точка и соединительная линия. Линии после
-                последнего шага нет — она обещала бы продолжение. */}
+            {/* Marker column: the dot and the connecting line. There is no line after the last
+                step, since it would suggest that more steps follow. */}
             <div className="flex w-3.5 shrink-0 flex-col items-center pt-1">
               <span aria-hidden className={cn("size-2 shrink-0 rounded-full", tone.dotBg)} />
               {!isLast ? <span aria-hidden className="bg-line-soft mt-[3px] w-px flex-1" /> : null}

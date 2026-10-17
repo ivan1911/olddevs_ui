@@ -5,35 +5,34 @@ import { cn } from "../../lib/cn.js";
 import { TONE_TOKENS, type Tone } from "../../lib/variants.js";
 
 export interface StatProps {
-  /** Подпись показателя. */
+  /** Metric label. */
   label: ReactNode;
-  /** Значение показателя. */
+  /** Metric value. */
   value: ReactNode;
-  /** Пояснение под значением: период, доля, что угодно короткое. */
+  /** Note under the value: a time frame, a share, anything short. */
   hint?: ReactNode;
-  /** Изменение: число или готовая строка («+320», «−4%»). */
+  /** Change: a number or a ready string ("+320", "−4%"). */
   delta?: ReactNode;
   /**
-   * Тон дельты. Задаётся пропом, а не выводится из знака.
+   * Tone of the delta. It is set by a prop, not derived from the sign.
    *
-   * Рост не всегда зелёный: выросшее число отписок, ошибок публикации или
-   * времени ответа — плохая новость, а падение расходов — хорошая. Компонент,
-   * который красит плюс в зелёный, врёт ровно в тех случаях, где ошибиться
-   * дороже всего.
+   * Growth is not always green: a rising number of unsubscribes, publishing errors or response
+   * time is bad news, while falling costs is good news. A component that paints a plus green lies
+   * in exactly the cases where a mistake costs the most.
    *
-   * Не задан — дельта нейтральная: «изменилось на столько-то», без оценки.
+   * When not set, the delta is neutral: "changed by this much", with no judgment.
    */
   deltaTone?: Tone;
   /**
-   * Кегль значения.
+   * Font size of the value.
    *
-   * `md` — показатель в плотной панели, где их десяток и все равны.
-   * `lg` — заглавное число экрана: то, ради чего на дашборд и заходят.
-   * Разница здесь не косметическая: одинаковый кегль у главного показателя и
-   * у соседней подписи означает, что иерархии на экране нет вовсе.
+   * `md`: a metric in a dense panel, where there are a dozen of them and all are equal.
+   * `lg`: the headline number of the screen, the one people come to the dashboard for.
+   * The difference is not cosmetic: the same size for the main metric and for a neighboring
+   * label means the screen has no hierarchy at all.
    */
   size?: "md" | "lg";
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
 }
 
@@ -43,14 +42,14 @@ const VALUE_CLASS: Record<"md" | "lg", string> = {
 };
 
 /**
- * Показатель: подпись, значение, изменение.
+ * A metric: label, value, change.
  *
- * Собран руками — поведения здесь нет вовсе, только раскладка и одно решение
- * про тон дельты.
+ * Hand-assembled: there is no behavior here at all, only layout and one decision about the
+ * delta tone.
  *
- * Разметка — `dl`: подпись и значение связаны как термин и определение, и
- * скринридер читает их парой. Два `div` рядом такой связи не дают, и значение
- * «12 480» звучит без всякого указания, чего именно.
+ * The markup is a `dl`: the label and the value are linked as a term and its definition, and a
+ * screen reader reads them as a pair. Two adjacent `div`s do not create that link, and the value
+ * "12,480" would be read with no indication of what it counts.
  */
 export function Stat({ label, value, hint, delta, deltaTone, size = "md", className }: StatProps) {
   return (

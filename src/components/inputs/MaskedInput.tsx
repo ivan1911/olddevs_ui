@@ -22,7 +22,7 @@ import {
 } from "../../lib/mask.js";
 import { TextControl } from "./TextControl.js";
 
-/** Токен маски → то, чего ждали, словами каталога. */
+/** Maps a mask token to what was expected, in terms from the message catalog. */
 const EXPECTED: Record<MaskToken, "digit" | "letter" | "any"> = {
   "9": "digit",
   a: "letter",
@@ -34,67 +34,62 @@ export interface MaskedInputProps extends Omit<
   "onChange" | "value" | "defaultValue" | "size"
 > {
   /**
-   * Маска: `9` — цифра, `a` — буква, `*` — цифра или буква; остальное литерал.
+   * Mask: `9` is a digit, `a` is a letter, `*` is a digit or a letter; anything else is a literal.
    *
-   * Кит о предметной области не знает: маска приходит пропом, и «телефон» или
-   * «серия паспорта» — знание вызывающего.
+   * The kit knows nothing about the business domain: the mask arrives as a prop, and whether it is
+   * a phone number or a passport series is the caller's knowledge.
    */
   mask: string;
-  /** Сырое значение — без литералов маски. Именно оно уходит на сервер. */
+  /** The raw value, without the mask literals. This is the one sent to the server. */
   value: string;
   /**
-   * Вызывается с обоими представлениями: сырым и показанным.
+   * Called with both representations: the raw one and the displayed one.
    *
-   * Сырое нужно запросу, показанное — тому, кто хранит текст как есть. Отдать
-   * одно — значит заставить половину потребителей форматировать заново.
+   * The raw one is for the request, the displayed one is for whoever stores the text as it is.
+   * Passing only one would force half of the consumers to format it again.
    */
   onChange: (raw: string, formatted: string) => void;
-  /** Классы на оболочку с рамкой. */
+  /** Classes for the wrapper around the frame. */
   shellClassName?: string;
   /**
-   * Показывать формат прямо в поле: `+7 (___) ___-__-__`.
+   * Shows the format right in the field: `+7 (___) ___-__-__`.
    *
-   * ПО УМОЛЧАНИЮ ВКЛЮЧЕНО, и это не косметика. До появления трафарета поле не
-   * сообщало формат ВООБЩЕ: `formatMask` подставляет литералы только пока есть
-   * что ставить дальше, поэтому пустое поле показывало пустой прямоугольник, а
-   * наполовину заполненное — обрубок без остатка. Пользователь узнавал формат
-   * методом проб.
+   * ON BY DEFAULT, and this is not cosmetic. Before the mask guide existed, the field did not
+   * show the format AT ALL: `formatMask` inserts literals only while there is something to place
+   * next, so an empty field showed an empty box, and a half-filled one showed a stub with no
+   * remainder. The user learned the format by trial and error.
    *
-   * Выключается там, где формат уже сказан рядом и повторять его в поле —
-   * шум: короткая известная маска в плотной таблице, поле под своей подписью
-   * с примером.
+   * Turn it off where the format is already stated next to the field and repeating it inside is
+   * noise: a short, well-known mask in a dense table, or a field whose label already gives an example.
    *
-   * Трафарет — УКРАШЕНИЕ: он `aria-hidden` и скринридеру не достаётся. Формат для
-   * него живёт в подсказке `FormField`, которая с полем связана
-   * (`aria-describedby`), — и это разделение сознательное: постоянная подсказка
-   * доступна и при проверке набранного, а трафарет по мере ввода исчезает.
+   * The mask guide is DECORATION: it is `aria-hidden`, so screen readers do not get it. The format
+   * for them lives in the `FormField` hint, which is linked to the field (`aria-describedby`). The
+   * split is deliberate: the persistent hint stays available while the typed value is checked,
+   * and the mask guide disappears as the user types.
    */
   showMask?: boolean;
 }
 
 /**
- * Поле с маской ввода.
+ * Input field with a mask.
  *
- * СТОИТ НА `TextControl` (прецедент ADR-0009): рамка, фокус, выключенное и
- * невалидное состояния — его; здесь только механика маски.
+ * IT IS BUILT ON `TextControl` (precedent: ADR-0009). The frame, focus, and the disabled and invalid
+ * states belong to it; here there is only the mask logic.
  *
- * ЗНАЧЕНИЕ СЫРОЕ, ПОКАЗ ОТФОРМАТИРОВАННЫЙ. Хранить формат — значит хранить
- * решение о показе: маску можно поменять, а записанные с ней скобки останутся
- * в базе навсегда.
+ * THE VALUE IS RAW, THE DISPLAY IS FORMATTED. Storing the format means storing a decision about display:
+ * the mask can be changed, but the brackets written with it stay in the database forever.
  *
- * КАРЕТКА — ТО, РАДИ ЧЕГО КОМПОНЕНТ ВООБЩЕ НУЖЕН. Форматирование на каждом
- * вводе перерисовывает строку целиком, и браузер ставит каретку в конец;
- * править середину номера становится невозможно. Поэтому позиция считается по
- * маске: сколько символов значения стояло левее — столько и останется.
+ * THE CARET IS WHY THE COMPONENT EXISTS AT ALL. Formatting on every keystroke redraws the whole string,
+ * and the browser puts the caret at the end, so editing the middle of a number becomes impossible.
+ * That is why the position is computed through the mask: however many value characters stood to the
+ * left, that many will remain.
  *
- * BACKSPACE ЧЕРЕЗ ЛИТЕРАЛ УДАЛЯЕТ СИМВОЛ ЗНАЧЕНИЯ, а не литерал. Иначе каретка
- * упирается в `)` и стирание встаёт: литерал удалится, тут же вернётся
- * форматированием, и нажатие ничего не изменит — дефект, который выглядит как
- * зависшая клавиша.
+ * BACKSPACE OVER A LITERAL DELETES A VALUE CHARACTER, not the literal. Otherwise the caret runs into
+ * `)` and deleting gets stuck: the literal would be removed and immediately re-added by formatting,
+ * and the keystroke would change nothing. That is a defect that looks like a stuck key.
  *
- * Вставка отдельного обработчика не требует: вставленное приходит тем же
- * событием ввода, и разбор по маске раскладывает его так же, как набранное
- * (`unmask` в `lib/mask.ts`).
+ * Pasting needs no separate handler: the pasted text arrives in the same input event, and the mask
+ * parser splits it the same way as typed text (`unmask` in `lib/mask.ts`).
  */
 export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(function MaskedInput(
   { mask, value, onChange, onKeyDown, showMask = true, ...rest },
@@ -102,43 +97,39 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(functi
 ) {
   const innerRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => innerRef.current as HTMLInputElement, []);
-  // Каретка живёт в `ref`: она нужна ровно один раз, сразу после перерисовки.
+  // The caret lives in a `ref`: it is needed exactly once, right after the re-render.
   const caret = useRef<number | null>(null);
 
   const messages = useMessages();
   /*
-    Что сказать об отброшенном символе.
+    What to say about a dropped character.
 
-    Отбрасывание было МОЛЧАЛИВЫМ: `unmask` пропускает не подошедший под токен
-    символ и идёт дальше. Пользователь видел, что нажатие «не сработало», и
-    оставался без объяснения — на этом же эталонная реализация USWDS провалила
-    тест WCAG 3.3.3 (у неё несовпавший символ вдобавок обрывает весь остаток).
+    The drop used to be SILENT: `unmask` skips a character that does not fit the token and moves on.
+    The user saw that the keystroke "did nothing" and got no explanation. The USWDS reference
+    implementation failed WCAG 3.3.3 on exactly this point (there, a mismatched character also cuts
+    off the rest of the input).
 
-    Повторное нажатие той же неподходящей клавиши даёт ТУ ЖЕ строку, и
-    скринридер её не переобъявляет — очереди из объявлений не возникает само
-    собой, без подавления и таймеров.
+    Pressing the same wrong key again yields THE SAME string, and a screen reader does not re-announce
+    it: a queue of announcements does not build up by itself, without suppression or timers.
   */
   const [rejection, setRejection] = useState("");
 
   const formatted = formatMask(value, mask);
 
   /*
-    Трафарет маски под значением.
+    The mask guide under the value.
 
-    СКРЫТЫЙ ПРЕФИКС ДЕРЖИТ НАБРАННОЕ, а не символы маски: тогда ширины
-    совпадают ПО ПОСТРОЕНИЮ — под цифрой стоит та же цифра, — и остаток
-    начинается ровно там, где кончился ввод. Держи он подчёркивания, совпадение
-    зависело бы от того, одинаковой ли ширины `_` и `8` в шрифте потребителя,
-    то есть было бы случайным.
+    THE HIDDEN PREFIX HOLDS WHAT WAS TYPED, not the mask symbols. Then the widths MATCH BY CONSTRUCTION:
+    the digit sits under the same digit, and the remainder starts exactly where the input ended. With
+    underscores, the match would depend on whether `_` and `8` have the same width in the consumer's
+    font, that is, it would be accidental.
 
-    Считается из `value` в рендере, а не в обработчике нажатий. У эталонной
-    реализации USWDS обработчик висит на `keyup`, и вставка мышью,
-    автозаполнение и любое программное изменение оставляют трафарет
-    рассинхронизированным с полем.
+    It is computed from `value` during render, not in a keystroke handler. The USWDS reference
+    implementation hangs its handler on `keyup`, so a mouse paste, autofill, or any programmatic change
+    leaves the mask guide out of sync with the field.
 
-    `GrayText` в режиме высокой контрастности: система красит весь текст одним
-    цветом, и без этого трафарет стал бы неотличим от набранного — то есть поле
-    показывало бы цифры, которых нет.
+    `GrayText` in high-contrast mode: the system paints all the text in one color, and without it the
+    mask guide would be indistinguishable from typed text, so the field would show digits that are not there.
   */
   const underlay = showMask ? (
     <>
@@ -172,53 +163,45 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(functi
         const raw = unmask(shown, mask);
 
         /*
-          Набранное пропало: строка показа выросла, а значение не изменилось.
+          The typed character was lost: the display string grew, but the value did not change.
 
-          Вопрос задаётся именно так — «изменилось ли значение», а не «годится
-          ли символ под токен». Разница видна на литерале маски, который сам
-          допустимый символ: в `+7 (999) 999-99-99` литерал `7` — цифра.
-          Пользователь набирает `7` первым (привычка набирать `+7`), `unmask`
-          съедает его как литерал, значение остаётся пустым — и проверка «по
-          токену» считала бы символ принятым и молчала. То есть ровно тот
-          дефект, ради которого объявление и заводилось.
+          The question is asked exactly this way: "did the value change", not "does the character fit the
+          token". The difference shows on a mask literal that is itself a valid character: in
+          `+7 (999) 999-99-99` the literal `7` is a digit. The user types `7` first (the habit of typing
+          `+7`), `unmask` eats it as a literal, the value stays empty, and a check "by token" would count
+          the character as accepted and stay silent. That is exactly the defect the announcement exists for.
 
-          Сравнение по значению, а не по его длине: правка СЕРЕДИНЫ заполненного
-          поля меняет значение, не меняя длины, и по длине выглядела бы отказом.
-          Она же роняла каретку лишней перерисовкой.
+          Compare by value, not by its length: editing the MIDDLE of a filled field changes the value
+          without changing its length, and by length it would look like a rejection. It also dropped the
+          caret with an extra re-render.
 
-          Длина показа в условии обязательна: без неё удаление литерала (`)`)
-          тоже даёт неизменное значение и объявлялось бы отказом.
+          The displayed length in the condition is required: without it, deleting a literal (`)`) also
+          leaves the value unchanged and would be announced as a rejection.
         */
         const added = shown.length - formatted.length;
         /*
-          Обрезка ВСТАВКИ — отдельная ветка, и различается она по `inputType`,
-          а не по длине.
+          Trimming a PASTE is a separate branch, and it is told apart by `inputType`, not by length.
 
-          Отличить её от соседей иначе нечем: набор лишнего символа в полном
-          поле тоже даёт переполнение, но это `full`, а правка СЕРЕДИНЫ полного
-          поля выталкивает символ и обязана молчать (см. ниже). Общее у этих
-          двух — пользователь видит, что делает. У вставки не видит: хвост
-          исчезает целиком, и `89161234567` становится `+7 (891) 612-34-56` —
-          чужим, но правдоподобным номером.
+          Nothing else tells it apart from its neighbors: typing an extra character into a full field also
+          overflows, but that is `full`, and editing the MIDDLE of a full field pushes a character out and
+          must stay silent (see below). What these two have in common is that the user sees what they are
+          doing. With a paste they do not see it: the tail disappears entirely, and `89161234567` becomes
+          `+7 (891) 612-34-56`, a different but plausible number.
 
-          Условие `raw === value` ниже вставку не ловит принципиально: при ней
-          значение МЕНЯЕТСЯ.
+          The `raw === value` condition below does not catch a paste on purpose: with a paste the value CHANGES.
         */
         const native = event.nativeEvent;
         const inputType = native instanceof InputEvent ? native.inputType : undefined;
         /*
-          «Пришло не по одному символу» — вот что на самом деле отличает этот
-          случай, и одного `insertFromPaste` для этого мало:
+          "Not one character at a time" is what really distinguishes this case, and `insertFromPaste` alone is not enough:
 
-          - перетаскивание текста мышью даёт `insertFromDrop`;
-          - подстановка из менеджера паролей или строки подсказок телефона —
-            `insertReplacementText`, а программная запись значения приходит
-            обычным `Event`, у которого `inputType` пуст или отсутствует. На мобильном это
-            САМЫЙ частый способ, каким телефон попадает в телефонное поле.
+          - dragging text with the mouse gives `insertFromDrop`;
+          - a substitution from a password manager or a phone's suggestion strip is `insertReplacementText`, and a
+            programmatic write of the value arrives as a plain `Event` whose `inputType` is empty or missing.
+            On mobile this is the MOST common way a phone number gets into a phone field.
 
-          Отсюда последнее условие: неизвестный `inputType` при `added > 1`.
-          Оно же отделяет эти пути от набора символа в полном поле — там
-          `added === 1`, и отвечать должна ветка `full` ниже.
+          Hence the last condition: an unknown `inputType` with `added > 1`. It also separates these paths from
+          typing a character into a full field: there `added === 1`, and the `full` branch below has to answer.
         */
         const bulk =
           inputType === "insertFromPaste" ||
@@ -230,7 +213,7 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(functi
         if (overflow > 0) {
           setRejection(messages.maskedInput.truncated({ count: overflow }));
         } else if (added > 0 && raw === value) {
-          // Куда метил ввод: сколько символов значения стоит левее вставленного.
+          // Where the input was aimed: how many value characters stand to the left of the inserted text.
           const at = rawLengthBefore(mask, Math.max(position - added, 0));
           const token = maskTokenAt(mask, at);
           setRejection(
@@ -240,14 +223,13 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(functi
           );
         } else if (rejection) setRejection("");
 
-        // Сколько символов значения оказалось левее каретки — столько и
-        // останется: позиция считается по показанной строке, а не по сдвигу.
+        // How many value characters ended up to the left of the caret: that many will remain.
+        // The position is counted from the displayed string, not from the shift.
         commit(raw, unmask(shown.slice(0, position), mask).length);
       }}
       onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
-        // Чужой обработчик вызывается ПЕРВЫМ и может отменить наш `preventDefault`
-        // — иначе он был бы вытеснен спредом, как это уже случилось со `style`
-        // у `TopBar` в ревью 2.1.0.
+        // The foreign handler is called FIRST and may cancel our `preventDefault`:
+        // otherwise it would be overridden by the spread, as already happened with `style` on `TopBar` in review 2.1.0.
         onKeyDown?.(event);
         if (event.defaultPrevented || event.key !== "Backspace") return;
 
@@ -265,17 +247,16 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(functi
   );
 
   /*
-    Живая область СМОНТИРОВАНА ВСЕГДА, подменяется только текст. Область,
-    вставленная в документ вместе с сообщением, объявляется ненадёжно — часть
-    скринридеров успевает её пропустить. Тот же приём и по той же причине, что
-    в `FileDropzone`.
+    The live region is MOUNTED ALWAYS; only its text changes. A region inserted into the document together
+    with a message is announced unreliably: some screen readers manage to skip it. The same technique,
+    for the same reason, as in `FileDropzone`.
 
-    `status`, а не `alert`: отброшенная клавиша — не ошибка формы, и перебивать
-    ею текущую речь значит наказывать за опечатку.
+    `status`, not `alert`: a rejected key is not a form error, and interrupting the current speech with it
+    would punish a typo.
 
-    Фрагмент, а не обёртка: обёртка вокруг поля сменила бы разметку всем, кто
-    уже ставит `MaskedInput` в свою раскладку. Область спрятана `sr-only`,
-    выпадает из потока и на раскладку не влияет.
+    A fragment, not a wrapper: a wrapper around the field would change the markup for everyone who already
+    puts `MaskedInput` in their layout. The region is hidden with `sr-only`: it leaves the flow and does not
+    affect the layout.
   */
   return (
     <>

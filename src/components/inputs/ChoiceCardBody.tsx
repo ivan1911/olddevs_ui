@@ -7,11 +7,11 @@ import { hasContent } from "../../lib/empty.js";
 import { CHOICE_CARD_ICON } from "../../lib/choice-card.js";
 
 /**
- * Содержимое карточки выбора — общее для `Radio` и `Checkbox`.
+ * Content of a choice card, shared by `Radio` and `Checkbox`.
  *
- * Не экспортируется из пакета: это разметка внутри метки, а не компонент
- * потребителя. Иконка, подпись и описание лежат столбцом, индикатор —
- * справа от них: выбранность не должна жить одним цветом рамки.
+ * It is not exported from the package: it is markup inside a label, not a consumer
+ * component. The icon, the label and the description lie in a column, and the indicator
+ * sits to the right of them. The selected state must not live in the border color alone.
  */
 export function ChoiceCardBody({
   icon,
@@ -26,8 +26,8 @@ export function ChoiceCardBody({
   description?: ReactNode;
   indicator: ReactNode;
 }) {
-  // `hasContent`, а не `!= null`: пустая строка или `{flag && …}` при ложном
-  // флаге дали бы пустой узел — лишний зазор в столбце карточки.
+  // `hasContent`, not `!= null`: an empty string or `{flag && …}` with a false flag would
+  // produce an empty node, an extra gap in the card's column.
   return (
     <>
       {hasContent(icon) && (
@@ -40,8 +40,8 @@ export function ChoiceCardBody({
           <span className={cn("text-fg-0 font-medium", labelClassName)}>{label}</span>
         )}
         {hasContent(description) && (
-          // Внутри метки, чтобы щелчок по описанию выбирал карточку, и скрыто от
-          // имени: читается как описание через `aria-describedby` (см. lib).
+          // Inside the label, so that a click on the description selects the card. Hidden
+          // from the name: it is read as a description via `aria-describedby` (see lib).
           <Text slot="description" aria-hidden="true" className="text-fg-3 text-[11px]">
             {description}
           </Text>

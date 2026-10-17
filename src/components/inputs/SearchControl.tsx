@@ -17,20 +17,25 @@ import { Popover, PopoverContent, PopoverTrigger } from "../overlays/Popover.js"
 import { TextControl } from "./TextControl.js";
 
 export interface SearchKeyboardConfig {
-  /** Текущая раскладка управляется потребителем так же, как значение поиска. */
+  /** The current layout is controlled by the consumer, the same way as the search value. */
   layout: KeyboardLayout;
-  /** Вызывается, когда пользователь переключает раскладку; сохранить новую должен потребитель. */
+  /**
+   * Called when the user switches the layout; the consumer is responsible for saving the new one.
+   */
   onLayoutChange: (nextLayout: KeyboardLayout) => void;
-  /** Открывает панель при первом рендере — для заранее раскрытого сценария. */
+  /** Opens the panel on the first render, for a scenario where it is expanded in advance. */
   defaultOpen?: boolean;
-  /** Подтверждает запрос по Enter экранной клавиатуры. */
+  /** Submits the query on the Enter key of the on-screen keyboard. */
   onSubmit?: () => void;
   /**
-   * Доступное имя кнопки, открывающей экранную клавиатуру. Без него берётся из
-   * каталога сообщений.
+   * The accessible name of the button that opens the on-screen keyboard. Without it, the name
+   * comes from the message catalog.
    */
   triggerLabel?: string;
-  /** Доступное имя панели экранной клавиатуры. Без него берётся из каталога сообщений. */
+  /**
+   * The accessible name of the on-screen keyboard panel. Without it, the name comes from the
+   * message catalog.
+   */
   keyboardLabel?: string;
 }
 
@@ -38,69 +43,69 @@ export interface SearchControlProps extends Omit<
   ComponentPropsWithoutRef<"input">,
   "value" | "onChange" | "type" | "size" | "aria-label"
 > {
-  /** Текст запроса. Поле управляемое: значение хранит потребитель. */
+  /** The query text. The field is controlled: the consumer holds the value. */
   value: string;
   /**
-   * Вызывается при изменении текста и получает строку.
+   * Called when the text changes; receives the string.
    *
-   * Отдаёт строку, а не событие. У поля поиска значение — это и есть смысл;
-   * все пять рукописных копий во фронте первым делом доставали `e.target.value`.
+   * Passes a string, not an event. For a search field, the value is the whole point;
+   * all five hand-written copies in the frontend first pulled out `e.target.value`.
    */
   onChange: (value: string) => void;
   /**
-   * Доступное имя. Обязательно, и это проверяет компилятор — как у `Toggle`.
+   * The accessible name. Required, and the compiler enforces it, as with `Toggle`.
    *
-   * Плейсхолдер именем не считается: он исчезает при первом же символе, и
-   * скринридер остаётся с безымянным полем ровно тогда, когда в нём есть что
-   * читать. Если нужен `aria-labelledby` — он проходит насквозь через `...rest`.
+   * A placeholder is not a name: it disappears at the first character, and the screen reader is
+   * left with an unnamed field exactly when there is something in it to read. If `aria-labelledby`
+   * is needed, it passes straight through `...rest`.
    */
   label: string;
-  /** Кнопка очистки, когда в поле что-то есть. */
+  /** The clear button, shown when the field has content. */
   clearable?: boolean;
-  /** Доступное имя кнопки очистки. Без него берётся из каталога сообщений. */
+  /**
+   * The accessible name of the clear button. Without it, the name comes from the message catalog.
+   */
   clearLabel?: string;
-  /** Классы на оболочку с рамкой — ширина, скругление, вертикальные внутренние отступы. */
+  /** Classes for the bordered shell: width, corner rounding, vertical inner padding. */
   shellClassName?: string;
   /**
-   * Ступень высоты поля: `md` — 42 пикселя, `sm` — 36. Проброс в `TextControl`.
+   * The height step of the field: `md` is 42 px, `sm` is 36. Forwarded to `TextControl`.
    *
-   * Ступень живёт у него, а не здесь: поиск намеренно стоит на `TextControl`, и
-   * своя высота у поиска означала бы второй способ считать её внутри самого
-   * пакета — ровно то расхождение, ради которого `SearchControl` и заведён.
+   * The step lives there, not here: search deliberately sits on `TextControl`, and a custom height
+   * for search would mean a second way to compute it inside the package itself, exactly the
+   * divergence `SearchControl` was created to prevent.
    */
   size?: "sm" | "md";
-  /** Добавляет экранную клавиатуру; без этого пропса разметка поиска не меняется. */
+  /** Adds the on-screen keyboard; without this prop, the search markup does not change. */
   keyboard?: SearchKeyboardConfig;
 }
 
 /**
- * Поле поиска: лупа слева, крестик очистки справа.
+ * Search field: a magnifier on the left, a clear cross on the right.
  *
- * СТОИТ НА `TextControl`, А НЕ НА СВОЕЙ ОБОЛОЧКЕ — и это главное решение здесь.
- * Во фронте таких полей было пять рукописных (диалог смены категории, диалог
- * коллекций, пикер обоев, фильтр библиотеки, глобальный поиск в шапке), и все
- * пять красили фокус в `--tg`, тогда как обычные поля через `TextControl` —
- * в `--accent-strong`. То есть поиск во всём приложении фокусировался не так,
- * как остальные поля, и заметить это по коду было нельзя: расхождение видно
- * только если открыть пять файлов рядом. Собственная оболочка здесь означала
- * бы шестую копию — уже внутри пакета.
+ * IT SITS ON `TextControl`, NOT ON ITS OWN SHELL, and this is the main decision here.
+ * The front end had five hand-written fields of this kind (the category-change dialog, the
+ * collections dialog, the wallpaper picker, the library filter, the global search in the header),
+ * and all five painted focus in `--tg`, while regular fields via `TextControl` used
+ * `--accent-strong`. So search across the whole app was focused differently from the other fields,
+ * and this could not be spotted from the code: the divergence is visible only if you open five
+ * files side by side. An own shell here would mean a sixth copy, this time inside the package.
  *
- * ЧЕГО КОМПОНЕНТ НАМЕРЕННО НЕ ДЕЛАЕТ:
+ * WHAT THE COMPONENT DELIBERATELY DOES NOT DO:
  *
- * — **Не перехватывает Escape.** Соблазнительно чистить поле по Escape, как
- *   это делает фильтр библиотеки. Но поиск чаще всего стоит внутри модального
- *   окна, а там Escape закрывает окно; перехват сломал бы закрытие ровно тогда,
- *   когда фокус в поиске, — то есть почти всегда. Кому нужна очистка по Escape,
- *   вешает `onKeyDown` сам: он проходит насквозь.
+ * - **Does not intercept Escape.** It is tempting to clear the field on Escape, as the library
+ *   filter does. But search most often sits inside a modal dialog, and there Escape closes the
+ *   dialog; intercepting it would break the closing exactly when focus is in the search, that is,
+ *   almost always. Whoever needs clearing on Escape attaches `onKeyDown` themselves: it passes
+ *   straight through.
  *
- * — **Не откладывает вызовы.** Дебаунс зависит от того, что за поиском стоит:
- *   локальная фильтрация массива в диалоге не нуждается в задержке вовсе,
- *   запрос в API нуждается. Пакет этого не знает, а зашитая задержка не
- *   отключается ничем.
+ * - **Does not debounce calls.** Debounce depends on what sits behind the search: local filtering
+ *   of an array in a dialog needs no delay at all, while an API request does. The package does not
+ *   know which one it is, and a built-in delay cannot be turned off.
  *
- * ОЧИСТКА ВОЗВРАЩАЕТ ФОКУС В ПОЛЕ. Крестик при этом размонтируется, и без
- * явного возврата фокус уезжает на `<body>` — пользователь клавиатуры теряет
- * место в диалоге и начинает обход заново.
+ * CLEARING RETURNS FOCUS TO THE FIELD. The cross unmounts at that moment, and without an explicit
+ * return focus moves to `<body>`: a keyboard user loses their place in the dialog and has to start
+ * navigating again from the beginning.
  */
 export const SearchControl = forwardRef<HTMLInputElement, SearchControlProps>(
   function SearchControl(
@@ -131,27 +136,25 @@ export const SearchControl = forwardRef<HTMLInputElement, SearchControlProps>(
     });
 
     const showClear = clearable && value !== "" && !disabled;
-    // Подпись раскладки берётся из ключа `keyboard.*`, а не пишется здесь
-    // второй раз: до 2.0.0 эта же строка жила и в `Keyboard.tsx`, и две копии
-    // разошлись бы молча.
+    // The layout label comes from the `keyboard.*` key rather than being written out here a second
+    // time: until 2.0.0 this same string lived in both `Keyboard.tsx` and here, and the two copies
+    // would have drifted apart silently.
     const keyboardLabel =
       keyboard?.keyboardLabel ??
       messages.keyboard.label({ layout: keyboard?.layout === "ru" ? "ru" : "en" });
     /*
-      ЧУЖАЯ смена значения двигает позицию в конец.
+      A value change from OUTSIDE moves the position to the end.
 
-      Позиция обновлялась по `onChange`, `onSelect` и `onPointerDown` у
-      кнопки-триггера, то есть только при указательном взаимодействии.
-      Пользователь клавиатуры доходил до кнопки табом и жал Enter —
-      `pointerdown` не приходил, и позиция оставалась с монтирования, `{0,0}`.
-      Значение при этом бывает непустым (восстановленный запрос), и первый же
-      символ с экранной клавиатуры вставлялся в НАЧАЛО строки.
+      The position was updated by `onChange`, `onSelect` and the trigger button's `onPointerDown`,
+      that is, only on pointer interaction. A keyboard user tabbed to the button and pressed Enter:
+      `pointerdown` did not fire, and the position stayed at `{0,0}` from mount. The value can be
+      non-empty at that point (a restored query), and the first character typed from the on-screen
+      keyboard was inserted at the START of the string.
 
-      Читать позицию из DOM вместо состояния НЕЛЬЗЯ: при наборе экранной
-      клавиатурой фокус стоит на её кнопке, а не в поле, и каретка в DOM
-      оказывается в конце — замена выделения ломается. Поэтому состояние
-      остаётся источником правды, а синхронизация происходит только когда
-      значение сменилось НЕ нами.
+      Reading the position from the DOM instead of state is NOT allowed: when typing with the
+      on-screen keyboard, focus stays on its button rather than in the field, and the caret in the
+      DOM ends up at the end, so replacing the selection breaks. So state stays the source of truth,
+      and synchronization happens only when the value changed NOT by us.
     */
     const ownValue = useRef<string | null>(null);
     useEffect(() => {
@@ -175,9 +178,10 @@ export const SearchControl = forwardRef<HTMLInputElement, SearchControlProps>(
     const control = (
       <TextControl
         ref={innerRef}
-        // `type="search"` даёт роль `searchbox` и поисковую клавиатуру на
-        // телефоне. Родной крестик WebKit при этом убран классом ниже — иначе
-        // в Safari очисток было бы две, рядом и разного вида.
+        // `type="search"` gives the `searchbox` role and the search keyboard on a phone. WebKit's
+        // native cross is removed by the class below; otherwise Safari would show two clear
+        // buttons,
+        // side by side and in different looks.
         type="search"
         value={value}
         onChange={(event) => {

@@ -19,19 +19,18 @@ import { ChoiceCardBody } from "./ChoiceCardBody.js";
 import { CHECKBOX_SIZES, type CheckboxCardComponent } from "./Checkbox.js";
 
 /**
- * Раскладка набора карточек. Свой контекст, а не поле контекста `Checkbox`:
- * см. `CheckboxCardComponent`.
+ * Layout of a card set. It has its own context, not a field of the `Checkbox` context:
+ * see `CheckboxCardComponent`.
  */
 export const CheckboxCardLayoutContext = createContext<"vertical" | "horizontal">("vertical");
 
 /**
- * Флажок-карточка: то, что `CheckboxGroup appearance="card"` рисует вместо
- * строки с коробкой.
+ * Checkbox card: what `CheckboxGroup appearance="card"` renders instead of a row with a box.
  *
- * Не экспортируется из пакета и НЕ импортируется из `Checkbox.tsx`: его кладёт
- * в контекст `CheckboxGroup`, и только тот, кто использует группу, платит за
- * этот код в бандле (см. `CheckboxGroupStyleContext`). Тон приходит уже
- * решённым — тон набора или собственный.
+ * It is not exported from the package, and it is NOT imported from `Checkbox.tsx`. The
+ * group puts it into the context, so only the one who uses the group pays for this code
+ * in the bundle (see `CheckboxGroupStyleContext`). The tone arrives already resolved: it
+ * is either the set's tone or the checkbox's own.
  */
 export const CheckboxCard: CheckboxCardComponent = forwardRef<
   HTMLDivElement,
@@ -90,9 +89,9 @@ export const CheckboxCard: CheckboxCardComponent = forwardRef<
       }
     >
       {/*
-        Зона нажатия здесь — вся карточка: метка накрывает рамку (см.
-        `CHOICE_CARD_LABEL`). Двух полосок обычного флажка тут нет: карточка и
-        сама выше 24 пикселей.
+        The hit area here is the whole card: the label covers the border (see
+        `CHOICE_CARD_LABEL`). There are no two strips of a regular checkbox here: the
+        card itself is taller than 24 pixels.
       */}
       <CheckboxButton
         className={({ isFocusVisible }) =>
@@ -113,7 +112,7 @@ export const CheckboxCard: CheckboxCardComponent = forwardRef<
                   className={cn(
                     "mt-0.5 flex shrink-0 items-center justify-center border transition-colors",
                     s.box,
-                    // Рамка отмеченной коробки — см. `STATE_BORDER` и `Checkbox`.
+                    // The border of a marked box: see `STATE_BORDER` and `Checkbox`.
                     on ? cn(t.solid, STATE_BORDER[tone]) : "border-line bg-bg-2",
                     isInvalid && "border-danger-strong"
                   )}

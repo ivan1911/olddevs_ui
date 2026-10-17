@@ -4,34 +4,34 @@ import type { ReactNode } from "react";
 import { cn } from "../../lib/cn.js";
 
 export interface DescriptionItem {
-  /** Подпись свойства (термин `dt`). */
+  /** Property label (the `dt` term). */
   label: ReactNode;
-  /** Значение свойства (описание `dd`). */
+  /** Property value (the `dd` description). */
   value: ReactNode;
 }
 
 export interface DescriptionListProps {
-  /** Пары «подпись — значение» в порядке показа. */
+  /** Label–value pairs, in display order. */
   items: DescriptionItem[];
   /**
-   * Раскладка на широком экране.
+   * Layout on a wide screen.
    *
-   * `columns` — подпись слева, значение справа; `stack` — значение под
-   * подписью. На УЗКОМ экране обе складываются в стопку независимо от пропа:
-   * две колонки на 360 пикселях означают, что подпись жмётся до одного слова,
-   * а значение переносится по букве.
+   * `columns` puts the label on the left and the value on the right; `stack` puts the value
+   * under the label. On a NARROW screen both stack regardless of the prop: two columns at
+   * 360 pixels mean the label is squeezed down to a single word and the value wraps letter
+   * by letter.
    */
   layout?: "columns" | "stack";
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 /**
- * Список «свойство — значение»: метаданные обоя, параметры кампании.
+ * A "property — value" list: wallpaper metadata, campaign parameters.
  *
- * Разметка — `dl` с парами `dt`/`dd`, а не таблица и не два столбца дивов:
- * связь подписи со значением здесь смысловая, и скринридер читает пару
- * целиком. Таблица объявила бы строки и колонки, которых по сути нет.
+ * The markup is a `dl` with `dt`/`dd` pairs, not a table and not two columns of divs: the
+ * link between a label and its value is semantic here, and a screen reader reads the pair
+ * as a whole. A table would declare rows and columns that do not really exist.
  */
 export function DescriptionList({ items, layout = "columns", className }: DescriptionListProps) {
   return (
@@ -42,8 +42,8 @@ export function DescriptionList({ items, layout = "columns", className }: Descri
           className={cn(
             "flex gap-1",
             layout === "columns"
-              ? // Стопка на узком, две колонки от `sm`. Порог общий с `Drawer`:
-                // ниже него колоночная раскладка перестаёт быть читаемой.
+              ? // Stacked on narrow screens, two columns from `sm`. The threshold is shared
+                // with `Drawer`: below it, the column layout stops being readable.
                 "flex-col sm:flex-row sm:items-baseline sm:gap-3"
               : "flex-col"
           )}

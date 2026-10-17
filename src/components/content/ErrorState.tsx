@@ -15,55 +15,54 @@ import { TONE_TOKENS } from "../../lib/variants.js";
 
 export interface ErrorStateProps {
   /**
-   * Заголовок состояния ошибки: общая фраза над пояснением.
+   * Heading of the error state: a general phrase above the explanation.
    *
-   * Умолчание берётся из каталога сообщений (`errorState.title`): в русском
-   * каталоге — «Ошибка загрузки», ровно этими словами все четыре места фронта
-   * и назывались; без провайдера — английская строка.
+   * The default comes from the message catalog (`errorState.title`). In the Russian catalog
+   * it reads "Failed to load" (an English stand-in for the original phrase; all four front-end
+   * places used exactly these words). Without a provider, it is the English string.
    */
   title?: string;
-  /** Что именно не удалось. Общая фраза наверху, конкретика здесь. */
+  /** What exactly failed. A general phrase on top, the specifics here. */
   description?: string;
   /**
-   * Готовый узел (обычно `Button` с «Попробовать снова»), а не колбэк с
-   * подписью — как у `EmptyState`: что делает действие, знает потребитель.
+   * A ready-made node (usually a `Button` labeled "Try again"), not a callback with a label,
+   * as with `EmptyState`: the consumer knows what the action does.
    */
   action?: ReactNode;
   /**
-   * Своя иконка вместо стандартной. `null` убирает её вовсе — например когда
-   * блок стоит внутри уже помеченного опасностью контейнера.
+   * A custom icon in place of the standard one. `null` removes it altogether, for example
+   * when the block sits inside a container that is already marked as dangerous.
    */
   icon?: ReactNode | null;
-  /** `sm` — внутри пикеров и панелей; `md` — вместо содержимого страницы. */
+  /** `sm` for use inside pickers and panels; `md` in place of page content. */
   size?: "sm" | "md";
-  /** Классы корневого элемента. */
+  /** Classes for the root element. */
   className?: string;
 }
 
 const ICON_SIZE = { sm: 22, md: 28 } as const;
 
 /**
- * Отказ: запрос не удался, показать нечего.
+ * A failure: the request did not succeed, so there is nothing to show.
  *
- * Отличается от `EmptyState` тремя вещами, и все три — не косметика:
+ * It differs from `EmptyState` in three things, and all three are not cosmetic:
  *
- * 1. **Роль `alert`.** Пустой список — это результат, отказ — событие, и
- *    скринридер обязан о нём узнать. Без живой области пользователь, не
- *    смотрящий на экран, остаётся с тишиной вместо ответа: запрос ушёл,
- *    ничего не произошло, и почему — неизвестно. Именно этого не было ни в
- *    одной из четырёх рукописных копий во фронте.
- * 2. **Тон опасности** у иконки и заголовка — `danger.fg`, то есть
- *    `danger-strong`. Голый `--danger` здесь не годится: атом тона подобран
- *    так, чтобы проходить порог контраста на всех четырёх подложках, а
- *    заливочный `--danger` считается только под контрастным текстом.
- * 3. **Действие подразумевается.** Отказ почти всегда повторим, поэтому слот
- *    `action` стоит на видном месте, а не как редкое дополнение.
+ * 1. **The `alert` role.** An empty list is a result; a failure is an event, and a screen
+ *    reader must be told about it. Without a live region, a user who is not looking at the
+ *    screen is left with silence instead of an answer: the request went out, nothing
+ *    happened, and why is unknown. This was missing from each of the four hand-written
+ *    copies in the front end.
+ * 2. **The danger tone** on the icon and the title: `danger.fg`, that is `danger-strong`.
+ *    The bare `--danger` does not fit here: the tone's base token is chosen so that it passes
+ *    the contrast threshold on all four backgrounds, while the filled `--danger` is valid
+ *    only under contrasting text.
+ * 3. **An action is implied.** A failure is almost always retryable, so the `action` slot
+ *    sits in a prominent place rather than as a rare addition.
  *
- * Отдельный компонент, а не ось `tone` у `EmptyState`: у того в замысле
- * записано «пустой экран не событие, ему не положено привлекать внимание» —
- * ровно противоположное требование. Один компонент с двумя взаимоисключающими
- * режимами обошёлся бы дороже двух честных. Общая у них геометрия, и она
- * вынесена в `lib/state.ts`.
+ * It is a separate component, not a `tone` axis on `EmptyState`: that one is designed around
+ * the rule "an empty screen is not an event, it should not draw attention", which is exactly
+ * the opposite requirement. One component with two mutually exclusive modes would cost more
+ * than two honest ones. The geometry is shared and lives in `lib/state.ts`.
  */
 export function ErrorState({
   title,
@@ -76,8 +75,8 @@ export function ErrorState({
   const messages = useMessages();
   const layout = STATE_LAYOUT[size];
   const tone = TONE_TOKENS.danger;
-  // `undefined` — иконки не передали, ставим стандартную; `null` — передали
-  // отказ от неё. Разница видна только так: `??` склеил бы оба случая.
+  // `undefined`: no icon was passed, so the standard one is used. `null`: the caller explicitly
+  // opted out of it. The difference is visible only this way: `??` would merge both cases.
   const iconNode =
     icon === undefined ? <ErrorIcon size={ICON_SIZE[size]} strokeWidth={1.5} /> : icon;
 
