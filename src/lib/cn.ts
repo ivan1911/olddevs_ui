@@ -2,28 +2,26 @@ import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 
 /**
- * Слияние с разрешением конфликтов, знающее про шкалу кита.
+ * Class merge that resolves conflicts and knows the kit's scale.
  *
- * Штатный `twMerge` раскладывает `text-*` по группам, глядя на суффикс:
- * t-shirt-размер (`sm`, `md`, `2xl`) или произвольная длина — это размер
- * шрифта, всё остальное — цвет. Ступень `caption` под это правило не подходит,
- * и `text-caption` попадал в группу ЦВЕТА, конфликтуя с `text-fg-2`:
+ * The stock `twMerge` sorts `text-*` into groups by looking at the suffix: a t-shirt size (`sm`, `md`,
+ * `2xl`) or an arbitrary length is a font size, everything else is a color. The `caption` step does not
+ * fit that rule, so `text-caption` landed in the COLOR group and conflicted with `text-fg-2`:
  *
- *     twMerge("text-caption", "text-fg-2") === "text-fg-2"   // размер съеден
- *     twMerge("text-fg-2", "text-caption") === "text-caption" // цвет съеден
+ *     twMerge("text-caption", "text-fg-2") === "text-fg-2"   // the size is dropped
+ *     twMerge("text-fg-2", "text-caption") === "text-caption" // the color is dropped
  *
- * Молча, без ошибки сборки, и результат зависел от порядка аргументов. Так
- * `Text size="caption"` рисовался унаследованным кеглем, а `Kbd` терял цвет.
+ * Silently, with no build error, and the result depended on the argument order. So `Text size="caption"`
+ * rendered with the inherited font size, and `Kbd` lost its color.
  *
- * Остальные шесть ступеней (`xs`, `sm`, `md`, `lg`, `xl`, `2xl`) — законные
- * t-shirt-размеры, и их `twMerge` разбирает сам.
+ * The other six steps (`xs`, `sm`, `md`, `lg`, `xl`, `2xl`) are legitimate t-shirt sizes, and `twMerge`
+ * parses them itself.
  *
- * `rounded-control` — вторая такая ступень и ровно тот же случай. Радиус
- * контролов назван по роли, а не по размеру (см. `--r-control` в styles.css),
- * поэтому под t-shirt-правило не подходит: без регистрации ниже `twMerge` не
- * узнаёт в нём радиус вовсе и перестаёт разрешать конфликт —
- * `cn("rounded-control", "rounded-full")` вернул бы ОБА класса, и выиграл бы
- * тот, что ниже в CSS, а не тот, что передан последним.
+ * `rounded-control` is a second such step, and exactly the same case. The control radius is named by
+ * role, not by size (see `--r-control` in styles.css), so the t-shirt rule does not fit it. Without the
+ * registration below, `twMerge` does not recognize it as a radius at all and stops resolving the
+ * conflict: `cn("rounded-control", "rounded-full")` would return BOTH classes, and the one that comes
+ * later in the CSS would win, not the one passed last.
  */
 const merge = extendTailwindMerge({
   extend: {
@@ -35,13 +33,12 @@ const merge = extendTailwindMerge({
 });
 
 /**
- * Слияние Tailwind-классов с разрешением конфликтов: последний выигрывает.
- * Перенесено из `src/lib/utils.js` фронта — там остаются прикладные утилиты
- * (formatFileSize, maskTime, normalizeTime, pluralize), они пакету не нужны.
+ * Merge of Tailwind classes with conflict resolution: the last one wins.
+ * Moved from `src/lib/utils.js` of the front-end app. The application utilities stay there
+ * (formatFileSize, maskTime, normalizeTime, pluralize), because the package does not need them.
  *
- * Экспортируется наружу намеренно: у потребителя свой `cn` на голом `twMerge`,
- * и `cn("text-caption", "text-fg-2")` там сломается ровно так же. Пары
- * «ступень шкалы + цвет» собирайте этим.
+ * Exported on purpose: the consumer has its own `cn` on bare `twMerge`, and `cn("text-caption", "text-fg-2")`
+ * breaks there in exactly the same way. Build "scale step + color" pairs with this function.
  */
 export function cn(...inputs: ClassValue[]): string {
   return merge(clsx(inputs));

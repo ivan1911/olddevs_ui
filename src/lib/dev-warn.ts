@@ -1,31 +1,27 @@
-// Тип `process` объявлен здесь же, а не берётся из `@types/node`: сборка пакета
-// Node-типов не подключает, а тянуть их ради одного поля незачем.
+// The `process` type is declared here, not taken from `@types/node`: the package build does not
+// include Node types, and pulling them in for a single field is pointless.
 declare const process: { env: { NODE_ENV?: string } };
 
 /**
- * Предупреждение потребителю в режиме разработки — один раз на сообщение.
+ * A warning to the consumer in development mode, once per message.
  *
- * ЗАЧЕМ. Типы ловят нарушение контракта у потребителя на TypeScript, а у
- * потребителя на JS — нет: два взаимоисключающих пропа приходят молча, и один
- * из них молча проигрывает. Предупреждение закрывает именно эту дыру. Правила,
- * когда оно уместно, — в `docs/conventions.md`, раздел «Предупреждения в режиме
- * разработки».
+ * WHY. Types catch a contract violation on the consumer's side in TypeScript, but not on the consumer's
+ * side in JS: two mutually exclusive props arrive silently, and one of them silently loses. The warning
+ * closes exactly this gap. The rules for when it is appropriate are in `docs/conventions.md`, section
+ * "Development-mode warnings".
  *
- * КАК ОПРЕДЕЛЯЕТСЯ РЕЖИМ. Пакет выходит голым `tsc` без бандлера, поэтому
- * значение `process.env.NODE_ENV` в `dist` не вшито — его подставляет сборка
- * потребителя (Vite, Next, webpack, esbuild с `define`), и в продакшн-сборке
- * ветка с предупреждением вырезается как мёртвая. Без бандлера (Node, браузер с
- * нативными модулями) `process` не определён: ссылка на него бросает
- * `ReferenceError`, и это тоже «тихо». Поэтому `try/catch`, а не
- * `typeof process !== "undefined"`: той проверки бандлер не заменяет, и в
- * браузерной сборке Vite, где `process` нет, предупреждение не сработало бы
- * никогда — даже в разработке. Для `try/catch` подстановка вида
- * `"development" !== "production"` остаётся константой, а не вызовом.
+ * HOW THE MODE IS DETERMINED. The package ships as plain `tsc` output, without a bundler, so the value of
+ * `process.env.NODE_ENV` is not baked into `dist`. The consumer's build substitutes it (Vite, Next,
+ * webpack, esbuild with `define`), and in a production build the warning branch is removed as dead code.
+ * Without a bundler (Node, a browser with native modules) `process` is not defined: a reference to it
+ * throws a `ReferenceError`, which is also "silent". So it is `try/catch`, not
+ * `typeof process !== "undefined"`: a bundler does not replace that check, and in a Vite browser build,
+ * where `process` does not exist, the warning would never fire, not even in development. For `try/catch`,
+ * the substitution of the form `"development" !== "production"` remains a constant, not a function call.
  *
- * Читается при каждом вызове, а не при загрузке модуля: тесты подменяют
- * значение через `vi.stubEnv`.
+ * Read on every call, not at module load: tests replace the value through `vi.stubEnv`.
  *
- * `@internal` — наружу из пакета не экспортируется.
+ * `@internal`: not exported from the package.
  */
 function isDevelopment(): boolean {
   try {
@@ -35,42 +31,40 @@ function isDevelopment(): boolean {
   }
 }
 
-/** Сообщения, которые уже были показаны. Ключ — сам текст. */
+/** Messages that have already been shown. The key is the text itself. */
 const shown = new Set<string>();
 
 /**
- * Написать в консоль предупреждение — только в разработке и только впервые.
+ * Write a warning to the console: in development only, and only the first time.
  *
- * «Один раз» нужно потому, что вызов стоит в теле рендера: строка списка
- * перерисовывается сотни раз, а `StrictMode` вызывает рендер дважды. Ключ —
- * текст сообщения, поэтому текст не должен содержать меняющихся данных: два
- * разных значения дали бы два предупреждения об одном и том же.
+ * "Once" is needed because the call sits in the render body: a list row re-renders hundreds of times,
+ * and `StrictMode` calls render twice. The key is the message text, so the text must not contain
+ * changing data: two different values would give two warnings about the same thing.
  *
- * Текст — по-английски (ADR-0034: консоль — адресат вне кита) и называет, что
- * передано, что победило и как исправить.
+ * The text is in English (ADR-0034: the console is an audience outside the kit), and it names what was
+ * passed, which one took precedence, and how to fix it.
  */
 export function devWarn(message: string): void {
   if (!isDevelopment() || shown.has(message)) return;
   shown.add(message);
-  // Единственное место кита, где `console` законен: предупреждение и есть вывод.
+  // The only place in the kit where `console` is legitimate: a warning is itself the output.
   // eslint-disable-next-line no-console
   console.warn(message);
 }
 
-/** Забыть показанное. Нужно только тестам: состояние живёт на уровне модуля. */
+/** Forget what has been shown. Needed only by tests: the state lives at module level. */
 export function resetDevWarnings(): void {
   shown.clear();
 }
 
 /**
- * Ошибка потребителя в консоль — только в разработке и только впервые, как
- * `devWarn`. Для того, что ломает компонент целиком (набор Инструментов
- * Редактора собран с ошибкой): само поле показывает её пользователю строкой
- * каталога, а причина нужна разработчику.
+ * A consumer error to the console: in development only, and only the first time, like `devWarn`.
+ * For something that breaks the component as a whole (the Editor's set of Tools is assembled with an
+ * error): the field itself shows the user a line from the catalog, while the developer needs the cause.
  *
- * `cause` — пойманное исключение: оно идёт в консоль вторым аргументом, а не в
- * текст. Ключ «один раз» — текст, и сообщение исключения в нём сделало бы
- * каждую ошибку новой; консоль же покажет у объекта `Error` и стек.
+ * `cause` is the caught exception. It goes to the console as the second argument, not into the text.
+ * The "once" key is the text, and the exception's message inside it would make every error look new.
+ * The console, however, shows the stack for an `Error` object.
  */
 export function devError(message: string, cause?: unknown): void {
   if (!isDevelopment() || shown.has(message)) return;

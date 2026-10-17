@@ -8,23 +8,23 @@ import { DEFAULT_MESSAGES } from "./defaults.js";
 import type { UiMessages } from "./messages.js";
 
 /**
- * Каталог сообщений: провайдера нет — английский фолбэк.
+ * The message catalog. No provider: the English fallback.
  *
- * Хук намеренно не принимает ключ и не режет каталог по пространствам имён:
- * компонент читает `messages.pagination.next`, и это видно в его коде. Хук вида
- * `useMessage("pagination.next")` спрятал бы ключ в строку, где ни компилятор,
- * ни поиск по репозиторию его не увидят.
+ * The hook deliberately takes no key and does not slice the catalog by namespace:
+ * a component reads `messages.pagination.next`, and that is visible in its code.
+ * A hook such as `useMessage("pagination.next")` would hide the key inside a string,
+ * where neither the compiler nor a repository search would see it.
  */
 export function useMessages(): UiMessages {
   return useContext(UiContext)?.messages ?? DEFAULT_MESSAGES;
 }
 
 /**
- * Локаль для `Intl` и `@internationalized/date`.
+ * The locale for `Intl` and `@internationalized/date`.
  *
- * Порядок: явная локаль `UiProvider` → локаль `I18nProvider` потребителя →
- * локаль браузера. Последние две даёт `useLocale` из react-aria, поэтому кит
- * не спорит с приложением, а встраивается в него.
+ * Order: the explicit locale of `UiProvider` → the consumer's `I18nProvider` locale →
+ * the browser locale. The last two come from react-aria's `useLocale`, so the kit does
+ * not fight the app but fits into it.
  */
 export function useUiLocale(): string {
   const explicit = useContext(UiContext)?.locale;
@@ -32,7 +32,7 @@ export function useUiLocale(): string {
   return explicit ?? locale;
 }
 
-/** Направление письма, контейнер порталов и плотность, объявленные провайдером. */
+/** Writing direction, portal container and density, as declared by the provider. */
 export function useUiConfig(): {
   dir: "ltr" | "rtl";
   portalContainer: HTMLElement | null;

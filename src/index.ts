@@ -1,5 +1,5 @@
-// Расширение ".js" обязательно: NodeNext требует его на этапе компиляции,
-// и оно же уезжает в dist, где его ждёт Node ESM.
+// The ".js" extension is required: NodeNext needs it at compile time, and it also ends up in dist,
+// where Node ESM expects it.
 export { cn } from "./lib/cn.js";
 export { useScrollLock } from "./hooks/useScrollLock.js";
 export { useTableState } from "./hooks/useTableState.js";
@@ -498,13 +498,13 @@ export type {
 } from "./components/overlays/CommandPalette.js";
 
 /*
- * i18n. Появился в 2.0.0 вместе с английским фолбэком: до него каждая
- * user-visible строка была русским дефолтом пропа, и другой язык означал
- * передать подпись в каждом месте вызова.
+ * i18n. Introduced in 2.0.0 together with the English fallback. Before it, every user-visible
+ * string was a Russian default of a prop, and another language meant passing the label at every
+ * call site.
  *
- * Каталоги локалей сюда НЕ реэкспортируются намеренно — они живут отдельными
- * входами (`@olddevs/ui/locales/ru`), иначе русский каталог оказался бы в
- * бандле у всех, включая тех, кому нужен только английский.
+ * The locale catalogs are deliberately NOT re-exported here. They live in separate entry points
+ * (`@olddevs/ui/locales/ru`), otherwise the Russian catalog would end up in everyone's bundle,
+ * including those who need only English.
  */
 export { UiProvider } from "./i18n/UiProvider.js";
 export type { UiProviderProps } from "./i18n/UiProvider.js";
