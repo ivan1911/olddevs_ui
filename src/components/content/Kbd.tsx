@@ -26,7 +26,7 @@ const KEY_SYMBOLS = /([⌘⌥⇧⌃])/;
 export function keyGlyphs(children: ReactNode): ReactNode {
   if (typeof children !== "string" || !KEY_SYMBOLS.test(children)) return children;
   return children.split(KEY_SYMBOLS).map((part, index) =>
-    // Нечётные части — сами знаки: `split` с группой кладёт их между кусками.
+    // Odd-indexed parts are the glyphs themselves: `split` with a capture group puts them between the pieces.
     index % 2 === 1 ? (
       <span key={index} data-key-symbol className="font-sans">
         {part}
