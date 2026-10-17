@@ -2,7 +2,12 @@
 
 import { devWarn } from "../../../lib/dev-warn.js";
 import { appleConvertedSpaces } from "./appleConvertedSpaces.js";
+import { backgroundMarkers } from "./backgroundMarkers.js";
+import { excelCellStyles } from "./excelCellStyles.js";
+import { horizontalRules } from "./horizontalRules.js";
+import { officeJunk } from "./officeJunk.js";
 import { detectPasteSources, type PasteSources } from "./pasteSources.js";
+import { sharePointStructure } from "./sharePointStructure.js";
 import { wordLists } from "./wordLists.js";
 
 /** What every step gets besides the parsed clipboard. */
@@ -30,10 +35,19 @@ export interface PasteCleanupStep {
 }
 
 /**
- * The steps, in order. The order matters where one step reads what another one removes: lists are
- * rebuilt before the Office junk is cleared, because the list markers sit inside that junk.
+ * The steps, in order. The order matters where one step reads what another one removes: Excel's
+ * class rules are resolved before backgrounds are read, and lists are rebuilt before the Office junk
+ * is cleared, because the list markers sit inside that junk.
  */
-export const PASTE_CLEANUP_STEPS: readonly PasteCleanupStep[] = [appleConvertedSpaces, wordLists];
+export const PASTE_CLEANUP_STEPS: readonly PasteCleanupStep[] = [
+  appleConvertedSpaces,
+  excelCellStyles,
+  backgroundMarkers,
+  wordLists,
+  sharePointStructure,
+  horizontalRules,
+  officeJunk,
+];
 
 /**
  * Clean the clipboard HTML of a paste (the `transformPastedHTML` of the `pasteCleanup` Tool).

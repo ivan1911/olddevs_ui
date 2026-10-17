@@ -18,6 +18,11 @@ export interface PasteSources {
   googleDocs: boolean;
   /** Google Sheets: the `<google-sheets-html-origin>` marker and the `data-sheets-*` attributes. */
   googleSheets: boolean;
+  /**
+   * SharePoint and Word Online (Word in the browser): their own markup, with `data-ccp-props` and the
+   * `OutlineElement` / `TextRun` classes. No real capture yet: the step is checked on synthetic HTML.
+   */
+  sharePoint: boolean;
 }
 
 const WORD =
@@ -25,6 +30,7 @@ const WORD =
 const EXCEL = /urn:schemas-microsoft-com:office:excel|\bcontent=["']?Excel\.Sheet/i;
 const GOOGLE_DOCS = /\bid=["']?docs-internal-guid-/;
 const GOOGLE_SHEETS = /<google-sheets-html-origin|\bdata-sheets-/;
+const SHARE_POINT = /\bdata-ccp-props=|\bclass=["']?(?:OutlineElement|TextRun)\b/;
 
 /** The sources of a clipboard's HTML, read from the string: no parse is needed to tell them apart. */
 export function detectPasteSources(html: string): PasteSources {
@@ -33,5 +39,6 @@ export function detectPasteSources(html: string): PasteSources {
     excel: EXCEL.test(html),
     googleDocs: GOOGLE_DOCS.test(html),
     googleSheets: GOOGLE_SHEETS.test(html),
+    sharePoint: SHARE_POINT.test(html),
   };
 }
