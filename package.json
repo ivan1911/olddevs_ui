@@ -74,7 +74,6 @@
     "contrast": "node scripts/contrast.mjs",
     "llms": "node scripts/llms.mjs",
     "llms:check": "node scripts/llms.mjs --check",
-    "docs:translations": "node scripts/docs-translations.mjs",
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
     "test:a11y": "playwright test tests-visual/a11y.spec.ts",

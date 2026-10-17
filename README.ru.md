@@ -1,3 +1,5 @@
+<!-- sourceHash: b0f0628dc8ba -->
+
 # <img src="https://ivan1911.github.io/olddevs_ui/logo.svg" alt="" width="44" height="56" align="absmiddle"> @olddevs/ui
 
 [English](README.md) · Русский
@@ -32,7 +34,7 @@ React — единственная peer-зависимость: его верс�
 | `clsx`, `tailwind-merge`                                                   | Сборка классов                                                 |
 | `@internationalized/date`                                                  | Типы компонентов даты и времени                                |
 
-Движка Редактора (Tiptap) в списке нет: его ставит только приложение, которое импортирует `@olddevs/ui/editor`. Команда — на [странице Редактора](docs/components/inputs/rich-text-editor.md#установка).
+Движка Редактора (Tiptap) в списке нет: его ставит только приложение, которое импортирует `@olddevs/ui/editor`. Команда — на [странице Редактора](docs/components/inputs/rich-text-editor.md#installation).
 
 ## Подключение стилей
 
@@ -123,11 +125,11 @@ import ru from "@olddevs/ui/locales/ru";
 
 - [ui.olddevs.ru](https://ui.olddevs.ru) — сайт документации
 - [Storybook](https://ivan1911.github.io/olddevs_ui/) — витрина: истории каждого компонента во всех темах, собранные из последнего выпуска
-- [docs/index.md](docs/index.md) — Справочник: страница на каждый компонент с разделами «Когда использовать» и «Когда не использовать»
+- [docs/index.md](docs/index.md) — Справочник: страница на каждый компонент с разделами «Когда использовать» и «Когда не использовать» (на английском)
 - [docs/components/index.md](docs/components/index.md) — каталог компонентов
 - [docs/accessibility.md](docs/accessibility.md) — контракт доступности
 
-Справочник написан по-русски; у большинства страниц рядом лежит английский перевод `*.en.md`.
+Справочник в пакете написан по-английски; русский перевод лежит на [сайте документации](https://ui.olddevs.ru/ru).
 
 Вместе с пакетом едут `docs/` и указатель `llms.txt`, поэтому Справочник нужной версии лежит в `node_modules/@olddevs/ui/`. Направьте ИИ-ассистента по коду на `llms.txt`.
 

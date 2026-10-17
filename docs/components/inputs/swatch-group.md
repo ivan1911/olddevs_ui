@@ -9,28 +9,29 @@ story: src/components/inputs/SwatchGroup.stories.tsx
 
 # SwatchGroup
 
-## Кратко для AI
+## Summary for AI
 
-Выбор одного значения из закрытого набора, где вариант показан **образцом
-цвета**, а не текстом. Закраска приходит оттенком палитры меток (`LabelHue`),
-имя варианта — отдельным полем `name`: закраска нужна глазам, имя — слуху.
+Picking one value from a closed set, where an option is shown as a **color
+swatch**, not as text. The fill comes as a hue of the label palette (`LabelHue`),
+the option name as a separate `name` field: the fill is for the eyes, the name
+for the ears.
 
-## Когда использовать
+## When to use
 
-- Цвет проекта, оттенок метки, цвет календаря — всё, где значение — это ключ из
-  закрытого набора, а показывать его нужно цветом.
-- Вариантов немного, и их сравнивают глазами, выкладывая сеткой.
+- A project color, a label hue, a calendar color — anywhere the value is a key
+  from a closed set and has to be shown as a color.
+- There are few options and they are compared by eye, laid out in a grid.
 
-## Когда не использовать
+## When not to use
 
-- Если нужен **произвольный** цвет, используйте `ColorPicker` (отдельный вход
-  `@olddevs/ui/color`). Он намеренно выдаёт цвет мимо системы токенов; здесь
-  наоборот — ключ, который тема превращает в цвет.
-- Если варианты называются словами, а не цветом, используйте `RadioGroup`.
-- Для выбора режима, а не значения используйте `Segmented`.
-- Если значений десятки и их ищут, а не сравнивают, используйте `Select`.
+- If you need an **arbitrary** color, use `ColorPicker` (a separate entry point
+  `@olddevs/ui/color`). It deliberately produces a color outside the token system;
+  here it is the opposite — a key that the theme resolves to a color.
+- If the options are named in words, not by color, use `RadioGroup`.
+- To choose a mode rather than a value, use `Segmented`.
+- If there are dozens of values and people search them rather than compare, use `Select`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { SwatchGroup, LABEL_HUES } from "@olddevs/ui";
@@ -38,140 +39,142 @@ import { SwatchGroup, LABEL_HUES } from "@olddevs/ui";
 const [color, setColor] = useState<string>("teal");
 
 <SwatchGroup
-  label="Цвет проекта"
+  label="Project color"
   value={color}
   onChange={setColor}
   options={[
-    { value: "none", name: "Без цвета" },
+    { value: "none", name: "No color" },
     ...LABEL_HUES.map((hue) => ({ value: hue, hue, name: NAMES[hue] })),
   ]}
 />;
 ```
 
-## Пропы
+## Props
 
-| Проп       | Умолчание | Назначение                                                               |
-| ---------- | --------- | ------------------------------------------------------------------------ |
-| `value`    | —         | Выбранное значение. Без `null`: набор закрытый и непустой по построению. |
-| `onChange` | —         | Новое значение. Применяется сразу — подтверждать в наборе нечего.        |
-| `label`    | —         | Вопрос, на который отвечает набор. **Обязателен.**                       |
-| `options`  | —         | Варианты: `value`, `hue`, `name`, `disabled`.                            |
-| `columns`  | `6`       | Сколько образцов в ряду. По столбцам ходят вертикальные стрелки.         |
-| `tooltips` | —         | Показывать имя варианта подсказкой при наведении и фокусе.               |
-| `disabled` | —         | Выключает весь набор.                                                    |
+| Prop       | Default | Purpose                                                                         |
+| ---------- | ------- | ------------------------------------------------------------------------------- |
+| `value`    | —       | The selected value. No `null`: the set is closed and non-empty by construction. |
+| `onChange` | —       | The new value. Applied at once — there is nothing in a set to confirm.          |
+| `label`    | —       | The question the set answers. **Required.**                                     |
+| `options`  | —       | The options: `value`, `hue`, `name`, `disabled`.                                |
+| `columns`  | `6`     | How many swatches in a row. Up Arrow and Down Arrow move by columns.            |
+| `tooltips` | —       | Show the option name as a tooltip on hover and focus.                           |
+| `disabled` | —       | Disables the whole set.                                                         |
 
-## Закраска — оттенок, а не класс и не строка цвета
+## The fill is a hue, not a class and not a color string
 
-`hue` — имя из палитры меток (`LABEL_HUES`, восемь оттенков, выпущены в 3.12.0).
-Готовый класс от потребителя компонент не принимает, и это не строгость ради строгости:
+`hue` is a name from the label palette (`LABEL_HUES`, eight hues, released in 3.12.0).
+The component does not accept a ready-made class from the consumer, and this is not
+strictness for its own sake:
 
-- класс означал бы цвет мимо токенов — он не пережил бы смену темы, а собранный
-  в рантайме (`` `bg-label-${hue}` ``) не попал бы в CSS вовсе: Tailwind
-  сканирует исходники текстом;
-- строка цвета завела бы вторую палитру рядом с уже выпущенной.
+- a class would mean a color outside the tokens — it would not survive a theme
+  change, and one assembled at runtime (`` `bg-label-${hue}` ``) would not get into
+  the CSS at all: Tailwind scans the sources as text;
+- a color string would introduce a second palette next to the one already released.
 
-**Оттенок не задан — образец пустой: контур без заливки.** Так и собирается
-вариант «без цвета»: отсутствие цвета — это такой же ответ на вопрос набора, как
-и любой оттенок, и отдельной поддержки ему не нужно.
+**If the hue is not set, the swatch is empty: an outline with no fill.** This is how
+the "no color" option is built: the absence of color is as much an answer to the
+set's question as any hue, and it needs no separate support.
 
-## Выбранность — кольцо, а не второй цвет
+## Selection is a ring, not a second color
 
-Выбранный образец получает нейтральное кольцо внутрь (`fg-0`), а не акцентное.
-Причина прикладная: акцент настраивается брендом, и акцентное кольцо вокруг
-образца того же оттенка не читалось бы вовсе. Этот дефект и породил компонент:
-у потребителя выбранный вариант подсвечивался синим рядом с бирюзовым образцом,
-и два цвета спорили.
+The selected swatch gets a neutral ring inside (`fg-0`), not an accent one. The
+reason is practical: the accent is configured by the brand, and an accent ring
+around a swatch of the same hue would not read at all — this defect is why
+the component exists: in a consumer's app the selected option was highlighted in blue
+next to a teal swatch, and the two colors clashed.
 
-Кольцо меняет **форму** варианта, а не только его цвет: различать «выбран» и
-«не выбран» по одной насыщенности нельзя.
+The ring changes the **shape** of the option, not only its color: telling "selected"
+from "not selected" by saturation alone is not possible.
 
-Кольцо фокуса — акцентное и снаружи образца, поэтому два индикатора не сливаются:
-на выбранном варианте в фокусе видно оба.
+The focus ring is the accent one and sits outside the swatch, so the two indicators do
+not merge: on a selected option in focus both are visible.
 
-## Имя оттенка подсказкой (`tooltips`)
+## The hue name as a tooltip (`tooltips`)
 
-Имя варианта по умолчанию слышно, но не видно: подпись рядом с девятью кругами
-превратила бы сетку в список. Зрячему человеку при этом узнать название было
-нечем — «янтарный» от «красного» в кружке 24 пикселя отличает не каждый глаз.
-`tooltips` показывает то же самое слово подсказкой: при наведении и при фокусе
-с клавиатуры.
+By default the option name is audible but not visible: a label next to nine circles
+would turn the grid into a list. A sighted person then had no way to learn the name —
+not every eye tells "amber" from "red" in a 24-pixel circle. `tooltips` shows the same
+word as a tooltip: on hover and on keyboard focus.
 
 ```tsx
 <TooltipProvider>
-  <SwatchGroup label="Цвет проекта" value={color} onChange={setColor} options={OPTIONS} tooltips />
+  <SwatchGroup label="Project color" value={color} onChange={setColor} options={OPTIONS} tooltips />
 </TooltipProvider>
 ```
 
-**Провайдер обязателен, и поэтому подсказка не включена по умолчанию.**
-`TooltipProvider` ставится один на корень приложения (он же задаёт задержку и
-группировку подсказок); без него Radix бросает исключение на первом же варианте. Набор
-выпущен раньше подсказки и уже используется потребителями без провайдера — умолчание
-«включено» сломало бы их при обновлении на патч.
+**The provider is required, and that is why the tooltip is not on by default.**
+`TooltipProvider` is placed once at the app root (it also sets the delay and the
+grouping of tooltips); without it Radix throws on the very first option. The set
+was released before the tooltip and is already in use in consumer apps without a provider —
+a default of "on" would have crashed them on a patch update.
 
-**Текст — тот же `name`, второго поля под подсказку нет.** Два источника имени
-разошлись бы при первом же переводе.
+**The text is the same `name`; there is no second field for the tooltip.** Two
+sources of the name would diverge at the first translation.
 
-**Проп на группе, а не на варианте**: набор обязан вести себя одинаково, и
-подсказка у трёх образцов из девяти читалась бы как поломка. На выключенном
-варианте подсказка работает: «почему нельзя» она не объясняет, но «что это за
-цвет» — вопрос законный и к недоступному варианту.
+**A prop on the group, not on the option**: the set must behave uniformly, and a
+tooltip on three swatches of nine would look like a bug. On a disabled option
+the tooltip still appears: it does not explain "why not", but "what color is this" is a
+legitimate question about an unavailable option too.
 
-**Для скринридера вариант по-прежнему называется один раз.** Radix вешает на свой триггер
-`aria-describedby`, и на самой радиокнопке это удвоило бы имя — оно уже её
-доступное имя, и скринридер прочитал бы «Янтарный Янтарный». Поэтому триггером
-служит обёртка вокруг варианта: описание достаётся ей, а от предка описание не
-наследуется. Той же обёрткой решается и вторая задача — `RadioButton` не
-пробрасывает `onFocus` и `onBlur`, и подсказка на нём работала бы только
-мышью, то есть отсутствовала бы у тех, кому она нужнее.
+**For a screen reader, the option is still named once.** Radix sets `aria-describedby` on its
+trigger, and on the radio button itself that would duplicate the name, which is already
+the button's accessible name, and the screen reader would read "Amber Amber". So the trigger
+is a wrapper around the option: the description goes to it, and a description is
+not inherited from an ancestor. The same wrapper solves a second problem —
+`RadioButton` does not forward `onFocus` and `onBlur`, and a tooltip on it
+would work with the mouse only, which means it would be missing for the people who need
+it more.
 
-**На касании подсказки нет.** Так устроен жест, а не эта реализация: на телефоне
-имя оттенка остаётся доступным только скринридеру.
+**There is no tooltip on touch.** That is a property of the gesture, not of this
+implementation: on a phone the hue name stays available to a screen reader only.
 
-## Клавиатура
+## Keyboard
 
-| Клавиша        | Что делает                                                          |
-| -------------- | ------------------------------------------------------------------- |
-| `Tab`          | Приводит фокус **на выбранный** вариант; выход из набора — тоже Tab |
-| `←` / `→`      | По ряду; на краю ряда переход к соседнему                           |
-| `↑` / `↓`      | По столбцу, шагом в `columns`; края не зацикливаются                |
-| `Home` / `End` | Первый и последний **доступный** вариант                            |
-| `Пробел`       | Выбирает вариант под фокусом                                        |
-| `Esc`          | Убирает подсказку `tooltips`, не забирая фокус                      |
+| Key            | What it does                                                            |
+| -------------- | ----------------------------------------------------------------------- |
+| `Tab`          | Moves focus **to the selected** option; Tab also leaves the set         |
+| `←` / `→`      | Moves along the row; at the edge of a row, moves to the neighboring row |
+| `↑` / `↓`      | Moves along the column in steps of `columns`; the edges do not wrap     |
+| `Home` / `End` | Moves to the first and last **available** option                        |
+| `Space`        | Selects the option under focus                                          |
+| `Esc`          | Dismisses the tooltip shown by `tooltips`, without taking focus away    |
 
-Горизонтальные стрелки разбирает сама радиогруппа react-aria — линейно, по
-порядку разметки, и в ряду это именно то, что нужно. Вертикальные считает
-компонент: для линейной навигации «вниз» означало бы «следующий», то есть
-соседний столбец, а не вариант под текущим. Обработчик стоит на погружении и
-гасит событие — react-aria слушает ниже по дереву и успела бы увести выбор
-раньше.
+The horizontal arrow keys are handled by the react-aria radio group itself — linearly,
+in markup order, and in a row that is exactly what is needed. The vertical ones are
+computed by the component: for linear navigation "down" would mean "next", that is,
+the neighboring column rather than the option below the current one. The handler runs
+in the capture phase and stops the event — react-aria listens lower in the tree
+and would have moved the selection first.
 
-**`columns` — число, а не `auto-fill`.** По столбцам ходят стрелки, то есть
-компонент обязан знать их количество; при `auto-fill` он узнавал бы его только
-замером, и клавиатура молча менялась бы от ширины контейнера.
+**`columns` is a number, not `auto-fill`.** The arrow keys move along columns, so the
+component must know their count; with `auto-fill` it could learn it only by
+measuring, and the keyboard would silently change with the container width.
 
-## Доступность
+## Accessibility
 
-- Роль набора — `radiogroup`, у варианта — `radio`; выбранность объявляет сама
-  роль, живой области не нужно.
-- Имя набора обязательно (`label`), имя варианта — обязательное поле `name`.
-  Без него девять одинаковых кругов не различаются на слух никак, а закраска
-  именем не является: её не прочитать.
-- Имя варианта по умолчанию слышно только скринридеру: глазами вариант называет сам образец. С `tooltips` имя ещё и показывается подсказкой.
-- Цвет не единственный носитель выбранности — см. выше.
+- The set has the `radiogroup` role and an option has `radio`; the role itself
+  announces selection, so no live region is needed.
+- The set name is required (`label`); the option name is the required `name` field.
+  Without it nine identical circles cannot be told apart by ear at all, and the
+  fill is not a name: it cannot be read.
+- By default, only the screen reader announces the option name: to the eye, the swatch
+  itself names the option. With `tooltips` the name is also shown in a tooltip.
+- Color is not the only cue for the selection — see above.
 
-## Антипаттерны
+## Anti-patterns
 
-- Класть в `name` то же, что в `hue`: имя переводится, закраска нет.
-- Собирать этот выбор на `RadioGroup` с цветным кружком внутри: у варианта
-  получаются два круга подряд, и сетка читается рябью.
-- Тащить `ColorPicker` ради выбора из девяти вариантов: он про произвольный
-  цвет и весит отдельным входом столько же, сколько весь остальной кит.
-- Заводить «пустое значение» пропом: вариант «без цвета» — обычный вариант
-  набора.
+- Putting the same thing in `name` as in `hue`: the name is translated, the fill is not.
+- Building this choice on `RadioGroup` with a colored circle inside: an option ends
+  up with two circles in a row, and the grid reads as visual noise.
+- Pulling in `ColorPicker` to choose from nine options: it is about an arbitrary
+  color and, as a separate entry point, weighs as much as the whole rest of the kit.
+- Introducing an "empty value" with a prop: the "no color" option is an ordinary
+  option of the set.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Исходник: `src/components/inputs/SwatchGroup.tsx`
-- Палитра оттенков: `LABEL_HUES`, `LABEL_BG_CLASS` — [`docs/palette.md`](../../palette.md)
-- Тесты: `tests/swatch-group.test.tsx`; браузер — `tests-visual/interactions.spec.ts`
-- Витрина: `src/components/inputs/SwatchGroup.stories.tsx`
+- Source: `src/components/inputs/SwatchGroup.tsx`
+- Hue palette: `LABEL_HUES`, `LABEL_BG_CLASS` — [`docs/palette.md`](../../palette.md)
+- Tests: `tests/swatch-group.test.tsx`; browser — `tests-visual/interactions.spec.ts`
+- Showcase: `src/components/inputs/SwatchGroup.stories.tsx`

@@ -474,7 +474,11 @@ function documentedAllowList(page: string): Set<string> {
   for (const row of rows) {
     // Первая ячейка — название строки («Блоки»), в ней тегов нет.
     const cells = row.split("|").slice(2);
-    for (const match of cells.join("|").matchAll(/`([^`]+)`/g)) tokens.add(match[1]!);
+    const found = [...cells.join("|").matchAll(/`([^`]+)`/g)].map((match) => match[1]!);
+    // The Attributes row also quotes attribute VALUES in backticks (`language-go`, `50-50`):
+    // only the `tag[attribute]` pairs are allow-list entries.
+    const pairs = found.filter((token) => token.includes("["));
+    for (const token of pairs.length > 0 ? pairs : found) tokens.add(token);
   }
   return tokens;
 }

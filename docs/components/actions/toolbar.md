@@ -9,184 +9,188 @@ story: src/components/actions/Toolbar.stories.tsx
 
 # Toolbar
 
-## Кратко для AI
+## Summary for AI
 
-Панель действий с ролью `toolbar` и одной остановкой табуляции: Tab входит в
-неё и выходит из неё, внутри ходят стрелки, `Home` и `End` ведут к краям, а
-возврат на панель ставит фокус на последнее использованное действие. Обёртка
-над `Toolbar` из react-aria. Имя обязательно — `aria-label` или
-`aria-labelledby`. Внутрь кладутся `Button`, `Toggle`, `ToggleGroup`, `Menu`,
-`SplitButton` и Radix-триггеры (`Popover`, `ContextMenu`) без доработок; группы
-разделяет `Separator`.
+An action bar with the `toolbar` role and a single tab stop: Tab enters it and
+leaves it, arrow keys move focus inside, `Home` and `End` go to the edges, and returning to
+the toolbar puts focus on the last used action. A wrapper over react-aria's
+`Toolbar`. A name is required — `aria-label` or `aria-labelledby`. You can put
+`Button`, `Toggle`, `ToggleGroup`, `Menu`, `SplitButton` and Radix triggers
+(`Popover`, `ContextMenu`) inside without extra work; groups are divided by
+`Separator`.
 
-## Когда использовать
+## When to use
 
-- Ряд из нескольких действий над одним объектом (редактором, просмотрщиком,
-  полотном), которые пользователь клавиатуры применяет подряд. Без панели на
-  каждое действие уходит остановка табуляции, и до содержимого за ней не
-  добраться.
-- Действия сгруппированы по смыслу и их удобно разделить с помощью `Separator`.
-- Компонент «на будущее» (ADR-0048): заказчика при выпуске не было, API взят по
-  аналогам — Radix `Toolbar`, React Aria `Toolbar`, Fluent 2 `Toolbar`, MUI X
-  `Toolbar`. Ваш экран — первая проверка этого API, а не нарушение контракта.
+- A row of several actions on one object — an editor, a viewer, a canvas — that
+  a keyboard user works through one after another. Without a toolbar every action costs a
+  tab stop, and the content after it cannot be reached.
+- The actions are grouped by meaning and are conveniently divided with a `Separator`.
+- A component built ahead of demand (ADR-0048): nobody had asked for it at release,
+  and the API was modeled on its analogs — Radix `Toolbar`, React Aria `Toolbar`,
+  Fluent 2 `Toolbar`, MUI X `Toolbar`. Your screen is the first test of this API,
+  not a violation of the contract.
 
-## Когда не использовать
+## When not to use
 
-- Для полосы над таблицей с заголовком, счётчиком, поиском и фильтрами
-  используйте `TableToolbar`. Роли `toolbar` у неё **нет** намеренно: стрелки
-  внутри поля поиска заняты кареткой, а панель перехватывает их в фазе
-  погружения (capture; см. ниже).
-  Это не пробел, а решение — [страница](../table/toolbar.md).
-- Для действий над выбранными строками используйте `SelectionBar`; для шапки
-  страницы с кнопками — `PageHeader`.
-- Для двух-трёх кнопок, которые никто не перебирает клавиатурой подряд, хватит
-  обычного ряда `ButtonGroup` или `flex` с `gap`. Роль `toolbar` обещает скринридеру
-  клавиатурную модель — не заводите её ради раскладки.
-- Для выбора раздела используйте `Tabs`, для режима отображения — `Segmented`.
-- Поля ввода (`TextControl`, `SearchControl`, `Select` с текстовым полем) в
-  панели не работают так, как ждут: панель забирает у них стрелки вдоль своей
-  оси, и каретка по тексту не ходит. Вынесите поле за панель.
+- For a bar above a table with a title, a counter, search and filters, use
+  `TableToolbar`. It deliberately has **no** `toolbar` role: arrow keys inside a
+  search field belong to the caret, and the toolbar intercepts them in the
+  capture phase (see below). This is not an omission but a decision — [the page](../table/toolbar.md).
+- For actions on selected rows, use `SelectionBar`; for a page header with
+  buttons, use `PageHeader`.
+- For two or three buttons that nobody works through one by one with the
+  keyboard, an ordinary `ButtonGroup` or a `flex` row with `gap` is enough. The
+  `toolbar` role promises the screen reader a keyboard model — do not add it for
+  layout.
+- For choosing a section, use `Tabs`; for a display mode, use `Segmented`.
+- Input fields (`TextControl`, `SearchControl`, `Select` with a text field) do
+  not work in a toolbar the way people expect: the toolbar takes the arrow keys
+  along its axis away from them, and the caret no longer moves through the text.
+  Move the field outside the toolbar.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Button, MenuItem, Separator, SplitButton, ToggleGroup, Toolbar } from "@olddevs/ui";
 
-<Toolbar aria-label="Инструменты документа">
+<Toolbar aria-label="Document tools">
   <ToggleGroup
-    aria-label="Начертание"
+    aria-label="Text style"
     options={[
-      { id: "bold", label: "B", "aria-label": "Полужирный" },
-      { id: "italic", label: "I", "aria-label": "Курсив" },
+      { id: "bold", label: "B", "aria-label": "Bold" },
+      { id: "italic", label: "I", "aria-label": "Italic" },
     ]}
     value={style}
     onChange={setStyle}
   />
   <Separator />
   <Button variant="ghost" onClick={copy}>
-    Копировать
+    Copy
   </Button>
   <Separator />
-  <SplitButton label="Экспорт" onClick={exportPdf}>
-    <MenuItem>Экспорт в PNG</MenuItem>
+  <SplitButton label="Export" onClick={exportPdf}>
+    <MenuItem>Export to PNG</MenuItem>
   </SplitButton>
 </Toolbar>;
 ```
 
 ## Public API
 
-| Проп                             | По умолчанию | Значение                                                                                                    |
-| -------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
-| `aria-label` / `aria-labelledby` | —            | **Обязательно одно из двух**: строка или `id` видимого заголовка. Оба сразу и ни одного — ошибка типов.     |
-| `orientation`                    | `horizontal` | Ось стрелок: `horizontal` — влево и вправо, `vertical` — вверх и вниз; вертикальная панель кладёт столбцом. |
-| `children`                       | —            | Действия и `Separator` между их группами.                                                                   |
-| `className`                      | —            | Классы на элемент панели.                                                                                   |
+| Prop                             | Default      | Meaning                                                                                                                       |
+| -------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `aria-label` / `aria-labelledby` | —            | **Exactly one of the two is required**: a string or the `id` of a visible heading. Both at once, or neither, is a type error. |
+| `orientation`                    | `horizontal` | The arrow axis: `horizontal` — left and right, `vertical` — up and down; a vertical toolbar stacks its actions in a column.   |
+| `children`                       | —            | The actions and a `Separator` between their groups.                                                                           |
+| `className`                      | —            | Classes on the toolbar element.                                                                                               |
 
-`ref` указывает на элемент панели (`forwardRef`, как в остальном ките). Остальные
-пропы (`id`, `data-*`) не пробрасываются: панель — раскладка с поведением, а не
-обёртка произвольного `div`.
+`ref` points to the toolbar element (`forwardRef`, as in the rest of the kit). The
+other props (`id`, `data-*`) are not passed through: the toolbar is a layout with
+behavior, not a wrapper for an arbitrary `div`.
 
-Имя обязательно на уровне типов, а не по соглашению: безымянная `toolbar`
-объявляется скринридером как «панель инструментов» без указания, чем она
-занимается, а на экране их обычно несколько. Тип выбирает ровно один источник
-имени — второй разошёлся бы с первым при правке. Это общее правило кита для
-компонентов без видимой подписи — [conventions.md](../../conventions.md#доступное-имя).
+The name is required at the type level, not by convention: an unnamed `toolbar`
+is announced by the screen reader as "toolbar" with no hint of what it is for,
+and there are usually several on a screen. The type picks exactly one source of
+the name — a second one would drift from the first on edit. This is the kit's
+general rule for components without a visible label — [conventions.md](../../conventions.md#accessible-name).
 
-## Разделитель между группами
+## A separator between groups
 
-`Separator` кита внутри панели ложится **поперёк её оси** сам: вертикальным
-разделителем в горизонтальной панели и горизонтальным в вертикальной. Ось
-приходит через контекст react-aria; `orientation`, заданный у самого
-разделителя, всегда сильнее. Вне панели `Separator` по-прежнему горизонтален.
+The kit's `Separator` inside a toolbar lays itself out **across the toolbar's
+axis**: a vertical separator in a horizontal toolbar and a horizontal one in a
+vertical toolbar. The axis comes through the react-aria context; an
+`orientation` set on the separator itself always wins. Outside a toolbar `Separator` is still horizontal.
 
-Контекст React идёт сквозь порталы, поэтому оверлеи кита — `PopoverContent`,
-`Dialog` и `Drawer` — обнуляют ось панели на своей границе: `Separator` и
-`ToggleGroup` в поповере или окне, открытом из панели, ведут себя как вне её.
-Выпадающая часть `Menu` react-aria обнуляет контекст разделителя сама. В
-портале, собранном на Radix напрямую, ось панели доходит до содержимого — там
-задавайте `orientation` разделителя явно.
+React context passes through portals, so the kit's overlays — `PopoverContent`,
+`Dialog` and `Drawer` — reset the toolbar axis at their boundary: a `Separator`
+and a `ToggleGroup` in a popover or dialog opened from the toolbar behave as if
+outside it. The popup of the react-aria `Menu` resets the separator's context by itself. In a
+portal built directly on Radix, the toolbar axis reaches the content — set the
+separator's `orientation` explicitly there.
 
-## Переполнение
+## Overflow
 
-В горизонтальной панели действия **переносятся на вторую строку** (`flex-wrap`),
-как у `Segmented`, `PageHeader` и `SelectionBar`. Меню «ещё» и priority+ нет и не
-планируются: спрятанное действие недоступно по умолчанию, а перенос ничего не
-прячет. Порядок стрелочной навигации — порядок разметки, то есть порядок чтения. Вертикальная
-панель не переносится: её высоту задаёт раскладка потребителя и ширина у неё —
-по содержимому.
+In a horizontal toolbar the actions **wrap onto a second row** (`flex-wrap`), as
+in `Segmented`, `PageHeader` and `SelectionBar`. There is no "more" menu and no
+priority+, and none is planned: a hidden action is unreachable by default, while
+wrapping hides nothing. The arrow-key order is the markup order, that is, the reading
+order. A vertical toolbar does not wrap: its height is set by the consumer's
+layout, and its width follows the content.
 
-Перенос идёт по элементам, а `Separator` — такой же элемент: при переносе
-разделитель может остаться в конце строки. Это принятая цена простоты; прятать
-разделители на границе строк CSS не умеет, а считать строки в JS панель не будет.
+Wrapping works element by element, and a `Separator` is an element like any other:
+when the toolbar wraps, a separator may end up at the end of a row. This is the
+accepted price of simplicity; CSS cannot hide separators at row boundaries, and the toolbar will not
+count rows in JS.
 
-## Клавиатура
+## Keyboard
 
-- **Tab** входит в панель одной остановкой и выходит из неё одной — как бы много
-  в ней ни было действий.
-- **Стрелки** по оси панели (`←`/`→` или `↑`/`↓`) переходят к соседнему
-  действию. Края **не зацикливаются**: цикл прятал бы, что действия кончились.
-  Недоступные (`disabled`) действия пропускаются; действие с `aria-disabled`
-  (например, `Button asChild disabled`) остаётся в стрелочной навигации — так советует руководство
-  [ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) (APG).
-- **Home** и **End** ведут к первому и последнему действию — тем же, на которых
-  останавливаются стрелки (скрытые стилем действия краем не считаются). Это
-  добавлено самим компонентом: хук react-aria их не обрабатывает. В текстовом
-  поле, на ползунке и в составных виджетах со своими Home и End (список,
-  вкладки, сетка, дерево) клавиши остаются за ними; на флажке и радио — нет,
-  каретки у них нет.
-- **Возврат**: Tab уводит фокус на край панели лишь затем, чтобы браузер вышел
-  за неё; обратно фокус встаёт на то действие, с которого ушли, а не на край.
-  Если оно исчезло, фокус получает край панели.
-- **Поперечные стрелки не трогаются.** В горизонтальной панели `↓` по-прежнему
-  открывает `Menu` и `SplitButton`. В вертикальной стрелки вниз и вверх заняты
-  стрелочной навигацией — меню там открывается Enter или Space.
+- **Tab** enters the toolbar with one stop and leaves it with one — however many
+  actions it holds.
+- **Arrow keys** along the toolbar's axis (`←`/`→` or `↑`/`↓`) move to the adjacent
+  action. The edges **do not wrap around**: a loop would hide that the actions
+  have run out. Unavailable (`disabled`) actions are skipped; an action with
+  `aria-disabled` (for example, `Button asChild disabled`) stays in the arrow-key navigation order, as the
+  [ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/) (APG) advises.
+- **Home** and **End** go to the first and last action — the same ones the arrow keys
+  stop at (actions hidden by styling do not count as an edge). The component adds
+  this itself: the react-aria hook does not handle them. In a text field, on a
+  slider and in composite widgets with their own Home and End (list, tabs, grid,
+  tree) the keys stay with them; on a checkbox and a radio button they do not, since
+  those have no caret.
+- **Coming back**: Tab moves focus to the toolbar's edge only so that the browser
+  leaves it; on the way back focus lands on the action it left, not on the edge.
+  If that action is gone, the toolbar's edge gets focus.
+- **The cross-axis arrow keys are left alone.** In a horizontal toolbar `↓` still
+  opens `Menu` and `SplitButton`. In a vertical one the Down Arrow and Up Arrow
+  keys are taken by arrow-key navigation — a menu there opens with Enter or Space.
 
-## Что лежит внутри: проверено
+## What goes inside: verified
 
-| Содержимое                                           | Стрелки | Комментарий                                                                                                              |
-| ---------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `Button`, `Toggle`                                   | да      | —                                                                                                                        |
-| `ToggleGroup`                                        | да      | Вложенная группа не перехватывает стрелки у панели; в вертикальной панели укладывается столбцом                          |
-| `MenuTrigger` + `MenuButton` + `Menu` (react-aria)   | да      | Список пунктов меню вынесен порталом: стрелки внутри открытого меню принадлежат меню; Escape возвращает фокус на триггер |
-| `SplitButton`                                        | да      | Обе кнопки — отдельные остановки стрелочной навигации; главное действие и меню работают как вне панели                   |
-| `Popover` + `PopoverTrigger asChild` (Radix)         | да      | Триггер — обычная кнопка; фокус в содержимом поповера ходит по его собственным правилам                                  |
-| `ContextMenu` + `ContextMenuTrigger asChild` (Radix) | да      | Триггер — кнопка, меню открывается по `contextmenu`; Escape возвращает фокус на кнопку                                   |
+| Content                                              | Arrow keys | Comment                                                                                                                                |
+| ---------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `Button`, `Toggle`                                   | yes        | —                                                                                                                                      |
+| `ToggleGroup`                                        | yes        | A nested group does not take the arrow keys from the toolbar; in a vertical toolbar it stacks into a column                            |
+| `MenuTrigger` + `MenuButton` + `Menu` (react-aria)   | yes        | The list of menu items is rendered in a portal: arrow keys inside an open menu belong to the menu; Escape returns focus to the trigger |
+| `SplitButton`                                        | yes        | Both buttons are separate stops in arrow-key navigation; the primary action and the menu work the same as outside a toolbar            |
+| `Popover` + `PopoverTrigger asChild` (Radix)         | yes        | The trigger is an ordinary button; focus inside the popover content moves by its own rules                                             |
+| `ContextMenu` + `ContextMenuTrigger asChild` (Radix) | yes        | The trigger is a button; the menu opens on `contextmenu`; Escape returns focus to the button                                           |
 
-`ContextMenuTrigger` **без `asChild`** оборачивает произвольный `span`, который
-не получает фокус и в стрелочную навигацию не попадает: клавиатурного пути к такому меню
-из панели нет. Если контекстное меню — единственный способ добраться до
-действий, дублируйте их кнопкой.
+`ContextMenuTrigger` **without `asChild`** wraps an arbitrary `span`, which does not
+receive focus and is not part of arrow-key navigation: there is no keyboard path to such a
+menu from the toolbar. If a context menu is the only way to reach the actions,
+duplicate them with a button.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Роль `toolbar` и `aria-orientation` ставит react-aria; имя — из обязательных
-  пропов.
-- Вложенная группа (`ToggleGroup`, `ButtonGroup` с именем) внутри панели
-  получает роль `group`, а не вторую `toolbar`.
-  Хук панели при этом вешает на группу `aria-orientation`, недопустимый для
-  роли `group` (axe: `aria-allowed-attr`, critical) — `ToggleGroup` кита этот
-  атрибут снимает сам. Если вы собрали группу на `ToggleButtonGroup` из
-  react-aria, снимайте `aria-orientation` с неё вручную.
-- Поведение стрелок — перехват клавиш в фазе погружения (capture), а не роуминг табиндекса:
-  элементы панели сохраняют собственные табстопы, а Tab выходит за счёт
-  программного переноса фокуса на край. Следствие: **любое** поле ввода внутри
-  теряет стрелки вдоль оси панели.
+- react-aria sets the `toolbar` role and `aria-orientation`; the name comes from
+  the required props.
+- A nested group (`ToggleGroup`, a named `ButtonGroup`) inside a toolbar gets the
+  `group` role, not a second `toolbar`.
+  The toolbar hook then puts an `aria-orientation` on the group, which is not
+  allowed for the `group` role (axe: `aria-allowed-attr`, critical) — the kit's
+  `ToggleGroup` removes this attribute itself. If you build a group on react-aria's
+  `ToggleButtonGroup`, remove `aria-orientation` from it yourself.
+- The arrow-key behavior is key interception in the capture phase, not roving tabindex: the
+  toolbar's elements keep their own tab stops, and Tab leaves by programmatically
+  moving focus to the edge. As a result, **any** input field inside loses the
+  arrow keys along the toolbar's axis.
 
-## Антипаттерны
+## Anti-patterns
 
-- `Toolbar` без имени — типы такого не пропустят; не прячьте это приведением.
-- Класть в панель поле поиска или числовое поле — каретка перестанет ходить
-  стрелками. Это же причина, по которой у `TableToolbar` роли нет.
-- Строить меню «ещё» из переполнения — действия переносятся, а не прячутся.
-- Заводить панель ради трёх кнопок рядом — это лишнее объявление скринридера и
-  обещание клавиатурной модели, которую никто не просил.
-- Ждать, что `ContextMenuTrigger` без `asChild` будет остановкой стрелочной навигации.
+- A `Toolbar` without a name — the types will not allow it; do not hide this
+  with a cast.
+- Putting a search field or a numeric field in a toolbar — the arrow keys
+  no longer move the caret. This is also why `TableToolbar` has no role.
+- Building a "more" menu out of the overflow — the actions wrap instead of
+  being hidden.
+- Adding a toolbar for three buttons in a row — it is an extra screen reader
+  announcement and a promise of a keyboard model nobody asked for.
+- Expecting `ContextMenuTrigger` without `asChild` to be a stop in arrow-key navigation.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходник: `src/components/actions/Toolbar.tsx`; ось разделителя — `src/components/content/Separator.tsx`.
-- Тесты: `tests/toolbar.test.tsx` (контракт), `tests/toolbar-compat.test.tsx`
-  (совместимость с `Menu`, `SplitButton` и Radix-триггерами).
-- Витрина: `src/components/actions/Toolbar.stories.tsx`. Уровень — периферия
-  (ADR-0014): снимков нет. Перенос на узком экране и поведение в браузере
-  проверены вручную на собранной витрине.
+- Source: `src/components/actions/Toolbar.tsx`; the separator's axis — `src/components/content/Separator.tsx`.
+- Tests: `tests/toolbar.test.tsx` (the contract), `tests/toolbar-compat.test.tsx`
+  (compatibility with `Menu`, `SplitButton` and Radix triggers).
+- Showcase: `src/components/actions/Toolbar.stories.tsx`. Level — periphery
+  (ADR-0014): no snapshots. Wrapping on a narrow screen and browser behavior
+  were checked by hand on the built showcase.

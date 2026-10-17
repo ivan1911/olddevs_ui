@@ -7,26 +7,26 @@ source: src/components/table/TableToolbar.tsx, src/components/table/TablePrefere
 story: src/components/table/TableToolbar.stories.tsx
 ---
 
-# TableToolbar и TablePreferences
+# TableToolbar and TablePreferences
 
-## Кратко для AI
+## Summary for AI
 
-`TableToolbar` — полоса над таблицей: заголовок, счётчик, действия, слот
-фильтров и слот настроек. `TablePreferences` — содержимое поповера у кнопки-шестерёнки: видимость
-и порядок колонок, плотность. Ни один из них состояния не хранит: всё приходит сверху,
-обычно из `useTableState`.
+`TableToolbar` is the table toolbar: a title, a counter, actions, a filters slot and a
+preferences slot. `TablePreferences` is the content behind the gear button: column
+visibility and order, density. Neither stores state: everything comes from above,
+usually from `useTableState`.
 
-## Когда использовать
+## When to use
 
-- Над списком, у которого есть заголовок, счётчик или действия над всем списком (например, экспорт).
-- Работает и без `DataTable` — над обычной `Table` тоже.
+- Above a list that has a title, a counter or actions on the whole list (for example, export).
+- It works without `DataTable` too — above a plain `Table`.
 
-## Когда не использовать
+## When not to use
 
-- Для действий над **выбранными** строками — это `SelectionBar`.
-- Для заголовка страницы с описанием — это `PageHeader`.
+- For actions on **selected** rows — that is `SelectionBar`.
+- For a page title with a description — that is `PageHeader`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Popover, PopoverContent, PopoverTrigger } from "@olddevs/ui";
@@ -35,13 +35,13 @@ import { TablePreferences, TableToolbar, useTableState } from "@olddevs/ui";
 const { state, set } = useTableState();
 
 <TableToolbar
-  title="Документы"
+  title="Documents"
   count={total}
-  actions={<Button tone="accent">Загрузить</Button>}
+  actions={<Button tone="accent">Upload</Button>}
   preferences={
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" iconOnly icon={<SettingsIcon />} aria-label="Настройки" />
+        <Button variant="ghost" iconOnly icon={<SettingsIcon />} aria-label="Preferences" />
       </PopoverTrigger>
       <PopoverContent className="p-3">
         <TablePreferences
@@ -59,39 +59,41 @@ const { state, set } = useTableState();
 />;
 ```
 
-## Решения, которые видно в API
+## Decisions visible in the API
 
-**Роли `toolbar` у полосы нет.** Роль требует навигации по элементам
-стрелками, а ARIA сама её не даёт: объявив роль и не
-реализовав поведение, кит пообещал бы скринридеру то, чего нет.
+**The bar has no `toolbar` role.** The role requires arrow-key navigation
+between its elements, and ARIA does not provide it by itself: by declaring
+the role without implementing the behavior, the kit would promise the screen
+reader something that is not there.
 
-**Счётчик — число, а не готовая строка.** Склонение делает каталог по локали;
-`countLabel` переопределяет подпись, когда нужно назвать сущность
-(«12 документов»). Тот же приём, что у `SelectionBar`.
+**The counter is a number, not a ready-made string.** Pluralization is done by the
+message catalog per locale; `countLabel` overrides the label when the entity needs
+naming ("12 documents"). The same technique as in `SelectionBar`.
 
-**`TablePreferences` — панель, а не меню.** Пункт меню не контейнер для кнопок:
-вложенные в него кнопки «Выше» и «Ниже» ломают клавиатурную семантику меню, где
-стрелки принадлежат самому меню. Контейнер — `Popover`, `Drawer` или `Dialog` —
-выбирает потребитель.
+**`TablePreferences` is a panel, not a menu.** A menu item is not a container for
+buttons: "Up" and "Down" buttons nested in it break the keyboard semantics of a menu,
+where the arrow keys belong to the menu itself. The consumer chooses the container —
+`Popover`, `Drawer` or `Dialog`.
 
-**Порядок меняется кнопками, а не перетаскиванием.** Перетаскивание без
-клавиатурной альтернативы недоступно вовсе, а альтернатива к нему — эти же
-кнопки; заводить оба способа ради одного экрана несоразмерно. Подписи кнопок
-называют колонку: иначе в списке из десяти колонок десять кнопок «Выше» и десять «Ниже».
+**The order is changed with buttons, not by dragging.** Dragging without a
+keyboard alternative is not accessible at all, and the alternative to it is these
+same buttons; providing both for one screen is out of proportion. The button
+labels name the column: otherwise a list of ten columns would have ten "Up"
+buttons and ten "Down" buttons.
 
-**`PopoverTrigger` требует `asChild`.** Без него Radix рисует свою кнопку вокруг
-вашей, получается кнопка в кнопке, и аудит проваливает прогон как `nested-interactive`
-— это поймал axe на первой же истории.
+**`PopoverTrigger` requires `asChild`.** Without it Radix renders its own button
+around yours, you get a button inside a button, and the audit fails the run as
+`nested-interactive` — axe caught this on the very first story.
 
-**Последнюю видимую колонку скрыть нельзя.** Таблица без колонок — не состояние
-интерфейса, а поломка: скрывать станет нечего, и пользователю из неё не
-выбраться. Запрет односторонний — скрытую колонку вернуть можно всегда.
+**The last visible column cannot be hidden.** A table without columns is not a
+UI state but a breakage: there is nothing left to hide, and the user cannot
+get out of it. The restriction is one-way — a hidden column can always be brought back.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/table/TableToolbar.tsx`,
+- Implementation: `src/components/table/TableToolbar.tsx`,
   `src/components/table/TablePreferences.tsx`.
-- Тесты: `tests/table-toolbar.test.tsx` (слоты, склонение счётчика, отсутствие
-  роли `toolbar`), `tests/table-preferences.test.tsx` (запрет на последнюю
-  колонку, порядок с клавиатуры, плотность).
-- Состояние: [`useTableState`](../../api/utilities.md).
+- Tests: `tests/table-toolbar.test.tsx` (slots, counter pluralization, no
+  `toolbar` role), `tests/table-preferences.test.tsx` (the guard against hiding the last
+  column, ordering from the keyboard, density).
+- State: [`useTableState`](../../api/utilities.md).

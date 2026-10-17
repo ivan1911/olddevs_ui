@@ -7,80 +7,80 @@ source: src/components/inputs/Form.tsx
 story: src/components/inputs/Form.stories.tsx
 ---
 
-# Form и FormField
+# Form and FormField
 
-## Кратко для AI
+## Summary for AI
 
-`Form` стандартизирует submit и блокировку на время запроса, но не создаёт систему валидации. `FormField` объединяет label, контрол, пояснение и error; правила и состояние ошибок принадлежат потребителю.
+`Form` standardizes submit and locking during a request, but does not create a validation system. `FormField` combines label, control, hint and error; the rules and the error state belong to the consumer.
 
-## Когда использовать
+## When to use
 
-- Нужно предотвратить повторную отправку формы через `pending`.
-- Для обычных контролов нужен связанный label, пояснение и единый вывод ошибки.
+- You need to prevent a repeated form submission through `pending`.
+- Ordinary controls need an associated label, a hint and a consistent way to show errors.
 
-## Когда не использовать
+## When not to use
 
-- Не ищите глобальный проп `validationErrors`: такого публичного API нет.
-- Не рассчитывайте, что `FormField` заменит собственный `label` у компонентов на React Aria: `NumberInput` всё равно требует свой `label`.
+- Do not look for a global `validationErrors` prop: there is no such public API.
+- Do not expect `FormField` to replace the `label` of components built on React Aria: `NumberInput` still requires its own `label`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Form pending={saving} onSubmit={submit}>
-  <FormField label="Название" htmlFor="name" required error={errors.name} hint="До 80 символов">
+  <FormField label="Name" htmlFor="name" required error={errors.name} hint="Up to 80 characters">
     <TextControl id="name" value={name} onChange={(e) => setName(e.target.value)} required />
   </FormField>
-  <Button type="submit">Сохранить</Button>
+  <Button type="submit">Save</Button>
 </Form>
 ```
 
 ## Public API
 
-- `Form.onSubmit` обязателен; компонент предотвращает native submit и не вызывает callback во время `pending`.
-- `pending` отключает children через fieldset, включая добавленные позднее поля. `RichTextEditor` внутри `<fieldset disabled>` (в том числе заданного потребителем, не только `Form pending`) выключается так же, как нативное поле. `Checkbox`, `Radio`, `Toggle` и `Slider` внутри такого `fieldset` приглушаются так же, как при собственном `disabled`.
-- `Form` ставит `noValidate` (`validationBehavior="aria"`): родная проверка браузера в нём не работает, и обязательный `RichTextEditor`, как и нативное `required`, отправку не блокирует — ошибку показывает потребитель через `FormField error`.
-- `FormField`: `label` обязателен, `htmlFor` связывает его с `id` контрола, `error` заменяет `hint`, `required` рисует только визуальную звёздочку. `hintPersistent` оставляет пояснение-правило («8–64 символа, цифра и буква») под полем и при ошибке. Ошибка встаёт под ним, обе описывают поле; обычное пояснение («как к вам обращаться») по-прежнему заменяет ошибка (ADR-0065).
-- `error` доводится **до поля**: поля кита читают признак невалидности из контекста и сами ставят `aria-invalid`, отчего краснеет и рамка, а не только текст под полем. Явный `aria-invalid` на поле сильнее — потребитель знает про своё поле больше, чем форма.
+- `Form.onSubmit` is required; the component prevents native submit and does not call the callback while `pending`.
+- `pending` disables the children through a fieldset, including fields added later. A `RichTextEditor` inside `<fieldset disabled>` (including one set by the consumer, not only `Form pending`) is disabled the same way as a native field. A `Checkbox`, `Radio`, `Toggle` and `Slider` inside such a fieldset are dimmed the same way as with their own `disabled`.
+- `Form` sets `noValidate` (`validationBehavior="aria"`): the browser's native validation does not work in it, and a required `RichTextEditor`, like a native `required`, does not block submission — the consumer shows the error through `FormField error`.
+- `FormField`: `label` is required, `htmlFor` ties it to the control's `id`, `error` replaces `hint`, `required` renders only a visual asterisk. `hintPersistent` keeps a rule hint ("8–64 characters, a digit and a letter") under the field even with an error. The error goes under it, and both describe the field; an explanatory hint ("how should we address you") is still replaced by the error (ADR-0065).
+- `error` is carried all the way **to the field**: kit fields read the invalid flag from context and set `aria-invalid` themselves, so the border turns red too, not only the text under the field. An explicit `aria-invalid` on the field wins — the consumer knows more about their field than the form does.
 
-## Ось `layout` у `FormField`
+## The `layout` axis on `FormField`
 
-`layout="stack"` (умолчание) — подпись над полем, как было всегда;
-`layout="side"` — подпись в колонке слева, поле, пояснение и ошибка справа.
+`layout="stack"` (the default) — the label above the field, as it always was;
+`layout="side"` — the label in the left column, the field, the note and the error on the right.
 
-Ось живёт **у поля, а не у раскладки**: подпись рисует `FormField`, и
-перенести её в левую колонку снаружи невозможно — она лежит внутри его
-собственного флекса. Разбор —
+The axis lives **on the field, not on the layout**: `FormField` renders the label,
+and the layout cannot move it into the left column — it sits inside
+its own flex. The analysis is in
 ADR-0025.
 
-Без пропа поле берёт ось у ближайшего `FormLayout`; без раскладки — `stack`, и
-разметка не меняется ни на узел (это проверяется тестом на разметку целиком).
-Явный проп сильнее контекста.
+Without the prop, the field takes the axis from the nearest `FormLayout`; without
+a layout it is `stack`, and the markup does not change by a single node (this is
+checked by a test on the whole markup). An explicit prop wins over context.
 
-Ширина колонки подписей — переменная `--form-label-w` со значением по умолчанию
-`12rem`; `subgrid` не используется, потому что он требует внешнего грида с
-известным числом дорожек, а поле обязано работать и само по себе:
+The width of the label column is the `--form-label-w` variable with a default of
+`12rem`; `subgrid` is not used, because it requires an outer grid with a known
+number of tracks, and the field must also work on its own:
 
 ```tsx
 <div style={{ "--form-label-w": "8rem" }}>
-  <FormField label="Узкая колонка" htmlFor="x" layout="side">
+  <FormField label="Narrow column" htmlFor="x" layout="side">
     <TextControl id="x" />
   </FormField>
 </div>
 ```
 
-Длинная подпись переносится внутри своей колонки и не двигает поле.
+A long label wraps inside its column and does not move the field.
 
-В боковой раскладке поле, пояснение и ошибка лежат в **одной** колонке целиком,
-а не по ячейке на узел. Грид раскладывает детей по ячейкам, а не по смыслу, и
-второй ребёнок (диапазон «от» и «до», поле с кнопкой рядом) иначе попадал бы в
-следующий ряд под подпись.
+In the side layout, the field, the note and the error sit in **one** column as a
+whole, not one cell per node. A grid places children into cells, not by meaning,
+and a second child (a "from" and "to" range, a field with a button next to it)
+would otherwise land in the next row under the label.
 
-## Доступность и форма
+## Accessibility and forms
 
-- Проставляйте и `htmlFor`, и `id`; плейсхолдер не заменяет label.
-- Ошибка FormField объявляется `role="alert"`; признак обязательности нужно продублировать на самом поле: `required` или `aria-required`.
-- **Пояснение и ошибка связаны с полем через `aria-describedby`.** `id` создаёт `FormField`, забирают его поля кита — `TextControl` и всё, что на нём стоит (`MaskedInput`, `PhoneInput`, `PasswordInput`, `SearchControl`), `NumberInput`, `Select`, `Combobox`, `DatePicker`, `TagInput` и другие. Своего описания это не отменяет: переданное пропом дополняется, а не вытесняется.
-- Роль и описание делят обязанности: `role="alert"` объявляет ошибку в момент появления (она возникает после отправки, когда фокус уже ушёл), а описание читается при возврате в поле. Разбор — ADR-0026.
-- Формат значения — это пояснение, а не плейсхолдер: плейсхолдер исчезает при первом символе, то есть ровно тогда, когда нужен для проверки набранного.
-- **Подпись публикует свой `id` контекстом.** `<label for>` называет только нативные `input`, `textarea`, `select`; поле, не относящееся к ним (`contenteditable` у `RichTextEditor`), ссылается на подпись через `aria-labelledby`. Поэтому `FormField` ставит на `<label>` стабильный `id` (из `useId`) и отдаёт его полям тем же приёмом, что описание и невалидность. Читает его только `RichTextEditor`; потребителю `id` подписи знать не нужно, а `htmlFor` проставляется по-прежнему — он нужен нативным полям. Разметка `FormField` от этого меняется на один атрибут — `id` подписи.
-- Источники: `src/components/inputs/Form.tsx`, `src/components/inputs/FormField.tsx`; тесты `form.test.tsx`, `form-field.test.tsx`.
+- Set both `htmlFor` and `id`; a placeholder does not replace a label.
+- The FormField error is announced with `role="alert"`; the field itself must also be marked as required, through `required` or `aria-required`.
+- **The hint and error are tied to the field through `aria-describedby`.** `FormField` generates the `id`, and the kit fields pick it up — `TextControl` and everything built on it (`MaskedInput`, `PhoneInput`, `PasswordInput`, `SearchControl`), `NumberInput`, `Select`, `Combobox`, `DatePicker`, `TagInput` and others. This does not override the field's own description: a description passed as a prop is extended, not replaced.
+- The role and the description share the duties: `role="alert"` announces the error the moment it appears (it appears after submit, when focus has already moved away), while the description is read on returning to the field. The analysis is in ADR-0026.
+- The value format is a hint, not a placeholder: a placeholder disappears at the first character, that is, exactly when it is needed to check what was typed.
+- **The label publishes its own `id` through context.** `<label for>` names only the native `input`, `textarea`, `select`; a field that is not among them (the `contenteditable` of `RichTextEditor`) refers to the label through `aria-labelledby`. So `FormField` puts a stable `id` (from `useId`) on the `<label>` and hands it to the fields the same way as the description and the invalid state. Only `RichTextEditor` reads it; the consumer does not need to know the label's `id`, and `htmlFor` is still set — native fields need it. The `FormField` markup changes by one attribute — the label's `id`.
+- Sources: `src/components/inputs/Form.tsx`, `src/components/inputs/FormField.tsx`; tests `form.test.tsx`, `form-field.test.tsx`.

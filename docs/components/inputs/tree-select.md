@@ -9,81 +9,82 @@ story: src/components/inputs/TreeSelect.stories.tsx
 
 # TreeSelect
 
-## Кратко для AI
+## Summary for AI
 
-`TreeSelect` — поле, выбирающее узел иерархии: [`TreeView`](../navigation/tree-view.md) внутри [`Popover`](../overlays/popover.md). Управляемый; `value` — **всегда массив**, даже при одиночном выборе. Отметка ветки потомков не отмечает.
+`TreeSelect` is a field that picks a node of a hierarchy: a [`TreeView`](../navigation/tree-view.md) inside a [`Popover`](../overlays/popover.md). Controlled; `value` is **always an array**, even for a single selection. Checking a branch does not check its descendants.
 
-## Когда использовать
+## When to use
 
-- Значение выбирают из дерева: подразделение, папка, категория, область прав.
-- Дерево длинное, и держать его развёрнутым на экране незачем.
+- The value is picked from a tree: a division, a folder, a category, a permissions scope.
+- The tree is long and there is no reason to keep it expanded on the screen.
 
-## Когда не использовать
+## When not to use
 
-- Если иерархии нет и список плоский, используйте `Select`.
-- Если дерево и есть содержимое экрана, а не значение поля, используйте `TreeView`.
-- Если уровней фиксированное число и важен путь целиком, нужно каскадное поле; в ките его нет, и ADR-0038 объясняет, почему.
+- If there is no hierarchy and the list is flat, use `Select`.
+- If the tree is the content of the screen rather than the value of a field, use `TreeView`.
+- If the number of levels is fixed and the whole path matters, you need a cascading field; the kit has none, and ADR-0038 explains why.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <TreeSelect
   items={divisions}
   value={value}
   onChange={setValue}
-  aria-label="Подразделение"
+  aria-label="Division"
   defaultExpandedKeys={["company"]}
 />
 ```
 
 ## Public API
 
-- `items` — узлы в формате `TreeNode`; это тот же формат, что у `TreeView`, а не его копия. Узел, встреченный в обходе второй раз, дальше не разворачивается: цикл в данных не должен превращаться в переполнение стека.
-- `value` + `onChange` — **массив ключей всегда**, и при `multiple`, и без него.
-- `multiple` включает множественный выбор и меняет вид закрытого поля: чипы вместо подписи.
-- `placeholder` — текст в пустом поле; без неё берётся из каталога сообщений.
-- `defaultExpandedKeys` — что раскрыто при первом показе; `expandedKeys` + `onExpandedChange` — управляемое раскрытие. Второе нужно тому, кто раскрывает дерево до текущего значения или подгружает ветки по мере раскрытия (lazy loading): без него глубоко лежащий выбранный узел открывается на свёрнутом дереве, где на него ничто не указывает.
-- `clearable` показывает кнопку очистки, когда что-то выбрано; `clearLabel` даёт ей своё имя — как у `Select`.
-- `disabled` не даёт полю раскрыться и закрывает уже открытое.
-- `aria-label` обязателен: у безымянного поля скринридер назовёт только значение и «кнопка», но не то, о чём поле. `aria-label` входит в имя поля вместе со значением, а не вместо него.
-- Ключ, которого нет в `items`, показывается **самим ключом**. Спрятать его значило бы дать поле, которое говорит «ничего не выбрано» и отдаёт потребителю непустое значение; выбросить — молча править значение потребителя.
-- При `multiple` показывается не больше трёх чипов, остальные сворачиваются в «ещё N»: поле, вырастающее на пять строк, перестаёт быть полем. Точный состав смотрят в раскрытом дереве.
+- `items` are nodes in the `TreeNode` format; it is the same format as in `TreeView`, not a copy of it. A node encountered a second time during the traversal is not expanded further: a cycle in the data must not turn into a stack overflow.
+- `value` and `onChange` always work with an **array of keys**, both with `multiple` and without it.
+- `multiple` turns on multiple selection and changes the look of the closed field: tags instead of a label.
+- `placeholder` is the text shown in an empty field. Defaults to the text from the message catalog.
+- `defaultExpandedKeys` — which nodes are expanded on first render; `expandedKeys` + `onExpandedChange` — controlled expansion. The second is for consumers who expand the tree to the current value or load branches on demand (lazy loading): without it a deeply nested selected node opens on a collapsed tree where nothing points to it.
+- `clearable` shows a clear button when something is selected; `clearLabel` sets its accessible name, as in `Select`.
+- `disabled` keeps the field from opening and closes one that is already open.
+- `aria-label` is required: for an unnamed field a screen reader announces only the value and "button", not what the field is for. `aria-label` becomes part of the field name together with the value, not instead of it.
+- A key that is not in `items` is shown **as the key itself**. Hiding it would give a field that says "nothing selected" while reporting a non-empty value to the consumer; dropping it would silently edit the consumer's value.
+- With `multiple` no more than three tags are shown; the rest collapse into "+N more": a field that grows by five rows stops being a field. To see exactly what is selected, open the tree.
 
-## Композиция, а не второе дерево
+## Composition, not a second tree
 
-Исполняет ADR-0024: тот
-отложил `TreeSelect` до первого экрана-заказчика и описал его как `Tree` внутри `Popover`. Своего
-обхода узлов, своей клавиатуры и своих ролей компонент не заводит — всё это уже
-есть у `TreeView`. Роль `treegrid` внутри поповера приходит оттуда же.
+This implements ADR-0024,
+which postponed `TreeSelect` until the first screen needed it and described it as a `Tree` inside a `Popover`.
+The component adds no node traversal of its own, no keyboard of its own and no
+roles of its own — `TreeView` already has all of that. The `treegrid` role inside
+the popover comes from there too.
 
-Расхождение двух деревьев заметил бы только тот, кто поставит их рядом.
-Обнаружилось бы оно поздно и дорого.
+A divergence between two trees would be noticeable only to someone who puts them
+side by side. It would be discovered late and at great cost.
 
-## Значение всегда массив
+## The value is always an array
 
-Тип-объединение `Key | Key[]` заставил бы потребителя разбирать форму значения в
-каждом обработчике. Выигрыш был бы один: в примере код короче.
+A union type `Key | Key[]` would make the consumer parse the shape of the value in
+every handler. The only gain would be a shorter-looking example.
 
-## Отметка ветки не отмечает потомков
+## Checking a branch does not check descendants
 
-Это решение: отмечать потомков значило бы, что кит решил за
-потребителя, включает ли «отдел» всех его сотрудников. А в правах доступа это
-противоположные политики. `TreeView` ведёт выбор ключами, и раскрыть ветку
-в потомков в коде потребителя — одна функция над `items`; внутри кита это было бы решение,
-которое нельзя отменить.
+This is a decision, not an oversight. Checking descendants would mean the kit decided
+for the consumer whether a "department" includes all its employees — and in access
+rights those are exactly opposite policies. `TreeView` keeps the selection by keys,
+and expanding a branch into its descendants in the consumer's code is one function over
+`items`; inside the kit it would be a decision that cannot be undone.
 
-## Клавиатура
+## Keyboard
 
-- Поле — обычная кнопка: Enter и Space раскрывают, Escape закрывает и возвращает фокус полю.
-- Внутри работает клавиатура `TreeView`: стрелки, `Home`, `End`, поиск набором.
-- Delete и Backspace на поле очищают его при `clearable` — короче, чем переходить клавишей Tab до кнопки очистки, которая тоже табстоп.
-- Одиночный выбор закрывает поповер, множественный оставляет открытым: выбор ещё не закончен, и каждое закрытие заставляло бы открывать поповер заново после каждого узла.
+- The field is a regular button: Enter and Space open it, Escape closes it and returns focus to the field.
+- Inside, the `TreeView` keyboard support applies: arrow keys, `Home`, `End`, typeahead.
+- Delete and Backspace on the field clear it when `clearable` is set — shorter than tabbing to the clear button, which is also a tab stop.
+- A single selection closes the popover; a multiple one leaves it open: the selection is not finished yet, and every close would force the user to reopen the popover after each node.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Имя поля собирается из скрытой подписи и содержимого через `aria-labelledby`, а не берётся из `aria-label` на кнопке. `aria-label` побеждает содержимое при вычислении имени, и поле объявлялось бы «Подразделение, кнопка» — без единого слова о том, что выбрано. Для поля выбора это отказ основной функции, и аудит axe его не ловит: имя у кнопки есть.
-- Кнопка очистки — **сосед** триггера, а не его потомок; приём тот же, что у `Select`. Кнопка внутри кнопки — это `nested-interactive`, а `aria-hidden`-крестик внутри выпадает из дерева доступности целиком: пользователь вспомогательных технологий (AT) не узнаёт, что очистка есть.
-- Дерево внутри поповера получает то же имя, что и поле: иначе после «Подразделение» скринридер читал бы безымянное дерево.
-- Пустое дерево говорит `common.empty` — «Пусто», а не `notFound`: своего поиска у поля нет, и запроса, по которому «ничего не найдено», пользователь не делал.
-- `aria-haspopup` объявлен как `grid`: внутри `TreeView`, а он рендерит `treegrid` с узлами-`row`. Объявленный тип обязан совпадать с тем, что там на самом деле.
-- См. `src/components/inputs/TreeSelect.tsx`, `src/components/inputs/TreeSelect.stories.tsx`, `tests/tree-select.test.tsx`, [TreeView](../navigation/tree-view.md).
+- The field name is assembled from a hidden label and the content through `aria-labelledby`, not taken from `aria-label` on the button. `aria-label` wins over the content when the name is computed, and the field would be announced as "Division, button" — without a single word about what is selected. For a selection field that is a failure of the main function, and an axe audit does not catch it: the button has a name.
+- The clear button is a **sibling** of the trigger, not its descendant; the technique is the same as in `Select`. A button inside a button is `nested-interactive`, and an `aria-hidden` clear button inside drops out of the accessibility tree entirely: a user of assistive technology (AT) does not learn that clearing exists.
+- The tree inside the popover gets the same name as the field: otherwise a screen reader would announce "Division" followed by an unnamed tree.
+- An empty tree says `common.empty` — "Empty", not `notFound`: the field has no search of its own, and the user has not entered any query that could return "nothing found".
+- `aria-haspopup` is declared as `grid`: the popover contains `TreeView`, which renders a `treegrid` with `row` nodes. The declared type must match what is really there.
+- See `src/components/inputs/TreeSelect.tsx`, `src/components/inputs/TreeSelect.stories.tsx`, `tests/tree-select.test.tsx`, [TreeView](../navigation/tree-view.md).

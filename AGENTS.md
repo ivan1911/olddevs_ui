@@ -1,7 +1,7 @@
 # AGENTS.md — `@olddevs/ui`
 
 Instructions for agents and developers working in this repository. Read them
-before the code. Then read [README.md](README.md), [docs/index.en.md](docs/index.en.md)
+before the code. Then read [README.md](README.md), [docs/index.md](docs/index.md)
 and the page for the component you are working on.
 
 `@olddevs/ui` is a design system: tokens, themes and accessible UI primitives for
@@ -39,16 +39,16 @@ separate campaign of it.
 
 ## Using components
 
-- Start with the [catalog](docs/components/index.en.md) and the page of the
+- Start with the [catalog](docs/components/index.md) and the page of the
   candidate component. Choose by "When to use" and "When not to use", not by
-  appearance. The selection rules are in [component-selection.en.md](docs/component-selection.en.md).
+  appearance. The selection rules are in [component-selection.md](docs/component-selection.md).
 - A consumer imports only the entry points listed at the top of this file. Paths
   in `src/` are not public API.
 - Don't replace an existing semantic primitive with hand-written markup. And
   don't move domain texts, status vocabularies, requests or the layout of a
   specific screen into the package: they belong to the consumer.
 - With Tailwind 4, the consumer must have `@import "@olddevs/ui/styles.css"` and
-  `@source "./node_modules/@olddevs/ui/dist"`. See [getting-started.en.md](docs/getting-started.en.md).
+  `@source "./node_modules/@olddevs/ui/dist"`. See [getting-started.md](docs/getting-started.md).
 
 ## Prop axes
 
@@ -57,7 +57,7 @@ Unless a component page says otherwise, three independent axes apply: `size`
 (`solid|soft|outline|ghost`). States are named positively: `selected`,
 `disabled`, `loading`. Alternatives (`kind`, `status`) and negative boolean props
 are not introduced without a separate public decision. Such decisions are
-recorded in the vocabulary in [`docs/conventions.en.md`](docs/conventions.en.md):
+recorded in the vocabulary in [`docs/conventions.md`](docs/conventions.md):
 `active` marks only the current navigation item, `appearance` is the
 shape of a variant, `level` is a heading level.
 
@@ -73,7 +73,7 @@ documentation. This holds everywhere, including story exports and showcase
 sections.
 
 For which language goes where, see ADR-0073 (English first), ADR-0034 and
-[`docs/conventions.en.md`](docs/conventions.en.md). In short: **English is the
+[`docs/conventions.md`](docs/conventions.md). In short: **English is the
 Original, Russian is the Translation.** New and edited comments (JSDoc included),
 the showcase, tests, scripts, `AGENTS.md`, `README.md` and the community files
 (`CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, the issue templates) are
@@ -81,25 +81,20 @@ written in English straight away; the author may think in Russian, the agent wri
 English. ADRs, `SPEC.md` and the archive stay in Russian (ADR-0067). A file you
 touch gets its Russian comments translated, so no file ends up half-and-half.
 Translate the meaning and the reasoning, not the words; keep industry terms as
-their source names them, and take kit terms from [`docs/glossary.en.md`](docs/glossary.en.md).
+their source names them, and take kit terms from [`docs/glossary.md`](docs/glossary.md).
 The brief for translating subagents is in `olddevs_ui_docs/agents/translation-brief.md`.
 Cyrillic in a line of code is allowed only where it is the **subject** of a check or
 input data; `tests/i18n-gate.test.ts` enforces this with an allowlist of three
 justified reasons.
 
-Transition (ADR-0073): until OLDSUI-295 lands, `docs/**` keeps the current pairing
-(Russian `X.md` is the Original, `X.en.md` its Translation) and the gates for it; the
-comment ratchet arrives with OLDSUI-297. Write new text in English anyway, and do not
-leave a Russian comment in a place you edited.
-
 ## Documentation is part of the public API
 
 - When you add, remove or change a public runtime export of any entry point, update
-  the component page and the [catalog](docs/components/index.en.md) in the same
+  the component page and the [catalog](docs/components/index.md) in the same
   change.
 - Compound exports of one family are documented on one page, with an explicit
   list of all the exports.
-- A component page is written in Russian and contains: a short purpose statement
+- A component page is written in English and contains: a short purpose statement
   for AI; "When to use"; "When not to use", with alternatives; a minimal example
   with a public import; the semantics of props, state and events; accessibility
   and keyboard support; anti-patterns; links to the source, tests and Storybook.
@@ -107,16 +102,17 @@ leave a Russian comment in a place you edited.
   and don't document internal paths as a contract.
 - `README.md` is a short description and the setup steps; the detailed reference
   lives in `docs/`.
-- The English Translation of a page is its neighbor `X.en.md`, carrying the
-  `sourceHash` of the Original (ADR-0062). The Original is written first; the
-  Translation repeats its shape: the same headings at the same levels, the same
-  code blocks, the same frontmatter. `tests/docs-translations.test.ts` enforces
-  this. Links in a Translation are written as in the Original: the `.md` path and the
-  Original's Russian anchor, never a Latin anchor from the English heading (the site
-  derives the English one); the same test checks every anchor against the Original's
-  heading slugs. Editing an Original doesn't wait for its Translation: a stale one shows
-  up in `npm run docs:translations`. Notes about Russian colloquialisms to avoid are
-  not carried into a Translation, because they mean nothing to an English reader.
+- A page is written in English and is the Original; the kit has one file per page, `X.md`,
+  and no Russian docs. The Russian Translation lives in the site repository
+  (`olddevs_ui_site`, `content/reference.ru/`), with the `sourceHash` of the English
+  page it was translated from (ADR-0073). Links between pages and `#anchor` links use
+  the English heading slugs; the site derives the Russian anchor from the heading's
+  position. Editing a page doesn't wait for its Translation: the lag of the Russian side
+  is a report on the site, never a gate. Cyrillic in `docs/**` and `README.md` is a
+  defect that `tests/i18n-gate.test.ts` catches; the pages that quote Russian catalog
+  strings as data are listed there with the reason. `README.ru.md` is the Translation of
+  `README.md` and starts with `<!-- sourceHash: … -->`; `npm run release:check` reports
+  when it lags.
 
 ## Components on react-aria-components
 
@@ -184,7 +180,7 @@ Renaming a public API goes through a **deprecated alias**: the old name keeps
 working and gets `@deprecated` pointing to the new one. The alias lives for one
 major version and is removed in the next. Removing something without a preceding
 alias is allowed only in a major version, with an entry in
-[docs/api/migration-notes.en.md](docs/api/migration-notes.en.md).
+[docs/api/migration-notes.md](docs/api/migration-notes.md).
 
 ## Commits
 
@@ -242,7 +238,7 @@ After any bump of the `@radix-ui/*` packages in `devDependencies`, there must
 still be exactly one copy of `@radix-ui/react-dismissable-layer`:
 `npm ls @radix-ui/react-dismissable-layer`. Two copies mean two independent
 layer stacks, and Escape in a dropdown also closes the dialog under it. What the
-consumer sees and how to fix it is in [getting-started.en.md](docs/getting-started.en.md#common-problems),
+consumer sees and how to fix it is in [getting-started.md](docs/getting-started.md#common-problems),
 "Common problems".
 
 ### Install scripts
@@ -309,7 +305,7 @@ a test and a row in the catalog, all in one change. Every user-visible string go
 through the message catalog with a fallback. A change that a consumer can see
 carries a changeset entry (`npm run changeset`); the rules are in
 [.changeset/README.md](.changeset/README.md). A breaking change is recorded in
-[docs/api/migration-notes.en.md](docs/api/migration-notes.en.md), with the action
+[docs/api/migration-notes.md](docs/api/migration-notes.md), with the action
 the consumer takes.
 
 **Ask first:** a new dependency or peer dependency; a change to token values that

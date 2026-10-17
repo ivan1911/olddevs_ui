@@ -14,14 +14,14 @@ export const PACKAGE_SCENARIOS = [
   {
     key: "utilities",
     title: "two pure utilities",
-    documented: "`cn` и `tableStateToParams`",
+    documented: "`cn` and `tableStateToParams`",
     source:
       'import { cn, tableStateToParams } from "@olddevs/ui";\nglobalThis.probe = [cn, tableStateToParams];\n',
   },
   {
     key: "button",
     title: "a single Button",
-    documented: "одна `Button`",
+    documented: "one `Button`",
     source: 'import { Button } from "@olddevs/ui";\nglobalThis.probe = Button;\n',
   },
   {
@@ -33,7 +33,7 @@ export const PACKAGE_SCENARIOS = [
   {
     key: "everything",
     title: "the whole kit",
-    documented: "весь кит целиком (`import *`)",
+    documented: "the whole kit (`import *`)",
     source: 'import * as ui from "@olddevs/ui";\nglobalThis.probe = ui;\n',
   },
   /*
@@ -60,14 +60,14 @@ export const PACKAGE_SCENARIOS = [
   {
     key: "editor",
     title: "RichTextEditor (kit code, start)",
-    documented: "`RichTextEditor` из `@olddevs/ui/editor`, без движка, «старт»",
+    documented: '`RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"',
     source:
       'import { RichTextEditor } from "@olddevs/ui/editor";\nglobalThis.probe = RichTextEditor;\n',
   },
   {
     key: "editorEngine",
     title: "RichTextEditor with Tiptap, start",
-    documented: "`RichTextEditor` вместе с движком Tiptap, «старт» (статический граф, `basic`)",
+    documented: '`RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)',
     // ProseMirror и прочие зависимости движка в манифесте кита не объявлены и попадают
     // в замер сами — внести нужно только пакеты Tiptap и `marked` (его
     // экземпляр свой у каждого Редактора, OLDSUI-47), а с OLDSUI-50 — подсветчик:
@@ -106,8 +106,7 @@ export const PACKAGE_SCENARIOS = [
   {
     key: "editorEngineFull",
     title: "RichTextEditor with Tiptap, full",
-    documented:
-      "`RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)",
+    documented: '`RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)',
     bundled: ["@tiptap/", "marked", "lowlight", "highlight.js", "katex"],
     chunks: "all",
     source:
@@ -122,7 +121,8 @@ export const PACKAGE_SCENARIOS = [
   {
     key: "editorView",
     title: "RichTextView (engine counted)",
-    documented: "`RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён",
+    documented:
+      "`RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement",
     // Подсветчик — тоже: `RichTextView` его не тянет (OLDSUI-50), и случайный
     // импорт lowlight в граф показал бы себя десятком килобайт.
     bundled: ["@tiptap/", "lowlight", "highlight.js", "katex"],
@@ -140,7 +140,7 @@ export const PACKAGE_SCENARIOS = [
     key: "editorSchema",
     title: "editor/schema (engine counted)",
     documented:
-      "`sanitizeRichText` и `richTextSanitizeConfig` из `@olddevs/ui/editor/schema`, движок Tiptap в замер включён",
+      "`sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included",
     bundled: ["@tiptap/"],
     source:
       'import { richTextSanitizeConfig, sanitizeRichText } from "@olddevs/ui/editor/schema";\nglobalThis.probe = [richTextSanitizeConfig, sanitizeRichText];\n',
@@ -153,7 +153,7 @@ export const PACKAGE_SCENARIOS = [
   {
     key: "editorHighlight",
     title: "editor/highlight (with lowlight)",
-    documented: "`highlightCodeBlocks` из `@olddevs/ui/editor/highlight`, вместе с lowlight",
+    documented: "`highlightCodeBlocks` from `@olddevs/ui/editor/highlight`, with lowlight",
     bundled: ["@tiptap/", "lowlight", "highlight.js"],
     source:
       'import { highlightCodeBlocks } from "@olddevs/ui/editor/highlight";\nglobalThis.probe = highlightCodeBlocks;\n',
@@ -166,7 +166,7 @@ export const PACKAGE_SCENARIOS = [
   {
     key: "editorHighlightNodes",
     title: "editor/highlight nodes for CodeView (with lowlight)",
-    documented: "`highlightCodeNodes` из `@olddevs/ui/editor/highlight`, вместе с lowlight",
+    documented: "`highlightCodeNodes` from `@olddevs/ui/editor/highlight`, with lowlight",
     bundled: ["@tiptap/", "lowlight", "highlight.js"],
     source:
       'import { highlightCodeNodes } from "@olddevs/ui/editor/highlight";\nglobalThis.probe = highlightCodeNodes;\n',

@@ -7,37 +7,37 @@ source: src/components/app-shell/SideNav.tsx, src/components/app-shell/NavItem.t
 story: src/components/app-shell/SideNav.stories.tsx, src/components/app-shell/NavItem.stories.tsx
 ---
 
-# SideNav, NavGroup и NavItem
+# SideNav, NavGroup and NavItem
 
-## Кратко для AI
+## Summary for AI
 
-`SideNav` — боковая навигация приложения: landmark с именем, слоты шапки и
-подвала, разделы `NavGroup` с пунктами `NavItem`. Схлопнутость держит сама
-(`defaultCollapsed`) или отдаёт потребителю (`collapsed` + `onCollapsedChange`);
-**сохранять** её — дело потребителя. `NavItem` о маршрутизаторе не знает ничего:
-ссылку задаёт дочерний элемент при `asChild` (или проп `href`), текущий пункт — пропом
-`active`. В схлопнутом режиме подписи прячутся от глаз, но остаются доступными
-именами, а заголовки разделов заменяются чертой. Содержимое слотов `header` и
-`footer` подстраивается под режим само через хук `useNavCollapsed()`.
+`SideNav` is the application's side navigation: a named landmark, header and
+footer slots, and `NavGroup` sections with `NavItem` items. It holds the collapsed state itself
+(`defaultCollapsed`) or hands it to the consumer (`collapsed` + `onCollapsedChange`);
+**persisting** it is the consumer's job. `NavItem` knows nothing about the router:
+the link target comes from the child element passed with `asChild` (or from `href`), and the current item is set by the
+`active` prop. In collapsed mode the labels are visually hidden but remain accessible
+names, and section headings are replaced by a divider line. Content in the `header`
+and `footer` slots adapts to the mode on its own through the `useNavCollapsed()` hook.
 
-Мобильного режима здесь нет: ниже `md` навигацию убирает в `Drawer` сам `AppShell`.
-Сама `SideNav` — просто колонка, и её можно положить внутрь ящика.
+There is no mobile mode here: below `md`, `AppShell` moves the navigation into a `Drawer`.
+`SideNav` itself is just a column, and it can be placed inside a drawer.
 
-## Когда использовать
+## When to use
 
-- Основная навигация приложения слева — админка, кабинет, консоль.
-- Отдельный пункт бокового меню (`NavItem`) — в навигации потребителя.
-- Любой список ссылок, где один из пунктов «текущий», а у пунктов есть иконки.
+- The application's main navigation on the left — an admin panel, an account area, a console.
+- A single side-menu item (`NavItem`) — in the consumer's own navigation.
+- Any list of links where one item is "current" and the items have icons.
 
-## Когда не использовать
+## When not to use
 
-- Для вкладок внутри страницы — это `Tabs`.
-- Для пути к текущей странице — это `Breadcrumbs`.
-- Для действия, а не перехода — это `Button`. Пункт навигации ведёт куда-то, и
-  роль ссылки не случайна: его открывают в новой вкладке, копируют ссылку, видят
-  `href` в строке состояния.
+- For tabs inside a page — that is `Tabs`.
+- For the path to the current page — that is `Breadcrumbs`.
+- For an action rather than navigation — that is `Button`. A navigation item leads somewhere, and
+  the link role is no accident: users open it in a new tab, copy the link and see its `href`
+  in the status bar.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { NavGroup, NavItem, SideNav } from "@olddevs/ui";
@@ -45,66 +45,66 @@ import { DashboardIcon, FolderIcon } from "@olddevs/ui/icons";
 import Link from "next/link";
 
 <SideNav header={<Logo />} footer={<CurrentUser />}>
-  <NavGroup label="Работа">
+  <NavGroup label="Work">
     <NavItem
-      label="Дашборд"
+      label="Dashboard"
       icon={<DashboardIcon size={20} />}
       active={pathname.startsWith("/dashboard")}
       asChild
     >
       <Link href="/dashboard" />
     </NavItem>
-    <NavItem label="Документы" icon={<FolderIcon size={20} />} asChild>
+    <NavItem label="Documents" icon={<FolderIcon size={20} />} asChild>
       <Link href="/docs" />
     </NavItem>
   </NavGroup>
 </SideNav>;
 ```
 
-Потомок `NavItem` передаётся **пустым**: иконка и подпись уезжают внутрь него
-через `Slottable`. Так же устроен `Button`.
+The child of `NavItem` is passed **empty**: the icon and label move inside it
+through `Slottable`. `Button` works the same way.
 
-## Пропы `SideNav`
+## `SideNav` props
 
-| Проп                | Умолчание | Назначение                                                                        |
-| ------------------- | --------- | --------------------------------------------------------------------------------- |
-| `header`            | —         | Слот шапки: логотип, название продукта.                                           |
-| `footer`            | —         | Слот подвала: блок текущего пользователя (имя, аватар), ссылки.                   |
-| `collapsed`         | —         | Схлопнутость в управляемом режиме. Задана — компонент своего состояния не держит. |
-| `defaultCollapsed`  | `false`   | Начальная схлопнутость в неуправляемом режиме.                                    |
-| `onCollapsedChange` | —         | Сообщает о намерении переключиться.                                               |
-| `collapsible`       | `true`    | Встроенная кнопка сворачивания в подвале.                                         |
-| `label`             | каталог   | Доступное имя навигации.                                                          |
+| Prop                | Default         | Purpose                                                                                  |
+| ------------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| `header`            | —               | The header slot: a logo, the product name.                                               |
+| `footer`            | —               | The footer slot: the current user block (name, avatar), links.                           |
+| `collapsed`         | —               | The collapsed state in controlled mode. If set, the component keeps no state of its own. |
+| `defaultCollapsed`  | `false`         | The initial collapsed state in uncontrolled mode.                                        |
+| `onCollapsedChange` | —               | Reports an intent to toggle.                                                             |
+| `collapsible`       | `true`          | The built-in collapse button in the footer.                                              |
+| `label`             | message catalog | The navigation's accessible name.                                                        |
 
-## Пропы `NavGroup`
+## `NavGroup` props
 
-| Проп    | Умолчание | Назначение                                                                   |
-| ------- | --------- | ---------------------------------------------------------------------------- |
-| `label` | —         | Заголовок раздела и доступное имя группы. Строка, а не `ReactNode`: это имя. |
+| Prop    | Default | Purpose                                                                                         |
+| ------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `label` | —       | The section heading and the group's accessible name. A string, not a `ReactNode`: it is a name. |
 
-## Пропы `NavItem`
+## `NavItem` props
 
-| Проп       | Умолчание | Назначение                                                                                                            |
-| ---------- | --------- | --------------------------------------------------------------------------------------------------------------------- |
-| `label`    | —         | Подпись и доступное имя. Обязательна.                                                                                 |
-| `icon`     | —         | Иконка слева. Скрыта от скринридера: имя даёт подпись.                                                                |
-| `active`   | `false`   | Текущий пункт: `aria-current="page"`, рамка и фон.                                                                    |
-| `badge`    | —         | Счётчик справа: `Badge`, число, точка. В схлопнутом режиме не рендерится.                                             |
-| `shortcut` | —         | Слот горячей клавиши, обычно `Kbd`. В схлопнутом режиме не рендерится.                                                |
-| `asChild`  | `false`   | Отрисовать пункт элементом потребителя: `next/link`, `<Link>` роутера; стили, пропы и `ref` пункта переходят на него. |
+| Prop       | Default | Purpose                                                                                                                       |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `label`    | —       | The label and the accessible name. Required.                                                                                  |
+| `icon`     | —       | An icon on the left. Hidden from the screen reader: the label provides the name.                                              |
+| `active`   | `false` | The current item: `aria-current="page"`, a border and a background.                                                           |
+| `badge`    | —       | A counter on the right: `Badge`, a number, a dot. Not rendered in collapsed mode.                                             |
+| `shortcut` | —       | A keyboard shortcut slot, usually `Kbd`. Not rendered in collapsed mode.                                                      |
+| `asChild`  | `false` | Render the item as the consumer's element: `next/link`, the router's `<Link>`; the item's styles, props and `ref` pass to it. |
 
-Остальные пропы уходят на элемент — включая `href` для случая без `asChild`.
+The other props go to the element — including `href` for the case without `asChild`.
 
-**Недоступный пункт** выключается атрибутом `aria-disabled="true"`: у ссылки нет родного `disabled`. Пункт гаснет
-и получает обычный курсор — так же, как `Button`. Атрибут только объявляет пункт недоступным: переход по `href`
-он не отменяет, поэтому потребитель либо не передаёт `href`, либо гасит переход сам.
+**An unavailable item** is switched off with the `aria-disabled="true"` attribute: a link has no native `disabled`. The item is dimmed
+and gets the default cursor, the same as `Button`. The attribute only declares the item unavailable: it does not cancel navigation
+through `href`, so the consumer either omits `href` or cancels the navigation itself.
 
-## Шапка и подвал в иконочном режиме
+## Header and footer in collapsed mode
 
-Пункты и разделы подстраиваются под схлопнутость сами, а слоты `header` и
-`footer` принадлежат потребителю: что в них лежит, кит не знает. Колонка в
-иконочном режиме шириной с иконку, и блок пользователя с именем и ролью в неё не
-помещается. Содержимое слота узнаёт режим хуком `useNavCollapsed()`:
+Items and sections adapt to the collapsed state on their own, but the `header`
+and `footer` slots belong to the consumer: the kit doesn't know what's in them.
+In collapsed mode the column is as wide as an icon, and a user block with a name and
+a role doesn't fit. Slot content reads the mode with the `useNavCollapsed()` hook:
 
 ```tsx
 import { Avatar, useNavCollapsed } from "@olddevs/ui";
@@ -131,72 +131,72 @@ function CurrentUser() {
 }
 ```
 
-Вне `SideNav` хук возвращает `false`, поэтому тот же компонент работает и в
-другом месте приложения. В ящике мобильного режима навигация всегда развёрнута,
-и хук возвращает `false` и там.
+Outside `SideNav` the hook returns `false`, so the same component works anywhere
+else in the app. In the mobile-mode drawer the navigation is always expanded, and
+the hook returns `false` there too.
 
-Если хватает CSS, у `<nav>` есть атрибут `data-collapsed`: в Tailwind подпись
-прячет класс `in-data-collapsed:hidden`.
+When CSS is enough, `<nav>` carries a `data-collapsed` attribute: in Tailwind,
+the `in-data-collapsed:hidden` class hides a label.
 
-Шапка и подвал обрезают по ширине всё, что в колонку не помещается. Это
-страховка, а не способ подстройки: текст, оставленный как есть, будет обрезан
-посередине. Обрезка заденет и кольцо фокуса у элемента вплотную к краю шапки:
-у шапки своих отступов нет, их задаёт содержимое слота. Подвал отступ даёт сам.
+The header and the footer clip anything too wide for the column. This is a safety
+net, not a way to adapt: text left as is gets cut off mid-word. Clipping also
+catches the focus ring of an element flush against the header's edge: the header
+has no padding of its own, the slot content sets it. The footer brings its own.
 
-## Решения, которые видно в API
+## Decisions visible in the API
 
-**Активность — проп, а не вычисление.** Кит не знает ни маршрутизатора, ни
-правил сравнения путей: хвостовой слэш, query, вложенные маршруты, локаль в
-префиксе — у каждого маршрутизатора они свои. Ошибка здесь выражается не падением, а тихо
-неподсвеченным пунктом, поэтому логика сравнения остаётся у приложения —
+**Active state is a prop, not a computation.** The kit knows neither the router nor
+the rules for comparing paths: trailing slash, query, nested routes, a locale in the
+prefix — each router has its own. A mistake here shows up not as a crash but as a quietly
+unhighlighted item, so that logic stays with the application —
 ADR-0018.
 
-**Подпись отдельным пропом, а не содержимым.** В схлопнутом режиме её нужно
-обернуть, чтобы спрятать от глаз и оставить скринридеру. Содержимое при
-`asChild` принадлежит потомку, и обернуть его нельзя.
+**The label is a separate prop, not content.** In collapsed mode it has to be
+wrapped, to hide it visually and keep it for the screen reader. With
+`asChild` the content belongs to the child, and it cannot be wrapped.
 
-**Схлопнутость приходит контекстом от `SideNav`**, а не пропом на каждом
-пункте: иначе потребитель протаскивал бы одно значение в десять мест руками и
-однажды забыл бы в одном.
+**The collapsed state arrives through context from `SideNav`**, not as a prop on each
+item: otherwise the consumer would pass one value to ten places by hand and
+one day forget it in one of them.
 
-**Управляемым режим делает наличие пропа, а не его значение.** `collapsed={false}`
-— это «я управляю, сейчас развёрнуто», а не «управления нет». Спутать эти два
-случая — значит получить внешнюю кнопку, которая молча перестала работать.
+**A prop's presence makes the mode controlled, not its value.** `collapsed={false}`
+means "I control it, it is expanded now", not "there is no control". Confusing these two
+cases leaves you with an external button that silently stops working.
 
-**Ширины — токены `--sidenav-w` и `--sidenav-w-collapsed`, а не пропы.** То же
-значение нужно сетке `AppShell`, и гонять его через React — значило бы
-ререндерить ради того, что CSS читает сам. Как их менять — в
+**Widths are the `--sidenav-w` and `--sidenav-w-collapsed` tokens, not props.** The `AppShell`
+grid needs the same value, and routing it through React would mean
+re-rendering for something CSS reads on its own. To change them, see
 [theming.md](../../theming.md).
 
-**В ящике мобильного режима навигация всегда развёрнута.** `AppShell`, показывая
-`SideNav` в `Drawer`, прячет кнопку сворачивания и не даёт схлопнутости
-действовать — ни `collapsed`, ни `defaultCollapsed`. Схлопнутый режим существует
-ради одного: отдать ширину содержимому страницы, а рядом с оверлеем содержимого
-нет. Убрать при этом только кнопку было бы хуже: потребитель, который сам
-хранит схлопнутость, получил бы в ящике иконки без способа их развернуть.
+**In the mobile-mode drawer the navigation is always expanded.** When `AppShell` shows
+`SideNav` in a `Drawer`, it hides the collapse button and keeps the collapsed state from
+taking effect — neither `collapsed` nor `defaultCollapsed`. Collapsed mode exists
+for one purpose: to free up width for the page content, and an overlay has no page content next to it.
+Removing only the button would be worse: a consumer who keeps the collapsed state
+outside the component would get icons in the drawer with no way to expand them.
 
-`onCollapsedChange` в ящике не зовётся — состояние потребителя относится к
-колонке, и оверлей не вправе его менять.
+`onCollapsedChange` is not called in the drawer — the consumer's state belongs
+to the column, and the overlay must not change it.
 
-**Сохранять схлопнутость кит не умеет и не будет.** `localStorage`, cookie,
-хранилище приложения — дело потребителя; компонент только сообщает о
-переключении.
+**The kit cannot persist the collapsed state and never will.** `localStorage`, a cookie,
+the application's storage — that is up to the consumer; the component only reports
+the toggle.
 
-## Требования к потребителю
+## Requirements for the consumer
 
-**Схлопнутая навигация обязана стоять внутри `TooltipProvider`** — иначе Radix
-бросает на первом же пункте. Компонент не создаёт провайдер сам, по
-той же причине, что и `Segmented`: провайдер задаёт группировку подсказок на всё
-приложение, а вложенный её ломает. В развёрнутом режиме подсказки нет, и
-требования тоже нет.
+**Collapsed navigation must sit inside a `TooltipProvider`** — otherwise Radix
+throws on the very first item. The component does not create the provider itself, for
+the same reason as `Segmented`: the provider sets the tooltip grouping for the whole
+application, and a nested one breaks it. In expanded mode there is no tooltip,
+and so no requirement.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/app-shell/SideNav.tsx`, `src/components/app-shell/NavItem.tsx`.
-- Тесты: `tests/nav-item.test.tsx` — активность, `asChild`, доступное имя в
-  схлопнутом режиме; `tests/side-nav.test.tsx` — landmark и его имя из каталога,
-  оба режима владения схлопнутостью, имя группы при спрятанном заголовке,
-  режим в слотах через `useNavCollapsed` и обрезка шапки и подвала;
-  `tests/app-shell.test.tsx` — поведение в ящике.
-- Истории: `src/components/app-shell/SideNav.stories.tsx`,
+- Implementation: `src/components/app-shell/SideNav.tsx`, `src/components/app-shell/NavItem.tsx`.
+- Tests: `tests/nav-item.test.tsx` — active state, `asChild`, the accessible name in
+  collapsed mode; `tests/side-nav.test.tsx` — the landmark and its name from the message catalog,
+  both modes of collapsed-state ownership, the group name with a hidden heading,
+  the mode in slots through `useNavCollapsed`, and header and footer clipping;
+  `tests/app-shell.test.tsx` — behavior in the drawer.
+- Stories: `src/components/app-shell/SideNav.stories.tsx`,
   `src/components/app-shell/NavItem.stories.tsx`.

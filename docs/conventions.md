@@ -1,358 +1,319 @@
-# Общие соглашения `@olddevs/ui`
+# General conventions for `@olddevs/ui`
 
-## Публичный контракт
+## Public contract
 
-Публичный API — экспорты времени выполнения из [`src/index.ts`](../src/index.ts), типы,
-описанные в документации входы и `styles.css`. Исходники в `src/components/` —
-доказательство поведения, но не разрешённый путь импорта для потребителя.
+The public API is the runtime exports from [`src/index.ts`](../src/index.ts), the types, the entry points
+described in the documentation, and `styles.css`. The sources in `src/components/` prove the behavior, but they
+are not an import path that consumers may use.
 
-## Семантический словарь пропсов
+## Semantic prop vocabulary
 
-Если конкретная страница не говорит иначе, примитивы используют три независимые
-оси:
+Unless a specific page says otherwise, primitives use three independent axes:
 
-| Prop      | Значения                                            | Вопрос, на который отвечает     |
-| --------- | --------------------------------------------------- | ------------------------------- |
-| `size`    | `sm`, `md`, `lg`                                    | Насколько крупен элемент?       |
-| `tone`    | `neutral`, `accent`, `success`, `warning`, `danger` | Что означает состояние?         |
-| `variant` | `solid`, `soft`, `outline`, `ghost`                 | Насколько заметно это значение? |
+| Prop      | Values                                              | Question it answers          |
+| --------- | --------------------------------------------------- | ---------------------------- |
+| `size`    | `sm`, `md`, `lg`                                    | How large is the element?    |
+| `tone`    | `neutral`, `accent`, `success`, `warning`, `danger` | What does the state mean?    |
+| `variant` | `solid`, `soft`, `outline`, `ghost`                 | How prominent is this value? |
 
-Состояния называются положительно: `selected`, `disabled`, `loading`. Нативное
-ARIA-состояние может использовать своё корректное имя, например `checked` у
-switch. Не создавайте альтернативы вроде `kind`, `status` или отрицательные
-булевы пропсы без отдельного публичного решения; `active` занят одним смыслом —
-ниже.
+States are named positively: `selected`, `disabled`, `loading`. A native ARIA state may use its own correct name,
+for example `checked` on a switch. Do not create alternatives such as `kind`, `status` or negative boolean props
+without a separate public decision. `active` already has one meaning, see below.
 
-Пропсы вне трёх осей повторяются в нескольких компонентах. Одно
-понятие — одно имя: второй компонент с тем же смыслом берёт имя отсюда, а не
-придумывает своё.
+Props outside the three axes repeat across several components. One concept, one name: a second component with the
+same meaning takes the name from here, and does not invent its own.
 
-| Prop         | Смысл                                                                           | Где                                   |
-| ------------ | ------------------------------------------------------------------------------- | ------------------------------------- |
-| `appearance` | Форма варианта — меняется разметка, а не заметность тона                        | `RadioGroup`, `CheckboxGroup`         |
-| `active`     | Текущий пункт навигации: `aria-current="page"`                                  | `NavItem`, `MobileTabBarItem`         |
-| `activeKey`  | То же для коллекции данных: ключ текущего узла, `aria-current="page"`           | `TreeView`                            |
-| `level`      | Уровень заголовка, `2`–`4`: компонент рисует настоящий `<h2>`–`<h4>`            | `SectionHeader`, `NotificationCenter` |
-| `kind`       | Вид **данных**, а не элемента: что за значение поле описывает и как его вводить | `FilterField` (ADR-0063)              |
+| Prop         | Meaning                                                                                     | Where                                 |
+| ------------ | ------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `appearance` | The form of a variant: the markup changes, not the prominence of the tone                   | `RadioGroup`, `CheckboxGroup`         |
+| `active`     | The current navigation item: `aria-current="page"`                                          | `NavItem`, `MobileTabBarItem`         |
+| `activeKey`  | The same for a data collection: the key of the current node, `aria-current="page"`          | `TreeView`                            |
+| `level`      | Heading level, `2`–`4`: the component renders a real `<h2>`–`<h4>`                          | `SectionHeader`, `NotificationCenter` |
+| `kind`       | The kind of **data**, not of an element: what value the field describes and how to enter it | `FilterField` (ADR-0063)              |
 
-- **`kind` у `FilterField` — публичное решение ADR-0063, а не обход оси.**
-  `FilterField` — описание поля данных, а не элемент интерфейса: `"values"`,
-  `"number-range"`, `"date-range"` говорят, что за значение у поля и каким
-  вводом его задать. Это не подача (`variant`) и не форма варианта
-  (`appearance`) — у описания данных нет ни тона, ни разметки. Компонентам,
-  которые рисуют элемент, `kind` по-прежнему не заводится.
-- **`appearance`, а не `variant`.** `variant` — ось подачи тона с закрытым
-  набором `solid|soft|outline|ghost` на весь кит. `appearance="card"` меняет
-  саму форму варианта: рамка, индикатор, описание внутри подписи. Под `variant`
-  такое значение дало бы оси второй смысл, и `variant="card"` у одного
-  компонента соседствовал бы с `variant="soft"` у другого.
-- **`active`, а не `selected`.** `selected` — выбор в наборе (`aria-selected`,
-  `aria-checked`): его меняет пользователь. Текущий раздел — это `aria-current`:
-  его задаёт маршрут, а пункт остаётся ссылкой. Других значений у `active` нет —
-  синонимом `selected` он не становится. Там, где пунктов-элементов нет, а есть
-  данные по ключам (`TreeView`), то же понятие называется `activeKey` — по
-  образцу `selectedKeys` и `expandedKeys`, одно значение вместо набора.
-- **`level`, а не `headingLevel`.** Уровень зависит от того, куда компонент
-  встал, и знает его потребитель. У `SectionHeader` проп назывался `level`
-  раньше, второе имя для того же понятия разошлось бы с ним молча.
+- **`kind` on `FilterField` is a public decision (ADR-0063), not a workaround for the axis.**
+  `FilterField` describes a data field, not a UI element: `"values"`, `"number-range"` and `"date-range"` say
+  what value the field holds and what input sets it. It is not a presentation (`variant`) or a variant form
+  (`appearance`): a description of data has no tone and no markup. Components that draw an element still do not
+  get `kind`.
+- **`appearance`, not `variant`.** `variant` is the axis for how a tone is presented, with a closed set
+  `solid|soft|outline|ghost` across the whole kit. `appearance="card"` changes the form of the variant itself:
+  the border, the indicator and the description inside the label. Under `variant`, such a value would give the
+  axis a second meaning: `variant="card"` on one component would sit next to `variant="soft"` on another.
+- **`active`, not `selected`.** `selected` is a choice in a set (`aria-selected`, `aria-checked`): the user
+  changes it. The current section is `aria-current`: the route sets it, and the item stays a link. `active` has
+  no other values, and it does not become a synonym for `selected`. Where there are no item elements but keyed
+  data (`TreeView`), the same concept is called `activeKey`, after `selectedKeys` and `expandedKeys`: one value
+  instead of a set.
+- **`level`, not `headingLevel`.** The level depends on where the component is placed, and the consumer knows
+  that. `SectionHeader` already had a prop called `level`. A second name for the same concept would silently
+  drift from it.
 
-## Доступное имя
+## Accessible name
 
-Правило выведено на `Toolbar`, `Carousel`, `MobileTabBar` и `TagGroup`: до него обязательное имя было устроено в этих компонентах по-разному, а `label` в одном выводился на экран, а в соседнем уходил в атрибут.
+The rule comes from `Toolbar`, `Carousel`, `MobileTabBar` and `TagGroup`. Before it, these components handled the
+required name in different ways: in one, `label` was shown on screen, and in another it went into an attribute.
 
-- **`label` — только видимая подпись.** Проп с этим именем рисует текст на
-  экране. Имя, которое не рисуется, называется своим ARIA-атрибутом.
-- **Без видимой подписи — ровно одно из `aria-label` и `aria-labelledby`.** Тип
-  — [`AccessibleName`](../src/lib/accessible-name.ts), объединение с `never`:
-  без имени и с обоими сразу TypeScript вызов не пропускает. Два источника
-  одного имени при правке расходятся молча.
-- **Имя с умолчанием из каталога** — `Partial<AccessibleName>`: можно не
-  передавать ничего, но не оба сразу (`MobileTabBar`). Умолчание звучит и тогда,
-  когда передана пустая строка.
-- **Видимая подпись или атрибут** — `{ label; "aria-label"?: never;
-"aria-labelledby"?: never } | ({ label?: never } & AccessibleName)` (`TagGroup`).
-  Подпись вместе с атрибутом запрещена: атрибут перекрыл бы видимый текст, и на
-  слух компонент назывался бы иначе, чем на экране.
-- Тест закрепляет форму через `@ts-expect-error` — на «нет имени» и на «оба
-  сразу».
+- **`label` is only a visible label.** A prop with this name draws text on screen. A name that is not drawn is
+  set with its own ARIA attribute.
+- **Without a visible label, use exactly one of `aria-label` and `aria-labelledby`.** The type is
+  [`AccessibleName`](../src/lib/accessible-name.ts), a union with `never`: TypeScript rejects a call with no name
+  and a call with both. Two sources of one name drift apart silently when you edit.
+- **A name with a default from the catalog** uses `Partial<AccessibleName>`: you can pass nothing, but not both
+  (`MobileTabBar`). The default is announced even when an empty string is passed.
+- **Visible label or attribute:** `{ label; "aria-label"?: never;
+"aria-labelledby"?: never } | ({ label?: never } & AccessibleName)` (`TagGroup`). A label together with an
+  attribute is not allowed: the attribute would override the visible text, and a screen reader would give the
+  component a different name than the one on screen.
+- The test locks the shape with `@ts-expect-error`: for "no name" and for "both at once".
 
-Компоненты, выпущенные до правила, используют `label` как строку имени без
-видимой подписи (`SideNav`, `TopBar`, `FilterBar`, `ScrollArea` и другие).
-Переименование там — breaking change и отдельное решение; новый компонент
-следует правилу.
+Components released before this rule use `label` as the name string without a visible label (`SideNav`,
+`TopBar`, `FilterBar`, `ScrollArea` and others). Renaming it there is a breaking change and a separate decision.
+A new component follows the rule.
 
-## Пустое значение
+## Empty value
 
-Пустая строка — не подпись и не имя. Правило и его история — в
-[`src/lib/empty.ts`](../src/lib/empty.ts): для пропа типа `string` фолбэк
-пишется через `||`, а не `??`; для `ReactNode` — через `hasContent`, а не
-`!= null`. `??` и `!= null` пропускают `""` — и компонент рисует пустой узел,
-остаётся без имени или называет кнопку «Удалить: ». Каждая такая ветка
-закрепляется тестом с пустой строкой.
+An empty string is neither a label nor a name. The rule and its history are in
+[`src/lib/empty.ts`](../src/lib/empty.ts). For a prop of type `string`, write the fallback with `||`, not `??`.
+For `ReactNode`, use `hasContent`, not `!= null`. `??` and `!= null` let `""` through: the component renders an
+empty node, stays without a name, or labels a button "Удалить: ". Each such branch is covered by a test with an
+empty string.
 
-## Что проверяют тесты
+## What the tests check
 
-Тест рендерит компонент как потребитель (Testing Library и user-event) и
-проверяет наблюдаемое: роли, имена, aria-атрибуты, фокус, вызовы обработчиков,
-текст. Внутреннее состояние и хуки не проверяются.
+A test renders the component as a consumer does (Testing Library and user-event), and checks what can be observed:
+roles, names, ARIA attributes, focus, handler calls and text. Internal state and hooks are not tested.
 
-**Класс проверяется, только когда он и есть наблюдаемый контракт, которого jsdom
-иначе не увидит**: jsdom не считает каскад, раскладку и `env()`. Таковы тон из
-словаря (`TONE_TOKENS`, `CHOICE_CARD_SELECTED_BORDER`), ширина слайда и число
-колонок из словаря компонента, фон полосы в слоте и вне его
-(`BACKDROP_CLASS` у `MobileTabBar`). Ожидание берут **из словаря, а не
-пишут литералом**: литерал проверяет, что строку никто не трогал, а словарь — что
-компонент взял нужную клетку.
+**A class is tested only when it is the observable contract that jsdom would not otherwise see**: jsdom does not
+compute the cascade, the layout or `env()`. Examples are the tone from the dictionary (`TONE_TOKENS`,
+`CHOICE_CARD_SELECTED_BORDER`), the slide width and column count from the component dictionary, and the bar
+background inside and outside the slot (`BACKDROP_CLASS` of `MobileTabBar`). Take the expected value **from the
+dictionary, not as a literal**: a literal checks that nobody touched the string, while the dictionary checks that
+the component picked the right cell.
 
-Произвольные классы вёрстки (`h-7`, `rounded-full`, `ring-bg-1`) тестом не
-закрепляются: их стерегут визуальные снимки, а попадание каждого класса в CSS —
-[`tests/class-coverage.test.ts`](../tests/class-coverage.test.ts) через матрицу.
-Если у такого класса есть наблюдаемое следствие (описание внутри подписи, узел в
-DOM, атрибут), проверяется следствие.
+Arbitrary layout classes (`h-7`, `rounded-full`, `ring-bg-1`) are not locked by a test. Visual snapshots guard
+them, and [`tests/class-coverage.test.ts`](../tests/class-coverage.test.ts) checks through a matrix that each
+class reaches the CSS. If such a class has an observable effect (a description inside the label, a node in the
+DOM, an attribute), test the effect.
 
-## Управление состоянием
+## State management
 
-Преимущественно компоненты принимают значение и callback от потребителя.
-Потребитель — единственный владелец доменного состояния, запроса, маршрута и
-валидации. На странице компонента всегда уточняйте:
+Components mostly take the value and the callback from the consumer. The consumer is the only owner of domain
+state, the request, the route and validation. On a component page, always state:
 
-- форму значения и пустого значения (`null`, массив, строка и т. п.);
-- controlled props и callback;
-- допустимые переходы состояния;
-- поведение disabled/loading;
-- интеграцию с нативной формой, если она есть.
+- the shape of the value and of the empty value (`null`, an array, a string, and so on);
+- controlled props and the callback;
+- allowed state transitions;
+- the behavior of disabled and loading;
+- the integration with a native form, if there is one.
 
-Не выводите API из внешнего вида истории: сверяйте тип и исходник.
+Do not infer the API from how a story looks: check the type and the source.
 
-## Как читать страницу компонента
+## How to read a component page
 
-Каждая страница обязана содержать:
+Every page must contain:
 
-1. Краткий ответ для AI и границу применения.
-2. Ближайшие альтернативы и запреты на неправильное применение.
-3. Минимальный рабочий пример с корректным импортом.
-4. Интерпретацию публичных пропсов, состояний и событий.
-5. Доступность, клавиатуру, фокус и границу формы.
-6. Антипаттерны, особые случаи и ссылки на source/Storybook.
+1. A short answer for AI and the limits of use.
+2. The closest alternatives and what not to do.
+3. A minimal working example with the correct import.
+4. An explanation of the public props, states and events.
+5. Accessibility, the keyboard, focus and the boundary with forms.
+6. Anti-patterns, special cases and links to the source and Storybook.
 
-## Раскладка исходников
+## Source layout
 
-Папка компонента в `src/components/<категория>/` совпадает с папкой его страницы
-в `docs/components/<категория>/`: категорий восемь (`actions`, `inputs`,
-`date-time`, `overlays`, `navigation`, `content`, `table`, `app-shell`), в корне
-`src/components/` файлов нет. Внутри категории файлы плоские, внутренняя часть
-лежит рядом с владельцем. Компонент меняет категорию вместе со страницей.
+A component folder in `src/components/<category>/` matches its page folder in `docs/components/<category>/`.
+There are eight categories (`actions`, `inputs`, `date-time`, `overlays`, `navigation`, `content`, `table`,
+`app-shell`). There are no files at the root of `src/components/`. Inside a category, files are flat: an internal
+part lives next to its owner. When a component changes its category, its page changes with it.
 
-В `src/editor/` в корне остаются только точки входа, `RichTextEditor`,
-`RichTextView` и их истории. Остальное: `core/` — движок и реестр Инструментов,
-`ui/` — общая обвязка, `styles/` — оформление, `hooks/` — хуки, `features/<фича>/`
-— узел, команды, Инструмент и UI одной фичи.
+In `src/editor/`, only the entry points stay at the root: `RichTextEditor`, `RichTextView` and their stories.
+Everything else is in subfolders: `core/` holds the engine and the Tool registry, `ui/` holds the shared glue code,
+`styles/` holds the styling, `hooks/` holds the hooks, and `features/<feature>/` holds the node, commands, Tool and
+UI of one feature.
 
-Файлы `index.ts` в категориях, слоях и фичах запрещены: импорт идёт напрямую по
-файлу, barrel-файлы допустимы только как точки входа пакета. Раскладку проверяет
-`tests/structure.test.ts`.
+`index.ts` files are not allowed in categories, layers or features: imports go directly to the file. Barrel files
+are allowed only as entry points of the package. `tests/structure.test.ts` checks the layout.
 
-## Изменение API
+## Changing the API
 
-При добавлении или изменении экспорта времени выполнения обновите его страницу, запись в
-каталоге и реестр в том же наборе изменений. Breaking change также требует записи в
-`docs/api/migration-notes.md` с действием для потребителя; не скрывайте
-изменение за визуально похожим поведением.
+When you add or change a runtime export, update its page, its entry in the catalog and the registry in the same
+change set. A breaking change also needs an entry in `docs/api/migration-notes.md` with the action for the
+consumer. Do not hide a change behind behavior that looks similar.
 
-## Строки, видимые пользователю
+## User-visible strings
 
-Каждая подпись, которую видит или слышит пользователь, идёт через каталог
-сообщений: `проп ?? messages.семья.ключ`. Проп остаётся — он точечное
-переопределение, а не единственный способ.
+Every label that a user sees or hears goes through the message catalog: `prop ?? messages.family.key`. The prop
+stays: it is a targeted override, not the only way.
 
-Литерал в JSX или в дефолте пропа роняет `npm test`
-([`tests/i18n-gate.test.ts`](../tests/i18n-gate.test.ts)). Исключения —
-перечисление с обоснованием в самом гейте (три причины описаны ниже), а не
-regexp.
+A string literal in JSX or in a prop default fails `npm test`
+([`tests/i18n-gate.test.ts`](../tests/i18n-gate.test.ts)). The exceptions are an explicit list, with the reason
+given in the gate itself (three reasons are described below), not a regexp.
 
-Как завести ключ — [i18n.md](i18n.md).
+To add a key, see [i18n.md](i18n.md).
 
-## Язык: что по-русски, что по-английски
+## Language: English is the Original
 
-Граница проходит по адресату, а не по типу файла — решение
-ADR-0034.
+English is the Original and Russian is the Translation: this is the decision in ADR-0073. New and edited text is
+written in English straight away.
 
-| По-русски — кит объясняет себе | По-английски — кит показывает наружу                        |
-| ------------------------------ | ----------------------------------------------------------- |
-| Комментарии в исходниках       | Витрина: разделы, имена историй, демо-контент, `aria-label` |
-| Эта документация и ADR         | Тесты: имена, фикстуры, данные                              |
-| Текст в макетах Figma          | Вывод скриптов в консоль                                    |
+| English: the Original                                       | Russian: the Translation and the internal archive |
+| ----------------------------------------------------------- | ------------------------------------------------- |
+| This documentation, `README.md`, `llms.txt`                 | The Russian Reference on the documentation site   |
+| Comments in the sources, JSDoc                              | `README.ru.md`                                    |
+| Showcase: sections, story names, demo content, `aria-label` | ADRs, `SPEC.md` and the archive                   |
+| Tests: names, fixtures, data                                | Text in the Figma mockups                         |
+| Script output to the console                                |                                                   |
 
-Комментарии остаются русскими намеренно, и гейт i18n их не смотрит. Русский
-комментарий над английской историей — норма, а не недоделка.
+The package contains no Russian documentation. The Russian Reference lives on the documentation site and carries
+the hash of the English page it was translated from; a lagging Translation is a report, not a gate. Cyrillic in
+`docs/**` and `README.md` is a defect, and `tests/i18n-gate.test.ts` checks it. The only exceptions are the
+pages that quote Russian catalog strings and Russian examples as data, listed in the gate with the reason.
 
-Русский законен в тестах там, где он **предмет** проверки: формы склонения и
-слова каталога живут в `tests/locale-ru.test.tsx`. В остальных тестах ожидания
-берутся из английского фолбэка.
+Russian is legitimate in tests where it is the **subject** of the check: the plural and case forms and the catalog
+words live in `tests/locale-ru.test.tsx`. In other tests, the expected values come from the English fallback.
 
-Белый список гейта — **три причины, а не три файла**: раскладка как данные ввода
-(`Keyboard.tsx` и его тест), русский каталог (`locales/ru.ts`) и русское слово
-как предмет проверки (`locale-ru.test.tsx`, плюс сценарий `SortableList` в
-`tests-visual/interactions.spec.ts`, где объявления локализует сама react-aria).
-Четвёртая причина — повод для разбора, а не для правки числа.
+The gate's allowlist covers **three reasons, not three files**: the keyboard layout as input data (`Keyboard.tsx`
+and its test), the Russian catalog (`locales/ru.ts`), and a Russian word as the subject of a check
+(`locale-ru.test.tsx`, plus the `SortableList` scenario in `tests-visual/interactions.spec.ts`, where react-aria
+localizes the announcements itself). A fourth reason is a case for review, not a reason to change the number.
 
-## Имена историй витрины
+## Showcase story names
 
-Разделы и имена историй — латиницей. Из них складывается `id` истории, а из
-`id` — имя файла снимка и адрес в `tests-visual`; переименование стоит
-перегенерации бейзлайна, поэтому имя выбирается один раз.
+Section and story names are in Latin script. They make up the story `id`, and the `id` gives the name of the
+snapshot file and its address in `tests-visual`. Renaming costs a baseline regeneration, so pick the name once.
 
-Раздел компонента — его категория, то есть папка его страницы в справочнике
-и его исходника (ADR-0060): история `src/components/overlays/Dialog.stories.tsx`
-называется `Overlays/Dialog`. Истории Редактора берут раздел по папке своей
-страницы: `Inputs/RichTextEditor`, `Content/RichTextView`.
+A component's section is its category: the folder of its page in the Reference and of its source (ADR-0060). The
+story `src/components/overlays/Dialog.stories.tsx` is named `Overlays/Dialog`. Editor stories take their section
+from the folder of their own page: `Inputs/RichTextEditor`, `Content/RichTextView`.
 
-| Раздел           | Что внутри                                                   |
-| ---------------- | ------------------------------------------------------------ |
-| `Actions/`       | Действия и обратная связь: `Actions/Button`, `Actions/Alert` |
-| `Inputs/`        | Поля и выбор: `Inputs/Select`, `Inputs/RichTextEditor`       |
-| `Date and time/` | Календари и выбор даты и времени                             |
-| `Overlays/`      | Окна, ящики, поповеры, меню, подсказки                       |
-| `Navigation/`    | Вкладки, хлебные крошки, шапки страниц и разделов            |
-| `Content/`       | Типографика, карточки, данные, состояния, раскладка          |
-| `Table/`         | Таблица данных и её панели                                   |
-| `App shell/`     | Оболочка приложения: `AppShell`, `SideNav`, `TopBar`         |
-| `Foundations/`   | Основы: иконки, движение                                     |
-| `Screens/`       | Собранные экраны                                             |
+| Section          | What is inside                                              |
+| ---------------- | ----------------------------------------------------------- |
+| `Actions/`       | Actions and feedback: `Actions/Button`, `Actions/Alert`     |
+| `Inputs/`        | Fields and choice: `Inputs/Select`, `Inputs/RichTextEditor` |
+| `Date and time/` | Calendars and date and time pickers                         |
+| `Overlays/`      | Dialogs, drawers, popovers, menus, tooltips                 |
+| `Navigation/`    | Tabs, breadcrumbs, page and section headers                 |
+| `Content/`       | Typography, cards, data, states, layout                     |
+| `Table/`         | The data table and its panels                               |
+| `App shell/`     | App shell: `AppShell`, `SideNav`, `TopBar`                  |
+| `Foundations/`   | Basics: icons, motion                                       |
+| `Screens/`       | Assembled screens                                           |
 
-**Словарь повторяющихся имён.** Имя, встретившееся во второй раз, обязано
-попасть сюда: иначе один и тот же случай в двух файлах назовётся по-разному, и
-разойдутся они молча.
+**Dictionary of repeated names.** A name that appears a second time must be added here. Otherwise the same case
+gets two different names in two files, and they drift apart silently.
 
-| Имя               | Когда                                            |
-| ----------------- | ------------------------------------------------ |
-| `Playground`      | Основная история с контролами                    |
-| `Matrix`          | Все варианты рядом; снимается визуальным тестом  |
-| `Empty`           | Пустое состояние                                 |
-| `Disabled`        | Выключенное состояние                            |
-| `WithError`       | Ошибка валидации                                 |
-| `WithAction`      | С кнопкой действия                               |
-| `WithSelection`   | С выбором                                        |
-| `Sizes`           | Размерная линейка                                |
-| `Horizontal`      | Горизонтальная раскладка                         |
-| `Compact`         | Плотная раскладка                                |
-| `SizesAndStates`  | Размеры и состояния рядом                        |
-| `Collapsed`       | Схлопнутое состояние навигации                   |
-| `Submitting`      | Идёт отправка формы                              |
-| `InForm`          | Компонент внутри формы                           |
-| `AsPage`          | Вариант во весь экран                            |
-| `WithoutTitle`    | Без заголовка                                    |
-| `States`          | Набор состояний рядом                            |
-| `Filled`          | Поле заполнено целиком                           |
-| `Open`            | Раскрытый список или календарь                   |
-| `Tones`           | Тоновая линейка                                  |
-| `WithLabel`       | С видимой подписью                               |
-| `Cards`           | Варианты выбора карточками (`appearance="card"`) |
-| `CardsHorizontal` | Карточки выбора в строку                         |
-| `CardsStates`     | Состояния карточек выбора рядом                  |
-| `CardsTones`      | Тоновая линейка карточек выбора                  |
-| `Controlled`      | Управляемый режим: значение хранит история       |
-| `Wrapping`        | Перенос на узкой ширине                          |
-| `Vertical`        | Вертикальная раскладка                           |
-| `Badges`          | Все виды значка рядом                            |
+| Name              | When                                                   |
+| ----------------- | ------------------------------------------------------ |
+| `Playground`      | The main story with controls                           |
+| `Matrix`          | All variants side by side; captured by the visual test |
+| `Empty`           | Empty state                                            |
+| `Disabled`        | Disabled state                                         |
+| `WithError`       | Validation error                                       |
+| `WithAction`      | With an action button                                  |
+| `WithSelection`   | With a selection                                       |
+| `Sizes`           | Size scale                                             |
+| `Horizontal`      | Horizontal layout                                      |
+| `Compact`         | Dense layout                                           |
+| `SizesAndStates`  | Sizes and states side by side                          |
+| `Collapsed`       | Collapsed navigation state                             |
+| `Submitting`      | The form is being submitted                            |
+| `InForm`          | The component inside a form                            |
+| `AsPage`          | Full-screen variant                                    |
+| `WithoutTitle`    | Without a title                                        |
+| `States`          | A set of states side by side                           |
+| `Filled`          | The field is completely filled                         |
+| `Open`            | An expanded list or calendar                           |
+| `Tones`           | Tone scale                                             |
+| `WithLabel`       | With a visible label                                   |
+| `Cards`           | Choice variants shown as cards (`appearance="card"`)   |
+| `CardsHorizontal` | Choice cards in a row                                  |
+| `CardsStates`     | States of choice cards side by side                    |
+| `CardsTones`      | Tone scale of choice cards                             |
+| `Controlled`      | Controlled mode: the story holds the value             |
+| `Wrapping`        | Wrapping at a narrow width                             |
+| `Vertical`        | Vertical layout                                        |
+| `Badges`          | All kinds of badge side by side                        |
 
-Одиночные имена описывают **случай**, а не переводят слово: история про то, чем
-компонент отличается от соседей, называется `VersusNeighbours`, а не
-транслитерацией русского заголовка.
+Single-word names describe the **case**, not translate a word: a story about how a component differs from its
+neighbors is called `VersusNeighbours`, not a transliteration of a Russian heading.
 
-**Ширина снимка — тегом истории.** Визуальный тест снимает историю на
-1280×900. История, которая показывает узкий экран, ставит себе тег
-`tags: ["viewport-phone"]` — и снимается на 375×812 с эмулированным вырезом
-экрана снизу (34px). Тег, а не параметр: спек читает истории из
-`storybook-static/index.json`, где параметров нет. Первая такая история —
-`AppShell` → `WithBottomBar`: на 1280px слот полосу прячет.
+**Snapshot width is set by a story tag.** The visual test takes a snapshot of a story at 1280×900. A story that
+shows a narrow screen sets the tag `tags: ["viewport-phone"]` on itself, and it is captured at 375×812 with an
+emulated screen cutout at the bottom (34px). It is a tag, not a parameter: the spec reads stories from
+`storybook-static/index.json`, which has no parameters. The first such story is `AppShell` → `WithBottomBar`: at
+1280px the slot hides the bar.
 
-**Ленивый чанк после показа — тоже тегом.** Снимок ждёт двух одинаковых кадров
-подряд, а пока чанк в пути, экран неподвижен — и снимок принимает недогруженную
-историю за готовую. История, часть которой приходит ленивым чанком уже после
-показа, ставит тег `tags: ["network-idle"]`: снимок и аудит axe ждут тишины в
-сети. Первые такие истории — `RichTextEditor` → `TextCardOpen` и
-`TextCardRussian`: чанк Карточки у текста запрашивается только после
-Готовности движка.
+**A lazy chunk that loads after the story is shown is also set by a tag.** The snapshot waits for two identical
+frames in a row. While a chunk is in transit, the screen does not change, and the snapshot takes a story that is
+not fully loaded for a finished one. A story part of which arrives as a lazy chunk after it is shown sets the tag
+`tags: ["network-idle"]`: the snapshot and the axe audit wait for the network to be quiet. The first such stories
+are `RichTextEditor` → `TextCardOpen` and `TextCardRussian`: the chunk of the Text card is requested only after the
+engine reaches Readiness.
 
-**Имя истории не должно совпадать с именем импортированного компонента.**
-История про `Separator` в `Separator.stories.tsx` не называется `Separator`:
-экспорт затенит импорт, и `tsc` упадёт на `cannot be used as a JSX component` —
-причём только там, где компонент используется как JSX. Отсюда `Separators`,
-`Scrolling`, `HiddenContent`, `BasicTable`.
+**A story name must not match the name of the imported component.** A story about `Separator` in
+`Separator.stories.tsx` must not be called `Separator`: the export shadows the import, and `tsc` fails with
+`cannot be used as a JSX component`. It fails only where the component is used as JSX. Hence the names
+`Separators`, `Scrolling`, `HiddenContent`, `BasicTable`.
 
-## Предупреждения в режиме разработки
+## Warnings in development mode
 
-Первое такое предупреждение — `NotificationItem` с одновременными `onAction` и
-`actions`. Правила выведены на нём и записаны здесь, чтобы следующий автор не
-изобретал свои.
+The first such warning is on `NotificationItem`, which gets both `onAction` and `actions`. The rules come from it,
+and they are written here so the next author does not invent their own.
 
-**Когда предупреждать.** Только когда нарушен контракт, который **типы ловят, а
-потребитель на JS — нет**, и компонент при этом молча выбирает одну из
-трактовок (взаимоисключающие пропы, где один проигрывает). Не предупреждаем
-о стиле, о неоптимальном использовании, об устаревании (для него —
-`migration-notes.md`) и о том, что ловит сам React или `react-aria`. Нарушение,
-после которого компонент не может работать, — не предупреждение, а исключение
-(как `HoverCardContent` вне `HoverCard`).
+**When to warn.** Only when a contract is broken that **types catch but a consumer in JS does not**, and the
+component silently picks one reading of it (mutually exclusive props, where one of them is ignored). Do not warn
+about style, non-optimal use, deprecation (for that, use `migration-notes.md`), or what React or `react-aria`
+already catches itself. A violation after which the component cannot work is not a warning but an exception (like
+`HoverCardContent` outside `HoverCard`).
 
-**Как.**
+**How.**
 
-- Через [`devWarn(message)`](../src/lib/dev-warn.ts), а не голым `console.warn`:
-  хелпер показывает сообщение **один раз** (ключ — текст) и **не пишет в
-  продакшне**. Вызов стоит в теле рендера, поэтому «один раз» обязателен —
-  строка списка рендерится сотни раз, `StrictMode` вызывает рендер дважды.
-- Текст — **по-английски**, это вывод в консоль потребителя
-  (ADR-0034); в каталог
-  сообщений он не идёт, это не строка интерфейса. Называет компонент, переданное значение,
-  победившее значение и способ исправления. Без меняющихся данных: ключ дедупликации
-  — сам текст.
-- Режим читается как `process.env.NODE_ENV !== "production"` внутри `try/catch`
-  при каждом вызове. Пакет выходит голым `tsc`, значение в `dist` не вшито — его
-  подставляет сборка потребителя (Vite, Next, webpack) и вырезает мёртвую ветку
-  в продакшне. Без бандлера `process` не определён, ссылка на него бросает
-  `ReferenceError`, и хелпер молчит. Проверка `typeof process !== "undefined"`
-  не годится: бандлер её не заменяет, и в браузерной сборке Vite предупреждение
-  не сработало бы никогда.
-- Тест: `vi.spyOn(console, "warn")`, `resetDevWarnings()` в `beforeEach` (состояние
-  «уже показано» живёт на уровне модуля) и четыре случая — предупреждает в
-  разработке, один раз, молчит в продакшне (`vi.stubEnv`) и молчит при корректном
-  вызове.
+- Through [`devWarn(message)`](../src/lib/dev-warn.ts), not a bare `console.warn`. The helper shows the message
+  **once** (the key is the text) and **does not write in production**. The call sits in the render body, so
+  showing once is required: a list row renders hundreds of times, and `StrictMode` calls the render twice.
+- The text is **in English**, because it is output to the consumer's console (ADR-0034). It does not go into the
+  message catalog, because it is not an interface string. The text names the component, the value that was
+  passed, the value that won, and how to fix it. Keep changing data out of it: the deduplication key is the text
+  itself.
+- The mode is read as `process.env.NODE_ENV !== "production"` inside `try/catch`, on every call. The package
+  ships as plain `tsc` output, and the value is not baked into `dist`. The consumer's build sets it (Vite, Next,
+  webpack) and removes the dead branch in production. Without a bundler, `process` is not defined: a reference to
+  it throws a `ReferenceError`, and the helper stays silent. The check `typeof process !== "undefined"` does not
+  work: the bundler does not replace it, so in a Vite browser build the warning would never fire.
+- Test: `vi.spyOn(console, "warn")`, `resetDevWarnings()` in `beforeEach` (the "already shown" state lives at
+  module level), and four cases: it warns in development, it warns once, it stays silent in production
+  (`vi.stubEnv`), and it stays silent on a correct call.
 
-**Ошибка вместо предупреждения — `devError(message, cause?)`.** Когда нарушение
-ломает компонент целиком, но не страницу: набор Инструментов `RichTextEditor`
-собран с ошибкой, Загрузчик Extensions упал, `rangeAt` Карточки бросил
-исключение. Поле само показывает автору строку каталога (`editor.toolsFailed`),
-а причина уходит разработчику через `console.error` — с теми же правилами, что у
-`devWarn`: в разработке, один раз на текст, по-английски.
+**An error instead of a warning: `devError(message, cause?)`.** Use it when a violation breaks the whole component
+but not the page: the Tool set of `RichTextEditor` is built incorrectly, the loader of the Extensions failed,
+`rangeAt` of the Text card threw an exception. The field shows the author a catalog string on its own, and the
+cause goes to the developer through `console.error`, with the same rules as `devWarn`: in development, once per
+text, in English.
 
-- Текст начинается с имени компонента (`RichTextEditor: …`): консоль общая для
-  всей страницы. Имя Инструмента или записи в тексте допустимо — оно из
-  описания и от вызова к вызову не меняется.
-- Пойманное исключение — вторым аргументом (`cause`), а не в тексте: его
-  сообщение сделало бы каждую ошибку новой для ключа «один раз», а консоль у
-  объекта `Error` покажет и стек.
-- Тест — тот же регламент на `vi.spyOn(console, "error")`: ошибка в разработке
-  с исключением отдельным аргументом, один раз, тишина в продакшне
-  (`vi.stubEnv`) и при корректном вызове
+- The text starts with the component name (`RichTextEditor: …`), because the console is shared by the whole page.
+  A Tool name or an entry name in the text is allowed: it comes from the Tool's description and does not change
+  from call to call.
+- A caught exception goes in as the second argument (`cause`), not in the text. Its message would make every error
+  new for the once-per-text key. The console also shows the stack for an `Error` object.
+- The test follows the same pattern with `vi.spyOn(console, "error")`: an error in development with the exception
+  as a separate argument, once; silence in production (`vi.stubEnv`); and silence on a correct call
   (`tests/rich-text-editor-dev-errors.test.tsx`).
 
-## `readOnly` и `disabled` — разные оси, а не оттенки одной
+## `readOnly` and `disabled` are separate axes, not shades of one
 
-Правило выведено на `Rating` (волна 25) и записано здесь, потому что в докстроке
-одного компонента следующий автор его не найдёт — и второй `readOnly` в ките
-будет значить что-то своё.
+The rule comes from `Rating` (wave 25). It is written here because the next author would not find it in one
+component's docstring, and a second `readOnly` in the kit would then mean something of its own.
 
-- **`readOnly` — показанные данные.** Значение видно, изменить его нельзя.
-  Приглушать такое нельзя: это значит прятать то, что показано специально.
-  Контрол уходит из табуляции, но остаётся ярким.
-- **`disabled` — недоступное сейчас действие.** Его приглушают, потому что
-  приглушённость и есть сигнал недоступности.
+- **`readOnly` is data on display.** The value is visible, and it cannot be changed. Such a value must not be
+  dimmed: that would hide what is shown on purpose. The control leaves the tab order, but stays at full strength.
+- **`disabled` is an action that is unavailable right now.** It is dimmed, because dimming is the signal that it
+  is unavailable.
 
-**Роль при этом не меняется.** Выключенный контрол остаётся тем, чем был, и
-помечается `aria-disabled`; подмена роли (например, на `img`) прочиталась бы как
-картинка, а не как недоступное действие. Роль — свойство контрола, а не его
-доступности прямо сейчас.
+**The role does not change.** A disabled control stays what it was and is marked with `aria-disabled`. Swapping the
+role (for example, to `img`) would be read as a picture, not as an unavailable action. The role is a property of
+the control, not of its availability right now.
 
-## Словарь Редактора
+## Editor glossary
 
-Термины Редактора переехали в общий [словарь кита](glossary.md#редактор).
+The Editor terms moved to the kit's shared [glossary](glossary.md#editor).

@@ -7,113 +7,116 @@ source: src/components/content/Avatar.tsx, src/components/content/AvatarGroup.ts
 story: src/components/content/Avatar.stories.tsx, src/components/content/AvatarGroup.stories.tsx
 ---
 
-# Avatar и AvatarGroup
+# Avatar and AvatarGroup
 
-## Кратко для AI
+## Summary for AI
 
-`Avatar` показывает фотографию по `src` или, если её нет или она не загрузилась,
-инициалы и стабильный градиент, вычисленные из имени. `AvatarGroup` компактно
-показывает участников (строки или `{ name, src? }`) и объявляет весь список
-одним доступным именем. Это представление человека/участников, а не бейдж
-статуса или кнопка профиля.
+`Avatar` shows a photo from `src` or, if there is none or it failed to load,
+initials and a stable gradient computed from the name. `AvatarGroup` shows
+participants compactly (strings or `{ name, src? }`) and announces the whole list
+under a single accessible name. It represents a person or participants; it is
+not a status badge or a profile button.
 
-## Когда использовать
+## When to use
 
-- `Avatar` — когда нужно компактно представить пользователя: с фотографией по
-  `src` или одними инициалами.
-- `AvatarGroup` — когда важна именно группа и можно показать только первых участников с
-  остатком `+N`; например, участников кампании. Фотографии передаются
-  объектами `{ name, src }`.
-- Фотография у `Avatar` добавлена «на будущее» (ADR-0048): заказчика при выпуске не
-  было, API взят по аналогам: у всех двенадцати сверенных китов у аватара есть
-  фотография с возвратом к инициалам. Ваш экран первым проверит этот API; если
-  ему понадобится другой, это не нарушение контракта.
+- `Avatar` — to represent a user compactly: with a photo from `src` or with
+  initials alone.
+- `AvatarGroup` — when it matters that there is a group and it is fine to show only the
+  first few participants with a `+N` remainder; for example, the participants of a campaign.
+  Photos are passed as `{ name, src }` objects.
+- The photo on `Avatar` was added "for the future" (ADR-0048): there was no
+  requesting screen at release, and the API was modeled on comparable kits: in all twelve kits
+  compared, the avatar has a photo that falls back to initials. Your screen is
+  the first to test this API; if it needs a different one, that is not a violation of the contract.
 
-## Когда не использовать
+## When not to use
 
-- Не подменяйте инициалы запасной картинкой: возврат к инициалам при
-  отсутствии или ошибке загрузки встроен, отдельного `fallback` у `Avatar` нет.
-- Не используйте для произвольных изображений (логотип, превью документа) — это
-  `Image`: у аватара круг фиксированного размера и доступное имя, выведенное из имени человека.
-- Не передавайте в `AvatarGroup` неполные инициалы вместо имён: доступное имя
-  группы строится из `names`.
-- Не применяйте группу как интерактивный список участников. Для выбора или
-  открытия профиля нужен отдельный контрол.
+- Do not replace the initials with your own image fallback: the fallback to
+  initials when the photo is missing or fails to load is built in, and `Avatar`
+  has no separate `fallback`.
+- Do not use it for arbitrary images (a logo, a document preview); use
+  `Image` instead: the avatar is a fixed-size circle with an accessible name derived from a person's
+  name.
+- Do not pass partial initials to `AvatarGroup` instead of names: the group's
+  accessible name is built from `names`.
+- Do not use the group as an interactive list of participants. Selecting or
+  opening a profile needs a separate control.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Avatar, AvatarGroup } from "@olddevs/ui";
 
-<Avatar name="Анна Смирнова" />
-<Avatar name="Анна Смирнова" src="/avatars/anna.jpg" />
-<AvatarGroup names={["Анна Смирнова", "Иван Петров", "Олег Кузнецов"]} />
-<AvatarGroup names={[{ name: "Анна Смирнова", src: "/avatars/anna.jpg" }, "Иван Петров"]} />
+<Avatar name="Anna Smith" />
+<Avatar name="Anna Smith" src="/avatars/anna.jpg" />
+<AvatarGroup names={["Anna Smith", "John Peterson", "Oliver Cooper"]} />
+<AvatarGroup names={[{ name: "Anna Smith", src: "/avatars/anna.jpg" }, "John Peterson"]} />
 ```
 
 ## Public API
 
 ### `Avatar`
 
-| Prop                          | По умолчанию | Значение                                                                                                                                        |
-| ----------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`                        | `"IV"`       | Имя или логин; первые два символа становятся инициалами, первый символ задаёт стабильный оттенок.                                               |
-| `size`                        | `md`         | `md` — компактный размер для списков и шапок; `lg` — крупный для карточки профиля.                                                              |
-| `src`                         | —            | Адрес фотографии. Пока грузится — круг с оттенком имени; нет или ошибка — инициалы на том же круге. Пустое значение равносильно отсутствию.     |
-| `alt`                         | `name`       | Альтернативный текст фотографии. `""` — декоративная (имя рядом уже написано). Без `name` и без `alt` фото декоративно. Без `src` не действует. |
-| `className` и атрибуты `span` | —            | Передаются корневому `span`; `children` намеренно не поддерживается.                                                                            |
+| Prop                              | Default | Meaning                                                                                                                                                                         |
+| --------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                            | `"IV"`  | A name or login; the first two characters become the initials, the first character sets the stable hue.                                                                         |
+| `size`                            | `md`    | `md` is a compact size for lists and headers; `lg` is a large size for a profile card.                                                                                          |
+| `src`                             | —       | Photo URL. While the photo loads, a circle in the name's hue is shown; if it is missing or fails to load, initials appear on the same circle. An empty value counts as missing. |
+| `alt`                             | `name`  | The photo's alt text. `""` — decorative (the name is already written next to it). With neither `name` nor `alt` the photo is decorative. No effect without `src`.               |
+| `className` and `span` attributes | —       | Passed to the root `span`; `children` is intentionally not supported.                                                                                                           |
 
 ### `AvatarGroup`
 
-| Prop         | По умолчанию              | Значение                                                                            |
-| ------------ | ------------------------- | ----------------------------------------------------------------------------------- |
-| `names`      | —                         | Обязательный полный список: строка-имя или `{ name, src? }`; формы можно смешивать. |
-| `max`        | `3`                       | Число видимых аватаров; остаток выводится как `+N`.                                 |
-| `size`       | `md`                      | Размер всех видимых аватаров: `md` или `lg`.                                        |
-| `aria-label` | все `names` через запятую | Переопределяет единое доступное имя группы.                                         |
-| `className`  | —                         | Класс корневой группы.                                                              |
+| Prop         | Default                      | Meaning                                                                        |
+| ------------ | ---------------------------- | ------------------------------------------------------------------------------ |
+| `names`      | —                            | Required full list: a name string or `{ name, src? }`; the forms can be mixed. |
+| `max`        | `3`                          | Number of visible avatars; the remainder is shown as `+N`.                     |
+| `size`       | `md`                         | Size of all visible avatars: `md` or `lg`.                                     |
+| `aria-label` | all `names`, comma-separated | Overrides the group's single accessible name.                                  |
+| `className`  | —                            | Class of the root group.                                                       |
 
-## Фотография и возврат к инициалам
+## Photo and fallback to initials
 
-Фото рендерится через `Image` кита (ADR-0011): загрузка и отказ обрабатываются в
-одном месте. Подложка с оттенком из имени лежит на корне круга, поэтому между
-«грузится», «загрузилось» и «не загрузилось» размер не меняется и круг не
-мигает: сначала виден круг цвета имени, затем фото или инициалы. Под загруженным
-фото подложка убирается, так что прозрачный PNG не окрашивается оттенком имени.
-`Skeleton` у аватара нет. Фото вписано по `cover`, не искажается, круг и размеры `md`/`lg`
-не меняются. Смена `src` после ошибки пробует новый адрес. Без `src` разметка, вид и
-озвучивание не меняются.
+The photo is rendered through the kit's `Image` (ADR-0011): loading and failure are
+handled in one place. The background layer with the hue from the name sits on the
+circle's root, so the size does not change between "loading", "loaded" and
+"failed", and the circle does not flicker: first you see a circle in the name's
+color, then the photo or the initials. Once the photo has loaded, the background
+layer is removed, so a transparent PNG is not tinted with the name's hue. The
+avatar has no `Skeleton`. The photo is fitted with `cover` and is not distorted;
+the circle and the `md`/`lg` sizes do not change. Changing `src` after an error
+tries the new URL. Without `src`, the markup, appearance and announcement do not change.
 
-## Доступность
+## Accessibility
 
-`AvatarGroup` рендерится как один `role="img"` с полным списком имён.
-Внутренние круги и `+N` скрыты от скринридера, поэтому он не читает бесполезные
-двухбуквенные инициалы и не повторяет имя у фотографии: список объявляет группа.
-Не удаляйте `names` ради визуального сокращения.
+`AvatarGroup` renders as a single `role="img"` with the full list of names. The
+inner circles and `+N` are hidden from the screen reader, so it does not read
+useless two-letter initials or repeat the name for a photo: the group announces
+the list. Do not remove `names` to shorten the display.
 
-Одиночный `Avatar` с фотографией — `img` с именем из `alt` (по умолчанию `name`);
-если фото не загрузилось, инициалы сохраняют то же имя. Без `src` аватар не
-несёт роли, его текст — инициалы. Рядом с написанным именем человека ставьте
-`alt=""`, чтобы имя не прозвучало дважды.
+A single `Avatar` with a photo is an `img` named from `alt` (by default `name`);
+if the photo fails to load, the initials keep the same name. Without `src` the
+avatar carries no role, and its text is the initials. Next to a person's written
+name, set `alt=""` so the name is not spoken twice.
 
-## Антипаттерны
+## Anti-patterns
 
 ```tsx
-// Плохо: скринридер получит не имена, а сокращения.
-<AvatarGroup names={["АС", "ИП"]} />
+// Bad: the screen reader gets abbreviations, not names.
+<AvatarGroup names={["AS", "JP"]} />
 
-// Хорошо: храните понятные людям имена.
-<AvatarGroup names={["Анна Смирнова", "Иван Петров"]} max={2} />
+// Good: keep names that people can understand.
+<AvatarGroup names={["Anna Smith", "John Peterson"]} max={2} />
 
-// Плохо: имя рядом уже написано, фото прозвучит вторым разом.
-<><Avatar name="Анна Смирнова" src={url} /> Анна Смирнова</>
+// Bad: the name is already written next to it, so the photo is announced a second time.
+<><Avatar name="Anna Smith" src={url} /> Anna Smith</>
 
-// Хорошо: фото декоративно.
-<><Avatar name="Анна Смирнова" src={url} alt="" /> Анна Смирнова</>
+// Good: the photo is decorative.
+<><Avatar name="Anna Smith" src={url} alt="" /> Anna Smith</>
 ```
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходники: `src/components/content/Avatar.tsx`, `src/components/content/AvatarGroup.tsx`.
+- Sources: `src/components/content/Avatar.tsx`, `src/components/content/AvatarGroup.tsx`.
 - Stories: `src/components/content/Avatar.stories.tsx`, `src/components/content/AvatarGroup.stories.tsx`.
-- Доступное имя группы проверяется в `tests/data.test.tsx`; фото, возврат к инициалам и неизменность разметки без `src` — в `tests/avatar.test.tsx`.
+- The group's accessible name is tested in `tests/data.test.tsx`; the photo, the fallback to initials and the unchanged markup without `src` — in `tests/avatar.test.tsx`.

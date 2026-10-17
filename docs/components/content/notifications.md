@@ -7,27 +7,28 @@ source: src/components/content/NotificationList.tsx
 story: src/components/content/NotificationList.stories.tsx
 ---
 
-# NotificationItem, NotificationList и NotificationCenter
+# NotificationItem, NotificationList and NotificationCenter
 
-## Кратко для AI
+## Summary for AI
 
-Список событий: что произошло, когда и прочитано ли. Типов событий кит не знает
-— иконка, тон и текст приходят пропами. Группы («Сегодня», «Раньше») приходят
-уже собранными.
+A list of events: what happened, when, and whether it has been read. The kit
+knows no event types — the icon, tone and text come in as props. Groups
+("Today", "Earlier") come already assembled.
 
-## Когда использовать
+## When to use
 
-- Лента уведомлений в поповере, ящике (`Drawer`) или на отдельной странице.
-- Нужно отличать прочитанное от непрочитанного и отмечать прочтение.
+- A notification feed in a popover, a drawer (`Drawer`) or on a separate page.
+- You need to tell read from unread and to mark items as read.
 
-## Когда не использовать
+## When not to use
 
-- Для временного сообщения о событии — это `toast`: он всплывает и уходит.
-- Для постоянного состояния страницы — это `Alert`, приложения — `Banner`.
-- Для шагов одного процесса — это `Timeline`: там порядок задаёт процесс, а не
-  время, и у шага нет действий.
+- For a temporary message about an event — that is `toast`: it pops up and goes
+  away.
+- For a persistent page state — that is `Alert`, for an app state — `Banner`.
+- For the steps of one process — that is `Timeline`: there the process sets the
+  order, not time, and a step has no actions.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { NotificationList, NotificationItem } from "@olddevs/ui";
@@ -36,94 +37,97 @@ import { NotificationList, NotificationItem } from "@olddevs/ui";
   groups={[
     {
       id: "today",
-      label: "Сегодня",
-      children: <NotificationItem title="Публикация не прошла" unread time="5 минут назад" />,
+      label: "Today",
+      children: <NotificationItem title="Publication failed" unread time="5 minutes ago" />,
     },
   ]}
-  empty={<EmptyState title="Пока тихо" />}
+  empty={<EmptyState title="All quiet for now" />}
 />;
 ```
 
-## Пропы
+## Props
 
 `NotificationItem`: `title`, `description`, `time`, `icon`, `media`, `tone`,
-`unread` и **одно из** `actions` / `onAction`.
+`unread` and **one of** `actions` / `onAction`.
 
-`NotificationList`: `groups` **или** `children`, `empty`, `aria-label`.
+`NotificationList`: `groups` **or** `children`, `empty`, `aria-label`.
 
 `NotificationCenter`: `title`, `level`, `titleId`, `unreadCount`,
 `filters`, `actions`, `selectedCount`, `onClearSelection`, `selectionActions`,
 `footer`, `children`.
 
-## Превью и иконка — два независимых слота
+## Preview and icon — two independent slots
 
-`icon` говорит, **что** случилось (тип события, тон), `media` — **с чем**
-(превью объекта, о котором событие). Строка показывает оба: иконка слева, превью
-следом, затем текст. Размер превью задаёт сам элемент (`Image` на 36px,
-`Avatar`); слот только не даёт ему сжаться. Если заголовок
-уже называет объект, превью декоративно и получает `alt=""`.
+`icon` says **what** happened (the event type, the tone), `media` — **to what**
+(a preview of the object the event is about). The row shows both: the icon on
+the left, the preview next, then the text. The element itself sets the preview
+size (`Image` at 36px, `Avatar`); the slot only keeps it from shrinking. If the
+title already names the object, the preview is decorative and gets `alt=""`.
 
 ```tsx
 <NotificationItem
-  title="Модерация завершена"
+  title="Moderation finished"
   icon={<InfoIcon size={16} />}
   media={<Image src={item.previewUrl} alt="" className="size-9 rounded-md" />}
 />
 ```
 
-## Вся строка — одна кнопка (`onAction`)
+## The whole row is one button (`onAction`)
 
-`onAction` превращает строку в **одну кнопку на всю площадь**: щелчок, Enter и
-Space вызывают обработчик. Строка по-прежнему `<li>` списка, кнопка лежит внутри
-неё; подложка непрочитанного остаётся на `li`, а наведение и кольцо фокуса —
-на кнопке; кольцо рисуется внутрь строки, потому что снаружи его срезала бы
-прокрутка центра.
+`onAction` turns the row into **one button that covers the whole row**: a click, Enter
+and Space call the handler. The row is still the list's `<li>`; the button sits
+inside it. The unread background stays on the `li`, while the hover and the focus
+ring are on the button; the ring is rendered inside the row because the center's
+scrolling would clip it on the outside.
 
-- **Имя кнопки — заголовок** и слово «Не прочитано» (`aria-labelledby` на оба
-  узла), а не весь текст: полным содержимым имя вышло бы на полстраницы.
-  **Время и подробности — описание** кнопки (`aria-describedby`), поэтому не
-  теряются.
-- Внутри кнопки нет вложенных интерактивных элементов, а блоки строки — `span`:
-  в `button` допустим только фразовый контент.
-- **Отступы и раскладка строки лежат на кнопке**, а `className` приходит на
-  `<li>`: подложка и граница через него меняются, `px-*`, `py-*` и `gap-*` — нет.
-  Без `onAction` они лежат на самом `li`.
-- **В имя и описание попадают только заголовок, слово «Не прочитано», время и
-  подробности.** `alt` превью и текст иконки в них не входят: важное об объекте
-  («фото Анны К.») пишите в заголовок, а превью оставляйте декоративным.
-- **`onAction` — это кнопка, а не ссылка.** Если щелчок ведёт на адрес и нужны
-  открытие в новой вкладке и клик средней кнопкой мыши, строку оборачивает ссылка снаружи
-  либо переход идёт через `actions` со ссылкой; кнопка с `router.push` этих
-  свойств лишена.
-- Наведение у непрочитанной строки затемняет подложку акцента, у прочитанной —
-  заливает нейтральным цветом.
-- Строка без `onAction` кнопки не содержит — разметка прежняя, без лишних `id`.
+- **The button name is the title** and the word "Unread" (`aria-labelledby` on
+  both nodes), not the whole text: with the full content the name would run to
+  half a page. **The time and details are the button description**
+  (`aria-describedby`), so they are not lost.
+- There are no nested interactive elements inside the button, and the row blocks
+  are `span` elements: a `button` allows only phrasing content.
+- **The row padding and layout sit on the button**, while `className` goes to
+  the `<li>`: the background and border change through it, `px-*`, `py-*` and
+  `gap-*` do not. Without `onAction` they sit on the `li` itself.
+- **Only the title, the word "Unread", the time and the details go into the name
+  and description.** The preview `alt` and the icon text are not included: write
+  what matters about the object ("photo of Anna K.") in the title, and keep the
+  preview decorative.
+- **`onAction` is a button, not a link.** If a click navigates to a URL and you
+  need to open it in a new tab or with the middle mouse button, wrap the row in a
+  link or navigate through `actions` with a link; a button with `router.push`
+  does not support these.
+- On hover, an unread row darkens the accent background, a read one fills with a
+  neutral color.
+- A row without `onAction` contains no button — the markup is as before, with no
+  extra `id` attributes.
 
 ```tsx
-<NotificationItem title="Публикация не прошла" unread onAction={() => markRead(id)} />
+<NotificationItem title="Publication failed" unread onAction={() => markRead(id)} />
 ```
 
-**С `actions` не сочетается**, и это сказано типом: кнопки внутри кнопки —
-недопустимая разметка. Если нужны и щелчок по строке, и отдельные действия,
-выберите одно: действие на всю строку или кнопки справа.
+**It does not combine with `actions`**, and the type says so: buttons inside a
+button are invalid markup. If you need both a click on the row and separate
+actions, pick one: an action on the whole row or buttons on the right.
 
-Потребитель на JS мог передать оба пропа: типы его не остановят. Кит при этом не
-роняет страницу: **побеждает `actions`, `onAction` игнорируется.** Из двух
-потерь выбрана меньшая: `actions` может быть единственным путём к действию
-(«удалить», «открыть»), а щелчок по всей строке — удобство. Сбой виден сразу:
-строка не отзывается на щелчок. В режиме разработки об этом ещё и пишет консоль:
-один раз на загрузку модуля `console.warn` с английским текстом: что передано, что
-победило и как исправить. В продакшн-сборке кит молчит. Правила таких
-предупреждений — [conventions.md](../../conventions.md#предупреждения-в-режиме-разработки).
+A consumer on JS could pass both props: the types do not stop them. The kit
+does not crash the page: **`actions` wins, `onAction` is ignored.** Of the two
+losses the smaller is chosen: `actions` may be the only path to an action
+("delete", "open"), while a click on the whole row is a convenience. The failure
+is visible at once: the row does not respond to a click. In development mode the
+console also reports it: a `console.warn` with English text once per module load:
+what was passed, what won and how to fix it. In a production build the kit is
+silent. The rules for such warnings are in
+[conventions.md](../../conventions.md#warnings-in-development-mode).
 
-## Заголовок центра: уровень и `id`
+## Center title: level and `id`
 
-По умолчанию заголовок `NotificationCenter` — обычный текст (`span`): в структуру
-заголовков страницы он не входит. `level` (`2`, `3` или `4`; имя то же, что у
-`SectionHeader`) делает его
-настоящим `<h2>`–`<h4>`: уровень зависит от того, куда центр встал, и знает это
-потребитель. `titleId` ставит `id` на элемент заголовка, чтобы на него ссылался
-`aria-labelledby` поповера или ящика:
+By default the `NotificationCenter` title is plain text (a `span`): it is not
+part of the page's heading structure. `level` (`2`, `3` or `4`; the name is the
+same as on `SectionHeader`) makes it a real `<h2>`–`<h4>`: the level depends on
+where the center is placed, and the consumer knows that. `titleId` sets an `id`
+on the title element so that the popover's or drawer's `aria-labelledby` can
+point to it:
 
 ```tsx
 <PopoverContent aria-labelledby="bell-title">
@@ -133,75 +137,79 @@ Space вызывают обработчик. Строка по-прежнему 
 </PopoverContent>
 ```
 
-`titleId` работает и без `level` (`id` встанет на `span`): имя
-контейнера придёт от заголовка, а структуру страницы центр не тронет. Без обоих
-пропов разметка и поведение прежние.
+`titleId` works without `level` too (the `id` lands on the `span`): the container
+name comes from the title, and the center does not touch the page structure.
+With neither prop, the markup and behavior are as before.
 
-## У центра нет контейнера
+## The center has no container
 
-`NotificationCenter` — не поповер, не ящик и не страница: он их **содержимое**.
-Потребитель ставит его внутрь существующих `Popover` или `Drawer` либо прямо на
-страницу, и центр не открывает и не закрывает себя — состояние контейнера живёт
-снаружи.
+`NotificationCenter` is not a popover, a drawer or a page: it is their
+**content**. The consumer places it inside an existing `Popover` or `Drawer`, or
+straight on a page, and the center neither opens nor closes itself — the
+container state lives outside.
 
-Иначе пришлось бы выбрать один контейнер за все приложения сразу, а в админке
-лента чаще страница, в клиентском приложении чаще поповер.
+Otherwise the kit would have to pick one container for all apps at once, while in
+an admin panel the feed is more often a page, and in a client app more often a
+popover.
 
-Массовые действия — существующий `SelectionBar`, а не своя полоса: он уже несёт
-счётчик, снятие выделения, два слота действий и правило «при нуле полосы нет
-вовсе». Липкость у него здесь выключена: в поповере прилипать не к чему.
+Bulk actions are the existing `SelectionBar`, not a bar of its own: it already
+carries a counter, selection clearing, two action slots and the rule "at zero
+there is no bar at all". Sticky positioning is off here: in a popover there is nothing
+to stick to.
 
-**Счётчик непрочитанных приходит пропом**, а не считается по строкам: список
-бывает страницей коллекции, и «3» вместо «300» — неправда.
-На экране `Badge` обрезает большое число до «99+», но имя для скринридера остаётся
-точным.
+**The unread counter comes as a prop**, and is not computed from the rows: a
+list can be a page of a collection, and "3" instead of "300" is a lie.
+Visually, `Badge` truncates a large number to "99+", but the name for a
+screen reader stays exact.
 
-## Непрочитанное слышно, а не только видно
+## Unread is heard, not only seen
 
-Точка и подложка — сигнал для глаз. Рядом с заголовком непрочитанного события
-встаёт слово из каталога сообщений: без него человек, который цвета не видит, не
-отличит новое событие от старого вовсе. Сама точка `aria-hidden` — иначе
-скринридер объявил бы безымянный узел рядом со словом.
+The dot and the background are a signal for the eyes. Next to the title of an
+unread event there is a word from the message catalog: without it, a person who
+cannot see color would not tell a new event from an old one at all. The dot
+itself is `aria-hidden` — otherwise a screen reader would announce a nameless
+node next to the word.
 
-## Группы приходят готовыми
+## Groups come ready-made
 
-Что такое «вчера», знает локаль и часовой пояс потребителя: у приложения с
-ночными сменами граница суток своя, и считать её в ките значило бы навязать
-чужой календарь.
+The consumer's locale and time zone decide what "yesterday" is: an app with night
+shifts has its own day boundary, and computing it in the kit would impose
+the kit's calendar on the app.
 
-Группа объявляется **группой с подписью** (`role="group"`), а не заголовком.
-Уровень заголовка (`h2`, `h3`) зависит от того, куда встал список (в поповер, в
-ящик или на страницу), и кит этого не знает. Группа сообщает структуру, не
-занимая уровня.
+A group is announced as a **labeled group** (`role="group"`), not as a heading.
+The heading level (`h2`, `h3`) depends on where the list is placed (in a
+popover, a drawer or on a page), and the kit does not know that. A group conveys
+structure without taking up a level.
 
-## Строка ничего не решает сама
+## The row decides nothing on its own
 
-Она не навигирует и не отмечает себя прочитанной: и переход, и отметка — действия
-приложения. Приложение передаёт их в `actions` или `onAction` (вся строка — кнопка) либо
-оборачивает строку снаружи.
+It neither navigates nor marks itself as read: both navigating and marking as read
+are app actions. The app passes them in `actions` or `onAction` (the whole row is a
+button), or wraps the row from the outside.
 
-Время приходит **уже отформатированным**: «5 минут назад» и «вчера в 14:03» собирает
-приложение через `Intl.RelativeTimeFormat` с часовым поясом потребителя.
+The time comes **already formatted**: "5 minutes ago" and "yesterday at 2:03 PM"
+are put together by the app with `Intl.RelativeTimeFormat` and the consumer's time zone.
 
-## Антипаттерны
+## Anti-patterns
 
-- Заводить `type: "publication_failed"` вместо `icon` и `tone`: доменные типы
-  событий в кит не переезжают.
-- Отмечать непрочитанное только цветом.
-- Считать группировку внутри компонента.
-- Считать счётчик непрочитанных по видимым строкам.
-- Заворачивать центр в свой поповер внутри кита: контейнер выбирает потребитель.
-- Передавать `onAction` вместе с `actions`: типы запрещают, а на JS победит `actions`
-  (и в разработке консоль предупредит).
-- Класть в `media` или `title` строки-кнопки интерактивные элементы: они окажутся
-  внутри кнопки.
-- Давать поповеру `aria-label` рядом с настоящим заголовком вместо `titleId`: имя
-  разойдётся с видимым заголовком при правке.
+- Adding `type: "publication_failed"` instead of `icon` and `tone`: domain event
+  types do not move into the kit.
+- Marking unread by color alone.
+- Computing grouping inside the component.
+- Computing the unread counter from the visible rows.
+- Wrapping the center in your own popover inside the kit: the consumer chooses
+  the container.
+- Passing `onAction` together with `actions`: the types forbid it, and on JS
+  `actions` wins (and in development the console warns).
+- Putting interactive elements into `media` or `title` of a button row: they end
+  up inside the button.
+- Giving the popover an `aria-label` next to a real title instead of `titleId`:
+  the name drifts from the visible title when it is edited.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Исходник: `src/components/content/NotificationList.tsx`
-- Тесты: `tests/notification-list.test.tsx`
-- Витрина: `src/components/content/NotificationList.stories.tsx`, `src/components/content/NotificationCenter.stories.tsx`
-- Тесты центра: `tests/notification-center.test.tsx`
-- Решение: ADR-0027
+- Source: `src/components/content/NotificationList.tsx`
+- Tests: `tests/notification-list.test.tsx`
+- Showcase: `src/components/content/NotificationList.stories.tsx`, `src/components/content/NotificationCenter.stories.tsx`
+- Center tests: `tests/notification-center.test.tsx`
+- Decision: ADR-0027

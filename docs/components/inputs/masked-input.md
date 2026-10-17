@@ -9,139 +9,140 @@ story: src/components/inputs/MaskedInput.stories.tsx
 
 # MaskedInput
 
-## Кратко для AI
+## Summary for AI
 
-Поле с маской ввода на `TextControl`. Маска приходит пропом — кит о предметной
-области не знает. Значение **сырое**, показ отформатированный; наружу уходят
-оба. Каретка — то, ради чего компонент нужен.
+A field with an input mask, built on `TextControl`. The mask comes as a prop — the
+kit knows nothing about the domain. The value is **unmasked**; the display is
+formatted; both are passed to the consumer. The caret is what the component exists for.
 
-## Когда использовать
+## When to use
 
-- Ввод в жёстком формате: дата, серия и номер документа, код, номер счёта.
-- Телефон — есть готовый `PhoneInput` на этом же движке.
+- Input in a fixed format: a date, a document series and number, a code, an account number.
+- A phone number — there is a ready-made `PhoneInput` built on the same engine.
 
-## Когда не использовать
+## When not to use
 
-- Для суммы и любых чисел — это `NumberInput` с `formatOptions`: там
-  разделители разрядов и десятичный знак берутся из локали, а маска их зашила
-  бы намертво.
-- Для даты с календарём — это `DatePicker`.
+- For amounts and any other numbers, use `NumberInput` with `formatOptions`: there
+  the grouping separators and the decimal separator come from the locale, and a mask would
+  hard-wire them.
+- For a date with a calendar, use `DatePicker`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { MaskedInput } from "@olddevs/ui";
 
 const [value, setValue] = useState("");
 
-<MaskedInput mask="99.99.9999" value={value} onChange={(raw) => setValue(raw)} aria-label="Дата" />;
+<MaskedInput mask="99.99.9999" value={value} onChange={(raw) => setValue(raw)} aria-label="Date" />;
 ```
 
-## Пропы
+## Props
 
-| Проп             | Умолчание | Назначение                                               |
-| ---------------- | --------- | -------------------------------------------------------- |
-| `mask`           | —         | Шаблон: `9` — цифра, `a` — буква, `*` — цифра или буква. |
-| `value`          | —         | Сырое значение, без литералов маски.                     |
-| `onChange`       | —         | `(raw, formatted)` — оба представления сразу.            |
-| `showMask`       | `true`    | Показывать формат в самом поле: `+7 (___) ___-__-__`.    |
-| `shellClassName` | —         | Классы на оболочку с рамкой.                             |
-| остальное        | —         | Уходит на `input` насквозь.                              |
+| Prop             | Default | Purpose                                                                 |
+| ---------------- | ------- | ----------------------------------------------------------------------- |
+| `mask`           | —       | The pattern: `9` is a digit, `a` is a letter, `*` is a digit or letter. |
+| `value`          | —       | The unmasked value, without the mask literals.                          |
+| `onChange`       | —       | `(raw, formatted)` — both representations at once.                      |
+| `showMask`       | `true`  | Show the format in the field itself: `+7 (___) ___-__-__`.              |
+| `shellClassName` | —       | Classes for the shell with the border.                                  |
+| the rest         | —       | Passed straight through to the `input`.                                 |
 
-## Как пользователь узнаёт формат
+## How the user learns the format
 
-Двумя способами сразу, и они не заменяют друг друга.
+Two ways at once, and they do not replace each other.
 
-**Трафарет маски в самом поле.** Пустое поле показывает маску целиком,
-вместе с литералами: `+7 (___) ___-__-__`; по мере ввода она расходуется слева
-направо. До версии кита 2.4.0 формат не сообщался **вообще**: `formatMask` обрывается там, где
-кончилось значение, поэтому пустое поле было пустым прямоугольником, а
-наполовину заполненное — обрубком без остатка.
+**A mask guide in the field itself.** An empty field shows the whole mask,
+literals included: `+7 (___) ___-__-__`; as you type, it is consumed from left to
+right. Before kit version 2.4.0 the format was **not** communicated **at all**: `formatMask` stops
+where the value ends, so an empty field was an empty rectangle, and a half-filled
+one a stump with no remainder.
 
-Трафарет маски — украшение: он `aria-hidden` и скринридеру не достаётся. Выключается
-`showMask={false}` там, где формат уже сказан рядом и повторять его в поле — шум:
-короткая известная маска в плотной таблице, поле под подписью с примером.
+The mask guide is decoration: it is `aria-hidden` and does not reach the screen
+reader. Turn it off with `showMask={false}` where the format is already stated
+nearby and repeating it in the field is noise: a short well-known mask in a dense
+table, a field under a label with an example.
 
-**Пояснение `FormField`.** Она и есть формат для скринридера: связана с полем
-через `aria-describedby`, поэтому читается при входе в поле и остаётся доступной,
-когда пользователь проверяет набранное. Трафарет маски к этому моменту уже заменён вводом,
-а пояснение — нет.
+**The `FormField` hint.** It is the format for the screen reader: tied to the field
+through `aria-describedby`, so it is read on entering the field and stays available
+when the user checks what they typed. By then the mask guide has already been replaced
+by the input, and the hint has not.
 
-Плейсхолдером формат не задаётся: плейсхолдер исчезает при первом же символе, то есть
-ровно тогда, когда нужен для проверки. Разбор и источники — ADR-0026.
+The format is not set with a placeholder: it disappears at the very first character,
+that is, exactly when it is needed for checking. The analysis and sources are in ADR-0026.
 
-## Неподходящий символ объявляется
+## A character that does not fit is announced
 
-Символ, не подошедший под токен, отбрасывается — но не молча: живая область
-рядом с полем говорит, чего здесь ждали («здесь нужна цифра»), а заполненная
-маска отвечает, что места больше нет.
+A character that did not fit its token is dropped — but not silently: a live region
+next to the field says what was expected here ("A digit is expected here"), and a
+filled mask answers that there is no more room.
 
-Разбирается ровно один набранный символ: посимвольные объявления на пятнадцать
-символов — шум, а текст не в том формате ловится проверкой значения, а не полем
-ввода.
+Exactly one typed character is parsed: per-character announcements for fifteen
+characters are noise, and text in the wrong format is caught by value validation,
+not by the input field.
 
-При вставке считается не то, какие символы пришли, а сколько их не влезло. Значение, которое в маску не влезло,
-обрезается — и об обрезке говорится вслух, потому что результат выходит
-правдоподобным, а значит незаметным: `89161234567`, частая форма
-российского телефонного номера в буфере обмена, под маской `+7 (999) 999-99-99`
-превращается в `+7 (891) 612-34-56`, то есть в чужой номер. Ведущую «8» маска
-принимает за первую цифру, всё сдвигается, последняя цифра выпадает. Ни
-компонент, ни глаз этого не замечают, поэтому замечает живая область.
+When text is pasted, what is counted is not which characters it contains but how
+many did not fit. A value that did not fit the mask is truncated — and the
+truncation is announced aloud, because the result looks plausible and therefore
+goes unnoticed: `89161234567`, a common form of a Russian phone number on the
+clipboard, with the mask `+7 (999) 999-99-99` turns into `+7 (891) 612-34-56`,
+that is, into someone else's number. The mask takes the leading "8" as the first
+digit, everything shifts and the last digit falls off.
+Neither the component nor the eye notices this, so the live region does.
 
-Молчаливое отбрасывание — не мелочь: на нём эталонная реализация
+Silent dropping is not a minor thing: the reference implementation of
 [USWDS](https://designsystem.digital.gov/components/input-mask/accessibility-tests/)
-провалила тест WCAG 3.3.3 (у неё несовпавший символ вдобавок обрывает весь
-остаток ввода).
+failed the WCAG 3.3.3 test on it (there, a mismatched character also cuts off the
+whole rest of the input).
 
-## Значение сырое, показ отформатированный
+## The value is unmasked, the display is formatted
 
-Хранить формат — значит хранить решение о показе: маску можно поменять, а
-записанные с ней скобки останутся в базе навсегда.
+Storing the format means storing a display decision: the mask can change, while
+the brackets recorded with it stay in the database forever.
 
-Наружу уходят **оба** представления: сырое нужно запросу, показанное — тому,
-кто хранит текст как есть. Отдать одно — значит заставить многих потребителей
-форматировать заново.
+**Both** representations are passed to the consumer: the unmasked one is needed by a
+request, the shown one by whoever stores the text as is. Passing only one forces
+many consumers to reformat.
 
-Разбор идёт позиционно, вместе с маской, а не «выбросим всё, что похоже на
-литерал»: в маске `+7 (999)` литерал `7` — тоже цифра, и наивный фильтр утащил
-бы его в значение, сделав номер одиннадцатизначным.
+Parsing is positional, together with the mask, not "throw out everything that
+looks like a literal": in the mask `+7 (999)` the literal `7` is also a digit, and
+a naive filter would carry it into the value, making the number eleven digits long.
 
-## Каретка и Backspace
+## The caret and Backspace
 
-Форматирование перерисовывает строку целиком, и браузер после этого ставит
-каретку в конец — править середину номера становится невозможно. Позиция
-считается по маске: сколько символов значения стояло левее, столько и
-останется.
+Formatting redraws the whole string, and after that the browser puts the caret at
+the end — editing the middle of a number becomes impossible. The position is
+computed from the mask: the caret stays after the same number of value
+characters that were to its left.
 
-**Backspace через литерал удаляет символ значения, а не литерал.** Иначе
-каретка упирается в `)`: литерал удаляется, тут же возвращается
-форматированием, и нажатие ничего не меняет — дефект выглядит как зависшая
-клавиша.
+**Backspace across a literal deletes a value character, not the literal.**
+Otherwise the caret runs into `)`: the literal is deleted, comes right back with
+the formatting, and the keypress changes nothing — the defect looks like a stuck key.
 
-Вставка отдельного обработчика не требует: вставленное приходит тем же
-событием ввода и раскладывается по маске так же, как набранное.
+A paste needs no separate handler: the pasted text arrives in the same input event
+and is fitted to the mask in the same way as typed text.
 
-Проверяется в живом браузере (`tests-visual/interactions.spec.ts`): позиция
-каретки после перерисовки — родная механика, которой в jsdom нет.
+This is checked in a live browser (`tests-visual/interactions.spec.ts`): the caret
+position after a redraw is native mechanics that jsdom does not have.
 
-## Экранирования в маске нет
+## There is no escaping in the mask
 
-Литерал `9` выразить нечем. Это ограничение, а не недосмотр: форматов с
-обязательной цифрой-литералом среди форматов кита не нашлось, а `\` сделал бы маску
-синтаксисом, который надо документировать отдельно. Появится такой формат —
-появится и экранирование.
+There is no way to express the literal `9`. This is a limitation, not an
+oversight: none of the kit's formats needs a mandatory literal digit, and
+`\` would turn the mask into a syntax that needs separate documentation. If such a
+format appears, escaping will appear too.
 
-## Чистые функции маски доступны отдельно
+## The pure mask functions are available separately
 
-`formatMask(raw, mask)`, `unmask(display, mask)` и `maskCapacity(mask)`
-экспортируются: ими удобно готовить значение до отправки или проверять
-заполненность, не поднимая компонент.
+`formatMask(raw, mask)`, `unmask(display, mask)` and `maskCapacity(mask)` are
+exported: they are handy for preparing a value before sending or for checking
+completeness without mounting the component.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/inputs/MaskedInput.tsx`, механика — `src/lib/mask.ts`;
-  состав волны — ADR-0024.
-- Тесты: `tests/mask.test.ts` — форматирование, разбор, каретка на строках;
-  `tests/masked-input.test.tsx` — ввод, вставка, Backspace через литерал, оба
-  представления; браузерный — каретка после перерисовки.
-- Истории витрины: `src/components/inputs/MaskedInput.stories.tsx`.
+- Implementation: `src/components/inputs/MaskedInput.tsx`, mechanics in `src/lib/mask.ts`;
+  the scope of the wave is in ADR-0024.
+- Tests: `tests/mask.test.ts` — formatting, parsing, the caret on strings;
+  `tests/masked-input.test.tsx` — input, paste, Backspace across a literal, both
+  representations; browser one — the caret after a redraw.
+- Showcase stories: `src/components/inputs/MaskedInput.stories.tsx`.

@@ -9,107 +9,108 @@ story: src/components/table/SavedViews.stories.tsx
 
 # SavedViews
 
-## Кратко для AI
+## Summary for AI
 
-`SavedViews` — переключатель именованных снимков состояния. Кит показывает
-список видов и объявляет активный; **где виды лежат, он не знает и знать не
-должен**. Тип вида параметризован снимком состояния (`SavedView<T>`), а не привязан к
-`TableState`.
+`SavedViews` is a switcher of named state snapshots. The kit shows the list of
+views and announces the active one; **where the views are stored, it does not know
+and should not know**. The view type is parameterized by the state snapshot
+(`SavedView<T>`), not tied to `TableState`.
 
-## Когда использовать
+## When to use
 
-- Над списком, таблицей или сеткой, где пользователь возвращается к одним и тем
-  же наборам фильтров: «Мои», «Черновики», «С ошибкой».
-- Когда набор видов создаёт пользователь, а не разработчик.
+- Above a list, a table or a grid where the user keeps returning to the same sets
+  of filters: "Mine", "Drafts", "With errors".
+- When the set of views is created by the user, not the developer.
 
-## Когда не использовать
+## When not to use
 
-- Для переключения одного признака или режима отображения — это `Segmented`:
-  там фиксированный набор режимов, а не пользовательские наборы.
-- Для показа применённых фильтров с возможностью снять любой — это `FilterBar`:
-  там снятие по одному, здесь выбор целиком.
-- Для навигации между разделами — это `Tabs`.
+- For toggling a single attribute or a display mode — that is `Segmented`: it has
+  a fixed set of modes, not user-defined sets.
+- For showing the applied filters with the ability to remove any of them — that is
+  `FilterBar`: there filters are removed one at a time, here a whole set is chosen.
+- For navigation between sections — that is `Tabs`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { SavedViews, type SavedView } from "@olddevs/ui";
 
 const views: SavedView<Filters>[] = [
-  { id: "all", name: "Все", state: { status: "" } },
-  { id: "drafts", name: "Черновики", state: { status: "draft" } },
+  { id: "all", name: "All", state: { status: "" } },
+  { id: "drafts", name: "Drafts", state: { status: "draft" } },
 ];
 
 <SavedViews
   views={views}
   activeId={activeId}
   onSelect={(view) => {
-    // Состояние приходит целиком: применяйте его одним действием.
+    // The state arrives whole: apply it in a single action.
     setActiveId(view.id);
     applyFilters(view.state);
   }}
 />;
 ```
 
-## `SavedView<T>` — форма вида
+## `SavedView<T>` — the shape of a view
 
 ```ts
 interface SavedView<T = unknown> {
   id: string;
-  /** Имя вида — оно же подпись. */
+  /** The view's name — also its label. */
   name: ReactNode;
-  /** Снимок состояния. Кит его не читает и не интерпретирует. */
+  /** A state snapshot. The kit neither reads nor interprets it. */
   state: T;
 }
 ```
 
-Параметр `T` — ваше состояние, каким вы его держите: объект фильтров,
-`TableState`, строка запроса. Кит не читает его и при выборе отдаёт
-как есть.
+The parameter `T` is your state, in whatever form you keep it: a filters object,
+`TableState`, a query string. The kit does not read it and hands it
+back as is on selection.
 
-## Решения, которые видно в API
+## Decisions visible in the API
 
-**Тип параметризован снимком состояния, а не привязан к `TableState`.** Тип таков
-из-за единственного известного потребителя: у него состояние живёт в адресе
-страницы, а экран — сетка карточек, а не таблица. Привязка к `TableState`
-отрезала бы его от компонента, написанного ради него же
+**The type is parameterized by the state snapshot, not tied to `TableState`.** The type
+is the way it is because of the only known consumer: its state lives in the page
+URL, and its screen is a grid of cards, not a table. Tying it to `TableState`
+would cut that consumer off from a component written for it
 (ADR-0033).
 
-**Хранения в ките нет вовсе.** Компонент ничего не пишет (ни в `localStorage`,
-ни в адрес страницы, ни в сеть) и ни на что не подписывается. Выбор между адресом
-страницы, локальным хранилищем и сервером остаётся приложению; общий доступ к
-видам для разных пользователей — задача бэкенда. Модель та же, что у
-[`useTableState`](../../api/utilities.md): кит описывает форму, а владеет
-потребитель.
+**The kit has no storage at all.** The component writes nothing (not to
+`localStorage`, not to the page URL, not to the network) and subscribes to nothing.
+The choice between the page URL, local storage and a server stays with the app; sharing
+views between users is a job for the backend. The model is the same as in
+[`useTableState`](../../api/utilities.md): the kit describes the shape, and the
+consumer owns it.
 
-Проверяется тестом, который подменяет хранилища, а не соглашением: любое
-обращение к `localStorage`, `sessionStorage` или `history` проваливает прогон.
+This is verified by a test that stubs the storage APIs, not by convention: any
+access to `localStorage`, `sessionStorage` or `history` fails the run.
 
-**`onSelect` отдаёт вид целиком за один вызов, а не его идентификатор.** Если
-состояние попадает в адрес страницы, последовательные записи по ключу строят
-адрес из одной и той же копии параметров адреса текущего рендера: побеждает
-последняя, правки предыдущих пропадают. Так и было у потребителя: терялась
-нижняя граница периода при выборе диапазона поверх пресета.
+**`onSelect` hands over the whole view in one call, not its identifier.** If the
+state goes into the page URL, consecutive writes by key build the URL from the
+same copy of the URL parameters in the current render: the last one wins, and the
+previous edits are lost. That is exactly what happened to a consumer, who lost the
+lower bound of a range when picking a range on top of a preset.
 
-**Активный вид объявляется, а не только подсвечивается.** Каждый вид — чип
-(`Chip`); он несёт `aria-pressed`, а подсветка цветом скринридеру ничего не
-сообщает.
+**The active view is announced, not just highlighted.** Each view is a chip
+(`Chip`); it carries `aria-pressed`, and color highlighting tells a screen reader
+nothing.
 
-**Понятия «сброс» у кита нет.** `activeId={null}` означает «активного вида
-нет». Возврат к умолчанию делается видом, который вы кладёте в список сами:
-его снимок состояния и есть ваше пустое состояние. Кит не знает, что для вашего приложения
-пусто.
+**The kit has no notion of "reset".** `activeId={null}` means "there is no active
+view". Returning to the default is done with a view that you put into the list
+yourself — its state snapshot is your empty state. The kit does not know what is empty
+for your app.
 
-**Создание, переименование и удаление вида — ваши.** Они неразрывны с
-хранением, а хранения здесь нет.
+**Creating, renaming and deleting a view are up to your app.** They are inseparable from
+storage, and there is no storage here.
 
-**Пустой список не рисуется вовсе.** Пустая группа объявила бы себя
-скринридеру, не имея внутри ничего, — тот же приём, что у `Timeline`.
+**An empty list is not rendered at all.** An empty group would announce itself to
+a screen reader with nothing inside — the same technique as in `Timeline`.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/table/SavedViews.tsx`.
-- Тесты: `tests/saved-views.test.tsx` — объявление активного вида, один вызов со
-  всем снимком состояния, запрет на хранение, пустой список, доступное имя группы.
-- Связанное: [`useTableState`](../../api/utilities.md),
+- Implementation: `src/components/table/SavedViews.tsx`.
+- Tests: `tests/saved-views.test.tsx` — announcing the active view, one call with
+  the whole state snapshot, the storage guard, an empty list, the group's accessible
+  name.
+- Related: [`useTableState`](../../api/utilities.md),
   [`FilterBar`](filter-bar.md).

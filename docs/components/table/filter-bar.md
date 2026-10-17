@@ -7,29 +7,29 @@ source: src/components/table/FilterBar.tsx, src/components/table/FilterBarAdd.ts
 story: src/components/table/FilterBar.stories.tsx
 ---
 
-# FilterBar и FilterBarAdd
+# FilterBar and FilterBarAdd
 
-## Кратко для AI
+## Summary for AI
 
-`FilterBar` показывает применённые фильтры снимаемыми токенами; `FilterBarAdd` —
-кнопка добавления с выбором поля и значения либо границ диапазона (сумма,
-дата). Оба **не знают, какие бывают фильтры**: список приходит пропом,
-доменного словаря в ките нет.
+`FilterBar` shows the applied filters as removable tags; `FilterBarAdd` is an
+add button with a choice of field and value, or of range bounds (amount, date).
+Neither **knows which filters exist**: the list is passed as a prop, and the
+kit has no domain vocabulary.
 
-## Когда использовать
+## When to use
 
-- Над списком, где фильтров больше одного и их состав меняется.
-- В слоте `filters` у `TableToolbar`.
+- Above a list with more than one filter, where the set of filters changes.
+- In the `filters` slot of `TableToolbar`.
 
-## Когда не использовать
+## When not to use
 
-- Для переключения одного признака («только избранное») — это `Chip` или
-  `Segmented`: там переключение, а не снятие.
-- Для ввода произвольного текста — это `SearchControl`.
-- Для фильтра «содержит» или «одно из» — операторов, кроме равенства и
-  диапазона, в модели нет (см. ниже).
+- For toggling a single attribute ("favorites only") — that is a `Chip` or
+  `Segmented`: there it is a toggle, not a removal.
+- For entering arbitrary text — that is `SearchControl`.
+- For a "contains" or "one of" filter — apart from equality and a range there
+  are no operators in the model (see below).
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { FilterBar, FilterBarAdd, useTableState } from "@olddevs/ui";
@@ -45,111 +45,116 @@ const { state, set } = useTableState();
 </FilterBar>;
 ```
 
-## `FilterField` — описание поля
+## `FilterField` — a field description
 
 ```ts
 interface FilterField {
   id: string;
-  /** Подпись поля. Строка: она же попадает в подпись токена. */
+  /** The field label. A string: it also ends up in the token label. */
   label: string;
-  /** Вид поля. Не задан — "values". */
+  /** The field kind. Defaults to "values". */
   kind?: "values" | "number-range" | "date-range";
-  /** Допустимые значения для "values". Пустой список — поле не появится в списке полей; у диапазонов — []. */
+  /** Allowed values for "values". With an empty list the field does not appear in the field list; for ranges pass []. */
   values: { id: string; label: string }[];
 }
 ```
 
-Список полей приходит пропом целиком: кит не знает, какие фильтры бывают в
-вашем продукте, и доменного словаря в нём не появляется.
+The list of fields is passed as a prop in full: the kit does not know which
+filters exist in your product, and no domain vocabulary appears in it.
 
-## Диапазоны
+## Ranges
 
-`kind: "number-range"` и `kind: "date-range"` (ADR-0063)
-заменяют выбор значения двумя полями ввода «От» и «До»: `NumberInput` для чисел и
-`DatePicker` для дат. Поле описывается с пустым `values`:
+`kind: "number-range"` and `kind: "date-range"` (ADR-0063)
+replace the choice of a value with two inputs, "From" and "To": a `NumberInput`
+for numbers and a `DatePicker` for dates. The field is described with an empty `values`:
 
 ```tsx
 const FIELDS: FilterField[] = [
-  { id: "amount", label: "Сумма", kind: "number-range", values: [] },
-  { id: "created", label: "Создан", kind: "date-range", values: [] },
-  { id: "status", label: "Статус", values: STATUSES },
+  { id: "amount", label: "Amount", kind: "number-range", values: [] },
+  { id: "created", label: "Created", kind: "date-range", values: [] },
+  { id: "status", label: "Status", values: STATUSES },
 ];
 ```
 
-Собранный фильтр — обычный `TableFilter` с необязательным `to`:
+The filter that gets built is an ordinary `TableFilter` with an optional `to`:
 
-| Что ввели            | `value` | `to`           | Подпись токена                |
-| -------------------- | ------- | -------------- | ----------------------------- |
-| 50 и 100             | `"50"`  | `"100"`        | «Сумма: 50–100»               |
-| только «от» 50       | `"50"`  | `""`           | «Сумма: от 50»                |
-| только «до» 100      | `""`    | `"100"`        | «Сумма: до 100»               |
-| только «до» 12 марта | `""`    | `"2026-03-12"` | «Создан: до 12 марта 2026 г.» |
+| What was entered   | `value` | `to`           | Tag label                    |
+| ------------------ | ------- | -------------- | ---------------------------- |
+| 50 and 100         | `"50"`  | `"100"`        | "Amount: 50–100"             |
+| only "from" 50     | `"50"`  | `""`           | "Amount: from 50"            |
+| only "to" 100      | `""`    | `"100"`        | "Amount: to 100"             |
+| only "to" March 12 | `""`    | `"2026-03-12"` | "Created: to March 12, 2026" |
 
-- **`to` есть — диапазон, `to` нет — равенство.** Пустая строка в `to` не то же
-  самое, что отсутствие ключа: это открытая граница, проверяйте её через
-  `to !== undefined`. Числа передаются строками, даты — ISO `ГГГГ-ММ-ДД`, как везде в
-  ките.
-- **«Применить» доступно, когда задана хотя бы одна граница.** Перевёрнутый
-  диапазон («от 100 до 50») применить нельзя: он ничего не выберет, а пустоту
-  пользователь прочтёт как «данных нет». В календаре «До» недоступны даты раньше
-  «От», и наоборот.
-- **Подпись собирает кит** через каталог сообщений: подписи полей ввода «От» и «До» —
-  `fromField` и `toField`, шаблоны подписи токена — `rangeBetween`, `rangeFrom`,
-  `rangeTo`. Числа и даты в подписи форматируются по локали `UiProvider`; год в
-  дате пишется всегда: подпись хранится в адресе страницы и в сохранённом виде,
-  и ссылка «до 12 марта», открытая через год, означала бы другую дату. Подпись
-  записывается в `label` фильтра и в адрес страницы. Если у фильтра есть `to`,
-  но нет `label`, `FilterBar` подпишет его теми же шаблонами, но границы в
-  подписи останутся сырыми, без форматирования.
-- **Поле с уже применённым диапазоном повторно не предлагается.** Два диапазона
-  по одному полю — пересечение, а не добавление, и токены нельзя было бы
-  различить. Идентификатор токена — `<поле>:range`.
-- **Выборку считает потребитель.** Кит описывает форму фильтра, а не фильтрует
-  данные (ADR-0023):
-  как трактовать границы (включительно, в каком часовом поясе) — решение
-  приложения.
-- **В адресе страницы** (`tableStateToParams`) `to` записывается пятой частью
-  записи фильтра; ссылки из
-  трёх и четырёх частей читаются как раньше. Пятая часть пишется и пустой,
-  иначе «от 50» превратилось бы в равенство.
+- **`to` present — a range, `to` absent — equality.** An empty string in `to`
+  is not the same as a missing key: it is an open bound, and check it
+  with `to !== undefined`. Numbers are passed as strings, dates as ISO `YYYY-MM-DD`,
+  as everywhere in the kit.
+- **"Apply" is enabled once at least one bound is set.** An inverted range
+  ("from 100 to 50") cannot be applied: it would select nothing, and the user
+  would read an empty result as "no data". In the "To" calendar the dates before
+  "From" are unavailable, and vice versa.
+- **The kit builds the label** through the message catalog: the labels of the "From"
+  and "To" inputs are `fromField` and `toField`, the tag label templates are
+  `rangeBetween`, `rangeFrom`, `rangeTo`. Numbers and dates in the label are
+  formatted in the `UiProvider` locale; a date always includes the year: the
+  label is stored in the page URL and in a saved view, and a link labeled "to
+  March 12" would mean a different date when it is opened a year later. The label
+  is stored in the filter's `label` and in the page URL. If a filter has `to` but
+  no `label`, `FilterBar` labels it with the same templates, but the bounds in
+  the label stay raw, unformatted.
+- **A field with an already applied range is not offered again.** Two ranges on
+  one field are an intersection, not an addition, and the tags could not be
+  told apart. The tag identifier is `<field>:range`.
+- **The consumer computes the filtered rows.** The kit describes the shape of the
+  filter, it does not filter data
+  (ADR-0023):
+  how to treat the bounds (inclusive, in which time zone) is the application's
+  decision.
+- **In the page URL** (`tableStateToParams`) `to` is written as the fifth part of
+  the filter entry; links of three and four parts are read as before. The fifth part is
+  written even when empty, otherwise "from 50" would turn into equality.
 
-## Решения, которые видно в API
+## Decisions visible in the API
 
-**Токены стоят на `TagGroup` из react-aria, а не на `Chip`.** У чипа нет
-снятия: он предназначен для переключения. Клавиатура при этом достаётся без
-доработки: Delete и Backspace на токене снимают его.
+**The tags are built on react-aria's `TagGroup`, not on `Chip`.** A chip cannot be
+removed; it is for toggling. Keyboard support comes without extra work: Delete and
+Backspace on a tag remove it.
 
-**У токена свой `id`, а подпись — не идентификатор.** Два фильтра по одному
-полю дают одинаковые на вид токены, и нельзя было бы снять нужный по подписи;
-подпись к тому же локализуется и обрезается. Токен снимается по `filter.id`.
+**A tag has its own `id`, and the label is not an identifier.** Two filters on
+the same field produce tags that look identical, and removing the right one by
+label would be impossible; the label is also localized and truncated. A tag is
+removed by `filter.id`.
 
-**Операторов в модели нет.** Без `to` токен означает равенство, с `to` —
-диапазон: `gte` и `lte` — тот же диапазон с пустой границей, отдельной оси они
-не заслуживают (ADR-0063).
-`contains` и `in` по-прежнему ждут заказчика
+**There are no operators in the model.** Without `to` a tag means equality, with
+`to` — a range: `gte` and `lte` are the same range with an empty bound and do not
+deserve an axis of their own
+(ADR-0063).
+`contains` and `in` still wait for a requesting screen
 (ADR-0023).
 
-**Подпись кнопки снятия — общая, без имени фильтра.** react-aria дописывает к
-имени кнопки подпись своего тега сам; когда имя фильтра дописывали в подпись вручную,
-получалось «Снять фильтр Раздел: Договоры Раздел: Договоры». Скринридер всё равно читает фильтр — его добавляет
-библиотека. Проверяется вычисленным доступным именем, а не разметкой.
+**The remove button's label is generic, without the filter's name.** react-aria
+appends its tag's label to the button's name by itself; adding the filter name by hand produced
+"Remove filter Section: Contracts Section: Contracts". The screen reader still
+reads the filter — the library adds it. This is checked against the computed
+accessible name, not the markup.
 
-**«Снять все» появляется со второго фильтра.** При одном кнопка делает ровно то
-же, что кнопка снятия на самом токене, и только удлиняет обход с клавиатуры.
+**"Clear all" appears once there are two filters.** With one filter the button does
+exactly what the tag's remove button does and only lengthens keyboard navigation.
 
-**Уже применённое значение повторно не предлагается.** Иначе пользователь
-добавляет второй такой же токен, выборка не меняется, и пользователь остаётся с двумя
-одинаковыми на вид фильтрами. Когда добавлять нечего, кнопка недоступна.
+**An already applied value is not offered again.** Otherwise the user adds a
+second identical tag, the result does not change, and they are left with two
+filters that look the same. When there is nothing to add, the button is disabled.
 
-**Фокус после добавления возвращается на кнопку.** Потерянный фокус возвращается в
-начало документа, и обход страницы начинается заново.
+**Focus returns to the button after adding.** If focus is lost, it falls back to the start of
+the document and keyboard navigation of the page starts over.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/table/FilterBar.tsx`, `src/components/table/FilterBarAdd.tsx`.
-- Тесты: `tests/filter-bar.test.tsx` — снятие мышью и клавиатурой, составное имя
-  кнопки, запрет дублей, возврат фокуса, совместная работа обоих компонентов;
-  `tests/filter-bar-ranges.test.tsx` — диапазоны (границы, подпись по локали,
-  перевёрнутый диапазон); `tests/table-state.test.tsx` — `to` в адресе страницы.
-- История: `Ranges` и `RangesFromScratch` в `FilterBar.stories.tsx`.
-- Состояние: [`useTableState`](../../api/utilities.md).
+- Implementation: `src/components/table/FilterBar.tsx`, `src/components/table/FilterBarAdd.tsx`.
+- Tests: `tests/filter-bar.test.tsx` — removal by mouse and keyboard, the
+  composite button name, duplicate prevention, focus return, the two components
+  working together; `tests/filter-bar-ranges.test.tsx` — ranges (bounds, the
+  localized label, an inverted range); `tests/table-state.test.tsx` — `to` in the
+  page URL.
+- Story: `Ranges` and `RangesFromScratch` in `FilterBar.stories.tsx`.
+- State: [`useTableState`](../../api/utilities.md).

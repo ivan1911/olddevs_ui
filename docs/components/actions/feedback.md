@@ -7,62 +7,62 @@ source: src/components/actions/Alert.tsx
 story: src/components/actions/Alert.stories.tsx
 ---
 
-# Alert, Banner, Progress, Spinner, Toaster, toast и StatusBadge
+# Alert, Banner, Progress, Spinner, Toaster, toast and StatusBadge
 
-## Кратко для AI
+## Summary for AI
 
-Выбирайте по типу информации:
+Choose by the kind of information:
 
-- `Alert` — постоянное состояние **места**;
-- `Banner` — состояние **приложения**;
-- `toast` — краткое завершившееся событие;
-- `Progress` — известная доля работы;
-- `Spinner` — неизвестное ожидание;
-- `StatusBadge` — статус объекта рядом с его именем.
+- `Alert` is for a lasting state of a _place_;
+- `Banner` is for a state of the _app_;
+- `toast` is for a brief event that has finished;
+- `Progress` is for a known fraction of the work;
+- `Spinner` is for an unknown wait;
+- `StatusBadge` is for an object's status next to its name.
 
-## Когда использовать
+## When to use
 
-- `Alert`: важное состояние на странице, которое не должно исчезнуть само.
-- `Banner`: деградация сервиса, работы на сервере, истёкшая подписка — то, что касается всего приложения и переживает навигацию.
-- `toast`: «сохранено», «не удалось отправить»; один `Toaster` ставится у корня приложения.
-- `Progress`: известен процент/доля; `value={null}` означает неопределённый прогресс.
-- `Spinner`: неизвестны и длительность, и будущая форма контента.
-- `StatusBadge`: компактный доменный статус, например публикация или канал.
+- `Alert`: an important state on a page that must not disappear by itself.
+- `Banner`: service degradation, server maintenance, an expired subscription — anything that concerns the whole app and survives navigation.
+- `toast`: "saved", "failed to send"; a single `Toaster` goes at the app root.
+- `Progress`: the percentage/fraction is known; `value={null}` means indeterminate progress.
+- `Spinner`: neither the duration nor the future shape of the content is known.
+- `StatusBadge`: a compact domain status, such as a publication or a channel.
 
-## Когда не использовать
+## When not to use
 
-- Не используйте `toast` для постоянной ошибки — это `Alert`.
-- Не используйте `Banner` для сообщения об одном блоке страницы — это `Alert`. Граница проходит по месту и времени жизни: `toast` сообщает о событии, `Alert` — о состоянии места, `Banner` — о состоянии приложения.
-- Не показывайте `Progress` с нулём, когда величина неизвестна: передайте `null`.
-- Не заменяйте `Skeleton` компонентом `Spinner`, когда форма результата известна.
-- Не используйте `StatusBadge` как кликабельный фильтр — это `Chip`.
+- Do not use a `toast` for a lasting error — that is an `Alert`.
+- Do not use `Banner` for a message about one block of the page — that is an `Alert`. The line is drawn by place and lifetime: `toast` reports an event, `Alert` describes the state of a place, and `Banner` describes the state of the app.
+- Do not show `Progress` at zero when the amount is unknown: pass `null`.
+- Do not replace a `Skeleton` with a `Spinner` when the shape of the result is known.
+- Do not use `StatusBadge` as a clickable filter — that is a `Chip`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<Alert tone="danger" title="Публикация недоступна">Подключите канал.</Alert>
-<Progress label="Загрузка файлов" value={64} showValue />
-<StatusBadge tone="success">Опубликовано</StatusBadge>
+<Alert tone="danger" title="Publishing is unavailable">Connect a channel.</Alert>
+<Progress label="Uploading files" value={64} showValue />
+<StatusBadge tone="success">Published</StatusBadge>
 
-// Рядом с app root:
+// Next to the app root:
 <Toaster />
-// В обработчике:
-toast.success("Сохранено");
+// In a handler:
+toast.success("Saved");
 ```
 
 ## Public API
 
-- `Alert`: `tone`, `variant` (`soft`/`outline`), `title`, `icon`, `action`, `onDismiss`, `closeLabel`; `danger` получает `role="alert"`, остальные тона — `role="status"`.
-- `Banner`: `tone`, `title`, `icon`, `action`, `onDismiss`, `closeLabel`. Вида (`variant`) нет — баннер всегда полоса во всю ширину без скруглений. Роль по тону та же, что у `Alert`. Стопка — это просто соседние баннеры: очереди у компонента нет.
-- `Progress`: обязательный `label`, `value: number | null`, `showValue`; `null` не выставляет `aria-valuenow`.
-- `Spinner`: `size`, `tone`, `label` (из каталога сообщений: «Загрузка» с `@olddevs/ui/locales/ru`, «Loading» без провайдера) и `role="status"`.
-- `Toaster`: `position`, `duration` (по умолчанию 4000 мс), `theme`, `offsetVar`. `offsetVar` — имя переменной с высотой нижней панели, по умолчанию `--bottombar-h`. У нижнего края тосты встают над `MobileTabBar` в слоте `bottomBar` у `AppShell`, а не под ним; если панели нет, отступ прежний. У `toast` только `success`, `error`, `warning`, `info`, `promise`, `dismiss`.
-- **У `toast` четыре тона, и сверх них ничего нет.** `toast.custom` и тост с произвольной раскладкой, которые есть у `sonner`, в кит не входят намеренно: тост, умеющий всё, перестаёт быть частью системы, и через полгода в приложении оказывается пять разных тостов. Тон, вид и раскладка принадлежат киту, а не месту вызова; вызывающий задаёт только содержимое — сообщение, `description` (вторая строка), `duration` и одно `action` с подписью и обработчиком. Нужно больше — это `Alert` или диалог. Разбор ошибки сервера кит не делает: текст для `description` готовит вызывающий, например `toast.error("Не удалось сохранить", { description: extractErrorMessage(error) })`.
-- `StatusBadge`: неинтерактивный `span` с `tone`, `size`, необязательной точкой статуса; используйте понятную текстовую подпись.
+- `Alert`: `tone`, `variant` (`soft`/`outline`), `title`, `icon`, `action`, `onDismiss`, `closeLabel`; `danger` gets `role="alert"` and the other tones get `role="status"`.
+- `Banner`: `tone`, `title`, `icon`, `action`, `onDismiss`, `closeLabel`. There is no `variant` — a banner is always a full-width strip with no rounded corners. The role follows the tone, as in `Alert`. A stack is just adjacent banners: the component has no queue.
+- `Progress`: required `label`, `value: number | null`, `showValue`; `null` does not set `aria-valuenow`.
+- `Spinner`: `size`, `tone`, `label` (from the message catalog: "Загрузка" with `@olddevs/ui/locales/ru`, "Loading" without a provider) and `role="status"`.
+- `Toaster`: `position`, `duration` (4000 ms by default), `theme`, `offsetVar`. `offsetVar` is the name of the variable holding the bottom bar height, `--bottombar-h` by default. At the bottom edge toasts sit above the `MobileTabBar` in the `bottomBar` slot of `AppShell` rather than under it; with no bar the offset is unchanged. `toast` has only `success`, `error`, `warning`, `info`, `promise`, `dismiss`.
+- **`toast` has four tones and nothing beyond them.** `toast.custom` and toasts with an arbitrary layout, which `sonner` has, are left out of the kit on purpose: a toast that can do everything stops being part of the system, and half a year later the app has five different toasts. The tone, look and layout belong to the kit rather than to the call site; the caller sets only the content: the message, `description` (the second line), `duration` and a single `action` with a label and a handler. If you need more, it is an `Alert` or a dialog. The kit does not parse server errors: the caller prepares the text for `description`, for example `toast.error("Couldn't save", { description: extractErrorMessage(error) })`.
+- `StatusBadge`: a non-interactive `span` with `tone`, `size` and an optional status dot; use a clear text label.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Тон `danger` у `Alert` и `Banner` прерывает речь скринридера; не ставьте его для обычного успеха.
-- `Banner` не липкий, и шапка под ним остаётся на `top: 0`: контракт `--topbar-h` (ADR-0016) не трогается. Разбор — ADR-0027.
-- У `Progress` и `Spinner` имя обязательно или имеет осмысленное умолчание.
-- Источники: `src/components/actions/Alert.tsx`, `src/components/actions/Progress.tsx`, `src/components/actions/Spinner.tsx`, `src/components/actions/Toaster.tsx`, `src/components/actions/StatusBadge.tsx`; истории этих же компонентов.
+- The `danger` tone on `Alert` and `Banner` interrupts the screen reader's speech; do not set it for ordinary success.
+- `Banner` is not sticky, and the header below it stays at `top: 0`: the `--topbar-h` contract (ADR-0016) is left untouched. The analysis is in ADR-0027.
+- `Progress` and `Spinner` must have a name, or a meaningful default.
+- Sources: `src/components/actions/Alert.tsx`, `src/components/actions/Progress.tsx`, `src/components/actions/Spinner.tsx`, `src/components/actions/Toaster.tsx`, `src/components/actions/StatusBadge.tsx`; the stories of the same components.

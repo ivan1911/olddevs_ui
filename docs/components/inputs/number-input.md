@@ -9,25 +9,25 @@ story: src/components/inputs/NumberInput.stories.tsx
 
 # NumberInput
 
-## Кратко для AI
+## Summary for AI
 
-`NumberInput` — управляемое числовое поле с кнопками шага. Пустое поле возвращает `null`, а не `0` и не `NaN`.
+`NumberInput` is a controlled numeric field with increment/decrement buttons. An empty field returns `null`, not `0` and not `NaN`.
 
-## Когда использовать
+## When to use
 
-- Нужен числовой ввод с `min`, `max`, `step` или форматированием `Intl.NumberFormat`.
-- В форме требуется поле с доступным именем и шагами «меньше/больше».
+- You need numeric input with `min`, `max`, `step` or `Intl.NumberFormat` formatting.
+- A form needs a field with an accessible name and increment/decrement buttons.
 
-## Когда не использовать
+## When not to use
 
-- Для свободного текстового идентификатора или кода — `TextControl`; для телефона есть `PhoneInput`.
-- Для непрерывного выбора на визуальной шкале — `Slider`/`RangeSlider`.
+- For a free-text identifier or code, use `TextControl`; for a phone number there is `PhoneInput`.
+- For continuous selection on a visual scale, use `Slider`/`RangeSlider`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <NumberInput
-  label="Лимит публикаций"
+  label="Publication limit"
   value={limit}
   onChange={setLimit}
   min={0}
@@ -38,43 +38,43 @@ story: src/components/inputs/NumberInput.stories.tsx
 
 ## Public API
 
-- `value` и `onChange` обязательны; значение `null` означает пустой input.
-- `label` обязателен и связывает имя с внутренним React Aria input; обёртка `FormField` этого не заменяет.
-- `formatOptions` передаётся в `Intl.NumberFormat`; `invalid` только показывает невалидное состояние, правило проверки остаётся у потребителя. Внутри `FormField` с `error` признак приходит из формы сам; явный `invalid={false}` его снимает.
-- `shellClassName` относится к рамке, `className` — к корневому NumberField.
+- `value` and `onChange` are required; the value `null` means an empty input.
+- `label` is required and ties the name to the inner React Aria input; the `FormField` wrapper does not replace it.
+- `formatOptions` is passed to `Intl.NumberFormat`; `invalid` only shows the invalid state; the validation rule stays with the consumer. Inside a `FormField` with `error` the flag arrives from the form on its own; an explicit `invalid={false}` clears it.
+- `shellClassName` applies to the border, `className` to the root NumberField.
 
-## Валюта — это `NumberInput`, а не отдельный компонент
+## Currency is a `NumberInput`, not a separate component
 
-`CurrencyInput` в ките **не существует**, и это решение
-(ADR-0024), а не
-пробел. Валютное поле — это `formatOptions`:
+`CurrencyInput` **does not exist** in the kit, and this is a decision
+(ADR-0024), not a gap.
+A currency field comes down to `formatOptions`:
 
 ```tsx
 <NumberInput
-  label="Сумма"
+  label="Amount"
   value={amount}
   onChange={setAmount}
   formatOptions={{ style: "currency", currency: "RUB" }}
 />
 ```
 
-`Intl.NumberFormat` внутри react-aria форматирует валюту, разбирает ввод и
-берёт разделители разрядов и десятичный знак **из локали**: в `ru-RU` это
-`1 234,56 ₽`, в `en-US` — `$1,234.56`. Отдельный компонент был бы
-обёрткой без собственной логики, вроде `ThemeSwitcher` над `Segmented`.
+`Intl.NumberFormat` inside react-aria formats the currency, parses the input and
+takes the grouping separators and the decimal separator **from the locale**: in `ru-RU`
+that is `1 234,56 ₽`, in `en-US` — `$1,234.56`. A separate component would be a
+wrapper with no logic of its own, like a `ThemeSwitcher` over `Segmented`.
 
-Проценты и единицы измерения тоже даёт `Intl.NumberFormat`:
+Percentages and units of measure are handled by `Intl.NumberFormat` too:
 
 ```tsx
-<NumberInput label="Скидка" formatOptions={{ style: "percent" }} />
-<NumberInput label="Вес" formatOptions={{ style: "unit", unit: "kilogram" }} />
+<NumberInput label="Discount" formatOptions={{ style: "percent" }} />
+<NumberInput label="Weight" formatOptions={{ style: "unit", unit: "kilogram" }} />
 ```
 
-Маска здесь не помощник: `MaskedInput` зашил бы разделители намертво, и в
-другой локали поле показывало бы формат другой локали.
+A mask is no help here: `MaskedInput` would hard-wire the separators, and in
+another locale the field would show the format of another locale.
 
-## Доступность и форма
+## Accessibility and forms
 
-- Кнопки шага автоматически получают имена от `label`.
-- Не превращайте пустоту в ноль: это меняет смысл данных.
-- Источник: `src/components/inputs/NumberInput.tsx`; проверки — `tests/number-input.test.tsx`.
+- The increment/decrement buttons get their names from `label` automatically.
+- Do not turn emptiness into zero: it changes the meaning of the data.
+- Source: `src/components/inputs/NumberInput.tsx`; checks — `tests/number-input.test.tsx`.

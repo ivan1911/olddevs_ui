@@ -7,130 +7,132 @@ source: src/components/actions/Toggle.tsx
 story: src/components/actions/Toggle.stories.tsx
 ---
 
-# Toggle, Segmented, ToggleGroup и ButtonGroup
+# Toggle, Segmented, ToggleGroup and ButtonGroup
 
-## Кратко для AI
+## Summary for AI
 
-Выбирайте компонент по смыслу состояния:
+Choose the component by what the state means:
 
-- `Toggle` — одно булево свойство;
-- `Segmented` — ровно один режим;
-- `ToggleGroup` — ноль или несколько независимых выборов;
-- `ButtonGroup` — только визуальная группа обычных действий.
+- `Toggle` is for one boolean property;
+- `Segmented` is for exactly one mode;
+- `ToggleGroup` is for zero or more independent choices;
+- `ButtonGroup` is only a visual group of ordinary actions.
 
-## Когда использовать
+## When to use
 
-- `Toggle`: включение и выключение настройки; обязательны `checked`, `onCheckedChange` и имя — `label` или видимая подпись в `children`.
-- `Segmented`: режим, который всегда ровно один, например «список / плитка».
-- `ToggleGroup`: фильтры или настройки, когда допустим пустой набор; `value` — массив ключей.
-- `ButtonGroup`: сцепка соседних `Button` без смены их семантики.
+- `Toggle`: turn a setting on/off; `checked`, `onCheckedChange` and a name — `label` or visible text in `children` — are required.
+- `Segmented`: there is always exactly one mode, for example "list / grid".
+- `ToggleGroup`: filters or settings where an empty set is allowed; `value` is an array of keys.
+- `ButtonGroup`: join adjacent `Button` components without changing their semantics.
 
-## Когда не использовать
+## When not to use
 
-- Не используйте `Segmented` для множественного выбора или возможности снять последний выбор — берите `ToggleGroup`.
-- Не используйте `ToggleGroup` как радиогруппу с обязательным ответом — берите `RadioGroup`.
-- Не применяйте `ButtonGroup` для передачи выбора: он не владеет состоянием выбора.
+- Do not use `Segmented` for multiple selection or when users must be able to clear the last choice — use `ToggleGroup`.
+- Do not use `ToggleGroup` as a radio group with a mandatory answer — use `RadioGroup`.
+- Do not use `ButtonGroup` to represent a selection: it does not own selection state.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<Toggle checked={digest} onCheckedChange={setDigest} description="Сводка активности по понедельникам">Недельная сводка</Toggle>
+<Toggle checked={digest} onCheckedChange={setDigest} description="A summary of activity every Monday">Weekly digest</Toggle>
 
-<Segmented value={view} onChange={setView} options={[{ value: "list", label: "Список" }, { value: "grid", label: "Плитка" }]} />
+<Segmented value={view} onChange={setView} options={[{ value: "list", label: "List" }, { value: "grid", label: "Grid" }]} />
 
-<ToggleGroup value={statuses} onChange={setStatuses} aria-label="Статусы" options={[{ id: "new", label: "Новые" }]} />
+<ToggleGroup value={statuses} onChange={setStatuses} aria-label="Statuses" options={[{ id: "new", label: "New" }]} />
 ```
 
 ## Public API
 
-- `Toggle` рендерит `button role="switch"`; `disabled` поддержан. Имя обязательно, и источник ровно один: `label` — доступное имя без видимого текста либо подпись в `children`. Обоих сразу нельзя: на слух переключатель назывался бы иначе, чем на экране. В разработке за этим следит предупреждение в консоли. Типом это не запрещено, чтобы `extends ToggleProps` и `Omit<ToggleProps, …>` у потребителя продолжали компилироваться.
-- **Подпись на экране и описание.** `<Toggle checked={…} onCheckedChange={…} description="Сводка активности по понедельникам">Недельная сводка</Toggle>` рисует строку настройки: заголовок и необязательное описание слева, дорожка справа. Подпись — настоящий `<label for>` на кнопку, поэтому нажатие по заголовку или по описанию переключает (у выключенного — нет), а подпись становится доступным именем (`aria-labelledby`). Описание связано с переключателем через `aria-describedby` и сливается с описанием `FormField` и с переданным `aria-describedby`, а не заменяет их. `description` без подписи не принимается — привязать его не к чему.
-- В виде строки `className` относится к строке целиком (ширина, отступы), в голом виде — к дорожке. Остальные атрибуты (`id`, `data-*`, `ref`, `aria-*`) в обоих видах уходят на кнопку. Дорожка стоит справа, подпись слева — раскладку «переключатель слева» пока не заказывали, а собирать её рядом с голым `Toggle` по-прежнему можно.
-- Дорожка включённого `Toggle` обведена рамкой `accent-strong`: заливка `accent` против подложки не дотягивает до 3:1 (WCAG 1.4.11), поэтому нужный контраст даёт рамка. Тот же приём у отмеченного `Checkbox`.
-- Переданный `onClick` вызывается **перед** переключением и не отменяет его: обработчик потребителя не вытесняет собственное поведение компонента. Чтобы отменить переключение осознанно, вызовите `event.preventDefault()`. Роль и `aria-checked` не перебиваются пропсами, переданными через spread.
-- `Segmented.options` содержит `value`, `label`, `icon`, `tooltip`, `disabled`; у сегмента без подписи `tooltip` обязателен как доступное имя.
-- `Segmented` переносит сегменты на вторую строку, когда они не помещаются в доступную ширину. Пропа под это нет и не будет — разбор ниже.
-- `Segmented.mobileIconOnly` прячет подписи на экране шириной меньше 640 пикселей, оставляя иконки; подпись при этом остаётся доступным именем кнопки. Разбор ниже.
-- `ToggleGroup.selectionMode` — `multiple` (по умолчанию) или `single`; в `single` допустимо ноль выбранных. `option` с одной иконкой требует `aria-label`.
-- `ToggleGroup` внутри вертикального `Toolbar` встаёт столбцом сам: ось приходит из панели через контекст react-aria, своего пропа у компонента нет.
-- `ButtonGroup.orientation` — `horizontal` или `vertical`; `aria-label` добавляет `role="group"`.
+- `Toggle` renders `button role="switch"`; `disabled` is supported. A name is required, and there is exactly one source: `label` — an accessible name with no visible text — or visible text in `children`. Both at once is not allowed: a screen reader would announce a different name than the one on screen. In development, a console warning flags this. The type does not forbid it, so that `extends ToggleProps` and `Omit<ToggleProps, …>` keep compiling for the consumer.
+- **Visible text and a description.** `<Toggle checked={…} onCheckedChange={…} description="A summary of activity every Monday">Weekly digest</Toggle>` renders a setting row: a title and an optional description on the left, the track on the right. The text is a real `<label for>` pointing at the button, so a click on the title or the description toggles (not when disabled), and the label becomes the accessible name (`aria-labelledby`). The description is linked to the switch through `aria-describedby` and is merged with the `FormField` description and any `aria-describedby` you pass, not replacing them. `description` without a label is not accepted — there is nothing to attach it to.
+- In the row form `className` applies to the whole row (width, margins), in the bare form — to the track. Other attributes (`id`, `data-*`, `ref`, `aria-*`) go to the button in both forms. The track sits on the right, the text on the left — a "switch on the left" layout has not been asked for yet, and you can still build it next to a bare `Toggle`.
+- The track of a `Toggle` that is on is outlined with an `accent-strong` border: the `accent` fill against the background falls short of 3:1 (WCAG 1.4.11), so the border provides the required contrast. A checked `Checkbox` uses the same technique.
+- A passed `onClick` is called _before_ the toggle and does not cancel it: a consumer's handler does not override the component's own behavior. To cancel the toggle deliberately, call `event.preventDefault()`. The role and `aria-checked` are not overridden by spread props.
+- `Segmented.options` holds `value`, `label`, `icon`, `tooltip`, `disabled`; for a segment without a label, `tooltip` is required as the accessible name.
+- `Segmented` wraps segments onto a second row when they do not fit the available width. There is no prop for this and there will not be — see the analysis below.
+- `Segmented.mobileIconOnly` hides the labels on screens narrower than 640 pixels, leaving the icons; the label stays the button's accessible name. See the analysis below.
+- `ToggleGroup.selectionMode` is `multiple` (the default) or `single`; in `single`, zero selected is allowed. An `option` with only an icon requires `aria-label`.
+- `ToggleGroup` inside a vertical `Toolbar` stacks into a column on its own: the axis comes from the toolbar through the react-aria context, and the component has no prop of its own.
+- `ButtonGroup.orientation` is `horizontal` or `vertical`; `aria-label` adds `role="group"`.
 
-## Перенос сегментов
+## Wrapping segments
 
-Сегмент не сжимается: у кнопки стоят `shrink-0` и `whitespace-nowrap`, и это
-намеренно — сжатая подпись вкладки читается хуже перенесённой. Поэтому, когда
-набор не влезает в ширину, у контейнера есть ровно два исхода: перенести
-лишнее на вторую строку или выехать за край; кит переносит.
+A segment does not shrink: the button has `shrink-0` and `whitespace-nowrap`, and
+this is deliberate — a squeezed tab label reads worse than a wrapped one. So when
+the set does not fit the width, the container has exactly two outcomes: wrap the
+excess onto a second row or run off the edge; the kit wraps.
 
-Булевым пропом это не управляется. `Segmented`, который не влезает и не
-переносится, бесполезен: выезд за край означает горизонтальную прокрутку,
-то есть нарушение WCAG 1.4.10, а нам не встретился потребитель, которому нужен
-именно выезд. Проп здесь читался бы как «по умолчанию сломано, почините
-пропом», и каждый следующий потребитель находил бы дефект заново — на узком
-экране и уже в проде.
+It is not controlled by a boolean prop. A `Segmented` that does not fit and does
+not wrap is useless: running off the edge means horizontal scrolling, that is, a
+violation of WCAG 1.4.10, and we have not met a consumer who specifically needs
+the overflow. A prop here would read as "broken by default, fix it with a prop",
+and every later consumer would rediscover the defect — on a narrow screen and
+already in production.
 
-Перенос зависит от доступной ширины, а не от брейкпоинта: `Segmented` может
-стоять и в узкой колонке на широком экране. Работает под любым родителем —
-блочным, `flex`, `grid`.
+Wrapping depends on the available width, not on a breakpoint: a `Segmented` may
+also sit in a narrow column on a wide screen. It works inside any parent — block,
+`flex`, `grid`.
 
-Зазор развёрнут по осям: между сегментами 2 пикселя, между рядами 4. Один
-`gap` на обе оси поставил бы ряды в те же 2 пикселя, и два ряда прочитались
-бы слипшейся сеткой вместо одного контрола.
+The gap is set per axis: 2 pixels between segments, 4 between rows. A single
+`gap` for both axes would put the rows the same 2 pixels apart, and the two
+rows would read as a clumped grid instead of one control.
 
-Порядок обхода клавиатурой при переносе совпадает с визуальным: слева направо,
-затем вторая строка. Это вторая причина предпочесть перенос прокрутке — при
-прокрутке Tab уводит фокус на кнопку за пределами видимой части, и браузер
-подтягивает её сам, дёргая содержимое вбок.
+The keyboard order when wrapping matches the visual one: left to right, then the
+second row. This is the second reason to prefer wrapping over scrolling — with
+scrolling, Tab moves focus to a button outside the visible part, and the browser
+scrolls it into view by itself, jerking the content sideways.
 
-## Только иконка на узком экране (`mobileIconOnly`)
+## Icon only on a narrow screen (`mobileIconOnly`)
 
-На экране шириной меньше 640 пикселей подпись сегмента прячется, остаётся иконка:
+On screens narrower than 640 pixels the segment label is hidden and the icon
+stays:
 
 ```tsx
 <Segmented value={list} onChange={setList} mobileIconOnly options={lists} />
 ```
 
-Мерой служит высота: пять сегментов с иконкой и подписью на ширине 375 занимают
-два ряда — 68 пикселей вместо 36 в этом режиме. Перенос сегментов (он появился
-раньше и никуда не делся) снимает горизонтальную прокрутку, но не высоту:
-пятьсот с лишним пикселей содержимого в 327 пикселей ширины не влезают, и
-второй ряд остаётся. В режиме ряд один.
+Height is the criterion: five segments with an icon and a label at a width of 375
+take two rows — 68 pixels instead of the 36 this mode needs. Segment wrapping (it
+came earlier and has not gone anywhere) removes horizontal scrolling but not
+height: over 500 pixels of content do not fit into 327 pixels of width, so a
+second row remains. In this mode there is one row.
 
-**Подпись прячется, а не удаляется.** Узел остаётся в дереве доступности и
-служит доступным именем кнопки — `sr-only sm:not-sr-only sm:inline`, тот же
-приём и тот же **один** узел, что у `Chip`. Ради этого режим и живёт в ките:
-спрятать подпись правильно — одна строка классов, а неправильно (`hidden`,
-`display: none`, выброшенные `children`) — три способа получить ряд безымянных
-кнопок, который видно только аудитом.
+**The label is hidden, not removed.** The node stays in the accessibility tree
+and serves as the button's accessible name — `sr-only sm:not-sr-only sm:inline`, the
+same technique and the same _one_ node as in `Chip`. This is why the mode lives in
+the kit: hiding a label correctly takes one line of classes, but there are three
+ways to hide it incorrectly (`hidden`, `display: none`, dropped `children`), and
+each leaves a row of nameless buttons that only an audit will reveal.
 
-**`tooltip` в этом режиме не нужен.** Требование «сегмент без подписи обязан
-иметь подсказку» относится к настоящему отсутствию подписи (`label: ""`); здесь
-подпись есть, просто её не видно. Подсказка на тач-устройстве всё равно не показалась
-бы. Раньше кит отказывался от такого режима именно поэтому: подсказка была бы
-невидима на касании. Отказ снят, потому что он держался на реализации, которая
-удаляла подпись.
+**`tooltip` is not needed in this mode.** The requirement "a segment without a
+label must have a tooltip" applies to a genuine absence of a label
+(`label: ""`); here the label exists, it just is not visible. A tooltip would not
+show on a touch device anyway. The kit used to refuse such a mode for exactly
+this reason: a tooltip would be invisible on touch. The refusal was lifted because
+it depended on an implementation that removed the label.
 
-**Режим — свойство всего `Segmented`, а не сегмента.** Ряд, где часть вкладок
-со словами, а часть без, менял бы ширину при переключении, и кнопки прыгали бы
-под пальцем. Единственное исключение — сегмент **без** иконки: у него подпись
-остаётся видимой, иначе кнопка оказалась бы пустой. Это защита от набора, в
-котором иконку забыли.
+**The mode is a property of the whole `Segmented`, not of a segment.** A row where
+some tabs have words and some do not would change width on switching, and the
+buttons would jump under the finger. The one exception is a segment _without_ an
+icon: its label stays visible, otherwise the button would be empty. This is a
+safeguard against a set where an icon was forgotten.
 
-**Порог наружу не выносится.** Те же 640, что у `Chip.mobileIconOnly`; два
-потребителя с разными порогами разошлись бы в поведении без причины. Порог
-берётся от ширины окна просмотра (viewport), а не родителя: `Segmented` в узкой
-колонке на широком мониторе подписи сохранит.
+**The threshold is not exposed.** It is the same 640 as `Chip.mobileIconOnly`;
+two consumers with different thresholds would diverge in behavior for no reason.
+The threshold is taken from the viewport width, not the parent's: a `Segmented` in a
+narrow column on a wide monitor keeps its labels.
 
-**Отступ режется вместе с подписью** — `px-2` вместо `px-3`. Вокруг одного
-иконки кнопка получается 32 на 28 вместо 40 на 28: почти квадрат, как у
-`Button iconOnly`. Высота не меняется, поэтому по высоте зона нажатия остаётся прежней.
+**The padding is reduced along with the label** — `px-2` instead of `px-3`. Around a
+single icon the button comes out 32 by 28 instead of 40 by 28: almost a square,
+like `Button iconOnly`. The height does not change, so the hit area keeps its
+height.
 
-Продуктовое возражение — пять голых иконок читаются хуже пяти слов — остаётся
-в силе, поэтому режим и есть проп, а не умолчание.
+The product objection — five bare icons read worse than five words — still
+stands, which is why the mode is a prop and not the default.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- `Toggle` использует `aria-checked`, остальные компоненты — `aria-pressed` или поведение React Aria.
-- Голый `Toggle` без видимой подписи называется только через `label`; не собирайте подпись рядом руками (`<span>` возле кнопки): она не станет именем и не откликнется на нажатие. Для этого есть `children`.
-- У сегмента без подписи доступное имя задаёт `tooltip`.
-- Источники: `src/components/actions/Toggle.tsx`, `src/components/actions/Segmented.tsx`, `src/components/actions/ToggleGroup.tsx`, `src/components/actions/ButtonGroup.tsx`; истории `Toggle.stories.tsx`, `Segmented.stories.tsx`, `ToggleGroup.stories.tsx`, `ButtonGroup.stories.tsx`.
+- `Toggle` uses `aria-checked`, the other components use `aria-pressed` or React Aria behavior.
+- A bare `Toggle` with no visible text is named only through `label`; do not build the text next to it by hand (a `<span>` beside the button): it will not become the name and will not react to a click. `children` exists for that.
+- For a segment without a label, the `tooltip` sets the accessible name.
+- Sources: `src/components/actions/Toggle.tsx`, `src/components/actions/Segmented.tsx`, `src/components/actions/ToggleGroup.tsx`, `src/components/actions/ButtonGroup.tsx`; the stories `Toggle.stories.tsx`, `Segmented.stories.tsx`, `ToggleGroup.stories.tsx`, `ButtonGroup.stories.tsx`.

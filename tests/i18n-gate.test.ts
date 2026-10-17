@@ -22,8 +22,8 @@ const ROOT = resolve(import.meta.dirname, "..");
  * Что сторожим. Волна 23 расширила гейт с одного `src/` на всё, что кит
  * показывает наружу.
  *
- * `docs/` в список НЕ входит: справочник остаётся русским по ADR-0034, и
- * сканирование сделало бы гейт вечно красным.
+ * `docs/` в этот список НЕ входит: у справочника свои ворота ниже («the Reference is
+ * English», ADR-0073), потому что `.ts`-обход и правила белого списка ему не подходят.
  *
  * `scripts/` тоже НЕ входит, и это осознанно. `bundle-size.mjs` разбирает
  * `docs/getting-started.md` — русский заголовок раздела и единица «кБ» лежат в
@@ -57,7 +57,6 @@ const ALLOWED = [
       "tests/rich-text-editor-table-size-grid.test.tsx",
       "tests/rich-text-editor-table-menu.test.tsx",
       "tests/editor-search.test.tsx",
-      "tests/docs-translations.test.ts",
       "tests-visual/interactions.spec.ts",
     ],
     why:
@@ -69,9 +68,7 @@ const ALLOWED = [
       "The table menu test sorts Russian cell text and Russian number formats: the order " +
       "of `yo` after `e`, not after `ya`, and `1 234,5` read as a number are the check. " +
       "The search test pins whole-word matching in Cyrillic: `\\b` of JS knows only Latin, " +
-      "so a Russian word inside a longer one is the case the Unicode boundary exists for. " +
-      "The docs translations test pins Cyrillic heading slugs: a Translation links by the " +
-      "Original's Russian anchor, so the slug of a Russian heading is the check itself.",
+      "so a Russian word inside a longer one is the case the Unicode boundary exists for.",
   },
 ];
 
@@ -209,5 +206,88 @@ describe("locale completeness", () => {
       extra
     );
     expect(extra.filter((p) => p.endsWith("key is missing from the locale"))).toEqual([]);
+  });
+});
+
+/**
+ * Ворота справочника (ADR-0073, английский Оригинал). Раньше `docs/` был исключён из
+ * гейта: справочник был русским по ADR-0034. Теперь Оригинал английский, русский
+ * Перевод живёт на сайте, и кириллица в `docs/**` и `README.md` — дефект.
+ *
+ * Перечень ниже — страницы, где русские строки являются ДАННЫМИ: значения русского
+ * каталога сообщений, русский пример ввода, русская подпись в примере кода. Страница
+ * без них в список не попадает. Поэтому он проверяется и в обратную сторону: запись
+ * для страницы без кириллицы устарела и роняет тест, иначе список только растёт.
+ */
+const DOCS_ALLOWED_PAGES = new Set([
+  "api/editor-extension.md",
+  "api/messages.md",
+  "api/utilities.md",
+  "components/actions/feedback.md",
+  "components/actions/split-button.md",
+  "components/app-shell/mobile-tab-bar.md",
+  "components/app-shell/split-panel.md",
+  "components/content/carousel.md",
+  "components/content/data-display.md",
+  "components/content/empty-and-loading.md",
+  "components/content/keyboard.md",
+  "components/content/media-card.md",
+  "components/content/rich-text-toc.md",
+  "components/date-time/time-picker.md",
+  "components/inputs/rich-text-editor.md",
+  "components/inputs/upload-queue.md",
+  "components/navigation/mega-menu.md",
+  "components/overlays/command-palette.md",
+  "components/overlays/confirm-dialog.md",
+  "components/overlays/shortcuts-help.md",
+  "conventions.md",
+  "i18n.md",
+  "theming.md",
+]);
+
+/** README.md carries the link to its Translation; that is the only Cyrillic word it may have. */
+const README_SWITCHER = /\(README\.ru\.md\)/;
+
+function docsFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = join(dir, entry.name);
+    return entry.isDirectory() ? docsFiles(full) : [full];
+  });
+}
+
+describe("the Reference is English (ADR-0073)", () => {
+  const docs = docsFiles(resolve(ROOT, "docs")).map((file) =>
+    relative(resolve(ROOT, "docs"), file).split("\\").join("/")
+  );
+
+  test("docs/ holds no *.en.md files: one file per page, in English", () => {
+    expect(docs.filter((file) => file.endsWith(".en.md"))).toEqual([]);
+  });
+
+  test("no Cyrillic in docs/**/*.md outside the pages that quote Russian as data", () => {
+    const found = docs
+      .filter((file) => file.endsWith(".md") && !DOCS_ALLOWED_PAGES.has(file))
+      .filter((file) => CYRILLIC.test(readFileSync(resolve(ROOT, "docs", file), "utf8")));
+    expect(
+      found,
+      "The Reference is written in English; the Russian Translation lives on the site " +
+        `(ADR-0073).\n${found.join("\n")}`
+    ).toEqual([]);
+  });
+
+  test("every allowed page exists and still quotes Russian", () => {
+    const stale = [...DOCS_ALLOWED_PAGES].filter(
+      (file) =>
+        !docs.includes(file) || !CYRILLIC.test(readFileSync(resolve(ROOT, "docs", file), "utf8"))
+    );
+    expect(stale, `These pages no longer need an allowance:\n${stale.join("\n")}`).toEqual([]);
+  });
+
+  test("no Cyrillic in README.md except the link to README.ru.md", () => {
+    const found = readFileSync(resolve(ROOT, "README.md"), "utf8")
+      .split("\n")
+      .map((line, i) => ({ line, number: i + 1 }))
+      .filter(({ line }) => CYRILLIC.test(line) && !README_SWITCHER.test(line));
+    expect(found.map(({ line, number }) => `README.md:${number}: ${line}`)).toEqual([]);
   });
 });

@@ -243,10 +243,9 @@ try {
   const doc = readFileSync(join(ROOT, "docs", "getting-started.md"), "utf8");
   // Именно раздел, а не весь файл: на странице есть вторая таблица — про цену
   // границы клиентского графа, — и строки в ней называются почти так же.
-  // Заголовок раздела и единица «кБ» — РУССКИЕ НАМЕРЕННО: скрипт разбирает
-  // `docs/getting-started.md`, а документация остаётся русской (ADR-0034).
-  // Перевести их значит разорвать сверку и получить вечно зелёный гейт.
-  const section = doc.split("## Размер импорта")[1]?.split("\n## ")[0];
+  // Заголовок раздела и единица «kB» разбираются как есть: справочник английский
+  // (ADR-0073). Переименовать их значит разорвать сверку и получить вечно зелёный гейт.
+  const section = doc.split("## Import size")[1]?.split("\n## ")[0];
 
   if (!section) {
     console.error(
@@ -266,7 +265,7 @@ try {
         continue;
       }
 
-      const written = Number(row.match(/([\d]+(?:[.,]\d+)?)\s*кБ/)?.[1]?.replace(",", "."));
+      const written = Number(row.match(/([\d]+(?:[.,]\d+)?)\s*kB/)?.[1]?.replace(",", "."));
       const actual = Number((measured[key] / 1024).toFixed(1));
       if (!Number.isFinite(written) || Math.abs(written - actual) > 0.1) {
         stale.push(`${key}: the docs say ${written} kB, the measurement says ${actual} kB`);

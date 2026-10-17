@@ -9,25 +9,25 @@ story: src/components/navigation/Pagination.stories.tsx
 
 # Pagination
 
-## Кратко для AI
+## Summary for AI
 
-`Pagination` — controlled pagination для уже разбитой на страницы коллекции.
-Она принимает 1-based `page`, вызывает `onChange` с 1-based номером и не
-рендерится при `pageCount <= 1`. `pageRange` — чистый helper для того же
-правила отображения номеров.
+`Pagination` is controlled pagination for a collection that is already split into pages.
+It takes a 1-based `page`, calls `onChange` with a 1-based number and does not
+render when `pageCount <= 1`. `pageRange` is a pure helper that applies the same
+rule for which page numbers to show.
 
-## Когда использовать
+## When to use
 
-- Серверная или локальная выдача с известным числом страниц.
-- Нужны переходы на соседнюю, первую и последнюю страницы и компактный диапазон номеров вокруг текущей.
+- Server-side or local results with a known number of pages.
+- You need to move to the adjacent, first or last page and to have a compact range of numbers around the current one.
 
-## Когда не использовать
+## When not to use
 
-- Для бесконечной ленты или «Загрузить ещё».
-- Для навигации по шагам формы используйте `Stepper`.
-- Не показывайте pagination, когда pageCount неизвестен или всегда равен 1.
+- For an infinite feed or "Load more".
+- For navigating the steps of a form, use `Stepper`.
+- Do not show pagination when pageCount is unknown or is always 1.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Pagination page={page} pageCount={result.pageCount} onChange={setPage} />
@@ -35,35 +35,34 @@ story: src/components/navigation/Pagination.stories.tsx
 
 ## Public API
 
-Нужны `page`, `pageCount`, `onChange`. `siblings` определяет количество соседей
-слева и справа от current page и по умолчанию равен 1. `className` и `aria-label` доступны;
-имя nav по умолчанию «Страницы». Если передан неверный `page`, компонент ограничивает
-текущий номер диапазоном от 1 до `pageCount`, а `onChange` получает номер соседней
-страницы, посчитанный от зажатого `page`.
-`pageRange(page, pageCount, siblings)` возвращает массив `(number | "gap")[]`;
-он всегда оставляет первую и последнюю страницы и не скрывает ровно одну страницу
-за многоточием.
+`page`, `pageCount` and `onChange` are required. `siblings` sets the number of neighbors
+to the left and right of the current page and defaults to 1. `className` and `aria-label` are available;
+the default nav name is "Pages". If an invalid `page` is passed in, the component clamps
+the current number to the range from 1 to `pageCount`, and `onChange` receives the number of the neighboring page, computed from the clamped `page`.
+`pageRange(page, pageCount, siblings)` returns an array `(number | "gap")[]`; it always
+keeps the first and last pages and never hides exactly one page
+behind an ellipsis.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-Это `nav` с обычными button: Tab проходит по каждому доступному действию.
-Текущая страница имеет `aria-current="page"`; prev/next имеют доступные имена и
-disabled на границах. Многоточие скрыто от скринридера и не кликабельно.
-См. [исходник Pagination](../../../src/components/navigation/Pagination.tsx).
+This is a `nav` with ordinary buttons: Tab moves through every available action.
+The current page has `aria-current="page"`; prev/next have accessible names and are
+disabled at the bounds. The ellipsis is hidden from screen readers and not clickable.
+See the [Pagination source](../../../src/components/navigation/Pagination.tsx).
 
-## Хорошие примеры
+## Good examples
 
-- Сбрасывать `page` в 1 при изменении фильтра на стороне приложения.
-- Передать `siblings={2}` для длинного списка, где нужно показывать больше соседних страниц.
-- Использовать `pageRange` лишь для собственного представления с теми же правилами.
+- Reset `page` to 1 when the application changes a filter.
+- Pass `siblings={2}` for a long list that should show more neighboring pages.
+- Use `pageRange` only for a custom presentation with the same rules.
 
-## Антипаттерны
+## Anti-patterns
 
-- 0-based `page` или `onChange`.
-- Кликабельные многоточия, которые ничего не раскрывают.
-- Выводить pagination для единственной страницы.
+- A 0-based `page` or `onChange`.
+- Clickable ellipses that reveal nothing.
+- Rendering pagination for a single page.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/navigation/Pagination.tsx`
 - `src/components/navigation/Pagination.stories.tsx`

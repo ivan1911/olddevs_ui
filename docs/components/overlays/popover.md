@@ -9,33 +9,33 @@ story: src/components/overlays/Popover.stories.tsx
 
 # Popover
 
-## Кратко для AI
+## Summary for AI
 
-`Popover` — составной примитив для панели, привязанной к элементу. Он не знает
-содержимого: вызывающий код задаёт trigger, контент и при необходимости anchor.
-Используйте его как основание dropdown, календаря или компактной панели, а не
-как самостоятельный диалог.
+`Popover` is a compound primitive for a panel attached to an element. It does not
+know its content: the calling code sets the trigger, the content and, if needed,
+the anchor. Use it as the basis for a dropdown, a calendar or a compact panel,
+not as a standalone dialog.
 
-## Когда использовать
+## When to use
 
-- Контент должен позиционироваться относительно кнопки или отдельного якоря.
-- Нужны portal, закрытие по Escape и корректное позиционирование у края экрана.
-- Внутри есть произвольная разметка, для которой нет готового `Select` или `Menu`.
+- The content must be positioned relative to a button or a separate anchor.
+- You need a portal, closing on Escape and correct positioning near the screen edge.
+- The content is arbitrary markup for which there is no ready `Select` or `Menu`.
 
-## Когда не использовать
+## When not to use
 
-- Для семантического списка действий используйте `Menu`.
-- Для текста при hover/focus — `Tooltip`; для превью с разметкой по наведению
-  на ссылку или имя — `HoverCard`; для блокирующего окна — `Dialog`.
-- Не используйте для контента, который обязан постоянно присутствовать в DOM
-  страницы как часть layout.
+- For a semantic list of actions, use `Menu`.
+- Use `Tooltip` for text on hover/focus, `HoverCard` for a preview with markup on
+  hover over a link or a name, and `Dialog` for a blocking dialog.
+- Do not use it for content that must always be present in the page's DOM as part
+  of the layout.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Popover>
   <PopoverTrigger asChild>
-    <Button>Фильтры</Button>
+    <Button>Filters</Button>
   </PopoverTrigger>
   <PopoverContent>
     <FilterForm />
@@ -45,33 +45,33 @@ story: src/components/overlays/Popover.stories.tsx
 
 ## Public API
 
-`Popover` — Radix `Root`, принимает его controlled- и uncontrolled-пропсы.
-`PopoverTrigger`, `PopoverAnchor` и `PopoverClose` — одноимённые примитивы Radix;
-обычно trigger получает `asChild`, чтобы сохранить семантику `Button`. Контент
-обязательно рендерьте через `PopoverContent`, а не голый Radix `Content`:
-`PopoverContent` создаёт portal, имеет `align="start"` и `sideOffset={4}` по умолчанию, а также
-принимает остальные props Radix (`side`, `align`, `onOpenAutoFocus` и др.).
+`Popover` is the Radix `Root` and accepts its controlled and uncontrolled props.
+`PopoverTrigger`, `PopoverAnchor` and `PopoverClose` are the matching Radix
+primitives; the trigger usually gets `asChild` to keep the `Button` semantics.
+Always render the content through `PopoverContent`, not the bare Radix `Content`:
+`PopoverContent` creates a portal, has `align="start"` and `sideOffset={4}` by default, and
+accepts the rest of the Radix props (`side`, `align`, `onOpenAutoFocus`, etc.).
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-Поведение фокуса, Escape и позиционирование делегированы Radix. Контент находится
-в portal на слое выше модальных окон, поэтому не добавляйте локальные `z-index`
-патчи без причины. Trigger должен быть доступным интерактивным элементом;
-не превращайте произвольный `div` в trigger без роли, фокуса и имени.
+Focus behavior, Escape and positioning are delegated to Radix. The content sits in
+a portal on a layer above modal dialogs, so do not add local `z-index` patches
+without a reason. The trigger must be an accessible interactive element; do
+not turn an arbitrary `div` into a trigger without a role, focus and a name.
 
-## Хорошие примеры
+## Good examples
 
-- Кнопка фильтра + форма в `PopoverContent`.
-- Отдельный `PopoverAnchor`, когда панель крепится не к trigger.
-- `side="bottom" align="end"` для панели у правого края кнопки.
+- A filter button + a form in `PopoverContent`.
+- A separate `PopoverAnchor` when the panel is anchored to something other than the trigger.
+- `side="bottom" align="end"` for a panel at the right edge of the button.
 
-## Антипаттерны
+## Anti-patterns
 
-- `<PopoverContent>` без `Popover`/триггера как постоянный слой.
-- Дублировать `Portal` или оборачивать `Popover` в `ModalOverlay`.
-- Список команд с неявной навигацией вместо `Menu`.
+- `<PopoverContent>` without a `Popover`/trigger as a permanent layer.
+- Duplicating `Portal` or wrapping a `Popover` in `ModalOverlay`.
+- A list of commands with implicit navigation instead of `Menu`.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/overlays/Popover.tsx`
 - `src/components/overlays/Popover.stories.tsx`

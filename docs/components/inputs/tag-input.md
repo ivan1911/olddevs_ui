@@ -9,40 +9,41 @@ story: src/components/inputs/TagInput.stories.tsx
 
 # TagInput
 
-## Кратко для AI
+## Summary for AI
 
-`TagInput` — управляемый набор строк. Enter или запятая превращают черновик в тег; повторные теги игнорируются, Backspace в пустом поле удаляет последний.
+`TagInput` is a controlled set of strings. Enter or a comma turns the draft into a tag; duplicate tags are ignored, and Backspace in an empty field removes the last one.
 
-## Когда использовать
+## When to use
 
-- Пользователь вводит несколько произвольных тегов, в том числе состоящих из нескольких слов.
-- Нужно удаление каждого тега, доступное с клавиатуры и скринридеру, и ограничение `max`.
+- The user enters several arbitrary tags, including ones made of several words.
+- You need each tag to be removable in an accessible way, and the `max` limit.
 
-## Когда не использовать
+## When not to use
 
-- Если набор предопределён, используйте `Select multiple`, `CheckboxGroup` или `ToggleGroup`.
-- Если нужен только один свободный текст, используйте `TextControl` или `Combobox`.
+- If the set is predefined, use `Select multiple`, `CheckboxGroup` or `ToggleGroup`.
+- If you need only a single free-form text value, use `TextControl` or `Combobox`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<TagInput label="Теги" value={tags} onChange={setTags} placeholder="Введите тег" max={8} />
+<TagInput label="Tags" value={tags} onChange={setTags} placeholder="Enter a tag" max={8} />
 ```
 
 ## Public API
 
-- `value` и `onChange` обязательны; это единственный источник набора тегов.
-- `label` или `aria-label` задаёт имя группе; input автоматически получает отдельное имя «…: добавить».
-- `max` отключает ввод по достижении лимита. `disabled` блокирует input; `placeholder` пропадает при полном наборе.
-- Вставленная строка делится по запятым, пробелы внутри тегов сохраняются; добавление на blur происходит только при уходе фокуса за пределы компонента.
+- `value` and `onChange` are required; they are the only source of the set of tags.
+- `label` or `aria-label` names the group; the input automatically gets a separate name "…: add".
+- `max` disables input when the limit is reached. `disabled` blocks the input; `placeholder` disappears when the set is full.
+- A pasted string is split at commas; spaces inside tags are kept; adding on blur happens only when focus leaves the component entirely.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- **Пояснение и ошибка `FormField` объявляются вместе с полем.** Описание
-  приходит контекстом, `aria-describedby` ставится на поле ввода, а не на группу тегов; значение,
-  заданное потребителем, не вытесняется, а дополняется. До версии 3.0.0 компоненты на react-aria
-  не забирали описание формы — на экране оно было, скринридеру не доставалось
+- **The hint and error of `FormField` are announced together with the field.** The
+  description arrives through context, and `aria-describedby` is set on the input,
+  not on the group of tags; the value set by the consumer is not replaced but merged
+  with it. Before version 3.0.0 the components built on react-aria did not pick up the form
+  description — it was on the screen but did not reach the screen reader
   (ADR-0031).
-- Enter на пустом вводе намеренно не отправляет форму.
-- В имени кнопки удаления назван конкретный тег; не заменяйте её другой кнопкой.
-- См. `src/components/inputs/TagInput.tsx`, `src/components/inputs/TagInput.stories.tsx`, `tests/tag-input.test.tsx`.
+- Enter on an empty input deliberately does not submit the form.
+- The remove button has a name that includes the specific tag; do not replace it with a custom button.
+- See `src/components/inputs/TagInput.tsx`, `src/components/inputs/TagInput.stories.tsx`, `tests/tag-input.test.tsx`.

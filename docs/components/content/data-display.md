@@ -9,189 +9,181 @@ story: src/components/content/Table.stories.tsx, src/components/content/Badge.st
 
 # Data display: `Badge`, `Stat`, `DescriptionList`, `Table`
 
-## Кратко для AI
+## Summary for AI
 
-Выбирайте компонент по форме и смыслу данных: `Badge` отвечает на «сколько»
-или «есть ли новое», `Stat` — на один показатель с контекстом, `DescriptionList`
-— на пары «свойство — значение», `Table` — на повторяющиеся строки и колонки.
-`StatusBadge` — не `Badge`: он описывает состояние сущности и документирован
-в [feedback](../actions/feedback.md).
+Choose the component by the shape and meaning of the data: `Badge` answers "how
+many" or "is there anything new", `Stat` is for a single metric with context,
+`DescriptionList` for "property — value" pairs, and `Table` for repeating
+rows and columns. `StatusBadge` is not a `Badge`: it describes the state of an
+entity and is documented in [feedback](../actions/feedback.md).
 
-## Когда использовать
+## When to use
 
-- `Badge` — число, короткая метка или точка рядом с иконкой или объектом.
-- `Stat` — ключевая метрика с подписью, изменением и коротким пояснением.
-- `DescriptionList` — набор неоднородных свойств объекта, например параметры
-  фото, где каждая подпись относится к одному значению.
-- `Table` — сопоставимые записи, которым нужны общая шапка, строки и при
-  необходимости сортировка, выделение либо изменение ширины колонок.
+- `Badge` — a number, a short label or a dot next to an icon or object.
+- `Stat` — a key metric with a label, a change and a short explanation.
+- `DescriptionList` — a set of heterogeneous properties of an object, for example
+  photo parameters, where each label belongs to one value.
+- `Table` — comparable records that need a shared header, rows and, when needed,
+  sorting, selection or column resizing.
 
-## Когда не использовать
+## When not to use
 
-- Не используйте `Badge` для статуса «черновик», «опубликован» или «ошибка»:
-  это `StatusBadge`. Для числа внутри кликабельного фильтра — `Chip count`.
-- Не вычисляйте `Stat deltaTone` по знаку: рост ошибок может быть плохим, а
-  уменьшение расходов — хорошим. Оценку задаёт вызывающий код.
-- Не используйте `DescriptionList` как замену таблицы с десятками однотипных
-  строк.
-- Не включайте сортировку, выделение, липкую шапку или изменение ширины
-  «на всякий случай»: `Table` показывает каждую ось только при её пропах.
+- Do not use `Badge` for the status "draft", "published" or "error": that is
+  `StatusBadge`. For a number inside a clickable filter, use `Chip count`.
+- Do not compute `Stat deltaTone` from the sign: a rise in errors may be bad, and
+  a drop in costs may be good. The calling code supplies that judgment.
+- Do not use `DescriptionList` as a replacement for a table with dozens of
+  same-shaped rows.
+- Do not turn on sorting, selection, a sticky header or column resizing "just in case":
+  `Table` shows each axis only when its props are passed.
 
-## Минимальные примеры
+## Minimal examples
 
 ```tsx
 import { Badge, DescriptionList, Stat, Table } from "@olddevs/ui";
 
 <Badge overlay>{5}</Badge>
-<Stat label="Подписчики" value="12 480" delta="+320" deltaTone="success" hint="за неделю" />
-<DescriptionList items={[{ label: "Размер", value: "2,4 МБ" }]} />
+<Stat label="Subscribers" value="12,480" delta="+320" deltaTone="success" hint="this week" />
+<DescriptionList items={[{ label: "Size", value: "2.4 MB" }]} />
 ```
 
 ```tsx
-const columns = [
-  { id: "name", header: "Название", cell: (item: User) => item.name, sortable: true },
-];
+const columns = [{ id: "name", header: "Name", cell: (item: User) => item.name, sortable: true }];
 
-<Table
-  aria-label="Пользователи"
-  items={users}
-  columns={columns}
-  sort={sort}
-  onSortChange={setSort}
-/>;
+<Table aria-label="Users" items={users} columns={columns} sort={sort} onSortChange={setSort} />;
 ```
 
 ## Public API
 
 ### `Badge`
 
-| Prop       | По умолчанию | Значение                                                                                                               |
-| ---------- | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `tone`     | `danger`     | Тон важности счётчика, не статус объекта.                                                                              |
-| `dot`      | `false`      | Рисует точку без содержимого: «есть новое», но не количество.                                                          |
-| `max`      | `99`         | Число выше предела выводится как `${max}+`.                                                                            |
-| `overlay`  | `false`      | Абсолютно позиционирует badge в правом верхнем углу соседа; родитель должен быть позиционированным, обычно `relative`. |
-| `children` | —            | Число или короткая метка.                                                                                              |
+| Prop       | Default  | Meaning                                                                                                                    |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `tone`     | `danger` | The tone of the counter's importance, not the status of the object.                                                        |
+| `dot`      | `false`  | Renders a dot with no content: "there is something new", but not a count.                                                  |
+| `max`      | `99`     | A number above the limit is shown as `${max}+`.                                                                            |
+| `overlay`  | `false`  | Positions the badge absolutely in the top right corner of its neighbor; the parent must be positioned, usually `relative`. |
+| `children` | —        | A number or a short label.                                                                                                 |
 
 ### `Stat`
 
-| Prop                  | По умолчанию | Значение                                                                           |
-| --------------------- | ------------ | ---------------------------------------------------------------------------------- |
-| `label`, `value`      | —            | Обязательная пара термина и значения.                                              |
-| `hint`                | —            | Короткое пояснение под значением.                                                  |
-| `delta` / `deltaTone` | —            | Изменение и его явная семантическая оценка; без `deltaTone` изменение нейтральное. |
-| `size`                | `md`         | `md` — плотная группа метрик, `lg` — главный показатель экрана.                    |
+| Prop                  | Default | Meaning                                                                                   |
+| --------------------- | ------- | ----------------------------------------------------------------------------------------- |
+| `label`, `value`      | —       | A required pair of term and value.                                                        |
+| `hint`                | —       | A short explanation under the value.                                                      |
+| `delta` / `deltaTone` | —       | The change and its explicit semantic judgment; without `deltaTone` the change is neutral. |
+| `size`                | `md`    | `md` — a dense group of metrics, `lg` — the main figure of the screen.                    |
 
 ### `DescriptionList`
 
-| Prop     | По умолчанию | Значение                                                                                                                                            |
-| -------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `items`  | —            | Массив обязательных пар `{ label, value }`.                                                                                                         |
-| `layout` | `columns`    | `columns` — подпись слева, значение справа на широком экране; `stack` — значение под подписью. На узком экране обе версии складываются вертикально. |
+| Prop     | Default   | Meaning                                                                                                                                                |
+| -------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `items`  | —         | An array of required `{ label, value }` pairs.                                                                                                         |
+| `layout` | `columns` | `columns` — label on the left, value on the right on a wide screen; `stack` — value under the label. On a narrow screen both layouts stack vertically. |
 
 ### `Table`
 
-| Prop                                | Назначение и ограничения                                                                                                                                                                 |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`, `items`                  | Обязательные данные. У каждого item нужен стабильный `id`; у колонки — `id`, `header`, `cell`.                                                                                           |
-| `aria-label`                        | Обязательное имя таблицы: по нему её найдёт скринридер.                                                                                                                                  |
-| `sort`, `onSortChange`              | Контролируемая сортировка. Передавайте обе части и отмечайте конкретные колонки `sortable`. Состояние у таблицы не хранится.                                                             |
-| `selectedKeys`, `onSelectionChange` | Контролируемое множественное выделение. Только наличие обеих частей добавляет колонку флажков.                                                                                           |
-| `stickyHeader`                      | Делает шапку липкой; контейнер снаружи обязан иметь заданную высоту и прокрутку.                                                                                                         |
-| `resizable`                         | Включает изменение ширины колонок мышью и клавиатурой. Только в этом режиме `column.width` становится начальной изменяемой шириной.                                                      |
-| `onRowAction`                       | Действие по строке: клик и Enter открывают запись (обработчик получает строку из `items`), а отмечают её флажки. Ось включается наличием пропа — см. ниже.                               |
-| `renderDetail`                      | Что показать под строкой. Включает ось раскрытия: без пропа нет ни колонки-раскрывателя, ни детальных строк в разметке.                                                                  |
-| `expandedKeys`, `onExpandedChange`  | Контролируемое раскрытие. Множество ключей, как у выделения; переключателя «одна строка или несколько» нет — см. ниже. Без этих пропов раскрытие работает само, на внутреннем состоянии. |
-| `rowLabel`                          | Имя строки для подписей построчных кнопок. Без него у всех раскрывателей одинаковое имя — см. ниже.                                                                                      |
-| `emptyText`                         | Содержимое пустого состояния; по умолчанию — строка каталога сообщений (`table.empty`): «Ничего нет» в `locales/ru`, без провайдера — «Nothing here».                                    |
+| Prop                                | Purpose and constraints                                                                                                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`, `items`                  | Required data. Every item needs a stable `id`; every column needs `id`, `header`, `cell`.                                                                                                         |
+| `aria-label`                        | A required name for the table; a screen reader uses it to identify the table.                                                                                                                     |
+| `sort`, `onSortChange`              | Controlled sorting. Pass both props and mark the columns that can be sorted as `sortable`. The table does not store the state.                                                                    |
+| `selectedKeys`, `onSelectionChange` | Controlled multiple selection. The checkbox column appears only if both props are passed.                                                                                                         |
+| `stickyHeader`                      | Makes the header sticky; the outer container must have a set height and scrolling.                                                                                                                |
+| `resizable`                         | Turns on column resizing by mouse and keyboard. Only in this mode does `column.width` become the initial resizable width.                                                                         |
+| `onRowAction`                       | A row action: a click and Enter open the record (the handler receives the item from `items`), while its checkboxes select it. Turned on by passing the prop — see below.                          |
+| `renderDetail`                      | What to show under a row. Turns on the expansion axis: without the prop there is no disclosure button column and no detail rows in the markup.                                                    |
+| `expandedKeys`, `onExpandedChange`  | Controlled expansion. A set of keys, like selection; there is no "one row or several" switch — see below. Without these props, the table manages expansion itself and keeps the state internally. |
+| `rowLabel`                          | The row's name for the labels of per-row buttons. Without it all the disclosure buttons have the same name — see below.                                                                           |
+| `emptyText`                         | The content of the empty state; by default a message-catalog string (`table.empty`): "Nothing here" without a provider, "Ничего нет" with `locales/ru`.                                           |
 
-`TableColumn.width` применяется как CSS-ширина без `resizable`; с `resizable`
-она передаётся как `defaultWidth`. Поэтому не ожидайте, что `width` в обычной
-таблице станет пользовательским состоянием.
+`TableColumn.width` is applied as a CSS width without `resizable`; with
+`resizable` it is passed as `defaultWidth`. So do not expect `width` in an
+ordinary table to become user state.
 
-**`onRowAction` — действие по строке рядом с выделением.** Клик по строке и
-Enter на сфокусированной строке вызывают `onRowAction(item)`; отмечают строку
-флажки, а Пробел на строке по-прежнему переключает выделение. Правило —
-«режим выделения» из react-aria, и его полезно знать заранее:
+**`onRowAction` is a row action alongside selection.** A click on a row and Enter
+on a focused row call `onRowAction(item)`; its checkboxes select it, and
+Space on a row still toggles the selection. The rule is react-aria's "selection
+behavior", and it is worth knowing in advance:
 
-- пока ничего не выделено, клик по строке — действие;
-- как только выделение появилось, клик по строке его переключает, и отмечать
-  дальше можно по всей строке, не целясь во флажок; действие остаётся на Enter;
-- без выделения (`selectedKeys` не передан) клик всегда вызывает действие.
+- while nothing is selected, a click on a row is the action;
+- once a selection exists, a click on a row toggles it, so you can keep selecting
+  by clicking anywhere on the row instead of aiming at a checkbox; the action stays on Enter;
+- without selection (`selectedKeys` not passed) a click always calls the action.
 
-Кнопки, ссылки и меню в ячейках сохраняют свой клик и строку не активируют: ручной
-`stopPropagation` не нужен. Строка раскрытия и кнопка-раскрыватель действие не
-вызывают. Строка с действием получает курсор-указатель.
+Buttons, links and menus inside cells keep their own click and do not activate
+the row: a manual `stopPropagation` is not needed. A detail row and the disclosure button
+do not call the action. A row with an action gets a pointer cursor.
 
-**Раскрытие — единственная ось, которую нельзя было добавить надстройкой.**
-Видимость колонок, порядок, плотность и полосу над таблицей (`toolbar`) `DataTable` добавляет снаружи:
-они меняют то, что уходит в `Table` пропсами. Детальная строка живёт **внутри**
-`<tbody>`, между строками коллекции react-aria, и вставить её снаружи невозможно.
-Разбор — ADR-0022.
+**Expansion is the only axis that could not be added as a layer on top.**
+`DataTable` adds column visibility, order, density and the table toolbar (`toolbar`)
+from the outside: they change what goes into `Table` through props. A detail row
+lives **inside** `<tbody>`, between the rows of the react-aria collection, and
+cannot be inserted from the outside. The analysis is in
+ADR-0022.
 
-**Переключателя «одна строка или несколько» нет.** У `Accordion` он есть, но
-`Accordion` умеет держать состояние сам, а `Table` — нет: проп, который она не
-может выполнить, был бы обещанием, которое нарушится молча. Сколько строк
-открыто разом, решает тот, у кого лежит состояние, кладя в множество один ключ
-или несколько.
+**There is no "one row or several" switch.** `Accordion` has one, but
+`Accordion` can hold the state itself and `Table` cannot: a prop it cannot back
+up would be a promise that breaks silently. How many rows are open at once is up
+to whoever holds the state, by putting one key or several into the set.
 
-**Передавайте `rowLabel` всегда, когда включено раскрытие.** Без него все
-кнопки называются одинаково, и скринридер в режиме перечисления кнопок читает
-двадцать одинаковых «Показать подробности». Первую колонку в качестве имени
-взять нельзя: её `cell` возвращает `ReactNode`, там бывает аватар или вёрстка, и
-в имя попал бы мусор.
+**Pass `rowLabel` whenever expansion is on.** Without it all the buttons have
+the same name, and a screen reader that lists buttons reads twenty identical
+"Show details". The first column cannot serve as the name: its `cell` returns a
+`ReactNode`, which may hold an avatar or markup, and junk would end up in the
+name.
 
-**Граница с `DataTable`** (с версии 2.2.0): всё, что выражается пропсами `Table` снаружи,
-внутрь `Table` не переносится. Если что-то можно было сделать надстройкой, а оно
-оказалось здесь — граница уже сдвинулась.
+**The boundary with `DataTable`** (since 2.2.0): anything that can be expressed by
+`Table` props from the outside does not move inside `Table`. If something could
+have been done as a layer on top and ended up here, the boundary has already
+shifted.
 
-## Состояние и доступность
+## State and accessibility
 
-- `Stat` и `DescriptionList` используют `dl` с `dt`/`dd`, поэтому подпись и
-  значение доступны как связанная пара.
-- У `Table` есть стандартный для react-aria клавиатурный контракт ячеек,
-  заголовков, сортировки и выделения. `aria-sort` в сортируемую колонку ставит
-  react-aria — и только после гидратации: статичная серверная разметка его не
-  содержит (направление видно по иконке). Причина — в самой библиотеке: она
-  решает по платформе, ставить ли атрибут, а сервер платформы не знает. На
-  Android, где TalkBack атрибут не поддерживает, его нет вовсе; на остальных
-  платформах у сортируемой колонки он есть всегда, `none` у несортированной.
-  Сервер и клиент поэтому начинают с одной и той же разметки, и на странице с
-  серверной отрисовкой нет предупреждения React о расхождении гидратации.
-- Идентификаторы колонок остаются публичными в `sort`; внутренний префикс
-  защищает от совпадения с `item.id` и не должен появляться в потребительском
-  состоянии.
-- Не добавляйте собственный Checkbox в колонку выделения: компонент использует
-  `Checkbox slot="selection"`, связанный с состоянием таблицы.
-- Раскрыватель — настоящая `<button>` в своей ячейке с `aria-expanded`, а не
-  кликабельная строка: строка целиком конфликтует со ссылками и флажками внутри
-  неё и недоступна с клавиатуры.
-- **`selectedKeys` — выделение видимых строк, а не всей выборки.** «Выделить
-  всё» отмечает то, что пришло в `items`; выделения записей за пределами
-  текущей страницы кит не поддерживает, и подписи в интерфейсе этого не обещают.
+- `Stat` and `DescriptionList` use `dl` with `dt`/`dd`, so the label and the value
+  are available as a linked pair.
+- `Table` has react-aria's standard keyboard contract for cells, headers, sorting
+  and selection. react-aria puts `aria-sort` on a sortable column, and only
+  after hydration: the static server markup does not contain it (the icon shows
+  the direction). The cause is in the library: it decides whether to set the
+  attribute based on the platform, and the server does not know the platform. On
+  Android, where TalkBack does not support the attribute, there is none at all;
+  elsewhere a sortable column always has it, `none` on an unsorted one. So the
+  server and the client start from the same markup, and a page with server
+  rendering gets no React hydration-mismatch warning.
+- Column identifiers stay public in `sort`; the internal prefix protects against
+  a clash with `item.id` and must not appear in the consumer's state.
+- Do not add your own Checkbox to the selection column: the component uses
+  `Checkbox slot="selection"`, tied to the table state.
+- The disclosure button is a real `<button>` in its own cell with `aria-expanded`, not a
+  clickable row: a whole-row target conflicts with links and checkboxes inside
+  it and is not reachable by keyboard.
+- **`selectedKeys` is the selection of visible rows, not of the whole result
+  set.** "Select all" marks what arrived in `items`; the kit does not support
+  selecting records outside the current page, and the interface labels do not promise it.
 
-## Антипаттерны
+## Anti-patterns
 
 ```tsx
-// Плохо: красный счётчик интерпретирован как ошибка сущности.
-<Badge tone="danger">Ошибка</Badge>
+// Bad: a red counter is interpreted as an entity error.
+<Badge tone="danger">Error</Badge>
 
-// Хорошо: состояние сущности — StatusBadge.
-<StatusBadge tone="danger">Ошибка</StatusBadge>
+// Good: the state of an entity is a StatusBadge.
+<StatusBadge tone="danger">Error</StatusBadge>
 
-// Плохо: таблица сама не знает, куда отправить сортировку.
-<Table aria-label="Фото" items={items} columns={columns} sort={sort} />
+// Bad: the table does not know where to send the sorting.
+<Table aria-label="Photos" items={items} columns={columns} sort={sort} />
 
-// Хорошо: состояние контролирует экран.
-<Table aria-label="Фото" items={items} columns={columns} sort={sort} onSortChange={setSort} />
+// Good: the screen controls the state.
+<Table aria-label="Photos" items={items} columns={columns} sort={sort} onSortChange={setSort} />
 
-// Плохо: «открыть заказ» ссылкой в ячейке с ручным stopPropagation на
-// pointerdown, mousedown и Enter — иначе клик заодно отмечает строку.
+// Bad: "open the order" as a link in a cell with a manual stopPropagation on
+// pointerdown, mousedown and Enter — otherwise the click also selects the row.
 cell: (order) => <Link onPointerDown={stop} onMouseDown={stop} onKeyDown={stopEnter} onClick={() => open(order)}>{order.id}</Link>
 
-// Хорошо: действие строки — проп таблицы; выделение остаётся на флажках.
+// Good: the row action is a table prop; selection stays on the checkboxes.
 <Table
-  aria-label="Заказы"
+  aria-label="Orders"
   items={orders}
   columns={columns}
   selectedKeys={selected}
@@ -200,13 +192,13 @@ cell: (order) => <Link onPointerDown={stop} onMouseDown={stop} onKeyDown={stopEn
 />
 ```
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходники: `src/components/content/Badge.tsx`, `src/components/content/Stat.tsx`,
+- Sources: `src/components/content/Badge.tsx`, `src/components/content/Stat.tsx`,
   `src/components/content/DescriptionList.tsx`, `src/components/content/Table.tsx`.
 - Stories: `src/components/content/Table.stories.tsx`, `src/components/content/Badge.stories.tsx`, `src/components/content/Stat.stories.tsx`, `src/components/content/DescriptionList.stories.tsx`.
-- Границы осей таблицы, доступность AvatarGroup и сворачивание Badge проверяет
-  `tests/data.test.tsx`.
-- Действие по строке: `tests/table-row-action.test.tsx` (jsdom) и тест «Table: a row
-  click and Enter run the row action…» в `tests-visual/interactions.spec.ts`.
-  Гидратация сортируемых колонок: `tests/table-hydration.test.tsx`.
+- The table axis boundaries, AvatarGroup accessibility and Badge collapsing are
+  tested in `tests/data.test.tsx`.
+- The row action: `tests/table-row-action.test.tsx` (jsdom) and the test "Table: a
+  row click and Enter run the row action…" in `tests-visual/interactions.spec.ts`.
+  Hydration of sortable columns: `tests/table-hydration.test.tsx`.

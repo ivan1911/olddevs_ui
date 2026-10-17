@@ -1,42 +1,40 @@
-# Подключение `@olddevs/ui`
+# Setting up `@olddevs/ui`
 
-## Установка
+## Installation
 
 ```bash
 npm install @olddevs/ui react
 ```
 
-React — единственная peer-зависимость кита (ADR-0072): его версию выбирает
-приложение, и копия в нём должна быть одна. Остальные библиотеки — Radix,
-`react-aria-components`, `@internationalized/date`, `lucide-react`, `sonner`,
-`clsx` и `tailwind-merge` — кит приносит сам, в своих `dependencies`, и держать
-их в `package.json` приложения не нужно.
+React is the kit's only peer dependency (ADR-0072): the app picks its version, and the app
+must have exactly one copy of it. The kit brings every other library itself, in its own
+`dependencies`: Radix, `react-aria-components`, `@internationalized/date`, `lucide-react`,
+`sonner`, `clsx` and `tailwind-merge`. You don't need to list them in your app's `package.json`.
 
-Если приложение пользуется какой-то из них напрямую, держите её диапазон
-совместимым с китовым: иначе в сборке окажутся две копии, и слои, контексты и
-провайдеры разных копий друг друга не увидят (см. [частые проблемы](#частые-проблемы)).
-По той же причине `LucideProvider` импортируйте из `@olddevs/ui/icons`, а `toast` —
-из `@olddevs/ui`, а не из `lucide-react` и `sonner`.
+If your app uses one of them directly, keep its range compatible with the kit's. Otherwise the
+build ends up with two copies, and the layers, contexts and providers of one copy can't see the
+other's (see [Troubleshooting](#troubleshooting)). For the same reason, import `LucideProvider`
+from `@olddevs/ui/icons` and `toast` from `@olddevs/ui`, not from `lucide-react` and `sonner`.
 
-Движка Редактора в списке нет: его ставит только тот, кто импортирует
-`@olddevs/ui/editor`, — команда на [странице Редактора](components/inputs/rich-text-editor.md#установка).
+The Editor engine is not on the list: only an app that imports `@olddevs/ui/editor` installs
+it — the command is on the [Editor page](components/inputs/rich-text-editor.md#installation).
 
-## Импорт компонентов
+## Importing components
 
 ```tsx
 import { Button, TextControl } from "@olddevs/ui";
 import { AddIcon } from "@olddevs/ui/icons";
 ```
 
-Импортируйте только публичные входы пакета — все они перечислены в `exports`
-файла `package.json` и в [словаре](glossary.md) (`.`, `/icons`, `/color`, `/editor`,
-`/editor/schema`, `/editor/highlight`, `/locales/ru`, `/locales/en`, а также
-`styles.css`). Не импортируйте `@olddevs/ui/src/components/...`: такой путь не входит в контракт пакета и может
-измениться без миграции.
+Import only the package's public entry points — they are all listed in `exports` of
+`package.json` and in the [glossary](glossary.md) (`.`, `/icons`, `/color`, `/editor`,
+`/editor/schema`, `/editor/highlight`, `/locales/ru`, `/locales/en`, plus
+`styles.css`). Do not import `@olddevs/ui/src/components/...`: that path is not part of the package contract and may
+change without a migration.
 
-## Подключение CSS
+## Adding the CSS
 
-В CSS потребителя обязательны все три строки:
+The consumer's CSS needs all three lines:
 
 ```css
 @import "tailwindcss";
@@ -44,182 +42,183 @@ import { AddIcon } from "@olddevs/ui/icons";
 @source "./node_modules/@olddevs/ui/dist";
 ```
 
-`@import "tailwindcss"` принадлежит приложению-потребителю, а не пакету. Не
-импортируйте Tailwind вторично. `@source` обязателен: Tailwind 4 не сканирует
-`node_modules` автоматически, поэтому без него сборка может успешно завершиться
-без классов компонентов в итоговом CSS.
+`@import "tailwindcss"` belongs to the consumer app, not to the package. Do not
+import Tailwind a second time. `@source` is required: Tailwind 4 does not scan
+`node_modules` automatically, so without it the build can succeed
+with no component classes in the final CSS.
 
-Если Редактор (`@olddevs/ui/editor`) в приложении не используется, добавьте
-четвёртую строку:
+If the app does not use the Editor (`@olddevs/ui/editor`), add a fourth line:
 
 ```css
 @source not "./node_modules/@olddevs/ui/dist/editor";
 ```
 
-`@source` по всему `dist` сканирует и Редактор, поэтому его классы (Панель, меню,
-`.ProseMirror`) попадают в CSS, даже когда вход нигде не импортируется. Замер
-на приложении Next.js 16 без Редактора: 160 кБ CSS без строки, 113 кБ с ней.
-Импортировали Редактор — уберите строку: иначе его классы не попадут в CSS, а
-сборка, как и без `@source`, пройдёт молча.
+`@source` over the whole `dist` scans the Editor too, so its classes (the Toolbar, menus,
+`.ProseMirror`) end up in the CSS even when the entry point is never imported. Measured on a
+Next.js 16 app without the Editor: 160 kB of CSS without the line, 113 kB with it. Once you
+import the Editor, remove the line: otherwise its classes do not reach the CSS, and the
+build, just as without `@source`, passes silently.
 
-## Пакет в серверных компонентах
+## The package in server components
 
-Компоненты кита импортируются **прямо в серверный компонент** Next.js App
-Router — оборачивать их своим файлом с `"use client"` не нужно: директива стоит
-в самом пакете, по файлам.
+Kit components can be imported **straight into a server component** of the Next.js App
+Router — you do not need to wrap them in your own file with `"use client"`: the directive sits
+in the package itself, file by file.
 
-Но в конфигурации потребителя обязательна ещё одна строка:
+But the consumer's config needs one more line:
 
 ```js
 // next.config.mjs
 export default { experimental: { optimizePackageImports: ["@olddevs/ui"] } };
 ```
 
-Она обязательна ровно в том же смысле, что и `@source` для Tailwind: без неё
-сборка проходит успешно, а результат негодный. Замер на приложении Next.js 15.5
-(`First Load JS`, пакет установлен из tarball):
+It is required in exactly the same sense as `@source` for Tailwind: without it
+the build passes, but the result is unusable. Measured on a Next.js 15.5 app
+(`First Load JS`, package installed from a tarball):
 
-| Что импортирует страница         | Без строки | Со строкой |
-| -------------------------------- | ---------- | ---------- |
-| ничего из кита (базовая линия)   | 102 кБ     | 103 кБ     |
-| `AddIcon` из `@olddevs/ui/icons` | 103 кБ     | 103 кБ     |
-| одна `Button` из корня           | **408 кБ** | 114 кБ     |
-| `cn` и `tableStateToParams`      | **408 кБ** | 103 кБ     |
+| What the page imports              | Without the line | With the line |
+| ---------------------------------- | ---------------- | ------------- |
+| nothing from the kit (baseline)    | 102 kB           | 103 kB        |
+| `AddIcon` from `@olddevs/ui/icons` | 103 kB           | 103 kB        |
+| one `Button` from the root         | **408 kB**       | 114 kB        |
+| `cn` and `tableStateToParams`      | **408 kB**       | 103 kB        |
 
-Третья строка читается так: импорт одной кнопки приносил пользователю **весь
-кит целиком**. Четвёртая — что серверный компонент, которому нужны две чистые
-функции и ни одного компонента, отгружал те же 306 кБ клиентского кода.
+Read the third row like this: importing a single button brought the user **the whole
+kit**. The fourth: a server component that needs two pure
+functions and no components shipped the same 306 kB of client code.
 
-Причина не в упаковке пакета, а в границе клиентского графа: корневой
-вход реэкспортирует сотню клиентских модулей, и tree shaking через эту
-границу не работает. `optimizePackageImports` переписывает импорт из
-корневого входа в набор точечных, и цена возвращается к разумной. Разбор —
+The cause is not how the package is built but the boundary of the client graph: the root
+entry point re-exports about a hundred client modules, and tree shaking does not work across that
+boundary. `optimizePackageImports` rewrites the import from the
+root entry point into a set of targeted ones, and the cost drops back to something reasonable. Details in
 ADR-0029.
 
-**Subpath Редактора — своей строкой.** Вход `@olddevs/ui/editor` — такой же
-barrel-файл: рядом с серверным `RichTextView` он реэкспортирует клиентский
-`RichTextEditor`. Корневая строка subpath не покрывает, и страница, которой
-нужен один Просмотр Документа, отгружает весь Редактор вместе с движком:
+**The Editor subpath needs its own line.** The `@olddevs/ui/editor` entry point is the same
+kind of barrel: next to the server-side `RichTextView` it re-exports the client
+`RichTextEditor`. The root line does not cover the subpath, and a page that needs only a Document
+View ships the whole Editor together with the engine:
 
 ```js
-// next.config.mjs — если импортируете @olddevs/ui/editor
+// next.config.mjs — if you import @olddevs/ui/editor
 export default {
   experimental: { optimizePackageImports: ["@olddevs/ui", "@olddevs/ui/editor"] },
 };
 ```
 
-Замер фикстуры потребителя (`RichTextView` с Блоком кода в серверном
-компоненте): **435 кБ** `First Load JS` без второй строки и 137 кБ с ней — в
-клиент едет только Остров кнопки «Копировать». Входы `@olddevs/ui/editor/schema`
-и `@olddevs/ui/editor/highlight` — не barrel-файлы и клиентских модулей не содержат,
-строка им не нужна.
+Measured on a consumer fixture (`RichTextView` with a code Block in a server
+component): **435 kB** of `First Load JS` without the second line and 137 kB with it — only
+the Island of the "Copy" button goes to the client. The `@olddevs/ui/editor/schema`
+and `@olddevs/ui/editor/highlight` entry points are not barrels and contain no client modules,
+so they do not need the line.
 
-Утилиты (`cn`, `tableStateToParams`, `formatMask` и остальные из
-[api/utilities.md](api/utilities.md)) серверно-безопасны: React они не
-импортируют и в клиентский граф не тянут. Отдельного входа вроде
-`@olddevs/ui/server` у пакета нет и не планируется — со строкой выше он не
-нужен.
+Utilities (`cn`, `tableStateToParams`, `formatMask` and the rest of
+[api/utilities.md](api/utilities.md)) are server-safe: they do not
+import React and do not pull anything into the client graph. The package has no separate entry point such as
+`@olddevs/ui/server` and none is planned — with the line above it is
+not needed.
 
-## Размер импорта
+## Import size
 
-Пакет поставляется с исходниками, неиспользуемый код отбрасывается (tree shaking):
-в бандл потребителя попадает только то, что он импортировал. Замер на 3.47.3 — вклад **самого пакета**,
-React и сторонние библиотеки кита внешние, метрика gzip:
+The package ships its source, and unused code is dropped by tree shaking: only what the
+consumer imported ends up in its bundle. Measured on 3.47.3. The figures are the contribution of **the package itself**;
+React and the kit's third-party libraries are treated as external, and the metric is gzip:
 
-| Что импортирует потребитель                                                                                 | gzip     |
-| ----------------------------------------------------------------------------------------------------------- | -------- |
-| `cn` и `tableStateToParams`                                                                                 | 0,6 кБ   |
-| одна `Button`                                                                                               | 1,6 кБ   |
-| `DataTable`                                                                                                 | 9,3 кБ   |
-| весь кит целиком (`import *`)                                                                               | 77,2 кБ  |
-| `RichTextEditor` из `@olddevs/ui/editor`, без движка, «старт»                                               | 82,0 кБ  |
-| `RichTextEditor` вместе с движком Tiptap, «старт» (статический граф, `basic`)                               | 315,7 кБ |
-| `RichTextEditor` вместе с движком Tiptap, «полный» (со всеми ленивыми чанками, `full`)                      | 462,7 кБ |
-| `RichTextView` из `@olddevs/ui/editor`, движок Tiptap в замер включён                                       | 14,8 кБ  |
-| `sanitizeRichText` и `richTextSanitizeConfig` из `@olddevs/ui/editor/schema`, движок Tiptap в замер включён | 4,7 кБ   |
-| `highlightCodeBlocks` из `@olddevs/ui/editor/highlight`, вместе с lowlight                                  | 22,6 кБ  |
-| `highlightCodeNodes` из `@olddevs/ui/editor/highlight`, вместе с lowlight                                   | 22,6 кБ  |
+| What the consumer imports                                                                                | gzip     |
+| -------------------------------------------------------------------------------------------------------- | -------- |
+| `cn` and `tableStateToParams`                                                                            | 0.6 kB   |
+| one `Button`                                                                                             | 1.6 kB   |
+| `DataTable`                                                                                              | 9.3 kB   |
+| the whole kit (`import *`)                                                                               | 77.2 kB  |
+| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 82.0 kB  |
+| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 315.7 kB |
+| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 462.7 kB |
+| `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 14.8 kB  |
+| `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 4.7 kB   |
+| `highlightCodeBlocks` from `@olddevs/ui/editor/highlight`, with lowlight                                 | 22.6 kB  |
+| `highlightCodeNodes` from `@olddevs/ui/editor/highlight`, with lowlight                                  | 22.6 kB  |
 
-Семь последних строк — отдельные входы Редактора со своими бюджетами
-(ADR-0050). У Редактора три строки, и две из
-них — сценарии (ADR-0058, п. 11.7):
-**«старт»** — статический граф, то, что едет сразу и что платит Пресет `basic`; **«полный»** — он же
-плюс все ленивые чанки входа, то, что в итоге грузит `full`. Блок кода и таблица (их нет в `basic`,
-а их Extensions тяжелее 10 кБ) грузятся лениво; до их прихода Редактор, в котором они есть,
-показывает Скелет. `npm run size` проверяет, что их модулей в «старте» нет. Код кита меряется на «старте».
+The last seven rows are separate Editor entry points with their own budgets
+(ADR-0050). The Editor has three rows, and two of
+them are scenarios (ADR-0058, item 11.7):
+**"start"** is the static graph, what ships immediately and what the `basic` Preset costs; **"full"** is the same
+plus all the lazy chunks of the entry point, what `full` ends up loading. The code Block and the table (absent from `basic`,
+and their Extensions weigh more than 10 kB) load lazily; until they arrive, an Editor that includes them shows a Skeleton.
+`npm run size` checks that their modules are not in "start". The kit's own code is measured at "start".
 
-В сценариях движок **внесён в замер** намеренно: Tiptap ставит потребитель, но набор его расширений
-выбирает кит. С подсветкой Блока кода в замер входят ещё lowlight и восемь грамматик highlight.js
-(ADR-0051). Числа в таблице сняты тем же
-конвейером, что и остальные (vite в режиме библиотеки, где пробелы при минификации остаются);
-бандлер приложения с полной минификацией давал около 133 кБ (замер до Панели).
+In the scenarios the engine is **included in the measurement** on purpose: the consumer installs Tiptap, but
+the kit chooses the set of its extensions. With code Block highlighting, lowlight and eight
+highlight.js grammars are included too (ADR-0051). The figures in the table come from the same
+pipeline as the others (vite in library mode, where whitespace stays during minification);
+an app bundler with full minification produced about 133 kB (measured before the Toolbar).
 
-У `RichTextView` Tiptap и lowlight внесены в замер ради проверки. В его строку входят только
-типографика, Остров кнопки «Копировать» у Блоков кода (кнопка и подсказка кита, каталог сообщений)
-и поиск формул и видео в HTML с загрузчиками их Островов; сами KaTeX и плеер — в ленивых чанках, которые
-страница без формул и видео не грузит. Замер доказывает, что в графе нет ни движка, ни подсветчика. Так же меряется лёгкий вход
-`@olddevs/ui/editor/schema` (4,7 кБ): Схема, `richTextSchema`, очистка `sanitizeRichText` с хуками для
-DOMPurify, в том числе по правилам своих Инструментов, и `markRange`.
+For `RichTextView`, Tiptap and lowlight are included in the measurement as a check. Its row contains only
+typography, the Island of the "Copy" button on code Blocks (the kit's button and tooltip, the message catalog)
+and the search for formulas and video in the HTML with the loaders of their Islands; KaTeX and the player themselves
+are in lazy chunks that a page without formulas or video does not load. The measurement proves that its graph
+contains neither the engine nor a highlighter. The lightweight
+`@olddevs/ui/editor/schema` entry point is measured the same way (4.7 kB): the Schema, `richTextSchema`, the
+`sanitizeRichText` sanitizer with hooks for DOMPurify, including for the rules of custom Tools, and `markRange`.
 
-Серверная подсветка `@olddevs/ui/editor/highlight` (22,6 кБ — почти целиком ядро highlight.js и
-грамматики) стоит только тому, кто её импортировал, и обычно только на сервере. Хелпер
-`highlightCodeNodes` для `CodeView` весит столько же: React в замер не входит
-(ADR-0052). Кто вход
-`@olddevs/ui/editor` не импортирует, не платит ни за движок, ни за код Редактора; в основной вход
-попадают только английские подписи Редактора в общем каталоге сообщений, около 1 кБ gzip (ADR-0050, п. 5).
+Server-side highlighting in `@olddevs/ui/editor/highlight` (22.6 kB — almost entirely the highlight.js core and
+grammars) costs only an app that imports it, and usually only on the server. The
+`highlightCodeNodes` helper for `CodeView` weighs the same: React is not in the measurement
+(ADR-0052). An app that does not import the
+`@olddevs/ui/editor` entry point pays for neither the engine nor the Editor code; only the Editor's English
+labels in the shared message catalog reach the main entry point, about 1 kB gzip (ADR-0050, item 5).
 
-Поповер своего цвета в Редакторе (`ColorPicker` и цветовая подсистема `react-aria-components`, около
-51 кБ gzip) грузится лениво при первом «Свой цвет…»: в «старт» он не входит, а в «полный» входит только
-код кита, react-aria в замер не входит. Ленивые чанки скрипт не отбрасывает молча: их вес сверх
-«старта» он печатает у каждой строки. Чанки можно подгрузить заранее: `modulepreload` на них ставит потребитель.
+The Editor's custom color Popover (`ColorPicker` and the color subsystem of `react-aria-components`, about
+51 kB gzip) loads lazily on the first "Custom color…": it is not in "start", and "full" includes
+only the kit's own code, since react-aria is not in the measurement. The script does not drop the lazy chunks
+silently: it prints their weight on top of "start" next to each row. The chunks can be preloaded ahead
+of time: the consumer sets `modulepreload` on them.
 
-Числа сторожатся в CI и сверяются с этой таблицей: `npm run size` меряет вклад
-пакета и падает, если документация разошлась с замером, а
-`npm run check:consumer` меряет `First Load JS` страницы
-приложения-потребителя. Бюджеты обеих величин лежат в
+The numbers are enforced in CI and checked against this table: `npm run size` measures the package's
+contribution and fails if the documentation has drifted from the measurement, and
+`npm run check:consumer` measures the `First Load JS` of a consumer
+app page. The budgets for both are in
 `scripts/bundle-size.budgets.mjs`.
 
-Если компонент вырос по делу, бюджет поднимается — **отдельной строкой в
-merge request и с объяснением, что именно выросло**. Бюджет, который двигают
-заодно с правкой компонента, перестаёт что-либо сторожить уже через пару
-релизов.
+If a component grew for a good reason, the budget goes up — **in a separate line in the
+merge request, with an explanation of what exactly grew**. A budget that is moved
+along with a component change stops enforcing anything within a couple of
+releases.
 
-### Что лежит в пакете
+### What is in the package
 
-Разбор решения — ADR-0042.
+Details of the decision — ADR-0042.
 
-Кроме `dist` и `styles.css` публикуются **исходники** (`src`, без историй) и
-карты к ним. На бандл потребителя это не влияет ни на байт: в браузер уезжает
-только импортированный код из `dist`, а исходники и карты нужны инструментам —
-отладчику и редактору. Цена — вес установки: на 3.47.3 пакет весит около 9,2 МБ
-распакованным (tarball — около 2,4 МБ), из них исходники — около 2,7 МБ
+Besides `dist` and `styles.css`, the **sources** (`src`, without stories) and their
+source maps are published. This does not affect the consumer's bundle by a single byte: only the imported code from `dist`
+goes to the browser, while the sources and maps are for tools —
+the debugger and the editor. The price is install size: on 3.47.3 the package weighs about 9.2 MB
+unpacked (the tarball is about 2.4 MB), of which the sources are about 2.7 MB
 (`npm pack --dry-run`).
 
-Покупается на них рабочая отладка. Без `src` карты в пакете лежали мёртвым
-грузом: они ссылаются на исходник относительным путём, файла рядом не было, и
-отладчик молча показывал скомпилированный код. Теперь брейкпоинт внутри кита
-открывает настоящий `.tsx` — с комментариями, в которых объяснено, почему
-компонент устроен именно так, — а «перейти к определению» ведёт туда же, а не
-в `.d.ts`.
+What they buy is working debugging. Without `src`, the maps sat in the package as dead
+weight: they refer to the source by a relative path, the file was not there, and
+the debugger quietly showed compiled code. Now a breakpoint inside the kit
+opens the real `.tsx` — with comments that explain why the
+component is built the way it is — and "go to definition" leads there too, rather than to
+`.d.ts`.
 
-Публичный вход это не расширяет: `exports` — закрытая карта, и
-`import "@olddevs/ui/src/components/content/Link.tsx"` Node и любой уважающий
-`exports` бандлер отвергают с `ERR_PACKAGE_PATH_NOT_EXPORTED`. Исходники в
-пакете — материал для инструментов, а не второй способ импортировать кит.
+This does not widen the public entry points: `exports` is a closed map, and
+`import "@olddevs/ui/src/components/content/Link.tsx"` is rejected by Node and by any
+`exports`-respecting bundler with `ERR_PACKAGE_PATH_NOT_EXPORTED`. The sources in the
+package are material for tools, not a second way to import the kit.
 
-С 3.8.0 рядом с ними едет **справочник** — `docs/` целиком и указатель
-`llms.txt` в корне пакета (ADR-0044).
-Тот же обмен, что и с исходниками: в браузер не уезжает ни байта, вес установки
-растёт на 2,5 МБ распакованным (на 3.47.3). Смысл — в читателе: комментарий в коде объясняет, почему
-компонент устроен так, а страница справочника отвечает, что брать и когда, и до
-3.8.0 второго вопроса в пакете не существовало вовсе.
+Since 3.8.0 the **Reference** ships next to them — the whole of `docs/` and the `llms.txt` index at the package root
+(ADR-0044).
+The same trade as with the sources: not a single byte goes to the browser, and the install size
+grows by 2.5 MB unpacked (on 3.47.3). The point is the reader: a comment in the code explains why a
+component is built the way it is, while a Reference page answers what to pick and when, and before
+3.8.0 the second question had no answer in the package at all.
 
-Открывайте справочник прямо из `node_modules/@olddevs/ui/`: начните с `llms.txt` —
-это указатель на все страницы справочника, — дальше по ссылкам. Импортировать справочник, как и
-исходники, нельзя: `import "@olddevs/ui/docs/index.md"` отвергается тем же
+Open the Reference straight from `node_modules/@olddevs/ui/`: start with `llms.txt` —
+the index of all the Reference pages — then follow the links. The Reference cannot be imported, any more than the
+sources: `import "@olddevs/ui/docs/index.md"` is rejected with the same
 `ERR_PACKAGE_PATH_NOT_EXPORTED`.
 
-## Быстрый пример
+## Quick example
 
 ```tsx
 import { Button, FormField, TextControl } from "@olddevs/ui";
@@ -228,24 +227,24 @@ import { AddIcon } from "@olddevs/ui/icons";
 export function CreateProjectForm() {
   return (
     <form>
-      <FormField label="Название проекта" htmlFor="name">
+      <FormField label="Project name" htmlFor="name">
         <TextControl id="name" name="name" />
       </FormField>
       <Button type="submit" icon={<AddIcon aria-hidden />}>
-        Создать
+        Create
       </Button>
     </form>
   );
 }
 ```
 
-Следующий шаг — [выбрать компонент по задаче](component-selection.md), а затем
-открыть его страницу в [каталоге](components/index.md).
+Next step: [pick a component for your task](component-selection.md), then
+open its page in the [catalog](components/index.md).
 
-## Страница в каркасе
+## A page in the app shell
 
-С 2.1.0 каркас приложения не нужно писать заново: боковая навигация, шапка и раскладка
-приходят из кита.
+Since 2.1.0 you no longer need to write the app shell yourself: the side navigation, the header and the layout
+come from the kit.
 
 ```tsx
 import { AppShell, NavGroup, NavItem, SideNav, TopBar } from "@olddevs/ui";
@@ -261,9 +260,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       routeKey={pathname}
       sidebar={
         <SideNav>
-          <NavGroup label="Работа">
+          <NavGroup label="Work">
             <NavItem
-              label="Дашборд"
+              label="Dashboard"
               icon={<DashboardIcon />}
               active={pathname.startsWith("/dashboard")}
               asChild
@@ -281,15 +280,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Три вещи, которые кит осознанно оставляет вам: **сравнение маршрутов**
-(`active` — проп), **сохранение схлопнутости** сайдбара и **применение темы**.
-Подробности — на страницах [AppShell](components/app-shell/app-shell.md) и
-[SideNav](components/app-shell/side-nav.md).
+Three things the kit deliberately leaves to you: **route comparison**
+(`active` is a prop), **persisting the collapsed state** of the sidebar, and **applying the theme**.
+Details are on the [AppShell](components/app-shell/app-shell.md) and
+[SideNav](components/app-shell/side-nav.md) pages.
 
-## Язык интерфейса
+## Interface language
 
-Кит говорит по-английски по умолчанию. Русские подписи подключаются одной
-строкой:
+The kit defaults to English. Russian labels are added with one
+line:
 
 ```tsx
 import { UiProvider } from "@olddevs/ui";
@@ -300,43 +299,41 @@ import ru from "@olddevs/ui/locales/ru";
 </UiProvider>;
 ```
 
-Каталог сообщений не грузится сам: иначе он оказался бы в бандле у всех, включая тех, кому
-нужен только английский. Порядок разрешения строки, частичные каталоги и
-стыковка с `I18nProvider` из react-aria — [i18n.md](i18n.md).
+The message catalog does not load automatically: otherwise it would end up in everyone's bundle, including those who
+only need English. The order in which a string is resolved, partial catalogs and
+integration with react-aria's `I18nProvider` — [i18n.md](i18n.md).
 
-## Частые проблемы
+## Troubleshooting
 
-### Escape из выпадающего списка закрывает и окно
+### Escape in a dropdown also closes the dialog
 
-**Симптом.** `Dialog` открыт, внутри раскрыт `Select`, `TimePicker` или календарь.
-Нажатие Escape должно закрыть только верхний слой — список, — а закрывает ещё и
-окно, вместе с несохранённой формой.
+**Symptom.** A `Dialog` is open with a `Select`, `TimePicker` or calendar expanded inside it.
+Pressing Escape should close only the topmost layer, the dropdown. Instead it closes the
+dialog too, taking the unsaved form with it.
 
-**Причина** — в приложении две и более копии пакета `@radix-ui/react-dismissable-layer`.
-Стек открытых слоёв Radix хранит в переменной модуля: сколько копий модуля, столько
-независимых стеков, и каждый слой считает себя верхним. Внутренние пакеты Radix
-пинит **точными** версиями, без каретки, поэтому `dialog`, `popover` и `tooltip`,
-выпущенные в разное время, тянут разные копии, и npm обязан их продублировать. В вёрстке это
-не видно — только в поведении.
+**Cause.** Your app has more than one copy of `@radix-ui/react-dismissable-layer`. Radix keeps
+the stack of open layers in a module-level variable, so every copy of the module has its own
+independent stack, and each layer believes it is the topmost one. Radix pins its internal
+packages to **exact** versions, with no caret, so `dialog`, `popover` and `tooltip`
+released at different times pull in different copies, and npm has to duplicate them. Nothing looks
+wrong in the layout; the problem shows only in behavior.
 
-**Проверка.** Копия должна быть одна:
+**How to check.** There should be exactly one copy:
 
 ```bash
 npm ls @radix-ui/react-dismissable-layer
-find node_modules -name "react-dismissable-layer" -type d   # ровно одно совпадение
+find node_modules -name "react-dismissable-layer" -type d   # exactly one match
 ```
 
-В выводе `npm ls` одна версия, остальные вхождения помечены `deduped`.
+In the `npm ls` output there is one version, and the other occurrences are marked `deduped`.
 
-**Лечение.** Radix приезжает вместе с китом (ADR-0072), и при свежей установке
-`dialog`, `popover`, `tooltip` и `context-menu` сходятся на одной копии
-`react-dismissable-layer`. Вторая копия появляется, когда Radix в приложение тянет
-ещё кто-то: ваш код или другая библиотека. Сначала сведите версии, чтобы все
-пакеты тянули одну копию: кит проверен на `dialog@1.1.23`, `popover@1.1.23`,
-`tooltip@1.2.16` и `context-menu@2.3.7`, они сходятся на
-`react-dismissable-layer@1.1.19`.
-Если свести версиями не выходит, закрепите одну копию через `overrides` в
-`package.json` приложения:
+**How to fix.** Radix comes with the kit (ADR-0072), and on a fresh install `dialog`, `popover`,
+`tooltip` and `context-menu` all resolve to one copy of `react-dismissable-layer`. A second copy
+appears when something else pulls Radix into the app: your own code or another library. First,
+line up the versions so that every package pulls in the same copy. The kit is tested on
+`dialog@1.1.23`, `popover@1.1.23`, `tooltip@1.2.16` and `context-menu@2.3.7`, which all resolve to
+`react-dismissable-layer@1.1.19`. If versions alone cannot bring them together, pin one copy with
+`overrides` in your app's `package.json`:
 
 ```json
 {
@@ -346,42 +343,40 @@ find node_modules -name "react-dismissable-layer" -type d   # ровно одн�
 }
 ```
 
-В pnpm то же самое называется `pnpm.overrides`, в Yarn — `resolutions`. Диапазоны в
-`dependencies` кита здесь не помогают: пакет не видит, какие внутренние версии
-выберет менеджер пакетов у вас. Повторяйте проверку после каждого обновления
-Radix. Тот же механизм с модульным состоянием у `react-focus-scope` и
-`react-presence`, и их копии стоит проверять так же.
+In pnpm this is `pnpm.overrides`; in Yarn it is `resolutions`. The ranges in the kit's
+`dependencies` do not help here: the package cannot see which internal versions your package manager
+will choose. Repeat the check after every Radix update. `react-focus-scope` and `react-presence`
+also keep module-level state, so check their copies too.
 
-### «Invalid hook call» после `npm i file:` или `npm link`
+### "Invalid hook call" after `npm i file:` or `npm link`
 
-**Симптом.** Пакет подключён локальным путём — `npm i file:../olddevs_ui` или
-`npm link`, — а приложение падает с ошибкой «Invalid hook call» без внятной причины.
+**Symptom.** The package is installed from a local path, with `npm i file:../olddevs_ui` or
+`npm link`, and the app crashes with "Invalid hook call" for no obvious reason.
 
-**Причина.** Так подключённый пакет — симлинк на рабочую копию кита. Он резолвит React
-из **своего** `node_modules`, куда React попал как зависимость разработки. В
-приложении получается два экземпляра React. `peerDependencies` от этого не
-спасают: они работают при установке из реестра, а не по симлинку.
+**Cause.** A package installed this way is a symlink to the kit's working copy. It resolves React
+from **its own** `node_modules`, where React is installed as a development dependency. The app
+ends up with two instances of React. `peerDependencies` do not prevent this: they apply when you
+install from the registry, not through a symlink.
 
-**Проверка.** Оба пути должны вести в один файл:
+**How to check.** Both paths should lead to the same file:
 
 ```bash
 node -p "require.resolve('react')"
 node -p "require.resolve('react', { paths: [require('fs').realpathSync('node_modules/@olddevs/ui')] })"
 ```
 
-**Лучше ставить опубликованную версию:** `npm i @olddevs/ui@X.Y.Z`, точная версия
-без каретки. Нужна локальная сборка — соберите tarball (`npm pack` в репозитории кита)
-и установите его: `npm i ../olddevs_ui/olddevs-ui-X.Y.Z.tgz`. Установка из tarball
-кладёт настоящую копию, а не симлинк, и второго React нет.
+**Prefer a published version:** `npm i @olddevs/ui@X.Y.Z`, an exact version with no caret.
+If you need a local build, pack it into a tarball (`npm pack` in the kit's repository) and install that:
+`npm i ../olddevs_ui/olddevs-ui-X.Y.Z.tgz`. Installing from a tarball puts a real copy
+instead of a symlink, so there is no second React.
 
-Если без симлинка не обойтись, сведите React к одной копии в сборщике приложения.
-В Vite:
+If you have to keep the symlink, make your bundler resolve React to a single copy. In Vite:
 
 ```ts
 // vite.config.ts
 export default { resolve: { dedupe: ["react", "react-dom"] } };
 ```
 
-В остальных сборщиках то же делает алиас `react` и `react-dom` на копии из
-`node_modules` приложения (в Next.js — `resolve.alias` в функции `webpack`
-в `next.config.js`). Перед коммитом верните в `package.json` версию из реестра.
+Other bundlers do the same with an alias that points `react` and `react-dom` at the copies in your
+app's `node_modules` (in Next.js, `resolve.alias` in the `webpack` function of `next.config.js`). Before
+you commit, put the registry version back in `package.json`.

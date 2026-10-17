@@ -9,21 +9,21 @@ story: src/components/date-time/RangeCalendar.stories.tsx
 
 # RangeCalendar
 
-## Кратко для AI
+## Summary for AI
 
-`RangeCalendar` — building block для одного непрерывного диапазона React Aria `DateValue`. Его `onChange` срабатывает только для завершённого периода; он не заменяет готовый `DateRangePicker` с триггером и пресетами.
+`RangeCalendar` is a building block for a single continuous React Aria `DateValue` range. Its `onChange` is called only for a completed range; it does not replace the ready-made `DateRangePicker` with its trigger and presets.
 
-## Когда использовать
+## When to use
 
-- Нужна нестандартная композиция календаря периода внутри собственной панели.
-- Нужен один или два видимых месяца (`months={1 | 2}`) и все ограничения React Aria.
+- You need a custom composition of a range calendar inside your own panel.
+- You need one or two visible months (`months={1 | 2}`) and all of React Aria's constraints.
 
-## Когда не использовать
+## When not to use
 
-- Для стандартного поля выбора периода с пресетами и очисткой используйте `DateRangePicker`.
-- Для одной даты используйте `Calendar`/`DatePicker`.
+- For a standard range field with presets and clearing, use `DateRangePicker`.
+- For a single date, use `Calendar`/`DatePicker`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <RangeCalendar value={range} onChange={setRange} months={2} locale="ru-RU" />
@@ -31,16 +31,16 @@ story: src/components/date-time/RangeCalendar.stories.tsx
 
 ## Public API
 
-- Наследует `RangeCalendarProps<DateValue>` React Aria: controlled `value`, `defaultValue`, `onChange`, `minValue`, `maxValue`, unavailable dates.
-- Пустое controlled значение передаётся как `null`.
-- **Период — объекты или ISO-строки.** `value` и `defaultValue` принимают `{ start, end }`, где границы — объекты `@internationalized/date` или строки `ГГГГ-ММ-ДД` (строки такие же, как `DateRange` у `DateRangePicker`). `minValue`, `maxValue` и `defaultFocusedValue` тоже принимают строку: `minValue="2026-03-09"`, импортировать `@internationalized/date` не нужно (сам пакет приезжает с китом). Неразбираемая строка не бросает исключение: период с такой границей считается пустым (половина диапазона выбранной не бывает), граница — незаданной.
-- `onChange(range, iso)` вызывается, когда выбраны обе границы. Первый аргумент — `{ start, end }` объектов календаря, как у React Aria (так было всегда), второй — тот же период парой ISO-строк, тот самый `DateRange`. Хранящему период строками достаточно `onChange={(_, iso) => setRange(iso)}`. Что получает `onChange`, не зависит от того, объектами или строками передан `value`: прежние вызовы с объектами работают без правок.
-- `isDateUnavailable` получает объект календаря: `date.toString()` возвращает день строкой `ГГГГ-ММ-ДД`.
-- `months` по умолчанию 1, допустимы 1 и 2; без `locale` локаль приходит сверху: от `UiProvider`, `I18nProvider` потребителя или браузера; `locale` перебивает её для этого календаря.
-- Отрисованный на сервере календарь проходит гидратацию. Заголовок над сеткой («March – April 2026») одинаков на сервере и в браузере: `Intl` в Node ставит вокруг тире тонкие пробелы, и кит приводит их к обычным. Точку «сегодня» ставит браузер после монтирования: сервер не знает, какой день у читателя, поэтому первый кадр рисуется без точки.
+- Inherits React Aria's `RangeCalendarProps<DateValue>`: controlled `value`, `defaultValue`, `onChange`, `minValue`, `maxValue`, unavailable dates.
+- An empty controlled value is passed as `null`.
+- **A range can be objects or ISO strings.** `value` and `defaultValue` accept `{ start, end }`, where the bounds are either `@internationalized/date` objects or `YYYY-MM-DD` strings (the strings are the same as `DateRange` in `DateRangePicker`). `minValue`, `maxValue` and `defaultFocusedValue` accept a string too (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself comes with the kit). An unparsable string does not throw: a range with such a bound is treated as empty (half a range is never selected) and the bound as not set.
+- `onChange(range, iso)` is called once both bounds are chosen. The first argument is `{ start, end }` of calendar objects, as in React Aria (it always was); the second is the same range as a pair of ISO strings, that is, the same `DateRange`. Whoever stores the range as strings needs only `onChange={(_, iso) => setRange(iso)}`. What `onChange` receives does not depend on whether `value` is passed as objects or strings: existing calls with objects work unchanged.
+- `isDateUnavailable` receives a calendar object: `date.toString()` returns the day as a `YYYY-MM-DD` string.
+- `months` is 1 or 2 and defaults to 1; without `locale`, the locale comes from above: from `UiProvider`, the consumer's `I18nProvider` or the browser; `locale` overrides it for this calendar.
+- A server-rendered calendar hydrates cleanly. The heading above the grid ("March – April 2026") is the same on the server and in the browser: `Intl` in Node puts thin spaces around the dash, and the kit converts them to regular ones. The browser renders the "today" dot after mounting: the server does not know what day it is for the reader, so the first render has no dot.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- React Aria управляет диапазонным выбором, семантикой сетки и клавиатурой.
-- Начало и конец диапазона отличаются от середины визуально; не заменяйте произвольными классами ячеек.
-- См. `src/components/date-time/RangeCalendar.tsx`, `src/components/date-time/RangeCalendar.stories.tsx`, `tests/matrix.tsx`.
+- React Aria handles range selection, grid semantics and the keyboard.
+- The start and end of the range look different from the middle; do not replace this with arbitrary cell classes.
+- See `src/components/date-time/RangeCalendar.tsx`, `src/components/date-time/RangeCalendar.stories.tsx`, `tests/matrix.tsx`.

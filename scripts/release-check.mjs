@@ -20,6 +20,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { readmeTranslationLag } from "./readme-translation.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
 
@@ -100,6 +101,13 @@ if (isMajor) {
     );
   }
 }
+
+// 5. Перевод README отстаёт — отчёт, а не ворота (ADR-0073): релиз не ждёт перевода.
+const lag = readmeTranslationLag(
+  readFileSync(join(ROOT, "README.md"), "utf8"),
+  readFileSync(join(ROOT, "README.ru.md"), "utf8")
+);
+if (lag) console.log(`\n⚠ ${lag}. A report only: the release goes on.`);
 
 console.log(`\n✓ All green. Version ${version}, tag ${tag} is free.`);
 console.log(

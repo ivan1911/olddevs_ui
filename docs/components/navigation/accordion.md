@@ -9,67 +9,67 @@ story: src/components/navigation/Accordion.stories.tsx
 
 # Accordion
 
-## Кратко для AI
+## Summary for AI
 
-`Accordion` — набор раскрываемых секций на react-aria. Состояние и keys
-наследуются из `DisclosureGroupProps`; `multiple={false}` по умолчанию оставляет
-открытой одну секцию. Создавайте каждую секцию через `AccordionItem` с
-уникальным `id`.
+`Accordion` is a set of expandable sections built on react-aria. State and keys
+are inherited from `DisclosureGroupProps`; `multiple={false}` by default keeps
+one section open. Create every section through `AccordionItem` with
+a unique `id`.
 
-## Когда использовать
+## When to use
 
-- Длинная страница с самостоятельными разделами, которые читают по очереди.
-- FAQ, настройки или подробности, когда закрытые блоки экономят вертикальное место.
-- Сравнение нескольких секций одновременно — с `multiple`.
+- A long page with self-contained sections that are read one at a time.
+- An FAQ, settings or details, when closed blocks save vertical space.
+- Comparing several sections at once — with `multiple`.
 
-## Когда не использовать
+## When not to use
 
-- Для навигации между панелями одного контекста используйте `Tabs`.
-- Для обязательных этапов процесса используйте `Stepper`.
-- Не используйте для одной постоянной секции: обычный heading яснее.
+- For navigation between panels of one context, use `Tabs`.
+- For mandatory steps of a process, use `Stepper`.
+- Do not use it for a single permanent section: a plain heading is clearer.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Accordion expandedKeys={expanded} onExpandedChange={setExpanded}>
-  <AccordionItem id="delivery" title="Доставка">
-    Условия доставки
+  <AccordionItem id="delivery" title="Delivery">
+    Delivery terms
   </AccordionItem>
-  <AccordionItem id="payment" title="Оплата">
-    Способы оплаты
+  <AccordionItem id="payment" title="Payment">
+    Payment methods
   </AccordionItem>
 </Accordion>
 ```
 
 ## Public API
 
-`Accordion` принимает `multiple`, `className`, `children` и остальные
-`DisclosureGroupProps` react-aria, включая controlled/uncontrolled keys. Не
-передавайте `allowsMultipleExpanded`: публичный prop компонента — `multiple`.
-`AccordionItem` требует `id` и `title`; также принимает `disabled`, `className`,
-`children`. `id` участвует в `expandedKeys`, поэтому должен быть стабилен при ререндере.
+`Accordion` accepts `multiple`, `className`, `children` and the rest of react-aria's
+`DisclosureGroupProps`, including controlled/uncontrolled keys. Do not
+pass `allowsMultipleExpanded`: the component's public prop is `multiple`.
+`AccordionItem` requires `id` and `title`; it also accepts `disabled`, `className`,
+`children`. `id` is used in `expandedKeys`, so it must stay stable across re-renders.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-React Aria создаёт кнопку trigger, `aria-expanded`, связь с панелью и скрывает
-свёрнутый контент от скринридера. Trigger находится внутри heading, поэтому
-скринридер находит секцию при навигации по заголовкам. Не рендерите второй интерактивный контрол
-в `title`; поместите его в panel. См.
-[исходник Accordion](../../../src/components/navigation/Accordion.tsx).
+React Aria creates the trigger button, `aria-expanded`, the association with the panel, and hides
+collapsed content from screen readers. The trigger sits inside a heading, so
+a screen reader finds the section when navigating by heading. Do not render a second interactive control
+in `title`; put it in the panel. See the
+[Accordion source](../../../src/components/navigation/Accordion.tsx).
 
-## Хорошие примеры
+## Good examples
 
-- Умолчание `multiple={false}` для последовательного чтения.
-- `multiple` для сравнения характеристик.
-- Disabled item вместо секции, удалённой без объяснения: так видно, что секция недоступна.
+- The default `multiple={false}` for sequential reading.
+- `multiple` for comparing specifications.
+- A disabled item instead of a section removed without explanation: it shows that the section is unavailable.
 
-## Антипаттерны
+## Anti-patterns
 
-- Передавать обычный `div` вместо `AccordionItem`.
-- Использовать нестабильный индекс массива как `id` при изменяемом списке.
-- Раскрывать все секции по умолчанию, если они не сравниваются.
+- Passing a plain `div` instead of `AccordionItem`.
+- Using an unstable array index as `id` in a mutable list.
+- Expanding all sections by default when they are not being compared.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/navigation/Accordion.tsx`
 - `src/components/navigation/Accordion.stories.tsx`

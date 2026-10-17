@@ -9,78 +9,78 @@ story: src/components/content/Card.stories.tsx
 
 # Card
 
-## Кратко для AI
+## Summary for AI
 
-`Card` — визуальная панель с фоном, границей, тенью, внутренним отступом и
-скруглением. Структуру и заголовок она не задаёт: заголовок и структуру задавайте
-вложенными компонентами (`Heading`, `Text`) на уровне экрана. Если по карточке нажимают — это `asChild` с
-настоящей кнопкой или ссылкой внутри, а не `div` с `onClick`.
+`Card` is a visual panel with a background, border, shadow, inner padding and
+rounded corners. It does not set structure or a heading: set the heading and structure with
+nested components (`Heading`, `Text`) at the screen level. If the card is clickable, use
+`asChild` with a real button or link inside, not a `div` with `onClick`.
 
-## Когда использовать
+## When to use
 
-- Для самостоятельного блока данных, настроек, метрики или элемента списка,
-  которому нужно отделение от фона.
-- Когда достаточно одного из двух размеров: `md` для обычной
-  панели, `sm` для компактной.
+- For a self-contained block of data, settings, a metric or a list item that
+  needs to stand apart from the background.
+- When one of the two sizes is enough: `md` for a regular panel,
+  `sm` for a compact one.
 
-## Когда не использовать
+## When not to use
 
-- Не вешайте `onClick` на саму карточку без `asChild`: получится `div`, до
-  которого не добраться с клавиатуры и о котором скринридер не сообщит, что
-  сюда можно нажать. Для нажимаемой карточки есть `asChild`.
-- Не создавайте пропсы произвольных `padding` и `radius`; доступны только
-  два размера `size="sm" | "md"`.
-- Не используйте для заглушки на время загрузки — для этого `Skeleton`, а
-  не панель с содержимым.
+- Do not put `onClick` on the card itself without `asChild`: you get a `div`
+  that the keyboard cannot reach and that a screen reader does not announce as
+  clickable. For a clickable card, use `asChild`.
+- Do not create props for arbitrary `padding` and `radius`; only the two sizes
+  `size="sm" | "md"` are available.
+- Do not use it for a loading placeholder; use `Skeleton` for that, not a
+  panel with content.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Card, Heading, Text } from "@olddevs/ui";
 
 <Card>
-  <Heading level={3}>Публикация</Heading>
-  <Text level={2}>Запланирована на 18:00</Text>
+  <Heading level={3}>Publication</Heading>
+  <Text level={2}>Scheduled for 6:00 PM</Text>
 </Card>;
 ```
 
 ## Public API
 
-`CardProps` принимает стандартные атрибуты `div`, включая `className`, и три
-собственных prop:
+`CardProps` accepts the standard `div` attributes, including `className`, and
+three props of its own:
 
-| Prop          | По умолчанию | Значение                                                                                                                                             |
-| ------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `size`        | `md`         | `sm` даёт компактные отступ и скругление; `md` — обычную панель. Размер и радиус меняются вместе.                                                    |
-| `asChild`     | `false`      | Передать оформление единственному потомку (`button`, `a`, `next/link`) и включить оформление нажимаемого: курсор, рамку, кольцо фокуса.              |
-| `interactive` | `false`      | Карточка-контейнер с растянутой ссылкой внутри: курсор, подсветка рамки, контекст позиционирования (`position: relative`) и кольцо фокуса по ссылке. |
+| Prop          | Default | Meaning                                                                                                                                                  |
+| ------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `size`        | `md`    | `sm` sets compact padding and corner radius; `md` sets a regular panel. Size and radius change together.                                                 |
+| `asChild`     | `false` | Apply the card's look to its only child (`button`, `a`, `next/link`) and turn on the clickable styling: cursor, border highlight, focus ring.            |
+| `interactive` | `false` | A container card with a stretched link inside: cursor, border highlight, positioning context (`position: relative`) and a focus ring driven by the link. |
 
-`asChild` включает не только слот, но и оформление нажимаемого: курсор,
-подсветку рамки на наведении и кольцо фокуса. Иначе каждый потребитель дописывал
-бы это руками — то самое расхождение, ради устранения которого карточка и лежит
-в пакете. Карточка-контейнер без `asChild` остаётся обычным контейнером: без курсора и подсветки.
+`asChild` turns on not only the slot but also the styling of a clickable
+element: cursor, border highlight on hover and the focus ring. Otherwise every
+consumer would have to add it by hand — the very divergence the card exists to
+eliminate. A container card without `asChild` stays an ordinary container: no cursor and no highlight.
 
 ```tsx
 <Card asChild size="md">
   <button type="button" onClick={open}>
-    <Heading level={3}>Городские пейзажи</Heading>
-    <Text level={3}>142 фото</Text>
+    <Heading level={3}>Cityscapes</Heading>
+    <Text level={3}>142 photos</Text>
   </button>
 </Card>
 ```
 
-Выбор между `button` и `a` тот же, что у `Button`: переход на другой экран —
-ссылка (её открывают в новой вкладке, копируют адрес), действие без перехода на другой экран —
-кнопка.
+The choice between `button` and `a` is the same as for `Button`: going to
+another screen is a link (it can be opened in a new tab, its URL copied), an
+action that does not leave the screen is a button.
 
-Если внутри карточки есть вторичное действие — меню «Ещё», кнопка «В избранное» —
-`asChild` не подходит: кнопку в кнопку вкладывать нельзя. Тогда `interactive`
-плюс растянутая ссылка:
+If the card has a secondary action inside — a "More" menu, an "Add to favorites" button —
+`asChild` does not fit: you cannot nest a button in a button. Then use
+`interactive` plus a stretched link:
 
 ```tsx
 <Card interactive>
   <a href={href} className="after:absolute after:inset-0">
-    Городские пейзажи
+    Cityscapes
   </a>
   <div className="relative z-10">
     <MenuTrigger>…</MenuTrigger>
@@ -88,27 +88,27 @@ import { Card, Heading, Text } from "@olddevs/ui";
 </Card>
 ```
 
-Кольцо фокуса обводит карточку только по фокусу самой ссылки: фокус на меню
-обвёл бы карточку целиком и обещал бы нажатие не туда.
+The focus ring outlines the card only when the link itself has focus: focus on
+the menu would outline the whole card and promise a click in the wrong place.
 
-## Доступность и композиция
+## Accessibility and composition
 
-Без `asChild` `Card` не получает ни роли, ни фокуса: если панель — отдельная
-область, задайте семантику вложенной разметкой, например `Heading` для
-заголовка.
+Without `asChild`, `Card` gets neither a role nor focus: if the panel is a
+separate region, set the semantics with nested markup, for example `Heading`
+for the title.
 
-С `asChild` роль, фокус и клавиатура принадлежат потомку, и доступное имя
-карточки — это его содержимое. Поэтому кнопку внутри нажимаемой
-карточки вкладывать нельзя — вложенная интерактивность недостижима с
-клавиатуры. Меню действий кладите рядом с карточкой, а не внутрь её кнопки.
+With `asChild`, the role, focus and keyboard belong to the child, and the
+card's accessible name is its content. A consequence: you cannot nest a button
+inside a clickable card — nested interactivity is unreachable from the
+keyboard. Put the actions menu next to the card, not inside its button.
 
-## Антипаттерны
+## Anti-patterns
 
 ```tsx
-// Плохо: div становится псевдокнопкой без клавиатурного контракта.
+// Bad: a div becomes a pseudo-button without a keyboard contract.
 <Card onClick={openCampaign}>…</Card>
 
-// Хорошо: интерактивность принадлежит ссылке, а карточка отдаёт ей свой вид.
+// Good: interactivity belongs to the link, and the card hands it its look.
 <Card asChild>
   <Link href={`/campaigns/${id}`} variant="standalone">
     …
@@ -116,7 +116,7 @@ import { Card, Heading, Text } from "@olddevs/ui";
 </Card>
 ```
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходник: `src/components/content/Card.tsx`.
+- Source: `src/components/content/Card.tsx`.
 - Story: `src/components/content/Card.stories.tsx`.

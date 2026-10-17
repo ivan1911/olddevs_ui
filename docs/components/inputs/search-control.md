@@ -9,50 +9,51 @@ story: src/components/inputs/SearchControl.stories.tsx
 
 # SearchControl
 
-## Кратко для AI
+## Summary for AI
 
-`SearchControl` — управляемое поле поиска поверх `TextControl`: лупа, доступное имя, очистка и необязательная экранная клавиатура. Он не откладывает запросы (debounce) и не перехватывает Escape.
+`SearchControl` is a controlled search field on top of `TextControl`: a magnifier, an accessible name, clearing and an optional on-screen keyboard. It does not debounce queries and does not intercept Escape.
 
-## Когда использовать
+## When to use
 
-- Поиск по списку, библиотеке или API с единым визуальным контрактом.
-- Нужна кнопка очистки, возвращающая фокус в поле.
-- На широком экране (от `md`) нужна экранная клавиатура `Keyboard` через проп `keyboard`.
+- Search over a list, a library or an API with a single visual contract.
+- You need a clear button that returns focus to the field.
+- On a wide screen (from `md`) you need the on-screen `Keyboard` through the `keyboard` prop.
 
-## Когда не использовать
+## When not to use
 
-- Для обычного текста — `TextControl`.
-- Для выбора из списка вариантов — `Combobox`; для фильтрации закрытого списка — searchable `Select`.
-- Общую debounce-политику задавайте в потребителе, а не здесь.
+- For plain text — `TextControl`.
+- For choosing from a list of options — `Combobox`; for filtering a closed list — a searchable `Select`.
+- Set a shared debounce policy in the consumer, not here.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <SearchControl
-  label="Поиск коллекций"
+  label="Search collections"
   value={query}
   onChange={setQuery}
-  placeholder="Найти коллекцию…"
+  placeholder="Find a collection…"
 />
 ```
 
 ## Public API
 
-- `value`, `onChange(string)`, `label` обязательны. `placeholder` не заменяет `label`.
-- `clearable` по умолчанию true; `clearLabel`, `shellClassName` и native input props доступны.
-- `keyboard` требует `layout` и `onLayoutChange`; `defaultOpen` действует только на первоначальное раскрытие, `onSubmit` вызывается экранной клавиатурой.
+- `value`, `onChange(string)`, `label` are required. A `placeholder` does not replace `label`.
+- `clearable` is true by default; `clearLabel`, `shellClassName` and native input props are available.
+- `keyboard` requires `layout` and `onLayoutChange`; `defaultOpen` affects only the initial opening; `onSubmit` is called by the on-screen keyboard.
 
-## Ступень высоты
+## Height step
 
-`size` пробрасывается в `TextControl`: `md` — 42 пикселя (умолчание), `sm` — 36,
-как высота `Button size="md"` и пилюли `Select` в той же строке панели.
+`size` is passed through to `TextControl`: `md` is 42 pixels (the default), `sm` is
+36, the same height as `Button size="md"` and of the `Select` pill in the same
+toolbar row.
 
-Ступень живёт у `TextControl`, а не здесь. Поиск намеренно стоит на нём, и своя
-высота у поиска означала бы второй способ считать её внутри самого пакета —
-ровно то расхождение, ради которого `SearchControl` и заведён.
+The step lives on `TextControl`, not here. Search is deliberately built on it, and a
+height of its own for search would mean a second way to compute it inside the
+package itself — exactly the divergence `SearchControl` was introduced to avoid.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- Escape намеренно проходит к родительскому оверлею; добавьте свой `onKeyDown`, чтобы очищать запрос.
-- Кнопка экранной клавиатуры скрыта до `md`; щелчок мышью по панели клавиатуры возвращает каретку в поле.
-- Источник: `src/components/inputs/SearchControl.tsx`; проверки — `tests/search-control.test.tsx`.
+- Escape deliberately passes through to the parent overlay; add an `onKeyDown` handler if you need to clear the query.
+- The on-screen keyboard button is hidden below `md`; a mouse click on the keyboard panel returns the caret to the field.
+- Source: `src/components/inputs/SearchControl.tsx`; checks — `tests/search-control.test.tsx`.

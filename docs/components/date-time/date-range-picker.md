@@ -9,22 +9,22 @@ story: src/components/date-time/DateRangePicker.stories.tsx
 
 # DateRangePicker
 
-## Кратко для AI
+## Summary for AI
 
-`DateRangePicker` — готовый выбор периода: триггер, `RangeCalendar`, относительные пресеты и отдельная очистка. `onChange` вызывается только после выбора обеих границ.
+`DateRangePicker` is a ready-made range picker: a trigger, `RangeCalendar`, relative presets and a separate clear control. `onChange` is called only after both bounds are picked.
 
-## Когда использовать
+## When to use
 
-- В фильтре или отчёте выбирают даты «с/по» и часто используют «7 дней», «30 дней» и другие пресеты.
-- Потребитель может хранить и развёрнутый `DateRange`, и исходный `RelativePeriod`.
+- In a filter or report, users pick "from/to" dates and often use "7 days", "30 days" and other presets.
+- The consumer can store both an expanded `DateRange` and the original `RelativePeriod`.
 
-## Когда не использовать
+## When not to use
 
-- Для произвольной раскладки периода используйте `RangeCalendar`.
-- Для одной даты используйте `DatePicker`.
-- Не используйте для выбора только начала периода: компонент отдаёт только полный диапазон.
+- For an arbitrary range layout, use `RangeCalendar`.
+- For a single date, use `DatePicker`.
+- Do not use it to pick only the start of a range: the component emits only a complete range.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <DateRangePicker
@@ -43,15 +43,15 @@ story: src/components/date-time/DateRangePicker.stories.tsx
 
 ## Public API
 
-- `value?: DateRange | null`, где границы — ISO-строки; `period?: RelativePeriod | null` связывает выбранный пресет с диапазоном.
-- `onChange(range, period)` получает `period=null` при ручном выборе; `onClear` обязателен для появления кнопки очистки, потому что очистка должна сбросить оба значения: `value` и `period`.
-- `presets`, `timeZone`, `minValue`, `maxValue`, `defaultFocusedValue`, `locale` задают допустимые и относительные периоды.
-- `minValue`, `maxValue` и `defaultFocusedValue` — ISO-строки `ГГГГ-ММ-ДД`, как `value`: `minValue="2026-03-09"`, импортировать `@internationalized/date` не нужно (сам пакет приезжает с китом). Объект по-прежнему принимается; неразбираемая строка считается незаданной границей.
-- `isDateUnavailable(date)` отмечает конкретные дни недоступными — занятые даты, праздники: в календаре они зачёркнуты и не выбираются. Функция получает объект календаря: `date.toString()` возвращает день строкой `ГГГГ-ММ-ДД`. Такое же свойство есть у `RangeCalendar` и `DatePicker`. Пресеты правило не учитывают: они подрезаются только по `minValue` и `maxValue`, а пресет, захвативший недоступный день, выбирается как есть — если так нельзя, не оставляйте такой пресет в `presets`.
-- `open`/`onOpenChange` позволяют управлять открытием поповера, иначе используется внутреннее состояние.
+- `value?: DateRange | null`, where the bounds are ISO strings; `period?: RelativePeriod | null` ties the selected preset to the range.
+- `onChange(range, period)` receives `period=null` on a manual pick; `onClear` is required for the clear button to appear, because clearing must reset both values: `value` and `period`.
+- `presets`, `timeZone`, `minValue`, `maxValue`, `defaultFocusedValue`, `locale` define the allowed ranges and relative presets.
+- `minValue`, `maxValue` and `defaultFocusedValue` are ISO strings `YYYY-MM-DD`, like `value` (`minValue="2026-03-09"`); there is no need to import `@internationalized/date` (the package itself comes with the kit). An object is still accepted; an unparsable string is treated as an unset bound.
+- `isDateUnavailable(date)` marks specific days unavailable — booked dates, holidays: in the calendar they are struck through and cannot be picked. The function receives a calendar object; `date.toString()` returns the day as a `YYYY-MM-DD` string. `RangeCalendar` and `DatePicker` have the same prop. Presets ignore the rule: they are clamped only by `minValue` and `maxValue`, and a preset that covers an unavailable day is picked as is — if that is not allowed, do not leave such a preset in `presets`.
+- `open`/`onOpenChange` let you control the popover; otherwise internal state is used.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- Очистка — отдельная кнопка рядом с триггером, а не интерактивный элемент внутри кнопки.
-- Два месяца показываются при ширине экрана от 640 пикселей; не полагайтесь на незавершённый выбор для сетевого запроса.
-- Источники: `src/components/date-time/DateRangePicker.tsx`, `src/components/date-time/DateRangePicker.stories.tsx`.
+- The clear control is a separate button next to the trigger, not an interactive element inside a button.
+- The two-month view appears at a screen width of 640 pixels and up; do not rely on an incomplete selection for a network request.
+- Sources: `src/components/date-time/DateRangePicker.tsx`, `src/components/date-time/DateRangePicker.stories.tsx`.

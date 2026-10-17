@@ -7,106 +7,111 @@ source: src/components/inputs/Checkbox.tsx
 story: src/components/inputs/Checkbox.stories.tsx
 ---
 
-# Checkbox, CheckboxGroup, Radio и RadioGroup
+# Checkbox, CheckboxGroup, Radio and RadioGroup
 
-## Кратко для AI
+## Summary for AI
 
-`Checkbox` выбирает независимое «да/нет», `CheckboxGroup` — несколько значений, `RadioGroup` — один ответ на общий вопрос. `Radio` существует только внутри `RadioGroup`. Ось `appearance="card"` у обеих групп показывает варианты карточками с подписью, описанием и значком.
+`Checkbox` selects an independent yes/no, `CheckboxGroup` selects several values, `RadioGroup` gives one answer to a shared question. `Radio` exists only inside `RadioGroup`. The `appearance="card"` axis on both groups shows the options as cards with a label, a description and an icon.
 
-## Когда использовать
+## When to use
 
-- `Checkbox`: отдельная настройка, включая `indeterminate` для состояния «часть выбрана».
-- `CheckboxGroup`: несколько независимых вариантов, `value` — массив строк.
-- `RadioGroup`: ровно один вариант из взаимоисключающего набора; `value` хранится на группе.
-- `appearance="card"`: два-пять вариантов, которые сравнивают до выбора: тариф, формат выгрузки, режим доступа, набор модулей. Подробности — в разделе «Карточки выбора».
+- `Checkbox`: a single setting, including `indeterminate` for the "some selected" state.
+- `CheckboxGroup`: several independent options; `value` is an array of strings.
+- `RadioGroup`: exactly one option from a mutually exclusive set; `value` is kept on the group.
+- `appearance="card"`: two to five options that people compare before choosing: a plan, an export format, an access mode, a set of modules. Details are in the "Choice cards" section.
 
-## Когда не использовать
+## When not to use
 
-- Не используйте RadioGroup для нескольких фильтров — берите CheckboxGroup или ToggleGroup.
-- Не снимайте выбор RadioGroup «кликом по выбранному»; добавьте явный вариант «Любой».
-- Не используйте карточки для длинного списка однотипных значений и для настроек в одну строку: карточка занимает три-четыре строки, и десять карточек читаются хуже десяти строк. Там — обычный вид.
-- Не используйте Checkbox без `children` или `label`: у него должно быть доступное имя.
+- Do not use RadioGroup for several filters — use CheckboxGroup or ToggleGroup.
+- Do not let people clear a RadioGroup by "clicking the selected option"; add an explicit "Any" option.
+- Do not use cards for a long list of same-kind values or for single-line settings: a card takes three or four lines, and ten cards read worse than ten rows. Use the default appearance there.
+- Do not use Checkbox without `children` or `label`: it must have an accessible name.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<CheckboxGroup label="Каналы" value={channels} onChange={setChannels}>
+<CheckboxGroup label="Channels" value={channels} onChange={setChannels}>
   <Checkbox value="telegram">Telegram</Checkbox>
 </CheckboxGroup>
 
-<RadioGroup label="Вид" value={view} onChange={setView}><Radio value="list">Список</Radio></RadioGroup>
+<RadioGroup label="View" value={view} onChange={setView}><Radio value="list">List</Radio></RadioGroup>
 ```
 
 ## Public API
 
-- `Checkbox`: controlled `checked`/`onCheckedChange` или `defaultChecked`; `indeterminate` при отрисовке важнее checked. `name` и `value` предназначены для native form submit.
-- `CheckboxGroup`: обязательные `value`, `onChange`, `label`; `errorMessage` заменяет `description`, а `disabled` выключает всех детей. Необязательный `tone` красит отмеченные флажки набора (см. ниже).
-- `RadioGroup`: `value: string | null`, но `onChange` возвращает string; `null` — только начальное пустое состояние. `Radio` принимает `value`, описание и disabled.
-- У обеих групп есть `orientation`, `errorMessage`, `appearance` и `tone`; RadioGroup также задаёт общий `size`.
-- **Тон набора.** `tone` у группы приходит вариантам контекстом и красит отмеченное: кружок и точку, коробку с галочкой и (в карточках) рамку выбранной. У `RadioGroup` тон есть только у группы, у `Radio` своего нет. У `CheckboxGroup` тон необязателен: **заданный `tone` группы перекрывает `tone` каждого `Checkbox` внутри** (набор не может разъехаться по виду, как у радио); не заданный — каждый флажок красится своим `tone`, как и вне группы. Одиночный `Checkbox` вне группы работает со своим `tone` как раньше. Неотмеченные всегда нейтральны.
-- `Radio` и `Checkbox` принимают необязательный `icon` и `description`.
-- **Рамка отмеченной коробки.** У отмеченного (и «часть выбрана») флажка коробка обведена рамкой в `*-strong` своего тона, у `neutral` — `fg-3`: заливка `solid` против подложки не дотягивает до 3:1 (WCAG 1.4.11) у четырёх тонов из пяти, а менять токены ради флажка не стали. Границу коробки держит рамка, галочку — контраст текста на заливке. То же у включённого `Toggle`. Меряет `npm run contrast`. **Это осознанное решение владельца, а не недоработка:** заливку отмеченного флажка до 3:1 не поднимали, потому что её цвет задают токены `solid` тонов, общие для всего кита.
+- `Checkbox`: controlled `checked`/`onCheckedChange` or `defaultChecked`; when rendering, `indeterminate` takes priority over checked. `name` and `value` are for native form submit.
+- `CheckboxGroup`: `value`, `onChange` and `label` are required; `errorMessage` replaces `description`, and `disabled` disables all children. The optional `tone` colors the checked boxes of the set (see below).
+- `RadioGroup`: `value: string | null`, but `onChange` returns a string; `null` is only the initial empty state. `Radio` accepts `value`, a description and disabled.
+- Both groups have `orientation`, `errorMessage`, `appearance` and `tone`; RadioGroup also sets a shared `size`.
+- **Group tone.** The group's `tone` reaches the options through context and colors what is checked: the circle and dot, the box with the checkmark and (in cards) the border of the selected one. For `RadioGroup` the tone exists only on the group; `Radio` has none of its own. For `CheckboxGroup` the tone is optional: **a `tone` set on the group overrides the `tone` of every `Checkbox` inside** (the set cannot drift apart in look, as with radios); if it is not set, each checkbox is colored with its own `tone`, as outside a group. A single `Checkbox` outside a group uses its own `tone` as before. Unchecked ones are always neutral.
+- `Radio` and `Checkbox` accept an optional `icon` and `description`.
+- **Border of the checked box.** A checked (and "some selected") checkbox has its box outlined in the `*-strong` color of its tone, and in `fg-3` for `neutral`: the `solid` fill falls short of 3:1 against the background (WCAG 1.4.11) for four tones out of five, and the kit did not change tokens for the sake of a checkbox. The border holds the edge of the box; the checkmark relies on text contrast on the fill. The same goes for a switched-on `Toggle`. `npm run contrast` measures it. **This is a deliberate decision by the owner, not an oversight:** the fill of a checked checkbox was not raised to 3:1, because its color comes from the `solid` tokens of the tones, shared across the whole kit.
 
-## Зона нажатия
+## Hit area
 
-Зона нажатия флажка и радио — 24 пикселя по высоте независимо от размера и
-наличия видимой подписи; столько требует WCAG 2.5.8. Сам контрол при этом занимает в
-раскладке прежнее место: зона расширена псевдоэлементом.
+The hit area of the checkbox and radio is 24 pixels high regardless of size
+and of whether a visible label is present; WCAG 2.5.8 requires this. The control
+itself takes the same space in the layout as before: a pseudo-element extends the
+area.
 
-Отступами её поднимать нельзя: высоту контрола держит строка списка, 32
-пикселя, и выросший флажок растянул бы её. Видимый размер и размер зоны нажатия
-разведены так же, как у `Button size="xs"`.
+Padding cannot be used to enlarge it: the control's height is held by the list
+row, 32 pixels, and a grown checkbox would stretch it. The visible size and the hit area
+are separated in the same way as with `Button size="xs"`.
 
-## Карточки выбора
+## Choice cards
 
 ```tsx
-<RadioGroup label="Тариф" appearance="card" value={plan} onChange={setPlan}>
-  <Radio value="free" icon={<StorageIcon size={20} />} description="До трёх проектов">
-    Стартовый
+<RadioGroup label="Plan" appearance="card" value={plan} onChange={setPlan}>
+  <Radio value="free" icon={<StorageIcon size={20} />} description="Up to three projects">
+    Starter
   </Radio>
-  <Radio value="team" description="Без ограничений">Команда</Radio>
+  <Radio value="team" description="No limits">Team</Radio>
 </RadioGroup>
 
-<CheckboxGroup label="Модули" appearance="card" value={modules} onChange={setModules}>
-  <Checkbox value="billing" icon={<PaymentIcon size={20} />}>Платежи</Checkbox>
+<CheckboxGroup label="Modules" appearance="card" value={modules} onChange={setModules}>
+  <Checkbox value="billing" icon={<PaymentIcon size={20} />}>Payments</Checkbox>
 </CheckboxGroup>
 ```
 
-- **Ось называется `appearance`, а не `variant`**: `variant` в ките уже значит
-  `solid|soft|outline|ghost`, то есть подачу тона, а здесь меняется вид самого
-  пункта набора: строка или карточка. Значения: `default` (умолчание, вид и поведение
-  прежние) и `card`. Словарь имён свойств зеркала (ADR-0036) имени не занимает.
-- Ось живёт у группы и приходит вариантам контекстом, как `size` и `tone`: набор
-  не может разъехаться по виду. Одиночный `Checkbox` вне группы остаётся обычным.
-- **Вся карточка — зона нажатия**, включая описание и пустое место карточки.
-  Семантика родная: `radio` или `checkbox` из react-aria, он же обеспечивает
-  стрелки и пробел. Описание лежит внутри элемента `<label>`, чтобы щелчок по нему выбирал карточку, но скрыто от имени
-  (`aria-hidden`) и читается как описание через `aria-describedby`: скринридер не
-  читает его дважды. Иконка декоративная и из имени исключена.
-- **Выбранность — рамка в тоне и индикатор.** Кружок или галочка остаются видимыми,
-  рамка не единственный признак. Тон — `tone` у группы (у `CheckboxGroup` он
-  необязателен, см. «Тон набора»). Невыбранные карточки нейтральны.
-  Контраст рамки выбранной карточки против подложек и против самой карточки меряет
-  `npm run contrast` (порог 3:1, WCAG 1.4.11); для `neutral` рамка — `fg-3`, а не
-  декоративная `line`.
-- Кольцо фокуса — на карточке, а не на кружке.
-- `orientation="horizontal"` раскладывает карточки в строку с переносом; вертикальная
-  раскладка — карточки во всю ширину колонки.
-- Отключение и ошибка работают как у обычных групп: выключенная карточка
-  полупрозрачна и не выбирается, `errorMessage` красит рамку всех карточек в `danger`
-  и заменяет `description` группы.
-- `icon` работает и без карточки: в обычном виде иконка стоит между кружком или
-  коробкой и подписью.
+- **The axis is called `appearance`, not `variant`**: in the kit `variant` already
+  means `solid|soft|outline|ghost`, that is, how a tone is presented, while here
+  the look of the option itself changes: a row or a card. Values: `default` (the
+  default; look and behavior unchanged) and `card`. The prop-name dictionary of the
+  mirror (ADR-0036) does not use this name.
+- The axis lives on the group and reaches the options through context, like `size`
+  and `tone`: the set cannot drift apart in look. A single `Checkbox` outside a
+  group stays the regular one.
+- **The whole card is the hit area**, including the description and the empty
+  space of the card. The semantics are native: react-aria's `radio` or `checkbox`,
+  which also provides the arrow keys and Space. The description sits inside the
+  `<label>` element so that a click
+  on it selects the card, but it is hidden from the name (`aria-hidden`) and read
+  as a description through `aria-describedby`: a screen reader does not read it
+  twice. The icon is decorative and excluded from the name.
+- **Selection is a border in the tone and an indicator.** The circle or the
+  checkmark stay visible; the border is not the only sign. The tone is the group's
+  `tone` (optional on `CheckboxGroup`, see "Group tone"). Unselected cards are
+  neutral. The contrast of the selected card's border against the backgrounds and
+  against the card itself is measured by `npm run contrast` (threshold 3:1, WCAG
+  1.4.11); for `neutral` the border is `fg-3`, not the decorative `line`.
+- The focus ring is on the card, not on the circle.
+- `orientation="horizontal"` lays the cards out in a wrapping row; the vertical
+  layout is cards at the full width of the column.
+- Disabled and error work as in the regular groups: a disabled card is
+  semi-transparent and cannot be selected, `errorMessage` colors the border of all
+  cards `danger` and replaces the group's `description`.
+- `icon` applies without a card too: in the default appearance the icon sits
+  between the circle or box and the label.
 
-**Ось «на будущее» (ADR-0048).** Заказчика при выпуске не было, API взят по
-аналогам — Chakra `RadioCard` и `CheckboxCard`, Mantine `Radio.Card`, Carbon
-`SelectableTile`, Cloudscape `Tiles`. Ваш экран — первая проверка этого API. Не
-вошло и пока не заводится: слот картинки поверх иконки,
-выбор карточки целиком в виде ссылки.
+**An axis "for the future" (ADR-0048).** There was no requesting screen at release, so the
+API is modeled on comparable libraries: Chakra `RadioCard` and `CheckboxCard`,
+Mantine `Radio.Card`, Carbon `SelectableTile`, Cloudscape `Tiles`. Your screen is
+the first test of this API. Not included and not planned for now: an image slot
+over the icon, selecting a whole card rendered as a link.
 
-## Доступность и форма
+## Accessibility and forms
 
-- Подпись группы обязательна: это вопрос, на который отвечает набор.
-- Не передавайте `checked` дочерним Checkbox внутри CheckboxGroup — состояние выводится из `value` группы.
-- Не задавайте `tone` у `Checkbox` внутри `CheckboxGroup` с заданным `tone`: он игнорируется, тон набора один на всех. Хотите разные тона — не задавайте `tone` у группы.
-- Источники: `src/components/inputs/Checkbox.tsx`, `src/components/inputs/CheckboxGroup.tsx`, `src/components/inputs/CheckboxCard.tsx` (карточка — внутренняя, её подключает только группа, чтобы голый `Checkbox` не тянул её в бандл), `src/components/inputs/RadioGroup.tsx`, общие классы карточки — `src/lib/choice-card.ts`; тесты `checkbox*.test.tsx`, `radio-group.test.tsx`, `choice-cards.test.tsx`.
+- The group label is required: it is the question the set answers.
+- Do not pass `checked` to child Checkboxes inside a CheckboxGroup — the state is derived from the group's `value`.
+- Do not set `tone` on a `Checkbox` inside a `CheckboxGroup` that has a `tone`: it is ignored: the set has one tone for all. If you want different tones, do not set `tone` on the group.
+- Sources: `src/components/inputs/Checkbox.tsx`, `src/components/inputs/CheckboxGroup.tsx`, `src/components/inputs/CheckboxCard.tsx` (the card is internal, only the group pulls it in, so that a bare `Checkbox` does not drag it into the bundle), `src/components/inputs/RadioGroup.tsx`, the shared card classes are in `src/lib/choice-card.ts`; tests `checkbox*.test.tsx`, `radio-group.test.tsx`, `choice-cards.test.tsx`.

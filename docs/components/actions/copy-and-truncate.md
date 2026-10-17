@@ -1,5 +1,5 @@
 ---
-component: CopyButton и Truncate
+component: CopyButton and Truncate
 exports: [CopyButton, Truncate]
 category: actions
 status: stable
@@ -7,27 +7,28 @@ source: src/components/actions/CopyButton.tsx
 story: src/components/actions/CopyButton.stories.tsx
 ---
 
-# CopyButton и Truncate
+# CopyButton and Truncate
 
-## Кратко для AI
+## Summary for AI
 
-Две мелочи, которые пишут заново в каждом проекте: копирование значения в буфер
-с внятным ответом и обрезка текста с подсказкой полного значения.
+Two small things that get rewritten in every project: copying a value to the
+clipboard with clear feedback, and truncating text with a tooltip showing the
+full value.
 
-## Когда использовать
+## When to use
 
-- `CopyButton`: идентификатор, ключ, ссылка — то, что копируют, а не читают.
-- `Truncate`: длинное имя в колонке таблицы, в карточке, в списке.
+- `CopyButton`: an identifier, a key, a link — something people copy rather than read.
+- `Truncate`: a long name in a table column, in a card, in a list.
 
-## Когда не использовать
+## When not to use
 
-- Не используйте `CopyButton` для копирования выделения со страницы: это работа браузера.
-- Не используйте `Truncate` для текста, который можно перенести: обрезка теряет
-  содержание, а перенос — нет.
-- Не оборачивайте в `Truncate` вёрстку: он принимает **строку**, потому что
-  показывает то же значение в подсказке.
+- Do not use `CopyButton` to copy a selection from the page: that is the browser's job.
+- Do not use `Truncate` for text that can wrap: truncation loses content, wrapping
+  does not.
+- Do not wrap markup in `Truncate`: it takes a **string**, because it shows the
+  same value in the tooltip.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { CopyButton, Truncate } from "@olddevs/ui";
@@ -39,58 +40,58 @@ import { CopyButton, Truncate } from "@olddevs/ui";
 
 ## CopyButton
 
-| Проп         | Умолчание | Назначение                                   |
-| ------------ | --------- | -------------------------------------------- |
-| `value`      | —         | Что скопировать.                             |
-| `children`   | —         | Подпись. Без неё кнопка иконочная.           |
-| `resetDelay` | `2000`    | Сколько держать состояние «скопировано», мс. |
-| `onCopy`     | —         | Чем кончилось: `true` или `false`.           |
+| Prop         | Default | Purpose                                     |
+| ------------ | ------- | ------------------------------------------- |
+| `value`      | —       | What to copy.                               |
+| `children`   | —       | Label. Without it the button is icon-only.  |
+| `resetDelay` | `2000`  | How long to hold the "copied" state, in ms. |
+| `onCopy`     | —       | The outcome of the copy: `true` or `false`. |
 
-**Результат объявляется, а не только меняет иконку.** Галочка — сигнал для глаз;
-пользователь скринридера, нажав кнопку, иначе не узнает, сработала она или нет.
-Рядом стоит живая область, смонтированная всегда, и имя кнопки меняется вместе с
-состоянием.
+**The result is announced, not just shown as a different icon.** The checkmark
+is a signal for the eyes; a screen reader user who presses the button would
+otherwise not know whether it worked. A live region, always mounted, sits next
+to it, and the button's name changes along with the state.
 
-**Отказ буфера — законный исход.** `navigator.clipboard` отсутствует в
-небезопасном контексте (страница по `http`), а запись может быть заблокирована
-настройками разрешений. При отказе кнопка сообщает, что копирование не удалось, а
-значение остаётся доступным для выделения руками.
+**A clipboard failure is an expected outcome.** `navigator.clipboard` is absent
+in an insecure context (a page served over `http`), and writing can be blocked by
+permission settings. When the copy fails, the button says so instead of crashing
+or pretending to succeed, and the value stays available for selecting by hand.
 
 ## Truncate
 
-| Проп       | Умолчание | Назначение                   |
-| ---------- | --------- | ---------------------------- |
-| `children` | —         | Текст. Строка, а не вёрстка. |
-| `lines`    | `1`       | Сколько строк показывать.    |
-| `side`     | `top`     | С какой стороны подсказка.   |
+| Prop       | Default | Purpose                          |
+| ---------- | ------- | -------------------------------- |
+| `children` | —       | The text. A string, not markup.  |
+| `lines`    | `1`     | How many lines to show.          |
+| `side`     | `top`   | Which side the tooltip opens on. |
 
-**Подсказка появляется только у обрезанного текста.** Подсказка на
-необрезанном — шум: она повторяет то, что и так видно, и приучает её
-игнорировать.
+**The tooltip appears only on text that is actually truncated.** A tooltip on
+text that is not truncated is noise: it repeats what is already visible and teaches
+people to ignore it.
 
-Обрезанность **измеряется** (`scrollWidth > clientWidth`, при `lines` больше единицы ещё и `scrollHeight > clientHeight`), а не угадывается по
-длине строки: сколько символов влезло, зависит от ширины контейнера и шрифта.
-Замер повторяется при изменении размеров — колонка таблицы, потянутая мышью,
-меняет обрезанность, не меняя текста.
+Truncation is **measured** (`scrollWidth > clientWidth`, and with `lines` above one also `scrollHeight > clientHeight`), not guessed from the
+string length: how many characters fit depends on the container width and the
+font. The measurement repeats when the size changes — a table column dragged
+with the mouse changes truncation without changing the text.
 
-**Полное значение доступно с клавиатуры:** обрезанный текст получает
-`tabIndex={0}`, и подсказка открывается по фокусу так же, как по наведению. Без
-этого значение было бы доступно только мышью.
+**The full value is reachable from the keyboard:** truncated text gets
+`tabIndex={0}`, and the tooltip opens on focus the same way it does on hover.
+Without this the value would be available only to mouse users.
 
-Скринридер читает текст целиком и без нашей помощи: обрезка визуальная, в DOM
-лежит вся строка.
+A screen reader reads the whole text without our help: truncation is visual, and
+the full string is in the DOM.
 
-`Truncate` требует `TooltipProvider` у корня приложения — как и любой `Tooltip`.
+`Truncate` requires a `TooltipProvider` at the app root — like any `Tooltip`.
 
-## Антипаттерны
+## Anti-patterns
 
-- Менять у кнопки только иконку, не объявляя результат.
-- Считать, что копирование всегда удаётся.
-- Вешать подсказку на весь текст подряд, обрезан он или нет.
+- Changing only the button's icon without announcing the result.
+- Assuming that copying always succeeds.
+- Attaching a tooltip to all text, whether it is truncated or not.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Исходники: `src/components/actions/CopyButton.tsx`, `src/components/actions/Truncate.tsx`
-- Тесты: `tests/copy-button.test.tsx`, `tests/truncate.test.tsx`
-- Витрина: `src/components/actions/CopyButton.stories.tsx`,
+- Sources: `src/components/actions/CopyButton.tsx`, `src/components/actions/Truncate.tsx`
+- Tests: `tests/copy-button.test.tsx`, `tests/truncate.test.tsx`
+- Showcase: `src/components/actions/CopyButton.stories.tsx`,
   `src/components/actions/Truncate.stories.tsx`

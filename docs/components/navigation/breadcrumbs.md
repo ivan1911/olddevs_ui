@@ -9,64 +9,64 @@ story: src/components/navigation/Breadcrumbs.stories.tsx
 
 # Breadcrumbs
 
-## Кратко для AI
+## Summary for AI
 
-`Breadcrumbs` показывает путь до текущей страницы. Передайте цепочку `items`;
-последний видимый crumb становится текущей страницей, а не ссылкой. Длинный
-путь автоматически сворачивается в первый crumb, многоточие и последние два;
-цепочка из трёх crumb и короче не сворачивается ни при каком `maxItems`.
+`Breadcrumbs` shows the path to the current page. Pass the chain of crumbs as `items`;
+the last visible item becomes the current page, not a link. A long
+path collapses automatically into the first crumb, an ellipsis and the last two;
+a chain of three crumbs or fewer never collapses, whatever `maxItems` is.
 
-## Когда использовать
+## When to use
 
-- Глубокая иерархия, где пользователю полезно быстро вернуться к родителю.
-- У каждого уровня пути уже есть свой URL.
+- A deep hierarchy where the user benefits from getting back to a parent quickly.
+- Every path level of the page already has its own URL.
 
-## Когда не использовать
+## When not to use
 
-- Для линейного мастера используйте `Stepper`.
-- Для короткой верхнеуровневой навигации используйте links или `Tabs`.
-- Не используйте как единственное имя текущей страницы: нужен page heading.
+- For a linear wizard, use `Stepper`.
+- For short top-level navigation, use links or `Tabs`.
+- Do not use it as the only name of the current page: a page heading is needed.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <Breadcrumbs
   items={[
-    { label: "Библиотека", href: "/library" },
-    { label: "Коллекции", href: "/collections" },
-    { label: "Закаты" },
+    { label: "Library", href: "/library" },
+    { label: "Collections", href: "/collections" },
+    { label: "Sunsets" },
   ]}
 />
 ```
 
 ## Public API
 
-`items` обязателен: `Crumb` имеет `label` и опциональный `href`. Обычно у
-последнего crumb нет `href`; даже если он передан, последний видимый crumb
-всё равно рендерится не ссылкой. `maxItems` равен 4 по умолчанию; `className`
-и `aria-label` передаются контейнеру. Без `aria-label` имя берётся из каталога
-сообщений (`breadcrumbs.label`) — см. [i18n](../../i18n.md).
+`items` is required: a `Crumb` has a `label` and an optional `href`. Usually the
+last item has no `href`; even if one is passed, the last visible crumb
+is still not rendered as a link. `maxItems` is 4 by default; `className`
+and `aria-label` are passed to the container. Without `aria-label` the name comes from the message
+catalog (`breadcrumbs.label`) — see [i18n](../../i18n.md).
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-Компонент создаёт `nav` с упорядоченным списком; текущий crumb имеет
-`aria-current="page"`. Многоточие — не ссылка и скрыто от скринридера.
-Ссылки остаются обычными keyboard-focusable links. См.
-[исходник Breadcrumbs](../../../src/components/navigation/Breadcrumbs.tsx).
+The component creates a `nav` with an ordered list; the current crumb has
+`aria-current="page"`. The ellipsis is not a link and is hidden from screen readers.
+Links remain ordinary keyboard-focusable links. See the
+[Breadcrumbs source](../../../src/components/navigation/Breadcrumbs.tsx).
 
-## Хорошие примеры
+## Good examples
 
-- Каждому предку назначить `href`, а текущему crumb — только `label`.
-- Уменьшить `maxItems`, когда в header мало места по ширине (цепочку из трёх crumb и короче это не сворачивает).
-- Использовать короткие labels, которые остаются понятны при truncate.
+- Give every ancestor an `href` and the current item only a `label`.
+- Lower `maxItems` when the header is narrow (this does not collapse a chain of three crumbs or fewer).
+- Use short labels that stay clear when truncated.
 
-## Антипаттерны
+## Anti-patterns
 
-- Делать последний crumb ссылкой на текущий URL.
-- Делать многоточие кнопкой, если скрытые уровни нельзя раскрыть.
-- Передавать пустую цепочку вместо того, чтобы не выводить breadcrumbs.
+- Linking the last crumb to the current URL.
+- Making the ellipsis a button when the hidden levels cannot be expanded.
+- Passing an empty chain instead of not rendering breadcrumbs.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/navigation/Breadcrumbs.tsx`
 - `src/components/navigation/Breadcrumbs.stories.tsx`

@@ -1,778 +1,760 @@
-# Каталог сообщений `UiMessages`
+# Message catalog `UiMessages`
 
-Публичный контракт: имена ключей и форма значения. Строку кит берёт по порядку
-`проп → сообщение провайдера → фолбэк`; как подключить каталог — [i18n.md](../i18n.md).
+The public contract: key names and the shape of a value. The kit takes a string in this order: `prop → provider message → fallback`. To connect a catalog, see [i18n.md](../i18n.md).
 
-Ключ-функция принимает параметры; строка собирается внутри локали, а не
-склеивается в компоненте: склонение тоже живёт в локали. Колонки со значениями у таких
-ключей пустые — показать «одно значение» у функции нельзя.
+A function key takes parameters. The string is built inside the locale, not joined together in the component: inflection also lives in the locale. The value columns for such keys are empty, because a function cannot show one fixed value.
 
-Страница обновляется вместе с ключом. Гейт `tests/i18n-gate.test.ts` сторожит
-полноту русской локали, но не эту страницу: если таблица разошлась с кодом, врёт таблица.
+This page is updated together with the key. The gate `tests/i18n-gate.test.ts` checks that the Russian locale is complete, but it does not check this page. If the table and the code disagree, the table is wrong.
 
 ## `common`
 
-| Ключ                | Форма  | `en-US`       | `ru-RU`           |
+| Key                 | Shape  | `en-US`       | `ru-RU`           |
 | ------------------- | ------ | ------------- | ----------------- |
-| `close`             | строка | Close         | Закрыть           |
-| `clear`             | строка | Clear         | Очистить          |
-| `notFound`          | строка | Nothing found | Ничего не найдено |
-| `empty`             | строка | Empty         | Пусто             |
-| `loading`           | строка | Loading       | Загрузка          |
-| `searchPlaceholder` | строка | Search…       | Поиск…            |
+| `close`             | string | Close         | Закрыть           |
+| `clear`             | string | Clear         | Очистить          |
+| `notFound`          | string | Nothing found | Ничего не найдено |
+| `empty`             | string | Empty         | Пусто             |
+| `loading`           | string | Loading       | Загрузка          |
+| `searchPlaceholder` | string | Search…       | Поиск…            |
 
 ## `alert`
 
-| Ключ    | Форма  | `en-US`         | `ru-RU`           |
+| Key     | Shape  | `en-US`         | `ru-RU`           |
 | ------- | ------ | --------------- | ----------------- |
-| `close` | строка | Dismiss message | Закрыть сообщение |
+| `close` | string | Dismiss message | Закрыть сообщение |
 
 ## `banner`
 
-| Ключ    | Форма  | `en-US`              | `ru-RU`           |
+| Key     | Shape  | `en-US`              | `ru-RU`           |
 | ------- | ------ | -------------------- | ----------------- |
-| `close` | строка | Dismiss announcement | Скрыть объявление |
+| `close` | string | Dismiss announcement | Скрыть объявление |
 
 ## `breadcrumbs`
 
-| Ключ        | Форма   | `en-US`     | `ru-RU`        |
-| ----------- | ------- | ----------- | -------------- |
-| `label`     | строка  | Breadcrumbs | Хлебные крошки |
-| `collapsed` | функция | —           | —              |
+| Key         | Shape    | `en-US`     | `ru-RU`        |
+| ----------- | -------- | ----------- | -------------- |
+| `label`     | string   | Breadcrumbs | Хлебные крошки |
+| `collapsed` | function | —           | —              |
 
 ## `carousel`
 
-| Ключ                   | Форма   | `en-US`        | `ru-RU`          |
-| ---------------------- | ------- | -------------- | ---------------- |
-| `roleDescription`      | строка  | carousel       | карусель         |
-| `slideRoleDescription` | строка  | slide          | слайд            |
-| `previous`             | строка  | Previous slide | Предыдущий слайд |
-| `next`                 | строка  | Next slide     | Следующий слайд  |
-| `slide`                | функция | —              | —                |
+| Key                    | Shape    | `en-US`        | `ru-RU`          |
+| ---------------------- | -------- | -------------- | ---------------- |
+| `roleDescription`      | string   | carousel       | карусель         |
+| `slideRoleDescription` | string   | slide          | слайд            |
+| `previous`             | string   | Previous slide | Предыдущий слайд |
+| `next`                 | string   | Next slide     | Следующий слайд  |
+| `slide`                | function | —              | —                |
 
-`roleDescription` и `slideRoleDescription` — текст `aria-roledescription`, то
-есть то, что скринридер произносит вместо роли; поэтому он переводится. `slide`
-— имя слайда по положению («2 из 5»), а слово «слайд» к нему добавляет роль.
+`roleDescription` and `slideRoleDescription` are the text of `aria-roledescription`: what a screen reader announces instead of the role. That is why this text is translated. `slide` is the name of a slide by its position, for example "2 из 5" in the Russian locale. The role adds the word "slide" to it.
 
 ## `colorPicker`
 
-| Ключ      | Форма  | `en-US` | `ru-RU`   |
+| Key       | Shape  | `en-US` | `ru-RU`   |
 | --------- | ------ | ------- | --------- |
-| `presets` | строка | Presets | Заготовки |
-| `hex`     | строка | HEX     | HEX       |
+| `presets` | string | Presets | Заготовки |
+| `hex`     | string | HEX     | HEX       |
 
 ## `combobox`
 
-| Ключ              | Форма  | `en-US`          | `ru-RU`            |
+| Key               | Shape  | `en-US`          | `ru-RU`            |
 | ----------------- | ------ | ---------------- | ------------------ |
-| `showSuggestions` | строка | Show suggestions | Показать подсказки |
+| `showSuggestions` | string | Show suggestions | Показать подсказки |
 
 ## `commandPalette`
 
-| Ключ          | Форма  | `en-US`                     | `ru-RU`                           |
+| Key           | Shape  | `en-US`                     | `ru-RU`                           |
 | ------------- | ------ | --------------------------- | --------------------------------- |
-| `title`       | строка | Command palette             | Командная палитра                 |
-| `placeholder` | строка | Search actions              | Поиск по действиям                |
-| `emptyHint`   | строка | Start typing an action name | Начните вводить название действия |
+| `title`       | string | Command palette             | Командная палитра                 |
+| `placeholder` | string | Search actions              | Поиск по действиям                |
+| `emptyHint`   | string | Start typing an action name | Начните вводить название действия |
 
 ## `confirmDialog`
 
-| Ключ                | Форма   | `en-US`                      | `ru-RU`        |
-| ------------------- | ------- | ---------------------------- | -------------- |
-| `confirm`           | строка  | Confirm                      | Подтвердить    |
-| `cancel`            | строка  | Cancel                       | Отменить       |
-| `typeToConfirm`     | функция | —                            | —              |
-| `typeToConfirmHint` | строка  | The match is case-sensitive. | Регистр важен. |
+| Key                 | Shape    | `en-US`                      | `ru-RU`        |
+| ------------------- | -------- | ---------------------------- | -------------- |
+| `confirm`           | string   | Confirm                      | Подтвердить    |
+| `cancel`            | string   | Cancel                       | Отменить       |
+| `typeToConfirm`     | function | —                            | —              |
+| `typeToConfirmHint` | string   | The match is case-sensitive. | Регистр важен. |
 
 ## `contextualSaveBar`
 
-| Ключ      | Форма   | `en-US`                  | `ru-RU`                      |
-| --------- | ------- | ------------------------ | ---------------------------- |
-| `label`   | строка  | Unsaved changes          | Несохранённые изменения      |
-| `unsaved` | строка  | You have unsaved changes | Есть несохранённые изменения |
-| `changes` | функция | —                        | —                            |
-| `save`    | строка  | Save                     | Сохранить                    |
-| `cancel`  | строка  | Discard                  | Отменить                     |
-| `saving`  | строка  | Saving…                  | Сохранение…                  |
+| Key       | Shape    | `en-US`                  | `ru-RU`                      |
+| --------- | -------- | ------------------------ | ---------------------------- |
+| `label`   | string   | Unsaved changes          | Несохранённые изменения      |
+| `unsaved` | string   | You have unsaved changes | Есть несохранённые изменения |
+| `changes` | function | —                        | —                            |
+| `save`    | string   | Save                     | Сохранить                    |
+| `cancel`  | string   | Discard                  | Отменить                     |
+| `saving`  | string   | Saving…                  | Сохранение…                  |
 
 ## `copyButton`
 
-| Ключ     | Форма  | `en-US`        | `ru-RU`                |
+| Key      | Shape  | `en-US`        | `ru-RU`                |
 | -------- | ------ | -------------- | ---------------------- |
-| `copy`   | строка | Copy           | Копировать             |
-| `copied` | строка | Copied         | Скопировано            |
-| `failed` | строка | Could not copy | Не удалось скопировать |
+| `copy`   | string | Copy           | Копировать             |
+| `copied` | string | Copied         | Скопировано            |
+| `failed` | string | Could not copy | Не удалось скопировать |
 
 ## `datePicker`
 
-| Ключ          | Форма  | `en-US`     | `ru-RU`      |
+| Key           | Shape  | `en-US`     | `ru-RU`      |
 | ------------- | ------ | ----------- | ------------ |
-| `placeholder` | строка | Pick a date | Выбрать дату |
+| `placeholder` | string | Pick a date | Выбрать дату |
 
 ## `dateRangePicker`
 
-| Ключ          | Форма  | `en-US`       | `ru-RU`        |
+| Key           | Shape  | `en-US`       | `ru-RU`        |
 | ------------- | ------ | ------------- | -------------- |
-| `placeholder` | строка | Pick a period | Выбрать период |
+| `placeholder` | string | Pick a period | Выбрать период |
 
 ## `editableList`
 
-| Ключ         | Форма  | `en-US` | `ru-RU`    |
+| Key          | Shape  | `en-US` | `ru-RU`    |
 | ------------ | ------ | ------- | ---------- |
-| `drag`       | строка | Drag    | Перетащить |
-| `emptyValue` | строка | Not set | Не задано  |
+| `drag`       | string | Drag    | Перетащить |
+| `emptyValue` | string | Not set | Не задано  |
 
 ## `editor`
 
-Строки Редактора ([rich-text-editor.md](../components/inputs/rich-text-editor.md)) живут в общем каталоге, а не в своём. Ключи с точкой — вложенные: `emojiName.*` — имя каждого эмодзи, `emojiCategory.*` — категории. `typographyQuotes` — не текст для экрана, а язык набора кавычек Инструмента `typography`: `ru` («ёлочки» и „лапки“) или `en` (“ ”); у каталога другого языка значение `en` или набор задаёт Опция `quotes`.
+The Editor's strings ([rich-text-editor.md](../components/inputs/rich-text-editor.md)) live in the shared catalog, not in a catalog of their own. Keys with a dot are nested: `emojiName.*` is the name of each emoji, and `emojiCategory.*` is the name of each category. `typographyQuotes` is not text for the screen but the language of the quote set of the `typography` Tool: `ru` (guillemets and low-9 quotes) or `en` (curly quotes); a catalog of another language keeps `en`, or the `quotes` option sets the quotes.
 
-| Ключ                                  | Форма   | `en-US`                                                                          | `ru-RU`                                                                            |
-| ------------------------------------- | ------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `label`                               | строка  | Rich text editor                                                                 | Редактор текста                                                                    |
-| `placeholder`                         | строка  | Start writing…                                                                   | Начните писать…                                                                    |
-| `remaining`                           | функция | —                                                                                | —                                                                                  |
-| `overLimit`                           | функция | —                                                                                | —                                                                                  |
-| `required`                            | строка  | Fill in this field                                                               | Заполните это поле                                                                 |
-| `toolbar`                             | строка  | Formatting                                                                       | Форматирование                                                                     |
-| `selectionToolbar`                    | строка  | Selection formatting                                                             | Форматирование выделения                                                           |
-| `textStyle`                           | функция | —                                                                                | —                                                                                  |
-| `blockTypeMenu`                       | строка  | Block type                                                                       | Тип блока                                                                          |
-| `blockType`                           | функция | —                                                                                | —                                                                                  |
-| `moreFormatting`                      | строка  | More formatting                                                                  | Ещё форматирование                                                                 |
-| `textBlock`                           | строка  | Text                                                                             | Текст                                                                              |
-| `paragraph`                           | строка  | Paragraph                                                                        | Абзац                                                                              |
-| `heading`                             | функция | —                                                                                | —                                                                                  |
-| `insertMenu`                          | строка  | Insert block                                                                     | Добавить блок                                                                      |
-| `insertSection`                       | строка  | Insert                                                                           | Добавить                                                                           |
-| `turnIntoSection`                     | строка  | Turn into                                                                        | Превратить в                                                                       |
-| `nothingFound`                        | строка  | Nothing found                                                                    | Ничего не найдено                                                                  |
-| `triggerList`                         | строка  | Suggestions                                                                      | Подсказки                                                                          |
-| `bold`                                | строка  | Bold                                                                             | Жирный                                                                             |
-| `italic`                              | строка  | Italic                                                                           | Курсив                                                                             |
-| `underline`                           | строка  | Underline                                                                        | Подчёркнутый                                                                       |
-| `strike`                              | строка  | Strikethrough                                                                    | Зачёркнутый                                                                        |
-| `code`                                | строка  | Inline code                                                                      | Строчный код                                                                       |
-| `superscript`                         | строка  | Superscript                                                                      | Верхний индекс                                                                     |
-| `subscript`                           | строка  | Subscript                                                                        | Нижний индекс                                                                      |
-| `clearFormatting`                     | строка  | Clear formatting                                                                 | Очистить стили                                                                     |
-| `link`                                | строка  | Link                                                                             | Ссылка                                                                             |
-| `linkAddress`                         | строка  | Address                                                                          | Адрес                                                                              |
-| `linkApply`                           | строка  | Apply                                                                            | Применить                                                                          |
-| `linkRemove`                          | строка  | Remove link                                                                      | Убрать ссылку                                                                      |
-| `linkInvalid`                         | строка  | Enter a web address (http, https) or an email (mailto)                           | Нужен адрес сайта (http, https) или почты (mailto)                                 |
-| `bulletList`                          | строка  | Bulleted list                                                                    | Маркированный список                                                               |
-| `orderedList`                         | строка  | Numbered list                                                                    | Нумерованный список                                                                |
-| `taskList`                            | строка  | Checklist                                                                        | Чек-лист                                                                           |
-| `blockquote`                          | строка  | Quote                                                                            | Цитата                                                                             |
-| `codeBlock`                           | строка  | Code block                                                                       | Блок кода                                                                          |
-| `codeLanguage`                        | функция | —                                                                                | —                                                                                  |
-| `codeLanguagePlain`                   | строка  | Plain text                                                                       | Обычный текст                                                                      |
-| `codeCopy`                            | строка  | Copy code                                                                        | Копировать код                                                                     |
-| `horizontalRule`                      | строка  | Divider                                                                          | Разделитель                                                                        |
-| `undo`                                | строка  | Undo                                                                             | Отменить                                                                           |
-| `redo`                                | строка  | Redo                                                                             | Повторить                                                                          |
-| `taskCheckbox`                        | функция | —                                                                                | —                                                                                  |
-| `highlight`                           | функция | —                                                                                | —                                                                                  |
-| `colorDefault`                        | строка  | Default                                                                          | По умолчанию                                                                       |
-| `highlightNone`                       | строка  | None                                                                             | Без маркера                                                                        |
-| `highlightToggle`                     | строка  | Highlight                                                                        | Маркер                                                                             |
-| `highlightRemove`                     | строка  | Remove highlight                                                                 | Убрать маркер                                                                      |
-| `colorRemove`                         | строка  | Remove color                                                                     | Убрать цвет                                                                        |
-| `color`                               | строка  | Color                                                                            | Цвет                                                                               |
-| `colorMenu`                           | функция | —                                                                                | —                                                                                  |
-| `textColorSection`                    | строка  | Text color                                                                       | Цвет текста                                                                        |
-| `highlightSection`                    | строка  | Highlight color                                                                  | Цвет маркера                                                                       |
-| `colorAccent`                         | строка  | Accent                                                                           | Акцентный                                                                          |
-| `colorSuccess`                        | строка  | Green                                                                            | Зелёный                                                                            |
-| `colorWarning`                        | строка  | Amber                                                                            | Жёлтый                                                                             |
-| `colorDanger`                         | строка  | Red                                                                              | Красный                                                                            |
-| `colorLime`                           | строка  | Lime                                                                             | Лаймовый                                                                           |
-| `colorMuted`                          | строка  | Gray                                                                             | Серый                                                                              |
-| `markerGray`                          | строка  | Gray                                                                             | Серый                                                                              |
-| `markerBrown`                         | строка  | Brown                                                                            | Коричневый                                                                         |
-| `markerOrange`                        | строка  | Orange                                                                           | Оранжевый                                                                          |
-| `markerYellow`                        | строка  | Yellow                                                                           | Жёлтый                                                                             |
-| `markerGreen`                         | строка  | Green                                                                            | Зелёный                                                                            |
-| `markerBlue`                          | строка  | Blue                                                                             | Синий                                                                              |
-| `markerPurple`                        | строка  | Purple                                                                           | Фиолетовый                                                                         |
-| `markerPink`                          | строка  | Pink                                                                             | Розовый                                                                            |
-| `markerRed`                           | строка  | Red                                                                              | Красный                                                                            |
-| `colorCustom`                         | строка  | Custom color…                                                                    | Свой цвет…                                                                         |
-| `colorCustomCurrent`                  | функция | —                                                                                | —                                                                                  |
-| `customColorText`                     | строка  | Custom text color                                                                | Свой цвет текста                                                                   |
-| `customColorHighlight`                | строка  | Custom highlight color                                                           | Свой цвет маркера                                                                  |
-| `customColorValue`                    | функция | —                                                                                | —                                                                                  |
-| `customColorApply`                    | строка  | Apply                                                                            | Применить                                                                          |
-| `customColorCancel`                   | строка  | Cancel                                                                           | Отмена                                                                             |
-| `customColorLowContrastText`          | функция | —                                                                                | —                                                                                  |
-| `customColorLowContrastHighlight`     | функция | —                                                                                | —                                                                                  |
-| `customColorThemeNote`                | строка  | This color does not change with the theme.                                       | Этот цвет не меняется вместе с темой.                                              |
-| `alignLeft`                           | строка  | Align left                                                                       | По левому краю                                                                     |
-| `alignCenter`                         | строка  | Align center                                                                     | По центру                                                                          |
-| `alignRight`                          | строка  | Align right                                                                      | По правому краю                                                                    |
-| `alignMenu`                           | функция | —                                                                                | —                                                                                  |
-| `listMenu`                            | функция | —                                                                                | —                                                                                  |
-| `table`                               | строка  | Table                                                                            | Таблица                                                                            |
-| `tableInsertDialog`                   | строка  | Insert table…                                                                    | Вставить таблицу…                                                                  |
-| `tableInsertDialogTitle`              | строка  | Insert table                                                                     | Вставить таблицу                                                                   |
-| `tableCell`                           | строка  | Cell                                                                             | Ячейка                                                                             |
-| `tableRow`                            | строка  | Row                                                                              | Строка                                                                             |
-| `tableColumn`                         | строка  | Column                                                                           | Столбец                                                                            |
-| `tableSort`                           | строка  | Sort                                                                             | Сортировка                                                                         |
-| `tableMergeCells`                     | строка  | Merge cells                                                                      | Объединить ячейки                                                                  |
-| `tableSplitCell`                      | строка  | Split cell                                                                       | Разделить ячейку                                                                   |
-| `tableAddRowBefore`                   | строка  | Insert row above                                                                 | Вставить строку выше                                                               |
-| `tableAddRowAfter`                    | строка  | Insert row below                                                                 | Вставить строку ниже                                                               |
-| `tableAddColumnBefore`                | строка  | Insert column left                                                               | Вставить столбец слева                                                             |
-| `tableAddColumnAfter`                 | строка  | Insert column right                                                              | Вставить столбец справа                                                            |
-| `tableDeleteRow`                      | строка  | Delete row                                                                       | Удалить строку                                                                     |
-| `tableDeleteColumn`                   | строка  | Delete column                                                                    | Удалить столбец                                                                    |
-| `tableHeaderRow`                      | строка  | Header row                                                                       | Строка-заголовок                                                                   |
-| `tableAlignLeft`                      | строка  | Align column left                                                                | Столбец по левому краю                                                             |
-| `tableAlignCenter`                    | строка  | Align column center                                                              | Столбец по центру                                                                  |
-| `tableAlignRight`                     | строка  | Align column right                                                               | Столбец по правому краю                                                            |
-| `tableSortAscending`                  | строка  | Sort ascending                                                                   | По возрастанию                                                                     |
-| `tableSortDescending`                 | строка  | Sort descending                                                                  | По убыванию                                                                        |
-| `tableSortMerged`                     | строка  | Unavailable: the table has merged cells                                          | Недоступно: в таблице есть объединённые ячейки                                     |
-| `tableDelete`                         | строка  | Delete table                                                                     | Удалить таблицу                                                                    |
-| `tableCancel`                         | строка  | Cancel                                                                           | Отмена                                                                             |
-| `image`                               | строка  | Image                                                                            | Картинка                                                                           |
-| `imageAddress`                        | строка  | Image address                                                                    | Адрес картинки                                                                     |
-| `imageInvalid`                        | строка  | Enter an image address starting with https:// or http://                         | Нужен адрес картинки, начинающийся с https:// или http://                          |
-| `imageAlt`                            | строка  | Alternative text                                                                 | Альтернативный текст                                                               |
-| `imageAltHint`                        | строка  | Describe the image for people who can't see it. Leave empty if it is decorative. | Опишите картинку для тех, кто её не видит. Оставьте пустым, если она декоративная. |
-| `imageInsert`                         | строка  | Insert                                                                           | Вставить                                                                           |
-| `imageApply`                          | строка  | Apply                                                                            | Применить                                                                          |
-| `imageChooseFile`                     | строка  | Upload from device                                                               | Загрузить с устройства                                                             |
-| `imageRemove`                         | строка  | Remove image                                                                     | Убрать картинку                                                                    |
-| `imageEdit`                           | строка  | Edit image                                                                       | Изменить картинку                                                                  |
-| `imageWidth`                          | строка  | Width                                                                            | Ширина                                                                             |
-| `imageWidthPreset`                    | функция | —                                                                                | —                                                                                  |
-| `imageCaption`                        | строка  | Caption (optional)                                                               | Подпись (необязательно)                                                            |
-| `imageUploading`                      | функция | —                                                                                | —                                                                                  |
-| `imageUploaded`                       | функция | —                                                                                | —                                                                                  |
-| `imageUploadFailed`                   | функция | —                                                                                | —                                                                                  |
-| `imageNotImage`                       | функция | —                                                                                | —                                                                                  |
-| `imageFilesUnsupported`               | строка  | Files can't be uploaded here. Insert the image by its address.                   | Файлы здесь не загружаются. Вставьте картинку по адресу.                           |
-| `toolsFailed`                         | строка  | The editor couldn't start. The document is unchanged.                            | Редактор не запустился. Документ не изменён.                                       |
-| `retry`                               | строка  | Retry                                                                            | Повторить                                                                          |
-| `textCardShown`                       | функция | —                                                                                | —                                                                                  |
-| `tableGrid`                           | строка  | Table size                                                                       | Размер таблицы                                                                     |
-| `tableSize`                           | функция | —                                                                                | —                                                                                  |
-| `tableColumns`                        | строка  | Columns                                                                          | Столбцы                                                                            |
-| `tableRows`                           | строка  | Rows                                                                             | Строки                                                                             |
-| `tableInsert`                         | строка  | Insert                                                                           | Вставить                                                                           |
-| `layout`                              | строка  | Layout                                                                           | Раскладка                                                                          |
-| `layoutVariant.100`                   | строка  | Single column                                                                    | Одна колонка                                                                       |
-| `layoutVariant.50-50`                 | строка  | Two columns                                                                      | Две колонки                                                                        |
-| `layoutVariant.33-33-33`              | строка  | Three columns                                                                    | Три колонки                                                                        |
-| `layoutVariant.25-25-25-25`           | строка  | Four columns                                                                     | Четыре колонки                                                                     |
-| `layoutVariant.60-40`                 | строка  | 60/40                                                                            | 60/40                                                                              |
-| `layoutVariant.40-60`                 | строка  | 40/60                                                                            | 40/60                                                                              |
-| `wrapper`                             | строка  | Wrapper                                                                          | Обёртка                                                                            |
-| `unwrap`                              | строка  | Unwrap                                                                           | Снять обёртку                                                                      |
-| `wrapperTone`                         | функция | —                                                                                | —                                                                                  |
-| `wrapperToneNone`                     | строка  | None                                                                             | Без тона                                                                           |
-| `wrapperToneName.accent`              | строка  | Note                                                                             | Заметка                                                                            |
-| `wrapperToneName.success`             | строка  | Tip                                                                              | Совет                                                                              |
-| `wrapperToneName.neutral`             | строка  | Important                                                                        | Важно                                                                              |
-| `wrapperToneName.warning`             | строка  | Warning                                                                          | Внимание                                                                           |
-| `wrapperToneName.danger`              | строка  | Caution                                                                          | Осторожно                                                                          |
-| `details`                             | строка  | Collapsible block                                                                | Сворачиваемый блок                                                                 |
-| `unwrapDetails`                       | строка  | Remove collapsing                                                                | Снять сворачивание                                                                 |
-| `detailsToggle`                       | функция | —                                                                                | —                                                                                  |
-| `mathInline`                          | строка  | Formula                                                                          | Формула                                                                            |
-| `mathBlock`                           | строка  | Block formula                                                                    | Блочная формула                                                                    |
-| `mathLatex`                           | строка  | LaTeX                                                                            | LaTeX                                                                              |
-| `mathPreview`                         | строка  | Preview                                                                          | Предпросмотр                                                                       |
-| `mathEmpty`                           | строка  | The formula appears here                                                         | Здесь появится формула                                                             |
-| `mathInvalid`                         | функция | —                                                                                | —                                                                                  |
-| `mathInsert`                          | строка  | Insert                                                                           | Вставить                                                                           |
-| `mathApply`                           | строка  | Apply                                                                            | Применить                                                                          |
-| `mathRemove`                          | строка  | Remove formula                                                                   | Убрать формулу                                                                     |
-| `emoji`                               | строка  | Emoji                                                                            | Эмодзи                                                                             |
-| `emojiGrid`                           | строка  | Choose an emoji                                                                  | Выберите эмодзи                                                                    |
-| `emojiCategory.favorites`             | строка  | Favorites                                                                        | Избранное                                                                          |
-| `emojiCategory.smileys`               | строка  | Smileys                                                                          | Смайлы                                                                             |
-| `emojiCategory.gestures`              | строка  | Gestures                                                                         | Жесты                                                                              |
-| `emojiCategory.animals`               | строка  | Animals                                                                          | Животные                                                                           |
-| `emojiCategory.food`                  | строка  | Food                                                                             | Еда                                                                                |
-| `emojiCategory.activities`            | строка  | Activities                                                                       | Занятия                                                                            |
-| `emojiCategory.travel`                | строка  | Travel                                                                           | Путешествия                                                                        |
-| `emojiName.faceWithTearsOfJoy`        | строка  | Face with tears of joy                                                           | Лицо со слезами радости                                                            |
-| `emojiName.redHeart`                  | строка  | Red heart                                                                        | Красное сердце                                                                     |
-| `emojiName.rollingOnTheFloorLaughing` | строка  | Rolling on the floor laughing                                                    | Катаюсь по полу от смеха                                                           |
-| `emojiName.thumbsUp`                  | строка  | Thumbs up                                                                        | Большой палец вверх                                                                |
-| `emojiName.loudlyCrying`              | строка  | Loudly crying face                                                               | Громко плачущее лицо                                                               |
-| `emojiName.foldedHands`               | строка  | Folded hands                                                                     | Сложенные ладони                                                                   |
-| `emojiName.blowingKiss`               | строка  | Face blowing a kiss                                                              | Воздушный поцелуй                                                                  |
-| `emojiName.smilingWithHearts`         | строка  | Smiling face with hearts                                                         | Улыбающееся лицо с сердечками                                                      |
-| `emojiName.heartEyes`                 | строка  | Heart eyes                                                                       | Глаза-сердечки                                                                     |
-| `emojiName.partyPopper`               | строка  | Party popper                                                                     | Хлопушка                                                                           |
-| `emojiName.beamingFace`               | строка  | Beaming face                                                                     | Сияющее лицо                                                                       |
-| `emojiName.fire`                      | строка  | Fire                                                                             | Огонь                                                                              |
-| `emojiName.birthdayCake`              | строка  | Birthday cake                                                                    | Праздничный торт                                                                   |
-| `emojiName.flushedFace`               | строка  | Flushed face                                                                     | Смущённое лицо                                                                     |
-| `emojiName.sunglassesFace`            | строка  | Face with sunglasses                                                             | Лицо в солнечных очках                                                             |
-| `emojiName.sparkles`                  | строка  | Sparkles                                                                         | Искры                                                                              |
-| `emojiName.eyes`                      | строка  | Eyes                                                                             | Глаза                                                                              |
-| `emojiName.pointingRight`             | строка  | Pointing right                                                                   | Указывает вправо                                                                   |
-| `emojiName.hundredPoints`             | строка  | Hundred points                                                                   | Сто баллов                                                                         |
-| `emojiName.angryFace`                 | строка  | Angry face                                                                       | Сердитое лицо                                                                      |
-| `emojiName.slightlySmiling`           | строка  | Slightly smiling face                                                            | Слегка улыбающееся лицо                                                            |
-| `emojiName.grinningSmilingEyes`       | строка  | Grinning face with smiling eyes                                                  | Ухмыляющееся лицо с улыбающимися глазами                                           |
-| `emojiName.grinningSquinting`         | строка  | Grinning squinting face                                                          | Ухмыляющееся лицо с прищуром                                                       |
-| `emojiName.winkingFace`               | строка  | Winking face                                                                     | Подмигивающее лицо                                                                 |
-| `emojiName.tongueFace`                | строка  | Face with tongue                                                                 | Лицо с высунутым языком                                                            |
-| `emojiName.smilingBlushing`           | строка  | Smiling face with smiling eyes                                                   | Улыбающееся лицо с улыбающимися глазами и румянцем                                 |
-| `emojiName.smirkingFace`              | строка  | Smirking face                                                                    | Самодовольное лицо                                                                 |
-| `emojiName.thinkingFace`              | строка  | Thinking face                                                                    | Задумавшееся лицо                                                                  |
-| `emojiName.sleepyFace`                | строка  | Sleepy face                                                                      | Сонное лицо                                                                        |
-| `emojiName.thumbsDown`                | строка  | Thumbs down                                                                      | Большой палец вниз                                                                 |
-| `emojiName.victoryHand`               | строка  | Victory hand                                                                     | Жест победы                                                                        |
-| `emojiName.clappingHands`             | строка  | Clapping hands                                                                   | Аплодисменты                                                                       |
-| `emojiName.raisedHands`               | строка  | Raising hands                                                                    | Поднятые руки                                                                      |
-| `emojiName.facepalm`                  | строка  | Facepalm                                                                         | Рука у лица                                                                        |
-| `emojiName.shrug`                     | строка  | Shrug                                                                            | Пожимает плечами                                                                   |
-| `emojiName.oncomingFist`              | строка  | Oncoming fist                                                                    | Кулак                                                                              |
-| `emojiName.wavingHand`                | строка  | Waving hand                                                                      | Машущая рука                                                                       |
-| `emojiName.okHand`                    | строка  | OK hand                                                                          | Жест «окей»                                                                        |
-| `emojiName.dog`                       | строка  | Dog                                                                              | Собака                                                                             |
-| `emojiName.cat`                       | строка  | Cat                                                                              | Кошка                                                                              |
-| `emojiName.mouse`                     | строка  | Mouse                                                                            | Мышь                                                                               |
-| `emojiName.hamster`                   | строка  | Hamster                                                                          | Хомяк                                                                              |
-| `emojiName.rabbit`                    | строка  | Rabbit                                                                           | Кролик                                                                             |
-| `emojiName.bear`                      | строка  | Bear                                                                             | Медведь                                                                            |
-| `emojiName.panda`                     | строка  | Panda                                                                            | Панда                                                                              |
-| `emojiName.lion`                      | строка  | Lion                                                                             | Лев                                                                                |
-| `emojiName.pig`                       | строка  | Pig                                                                              | Свинья                                                                             |
-| `emojiName.frog`                      | строка  | Frog                                                                             | Лягушка                                                                            |
-| `emojiName.greenApple`                | строка  | Green apple                                                                      | Зелёное яблоко                                                                     |
-| `emojiName.pizza`                     | строка  | Pizza                                                                            | Пицца                                                                              |
-| `emojiName.hamburger`                 | строка  | Hamburger                                                                        | Гамбургер                                                                          |
-| `emojiName.frenchFries`               | строка  | French fries                                                                     | Картофель фри                                                                      |
-| `emojiName.spaghetti`                 | строка  | Spaghetti                                                                        | Спагетти                                                                           |
-| `emojiName.sushi`                     | строка  | Sushi                                                                            | Суши                                                                               |
-| `emojiName.iceCream`                  | строка  | Ice cream                                                                        | Мороженое                                                                          |
-| `emojiName.doughnut`                  | строка  | Doughnut                                                                         | Пончик                                                                             |
-| `emojiName.cookie`                    | строка  | Cookie                                                                           | Печенье                                                                            |
-| `emojiName.shortcake`                 | строка  | Shortcake                                                                        | Кусок торта                                                                        |
-| `emojiName.soccerBall`                | строка  | Soccer ball                                                                      | Футбольный мяч                                                                     |
-| `emojiName.basketball`                | строка  | Basketball                                                                       | Баскетбольный мяч                                                                  |
-| `emojiName.americanFootball`          | строка  | American football                                                                | Мяч для американского футбола                                                      |
-| `emojiName.baseball`                  | строка  | Baseball                                                                         | Бейсбольный мяч                                                                    |
-| `emojiName.tennis`                    | строка  | Tennis                                                                           | Теннис                                                                             |
-| `emojiName.bowling`                   | строка  | Bowling                                                                          | Боулинг                                                                            |
-| `emojiName.golfer`                    | строка  | Golfer                                                                           | Гольфист                                                                           |
-| `emojiName.fishing`                   | строка  | Fishing                                                                          | Рыбалка                                                                            |
-| `emojiName.cyclist`                   | строка  | Cyclist                                                                          | Велосипедист                                                                       |
-| `emojiName.videoGame`                 | строка  | Video game                                                                       | Видеоигра                                                                          |
-| `emojiName.airplane`                  | строка  | Airplane                                                                         | Самолёт                                                                            |
-| `emojiName.car`                       | строка  | Car                                                                              | Автомобиль                                                                         |
-| `emojiName.bicycle`                   | строка  | Bicycle                                                                          | Велосипед                                                                          |
-| `emojiName.train`                     | строка  | Train                                                                            | Поезд                                                                              |
-| `emojiName.sailboat`                  | строка  | Sailboat                                                                         | Парусник                                                                           |
-| `emojiName.worldMap`                  | строка  | World map                                                                        | Карта мира                                                                         |
-| `emojiName.beach`                     | строка  | Beach                                                                            | Пляж                                                                               |
-| `emojiName.mountain`                  | строка  | Snow-capped mountain                                                             | Заснеженная гора                                                                   |
-| `emojiName.camping`                   | строка  | Camping                                                                          | Кемпинг                                                                            |
-| `emojiName.luggage`                   | строка  | Luggage                                                                          | Чемодан                                                                            |
-| `source`                              | строка  | HTML                                                                             | HTML                                                                               |
-| `sourceField`                         | строка  | HTML source                                                                      | HTML-код документа                                                                 |
-| `invisibleCharacters`                 | строка  | Invisible characters                                                             | Невидимые символы                                                                  |
-| `search`                              | строка  | Find                                                                             | Найти                                                                              |
-| `searchReplace`                       | строка  | Find and replace                                                                 | Найти и заменить                                                                   |
-| `searchPanel`                         | строка  | Find and replace                                                                 | Поиск и замена                                                                     |
-| `searchField`                         | строка  | Find                                                                             | Найти                                                                              |
-| `replaceField`                        | строка  | Replace with                                                                     | Заменить на                                                                        |
-| `searchPrevious`                      | строка  | Previous match                                                                   | Предыдущее совпадение                                                              |
-| `searchNext`                          | строка  | Next match                                                                       | Следующее совпадение                                                               |
-| `searchClose`                         | строка  | Close find and replace                                                           | Закрыть поиск                                                                      |
-| `searchMatchCase`                     | строка  | Match case                                                                       | Учитывать регистр                                                                  |
-| `searchWholeWord`                     | строка  | Whole words                                                                      | Слово целиком                                                                      |
-| `searchRegex`                         | строка  | Regular expression                                                               | Регулярное выражение                                                               |
-| `replaceOne`                          | строка  | Replace                                                                          | Заменить                                                                           |
-| `replaceAll`                          | строка  | Replace all                                                                      | Заменить все                                                                       |
-| `searchCount`                         | функция | —                                                                                | —                                                                                  |
-| `searchNoMatches`                     | строка  | No matches                                                                       | Нет совпадений                                                                     |
-| `searchInvalid`                       | строка  | Invalid regular expression                                                       | Неверное регулярное выражение                                                      |
-| `resizeField`                         | строка  | Resize the editor                                                                | Изменить высоту поля                                                               |
-| `fieldHeight`                         | функция | —                                                                                | —                                                                                  |
-| `shortcuts`                           | строка  | Keyboard shortcuts                                                               | Сочетания клавиш                                                                   |
-| `shortcutsCommand`                    | строка  | Command                                                                          | Команда                                                                            |
-| `shortcutsKeys`                       | строка  | Shortcut                                                                         | Сочетание                                                                          |
-| `selectBlock`                         | строка  | Select block text                                                                | Выделить текст блока                                                               |
-| `selectDocument`                      | строка  | Select all (second press)                                                        | Выделить всё (второе нажатие)                                                      |
-| `duplicateBlock`                      | строка  | Duplicate block                                                                  | Дублировать блок                                                                   |
-| `moveBlockUp`                         | строка  | Move block up                                                                    | Переместить блок вверх                                                             |
-| `moveBlockDown`                       | строка  | Move block down                                                                  | Переместить блок вниз                                                              |
-| `indentListItem`                      | строка  | Indent list item                                                                 | Сдвинуть пункт списка вправо                                                       |
-| `outdentListItem`                     | строка  | Outdent list item                                                                | Сдвинуть пункт списка влево                                                        |
-| `focusToolbar`                        | строка  | Go to the toolbar                                                                | Перейти в панель                                                                   |
-| `blockActions`                        | строка  | Block actions                                                                    | Действия с блоком                                                                  |
-| `blockAdd`                            | строка  | Add                                                                              | Добавить                                                                           |
-| `blockFormat`                         | строка  | Format                                                                           | Формат                                                                             |
-| `blockMoveUp`                         | строка  | Move up                                                                          | Вверх                                                                              |
-| `blockMoveDown`                       | строка  | Move down                                                                        | Вниз                                                                               |
-| `blockDuplicate`                      | строка  | Duplicate                                                                        | Дублировать                                                                        |
-| `blockDelete`                         | строка  | Delete                                                                           | Удалить                                                                            |
-| `toc`                                 | строка  | Table of contents                                                                | Оглавление                                                                         |
-| `video`                               | строка  | Video                                                                            | Видео                                                                              |
-| `videoLink`                           | строка  | Video link                                                                       | Ссылка на видео                                                                    |
-| `videoInsert`                         | строка  | Insert                                                                           | Вставить                                                                           |
-| `videoNotFound`                       | функция | —                                                                                | —                                                                                  |
-| `videoPlay`                           | строка  | Play                                                                             | Воспроизвести                                                                      |
-| `videoPlayLabel`                      | функция | —                                                                                | —                                                                                  |
-| `videoPlayer`                         | функция | —                                                                                | —                                                                                  |
-| `typographyQuotes`                    | строка  | en                                                                               | ru                                                                                 |
+| Key                                   | Shape    | `en-US`                                                                          | `ru-RU`                                                                            |
+| ------------------------------------- | -------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `label`                               | string   | Rich text editor                                                                 | Редактор текста                                                                    |
+| `placeholder`                         | string   | Start writing…                                                                   | Начните писать…                                                                    |
+| `remaining`                           | function | —                                                                                | —                                                                                  |
+| `overLimit`                           | function | —                                                                                | —                                                                                  |
+| `required`                            | string   | Fill in this field                                                               | Заполните это поле                                                                 |
+| `toolbar`                             | string   | Formatting                                                                       | Форматирование                                                                     |
+| `selectionToolbar`                    | string   | Selection formatting                                                             | Форматирование выделения                                                           |
+| `textStyle`                           | function | —                                                                                | —                                                                                  |
+| `blockTypeMenu`                       | string   | Block type                                                                       | Тип блока                                                                          |
+| `blockType`                           | function | —                                                                                | —                                                                                  |
+| `moreFormatting`                      | string   | More formatting                                                                  | Ещё форматирование                                                                 |
+| `textBlock`                           | string   | Text                                                                             | Текст                                                                              |
+| `paragraph`                           | string   | Paragraph                                                                        | Абзац                                                                              |
+| `heading`                             | function | —                                                                                | —                                                                                  |
+| `insertMenu`                          | string   | Insert block                                                                     | Добавить блок                                                                      |
+| `insertSection`                       | string   | Insert                                                                           | Добавить                                                                           |
+| `turnIntoSection`                     | string   | Turn into                                                                        | Превратить в                                                                       |
+| `nothingFound`                        | string   | Nothing found                                                                    | Ничего не найдено                                                                  |
+| `triggerList`                         | string   | Suggestions                                                                      | Подсказки                                                                          |
+| `bold`                                | string   | Bold                                                                             | Жирный                                                                             |
+| `italic`                              | string   | Italic                                                                           | Курсив                                                                             |
+| `underline`                           | string   | Underline                                                                        | Подчёркнутый                                                                       |
+| `strike`                              | string   | Strikethrough                                                                    | Зачёркнутый                                                                        |
+| `code`                                | string   | Inline code                                                                      | Строчный код                                                                       |
+| `superscript`                         | string   | Superscript                                                                      | Верхний индекс                                                                     |
+| `subscript`                           | string   | Subscript                                                                        | Нижний индекс                                                                      |
+| `clearFormatting`                     | string   | Clear formatting                                                                 | Очистить стили                                                                     |
+| `link`                                | string   | Link                                                                             | Ссылка                                                                             |
+| `linkAddress`                         | string   | Address                                                                          | Адрес                                                                              |
+| `linkApply`                           | string   | Apply                                                                            | Применить                                                                          |
+| `linkRemove`                          | string   | Remove link                                                                      | Убрать ссылку                                                                      |
+| `linkInvalid`                         | string   | Enter a web address (http, https) or an email (mailto)                           | Нужен адрес сайта (http, https) или почты (mailto)                                 |
+| `bulletList`                          | string   | Bulleted list                                                                    | Маркированный список                                                               |
+| `orderedList`                         | string   | Numbered list                                                                    | Нумерованный список                                                                |
+| `taskList`                            | string   | Checklist                                                                        | Чек-лист                                                                           |
+| `blockquote`                          | string   | Quote                                                                            | Цитата                                                                             |
+| `codeBlock`                           | string   | Code block                                                                       | Блок кода                                                                          |
+| `codeLanguage`                        | function | —                                                                                | —                                                                                  |
+| `codeLanguagePlain`                   | string   | Plain text                                                                       | Обычный текст                                                                      |
+| `codeCopy`                            | string   | Copy code                                                                        | Копировать код                                                                     |
+| `horizontalRule`                      | string   | Divider                                                                          | Разделитель                                                                        |
+| `undo`                                | string   | Undo                                                                             | Отменить                                                                           |
+| `redo`                                | string   | Redo                                                                             | Повторить                                                                          |
+| `taskCheckbox`                        | function | —                                                                                | —                                                                                  |
+| `highlight`                           | function | —                                                                                | —                                                                                  |
+| `colorDefault`                        | string   | Default                                                                          | По умолчанию                                                                       |
+| `highlightNone`                       | string   | None                                                                             | Без маркера                                                                        |
+| `highlightToggle`                     | string   | Highlight                                                                        | Маркер                                                                             |
+| `highlightRemove`                     | string   | Remove highlight                                                                 | Убрать маркер                                                                      |
+| `colorRemove`                         | string   | Remove color                                                                     | Убрать цвет                                                                        |
+| `color`                               | string   | Color                                                                            | Цвет                                                                               |
+| `colorMenu`                           | function | —                                                                                | —                                                                                  |
+| `textColorSection`                    | string   | Text color                                                                       | Цвет текста                                                                        |
+| `highlightSection`                    | string   | Highlight color                                                                  | Цвет маркера                                                                       |
+| `colorAccent`                         | string   | Accent                                                                           | Акцентный                                                                          |
+| `colorSuccess`                        | string   | Green                                                                            | Зелёный                                                                            |
+| `colorWarning`                        | string   | Amber                                                                            | Жёлтый                                                                             |
+| `colorDanger`                         | string   | Red                                                                              | Красный                                                                            |
+| `colorLime`                           | string   | Lime                                                                             | Лаймовый                                                                           |
+| `colorMuted`                          | string   | Gray                                                                             | Серый                                                                              |
+| `markerGray`                          | string   | Gray                                                                             | Серый                                                                              |
+| `markerBrown`                         | string   | Brown                                                                            | Коричневый                                                                         |
+| `markerOrange`                        | string   | Orange                                                                           | Оранжевый                                                                          |
+| `markerYellow`                        | string   | Yellow                                                                           | Жёлтый                                                                             |
+| `markerGreen`                         | string   | Green                                                                            | Зелёный                                                                            |
+| `markerBlue`                          | string   | Blue                                                                             | Синий                                                                              |
+| `markerPurple`                        | string   | Purple                                                                           | Фиолетовый                                                                         |
+| `markerPink`                          | string   | Pink                                                                             | Розовый                                                                            |
+| `markerRed`                           | string   | Red                                                                              | Красный                                                                            |
+| `colorCustom`                         | string   | Custom color…                                                                    | Свой цвет…                                                                         |
+| `colorCustomCurrent`                  | function | —                                                                                | —                                                                                  |
+| `customColorText`                     | string   | Custom text color                                                                | Свой цвет текста                                                                   |
+| `customColorHighlight`                | string   | Custom highlight color                                                           | Свой цвет маркера                                                                  |
+| `customColorValue`                    | function | —                                                                                | —                                                                                  |
+| `customColorApply`                    | string   | Apply                                                                            | Применить                                                                          |
+| `customColorCancel`                   | string   | Cancel                                                                           | Отмена                                                                             |
+| `customColorLowContrastText`          | function | —                                                                                | —                                                                                  |
+| `customColorLowContrastHighlight`     | function | —                                                                                | —                                                                                  |
+| `customColorThemeNote`                | string   | This color does not change with the theme.                                       | Этот цвет не меняется вместе с темой.                                              |
+| `alignLeft`                           | string   | Align left                                                                       | По левому краю                                                                     |
+| `alignCenter`                         | string   | Align center                                                                     | По центру                                                                          |
+| `alignRight`                          | string   | Align right                                                                      | По правому краю                                                                    |
+| `alignMenu`                           | function | —                                                                                | —                                                                                  |
+| `listMenu`                            | function | —                                                                                | —                                                                                  |
+| `table`                               | string   | Table                                                                            | Таблица                                                                            |
+| `tableInsertDialog`                   | string   | Insert table…                                                                    | Вставить таблицу…                                                                  |
+| `tableInsertDialogTitle`              | string   | Insert table                                                                     | Вставить таблицу                                                                   |
+| `tableCell`                           | string   | Cell                                                                             | Ячейка                                                                             |
+| `tableRow`                            | string   | Row                                                                              | Строка                                                                             |
+| `tableColumn`                         | string   | Column                                                                           | Столбец                                                                            |
+| `tableSort`                           | string   | Sort                                                                             | Сортировка                                                                         |
+| `tableMergeCells`                     | string   | Merge cells                                                                      | Объединить ячейки                                                                  |
+| `tableSplitCell`                      | string   | Split cell                                                                       | Разделить ячейку                                                                   |
+| `tableAddRowBefore`                   | string   | Insert row above                                                                 | Вставить строку выше                                                               |
+| `tableAddRowAfter`                    | string   | Insert row below                                                                 | Вставить строку ниже                                                               |
+| `tableAddColumnBefore`                | string   | Insert column left                                                               | Вставить столбец слева                                                             |
+| `tableAddColumnAfter`                 | string   | Insert column right                                                              | Вставить столбец справа                                                            |
+| `tableDeleteRow`                      | string   | Delete row                                                                       | Удалить строку                                                                     |
+| `tableDeleteColumn`                   | string   | Delete column                                                                    | Удалить столбец                                                                    |
+| `tableHeaderRow`                      | string   | Header row                                                                       | Строка-заголовок                                                                   |
+| `tableAlignLeft`                      | string   | Align column left                                                                | Столбец по левому краю                                                             |
+| `tableAlignCenter`                    | string   | Align column center                                                              | Столбец по центру                                                                  |
+| `tableAlignRight`                     | string   | Align column right                                                               | Столбец по правому краю                                                            |
+| `tableSortAscending`                  | string   | Sort ascending                                                                   | По возрастанию                                                                     |
+| `tableSortDescending`                 | string   | Sort descending                                                                  | По убыванию                                                                        |
+| `tableSortMerged`                     | string   | Unavailable: the table has merged cells                                          | Недоступно: в таблице есть объединённые ячейки                                     |
+| `tableDelete`                         | string   | Delete table                                                                     | Удалить таблицу                                                                    |
+| `tableCancel`                         | string   | Cancel                                                                           | Отмена                                                                             |
+| `image`                               | string   | Image                                                                            | Картинка                                                                           |
+| `imageAddress`                        | string   | Image address                                                                    | Адрес картинки                                                                     |
+| `imageInvalid`                        | string   | Enter an image address starting with https:// or http://                         | Нужен адрес картинки, начинающийся с https:// или http://                          |
+| `imageAlt`                            | string   | Alternative text                                                                 | Альтернативный текст                                                               |
+| `imageAltHint`                        | string   | Describe the image for people who can't see it. Leave empty if it is decorative. | Опишите картинку для тех, кто её не видит. Оставьте пустым, если она декоративная. |
+| `imageInsert`                         | string   | Insert                                                                           | Вставить                                                                           |
+| `imageApply`                          | string   | Apply                                                                            | Применить                                                                          |
+| `imageChooseFile`                     | string   | Upload from device                                                               | Загрузить с устройства                                                             |
+| `imageRemove`                         | string   | Remove image                                                                     | Убрать картинку                                                                    |
+| `imageEdit`                           | string   | Edit image                                                                       | Изменить картинку                                                                  |
+| `imageWidth`                          | string   | Width                                                                            | Ширина                                                                             |
+| `imageWidthPreset`                    | function | —                                                                                | —                                                                                  |
+| `imageCaption`                        | string   | Caption (optional)                                                               | Подпись (необязательно)                                                            |
+| `imageUploading`                      | function | —                                                                                | —                                                                                  |
+| `imageUploaded`                       | function | —                                                                                | —                                                                                  |
+| `imageUploadFailed`                   | function | —                                                                                | —                                                                                  |
+| `imageNotImage`                       | function | —                                                                                | —                                                                                  |
+| `imageFilesUnsupported`               | string   | Files can't be uploaded here. Insert the image by its address.                   | Файлы здесь не загружаются. Вставьте картинку по адресу.                           |
+| `toolsFailed`                         | string   | The editor couldn't start. The document is unchanged.                            | Редактор не запустился. Документ не изменён.                                       |
+| `retry`                               | string   | Retry                                                                            | Повторить                                                                          |
+| `textCardShown`                       | function | —                                                                                | —                                                                                  |
+| `tableGrid`                           | string   | Table size                                                                       | Размер таблицы                                                                     |
+| `tableSize`                           | function | —                                                                                | —                                                                                  |
+| `tableColumns`                        | string   | Columns                                                                          | Столбцы                                                                            |
+| `tableRows`                           | string   | Rows                                                                             | Строки                                                                             |
+| `tableInsert`                         | string   | Insert                                                                           | Вставить                                                                           |
+| `layout`                              | string   | Layout                                                                           | Раскладка                                                                          |
+| `layoutVariant.100`                   | string   | Single column                                                                    | Одна колонка                                                                       |
+| `layoutVariant.50-50`                 | string   | Two columns                                                                      | Две колонки                                                                        |
+| `layoutVariant.33-33-33`              | string   | Three columns                                                                    | Три колонки                                                                        |
+| `layoutVariant.25-25-25-25`           | string   | Four columns                                                                     | Четыре колонки                                                                     |
+| `layoutVariant.60-40`                 | string   | 60/40                                                                            | 60/40                                                                              |
+| `layoutVariant.40-60`                 | string   | 40/60                                                                            | 40/60                                                                              |
+| `wrapper`                             | string   | Wrapper                                                                          | Обёртка                                                                            |
+| `unwrap`                              | string   | Unwrap                                                                           | Снять обёртку                                                                      |
+| `wrapperTone`                         | function | —                                                                                | —                                                                                  |
+| `wrapperToneNone`                     | string   | None                                                                             | Без тона                                                                           |
+| `wrapperToneName.accent`              | string   | Note                                                                             | Заметка                                                                            |
+| `wrapperToneName.success`             | string   | Tip                                                                              | Совет                                                                              |
+| `wrapperToneName.neutral`             | string   | Important                                                                        | Важно                                                                              |
+| `wrapperToneName.warning`             | string   | Warning                                                                          | Внимание                                                                           |
+| `wrapperToneName.danger`              | string   | Caution                                                                          | Осторожно                                                                          |
+| `details`                             | string   | Collapsible block                                                                | Сворачиваемый блок                                                                 |
+| `unwrapDetails`                       | string   | Remove collapsing                                                                | Снять сворачивание                                                                 |
+| `detailsToggle`                       | function | —                                                                                | —                                                                                  |
+| `mathInline`                          | string   | Formula                                                                          | Формула                                                                            |
+| `mathBlock`                           | string   | Block formula                                                                    | Блочная формула                                                                    |
+| `mathLatex`                           | string   | LaTeX                                                                            | LaTeX                                                                              |
+| `mathPreview`                         | string   | Preview                                                                          | Предпросмотр                                                                       |
+| `mathEmpty`                           | string   | The formula appears here                                                         | Здесь появится формула                                                             |
+| `mathInvalid`                         | function | —                                                                                | —                                                                                  |
+| `mathInsert`                          | string   | Insert                                                                           | Вставить                                                                           |
+| `mathApply`                           | string   | Apply                                                                            | Применить                                                                          |
+| `mathRemove`                          | string   | Remove formula                                                                   | Убрать формулу                                                                     |
+| `emoji`                               | string   | Emoji                                                                            | Эмодзи                                                                             |
+| `emojiGrid`                           | string   | Choose an emoji                                                                  | Выберите эмодзи                                                                    |
+| `emojiCategory.favorites`             | string   | Favorites                                                                        | Избранное                                                                          |
+| `emojiCategory.smileys`               | string   | Smileys                                                                          | Смайлы                                                                             |
+| `emojiCategory.gestures`              | string   | Gestures                                                                         | Жесты                                                                              |
+| `emojiCategory.animals`               | string   | Animals                                                                          | Животные                                                                           |
+| `emojiCategory.food`                  | string   | Food                                                                             | Еда                                                                                |
+| `emojiCategory.activities`            | string   | Activities                                                                       | Занятия                                                                            |
+| `emojiCategory.travel`                | string   | Travel                                                                           | Путешествия                                                                        |
+| `emojiName.faceWithTearsOfJoy`        | string   | Face with tears of joy                                                           | Лицо со слезами радости                                                            |
+| `emojiName.redHeart`                  | string   | Red heart                                                                        | Красное сердце                                                                     |
+| `emojiName.rollingOnTheFloorLaughing` | string   | Rolling on the floor laughing                                                    | Катаюсь по полу от смеха                                                           |
+| `emojiName.thumbsUp`                  | string   | Thumbs up                                                                        | Большой палец вверх                                                                |
+| `emojiName.loudlyCrying`              | string   | Loudly crying face                                                               | Громко плачущее лицо                                                               |
+| `emojiName.foldedHands`               | string   | Folded hands                                                                     | Сложенные ладони                                                                   |
+| `emojiName.blowingKiss`               | string   | Face blowing a kiss                                                              | Воздушный поцелуй                                                                  |
+| `emojiName.smilingWithHearts`         | string   | Smiling face with hearts                                                         | Улыбающееся лицо с сердечками                                                      |
+| `emojiName.heartEyes`                 | string   | Heart eyes                                                                       | Глаза-сердечки                                                                     |
+| `emojiName.partyPopper`               | string   | Party popper                                                                     | Хлопушка                                                                           |
+| `emojiName.beamingFace`               | string   | Beaming face                                                                     | Сияющее лицо                                                                       |
+| `emojiName.fire`                      | string   | Fire                                                                             | Огонь                                                                              |
+| `emojiName.birthdayCake`              | string   | Birthday cake                                                                    | Праздничный торт                                                                   |
+| `emojiName.flushedFace`               | string   | Flushed face                                                                     | Смущённое лицо                                                                     |
+| `emojiName.sunglassesFace`            | string   | Face with sunglasses                                                             | Лицо в солнечных очках                                                             |
+| `emojiName.sparkles`                  | string   | Sparkles                                                                         | Искры                                                                              |
+| `emojiName.eyes`                      | string   | Eyes                                                                             | Глаза                                                                              |
+| `emojiName.pointingRight`             | string   | Pointing right                                                                   | Указывает вправо                                                                   |
+| `emojiName.hundredPoints`             | string   | Hundred points                                                                   | Сто баллов                                                                         |
+| `emojiName.angryFace`                 | string   | Angry face                                                                       | Сердитое лицо                                                                      |
+| `emojiName.slightlySmiling`           | string   | Slightly smiling face                                                            | Слегка улыбающееся лицо                                                            |
+| `emojiName.grinningSmilingEyes`       | string   | Grinning face with smiling eyes                                                  | Ухмыляющееся лицо с улыбающимися глазами                                           |
+| `emojiName.grinningSquinting`         | string   | Grinning squinting face                                                          | Ухмыляющееся лицо с прищуром                                                       |
+| `emojiName.winkingFace`               | string   | Winking face                                                                     | Подмигивающее лицо                                                                 |
+| `emojiName.tongueFace`                | string   | Face with tongue                                                                 | Лицо с высунутым языком                                                            |
+| `emojiName.smilingBlushing`           | string   | Smiling face with smiling eyes                                                   | Улыбающееся лицо с улыбающимися глазами и румянцем                                 |
+| `emojiName.smirkingFace`              | string   | Smirking face                                                                    | Самодовольное лицо                                                                 |
+| `emojiName.thinkingFace`              | string   | Thinking face                                                                    | Задумавшееся лицо                                                                  |
+| `emojiName.sleepyFace`                | string   | Sleepy face                                                                      | Сонное лицо                                                                        |
+| `emojiName.thumbsDown`                | string   | Thumbs down                                                                      | Большой палец вниз                                                                 |
+| `emojiName.victoryHand`               | string   | Victory hand                                                                     | Жест победы                                                                        |
+| `emojiName.clappingHands`             | string   | Clapping hands                                                                   | Аплодисменты                                                                       |
+| `emojiName.raisedHands`               | string   | Raising hands                                                                    | Поднятые руки                                                                      |
+| `emojiName.facepalm`                  | string   | Facepalm                                                                         | Рука у лица                                                                        |
+| `emojiName.shrug`                     | string   | Shrug                                                                            | Пожимает плечами                                                                   |
+| `emojiName.oncomingFist`              | string   | Oncoming fist                                                                    | Кулак                                                                              |
+| `emojiName.wavingHand`                | string   | Waving hand                                                                      | Машущая рука                                                                       |
+| `emojiName.okHand`                    | string   | OK hand                                                                          | Жест «окей»                                                                        |
+| `emojiName.dog`                       | string   | Dog                                                                              | Собака                                                                             |
+| `emojiName.cat`                       | string   | Cat                                                                              | Кошка                                                                              |
+| `emojiName.mouse`                     | string   | Mouse                                                                            | Мышь                                                                               |
+| `emojiName.hamster`                   | string   | Hamster                                                                          | Хомяк                                                                              |
+| `emojiName.rabbit`                    | string   | Rabbit                                                                           | Кролик                                                                             |
+| `emojiName.bear`                      | string   | Bear                                                                             | Медведь                                                                            |
+| `emojiName.panda`                     | string   | Panda                                                                            | Панда                                                                              |
+| `emojiName.lion`                      | string   | Lion                                                                             | Лев                                                                                |
+| `emojiName.pig`                       | string   | Pig                                                                              | Свинья                                                                             |
+| `emojiName.frog`                      | string   | Frog                                                                             | Лягушка                                                                            |
+| `emojiName.greenApple`                | string   | Green apple                                                                      | Зелёное яблоко                                                                     |
+| `emojiName.pizza`                     | string   | Pizza                                                                            | Пицца                                                                              |
+| `emojiName.hamburger`                 | string   | Hamburger                                                                        | Гамбургер                                                                          |
+| `emojiName.frenchFries`               | string   | French fries                                                                     | Картофель фри                                                                      |
+| `emojiName.spaghetti`                 | string   | Spaghetti                                                                        | Спагетти                                                                           |
+| `emojiName.sushi`                     | string   | Sushi                                                                            | Суши                                                                               |
+| `emojiName.iceCream`                  | string   | Ice cream                                                                        | Мороженое                                                                          |
+| `emojiName.doughnut`                  | string   | Doughnut                                                                         | Пончик                                                                             |
+| `emojiName.cookie`                    | string   | Cookie                                                                           | Печенье                                                                            |
+| `emojiName.shortcake`                 | string   | Shortcake                                                                        | Кусок торта                                                                        |
+| `emojiName.soccerBall`                | string   | Soccer ball                                                                      | Футбольный мяч                                                                     |
+| `emojiName.basketball`                | string   | Basketball                                                                       | Баскетбольный мяч                                                                  |
+| `emojiName.americanFootball`          | string   | American football                                                                | Мяч для американского футбола                                                      |
+| `emojiName.baseball`                  | string   | Baseball                                                                         | Бейсбольный мяч                                                                    |
+| `emojiName.tennis`                    | string   | Tennis                                                                           | Теннис                                                                             |
+| `emojiName.bowling`                   | string   | Bowling                                                                          | Боулинг                                                                            |
+| `emojiName.golfer`                    | string   | Golfer                                                                           | Гольфист                                                                           |
+| `emojiName.fishing`                   | string   | Fishing                                                                          | Рыбалка                                                                            |
+| `emojiName.cyclist`                   | string   | Cyclist                                                                          | Велосипедист                                                                       |
+| `emojiName.videoGame`                 | string   | Video game                                                                       | Видеоигра                                                                          |
+| `emojiName.airplane`                  | string   | Airplane                                                                         | Самолёт                                                                            |
+| `emojiName.car`                       | string   | Car                                                                              | Автомобиль                                                                         |
+| `emojiName.bicycle`                   | string   | Bicycle                                                                          | Велосипед                                                                          |
+| `emojiName.train`                     | string   | Train                                                                            | Поезд                                                                              |
+| `emojiName.sailboat`                  | string   | Sailboat                                                                         | Парусник                                                                           |
+| `emojiName.worldMap`                  | string   | World map                                                                        | Карта мира                                                                         |
+| `emojiName.beach`                     | string   | Beach                                                                            | Пляж                                                                               |
+| `emojiName.mountain`                  | string   | Snow-capped mountain                                                             | Заснеженная гора                                                                   |
+| `emojiName.camping`                   | string   | Camping                                                                          | Кемпинг                                                                            |
+| `emojiName.luggage`                   | string   | Luggage                                                                          | Чемодан                                                                            |
+| `source`                              | string   | HTML                                                                             | HTML                                                                               |
+| `sourceField`                         | string   | HTML source                                                                      | HTML-код документа                                                                 |
+| `invisibleCharacters`                 | string   | Invisible characters                                                             | Невидимые символы                                                                  |
+| `search`                              | string   | Find                                                                             | Найти                                                                              |
+| `searchReplace`                       | string   | Find and replace                                                                 | Найти и заменить                                                                   |
+| `searchPanel`                         | string   | Find and replace                                                                 | Поиск и замена                                                                     |
+| `searchField`                         | string   | Find                                                                             | Найти                                                                              |
+| `replaceField`                        | string   | Replace with                                                                     | Заменить на                                                                        |
+| `searchPrevious`                      | string   | Previous match                                                                   | Предыдущее совпадение                                                              |
+| `searchNext`                          | string   | Next match                                                                       | Следующее совпадение                                                               |
+| `searchClose`                         | string   | Close find and replace                                                           | Закрыть поиск                                                                      |
+| `searchMatchCase`                     | string   | Match case                                                                       | Учитывать регистр                                                                  |
+| `searchWholeWord`                     | string   | Whole words                                                                      | Слово целиком                                                                      |
+| `searchRegex`                         | string   | Regular expression                                                               | Регулярное выражение                                                               |
+| `replaceOne`                          | string   | Replace                                                                          | Заменить                                                                           |
+| `replaceAll`                          | string   | Replace all                                                                      | Заменить все                                                                       |
+| `searchCount`                         | function | —                                                                                | —                                                                                  |
+| `searchNoMatches`                     | string   | No matches                                                                       | Нет совпадений                                                                     |
+| `searchInvalid`                       | string   | Invalid regular expression                                                       | Неверное регулярное выражение                                                      |
+| `resizeField`                         | string   | Resize the editor                                                                | Изменить высоту поля                                                               |
+| `fieldHeight`                         | function | —                                                                                | —                                                                                  |
+| `shortcuts`                           | string   | Keyboard shortcuts                                                               | Сочетания клавиш                                                                   |
+| `shortcutsCommand`                    | string   | Command                                                                          | Команда                                                                            |
+| `shortcutsKeys`                       | string   | Shortcut                                                                         | Сочетание                                                                          |
+| `selectBlock`                         | string   | Select block text                                                                | Выделить текст блока                                                               |
+| `selectDocument`                      | string   | Select all (second press)                                                        | Выделить всё (второе нажатие)                                                      |
+| `duplicateBlock`                      | string   | Duplicate block                                                                  | Дублировать блок                                                                   |
+| `moveBlockUp`                         | string   | Move block up                                                                    | Переместить блок вверх                                                             |
+| `moveBlockDown`                       | string   | Move block down                                                                  | Переместить блок вниз                                                              |
+| `indentListItem`                      | string   | Indent list item                                                                 | Сдвинуть пункт списка вправо                                                       |
+| `outdentListItem`                     | string   | Outdent list item                                                                | Сдвинуть пункт списка влево                                                        |
+| `focusToolbar`                        | string   | Go to the toolbar                                                                | Перейти в панель                                                                   |
+| `blockActions`                        | string   | Block actions                                                                    | Действия с блоком                                                                  |
+| `blockAdd`                            | string   | Add                                                                              | Добавить                                                                           |
+| `blockFormat`                         | string   | Format                                                                           | Формат                                                                             |
+| `blockMoveUp`                         | string   | Move up                                                                          | Вверх                                                                              |
+| `blockMoveDown`                       | string   | Move down                                                                        | Вниз                                                                               |
+| `blockDuplicate`                      | string   | Duplicate                                                                        | Дублировать                                                                        |
+| `blockDelete`                         | string   | Delete                                                                           | Удалить                                                                            |
+| `toc`                                 | string   | Table of contents                                                                | Оглавление                                                                         |
+| `video`                               | string   | Video                                                                            | Видео                                                                              |
+| `videoLink`                           | string   | Video link                                                                       | Ссылка на видео                                                                    |
+| `videoInsert`                         | string   | Insert                                                                           | Вставить                                                                           |
+| `videoNotFound`                       | function | —                                                                                | —                                                                                  |
+| `videoPlay`                           | string   | Play                                                                             | Воспроизвести                                                                      |
+| `videoPlayLabel`                      | function | —                                                                                | —                                                                                  |
+| `videoPlayer`                         | function | —                                                                                | —                                                                                  |
+| `typographyQuotes`                    | string   | en                                                                               | ru                                                                                 |
 
 ## `errorState`
 
-| Ключ    | Форма  | `en-US`        | `ru-RU`         |
+| Key     | Shape  | `en-US`        | `ru-RU`         |
 | ------- | ------ | -------------- | --------------- |
-| `title` | строка | Failed to load | Ошибка загрузки |
+| `title` | string | Failed to load | Ошибка загрузки |
 
 ## `fileDropzone`
 
-| Ключ                 | Форма   | `en-US`                   | `ru-RU`                      |
-| -------------------- | ------- | ------------------------- | ---------------------------- |
-| `label`              | строка  | Drop files here           | Перетащите файлы сюда        |
-| `browse`             | строка  | Choose files              | Выбрать файлы                |
-| `tooLarge`           | функция | —                         | —                            |
-| `singleFileOnly`     | строка  | only one file is accepted | принимается только один файл |
-| `foldersNotAccepted` | строка  | folders are not accepted  | папки не принимаются         |
-| `folderName`         | строка  | folder                    | папка                        |
-| `wrongType`          | строка  | Unsupported type          | Неподходящий тип             |
-| `unreadable`         | строка  | Could not be read         | Не удалось прочитать         |
+| Key                  | Shape    | `en-US`                   | `ru-RU`                      |
+| -------------------- | -------- | ------------------------- | ---------------------------- |
+| `label`              | string   | Drop files here           | Перетащите файлы сюда        |
+| `browse`             | string   | Choose files              | Выбрать файлы                |
+| `tooLarge`           | function | —                         | —                            |
+| `singleFileOnly`     | string   | only one file is accepted | принимается только один файл |
+| `foldersNotAccepted` | string   | folders are not accepted  | папки не принимаются         |
+| `folderName`         | string   | folder                    | папка                        |
+| `wrongType`          | string   | Unsupported type          | Неподходящий тип             |
+| `unreadable`         | string   | Could not be read         | Не удалось прочитать         |
 
 ## `filterBar`
 
-| Ключ           | Форма   | `en-US`         | `ru-RU`             |
-| -------------- | ------- | --------------- | ------------------- |
-| `label`        | строка  | Applied filters | Применённые фильтры |
-| `remove`       | строка  | Remove filter   | Снять фильтр        |
-| `clear`        | строка  | Clear all       | Снять все           |
-| `add`          | строка  | Add filter      | Добавить фильтр     |
-| `field`        | строка  | Field           | Поле                |
-| `value`        | строка  | Value           | Значение            |
-| `apply`        | строка  | Apply           | Применить           |
-| `fromField`    | строка  | From            | От                  |
-| `toField`      | строка  | To              | До                  |
-| `rangeBetween` | функция | —               | —                   |
-| `rangeFrom`    | функция | —               | —                   |
-| `rangeTo`      | функция | —               | —                   |
+| Key            | Shape    | `en-US`         | `ru-RU`             |
+| -------------- | -------- | --------------- | ------------------- |
+| `label`        | string   | Applied filters | Применённые фильтры |
+| `remove`       | string   | Remove filter   | Снять фильтр        |
+| `clear`        | string   | Clear all       | Снять все           |
+| `add`          | string   | Add filter      | Добавить фильтр     |
+| `field`        | string   | Field           | Поле                |
+| `value`        | string   | Value           | Значение            |
+| `apply`        | string   | Apply           | Применить           |
+| `fromField`    | string   | From            | От                  |
+| `toField`      | string   | To              | До                  |
+| `rangeBetween` | function | —               | —                   |
+| `rangeFrom`    | function | —               | —                   |
+| `rangeTo`      | function | —               | —                   |
 
 ## `inlineEdit`
 
-| Ключ    | Форма  | `en-US` | `ru-RU`   |
+| Key     | Shape  | `en-US` | `ru-RU`   |
 | ------- | ------ | ------- | --------- |
-| `edit`  | строка | edit    | изменить  |
-| `empty` | строка | Not set | Не задано |
+| `edit`  | string | edit    | изменить  |
+| `empty` | string | Not set | Не задано |
 
-Окончание доступного имени кнопки-значения: «Ежедневная подборка, изменить». Имя
-строится из содержимого, а не задаётся `aria-label`: иначе значение из имени
-пропадает.
+The accessible name of the value button ends with "Ежедневная подборка, изменить". The name is built from the content, not set with `aria-label`. Otherwise, the value drops out of the name.
 
 ## `keyboard`
 
-| Ключ                 | Форма   | `en-US`                      | `ru-RU`                                |
-| -------------------- | ------- | ---------------------------- | -------------------------------------- |
-| `label`              | функция | —                            | —                                      |
-| `close`              | строка  | Close the on-screen keyboard | Закрыть экранную клавиатуру            |
-| `move`               | строка  | Move the on-screen keyboard  | Перемещать экранную клавиатуру         |
-| `switchLayout`       | строка  | Switch layout                | Сменить раскладку                      |
-| `switchLayoutTo`     | функция | —                            | —                                      |
-| `showSymbols`        | строка  | Show symbols                 | Показать символы                       |
-| `showLetters`        | функция | —                            | —                                      |
-| `showPrimarySymbols` | строка  | Show the primary symbol set  | Показать основной набор символов       |
-| `showExtraSymbols`   | строка  | Show the extra symbol set    | Показать дополнительный набор символов |
-| `backspace`          | строка  | Delete character             | Удалить символ                         |
-| `space`              | строка  | Space                        | Пробел                                 |
-| `submit`             | строка  | Submit search                | Отправить поиск                        |
-| `keyComma`           | строка  | Comma                        | Запятая                                |
-| `keyPeriod`          | строка  | Period                       | Точка                                  |
-| `keyLess`            | строка  | Less than                    | Меньше                                 |
-| `keyGreater`         | строка  | Greater than                 | Больше                                 |
-| `keySemicolon`       | строка  | Semicolon                    | Точка с запятой                        |
-| `keyColon`           | строка  | Colon                        | Двоеточие                              |
+| Key                  | Shape    | `en-US`                      | `ru-RU`                                |
+| -------------------- | -------- | ---------------------------- | -------------------------------------- |
+| `label`              | function | —                            | —                                      |
+| `close`              | string   | Close the on-screen keyboard | Закрыть экранную клавиатуру            |
+| `move`               | string   | Move the on-screen keyboard  | Перемещать экранную клавиатуру         |
+| `switchLayout`       | string   | Switch layout                | Сменить раскладку                      |
+| `switchLayoutTo`     | function | —                            | —                                      |
+| `showSymbols`        | string   | Show symbols                 | Показать символы                       |
+| `showLetters`        | function | —                            | —                                      |
+| `showPrimarySymbols` | string   | Show the primary symbol set  | Показать основной набор символов       |
+| `showExtraSymbols`   | string   | Show the extra symbol set    | Показать дополнительный набор символов |
+| `backspace`          | string   | Delete character             | Удалить символ                         |
+| `space`              | string   | Space                        | Пробел                                 |
+| `submit`             | string   | Submit search                | Отправить поиск                        |
+| `keyComma`           | string   | Comma                        | Запятая                                |
+| `keyPeriod`          | string   | Period                       | Точка                                  |
+| `keyLess`            | string   | Less than                    | Меньше                                 |
+| `keyGreater`         | string   | Greater than                 | Больше                                 |
+| `keySemicolon`       | string   | Semicolon                    | Точка с запятой                        |
+| `keyColon`           | string   | Colon                        | Двоеточие                              |
 
 ## `link`
 
-| Ключ            | Форма  | `en-US`              | `ru-RU`                     |
+| Key             | Shape  | `en-US`              | `ru-RU`                     |
 | --------------- | ------ | -------------------- | --------------------------- |
-| `opensInNewTab` | строка | (opens in a new tab) | (откроется в новой вкладке) |
+| `opensInNewTab` | string | (opens in a new tab) | (откроется в новой вкладке) |
 
 ## `maskedInput`
 
-| Ключ        | Форма   | `en-US`                       | `ru-RU`                 |
-| ----------- | ------- | ----------------------------- | ----------------------- |
-| `rejected`  | функция | A digit is expected here      | Здесь нужна цифра       |
-| `full`      | строка  | The field is already complete | Поле уже заполнено      |
-| `truncated` | функция | …is N characters too long…    | …длиннее на N символов… |
+| Key         | Shape    | `en-US`                       | `ru-RU`                 |
+| ----------- | -------- | ----------------------------- | ----------------------- |
+| `rejected`  | function | A digit is expected here      | Здесь нужна цифра       |
+| `full`      | string   | The field is already complete | Поле уже заполнено      |
+| `truncated` | function | …is N characters too long…    | …длиннее на N символов… |
 
-`rejected` принимает `{ expected: "digit" | "letter" | "any" }` и говорит, что именно
-здесь ждали. `truncated` принимает `{ count }` — сколько символов вставки не
-влезло; появился в 3.5.0, до него обрезка вставки не объявлялась.
+`rejected` takes `{ expected: "digit" | "letter" | "any" }` and says what exactly was expected here. `truncated` takes `{ count }`, the number of characters from the paste that did not fit. It appeared in 3.5.0. Before that, a trimmed paste was not announced.
 
 ## `mediaCard`
 
-| Ключ     | Форма  | `en-US` | `ru-RU` |
+| Key      | Shape  | `en-US` | `ru-RU` |
 | -------- | ------ | ------- | ------- |
-| `select` | строка | Select  | Выбрать |
+| `select` | string | Select  | Выбрать |
 
 ## `megaMenu`
 
-| Ключ   | Форма  | `en-US` | `ru-RU` |
+| Key    | Shape  | `en-US` | `ru-RU` |
 | ------ | ------ | ------- | ------- |
-| `back` | строка | Back    | Назад   |
+| `back` | string | Back    | Назад   |
 
 ## `mobileTabBar`
 
-| Ключ       | Форма   | `en-US`  | `ru-RU`    |
-| ---------- | ------- | -------- | ---------- |
-| `label`    | строка  | Sections | Разделы    |
-| `new`      | строка  | New      | Есть новое |
-| `newCount` | функция | —        | —          |
+| Key        | Shape    | `en-US`  | `ru-RU`    |
+| ---------- | -------- | -------- | ---------- |
+| `label`    | string   | Sections | Разделы    |
+| `new`      | string   | New      | Есть новое |
+| `newCount` | function | —        | —          |
 
 ## `nav`
 
-| Ключ       | Форма  | `en-US`             | `ru-RU`              |
+| Key        | Shape  | `en-US`             | `ru-RU`              |
 | ---------- | ------ | ------------------- | -------------------- |
-| `label`    | строка | Main navigation     | Основная навигация   |
-| `collapse` | строка | Collapse navigation | Свернуть навигацию   |
-| `expand`   | строка | Expand navigation   | Развернуть навигацию |
+| `label`    | string | Main navigation     | Основная навигация   |
+| `collapse` | string | Collapse navigation | Свернуть навигацию   |
+| `expand`   | string | Expand navigation   | Развернуть навигацию |
 
 ## `notifications`
 
-| Ключ          | Форма   | `en-US`       | `ru-RU`      |
-| ------------- | ------- | ------------- | ------------ |
-| `label`       | строка  | Notifications | Уведомления  |
-| `unread`      | строка  | Unread        | Не прочитано |
-| `unreadCount` | функция | —             | —            |
+| Key           | Shape    | `en-US`       | `ru-RU`      |
+| ------------- | -------- | ------------- | ------------ |
+| `label`       | string   | Notifications | Уведомления  |
+| `unread`      | string   | Unread        | Не прочитано |
+| `unreadCount` | function | —             | —            |
 
 ## `numberInput`
 
-| Ключ        | Форма   | `en-US` | `ru-RU` |
-| ----------- | ------- | ------- | ------- |
-| `decrement` | функция | —       | —       |
-| `increment` | функция | —       | —       |
+| Key         | Shape    | `en-US` | `ru-RU` |
+| ----------- | -------- | ------- | ------- |
+| `decrement` | function | —       | —       |
+| `increment` | function | —       | —       |
 
 ## `pagination`
 
-| Ключ       | Форма  | `en-US`       | `ru-RU`             |
+| Key        | Shape  | `en-US`       | `ru-RU`             |
 | ---------- | ------ | ------------- | ------------------- |
-| `label`    | строка | Pages         | Страницы            |
-| `previous` | строка | Previous page | Предыдущая страница |
-| `next`     | строка | Next page     | Следующая страница  |
+| `label`    | string | Pages         | Страницы            |
+| `previous` | string | Previous page | Предыдущая страница |
+| `next`     | string | Next page     | Следующая страница  |
 
 ## `passwordInput`
 
-| Ключ       | Форма  | `en-US`         | `ru-RU`           |
+| Key        | Shape  | `en-US`         | `ru-RU`           |
 | ---------- | ------ | --------------- | ----------------- |
-| `toggle`   | строка | Show password   | Показать пароль   |
-| `capsLock` | строка | Caps Lock is on | Включён Caps Lock |
+| `toggle`   | string | Show password   | Показать пароль   |
+| `capsLock` | string | Caps Lock is on | Включён Caps Lock |
 
-Подпись кнопки показа одна на оба состояния: состояние объявляет `aria-pressed`,
-и меняющееся вместе с ним имя читалось бы как «Скрыть пароль, нажато».
+The button's label is the same for both states: the state is announced by `aria-pressed`. A name that changed along with it would be read as "Скрыть пароль, нажато".
 
 ## `pinInput`
 
-| Ключ    | Форма   | `en-US` | `ru-RU` |
-| ------- | ------- | ------- | ------- |
-| `digit` | функция | —       | —       |
+| Key     | Shape    | `en-US` | `ru-RU` |
+| ------- | -------- | ------- | ------- |
+| `digit` | function | —       | —       |
 
-«Цифра 3 из 6» — имя одного поля кода. Без него скринридер читает N безымянных
-полей подряд.
+"Цифра 3 из 6" is the name of one code field. Without it, a screen reader reads N unnamed fields in a row.
 
 ## `rating`
 
-| Ключ    | Форма   | `en-US` | `ru-RU` |
-| ------- | ------- | ------- | ------- |
-| `value` | функция | —       | —       |
-| `star`  | функция | —       | —       |
+| Key     | Shape    | `en-US` | `ru-RU` |
+| ------- | -------- | ------- | ------- |
+| `value` | function | —       | —       |
+| `star`  | function | —       | —       |
 
 ## `savedViews`
 
-| Ключ    | Форма  | `en-US`     | `ru-RU`          |
+| Key     | Shape  | `en-US`     | `ru-RU`          |
 | ------- | ------ | ----------- | ---------------- |
-| `label` | строка | Saved views | Сохранённые виды |
+| `label` | string | Saved views | Сохранённые виды |
 
 ## `searchControl`
 
-| Ключ           | Форма  | `en-US`                     | `ru-RU`                     |
+| Key            | Shape  | `en-US`                     | `ru-RU`                     |
 | -------------- | ------ | --------------------------- | --------------------------- |
-| `clear`        | строка | Clear search                | Очистить поиск              |
-| `openKeyboard` | строка | Open the on-screen keyboard | Открыть экранную клавиатуру |
+| `clear`        | string | Clear search                | Очистить поиск              |
+| `openKeyboard` | string | Open the on-screen keyboard | Открыть экранную клавиатуру |
 
 ## `selectionBar`
 
-| Ключ             | Форма   | `en-US`              | `ru-RU`                |
-| ---------------- | ------- | -------------------- | ---------------------- |
-| `label`          | строка  | Actions on selection | Действия над выбранным |
-| `clearSelection` | строка  | Clear selection      | Снять выделение        |
-| `count`          | функция | —                    | —                      |
+| Key              | Shape    | `en-US`              | `ru-RU`                |
+| ---------------- | -------- | -------------------- | ---------------------- |
+| `label`          | string   | Actions on selection | Действия над выбранным |
+| `clearSelection` | string   | Clear selection      | Снять выделение        |
+| `count`          | function | —                    | —                      |
 
 ## `shell`
 
-| Ключ             | Форма  | `en-US`         | `ru-RU`               |
+| Key              | Shape  | `en-US`         | `ru-RU`               |
 | ---------------- | ------ | --------------- | --------------------- |
-| `skipToContent`  | строка | Skip to content | Перейти к содержимому |
-| `openNavigation` | строка | Open navigation | Открыть навигацию     |
+| `skipToContent`  | string | Skip to content | Перейти к содержимому |
+| `openNavigation` | string | Open navigation | Открыть навигацию     |
 
 ## `shortcutsHelp`
 
-| Ключ           | Форма  | `en-US`            | `ru-RU`          |
+| Key            | Shape  | `en-US`            | `ru-RU`          |
 | -------------- | ------ | ------------------ | ---------------- |
-| `title`        | строка | Keyboard shortcuts | Горячие клавиши  |
-| `list`         | строка | Shortcuts          | Сочетания клавиш |
-| `keySeparator` | строка | plus               | плюс             |
+| `title`        | string | Keyboard shortcuts | Горячие клавиши  |
+| `list`         | string | Shortcuts          | Сочетания клавиш |
+| `keySeparator` | string | plus               | плюс             |
 
-`list` — имя области прокрутки со списком сочетаний; оно отличается от `title`, чтобы
-скринридер не произносил имя окна дважды. `keySeparator` — слово между
-клавишами сочетания для скринридера («Ctrl плюс K»): видимый «+» скрыт, потому
-что NVDA по умолчанию знак плюса не читает.
+`list` is the name of the scroll area with the list of shortcuts. It differs from `title`, so that a screen reader does not read the dialog name twice. `keySeparator` is the word between the keys of a shortcut for a screen reader ("Ctrl плюс K"): the visible "+" is hidden, because NVDA does not read the plus sign by default.
 
 ## `sortableList`
 
-| Ключ   | Форма  | `en-US` | `ru-RU`    |
+| Key    | Shape  | `en-US` | `ru-RU`    |
 | ------ | ------ | ------- | ---------- |
-| `drag` | строка | Drag    | Перетащить |
+| `drag` | string | Drag    | Перетащить |
 
 ## `spinner`
 
-| Ключ    | Форма  | `en-US` | `ru-RU`  |
+| Key     | Shape  | `en-US` | `ru-RU`  |
 | ------- | ------ | ------- | -------- |
-| `label` | строка | Loading | Загрузка |
+| `label` | string | Loading | Загрузка |
 
 ## `splitButton`
 
-| Ключ   | Форма   | `en-US` | `ru-RU` |
-| ------ | ------- | ------- | ------- |
-| `more` | функция | —       | —       |
+| Key    | Shape    | `en-US` | `ru-RU` |
+| ------ | -------- | ------- | ------- |
+| `more` | function | —       | —       |
 
 ## `splitPanel`
 
-| Ключ          | Форма   | `en-US`          | `ru-RU`                |
-| ------------- | ------- | ---------------- | ---------------------- |
-| `resize`      | строка  | Resize the panel | Изменить размер панели |
-| `resizeNamed` | функция | —                | —                      |
-| `size`        | функция | —                | —                      |
+| Key           | Shape    | `en-US`          | `ru-RU`                |
+| ------------- | -------- | ---------------- | ---------------------- |
+| `resize`      | string   | Resize the panel | Изменить размер панели |
+| `resizeNamed` | function | —                | —                      |
+| `size`        | function | —                | —                      |
 
 ## `stepper`
 
-| Ключ    | Форма   | `en-US`                                | `ru-RU`                          |
-| ------- | ------- | -------------------------------------- | -------------------------------- |
-| `label` | строка  | Steps                                  | Шаги                             |
-| `state` | функция | completed / current step / not started | пройден / текущий шаг / не начат |
+| Key     | Shape    | `en-US`                                | `ru-RU`                          |
+| ------- | -------- | -------------------------------------- | -------------------------------- |
+| `label` | string   | Steps                                  | Шаги                             |
+| `state` | function | completed / current step / not started | пройден / текущий шаг / не начат |
 
 ## `table`
 
-| Ключ           | Форма   | `en-US`         | `ru-RU`             |
-| -------------- | ------- | --------------- | ------------------- |
-| `empty`        | строка  | Nothing here    | Ничего нет          |
-| `selectAll`    | строка  | Select all rows | Выделить все строки |
-| `selectRow`    | строка  | Select row      | Выделить строку     |
-| `expandColumn` | строка  | Row details     | Подробности строки  |
-| `expandRow`    | функция | —               | —                   |
-| `collapseRow`  | функция | —               | —                   |
+| Key            | Shape    | `en-US`         | `ru-RU`             |
+| -------------- | -------- | --------------- | ------------------- |
+| `empty`        | string   | Nothing here    | Ничего нет          |
+| `selectAll`    | string   | Select all rows | Выделить все строки |
+| `selectRow`    | string   | Select row      | Выделить строку     |
+| `expandColumn` | string   | Row details     | Подробности строки  |
+| `expandRow`    | function | —               | —                   |
+| `collapseRow`  | function | —               | —                   |
 
 ## `tablePreferences`
 
-| Ключ          | Форма   | `en-US`     | `ru-RU`   |
-| ------------- | ------- | ----------- | --------- |
-| `columns`     | строка  | Columns     | Колонки   |
-| `density`     | строка  | Density     | Плотность |
-| `comfortable` | строка  | Comfortable | Свободно  |
-| `compact`     | строка  | Compact     | Плотно    |
-| `moveUp`      | функция | —           | —         |
-| `moveDown`    | функция | —           | —         |
+| Key           | Shape    | `en-US`     | `ru-RU`   |
+| ------------- | -------- | ----------- | --------- |
+| `columns`     | string   | Columns     | Колонки   |
+| `density`     | string   | Density     | Плотность |
+| `comfortable` | string   | Comfortable | Свободно  |
+| `compact`     | string   | Compact     | Плотно    |
+| `moveUp`      | function | —           | —         |
+| `moveDown`    | function | —           | —         |
 
 ## `tableToolbar`
 
-| Ключ          | Форма   | `en-US`        | `ru-RU`           |
-| ------------- | ------- | -------------- | ----------------- |
-| `total`       | функция | —              | —                 |
-| `preferences` | строка  | Table settings | Настройки таблицы |
+| Key           | Shape    | `en-US`        | `ru-RU`           |
+| ------------- | -------- | -------------- | ----------------- |
+| `total`       | function | —              | —                 |
+| `preferences` | string   | Table settings | Настройки таблицы |
 
 ## `tagGroup`
 
-| Ключ     | Форма   | `en-US` | `ru-RU` |
-| -------- | ------- | ------- | ------- |
-| `remove` | функция | —       | —       |
+| Key      | Shape    | `en-US` | `ru-RU` |
+| -------- | -------- | ------- | ------- |
+| `remove` | function | —       | —       |
 
-Имя кнопки удаления **с** подписью тега внутри строки («Удалить: Дизайн»). У
-`tagInput.remove` подписи тега в имени нет, поэтому там обычная строка. В первом
-случае порядок слов принадлежит языку, поэтому это функция.
+The remove button's name **includes** the tag label inside the row ("Удалить: Дизайн"). `tagInput.remove` has no tag label in its name, so there it is a plain string. In the first case, the word order depends on the language, so it is a function.
 
 ## `tagInput`
 
-| Ключ     | Форма   | `en-US`    | `ru-RU`      |
-| -------- | ------- | ---------- | ------------ |
-| `remove` | строка  | Remove tag | Убрать тег   |
-| `add`    | строка  | Add tag    | Добавить тег |
-| `addTo`  | функция | —          | —            |
+| Key      | Shape    | `en-US`    | `ru-RU`      |
+| -------- | -------- | ---------- | ------------ |
+| `remove` | string   | Remove tag | Убрать тег   |
+| `add`    | string   | Add tag    | Добавить тег |
+| `addTo`  | function | —          | —            |
 
 ## `timePicker`
 
-| Ключ            | Форма  | `en-US` | `ru-RU` |
+| Key             | Shape  | `en-US` | `ru-RU` |
 | --------------- | ------ | ------- | ------- |
-| `label`         | строка | Time    | Время   |
-| `placeholder`   | строка | HH:MM   | ЧЧ:ММ   |
-| `placeholder12` | строка | h:mm AM | Ч:ММ AM |
-| `am`            | строка | AM      | AM      |
-| `pm`            | строка | PM      | PM      |
+| `label`         | string | Time    | Время   |
+| `placeholder`   | string | HH:MM   | ЧЧ:ММ   |
+| `placeholder12` | string | h:mm AM | Ч:ММ AM |
+| `am`            | string | AM      | AM      |
+| `pm`            | string | PM      | PM      |
 
 ## `topbar`
 
-| Ключ    | Форма  | `en-US`            | `ru-RU`          |
+| Key     | Shape  | `en-US`            | `ru-RU`          |
 | ------- | ------ | ------------------ | ---------------- |
-| `label` | строка | Application header | Шапка приложения |
+| `label` | string | Application header | Шапка приложения |
 
 ## `transfer`
 
-| Ключ           | Форма   | `en-US`           | `ru-RU`               |
-| -------------- | ------- | ----------------- | --------------------- |
-| `source`       | строка  | Available         | Доступно              |
-| `target`       | строка  | Selected          | Выбрано               |
-| `moveToTarget` | строка  | Move to selected  | Перенести в выбранное |
-| `moveToSource` | строка  | Move to available | Вернуть в доступное   |
-| `searchIn`     | функция | —                 | —                     |
+| Key            | Shape    | `en-US`           | `ru-RU`               |
+| -------------- | -------- | ----------------- | --------------------- |
+| `source`       | string   | Available         | Доступно              |
+| `target`       | string   | Selected          | Выбрано               |
+| `moveToTarget` | string   | Move to selected  | Перенести в выбранное |
+| `moveToSource` | string   | Move to available | Вернуть в доступное   |
+| `searchIn`     | function | —                 | —                     |
 
 ## `treeSelect`
 
-| Ключ          | Форма   | `en-US`       | `ru-RU`       |
-| ------------- | ------- | ------------- | ------------- |
-| `placeholder` | строка  | Select a node | Выберите узел |
-| `more`        | функция | —             | —             |
+| Key           | Shape    | `en-US`       | `ru-RU`       |
+| ------------- | -------- | ------------- | ------------- |
+| `placeholder` | string   | Select a node | Выберите узел |
+| `more`        | function | —             | —             |
 
 ## `treeView`
 
-| Ключ       | Форма  | `en-US`  | `ru-RU`  |
+| Key        | Shape  | `en-US`  | `ru-RU`  |
 | ---------- | ------ | -------- | -------- |
-| `expand`   | строка | Expand   | Раскрыть |
-| `collapse` | строка | Collapse | Свернуть |
-| `select`   | строка | Select   | Выбрать  |
+| `expand`   | string | Expand   | Раскрыть |
+| `collapse` | string | Collapse | Свернуть |
+| `select`   | string | Select   | Выбрать  |
 
-Имена кнопок раскрытия **без** подписи узла: react-aria дописывает её сама, и
-«Раскрыть Природа» читалось бы как «Раскрыть Природа Природа».
+The names of the expand buttons **have no** node label: react-aria adds it on its own, and "Раскрыть Природа" would be read as "Раскрыть Природа Природа".
 
 ## `uploadQueue`
 
-| Ключ           | Форма   | `en-US`         | `ru-RU`          |
-| -------------- | ------- | --------------- | ---------------- |
-| `label`        | строка  | Upload queue    | Очередь загрузки |
-| `summary`      | функция | —               | —                |
-| `progress`     | строка  | Upload progress | Ход загрузки     |
-| `itemProgress` | функция | —               | —                |
+| Key            | Shape    | `en-US`         | `ru-RU`          |
+| -------------- | -------- | --------------- | ---------------- |
+| `label`        | string   | Upload queue    | Очередь загрузки |
+| `summary`      | function | —               | —                |
+| `progress`     | string   | Upload progress | Ход загрузки     |
+| `itemProgress` | function | —               | —                |
 
 ## `period`
 
-| Ключ                | Форма   | `en-US`    | `ru-RU`       |
-| ------------------- | ------- | ---------- | ------------- |
-| `presets.7d`        | строка  | 7 days     | 7 дней        |
-| `presets.30d`       | строка  | 30 days    | 30 дней       |
-| `presets.90d`       | строка  | 90 days    | 90 дней       |
-| `presets.365d`      | строка  | Year       | Год           |
-| `presets.thisMonth` | строка  | This month | Этот месяц    |
-| `presets.lastMonth` | строка  | Last month | Прошлый месяц |
-| `length`            | функция | —          | —             |
+| Key                 | Shape    | `en-US`    | `ru-RU`       |
+| ------------------- | -------- | ---------- | ------------- |
+| `presets.7d`        | string   | 7 days     | 7 дней        |
+| `presets.30d`       | string   | 30 days    | 30 дней       |
+| `presets.90d`       | string   | 90 days    | 90 дней       |
+| `presets.365d`      | string   | Year       | Год           |
+| `presets.thisMonth` | string   | This month | Этот месяц    |
+| `presets.lastMonth` | string   | Last month | Прошлый месяц |
+| `length`            | function | —          | —             |

@@ -9,43 +9,38 @@ story: src/components/date-time/TimePicker.stories.tsx
 
 # TimePicker
 
-## Кратко для AI
+## Summary for AI
 
-`TimePicker` — поле времени с маской и списком ближайших слотов. Значение, которое компонент принимает и отдаёт, — строка `HH:MM`; ввод нормализуется на blur или подтверждение. Пустое поле пустым и остаётся: с 3.6.0 уход фокуса из него не подставляет `00:00`.
+`TimePicker` is a time field with a mask and a list of upcoming slots. The value the component accepts and returns is an `HH:MM` string; input is normalized on blur or confirmation. An empty field stays empty: since 3.6.0, moving focus out of it does not fill in `00:00`.
 
-## Когда использовать
+## When to use
 
-- Пользователь может быстро напечатать точное время или выбрать удобный слот.
-- Время хранится отдельно от календарной даты, например в `DateTimePicker`.
+- The user can quickly type an exact time or pick a convenient slot.
+- The time is stored separately from the calendar date, for example in `DateTimePicker`.
 
-## Когда не использовать
+## When not to use
 
-- Для полного момента времени с датой используйте `DateTimePicker`.
-- Для свободной строки, не обязательно времени, используйте `TextControl`.
+- For a complete point in time that includes a date, use `DateTimePicker`.
+- For a free-form string that is not necessarily a time, use `TextControl`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<TimePicker value={time} onChange={setTime} step={30} aria-label="Время публикации" />
+<TimePicker value={time} onChange={setTime} step={30} aria-label="Publication time" />
 ```
 
 ## Public API
 
-- `value?: string | null`; `onChange(time: string)` обязателен; `step` по умолчанию 30 минут.
-- `hourCycle?: 12 | 24` — часы поля и списка; по умолчанию `24` (`14:30`). При `12` поле и слоты
-  показывают `2:30 PM`, печатать можно `230p` или `2:30 PM`, а набранное 24-часовое время
-  (`14:30`) тоже принимается. Это только показ и ввод: `value` и `onChange` остаются `HH:MM`.
-  Подписи `AM` и `PM` и маска `h:mm AM` берутся из каталога (`timePicker.am`, `timePicker.pm`,
-  `timePicker.placeholder12`). Если период не набран, берётся период прежнего значения, а у
-  пустого поля — `AM`.
-- `placeholder` и `aria-label` берутся из каталога сообщений (`timePicker.placeholder`,
-  `timePicker.label`): без провайдера это `HH:MM` и «Time», с `@olddevs/ui/locales/ru` —
-  `ЧЧ:ММ` и «Время». Проп переопределяет каталог точечно. `disabled`, `className` доступны.
-- `invalid` показывает поле в состоянии ошибки: линия под временем краснеет (и в фокусе тоже), на поле ставится `aria-invalid`. Правило проверки остаётся у потребителя. Внутри `FormField` с `error` проп не нужен: признак приходит из формы, как у `TextControl` и `NumberInput`, а явный `invalid={false}` его снимает. Пояснение и ошибка формы ещё и объявляются с полем — их `id` уходит в `aria-describedby`.
-- `upcomingSlots(step, now)` — публичная утилита, которая возвращает полный суточный список, начиная с ближайшего будущего слота. Она полезна для представления, но это не UI-компонент.
+- `value?: string | null`; `onChange(time: string)` is required; `step` defaults to 30 minutes.
+- `hourCycle?: 12 | 24` is the hour cycle of the field and the list; the default is `24` (`14:30`). With `12`, the field and the slots show `2:30 PM`; you can type `230p` or `2:30 PM`, and a typed 24-hour time (`14:30`) is accepted too. This affects only display and input: `value` and `onChange` stay `HH:MM`. The `AM` and `PM` labels and the `h:mm AM` mask come from the catalog (`timePicker.am`, `timePicker.pm`, `timePicker.placeholder12`). If no day period is typed, the day period of the previous value is used, and `AM` for an empty field.
+- `placeholder` and `aria-label` come from the message catalog (`timePicker.placeholder`,
+  `timePicker.label`): without a provider they are `HH:MM` and "Time", with `@olddevs/ui/locales/ru` —
+  `ЧЧ:ММ` and "Время". A prop overrides the catalog string individually. `disabled` and `className` are available.
+- `invalid` shows the field in an error state: the line under the time turns red (including when focused), and `aria-invalid` is set on the field. The validation rule stays with the consumer. Inside a `FormField` with `error` the prop is not needed: the flag comes from the form, as it does for `TextControl` and `NumberInput`, and an explicit `invalid={false}` clears it. The form's hint and error are also announced with the field — their `id` goes into `aria-describedby`.
+- `upcomingSlots(step, now)` is a public utility that returns the full 24-hour list, starting from the nearest future slot. It is useful for presentation, but it is not a UI component.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- Поле ввода имеет семантику combobox; фокус остаётся в поле, а список сообщает активный слот через `aria-activedescendant`.
-- Стрелки вниз и вверх ходят по слотам, Enter выбирает слот или подтверждает введённый текст, Escape закрывает список и продолжает всплытие к родительскому оверлею.
-- Источники: `src/components/date-time/TimePicker.tsx`, `src/components/date-time/TimePicker.stories.tsx`, `tests/timepicker.test.tsx`.
+- The input has combobox semantics; focus stays in the field, and the list reports the active slot through `aria-activedescendant`.
+- The Down Arrow and Up Arrow keys move through the slots, Enter picks a slot or confirms the typed text, Escape closes the list and keeps bubbling up to the parent overlay.
+- Sources: `src/components/date-time/TimePicker.tsx`, `src/components/date-time/TimePicker.stories.tsx`, `tests/timepicker.test.tsx`.

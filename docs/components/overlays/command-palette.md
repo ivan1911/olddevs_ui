@@ -9,85 +9,90 @@ story: src/components/overlays/CommandPalette.stories.tsx
 
 # CommandPalette
 
-## Кратко для AI
+## Summary for AI
 
-`CommandPalette` — controlled modal search по действиям приложения. Передайте
-структурированные `sections` и обработайте выбранный `id` в `onSelect`; палитра
-сама ищет по `label` и `keywords`, закрывается после выбора и не регистрирует
-глобальную горячую клавишу открытия.
+`CommandPalette` is a controlled modal search over the app's actions. Pass
+structured `sections` and handle the chosen `id` in `onSelect`; the palette
+searches `label` and `keywords` by itself, closes after a choice and does not
+register a global shortcut to open itself.
 
-Для находок сервера собственный поиск палитры выключается флагом
-`prefiltered: true` на разделе; запрос приходит в `onQueryChange`, а время
-ответа показывается через `loading`.
+For server results, turn off the palette's own search with the `prefiltered: true`
+flag on a section; the query arrives in `onQueryChange`, and `loading` shows
+that a response is pending.
 
-## Когда использовать
+## When to use
 
-- Быстрый поиск среди действий, особенно когда команд уже много.
-- Оглавление доступных команд: при пустом запросе нужен полный список разделов.
-- Действия естественно группируются по `CommandSection`.
+- Quick search among actions, especially when there are already many commands.
+- A table of contents of the available commands: with an empty query you need the full list of sections.
+- The actions fall naturally into `CommandSection` groups.
 
-## Когда не использовать
+## When not to use
 
-- Для фильтрации списка на экране — `SearchControl`.
-- Для навигации по нескольким статичным страницам — обычные ссылки или вкладки.
-- Не ожидайте, что компонент сам слушает `⌘K`: этой горячей клавишей и `open`
-  владеет приложение.
+- Use `SearchControl` to filter a list on the screen.
+- Use plain links or tabs to navigate between a few static pages.
+- Do not expect the component to listen for `⌘K` itself: the app owns that
+  shortcut and `open`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <CommandPalette
   open={open}
   onClose={() => setOpen(false)}
-  sections={[{ id: "files", label: "Файлы", items: [{ id: "upload", label: "Загрузить" }] }]}
+  sections={[{ id: "files", label: "Files", items: [{ id: "upload", label: "Upload" }] }]}
   onSelect={(id) => runCommand(id)}
 />
 ```
 
 ## Public API
 
-Требуются `open`, `onClose`, `sections`, `onSelect`. Каждый section имеет `id`,
-`label`, `items` и опционально `prefiltered`; item требует `id`, `label` и
-опционально `shortcut`, `keywords`, `icon`. `placeholder`, `title` и
-`notFoundText` настраивают тексты. `emptyBehaviour="all"` (умолчание) показывает
-все разделы на пустом запросе; `"hint"` вместо них выводит `emptyHint` до
-первого символа.
+`open`, `onClose`, `sections` and `onSelect` are required. Each section has `id`,
+`label`, `items` and optionally `prefiltered`; an item requires `id`, `label` and
+optionally `shortcut`, `keywords`, `icon`. `placeholder`, `title` and
+`notFoundText` set the strings. `emptyBehaviour="all"` (the default) shows all
+sections on an empty query; `"hint"` shows `emptyHint` instead, until the first
+character is typed.
 
-`onQueryChange(query)` отдаёт набранное наружу на каждое изменение поля —
-включая нажатие кнопки очистки и сброс при закрытии. Это уведомление, а не
-управление: значением поля владеет компонент. Дребезг запроса делает
-потребитель: сколько ждать, зависит от цены запроса, а её кит не знает.
+`onQueryChange(query)` is called with the typed text on every change of the
+field, including a click on the clear button and the reset on close. It only
+notifies you; it does not control the field: the component owns its value.
+Debouncing the query is up to the consumer: how long to wait depends on the cost
+of a query, which the kit cannot know.
 
-`loading` сообщает, что на стороне потребителя идёт поиск: на месте лупы появляется
-`Spinner`, а пустое состояние вместо `notFoundText` показывает `loadingText`
-(умолчание — «Загрузка»). Уже показанные результаты при этом не прячутся.
+`loading` signals that a search is under way on the consumer's side: a `Spinner` appears
+in place of the search icon, and the empty state shows `loadingText` instead of
+`notFoundText` (the default is "Loading"). Results that are already shown are not
+hidden.
 
-**Слот под иконку фиксирован: его размер задаёт разметка.** Лупа — 16 пикселей,
-`Spinner` — 14, и пока слот занимала сама иконка, поле вместе с набранным текстом
-уезжало на эти два пикселя при каждом включении загрузки. Поиск в палитре ходит
-на сервер, запрос уходит на каждое изменение поля — текст дёргался в такт паузам в
-наборе и читался не как «идёт загрузка», а как «экран перезагружается». С
-3.26.0 слот фиксированный, и включать `loading` на каждую догрузку безопасно
-(замер потребителя; браузерный тест сторожит).
+**The slot for the icon has a fixed size: the layout sets it.** The
+search icon is 16 pixels, the `Spinner` is 14, and while the slot took its size from
+the icon itself, the field together with the typed text shifted by those two
+pixels every time loading was turned on. The palette's search goes to the
+server, and a request goes out on every change of the field; the text flickered
+in step with the pauses in typing and read not as "loading" but as "the screen is
+reloading". Since 3.26.0 the slot has a fixed size, and it is safe to turn
+`loading` on for every fetch (the consumer's measurement; a browser
+test guards it).
 
-## Поиск на сервере: `prefiltered`
+## Server-side search: `prefiltered`
 
-Палитра фильтрует переданные разделы сама. Для действий приложения это
-правильно: набор известен заранее и лежит в памяти целиком. Для находок
-сервера — разрушительно: они уже отобраны, причём по другим правилам, и второе
-просеивание подстрокой выбрасывает верные.
+The palette filters the sections it is given by itself. For app actions that is
+right: the set is known in advance and sits in memory in full. For server
+results it is destructive: they have already been filtered, and by different
+rules, and a second pass by substring throws away valid matches.
 
-Разберём на морфологии. Поиск по `tsvector` с русским словарём находит задачу
-«Подписать договор с подрядчиком» по запросу «договоры». Локальный `contains`
-такую пару не найдёт никогда — подстроки «договоры» в заголовке нет, — и
-человек видит «ничего не найдено» там, где сервер нашёл. Через `keywords` это не
-обходится в принципе: сколько слов туда ни клади, фильтр по подстроке не станет
-морфологическим.
+Take morphology as an example. A `tsvector` search with a Russian dictionary finds
+the task "Подписать договор с подрядчиком" for the query "договоры". A local
+`contains` will never match such a pair: "договоры" is another form of the word
+"договор" in the title, so the substring is not there, and the person sees "nothing
+found" where the server found something.
+`keywords` cannot work around this at all: no matter how many words you put there,
+a substring filter does not become morphological.
 
-`prefiltered: true` на разделе выключает локальное просеивание именно для него.
-Порядок пунктов сохраняется как передан: ранжирование сделал тот, кто искал.
-Разделы обоих видов уживаются в одном списке, а клавиатура работает в
-`prefiltered`-разделе ровно так же — стрелки, `aria-activedescendant`, выбор по
+`prefiltered: true` on a section turns off local filtering for that section only.
+The order of items is kept as passed: whoever searched did the ranking. Sections
+of both kinds coexist in one list, and the keyboard works in a `prefiltered`
+section exactly the same way: arrow keys, `aria-activedescendant`, choosing with
 Enter.
 
 ```tsx
@@ -104,44 +109,44 @@ const found = useQuery({
   onQueryChange={setQuery}
   loading={found.isFetching}
   sections={[
-    { id: "commands", label: "Команды", items: commands },
-    { id: "tasks", label: "Задачи", items: taskItems, prefiltered: true },
+    { id: "commands", label: "Commands", items: commands },
+    { id: "tasks", label: "Tasks", items: taskItems, prefiltered: true },
   ]}
   onSelect={run}
 />;
 ```
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-Компонент сочетает Radix Dialog и react-aria `Autocomplete`/`ListBox`. Поле получает
-autofocus, скрытый title даёт диалогу имя, а список получает то же имя. Поиск
-учитывает локаль, не различает регистр и диакритику; `keywords` расширяют
-`textValue`. Стрелки и выбор обрабатывает react-aria. После выбора пункта сначала
-вызывается `onSelect(id)`, затем `onClose`.
+The component combines Radix Dialog and react-aria `Autocomplete`/`ListBox`. The
+field gets autofocus, a hidden title gives the dialog its name, and the list gets
+the same name. Search respects the locale and ignores case and diacritics;
+`keywords` extend the `textValue`. react-aria handles the arrow keys and selection.
+After an item is chosen, `onSelect(id)` is called first, then `onClose`.
 
-Занятость объявляет сам `Spinner` — у него внутри `role="status"` со скрытой
-подписью. Отдельной живой области со счётом находок нет намеренно: она была бы
-вторым голосом про то же самое, а на локально фильтруемых командах срабатывала
-бы на каждый набранный символ.
+The busy state is announced by the `Spinner` itself — it has `role="status"` with
+a hidden label inside. There is deliberately no separate live region with a count
+of results: it would be a second voice saying the same thing, and on locally
+filtered commands it would fire on every typed character.
 
-## Хорошие примеры
+## Good examples
 
-- Пустой список действий через `emptyBehaviour="hint"`, если их сотни.
-- `prefiltered: true` на разделе с находками сервера — вместе с `loading`.
-- `keywords="similar поиск"` у пункта «Найти похожие»: английское название и русский синоним.
-- `shortcut={["⌘", "K"]}` для показа уже существующей команды приложения.
+- An empty list (`emptyBehaviour="hint"`) if there are hundreds of actions.
+- `prefiltered: true` on a section with server results — together with `loading`.
+- `keywords="similar поиск"` on a "Find similar" item: an English name and a Russian synonym.
+- `shortcut={["⌘", "K"]}` to show a command the app already has.
 
-## Антипаттерны
+## Anti-patterns
 
-- Хранить callback в `CommandItem` вместо устойчивого `id`.
-- Вводить разделы с дублирующими `id` пунктов.
-- Складывать результаты сервера в обычный раздел: локальный фильтр просеет их
-  второй раз и выбросит верные находки.
-- Ходить в сеть прямо в `onQueryChange`, без дребезга: запрос меняется на каждый
-  символ.
-- Оставлять палитру открытой после перехода к действию.
+- Storing a callback in `CommandItem` instead of a stable `id`.
+- Introducing sections with duplicate item `id` values.
+- Putting server results into a regular section: the local filter sifts them a
+  second time and throws away valid results.
+- Making network requests directly from `onQueryChange`, without debouncing: the
+  query changes on every character.
+- Leaving the palette open after moving on to the action.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
 - `src/components/overlays/CommandPalette.tsx`
 - `src/components/overlays/CommandPalette.stories.tsx`

@@ -9,86 +9,84 @@ story: src/components/inputs/InlineEdit.stories.tsx
 
 # InlineEdit
 
-## Кратко для AI
+## Summary for AI
 
-Правка значения по месту: кнопка-значение → поле → подтверждение.
-Подтверждённое значение приходит пропом и компонентом **не хранится**. Escape
-возвращает и значение, и фокус на кнопку.
+Edit a value in place: value button → field → confirmation.
+The confirmed value arrives as a prop and the component does **not store** it.
+Escape restores both the value and the focus on the button.
 
-## Когда использовать
+## When to use
 
-- Поле, которое чаще читают, чем правят: название в карточке, свойства
-  объекта, ячейка списка настроек.
+- A field that is read more often than edited: a title in a card, the properties
+  of an object, a cell of a settings list.
 
-## Когда не использовать
+## When not to use
 
-- В форме, которую заполняют целиком, берите обычное поле в `FormField`.
-- Когда правку нужно подтверждать кнопкой «Сохранить» вместе с остальными
-  полями: `InlineEdit` подтверждает сам, по Enter или уходу фокуса.
+- In a form that is filled in as a whole, use a regular field in `FormField` instead.
+- When the edit has to be confirmed with a "Save" button together with the other
+  fields: `InlineEdit` confirms by itself, on Enter or when focus leaves.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { InlineEdit } from "@olddevs/ui";
 
-const [title, setTitle] = useState("Ежедневная подборка");
+const [title, setTitle] = useState("Daily digest");
 
-<InlineEdit value={title} onChange={setTitle} label="Название" />;
+<InlineEdit value={title} onChange={setTitle} label="Title" />;
 ```
 
-## Пропы
+## Props
 
-| Проп              | Умолчание         | Назначение                                                       |
-| ----------------- | ----------------- | ---------------------------------------------------------------- |
-| `value`           | —                 | Подтверждённое значение. Компонент его не хранит.                |
-| `onChange`        | —                 | Подтверждение. Вызывается, **только** когда значение изменилось. |
-| `label`           | —                 | Доступное имя поля. Обязательно, проверяет компилятор.           |
-| `editing`         | —                 | Режим правки снаружи. Без пропа компонент ведёт его сам.         |
-| `onEditingChange` | —                 | Сообщает о намерении открыть или закрыть правку.                 |
-| `placeholder`     | каталог сообщений | Что показать на кнопке при пустом значении.                      |
-| `disabled`        | —                 | Выключает и кнопку, и поле.                                      |
+| Prop              | Default         | Purpose                                                                 |
+| ----------------- | --------------- | ----------------------------------------------------------------------- |
+| `value`           | —               | The confirmed value. The component does not store it.                   |
+| `onChange`        | —               | Confirmation. Called **only** when the value has changed.               |
+| `label`           | —               | The accessible name of the field. Required, enforced by the compiler.   |
+| `editing`         | —               | Controlled edit mode. Without the prop the component manages it itself. |
+| `onEditingChange` | —               | Reports the intent to open or close editing.                            |
+| `placeholder`     | message catalog | What to show on the button when the value is empty.                     |
+| `disabled`        | —               | Disables both the button and the field.                                 |
 
-## Подтверждённое значение не хранится
+## The confirmed value is not stored
 
-Внутри живёт только черновик — то, что набирают прямо сейчас. Подтверждение
-уходит наружу, и следующим кадром значение приходит пропом.
+Only the draft lives inside — what is being typed right now. The confirmation is passed to the parent, and in the next frame the value comes back as a prop.
 
-Разница видна там, где важна: если сервер отказался сохранить и потребитель не
-поменял `value`, компонент показывает **прежнее**, а не выдуманное своё.
-Черновик к тому же начинается с текущего значения при каждом открытии — между
-правками оно могло измениться снаружи.
+The difference shows where it matters: if the server refused to save and the
+consumer did not change `value`, the component shows the **previous** one, not an
+invented one of its own. The draft also starts from the current value on every
+open — between edits it may have been changed by the parent.
 
-## Переходы фокуса — главное, что здесь есть
+## Focus handling is the core of this component
 
-- **Открытие** ставит фокус в поле, а не оставляет его на кнопке: иначе
-  пользователь клавиатуры открыл поле и печатает в никуда.
-- **Escape** возвращает прежнее значение **и** фокус на кнопку. Это
-  требование: без отмены начавший править по ошибке не может
-  выйти, не сохранив — щелчок мимо подтверждает, Enter подтверждает.
-- **Enter** подтверждает и тоже возвращает фокус: поле исчезает, и без
-  возврата фокус уехал бы на `<body>`.
-- **Щелчок мимо** подтверждает и фокус **не** забирает: пользователь ушёл
-  туда, куда хотел.
+- **Opening** puts the focus in the field instead of leaving it on the button:
+  otherwise a keyboard user would open the field and type into nothing.
+- **Escape** restores the previous value **and** the focus on the button. This is
+  a requirement: without a way to cancel, someone who started editing by
+  mistake cannot leave without saving — a click elsewhere confirms, Enter confirms.
+- **Enter** confirms and also returns focus: the field disappears, and without
+  returning focus it would have gone to `<body>`.
+- **A click elsewhere** confirms and does **not** take the focus: the user went
+  where they wanted.
 
-Отмена сбрасывает свой флаг **при открытии** правки, а не только в обработчике
-потери фокуса: после Escape поле размонтируется и `blur` не приходит вовсе —
-флаг оставался бы поднятым, и следующая правка молча не подтверждалась бы по
-щелчку мимо.
+Cancel clears its flag **when editing opens**, not only in the blur handler: after
+Escape the field unmounts and `blur` never arrives — the flag would stay raised,
+and the next edit would silently not be confirmed by a click elsewhere.
 
-Проверяется в живом браузере (`tests-visual/interactions.spec.ts`): в jsdom
-`document.activeElement` после размонтирования ведёт себя иначе, и тест
-проходил бы на сломанном компоненте.
+This is checked in a live browser (`tests-visual/interactions.spec.ts`): in jsdom
+`document.activeElement` after unmounting behaves differently, and the test would
+pass on a broken component.
 
-## Имя кнопки строится из содержимого
+## The button name is built from the content
 
-Значение обязано быть в доступном имени: «Ежедневная подборка, изменить».
-`aria-label` вытеснил бы его, и скринридер объявлял бы «изменить название», не
-читая того, что там написано.
+The value has to be in the accessible name: "Daily digest, edit". An `aria-label`
+would override it, and the screen reader would announce "edit title" without
+reading what is written there.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/inputs/InlineEdit.tsx`; состав волны —
+- Implementation: `src/components/inputs/InlineEdit.tsx`; the scope of the wave is in
   ADR-0024.
-- Тесты: `tests/inline-edit.test.tsx` — три перехода, отмена, отсутствие
-  хранения, контролируемый режим; браузерные — возврат фокуса и щелчок мимо.
-- Истории витрины: `src/components/inputs/InlineEdit.stories.tsx`.
+- Tests: `tests/inline-edit.test.tsx` — the three transitions, cancel, no storing,
+  controlled mode; browser ones — focus return and a click elsewhere.
+- Showcase stories: `src/components/inputs/InlineEdit.stories.tsx`.

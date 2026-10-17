@@ -7,77 +7,76 @@ source: src/components/navigation/SelectionBar.tsx, src/hooks/useStickyOffset.ts
 story: src/components/navigation/SelectionBar.stories.tsx
 ---
 
-# SelectionBar и useStickyOffset
+# SelectionBar and useStickyOffset
 
-## Кратко для AI
+## Summary for AI
 
-`SelectionBar` — полоса массовых действий: «Выбрано 12» и что с этим можно сделать. Счётчик идёт из каталога сообщений со склонением по локали; `countLabel` переопределяет его, когда нужно назвать сущность («Выбрано 12 документов»). Полоса липнет под верхней панелью и берёт её фактическую высоту из CSS-переменной. `useStickyOffset` — тот же механизм липкости отдельно, для своих полос.
+`SelectionBar` is a batch action bar: "12 selected" and what can be done with them. The counter comes from the message catalog with plural forms for the locale; `countLabel` overrides it when you need to name the entity ("12 documents selected"). The bar sticks under the application's top bar and takes its actual height from a CSS variable. `useStickyOffset` is the same sticky positioning mechanism on its own, for your own bars.
 
-## Когда использовать
+## When to use
 
-- Список или сетка поддерживают выделение нескольких объектов, и над ними есть действия.
-- Действий больше одного: одно-единственное уместнее показать прямо в строке объекта.
+- A list or grid supports selecting several objects, and there are actions that apply to them.
+- There is more than one action: a single one is better shown right in the object's row.
 
-## Когда не использовать
+## When not to use
 
-- Для действий над **одним** объектом используйте меню строки (`Menu`) или кнопки в её конце.
-- Для панели фильтров не подходит: там нет счётчика выбранного и нет «снять выделение».
-- Для подтверждения разрушительного действия используйте `ConfirmDialog`.
+- For actions on a **single** object, use the row menu (`Menu`) or buttons at the end of the row.
+- A filter bar does not fit: it has no count of selected items and no "clear selection".
+- For confirming a destructive action, use `ConfirmDialog`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { Button, SelectionBar } from "@olddevs/ui";
 
-// pluralize — ваша функция склонения по числу, в кит она не входит.
 <SelectionBar
   count={selected.size}
-  countLabel={(n) => `Выбрано ${n} ${pluralize(n, ["документ", "документа", "документов"])}`}
+  countLabel={(n) => `${n} ${n === 1 ? "document" : "documents"} selected`}
   onClear={clearSelection}
-  secondary={<button onClick={selectAll}>Выбрать все ({total})</button>}
+  secondary={<button onClick={selectAll}>Select all ({total})</button>}
 >
   <Button size="sm" icon={<CalendarIcon />} onClick={schedule}>
-    В расписание
+    Schedule
   </Button>
   <Button size="sm" variant="outline" tone="danger" icon={<DeleteIcon />} onClick={remove}>
-    Удалить
+    Delete
   </Button>
 </SelectionBar>;
 ```
 
 ## Public API
 
-| Prop         | По умолчанию             | Значение                                                                     |
-| ------------ | ------------------------ | ---------------------------------------------------------------------------- |
-| `count`      | —                        | Сколько выбрано. При нуле полоса не рендерится вовсе.                        |
-| `countLabel` | `Выбрано N`              | Своя подпись — там, где счёт идёт в предметных единицах и требует склонения. |
-| `onClear`    | —                        | Снять выделение. Без него кнопки «Снять выделение» нет.                      |
-| `children`   | —                        | Действия, обычно `Button size="sm"`.                                         |
-| `secondary`  | —                        | Правый край: «Выбрать все», ссылка на справку.                               |
-| `sticky`     | `true`                   | Липнуть под верхней панелью.                                                 |
-| `offsetVar`  | `--topbar-h`             | Имя переменной с высотой панели.                                             |
-| `aria-label` | `Действия над выбранным` | Имя группы для скринридера.                                                  |
+| Prop         | Default                | Meaning                                                                   |
+| ------------ | ---------------------- | ------------------------------------------------------------------------- |
+| `count`      | —                      | How many are selected. At zero the bar is not rendered at all.            |
+| `countLabel` | `N selected`           | Your own label, for when you count domain entities and need plural forms. |
+| `onClear`    | —                      | Clear the selection. Without it there is no "Clear selection" button.     |
+| `children`   | —                      | Actions, usually `Button size="sm"`.                                      |
+| `secondary`  | —                      | The right edge: "Select all", a link to help.                             |
+| `sticky`     | `true`                 | Stick under the top bar.                                                  |
+| `offsetVar`  | `--topbar-h`           | The name of the variable with the bar's height.                           |
+| `aria-label` | `Actions on selection` | The group's name for the screen reader.                                   |
 
-Два слота, а не один: `children` занимают всё свободное место и прижимают `secondary` к правому краю, а на узком экране `secondary` уезжает наверх к счётчику, и действия переносятся во вторую строку.
+Two slots, not one: `children` take all the free space and push `secondary` to the right edge, and on a narrow screen `secondary` moves up next to the counter while the actions wrap to a second row.
 
-На средней ширине, когда действия не влезают в одну строку со счётчиком, они переносятся целыми кнопками внутри своей части полосы, а не ужимаются: подпись кнопки не ломается на две строки, иконка не сплющивается.
+At medium widths, when the actions do not fit on one line with the counter, they wrap as whole buttons within their part of the bar instead of shrinking: a button label never breaks onto two lines, and its icon is never squashed.
 
-Правило «при нуле ничего не рендерить» принадлежит полосе, а не вызывающему коду: иначе в каждом месте пришлось бы писать свой `count > 0 &&`, и где-то его однажды забыли бы.
+The "render nothing at zero" rule belongs to the bar, not to the calling code: otherwise every call site would write its own `count > 0 &&`, and one of them would eventually forget it.
 
-## Контракт липкости
+## Sticky positioning contract
 
-Приложение публикует настоящую высоту своей верхней панели в CSS-переменной (`--topbar-h` по умолчанию); полоса её читает. Зашитое число не годится: на узких экранах панель ниже по высоте, и остаётся просвет, сквозь который видно уезжающий контент. Решение и отвергнутые варианты — ADR-0016.
+The application publishes the real height of its top bar in a CSS variable (`--topbar-h` by default), and the bar reads it. A hard-coded number will not do: on narrow screens the top bar is shorter, and a gap is left through which the scrolling content shows. The decision and the rejected options are in ADR-0016.
 
-Отсутствие переменной — законное состояние: смещение равно нулю, полоса липнет к верху окна браузера.
+A missing variable is a legitimate state: the offset is zero, and the bar sticks to the top of the viewport.
 
-`useStickyOffset` возвращает `sentinelRef` (вешается на пустой блок нулевой высоты **перед** липким элементом) и `isStuck`. Прижавшись, полоса теряет верхние скругления — иначе они приоткрывают фон страницы уголками на стыке.
+`useStickyOffset` returns `sentinelRef` (attached to an empty zero-height block **before** the sticky element) and `isStuck`. Once stuck, the bar loses its top rounded corners — otherwise the corners reveal the page background at the seam.
 
-## Доступность
+## Accessibility
 
-Полоса — `role="group"` с доступным именем: для скринридера это набор действий над выбранным, а не случайные кнопки посреди страницы. Счётчик стоит первым и читается вместе с именем группы. У кнопки сброса есть имя «Снять выделение» — без него это была бы безымянная кнопка, и axe отметит это как `critical`.
+The bar is a `role="group"` with an accessible name: for a screen reader it is a set of actions on the selection, not random buttons in the middle of the page. The counter comes first and is read together with the group name. The clear button is named "Clear selection" — without a name it would be an unnamed button, and axe flags it as `critical`.
 
-## Связанные исходники и Storybook
+## Related sources and Storybook
 
-- Исходники: `src/components/navigation/SelectionBar.tsx`, `src/hooks/useStickyOffset.ts`
+- Sources: `src/components/navigation/SelectionBar.tsx`, `src/hooks/useStickyOffset.ts`
 - Stories: `src/components/navigation/SelectionBar.stories.tsx`
-- Тесты: `tests/selection-bar.test.tsx`, `tests/sticky-offset.test.tsx`, браузерные сценарии липкости — `tests-visual/interactions.spec.ts`
+- Tests: `tests/selection-bar.test.tsx`, `tests/sticky-offset.test.tsx`, browser sticky positioning scenarios — `tests-visual/interactions.spec.ts`

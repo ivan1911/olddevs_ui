@@ -9,22 +9,22 @@ story: src/components/date-time/DateTimePicker.stories.tsx
 
 # DateTimePicker
 
-## Кратко для AI
+## Summary for AI
 
-`DateTimePicker` собран из `DatePicker` и `TimePicker`. Потребитель хранит дату и время отдельно: ISO-дата без часового пояса и строка времени `HH:MM`.
+`DateTimePicker` is composed of `DatePicker` and `TimePicker`. The consumer stores the date and time separately: an ISO date without a time zone and an `HH:MM` time string.
 
-## Когда использовать
+## When to use
 
-- Нужен пользовательский ввод даты и времени публикации/события как два независимых значения.
-- Нужны единые ограничения календарной даты и выключенное состояние.
+- You need user input for the publication/event date and time as two independent values.
+- You need shared calendar-date constraints and a disabled state.
 
-## Когда не использовать
+## When not to use
 
-- Для одного дня без времени используйте `DatePicker`.
-- Для произвольной раскладки календаря составьте `Calendar` и `TimePicker` самостоятельно.
-- Не трактуйте результат как готовый UTC timestamp: часовой пояс и серверная конвертация принадлежат домену.
+- For a single day without a time, use `DatePicker`.
+- For an arbitrary calendar layout, compose `Calendar` and `TimePicker` yourself.
+- Do not treat the result as a ready-made UTC timestamp: the time zone and server-side conversion belong to the domain.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 <DateTimePicker date={date} onDateChange={setDate} time={time} onTimeChange={setTime} />
@@ -32,12 +32,12 @@ story: src/components/date-time/DateTimePicker.stories.tsx
 
 ## Public API
 
-- Контракт состоит из `date`, `onDateChange`, `time`, `onTimeChange`; также `minValue`, `maxValue` (календарные, дневные границы), `disabled`, `hourCycle` (`12` или `24`, как у `TimePicker`), `locale` и `timeZoneLabel` (подпись зоны справа от времени).
-- Границы `minValue` и `maxValue` **календарные, то есть дневные**: ячейки календаря — даты без времени, и сравнение идёт по дню. `minValue={…T14:00}` в смысле «не раньше чем через час» не сработает — тот же день с девятью утра пройдёт. Границ времени компонент не принимает: «не раньше чем через час» зависит от часового пояса, которого кит не знает, и от момента отправки, а не отрисовки. Это правило потребителя.
-- `maskTime(value)` — public helper, приводящий ввод к виду `HH:MM`; `normalizeTime(value, fallback)` нормализует допустимое время. Это helpers, не компоненты.
-- Используйте строгие API даты и времени, а не соединяйте их в `Date` на UI-границе.
+- The contract is `date`, `onDateChange`, `time`, `onTimeChange`; `minValue`, `maxValue` (calendar, day bounds), `disabled`, `hourCycle` (`12` or `24`, as in `TimePicker`), `locale` and `timeZoneLabel` (a time-zone label to the right of the time) are also supported.
+- The `minValue` and `maxValue` bounds are **calendar bounds, that is, day bounds**: calendar cells are dates without a time, and the comparison is by day. `minValue={…T14:00}` in the sense of "no earlier than an hour from now" will not work — the same day at nine in the morning passes. The component accepts no time bounds: "no earlier than an hour from now" depends on a time zone the kit does not know, and on the moment of submission, not rendering. This is a consumer rule.
+- `maskTime(value)` is a public helper that coerces input to the `HH:MM` format; `normalizeTime(value, fallback)` normalizes a valid time. These are helpers, not components.
+- Use strict date and time APIs; do not merge them into a `Date` at the UI boundary.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- Дочерние поля сохраняют своё доступное имя и клавиатурное поведение.
-- См. `src/components/date-time/DateTimePicker.tsx`, `src/components/date-time/DateTimePicker.stories.tsx`, `tests/matrix.tsx`.
+- The child pickers keep their own accessible names and keyboard contracts.
+- See `src/components/date-time/DateTimePicker.tsx`, `src/components/date-time/DateTimePicker.stories.tsx`, `tests/matrix.tsx`.

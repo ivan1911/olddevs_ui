@@ -9,26 +9,26 @@ story: src/components/navigation/ContextualSaveBar.stories.tsx
 
 # ContextualSaveBar
 
-## Кратко для AI
+## Summary for AI
 
-Полоса несохранённых изменений: появляется с первой правкой формы, показывает «есть несохранённые изменения» (или их число) и две кнопки — сохранить и отменить. Липнет к нижнему краю окна браузера — над нижней панелью приложения, если она есть (`--bottombar-h`). Данных формы не знает: принимает признак несохранённых правок (`visible`), число правок и два обработчика. Появление и ход сохранения объявляются скринридеру, а не только выводятся на экран.
+A bar for unsaved changes: it appears with the first edit of a form, shows "there are unsaved changes" (or their count) and two buttons — save and cancel. It sticks to the bottom edge of the viewport — above the application's bottom bar, if there is one (`--bottombar-h`). It knows nothing about the form data: it takes a flag for unsaved edits (`visible`), the number of edits and two handlers. The bar appearing and the progress of saving are announced to the screen reader, not just rendered.
 
-## Когда использовать
+## When to use
 
-- Длинная форма или страница настроек, где правки копятся и отправляются разом.
-- Правка возможна прямо в списке или таблице, и сохранение общее для всех правок.
-- Пользователю нужно видеть, что несохранённое есть, даже если изменённое поле уехало из кадра.
+- A long form or settings page where edits accumulate and are submitted at once.
+- Editing is possible right in a list or table, and saving is shared by all the edits.
+- The user needs to see that something is unsaved, even when the changed field has scrolled out of view.
 
-## Когда не использовать
+## When not to use
 
-- **Для выбора объектов** используйте `SelectionBar`: «Выбрано 12» и действия над ними.
-- **Для состояния приложения** («идут работы», «подписка истекает») используйте `Banner`: он переживает навигацию и не относится к текущей форме.
-- **Для сообщения об уже случившемся** («сохранено») используйте `toast`.
-- Для формы с единственной кнопкой «Отправить» внизу: полоса дублировала бы её.
+- **For selecting objects**, use `SelectionBar`: "12 selected" and actions on them.
+- **For application state** ("maintenance in progress", "subscription is expiring"), use `Banner`: it survives navigation and does not belong to the current form.
+- **For a message about something that has already happened** ("saved"), use a `toast`.
+- For a form with a single "Submit" button at the bottom: the bar would duplicate it.
 
-Граница коротко: `SelectionBar` — про выбор, `Banner` — про приложение, `ContextualSaveBar` — про текущую форму.
+In short: `SelectionBar` is about selection, `Banner` is about the application, `ContextualSaveBar` is about the current form.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { ContextualSaveBar } from "@olddevs/ui";
@@ -39,7 +39,7 @@ export function GroupSettings() {
 
   return (
     <form>
-      {/* поля формы */}
+      {/* form fields */}
       <ContextualSaveBar
         visible={dirty}
         onSave={() => save(value)}
@@ -52,52 +52,52 @@ export function GroupSettings() {
 
 ## Props
 
-| Проп                        | Тип                             | Смысл                                                                                       |
-| --------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------- |
-| `visible`                   | `boolean`                       | Есть ли несохранённое. При `false` полоса не рендерится                                     |
-| `count`                     | `number`                        | Число правок. Без него — «есть несохранённые изменения»; с ним называется число             |
-| `message`                   | `ReactNode`                     | Своя формулировка вместо умолчания. Вытесняет и `count`                                     |
-| `onSave`                    | `() => void`                    | Обязателен: ради него полоса и существует                                                   |
-| `onCancel`                  | `() => void`                    | Отмена. **Без обработчика кнопки нет вовсе**                                                |
-| `saving`                    | `boolean`                       | Идёт сохранение: кнопка показывает ход, отмена выключена                                    |
-| `error`                     | `ReactNode`                     | Текст отказа. Показывается в полосе и объявляется                                           |
-| `saveLabel` / `cancelLabel` | `ReactNode`                     | Свои подписи кнопок                                                                         |
-| `sticky`                    | `boolean` (по умолчанию `true`) | Липнуть к низу области просмотра                                                            |
-| `offsetVar`                 | `string` (`"--bottombar-h"`)    | Переменная с высотой нижней панели: полоса встаёт на эту высоту выше края области просмотра |
+| Prop                        | Type                          | Meaning                                                                                              |
+| --------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `visible`                   | `boolean`                     | Whether anything is unsaved. When `false` the bar is not rendered                                    |
+| `count`                     | `number`                      | The number of edits. Without it, "there are unsaved changes"; with it, the count is shown            |
+| `message`                   | `ReactNode`                   | Your own wording instead of the default. Replaces `count` as well                                    |
+| `onSave`                    | `() => void`                  | Required: the bar exists for it                                                                      |
+| `onCancel`                  | `() => void`                  | Cancel. **Without a handler there is no button at all**                                              |
+| `saving`                    | `boolean`                     | Saving is in progress: the button shows progress, cancel is disabled                                 |
+| `error`                     | `ReactNode`                   | The text of a failure. Shown in the bar and announced                                                |
+| `saveLabel` / `cancelLabel` | `ReactNode`                   | Your own button labels                                                                               |
+| `sticky`                    | `boolean` (`true` by default) | Stick to the bottom of the viewport                                                                  |
+| `offsetVar`                 | `string` (`"--bottombar-h"`)  | The variable holding the bottom bar height: the bar is offset above the viewport edge by that height |
 
-Состояние формы компонент не хранит. Что считать правкой — решение потребителя: сравнение с исходным значением, счётчик касаний поля или ответ сервера.
+The component does not store form state. What counts as an edit is the consumer's decision: a comparison with the original value, a field-touch counter or a server response.
 
-## Почему внизу, а не вверху
+## Why at the bottom, not the top
 
-Полоса липнет к нижнему краю **ближайшей области прокрутки**: окна браузера, если прокручивается страница, и контейнера, если у рабочей области свой `overflow` — как в большинстве админок. Это обычная семантика `position: sticky`, и знать её стоит: предок с `overflow: auto`, который сам не прокручивается, отменяет липкость к окну.
+The bar sticks to the bottom edge of the **nearest scroll area**: the browser window, if the page scrolls, and the container, if the work area has its own `overflow` — as in most admin panels. This is ordinary `position: sticky` semantics, and you should know it: an ancestor with `overflow: auto` that does not itself scroll cancels sticky positioning to the window.
 
-Наверху уже стоят шапка приложения и `SelectionBar`, и обе отсчитывают липкость от `--topbar-h` (ADR-0016, ADR-0019). Третий липкий слой сверху потребовал бы второй переменной высоты и пересмотра контракта — цена, несопоставимая с задачей. Внизу свободно, и там пользователи привыкли видеть такую полосу в админках.
+The application header and `SelectionBar` already sit at the top, and both measure sticky positioning from `--topbar-h` (ADR-0016, ADR-0019). A third sticky layer at the top would need a second height variable and a revision of the contract — a price out of proportion to the task. The bottom is free, and users are used to seeing such a bar there in admin panels.
 
-## Над нижней панелью телефона
+## Above the phone's bottom bar
 
-На телефоне нижний край области просмотра занимает `MobileTabBar` в слоте `bottomBar` у `AppShell`. Каркас публикует высоту слота в `--bottombar-h` (на `md` и шире панели нет, значение `0px`), а полоса прилипает на эту высоту выше края области просмотра — так же, как `SelectionBar` отсчитывает липкость от `--topbar-h`. Задавать полосе отступ `max-md:bottom-14` на глаз не нужно: зашитое число расходится с настоящей высотой панели (вырез экрана, перенос подписей).
+On a phone the bottom edge of the viewport is taken by `MobileTabBar` in the `bottomBar` slot of `AppShell`. The shell publishes the slot height as `--bottombar-h` (at `md` and wider there is no bar and the value is `0px`), and the bar sticks that far above the viewport edge — the same way `SelectionBar` measures its sticky positioning from `--topbar-h`. There is no need to offset the bar with `max-md:bottom-14` by eye: a hard-coded number drifts from the real bar height (notch inset, wrapped labels).
 
-`offsetVar` меняет имя переменной, если каркас публикует её под другим (`bottomBarHeightVar` у `AppShell`) или нижнюю панель публикует само приложение. Отступ — класс, читающий эту переменную, а не инлайновый `bottom`, поэтому `className` с `bottom-*` его перекрывает: своя нижняя панель вне `AppShell` задаёт отступ так же, как при инлайновом `bottom`. Если переменная не опубликована, отступ `0px`.
+`offsetVar` changes the variable name if the shell publishes it under a different name (`bottomBarHeightVar` on `AppShell`) or the application publishes the bottom bar itself. The offset is a class that reads this variable, not an inline `bottom`, so a `className` with `bottom-*` overrides it: your own bottom bar outside `AppShell` sets the offset the same way as with an inline `bottom`. With no published variable the offset is `0px`.
 
-## Доступность и клавиатура
+## Accessibility and keyboard
 
-- У полосы роль `group` и доступное имя: для скринридера это набор действий над формой, а не кнопки посреди страницы.
-- Появление, ход сохранения и отказ объявляются живой областью `role="status"`. Область смонтирована всегда, содержимое подменяется: живая область, вставленная в дерево вместе со своим текстом, объявляется ненадёжно.
-- Роль `status`, а не `alert`, даже при отказе: отказ сопровождается видимым текстом в самой полосе, и перебивать речь незачем.
-- Кнопки — обычные `Button`: Tab, Enter, пробел. Во время сохранения отмена выключена, а кнопка сохранения показывает ход.
+- The bar has the `group` role and an accessible name: for a screen reader it is a set of actions on the form, not buttons in the middle of the page.
+- The bar appearing, the progress of saving and a failure are announced by a `role="status"` live region. The region is always mounted and only its content is swapped: a live region inserted into the tree together with its text is announced unreliably.
+- The role is `status`, not `alert`, even on failure: the failure comes with visible text in the bar itself, and there is no need to interrupt speech.
+- The buttons are ordinary `Button` components: Tab, Enter, Space. While saving, cancel is disabled and the save button shows progress.
 
-**Известная цена.** Текст полосы попадает в дерево доступности дважды: видимой строкой и живой областью. В режиме обзора он читается два раза подряд. Размен сознательный: если появление полосы объявляется ненадёжно, это хуже лишнего повтора. Тот же вопрос открыт у `MaskedInput` (ADR-0026) и закрывается одним прогоном с NVDA и VoiceOver — на оба компонента разом.
+**A known cost.** The bar's text gets into the accessibility tree twice: as a visible line and as a live region. In browse mode it is read twice in a row. The trade-off is deliberate: if the bar's appearance is announced unreliably, that is worse than an extra repeat. The same question is open for `MaskedInput` (ADR-0026) and is closed by one run with NVDA and VoiceOver — for both components at once.
 
-## Антипаттерны
+## Anti-patterns
 
-- **Перехватывать уход со страницы внутри кита.** Полоса не знает маршрутизатора и знать не должна; предупреждение об уходе — дело приложения.
-- **Держать в полосе третью и четвёртую кнопку.** Полоса про одно решение: сохранить или отменить. Остальное — в форме.
-- **Показывать полосу всегда, с выключенной кнопкой.** Постоянная полоса перестаёт значить «есть несохранённое» и отнимает место у содержимого.
-- **Заменять полосой сообщение об ошибке уровня страницы.** Отказ сохранения — да; для недоступного сервиса используйте `Banner`.
+- **Intercepting navigation away from the page inside the kit.** The bar knows nothing about the router and should not; a warning about leaving the page is the application's business.
+- **Keeping a third and fourth button in the bar.** The bar is about one decision: save or cancel. Everything else belongs in the form.
+- **Showing the bar always, with a disabled button.** A permanent bar stops meaning "something is unsaved" and takes space from the content.
+- **Replacing a page-level error message with the bar.** A save failure is fine; for an unavailable service, use `Banner`.
 
-## Ссылки
+## Links
 
-- Исходник: [`src/components/navigation/ContextualSaveBar.tsx`](../../../src/components/navigation/ContextualSaveBar.tsx)
-- Тесты: [`tests/contextual-save-bar.test.tsx`](../../../tests/contextual-save-bar.test.tsx)
-- История: [`src/components/navigation/ContextualSaveBar.stories.tsx`](../../../src/components/navigation/ContextualSaveBar.stories.tsx)
-- Соседи по границе: [SelectionBar](selection-bar.md), [Banner](../actions/feedback.md)
+- Source: [`src/components/navigation/ContextualSaveBar.tsx`](../../../src/components/navigation/ContextualSaveBar.tsx)
+- Tests: [`tests/contextual-save-bar.test.tsx`](../../../tests/contextual-save-bar.test.tsx)
+- Story: [`src/components/navigation/ContextualSaveBar.stories.tsx`](../../../src/components/navigation/ContextualSaveBar.stories.tsx)
+- Neighbors at the boundary: [SelectionBar](selection-bar.md), [Banner](../actions/feedback.md)

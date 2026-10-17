@@ -54,7 +54,7 @@ npm run build
 
 Heavy checks run locally, not in GitHub Actions: the workflows only build and publish the package on a tag and deploy Storybook. So the checks above are the only gate a change passes before release, and running them is part of the patch.
 
-If you add or change a component, update its page in `docs/components/` in the same change. The Reference is written in Russian, with an English translation next to each page (`X.md` and `X.en.md`). If you don't write Russian, send an English draft: the maintainer will bring it into line with the project's conventions.
+If you add or change a component, update its page in `docs/components/` in the same change. The Reference is written in English, one file per page. The Russian translation is kept on the documentation site and is brought up to date by the maintainers, so you don't need to write Russian.
 
 ## Commit messages
 

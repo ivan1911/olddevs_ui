@@ -9,100 +9,100 @@ story: src/components/inputs/PinInput.stories.tsx
 
 # PinInput
 
-## Кратко для AI
+## Summary for AI
 
-Ввод кода подтверждения: N полей по цифре, значение — **одна строка**. Вставка
-целого кода раскладывается по полям, Backspace на пустом поле возвращает фокус на предыдущее,
-`autocomplete="one-time-code"` стоит на первом поле. Код цифровой.
+Entry of a verification code: N single-digit fields that report **one string** as the value.
+Pasting a whole code spreads it across the fields, Backspace on an empty field
+moves focus back to the previous one, and `autocomplete="one-time-code"` is on the first field. The code is numeric.
 
-## Когда использовать
+## When to use
 
-- Код из СМС или письма, ПИН, код двухфакторной аутентификации.
+- A code from an SMS or an email, a PIN, a two-factor authentication code.
 
-## Когда не использовать
+## When not to use
 
-- Для пароля используйте `PasswordInput`: там одно поле и показ по кнопке.
-- Для буквенного кода этот компонент не подходит: он этого намеренно не умеет, см. ниже.
+- For a password, use `PasswordInput`: one field and a show button.
+- An alphabetic code is deliberately not supported, see below.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
 import { PinInput } from "@olddevs/ui";
 
 const [code, setCode] = useState("");
 
-<PinInput value={code} onChange={setCode} label="Код из СМС" />;
+<PinInput value={code} onChange={setCode} label="SMS code" />;
 ```
 
-## Пропы
+## Props
 
-| Проп        | Умолчание | Назначение                                               |
-| ----------- | --------- | -------------------------------------------------------- |
-| `value`     | —         | Код целиком, строкой.                                    |
-| `onChange`  | —         | Отдаёт строку, а не массив и не событие.                 |
-| `length`    | `6`       | Сколько полей.                                           |
-| `label`     | —         | Доступное имя группы. Обязательно, проверяет компилятор. |
-| `disabled`  | —         | Выключает все поля.                                      |
-| `autoFocus` | —         | Ставит фокус в первое поле при появлении.                |
-| `invalid`   | —         | Показывает код в состоянии ошибки: рамки полей красные.  |
+| Prop        | Default | Purpose                                                               |
+| ----------- | ------- | --------------------------------------------------------------------- |
+| `value`     | —       | The whole code, as a string.                                          |
+| `onChange`  | —       | Called with a string, not an array or an event.                       |
+| `length`    | `6`     | How many fields.                                                      |
+| `label`     | —       | The accessible name of the group. Required, enforced by the compiler. |
+| `disabled`  | —       | Disables all fields.                                                  |
+| `autoFocus` | —       | Focuses the first field when the component appears.                   |
+| `invalid`   | —       | Shows the code in an error state: the field borders turn red.         |
 
-## Значение — строка, и дыр в нём не бывает
+## The value is a string, and it has no holes
 
-Потребителю нужен код целиком: он уходит в запрос одной строкой, и разбирать
-массив на стороне вызова пришлось бы каждому.
+The consumer needs the whole code: it goes into a request as one string, and
+every caller would have to parse an array.
 
-Отсюда следствие: поля — это **показ одного
-значения**, а не N независимых. Удаление символа в середине сдвигает остальные
-влево, как в обычном текстовом поле.
+A consequence follows: the fields are a **display of one
+value**, not N independent ones. Deleting a character in the middle shifts the
+rest to the left, as in a regular text field.
 
-Очистка поля и ввод не-цифры — разные события. При фокусе содержимое поля
-выделено, поэтому буква поверх занятой цифры приходит как замена выделенного.
-Если их не различать, компонент стирал бы цифру из-за символа, который даже не
-показал.
+Clearing a field and typing a non-digit are different events. On focus the content
+of the field is selected, so a letter typed over an occupied digit is reported as a
+replacement of the selection. If the component did not tell them apart, it would
+erase a digit because of a character it never even showed.
 
-## Вставка перехватывается, а не доверяется браузеру
+## Paste is intercepted, not left to the browser
 
-Код приходит из СМС целиком, и пользователь вставляет его в первое поле. При
-`maxLength=1` браузер сам обрезает вставленное до первой цифры — поэтому
-событие вставки обрабатывается компонентом: из текста берутся цифры и
-раскладываются по полям начиная с текущего.
+The SMS delivers the code as a whole, and the user pastes it into the first
+field. With `maxLength=1` the browser itself trims the pasted text to the first
+digit — so the component handles the paste event: the digits are taken from
+the text and spread across the fields starting from the current one.
 
-`autocomplete="one-time-code"` стоит на **первом** поле — так браузер и iOS
-предлагают код из уведомления; на остальных он мешал бы.
+`autocomplete="one-time-code"` is on the **first** field — this is how the browser
+and iOS offer the code from the notification; on the others it would get in the way.
 
-## Код цифровой — и это решение
+## The code is numeric — and that is a decision
 
-`inputMode="numeric"` и `one-time-code` — про цифры, и фильтр ввода здесь тот
-же: всё, кроме цифр, отбрасывается и на вводе, и на вставке. Буквенный код
-потребовал бы второй оси и правил регистра; он придёт вместе с экраном,
-которому нужен, а не раньше.
+`inputMode="numeric"` and `one-time-code` are about digits, and the input filter is
+the same here: everything except digits is dropped, both on input and on paste. An
+alphabetic code would need a second axis and case rules; it will be added when a
+screen needs it, not before.
 
-## Ошибка: `invalid`
+## Error: `invalid`
 
-`invalid` красит рамки всех полей кода и ставит `aria-invalid` на каждое поле.
-Правило проверки остаётся у потребителя: проп только показывает результат.
+`invalid` turns the borders of all the code fields red and sets `aria-invalid` on each field.
+The validation rule stays with the consumer: the prop only shows the result.
 
-Внутри `FormField` с `error` проп не передают — флаг приходит из
-формы тем же путём, что у `TextControl` и `NumberInput`, и поля краснеют вместе
-с текстом под ними. Явный `invalid={false}` его снимает: потребитель знает про
-своё поле больше, чем форма. Пояснение без ошибки код невалидным не делает.
+Inside a `FormField` with `error` you pass no prop — the flag arrives from the form the same way as
+for `TextControl` and `NumberInput`, and the fields turn red together with the text below them. An
+explicit `invalid={false}` clears it: the consumer knows more about their field than the form does.
+A hint without an error does not make the code invalid.
 
-## Клавиатура
+## Keyboard
 
-- ввод цифры — фокус вперёд;
-- Backspace на пустом поле — шаг назад **с удалением** предыдущей цифры: иначе
-  фокус упирается в пустое поле и стереть нечем;
-- стрелки влево и вправо — переход между полями;
-- фокус выделяет содержимое поля: при `maxLength=1` набор поверх занятого поля
-  иначе не проходит вовсе.
+- typing a digit — focus moves forward;
+- Backspace on an empty field — a step back **with deletion** of the previous
+  digit: otherwise focus runs into an empty field and there is nothing to erase;
+- Left Arrow and Right Arrow move between the fields;
+- focus selects the field content: with `maxLength=1`, typing over an occupied
+  field otherwise does not go through at all.
 
-Каждое поле названо («цифра 3 из 6»): без имён скринридер читает шесть
-безымянных полей подряд.
+Each field is named ("Digit 3 of 6"): without names the screen reader reads six
+nameless fields in a row.
 
-## Связанные исходники и проверка
+## Related sources and tests
 
-- Реализация: `src/components/inputs/PinInput.tsx`; состав волны —
+- Implementation: `src/components/inputs/PinInput.tsx`; the wave contents are in
   ADR-0024.
-- Тесты: `tests/pin-input.test.tsx` — вставка целиком и с середины, фильтр
-  цифр, Backspace, стрелки, имена полей, обрезка по длине.
-- История: `src/components/inputs/PinInput.stories.tsx`.
+- Tests: `tests/pin-input.test.tsx` — paste of a whole code and from the middle,
+  the digit filter, Backspace, arrow keys, field names, trimming by length.
+- Story: `src/components/inputs/PinInput.stories.tsx`.

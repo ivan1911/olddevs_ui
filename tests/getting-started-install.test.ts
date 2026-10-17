@@ -31,10 +31,7 @@ function installedBy(page: string) {
 }
 
 describe("getting-started install command", () => {
-  test.each(["getting-started.md", "getting-started.en.md"])(
-    "%s lists exactly the required peers",
-    (page) => {
-      expect(installedBy(page)).toEqual(requiredPeers);
-    }
-  );
+  test("getting-started.md lists exactly the required peers", () => {
+    expect(installedBy("getting-started.md")).toEqual(requiredPeers);
+  });
 });

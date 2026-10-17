@@ -9,67 +9,67 @@ story: src/components/actions/SplitButton.stories.tsx
 
 # SplitButton
 
-## Кратко для AI
+## Summary for AI
 
-`SplitButton` — главное действие и раскрыватель его вариантов рядом, **двумя отдельными кнопками**. Доступное имя раскрывателя строится из `label`, поэтому `label` — строка, а не узел. Пункты меню передаются в `children`.
+`SplitButton` is a primary action with a menu button for its variants next to it, as **two separate buttons**. The accessible name of the menu button is built from `label`, so `label` is a string, not a node. Menu items go in `children`.
 
-## Когда использовать
+## When to use
 
-- У действия есть родня: «Экспорт» и рядом «в XLSX», «в JSON», «только выбранные».
-- Одно из действий заведомо главное, и заставлять открывать меню ради него — лишний шаг.
+- The action has related variants: "Export" and next to it "to XLSX", "to JSON", "selected only".
+- One of the actions is clearly the primary one, and making people open a menu for it is an extra step.
 
-## Когда не использовать
+## When not to use
 
-- Если все варианты равнозначны, используйте `MenuButton` с меню, без выделенного действия.
-- Если вариантов два и оба видны, используйте `ButtonGroup` из двух кнопок.
-- Если варианты — режимы отображения, а не действия, используйте `Segmented` или `ToggleGroup`.
+- If all the variants are equal, use a `MenuButton` with a menu and no highlighted action.
+- If there are two variants and both are visible, use a `ButtonGroup` of two buttons.
+- If the variants are display modes, not actions, use `Segmented` or `ToggleGroup`.
 
-## Минимальный пример
+## Minimal example
 
 ```tsx
-<SplitButton label="Экспорт" onClick={exportAll} icon={<DownloadIcon aria-hidden />}>
-  <MenuItem onAction={exportXlsx}>Экспорт в XLSX</MenuItem>
-  <MenuItem onAction={exportJson}>Экспорт в JSON</MenuItem>
+<SplitButton label="Export" onClick={exportAll} icon={<DownloadIcon aria-hidden />}>
+  <MenuItem onAction={exportXlsx}>Export to XLSX</MenuItem>
+  <MenuItem onAction={exportJson}>Export to JSON</MenuItem>
   <MenuSeparator />
-  <MenuItem onAction={exportSelected}>Только выбранные строки</MenuItem>
+  <MenuItem onAction={exportSelected}>Selected rows only</MenuItem>
 </SplitButton>
 ```
 
 ## Public API
 
-- `label` — **строка**, подпись главного действия и основа имени раскрывателя.
-- `icon` — иконка слева у главного действия. Кнопке, у которой бывает `loading`, иконку стоит дать сразу: иначе индикатор отправки добавляет слот, и подпись сдвигается.
-- `onClick` срабатывает только от главного действия; раскрыватель его не вызывает.
-- `variant`, `tone`, `size` — те же оси, что у `Button`, и значат то же самое.
-- `disabled` и `loading` отключают **обе** кнопки и закрывают уже открытое меню — и **не возвращают** его, когда `disabled` или `loading` снимут: иначе меню раскрывалось бы само после окончания отправки.
-- `placement` — сторона раскрытия панели, по умолчанию `bottom end`. Боковые значения `Menu` здесь сужены: панель, уезжающая вбок, встаёт поверх главного действия.
-- `children` — содержимое меню: `MenuItem`, `MenuSection`, `MenuSeparator`.
-- `className` ложится на **группу**; у одноимённого пропа `Button` он идёт на кнопку. Элементов здесь два, и у «класса на кнопку» нет однозначного адресата.
-- Остальные пропы наружу **не пробрасываются** по той же причине: у `id`, `type` или `data-*` нет однозначного адресата. Кнопке, которая обязана отправлять форму, нужны `Button` и `MenuTrigger` рядом, собранные вручную.
+- `label` is a **string**: the label of the primary action and the source of the name of the menu button.
+- `icon` is the icon on the left of the primary action. If a button can enter `loading`, give it an icon from the start: otherwise the loading indicator adds a slot, and the label shifts.
+- `onClick` is called only by the primary action; the menu button does not call it.
+- `variant`, `tone`, `size` are the same axes as on `Button` and mean the same thing.
+- `disabled` and `loading` disable **both** buttons and close a menu that is already open — and **do not bring it back** when `disabled` or `loading` is lifted: otherwise the menu would open by itself once a submission ended.
+- `placement` is the side the panel opens to, `bottom end` by default. The side values of `Menu` are narrowed here: a panel that slides sideways lands on top of the primary action.
+- `children` is the menu content: `MenuItem`, `MenuSection`, `MenuSeparator`.
+- `className` is applied to the **group**; on `Button`, the prop of the same name goes on the button. There are two elements here, and "a class on the button" has no unambiguous target.
+- The remaining props are **not passed through** for the same reason: `id`, `type` or `data-*` have no unambiguous target. A button that has to submit a form needs a `Button` and a `MenuTrigger` side by side, assembled by hand.
 
-## Почему две кнопки, а не одна с меню в правой части
+## Why two buttons, not one with the menu in its right part
 
-Если правая часть кнопки открывает меню, получается элемент с двумя разными
-исходами и одним доступным именем. С клавиатуры до второго исхода не добраться
-вовсе, а скринридер объявит одно действие вместо двух. Это два разных элемента
-управления.
+If the right part of a button opens a menu, the result is one element with two
+different outcomes and one accessible name. The second outcome cannot be reached
+from the keyboard at all, and a screen reader announces one action instead of
+two. These are two separate controls.
 
-## Почему `label` — строка
+## Why `label` is a string
 
-Из подписи строится имя раскрывателя. Узел дал бы имя, которого нет, — или
-потребовал бы второго пропа с той же подписью строкой. Одна подпись жила бы в
-двух местах и разошлась бы при первой правке.
+The name of the menu button is built from the label. A node would give a name
+that does not exist — or would require a second prop with the same label as a
+string. One label would live in two places and drift apart at the first edit.
 
-## Клавиатура
+## Keyboard
 
-- **Два табстопа, а не один.** Tab ведёт на главное действие, следующий Tab — на раскрыватель. На этом держится всё обоснование компонента: одна кнопка, правая часть которой открывает меню, оставила бы второй исход недостижимым с клавиатуры.
-- Меню открывается с раскрывателя по Enter, Space и стрелке вниз — это делает `MenuTrigger`.
-- Escape закрывает меню и **возвращает фокус раскрывателю**, а не уводит его на `<body>`.
-- Выключение компонента при открытом меню закрывает панель: иначе он выглядел бы выключенным, а пункты продолжали бы срабатывать.
+- **Two tab stops, not one.** Tab goes to the primary action, the next Tab to the menu button. The whole rationale of the component rests on this: a single button whose right part opens a menu would leave the second outcome unreachable from the keyboard.
+- The menu opens from the menu button with Enter, Space and Down Arrow — `MenuTrigger` does this.
+- Escape closes the menu and **returns focus to the menu button** instead of sending it to `<body>`.
+- Disabling the component while the menu is open closes the panel: otherwise it would look disabled while the items kept working.
 
-## Доступность и семантика
+## Accessibility and semantics
 
-- Имя раскрывателя приходит из каталога сообщений: `splitButton.more({ action })` → «Другие действия: Экспорт» с `@olddevs/ui/locales/ru`, «More actions: Export» без провайдера. Без подписи действия несколько раскрывателей на странице неразличимы на слух в скринридере.
-- Раскрыватель несёт `aria-haspopup` и `aria-expanded` — их проставляет `MenuTrigger`.
-- Группа не получает `role="group"`: безымянная группа — лишнее объявление скринридера, а имя дублировало бы подпись кнопки.
-- См. `src/components/actions/SplitButton.tsx`, `src/components/actions/SplitButton.stories.tsx`, `tests/split-button.test.tsx`, [Menu](../overlays/menu.md).
+- The menu button's name comes from the message catalog: `splitButton.more({ action })` → "Другие действия: Экспорт" with `@olddevs/ui/locales/ru`, "More actions: Export" without a provider. Without the action's label, several menu buttons on a page are indistinguishable when read aloud by a screen reader.
+- The menu button carries `aria-haspopup` and `aria-expanded` — `MenuTrigger` sets them.
+- The group does not get `role="group"`: an unnamed group is an extra screen reader announcement, and a name would duplicate the button's label.
+- See `src/components/actions/SplitButton.tsx`, `src/components/actions/SplitButton.stories.tsx`, `tests/split-button.test.tsx`, [Menu](../overlays/menu.md).
