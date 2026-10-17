@@ -5,40 +5,45 @@ import { BLOCK_FORMULA_TYPE, FORMULA_SELECTOR, FORMULA_SOURCE_ATTRIBUTE } from "
 import type { MathRenderOptions } from "./mathOptions.js";
 
 export interface MathIslandProps {
-  /** Отпечаток HTML просмотра: сменился Документ — формулы новые, и остров рисует их заново. */
+  /**
+   * Fingerprint of the View's HTML. When the Document changes, the formulas are new and the
+   * Island redraws them.
+   */
   docKey: string;
-  /** Опции KaTeX из `tools` экрана (`mathOptionsOf`): макросы и строгость, данные. */
+  /** KaTeX options from the screen's `tools` (`mathOptionsOf`): macros and strictness, as data. */
   options: MathRenderOptions;
 }
 
 /**
- * Остров формул у `RichTextView` (ADR-0070, п. 6): отрисовывает каждую формулу из
- * `data-latex` на месте.
+ * Formula Island of `RichTextView` (ADR-0070, item 6): draws each formula from its
+ * `data-latex` in place.
  *
- * СЕРВЕРНЫЙ HTML ПЕРВИЧЕН. Элемент формулы приходит с исходным LaTeX текстом
- * (`withMathSource`) и читается без JS и до гидрации; после монтирования остров
- * грузит KaTeX и его CSS и заменяет содержимое отрисованной формулой. Формула с
- * ошибкой остаётся исходником и получает `data-math-error` — читатель видит текст
- * автора, а не пустоту.
+ * SERVER HTML COMES FIRST. A formula element arrives with its LaTeX source as text
+ * (`withMathSource`) and is readable without JS and before hydration. After mounting, the
+ * Island loads KaTeX and its CSS and replaces the content with the rendered formula. A formula
+ * with an error stays as its source and gets `data-math-error`, so the reader sees the
+ * author's text, not an empty spot.
  *
- * KaTeX ГРУЗИТСЯ ЛЕНИВО, `import()` в эффекте, а не статически: остров монтируется
- * только у Документа с формулами (`hasMath`), и страница без них не платит ни за
- * 270 кБ KaTeX, ни за его CSS и шрифты. `katexEngine.ts` несёт CSS, поэтому стили
- * приходят тем же чанком.
+ * KaTeX IS LOADED LAZILY, with `import()` in the effect rather than statically. The Island
+ * mounts only in a Document with formulas (`hasMath`), so a page without them pays for
+ * neither the 270 kB of KaTeX nor its CSS and fonts. `katexEngine.ts` carries the CSS, so the
+ * styles arrive in the same chunk.
  *
- * ПОИСК — ОТ СВОЕГО МЕСТА В ДЕРЕВЕ, как у «Копировать» и Острова своих Блоков:
- * инертный `<template>` стоит сразу за контейнером просмотра (или за метками
- * других островов), и просмотр в теневом корне или `iframe` находит свои формулы.
+ * THE LOOKUP STARTS FROM ITS OWN PLACE IN THE TREE, as the Copy button and the Islands of
+ * custom Blocks do. An inert `<template>` stands right after the View's container (or after
+ * the markers of other Islands), so a View in a shadow root or an `iframe` finds its own
+ * formulas.
  *
- * Элементы формул не принадлежат React: он кладёт HTML одной строкой
- * (`dangerouslySetInnerHTML`) и детей не сверяет, а перерисовка того же Документа
- * (`useMemo` в `RichTextView`) разметку не трогает. Новый Документ — новая строка,
- * новый `docKey` и новый проход эффекта.
+ * React does not own the formula elements. It sets their HTML as one string
+ * (`dangerouslySetInnerHTML`) and does not reconcile the children, and a re-render of the same
+ * Document (`useMemo` in `RichTextView`) leaves the markup alone. A new Document means a new
+ * string, a new `docKey`, and a new pass of the effect.
  */
 export function MathIsland({ docKey, options }: MathIslandProps) {
   const marker = useRef<HTMLTemplateElement>(null);
-  // Опции — данные с сервера, и новый литерал каждый рендер не должен гонять
-  // эффект заново: Документ решает, что рисовать заново, а опции читаются в момент рисования.
+  // The options are data from the server. A new object literal on every render must not
+  // rerun the effect: the Document decides what to redraw, and the options are read at the
+  // moment of drawing.
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
@@ -58,14 +63,14 @@ export function MathIsland({ docKey, options }: MathIslandProps) {
             katex.render(latex, element, katexOptionsFor(optionsRef.current, block));
             element.removeAttribute("data-math-error");
           } catch {
-            // KaTeX очищает элемент до разбора, поэтому исходник возвращается текстом.
+            // KaTeX clears the element before parsing, so the source is put back as text.
             element.textContent = latex;
             element.setAttribute("data-math-error", "");
           }
         }
       },
       () => {
-        // Чанк не пришёл: исходник LaTeX остаётся на месте, как до острова.
+        // The chunk did not arrive: the LaTeX source stays in place, as it was before the Island.
       }
     );
     return () => {

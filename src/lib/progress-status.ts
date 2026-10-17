@@ -1,40 +1,38 @@
 import type { Tone } from "./variants.js";
 
 /**
- * Состояние работы: не начиналась, идёт, кончилась хорошо, кончилась плохо.
+ * Progress state: not started, running, finished successfully, finished with a failure.
  *
- * Один словарь на весь кит, и это результат ломающей правки 3.0.0. До неё их
- * было два: `TimelineStatus` со значениями `success`/`failed` и `UploadState`
- * со значениями `done`/`error` — одна и та же сущность под двумя именами, с
- * двумя идентичными построчно таблицами тонов. Долг нашло ревью 2.5.0, свести
- * его патчем было нельзя: оба типа входили в публичный API
- * (ADR-0031).
+ * One vocabulary for the whole kit. This is the result of the breaking change in 3.0.0.
+ * Before it there were two: `TimelineStatus` with `success`/`failed` and `UploadState`
+ * with `done`/`error`. It was one and the same concept under two names, with two
+ * line-by-line identical tone tables. The debt was found by the 2.5.0 review, but it
+ * could not be fixed with a patch: both types were part of the public API (ADR-0031).
  *
- * ПОЧЕМУ ВЫЖИЛИ `success` и `failed`. Они описывают ИСХОД и симметричны друг
- * другу. `done` и `error` несимметричны: первое про завершённость, второе про
- * событие, и пара читается так, будто «завершено с ошибкой» — тоже возможное
- * состояние. Для четырёх взаимоисключающих значений это дефект.
+ * WHY `success` AND `failed` SURVIVED. They describe the OUTCOME and are symmetric to
+ * each other. `done` and `error` are asymmetric: the first is about completion, the
+ * second is about an event, and the pair reads as if "finished with an error" were a
+ * possible state too. For four mutually exclusive values, that is a defect.
  *
- * ИМЯ НЕЙТРАЛЬНОЕ, а не имя одного из потребителей: `TimelineStatus` у очереди
- * загрузок врал бы — никакого timeline у неё нет.
+ * THE NAME IS NEUTRAL, not the name of one of the consumers: `TimelineStatus` would
+ * be misleading for an upload queue, because it has no timeline.
  *
- * СОСТОЯНИЕ — МЕХАНИКА, А НЕ ДОМЕН. «Дубль», «на модерации», «превышен лимит»
- * — подписи потребителя (`statusLabel`), а не новые значения. Прецедент —
- * `StatusBadge`, приехавший из фронта и оставивший снаружи словарь из
- * одиннадцати доменных статусов с русскими подписями.
+ * THE STATE IS MECHANICS, NOT DOMAIN. "Duplicate", "under review", "limit exceeded"
+ * are labels of the consumer (`statusLabel`), not new values. The precedent is
+ * `StatusBadge`: it came from the frontend and left behind a vocabulary of eleven
+ * domain statuses with Russian labels.
  */
 export type ProgressStatus = "pending" | "running" | "success" | "failed";
 
 /**
- * Тон по состоянию.
+ * Tone by state.
  *
- * `pending` намеренно нейтральный и приглушённый: работа, которая ещё не
- * начиналась, — не событие.
+ * `pending` is deliberately neutral and muted: work that has not started yet is not an event.
  *
- * Читается ВСЕГДА со страховкой `?? "neutral"`. Потребитель пакета — приложение
- * на JS, компилятор его данные не проверяет, а состояния приходят с бэкенда:
- * пятый вид статуса не должен стоить экрана. Без страховки `TONE_TOKENS[…]`
- * даёт `undefined.dotBg`, то есть падение всего экрана активности.
+ * It is ALWAYS read with the `?? "neutral"` fallback. The consumer of the package is an app in
+ * JS, the compiler does not check its data, and the states come from the backend. A fifth kind
+ * of status must not cost a screen. Without the fallback, `TONE_TOKENS[…]` gives
+ * `undefined.dotBg`, that is, the whole activity screen crashes.
  */
 export const PROGRESS_STATUS_TONE: Record<ProgressStatus, Tone> = {
   pending: "neutral",

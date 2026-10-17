@@ -1,33 +1,33 @@
 /**
- * Перестановка элементов при сбросе — чистая функция, проверяемая на массивах.
+ * Reordering items on drop. A pure function that is tested on arrays.
  *
- * Вынесена из `SortableList` по той же причине, что механика маски из
- * `MaskedInput` в `lib/mask.ts`: ошибка здесь стоит порядка данных пользователя,
- * а перебрать все входы удобнее на массивах, чем через перетаскивание в DOM.
+ * Extracted from `SortableList` for the same reason as the mask logic of `MaskedInput`
+ * in `lib/mask.ts`: a bug here costs the user their data order, and it is easier to
+ * exhaust all inputs on arrays than by dragging in the DOM.
  *
- * `useListData` из `react-stately` не используется: он лежит в дереве
- * транзитивно, но объявленной зависимостью кита не является (ADR-0028).
+ * `useListData` from `react-stately` is not used: it is in the tree transitively, but
+ * it is not a declared dependency of the kit (ADR-0028).
  */
 
 export interface ReorderTarget<K> {
-  /** Ключ элемента, рядом с которым сбросили. */
+  /** Key of the item the drop landed next to. */
   key: K;
   dropPosition: "before" | "after" | "on";
 }
 
 /**
- * Новый порядок после сброса, или `null`, если сброс ничего не меняет.
+ * The new order after the drop, or `null` if the drop changes nothing.
  *
- * Перемещаемые вынимаются из списка целиком и вставляются перед целью или
- * после неё — так порядок внутри переносимой группы сохраняется.
+ * The moved items are taken out of the list as a whole and inserted before or after the
+ * target, so their order within the moved group is preserved.
  *
- * `null`, А НЕ ПРЕЖНИЙ МАССИВ, в двух случаях, и оба — не ошибка вызывающего:
+ * `null`, NOT THE PREVIOUS ARRAY, in two cases. Neither one is a caller error:
  *
- * - цель сама среди перемещаемых. Раньше `findIndex` давал `-1`, и
- *   `slice(0, -1)` молча выбрасывал последний элемент списка — нашло ревью
- *   2.5.0. Сброс «на себя» — законный жест, и отвечать на него потерей данных
- *   нельзя;
- * - `dropPosition === "on"`: вложить в элемент списку некуда.
+ * - the target is itself among the moved items. Previously `findIndex` returned `-1`,
+ *   and `slice(0, -1)` silently dropped the last item of the list. The 2.5.0 review
+ *   found it. Dropping an item onto itself is a legitimate gesture, and answering it
+ *   with data loss is not acceptable;
+ * - `dropPosition === "on"`: a list has no place to nest an item.
  */
 export function reorder<K, T extends { id: K }>(
   items: readonly T[],
@@ -46,12 +46,12 @@ export function reorder<K, T extends { id: K }>(
 }
 
 /**
- * Место строки, пришедшей из другого списка группы: индекс в списке-приёмнике
- * или `null`, если положить её некуда.
+ * The place for a row that came from another list of the group: an index in the receiving
+ * list, or `null` if the row cannot be placed there.
  *
- * `target === null` — бросок на сам список, а не рядом со строкой: так
- * react-aria сообщает о пустом списке, и строка встаёт в конец. `"on"` —
- * вложить в строку нельзя, как и при перестановке.
+ * `target === null` means the drop is on the list itself, not next to a row. This is how
+ * react-aria reports an empty list, and the row goes to the end. `"on"` means the row
+ * cannot be nested into another row, the same as in reordering.
  */
 export function insertionIndex<K, T extends { id: K }>(
   items: readonly T[],

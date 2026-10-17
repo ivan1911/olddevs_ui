@@ -23,49 +23,52 @@ import {
 import { containerFreeContext, placeContainerBlock, WRAPPER_NODE } from "../../core/containers.js";
 
 /**
- * Раскладка — Блок из колонок: `div[data-block="layout"]` с
- * вариантом в `data-layout`, внутри от одной до четырёх
- * `div[data-block="column"]`, в колонке — любые Блоки, кроме другой Раскладки.
+ * Column layout: a Block made of columns. It is `div[data-block="layout"]` with a variant in
+ * `data-layout`, holding one to four `div[data-block="column"]`. A column holds any Blocks
+ * except another Column layout.
  *
- * ИМЕНА АТРИБУТОВ — ИЗ ОБРАЗЦА ВЛАДЕЛЬЦА (`data-block="layout"`,
- * `data-block="column"`): так размечают колонки редакторы, из которых HTML
- * чаще всего и вставляют. Своё отличие одно — ширины. В образце они в
- * `style="flex-basis: 50%"`, а Схема кита `style` не знает (ADR-0050), поэтому
- * доли — именем варианта (`columnLayouts.ts`), а `flex-basis` из вставки
- * переводится в ближайший вариант.
+ * THE ATTRIBUTE NAMES COME FROM THE OWNER'S SAMPLE (`data-block="layout"`,
+ * `data-block="column"`). This is how the editors that most often supply pasted HTML mark up
+ * their columns. The kit's own difference is one: the widths. In the sample they are in
+ * `style="flex-basis: 50%"`, but the kit's Schema does not know `style` (ADR-0050). So the
+ * shares are carried by the variant name (`columnLayouts.ts`), and the `flex-basis` of a paste
+ * is mapped to the nearest variant.
  *
- * ВЛОЖЕННОСТИ НЕТ НА УРОВНЕ СХЕМЫ ДВИЖКА, а не проверкой в командах. Раскладка
- * не входит в группу `block`: её принимает только Документ (`(block | layout)+`,
- * `document.ts`), а колонка, пункт списка, цитата, ячейка и Обёртка держат
- * `block`. Значит, вложить её не может ни вставка, ни `value`, ни команда.
- * Разбор HTML на такой случай не режет Раскладку надвое, а снимает её обёртки:
- * правило с `skip` в контексте контейнера отдаёт Блоки колонок подряд.
+ * NESTING IS PREVENTED AT THE ENGINE SCHEMA LEVEL, not by checks in the commands. A Column
+ * layout is not in the `block` group: only the Document accepts it (`(block | layout)+`,
+ * `document.ts`), while a column, a list item, a quote, a cell and a Wrapper hold `block`. So
+ * neither a paste, nor `value`, nor a command can nest it. When HTML with such a case is parsed,
+ * the Column layout is not cut in two; its wrappers are removed instead. A rule with `skip` in
+ * a container's context yields the column Blocks one after another.
  *
- * `isolating` У ОБОИХ УЗЛОВ, как у таблицы и ячейки: Backspace в начале колонки
- * не сливает её с соседней и не вытаскивает текст из Раскладки, а выделение
- * мышью и команды «Превратить в» не перешагивают границу колонки.
+ * BOTH NODES ARE `isolating`, as the table and the cell are: Backspace at the start of a column
+ * does not merge it with the neighboring column or pull text out of the layout, and mouse
+ * selection and the "Turn into" commands do not cross the column boundary.
  *
- * Решение — ADR-0056.
+ * Decision: ADR-0056.
  */
 
-/** Имя узла Раскладки в Схеме движка. */
+/** Name of the Column layout node in the engine Schema. */
 export const LAYOUT_NODE = "layout";
-/** Имя узла колонки в Схеме движка. */
+/** Name of the column node in the engine Schema. */
 export const COLUMN_NODE = "layoutColumn";
 
 const LAYOUT_TAG = 'div[data-block="layout"]';
 const COLUMN_TAG = 'div[data-block="column"]';
 
 /**
- * Контейнеры, где Раскладки нет: внутри них разбор снимает её обёртки. Это
- * общий список контейнерных Блоков (`containers.ts`: Обёртка, цитата, пункты
- * списков, ячейки) и ещё колонка — Раскладка в Раскладке. Обёртка
- * в нём есть: Раскладка в ней разворачивается в Блоки, а не разрезает Обёртку
- * надвое.
+ * Containers where there is no Column layout: inside them, parsing strips the layout's wrappers.
+ * This is the shared list of container Blocks (`containers.ts`: Wrapper, quote, list items,
+ * cells), plus the column, since a column would hold a Column layout inside a Column layout.
+ * A Wrapper is in the list: a Column layout inside it expands into Blocks, instead of cutting
+ * the Wrapper in two.
  */
 const NO_LAYOUT_CONTEXT = containerFreeContext(COLUMN_NODE);
 
-/** Доля колонки из чужого `style`: `flex-basis`, `flex: 1 1 50%` или `width` в процентах. */
+/**
+ * A column's share from a foreign `style`: `flex-basis`, `flex: 1 1 50%`, or a percentage
+ * `width`.
+ */
 function columnShare(column: Element): number | null {
   const style = (column as HTMLElement).style;
   const raw = style?.flexBasis || style?.width || "";
@@ -73,10 +76,10 @@ function columnShare(column: Element): number | null {
 }
 
 /**
- * Вариант Раскладки из разметки. Свой `data-layout` берётся, если число колонок
- * с ним сходится; иначе вариант подбирается по числу колонок и их долям — так
- * читается HTML чужого редактора с `flex-basis` и Раскладка, у которой колонку
- * удалили руками.
+ * Column layout variant from the markup. The element's own `data-layout` is used if its column
+ * count matches; otherwise the variant is picked by the number of columns and their shares. This
+ * is how the HTML of another editor with `flex-basis` is read, and a Column layout whose column
+ * was deleted by hand.
  */
 function layoutOf(element: HTMLElement): EditorLayout {
   const columns = Array.from(element.children).filter((child) => child.matches(COLUMN_TAG));
@@ -91,9 +94,9 @@ function layoutOf(element: HTMLElement): EditorLayout {
 }
 
 /**
- * Колонка — то, что Раскладка держит: Блоки, и в Markdown — подряд. С
- * инструментом `wrapper` — ещё Обёртку: она группирует Блоки и в
- * колонке, а Раскладки в себе не держит, поэтому вложенности не появляется.
+ * A column holds what a Column layout holds: Blocks, and in Markdown, one after another. With the
+ * `wrapper` Tool, it also holds a Wrapper. The Wrapper groups Blocks inside a column too, and it
+ * does not hold Column layouts, so no nesting appears.
  */
 export const LayoutColumn = Node.create<{ wrapper: boolean }>({
   name: COLUMN_NODE,
@@ -103,9 +106,9 @@ export const LayoutColumn = Node.create<{ wrapper: boolean }>({
   },
   isolating: true,
   /*
-    Колонка — контейнер Блоков (`isBlockContainer`, `blockCommands.ts`): её дети
-    — Блоки со своей ручкой у левого края колонки, а «Вверх», «Вниз»,
-    «Добавить ниже» и `⌥⇧↑/↓` остаются внутри неё, как в Документе.
+    A column is a Block container (`isBlockContainer`, `blockCommands.ts`). Its children are
+    Blocks, each with its own handle at the column's left edge. "Up", "Down", "Add below" and
+    `⌥⇧↑/↓` stay inside the column, as they do in the Document.
   */
   extendNodeSchema: (extension) => (extension.name === COLUMN_NODE ? { blockContainer: true } : {}),
   parseHTML: () => [
@@ -125,7 +128,7 @@ export const Layout = Node.create({
     variant: {
       default: DEFAULT_LAYOUT,
       parseHTML: (element) => layoutOf(element),
-      // Пишет его `renderHTML` узла: значение сверяется с числом колонок.
+      // The node's `renderHTML` writes it. The value is checked against the number of columns.
       rendered: false,
     },
   }),
@@ -134,9 +137,9 @@ export const Layout = Node.create({
     { tag: LAYOUT_TAG },
   ],
   /*
-    Вариант пишется по узлу, а не по атрибуту: колонку без Раскладки разбор
-    оборачивает Раскладкой по умолчанию, и до `fixLayouts` атрибут с числом
-    колонок расходится. HTML с таким вариантом не выходит никогда.
+    The variant is written from the node, not from the attribute. The parser wraps a column
+    without a Column layout in the default Column layout, and until `fixLayouts` runs, the
+    attribute and the column count disagree. HTML with such a variant is never output.
   */
   renderHTML: ({ node, HTMLAttributes }) => [
     "div",
@@ -144,8 +147,8 @@ export const Layout = Node.create({
     0,
   ],
   /*
-    Колонок в Markdown нет (решение владельца): Блоки колонок выгружаются
-    подряд, слева направо — в том же порядке, в каком их читает скринридер.
+    Markdown has no columns (the owner's decision): the column Blocks are exported one after
+    another, left to right, in the same order a screen reader reads them.
   */
   renderMarkdown: (node, helpers) =>
     node.content ? helpers.renderChildren(node.content, "\n\n") : "",
@@ -170,10 +173,10 @@ export const Layout = Node.create({
   },
 
   /*
-    Раскладка из `defaultValue` или `value`, у которой число колонок разошлось с
-    вариантом (колонку удалили руками, колонка без Раскладки обернулась в
-    Раскладку по умолчанию), приводится к варианту по числу колонок. Как
-    выравнивание таблиц: не правка автора — без `onChange` и без записи в историю.
+    A Column layout from `defaultValue` or `value` whose column count does not match its variant
+    (a column was deleted by hand, or a column without a Column layout got wrapped in the default
+    one) is brought to the variant that fits the column count. Like table alignment, this is not
+    an edit by the author: no `onChange` and no history entry.
   */
   onCreate() {
     const tr = fixLayouts(this.editor.state.tr);
@@ -201,22 +204,25 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     layout: {
       /**
-       * Вставить Раскладку варианта `variant` (по умолчанию — две колонки) под
-       * текущим Блоком верхнего уровня; пустой абзац верхнего уровня
-       * заменяется. Каретка — в первую колонку.
+       * Insert a Column layout of variant `variant` (default: two columns) below the current
+       * top-level Block. An empty top-level paragraph is replaced. The caret goes to the first
+       * column.
        */
       insertLayout: (variant?: EditorLayout) => ReturnType;
       /**
-       * Сменить вариант Раскладки под кареткой. Лишние колонки сливаются в
-       * последнюю оставшуюся, недостающие добавляются пустыми — содержимое не
-       * теряется. Не в Раскладке — `false`.
+       * Change the variant of the Column layout under the caret. Extra columns are merged into
+       * the last remaining one, and missing ones are added empty, so no content is lost. Outside
+       * a Column layout, returns `false`.
        */
       setLayout: (variant: EditorLayout) => ReturnType;
     };
   }
 }
 
-/** Раскладка под выделением: выделенная узлом или та, в колонке которой каретка. */
+/**
+ * The Column layout under the selection: the one selected as a node, or the one whose column
+ * holds the caret.
+ */
 export function layoutAt(selection: Selection): { pos: number; node: PmNode } | null {
   if (selection instanceof NodeSelection && selection.node.type.name === LAYOUT_NODE) {
     return { pos: selection.from, node: selection.node };
@@ -230,8 +236,8 @@ export function layoutAt(selection: Selection): { pos: number; node: PmNode } | 
 }
 
 /**
- * Вариант узла Раскладки: его атрибут, если число колонок с ним сходится, иначе
- * вариант по числу колонок.
+ * Variant of a Column layout node: its attribute, if the column count matches it; otherwise the
+ * variant chosen by the column count.
  */
 export function layoutOfNode(node: PmNode): EditorLayout {
   const variant = layoutFrom(node.attrs.variant);
@@ -240,13 +246,16 @@ export function layoutOfNode(node: PmNode): EditorLayout {
     : nearestLayout(node.childCount);
 }
 
-/** Вариант Раскладки под выделением или `null` — для отметки в меню «Формат ›». */
+/**
+ * Variant of the Column layout under the selection, or `null`. Used to mark the current item in
+ * the "Format ›" menu.
+ */
 export function currentLayout(state: EditorState): EditorLayout | null {
   const found = layoutAt(state.selection);
   return found ? layoutOfNode(found.node) : null;
 }
 
-/** Пустая колонка: один пустой текстовый Блок. */
+/** Empty column: one empty text Block. */
 function isEmptyColumn(column: PmNode): boolean {
   const first = column.firstChild;
   return column.childCount === 1 && !!first?.isTextblock && first.content.size === 0;
@@ -262,22 +271,22 @@ function createLayout(state: { schema: EditorState["schema"] }, variant: EditorL
 }
 
 /**
- * Место новой Раскладки — только верхний уровень Документа: её принимает он
- * один, и общий помощник (`placeContainerBlock`, `containers.ts`) поднимается
- * к нему из колонки, Обёртки, списка, цитаты или ячейки. Пустой абзац верхнего
- * уровня заменяется, пустой абзац колонки или Обёртки с `/` — убирается.
+ * A new Column layout can go only at the top level of the Document, since only the Document
+ * accepts it. The shared helper (`placeContainerBlock`, `containers.ts`) climbs to the top
+ * level from a column, a Wrapper, a list, a quote or a cell. An empty top-level paragraph is
+ * replaced, and an empty paragraph in a column or a Wrapper that has `/` is removed.
  */
 function placeLayout(tr: Transaction, variant: EditorLayout): void {
   placeContainerBlock(tr, createLayout(tr.doc.type, variant));
 }
 
 /**
- * Сменить вариант Раскладки в `pos`.
+ * Change the variant of the Column layout at `pos`.
  *
- * Лишние колонки СЛИВАЮТСЯ, а не удаляются: `join` двигает их Блоки в конец
- * последней оставшейся, и каретка, стоявшая в лишней колонке, едет вместе со
- * своим текстом. Пустые лишние колонки просто уходят — пустой абзац в чужой
- * колонке был бы мусором. Одна транзакция — одна отмена.
+ * Extra columns are MERGED, not deleted: `join` moves their Blocks to the end of the last
+ * remaining column, and a caret that was in an extra column moves along with its text. Empty
+ * extra columns are simply dropped, since an empty paragraph in someone else's column would be
+ * junk. One transaction is one undo step.
  */
 function switchLayout(tr: Transaction, pos: number, variant: EditorLayout): void {
   const count = layoutColumnCount(variant);
@@ -287,7 +296,7 @@ function switchLayout(tr: Transaction, pos: number, variant: EditorLayout): void
     for (let i = 0; i < index; i++) at += layoutNode().child(i).nodeSize;
     return at;
   };
-  // Пустые лишние колонки — с конца, чтобы позиции левых не сдвигались.
+  // Empty extra columns are removed from the end, so the positions of the left ones do not shift.
   for (let index = layoutNode().childCount - 1; index >= count; index--) {
     const column = layoutNode().child(index);
     if (isEmptyColumn(column) && layoutNode().childCount > 1) {
@@ -297,8 +306,8 @@ function switchLayout(tr: Transaction, pos: number, variant: EditorLayout): void
   }
   while (layoutNode().childCount > count) tr.join(columnStart(count));
   const node = layoutNode();
-  // Последняя оставшаяся была пустой, а в неё слились чужие Блоки: пустой абзац
-  // сверху от неё не остаётся.
+  // The last remaining column was empty, and other Blocks were merged into it. The empty
+  // paragraph at its top does not stay.
   if (node.childCount === count && count > 0) {
     const last = node.child(count - 1);
     if (
@@ -322,9 +331,9 @@ function switchLayout(tr: Transaction, pos: number, variant: EditorLayout): void
 }
 
 /**
- * Раскладки, у которых число колонок разошлось с вариантом, — к варианту по
- * числу колонок (60/40 остаётся 60/40, пока колонок две). Раскладки живут
- * только на верхнем уровне, поэтому обход — по детям Документа.
+ * Column layouts whose column count does not match their variant are brought to the variant
+ * that fits the column count (60/40 stays 60/40 while there are two columns). Column layouts
+ * live only at the top level, so the walk goes over the Document's children.
  */
 function fixLayouts(tr: Transaction): Transaction | null {
   let changed = false;
@@ -338,7 +347,7 @@ function fixLayouts(tr: Transaction): Transaction | null {
   return changed ? tr : null;
 }
 
-/** Раскладки фрагмента — Блоками колонок подряд. */
+/** Column layouts in a fragment become their column Blocks, one after another. */
 function flatten(fragment: Fragment): Fragment {
   const nodes: PmNode[] = [];
   fragment.forEach((node) => {
@@ -352,10 +361,10 @@ function flatten(fragment: Fragment): Fragment {
 }
 
 /**
- * Раскладка из буфера, вставленная не на верхний уровень (в колонку, список,
- * цитату, ячейку), разворачивается в Блоки: иначе ProseMirror, не найдя ей
- * места, разрезал бы контейнер вставки надвое. Открытые края фрагмента теряют
- * два уровня — Раскладку и колонку.
+ * A Column layout from the clipboard that is pasted somewhere other than the top level (into a
+ * column, a list, a quote or a cell) is unwrapped into Blocks. Otherwise ProseMirror, finding no
+ * place for it, would cut the paste's container in two. The open edges of the fragment lose two
+ * levels: the Column layout and the column.
  */
 function flattenSlice(slice: Slice): Slice {
   const { content } = slice;
@@ -374,15 +383,15 @@ function flattenSlice(slice: Slice): Slice {
 }
 
 /*
-  Проверка места под щель — та же, что у самого плагина щели (как в
-  `tables.ts`): в типах пакета её нет (`@internal`).
+  The gap cursor's placement check is the same one the gap cursor plugin uses (as in
+  `tables.ts`). The package's types do not declare it (`@internal`).
 */
 const gapCursorFits = ($pos: ResolvedPos): boolean =>
   (GapCursor as unknown as { valid($pos: ResolvedPos): boolean }).valid($pos);
 
 /**
- * Колонка, у края которой стоит каретка: каждый предок текстового Блока до
- * колонки — крайний в своём родителе в сторону `dir`. Иначе `-1`.
+ * The column whose edge holds the caret: every ancestor of the text Block, up to the column, is
+ * the last child of its parent in the direction `dir`. Otherwise `-1`.
  */
 function columnAtEdge($head: ResolvedPos, dir: 1 | -1): number {
   for (let depth = $head.depth - 1; depth > 0; depth--) {
@@ -395,7 +404,10 @@ function columnAtEdge($head: ResolvedPos, dir: 1 | -1): number {
   return -1;
 }
 
-/** Выйти из Раскладки вверх или вниз: в соседний Блок, а у края Документа — щелью. */
+/**
+ * Leave the Column layout upward or downward: into the neighboring Block, or, at the Document's
+ * edge, into a gap cursor.
+ */
 function leaveLayout(view: EditorView, layoutDepth: number, dir: 1 | -1): boolean {
   const { state } = view;
   const { $head } = state.selection;
@@ -410,13 +422,13 @@ function leaveLayout(view: EditorView, layoutDepth: number, dir: 1 | -1): boolea
 }
 
 /**
- * Стрелки у края колонки.
+ * Arrow keys at the edge of a column.
  *
- * `←` и `→` — в соседнюю колонку (в конец левой, в начало правой), а из
- * крайней — из Раскладки. `↑` и `↓` у верхней и нижней строки любой колонки —
- * из Раскладки, к Блоку над ней или под ней. Браузер в сетке ведёт каретку по
- * геометрии: `↓` из короткой левой колонки попадал бы в середину правой, а то
- * и мимо Раскладки. Внутри колонки стрелки остаются браузеру.
+ * `←` and `→` move into the neighboring column (to the end of the left one, to the start of the
+ * right one). From the outermost column they leave the Column layout. `↑` and `↓` on the top or
+ * bottom line of any column leave the Column layout, to the Block above or below it. The browser
+ * moves the caret in a grid by geometry: `↓` from a short left column would land in the middle of
+ * the right one, or even past the layout. Inside a column, the arrows stay with the browser.
  */
 function arrow(view: EditorView, axis: "horizontal" | "vertical", dir: 1 | -1): boolean {
   const { selection, doc } = view.state;
@@ -441,7 +453,7 @@ function arrow(view: EditorView, axis: "horizontal" | "vertical", dir: 1 | -1): 
   return leaveLayout(view, layoutDepth, dir);
 }
 
-/** Узлы, которым Tab принадлежит в колонке: список, таблица, код. */
+/** Nodes that own Tab inside a column: list items, table cells, code blocks. */
 const TAB_OWNERS: ReadonlySet<string> = new Set([
   "listItem",
   "taskItem",
@@ -451,10 +463,10 @@ const TAB_OWNERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Tab и Shift+Tab — в начало следующей или предыдущей колонки, как Tab по
- * ячейкам таблицы. Список, таблица и блок кода внутри колонки оставляют Tab
- * себе. Из крайней колонки Tab уходит браузеру — фокус покидает Редактор, как из
- * любого абзаца: ловушки клавиатуры нет (WCAG 2.1.2).
+ * Tab and Shift+Tab move to the start of the next or previous column, as Tab moves between table
+ * cells. A list, a table or a code block inside a column keeps Tab for itself. From the last
+ * column, Tab goes to the browser: focus leaves the Editor, as it does from any paragraph. There
+ * is no keyboard trap (WCAG 2.1.2).
  */
 function tabToColumn(
   state: EditorState,
@@ -480,8 +492,8 @@ function tabToColumn(
 }
 
 /**
- * Каретка в самом начале колонки (`dir < 0`) или в самом конце (`dir > 0`), с
- * пустым выделением.
+ * The caret is at the very start of a column (`dir < 0`) or at its very end (`dir > 0`), with an
+ * empty selection.
  */
 function atColumnBoundary(state: EditorState, dir: 1 | -1): boolean {
   const { selection } = state;
@@ -492,7 +504,7 @@ function atColumnBoundary(state: EditorState, dir: 1 | -1): boolean {
   return atTextEdge && columnAtEdge($head, dir) >= 0;
 }
 
-/** Стрелки и Tab между колонками. */
+/** Arrow keys and Tab between columns. */
 const LayoutKeys = Extension.create({
   name: "layoutKeys",
   addKeyboardShortcuts() {
@@ -510,12 +522,12 @@ const LayoutKeys = Extension.create({
 });
 
 /**
- * Backspace в начале колонки и Delete в её конце — последними, после всех
- * правил ядра (`priority` ниже, чем у них). Заголовок в начале колонки ядро
- * ещё превращает в абзац, пункт списка — выносит из списка. Если же никто не
- * взялся, клавиша поглощается: `isolating` не даёт командам ProseMirror слить
- * колонки, и без поглощения правку сделал бы сам браузер — по DOM, мимо Схемы, и
- * колонки слились бы в одну.
+ * Backspace at the start of a column and Delete at its end run last, after all the core rules
+ * (this extension's `priority` is lower than theirs). The core still turns a heading at the start
+ * of a column into a paragraph, and lifts a list item out of its list. If nobody handles the key,
+ * it is swallowed. `isolating` stops ProseMirror's commands from merging the columns, and without
+ * the swallow the browser would make the edit itself, through the DOM and outside the Schema, and
+ * the columns would merge into one.
  */
 const LayoutBoundary = Extension.create({
   name: "layoutBoundary",
@@ -528,9 +540,9 @@ const LayoutBoundary = Extension.create({
 });
 
 /**
- * Всё, что нужно Раскладке, кроме Документа (`document.ts`): узлы и
- * клавиатура. `wrapper` — включён ли инструмент Обёртки: тогда колонка
- * принимает и её.
+ * Everything the Column layout needs apart from the Document (`document.ts`): the nodes and the
+ * keyboard. `wrapper` says whether the Wrapper Tool is on. If it is, the column accepts a
+ * Wrapper too.
  */
 export function layoutExtensions({ wrapper }: { wrapper: boolean }): Extensions {
   return [Layout, LayoutColumn.configure({ wrapper }), LayoutKeys, LayoutBoundary];

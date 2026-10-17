@@ -1,10 +1,10 @@
 "use client";
 
-// Происхождение: minimal-tiptap, `components/link/link-edit-block.tsx` и
+// Origin: minimal-tiptap, `components/link/link-edit-block.tsx` and
 // `link-edit-popover.tsx` (MIT, © 2024 Aslam, https://github.com/Aslam97/minimal-tiptap).
-// Перенесены поведение «применить к выделению или вставить адрес текстом» и
-// правка ссылки под кареткой; разметка shadcn заменена примитивами кита.
-// Лицензия — NOTICE в корне пакета.
+// Carried over: the behavior "apply to the selection or insert the address as text", and
+// editing the link under the caret. The shadcn markup is replaced with the kit's primitives.
+// License: NOTICE in the package root.
 
 import type { Editor } from "@tiptap/react";
 import { useId, useState, type KeyboardEvent } from "react";
@@ -15,19 +15,18 @@ import { useMessages } from "../../../i18n/useMessages.js";
 import { normalizeLinkInput } from "./link.js";
 
 /**
- * Содержимое поповера адреса ссылки: `Mod+K` и кнопка «Ссылка» Панели и Меню
- * выделения (описание — `linkTool.tsx`).
+ * Content of the link address popover: opened by `Mod+K` and by the "Link" button of the
+ * Toolbar and of the Bubble menu (the description is in `linkTool.tsx`).
  *
- * Рамку держит кит (`ToolButtonView.tsx`): `Popover` в стеке слоёв, имя рамки
- * — подпись кнопки, возврат фокуса в Документ на прежнее выделение.
+ * The kit draws the frame (`ToolButtonView.tsx`): a `Popover` in the layer stack. The frame's
+ * name is the button's label, and focus returns to the Document's previous selection.
  *
- * ЯКОРЬ — ВЫДЕЛЕНИЕ, а не кнопка. Поповер открывают и с клавиатуры, когда
- * Панели нет вовсе (`toolbar="none"`) или плавающая спрятана, поэтому он
- * стоит у текста, который станет ссылкой, — одинаково при любом способе
- * открыть.
+ * THE ANCHOR IS THE SELECTION, not the button. The popover is also opened from the keyboard,
+ * when the Toolbar is absent (`toolbar="none"`) or the floating one is hidden. So it stands
+ * next to the text that will become a link, however it was opened.
  *
- * Форма монтируется заново на каждое открытие: поле берёт адрес ссылки под
- * кареткой в момент открытия, а не прошлый черновик.
+ * The form is mounted anew on each opening: the field takes the link's address under the caret
+ * at the moment of opening, not the previous draft.
  */
 export function LinkForm({ editor, onDone }: { editor: Editor; onDone: () => void }) {
   const messages = useMessages().editor;
@@ -45,8 +44,8 @@ export function LinkForm({ editor, onDone }: { editor: Editor; onDone: () => voi
 
   const apply = () => {
     const text = draft.trim();
-    // Пустое поле — «ссылки здесь нет»: у существующей это снятие, у новой —
-    // просто закрыть.
+    // An empty field means "no link here": for an existing link it removes the link; for a
+    // new one, it just closes the popover.
     if (!text) {
       if (existing != null) remove();
       else onDone();
@@ -60,14 +59,14 @@ export function LinkForm({ editor, onDone }: { editor: Editor; onDone: () => voi
     const chain = editor.chain();
     if (!editor.state.selection.empty) chain.setLink({ href });
     else if (existing != null) chain.extendMarkRange("link").setLink({ href });
-    // Выделения нет — адрес вставляется текстом ссылки, как в minimal-tiptap.
+    // No selection: the address is inserted as the link's text, as in minimal-tiptap.
     else chain.insertContent({ type: "text", text, marks: [{ type: "link", attrs: { href } }] });
     chain.run();
     onDone();
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    // Enter, которым IME подтверждает слово, — не «применить».
+    // An Enter that the IME uses to confirm a word does not apply the link.
     if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
     event.preventDefault();
     apply();
@@ -75,8 +74,8 @@ export function LinkForm({ editor, onDone }: { editor: Editor; onDone: () => voi
 
   return (
     <div className="flex flex-col gap-3">
-      {/* `layout="stack"` явно: поповер рисуется вне раскладки формы, где
-          стоит Редактор, и боковая подпись `FormLayout` ему не подходит. */}
+      {/* `layout="stack"` is set explicitly: the popover is drawn outside the form layout where
+          the Editor sits, and the side label of `FormLayout` does not suit it. */}
       <FormField
         label={messages.linkAddress}
         htmlFor={fieldId}
