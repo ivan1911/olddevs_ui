@@ -23,32 +23,33 @@ import type { FormatMenuHostProps } from "./FormatMenus.js";
 type EditorMessages = UiMessages["editor"];
 
 /**
- * ПОПОВЕРЫ ЦВЕТА. Образец — Notion-like шаблон Tiptap: цвет
- * выбирают глазами, по кружкам, одним щелчком. Прежде цвет текста и маркер
- * были подменю «…» — пункты словом, цвет виден только у образца строки.
+ * COLOR POPOVERS. The reference is Tiptap's Notion-like template: the color is
+ * picked by eye, from swatches, in one click. Before, the text color and the highlight
+ * were a "…" submenu, with items by name, and the color showed only on the reference's
+ * sample row.
  *
- * Кнопки две, как в образце (решение владельца):
+ * There are two buttons, as in the reference (owner's decision):
  *
- * - «Цвет» — буква «A» текущего цвета текста со стрелкой; поповер из двух
- *   сеток: «Цвет текста» (шесть тонов) и «Цвет маркера» (девять цветов), в
- *   конце каждой — «Убрать цвет» и «Убрать маркер» иконкой. У
- *   заголовка каждой сетки — «Свой цвет…».
- * - «Маркер» — щелчок открывает ряд из девяти маркеров и «Убрать маркер».
- *   Прежний один щелчок жёлтым ушёл: цвет маркера теперь выбирают
- *   всегда, и жёлтый — один щелчок по кружку.
+ * - "Color" — the letter "A" in the current text color, with an arrow. The popover has
+ *   two grids: "Text color" (six tones) and "Highlight color" (nine colors). At the end
+ *   of each one there is "Remove color" or "Remove highlight" as an icon. Each grid's
+ *   heading has "Custom color…".
+ * - "Highlight" — a click opens a row of nine highlights and "Remove highlight". The
+ *   former single click that applied yellow is gone: the highlight color is now always
+ *   chosen, and yellow is one click on its swatch.
  *
- * РОЛИ — МЕНЮ, А НЕ РАДИОГРУППА. В радиогруппе (`SwatchGroup` кита) стрелка
- * сразу выбирает: здесь первая же стрелка покрасила бы текст и закрыла
- * поповер. Поэтому паттерн меню APG: `menu` › `group` с заголовком ›
- * `menuitemradio` с `aria-checked` (и «Свой цвет…» — вариант того же выбора,
- * как прежде в подменю), «Убрать маркер» — `menuitem`. Стрелки ходят по сетке,
- * Enter, пробел и щелчок применяют.
+ * ROLES ARE A MENU, NOT A RADIO GROUP. In a radio group (the kit's `SwatchGroup`) an
+ * arrow selects at once: here the first arrow would have colored the text and closed
+ * the popover. So the APG menu pattern is used: `menu` › `group` with a heading ›
+ * `menuitemradio` with `aria-checked` (and "Custom color…" is a variant of the same
+ * choice, as it was in the submenu before), while "Remove highlight" is a `menuitem`.
+ * Arrows move across the grid; Enter, Space and a click apply.
  *
- * ПОПОВЕР ДЕРЖИТ КНОПКА, и в плашке меню выделения тоже: пока открыт, у кнопки
- * `aria-expanded="true"`, и плашка не прячется (`showOverSelection`).
+ * THE BUTTON HOLDS THE POPOVER, and so does the Bubble menu's pill: while the popover is
+ * open, the button has `aria-expanded="true"`, and the pill does not hide (`showOverSelection`).
  */
 
-/** Цвет метки: имя палитры либо `#rrggbb` автора; `null` — цвета нет. */
+/** Color of a Mark: a palette name, or the author's `#rrggbb`; `null` means there is no color. */
 type CurrentColor = string | null;
 
 function colorOf(attributes: Record<string, unknown>, names: readonly string[]): CurrentColor {
@@ -77,7 +78,7 @@ const MARKER_LABEL: Record<EditorMarkerName, (m: EditorMessages) => string> = {
   red: (m) => m.markerRed,
 };
 
-/** Текущий цвет словом — для имени кнопки «Маркер: Розовый». */
+/** The current color by name, for the button's name, e.g. "Highlight: Pink". */
 function colorName(
   current: CurrentColor,
   labels: Record<string, (m: EditorMessages) => string>,
@@ -89,40 +90,40 @@ function colorName(
   return labels[current]?.(messages) ?? none;
 }
 
-/* ─── Сетка ─────────────────────────────────────────────────────────────── */
+/* ─── Grid ──────────────────────────────────────────────────────────────── */
 
 interface GridItem {
   id: string;
   label: string;
   /**
-   * `radio` — вариант выбора, отмечается: цвет и «Свой цвет…» (отмечен, когда на
-   * выделении цвет автора; выбор открывает `ColorPicker`). `action` — «Убрать
-   * маркер»: действие, а не вариант.
+   * `radio` — a choice, shown as checked: a color, and "Custom color…" (checked when the
+   * selection has the author's color; choosing it opens `ColorPicker`). `action` — "Remove
+   * highlight": an action, not a choice.
    */
   kind: "radio" | "action";
   checked?: boolean;
-  /** Образец; у действия без образца — подпись словом. */
+  /** The swatch; an action without a swatch is labelled with a word. */
   swatch?: ReactNode;
-  /** Подсказка с именем — у иконки без подписи («Убрать маркер»). */
+  /** A tooltip with the name, for an icon without a label ("Remove highlight"). */
   tooltip?: boolean;
 }
 
 interface GridSection {
   id: string;
-  /** Заголовок сетки; без него группа называется `aria-label` меню. */
+  /** The grid's heading; without it, the group is named by the menu's `aria-label`. */
   label?: string;
-  /** Пункт у заголовка справа — «Свой цвет…». */
+  /** The item at the right of the heading: "Custom color…". */
   header?: GridItem;
   items: GridItem[];
 }
 
-/** Кружков в ряду: столько у образца, и обе сетки ровно в два ряда. */
+/** Swatches per row: the reference has this many, and both grids have exactly two rows. */
 const COLUMNS = 5;
 
 /**
- * Ячейка: кружок 24 px и отступ под кольцо выбранности, как у `SwatchGroup`
- * кита — кольцо лежит на подложке поповера, а не на цвете кружка, и держит
- * контраст в любой теме. Фокус — акцентный контур ещё дальше.
+ * A cell: a 24 px swatch and padding for the selection ring, as in the kit's `SwatchGroup`.
+ * The ring lies on the popover's backing, not on the swatch's color, and keeps its contrast
+ * in any theme. Focus is an accent outline, further out.
  */
 const CELL_CLASS =
   "block cursor-pointer rounded-full p-1 transition-shadow outline-none " +
@@ -135,13 +136,13 @@ const HEADER_ACTION_CLASS =
   "outline-none focus-visible:outline-2 focus-visible:outline-accent-strong";
 
 /**
- * Меню-сетка. Обход — свой: `Menu` react-aria ходит только вверх и вниз, а
- * здесь ряды. Фокус кочует (roving tabindex): Tab-остановка у меню одна, на
- * отмеченном цвете или на первом пункте, — её и берёт Radix при открытии.
+ * A grid menu. Its traversal is its own: react-aria's `Menu` moves only up and down, while
+ * here the items form rows. Focus roams (roving tabindex): the menu has one Tab stop, on the
+ * checked color or on the first item, and Radix takes it on open.
  *
- * Стрелки: ← → — соседний пункт по порядку, ↑ ↓ — тот же столбец в ряду выше
- * или ниже, через заголовки сеток; Home и End — первый и последний пункт. Края
- * не зацикливаются: прыжок с последнего цвета на первый читается как промах.
+ * Arrows: ← and → move to the neighboring item in order; ↑ and ↓ move to the same column in
+ * the row above or below, across the grid headings; Home and End go to the first and last
+ * item. The edges do not wrap: a jump from the last color to the first reads as a miss.
  */
 function ColorGrid({
   label,
@@ -161,8 +162,8 @@ function ColorGrid({
     }
   }
   const flat = rows.flat();
-  // Фокус при открытии — на отмеченном цвете, без цвета — на первом кружке, а не
-  // на «Свой цвет…» у заголовка.
+  // On open, focus goes to the checked color; with no color, to the first swatch, not to
+  // "Custom color…" in the heading.
   const checked = flat.findIndex((item) => item.checked);
   const initial = Math.max(0, checked >= 0 ? checked : flat.findIndex((item) => item.swatch));
   const [active, setActive] = useState(initial);
@@ -229,8 +230,8 @@ function ColorGrid({
       </button>
     );
     return item.tooltip ? (
-      // Подсказка на обёртке: на самой кнопке Radix добавил бы `aria-describedby`,
-      // и скринридер прочитал бы имя дважды (как у `SwatchGroup`).
+      // The tooltip is on the wrapper: on the button itself, Radix would add `aria-describedby`,
+      // and a screen reader would read the name twice (as with `SwatchGroup`).
       <Tooltip key={item.id} content={item.label}>
         <span className="block">{button}</span>
       </Tooltip>
@@ -277,9 +278,9 @@ function ColorGrid({
   );
 }
 
-/* ─── Образцы ───────────────────────────────────────────────────────────── */
+/* ─── Swatches ──────────────────────────────────────────────────────────── */
 
-/** Кружок цвета текста: буква «A» этим цветом на кольце, как у образца. */
+/** Text color swatch: the letter "A" in this color on a ring, as in the reference. */
 function TextSwatch({ name }: { name: EditorTextColorName }) {
   return (
     <span
@@ -295,7 +296,7 @@ function TextSwatch({ name }: { name: EditorTextColorName }) {
   );
 }
 
-/** Кружок маркера: заливка токеном `--marker-<имя>`. */
+/** Highlight swatch: filled with the `--marker-<name>` token. */
 function MarkerSwatch({ name }: { name: EditorMarkerName }) {
   return (
     <span
@@ -306,10 +307,10 @@ function MarkerSwatch({ name }: { name: EditorMarkerName }) {
 }
 
 /**
- * Снятие цвета — последняя ячейка сетки, перечёркнутый круг с подсказкой.
- * Не белый кружок первым, как было: тот выглядел ещё одним цветом
- * и стоял отмеченным, когда цвета нет, — будто выбран белый. Это действие, а
- * не вариант выбора, поэтому `menuitem` без отметки.
+ * Clearing the color is the last cell of the grid: a crossed-out circle with a tooltip.
+ * It is not a white swatch first, as it used to be. That one looked like one more color,
+ * and it was shown checked when there was no color, as if white were selected. This is an
+ * action, not a choice, so it is a `menuitem` without a check mark.
  */
 function removeItem(id: string, label: string): GridItem {
   return {
@@ -325,7 +326,7 @@ function removeItem(id: string, label: string): GridItem {
   };
 }
 
-/* ─── Кнопки ────────────────────────────────────────────────────────────── */
+/* ─── Buttons ───────────────────────────────────────────────────────────── */
 
 const BUTTON_CLASS = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true });
 const BUTTON_SELECTED_CLASS = buttonClasses({
@@ -342,18 +343,18 @@ const MENU_BUTTON_OPEN_CLASS = cn(
 
 const POPOVER_CLASS = cn(GLASS_PANEL_CLASS, "w-auto p-3");
 
-/** Как закрыт поповер: выбором (фокус в Документ), передачей (`ColorPicker`) или иначе. */
+/** How the popover was closed: by selecting an item (focus goes to the Document), by handing over to `ColorPicker`, or otherwise. */
 type Closing = "document" | "handoff" | null;
 
 /**
- * Поповер у кнопки: Radix ведёт стек слоёв (Escape в поповере внутри `Dialog`
- * закрывает поповер, ADR-0041) и берёт фокус на Tab-остановку сетки.
+ * The popover at the button. Radix keeps the layer stack (Escape in a popover inside a
+ * `Dialog` closes the popover, ADR-0041) and moves focus to the grid's Tab stop.
  *
- * ФОКУС ПРИ ЗАКРЫТИИ. После выбора — в Документ, на прежнее выделение: человек
- * красил текст и продолжает писать. После «Свой цвет…» — никуда: фокус уже
- * забрал поповер `ColorPicker`, и фокус в Документ закрыл бы его как щелчок
- * мимо. После Escape — на кнопку, как у меню APG. Щелчок мимо фокус не трогает:
- * человек сам выбрал, куда его поставить.
+ * FOCUS ON CLOSE. After a choice, focus goes to the Document, to the previous selection: the
+ * user colored the text and goes on writing. After "Custom color…", focus goes nowhere: the
+ * `ColorPicker` popover has already taken it, and moving it to the Document would close that
+ * popover as a click outside. After Escape, focus goes to the button, as in the APG menu.
+ * A click outside does not touch focus: the user chose where to put it.
  */
 function ColorPopover({
   editor,
@@ -372,7 +373,7 @@ function ColorPopover({
   trigger: ReactNode;
   tooltip: string;
   children: ReactNode;
-  /** Чем закрыт поповер: выбором в Документ или передачей другому поповеру. */
+  /** How the popover was closed: by a choice that goes to the Document, or by handing over to another popover. */
   pickedRef: { current: Closing };
 }) {
   const interactedOutside = useRef(false);
@@ -403,13 +404,13 @@ function ColorPopover({
 }
 
 export interface ColorMenuButtonProps extends FormatMenuHostProps {
-  /** «Свой цвет…»: поповер `ColorPicker` держит `RichTextEditor`. Нет — пункта нет. */
+  /** "Custom color…": the `ColorPicker` popover is held by `RichTextEditor`. Without it, there is no item. */
   onCustomColor?: (kind: CustomColorKind) => void;
 }
 
 /**
- * Кнопка «Цвет»: иконка «A» текущим цветом текста и стрелка. Сетка маркера —
- * только при инструменте `highlight`: без него Метки маркера нет в Схеме.
+ * The "Color" button: the "A" icon in the current text color, and an arrow. The highlight
+ * grid appears only with the `highlight` Tool: without it, the highlight Mark is not in the Schema.
  */
 export function ColorMenuButton({
   editor,
@@ -429,8 +430,8 @@ export function ColorMenuButton({
       highlight: withHighlight
         ? colorOf(current.getAttributes("highlight"), EDITOR_MARKER_NAMES)
         : null,
-      // Метки цвета исключены, например, в блоке кода: кнопка недоступна, как
-      // прежний переключатель маркера, а не открывает выбор впустую.
+      // Color Marks are excluded, for example, in a code Block: the button is unavailable, as
+      // the former highlight toggle was, instead of opening a choice that does nothing.
       can: current.can().setColor("accent"),
     }),
   });
@@ -496,8 +497,8 @@ export function ColorMenuButton({
   const trigger = (
     <button
       type="button"
-      // Имя несёт текущий цвет текста, как у остальных кнопок меню (ADR-0054,
-      // п. 3): его слышно, не открывая поповер.
+      // The name carries the current text color, as with the other menu buttons (ADR-0054,
+      // item 3): it is heard without opening the popover.
       aria-label={messages.colorMenu({
         current: colorName(state.text, TEXT_COLOR_LABEL, messages.colorDefault, messages),
       })}
@@ -505,7 +506,7 @@ export function ColorMenuButton({
       aria-disabled={locked || undefined}
       disabled={disabled}
       onClick={(event) => {
-        // Radix не откроет поповер, если обработчик отменил событие.
+        // Radix will not open the popover if the handler cancels the event.
         if (locked) event.preventDefault();
       }}
       className={open ? MENU_BUTTON_OPEN_CLASS : MENU_BUTTON_CLASS}
@@ -514,7 +515,7 @@ export function ColorMenuButton({
         size={16}
         aria-hidden
         className={textName ? EDITOR_TEXT_COLOR_CLASS[textName as EditorTextColorName] : undefined}
-        // Цвет автора — значением: класса под произвольный `#rrggbb` нет.
+        // The author's color is passed as a value: there is no class for an arbitrary `#rrggbb`.
         style={textCustom ? { color: textCustom } : undefined}
       />
       <ChevronDownIcon size={12} aria-hidden />
@@ -537,9 +538,9 @@ export function ColorMenuButton({
 }
 
 /**
- * Кнопка «Маркер»: щелчок открывает ряд из девяти маркеров и «Убрать маркер».
- * Нажата на вид, пока на выделении маркер; имя называет текущий —
- * «Маркер: Розовый», и его слышно, не открывая поповер.
+ * The "Highlight" button: a click opens a row of nine highlights and "Remove highlight".
+ * It looks pressed while the selection has a highlight. Its name gives the current one,
+ * "Highlight: Pink", and it is heard without opening the popover.
  */
 export function HighlightMenuButton({
   editor,
