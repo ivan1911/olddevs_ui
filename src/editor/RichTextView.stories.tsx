@@ -665,3 +665,28 @@ export const VideoPaper: Story = {
     </div>
   ),
 };
+
+/* One Document with two footnotes: the markup the Editor saves. */
+const footnoteRef = (key: string, number: number) =>
+  `<sup data-footnote-ref="${key}"><a href="#fn-${key}" id="fnref-${key}" role="doc-noteref">${number}</a></sup>`;
+const FOOTNOTES_HTML =
+  `<p>The first result${footnoteRef("viewnot1", 1)} was measured twice, ` +
+  `and the second one${footnoteRef("viewnot2", 2)} agreed with it.</p>` +
+  '<section data-block="footnotes" role="doc-endnotes" aria-label="Footnotes"><ol>' +
+  '<li id="fn-viewnot1"><p>Measured in the lab.</p><a href="#fnref-viewnot1" role="doc-backlink">↩</a></li>' +
+  '<li id="fn-viewnot2"><p>The difference stayed under one percent.</p><a href="#fnref-viewnot2" role="doc-backlink">↩</a></li>' +
+  "</ol></section>";
+
+/**
+ * The Editor and the View of one Document on one page. Their footnote ids do not meet: the View keeps
+ * the saved `fn-<key>`, so a link to `#fn-<key>` from outside lands on it, and the Editor's own DOM
+ * carries a prefix of its instance. A click on a reference in the View goes to the View's footnote.
+ */
+export const FootnotesNextToEditor: Story = {
+  render: () => (
+    <div className="grid max-w-[1100px] grid-cols-1 gap-6 md:grid-cols-2">
+      <RichTextEditor aria-label="Document" defaultValue={FOOTNOTES_HTML} />
+      <RichTextView html={FOOTNOTES_HTML} data-testid="footnotes-view" />
+    </div>
+  ),
+};

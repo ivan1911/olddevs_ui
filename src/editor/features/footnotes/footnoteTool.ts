@@ -34,10 +34,10 @@ export const FOOTNOTES_TOOL: ToolDescriptor = {
   name: "footnotes",
   load: loadFootnotes,
   engine: (context) =>
-    footnotesChunk()!.footnoteExtensions({
-      listName: context.footnoteListName,
-      back: context.footnoteBack,
-    }),
+    footnotesChunk()!.footnoteExtensions(
+      { listName: context.footnoteListName, back: context.footnoteBack },
+      context.footnoteIdPrefix ?? ""
+    ),
   // The same nodes without the node view, the keys and Markdown: the Skeleton draws the saved markup.
   skeleton: (context) => {
     const labels = { listName: context.footnoteListName, back: context.footnoteBack };
