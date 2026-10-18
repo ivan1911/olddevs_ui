@@ -120,10 +120,10 @@ describe("SharePoint headings", () => {
     expect(html).not.toMatch(/data-ccp|style=|class=/);
   });
 
-  test("levels the Schema does not have are kept as the deepest heading", () => {
+  test("levels 5 and 6 become paragraphs, as an h5 or h6 from any other paste does", () => {
     const html = pasted("sharepoint-synthetic-headings");
 
-    expect(html).toContain("<h4>Fifth level</h4><h4>Sixth level</h4>");
+    expect(html).toContain("<p>Fifth level</p><p>Sixth level</p>");
   });
 
   test("without the heading1 Tool the Schema takes h1 out, as it does for any h1 paste", () => {

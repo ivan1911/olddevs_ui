@@ -1,6 +1,7 @@
 "use client";
 
 import type { PasteCleanupStep } from "./cleanPastedHtml.js";
+import { buildNestedLists, type FlatListItem } from "./nestedLists.js";
 
 /*
   Word does not put a list on the clipboard as a list. Every item is a paragraph, and the marker
@@ -49,14 +50,9 @@ const PT_PER_UNIT: Record<string, number> = {
   px: 0.75,
 };
 
-interface ListItem {
+/** `id` is the Word list id (`l0`), `null` when Word wrote no `mso-list`; `number` comes from the marker or the list's start. */
+interface ListItem extends FlatListItem {
   paragraph: HTMLParagraphElement;
-  /** The Word list id (`l0`); `null` when Word wrote no `mso-list`. */
-  id: string | null;
-  level: number;
-  kind: "ul" | "ol";
-  /** The number of the item, from its marker or the list's start; `null` for a bullet. */
-  number: number | null;
 }
 
 /** Remove the item's marker and return its text: `"1."`, `"•"`, or `null` when there is none. */
@@ -191,33 +187,11 @@ function readItem(paragraph: HTMLParagraphElement, styles: string): ListItem | n
   };
 }
 
-/**
- * Build the nested lists of one run of consecutive items. A deeper level goes into the last item of
- * the list above it; a different kind or a different Word list on the same level starts a new list.
- */
-function buildLists(items: ListItem[], document: Document): DocumentFragment {
-  const root = document.createDocumentFragment();
-  const stack: { level: number; kind: "ul" | "ol"; id: string | null; list: HTMLElement }[] = [];
-  for (const item of items) {
-    while (stack.length > 0 && stack.at(-1)!.level > item.level) stack.pop();
-    const top = stack.at(-1);
-    if (top && top.level === item.level && (top.kind !== item.kind || top.id !== item.id)) {
-      stack.pop();
-    }
-    if (stack.length === 0 || stack.at(-1)!.level < item.level) {
-      const list = document.createElement(item.kind);
-      if (item.number !== null && item.number > 1) list.setAttribute("start", String(item.number));
-      const parentItem = stack.at(-1)?.list.lastElementChild;
-      (parentItem ?? root).appendChild(list);
-      stack.push({ level: item.level, kind: item.kind, id: item.id, list });
-    }
-    const li = document.createElement("li");
-    const content = document.createElement("p");
-    content.append(...item.paragraph.childNodes);
-    li.append(content);
-    stack.at(-1)!.list.append(li);
-  }
-  return root;
+/** The item's content: Word's list paragraph becomes the item's paragraph. */
+function itemContent(item: ListItem, document: Document): Node[] {
+  const content = document.createElement("p");
+  content.append(...item.paragraph.childNodes);
+  return [content];
 }
 
 export const wordLists: PasteCleanupStep = {
@@ -240,7 +214,9 @@ export const wordLists: PasteCleanupStep = {
       else runs.push([item]);
     }
     for (const run of runs) {
-      run[0]!.paragraph.replaceWith(buildLists(run, document));
+      run[0]!.paragraph.replaceWith(
+        buildNestedLists(run, (item) => itemContent(item, document), document)
+      );
       for (const item of run.slice(1)) item.paragraph.remove();
     }
   },

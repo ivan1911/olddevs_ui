@@ -1,6 +1,7 @@
 "use client";
 
 import type { PasteCleanupStep } from "./cleanPastedHtml.js";
+import { buildNestedLists, type FlatListItem } from "./nestedLists.js";
 
 /*
   SharePoint and Word Online (Word in the browser) put real structure on the clipboard, but in a
@@ -36,19 +37,14 @@ import type { PasteCleanupStep } from "./cleanPastedHtml.js";
   a rule and a `span` without a mark as their content, which is what is wanted.
 */
 
-/** Keep to the levels the Schema has (`h1`–`h4`; without the `heading1` Tool the Schema drops `h1`). */
-const MAX_HEADING_LEVEL = 4;
+/** HTML has six heading levels; a deeper `aria-level` stays a paragraph. */
+const MAX_HEADING_LEVEL = 6;
 
-interface ListItem {
+/** `id` is `data-listid`: Word's identity of the list, shared by all its levels. */
+interface ListItem extends FlatListItem {
   li: HTMLLIElement;
   /** The element the item travels in: its wrapper div, else its `ul` / `ol`. */
   block: Element;
-  /** `data-listid`: Word's identity of the list, shared by all its levels. */
-  id: string | null;
-  level: number;
-  kind: "ul" | "ol";
-  /** The number the item shows, for a numbered list; `null` for a bullet. */
-  number: number | null;
 }
 
 /** A class list holds the token (`class="EOP SCXW1 BCX0"`). */
@@ -65,7 +61,10 @@ function removeEndOfParagraph(document: Document): void {
   }
 }
 
-/** `<p role="heading" aria-level="N">` becomes `<hN>`; the Schema then applies its own heading rules. */
+/**
+ * `<p role="heading" aria-level="N">` becomes `<hN>`, and the Schema then applies its own heading
+ * rules, as to an `<hN>` from any other paste: H5 and H6 become paragraphs, H1 needs `heading1`.
+ */
 function convertHeadings(document: Document): void {
   for (const paragraph of Array.from(
     document.body.querySelectorAll<HTMLElement>('p[role="heading"][aria-level]')
@@ -73,8 +72,8 @@ function convertHeadings(document: Document): void {
     // A heading inside a list item is the item's text: the item stays a paragraph.
     if (paragraph.closest("li")) continue;
     const level = Number.parseInt(paragraph.getAttribute("aria-level") ?? "", 10);
-    if (!Number.isInteger(level) || level < 1) continue;
-    const heading = document.createElement(`h${Math.min(level, MAX_HEADING_LEVEL)}`);
+    if (!Number.isInteger(level) || level < 1 || level > MAX_HEADING_LEVEL) continue;
+    const heading = document.createElement(`h${level}`);
     heading.append(...paragraph.childNodes);
     paragraph.replaceWith(heading);
   }
@@ -107,32 +106,6 @@ function itemContent(li: HTMLLIElement, document: Document): Node[] {
   return [paragraph];
 }
 
-/**
- * Build the nested lists of one run of consecutive items. A deeper level goes into the last item of
- * the list above it; a different kind or a different Word list on the same level starts a new list.
- */
-function buildLists(items: ListItem[], document: Document): DocumentFragment {
-  const root = document.createDocumentFragment();
-  const stack: { level: number; kind: "ul" | "ol"; id: string | null; list: HTMLElement }[] = [];
-  for (const item of items) {
-    while (stack.length > 0 && stack.at(-1)!.level > item.level) stack.pop();
-    const top = stack.at(-1);
-    if (top && top.level === item.level && (top.kind !== item.kind || top.id !== item.id)) {
-      stack.pop();
-    }
-    if (stack.length === 0 || stack.at(-1)!.level < item.level) {
-      const list = document.createElement(item.kind);
-      if (item.number !== null && item.number > 1) list.setAttribute("start", String(item.number));
-      (stack.at(-1)?.list.lastElementChild ?? root).appendChild(list);
-      stack.push({ level: item.level, kind: item.kind, id: item.id, list });
-    }
-    const li = document.createElement("li");
-    li.append(...itemContent(item.li, document));
-    stack.at(-1)!.list.append(li);
-  }
-  return root;
-}
-
 function rebuildLists(document: Document): void {
   const items = Array.from(document.body.querySelectorAll<HTMLLIElement>("li[data-listid]"))
     .map(readItem)
@@ -152,7 +125,9 @@ function rebuildLists(document: Document): void {
   }
   for (const run of runs) {
     const blocks = [...new Set(run.map((item) => item.block))];
-    blocks[0]!.replaceWith(buildLists(run, document));
+    blocks[0]!.replaceWith(
+      buildNestedLists(run, (item) => itemContent(item.li, document), document)
+    );
     for (const block of blocks.slice(1)) block.remove();
   }
 }
