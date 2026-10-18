@@ -550,6 +550,12 @@ export {
    */
   SquareDashed as BlockSelectIcon,
   /**
+   * The Editor's focus mode: a viewfinder with a dot, the "Focus mode" item of the "…" menu. The
+   * frame corners are the picture of "one Block in focus, the rest out of it". Not `ExpandIcon`: that
+   * one is "Fullscreen" in the same menu.
+   */
+  Focus as FocusModeIcon,
+  /**
    * Video in the Editor (the `youtube` and `twitch` Tools): a square with a "play" triangle, the
    * "Video" item of the Slash menu. Not `PlayIcon`: that one is a launch button, and it is exactly
    * that button inside the player itself.

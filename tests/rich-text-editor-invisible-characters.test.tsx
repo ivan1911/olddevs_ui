@@ -40,6 +40,8 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 }
 
 const TOOLS_WITH = ["bold", "invisibleCharacters"] as const;
+/** `full` without the other display modes (OLDSUI-312), which share the section: its own item stays alone in it. */
+const FULL_ALONE = PRESETS.full.filter((name) => name !== "fullscreen" && name !== "focus");
 const CONTENT = "<p>one two</p><p>three<br>four</p><p></p>";
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -117,7 +119,7 @@ test("there is no toolbar button for it any more: the row is untouched", () => {
 
 test("the item is a menuitemcheckbox in its own last section, set off by a divider", async () => {
   const user = userEvent.setup();
-  renderEditor({ defaultValue: CONTENT });
+  renderEditor({ tools: [...FULL_ALONE], defaultValue: CONTENT });
   const menu = await openMore(user);
 
   const item = itemIn(menu)!;
@@ -354,7 +356,7 @@ test("the full preset includes the tool, the basic one does not", async () => {
 
 test("the item is reached from the keyboard and toggled with Enter and Space", async () => {
   const user = userEvent.setup();
-  renderEditor({ defaultValue: CONTENT });
+  renderEditor({ tools: [...FULL_ALONE], defaultValue: CONTENT });
 
   moreButton()!.focus();
   await user.keyboard("{Enter}");

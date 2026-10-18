@@ -1156,6 +1156,18 @@ export interface UiMessages {
     blocksCut: (vars: { count: number }) => string;
     blocksReplaced: (vars: { count: number }) => string;
     /**
+     * Fullscreen mode and the focus mode (the `fullscreen` and `focus` Tools, ADR-0082).
+     * `fullscreen` and `focusMode` are the checkbox items of the "…" menu; `fullscreen` is also the
+     * layer's accessible name. `fullscreenExit` is the visible "Collapse" button (the Toolbar's right
+     * edge, or the layer's corner). `fullscreenOpened` and `fullscreenClosed` are what the screen
+     * reader hears when the mode changes (Field notice, tone `status`).
+     */
+    fullscreen: string;
+    fullscreenExit: string;
+    fullscreenOpened: string;
+    fullscreenClosed: string;
+    focusMode: string;
+    /**
      * The Document's table of contents (`RichTextToc`): the name of the strip button and the label
      * of the `nav` with the list of headings. It is one word for both, because it is one thing.
      */

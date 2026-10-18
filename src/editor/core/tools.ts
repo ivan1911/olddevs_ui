@@ -112,6 +112,16 @@
  * `basic`: it takes the first `Esc` in the text, so a field in a `Dialog` closes on the second one,
  * and a comment field keeps the usual "one `Esc` closes the window". The Block handle's menu over
  * several Blocks (the text selection across them) is not a Tool: it is in every Editor.
+ *
+ * `fullscreen` expands the field to the whole window (ADR-0082): a layer of the kit above the page,
+ * not the browser's Fullscreen API, so it works inside a `Dialog` and on iOS. It is a view only: the
+ * same engine and history, the Toolbar on top, the Status bar at the bottom, a column of text in
+ * the middle. "Fullscreen" is a checkbox item in the "…" menu, `Esc` collapses one level at a time,
+ * and the Tool has no Schema. `focus` is the focus mode: the Blocks around the current one (by the
+ * Block unit of ADR-0077) are shown in secondary color. A view too, with no Schema, no Markdown and
+ * no change to `value`. They are two Tools because the focus mode is useful in an ordinary field.
+ * Both are in `full`, not in `basic`; the focus mode is off until the author turns it on, or the
+ * `tool("focus", { enabled: true })` option does.
  */
 export const TOOLS = [
   "history",
@@ -147,6 +157,8 @@ export const TOOLS = [
   "search",
   "invisibleCharacters",
   "blockSelection",
+  "fullscreen",
+  "focus",
   "insertMenu",
   "typography",
   "pasteCleanup",

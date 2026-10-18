@@ -96,6 +96,10 @@ export interface SelectionBubbleProps {
   keyboardTarget?: boolean;
   /** The Document area that scrolls on its own (ADR-0059); without it, the window scrolls. */
   scrollTarget?: HTMLElement;
+  /** The "Fullscreen" item of the bubble's "…" menu (ADR-0082); the layer is held by `RichTextEditor`. */
+  fullscreen?: { open: boolean; onToggle: () => void };
+  /** The "Focus mode" item of the bubble's "…" menu. */
+  focusMode?: boolean;
 }
 
 /**
@@ -126,6 +130,8 @@ export function SelectionBubble({
   onCustomColor,
   keyboardTarget = true,
   scrollTarget,
+  fullscreen,
+  focusMode = false,
 }: SelectionBubbleProps) {
   const options = useSelectionMenuOptions(scrollTarget);
   const messages = useMessages().editor;
@@ -135,7 +141,10 @@ export function SelectionBubble({
   useOutOfTabOrder(ref, editor);
 
   const marks = BUBBLE_ROW_MARKS.filter((mark) => tools.has(mark.tool));
-  const hasMore = BUBBLE_MORE_TOOLS.some((tool) => tools.has(tool));
+  const hasMore =
+    BUBBLE_MORE_TOOLS.some((tool) => tools.has(tool)) ||
+    (fullscreen !== undefined && tools.has("fullscreen")) ||
+    (focusMode && tools.has("focus"));
   /*
     The "Color" button is one button with both grids (the owner's decision):
     on the Toolbar it is "Highlight", here it is "Color", with no duplicates. Without the `color`
@@ -291,6 +300,8 @@ export function SelectionBubble({
               disabled={off}
               shortcut={shortcut}
               omit={BUBBLE_MORE_OMIT}
+              fullscreen={fullscreen}
+              focusMode={focusMode}
             />
           )}
           {hasMarks && hasTail && <Separator />}

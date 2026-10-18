@@ -24,6 +24,8 @@ import {
   CodeBlockIcon,
   InlineCodeIcon,
   InvisibleCharactersIcon,
+  ExpandIcon,
+  FocusModeIcon,
   ListIcon,
   MoreIcon,
   ParagraphIcon,
@@ -44,6 +46,7 @@ import { applyInsertItem } from "../core/insertItems.js";
 import { useLockableMenu } from "./lockableMenu.js";
 import { DEFAULT_ALIGNMENT, EDITOR_ALIGNMENTS, type EditorAlignment } from "../styles/palette.js";
 import { findShortcutKeys } from "../core/shortcuts.js";
+import { focusModeEnabled, toggleFocusMode } from "../features/focus/focusModeState.js";
 import {
   invisibleCharactersVisible,
   toggleInvisibleCharacters,
@@ -588,6 +591,17 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
    * the `invisibleCharacters` Tool in `tools` there is no item, even when `true`.
    */
   invisibleCharacters?: boolean;
+  /**
+   * The "Fullscreen" item of the "view" section (ADR-0082): the layer's state is held by
+   * `RichTextEditor`, so the host passes it and the toggle. Without the prop, or without the
+   * `fullscreen` Tool in `tools`, there is no item.
+   */
+  fullscreen?: { open: boolean; onToggle: () => void };
+  /**
+   * The "Focus mode" item of the "view" section: the engine holds the mode, so the prop only says
+   * "the item is there". Without the `focus` Tool in `tools` there is no item, even when `true`.
+   */
+  focusMode?: boolean;
 }
 
 /**
@@ -615,7 +629,11 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
  * "Highlight" and "Color" buttons with popover grids beside "…" (`ColorMenus.tsx`): a color is
  * chosen by eye, from swatches.
  *
- * INVISIBLE CHARACTERS is the last section, and only on the fixed Toolbar (the `invisibleCharacters`
+ * THE "VIEW" SECTION also holds "Focus mode" and "Fullscreen" (ADR-0082), the display modes of the
+ * Document: unlike the invisible characters, they are in the selection menu's "…" too, because with
+ * `toolbar="bubble"` that menu is the only way in. Each is a checkbox item.
+ *
+ * INVISIBLE CHARACTERS is the first item of that section, and only on the fixed Toolbar (the `invisibleCharacters`
  * prop). It is a display mode of the Document, not formatting of the selection, so it is separated
  * from clearing by a divider and sits at the very end. The check mark is set when the characters are
  * shown. Choosing it toggles the display the same way as the `tool("invisibleCharacters").toggle()`
@@ -632,6 +650,8 @@ export function MoreFormatMenu({
   shortcut,
   omit = [],
   invisibleCharacters = false,
+  fullscreen,
+  focusMode = false,
 }: MoreFormatMenuProps) {
   const messages = useMessages().editor;
   const locale = useUiLocale();
@@ -641,6 +661,8 @@ export function MoreFormatMenu({
   const quote = quoteItemFor(tools);
   const clear = tools.has("clearFormatting");
   const view = invisibleCharacters && tools.has("invisibleCharacters");
+  const focus = focusMode && tools.has("focus");
+  const full = fullscreen !== undefined && tools.has("fullscreen");
   const languages = toolOptions(tools, "language")?.languages;
 
   // The result is compared deeply (the default of `useEditorState`): it re-renders only on change.
@@ -656,13 +678,23 @@ export function MoreFormatMenu({
       canClear: clear && current.can().unsetAllMarks(),
       // Showing invisible characters is a plugin state of the engine, not a Mark or a Block.
       invisible: view && invisibleCharactersVisible(current),
+      focus: focus && focusModeEnabled(current),
       // The language under the selection and the page's; `null` without the Tool.
       language: languages
         ? { ...selectedLanguage(current.state), primary: primaryLanguageOf(current) }
         : null,
     }),
   });
-  if (marks.length === 0 && !codeBlock && !quote && !clear && !view && !languages) return null;
+  if (
+    marks.length === 0 &&
+    !codeBlock &&
+    !quote &&
+    !clear &&
+    !(view || focus || full) &&
+    !languages
+  ) {
+    return null;
+  }
 
   const sections = (
     [
@@ -737,16 +769,24 @@ export function MoreFormatMenu({
         // A checkbox section of its own, at the end: the display mode of the Document, not formatting.
         id: "view",
         selectionMode: "multiple",
-        selected: state.invisible ? ["invisibleCharacters"] : [],
-        items: view
-          ? [
-              {
-                id: "invisibleCharacters",
-                label: messages.invisibleCharacters,
-                icon: InvisibleCharactersIcon,
-              },
-            ]
-          : [],
+        selected: [
+          ...(state.invisible ? ["invisibleCharacters"] : []),
+          ...(state.focus ? ["focusMode"] : []),
+          ...(full && fullscreen.open ? ["fullscreen"] : []),
+        ],
+        items: [
+          ...(view
+            ? [
+                {
+                  id: "invisibleCharacters",
+                  label: messages.invisibleCharacters,
+                  icon: InvisibleCharactersIcon,
+                },
+              ]
+            : []),
+          ...(focus ? [{ id: "focusMode", label: messages.focusMode, icon: FocusModeIcon }] : []),
+          ...(full ? [{ id: "fullscreen", label: messages.fullscreen, icon: ExpandIcon }] : []),
+        ],
       },
     ] satisfies FormatMenuSection[]
   ).filter((section) => section.items.length > 0);
@@ -762,6 +802,12 @@ export function MoreFormatMenu({
       toggleInvisibleCharacters(editor);
       editor.commands.focus();
     }
+    if (key === "focusMode") {
+      toggleFocusMode(editor);
+      editor.commands.focus();
+    }
+    // The layer moves the Document and focuses it itself; a `focus` here would run in the old place.
+    if (key === "fullscreen") fullscreen?.onToggle();
   };
 
   return (

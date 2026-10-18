@@ -615,6 +615,8 @@ describe("surfaces", () => {
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
           "menuitem: Clear formatting | Ctrl+\\",
           "menuitemcheckbox: Invisible characters",
+          "menuitemcheckbox: Focus mode",
+          "menuitemcheckbox: Fullscreen",
         ],
       }
     `);
@@ -644,6 +646,8 @@ describe("surfaces", () => {
           "menuitemcheckbox: Code block | Ctrl+Alt+C",
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
           "menuitem: Clear formatting | Ctrl+\\",
+          "menuitemcheckbox: Focus mode",
+          "menuitemcheckbox: Fullscreen",
         ],
       }
     `);

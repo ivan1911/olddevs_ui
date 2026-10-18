@@ -16,7 +16,7 @@ import { Toolbar } from "../../components/actions/Toolbar.js";
 import { Tooltip, TooltipProvider } from "../../components/overlays/Tooltip.js";
 import type { UiMessages } from "../../i18n/messages.js";
 import { useMessages } from "../../i18n/useMessages.js";
-import { SearchIcon, SourceIcon, type IconProps } from "../../icons.js";
+import { CollapseIcon, SearchIcon, SourceIcon, type IconProps } from "../../icons.js";
 import { buttonClasses } from "../../lib/button.js";
 import { cn } from "../../lib/cn.js";
 import { TOUCH_HIDDEN_CLASS } from "../../lib/touch.js";
@@ -167,7 +167,8 @@ const GROUPS: readonly (readonly Entry[])[] = [
       "more",
       (tools, withView) =>
         MORE_FORMAT_TOOLS.some((tool) => tools.has(tool)) ||
-        (withView && tools.has("invisibleCharacters"))
+        (withView &&
+          (tools.has("invisibleCharacters") || tools.has("fullscreen") || tools.has("focus")))
     ),
   ],
   [widget("lists", hasListMenu)],
@@ -259,6 +260,14 @@ export interface EditorToolbarProps {
    * Toolbar (which draws the same "…" as the fixed one) and without the `invisibleCharacters` Tool.
    */
   invisibleCharacters?: boolean;
+  /**
+   * Fullscreen mode (ADR-0082): the "Fullscreen" item of the "…" menu and, while the layer is open,
+   * the visible "Collapse" button at the right edge. The layer is held by `RichTextEditor`, so the
+   * Toolbar gets its state and the toggle. Without the prop, or without the `fullscreen` Tool, neither exists.
+   */
+  fullscreen?: { open: boolean; onToggle: () => void };
+  /** The "Focus mode" item of the "…" menu; the engine holds the mode. Without the `focus` Tool there is no item. */
+  focusMode?: boolean;
 }
 
 /**
@@ -288,6 +297,8 @@ export function EditorToolbar({
   source,
   search,
   invisibleCharacters = false,
+  fullscreen,
+  focusMode = false,
 }: EditorToolbarProps) {
   const messages = useMessages().editor;
   const label = useToolLabel();
@@ -297,7 +308,12 @@ export function EditorToolbar({
     and in their own group before history. Whether a button is shown now is also decided by
     its visibility predicate, which is read after the state below.
   */
-  const present = toolbarGroups(tools, source != null, invisibleCharacters);
+  const present = toolbarGroups(
+    tools,
+    source != null,
+    invisibleCharacters || fullscreen !== undefined || focusMode
+  );
+  const collapse = fullscreen?.open && tools.has("fullscreen") ? fullscreen.onToggle : undefined;
   const entries = present.flat();
   const actions = entries.filter((entry): entry is Action => entry.kind === "button");
   const toolButtons = entries.flatMap((entry) => (entry.kind === "tool" ? [entry.button] : []));
@@ -463,6 +479,8 @@ export function EditorToolbar({
                       key={entry.id}
                       {...host}
                       invisibleCharacters={invisibleCharacters}
+                      fullscreen={fullscreen}
+                      focusMode={focusMode}
                     />
                   );
                 case "lists":
@@ -508,7 +526,7 @@ export function EditorToolbar({
             {index < groups.length - 1 && <Separator className="h-auto" />}
           </div>
         ))}
-        {(search || shortcutsReference) && (
+        {(search || shortcutsReference || collapse) && (
           /*
             Find and the keyboard shortcuts popover form one group at the right edge. A narrow
             Toolbar moves it to a new row as a whole, also to the right: one button of the popover
@@ -546,6 +564,23 @@ export function EditorToolbar({
               </Tooltip>
             )}
             {shortcutsReference && <ShortcutsButton tools={tools} disabled={disabled} />}
+            {collapse && (
+              /*
+                "Collapse" is always visible, not only an `Esc` away: a touch screen has no `Esc`
+                (ADR-0082). It is at the right edge, where "Fullscreen" would put a button of its own.
+              */
+              <Tooltip content={messages.fullscreenExit}>
+                <button
+                  type="button"
+                  aria-label={messages.fullscreenExit}
+                  disabled={disabled}
+                  onClick={collapse}
+                  className={BUTTON_CLASS}
+                >
+                  <CollapseIcon size={16} aria-hidden />
+                </button>
+              </Tooltip>
+            )}
           </div>
         )}
       </Toolbar>
@@ -561,6 +596,8 @@ export interface ToolbarSkeletonProps {
   search: boolean;
   /** Whether the "…" menu has an "Invisible characters" item. That decides whether the Toolbar needs its "…" button. */
   invisibleCharacters: boolean;
+  /** Whether the "…" menu has a "Fullscreen" or a "Focus mode" item: either one makes the Toolbar need its "…" button too. */
+  view?: boolean;
   shortcutsReference: boolean;
 }
 
@@ -576,9 +613,10 @@ export function ToolbarSkeleton({
   source,
   search,
   invisibleCharacters,
+  view = false,
   shortcutsReference,
 }: ToolbarSkeletonProps) {
-  const groups = toolbarGroups(tools, source, invisibleCharacters).filter(
+  const groups = toolbarGroups(tools, source, invisibleCharacters || view).filter(
     (group) => group.length > 0
   );
   const place = (key: string, menu: boolean, className?: string) => (

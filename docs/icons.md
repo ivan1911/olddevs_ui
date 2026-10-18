@@ -119,6 +119,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
 | Details Block of the Editor         | `DetailsIcon`                                   | `ChevronDownIcon`              |
 | Select Blocks whole in the Editor   | `BlockSelectIcon`                               | `SelectIcon`                   |
+| Focus mode of the Editor            | `FocusModeIcon`                                 | `ExpandIcon`                   |
 | Editor formula, inline and block    | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
 | Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
 | Video by link in the Editor         | `VideoIcon`                                     | `PlayIcon`                     |
@@ -232,6 +233,8 @@ Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`
 Video added `VideoIcon` — lucide's `SquarePlay`: a square with a play triangle, the "Video" item of the Editor's Insert menu (the `youtube` and `twitch` Tools). This is not `PlayIcon`: that one is a start button, and the player placeholder's own "Play" button (the `autoload: false` option) carries exactly that icon (ADR-0049).
 
 Block selection added `BlockSelectIcon` — lucide's `SquareDashed`: a dashed frame, the "Select" item of the Block handle menu. This is not `SelectIcon`: those are the up-down chevrons of a select field, and the frame matches how the Editor highlights selected Blocks (ADR-0049).
+
+The focus mode added `FocusModeIcon` — lucide's `Focus`: a viewfinder with a dot, the "Focus mode" item of the Editor's "…" menu. Its neighbor "Fullscreen" takes the existing `ExpandIcon`, and the visible "Collapse" button takes `CollapseIcon` (ADR-0049).
 
 The first iteration of the table made do with two icons for four directions
 (`AddRowIcon`, `AddColumnIcon`) and an icon for the separate "Table

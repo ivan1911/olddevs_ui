@@ -7,6 +7,7 @@ import { toolOptions } from "../core/toolDescriptor.js";
 import type { RichTextTools } from "../core/toolOptions.js";
 import type { RichTextEditorHandle } from "../RichTextEditor.js";
 import { blockSelectionSnapshot } from "../features/blockSelection/blockSelectionSnapshot.js";
+import { focusModeEnabled } from "../features/focus/focusModeState.js";
 import { invisibleCharactersSnapshot } from "../features/invisibleCharacters/invisibleCharactersSnapshot.js";
 import { languageSnapshot } from "../features/language/languageSnapshot.js";
 import { searchSnapshot } from "../features/search/searchSnapshot.js";
@@ -51,6 +52,18 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
     "blockSelection",
     (editor, ref) =>
       toolSignals(ref).tools?.has("blockSelection") ? blockSelectionSnapshot(editor) : null,
+  ],
+  [
+    "fullscreen",
+    (_editor, ref) => {
+      const { tools, fullscreenOpen } = toolSignals(ref);
+      return tools?.has("fullscreen") ? { open: fullscreenOpen === true } : null;
+    },
+  ],
+  [
+    "focus",
+    (editor, ref) =>
+      toolSignals(ref).tools?.has("focus") ? { enabled: focusModeEnabled(editor) } : null,
   ],
   [
     "language",

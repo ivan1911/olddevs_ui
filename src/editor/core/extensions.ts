@@ -249,6 +249,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "search",
   "invisibleCharacters",
   "blockSelection",
+  "focus",
   "toc",
 ];
 
