@@ -145,6 +145,7 @@ const INSERT_ORDER: readonly Tool[] = [
   "wrapper",
   "details",
   "mathematics",
+  "date",
   "youtube",
   "twitch",
 ];

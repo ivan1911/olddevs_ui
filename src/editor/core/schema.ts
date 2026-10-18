@@ -1,6 +1,7 @@
 import { CODE_LANGUAGE_IDS } from "../features/code/codeLanguages.js";
 import { EDITOR_LAYOUTS } from "../features/layout/columnLayouts.js";
 import { CUSTOM_COLOR_STYLE_PATTERN } from "../features/color/customColor.js";
+import { isDatetime } from "../features/date/dateValue.js";
 import { safeLatexSource } from "../features/mathematics/mathHtml.js";
 import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "../features/mathematics/mathNames.js";
 import { devWarn } from "../../lib/dev-warn.js";
@@ -83,6 +84,10 @@ export const RICH_TEXT_SCHEMA = {
    * Island render it. The `data-type` and `data-latex` pair is allowed only on these two tags;
    * `data-latex` is the only attribute value where `<` is allowed.
    *
+   * A date mention is `time[datetime]` inline (ADR-0079), listed with the inline tags in `marks`:
+   * `datetime` is strictly `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM±HH:MM`, calendar-checked, and the
+   * element holds only the text the author saw. A `time` in any other form loses its wrapper.
+   *
    * A table is `table > tbody > tr > th|td`, without `thead`, `colgroup` or `caption`: a header
    * row is an ordinary first row of `th` cells. A cell carries only merging (`colspan`,
    * `rowspan`) and column alignment (`data-align`). Column widths are not built, and `style` and
@@ -122,7 +127,7 @@ export const RICH_TEXT_SCHEMA = {
    * too, where it is task item markup). `a` is a link, its address limited to the schemes in
    * `protocols`.
    */
-  marks: ["strong", "em", "u", "s", "code", "sup", "sub", "mark", "br", "a"],
+  marks: ["strong", "em", "u", "s", "code", "sup", "sub", "mark", "br", "a", "time"],
   /** Attributes by tag. Anything not listed here does not appear in the output. */
   attributes: {
     /** The number of the first item, only when it is not 1. */
@@ -201,6 +206,11 @@ export const RICH_TEXT_SCHEMA = {
      * only on an image with a set width.
      */
     img: ["src", "alt", "data-width"],
+    /**
+     * Date mention (ADR-0079): `datetime` only on `time`, and only in the two forms the Editor
+     * writes, `YYYY-MM-DD` and `YYYY-MM-DDTHH:MM±HH:MM` (`isDatetime`).
+     */
+    time: ["datetime"],
   },
   /**
    * Allowed values of `span[data-color]`, the text color: six status tones. `sanitizeRichText`
@@ -619,6 +629,9 @@ export interface RichTextPurifier {
  * - Formula: `span[data-type="inline-math"]` or `div[data-type="block-math"]` with `data-latex`.
  *   The pair is allowed only on these tags. The element itself is empty, and `data-latex` may
  *   contain `<` (it is LaTeX text, not markup). Without `data-latex` the element loses its wrapper.
+ * - Date mention: `time[datetime]` with a value in the Editor's two forms, `YYYY-MM-DD` or
+ *   `YYYY-MM-DDTHH:MM±HH:MM`, and a real calendar date (`isDatetime`). The element keeps only text:
+ *   marks and tags inside it are cut. A `time` without a valid `datetime` loses its wrapper.
  * - `colspan`, `rowspan`: on `th` and `td`, an integer from 1 to `tableSpans`.
  * - Video: `div[data-block="video"]` with `data-provider` from `VIDEO_PROVIDERS` and `data-src`,
  *   an `https` address of a video on that service's host (`isVideoSrc`). A Block without a valid
@@ -699,6 +712,8 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
   // tag, or next to a foreign `data-type`, is removed. `data-type` is read from the markup, not from
   // the hook's decision, because DOMPurify walks the attributes in its own order.
   "data-latex": (node) => isFormula(node),
+  // A date mention's value: only on `time`, only in the two forms of the Editor (ADR-0079).
+  datetime: (node, value) => node.nodeName === "TIME" && isDatetime(value),
   // An open Block: `open=""`, as the Editor writes it. An `open="open"` value from foreign HTML
   // loses the attribute, and the Block stays closed.
   open: (node, value) => node.nodeName === "DETAILS" && value === "",
@@ -958,6 +973,13 @@ function checkStructure(node: Element, schema: RichTextSchema): void {
   // its wrapper, like any stray `span` or `div`.
   if (isFormula(node)) {
     if (node.hasAttribute("data-latex")) node.replaceChildren();
+    else node.replaceWith(...node.childNodes);
+    return;
+  }
+  // A date mention is text in a `time`: nothing inside it but the words. Without a valid `datetime`
+  // (the attribute hook removed it) the element is only a wrapper, and it goes away with its text kept.
+  if (node.nodeName === "TIME") {
+    if (node.hasAttribute("datetime")) node.replaceChildren(node.textContent ?? "");
     else node.replaceWith(...node.childNodes);
     return;
   }

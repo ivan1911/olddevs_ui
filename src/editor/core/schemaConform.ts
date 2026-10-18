@@ -2,6 +2,7 @@
 
 import type { Editor, JSONContent } from "@tiptap/core";
 import type { Schema } from "@tiptap/pm/model";
+import { dateJsonAsText } from "../features/date/dateAsText.js";
 import { formulaJsonAsText } from "../features/mathematics/mathAsText.js";
 import { videoJsonAsLink } from "../features/video/videoAsLink.js";
 
@@ -87,6 +88,9 @@ export function conformToSchema(
   const type = node.type && !options.excluded?.has(node.type) ? schema.nodes[node.type] : undefined;
   // A formula without the `mathematics` Tool becomes text, and a video without `youtube` and
   // `twitch` becomes a link, not a loss (`mathAsText.ts`, `videoAsLink.ts`).
+  // A date mention without the `date` Tool becomes its words (`dateAsText.ts`).
+  const dateText = type ? null : dateJsonAsText(node);
+  if (dateText) return dateText;
   if (!type) return formulaJsonAsText(node) ?? videoJsonAsLink(node, schema) ?? children;
 
   const content = type.inlineContent || type.isLeaf ? children : wrapInlineRuns(children, schema);

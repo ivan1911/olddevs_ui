@@ -537,6 +537,13 @@ export const DEFAULT_MESSAGES: UiMessages = {
     mathInsert: "Insert",
     mathApply: "Apply",
     mathRemove: "Remove formula",
+    date: "Date",
+    dateTime: "Time",
+    dateTimeField: "Time, hours and minutes",
+    dateRemoveTime: "Remove time",
+    dateRemove: "Delete date",
+    dateInsert: "Insert",
+    dateApply: "Apply",
     emoji: "Emoji",
     emojiGrid: "Choose an emoji",
     emojiCategory: {

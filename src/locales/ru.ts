@@ -576,6 +576,13 @@ export const messages: UiMessages = {
     mathInsert: "Вставить",
     mathApply: "Применить",
     mathRemove: "Убрать формулу",
+    date: "Дата",
+    dateTime: "Время",
+    dateTimeField: "Время, часы и минуты",
+    dateRemoveTime: "Убрать время",
+    dateRemove: "Удалить дату",
+    dateInsert: "Вставить",
+    dateApply: "Применить",
     emoji: "Эмодзи",
     emojiGrid: "Выберите эмодзи",
     emojiCategory: {

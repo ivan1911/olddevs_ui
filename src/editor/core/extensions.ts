@@ -51,6 +51,12 @@ export interface EditorExtensionOptions {
    */
   quoteSet: () => EditorQuoteSet;
   /**
+   * The author's locale (the `UiProvider` locale), for the Tools that write locale-dependent text into
+   * the Document: the `date` Tool writes a date mention's words with it when the mention is inserted or
+   * edited. Read at that moment: a locale change does not recreate the engine. Absent means English.
+   */
+  locale?: () => string;
+  /**
    * Bridge to the Slash menu, opened by `/`. Without it the menu does not open: the `insertMenu`
    * Tool is disabled or has no items for it.
    */
@@ -210,6 +216,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "wrapper",
   "details",
   "mathematics",
+  "date",
   "insertMenu",
   TRIGGERS,
   "history",

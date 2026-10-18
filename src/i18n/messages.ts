@@ -1032,6 +1032,20 @@ export interface UiMessages {
     mathApply: string;
     mathRemove: string;
     /**
+     * Date mention (ADR-0079). `date` is the Slash menu item and the name of the popover. In the
+     * popover: `dateTime` is the label of the "Time" switch, `dateTimeField` is the name of the time
+     * field (`HH:MM`), `dateRemoveTime` turns a date with a time back into a date, `dateRemove` deletes
+     * the mention from the Document, `dateInsert` and `dateApply` are the buttons for a new and for an
+     * editable mention.
+     */
+    date: string;
+    dateTime: string;
+    dateTimeField: string;
+    dateRemoveTime: string;
+    dateRemove: string;
+    dateInsert: string;
+    dateApply: string;
+    /**
      * Emoji. `emoji` is the name of the Toolbar button; `emojiGrid` is the name of the grid in
      * the popover. `emojiCategory` holds the category names, `emojiName` the name of each emoji:
      * a screen reader reads a cell by its name, not by its character, because different programs
