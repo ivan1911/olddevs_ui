@@ -506,6 +506,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     ref
   ) {
     const messages = useMessages();
+    const locale = useUiLocale();
     /*
       The Tool set is frozen at mount: the Schema is built from it, and a live engine's Schema
       cannot be changed. The Toolbar reads the same frozen set, otherwise a new `tools` would show
@@ -594,10 +595,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     // `typography` quotes are read at the moment of typing: a catalog change does not recreate the engine.
     const quoteSetRef = useRef(messages.editor.typographyQuotes);
     quoteSetRef.current = messages.editor.typographyQuotes;
-    // The `date` Tool writes a mention's words in the author's locale at insertion and at editing.
-    const uiLocale = useUiLocale();
-    const localeRef = useRef(uiLocale);
-    localeRef.current = uiLocale;
+    // The `language` Tool reads the interface locale when asked, as the quotes are read.
+    const localeRef = useRef(locale);
+    localeRef.current = locale;
     // The upload handler and image strings also go through refs: the extension reads them when a
     // file is inserted and when a caption is redrawn, not when the engine is created.
     const uploadRef = useRef(onUploadImage);
@@ -885,6 +885,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           focusToolbar: () => focusToolbarRef.current(),
           openBlockMenu: () => openBlockMenuRef.current(),
           onNotice: setNotice,
+          editorMessages: () => imageMessagesRef.current,
           openSearch: (replace) => openSearchRef.current(replace),
           image: {
             /*

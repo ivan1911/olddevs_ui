@@ -98,6 +98,45 @@ export interface DateToolCommands {
   insert(value?: string): boolean;
 }
 
+/** Commands of the `language` Tool (Text part language, ADR-0078). */
+export interface LanguageToolCommands {
+  /**
+   * Marks the selection with a language: a tag of the BCP 47 shape (`"en"`, `"de-CH"`), in any case,
+   * not only one of the `languages` option. A caret in the middle of a marked word changes the
+   * language of that whole word; a caret elsewhere sets the language for the text typed next. The
+   * page's primary language (`primary` in the Tool state) does not make a mark: it removes the
+   * existing one, the same as `unset()`, and gives `true`. `false` means the value is not a language
+   * tag, the field cannot be edited, or Source mode is open (there is no Document on screen).
+   */
+  set(language: string): boolean;
+  /**
+   * Removes the language mark from the selection, or from the whole marked word at the caret: the
+   * "Remove language mark" item of the menu. `false` in `readOnly` and in Source mode. Clear
+   * formatting does not do this: a language is meaning, not looks.
+   */
+  unset(): boolean;
+}
+
+/**
+ * Commands of the `blockSelection` Tool (ADR-0077). Each returns a `boolean`: done or not.
+ */
+export interface BlockSelectionToolCommands {
+  /**
+   * Selects the current Blocks whole, the same as `Esc` in the text: a caret gives its Block (in a
+   * list, the item; in a table, the whole table), a text selection across several Blocks gives all of
+   * them. The selection is made without moving focus. `false` in Source mode, in a disabled field,
+   * and where the selection is in no Block (a caret between Blocks). It works in `readOnly`, where
+   * the Blocks can be copied.
+   */
+  selectCurrent(): boolean;
+  /**
+   * Ends the Block selection and puts the caret at the end of its first Block, the same as the
+   * second `Esc` (without letting the key through to a window around the Editor). `false` when no
+   * Blocks are selected.
+   */
+  clear(): boolean;
+}
+
 /**
  * Commands of a Tool by name from the `RichTextTools` map. A name outside the map gives `unknown`:
  * typing is optional, and the Tool works without it.

@@ -3,6 +3,7 @@
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import type { BubbleMenuProps } from "@tiptap/react/menus";
 import { useEffect, useMemo, type RefObject } from "react";
+import { BlockSelection } from "../core/blockSelection.js";
 import { focusWithin } from "./focusWithin.js";
 import { isImageSelection } from "../features/image/image.js";
 
@@ -40,6 +41,8 @@ export const showOverSelection: NonNullable<BubbleMenuProps["shouldShow"]> = ({
 }) => {
   const { selection } = state;
   if (selection.empty || !editor.isEditable || isImageSelection(selection)) return false;
+  // Whole Blocks selected (ADR-0077): their menu is the Block handle's, not a text pill.
+  if (selection instanceof BlockSelection) return false;
   // Block trait "atom without a formatting menu" on a custom Block (ADR-0058, item 1.4).
   if (selection instanceof NodeSelection && selection.node.type.spec.plainAtom === true) {
     return false;

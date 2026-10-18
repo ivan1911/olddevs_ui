@@ -84,6 +84,8 @@ test("the full preset offers the rare marks, Code block, Quote and Clear formatt
     { role: "menuitemcheckbox", name: "Strikethrough", checked: false, shortcut: "Ctrl+Shift+S" },
     { role: "menuitemcheckbox", name: "Superscript", checked: false, shortcut: "Ctrl+." },
     { role: "menuitemcheckbox", name: "Subscript", checked: false, shortcut: "Ctrl+," },
+    // The submenu of the language Mark (OLDSUI-308): a section of its own, without a shortcut.
+    { role: "menuitem", name: "Language", checked: false, shortcut: null },
     { role: "menuitemcheckbox", name: "Code block", checked: false, shortcut: "Ctrl+Alt+C" },
     // Quote is a check item next to the Code block (OLDSUI-154): it has moved out of "¶".
     { role: "menuitemcheckbox", name: "Quote", checked: false, shortcut: "Ctrl+Shift+B" },
@@ -105,6 +107,7 @@ test("on Apple the shortcuts are signed with ⌘", async () => {
     "⌘+⇧+S",
     "⌘+.",
     "⌘+,",
+    null,
     "⌘+⌥+C",
     "⌘+⇧+B",
     "⌘+\\",
@@ -308,6 +311,9 @@ test("Escape in the menu closes it, not the layer under it", async () => {
   // the Document, not to the "…" button: a tooltip may open on that button, and the first Escape
   // through the layer stack would go to it.
   act(() => textbox().focus());
+  // The first Escape in the text selects the Block (the `blockSelection` Tool, ADR-0077); the layer closes on the second.
+  await user.keyboard("{Escape}");
+  expect(onClose).not.toHaveBeenCalled();
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });
@@ -330,6 +336,7 @@ test("the menu speaks the provider's language", async () => {
     t.strike,
     t.superscript,
     t.subscript,
+    t.language,
     t.codeBlock,
     t.blockquote,
     t.clearFormatting,

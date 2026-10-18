@@ -166,11 +166,11 @@ test("a selected image and a selected line show the handle too", () => {
   expect(handle()).toBeDefined();
 });
 
-test("a selection across two blocks has no handle: there is no single block to act on", () => {
+test("a selection across two blocks keeps the handle: its menu acts on both (OLDSUI-307)", () => {
   const { editor } = renderEditor({ defaultValue: "<p>One</p><p>Two</p>" });
   caretIn(editor, "One");
   act(() => void editor.commands.setTextSelection({ from: 2, to: 8 }));
-  expect(queryHandle()).toBeNull();
+  expect(handle()).toBeDefined();
 });
 
 test("read-only and disabled editors have no handle; read-only has no left margin for it", () => {
@@ -205,6 +205,8 @@ test("the menu: Add, Format, Move up, Move down, Duplicate, Delete — Delete in
 
   const menu = await openMenu(user);
   expect(itemsOf(menu).map((item) => item.name)).toEqual([
+    // "Select" is the way into Block selection, from the `blockSelection` Tool (`tools` has them all).
+    "Select",
     "Add",
     "Format",
     "Move up",
@@ -572,10 +574,17 @@ test('on a Russian layout the slash key types ".": Mod+/ still opens the menu, n
   expect(editor.getHTML()).toBe("<p>One</p>");
 });
 
-test("Mod+/ without a single block under the selection goes on to the browser", () => {
-  const { editor } = renderEditor({ defaultValue: "<p>One</p><p>Two</p>" });
-  caretIn(editor, "One");
-  act(() => void editor.commands.setTextSelection({ from: 2, to: 8 }));
+test("Mod+/ with no block under the selection goes on to the browser", async () => {
+  const { GapCursor } = await import("@tiptap/pm/gapcursor");
+  const { editor } = renderEditor({ defaultValue: TABLE + TABLE });
+  caretIn(editor, "c1");
+  // The gap is at the Document level, between the two tables: it stands in no block.
+  const between = editor.state.doc.child(0).nodeSize;
+  act(() =>
+    editor.view.dispatch(
+      editor.state.tr.setSelection(new GapCursor(editor.state.doc.resolve(between)))
+    )
+  );
 
   expect(pressOpen(editor)).toBe(false);
   expect(screen.queryByRole("menu")).toBeNull();
@@ -641,6 +650,7 @@ test("the handle and its menu speak the provider's language", async () => {
   await user.click(screen.getByRole("button", { name: t.blockActions }));
   const menu = await screen.findByRole("menu", { name: t.blockActions });
   expect(itemsOf(menu).map((item) => item.name)).toEqual([
+    t.blockSelect,
     t.blockAdd,
     t.blockFormat,
     t.blockMoveUp,

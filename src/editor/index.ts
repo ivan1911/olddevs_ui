@@ -51,6 +51,7 @@ export type {
   DateToolOptions,
   DetailsToolOptions,
   InvisibleCharactersToolOptions,
+  LanguageToolOptions,
   MathematicsToolOptions,
   RichTextTools,
   SearchToolOptions,
@@ -61,12 +62,16 @@ export type {
 } from "./core/toolOptions.js";
 export type {
   DateToolCommands,
+  BlockSelectionToolCommands,
   InvisibleCharactersToolCommands,
+  LanguageToolCommands,
   SearchToolCommands,
   TocToolCommands,
 } from "./core/toolCommands.js";
 export type {
+  BlockSelectionToolState,
   InvisibleCharactersToolState,
+  LanguageToolState,
   SearchToolState,
   TocToolHeading,
   TocToolState,

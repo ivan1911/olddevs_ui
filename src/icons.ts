@@ -544,6 +544,12 @@ export {
    */
   ListCollapse as DetailsIcon,
   /**
+   * Select Blocks whole in the Editor (Block selection): a dashed frame. Not `SelectIcon`, which is
+   * the up-down chevrons of a select field; here it is a frame around a Block, as in the highlight
+   * the selection draws.
+   */
+  SquareDashed as BlockSelectIcon,
+  /**
    * Video in the Editor (the `youtube` and `twitch` Tools): a square with a "play" triangle, the
    * "Video" item of the Slash menu. Not `PlayIcon`: that one is a launch button, and it is exactly
    * that button inside the player itself.

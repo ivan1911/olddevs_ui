@@ -1,20 +1,23 @@
 "use client";
 
 import { Extension, type Editor } from "@tiptap/core";
-import { Fragment, type Node as PmNode, type NodeRange } from "@tiptap/pm/model";
+import { Fragment, type NodeRange } from "@tiptap/pm/model";
 import {
   Plugin,
   PluginKey,
-  Selection,
   TextSelection,
   type EditorState,
   type Transaction,
 } from "@tiptap/pm/state";
 import { StepMap } from "@tiptap/pm/transform";
+import { BlockSelection, removeUnits } from "./blockSelection.js";
+import { blockUnitRange, inTable, isBlockContainer, unitNodes } from "./blockUnit.js";
+
+export { isBlockContainer };
 
 /**
  * Commands over Blocks: duplicate, move, select the text of a Block, shift a list item, clear
- * styles — as in Notion and Google Docs.
+ * styles — as in Notion and Google Docs. Which Blocks a command takes is `blockUnit.ts`.
  *
  * It has no markup of its own, so the extension is always on, like `ToolbarFocus`; the Tool is
  * needed only for clearing styles — its shortcut lives and dies together with the
@@ -30,44 +33,16 @@ import { StepMap } from "@tiptap/pm/transform";
  * leave this shortcut free in an input field.
  */
 
-const LIST_NODES: ReadonlySet<string> = new Set(["bulletList", "orderedList", "taskList"]);
 const LIST_ITEMS: ReadonlySet<string> = new Set(["listItem", "taskItem"]);
-
-/**
- * A container of Blocks — a node whose children are the Blocks: the Document itself, and any node
- * whose Schema is marked `blockContainer: true`.
- *
- * A SEAM FOR THE COLUMN LAYOUT. A column of a Column layout holds its own Blocks, and they should
- * each have their own handle at the column's left edge, not one for the whole layout. The column
- * node will declare itself a container with a flag in the Schema (in Tiptap — through
- * `extendNodeSchema`), and the handle, its position and all its actions (up, down, duplicate,
- * delete, add below, format) will work inside the column without changing this module:
- * `handleBlock` below computes "Block" everywhere.
- */
-export function isBlockContainer(node: PmNode): boolean {
-  return node.type.name === "doc" || node.type.spec.blockContainer === true;
-}
-
-/**
- * Whether the selection lies entirely inside one table: there `⌥⇧↑/↓` does not move anything
- * (`Alt+↓` is the row), and the Block is the whole table. A selection that starts or ends outside
- * a table moves the table itself along with its neighbours.
- */
-function inTable(state: Pick<EditorState, "selection">): boolean {
-  const { $from, $to } = state.selection;
-  for (let depth = $from.sharedDepth($to.pos); depth > 0; depth--) {
-    if ($from.node(depth).type.spec.tableRole === "table") return true;
-  }
-  return false;
-}
 
 /**
  * Whose Blocks the command takes.
  *
  * - `selection` — keyboard shortcuts: the Blocks under the selection, and in a list — the item;
  *   duplicating and moving an item stay within its list.
- * - `handle` — the Block handle: the whole container Block (the whole list, the whole table);
- *   exactly one — the one the handle stands on (`handleBlock`).
+ * - `handle` — the Block handle: the whole container Block (the whole list, the whole table), or
+ *   the row of Blocks the handle stands on (`handleBlocks`): the Blocks a text selection touches, or
+ *   the units of a Block selection.
  */
 export type BlockScope = "selection" | "handle";
 
@@ -77,41 +52,45 @@ export type BlockScope = "selection" | "handle";
  * horizontal rule. ONE function for everything the handle knows about a Block: where to draw it,
  * what to move, copy, delete, insert under, and what to turn into. A selection across several
  * Blocks, and a caret in the gap between them, give `null`: the handle has nothing to attach to.
+ * The Block handle over a row of Blocks is `handleBlocks`.
  */
 export function handleBlock(state: Pick<EditorState, "selection">): NodeRange | null {
-  const { $from, $to } = state.selection;
-  const range = $from.blockRange($to, isBlockContainer);
+  const range = handleBlocks(state);
   return range && range.endIndex - range.startIndex === 1 ? range : null;
 }
 
 /**
- * The Blocks under the selection — a row of siblings under one parent.
+ * The Blocks the handle stands on: one or several, a row of siblings under one parent.
+ *
+ * - Block selection (ADR-0077) gives exactly its units, in a list the items.
+ * - Otherwise the text selection gives the Blocks it touches, taken whole as `handleBlock` takes
+ *   them: a list touched at one item is one Block, the whole list.
+ *
+ * The handle stands at the first Block of the row, and its menu acts on all of them. A caret in
+ * the gap between Blocks gives `null`.
+ */
+export function handleBlocks(state: Pick<EditorState, "selection">): NodeRange | null {
+  const { selection } = state;
+  if (selection instanceof BlockSelection) return selection.nodeRange();
+  const { $from, $to } = selection;
+  const range = $from.blockRange($to, isBlockContainer);
+  return range && range.startIndex < range.endIndex ? range : null;
+}
+
+/**
+ * The Blocks under the selection — a row of siblings under one parent (`blockUnitRange`).
  *
  * A Block is a child of a container of Blocks, and in a list it is an item. In a Column layout's
  * column the Block is a child of the column: moving does not take it out of the column, while a
  * selection across two columns takes the whole Column layout. A table is one Block as a whole,
  * even if its cell contains a list. A selection across several Blocks takes all of them: the row
  * is counted where the start and the end of the selection diverge. A caret in the gap between
- * Blocks is inside no Block — `null`.
+ * Blocks is inside no Block — `null`. Block selection is exactly its units.
  */
 function blockRange(state: EditorState, scope: BlockScope): NodeRange | null {
-  if (scope === "handle") return handleBlock(state);
+  if (scope === "handle") return handleBlocks(state);
   const { $from, $to } = state.selection;
-  const table = inTable(state);
-  const range = $from.blockRange(
-    $to,
-    (parent) => isBlockContainer(parent) || (!table && LIST_NODES.has(parent.type.name))
-  );
-  // A caret in the gap at the Document level gives an empty row, not `null`.
-  return range && range.startIndex < range.endIndex ? range : null;
-}
-
-function blocksOf(range: NodeRange): PmNode[] {
-  const nodes: PmNode[] = [];
-  for (let index = range.startIndex; index < range.endIndex; index++) {
-    nodes.push(range.parent.child(index));
-  }
-  return nodes;
+  return blockUnitRange($from, $to);
 }
 
 /**
@@ -134,7 +113,7 @@ export function duplicateBlock(scope: BlockScope = "selection"): Command {
     if (!range) return false;
     if (dispatch) {
       const size = range.end - range.start;
-      const tr = state.tr.insert(range.end, Fragment.from(blocksOf(range)));
+      const tr = state.tr.insert(range.end, Fragment.from(unitNodes(range)));
       dispatch(shifted(state, tr, size).scrollIntoView());
     }
     return true;
@@ -149,10 +128,10 @@ export function duplicateBlock(scope: BlockScope = "selection"): Command {
  */
 export function moveBlock(dir: -1 | 1, scope: BlockScope = "selection"): Command {
   return (state, dispatch) => {
-    if (scope === "selection" && inTable(state)) return false;
+    if (scope === "selection" && inTable(state.selection.$from, state.selection.$to)) return false;
     const range = blockRange(state, scope);
     if (!range) return false;
-    const blocks = blocksOf(range);
+    const blocks = unitNodes(range);
     const neighbourIndex = dir < 0 ? range.startIndex - 1 : range.endIndex;
     if (neighbourIndex < 0 || neighbourIndex >= range.parent.childCount) return true;
     if (dispatch) {
@@ -168,25 +147,17 @@ export function moveBlock(dir: -1 | 1, scope: BlockScope = "selection"): Command
 }
 
 /**
- * The handle's "Delete" — the whole Block; the caret goes to the neighbour above, and for the
- * first Block to the neighbour below. The only Block of a container yields its place to an empty
- * default Block (a paragraph): the Schema does not allow an empty Document, and an empty column is
- * no better.
+ * The handle's "Delete" — the whole Block, or all the Blocks of the row the handle stands on; the
+ * caret goes to the neighbour above, and for the first Block to the neighbour below. Every Block of
+ * a container yields its place to an empty default Block (a paragraph): the Schema does not allow
+ * an empty Document, and an empty column is no better.
  */
 export const deleteBlock: Command = (state, dispatch) => {
-  const range = handleBlock(state);
+  const range = handleBlocks(state);
   if (!range) return false;
   if (dispatch) {
     const tr = state.tr;
-    if (range.parent.childCount === 1) {
-      const filler = range.parent.type.contentMatch.defaultType?.createAndFill();
-      if (!filler) return false;
-      tr.replaceWith(range.start, range.end, filler);
-      tr.setSelection(Selection.near(tr.doc.resolve(range.start + 1)));
-    } else {
-      tr.delete(range.start, range.end);
-      tr.setSelection(Selection.near(tr.doc.resolve(range.start), range.startIndex > 0 ? -1 : 1));
-    }
+    if (!removeUnits(tr, range)) return false;
     dispatch(tr.scrollIntoView());
   }
   return true;
@@ -207,12 +178,12 @@ export function handleShortcutsMatch(state: EditorState): {
   move: boolean;
   type: boolean;
 } {
-  const handle = handleBlock(state);
+  const handle = handleBlocks(state);
   const keys = blockRange(state, "selection");
   const same = !!handle && !!keys && handle.start === keys.start && handle.end === keys.end;
   return {
     duplicate: same,
-    move: same && !inTable(state),
+    move: same && !inTable(state.selection.$from, state.selection.$to),
     type: !!handle && state.selection.$from.depth === handle.depth + 1,
   };
 }

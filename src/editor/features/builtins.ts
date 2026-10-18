@@ -7,6 +7,7 @@ import { turnIntoTypes } from "../core/blockTypes.js";
 import type { InsertItem } from "../core/insertItems.js";
 import { INSERT_MENU_TOOL } from "../core/insertMenuTool.js";
 import { SHORTCUT_KEYS, type ShortcutCommand } from "../core/shortcuts.js";
+import { BLOCK_SELECTION_TOOL } from "./blockSelection/blockSelectionTool.js";
 import { ALIGN_TOOL, COLOR_TOOL, HIGHLIGHT_TOOL } from "./color/colorTools.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
 import { DATE_TOOL } from "./date/dateTool.js";
@@ -16,6 +17,7 @@ import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
 import { HISTORY_TOOL } from "./history/historyTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
 import { INVISIBLE_CHARACTERS_TOOL } from "./invisibleCharacters/invisibleCharactersTool.js";
+import { LANGUAGE_TOOL } from "./language/languageTool.js";
 import { LAYOUT_TOOL } from "./layout/layoutTool.js";
 import { LINK_TOOL } from "./link/linkTool.js";
 import { BULLET_LIST_TOOL, ORDERED_LIST_TOOL, TASK_LIST_TOOL } from "./lists/listTools.js";
@@ -81,12 +83,14 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
 export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   search: SEARCH_TOOL,
   invisibleCharacters: INVISIBLE_CHARACTERS_TOOL,
+  blockSelection: BLOCK_SELECTION_TOOL,
   // The Table of contents carries only options: its strip and list are drawn in `RichTextEditor`.
   toc: TOC_TOOL,
   layout: LAYOUT_TOOL,
   color: COLOR_TOOL,
   highlight: HIGHLIGHT_TOOL,
   align: ALIGN_TOOL,
+  language: LANGUAGE_TOOL,
   wrapper: WRAPPER_TOOL,
   details: DETAILS_TOOL,
   mathematics: MATHEMATICS_TOOL,

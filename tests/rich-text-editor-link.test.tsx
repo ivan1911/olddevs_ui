@@ -333,6 +333,9 @@ test("Escape in the link popover inside a Dialog closes the popover, not the win
 
   // Control: without the popover, the same Escape closes the dialog.
   await waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
+  // The first Escape in the text selects the Block (the `blockSelection` Tool, ADR-0077); the layer closes on the second.
+  await user.keyboard("{Escape}");
+  expect(onClose).not.toHaveBeenCalled();
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });

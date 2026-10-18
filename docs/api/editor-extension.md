@@ -39,7 +39,7 @@ The decision is ADR-0058, which supplements ADR-0050. Capitalized terms come fro
 
 - What you need is already among the kit's Tools (["Tools and Presets"](../components/inputs/rich-text-editor.md#tools-and-presets)): pass the name in `tools`, do not write a custom Tool.
 - To hide a built-in button or item, narrow `tools`. A built-in Tool cannot be replaced by name: turn it off and add a custom Tool under your own name.
-- Only `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography` and `invisibleCharacters` have options; `tool("bold", …)` does not compile. Options for other built-in Tools will be added one at a time, as consumers ask for them. You cannot change the behavior of a built-in Tool by substitution (there is no `extend()` as in Tiptap): the descriptions of built-in Tools are not exported.
+- Only `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters` and `language` have options; `tool("bold", …)` does not compile. Options for other built-in Tools will be added one at a time, as consumers ask for them. You cannot change the behavior of a built-in Tool by substitution (there is no `extend()` as in Tiptap): the descriptions of built-in Tools are not exported.
 - You cannot change the options of a mounted field: they are read once, when the engine is created, together with `tools`. Remount the field with a key.
 - You cannot put arbitrary React in the Toolbar row or in a menu: the kit renders the UI contributions itself. React is allowed only in the content of a popover (of a button, Insert item or Block action) and in a Text card.
 - You cannot intercept paste and drop through a prop: the Extensions of a custom Tool handle them (["Paste and drop order"](../components/inputs/rich-text-editor.md#paste-and-drop-order)).
@@ -147,7 +147,7 @@ The Extensions still follow the Tiptap major (ADR-0058, item 12.4). The three ne
 
 ### The `RichTextTools` map and declaration merging
 
-The types of all three parts are collected in the `RichTextTools` interface, like `Storage` and `Commands` in Tiptap: the key is the Tool's name, the value is `{ options; state; commands }`. The kit declares `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography` and `invisibleCharacters` in it (`details` and `typography` have only `options`), and the consumer adds a custom Tool:
+The types of all three parts are collected in the `RichTextTools` interface, like `Storage` and `Commands` in Tiptap: the key is the Tool's name, the value is `{ options; state; commands }`. The kit declares `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters`, `blockSelection` and `language` in it (`details` and `typography` have only `options`, `blockSelection` has only `state` and `commands`), and the consumer adds a custom Tool:
 
 ```ts
 declare module "@olddevs/ui/editor" {

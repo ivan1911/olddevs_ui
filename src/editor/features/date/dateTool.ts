@@ -44,7 +44,7 @@ function dateNode(
 ) {
   // The Editor that hosts the node: a click edits only in an editable field.
   let host: Editor | null = null;
-  const textOf = (datetime: string) => dateText(datetime, locale?.() ?? "en", format);
+  const textOf = (datetime: string) => dateText(datetime, locale(), format);
   return Node.create({
     name: DATE_NODE,
     group: "inline",

@@ -348,6 +348,8 @@ describe("shortcut reference", () => {
         [
           "Select block text | Ctrl+A",
           "Select all (second press) | Ctrl+A",
+          "Select block | Esc",
+          "Extend selection | Shift+↑/↓",
         ],
         [
           "Undo | Ctrl+Z",
@@ -608,6 +610,7 @@ describe("surfaces", () => {
           "menuitemcheckbox: Strikethrough | Ctrl+Shift+S",
           "menuitemcheckbox: Superscript | Ctrl+.",
           "menuitemcheckbox: Subscript | Ctrl+,",
+          "menuitem: Language",
           "menuitemcheckbox: Code block | Ctrl+Alt+C",
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
           "menuitem: Clear formatting | Ctrl+\\",
@@ -637,6 +640,7 @@ describe("surfaces", () => {
           "menuitemcheckbox: Strikethrough | Ctrl+Shift+S",
           "menuitemcheckbox: Superscript | Ctrl+.",
           "menuitemcheckbox: Subscript | Ctrl+,",
+          "menuitem: Language",
           "menuitemcheckbox: Code block | Ctrl+Alt+C",
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
           "menuitem: Clear formatting | Ctrl+\\",
@@ -883,6 +887,7 @@ describe("the block handle menu", () => {
             "menuitemradio: Checklist | Ctrl+Shift+9",
           ],
           "top": [
+            "menuitem: Select",
             "menuitem: Add",
             "menuitem: Format",
             "menuitem: Move up (disabled) | Alt+Shift+↑",
