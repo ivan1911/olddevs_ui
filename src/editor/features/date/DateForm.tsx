@@ -97,7 +97,8 @@ export function DateForm({ editor, pos, close }: DateFormProps) {
     <div className="flex flex-col gap-2 p-1">
       <Calendar
         autoFocus
-        className="p-1"
+        // The footer row can be wider than the grid (the Russian labels are): the grid stays in the middle.
+        className="self-center p-1"
         value={date}
         onChange={(_value, iso) => {
           setDate(iso);
