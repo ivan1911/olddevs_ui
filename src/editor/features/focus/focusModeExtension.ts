@@ -36,9 +36,13 @@ export const FOCUS_DIM_MEDIA_CLASS = "rte-focus-dim-media";
  * holds 4.5:1 on the sheet, on the theme and on the Wrapper backings (`tokens.ts`). Images, videos,
  * code Blocks and block formulas have no text of their own to recolor, so they go translucent.
  *
- * Two exceptions. Text on a marker keeps the marker's dark text: a gray one would sink on the bright
- * fill. In a toned Wrapper the secondary role IS the main text (the only step that holds 4.5:1 on all
- * five backings), so the dimming there is a little opacity instead of a color.
+ * Three exceptions:
+ *
+ * - Text on a marker keeps the marker's dark text: a gray one would sink on the bright fill.
+ * - A code Block keeps the colors of its highlight theme, which hold only on its own background,
+ *   and goes translucent as a whole.
+ * - In a toned Wrapper the secondary role IS the main text (the only step that holds 4.5:1 on all
+ *   five backings), so the dimming there is a little opacity instead of a color.
  *
  * THE RULES COME WITH THE EXTENSION, as a class on the Document's root, and not from `prose.ts`: that
  * module is shared with `RichTextView`, which has no use for them. The root carries the class only
@@ -47,6 +51,8 @@ export const FOCUS_DIM_MEDIA_CLASS = "rte-focus-dim-media";
 const FOCUS_MODE_CLASS =
   "[&_.rte-focus-dim]:text-(--rte-muted) [&_mark_.rte-focus-dim]:text-(--marker-text) " +
   "[&_[data-block=wrapper][data-tone]_.rte-focus-dim]:opacity-75 " +
+  // A code Block has its own text color on its own background (`codeTheme.ts`): it goes translucent as a whole.
+  "[&_pre_.rte-focus-dim]:text-inherit " +
   "[&_.rte-focus-dim-media]:opacity-60";
 
 /** Blocks dimmed by opacity: they have no text of their own to recolor, or their colors are the theme's. */
