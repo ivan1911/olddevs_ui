@@ -3,7 +3,7 @@ import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { Editor } from "@tiptap/react";
 import { createRef } from "react";
-import { afterEach, beforeAll, expect, test } from "vitest";
+import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import {
   RichTextEditor,
   type RichTextEditorHandle,
@@ -16,7 +16,10 @@ import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 // Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
 beforeAll(loadLazyBuiltins);
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 /**
  * Column widths from the keyboard (OLDSUI-310, ADR-0080, decision 6): the "Column" submenu has
@@ -168,6 +171,27 @@ test("the first step in a table without widths starts from equal columns when no
 
   // jsdom has no layout, so the columns count as equal: 50/50, then a step.
   expect(handle.getHTML()).toBe(table(cols(55, 45), row("a1", "a2"), row("b1", "b2")));
+});
+
+test("a step that changes nothing is not announced", async () => {
+  // The table has no widths, so the menu cannot know the neighbour is thin: the dry run counts the
+  // columns as equal. On the screen the first column is 95% wide and the second 5%, and "Wider"
+  // finds no room when it runs.
+  const edges: Record<string, [number, number]> = { a1: [0, 95], a2: [95, 100] };
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLElement
+  ) {
+    const [left, right] = edges[this.textContent ?? ""] ?? [0, 0];
+    return { left, right, width: right - left, top: 0, bottom: 10, height: 10 } as DOMRect;
+  });
+  const user = userEvent.setup();
+  const { editor, handle } = renderEditor({ defaultValue: table("", row("a1", "a2")) });
+  caretIn(editor, "a1");
+
+  await choose(user, "Column", "Wider");
+
+  expect(handle.getHTML()).toBe(table("", row("a1", "a2")));
+  expect(screen.getByRole("status").textContent).toBe("");
 });
 
 test("Equal columns makes every column the same width in one edit", async () => {
