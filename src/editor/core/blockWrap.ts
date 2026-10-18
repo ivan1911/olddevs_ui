@@ -7,9 +7,9 @@ import { BlockSelection } from "./blockSelection.js";
 import { unitNodes } from "./blockUnit.js";
 
 /**
- * Wrap existing Blocks into a container (ADR-0077): a Wrapper, a quote or a Details Block. Until
- * now the containers were only inserted empty, and "Unwrap" was the only way back. The command takes
- * a row of Block units (`blockUnit.ts`) and puts all of them into ONE container, in one edit.
+ * Wrap existing Blocks into a container (ADR-0077): a Wrapper, a quote or a Details Block.
+ * "Unwrap" is the way back. The command takes a row of Block units (`blockUnit.ts`) and puts all of
+ * them into ONE container, in one edit.
  *
  * THE SCHEMA DECIDES WHERE IT IS ALLOWED. The container must accept these Blocks as its content
  * (a Wrapper does not hold another Wrapper or a Column layout), and its parent must accept the

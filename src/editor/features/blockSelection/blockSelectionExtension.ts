@@ -303,7 +303,7 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
               return true;
             },
 
-            // Dragging the selected Blocks is not supported (the owner's decision, as with the handle).
+            // Dragging the selected Blocks is not supported, as with the handle (ADR-0077, item 4).
             dragstart: (view, event) => {
               if (!(view.state.selection instanceof BlockSelection)) return false;
               event.preventDefault();

@@ -20,7 +20,7 @@ import type { InsertItem } from "./insertItems.js";
  * - "Text" breaks a list into paragraphs. It is the same step that turns any Block into a list
  *   or a heading: the Block is first freed from what wraps it (`clearNodes`), then the item applies.
  * - A QUOTE IS ONE QUOTE, like a list: a run of neighbouring text Blocks becomes one quote of that many
- *   paragraphs (the owner's decision of 2026-10-18; "Wrap in › Quote" gives the same for any Blocks).
+ *   paragraphs (the kit's rule for quotes; "Wrap in › Quote" gives the same for any Blocks).
  *
  * The whole group is one transaction, so it is one undo step.
  */
