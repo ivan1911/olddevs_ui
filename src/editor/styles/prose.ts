@@ -386,6 +386,21 @@ const INVISIBLE_CHARACTERS_CLASS =
   "[&_p.is-editor-empty:first-child>.tiptap-invisible-character--paragraph]:hidden ";
 
 /**
+ * Text part language (the `language` Tool, ADR-0078): `span[lang]` is a Mark with no look of its own
+ * for the reader: a screen reader, spell checking and hyphenation read it, and nothing is drawn.
+ *
+ * THE UNDERLINE IS IN THE EDITOR ONLY (`.ProseMirror`), as the frame of a column: a thin dotted line
+ * in the color of secondary text (`--rte-secondary`) shows the author where a mark begins and ends,
+ * so a phrase in another language is not lost in the text. `RichTextView` has no `.ProseMirror`, so
+ * the reader of a Document sees no line. The role is recalculated for the `paper` sheet and inside a
+ * toned Wrapper, so the line follows the theme and the backing.
+ */
+const LANGUAGE_CLASS =
+  "[&.ProseMirror_span[lang]]:underline [&.ProseMirror_span[lang]]:decoration-dotted " +
+  "[&.ProseMirror_span[lang]]:decoration-1 [&.ProseMirror_span[lang]]:underline-offset-[3px] " +
+  "[&.ProseMirror_span[lang]]:decoration-(--rte-secondary) ";
+
+/**
  * Video (the `youtube` and `twitch` Tools, ADR-0071): a server-rendered `div[data-block=video]`
  * block with a link inside, a 16:9 frame with the same classes as the player placeholder
  * (`PLAYER_FRAME`, `VideoPlayer.tsx`; a test compares the two lists). So the Editor's Skeleton
@@ -538,6 +553,7 @@ const PROSE_RULES =
   " " +
   MATH_CLASS +
   INVISIBLE_CHARACTERS_CLASS +
+  LANGUAGE_CLASS +
   VIDEO_CLASS +
   CUSTOM_BLOCK_CLASS;
 
