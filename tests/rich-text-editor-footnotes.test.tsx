@@ -13,6 +13,8 @@ import {
   type RichTextEditorProps,
 } from "../src/editor/index.js";
 import createDOMPurify from "dompurify";
+import { UiProvider } from "../src/i18n/UiProvider.js";
+import { messages as ru } from "../src/locales/ru.js";
 import { handleBlock } from "../src/editor/core/blockCommands.js";
 import { countCharacters } from "../src/editor/core/maxLength.js";
 import { sanitizeRichText } from "../src/editor/schema-entry.js";
@@ -789,6 +791,9 @@ test("an Editor without the Tool keeps the text of the numbers and of the footno
   expect(editor.getText()).toContain("First");
   expect(editor.getText()).toContain("Second");
   expect(editor.getText()).toContain("One1 and two2.");
+  // The backlink points nowhere here, so its arrow does not stay as text.
+  expect(editor.getText()).not.toContain("\u21A9");
+  expect(editor.getHTML()).toContain("<p>First</p>");
 });
 
 test("the basic preset does not include footnotes", () => {
@@ -938,4 +943,23 @@ test("a reference added by insertHTML in the text gets a footnote of its own", (
   act(() => void handle.insertHTML(reference(C, 4)));
 
   expect(editor.getHTML()).toBe(`<p>He${reference(C, 1)}llo</p>${list([C, ""])}`);
+});
+
+test("the Russian catalog names the list in the HTML, the number button and the menu item", async () => {
+  const user = userEvent.setup();
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <UiProvider messages={ru}>
+      <RichTextEditor ref={ref} aria-label="Body" defaultValue={WHOLE} />
+    </UiProvider>
+  );
+  const editor = ref.current!.editor!;
+
+  // The list's name is written into the HTML in the catalog's language.
+  expect(editor.getHTML()).toContain(`aria-label="${ru.editor.footnotes}"`);
+  expect(editor.view.dom.querySelector("[data-footnote-back]")!.getAttribute("aria-label")).toBe(
+    ru.editor.footnoteBack({ number: 1 })
+  );
+  await user.click(screen.getByRole("button", { name: ru.editor.moreFormatting }));
+  expect(screen.getByRole("menuitem", { name: ru.editor.footnote })).toBeDefined();
 });

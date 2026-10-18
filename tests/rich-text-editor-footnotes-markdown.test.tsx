@@ -136,3 +136,24 @@ test("without the Tool nothing is lost: the reference and the definition stay as
 
   expect(handle.getText()).toBe("Text[^1]\n\n[^1]: A note.");
 });
+
+test("a Markdown paste with footnotes into the middle of a document puts the list at the end", () => {
+  const handle = renderEditor({ defaultValue: "<p>Before</p><p>After</p>" });
+  const editor = handle.editor!;
+  act(() => void editor.commands.setTextSelection(7));
+  const event = new Event("paste", { bubbles: true, cancelable: true });
+  Object.assign(event, {
+    clipboardData: {
+      getData: (type: string) =>
+        type === "text/plain" ? "# Title\n\nPasted[^1] words\n\n[^1]: With a note." : "",
+      types: ["text/plain"],
+    },
+  });
+  act(() => void editor.view.dom.dispatchEvent(event));
+
+  const last = editor.state.doc.lastChild!;
+  expect(last.type.name).toBe("footnoteList");
+  expect(summary(handle)).toEqual({ notes: ["With a note."], numbers: [1] });
+  expect(handle.getText()).toContain("After");
+  expect(handle.getText()).toContain("Pasted[1] words");
+});

@@ -17,6 +17,7 @@ import type { RichImageOptions } from "../features/image/image.js";
 import { createDocumentNode } from "./document.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
 import { FormulasAsText } from "../features/mathematics/mathAsText.js";
+import { FootnotesAsText } from "../features/footnotes/footnotesAsText.js";
 import { MaxLength } from "./maxLength.js";
 import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
 import {
@@ -309,6 +310,8 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     // Without the `mathematics` Tool, a formula from `value` and from paste is read as `$…$` text,
     // instead of disappearing together with an empty element (`mathAsText.ts`).
     ...(options.tools.has("mathematics") ? [] : [FormulasAsText]),
+    // Without `footnotes`, the backlink "↩" of a footnote is dropped and its words stay (`footnotesAsText.ts`).
+    ...(options.tools.has("footnotes") ? [] : [FootnotesAsText]),
     ToolbarFocus.configure({ focus: options.focusToolbar }),
     HandledTabStaysInside,
     // Commands over Blocks have no markup of their own and are always on (`blockCommands.ts`).

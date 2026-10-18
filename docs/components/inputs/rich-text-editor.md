@@ -1341,7 +1341,7 @@ Text[^1] and more[^2].
 
 `getMarkdown()` writes `[^1]` … `[^n]` and the definitions at the end; a hard break inside a footnote continues on an indented line. Reading: a label (`[^note]`) becomes a number; a reference with no definition stays the text `[^note]`; a definition with no reference becomes a paragraph at the end, with its label; a label used twice gives two footnotes; the second and later paragraphs of a definition (indented by four spaces) are joined to the first with a hard break, because a footnote is one paragraph. Plain text with a definition line is recognized as Markdown on paste. This adds nothing to "What is lost on export".
 
-**Without the Tool** a Document with footnotes opened in an Editor does not lose its text: the reference's number stays as text (`1`, superscript if `superscript` is on), the footnotes' paragraphs follow it, and Markdown keeps `[^1]` and its definition as text.
+**Without the Tool** a Document with footnotes opened in an Editor does not lose its text: the reference's number stays as text (`1`, superscript if `superscript` is on), the footnotes' paragraphs follow it without the "↩" arrow (it would lead nowhere), and Markdown keeps `[^1]` and its definition as text.
 
 **View.** `RichTextView` shows the references and the list and follows the jumps as plain anchors: no JS, no Island. Run the Document through `sanitizeRichText` first (see "Schema and security").
 

@@ -412,6 +412,8 @@ const FOOTNOTE_CLASS =
   "[&_section[data-block=footnotes]_li>a[role=doc-backlink]]:ml-1 " +
   "[&_section[data-block=footnotes]_li:target]:rounded-(--rte-radius) " +
   "[&_section[data-block=footnotes]_li:target]:bg-(--rte-selection) " +
+  // In the Editor the number is a button, so the list needs no room for its own markers.
+  "[&_section[data-block=footnotes]_ol:has(>li>[data-footnote-back])]:pl-0 " +
   "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:flex " +
   "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:list-none " +
   "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:items-baseline " +
@@ -422,7 +424,9 @@ const FOOTNOTE_CLASS =
   "[&_section[data-block=footnotes]_[data-footnote-back]]:text-right " +
   "[&_section[data-block=footnotes]_[data-footnote-back]]:text-(--rte-link) " +
   "[&_section[data-block=footnotes]_[data-footnote-back]]:underline " +
-  "[&_section[data-block=footnotes]_[data-footnote-back]]:underline-offset-2 ";
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:underline-offset-2 " +
+  // The number is followed by a dot, like the decimal marker the View's list draws itself.
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:after:content-['.'] ";
 
 /**
  * Video (the `youtube` and `twitch` Tools, ADR-0071): a server-rendered `div[data-block=video]`
