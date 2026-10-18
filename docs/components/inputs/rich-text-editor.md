@@ -1560,7 +1560,7 @@ import { RICH_TEXT_PRESETS, RichTextEditor, tool } from "@olddevs/ui/editor";
 
 **Markdown** writes the text of a mention; the machine value is lost on export (a line in "What is lost on export"), and `setMarkdown()` reads the words as plain text. For a lossless copy use HTML or the JSON envelope.
 
-The strings are `editor.date` ("Date"), `editor.dateTime`, `editor.dateTimeField`, `editor.dateRemoveTime`, `editor.dateRemove`, `editor.dateInsert` and `editor.dateApply` in the message catalog (English and Russian); the icon is `DateMentionIcon`. The decision is ADR-0079.
+The strings are `editor.date` ("Date"), `editor.dateTime`, `editor.dateTimeField`, `editor.dateTimePlaceholder`, `editor.dateRemoveTime`, `editor.dateRemove`, `editor.dateInsert` and `editor.dateApply` in the message catalog (English and Russian); the icon is `DateMentionIcon`. The decision is ADR-0079.
 
 ## Emoji
 

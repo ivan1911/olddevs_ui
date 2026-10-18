@@ -384,6 +384,22 @@ test("the text is written in the author's locale: Russian and a 24-hour clock", 
   expect(editor.getHTML()).toBe(`<p>Due${mention("2026-10-18T15:00+03:00", RU_TEXT_15)}</p>`);
 });
 
+test("the placeholder of the time field comes from the catalog, in the interface language", async () => {
+  today();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: "<p>Due</p>" }, "ru-RU");
+  caretIn(editor, "Due");
+
+  await user.click(screen.getByRole("button", { name: ru.editor.insertMenu }));
+  await user.click(itemNamed(await screen.findByRole("menu"), ru.editor.date));
+  const popover = await screen.findByRole("dialog", { name: ru.editor.date });
+  await user.click(within(popover).getByRole("checkbox", { name: ru.editor.dateTime }));
+  const field = within(popover).getByRole("textbox", { name: ru.editor.dateTimeField });
+
+  expect(ru.editor.dateTimePlaceholder).not.toBe("HH:MM");
+  expect(field.getAttribute("placeholder")).toBe(ru.editor.dateTimePlaceholder);
+});
+
 test.each([
   ["date", "date"],
   ["today", "today"],
