@@ -2478,6 +2478,144 @@ export const MathematicsPopover: Story = {
   render: () => <OpenedFormula />,
 };
 
+/*
+  Date mention (OLDSUI-309, ADR-0079): a date inside a line of text, `<time datetime>` with the words the
+  author saw. In `full`, so no `tools` list is needed. The Calendar and the popover are a lazy chunk that
+  loads when a mention is inserted or edited.
+*/
+const DATE_SAMPLE =
+  "<h2>Project plan</h2>" +
+  '<p>The kickoff is on <time datetime="2026-10-12">Oct 12, 2026</time>, the review meeting at ' +
+  '<time datetime="2026-10-19T15:00+03:00">Oct 19, 2026, 3:00 PM</time>, and the release is planned for ' +
+  '<time datetime="2026-11-02">Nov 02, 2026</time>. Click a date to change it, or select it with ' +
+  "<kbd>Shift</kbd>+<kbd>→</kbd> and press Enter.</p>" +
+  "<p>Text after the dates.</p>";
+
+/**
+ * A date mention: a rounded chip with the weak background and the ordinary font. A click on it, or Enter
+ * on the selected one, opens the popover with the calendar; a new one is inserted from the Insert menu
+ * ("Date"). The words are written in the author's locale and shown by `RichTextView` as they are.
+ */
+export const DateMention: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} />
+    </div>
+  ),
+};
+
+/** Date mentions on a light `surface="paper"` sheet. */
+export const DateMentionPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} surface="paper" />
+    </div>
+  ),
+};
+
+/** The Slash menu by `/date`: the "Date" item (and by `today`, `calendar`). Enter on it opens the calendar. */
+export const DateMentionInsertSlash: Story = {
+  render: () => <TypedCommand command="/date" />,
+};
+
+/** Open the edit popover of the mention with a time as soon as the Editor has drawn it. */
+function OpenedDate() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const target = root.current?.querySelector<HTMLElement>("time[datetime*='T']");
+      if (!target) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      target.click();
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div ref={root} className="h-[560px] max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * The edit popover of a mention with a time: the calendar on its day, the "Time" switch with the time
+ * field, "Remove time" and "Delete date", and "Apply" for a changed time.
+ */
+export const DateMentionPopover: Story = {
+  // The popover's chunk (the Calendar) is lazy: the snapshot and the audit wait for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => <OpenedDate />,
+};
+
+/*
+  A `<time>` from someone else's page. The forms the Editor writes itself (a date, a date with a time and
+  an offset) become mentions with their words as they were; a period, a week, a year and a time without an
+  offset stay ordinary text, and nothing is lost.
+*/
+const FOREIGN_TIME_HTML =
+  '<p>From a news page: published <time datetime="2026-10-12">twelfth of October</time> and ' +
+  '<time datetime="2026-10-12T09:30+02:00">9:30 CEST</time>.</p>' +
+  '<p>These stay text: <time datetime="P3D">three days</time>, <time datetime="2026-W42">week 42</time>, ' +
+  '<time datetime="2026-10-12T09:30">9:30 with no offset</time>.</p>';
+
+function PastedTime() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.view.pasteHTML(FOREIGN_TIME_HTML);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/** A `<time>` pasted from another page: a mention where `datetime` is in the Editor's form, text elsewhere. */
+export const DateMentionPasted: Story = {
+  render: () => <PastedTime />,
+};
+
+/** The `format` option: `tool("date", { format: { dateStyle: "long" } })` writes new dates in the long form. */
+export const DateMentionFormat: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, tool("date", { format: { dateStyle: "long" } })]}
+        defaultValue={DATE_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * Date mentions in the Russian locale: the Insert menu and the popover come from the catalog, the
+ * calendar is in Russian, and a date picked now is written as Russian text with a 24-hour clock.
+ */
+export const DateMentionRussian: Story = {
+  // The popover's chunk (the Calendar) is lazy: the snapshot and the audit wait for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <OpenedDate />
+    </UiProvider>
+  ),
+};
+
 /** Open the HTML mode as soon as the Toolbar appears: a click on the "HTML" button. */
 function OpenedSource(props: Partial<RichTextEditorProps>) {
   const root = useRef<HTMLDivElement>(null);

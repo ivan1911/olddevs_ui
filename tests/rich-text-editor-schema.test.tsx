@@ -181,6 +181,8 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     // Video (OLDSUI-281): the service and the video link are two attributes of the `div`.
     '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
     '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
+    // Date mention (OLDSUI-309): `datetime` in one of the two forms and the words as the author saw them.
+    '<p>d <time datetime="2026-10-18T15:00+03:00">Oct 18, 2026, 3:00 PM</time></p>' +
     // Formulas write only `data-type` and the source in `data-latex` (OLDSUI-280).
     '<p>f <span data-type="inline-math" data-latex="x^2"></span></p>' +
     '<div data-type="block-math" data-latex="\\frac{a}{b}"></div>' +

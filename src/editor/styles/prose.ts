@@ -359,6 +359,24 @@ const MATH_CLASS =
   "[&_.tiptap-mathematics-render.ProseMirror-selectednode]:outline-(--rte-ring) ";
 
 /**
+ * Date mention (the `date` Tool, ADR-0079): `time[datetime]` inline. The same plaque in the Editor and
+ * in the View: a rounded chip with the weak background that inline code uses (`--rte-code-background`,
+ * whose contrast with the body text is already measured on the themes, the Paper and in a toned
+ * Wrapper by `npm run contrast`), with the ordinary font and no icon. `nowrap` keeps one date from
+ * breaking across lines.
+ *
+ * EDITOR. The mention is clickable: the pointer shows it, but only in an editable field (the root's
+ * `contenteditable="true"`). A mention selected with a click or `Enter` gets the outline of a selected
+ * Atom, the same as a formula.
+ */
+const DATE_CLASS =
+  "[&_time[datetime]]:rounded-(--rte-radius) [&_time[datetime]]:bg-(--rte-code-background) " +
+  "[&_time[datetime]]:px-1 [&_time[datetime]]:py-0.5 [&_time[datetime]]:whitespace-nowrap " +
+  "[&[contenteditable=true]_time[datetime]]:cursor-pointer " +
+  "[&_time[datetime].ProseMirror-selectednode]:outline-2 " +
+  "[&_time[datetime].ProseMirror-selectednode]:outline-(--rte-ring) ";
+
+/**
  * Invisible characters (the `invisibleCharacters` Tool): the Tiptap extension puts
  * `span.tiptap-invisible-character` widgets into the markup, with a `--space`, `--break` or
  * `--paragraph` modifier; the empty `span` carries the mark in `::before`. The kit does not
@@ -612,6 +630,7 @@ const PROSE_RULES =
   DETAILS_CLASS +
   " " +
   MATH_CLASS +
+  DATE_CLASS +
   INVISIBLE_CHARACTERS_CLASS +
   FOOTNOTE_CLASS +
   LANGUAGE_CLASS +

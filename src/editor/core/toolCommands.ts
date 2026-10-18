@@ -85,6 +85,19 @@ export interface InvisibleCharactersToolCommands {
   toggle(): boolean;
 }
 
+/** Commands of the `date` Tool (the date mention, ADR-0079). */
+export interface DateToolCommands {
+  /**
+   * Inserts a date mention at the caret (or over the selection) in one edit. `value` is a calendar
+   * date `YYYY-MM-DD` or a date with a time and the author's offset, `YYYY-MM-DDTHH:MM±HH:MM`; its text
+   * is written in the current locale by the Tool's `format` option. Without `value` it opens the same
+   * popover as the Slash menu item, with the calendar on today. `true` means the mention is inserted
+   * or the popover is opened. `false` means the field is read-only, source mode is open, or `value`
+   * is not a date in the two forms (a day that does not exist, a time without an offset).
+   */
+  insert(value?: string): boolean;
+}
+
 /** Commands of the `language` Tool (Text part language, ADR-0078). */
 export interface LanguageToolCommands {
   /**

@@ -567,6 +567,12 @@ export {
    */
   SquareSigma as BlockFormulaIcon,
   /**
+   * The date mention of the Editor: a calendar with days, the "Date" item of the Slash menu. A new
+   * name next to `CalendarIcon` on purpose: that one is "scheduled for later" in the product's
+   * vocabulary, and this one is a date inside a line of text.
+   */
+  CalendarDays as DateMentionIcon,
+  /**
    * Show invisible characters in the Editor: a pilcrow with an arrow, the "Invisible characters" item
    * of the "…" menu of the fixed Toolbar. Not `ParagraphIcon`: that one already means "plain paragraph"
    * and appears in the same Toolbar, in the "¶" menu on the left; the arrow tells the show toggle apart

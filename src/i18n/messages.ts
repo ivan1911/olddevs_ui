@@ -1032,6 +1032,20 @@ export interface UiMessages {
     mathApply: string;
     mathRemove: string;
     /**
+     * Date mention (ADR-0079). `date` is the Slash menu item and the name of the popover. In the
+     * popover: `dateTime` is the label of the "Time" switch, `dateTimeField` is the name of the time
+     * field (`HH:MM`), `dateRemoveTime` turns a date with a time back into a date, `dateRemove` deletes
+     * the mention from the Document, `dateInsert` and `dateApply` are the buttons for a new and for an
+     * editable mention.
+     */
+    date: string;
+    dateTime: string;
+    dateTimeField: string;
+    dateRemoveTime: string;
+    dateRemove: string;
+    dateInsert: string;
+    dateApply: string;
+    /**
      * Footnotes (ADR-0076). `footnote` is the name of the Slash menu item and of the item in the "…"
      * menu of the Toolbar. `footnotes` is the name of the list, written into the saved HTML
      * (`aria-label` of the list) in the language of this catalog, like the rest of the Document's text.
