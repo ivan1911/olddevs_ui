@@ -160,6 +160,23 @@ test("images and code Blocks without text of their own go translucent, not recol
   expect(document.querySelector(".node-codeBlock.rte-focus-dim-media")).not.toBeNull();
 });
 
+test("a floated image is a media Block like any other: dimmed whole when it is not current", () => {
+  const { editor } = renderEditor({
+    tools: [...TOOLS, ...ON],
+    defaultValue:
+      '<p>Text</p><figure data-align="left"><img src="https://example.com/a.png" alt="a" data-width="50"></figure><p>More</p>',
+  });
+
+  caretIn(editor, "Text");
+  const floated = document.querySelector("figure[data-align=left]");
+  expect(floated?.classList.contains("rte-focus-dim-media")).toBe(true);
+  expect(dimmed().join("|")).toBe("More");
+
+  // Selected, it is the current Block and is as it is.
+  act(() => void editor.commands.setNodeSelection(editor.state.doc.child(0).nodeSize));
+  expect(document.querySelector("figure[data-align=left].rte-focus-dim-media")).toBeNull();
+});
+
 test("marks keep working inside dimmed text: the decoration wraps, it does not replace", () => {
   const { editor } = renderEditor({
     tools: [...TOOLS, ...ON],
