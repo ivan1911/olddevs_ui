@@ -111,8 +111,12 @@ for (const [path, run] of [
     // Images outside the address policy are dropped entirely; the one within the policy stays,
     // with `src` and `alt`, and without a width outside the presets (40 is not one).
     expect(html.match(/<img/g)).toHaveLength(1);
+    // The one exception is the `float:left` on the figure: a paste reads it as the image's side
+    // (OLDSUI-311), while `value` has no such reading, and the `style` itself never survives.
+    const side = path === "pasting" ? ' data-align="left"' : "";
+    const width = path === "pasting" ? ' data-width="50"' : "";
     expect(html).toContain(
-      '<figure><img src="https://cdn.example.com/a.png" alt="ok"><figcaption>caption</figcaption></figure>'
+      `<figure${side}><img src="https://cdn.example.com/a.png" alt="ok"${width}><figcaption>caption</figcaption></figure>`
     );
     expect(html).not.toMatch(/blob:|relative\.png/);
   });
