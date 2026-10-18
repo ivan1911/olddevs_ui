@@ -9,6 +9,7 @@ import type { ResolvedPos } from "@tiptap/pm/model";
 import type { EditorView } from "@tiptap/pm/view";
 import { cellAlignment, cellAttributes, tableShareAttributes, tableSpec } from "./tableCells.js";
 import { columnSharesGuard, withColumnShares } from "./tableColumns.js";
+import { readColumnShares } from "./tableShareForeign.js";
 
 /**
  * The Editor's table: Tiptap extensions trimmed down to the kit's Schema.
@@ -183,7 +184,8 @@ export function addRowBelow(state: EditorState, dispatch?: (tr: Transaction) => 
 
 export const RichTable = Table.extend({
   addAttributes() {
-    return { ...this.parent?.(), ...tableShareAttributes() };
+    // The engine reads the widths other applications write as well; the Skeleton only its own markup.
+    return { ...this.parent?.(), ...tableShareAttributes(readColumnShares) };
   },
   /*
     The engine commands that add and remove columns carry the shares along. Anything that calls

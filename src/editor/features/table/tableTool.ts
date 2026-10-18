@@ -40,7 +40,7 @@ const TABLE_SHAPE = [
     group: "block",
     content: "tableRow+",
     isolating: true,
-    addAttributes: tableShareAttributes,
+    addAttributes: () => tableShareAttributes(),
     parseHTML: () => [{ tag: "table" }],
     renderHTML: ({ node }) => tableSpec(node.attrs.shares),
   }),

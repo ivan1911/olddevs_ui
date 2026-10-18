@@ -8,7 +8,7 @@ import {
 } from "../../styles/palette.js";
 import type { DOMOutputSpec } from "@tiptap/pm/model";
 import { RICH_TEXT_SCHEMA } from "../../core/schema.js";
-import { colgroupSpec, readColumnShares } from "./tableShares.js";
+import { colgroupSpec, readStoredShares } from "./tableShares.js";
 
 /*
   Table cell attributes (merging and column alignment) and the table's own `shares` attribute (`tables.ts` explains why
@@ -70,12 +70,14 @@ export const cellAttributes = () => ({
  * The table's `shares` attribute (ADR-0080). It is not rendered as an attribute: `renderHTML` below
  * draws the `colgroup`, and `parseHTML` reads the widths from the one in the markup.
  */
-export const tableShareAttributes = () => ({
+export const tableShareAttributes = (
+  read: (table: Element) => number[] | null | undefined = readStoredShares
+) => ({
   shares: {
     default: null,
     rendered: false,
     parseHTML: (element: HTMLElement) => {
-      const shares = readColumnShares(element);
+      const shares = read(element);
       // Shares for another number of columns would size every column wrongly: the table is
       // read without them, so no entry point (value, paste, JSON, Markdown) can create the mismatch.
       return shares && shares.length === gridWidth(element) ? shares : null;

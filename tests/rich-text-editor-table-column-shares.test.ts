@@ -3,14 +3,13 @@ import { expect, test } from "vitest";
 import {
   equalShares,
   insertShare,
-  isShares,
   moveBoundary,
   nudgeShare,
-  parseCssWidth,
-  readColumnShares,
   removeShares,
   snapShares,
-} from "../src/editor/features/table/tableShares.js";
+} from "../src/editor/features/table/tableShareMath.js";
+import { parseCssWidth, readColumnShares } from "../src/editor/features/table/tableShareForeign.js";
+import { isShares, readStoredShares } from "../src/editor/features/table/tableShares.js";
 
 /*
   Column widths as shares (OLDSUI-310, ADR-0080): the pure rules behind the table node, the commands,
@@ -173,5 +172,22 @@ test("a colgroup without usable widths leaves the table to the content", () => {
     "",
   ]) {
     expect(readColumnShares(table(html)), html).toBeNull();
+  }
+});
+
+test("the Editor's own markup is told apart from foreign widths: undefined, null or the shares", () => {
+  // The Skeleton reads only this: a table of another application is the engine's to read.
+  expect(
+    readStoredShares(table('<colgroup><col data-width="35"><col data-width="65"></colgroup>'))
+  ).toEqual([35, 65]);
+  expect(
+    readStoredShares(table('<colgroup><col data-width="35"><col data-width="60"></colgroup>'))
+  ).toBeNull();
+  for (const foreign of [
+    "",
+    '<colgroup><col width="100"><col width="300"></colgroup>',
+    '<colgroup><col data-width="50"><col></colgroup>',
+  ]) {
+    expect(readStoredShares(table(foreign)), foreign).toBeUndefined();
   }
 });

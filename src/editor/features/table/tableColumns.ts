@@ -20,12 +20,12 @@ import {
 import {
   equalShares,
   insertShare,
-  isShares,
   nudgeShare,
   removeShares,
   sameShares,
   snapShares,
-} from "./tableShares.js";
+} from "./tableShareMath.js";
+import { isShares } from "./tableShares.js";
 
 /*
   Column widths of a table, as ProseMirror commands over the table node's `shares` attribute

@@ -12,7 +12,8 @@ import {
 import { useMessages } from "../../../i18n/useMessages.js";
 import { sharesOf, writeShares } from "./tableColumns.js";
 import { columnEdges, columnWidths } from "./tableMeasure.js";
-import { equalShares, moveBoundary, SHARE_STEP, snapShares } from "./tableShares.js";
+import { equalShares, moveBoundary, snapShares } from "./tableShareMath.js";
+import { SHARE_STEP } from "./tableShares.js";
 
 /** A handle bar: where it sits in the frame, in pixels from the frame's top left. */
 interface Bar {

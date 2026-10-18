@@ -1,20 +1,20 @@
 "use client";
 
 import { gridWidth } from "../table/tableCells.js";
+import { snapShares } from "../table/tableShareMath.js";
 import {
   columnElements,
   declaredWidth,
-  snapShares,
   weightsOf,
   type CssWidth,
-} from "../table/tableShares.js";
+} from "../table/tableShareForeign.js";
 import type { PasteCleanupContext, PasteCleanupStep } from "./cleanPastedHtml.js";
 
 /*
   Column widths of a pasted table (OLDSUI-310, ADR-0080). The Schema has no width of its own to keep,
   so a width is carried only in the form it reads: `<colgroup><col data-width>`, shares in 5% steps.
   This step turns what each source writes into that form BEFORE the Schema, with the same rounding the
-  table node uses for any foreign `colgroup` (`tableShares.ts`), so the two paths cannot disagree.
+  table node uses for any foreign `colgroup` (`tableShareForeign.ts`), so the two paths cannot disagree.
 
   Where each application keeps its widths:
 
