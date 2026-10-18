@@ -9,7 +9,7 @@ import { Extension, type Extensions } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Placeholder } from "@tiptap/extensions";
 import { StarterKit, type StarterKitOptions } from "@tiptap/starter-kit";
-import type { EditorQuoteSet } from "../../i18n/messages.js";
+import type { EditorQuoteSet, UiMessages } from "../../i18n/messages.js";
 import { AtomText } from "./atomText.js";
 import { BlockCommands, BlockMenuKey } from "./blockCommands.js";
 import { FieldNoticeExtension, type FieldNoticeOptions } from "./fieldNotice.js";
@@ -17,6 +17,7 @@ import type { RichImageOptions } from "../features/image/image.js";
 import { createDocumentNode } from "./document.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
 import { FormulasAsText } from "../features/mathematics/mathAsText.js";
+import { FootnotesAsText } from "../features/footnotes/footnotesAsText.js";
 import { MaxLength } from "./maxLength.js";
 import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
 import {
@@ -45,11 +46,25 @@ export interface EditorExtensionOptions {
    */
   detailsToggle: (text: string) => string;
   /**
+   * The footnote list's name, written into the saved HTML (`aria-label`) in the language of the
+   * message catalog. Read on every serialization: a catalog change does not recreate the engine.
+   */
+  footnoteListName: () => string;
+  /** The name of a footnote's number button in the Editor, from the catalog; read on every re-render of the footnote. */
+  footnoteBack: (number: number) => string;
+  /**
    * Quotation marks for the message catalog language (`UiMessages.editor.typographyQuotes`) for the
    * `typography` Tool with the `quotes: "auto"` option. Read on every quote typed: a catalog
    * change does not recreate the engine.
    */
   quoteSet: () => EditorQuoteSet;
+  /**
+   * The interface locale (`UiProvider`): the `language` Tool's last fallback for the page's primary
+   * language when no ancestor of the field has a `lang`, and the locale in which the `date` Tool writes
+   * a mention's words when it is inserted or edited. Read when asked: a locale change does not
+   * recreate the engine.
+   */
+  locale: () => string;
   /**
    * Bridge to the Slash menu, opened by `/`. Without it the menu does not open: the `insertMenu`
    * Tool is disabled or has no items for it.
@@ -77,6 +92,11 @@ export interface EditorExtensionOptions {
   image?: RichImageOptions;
   /** Field notice (`showNotice`): the state is held by `RichTextEditor`. */
   onNotice: FieldNoticeOptions["onNotice"];
+  /**
+   * The Editor's strings in the screen's language, read on every use: a locale change does not
+   * recreate the engine. For Tools that announce results (Block selection). Absent means English.
+   */
+  editorMessages?: () => UiMessages["editor"];
   /**
    * Open the search panel (`Mod+F`, `Mod+Alt+F`); `replace` puts focus in the replace field. The
    * panel is held by `RichTextEditor`; `false` means there is no panel, and the key goes to the
@@ -203,13 +223,16 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "subscript",
   "color",
   "highlight",
+  "language",
   "align",
   "taskList",
   "image",
   "layout",
   "wrapper",
   "details",
+  "footnotes",
   "mathematics",
+  "date",
   "insertMenu",
   TRIGGERS,
   "history",
@@ -236,6 +259,8 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "source",
   "search",
   "invisibleCharacters",
+  "blockSelection",
+  "focus",
   "toc",
 ];
 
@@ -301,6 +326,8 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     // Without the `mathematics` Tool, a formula from `value` and from paste is read as `$…$` text,
     // instead of disappearing together with an empty element (`mathAsText.ts`).
     ...(options.tools.has("mathematics") ? [] : [FormulasAsText]),
+    // Without `footnotes`, the backlink "↩" of a footnote is dropped and its words stay (`footnotesAsText.ts`).
+    ...(options.tools.has("footnotes") ? [] : [FootnotesAsText]),
     ToolbarFocus.configure({ focus: options.focusToolbar }),
     HandledTabStaysInside,
     // Commands over Blocks have no markup of their own and are always on (`blockCommands.ts`).

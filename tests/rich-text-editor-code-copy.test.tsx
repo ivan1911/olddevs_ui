@@ -6,6 +6,7 @@ import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import {
+  RICH_TEXT_PRESETS,
   RichTextEditor,
   type RichTextEditorHandle,
   type RichTextEditorProps,
@@ -235,9 +236,25 @@ test("Enter on the focused copy button copies", async () => {
 
 test("a read-only editor puts copy into the Tab order: that is the only way to it", async () => {
   const { user } = setupClipboard();
-  renderEditor({ readOnly: true, defaultValue: "<pre><code>x</code></pre>" });
+  // Without Block selection a read-only Document takes no focus, and copy is the first stop.
+  renderEditor({
+    readOnly: true,
+    tools: RICH_TEXT_PRESETS.full.filter((name) => name !== "blockSelection"),
+    defaultValue: "<pre><code>x</code></pre>",
+  });
   await settle();
 
+  await user.tab();
+  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Copy" }));
+});
+
+test("with Block selection the read-only Document comes first, then copy (ADR-0077, decision 13)", async () => {
+  const { user } = setupClipboard();
+  const { editor } = renderEditor({ readOnly: true, defaultValue: "<pre><code>x</code></pre>" });
+  await settle();
+
+  await user.tab();
+  expect(document.activeElement).toBe(editor.view.dom);
   await user.tab();
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Copy" }));
 });

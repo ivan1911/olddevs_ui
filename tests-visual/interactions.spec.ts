@@ -483,6 +483,10 @@ test("RichTextEditor inside Dialog: Escape closes the insert menu, not the windo
   // What was typed stays as text.
   await expect(page.locator('[contenteditable="true"] p').last()).toHaveText("/");
 
+  // With Block selection in `full` (ADR-0077) the next `Escape` in the text selects the Block, and
+  // the window closes on the one after it, like any nested layer.
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
 });
@@ -849,6 +853,9 @@ test("RichTextEditor inside Dialog: Escape closes the colour picker, then the cu
   // Focus returned to the document, not to `<body>`.
   await expect(page.getByRole("textbox", { name: "Document" })).toBeFocused();
 
+  // Block selection (ADR-0077): one `Escape` selects the Block, the next one closes the window.
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
 });

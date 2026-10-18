@@ -70,20 +70,26 @@ test("the Table item of the insert menu adds a 3x3 table with a header row", () 
 /** A table as other editors send it: widths, merging, alignment, styles. */
 const FOREIGN_TABLE =
   '<table class="grid" style="width:100%" border="1">' +
-  '<colgroup><col style="width:30%"><col></colgroup>' +
+  '<colgroup><col style="width:30%"><col style="width:70%"></colgroup>' +
   '<thead><tr><th colspan="2" scope="col" style="text-align:center" data-colwidth="120,80">Head</th></tr></thead>' +
   '<tbody><tr><td rowspan="2" colwidth="100" align="right" onclick="steal()">a</td><td>b</td></tr>' +
   "<tr><td>c</td></tr></tbody></table>";
 
-/** What the Schema allows a cell, and only that: merging, `data-align`. */
+/**
+ * What the Schema allows a cell, and only that: merging, `data-align`. A column width is allowed too,
+ * but only as the shares of `col[data-width]` (OLDSUI-310): a `col` with `style` or `width` is a leftover.
+ */
 const FOREIGN_LEFTOVERS =
-  /style|colwidth|class|[^-]align=|scope|border|onclick|colgroup|<col[\s>]|thead|caption/;
+  /style|colwidth|class|[^-]align=|scope|border|onclick|<col (?!data-width)|<col>|thead|caption/;
 
-test("a loaded table keeps its merges and nothing else: no style, widths, classes or handlers", () => {
+test("a loaded table keeps its merges and its widths as shares, and nothing else: no style, classes or handlers", () => {
   const { handle } = renderEditor({ defaultValue: FOREIGN_TABLE });
 
   const html = handle.getHTML();
-  expect(html).toMatch(/^<table><tbody>.*<\/tbody><\/table>$/);
+  // The 30% and 70% of the foreign `col` styles are now the table's own shares, without `style`.
+  expect(html).toMatch(
+    /^<table><colgroup><col data-width="30"><col data-width="70"><\/colgroup><tbody>.*<\/tbody><\/table>$/
+  );
   expect(html).not.toMatch(FOREIGN_LEFTOVERS);
   // Merged cells from a foreign table (Word, Excel, Google Docs) are kept, and its
   // `text-align` and `align` become `data-align`.
@@ -336,12 +342,14 @@ function pasteHtml(editor: Editor, html: string) {
   act(() => void editor.view.pasteHTML(html, new Event("paste") as ClipboardEvent));
 }
 
-test("a pasted HTML table lands as a table with its merges and nothing else", () => {
+test("a pasted HTML table lands as a table with its merges and widths as shares, and nothing else", () => {
   const { editor } = renderEditor();
 
   pasteHtml(editor, FOREIGN_TABLE);
 
-  expect(editor.getHTML()).toMatch(/^<table><tbody>.*<\/tbody><\/table>$/);
+  expect(editor.getHTML()).toMatch(
+    /^<table><colgroup><col data-width="30"><col data-width="70"><\/colgroup><tbody>.*<\/tbody><\/table>$/
+  );
   expect(editor.getHTML()).not.toMatch(FOREIGN_LEFTOVERS);
   expect(editor.getHTML()).toContain('<th colspan="2" data-align="center"><p>Head</p></th>');
   expect(editor.getHTML()).toContain('<td rowspan="2" data-align="right"><p>a</p></td>');
@@ -408,6 +416,8 @@ test("the insert menu lists Table among the blocks to add, with no shortcut hint
     "Layout",
     "Wrapper",
     "Collapsible block",
+    "Footnote",
+    "Date",
   ]);
 });
 

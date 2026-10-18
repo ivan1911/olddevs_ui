@@ -25,10 +25,13 @@ import {
   type ReactNode,
 } from "react";
 import { useDescribedBy, useFieldInvalid, useFieldLabelId } from "../hooks/useFieldDescription.js";
-import { useMessages } from "../i18n/useMessages.js";
+import { useMessages, useUiLocale } from "../i18n/useMessages.js";
 import { cn } from "../lib/cn.js";
 import { FIELD_SHELL_CLASS } from "../lib/field.js";
+import { CollapseIcon } from "../icons.js";
+import { OVERLAY_LAYER } from "../lib/overlay-layer.js";
 import { BlockHandle } from "./ui/BlockHandle.js";
+import { FullscreenLayer } from "./features/fullscreen/FullscreenLayer.js";
 import { expandTools } from "./features/builtins.js";
 import {
   createHandleMethods,
@@ -402,6 +405,13 @@ const PLACEHOLDER_CLASS =
   and an empty caption hidden in the read-only field. The `rte-caption-empty` and
   `rte-resize-handle` classes are set by `image.ts`, as decorations and in the node view.
   They do not go into the Document.
+
+  The caption's hint is a block that takes its own height, not a zero-height float like the
+  paragraph's: an aligned image is only 25% of a narrow Document, the hint wraps there, and a
+  float with `h-0` left the box one line high, so the second line ran over the next Block. The
+  empty caption holds a trailing `<br>` of one line after the hint, so the hint is pulled up by
+  that line (`-mb-[1lh]`): a one-line hint looks and sits exactly as before, a wrapped one adds
+  only the lines it really has.
 */
 const IMAGE_EDITING_CLASS =
   "[&_figure.ProseMirror-selectednode_img]:outline-2 " +
@@ -409,9 +419,8 @@ const IMAGE_EDITING_CLASS =
   "[&_figure.ProseMirror-selectednode_img]:outline-(--rte-primary) " +
   "[&[contenteditable=true]_figure.ProseMirror-selectednode_.rte-resize-handle]:block " +
   "[&_figcaption.rte-caption-empty]:before:pointer-events-none " +
-  "[&_figcaption.rte-caption-empty]:before:float-left " +
-  "[&_figcaption.rte-caption-empty]:before:h-0 " +
-  "[&_figcaption.rte-caption-empty]:before:w-full " +
+  "[&_figcaption.rte-caption-empty]:before:block " +
+  "[&_figcaption.rte-caption-empty]:before:-mb-[1lh] " +
   "[&_figcaption.rte-caption-empty]:before:text-(--rte-muted-foreground) " +
   "[&_figcaption.rte-caption-empty]:before:content-[attr(data-placeholder)] " +
   "[&[contenteditable=false]_figcaption.rte-caption-empty]:hidden";
@@ -428,6 +437,15 @@ const SEARCH_HIGHLIGHT_CLASS =
   "[&_.rte-search-match]:bg-[color-mix(in_srgb,var(--warning)_30%,transparent)] " +
   "[&_.rte-search-current]:bg-[color-mix(in_srgb,var(--warning)_60%,transparent)] " +
   "[&_.rte-search-current]:shadow-[0_0_0_1px_var(--warning)]";
+
+/*
+  The field's frame inside the fullscreen layer (ADR-0082): the whole window, a column of the Toolbar,
+  the Document's area (`flex-1`, scrolls itself) and the Status bar. No frame, shadow or focus ring:
+  the window edge is the frame.
+*/
+const FULLSCREEN_SHELL_CLASS =
+  "flex min-h-0 flex-1 flex-col rounded-none border-0 shadow-none " +
+  "focus-within:border-transparent focus-within:ring-0";
 
 // Frame of the fixed Toolbar and of its Skeleton (the reason for this markup is below).
 const TOOLBAR_SHELL_CLASS =
@@ -506,6 +524,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     ref
   ) {
     const messages = useMessages();
+    const locale = useUiLocale();
     /*
       The Tool set is frozen at mount: the Schema is built from it, and a live engine's Schema
       cannot be changed. The Toolbar reads the same frozen set, otherwise a new `tools` would show
@@ -545,6 +564,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     };
     const editorRef = useRef<Editor | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
+    /** The field's frame: in the root, or in the fullscreen layer. Whatever asks "is this inside the field" asks it. */
+    const shellRef = useRef<HTMLDivElement>(null);
     // A disabled `<fieldset>` disables the editor too, like a native field. `Form pending`
     // behaves the same way, and a foreign `fieldset` is covered by the same rule.
     const inDisabledFieldset = useFieldsetDisabled(rootRef);
@@ -591,9 +612,21 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     taskCheckboxRef.current = messages.editor.taskCheckbox;
     const detailsToggleRef = useRef(messages.editor.detailsToggle);
     detailsToggleRef.current = messages.editor.detailsToggle;
+    // The footnote list's name is written into the saved HTML, and the number button's name is drawn in
+    // the Document: both are read when they are needed, so a catalog change does not recreate the engine.
+    const footnotesRef = useRef(messages.editor.footnotes);
+    footnotesRef.current = messages.editor.footnotes;
+    const footnoteBackRef = useRef(messages.editor.footnoteBack);
+    footnoteBackRef.current = messages.editor.footnoteBack;
+    // The `disabled` flag for the Tool commands that must work in `readOnly` but not in a disabled field.
+    const disabledRef = useRef(disabled);
+    disabledRef.current = disabled;
     // `typography` quotes are read at the moment of typing: a catalog change does not recreate the engine.
     const quoteSetRef = useRef(messages.editor.typographyQuotes);
     quoteSetRef.current = messages.editor.typographyQuotes;
+    // The `language` Tool reads the interface locale when asked, as the quotes are read.
+    const localeRef = useRef(locale);
+    localeRef.current = locale;
     // The upload handler and image strings also go through refs: the extension reads them when a
     // file is inserted and when a caption is redrawn, not when the engine is created.
     const uploadRef = useRef(onUploadImage);
@@ -629,12 +662,29 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     // The dialog comes from the table's lazy chunk (`tableTool.ts`): the table engine is created
     // after it, and without the engine there is no dialog.
     const TableInsertDialog = tableChunk()?.TableInsertDialog;
+    const TableColumnHandles = tableChunk()?.TableColumnHandles;
     const [tableDialogOpen, setTableDialogOpen] = useState(false);
     /**
      * The field message (`showNotice`, `fieldNotice.ts`): only the latest one is kept. `status` is
      * for the live region. `error` is a visible line under the field. A Document edit clears `error`.
      */
     const [notice, setNotice] = useState<FieldNotice | null>(null);
+    /*
+      Fullscreen mode (ADR-0082). `layer` is non-null while the layer is mounted: from the open
+      command until the exit animation ends. `height` is the field's height before it left its place:
+      the root keeps it, so the page below does not jump and its scroll stays put. The field's DOM
+      moves into the layer (a portal), and the engine, its history and its state stay where they are.
+    */
+    const [layer, setLayer] = useState<{ height: number; closing: boolean } | null>(null);
+    /** The mirror of "the layer is open" for the Commands, which hold a closure from an earlier render. */
+    const fullscreenRef = useRef(false);
+    const pageScrollRef = useRef({ x: 0, y: 0 });
+    /*
+      Focus is moving between the field's two places. Removing the focused Document from the DOM may
+      send a `blur` with no `relatedTarget`, and that is not a departure from the field: the layer is
+      a part of it. The flag holds the departure check until the Document is focused again.
+    */
+    const settlingRef = useRef(false);
     /*
       HTML mode: `null` means visual mode. Otherwise it holds the HTML field's text and the
       Document's height at entry. The field never gets shorter than that, so the page does not jump.
@@ -873,13 +923,17 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           limit: () => limitRef.current,
           taskCheckbox: (text) => taskCheckboxRef.current({ text }),
           detailsToggle: (text) => detailsToggleRef.current({ text }),
+          footnoteListName: () => footnotesRef.current,
+          footnoteBack: (number) => footnoteBackRef.current({ number }),
           quoteSet: () => quoteSetRef.current,
+          locale: () => localeRef.current,
           slash: slashBridge,
           triggers: triggerBindings,
           openPopover: (request) => setToolPopover({ request, open: true }),
           focusToolbar: () => focusToolbarRef.current(),
           openBlockMenu: () => openBlockMenuRef.current(),
           onNotice: setNotice,
+          editorMessages: () => imageMessagesRef.current,
           openSearch: (replace) => openSearchRef.current(replace),
           image: {
             /*
@@ -961,6 +1015,59 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const invalid = ariaInvalid ?? fieldInvalid;
     const labelledBy = ariaLabelledBy ?? (ariaLabel ? undefined : fieldLabelId);
     const editable = !readOnly && !disabled;
+
+    /*
+      Expand the field to the window or put it back (ADR-0082): the "Fullscreen" item, the `Esc` and
+      "Collapse" of the layer, and the Tool's Commands. `false` when nothing changed: the Tool is off,
+      the layer is already in that state, or the field cannot open it (disabled, or Source mode, where
+      the Document is not on screen). The announcement and the focus come later, from the places that
+      have the new DOM: `onLayerOpened` and the layout effect below.
+    */
+    const setFullscreen = (next: boolean): boolean => {
+      if (!enabledTools.has("fullscreen") || fullscreenRef.current === next) return false;
+      if (next && (disabled || sourceTextRef.current !== null)) return false;
+      fullscreenRef.current = next;
+      settlingRef.current = true;
+      if (next) {
+        // A repeated open during the exit animation only cancels the exit.
+        if (!layer) pageScrollRef.current = { x: window.scrollX, y: window.scrollY };
+        const height = rootRef.current?.offsetHeight ?? 0;
+        setLayer((previous) => ({ height: previous?.height ?? height, closing: false }));
+      } else {
+        setLayer((previous) => previous && { ...previous, closing: true });
+      }
+      return true;
+    };
+    const setFullscreenRef = useRef(setFullscreen);
+    setFullscreenRef.current = setFullscreen;
+    /** The layer has mounted: the Document takes focus with its selection, scrolled into view. */
+    const onLayerOpened = (): boolean => {
+      const current = editorRef.current;
+      const focused =
+        current != null && !current.isDestroyed && editable && sourceTextRef.current === null;
+      if (focused) {
+        current.view.focus();
+        current.commands.scrollIntoView();
+      }
+      settlingRef.current = false;
+      setNotice({ tone: "status", text: messages.editor.fullscreenOpened });
+      return focused;
+    };
+    // The layer has gone: the field is back in its place, and so is the page's scroll and the focus.
+    const layerShown = layer !== null;
+    const layerShownRef = useRef(false);
+    useLayoutEffect(() => {
+      if (layerShownRef.current && !layerShown) {
+        const { x, y } = pageScrollRef.current;
+        if (window.scrollX !== x || window.scrollY !== y) window.scrollTo(x, y);
+        const current = editorRef.current;
+        if (sourceTextRef.current !== null) sourceFieldRef.current?.focus();
+        else if (editable && current && !current.isDestroyed) current.view.focus();
+        settlingRef.current = false;
+        setNotice({ tone: "status", text: messages.editor.fullscreenClosed });
+      }
+      layerShownRef.current = layerShown;
+    }, [layerShown]);
     /*
       On a touch screen, the floating Toolbar and the Bubble menu compete with the system selection
       menu ("Copy / Paste") for the same spot above the text, and lose: there, a fixed Toolbar is
@@ -992,20 +1099,22 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       The `-mx-3 px-3` margins match the horizontal padding of the shell, as the Toolbar does: the
       scrollbar sits at the frame, and the Block handle on the left is not clipped.
     */
-    const scrolls = maxHeight != null || resizable;
+    const scrolls = maxHeight != null || resizable || layerShown;
     const [scrollArea, setScrollArea] = useState<HTMLDivElement | null>(null);
     const scrollTarget = scrolls ? (scrollArea ?? undefined) : undefined;
     const areaLength = maxHeight == null ? undefined : cssLength(maxHeight);
     /** Height set by the resize handle (`FieldResizer`); `null` means the starting height. */
     const [areaHeight, setAreaHeight] = useState<number | null>(null);
-    const areaStyle: CSSProperties | undefined = !scrolls
-      ? undefined
-      : resizable
-        ? {
-            height: areaHeight != null ? `${areaHeight}px` : areaLength,
-            minHeight: FIELD_MIN_HEIGHT,
-          }
-        : { maxHeight: areaLength };
+    // The layer sets the area's height itself (`flex-1`): `maxHeight` and `resizable` do not apply in it.
+    const areaStyle: CSSProperties | undefined =
+      !scrolls || layerShown
+        ? undefined
+        : resizable
+          ? {
+              height: areaHeight != null ? `${areaHeight}px` : areaLength,
+              minHeight: FIELD_MIN_HEIGHT,
+            }
+          : { maxHeight: areaLength };
 
     /*
       The Table of contents in the left margin (`toc` Tool, ADR-0068). Its strip sticks under the
@@ -1033,8 +1142,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       measure from the top of the area, and do not use this edge.
     */
     const tocStickyTop = useCallback(
-      () => (stickyOffset(tocOffsetVar) ?? 0) + toolbarHeight,
-      [tocOffsetVar, toolbarHeight]
+      // The layer covers the app's header: its Toolbar is at the window edge, whatever the app publishes.
+      () => (layerShown ? 0 : (stickyOffset(tocOffsetVar) ?? 0)) + toolbarHeight,
+      [tocOffsetVar, toolbarHeight, layerShown]
     );
     /*
       A jump in edit mode puts the caret at the end of the heading, as Google Docs' document outline
@@ -1064,7 +1174,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     */
     focusToolbarRef.current = () => {
       const current = editorRef.current;
-      const root = rootRef.current;
+      const root = shellRef.current;
       if (!current || !root) return false;
       // An open Text card is closer than the Toolbar; a hidden one does not take the key.
       if (textCardRef.current?.focus()) return true;
@@ -1224,7 +1334,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           ? skeletonHtml(
               initial,
               enabledTools,
-              loaders.filter((_, index) => !loads[index]?.done)
+              loaders.filter((_, index) => !loads[index]?.done),
+              { footnoteListName: () => footnotesRef.current }
             )
           : "",
       [mounted, !editor, initial, enabledTools, settledLoads]
@@ -1357,6 +1468,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       closeSearch: () => closeSearch(false),
       sourceOpen: () => sourceTextRef.current !== null,
       jumpToc: (index) => tocJumpRef.current?.(index) ?? false,
+      setFullscreen: (next) => setFullscreenRef.current(next),
+      fullscreenOpen: () => fullscreenRef.current,
+      disabled: () => disabledRef.current,
     };
 
     useImperativeHandle(ref, () => {
@@ -1439,9 +1553,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       message: the Tool set and whether the search panel is open.
     */
     const searchOpen = searchPanel !== null;
+    const fullscreenOpen = layer !== null && !layer.closing;
     useEffect(
-      () => publishToolSignals(ref, { tools: enabledTools, searchOpen }),
-      [ref, editor, enabledTools, searchOpen]
+      () => publishToolSignals(ref, { tools: enabledTools, searchOpen, fullscreenOpen }),
+      [ref, editor, enabledTools, searchOpen, fullscreenOpen]
     );
     // Unmounting (or a `ref` change) takes the signals back: the screen hook returns `null`.
     useEffect(() => () => clearToolSignals(ref), [ref]);
@@ -1500,34 +1615,44 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         </Suspense>
       );
 
-    return (
-      <div
-        ref={rootRef}
-        className={cn("relative", className)}
-        onFocus={() => {
-          clearTimeout(leaveTimerRef.current);
-          if (fieldFocusedRef.current) return;
-          fieldFocusedRef.current = true;
-          onFocusRef.current?.();
-        }}
-        onBlur={(event) => {
-          const next = event.relatedTarget;
-          if (next instanceof Node && event.currentTarget.contains(next)) return;
-          clearTimeout(leaveTimerRef.current);
-          leaveTimerRef.current = setTimeout(() => {
-            if (!fieldFocusedRef.current) return;
-            fieldFocusedRef.current = false;
-            throttle.flush();
-            onBlurRef.current?.();
-          }, 0);
-        }}
-      >
+    const editorContent = <EditorContent editor={editor} hidden={sourceOpen} />;
+    // In the layer the Document is a column of about 72 characters in the middle of the window (ADR-0082).
+    const column = (content: ReactNode) =>
+      layerShown ? <div className="mx-auto w-full max-w-[72ch]">{content}</div> : content;
+    /*
+      The "Fullscreen" item and the "Collapse" button read the layer's state and toggle it; they exist
+      only with the Tool on. Opening from Source mode is refused by `setFullscreen`, as for the Command.
+    */
+    const fullscreenItem = enabledTools.has("fullscreen")
+      ? { open: fullscreenOpen, onToggle: () => setFullscreen(!fullscreenRef.current) }
+      : undefined;
+    /*
+      "Collapse" lives in the Toolbar. Without a fixed Toolbar (floating, bubble, none, or `readOnly`) it
+      sits in the layer's corner, where a finger finds it: a touch screen has no `Esc`.
+    */
+    const collapseCorner = !(toolbarMode === "fixed" && !readOnly) && (
+      <Button
+        size="sm"
+        variant="outline"
+        iconOnly
+        icon={<CollapseIcon size={16} aria-hidden />}
+        aria-label={messages.editor.fullscreenExit}
+        onClick={() => setFullscreen(false)}
+        className="absolute top-2 right-3 z-[3]"
+      />
+    );
+
+    const renderShell = () => {
+      return (
         <div
+          ref={shellRef}
           data-disabled={disabled || undefined}
           className={cn(
             FIELD_SHELL_CLASS,
             "has-[[contenteditable][aria-invalid=true]]:border-danger-strong",
-            "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+            "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
+            layerShown && FULLSCREEN_SHELL_CLASS,
+            layerShown && surface === "paper" && "bg-bg-0"
           )}
         >
           {editor && toolbarMode === "fixed" && !readOnly && (
@@ -1542,7 +1667,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               field, not a step in the layer stack: the Toolbar is not an overlay and must stay below
               any of them.
             */
-            <div ref={setToolbarShell} className={TOOLBAR_SHELL_CLASS}>
+            <div
+              ref={setToolbarShell}
+              className={cn(TOOLBAR_SHELL_CLASS, layerShown && "rounded-none")}
+            >
               <EditorToolbar
                 editor={editor}
                 tools={enabledTools}
@@ -1550,6 +1678,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 onInsertTable={() => setTableDialogOpen(true)}
                 shortcutsReference
                 invisibleCharacters={enabledTools.has("invisibleCharacters")}
+                fullscreen={fullscreenItem}
+                focusMode={enabledTools.has("focus")}
                 search={
                   enabledTools.has("search")
                     ? {
@@ -1588,6 +1718,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 source={sourceAvailable}
                 search={enabledTools.has("search")}
                 invisibleCharacters={enabledTools.has("invisibleCharacters")}
+                view={enabledTools.has("fullscreen") || enabledTools.has("focus")}
                 shortcutsReference
               />
             </div>
@@ -1600,7 +1731,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               landed under the field.
             */
             ref={scrolls ? setScrollArea : undefined}
-            className={cn(scrolls && "relative -mx-3 overflow-y-auto px-3")}
+            className={cn(
+              scrolls && "relative -mx-3 overflow-y-auto px-3",
+              layerShown && "min-h-0 flex-1"
+            )}
             style={areaStyle}
           >
             {/* In HTML mode the Document is hidden but still mounted: the engine and history stay alive. */}
@@ -1634,12 +1768,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                     />
                   </Suspense>
                 )}
-                <div className="min-w-0 flex-1">
-                  <EditorContent editor={editor} hidden={sourceOpen} />
-                </div>
+                <div className="min-w-0 flex-1">{column(editorContent)}</div>
               </div>
             ) : (
-              <EditorContent editor={editor} hidden={sourceOpen} />
+              column(editorContent)
             )}
             {!editor && (
               /*
@@ -1726,6 +1858,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             {editor && !readOnly && !sourceOpen && (
               <BlockHandle editor={editor} tools={enabledTools} openRef={openBlockMenuRef} />
             )}
+            {editor &&
+              TableColumnHandles &&
+              enabledTools.has("table") &&
+              !readOnly &&
+              !sourceOpen && <TableColumnHandles editor={editor} />}
           </div>
           {editor && !sourceOpen && slash.element}
           {editor && !sourceOpen && triggerMenu.element}
@@ -1737,6 +1874,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               onCustomColor={openCustomColor}
               keyboardTarget={toolbarMode === "bubble"}
               scrollTarget={scrollTarget}
+              fullscreen={fullscreenItem}
+              focusMode={enabledTools.has("focus")}
             />
           )}
           {editor && toolbarMode === "floating" && !readOnly && (
@@ -1753,6 +1892,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               editor={editor}
               open={tableDialogOpen}
               onClose={() => setTableDialogOpen(false)}
+              zIndex={layerShown ? OVERLAY_LAYER.alert : undefined}
             />
           )}
           {editor && toolPopover && (
@@ -1770,7 +1910,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
                 entries={textCardEntries}
                 enabled={!disabled && !sourceOpen}
                 readOnly={readOnly}
-                rootRef={rootRef}
+                rootRef={shellRef}
                 controlRef={textCardRef}
               />
             </Suspense>
@@ -1801,7 +1941,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               canUpload={onUploadImage != null}
             />
           )}
-          {resizable && (
+          {resizable && !layerShown && (
             <FieldResizer
               area={scrollArea}
               height={areaHeight}
@@ -1825,6 +1965,49 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           />
           <StatusLine status={status} counter={counter} counterId={counterId} />
         </div>
+      );
+    };
+
+    return (
+      <div
+        ref={rootRef}
+        className={cn("relative", className)}
+        // While the field is in the layer, its place keeps the height, so the page below does not jump.
+        style={layer ? { minHeight: layer.height } : undefined}
+        onFocus={() => {
+          clearTimeout(leaveTimerRef.current);
+          settlingRef.current = false;
+          if (fieldFocusedRef.current) return;
+          fieldFocusedRef.current = true;
+          onFocusRef.current?.();
+        }}
+        onBlur={(event) => {
+          const next = event.relatedTarget;
+          if (next instanceof Node && event.currentTarget.contains(next)) return;
+          clearTimeout(leaveTimerRef.current);
+          leaveTimerRef.current = setTimeout(() => {
+            // The Document is moving between its two places (the layer): not a departure.
+            if (settlingRef.current || !fieldFocusedRef.current) return;
+            fieldFocusedRef.current = false;
+            throttle.flush();
+            onBlurRef.current?.();
+          }, 0);
+        }}
+      >
+        {layer ? (
+          <FullscreenLayer
+            title={messages.editor.fullscreen}
+            closing={layer.closing}
+            onClose={() => setFullscreen(false)}
+            onExited={() => setLayer(null)}
+            onOpened={onLayerOpened}
+          >
+            {renderShell()}
+            {collapseCorner}
+          </FullscreenLayer>
+        ) : (
+          renderShell()
+        )}
         {validatable && (
           /*
             A proxy for browser constraint validation. An `<input type="hidden">` is EXCLUDED from it

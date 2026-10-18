@@ -363,6 +363,35 @@ export const LayoutNarrow: Story = {
   args: { html: LAYOUTS_HTML },
 };
 
+/* Image alignment (OLDSUI-311): the same markup the Editor writes; the View draws it with the same styles. */
+const alignedParagraph =
+  "<p>The text wraps the picture while the Document is at least 30 rem wide, and a heading, a table or a divider starts below it. " +
+  "Narrower than that the picture stands on a line of its own, in the centre.</p>";
+
+function alignedHtml(): string {
+  // The showcase file, absolute because the Document accepts only `http(s)`; read at render, not at import.
+  const ALIGNED_IMAGE = new URL("editor-sample-landscape.svg", document.baseURI).href;
+  return (
+    "<h2>Image alignment</h2>" +
+    `<figure data-align="left"><img src="${ALIGNED_IMAGE}" alt="Mountains under a clear sky" data-width="33">` +
+    "<figcaption>On the left</figcaption></figure>" +
+    alignedParagraph +
+    alignedParagraph +
+    "<h3>A heading starts below</h3>" +
+    `<figure data-align="right"><img src="${ALIGNED_IMAGE}" alt="" data-width="25"></figure>` +
+    alignedParagraph
+  );
+}
+
+/** An image the text wraps, left and right, in `RichTextView`. */
+export const ImageAlignmentView: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={alignedHtml()} />
+    </div>
+  ),
+};
+
 /*
   Wrapper in the View: no border, and the spacing between Blocks is the same as in
   the Document. The sample is the same one as in the Editor's `Wrappers` story.
@@ -490,6 +519,40 @@ export const MathematicsMacros: Story = {
         }
         tools={[tool("mathematics", { macros: { "\\RR": "\\mathbb{R}" } })]}
       />
+    </div>
+  ),
+};
+
+/*
+  Date mentions in the View (OLDSUI-309, ADR-0079): a `time` element with the words the author saw. No
+  Island, no JS and no formatting at display time. The sample is the same one as in the Editor's
+  `DateMention` story.
+*/
+const DATE_HTML =
+  "<h2>Project plan</h2>" +
+  '<p>The kickoff is on <time datetime="2026-10-12">Oct 12, 2026</time>, the review meeting at ' +
+  '<time datetime="2026-10-19T15:00+03:00">Oct 19, 2026, 3:00 PM</time>, and the release is planned for ' +
+  '<time datetime="2026-11-02">Nov 02, 2026</time>.</p>' +
+  '<blockquote><p>Due <time datetime="2026-10-30">Oct 30, 2026</time></p></blockquote>' +
+  '<div data-block="wrapper" data-tone="warning"><p>Deadline: <time datetime="2026-11-15">Nov 15, 2026</time></p></div>';
+
+/**
+ * Date mentions in the View: the same chip as in the Editor, shown as the author wrote it. A reader in
+ * another locale sees the author's format; the machine value stays in `datetime`.
+ */
+export const DateMention: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={DATE_HTML} />
+    </div>
+  ),
+};
+
+/** Date mentions on a light Paper (`surface="paper"`). */
+export const DateMentionPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={DATE_HTML} surface="paper" />
     </div>
   ),
 };

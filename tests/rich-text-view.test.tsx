@@ -325,6 +325,7 @@ test("the bare sanitise config lists the schema minus what only hooks may admit"
     "data-tone",
     "data-type",
     "data-width",
+    "datetime",
     "href",
     "open",
     "rel",
@@ -465,11 +466,14 @@ function documentedAllowList(page: string): Set<string> {
   const text = readFileSync(join(DOCS, page), "utf8");
   const start = text.indexOf(MARKER);
   expect(start, `${page}: no ${MARKER} marker`).toBeGreaterThan(-1);
-  const rows = text
-    .slice(start)
-    .split("\n")
-    .filter((line) => line.startsWith("|"))
-    // The table header and separator are not data; there is one table, and prose follows it.
+  // Only the first table after the marker: the section goes on with prose and other tables (the
+  // own-allowlist guidance) that quote the same names for a different reason.
+  const lines = text.slice(start).split("\n");
+  const first = lines.findIndex((line) => line.startsWith("|"));
+  const end = lines.findIndex((line, index) => index > first && !line.startsWith("|"));
+  const rows = lines
+    .slice(first, end === -1 ? undefined : end)
+    // The table header and separator are not data.
     .slice(2);
   const tokens = new Set<string>();
   for (const row of rows) {

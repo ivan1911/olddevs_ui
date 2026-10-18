@@ -79,7 +79,7 @@ const HOSTILE =
   // nor sizes, nor classes, nor handlers, on either `img` or `figure`.
   '<figure class="wide" style="float:left" data-width="50" src="javascript:steal()">' +
   '<img src="https://cdn.example.com/a.png" alt="ok" width="300" height="200" title="t" ' +
-  'class="x" style="width:10px" data-width="33" loading="lazy" onerror="steal()">' +
+  'class="x" style="width:10px" data-width="40" loading="lazy" onerror="steal()">' +
   '<figcaption style="color:red" class="c">caption</figcaption></figure>' +
   '<img src="blob:https://example.com/0b6b"><img src="/relative.png"><img src=" java\tscript:steal()">';
 
@@ -109,10 +109,14 @@ for (const [path, run] of [
     expect(html).toContain('<code class="language-python">code()</code>');
     expect(html.match(/<input/g)).toHaveLength(1);
     // Images outside the address policy are dropped entirely; the one within the policy stays,
-    // with `src` and `alt`, and without a width outside the presets.
+    // with `src` and `alt`, and without a width outside the presets (40 is not one).
     expect(html.match(/<img/g)).toHaveLength(1);
+    // The one exception is the `float:left` on the figure: a paste reads it as the image's side
+    // (OLDSUI-311), while `value` has no such reading, and the `style` itself never survives.
+    const side = path === "pasting" ? ' data-align="left"' : "";
+    const width = path === "pasting" ? ' data-width="50"' : "";
     expect(html).toContain(
-      '<figure><img src="https://cdn.example.com/a.png" alt="ok"><figcaption>caption</figcaption></figure>'
+      `<figure${side}><img src="https://cdn.example.com/a.png" alt="ok"${width}><figcaption>caption</figcaption></figure>`
     );
     expect(html).not.toMatch(/blob:|relative\.png/);
   });
@@ -158,12 +162,15 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     '<br>next <a href="https://example.com">link</a></p>' +
     '<p data-align="center"><span data-color="danger">c</span><mark data-color="green">m</mark></p>' +
     '<p><span style="color:#ff0000">c</span><mark style="background-color:#ffee00">m</mark></p>' +
+    // The language of a fragment (OLDSUI-308): the one standard, non-`data-*` attribute of a Mark.
+    '<p><span lang="de">l</span></p>' +
     '<h1 data-align="center">Top</h1><h2 data-align="right">Right</h2><h3 data-align="center">C</h3><h4 data-align="right">R</h4>' +
     '<ul><li><p>u</p></li></ul><ol start="3"><li><p>o</p></li></ol>' +
     '<ul data-type="taskList"><li data-type="taskItem" data-checked="true"><p>done</p></li></ul>' +
     '<pre><code class="language-typescript">const a = 1;</code></pre>' +
     "<blockquote><p>q</p></blockquote><hr>" +
-    "<table><tbody>" +
+    // Column widths (OLDSUI-310): the shares of three columns, a colgroup before the body.
+    '<table><colgroup><col data-width="35"><col data-width="35"><col data-width="30"></colgroup><tbody>' +
     '<tr><th colspan="2" data-align="center"><p>h</p></th><th rowspan="2"><p>i</p></th></tr>' +
     '<tr><td colspan="2" data-align="right"><p>d</p></td></tr>' +
     '<tr><td rowspan="2"><p>e</p></td><td><p>f</p></td><td><p>g</p></td></tr>' +
@@ -171,6 +178,8 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     "</tbody></table>" +
     '<figure><img src="https://cdn.example.com/a.png" alt="A" data-width="75">' +
     "<figcaption>Caption</figcaption></figure>" +
+    // Image alignment (OLDSUI-311): the only `data-align` on a `figure`.
+    '<figure data-align="right"><img src="https://cdn.example.com/b.png" alt="B" data-width="25"></figure>' +
     '<div data-block="layout" data-layout="60-40"><div data-block="column"><p>l</p></div>' +
     '<div data-block="column"><p>r</p></div></div>' +
     '<div data-block="wrapper" data-tone="warning"><p>w</p></div>' +
@@ -179,9 +188,15 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     // Video (OLDSUI-281): the service and the video link are two attributes of the `div`.
     '<div data-block="video" data-provider="youtube" data-src="https://www.youtube.com/watch?v=dQw4w9WgXcQ">' +
     '<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a></div>' +
+    // Date mention (OLDSUI-309): `datetime` in one of the two forms and the words as the author saw them.
+    '<p>d <time datetime="2026-10-18T15:00+03:00">Oct 18, 2026, 3:00 PM</time></p>' +
     // Formulas write only `data-type` and the source in `data-latex` (OLDSUI-280).
     '<p>f <span data-type="inline-math" data-latex="x^2"></span></p>' +
-    '<div data-type="block-math" data-latex="\\frac{a}{b}"></div>';
+    '<div data-type="block-math" data-latex="\\frac{a}{b}"></div>' +
+    // Footnotes write the only `id` and `href="#…"` of the Schema (OLDSUI-306, ADR-0076).
+    '<p>n<sup data-footnote-ref="k3x9q2mf"><a href="#fn-k3x9q2mf" id="fnref-k3x9q2mf" role="doc-noteref">1</a></sup></p>' +
+    '<section data-block="footnotes" role="doc-endnotes" aria-label="Footnotes"><ol>' +
+    '<li id="fn-k3x9q2mf"><p>Note</p><a href="#fnref-k3x9q2mf" role="doc-backlink">\u21A9</a></li></ol></section>';
   const { tags, attributes } = inventory(
     load(sample, [
       ...TOOLS.filter((name) => name !== "details"),

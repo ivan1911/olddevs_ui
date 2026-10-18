@@ -48,8 +48,11 @@ export type {
 } from "./core/toolDefinition.js";
 export type {
   ConfiguredTool,
+  DateToolOptions,
   DetailsToolOptions,
+  FocusToolOptions,
   InvisibleCharactersToolOptions,
+  LanguageToolOptions,
   MathematicsToolOptions,
   RichTextTools,
   SearchToolOptions,
@@ -59,12 +62,24 @@ export type {
   VideoToolOptions,
 } from "./core/toolOptions.js";
 export type {
+  DateToolCommands,
+  BlockSelectionToolCommands,
+  FocusToolCommands,
+  FullscreenToolCommands,
+  FootnotesToolCommands,
   InvisibleCharactersToolCommands,
+  LanguageToolCommands,
   SearchToolCommands,
   TocToolCommands,
 } from "./core/toolCommands.js";
 export type {
+  BlockSelectionToolState,
+  FocusToolState,
+  FullscreenToolState,
+  FootnotesToolNote,
+  FootnotesToolState,
   InvisibleCharactersToolState,
+  LanguageToolState,
   SearchToolState,
   TocToolHeading,
   TocToolState,

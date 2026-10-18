@@ -495,6 +495,10 @@ export {
   TableCellsMerge as MergeCellsIcon,
   /** Split a merged cell back. */
   TableCellsSplit as SplitCellIcon,
+  /** Make a table column a step wider (OLDSUI-310). */
+  UnfoldHorizontal as ColumnWiderIcon,
+  /** Make a table column a step narrower. */
+  FoldHorizontal as ColumnNarrowerIcon,
   /** First row: column headers. Not `TableIcon`, which is the whole table. */
   PanelTop as HeaderRowIcon,
   /**
@@ -544,6 +548,18 @@ export {
    */
   ListCollapse as DetailsIcon,
   /**
+   * Select Blocks whole in the Editor (Block selection): a dashed frame. Not `SelectIcon`, which is
+   * the up-down chevrons of a select field; here it is a frame around a Block, as in the highlight
+   * the selection draws.
+   */
+  SquareDashed as BlockSelectIcon,
+  /**
+   * The Editor's focus mode: a viewfinder with a dot, the "Focus mode" item of the "…" menu. The
+   * frame corners are the picture of "one Block in focus, the rest out of it". Not `ExpandIcon`: that
+   * one is "Fullscreen" in the same menu.
+   */
+  Focus as FocusModeIcon,
+  /**
    * Video in the Editor (the `youtube` and `twitch` Tools): a square with a "play" triangle, the
    * "Video" item of the Slash menu. Not `PlayIcon`: that one is a launch button, and it is exactly
    * that button inside the player itself.
@@ -561,12 +577,24 @@ export {
    */
   SquareSigma as BlockFormulaIcon,
   /**
+   * The date mention of the Editor: a calendar with days, the "Date" item of the Slash menu. A new
+   * name next to `CalendarIcon` on purpose: that one is "scheduled for later" in the product's
+   * vocabulary, and this one is a date inside a line of text.
+   */
+  CalendarDays as DateMentionIcon,
+  /**
    * Show invisible characters in the Editor: a pilcrow with an arrow, the "Invisible characters" item
    * of the "…" menu of the fixed Toolbar. Not `ParagraphIcon`: that one already means "plain paragraph"
    * and appears in the same Toolbar, in the "¶" menu on the left; the arrow tells the show toggle apart
    * from a Block type.
    */
   PilcrowRight as InvisibleCharactersIcon,
+  /**
+   * A footnote in the Editor: the asterisk, the oldest mark of a note at the foot of the text. The
+   * "Footnote" item of the Slash menu and of the "…" menu. Not `SuperscriptIcon`: that one is the Mark,
+   * and a footnote is a reference with its own text in the list at the end of the Document.
+   */
+  Asterisk as FootnoteIcon,
 
   // ── Theme and grid density ─────────────────────────────────────────────
   Sun as ThemeLightIcon,

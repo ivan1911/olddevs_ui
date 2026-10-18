@@ -196,7 +196,7 @@ test("an external toggle drives the same state, and the saved HTML and onChange 
   await expect(changes).toHaveText("0");
 });
 
-test("from the keyboard: «…» opens with Enter, the item is the last one, Space and Enter toggle it", async ({
+test("from the keyboard: «…» opens with Enter, the item is first in the view section, Space and Enter toggle it", async ({
   page,
 }) => {
   await page.goto(STORY("inputs-richtexteditor--invisible-characters"));
@@ -207,7 +207,10 @@ test("from the keyboard: «…» opens with Enter, the item is the last one, Spa
   const item = page.getByRole("menuitemcheckbox", { name: "Invisible characters" });
   await more.focus();
   await page.keyboard.press("Enter");
-  // `↑` from the start of the list wraps to the end: the last item is "Invisible characters".
+  // `↑` from the start of the list wraps to the end. The view section is last: "Invisible
+  // characters", "Focus mode", "Fullscreen" (OLDSUI-312), so the item is three steps up.
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
   await page.keyboard.press("ArrowUp");
   await expect(item).toBeFocused();
 
@@ -217,6 +220,8 @@ test("from the keyboard: «…» opens with Enter, the item is the last one, Spa
 
   await more.focus();
   await page.keyboard.press("Enter");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
   await page.keyboard.press("ArrowUp");
   await expect(item).toHaveAttribute("aria-checked", "true");
   await page.keyboard.press("Enter");

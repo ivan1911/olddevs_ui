@@ -2,7 +2,6 @@
 
 import { useEditorState, type Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
-import type { NodeSelection } from "@tiptap/pm/state";
 import { useEffect, useMemo, useRef } from "react";
 import { Separator } from "../../../components/content/Separator.js";
 import { Toolbar } from "../../../components/actions/Toolbar.js";
@@ -12,7 +11,9 @@ import { DeleteIcon, EditIcon } from "../../../icons.js";
 import { buttonClasses } from "../../../lib/button.js";
 import { cn } from "../../../lib/cn.js";
 import { OVERLAY_LAYER } from "../../../lib/overlay-layer.js";
-import { IMAGE_WIDTHS, isImageSelection, type ImageWidth } from "./image.js";
+import { selectedImage, inTableCell, isImageSelection, type ImageAttributes } from "./image.js";
+import { ImageAlignGroup } from "./ImageAlignGroup.js";
+import { IMAGE_WIDTHS, type ImageAlign } from "./imageLayout.js";
 import { focusWithin } from "../../ui/focusWithin.js";
 import { GLASS_PANEL_CLASS } from "../../styles/glass.js";
 
@@ -29,8 +30,8 @@ const IMAGE_TOOLBAR_OPTIONS = {
 const ICON_BUTTON = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true });
 
 /**
- * Toolbar for the selected image: width presets, "Edit" (a popover with the address and the
- * description) and "Remove". It appears above an image selected with a click or with the arrows,
+ * Toolbar for the selected image: the three alignment toggles, the width presets, "Edit" (a popover
+ * with the address and the description) and "Remove". It appears above an image selected with a click or with the arrows,
  * like the floating Toolbar above text, with the same `BubbleMenu`.
  *
  * This is the path for the mouse and for quick edits. From the keyboard, the same `Alt+F10` that
@@ -40,6 +41,11 @@ const ICON_BUTTON = buttonClasses({ variant: "ghost", size: "sm", iconOnly: true
  * The kit's `role="toolbar"` is one Tab stop, with the arrows, Home and End. The presets are toggle
  * buttons with `aria-pressed`; pressing a pressed one again clears it, and the image goes back to
  * its own size. The action keeps the image selected, so the next preset can be pressed right away.
+ *
+ * The alignment comes first: it is the choice that changes how the image sits among the text, and
+ * the width only sizes it. Left and right also set the width and 100% also clears the side
+ * (`layoutOf`), so the presets pressed next to the toggles always show what the Document holds.
+ * In a table cell the toggles are disabled: there is no room for text to wrap there (ADR-0081).
  */
 export function ImageToolbar({
   editor,
@@ -65,15 +71,29 @@ export function ImageToolbar({
     ref.current?.setAttribute("tabindex", "-1");
   }, [editor]);
 
+  // One primitive per field: `useEditorState` re-renders on a changed value, not on a new object.
   const width = useEditorState({
     editor,
     selector: ({ editor: current }) =>
-      isImageSelection(current.state.selection)
-        ? ((current.state.selection as NodeSelection).node.attrs.width as ImageWidth | null)
-        : null,
+      (selectedImage(current.state)?.node.attrs as ImageAttributes | undefined)?.width ?? null,
+  });
+  const align = useEditorState({
+    editor,
+    selector: ({ editor: current }): ImageAlign | null => {
+      const found = isImageSelection(current.state.selection) ? selectedImage(current.state) : null;
+      if (!found || inTableCell(current.state, found.pos)) return null;
+      return (found.node.attrs as ImageAttributes).align;
+    },
+  });
+  const inCell = useEditorState({
+    editor,
+    selector: ({ editor: current }) => {
+      const found = selectedImage(current.state);
+      return found ? inTableCell(current.state, found.pos) : false;
+    },
   });
 
-  const setWidth = (preset: ImageWidth) =>
+  const setWidth = (preset: (typeof IMAGE_WIDTHS)[number]) =>
     editor
       .chain()
       .focus()
@@ -98,6 +118,13 @@ export function ImageToolbar({
     >
       <TooltipProvider>
         <Toolbar aria-label={messages.image} className="gap-0.5">
+          <ImageAlignGroup
+            value={align}
+            disabled={disabled || inCell}
+            variant="ghost"
+            onChange={(next) => editor.chain().focus().updateImage({ align: next }).run()}
+          />
+          <Separator />
           <div role="group" aria-label={messages.imageWidth} className="flex gap-0.5">
             {IMAGE_WIDTHS.map((preset) => (
               <button

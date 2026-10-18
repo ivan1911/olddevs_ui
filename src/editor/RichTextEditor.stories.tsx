@@ -188,6 +188,49 @@ const SORT_SAMPLE =
   '<td data-align="center"><p>draft</p></td></tr>' +
   "</tbody></table><p>Put the caret in a column and choose Table › Sort.</p>";
 
+/*
+  Column widths (OLDSUI-310, ADR-0080): a table with the widths the author set. The shares are in
+  `<colgroup><col data-width>`, in 5% steps, and add up to 100: the table fills the Document, a narrow
+  "Owner" and "Status" leave room for the notes. `SIZED_WIDE_SAMPLE` is the six-column roadmap of the
+  table stories with shares of its own, for the narrow screen, where 6 rem per column wins over them.
+*/
+const colgroup = (...shares: number[]) =>
+  `<colgroup>${shares.map((share) => `<col data-width="${share}">`).join("")}</colgroup>`;
+
+const SIZED_TABLE_SAMPLE =
+  "<h2>Roadmap</h2><p>Quarterly plan by area.</p>" +
+  `<table>${colgroup(25, 20, 20, 35)}<tbody>` +
+  "<tr><th><p>Area</p></th><th><p>Owner</p></th><th><p>Status</p></th><th><p>Notes</p></th></tr>" +
+  "<tr><td><p>Search</p></td><td><p>Alex</p></td><td><p><strong>Done</strong></p></td>" +
+  "<td><p>Shipped to <em>all</em> accounts</p></td></tr>" +
+  "<tr><td><p>Billing</p></td><td><p>Sam</p></td><td><p>In progress</p></td>" +
+  "<td><p>Waiting on the <code>invoice</code> format</p></td></tr>" +
+  "<tr><td><p>Reports</p></td><td><p>Kim</p></td><td><p>Planned</p></td>" +
+  "<td><p>Needs a design review</p></td></tr>" +
+  "</tbody></table><p>Text after the table.</p>";
+
+const SIZED_WIDE_SAMPLE = TABLE_SAMPLE.replace(
+  "<table><tbody>",
+  `<table>${colgroup(20, 10, 10, 10, 10, 40)}<tbody>`
+);
+
+/*
+  A range as Excel puts it on the clipboard: the Office namespace that tells the source, and a
+  `<col>` per column with the width in points (the exact value) and in pixels (rounded). The widths
+  are 132, 84, 72, 84 and 60 points: after the paste they are 30%, 20%, 15%, 20% and 15%.
+*/
+const EXCEL_RANGE =
+  '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><body><table>' +
+  "<col width=176 style='mso-width-source:userset;width:132pt'>" +
+  "<col width=112 style='mso-width-source:userset;width:84pt'>" +
+  "<col width=96 style='mso-width-source:userset;width:72pt'>" +
+  "<col width=112 style='mso-width-source:userset;width:84pt'>" +
+  "<col width=80 style='mso-width-source:userset;width:60pt'>" +
+  "<tr><td>Fruit</td><td>Origin</td><td>Price</td><td>Updated</td><td>Share</td></tr>" +
+  "<tr><td>Apple</td><td>Spain</td><td>1.20</td><td>01.10.2026</td><td>25%</td></tr>" +
+  "<tr><td>Pear</td><td>Italy</td><td>1.80</td><td>03.10.2026</td><td>10%</td></tr>" +
+  "</table></body></html>";
+
 /** Part of the remount key for a `tools` entry: the name, and for `tool()` the options too. */
 const toolKey = (entry: NonNullable<RichTextEditorProps["tools"]>[number]) =>
   typeof entry === "string"
@@ -1406,15 +1449,25 @@ function TableInCell({
   locale,
   document = TABLE_SAMPLE,
   caret = "Billing",
+  showBars = false,
 }: {
   locale?: "ru-RU";
   document?: string;
   caret?: string;
+  /**
+   * The width bars are in the table while the caret is in it, but each one draws its line only under
+   * the pointer. The story has no pointer, so it draws all of them.
+   */
+  showBars?: boolean;
 }) {
   const ref = useRef<RichTextEditorHandle>(null);
   useCaretInCell(ref, caret);
   const field = (
-    <div className="max-w-[640px]">
+    <div
+      className={
+        showBars ? "max-w-[640px] [&_[data-column-handle]>div]:opacity-100" : "max-w-[640px]"
+      }
+    >
       <RichTextEditor ref={ref} aria-label="Document" defaultValue={document} />
     </div>
   );
@@ -1481,6 +1534,83 @@ export const TableRussian: Story = {
 export const TableNarrow: Story = {
   tags: ["viewport-phone"],
   render: () => <TableInCell />,
+};
+
+/**
+ * Column widths with the pointer (decision 4): with the caret in a table, a bar appears on the
+ * boundary between every two columns (it is always visible on a touch screen). Drag one: the bar
+ * follows the pointer smoothly, and on release the boundary snaps to the nearest 5%. Only the two
+ * columns around it trade width, the rest stay put, and the last column has no bar. The drag is one
+ * undo step. This table has no widths yet: the first drag rounds all of them to 5%, then moves the
+ * boundary. The bars are for the pointer only; the keyboard has the menu (`TableColumnWidthMenu`).
+ * The caret is in the "Search" cell; a bar draws its line under the pointer, and the story draws all
+ * three at once so that they are in the frame.
+ */
+export const TableColumnWidthHandle: Story = {
+  render: () => (
+    <TableInCell
+      document={SIZED_TABLE_SAMPLE.replace(colgroup(25, 20, 20, 35), "")}
+      caret="Search"
+      showBars
+    />
+  ),
+};
+
+/**
+ * Column widths from the keyboard (decision 6): "Table ▾" → "Column ›" → "Wider" / "Narrower" widen
+ * or narrow the column under the caret by 5% at the expense of its neighbour on the right (on the left
+ * for the last column). The group's name is the current width ("Column width: 20%"), and the result is
+ * announced through the Field notice. "Equal columns" and "Fit columns to content" are in the "Table"
+ * menu itself: the second takes all the widths away, and the table is sized by its content again.
+ */
+export const TableColumnWidthMenu: Story = {
+  render: () => <TableInCell document={SIZED_TABLE_SAMPLE} caret="Billing" />,
+};
+
+/**
+ * A narrow screen (375 px): the shares are of the table's width, but a column never gets narrower than
+ * 6 rem, so six columns do not fit and the table scrolls inside itself, as a table without widths does.
+ * The bars follow the scroll.
+ */
+export const TableColumnWidthNarrow: Story = {
+  tags: ["viewport-phone"],
+  render: () => <TableInCell document={SIZED_WIDE_SAMPLE} caret="Billing" />,
+};
+
+/** Paste a range from Excel (decision 7): its column widths in points become shares rounded to 5%. */
+function ExcelPasteDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  return (
+    <div className="flex max-w-[640px] flex-col gap-3">
+      <div>
+        <Button
+          onClick={() => {
+            const editor = ref.current?.editor;
+            editor?.view.focus();
+            editor?.view.pasteHTML(EXCEL_RANGE, new Event("paste") as ClipboardEvent);
+          }}
+        >
+          Paste a range from Excel
+        </Button>
+      </div>
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue="<p>Press the button.</p>" />
+    </div>
+  );
+}
+
+/**
+ * A range from Excel: the paste cleanup (`pasteCleanup`) reads the column widths the application writes
+ * (points and pixels) and the Document keeps them as shares (30/20/15/20/15). Word, Google Docs and
+ * Google Sheets are read the same way. A copy from a web page with a `colgroup` is read by the table
+ * itself; a table with no widths comes in sized by its content.
+ */
+export const TableColumnWidthExcelPaste: Story = {
+  render: () => <ExcelPasteDemo />,
+};
+
+/** Column widths in the Russian locale: the name of the menu group, the two items and the announcement come from the catalog. */
+export const TableColumnWidthRussian: Story = {
+  render: () => <TableInCell locale="ru-RU" document={SIZED_TABLE_SAMPLE} caret="Billing" />,
 };
 
 /**
@@ -1623,6 +1753,142 @@ export const ImagesRussian: Story = {
           defaultValue={imagesDocument()}
           onUploadImage={fakeUploader("success")}
         />
+      </div>
+    </UiProvider>
+  ),
+};
+
+/*
+  Image alignment (ADR-0081, OLDSUI-311). The images are written the way the Editor writes them:
+  `data-align` on the `figure`, the width as a preset on the `img`. The text is neutral on purpose.
+*/
+const LOREM =
+  "The paragraph is long enough to run past the picture and fall back to the full width of the " +
+  "Document, which is how the wrapping shows. Text beside an aligned image follows its edge, and a " +
+  "heading, a table or a divider starts below it.";
+
+function alignedDocument(): string {
+  const src = sampleImage();
+  return (
+    "<h2>Image alignment</h2>" +
+    `<figure data-align="left"><img src="${src}" alt="Mountains under a clear sky" data-width="33">` +
+    "<figcaption>On the left, 33%</figcaption></figure>" +
+    `<p>${LOREM} ${LOREM}</p><p>${LOREM}</p>` +
+    "<h3>A heading starts below the image</h3>" +
+    `<figure data-align="right"><img src="${src}" alt="Mountains, again" data-width="25"></figure>` +
+    `<p>${LOREM} ${LOREM}</p>` +
+    "<ul><li><p>A list wraps the image too</p></li><li><p>Its bullets stay clear of the picture</p></li></ul>" +
+    "<hr><p>A divider clears both sides.</p>" +
+    `<figure data-align="left"><img src="${src}" alt="" data-width="25"></figure>` +
+    `<figure data-align="right"><img src="${src}" alt="" data-width="25"></figure>` +
+    "<p>One image on the left and one on the right can stand side by side, with the text between them.</p>"
+  );
+}
+
+/**
+ * Image alignment: left and right put the image at the edge and the text of the next Blocks wraps
+ * around it, as in Word. A selected image shows three toggles (left, centre, right) before the width
+ * presets; `Ctrl/⌘+Shift+L/E/R` do the same on a selected image. An aligned image is 25, 33, 50 or
+ * 75% wide and has one resize handle, on the side of the text. A heading, a table, a divider and the
+ * other Blocks of ADR-0081 start below it.
+ */
+export const ImageAlignment: Story = {
+  render: (args) => (
+    <div className="max-w-[640px]">
+      <RichTextEditor {...args} defaultValue={alignedDocument()} />
+    </div>
+  ),
+};
+
+/**
+ * A narrow Document (375 px): from 30 rem of the Document's own width the image floats, and below it
+ * there is no room for a column of text beside the image, so it stands on a line of its own, in the
+ * centre, at its own width. The threshold is a container query, not the window's width.
+ */
+export const ImageAlignmentNarrow: Story = {
+  tags: ["viewport-phone"],
+  render: (args) => <RichTextEditor {...args} defaultValue={alignedDocument()} />,
+};
+
+/**
+ * Alignment is relative to its own container: here it is a share of a column of a Column layout and
+ * of a Wrapper, and each container holds the floats of its own children. In a table cell the toggles
+ * are unavailable and an aligned image stays in the centre.
+ */
+export const ImageAlignmentInColumn: Story = {
+  render: (args) => {
+    const src = sampleImage();
+    const column = (side: "left" | "right") =>
+      `<div data-block="column"><figure data-align="${side}"><img src="${src}" alt="" data-width="50"></figure>` +
+      `<p>${LOREM}</p></div>`;
+    return (
+      <div className="max-w-[640px]">
+        <RichTextEditor
+          {...args}
+          defaultValue={
+            `<div data-block="layout" data-layout="50-50">${column("left")}${column("right")}</div>` +
+            '<div data-block="wrapper" data-tone="accent">' +
+            `<figure data-align="left"><img src="${src}" alt="" data-width="25"></figure>` +
+            `<p>${LOREM}</p></div>` +
+            "<table><tbody><tr><td>" +
+            `<figure data-align="left"><img src="${src}" alt="" data-width="50"></figure>` +
+            "</td><td><p>The image in the first cell takes no alignment.</p></td></tr></tbody></table>"
+          }
+        />
+      </div>
+    );
+  },
+};
+
+const WORD_ALIGNED_FRAGMENT = (src: string) =>
+  '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+  'xmlns:w="urn:schemas-microsoft-com:office:word"><body>' +
+  "<p class=MsoNormal><span style='mso-ignore:vglayout'>" +
+  `<img width=200 height=130 src="${src}" align=left hspace=12 alt="A landscape"></span>` +
+  "A picture Word wraps with the text on its right.</p>" +
+  `<p class=MsoNormal><img width=200 height=130 src="${src}" align=right alt="">` +
+  "And one with the text on its left.</p></body></html>";
+
+function PasteAlignedDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      // The cleanup steps come in their own chunk: wait for it, or the first paste would go in uncleaned.
+      void loadPasteCleanup().then(() => {
+        editor.view.pasteHTML(WORD_ALIGNED_FRAGMENT(sampleImage()));
+      });
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/**
+ * A paste from Word: a picture the text wraps (`align="left"` or `"right"`, as Word writes it) comes
+ * in aligned, at 50% because the width in pixels says nothing about the target Document. The same
+ * goes for `float` on a picture from a web page.
+ */
+export const ImageAlignmentPasteFromWord: Story = {
+  render: () => <PasteAlignedDemo />,
+};
+
+/** Image alignment in the Russian locale: the toggles, their tooltips and the popover. */
+export const ImageAlignmentRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor aria-label="Document" defaultValue={alignedDocument()} />
       </div>
     </UiProvider>
   ),
@@ -2476,6 +2742,179 @@ export const MathematicsPopover: Story = {
   // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => <OpenedFormula />,
+};
+
+/*
+  Date mention (OLDSUI-309, ADR-0079): a date inside a line of text, `<time datetime>` with the words the
+  author saw. In `full`, so no `tools` list is needed. The Calendar and the popover are a lazy chunk that
+  loads when a mention is inserted or edited.
+*/
+const DATE_SAMPLE =
+  "<h2>Project plan</h2>" +
+  '<p>The kickoff is on <time datetime="2026-10-12">Oct 12, 2026</time>, the review meeting at ' +
+  '<time datetime="2026-10-19T15:00+03:00">Oct 19, 2026, 3:00 PM</time>, and the release is planned for ' +
+  '<time datetime="2026-11-02">Nov 02, 2026</time>. Click a date to change it, or select it with ' +
+  "<kbd>Shift</kbd>+<kbd>→</kbd> and press Enter.</p>" +
+  "<p>Text after the dates.</p>";
+
+/**
+ * A date mention: a rounded chip with the weak background and the ordinary font. A click on it, or Enter
+ * on the selected one, opens the popover with the calendar; a new one is inserted from the Insert menu
+ * ("Date"). The words are written in the author's locale and shown by `RichTextView` as they are.
+ */
+export const DateMention: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} />
+    </div>
+  ),
+};
+
+/** Date mentions on a light `surface="paper"` sheet. */
+export const DateMentionPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} surface="paper" />
+    </div>
+  ),
+};
+
+/** The Slash menu by `/date`: the "Date" item (and by `today`, `calendar`). Enter on it opens the calendar. */
+export const DateMentionInsertSlash: Story = {
+  render: () => <TypedCommand command="/date" />,
+};
+
+/**
+ * Open the edit popover of the mention with a time as soon as the engine has drawn it. Before the
+ * engine exists the field shows a Skeleton with the same `time` elements, and a click on those opens
+ * nothing: the mention is looked for inside the Document (`editor.view.dom`), not in the whole story.
+ */
+function OpenedDate() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const target =
+        ref.current?.editor?.view.dom.querySelector<HTMLElement>("time[datetime*='T']");
+      if (!target) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      target.click();
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="h-[560px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={DATE_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * The edit popover of a mention with a time: the calendar on its day, the "Time" switch with the time
+ * field, "Remove time" and "Delete date", and "Apply" for a changed time.
+ */
+export const DateMentionPopover: Story = {
+  // The popover's chunk (the Calendar) is lazy: the snapshot and the audit wait for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => <OpenedDate />,
+};
+
+/*
+  A `<time>` from someone else's page. The forms the Editor writes itself (a date, a date with a time and
+  an offset) become mentions with their words as they were; a period, a week, a year and a time without an
+  offset stay ordinary text, and nothing is lost.
+*/
+const FOREIGN_TIME_HTML =
+  '<p>From a news page: published <time datetime="2026-10-12">twelfth of October</time> and ' +
+  '<time datetime="2026-10-12T09:30+02:00">9:30 CEST</time>.</p>' +
+  '<p>These stay text: <time datetime="P3D">three days</time>, <time datetime="2026-W42">week 42</time>, ' +
+  '<time datetime="2026-10-12T09:30">9:30 with no offset</time>.</p>';
+
+function PastedTime() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.view.pasteHTML(FOREIGN_TIME_HTML);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/** A `<time>` pasted from another page: a mention where `datetime` is in the Editor's form, text elsewhere. */
+export const DateMentionPasted: Story = {
+  render: () => <PastedTime />,
+};
+
+const DATE_FORMAT_SAMPLE =
+  "<h2>Project plan</h2>" +
+  '<p>Written before the option, as it was: <time datetime="2026-10-12">Oct 12, 2026</time>.</p>' +
+  "<p>Inserted with the option:</p>";
+
+/** Insert one mention at the end of the last paragraph, once the engine is created. */
+function FormattedDate() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.chain().focus("end").insertContent(" ").run();
+      ref.current?.tool("date")?.insert("2026-10-19");
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, tool("date", { format: { dateStyle: "long" } })]}
+        defaultValue={DATE_FORMAT_SAMPLE}
+      />
+    </div>
+  );
+}
+
+/**
+ * The `format` option: `tool("date", { format: { dateStyle: "long" } })` writes new dates in the long
+ * form. It applies to mentions made from now on, so the one in the Document already keeps the words it
+ * was written with ("Oct 12, 2026"), and the one the story inserts reads "October 19, 2026".
+ */
+export const DateMentionFormat: Story = {
+  render: () => <FormattedDate />,
+};
+
+/**
+ * Date mentions in the Russian locale: the Insert menu and the popover come from the catalog, the
+ * calendar is in Russian, and a date picked now is written as Russian text with a 24-hour clock.
+ */
+export const DateMentionRussian: Story = {
+  // The popover's chunk (the Calendar) is lazy: the snapshot and the audit wait for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <OpenedDate />
+    </UiProvider>
+  ),
 };
 
 /** Open the HTML mode as soon as the Toolbar appears: a click on the "HTML" button. */
@@ -3804,4 +4243,702 @@ export const PasteFromOffice: Story = {
   // The sample is fetched from the showcase: the snapshot waits for the network to go quiet.
   tags: ["network-idle"],
   render: () => <PasteCleanupDemo />,
+};
+
+/*
+  Text part language (OLDSUI-308, ADR-0078): the sample is a neutral English text with a German
+  term, a French phrase and an English quotation inside a Russian page. The stories use Latin
+  text only; the Russian interface comes from the catalog.
+*/
+const LANGUAGE_SAMPLE =
+  "<h2>Language of parts</h2>" +
+  '<p>A reader hears this sentence in the language of the page, but the word <span lang="de">Weltschmerz</span> ' +
+  'is German, and <span lang="fr">joie de vivre</span> is French. A dotted line under a fragment shows the author where the mark ' +
+  "begins and ends; the reader of <code>RichTextView</code> sees no line.</p>" +
+  '<p><span lang="de">A whole paragraph can carry the mark too, with <strong>bold</strong> inside it.</span></p>';
+
+/**
+ * The `language` Tool, marked fragments: a thin dotted underline in the Editor shows where each
+ * Mark begins and ends (the View draws nothing). The page language is `en`, so only the German and
+ * French pieces are marked. The "Language ›" submenu is in the "…" menu.
+ */
+export const TextLanguage: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={LANGUAGE_SAMPLE} />
+    </div>
+  ),
+};
+
+/*
+  Opens "…" over the selected `text`, then its submenu: the same way as from the keyboard (focus on
+  the item and `→`), because hovering would open it after a delay and the snapshot would catch an
+  intermediate frame.
+*/
+function useOpenLanguageSubmenu(
+  ref: RefObject<RichTextEditorHandle | null>,
+  text: string,
+  more: string,
+  item: string
+) {
+  useOpenToolbarPopover(ref, text, more);
+  useEffect(() => {
+    let frame = 0;
+    const open = () => {
+      const trigger = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="menuitem"][aria-haspopup]')
+      ).find((candidate) => candidate.textContent?.startsWith(item));
+      if (!trigger) {
+        frame = requestAnimationFrame(open);
+        return;
+      }
+      trigger.focus();
+      trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    };
+    frame = requestAnimationFrame(open);
+    return () => cancelAnimationFrame(frame);
+  }, [item]);
+}
+
+function OpenLanguageMenu({ more, item }: { more: string; item: string }) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useOpenLanguageSubmenu(ref, "Weltschmerz", more, item);
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={LANGUAGE_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * The "Language ›" submenu over the selected German word: English and Russian are the options
+ * (`languages`), the page's own language is marked "primary", and "Remove language mark" removes
+ * the Mark. German is not in the option, but it is under the selection, so it is added and checked.
+ */
+export const TextLanguageMenu: Story = {
+  render: () => <OpenLanguageMenu more="More formatting" item="Language" />,
+  tags: ["network-idle"],
+};
+
+/**
+ * A Russian interface: the page's primary language is the interface locale (`ru-RU`, there is no
+ * `lang` above the field in this story's frame), so the English piece is the real mark. The names
+ * come from `Intl.DisplayNames` in Russian, the words from the catalog.
+ */
+export const TextLanguageRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <OpenLanguageMenu more={ru.editor.moreFormatting} item={ru.editor.language} />
+    </UiProvider>
+  ),
+  tags: ["network-idle"],
+};
+
+// A Word clipboard fragment: `lang` on every run, `mso-ansi-language` next to it, and Word's own case.
+const WORD_LANGUAGE_FRAGMENT =
+  "<html><body><p class=MsoNormal><span lang=EN-US style='mso-ansi-language:EN-US'>" +
+  "The page is English, so this run is dropped. </span>" +
+  "<span lang=DE style='mso-ansi-language:DE'>Dieser Satz bleibt deutsch.</span>" +
+  "<span lang=EN-US style='mso-ansi-language:EN-US'> And the next run is again plain.</span></p></body></html>";
+
+function PasteLanguageDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.view.pasteHTML(WORD_LANGUAGE_FRAGMENT, new Event("paste") as ClipboardEvent);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/**
+ * A paste from Word: every run carries `lang`, and the Editor keeps only the one that differs
+ * from the page's language (`en` here), written in the canonical case (`DE` becomes `de`). Without
+ * the drop, Word would cover the whole text with marks.
+ */
+export const TextLanguagePasteFromWord: Story = {
+  render: () => <PasteLanguageDemo />,
+};
+
+function QuotesDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      // The same path ProseMirror receives typing by, where the input rules hang.
+      const { doc } = editor.state;
+      let end = 0;
+      doc.descendants((node, pos) => {
+        if (node.isText && node.text === "French") end = pos + node.nodeSize;
+      });
+      editor.commands.setTextSelection(end);
+      for (const char of ' "a phrase"') {
+        const { from, to } = editor.state.selection;
+        const handled = editor.view.someProp("handleTextInput", (handler) =>
+          handler(editor.view, from, to, char, () => editor.state.tr.insertText(char, from, to))
+        );
+        if (!handled) editor.view.dispatch(editor.state.tr.insertText(char, from, to));
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "typography"]}
+        defaultValue={
+          '<p>The English interface gives “curly” quotes: <span lang="en">English</span>, but inside a ' +
+          '<span lang="ru">Russian</span> fragment the same key gives guillemets, and inside <span lang="fr">French</span></p>'
+        }
+      />
+    </div>
+  );
+}
+
+/**
+ * Typography by the language of the fragment: the `"` typed at the end of the French fragment gives
+ * the catalog's curly quotes, while one typed inside a `ru` mark gives guillemets and inside an
+ * `en` mark curly quotes, whatever the interface language is.
+ */
+export const TextLanguageQuotes: Story = {
+  render: () => <QuotesDemo />,
+};
+
+/*
+  Block selection and the Block handle over a range (ADR-0077, OLDSUI-307). The story sets the state
+  once the engine is created, the way a user gets there: a text selection across Blocks (the handle
+  over a range), or `Esc` in the text and `Shift+↓` (Block selection). `extend` is how many times
+  `Shift+↓` is pressed after `Esc`.
+*/
+function useRangeDemo(
+  ref: RefObject<RichTextEditorHandle | null>,
+  options: {
+    from: string;
+    to?: string;
+    extend?: number;
+    open?: boolean;
+    /** The accessible name of the "⋮" button: it comes from the catalog, so it is not English in `ru`. */
+    handleName?: string;
+  }
+) {
+  const { from, to, extend = 0, open = false, handleName = "Block actions" } = options;
+  useEffect(() => {
+    let frame = 0;
+    const press = () => {
+      const handle = document.querySelector<HTMLElement>(
+        `button[aria-label="${CSS.escape(handleName)}"]`
+      );
+      if (!handle) {
+        frame = requestAnimationFrame(press);
+        return;
+      }
+      handle.click();
+    };
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      let start = -1;
+      let end = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (!node.isText) return;
+        if (start < 0 && node.text === from) start = pos + 1;
+        if (node.text === (to ?? from)) end = pos + node.nodeSize - 1;
+      });
+      editor.view.focus();
+      if (start > 0) editor.commands.setTextSelection(to ? { from: start, to: end } : start);
+      if (!to) {
+        // Block selection: the same as `Esc`, then `Shift+↓` for each extra Block.
+        ref.current?.tool("blockSelection")?.selectCurrent();
+        for (let step = 0; step < extend; step++) {
+          editor.view.dom.dispatchEvent(
+            new KeyboardEvent("keydown", { key: "ArrowDown", shiftKey: true, bubbles: true })
+          );
+        }
+      }
+      if (open) frame = requestAnimationFrame(press);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [ref, from, to, extend, open, handleName]);
+}
+
+const RANGE_SAMPLE =
+  "<h2>Release plan</h2>" +
+  "<p>Freeze the scope on Monday.</p>" +
+  "<p>Run the regression pass on Tuesday.</p>" +
+  "<p>Ship on Wednesday.</p>" +
+  "<ul><li><p>Announce the date</p></li><li><p>Update the changelog</p></li></ul>" +
+  "<p>Closing note for the team.</p>";
+
+function RangeDemo({
+  document = RANGE_SAMPLE,
+  from,
+  to,
+  extend,
+  open,
+  handleName,
+  ...props
+}: {
+  document?: string;
+  from: string;
+  to?: string;
+  extend?: number;
+  open?: boolean;
+  handleName?: string;
+} & Partial<RichTextEditorProps>) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useRangeDemo(ref, { from, to, extend, open, handleName });
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={document} {...props} />
+    </div>
+  );
+}
+
+/**
+ * The Block handle over a range: a text selection across several Blocks no longer hides the "⋮". It
+ * stands at the first Block the selection touches, and its menu acts on all of them. This is in every
+ * Editor, with or without the `blockSelection` Tool.
+ */
+export const BlockHandleOverRange: Story = {
+  // The frame is about the handle: the selection menu above the same range only animates in at a
+  // varying moment and makes the snapshot flaky.
+  render: () => (
+    <RangeDemo
+      from="Run the regression pass on Tuesday."
+      to="Ship on Wednesday."
+      selectionMenu={false}
+    />
+  ),
+};
+
+/**
+ * The menu of the handle over a range: Select, Format ›, Wrap in ›, Move up, Move down, Duplicate and
+ * Delete. No "Add ›": that item is for one Block. Every item is one edit for undo, and the screen
+ * reader hears the result ("Blocks deleted: 2").
+ */
+export const BlockHandleOverRangeMenu: Story = {
+  render: () => (
+    <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." open />
+  ),
+};
+
+/**
+ * Block selection: `Esc` in the text selects the current Block, `Shift+↓` adds the next one. The
+ * Blocks are painted whole on the selection color, there is no caret, and the "⋮" stands at the first
+ * Block. Then `Backspace` removes them, `⌘C` and `⌘X` take them whole, `⌘V` replaces them, `⌘⇧D` and
+ * `⌥⇧↑/↓` duplicate and move them; `Esc` again returns the caret.
+ */
+export const BlockSelection: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} />,
+};
+
+/** Block selection on the Paper sheet: the same highlight on a light surface in any theme. */
+export const BlockSelectionPaper: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} surface="paper" />,
+};
+
+/** A list: the unit is the item, so the selection takes one item and grows by item. */
+export const BlockSelectionInList: Story = {
+  render: () => <RangeDemo from="Announce the date" extend={1} />,
+};
+
+const COLUMNS_RANGE_SAMPLE =
+  "<p>Before the columns.</p>" +
+  layoutBlock(
+    "50-50",
+    layoutColumn("Left", "First block of the left column."),
+    layoutColumn("Right", "Only block of the right column.")
+  ) +
+  "<p>After the columns.</p>";
+
+/**
+ * Block selection in columns: the selection is neighbours of one container, so `Shift+↓` stays in the
+ * column. At the column's edge it selects the whole Column layout and goes on at the Document's level.
+ */
+export const BlockSelectionInColumns: Story = {
+  render: () => (
+    <RangeDemo document={COLUMNS_RANGE_SAMPLE} from="First block of the left column." />
+  ),
+};
+
+/**
+ * Block selection inside a `Dialog`: the first `Esc` selects the Block and the window stays, the
+ * second `Esc` ends the selection and closes the window, like any nested layer (ADR-0041). A comment
+ * field uses `preset="basic"` and keeps the one-`Esc` close.
+ */
+export const BlockSelectionInDialog: Story = {
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="h-[520px]">
+        <Button onClick={() => setOpen(true)}>Open the window</Button>
+        <Dialog open={open} onClose={() => setOpen(false)} title="Edit the plan">
+          <div className="w-[560px] max-w-full">
+            <RangeDemoInDialog />
+          </div>
+        </Dialog>
+      </div>
+    );
+  },
+};
+
+function RangeDemoInDialog() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useRangeDemo(ref, { from: "Run the regression pass on Tuesday." });
+  return <RichTextEditor ref={ref} aria-label="Document" defaultValue={RANGE_SAMPLE} />;
+}
+
+/**
+ * Block selection in a read-only field: `Esc`, `Shift+↑/↓` and `Shift+click` work, and of the actions
+ * only `⌘C` (there is no handle).
+ */
+export const BlockSelectionReadOnly: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} readOnly />,
+};
+
+/** The announcements, the menu items and the reference rows in the Russian catalog. */
+export const BlockSelectionRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <RangeDemo
+        from="Run the regression pass on Tuesday."
+        to="Ship on Wednesday."
+        open
+        handleName={ru.editor.blockActions}
+      />
+    </UiProvider>
+  ),
+};
+
+/* ── Footnotes (the `footnotes` Tool, OLDSUI-306, ADR-0076) ───────────────────────────────── */
+
+/** A footnote reference as the Editor writes it. */
+const footnoteRef = (key: string, number: number) =>
+  `<sup data-footnote-ref="${key}"><a href="#fn-${key}" id="fnref-${key}" role="doc-noteref">${number}</a></sup>`;
+
+/** The footnote list as the Editor writes it. */
+const footnoteList = (name: string, notes: readonly (readonly [key: string, html: string])[]) =>
+  `<section data-block="footnotes" role="doc-endnotes" aria-label="${name}"><ol>` +
+  notes
+    .map(
+      ([key, html]) =>
+        `<li id="fn-${key}"><p>${html}</p><a href="#fnref-${key}" role="doc-backlink">↩</a></li>`
+    )
+    .join("") +
+  "</ol></section>";
+
+const FOOTNOTES_SAMPLE =
+  "<h2>A short report</h2>" +
+  `<p>The first result${footnoteRef("fnstory1", 1)} was measured twice, and the second one${footnoteRef("fnstory2", 2)} ` +
+  `agreed with it${footnoteRef("fnstory3", 3)}.</p>` +
+  "<p>Type <code>/footnote</code> or use the item in the “…” menu to add another reference at the caret.</p>" +
+  footnoteList("Footnotes", [
+    ["fnstory1", "Measured on <strong>2026-09-01</strong>, in the lab."],
+    [
+      "fnstory2",
+      'See <a href="https://example.com/method" rel="noopener noreferrer">the method</a>.',
+    ],
+    ["fnstory3", "The difference stayed under one percent."],
+  ]);
+
+/**
+ * Footnotes in `full`: a reference with an automatic number in the text, and the footnotes' texts in a
+ * list at the end, edited in place. "Footnote" in the Slash menu and in the “…” menu inserts a reference
+ * at the caret and moves the caret into its footnote. A click or Enter on a reference goes to its
+ * footnote; the footnote's number button, or Enter in it, goes back.
+ */
+export const Footnotes: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={FOOTNOTES_SAMPLE} />
+    </div>
+  ),
+};
+
+function FootnotesRenumberingDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  const state = useRichTextToolState(ref, "footnotes");
+  return (
+    <div className="flex max-w-[640px] flex-col gap-3">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={FOOTNOTES_SAMPLE} />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          onClick={() => {
+            // The caret goes to the start of the first paragraph: the new reference becomes number 1.
+            const editor = ref.current?.editor;
+            editor
+              ?.chain()
+              .focus()
+              .setTextSelection(editor.state.doc.child(0).nodeSize + 1)
+              .run();
+            ref.current?.tool("footnotes")?.insert();
+          }}
+        >
+          Add a footnote at the start of the report
+        </Button>
+        <Button variant="outline" onClick={() => ref.current?.undo()}>
+          Undo
+        </Button>
+        <span role="status" className="text-fg-2 text-caption">
+          {state
+            ? `${state.footnotes.length} footnotes, current: ${state.current ?? "none"}`
+            : "Loading"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Renumbering. The button puts a new reference before the others: the old references and footnotes
+ * move down by one, the new footnote is first in the list, and one Undo takes the whole edit back. The
+ * state line is `useRichTextToolState(ref, "footnotes")`.
+ */
+export const FootnotesRenumbering: Story = {
+  render: () => <FootnotesRenumberingDemo />,
+};
+
+const FOOTNOTES_MARKDOWN =
+  "The first result[^lab] was measured twice, and the second one[^method] agreed with it.\n\n" +
+  "[^lab]: Measured on **2026-09-01**, in the lab.\n" +
+  "[^method]: See [the method](https://example.com/method).";
+
+/**
+ * Markdown both ways. "Load Markdown" reads GFM footnotes (labels become numbers), and "Export Markdown"
+ * writes `[^1]` … `[^n]` and the definitions at the end; the round trip loses nothing.
+ */
+export const FootnotesMarkdown: Story = {
+  render: () => {
+    const ref = useRef<RichTextEditorHandle>(null);
+    const [markdown, setMarkdown] = useState("");
+    return (
+      <div className="flex max-w-[640px] flex-col gap-3">
+        <RichTextEditor ref={ref} aria-label="Document" />
+        <div className="flex gap-2">
+          <Button onClick={() => ref.current?.setMarkdown(FOOTNOTES_MARKDOWN)}>
+            Load Markdown
+          </Button>
+          <Button variant="outline" onClick={() => setMarkdown(ref.current?.getMarkdown() ?? "")}>
+            Export Markdown
+          </Button>
+        </div>
+        <pre className="text-fg-2 text-caption break-all whitespace-pre-wrap">{markdown}</pre>
+      </div>
+    );
+  },
+};
+
+/**
+ * `readOnly`: the Document does not change, but the jumps work. A click on a reference goes to its
+ * footnote, and the buttons use the Tool's commands `goToFootnote(n)` and `goToReference(n)`.
+ */
+export const FootnotesReadOnly: Story = {
+  render: () => {
+    const ref = useRef<RichTextEditorHandle>(null);
+    return (
+      <div className="flex max-w-[640px] flex-col gap-3">
+        <RichTextEditor ref={ref} aria-label="Document" readOnly defaultValue={FOOTNOTES_SAMPLE} />
+        <div className="flex gap-2">
+          <Button onClick={() => ref.current?.tool("footnotes")?.goToFootnote(2)}>
+            Go to footnote 2
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => ref.current?.tool("footnotes")?.goToReference(2)}
+          >
+            Back to reference 2
+          </Button>
+        </div>
+      </div>
+    );
+  },
+};
+
+const FOOTNOTES_RUSSIAN =
+  "<h2>A short report</h2>" +
+  `<p>The first result${footnoteRef("fnrusone", 1)} was measured twice, and the second one${footnoteRef("fnrustwo", 2)} agreed with it.</p>` +
+  // The list's name is written into the HTML in the language of the catalog, as the Editor does.
+  footnoteList(ru.editor.footnotes, [
+    ["fnrusone", "Measured in the lab on 1 September 2026."],
+    ["fnrustwo", "The method is described <em>separately</em>."],
+  ]);
+
+/**
+ * The Russian catalog: the Toolbar, the Slash menu item, the number button's name and the list's name
+ * in the HTML come from `@olddevs/ui/locales/ru`. The Document's text is data and stays English.
+ */
+export const FootnotesRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor defaultValue={FOOTNOTES_RUSSIAN} />
+      </div>
+    </UiProvider>
+  ),
+};
+
+/*
+  Fullscreen mode and the focus mode (OLDSUI-312, ADR-0082). The demos put the field in the state
+  the story is about: the caret in a Block, the layer open. `onReady` runs once the engine is created,
+  and the Handle already works inside it.
+*/
+const FOCUS_SAMPLE =
+  "<h2>Release plan</h2>" +
+  "<p>Freeze the scope on Monday.</p>" +
+  "<p>Run the regression pass on Tuesday.</p>" +
+  "<ul><li><p>Announce the date</p></li><li><p>Update the changelog</p></li></ul>" +
+  "<p>Ship on Wednesday.</p>";
+
+/** Put the caret at the end of the text `text` and focus the Document. */
+function caretAt(handle: RichTextEditorHandle | null, text: string) {
+  const editor = handle?.editor;
+  if (!editor) return;
+  let found = -1;
+  editor.state.doc.descendants((node, pos) => {
+    if (found < 0 && node.isText && node.text === text) found = pos + node.nodeSize;
+  });
+  editor.view.focus();
+  if (found > 0) editor.commands.setTextSelection(found);
+}
+
+function ModesDemo({
+  fullscreen = false,
+  focus = false,
+  ...props
+}: { fullscreen?: boolean; focus?: boolean } & Partial<RichTextEditorProps>) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, ...(focus ? [tool("focus", { enabled: true })] : [])]}
+        defaultValue={FOCUS_SAMPLE}
+        onReady={() => {
+          caretAt(ref.current, "Run the regression pass on Tuesday.");
+          if (fullscreen) ref.current?.tool("fullscreen")?.open();
+        }}
+        {...props}
+      />
+    </div>
+  );
+}
+
+/**
+ * Fullscreen mode: the "Fullscreen" item of the "…" menu expands the field to the whole window. The
+ * Toolbar is across the top, the Status bar at the bottom, and the Document scrolls itself as a
+ * column of about 72 characters. "Collapse" at the right edge of the Toolbar and `Esc` put it back;
+ * the history, the caret and the selection stay. The story opens the layer on load.
+ */
+export const Fullscreen: Story = {
+  render: () => <ModesDemo fullscreen status="12 words" />,
+};
+
+/** The same on the Paper: the sheet stays a sheet on the app's background. */
+export const FullscreenPaper: Story = {
+  render: () => <ModesDemo fullscreen surface="paper" />,
+};
+
+/**
+ * Fullscreen mode inside a `Dialog`: the layer lies above the window. The first `Esc` collapses the
+ * field (with `blockSelection`, the first one selects the Block), the next one closes the `Dialog`.
+ */
+export const FullscreenInDialog: Story = {
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="h-[520px]">
+        <Button onClick={() => setOpen(true)}>Open the window</Button>
+        <Dialog open={open} onClose={() => setOpen(false)} title="Edit the plan">
+          <div className="w-[560px] max-w-full">
+            <ModesDemo fullscreen />
+          </div>
+        </Dialog>
+      </div>
+    );
+  },
+};
+
+/** A phone: the layer is `100dvh` and the Toolbar sticks to the top. */
+export const FullscreenPhone: Story = {
+  tags: ["viewport-phone"],
+  render: () => <ModesDemo fullscreen />,
+};
+
+/** The Bubble menu has no Toolbar: "Collapse" sits in the corner of the layer. */
+export const FullscreenBubble: Story = {
+  render: () => <ModesDemo fullscreen toolbar="bubble" />,
+};
+
+/**
+ * Focus mode: the Block with the caret is as it is, everything around it is in secondary color.
+ * Here the caret is in a paragraph; in a list the unit is the item, and a table is one Block. The
+ * dimming goes away without focus in the Document, over a Block selection and in a read-only field.
+ */
+export const FocusMode: Story = {
+  render: () => <ModesDemo focus />,
+};
+
+/** Focus mode on the Paper sheet. */
+export const FocusModePaper: Story = {
+  render: () => <ModesDemo focus surface="paper" />,
+};
+
+/**
+ * Focus mode in a list: the caret is in the second item, so the first item and the text around the
+ * list are dimmed, and the item itself is as it is.
+ */
+export const FocusModeInList: Story = {
+  render: function Render() {
+    const ref = useRef<RichTextEditorHandle>(null);
+    return (
+      <div className="max-w-[640px]">
+        <RichTextEditor
+          ref={ref}
+          aria-label="Document"
+          tools={[...RICH_TEXT_PRESETS.full, tool("focus", { enabled: true })]}
+          defaultValue={FOCUS_SAMPLE}
+          onReady={() => caretAt(ref.current, "Update the changelog")}
+        />
+      </div>
+    );
+  },
+};
+
+/** Both modes together: the long work the pair is for. */
+export const FocusModeInFullscreen: Story = {
+  render: () => <ModesDemo fullscreen focus />,
+};
+
+/** The item names, the "Collapse" button and the announcements in the Russian catalog. */
+export const FullscreenRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <ModesDemo fullscreen focus />
+    </UiProvider>
+  ),
 };

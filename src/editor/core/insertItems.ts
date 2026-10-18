@@ -61,6 +61,12 @@ export interface InsertItem {
   requires?: Tool;
   run: (chain: ChainedCommands, editor: Editor) => ChainedCommands;
   /**
+   * The item inserts inside the text at the caret (a footnote reference), not a Block. The menu makes no
+   * room for it: no paragraph is opened below, and the "Add ›" submenu of the Block handle, which means
+   * "a new Block below", does not offer it.
+   */
+  inline?: boolean;
+  /**
    * A popover instead of `run` (for a custom Tool, ADR-0058, item 5.6). The item does not prepare
    * the Document; it opens a popover at the caret (`applyInsertItem`).
    */
@@ -144,7 +150,9 @@ const INSERT_ORDER: readonly Tool[] = [
   "layout",
   "wrapper",
   "details",
+  "footnotes",
   "mathematics",
+  "date",
   "youtube",
   "twitch",
 ];
@@ -264,7 +272,7 @@ export function applyInsertItem(
       maps the new document's positions as if they were the old ones, and it throws past its end.
     */
     if (item.id === "paragraph") return void chain.run();
-  } else if (item.section === "insert") {
+  } else if (item.section === "insert" && !item.inline) {
     chain = chain.command(({ tr }) => {
       // The empty Block under the caret is the place for the new one.
       const { $from } = tr.selection;

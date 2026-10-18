@@ -85,6 +85,102 @@ export interface InvisibleCharactersToolCommands {
   toggle(): boolean;
 }
 
+/** Commands of the `fullscreen` Tool (ADR-0082). Each returns a `boolean`: done or not. */
+export interface FullscreenToolCommands {
+  /** Expands the field to the whole window, the same as the "Fullscreen" item of the "…" menu. `false` in Source mode, in a disabled field, and when it is already open. */
+  open(): boolean;
+  /** Collapses the field to its place on the page. `false` when it is not open. */
+  close(): boolean;
+  /** Opens the field if it is collapsed and collapses it if it is open. `false` where `open()` is refused. */
+  toggle(): boolean;
+}
+
+/** Commands of the `focus` Tool (ADR-0082). */
+export interface FocusToolCommands {
+  /**
+   * Turns the focus mode on if it is off and off if it is on: the same as the "Focus mode" item of
+   * the "…" menu. The Document and `value` do not change, and `onChange` is not called. The new
+   * value is read by the Tool state (`enabled`). `false` in Source mode (there is no Document on screen).
+   */
+  toggle(): boolean;
+}
+
+/** Commands of the `date` Tool (the date mention, ADR-0079). */
+export interface DateToolCommands {
+  /**
+   * Inserts a date mention at the caret (or over the selection) in one edit. `value` is a calendar
+   * date `YYYY-MM-DD` or a date with a time and the author's offset, `YYYY-MM-DDTHH:MM±HH:MM`; its text
+   * is written in the current locale by the Tool's `format` option. Without `value` it opens the same
+   * popover as the Slash menu item, with the calendar on today. `true` means the mention is inserted
+   * or the popover is opened. `false` means the field is read-only, source mode is open, or `value`
+   * is not a date in the two forms (a day that does not exist, a time without an offset).
+   */
+  insert(value?: string): boolean;
+}
+
+/** Commands of the `language` Tool (Text part language, ADR-0078). */
+export interface LanguageToolCommands {
+  /**
+   * Marks the selection with a language: a tag of the BCP 47 shape (`"en"`, `"de-CH"`), in any case,
+   * not only one of the `languages` option. A caret in the middle of a marked word changes the
+   * language of that whole word; a caret elsewhere sets the language for the text typed next. The
+   * page's primary language (`primary` in the Tool state) does not make a mark: it removes the
+   * existing one, the same as `unset()`, and gives `true`. `false` means the value is not a language
+   * tag, the field cannot be edited, or Source mode is open (there is no Document on screen).
+   */
+  set(language: string): boolean;
+  /**
+   * Removes the language mark from the selection, or from the whole marked word at the caret: the
+   * "Remove language mark" item of the menu. `false` in `readOnly` and in Source mode. Clear
+   * formatting does not do this: a language is meaning, not looks.
+   */
+  unset(): boolean;
+}
+
+/**
+ * Commands of the `blockSelection` Tool (ADR-0077). Each returns a `boolean`: done or not.
+ */
+export interface BlockSelectionToolCommands {
+  /**
+   * Selects the current Blocks whole, the same as `Esc` in the text: a caret gives its Block (in a
+   * list, the item; in a table, the whole table), a text selection across several Blocks gives all of
+   * them. The selection is made without moving focus. `false` in Source mode, in a disabled field,
+   * and where the selection is in no Block (a caret between Blocks). It works in `readOnly`, where
+   * the Blocks can be copied.
+   */
+  selectCurrent(): boolean;
+  /**
+   * Ends the Block selection and puts the caret at the end of its first Block, the same as the
+   * second `Esc` (without letting the key through to a window around the Editor). `false` when no
+   * Blocks are selected.
+   */
+  clear(): boolean;
+}
+
+/**
+ * Commands of the `footnotes` Tool (ADR-0076). Each returns a `boolean`: done or not.
+ */
+export interface FootnotesToolCommands {
+  /**
+   * Inserts a footnote reference at the end of the selection, makes its footnote in the list, and
+   * puts the caret into the footnote's text: the same as the "Footnote" item of the Slash menu. One
+   * edit, one undo. `false` in `readOnly`, in a disabled field and in Source mode, and where a
+   * reference cannot stand: in code, in a formula, in a footnote.
+   */
+  insert(): boolean;
+  /**
+   * Puts the caret at the end of footnote `number` (from 1) and scrolls to it, as a click on its
+   * reference does. Works in `readOnly`, where the Document does not change. `false` for a number
+   * that has no footnote, in a disabled field and in Source mode.
+   */
+  goToFootnote(number: number): boolean;
+  /**
+   * Puts the caret right after the reference of footnote `number` (from 1) and scrolls to it, as the
+   * footnote's number button does. The conditions are the same as for `goToFootnote`.
+   */
+  goToReference(number: number): boolean;
+}
+
 /**
  * Commands of a Tool by name from the `RichTextTools` map. A name outside the map gives `unknown`:
  * typing is optional, and the Tool works without it.

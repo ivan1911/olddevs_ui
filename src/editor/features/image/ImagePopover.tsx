@@ -10,13 +10,10 @@ import { useMessages } from "../../../i18n/useMessages.js";
 import { UploadIcon } from "../../../icons.js";
 import { buttonClasses } from "../../../lib/button.js";
 import { cn } from "../../../lib/cn.js";
-import {
-  IMAGE_WIDTHS,
-  normalizeImageInput,
-  selectedImage,
-  type ImageAttributes,
-  type ImageWidth,
-} from "./image.js";
+import { inTableCell, normalizeImageInput, selectedImage, type ImageAttributes } from "./image.js";
+import { ImageAlignGroup } from "./ImageAlignGroup.js";
+import { IMAGE_WIDTHS, layoutOf, type ImageLayout } from "./imageLayout.js";
+import { TooltipProvider } from "../../../components/overlays/Tooltip.js";
 import { GLASS_PANEL_CLASS } from "../../styles/glass.js";
 
 export interface ImagePopoverProps {
@@ -41,9 +38,13 @@ export interface ImagePopoverProps {
  * stack (Escape inside a `Dialog` closes only the popover, ADR-0041), the anchor is the selection,
  * and closing from the keyboard returns focus to the document.
  *
- * WIDTH FROM THE KEYBOARD IS HERE. The image's resize handles are for the mouse only; three toggle
- * buttons give the same 50/75/100 % presets with `aria-pressed`. Pressing a pressed preset again
+ * WIDTH FROM THE KEYBOARD IS HERE. The image's resize handles are for the mouse only; toggle buttons
+ * give the same 25/33/50/75/100 % presets with `aria-pressed`. Pressing a pressed preset again
  * clears it, and the image goes back to its own size.
+ *
+ * The three alignment toggles come before the width, as in the image panel. They share its rules
+ * (`layoutOf`): choosing a side sets 50% next to it, and 100% clears the side. The form keeps the
+ * two as one value, so what is pressed on screen is exactly what "Apply" writes.
  */
 export function ImagePopover({ editor, open, onOpenChange, canUpload }: ImagePopoverProps) {
   const messages = useMessages().editor;
@@ -107,7 +108,15 @@ function ImageForm({
   });
   const [address, setAddress] = useState(existing?.src ?? "");
   const [alt, setAlt] = useState(existing?.alt ?? "");
-  const [width, setWidth] = useState<ImageWidth | null>(existing?.width ?? null);
+  const [layout, setLayout] = useState<ImageLayout>({
+    width: existing?.width ?? null,
+    align: existing?.align ?? null,
+  });
+  // Table cells have no room for text to wrap, so the alignment is not offered there.
+  const [inCell] = useState(() => {
+    const found = selectedImage(editor.state);
+    return found ? inTableCell(editor.state, found.pos) : false;
+  });
   const [invalid, setInvalid] = useState(false);
 
   const apply = () => {
@@ -116,7 +125,11 @@ function ImageForm({
       setInvalid(true);
       return;
     }
-    if (existing) editor.chain().updateImage({ src, alt: alt.trim(), width }).run();
+    if (existing)
+      editor
+        .chain()
+        .updateImage({ src, alt: alt.trim(), ...layout })
+        .run();
     else editor.chain().insertImage({ src, alt: alt.trim() }).run();
     onDone();
   };
@@ -176,20 +189,35 @@ function ImageForm({
       </FormField>
       {existing && (
         <div className="flex flex-col gap-1.5">
+          <span className="text-fg-2 text-xs font-medium" aria-hidden="true">
+            {messages.imageAlign}
+          </span>
+          <TooltipProvider>
+            <ImageAlignGroup
+              value={inCell ? null : layout.align}
+              disabled={inCell}
+              variant="outline"
+              onChange={(align) => setLayout((current) => layoutOf(current, { align }))}
+            />
+          </TooltipProvider>
           <span id={widthLabelId} className="text-fg-2 text-xs font-medium">
             {messages.imageWidth}
           </span>
-          <div role="group" aria-labelledby={widthLabelId} className="flex gap-1">
+          <div role="group" aria-labelledby={widthLabelId} className="flex flex-wrap gap-1">
             {IMAGE_WIDTHS.map((preset) => (
               <button
                 key={preset}
                 type="button"
-                aria-pressed={width === preset}
-                onClick={() => setWidth((current) => (current === preset ? null : preset))}
+                aria-pressed={layout.width === preset}
+                onClick={() =>
+                  setLayout((current) =>
+                    layoutOf(current, { width: current.width === preset ? null : preset })
+                  )
+                }
                 className={buttonClasses({
                   variant: "outline",
                   size: "sm",
-                  selected: width === preset,
+                  selected: layout.width === preset,
                 })}
               >
                 {messages.imageWidthPreset({ percent: Number(preset) })}

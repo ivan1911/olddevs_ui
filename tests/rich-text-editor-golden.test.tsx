@@ -348,6 +348,8 @@ describe("shortcut reference", () => {
         [
           "Select block text | Ctrl+A",
           "Select all (second press) | Ctrl+A",
+          "Select block | Esc",
+          "Extend selection | Shift+↑/↓",
         ],
         [
           "Undo | Ctrl+Z",
@@ -608,10 +610,14 @@ describe("surfaces", () => {
           "menuitemcheckbox: Strikethrough | Ctrl+Shift+S",
           "menuitemcheckbox: Superscript | Ctrl+.",
           "menuitemcheckbox: Subscript | Ctrl+,",
+          "menuitem: Language",
           "menuitemcheckbox: Code block | Ctrl+Alt+C",
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
+          "menuitem: Footnote",
           "menuitem: Clear formatting | Ctrl+\\",
           "menuitemcheckbox: Invisible characters",
+          "menuitemcheckbox: Focus mode",
+          "menuitemcheckbox: Fullscreen",
         ],
       }
     `);
@@ -637,9 +643,13 @@ describe("surfaces", () => {
           "menuitemcheckbox: Strikethrough | Ctrl+Shift+S",
           "menuitemcheckbox: Superscript | Ctrl+.",
           "menuitemcheckbox: Subscript | Ctrl+,",
+          "menuitem: Language",
           "menuitemcheckbox: Code block | Ctrl+Alt+C",
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
+          "menuitem: Footnote",
           "menuitem: Clear formatting | Ctrl+\\",
+          "menuitemcheckbox: Focus mode",
+          "menuitemcheckbox: Fullscreen",
         ],
       }
     `);
@@ -746,6 +756,8 @@ describe("the Insert menu", () => {
             "Layout",
             "Wrapper",
             "Collapsible block",
+            "Footnote",
+            "Date",
           ],
           "section": "Insert",
         },
@@ -791,6 +803,8 @@ describe("the Insert menu", () => {
         "menuitem: Layout",
         "menuitem: Wrapper",
         "menuitem: Collapsible block",
+        "menuitem: Footnote",
+        "menuitem: Date",
         "menuitem: Paragraph | Ctrl+Alt+0",
         "menuitem: Heading 1 | #",
         "menuitem: Heading 2 | ##",
@@ -880,6 +894,7 @@ describe("the block handle menu", () => {
             "menuitemradio: Checklist | Ctrl+Shift+9",
           ],
           "top": [
+            "menuitem: Select",
             "menuitem: Add",
             "menuitem: Format",
             "menuitem: Move up (disabled) | Alt+Shift+↑",

@@ -23,7 +23,10 @@ import {
   ClearFormattingIcon,
   CodeBlockIcon,
   InlineCodeIcon,
+  FootnoteIcon,
   InvisibleCharactersIcon,
+  ExpandIcon,
+  FocusModeIcon,
   ListIcon,
   MoreIcon,
   ParagraphIcon,
@@ -44,11 +47,14 @@ import { applyInsertItem } from "../core/insertItems.js";
 import { useLockableMenu } from "./lockableMenu.js";
 import { DEFAULT_ALIGNMENT, EDITOR_ALIGNMENTS, type EditorAlignment } from "../styles/palette.js";
 import { findShortcutKeys } from "../core/shortcuts.js";
+import { focusModeEnabled, toggleFocusMode } from "../features/focus/focusModeState.js";
 import {
   invisibleCharactersVisible,
   toggleInvisibleCharacters,
 } from "../features/invisibleCharacters/invisibleCharactersVisible.js";
-import type { ToolList } from "../core/toolDescriptor.js";
+import { toolOptions, type ToolList } from "../core/toolDescriptor.js";
+import { primaryLanguageOf, selectedLanguage } from "../features/language/languageState.js";
+import { applyLanguageItem, languageMenuItem } from "../features/language/languageMenu.js";
 import type { Tool } from "../core/tools.js";
 import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
 import { GLASS_MENU_CLASS } from "../styles/glass.js";
@@ -566,8 +572,10 @@ export function isMoreMarkId(id: string): id is MoreMarkId {
 export function moreFormatTools(omit: readonly MoreMarkId[] = []): readonly Tool[] {
   return [
     ...MORE_MARKS.map((mark) => mark.id).filter((id) => !omit.includes(id)),
+    "language",
     "codeBlock",
     "blockquote",
+    "footnotes",
     "clearFormatting",
   ];
 }
@@ -585,6 +593,17 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
    * the `invisibleCharacters` Tool in `tools` there is no item, even when `true`.
    */
   invisibleCharacters?: boolean;
+  /**
+   * The "Fullscreen" item of the "view" section (ADR-0082): the layer's state is held by
+   * `RichTextEditor`, so the host passes it and the toggle. Without the prop, or without the
+   * `fullscreen` Tool in `tools`, there is no item.
+   */
+  fullscreen?: { open: boolean; onToggle: () => void };
+  /**
+   * The "Focus mode" item of the "view" section: the engine holds the mode, so the prop only says
+   * "the item is there". Without the `focus` Tool in `tools` there is no item, even when `true`.
+   */
+  focusMode?: boolean;
 }
 
 /**
@@ -604,11 +623,19 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
  * former button did (`toggleCodeBlock`). "Clear formatting" does not touch the code Block (it removes
  * Marks), and stays last.
  *
+ * "LANGUAGE ›" is a submenu of the `language` Tool (ADR-0078), in a section of its own after the Marks:
+ * it cannot sit among the checkboxes, because it opens a list. The same "…" is in the selection bubble,
+ * so the item is there too. "Clear formatting" does not remove a language: the Mark is `clearable: false`.
+ *
  * COLORS ARE NOT HERE. The highlight and the text color used to be submenus of "…"; now they are the
  * "Highlight" and "Color" buttons with popover grids beside "…" (`ColorMenus.tsx`): a color is
  * chosen by eye, from swatches.
  *
- * INVISIBLE CHARACTERS is the last section, and only on the fixed Toolbar (the `invisibleCharacters`
+ * THE "VIEW" SECTION also holds "Focus mode" and "Fullscreen" (ADR-0082), the display modes of the
+ * Document: unlike the invisible characters, they are in the selection menu's "…" too, because with
+ * `toolbar="bubble"` that menu is the only way in. Each is a checkbox item.
+ *
+ * INVISIBLE CHARACTERS is the first item of that section, and only on the fixed Toolbar (the `invisibleCharacters`
  * prop). It is a display mode of the Document, not formatting of the selection, so it is separated
  * from clearing by a divider and sits at the very end. The check mark is set when the characters are
  * shown. Choosing it toggles the display the same way as the `tool("invisibleCharacters").toggle()`
@@ -625,6 +652,8 @@ export function MoreFormatMenu({
   shortcut,
   omit = [],
   invisibleCharacters = false,
+  fullscreen,
+  focusMode = false,
 }: MoreFormatMenuProps) {
   const messages = useMessages().editor;
   const locale = useUiLocale();
@@ -633,7 +662,12 @@ export function MoreFormatMenu({
   // The quote is a checkbox next to the code Block: it has moved out of the "¶" menu.
   const quote = quoteItemFor(tools);
   const clear = tools.has("clearFormatting");
+  // "Footnote" is an action, not a toggle: it puts a reference at the end of the selection.
+  const footnote = tools.has("footnotes");
   const view = invisibleCharacters && tools.has("invisibleCharacters");
+  const focus = focusMode && tools.has("focus");
+  const full = fullscreen !== undefined && tools.has("fullscreen");
+  const languages = toolOptions(tools, "language")?.languages;
 
   // The result is compared deeply (the default of `useEditorState`): it re-renders only on change.
   const state = useEditorState({
@@ -646,11 +680,27 @@ export function MoreFormatMenu({
       inQuote: quote !== undefined && current.isActive("blockquote"),
       canQuote: quote !== undefined && current.can().toggleBlockquote(),
       canClear: clear && current.can().unsetAllMarks(),
+      canFootnote: footnote && current.can().insertFootnote(),
       // Showing invisible characters is a plugin state of the engine, not a Mark or a Block.
       invisible: view && invisibleCharactersVisible(current),
+      focus: focus && focusModeEnabled(current),
+      // The language under the selection and the page's; `null` without the Tool.
+      language: languages
+        ? { ...selectedLanguage(current.state), primary: primaryLanguageOf(current) }
+        : null,
     }),
   });
-  if (marks.length === 0 && !codeBlock && !quote && !clear && !view) return null;
+  if (
+    marks.length === 0 &&
+    !codeBlock &&
+    !quote &&
+    !footnote &&
+    !clear &&
+    !(view || focus || full) &&
+    !languages
+  ) {
+    return null;
+  }
 
   const sections = (
     [
@@ -665,6 +715,14 @@ export function MoreFormatMenu({
           keys: findShortcutKeys(mark.id),
           disabled: state.unavailable.includes(mark.id),
         })),
+      },
+      {
+        // A section of its own: the item opens a submenu, so it cannot sit among the checkboxes.
+        id: "lang",
+        items:
+          languages && state.language
+            ? [languageMenuItem(languages, state.language, messages, locale)]
+            : [],
       },
       {
         // Not `codeBlock`: the keys of sections and items are shared in a react-aria collection.
@@ -700,6 +758,19 @@ export function MoreFormatMenu({
         ],
       },
       {
+        id: "insert",
+        items: footnote
+          ? [
+              {
+                id: "footnote",
+                label: messages.footnote,
+                icon: FootnoteIcon,
+                disabled: !state.canFootnote,
+              },
+            ]
+          : [],
+      },
+      {
         id: "clear",
         items: clear
           ? [
@@ -717,30 +788,46 @@ export function MoreFormatMenu({
         // A checkbox section of its own, at the end: the display mode of the Document, not formatting.
         id: "view",
         selectionMode: "multiple",
-        selected: state.invisible ? ["invisibleCharacters"] : [],
-        items: view
-          ? [
-              {
-                id: "invisibleCharacters",
-                label: messages.invisibleCharacters,
-                icon: InvisibleCharactersIcon,
-              },
-            ]
-          : [],
+        selected: [
+          ...(state.invisible ? ["invisibleCharacters"] : []),
+          ...(state.focus ? ["focusMode"] : []),
+          ...(full && fullscreen.open ? ["fullscreen"] : []),
+        ],
+        items: [
+          ...(view
+            ? [
+                {
+                  id: "invisibleCharacters",
+                  label: messages.invisibleCharacters,
+                  icon: InvisibleCharactersIcon,
+                },
+              ]
+            : []),
+          ...(focus ? [{ id: "focusMode", label: messages.focusMode, icon: FocusModeIcon }] : []),
+          ...(full ? [{ id: "fullscreen", label: messages.fullscreen, icon: ExpandIcon }] : []),
+        ],
       },
     ] satisfies FormatMenuSection[]
   ).filter((section) => section.items.length > 0);
 
   const apply = (key: string) => {
+    if (applyLanguageItem(editor, key)) return;
     const mark = marks.find((candidate) => candidate.id === key);
     if (mark) return mark.run(editor);
     if (key === "codeBlock") return void editor.chain().focus().toggleCodeBlock().run();
     if (key === "blockquote") return void editor.chain().focus().toggleBlockquote().run();
+    if (key === "footnote") return void editor.chain().focus().insertFootnote().run();
     if (key === "clearFormatting") return void editor.chain().focus().unsetAllMarks().run();
     if (key === "invisibleCharacters") {
       toggleInvisibleCharacters(editor);
       editor.commands.focus();
     }
+    if (key === "focusMode") {
+      toggleFocusMode(editor);
+      editor.commands.focus();
+    }
+    // The layer moves the Document and focuses it itself; a `focus` here would run in the old place.
+    if (key === "fullscreen") fullscreen?.onToggle();
   };
 
   return (

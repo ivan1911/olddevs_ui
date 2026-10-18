@@ -18,6 +18,8 @@ export interface TableInsertDialogProps {
   editor: Editor;
   open: boolean;
   onClose: () => void;
+  /** The dialog's layer. The Editor raises it above the fullscreen layer (`OVERLAY_LAYER.alert`). */
+  zIndex?: string;
 }
 
 /**
@@ -41,7 +43,7 @@ export interface TableInsertDialogProps {
  *
  * An empty field does not change the selection: Insert takes the last valid value.
  */
-export function TableInsertDialog({ editor, open, onClose }: TableInsertDialogProps) {
+export function TableInsertDialog({ editor, open, onClose, zIndex }: TableInsertDialogProps) {
   const messages = useMessages().editor;
   const fieldsRef = useRef<HTMLDivElement>(null);
   /*
@@ -63,6 +65,7 @@ export function TableInsertDialog({ editor, open, onClose }: TableInsertDialogPr
       onClose={onClose}
       title={messages.tableInsertDialogTitle}
       initialFocusRef={firstField}
+      zIndex={zIndex}
       className="w-full max-w-[340px]"
     >
       {/* The content mounts on every open: the fields take the last size again. */}

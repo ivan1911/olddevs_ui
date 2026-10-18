@@ -13,6 +13,7 @@ import {
   type RichTextEditorHandle,
   type RichTextEditorProps,
 } from "../src/editor/index.js";
+import { BlockSelection } from "../src/editor/core/blockSelection.js";
 import { expandTools } from "../src/editor/features/builtins.js";
 import {
   ariaShortcut,
@@ -168,6 +169,8 @@ test("the full preset lists every command in the documented order of groups", as
   expect(commandNames(popover)).toEqual([
     "Select block text",
     "Select all (second press)",
+    "Select block",
+    "Extend selection",
     "Undo",
     "Redo",
     "Duplicate block",
@@ -386,8 +389,12 @@ test("Escape in the reference inside a Dialog closes the reference, not the wind
   );
 
   // Control check: without the open popover, the same Escape closes the window. Focus is moved
-  // into the Document, because on the button Escape would first close its tooltip.
+  // into the Document, because on the button Escape would first close its tooltip. The first Escape
+  // in the text selects the Block (the `blockSelection` Tool is in `full`, ADR-0077); the second
+  // closes the window.
   act(() => ref.current!.editor!.view.focus());
+  await user.keyboard("{Escape}");
+  expect(onClose).not.toHaveBeenCalled();
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });
@@ -400,8 +407,10 @@ test("Escape in the reference inside a Dialog closes the reference, not the wind
  * jsdom is not Apple, so `mod` here is `Ctrl`.
  */
 const KEY_CODES: Record<string, number> = {
+  Esc: 27,
   "↑": 38,
   "↓": 40,
+  "↑/↓": 40,
   F10: 121,
   "]": 221,
   "[": 219,
@@ -410,7 +419,13 @@ const KEY_CODES: Record<string, number> = {
   ",": 188,
   "/": 191,
 };
-const KEY_NAMES: Record<string, string> = { "↑": "ArrowUp", "↓": "ArrowDown" };
+const KEY_NAMES: Record<string, string> = {
+  "↑": "ArrowUp",
+  "↓": "ArrowDown",
+  // One row stands for both arrows; the press goes with the down one.
+  "↑/↓": "ArrowDown",
+  Esc: "Escape",
+};
 
 function press(editor: Editor, keys: readonly string[]): boolean {
   const key = keys.at(-1)!;
@@ -627,6 +642,25 @@ const SCENARIOS: Record<string, Scenario> = {
       const panel = await screen.findByRole("search", { name: "Find and replace" });
       const field = within(panel).getByRole("textbox", { name: "Replace with" });
       await waitFor(() => expect(document.activeElement).toBe(field));
+    },
+  },
+  // Block selection (OLDSUI-307): `Esc` selects the Block, `Shift+↓` grows the selection.
+  blockSelect: {
+    value: "<p>one</p><p>two</p>",
+    select: "one",
+    then: (editor, pressed) => {
+      pressed();
+      expect(editor.state.selection).toBeInstanceOf(BlockSelection);
+    },
+  },
+  blockExtend: {
+    value: "<p>one</p><p>two</p>",
+    select: "one",
+    then: (editor) => {
+      press(editor, shortcutKeys("blockSelect"));
+      expect((editor.state.selection as BlockSelection).count).toBe(1);
+      press(editor, shortcutKeys("blockExtend"));
+      expect((editor.state.selection as BlockSelection).count).toBe(2);
     },
   },
   focusToolbar: {

@@ -884,6 +884,20 @@ export interface UiMessages {
     tableAlignLeft: string;
     tableAlignCenter: string;
     tableAlignRight: string;
+    /**
+     * Column widths (ADR-0080). `tableColumnWider` and `tableColumnNarrower` are items of the "Column"
+     * submenu: a step of 5% at the expense of the neighbour. `tableColumnWidth` names the width of the
+     * column under the caret, both as the label of the section that holds the two items and as the
+     * announcement after a change ("Column width: 35%"); `percent` is `null` for a table sized by its
+     * content. `tableEqualColumns` and `tableFitContent` are items of the "Table" menu: the first
+     * makes all columns the same width, the second removes the widths. The names are self-sufficient,
+     * like the rest of the menu: the screen reader reads the item, not its section.
+     */
+    tableColumnWider: string;
+    tableColumnNarrower: string;
+    tableColumnWidth: (vars: { percent: number | null }) => string;
+    tableEqualColumns: string;
+    tableFitContent: string;
     tableSortAscending: string;
     tableSortDescending: string;
     /**
@@ -927,6 +941,14 @@ export interface UiMessages {
      * space before it.
      */
     imageWidthPreset: (vars: { percent: number }) => string;
+    /** Name of the group of three alignment toggles of an image: left, centre, right (ADR-0081). */
+    imageAlign: string;
+    /** Float the image to the left; the text of the next Blocks wraps around it. */
+    imageAlignLeft: string;
+    /** Put the image in the centre, on a line of its own. */
+    imageAlignCenter: string;
+    /** Float the image to the right; the text of the next Blocks wraps around it. */
+    imageAlignRight: string;
     /** Hint for an empty image caption. The caption is optional, and the string says so. */
     imageCaption: string;
     /** Placeholder in place of the uploading image, and the message of the live region. */
@@ -1032,6 +1054,31 @@ export interface UiMessages {
     mathApply: string;
     mathRemove: string;
     /**
+     * Date mention (ADR-0079). `date` is the Slash menu item and the name of the popover. In the
+     * popover: `dateTime` is the label of the "Time" switch, `dateTimeField` is the name of the time
+     * field (`HH:MM`) and `dateTimePlaceholder` is the hint inside it (`HH:MM` in English), `dateRemoveTime` turns a date with a time back into a date, `dateRemove` deletes
+     * the mention from the Document, `dateInsert` and `dateApply` are the buttons for a new and for an
+     * editable mention.
+     */
+    date: string;
+    dateTime: string;
+    dateTimeField: string;
+    dateTimePlaceholder: string;
+    dateRemoveTime: string;
+    dateRemove: string;
+    dateInsert: string;
+    dateApply: string;
+    /**
+     * Footnotes (ADR-0076). `footnote` is the name of the Slash menu item and of the item in the "…"
+     * menu of the Toolbar. `footnotes` is the name of the list, written into the saved HTML
+     * (`aria-label` of the list) in the language of this catalog, like the rest of the Document's text.
+     * `footnoteBack` is the name of the number button of a footnote in the Editor, which returns the
+     * caret to the text; the number is in the sentence, so a function.
+     */
+    footnote: string;
+    footnotes: string;
+    footnoteBack: (vars: { number: number }) => string;
+    /**
      * Emoji. `emoji` is the name of the Toolbar button; `emojiGrid` is the name of the grid in
      * the popover. `emojiCategory` holds the category names, `emojiName` the name of each emoji:
      * a screen reader reads a cell by its name, not by its character, because different programs
@@ -1056,6 +1103,17 @@ export interface UiMessages {
      * are shown is said by `aria-checked`, not by the words of the name.
      */
     invisibleCharacters: string;
+    /**
+     * Text part language (the `language` Tool, ADR-0078). `language` is the "Language ›" item of the
+     * "…" menu, and the name of its submenu. The submenu lists the languages of the Tool's
+     * `languages` option; their names are drawn by `Intl.DisplayNames` in the interface language, not
+     * by the catalog. `languagePrimary` labels the page's own language in that list, the one that
+     * needs no mark: `language` is the language's name. `languageRemove` is the item that removes the
+     * mark from the selection.
+     */
+    language: string;
+    languagePrimary: (vars: { language: string }) => string;
+    languageRemove: string;
     /**
      * Search and replace. `search` is the name and the hint of the Toolbar button, and of the
      * shortcut reference row `Mod+F`; `searchReplace` is the `Mod+Alt+F` row; `searchPanel` is the
@@ -1118,6 +1176,44 @@ export interface UiMessages {
     blockMoveDown: string;
     blockDuplicate: string;
     blockDelete: string;
+    /**
+     * Block selection (the `blockSelection` Tool, ADR-0077) and the Block handle over several Blocks.
+     * `blockSelect` is the handle's item that selects the current Blocks (the way in on a touch
+     * screen); `blockWrap` is the handle's submenu "Wrap in ›" over a group of Blocks (its items are
+     * the names of the containers: `wrapper`, `blockquote`, `details`). `blockSelectionSelect` and
+     * `blockSelectionExtend` are the reference rows of `Esc` and `Shift+↑/↓`.
+     */
+    blockSelect: string;
+    blockWrap: string;
+    blockSelectionSelect: string;
+    blockSelectionExtend: string;
+    /**
+     * What the screen reader hears (Field notice, tone `status`): the state of the selection and the
+     * result of an action over Blocks. The count is in the phrase's tail, so the phrase needs no
+     * plural form in any language.
+     */
+    blocksSelected: (vars: { count: number }) => string;
+    blockSelectionCleared: string;
+    blocksDeleted: (vars: { count: number }) => string;
+    blocksDuplicated: (vars: { count: number }) => string;
+    blocksMoved: (vars: { count: number }) => string;
+    blocksChanged: (vars: { count: number }) => string;
+    blocksWrapped: (vars: { count: number }) => string;
+    blocksCopied: (vars: { count: number }) => string;
+    blocksCut: (vars: { count: number }) => string;
+    blocksReplaced: (vars: { count: number }) => string;
+    /**
+     * Fullscreen mode and the focus mode (the `fullscreen` and `focus` Tools, ADR-0082).
+     * `fullscreen` and `focusMode` are the checkbox items of the "…" menu; `fullscreen` is also the
+     * layer's accessible name. `fullscreenExit` is the visible "Collapse" button (the Toolbar's right
+     * edge, or the layer's corner). `fullscreenOpened` and `fullscreenClosed` are what the screen
+     * reader hears when the mode changes (Field notice, tone `status`).
+     */
+    fullscreen: string;
+    fullscreenExit: string;
+    fullscreenOpened: string;
+    fullscreenClosed: string;
+    focusMode: string;
     /**
      * The Document's table of contents (`RichTextToc`): the name of the strip button and the label
      * of the `nav` with the list of headings. It is one word for both, because it is one thing.

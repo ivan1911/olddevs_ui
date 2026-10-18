@@ -1,7 +1,10 @@
 import { CODE_LANGUAGE_IDS } from "../features/code/codeLanguages.js";
 import { EDITOR_LAYOUTS } from "../features/layout/columnLayouts.js";
 import { CUSTOM_COLOR_STYLE_PATTERN } from "../features/color/customColor.js";
+import { isDatetime } from "../features/date/dateValue.js";
+import { normalizeLanguageTag } from "../features/language/languageTag.js";
 import { safeLatexSource } from "../features/mathematics/mathHtml.js";
+import { isShareValue } from "../features/table/tableShares.js";
 import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "../features/mathematics/mathNames.js";
 import { devWarn } from "../../lib/dev-warn.js";
 import type { CustomAttribute, PrefixedName, ToolEntry } from "./customTool.js";
@@ -14,6 +17,11 @@ import {
 } from "../styles/palette.js";
 import { EDITOR_WRAPPER_TONES } from "../features/wrapper/wrapperTones.js";
 import { isVideoProvider, isVideoSrc, VIDEO_BLOCK } from "../features/video/videoSrc.js";
+import {
+  checkFootnote,
+  FOOTNOTE_ANCHOR_PATTERN,
+  footnoteAttributeAllowed,
+} from "../features/footnotes/footnoteHtml.js";
 
 /**
  * The Editor's Schema as DATA: an allowlist of the tags and attributes it accepts and returns.
@@ -83,10 +91,23 @@ export const RICH_TEXT_SCHEMA = {
    * Island render it. The `data-type` and `data-latex` pair is allowed only on these two tags;
    * `data-latex` is the only attribute value where `<` is allowed.
    *
-   * A table is `table > tbody > tr > th|td`, without `thead`, `colgroup` or `caption`: a header
-   * row is an ordinary first row of `th` cells. A cell carries only merging (`colspan`,
-   * `rowspan`) and column alignment (`data-align`). Column widths are not built, and `style` and
-   * `colwidth` never appear in the output. The HTML parser drops `tbody`, `tr`, `th` and `td`
+   * A date mention is `time[datetime]` inline (ADR-0079), listed with the inline tags in `marks`:
+   * `datetime` is strictly `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM±HH:MM`, calendar-checked, and the
+   * element holds only the text the author saw. A `time` in any other form loses its wrapper.
+   *
+   * Footnotes (ADR-0076): the reference is `sup[data-footnote-ref]` holding one anchor
+   * (`a[href="#fn-<key>"][id="fnref-<key>"]`), and the list is the last Block,
+   * `section[data-block="footnotes"]` with an `ol` of `li[id="fn-<key>"]`, each holding a `p` and the
+   * backlink `a[href="#fnref-<key>"]`. The key is eight lowercase letters and digits. These are the
+   * only `id` and `href="#…"` in the Schema, allowed only in this shape and place (`footnoteHtml.ts`).
+   *
+   * A table is `table > tbody > tr > th|td`, without `thead` or `caption`: a header row is an
+   * ordinary first row of `th` cells. A cell carries only merging (`colspan`, `rowspan`) and
+   * column alignment (`data-align`). Column widths are an optional `colgroup` before `tbody`
+   * (ADR-0080): one `col` per column, each with `data-width`, a share of the table in percent
+   * (`tableColumnShares` below), summing to 100; a `colgroup` that breaks this is removed whole,
+   * and the table is sized by its content again. `style` and `colwidth` never appear in the
+   * output. The HTML parser drops `tbody`, `tr`, `th` and `td`
    * outside a table on its own, so no hook is needed for that.
    */
   blocks: [
@@ -103,6 +124,8 @@ export const RICH_TEXT_SCHEMA = {
     "pre",
     "table",
     "tbody",
+    "colgroup",
+    "col",
     "tr",
     "th",
     "td",
@@ -115,14 +138,15 @@ export const RICH_TEXT_SCHEMA = {
     "figcaption",
     "details",
     "summary",
+    "section",
   ],
   /**
    * Marks and inline nodes. `br` is a soft line break on Shift+Enter. `mark` is a marker, always
    * with `data-color`. `span` with `data-color` is a text color (the tag is named in `blocks`
-   * too, where it is task item markup). `a` is a link, its address limited to the schemes in
-   * `protocols`.
+   * too, where it is task item markup), and `span` with `lang` is a language of a fragment. `a`
+   * is a link, its address limited to the schemes in `protocols`.
    */
-  marks: ["strong", "em", "u", "s", "code", "sup", "sub", "mark", "br", "a"],
+  marks: ["strong", "em", "u", "s", "code", "sup", "sub", "mark", "br", "a", "time"],
   /** Attributes by tag. Anything not listed here does not appear in the output. */
   attributes: {
     /** The number of the first item, only when it is not 1. */
@@ -151,7 +175,7 @@ export const RICH_TEXT_SCHEMA = {
     /** An open Details Block: an empty `open`, only with the `persist` option. */
     details: ["open"],
     /** Task item: `data-type="taskItem"` and `data-checked="true|false"`. */
-    li: ["data-type", "data-checked"],
+    li: ["data-type", "data-checked", "id"],
     /** Checkbox of a task item: always `type="checkbox"`, `checked` on a checked one. */
     input: ["type", "checked"],
     /**
@@ -170,8 +194,15 @@ export const RICH_TEXT_SCHEMA = {
      * marker names (`legacyMarkerColors`). A `span` without `data-color` and without `style` never
      * occurs either: an empty `span` exists only in a task item and in an inline formula
      * (`data-type="inline-math"` with `data-latex`, only on `span`).
+     *
+     * `span[lang]` is the Text part language Mark (ADR-0078): a standard attribute, the first one in
+     * the Schema that is not `data-*`, so that a screen reader, spell checking and hyphenation read
+     * it without the kit's code. Its value is NOT a list: any tag of the BCP 47 SHAPE passes
+     * (`languageTag.ts`), because HTML with `lang="de"` arrives from other screens and from Word, and
+     * the server's sanitizer has no Options of the screen. It may sit next to `data-color` on one
+     * element, and an element with only `lang` is kept, not unwrapped.
      */
-    span: ["data-color", "style", "data-type", "data-latex"],
+    span: ["data-color", "style", "data-type", "data-latex", "lang"],
     mark: ["data-color", "style"],
     /**
      * Block alignment: a value from `alignments`, except `left`. `left` is the default, and the
@@ -185,6 +216,11 @@ export const RICH_TEXT_SCHEMA = {
      */
     th: ["colspan", "rowspan", "data-align"],
     td: ["colspan", "rowspan", "data-align"],
+    /**
+     * Column width of a table: a share of the table's width in percent, a multiple of 5 from 5 to
+     * 95 (`tableColumnShares`). Only on a `col` directly in the table's first `colgroup`.
+     */
+    col: ["data-width"],
     h1: ["data-align"],
     h2: ["data-align"],
     h3: ["data-align"],
@@ -194,13 +230,32 @@ export const RICH_TEXT_SCHEMA = {
      * The Editor does not return `target`: opening a new tab is the decision of the page that
      * shows the Document, not of the Document's data.
      */
-    a: ["href", "rel"],
+    a: ["href", "rel", "id", "role"],
     /**
      * Image: `src` only an absolute `http` or `https` URL (`imageProtocols`). `alt` is always
      * present, empty for an image with no description. `data-width` is a value from `imageWidths`,
      * only on an image with a set width.
      */
     img: ["src", "alt", "data-width"],
+    /**
+     * Image alignment (ADR-0081): a value from `imageAlignments`, `left` or `right`, and the text of
+     * the next Blocks wraps around the image. The centre is the absence of the attribute. Unlike a
+     * paragraph's `left`, which is the default and is never written, here `left` is written: it means wrapping.
+     */
+    figure: ["data-align"],
+    /**
+     * Date mention (ADR-0079): `datetime` only on `time`, and only in the two forms the Editor
+     * writes, `YYYY-MM-DD` and `YYYY-MM-DDTHH:MM±HH:MM` (`isDatetime`).
+     */
+    time: ["datetime"],
+    /**
+     * Footnote reference: the key of its footnote (ADR-0076). The anchor inside it carries the `id`, the
+     * `role="doc-noteref"` and the `href="#fn-<key>"`, and `li` carries `id="fn-<key>"`: those values pass
+     * only in this shape and place (`footnoteHtml.ts`). `a[role]` is also the backlink's `doc-backlink`.
+     */
+    sup: ["data-footnote-ref"],
+    /** Footnote list: `data-block="footnotes"`, `role="doc-endnotes"` and its name in `aria-label`. */
+    section: ["data-block", "role", "aria-label"],
   },
   /**
    * Allowed values of `span[data-color]`, the text color: six status tones. `sanitizeRichText`
@@ -250,6 +305,11 @@ export const RICH_TEXT_SCHEMA = {
   /** Allowed values of `data-align`. `left` is read, but never written. */
   alignments: EDITOR_ALIGNMENTS,
   /**
+   * Allowed values of `figure[data-align]` (ADR-0081): the side the image floats to while the text
+   * wraps it. The same words as `alignments`, but `left` is written here and "centre" is no attribute.
+   */
+  imageAlignments: ["left", "right"],
+  /**
    * Column layout variants: the values of `div[data-layout]`, the column shares in percent,
    * separated by hyphens (`50-50`, `60-40`, `25-25-25-25`). The Editor maps the number of columns
    * of a Column layout to a variant on load. The server does not recalculate it, and an extra or
@@ -287,9 +347,10 @@ export const RICH_TEXT_SCHEMA = {
    * Image width is the share of the Document's width in percent: `data-width="50"`. Without the
    * attribute the image is shown at its own size, but not wider than the Document. Presets rather
    * than any number: the mouse resize handles snap to them, and the same set is available from
-   * the keyboard in the image popover.
+   * the keyboard in the image popover. An aligned image (`figure[data-align]`) is one of the four
+   * narrower ones: 100% leaves no room for the text to wrap.
    */
-  imageWidths: ["50", "75", "100"],
+  imageWidths: ["25", "33", "50", "75", "100"],
   /**
    * Cell merge limit: `colspan` no more than 20, `rowspan` no more than 50, the same as the number
    * of columns and rows of the largest table the Editor pastes. On load and on paste the Editor
@@ -298,6 +359,13 @@ export const RICH_TEXT_SCHEMA = {
    * thousand empty cells for everyone who opens the table.
    */
   tableSpans: { colspan: 20, rowspan: 50 },
+  /**
+   * Table column widths (ADR-0080): `col[data-width]` is a share of the table's width in percent,
+   * a multiple of `step` from `min` to `max`, and the shares of one `colgroup` add up to `total`.
+   * The Editor writes a `colgroup` only for a table whose author set the widths, and reads a list
+   * that does not follow these rules as no widths. `sanitizeRichText` removes such a `colgroup`.
+   */
+  tableColumnShares: { step: 5, min: 5, max: 95, total: 100 },
 } as const satisfies {
   blocks: readonly string[];
   marks: readonly string[];
@@ -308,12 +376,19 @@ export const RICH_TEXT_SCHEMA = {
   codeLanguages: readonly string[];
   customColor: { readonly styles: Readonly<Record<string, string>> };
   alignments: readonly string[];
+  imageAlignments: readonly string[];
   layouts: readonly string[];
   wrapperTones: readonly string[];
   protocols: readonly string[];
   imageProtocols: readonly string[];
   imageWidths: readonly string[];
   tableSpans: { readonly colspan: number; readonly rowspan: number };
+  tableColumnShares: {
+    readonly step: number;
+    readonly min: number;
+    readonly max: number;
+    readonly total: number;
+  };
 };
 
 /**
@@ -465,6 +540,14 @@ const HOOK_GUARDED_ATTRIBUTES: readonly string[] = [
   "checked",
   // The video address: a third-party lazy-loading script reads `data-src` in particular.
   "data-src",
+  // Footnotes (ADR-0076): the only `id`, `role` and `aria-label` in the Schema, and the key of a
+  // reference. Each passes on one tag with one shape of value (`footnoteHtml.ts`).
+  "id",
+  "role",
+  "aria-label",
+  "data-footnote-ref",
+  // The language of a fragment: only a tag of the BCP 47 shape on a `span` (ADR-0078).
+  "lang",
 ];
 const HOOK_GUARDED_TAGS: readonly string[] = ["input", "img"];
 
@@ -528,7 +611,9 @@ function sanitizeConfig(withHooks: boolean, custom?: RichTextSchema): RichTextSa
     ALLOWED_ATTR: attributes,
     ALLOW_DATA_ATTR: false,
     ALLOW_ARIA_ATTR: false,
-    ALLOWED_URI_REGEXP: linkProtocolPattern(),
+    // With the hooks the footnote anchors `#fn-<key>` and `#fnref-<key>` also pass the address check;
+    // the hook then admits them only on the footnote markup. A bare config stays link-schemes only.
+    ALLOWED_URI_REGEXP: withHooks ? linkOrFootnotePattern() : linkProtocolPattern(),
     ADD_URI_SAFE_ATTR: attributes.filter((name) => !URI_ATTRIBUTES.includes(name)),
   };
 }
@@ -605,7 +690,7 @@ export interface RichTextPurifier {
  *   are converted (`legacyMarkerColors`). A `mark` without a color is removed.
  * - `style`: only `color:#rrggbb` on `span`, and `background-color:#rrggbb` on `mark`, and never
  *   together with `data-color`.
- * - `data-align`: a known value on `p`, `h1`–`h4`, `th`, `td`.
+ * - `data-align`: a known value on `p`, `h1`–`h4`, `th`, `td`; `left` or `right` on `figure`.
  * - Column layout: `div[data-block="layout"]` with a variant from `layouts`, and only outside a
  *   column, a Wrapper, a list, a quote, a table or a Details Block. `div[data-block="column"]` only directly inside a Column
  *   layout. Otherwise the wrapper is removed and the Blocks stay in place.
@@ -619,7 +704,13 @@ export interface RichTextPurifier {
  * - Formula: `span[data-type="inline-math"]` or `div[data-type="block-math"]` with `data-latex`.
  *   The pair is allowed only on these tags. The element itself is empty, and `data-latex` may
  *   contain `<` (it is LaTeX text, not markup). Without `data-latex` the element loses its wrapper.
+ * - Date mention: `time[datetime]` with a value in the Editor's two forms, `YYYY-MM-DD` or
+ *   `YYYY-MM-DDTHH:MM±HH:MM`, and a real calendar date (`isDatetime`). The element keeps only text:
+ *   marks and tags inside it are cut. A `time` without a valid `datetime` loses its wrapper.
  * - `colspan`, `rowspan`: on `th` and `td`, an integer from 1 to `tableSpans`.
+ * - Column widths: `colgroup` only as the first one directly in a `table`, with 2 to 20 `col`, each
+ *   with `data-width`, a multiple of 5 from 5 to 95, adding up to 100; otherwise the whole `colgroup`
+ *   is removed. `col` only directly in it, `data-width` on a `col` only with such a value.
  * - Video: `div[data-block="video"]` with `data-provider` from `VIDEO_PROVIDERS` and `data-src`,
  *   an `https` address of a video on that service's host (`isVideoSrc`). A Block without a valid
  *   service or address, and a video Block inside a video Block, loses its wrapper; the link inside
@@ -628,7 +719,7 @@ export interface RichTextPurifier {
  *   A link without an address becomes text.
  * - Image: `img` with an absolute `http`/`https` address, directly inside `figure`, with no `data:`
  *   or `blob:`. `data-width` is a preset, and `alt` is always present. `figcaption` only inside
- *   `figure`.
+ *   `figure`. `figure[data-align]` is `left` or `right`.
  *
  * The Schema has no `hljs-*` highlight tokens, and the helper removes them: highlighting happens
  * after sanitization (`highlightCodeBlocks`, ADR-0051).
@@ -699,6 +790,8 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
   // tag, or next to a foreign `data-type`, is removed. `data-type` is read from the markup, not from
   // the hook's decision, because DOMPurify walks the attributes in its own order.
   "data-latex": (node) => isFormula(node),
+  // A date mention's value: only on `time`, only in the two forms of the Editor (ADR-0079).
+  datetime: (node, value) => node.nodeName === "TIME" && isDatetime(value),
   // An open Block: `open=""`, as the Editor writes it. An `open="open"` value from foreign HTML
   // loses the attribute, and the Block stays closed.
   open: (node, value) => node.nodeName === "DETAILS" && value === "",
@@ -746,8 +839,10 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
     node.getAttribute("data-block") === VIDEO_BLOCK &&
     isVideoSrc(node.getAttribute("data-provider") ?? "", value),
   "data-align": (node, value) =>
-    ["P", "H1", "H2", "H3", "H4", "TH", "TD"].includes(node.nodeName) &&
-    has(RICH_TEXT_SCHEMA.alignments, value),
+    node.nodeName === "FIGURE"
+      ? has(RICH_TEXT_SCHEMA.imageAlignments, value)
+      : ["P", "H1", "H2", "H3", "H4", "TH", "TD"].includes(node.nodeName) &&
+        has(RICH_TEXT_SCHEMA.alignments, value),
   colspan: (node, value) => isSpan(node, value, RICH_TEXT_SCHEMA.tableSpans.colspan),
   rowspan: (node, value) => isSpan(node, value, RICH_TEXT_SCHEMA.tableSpans.rowspan),
   type: (node, value) => node.nodeName === "INPUT" && value === "checkbox",
@@ -769,6 +864,13 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
   alt: (node) => node.nodeName === "IMG",
   "data-width": (node, value) =>
     node.nodeName === "IMG" && has(RICH_TEXT_SCHEMA.imageWidths, value),
+  // The language of a fragment: only on a plain `span` (a formula and a custom Mark are `span` too,
+  // and carry no language), and only a value of the BCP 47 shape. The hook has already written the
+  // tag in its canonical case, so the shape is what is checked here.
+  lang: (node, value) =>
+    node.nodeName === "SPAN" &&
+    !node.hasAttribute("data-type") &&
+    normalizeLanguageTag(value) !== null,
 };
 
 /** A record key counts only as an own property: `constructor` and `__proto__` do not become a rule. */
@@ -841,6 +943,22 @@ function checkAttribute(
   if (event.attrName === "data-color" && node.nodeName === "MARK") {
     const legacy = RICH_TEXT_SCHEMA.legacyMarkerColors as Record<string, string>;
     if (Object.hasOwn(legacy, event.attrValue)) event.attrValue = legacy[event.attrValue]!;
+  }
+  // Footnote markup: the narrow `id` and `#` rule, before the general rules (ADR-0076).
+  const footnote = footnoteAttributeAllowed(node, event.attrName, event.attrValue);
+  if (footnote !== undefined) {
+    if (!footnote) event.keepAttr = false;
+    return;
+  }
+  // `EN-US` from Word is written as `en-US`, as the Editor writes it (`normalizeLanguageTag`).
+  if (event.attrName === "lang") {
+    event.attrValue = normalizeLanguageTag(event.attrValue) ?? event.attrValue;
+  }
+  // The share of a table column (ADR-0080). `data-width` is also an image attribute, and each tag
+  // has its own values, so a `col` is decided here and never reaches the shared rule.
+  if (event.attrName === "data-width" && node.nodeName === "COL") {
+    if (!isShareValue(event.attrValue)) event.keepAttr = false;
+    return;
   }
   const allowed = ATTRIBUTE_RULES[event.attrName];
   if (allowed && !allowed(node, event.attrValue)) event.keepAttr = false;
@@ -950,14 +1068,56 @@ function checkVideo(node: Element): boolean {
   return true;
 }
 
+/**
+ * The widths of a table (ADR-0080): `true` means the element was handled. A `colgroup` stays only
+ * as the first one directly in a `table`, with 2 to 20 `col`, each with a valid share and nothing
+ * else in it, and the shares add up to 100. The Editor reads the same rule; a list that breaks it
+ * would size the columns wrongly, so it is removed whole and the table goes back to its content.
+ * The `col` values are read from the markup here, because a parent is visited before its children
+ * and their attributes have not been checked yet (DOMPurify trims the value, and so do we).
+ * A `col` anywhere else is removed.
+ */
+function checkColumns(node: Element): boolean {
+  if (node.nodeName === "COL") {
+    if (node.parentElement?.nodeName !== "COLGROUP") node.remove();
+    return true;
+  }
+  if (node.nodeName !== "COLGROUP") return false;
+  const { total, min } = RICH_TEXT_SCHEMA.tableColumnShares;
+  const columns = Array.from(node.children);
+  const shares = columns.map((column) =>
+    column.nodeName === "COL" && !column.hasAttribute("span")
+      ? (column.getAttribute("data-width") ?? "").trim()
+      : ""
+  );
+  const valid =
+    node.parentElement?.nodeName === "TABLE" &&
+    node.parentElement.querySelector(":scope > colgroup") === node &&
+    columns.length >= 2 &&
+    columns.length <= total / min &&
+    shares.every(isShareValue) &&
+    shares.reduce((sum, share) => sum + Number(share), 0) === total;
+  if (!valid) node.remove();
+  return true;
+}
+
 /** The `afterSanitizeAttributes` hook: the element's place in the Document. */
 function checkStructure(node: Element, schema: RichTextSchema): void {
+  if (checkColumns(node)) return;
   if (checkLayout(node) || checkVideo(node) || checkCustom(node, schema)) return;
+  if (checkFootnote(node)) return;
   // A formula is a leaf: an empty element with `data-latex`. The rendered KaTeX markup does not get
   // into the Document (ADR-0070), so its children are removed. Without a source the element loses
   // its wrapper, like any stray `span` or `div`.
   if (isFormula(node)) {
     if (node.hasAttribute("data-latex")) node.replaceChildren();
+    else node.replaceWith(...node.childNodes);
+    return;
+  }
+  // A date mention is text in a `time`: nothing inside it but the words. Without a valid `datetime`
+  // (the attribute hook removed it) the element is only a wrapper, and it goes away with its text kept.
+  if (node.nodeName === "TIME") {
+    if (node.hasAttribute("datetime")) node.replaceChildren(node.textContent ?? "");
     else node.replaceWith(...node.childNodes);
     return;
   }
@@ -976,6 +1136,9 @@ function checkStructure(node: Element, schema: RichTextSchema): void {
     return;
   }
   if (node.nodeName === "SPAN" && coloured) return;
+  // A `span` with a language is a Mark (ADR-0078), not a stray wrapper. The attribute hook has already
+  // removed a `lang` that is not a tag, so a `span` that still has one is valid.
+  if (node.nodeName === "SPAN" && node.hasAttribute("lang")) return;
   // Details Block: `summary` only directly in `details`, and the content wrapper with its
   // `data-type` likewise. (The hook has already removed the attribute if the wrapper is not in
   // place.) Outside a Block they lose their wrapper, and the content stays.
@@ -1031,6 +1194,11 @@ const URI_WHITESPACE = /[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u300
 /** The address starts with an allowed scheme from `RICH_TEXT_SCHEMA.protocols`. */
 function linkProtocolPattern(): RegExp {
   return new RegExp(`^(?:${RICH_TEXT_SCHEMA.protocols.join("|")}):`, "i");
+}
+
+/** The link schemes, or a footnote anchor (`#fn-<key>`, `#fnref-<key>`): the cleanup config with hooks. */
+function linkOrFootnotePattern(): RegExp {
+  return new RegExp(`${linkProtocolPattern().source}|${FOOTNOTE_ANCHOR_PATTERN.source}`, "i");
 }
 
 /**
