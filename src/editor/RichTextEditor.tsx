@@ -1136,8 +1136,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       measure from the top of the area, and do not use this edge.
     */
     const tocStickyTop = useCallback(
-      () => (stickyOffset(tocOffsetVar) ?? 0) + toolbarHeight,
-      [tocOffsetVar, toolbarHeight]
+      // The layer covers the app's header: its Toolbar is at the window edge, whatever the app publishes.
+      () => (layerShown ? 0 : (stickyOffset(tocOffsetVar) ?? 0)) + toolbarHeight,
+      [tocOffsetVar, toolbarHeight, layerShown]
     );
     /*
       A jump in edit mode puts the caret at the end of the heading, as Google Docs' document outline
