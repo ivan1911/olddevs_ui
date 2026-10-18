@@ -1,5 +1,5 @@
 {
-  "source": "word-win",
+  "source": "word2007-win",
   "browser": "firefox",
   "scenario": "lists",
   "origin": "tinymce/tinymce@6.8.5 PasteStrings.ts",

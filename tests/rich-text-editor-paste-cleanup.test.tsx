@@ -111,7 +111,7 @@ describe("Word lists", () => {
   );
 
   test("a list from Word 2007 on Windows without mso-list still becomes a list", () => {
-    const html = pasted("word-win-firefox-lists");
+    const html = pasted("word2007-win-firefox-lists");
 
     const items = Array.from({ length: 6 }, (_, i) => `<li><p>Item ${i + 1}</p></li>`).join("");
     expect(html).toContain(`<ul>${items}</ul>`);
@@ -264,4 +264,53 @@ describe("after the review", () => {
     expect(seen[0]).toContain("mso-list");
     expect(html).toContain("<ul><li><p>Apples</p>");
   });
+});
+
+/*
+  Word and Excel (Microsoft 365) on Windows, captured 2026-10-18 into Chrome and Firefox. Word on
+  Windows writes the same HTML export as on Mac (`mso-list`, `@list` rules), Excel the same class rules:
+  the steps need nothing of their own, and these tests keep it that way.
+*/
+describe("Word and Excel on Windows", () => {
+  test("Chrome: the numbered list section keeps its nesting, its start and the Roman list", () => {
+    const html = pasted("word-win-chrome-lists-numbered");
+
+    expect(html).toContain(NUMBERED);
+    expect(html).toContain(FROM_THREE);
+    expect(html).toContain(ROMAN);
+  });
+
+  test("Chrome: the bullet list keeps its three levels", () => {
+    expect(pasted("word-win-chrome-lists-bullet")).toContain(BULLETS);
+  });
+
+  test("Firefox: the whole document gives the same lists, markers and dividers", () => {
+    const html = pasted("word-win-firefox-whole");
+
+    expect(html).toContain(BULLETS);
+    expect(html).toContain(NUMBERED);
+    expect(html).toContain(FROM_THREE);
+    expect(html).toContain('<mark data-color="yellow">yellow</mark>');
+    expect(html).toContain(
+      "<p>Text above a paragraph with a bottom border.</p><hr><p>Text below the bottom border.</p><hr>"
+    );
+  });
+
+  test.each(["chrome", "firefox"])(
+    "%s: an Excel range keeps bold, fills and alignment",
+    (browser) => {
+      const html = pasted(`excel-win-${browser}-range`);
+
+      expect(html).toContain(
+        '<td data-align="center"><p><mark data-color="blue"><strong>Fruit</strong></mark></p></td>'
+      );
+      expect(html).toContain("<td><p><em>Apple</em></p></td>");
+      expect(html).toContain(
+        '<td data-align="center"><p><mark data-color="yellow">Italy</mark></p></td>'
+      );
+      expect(html).toContain(
+        '<td colspan="2" data-align="right"><p><strong>Total</strong></p></td>'
+      );
+    }
+  );
 });

@@ -164,7 +164,7 @@ describe("horizontal rules", () => {
   );
 
   test("the Word table of the Windows capture has no rules in it", () => {
-    expect(pasted("word-win-firefox-table")).not.toContain("<hr>");
+    expect(pasted("word2007-win-firefox-table")).not.toContain("<hr>");
   });
 
   // Synthetic: HTML written from the shape of Word's CSS, for what the captures do not show.
@@ -339,7 +339,7 @@ describe("Word bookmarks", () => {
 
 describe("<o:p>", () => {
   test("the Windows capture: Word 2007 paragraph marks are gone", () => {
-    const document = cleaned("word-win-firefox-table");
+    const document = cleaned("word2007-win-firefox-table");
 
     expect(document.getElementsByTagName("o:p")).toHaveLength(0);
     expect(document.querySelectorAll("table")).toHaveLength(1);
