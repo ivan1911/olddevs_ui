@@ -4524,7 +4524,15 @@ function RangeDemo({
  * Editor, with or without the `blockSelection` Tool.
  */
 export const BlockHandleOverRange: Story = {
-  render: () => <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." />,
+  // The frame is about the handle: the selection menu above the same range only animates in at a
+  // varying moment and makes the snapshot flaky.
+  render: () => (
+    <RangeDemo
+      from="Run the regression pass on Tuesday."
+      to="Ship on Wednesday."
+      selectionMenu={false}
+    />
+  ),
 };
 
 /**
