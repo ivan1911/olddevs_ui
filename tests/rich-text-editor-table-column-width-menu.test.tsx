@@ -220,20 +220,28 @@ test("Equal columns is unavailable when the columns are already equal", async ()
 
 test("the menu and the announcement speak Russian", async () => {
   const user = userEvent.setup();
+  const labels = ru.editor;
   const ref = createRef<RichTextEditorHandle>();
   render(
     <UiProvider locale="ru" messages={ru}>
-      <RichTextEditor ref={ref} aria-label="Текст" defaultValue={SIZED} />
+      <RichTextEditor ref={ref} aria-label="Body" defaultValue={SIZED} />
     </UiProvider>
   );
   caretIn(ref.current!.editor!, "a1");
 
-  await user.click(screen.getByRole("button", { name: "Таблица" }));
-  const menu = screen.getByRole("menu", { name: "Таблица" });
-  await user.hover(within(menu).getByRole("menuitem", { name: "Столбец" }));
-  const column = await screen.findByRole("menu", { name: "Столбец" });
-  expect(within(column).getByRole("group", { name: "Ширина столбца: 40 %" })).toBeDefined();
-  await user.click(within(column).getByRole("menuitem", { name: "Шире" }));
+  await user.click(screen.getByRole("button", { name: labels.table }));
+  const menu = screen.getByRole("menu", { name: labels.table });
+  await user.hover(within(menu).getByRole("menuitem", { name: labels.tableColumn }));
+  const column = await screen.findByRole("menu", { name: labels.tableColumn });
+  expect(
+    within(column).getByRole("group", { name: labels.tableColumnWidth({ percent: 40 }) })
+  ).toBeDefined();
+  await user.click(within(column).getByRole("menuitem", { name: labels.tableColumnWider }));
 
-  expect(announced()).toBe("Ширина столбца: 45 %");
+  expect(announced()).toBe(labels.tableColumnWidth({ percent: 45 }));
+  // The Russian catalog has its own words, and the percent sign follows a no-break space.
+  expect(labels.tableColumnWidth({ percent: 45 })).toContain("\u00a0%");
+  expect(labels.tableColumnWidth({ percent: null })).not.toBe(
+    labels.tableColumnWidth({ percent: 45 })
+  );
 });

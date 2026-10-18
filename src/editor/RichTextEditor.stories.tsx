@@ -1595,7 +1595,7 @@ export const TableColumnWidthExcelPaste: Story = {
   render: () => <ExcelPasteDemo />,
 };
 
-/** Column widths in the Russian locale: the menu group, "Шире" / "Уже" and the announcement. */
+/** Column widths in the Russian locale: the name of the menu group, the two items and the announcement come from the catalog. */
 export const TableColumnWidthRussian: Story = {
   render: () => <TableInCell locale="ru-RU" document={SIZED_TABLE_SAMPLE} caret="Billing" />,
 };
