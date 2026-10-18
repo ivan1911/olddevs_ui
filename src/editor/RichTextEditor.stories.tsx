@@ -3730,6 +3730,7 @@ export const VideoRussian: Story = {
 const PASTE_SAMPLES = [
   { label: "Word for Mac", file: "word-mac-chrome-whole" },
   { label: "Word on Windows", file: "word-win-firefox-lists" },
+  { label: "Word for the web", file: "word-web-chrome-whole" },
   { label: "Excel", file: "excel-mac-chrome-range" },
   { label: "Google Docs", file: "gdocs-chrome-whole" },
   { label: "Google Sheets", file: "gsheets-chrome-range" },

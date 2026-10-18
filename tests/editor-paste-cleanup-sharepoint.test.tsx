@@ -299,3 +299,54 @@ describe("SharePoint detection", () => {
     expect(cleanPastedHtml(page)).toBe(page);
   });
 });
+
+/*
+  Real captures of Word for the web (Microsoft 365, 2026-10-18), copied from the test document and
+  pasted into Chrome, Safari and Firefox (`fixtures/paste/word-web-*-whole.json`). They confirm the
+  synthetic shape above and show two things it lacked: a long copy is split into chunk `div`s that
+  carry only Word's `SCXW…`/`BCX…` classes, and a table of contents leaves content-control
+  boundaries (zero-width spaces) behind instead of its entries.
+*/
+describe("Word for the web, real captures", () => {
+  const NESTED_NUMBERED =
+    "<ol><li><p>First step</p><ol><li><p>Sub-step a</p><ol><li><p>Detail i</p></li>" +
+    "<li><p>Detail ii</p></li></ol></li><li><p>Sub-step b</p></li></ol></li>" +
+    "<li><p>Second step</p><ul><li><p>A bullet inside a numbered list</p></li></ul></li>" +
+    "<li><p>Third step</p></li></ol>";
+
+  test.each(["chrome", "safari", "firefox"])(
+    "%s: a list split across Word's chunks stays one nested list",
+    (browser) => {
+      const html = pasted(`word-web-${browser}-whole`);
+
+      expect(html).toContain(NESTED_NUMBERED);
+      expect(html).toContain(
+        '<ol start="3"><li><p>Item three</p></li><li><p>Item four</p></li></ol>'
+      );
+    }
+  );
+
+  test.each(["chrome", "safari", "firefox"])(
+    "%s: the table of contents leaves no empty paragraphs of zero-width spaces",
+    (browser) => {
+      const html = pasted(`word-web-${browser}-whole`);
+
+      expect(html).not.toContain("\u200b");
+      expect(html).toMatch(
+        /<p><em>OLDSUI-274\.[^<]*<\/em><\/p><h1>1\. Headings and inline marks<\/h1>/
+      );
+    }
+  );
+
+  test.each(["chrome", "safari", "firefox"])(
+    "%s: headings, marks and highlights come through",
+    (browser) => {
+      const html = pasted(`word-web-${browser}-whole`);
+
+      expect(html).toContain("<h2>Heading Two</h2><h3>Heading Three</h3>");
+      expect(html).toContain('<mark data-color="yellow">yellow</mark>');
+      expect(html).toContain("<s>lazy</s>");
+      expect(html).not.toMatch(/style=|class=/);
+    }
+  );
+});

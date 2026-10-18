@@ -1,9 +1,10 @@
 Clipboard HTML used as paste test fixtures. None of these files ships in the npm package
 ("files" in package.json does not include fixtures/). Each file keeps its source's licence.
 
-word-mac-*, excel-mac-*, gdocs-{chrome,safari,firefox}-*, gsheets-*
+word-mac-*, excel-mac-*, gdocs-{chrome,safari,firefox}-*, gsheets-*, word-web-*
   Captured for OLDSUI-274 on 2026-10-17 and 2026-10-18 (gdocs-*-rule-native) on macOS: Microsoft Word 16.114 and Excel for Mac,
-  Google Docs and Google Sheets, pasted into Chrome, Safari and Firefox Developer Edition.
+  Google Docs and Google Sheets, and Word for the web (Microsoft 365, word-web-*, 2026-10-18), pasted into
+  Chrome, Safari and Firefox Developer Edition.
   Office temp file paths and Google copy GUIDs are replaced with constants.
   Licence: the kit's licence (MIT).
 

@@ -136,8 +136,45 @@ export const sharePointStructure: PasteCleanupStep = {
   name: "sharePointStructure",
   applies: (sources) => sources.sharePoint,
   run(document) {
+    removeContentControlBoundaries(document);
     removeEndOfParagraph(document);
+    unwrapChunks(document);
     convertHeadings(document);
     rebuildLists(document);
   },
 };
+
+/** Word's own render classes (`SCXW124463699`, `BCX0`): they carry no meaning of the document. */
+const RENDER_CLASS = /^(?:SCXW|BCX)\d+$/;
+
+/**
+ * A long copy from Word for the web is split into chunk `div`s of about twenty Blocks, which carry
+ * only the render classes. A list that crosses a chunk boundary would look like two runs, and its
+ * items after the boundary would start a new list at the top level. The chunks are unwrapped first.
+ */
+function unwrapChunks(document: Document): void {
+  for (const div of Array.from(document.body.querySelectorAll("div"))) {
+    const classes = Array.from(div.classList);
+    if (classes.length > 0 && classes.every((name) => RENDER_CLASS.test(name))) {
+      div.replaceWith(...div.childNodes);
+    }
+  }
+}
+
+/**
+ * A content control (a table of contents, a form field) is copied as its boundaries only: spans of
+ * class `ContentControlBoundarySink` holding a zero-width space, while the entries stay in Word. A
+ * paragraph left with nothing but such boundaries goes; a boundary next to real text goes alone.
+ */
+function removeContentControlBoundaries(document: Document): void {
+  const paragraphs = new Set<Element>();
+  for (const sink of Array.from(document.body.querySelectorAll(".ContentControlBoundarySink"))) {
+    const paragraph = sink.closest("p");
+    if (paragraph) paragraphs.add(paragraph);
+    sink.remove();
+  }
+  for (const paragraph of paragraphs) {
+    const text = (paragraph.textContent ?? "").replace(/[\s\u200b]/g, "");
+    if (text === "" && !paragraph.querySelector("img, br")) paragraph.remove();
+  }
+}
