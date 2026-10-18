@@ -5,6 +5,7 @@ import { TextSelection } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
 import { BlockSelection } from "./blockSelection.js";
 import { blockTypeOf } from "./blockTypes.js";
+import { LIST_ITEMS } from "./blockUnit.js";
 import type { InsertItem } from "./insertItems.js";
 
 /**
@@ -19,12 +20,10 @@ import type { InsertItem } from "./insertItems.js";
  * - "Text" breaks a list into paragraphs. It is the same step that turns any Block into a list
  *   or a heading: the Block is first freed from what wraps it (`clearNodes`), then the item applies.
  * - A QUOTE IS ONE QUOTE, like a list: a run of neighbouring text Blocks becomes one quote of that many
- *   paragraphs (the owner's decision of 2026-10-18; "Wrap in › Quote" gives the same for any Blocks).
+ *   paragraphs (the kit's rule for quotes; "Wrap in › Quote" gives the same for any Blocks).
  *
  * The whole group is one transaction, so it is one undo step.
  */
-
-const LIST_ITEMS: ReadonlySet<string> = new Set(["listItem", "taskItem"]);
 
 /** Whether the Block changes under "Format ›": a text Block, a list item, or a custom Block that opted in. */
 export function isTurnable(node: PmNode): boolean {

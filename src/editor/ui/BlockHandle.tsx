@@ -635,8 +635,12 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     }
     const command = commands[id as keyof typeof commands];
     if (!command) return;
+    // A command can answer `true` and still leave the Document alone (a move next to the footnote
+    // list), and one that answers `false` changes nothing: only a real edit is announced.
+    const before = editor.state.doc;
     command(editor.state, editor.view.dispatch);
     editor.commands.focus();
+    if (editor.state.doc === before) return;
     const result = {
       moveUp: messages.blocksMoved,
       moveDown: messages.blocksMoved,

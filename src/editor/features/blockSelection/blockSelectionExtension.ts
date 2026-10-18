@@ -1,6 +1,6 @@
 "use client";
 
-import { Extension } from "@tiptap/core";
+import { Extension, type Editor } from "@tiptap/core";
 import { Plugin, PluginKey, type EditorState } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
 import { hasOpenAriaOverlay } from "../../../lib/overlay-layer.js";
@@ -74,10 +74,30 @@ function isDisabled(view: EditorView): boolean {
 }
 
 /**
+ * The same question for the Document that does not exist yet: the root's attributes are computed
+ * while the view is being built, before `aria-disabled` is on the DOM, so it is read from the
+ * options the Editor passes (`RichTextEditor` sets it there).
+ */
+function isDisabledField(editor: Editor): boolean {
+  const attributes = editor.options.editorProps?.attributes;
+  return (
+    typeof attributes === "object" &&
+    (attributes as Record<string, string>)["aria-disabled"] === "true"
+  );
+}
+
+/**
  * Whether a layer of the kit is open above the Document, one that owns `Escape` first: the Slash
  * menu, a Text card, a popover, a menu. Radix keeps them in a popper wrapper, react-aria in a
  * positioned overlay (ADR-0041). A tooltip is not a layer: it takes no focus and does not close
  * on `Escape`.
+ *
+ * Any open layer counts, not only the Editor's own, because there is no reliable owner link to
+ * narrow it by. The Slash and trigger lists are tied to the Document by `aria-controls`, but a Text
+ * card is not tied to it by anything, and a layer portaled to the body is outside the Editor's DOM.
+ * Narrowing by `aria-controls` alone would make the first `Esc` select a Block instead of closing
+ * a Text card. The cost is small: the caller already requires focus in the Document, and a
+ * non-modal Radix layer elsewhere closes itself when focus moves out of it.
  */
 function layerIsOpen(doc: Document): boolean {
   if (hasOpenAriaOverlay()) return true;
@@ -126,7 +146,7 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
   },
 
   addProseMirrorPlugins() {
-    const { options } = this;
+    const { editor, options } = this;
     const announce = (text: (messages: EditorMessages) => string) => {
       options.onNotice({ tone: "status", text: text(options.messages()) });
     };
@@ -162,8 +182,17 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
           },
 
           // The root marks the mode: the native selection paint and the caret are hidden by CSS.
-          attributes: (state): Record<string, string> =>
-            state.selection instanceof BlockSelection ? { "data-block-selection": "" } : {},
+          attributes: (state): Record<string, string> => {
+            const attributes: Record<string, string> = {};
+            if (state.selection instanceof BlockSelection) attributes["data-block-selection"] = "";
+            /*
+              A read-only Document has no `tabindex` of its own, so it could never take the focus
+              that `Esc` and `Shift+↑/↓` need (ADR-0077, decision 13). With the Tool on it joins the
+              Tab order. A disabled field stays out of it; an editable one has the engine's own.
+            */
+            if (!editor.isEditable && !isDisabledField(editor)) attributes.tabindex = "0";
+            return attributes;
+          },
 
           // A character typed over the selected Blocks is ignored: one key must not erase a section.
           handleTextInput: (view) =>
@@ -274,7 +303,7 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
               return true;
             },
 
-            // Dragging the selected Blocks is not supported (the owner's decision, as with the handle).
+            // Dragging the selected Blocks is not supported, as with the handle (ADR-0077, item 4).
             dragstart: (view, event) => {
               if (!(view.state.selection instanceof BlockSelection)) return false;
               event.preventDefault();
