@@ -1,5 +1,15 @@
 # @olddevs/ui
 
+## 4.11.0
+
+### Minor Changes
+
+- 649be59: Add the `pasteCleanup` Editor Tool, in both Presets: a paste from Word, Excel, Google Docs, Google Sheets and SharePoint keeps its meaning before the Schema reads it. Word lists stay lists (with nesting and `start`) instead of paragraphs with typed numbers, a highlight becomes the palette marker of the nearest hue, bold, italic and alignment of Excel cells survive, Word bookmarks, `<o:p>` and stray breaks are removed, and a Word paragraph border becomes a divider. HTML from other sources is pasted exactly as before, and a text color is still not mapped to the palette. The visible change: a paste from these applications into an Editor with `full` or `basic` gives different, cleaner HTML; leave `pasteCleanup` out of an exact `tools` list to keep the old behavior.
+
+### Patch Changes
+
+- 763fae5: Editor: a pasted link keeps its own address when its text looks like an address. A link such as `<a href="https://example.com/docs?page=1#top">example.com/docs</a>` copied from Word or a web page lost its query and anchor (or its whole address when the text named another page), because the paste rule relinked the text. A bare address in pasted text now gets `https://`, like one typed by hand, instead of `http://`.
+
 ## 4.10.0
 
 ### Minor Changes
