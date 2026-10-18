@@ -311,6 +311,9 @@ test("Escape in the menu closes it, not the layer under it", async () => {
   // the Document, not to the "…" button: a tooltip may open on that button, and the first Escape
   // through the layer stack would go to it.
   act(() => textbox().focus());
+  // The first Escape in the text selects the Block (the `blockSelection` Tool, ADR-0077); the layer closes on the second.
+  await user.keyboard("{Escape}");
+  expect(onClose).not.toHaveBeenCalled();
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });

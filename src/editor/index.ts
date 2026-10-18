@@ -60,12 +60,14 @@ export type {
   VideoToolOptions,
 } from "./core/toolOptions.js";
 export type {
+  BlockSelectionToolCommands,
   InvisibleCharactersToolCommands,
   LanguageToolCommands,
   SearchToolCommands,
   TocToolCommands,
 } from "./core/toolCommands.js";
 export type {
+  BlockSelectionToolState,
   InvisibleCharactersToolState,
   LanguageToolState,
   SearchToolState,

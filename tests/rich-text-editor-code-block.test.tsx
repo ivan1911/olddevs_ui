@@ -287,7 +287,10 @@ test("inside a Dialog Escape on the header buttons returns to the code and keeps
   expect(editor.view.hasFocus()).toBe(true);
   expect(onClose).not.toHaveBeenCalled();
 
-  // Escape from the code itself is the usual one: the dialog closes.
+  // Escape from the code itself is the usual one: the dialog closes. The first one selects the
+  // Block (the `blockSelection` Tool, ADR-0077), the second closes the window.
+  await user.keyboard("{Escape}");
+  expect(onClose).not.toHaveBeenCalled();
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });
@@ -320,6 +323,9 @@ test("inside a Drawer Escape on the language button returns to the code and keep
   expect(editor.view.hasFocus()).toBe(true);
   expect(onClose).not.toHaveBeenCalled();
 
+  // The first Escape in the code selects the Block (the `blockSelection` Tool, ADR-0077).
+  await user.keyboard("{Escape}");
+  expect(onClose).not.toHaveBeenCalled();
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });

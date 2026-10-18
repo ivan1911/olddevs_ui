@@ -1130,6 +1130,32 @@ export interface UiMessages {
     blockDuplicate: string;
     blockDelete: string;
     /**
+     * Block selection (the `blockSelection` Tool, ADR-0077) and the Block handle over several Blocks.
+     * `blockSelect` is the handle's item that selects the current Blocks (the way in on a touch
+     * screen); `blockWrap` is the handle's submenu "Wrap in ›" over a group of Blocks (its items are
+     * the names of the containers: `wrapper`, `blockquote`, `details`). `blockSelectionSelect` and
+     * `blockSelectionExtend` are the reference rows of `Esc` and `Shift+↑/↓`.
+     */
+    blockSelect: string;
+    blockWrap: string;
+    blockSelectionSelect: string;
+    blockSelectionExtend: string;
+    /**
+     * What the screen reader hears (Field notice, tone `status`): the state of the selection and the
+     * result of an action over Blocks. The count is in the phrase's tail, so the phrase needs no
+     * plural form in any language.
+     */
+    blocksSelected: (vars: { count: number }) => string;
+    blockSelectionCleared: string;
+    blocksDeleted: (vars: { count: number }) => string;
+    blocksDuplicated: (vars: { count: number }) => string;
+    blocksMoved: (vars: { count: number }) => string;
+    blocksChanged: (vars: { count: number }) => string;
+    blocksWrapped: (vars: { count: number }) => string;
+    blocksCopied: (vars: { count: number }) => string;
+    blocksCut: (vars: { count: number }) => string;
+    blocksReplaced: (vars: { count: number }) => string;
+    /**
      * The Document's table of contents (`RichTextToc`): the name of the strip button and the label
      * of the `nav` with the list of headings. It is one word for both, because it is one thing.
      */

@@ -885,6 +885,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           focusToolbar: () => focusToolbarRef.current(),
           openBlockMenu: () => openBlockMenuRef.current(),
           onNotice: setNotice,
+          editorMessages: () => imageMessagesRef.current,
           openSearch: (replace) => openSearchRef.current(replace),
           image: {
             /*

@@ -6,6 +6,7 @@ import { toolSignals, watchHandleEditor } from "../core/handleWatchers.js";
 import { toolOptions } from "../core/toolDescriptor.js";
 import type { RichTextTools } from "../core/toolOptions.js";
 import type { RichTextEditorHandle } from "../RichTextEditor.js";
+import { blockSelectionSnapshot } from "../features/blockSelection/blockSelectionSnapshot.js";
 import { invisibleCharactersSnapshot } from "../features/invisibleCharacters/invisibleCharactersSnapshot.js";
 import { languageSnapshot } from "../features/language/languageSnapshot.js";
 import { searchSnapshot } from "../features/search/searchSnapshot.js";
@@ -45,6 +46,11 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
       toolSignals(ref).tools?.has("invisibleCharacters")
         ? invisibleCharactersSnapshot(editor)
         : null,
+  ],
+  [
+    "blockSelection",
+    (editor, ref) =>
+      toolSignals(ref).tools?.has("blockSelection") ? blockSelectionSnapshot(editor) : null,
   ],
   [
     "language",

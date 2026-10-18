@@ -339,6 +339,15 @@ function placeDetails(tr: Transaction, persist: boolean): void {
   }
 }
 
+/**
+ * Expand the Block at `pos` once it is in the Document, as a Block inserted from the Slash menu is
+ * expanded. For a Block made by wrapping existing Blocks (`blockWrap.ts`): with `persist: false` the
+ * open state lives in the DOM only, and a collapsed Block would hide the Blocks just put into it.
+ */
+export function openDetailsOnInsert(tr: Transaction, pos: number): void {
+  tr.setMeta(OPEN_ON_INSERT, pos);
+}
+
 /** The collapsible Block at position `pos`: the Block itself, or a Block directly in its content. */
 function detailsAt(tr: Transaction, pos: number): { from: number; node: PmNode } | null {
   const node = tr.doc.nodeAt(pos);

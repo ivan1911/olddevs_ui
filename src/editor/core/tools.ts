@@ -104,6 +104,14 @@
  * Toolbar and the Bubble menu have no such item. It is in `full`, not in `basic`: a comment does not
  * need this mode. But in `full` the characters stay hidden until the author turns display on: the
  * starting display is set by the `tool("invisibleCharacters", { visible: true })` option.
+ *
+ * `blockSelection` is Block selection (ADR-0077): several Blocks selected whole, as in Notion. `Esc` in
+ * the text selects the current Block, `Shift+↑/↓` and `Shift+click` grow the selection, and then
+ * `Backspace`, `⌘C`, `⌘X`, `⌘V`, `⌘⇧D` and `⌥⇧↑/↓` act on the Blocks. It has no Schema of its own, like
+ * `clearFormatting`: the Document, the sanitizer and Markdown do not change. It is in `full`, not in
+ * `basic`: it takes the first `Esc` in the text, so a field in a `Dialog` closes on the second one,
+ * and a comment field keeps the usual "one `Esc` closes the window". The Block handle's menu over
+ * several Blocks (the text selection across them) is not a Tool: it is in every Editor.
  */
 export const TOOLS = [
   "history",
@@ -138,6 +146,7 @@ export const TOOLS = [
   "source",
   "search",
   "invisibleCharacters",
+  "blockSelection",
   "insertMenu",
   "typography",
   "pasteCleanup",

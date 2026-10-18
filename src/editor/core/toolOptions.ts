@@ -3,12 +3,14 @@ import { devError } from "../../lib/dev-warn.js";
 import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
 import type {
+  BlockSelectionToolState,
   InvisibleCharactersToolState,
   LanguageToolState,
   SearchToolState,
   TocToolState,
 } from "./toolState.js";
 import type {
+  BlockSelectionToolCommands,
   InvisibleCharactersToolCommands,
   LanguageToolCommands,
   SearchToolCommands,
@@ -277,6 +279,11 @@ export interface RichTextTools {
     state: InvisibleCharactersToolState;
     commands: InvisibleCharactersToolCommands;
   };
+  // State and commands only: the mode has no options (ADR-0077).
+  blockSelection: {
+    state: BlockSelectionToolState;
+    commands: BlockSelectionToolCommands;
+  };
   language: {
     options: LanguageToolOptions;
     state: LanguageToolState;
@@ -289,7 +296,11 @@ export interface RichTextTools {
  * names. A custom Tool added to the map does not appear here; it is configured by its
  * definition, not by name.
  */
-export type ConfigurableToolName = keyof RichTextTools & ToolName;
+export type ConfigurableToolName = {
+  [Name in keyof RichTextTools & ToolName]: RichTextTools[Name] extends { options: object }
+    ? Name
+    : never;
+}[keyof RichTextTools & ToolName];
 
 /** Options of a Tool from the map; no map entry or no `options` gives `never`. */
 type OptionsOf<Name extends ConfigurableToolName> = RichTextTools[Name] extends {

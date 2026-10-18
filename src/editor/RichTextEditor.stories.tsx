@@ -3984,3 +3984,189 @@ function QuotesDemo() {
 export const TextLanguageQuotes: Story = {
   render: () => <QuotesDemo />,
 };
+
+/*
+  Block selection and the Block handle over a range (ADR-0077, OLDSUI-307). The story sets the state
+  once the engine is created, the way a user gets there: a text selection across Blocks (the handle
+  over a range), or `Esc` in the text and `Shift+↓` (Block selection). `extend` is how many times
+  `Shift+↓` is pressed after `Esc`.
+*/
+function useRangeDemo(
+  ref: RefObject<RichTextEditorHandle | null>,
+  options: { from: string; to?: string; extend?: number; open?: boolean }
+) {
+  const { from, to, extend = 0, open = false } = options;
+  useEffect(() => {
+    let frame = 0;
+    const press = () => {
+      const handle = document.querySelector<HTMLElement>('button[aria-label="Block actions"]');
+      if (!handle) {
+        frame = requestAnimationFrame(press);
+        return;
+      }
+      handle.click();
+    };
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      let start = -1;
+      let end = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (!node.isText) return;
+        if (start < 0 && node.text === from) start = pos + 1;
+        if (node.text === (to ?? from)) end = pos + node.nodeSize - 1;
+      });
+      editor.view.focus();
+      if (start > 0) editor.commands.setTextSelection(to ? { from: start, to: end } : start);
+      if (!to) {
+        // Block selection: the same as `Esc`, then `Shift+↓` for each extra Block.
+        ref.current?.tool("blockSelection")?.selectCurrent();
+        for (let step = 0; step < extend; step++) {
+          editor.view.dom.dispatchEvent(
+            new KeyboardEvent("keydown", { key: "ArrowDown", shiftKey: true, bubbles: true })
+          );
+        }
+      }
+      if (open) frame = requestAnimationFrame(press);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [ref, from, to, extend, open]);
+}
+
+const RANGE_SAMPLE =
+  "<h2>Release plan</h2>" +
+  "<p>Freeze the scope on Monday.</p>" +
+  "<p>Run the regression pass on Tuesday.</p>" +
+  "<p>Ship on Wednesday.</p>" +
+  "<ul><li><p>Announce the date</p></li><li><p>Update the changelog</p></li></ul>" +
+  "<p>Closing note for the team.</p>";
+
+function RangeDemo({
+  document = RANGE_SAMPLE,
+  from,
+  to,
+  extend,
+  open,
+  ...props
+}: {
+  document?: string;
+  from: string;
+  to?: string;
+  extend?: number;
+  open?: boolean;
+} & Partial<RichTextEditorProps>) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useRangeDemo(ref, { from, to, extend, open });
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={document} {...props} />
+    </div>
+  );
+}
+
+/**
+ * The Block handle over a range: a text selection across several Blocks no longer hides the "⋮". It
+ * stands at the first Block the selection touches, and its menu acts on all of them. This is in every
+ * Editor, with or without the `blockSelection` Tool.
+ */
+export const BlockHandleOverRange: Story = {
+  render: () => <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." />,
+};
+
+/**
+ * The menu of the handle over a range: Select, Format ›, Wrap in ›, Move up, Move down, Duplicate and
+ * Delete. No "Add ›": that item is for one Block. Every item is one edit for undo, and the screen
+ * reader hears the result ("Blocks deleted: 2").
+ */
+export const BlockHandleOverRangeMenu: Story = {
+  render: () => (
+    <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." open />
+  ),
+};
+
+/**
+ * Block selection: `Esc` in the text selects the current Block, `Shift+↓` adds the next one. The
+ * Blocks are painted whole on the selection color, there is no caret, and the "⋮" stands at the first
+ * Block. Then `Backspace` removes them, `⌘C` and `⌘X` take them whole, `⌘V` replaces them, `⌘⇧D` and
+ * `⌥⇧↑/↓` duplicate and move them; `Esc` again returns the caret.
+ */
+export const BlockSelection: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} />,
+};
+
+/** Block selection on the Paper sheet: the same highlight on a light surface in any theme. */
+export const BlockSelectionPaper: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} surface="paper" />,
+};
+
+/** A list: the unit is the item, so the selection takes one item and grows by item. */
+export const BlockSelectionInList: Story = {
+  render: () => <RangeDemo from="Announce the date" extend={1} />,
+};
+
+const COLUMNS_RANGE_SAMPLE =
+  "<p>Before the columns.</p>" +
+  layoutBlock(
+    "50-50",
+    layoutColumn("Left", "First block of the left column."),
+    layoutColumn("Right", "Only block of the right column.")
+  ) +
+  "<p>After the columns.</p>";
+
+/**
+ * Block selection in columns: the selection is neighbours of one container, so `Shift+↓` stays in the
+ * column. At the column's edge it selects the whole Column layout and goes on at the Document's level.
+ */
+export const BlockSelectionInColumns: Story = {
+  render: () => (
+    <RangeDemo document={COLUMNS_RANGE_SAMPLE} from="First block of the left column." />
+  ),
+};
+
+/**
+ * Block selection inside a `Dialog`: the first `Esc` selects the Block and the window stays, the
+ * second `Esc` ends the selection and closes the window, like any nested layer (ADR-0041). A comment
+ * field uses `preset="basic"` and keeps the one-`Esc` close.
+ */
+export const BlockSelectionInDialog: Story = {
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="h-[520px]">
+        <Button onClick={() => setOpen(true)}>Open the window</Button>
+        <Dialog open={open} onClose={() => setOpen(false)} title="Edit the plan">
+          <div className="w-[560px] max-w-full">
+            <RangeDemoInDialog />
+          </div>
+        </Dialog>
+      </div>
+    );
+  },
+};
+
+function RangeDemoInDialog() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useRangeDemo(ref, { from: "Run the regression pass on Tuesday." });
+  return <RichTextEditor ref={ref} aria-label="Document" defaultValue={RANGE_SAMPLE} />;
+}
+
+/**
+ * Block selection in a read-only field: `Esc`, `Shift+↑/↓` and `Shift+click` work, and of the actions
+ * only `⌘C` (there is no handle).
+ */
+export const BlockSelectionReadOnly: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} readOnly />,
+};
+
+/** The announcements, the menu items and the reference rows in the Russian catalog. */
+export const BlockSelectionRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." open />
+    </UiProvider>
+  ),
+};

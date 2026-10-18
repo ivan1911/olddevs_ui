@@ -298,6 +298,9 @@ test("Escape in a colour popover inside a modal layer closes the popover, not th
   const button = await colorButton();
   await waitFor(() => expect(document.activeElement).toBe(button));
   act(() => screen.getByRole("textbox", { name: "Body" }).focus());
+  // The first Escape in the text selects the Block (the `blockSelection` Tool, ADR-0077); the layer closes on the second.
+  await user.keyboard("{Escape}");
+  expect(onClose).not.toHaveBeenCalled();
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
 });
