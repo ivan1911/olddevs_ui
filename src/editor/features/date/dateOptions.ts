@@ -1,3 +1,5 @@
+"use client";
+
 import type { DateToolOptions } from "../../core/toolOptions.js";
 import { TIME_FORMAT_FIELDS } from "./dateFormat.js";
 

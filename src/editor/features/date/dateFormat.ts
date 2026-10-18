@@ -1,3 +1,5 @@
+"use client";
+
 import { parseDatetime } from "./dateValue.js";
 
 /*

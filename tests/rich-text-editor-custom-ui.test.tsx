@@ -143,12 +143,13 @@ test("own items stand at the end of their section, after the kit's, with the sho
 
   const { insert, turnInto } = slashRows();
   expect(insert.at(-1)).toMatch(/^Box en-US/);
-  expect(insert.at(-6)).toMatch(/^Wrapper/);
-  expect(insert.at(-5)).toMatch(/^Collapsible block/);
+  expect(insert.at(-7)).toMatch(/^Wrapper/);
+  expect(insert.at(-6)).toMatch(/^Collapsible block/);
   // Formulas (OLDSUI-280) and videos (OLDSUI-281) are in the `TOOLS` set but outside the presets: after
-  // the Details Block, before the custom ones.
-  expect(insert.at(-4)).toMatch(/^Formula/);
-  expect(insert.at(-3)).toMatch(/^Block formula/);
+  // the Details Block, before the custom ones. The date mention (OLDSUI-309) stands between them.
+  expect(insert.at(-5)).toMatch(/^Formula/);
+  expect(insert.at(-4)).toMatch(/^Block formula/);
+  expect(insert.at(-3)).toMatch(/^Date/);
   expect(insert.at(-2)).toMatch(/^Video/);
   expect(turnInto.at(-1)).toMatch(/^Card/);
   expect(turnInto.at(-2)).toMatch(/^Code block/);
@@ -260,11 +261,12 @@ test("Add lists own items and puts a new block under the current one, one undo s
 
   const add = await openSubmenu(user, await openHandleMenu(user), "Add");
   const names = itemsOf(add).map((entry) => entry.name);
-  expect(names.slice(-7)).toEqual([
+  expect(names.slice(-8)).toEqual([
     "Wrapper",
     "Collapsible block",
     "Formula",
     "Block formula",
+    "Date",
     "Video",
     "Box en-US",
     "Card",

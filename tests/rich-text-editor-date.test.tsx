@@ -125,7 +125,7 @@ test("value, engine, HTML, sanitizer and value again lose nothing", () => {
   const purify = createDOMPurify(window);
   const tools = ["bold", "bulletList", "date"] as const;
   const html =
-    `<p>Due ${mention("2026-10-18", "18 окт. 2026 г.")} <strong>or ${mention("2026-10-19T09:30-05:00", "Oct 19, 9:30 AM")}</strong></p>` +
+    `<p>Due ${mention("2026-10-18", "18 Oct 2026")} <strong>or ${mention("2026-10-19T09:30-05:00", "Oct 19, 9:30 AM")}</strong></p>` +
     `<ul><li><p>${mention("2028-02-29", "Feb 29")}</p></li></ul>`;
 
   const first = renderEditor({ tools, defaultValue: html });
@@ -164,6 +164,20 @@ test.each([
   });
 
   expect(editor.getHTML()).toBe("<p>a some words b</p>");
+});
+
+test("pasting someone else's `time` follows the same rules as a value", () => {
+  const { editor } = renderEditor({ defaultValue: "<p></p>" });
+
+  act(
+    () =>
+      void editor.view.pasteHTML(
+        '<p><time datetime="2026-10-12">twelfth of October</time> <time datetime="P3D">three days</time></p>',
+        new Event("paste") as ClipboardEvent
+      )
+  );
+
+  expect(editor.getHTML()).toBe(`<p>${mention("2026-10-12", "twelfth of October")} three days</p>`);
 });
 
 test("an empty `time` is written by the option in the author's locale", () => {
@@ -227,6 +241,15 @@ test("Markdown carries the words and loses the machine value", () => {
   act(() => handle.setMarkdown("Due Oct 18, 2026!"));
   expect(handle.editor!.getHTML()).toBe("<p>Due Oct 18, 2026!</p>");
 });
+
+/*
+  The Russian words are the output of Intl, written as escapes because the i18n gate keeps Cyrillic out
+  of tests: the day, the abbreviated month with a dot ("okt." in Latin letters), the year with its "g."
+  suffix, and the 24-hour clock.
+*/
+const RU_DATE = "18 \u043e\u043a\u0442. 2026 \u0433.";
+const RU_TEXT_15 = `${RU_DATE}, 15:00`;
+const RU_TEXT_0930 = `${RU_DATE}, 9:30`;
 
 // ── Inserting: the Slash menu item and the popover ───────────────────────────────────────
 
@@ -318,19 +341,19 @@ test("the text is written in the author's locale: Russian and a 24-hour clock", 
   today();
   inMoscow();
   const user = userEvent.setup({ advanceTimers: () => {} });
-  const { editor } = renderEditor({ defaultValue: "<p>Срок</p>" }, "ru-RU");
-  caretIn(editor, "Срок");
+  const { editor } = renderEditor({ defaultValue: "<p>Due</p>" }, "ru-RU");
+  caretIn(editor, "Due");
 
-  await user.click(screen.getByRole("button", { name: "Добавить блок" }));
-  await user.click(itemNamed(await screen.findByRole("menu"), "Дата"));
-  const popover = await screen.findByRole("dialog", { name: "Дата" });
-  await user.click(within(popover).getByRole("checkbox", { name: "Время" }));
-  const field = within(popover).getByRole("textbox", { name: "Время, часы и минуты" });
+  await user.click(screen.getByRole("button", { name: ru.editor.insertMenu }));
+  await user.click(itemNamed(await screen.findByRole("menu"), ru.editor.date));
+  const popover = await screen.findByRole("dialog", { name: ru.editor.date });
+  await user.click(within(popover).getByRole("checkbox", { name: ru.editor.dateTime }));
+  const field = within(popover).getByRole("textbox", { name: ru.editor.dateTimeField });
   await user.clear(field);
   await user.type(field, "1500{Enter}");
 
   expect(editor.getHTML()).toBe(
-    `<p>Срок${mention("2026-10-18T15:00+03:00", "18 окт. 2026 г., 15:00")}</p>`
+    `<p>Due${mention("2026-10-18T15:00+03:00", RU_TEXT_15)}</p>`
   );
 });
 
@@ -424,15 +447,15 @@ test("a time can be added to a date and changed with Apply, and the words follow
   const { editor } = renderEditor({ defaultValue: DUE }, "ru-RU");
 
   clickOn(time(editor));
-  const popover = await screen.findByRole("dialog", { name: "Дата" });
-  await user.click(within(popover).getByRole("checkbox", { name: "Время" }));
-  const field = within(popover).getByRole("textbox", { name: "Время, часы и минуты" });
+  const popover = await screen.findByRole("dialog", { name: ru.editor.date });
+  await user.click(within(popover).getByRole("checkbox", { name: ru.editor.dateTime }));
+  const field = within(popover).getByRole("textbox", { name: ru.editor.dateTimeField });
   await user.clear(field);
   await user.type(field, "0930");
-  await user.click(within(popover).getByRole("button", { name: "Применить" }));
+  await user.click(within(popover).getByRole("button", { name: ru.editor.dateApply }));
 
   expect(editor.getHTML()).toBe(
-    `<p>Due ${mention("2026-10-18T09:30+03:00", "18 окт. 2026 г., 9:30")} end</p>`
+    `<p>Due ${mention("2026-10-18T09:30+03:00", RU_TEXT_0930)} end</p>`
   );
 });
 

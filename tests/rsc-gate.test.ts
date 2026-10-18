@@ -319,6 +319,13 @@ const SERVER_SAFE = [
       "and no DOM, so the server-rendered RichTextView calls it.",
   },
   {
+    file: "editor/features/date/dateValue.ts",
+    why:
+      "The strict form of a date mention's datetime (OLDSUI-309, ADR-0079): a parser, a calendar check and " +
+      "a composer over strings, plus the tag and node names. No imports, so the sanitizer in schema.ts, which " +
+      "runs on the consumer's server, shares the very check the Editor uses.",
+  },
+  {
     file: "editor/features/mathematics/mathHtml.ts",
     why:
       "hasMath and withMathSource: string-to-string functions over the saved HTML that put the LaTeX " +
