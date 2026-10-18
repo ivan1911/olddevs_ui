@@ -91,6 +91,13 @@ function isDisabledField(editor: Editor): boolean {
  * menu, a Text card, a popover, a menu. Radix keeps them in a popper wrapper, react-aria in a
  * positioned overlay (ADR-0041). A tooltip is not a layer: it takes no focus and does not close
  * on `Escape`.
+ *
+ * Any open layer counts, not only the Editor's own, because there is no reliable owner link to
+ * narrow it by. The Slash and trigger lists are tied to the Document by `aria-controls`, but a Text
+ * card is not tied to it by anything, and a layer portaled to the body is outside the Editor's DOM.
+ * Narrowing by `aria-controls` alone would make the first `Esc` select a Block instead of closing
+ * a Text card. The cost is small: the caller already requires focus in the Document, and a
+ * non-modal Radix layer elsewhere closes itself when focus moves out of it.
  */
 function layerIsOpen(doc: Document): boolean {
   if (hasOpenAriaOverlay()) return true;
