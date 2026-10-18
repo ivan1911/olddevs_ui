@@ -174,6 +174,47 @@ test("marks keep working inside dimmed text: the decoration wraps, it does not r
   expect(dimmed().join("")).toBe("One bold link");
 });
 
+// --- Footnotes: the list is not a Block unit, but a note is the current Block ----------------
+
+const NOTE_A = "aaaaaaa1";
+const NOTE_B = "bbbbbbb2";
+const reference = (key: string, number: number) =>
+  `<sup data-footnote-ref="${key}"><a href="#fn-${key}" id="fnref-${key}" role="doc-noteref">${number}</a></sup>`;
+const notes =
+  '<section data-block="footnotes" role="doc-endnotes" aria-label="Footnotes"><ol>' +
+  [
+    [NOTE_A, "Note one"],
+    [NOTE_B, "Note two"],
+  ]
+    .map(
+      ([key, html]) =>
+        `<li id="fn-${key}"><p>${html}</p><a href="#fnref-${key}" role="doc-backlink">↩</a></li>`
+    )
+    .join("") +
+  "</ol></section>";
+const WITH_NOTES =
+  `<p>First${reference(NOTE_A, 1)}</p><p>Second${reference(NOTE_B, 2)}</p>` + notes;
+/** The dimmed text runs that are words (the reference numbers are atoms of their own). */
+const dimmedWords = () => dimmed().filter((text) => /[a-z]{3}/i.test(text));
+
+test("a caret in a footnote keeps that note as it is and dims the text and the other notes", () => {
+  const { editor } = renderEditor({ tools: [...TOOLS, ...ON], defaultValue: WITH_NOTES });
+
+  caretIn(editor, "Note two");
+  expect(dimmedWords()).toEqual(["First", "Second", "Note one"]);
+
+  caretIn(editor, "Note one");
+  expect(dimmedWords()).toEqual(["First", "Second", "Note two"]);
+});
+
+test("a caret in the text dims the whole footnote list like any other Block", () => {
+  const { editor } = renderEditor({ tools: [...TOOLS, ...ON], defaultValue: WITH_NOTES });
+
+  caretIn(editor, "First");
+
+  expect(dimmedWords()).toEqual(["Second", "Note one", "Note two"]);
+});
+
 // --- Where there is no dimming -------------------------------------------------------------
 
 test("nothing is dimmed without the mode: it is off until it is turned on", () => {

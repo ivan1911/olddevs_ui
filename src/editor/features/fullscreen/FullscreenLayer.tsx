@@ -1,10 +1,11 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { useOverlayLayer } from "../../../hooks/useOverlayLayer.js";
 import { useScrollLock } from "../../../hooks/useScrollLock.js";
 import { cn } from "../../../lib/cn.js";
+import { hideOthers } from "../../../lib/hide-others.js";
 import { hasOpenAriaOverlay, OVERLAY_LAYER } from "../../../lib/overlay-layer.js";
 import { withoutToolbarAxis } from "../../../lib/toolbar-axis.js";
 
@@ -57,7 +58,27 @@ export function FullscreenLayer({
   onOpened,
   children,
 }: FullscreenLayerProps) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
+  const restoreRef = useRef<(() => void) | null>(null);
+  /*
+    The layer says `aria-modal`, so the page behind it must be hidden from assistive technology for
+    real (`hide-others.ts`). The node arrives after the portal has mounted, hence the callback ref; the
+    background comes back when the exit starts, not when the fade ends: the field is already leaving.
+  */
+  const attach = useCallback((node: HTMLDivElement | null) => {
+    ref.current = node;
+    restoreRef.current?.();
+    restoreRef.current = node ? hideOthers(node) : null;
+  }, []);
+  useEffect(() => {
+    if (closing) {
+      restoreRef.current?.();
+      restoreRef.current = null;
+    } else if (!restoreRef.current && ref.current) {
+      // The exit was cancelled by a new `open()`: the page goes behind the layer again.
+      restoreRef.current = hideOthers(ref.current);
+    }
+  }, [closing]);
   useScrollLock(true);
   useOverlayLayer(true, ref);
 
@@ -76,7 +97,7 @@ export function FullscreenLayer({
     <DialogPrimitive.Root open modal={false} onOpenChange={(open) => !open && onClose()}>
       <Portal>
         <DialogPrimitive.Content
-          ref={ref}
+          ref={attach}
           aria-modal="true"
           aria-describedby={undefined}
           data-closing={closing || undefined}

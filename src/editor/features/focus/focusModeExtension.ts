@@ -5,7 +5,7 @@ import { Plugin, type EditorState } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { Editor } from "@tiptap/core";
 import { BlockSelection } from "../../core/blockSelection.js";
-import { blockUnitRange } from "../../core/blockUnit.js";
+import { viewUnitRange } from "../../core/blockUnit.js";
 import { FOCUS_MODE_KEY } from "./focusModeState.js";
 
 /**
@@ -13,7 +13,8 @@ import { FOCUS_MODE_KEY } from "./focusModeState.js";
  * color. A view only: decorations over the Document, so `value`, `onChange`, the HTML and the
  * history do not see it.
  *
- * "THE BLOCK" IS THE BLOCK UNIT OF ADR-0077 (`blockUnitRange`), the same as for the keys, the
+ * "THE BLOCK" IS THE BLOCK UNIT OF ADR-0077 (`viewUnitRange`, which is `blockUnitRange` plus the
+ * children of a node that opted out of being a unit), the same as for the keys, the
  * handle and Block selection: a list item, a table as a whole, a Block of a column. Tiptap's own
  * Focus extension marks the nodes around the caret and knows none of these.
  *
@@ -24,7 +25,8 @@ import { FOCUS_MODE_KEY } from "./focusModeState.js";
  *
  * NO DIMMING where the Document is not the place of work: without focus in it (the Toolbar or the
  * page has it), over a Block selection (the selected Blocks are already marked), and in a read-only
- * field. A caret in a node that is not a unit (the footnote list) dims nothing.
+ * field. A caret in the footnote list keeps that one footnote as it is and dims the rest, the text
+ * Blocks and the other footnotes alike; a caret in the text dims the whole list like any other Block.
  */
 
 /** CSS class of dimmed text and of a dimmed Block without text. */
@@ -63,7 +65,7 @@ function dim(editor: Editor, state: EditorState): DecorationSet | null {
   if (!editor.isEditable || !editor.isFocused) return null;
   const { doc, selection } = state;
   if (selection instanceof BlockSelection) return null;
-  const range = blockUnitRange(selection.$from, selection.$to);
+  const range = viewUnitRange(selection.$from, selection.$to);
   if (!range) return null;
   const end = doc.content.size;
   const marks: Decoration[] = [];

@@ -122,6 +122,26 @@ export function blockUnitAt($pos: ResolvedPos): NodeRange | null {
   return blockUnitRange($pos, $pos);
 }
 
+/**
+ * The units a VIEW follows: `blockUnitRange`, and where that finds none because the position lies
+ * inside a node that opted out of being a unit (`spec.blockUnit === false`), the row of that node's own
+ * children under the position. The focus mode needs this: with the caret in one footnote, that
+ * footnote is the current Block, although the list around it is never selected, moved or deleted as a
+ * Block. The actions (keys, handle, Block selection) must keep using `blockUnitRange`, so the list
+ * stays out of their reach.
+ */
+export function viewUnitRange($from: ResolvedPos, $to: ResolvedPos = $from): NodeRange | null {
+  const range = blockUnitRange($from, $to);
+  if (range) return range;
+  for (let depth = $from.sharedDepth($to.pos); depth > 0; depth--) {
+    const node = $from.node(depth);
+    if (isBlockUnit(node)) continue;
+    const inside = $from.blockRange($to, (candidate) => candidate === node);
+    return inside && inside.startIndex < inside.endIndex ? inside : null;
+  }
+  return null;
+}
+
 /** The nodes of a row of units, in order. */
 export function unitNodes(range: NodeRange): PmNode[] {
   const nodes: PmNode[] = [];

@@ -157,6 +157,94 @@ test("the layer is in the stack of ADR-0041 and above a Dialog's step", () => {
   expect(layer()!.className).toContain("z-100");
 });
 
+// --- Table column handles work in the layer ------------------------------------------------
+
+test("the column handles of a table are mounted in the layer and find their bars", async () => {
+  // jsdom has no layout: every cell is 100 x 20 px from the frame's corner, as in the handle's own test.
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLElement
+  ) {
+    const box = (left: number, top: number, width: number, height: number) =>
+      ({ left, top, width, height, right: left + width, bottom: top + height }) as DOMRect;
+    if (this.tagName === "TD") {
+      const row = this.parentElement!;
+      return box(Array.from(row.children).indexOf(this) * 100, 0, 100, 20);
+    }
+    if (this.tagName === "TABLE") return box(0, 0, 300, 20);
+    return box(0, 0, 0, 0);
+  });
+  const { handle, editor } = renderEditor({
+    defaultValue:
+      "<table><tbody><tr><td><p>a</p></td><td><p>b</p></td><td><p>c</p></td></tr></tbody></table>",
+  });
+  open(handle);
+  caretIn(editor, "b");
+
+  const handles = layer()!.querySelector("[data-table-column-handles]");
+  expect(handles).not.toBeNull();
+  // The bars are measured against the layer's own frame: two boundaries of three columns.
+  await waitFor(() => expect(handles!.querySelectorAll("[data-column-handle]")).toHaveLength(2));
+  // The handles sit in the Document area that scrolls, next to the Block handle, not in the page.
+  expect(handles!.parentElement!.className).toContain("overflow-y-auto");
+});
+
+// --- The page behind is hidden from assistive technology ----------------------------------
+
+test("everything outside the layer is aria-hidden while it is open, and restored after", async () => {
+  const { handle, container } = renderEditor({ defaultValue: THREE });
+  const sibling = document.createElement("div");
+  document.body.append(sibling);
+  expect(container.getAttribute("aria-hidden")).toBeNull();
+
+  open(handle);
+
+  expect(layer()!.getAttribute("aria-modal")).toBe("true");
+  expect(container.getAttribute("aria-hidden")).toBe("true");
+  expect(sibling.getAttribute("aria-hidden")).toBe("true");
+  // The layer itself and its popovers are not hidden: the menu opens in a portal made later.
+  expect(layer()!.closest("[aria-hidden=true]")).toBeNull();
+
+  close(handle);
+  await waitFor(() => expect(layer()).toBeNull());
+  expect(container.getAttribute("aria-hidden")).toBeNull();
+  expect(sibling.getAttribute("aria-hidden")).toBeNull();
+  sibling.remove();
+});
+
+test("a live region outside the layer stays audible", () => {
+  const { handle } = renderEditor({ defaultValue: THREE });
+  const toast = document.createElement("div");
+  toast.setAttribute("aria-live", "polite");
+  document.body.append(toast);
+
+  open(handle);
+
+  expect(toast.getAttribute("aria-hidden")).toBeNull();
+  toast.remove();
+});
+
+test("in a Dialog the window's content is hidden by the layer and comes back with it", async () => {
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <Dialog open onClose={() => {}} title="Edit">
+      <RichTextEditor ref={ref} aria-label="Body" tools={[...TOOLS]} defaultValue={THREE} />
+    </Dialog>
+  );
+  const dialog = screen.getByRole("dialog", { name: "Edit" });
+  const portal = dialog.closest("body > *") as HTMLElement;
+  expect(portal.getAttribute("aria-hidden")).toBeNull();
+
+  act(() => void ref.current!.tool("fullscreen")!.open());
+  expect(portal.getAttribute("aria-hidden")).toBe("true");
+  expect(layer()!.closest("[aria-hidden=true]")).toBeNull();
+
+  act(() => void ref.current!.tool("fullscreen")!.close());
+  await waitFor(() => expect(layer()).toBeNull());
+  expect(portal.getAttribute("aria-hidden")).toBeNull();
+  // The Dialog is as it was, with its own modality.
+  expect(screen.getByRole("dialog", { name: "Edit" })).toBe(dialog);
+});
+
 // --- Nothing is lost ---------------------------------------------------------------------------
 
 test("it is the same engine: the history, the caret and the focus go through both ways", async () => {
