@@ -1628,6 +1628,142 @@ export const ImagesRussian: Story = {
   ),
 };
 
+/*
+  Image alignment (ADR-0081, OLDSUI-311). The images are written the way the Editor writes them:
+  `data-align` on the `figure`, the width as a preset on the `img`. The text is neutral on purpose.
+*/
+const LOREM =
+  "The paragraph is long enough to run past the picture and fall back to the full width of the " +
+  "Document, which is how the wrapping shows. Text beside an aligned image follows its edge, and a " +
+  "heading, a table or a divider starts below it.";
+
+function alignedDocument(): string {
+  const src = sampleImage();
+  return (
+    "<h2>Image alignment</h2>" +
+    `<figure data-align="left"><img src="${src}" alt="Mountains under a clear sky" data-width="33">` +
+    "<figcaption>On the left, 33%</figcaption></figure>" +
+    `<p>${LOREM} ${LOREM}</p><p>${LOREM}</p>` +
+    "<h3>A heading starts below the image</h3>" +
+    `<figure data-align="right"><img src="${src}" alt="Mountains, again" data-width="25"></figure>` +
+    `<p>${LOREM} ${LOREM}</p>` +
+    "<ul><li><p>A list wraps the image too</p></li><li><p>Its bullets stay clear of the picture</p></li></ul>" +
+    "<hr><p>A divider clears both sides.</p>" +
+    `<figure data-align="left"><img src="${src}" alt="" data-width="25"></figure>` +
+    `<figure data-align="right"><img src="${src}" alt="" data-width="25"></figure>` +
+    "<p>One image on the left and one on the right can stand side by side, with the text between them.</p>"
+  );
+}
+
+/**
+ * Image alignment: left and right put the image at the edge and the text of the next Blocks wraps
+ * around it, as in Word. A selected image shows three toggles (left, centre, right) before the width
+ * presets; `Ctrl/⌘+Shift+L/E/R` do the same on a selected image. An aligned image is 25, 33, 50 or
+ * 75% wide and has one resize handle, on the side of the text. A heading, a table, a divider and the
+ * other Blocks of ADR-0081 start below it.
+ */
+export const ImageAlignment: Story = {
+  render: (args) => (
+    <div className="max-w-[640px]">
+      <RichTextEditor {...args} defaultValue={alignedDocument()} />
+    </div>
+  ),
+};
+
+/**
+ * A narrow Document (375 px): from 30 rem of the Document's own width the image floats, and below it
+ * there is no room for a column of text beside the image, so it stands on a line of its own, in the
+ * centre, at its own width. The threshold is a container query, not the window's width.
+ */
+export const ImageAlignmentNarrow: Story = {
+  tags: ["viewport-phone"],
+  render: (args) => <RichTextEditor {...args} defaultValue={alignedDocument()} />,
+};
+
+/**
+ * Alignment is relative to its own container: here it is a share of a column of a Column layout and
+ * of a Wrapper, and each container holds the floats of its own children. In a table cell the toggles
+ * are unavailable and an aligned image stays in the centre.
+ */
+export const ImageAlignmentInColumn: Story = {
+  render: (args) => {
+    const src = sampleImage();
+    const column = (side: "left" | "right") =>
+      `<div data-block="column"><figure data-align="${side}"><img src="${src}" alt="" data-width="50"></figure>` +
+      `<p>${LOREM}</p></div>`;
+    return (
+      <div className="max-w-[640px]">
+        <RichTextEditor
+          {...args}
+          defaultValue={
+            `<div data-block="layout" data-layout="50-50">${column("left")}${column("right")}</div>` +
+            '<div data-block="wrapper" data-tone="accent">' +
+            `<figure data-align="left"><img src="${src}" alt="" data-width="25"></figure>` +
+            `<p>${LOREM}</p></div>` +
+            "<table><tbody><tr><td>" +
+            `<figure data-align="left"><img src="${src}" alt="" data-width="50"></figure>` +
+            "</td><td><p>The image in the first cell takes no alignment.</p></td></tr></tbody></table>"
+          }
+        />
+      </div>
+    );
+  },
+};
+
+const WORD_ALIGNED_FRAGMENT = (src: string) =>
+  '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+  'xmlns:w="urn:schemas-microsoft-com:office:word"><body>' +
+  "<p class=MsoNormal><span style='mso-ignore:vglayout'>" +
+  `<img width=200 height=130 src="${src}" align=left hspace=12 alt="A landscape"></span>` +
+  "A picture Word wraps with the text on its right.</p>" +
+  `<p class=MsoNormal><img width=200 height=130 src="${src}" align=right alt="">` +
+  "And one with the text on its left.</p></body></html>";
+
+function PasteAlignedDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      // The cleanup steps come in their own chunk: wait for it, or the first paste would go in uncleaned.
+      void loadPasteCleanup().then(() => {
+        editor.view.pasteHTML(WORD_ALIGNED_FRAGMENT(sampleImage()));
+      });
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/**
+ * A paste from Word: a picture the text wraps (`align="left"` or `"right"`, as Word writes it) comes
+ * in aligned, at 50% because the width in pixels says nothing about the target Document. The same
+ * goes for `float` on a picture from a web page.
+ */
+export const ImageAlignmentPasteFromWord: Story = {
+  render: () => <PasteAlignedDemo />,
+};
+
+/** Image alignment in the Russian locale: the toggles, their tooltips and the popover. */
+export const ImageAlignmentRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor aria-label="Document" defaultValue={alignedDocument()} />
+      </div>
+    </UiProvider>
+  ),
+};
+
 /**
  * The table size grid on its own: five by five, growing to ten by ten as the
  * selection moves. The arrows move the selection, `Enter` selects, `Escape`

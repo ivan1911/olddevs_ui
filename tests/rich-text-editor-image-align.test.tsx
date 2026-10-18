@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { afterEach, beforeAll, expect, test } from "vitest";
 import {
+  RICH_TEXT_PRESETS,
   RichTextEditor,
   type RichTextEditorHandle,
   type RichTextEditorProps,
 } from "../src/editor/index.js";
+import { testLazyTool } from "./editor-test-tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 // Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` once the chunks load.
@@ -179,4 +181,23 @@ test("Markdown loses the alignment, as it loses the width and the caption", () =
   });
 
   expect(ref.current!.getMarkdown()).toBe(`![A lake](${PHOTO})`);
+});
+
+test("the Skeleton draws the aligned image with the same attributes, so it stands in the same place", async () => {
+  const lazy = testLazyTool();
+  render(
+    <RichTextEditor
+      aria-label="Body"
+      value={`<p>Text</p>${figure(' data-align="right"', "25")}`}
+      tools={[...RICH_TEXT_PRESETS.full, lazy.tool]}
+    />
+  );
+  await act(async () => void (await new Promise((resolve) => setTimeout(resolve, 10))));
+
+  // The engine has not arrived: the Skeleton is on screen, and it is not editable.
+  expect(screen.queryByRole("textbox")).toBeNull();
+  const skeleton = screen.getByText("Text").closest<HTMLElement>("[class*='min-h-24']")!;
+  const drawn = skeleton.querySelector("figure")!;
+  expect(drawn.getAttribute("data-align")).toBe("right");
+  expect(drawn.querySelector("img")!.getAttribute("data-width")).toBe("25");
 });

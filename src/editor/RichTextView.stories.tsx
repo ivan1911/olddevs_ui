@@ -363,6 +363,35 @@ export const LayoutNarrow: Story = {
   args: { html: LAYOUTS_HTML },
 };
 
+/* Image alignment (OLDSUI-311): the same markup the Editor writes; the View draws it with the same styles. */
+const alignedParagraph =
+  "<p>The text wraps the picture while the Document is at least 30 rem wide, and a heading, a table or a divider starts below it. " +
+  "Narrower than that the picture stands on a line of its own, in the centre.</p>";
+
+function alignedHtml(): string {
+  // The showcase file, absolute because the Document accepts only `http(s)`; read at render, not at import.
+  const ALIGNED_IMAGE = new URL("editor-sample-landscape.svg", document.baseURI).href;
+  return (
+    "<h2>Image alignment</h2>" +
+    `<figure data-align="left"><img src="${ALIGNED_IMAGE}" alt="Mountains under a clear sky" data-width="33">` +
+    "<figcaption>On the left</figcaption></figure>" +
+    alignedParagraph +
+    alignedParagraph +
+    "<h3>A heading starts below</h3>" +
+    `<figure data-align="right"><img src="${ALIGNED_IMAGE}" alt="" data-width="25"></figure>` +
+    alignedParagraph
+  );
+}
+
+/** An image the text wraps, left and right, in `RichTextView`. */
+export const ImageAlignmentView: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={alignedHtml()} />
+    </div>
+  ),
+};
+
 /*
   Wrapper in the View: no border, and the spacing between Blocks is the same as in
   the Document. The sample is the same one as in the Editor's `Wrappers` story.
