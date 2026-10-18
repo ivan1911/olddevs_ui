@@ -2,7 +2,7 @@
 
 import type { Editor } from "@tiptap/core";
 import type { EditorState } from "@tiptap/pm/state";
-import { isPrimaryLanguage, normalizeLanguageTag } from "./languageTag.js";
+import { normalizeLanguageTag } from "./languageTag.js";
 
 /*
   Reading the Text part language (ADR-0078) from the engine: the Mark under the selection and the
@@ -74,9 +74,4 @@ export function selectedLanguage(state: EditorState): SelectedLanguage {
   }
   const [only] = found;
   return { current: found.size === 1 ? (only ?? null) : null, marked: [...found].some(Boolean) };
-}
-
-/** Whether a menu entry's language is the page's own (marking with it is the same as removing the mark). */
-export function isPageLanguage(editor: Editor, tag: string): boolean {
-  return isPrimaryLanguage(tag, primaryLanguageOf(editor));
 }
