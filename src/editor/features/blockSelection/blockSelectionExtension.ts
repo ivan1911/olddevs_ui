@@ -1,6 +1,6 @@
 "use client";
 
-import { Extension } from "@tiptap/core";
+import { Extension, type Editor } from "@tiptap/core";
 import { Plugin, PluginKey, type EditorState } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
 import { hasOpenAriaOverlay } from "../../../lib/overlay-layer.js";
@@ -74,6 +74,19 @@ function isDisabled(view: EditorView): boolean {
 }
 
 /**
+ * The same question for the Document that does not exist yet: the root's attributes are computed
+ * while the view is being built, before `aria-disabled` is on the DOM, so it is read from the
+ * options the Editor passes (`RichTextEditor` sets it there).
+ */
+function isDisabledField(editor: Editor): boolean {
+  const attributes = editor.options.editorProps?.attributes;
+  return (
+    typeof attributes === "object" &&
+    (attributes as Record<string, string>)["aria-disabled"] === "true"
+  );
+}
+
+/**
  * Whether a layer of the kit is open above the Document, one that owns `Escape` first: the Slash
  * menu, a Text card, a popover, a menu. Radix keeps them in a popper wrapper, react-aria in a
  * positioned overlay (ADR-0041). A tooltip is not a layer: it takes no focus and does not close
@@ -126,7 +139,7 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
   },
 
   addProseMirrorPlugins() {
-    const { options } = this;
+    const { editor, options } = this;
     const announce = (text: (messages: EditorMessages) => string) => {
       options.onNotice({ tone: "status", text: text(options.messages()) });
     };
@@ -162,8 +175,17 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
           },
 
           // The root marks the mode: the native selection paint and the caret are hidden by CSS.
-          attributes: (state): Record<string, string> =>
-            state.selection instanceof BlockSelection ? { "data-block-selection": "" } : {},
+          attributes: (state): Record<string, string> => {
+            const attributes: Record<string, string> = {};
+            if (state.selection instanceof BlockSelection) attributes["data-block-selection"] = "";
+            /*
+              A read-only Document has no `tabindex` of its own, so it could never take the focus
+              that `Esc` and `Shift+↑/↓` need (ADR-0077, decision 13). With the Tool on it joins the
+              Tab order. A disabled field stays out of it; an editable one has the engine's own.
+            */
+            if (!editor.isEditable && !isDisabledField(editor)) attributes.tabindex = "0";
+            return attributes;
+          },
 
           // A character typed over the selected Blocks is ignored: one key must not erase a section.
           handleTextInput: (view) =>
