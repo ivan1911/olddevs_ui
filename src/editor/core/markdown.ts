@@ -13,8 +13,8 @@ import { WRAPPER_NODE } from "../features/wrapper/wrapper.js";
 import { WRAPPER_TONE_ALERTS } from "../features/wrapper/wrapperTones.js";
 import { VIDEO_BLOCK } from "../features/video/videoSrc.js";
 import { conformToSchema, headingLevels } from "./schemaConform.js";
-import { resolveMarkdownFootnotes } from "../features/footnotes/footnoteMarkdown.js";
 import { FOOTNOTE_REF_NODE } from "../features/footnotes/footnoteNames.js";
+import { footnotesChunk } from "../features/footnotes/footnotesLoader.js";
 
 /**
  * Markdown goes into the Document through the Schema, not around it. `@tiptap/markdown` parses the
@@ -104,8 +104,12 @@ function markdownToFragment(editor: Editor, markdown: string, wrapper = true): F
   const options = { levels: headingLevels(editor), excluded: NOT_FROM_MARKDOWN };
   const toned = wrapper && WRAPPER_NODE in schema.nodes;
   const tree = editor.markdown?.parse(markdown).content ?? [];
-  // Footnote labels are paired with their definitions over the whole parse (ADR-0076).
-  const paired = FOOTNOTE_REF_NODE in schema.nodes ? resolveMarkdownFootnotes(tree) : tree;
+  // Footnote labels are paired with their definitions over the whole parse (ADR-0076). The Schema has the
+  // reference only in an engine created after the footnotes chunk, so the pairing is there when it is needed.
+  const paired =
+    FOOTNOTE_REF_NODE in schema.nodes
+      ? (footnotesChunk()?.resolveMarkdownFootnotes(tree) ?? tree)
+      : tree;
   const parsed = paired.map((child) =>
     child.type === VIDEO_BLOCK ? child : demoteNestedVideo(child, schema)
   );

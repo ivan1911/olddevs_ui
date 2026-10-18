@@ -498,7 +498,7 @@ An empty label does not crash the field: in development there is a `console.erro
 
 ### `modulepreload` for lazy chunks
 
-The kit does not publish preloads. The chunks of Extensions (of custom Loaders and of the built-in `codeBlock`, `table` and `blockSelection` in `full`) start loading on the Editor's first render, and the Skeleton is shown in the meantime. To have a chunk arrive with the page, add a `<link rel="modulepreload">` for it (in React 19, `preloadModule(url)` from `react-dom`); take the hashed URL from your bundler's manifest: the kit's chunk names are not part of the contract. For an example, see [RichTextEditor, "Extensions Loader"](../components/inputs/rich-text-editor.md#extensions-loader); the cost of the "start" and "full" scenarios is in ["Import size"](../getting-started.md#import-size).
+The kit does not publish preloads. The chunks of Extensions (of custom Loaders and of the built-in `codeBlock`, `table`, `footnotes` and `blockSelection` in `full`) start loading on the Editor's first render, and the Skeleton is shown in the meantime. To have a chunk arrive with the page, add a `<link rel="modulepreload">` for it (in React 19, `preloadModule(url)` from `react-dom`); take the hashed URL from your bundler's manifest: the kit's chunk names are not part of the contract. For an example, see [RichTextEditor, "Extensions Loader"](../components/inputs/rich-text-editor.md#extensions-loader); the cost of the "start" and "full" scenarios is in ["Import size"](../getting-started.md#import-size).
 
 ## Links
 

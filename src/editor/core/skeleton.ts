@@ -22,8 +22,10 @@ import type { ToolLoader } from "./toolLoader.js";
 
   The Schema is the one the engine will get, but without Extensions whose loaders have not run yet:
   their Blocks show as text, and the Schema strips the wrapper. A lazy built-in Tool (`codeBlock`,
-  `table`) gives its Blocks' shape (the descriptor's `skeleton` field) in place of Extensions. Its
-  Blocks show with their own markup, and the field does not jump when the chunk arrives. The code
+  `table`, `footnotes`) gives its Blocks' shape (the descriptor's `skeleton` field) in place of
+  Extensions. Its Blocks show with their own markup, and the field does not jump when the chunk
+  arrives. A top-level container (`documentContent`, the footnote list) keeps its place in the
+  Document's content model. The code
   block header is the same as in `RichTextView` (`withCodeHeaders`): it exists in the Editor, and
   without it the Skeleton would be shorter. The extension set is assembled for the sake of one
   Schema alone: there are no engine, plugins, or node views here, and the `RichTextEditor` bridges
@@ -74,9 +76,13 @@ function narrowed(
 }
 
 /** The Document's HTML cleaned by the tool set's Schema; `null` if the Schema could not be built. */
-function cleaned(html: string, tools: ToolList): string | null {
+function cleaned(
+  html: string,
+  tools: ToolList,
+  bridges: Partial<Omit<EditorExtensionOptions, "tools">>
+): string | null {
   try {
-    const schema = getSchema(createEditorExtensions({ tools, ...SCHEMA_ONLY }));
+    const schema = getSchema(createEditorExtensions({ tools, ...SCHEMA_ONLY, ...bridges }));
     // Without `mathematics`, a formula in the Skeleton is text, as in the engine. The extension
     // would not do this, and the Skeleton has no engine (`mathAsText.ts`).
     if (!tools.has("mathematics")) readFormulasAsText(schema);
@@ -100,20 +106,27 @@ function cleaned(html: string, tools: ToolList): string | null {
  *
  * A tool set whose custom Tools break the Schema does not produce one (a field error, ADR-0058,
  * item 1.5). Then the Skeleton is cleaned with the built-in Schema, so the Document stays visible.
+ *
+ * `bridges` replace the stubs for the strings that end up in the Skeleton's markup, as the name of the
+ * footnote list does: the Skeleton writes the same `aria-label` the engine will.
  */
 export function skeletonHtml(
   html: string,
   tools: ToolList,
-  pending: readonly ToolLoader[]
+  pending: readonly ToolLoader[],
+  bridges: Partial<Omit<EditorExtensionOptions, "tools">> = {}
 ): string {
   // A descriptor whose loader has not run yet gives way to the Block shape, or is dropped.
   const settled = (d: ToolDescriptor): ToolDescriptor | undefined =>
-    !d.load || !pending.includes(d.load) ? d : d.skeleton && { name: d.name, engine: d.skeleton };
+    !d.load || !pending.includes(d.load)
+      ? d
+      : d.skeleton && { name: d.name, engine: d.skeleton, documentContent: d.documentContent };
   return (
-    cleaned(html, narrowed(tools, settled)) ??
+    cleaned(html, narrowed(tools, settled), bridges) ??
     cleaned(
       html,
-      narrowed(tools, (d) => (d.custom ? undefined : settled(d)))
+      narrowed(tools, (d) => (d.custom ? undefined : settled(d))),
+      bridges
     ) ??
     ""
   );

@@ -1327,7 +1327,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           ? skeletonHtml(
               initial,
               enabledTools,
-              loaders.filter((_, index) => !loads[index]?.done)
+              loaders.filter((_, index) => !loads[index]?.done),
+              { footnoteListName: () => footnotesRef.current }
             )
           : "",
       [mounted, !editor, initial, enabledTools, settledLoads]
