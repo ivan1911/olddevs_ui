@@ -25,7 +25,7 @@ import {
   type ReactNode,
 } from "react";
 import { useDescribedBy, useFieldInvalid, useFieldLabelId } from "../hooks/useFieldDescription.js";
-import { useMessages } from "../i18n/useMessages.js";
+import { useMessages, useUiLocale } from "../i18n/useMessages.js";
 import { cn } from "../lib/cn.js";
 import { FIELD_SHELL_CLASS } from "../lib/field.js";
 import { BlockHandle } from "./ui/BlockHandle.js";
@@ -506,6 +506,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     ref
   ) {
     const messages = useMessages();
+    const locale = useUiLocale();
     /*
       The Tool set is frozen at mount: the Schema is built from it, and a live engine's Schema
       cannot be changed. The Toolbar reads the same frozen set, otherwise a new `tools` would show
@@ -594,6 +595,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     // `typography` quotes are read at the moment of typing: a catalog change does not recreate the engine.
     const quoteSetRef = useRef(messages.editor.typographyQuotes);
     quoteSetRef.current = messages.editor.typographyQuotes;
+    // The `language` Tool reads the interface locale when asked, as the quotes are read.
+    const localeRef = useRef(locale);
+    localeRef.current = locale;
     // The upload handler and image strings also go through refs: the extension reads them when a
     // file is inserted and when a caption is redrawn, not when the engine is created.
     const uploadRef = useRef(onUploadImage);
@@ -874,6 +878,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           taskCheckbox: (text) => taskCheckboxRef.current({ text }),
           detailsToggle: (text) => detailsToggleRef.current({ text }),
           quoteSet: () => quoteSetRef.current,
+          locale: () => localeRef.current,
           slash: slashBridge,
           triggers: triggerBindings,
           openPopover: (request) => setToolPopover({ request, open: true }),

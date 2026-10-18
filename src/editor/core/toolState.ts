@@ -67,3 +67,19 @@ export interface BlockSelectionToolState {
   /** How many Blocks are selected whole; `0` means there is no Block selection (a caret or a text selection). */
   count: number;
 }
+
+/** State of the `language` Tool (Text part language, ADR-0078). */
+export interface LanguageToolState {
+  /**
+   * The language mark under the selection: the tag at the caret, or the one tag of a whole
+   * selection. `null` means no mark there, or a selection that mixes two languages (or a language
+   * and plain text).
+   */
+  current: string | null;
+  /**
+   * The page's primary language, the one the reader hears where there is no mark: the `lang` of the
+   * field's nearest ancestor (usually `<html lang>`), without one the interface locale. In the
+   * canonical case of BCP 47 (`en-US`). Marking text with it clears the mark.
+   */
+  primary: string;
+}

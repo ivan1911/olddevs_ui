@@ -158,6 +158,8 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     '<br>next <a href="https://example.com">link</a></p>' +
     '<p data-align="center"><span data-color="danger">c</span><mark data-color="green">m</mark></p>' +
     '<p><span style="color:#ff0000">c</span><mark style="background-color:#ffee00">m</mark></p>' +
+    // The language of a fragment (OLDSUI-308): the one standard, non-`data-*` attribute of a Mark.
+    '<p><span lang="de">l</span></p>' +
     '<h1 data-align="center">Top</h1><h2 data-align="right">Right</h2><h3 data-align="center">C</h3><h4 data-align="right">R</h4>' +
     '<ul><li><p>u</p></li></ul><ol start="3"><li><p>o</p></li></ol>' +
     '<ul data-type="taskList"><li data-type="taskItem" data-checked="true"><p>done</p></li></ul>' +

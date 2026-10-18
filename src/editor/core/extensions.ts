@@ -51,6 +51,12 @@ export interface EditorExtensionOptions {
    */
   quoteSet: () => EditorQuoteSet;
   /**
+   * The interface locale (`UiProvider`): the `language` Tool's last fallback for the page's primary
+   * language when no ancestor of the field has a `lang`. Read when asked: a locale change does not
+   * recreate the engine.
+   */
+  locale: () => string;
+  /**
    * Bridge to the Slash menu, opened by `/`. Without it the menu does not open: the `insertMenu`
    * Tool is disabled or has no items for it.
    */
@@ -208,6 +214,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "subscript",
   "color",
   "highlight",
+  "language",
   "align",
   "taskList",
   "image",

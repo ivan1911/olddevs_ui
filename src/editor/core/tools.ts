@@ -129,6 +129,7 @@ export const TOOLS = [
   "color",
   "highlight",
   "align",
+  "language",
   "bulletList",
   "orderedList",
   "taskList",

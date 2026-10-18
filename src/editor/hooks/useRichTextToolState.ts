@@ -8,6 +8,7 @@ import type { RichTextTools } from "../core/toolOptions.js";
 import type { RichTextEditorHandle } from "../RichTextEditor.js";
 import { blockSelectionSnapshot } from "../features/blockSelection/blockSelectionSnapshot.js";
 import { invisibleCharactersSnapshot } from "../features/invisibleCharacters/invisibleCharactersSnapshot.js";
+import { languageSnapshot } from "../features/language/languageSnapshot.js";
 import { searchSnapshot } from "../features/search/searchSnapshot.js";
 import { tocSnapshot } from "../features/toc/tocSnapshot.js";
 
@@ -51,6 +52,10 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
     (editor, ref) =>
       toolSignals(ref).tools?.has("blockSelection") ? blockSelectionSnapshot(editor) : null,
   ],
+  [
+    "language",
+    (editor, ref) => (toolSignals(ref).tools?.has("language") ? languageSnapshot(editor) : null),
+  ],
 ]);
 
 /** A plain object: an object literal or `Object.create(null)`, not a class instance. */
@@ -84,7 +89,7 @@ function sameValue(a: unknown, b: unknown): boolean {
  * and external navigation from the Table of contents headings. The name is a Tool from the
  * `tools` set, and the snapshot type comes from the `RichTextTools` map: `search` gives
  * `SearchToolState`, `toc` gives `TocToolState`, and `invisibleCharacters` gives
- * `InvisibleCharactersToolState` (`{ visible }`).
+ * `InvisibleCharactersToolState` (`{ visible }`), and `language` gives `LanguageToolState` (`{ current, primary }`).
  *
  * RE-RENDERS ONLY ON A SNAPSHOT CHANGE. The snapshot is recomputed on every engine transaction
  * and on kit signals that the engine does not have: opening and closing the Find panel, a change
