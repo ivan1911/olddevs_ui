@@ -126,12 +126,7 @@ export function DateForm({ editor, pos, close }: DateFormProps) {
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {editing && hadTime && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => commit(dateOf(existing))}
-          >
+          <Button type="button" size="sm" variant="ghost" onClick={() => commit(dateOf(existing))}>
             {messages.dateRemoveTime}
           </Button>
         )}

@@ -9,7 +9,9 @@ import type { DateFormProps } from "./DateForm.js";
   Tool's node and its Slash menu item stay in the start bundle; this file is their only door to the
   form, and `import()` is the border of the chunk.
 */
-const LazyDateForm = lazy(() => import("./DateForm.js").then((chunk) => ({ default: chunk.DateForm })));
+const LazyDateForm = lazy(() =>
+  import("./DateForm.js").then((chunk) => ({ default: chunk.DateForm }))
+);
 
 /**
  * The form in a `Suspense` boundary. The fallback holds the size of the calendar, so that the

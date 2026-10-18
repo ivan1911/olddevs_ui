@@ -32,8 +32,7 @@ const MAX_TEXT = 120;
 function editRequest(pos: number): ToolPopoverRequest {
   return {
     label: ({ messages }) => messages.date,
-    popover: ({ editor, close, pos: current }) =>
-      renderDateForm({ editor, pos: current, close }),
+    popover: ({ editor, close, pos: current }) => renderDateForm({ editor, pos: current, close }),
     block: pos,
   };
 }

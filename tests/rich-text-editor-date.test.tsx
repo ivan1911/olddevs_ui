@@ -270,7 +270,7 @@ test("the Slash menu has a Date item, and Enter in its popover inserts today", a
   const { editor } = renderEditor({ defaultValue: "<p>Due</p>" });
   caretIn(editor, "Due");
 
-  const popover = await openFromMenu(user);
+  await openFromMenu(user);
   // The calendar has the focus on today: Enter alone picks it.
   await waitFor(() => expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull());
   await user.keyboard("{Enter}");
@@ -352,9 +352,7 @@ test("the text is written in the author's locale: Russian and a 24-hour clock", 
   await user.clear(field);
   await user.type(field, "1500{Enter}");
 
-  expect(editor.getHTML()).toBe(
-    `<p>Due${mention("2026-10-18T15:00+03:00", RU_TEXT_15)}</p>`
-  );
+  expect(editor.getHTML()).toBe(`<p>Due${mention("2026-10-18T15:00+03:00", RU_TEXT_15)}</p>`);
 });
 
 // ── Editing: a click or Enter on a mention ───────────────────────────────────────────────
@@ -363,7 +361,6 @@ const DUE = `<p>Due ${mention("2026-10-18", "Oct 18, 2026")} end</p>`;
 
 test("a click on a mention selects it and opens the popover on its day", async () => {
   today();
-  const user = userEvent.setup({ advanceTimers: () => {} });
   const { editor } = renderEditor({ defaultValue: DUE });
 
   clickOn(time(editor));
@@ -377,7 +374,6 @@ test("a click on a mention selects it and opens the popover on its day", async (
   // A date without a time has nothing to "remove", but it can be deleted.
   expect(within(popover).queryByRole("button", { name: "Remove time" })).toBeNull();
   expect(within(popover).getByRole("button", { name: "Delete date" })).toBeTruthy();
-  void user;
 });
 
 test("another day replaces the value and the words in one edit", async () => {
@@ -494,10 +490,10 @@ test("tool('date', { format }) sets how the date is written, and the value stays
   });
   caretIn(editor, "Due");
 
-  const popover = await openFromMenu(user);
+  await openFromMenu(user);
+  await waitFor(() => expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull());
   await user.keyboard("{Enter}");
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Date" })).toBeNull());
-  void popover;
 
   expect(editor.getHTML()).toBe(`<p>Due${mention("2026-10-18", "October 18, 2026")}</p>`);
 });

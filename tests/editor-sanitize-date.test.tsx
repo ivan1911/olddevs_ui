@@ -2,7 +2,11 @@
 import createDOMPurify from "dompurify";
 import { expect, test } from "vitest";
 import { RICH_TEXT_SCHEMA, sanitizeRichText } from "../src/editor/schema-entry.js";
-import { composeDatetime, isDatetime, parseDatetime } from "../src/editor/features/date/dateValue.js";
+import {
+  composeDatetime,
+  isDatetime,
+  parseDatetime,
+} from "../src/editor/features/date/dateValue.js";
 
 /**
  * Date mentions in the sanitizer (OLDSUI-309, ADR-0079): `time[datetime]` with a strict value,
@@ -59,14 +63,16 @@ test("a leap day passes, and so does a date at the end of a month", () => {
 
 test("the element keeps only text: marks, links and tags inside it are cut", () => {
   expect(
-    clean('<p><time datetime="2026-10-18"><a href="https://example.com">18</a> <i>Oct</i></time></p>')
+    clean(
+      '<p><time datetime="2026-10-18"><a href="https://example.com">18</a> <i>Oct</i></time></p>'
+    )
   ).toBe('<p><time datetime="2026-10-18">18 Oct</time></p>');
 });
 
 test("`datetime` on another tag does not pass", () => {
-  expect(clean('<p><span datetime="2026-10-18">x</span><del datetime="2026-10-18">y</del></p>')).toBe(
-    "<p>xy</p>"
-  );
+  expect(
+    clean('<p><span datetime="2026-10-18">x</span><del datetime="2026-10-18">y</del></p>')
+  ).toBe("<p>xy</p>");
   expect(clean('<p><mark data-color="red" datetime="2026-10-18">x</mark></p>')).toBe(
     '<p><mark data-color="red">x</mark></p>'
   );

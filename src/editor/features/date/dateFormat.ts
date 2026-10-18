@@ -25,7 +25,7 @@ export const DEFAULT_DATE_FORMAT: Intl.DateTimeFormatOptions = {
  * (`Calendar.tsx` fights the same thing), and the text goes into the saved HTML, so it is made of
  * ordinary spaces. A regular no-break space is the same everywhere and is left alone.
  */
-const INTL_SPACES = /[  ]/g;
+const INTL_SPACES = /[\u2009\u202f]/g;
 
 /**
  * The field names that carry a time or a zone. The mention's time comes from its value, and the kit
