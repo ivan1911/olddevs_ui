@@ -71,6 +71,6 @@ export const TABLE_TOOL: ToolDescriptor = {
   // All four nodes at once (`tables.ts`): the Schema does not assemble without any one of them.
   engine: () => [...tableChunk()!.TABLE_EXTENSIONS],
   skeleton: () => TABLE_SHAPE,
-  kitTags: ["table", "tbody", "tr", "th", "td"],
+  kitTags: ["table", "tbody", "colgroup", "col", "tr", "th", "td"],
   insertItems: [tableItem(3, 3)],
 };
