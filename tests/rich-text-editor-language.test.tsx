@@ -277,6 +277,49 @@ test("paste drops the mark that repeats the page's language, and keeps the text"
   expect(handle.getHTML()).toBe('<p>own same <span lang="en">other</span></p>');
 });
 
+test("Word's lang=EN-US on a page in bare en gives no marks; another language keeps its mark", () => {
+  document.documentElement.setAttribute("lang", "en");
+  const { editor, handle } = renderEditor({ defaultValue: "<p></p>" });
+  paste(
+    editor,
+    "<html><body><p class=MsoNormal><span lang=EN-US>Hello</span> <span lang=EN-GB>there</span> " +
+      "<span lang=en>again</span> <span lang=DE>Welt</span></p></body></html>"
+  );
+  expect(handle.getHTML()).toBe('<p>Hello there again <span lang="de">Welt</span></p>');
+});
+
+test("a paste keeps a regional English mark on a page in another language", () => {
+  document.documentElement.setAttribute("lang", "ru");
+  const { editor, handle } = renderEditor({ defaultValue: "<p></p>" });
+  paste(editor, '<p><span lang="EN-GB">colour</span> <span lang="ru-RU">own</span></p>');
+  expect(handle.getHTML()).toBe('<p><span lang="en-GB">colour</span> own</p>');
+});
+
+test("the author's own set() and a value stay strict: en-GB on an en page is a real mark", () => {
+  document.documentElement.setAttribute("lang", "en");
+  const { editor, handle } = renderEditor({
+    defaultValue: '<p>one two <span lang="en-US">kept</span></p>',
+  });
+  expect(handle.getHTML()).toBe('<p>one two <span lang="en-US">kept</span></p>');
+  select(editor, 1, 4);
+  act(() => void handle.tool("language")!.set("en-GB"));
+  expect(handle.getHTML()).toBe(
+    '<p><span lang="en-GB">one</span> two <span lang="en-US">kept</span></p>'
+  );
+});
+
+test("a span with lang and data-type (an inline formula) makes no language mark", () => {
+  const { handle } = renderEditor({
+    tools: [...TOOLS, "mathematics"],
+    defaultValue: '<p>a <span data-type="inline-math" data-latex="x^2" lang="en"></span> b</p>',
+  });
+  const html = handle.getHTML();
+  // The formula survives as it is written, and nothing is marked around it.
+  expect(html).toContain('data-type="inline-math"');
+  expect(html).toContain('data-latex="x^2"');
+  expect(html).not.toContain("lang");
+});
+
 test("Google Docs and browsers: a plain span[lang] survives the paste", () => {
   const { editor, handle } = renderEditor({ defaultValue: "<p></p>" });
   paste(editor, '<meta charset="utf-8"><p>a <span lang="fr">b</span></p>');

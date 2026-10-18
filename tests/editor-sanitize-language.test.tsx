@@ -7,6 +7,7 @@ import {
   sanitizeRichText,
 } from "../src/editor/schema-entry.js";
 import {
+  isPastedPrimaryLanguage,
   isPrimaryLanguage,
   normalizeLanguageTag,
   quoteSetOfLanguage,
@@ -117,4 +118,12 @@ test("quoteSetOfLanguage knows the two catalog languages", () => {
   expect(quoteSetOfLanguage("en-GB")).toBe("en");
   expect(quoteSetOfLanguage("ru")).toBe("ru");
   expect(quoteSetOfLanguage("de")).toBeNull();
+});
+
+test("isPastedPrimaryLanguage compares the language subtag alone", () => {
+  expect(isPastedPrimaryLanguage("en-US", "en")).toBe(true);
+  expect(isPastedPrimaryLanguage("en-GB", "en-US")).toBe(true);
+  expect(isPastedPrimaryLanguage("ru", "ru-RU")).toBe(true);
+  expect(isPastedPrimaryLanguage("en-GB", "ru")).toBe(false);
+  expect(isPastedPrimaryLanguage("de", "en")).toBe(false);
 });

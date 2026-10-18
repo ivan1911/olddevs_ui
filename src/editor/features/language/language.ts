@@ -4,7 +4,7 @@ import { getMarkRange, Mark, mergeAttributes } from "@tiptap/core";
 import { Fragment, Slice, type Mark as PmMark, type Node as PmNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { LANGUAGE_MARK, primaryLanguageOf, type LanguageMarkOptions } from "./languageState.js";
-import { isPrimaryLanguage, normalizeLanguageTag } from "./languageTag.js";
+import { isPastedPrimaryLanguage, isPrimaryLanguage, normalizeLanguageTag } from "./languageTag.js";
 
 /**
  * A fragment's language Mark: `<span lang="en">` (the `language` Tool, ADR-0078).
@@ -73,7 +73,12 @@ export const LanguageMark = Mark.create<LanguageMarkOptions>({
         // A text color on the same element (`<span lang="en" data-color="danger">`) is read by its
         // own rule after this one: the element is not consumed.
         consuming: false,
-        getAttrs: (element) => (normalizeLanguageTag(element.getAttribute("lang")) ? {} : false),
+        // The same rule as the sanitizer's (`schema.ts`): a `span` that is already something else,
+        // such as an inline formula (`data-type`), carries no language.
+        getAttrs: (element) =>
+          !element.hasAttribute("data-type") && normalizeLanguageTag(element.getAttribute("lang"))
+            ? {}
+            : false,
       },
     ];
   },
@@ -119,12 +124,14 @@ export const LanguageMark = Mark.create<LanguageMarkOptions>({
         key: new PluginKey("languagePaste"),
         props: {
           // Word, Google Docs and browsers keep their `lang`, in its canonical case (the parse rule
-          // does that); only the marks equal to the primary language go (decision 8 of ADR-0078).
+          // does that); the marks in the primary language go (decision 8 of ADR-0078). WHY BY THE
+          // LANGUAGE SUBTAG ALONE: Word writes `lang=EN-US` on every run, and on `<html lang="en">`
+          // the exact comparison would cover the whole text with marks. Only a paste is this loose.
           transformPasted: (slice) => {
             const primary = primaryLanguageOf(this.editor);
             const drop = (mark: PmMark) =>
               mark.type.name === LANGUAGE_MARK &&
-              isPrimaryLanguage(String(mark.attrs.lang), primary);
+              isPastedPrimaryLanguage(String(mark.attrs.lang), primary);
             const content = withoutPrimary(slice.content, drop);
             return content.eq(slice.content)
               ? slice

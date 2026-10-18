@@ -65,6 +65,18 @@ export function isPrimaryLanguage(tag: string, primary: string): boolean {
 }
 
 /**
+ * Whether a PASTED mark repeats the page's language: the language subtags are equal, whatever the
+ * region (`en-US`, `en-GB` and `en` on a page in `en`; `ru-RU` on `ru`). Looser than
+ * `isPrimaryLanguage` on purpose: Word writes `lang=EN-US` on every run, and on the very common
+ * `<html lang="en">` the strict rule would cover the whole pasted text with marks. The author's own
+ * choice (`set("en-GB")` on an `en` page) and a `value` keep the strict rule, because there the
+ * region is a deliberate statement.
+ */
+export function isPastedPrimaryLanguage(tag: string, primary: string): boolean {
+  return tag.split("-")[0]!.toLowerCase() === primary.split("-")[0]!.toLowerCase();
+}
+
+/**
  * The quote set of a language for the `typography` Tool: `en…` gives curly quotes, `ru…` gives guillemets.
  * `null` means the kit has no set for the language, and the Tool uses its usual one.
  */
