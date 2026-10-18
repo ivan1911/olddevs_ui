@@ -118,6 +118,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Wrapper: a group of Blocks          | `WrapperIcon`                                   | `ColumnLayoutIcon`             |
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
 | Details Block of the Editor         | `DetailsIcon`                                   | `ChevronDownIcon`              |
+| Select Blocks whole in the Editor   | `BlockSelectIcon`                               | `SelectIcon`                   |
 | Editor formula, inline and block    | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
 | Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
 | Footnote in the Editor              | `FootnoteIcon`                                  | `SuperscriptIcon`              |
@@ -232,6 +233,8 @@ Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`
 Footnotes added `FootnoteIcon` — lucide's `Asterisk`, the oldest mark of a note at the foot of the text: the "Footnote" item of the Editor's Slash menu and "…" menu. This is not `SuperscriptIcon`: that one is the Mark, while a footnote is a reference with a text of its own in the list at the end of the Document (ADR-0076).
 
 Video added `VideoIcon` — lucide's `SquarePlay`: a square with a play triangle, the "Video" item of the Editor's Insert menu (the `youtube` and `twitch` Tools). This is not `PlayIcon`: that one is a start button, and the player placeholder's own "Play" button (the `autoload: false` option) carries exactly that icon (ADR-0049).
+
+Block selection added `BlockSelectIcon` — lucide's `SquareDashed`: a dashed frame, the "Select" item of the Block handle menu. This is not `SelectIcon`: those are the up-down chevrons of a select field, and the frame matches how the Editor highlights selected Blocks (ADR-0049).
 
 The first iteration of the table made do with two icons for four directions
 (`AddRowIcon`, `AddColumnIcon`) and an icon for the separate "Table

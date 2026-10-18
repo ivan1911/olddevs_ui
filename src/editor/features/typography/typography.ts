@@ -2,6 +2,8 @@
 
 import { Extension, InputRule } from "@tiptap/core";
 import type { EditorQuoteSet } from "../../../i18n/messages.js";
+import { LANGUAGE_MARK } from "../language/languageState.js";
+import { quoteSetOfLanguage } from "../language/languageTag.js";
 
 /*
   The double quote `"` is the only Typography rule that the kit writes itself. The
@@ -9,6 +11,9 @@ import type { EditorQuoteSet } from "../../../i18n/messages.js";
   catalog's language, and the catalog can change while the Editor is mounted: the set
   is read at the moment of typing, not when the rules are built. Inside nested Russian
   quotes («He said: „hi“»), the pair also depends on what is open in the Block before the caret.
+
+  A language Mark under the caret (the `language` Tool, ADR-0078) overrides the set: `en…` gives
+  “English”, `ru…` gives «guillemets», and any other language leaves the set as it was.
 */
 
 /** Quote pairs of the sets: the opening and the closing first-level quote. */
@@ -98,7 +103,13 @@ export const TypographyQuotes = Extension.create<QuotesOptions>({
           // The state's document already contains the typed quote: the text before it ends at `range.from`.
           const $from = state.doc.resolve(range.from);
           const before = $from.parent.textBetween(0, $from.parentOffset, undefined, "￼");
-          const quote = doubleQuoteFor(set(), before, { open, close });
+          // Inside a language mark (the `language` Tool) the quotes are that language's: English
+          // inside Russian text is “English”, and Russian inside English text is «Russian». Another
+          // language, and no mark, use the Tool's set: the `quotes` Option or the catalog's.
+          const marks = state.storedMarks ?? $from.marks();
+          const lang = marks.find((mark) => mark.type.name === LANGUAGE_MARK)?.attrs.lang;
+          const own = typeof lang === "string" ? quoteSetOfLanguage(lang) : null;
+          const quote = doubleQuoteFor(own ?? set(), before, { open, close });
           if (quote === false) return null;
           state.tr.insertText(quote, range.from, range.to);
         },

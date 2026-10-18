@@ -50,6 +50,7 @@ export type {
   ConfiguredTool,
   DetailsToolOptions,
   InvisibleCharactersToolOptions,
+  LanguageToolOptions,
   MathematicsToolOptions,
   RichTextTools,
   SearchToolOptions,
@@ -59,15 +60,19 @@ export type {
   VideoToolOptions,
 } from "./core/toolOptions.js";
 export type {
+  BlockSelectionToolCommands,
   FootnotesToolCommands,
   InvisibleCharactersToolCommands,
+  LanguageToolCommands,
   SearchToolCommands,
   TocToolCommands,
 } from "./core/toolCommands.js";
 export type {
+  BlockSelectionToolState,
   FootnotesToolNote,
   FootnotesToolState,
   InvisibleCharactersToolState,
+  LanguageToolState,
   SearchToolState,
   TocToolHeading,
   TocToolState,

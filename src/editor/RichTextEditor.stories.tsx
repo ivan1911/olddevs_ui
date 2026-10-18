@@ -3806,6 +3806,371 @@ export const PasteFromOffice: Story = {
   render: () => <PasteCleanupDemo />,
 };
 
+/*
+  Text part language (OLDSUI-308, ADR-0078): the sample is a neutral English text with a German
+  term, a French phrase and an English quotation inside a Russian page. The stories use Latin
+  text only; the Russian interface comes from the catalog.
+*/
+const LANGUAGE_SAMPLE =
+  "<h2>Language of parts</h2>" +
+  '<p>A reader hears this sentence in the language of the page, but the word <span lang="de">Weltschmerz</span> ' +
+  'is German, and <span lang="fr">joie de vivre</span> is French. A dotted line under a fragment shows the author where the mark ' +
+  "begins and ends; the reader of <code>RichTextView</code> sees no line.</p>" +
+  '<p><span lang="de">A whole paragraph can carry the mark too, with <strong>bold</strong> inside it.</span></p>';
+
+/**
+ * The `language` Tool, marked fragments: a thin dotted underline in the Editor shows where each
+ * Mark begins and ends (the View draws nothing). The page language is `en`, so only the German and
+ * French pieces are marked. The "Language ›" submenu is in the "…" menu.
+ */
+export const TextLanguage: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={LANGUAGE_SAMPLE} />
+    </div>
+  ),
+};
+
+/*
+  Opens "…" over the selected `text`, then its submenu: the same way as from the keyboard (focus on
+  the item and `→`), because hovering would open it after a delay and the snapshot would catch an
+  intermediate frame.
+*/
+function useOpenLanguageSubmenu(
+  ref: RefObject<RichTextEditorHandle | null>,
+  text: string,
+  more: string,
+  item: string
+) {
+  useOpenToolbarPopover(ref, text, more);
+  useEffect(() => {
+    let frame = 0;
+    const open = () => {
+      const trigger = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="menuitem"][aria-haspopup]')
+      ).find((candidate) => candidate.textContent?.startsWith(item));
+      if (!trigger) {
+        frame = requestAnimationFrame(open);
+        return;
+      }
+      trigger.focus();
+      trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    };
+    frame = requestAnimationFrame(open);
+    return () => cancelAnimationFrame(frame);
+  }, [item]);
+}
+
+function OpenLanguageMenu({ more, item }: { more: string; item: string }) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useOpenLanguageSubmenu(ref, "Weltschmerz", more, item);
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={LANGUAGE_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * The "Language ›" submenu over the selected German word: English and Russian are the options
+ * (`languages`), the page's own language is marked "primary", and "Remove language mark" removes
+ * the Mark. German is not in the option, but it is under the selection, so it is added and checked.
+ */
+export const TextLanguageMenu: Story = {
+  render: () => <OpenLanguageMenu more="More formatting" item="Language" />,
+  tags: ["network-idle"],
+};
+
+/**
+ * A Russian interface: the page's primary language is the interface locale (`ru-RU`, there is no
+ * `lang` above the field in this story's frame), so the English piece is the real mark. The names
+ * come from `Intl.DisplayNames` in Russian, the words from the catalog.
+ */
+export const TextLanguageRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <OpenLanguageMenu more={ru.editor.moreFormatting} item={ru.editor.language} />
+    </UiProvider>
+  ),
+  tags: ["network-idle"],
+};
+
+// A Word clipboard fragment: `lang` on every run, `mso-ansi-language` next to it, and Word's own case.
+const WORD_LANGUAGE_FRAGMENT =
+  "<html><body><p class=MsoNormal><span lang=EN-US style='mso-ansi-language:EN-US'>" +
+  "The page is English, so this run is dropped. </span>" +
+  "<span lang=DE style='mso-ansi-language:DE'>Dieser Satz bleibt deutsch.</span>" +
+  "<span lang=EN-US style='mso-ansi-language:EN-US'> And the next run is again plain.</span></p></body></html>";
+
+function PasteLanguageDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.view.pasteHTML(WORD_LANGUAGE_FRAGMENT, new Event("paste") as ClipboardEvent);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/**
+ * A paste from Word: every run carries `lang`, and the Editor keeps only the one that differs
+ * from the page's language (`en` here), written in the canonical case (`DE` becomes `de`). Without
+ * the drop, Word would cover the whole text with marks.
+ */
+export const TextLanguagePasteFromWord: Story = {
+  render: () => <PasteLanguageDemo />,
+};
+
+function QuotesDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      // The same path ProseMirror receives typing by, where the input rules hang.
+      const { doc } = editor.state;
+      let end = 0;
+      doc.descendants((node, pos) => {
+        if (node.isText && node.text === "French") end = pos + node.nodeSize;
+      });
+      editor.commands.setTextSelection(end);
+      for (const char of ' "a phrase"') {
+        const { from, to } = editor.state.selection;
+        const handled = editor.view.someProp("handleTextInput", (handler) =>
+          handler(editor.view, from, to, char, () => editor.state.tr.insertText(char, from, to))
+        );
+        if (!handled) editor.view.dispatch(editor.state.tr.insertText(char, from, to));
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "typography"]}
+        defaultValue={
+          '<p>The English interface gives “curly” quotes: <span lang="en">English</span>, but inside a ' +
+          '<span lang="ru">Russian</span> fragment the same key gives guillemets, and inside <span lang="fr">French</span></p>'
+        }
+      />
+    </div>
+  );
+}
+
+/**
+ * Typography by the language of the fragment: the `"` typed at the end of the French fragment gives
+ * the catalog's curly quotes, while one typed inside a `ru` mark gives guillemets and inside an
+ * `en` mark curly quotes, whatever the interface language is.
+ */
+export const TextLanguageQuotes: Story = {
+  render: () => <QuotesDemo />,
+};
+
+/*
+  Block selection and the Block handle over a range (ADR-0077, OLDSUI-307). The story sets the state
+  once the engine is created, the way a user gets there: a text selection across Blocks (the handle
+  over a range), or `Esc` in the text and `Shift+↓` (Block selection). `extend` is how many times
+  `Shift+↓` is pressed after `Esc`.
+*/
+function useRangeDemo(
+  ref: RefObject<RichTextEditorHandle | null>,
+  options: { from: string; to?: string; extend?: number; open?: boolean }
+) {
+  const { from, to, extend = 0, open = false } = options;
+  useEffect(() => {
+    let frame = 0;
+    const press = () => {
+      const handle = document.querySelector<HTMLElement>('button[aria-label="Block actions"]');
+      if (!handle) {
+        frame = requestAnimationFrame(press);
+        return;
+      }
+      handle.click();
+    };
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      let start = -1;
+      let end = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (!node.isText) return;
+        if (start < 0 && node.text === from) start = pos + 1;
+        if (node.text === (to ?? from)) end = pos + node.nodeSize - 1;
+      });
+      editor.view.focus();
+      if (start > 0) editor.commands.setTextSelection(to ? { from: start, to: end } : start);
+      if (!to) {
+        // Block selection: the same as `Esc`, then `Shift+↓` for each extra Block.
+        ref.current?.tool("blockSelection")?.selectCurrent();
+        for (let step = 0; step < extend; step++) {
+          editor.view.dom.dispatchEvent(
+            new KeyboardEvent("keydown", { key: "ArrowDown", shiftKey: true, bubbles: true })
+          );
+        }
+      }
+      if (open) frame = requestAnimationFrame(press);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [ref, from, to, extend, open]);
+}
+
+const RANGE_SAMPLE =
+  "<h2>Release plan</h2>" +
+  "<p>Freeze the scope on Monday.</p>" +
+  "<p>Run the regression pass on Tuesday.</p>" +
+  "<p>Ship on Wednesday.</p>" +
+  "<ul><li><p>Announce the date</p></li><li><p>Update the changelog</p></li></ul>" +
+  "<p>Closing note for the team.</p>";
+
+function RangeDemo({
+  document = RANGE_SAMPLE,
+  from,
+  to,
+  extend,
+  open,
+  ...props
+}: {
+  document?: string;
+  from: string;
+  to?: string;
+  extend?: number;
+  open?: boolean;
+} & Partial<RichTextEditorProps>) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useRangeDemo(ref, { from, to, extend, open });
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={document} {...props} />
+    </div>
+  );
+}
+
+/**
+ * The Block handle over a range: a text selection across several Blocks no longer hides the "⋮". It
+ * stands at the first Block the selection touches, and its menu acts on all of them. This is in every
+ * Editor, with or without the `blockSelection` Tool.
+ */
+export const BlockHandleOverRange: Story = {
+  render: () => <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." />,
+};
+
+/**
+ * The menu of the handle over a range: Select, Format ›, Wrap in ›, Move up, Move down, Duplicate and
+ * Delete. No "Add ›": that item is for one Block. Every item is one edit for undo, and the screen
+ * reader hears the result ("Blocks deleted: 2").
+ */
+export const BlockHandleOverRangeMenu: Story = {
+  render: () => (
+    <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." open />
+  ),
+};
+
+/**
+ * Block selection: `Esc` in the text selects the current Block, `Shift+↓` adds the next one. The
+ * Blocks are painted whole on the selection color, there is no caret, and the "⋮" stands at the first
+ * Block. Then `Backspace` removes them, `⌘C` and `⌘X` take them whole, `⌘V` replaces them, `⌘⇧D` and
+ * `⌥⇧↑/↓` duplicate and move them; `Esc` again returns the caret.
+ */
+export const BlockSelection: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} />,
+};
+
+/** Block selection on the Paper sheet: the same highlight on a light surface in any theme. */
+export const BlockSelectionPaper: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} surface="paper" />,
+};
+
+/** A list: the unit is the item, so the selection takes one item and grows by item. */
+export const BlockSelectionInList: Story = {
+  render: () => <RangeDemo from="Announce the date" extend={1} />,
+};
+
+const COLUMNS_RANGE_SAMPLE =
+  "<p>Before the columns.</p>" +
+  layoutBlock(
+    "50-50",
+    layoutColumn("Left", "First block of the left column."),
+    layoutColumn("Right", "Only block of the right column.")
+  ) +
+  "<p>After the columns.</p>";
+
+/**
+ * Block selection in columns: the selection is neighbours of one container, so `Shift+↓` stays in the
+ * column. At the column's edge it selects the whole Column layout and goes on at the Document's level.
+ */
+export const BlockSelectionInColumns: Story = {
+  render: () => (
+    <RangeDemo document={COLUMNS_RANGE_SAMPLE} from="First block of the left column." />
+  ),
+};
+
+/**
+ * Block selection inside a `Dialog`: the first `Esc` selects the Block and the window stays, the
+ * second `Esc` ends the selection and closes the window, like any nested layer (ADR-0041). A comment
+ * field uses `preset="basic"` and keeps the one-`Esc` close.
+ */
+export const BlockSelectionInDialog: Story = {
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="h-[520px]">
+        <Button onClick={() => setOpen(true)}>Open the window</Button>
+        <Dialog open={open} onClose={() => setOpen(false)} title="Edit the plan">
+          <div className="w-[560px] max-w-full">
+            <RangeDemoInDialog />
+          </div>
+        </Dialog>
+      </div>
+    );
+  },
+};
+
+function RangeDemoInDialog() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useRangeDemo(ref, { from: "Run the regression pass on Tuesday." });
+  return <RichTextEditor ref={ref} aria-label="Document" defaultValue={RANGE_SAMPLE} />;
+}
+
+/**
+ * Block selection in a read-only field: `Esc`, `Shift+↑/↓` and `Shift+click` work, and of the actions
+ * only `⌘C` (there is no handle).
+ */
+export const BlockSelectionReadOnly: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} readOnly />,
+};
+
+/** The announcements, the menu items and the reference rows in the Russian catalog. */
+export const BlockSelectionRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." open />
+    </UiProvider>
+  ),
+};
+
 /* ── Footnotes (the `footnotes` Tool, OLDSUI-306, ADR-0076) ───────────────────────────────── */
 
 /** A footnote reference as the Editor writes it. */

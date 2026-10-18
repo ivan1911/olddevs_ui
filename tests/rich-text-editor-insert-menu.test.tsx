@@ -381,6 +381,9 @@ test("Escape inside a Dialog closes only the menu", () => {
   expect(editor.getHTML()).toBe("<p>/</p>");
 
   // Control: without the menu, the same Escape closes the dialog.
+  // The first Escape in the text selects the Block (the `blockSelection` Tool, ADR-0077); the layer closes on the second.
+  press(editor, "Escape");
+  expect(onClose).not.toHaveBeenCalled();
   press(editor, "Escape");
   expect(onClose).toHaveBeenCalledTimes(1);
 });

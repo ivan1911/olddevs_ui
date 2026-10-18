@@ -1,6 +1,7 @@
 import { CODE_LANGUAGE_IDS } from "../features/code/codeLanguages.js";
 import { EDITOR_LAYOUTS } from "../features/layout/columnLayouts.js";
 import { CUSTOM_COLOR_STYLE_PATTERN } from "../features/color/customColor.js";
+import { normalizeLanguageTag } from "../features/language/languageTag.js";
 import { safeLatexSource } from "../features/mathematics/mathHtml.js";
 import { BLOCK_FORMULA_TYPE, INLINE_FORMULA_TYPE } from "../features/mathematics/mathNames.js";
 import { devWarn } from "../../lib/dev-warn.js";
@@ -131,8 +132,8 @@ export const RICH_TEXT_SCHEMA = {
   /**
    * Marks and inline nodes. `br` is a soft line break on Shift+Enter. `mark` is a marker, always
    * with `data-color`. `span` with `data-color` is a text color (the tag is named in `blocks`
-   * too, where it is task item markup). `a` is a link, its address limited to the schemes in
-   * `protocols`.
+   * too, where it is task item markup), and `span` with `lang` is a language of a fragment. `a`
+   * is a link, its address limited to the schemes in `protocols`.
    */
   marks: ["strong", "em", "u", "s", "code", "sup", "sub", "mark", "br", "a"],
   /** Attributes by tag. Anything not listed here does not appear in the output. */
@@ -182,8 +183,15 @@ export const RICH_TEXT_SCHEMA = {
      * marker names (`legacyMarkerColors`). A `span` without `data-color` and without `style` never
      * occurs either: an empty `span` exists only in a task item and in an inline formula
      * (`data-type="inline-math"` with `data-latex`, only on `span`).
+     *
+     * `span[lang]` is the Text part language Mark (ADR-0078): a standard attribute, the first one in
+     * the Schema that is not `data-*`, so that a screen reader, spell checking and hyphenation read
+     * it without the kit's code. Its value is NOT a list: any tag of the BCP 47 SHAPE passes
+     * (`languageTag.ts`), because HTML with `lang="de"` arrives from other screens and from Word, and
+     * the server's sanitizer has no Options of the screen. It may sit next to `data-color` on one
+     * element, and an element with only `lang` is kept, not unwrapped.
      */
-    span: ["data-color", "style", "data-type", "data-latex"],
+    span: ["data-color", "style", "data-type", "data-latex", "lang"],
     mark: ["data-color", "style"],
     /**
      * Block alignment: a value from `alignments`, except `left`. `left` is the default, and the
@@ -491,6 +499,8 @@ const HOOK_GUARDED_ATTRIBUTES: readonly string[] = [
   "role",
   "aria-label",
   "data-footnote-ref",
+  // The language of a fragment: only a tag of the BCP 47 shape on a `span` (ADR-0078).
+  "lang",
 ];
 const HOOK_GUARDED_TAGS: readonly string[] = ["input", "img"];
 
@@ -797,6 +807,13 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
   alt: (node) => node.nodeName === "IMG",
   "data-width": (node, value) =>
     node.nodeName === "IMG" && has(RICH_TEXT_SCHEMA.imageWidths, value),
+  // The language of a fragment: only on a plain `span` (a formula and a custom Mark are `span` too,
+  // and carry no language), and only a value of the BCP 47 shape. The hook has already written the
+  // tag in its canonical case, so the shape is what is checked here.
+  lang: (node, value) =>
+    node.nodeName === "SPAN" &&
+    !node.hasAttribute("data-type") &&
+    normalizeLanguageTag(value) !== null,
 };
 
 /** A record key counts only as an own property: `constructor` and `__proto__` do not become a rule. */
@@ -875,6 +892,10 @@ function checkAttribute(
   if (footnote !== undefined) {
     if (!footnote) event.keepAttr = false;
     return;
+  }
+  // `EN-US` from Word is written as `en-US`, as the Editor writes it (`normalizeLanguageTag`).
+  if (event.attrName === "lang") {
+    event.attrValue = normalizeLanguageTag(event.attrValue) ?? event.attrValue;
   }
   const allowed = ATTRIBUTE_RULES[event.attrName];
   if (allowed && !allowed(node, event.attrValue)) event.keepAttr = false;
@@ -1011,6 +1032,9 @@ function checkStructure(node: Element, schema: RichTextSchema): void {
     return;
   }
   if (node.nodeName === "SPAN" && coloured) return;
+  // A `span` with a language is a Mark (ADR-0078), not a stray wrapper. The attribute hook has already
+  // removed a `lang` that is not a tag, so a `span` that still has one is valid.
+  if (node.nodeName === "SPAN" && node.hasAttribute("lang")) return;
   // Details Block: `summary` only directly in `details`, and the content wrapper with its
   // `data-type` likewise. (The hook has already removed the attribute if the wrapper is not in
   // place.) Outside a Block they lose their wrapper, and the content stays.

@@ -1067,6 +1067,17 @@ export interface UiMessages {
      */
     invisibleCharacters: string;
     /**
+     * Text part language (the `language` Tool, ADR-0078). `language` is the "Language ›" item of the
+     * "…" menu, and the name of its submenu. The submenu lists the languages of the Tool's
+     * `languages` option; their names are drawn by `Intl.DisplayNames` in the interface language, not
+     * by the catalog. `languagePrimary` labels the page's own language in that list, the one that
+     * needs no mark: `language` is the language's name. `languageRemove` is the item that removes the
+     * mark from the selection.
+     */
+    language: string;
+    languagePrimary: (vars: { language: string }) => string;
+    languageRemove: string;
+    /**
      * Search and replace. `search` is the name and the hint of the Toolbar button, and of the
      * shortcut reference row `Mod+F`; `searchReplace` is the `Mod+Alt+F` row; `searchPanel` is the
      * name of the panel; the rest are its fields, checkboxes and buttons. `searchCount` is the
@@ -1128,6 +1139,32 @@ export interface UiMessages {
     blockMoveDown: string;
     blockDuplicate: string;
     blockDelete: string;
+    /**
+     * Block selection (the `blockSelection` Tool, ADR-0077) and the Block handle over several Blocks.
+     * `blockSelect` is the handle's item that selects the current Blocks (the way in on a touch
+     * screen); `blockWrap` is the handle's submenu "Wrap in ›" over a group of Blocks (its items are
+     * the names of the containers: `wrapper`, `blockquote`, `details`). `blockSelectionSelect` and
+     * `blockSelectionExtend` are the reference rows of `Esc` and `Shift+↑/↓`.
+     */
+    blockSelect: string;
+    blockWrap: string;
+    blockSelectionSelect: string;
+    blockSelectionExtend: string;
+    /**
+     * What the screen reader hears (Field notice, tone `status`): the state of the selection and the
+     * result of an action over Blocks. The count is in the phrase's tail, so the phrase needs no
+     * plural form in any language.
+     */
+    blocksSelected: (vars: { count: number }) => string;
+    blockSelectionCleared: string;
+    blocksDeleted: (vars: { count: number }) => string;
+    blocksDuplicated: (vars: { count: number }) => string;
+    blocksMoved: (vars: { count: number }) => string;
+    blocksChanged: (vars: { count: number }) => string;
+    blocksWrapped: (vars: { count: number }) => string;
+    blocksCopied: (vars: { count: number }) => string;
+    blocksCut: (vars: { count: number }) => string;
+    blocksReplaced: (vars: { count: number }) => string;
     /**
      * The Document's table of contents (`RichTextToc`): the name of the strip button and the label
      * of the `nav` with the list of headings. It is one word for both, because it is one thing.

@@ -3,14 +3,18 @@ import { devError } from "../../lib/dev-warn.js";
 import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
 import type {
+  BlockSelectionToolState,
   FootnotesToolState,
   InvisibleCharactersToolState,
+  LanguageToolState,
   SearchToolState,
   TocToolState,
 } from "./toolState.js";
 import type {
+  BlockSelectionToolCommands,
   FootnotesToolCommands,
   InvisibleCharactersToolCommands,
+  LanguageToolCommands,
   SearchToolCommands,
   TocToolCommands,
 } from "./toolCommands.js";
@@ -185,6 +189,22 @@ export interface InvisibleCharactersToolOptions {
 }
 
 /**
+ * Options of the `language` Tool (Text part language, ADR-0078).
+ */
+export interface LanguageToolOptions {
+  /**
+   * The languages the "Language ›" submenu offers, as BCP 47 tags (`"en"`, `"de"`, `"pt-BR"`), in the
+   * order of the list. Names are drawn by `Intl.DisplayNames` in the interface language. The list
+   * only fills the menu: the Schema and the sanitizer accept a `lang` of any language, so a Document
+   * with `lang="de"` keeps its marks in an Editor whose menu has no German. A list with an invalid
+   * tag, or an empty one, is replaced with the default and logs one `console.error` in development.
+   * Default `["en", "ru"]`, the languages of the kit's message catalogs. An array is replaced whole,
+   * not merged with the default.
+   */
+  languages: readonly string[];
+}
+
+/**
  * Options of the `youtube` and `twitch` Tools (ADR-0071, item 4). Both have the same
  * options, because each Tool configures the blocks of its own service. Neither one
  * changes the saved HTML, which still holds only the link. `RichTextView` reads the
@@ -206,7 +226,7 @@ export interface VideoToolOptions {
  * Editor Tool types by name: what the screen sets when configuring (`options`), what it
  * reads (`state`) and what it calls (`commands`). An extensible interface, like `Storage`
  * and `Commands` in Tiptap: the kit declares `search`, `toc`, `details`, `mathematics`,
- * `youtube`, `twitch`, `typography` and `invisibleCharacters` in it, and the consumer
+ * `youtube`, `twitch`, `typography`, `invisibleCharacters` and `language` in it, and the consumer
  * adds its own Tools through declaration merging:
  *
  * ```ts
@@ -261,10 +281,20 @@ export interface RichTextTools {
     state: InvisibleCharactersToolState;
     commands: InvisibleCharactersToolCommands;
   };
+  // State and commands only: the mode has no options (ADR-0077).
+  blockSelection: {
+    state: BlockSelectionToolState;
+    commands: BlockSelectionToolCommands;
+  };
   // State and commands only: footnotes have no options (ADR-0076).
   footnotes: {
     state: FootnotesToolState;
     commands: FootnotesToolCommands;
+  };
+  language: {
+    options: LanguageToolOptions;
+    state: LanguageToolState;
+    commands: LanguageToolCommands;
   };
 }
 
@@ -361,7 +391,7 @@ export function mergeOptions(base: object, given: object): object {
  * `console.error`; the author of a custom Tool checks that Tool's own options.
  *
  * Only built-in Tools with options can be configured by name: `search`, `toc`, `details`,
- * `mathematics`, `youtube`, `twitch`, `typography` and `invisibleCharacters`. The function
+ * `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters` and `language`. The function
  * is server-safe.
  */
 export function tool<Name extends ConfigurableToolName>(

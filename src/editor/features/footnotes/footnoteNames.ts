@@ -17,9 +17,6 @@ export const FOOTNOTE_NODE = "footnote";
 /** The node name of the footnote list: the last Block of the Document. */
 export const FOOTNOTE_LIST_NODE = "footnoteList";
 
-/** The node is the footnote list: the kit keeps it, so it has no handle, no move, no duplicate and no insert menu. */
-export const isFootnoteListName = (name: string): boolean => name === FOOTNOTE_LIST_NODE;
-
 /** The `data-block` value of the list: `section[data-block="footnotes"]`. */
 export const FOOTNOTE_LIST_BLOCK = "footnotes";
 /** The reference's attribute: `sup[data-footnote-ref="<key>"]`. */

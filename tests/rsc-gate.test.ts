@@ -342,6 +342,13 @@ const SERVER_SAFE = [
       "imports (crypto is a global), so the sanitizer in schema.ts and the Tool descriptor share them.",
   },
   {
+    file: "editor/features/language/languageTag.ts",
+    why:
+      "The shape, the canonical case and the quote set of a BCP 47 language tag (OLDSUI-308, ADR-0078): " +
+      "pure functions over a string. The only import is a type from i18n/messages.ts. The sanitizer in " +
+      "schema.ts normalizes and checks `span[lang]` with them on the consumer's server, with no React and no Tiptap.",
+  },
+  {
     file: "editor/features/mathematics/mathNames.ts",
     why:
       "The names of a formula as constants (OLDSUI-280, ADR-0070): the data-type values of the HTML, " +

@@ -9,7 +9,7 @@ import { Extension, type Extensions } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Placeholder } from "@tiptap/extensions";
 import { StarterKit, type StarterKitOptions } from "@tiptap/starter-kit";
-import type { EditorQuoteSet } from "../../i18n/messages.js";
+import type { EditorQuoteSet, UiMessages } from "../../i18n/messages.js";
 import { AtomText } from "./atomText.js";
 import { BlockCommands, BlockMenuKey } from "./blockCommands.js";
 import { FieldNoticeExtension, type FieldNoticeOptions } from "./fieldNotice.js";
@@ -59,6 +59,12 @@ export interface EditorExtensionOptions {
    */
   quoteSet: () => EditorQuoteSet;
   /**
+   * The interface locale (`UiProvider`): the `language` Tool's last fallback for the page's primary
+   * language when no ancestor of the field has a `lang`. Read when asked: a locale change does not
+   * recreate the engine.
+   */
+  locale: () => string;
+  /**
    * Bridge to the Slash menu, opened by `/`. Without it the menu does not open: the `insertMenu`
    * Tool is disabled or has no items for it.
    */
@@ -85,6 +91,11 @@ export interface EditorExtensionOptions {
   image?: RichImageOptions;
   /** Field notice (`showNotice`): the state is held by `RichTextEditor`. */
   onNotice: FieldNoticeOptions["onNotice"];
+  /**
+   * The Editor's strings in the screen's language, read on every use: a locale change does not
+   * recreate the engine. For Tools that announce results (Block selection). Absent means English.
+   */
+  editorMessages?: () => UiMessages["editor"];
   /**
    * Open the search panel (`Mod+F`, `Mod+Alt+F`); `replace` puts focus in the replace field. The
    * panel is held by `RichTextEditor`; `false` means there is no panel, and the key goes to the
@@ -211,6 +222,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "subscript",
   "color",
   "highlight",
+  "language",
   "align",
   "taskList",
   "image",
@@ -245,6 +257,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "source",
   "search",
   "invisibleCharacters",
+  "blockSelection",
   "toc",
 ];
 

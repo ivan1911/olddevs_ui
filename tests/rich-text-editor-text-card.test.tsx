@@ -364,11 +364,14 @@ test("inside a Dialog Escape closes the card first and the Dialog on the second 
   expect(card()).toBeNull();
   expect(onClose).not.toHaveBeenCalled();
 
-  act(() => {
-    editor.view.dom.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })
-    );
-  });
+  // The next Escape selects the Block (the `blockSelection` Tool, ADR-0077); the Dialog closes on the one after.
+  for (let press = 0; press < 2; press++) {
+    act(() => {
+      editor.view.dom.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })
+      );
+    });
+  }
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 

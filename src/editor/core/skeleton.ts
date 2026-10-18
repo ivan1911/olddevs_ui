@@ -45,6 +45,7 @@ const SCHEMA_ONLY: Omit<EditorExtensionOptions, "tools"> = {
   footnoteListName: () => "",
   footnoteBack: (number) => String(number),
   quoteSet: () => "en",
+  locale: () => "en",
   openPopover: quiet,
   focusToolbar: no,
   openBlockMenu: no,

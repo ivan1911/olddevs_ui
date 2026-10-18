@@ -191,6 +191,13 @@ const SYNC_KEY = new PluginKey("footnoteSync");
 export const FootnoteBehavior = Extension.create({
   name: "footnotes",
 
+  /*
+    The list is not a Block unit (`blockUnit.ts`): the kit keeps it last and whole, so the handle does
+    not stand on it, the Block keys neither take nor pass it, and Block selection never includes it.
+  */
+  extendNodeSchema: (extension) =>
+    extension.name === FOOTNOTE_LIST_NODE ? { blockUnit: false } : {},
+
   onBeforeCreate() {
     repairParsedDocument(this.editor.schema);
   },
