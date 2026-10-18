@@ -107,6 +107,35 @@ test("a nested item is the unit, and the text of the item around it is dimmed", 
   expect(dimmed().join("|")).toBe("outer|next");
 });
 
+/** The text of the list items whose marker is dimmed (OLDSUI-315): the marker goes with its item's text. */
+function dimmedMarkers(): string[] {
+  return Array.from(
+    document.querySelectorAll("li.rte-focus-dim-item"),
+    (item) => item.querySelector("p")?.textContent ?? ""
+  );
+}
+
+test("the marker of an item outside the unit is dimmed with its text, the current one is not", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({
+    tools: [...TOOLS, ...ON],
+    defaultValue:
+      "<ul><li><p>outer</p><ul><li><p>inner</p></li></ul></li><li><p>next</p></li></ul>" +
+      "<ol><li><p>first</p></li></ol><p>after</p>",
+  });
+
+  caretIn(editor, "inner");
+  expect(dimmedMarkers()).toEqual(["outer", "next", "first"]);
+
+  // The caret in a paragraph: every item is outside the unit.
+  caretIn(editor, "after");
+  expect(dimmedMarkers()).toEqual(["outer", "inner", "next", "first"]);
+
+  // Without focus nothing is dimmed, markers included.
+  await user.click(screen.getByRole("button", { name: "Outside" }));
+  expect(dimmedMarkers()).toEqual([]);
+});
+
 test("a table is one unit, wherever the caret is in it", () => {
   const { editor } = renderEditor({
     tools: [...TOOLS, ...ON],
