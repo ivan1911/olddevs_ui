@@ -65,9 +65,10 @@ export interface ToolDescriptor {
    * The shape of Blocks for the Skeleton while the loader has not finished (`skeleton.ts`): light
    * nodes with the same markup and the same attribute parsing, without plugins and heavy packages. A
    * privilege of a lazy built-in: without it its Blocks show up as text in the Skeleton, and the field
-   * jumps in height when the chunk arrives.
+   * jumps in height when the chunk arrives. The context holds the bridges for the strings that the shape
+   * writes into the HTML (the footnote list's name).
    */
-  skeleton?: () => Extensions;
+  skeleton?: (context: ToolEngineContext) => Extensions;
   /** Block traits by node name; the kit copies them into the node spec. None means an ordinary Block. */
   blocks?: Readonly<Record<string, BlockTraits>>;
 

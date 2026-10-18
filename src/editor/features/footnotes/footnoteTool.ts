@@ -1,32 +1,23 @@
 "use client";
 
-import type { Extensions } from "@tiptap/core";
 import { closeHistory } from "@tiptap/pm/history";
 import { FootnoteIcon } from "../../../icons.js";
 import type { FootnotesToolCommands } from "../../core/toolCommands.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
-import { FootnoteBehavior } from "./footnoteBehavior.js";
-import { jump } from "./footnoteCommands.js";
-import { Footnote, FootnoteList, FootnoteReference, type FootnoteLabels } from "./footnoteNodes.js";
 import { FOOTNOTE_LIST_NODE, FOOTNOTE_REF_NODE } from "./footnoteNames.js";
-
-/**
- * The nodes, the keys and the list's upkeep (ADR-0076). The Slash menu is the only `run` that matters
- * to the engine: `insertFootnote` is a command, so `chain.insertFootnote()` is one transaction.
- */
-export function footnoteExtensions(labels: FootnoteLabels): Extensions {
-  return [
-    FootnoteReference,
-    Footnote.configure({ labels }),
-    FootnoteList.configure({ labels }),
-    FootnoteBehavior,
-  ];
-}
+import { FootnoteListShape, FootnoteReferenceShape, FootnoteShape } from "./footnoteShape.js";
+import { footnotesChunk, loadFootnotes } from "./footnotesLoader.js";
 
 /**
  * Footnotes on the Tool's description (ADR-0076): the reference in the text, the list at the end of
  * the Document (a top-level node the Document names itself, like a Column layout), the "Footnote"
  * Slash menu item and the same item in the "…" menu, and the Commands.
+ *
+ * LAZY (ADR-0058, item 11.1). `full` has the Tool, `basic` does not, and the nodes with their node view,
+ * the keys, the list's upkeep and the Markdown rules weigh more than the start bundle should carry, so
+ * they arrive through the Loader as `footnotesChunk.ts`. What stays here is static: the description, the
+ * Slash menu item, the Schema half (`footnoteShape.ts`, which the Skeleton draws the reference and the
+ * list from before the chunk arrives) and the server-safe cleanup (`footnoteHtml.ts`).
  *
  * The reference is a `plainAtom`: Marks do not apply to it, so the Bubble menu does not surround it.
  * The list has no handle (`handleBlock`), and the Slash menu and "+" do not work inside a footnote.
@@ -40,8 +31,21 @@ export function footnoteExtensions(labels: FootnoteLabels): Extensions {
  */
 export const FOOTNOTES_TOOL: ToolDescriptor = {
   name: "footnotes",
+  load: loadFootnotes,
   engine: (context) =>
-    footnoteExtensions({ listName: context.footnoteListName, back: context.footnoteBack }),
+    footnotesChunk()!.footnoteExtensions({
+      listName: context.footnoteListName,
+      back: context.footnoteBack,
+    }),
+  // The same nodes without the node view, the keys and Markdown: the Skeleton draws the saved markup.
+  skeleton: (context) => {
+    const labels = { listName: context.footnoteListName, back: context.footnoteBack };
+    return [
+      FootnoteReferenceShape,
+      FootnoteShape.configure({ labels }),
+      FootnoteListShape.configure({ labels }),
+    ];
+  },
   blocks: { [FOOTNOTE_REF_NODE]: { plainAtom: true } },
   documentContent: [FOOTNOTE_LIST_NODE],
   // The kit's Schema tags the Tool writes: the reference, the list and the footnote's paragraph.
@@ -61,7 +65,9 @@ export const FOOTNOTES_TOOL: ToolDescriptor = {
     },
   ],
   commands: ({ editor, bridge }): FootnotesToolCommands => {
-    const ready = () => !editor.isDestroyed && !bridge.sourceOpen() && !bridge.disabled();
+    // Before the chunk has loaded there is no engine with footnotes, and no jump to make.
+    const ready = () =>
+      !!footnotesChunk() && !editor.isDestroyed && !bridge.sourceOpen() && !bridge.disabled();
     return {
       insert: () => {
         if (!ready() || !editor.isEditable) return false;
@@ -79,8 +85,9 @@ export const FOOTNOTES_TOOL: ToolDescriptor = {
         // is then the same one (`handle.ts`, `authorEdit`).
         return editor.state.doc !== before;
       },
-      goToFootnote: (number) => ready() && jump(editor, "goToFootnote", number),
-      goToReference: (number) => ready() && jump(editor, "goToFootnoteReference", number),
+      goToFootnote: (number) => ready() && footnotesChunk()!.jump(editor, "goToFootnote", number),
+      goToReference: (number) =>
+        ready() && footnotesChunk()!.jump(editor, "goToFootnoteReference", number),
     };
   },
 };
