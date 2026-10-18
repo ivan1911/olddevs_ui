@@ -5,7 +5,7 @@ import { Plugin, type EditorState } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { Editor } from "@tiptap/core";
 import { BlockSelection } from "../../core/blockSelection.js";
-import { viewUnitRange } from "../../core/blockUnit.js";
+import { LIST_ITEMS, viewUnitRange } from "../../core/blockUnit.js";
 import { FOCUS_MODE_KEY } from "./focusModeState.js";
 
 /**
@@ -18,10 +18,12 @@ import { FOCUS_MODE_KEY } from "./focusModeState.js";
  * handle and Block selection: a list item, a table as a whole, a Block of a column. Tiptap's own
  * Focus extension marks the nodes around the caret and knows none of these.
  *
- * TWO KINDS OF DECORATION. Text outside the unit gets ONE inline decoration for each side (before
- * and after), which wraps the text runs: the color lands on the text itself, so a link, a quote or
- * an author color does not keep its own. Blocks without text of their own (an image, a video, a
- * code Block, a block formula) get a node decoration and are dimmed by opacity.
+ * THREE KINDS OF DECORATION. Text outside the unit gets ONE inline decoration for each side (before
+ * and after), which wraps the text runs. A Block that goes faint whole (an image, a video, a code
+ * Block, a block formula, a Wrapper, a Details Block, a table: `MEDIA_NODES`) gets a node
+ * decoration. A list item whose own text is outside the unit
+ * gets a node decoration too, for its marker: the marker is the item's, not the text's, and the
+ * inline decoration does not reach it.
  *
  * NO DIMMING where the Document is not the place of work: without focus in it (the Toolbar or the
  * page has it), over a Block selection (the selected Blocks are already marked), and in a read-only
@@ -29,36 +31,54 @@ import { FOCUS_MODE_KEY } from "./focusModeState.js";
  * Blocks and the other footnotes alike; a caret in the text dims the whole list like any other Block.
  */
 
-/** CSS class of dimmed text and of a dimmed Block without text. */
+/** CSS class of dimmed text, of a dimmed Block without text and of a list item with a dimmed marker. */
 export const FOCUS_DIM_CLASS = "rte-focus-dim";
 export const FOCUS_DIM_MEDIA_CLASS = "rte-focus-dim-media";
+export const FOCUS_DIM_ITEM_CLASS = "rte-focus-dim-item";
 
 /**
- * What the classes do. Text outside the Block takes the secondary role `--rte-muted`, the one that
- * holds 4.5:1 on the sheet, on the theme and on the Wrapper backings (`tokens.ts`). Images, videos,
- * code Blocks and block formulas have no text of their own to recolor, so they go translucent.
+ * What the classes do: everything outside the Block goes to 40% opacity (OLDSUI-315, the owner's
+ * choice among four variants). Opacity, not a color: a link, an author color, a marker fill and a
+ * code Block's highlight keep their own colors, only fainter, so one rule fits the theme, the Paper,
+ * the toned Wrappers and the code themes alike. Opacity multiplies, so an element that is already
+ * faint (a code Block, a `mark`) keeps the text inside it as it is. A list marker has no opacity of
+ * its own (`::marker` takes only a color), so it gets its item's color at the same 40%.
  *
- * Three exceptions:
- *
- * - Text on a marker keeps the marker's dark text: a gray one would sink on the bright fill.
- * - A code Block keeps the colors of its highlight theme, which hold only on its own background,
- *   and goes translucent as a whole.
- * - In a toned Wrapper the secondary role IS the main text (the only step that holds 4.5:1 on all
- *   five backings), so the dimming there is a little opacity instead of a color.
+ * THE CONTRAST IS BELOW 4.5:1 ON PURPOSE (3.1:1 on the dark theme, 2.4:1 on the Paper; ADR-0082,
+ * decision 6 and its 2026-10-18 amendment). The dimmed text is not the text being read: it is the background around the
+ * Block being written, and it comes back in full as soon as the caret reaches it or the focus leaves
+ * the Document. The a11y check leaves it out of the contrast rule for that reason (`a11y.spec.ts`).
  *
  * THE RULES COME WITH THE EXTENSION, as a class on the Document's root, and not from `prose.ts`: that
  * module is shared with `RichTextView`, which has no use for them. The root carries the class only
  * while the mode is on.
  */
 const FOCUS_MODE_CLASS =
-  "[&_.rte-focus-dim]:text-(--rte-muted) [&_mark_.rte-focus-dim]:text-(--marker-text) " +
-  "[&_[data-block=wrapper][data-tone]_.rte-focus-dim]:opacity-75 " +
-  // A code Block has its own text color on its own background (`codeTheme.ts`): it goes translucent as a whole.
-  "[&_pre_.rte-focus-dim]:text-inherit " +
-  "[&_.rte-focus-dim-media]:opacity-60";
+  "[&_:is(.rte-focus-dim,.rte-focus-dim-media)]:opacity-40 " +
+  // The decoration lies inside a marker's `mark`, so it would dim the letters and leave the fill bright:
+  // the `mark` goes faint as a whole instead, its text as it is inside.
+  "[&_mark:has(>.rte-focus-dim)]:opacity-40 [&_mark>.rte-focus-dim]:opacity-100 " +
+  "[&_li.rte-focus-dim-item]:marker:text-[color-mix(in_srgb,currentColor_40%,transparent)] " +
+  // Opacity multiplies: inside a Block already at 40% (a code Block, a Wrapper, a table) nothing goes
+  // faint a second time, or it would sink to 16%.
+  "[&_.rte-focus-dim-media_:is(.rte-focus-dim,.rte-focus-dim-media,mark)]:opacity-100 " +
+  "[&_.rte-focus-dim-media_li.rte-focus-dim-item]:marker:text-inherit";
 
-/** Blocks dimmed by opacity: they have no text of their own to recolor, or their colors are the theme's. */
-const MEDIA_NODES: ReadonlySet<string> = new Set(["image", "video", "codeBlock", "blockMath"]);
+/**
+ * Blocks that go faint whole, not only their text: media and code have no text of their own or keep
+ * their theme's colors, and a toned Wrapper, a Details Block and a table have a fill or a frame that
+ * would stay bright around faint text (OLDSUI-315). Only a node that lies wholly outside the unit: a
+ * Wrapper with the caret inside keeps its frame, and its other Blocks dim as text.
+ */
+const MEDIA_NODES: ReadonlySet<string> = new Set([
+  "image",
+  "video",
+  "codeBlock",
+  "blockMath",
+  "wrapper",
+  "details",
+  "table",
+]);
 
 function dim(editor: Editor, state: EditorState): DecorationSet | null {
   if (!FOCUS_MODE_KEY.getState(state)?.enabled) return null;
@@ -74,11 +94,26 @@ function dim(editor: Editor, state: EditorState): DecorationSet | null {
   const dimMedia = (from: number, to: number) =>
     doc.nodesBetween(from, to, (node, pos) => {
       if (!MEDIA_NODES.has(node.type.name)) return true;
+      // A container around the unit is not outside it: its own children are judged instead.
+      if (pos < range.end && pos + node.nodeSize > range.start) return true;
       marks.push(Decoration.node(pos, pos + node.nodeSize, { class: FOCUS_DIM_MEDIA_CLASS }));
       return false;
     });
   dimMedia(0, range.start);
   dimMedia(range.end, end);
+  // A marker is dimmed when its item's own text (the first child) is outside the unit.
+  doc.descendants((node, pos) => {
+    // A list item never lies inside text: a textblock and its inline content are not walked.
+    if (node.isTextblock) return false;
+    if (!LIST_ITEMS.has(node.type.name)) return true;
+    const text = node.firstChild;
+    const from = pos + 1;
+    const to = from + (text?.nodeSize ?? 0);
+    if (to <= range.start || from >= range.end) {
+      marks.push(Decoration.node(pos, pos + node.nodeSize, { class: FOCUS_DIM_ITEM_CLASS }));
+    }
+    return true;
+  });
   return DecorationSet.create(doc, marks);
 }
 
