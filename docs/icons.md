@@ -119,6 +119,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Remove the Wrapper, keep the Blocks | `UnwrapIcon`                                    | `DeleteIcon`                   |
 | Details Block of the Editor         | `DetailsIcon`                                   | `ChevronDownIcon`              |
 | Editor formula, inline and block    | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
+| Date mention in the Editor          | `DateMentionIcon`                               | `CalendarIcon`                 |
 | Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
 | Video by link in the Editor         | `VideoIcon`                                     | `PlayIcon`                     |
 
@@ -225,6 +226,8 @@ Wrapper added the pair `WrapperIcon` and `UnwrapIcon` — lucide's `Group` and `
 The Details Block added `DetailsIcon` — lucide's `ListCollapse`: a list with collapse arrows, the "Collapsible block" item of the Slash menu. The dictionary had no fitting name: `ChevronDownIcon` is a step and nesting, `CollapseIcon` is collapsing a window, while here it is a whole Block with a title and hidden content. Removing the Block uses the already taken `UnwrapIcon` (ADR-0049).
 
 Formulas added the pair `FormulaIcon` and `BlockFormulaIcon` — lucide's `Sigma` and `SquareSigma`: the sigma is the "Formula" item of the Slash menu, the sigma in a frame is "Block formula". `CodeIcon` does not fit: it means the subject theme "development", while a sigma reads as math (ADR-0049).
+
+The Editor's date mention added `DateMentionIcon` — lucide's `CalendarDays`, the "Date" item of the Slash menu. `CalendarIcon` does not fit: in the kit's vocabulary it is "scheduled for later", while this is a date inside a line of text (ADR-0049).
 
 Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`: a pilcrow with an arrow, the "Invisible characters" item of the "…" menu on the Editor's fixed Toolbar. This is not `ParagraphIcon`: that one is a plain pilcrow, "an ordinary paragraph", and sits on the same Toolbar in the "¶" menu; the arrow tells the display toggle from a Block type.
 

@@ -189,7 +189,7 @@ test("without the Tool a mention is its words, in HTML and in JSON", () => {
   const withTool = renderEditor({
     defaultValue: `<p>On ${mention("2026-10-18", "Oct 18, 2026")}.</p>`,
   });
-  const json = withTool.handle.getJSON();
+  const json = withTool.handle.getJSON()!;
   cleanup();
 
   const html = renderEditor({
