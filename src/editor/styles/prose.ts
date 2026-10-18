@@ -386,6 +386,45 @@ const INVISIBLE_CHARACTERS_CLASS =
   "[&_p.is-editor-empty:first-child>.tiptap-invisible-character--paragraph]:hidden ";
 
 /**
+ * Footnotes (the `footnotes` Tool, ADR-0076): the reference `sup[data-footnote-ref]` in the text and
+ * the list `section[data-block=footnotes]` at the end of the Document. The look is the same in the
+ * Editor and in the View, apart from the number: the View shows the list's own decimal markers and the
+ * "↩" link, the Editor shows the number as a button (`[data-footnote-back]`) that returns the caret to
+ * the text.
+ *
+ * THE LIST: a short rule on top, small secondary text, no visible heading (its name is in the HTML for
+ * screen readers, `aria-label`). The roles are the Document's own (`--rte-hr`, `--rte-secondary`), so
+ * the contrast of the quote's text holds here too, on the theme and on the Paper alike.
+ *
+ * THE TEXT STANDS NEXT TO ITS BACKLINK. In the saved HTML a footnote is `li > p` plus the "↩" link;
+ * the paragraph is inline so the link follows the last word. In the Editor the item is a flex row of
+ * the number button and the paragraph, and a flex item is a block whatever its `display`.
+ *
+ * JUMPS WITHOUT JS. The anchors are plain `#fn-…` and `#fnref-…` links. The item that was jumped to
+ * (`:target`) is highlighted with the selection color, so the reader sees where they landed.
+ */
+const FOOTNOTE_CLASS =
+  "[&_sup[data-footnote-ref]]:ml-px [&_sup[data-footnote-ref]>a]:font-medium " +
+  "[&_section[data-block=footnotes]]:mt-6 [&_section[data-block=footnotes]]:border-t " +
+  "[&_section[data-block=footnotes]]:border-(--rte-hr) [&_section[data-block=footnotes]]:pt-3 " +
+  "[&_section[data-block=footnotes]]:text-sm [&_section[data-block=footnotes]]:text-(--rte-secondary) " +
+  "[&_section[data-block=footnotes]_li>p]:inline " +
+  "[&_section[data-block=footnotes]_li>a[role=doc-backlink]]:ml-1 " +
+  "[&_section[data-block=footnotes]_li:target]:rounded-(--rte-radius) " +
+  "[&_section[data-block=footnotes]_li:target]:bg-(--rte-selection) " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:flex " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:list-none " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:items-baseline " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:gap-1.5 " +
+  "[&_section[data-block=footnotes]_li>p]:min-w-0 [&_section[data-block=footnotes]_li>p]:flex-1 " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:min-w-5 " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:cursor-pointer " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:text-right " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:text-(--rte-link) " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:underline " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:underline-offset-2 ";
+
+/**
  * Video (the `youtube` and `twitch` Tools, ADR-0071): a server-rendered `div[data-block=video]`
  * block with a link inside, a 16:9 frame with the same classes as the player placeholder
  * (`PLAYER_FRAME`, `VideoPlayer.tsx`; a test compares the two lists). So the Editor's Skeleton
@@ -538,6 +577,7 @@ const PROSE_RULES =
   " " +
   MATH_CLASS +
   INVISIBLE_CHARACTERS_CLASS +
+  FOOTNOTE_CLASS +
   VIDEO_CLASS +
   CUSTOM_BLOCK_CLASS;
 

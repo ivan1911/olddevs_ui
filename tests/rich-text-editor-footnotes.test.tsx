@@ -12,7 +12,9 @@ import {
   type RichTextEditorHandle,
   type RichTextEditorProps,
 } from "../src/editor/index.js";
+import createDOMPurify from "dompurify";
 import { countCharacters } from "../src/editor/core/maxLength.js";
+import { sanitizeRichText } from "../src/editor/schema-entry.js";
 import { PRESETS, TOOLS } from "../src/editor/core/tools.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
@@ -864,4 +866,23 @@ test("a reference can stand next to an inline formula when mathematics is on", (
 test("the list name in the saved HTML follows the catalog", () => {
   const { editor } = renderEditor({ defaultValue: WHOLE });
   expect(editor.getHTML()).toContain('aria-label="Footnotes"');
+});
+
+// ── The Schema, in both directions ──────────────────────────────────────────
+
+test("what the Editor writes passes the server cleanup unchanged", () => {
+  const { editor } = renderEditor({ defaultValue: WHOLE });
+
+  expect(sanitizeRichText(editor.getHTML(), createDOMPurify(window))).toBe(WHOLE);
+});
+
+test("the Editor drops an id, an anchor and a role that are not footnote markup", () => {
+  const { editor } = renderEditor({
+    defaultValue:
+      '<h2 id="top">Head</h2><p id="fn-aaaaaaa1" role="button" aria-label="x"><a href="#top" id="fnref-aaaaaaa1">jump</a></p>',
+  });
+
+  const html = editor.getHTML();
+  expect(html).not.toMatch(/\bid=|role=|aria-label=|href=/);
+  expect(editor.getText()).toContain("jump");
 });

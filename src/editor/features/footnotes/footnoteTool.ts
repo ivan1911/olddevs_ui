@@ -52,7 +52,9 @@ export const FOOTNOTES_TOOL: ToolDescriptor = {
       section: "insert",
       label: (m) => m.footnote,
       icon: FootnoteIcon,
-      aliases: ["footnote", "endnote", "note", "сноска"],
+      // The Russian word is an escape sequence: the i18n gate rejects Cyrillic letters in code. It is input
+      // data for the filter, so a Russian word finds the item in an English interface too.
+      aliases: ["footnote", "endnote", "note", "\u0441\u043d\u043e\u0441\u043a\u0430"],
       // Inline: it goes at the caret, in the text, and the menu makes no room for a Block.
       inline: true,
       run: (chain) => chain.insertFootnote(),

@@ -87,6 +87,8 @@ test("the full preset offers the rare marks, Code block, Quote and Clear formatt
     { role: "menuitemcheckbox", name: "Code block", checked: false, shortcut: "Ctrl+Alt+C" },
     // Quote is a check item next to the Code block (OLDSUI-154): it has moved out of "¶".
     { role: "menuitemcheckbox", name: "Quote", checked: false, shortcut: "Ctrl+Shift+B" },
+    // An action, not a toggle, and without a shortcut: Ctrl+Alt+F is Find and replace (OLDSUI-306).
+    { role: "menuitem", name: "Footnote", checked: false, shortcut: null },
     { role: "menuitem", name: "Clear formatting", checked: false, shortcut: "Ctrl+\\" },
     // A display mode of the Document, not formatting: the last section, without a shortcut (OLDSUI-278).
     { role: "menuitemcheckbox", name: "Invisible characters", checked: false, shortcut: null },
@@ -107,6 +109,7 @@ test("on Apple the shortcuts are signed with ⌘", async () => {
     "⌘+,",
     "⌘+⌥+C",
     "⌘+⇧+B",
+    null,
     "⌘+\\",
     null,
   ]);
@@ -332,6 +335,7 @@ test("the menu speaks the provider's language", async () => {
     t.subscript,
     t.codeBlock,
     t.blockquote,
+    t.footnote,
     t.clearFormatting,
     t.invisibleCharacters,
   ]);
