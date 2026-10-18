@@ -251,8 +251,7 @@ test("Add offers the insert menu items once each, without shortcut hints", async
     // Formulas (OLDSUI-280) — in `TOOLS`, outside the presets: `rich-text-editor-mathematics.test.tsx`.
     "Formula",
     "Block formula",
-    // Date mention (OLDSUI-309): `rich-text-editor-date.test.tsx`.
-    "Date",
+    // The inline Date mention (OLDSUI-309) and the Footnote are not here: "Add" means a new Block below.
     // Video (OLDSUI-281): `rich-text-editor-video.test.tsx`.
     "Video",
   ]);

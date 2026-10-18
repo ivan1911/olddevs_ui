@@ -1046,6 +1046,16 @@ export interface UiMessages {
     dateInsert: string;
     dateApply: string;
     /**
+     * Footnotes (ADR-0076). `footnote` is the name of the Slash menu item and of the item in the "…"
+     * menu of the Toolbar. `footnotes` is the name of the list, written into the saved HTML
+     * (`aria-label` of the list) in the language of this catalog, like the rest of the Document's text.
+     * `footnoteBack` is the name of the number button of a footnote in the Editor, which returns the
+     * caret to the text; the number is in the sentence, so a function.
+     */
+    footnote: string;
+    footnotes: string;
+    footnoteBack: (vars: { number: number }) => string;
+    /**
      * Emoji. `emoji` is the name of the Toolbar button; `emojiGrid` is the name of the grid in
      * the popover. `emojiCategory` holds the category names, `emojiName` the name of each emoji:
      * a screen reader reads a cell by its name, not by its character, because different programs

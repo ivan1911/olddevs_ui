@@ -185,7 +185,11 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     '<p>d <time datetime="2026-10-18T15:00+03:00">Oct 18, 2026, 3:00 PM</time></p>' +
     // Formulas write only `data-type` and the source in `data-latex` (OLDSUI-280).
     '<p>f <span data-type="inline-math" data-latex="x^2"></span></p>' +
-    '<div data-type="block-math" data-latex="\\frac{a}{b}"></div>';
+    '<div data-type="block-math" data-latex="\\frac{a}{b}"></div>' +
+    // Footnotes write the only `id` and `href="#…"` of the Schema (OLDSUI-306, ADR-0076).
+    '<p>n<sup data-footnote-ref="k3x9q2mf"><a href="#fn-k3x9q2mf" id="fnref-k3x9q2mf" role="doc-noteref">1</a></sup></p>' +
+    '<section data-block="footnotes" role="doc-endnotes" aria-label="Footnotes"><ol>' +
+    '<li id="fn-k3x9q2mf"><p>Note</p><a href="#fnref-k3x9q2mf" role="doc-backlink">\u21A9</a></li></ol></section>';
   const { tags, attributes } = inventory(
     load(sample, [
       ...TOOLS.filter((name) => name !== "details"),

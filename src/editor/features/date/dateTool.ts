@@ -207,6 +207,9 @@ export const DATE_TOOL: ToolDescriptor = {
         "\u0434\u0430\u0442\u0430",
         "\u0441\u0435\u0433\u043e\u0434\u043d\u044f",
       ],
+      // Inline, like the footnote: the mention goes into the text at the caret, so the "Add ›" submenu of the
+      // Block handle, which means "a new Block below", does not offer it.
+      inline: true,
       // The Document is not prepared: the popover places the mention at the caret.
       run: (chain) => chain,
       popover: ({ editor, close }) => renderDateForm({ editor, close }),

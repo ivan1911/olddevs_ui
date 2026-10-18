@@ -4308,3 +4308,170 @@ export const BlockSelectionRussian: Story = {
     </UiProvider>
   ),
 };
+
+/* ── Footnotes (the `footnotes` Tool, OLDSUI-306, ADR-0076) ───────────────────────────────── */
+
+/** A footnote reference as the Editor writes it. */
+const footnoteRef = (key: string, number: number) =>
+  `<sup data-footnote-ref="${key}"><a href="#fn-${key}" id="fnref-${key}" role="doc-noteref">${number}</a></sup>`;
+
+/** The footnote list as the Editor writes it. */
+const footnoteList = (name: string, notes: readonly (readonly [key: string, html: string])[]) =>
+  `<section data-block="footnotes" role="doc-endnotes" aria-label="${name}"><ol>` +
+  notes
+    .map(
+      ([key, html]) =>
+        `<li id="fn-${key}"><p>${html}</p><a href="#fnref-${key}" role="doc-backlink">↩</a></li>`
+    )
+    .join("") +
+  "</ol></section>";
+
+const FOOTNOTES_SAMPLE =
+  "<h2>A short report</h2>" +
+  `<p>The first result${footnoteRef("fnstory1", 1)} was measured twice, and the second one${footnoteRef("fnstory2", 2)} ` +
+  `agreed with it${footnoteRef("fnstory3", 3)}.</p>` +
+  "<p>Type <code>/footnote</code> or use the item in the “…” menu to add another reference at the caret.</p>" +
+  footnoteList("Footnotes", [
+    ["fnstory1", "Measured on <strong>2026-09-01</strong>, in the lab."],
+    [
+      "fnstory2",
+      'See <a href="https://example.com/method" rel="noopener noreferrer">the method</a>.',
+    ],
+    ["fnstory3", "The difference stayed under one percent."],
+  ]);
+
+/**
+ * Footnotes in `full`: a reference with an automatic number in the text, and the footnotes' texts in a
+ * list at the end, edited in place. "Footnote" in the Slash menu and in the “…” menu inserts a reference
+ * at the caret and moves the caret into its footnote. A click or Enter on a reference goes to its
+ * footnote; the footnote's number button, or Enter in it, goes back.
+ */
+export const Footnotes: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={FOOTNOTES_SAMPLE} />
+    </div>
+  ),
+};
+
+function FootnotesRenumberingDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  const state = useRichTextToolState(ref, "footnotes");
+  return (
+    <div className="flex max-w-[640px] flex-col gap-3">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={FOOTNOTES_SAMPLE} />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          onClick={() => {
+            // The caret goes to the start of the first paragraph: the new reference becomes number 1.
+            const editor = ref.current?.editor;
+            editor
+              ?.chain()
+              .focus()
+              .setTextSelection(editor.state.doc.child(0).nodeSize + 1)
+              .run();
+            ref.current?.tool("footnotes")?.insert();
+          }}
+        >
+          Add a footnote at the start of the report
+        </Button>
+        <Button variant="outline" onClick={() => ref.current?.undo()}>
+          Undo
+        </Button>
+        <span role="status" className="text-fg-2 text-caption">
+          {state
+            ? `${state.footnotes.length} footnotes, current: ${state.current ?? "none"}`
+            : "Loading"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Renumbering. The button puts a new reference before the others: the old references and footnotes
+ * move down by one, the new footnote is first in the list, and one Undo takes the whole edit back. The
+ * state line is `useRichTextToolState(ref, "footnotes")`.
+ */
+export const FootnotesRenumbering: Story = {
+  render: () => <FootnotesRenumberingDemo />,
+};
+
+const FOOTNOTES_MARKDOWN =
+  "The first result[^lab] was measured twice, and the second one[^method] agreed with it.\n\n" +
+  "[^lab]: Measured on **2026-09-01**, in the lab.\n" +
+  "[^method]: See [the method](https://example.com/method).";
+
+/**
+ * Markdown both ways. "Load Markdown" reads GFM footnotes (labels become numbers), and "Export Markdown"
+ * writes `[^1]` … `[^n]` and the definitions at the end; the round trip loses nothing.
+ */
+export const FootnotesMarkdown: Story = {
+  render: () => {
+    const ref = useRef<RichTextEditorHandle>(null);
+    const [markdown, setMarkdown] = useState("");
+    return (
+      <div className="flex max-w-[640px] flex-col gap-3">
+        <RichTextEditor ref={ref} aria-label="Document" />
+        <div className="flex gap-2">
+          <Button onClick={() => ref.current?.setMarkdown(FOOTNOTES_MARKDOWN)}>
+            Load Markdown
+          </Button>
+          <Button variant="outline" onClick={() => setMarkdown(ref.current?.getMarkdown() ?? "")}>
+            Export Markdown
+          </Button>
+        </div>
+        <pre className="text-fg-2 text-caption break-all whitespace-pre-wrap">{markdown}</pre>
+      </div>
+    );
+  },
+};
+
+/**
+ * `readOnly`: the Document does not change, but the jumps work. A click on a reference goes to its
+ * footnote, and the buttons use the Tool's commands `goToFootnote(n)` and `goToReference(n)`.
+ */
+export const FootnotesReadOnly: Story = {
+  render: () => {
+    const ref = useRef<RichTextEditorHandle>(null);
+    return (
+      <div className="flex max-w-[640px] flex-col gap-3">
+        <RichTextEditor ref={ref} aria-label="Document" readOnly defaultValue={FOOTNOTES_SAMPLE} />
+        <div className="flex gap-2">
+          <Button onClick={() => ref.current?.tool("footnotes")?.goToFootnote(2)}>
+            Go to footnote 2
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => ref.current?.tool("footnotes")?.goToReference(2)}
+          >
+            Back to reference 2
+          </Button>
+        </div>
+      </div>
+    );
+  },
+};
+
+const FOOTNOTES_RUSSIAN =
+  "<h2>A short report</h2>" +
+  `<p>The first result${footnoteRef("fnrusian1", 1)} was measured twice, and the second one${footnoteRef("fnrusian2", 2)} agreed with it.</p>` +
+  // The list's name is written into the HTML in the language of the catalog, as the Editor does.
+  footnoteList(ru.editor.footnotes, [
+    ["fnrusian1", "Measured in the lab on 1 September 2026."],
+    ["fnrusian2", "The method is described <em>separately</em>."],
+  ]);
+
+/**
+ * The Russian catalog: the Toolbar, the Slash menu item, the number button's name and the list's name
+ * in the HTML come from `@olddevs/ui/locales/ru`. The Document's text is data and stays English.
+ */
+export const FootnotesRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor defaultValue={FOOTNOTES_RUSSIAN} />
+      </div>
+    </UiProvider>
+  ),
+};

@@ -42,6 +42,8 @@ const SCHEMA_ONLY: Omit<EditorExtensionOptions, "tools"> = {
   limit: () => undefined,
   taskCheckbox: (text) => text,
   detailsToggle: (text) => text,
+  footnoteListName: () => "",
+  footnoteBack: (number) => String(number),
   quoteSet: () => "en",
   locale: () => "en",
   openPopover: quiet,

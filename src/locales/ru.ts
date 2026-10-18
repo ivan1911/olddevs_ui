@@ -583,6 +583,9 @@ export const messages: UiMessages = {
     dateRemove: "Удалить дату",
     dateInsert: "Вставить",
     dateApply: "Применить",
+    footnote: "Сноска",
+    footnotes: "Сноски",
+    footnoteBack: ({ number }) => `К тексту, сноска ${number}`,
     emoji: "Эмодзи",
     emojiGrid: "Выберите эмодзи",
     emojiCategory: {

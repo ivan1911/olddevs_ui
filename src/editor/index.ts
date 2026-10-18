@@ -63,6 +63,7 @@ export type {
 export type {
   DateToolCommands,
   BlockSelectionToolCommands,
+  FootnotesToolCommands,
   InvisibleCharactersToolCommands,
   LanguageToolCommands,
   SearchToolCommands,
@@ -70,6 +71,8 @@ export type {
 } from "./core/toolCommands.js";
 export type {
   BlockSelectionToolState,
+  FootnotesToolNote,
+  FootnotesToolState,
   InvisibleCharactersToolState,
   LanguageToolState,
   SearchToolState,

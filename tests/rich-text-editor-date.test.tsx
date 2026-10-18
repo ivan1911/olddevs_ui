@@ -217,6 +217,35 @@ test("without the Tool a mention is its words, in HTML and in JSON", () => {
   expect(fromJson.editor.getHTML()).toBe("<p>On Oct 18, 2026.</p>");
 });
 
+test("a Document with a formula, a footnote and a date keeps all their words in a field without those Tools", () => {
+  const key = "aaaaaaa1";
+  const html =
+    `<p>See <span data-type="inline-math" data-latex="x^2"></span>, ${mention("2026-10-18", "Oct 18, 2026")}` +
+    `<sup data-footnote-ref="${key}"><a href="#fn-${key}" id="fnref-${key}" role="doc-noteref">1</a></sup>.</p>` +
+    '<section data-block="footnotes" role="doc-endnotes" aria-label="Footnotes"><ol>' +
+    `<li id="fn-${key}"><p>Note words</p><a href="#fnref-${key}" role="doc-backlink">↩</a></li></ol></section>`;
+
+  const all = renderEditor({
+    tools: ["bold", "mathematics", "footnotes", "date"],
+    defaultValue: html,
+  });
+  const json = all.handle.getJSON()!;
+  cleanup();
+
+  // From HTML, then from the JSON envelope: each pass goes through the seams of its own Tool.
+  const words = (props: Partial<RichTextEditorProps>) => {
+    const { handle } = renderEditor({ tools: ["bold"], ...props });
+    const text = handle.getText();
+    cleanup();
+    return text;
+  };
+  for (const text of [words({ defaultValue: html }), words({ defaultValue: json })]) {
+    expect(text).toContain("$x^2$");
+    expect(text).toContain("Oct 18, 2026");
+    expect(text).toContain("Note words");
+  }
+});
+
 // ── Atom text, counter and Markdown ───────────────────────────────────────────────────
 
 test("the text of a mention is what the reader sees: getText, the counter, the selected text", () => {

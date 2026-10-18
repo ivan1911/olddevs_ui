@@ -122,6 +122,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Editor formula, inline and block    | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
 | Date mention in the Editor          | `DateMentionIcon`                               | `CalendarIcon`                 |
 | Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
+| Footnote in the Editor              | `FootnoteIcon`                                  | `SuperscriptIcon`              |
 | Video by link in the Editor         | `VideoIcon`                                     | `PlayIcon`                     |
 
 ## Subject topics
@@ -231,6 +232,8 @@ Formulas added the pair `FormulaIcon` and `BlockFormulaIcon` — lucide's `Sigma
 The Editor's date mention added `DateMentionIcon` — lucide's `CalendarDays`, the "Date" item of the Slash menu. `CalendarIcon` does not fit: in the kit's vocabulary it is "scheduled for later", while this is a date inside a line of text (ADR-0049).
 
 Invisible characters added `InvisibleCharactersIcon` — lucide's `PilcrowRight`: a pilcrow with an arrow, the "Invisible characters" item of the "…" menu on the Editor's fixed Toolbar. This is not `ParagraphIcon`: that one is a plain pilcrow, "an ordinary paragraph", and sits on the same Toolbar in the "¶" menu; the arrow tells the display toggle from a Block type.
+
+Footnotes added `FootnoteIcon` — lucide's `Asterisk`, the oldest mark of a note at the foot of the text: the "Footnote" item of the Editor's Slash menu and "…" menu. This is not `SuperscriptIcon`: that one is the Mark, while a footnote is a reference with a text of its own in the list at the end of the Document (ADR-0076).
 
 Video added `VideoIcon` — lucide's `SquarePlay`: a square with a play triangle, the "Video" item of the Editor's Insert menu (the `youtube` and `twitch` Tools). This is not `PlayIcon`: that one is a start button, and the player placeholder's own "Play" button (the `autoload: false` option) carries exactly that icon (ADR-0049).
 

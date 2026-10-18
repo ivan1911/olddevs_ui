@@ -334,6 +334,21 @@ const SERVER_SAFE = [
       "RichTextView and the sanitizer call them.",
   },
   {
+    file: "editor/features/footnotes/footnoteHtml.ts",
+    why:
+      "The sanitizer half of footnotes (ADR-0076): the narrow rule that lets id and href=# through " +
+      "only on the footnote markup, in its exact shape and place, and the structure check. Functions " +
+      "over DOM nodes that the server-side cleanup hands over; the only import is footnoteNames.ts. " +
+      "No React and no Tiptap, so schema.ts calls it on the consumer's server.",
+  },
+  {
+    file: "editor/features/footnotes/footnoteNames.ts",
+    why:
+      "The names of footnotes as constants and pure functions (ADR-0076): the node names, the HTML " +
+      "attribute names, the key shape and the fn-<key> / fnref-<key> anchors. Strings only, no " +
+      "imports (crypto is a global), so the sanitizer in schema.ts and the Tool descriptor share them.",
+  },
+  {
     file: "editor/features/language/languageTag.ts",
     why:
       "The shape, the canonical case and the quote set of a BCP 47 language tag (OLDSUI-308, ADR-0078): " +

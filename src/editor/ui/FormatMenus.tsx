@@ -23,6 +23,7 @@ import {
   ClearFormattingIcon,
   CodeBlockIcon,
   InlineCodeIcon,
+  FootnoteIcon,
   InvisibleCharactersIcon,
   ListIcon,
   MoreIcon,
@@ -571,6 +572,7 @@ export function moreFormatTools(omit: readonly MoreMarkId[] = []): readonly Tool
     "language",
     "codeBlock",
     "blockquote",
+    "footnotes",
     "clearFormatting",
   ];
 }
@@ -640,6 +642,8 @@ export function MoreFormatMenu({
   // The quote is a checkbox next to the code Block: it has moved out of the "¶" menu.
   const quote = quoteItemFor(tools);
   const clear = tools.has("clearFormatting");
+  // "Footnote" is an action, not a toggle: it puts a reference at the end of the selection.
+  const footnote = tools.has("footnotes");
   const view = invisibleCharacters && tools.has("invisibleCharacters");
   const languages = toolOptions(tools, "language")?.languages;
 
@@ -654,6 +658,7 @@ export function MoreFormatMenu({
       inQuote: quote !== undefined && current.isActive("blockquote"),
       canQuote: quote !== undefined && current.can().toggleBlockquote(),
       canClear: clear && current.can().unsetAllMarks(),
+      canFootnote: footnote && current.can().insertFootnote(),
       // Showing invisible characters is a plugin state of the engine, not a Mark or a Block.
       invisible: view && invisibleCharactersVisible(current),
       // The language under the selection and the page's; `null` without the Tool.
@@ -662,7 +667,8 @@ export function MoreFormatMenu({
         : null,
     }),
   });
-  if (marks.length === 0 && !codeBlock && !quote && !clear && !view && !languages) return null;
+  if (marks.length === 0 && !codeBlock && !quote && !footnote && !clear && !view && !languages)
+    return null;
 
   const sections = (
     [
@@ -720,6 +726,19 @@ export function MoreFormatMenu({
         ],
       },
       {
+        id: "insert",
+        items: footnote
+          ? [
+              {
+                id: "footnote",
+                label: messages.footnote,
+                icon: FootnoteIcon,
+                disabled: !state.canFootnote,
+              },
+            ]
+          : [],
+      },
+      {
         id: "clear",
         items: clear
           ? [
@@ -757,6 +776,7 @@ export function MoreFormatMenu({
     if (mark) return mark.run(editor);
     if (key === "codeBlock") return void editor.chain().focus().toggleCodeBlock().run();
     if (key === "blockquote") return void editor.chain().focus().toggleBlockquote().run();
+    if (key === "footnote") return void editor.chain().focus().insertFootnote().run();
     if (key === "clearFormatting") return void editor.chain().focus().unsetAllMarks().run();
     if (key === "invisibleCharacters") {
       toggleInvisibleCharacters(editor);

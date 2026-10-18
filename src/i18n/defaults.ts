@@ -544,6 +544,9 @@ export const DEFAULT_MESSAGES: UiMessages = {
     dateRemove: "Delete date",
     dateInsert: "Insert",
     dateApply: "Apply",
+    footnote: "Footnote",
+    footnotes: "Footnotes",
+    footnoteBack: ({ number }) => `Back to text, footnote ${number}`,
     emoji: "Emoji",
     emojiGrid: "Choose an emoji",
     emojiCategory: {
