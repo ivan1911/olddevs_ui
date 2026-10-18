@@ -188,6 +188,8 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   const submenuPlacement = useSubmenuPlacement();
   const [open, setOpen] = useState(false);
   const [buttonFocused, setButtonFocused] = useState(false);
+  // Between an action and the frame in which the Document gets its focus back (see `run`).
+  const [refocusing, setRefocusing] = useState(false);
   const [place, setPlace] = useState<{ top: number; left: number } | null>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -279,7 +281,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       };
     },
   });
-  const shown = state !== null && (state.focused || open || buttonFocused);
+  const shown = state !== null && (state.focused || open || buttonFocused || refocusing);
 
   openRef.current = () => {
     if (!editor.isEditable || !handleBlocks(editor.state)) return false;
@@ -537,7 +539,19 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     delete: deleteBlock,
   } as const;
 
+  /*
+    An action returns focus to the Document with the engine's `focus()`, and that waits for an
+    animation frame. The menu has closed by then and focus is nowhere, so for that frame the handle
+    would disappear and come back. `refocusing` holds it on screen until the frame has passed; the
+    frame is requested after the engine's own, so the Document is focused by the time it ends.
+  */
   const run = (key: unknown) => {
+    perform(key);
+    setRefocusing(true);
+    requestAnimationFrame(() => setRefocusing(false));
+  };
+
+  const perform = (key: unknown) => {
     actedRef.current = true;
     const id = String(key);
     const [kind, itemId] = id.split(":");
