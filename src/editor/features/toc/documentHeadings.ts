@@ -2,6 +2,7 @@ import type { Editor } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
 import { WRAPPER_NODE } from "../../core/nodeNames.js";
 import type { TocLevel, TocToolOptions } from "../../core/toolOptions.js";
+import { FOOTNOTE_REF_NODE } from "../footnotes/footnoteNames.js";
 
 /*
   A module without Tiptap at runtime (types only). The table-of-contents core
@@ -29,7 +30,8 @@ export interface TocDocumentHeading {
  * the list items: a heading at the top level or inside Wrappers (not inside Layout
  * columns, custom Blocks, quotes, or lists), a level from `levels`, and text that is
  * not empty after trimming the outer spaces. The text is the same as the DOM's
- * `textContent`: a soft hyphen is not part of it, but Atom text is.
+ * `textContent`: a soft hyphen is not part of it, but Atom text is, except for the number of a footnote
+ * reference, which the list does not show.
  *
  * The traversal goes through the top level and Wrappers, not the whole Document: the cost
  * is the number of top-level Blocks. It does not grow with nesting and will not be noticeable
@@ -49,7 +51,10 @@ export function tocDocumentHeadings(
       const level = node.attrs.level as TocLevel;
       const text = node
         .textBetween(0, node.content.size, "", (leaf) =>
-          leaf.type.name === "hardBreak" ? "" : leaf.textContent
+          // A footnote reference is not part of the heading's name (ADR-0076).
+          leaf.type.name === "hardBreak" || leaf.type.name === FOOTNOTE_REF_NODE
+            ? ""
+            : leaf.textContent
         )
         .trim();
       if (text && levels.includes(level)) headings.push({ level, text, pos });

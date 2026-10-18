@@ -11,22 +11,30 @@ import {
   AddIcon,
   ArrowDownIcon,
   ArrowUpIcon,
+  BlockSelectIcon,
   ColumnLayoutIcon,
   DeleteIcon,
+  DetailsIcon,
   DuplicateIcon,
   MoreVerticalIcon,
   PaletteIcon,
   ParagraphIcon,
+  QuoteIcon,
+  WrapperIcon,
 } from "../../icons.js";
 import { cn } from "../../lib/cn.js";
 import {
   deleteBlock,
   duplicateBlock,
-  handleBlock,
+  handleBlocks,
   handleShortcutsMatch,
   moveBlock,
 } from "../core/blockCommands.js";
+import { BlockSelection } from "../core/blockSelection.js";
+import { isTurnable, sharedBlockType, turnBlocksInto } from "../core/blockTurn.js";
 import { blockTypeOf, formatItemsFor } from "../core/blockTypes.js";
+import { unitNodes } from "../core/blockUnit.js";
+import { planWrap, wrapUnits, type WrapKind } from "../core/blockWrap.js";
 import { EDITOR_LAYOUTS, type EditorLayout } from "../features/layout/columnLayouts.js";
 import {
   formatMenuSections,
@@ -39,7 +47,12 @@ import { applyInsertItem, insertItemsFor, turnBlockInto } from "../core/insertIt
 import { COLUMN_NODE, LAYOUT_NODE, layoutOfNode } from "../features/layout/layout.js";
 import { EDITOR_WRAPPER_TONE_CLASS } from "../styles/prose.js";
 import { ariaShortcut, findShortcutKeys, isApple, shortcutLabel } from "../core/shortcuts.js";
-import { blockActionsOf, blockActionVisible, type ToolList } from "../core/toolDescriptor.js";
+import {
+  blockActionsOf,
+  blockActionVisible,
+  toolOptions,
+  type ToolList,
+} from "../core/toolDescriptor.js";
 import { WRAPPER_NODE } from "../features/wrapper/wrapper.js";
 import { EDITOR_WRAPPER_TONES, wrapperToneFrom } from "../features/wrapper/wrapperTones.js";
 import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
@@ -66,12 +79,13 @@ const buttonExtras = (onFocusChange: (focused: boolean) => void) =>
  * edge; a horizontal rule's handle sits on the rule itself. `null` means there is nothing to measure.
  */
 function handlePlace(view: EditorView, anchor: HTMLElement): { top: number; left: number } | null {
-  const block = handleBlock(view.state);
+  const block = handleBlocks(view.state);
   const origin = anchor.offsetParent;
   if (!block || !(origin instanceof HTMLElement)) return null;
   const container = block.depth === 0 ? view.dom : view.nodeDOM(block.$from.before(block.depth));
   if (!(container instanceof HTMLElement)) return null;
 
+  // The handle stands at the first Block of the row.
   const node = block.parent.child(block.startIndex);
   const win = container.ownerDocument.defaultView;
   /*
@@ -185,7 +199,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   // below is the same one. A duplicate is dropped by id, not by label: the label
   // depends on the consumer's catalog, and matching words do not mean one action.
   const addItems = useMemo(
-    () => insertItemsFor(tools).filter((item) => item.id !== "codeBlockFromText"),
+    () => insertItemsFor(tools).filter((item) => item.id !== "codeBlockFromText" && !item.inline),
     [tools]
   );
   const formatItems = useMemo(() => formatItemsFor(tools), [tools]);
@@ -193,12 +207,20 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   // are menu widgets without a Tool of their own, so they are still assembled below, as before.
   const toolActions = useMemo(() => blockActionsOf(tools), [tools]);
 
+  const detailsPersist = toolOptions(tools, "details")?.persist === true;
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => {
-      const block = current.isEditable ? handleBlock(current.state) : null;
+      const block = current.isEditable ? handleBlocks(current.state) : null;
       if (!block) return null;
-      const node = block.parent.child(block.startIndex);
+      const nodes = unitNodes(block);
+      const node = nodes[0]!;
+      const count = nodes.length;
+      // A group acts on several Blocks (ADR-0077); one selected Block is "picked", and its menu has
+      // everything of a single Block's menu plus "Wrap in ›".
+      const picked = current.state.selection instanceof BlockSelection;
+      const group = count > 1;
+      const several = group || picked;
       // Column layout: its variant is on the handle of the Column layout itself (selected
       // as a whole) and on the handle of a Block in its column.
       const layout =
@@ -215,7 +237,22 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
             : null;
       return {
         focused: current.view.hasFocus(),
+        count,
+        group,
+        picked,
+        // The Block selection Tool adds "Select" to the menu (the way in on a touch screen).
+        canSelect: tools.has("blockSelection") && !picked,
         type: blockTypeOf(node),
+        // The type shared by all text Blocks of a group, for the mark in "Format ›".
+        sharedType: several ? sharedBlockType(block) : null,
+        // Something in the row changes under "Format ›" (a table, an image and containers do not).
+        turnable: several && nodes.some(isTurnable),
+        // The containers the Schema allows around these Blocks; only for a row that can be wrapped.
+        wraps: several
+          ? (["wrapper", "blockquote", "details"] as const)
+              .filter((kind) => tools.has(kind))
+              .map((kind) => ({ kind, allowed: planWrap(block, kind, detailsPersist) !== null }))
+          : [],
         // The "can be turned into" trait of a custom Block (ADR-0058, item 1.4).
         turnInto: node.type.spec.turnInto === true,
         layout: layout ? layoutOfNode(layout) : null,
@@ -225,14 +262,17 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
         inWrapper: wrapper !== null,
         tone: wrapper ? wrapperToneFrom(wrapper.attrs.tone) : null,
         // Block actions apply to the handle's Block and to the container it sits in (`BlockAction.blocks`).
-        actions: toolActions
-          .filter((action) =>
-            blockActionVisible(action, current, block.start, {
-              name: node.type.name,
-              container: block.parent.type.name,
-            })
-          )
-          .map((action) => action.id),
+        // A group has none: they are written for one Block.
+        actions: group
+          ? []
+          : toolActions
+              .filter((action) =>
+                blockActionVisible(action, current, block.start, {
+                  name: node.type.name,
+                  container: block.parent.type.name,
+                })
+              )
+              .map((action) => action.id),
         first: block.startIndex === 0,
         last: block.endIndex === block.parent.childCount,
         keys: handleShortcutsMatch(current.state),
@@ -242,7 +282,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   const shown = state !== null && (state.focused || open || buttonFocused);
 
   openRef.current = () => {
-    if (!editor.isEditable || !handleBlock(editor.state)) return false;
+    if (!editor.isEditable || !handleBlocks(editor.state)) return false;
     actedRef.current = false;
     setOpen(true);
     return true;
@@ -288,7 +328,8 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
 
   const shortcut = (keys: readonly string[]) => shortcutLabel(keys, apple);
   const { keys } = state;
-  const active = formatItems.find((item) => item.id === state.type);
+  const several = state.group || state.picked;
+  const active = formatItems.find((item) => item.id === (several ? state.sharedType : state.type));
 
   /*
     The Column layout variants form one list, for "Add › Layout ›" and for
@@ -309,7 +350,10 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   ];
 
   const blockItems: FormatMenuItem[] = [];
-  if (addItems.length > 0) {
+  if (state.canSelect) {
+    blockItems.push({ id: "select", label: messages.blockSelect, icon: BlockSelectIcon });
+  }
+  if (addItems.length > 0 && !state.group) {
     blockItems.push({
       id: "add",
       label: messages.blockAdd,
@@ -334,7 +378,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       ],
     });
   }
-  if (state.isLayout) {
+  if (state.isLayout && !state.group) {
     // "Format ›" of the Column layout as a whole: its variants, with the current one marked.
     // It has no Block type, and the variant is its format.
     blockItems.push({
@@ -349,8 +393,9 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       label: messages.blockFormat,
       icon: ParagraphIcon,
       // A table, an image, and a rule cannot be turned into text: the item is visible but
-      // disabled. A custom Block gets it only with the "can be turned into" trait.
-      disabled: state.type === null && !state.turnInto,
+      // disabled. A custom Block gets it only with the "can be turned into" trait. A group is
+      // turned when at least one Block in it changes.
+      disabled: several ? !state.turnable : state.type === null && !state.turnInto,
       submenu: [
         {
           id: "formatItems",
@@ -372,7 +417,31 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     when it is selected as a whole (Backspace on the Block under it), and the caret is almost
     always in the column. Without this item the variant could not be changed.
   */
-  if (!state.isLayout && state.layout) {
+  if (state.wraps.length > 0) {
+    // Wrap the Blocks in a container (ADR-0077). The Schema decides where it is allowed.
+    const wrapLabels = {
+      wrapper: { label: messages.wrapper, icon: WrapperIcon },
+      blockquote: { label: messages.blockquote, icon: QuoteIcon },
+      details: { label: messages.details, icon: DetailsIcon },
+    } as const;
+    blockItems.push({
+      id: "wrap",
+      label: messages.blockWrap,
+      icon: WrapperIcon,
+      disabled: state.wraps.every((wrap) => !wrap.allowed),
+      submenu: [
+        {
+          id: "wrapItems",
+          items: state.wraps.map(({ kind, allowed }) => ({
+            id: `wrap:${kind}`,
+            ...wrapLabels[kind],
+            disabled: !allowed,
+          })),
+        },
+      ],
+    });
+  }
+  if (!state.isLayout && state.layout && !state.group) {
     blockItems.push({
       id: "layoutFormat",
       label: messages.layout,
@@ -387,7 +456,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     on a Block of the `wrapper` Tool (`features/builtins.ts`), and it is in the actions
     section below.
   */
-  if (state.inWrapper) {
+  if (state.inWrapper && !state.group) {
     /*
       The items are radio items: "None" and the five tones by name. The current one is marked,
       and the menu item's name carries the current tone, as the "¶" button's name carries the current type.
@@ -506,13 +575,45 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     }
     if (kind === "action") {
       const action = toolActions.find((candidate) => candidate.id === itemId);
-      const block = handleBlock(editor.state);
+      const block = handleBlocks(editor.state);
       if (action && block) action.run(editor, block.start);
       else editor.commands.focus();
       return;
     }
+    /*
+      A group's result is announced to the screen reader (ADR-0077): "Blocks deleted: 3". One Block
+      acts as before, in silence. The count is read before the action: the selection changes with it.
+    */
+    const several = state.group || state.picked;
+    const announce = (text: string) => {
+      if (several) editor.commands.showNotice({ tone: "status", text });
+    };
+    if (kind === "select") {
+      editor.chain().focus().selectBlocks().run();
+      return;
+    }
+    if (kind === "wrap") {
+      const range = handleBlocks(editor.state);
+      const done =
+        !!range &&
+        editor
+          .chain()
+          .focus()
+          .command(({ tr }) => wrapUnits(tr, range, itemId as WrapKind, detailsPersist))
+          .run();
+      if (done) announce(messages.blocksWrapped({ count: state.count }));
+      return;
+    }
     if (kind === "format") {
       const item = formatItems.find((candidate) => candidate.id === itemId);
+      const range = handleBlocks(editor.state);
+      if (several && item && range) {
+        // The same type in every text Block of the group changes nothing, as with "¶".
+        if (item.id !== state.sharedType && turnBlocksInto(editor, item, range)) {
+          announce(messages.blocksChanged({ count: state.count }));
+        } else editor.commands.focus();
+        return;
+      }
       // Selecting the current type changes nothing, as with "¶".
       if (item && item.id !== state.type) turnBlockInto(editor, item);
       else editor.commands.focus();
@@ -522,6 +623,13 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     if (!command) return;
     command(editor.state, editor.view.dispatch);
     editor.commands.focus();
+    const result = {
+      moveUp: messages.blocksMoved,
+      moveDown: messages.blocksMoved,
+      duplicate: messages.blocksDuplicated,
+      delete: messages.blocksDeleted,
+    }[id as keyof typeof commands];
+    announce(result({ count: state.count }));
   };
 
   const onOpenChange = (next: boolean) => {

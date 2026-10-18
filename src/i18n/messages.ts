@@ -1046,6 +1046,30 @@ export interface UiMessages {
     mathApply: string;
     mathRemove: string;
     /**
+     * Date mention (ADR-0079). `date` is the Slash menu item and the name of the popover. In the
+     * popover: `dateTime` is the label of the "Time" switch, `dateTimeField` is the name of the time
+     * field (`HH:MM`), `dateRemoveTime` turns a date with a time back into a date, `dateRemove` deletes
+     * the mention from the Document, `dateInsert` and `dateApply` are the buttons for a new and for an
+     * editable mention.
+     */
+    date: string;
+    dateTime: string;
+    dateTimeField: string;
+    dateRemoveTime: string;
+    dateRemove: string;
+    dateInsert: string;
+    dateApply: string;
+    /**
+     * Footnotes (ADR-0076). `footnote` is the name of the Slash menu item and of the item in the "…"
+     * menu of the Toolbar. `footnotes` is the name of the list, written into the saved HTML
+     * (`aria-label` of the list) in the language of this catalog, like the rest of the Document's text.
+     * `footnoteBack` is the name of the number button of a footnote in the Editor, which returns the
+     * caret to the text; the number is in the sentence, so a function.
+     */
+    footnote: string;
+    footnotes: string;
+    footnoteBack: (vars: { number: number }) => string;
+    /**
      * Emoji. `emoji` is the name of the Toolbar button; `emojiGrid` is the name of the grid in
      * the popover. `emojiCategory` holds the category names, `emojiName` the name of each emoji:
      * a screen reader reads a cell by its name, not by its character, because different programs
@@ -1143,6 +1167,32 @@ export interface UiMessages {
     blockMoveDown: string;
     blockDuplicate: string;
     blockDelete: string;
+    /**
+     * Block selection (the `blockSelection` Tool, ADR-0077) and the Block handle over several Blocks.
+     * `blockSelect` is the handle's item that selects the current Blocks (the way in on a touch
+     * screen); `blockWrap` is the handle's submenu "Wrap in ›" over a group of Blocks (its items are
+     * the names of the containers: `wrapper`, `blockquote`, `details`). `blockSelectionSelect` and
+     * `blockSelectionExtend` are the reference rows of `Esc` and `Shift+↑/↓`.
+     */
+    blockSelect: string;
+    blockWrap: string;
+    blockSelectionSelect: string;
+    blockSelectionExtend: string;
+    /**
+     * What the screen reader hears (Field notice, tone `status`): the state of the selection and the
+     * result of an action over Blocks. The count is in the phrase's tail, so the phrase needs no
+     * plural form in any language.
+     */
+    blocksSelected: (vars: { count: number }) => string;
+    blockSelectionCleared: string;
+    blocksDeleted: (vars: { count: number }) => string;
+    blocksDuplicated: (vars: { count: number }) => string;
+    blocksMoved: (vars: { count: number }) => string;
+    blocksChanged: (vars: { count: number }) => string;
+    blocksWrapped: (vars: { count: number }) => string;
+    blocksCopied: (vars: { count: number }) => string;
+    blocksCut: (vars: { count: number }) => string;
+    blocksReplaced: (vars: { count: number }) => string;
     /**
      * The Document's table of contents (`RichTextToc`): the name of the strip button and the label
      * of the `nav` with the list of headings. It is one word for both, because it is one thing.

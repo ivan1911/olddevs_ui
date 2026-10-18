@@ -385,6 +385,24 @@ const MATH_CLASS =
   "[&_.tiptap-mathematics-render.ProseMirror-selectednode]:outline-(--rte-ring) ";
 
 /**
+ * Date mention (the `date` Tool, ADR-0079): `time[datetime]` inline. The same plaque in the Editor and
+ * in the View: a rounded chip with the weak background that inline code uses (`--rte-code-background`,
+ * whose contrast with the body text is already measured on the themes, the Paper and in a toned
+ * Wrapper by `npm run contrast`), with the ordinary font and no icon. `nowrap` keeps one date from
+ * breaking across lines.
+ *
+ * EDITOR. The mention is clickable: the pointer shows it, but only in an editable field (the root's
+ * `contenteditable="true"`). A mention selected with a click or `Enter` gets the outline of a selected
+ * Atom, the same as a formula.
+ */
+const DATE_CLASS =
+  "[&_time[datetime]]:rounded-(--rte-radius) [&_time[datetime]]:bg-(--rte-code-background) " +
+  "[&_time[datetime]]:px-1 [&_time[datetime]]:py-0.5 [&_time[datetime]]:whitespace-nowrap " +
+  "[&[contenteditable=true]_time[datetime]]:cursor-pointer " +
+  "[&_time[datetime].ProseMirror-selectednode]:outline-2 " +
+  "[&_time[datetime].ProseMirror-selectednode]:outline-(--rte-ring) ";
+
+/**
  * Invisible characters (the `invisibleCharacters` Tool): the Tiptap extension puts
  * `span.tiptap-invisible-character` widgets into the markup, with a `--space`, `--break` or
  * `--paragraph` modifier; the empty `span` carries the mark in `::before`. The kit does not
@@ -410,6 +428,49 @@ const INVISIBLE_CHARACTERS_CLASS =
   "[&_.tiptap-invisible-character--break]:before:content-['↵'] " +
   "[&_.tiptap-invisible-character--paragraph]:before:content-['¶'] " +
   "[&_p.is-editor-empty:first-child>.tiptap-invisible-character--paragraph]:hidden ";
+
+/**
+ * Footnotes (the `footnotes` Tool, ADR-0076): the reference `sup[data-footnote-ref]` in the text and
+ * the list `section[data-block=footnotes]` at the end of the Document. The look is the same in the
+ * Editor and in the View, apart from the number: the View shows the list's own decimal markers and the
+ * "↩" link, the Editor shows the number as a button (`[data-footnote-back]`) that returns the caret to
+ * the text.
+ *
+ * THE LIST: a short rule on top, small secondary text, no visible heading (its name is in the HTML for
+ * screen readers, `aria-label`). The roles are the Document's own (`--rte-hr`, `--rte-secondary`), so
+ * the contrast of the quote's text holds here too, on the theme and on the Paper alike.
+ *
+ * THE TEXT STANDS NEXT TO ITS BACKLINK. In the saved HTML a footnote is `li > p` plus the "↩" link;
+ * the paragraph is inline so the link follows the last word. In the Editor the item is a flex row of
+ * the number button and the paragraph, and a flex item is a block whatever its `display`.
+ *
+ * JUMPS WITHOUT JS. The anchors are plain `#fn-…` and `#fnref-…` links. The item that was jumped to
+ * (`:target`) is highlighted with the selection color, so the reader sees where they landed.
+ */
+const FOOTNOTE_CLASS =
+  "[&_sup[data-footnote-ref]]:ml-px [&_sup[data-footnote-ref]>a]:font-medium " +
+  "[&_section[data-block=footnotes]]:mt-6 [&_section[data-block=footnotes]]:border-t " +
+  "[&_section[data-block=footnotes]]:border-(--rte-hr) [&_section[data-block=footnotes]]:pt-3 " +
+  "[&_section[data-block=footnotes]]:text-sm [&_section[data-block=footnotes]]:text-(--rte-secondary) " +
+  "[&_section[data-block=footnotes]_li>p]:inline " +
+  "[&_section[data-block=footnotes]_li>a[role=doc-backlink]]:ml-1 " +
+  "[&_section[data-block=footnotes]_li:target]:rounded-(--rte-radius) " +
+  "[&_section[data-block=footnotes]_li:target]:bg-(--rte-selection) " +
+  // In the Editor the number is a button, so the list needs no room for its own markers.
+  "[&_section[data-block=footnotes]_ol:has(>li>[data-footnote-back])]:pl-0 " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:flex " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:list-none " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:items-baseline " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:gap-1.5 " +
+  "[&_section[data-block=footnotes]_li>p]:min-w-0 [&_section[data-block=footnotes]_li>p]:flex-1 " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:min-w-5 " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:cursor-pointer " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:text-right " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:text-(--rte-link) " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:underline " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:underline-offset-2 " +
+  // The number is followed by a dot, like the decimal marker the View's list draws itself.
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:after:content-['.'] ";
 
 /**
  * Text part language (the `language` Tool, ADR-0078): `span[lang]` is a Mark with no look of its own
@@ -475,6 +536,20 @@ const VIDEO_CLASS =
 const CUSTOM_BLOCK_CLASS =
   "[&_div[data-block]:not([data-block=layout],[data-block=column],[data-block=wrapper])>:is(p,h1,h2,h3,h4,ul,ol,blockquote,hr,pre,table,figure,div):not(:last-child)]:mb-3 " +
   "[&_div[data-block]:not([data-block=layout],[data-block=column],[data-block=wrapper])>:is(h1,h2,h3,h4):not(:first-child)]:mt-6";
+
+/**
+ * Block selection (ADR-0077): the selected Blocks are painted whole on `--rte-selection`, the same
+ * role as the selected cells of a table and the selected text, with the Document's radius. The Blocks
+ * carry the class from a decoration (`blockSelectionExtension.ts`), so it exists only in the Editor.
+ * A 2px spread of the same color shows the selection around a Block that has a background of its own
+ * (a code Block, a toned Wrapper). While the selection lasts, the root has `data-block-selection`:
+ * the engine's own selection (which spans the Blocks) is not painted, and neither is the caret,
+ * so the Document shows no cursor and no text selection.
+ */
+const BLOCK_SELECTION_CLASS =
+  "[&_.rte-block-selected]:rounded-(--rte-radius) [&_.rte-block-selected]:bg-(--rte-selection) " +
+  "[&_.rte-block-selected]:shadow-[0_0_0_2px_var(--rte-selection)] " +
+  "[&[data-block-selection]]:caret-transparent [&[data-block-selection]]:selection:bg-transparent ";
 
 /**
  * Document typography, shared by the Editor and the future `RichTextView`.
@@ -581,9 +656,12 @@ const PROSE_RULES =
   DETAILS_CLASS +
   " " +
   MATH_CLASS +
+  DATE_CLASS +
   INVISIBLE_CHARACTERS_CLASS +
+  FOOTNOTE_CLASS +
   LANGUAGE_CLASS +
   VIDEO_CLASS +
+  BLOCK_SELECTION_CLASS +
   CUSTOM_BLOCK_CLASS;
 
 /**

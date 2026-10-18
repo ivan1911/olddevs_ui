@@ -96,6 +96,15 @@ test("tool() does not take a name that has no options", () => {
   tool("nope", {});
 });
 
+test("a Tool with only state and commands is not configurable by name (OLDSUI-307), one with options is", () => {
+  // @ts-expect-error `blockSelection` has state and commands, and no options
+  tool("blockSelection");
+  // @ts-expect-error `blockSelection` has no options to pass
+  tool("blockSelection", {});
+  // `language` has options (OLDSUI-308), and stays configurable next to it.
+  expect(tool("language", {})).toBeDefined();
+});
+
 test("the map reads the options of a tool by its name", () => {
   expectTypeOf<RichTextTools["toc"]["options"]>().toEqualTypeOf<{
     offsetVar: string;

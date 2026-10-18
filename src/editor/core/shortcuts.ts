@@ -79,6 +79,8 @@ export const SHORTCUT_KEYS = {
   moveBlockUp: ["alt", "shift", "↑"],
   moveBlockDown: ["alt", "shift", "↓"],
   blockActions: ["mod", "/"],
+  blockSelect: ["Esc"],
+  blockExtend: ["shift", "↑/↓"],
   clearFormatting: ["mod", "\\"],
   bold: ["mod", "B"],
   italic: ["mod", "I"],
@@ -366,6 +368,7 @@ export function ariaShortcut(keys: readonly string[], apple: boolean): string {
     shift: "Shift",
     "↑": "ArrowUp",
     "↓": "ArrowDown",
+    Esc: "Escape",
   };
   return keys.map((key) => names[key] ?? key).join("+");
 }

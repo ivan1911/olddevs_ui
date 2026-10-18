@@ -416,6 +416,8 @@ test("the insert menu lists Table among the blocks to add, with no shortcut hint
     "Layout",
     "Wrapper",
     "Collapsible block",
+    "Footnote",
+    "Date",
   ]);
 });
 

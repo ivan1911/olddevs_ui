@@ -56,10 +56,35 @@ export interface TocToolState {
   current: number;
 }
 
+/** A footnote in the `footnotes` Tool's state. */
+export interface FootnotesToolNote {
+  /** The footnote's number, from 1: its place in the list, which is the order of the references in the text. */
+  number: number;
+  /** The footnote's text without markup; a hard break is a line break. */
+  text: string;
+}
+
+/** State of the `footnotes` Tool (ADR-0076). */
+export interface FootnotesToolState {
+  /** The footnotes in order: the same as the list at the end of the Document. Empty when there are none. */
+  footnotes: readonly FootnotesToolNote[];
+  /**
+   * The number of the current footnote: the caret is in its text, or its reference is selected.
+   * `null` when the caret is anywhere else.
+   */
+  current: number | null;
+}
+
 /** State of the `invisibleCharacters` Tool (based on the Invisible Characters extension from Tiptap, ADR-0048). */
 export interface InvisibleCharactersToolState {
   /** Spaces, soft hyphens and paragraph ends are shown. Hidden until the author turns them on or the `visible` option applies. */
   visible: boolean;
+}
+
+/** State of the `blockSelection` Tool (ADR-0077). */
+export interface BlockSelectionToolState {
+  /** How many Blocks are selected whole; `0` means there is no Block selection (a caret or a text selection). */
+  count: number;
 }
 
 /** State of the `language` Tool (Text part language, ADR-0078). */

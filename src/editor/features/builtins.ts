@@ -7,10 +7,13 @@ import { turnIntoTypes } from "../core/blockTypes.js";
 import type { InsertItem } from "../core/insertItems.js";
 import { INSERT_MENU_TOOL } from "../core/insertMenuTool.js";
 import { SHORTCUT_KEYS, type ShortcutCommand } from "../core/shortcuts.js";
+import { BLOCK_SELECTION_TOOL } from "./blockSelection/blockSelectionTool.js";
 import { ALIGN_TOOL, COLOR_TOOL, HIGHLIGHT_TOOL } from "./color/colorTools.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
+import { DATE_TOOL } from "./date/dateTool.js";
 import { DETAILS_TOOL } from "./details/detailsTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
+import { FOOTNOTES_TOOL } from "./footnotes/footnoteTool.js";
 import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
 import { HISTORY_TOOL } from "./history/historyTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
@@ -81,6 +84,7 @@ const BLOCKQUOTE_ITEMS: readonly InsertItem[] = [
 export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   search: SEARCH_TOOL,
   invisibleCharacters: INVISIBLE_CHARACTERS_TOOL,
+  blockSelection: BLOCK_SELECTION_TOOL,
   // The Table of contents carries only options: its strip and list are drawn in `RichTextEditor`.
   toc: TOC_TOOL,
   layout: LAYOUT_TOOL,
@@ -91,6 +95,8 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   wrapper: WRAPPER_TOOL,
   details: DETAILS_TOOL,
   mathematics: MATHEMATICS_TOOL,
+  date: DATE_TOOL,
+  footnotes: FOOTNOTES_TOOL,
   typography: TYPOGRAPHY_TOOL,
   pasteCleanup: PASTE_CLEANUP_TOOL,
   youtube: YOUTUBE_TOOL,

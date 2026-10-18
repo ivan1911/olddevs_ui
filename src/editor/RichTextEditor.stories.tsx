@@ -2595,6 +2595,144 @@ export const MathematicsPopover: Story = {
   render: () => <OpenedFormula />,
 };
 
+/*
+  Date mention (OLDSUI-309, ADR-0079): a date inside a line of text, `<time datetime>` with the words the
+  author saw. In `full`, so no `tools` list is needed. The Calendar and the popover are a lazy chunk that
+  loads when a mention is inserted or edited.
+*/
+const DATE_SAMPLE =
+  "<h2>Project plan</h2>" +
+  '<p>The kickoff is on <time datetime="2026-10-12">Oct 12, 2026</time>, the review meeting at ' +
+  '<time datetime="2026-10-19T15:00+03:00">Oct 19, 2026, 3:00 PM</time>, and the release is planned for ' +
+  '<time datetime="2026-11-02">Nov 02, 2026</time>. Click a date to change it, or select it with ' +
+  "<kbd>Shift</kbd>+<kbd>→</kbd> and press Enter.</p>" +
+  "<p>Text after the dates.</p>";
+
+/**
+ * A date mention: a rounded chip with the weak background and the ordinary font. A click on it, or Enter
+ * on the selected one, opens the popover with the calendar; a new one is inserted from the Insert menu
+ * ("Date"). The words are written in the author's locale and shown by `RichTextView` as they are.
+ */
+export const DateMention: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} />
+    </div>
+  ),
+};
+
+/** Date mentions on a light `surface="paper"` sheet. */
+export const DateMentionPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} surface="paper" />
+    </div>
+  ),
+};
+
+/** The Slash menu by `/date`: the "Date" item (and by `today`, `calendar`). Enter on it opens the calendar. */
+export const DateMentionInsertSlash: Story = {
+  render: () => <TypedCommand command="/date" />,
+};
+
+/** Open the edit popover of the mention with a time as soon as the Editor has drawn it. */
+function OpenedDate() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const target = root.current?.querySelector<HTMLElement>("time[datetime*='T']");
+      if (!target) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      target.click();
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div ref={root} className="h-[560px] max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * The edit popover of a mention with a time: the calendar on its day, the "Time" switch with the time
+ * field, "Remove time" and "Delete date", and "Apply" for a changed time.
+ */
+export const DateMentionPopover: Story = {
+  // The popover's chunk (the Calendar) is lazy: the snapshot and the audit wait for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => <OpenedDate />,
+};
+
+/*
+  A `<time>` from someone else's page. The forms the Editor writes itself (a date, a date with a time and
+  an offset) become mentions with their words as they were; a period, a week, a year and a time without an
+  offset stay ordinary text, and nothing is lost.
+*/
+const FOREIGN_TIME_HTML =
+  '<p>From a news page: published <time datetime="2026-10-12">twelfth of October</time> and ' +
+  '<time datetime="2026-10-12T09:30+02:00">9:30 CEST</time>.</p>' +
+  '<p>These stay text: <time datetime="P3D">three days</time>, <time datetime="2026-W42">week 42</time>, ' +
+  '<time datetime="2026-10-12T09:30">9:30 with no offset</time>.</p>';
+
+function PastedTime() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.view.pasteHTML(FOREIGN_TIME_HTML);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/** A `<time>` pasted from another page: a mention where `datetime` is in the Editor's form, text elsewhere. */
+export const DateMentionPasted: Story = {
+  render: () => <PastedTime />,
+};
+
+/** The `format` option: `tool("date", { format: { dateStyle: "long" } })` writes new dates in the long form. */
+export const DateMentionFormat: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, tool("date", { format: { dateStyle: "long" } })]}
+        defaultValue={DATE_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * Date mentions in the Russian locale: the Insert menu and the popover come from the catalog, the
+ * calendar is in Russian, and a date picked now is written as Russian text with a 24-hour clock.
+ */
+export const DateMentionRussian: Story = {
+  // The popover's chunk (the Calendar) is lazy: the snapshot and the audit wait for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <OpenedDate />
+    </UiProvider>
+  ),
+};
+
 /** Open the HTML mode as soon as the Toolbar appears: a click on the "HTML" button. */
 function OpenedSource(props: Partial<RichTextEditorProps>) {
   const root = useRef<HTMLDivElement>(null);
@@ -4100,4 +4238,357 @@ function QuotesDemo() {
  */
 export const TextLanguageQuotes: Story = {
   render: () => <QuotesDemo />,
+};
+
+/*
+  Block selection and the Block handle over a range (ADR-0077, OLDSUI-307). The story sets the state
+  once the engine is created, the way a user gets there: a text selection across Blocks (the handle
+  over a range), or `Esc` in the text and `Shift+↓` (Block selection). `extend` is how many times
+  `Shift+↓` is pressed after `Esc`.
+*/
+function useRangeDemo(
+  ref: RefObject<RichTextEditorHandle | null>,
+  options: { from: string; to?: string; extend?: number; open?: boolean }
+) {
+  const { from, to, extend = 0, open = false } = options;
+  useEffect(() => {
+    let frame = 0;
+    const press = () => {
+      const handle = document.querySelector<HTMLElement>('button[aria-label="Block actions"]');
+      if (!handle) {
+        frame = requestAnimationFrame(press);
+        return;
+      }
+      handle.click();
+    };
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      let start = -1;
+      let end = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (!node.isText) return;
+        if (start < 0 && node.text === from) start = pos + 1;
+        if (node.text === (to ?? from)) end = pos + node.nodeSize - 1;
+      });
+      editor.view.focus();
+      if (start > 0) editor.commands.setTextSelection(to ? { from: start, to: end } : start);
+      if (!to) {
+        // Block selection: the same as `Esc`, then `Shift+↓` for each extra Block.
+        ref.current?.tool("blockSelection")?.selectCurrent();
+        for (let step = 0; step < extend; step++) {
+          editor.view.dom.dispatchEvent(
+            new KeyboardEvent("keydown", { key: "ArrowDown", shiftKey: true, bubbles: true })
+          );
+        }
+      }
+      if (open) frame = requestAnimationFrame(press);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [ref, from, to, extend, open]);
+}
+
+const RANGE_SAMPLE =
+  "<h2>Release plan</h2>" +
+  "<p>Freeze the scope on Monday.</p>" +
+  "<p>Run the regression pass on Tuesday.</p>" +
+  "<p>Ship on Wednesday.</p>" +
+  "<ul><li><p>Announce the date</p></li><li><p>Update the changelog</p></li></ul>" +
+  "<p>Closing note for the team.</p>";
+
+function RangeDemo({
+  document = RANGE_SAMPLE,
+  from,
+  to,
+  extend,
+  open,
+  ...props
+}: {
+  document?: string;
+  from: string;
+  to?: string;
+  extend?: number;
+  open?: boolean;
+} & Partial<RichTextEditorProps>) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useRangeDemo(ref, { from, to, extend, open });
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={document} {...props} />
+    </div>
+  );
+}
+
+/**
+ * The Block handle over a range: a text selection across several Blocks no longer hides the "⋮". It
+ * stands at the first Block the selection touches, and its menu acts on all of them. This is in every
+ * Editor, with or without the `blockSelection` Tool.
+ */
+export const BlockHandleOverRange: Story = {
+  render: () => <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." />,
+};
+
+/**
+ * The menu of the handle over a range: Select, Format ›, Wrap in ›, Move up, Move down, Duplicate and
+ * Delete. No "Add ›": that item is for one Block. Every item is one edit for undo, and the screen
+ * reader hears the result ("Blocks deleted: 2").
+ */
+export const BlockHandleOverRangeMenu: Story = {
+  render: () => (
+    <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." open />
+  ),
+};
+
+/**
+ * Block selection: `Esc` in the text selects the current Block, `Shift+↓` adds the next one. The
+ * Blocks are painted whole on the selection color, there is no caret, and the "⋮" stands at the first
+ * Block. Then `Backspace` removes them, `⌘C` and `⌘X` take them whole, `⌘V` replaces them, `⌘⇧D` and
+ * `⌥⇧↑/↓` duplicate and move them; `Esc` again returns the caret.
+ */
+export const BlockSelection: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} />,
+};
+
+/** Block selection on the Paper sheet: the same highlight on a light surface in any theme. */
+export const BlockSelectionPaper: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} surface="paper" />,
+};
+
+/** A list: the unit is the item, so the selection takes one item and grows by item. */
+export const BlockSelectionInList: Story = {
+  render: () => <RangeDemo from="Announce the date" extend={1} />,
+};
+
+const COLUMNS_RANGE_SAMPLE =
+  "<p>Before the columns.</p>" +
+  layoutBlock(
+    "50-50",
+    layoutColumn("Left", "First block of the left column."),
+    layoutColumn("Right", "Only block of the right column.")
+  ) +
+  "<p>After the columns.</p>";
+
+/**
+ * Block selection in columns: the selection is neighbours of one container, so `Shift+↓` stays in the
+ * column. At the column's edge it selects the whole Column layout and goes on at the Document's level.
+ */
+export const BlockSelectionInColumns: Story = {
+  render: () => (
+    <RangeDemo document={COLUMNS_RANGE_SAMPLE} from="First block of the left column." />
+  ),
+};
+
+/**
+ * Block selection inside a `Dialog`: the first `Esc` selects the Block and the window stays, the
+ * second `Esc` ends the selection and closes the window, like any nested layer (ADR-0041). A comment
+ * field uses `preset="basic"` and keeps the one-`Esc` close.
+ */
+export const BlockSelectionInDialog: Story = {
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="h-[520px]">
+        <Button onClick={() => setOpen(true)}>Open the window</Button>
+        <Dialog open={open} onClose={() => setOpen(false)} title="Edit the plan">
+          <div className="w-[560px] max-w-full">
+            <RangeDemoInDialog />
+          </div>
+        </Dialog>
+      </div>
+    );
+  },
+};
+
+function RangeDemoInDialog() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useRangeDemo(ref, { from: "Run the regression pass on Tuesday." });
+  return <RichTextEditor ref={ref} aria-label="Document" defaultValue={RANGE_SAMPLE} />;
+}
+
+/**
+ * Block selection in a read-only field: `Esc`, `Shift+↑/↓` and `Shift+click` work, and of the actions
+ * only `⌘C` (there is no handle).
+ */
+export const BlockSelectionReadOnly: Story = {
+  render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} readOnly />,
+};
+
+/** The announcements, the menu items and the reference rows in the Russian catalog. */
+export const BlockSelectionRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." open />
+    </UiProvider>
+  ),
+};
+
+/* ── Footnotes (the `footnotes` Tool, OLDSUI-306, ADR-0076) ───────────────────────────────── */
+
+/** A footnote reference as the Editor writes it. */
+const footnoteRef = (key: string, number: number) =>
+  `<sup data-footnote-ref="${key}"><a href="#fn-${key}" id="fnref-${key}" role="doc-noteref">${number}</a></sup>`;
+
+/** The footnote list as the Editor writes it. */
+const footnoteList = (name: string, notes: readonly (readonly [key: string, html: string])[]) =>
+  `<section data-block="footnotes" role="doc-endnotes" aria-label="${name}"><ol>` +
+  notes
+    .map(
+      ([key, html]) =>
+        `<li id="fn-${key}"><p>${html}</p><a href="#fnref-${key}" role="doc-backlink">↩</a></li>`
+    )
+    .join("") +
+  "</ol></section>";
+
+const FOOTNOTES_SAMPLE =
+  "<h2>A short report</h2>" +
+  `<p>The first result${footnoteRef("fnstory1", 1)} was measured twice, and the second one${footnoteRef("fnstory2", 2)} ` +
+  `agreed with it${footnoteRef("fnstory3", 3)}.</p>` +
+  "<p>Type <code>/footnote</code> or use the item in the “…” menu to add another reference at the caret.</p>" +
+  footnoteList("Footnotes", [
+    ["fnstory1", "Measured on <strong>2026-09-01</strong>, in the lab."],
+    [
+      "fnstory2",
+      'See <a href="https://example.com/method" rel="noopener noreferrer">the method</a>.',
+    ],
+    ["fnstory3", "The difference stayed under one percent."],
+  ]);
+
+/**
+ * Footnotes in `full`: a reference with an automatic number in the text, and the footnotes' texts in a
+ * list at the end, edited in place. "Footnote" in the Slash menu and in the “…” menu inserts a reference
+ * at the caret and moves the caret into its footnote. A click or Enter on a reference goes to its
+ * footnote; the footnote's number button, or Enter in it, goes back.
+ */
+export const Footnotes: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={FOOTNOTES_SAMPLE} />
+    </div>
+  ),
+};
+
+function FootnotesRenumberingDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  const state = useRichTextToolState(ref, "footnotes");
+  return (
+    <div className="flex max-w-[640px] flex-col gap-3">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={FOOTNOTES_SAMPLE} />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          onClick={() => {
+            // The caret goes to the start of the first paragraph: the new reference becomes number 1.
+            const editor = ref.current?.editor;
+            editor
+              ?.chain()
+              .focus()
+              .setTextSelection(editor.state.doc.child(0).nodeSize + 1)
+              .run();
+            ref.current?.tool("footnotes")?.insert();
+          }}
+        >
+          Add a footnote at the start of the report
+        </Button>
+        <Button variant="outline" onClick={() => ref.current?.undo()}>
+          Undo
+        </Button>
+        <span role="status" className="text-fg-2 text-caption">
+          {state
+            ? `${state.footnotes.length} footnotes, current: ${state.current ?? "none"}`
+            : "Loading"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Renumbering. The button puts a new reference before the others: the old references and footnotes
+ * move down by one, the new footnote is first in the list, and one Undo takes the whole edit back. The
+ * state line is `useRichTextToolState(ref, "footnotes")`.
+ */
+export const FootnotesRenumbering: Story = {
+  render: () => <FootnotesRenumberingDemo />,
+};
+
+const FOOTNOTES_MARKDOWN =
+  "The first result[^lab] was measured twice, and the second one[^method] agreed with it.\n\n" +
+  "[^lab]: Measured on **2026-09-01**, in the lab.\n" +
+  "[^method]: See [the method](https://example.com/method).";
+
+/**
+ * Markdown both ways. "Load Markdown" reads GFM footnotes (labels become numbers), and "Export Markdown"
+ * writes `[^1]` … `[^n]` and the definitions at the end; the round trip loses nothing.
+ */
+export const FootnotesMarkdown: Story = {
+  render: () => {
+    const ref = useRef<RichTextEditorHandle>(null);
+    const [markdown, setMarkdown] = useState("");
+    return (
+      <div className="flex max-w-[640px] flex-col gap-3">
+        <RichTextEditor ref={ref} aria-label="Document" />
+        <div className="flex gap-2">
+          <Button onClick={() => ref.current?.setMarkdown(FOOTNOTES_MARKDOWN)}>
+            Load Markdown
+          </Button>
+          <Button variant="outline" onClick={() => setMarkdown(ref.current?.getMarkdown() ?? "")}>
+            Export Markdown
+          </Button>
+        </div>
+        <pre className="text-fg-2 text-caption break-all whitespace-pre-wrap">{markdown}</pre>
+      </div>
+    );
+  },
+};
+
+/**
+ * `readOnly`: the Document does not change, but the jumps work. A click on a reference goes to its
+ * footnote, and the buttons use the Tool's commands `goToFootnote(n)` and `goToReference(n)`.
+ */
+export const FootnotesReadOnly: Story = {
+  render: () => {
+    const ref = useRef<RichTextEditorHandle>(null);
+    return (
+      <div className="flex max-w-[640px] flex-col gap-3">
+        <RichTextEditor ref={ref} aria-label="Document" readOnly defaultValue={FOOTNOTES_SAMPLE} />
+        <div className="flex gap-2">
+          <Button onClick={() => ref.current?.tool("footnotes")?.goToFootnote(2)}>
+            Go to footnote 2
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => ref.current?.tool("footnotes")?.goToReference(2)}
+          >
+            Back to reference 2
+          </Button>
+        </div>
+      </div>
+    );
+  },
+};
+
+const FOOTNOTES_RUSSIAN =
+  "<h2>A short report</h2>" +
+  `<p>The first result${footnoteRef("fnrusian1", 1)} was measured twice, and the second one${footnoteRef("fnrusian2", 2)} agreed with it.</p>` +
+  // The list's name is written into the HTML in the language of the catalog, as the Editor does.
+  footnoteList(ru.editor.footnotes, [
+    ["fnrusian1", "Measured in the lab on 1 September 2026."],
+    ["fnrusian2", "The method is described <em>separately</em>."],
+  ]);
+
+/**
+ * The Russian catalog: the Toolbar, the Slash menu item, the number button's name and the list's name
+ * in the HTML come from `@olddevs/ui/locales/ru`. The Document's text is data and stays English.
+ */
+export const FootnotesRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <div className="max-w-[640px]">
+        <RichTextEditor defaultValue={FOOTNOTES_RUSSIAN} />
+      </div>
+    </UiProvider>
+  ),
 };
