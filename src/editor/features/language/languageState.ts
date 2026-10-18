@@ -1,3 +1,5 @@
+"use client";
+
 import type { Editor } from "@tiptap/core";
 import type { EditorState } from "@tiptap/pm/state";
 import { isPrimaryLanguage, normalizeLanguageTag } from "./languageTag.js";

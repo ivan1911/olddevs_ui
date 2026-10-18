@@ -40,9 +40,9 @@ test.each([
   const rule = (suffix: string) => rules.includes(`[&.ProseMirror_span[lang]]:${suffix}`);
   expect(rule("underline")).toBe(true);
   expect(rule("decoration-dotted")).toBe(true);
-  expect(rule("decoration-1")).toBe(true);
+  expect(rule("[text-decoration-thickness:1px]")).toBe(true);
   // The secondary text role: the theme and the paper sheet each redefine it (`tokens.ts`).
-  expect(rule("decoration-(--rte-secondary)")).toBe(true);
+  expect(rule("decoration-(color:--rte-secondary)")).toBe(true);
 });
 
 test("the Editor's content element carries the class the rule needs", () => {

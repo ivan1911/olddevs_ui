@@ -397,8 +397,11 @@ const INVISIBLE_CHARACTERS_CLASS =
  */
 const LANGUAGE_CLASS =
   "[&.ProseMirror_span[lang]]:underline [&.ProseMirror_span[lang]]:decoration-dotted " +
-  "[&.ProseMirror_span[lang]]:decoration-1 [&.ProseMirror_span[lang]]:underline-offset-[3px] " +
-  "[&.ProseMirror_span[lang]]:decoration-(--rte-secondary) ";
+  // The thickness is an arbitrary property: `tailwind-merge` in `cn` takes `decoration-1` for a
+  // conflict of `decoration-(color:…)` and drops it from the View's class list.
+  "[&.ProseMirror_span[lang]]:[text-decoration-thickness:1px] " +
+  "[&.ProseMirror_span[lang]]:underline-offset-[3px] " +
+  "[&.ProseMirror_span[lang]]:decoration-(color:--rte-secondary) ";
 
 /**
  * Video (the `youtube` and `twitch` Tools, ADR-0071): a server-rendered `div[data-block=video]`

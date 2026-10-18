@@ -1,3 +1,5 @@
+"use client";
+
 import type { Editor } from "@tiptap/core";
 import type { UiMessages } from "../../../i18n/messages.js";
 import { LanguageIcon } from "../../../icons.js";
@@ -29,7 +31,7 @@ export interface LanguageMenuState {
 
 /**
  * The name of a language in the interface language (`Intl.DisplayNames`), with a capital letter:
- * "Русский", "American English". A tag the runtime cannot name is shown as the tag itself.
+ * "Russian", "American English". A tag the runtime cannot name is shown as the tag itself.
  */
 export function languageName(tag: string, locale: string): string {
   try {
