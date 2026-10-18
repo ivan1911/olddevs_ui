@@ -29,7 +29,7 @@ export function footnoteExtensions(labels: FootnoteLabels): Extensions {
  * Slash menu item and the same item in the "…" menu, and the Commands.
  *
  * The reference is a `plainAtom`: Marks do not apply to it, so the Bubble menu does not surround it.
- * The list has no handle and no Slash menu or "+" inside it (`isFootnoteBlock`, `handleBlock`).
+ * The list has no handle (`handleBlock`), and the Slash menu and "+" do not work inside a footnote.
  *
  * There is no shortcut: `Ctrl/⌘+Alt+F` is Find and replace here, though it is the footnote's key in
  * Word and Google Docs, and the kit does not invent a second one (decision 10).

@@ -185,8 +185,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   // below is the same one. A duplicate is dropped by id, not by label: the label
   // depends on the consumer's catalog, and matching words do not mean one action.
   const addItems = useMemo(
-    () =>
-      insertItemsFor(tools).filter((item) => item.id !== "codeBlockFromText" && !item.inline),
+    () => insertItemsFor(tools).filter((item) => item.id !== "codeBlockFromText" && !item.inline),
     [tools]
   );
   const formatItems = useMemo(() => formatItemsFor(tools), [tools]);

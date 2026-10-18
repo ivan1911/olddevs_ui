@@ -166,6 +166,8 @@ export function moveBlock(dir: -1 | 1, scope: BlockScope = "selection"): Command
     const blocks = blocksOf(range);
     const neighbourIndex = dir < 0 ? range.startIndex - 1 : range.endIndex;
     if (neighbourIndex < 0 || neighbourIndex >= range.parent.childCount) return true;
+    // The footnote list is always the last Block (ADR-0076): nothing moves past it.
+    if (isFootnoteListName(range.parent.child(neighbourIndex).type.name)) return true;
     if (dispatch) {
       const neighbour = range.parent.child(neighbourIndex);
       const from = dir < 0 ? range.start - neighbour.nodeSize : range.start;

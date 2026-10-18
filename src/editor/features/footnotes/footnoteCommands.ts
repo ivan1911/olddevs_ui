@@ -4,7 +4,6 @@ import type { Editor } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
 import { NodeSelection, TextSelection, type EditorState, type Transaction } from "@tiptap/pm/state";
 import {
-  FOOTNOTE_LIST_NODE,
   FOOTNOTE_NODE,
   FOOTNOTE_REF_NODE,
   isFootnoteKey,
@@ -27,11 +26,6 @@ declare module "@tiptap/core" {
       goToFootnoteReference: (number: number) => ReturnType;
     };
   }
-}
-
-/** The node is in the footnote list (a footnote or the list): it has no handle and no insert menu. */
-export function isFootnoteBlock(node: PmNode): boolean {
-  return node.type.name === FOOTNOTE_NODE || node.type.name === FOOTNOTE_LIST_NODE;
 }
 
 /** The selection's text Block is a footnote's text. */

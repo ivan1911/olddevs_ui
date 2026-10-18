@@ -250,8 +250,9 @@ export const Footnote = Node.create<{ labels: FootnoteLabels }>({
 });
 
 /**
- * The list: the Document's last Block. It has no handle, no Slash menu and no "+" of its own (the
- * kit asks `isFootnoteBlock`); the footnotes are edited in place, and the list is kept by the kit.
+ * The list: the Document's last Block. It has no handle (`handleBlock` skips it, `blockCommands.ts`),
+ * and no Slash menu or "+" works inside its footnotes; the footnotes are edited in place, and the
+ * list is kept by the kit (`footnoteSync.ts`).
  */
 export const FootnoteList = Node.create<{ labels: FootnoteLabels }>({
   name: FOOTNOTE_LIST_NODE,

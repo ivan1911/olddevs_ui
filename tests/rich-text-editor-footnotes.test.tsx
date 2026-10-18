@@ -13,6 +13,7 @@ import {
   type RichTextEditorProps,
 } from "../src/editor/index.js";
 import createDOMPurify from "dompurify";
+import { handleBlock } from "../src/editor/core/blockCommands.js";
 import { countCharacters } from "../src/editor/core/maxLength.js";
 import { sanitizeRichText } from "../src/editor/schema-entry.js";
 import { PRESETS, TOOLS } from "../src/editor/core/tools.js";
@@ -37,6 +38,7 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 
 const A = "aaaaaaa1";
 const B = "bbbbbbb2";
+const C = "ccccccc3";
 
 /** The reference as the Editor writes it. */
 const reference = (key: string, number: number) =>
@@ -531,16 +533,21 @@ test("Shift+Enter in a footnote is a hard break, and it stays one footnote", () 
   );
 });
 
-test("the list has no handle and moving or duplicating a block never takes it", () => {
+test("the list has no handle, and the Block shortcuts neither take it nor move past it", () => {
   const { editor } = renderEditor({ defaultValue: WHOLE });
   focusField();
-  caretInNote(editor, A, 1);
 
+  caretInNote(editor, A, 1);
+  expect(handleBlock(editor.state)).toBeNull();
   expect(press(editor, "ArrowUp", { altKey: true, shiftKey: true })).toBe(true);
   expect(press(editor, "d", { metaKey: true, shiftKey: true })).toBe(true);
-
   expect(editor.getHTML()).toBe(WHOLE);
-  expect(screen.queryByRole("button", { name: "Block actions" })).toBeNull();
+
+  // The last Block of the text does not swap with the list either.
+  act(() => void editor.commands.setTextSelection(3));
+  expect(handleBlock(editor.state)).not.toBeNull();
+  press(editor, "ArrowDown", { altKey: true, shiftKey: true });
+  expect(editor.getHTML()).toBe(WHOLE);
 });
 
 // ── The clipboard (decision 15) ─────────────────────────────────────────────
@@ -885,4 +892,50 @@ test("the Editor drops an id, an anchor and a role that are not footnote markup"
   const html = editor.getHTML();
   expect(html).not.toMatch(/\bid=|role=|aria-label=|href=/);
   expect(editor.getText()).toContain("jump");
+});
+
+// ── The list stays whole after any edit ─────────────────────────────────────
+
+test("a Block added after the list is put before it again, in the same edit", () => {
+  const { editor, handle } = renderEditor({ defaultValue: WHOLE });
+  const { doc, schema } = editor.state;
+
+  act(() => {
+    editor.view.dispatch(
+      editor.state.tr.insert(
+        doc.content.size,
+        schema.nodes.paragraph!.create(null, schema.text("Tail"))
+      )
+    );
+  });
+
+  expect(editor.getHTML()).toBe(
+    `<p>One${reference(A, 1)} and two${reference(B, 2)}.</p><p>Tail</p>${list([A, "First"], [B, "Second"])}`
+  );
+  act(() => handle.undo());
+  expect(editor.getHTML()).toBe(WHOLE);
+});
+
+test("a reference inserted into a footnote is dropped, and so is the footnote it would have made", () => {
+  const { editor, handle } = renderEditor({ defaultValue: WHOLE });
+  caretInNote(editor, A, 2);
+
+  let done = false;
+  act(() => {
+    done = handle.insertHTML(`x${reference(C, 9)}`);
+  });
+
+  expect(done).toBe(true);
+  expect(editor.getHTML()).toBe(
+    `<p>One${reference(A, 1)} and two${reference(B, 2)}.</p>${list([A, "Fixrst"], [B, "Second"])}`
+  );
+});
+
+test("a reference added by insertHTML in the text gets a footnote of its own", () => {
+  const { editor, handle } = renderEditor({ defaultValue: "<p>Hello</p>" });
+  act(() => void editor.commands.setTextSelection(3));
+
+  act(() => void handle.insertHTML(reference(C, 4)));
+
+  expect(editor.getHTML()).toBe(`<p>He${reference(C, 1)}llo</p>${list([C, ""])}`);
 });
