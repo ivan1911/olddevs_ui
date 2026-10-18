@@ -59,6 +59,9 @@ export function allUnits(parent: PmNode, from: number, to: number): boolean {
 /** Lists: their children are the units, the list itself is one only at the edge of its range. */
 export const LIST_NODES: ReadonlySet<string> = new Set(["bulletList", "orderedList", "taskList"]);
 
+/** The items of those lists: the units inside them. */
+export const LIST_ITEMS: ReadonlySet<string> = new Set(["listItem", "taskItem"]);
+
 /**
  * A container of Blocks — a node whose children are the Blocks: the Document itself, and any node
  * whose Schema is marked `blockContainer: true`.

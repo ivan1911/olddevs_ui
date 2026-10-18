@@ -16,6 +16,7 @@ import {
   inTable,
   isBlockContainer,
   isBlockUnit,
+  LIST_ITEMS,
   onlyUnits,
   unitNodes,
 } from "./blockUnit.js";
@@ -39,8 +40,6 @@ export { isBlockContainer };
  * search. The Block handle's menu is `⌘/`, like "Block actions" in Notion: browsers and systems
  * leave this shortcut free in an input field.
  */
-
-const LIST_ITEMS: ReadonlySet<string> = new Set(["listItem", "taskItem"]);
 
 /**
  * Whose Blocks the command takes.

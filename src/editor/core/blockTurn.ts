@@ -5,6 +5,7 @@ import { TextSelection } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
 import { BlockSelection } from "./blockSelection.js";
 import { blockTypeOf } from "./blockTypes.js";
+import { LIST_ITEMS } from "./blockUnit.js";
 import type { InsertItem } from "./insertItems.js";
 
 /**
@@ -23,8 +24,6 @@ import type { InsertItem } from "./insertItems.js";
  *
  * The whole group is one transaction, so it is one undo step.
  */
-
-const LIST_ITEMS: ReadonlySet<string> = new Set(["listItem", "taskItem"]);
 
 /** Whether the Block changes under "Format ›": a text Block, a list item, or a custom Block that opted in. */
 export function isTurnable(node: PmNode): boolean {
