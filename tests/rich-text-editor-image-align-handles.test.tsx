@@ -40,6 +40,11 @@ function handle(figure: HTMLElement, side: "left" | "right"): HTMLElement {
   return figure.querySelector(`[data-resize-handle="${side}"]`) as HTMLElement;
 }
 
+/** Whether the handle is in the frame: a floated image has only the one on the side of the text. */
+function present(figure: HTMLElement, side: "left" | "right"): boolean {
+  return figure.querySelector(`[data-resize-handle="${side}"]`) !== null;
+}
+
 /** Drag a handle by `dx` px, the way a mouse does it. */
 function drag(target: HTMLElement, dx: number) {
   const at = (type: string, x: number) =>
@@ -57,22 +62,22 @@ function drag(target: HTMLElement, dx: number) {
 test("a centred image keeps two handles", () => {
   const { figure } = renderEditor(doc("", "50"));
 
-  expect(handle(figure, "left").hidden).toBe(false);
-  expect(handle(figure, "right").hidden).toBe(false);
+  expect(present(figure, "left")).toBe(true);
+  expect(present(figure, "right")).toBe(true);
 });
 
 test("an image on the left has one handle, on the right where the text is", () => {
   const { figure } = renderEditor(doc(' data-align="left"', "50"));
 
-  expect(handle(figure, "left").hidden).toBe(true);
-  expect(handle(figure, "right").hidden).toBe(false);
+  expect(present(figure, "left")).toBe(false);
+  expect(present(figure, "right")).toBe(true);
 });
 
 test("an image on the right has one handle, on the left", () => {
   const { figure } = renderEditor(doc(' data-align="right"', "50"));
 
-  expect(handle(figure, "right").hidden).toBe(true);
-  expect(handle(figure, "left").hidden).toBe(false);
+  expect(present(figure, "right")).toBe(false);
+  expect(present(figure, "left")).toBe(true);
 });
 
 test("the handles follow the alignment when it changes", () => {
@@ -82,8 +87,8 @@ test("the handles follow the alignment when it changes", () => {
   act(() => void editor.chain().updateImage({ align: null }).run());
 
   const after = editor.view.dom.querySelector("figure") as HTMLElement;
-  expect(handle(after, "left").hidden).toBe(false);
-  expect(handle(after, "right").hidden).toBe(false);
+  expect(present(after, "left")).toBe(true);
+  expect(present(after, "right")).toBe(true);
   expect(after).toBe(figure);
 });
 

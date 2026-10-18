@@ -776,6 +776,7 @@ class ImageView implements NodeView {
   private img: HTMLImageElement;
   private node: ProseMirrorNode;
   private handles = {} as Record<"left" | "right", HTMLElement>;
+  private frame: HTMLElement;
 
   constructor(
     node: ProseMirrorNode,
@@ -785,17 +786,17 @@ class ImageView implements NodeView {
   ) {
     this.node = node;
     this.dom = document.createElement("figure");
-    const frame = document.createElement("div");
-    frame.contentEditable = "false";
-    frame.className = "relative";
+    this.frame = document.createElement("div");
+    this.frame.contentEditable = "false";
+    this.frame.className = "relative";
     this.img = document.createElement("img");
-    frame.append(this.img);
+    this.frame.append(this.img);
     for (const side of ["left", "right"] as const) {
       this.handles[side] = this.handle(side);
-      frame.append(this.handles[side]);
+      this.frame.append(this.handles[side]);
     }
     this.contentDOM = document.createElement("div");
-    this.dom.append(frame, this.contentDOM);
+    this.dom.append(this.frame, this.contentDOM);
     this.render();
   }
 
@@ -824,13 +825,16 @@ class ImageView implements NodeView {
 
   /**
    * A floated image has one handle, on the side of the text: the edge next to the container's edge
-   * stays where it is, so a handle there would have nothing to drag. The other is kept in the frame
-   * for when the image is centred again.
+   * stays where it is, so a handle there would have nothing to drag. The other leaves the frame and
+   * comes back when the image is centred again. It is taken out of the DOM rather than hidden: the
+   * stylesheet shows a handle with `display: block`, and a `hidden` attribute would lose to it.
    */
   private syncHandles() {
     const float = this.floatSide();
-    for (const [side, handle] of Object.entries(this.handles)) {
-      handle.hidden = float !== null && side === float;
+    for (const side of ["left", "right"] as const) {
+      const handle = this.handles[side];
+      if (float === side) handle.remove();
+      else if (!handle.isConnected) this.frame.append(handle);
     }
   }
 
