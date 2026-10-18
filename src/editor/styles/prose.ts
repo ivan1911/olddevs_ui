@@ -433,6 +433,20 @@ const CUSTOM_BLOCK_CLASS =
   "[&_div[data-block]:not([data-block=layout],[data-block=column],[data-block=wrapper])>:is(h1,h2,h3,h4):not(:first-child)]:mt-6";
 
 /**
+ * Block selection (ADR-0077): the selected Blocks are painted whole on `--rte-selection`, the same
+ * role as the selected cells of a table and the selected text, with the Document's radius. The Blocks
+ * carry the class from a decoration (`blockSelectionExtension.ts`), so it exists only in the Editor.
+ * A 2px spread of the same color shows the selection around a Block that has a background of its own
+ * (a code Block, a toned Wrapper). While the selection lasts, the root has `data-block-selection`:
+ * the engine's own selection (which spans the Blocks) is not painted, and neither is the caret,
+ * so the Document shows no cursor and no text selection.
+ */
+const BLOCK_SELECTION_CLASS =
+  "[&_.rte-block-selected]:rounded-(--rte-radius) [&_.rte-block-selected]:bg-(--rte-selection) " +
+  "[&_.rte-block-selected]:shadow-[0_0_0_2px_var(--rte-selection)] " +
+  "[&[data-block-selection]]:caret-transparent [&[data-block-selection]]:selection:bg-transparent ";
+
+/**
  * Document typography, shared by the Editor and the future `RichTextView`.
  *
  * ONE MODULE FOR BOTH, because the spec promises that the text looks the same in the Editor and
@@ -539,6 +553,7 @@ const PROSE_RULES =
   MATH_CLASS +
   INVISIBLE_CHARACTERS_CLASS +
   VIDEO_CLASS +
+  BLOCK_SELECTION_CLASS +
   CUSTOM_BLOCK_CLASS;
 
 /**

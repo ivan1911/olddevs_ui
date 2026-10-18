@@ -61,3 +61,9 @@ export interface InvisibleCharactersToolState {
   /** Spaces, soft hyphens and paragraph ends are shown. Hidden until the author turns them on or the `visible` option applies. */
   visible: boolean;
 }
+
+/** State of the `blockSelection` Tool (ADR-0077). */
+export interface BlockSelectionToolState {
+  /** How many Blocks are selected whole; `0` means there is no Block selection (a caret or a text selection). */
+  count: number;
+}
