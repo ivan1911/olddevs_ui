@@ -101,6 +101,18 @@ export const PACKAGE_SCENARIOS = [
       "/dist/editor/features/mathematics/katexEngine.js",
       "/node_modules/@tiptap/extension-mathematics/",
       "/node_modules/katex/",
+      // Epic OLDSUI-305: footnotes and the Block selection extension are lazy built-ins below the
+      // 10 kB rule of item 11.1, by the owner's decision on the epic's total (ADR-0076, ADR-0077).
+      "/dist/editor/features/footnotes/footnotesChunk.js",
+      "/dist/editor/features/footnotes/footnoteBehavior.js",
+      "/dist/editor/features/footnotes/footnoteSync.js",
+      "/dist/editor/features/footnotes/footnoteCommands.js",
+      "/dist/editor/features/footnotes/footnoteMarkdown.js",
+      "/dist/editor/features/blockSelection/blockSelectionExtension.js",
+      "/dist/editor/features/blockSelection/blockSelectionMoves.js",
+      // The date form with the kit's `Calendar` (OLDSUI-309) and the column handles of the table (OLDSUI-310).
+      "/dist/editor/features/date/DateForm.js",
+      "/dist/editor/features/table/TableColumnHandles.js",
     ],
     source:
       'import { RichTextEditor } from "@olddevs/ui/editor";\nglobalThis.probe = RichTextEditor;\n',
@@ -203,7 +215,9 @@ export const BUDGETS = {
     // Epic OLDSUI-272 (OLDSUI-278…281): the measurement of 9.3 kB hit the threshold. The `editor`
     // catalog (en) +16 lines for the new Tools (formulas, video, invisible characters, the quote
     // set), and the catalog also ships in `DataTable`. Raised to 9.6 kB, headroom about 3%, ADR-0030.
-    dataTable: 9830,
+    // Epic OLDSUI-305 (footnotes, Block selection, text part language, date mention, table column widths, image alignment, fullscreen and focus modes): `DataTable` 9.7 kB (+0.4): the epic's rows in the shared catalog, which ships with
+    // every entry that reads `useMessages`. Raised to 10.0 kB, headroom about 3%, ADR-0030.
+    dataTable: 10240,
     // OLDSUI-193: the whole kit 66.7 kB (+2.5): eleven Gallery findings. The `FilterBar` ranges,
     // `onRowAction`, `onAction` and the cell menu of `VirtualGrid`, `activeKey` on `TreeView`,
     // `useMediaQuery`, `typeToConfirm`, `--bottombar-h`, the string API of the calendars, the
@@ -223,7 +237,9 @@ export const BUDGETS = {
     // drill-down on a phone), and menu aim is 0.8 kB. There are no new dependencies. Plus the
     // `megaMenu.back` catalog row and the shared `useNarrowScreen`. Raised to 77.9 kB, headroom
     // about 2%, ADR-0030.
-    everything: 79770,
+    // Epic OLDSUI-305 (footnotes, Block selection, text part language, date mention, table column widths, image alignment, fullscreen and focus modes): the whole kit 77.9 kB (+0.4), the same catalog rows; the measurement hit the threshold.
+    // Raised to 80.2 kB, headroom about 3%, ADR-0030.
+    everything: 82125,
     // The first measurement of the `./editor` entry (OLDSUI-40): 5.5 and 168.4 kB, headroom about
     // 15%, as for the others. The next slices of epic OLDSUI-38 add Blocks and the Toolbar. Each
     // of them raises these numbers in a separate line with an explanation.
@@ -378,12 +394,22 @@ export const BUDGETS = {
     // and a link, a space in `data-latex` for DOMPurify, the shared parsing of the built-ins' Options, and the
     // formula names in a single module. All of this runs before the lazy chunks load, so it belongs in "start".
     // Raised to 83.5 kB, headroom about 2%.
-    editor: 85504,
+    // Epic OLDSUI-305 (footnotes, Block selection, text part language, date mention, table column widths, image alignment, fullscreen and focus modes): "start" 96.7 kB (+14.3 from 82.4 at 4.11.0). Seven built-ins in `full`: the text part
+    // language Mark and its submenu (+2.0), Block selection's core (the handle over a range, the
+    // `BlockSelection` class, Block unit, wrap and turn; +2.8, its extension is a lazy chunk), the date
+    // mention Atom and keys (+2.1, the form is lazy), the column share rules of tables (+0.8), image
+    // alignment (+1.3), fullscreen and focus modes (+2.3), the footnote Schema shape and descriptor
+    // (+1.9, the engine part is a lazy chunk), and the catalog. Footnotes and the Block selection
+    // extension were made lazy below the 10 kB rule of ADR-0058, 11.1 (ADR-0076, ADR-0077), which
+    // took 6.8 kB out of "start". Raised to 100.5 kB, headroom about 4%, ADR-0030.
+    editor: 102912,
     // The engine's "start" (ADR-0058, item 11.7) is 285.4 kB: 35.7 kB less than the 321.1 kB on the epic's branch
     // (`@tiptap/extension-table`, `@tiptap/extension-code-block-lowlight`, lowlight and the highlight.js grammars
     // are gone). The threshold is the measurement plus about 15%, ADR-0030: lowered from 336.1 to 328.2 kB. The
     // earlier one was taken from a measurement in which the table and the code block shipped together.
-    editorEngine: 336100,
+    // Epic OLDSUI-305 (footnotes, Block selection, text part language, date mention, table column widths, image alignment, fullscreen and focus modes): "start" with the engine 330.5 kB (+14.4), the same kit code; no new engine packages.
+    // Raised to 340 kB, headroom about 3%, ADR-0030.
+    editorEngine: 348160,
     // "Full": the whole subpath graph with all the lazy chunks, which is what `full` loads: 326.3 kB (the static
     // graph 285.4 and the lazy 40.8: the code block, the table, and the popover of a custom colour without
     // react-aria, which is not part of the measurement). The first measurement; the threshold is plus about 15%,
@@ -392,7 +418,10 @@ export const BUDGETS = {
     // `@tiptap/extension-mathematics` and the formula popover; plus a lazy chunk for video (OLDSUI-281, the
     // player and the link field, ADR-0071). The growth was accepted in ADR-0070 ("Consequences"): a page without
     // formulas does not load it. Raised to 484.0 kB, headroom about 5%.
-    editorEngineFull: 495616,
+    // Epic OLDSUI-305 (footnotes, Block selection, text part language, date mention, table column widths, image alignment, fullscreen and focus modes): "full" 498.7 kB (+28.4): the start growth plus the lazy chunks (the footnote engine
+    // part, the Block selection extension, the date form with `Calendar`, the table column handles).
+    // Raised to 514 kB, headroom about 3%, ADR-0030.
+    editorEngineFull: 526336,
     // RichTextView (OLDSUI-48): the first measurement 0.7 kB: PROSE_CLASS and the wrapper. The engine is
     // included in the measurement: were it pulled in by accident, it would grow the budget two hundredfold.
     // OLDSUI-41: 1.0 kB: the typography of the checklist and the code block in `prose.ts`.
@@ -412,7 +441,10 @@ export const BUDGETS = {
     // OLDSUI-277: 12.7 kB (+0.3): the frame, heading and chevron of the collapsible `details` Block in `prose.ts` (the View draws native `details` and `summary` without the engine), and its rows in the catalog. Raised to 13.0 kB, headroom about 2.5%.
     // OLDSUI-280, OLDSUI-281: 14.2 kB (+1.4): formula and video search in HTML (`hasMath`, `hasVideoBlocks`), the LaTeX source in an empty formula for display without JS (`withMathSource`), the lazy formula and video Islands and their catalog rows. The KaTeX and player code is in lazy chunks. Raised to 14.6 kB, headroom about 3%.
     // Review of OLDSUI-280/281: 14.8 kB (+0.6): the 16:9 frame of the video Block in the server HTML (no height jump), parsing of the formula Options by the Editor's shared code, the Document fingerprint once per render. Raised to 15.2 kB, headroom about 3%.
-    editorView: 15565,
+    // Epic OLDSUI-305 (footnotes, Block selection, text part language, date mention, table column widths, image alignment, fullscreen and focus modes): 16.1 kB (+1.3): the View renders the new markup without JS (footnote anchors, `time`,
+    // `colgroup` shares, aligned figures) through the shared prose classes, plus the catalog rows.
+    // Raised to 16.6 kB, headroom about 3%, ADR-0030.
+    editorView: 16998,
     // The Schema entry (OLDSUI-48): data and one function, with no engine and no React.
     // The palette and the alignments in the Schema: 0.4 kB measurement, a margin for the links (OLDSUI-42).
     // OLDSUI-42: 0.5 kB (+0.2): the list of link schemes and the address check for `ALLOWED_URI_REGEXP`.
@@ -423,7 +455,11 @@ export const BUDGETS = {
     // OLDSUI-268: 3.9 kB (+0.1): the Schema rules from `defineTool` definitions (`customToolOf`, the merge of Options and the cache of the `create` result per `tools` entry); the measurement hit the threshold. Raised to 4.2 kB, headroom about 7%, ADR-0030.
     // OLDSUI-280, OLDSUI-281: 4.4 kB (+0.4): the formula rules (`data-type` and `data-latex`, `<` only in `data-latex`, a formula is an empty leaf) and video (`data-provider`, `data-src` by the host template). Raised to 4.6 kB, headroom about 4%, ADR-0030.
     // Review of OLDSUI-280/281: 4.7 kB (+0.3): the space in `data-latex` before the DOMPurify check, and the Twitch channel-name rules for the sanitizer and the link parsing. Raised to 4.9 kB, headroom about 4%.
-    editorSchema: 5018,
+    // Epic OLDSUI-305 (footnotes, Block selection, text part language, date mention, table column widths, image alignment, fullscreen and focus modes): 6.4 kB (+1.7): the sanitizer rules of the new markup: the footnote `id`/`#`/role
+    // shapes, `span[lang]` by the BCP 47 pattern, `time[datetime]` with the calendar check, the
+    // `colgroup` share list, `figure[data-align]` and the wider image presets. Raised to 6.6 kB,
+    // headroom about 3%, ADR-0030.
+    editorSchema: 6758,
     // The highlighting entry (OLDSUI-50): the first measurement 21.3 kB: the helper, lowlight, the highlight.js core and six grammars. Headroom 15%, ADR-0030.
     editorHighlight: 25100,
     // Highlighting for `CodeView` (OLDSUI-58): the first measurement 22.4 kB: the node helper, lowlight, the highlight.js core, seven grammars and the theme string. Headroom 15%, ADR-0030.
