@@ -494,6 +494,56 @@ const CUSTOM_BLOCK_CLASS =
   "[&_div[data-block]:not([data-block=layout],[data-block=column],[data-block=wrapper])>:is(h1,h2,h3,h4):not(:first-child)]:mt-6";
 
 /**
+ * Image alignment and the two narrow widths (ADR-0081). `figure[data-align=left|right]` floats to its
+ * side and the text of the next Blocks wraps around it; the centre has no attribute and stays as the
+ * base rules above leave it. A separate block: it adds to the image rules and does not rewrite them.
+ *
+ * WIDTH. 25% and 33% are the two new presets, next to 50/75/100 above. A floated figure is a share
+ * of its container's width, like a centred one. An aligned image with no width, or at 100%, is not
+ * something the Editor writes (it gives 50% in both cases), but a Document from another screen may
+ * hold it, and it would not wrap at all: here it gets 50% too, so the View shows what the Editor does.
+ *
+ * NARROW DOCUMENT IS A CONTAINER QUERY, NOT A SCREEN BREAKPOINT, as for the Column layout above: a
+ * Drawer on a wide monitor is narrow. From 30 rem the image floats; narrower, there is not even room
+ * for a column of text beside it, so it stays on a line of its own, in the centre, at its own width.
+ * The container is the Document root, and only when it holds an aligned image (`:has`): the
+ * container needs `inline-size` containment, which a Document without one does not need. The
+ * name and the threshold are those of the Column layout, so one root with both is one container.
+ *
+ * WHAT WRAPS AND WHAT CLEARS. Paragraphs, lists and quotes flow around the image: they are not
+ * listed. A heading, a table, a code Block, a rule, a centred image, a Column layout, a Wrapper, a
+ * Details Block, a video and the footnote list start below it (`clear`), so a new section is not
+ * glued to the picture of the old one. An aligned image does not clear: a left and a right one can
+ * stand side by side. The list is of the kit's own tags and Blocks, as the spacing rule for custom
+ * Blocks above: a custom Block flows like a paragraph.
+ *
+ * CONTAINERS END THE FLOAT. A Wrapper, a Details Block's content and a column hold the floats of
+ * their own children (`flow-root`), so a tall image at the end of a Wrapper does not hang out of its
+ * frame. The root does the same by being a container (inline-size containment makes it a formatting
+ * context of its own). It is only set where an aligned image lives, so nothing else changes.
+ *
+ * A TABLE CELL IS NOT A PLACE FOR IT. There is no room for a column of text beside an image there,
+ * and the toggles are disabled; an aligned `figure` that arrives in a cell (a paste, another screen)
+ * keeps its attribute in the Document but its styles do not apply: the reset below is `!important`,
+ * because it must beat the float of the query, which is more specific. The `td` is matched inside
+ * the root, so a Document that sits in a table cell of the page is not affected.
+ */
+const IMAGE_ALIGN_CLASS =
+  "[&_figure:has(img[data-width='25'])]:w-1/4 [&_figure:has(img[data-width='33'])]:w-1/3 " +
+  "[&:has(figure[data-align])]:[container-type:inline-size] " +
+  "[&:has(figure[data-align])]:[container-name:rte-document] " +
+  "@min-[30rem]/rte-document:[&_figure[data-align='left']]:float-left " +
+  "@min-[30rem]/rte-document:[&_figure[data-align='left']]:mr-4 " +
+  "@min-[30rem]/rte-document:[&_figure[data-align='right']]:float-right " +
+  "@min-[30rem]/rte-document:[&_figure[data-align='right']]:ml-4 " +
+  "@min-[30rem]/rte-document:[&_figure[data-align]:not(:has(img[data-width]))]:w-1/2 " +
+  "@min-[30rem]/rte-document:[&_figure[data-align]:has(img[data-width='100'])]:w-1/2 " +
+  "@min-[30rem]/rte-document:[&_:is(td,th)_figure]:float-none! " +
+  "@min-[30rem]/rte-document:[&_:is(td,th)_figure]:mx-auto! " +
+  "[&_:is(h1,h2,h3,h4,table,pre,hr,details,div[data-type=details],div[data-block=layout],div[data-block=wrapper],div[data-block=video],section[data-block=footnotes],figure:not([data-align]))]:clear-both " +
+  "[&_:is(div[data-block=wrapper],div[data-block=column],div[data-type=detailsContent]):has(figure[data-align])]:flow-root ";
+
+/**
  * Block selection (ADR-0077): the selected Blocks are painted whole on `--rte-selection`, the same
  * role as the selected cells of a table and the selected text, with the Document's radius. The Blocks
  * carry the class from a decoration (`blockSelectionExtension.ts`), so it exists only in the Editor.
@@ -617,6 +667,7 @@ const PROSE_RULES =
   LANGUAGE_CLASS +
   VIDEO_CLASS +
   BLOCK_SELECTION_CLASS +
+  IMAGE_ALIGN_CLASS +
   CUSTOM_BLOCK_CLASS;
 
 /**
