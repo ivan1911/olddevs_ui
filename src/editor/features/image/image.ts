@@ -20,38 +20,49 @@ import {
 import { closeHistory } from "@tiptap/pm/history";
 import { Decoration, DecorationSet, type EditorView, type NodeView } from "@tiptap/pm/view";
 import type { FieldNotice } from "../../core/fieldNotice.js";
-import { isAllowedImageSrc, RICH_TEXT_SCHEMA } from "../../core/schema.js";
+import { isAllowedImageSrc } from "../../core/schema.js";
+import {
+  ALIGNED_WIDTHS,
+  alignOf,
+  IMAGE_WIDTHS,
+  layoutOf,
+  widthOf,
+  type ImageAlign,
+  type ImageWidth,
+} from "./imageLayout.js";
 
-/** Image width: a preset from the Schema, or `null` for a custom size no wider than the Document. */
-export type ImageWidth = (typeof RICH_TEXT_SCHEMA.imageWidths)[number];
-
-export const IMAGE_WIDTHS: readonly ImageWidth[] = RICH_TEXT_SCHEMA.imageWidths;
+export { IMAGE_ALIGNMENTS, IMAGE_WIDTHS, layoutOf } from "./imageLayout.js";
+export type { ImageAlign, ImageWidth } from "./imageLayout.js";
 
 /** Image attributes in the Document. */
 export interface ImageAttributes {
   src: string;
   alt: string;
   width: ImageWidth | null;
-}
-
-/** Width from the HTML attribute: only a Schema preset is accepted; anything else means "not set". */
-function widthOf(value: unknown): ImageWidth | null {
-  return IMAGE_WIDTHS.find((width) => width === value) ?? null;
+  /** The side the image floats to, with the text wrapping it; `null` is the centre (ADR-0081). */
+  align: ImageAlign | null;
 }
 
 /**
  * Attributes from the `<img>` of incoming HTML, or `false` if such an image must not
  * exist in the Document. An address outside the policy (`data:`, `blob:`, `javascript:`,
  * relative) drops the whole image: there is no empty frame without an address.
+ *
+ * The side is read from the `figure` (`data-align`), or from the bare `<img>` the paste cleanup
+ * marks (`imageAlignment.ts`). Width and side then go through `layoutOf`, so a saved Document that
+ * names a side for an image at its own size or at 100% opens with the 50% the commands would give.
  */
-function attributesFromImg(img: Element | null): ImageAttributes | false {
+function attributesFromImg(img: Element | null, figure?: Element): ImageAttributes | false {
   const src = img?.getAttribute("src")?.trim() ?? "";
   if (!img || !isAllowedImageSrc(src)) return false;
-  return {
-    src,
-    alt: img.getAttribute("alt") ?? "",
-    width: widthOf(img.getAttribute("data-width")),
-  };
+  const { width, align } = layoutOf(
+    { width: null, align: null },
+    {
+      width: widthOf(img.getAttribute("data-width")),
+      align: alignOf((figure ?? img).getAttribute("data-align")),
+    }
+  );
+  return { src, alt: img.getAttribute("alt") ?? "", width, align };
 }
 
 /** The `<img>` on output: `alt` always (empty means "no description"), `data-width` if set. */
@@ -63,6 +74,12 @@ function imgAttributes(node: ProseMirrorNode): Record<string, string> {
   attributes.alt = alt ?? "";
   if (widthOf(width)) attributes["data-width"] = width!;
   return attributes;
+}
+
+/** The `<figure>` on output: `data-align` only on an aligned image; the centre has no attribute. */
+function figureAttributes(node: ProseMirrorNode): Record<string, string> {
+  const align = alignOf((node.attrs as ImageAttributes).align);
+  return align ? { "data-align": align } : {};
 }
 
 /** Whether the image has a caption, that is, a non-empty `figcaption`. */
@@ -82,6 +99,18 @@ export function selectedImage(state: EditorState): { pos: number; node: ProseMir
     if (node.type.name === IMAGE_NODE) return { pos: $from.before(depth), node };
   }
   return null;
+}
+
+/** Nodes of a table cell: the text cannot wrap an image there, so it takes no side (ADR-0081, item 7). */
+const TABLE_CELLS = ["tableCell", "tableHeader"];
+
+/** Whether the position lies inside a table cell. */
+export function inTableCell(state: EditorState, pos: number): boolean {
+  const $pos = state.doc.resolve(pos);
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    if (TABLE_CELLS.includes($pos.node(depth).type.name)) return true;
+  }
+  return false;
 }
 
 /**
@@ -266,6 +295,7 @@ export const RichImage = Node.create<RichImageOptions>({
       src: { default: "", ...own },
       alt: { default: "", ...own },
       width: { default: null, ...own },
+      align: { default: null, ...own },
     };
   },
 
@@ -273,7 +303,7 @@ export const RichImage = Node.create<RichImageOptions>({
     return [
       {
         tag: "figure",
-        getAttrs: (dom) => attributesFromImg(dom.querySelector("img")),
+        getAttrs: (dom) => attributesFromImg(dom.querySelector("img"), dom),
         // The content is the caption text. Without one it is an empty element, so the caption
         // comes out empty, not made from random text inside the `figure`.
         contentElement: (dom) =>
@@ -286,13 +316,16 @@ export const RichImage = Node.create<RichImageOptions>({
 
   renderHTML({ node }): DOMOutputSpec {
     const img: DOMOutputSpec = ["img", imgAttributes(node)];
-    if (!hasCaption(node)) return ["figure", img];
+    if (!hasCaption(node)) return ["figure", figureAttributes(node), img];
     /*
       A content hole in DOMOutputSpec must be the only child of its element, but the caption
       comes AFTER the `img` in the same `figure`. So with a caption, the node is a DOM node:
       `contentDOM` is the `figure` itself, and the caption is appended after the image.
     */
     const figure = document.createElement("figure");
+    for (const [name, value] of Object.entries(figureAttributes(node))) {
+      figure.setAttribute(name, value);
+    }
     const element = document.createElement("img");
     for (const [name, value] of Object.entries(imgAttributes(node))) {
       element.setAttribute(name, value);
@@ -315,7 +348,12 @@ export const RichImage = Node.create<RichImageOptions>({
     if (!isAllowedImageSrc(src)) return { type: DROPPED_IMAGE };
     return {
       type: IMAGE_NODE,
-      attrs: { src, alt: typeof token.text === "string" ? token.text : "", width: null },
+      attrs: {
+        src,
+        alt: typeof token.text === "string" ? token.text : "",
+        width: null,
+        align: null,
+      },
       content: [{ type: CAPTION_NODE }],
     };
   },
@@ -341,7 +379,11 @@ export const RichImage = Node.create<RichImageOptions>({
           const src = attributes.src.trim();
           if (!isAllowedImageSrc(src)) return false;
           const image = state.schema.nodes[IMAGE_NODE]!.create(
-            { src, alt: attributes.alt ?? "", width: widthOf(attributes.width) },
+            {
+              src,
+              alt: attributes.alt ?? "",
+              ...layoutOf({ width: null, align: null }, attributes),
+            },
             state.schema.nodes[CAPTION_NODE]!.create()
           );
           if (dispatch) {
@@ -355,10 +397,18 @@ export const RichImage = Node.create<RichImageOptions>({
         ({ tr, dispatch, state }) => {
           const found = selectedImage(state);
           if (!found) return false;
-          const next = { ...(found.node.attrs as ImageAttributes), ...attributes };
+          const current = found.node.attrs as ImageAttributes;
+          const next = { ...current, ...attributes };
           next.src = next.src.trim();
           if (!isAllowedImageSrc(next.src)) return false;
-          next.width = widthOf(next.width);
+          // Width and side are tied (ADR-0081). A table cell takes no side: it has no room for the
+          // text to wrap, so the side the author asked for is not written there.
+          const change: Partial<ImageAttributes> = {
+            ...("width" in attributes && { width: attributes.width }),
+            ...("align" in attributes &&
+              !inTableCell(state, found.pos) && { align: attributes.align }),
+          };
+          Object.assign(next, layoutOf(current, change));
           if (dispatch) {
             const wasNode = tr.selection instanceof NodeSelection;
             tr.setNodeMarkup(found.pos, undefined, next);
@@ -391,7 +441,21 @@ export const RichImage = Node.create<RichImageOptions>({
 
   addKeyboardShortcuts() {
     const inCaption = () => this.editor.state.selection.$from.parent.type.name === CAPTION_NODE;
+    /*
+      Ctrl/⌘+Shift+L, E and R are the alignment keys of the `align` Tool for text (ADR-0081). On an
+      image selected as a whole they align the image instead: left and right float it, the centre
+      puts it back. With the caret in the caption, or anywhere else, they are not ours (`false`), so
+      the text keeps its alignment. The `align` Tool steps aside on a selected image by itself, so
+      the order of the two extensions does not matter; without that Tool the image still has the keys.
+    */
+    const align =
+      (side: ImageAlign | null) =>
+      ({ editor }: { editor: Editor }): boolean =>
+        isImageSelection(editor.state.selection) && editor.commands.updateImage({ align: side });
     return {
+      "Mod-Shift-l": align("left"),
+      "Mod-Shift-e": align(null),
+      "Mod-Shift-r": align("right"),
       /*
         Enter in the caption exits it into a new paragraph under the image. A caption is one line,
         and the Schema does not let a second `figcaption` into the `figure`. Enter on a selected
@@ -671,7 +735,7 @@ async function uploadFiles(
     }
     const { schema } = editor.state;
     const image = schema.nodes[IMAGE_NODE]!.create(
-      { src: address, alt: "", width: null },
+      { src: address, alt: "", width: null, align: null },
       schema.nodes[CAPTION_NODE]!.create()
     );
     const inserted = placeImage(tr, placed, image);
@@ -689,9 +753,9 @@ const UPLOAD_PLACEHOLDER_CLASS =
   "border border-dashed border-(--rte-code-border) bg-(--rte-code-background) p-3 " +
   "text-sm text-(--rte-muted-foreground)";
 
-/** The width the handle snaps to: the nearest preset to the Document width fraction. */
-function nearestWidth(percent: number): ImageWidth {
-  return IMAGE_WIDTHS.reduce((best, width) =>
+/** The width the handle snaps to: the nearest of `widths` to the Document width fraction. */
+function nearestWidth(percent: number, widths: readonly ImageWidth[]): ImageWidth {
+  return widths.reduce((best, width) =>
     Math.abs(Number(width) - percent) < Math.abs(Number(best) - percent) ? width : best
   );
 }
@@ -711,6 +775,7 @@ class ImageView implements NodeView {
   contentDOM: HTMLElement;
   private img: HTMLImageElement;
   private node: ProseMirrorNode;
+  private handles = {} as Record<"left" | "right", HTMLElement>;
 
   constructor(
     node: ProseMirrorNode,
@@ -725,7 +790,10 @@ class ImageView implements NodeView {
     frame.className = "relative";
     this.img = document.createElement("img");
     frame.append(this.img);
-    for (const side of ["left", "right"] as const) frame.append(this.handle(side));
+    for (const side of ["left", "right"] as const) {
+      this.handles[side] = this.handle(side);
+      frame.append(this.handles[side]);
+    }
     this.contentDOM = document.createElement("div");
     this.dom.append(frame, this.contentDOM);
     this.render();
@@ -736,6 +804,33 @@ class ImageView implements NodeView {
     for (const name of ["src", "alt", "data-width"]) {
       if (attributes[name] == null) this.img.removeAttribute(name);
       else this.img.setAttribute(name, attributes[name]);
+    }
+    const figure = figureAttributes(this.node);
+    if (figure["data-align"]) this.dom.setAttribute("data-align", figure["data-align"]);
+    else this.dom.removeAttribute("data-align");
+    this.syncHandles();
+  }
+
+  /**
+   * The side the image really floats to: its `align`, except in a table cell, where the styles
+   * ignore it. `null` when the position is not known yet or the image is centred.
+   */
+  private floatSide(): ImageAlign | null {
+    const align = alignOf(this.node.attrs.align);
+    const pos = this.getPos();
+    if (!align || pos == null || inTableCell(this.view.state, pos)) return null;
+    return align;
+  }
+
+  /**
+   * A floated image has one handle, on the side of the text: the edge next to the container's edge
+   * stays where it is, so a handle there would have nothing to drag. The other is kept in the frame
+   * for when the image is centred again.
+   */
+  private syncHandles() {
+    const float = this.floatSide();
+    for (const [side, handle] of Object.entries(this.handles)) {
+      handle.hidden = float !== null && side === float;
     }
   }
 
@@ -758,13 +853,18 @@ class ImageView implements NodeView {
     const startX = event.clientX;
     const target = event.currentTarget as HTMLElement;
     target.setPointerCapture?.(event.pointerId);
-    // The image is centered, so its edge follows the cursor when the width changes
-    // by twice the shift.
-    const sign = side === "right" ? 2 : -2;
+    // A centred image grows to both sides, so its edge follows the cursor when the width changes by
+    // twice the shift. A floated image is held by the container's edge and grows to one side only:
+    // the handle is on the text side, and the edge follows the cursor one pixel for one.
+    const floated = this.floatSide() !== null;
+    const sign = (side === "right" ? 1 : -1) * (floated ? 1 : 2);
+    // The full width leaves a floated image no room for the text, so the handle stops short of it.
+    const widths = floated ? ALIGNED_WIDTHS : IMAGE_WIDTHS;
+    const widest = Number(widths[widths.length - 1]) / 100;
     let width = start;
     const move = (moveEvent: PointerEvent) => {
       width = Math.min(
-        container,
+        container * widest,
         Math.max(container * 0.25, start + sign * (moveEvent.clientX - startX))
       );
       this.dom.style.width = `${width}px`;
@@ -776,10 +876,14 @@ class ImageView implements NodeView {
       this.dom.style.removeProperty("width");
       const pos = this.getPos();
       if (pos == null) return;
-      const next = nearestWidth((width / container) * 100);
+      const next = nearestWidth((width / container) * 100, widths);
       if (next === this.node.attrs.width) return;
+      const attrs = this.node.attrs as ImageAttributes;
       this.view.dispatch(
-        this.view.state.tr.setNodeMarkup(pos, undefined, { ...this.node.attrs, width: next })
+        this.view.state.tr.setNodeMarkup(pos, undefined, {
+          ...attrs,
+          ...layoutOf(attrs, { width: next }),
+        })
       );
     };
     target.addEventListener("pointermove", move);

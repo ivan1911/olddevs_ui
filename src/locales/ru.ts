@@ -528,6 +528,10 @@ export const messages: UiMessages = {
     imageWidth: "Ширина",
     // In Russian, a non-breaking space goes between the number and the percent sign.
     imageWidthPreset: ({ percent }) => `${percent}\u00a0%`,
+    imageAlign: "Выравнивание картинки",
+    imageAlignLeft: "Слева, текст обтекает",
+    imageAlignCenter: "По центру",
+    imageAlignRight: "Справа, текст обтекает",
     imageCaption: "Подпись (необязательно)",
     imageUploading: ({ name }) => `Загружается файл ${name}…`,
     imageUploaded: ({ name }) => `Файл ${name} загружен`,

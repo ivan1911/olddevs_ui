@@ -79,7 +79,7 @@ const HOSTILE =
   // nor sizes, nor classes, nor handlers, on either `img` or `figure`.
   '<figure class="wide" style="float:left" data-width="50" src="javascript:steal()">' +
   '<img src="https://cdn.example.com/a.png" alt="ok" width="300" height="200" title="t" ' +
-  'class="x" style="width:10px" data-width="33" loading="lazy" onerror="steal()">' +
+  'class="x" style="width:10px" data-width="40" loading="lazy" onerror="steal()">' +
   '<figcaption style="color:red" class="c">caption</figcaption></figure>' +
   '<img src="blob:https://example.com/0b6b"><img src="/relative.png"><img src=" java\tscript:steal()">';
 
@@ -109,7 +109,7 @@ for (const [path, run] of [
     expect(html).toContain('<code class="language-python">code()</code>');
     expect(html.match(/<input/g)).toHaveLength(1);
     // Images outside the address policy are dropped entirely; the one within the policy stays,
-    // with `src` and `alt`, and without a width outside the presets.
+    // with `src` and `alt`, and without a width outside the presets (40 is not one).
     expect(html.match(/<img/g)).toHaveLength(1);
     expect(html).toContain(
       '<figure><img src="https://cdn.example.com/a.png" alt="ok"><figcaption>caption</figcaption></figure>'
@@ -173,6 +173,8 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     "</tbody></table>" +
     '<figure><img src="https://cdn.example.com/a.png" alt="A" data-width="75">' +
     "<figcaption>Caption</figcaption></figure>" +
+    // Image alignment (OLDSUI-311): the only `data-align` on a `figure`.
+    '<figure data-align="right"><img src="https://cdn.example.com/b.png" alt="B" data-width="25"></figure>' +
     '<div data-block="layout" data-layout="60-40"><div data-block="column"><p>l</p></div>' +
     '<div data-block="column"><p>r</p></div></div>' +
     '<div data-block="wrapper" data-tone="warning"><p>w</p></div>' +
