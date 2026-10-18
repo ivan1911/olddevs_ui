@@ -37,6 +37,8 @@ export interface ToolSignals {
   tools?: ToolList;
   /** The search panel is open (React state in `RichTextEditor`). */
   searchOpen?: boolean;
+  /** The field fills the window (React state in `RichTextEditor`, ADR-0082). */
+  fullscreenOpen?: boolean;
   /** Index of the current Table of contents section (computed by `TocCore` from the scroll position). */
   tocAt?: number;
 }

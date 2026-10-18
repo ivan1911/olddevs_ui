@@ -178,6 +178,10 @@ export interface ToolBridge {
   sourceOpen: () => boolean;
   /** Go to a Table of contents heading by its list index. */
   jumpToc: (index: number) => boolean;
+  /** Expand the field to the whole window or collapse it; `false` when nothing changed (ADR-0082). */
+  setFullscreen: (open: boolean) => boolean;
+  /** Whether the field fills the window now. */
+  fullscreenOpen: () => boolean;
   /** Whether the field is disabled (not only read-only): the jumps of the footnotes work in `readOnly`, not here. */
   disabled: () => boolean;
 }

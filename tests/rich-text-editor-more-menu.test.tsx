@@ -94,6 +94,9 @@ test("the full preset offers the rare marks, Code block, Quote and Clear formatt
     { role: "menuitem", name: "Clear formatting", checked: false, shortcut: "Ctrl+\\" },
     // A display mode of the Document, not formatting: the last section, without a shortcut (OLDSUI-278).
     { role: "menuitemcheckbox", name: "Invisible characters", checked: false, shortcut: null },
+    // The other display modes share the section (OLDSUI-312).
+    { role: "menuitemcheckbox", name: "Focus mode", checked: false, shortcut: null },
+    { role: "menuitemcheckbox", name: "Fullscreen", checked: false, shortcut: null },
   ]);
 });
 
@@ -114,6 +117,8 @@ test("on Apple the shortcuts are signed with ⌘", async () => {
     "⌘+⇧+B",
     null,
     "⌘+\\",
+    null,
+    null,
     null,
   ]);
   // Key symbols are set in a proportional font, as in \`Kbd\`: in a monospace stack the \`⇧\`
@@ -345,5 +350,7 @@ test("the menu speaks the provider's language", async () => {
     t.footnote,
     t.clearFormatting,
     t.invisibleCharacters,
+    t.focusMode,
+    t.fullscreen,
   ]);
 });

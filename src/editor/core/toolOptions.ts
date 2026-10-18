@@ -4,6 +4,8 @@ import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
 import type {
   BlockSelectionToolState,
+  FocusToolState,
+  FullscreenToolState,
   FootnotesToolState,
   InvisibleCharactersToolState,
   LanguageToolState,
@@ -12,6 +14,8 @@ import type {
 } from "./toolState.js";
 import type {
   BlockSelectionToolCommands,
+  FocusToolCommands,
+  FullscreenToolCommands,
   DateToolCommands,
   FootnotesToolCommands,
   InvisibleCharactersToolCommands,
@@ -211,6 +215,18 @@ export interface InvisibleCharactersToolOptions {
 }
 
 /**
+ * Options of the `focus` Tool (the focus mode, ADR-0082).
+ */
+export interface FocusToolOptions {
+  /**
+   * The focus mode is on from the start. Default `false`: the Tool is part of `full`, and a kit
+   * update must not change how every such Editor looks. After that, the "Focus mode" item, the
+   * `toggle` command and the `enabled` state control the mode; the option sets only the starting value.
+   */
+  enabled: boolean;
+}
+
+/**
  * Options of the `language` Tool (Text part language, ADR-0078).
  */
 export interface LanguageToolOptions {
@@ -312,6 +328,16 @@ export interface RichTextTools {
   blockSelection: {
     state: BlockSelectionToolState;
     commands: BlockSelectionToolCommands;
+  };
+  // State and commands only: the layer has no options (ADR-0082).
+  fullscreen: {
+    state: FullscreenToolState;
+    commands: FullscreenToolCommands;
+  };
+  focus: {
+    options: FocusToolOptions;
+    state: FocusToolState;
+    commands: FocusToolCommands;
   };
   // State and commands only: footnotes have no options (ADR-0076).
   footnotes: {

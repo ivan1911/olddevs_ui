@@ -87,6 +87,18 @@ export interface BlockSelectionToolState {
   count: number;
 }
 
+/** State of the `fullscreen` Tool (ADR-0082). */
+export interface FullscreenToolState {
+  /** The field fills the whole window. Read it to draw an outside control, or to hide the page's own chrome. */
+  open: boolean;
+}
+
+/** State of the `focus` Tool (ADR-0082). */
+export interface FocusToolState {
+  /** The focus mode is on: the Blocks around the current one are shown in secondary color. Off until the author or the `enabled` option turns it on. */
+  enabled: boolean;
+}
+
 /** State of the `language` Tool (Text part language, ADR-0078). */
 export interface LanguageToolState {
   /**

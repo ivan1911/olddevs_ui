@@ -85,6 +85,26 @@ export interface InvisibleCharactersToolCommands {
   toggle(): boolean;
 }
 
+/** Commands of the `fullscreen` Tool (ADR-0082). Each returns a `boolean`: done or not. */
+export interface FullscreenToolCommands {
+  /** Expands the field to the whole window, the same as the "Fullscreen" item of the "…" menu. `false` in Source mode, in a disabled field, and when it is already open. */
+  open(): boolean;
+  /** Collapses the field to its place on the page. `false` when it is not open. */
+  close(): boolean;
+  /** Opens the field if it is collapsed and collapses it if it is open. `false` where `open()` is refused. */
+  toggle(): boolean;
+}
+
+/** Commands of the `focus` Tool (ADR-0082). */
+export interface FocusToolCommands {
+  /**
+   * Turns the focus mode on if it is off and off if it is on: the same as the "Focus mode" item of
+   * the "…" menu. The Document and `value` do not change, and `onChange` is not called. The new
+   * value is read by the Tool state (`enabled`). `false` in Source mode (there is no Document on screen).
+   */
+  toggle(): boolean;
+}
+
 /** Commands of the `date` Tool (the date mention, ADR-0079). */
 export interface DateToolCommands {
   /**

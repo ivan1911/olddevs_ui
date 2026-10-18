@@ -616,6 +616,8 @@ describe("surfaces", () => {
           "menuitem: Footnote",
           "menuitem: Clear formatting | Ctrl+\\",
           "menuitemcheckbox: Invisible characters",
+          "menuitemcheckbox: Focus mode",
+          "menuitemcheckbox: Fullscreen",
         ],
       }
     `);
@@ -646,6 +648,8 @@ describe("surfaces", () => {
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
           "menuitem: Footnote",
           "menuitem: Clear formatting | Ctrl+\\",
+          "menuitemcheckbox: Focus mode",
+          "menuitemcheckbox: Fullscreen",
         ],
       }
     `);

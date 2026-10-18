@@ -50,6 +50,7 @@ export type {
   ConfiguredTool,
   DateToolOptions,
   DetailsToolOptions,
+  FocusToolOptions,
   InvisibleCharactersToolOptions,
   LanguageToolOptions,
   MathematicsToolOptions,
@@ -63,6 +64,8 @@ export type {
 export type {
   DateToolCommands,
   BlockSelectionToolCommands,
+  FocusToolCommands,
+  FullscreenToolCommands,
   FootnotesToolCommands,
   InvisibleCharactersToolCommands,
   LanguageToolCommands,
@@ -71,6 +74,8 @@ export type {
 } from "./core/toolCommands.js";
 export type {
   BlockSelectionToolState,
+  FocusToolState,
+  FullscreenToolState,
   FootnotesToolNote,
   FootnotesToolState,
   InvisibleCharactersToolState,
