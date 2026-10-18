@@ -105,6 +105,19 @@ export interface FocusToolCommands {
   toggle(): boolean;
 }
 
+/** Commands of the `date` Tool (the date mention, ADR-0079). */
+export interface DateToolCommands {
+  /**
+   * Inserts a date mention at the caret (or over the selection) in one edit. `value` is a calendar
+   * date `YYYY-MM-DD` or a date with a time and the author's offset, `YYYY-MM-DDTHH:MM±HH:MM`; its text
+   * is written in the current locale by the Tool's `format` option. Without `value` it opens the same
+   * popover as the Slash menu item, with the calendar on today. `true` means the mention is inserted
+   * or the popover is opened. `false` means the field is read-only, source mode is open, or `value`
+   * is not a date in the two forms (a day that does not exist, a time without an offset).
+   */
+  insert(value?: string): boolean;
+}
+
 /** Commands of the `language` Tool (Text part language, ADR-0078). */
 export interface LanguageToolCommands {
   /**
@@ -142,6 +155,30 @@ export interface BlockSelectionToolCommands {
    * Blocks are selected.
    */
   clear(): boolean;
+}
+
+/**
+ * Commands of the `footnotes` Tool (ADR-0076). Each returns a `boolean`: done or not.
+ */
+export interface FootnotesToolCommands {
+  /**
+   * Inserts a footnote reference at the end of the selection, makes its footnote in the list, and
+   * puts the caret into the footnote's text: the same as the "Footnote" item of the Slash menu. One
+   * edit, one undo. `false` in `readOnly`, in a disabled field and in Source mode, and where a
+   * reference cannot stand: in code, in a formula, in a footnote.
+   */
+  insert(): boolean;
+  /**
+   * Puts the caret at the end of footnote `number` (from 1) and scrolls to it, as a click on its
+   * reference does. Works in `readOnly`, where the Document does not change. `false` for a number
+   * that has no footnote, in a disabled field and in Source mode.
+   */
+  goToFootnote(number: number): boolean;
+  /**
+   * Puts the caret right after the reference of footnote `number` (from 1) and scrolls to it, as the
+   * footnote's number button does. The conditions are the same as for `goToFootnote`.
+   */
+  goToReference(number: number): boolean;
 }
 
 /**

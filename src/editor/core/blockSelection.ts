@@ -8,7 +8,7 @@ import {
   type Transaction,
 } from "@tiptap/pm/state";
 import type { Mappable } from "@tiptap/pm/transform";
-import { holdsUnits, LIST_NODES } from "./blockUnit.js";
+import { allUnits, holdsUnits, LIST_NODES } from "./blockUnit.js";
 
 /**
  * Block selection (ADR-0077): several Blocks selected whole, with no caret and no text selection.
@@ -37,7 +37,9 @@ function isUnitRow(doc: PmNode, from: number, to: number): boolean {
     $from.depth === $to.depth &&
     holdsUnits($from.parent) &&
     $from.nodeAfter !== null &&
-    $to.nodeBefore !== null
+    $to.nodeBefore !== null &&
+    // A node that is not a unit (the footnote list) is never inside a selected row.
+    allUnits($from.parent, $from.index(), $to.index())
   );
 }
 

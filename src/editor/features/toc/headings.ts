@@ -44,6 +44,19 @@ export function documentRoot(target: HTMLElement): HTMLElement {
   return target.querySelector<HTMLElement>(".ProseMirror") ?? target;
 }
 
+/**
+ * The heading's name for the list: its text without the numbers of footnote references (ADR-0076),
+ * which belong to the text, not to the name. The element itself is left alone.
+ */
+function headingText(heading: Element): string {
+  if (!heading.querySelector("sup[data-footnote-ref]")) return heading.textContent?.trim() ?? "";
+  const copy = heading.cloneNode(true) as Element;
+  for (const reference of Array.from(copy.querySelectorAll("sup[data-footnote-ref]"))) {
+    reference.remove();
+  }
+  return copy.textContent?.trim() ?? "";
+}
+
 /** The heading is at the top level of the Document, or only inside Wrappers. */
 function isStructural(heading: Element, root: HTMLElement): boolean {
   for (let node = heading.parentElement; node && node !== root; node = node.parentElement) {
@@ -64,14 +77,14 @@ export function collectHeadings(target: HTMLElement, only?: readonly number[]): 
   const found = [...root.querySelectorAll<HTMLElement>(HEADING)].filter(
     (heading) =>
       isStructural(heading, root) &&
-      heading.textContent?.trim() &&
+      headingText(heading) &&
       (!only || only.includes(Number(heading.tagName[1])))
   );
   const levels = found.map((heading) => Number(heading.tagName[1]));
   const top = Math.min(...levels);
   return found.map((element, index) => ({
     element,
-    text: element.textContent?.trim() ?? "",
+    text: headingText(element),
     level: levels[index]!,
     depth: levels[index]! - top,
   }));

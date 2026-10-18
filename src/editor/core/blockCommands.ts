@@ -11,7 +11,14 @@ import {
 } from "@tiptap/pm/state";
 import { StepMap } from "@tiptap/pm/transform";
 import { BlockSelection, removeUnits } from "./blockSelection.js";
-import { blockUnitRange, inTable, isBlockContainer, unitNodes } from "./blockUnit.js";
+import {
+  blockUnitRange,
+  inTable,
+  isBlockContainer,
+  isBlockUnit,
+  onlyUnits,
+  unitNodes,
+} from "./blockUnit.js";
 
 export { isBlockContainer };
 
@@ -74,7 +81,7 @@ export function handleBlocks(state: Pick<EditorState, "selection">): NodeRange |
   if (selection instanceof BlockSelection) return selection.nodeRange();
   const { $from, $to } = selection;
   const range = $from.blockRange($to, isBlockContainer);
-  return range && range.startIndex < range.endIndex ? range : null;
+  return onlyUnits(range && range.startIndex < range.endIndex ? range : null);
 }
 
 /**
@@ -134,6 +141,8 @@ export function moveBlock(dir: -1 | 1, scope: BlockScope = "selection"): Command
     const blocks = unitNodes(range);
     const neighbourIndex = dir < 0 ? range.startIndex - 1 : range.endIndex;
     if (neighbourIndex < 0 || neighbourIndex >= range.parent.childCount) return true;
+    // The footnote list is always the last Block (ADR-0076): nothing moves past it.
+    if (!isBlockUnit(range.parent.child(neighbourIndex))) return true;
     if (dispatch) {
       const neighbour = range.parent.child(neighbourIndex);
       const from = dir < 0 ? range.start - neighbour.nodeSize : range.start;

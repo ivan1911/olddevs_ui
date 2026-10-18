@@ -12,7 +12,7 @@
  * not a breaking change for it. But a name with no implementation would be a silent trap:
  * `tools={["x"]}` would compile and do nothing. This is how `link`, `color`, `highlight`,
  * `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `details`, `mathematics`,
- * `invisibleCharacters`, `source`, `typography`, `youtube` and `twitch` arrived; there are no
+ * `date`, `invisibleCharacters`, `source`, `typography`, `youtube` and `twitch` arrived; there are no
  * reserved names at the moment.
  *
  * `heading1` is the first-level heading, an add-on over `heading`: with it, the Block's levels
@@ -60,6 +60,14 @@
  * not load KaTeX; it is enabled by an explicit entry in `tools`. A disabled Tool leaves a formula
  * from an insert and from `value` as the text `$…$` / `$$…$$`, so the LaTeX is not lost.
  *
+ * `date` is the date mention, an inline Atom `<time datetime="…">text</time>` (ADR-0079): a date from
+ * the kit's `Calendar`, optionally with a time and the author's UTC offset, written as text in the
+ * author's locale at the moment of insertion. The Slash menu item "Date" inserts it, and a click or
+ * `Enter` on it edits it in the kit's popover. The calendar and the popover are a lazy chunk; the node
+ * itself is small and stays in the start bundle. It is in `full`, not in `basic`: in a comment a date
+ * is typed as text. A disabled Tool leaves someone else's `<time>` as its words. The text format is
+ * set by `tool("date", { format })`.
+ *
  * `source` is Source mode: the "HTML" button on the fixed Toolbar replaces the Document with a field
  * holding its HTML, and on exit the field's content is applied through the Schema, like an
  * incoming `value`. It has no Schema of its own, like `clearFormatting`: the Schema governs the
@@ -104,6 +112,15 @@
  * Toolbar and the Bubble menu have no such item. It is in `full`, not in `basic`: a comment does not
  * need this mode. But in `full` the characters stay hidden until the author turns display on: the
  * starting display is set by the `tool("invisibleCharacters", { visible: true })` option.
+ *
+ * `footnotes` is footnotes (ADR-0076): a reference in the text with an automatic number, and a list of
+ * the footnotes' texts at the end of the Document, edited in place; the reference and the footnote
+ * are followed both ways, in the Editor and in `RichTextView` without JS. It has no Toolbar button:
+ * a "Footnote" item in the Slash menu and in the "…" menu. The kit keeps the list: a footnote exists
+ * while its reference does, and deleting the reference deletes the footnote in the same edit. It is
+ * in `full`, not in `basic`: a comment does not need footnotes. A Document that holds footnotes
+ * opened in an Editor without the Tool keeps the text: the markup goes, and the numbers and the
+ * footnotes' paragraphs stay.
  *
  * `blockSelection` is Block selection (ADR-0077): several Blocks selected whole, as in Notion. `Esc` in
  * the text selects the current Block, `Shift+↑/↓` and `Shift+click` grow the selection, and then
@@ -152,6 +169,8 @@ export const TOOLS = [
   "wrapper",
   "details",
   "mathematics",
+  "date",
+  "footnotes",
   "emoji",
   "source",
   "search",

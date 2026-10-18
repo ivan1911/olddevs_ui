@@ -154,6 +154,21 @@ const COLOR_CLASS =
  * `scrollable-region-focusable`) fires only when the table is actually wider than the screen;
  * in the Editor each cell has a caret in it.
  *
+ * COLUMN WIDTHS (ADR-0080). A table with a `colgroup` of `col[data-width]` gets the shares of its
+ * width: the table becomes a size container, and each `col` is that many `cqw` (container-query
+ * width, 1% of the container). Percentages do not work here: inside the `display: block` table the
+ * browser builds an anonymous table whose own width is "by content", so `width: 35%` on a `col`
+ * has nothing to be a share of, and the table would not fill the Document. A container unit is
+ * resolved against the block, which does fill it. Without a `colgroup` nothing changes: the table
+ * is as wide as its content.
+ *
+ * THE MINIMUM COLUMN WIDTH (6 rem, `min-w-24` on the cell) WINS OVER THE SHARE. A `col` width in an
+ * automatic table layout is a preferred width, never below what the cells need: on a narrow screen
+ * the columns stop at 6 rem, the anonymous table becomes wider than the block, and the table
+ * scrolls inside itself, as a table without widths does. The 19 values are the whole set the Schema
+ * allows (5 to 95 in steps of 5); the value is IN QUOTES, as in the image rules below, because
+ * `[data-width=5]` is not a valid selector.
+ *
  * `.selectedCell` is the class the table engine marks cells with when they are selected by
  * mouse across cells; without the rule the selection is not visible.
  *
@@ -173,7 +188,18 @@ const TABLE_CLASS =
   "[&_.ProseMirror-gapcursor]:hidden [&.ProseMirror-focused_.ProseMirror-gapcursor]:block " +
   "[&_.ProseMirror-gapcursor]:after:absolute [&_.ProseMirror-gapcursor]:after:-top-0.5 " +
   "[&_.ProseMirror-gapcursor]:after:w-5 [&_.ProseMirror-gapcursor]:after:border-t-2 " +
-  "[&_.ProseMirror-gapcursor]:after:border-(--rte-foreground)";
+  "[&_.ProseMirror-gapcursor]:after:border-(--rte-foreground) " +
+  "[&_table:has(>colgroup)]:[container-type:inline-size] " +
+  "[&_col[data-width='5']]:w-[5cqw] [&_col[data-width='10']]:w-[10cqw] " +
+  "[&_col[data-width='15']]:w-[15cqw] [&_col[data-width='20']]:w-[20cqw] " +
+  "[&_col[data-width='25']]:w-[25cqw] [&_col[data-width='30']]:w-[30cqw] " +
+  "[&_col[data-width='35']]:w-[35cqw] [&_col[data-width='40']]:w-[40cqw] " +
+  "[&_col[data-width='45']]:w-[45cqw] [&_col[data-width='50']]:w-[50cqw] " +
+  "[&_col[data-width='55']]:w-[55cqw] [&_col[data-width='60']]:w-[60cqw] " +
+  "[&_col[data-width='65']]:w-[65cqw] [&_col[data-width='70']]:w-[70cqw] " +
+  "[&_col[data-width='75']]:w-[75cqw] [&_col[data-width='80']]:w-[80cqw] " +
+  "[&_col[data-width='85']]:w-[85cqw] [&_col[data-width='90']]:w-[90cqw] " +
+  "[&_col[data-width='95']]:w-[95cqw]";
 
 /**
  * Column layout: `div[data-block=layout]` is a grid, its columns are its cells, and the
@@ -359,6 +385,24 @@ const MATH_CLASS =
   "[&_.tiptap-mathematics-render.ProseMirror-selectednode]:outline-(--rte-ring) ";
 
 /**
+ * Date mention (the `date` Tool, ADR-0079): `time[datetime]` inline. The same plaque in the Editor and
+ * in the View: a rounded chip with the weak background that inline code uses (`--rte-code-background`,
+ * whose contrast with the body text is already measured on the themes, the Paper and in a toned
+ * Wrapper by `npm run contrast`), with the ordinary font and no icon. `nowrap` keeps one date from
+ * breaking across lines.
+ *
+ * EDITOR. The mention is clickable: the pointer shows it, but only in an editable field (the root's
+ * `contenteditable="true"`). A mention selected with a click or `Enter` gets the outline of a selected
+ * Atom, the same as a formula.
+ */
+const DATE_CLASS =
+  "[&_time[datetime]]:rounded-(--rte-radius) [&_time[datetime]]:bg-(--rte-code-background) " +
+  "[&_time[datetime]]:px-1 [&_time[datetime]]:py-0.5 [&_time[datetime]]:whitespace-nowrap " +
+  "[&[contenteditable=true]_time[datetime]]:cursor-pointer " +
+  "[&_time[datetime].ProseMirror-selectednode]:outline-2 " +
+  "[&_time[datetime].ProseMirror-selectednode]:outline-(--rte-ring) ";
+
+/**
  * Invisible characters (the `invisibleCharacters` Tool): the Tiptap extension puts
  * `span.tiptap-invisible-character` widgets into the markup, with a `--space`, `--break` or
  * `--paragraph` modifier; the empty `span` carries the mark in `::before`. The kit does not
@@ -384,6 +428,49 @@ const INVISIBLE_CHARACTERS_CLASS =
   "[&_.tiptap-invisible-character--break]:before:content-['↵'] " +
   "[&_.tiptap-invisible-character--paragraph]:before:content-['¶'] " +
   "[&_p.is-editor-empty:first-child>.tiptap-invisible-character--paragraph]:hidden ";
+
+/**
+ * Footnotes (the `footnotes` Tool, ADR-0076): the reference `sup[data-footnote-ref]` in the text and
+ * the list `section[data-block=footnotes]` at the end of the Document. The look is the same in the
+ * Editor and in the View, apart from the number: the View shows the list's own decimal markers and the
+ * "↩" link, the Editor shows the number as a button (`[data-footnote-back]`) that returns the caret to
+ * the text.
+ *
+ * THE LIST: a short rule on top, small secondary text, no visible heading (its name is in the HTML for
+ * screen readers, `aria-label`). The roles are the Document's own (`--rte-hr`, `--rte-secondary`), so
+ * the contrast of the quote's text holds here too, on the theme and on the Paper alike.
+ *
+ * THE TEXT STANDS NEXT TO ITS BACKLINK. In the saved HTML a footnote is `li > p` plus the "↩" link;
+ * the paragraph is inline so the link follows the last word. In the Editor the item is a flex row of
+ * the number button and the paragraph, and a flex item is a block whatever its `display`.
+ *
+ * JUMPS WITHOUT JS. The anchors are plain `#fn-…` and `#fnref-…` links. The item that was jumped to
+ * (`:target`) is highlighted with the selection color, so the reader sees where they landed.
+ */
+const FOOTNOTE_CLASS =
+  "[&_sup[data-footnote-ref]]:ml-px [&_sup[data-footnote-ref]>a]:font-medium " +
+  "[&_section[data-block=footnotes]]:mt-6 [&_section[data-block=footnotes]]:border-t " +
+  "[&_section[data-block=footnotes]]:border-(--rte-hr) [&_section[data-block=footnotes]]:pt-3 " +
+  "[&_section[data-block=footnotes]]:text-sm [&_section[data-block=footnotes]]:text-(--rte-secondary) " +
+  "[&_section[data-block=footnotes]_li>p]:inline " +
+  "[&_section[data-block=footnotes]_li>a[role=doc-backlink]]:ml-1 " +
+  "[&_section[data-block=footnotes]_li:target]:rounded-(--rte-radius) " +
+  "[&_section[data-block=footnotes]_li:target]:bg-(--rte-selection) " +
+  // In the Editor the number is a button, so the list needs no room for its own markers.
+  "[&_section[data-block=footnotes]_ol:has(>li>[data-footnote-back])]:pl-0 " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:flex " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:list-none " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:items-baseline " +
+  "[&_section[data-block=footnotes]_li:has(>[data-footnote-back])]:gap-1.5 " +
+  "[&_section[data-block=footnotes]_li>p]:min-w-0 [&_section[data-block=footnotes]_li>p]:flex-1 " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:min-w-5 " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:cursor-pointer " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:text-right " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:text-(--rte-link) " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:underline " +
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:underline-offset-2 " +
+  // The number is followed by a dot, like the decimal marker the View's list draws itself.
+  "[&_section[data-block=footnotes]_[data-footnote-back]]:after:content-['.'] ";
 
 /**
  * Text part language (the `language` Tool, ADR-0078): `span[lang]` is a Mark with no look of its own
@@ -569,7 +656,9 @@ const PROSE_RULES =
   DETAILS_CLASS +
   " " +
   MATH_CLASS +
+  DATE_CLASS +
   INVISIBLE_CHARACTERS_CLASS +
+  FOOTNOTE_CLASS +
   LANGUAGE_CLASS +
   VIDEO_CLASS +
   BLOCK_SELECTION_CLASS +

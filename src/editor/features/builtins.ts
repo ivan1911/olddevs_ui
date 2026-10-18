@@ -12,8 +12,10 @@ import { FOCUS_TOOL } from "./focus/focusTool.js";
 import { FULLSCREEN_TOOL } from "./fullscreen/fullscreenTool.js";
 import { ALIGN_TOOL, COLOR_TOOL, HIGHLIGHT_TOOL } from "./color/colorTools.js";
 import { CODE_BLOCK_TOOL } from "./code/codeBlockTool.js";
+import { DATE_TOOL } from "./date/dateTool.js";
 import { DETAILS_TOOL } from "./details/detailsTool.js";
 import { EMOJI_TOOL } from "./emoji/emojiTool.js";
+import { FOOTNOTES_TOOL } from "./footnotes/footnoteTool.js";
 import { HEADING1_TOOL, HEADING_TOOL } from "./heading/headingTool.js";
 import { HISTORY_TOOL } from "./history/historyTool.js";
 import { IMAGE_TOOL } from "./image/imageTool.js";
@@ -97,6 +99,8 @@ export const BUILTIN_TOOLS: Record<Tool, ToolDescriptor> = {
   wrapper: WRAPPER_TOOL,
   details: DETAILS_TOOL,
   mathematics: MATHEMATICS_TOOL,
+  date: DATE_TOOL,
+  footnotes: FOOTNOTES_TOOL,
   typography: TYPOGRAPHY_TOOL,
   pasteCleanup: PASTE_CLEANUP_TOOL,
   youtube: YOUTUBE_TOOL,

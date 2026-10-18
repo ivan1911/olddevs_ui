@@ -182,6 +182,8 @@ export interface ToolBridge {
   setFullscreen: (open: boolean) => boolean;
   /** Whether the field fills the window now. */
   fullscreenOpen: () => boolean;
+  /** Whether the field is disabled (not only read-only): the jumps of the footnotes work in `readOnly`, not here. */
+  disabled: () => boolean;
 }
 
 /** A trigger character of a Tool in the descriptor list: the public entry and the owner's name for messages. */

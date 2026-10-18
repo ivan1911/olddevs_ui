@@ -7,5 +7,6 @@
   module statically, or `basic` would pay for the table.
 */
 export { TABLE_EXTENSIONS } from "./tables.js";
+export { TableColumnHandles } from "./TableColumnHandles.js";
 export { TableInsertDialog } from "./TableInsertDialog.js";
 export { TableMenuButton } from "./TableMenuButton.js";

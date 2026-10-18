@@ -325,6 +325,7 @@ test("the bare sanitise config lists the schema minus what only hooks may admit"
     "data-tone",
     "data-type",
     "data-width",
+    "datetime",
     "href",
     "open",
     "rel",

@@ -319,12 +319,42 @@ const SERVER_SAFE = [
       "and no DOM, so the server-rendered RichTextView calls it.",
   },
   {
+    file: "editor/features/date/dateValue.ts",
+    why:
+      "The strict form of a date mention's datetime (OLDSUI-309, ADR-0079): a parser, a calendar check and " +
+      "a composer over strings, plus the tag and node names. No imports, so the sanitizer in schema.ts, which " +
+      "runs on the consumer's server, shares the very check the Editor uses.",
+  },
+  {
     file: "editor/features/mathematics/mathHtml.ts",
     why:
       "hasMath and withMathSource: string-to-string functions over the saved HTML that put the LaTeX " +
       "source into the empty formula elements (ADR-0070) and make a LaTeX source safe for the data-latex " +
       "attribute. The only import is mathNames.ts; no React and no DOM, so the server-rendered " +
       "RichTextView and the sanitizer call them.",
+  },
+  {
+    file: "editor/features/table/tableShares.ts",
+    why:
+      "The table column widths (OLDSUI-310, ADR-0080) as pure functions over numbers and an element " +
+      "passed in: the check of one share, the rounding of widths to steps of 5%, the reader of a " +
+      "colgroup. No React, no Tiptap, no global DOM. schema.ts sanitizes `col[data-width]` with the " +
+      "same check on the consumer's server, and the Skeleton shape of the table parses with it.",
+  },
+  {
+    file: "editor/features/footnotes/footnoteHtml.ts",
+    why:
+      "The sanitizer half of footnotes (ADR-0076): the narrow rule that lets id and href=# through " +
+      "only on the footnote markup, in its exact shape and place, and the structure check. Functions " +
+      "over DOM nodes that the server-side cleanup hands over; the only import is footnoteNames.ts. " +
+      "No React and no Tiptap, so schema.ts calls it on the consumer's server.",
+  },
+  {
+    file: "editor/features/footnotes/footnoteNames.ts",
+    why:
+      "The names of footnotes as constants and pure functions (ADR-0076): the node names, the HTML " +
+      "attribute names, the key shape and the fn-<key> / fnref-<key> anchors. Strings only, no " +
+      "imports (crypto is a global), so the sanitizer in schema.ts and the Tool descriptor share them.",
   },
   {
     file: "editor/features/language/languageTag.ts",
