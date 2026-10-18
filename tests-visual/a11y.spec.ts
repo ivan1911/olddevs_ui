@@ -71,7 +71,10 @@ async function freezeAnimations(page: Page) {
 async function analyzeWhenFree(page: Page, scope: string) {
   for (let attempt = 0; ; attempt++) {
     try {
-      return await new AxeBuilder({ page }).include(scope).analyze();
+      // The text the Editor's focus mode dims is below 4.5:1 on purpose (OLDSUI-315, ADR-0082):
+      // it is the background around the Block being written, not the text being read. It holds only
+      // inline content, which the stories without the mode check in full.
+      return await new AxeBuilder({ page }).include(scope).exclude(".rte-focus-dim").analyze();
     } catch (e) {
       const busy = e instanceof Error && e.message.includes("Axe is already running");
       if (!busy || attempt >= 10) throw e;

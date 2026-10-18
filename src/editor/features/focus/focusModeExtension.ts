@@ -39,7 +39,8 @@ export const FOCUS_DIM_ITEM_CLASS = "rte-focus-dim-item";
  * What the classes do: everything outside the Block goes to 40% opacity (OLDSUI-315, the owner's
  * choice among four variants). Opacity, not a color: a link, an author color, a marker fill and a
  * code Block's highlight keep their own colors, only fainter, so one rule fits the theme, the Paper,
- * the toned Wrappers and the code themes alike. A list marker has no opacity of its own (`::marker`
+ * the toned Wrappers and the code themes alike. Opacity multiplies, so an element that is already
+ * faint (a code Block, a `mark`) keeps the text inside it as it is. A list marker has no opacity of its own (`::marker`
  * takes only a color), so it gets its item's color at the same 40%.
  *
  * THE CONTRAST IS BELOW 4.5:1 ON PURPOSE (3.1:1 on the dark theme, 2.4:1 on the Paper; ADR-0082,
@@ -53,10 +54,30 @@ export const FOCUS_DIM_ITEM_CLASS = "rte-focus-dim-item";
  */
 const FOCUS_MODE_CLASS =
   "[&_:is(.rte-focus-dim,.rte-focus-dim-media)]:opacity-40 " +
-  "[&_li.rte-focus-dim-item]:marker:text-[color-mix(in_srgb,currentColor_40%,transparent)]";
+  // The decoration lies inside a marker's `mark`, so it would dim the letters and leave the fill bright:
+  // the `mark` goes faint as a whole instead, its text as it is inside.
+  "[&_mark:has(>.rte-focus-dim)]:opacity-40 [&_mark>.rte-focus-dim]:opacity-100 " +
+  "[&_li.rte-focus-dim-item]:marker:text-[color-mix(in_srgb,currentColor_40%,transparent)] " +
+  // Opacity multiplies: inside a Block already at 40% (a code Block, a Wrapper, a table) nothing goes
+  // faint a second time, or it would sink to 16%.
+  "[&_.rte-focus-dim-media_:is(.rte-focus-dim,.rte-focus-dim-media,mark)]:opacity-100 " +
+  "[&_.rte-focus-dim-media_li.rte-focus-dim-item]:marker:text-inherit";
 
-/** Blocks dimmed by opacity: they have no text of their own to recolor, or their colors are the theme's. */
-const MEDIA_NODES: ReadonlySet<string> = new Set(["image", "video", "codeBlock", "blockMath"]);
+/**
+ * Blocks that go faint whole, not only their text: media and code have no text of their own or keep
+ * their theme's colors, and a toned Wrapper, a Details Block and a table have a fill or a frame that
+ * would stay bright around faint text (OLDSUI-315). Only a node that lies wholly outside the unit: a
+ * Wrapper with the caret inside keeps its frame, and its other Blocks dim as text.
+ */
+const MEDIA_NODES: ReadonlySet<string> = new Set([
+  "image",
+  "video",
+  "codeBlock",
+  "blockMath",
+  "wrapper",
+  "details",
+  "table",
+]);
 
 function dim(editor: Editor, state: EditorState): DecorationSet | null {
   if (!FOCUS_MODE_KEY.getState(state)?.enabled) return null;
@@ -72,6 +93,8 @@ function dim(editor: Editor, state: EditorState): DecorationSet | null {
   const dimMedia = (from: number, to: number) =>
     doc.nodesBetween(from, to, (node, pos) => {
       if (!MEDIA_NODES.has(node.type.name)) return true;
+      // A container around the unit is not outside it: its own children are judged instead.
+      if (pos < range.end && pos + node.nodeSize > range.start) return true;
       marks.push(Decoration.node(pos, pos + node.nodeSize, { class: FOCUS_DIM_MEDIA_CLASS }));
       return false;
     });

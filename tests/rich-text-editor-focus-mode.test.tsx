@@ -189,6 +189,27 @@ test("images and code Blocks without text of their own go translucent, not recol
   expect(document.querySelector(".node-codeBlock.rte-focus-dim-media")).not.toBeNull();
 });
 
+test("a Wrapper, a Details Block and a table outside the unit go faint whole, frame and fill included", () => {
+  const { editor } = renderEditor({
+    tools: [...TOOLS, ...ON],
+    defaultValue:
+      '<div data-block="wrapper" data-tone="accent"><p>wrapped</p></div>' +
+      '<details><summary>title</summary><div data-type="detailsContent"><p>hidden</p></div></details>' +
+      "<table><tbody><tr><td><p>cell</p></td></tr></tbody></table><p>after</p>",
+  });
+  const whole = () =>
+    Array.from(document.querySelectorAll(".rte-focus-dim-media"), (node) =>
+      (node.textContent ?? "").trim()
+    );
+
+  caretIn(editor, "after");
+  expect(whole()).toEqual(["wrapped", "titlehidden", "cell"]);
+
+  // The caret inside the Wrapper: its paragraph is the unit, so the Wrapper is not faint as a whole.
+  caretIn(editor, "wrapped");
+  expect(whole()).toEqual(["titlehidden", "cell"]);
+});
+
 test("a floated image is a media Block like any other: dimmed whole when it is not current", () => {
   const { editor } = renderEditor({
     tools: [...TOOLS, ...ON],
