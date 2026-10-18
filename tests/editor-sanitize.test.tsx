@@ -147,7 +147,7 @@ const ATTACKS: [name: string, input: string, output: string][] = [
   ["image outside figure", '<p><img src="https://e.com/a.png" alt="">x</p>', "<p>x</p>"],
   [
     "unknown image width and a class",
-    '<figure><img src="https://e.com/a.png" alt="" data-width="33" class="x"></figure>',
+    '<figure><img src="https://e.com/a.png" alt="" data-width="40" class="x"></figure>',
     '<figure><img src="https://e.com/a.png" alt=""></figure>',
   ],
   ["figcaption outside figure", "<figcaption>x</figcaption>", "x"],

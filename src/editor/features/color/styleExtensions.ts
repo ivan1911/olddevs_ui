@@ -2,6 +2,7 @@
 
 import type { DOMOutputSpec } from "@tiptap/pm/model";
 import { mergeAttributes, type Extension, type Mark } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Color, TextStyle } from "@tiptap/extension-text-style";
@@ -300,10 +301,20 @@ export const TextAlignExtension: Extension = TextAlign.extend({
     };
   },
   addKeyboardShortcuts() {
+    /*
+      The same keys align a selected image (ADR-0081, `image.ts`), and the image's handler is not
+      guaranteed to run first: the order of two extensions of equal priority is the order of `tools`.
+      So with an image selected, this handler steps aside by name, with no import of the image feature.
+    */
+    const text = (alignment: EditorAlignment) => (): boolean => {
+      const { selection } = this.editor.state;
+      if (selection instanceof NodeSelection && selection.node.type.name === "image") return false;
+      return this.editor.commands.setTextAlign(alignment);
+    };
     return {
-      "Mod-Shift-l": () => this.editor.commands.setTextAlign("left"),
-      "Mod-Shift-e": () => this.editor.commands.setTextAlign("center"),
-      "Mod-Shift-r": () => this.editor.commands.setTextAlign("right"),
+      "Mod-Shift-l": text("left"),
+      "Mod-Shift-e": text("center"),
+      "Mod-Shift-r": text("right"),
     };
   },
 }).configure({ types: ["paragraph", "heading"], alignments: [...EDITOR_ALIGNMENTS] });

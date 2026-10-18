@@ -537,7 +537,10 @@ test("Alt+F10 on a selected image moves focus into the image toolbar", async () 
     );
   });
 
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "50%" }));
+  // The first stop of the panel is its first control: the left alignment toggle (OLDSUI-311).
+  expect(document.activeElement).toBe(
+    screen.getByRole("button", { name: "Left, text wraps around" })
+  );
 });
 
 test("the image popover and file messages speak the provider's language", async () => {

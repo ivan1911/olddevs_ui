@@ -238,6 +238,12 @@ export const RICH_TEXT_SCHEMA = {
      */
     img: ["src", "alt", "data-width"],
     /**
+     * Image alignment (ADR-0081): a value from `imageAlignments`, `left` or `right`, and the text of
+     * the next Blocks wraps around the image. The centre is the absence of the attribute. Unlike a
+     * paragraph's `left`, which is the default and is never written, here `left` is written: it means wrapping.
+     */
+    figure: ["data-align"],
+    /**
      * Date mention (ADR-0079): `datetime` only on `time`, and only in the two forms the Editor
      * writes, `YYYY-MM-DD` and `YYYY-MM-DDTHH:MM±HH:MM` (`isDatetime`).
      */
@@ -299,6 +305,11 @@ export const RICH_TEXT_SCHEMA = {
   /** Allowed values of `data-align`. `left` is read, but never written. */
   alignments: EDITOR_ALIGNMENTS,
   /**
+   * Allowed values of `figure[data-align]` (ADR-0081): the side the image floats to while the text
+   * wraps it. The same words as `alignments`, but `left` is written here and "centre" is no attribute.
+   */
+  imageAlignments: ["left", "right"],
+  /**
    * Column layout variants: the values of `div[data-layout]`, the column shares in percent,
    * separated by hyphens (`50-50`, `60-40`, `25-25-25-25`). The Editor maps the number of columns
    * of a Column layout to a variant on load. The server does not recalculate it, and an extra or
@@ -336,9 +347,10 @@ export const RICH_TEXT_SCHEMA = {
    * Image width is the share of the Document's width in percent: `data-width="50"`. Without the
    * attribute the image is shown at its own size, but not wider than the Document. Presets rather
    * than any number: the mouse resize handles snap to them, and the same set is available from
-   * the keyboard in the image popover.
+   * the keyboard in the image popover. An aligned image (`figure[data-align]`) is one of the four
+   * narrower ones: 100% leaves no room for the text to wrap.
    */
-  imageWidths: ["50", "75", "100"],
+  imageWidths: ["25", "33", "50", "75", "100"],
   /**
    * Cell merge limit: `colspan` no more than 20, `rowspan` no more than 50, the same as the number
    * of columns and rows of the largest table the Editor pastes. On load and on paste the Editor
@@ -364,6 +376,7 @@ export const RICH_TEXT_SCHEMA = {
   codeLanguages: readonly string[];
   customColor: { readonly styles: Readonly<Record<string, string>> };
   alignments: readonly string[];
+  imageAlignments: readonly string[];
   layouts: readonly string[];
   wrapperTones: readonly string[];
   protocols: readonly string[];
@@ -677,7 +690,7 @@ export interface RichTextPurifier {
  *   are converted (`legacyMarkerColors`). A `mark` without a color is removed.
  * - `style`: only `color:#rrggbb` on `span`, and `background-color:#rrggbb` on `mark`, and never
  *   together with `data-color`.
- * - `data-align`: a known value on `p`, `h1`–`h4`, `th`, `td`.
+ * - `data-align`: a known value on `p`, `h1`–`h4`, `th`, `td`; `left` or `right` on `figure`.
  * - Column layout: `div[data-block="layout"]` with a variant from `layouts`, and only outside a
  *   column, a Wrapper, a list, a quote, a table or a Details Block. `div[data-block="column"]` only directly inside a Column
  *   layout. Otherwise the wrapper is removed and the Blocks stay in place.
@@ -706,7 +719,7 @@ export interface RichTextPurifier {
  *   A link without an address becomes text.
  * - Image: `img` with an absolute `http`/`https` address, directly inside `figure`, with no `data:`
  *   or `blob:`. `data-width` is a preset, and `alt` is always present. `figcaption` only inside
- *   `figure`.
+ *   `figure`. `figure[data-align]` is `left` or `right`.
  *
  * The Schema has no `hljs-*` highlight tokens, and the helper removes them: highlighting happens
  * after sanitization (`highlightCodeBlocks`, ADR-0051).
@@ -826,8 +839,10 @@ const ATTRIBUTE_RULES: Record<string, (node: Element, value: string) => boolean>
     node.getAttribute("data-block") === VIDEO_BLOCK &&
     isVideoSrc(node.getAttribute("data-provider") ?? "", value),
   "data-align": (node, value) =>
-    ["P", "H1", "H2", "H3", "H4", "TH", "TD"].includes(node.nodeName) &&
-    has(RICH_TEXT_SCHEMA.alignments, value),
+    node.nodeName === "FIGURE"
+      ? has(RICH_TEXT_SCHEMA.imageAlignments, value)
+      : ["P", "H1", "H2", "H3", "H4", "TH", "TD"].includes(node.nodeName) &&
+        has(RICH_TEXT_SCHEMA.alignments, value),
   colspan: (node, value) => isSpan(node, value, RICH_TEXT_SCHEMA.tableSpans.colspan),
   rowspan: (node, value) => isSpan(node, value, RICH_TEXT_SCHEMA.tableSpans.rowspan),
   type: (node, value) => node.nodeName === "INPUT" && value === "checkbox",
