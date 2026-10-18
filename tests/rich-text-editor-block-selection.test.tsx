@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { Editor } from "@tiptap/react";
 import { createRef } from "react";
@@ -790,4 +790,77 @@ test("a Tool list without blockSelection has no mode: Esc does nothing", () => {
 
   expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
   expect(selection(editor).empty).toBe(true);
+});
+
+// --- The handle menu and the Toolbar over a Block selection -------------------------------------
+
+/** Three Blocks selected the way a user does: `Esc`, then `Shift+↓` twice. */
+function selectThree(editor: Editor) {
+  caretIn(editor, "One");
+  press(editor, "Escape");
+  press(editor, "ArrowDown", { shift: true });
+  press(editor, "ArrowDown", { shift: true });
+  expect(selectedCount(editor)).toBe(3);
+}
+
+test("Mod+/ over three selected Blocks opens the handle menu, and Duplicate copies all three in one edit", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectThree(editor);
+
+  const slash = new KeyboardEvent("keydown", {
+    key: "/",
+    code: "Slash",
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  Object.defineProperty(slash, "keyCode", { value: 191 });
+  act(() => void editor.view.dom.dispatchEvent(slash));
+  expect(slash.defaultPrevented).toBe(true);
+
+  const menu = await screen.findByRole("menu", { name: "Block actions" });
+  await user.click(within(menu).getByRole("menuitem", { name: /^Duplicate/ }));
+
+  expect(editor.getHTML()).toBe(THREE + THREE);
+  expect(announced()).toBe("Blocks duplicated: 3");
+  // The copy is selected, and one undo takes it away whole.
+  expect(selectedCount(editor)).toBe(3);
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe(THREE);
+});
+
+test("the Bold button makes the text of every selected Block bold in one edit, and the Blocks stay selected", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: "<p>One</p><p>Two</p><p>Three</p>" });
+  caretIn(editor, "One");
+  press(editor, "Escape");
+  press(editor, "ArrowDown", { shift: true });
+
+  await user.click(screen.getByRole("button", { name: "Bold" }));
+
+  expect(editor.getHTML()).toBe(
+    "<p><strong>One</strong></p><p><strong>Two</strong></p><p>Three</p>"
+  );
+  // The mark steps do not touch the Block edges, so the selection maps to itself.
+  expect(selectedCount(editor)).toBe(2);
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe("<p>One</p><p>Two</p><p>Three</p>");
+});
+
+test("the alignment menu aligns every selected Block", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "One");
+  press(editor, "Escape");
+  press(editor, "ArrowDown", { shift: true });
+
+  await user.click(screen.getByRole("button", { name: /^Alignment/ }));
+  await user.click(await screen.findByRole("menuitemradio", { name: /Align center/ }));
+
+  expect(editor.getHTML()).toBe(
+    '<p data-align="center">One</p><p data-align="center">Two</p><p>Three</p>'
+  );
+  expect(selection(editor)).toBeInstanceOf(BlockSelection);
+  expect(selectedCount(editor)).toBe(2);
 });
