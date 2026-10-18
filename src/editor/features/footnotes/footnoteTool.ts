@@ -23,7 +23,8 @@ import { footnotesChunk, loadFootnotes } from "./footnotesLoader.js";
  * The list has no handle (`handleBlock`), and the Slash menu and "+" do not work inside a footnote.
  *
  * There is no shortcut: `Ctrl/⌘+Alt+F` is Find and replace here, though it is the footnote's key in
- * Word and Google Docs, and the kit does not invent a second one (decision 10).
+ * Word and Google Docs, and the kit does not invent a second one (OLDSUI-306, interview decision 10:
+ * the ADR does not repeat it).
  *
  * The Commands are for screen code and tests. `insert` is a User edit (a separate undo step); the two
  * jumps move the caret and scroll, and so they work in `readOnly` (the Document does not change) but

@@ -550,6 +550,7 @@ export const DEFAULT_MESSAGES: UiMessages = {
     date: "Date",
     dateTime: "Time",
     dateTimeField: "Time, hours and minutes",
+    dateTimePlaceholder: "HH:MM",
     dateRemoveTime: "Remove time",
     dateRemove: "Delete date",
     dateInsert: "Insert",

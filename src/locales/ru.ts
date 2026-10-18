@@ -590,6 +590,7 @@ export const messages: UiMessages = {
     date: "Дата",
     dateTime: "Время",
     dateTimeField: "Время, часы и минуты",
+    dateTimePlaceholder: "ЧЧ:ММ",
     dateRemoveTime: "Убрать время",
     dateRemove: "Удалить дату",
     dateInsert: "Вставить",

@@ -115,7 +115,7 @@ export function DateForm({ editor, pos, close }: DateFormProps) {
             size="sm"
             inputMode="numeric"
             autoComplete="off"
-            placeholder="HH:MM"
+            placeholder={messages.dateTimePlaceholder}
             aria-label={messages.dateTimeField}
             shellClassName="w-24"
             value={time}

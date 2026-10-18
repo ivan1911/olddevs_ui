@@ -167,9 +167,13 @@ export function TableMenuButton({
     }
     const commands = tableCommands(locale);
     if (!(action in commands)) return;
+    const before = editor.state.doc;
     runTableCommand(editor, commands[action as TableAction]);
     // A width change is invisible to a screen reader: the result is announced (ADR-0080, item 6).
-    const announcement = WIDTH_ANNOUNCEMENT[action];
+    // Only when the shares really changed: a step in a table without widths is judged by the screen,
+    // which the menu does not measure ahead of time, and it may find no room (a neighbour at 5%).
+    // Then nothing is said, because nothing happened.
+    const announcement = editor.state.doc === before ? undefined : WIDTH_ANNOUNCEMENT[action];
     if (announcement) {
       editor.commands.showNotice({
         tone: "status",

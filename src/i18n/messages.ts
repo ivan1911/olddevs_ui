@@ -1056,13 +1056,14 @@ export interface UiMessages {
     /**
      * Date mention (ADR-0079). `date` is the Slash menu item and the name of the popover. In the
      * popover: `dateTime` is the label of the "Time" switch, `dateTimeField` is the name of the time
-     * field (`HH:MM`), `dateRemoveTime` turns a date with a time back into a date, `dateRemove` deletes
+     * field (`HH:MM`) and `dateTimePlaceholder` is the hint inside it (`HH:MM` in English), `dateRemoveTime` turns a date with a time back into a date, `dateRemove` deletes
      * the mention from the Document, `dateInsert` and `dateApply` are the buttons for a new and for an
      * editable mention.
      */
     date: string;
     dateTime: string;
     dateTimeField: string;
+    dateTimePlaceholder: string;
     dateRemoveTime: string;
     dateRemove: string;
     dateInsert: string;

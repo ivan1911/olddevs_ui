@@ -21,7 +21,7 @@ const POSITIONS: readonly { align: ImageAlign | null; icon: ComponentType<{ size
  * Toggle buttons with `aria-pressed`, like the width presets next to them, but exactly one is always
  * pressed: pressing the pressed one again keeps it (the centre is a position too, not "no choice").
  * The icons are the text alignment glyphs; the name says what is different about an image, that the
- * text wraps around it. `disabled` is for a table cell, where there is no room to wrap (item 7).
+ * text wraps around it. `disabled` is for a table cell, where there is no room to wrap (ADR-0081, decision 7).
  */
 export function ImageAlignGroup({
   value,
