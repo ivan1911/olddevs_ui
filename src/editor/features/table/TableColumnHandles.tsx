@@ -9,6 +9,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { cn } from "../../../lib/cn.js";
 import { useMessages } from "../../../i18n/useMessages.js";
 import { sharesOf, writeShares } from "./tableColumns.js";
 import { columnEdges, columnWidths } from "./tableMeasure.js";
@@ -214,7 +215,13 @@ export function TableColumnHandles({ editor }: { editor: Editor }) {
       ref={layer}
       aria-hidden="true"
       data-table-column-handles=""
-      className="pointer-events-none absolute inset-0"
+      className={cn(
+        "pointer-events-none absolute",
+        // Only the layer's origin is measured. A full-frame layer with nothing in it still shifts the
+        // anti-aliasing of the frame's rounded corners in every Editor with the table Tool, so it
+        // shrinks to a point until there is a bar to show.
+        bars.length === 0 && !dragging ? "top-0 left-0 size-0" : "inset-0"
+      )}
     >
       {bars.map((bar) => {
         const active = dragging?.boundary === bar.boundary;
