@@ -1449,15 +1449,25 @@ function TableInCell({
   locale,
   document = TABLE_SAMPLE,
   caret = "Billing",
+  showBars = false,
 }: {
   locale?: "ru-RU";
   document?: string;
   caret?: string;
+  /**
+   * The width bars are in the table while the caret is in it, but each one draws its line only under
+   * the pointer. The story has no pointer, so it draws all of them.
+   */
+  showBars?: boolean;
 }) {
   const ref = useRef<RichTextEditorHandle>(null);
   useCaretInCell(ref, caret);
   const field = (
-    <div className="max-w-[640px]">
+    <div
+      className={
+        showBars ? "max-w-[640px] [&_[data-column-handle]>div]:opacity-100" : "max-w-[640px]"
+      }
+    >
       <RichTextEditor ref={ref} aria-label="Document" defaultValue={document} />
     </div>
   );
@@ -1533,12 +1543,15 @@ export const TableNarrow: Story = {
  * columns around it trade width, the rest stay put, and the last column has no bar. The drag is one
  * undo step. This table has no widths yet: the first drag rounds all of them to 5%, then moves the
  * boundary. The bars are for the pointer only; the keyboard has the menu (`TableColumnWidthMenu`).
+ * The caret is in the "Search" cell; a bar draws its line under the pointer, and the story draws all
+ * three at once so that they are in the frame.
  */
 export const TableColumnWidthHandle: Story = {
   render: () => (
     <TableInCell
       document={SIZED_TABLE_SAMPLE.replace(colgroup(25, 20, 20, 35), "")}
       caret="Search"
+      showBars
     />
   ),
 };
@@ -2771,13 +2784,18 @@ export const DateMentionInsertSlash: Story = {
   render: () => <TypedCommand command="/date" />,
 };
 
-/** Open the edit popover of the mention with a time as soon as the Editor has drawn it. */
+/**
+ * Open the edit popover of the mention with a time as soon as the engine has drawn it. Before the
+ * engine exists the field shows a Skeleton with the same `time` elements, and a click on those opens
+ * nothing: the mention is looked for inside the Document (`editor.view.dom`), not in the whole story.
+ */
 function OpenedDate() {
-  const root = useRef<HTMLDivElement>(null);
+  const ref = useRef<RichTextEditorHandle>(null);
   useEffect(() => {
     let frame = 0;
     const tick = () => {
-      const target = root.current?.querySelector<HTMLElement>("time[datetime*='T']");
+      const target =
+        ref.current?.editor?.view.dom.querySelector<HTMLElement>("time[datetime*='T']");
       if (!target) {
         frame = requestAnimationFrame(tick);
         return;
@@ -2788,8 +2806,8 @@ function OpenedDate() {
     return () => cancelAnimationFrame(frame);
   }, []);
   return (
-    <div ref={root} className="h-[560px] max-w-[640px]">
-      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} />
+    <div className="h-[560px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={DATE_SAMPLE} />
     </div>
   );
 }
@@ -2842,17 +2860,47 @@ export const DateMentionPasted: Story = {
   render: () => <PastedTime />,
 };
 
-/** The `format` option: `tool("date", { format: { dateStyle: "long" } })` writes new dates in the long form. */
-export const DateMentionFormat: Story = {
-  render: () => (
+const DATE_FORMAT_SAMPLE =
+  "<h2>Project plan</h2>" +
+  '<p>Written before the option, as it was: <time datetime="2026-10-12">Oct 12, 2026</time>.</p>' +
+  "<p>Inserted with the option:</p>";
+
+/** Insert one mention at the end of the last paragraph, once the engine is created. */
+function FormattedDate() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.chain().focus("end").insertContent(" ").run();
+      ref.current?.tool("date")?.insert("2026-10-19");
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
     <div className="max-w-[640px]">
       <RichTextEditor
+        ref={ref}
         aria-label="Document"
         tools={[...RICH_TEXT_PRESETS.full, tool("date", { format: { dateStyle: "long" } })]}
-        defaultValue={DATE_SAMPLE}
+        defaultValue={DATE_FORMAT_SAMPLE}
       />
     </div>
-  ),
+  );
+}
+
+/**
+ * The `format` option: `tool("date", { format: { dateStyle: "long" } })` writes new dates in the long
+ * form. It applies to mentions made from now on, so the one in the Document already keeps the words it
+ * was written with ("Oct 12, 2026"), and the one the story inserts reads "October 19, 2026".
+ */
+export const DateMentionFormat: Story = {
+  render: () => <FormattedDate />,
 };
 
 /**
@@ -4384,13 +4432,22 @@ export const TextLanguageQuotes: Story = {
 */
 function useRangeDemo(
   ref: RefObject<RichTextEditorHandle | null>,
-  options: { from: string; to?: string; extend?: number; open?: boolean }
+  options: {
+    from: string;
+    to?: string;
+    extend?: number;
+    open?: boolean;
+    /** The accessible name of the "⋮" button: it comes from the catalog, so it is not English in `ru`. */
+    handleName?: string;
+  }
 ) {
-  const { from, to, extend = 0, open = false } = options;
+  const { from, to, extend = 0, open = false, handleName = "Block actions" } = options;
   useEffect(() => {
     let frame = 0;
     const press = () => {
-      const handle = document.querySelector<HTMLElement>('button[aria-label="Block actions"]');
+      const handle = document.querySelector<HTMLElement>(
+        `button[aria-label="${CSS.escape(handleName)}"]`
+      );
       if (!handle) {
         frame = requestAnimationFrame(press);
         return;
@@ -4425,7 +4482,7 @@ function useRangeDemo(
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [ref, from, to, extend, open]);
+  }, [ref, from, to, extend, open, handleName]);
 }
 
 const RANGE_SAMPLE =
@@ -4442,6 +4499,7 @@ function RangeDemo({
   to,
   extend,
   open,
+  handleName,
   ...props
 }: {
   document?: string;
@@ -4449,9 +4507,10 @@ function RangeDemo({
   to?: string;
   extend?: number;
   open?: boolean;
+  handleName?: string;
 } & Partial<RichTextEditorProps>) {
   const ref = useRef<RichTextEditorHandle>(null);
-  useRangeDemo(ref, { from, to, extend, open });
+  useRangeDemo(ref, { from, to, extend, open, handleName });
   return (
     <div className="h-[520px] max-w-[640px]">
       <RichTextEditor ref={ref} aria-label="Document" defaultValue={document} {...props} />
@@ -4557,7 +4616,12 @@ export const BlockSelectionReadOnly: Story = {
 export const BlockSelectionRussian: Story = {
   render: () => (
     <UiProvider locale="ru-RU" messages={ru}>
-      <RangeDemo from="Run the regression pass on Tuesday." to="Ship on Wednesday." open />
+      <RangeDemo
+        from="Run the regression pass on Tuesday."
+        to="Ship on Wednesday."
+        open
+        handleName={ru.editor.blockActions}
+      />
     </UiProvider>
   ),
 };
@@ -4708,11 +4772,11 @@ export const FootnotesReadOnly: Story = {
 
 const FOOTNOTES_RUSSIAN =
   "<h2>A short report</h2>" +
-  `<p>The first result${footnoteRef("fnrusian1", 1)} was measured twice, and the second one${footnoteRef("fnrusian2", 2)} agreed with it.</p>` +
+  `<p>The first result${footnoteRef("fnrusone", 1)} was measured twice, and the second one${footnoteRef("fnrustwo", 2)} agreed with it.</p>` +
   // The list's name is written into the HTML in the language of the catalog, as the Editor does.
   footnoteList(ru.editor.footnotes, [
-    ["fnrusian1", "Measured in the lab on 1 September 2026."],
-    ["fnrusian2", "The method is described <em>separately</em>."],
+    ["fnrusone", "Measured in the lab on 1 September 2026."],
+    ["fnrustwo", "The method is described <em>separately</em>."],
   ]);
 
 /**
