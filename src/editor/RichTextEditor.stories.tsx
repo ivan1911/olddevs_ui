@@ -3805,3 +3805,182 @@ export const PasteFromOffice: Story = {
   tags: ["network-idle"],
   render: () => <PasteCleanupDemo />,
 };
+
+/*
+  Text part language (OLDSUI-308, ADR-0078): the sample is a neutral English text with a German
+  term, a French phrase and an English quotation inside a Russian page. The stories use Latin
+  text only; the Russian interface comes from the catalog.
+*/
+const LANGUAGE_SAMPLE =
+  "<h2>Language of parts</h2>" +
+  '<p>A reader hears this sentence in the language of the page, but the word <span lang="de">Weltschmerz</span> ' +
+  'is German, and <span lang="fr">joie de vivre</span> is French. A dotted line under a fragment shows the author where the mark ' +
+  "begins and ends; the reader of <code>RichTextView</code> sees no line.</p>" +
+  '<p><span lang="de">A whole paragraph can carry the mark too, with <strong>bold</strong> inside it.</span></p>';
+
+/**
+ * The `language` Tool, marked fragments: a thin dotted underline in the Editor shows where each
+ * Mark begins and ends (the View draws nothing). The page language is `en`, so only the German and
+ * French pieces are marked. The "Language ›" submenu is in the "…" menu.
+ */
+export const TextLanguage: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={LANGUAGE_SAMPLE} />
+    </div>
+  ),
+};
+
+/*
+  Opens "…" over the selected `text`, then its submenu: the same way as from the keyboard (focus on
+  the item and `→`), because hovering would open it after a delay and the snapshot would catch an
+  intermediate frame.
+*/
+function useOpenLanguageSubmenu(
+  ref: RefObject<RichTextEditorHandle | null>,
+  text: string,
+  more: string,
+  item: string
+) {
+  useOpenToolbarPopover(ref, text, more);
+  useEffect(() => {
+    let frame = 0;
+    const open = () => {
+      const trigger = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="menuitem"][aria-haspopup]')
+      ).find((candidate) => candidate.textContent?.startsWith(item));
+      if (!trigger) {
+        frame = requestAnimationFrame(open);
+        return;
+      }
+      trigger.focus();
+      trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    };
+    frame = requestAnimationFrame(open);
+    return () => cancelAnimationFrame(frame);
+  }, [item]);
+}
+
+function OpenLanguageMenu({ more, item }: { more: string; item: string }) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useOpenLanguageSubmenu(ref, "Weltschmerz", more, item);
+  return (
+    <div className="h-[520px] max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue={LANGUAGE_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * The "Language ›" submenu over the selected German word: English and Russian are the options
+ * (`languages`), the page's own language is marked "primary", and "Remove language mark" removes
+ * the Mark. German is not in the option, but it is under the selection, so it is added and checked.
+ */
+export const TextLanguageMenu: Story = {
+  render: () => <OpenLanguageMenu more="More formatting" item="Language" />,
+  tags: ["network-idle"],
+};
+
+/**
+ * A Russian interface: the page's primary language is the interface locale (`ru-RU`, there is no
+ * `lang` above the field in this story's frame), so the English piece is the real mark. The names
+ * come from `Intl.DisplayNames` in Russian, the words from the catalog.
+ */
+export const TextLanguageRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <OpenLanguageMenu more={ru.editor.moreFormatting} item={ru.editor.language} />
+    </UiProvider>
+  ),
+  tags: ["network-idle"],
+};
+
+// A Word clipboard fragment: `lang` on every run, `mso-ansi-language` next to it, and Word's own case.
+const WORD_LANGUAGE_FRAGMENT =
+  "<html><body><p class=MsoNormal><span lang=EN-US style='mso-ansi-language:EN-US'>" +
+  "The page is English, so this run is dropped. </span>" +
+  "<span lang=DE style='mso-ansi-language:DE'>Dieser Satz bleibt deutsch.</span>" +
+  "<span lang=EN-US style='mso-ansi-language:EN-US'> And the next run is again plain.</span></p></body></html>";
+
+function PasteLanguageDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.view.pasteHTML(WORD_LANGUAGE_FRAGMENT, new Event("paste") as ClipboardEvent);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/**
+ * A paste from Word: every run carries `lang`, and the Editor keeps only the one that differs
+ * from the page's language (`en` here), written in the canonical case (`DE` becomes `de`). Without
+ * the drop, Word would cover the whole text with marks.
+ */
+export const TextLanguagePasteFromWord: Story = {
+  render: () => <PasteLanguageDemo />,
+};
+
+function QuotesDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      // The same path ProseMirror receives typing by, where the input rules hang.
+      const { doc } = editor.state;
+      let end = 0;
+      doc.descendants((node, pos) => {
+        if (node.isText && node.text === "French") end = pos + node.nodeSize;
+      });
+      editor.commands.setTextSelection(end);
+      for (const char of ' "a phrase"') {
+        const { from, to } = editor.state.selection;
+        const handled = editor.view.someProp("handleTextInput", (handler) =>
+          handler(editor.view, from, to, char, () => editor.state.tr.insertText(char, from, to))
+        );
+        if (!handled) editor.view.dispatch(editor.state.tr.insertText(char, from, to));
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, "typography"]}
+        defaultValue={
+          '<p>The English interface gives “curly” quotes: <span lang="en">English</span>, but inside a ' +
+          '<span lang="ru">Russian</span> fragment the same key gives guillemets, and inside <span lang="fr">French</span></p>'
+        }
+      />
+    </div>
+  );
+}
+
+/**
+ * Typography by the language of the fragment: the `"` typed at the end of the French fragment gives
+ * the catalog's curly quotes, while one typed inside a `ru` mark gives guillemets and inside an
+ * `en` mark curly quotes, whatever the interface language is.
+ */
+export const TextLanguageQuotes: Story = {
+  render: () => <QuotesDemo />,
+};

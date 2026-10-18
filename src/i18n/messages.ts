@@ -1057,6 +1057,17 @@ export interface UiMessages {
      */
     invisibleCharacters: string;
     /**
+     * Text part language (the `language` Tool, ADR-0078). `language` is the "Language ›" item of the
+     * "…" menu, and the name of its submenu. The submenu lists the languages of the Tool's
+     * `languages` option; their names are drawn by `Intl.DisplayNames` in the interface language, not
+     * by the catalog. `languagePrimary` labels the page's own language in that list, the one that
+     * needs no mark: `language` is the language's name. `languageRemove` is the item that removes the
+     * mark from the selection.
+     */
+    language: string;
+    languagePrimary: (vars: { language: string }) => string;
+    languageRemove: string;
+    /**
      * Search and replace. `search` is the name and the hint of the Toolbar button, and of the
      * shortcut reference row `Mod+F`; `searchReplace` is the `Mod+Alt+F` row; `searchPanel` is the
      * name of the panel; the rest are its fields, checkboxes and buttons. `searchCount` is the

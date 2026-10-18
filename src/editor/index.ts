@@ -50,6 +50,7 @@ export type {
   ConfiguredTool,
   DetailsToolOptions,
   InvisibleCharactersToolOptions,
+  LanguageToolOptions,
   MathematicsToolOptions,
   RichTextTools,
   SearchToolOptions,
@@ -60,11 +61,13 @@ export type {
 } from "./core/toolOptions.js";
 export type {
   InvisibleCharactersToolCommands,
+  LanguageToolCommands,
   SearchToolCommands,
   TocToolCommands,
 } from "./core/toolCommands.js";
 export type {
   InvisibleCharactersToolState,
+  LanguageToolState,
   SearchToolState,
   TocToolHeading,
   TocToolState,
