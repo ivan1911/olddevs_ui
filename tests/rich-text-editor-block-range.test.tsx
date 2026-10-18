@@ -207,16 +207,14 @@ test("Format into Text breaks a list into paragraphs", async () => {
   expect(editor.getHTML()).toBe("<p>a</p><p>b</p><p>c</p>");
 });
 
-test("Format into a quote gives every Block its own quote", async () => {
+test("Format into a quote gives one quote of the run, as a list does", async () => {
   const user = userEvent.setup();
   const { editor } = renderEditor({ defaultValue: THREE });
   selectAcross(editor, "One", "Two");
 
   await choose(user, "Format", "Quote");
 
-  expect(editor.getHTML()).toBe(
-    "<blockquote><p>One</p></blockquote><blockquote><p>Two</p></blockquote><p>Three</p>"
-  );
+  expect(editor.getHTML()).toBe("<blockquote><p>One</p><p>Two</p></blockquote><p>Three</p>");
 });
 
 test("Format is unavailable when nothing in the group can change", async () => {

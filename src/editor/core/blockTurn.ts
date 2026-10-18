@@ -18,7 +18,8 @@ import type { InsertItem } from "./insertItems.js";
  *   change, so a table in the middle splits it in two.
  * - "Text" breaks a list into paragraphs. It is the same step that turns any Block into a list
  *   or a heading: the Block is first freed from what wraps it (`clearNodes`), then the item applies.
- * - A QUOTE IS PER BLOCK, as in Notion: each text Block gets its own quote.
+ * - A QUOTE IS ONE QUOTE, like a list: a run of neighbouring text Blocks becomes one quote of that many
+ *   paragraphs (the owner's decision of 2026-10-18; "Wrap in › Quote" gives the same for any Blocks).
  *
  * The whole group is one transaction, so it is one undo step.
  */
@@ -46,7 +47,7 @@ export function sharedBlockType(range: NodeRange): string | null {
 }
 
 /** Positions of the text inside runs of the row's Blocks that change, in document order. */
-function runsOf(range: NodeRange, perBlock: boolean): { from: number; to: number }[] {
+function runsOf(range: NodeRange): { from: number; to: number }[] {
   const runs: { from: number; to: number }[] = [];
   let open: { from: number; to: number } | null = null;
   let pos = range.start;
@@ -55,7 +56,7 @@ function runsOf(range: NodeRange, perBlock: boolean): { from: number; to: number
     const next = pos + node.nodeSize;
     if (!isTurnable(node)) {
       open = null;
-    } else if (open && !perBlock) {
+    } else if (open) {
       open.to = next - 1;
     } else {
       open = { from: pos + 1, to: next - 1 };
@@ -71,7 +72,7 @@ function runsOf(range: NodeRange, perBlock: boolean): { from: number; to: number
  * The item must not open a popover (`item.popover`): those are insertions, not types.
  */
 export function turnBlocksInto(editor: Editor, item: InsertItem, range: NodeRange): boolean {
-  const runs = runsOf(range, item.id === "blockquote");
+  const runs = runsOf(range);
   if (runs.length === 0 || item.popover) return false;
   const before = editor.state.selection;
   const start = range.start;
