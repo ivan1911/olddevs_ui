@@ -84,6 +84,8 @@ test("the full preset offers the rare marks, Code block, Quote and Clear formatt
     { role: "menuitemcheckbox", name: "Strikethrough", checked: false, shortcut: "Ctrl+Shift+S" },
     { role: "menuitemcheckbox", name: "Superscript", checked: false, shortcut: "Ctrl+." },
     { role: "menuitemcheckbox", name: "Subscript", checked: false, shortcut: "Ctrl+," },
+    // The submenu of the language Mark (OLDSUI-308): a section of its own, without a shortcut.
+    { role: "menuitem", name: "Language", checked: false, shortcut: null },
     { role: "menuitemcheckbox", name: "Code block", checked: false, shortcut: "Ctrl+Alt+C" },
     // Quote is a check item next to the Code block (OLDSUI-154): it has moved out of "¶".
     { role: "menuitemcheckbox", name: "Quote", checked: false, shortcut: "Ctrl+Shift+B" },
@@ -105,6 +107,7 @@ test("on Apple the shortcuts are signed with ⌘", async () => {
     "⌘+⇧+S",
     "⌘+.",
     "⌘+,",
+    null,
     "⌘+⌥+C",
     "⌘+⇧+B",
     "⌘+\\",
@@ -330,6 +333,7 @@ test("the menu speaks the provider's language", async () => {
     t.strike,
     t.superscript,
     t.subscript,
+    t.language,
     t.codeBlock,
     t.blockquote,
     t.clearFormatting,

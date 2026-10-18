@@ -48,7 +48,9 @@ import {
   invisibleCharactersVisible,
   toggleInvisibleCharacters,
 } from "../features/invisibleCharacters/invisibleCharactersVisible.js";
-import type { ToolList } from "../core/toolDescriptor.js";
+import { toolOptions, type ToolList } from "../core/toolDescriptor.js";
+import { primaryLanguageOf, selectedLanguage } from "../features/language/languageState.js";
+import { applyLanguageItem, languageMenuItem } from "../features/language/languageMenu.js";
 import type { Tool } from "../core/tools.js";
 import { useSubmenuPlacement } from "../../hooks/useSubmenuPlacement.js";
 import { GLASS_MENU_CLASS } from "../styles/glass.js";
@@ -566,6 +568,7 @@ export function isMoreMarkId(id: string): id is MoreMarkId {
 export function moreFormatTools(omit: readonly MoreMarkId[] = []): readonly Tool[] {
   return [
     ...MORE_MARKS.map((mark) => mark.id).filter((id) => !omit.includes(id)),
+    "language",
     "codeBlock",
     "blockquote",
     "clearFormatting",
@@ -634,6 +637,7 @@ export function MoreFormatMenu({
   const quote = quoteItemFor(tools);
   const clear = tools.has("clearFormatting");
   const view = invisibleCharacters && tools.has("invisibleCharacters");
+  const languages = toolOptions(tools, "language")?.languages;
 
   // The result is compared deeply (the default of `useEditorState`): it re-renders only on change.
   const state = useEditorState({
@@ -648,9 +652,13 @@ export function MoreFormatMenu({
       canClear: clear && current.can().unsetAllMarks(),
       // Showing invisible characters is a plugin state of the engine, not a Mark or a Block.
       invisible: view && invisibleCharactersVisible(current),
+      // The language under the selection and the page's; `null` without the Tool.
+      language: languages
+        ? { ...selectedLanguage(current.state), primary: primaryLanguageOf(current) }
+        : null,
     }),
   });
-  if (marks.length === 0 && !codeBlock && !quote && !clear && !view) return null;
+  if (marks.length === 0 && !codeBlock && !quote && !clear && !view && !languages) return null;
 
   const sections = (
     [
@@ -665,6 +673,14 @@ export function MoreFormatMenu({
           keys: findShortcutKeys(mark.id),
           disabled: state.unavailable.includes(mark.id),
         })),
+      },
+      {
+        // A section of its own: the item opens a submenu, so it cannot sit among the checkboxes.
+        id: "lang",
+        items:
+          languages && state.language
+            ? [languageMenuItem(languages, state.language, messages, locale)]
+            : [],
       },
       {
         // Not `codeBlock`: the keys of sections and items are shared in a react-aria collection.
@@ -732,6 +748,7 @@ export function MoreFormatMenu({
   ).filter((section) => section.items.length > 0);
 
   const apply = (key: string) => {
+    if (applyLanguageItem(editor, key)) return;
     const mark = marks.find((candidate) => candidate.id === key);
     if (mark) return mark.run(editor);
     if (key === "codeBlock") return void editor.chain().focus().toggleCodeBlock().run();
