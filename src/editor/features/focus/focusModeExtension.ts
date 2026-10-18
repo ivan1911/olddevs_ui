@@ -19,8 +19,9 @@ import { FOCUS_MODE_KEY } from "./focusModeState.js";
  * Focus extension marks the nodes around the caret and knows none of these.
  *
  * THREE KINDS OF DECORATION. Text outside the unit gets ONE inline decoration for each side (before
- * and after), which wraps the text runs. Blocks without text of their own (an image, a video, a
- * code Block, a block formula) get a node decoration. A list item whose own text is outside the unit
+ * and after), which wraps the text runs. A Block that goes faint whole (an image, a video, a code
+ * Block, a block formula, a Wrapper, a Details Block, a table: `MEDIA_NODES`) gets a node
+ * decoration. A list item whose own text is outside the unit
  * gets a node decoration too, for its marker: the marker is the item's, not the text's, and the
  * inline decoration does not reach it.
  *
@@ -40,11 +41,11 @@ export const FOCUS_DIM_ITEM_CLASS = "rte-focus-dim-item";
  * choice among four variants). Opacity, not a color: a link, an author color, a marker fill and a
  * code Block's highlight keep their own colors, only fainter, so one rule fits the theme, the Paper,
  * the toned Wrappers and the code themes alike. Opacity multiplies, so an element that is already
- * faint (a code Block, a `mark`) keeps the text inside it as it is. A list marker has no opacity of its own (`::marker`
- * takes only a color), so it gets its item's color at the same 40%.
+ * faint (a code Block, a `mark`) keeps the text inside it as it is. A list marker has no opacity of
+ * its own (`::marker` takes only a color), so it gets its item's color at the same 40%.
  *
  * THE CONTRAST IS BELOW 4.5:1 ON PURPOSE (3.1:1 on the dark theme, 2.4:1 on the Paper; ADR-0082,
- * decision 9 revised). The dimmed text is not the text being read: it is the background around the
+ * decision 6 and its 2026-10-18 amendment). The dimmed text is not the text being read: it is the background around the
  * Block being written, and it comes back in full as soon as the caret reaches it or the focus leaves
  * the Document. The a11y check leaves it out of the contrast rule for that reason (`a11y.spec.ts`).
  *
@@ -102,6 +103,8 @@ function dim(editor: Editor, state: EditorState): DecorationSet | null {
   dimMedia(range.end, end);
   // A marker is dimmed when its item's own text (the first child) is outside the unit.
   doc.descendants((node, pos) => {
+    // A list item never lies inside text: a textblock and its inline content are not walked.
+    if (node.isTextblock) return false;
     if (!LIST_ITEMS.has(node.type.name)) return true;
     const text = node.firstChild;
     const from = pos + 1;
