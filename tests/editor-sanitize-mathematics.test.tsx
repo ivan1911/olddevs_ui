@@ -107,6 +107,8 @@ test("data-latex is in the bare config and in the schema data, the value checks 
     "style",
     "data-type",
     "data-latex",
+    // The language of a fragment (OLDSUI-308).
+    "lang",
   ]);
   expect(RICH_TEXT_SCHEMA.attributes.div).toContain("data-latex");
   expect(richTextSanitizeConfig().ALLOWED_ATTR).toContain("data-latex");
