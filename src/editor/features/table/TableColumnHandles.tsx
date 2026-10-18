@@ -213,7 +213,7 @@ export function TableColumnHandles({ editor }: { editor: Editor }) {
       ref={layer}
       aria-hidden="true"
       data-table-column-handles=""
-      className="pointer-events-none absolute inset-0 z-10"
+      className="pointer-events-none absolute inset-0"
     >
       {bars.map((bar) => {
         const active = dragging?.boundary === bar.boundary;
