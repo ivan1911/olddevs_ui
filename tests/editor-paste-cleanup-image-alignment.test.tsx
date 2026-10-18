@@ -201,6 +201,7 @@ describe("WordPress", () => {
     }
     expect(detectPasteSources(`<p class="alignleft">text</p>`).imageAlignment).toBe(false);
     expect(detectPasteSources(`<img src="${SRC}" class="x alignleft">`).imageAlignment).toBe(true);
+    expect(detectPasteSources(`<img src=${SRC} class=alignright/>`).imageAlignment).toBe(true);
   });
 });
 

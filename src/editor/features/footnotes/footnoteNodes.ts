@@ -40,6 +40,9 @@ export const FootnoteReference = FootnoteReferenceShape.extend<{ idPrefix: strin
     const { idPrefix } = this.options;
     return ({ node }) => {
       const dom = document.createElement("sup");
+      const link = document.createElement("a");
+      link.setAttribute("role", "doc-noteref");
+      // Updated in place: a redraw next to the reference does not replace its anchor.
       const show = (current: typeof node) => {
         const key = String(current.attrs.key);
         const number = String(current.attrs.number);
@@ -48,13 +51,11 @@ export const FootnoteReference = FootnoteReferenceShape.extend<{ idPrefix: strin
           dom.replaceChildren(number);
           return;
         }
-        const link = document.createElement("a");
         link.setAttribute("href", `#${idPrefix}${footnoteId(key)}`);
         link.id = idPrefix + referenceId(key);
-        link.setAttribute("role", "doc-noteref");
-        link.textContent = number;
+        if (link.textContent !== number) link.textContent = number;
         dom.setAttribute(FOOTNOTE_REF_ATTRIBUTE, key);
-        dom.replaceChildren(link);
+        if (dom.firstChild !== link || dom.childNodes.length !== 1) dom.replaceChildren(link);
       };
       show(node);
       return {

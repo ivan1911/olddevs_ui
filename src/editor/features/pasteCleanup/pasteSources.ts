@@ -64,7 +64,7 @@ const SHARE_POINT = new RegExp(
 */
 const IMAGE_ALIGNMENT = new RegExp(
   `<(?:img|figure)\\b[^<>]*(?:[\\s"'/]align\\s*=|\\bfloat\\s*:|\\bmso-wrap-style\\s*:|` +
-    `\\bclass\\s*=\\s*["']?(?:[^"'<>]*\\s)?align(?:left|right)(?=[\\s"'>]))`,
+    `\\bclass\\s*=\\s*["']?(?:[^"'<>]*\\s)?align(?:left|right)(?=[\\s"'/>]))`,
   "i"
 );
 
