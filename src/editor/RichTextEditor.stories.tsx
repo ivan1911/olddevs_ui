@@ -4170,3 +4170,145 @@ export const BlockSelectionRussian: Story = {
     </UiProvider>
   ),
 };
+
+/*
+  Fullscreen mode and the focus mode (OLDSUI-312, ADR-0082). The demos put the field in the state
+  the story is about: the caret in a Block, the layer open. `onReady` runs once the engine is created,
+  and the Handle already works inside it.
+*/
+const FOCUS_SAMPLE =
+  "<h2>Release plan</h2>" +
+  "<p>Freeze the scope on Monday.</p>" +
+  "<p>Run the regression pass on Tuesday.</p>" +
+  "<ul><li><p>Announce the date</p></li><li><p>Update the changelog</p></li></ul>" +
+  "<p>Ship on Wednesday.</p>";
+
+/** Put the caret at the end of the text `text` and focus the Document. */
+function caretAt(handle: RichTextEditorHandle | null, text: string) {
+  const editor = handle?.editor;
+  if (!editor) return;
+  let found = -1;
+  editor.state.doc.descendants((node, pos) => {
+    if (found < 0 && node.isText && node.text === text) found = pos + node.nodeSize;
+  });
+  editor.view.focus();
+  if (found > 0) editor.commands.setTextSelection(found);
+}
+
+function ModesDemo({
+  fullscreen = false,
+  focus = false,
+  ...props
+}: { fullscreen?: boolean; focus?: boolean } & Partial<RichTextEditorProps>) {
+  const ref = useRef<RichTextEditorHandle>(null);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        ref={ref}
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, ...(focus ? [tool("focus", { enabled: true })] : [])]}
+        defaultValue={FOCUS_SAMPLE}
+        onReady={() => {
+          caretAt(ref.current, "Run the regression pass on Tuesday.");
+          if (fullscreen) ref.current?.tool("fullscreen")?.open();
+        }}
+        {...props}
+      />
+    </div>
+  );
+}
+
+/**
+ * Fullscreen mode: the "Fullscreen" item of the "…" menu expands the field to the whole window. The
+ * Toolbar is across the top, the Status bar at the bottom, and the Document scrolls itself as a
+ * column of about 72 characters. "Collapse" at the right edge of the Toolbar and `Esc` put it back;
+ * the history, the caret and the selection stay. The story opens the layer on load.
+ */
+export const Fullscreen: Story = {
+  render: () => <ModesDemo fullscreen status="12 words" />,
+};
+
+/** The same on the Paper: the sheet stays a sheet on the app's background. */
+export const FullscreenPaper: Story = {
+  render: () => <ModesDemo fullscreen surface="paper" />,
+};
+
+/**
+ * Fullscreen mode inside a `Dialog`: the layer lies above the window. The first `Esc` collapses the
+ * field (with `blockSelection`, the first one selects the Block), the next one closes the `Dialog`.
+ */
+export const FullscreenInDialog: Story = {
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <div className="h-[520px]">
+        <Button onClick={() => setOpen(true)}>Open the window</Button>
+        <Dialog open={open} onClose={() => setOpen(false)} title="Edit the plan">
+          <div className="w-[560px] max-w-full">
+            <ModesDemo fullscreen />
+          </div>
+        </Dialog>
+      </div>
+    );
+  },
+};
+
+/** A phone: the layer is `100dvh` and the Toolbar sticks to the top. */
+export const FullscreenPhone: Story = {
+  tags: ["viewport-phone"],
+  render: () => <ModesDemo fullscreen />,
+};
+
+/** The Bubble menu has no Toolbar: "Collapse" sits in the corner of the layer. */
+export const FullscreenBubble: Story = {
+  render: () => <ModesDemo fullscreen toolbar="bubble" />,
+};
+
+/**
+ * Focus mode: the Block with the caret is as it is, everything around it is in secondary color.
+ * Here the caret is in a paragraph; in a list the unit is the item, and a table is one Block. The
+ * dimming goes away without focus in the Document, over a Block selection and in a read-only field.
+ */
+export const FocusMode: Story = {
+  render: () => <ModesDemo focus />,
+};
+
+/** Focus mode on the Paper sheet. */
+export const FocusModePaper: Story = {
+  render: () => <ModesDemo focus surface="paper" />,
+};
+
+/**
+ * Focus mode in a list: the caret is in the second item, so the first item and the text around the
+ * list are dimmed, and the item itself is as it is.
+ */
+export const FocusModeInList: Story = {
+  render: function Render() {
+    const ref = useRef<RichTextEditorHandle>(null);
+    return (
+      <div className="max-w-[640px]">
+        <RichTextEditor
+          ref={ref}
+          aria-label="Document"
+          tools={[...RICH_TEXT_PRESETS.full, tool("focus", { enabled: true })]}
+          defaultValue={FOCUS_SAMPLE}
+          onReady={() => caretAt(ref.current, "Update the changelog")}
+        />
+      </div>
+    );
+  },
+};
+
+/** Both modes together: the long work the pair is for. */
+export const FocusModeInFullscreen: Story = {
+  render: () => <ModesDemo fullscreen focus />,
+};
+
+/** The item names, the "Collapse" button and the announcements in the Russian catalog. */
+export const FullscreenRussian: Story = {
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <ModesDemo fullscreen focus />
+    </UiProvider>
+  ),
+};
