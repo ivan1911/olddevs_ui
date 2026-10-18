@@ -607,6 +607,10 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
  * former button did (`toggleCodeBlock`). "Clear formatting" does not touch the code Block (it removes
  * Marks), and stays last.
  *
+ * "LANGUAGE ›" is a submenu of the `language` Tool (ADR-0078), in a section of its own after the Marks:
+ * it cannot sit among the checkboxes, because it opens a list. The same "…" is in the selection bubble,
+ * so the item is there too. "Clear formatting" does not remove a language: the Mark is `clearable: false`.
+ *
  * COLORS ARE NOT HERE. The highlight and the text color used to be submenus of "…"; now they are the
  * "Highlight" and "Color" buttons with popover grids beside "…" (`ColorMenus.tsx`): a color is
  * chosen by eye, from swatches.

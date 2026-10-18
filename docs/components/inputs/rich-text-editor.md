@@ -24,13 +24,16 @@ exports:
     VideoToolOptions,
     TypographyToolOptions,
     InvisibleCharactersToolOptions,
+    LanguageToolOptions,
     TocLevel,
     SearchToolCommands,
     TocToolCommands,
     InvisibleCharactersToolCommands,
+    LanguageToolCommands,
     SearchToolState,
     TocToolState,
     InvisibleCharactersToolState,
+    LanguageToolState,
     TocToolHeading,
     Tool,
     ToolName,
@@ -1976,9 +1979,9 @@ function Screen() {
 
 ### Tool state: `useRichTextToolState`
 
-`useRichTextToolState(ref, name, selector?)` gives the screen the state of a Tool: a "3 of 12" counter from Find in the Status bar, or external navigation built from the headings of the Table of contents. The hook sits next to `useRichTextEditorState` and follows the Handle's engine in the same way, but it returns not a slice of the Tiptap engine but a typed snapshot of the kit's contract. The state fields of the built-in Tools are in the "Find and replace", "Table of contents" and "Invisible characters" sections.
+`useRichTextToolState(ref, name, selector?)` gives the screen the state of a Tool: a "3 of 12" counter from Find in the Status bar, or external navigation built from the headings of the Table of contents. The hook sits next to `useRichTextEditorState` and follows the Handle's engine in the same way, but it returns not a slice of the Tiptap engine but a typed snapshot of the kit's contract. The state fields of the built-in Tools are in the "Find and replace", "Table of contents", "Invisible characters" and "Text part language" sections.
 
-- **Name and type.** `name` is a Tool from the `tools` set; the snapshot type is inferred from the `RichTextTools` map: `search` returns `SearchToolState`, `toc` returns `TocToolState`, `invisibleCharacters` returns `InvisibleCharactersToolState`. A name outside the map (a custom Tool without typing) gives `unknown`.
+- **Name and type.** `name` is a Tool from the `tools` set; the snapshot type is inferred from the `RichTextTools` map: `search` returns `SearchToolState`, `toc` returns `TocToolState`, `invisibleCharacters` returns `InvisibleCharactersToolState`, `language` returns `LanguageToolState`. A name outside the map (a custom Tool without typing) gives `unknown`.
 - **Re-renders only when the snapshot changes.** The snapshot is recomputed on every engine transaction and on kit signals that the engine does not have: the find panel opening and closing, and the current section of the Table of contents changing on scroll. The screen re-renders when the result becomes different (plain data — primitives, arrays and plain objects — is compared by value, like `useRichTextEditorState`; `Date`, `Map`, `Set` and class instances are compared by reference), so typing that does not change the snapshot does not touch it. A custom Tool's `state` that creates such values anew on every call re-renders the screen on every transaction.
 - **A selector.** The third argument subscribes the screen to a slice: `useRichTextToolState(ref, "search", (state) => state.total)` re-renders it only when the number of matches changes. With `null`, the selector is not called.
 - **`null`** is what the hook returns before mount and in the screen's first render, on the server, after the Editor unmounts, and when the Tool is not in the set: Presets do not include `toc`, so you enable it by name or with a `tool("toc")` entry. This way the screen renders the same on the server and in the browser.
@@ -1989,7 +1992,7 @@ The state of a custom Tool is declared with `defineTool` (the `state` field) and
 
 ### Tool commands: `handle.tool()`
 
-`ref.current?.tool(name)` returns the commands object of a Tool: `tool("search")?.open({ query: "TODO" })`, `tool("toc")?.jumpTo(2)`. The commands of the built-in Tools are described in the "Find and replace", "Table of contents" and "Invisible characters" sections.
+`ref.current?.tool(name)` returns the commands object of a Tool: `tool("search")?.open({ query: "TODO" })`, `tool("toc")?.jumpTo(2)`. The commands of the built-in Tools are described in the "Find and replace", "Table of contents", "Invisible characters" and "Text part language" sections.
 
 ```tsx
 <button type="button" onClick={() => ref.current?.tool("search")?.open({ query: "TODO" })}>
