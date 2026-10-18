@@ -227,3 +227,316 @@ test("Markdown carries the words and loses the machine value", () => {
   act(() => handle.setMarkdown("Due Oct 18, 2026!"));
   expect(handle.editor!.getHTML()).toBe("<p>Due Oct 18, 2026!</p>");
 });
+
+// ── Inserting: the Slash menu item and the popover ───────────────────────────────────────
+
+/** Pins "today" without freezing timers: the calendar, the form and `insert` all read the Date. */
+function today(iso = "2026-10-18T09:00:00") {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(iso));
+}
+
+/** A zone with an offset the test can name: the browser of an author in Moscow. */
+function inMoscow() {
+  vi.spyOn(Date.prototype, "getTimezoneOffset").mockReturnValue(-180);
+}
+
+test("the Slash menu has a Date item, and Enter in its popover inserts today", async () => {
+  today();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: "<p>Due</p>" });
+  caretIn(editor, "Due");
+
+  const popover = await openFromMenu(user);
+  // The calendar has the focus on today: Enter alone picks it.
+  await waitFor(() => expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull());
+  await user.keyboard("{Enter}");
+
+  await waitFor(() => expect(screen.queryByRole("dialog", { name: "Date" })).toBeNull());
+  expect(editor.getHTML()).toBe(`<p>Due${mention("2026-10-18", "Oct 18, 2026")}</p>`);
+});
+
+test("a day picked in the calendar is inserted at the caret as one undo step", async () => {
+  today();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: "<p>Due</p>" });
+  caretIn(editor, "Due");
+
+  const popover = await openFromMenu(user);
+  await user.click(dayCell(popover, /October 25, 2026/));
+
+  expect(editor.getHTML()).toBe(`<p>Due${mention("2026-10-25", "Oct 25, 2026")}</p>`);
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe("<p>Due</p>");
+});
+
+test("with the Time switch on, a date and a time are inserted together with the author's offset", async () => {
+  today();
+  inMoscow();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: "<p>Due</p>" });
+  caretIn(editor, "Due");
+
+  const popover = await openFromMenu(user);
+  await user.click(within(popover).getByRole("checkbox", { name: "Time" }));
+  const field = within(popover).getByRole("textbox", { name: "Time, hours and minutes" });
+  // Turning the switch on offers the current time.
+  expect((field as HTMLInputElement).value).toBe("09:00");
+  await user.clear(field);
+  await user.type(field, "1500");
+  expect((field as HTMLInputElement).value).toBe("15:00");
+  // A day picked now does not insert: the time still has to be confirmed.
+  await user.click(dayCell(popover, /October 25, 2026/));
+  expect(editor.getHTML()).toBe("<p>Due</p>");
+  await user.click(within(popover).getByRole("button", { name: "Insert" }));
+
+  expect(editor.getHTML()).toBe(
+    `<p>Due${mention("2026-10-25T15:00+03:00", "Oct 25, 2026, 3:00 PM")}</p>`
+  );
+});
+
+test("Enter in the time field inserts, and a time typed short is completed", async () => {
+  today();
+  inMoscow();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: "<p>Due</p>" });
+  caretIn(editor, "Due");
+
+  const popover = await openFromMenu(user);
+  await user.click(within(popover).getByRole("checkbox", { name: "Time" }));
+  const field = within(popover).getByRole("textbox", { name: "Time, hours and minutes" });
+  await user.clear(field);
+  await user.type(field, "7{Enter}");
+
+  // Today, as nothing else was picked; "7" is 07:00.
+  expect(editor.getHTML()).toBe(
+    `<p>Due${mention("2026-10-18T07:00+03:00", "Oct 18, 2026, 7:00 AM")}</p>`
+  );
+});
+
+test("the text is written in the author's locale: Russian and a 24-hour clock", async () => {
+  today();
+  inMoscow();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: "<p>Срок</p>" }, "ru-RU");
+  caretIn(editor, "Срок");
+
+  await user.click(screen.getByRole("button", { name: "Добавить блок" }));
+  await user.click(itemNamed(await screen.findByRole("menu"), "Дата"));
+  const popover = await screen.findByRole("dialog", { name: "Дата" });
+  await user.click(within(popover).getByRole("checkbox", { name: "Время" }));
+  const field = within(popover).getByRole("textbox", { name: "Время, часы и минуты" });
+  await user.clear(field);
+  await user.type(field, "1500{Enter}");
+
+  expect(editor.getHTML()).toBe(
+    `<p>Срок${mention("2026-10-18T15:00+03:00", "18 окт. 2026 г., 15:00")}</p>`
+  );
+});
+
+// ── Editing: a click or Enter on a mention ───────────────────────────────────────────────
+
+const DUE = `<p>Due ${mention("2026-10-18", "Oct 18, 2026")} end</p>`;
+
+test("a click on a mention selects it and opens the popover on its day", async () => {
+  today();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: DUE });
+
+  clickOn(time(editor));
+  const popover = await screen.findByRole("dialog", { name: "Date" });
+
+  expect(editor.state.selection).toBeInstanceOf(NodeSelection);
+  // The day of the mention is the selected one; the time switch is off.
+  const selected = await within(popover).findByRole("button", { name: /October 18, 2026/ });
+  expect(selected.closest("[data-selected]")).not.toBeNull();
+  expect(within(popover).getByRole("checkbox", { name: "Time" })).toHaveProperty("checked", false);
+  // A date without a time has nothing to "remove", but it can be deleted.
+  expect(within(popover).queryByRole("button", { name: "Remove time" })).toBeNull();
+  expect(within(popover).getByRole("button", { name: "Delete date" })).toBeTruthy();
+  void user;
+});
+
+test("another day replaces the value and the words in one edit", async () => {
+  today();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: DUE });
+
+  clickOn(time(editor));
+  const popover = await screen.findByRole("dialog", { name: "Date" });
+  await user.click(await within(popover).findByRole("button", { name: /October 20, 2026/ }));
+
+  expect(editor.getHTML()).toBe(`<p>Due ${mention("2026-10-20", "Oct 20, 2026")} end</p>`);
+  // One edit: one undo returns the old date.
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe(DUE);
+});
+
+test("Enter on a selected mention opens the popover, and Shift+Arrow selects it from the caret", async () => {
+  today();
+  const { editor } = renderEditor({ defaultValue: DUE });
+
+  caretIn(editor, "Due ");
+  expect(press(editor, "ArrowRight", { shiftKey: true })).toBe(true);
+  expect(press(editor, "Enter")).toBe(true);
+
+  expect(await screen.findByRole("dialog", { name: "Date" })).toBeTruthy();
+  // The paragraph was not split by that Enter.
+  expect(editor.getHTML()).toBe(DUE);
+});
+
+test("Enter next to a mention, with nothing selected, still splits the paragraph", () => {
+  const { editor } = renderEditor({ defaultValue: DUE });
+
+  caretIn(editor, "Due ");
+  press(editor, "Enter");
+
+  expect(screen.queryByRole("dialog")).toBeNull();
+});
+
+test("a mention with a time shows it, can lose it in one edit, and keeps the day", async () => {
+  today();
+  inMoscow();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const html = `<p>Due ${mention("2026-10-18T15:00+03:00", "Oct 18, 2026, 3:00 PM")}</p>`;
+  const { editor } = renderEditor({ defaultValue: html });
+
+  clickOn(time(editor));
+  const popover = await screen.findByRole("dialog", { name: "Date" });
+  expect(within(popover).getByRole("checkbox", { name: "Time" })).toHaveProperty("checked", true);
+  expect(
+    (within(popover).getByRole("textbox", { name: "Time, hours and minutes" }) as HTMLInputElement)
+      .value
+  ).toBe("15:00");
+
+  await user.click(within(popover).getByRole("button", { name: "Remove time" }));
+
+  expect(editor.getHTML()).toBe(`<p>Due ${mention("2026-10-18", "Oct 18, 2026")}</p>`);
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe(html);
+});
+
+test("a time can be added to a date and changed with Apply, and the words follow the current locale", async () => {
+  today();
+  inMoscow();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  // Written once in English; the author's locale is Russian now, so editing re-writes the words.
+  const { editor } = renderEditor({ defaultValue: DUE }, "ru-RU");
+
+  clickOn(time(editor));
+  const popover = await screen.findByRole("dialog", { name: "Дата" });
+  await user.click(within(popover).getByRole("checkbox", { name: "Время" }));
+  const field = within(popover).getByRole("textbox", { name: "Время, часы и минуты" });
+  await user.clear(field);
+  await user.type(field, "0930");
+  await user.click(within(popover).getByRole("button", { name: "Применить" }));
+
+  expect(editor.getHTML()).toBe(
+    `<p>Due ${mention("2026-10-18T09:30+03:00", "18 окт. 2026 г., 9:30")} end</p>`
+  );
+});
+
+test("Delete removes the mention in one edit", async () => {
+  today();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({ defaultValue: DUE });
+
+  clickOn(time(editor));
+  const popover = await screen.findByRole("dialog", { name: "Date" });
+  await user.click(within(popover).getByRole("button", { name: "Delete date" }));
+
+  expect(editor.getHTML()).toBe("<p>Due  end</p>");
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe(DUE);
+});
+
+test("a read-only field shows the mention and opens nothing", () => {
+  const { editor } = renderEditor({ defaultValue: DUE, readOnly: true });
+
+  clickOn(time(editor));
+  press(editor, "Enter");
+
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(editor.getHTML()).toBe(DUE);
+});
+
+// ── API: the `format` option and the `insert` command ──────────────────────────────────
+
+test("tool('date', { format }) sets how the date is written, and the value stays", async () => {
+  today();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const { editor } = renderEditor({
+    tools: ["insertMenu", tool("date", { format: { dateStyle: "long" } })],
+    defaultValue: "<p>Due</p>",
+  });
+  caretIn(editor, "Due");
+
+  const popover = await openFromMenu(user);
+  await user.keyboard("{Enter}");
+  await waitFor(() => expect(screen.queryByRole("dialog", { name: "Date" })).toBeNull());
+  void popover;
+
+  expect(editor.getHTML()).toBe(`<p>Due${mention("2026-10-18", "October 18, 2026")}</p>`);
+});
+
+test("a format with a time field or a bad combination falls back to the default, with one console.error", () => {
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const { handle } = renderEditor({
+    // From plain JS without types: a time field, and the combination Intl rejects.
+    tools: [tool("date", { format: { hour: "numeric" } })],
+    defaultValue: "<p></p>",
+  });
+  expect(handle.tool("date")?.insert("2026-10-18")).toBe(true);
+  expect(handle.editor!.getHTML()).toBe(`<p>${mention("2026-10-18", "Oct 18, 2026")}</p>`);
+  expect(error).toHaveBeenCalledTimes(1);
+  expect(error).toHaveBeenCalledWith(
+    expect.stringContaining('tool "date": ignored invalid options: format')
+  );
+  cleanup();
+
+  const mixed = renderEditor({
+    tools: [tool("date", { format: { dateStyle: "long", month: "short" } })],
+    defaultValue: "<p></p>",
+  });
+  expect(mixed.handle.tool("date")?.insert("2026-10-18")).toBe(true);
+  expect(mixed.editor.getHTML()).toBe(`<p>${mention("2026-10-18", "Oct 18, 2026")}</p>`);
+});
+
+test("insert(value) puts a mention at the caret in one edit and says whether it did", () => {
+  inMoscow();
+  const { editor, handle } = renderEditor({ defaultValue: "<p>Due</p>" });
+  caretIn(editor, "Due");
+  const date = handle.tool("date")!;
+
+  expect(date.insert("2026-10-18")).toBe(true);
+  expect(editor.getHTML()).toBe(`<p>Due${mention("2026-10-18", "Oct 18, 2026")}</p>`);
+  expect(date.insert("2026-10-19T15:00+03:00")).toBe(true);
+  expect(editor.getHTML()).toContain(mention("2026-10-19T15:00+03:00", "Oct 19, 2026, 3:00 PM"));
+  // Not our forms: no change, and `false`.
+  expect(date.insert("2026-02-29")).toBe(false);
+  expect(date.insert("2026-10-19T15:00")).toBe(false);
+  expect(date.insert("tomorrow")).toBe(false);
+  // Both calls are one undo group (the history merges edits made in quick succession): one undo.
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe("<p>Due</p>");
+});
+
+test("insert() without a value opens the popover, and a read-only field refuses", async () => {
+  const { handle } = renderEditor({ defaultValue: "<p>Due</p>" });
+
+  expect(handle.tool("date")?.insert()).toBe(true);
+  expect(await screen.findByRole("dialog", { name: "Date" })).toBeTruthy();
+  cleanup();
+
+  const readOnly = renderEditor({ defaultValue: "<p>Due</p>", readOnly: true });
+  expect(readOnly.handle.tool("date")?.insert("2026-10-18")).toBe(false);
+  expect(readOnly.handle.tool("date")?.insert()).toBe(false);
+});
+
+test("the Tool is in full and not in basic, and a Tool set without it has no Date item", () => {
+  const full = renderEditor({ tools: undefined, preset: "full" });
+  expect(full.handle.tool("date")).not.toBeNull();
+  cleanup();
+  const basic = renderEditor({ tools: undefined, preset: "basic" });
+  expect(basic.handle.tool("date")).toBeNull();
+});
