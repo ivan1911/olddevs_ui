@@ -428,7 +428,8 @@ test.each([
       `<p class=MsoListParagraphCxSpLast style='text-indent:-18.0pt;mso-list:l0 level1 lfo1'>` +
       `<span style='mso-list:Ignore'>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp; </span></span>Two<o:p></o:p></p>` +
       `<!--EndFragment--></body></html>`,
-    "<p>1.&nbsp;&nbsp;&nbsp; One</p><p>2.&nbsp;&nbsp;&nbsp; Two</p>",
+    // Since OLDSUI-274 the `pasteCleanup` Tool rebuilds Word's list paragraphs into a list.
+    "<ol><li><p>One</p></li><li><p>Two</p></li></ol>",
   ],
   [
     "a Google Docs list in a monospace font",

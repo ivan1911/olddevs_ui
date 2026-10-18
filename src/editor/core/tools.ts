@@ -139,6 +139,7 @@ export const TOOLS = [
   "invisibleCharacters",
   "insertMenu",
   "typography",
+  "pasteCleanup",
   "toc",
   "youtube",
   "twitch",
@@ -182,6 +183,7 @@ export const PRESETS: Record<RichTextEditorPreset, readonly Tool[]> = {
     "orderedList",
     "blockquote",
     "search",
+    "pasteCleanup",
   ],
 };
 

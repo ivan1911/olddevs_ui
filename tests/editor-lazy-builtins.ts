@@ -2,6 +2,7 @@ import { render, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 import { RichTextEditor } from "../src/editor/index.js";
 import { TOOLS } from "../src/editor/core/tools.js";
+import { loadPasteCleanup } from "../src/editor/features/pasteCleanup/pasteCleanupTool.js";
 
 /**
  * Wait for the chunks of the lazy built-ins: `codeBlock`, `table` (OLDSUI-111,
@@ -34,4 +35,7 @@ export async function loadLazyBuiltins(): Promise<void> {
     { timeout: 10_000 }
   );
   view.unmount();
+  // The paste cleanup steps load in their own chunk once a view exists (`pasteCleanupTool.ts`); a test
+  // that pastes right after `render` needs them already there.
+  await loadPasteCleanup();
 }

@@ -1,0 +1,17 @@
+{
+  "source": "excel-mac",
+  "browser": "safari",
+  "scenario": "cell",
+  "origin": "captured for OLDSUI-274",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0.1 Safari/605.1.15",
+  "types": ["Files", "text/html", "text/plain"],
+  "files": [
+    {
+      "name": "image.png",
+      "type": "image/png",
+      "size": 726
+    }
+  ],
+  "text/html": "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"176\" style=\"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); font-size: medium; font-style: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; text-decoration: none; border-collapse: collapse; width: 132pt;\"><colgroup><col width=\"176\" style=\"width: 132pt;\"></colgroup><tbody><tr height=\"20\" style=\"height: 15pt;\"><td height=\"20\" class=\"xl65\" width=\"176\" style=\"padding-top: 1px; padding-right: 1px; padding-left: 1px; color: windowtext; font-size: 11pt; font-weight: 400; font-style: italic; text-decoration: none; font-family: Arial; vertical-align: bottom; border: 0.5pt solid windowtext; white-space: nowrap; height: 15pt; width: 132pt;\">Apple</td></tr></tbody></table>",
+  "text/plain": "Apple"
+}
