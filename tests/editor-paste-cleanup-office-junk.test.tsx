@@ -94,6 +94,18 @@ const DOCS = '<b id="docs-internal-guid-test" style="font-weight:normal;">';
 const WITHOUT_RULE = RICH_TEXT_PRESETS.full.filter((tool) => tool !== "horizontalRule");
 
 describe("horizontal rules", () => {
+  test.each(["chrome", "safari", "firefox"])(
+    "a line inserted in Google Docs (%s) is one divider, with no empty paragraphs around it",
+    (browser) => {
+      // The test document with "Insert → Horizontal line" added at its end, captured 2026-10-18.
+      const html = pasted(`gdocs-${browser}-rule-native`);
+
+      expect(html.match(/<hr>/g)).toHaveLength(3);
+      expect(html).not.toContain("<p></p><hr>");
+      expect(html).not.toContain("<hr><p></p>");
+    }
+  );
+
   /** Section 5 of the test document: a bottom border on an empty paragraph, a top border on a text one. */
   const RULES =
     "<h1>5. Horizontal rules</h1><p>Text above a paragraph with a bottom border.</p><hr>" +

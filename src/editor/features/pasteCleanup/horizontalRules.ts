@@ -150,7 +150,7 @@ function isBorderGroup(div: Element): boolean {
 export const horizontalRules: PasteCleanupStep = {
   name: "horizontalRules",
   applies: (sources) => sources.word || sources.googleDocs,
-  run(document) {
+  run(document, { sources }) {
     const rule = () => document.createElement("hr");
     // Paragraphs already settled by their border group: their own copy of the border is not a second line.
     const settled = new WeakSet<Element>();
@@ -186,5 +186,25 @@ export const horizontalRules: PasteCleanupStep = {
       if (borders.top) paragraph.before(rule());
       if (borders.bottom) paragraph.after(rule());
     }
+
+    if (sources.googleDocs) unwrapDocsLines(document);
   },
 };
+
+/**
+ * Google Docs puts its own line ("Insert → Horizontal line") inside a paragraph:
+ * `<p dir="ltr" style="…"><hr /></p>`. A paragraph cannot hold an `<hr>`, so the parser closes it
+ * before the line and opens a bare one for the stray `</p>`: two empty paragraphs the author never
+ * made. They go; the line is already an `<hr>`. The bare one after the line is the parser's (no
+ * attributes), which keeps an author's own empty paragraph next to a line in place.
+ */
+function unwrapDocsLines(document: Document): void {
+  for (const line of Array.from(document.body.querySelectorAll("hr"))) {
+    const before = line.previousElementSibling;
+    const after = line.nextElementSibling;
+    if (!before || !after || before.tagName !== "P" || after.tagName !== "P") continue;
+    if (!isBlank(before) || !isBlank(after) || after.hasAttributes()) continue;
+    before.remove();
+    after.remove();
+  }
+}
