@@ -2,11 +2,8 @@
 import createDOMPurify from "dompurify";
 import { expect, test } from "vitest";
 import { RICH_TEXT_SCHEMA, sanitizeRichText } from "../src/editor/schema-entry.js";
-import {
-  composeDatetime,
-  isDatetime,
-  parseDatetime,
-} from "../src/editor/features/date/dateValue.js";
+import { composeDatetime } from "../src/editor/features/date/dateCompose.js";
+import { isDatetime, parseDatetime } from "../src/editor/features/date/dateValue.js";
 
 /**
  * Date mentions in the sanitizer (OLDSUI-309, ADR-0079): `time[datetime]` with a strict value,

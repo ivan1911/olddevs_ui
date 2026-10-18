@@ -8,8 +8,9 @@ import { Checkbox } from "../../../components/inputs/Checkbox.js";
 import { TextControl } from "../../../components/inputs/TextControl.js";
 import { useMessages } from "../../../i18n/useMessages.js";
 import { maskTime, normalizeTime } from "../../../lib/time.js";
-import { insertDate, removeDate, updateDate } from "./dateCommands.js";
-import { composeDatetime, dateOf, isoDate, timeOf } from "./dateValue.js";
+import { composeDatetime, dateOf, isoDate, timeOf } from "./dateCompose.js";
+import { insertDate } from "./dateCommands.js";
+import { removeDate, updateDate } from "./dateEdit.js";
 
 export interface DateFormProps {
   editor: Editor;
