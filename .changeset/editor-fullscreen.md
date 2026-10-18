@@ -1,7 +1,0 @@
----
-"@olddevs/ui": minor
----
-
-Editor, extension: fullscreen mode. The new `fullscreen` Tool, in `full` (not in `basic`), expands the field to the whole window for long work with text. It is a layer of the kit above the page, not the browser's Fullscreen API, so it works inside a `Dialog` or a `Drawer` and on iPhone. The Toolbar is across the top, the Status bar at the bottom, and the Document scrolls itself as a column of about 72 characters; `maxHeight` and `resizable` do not apply in it. It is the same engine, edit history, caret and selection, the page returns to where it was scrolled, and `onFocus` and `onBlur` do not fire. The way in is the new "Fullscreen" checkbox item in the "…" menu (the fixed Toolbar and the Bubble menu); the way out is a visible "Collapse" button at the right edge of the Toolbar (in the corner of the layer when there is no fixed Toolbar) and `Escape`, one level at a time: with `blockSelection` the first `Escape` selects the Block, the next collapses the field, and in a `Dialog` the one after that closes the window. The state is `{ open }`, the commands are `open()`, `close()` and `toggle()`; the screen reader hears "Fullscreen mode on" and "Fullscreen mode off".
-
-The visible change in `full`: the "…" menu of the Toolbar gains the "Fullscreen" item. A screen that does not want it removes the Tool from `tools` (`RICH_TEXT_PRESETS.full` without `"fullscreen"`).
