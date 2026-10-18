@@ -66,6 +66,23 @@ test("a link outside the protocol policy loses its wrapper on load and on paste"
   }
 });
 
+test("a pasted link keeps its own address when its text looks like an address (OLDSUI-304)", () => {
+  // A copy from Word or a web page: the visible text is a short form of the address.
+  const PASTED =
+    '<p>See <a href="https://example.com/docs?page=1#top">example.com/docs</a> and ' +
+    '<a href="https://example.com/other">example.com/docs</a>, then example.org.</p>';
+  const { editor } = renderEditor();
+
+  act(() => void editor.view.pasteHTML(PASTED, new Event("paste") as ClipboardEvent));
+
+  expect(editor.getHTML()).toBe(
+    '<p>See <a href="https://example.com/docs?page=1#top" rel="noopener noreferrer">example.com/docs</a> and ' +
+      '<a href="https://example.com/other" rel="noopener noreferrer">example.com/docs</a>, then ' +
+      // A bare address in the same paste still becomes a link.
+      '<a href="https://example.org" rel="noopener noreferrer">example.org</a>.</p>'
+  );
+});
+
 test("a Markdown link with a foreign address keeps only its text", () => {
   const { ref, editor } = renderEditor();
 
