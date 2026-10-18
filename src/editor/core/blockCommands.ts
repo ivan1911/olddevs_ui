@@ -1,7 +1,7 @@
 "use client";
 
 import { Extension, type Editor } from "@tiptap/core";
-import { Fragment, type Node as PmNode, type NodeRange } from "@tiptap/pm/model";
+import { Fragment, type NodeRange } from "@tiptap/pm/model";
 import {
   Plugin,
   PluginKey,
@@ -177,7 +177,7 @@ export function handleShortcutsMatch(state: EditorState): {
   move: boolean;
   type: boolean;
 } {
-  const handle = handleBlock(state);
+  const handle = handleBlocks(state);
   const keys = blockRange(state, "selection");
   const same = !!handle && !!keys && handle.start === keys.start && handle.end === keys.end;
   return {

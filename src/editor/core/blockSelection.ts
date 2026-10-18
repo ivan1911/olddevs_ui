@@ -100,7 +100,9 @@ export class BlockSelection extends Selection {
   }
 
   eq(other: Selection): boolean {
-    return other instanceof BlockSelection && other.anchor === this.anchor && other.head === this.head;
+    return (
+      other instanceof BlockSelection && other.anchor === this.anchor && other.head === this.head
+    );
   }
 
   /**

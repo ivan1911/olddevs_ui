@@ -153,7 +153,9 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
             let pos = range.start;
             for (let index = range.startIndex; index < range.endIndex; index++) {
               const node = range.parent.child(index);
-              marks.push(Decoration.node(pos, pos + node.nodeSize, { class: SELECTED_BLOCK_CLASS }));
+              marks.push(
+                Decoration.node(pos, pos + node.nodeSize, { class: SELECTED_BLOCK_CLASS })
+              );
               pos += node.nodeSize;
             }
             return DecorationSet.create(state.doc, marks);
@@ -164,70 +166,79 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
             state.selection instanceof BlockSelection ? { "data-block-selection": "" } : {},
 
           // A character typed over the selected Blocks is ignored: one key must not erase a section.
-          handleTextInput: (view) => view.state.selection instanceof BlockSelection && view.editable,
-
-          handleKeyDown: (view, event) => {
-            const { state } = view;
-            const { selection } = state;
-            if (!(selection instanceof BlockSelection) || isDisabled(view)) return false;
-            const mod = event.metaKey || event.ctrlKey;
-            const plain = !mod && !event.altKey;
-            const editable = view.editable;
-
-            if ((event.key === "ArrowUp" || event.key === "ArrowDown") && plain) {
-              const dir = event.key === "ArrowUp" ? -1 : 1;
-              event.preventDefault();
-              dispatchSelection(
-                view,
-                event.shiftKey ? extendSelection(selection, dir) : moveSelection(selection, dir)
-              );
-              return true;
-            }
-            if (event.key === "Enter" && plain && !event.shiftKey) {
-              event.preventDefault();
-              view.dispatch(state.tr.setSelection(caretAfter(selection)).scrollIntoView());
-              return true;
-            }
-            if (!editable) return false;
-
-            const count = selection.count;
-            if ((event.key === "Backspace" || event.key === "Delete") && plain && !event.shiftKey) {
-              event.preventDefault();
-              const tr = state.tr;
-              if (removeUnits(tr, selection.nodeRange())) {
-                view.dispatch(tr.scrollIntoView());
-                announce((m) => m.blocksDeleted({ count }));
-              }
-              return true;
-            }
-            // `⌘⇧D` and `⌥⇧↑/↓` are the Block commands, run here to announce their result.
-            if (mod && event.shiftKey && !event.altKey && event.key.toLowerCase() === "d") {
-              event.preventDefault();
-              if (duplicateBlock()(state, view.dispatch)) {
-                announce((m) => m.blocksDuplicated({ count }));
-              }
-              return true;
-            }
-            if (
-              event.altKey &&
-              event.shiftKey &&
-              !mod &&
-              (event.key === "ArrowUp" || event.key === "ArrowDown")
-            ) {
-              event.preventDefault();
-              if (moveBlock(event.key === "ArrowUp" ? -1 : 1)(state, view.dispatch)) {
-                announce((m) => m.blocksMoved({ count }));
-              }
-              return true;
-            }
-            if (isTyping(event)) {
-              event.preventDefault();
-              return true;
-            }
-            return false;
-          },
+          handleTextInput: (view) =>
+            view.state.selection instanceof BlockSelection && view.editable,
 
           handleDOMEvents: {
+            /*
+              The keys are a DOM handler and not `handleKeyDown`: the engine ignores `keydown` in a
+              read-only field, and there the selection must still move and grow.
+            */
+            keydown: (view, event) => {
+              const { state } = view;
+              const { selection } = state;
+              if (!(selection instanceof BlockSelection) || isDisabled(view)) return false;
+              const mod = event.metaKey || event.ctrlKey;
+              const plain = !mod && !event.altKey;
+              const editable = view.editable;
+
+              if ((event.key === "ArrowUp" || event.key === "ArrowDown") && plain) {
+                const dir = event.key === "ArrowUp" ? -1 : 1;
+                event.preventDefault();
+                dispatchSelection(
+                  view,
+                  event.shiftKey ? extendSelection(selection, dir) : moveSelection(selection, dir)
+                );
+                return true;
+              }
+              if (event.key === "Enter" && plain && !event.shiftKey) {
+                event.preventDefault();
+                view.dispatch(state.tr.setSelection(caretAfter(selection)).scrollIntoView());
+                return true;
+              }
+              if (!editable) return false;
+
+              const count = selection.count;
+              if (
+                (event.key === "Backspace" || event.key === "Delete") &&
+                plain &&
+                !event.shiftKey
+              ) {
+                event.preventDefault();
+                const tr = state.tr;
+                if (removeUnits(tr, selection.nodeRange())) {
+                  view.dispatch(tr.scrollIntoView());
+                  announce((m) => m.blocksDeleted({ count }));
+                }
+                return true;
+              }
+              // `⌘⇧D` and `⌥⇧↑/↓` are the Block commands, run here to announce their result.
+              if (mod && event.shiftKey && !event.altKey && event.key.toLowerCase() === "d") {
+                event.preventDefault();
+                if (duplicateBlock()(state, view.dispatch)) {
+                  announce((m) => m.blocksDuplicated({ count }));
+                }
+                return true;
+              }
+              if (
+                event.altKey &&
+                event.shiftKey &&
+                !mod &&
+                (event.key === "ArrowUp" || event.key === "ArrowDown")
+              ) {
+                event.preventDefault();
+                if (moveBlock(event.key === "ArrowUp" ? -1 : 1)(state, view.dispatch)) {
+                  announce((m) => m.blocksMoved({ count }));
+                }
+                return true;
+              }
+              if (isTyping(event)) {
+                event.preventDefault();
+                return true;
+              }
+              return false;
+            },
+
             pointerdown: (_view, event) => {
               pointer = (event as PointerEvent).pointerType || "mouse";
               return false;

@@ -94,7 +94,6 @@ const selectedCount = (editor: Editor) => {
   const current = selection(editor);
   return current instanceof BlockSelection ? current.count : 0;
 };
-const status = () => screen.getAllByRole("status").find((node) => node.className.includes("sr-only"));
 const announced = () => document.querySelector('[role="status"].sr-only')?.textContent ?? "";
 
 const THREE = "<p>One</p><p>Two</p><p>Three</p>";
@@ -297,11 +296,13 @@ test("copy puts whole Blocks on the clipboard, cut removes them, paste replaces 
   expect(data.get("text/html")).toMatch(/^<p[^>]*>Two<\/p>$/);
   expect(data.get("text/plain")).toBe("Two");
   expect(editor.getHTML()).toBe(THREE);
+  expect(announced()).toBe("Blocks copied: 1");
 
   const cut = new Event("cut", { bubbles: true, cancelable: true });
   Object.defineProperty(cut, "clipboardData", { value: clipboardData });
   act(() => void editor.view.dom.dispatchEvent(cut));
   expect(editor.getHTML()).toBe("<p>One</p><p>Three</p>");
+  expect(announced()).toBe("Blocks cut: 1");
 });
 
 test("paste replaces the selected Blocks with the pasted content", () => {
@@ -320,4 +321,441 @@ test("paste replaces the selected Blocks with the pasted content", () => {
   act(() => void editor.view.dom.dispatchEvent(paste));
 
   expect(editor.getHTML()).toBe("<p>One</p><p>Pasted</p><p>Three</p>");
+  expect(announced()).toBe("Blocks replaced: 1");
+});
+
+// --- Containers: the unit and the borders ---------------------------------------------
+
+const column = (...blocks: string[]) => `<div data-block="column">${blocks.join("")}</div>`;
+const layout = (...columns: string[]) =>
+  `<div data-block="layout" data-layout="50-50">${columns.join("")}</div>`;
+const wrapper = (...blocks: string[]) => `<div data-block="wrapper">${blocks.join("")}</div>`;
+const nameOf = (editor: Editor) => {
+  const block = selection(editor) as BlockSelection;
+  const range = block.nodeRange();
+  return range.parent.child(range.startIndex).type.name;
+};
+
+test("past the edge of a column the selection becomes the whole Column layout", () => {
+  const { editor } = renderEditor({
+    defaultValue: `<p>Before</p>${layout(column("<p>L1</p>", "<p>L2</p>"), column("<p>R1</p>"))}<p>After</p>`,
+  });
+  caretIn(editor, "L1");
+  press(editor, "Escape");
+  expect((selection(editor) as BlockSelection).nodeRange().parent.type.name).toBe("layoutColumn");
+
+  press(editor, "ArrowDown", { shift: true });
+  expect(selectedCount(editor)).toBe(2);
+  // L2 is the last Block of the column: one more press selects the Column layout whole.
+  press(editor, "ArrowDown", { shift: true });
+  expect(selectedCount(editor)).toBe(1);
+  expect(nameOf(editor)).toBe("layout");
+
+  // And the next one goes on at the Document's level.
+  press(editor, "ArrowDown", { shift: true });
+  expect(selectedCount(editor)).toBe(2);
+  expect((selection(editor) as BlockSelection).nodeRange().parent.type.name).toBe("doc");
+});
+
+test("past the edge of a Wrapper the selection becomes the Wrapper whole", () => {
+  const { editor } = renderEditor({
+    defaultValue: `<p>Before</p>${wrapper("<p>In</p>")}<p>After</p>`,
+  });
+  caretIn(editor, "In");
+  press(editor, "Escape");
+
+  press(editor, "ArrowUp", { shift: true });
+
+  expect(selectedCount(editor)).toBe(1);
+  expect(nameOf(editor)).toBe("wrapper");
+  press(editor, "ArrowUp", { shift: true });
+  expect(selectedCount(editor)).toBe(2);
+});
+
+test("past the edge of a list the selection becomes the whole list", () => {
+  const { editor } = renderEditor({
+    defaultValue: "<p>Before</p><ul><li><p>a</p></li><li><p>b</p></li></ul>",
+  });
+  caretIn(editor, "b");
+  press(editor, "Escape");
+  expect(nameOf(editor)).toBe("listItem");
+
+  press(editor, "ArrowDown", { shift: true });
+
+  expect(nameOf(editor)).toBe("bulletList");
+});
+
+test("a Block in a Wrapper is selected inside it: the neighbours are the Wrapper's own", () => {
+  const { editor } = renderEditor({ defaultValue: wrapper("<p>One</p><p>Two</p>") });
+  caretIn(editor, "One");
+  press(editor, "Escape");
+  press(editor, "ArrowDown", { shift: true });
+
+  expect(selectedCount(editor)).toBe(2);
+  expect((selection(editor) as BlockSelection).nodeRange().parent.type.name).toBe("wrapper");
+});
+
+// --- Look ------------------------------------------------------------------------------
+
+test("the selected Blocks are marked whole and the root marks the mode; the DOM carries no caret hint", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "One");
+  press(editor, "Escape");
+  press(editor, "ArrowDown", { shift: true });
+
+  const root = editor.view.dom;
+  expect(root.hasAttribute("data-block-selection")).toBe(true);
+  const marked = Array.from(root.querySelectorAll(".rte-block-selected"));
+  expect(marked.map((node) => node.textContent)).toEqual(["One", "Two"]);
+
+  press(editor, "Enter");
+  expect(root.hasAttribute("data-block-selection")).toBe(false);
+  expect(root.querySelector(".rte-block-selected")).toBeNull();
+});
+
+// --- The selection survives other edits -------------------------------------------------
+
+test("an edit above the Blocks moves the selection along with them", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "Two");
+  press(editor, "Escape");
+
+  const { schema } = editor.state;
+  act(() =>
+    editor.view.dispatch(
+      editor.state.tr.insert(0, schema.nodes.paragraph!.create(null, schema.text("New")))
+    )
+  );
+
+  const block = selection(editor) as BlockSelection;
+  expect(selection(editor)).toBeInstanceOf(BlockSelection);
+  expect(editor.state.doc.textBetween(block.from, block.to)).toBe("Two");
+});
+
+test("deleting the selected Blocks from outside ends the selection with a caret", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "Two");
+  press(editor, "Escape");
+
+  act(() => void editor.commands.deleteRange({ from: 5, to: 10 }));
+
+  expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
+});
+
+// --- Announcements -------------------------------------------------------------------------
+
+test("the screen reader hears the count, the end of the selection and the result of an action", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "One");
+
+  press(editor, "Escape");
+  expect(announced()).toBe("Blocks selected: 1");
+  press(editor, "ArrowDown", { shift: true });
+  expect(announced()).toBe("Blocks selected: 2");
+  press(editor, "Enter");
+  expect(announced()).toBe("Block selection cleared");
+
+  press(editor, "Escape");
+  press(editor, "Backspace");
+  expect(announced()).toBe("Blocks deleted: 1");
+});
+
+test("the announcements speak the provider's language", () => {
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <UiProvider messages={ru}>
+      <RichTextEditor ref={ref} aria-label="Body" defaultValue={THREE} />
+    </UiProvider>
+  );
+  const editor = ref.current!.editor!;
+  caretIn(editor, "One");
+
+  press(editor, "Escape");
+
+  expect(announced()).toBe(ru.editor.blocksSelected({ count: 1 }));
+});
+
+// --- Layers: Dialog and Drawer (ADR-0041) ----------------------------------------------------
+
+test.each([
+  [
+    "Dialog",
+    (onClose: () => void, child: React.ReactNode) => (
+      <Dialog open onClose={onClose} title="Edit">
+        {child}
+      </Dialog>
+    ),
+  ],
+  [
+    "Drawer",
+    (onClose: () => void, child: React.ReactNode) => (
+      <Drawer open onClose={onClose} title="Edit">
+        {child}
+      </Drawer>
+    ),
+  ],
+] as const)(
+  "in a %s the first Esc selects the Block and the second closes the layer",
+  async (_, wrap) => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const ref = createRef<RichTextEditorHandle>();
+    render(wrap(onClose, <RichTextEditor ref={ref} aria-label="Body" defaultValue={THREE} />));
+    const editor = ref.current!.editor!;
+    caretIn(editor, "Two");
+
+    await user.keyboard("{Escape}");
+    expect(selectedCount(editor)).toBe(1);
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.keyboard("{Escape}");
+    expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  }
+);
+
+test("without the Tool a field in a Dialog keeps the one-Escape close", async () => {
+  const user = userEvent.setup();
+  const onClose = vi.fn();
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <Dialog open onClose={onClose} title="Comment">
+      <RichTextEditor ref={ref} aria-label="Body" preset="basic" defaultValue={THREE} />
+    </Dialog>
+  );
+  caretIn(ref.current!.editor!, "Two");
+
+  await user.keyboard("{Escape}");
+
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test("an open layer of the Editor keeps its own Esc: the Slash menu closes, nothing is selected", async () => {
+  const user = userEvent.setup();
+  const onClose = vi.fn();
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <Dialog open onClose={onClose} title="Edit">
+      <RichTextEditor ref={ref} aria-label="Body" defaultValue="<p></p>" />
+    </Dialog>
+  );
+  const editor = ref.current!.editor!;
+  act(() => editor.view.focus());
+  await user.keyboard("/");
+  await screen.findByRole("listbox");
+
+  await user.keyboard("{Escape}");
+
+  await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+  expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+// --- readOnly and disabled --------------------------------------------------------------------
+
+test("readOnly keeps the selection and the copy, and no key that changes the Document", () => {
+  const { editor } = renderEditor({ readOnly: true, defaultValue: THREE });
+  act(() => {
+    editor.view.focus();
+    editor.commands.setTextSelection(3);
+  });
+
+  press(editor, "Escape");
+  expect(selectedCount(editor)).toBe(1);
+  press(editor, "ArrowDown", { shift: true });
+  expect(selectedCount(editor)).toBe(2);
+
+  press(editor, "Backspace");
+  press(editor, "d", { mod: true, shift: true });
+  expect(editor.getHTML()).toBe(THREE);
+  expect(selectedCount(editor)).toBe(2);
+
+  const data = new Map<string, string>();
+  const copy = new Event("copy", { bubbles: true, cancelable: true });
+  Object.defineProperty(copy, "clipboardData", {
+    value: {
+      setData: (type: string, value: string) => void data.set(type, value),
+      clearData: () => data.clear(),
+    },
+  });
+  act(() => void editor.view.dom.dispatchEvent(copy));
+  expect(data.get("text/plain")).toBe("One\n\nTwo");
+  // The handle is not mounted in a read-only field.
+  expect(screen.queryByRole("button", { name: "Block actions" })).toBeNull();
+});
+
+test("a disabled field does nothing", () => {
+  const { editor } = renderEditor({ disabled: true, defaultValue: THREE });
+  act(() => editor.commands.setTextSelection(3));
+
+  const event = press(editor, "Escape");
+
+  expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
+  expect(event.defaultPrevented).toBe(false);
+  expect(editor.commands.selectBlocks()).toBe(false);
+});
+
+// --- Mouse, touch -----------------------------------------------------------------------------
+
+const paragraph = (editor: Editor, text: string) =>
+  Array.from(editor.view.dom.querySelectorAll("p")).find((node) => node.textContent === text)!;
+
+test("Shift+click on another Block draws the selection to it", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "One");
+  press(editor, "Escape");
+
+  fireEvent.mouseDown(paragraph(editor, "Three"), { shiftKey: true });
+
+  expect(selectedCount(editor)).toBe(3);
+  fireEvent.mouseDown(paragraph(editor, "Two"), { shiftKey: true });
+  expect(selectedCount(editor)).toBe(2);
+});
+
+test("Shift+click above the anchor grows the selection upwards", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "Three");
+  press(editor, "Escape");
+
+  fireEvent.mouseDown(paragraph(editor, "One"), { shiftKey: true });
+
+  const block = selection(editor) as BlockSelection;
+  expect(block.count).toBe(3);
+  expect(block.forward).toBe(false);
+});
+
+test("Shift+click in another column lifts the selection to the Column layout", () => {
+  const { editor } = renderEditor({
+    defaultValue: layout(column("<p>L1</p>", "<p>L2</p>"), column("<p>R1</p>")),
+  });
+  caretIn(editor, "L1");
+  press(editor, "Escape");
+
+  fireEvent.mouseDown(paragraph(editor, "R1"), { shiftKey: true });
+
+  expect(selectedCount(editor)).toBe(1);
+  expect(nameOf(editor)).toBe("layout");
+});
+
+/** jsdom has no layout: the engine's own mouse handling asks where a point is, and finds nothing. */
+function noPointLookup() {
+  const doc = document as unknown as { elementFromPoint?: () => null };
+  doc.elementFromPoint = () => null;
+  return () => void delete doc.elementFromPoint;
+}
+
+test("a plain click leaves the mode with a caret", () => {
+  const restore = noPointLookup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "One");
+  press(editor, "Escape");
+
+  fireEvent.mouseDown(paragraph(editor, "Three"));
+  restore();
+
+  // The engine places the caret itself; the click does not extend the Blocks.
+  expect(selectedCount(editor)).toBe(1);
+});
+
+function tap(editor: Editor, target: HTMLElement) {
+  const down = new Event("pointerdown", { bubbles: true });
+  Object.defineProperty(down, "pointerType", { value: "touch" });
+  act(() => void editor.view.dom.dispatchEvent(down));
+  fireEvent.mouseDown(target);
+}
+
+test("on a touch screen a tap on another Block draws the selection to it, a tap in a selected Block is a caret", () => {
+  const restore = noPointLookup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "One");
+  act(() => void editor.commands.selectBlocks());
+
+  tap(editor, paragraph(editor, "Three"));
+  expect(selectedCount(editor)).toBe(3);
+
+  // A tap in the text of a selected Block is left to the engine: the selection is not extended.
+  tap(editor, paragraph(editor, "Two"));
+  restore();
+  expect(selectedCount(editor)).toBe(3);
+});
+
+test("the selected Blocks cannot be dragged away, and typing through an input method is cancelled", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "Two");
+  press(editor, "Escape");
+
+  const drag = new Event("dragstart", { bubbles: true, cancelable: true });
+  act(() => void editor.view.dom.dispatchEvent(drag));
+  expect(drag.defaultPrevented).toBe(true);
+
+  const input = new Event("beforeinput", { bubbles: true, cancelable: true });
+  Object.defineProperty(input, "inputType", { value: "insertText" });
+  act(() => void editor.view.dom.dispatchEvent(input));
+  expect(input.defaultPrevented).toBe(true);
+  expect(editor.getHTML()).toBe(THREE);
+});
+
+// --- State and commands ---------------------------------------------------------------------------
+
+/** The result of a command called inside `act`. */
+function run<T>(command: () => T): T {
+  let result!: T;
+  act(() => {
+    result = command();
+  });
+  return result;
+}
+
+function Probe({ handle }: { handle: React.RefObject<RichTextEditorHandle | null> }) {
+  const count = useRichTextToolState(handle, "blockSelection", (state) => state.count);
+  return <output data-testid="count">{count === null ? "null" : String(count)}</output>;
+}
+
+test("the state is the number of selected Blocks, and the commands select and clear", () => {
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <>
+      <RichTextEditor ref={ref} aria-label="Body" defaultValue={THREE} />
+      <Probe handle={ref} />
+    </>
+  );
+  const editor = ref.current!.editor!;
+  const count = () => screen.getByTestId("count").textContent;
+  caretIn(editor, "Two");
+  expect(count()).toBe("0");
+
+  const commands = ref.current!.tool("blockSelection")!;
+  expect(run(() => commands.selectCurrent())).toBe(true);
+  expect(count()).toBe("1");
+  expect(selectedCount(editor)).toBe(1);
+
+  press(editor, "ArrowDown", { shift: true });
+  expect(count()).toBe("2");
+
+  expect(run(() => commands.clear())).toBe(true);
+  expect(count()).toBe("0");
+  expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
+  // Nothing to clear the second time.
+  expect(run(() => commands.clear())).toBe(false);
+});
+
+test("without the Tool there is no state and no commands", () => {
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <>
+      <RichTextEditor ref={ref} aria-label="Body" preset="basic" defaultValue={THREE} />
+      <Probe handle={ref} />
+    </>
+  );
+  expect(screen.getByTestId("count").textContent).toBe("null");
+  expect(ref.current!.tool("blockSelection")).toBeNull();
+});
+
+test("selectCurrent is false in Source mode", async () => {
+  const user = userEvent.setup();
+  const ref = createRef<RichTextEditorHandle>();
+  render(<RichTextEditor ref={ref} aria-label="Body" defaultValue={THREE} />);
+  await user.click(screen.getByRole("button", { name: "HTML" }));
+
+  expect(ref.current!.tool("blockSelection")!.selectCurrent()).toBe(false);
 });
