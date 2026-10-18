@@ -1,7 +1,14 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { useCallback, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { useOverlayLayer } from "../../../hooks/useOverlayLayer.js";
 import { useScrollLock } from "../../../hooks/useScrollLock.js";
 import { cn } from "../../../lib/cn.js";
@@ -11,6 +18,8 @@ import { withoutToolbarAxis } from "../../../lib/toolbar-axis.js";
 
 /** The layer's portal: the `Toolbar` axis the field sits in does not pass into it, as for `Dialog`. */
 const Portal = withoutToolbarAxis(DialogPrimitive.Portal);
+
+const TOP_BAR_OVERRIDE = { "--topbar-h": "0px" } as CSSProperties;
 
 /** The longest an exit may take, whatever the browser reports: a missed `animationend` must not strand the layer. */
 const EXIT_LIMIT_MS = 400;
@@ -118,6 +127,9 @@ export function FullscreenLayer({
             // A react-aria menu inside the layer owns `Esc` first, as it does in a `Dialog`.
             if (closing || hasOpenAriaOverlay()) event.preventDefault();
           }}
+          // The layer covers the app's own top bar: the Toolbar (and the Find panel) stick to the window edge,
+          // not below the `--topbar-h` that `TopBar` publishes on an ancestor and the portal inherits.
+          style={TOP_BAR_OVERRIDE}
           className={cn(
             "pointer-events-auto fixed inset-0 flex h-dvh flex-col outline-none",
             OVERLAY_LAYER.alert,

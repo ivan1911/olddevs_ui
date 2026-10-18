@@ -698,7 +698,7 @@ test("Tab from the last stop lands on the first one, and Shift+Tab from the firs
   const path = await tabPath(user, 60);
   const seenAgain = path.findIndex((element, index) => path.indexOf(element) < index);
   expect(seenAgain).toBeGreaterThan(0);
-  const first = path[path.indexOf(path[seenAgain])]!;
+  const first = path[path.indexOf(path[seenAgain]!)]!;
   const last = path[seenAgain - 1]!;
 
   (first as HTMLElement).focus();
@@ -756,4 +756,23 @@ test("Tab from <body> (after a click on a bare patch of the layer) stays in the 
 
   const path = await tabPath(user, 3);
   expect(path.every((element) => element && root.contains(element))).toBe(true);
+});
+
+// --- The app shell does not reach into the layer ----------------------------------------------
+
+test("the layer overrides --topbar-h: the Toolbar sticks to the window, not under the app's bar", () => {
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <div style={{ "--topbar-h": "56px" } as React.CSSProperties} data-testid="app">
+      <RichTextEditor ref={ref} aria-label="Body" tools={[...TOOLS]} defaultValue={THREE} />
+    </div>
+  );
+  // In the page the Toolbar reads the bar the app (its `TopBar`) publishes.
+  expect(getComputedStyle(screen.getByTestId("app")).getPropertyValue("--topbar-h")).toBe("56px");
+
+  act(() => void ref.current!.tool("fullscreen")!.open());
+
+  // The layer is portaled to <body>, but a portal inside a themed subtree would inherit the value
+  // all the same, so the layer says its own: the whole window is the layer's, there is no bar above.
+  expect(getComputedStyle(layer()!).getPropertyValue("--topbar-h")).toBe("0px");
 });
