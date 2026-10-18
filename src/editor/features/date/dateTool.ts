@@ -1,7 +1,6 @@
 "use client";
 
 import { Extension, Node, type Editor, type Extensions } from "@tiptap/core";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { DateMentionIcon } from "../../../icons.js";
 import type { ToolDescriptor, ToolEngineContext } from "../../core/toolDescriptor.js";
