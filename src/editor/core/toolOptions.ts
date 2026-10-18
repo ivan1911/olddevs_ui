@@ -12,6 +12,7 @@ import type {
 } from "./toolState.js";
 import type {
   BlockSelectionToolCommands,
+  DateToolCommands,
   FootnotesToolCommands,
   InvisibleCharactersToolCommands,
   LanguageToolCommands,
@@ -115,6 +116,27 @@ export interface MathematicsToolOptions {
    * console would be noisy on every typed character.
    */
   strict: "ignore" | "warn" | "error";
+}
+
+/**
+ * Options of the `date` Tool (the date mention, ADR-0079).
+ *
+ * Data, not code: the text of a mention is written into the Document when it is inserted or
+ * edited, and a function in the options would make the Document depend on the screen's code.
+ */
+export interface DateToolOptions {
+  /**
+   * How the DATE is written as text, an `Intl.DateTimeFormatOptions` object. It is applied in the
+   * author's locale (the `UiProvider` locale) at the moment of insertion or editing; the Document
+   * then holds the finished text, and a reader sees it as is. A date with a time gets hours and
+   * minutes in the locale's own cycle on top of it (or `timeStyle: "short"` next to `dateStyle`).
+   *
+   * Replaced as a whole, not merged with the default. Only date fields are allowed: a value with
+   * `hour`, `minute`, `second`, `timeStyle`, `timeZone`, `hourCycle` and the like is rejected, since
+   * the kit does not know time zones (ADR-0008). Default: the format of `formatDate`,
+   * `{ day: "2-digit", month: "short", year: "numeric" }`.
+   */
+  format?: Intl.DateTimeFormatOptions;
 }
 
 /**
@@ -226,7 +248,7 @@ export interface VideoToolOptions {
  * Editor Tool types by name: what the screen sets when configuring (`options`), what it
  * reads (`state`) and what it calls (`commands`). An extensible interface, like `Storage`
  * and `Commands` in Tiptap: the kit declares `search`, `toc`, `details`, `mathematics`,
- * `youtube`, `twitch`, `typography`, `invisibleCharacters` and `language` in it, and the consumer
+ * `youtube`, `twitch`, `typography`, `invisibleCharacters`, `language` and `date` in it, and the consumer
  * adds its own Tools through declaration merging:
  *
  * ```ts
@@ -271,6 +293,11 @@ export interface RichTextTools {
   };
   twitch: {
     options: VideoToolOptions;
+  };
+  // Options and commands: a date mention has no state, the screen reads dates from the HTML.
+  date: {
+    options: DateToolOptions;
+    commands: DateToolCommands;
   };
   // Options only: input rules; they have no state or commands.
   typography: {
@@ -391,7 +418,7 @@ export function mergeOptions(base: object, given: object): object {
  * `console.error`; the author of a custom Tool checks that Tool's own options.
  *
  * Only built-in Tools with options can be configured by name: `search`, `toc`, `details`,
- * `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters` and `language`. The function
+ * `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters`, `language` and `date`. The function
  * is server-safe.
  */
 export function tool<Name extends ConfigurableToolName>(

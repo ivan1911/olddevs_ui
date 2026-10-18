@@ -12,7 +12,7 @@
  * not a breaking change for it. But a name with no implementation would be a silent trap:
  * `tools={["x"]}` would compile and do nothing. This is how `link`, `color`, `highlight`,
  * `align`, `table`, `image`, `emoji`, `layout`, `wrapper`, `details`, `mathematics`,
- * `invisibleCharacters`, `source`, `typography`, `youtube` and `twitch` arrived; there are no
+ * `date`, `invisibleCharacters`, `source`, `typography`, `youtube` and `twitch` arrived; there are no
  * reserved names at the moment.
  *
  * `heading1` is the first-level heading, an add-on over `heading`: with it, the Block's levels
@@ -59,6 +59,14 @@
  * Loader (ADR-0058, item 11.1). It is not in the presets, neither `full` nor `basic`: presets must
  * not load KaTeX; it is enabled by an explicit entry in `tools`. A disabled Tool leaves a formula
  * from an insert and from `value` as the text `$…$` / `$$…$$`, so the LaTeX is not lost.
+ *
+ * `date` is the date mention, an inline Atom `<time datetime="…">text</time>` (ADR-0079): a date from
+ * the kit's `Calendar`, optionally with a time and the author's UTC offset, written as text in the
+ * author's locale at the moment of insertion. The Slash menu item "Date" inserts it, and a click or
+ * `Enter` on it edits it in the kit's popover. The calendar and the popover are a lazy chunk; the node
+ * itself is small and stays in the start bundle. It is in `full`, not in `basic`: in a comment a date
+ * is typed as text. A disabled Tool leaves someone else's `<time>` as its words. The text format is
+ * set by `tool("date", { format })`.
  *
  * `source` is Source mode: the "HTML" button on the fixed Toolbar replaces the Document with a field
  * holding its HTML, and on exit the field's content is applied through the Schema, like an
@@ -151,6 +159,7 @@ export const TOOLS = [
   "wrapper",
   "details",
   "mathematics",
+  "date",
   "footnotes",
   "emoji",
   "source",

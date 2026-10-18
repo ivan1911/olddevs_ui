@@ -152,6 +152,7 @@ const INSERT_ORDER: readonly Tool[] = [
   "details",
   "footnotes",
   "mathematics",
+  "date",
   "youtube",
   "twitch",
 ];

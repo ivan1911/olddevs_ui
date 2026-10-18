@@ -9,6 +9,7 @@ import { imageAlignment } from "./imageAlignment.js";
 import { officeJunk } from "./officeJunk.js";
 import { detectPasteSources, type PasteSources } from "./pasteSources.js";
 import { sharePointStructure } from "./sharePointStructure.js";
+import { tableColumnWidths } from "./tableColumnWidths.js";
 import { wordLists } from "./wordLists.js";
 
 /** What every step gets besides the parsed clipboard. */
@@ -49,6 +50,7 @@ export const PASTE_CLEANUP_STEPS: readonly PasteCleanupStep[] = [
   wordLists,
   sharePointStructure,
   horizontalRules,
+  tableColumnWidths,
   officeJunk,
   // After the Office steps: it reads the picture's own attributes, which they leave alone.
   imageAlignment,

@@ -642,6 +642,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     // The dialog comes from the table's lazy chunk (`tableTool.ts`): the table engine is created
     // after it, and without the engine there is no dialog.
     const TableInsertDialog = tableChunk()?.TableInsertDialog;
+    const TableColumnHandles = tableChunk()?.TableColumnHandles;
     const [tableDialogOpen, setTableDialogOpen] = useState(false);
     /**
      * The field message (`showNotice`, `fieldNotice.ts`): only the latest one is kept. `status` is
@@ -1744,6 +1745,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             {editor && !readOnly && !sourceOpen && (
               <BlockHandle editor={editor} tools={enabledTools} openRef={openBlockMenuRef} />
             )}
+            {editor &&
+              TableColumnHandles &&
+              enabledTools.has("table") &&
+              !readOnly &&
+              !sourceOpen && <TableColumnHandles editor={editor} />}
           </div>
           {editor && !sourceOpen && slash.element}
           {editor && !sourceOpen && triggerMenu.element}

@@ -93,6 +93,8 @@ test("outside a table only Table and Insert table are available; the rest stays 
     { name: "Row", disabled: true },
     { name: "Column", disabled: true },
     { name: "Sort", disabled: true },
+    { name: "Equal columns", disabled: true },
+    { name: "Fit columns to content", disabled: true },
     { name: "Delete table", disabled: true },
   ]);
   // A disabled item is `aria-disabled`, not skipped: the arrow key lands on it.
@@ -107,7 +109,10 @@ test("inside a table every top-level item is available", async () => {
 
   const menu = await openMenu(user);
 
-  expect(topItems(menu).every((item) => !item.disabled)).toBe(true);
+  // "Fit columns to content" has nothing to remove while the table has no widths of its own.
+  expect(topItems(menu).filter((item) => item.disabled)).toEqual([
+    { name: "Fit columns to content", disabled: true },
+  ]);
   expect(within(menu).getByRole("menuitem", { name: "Delete table" })).toBeDefined();
 });
 

@@ -524,6 +524,40 @@ export const MathematicsMacros: Story = {
 };
 
 /*
+  Date mentions in the View (OLDSUI-309, ADR-0079): a `time` element with the words the author saw. No
+  Island, no JS and no formatting at display time. The sample is the same one as in the Editor's
+  `DateMention` story.
+*/
+const DATE_HTML =
+  "<h2>Project plan</h2>" +
+  '<p>The kickoff is on <time datetime="2026-10-12">Oct 12, 2026</time>, the review meeting at ' +
+  '<time datetime="2026-10-19T15:00+03:00">Oct 19, 2026, 3:00 PM</time>, and the release is planned for ' +
+  '<time datetime="2026-11-02">Nov 02, 2026</time>.</p>' +
+  '<blockquote><p>Due <time datetime="2026-10-30">Oct 30, 2026</time></p></blockquote>' +
+  '<div data-block="wrapper" data-tone="warning"><p>Deadline: <time datetime="2026-11-15">Nov 15, 2026</time></p></div>';
+
+/**
+ * Date mentions in the View: the same chip as in the Editor, shown as the author wrote it. A reader in
+ * another locale sees the author's format; the machine value stays in `datetime`.
+ */
+export const DateMention: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={DATE_HTML} />
+    </div>
+  ),
+};
+
+/** Date mentions on a light Paper (`surface="paper"`). */
+export const DateMentionPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextView html={DATE_HTML} surface="paper" />
+    </div>
+  ),
+};
+
+/*
   Callout tone of a Wrapper in the View: the same look as in the Editor, a background and
   a tone stripe. A Wrapper without a tone is still invisible. The sample is the same one as
   in the Editor's `WrapperTones` story.

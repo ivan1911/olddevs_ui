@@ -155,6 +155,7 @@ test("the menu lists both sections with icons, labels and hints", () => {
     "Wrapper",
     "Collapsible block",
     "Footnote",
+    "Date",
   ]);
   expect(names(turnInto)).toEqual([
     "ParagraphCtrl+Alt+0",

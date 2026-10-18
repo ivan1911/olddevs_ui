@@ -48,6 +48,7 @@ export type {
 } from "./core/toolDefinition.js";
 export type {
   ConfiguredTool,
+  DateToolOptions,
   DetailsToolOptions,
   InvisibleCharactersToolOptions,
   LanguageToolOptions,
@@ -60,6 +61,7 @@ export type {
   VideoToolOptions,
 } from "./core/toolOptions.js";
 export type {
+  DateToolCommands,
   BlockSelectionToolCommands,
   FootnotesToolCommands,
   InvisibleCharactersToolCommands,

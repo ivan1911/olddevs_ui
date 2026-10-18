@@ -60,7 +60,8 @@ export interface EditorExtensionOptions {
   quoteSet: () => EditorQuoteSet;
   /**
    * The interface locale (`UiProvider`): the `language` Tool's last fallback for the page's primary
-   * language when no ancestor of the field has a `lang`. Read when asked: a locale change does not
+   * language when no ancestor of the field has a `lang`, and the locale in which the `date` Tool writes
+   * a mention's words when it is inserted or edited. Read when asked: a locale change does not
    * recreate the engine.
    */
   locale: () => string;
@@ -231,6 +232,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "details",
   "footnotes",
   "mathematics",
+  "date",
   "insertMenu",
   TRIGGERS,
   "history",

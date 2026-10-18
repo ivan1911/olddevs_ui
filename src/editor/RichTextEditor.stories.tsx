@@ -188,6 +188,49 @@ const SORT_SAMPLE =
   '<td data-align="center"><p>draft</p></td></tr>' +
   "</tbody></table><p>Put the caret in a column and choose Table › Sort.</p>";
 
+/*
+  Column widths (OLDSUI-310, ADR-0080): a table with the widths the author set. The shares are in
+  `<colgroup><col data-width>`, in 5% steps, and add up to 100: the table fills the Document, a narrow
+  "Owner" and "Status" leave room for the notes. `SIZED_WIDE_SAMPLE` is the six-column roadmap of the
+  table stories with shares of its own, for the narrow screen, where 6 rem per column wins over them.
+*/
+const colgroup = (...shares: number[]) =>
+  `<colgroup>${shares.map((share) => `<col data-width="${share}">`).join("")}</colgroup>`;
+
+const SIZED_TABLE_SAMPLE =
+  "<h2>Roadmap</h2><p>Quarterly plan by area.</p>" +
+  `<table>${colgroup(25, 20, 20, 35)}<tbody>` +
+  "<tr><th><p>Area</p></th><th><p>Owner</p></th><th><p>Status</p></th><th><p>Notes</p></th></tr>" +
+  "<tr><td><p>Search</p></td><td><p>Alex</p></td><td><p><strong>Done</strong></p></td>" +
+  "<td><p>Shipped to <em>all</em> accounts</p></td></tr>" +
+  "<tr><td><p>Billing</p></td><td><p>Sam</p></td><td><p>In progress</p></td>" +
+  "<td><p>Waiting on the <code>invoice</code> format</p></td></tr>" +
+  "<tr><td><p>Reports</p></td><td><p>Kim</p></td><td><p>Planned</p></td>" +
+  "<td><p>Needs a design review</p></td></tr>" +
+  "</tbody></table><p>Text after the table.</p>";
+
+const SIZED_WIDE_SAMPLE = TABLE_SAMPLE.replace(
+  "<table><tbody>",
+  `<table>${colgroup(20, 10, 10, 10, 10, 40)}<tbody>`
+);
+
+/*
+  A range as Excel puts it on the clipboard: the Office namespace that tells the source, and a
+  `<col>` per column with the width in points (the exact value) and in pixels (rounded). The widths
+  are 132, 84, 72, 84 and 60 points: after the paste they are 30%, 20%, 15%, 20% and 15%.
+*/
+const EXCEL_RANGE =
+  '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><body><table>' +
+  "<col width=176 style='mso-width-source:userset;width:132pt'>" +
+  "<col width=112 style='mso-width-source:userset;width:84pt'>" +
+  "<col width=96 style='mso-width-source:userset;width:72pt'>" +
+  "<col width=112 style='mso-width-source:userset;width:84pt'>" +
+  "<col width=80 style='mso-width-source:userset;width:60pt'>" +
+  "<tr><td>Fruit</td><td>Origin</td><td>Price</td><td>Updated</td><td>Share</td></tr>" +
+  "<tr><td>Apple</td><td>Spain</td><td>1.20</td><td>01.10.2026</td><td>25%</td></tr>" +
+  "<tr><td>Pear</td><td>Italy</td><td>1.80</td><td>03.10.2026</td><td>10%</td></tr>" +
+  "</table></body></html>";
+
 /** Part of the remount key for a `tools` entry: the name, and for `tool()` the options too. */
 const toolKey = (entry: NonNullable<RichTextEditorProps["tools"]>[number]) =>
   typeof entry === "string"
@@ -1484,6 +1527,80 @@ export const TableNarrow: Story = {
 };
 
 /**
+ * Column widths with the pointer (decision 4): with the caret in a table, a bar appears on the
+ * boundary between every two columns (it is always visible on a touch screen). Drag one: the bar
+ * follows the pointer smoothly, and on release the boundary snaps to the nearest 5%. Only the two
+ * columns around it trade width, the rest stay put, and the last column has no bar. The drag is one
+ * undo step. This table has no widths yet: the first drag rounds all of them to 5%, then moves the
+ * boundary. The bars are for the pointer only; the keyboard has the menu (`TableColumnWidthMenu`).
+ */
+export const TableColumnWidthHandle: Story = {
+  render: () => (
+    <TableInCell
+      document={SIZED_TABLE_SAMPLE.replace(colgroup(25, 20, 20, 35), "")}
+      caret="Search"
+    />
+  ),
+};
+
+/**
+ * Column widths from the keyboard (decision 6): "Table ▾" → "Column ›" → "Wider" / "Narrower" widen
+ * or narrow the column under the caret by 5% at the expense of its neighbour on the right (on the left
+ * for the last column). The group's name is the current width ("Column width: 20%"), and the result is
+ * announced through the Field notice. "Equal columns" and "Fit columns to content" are in the "Table"
+ * menu itself: the second takes all the widths away, and the table is sized by its content again.
+ */
+export const TableColumnWidthMenu: Story = {
+  render: () => <TableInCell document={SIZED_TABLE_SAMPLE} caret="Billing" />,
+};
+
+/**
+ * A narrow screen (375 px): the shares are of the table's width, but a column never gets narrower than
+ * 6 rem, so six columns do not fit and the table scrolls inside itself, as a table without widths does.
+ * The bars follow the scroll.
+ */
+export const TableColumnWidthNarrow: Story = {
+  tags: ["viewport-phone"],
+  render: () => <TableInCell document={SIZED_WIDE_SAMPLE} caret="Billing" />,
+};
+
+/** Paste a range from Excel (decision 7): its column widths in points become shares rounded to 5%. */
+function ExcelPasteDemo() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  return (
+    <div className="flex max-w-[640px] flex-col gap-3">
+      <div>
+        <Button
+          onClick={() => {
+            const editor = ref.current?.editor;
+            editor?.view.focus();
+            editor?.view.pasteHTML(EXCEL_RANGE, new Event("paste") as ClipboardEvent);
+          }}
+        >
+          Paste a range from Excel
+        </Button>
+      </div>
+      <RichTextEditor ref={ref} aria-label="Document" defaultValue="<p>Press the button.</p>" />
+    </div>
+  );
+}
+
+/**
+ * A range from Excel: the paste cleanup (`pasteCleanup`) reads the column widths the application writes
+ * (points and pixels) and the Document keeps them as shares (30/20/15/20/15). Word, Google Docs and
+ * Google Sheets are read the same way. A copy from a web page with a `colgroup` is read by the table
+ * itself; a table with no widths comes in sized by its content.
+ */
+export const TableColumnWidthExcelPaste: Story = {
+  render: () => <ExcelPasteDemo />,
+};
+
+/** Column widths in the Russian locale: the name of the menu group, the two items and the announcement come from the catalog. */
+export const TableColumnWidthRussian: Story = {
+  render: () => <TableInCell locale="ru-RU" document={SIZED_TABLE_SAMPLE} caret="Billing" />,
+};
+
+/**
  * The image address of the stories: the showcase file (`.storybook/static`).
  * It must be absolute, because the Document accepts only `http(s)`, and it is
  * built from the showcase's own address: the showcase is published either at the
@@ -2612,6 +2729,144 @@ export const MathematicsPopover: Story = {
   // Lazy chunks (KaTeX, player, Island): the snapshot and the audit wait for the network to go quiet.
   tags: ["network-idle"],
   render: () => <OpenedFormula />,
+};
+
+/*
+  Date mention (OLDSUI-309, ADR-0079): a date inside a line of text, `<time datetime>` with the words the
+  author saw. In `full`, so no `tools` list is needed. The Calendar and the popover are a lazy chunk that
+  loads when a mention is inserted or edited.
+*/
+const DATE_SAMPLE =
+  "<h2>Project plan</h2>" +
+  '<p>The kickoff is on <time datetime="2026-10-12">Oct 12, 2026</time>, the review meeting at ' +
+  '<time datetime="2026-10-19T15:00+03:00">Oct 19, 2026, 3:00 PM</time>, and the release is planned for ' +
+  '<time datetime="2026-11-02">Nov 02, 2026</time>. Click a date to change it, or select it with ' +
+  "<kbd>Shift</kbd>+<kbd>→</kbd> and press Enter.</p>" +
+  "<p>Text after the dates.</p>";
+
+/**
+ * A date mention: a rounded chip with the weak background and the ordinary font. A click on it, or Enter
+ * on the selected one, opens the popover with the calendar; a new one is inserted from the Insert menu
+ * ("Date"). The words are written in the author's locale and shown by `RichTextView` as they are.
+ */
+export const DateMention: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} />
+    </div>
+  ),
+};
+
+/** Date mentions on a light `surface="paper"` sheet. */
+export const DateMentionPaper: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} surface="paper" />
+    </div>
+  ),
+};
+
+/** The Slash menu by `/date`: the "Date" item (and by `today`, `calendar`). Enter on it opens the calendar. */
+export const DateMentionInsertSlash: Story = {
+  render: () => <TypedCommand command="/date" />,
+};
+
+/** Open the edit popover of the mention with a time as soon as the Editor has drawn it. */
+function OpenedDate() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const target = root.current?.querySelector<HTMLElement>("time[datetime*='T']");
+      if (!target) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      target.click();
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div ref={root} className="h-[560px] max-w-[640px]">
+      <RichTextEditor aria-label="Document" defaultValue={DATE_SAMPLE} />
+    </div>
+  );
+}
+
+/**
+ * The edit popover of a mention with a time: the calendar on its day, the "Time" switch with the time
+ * field, "Remove time" and "Delete date", and "Apply" for a changed time.
+ */
+export const DateMentionPopover: Story = {
+  // The popover's chunk (the Calendar) is lazy: the snapshot and the audit wait for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => <OpenedDate />,
+};
+
+/*
+  A `<time>` from someone else's page. The forms the Editor writes itself (a date, a date with a time and
+  an offset) become mentions with their words as they were; a period, a week, a year and a time without an
+  offset stay ordinary text, and nothing is lost.
+*/
+const FOREIGN_TIME_HTML =
+  '<p>From a news page: published <time datetime="2026-10-12">twelfth of October</time> and ' +
+  '<time datetime="2026-10-12T09:30+02:00">9:30 CEST</time>.</p>' +
+  '<p>These stay text: <time datetime="P3D">three days</time>, <time datetime="2026-W42">week 42</time>, ' +
+  '<time datetime="2026-10-12T09:30">9:30 with no offset</time>.</p>';
+
+function PastedTime() {
+  const ref = useRef<RichTextEditorHandle>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      const editor = ref.current?.editor;
+      if (!editor) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      editor.view.pasteHTML(FOREIGN_TIME_HTML);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div className="max-w-[640px]">
+      <RichTextEditor ref={ref} aria-label="Document" />
+    </div>
+  );
+}
+
+/** A `<time>` pasted from another page: a mention where `datetime` is in the Editor's form, text elsewhere. */
+export const DateMentionPasted: Story = {
+  render: () => <PastedTime />,
+};
+
+/** The `format` option: `tool("date", { format: { dateStyle: "long" } })` writes new dates in the long form. */
+export const DateMentionFormat: Story = {
+  render: () => (
+    <div className="max-w-[640px]">
+      <RichTextEditor
+        aria-label="Document"
+        tools={[...RICH_TEXT_PRESETS.full, tool("date", { format: { dateStyle: "long" } })]}
+        defaultValue={DATE_SAMPLE}
+      />
+    </div>
+  ),
+};
+
+/**
+ * Date mentions in the Russian locale: the Insert menu and the popover come from the catalog, the
+ * calendar is in Russian, and a date picked now is written as Russian text with a 24-hour clock.
+ */
+export const DateMentionRussian: Story = {
+  // The popover's chunk (the Calendar) is lazy: the snapshot and the audit wait for the network to go quiet.
+  tags: ["network-idle"],
+  render: () => (
+    <UiProvider locale="ru-RU" messages={ru}>
+      <OpenedDate />
+    </UiProvider>
+  ),
 };
 
 /** Open the HTML mode as soon as the Toolbar appears: a click on the "HTML" button. */

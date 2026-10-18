@@ -319,12 +319,27 @@ const SERVER_SAFE = [
       "and no DOM, so the server-rendered RichTextView calls it.",
   },
   {
+    file: "editor/features/date/dateValue.ts",
+    why:
+      "The strict form of a date mention's datetime (OLDSUI-309, ADR-0079): a parser, a calendar check and " +
+      "a composer over strings, plus the tag and node names. No imports, so the sanitizer in schema.ts, which " +
+      "runs on the consumer's server, shares the very check the Editor uses.",
+  },
+  {
     file: "editor/features/mathematics/mathHtml.ts",
     why:
       "hasMath and withMathSource: string-to-string functions over the saved HTML that put the LaTeX " +
       "source into the empty formula elements (ADR-0070) and make a LaTeX source safe for the data-latex " +
       "attribute. The only import is mathNames.ts; no React and no DOM, so the server-rendered " +
       "RichTextView and the sanitizer call them.",
+  },
+  {
+    file: "editor/features/table/tableShares.ts",
+    why:
+      "The table column widths (OLDSUI-310, ADR-0080) as pure functions over numbers and an element " +
+      "passed in: the check of one share, the rounding of widths to steps of 5%, the reader of a " +
+      "colgroup. No React, no Tiptap, no global DOM. schema.ts sanitizes `col[data-width]` with the " +
+      "same check on the consumer's server, and the Skeleton shape of the table parses with it.",
   },
   {
     file: "editor/features/footnotes/footnoteHtml.ts",

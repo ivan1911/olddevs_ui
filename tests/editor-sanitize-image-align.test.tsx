@@ -63,3 +63,20 @@ test("neither style nor float nor class nor align gets onto a figure", () => {
     )
   ).toBe(`<figure data-align="left"><img src="${SRC}" alt="" data-width="25"></figure>`);
 });
+
+test("33 is an image preset and not a column share: each tag has its own values for data-width", () => {
+  const table = (shares: [string, string]) =>
+    `<table><colgroup><col data-width="${shares[0]}"><col data-width="${shares[1]}"></colgroup>` +
+    "<tbody><tr><td><p>a</p></td><td><p>b</p></td></tr></tbody></table>";
+
+  // A share that is not a multiple of 5 is rejected on a `col`, and the whole `colgroup` goes with it.
+  const rejected = clean(table(["33", "67"]));
+  expect(rejected).not.toContain("data-width");
+  expect(rejected).not.toContain("colgroup");
+  // The same value on an image passes, next to a valid colgroup.
+  const both = clean(table(["35", "65"]) + figure("", "33"));
+  expect(both).toContain('<col data-width="35">');
+  expect(both).toContain('data-width="33"');
+  // And a `col` share does not widen the image presets: 35 is no image width.
+  expect(clean(figure("", "35"))).toBe(`<figure><img src="${SRC}" alt=""></figure>`);
+});

@@ -495,6 +495,10 @@ export {
   TableCellsMerge as MergeCellsIcon,
   /** Split a merged cell back. */
   TableCellsSplit as SplitCellIcon,
+  /** Make a table column a step wider (OLDSUI-310). */
+  UnfoldHorizontal as ColumnWiderIcon,
+  /** Make a table column a step narrower. */
+  FoldHorizontal as ColumnNarrowerIcon,
   /** First row: column headers. Not `TableIcon`, which is the whole table. */
   PanelTop as HeaderRowIcon,
   /**
@@ -566,6 +570,12 @@ export {
    * The pair of `FormulaIcon`: the frame sets a formula-Block apart from a formula inside a line of text.
    */
   SquareSigma as BlockFormulaIcon,
+  /**
+   * The date mention of the Editor: a calendar with days, the "Date" item of the Slash menu. A new
+   * name next to `CalendarIcon` on purpose: that one is "scheduled for later" in the product's
+   * vocabulary, and this one is a date inside a line of text.
+   */
+  CalendarDays as DateMentionIcon,
   /**
    * Show invisible characters in the Editor: a pilcrow with an arrow, the "Invisible characters" item
    * of the "…" menu of the fixed Toolbar. Not `ParagraphIcon`: that one already means "plain paragraph"
