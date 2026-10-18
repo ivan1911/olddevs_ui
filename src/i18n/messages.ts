@@ -884,6 +884,20 @@ export interface UiMessages {
     tableAlignLeft: string;
     tableAlignCenter: string;
     tableAlignRight: string;
+    /**
+     * Column widths (ADR-0080). `tableColumnWider` and `tableColumnNarrower` are items of the "Column"
+     * submenu: a step of 5% at the expense of the neighbour. `tableColumnWidth` names the width of the
+     * column under the caret, both as the label of the section that holds the two items and as the
+     * announcement after a change ("Column width: 35%"); `percent` is `null` for a table sized by its
+     * content. `tableEqualColumns` and `tableFitContent` are items of the "Table" menu: the first
+     * makes all columns the same width, the second removes the widths. The names are self-sufficient,
+     * like the rest of the menu: the screen reader reads the item, not its section.
+     */
+    tableColumnWider: string;
+    tableColumnNarrower: string;
+    tableColumnWidth: (vars: { percent: number | null }) => string;
+    tableEqualColumns: string;
+    tableFitContent: string;
     tableSortAscending: string;
     tableSortDescending: string;
     /**

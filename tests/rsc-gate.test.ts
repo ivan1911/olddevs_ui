@@ -334,6 +334,14 @@ const SERVER_SAFE = [
       "RichTextView and the sanitizer call them.",
   },
   {
+    file: "editor/features/table/tableShares.ts",
+    why:
+      "The table column widths (OLDSUI-310, ADR-0080) as pure functions over numbers and an element " +
+      "passed in: the check of one share, the rounding of widths to steps of 5%, the reader of a " +
+      "colgroup. No React, no Tiptap, no global DOM. schema.ts sanitizes `col[data-width]` with the " +
+      "same check on the consumer's server, and the Skeleton shape of the table parses with it.",
+  },
+  {
     file: "editor/features/footnotes/footnoteHtml.ts",
     why:
       "The sanitizer half of footnotes (ADR-0076): the narrow rule that lets id and href=# through " +

@@ -509,6 +509,13 @@ export const messages: UiMessages = {
     tableAlignLeft: "Столбец по левому краю",
     tableAlignCenter: "Столбец по центру",
     tableAlignRight: "Столбец по правому краю",
+    tableColumnWider: "Шире",
+    tableColumnNarrower: "Уже",
+    // In Russian, a non-breaking space goes between the number and the percent sign.
+    tableColumnWidth: ({ percent }) =>
+      percent === null ? "Ширина столбца: по содержимому" : `Ширина столбца: ${percent}\u00a0%`,
+    tableEqualColumns: "Столбцы поровну",
+    tableFitContent: "Ширина по содержимому",
     tableSortAscending: "По возрастанию",
     tableSortDescending: "По убыванию",
     tableSortMerged: "Недоступно: в таблице есть объединённые ячейки",

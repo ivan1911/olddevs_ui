@@ -495,6 +495,10 @@ export {
   TableCellsMerge as MergeCellsIcon,
   /** Split a merged cell back. */
   TableCellsSplit as SplitCellIcon,
+  /** Make a table column a step wider (OLDSUI-310). */
+  UnfoldHorizontal as ColumnWiderIcon,
+  /** Make a table column a step narrower. */
+  FoldHorizontal as ColumnNarrowerIcon,
   /** First row: column headers. Not `TableIcon`, which is the whole table. */
   PanelTop as HeaderRowIcon,
   /**
