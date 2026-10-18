@@ -101,7 +101,9 @@ function carryNotes(slice: Slice, view: EditorView): Slice {
   const content = mapReferences(slice.content, reference, (node) => {
     if (node.attrs.note) return node;
     const text = notes.get(node.attrs.key as string)?.content;
-    return text ? reference.create({ ...node.attrs, note: carryContent(text) }) : node;
+    return text
+      ? reference.create({ ...node.attrs, note: carryContent(text, view.state.schema) })
+      : node;
   });
   return new Slice(content, slice.openStart, slice.openEnd);
 }
@@ -157,7 +159,9 @@ function newNotes(slice: Slice, view: EditorView): Slice {
         const text = carriedContent(child, schema) ?? sliceNotes.get(old) ?? here.get(old)?.content;
         const key = newFootnoteKey(taken);
         taken.add(key);
-        nodes.push(reference.create({ key, number: 0, note: text ? carryContent(text) : null }));
+        nodes.push(
+          reference.create({ key, number: 0, note: text ? carryContent(text, schema) : null })
+        );
       } else if (child.isLeaf) {
         nodes.push(child);
       } else {

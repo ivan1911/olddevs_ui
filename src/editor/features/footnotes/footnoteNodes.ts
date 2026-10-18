@@ -117,8 +117,9 @@ export const FootnoteReference = Node.create({
     },
     /*
       The footnote's text on its way between two Editors (copy, cut, drag): the reference carries it,
-      and the paste puts it into a new footnote (`footnoteClipboard.ts`). Always empty in the
-      Document and absent from the saved HTML. A JSON string of the footnote's inline content.
+      and the paste puts it into a new footnote (`footnoteBehavior.ts`). Always empty in the
+      Document and absent from the saved HTML. The footnote's inline content as an HTML string, which
+      is read back through the Schema's HTML parse (`footnoteSync.ts`, `carriedContent`).
     */
     note: {
       default: null,

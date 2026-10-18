@@ -963,3 +963,22 @@ test("the Russian catalog names the list in the HTML, the number button and the 
   await user.click(screen.getByRole("button", { name: ru.editor.moreFormatting }));
   expect(screen.getByRole("menuitem", { name: ru.editor.footnote })).toBeDefined();
 });
+
+test("the text a reference carries goes through the Schema: a foreign address or markup is dropped", () => {
+  const { editor } = renderEditor({ defaultValue: "<p>Target</p>" });
+  act(() => void editor.commands.setTextSelection(7));
+  const note =
+    '<a href="javascript:steal()">bad</a> <script>steal()</script><img src=x onerror="steal()">' +
+    '<span style="position:fixed">styled</span> <strong>kept</strong>';
+  const html = `<sup data-footnote-ref="${C}" data-footnote-note="${note.replaceAll('"', "&quot;")}"><a href="#fn-${C}">1</a></sup>`;
+
+  pasteHtml(editor, html);
+
+  const found = notes(editor);
+  expect(found).toHaveLength(1);
+  const saved = editor.getHTML();
+  expect(saved).not.toMatch(/javascript:|<script|onerror|<img|style=/);
+  expect(saved).toContain("<strong>kept</strong>");
+  expect(found[0]!.text).toContain("bad");
+  expect(found[0]!.text).toContain("styled");
+});

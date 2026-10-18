@@ -1,6 +1,12 @@
 "use client";
 
-import { Fragment, type Node as PmNode, type Schema } from "@tiptap/pm/model";
+import {
+  DOMParser as ProseMirrorParser,
+  DOMSerializer,
+  Fragment,
+  type Node as PmNode,
+  type Schema,
+} from "@tiptap/pm/model";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import { ReplaceAroundStep, ReplaceStep, Transform, type Step } from "@tiptap/pm/transform";
 import {
@@ -102,22 +108,33 @@ export function findNote(doc: PmNode, key: string): Placed | null {
   return scanFootnotes(doc).notes.find((note) => note.node.attrs.key === key) ?? null;
 }
 
-/** The text the reference carries from a copy: the footnote's content as a JSON string, or `null`. */
+/** An inert document: parsing HTML in it runs no script and loads no image. */
+const inertDocument = (): Document => document.implementation.createHTMLDocument("");
+
+/**
+ * The text the reference carries from a copy (the footnote's inline HTML in `note`), or `null`.
+ *
+ * IT GOES THROUGH THE SCHEMA'S HTML PARSE, not through `Fragment.fromJSON`: the clipboard is outside
+ * data, and the HTML parse is what holds the attribute policy (a link address, a color, a class). A
+ * JSON tree would put a `javascript:` address into a link Mark as it stands.
+ */
 export function carriedContent(reference: PmNode, schema: Schema): Fragment | null {
   const raw: unknown = reference.attrs.note;
   const note = schema.nodes[FOOTNOTE_NODE];
   if (typeof raw !== "string" || raw === "" || !note) return null;
-  try {
-    const fragment = Fragment.fromJSON(schema, JSON.parse(raw));
-    return note.validContent(fragment) ? fragment : null;
-  } catch {
-    return null;
-  }
+  const box = inertDocument().createElement("div");
+  box.innerHTML = raw;
+  const { content } = ProseMirrorParser.fromSchema(schema).parse(box, { topNode: note.create() });
+  return content.size > 0 ? content : null;
 }
 
-/** The footnote's content as the string a reference carries across the clipboard. */
-export function carryContent(content: Fragment): string | null {
-  return content.size > 0 ? JSON.stringify(content.toJSON()) : null;
+/** The footnote's content as the string a reference carries across the clipboard: its inline HTML. */
+export function carryContent(content: Fragment, schema: Schema): string | null {
+  if (content.size === 0) return null;
+  const owner = inertDocument();
+  const box = owner.createElement("div");
+  box.append(DOMSerializer.fromSchema(schema).serializeFragment(content, { document: owner }));
+  return box.innerHTML;
 }
 
 /** How a reference ends up: its final key, and the footnote it points to (an existing one or a new one). */
