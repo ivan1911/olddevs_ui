@@ -405,6 +405,13 @@ const PLACEHOLDER_CLASS =
   and an empty caption hidden in the read-only field. The `rte-caption-empty` and
   `rte-resize-handle` classes are set by `image.ts`, as decorations and in the node view.
   They do not go into the Document.
+
+  The caption's hint is a block that takes its own height, not a zero-height float like the
+  paragraph's: an aligned image is only 25% of a narrow Document, the hint wraps there, and a
+  float with `h-0` left the box one line high, so the second line ran over the next Block. The
+  empty caption holds a trailing `<br>` of one line after the hint, so the hint is pulled up by
+  that line (`-mb-[1lh]`): a one-line hint looks and sits exactly as before, a wrapped one adds
+  only the lines it really has.
 */
 const IMAGE_EDITING_CLASS =
   "[&_figure.ProseMirror-selectednode_img]:outline-2 " +
@@ -412,9 +419,8 @@ const IMAGE_EDITING_CLASS =
   "[&_figure.ProseMirror-selectednode_img]:outline-(--rte-primary) " +
   "[&[contenteditable=true]_figure.ProseMirror-selectednode_.rte-resize-handle]:block " +
   "[&_figcaption.rte-caption-empty]:before:pointer-events-none " +
-  "[&_figcaption.rte-caption-empty]:before:float-left " +
-  "[&_figcaption.rte-caption-empty]:before:h-0 " +
-  "[&_figcaption.rte-caption-empty]:before:w-full " +
+  "[&_figcaption.rte-caption-empty]:before:block " +
+  "[&_figcaption.rte-caption-empty]:before:-mb-[1lh] " +
   "[&_figcaption.rte-caption-empty]:before:text-(--rte-muted-foreground) " +
   "[&_figcaption.rte-caption-empty]:before:content-[attr(data-placeholder)] " +
   "[&[contenteditable=false]_figcaption.rte-caption-empty]:hidden";

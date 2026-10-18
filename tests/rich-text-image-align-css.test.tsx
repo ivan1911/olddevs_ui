@@ -158,3 +158,22 @@ test("the View renders the attributes the rules select and wears the classes", (
   );
   expect(PROSE_CLASS).toContain("[&:has(figure[data-align])]:[container-type:inline-size]");
 });
+
+/**
+ * The hint of an empty caption in the Editor. An aligned image is a quarter or a third of a narrow
+ * Document, and "Caption (optional)" wraps there; a hint that was a zero-height float left the empty
+ * caption one line high, and the second line ran over the next figure and the paragraph below.
+ */
+test("the hint of an empty caption takes its own height, so a wrapped hint does not overflow", () => {
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(
+    (rule) => rule[1]!.includes("rte-caption-empty") && rule[1]!.includes("::before")
+  );
+  const hint = rules.map((rule) => rule[2]).join("\n");
+
+  expect(rules.length).toBeGreaterThan(0);
+  expect(hint).toMatch(/display:\s*block/);
+  expect(hint).not.toMatch(/float:/);
+  expect(hint).not.toMatch(/(?:^|[;\s])height:\s*0/);
+  // The caption keeps its trailing `<br>` for the caret: the hint is pulled up by that one line.
+  expect(hint).toMatch(/margin-bottom:\s*calc\(1lh\s*\*\s*-1\)/);
+});
