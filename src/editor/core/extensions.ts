@@ -45,6 +45,13 @@ export interface EditorExtensionOptions {
    */
   detailsToggle: (text: string) => string;
   /**
+   * The footnote list's name, written into the saved HTML (`aria-label`) in the language of the
+   * message catalog. Read on every serialization: a catalog change does not recreate the engine.
+   */
+  footnoteListName: () => string;
+  /** The name of a footnote's number button in the Editor, from the catalog; read on every re-render of the footnote. */
+  footnoteBack: (number: number) => string;
+  /**
    * Quotation marks for the message catalog language (`UiMessages.editor.typographyQuotes`) for the
    * `typography` Tool with the `quotes: "auto"` option. Read on every quote typed: a catalog
    * change does not recreate the engine.
@@ -209,6 +216,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "layout",
   "wrapper",
   "details",
+  "footnotes",
   "mathematics",
   "insertMenu",
   TRIGGERS,

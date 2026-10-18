@@ -6,6 +6,7 @@ import { toolSignals, watchHandleEditor } from "../core/handleWatchers.js";
 import { toolOptions } from "../core/toolDescriptor.js";
 import type { RichTextTools } from "../core/toolOptions.js";
 import type { RichTextEditorHandle } from "../RichTextEditor.js";
+import { footnotesSnapshot } from "../features/footnotes/footnotesSnapshot.js";
 import { invisibleCharactersSnapshot } from "../features/invisibleCharacters/invisibleCharactersSnapshot.js";
 import { searchSnapshot } from "../features/search/searchSnapshot.js";
 import { tocSnapshot } from "../features/toc/tocSnapshot.js";
@@ -37,6 +38,10 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
       const options = tools && toolOptions(tools, "toc");
       return options && tocSnapshot(editor, options, tocAt);
     },
+  ],
+  [
+    "footnotes",
+    (editor, ref) => (toolSignals(ref).tools?.has("footnotes") ? footnotesSnapshot(editor) : null),
   ],
   [
     "invisibleCharacters",

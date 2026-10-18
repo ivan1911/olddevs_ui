@@ -567,6 +567,12 @@ export {
    * from a Block type.
    */
   PilcrowRight as InvisibleCharactersIcon,
+  /**
+   * A footnote in the Editor: the asterisk, the oldest mark of a note at the foot of the text. The
+   * "Footnote" item of the Slash menu and of the "…" menu. Not `SuperscriptIcon`: that one is the Mark,
+   * and a footnote is a reference with its own text in the list at the end of the Document.
+   */
+  Asterisk as FootnoteIcon,
 
   // ── Theme and grid density ─────────────────────────────────────────────
   Sun as ThemeLightIcon,

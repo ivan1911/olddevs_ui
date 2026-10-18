@@ -104,6 +104,15 @@
  * Toolbar and the Bubble menu have no such item. It is in `full`, not in `basic`: a comment does not
  * need this mode. But in `full` the characters stay hidden until the author turns display on: the
  * starting display is set by the `tool("invisibleCharacters", { visible: true })` option.
+ *
+ * `footnotes` is footnotes (ADR-0076): a reference in the text with an automatic number, and a list of
+ * the footnotes' texts at the end of the Document, edited in place; the reference and the footnote
+ * are followed both ways, in the Editor and in `RichTextView` without JS. It has no Toolbar button:
+ * a "Footnote" item in the Slash menu and in the "…" menu. The kit keeps the list: a footnote exists
+ * while its reference does, and deleting the reference deletes the footnote in the same edit. It is
+ * in `full`, not in `basic`: a comment does not need footnotes. A Document that holds footnotes
+ * opened in an Editor without the Tool keeps the text: the markup goes, and the numbers and the
+ * footnotes' paragraphs stay.
  */
 export const TOOLS = [
   "history",
@@ -133,6 +142,7 @@ export const TOOLS = [
   "wrapper",
   "details",
   "mathematics",
+  "footnotes",
   "emoji",
   "source",
   "search",

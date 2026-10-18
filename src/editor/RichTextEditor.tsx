@@ -591,6 +591,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     taskCheckboxRef.current = messages.editor.taskCheckbox;
     const detailsToggleRef = useRef(messages.editor.detailsToggle);
     detailsToggleRef.current = messages.editor.detailsToggle;
+    // The footnote list's name is written into the saved HTML, and the number button's name is drawn in
+    // the Document: both are read when they are needed, so a catalog change does not recreate the engine.
+    const footnotesRef = useRef(messages.editor.footnotes);
+    footnotesRef.current = messages.editor.footnotes;
+    const footnoteBackRef = useRef(messages.editor.footnoteBack);
+    footnoteBackRef.current = messages.editor.footnoteBack;
+    // The `disabled` flag for the Tool commands that must work in `readOnly` but not in a disabled field.
+    const disabledRef = useRef(disabled);
+    disabledRef.current = disabled;
     // `typography` quotes are read at the moment of typing: a catalog change does not recreate the engine.
     const quoteSetRef = useRef(messages.editor.typographyQuotes);
     quoteSetRef.current = messages.editor.typographyQuotes;
@@ -873,6 +882,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           limit: () => limitRef.current,
           taskCheckbox: (text) => taskCheckboxRef.current({ text }),
           detailsToggle: (text) => detailsToggleRef.current({ text }),
+          footnoteListName: () => footnotesRef.current,
+          footnoteBack: (number) => footnoteBackRef.current({ number }),
           quoteSet: () => quoteSetRef.current,
           slash: slashBridge,
           triggers: triggerBindings,
@@ -1357,6 +1368,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       closeSearch: () => closeSearch(false),
       sourceOpen: () => sourceTextRef.current !== null,
       jumpToc: (index) => tocJumpRef.current?.(index) ?? false,
+      disabled: () => disabledRef.current,
     };
 
     useImperativeHandle(ref, () => {

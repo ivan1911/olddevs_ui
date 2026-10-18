@@ -86,6 +86,30 @@ export interface InvisibleCharactersToolCommands {
 }
 
 /**
+ * Commands of the `footnotes` Tool (ADR-0076). Each returns a `boolean`: done or not.
+ */
+export interface FootnotesToolCommands {
+  /**
+   * Inserts a footnote reference at the end of the selection, makes its footnote in the list, and
+   * puts the caret into the footnote's text: the same as the "Footnote" item of the Slash menu. One
+   * edit, one undo. `false` in `readOnly`, in a disabled field and in Source mode, and where a
+   * reference cannot stand: in code, in a formula, in a footnote.
+   */
+  insert(): boolean;
+  /**
+   * Puts the caret at the end of footnote `number` (from 1) and scrolls to it, as a click on its
+   * reference does. Works in `readOnly`, where the Document does not change. `false` for a number
+   * that has no footnote, in a disabled field and in Source mode.
+   */
+  goToFootnote(number: number): boolean;
+  /**
+   * Puts the caret right after the reference of footnote `number` (from 1) and scrolls to it, as the
+   * footnote's number button does. The conditions are the same as for `goToFootnote`.
+   */
+  goToReference(number: number): boolean;
+}
+
+/**
  * Commands of a Tool by name from the `RichTextTools` map. A name outside the map gives `unknown`:
  * typing is optional, and the Tool works without it.
  */

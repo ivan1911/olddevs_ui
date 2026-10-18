@@ -2,8 +2,14 @@ import type { EditorQuoteSet } from "../../i18n/messages.js";
 import { devError } from "../../lib/dev-warn.js";
 import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
-import type { InvisibleCharactersToolState, SearchToolState, TocToolState } from "./toolState.js";
 import type {
+  FootnotesToolState,
+  InvisibleCharactersToolState,
+  SearchToolState,
+  TocToolState,
+} from "./toolState.js";
+import type {
+  FootnotesToolCommands,
   InvisibleCharactersToolCommands,
   SearchToolCommands,
   TocToolCommands,
@@ -255,6 +261,11 @@ export interface RichTextTools {
     state: InvisibleCharactersToolState;
     commands: InvisibleCharactersToolCommands;
   };
+  // State and commands only: footnotes have no options (ADR-0076).
+  footnotes: {
+    state: FootnotesToolState;
+    commands: FootnotesToolCommands;
+  };
 }
 
 /**
@@ -262,7 +273,11 @@ export interface RichTextTools {
  * names. A custom Tool added to the map does not appear here; it is configured by its
  * definition, not by name.
  */
-export type ConfigurableToolName = keyof RichTextTools & ToolName;
+export type ConfigurableToolName = {
+  [Name in keyof RichTextTools & ToolName]: RichTextTools[Name] extends { options: object }
+    ? Name
+    : never;
+}[keyof RichTextTools & ToolName];
 
 /** Options of a Tool from the map; no map entry or no `options` gives `never`. */
 type OptionsOf<Name extends ConfigurableToolName> = RichTextTools[Name] extends {

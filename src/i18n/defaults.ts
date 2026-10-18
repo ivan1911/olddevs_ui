@@ -537,6 +537,9 @@ export const DEFAULT_MESSAGES: UiMessages = {
     mathInsert: "Insert",
     mathApply: "Apply",
     mathRemove: "Remove formula",
+    footnote: "Footnote",
+    footnotes: "Footnotes",
+    footnoteBack: ({ number }) => `Back to text, footnote ${number}`,
     emoji: "Emoji",
     emojiGrid: "Choose an emoji",
     emojiCategory: {
