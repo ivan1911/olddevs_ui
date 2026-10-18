@@ -941,6 +941,14 @@ export interface UiMessages {
      * space before it.
      */
     imageWidthPreset: (vars: { percent: number }) => string;
+    /** Name of the group of three alignment toggles of an image: left, centre, right (ADR-0081). */
+    imageAlign: string;
+    /** Float the image to the left; the text of the next Blocks wraps around it. */
+    imageAlignLeft: string;
+    /** Put the image in the centre, on a line of its own. */
+    imageAlignCenter: string;
+    /** Float the image to the right; the text of the next Blocks wraps around it. */
+    imageAlignRight: string;
     /** Hint for an empty image caption. The caption is optional, and the string says so. */
     imageCaption: string;
     /** Placeholder in place of the uploading image, and the message of the live region. */
