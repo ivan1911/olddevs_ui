@@ -109,6 +109,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Insert a column left / right        | `InsertColumnLeftIcon`, `InsertColumnRightIcon` | `ColumnsIcon`                  |
 | Merge table cells                   | `MergeCellsIcon`                                | `TableIcon`                    |
 | Split a merged cell                 | `SplitCellIcon`                                 | `TableIcon`                    |
+| Table column wider / narrower       | `ColumnWiderIcon`, `ColumnNarrowerIcon`         | `ExpandIcon`                   |
 | First row is headings               | `HeaderRowIcon`                                 | `TableIcon`                    |
 | Emoji (symbol grid)                 | `EmojiIcon`                                     | —                              |
 | Vertical "more": the Block menu     | `MoreVerticalIcon`                              | `MoreIcon`, `DragHandleIcon`   |

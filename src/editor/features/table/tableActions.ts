@@ -3,12 +3,9 @@
 import { Fragment, type Node as PMNode } from "@tiptap/pm/model";
 import { TextSelection, type Command, type EditorState } from "@tiptap/pm/state";
 import {
-  addColumnAfter,
-  addColumnBefore,
   addRowAfter,
   addRowBefore,
   CellSelection,
-  deleteColumn,
   deleteRow,
   deleteTable,
   isInTable,
@@ -21,6 +18,17 @@ import type { Editor } from "@tiptap/react";
 import type { EditorAlignment } from "../../styles/palette.js";
 import { RICH_TEXT_SCHEMA } from "../../core/schema.js";
 import { cellAlignment } from "./tableCells.js";
+import {
+  columnShare,
+  equalColumns,
+  fitColumnsToContent,
+  insertColumnAfter,
+  insertColumnBefore,
+  removeColumn,
+  sharesOf,
+  stepColumnWidth,
+} from "./tableColumns.js";
+import { columnEdges, columnWidths } from "./tableMeasure.js";
 
 /**
  * The Table menu's actions, as data and ProseMirror commands, without React.
@@ -148,6 +156,26 @@ export function setColumnAlignment(alignment: EditorAlignment): Command {
     }
     return true;
   };
+}
+
+/* ── Column widths ───────────────────────────────────────────────────── */
+
+/**
+ * "Wider" and "Narrower": a step of 5% for the column under the caret (ADR-0080). A table without
+ * shares first takes the widths it has on screen; the measuring needs the view, so it is read only
+ * when the command runs, and the dry run of the menu never touches the layout.
+ */
+function stepColumn(direction: 1 | -1): Command {
+  return (state, dispatch, view) =>
+    stepColumnWidth(
+      direction,
+      view
+        ? (_state, rect) => {
+            const edges = columnEdges(view, rect.tableStart - 1);
+            return edges && columnWidths(edges);
+          }
+        : undefined
+    )(state, dispatch, view);
 }
 
 /* ── Sorting ─────────────────────────────────────────────────────────── */
@@ -330,9 +358,14 @@ export function tableCommands(locale: string) {
     addRowAfter: addRowAfter as Command,
     deleteRow: deleteRow as Command,
     headerRow: toggleHeader("row"),
-    addColumnBefore: addColumnBefore as Command,
-    addColumnAfter: addColumnAfter as Command,
-    deleteColumn: deleteColumn as Command,
+    // The column edits carry the column widths along (`tableColumns.ts`).
+    addColumnBefore: insertColumnBefore,
+    addColumnAfter: insertColumnAfter,
+    deleteColumn: removeColumn,
+    widerColumn: stepColumn(1),
+    narrowerColumn: stepColumn(-1),
+    equalColumns,
+    fitColumnsToContent,
     alignLeft: setColumnAlignment("left"),
     alignCenter: setColumnAlignment("center"),
     alignRight: setColumnAlignment("right"),
@@ -363,7 +396,7 @@ export function canRun(command: Command, state: EditorState): boolean {
  */
 export function runTableCommand(editor: Editor, command: Command): void {
   editor.commands.focus();
-  command(editor.state, editor.view.dispatch);
+  command(editor.state, editor.view.dispatch, editor.view);
 }
 
 /** Menu state for the current selection: empty outside a table. */
@@ -380,5 +413,9 @@ export function tableMenuState(state: EditorState, locale: string) {
     headerRow: hasHeaderRow(rect.table),
     merged: hasMergedCells(rect.table),
     alignment: columnAlignment(state),
+    /** The share of the column under the caret in percent, or `null` for a table sized by content. */
+    share: columnShare(state),
+    /** The table has widths of its own, so "Fit to content" has something to remove. */
+    sized: sharesOf(rect.table) !== null,
   };
 }

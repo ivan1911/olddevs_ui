@@ -8,6 +8,7 @@ import {
   type RichTextEditorHandle,
   type RichTextEditorProps,
 } from "../src/editor/index.js";
+import { tableCommands } from "../src/editor/features/table/tableActions.js";
 import { loadLazyBuiltins } from "./editor-lazy-builtins.js";
 
 // Lazy `codeBlock` and `table` (OLDSUI-111): `full` is ready in `render` after the chunks load.
@@ -256,11 +257,20 @@ test("a paste that grows the table past its widths drops them instead of sizing 
   expect(sharesIn(editor)).toBeNull();
 });
 
-test("sorting a table keeps its widths", () => {
-  const { editor } = renderEditor({
-    defaultValue: table(cols(40, 60), ["b", "2"], ["a", "1"]),
+test("sorting the rows keeps the widths", () => {
+  const { editor, handle } = renderEditor({
+    defaultValue: table(cols(40, 60), ["h1", "h2"], ["b", "2"], ["a", "1"]).replace(
+      /<tr><td><p>h1<\/p><\/td><td><p>h2<\/p><\/td><\/tr>/,
+      "<tr><th><p>h1</p></th><th><p>h2</p></th></tr>"
+    ),
   });
-  caretIn(editor, "a");
+  caretIn(editor, "b");
+
+  const sorted = tableCommands("en").sortAscending(editor.state, editor.view.dispatch);
+
+  expect(sorted).toBe(true);
+  expect(handle.getHTML()).toContain(cols(40, 60));
+  expect(handle.getHTML().indexOf("<p>a</p>")).toBeLessThan(handle.getHTML().indexOf("<p>b</p>"));
   expect(sharesIn(editor)).toEqual([40, 60]);
 });
 

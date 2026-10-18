@@ -163,8 +163,8 @@ export const fitColumnsToContent: Command = shareCommand((shares) => (shares ? n
  *
  * A table without shares takes the widths it has now first: `measured` are the pixel widths of its
  * columns from the browser (the pointer handle measures them the same way), and without them the
- * columns are taken as equal. The widths are measured only when the command runs (`view` is set), so
- * the dry run that decides whether the menu item is enabled never touches the layout.
+ * columns are taken as equal. The caller passes `measured` only when the command really runs, so the
+ * dry run that decides whether the menu item is enabled never touches the layout.
  */
 export function stepColumnWidth(
   direction: 1 | -1,
@@ -173,11 +173,11 @@ export function stepColumnWidth(
   return (state, dispatch) => {
     const rect = rectOf(state);
     if (!rect) return false;
-    const count = columnCount(rect.table);
-    const current = sharesOf(rect.table);
-    if (!current && !dispatch) return count >= 2 && equalShares(count) !== null;
     const pixels = measured?.(state, rect);
-    const base = current ?? (pixels ? snapShares(pixels) : null) ?? equalShares(count);
+    const base =
+      sharesOf(rect.table) ??
+      (pixels ? snapShares(pixels) : null) ??
+      equalShares(columnCount(rect.table));
     const next = base && nudgeShare(base, rect.left, direction);
     if (!next) return false;
     if (dispatch) dispatch(writeShares(state.tr, rect.tableStart - 1, next));

@@ -31,6 +31,8 @@ import {
   AlignLeftIcon,
   AlignRightIcon,
   ChevronDownIcon,
+  ColumnNarrowerIcon,
+  ColumnWiderIcon,
   DeleteIcon,
   HeaderRowIcon,
   InsertColumnLeftIcon,
@@ -47,6 +49,8 @@ import { cn } from "../../../lib/cn.js";
 import { MENU_PANEL_CLASS } from "../../../lib/menu.js";
 import { useLockableMenu } from "../../ui/lockableMenu.js";
 import { insertTableOfSize } from "../../core/insertItems.js";
+import type { UiMessages } from "../../../i18n/messages.js";
+import { columnShare } from "./tableColumns.js";
 import {
   lastTableSize,
   rememberTableSize,
@@ -162,7 +166,16 @@ export function TableMenuButton({
       return;
     }
     const commands = tableCommands(locale);
-    if (action in commands) runTableCommand(editor, commands[action as TableAction]);
+    if (!(action in commands)) return;
+    runTableCommand(editor, commands[action as TableAction]);
+    // A width change is invisible to a screen reader: the result is announced (ADR-0080, item 6).
+    const announcement = WIDTH_ANNOUNCEMENT[action];
+    if (announcement) {
+      editor.commands.showNotice({
+        tone: "status",
+        text: announcement(messages, editor),
+      });
+    }
   };
 
   /*
@@ -337,6 +350,24 @@ export function TableMenuButton({
               )}
             </MenuSection>
             <MenuSeparator />
+            {/* The section's label is the current width: it is read on entering the group, and
+                names what the two items change. */}
+            <MenuSection
+              id="width"
+              label={messages.tableColumnWidth({ percent: state?.share ?? null })}
+            >
+              {item(
+                "widerColumn",
+                messages.tableColumnWider,
+                <ColumnWiderIcon size={14} aria-hidden />
+              )}
+              {item(
+                "narrowerColumn",
+                messages.tableColumnNarrower,
+                <ColumnNarrowerIcon size={14} aria-hidden />
+              )}
+            </MenuSection>
+            <MenuSeparator />
             {/* A radio group: the alignment of the whole column is checked; when it is
                 mixed, none is. */}
             <MenuSection
@@ -381,6 +412,11 @@ export function TableMenuButton({
           </MenuSection>
         )}
         <MenuSeparator />
+        {/* The widths of the whole table (ADR-0080): the pointer handle and the Column submenu
+            set one column at a time. */}
+        {item("equalColumns", messages.tableEqualColumns, null)}
+        {item("fitColumnsToContent", messages.tableFitContent, null)}
+        <MenuSeparator />
         <MenuItem
           id="deleteTable"
           textValue={messages.tableDelete}
@@ -393,6 +429,23 @@ export function TableMenuButton({
     </MenuTrigger>
   );
 }
+
+/**
+ * What a width action announces, by action id. A step names the column's new width, read from the
+ * state after the edit (the menu's own `share` is from before it); the two whole-table actions name
+ * themselves.
+ */
+const WIDTH_ANNOUNCEMENT: Record<
+  string,
+  (messages: UiMessages["editor"], editor: Editor) => string
+> = {
+  widerColumn: (messages, editor) =>
+    messages.tableColumnWidth({ percent: columnShare(editor.state) }),
+  narrowerColumn: (messages, editor) =>
+    messages.tableColumnWidth({ percent: columnShare(editor.state) }),
+  equalColumns: (messages) => messages.tableEqualColumns,
+  fitColumnsToContent: (messages) => messages.tableFitContent,
+};
 
 const ALIGN_KEY = { left: "alignLeft", center: "alignCenter", right: "alignRight" } as const;
 
