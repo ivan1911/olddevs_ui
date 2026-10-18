@@ -53,6 +53,12 @@ export interface EditorExtensionOptions {
   /** The name of a footnote's number button in the Editor, from the catalog; read on every re-render of the footnote. */
   footnoteBack: (number: number) => string;
   /**
+   * The prefix of the footnote ids in the Editor's own DOM, one per instance (OLDSUI-314). The saved
+   * HTML keeps the plain `fn-<key>`: without the prefix a View of the same Document on the page would
+   * share them, and its anchors would lead into the Editor. Empty when absent (the Skeleton, the Schema).
+   */
+  footnoteIdPrefix?: string;
+  /**
    * Quotation marks for the message catalog language (`UiMessages.editor.typographyQuotes`) for the
    * `typography` Tool with the `quotes: "auto"` option. Read on every quote typed: a catalog
    * change does not recreate the engine.

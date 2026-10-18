@@ -618,6 +618,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     footnotesRef.current = messages.editor.footnotes;
     const footnoteBackRef = useRef(messages.editor.footnoteBack);
     footnoteBackRef.current = messages.editor.footnoteBack;
+    // The footnote ids of this instance's DOM (OLDSUI-314): `useId` is stable for the engine's life, and
+    // only letters, digits and hyphens are kept, so the id reads the same in a `#…` link and a selector.
+    const footnoteIdPrefix = `rte-${useId().replace(/[^A-Za-z0-9-]/g, "")}-`;
     // The `disabled` flag for the Tool commands that must work in `readOnly` but not in a disabled field.
     const disabledRef = useRef(disabled);
     disabledRef.current = disabled;
@@ -925,6 +928,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           detailsToggle: (text) => detailsToggleRef.current({ text }),
           footnoteListName: () => footnotesRef.current,
           footnoteBack: (number) => footnoteBackRef.current({ number }),
+          footnoteIdPrefix,
           quoteSet: () => quoteSetRef.current,
           locale: () => localeRef.current,
           slash: slashBridge,
@@ -949,7 +953,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             describeNotice: (event) => describeImageNotice(event, imageMessagesRef.current),
           },
         }),
-      [enabledTools, slashBridge, triggerBindings, ready]
+      [enabledTools, slashBridge, triggerBindings, ready, footnoteIdPrefix]
     );
     /*
       An error while assembling a custom Tool set (ADR-0058, items 1.5, 2.4) is a field error: the
