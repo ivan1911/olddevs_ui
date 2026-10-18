@@ -165,7 +165,8 @@ test("every tag and attribute the schema lists survives a round trip", () => {
     '<ul data-type="taskList"><li data-type="taskItem" data-checked="true"><p>done</p></li></ul>' +
     '<pre><code class="language-typescript">const a = 1;</code></pre>' +
     "<blockquote><p>q</p></blockquote><hr>" +
-    "<table><tbody>" +
+    // Column widths (OLDSUI-310): the shares of three columns, a colgroup before the body.
+    '<table><colgroup><col data-width="35"><col data-width="35"><col data-width="30"></colgroup><tbody>' +
     '<tr><th colspan="2" data-align="center"><p>h</p></th><th rowspan="2"><p>i</p></th></tr>' +
     '<tr><td colspan="2" data-align="right"><p>d</p></td></tr>' +
     '<tr><td rowspan="2"><p>e</p></td><td><p>f</p></td><td><p>g</p></td></tr>' +

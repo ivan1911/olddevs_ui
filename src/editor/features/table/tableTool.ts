@@ -2,7 +2,7 @@
 
 import { Node } from "@tiptap/core";
 import { tableItem } from "../../core/insertItems.js";
-import { cellAttributes } from "./tableCells.js";
+import { cellAttributes, tableShareAttributes, tableSpec } from "./tableCells.js";
 // Type only: a static import of the module would pull the chunk into the start bundle.
 import type * as TableChunkModule from "./tableChunk.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
@@ -40,8 +40,9 @@ const TABLE_SHAPE = [
     group: "block",
     content: "tableRow+",
     isolating: true,
+    addAttributes: tableShareAttributes,
     parseHTML: () => [{ tag: "table" }],
-    renderHTML: () => ["table", {}, ["tbody", 0]],
+    renderHTML: ({ node }) => tableSpec(node.attrs.shares),
   }),
   Node.create({
     name: "tableRow",

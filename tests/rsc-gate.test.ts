@@ -327,6 +327,14 @@ const SERVER_SAFE = [
       "RichTextView and the sanitizer call them.",
   },
   {
+    file: "editor/features/table/tableShares.ts",
+    why:
+      "The table column widths (OLDSUI-310, ADR-0080) as pure functions over numbers and an element " +
+      "passed in: the check of one share, the rounding of widths to steps of 5%, the reader of a " +
+      "colgroup. No React, no Tiptap, no global DOM. schema.ts sanitizes `col[data-width]` with the " +
+      "same check on the consumer's server, and the Skeleton shape of the table parses with it.",
+  },
+  {
     file: "editor/features/language/languageTag.ts",
     why:
       "The shape, the canonical case and the quote set of a BCP 47 language tag (OLDSUI-308, ADR-0078): " +

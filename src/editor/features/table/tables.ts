@@ -1,13 +1,14 @@
 "use client";
 
-import type { JSONContent } from "@tiptap/core";
+import type { CommandProps, JSONContent } from "@tiptap/core";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import { GapCursor } from "@tiptap/pm/gapcursor";
 import { Selection, TextSelection, type EditorState, type Transaction } from "@tiptap/pm/state";
 import { addRow, fixTables, isInTable, selectedRect, TableMap } from "@tiptap/pm/tables";
 import type { ResolvedPos } from "@tiptap/pm/model";
 import type { EditorView } from "@tiptap/pm/view";
-import { cellAlignment, cellAttributes } from "./tableCells.js";
+import { cellAlignment, cellAttributes, tableShareAttributes, tableSpec } from "./tableCells.js";
+import { columnSharesGuard, withColumnShares } from "./tableColumns.js";
 
 /**
  * The Editor's table: Tiptap extensions trimmed down to the kit's Schema.
@@ -21,8 +22,9 @@ import { cellAlignment, cellAttributes } from "./tableCells.js";
  * - `style="text-align"` on a cell, which is alignment that comes from Markdown
  *   (`:--:`), and `class="tableWrapper"` on the node view's wrapper.
  *
- * All of this is turned off here: column widths are not built in v1. The output
- * is `table > tbody > tr > th|td`, and a cell has only the Schema's three attributes.
+ * All of this is turned off here. The output is `table > tbody > tr > th|td`, and a cell has only
+ * the Schema's three attributes. Column widths are the one thing the table writes beyond that: an
+ * optional `colgroup` of `col[data-width]` before `tbody`, shares in 5% steps (see COLUMN WIDTHS).
  *
  * MERGING: `colspan` and `rowspan`, a decision of the owner (the Table menu items
  * "Merge" and "Split"). The first slice did not read them: there was no way to
@@ -40,6 +42,13 @@ import { cellAlignment, cellAttributes } from "./tableCells.js";
  *
  * `colwidth` STAYS ON THE NODE, but is neither written nor read. The table engine
  * (`prosemirror-tables`) touches it on every edit and crashes without it.
+ *
+ * COLUMN WIDTHS (ADR-0080): the table node has a `shares` attribute, the shares of the table's width
+ * in percent, or `null` for a table sized by its content. It is written as `<colgroup><col
+ * data-width="35">…</colgroup>` and read from one (`tableShares.ts`). The engine's pixels are not the
+ * source: they are in the cells and stay unused. The shares live on the table, so merging, splitting
+ * and sorting cannot disturb them; inserting and deleting a column carry them along, and anything
+ * else that changes the column count drops them (`tableColumns.ts`).
  *
  * NODE VIEW IS OFF (`View: null`). The stock node view wraps the table in a
  * `div.tableWrapper` with a `colgroup` and sets `style` directly on the DOM.
@@ -173,6 +182,35 @@ export function addRowBelow(state: EditorState, dispatch?: (tr: Transaction) => 
 }
 
 export const RichTable = Table.extend({
+  addAttributes() {
+    return { ...this.parent?.(), ...tableShareAttributes() };
+  },
+  /*
+    The engine commands that add and remove columns carry the shares along. Anything that calls
+    them (the menu, a screen through `editor.commands`) gets the same result; the chained form works
+    too, because the wrapped `dispatch` edits the transaction the command built.
+  */
+  addCommands() {
+    const parent =
+      this.parent?.() ?? ({} as NonNullable<ReturnType<NonNullable<typeof this.parent>>>);
+    const carry =
+      (name: "addColumnBefore" | "addColumnAfter" | "deleteColumn") =>
+      () =>
+      (props: CommandProps) =>
+        parent[name]!()({
+          ...props,
+          dispatch: withColumnShares(name, props.state, props.dispatch),
+        });
+    return {
+      ...parent,
+      addColumnBefore: carry("addColumnBefore"),
+      addColumnAfter: carry("addColumnAfter"),
+      deleteColumn: carry("deleteColumn"),
+    };
+  },
+  addProseMirrorPlugins() {
+    return [...(this.parent?.() ?? []), columnSharesGuard()];
+  },
   addKeyboardShortcuts() {
     return {
       ...this.parent?.(),
@@ -182,7 +220,7 @@ export const RichTable = Table.extend({
         this.editor.isEditable && addRowBelow(this.editor.state, this.editor.view.dispatch),
     };
   },
-  renderHTML: () => ["table", {}, ["tbody", 0]],
+  renderHTML: ({ node }) => tableSpec(node.attrs.shares),
   /*
     The stock export starts and ends with a line break, and the Markdown manager
     separates Blocks with a blank line on its own: around the table that came to
