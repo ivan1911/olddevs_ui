@@ -3728,7 +3728,7 @@ export const VideoRussian: Story = {
   from the showcase's own, as for the sample image: it may be published in a subdirectory.
 */
 const PASTE_SAMPLES = [
-  { label: "Word for Mac", file: "word-mac-chrome-whole" },
+  { label: "Word for Mac", file: "word-mac-chrome-lists-numbered" },
   { label: "Word on Windows", file: "word-win-chrome-whole" },
   { label: "Word for the web", file: "word-web-chrome-whole" },
   { label: "Excel", file: "excel-mac-chrome-range" },
