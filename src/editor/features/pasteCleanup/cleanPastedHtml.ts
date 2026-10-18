@@ -5,6 +5,7 @@ import { appleConvertedSpaces } from "./appleConvertedSpaces.js";
 import { backgroundMarkers } from "./backgroundMarkers.js";
 import { excelCellStyles } from "./excelCellStyles.js";
 import { horizontalRules } from "./horizontalRules.js";
+import { imageAlignment } from "./imageAlignment.js";
 import { officeJunk } from "./officeJunk.js";
 import { detectPasteSources, type PasteSources } from "./pasteSources.js";
 import { sharePointStructure } from "./sharePointStructure.js";
@@ -49,6 +50,8 @@ export const PASTE_CLEANUP_STEPS: readonly PasteCleanupStep[] = [
   sharePointStructure,
   horizontalRules,
   officeJunk,
+  // After the Office steps: it reads the picture's own attributes, which they leave alone.
+  imageAlignment,
 ];
 
 /**

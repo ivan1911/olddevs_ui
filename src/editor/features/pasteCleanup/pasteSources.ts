@@ -28,6 +28,11 @@ export interface PasteSources {
    * shaped after what public editors quote from real copies.
    */
   sharePoint: boolean;
+  /**
+   * A picture (or a figure) that names a side or a wrap: `float`, `align` or Word's `mso-wrap-style`.
+   * Unlike the signs above this is not an application: a web page sets a float on a picture as well.
+   */
+  imageAlignment: boolean;
 }
 
 /*
@@ -51,6 +56,16 @@ const SHARE_POINT = new RegExp(
   `${TAG}(?:\\bdata-ccp-props=|\\bclass=["']?(?:[^"'<>]*\\s)?(?:OutlineElement|ListContainerWrapper|NormalTextRun)(?=[\\s"'>]))`
 );
 
+/*
+  The sign of an aligned picture: the tag is `img` or `figure`, and its attributes name a side. `align`
+  must stand alone as an attribute (a space or a quote before it), so the Editor's own `data-align` is
+  not taken for it: the Editor's markup needs no cleanup.
+*/
+const IMAGE_ALIGNMENT = new RegExp(
+  `<(?:img|figure)\\b[^<>]*(?:[\\s"'/]align\\s*=|\\bfloat\\s*:|\\bmso-wrap-style\\s*:)`,
+  "i"
+);
+
 /** The sources of a clipboard's HTML, read from the string: no parse is needed to tell them apart. */
 export function detectPasteSources(html: string): PasteSources {
   return {
@@ -59,5 +74,6 @@ export function detectPasteSources(html: string): PasteSources {
     googleDocs: GOOGLE_DOCS.test(html),
     googleSheets: GOOGLE_SHEETS.test(html),
     sharePoint: SHARE_POINT.test(html),
+    imageAlignment: IMAGE_ALIGNMENT.test(html),
   };
 }
