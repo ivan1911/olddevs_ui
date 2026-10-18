@@ -489,6 +489,10 @@ const SOURCE_FIELD_CLASS =
  * cleaned by the Schema (`skeleton.ts`), and only in the browser after mount. On the server the
  * Skeleton is just the frame and the Toolbar's place.
  */
+/** Editor instances on the page, for the footnote ids of each one's DOM. */
+let footnoteInstances = 0;
+const nextFootnoteIdPrefix = () => `rte${++footnoteInstances}-`;
+
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
   function RichTextEditor(
     {
@@ -618,6 +622,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     footnotesRef.current = messages.editor.footnotes;
     const footnoteBackRef = useRef(messages.editor.footnoteBack);
     footnoteBackRef.current = messages.editor.footnoteBack;
+    // The footnote ids of this instance's DOM (OLDSUI-314). Not `useId`: it is unique only within one
+    // React root, and two roots on a page would meet again. The ids live only in the engine's client DOM,
+    // never in the server markup, so a page-wide counter is safe for hydration.
+    const [footnoteIdPrefix] = useState(nextFootnoteIdPrefix);
     // The `disabled` flag for the Tool commands that must work in `readOnly` but not in a disabled field.
     const disabledRef = useRef(disabled);
     disabledRef.current = disabled;
@@ -925,6 +933,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           detailsToggle: (text) => detailsToggleRef.current({ text }),
           footnoteListName: () => footnotesRef.current,
           footnoteBack: (number) => footnoteBackRef.current({ number }),
+          footnoteIdPrefix,
           quoteSet: () => quoteSetRef.current,
           locale: () => localeRef.current,
           slash: slashBridge,
@@ -949,7 +958,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             describeNotice: (event) => describeImageNotice(event, imageMessagesRef.current),
           },
         }),
-      [enabledTools, slashBridge, triggerBindings, ready]
+      [enabledTools, slashBridge, triggerBindings, ready, footnoteIdPrefix]
     );
     /*
       An error while assembling a custom Tool set (ADR-0058, items 1.5, 2.4) is a field error: the

@@ -19,10 +19,10 @@ import type { FootnoteLabels } from "./footnoteShape.js";
  * The nodes, the keys and the list's upkeep (ADR-0076). The Slash menu is the only `run` that matters
  * to the engine: `insertFootnote` is a command, so `chain.insertFootnote()` is one transaction.
  */
-export function footnoteExtensions(labels: FootnoteLabels): Extensions {
+export function footnoteExtensions(labels: FootnoteLabels, idPrefix: string): Extensions {
   return [
-    FootnoteReference,
-    Footnote.configure({ labels }),
+    FootnoteReference.configure({ idPrefix }),
+    Footnote.configure({ labels, idPrefix }),
     FootnoteList.configure({ labels }),
     FootnoteBehavior,
   ];

@@ -8,8 +8,13 @@ import {
   renderDefinition,
   renderReference,
 } from "./footnoteMarkdown.js";
-import { footnoteId, isFootnoteKey } from "./footnoteNames.js";
-import { FootnoteListShape, FootnoteReferenceShape, FootnoteShape } from "./footnoteShape.js";
+import { FOOTNOTE_REF_ATTRIBUTE, footnoteId, isFootnoteKey, referenceId } from "./footnoteNames.js";
+import {
+  FootnoteListShape,
+  FootnoteReferenceShape,
+  FootnoteShape,
+  type FootnoteLabels,
+} from "./footnoteShape.js";
 
 /*
   The footnote nodes of the live Document (lazy chunk, `footnotesChunk.ts`): the Schema half is
@@ -17,13 +22,52 @@ import { FootnoteListShape, FootnoteReferenceShape, FootnoteShape } from "./foot
   draws), and here are added what only the engine needs: the Markdown rules and the footnote's node
   view. Markdown stays out of the shape because its tokenizers weigh something and nothing but a
   live Document reads or writes Markdown.
+
+  THE IDS IN THE EDITOR'S DOM carry the instance's prefix (`idPrefix`, OLDSUI-314), the saved HTML does
+  not: the node views draw the anchors, `renderHTML` writes them. A View of the same Document on the
+  page keeps the plain `fn-<key>`, so its links land on itself and a link from outside still works. The
+  Editor's own jumps do not need the ids at all (`footnoteBehavior.ts` follows the click by the node).
 */
 
 /** The reference: a superscript number that links to its footnote. */
-export const FootnoteReference = FootnoteReferenceShape.extend({
+export const FootnoteReference = FootnoteReferenceShape.extend<{ idPrefix: string }>({
+  addOptions: () => ({ idPrefix: "" }),
   markdownTokenizer: referenceTokenizer,
   parseMarkdown: (token) => parseReference(token),
   renderMarkdown: (node) => renderReference(node),
+  // The markup of `renderHTML`, with the ids of this instance. A key that is not valid has no anchor there either.
+  addNodeView() {
+    const { idPrefix } = this.options;
+    return ({ node }) => {
+      const dom = document.createElement("sup");
+      const link = document.createElement("a");
+      link.setAttribute("role", "doc-noteref");
+      // Updated in place: a redraw next to the reference does not replace its anchor.
+      const show = (current: typeof node) => {
+        const key = String(current.attrs.key);
+        const number = String(current.attrs.number);
+        if (!isFootnoteKey(key)) {
+          dom.removeAttribute(FOOTNOTE_REF_ATTRIBUTE);
+          dom.replaceChildren(number);
+          return;
+        }
+        link.setAttribute("href", `#${idPrefix}${footnoteId(key)}`);
+        link.id = idPrefix + referenceId(key);
+        if (link.textContent !== number) link.textContent = number;
+        dom.setAttribute(FOOTNOTE_REF_ATTRIBUTE, key);
+        if (dom.firstChild !== link || dom.childNodes.length !== 1) dom.replaceChildren(link);
+      };
+      show(node);
+      return {
+        dom,
+        update(updated) {
+          if (updated.type !== node.type) return false;
+          show(updated);
+          return true;
+        },
+      };
+    };
+  },
 });
 
 /**
@@ -31,10 +75,13 @@ export const FootnoteReference = FootnoteReferenceShape.extend({
  * to the reference (`goToReference`), the text is the content. In the saved HTML the footnote is a
  * list item with its paragraph and the "↩" link.
  */
-export const Footnote = FootnoteShape.extend({
+export const Footnote = FootnoteShape.extend<{ labels: FootnoteLabels; idPrefix: string }>({
+  addOptions() {
+    return { ...this.parent!(), idPrefix: "" };
+  },
   renderMarkdown: (node, helpers) => renderDefinition(node, helpers),
   addNodeView() {
-    const { labels } = this.options;
+    const { labels, idPrefix } = this.options;
     return ({ node, editor, getPos }) => {
       const dom = document.createElement("li");
       const back = document.createElement("button");
@@ -47,7 +94,7 @@ export const Footnote = FootnoteShape.extend({
       const show = (current: typeof node) => {
         const key = String(current.attrs.key);
         const number = Number(current.attrs.number);
-        if (isFootnoteKey(key)) dom.id = footnoteId(key);
+        if (isFootnoteKey(key)) dom.id = idPrefix + footnoteId(key);
         else dom.removeAttribute("id");
         back.textContent = String(number);
         back.setAttribute("aria-label", labels.back(number));
