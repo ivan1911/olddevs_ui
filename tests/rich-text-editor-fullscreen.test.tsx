@@ -632,3 +632,128 @@ test("the Insert table dialog opened from the layer is above it", async () => {
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Insert table" })).toBeNull());
   expect(layer()).not.toBeNull();
 });
+
+// --- Focus stays in the layer -----------------------------------------------------------------
+
+/** Presses Tab (or Shift+Tab) `times` times and returns the element that held focus after each press. */
+async function tabPath(user: ReturnType<typeof userEvent.setup>, times: number, back = false) {
+  const path: (Element | null)[] = [];
+  for (let i = 0; i < times; i += 1) {
+    await user.tab({ shift: back });
+    path.push(document.activeElement);
+  }
+  return path;
+}
+
+test.each([
+  ["page", (child: React.ReactNode) => child],
+  [
+    "Dialog",
+    (child: React.ReactNode) => (
+      <Dialog open onClose={() => {}} title="Edit">
+        {child}
+      </Dialog>
+    ),
+  ],
+  [
+    "Drawer",
+    (child: React.ReactNode) => (
+      <Drawer open onClose={() => {}} title="Edit">
+        {child}
+      </Drawer>
+    ),
+  ],
+] as const)(
+  "in a %s: Tab and Shift+Tab loop inside the layer and never reach the page",
+  async (_, wrap) => {
+    const user = userEvent.setup();
+    const ref = createRef<RichTextEditorHandle>();
+    render(
+      wrap(<RichTextEditor ref={ref} aria-label="Body" tools={[...TOOLS]} defaultValue={THREE} />)
+    );
+    act(() => void ref.current!.tool("fullscreen")!.open());
+    const root = layer()!;
+    await waitFor(() => expect(root.contains(document.activeElement)).toBe(true));
+
+    // Far more presses than the layer has stops: the path has to come round to where it started.
+    const forward = await tabPath(user, 60);
+    expect(forward.every((element) => element && root.contains(element))).toBe(true);
+    const first = forward[0]!;
+    expect(forward.slice(1).includes(first)).toBe(true);
+
+    const backward = await tabPath(user, 60, true);
+    expect(backward.every((element) => element && root.contains(element))).toBe(true);
+    expect(backward.slice(1).includes(backward[0]!)).toBe(true);
+  }
+);
+
+test("Tab from the last stop lands on the first one, and Shift+Tab from the first on the last", async () => {
+  const user = userEvent.setup();
+  const { handle } = renderEditor({ defaultValue: THREE });
+  open(handle);
+  const root = layer()!;
+  await waitFor(() => expect(root.contains(document.activeElement)).toBe(true));
+
+  // Walk to the wrap: the first element seen again is the first stop, the one before it the last.
+  const path = await tabPath(user, 60);
+  const seenAgain = path.findIndex((element, index) => path.indexOf(element) < index);
+  expect(seenAgain).toBeGreaterThan(0);
+  const first = path[path.indexOf(path[seenAgain])]!;
+  const last = path[seenAgain - 1]!;
+
+  (first as HTMLElement).focus();
+  await user.tab({ shift: true });
+  expect(document.activeElement).toBe(last);
+  await user.tab();
+  expect(document.activeElement).toBe(first);
+});
+
+test("the page behind the layer is inert while it is open, and as it was after", async () => {
+  const { handle, container } = renderEditor({ defaultValue: THREE });
+  const toast = document.createElement("div");
+  toast.setAttribute("role", "status");
+  const stale = document.createElement("div");
+  stale.setAttribute("inert", "");
+  document.body.append(toast, stale);
+
+  open(handle);
+  expect(container.hasAttribute("inert")).toBe(true);
+  expect(layer()!.closest("[inert]")).toBeNull();
+  // A live region stays reachable and audible.
+  expect(toast.hasAttribute("inert")).toBe(false);
+
+  close(handle);
+  await waitFor(() => expect(layer()).toBeNull());
+  expect(container.hasAttribute("inert")).toBe(false);
+  // What was inert before is not ours to restore.
+  expect(stale.hasAttribute("inert")).toBe(true);
+  toast.remove();
+  stale.remove();
+});
+
+test("focus that lands in the page behind the layer is sent back into it", async () => {
+  const { handle } = renderEditor({ defaultValue: THREE });
+  open(handle);
+  const root = layer()!;
+  const bold = within(root).getByRole("button", { name: "Bold" });
+  act(() => bold.focus());
+  expect(document.activeElement).toBe(bold);
+
+  // An engine without `inert`, or a script: the page's own control takes focus.
+  act(() => screen.getByRole("button", { name: "Outside", hidden: true }).focus());
+
+  expect(root.contains(document.activeElement)).toBe(true);
+  expect(document.activeElement).toBe(bold);
+});
+
+test("Tab from <body> (after a click on a bare patch of the layer) stays in the layer", async () => {
+  const user = userEvent.setup();
+  const { handle } = renderEditor({ defaultValue: THREE });
+  open(handle);
+  const root = layer()!;
+  act(() => (document.activeElement as HTMLElement | null)?.blur());
+  expect(document.activeElement).toBe(document.body);
+
+  const path = await tabPath(user, 3);
+  expect(path.every((element) => element && root.contains(element))).toBe(true);
+});

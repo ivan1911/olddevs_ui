@@ -47,6 +47,11 @@ export interface FullscreenLayerProps {
  * stack of ADR-0041, and `OVERLAY_LAYER.alert` puts it above the host window (`modal`) and below the
  * popovers (`popover`), which the Editor opens from inside it.
  *
+ * Focus: Radix's dialog content wraps its children in a looping focus scope, so `Tab` and `Shift+Tab` wrap
+ * at the ends of the layer. The page behind is made `inert` by `hideOthers`, which also sends back focus
+ * that gets there some other way (from `<body>`, by script). The scope is not "trapped": a trapped one
+ * would need the focus-scope package as a direct dependency of the kit, and the loop plus `inert` do the job.
+ *
  * `Esc` goes through `blockSelection` first: that Tool takes the first key of every press in the text
  * through a capture listener on the window, before Radix's listener on the document.
  */
@@ -61,8 +66,8 @@ export function FullscreenLayer({
   const ref = useRef<HTMLDivElement | null>(null);
   const restoreRef = useRef<(() => void) | null>(null);
   /*
-    The layer says `aria-modal`, so the page behind it must be hidden from assistive technology for
-    real (`hide-others.ts`). The node arrives after the portal has mounted, hence the callback ref; the
+    The layer says `aria-modal`, so the page behind it must be hidden from assistive technology and
+    from the keyboard for real (`hide-others.ts`). The node arrives after the portal has mounted, hence the callback ref; the
     background comes back when the exit starts, not when the fade ends: the field is already leaving.
   */
   const attach = useCallback((node: HTMLDivElement | null) => {
