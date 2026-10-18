@@ -476,7 +476,7 @@ A name enters the `Tool` type together with the Tool itself, not earlier: wideni
 
 ### Options of a built-in Tool: `tool()`
 
-Nine built-in Tools have options: `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters`, `focus`, `language` and `date`. You set them with the `tool(name, options)` helper, which returns a Configured Tool: an entry for `tools` that sits next to the names and the descriptions of custom Tools (ADR-0069).
+Eleven built-in Tools have options: `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters`, `focus`, `language` and `date`. You set them with the `tool(name, options)` helper, which returns a Configured Tool: an entry for `tools` that sits next to the names and the descriptions of custom Tools (ADR-0069).
 
 ```tsx
 import { RICH_TEXT_PRESETS, RichTextEditor, tool } from "@olddevs/ui/editor";

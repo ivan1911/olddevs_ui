@@ -263,8 +263,8 @@ export interface VideoToolOptions {
 /**
  * Editor Tool types by name: what the screen sets when configuring (`options`), what it
  * reads (`state`) and what it calls (`commands`). An extensible interface, like `Storage`
- * and `Commands` in Tiptap: the kit declares `search`, `toc`, `details`, `mathematics`,
- * `youtube`, `twitch`, `typography`, `invisibleCharacters`, `language` and `date` in it, and the consumer
+ * and `Commands` in Tiptap: the kit declares its built-in Tools that have options, state or
+ * commands in it (from `search` and `toc` to `footnotes` and `fullscreen`), and the consumer
  * adds its own Tools through declaration merging:
  *
  * ```ts
@@ -444,7 +444,8 @@ export function mergeOptions(base: object, given: object): object {
  * `console.error`; the author of a custom Tool checks that Tool's own options.
  *
  * Only built-in Tools with options can be configured by name: `search`, `toc`, `details`,
- * `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters`, `language` and `date`. The function
+ * `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters`, `focus`, `language`
+ * and `date`. The function
  * is server-safe.
  */
 export function tool<Name extends ConfigurableToolName>(
