@@ -347,3 +347,78 @@ test("a selected Block has the single-Block menu plus Wrap in, and no Select", a
   ]);
   await waitFor(() => expect(editor.state.selection).toBeInstanceOf(BlockSelection));
 });
+
+// --- Block selection through the handle ----------------------------------------------------------
+
+/** A `keydown` on the Document; `keyCode` is set for ProseMirror. */
+function press(editor: Editor, key: string, init: KeyboardEventInit & { keyCode?: number } = {}) {
+  const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
+  Object.defineProperty(event, "keyCode", {
+    value: init.keyCode ?? key.toUpperCase().charCodeAt(0),
+  });
+  act(() => void editor.view.dom.dispatchEvent(event));
+  return event;
+}
+
+test("Mod+/ opens the menu over the selected Blocks, and Wrap in selects the new container", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectAcross(editor, "One", "One");
+  press(editor, "Escape", { keyCode: 27 });
+  press(editor, "ArrowDown", { shiftKey: true, keyCode: 40 });
+  expect((editor.state.selection as BlockSelection).count).toBe(2);
+
+  press(editor, "/", { ctrlKey: true, code: "Slash", keyCode: 191 });
+  const menu = await screen.findByRole("menu", { name: HANDLE });
+  await user.click(within(menu).getByRole("menuitem", { name: "Wrap in" }));
+  const submenu = await screen.findByRole("menu", { name: "Wrap in" });
+  await user.click(within(submenu).getByRole("menuitem", { name: "Wrapper" }));
+
+  expect(editor.getHTML()).toBe('<div data-block="wrapper"><p>One</p><p>Two</p></div><p>Three</p>');
+  // The group became one Block, and it stays selected.
+  const block = editor.state.selection as BlockSelection;
+  expect(block).toBeInstanceOf(BlockSelection);
+  expect(block.count).toBe(1);
+});
+
+test("Move up moves the selected group above its neighbour and keeps it selected", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectAcross(editor, "Two", "Two");
+  press(editor, "Escape", { keyCode: 27 });
+  press(editor, "ArrowDown", { shiftKey: true, keyCode: 40 });
+
+  await choose(user, "Move up");
+
+  expect(editor.getHTML()).toBe("<p>Two</p><p>Three</p><p>One</p>");
+  const block = editor.state.selection as BlockSelection;
+  expect(block.count).toBe(2);
+  expect(editor.state.doc.textBetween(block.from, block.to, "|")).toBe("Two|Three");
+});
+
+test("Format over a selected list item turns that item only: the list splits around it", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({
+    defaultValue: "<ul><li><p>a</p></li><li><p>b</p></li><li><p>c</p></li></ul>",
+  });
+  selectAcross(editor, "b", "b");
+  press(editor, "Escape", { keyCode: 27 });
+
+  await choose(user, "Format", "Text");
+
+  expect(editor.getHTML()).toBe("<ul><li><p>a</p></li></ul><p>b</p><ul><li><p>c</p></li></ul>");
+});
+
+test("Delete over a whole list's items removes the list, not an empty item", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({
+    defaultValue: "<p>Before</p><ul><li><p>a</p></li><li><p>b</p></li></ul>",
+  });
+  selectAcross(editor, "a", "a");
+  press(editor, "Escape", { keyCode: 27 });
+  press(editor, "ArrowDown", { shiftKey: true, keyCode: 40 });
+
+  await choose(user, "Delete");
+
+  expect(editor.getHTML()).toBe("<p>Before</p>");
+});

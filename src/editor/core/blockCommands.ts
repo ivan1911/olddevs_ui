@@ -17,7 +17,7 @@ export { isBlockContainer };
 
 /**
  * Commands over Blocks: duplicate, move, select the text of a Block, shift a list item, clear
- * styles — as in Notion and Google Docs.
+ * styles — as in Notion and Google Docs. Which Blocks a command takes is `blockUnit.ts`.
  *
  * It has no markup of its own, so the extension is always on, like `ToolbarFocus`; the Tool is
  * needed only for clearing styles — its shortcut lives and dies together with the
@@ -40,8 +40,9 @@ const LIST_ITEMS: ReadonlySet<string> = new Set(["listItem", "taskItem"]);
  *
  * - `selection` — keyboard shortcuts: the Blocks under the selection, and in a list — the item;
  *   duplicating and moving an item stay within its list.
- * - `handle` — the Block handle: the whole container Block (the whole list, the whole table);
- *   exactly one — the one the handle stands on (`handleBlock`).
+ * - `handle` — the Block handle: the whole container Block (the whole list, the whole table), or
+ *   the row of Blocks the handle stands on (`handleBlocks`): the Blocks a text selection touches, or
+ *   the units of a Block selection.
  */
 export type BlockScope = "selection" | "handle";
 

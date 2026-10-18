@@ -759,3 +759,35 @@ test("selectCurrent is false in Source mode", async () => {
 
   expect(ref.current!.tool("blockSelection")!.selectCurrent()).toBe(false);
 });
+
+// --- No trace in the Document ------------------------------------------------------------------
+
+test("the mode leaves no trace in the HTML, Markdown or JSON, and does not call onChange", () => {
+  const onChange = vi.fn();
+  const { ref, editor } = renderEditor({ defaultValue: THREE, onChange });
+  const before = {
+    html: ref.current!.getHTML(),
+    markdown: ref.current!.getMarkdown(),
+    json: ref.current!.getJSON(),
+  };
+  caretIn(editor, "Two");
+
+  press(editor, "Escape");
+  press(editor, "ArrowDown", { shift: true });
+
+  expect(selectedCount(editor)).toBe(2);
+  expect(ref.current!.getHTML()).toBe(before.html);
+  expect(ref.current!.getMarkdown()).toBe(before.markdown);
+  expect(ref.current!.getJSON()).toEqual(before.json);
+  expect(onChange).not.toHaveBeenCalled();
+});
+
+test("a Tool list without blockSelection has no mode: Esc does nothing", () => {
+  const { editor } = renderEditor({ tools: ["bold", "italic"], defaultValue: THREE });
+  caretIn(editor, "Two");
+
+  press(editor, "Escape");
+
+  expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
+  expect(selection(editor).empty).toBe(true);
+});
