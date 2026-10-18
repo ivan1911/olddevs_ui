@@ -1,5 +1,6 @@
 "use client";
 
+import { PasteRule } from "@tiptap/core";
 import { Link as TiptapLink, type LinkOptions } from "@tiptap/extension-link";
 import { isAllowedLinkHref } from "../../core/schema.js";
 
@@ -84,6 +85,40 @@ export const RichLink = TiptapLink.extend<LinkOptions>({
   renderHTML({ HTMLAttributes }) {
     const href = typeof HTMLAttributes.href === "string" ? HTMLAttributes.href : "";
     return ["a", isAllowedLinkHref(href) ? { href, rel: LINK_REL } : { rel: LINK_REL }, 0];
+  },
+
+  /*
+    Tiptap's paste rule links every address-like stretch of pasted text, and two things go wrong
+    (OLDSUI-304):
+
+    - TEXT THAT IS ALREADY A LINK. A copy from Word or a web page often shows a short form of the
+      address: `<a href="https://example.com/docs?page=1#top">example.com/docs</a>`. The rule found
+      `example.com/docs` in the text and set a new Mark over the existing one, so the link lost its
+      query and anchor, or its whole address when the text named another page. A stretch that
+      already carries a link is the source's link: the rule leaves it alone.
+    - THE SCHEME. The rule takes the address from linkify, which writes `http://` for an address
+      without a scheme, while the kit's `defaultProtocol` (and the autolink while typing) gives
+      `https://`. A bare `example.org` in a paste gets the same `https://` as one typed by hand.
+  */
+  addPasteRules() {
+    const { defaultProtocol } = this.options;
+    return (this.parent?.() ?? []).map(
+      (rule) =>
+        new PasteRule({
+          find: rule.find,
+          handler: (props) => {
+            const { state, range, match } = props;
+            // Nothing to do, but not `null`: Tiptap drops the whole paste transaction when any
+            // handler returns `null`, and the other addresses of the same paste would stay plain text.
+            if (state.doc.rangeHasMark(range.from, range.to, this.type)) return undefined;
+            const text = match[0];
+            if (match.data?.href === `http://${text}` && !SCHEME.test(text)) {
+              match.data = { ...match.data, href: `${defaultProtocol}://${text}` };
+            }
+            return rule.handler(props);
+          },
+        })
+    );
   },
 
   parseMarkdown: (token, helpers) => {
