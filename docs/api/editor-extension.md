@@ -147,7 +147,7 @@ The Extensions still follow the Tiptap major (ADR-0058, item 12.4). The three ne
 
 ### The `RichTextTools` map and declaration merging
 
-The types of all three parts are collected in the `RichTextTools` interface, like `Storage` and `Commands` in Tiptap: the key is the Tool's name, the value is `{ options; state; commands }`. The kit declares `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography` and `invisibleCharacters` in it (`details` and `typography` have only `options`), and the consumer adds a custom Tool:
+The types of all three parts are collected in the `RichTextTools` interface, like `Storage` and `Commands` in Tiptap: the key is the Tool's name, the value is `{ options; state; commands }`. The kit declares `search`, `toc`, `details`, `mathematics`, `youtube`, `twitch`, `typography`, `invisibleCharacters` and `blockSelection` in it (`details` and `typography` have only `options`, `blockSelection` has only `state` and `commands`), and the consumer adds a custom Tool:
 
 ```ts
 declare module "@olddevs/ui/editor" {
