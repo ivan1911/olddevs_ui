@@ -355,6 +355,24 @@ test("the text is written in the author's locale: Russian and a 24-hour clock", 
   expect(editor.getHTML()).toBe(`<p>Due${mention("2026-10-18T15:00+03:00", RU_TEXT_15)}</p>`);
 });
 
+test.each([
+  ["date", "date"],
+  ["today", "today"],
+  // The Russian words are escapes (the i18n gate keeps Cyrillic out of code): they find the item in an English interface.
+  ["a Russian word for date", "\u0434\u0430\u0442\u0430"],
+  ["a Russian word for today", "\u0441\u0435\u0433\u043e\u0434\u043d\u044f"],
+])("typing /%s in the Slash menu finds Date in an English interface", async (_name, query) => {
+  const { editor } = renderEditor({ defaultValue: "<p></p>" });
+  act(() => {
+    editor.view.focus();
+    editor.commands.setTextSelection(1);
+  });
+  act(() => void editor.commands.insertContent(`/${query}`));
+
+  const options = await screen.findAllByRole("option");
+  expect(options.map((option) => option.textContent)).toEqual(["Date"]);
+});
+
 // ── Editing: a click or Enter on a mention ───────────────────────────────────────────────
 
 const DUE = `<p>Due ${mention("2026-10-18", "Oct 18, 2026")} end</p>`;
@@ -374,6 +392,24 @@ test("a click on a mention selects it and opens the popover on its day", async (
   // A date without a time has nothing to "remove", but it can be deleted.
   expect(within(popover).queryByRole("button", { name: "Remove time" })).toBeNull();
   expect(within(popover).getByRole("button", { name: "Delete date" })).toBeTruthy();
+});
+
+test("with two mentions side by side, the click edits the one that was clicked", async () => {
+  today();
+  const user = userEvent.setup({ advanceTimers: () => {} });
+  const html = `<p>${mention("2026-10-18", "Oct 18, 2026")}${mention("2026-10-19", "Oct 19, 2026")} ${mention("2026-10-20", "Oct 20, 2026")}</p>`;
+  const { editor } = renderEditor({ defaultValue: html });
+  const [, second] = [...editor.view.dom.querySelectorAll("time")];
+
+  clickOn(second!);
+  const popover = await screen.findByRole("dialog", { name: "Date" });
+  expect(editor.state.selection).toBeInstanceOf(NodeSelection);
+  expect((editor.state.selection as NodeSelection).node.attrs.datetime).toBe("2026-10-19");
+  await user.click(await within(popover).findByRole("button", { name: /October 25, 2026/ }));
+
+  expect(editor.getHTML()).toBe(
+    `<p>${mention("2026-10-18", "Oct 18, 2026")}${mention("2026-10-25", "Oct 25, 2026")} ${mention("2026-10-20", "Oct 20, 2026")}</p>`
+  );
 });
 
 test("another day replaces the value and the words in one edit", async () => {

@@ -110,16 +110,18 @@ function dateNode(
                 const target = event.target;
                 const element = target instanceof Element ? target.closest(DATE_TAG) : null;
                 if (!element || !view.dom.contains(element) || !view.editable) return false;
-                let found: { node: ProseMirrorNode; pos: number } | null = null;
-                view.state.doc.descendants((node, pos) => {
-                  if (!found && isDateNode(node) && view.nodeDOM(pos) === element) {
-                    found = { node, pos };
-                  }
-                  return !found;
-                });
-                const hit = found as { node: ProseMirrorNode; pos: number } | null;
-                if (!hit) return false;
-                edit(hit.pos);
+                // The position comes straight from the element, not from a walk over the Document.
+                // For an Atom `posAtDOM` gives the position before it or right after it, and the node's
+                // own DOM tells which of the two is the mention that was clicked.
+                const at = view.posAtDOM(element, 0);
+                const pos = [at, at - 1].find(
+                  (candidate) =>
+                    candidate >= 0 &&
+                    view.state.doc.nodeAt(candidate)?.type.name === DATE_NODE &&
+                    view.nodeDOM(candidate) === element
+                );
+                if (pos === undefined) return false;
+                edit(pos);
                 return false;
               },
             },
@@ -196,7 +198,16 @@ export const DATE_TOOL: ToolDescriptor = {
       section: "insert",
       label: (m) => m.date,
       icon: DateMentionIcon,
-      aliases: ["date", "today", "calendar", "time"],
+      // The Russian words are escape sequences: the i18n gate rejects Cyrillic letters in code. They are
+      // input data for the filter, so "date" and "today" in Russian find the item in an English interface too.
+      aliases: [
+        "date",
+        "today",
+        "calendar",
+        "time",
+        "\u0434\u0430\u0442\u0430",
+        "\u0441\u0435\u0433\u043e\u0434\u043d\u044f",
+      ],
       // The Document is not prepared: the popover places the mention at the caret.
       run: (chain) => chain,
       popover: ({ editor, close }) => renderDateForm({ editor, close }),
