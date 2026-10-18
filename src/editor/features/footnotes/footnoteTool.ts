@@ -61,9 +61,9 @@ export const FOOTNOTES_TOOL: ToolDescriptor = {
   commands: ({ editor, bridge }): FootnotesToolCommands => {
     const ready = () => !editor.isDestroyed && !bridge.sourceOpen() && !bridge.disabled();
     return {
-      insert: () =>
-        ready() &&
-        editor.isEditable &&
+      insert: () => {
+        if (!ready() || !editor.isEditable) return false;
+        const before = editor.state.doc;
         editor
           .chain()
           .command(({ tr }) => {
@@ -72,7 +72,11 @@ export const FOOTNOTES_TOOL: ToolDescriptor = {
           })
           .focus()
           .insertFootnote()
-          .run(),
+          .run();
+        // The engine silently rejects an edit the character limit did not let through: the Document
+        // is then the same one (`handle.ts`, `authorEdit`).
+        return editor.state.doc !== before;
+      },
       goToFootnote: (number) => ready() && jump(editor, "goToFootnote", number),
       goToReference: (number) => ready() && jump(editor, "goToFootnoteReference", number),
     };

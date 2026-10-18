@@ -11,6 +11,7 @@ import {
   type Transaction,
 } from "@tiptap/pm/state";
 import { StepMap } from "@tiptap/pm/transform";
+import { isFootnoteListName } from "../features/footnotes/footnoteNames.js";
 
 /**
  * Commands over Blocks: duplicate, move, select the text of a Block, shift a list item, clear
@@ -81,7 +82,12 @@ export type BlockScope = "selection" | "handle";
 export function handleBlock(state: Pick<EditorState, "selection">): NodeRange | null {
   const { $from, $to } = state.selection;
   const range = $from.blockRange($to, isBlockContainer);
-  return range && range.endIndex - range.startIndex === 1 ? range : null;
+  // The footnote list is kept by the kit (ADR-0076): the handle does not stand on it.
+  return range &&
+    range.endIndex - range.startIndex === 1 &&
+    !isFootnoteListName(range.parent.child(range.startIndex).type.name)
+    ? range
+    : null;
 }
 
 /**
@@ -102,8 +108,13 @@ function blockRange(state: EditorState, scope: BlockScope): NodeRange | null {
     $to,
     (parent) => isBlockContainer(parent) || (!table && LIST_NODES.has(parent.type.name))
   );
-  // A caret in the gap at the Document level gives an empty row, not `null`.
-  return range && range.startIndex < range.endIndex ? range : null;
+  // A caret in the gap at the Document level gives an empty row, not `null`. The footnote list is not a
+  // Block to move, copy or delete (ADR-0076).
+  return range &&
+    range.startIndex < range.endIndex &&
+    !blocksOf(range).some((block) => isFootnoteListName(block.type.name))
+    ? range
+    : null;
 }
 
 function blocksOf(range: NodeRange): PmNode[] {

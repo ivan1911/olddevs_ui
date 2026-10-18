@@ -59,11 +59,14 @@ export type {
   VideoToolOptions,
 } from "./core/toolOptions.js";
 export type {
+  FootnotesToolCommands,
   InvisibleCharactersToolCommands,
   SearchToolCommands,
   TocToolCommands,
 } from "./core/toolCommands.js";
 export type {
+  FootnotesToolNote,
+  FootnotesToolState,
   InvisibleCharactersToolState,
   SearchToolState,
   TocToolHeading,

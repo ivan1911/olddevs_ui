@@ -160,9 +160,10 @@ export const FootnoteReference = Node.create({
 export const Footnote = Node.create<{ labels: FootnoteLabels }>({
   name: FOOTNOTE_NODE,
   content: "inline*",
-  // The list is the only parent; Backspace at the start does not merge footnotes (`footnoteKeys`).
+  // The list is the only parent. Not `isolating`: Tiptap's hard break refuses to work in an isolating
+  // Block, and `Shift+Enter` must work here. Footnotes do not merge because the keys say so
+  // (`footnoteBehavior.ts`: Backspace at the start, Delete at the end).
   defining: true,
-  isolating: true,
   selectable: false,
   addOptions: () => ({
     labels: { listName: () => "Footnotes", back: (number) => `Back to text, footnote ${number}` },
