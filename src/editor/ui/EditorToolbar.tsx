@@ -30,6 +30,7 @@ import {
   MoreFormatMenu,
 } from "./FormatMenus.js";
 import { insertItemsFor } from "../core/insertItems.js";
+import { FOOTNOTE_NODE } from "../features/footnotes/footnoteNames.js";
 import { InsertMenuButton } from "./InsertMenuButton.js";
 import { TOOLBAR_ROW_MARKS } from "./rowMarks.js";
 import { HighlightMenuButton } from "./ColorMenus.js";
@@ -338,7 +339,12 @@ export function EditorToolbar({
       for (const button of toolButtons) {
         flags[button.id]!.visible = button.isVisible?.(current) ?? true;
       }
-      return { flags, editable: current.isEditable };
+      return {
+        flags,
+        editable: current.isEditable,
+        // A footnote is a line of running text: it has no Block menu, so "+" is unavailable there (ADR-0076).
+        inFootnote: current.state.selection.$from.parent.type.name === FOOTNOTE_NODE,
+      };
     },
   });
 
@@ -447,7 +453,7 @@ export function EditorToolbar({
                       editor={editor}
                       items={insertItems}
                       disabled={host.disabled}
-                      unavailable={locked}
+                      unavailable={locked || state.inFootnote}
                       shortcut={host.shortcut}
                     />
                   );

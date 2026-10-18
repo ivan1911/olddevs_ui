@@ -61,6 +61,7 @@ export type {
 } from "./core/toolOptions.js";
 export type {
   BlockSelectionToolCommands,
+  FootnotesToolCommands,
   InvisibleCharactersToolCommands,
   LanguageToolCommands,
   SearchToolCommands,
@@ -68,6 +69,8 @@ export type {
 } from "./core/toolCommands.js";
 export type {
   BlockSelectionToolState,
+  FootnotesToolNote,
+  FootnotesToolState,
   InvisibleCharactersToolState,
   LanguageToolState,
   SearchToolState,

@@ -576,6 +576,9 @@ export const messages: UiMessages = {
     mathInsert: "Вставить",
     mathApply: "Применить",
     mathRemove: "Убрать формулу",
+    footnote: "Сноска",
+    footnotes: "Сноски",
+    footnoteBack: ({ number }) => `К тексту, сноска ${number}`,
     emoji: "Эмодзи",
     emojiGrid: "Выберите эмодзи",
     emojiCategory: {

@@ -4,6 +4,7 @@ import type { PrefixedName } from "./customTool.js";
 import type { ToolDefinition } from "./toolDefinition.js";
 import type {
   BlockSelectionToolState,
+  FootnotesToolState,
   InvisibleCharactersToolState,
   LanguageToolState,
   SearchToolState,
@@ -11,6 +12,7 @@ import type {
 } from "./toolState.js";
 import type {
   BlockSelectionToolCommands,
+  FootnotesToolCommands,
   InvisibleCharactersToolCommands,
   LanguageToolCommands,
   SearchToolCommands,
@@ -283,6 +285,11 @@ export interface RichTextTools {
   blockSelection: {
     state: BlockSelectionToolState;
     commands: BlockSelectionToolCommands;
+  };
+  // State and commands only: footnotes have no options (ADR-0076).
+  footnotes: {
+    state: FootnotesToolState;
+    commands: FootnotesToolCommands;
   };
   language: {
     options: LanguageToolOptions;

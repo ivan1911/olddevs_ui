@@ -105,6 +105,15 @@
  * need this mode. But in `full` the characters stay hidden until the author turns display on: the
  * starting display is set by the `tool("invisibleCharacters", { visible: true })` option.
  *
+ * `footnotes` is footnotes (ADR-0076): a reference in the text with an automatic number, and a list of
+ * the footnotes' texts at the end of the Document, edited in place; the reference and the footnote
+ * are followed both ways, in the Editor and in `RichTextView` without JS. It has no Toolbar button:
+ * a "Footnote" item in the Slash menu and in the "…" menu. The kit keeps the list: a footnote exists
+ * while its reference does, and deleting the reference deletes the footnote in the same edit. It is
+ * in `full`, not in `basic`: a comment does not need footnotes. A Document that holds footnotes
+ * opened in an Editor without the Tool keeps the text: the markup goes, and the numbers and the
+ * footnotes' paragraphs stay.
+ *
  * `blockSelection` is Block selection (ADR-0077): several Blocks selected whole, as in Notion. `Esc` in
  * the text selects the current Block, `Shift+↑/↓` and `Shift+click` grow the selection, and then
  * `Backspace`, `⌘C`, `⌘X`, `⌘V`, `⌘⇧D` and `⌥⇧↑/↓` act on the Blocks. It has no Schema of its own, like
@@ -142,6 +151,7 @@ export const TOOLS = [
   "wrapper",
   "details",
   "mathematics",
+  "footnotes",
   "emoji",
   "source",
   "search",

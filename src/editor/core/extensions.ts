@@ -17,6 +17,7 @@ import type { RichImageOptions } from "../features/image/image.js";
 import { createDocumentNode } from "./document.js";
 import { createMarkdown, MarkdownPaste } from "./markdown.js";
 import { FormulasAsText } from "../features/mathematics/mathAsText.js";
+import { FootnotesAsText } from "../features/footnotes/footnotesAsText.js";
 import { MaxLength } from "./maxLength.js";
 import { TriggerCommand, type SlashBridge, type TriggerBinding } from "./slashCommand.js";
 import {
@@ -44,6 +45,13 @@ export interface EditorExtensionOptions {
    * catalog; read on every re-render of the button.
    */
   detailsToggle: (text: string) => string;
+  /**
+   * The footnote list's name, written into the saved HTML (`aria-label`) in the language of the
+   * message catalog. Read on every serialization: a catalog change does not recreate the engine.
+   */
+  footnoteListName: () => string;
+  /** The name of a footnote's number button in the Editor, from the catalog; read on every re-render of the footnote. */
+  footnoteBack: (number: number) => string;
   /**
    * Quotation marks for the message catalog language (`UiMessages.editor.typographyQuotes`) for the
    * `typography` Tool with the `quotes: "auto"` option. Read on every quote typed: a catalog
@@ -221,6 +229,7 @@ const ENGINE_ORDER: readonly (Tool | typeof TRIGGERS)[] = [
   "layout",
   "wrapper",
   "details",
+  "footnotes",
   "mathematics",
   "insertMenu",
   TRIGGERS,
@@ -314,6 +323,8 @@ export function createEditorExtensions(options: EditorExtensionOptions): Extensi
     // Without the `mathematics` Tool, a formula from `value` and from paste is read as `$…$` text,
     // instead of disappearing together with an empty element (`mathAsText.ts`).
     ...(options.tools.has("mathematics") ? [] : [FormulasAsText]),
+    // Without `footnotes`, the backlink "↩" of a footnote is dropped and its words stay (`footnotesAsText.ts`).
+    ...(options.tools.has("footnotes") ? [] : [FootnotesAsText]),
     ToolbarFocus.configure({ focus: options.focusToolbar }),
     HandledTabStaysInside,
     // Commands over Blocks have no markup of their own and are always on (`blockCommands.ts`).

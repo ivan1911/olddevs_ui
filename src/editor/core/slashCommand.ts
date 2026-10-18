@@ -3,6 +3,7 @@
 import { Extension, type Editor, type Range } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import { exitSuggestion, Suggestion } from "@tiptap/suggestion";
+import { FOOTNOTE_NODE } from "../features/footnotes/footnoteNames.js";
 
 /** Plugin key: the menu closes the session from outside through it (`closeSlashMenu`). */
 const SLASH_KEY = new PluginKey("olddevsSlashMenu");
@@ -92,6 +93,9 @@ function triggerPlugin(editor: Editor, char: string, bridge: SlashBridge) {
     allow: ({ state, range }) => {
       const $from = state.doc.resolve(range.from);
       if ($from.parent.type.spec.code) return false;
+      // A footnote is a line of running text: the Slash menu would offer Blocks it cannot hold
+      // (ADR-0076). The custom triggers (a mention) are fine there.
+      if (char === "/" && $from.parent.type.name === FOOTNOTE_NODE) return false;
       return !$from.marks().some((mark) => mark.type.spec.code);
     },
     render: () => ({

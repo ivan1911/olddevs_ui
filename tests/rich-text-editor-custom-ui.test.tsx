@@ -143,10 +143,12 @@ test("own items stand at the end of their section, after the kit's, with the sho
 
   const { insert, turnInto } = slashRows();
   expect(insert.at(-1)).toMatch(/^Box en-US/);
-  expect(insert.at(-6)).toMatch(/^Wrapper/);
-  expect(insert.at(-5)).toMatch(/^Collapsible block/);
+  expect(insert.at(-7)).toMatch(/^Wrapper/);
+  expect(insert.at(-6)).toMatch(/^Collapsible block/);
+  // The inline Footnote (OLDSUI-306) follows the Details Block.
+  expect(insert.at(-5)).toMatch(/^Footnote/);
   // Formulas (OLDSUI-280) and videos (OLDSUI-281) are in the `TOOLS` set but outside the presets: after
-  // the Details Block, before the custom ones.
+  // the Footnote, before the custom ones.
   expect(insert.at(-4)).toMatch(/^Formula/);
   expect(insert.at(-3)).toMatch(/^Block formula/);
   expect(insert.at(-2)).toMatch(/^Video/);

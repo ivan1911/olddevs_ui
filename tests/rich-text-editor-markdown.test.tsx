@@ -216,7 +216,8 @@ test.each([
 
 /*
   Markdown links on paste (OLDSUI-71). A link in the Schema has one attribute —
-  `href`: the title is dropped, and a footnote definition does not get into the Document.
+  `href`: the title is dropped. (A footnote definition `[^1]: text` is not a link reference: with the
+  `footnotes` Tool it becomes a footnote, `tests/rich-text-editor-footnotes-markdown.test.tsx`.)
 */
 const DOCS_LINK = '<a href="https://example.com/docs" rel="noopener noreferrer">the docs</a>';
 

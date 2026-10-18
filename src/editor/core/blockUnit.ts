@@ -1,6 +1,6 @@
 "use client";
 
-import type { Node as PmNode, NodeRange, ResolvedPos } from "@tiptap/pm/model";
+import { NodeRange, type Node as PmNode, type ResolvedPos } from "@tiptap/pm/model";
 
 /**
  * The Block unit (ADR-0077): the Block of its container.
@@ -17,8 +17,44 @@ import type { Node as PmNode, NodeRange, ResolvedPos } from "@tiptap/pm/model";
  * - Several units are always siblings of one parent. A range that starts and ends in different
  *   parents (two columns) takes the unit above them (the whole Column layout).
  *
+ * A node can opt out of being a unit with `spec.blockUnit === false`. The footnote list does
+ * (ADR-0076): the kit keeps it, always last and always whole, so it is never selected, moved,
+ * duplicated or deleted as a Block, and a range that reaches into it stops at the last real Block.
+ * The rule lives HERE, once, so the keys, the handle and Block selection cannot disagree about it.
+ *
  * An internal module: it is not part of the public API.
  */
+
+/** Whether the node can be a unit: the kit-kept footnote list cannot (`spec.blockUnit === false`). */
+export function isBlockUnit(node: PmNode): boolean {
+  return node.type.spec.blockUnit !== false;
+}
+
+/**
+ * The row without the nodes that are not units at its edges. `null` when nothing is left. The
+ * kit-kept node is always at the end of the Document, so the edges are all that matters.
+ */
+export function onlyUnits(range: NodeRange | null): NodeRange | null {
+  if (!range) return null;
+  let first = range.startIndex;
+  let last = range.endIndex;
+  while (first < last && !isBlockUnit(range.parent.child(first))) first++;
+  while (last > first && !isBlockUnit(range.parent.child(last - 1))) last--;
+  if (first === last) return null;
+  if (first === range.startIndex && last === range.endIndex) return range;
+  const { doc } = range.$from;
+  const start = range.$from.posAtIndex(first, range.depth);
+  const end = range.$from.posAtIndex(last, range.depth);
+  return new NodeRange(doc.resolve(start), doc.resolve(end), range.depth);
+}
+
+/** Whether every node between the two child indices of `parent` can be a unit. */
+export function allUnits(parent: PmNode, from: number, to: number): boolean {
+  for (let index = from; index < to; index++) {
+    if (!isBlockUnit(parent.child(index))) return false;
+  }
+  return true;
+}
 
 /** Lists: their children are the units, the list itself is one only at the edge of its range. */
 export const LIST_NODES: ReadonlySet<string> = new Set(["bulletList", "orderedList", "taskList"]);
@@ -78,7 +114,7 @@ export function blockUnitRange($from: ResolvedPos, $to: ResolvedPos = $from): No
   }
   const range = low.blockRange(high, holdsUnits);
   // A caret in the gap at the Document level gives an empty row, not `null`.
-  return range && range.startIndex < range.endIndex ? range : null;
+  return onlyUnits(range && range.startIndex < range.endIndex ? range : null);
 }
 
 /** The single Block unit that holds the position, or `null` when it lies in none. */
