@@ -777,6 +777,7 @@ class ImageView implements NodeView {
   private node: ProseMirrorNode;
   private handles = {} as Record<"left" | "right", HTMLElement>;
   private frame: HTMLElement;
+  private observer: ResizeObserver | null = null;
 
   constructor(
     node: ProseMirrorNode,
@@ -798,6 +799,13 @@ class ImageView implements NodeView {
     this.contentDOM = document.createElement("div");
     this.dom.append(this.frame, this.contentDOM);
     this.render();
+    // The float depends on the width of the Document root (a container query), so the handles are
+    // checked again when it changes. The first call of the observer also fixes them once the figure
+    // is in the page: until then there is no computed style to read.
+    if (typeof ResizeObserver !== "undefined") {
+      this.observer = new ResizeObserver(() => this.syncHandles());
+      this.observer.observe(this.view.dom);
+    }
   }
 
   private render() {
@@ -813,13 +821,18 @@ class ImageView implements NodeView {
   }
 
   /**
-   * The side the image really floats to: its `align`, except in a table cell, where the styles
-   * ignore it. `null` when the position is not known yet or the image is centred.
+   * The side the image really floats to: its `align`, except where the styles do not float it. That
+   * is a table cell and a Document narrower than 30 rem (ADR-0081, decision 6), where the image
+   * stands on a line of its own. The browser knows which it is, so the computed `float` decides,
+   * not a copy of the rule here. `null` when the position is not known yet or the image is not floated.
    */
   private floatSide(): ImageAlign | null {
     const align = alignOf(this.node.attrs.align);
     const pos = this.getPos();
     if (!align || pos == null || inTableCell(this.view.state, pos)) return null;
+    // A figure that is not in the page yet has no computed style: it is taken as floated, and the
+    // observer corrects it on its first call.
+    if (this.dom.isConnected && getComputedStyle(this.dom).float === "none") return null;
     return align;
   }
 
@@ -900,6 +913,11 @@ class ImageView implements NodeView {
     this.node = node;
     this.render();
     return true;
+  }
+
+  destroy() {
+    this.observer?.disconnect();
+    this.observer = null;
   }
 
   // The handles behave on their own: they do not start a selection or a drag of the node.
