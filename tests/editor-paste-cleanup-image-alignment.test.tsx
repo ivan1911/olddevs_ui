@@ -151,6 +151,59 @@ describe("a web page", () => {
   });
 });
 
+/*
+  WordPress (OLDSUI-314). The side is a class, and its float lives in the theme's stylesheet, which
+  does not travel with the clipboard: the classic editor puts `alignleft` on the `img` itself, the
+  block editor puts it on the `figure` (`wp-block-image`), sometimes inside a `div` of that class.
+*/
+describe("WordPress", () => {
+  test("alignleft and alignright on the img become the side", () => {
+    const classic = pasted(
+      `<p><img src="${SRC}" alt="" class="alignleft size-medium wp-image-12" width="300">` +
+        "The text that wraps the picture.</p>"
+    );
+    expect(classic).toContain(figure(' data-align="left"', "50"));
+    expect(classic).toContain("The text that wraps the picture.");
+    expect(pasted(`<img src="${SRC}" alt="" class="ALIGNRIGHT">`)).toBe(
+      figure(' data-align="right"', "50")
+    );
+  });
+
+  test("the block editor's figure, alone or in its div", () => {
+    expect(
+      pasted(
+        `<figure class="wp-block-image alignright size-large"><img src="${SRC}" alt=""></figure>`
+      )
+    ).toBe(figure(' data-align="right"', "50"));
+    expect(
+      pasted(
+        `<div class="wp-block-image"><figure class="alignleft size-large"><img src="${SRC}" alt=""><figcaption>Dawn</figcaption></figure></div>`
+      )
+    ).toBe(
+      `<figure data-align="left"><img src="${SRC}" alt="" data-width="50"><figcaption>Dawn</figcaption></figure>`
+    );
+  });
+
+  test("aligncenter and alignnone give no side, as align=center does", () => {
+    expect(pasted(`<img src="${SRC}" alt="" class="aligncenter">`)).toBe(
+      `<figure><img src="${SRC}" alt=""></figure>`
+    );
+    expect(pasted(`<img src="${SRC}" alt="" class="alignnone size-full">`)).toBe(
+      `<figure><img src="${SRC}" alt=""></figure>`
+    );
+  });
+
+  test("only the whole class counts, and only on a picture", () => {
+    for (const name of ["myalignleft", "alignleft-wide", "has-alignleft"]) {
+      expect(pasted(`<img src="${SRC}" alt="" class="${name}">`), name).toBe(
+        `<figure><img src="${SRC}" alt=""></figure>`
+      );
+    }
+    expect(detectPasteSources(`<p class="alignleft">text</p>`).imageAlignment).toBe(false);
+    expect(detectPasteSources(`<img src="${SRC}" class="x alignleft">`).imageAlignment).toBe(true);
+  });
+});
+
 describe("the width of the source", () => {
   test("a percentage goes to the nearest preset that leaves room for the text", () => {
     const cases: [string, string][] = [

@@ -7,8 +7,11 @@ import { lastValue, parseDeclarations } from "./cssDeclarations.js";
 /*
   Where a picture stood in the text (ADR-0081, decision 10). Word writes the side of a picture the
   text wraps as `align="left"` (with `hspace`) on the `<img>`; a web page writes it as `float` in the
-  `style`, or as the same obsolete `align`. The Schema keeps no `style`, so the side is lost unless
-  it is read here and written as the `data-align` the image node reads (`image.ts`).
+  `style`, or as the same obsolete `align`. WordPress writes it as a class, `alignleft` or `alignright`,
+  on the `<img>` (the classic editor) or on the `<figure>` (the block editor), and keeps the float in the
+  theme's stylesheet, which the clipboard does not carry (OLDSUI-314). The Schema keeps no `style`, so
+  the side is lost unless it is read here and written as the `data-align` the image node reads
+  (`image.ts`).
 
   Unlike the other steps, this one is not for one office application: a float on a picture comes
   from a web page as often as from Word, and a page is not the source of the other steps' junk.
@@ -30,7 +33,12 @@ function sideOf(element: Element): ImageAlign | "none" | null {
   const float = lastValue(style, "float")?.toLowerCase();
   if (float === "left" || float === "right") return float;
   const align = element.getAttribute("align")?.trim().toLowerCase();
-  return align === "left" || align === "right" ? align : null;
+  if (align === "left" || align === "right") return align;
+  // The class is the weakest: in the source the inline style and the attribute win over the stylesheet.
+  // `aligncenter` and `alignnone` name no side, as `align="center"` does not.
+  const classes = (element.getAttribute("class") ?? "").toLowerCase().split(/\s+/);
+  if (classes.includes("alignleft")) return "left";
+  return classes.includes("alignright") ? "right" : null;
 }
 
 /** The share of the container a source width names, in percent, or `null` for any other size. */

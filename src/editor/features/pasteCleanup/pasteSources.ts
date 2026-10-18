@@ -59,10 +59,12 @@ const SHARE_POINT = new RegExp(
 /*
   The sign of an aligned picture: the tag is `img` or `figure`, and its attributes name a side. `align`
   must stand alone as an attribute (a space or a quote before it), so the Editor's own `data-align` is
-  not taken for it: the Editor's markup needs no cleanup.
+  not taken for it: the Editor's markup needs no cleanup. WordPress names the side with a whole class
+  (`alignleft`, `alignright`), so a class that only contains the word (`has-alignleft`) is not a sign.
 */
 const IMAGE_ALIGNMENT = new RegExp(
-  `<(?:img|figure)\\b[^<>]*(?:[\\s"'/]align\\s*=|\\bfloat\\s*:|\\bmso-wrap-style\\s*:)`,
+  `<(?:img|figure)\\b[^<>]*(?:[\\s"'/]align\\s*=|\\bfloat\\s*:|\\bmso-wrap-style\\s*:|` +
+    `\\bclass\\s*=\\s*["']?(?:[^"'<>]*\\s)?align(?:left|right)(?=[\\s"'>]))`,
   "i"
 );
 
