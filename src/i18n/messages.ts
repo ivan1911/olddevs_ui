@@ -1202,6 +1202,8 @@ export interface UiMessages {
     blocksCopied: (vars: { count: number }) => string;
     blocksCut: (vars: { count: number }) => string;
     blocksReplaced: (vars: { count: number }) => string;
+    /** Why `⌘V` did nothing over a set of Blocks from different places (ADR-0083). */
+    blocksPasteScattered: string;
     /**
      * Fullscreen mode and the focus mode (the `fullscreen` and `focus` Tools, ADR-0082).
      * `fullscreen` and `focusMode` are the checkbox items of the "…" menu; `fullscreen` is also the

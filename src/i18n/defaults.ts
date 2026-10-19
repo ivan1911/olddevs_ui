@@ -705,6 +705,7 @@ export const DEFAULT_MESSAGES: UiMessages = {
     blocksCopied: ({ count }) => `Blocks copied: ${count}`,
     blocksCut: ({ count }) => `Blocks cut: ${count}`,
     blocksReplaced: ({ count }) => `Blocks replaced: ${count}`,
+    blocksPasteScattered: "Cannot paste over blocks in different places",
     fullscreen: "Fullscreen",
     fullscreenExit: "Exit fullscreen",
     fullscreenOpened: "Fullscreen mode on",

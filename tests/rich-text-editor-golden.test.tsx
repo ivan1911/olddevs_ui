@@ -894,9 +894,9 @@ describe("the block handle menu", () => {
             "menuitemradio: Checklist | Ctrl+Shift+9",
           ],
           "top": [
-            "menuitem: Select",
             "menuitem: Add",
             "menuitem: Format",
+            "menuitem: Select",
             "menuitem: Move up (disabled) | Alt+Shift+↑",
             "menuitem: Move down | Alt+Shift+↓",
             "menuitem: Duplicate | Ctrl+Shift+D",

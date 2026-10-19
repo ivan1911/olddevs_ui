@@ -864,3 +864,329 @@ test("the alignment menu aligns every selected Block", async () => {
   expect(selection(editor)).toBeInstanceOf(BlockSelection);
   expect(selectedCount(editor)).toBe(2);
 });
+
+// --- A set of Blocks from different places (ADR-0083, OLDSUI-316) ------------------------------
+
+const FIVE = "<p>P1</p><p>P2</p><p>P3</p><p>P4</p><p>P5</p>";
+
+/** `Ctrl+click` on the paragraph `text`: jsdom is not a Mac, so the modifier is Ctrl. */
+function modClick(editor: Editor, text: string) {
+  fireEvent.mouseDown(paragraph(editor, text), { ctrlKey: true });
+}
+
+/** The text of every selected Block, in document order. */
+function selectedTexts(editor: Editor): string[] {
+  const current = selection(editor);
+  if (!(current instanceof BlockSelection)) return [];
+  return current
+    .rows()
+    .flatMap((row) =>
+      Array.from(
+        { length: row.endIndex - row.startIndex },
+        (_, offset) => row.parent.child(row.startIndex + offset).textContent
+      )
+    );
+}
+
+const rowCount = (editor: Editor) => {
+  const current = selection(editor);
+  return current instanceof BlockSelection ? current.rows().length : 0;
+};
+
+/** One and Three of `THREE`: a set with a gap. */
+function selectOneAndThree(editor: Editor) {
+  caretIn(editor, "One");
+  press(editor, "Escape");
+  modClick(editor, "Three");
+  expect(selectedTexts(editor)).toEqual(["One", "Three"]);
+}
+
+function openHandleMenu(editor: Editor) {
+  const slash = new KeyboardEvent("keydown", {
+    key: "/",
+    code: "Slash",
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  Object.defineProperty(slash, "keyCode", { value: 191 });
+  act(() => void editor.view.dom.dispatchEvent(slash));
+  return screen.findByRole("menu", { name: "Block actions" });
+}
+
+test("Mod+click in the mode adds a Block to the set and takes it out again; the last one leaves the mode", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "One");
+  press(editor, "Escape");
+
+  modClick(editor, "Three");
+  expect(selectedTexts(editor)).toEqual(["One", "Three"]);
+  expect(rowCount(editor)).toBe(2);
+  expect(selectedCount(editor)).toBe(2);
+
+  modClick(editor, "Three");
+  expect(selectedTexts(editor)).toEqual(["One"]);
+
+  modClick(editor, "One");
+  expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
+});
+
+test("neighbouring Blocks of the set join into one row", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectOneAndThree(editor);
+
+  modClick(editor, "Two");
+
+  expect(selectedTexts(editor)).toEqual(["One", "Two", "Three"]);
+  expect(rowCount(editor)).toBe(1);
+});
+
+test("Mod+click in the text is a plain click: the mode does not start", () => {
+  const restore = noPointLookup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  caretIn(editor, "One");
+
+  modClick(editor, "Three");
+  restore();
+
+  expect(selection(editor)).not.toBeInstanceOf(BlockSelection);
+});
+
+test("a Block and its container are never selected together", () => {
+  const { editor } = renderEditor({
+    defaultValue: `<p>Out</p>${wrapper("<p>W1</p>", "<p>W2</p>")}`,
+  });
+  caretIn(editor, "Out");
+  press(editor, "Escape");
+  modClick(editor, "W1");
+  expect(selectedTexts(editor)).toEqual(["Out", "W1"]);
+
+  // Past the Wrapper's edge the active row becomes the Wrapper, and W1 inside it leaves the set.
+  press(editor, "ArrowUp", { shift: true });
+  expect(selectedCount(editor)).toBe(2);
+  expect(selectedTexts(editor)).toEqual(["Out", "W1W2"]);
+
+  // A click on a Block inside the selected Wrapper puts that Block in the Wrapper's place.
+  modClick(editor, "W2");
+  expect(selectedTexts(editor)).toEqual(["Out", "W2"]);
+});
+
+test("Shift+click and Shift+arrows add a row from the last clicked Block and keep the rest", () => {
+  const { editor } = renderEditor({ defaultValue: FIVE });
+  caretIn(editor, "P1");
+  press(editor, "Escape");
+  modClick(editor, "P3");
+
+  fireEvent.mouseDown(paragraph(editor, "P5"), { shiftKey: true });
+  expect(selectedTexts(editor)).toEqual(["P1", "P3", "P4", "P5"]);
+  expect(rowCount(editor)).toBe(2);
+
+  press(editor, "ArrowUp", { shift: true });
+  expect(selectedTexts(editor)).toEqual(["P1", "P3", "P4"]);
+});
+
+test("taking the active Block out passes the anchor to the nearest selected Block above", () => {
+  const { editor } = renderEditor({ defaultValue: FIVE });
+  caretIn(editor, "P1");
+  press(editor, "Escape");
+  modClick(editor, "P3");
+  modClick(editor, "P5");
+  modClick(editor, "P5");
+
+  press(editor, "ArrowDown", { shift: true });
+
+  expect(selectedTexts(editor)).toEqual(["P1", "P3", "P4"]);
+});
+
+test("an arrow key without Shift collapses the set onto the Block past the active row", () => {
+  const { editor } = renderEditor({ defaultValue: FIVE });
+  caretIn(editor, "P1");
+  press(editor, "Escape");
+  modClick(editor, "P3");
+
+  press(editor, "ArrowDown");
+
+  expect(selectedTexts(editor)).toEqual(["P4"]);
+});
+
+test("Backspace removes every Block of the set as one edit, and undo brings the set back", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectOneAndThree(editor);
+
+  press(editor, "Backspace");
+
+  expect(editor.getHTML()).toBe("<p>Two</p>");
+  expect(announced()).toBe("Blocks deleted: 2");
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe(THREE);
+  expect(selectedTexts(editor)).toEqual(["One", "Three"]);
+});
+
+test("copy puts the Blocks in document order, a list item in its own list; cut removes them", () => {
+  const { editor } = renderEditor({
+    defaultValue: "<p>One</p><ul><li><p>a</p></li><li><p>b</p></li></ul><p>Three</p>",
+  });
+  caretIn(editor, "One");
+  press(editor, "Escape");
+  modClick(editor, "b");
+  modClick(editor, "Three");
+  expect(selectedTexts(editor)).toEqual(["One", "b", "Three"]);
+
+  const data = new Map<string, string>();
+  const clipboardData = {
+    setData: (type: string, value: string) => void data.set(type, value),
+    getData: (type: string) => data.get(type) ?? "",
+    clearData: () => data.clear(),
+    types: [] as string[],
+  };
+  const copy = new Event("copy", { bubbles: true, cancelable: true });
+  Object.defineProperty(copy, "clipboardData", { value: clipboardData });
+  act(() => void editor.view.dom.dispatchEvent(copy));
+  expect(data.get("text/html")?.replace(/ data-pm-slice="[^"]*"/, "")).toBe(
+    "<p>One</p><ul><li><p>b</p></li></ul><p>Three</p>"
+  );
+  expect(announced()).toBe("Blocks copied: 3");
+
+  const cut = new Event("cut", { bubbles: true, cancelable: true });
+  Object.defineProperty(cut, "clipboardData", { value: clipboardData });
+  act(() => void editor.view.dom.dispatchEvent(cut));
+  expect(editor.getHTML()).toBe("<ul><li><p>a</p></li></ul>");
+});
+
+test("paste over a set from different places inserts nothing and says why", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectOneAndThree(editor);
+
+  const paste = new Event("paste", { bubbles: true, cancelable: true });
+  Object.defineProperty(paste, "clipboardData", {
+    value: {
+      getData: (type: string) =>
+        ({ "text/html": "<p>Pasted</p>", "text/plain": "Pasted" })[type] ?? "",
+      types: ["text/html", "text/plain"],
+    },
+  });
+  act(() => void editor.view.dom.dispatchEvent(paste));
+
+  expect(editor.getHTML()).toBe(THREE);
+  expect(announced()).toBe("Cannot paste over blocks in different places");
+  expect(selectedTexts(editor)).toEqual(["One", "Three"]);
+});
+
+test("move and duplicate keys do nothing over a set from different places", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectOneAndThree(editor);
+
+  const move = press(editor, "ArrowDown", { alt: true, shift: true });
+  const duplicate = press(editor, "d", { mod: true, shift: true });
+
+  expect(move.defaultPrevented).toBe(true);
+  expect(duplicate.defaultPrevented).toBe(true);
+  expect(editor.getHTML()).toBe(THREE);
+  expect(selectedTexts(editor)).toEqual(["One", "Three"]);
+});
+
+test("the handle menu over a set from different places: move, duplicate and wrap are unavailable, Delete takes all", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectOneAndThree(editor);
+
+  const menu = await openHandleMenu(editor);
+  const disabled = (name: string) =>
+    within(menu)
+      .getByRole("menuitem", { name: new RegExp(`^${name}`) })
+      .getAttribute("aria-disabled");
+  expect(disabled("Move up")).toBe("true");
+  expect(disabled("Move down")).toBe("true");
+  expect(disabled("Duplicate")).toBe("true");
+  expect(disabled("Wrap in")).toBe("true");
+
+  await user.click(within(menu).getByRole("menuitem", { name: "Delete" }));
+  expect(editor.getHTML()).toBe("<p>Two</p>");
+  expect(announced()).toBe("Blocks deleted: 2");
+});
+
+test("Format turns every row of the set on its own, and the set stays selected", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: FIVE });
+  caretIn(editor, "P1");
+  press(editor, "Escape");
+  modClick(editor, "P3");
+  modClick(editor, "P4");
+
+  const menu = await openHandleMenu(editor);
+  await user.click(within(menu).getByRole("menuitem", { name: "Format" }));
+  const format = await screen.findByRole("menu", { name: "Format" });
+  await user.click(within(format).getByRole("menuitemradio", { name: /Bulleted list/ }));
+
+  // Two rows, two lists: a list is never stitched across a gap.
+  expect(editor.getHTML()).toBe(
+    "<ul><li><p>P1</p></li></ul><p>P2</p><ul><li><p>P3</p></li><li><p>P4</p></li></ul><p>P5</p>"
+  );
+  expect(announced()).toBe("Blocks changed: 3");
+  expect(rowCount(editor)).toBe(2);
+  act(() => void editor.commands.undo());
+  expect(editor.getHTML()).toBe(FIVE);
+});
+
+test("the set follows the edits around it, and a deleted Block leaves it", () => {
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectOneAndThree(editor);
+
+  // A raw step: `insertContentAt` would move the selection to the inserted text itself.
+  act(() => {
+    const { schema } = editor.state;
+    const zero = schema.nodes.paragraph!.create(null, schema.text("Zero"));
+    editor.view.dispatch(editor.state.tr.insert(0, zero));
+  });
+  expect(selectedTexts(editor)).toEqual(["One", "Three"]);
+
+  // "Three" is the last Block: remove it from outside the selection.
+  act(() => {
+    const { doc } = editor.state;
+    const last = doc.child(doc.childCount - 1);
+    editor.view.dispatch(
+      editor.state.tr.delete(doc.content.size - last.nodeSize, doc.content.size)
+    );
+  });
+  expect(selectedTexts(editor)).toEqual(["One"]);
+});
+
+test("the set survives JSON and the history bookmark", () => {
+  const { editor } = renderEditor({ defaultValue: FIVE });
+  caretIn(editor, "P1");
+  press(editor, "Escape");
+  modClick(editor, "P3");
+  modClick(editor, "P5");
+  const set = selection(editor) as BlockSelection;
+
+  const restored = BlockSelection.fromJSON(editor.state.doc, set.toJSON());
+  expect(restored.eq(set)).toBe(true);
+  expect(set.getBookmark().resolve(editor.state.doc).eq(set)).toBe(true);
+});
+
+test("the Tool state counts every Block of the set", () => {
+  const ref = createRef<RichTextEditorHandle>();
+  render(
+    <>
+      <RichTextEditor ref={ref} aria-label="Body" defaultValue={THREE} />
+      <Probe handle={ref} />
+    </>
+  );
+  selectOneAndThree(ref.current!.editor!);
+  expect(screen.getByTestId("count").textContent).toBe("2");
+});
+
+test("the Toolbar's Lists menu turns every row of a set, not only the first", async () => {
+  const user = userEvent.setup();
+  const { editor } = renderEditor({ defaultValue: THREE });
+  selectOneAndThree(editor);
+
+  await user.click(screen.getByRole("button", { name: /^Lists/ }));
+  const menu = await screen.findByRole("menu", { name: /^Lists/ });
+  await user.click(within(menu).getByRole("menuitemradio", { name: /Bulleted list/ }));
+
+  expect(editor.getHTML()).toBe(
+    "<ul><li><p>One</p></li></ul><p>Two</p><ul><li><p>Three</p></li></ul>"
+  );
+  expect(rowCount(editor)).toBe(2);
+});

@@ -6,7 +6,8 @@ import type { ComponentType } from "react";
 import type { UiMessages } from "../../i18n/messages.js";
 import { TableIcon, type IconProps } from "../../icons.js";
 import { DEFAULT_LOCALE } from "../../i18n/defaults.js";
-import { handleBlock } from "./blockCommands.js";
+import { handleBlock, handleRows, isScattered } from "./blockCommands.js";
+import { turnBlocksInto } from "./blockTurn.js";
 import { projectRecords, type ToolList, type ToolPopover } from "./toolDescriptor.js";
 import type { Tool } from "./tools.js";
 
@@ -256,6 +257,20 @@ export function applyInsertItem(
   range: Range | null,
   place: InsertPlace = "caret"
 ): void {
+  /*
+    A set of Blocks from different places (ADR-0083): a list or a quote wraps the range between
+    `$from` and `$to`, which is only the first row of the set, so the type goes row by row instead,
+    as "Format ›" of the handle does.
+  */
+  if (
+    !range &&
+    place === "caret" &&
+    item.section === "turnInto" &&
+    isScattered(editor.state.selection)
+  ) {
+    turnBlocksInto(editor, item, handleRows(editor.state));
+    return;
+  }
   let chain = editor.chain().focus();
   if (range) chain = chain.deleteRange(range);
   // An item with a popover only removes `/query`. The popover's content sets the Block.

@@ -198,17 +198,18 @@ test("the handle is out of the Tab order", () => {
 
 // --- Menu items ------------------------------------------------------------
 
-test("the menu: Add, Format, Move up, Move down, Duplicate, Delete — Delete in the danger tone", async () => {
+test("the menu: Add, Format, Select, Move up, Move down, Duplicate, Delete — Delete in the danger tone", async () => {
   const user = userEvent.setup();
   const { editor } = renderEditor({ defaultValue: "<p>One</p><p>Two</p>" });
   caretIn(editor, "Two");
 
   const menu = await openMenu(user);
   expect(itemsOf(menu).map((item) => item.name)).toEqual([
-    // "Select" is the way into Block selection, from the `blockSelection` Tool (`tools` has them all).
-    "Select",
     "Add",
     "Format",
+    // "Select" is the way into Block selection, from the `blockSelection` Tool (`tools` has them all).
+    // It leads the section that acts on the Block whole, above "Move up".
+    "Select",
     "Move up",
     "Move down",
     "Duplicate",
@@ -649,9 +650,9 @@ test("the handle and its menu speak the provider's language", async () => {
   await user.click(screen.getByRole("button", { name: t.blockActions }));
   const menu = await screen.findByRole("menu", { name: t.blockActions });
   expect(itemsOf(menu).map((item) => item.name)).toEqual([
-    t.blockSelect,
     t.blockAdd,
     t.blockFormat,
+    t.blockSelect,
     t.blockMoveUp,
     t.blockMoveDown,
     t.blockDuplicate,

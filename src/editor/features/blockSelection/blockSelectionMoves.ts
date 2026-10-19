@@ -2,12 +2,16 @@
 
 import type { NodeRange } from "@tiptap/pm/model";
 import { NodeSelection, Selection, type EditorState } from "@tiptap/pm/state";
-import { BlockSelection } from "../../core/blockSelection.js";
-import { blockUnitRange } from "../../core/blockUnit.js";
+import { BlockSelection, type BlockSpan } from "../../core/blockSelection.js";
+import { blockUnitAt, blockUnitRange } from "../../core/blockUnit.js";
 
 /**
  * The moves of Block selection (ADR-0077) as pure functions of the state: where `Esc`, `Shift+↑/↓`,
- * `↑/↓` and `Shift+click` lead. The plugin (`blockSelectionPlugin.ts`) only dispatches the result.
+ * `↑/↓`, `Shift+click` and `Cmd/Ctrl+click` lead. The plugin (`blockSelectionPlugin.ts`) only
+ * dispatches the result.
+ *
+ * In a set of Blocks from different places (ADR-0083) the moves with `Shift` change the active row
+ * only and keep the rest of the set; a plain arrow collapses the set onto one Block.
  */
 
 /**
@@ -22,15 +26,23 @@ export function selectCurrent(state: EditorState): BlockSelection | null {
   return range ? BlockSelection.ofRange(range, selection.anchor <= selection.head) : null;
 }
 
-/** The selection of the units `anchor` and `head` (indices in the row's parent) and everything between. */
-function selectSpan(range: NodeRange, anchor: number, head: number): BlockSelection | null {
+/**
+ * The selection of the units `anchor` and `head` (indices in the row's parent) and everything
+ * between, with `others` as the rest of the set.
+ */
+function selectSpan(
+  range: NodeRange,
+  anchor: number,
+  head: number,
+  others: readonly BlockSpan[] = []
+): BlockSelection | null {
   const { $from, depth } = range;
   const first = Math.min(anchor, head);
   const last = Math.max(anchor, head);
   const from = $from.posAtIndex(first, depth);
   const to = $from.posAtIndex(last + 1, depth);
   const [edgeAnchor, edgeHead] = head >= anchor ? [from, to] : [to, from];
-  return BlockSelection.tryCreate($from.doc, edgeAnchor, edgeHead);
+  return BlockSelection.tryCreate($from.doc, edgeAnchor, edgeHead, others);
 }
 
 /**
@@ -53,21 +65,22 @@ function containerUnit(range: NodeRange): NodeRange | null {
  * keys shrink the selection back.
  */
 export function extendSelection(selection: BlockSelection, dir: -1 | 1): BlockSelection {
-  const range = selection.nodeRange();
+  const range = selection.activeRange();
   const head = selection.headIndex + dir;
   if (head >= 0 && head < range.parent.childCount) {
-    return selectSpan(range, selection.anchorIndex, head) ?? selection;
+    return selectSpan(range, selection.anchorIndex, head, selection.others) ?? selection;
   }
   const up = containerUnit(range);
-  return up ? BlockSelection.ofRange(up, dir > 0) : selection;
+  return up ? BlockSelection.ofRange(up, dir > 0, selection.others) : selection;
 }
 
 /**
  * `↑/↓`: move the selection to the neighbouring Block. A single Block moves by one; a group
- * collapses onto the Block just beyond its edge. At the edge of the parent the selection stays.
+ * collapses onto the Block just beyond the active row's edge, and a set drops its other Blocks.
+ * At the edge of the parent the selection stays.
  */
 export function moveSelection(selection: BlockSelection, dir: -1 | 1): BlockSelection {
-  const range = selection.nodeRange();
+  const range = selection.activeRange();
   const index = dir < 0 ? range.startIndex - 1 : range.endIndex;
   if (index < 0 || index >= range.parent.childCount) return selection;
   return selectSpan(range, index, index) ?? selection;
@@ -85,7 +98,7 @@ export function extendToPosition(
 ): BlockSelection | null {
   const { doc } = state;
   if (pos < 0 || pos > doc.content.size) return null;
-  const range = selection.nodeRange();
+  const range = selection.activeRange();
   const anchorStart = range.$from.posAtIndex(selection.anchorIndex, range.depth);
   const anchorEnd = range.$from.posAtIndex(selection.anchorIndex + 1, range.depth);
   const forward = pos >= anchorStart;
@@ -93,7 +106,40 @@ export function extendToPosition(
   const pivot = doc.resolve(forward ? anchorStart : anchorEnd);
   const target = doc.resolve(pos);
   const units = blockUnitRange(pivot, target);
-  return units ? BlockSelection.ofRange(units, forward) : null;
+  return units ? BlockSelection.ofRange(units, forward, selection.others) : null;
+}
+
+/**
+ * `Cmd/Ctrl+click` (ADR-0083): the Block at `pos` joins the set, or leaves it when it is already
+ * selected. A Block never stands in the set together with its container: the clicked Block takes
+ * the place of a selected container around it, and pushes out the selected Blocks inside it. A Block
+ * that leaves passes the active row to the nearest selected Block above it (or below, at the top);
+ * the last one to leave ends the mode with the caret in it. `null` where `pos` is in no Block.
+ */
+export function toggleAtPosition(
+  state: EditorState,
+  selection: BlockSelection,
+  pos: number
+): Selection | null {
+  const { doc } = state;
+  if (pos < 0 || pos > doc.content.size) return null;
+  const unit = blockUnitAt(doc.resolve(pos));
+  if (!unit) return null;
+  const clicked = { from: unit.start, to: unit.end };
+  const units = selection.units();
+  const index = units.findIndex((span) => span.from === clicked.from && span.to === clicked.to);
+  if (index < 0) {
+    const others = units.filter((span) => span.to <= clicked.from || span.from >= clicked.to);
+    return BlockSelection.ofRange(unit, true, others);
+  }
+  const rest = units.filter((_, other) => other !== index);
+  const next = rest[index - 1] ?? rest[index];
+  if (!next) return caretAfter(BlockSelection.ofRange(unit));
+  return new BlockSelection(
+    doc.resolve(next.from),
+    doc.resolve(next.to),
+    rest.filter((span) => span !== next)
+  );
 }
 
 /**
