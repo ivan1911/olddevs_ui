@@ -203,6 +203,8 @@ test("the full preset lists every command in the documented order of groups", as
     "Link",
     "Find",
     "Find and replace",
+    "Fullscreen",
+    "Focus mode",
     "Go to the toolbar",
   ]);
 });
@@ -661,6 +663,30 @@ const SCENARIOS: Record<string, Scenario> = {
       expect((editor.state.selection as BlockSelection).count).toBe(1);
       press(editor, shortcutKeys("blockExtend"));
       expect((editor.state.selection as BlockSelection).count).toBe(2);
+    },
+  },
+  // The view modes (OLDSUI-316): the same key turns the mode on and off.
+  fullscreen: {
+    value: "<p>word</p>",
+    select: "word",
+    then: async (editor, pressed) => {
+      pressed();
+      expect(await screen.findByRole("dialog", { name: "Fullscreen" })).toBeDefined();
+      pressed();
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Fullscreen" })).toBeNull());
+      expect(editor.isDestroyed).toBe(false);
+    },
+  },
+  focusMode: {
+    value: "<p>one</p><p>two</p>",
+    select: "one",
+    then: (editor, pressed) => {
+      const dimmed = () => editor.view.dom.querySelectorAll(".rte-focus-dim").length;
+      expect(dimmed()).toBe(0);
+      pressed();
+      expect(dimmed()).toBe(1);
+      pressed();
+      expect(dimmed()).toBe(0);
     },
   },
   focusToolbar: {

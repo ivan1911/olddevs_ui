@@ -22,6 +22,9 @@ import type { InsertItem } from "./insertItems.js";
  * - A QUOTE IS ONE QUOTE, like a list: a run of neighbouring text Blocks becomes one quote of that many
  *   paragraphs (the kit's rule for quotes; "Wrap in › Quote" gives the same for any Blocks).
  *
+ * - A SET FROM DIFFERENT PLACES (ADR-0083) TURNS ROW BY ROW: a run never crosses a gap, so two rows of
+ *   paragraphs become two lists.
+ *
  * The whole group is one transaction, so it is one undo step.
  */
 
@@ -32,15 +35,17 @@ export function isTurnable(node: PmNode): boolean {
   );
 }
 
-/** The `id` shared by all text Blocks of the row, or `null` when they differ or there are none. */
-export function sharedBlockType(range: NodeRange): string | null {
+/** The `id` shared by all text Blocks of the rows, or `null` when they differ or there are none. */
+export function sharedBlockType(rows: readonly NodeRange[]): string | null {
   let shared: string | null = null;
-  for (let index = range.startIndex; index < range.endIndex; index++) {
-    const node = range.parent.child(index);
-    if (!isTurnable(node)) continue;
-    const type = blockTypeOf(node);
-    if (type === null || (shared !== null && shared !== type)) return null;
-    shared = type;
+  for (const range of rows) {
+    for (let index = range.startIndex; index < range.endIndex; index++) {
+      const node = range.parent.child(index);
+      if (!isTurnable(node)) continue;
+      const type = blockTypeOf(node);
+      if (type === null || (shared !== null && shared !== type)) return null;
+      shared = type;
+    }
   }
   return shared;
 }
@@ -67,15 +72,17 @@ function runsOf(range: NodeRange): { from: number; to: number }[] {
 }
 
 /**
- * Turn the Blocks of the row into the item's type. `false` means nothing in the row can change.
+ * Turn the Blocks of the rows into the item's type. `false` means nothing in them can change.
  * The item must not open a popover (`item.popover`): those are insertions, not types.
  */
-export function turnBlocksInto(editor: Editor, item: InsertItem, range: NodeRange): boolean {
-  const runs = runsOf(range);
+export function turnBlocksInto(
+  editor: Editor,
+  item: InsertItem,
+  rows: readonly NodeRange[]
+): boolean {
+  const runs = rows.flatMap(runsOf);
   if (runs.length === 0 || item.popover) return false;
   const before = editor.state.selection;
-  const start = range.start;
-  const end = range.end;
   const chain = editor.chain().focus();
   // The last run first: an edit shifts the positions after it, never before it.
   for (const run of [...runs].reverse()) {
@@ -91,12 +98,7 @@ export function turnBlocksInto(editor: Editor, item: InsertItem, range: NodeRang
     .command(({ tr }) => {
       if (before instanceof BlockSelection) {
         // Outward: the units are now whatever the edit made of them (a list around the items).
-        const next = BlockSelection.tryCreate(
-          tr.doc,
-          tr.mapping.map(before.forward ? start : end, -1),
-          tr.mapping.map(before.forward ? end : start, 1)
-        );
-        tr.setSelection(next ?? before.map(tr.doc, tr.mapping));
+        tr.setSelection(before.mapOutward(tr.doc, tr.mapping));
       } else {
         tr.setSelection(before.map(tr.doc, tr.mapping));
       }

@@ -95,8 +95,8 @@ test("the full preset offers the rare marks, Code block, Quote and Clear formatt
     // A display mode of the Document, not formatting: the last section, without a shortcut (OLDSUI-278).
     { role: "menuitemcheckbox", name: "Invisible characters", checked: false, shortcut: null },
     // The other display modes share the section (OLDSUI-312).
-    { role: "menuitemcheckbox", name: "Focus mode", checked: false, shortcut: null },
-    { role: "menuitemcheckbox", name: "Fullscreen", checked: false, shortcut: null },
+    { role: "menuitemcheckbox", name: "Focus mode", checked: false, shortcut: "Ctrl+Shift+J" },
+    { role: "menuitemcheckbox", name: "Fullscreen", checked: false, shortcut: "Ctrl+Shift+F" },
   ]);
 });
 
@@ -118,8 +118,8 @@ test("on Apple the shortcuts are signed with ⌘", async () => {
     null,
     "⌘+\\",
     null,
-    null,
-    null,
+    "⌘+⇧+J",
+    "⌘+⇧+F",
   ]);
   // Key symbols are set in a proportional font, as in \`Kbd\`: in a monospace stack the \`⇧\`
   // glyph is missing, and the fallback glyph comes out thin (OLDSUI-117).

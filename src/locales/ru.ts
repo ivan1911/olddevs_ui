@@ -746,6 +746,7 @@ export const messages: UiMessages = {
     blocksCopied: ({ count }) => `Скопировано блоков: ${count}`,
     blocksCut: ({ count }) => `Вырезано блоков: ${count}`,
     blocksReplaced: ({ count }) => `Заменено блоков: ${count}`,
+    blocksPasteScattered: "Нельзя вставить поверх блоков из разных мест",
     fullscreen: "Во весь экран",
     fullscreenExit: "Свернуть",
     fullscreenOpened: "Редактор развёрнут во весь экран",

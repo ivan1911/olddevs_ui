@@ -5,15 +5,17 @@ import { Plugin, PluginKey, type EditorState } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
 import { hasOpenAriaOverlay } from "../../../lib/overlay-layer.js";
 import type { UiMessages } from "../../../i18n/messages.js";
-import { duplicateBlock, moveBlock } from "../../core/blockCommands.js";
-import { BlockSelection, removeUnits } from "../../core/blockSelection.js";
+import { duplicateBlock, isScattered, moveBlock } from "../../core/blockCommands.js";
+import { BlockSelection, removeRows } from "../../core/blockSelection.js";
 import type { FieldNotice } from "../../core/fieldNotice.js";
+import { isApple } from "../../core/shortcuts.js";
 import {
   caretAfter,
   extendSelection,
   extendToPosition,
   moveSelection,
   selectCurrent,
+  toggleAtPosition,
 } from "./blockSelectionMoves.js";
 
 /**
@@ -22,13 +24,15 @@ import {
  * way in, the keys inside, and the look.
  *
  * - WAY IN: `Esc` in the text selects the current Block; the "Select" item of the Block handle's
- *   menu does the same (`selectBlocks`); `Shift+↑/↓` and `Shift+click` grow it.
+ *   menu does the same (`selectBlocks`); `Shift+↑/↓` and `Shift+click` grow it. `Cmd/Ctrl+click`
+ *   adds a Block from anywhere to the set or takes it out (ADR-0083).
  * - WAY OUT: `Esc` again puts the caret at the end of the first Block, and that `Esc` goes on to the
  *   window around the Editor, so it closes a `Dialog` or a `Drawer`. Enter, and a click into the
  *   text, bring the caret back too.
  * - KEYS INSIDE: `Backspace` and `Delete` remove the Blocks, `⌘⇧D`, `⌥⇧↑/↓` and `⌘/` act on the
  *   group, a printable character is ignored (one key must not erase a section), `⌘C`, `⌘X` and `⌘V`
  *   take the Blocks whole. Copying is the engine's own: the selection serializes as whole Blocks.
+ *   Over a set with gaps `⌘⇧D`, `⌥⇧↑/↓` and `⌘V` do nothing: they are written for one row.
  *
  * `readOnly` keeps the selection and copying, and no key that changes the Document; `disabled` does
  * nothing at all.
@@ -168,16 +172,9 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
           decorations: (state) => {
             const { selection } = state;
             if (!(selection instanceof BlockSelection)) return null;
-            const range = selection.nodeRange();
-            const marks: Decoration[] = [];
-            let pos = range.start;
-            for (let index = range.startIndex; index < range.endIndex; index++) {
-              const node = range.parent.child(index);
-              marks.push(
-                Decoration.node(pos, pos + node.nodeSize, { class: SELECTED_BLOCK_CLASS })
-              );
-              pos += node.nodeSize;
-            }
+            const marks = selection
+              .units()
+              .map(({ from, to }) => Decoration.node(from, to, { class: SELECTED_BLOCK_CLASS }));
             return DecorationSet.create(state.doc, marks);
           },
 
@@ -235,13 +232,14 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
               ) {
                 event.preventDefault();
                 const tr = state.tr;
-                if (removeUnits(tr, selection.nodeRange())) {
+                if (removeRows(tr, selection.rows())) {
                   view.dispatch(tr.scrollIntoView());
                   announce((m) => m.blocksDeleted({ count }));
                 }
                 return true;
               }
-              // `⌘⇧D` and `⌥⇧↑/↓` are the Block commands, run here to announce their result.
+              // `⌘⇧D` and `⌥⇧↑/↓` are the Block commands, run here to announce their result. A set
+              // with gaps has no row for them (`false`), and the key is still taken.
               if (mod && event.shiftKey && !event.altKey && event.key.toLowerCase() === "d") {
                 event.preventDefault();
                 if (duplicateBlock()(state, view.dispatch)) {
@@ -276,13 +274,17 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
             /*
               `Shift+click` on another Block draws the selection to it; on a touch screen a tap does
               the same, except in the text of a selected Block, which puts the caret there as usual.
+              `Cmd+click` (`Ctrl+click` off a Mac, the modifier ProseMirror selects a node with) adds
+              the Block to the set or takes it out (ADR-0083); in the text it stays the engine's.
               The Block is found from the DOM node under the pointer, not from coordinates.
             */
             mousedown: (view, event) => {
               const { selection } = view.state;
               if (!(selection instanceof BlockSelection) || isDisabled(view)) return false;
               const touch = pointer === "touch";
-              if (!event.shiftKey && !touch) return false;
+              const toggle =
+                !touch && !event.shiftKey && (isApple() ? event.metaKey : event.ctrlKey);
+              if (!event.shiftKey && !touch && !toggle) return false;
               const target = event.target;
               if (!(target instanceof Node) || target === view.dom || !view.dom.contains(target)) {
                 return false;
@@ -292,6 +294,13 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
                 pos = view.posAtDOM(target, 0);
               } catch {
                 return false;
+              }
+              if (toggle) {
+                const next = toggleAtPosition(view.state, selection, pos);
+                if (!next) return false;
+                event.preventDefault();
+                view.dispatch(view.state.tr.setSelection(next).scrollIntoView());
+                return true;
               }
               if (touch && !event.shiftKey && pos >= selection.from && pos <= selection.to) {
                 return false;
@@ -327,8 +336,14 @@ export const BlockSelectionExtension = Extension.create<BlockSelectionOptions>({
               }
               return false;
             },
-            paste: (view) => {
+            paste: (view, event) => {
               const { selection } = view.state;
+              if (isScattered(selection)) {
+                // There is no one place for the pasted content in a set with gaps (ADR-0083).
+                event.preventDefault();
+                if (view.editable && !isDisabled(view)) announce((m) => m.blocksPasteScattered);
+                return true;
+              }
               if (selection instanceof BlockSelection && view.editable && !isDisabled(view)) {
                 const count = selection.count;
                 pending = { text: (m) => m.blocksReplaced({ count }), at: Date.now() };

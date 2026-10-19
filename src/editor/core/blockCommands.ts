@@ -7,10 +7,11 @@ import {
   PluginKey,
   TextSelection,
   type EditorState,
+  type Selection,
   type Transaction,
 } from "@tiptap/pm/state";
 import { StepMap } from "@tiptap/pm/transform";
-import { BlockSelection, removeUnits } from "./blockSelection.js";
+import { BlockSelection, removeRows } from "./blockSelection.js";
 import {
   blockUnitRange,
   inTable,
@@ -76,11 +77,28 @@ export function handleBlock(state: Pick<EditorState, "selection">): NodeRange | 
  * the gap between Blocks gives `null`.
  */
 export function handleBlocks(state: Pick<EditorState, "selection">): NodeRange | null {
+  // A set from different places (ADR-0083): the handle stands at its first row.
   const { selection } = state;
   if (selection instanceof BlockSelection) return selection.nodeRange();
   const { $from, $to } = selection;
   const range = $from.blockRange($to, isBlockContainer);
   return onlyUnits(range && range.startIndex < range.endIndex ? range : null);
+}
+
+/**
+ * Every row the handle's menu acts on: the rows of a Block selection, a set from different places
+ * included (ADR-0083), or the one row of `handleBlocks`. Empty where the handle has nothing.
+ */
+export function handleRows(state: Pick<EditorState, "selection">): NodeRange[] {
+  const { selection } = state;
+  if (selection instanceof BlockSelection) return selection.rows();
+  const range = handleBlocks(state);
+  return range ? [range] : [];
+}
+
+/** Whether the selection is a set of Blocks with gaps, where the actions over one row do nothing. */
+export function isScattered(selection: Selection): boolean {
+  return selection instanceof BlockSelection && selection.scattered;
 }
 
 /**
@@ -91,9 +109,11 @@ export function handleBlocks(state: Pick<EditorState, "selection">): NodeRange |
  * selection across two columns takes the whole Column layout. A table is one Block as a whole,
  * even if its cell contains a list. A selection across several Blocks takes all of them: the row
  * is counted where the start and the end of the selection diverge. A caret in the gap between
- * Blocks is inside no Block — `null`. Block selection is exactly its units.
+ * Blocks is inside no Block — `null`. Block selection is exactly its units; a set with gaps has no
+ * one row to move or duplicate — `null` (ADR-0083).
  */
 function blockRange(state: EditorState, scope: BlockScope): NodeRange | null {
+  if (isScattered(state.selection)) return null;
   if (scope === "handle") return handleBlocks(state);
   const { $from, $to } = state.selection;
   return blockUnitRange($from, $to);
@@ -155,17 +175,18 @@ export function moveBlock(dir: -1 | 1, scope: BlockScope = "selection"): Command
 }
 
 /**
- * The handle's "Delete" — the whole Block, or all the Blocks of the row the handle stands on; the
- * caret goes to the neighbour above, and for the first Block to the neighbour below. Every Block of
- * a container yields its place to an empty default Block (a paragraph): the Schema does not allow
- * an empty Document, and an empty column is no better.
+ * The handle's "Delete" — the whole Block, or all the Blocks of the row the handle stands on (every
+ * row of a set from different places, ADR-0083); the caret goes to the neighbour above, and for the
+ * first Block to the neighbour below. Every Block of a container yields its place to an empty
+ * default Block (a paragraph): the Schema does not allow an empty Document, and an empty column is
+ * no better.
  */
 export const deleteBlock: Command = (state, dispatch) => {
-  const range = handleBlocks(state);
-  if (!range) return false;
+  const rows = handleRows(state);
+  if (rows.length === 0) return false;
   if (dispatch) {
     const tr = state.tr;
-    if (!removeUnits(tr, range)) return false;
+    if (!removeRows(tr, rows)) return false;
     dispatch(tr.scrollIntoView());
   }
   return true;

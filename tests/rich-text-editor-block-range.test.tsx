@@ -98,9 +98,9 @@ test("a selection across Blocks keeps the handle, and its menu is for a group", 
 
   // No "Add" and no tool actions: those are written for one Block. "Format" and "Wrap in" take the group.
   expect(names(menu)).toEqual([
-    "Select",
     "Format",
     "Wrap in",
+    "Select",
     "Move up",
     "Move down",
     "Duplicate",

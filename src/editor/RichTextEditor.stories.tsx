@@ -4436,12 +4436,14 @@ function useRangeDemo(
     from: string;
     to?: string;
     extend?: number;
+    /** Blocks added to the set with `Cmd/Ctrl+click`, by their text (ADR-0083). */
+    toggle?: readonly string[];
     open?: boolean;
     /** The accessible name of the "⋮" button: it comes from the catalog, so it is not English in `ru`. */
     handleName?: string;
   }
 ) {
-  const { from, to, extend = 0, open = false, handleName = "Block actions" } = options;
+  const { from, to, extend = 0, toggle = [], open = false, handleName = "Block actions" } = options;
   useEffect(() => {
     let frame = 0;
     const press = () => {
@@ -4477,6 +4479,15 @@ function useRangeDemo(
             new KeyboardEvent("keydown", { key: "ArrowDown", shiftKey: true, bubbles: true })
           );
         }
+        // Both modifiers: the Tool reads the one of the platform (`Cmd` on a Mac, `Ctrl` elsewhere).
+        for (const text of toggle) {
+          const target = Array.from(editor.view.dom.querySelectorAll("p")).find(
+            (node) => node.textContent === text
+          );
+          target?.dispatchEvent(
+            new MouseEvent("mousedown", { metaKey: true, ctrlKey: true, bubbles: true })
+          );
+        }
       }
       if (open) frame = requestAnimationFrame(press);
     };
@@ -4498,6 +4509,7 @@ function RangeDemo({
   from,
   to,
   extend,
+  toggle,
   open,
   handleName,
   ...props
@@ -4506,11 +4518,12 @@ function RangeDemo({
   from: string;
   to?: string;
   extend?: number;
+  toggle?: readonly string[];
   open?: boolean;
   handleName?: string;
 } & Partial<RichTextEditorProps>) {
   const ref = useRef<RichTextEditorHandle>(null);
-  useRangeDemo(ref, { from, to, extend, open, handleName });
+  useRangeDemo(ref, { from, to, extend, toggle, open, handleName });
   return (
     <div className="h-[520px] max-w-[640px]">
       <RichTextEditor ref={ref} aria-label="Document" defaultValue={document} {...props} />
@@ -4536,7 +4549,7 @@ export const BlockHandleOverRange: Story = {
 };
 
 /**
- * The menu of the handle over a range: Select, Format ›, Wrap in ›, Move up, Move down, Duplicate and
+ * The menu of the handle over a range: Format ›, Wrap in ›, Select, Move up, Move down, Duplicate and
  * Delete. No "Add ›": that item is for one Block. Every item is one edit for undo, and the screen
  * reader hears the result ("Blocks deleted: 2").
  */
@@ -4554,6 +4567,28 @@ export const BlockHandleOverRangeMenu: Story = {
  */
 export const BlockSelection: Story = {
   render: () => <RangeDemo from="Freeze the scope on Monday." extend={1} />,
+};
+
+/**
+ * A set from different places (ADR-0083): in the mode, `Cmd+click` (`Ctrl+click` off a Mac) adds a
+ * Block from anywhere, here a paragraph and a list item past a gap. `Backspace`, `⌘C`, `⌘X` and
+ * "Format ›" act on every Block; moving, duplicating, wrapping and `⌘V` are unavailable, since the
+ * set has no one row to act on.
+ */
+export const BlockSelectionScattered: Story = {
+  render: () => (
+    <RangeDemo
+      from="Freeze the scope on Monday."
+      toggle={["Ship on Wednesday.", "Update the changelog"]}
+    />
+  ),
+};
+
+/** The handle's menu over a set from different places: Move, Duplicate and Wrap in are unavailable. */
+export const BlockSelectionScatteredMenu: Story = {
+  render: () => (
+    <RangeDemo from="Freeze the scope on Monday." toggle={["Ship on Wednesday."]} open />
+  ),
 };
 
 /** Block selection on the Paper sheet: the same highlight on a light surface in any theme. */

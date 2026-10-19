@@ -3,6 +3,7 @@
 import { Fragment, type Node as PmNode, type NodeRange } from "@tiptap/pm/model";
 import { Selection, TextSelection, type Transaction } from "@tiptap/pm/state";
 import { openDetailsOnInsert } from "../features/details/details.js";
+import { isScattered } from "./blockCommands.js";
 import { BlockSelection } from "./blockSelection.js";
 import { unitNodes } from "./blockUnit.js";
 
@@ -49,7 +50,8 @@ export function planWrap(range: NodeRange, kind: WrapKind, persist = false): PmN
  * Wrap the units into the container. The caret goes into the title of a Details Block (it is
  * empty, and the author is expected to name it). In the other two the selection stays what it was:
  * a Block selection now holds the new container, a text selection becomes a caret at the start of
- * its first Block. `false` means the Schema does not allow it, and nothing changed.
+ * its first Block. `false` means the Schema does not allow it, or the selection is a set from
+ * different places that has no one row to wrap (ADR-0083), and nothing changed.
  */
 export function wrapUnits(
   tr: Transaction,
@@ -57,6 +59,7 @@ export function wrapUnits(
   kind: WrapKind,
   persist = false
 ): boolean {
+  if (isScattered(tr.selection)) return false;
   const node = planWrap(range, kind, persist);
   if (!node) return false;
   const blocks = tr.selection instanceof BlockSelection;

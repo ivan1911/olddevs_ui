@@ -109,6 +109,11 @@ export interface EditorExtensionOptions {
    * browser.
    */
   openSearch?: (replace: boolean) => boolean;
+  /**
+   * `Mod+Shift+F` — expand the field to the whole window or collapse it (the `fullscreen` Tool). The
+   * layer is held by `RichTextEditor`; `false` means nothing changed (Source mode, a disabled field).
+   */
+  toggleFullscreen?: () => boolean;
 }
 
 /**

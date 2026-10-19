@@ -12,9 +12,10 @@ const loadBlockSelection = () => import("./blockSelectionChunk.js");
 
 /**
  * Block selection on the Tool's description (ADR-0077): `Esc` in the text selects the current
- * Block, `Shift+↑/↓` and `Shift+click` grow the selection, and the keys and the clipboard then act on
- * the Blocks. The engine is one extension (`blockSelectionExtension.ts`); the selection itself is
- * the core's `BlockSelection`, which the Block handle reads in every Editor.
+ * Block, `Shift+↑/↓` and `Shift+click` grow the selection, `Cmd/Ctrl+click` adds a Block from
+ * anywhere to the set (ADR-0083), and the keys and the clipboard then act on the Blocks. The engine
+ * is one extension (`blockSelectionExtension.ts`); the selection itself is the core's
+ * `BlockSelection`, which the Block handle reads in every Editor.
  *
  * The extension is lazy (ADR-0058, item 11.1): it is outside `basic`, and the keys, the decorations
  * and the moves are the whole Tool, so a Loader brings them and the start chunk pays only for this

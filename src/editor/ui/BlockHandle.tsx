@@ -27,6 +27,7 @@ import {
   deleteBlock,
   duplicateBlock,
   handleBlocks,
+  handleRows,
   handleShortcutsMatch,
   moveBlock,
 } from "../core/blockCommands.js";
@@ -215,13 +216,16 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     selector: ({ editor: current }) => {
       const block = current.isEditable ? handleBlocks(current.state) : null;
       if (!block) return null;
-      const nodes = unitNodes(block);
+      const rows = handleRows(current.state);
+      const nodes = rows.flatMap(unitNodes);
       const node = nodes[0]!;
       const count = nodes.length;
       // A group acts on several Blocks (ADR-0077); one selected Block is "picked", and its menu has
       // everything of a single Block's menu plus "Wrap in ›".
       const picked = current.state.selection instanceof BlockSelection;
       const group = count > 1;
+      // A set from different places (ADR-0083): no one row to move, duplicate or wrap.
+      const scattered = rows.length > 1;
       const several = group || picked;
       // Column layout: its variant is on the handle of the Column layout itself (selected
       // as a whole) and on the handle of a Block in its column.
@@ -246,14 +250,17 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
         canSelect: tools.has("blockSelection") && !picked,
         type: blockTypeOf(node),
         // The type shared by all text Blocks of a group, for the mark in "Format ›".
-        sharedType: several ? sharedBlockType(block) : null,
+        sharedType: several ? sharedBlockType(rows) : null,
         // Something in the row changes under "Format ›" (a table, an image and containers do not).
         turnable: several && nodes.some(isTurnable),
         // The containers the Schema allows around these Blocks; only for a row that can be wrapped.
         wraps: several
           ? (["wrapper", "blockquote", "details"] as const)
               .filter((kind) => tools.has(kind))
-              .map((kind) => ({ kind, allowed: planWrap(block, kind, detailsPersist) !== null }))
+              .map((kind) => ({
+                kind,
+                allowed: !scattered && planWrap(block, kind, detailsPersist) !== null,
+              }))
           : [],
         // The "can be turned into" trait of a custom Block (ADR-0058, item 1.4).
         turnInto: node.type.spec.turnInto === true,
@@ -275,8 +282,9 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
                 })
               )
               .map((action) => action.id),
-        first: block.startIndex === 0,
-        last: block.endIndex === block.parent.childCount,
+        scattered,
+        first: scattered || block.startIndex === 0,
+        last: scattered || block.endIndex === block.parent.childCount,
         keys: handleShortcutsMatch(current.state),
       };
     },
@@ -352,9 +360,6 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
   ];
 
   const blockItems: FormatMenuItem[] = [];
-  if (state.canSelect) {
-    blockItems.push({ id: "select", label: messages.blockSelect, icon: BlockSelectIcon });
-  }
   if (addItems.length > 0 && !state.group) {
     blockItems.push({
       id: "add",
@@ -491,6 +496,10 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
       {
         id: "move",
         items: [
+          // "Select" leads the section of what acts on the Block as a whole: select, move, duplicate.
+          ...(state.canSelect
+            ? [{ id: "select", label: messages.blockSelect, icon: BlockSelectIcon }]
+            : []),
           {
             id: "moveUp",
             label: messages.blockMoveUp,
@@ -510,6 +519,7 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
             label: messages.blockDuplicate,
             icon: DuplicateIcon,
             keys: keys.duplicate ? findShortcutKeys("duplicateBlock") : undefined,
+            disabled: state.scattered,
           },
         ],
       },
@@ -620,10 +630,10 @@ export function BlockHandle({ editor, tools, openRef }: BlockHandleProps) {
     }
     if (kind === "format") {
       const item = formatItems.find((candidate) => candidate.id === itemId);
-      const range = handleBlocks(editor.state);
-      if (several && item && range) {
+      const rows = handleRows(editor.state);
+      if (several && item && rows.length > 0) {
         // The same type in every text Block of the group changes nothing, as with "¶".
-        if (item.id !== state.sharedType && turnBlocksInto(editor, item, range)) {
+        if (item.id !== state.sharedType && turnBlocksInto(editor, item, rows)) {
           announce(messages.blocksChanged({ count: state.count }));
         } else editor.commands.focus();
         return;

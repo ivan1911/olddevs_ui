@@ -944,6 +944,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           onNotice: setNotice,
           editorMessages: () => imageMessagesRef.current,
           openSearch: (replace) => openSearchRef.current(replace),
+          toggleFullscreen: () => setFullscreenRef.current(!fullscreenRef.current),
           image: {
             /*
               The popover opens one frame later. The Slash menu item runs its command in a chain

@@ -6,7 +6,7 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { Editor } from "@tiptap/core";
 import { BlockSelection } from "../../core/blockSelection.js";
 import { LIST_ITEMS, viewUnitRange } from "../../core/blockUnit.js";
-import { FOCUS_MODE_KEY } from "./focusModeState.js";
+import { FOCUS_MODE_KEY, toggleFocusMode } from "./focusModeState.js";
 
 /**
  * The focus mode (ADR-0082): everything outside the Block with the caret is shown in secondary
@@ -126,6 +126,11 @@ export const FocusModeExtension = Extension.create<FocusModeOptions>({
   name: "focusMode",
 
   addOptions: () => ({ enabled: false }),
+
+  // `Mod+Shift+J`: the same switch as the "Focus mode" item of the "…" menu (OLDSUI-316).
+  addKeyboardShortcuts() {
+    return { "Mod-Shift-j": () => toggleFocusMode(this.editor) };
+  },
 
   addProseMirrorPlugins() {
     const { editor, options } = this;

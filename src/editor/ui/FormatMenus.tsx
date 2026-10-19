@@ -803,8 +803,26 @@ export function MoreFormatMenu({
                 },
               ]
             : []),
-          ...(focus ? [{ id: "focusMode", label: messages.focusMode, icon: FocusModeIcon }] : []),
-          ...(full ? [{ id: "fullscreen", label: messages.fullscreen, icon: ExpandIcon }] : []),
+          ...(focus
+            ? [
+                {
+                  id: "focusMode",
+                  label: messages.focusMode,
+                  icon: FocusModeIcon,
+                  keys: findShortcutKeys("focusMode"),
+                },
+              ]
+            : []),
+          ...(full
+            ? [
+                {
+                  id: "fullscreen",
+                  label: messages.fullscreen,
+                  icon: ExpandIcon,
+                  keys: findShortcutKeys("fullscreen"),
+                },
+              ]
+            : []),
         ],
       },
     ] satisfies FormatMenuSection[]
