@@ -748,6 +748,7 @@ export const messages: UiMessages = {
     blocksReplaced: ({ count }) => `Заменено блоков: ${count}`,
     blocksPasteScattered: "Нельзя вставить поверх блоков из разных мест",
     fullscreen: "Во весь экран",
+    fullWidth: "Во всю ширину",
     fullscreenExit: "Свернуть",
     fullscreenOpened: "Редактор развёрнут во весь экран",
     fullscreenClosed: "Редактор свёрнут",

@@ -26,6 +26,7 @@ import {
   FootnoteIcon,
   InvisibleCharactersIcon,
   ExpandIcon,
+  FullWidthIcon,
   FocusModeIcon,
   ListIcon,
   MoreIcon,
@@ -598,12 +599,23 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
    * `RichTextEditor`, so the host passes it and the toggle. Without the prop, or without the
    * `fullscreen` Tool in `tools`, there is no item.
    */
-  fullscreen?: { open: boolean; onToggle: () => void };
+  fullscreen?: FullscreenMenuState;
   /**
    * The "Focus mode" item of the "view" section: the engine holds the mode, so the prop only says
    * "the item is there". Without the `focus` Tool in `tools` there is no item, even when `true`.
    */
   focusMode?: boolean;
+}
+
+/**
+ * What the host passes for the items of the `fullscreen` Tool: the layer's state and its toggle, and
+ * the same for "Full width" (OLDSUI-318), which is an item only while the layer is open.
+ */
+export interface FullscreenMenuState {
+  open: boolean;
+  onToggle: () => void;
+  fullWidth: boolean;
+  onToggleFullWidth: () => void;
 }
 
 /**
@@ -633,7 +645,9 @@ export interface MoreFormatMenuProps extends FormatMenuHostProps {
  *
  * THE "VIEW" SECTION also holds "Focus mode" and "Fullscreen" (ADR-0082), the display modes of the
  * Document: unlike the invisible characters, they are in the selection menu's "…" too, because with
- * `toolbar="bubble"` that menu is the only way in. Each is a checkbox item.
+ * `toolbar="bubble"` that menu is the only way in. Each is a checkbox item. "Full width" follows
+ * "Fullscreen" only while the layer is open: on the page the field's width is the page's, and the item
+ * would do nothing (OLDSUI-318).
  *
  * INVISIBLE CHARACTERS is the first item of that section, and only on the fixed Toolbar (the `invisibleCharacters`
  * prop). It is a display mode of the Document, not formatting of the selection, so it is separated
@@ -792,6 +806,7 @@ export function MoreFormatMenu({
           ...(state.invisible ? ["invisibleCharacters"] : []),
           ...(state.focus ? ["focusMode"] : []),
           ...(full && fullscreen.open ? ["fullscreen"] : []),
+          ...(full && fullscreen.open && fullscreen.fullWidth ? ["fullWidth"] : []),
         ],
         items: [
           ...(view
@@ -823,6 +838,10 @@ export function MoreFormatMenu({
                 },
               ]
             : []),
+          // No shortcut: the width is switched rarely, and a free key is worth more (OLDSUI-318).
+          ...(full && fullscreen.open
+            ? [{ id: "fullWidth", label: messages.fullWidth, icon: FullWidthIcon }]
+            : []),
         ],
       },
     ] satisfies FormatMenuSection[]
@@ -846,6 +865,14 @@ export function MoreFormatMenu({
     }
     // The layer moves the Document and focuses it itself; a `focus` here would run in the old place.
     if (key === "fullscreen") fullscreen?.onToggle();
+    /*
+      The Document stays where it is, only wider or narrower: focus goes back into it, but without
+      scrolling to the caret, so the reflowed text keeps the place the author was reading.
+    */
+    if (key === "fullWidth") {
+      fullscreen?.onToggleFullWidth();
+      editor.commands.focus(null, { scrollIntoView: false });
+    }
   };
 
   return (

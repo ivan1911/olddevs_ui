@@ -121,6 +121,7 @@ import { DeleteIcon, SearchIcon } from "@olddevs/ui/icons";
 | Details Block of the Editor         | `DetailsIcon`                                   | `ChevronDownIcon`              |
 | Select Blocks whole in the Editor   | `BlockSelectIcon`                               | `SelectIcon`                   |
 | Focus mode of the Editor            | `FocusModeIcon`                                 | `ExpandIcon`                   |
+| Full width of the Editor's layer    | `FullWidthIcon`                                 | `ColumnWiderIcon`              |
 | Editor formula, inline and block    | `FormulaIcon`, `BlockFormulaIcon`               | `CodeIcon`                     |
 | Date mention in the Editor          | `DateMentionIcon`                               | `CalendarIcon`                 |
 | Show invisible characters           | `InvisibleCharactersIcon`                       | `ParagraphIcon`                |
@@ -242,6 +243,8 @@ Video added `VideoIcon` — lucide's `SquarePlay`: a square with a play triangle
 Block selection added `BlockSelectIcon` — lucide's `SquareDashed`: a dashed frame, the "Select" item of the Block handle menu. This is not `SelectIcon`: those are the up-down chevrons of a select field, and the frame matches how the Editor highlights selected Blocks (ADR-0049).
 
 The focus mode added `FocusModeIcon` — lucide's `Focus`: a viewfinder with a dot, the "Focus mode" item of the Editor's "…" menu. Its neighbor "Fullscreen" takes the existing `ExpandIcon`, and the visible "Collapse" button takes `CollapseIcon` (ADR-0049).
+
+"Full width" of the fullscreen layer added `FullWidthIcon` — lucide's `MoveHorizontal`: arrows to both sides, the Document reaching the window's edges. This is not `ColumnWiderIcon`: that one widens a table column (ADR-0049).
 
 The first iteration of the table made do with two icons for four directions
 (`AddRowIcon`, `AddColumnIcon`) and an icon for the separate "Table

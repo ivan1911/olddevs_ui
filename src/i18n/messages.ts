@@ -1212,6 +1212,8 @@ export interface UiMessages {
      * reader hears when the mode changes (Field notice, tone `status`).
      */
     fullscreen: string;
+    /** The "Full width" checkbox item of the "…" menu in the layer (OLDSUI-318). */
+    fullWidth: string;
     fullscreenExit: string;
     fullscreenOpened: string;
     fullscreenClosed: string;

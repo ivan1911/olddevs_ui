@@ -67,6 +67,8 @@ test("the options of another tool, an unknown option and a wrong value do not co
   tool("invisibleCharacters", { visible: "yes" });
   // @ts-expect-error `persist` is an option of the Details Block, not of invisible characters
   tool("invisibleCharacters", { persist: true });
+  // @ts-expect-error `fullWidth` is a boolean
+  tool("fullscreen", { fullWidth: "yes" });
 });
 
 test("typography takes the quote set and a rule as false or a string (OLDSUI-279)", () => {

@@ -447,6 +447,9 @@ const FULLSCREEN_SHELL_CLASS =
   "flex min-h-0 flex-1 flex-col rounded-none border-0 shadow-none " +
   "focus-within:border-transparent focus-within:ring-0";
 
+// "Full width" of the layer: the Document across the window, with margins that grow with it (OLDSUI-318).
+const FULL_WIDTH_CLASS = "px-3 md:px-9 xl:px-21";
+
 // Frame of the fixed Toolbar and of its Skeleton (the reason for this markup is below).
 const TOOLBAR_SHELL_CLASS =
   "bg-bg-2 border-line-soft rounded-t-control sticky top-[var(--topbar-h,0px)] z-[1] " +
@@ -686,6 +689,16 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const [layer, setLayer] = useState<{ height: number; closing: boolean } | null>(null);
     /** The mirror of "the layer is open" for the Commands, which hold a closure from an earlier render. */
     const fullscreenRef = useRef(false);
+    /*
+      "Full width" of the layer (OLDSUI-318): the Document across the window instead of the 60rem
+      column. A view preference of this instance: it outlives collapsing, and is kept outside the layer
+      too. The option gives only the starting value; between page loads the screen keeps it.
+    */
+    const [fullWidth, setFullWidth] = useState(
+      () => toolOptions(enabledTools, "fullscreen")?.fullWidth === true
+    );
+    // The item and the Command toggle it the same way.
+    const toggleFullWidth = () => setFullWidth((previous) => !previous);
     const pageScrollRef = useRef({ x: 0, y: 0 });
     /*
       Focus is moving between the field's two places. Removing the focused Document from the DOM may
@@ -1480,6 +1493,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       jumpToc: (index) => tocJumpRef.current?.(index) ?? false,
       setFullscreen: (next) => setFullscreenRef.current(next),
       fullscreenOpen: () => fullscreenRef.current,
+      toggleFullWidth: () => {
+        toggleFullWidth();
+        return true;
+      },
       disabled: () => disabledRef.current,
     };
 
@@ -1565,8 +1582,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const searchOpen = searchPanel !== null;
     const fullscreenOpen = layer !== null && !layer.closing;
     useEffect(
-      () => publishToolSignals(ref, { tools: enabledTools, searchOpen, fullscreenOpen }),
-      [ref, editor, enabledTools, searchOpen, fullscreenOpen]
+      () => publishToolSignals(ref, { tools: enabledTools, searchOpen, fullscreenOpen, fullWidth }),
+      [ref, editor, enabledTools, searchOpen, fullscreenOpen, fullWidth]
     );
     // Unmounting (or a `ref` change) takes the signals back: the screen hook returns `null`.
     useEffect(() => () => clearToolSignals(ref), [ref]);
@@ -1626,15 +1643,36 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       );
 
     const editorContent = <EditorContent editor={editor} hidden={sourceOpen} />;
-    // In the layer the Document is a column of about 72 characters in the middle of the window (ADR-0082).
+    /*
+      In the layer the Document is a 60rem column in the middle of the window, or, with "Full width",
+      the whole window (the addendum of ADR-0082, OLDSUI-318). The width is in rem, not in ch: the
+      column holds tables, pictures and Column layouts, not only text. The margins add to the 12px of
+      the shell: 24px on a narrow window, 48px from `md`, 96px from `xl`. The switch is instant: an
+      animated width would reflow the text on every frame. The Paper sheet is the Document itself, so
+      it follows the column.
+    */
     const column = (content: ReactNode) =>
-      layerShown ? <div className="mx-auto w-full max-w-[72ch]">{content}</div> : content;
+      layerShown ? (
+        <div
+          data-fullscreen-column={fullWidth ? "full" : "column"}
+          className={cn("mx-auto w-full", fullWidth ? FULL_WIDTH_CLASS : "max-w-[60rem] px-3")}
+        >
+          {content}
+        </div>
+      ) : (
+        content
+      );
     /*
       The "Fullscreen" item and the "Collapse" button read the layer's state and toggle it; they exist
       only with the Tool on. Opening from Source mode is refused by `setFullscreen`, as for the Command.
     */
     const fullscreenItem = enabledTools.has("fullscreen")
-      ? { open: fullscreenOpen, onToggle: () => setFullscreen(!fullscreenRef.current) }
+      ? {
+          open: fullscreenOpen,
+          onToggle: () => setFullscreen(!fullscreenRef.current),
+          fullWidth,
+          onToggleFullWidth: toggleFullWidth,
+        }
       : undefined;
     /*
       "Collapse" lives in the Toolbar. Without a fixed Toolbar (floating, bubble, none, or `readOnly`) it

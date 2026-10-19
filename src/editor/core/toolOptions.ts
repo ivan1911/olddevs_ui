@@ -215,6 +215,20 @@ export interface InvisibleCharactersToolOptions {
 }
 
 /**
+ * Options of the `fullscreen` Tool (ADR-0082, the addendum of OLDSUI-318).
+ */
+export interface FullscreenToolOptions {
+  /**
+   * The layer opens with the Document across the whole window instead of the 60rem column. Default
+   * `false`. After that, the "Full width" item, the `toggleFullWidth` command and the `fullWidth`
+   * state control the width; the option sets only the starting value. The kit does not remember the
+   * choice between page loads: a screen that wants to keeps the state in its own storage and passes
+   * it back here.
+   */
+  fullWidth: boolean;
+}
+
+/**
  * Options of the `focus` Tool (the focus mode, ADR-0082).
  */
 export interface FocusToolOptions {
@@ -329,8 +343,8 @@ export interface RichTextTools {
     state: BlockSelectionToolState;
     commands: BlockSelectionToolCommands;
   };
-  // State and commands only: the layer has no options (ADR-0082).
   fullscreen: {
+    options: FullscreenToolOptions;
     state: FullscreenToolState;
     commands: FullscreenToolCommands;
   };
