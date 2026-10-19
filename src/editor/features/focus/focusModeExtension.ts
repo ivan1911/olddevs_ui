@@ -59,10 +59,13 @@ const FOCUS_MODE_CLASS =
   // the `mark` goes faint as a whole instead, its text as it is inside.
   "[&_mark:has(>.rte-focus-dim)]:opacity-40 [&_mark>.rte-focus-dim]:opacity-100 " +
   "[&_li.rte-focus-dim-item]:marker:text-[color-mix(in_srgb,currentColor_40%,transparent)] " +
+  // A task item has no `::marker`: its marker is the checkbox in a `label`, which goes faint whole.
+  "[&_li.rte-focus-dim-item>label]:opacity-40 " +
   // Opacity multiplies: inside a Block already at 40% (a code Block, a Wrapper, a table) nothing goes
   // faint a second time, or it would sink to 16%.
   "[&_.rte-focus-dim-media_:is(.rte-focus-dim,.rte-focus-dim-media,mark)]:opacity-100 " +
-  "[&_.rte-focus-dim-media_li.rte-focus-dim-item]:marker:text-inherit";
+  "[&_.rte-focus-dim-media_li.rte-focus-dim-item]:marker:text-inherit " +
+  "[&_.rte-focus-dim-media_li.rte-focus-dim-item>label]:opacity-100";
 
 /**
  * Blocks that go faint whole, not only their text: media and code have no text of their own or keep

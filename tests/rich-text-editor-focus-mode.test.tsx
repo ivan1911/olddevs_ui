@@ -136,6 +136,27 @@ test("the marker of an item outside the unit is dimmed with its text, the curren
   expect(dimmedMarkers()).toEqual([]);
 });
 
+test("a task item outside the unit is marked for its checkbox to dim, the current one is not", () => {
+  const { editor } = renderEditor({
+    tools: [...TOOLS, ...ON],
+    defaultValue:
+      '<ul data-type="taskList">' +
+      '<li data-type="taskItem" data-checked="true"><p>done</p></li>' +
+      '<li data-type="taskItem" data-checked="false"><p>todo</p></li>' +
+      "</ul><p>after</p>",
+  });
+
+  // The engine's node view draws the item: the checkbox sits in a `label` of the very `li` that
+  // carries the class, which the stylesheet turns faint (`li.rte-focus-dim-item>label`).
+  caretIn(editor, "todo");
+  expect(dimmedMarkers()).toEqual(["done"]);
+  const done = document.querySelector("li.rte-focus-dim-item");
+  expect(done?.querySelector(":scope > label input[type=checkbox]")).not.toBeNull();
+
+  caretIn(editor, "after");
+  expect(dimmedMarkers()).toEqual(["done", "todo"]);
+});
+
 test("a table is one unit, wherever the caret is in it", () => {
   const { editor } = renderEditor({
     tools: [...TOOLS, ...ON],
