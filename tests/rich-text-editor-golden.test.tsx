@@ -402,6 +402,10 @@ describe("shortcut reference", () => {
           "Find and replace | Ctrl+Alt+F",
         ],
         [
+          "Fullscreen | Ctrl+Shift+F",
+          "Focus mode | Ctrl+Shift+J",
+        ],
+        [
           "Go to the toolbar | Alt+F10",
         ],
       ]
@@ -616,8 +620,8 @@ describe("surfaces", () => {
           "menuitem: Footnote",
           "menuitem: Clear formatting | Ctrl+\\",
           "menuitemcheckbox: Invisible characters",
-          "menuitemcheckbox: Focus mode",
-          "menuitemcheckbox: Fullscreen",
+          "menuitemcheckbox: Focus mode | Ctrl+Shift+J",
+          "menuitemcheckbox: Fullscreen | Ctrl+Shift+F",
         ],
       }
     `);
@@ -648,8 +652,8 @@ describe("surfaces", () => {
           "menuitemcheckbox: Quote | Ctrl+Shift+B",
           "menuitem: Footnote",
           "menuitem: Clear formatting | Ctrl+\\",
-          "menuitemcheckbox: Focus mode",
-          "menuitemcheckbox: Fullscreen",
+          "menuitemcheckbox: Focus mode | Ctrl+Shift+J",
+          "menuitemcheckbox: Fullscreen | Ctrl+Shift+F",
         ],
       }
     `);

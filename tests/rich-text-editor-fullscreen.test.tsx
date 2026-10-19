@@ -46,6 +46,8 @@ function renderEditor(props: Partial<RichTextEditorProps> = {}) {
 }
 
 const LAYER = { name: "Fullscreen" } as const;
+/** The "…" menu item: its name carries the shortcut hint after the label. */
+const ITEM = { name: /^Fullscreen/ } as const;
 const RESIZER = { name: "Resize the editor" } as const;
 const layer = () => screen.queryByRole("dialog", LAYER);
 const status = () => document.querySelector('[role="status"].sr-only')?.textContent ?? "";
@@ -362,7 +364,7 @@ test("the «…» item opens the layer, and the Toolbar's «Collapse» button cl
   renderEditor({ defaultValue: THREE });
 
   await user.click(screen.getByRole("button", MORE));
-  const item = within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", LAYER);
+  const item = within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", ITEM);
   expect(item.getAttribute("aria-checked")).toBe("false");
   await user.click(item);
 
@@ -385,7 +387,7 @@ test("the «…» item inside the layer shows the mark and closes it", async () 
   open(handle);
 
   await user.click(within(layer()!).getByRole("button", MORE));
-  const item = within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", LAYER);
+  const item = within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", ITEM);
   expect(item.getAttribute("aria-checked")).toBe("true");
   await user.click(item);
 
@@ -414,7 +416,7 @@ test("the item is in the selection bubble's «…» menu too", async () => {
   const bubble = await screen.findByRole("toolbar", { name: "Selection formatting" });
 
   await user.click(within(bubble).getByRole("button", MORE));
-  await user.click(within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", LAYER));
+  await user.click(within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", ITEM));
 
   await screen.findByRole("dialog", LAYER);
 });
@@ -455,7 +457,7 @@ test("the Tool is in `full`, not in `basic`; without it there is no item and no 
     defaultValue: THREE,
   });
   await user.click(screen.getByRole("button", MORE));
-  expect(within(screen.getByRole("menu", MORE)).queryByRole("menuitemcheckbox", LAYER)).toBeNull();
+  expect(within(screen.getByRole("menu", MORE)).queryByRole("menuitemcheckbox", ITEM)).toBeNull();
   expect(handle.tool("fullscreen")).toBeNull();
 });
 

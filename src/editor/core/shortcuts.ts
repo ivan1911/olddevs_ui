@@ -39,6 +39,7 @@ export const SHORTCUT_GROUPS = [
   "align",
   "link",
   "search",
+  "view",
   "toolbar",
 ] as const;
 
@@ -104,6 +105,8 @@ export const SHORTCUT_KEYS = {
   alignLeft: ["mod", "shift", "L"],
   alignCenter: ["mod", "shift", "E"],
   alignRight: ["mod", "shift", "R"],
+  fullscreen: ["mod", "shift", "F"],
+  focusMode: ["mod", "shift", "J"],
   focusToolbar: ["alt", "F10"],
 } as const satisfies Record<string, readonly string[]>;
 
@@ -148,6 +151,8 @@ export const SHORTCUT_ORDER: readonly ShortcutId[] = [
   "alignLeft",
   "alignCenter",
   "alignRight",
+  "fullscreen",
+  "focusMode",
   "focusToolbar",
 ];
 

@@ -377,7 +377,8 @@ test("the mode is not an edit: it leaves the history alone", () => {
 // --- API: the item, the Option, the State, the Command --------------------------------------
 
 const MORE = { name: "More formatting" } as const;
-const NAME = { name: "Focus mode" } as const;
+/** The "…" menu item: its name carries the shortcut hint after the label. */
+const NAME = { name: /^Focus mode/ } as const;
 
 async function openMore(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", MORE));

@@ -1,5 +1,6 @@
 "use client";
 
+import { SHORTCUT_KEYS } from "../../core/shortcuts.js";
 import type { ToolDescriptor } from "../../core/toolDescriptor.js";
 import type { FocusToolCommands } from "../../core/toolCommands.js";
 import type { FocusToolOptions } from "../../core/toolOptions.js";
@@ -16,7 +17,7 @@ export const FOCUS_DEFAULTS: FocusToolOptions = { enabled: false };
  * The focus mode on the Tool's description (ADR-0082). A Decoration over the Document: the Schema,
  * the sanitizer, Markdown and the saved HTML do not change. Like `invisibleCharacters`, it has no
  * Toolbar button and no Slash menu item: "Focus mode" is a checkbox item in the "view" section of
- * the "…" menu (`FormatMenus.tsx`), and the Tool has no shortcut.
+ * the "…" menu (`FormatMenus.tsx`), and `Mod+Shift+J` toggles it (OLDSUI-316).
  */
 export const FOCUS_TOOL: ToolDescriptor = {
   name: "focus",
@@ -31,6 +32,15 @@ export const FOCUS_TOOL: ToolDescriptor = {
     In Source mode the Document is not on screen, so there is nothing to dim: `false` (the "…" menu
     is locked in that mode).
   */
+  shortcuts: [
+    {
+      id: "focusMode",
+      group: "view",
+      tool: "focus",
+      keys: SHORTCUT_KEYS.focusMode,
+      label: (m) => m.focusMode,
+    },
+  ],
   commands: ({ editor, bridge }): FocusToolCommands => ({
     toggle: () => !bridge.sourceOpen() && toggleFocusMode(editor),
   }),
