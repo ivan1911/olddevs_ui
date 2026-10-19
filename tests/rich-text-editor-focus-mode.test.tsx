@@ -136,6 +136,27 @@ test("the marker of an item outside the unit is dimmed with its text, the curren
   expect(dimmedMarkers()).toEqual([]);
 });
 
+test("a task item outside the unit is marked for its checkbox to dim, the current one is not", () => {
+  const { editor } = renderEditor({
+    tools: [...TOOLS, ...ON],
+    defaultValue:
+      '<ul data-type="taskList">' +
+      '<li data-type="taskItem" data-checked="true"><p>done</p></li>' +
+      '<li data-type="taskItem" data-checked="false"><p>todo</p></li>' +
+      "</ul><p>after</p>",
+  });
+
+  // The engine's node view draws the item: the checkbox sits in a `label` of the very `li` that
+  // carries the class, which the stylesheet turns faint (`li.rte-focus-dim-item>label`).
+  caretIn(editor, "todo");
+  expect(dimmedMarkers()).toEqual(["done"]);
+  const done = document.querySelector("li.rte-focus-dim-item");
+  expect(done?.querySelector(":scope > label input[type=checkbox]")).not.toBeNull();
+
+  caretIn(editor, "after");
+  expect(dimmedMarkers()).toEqual(["done", "todo"]);
+});
+
 test("a table is one unit, wherever the caret is in it", () => {
   const { editor } = renderEditor({
     tools: [...TOOLS, ...ON],
@@ -210,6 +231,57 @@ test("a Wrapper, a Details Block and a table outside the unit go faint whole, fr
   expect(whole()).toEqual(["titlehidden", "cell"]);
 });
 
+test("a quote, a rule and a column outside the unit go faint whole, bar and frame included", () => {
+  const { editor } = renderEditor({
+    tools: [...TOOLS, ...ON],
+    defaultValue:
+      "<blockquote><p>quoted</p></blockquote><hr>" +
+      '<div data-block="layout" data-layout="50-50">' +
+      '<div data-block="column"><p>left</p></div><div data-block="column"><p>right</p></div>' +
+      "</div><p>after</p>",
+  });
+  const whole = () =>
+    Array.from(document.querySelectorAll(".rte-focus-dim-media"), (node) =>
+      node.tagName === "HR" || node.querySelector("hr") ? "hr" : (node.textContent ?? "").trim()
+    );
+
+  // The quote's bar, the rule and the layout's column frames stay bright around faint text otherwise
+  // (OLDSUI-317).
+  caretIn(editor, "after");
+  expect(whole()).toEqual(["quoted", "hr", "leftright"]);
+
+  // The caret in a column: the layout keeps its frame, the other column goes faint whole.
+  caretIn(editor, "left");
+  expect(whole()).toEqual(["quoted", "hr", "right"]);
+});
+
+test("inline code keeps its dimmed text directly inside, so the code goes faint with its fill", () => {
+  const { editor } = renderEditor({
+    tools: [...TOOLS, ...ON],
+    defaultValue: "<p>Run <code>npm test</code> first</p><p>Two</p>",
+  });
+
+  caretIn(editor, "Two");
+
+  // The stylesheet dims a `code` whose child is the decoration (`code:has(>.rte-focus-dim)`).
+  expect(document.querySelector("code > .rte-focus-dim")?.textContent).toBe("npm test");
+});
+
+test("a text Block outside the unit is marked for its invisible characters, empty ones included", () => {
+  const { editor } = renderEditor({
+    tools: [...TOOLS, ...ON],
+    defaultValue: "<p>One</p><p></p><h2>Two</h2><p>Three</p>",
+  });
+  const blocks = () =>
+    Array.from(document.querySelectorAll(".rte-focus-dim-block"), (node) => node.tagName);
+
+  caretIn(editor, "Three");
+
+  // The invisible characters are widgets between the text runs: the text decoration does not wrap
+  // them, so they dim by their Block (`.rte-focus-dim-block > .tiptap-invisible-character`).
+  expect(blocks()).toEqual(["P", "P", "H2"]);
+});
+
 test("a floated image is a media Block like any other: dimmed whole when it is not current", () => {
   const { editor } = renderEditor({
     tools: [...TOOLS, ...ON],
@@ -280,6 +352,27 @@ test("a caret in the text dims the whole footnote list like any other Block", ()
   caretIn(editor, "First");
 
   expect(dimmedWords()).toEqual(["Second", "Note one", "Note two"]);
+  // The list goes faint whole, the line above it included (OLDSUI-317).
+  expect(document.querySelector("section.rte-focus-dim-media")).not.toBeNull();
+});
+
+test("the number of a note outside the unit is marked to dim with its text, the current one is not", () => {
+  const { editor } = renderEditor({ tools: [...TOOLS, ...ON], defaultValue: WITH_NOTES });
+  // The number is a button back to the reference beside the note's text: a footnote is a text Block,
+  // and the number dims by it (`.rte-focus-dim-block > [data-footnote-back]`).
+  const numbers = () =>
+    Array.from(
+      document.querySelectorAll("li.rte-focus-dim-block > [data-footnote-back]"),
+      (button) => button.textContent
+    );
+
+  caretIn(editor, "Note two");
+  expect(numbers()).toEqual(["1"]);
+  // The caret in a note: the list holds the unit, so it keeps its line.
+  expect(document.querySelector("section.rte-focus-dim-media")).toBeNull();
+
+  caretIn(editor, "First");
+  expect(numbers()).toEqual(["1", "2"]);
 });
 
 // --- Where there is no dimming -------------------------------------------------------------

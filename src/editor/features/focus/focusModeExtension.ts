@@ -6,6 +6,7 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { Editor } from "@tiptap/core";
 import { BlockSelection } from "../../core/blockSelection.js";
 import { LIST_ITEMS, viewUnitRange } from "../../core/blockUnit.js";
+import { FOOTNOTE_LIST_NODE } from "../footnotes/footnoteNames.js";
 import { FOCUS_MODE_KEY, toggleFocusMode } from "./focusModeState.js";
 
 /**
@@ -18,12 +19,12 @@ import { FOCUS_MODE_KEY, toggleFocusMode } from "./focusModeState.js";
  * handle and Block selection: a list item, a table as a whole, a Block of a column. Tiptap's own
  * Focus extension marks the nodes around the caret and knows none of these.
  *
- * THREE KINDS OF DECORATION. Text outside the unit gets ONE inline decoration for each side (before
+ * FOUR KINDS OF DECORATION. Text outside the unit gets ONE inline decoration for each side (before
  * and after), which wraps the text runs. A Block that goes faint whole (an image, a video, a code
- * Block, a block formula, a Wrapper, a Details Block, a table: `MEDIA_NODES`) gets a node
- * decoration. A list item whose own text is outside the unit
- * gets a node decoration too, for its marker: the marker is the item's, not the text's, and the
- * inline decoration does not reach it.
+ * Block, a quote, a Wrapper, a table and the rest of `MEDIA_NODES`) gets a node decoration. A list
+ * item whose own text is outside the unit gets a node decoration too, for its marker: the marker is
+ * the item's, not the text's, and the inline decoration does not reach it. So does every text Block
+ * outside the unit, for what sits beside its text runs (invisible characters, a footnote's number).
  *
  * NO DIMMING where the Document is not the place of work: without focus in it (the Toolbar or the
  * page has it), over a Block selection (the selected Blocks are already marked), and in a read-only
@@ -35,6 +36,11 @@ import { FOCUS_MODE_KEY, toggleFocusMode } from "./focusModeState.js";
 export const FOCUS_DIM_CLASS = "rte-focus-dim";
 export const FOCUS_DIM_MEDIA_CLASS = "rte-focus-dim-media";
 export const FOCUS_DIM_ITEM_CLASS = "rte-focus-dim-item";
+/**
+ * A text Block outside the unit: for what the text decoration does not wrap — the invisible characters'
+ * widgets, and a footnote's number (the footnote is a text Block of its own).
+ */
+export const FOCUS_DIM_BLOCK_CLASS = "rte-focus-dim-block";
 
 /**
  * What the classes do: everything outside the Block goes to 40% opacity (OLDSUI-315, the owner's
@@ -55,29 +61,42 @@ export const FOCUS_DIM_ITEM_CLASS = "rte-focus-dim-item";
  */
 const FOCUS_MODE_CLASS =
   "[&_:is(.rte-focus-dim,.rte-focus-dim-media)]:opacity-40 " +
-  // The decoration lies inside a marker's `mark`, so it would dim the letters and leave the fill bright:
-  // the `mark` goes faint as a whole instead, its text as it is inside.
-  "[&_mark:has(>.rte-focus-dim)]:opacity-40 [&_mark>.rte-focus-dim]:opacity-100 " +
+  // The decoration lies inside a marker's `mark` and inside inline `code`, so it would dim the letters
+  // and leave the fill bright: the element goes faint as a whole instead, its text as it is inside.
+  "[&_:is(mark,code):has(>.rte-focus-dim)]:opacity-40 [&_:is(mark,code)>.rte-focus-dim]:opacity-100 " +
   "[&_li.rte-focus-dim-item]:marker:text-[color-mix(in_srgb,currentColor_40%,transparent)] " +
+  // A task item has no `::marker`: its marker is the checkbox in a `label`, which goes faint whole.
+  "[&_li.rte-focus-dim-item>label]:opacity-40 " +
+  // Outside the text decoration of a text Block: the invisible characters (widgets between the text
+  // runs) and a footnote's number (a button back to the reference, next to the footnote's text).
+  "[&_.rte-focus-dim-block>:is(.tiptap-invisible-character,[data-footnote-back])]:opacity-40 " +
   // Opacity multiplies: inside a Block already at 40% (a code Block, a Wrapper, a table) nothing goes
   // faint a second time, or it would sink to 16%.
-  "[&_.rte-focus-dim-media_:is(.rte-focus-dim,.rte-focus-dim-media,mark)]:opacity-100 " +
-  "[&_.rte-focus-dim-media_li.rte-focus-dim-item]:marker:text-inherit";
+  "[&_.rte-focus-dim-media_:is(.rte-focus-dim,.rte-focus-dim-media,mark,code)]:opacity-100 " +
+  "[&_.rte-focus-dim-media_li.rte-focus-dim-item]:marker:text-inherit " +
+  "[&_.rte-focus-dim-media_li.rte-focus-dim-item>label]:opacity-100 " +
+  "[&_.rte-focus-dim-media_.rte-focus-dim-block>:is(.tiptap-invisible-character,[data-footnote-back])]:opacity-100";
 
 /**
- * Blocks that go faint whole, not only their text: media and code have no text of their own or keep
- * their theme's colors, and a toned Wrapper, a Details Block and a table have a fill or a frame that
- * would stay bright around faint text (OLDSUI-315). Only a node that lies wholly outside the unit: a
- * Wrapper with the caret inside keeps its frame, and its other Blocks dim as text.
+ * Blocks that go faint whole, not only their text: media, code and a horizontal rule have no text of
+ * their own or keep their theme's colors, and a toned Wrapper, a Details Block, a table, a quote, a
+ * column and the footnote list have a fill, a frame or a line that would stay bright around faint text
+ * (OLDSUI-315, OLDSUI-317). Only a node that lies wholly outside the unit: a Wrapper with the caret
+ * inside keeps its frame, and its other Blocks dim as text.
  */
 const MEDIA_NODES: ReadonlySet<string> = new Set([
   "image",
   "video",
   "codeBlock",
   "blockMath",
+  "horizontalRule",
+  "blockquote",
   "wrapper",
   "details",
   "table",
+  "layout",
+  "layoutColumn",
+  FOOTNOTE_LIST_NODE,
 ]);
 
 function dim(editor: Editor, state: EditorState): DecorationSet | null {
@@ -104,7 +123,12 @@ function dim(editor: Editor, state: EditorState): DecorationSet | null {
   // A marker is dimmed when its item's own text (the first child) is outside the unit.
   doc.descendants((node, pos) => {
     // A list item never lies inside text: a textblock and its inline content are not walked.
-    if (node.isTextblock) return false;
+    if (node.isTextblock) {
+      if (pos + node.nodeSize <= range.start || pos >= range.end) {
+        marks.push(Decoration.node(pos, pos + node.nodeSize, { class: FOCUS_DIM_BLOCK_CLASS }));
+      }
+      return false;
+    }
     if (!LIST_ITEMS.has(node.type.name)) return true;
     const text = node.firstChild;
     const from = pos + 1;
