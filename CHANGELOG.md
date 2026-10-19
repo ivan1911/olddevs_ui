@@ -1,5 +1,11 @@
 # @olddevs/ui
 
+## 4.12.2
+
+### Patch Changes
+
+- 1fbd0d1: `RichTextEditor`: the focus mode now dims everything outside the current Block. Task checkboxes, quote bars, horizontal rules, column frames, the fill of inline code, footnote numbers with the line above the footnote list, and invisible characters used to stay bright around the faint text.
+
 ## 4.12.1
 
 ### Patch Changes
