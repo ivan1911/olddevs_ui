@@ -61,8 +61,10 @@ const SNAPSHOTS = new Map<string, (editor: Editor, ref: object) => unknown>([
   [
     "fullscreen",
     (_editor, ref) => {
-      const { tools, fullscreenOpen } = toolSignals(ref);
-      return tools?.has("fullscreen") ? { open: fullscreenOpen === true } : null;
+      const { tools, fullscreenOpen, fullWidth } = toolSignals(ref);
+      return tools?.has("fullscreen")
+        ? { open: fullscreenOpen === true, fullWidth: fullWidth === true }
+        : null;
     },
   ],
   [

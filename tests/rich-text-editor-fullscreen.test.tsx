@@ -10,6 +10,7 @@ import { UiProvider } from "../src/i18n/UiProvider.js";
 import { messages as ru } from "../src/locales/ru.js";
 import {
   RichTextEditor,
+  tool,
   useRichTextToolState,
   type RichTextEditorHandle,
   type RichTextEditorProps,
@@ -777,4 +778,161 @@ test("the layer overrides --topbar-h: the Toolbar sticks to the window, not unde
   // The layer is portaled to <body>, but a portal inside a themed subtree would inherit the value
   // all the same, so the layer says its own: the whole window is the layer's, there is no bar above.
   expect(getComputedStyle(layer()!).getPropertyValue("--topbar-h")).toBe("0px");
+});
+
+// --- Full width (OLDSUI-318, ADR-0082, the addendum of 2026-10-19) ------------------------------
+
+/** The "Full width" item has no shortcut, so its name is the label alone. */
+const FULL_WIDTH = { name: "Full width" } as const;
+/** What the Document's column in the layer is now: `"column"` (60rem) or `"full"` (the window). */
+const columnWidth = () =>
+  layer()?.querySelector("[data-fullscreen-column]")?.getAttribute("data-fullscreen-column");
+const toggleFullWidth = (handle: RichTextEditorHandle) => {
+  let result = false;
+  act(() => void (result = handle.tool("fullscreen")!.toggleFullWidth()));
+  return result;
+};
+
+test("«Full width» is in the «…» menu only in the layer, right after «Fullscreen»", async () => {
+  const user = userEvent.setup();
+  const { handle } = renderEditor({ defaultValue: THREE });
+
+  // On the page the field's width is the page's: the item would do nothing, so it is not there.
+  await user.click(screen.getByRole("button", MORE));
+  expect(
+    within(screen.getByRole("menu", MORE)).queryByRole("menuitemcheckbox", FULL_WIDTH)
+  ).toBeNull();
+  await user.keyboard("{Escape}");
+
+  open(handle);
+  await user.click(within(layer()!).getByRole("button", MORE));
+  const items = within(screen.getByRole("menu", MORE)).getAllByRole("menuitemcheckbox");
+  const fullscreen = items.findIndex((item) => ITEM.name.test(item.textContent ?? ""));
+  const fullWidth = within(screen.getByRole("menu", MORE)).getByRole(
+    "menuitemcheckbox",
+    FULL_WIDTH
+  );
+  expect(items.indexOf(fullWidth)).toBe(fullscreen + 1);
+  expect(fullWidth.getAttribute("aria-checked")).toBe("false");
+});
+
+test("the item spreads the Document across the window and takes it back to the column", async () => {
+  const user = userEvent.setup();
+  const { handle } = renderEditor({ defaultValue: THREE });
+  open(handle);
+  expect(columnWidth()).toBe("column");
+
+  await user.click(within(layer()!).getByRole("button", MORE));
+  await user.click(
+    within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", FULL_WIDTH)
+  );
+  expect(columnWidth()).toBe("full");
+  // The layer stays: the item changes the width, not the mode.
+  expect(layer()).not.toBeNull();
+
+  await user.click(within(layer()!).getByRole("button", MORE));
+  const item = within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", FULL_WIDTH);
+  expect(item.getAttribute("aria-checked")).toBe("true");
+  await user.click(item);
+  expect(columnWidth()).toBe("column");
+});
+
+test("the item is in the selection bubble's «…» menu of the layer too", async () => {
+  const user = userEvent.setup();
+  const { editor, handle } = renderEditor({ toolbar: "bubble", defaultValue: THREE });
+  open(handle);
+  act(() => {
+    editor.view.focus();
+    editor.commands.setTextSelection({ from: 2, to: 4 });
+  });
+  const bubble = await screen.findByRole("toolbar", { name: "Selection formatting" });
+
+  await user.click(within(bubble).getByRole("button", MORE));
+  await user.click(
+    within(screen.getByRole("menu", MORE)).getByRole("menuitemcheckbox", FULL_WIDTH)
+  );
+
+  expect(columnWidth()).toBe("full");
+});
+
+test("the choice survives collapsing: the layer opens again at the same width", async () => {
+  const { handle } = renderEditor({ defaultValue: THREE });
+  open(handle);
+  toggleFullWidth(handle);
+  expect(columnWidth()).toBe("full");
+
+  close(handle);
+  await waitFor(() => expect(layer()).toBeNull());
+  open(handle);
+
+  expect(columnWidth()).toBe("full");
+});
+
+test("toggleFullWidth() is a view preference: true outside the layer, in readOnly, disabled and Source mode", async () => {
+  const user = userEvent.setup();
+  const { handle } = renderEditor({ defaultValue: THREE });
+  // Outside the layer it is remembered for the next opening.
+  expect(toggleFullWidth(handle)).toBe(true);
+  open(handle);
+  expect(columnWidth()).toBe("full");
+  close(handle);
+  await waitFor(() => expect(layer()).toBeNull());
+
+  await user.click(screen.getByRole("button", { name: "HTML" }));
+  expect(toggleFullWidth(handle)).toBe(true);
+  cleanup();
+
+  expect(toggleFullWidth(renderEditor({ defaultValue: THREE, readOnly: true }).handle)).toBe(true);
+  cleanup();
+  expect(toggleFullWidth(renderEditor({ defaultValue: THREE, disabled: true }).handle)).toBe(true);
+});
+
+test("the fullWidth option is the starting value; the item and the Command take over after it", () => {
+  const { handle } = renderEditor({
+    tools: [...TOOLS, tool("fullscreen", { fullWidth: true })],
+    defaultValue: THREE,
+  });
+  open(handle);
+  expect(columnWidth()).toBe("full");
+
+  toggleFullWidth(handle);
+  expect(columnWidth()).toBe("column");
+});
+
+test("State is { open, fullWidth }, and the hook follows the width", async () => {
+  const seen: ({ open: boolean; fullWidth: boolean } | null)[] = [];
+  function Probe() {
+    const ref = useRef<RichTextEditorHandle>(null);
+    seen.push(useRichTextToolState(ref, "fullscreen"));
+    return (
+      <>
+        <RichTextEditor ref={ref} aria-label="Body" tools={[...TOOLS]} defaultValue={THREE} />
+        <button type="button" onClick={() => ref.current?.tool("fullscreen")?.toggleFullWidth()}>
+          Width
+        </button>
+      </>
+    );
+  }
+  const user = userEvent.setup();
+  render(<Probe />);
+  expect(seen.at(-1)).toEqual({ open: false, fullWidth: false });
+
+  await user.click(screen.getByRole("button", { name: "Width" }));
+  expect(seen.at(-1)).toEqual({ open: false, fullWidth: true });
+});
+
+test("a fullWidth that is not a boolean falls back to the column, with one console.error", () => {
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const { handle } = renderEditor({
+    // From plain JS without types, or from a storage that had nothing saved.
+    tools: [...TOOLS, tool("fullscreen", { fullWidth: null as unknown as boolean })],
+    defaultValue: THREE,
+  });
+  open(handle);
+
+  expect(columnWidth()).toBe("column");
+  expect(error).toHaveBeenCalledTimes(1);
+  expect(error).toHaveBeenCalledWith(
+    expect.stringContaining('tool "fullscreen": ignored invalid options: fullWidth')
+  );
 });

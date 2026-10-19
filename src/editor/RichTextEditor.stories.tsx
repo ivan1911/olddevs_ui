@@ -4862,16 +4862,21 @@ function caretAt(handle: RichTextEditorHandle | null, text: string) {
 
 function ModesDemo({
   fullscreen = false,
+  fullWidth = false,
   focus = false,
   ...props
-}: { fullscreen?: boolean; focus?: boolean } & Partial<RichTextEditorProps>) {
+}: { fullscreen?: boolean; fullWidth?: boolean; focus?: boolean } & Partial<RichTextEditorProps>) {
   const ref = useRef<RichTextEditorHandle>(null);
   return (
     <div className="max-w-[640px]">
       <RichTextEditor
         ref={ref}
         aria-label="Document"
-        tools={[...RICH_TEXT_PRESETS.full, ...(focus ? [tool("focus", { enabled: true })] : [])]}
+        tools={[
+          ...RICH_TEXT_PRESETS.full,
+          ...(focus ? [tool("focus", { enabled: true })] : []),
+          ...(fullWidth ? [tool("fullscreen", { fullWidth: true })] : []),
+        ]}
         defaultValue={FOCUS_SAMPLE}
         onReady={() => {
           caretAt(ref.current, "Run the regression pass on Tuesday.");
@@ -4886,8 +4891,8 @@ function ModesDemo({
 /**
  * Fullscreen mode: the "Fullscreen" item of the "…" menu expands the field to the whole window. The
  * Toolbar is across the top, the Status bar at the bottom, and the Document scrolls itself as a
- * column of about 72 characters. "Collapse" at the right edge of the Toolbar and `Esc` put it back;
- * the history, the caret and the selection stay. The story opens the layer on load.
+ * 60rem column in the middle of the window. "Collapse" at the right edge of the Toolbar and `Esc` put
+ * it back; the history, the caret and the selection stay. The story opens the layer on load.
  */
 export const Fullscreen: Story = {
   render: () => <ModesDemo fullscreen status="12 words" />,
@@ -4896,6 +4901,21 @@ export const Fullscreen: Story = {
 /** The same on the Paper: the sheet stays a sheet on the app's background. */
 export const FullscreenPaper: Story = {
   render: () => <ModesDemo fullscreen surface="paper" />,
+};
+
+/**
+ * "Full width" (OLDSUI-318): the item right after "Fullscreen" in the "…" menu of the layer spreads
+ * the Document across the window, with margins that grow with it: 24px on a phone, 48px from `md`,
+ * 96px from `xl`. The item exists only in the layer; the `fullWidth` option is the starting value,
+ * which the story sets.
+ */
+export const FullscreenFullWidth: Story = {
+  render: () => <ModesDemo fullscreen fullWidth status="12 words" />,
+};
+
+/** "Full width" on the Paper: the sheet follows the Document across the window. */
+export const FullscreenFullWidthPaper: Story = {
+  render: () => <ModesDemo fullscreen fullWidth surface="paper" />,
 };
 
 /**

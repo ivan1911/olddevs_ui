@@ -93,6 +93,13 @@ export interface FullscreenToolCommands {
   close(): boolean;
   /** Opens the field if it is collapsed and collapses it if it is open. `false` where `open()` is refused. */
   toggle(): boolean;
+  /**
+   * Switches the Document between the 60rem column and the whole window, the same as the "Full width"
+   * item of the "…" menu in the layer. Always `true`: it is a view preference that does not touch the
+   * Document or `value`, so it works in `readOnly`, in a disabled field and in Source mode. Outside
+   * the layer the choice applies the next time it opens.
+   */
+  toggleFullWidth(): boolean;
 }
 
 /** Commands of the `focus` Tool (ADR-0082). */

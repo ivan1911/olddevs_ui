@@ -183,6 +183,8 @@ export interface ToolBridge {
   setFullscreen: (open: boolean) => boolean;
   /** Whether the field fills the window now. */
   fullscreenOpen: () => boolean;
+  /** Switch the layer's Document between the column and the whole window; always `true`. */
+  toggleFullWidth: () => boolean;
   /** Whether the field is disabled (not only read-only): the jumps of the footnotes work in `readOnly`, not here. */
   disabled: () => boolean;
 }

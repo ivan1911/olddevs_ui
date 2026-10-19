@@ -21,6 +21,7 @@ import {
   isMoreMarkId,
   moreFormatTools,
   MoreFormatMenu,
+  type FullscreenMenuState,
 } from "./FormatMenus.js";
 import { BUBBLE_ROW_MARKS } from "./rowMarks.js";
 import { showOverSelection, useOutOfTabOrder, useSelectionMenuOptions } from "./selectionMenu.js";
@@ -97,7 +98,7 @@ export interface SelectionBubbleProps {
   /** The Document area that scrolls on its own (ADR-0059); without it, the window scrolls. */
   scrollTarget?: HTMLElement;
   /** The "Fullscreen" item of the bubble's "…" menu (ADR-0082); the layer is held by `RichTextEditor`. */
-  fullscreen?: { open: boolean; onToggle: () => void };
+  fullscreen?: FullscreenMenuState;
   /** The "Focus mode" item of the bubble's "…" menu. */
   focusMode?: boolean;
 }

@@ -39,6 +39,8 @@ export interface ToolSignals {
   searchOpen?: boolean;
   /** The field fills the window (React state in `RichTextEditor`, ADR-0082). */
   fullscreenOpen?: boolean;
+  /** The layer's Document spreads across the window (React state in `RichTextEditor`, OLDSUI-318). */
+  fullWidth?: boolean;
   /** Index of the current Table of contents section (computed by `TocCore` from the scroll position). */
   tocAt?: number;
 }

@@ -560,6 +560,11 @@ export {
    */
   Focus as FocusModeIcon,
   /**
+   * "Full width" of the Editor's fullscreen layer: arrows to both sides, the Document reaching the
+   * window's edges. Not `ColumnWiderIcon`: that one widens a table column.
+   */
+  MoveHorizontal as FullWidthIcon,
+  /**
    * Video in the Editor (the `youtube` and `twitch` Tools): a square with a "play" triangle, the
    * "Video" item of the Slash menu. Not `PlayIcon`: that one is a launch button, and it is exactly
    * that button inside the player itself.

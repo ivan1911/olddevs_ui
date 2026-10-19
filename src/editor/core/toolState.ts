@@ -91,6 +91,11 @@ export interface BlockSelectionToolState {
 export interface FullscreenToolState {
   /** The field fills the whole window. Read it to draw an outside control, or to hide the page's own chrome. */
   open: boolean;
+  /**
+   * The Document spreads across the whole window instead of the 60rem column. A view preference: it
+   * holds outside the layer too, and applies the next time the layer opens.
+   */
+  fullWidth: boolean;
 }
 
 /** State of the `focus` Tool (ADR-0082). */

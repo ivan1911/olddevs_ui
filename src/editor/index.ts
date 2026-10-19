@@ -51,6 +51,7 @@ export type {
   DateToolOptions,
   DetailsToolOptions,
   FocusToolOptions,
+  FullscreenToolOptions,
   InvisibleCharactersToolOptions,
   LanguageToolOptions,
   MathematicsToolOptions,

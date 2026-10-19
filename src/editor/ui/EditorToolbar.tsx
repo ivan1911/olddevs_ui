@@ -28,6 +28,7 @@ import {
   ListMenu,
   moreFormatTools,
   MoreFormatMenu,
+  type FullscreenMenuState,
 } from "./FormatMenus.js";
 import { insertItemsFor } from "../core/insertItems.js";
 import { FOOTNOTE_NODE } from "../features/footnotes/footnoteNames.js";
@@ -266,7 +267,7 @@ export interface EditorToolbarProps {
    * the visible "Collapse" button at the right edge. The layer is held by `RichTextEditor`, so the
    * Toolbar gets its state and the toggle. Without the prop, or without the `fullscreen` Tool, neither exists.
    */
-  fullscreen?: { open: boolean; onToggle: () => void };
+  fullscreen?: FullscreenMenuState;
   /** The "Focus mode" item of the "…" menu; the engine holds the mode. Without the `focus` Tool there is no item. */
   focusMode?: boolean;
 }
