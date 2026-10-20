@@ -1,5 +1,8 @@
 import type { StorybookConfig } from "@storybook/react-vite";
 
+/** The GA4 stream of the showcase. The ui.olddevs.ru site has a stream of its own. */
+const GA_ID = "G-2NRDLQD296";
+
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.tsx"],
   addons: ["@storybook/addon-a11y"],
@@ -20,6 +23,23 @@ const config: StorybookConfig = {
   // The paste cleanup story (OLDSUI-274) pastes real clipboard captures: they are served from the
   // fixtures folder as they are, so the showcase and the tests read the same files.
   staticDirs: ["./static", { from: "../fixtures/paste", to: "/paste-fixtures" }],
+  // The Google tag of the public showcase on GitHub Pages. It goes into the manager, not the
+  // preview: the manager is the page a reader opens, while every story renders in its own
+  // `iframe.html`, so a tag there would count each story twice and send the Playwright checks
+  // to the network. GA4 counts switching stories (`?path=` in the address) through its
+  // enhanced measurement of history changes. `storybook dev` gets no tag, so local work stays
+  // out of the stats.
+  managerHead: (head, { configType }) =>
+    configType === "PRODUCTION"
+      ? `${head}
+<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${GA_ID}');
+</script>`
+      : head,
 };
 
 export default config;
