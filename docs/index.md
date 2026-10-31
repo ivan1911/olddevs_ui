@@ -18,6 +18,8 @@ behavior claims on the pages.
 9. [Component catalog](components/index.md): the full index of the public components.
 10. [Text chat recipe](recipes/chat.md): compose controlled drafts, messages and a reading viewport with consumer-owned history.
 
+11. [Tools and sources recipe](recipes/tools-and-sources.md): compose local operation details and optional references beneath the matching reply.
+
 ## Rules for AI
 
 - **Start with `llms.txt`** at the package root. It is an index of all Reference pages, with a description of
