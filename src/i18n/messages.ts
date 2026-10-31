@@ -34,6 +34,15 @@ export interface CommonMessages {
 }
 
 export interface UiMessages {
+  promptInput: { send: string };
+  chatTranscript: { returnToLatest: string };
+  chatMessage: {
+    textInput: string;
+    voiceInput: string;
+    streaming: string;
+    provisional: string;
+    interrupted: string;
+  };
   common: CommonMessages;
 
   alert: {
