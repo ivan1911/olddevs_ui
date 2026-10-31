@@ -129,7 +129,7 @@ Components built from primitives: the page frame, its navigation and header.
 
 ## Content
 
-- [ChatMessage](content/chat-message.md): `ChatMessage` — one user or assistant message with accessible metadata, body and action slots
+- [ChatMessage](content/chat-message.md): `ChatMessage` — a user or assistant bubble with intrinsic width, aligned tails, accessible metadata/body/actions and consumer-supplied group positions
 - [ChatTranscript](content/chat-transcript.md): `ChatTranscript` — a reading viewport that follows growth, pauses for manual reading and returns explicitly to the latest message
 
 - [Typography](content/typography.md): `Text`, `Heading`, `Link` — page text: headings of the right level, paragraphs and captions, links that navigate to a URL

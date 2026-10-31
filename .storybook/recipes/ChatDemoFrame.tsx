@@ -7,6 +7,7 @@ import {
   EmptyState,
   PromptInput,
 } from "../../src/index.js";
+import { messageDateTime, messageGroupPositions } from "./messageGroups.js";
 import type { ChatDemoController, DemoMessage } from "./useChatDemo.js";
 
 /** Internal consumer composition shared by the separate chat recipes. */
@@ -40,6 +41,12 @@ export function ChatDemoFrame({
 }: ChatDemoFrameProps) {
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const field = composerRef ?? internalRef;
+  const groupPositions = messageGroupPositions(
+    chat.messages.map((message) => ({
+      authorId: message.authorId ?? "",
+      createdAt: message.createdAt,
+    }))
+  );
   return (
     <section
       aria-label={label}
@@ -61,34 +68,44 @@ export function ChatDemoFrame({
             description="Write a message below, then complete the simulated response."
           />
         )}
-        {chat.messages.map((message) => (
-          <ChatMessage
+        {chat.messages.map((message, index) => (
+          <div
             key={message.id}
-            author={message.speaker === "user" ? "You" : "Assistant"}
-            speaker={message.speaker}
-            timestamp={message.timestamp}
-            inputMethod={message.inputMethod ?? "text"}
-            state={message.state}
-            actions={
-              message.speaker === "assistant" && message.text.trim() ? (
-                <CopyButton value={message.text} size="sm" />
-              ) : undefined
+            className={
+              groupPositions[index] === "middle" || groupPositions[index] === "last"
+                ? "-mt-2"
+                : undefined
             }
           >
-            {messageBody ? (
-              messageBody(message)
-            ) : (
-              <p className="whitespace-pre-wrap">{message.text}</p>
-            )}
-            {messageExtras?.(message)}
-          </ChatMessage>
+            <ChatMessage
+              groupPosition={groupPositions[index]}
+              dateTime={messageDateTime(message.createdAt)}
+              author={message.speaker === "user" ? "You" : "Assistant"}
+              speaker={message.speaker}
+              timestamp={message.timestamp}
+              inputMethod={message.inputMethod ?? "text"}
+              state={message.state}
+              actions={
+                message.speaker === "assistant" && message.text.trim() ? (
+                  <CopyButton value={message.text} size="sm" />
+                ) : undefined
+              }
+            >
+              {messageBody ? (
+                messageBody(message)
+              ) : (
+                <p className="whitespace-pre-wrap">{message.text}</p>
+              )}
+              {messageExtras?.(message)}
+            </ChatMessage>
+          </div>
         ))}
         {chat.phase === "responding" &&
           !chat.messages.some((message) => message.id === chat.responseId) && (
             <p className="text-fg-2 text-sm">Waiting for a simulated response…</p>
           )}
       </ChatTranscript>
-      {chat.error && <p className="text-danger text-sm">{chat.error}</p>}
+      {chat.error && <p className="text-danger-strong text-sm">{chat.error}</p>}
       {chat.canRetry && (
         <Button
           className="self-start"

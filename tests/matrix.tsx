@@ -158,19 +158,21 @@ export function renderMatrix(): ReactElement {
     )
   );
   for (const speaker of ["user", "assistant"] as const)
-    for (const state of ["complete", "streaming", "provisional", "interrupted"] as const)
-      els.push(
-        h(ChatMessage, {
-          key: `chat-${speaker}-${state}`,
-          speaker,
-          author: "Author",
-          state,
-          inputMethod: "voice",
-          timestamp: "16:50",
-          actions: h("button", null, "Copy"),
-          children: "Message body",
-        })
-      );
+    for (const groupPosition of ["single", "first", "middle", "last"] as const)
+      for (const state of ["complete", "streaming", "provisional", "interrupted"] as const)
+        els.push(
+          h(ChatMessage, {
+            key: `chat-${speaker}-${state}-${groupPosition}`,
+            groupPosition,
+            speaker,
+            author: "Author",
+            state,
+            inputMethod: "voice",
+            timestamp: "16:50",
+            actions: h("button", null, "Copy"),
+            children: "Message body",
+          })
+        );
   els.push(
     h(ChatTranscript, {
       key: "transcript",
