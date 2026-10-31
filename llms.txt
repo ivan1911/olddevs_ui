@@ -23,6 +23,7 @@ index: a mismatch fails `npm run llms:check`.
 - [Localization: provider and message catalog](docs/i18n.md): Since 2.0.0 the kit defaults to English and supports other languages.
 - [Component catalog](docs/components/index.md): The catalog lists the kit's components by group: each has a link to its page, its exports and a note on what the component is and what it is for.
 - [Text chat recipe](docs/recipes/chat.md): The `Recipes/Chat` → `BasicTextChat` story composes `PromptInput`, `ChatMessage` and `ChatTranscript` with existing `Button` and `EmptyState` primitives.
+- [Tools and sources in a chat](docs/recipes/tools-and-sources.md): Compose short operation summaries and source cards under their matching assistant reply with `Accordion`, `Card` and `Link`.
 
 ## Rules for AI
 
