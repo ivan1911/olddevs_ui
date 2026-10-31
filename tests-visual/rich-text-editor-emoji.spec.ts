@@ -65,23 +65,50 @@ test("the keyboard walks the grid and Enter inserts at the caret", async ({ page
   await expect(field).toBeFocused();
 });
 
-test("on the floating toolbar the grid opens and inserts after the selection", async ({ page }) => {
-  await page.goto(STORY("floating-toolbar"));
-  const field = page.getByRole("textbox", { name: "Document" });
-  await field.click();
-  await page.keyboard.press("Control+Home");
-  await page.keyboard.press("Shift+ArrowRight");
-  await page.keyboard.press("Shift+ArrowRight");
-  await page.keyboard.press("Shift+ArrowRight");
-  const toolbar = page.getByRole("toolbar", { name: "Formatting", exact: true });
-  await expect(toolbar).toBeVisible();
+for (const initialCaret of ["clicked position", "document end"] as const) {
+  test(`on the floating toolbar the grid opens and inserts after the selection (${initialCaret})`, async ({
+    page,
+  }) => {
+    await page.goto(STORY("floating-toolbar"));
+    const field = page.getByRole("textbox", { name: "Document" });
+    await field.click();
+    if (initialCaret === "document end") {
+      const bounds = await field.boundingBox();
+      await field.click({ position: { x: bounds!.width - 20, y: bounds!.height - 20 } });
+      await expect
+        .poll(() =>
+          field.evaluate((node) => {
+            const selection = window.getSelection();
+            const lastParagraph = node.querySelector("p:last-child");
+            return (
+              selection?.isCollapsed &&
+              lastParagraph?.contains(selection.focusNode) &&
+              selection.focusOffset === selection.focusNode?.textContent?.length
+            );
+          })
+        )
+        .toBe(true);
+    }
+    const toolbar = page.getByRole("toolbar", { name: "Formatting", exact: true });
+    // Control+Home leaves the macOS caret unchanged. Observe selection consumption before
+    // collapsing it, so ProseMirror's delayed focus restore cannot race the following keys.
+    await field.press("ControlOrMeta+a");
+    await expect(toolbar).toBeVisible();
+    await field.press("ArrowLeft");
+    await expect(toolbar).toBeHidden();
+    await field.press("Shift+ArrowRight");
+    await field.press("Shift+ArrowRight");
+    await field.press("Shift+ArrowRight");
+    await expect.poll(() => field.evaluate(() => window.getSelection()?.toString())).toBe("Sel");
+    await expect(toolbar).toBeVisible();
 
-  await toolbar.getByRole("button", { name: "Emoji", exact: true }).click();
-  const grid = page.getByRole("grid", { name: "Choose an emoji" });
-  await expect(grid).toBeVisible();
-  await expect(grid).toBeFocused();
-  await grid.getByRole("gridcell", { name: "Fire" }).first().click();
+    await toolbar.getByRole("button", { name: "Emoji", exact: true }).click();
+    const grid = page.getByRole("grid", { name: "Choose an emoji" });
+    await expect(grid).toBeVisible();
+    await expect(grid).toBeFocused();
+    await grid.getByRole("gridcell", { name: "Fire" }).first().click();
 
-  await expect(grid).toBeHidden();
-  await expect(field).toContainText("🔥");
-});
+    await expect(grid).toBeHidden();
+    await expect(field).toContainText("🔥");
+  });
+}
