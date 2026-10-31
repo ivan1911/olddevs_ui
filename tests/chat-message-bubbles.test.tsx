@@ -121,3 +121,14 @@ test("consumer groups a chain by adjacent gaps and never sorts the history", () 
   ).toEqual(["first", "middle", "last", "single"]);
   expect(screen.getAllByRole("article")[3]!.textContent).toContain("Backward");
 });
+
+test.each(["", false, null])("an empty author leaves no empty name slot: %j", (author) => {
+  render(
+    <ChatMessage speaker="assistant" author={author}>
+      Body
+    </ChatMessage>
+  );
+  const article = screen.getByRole("article");
+  expect(article.hasAttribute("aria-labelledby")).toBe(false);
+  expect(article.querySelector("header")?.children).toHaveLength(0);
+});

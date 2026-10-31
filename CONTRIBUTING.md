@@ -66,7 +66,7 @@ fix(select): keep the highlighted option in view while typing
 
 ## Versioning
 
-Since 4.0.0, the package follows strict [semver](https://semver.org/): breaking changes ship only in a major version. A public API rename keeps the old name as a deprecated alias for one major version. The public API is every entry point listed in the `exports` field of `package.json`: `@olddevs/ui`, `@olddevs/ui/icons`, `@olddevs/ui/color`, `@olddevs/ui/editor`, `@olddevs/ui/editor/schema`, `@olddevs/ui/editor/highlight`, `@olddevs/ui/locales/ru`, `@olddevs/ui/locales/en` and `@olddevs/ui/styles.css`. A path in `src/` is not public.
+Since 4.0.0, the package follows strict [semver](https://semver.org/): breaking changes ship only in a major version. A public API rename keeps the old name as a deprecated alias for one major version. The public API is every entry point listed in the `exports` field of `package.json`: `@olddevs/ui`, `@olddevs/ui/icons`, `@olddevs/ui/color`, `@olddevs/ui/editor`, `@olddevs/ui/editor/schema`, `@olddevs/ui/editor/highlight`, `@olddevs/ui/markdown`, `@olddevs/ui/locales/ru`, `@olddevs/ui/locales/en` and `@olddevs/ui/styles.css`. A path in `src/` is not public.
 
 ## References you may find in the code
 

@@ -48,6 +48,22 @@ This page is updated together with the key. The gate `tests/i18n-gate.test.ts` c
 
 `roleDescription` and `slideRoleDescription` are the text of `aria-roledescription`: what a screen reader announces instead of the role. That is why this text is translated. `slide` is the name of a slide by its position, for example "2 из 5" in the Russian locale. The role adds the word "slide" to it.
 
+## `chatMessage`
+
+| Key           | Shape  | `en-US`              | `ru-RU`                    |
+| ------------- | ------ | -------------------- | -------------------------- |
+| `textInput`   | string | Text input           | Текстовый ввод             |
+| `voiceInput`  | string | Voice input          | Голосовой ввод             |
+| `streaming`   | string | Responding           | Отвечает                   |
+| `provisional` | string | Interim transcript   | Промежуточная транскрипция |
+| `interrupted` | string | Response interrupted | Ответ прерван              |
+
+## `chatTranscript`
+
+| Key              | Shape  | `en-US`          | `ru-RU`                |
+| ---------------- | ------ | ---------------- | ---------------------- |
+| `returnToLatest` | string | Return to latest | К последнему сообщению |
+
 ## `colorPicker`
 
 | Key       | Shape  | `en-US` | `ru-RU`   |
@@ -538,6 +554,16 @@ The accessible name of the value button ends with "Ежедневная подб
 | --------------- | ------ | -------------------- | --------------------------- |
 | `opensInNewTab` | string | (opens in a new tab) | (откроется в новой вкладке) |
 
+## `markdownView`
+
+| Key               | Shape    | `en-US`        | `ru-RU`          |
+| ----------------- | -------- | -------------- | ---------------- |
+| `image`           | function | —              | —                |
+| `imageWithoutAlt` | string   | [Image]        | [Изображение]    |
+| `table`           | string   | Markdown table | Таблица Markdown |
+
+`image` takes `{ alt }` and builds the placeholder text of a blocked Markdown image.
+
 ## `maskedInput`
 
 | Key         | Shape    | `en-US`                       | `ru-RU`                 |
@@ -615,6 +641,12 @@ The button's label is the same for both states: the state is announced by `aria-
 | `digit` | function | —       | —       |
 
 "Цифра 3 из 6" is the name of one code field. Without it, a screen reader reads N unnamed fields in a row.
+
+## `promptInput`
+
+| Key    | Shape  | `en-US` | `ru-RU`   |
+| ------ | ------ | ------- | --------- |
+| `send` | string | Send    | Отправить |
 
 ## `rating`
 
