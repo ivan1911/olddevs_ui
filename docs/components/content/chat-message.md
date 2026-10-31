@@ -60,7 +60,9 @@ import { ChatMessage, CopyButton } from "@olddevs/ui";
   group already computed by the consumer. It changes the corners and tail, not
   message identity, ordering or author/time visibility.
 - Required `children` is the body; `actions` holds consumer buttons. Actions
-  remain visible and reachable without hover. `className` styles the article.
+  remain visible and reachable without hover. Empty strings and `false` in
+  `timestamp` or `actions` omit their wrappers and spacing; numeric `0` remains
+  visible. `className` styles the article.
 
 ## Bubble shape and grouping
 

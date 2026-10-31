@@ -3,6 +3,7 @@
 import { useId, type ReactNode } from "react";
 import { useMessages } from "../../i18n/useMessages.js";
 import { cn } from "../../lib/cn.js";
+import { hasContent } from "../../lib/empty.js";
 
 export interface ChatMessageProps {
   author: ReactNode;
@@ -66,7 +67,7 @@ export function ChatMessage({
           <span id={authorId} className="text-fg-0 min-w-0 font-semibold">
             {author}
           </span>
-          {timestamp != null &&
+          {hasContent(timestamp) &&
             (dateTime ? <time dateTime={dateTime}>{timestamp}</time> : <span>{timestamp}</span>)}
           {inputMethod && (
             <span>{inputMethod === "voice" ? messages.voiceInput : messages.textInput}</span>
@@ -74,7 +75,9 @@ export function ChatMessage({
           {state !== "complete" && <span>{messages[state]}</span>}
         </header>
         <div className="text-fg-0 min-w-0 [overflow-wrap:anywhere]">{children}</div>
-        {actions != null && <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>}
+        {hasContent(actions) && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>
+        )}
         {/* Absolute offsets start inside the 1px body border. The 9.5px attachment
             meets that border's center; the fill extends inside to cover the old
             straight edge as the outline curves outward. Half-pixel bottom alignment
