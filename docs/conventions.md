@@ -49,6 +49,11 @@ same meaning takes the name from here, and does not invent its own.
   that. `SectionHeader` already had a prop called `level`. A second name for the same concept would silently
   drift from it.
 
+ChatMessage `groupPosition` (`single|first|middle|last`) is consumer-computed
+from adjacency, stable author identity and actual valid timestamps (0–5 minutes
+inclusive). It controls bubble shape; neither display labels nor DOM neighbors
+are used to infer it. Unknown time or identity leaves the message single.
+
 Chat presentation uses the ADR-0085 vocabulary: `speaker` (`user|assistant`),
 `inputMethod` (`text|voice`) and `state`
 (`complete|streaming|provisional|interrupted`) belong to `ChatMessage`.

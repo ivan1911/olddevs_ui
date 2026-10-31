@@ -112,3 +112,21 @@ The keyboard/browser checks cover controlled submission, sequence, reset and
 reading behavior. Synthetic composition events and axe cannot establish real
 OS IME behavior or what a screen reader actually speaks; those require manual
 validation with the final consumer and assistive technology.
+
+## Bubble groups
+
+`ChatMessage` receives `groupPosition` from the consumer. The shared demo frame
+uses the recipe-only `messageGroups.ts` helper, not a new package runtime engine.
+The demo message's optional `createdAt` is actual epoch milliseconds and
+`authorId` is a stable author identity; `timestamp` is only a display caption.
+Missing time or identity never groups a message. Generated events without an
+actual timestamp remain single even if their visible captions match.
+
+The helper compares each adjacent pair in input order: same author, two valid
+finite timestamps, and a nonnegative gap no larger than 300,000 ms. It never
+sorts or infers time from a caption. The frame supplies single/first/middle/last
+and reduces the visual gap within a group; the component handles shape only.
+See `Content/ChatMessage/Bubbles` for equal and exactly-five-minute times,
+larger gaps, different authors, unknown/invalid/backward times and narrow
+Markdown/table/code bodies. The helper lives outside the shipped runtime and
+is illustrative consumer code, not an import path for applications.

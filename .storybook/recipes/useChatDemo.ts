@@ -7,6 +7,10 @@ export interface DemoMessage {
   speaker: "user" | "assistant";
   text: string;
   timestamp: string;
+  /** Actual epoch milliseconds; never inferred from the display caption. */
+  createdAt?: number;
+  /** Stable consumer identity; an unknown identity never creates a group. */
+  authorId?: string;
   inputMethod?: "text" | "voice";
   state?: ChatMessageProps["state"];
 }
@@ -93,6 +97,7 @@ export function useChatDemo(options: Options = {}) {
                 {
                   id,
                   speaker: "assistant",
+                  authorId: "demo-assistant",
                   text: delta,
                   timestamp: "16:50",
                   inputMethod: "text",
@@ -159,6 +164,7 @@ export function useChatDemo(options: Options = {}) {
       const user: DemoMessage = {
         id: `message-${++sequence.current}`,
         speaker: "user",
+        authorId: "demo-user",
         text,
         timestamp: "16:54",
         inputMethod: "text",

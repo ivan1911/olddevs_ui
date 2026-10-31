@@ -46,16 +46,17 @@ Prop names are a separate vocabulary:
 
 ## Conversation presentation
 
-| Term                         | Meaning                                                                                          | Source | Also searched as   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------ | ------ | ------------------ |
-| Conversation                 | Consumer-owned ordered history that can continue across voice sessions.                          | common | thread             |
-| Voice session                | A period of voice interaction within a conversation; ending it does not delete the conversation. | common | voice call         |
-| Draft                        | Controlled editable text before the consumer accepts submission.                                 | common | composer value     |
-| Speaker (`speaker`)          | The presentation role of a message: user or assistant; independent of the displayed author.      | own    | message role       |
-| Input method (`inputMethod`) | Whether presented text came from typing or voice. It does not connect media.                     | common | origin             |
-| Message state (`state`)      | Complete, streaming, provisional or interrupted presentation, supplied by the consumer.          | own    | message status     |
-| Interim transcript           | Temporary recognized speech that the consumer replaces with one canonical message.               | common | partial transcript |
-| Following                    | Viewport behavior that keeps the latest growing content visible until manual reading pauses it.  | own    | autoscroll         |
+| Term                             | Meaning                                                                                                                                                                              | Source | Also searched as           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | -------------------------- |
+| Conversation                     | Consumer-owned ordered history that can continue across voice sessions.                                                                                                              | common | thread                     |
+| Voice session                    | A period of voice interaction within a conversation; ending it does not delete the conversation.                                                                                     | common | voice call                 |
+| Draft                            | Controlled editable text before the consumer accepts submission.                                                                                                                     | common | composer value             |
+| Speaker (`speaker`)              | The presentation role of a message: user or assistant; independent of the displayed author.                                                                                          | own    | message role               |
+| Group position (`groupPosition`) | Consumer-computed single/first/middle/last position in an adjacent same-author group with valid nonnegative gaps of at most five minutes. Controls bubble corners/tail, not history. | own    | bubble group, continuation |
+| Input method (`inputMethod`)     | Whether presented text came from typing or voice. It does not connect media.                                                                                                         | common | origin                     |
+| Message state (`state`)          | Complete, streaming, provisional or interrupted presentation, supplied by the consumer.                                                                                              | own    | message status             |
+| Interim transcript               | Temporary recognized speech that the consumer replaces with one canonical message.                                                                                                   | common | partial transcript         |
+| Following                        | Viewport behavior that keeps the latest growing content visible until manual reading pauses it.                                                                                      | own    | autoscroll                 |
 
 ## Markdown presentation
 
