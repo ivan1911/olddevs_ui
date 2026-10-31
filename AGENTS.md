@@ -12,6 +12,7 @@ nothing else:
 - `@olddevs/ui` — components, hooks and types; the runtime API is defined
   **only** in [`src/index.ts`](src/index.ts)
 - `@olddevs/ui/icons` — the icon vocabulary
+- `@olddevs/ui/markdown` — MarkdownView with its parser, kept out of the root entry
 - `@olddevs/ui/color` — `ColorPicker`, kept apart so that its weight is visible
   in the import
 - `@olddevs/ui/editor` — the rich text Editor

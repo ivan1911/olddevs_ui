@@ -136,6 +136,7 @@ Components built from primitives: the page frame, its navigation and header.
 - [Card](content/card.md): `Card` — a panel with a background, a border and padding that sets a self-contained block apart from the page background; you put the content into it yourself
 - [Image](content/image.md): `Image` — a picture that shows a loading state, and a placeholder if the URL is empty or the file fails to load
 - [Timeline](content/timeline.md): `Timeline` — a sequence of process steps where each step has its own outcome and any of them can fail: a task pipeline, a publication history
+- [MarkdownView](content/markdown-view.md): `MarkdownView` — complete or growing Markdown with safe links, tables and copyable code; a separate entry point `@olddevs/ui/markdown`
 - [CodeView](content/code-view.md): `CodeView` — a read-only block of code or data that can be copied whole: an API response, a config, a webhook body; highlighting comes from the `highlightCodeNodes` helper in `@olddevs/ui/editor/highlight`
 - [Notifications](content/notifications.md): `NotificationItem`, `NotificationList`, `NotificationCenter` — a notification feed in a popover or on a page: what happened, when, whether it has been read; unlike `toast`, it stays on screen
 - [MediaCard](content/media-card.md): `MediaCard` — a tile with a preview, with badges and buttons overlaid on it; the tile can be selected among other tiles: frames, documents, covers

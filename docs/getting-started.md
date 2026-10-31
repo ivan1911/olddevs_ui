@@ -27,7 +27,7 @@ import { AddIcon } from "@olddevs/ui/icons";
 ```
 
 Import only the package's public entry points — they are all listed in `exports` of
-`package.json` and in the [glossary](glossary.md) (`.`, `/icons`, `/color`, `/editor`,
+`package.json` and in the [glossary](glossary.md) (`.`, `/icons`, `/color`, `/markdown`, `/editor`,
 `/editor/schema`, `/editor/highlight`, `/locales/ru`, `/locales/en`, plus
 `styles.css`). Do not import `@olddevs/ui/src/components/...`: that path is not part of the package contract and may
 change without a migration.

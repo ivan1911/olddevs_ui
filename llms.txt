@@ -125,6 +125,7 @@ index: a mismatch fails `npm run llms:check`.
 - [Card](docs/components/content/card.md): `Card` is a visual panel with a background, border, shadow, inner padding and rounded corners.
 - [Image](docs/components/content/image.md): `Image` handles all three states of a picture: loading, loaded and failed to load.
 - [Timeline](docs/components/content/timeline.md): `Timeline` is a list of process steps: what has already happened and how it ended.
+- [MarkdownView](docs/components/content/markdown-view.md): `MarkdownView` presents complete or growing Markdown answers with the kit's typography, safe links and copyable code.
 - [CodeView](docs/components/content/code-view.md): `CodeView` is a code viewer: a JSON API response, a YAML config, a webhook body.
 - [NotificationItem, NotificationList and NotificationCenter](docs/components/content/notifications.md): A list of events: what happened, when, and whether it has been read.
 - [MediaCard](docs/components/content/media-card.md): An image tile: a preview in a set aspect ratio, actions over it, badges and selection.

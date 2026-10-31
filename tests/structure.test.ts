@@ -89,7 +89,7 @@ function stripComments(source: string): string {
  */
 function publicExportsByModule(): Map<string, string[]> {
   const byModule = new Map<string, string[]>();
-  for (const entry of ["index.ts", "color.ts"]) {
+  for (const entry of ["index.ts", "color.ts", "markdown.ts"]) {
     const source = stripComments(readFileSync(join(SRC, entry), "utf8"));
     for (const match of source.matchAll(/export\s*(type\s*)?\{([^}]*)\}\s*from\s*"([^"]+)"/g)) {
       const [, typeOnly, list, from] = match;
