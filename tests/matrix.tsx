@@ -1,3 +1,4 @@
+import { MarkdownView } from "../src/markdown.js";
 import { createElement as h, Fragment, type ReactElement } from "react";
 import { parseDate } from "@internationalized/date";
 import { Alert } from "../src/components/actions/Alert.js";
@@ -57,6 +58,9 @@ import { PhoneInput } from "../src/components/inputs/PhoneInput.js";
 import { TreeView } from "../src/components/navigation/TreeView.js";
 import { PinInput } from "../src/components/inputs/PinInput.js";
 import { SearchControl } from "../src/components/inputs/SearchControl.js";
+import { PromptInput } from "../src/components/inputs/PromptInput.js";
+import { ChatMessage } from "../src/components/content/ChatMessage.js";
+import { ChatTranscript } from "../src/components/content/ChatTranscript.js";
 import { Select } from "../src/components/inputs/Select.js";
 import { SectionHeader } from "../src/components/navigation/SectionHeader.js";
 import { StatusBadge } from "../src/components/actions/StatusBadge.js";
@@ -131,6 +135,52 @@ const BUTTON_SIZES: ButtonSize[] = ["xs", "sm", "md", "lg"];
  */
 export function renderMatrix(): ReactElement {
   const els: ReactElement[] = [];
+  els.push(
+    h(MarkdownView, {
+      key: "markdown",
+      content:
+        "Text with `inline code`, [link](/guide).\n\n> Quote\n\n- Item\n\n1. Item\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n```js\nconst x=1;\n```\n\n---",
+    })
+  );
+
+  els.push(
+    h(
+      PromptInput,
+      {
+        key: "prompt",
+        label: "Message",
+        value: "Draft",
+        onValueChange: () => {},
+        onSubmit: () => {},
+        actions: h("button", null, "Extra"),
+      },
+      "Consumer status"
+    )
+  );
+  for (const speaker of ["user", "assistant"] as const)
+    for (const groupPosition of ["single", "first", "middle", "last"] as const)
+      for (const state of ["complete", "streaming", "provisional", "interrupted"] as const)
+        els.push(
+          h(ChatMessage, {
+            key: `chat-${speaker}-${state}-${groupPosition}`,
+            groupPosition,
+            speaker,
+            author: "Author",
+            state,
+            inputMethod: "voice",
+            timestamp: "16:50",
+            actions: h("button", null, "Copy"),
+            children: "Message body",
+          })
+        );
+  els.push(
+    h(ChatTranscript, {
+      key: "transcript",
+      label: "Conversation",
+      className: "h-64",
+      children: "Ordered content",
+    })
+  );
 
   for (const variant of VARIANTS)
     for (const tone of TONES)

@@ -22,6 +22,10 @@ index: a mismatch fails `npm run llms:check`.
 - [Palette](docs/palette.md): This page shows the kit's color values: which palette primitives (labels aside) are declared and which role each of them is assigned to in each theme.
 - [Localization: provider and message catalog](docs/i18n.md): Since 2.0.0 the kit defaults to English and supports other languages.
 - [Component catalog](docs/components/index.md): The catalog lists the kit's components by group: each has a link to its page, its exports and a note on what the component is and what it is for.
+- [Text chat recipe](docs/recipes/chat.md): The `Recipes/Chat` → `BasicTextChat` story composes `PromptInput`, `ChatMessage` and `ChatTranscript` with existing `Button` and `EmptyState` primitives.
+- [Tools and sources in a chat](docs/recipes/tools-and-sources.md): Compose short operation summaries and source cards under their matching assistant reply with `Accordion`, `Card` and `Link`.
+- [Voice and text conversation recipe](docs/recipes/voice-chat.md): `Recipes/VoiceChat` presents one conversation with a voice panel beside the composer.
+- [Text, voice and references in one conversation](docs/recipes/integrated-chat.md): Compose PromptInput, ChatTranscript, ChatMessage and MarkdownView with the tools/source and voice recipes.
 
 ## Rules for AI
 
@@ -39,6 +43,7 @@ index: a mismatch fails `npm run llms:check`.
 
 ## Input fields
 
+- [PromptInput](docs/components/inputs/prompt-input.md): `PromptInput` is a controlled message draft on `TextControl`.
 - [TextControl](docs/components/inputs/text-control.md): `TextControl` is a base text field or textarea with a shared form shell.
 - [RichTextEditor](docs/components/inputs/rich-text-editor.md): `RichTextEditor` is a rich text field built on Tiptap v3 (ProseMirror).
 - [Editor extension API](docs/api/editor-extension.md): A map of how a product extends `RichTextEditor` from `@olddevs/ui/editor`, and the stability boundary of this API.
@@ -117,10 +122,13 @@ index: a mismatch fails `npm run llms:check`.
 
 ## Content
 
+- [ChatMessage](docs/components/content/chat-message.md): `ChatMessage` presents one message as an article with author, optional time, input method, presentation state, body and actions.
+- [ChatTranscript](docs/components/content/chat-transcript.md): `ChatTranscript` is a named scrollable reading viewport.
 - [Typography: `Text`, `Heading`, `Link`](docs/components/content/typography.md): Use `Heading` for document structure, `Text` for paragraphs and auxiliary lines, `Link` for navigation.
 - [Card](docs/components/content/card.md): `Card` is a visual panel with a background, border, shadow, inner padding and rounded corners.
 - [Image](docs/components/content/image.md): `Image` handles all three states of a picture: loading, loaded and failed to load.
 - [Timeline](docs/components/content/timeline.md): `Timeline` is a list of process steps: what has already happened and how it ended.
+- [MarkdownView](docs/components/content/markdown-view.md): `MarkdownView` presents complete or growing Markdown answers with the kit's typography, safe links and copyable code.
 - [CodeView](docs/components/content/code-view.md): `CodeView` is a code viewer: a JSON API response, a YAML config, a webhook body.
 - [NotificationItem, NotificationList and NotificationCenter](docs/components/content/notifications.md): A list of events: what happened, when, and whether it has been read.
 - [MediaCard](docs/components/content/media-card.md): An image tile: a preview in a set aspect ratio, actions over it, badges and selection.

@@ -27,7 +27,7 @@ import { AddIcon } from "@olddevs/ui/icons";
 ```
 
 Import only the package's public entry points — they are all listed in `exports` of
-`package.json` and in the [glossary](glossary.md) (`.`, `/icons`, `/color`, `/editor`,
+`package.json` and in the [glossary](glossary.md) (`.`, `/icons`, `/color`, `/markdown`, `/editor`,
 `/editor/schema`, `/editor/highlight`, `/locales/ru`, `/locales/en`, plus
 `styles.css`). Do not import `@olddevs/ui/src/components/...`: that path is not part of the package contract and may
 change without a migration.
@@ -120,19 +120,22 @@ not needed.
 ## Import size
 
 The package ships its source, and unused code is dropped by tree shaking: only what the
-consumer imported ends up in its bundle. Measured on 3.47.3. The figures are the contribution of **the package itself**;
+consumer imported ends up in its bundle. Measured with `npm run size` on 2026-10-31
+against the unreleased integration runtime at `5c543e3`, confirmed after the consumer
+build; these are not published-release figures.
+The figures are the contribution of **the package itself**;
 React and the kit's third-party libraries are treated as external, and the metric is gzip:
 
 | What the consumer imports                                                                                | gzip     |
 | -------------------------------------------------------------------------------------------------------- | -------- |
 | `cn` and `tableStateToParams`                                                                            | 0.6 kB   |
-| one `Button`                                                                                             | 1.6 kB   |
-| `DataTable`                                                                                              | 9.8 kB   |
-| the whole kit (`import *`)                                                                               | 77.9 kB  |
-| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 98.7 kB  |
-| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 332.4 kB |
-| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 501.5 kB |
-| `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 16.1 kB  |
+| one `Button`                                                                                             | 1.7 kB   |
+| `DataTable`                                                                                              | 9.9 kB   |
+| the whole kit (`import *`)                                                                               | 79.6 kB  |
+| `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 98.8 kB  |
+| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 331.7 kB |
+| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 500.5 kB |
+| `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 16.3 kB  |
 | `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 6.4 kB   |
 | `highlightCodeBlocks` from `@olddevs/ui/editor/highlight`, with lowlight                                 | 22.6 kB  |
 | `highlightCodeNodes` from `@olddevs/ui/editor/highlight`, with lowlight                                  | 22.6 kB  |

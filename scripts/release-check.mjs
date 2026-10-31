@@ -39,6 +39,7 @@ const STEPS = [
   { name: "public package", command: "npm", args: ["run", "check:public"] },
   { name: "public repository", command: "npm", args: ["run", "check:public", "--", "--repo"] },
   { name: "directives in dist", command: "npm", args: ["run", "check:dist"] },
+  { name: "Markdown import isolation", command: "npm", args: ["run", "check:markdown"] },
   { name: "token contrast", command: "npm", args: ["run", "contrast"] },
   { name: "size budget", command: "npm", args: ["run", "size"] },
   { name: "consumer build", command: "npm", args: ["run", "check:consumer"] },
