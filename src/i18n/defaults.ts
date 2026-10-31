@@ -15,6 +15,11 @@ import type { UiMessages } from "./messages.js";
  * product; outside that product the reason fell away.
  */
 export const DEFAULT_MESSAGES: UiMessages = {
+  markdownView: {
+    image: ({ alt }) => `[Image: ${alt}]`,
+    imageWithoutAlt: "[Image]",
+    table: "Markdown table",
+  },
   promptInput: { send: "Send" },
   chatTranscript: { returnToLatest: "Return to latest" },
   chatMessage: {
