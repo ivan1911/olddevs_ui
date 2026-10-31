@@ -20,6 +20,7 @@ behavior claims on the pages.
 
 11. [Tools and sources recipe](recipes/tools-and-sources.md): compose local operation details and optional references beneath the matching reply.
 12. [Voice and text conversation](recipes/voice-chat.md): controlled voice status and a shared conversation without media dependencies.
+13. [Text, voice and references in one conversation](recipes/integrated-chat.md): combine streaming Markdown, local operations and a voice panel in one resettable history.
 
 ## Rules for AI
 

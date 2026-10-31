@@ -79,3 +79,5 @@ external callbacks, including keyboard and emulated touch. The static supplied
 visualizer needs no animation. Browser/axe checks do not establish actual screen
 reader speech, real OS IME behavior or device/media compatibility; those require
 manual verification with the eventual consumer.
+
+See [Integrated chat](integrated-chat.md) to combine this panel with Markdown, operations and supplied references in one conversation.

@@ -108,6 +108,28 @@ That helper is a separate opt-in import with its own engine installation require
 - Do not treat a rendered safe-scheme link as verification of its destination or of a source claim.
 - Do not assume a virtualized or unbounded history: every changed answer is reparsed, and this component has no truncation or pagination. Large answers and tables require consumer measurement; prototype timings are not production guarantees.
 
+The integrated production measurement on 2026-10-31 used a minified React bundle,
+kit CSS, Chromium 153.0.8010.12 on Apple M5 Pro / Darwin 27.2.0, 1280×900,
+three warmups and ten retained samples. The reply fixture repeats paragraphs,
+links, GFM tables and fenced code. A separate public renderer probe appended
+29 characters to an existing long reply and measured its synchronous React
+commit, including reparsing; it did not measure appending to a new short reply.
+
+| Existing reply size       | Changed-reply commit P50 / P95 |
+| ------------------------- | -----------------------------: |
+| 5,000 characters          |                   3.8 / 6.0 ms |
+| 20,000 characters         |                 14.9 / 17.8 ms |
+| 50,000 characters, stress |                 40.8 / 42.2 ms |
+
+The normal single-reply fixture stops at 20,000 characters. This is a tested
+configuration, not a hard length cap or an update-rate SLA; the 50,000-character
+case is stress evidence. Full parsing of a changed complex answer can exceed a
+frame budget, so coalesce incoming deltas in the consumer and measure its real
+syntax and update frequency. Unchanged completed bodies should stay stable
+while editing a draft, as the [integrated recipe](../../recipes/integrated-chat.md)
+demonstrates. The [history measurements](chat-transcript.md#volume-and-limits)
+cover simple and mixed histories separately; none implies virtualization.
+
 ## Chat example
 
 ```tsx

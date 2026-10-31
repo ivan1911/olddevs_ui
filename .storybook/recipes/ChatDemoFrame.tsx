@@ -1,6 +1,7 @@
 import { useRef, type ReactNode, type RefObject } from "react";
 import {
   Button,
+  cn,
   ChatMessage,
   ChatTranscript,
   CopyButton,
@@ -24,6 +25,8 @@ export interface ChatDemoFrameProps {
   canSubmit?: boolean;
   onReset?: () => void;
   composerRef?: RefObject<HTMLTextAreaElement | null>;
+  className?: string;
+  maxDraftRows?: number;
 }
 export function ChatDemoFrame({
   chat,
@@ -38,6 +41,8 @@ export function ChatDemoFrame({
   canSubmit,
   onReset,
   composerRef,
+  className,
+  maxDraftRows,
 }: ChatDemoFrameProps) {
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const field = composerRef ?? internalRef;
@@ -50,7 +55,10 @@ export function ChatDemoFrame({
   return (
     <section
       aria-label={label}
-      className="border-line bg-bg-0 mx-auto flex h-[560px] max-h-[85dvh] w-full max-w-3xl min-w-0 flex-col gap-3 rounded-lg border p-4"
+      className={cn(
+        "border-line bg-bg-0 mx-auto flex h-[560px] max-h-[85dvh] w-full max-w-3xl min-w-0 flex-col gap-3 rounded-lg border p-4",
+        className
+      )}
     >
       <header className="flex shrink-0 flex-wrap items-start justify-between gap-2">
         <div>
@@ -132,6 +140,7 @@ export function ChatDemoFrame({
       <PromptInput
         ref={field}
         label="Message"
+        maxRows={maxDraftRows}
         value={chat.draft}
         onValueChange={chat.setDraft}
         onSubmit={(text) => {

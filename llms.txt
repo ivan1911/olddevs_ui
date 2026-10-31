@@ -25,6 +25,7 @@ index: a mismatch fails `npm run llms:check`.
 - [Text chat recipe](docs/recipes/chat.md): The `Recipes/Chat` → `BasicTextChat` story composes `PromptInput`, `ChatMessage` and `ChatTranscript` with existing `Button` and `EmptyState` primitives.
 - [Tools and sources in a chat](docs/recipes/tools-and-sources.md): Compose short operation summaries and source cards under their matching assistant reply with `Accordion`, `Card` and `Link`.
 - [Voice and text conversation recipe](docs/recipes/voice-chat.md): `Recipes/VoiceChat` presents one conversation with a voice panel beside the composer.
+- [Text, voice and references in one conversation](docs/recipes/integrated-chat.md): Compose PromptInput, ChatTranscript, ChatMessage and MarkdownView with the tools/source and voice recipes.
 
 ## Rules for AI
 

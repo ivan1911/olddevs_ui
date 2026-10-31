@@ -65,6 +65,7 @@ const ALLOWED = [
       "tests/editor-search.test.tsx",
       "tests/rich-text-editor-paste-cleanup.test.tsx",
       "tests-visual/interactions.spec.ts",
+      ".storybook/recipes/integratedFixtures.ts",
     ],
     why:
       "Here a Russian word is the SUBJECT of the check, not the language of writing. " +
@@ -76,7 +77,9 @@ const ALLOWED = [
       "of `yo` after `e`, not after `ya`, and `1 234,5` read as a number are the check. " +
       "The search test pins whole-word matching in Cyrillic: `\\b` of JS knows only Latin, " +
       "so a Russian word inside a longer one is the case the Unicode boundary exists for. " +
-      "The paste cleanup test pins a Word list lettered in Russian, which must stay numbered.",
+      "The paste cleanup test pins a Word list lettered in Russian, which must stay numbered. " +
+      "The integrated chat fixture supplies long Russian message/draft data to verify wrapping " +
+      "and narrow-screen reading, not translated controls or public Reference prose.",
   },
 ];
 

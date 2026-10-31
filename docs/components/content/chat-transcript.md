@@ -69,17 +69,42 @@ use a separate polite atomic lifecycle status in the consumer.
 Activating Return to latest deliberately moves focus to the named viewport
 before its return button disappears, so keyboard focus does not fall to the page body.
 
+A delayed programmatic scroll event after Return to latest does not count as
+manual reading just because new content has already grown. Upward movement still
+pauses following, including small scrollbar movements.
+
 ## Volume and limits
 
 The viewport contains positioned descendants, including accessible status helpers
 inside message actions. These helpers do not extend the document's scroll area
 beyond a bounded transcript.
 
-There is no virtualization or previous-page loader. The first-wave browser
-fixture uses 20 messages with expandable paragraphs. The technical prototype
-also measured 100/500/1000 simple messages, but these are not a throughput or
-Markdown-volume guarantee. Profile the actual body renderer and data volume in
-the consumer; large code blocks and tables can dominate DOM and layout work.
+There is no virtualization or previous-page loader. The integrated production
+fixture was measured on 2026-10-31 with minified React, the kit CSS, Chromium
+153.0.8010.12, an Apple M5 Pro and Darwin 27.2.0 at 1280×900. Each case had three
+warmups and ten retained samples. Mount timing runs from the fixture command to
+two animation frames; draft timing measures a forced synchronous React commit.
+The latter is CPU/commit work, not end-to-end input latency.
+
+| History fixture                              | Characters |  Mount P50 / P95 | Draft commit P50 / P95 |
+| -------------------------------------------- | ---------: | ---------------: | ---------------------: |
+| 100 simple-text messages                     |     34,090 |   31.8 / 33.1 ms |           1.1 / 1.1 ms |
+| 100 mixed messages with Markdown tables/code |     33,685 |   32.3 / 32.8 ms |           1.1 / 1.3 ms |
+| 500 simple messages, stress                  |    170,890 |   61.2 / 63.6 ms |           3.2 / 3.3 ms |
+| 1,000 simple messages, stress                |    341,890 | 122.2 / 124.7 ms |          5.9 / 10.3 ms |
+
+The normal history fixture stops at 100 messages / roughly 35,000 characters;
+a separate complex Markdown reply was checked at 20,000 characters. These are
+measured fixture bounds, not API caps, a throughput SLA or a mobile guarantee.
+The narrow 320/390-pixel checks exercise long Russian content and multiline
+input separately. Every retained benchmark sample also preserved manual reading
+through disclosure, panel resize, Return and immediate manual scrolling.
+
+The consumer memoizes unchanged Markdown bodies. In the same 100-message mixed
+fixture, disabling only that optimization increased draft commit P50/P95 from
+1.1/1.3 to 8.7/10.4 ms. Changed live answers still require parsing and layout; see
+[MarkdownView limits](markdown-view.md#limits-and-anti-patterns). Profile the
+actual renderer, source complexity and update frequency in the consumer.
 
 ## Anti-patterns
 
@@ -93,5 +118,6 @@ the consumer; large code blocks and tables can dominate DOM and layout work.
 
 Source: `src/components/content/ChatTranscript.tsx`. Semantics:
 `tests/chat.test.tsx`; real scrolling, resizing and focus:
-`tests-visual/chat.spec.ts` and `tests-visual/chat.tools.spec.ts`. Storybook: `Content/ChatTranscript`,
+`tests-visual/chat.spec.ts`, `tests-visual/chat.tools.spec.ts` and
+`tests-visual/chat.integrated.spec.ts`. Storybook: `Content/ChatTranscript`,
 `ReadingHistory`. See ADR-0085 and the [chat recipe](../../recipes/chat.md).
