@@ -1,5 +1,32 @@
 # @olddevs/ui
 
+## 4.13.0
+
+### Minor Changes
+
+- fd24f66: Add PromptInput, ChatMessage and ChatTranscript for controlled message drafts,
+  semantic message slots and conversation reading with pause/return-to-latest
+  behavior. Include a resettable text chat recipe with simulated responses.
+- be899b7: Add MarkdownView through the separate `@olddevs/ui/markdown` entry for complete and growing Markdown answers, with fixed HTML/URL handling, image text fallbacks, themed tables and CodeView copying. Highlighting stays optional and ordinary root imports do not include the Markdown parser.
+- c036f3b: Add ChatMessage groupPosition for consumer-computed message groups, with role-aligned intrinsic-width bubbles and decorative tails. User messages align right and assistant messages left; group members use smaller inner corners and only the last member keeps a tail. The chat recipe compares actual adjacent author identities and timestamps within five minutes inclusive; unknown times remain single.
+
+### Patch Changes
+
+- 40d4ad3: Expand the text chat recipe with simulated streaming, Stop, preserved partial
+  answers, draft-safe acceptance failures, copying and an explicit retry handler.
+  Keep positioned message helpers inside the transcript so long histories do not
+  extend the surrounding page's scroll area.
+- 754e716: Make ChatMessage tails shorter and less prominent, and join each tail to the body's existing outline without a second internal border branch. Message grouping, intrinsic widths, theme colors and radius tokens stay unchanged.
+- 5c543e3: Omit empty timestamp and actions wrappers in ChatMessage so empty strings and false do not leave metadata gaps or action spacing. Preserve numeric zero in both slots.
+- 88d0fdf: Add a resettable integrated chat recipe with one text/voice history, streaming Markdown, operations and sources. Preserve reading and draft state across resize, interruption and delayed acceptance; keep completed Markdown bodies stable while editing the next draft.
+
+  Keep transcript following through queued scroll events when Return or Markdown changes its bounds, while immediate manual scrolling still pauses following.
+
+- 0357178: Add a tools and sources chat recipe with stable operation identities, local errors and optional reference excerpts. Keep reading and focus stable when expanding details during a response.
+- afc12af: Add a simulated voice/text conversation recipe with independent connection,
+  agent and microphone states, interim transcript reconciliation, interruption
+  by text, and continuation after ending voice.
+
 ## 4.12.3
 
 ### Patch Changes
