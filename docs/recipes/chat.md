@@ -106,6 +106,9 @@ recipes. These simulations establish no real AI or media capabilities. The kit
 does not deduplicate SDK messages or reconcile interim speech. See the family
 pages for their independent contracts.
 
+For the combined Markdown, operations, sources and voice composition, see
+[Integrated chat](integrated-chat.md).
+
 ## Validation limits
 
 The keyboard/browser checks cover controlled submission, sequence, reset and

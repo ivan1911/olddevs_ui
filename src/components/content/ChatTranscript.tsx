@@ -30,6 +30,7 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
     const labelId = useId();
     const content = useRef<HTMLDivElement>(null);
     const follows = useRef(true);
+    const lastScroll = useRef({ top: 0, contentHeight: 0 });
     const [following, setFollowing] = useState(true);
     const messages = useMessages().chatTranscript;
     useImperativeHandle(ref, () => viewport.current!, []);
@@ -42,21 +43,39 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
       },
       [onFollowingChange]
     );
+    const movedUp = useCallback((node: HTMLDivElement) => {
+      // The browser clamps the old position when content shrinks or the viewport grows.
+      const expectedTop = Math.min(
+        lastScroll.current.top,
+        Math.max(
+          0,
+          Math.min(lastScroll.current.contentHeight, node.scrollHeight) - node.clientHeight
+        )
+      );
+      return node.scrollTop < expectedTop;
+    }, []);
     const scrollToLatest = useCallback(() => {
       const node = viewport.current;
-      if (node) node.scrollTop = node.scrollHeight;
+      if (node) {
+        node.scrollTop = node.scrollHeight;
+        lastScroll.current = { top: node.scrollTop, contentHeight: node.scrollHeight };
+      }
     }, []);
     useLayoutEffect(scrollToLatest, [scrollToLatest]);
     useEffect(() => {
       if (typeof ResizeObserver === "undefined") return;
       const observer = new ResizeObserver(() => {
-        if (follows.current) scrollToLatest();
+        if (!follows.current) return;
+        const node = viewport.current;
+        // A manual scroll may precede its queued scroll event; do not overwrite it on resize.
+        if (node && movedUp(node)) updateFollowing(false);
+        else scrollToLatest();
       });
       if (content.current) observer.observe(content.current);
       // A compact/expanded voice panel changes the available viewport, not the message content.
       if (viewport.current) observer.observe(viewport.current);
       return () => observer.disconnect();
-    }, [scrollToLatest]);
+    }, [scrollToLatest, movedUp, updateFollowing]);
     return (
       <div className={cn("flex min-h-0 min-w-0 flex-col gap-2", className)}>
         <div id={labelId} className="text-fg-0 shrink-0 text-sm font-medium">
@@ -70,8 +89,12 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
           className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none]"
           onScroll={() => {
             const node = viewport.current!;
-            // A small upward movement is still manual reading. Only the actual bottom resumes follow.
-            updateFollowing(node.scrollHeight - node.scrollTop - node.clientHeight <= 1);
+            const atBottom = node.scrollHeight - node.scrollTop - node.clientHeight <= 1;
+            // A queued programmatic event can arrive after layout changed. Only movement beyond
+            // the expected native clamp is manual reading; the new bottom gap alone is not intent.
+            if (atBottom) updateFollowing(true);
+            else if (movedUp(node)) updateFollowing(false);
+            lastScroll.current = { top: node.scrollTop, contentHeight: node.scrollHeight };
           }}
           onWheel={(event) => {
             if (event.deltaY < 0) updateFollowing(false);

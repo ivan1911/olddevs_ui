@@ -106,6 +106,13 @@ test("timer-driven stream growth preserves focus, past reading and lifecycle ann
   await region.focus();
   await region.press("Home");
   await page.clock.runFor(50);
+  // Wait for native keyboard scrolling to reach Home before capturing a reading anchor.
+  await expect
+    .poll(async () => {
+      await page.clock.runFor(16);
+      return region.evaluate((node) => node.scrollTop);
+    })
+    .toBe(0);
   await expect(page.getByRole("button", { name: "Return to latest" })).toBeVisible();
   const summary = page.getByText("Details for history-0", { exact: true });
   await summary.focus();
