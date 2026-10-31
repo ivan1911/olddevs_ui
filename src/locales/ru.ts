@@ -41,6 +41,11 @@ function pluralize(n: number, one: string, few: string, many: string): string {
 export const locale = "ru-RU";
 
 export const messages: UiMessages = {
+  markdownView: {
+    image: ({ alt }) => `[Изображение: ${alt}]`,
+    imageWithoutAlt: "[Изображение]",
+    table: "Таблица Markdown",
+  },
   promptInput: { send: "Отправить" },
   chatTranscript: { returnToLatest: "К последнему сообщению" },
   chatMessage: {
