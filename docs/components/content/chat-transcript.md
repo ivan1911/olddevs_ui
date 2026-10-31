@@ -69,6 +69,10 @@ before its return button disappears, so keyboard focus does not fall to the page
 
 ## Volume and limits
 
+The viewport contains positioned descendants, including accessible status helpers
+inside message actions. These helpers do not extend the document's scroll area
+beyond a bounded transcript.
+
 There is no virtualization or previous-page loader. The first-wave browser
 fixture uses 20 messages with expandable paragraphs. The technical prototype
 also measured 100/500/1000 simple messages, but these are not a throughput or

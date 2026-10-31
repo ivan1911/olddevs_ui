@@ -67,7 +67,7 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
           role="region"
           aria-labelledby={labelId}
           tabIndex={0}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none]"
+          className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none]"
           onScroll={() => {
             const node = viewport.current!;
             // A small upward movement is still manual reading. Only the actual bottom resumes follow.

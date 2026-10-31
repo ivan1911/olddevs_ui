@@ -11,7 +11,35 @@ Type a draft and send with Enter or Send. Complete response supplies a fixed
 plain-text answer; Reset chat returns to the empty conversation. This sequence
 is simulated and needs no network, model keys, microphone or voice SDK. The
 optional example `request(text): Promise<string>` demonstrates where an external
-handler can supply an answer. Production apps own request errors and retry.
+handler can supply an answer. This helper is consumer example code, not a package API.
+
+### Streaming, Stop and recovery
+
+`StreamingResponse` provides explicit fixture events. Send a message, append
+response chunks, then complete, stop or fail the response. The next draft stays
+editable while a response runs; sending waits for completion or Stop. There is
+no queued next message. Stop and failure retain received text with the
+interrupted label. An empty or whitespace-only answer leaves no empty bubble.
+
+Use Fail next send to exercise acceptance failure: no message is accepted and
+the draft stays intact. Delay acceptance exposes Accept send, Reject send and
+Cancel send. Edits made while acceptance is pending survive a later acceptance;
+only the unchanged submitted draft is cleared. Duplicate acceptance is guarded
+synchronously before React disables Send. Reset rejects late results from an
+old acceptance or response.
+
+Copy is available on assistant messages. Retry response is available only for
+the latest stopped or failed response, until another send starts. A retry adds
+a new response attempt without duplicating the user message or removing the
+previous partial answer. It invokes a separate external `onRetry` handler and
+never automatically calls the ordinary `onStart` handler or replays tools.
+Without an external handler, fixture buttons explicitly supply the new answer.
+
+`ReadingDuringStream` uses a local timer and twenty previous fixture messages.
+Write a draft, read older messages or open their details while tokens arrive.
+Content updates preserve focus and manual reading position; Return to latest
+explicitly resumes following. This timer is a demonstration fixture, not a
+runtime requirement.
 
 ## Compose the screen
 
@@ -52,16 +80,31 @@ import { ChatMessage, ChatTranscript, PromptInput } from "@olddevs/ui";
 
 ## Consumer responsibilities
 
-The example guards acceptance with a synchronous ref lock before React updates
-the Send button. It clears an accepted draft; it never asks the primitives to
-store messages, call a backend or clear content. A generation check rejects late
-external results after Reset. The lifecycle status changes at response start
-and completion; the transcript itself has no token-level live announcements.
+The example guards acceptance synchronously before React updates the Send
+button. It clears an unchanged accepted draft; it never asks the primitives to
+store messages, call a backend or clear content. Generation-bound response
+callbacks reject late tokens/completion/errors after Stop, Reset, unmount or a
+new attempt. A canceled acceptance cannot alter a previous completed response.
+Synchronous throws and rejected promises in an external response handler become
+recoverable response errors.
 
-Conversation persistence, streaming/Stop/retry, tools, sources and voice belong
-to their consumer recipes. This basic path establishes none of those runtime
-capabilities. The kit does not deduplicate SDK messages or reconcile interim
-speech. See the family pages for their independent contracts.
+The separate polite atomic status changes only for lifecycle transitions:
+sending, response start, completion, interruption, cancellation or error. It
+does not repeat every token or reannounce the history. Explicit terminal
+controls and Retry return focus to the composer before the activated button
+disappears; passive updates do not move it.
+
+The internal `.storybook/recipes/useChatDemo.ts` helper keeps this consumer
+state reusable across the independent recipes. Its `accept`, `onStart` and
+`onRetry` callbacks receive fixture events, not SDK messages. A response exposes
+`append`, `complete` and `fail`; each callback is bound to its attempt.
+`ChatDemoFrame.tsx` supplies message-body, message-extras, controls and composer
+slots. Neither helper is exported from the package or shipped as a chat runtime.
+
+Conversation persistence, tools, sources and voice belong to their consumer
+recipes. These simulations establish no real AI or media capabilities. The kit
+does not deduplicate SDK messages or reconcile interim speech. See the family
+pages for their independent contracts.
 
 ## Validation limits
 

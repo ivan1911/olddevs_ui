@@ -109,6 +109,7 @@ test("resetting the recipe rejects a late result from its external request handl
   render(<BasicChatDemo request={request} />);
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "A question" } });
   fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  expect(screen.queryByRole("button", { name: "Complete response" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Reset chat" }));
   await act(async () => {
     resolve("Late response");
