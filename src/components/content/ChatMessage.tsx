@@ -75,22 +75,26 @@ export function ChatMessage({
         </header>
         <div className="text-fg-0 min-w-0 [overflow-wrap:anywhere]">{children}</div>
         {actions != null && <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>}
+        {/* Absolute offsets start inside the 1px body border. The 9.5px attachment
+            meets that border's center; the fill extends inside to cover the old
+            straight edge as the outline curves outward. Half-pixel bottom alignment
+            continues the body's existing 1px bottom stroke without doubling it. */}
         {(groupPosition === "single" || groupPosition === "last") && (
           <svg
             aria-hidden="true"
             focusable="false"
-            viewBox="0 0 16 24"
+            viewBox="0 0 12 14"
             className={cn(
-              "pointer-events-none absolute -bottom-px h-6 w-4 overflow-visible",
-              speaker === "user" ? "-right-3.5 -scale-x-100" : "-left-3.5"
+              "pointer-events-none absolute -bottom-px h-3.5 w-3 overflow-visible",
+              speaker === "user" ? "-right-2.5 -scale-x-100" : "-left-2.5"
             )}
           >
             <path
-              d="M16 0C16 12 11 21 1 23H16Z"
+              d="M9.5 0C9.5 6 6.5 11.5 0.5 13.5H12V0Z"
               className={speaker === "user" ? "fill-bg-2" : "fill-bg-1"}
             />
             <path
-              d="M16 0C16 12 11 21 1 23H16"
+              d="M9.5 0C9.5 6 6.5 11.5 0.5 13.5H12"
               fill="none"
               className="stroke-line"
               strokeWidth="1"
