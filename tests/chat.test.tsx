@@ -140,6 +140,58 @@ test("ChatMessage exposes the author, supplied time and input method beside its 
   expect(screen.getByText("Retained answer")).toBeTruthy();
 });
 
+test.each(["", false])("ChatMessage omits empty timestamp metadata for %j", (empty) => {
+  const { rerender } = render(
+    <ChatMessage author="Assistant" speaker="assistant" timestamp={empty}>
+      Answer
+    </ChatMessage>
+  );
+  const article = screen.getByRole("article", { name: "Assistant" });
+  // Only the author occupies the metadata row; no empty flex item adds a gap.
+  expect(article.querySelector("header")!.children).toHaveLength(1);
+  rerender(
+    <ChatMessage
+      author="Assistant"
+      speaker="assistant"
+      timestamp={empty}
+      dateTime="2026-10-31T16:54:00+03:00"
+    >
+      Answer
+    </ChatMessage>
+  );
+  expect(article.querySelector("time")).toBeNull();
+  expect(article.querySelector("header")!.children).toHaveLength(1);
+});
+
+test.each(["", false])("ChatMessage omits the empty actions spacing row for %j", (empty) => {
+  render(
+    <ChatMessage author="Assistant" speaker="assistant" actions={empty}>
+      Answer
+    </ChatMessage>
+  );
+  // Only the body occupies a direct div; no empty actions row adds top spacing.
+  expect(screen.getByRole("article").querySelectorAll(":scope > div")).toHaveLength(1);
+});
+
+test("ChatMessage preserves numeric zero in timestamp and actions slots", () => {
+  render(
+    <ChatMessage
+      author="Assistant"
+      speaker="assistant"
+      timestamp={0}
+      dateTime="2026-10-31T16:54:00+03:00"
+      actions={0}
+    >
+      Answer
+    </ChatMessage>
+  );
+  const article = screen.getByRole("article", { name: "Assistant" });
+  expect(article.querySelector("time")?.textContent).toBe("0");
+  const rows = article.querySelectorAll(":scope > div");
+  expect(rows).toHaveLength(2);
+  expect(rows[1]?.textContent).toBe("0");
+});
+
 test("ChatTranscript preserves supplied order and is a named region without token announcements", () => {
   render(
     <ChatTranscript label="Conversation">
