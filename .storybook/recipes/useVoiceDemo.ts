@@ -45,6 +45,8 @@ export function useVoiceDemo(
     textSendPending.current = false;
     if (finalVoicePending.current) {
       finalVoicePending.current = false;
+      // The consumer reconciles temporary speech with one accepted canonical message.
+      removeInterim();
       chat.updateMessages((items) => {
         const lastUser = items.reduce(
           (last, message, index) => (message.speaker === "user" ? index : last),
@@ -102,8 +104,7 @@ export function useVoiceDemo(
     const unsentDraft = chat.draft;
     focusComposer();
     interrupt();
-    removeInterim();
-    // The consumer reconciles temporary speech with one accepted canonical message.
+    // A rejected send keeps the interim transcript, so finalizing can be tried again.
     finalVoicePending.current = true;
     chat.send("I would like to plan a visit tomorrow.");
     // Incoming recognized speech is not submission of the user's independently edited draft.

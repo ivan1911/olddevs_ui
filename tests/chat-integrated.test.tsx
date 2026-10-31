@@ -95,10 +95,28 @@ test("an accepted incoming voice final retains voice metadata after delayed acce
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "Independent draft" } });
   click("Show interim transcript");
   click("Finalize transcript");
-  expect(screen.queryAllByRole("article")).toHaveLength(0);
+  expect(within(screen.getByRole("article")).getByText("Interim transcript")).toBeTruthy();
   await act(async () => click("Accept send"));
   expect(within(screen.getByRole("article")).getByText("Voice input")).toBeTruthy();
+  expect(screen.queryByText("Interim transcript")).toBeNull();
   expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("Independent draft");
+});
+
+test("a rejected voice final keeps the interim transcript and can be finalized again", async () => {
+  render(<IntegratedChatDemo />);
+  click("Simulation events");
+  click("Start voice");
+  click("Connection ready");
+  fireEvent.click(screen.getByRole("checkbox", { name: "Hold acceptance" }));
+  click("Show interim transcript");
+  click("Finalize transcript");
+  await act(async () => click("Reject send"));
+  expect(within(screen.getByRole("article")).getByText("Interim transcript")).toBeTruthy();
+  click("Finalize transcript");
+  await act(async () => click("Accept send"));
+  expect(screen.getAllByRole("article")).toHaveLength(1);
+  expect(within(screen.getByRole("article")).getByText("Voice input")).toBeTruthy();
+  expect(screen.queryByText("Interim transcript")).toBeNull();
 });
 
 test("empty and whitespace-only stops leave no assistant bubble; source-free answers and lifecycle status stay usable", () => {

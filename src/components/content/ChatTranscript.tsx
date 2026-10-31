@@ -23,6 +23,9 @@ export interface ChatTranscriptProps {
   onFollowingChange?: (following: boolean) => void;
 }
 
+// A popup trigger opens an overlay. Only an inline disclosure changes the transcript's height.
+const DISCLOSURE = "summary,[aria-expanded]:not([aria-haspopup])";
+
 /** A reading viewport, without a message model, sorting or pagination. */
 export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
   function ChatTranscript({ children, label, className, onFollowingChange }, ref) {
@@ -31,6 +34,7 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
     const content = useRef<HTMLDivElement>(null);
     const follows = useRef(true);
     const lastScroll = useRef({ top: 0, contentHeight: 0 });
+    const touchY = useRef(0);
     const [following, setFollowing] = useState(true);
     const messages = useMessages().chatTranscript;
     useImperativeHandle(ref, () => viewport.current!, []);
@@ -54,6 +58,10 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
       );
       return node.scrollTop < expectedTop;
     }, []);
+    // Without room to move, no scroll event follows the intent and nothing would resume following.
+    const pauseIfCanMoveUp = useCallback(() => {
+      if (viewport.current!.scrollTop > 0) updateFollowing(false);
+    }, [updateFollowing]);
     const scrollToLatest = useCallback(() => {
       const node = viewport.current;
       if (node) {
@@ -97,27 +105,30 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
             lastScroll.current = { top: node.scrollTop, contentHeight: node.scrollHeight };
           }}
           onWheel={(event) => {
-            if (event.deltaY < 0) updateFollowing(false);
+            if (event.deltaY < 0) pauseIfCanMoveUp();
           }}
-          onTouchMove={() => updateFollowing(false)}
+          onTouchStart={(event) => {
+            touchY.current = event.touches[0]!.clientY;
+          }}
+          onTouchMove={(event) => {
+            const y = event.touches[0]!.clientY;
+            if (y > touchY.current) pauseIfCanMoveUp();
+            touchY.current = y;
+          }}
           onKeyDown={(event) => {
             if (
               event.target === event.currentTarget &&
               ["ArrowUp", "PageUp", "Home"].includes(event.key)
             )
-              updateFollowing(false);
+              pauseIfCanMoveUp();
           }}
           onKeyDownCapture={(event) => {
             // React Aria can expand on keydown before a synthesized click reaches capture.
-            if (
-              ["Enter", " "].includes(event.key) &&
-              (event.target as Element).closest("summary,[aria-expanded]")
-            )
+            if (["Enter", " "].includes(event.key) && (event.target as Element).closest(DISCLOSURE))
               updateFollowing(false);
           }}
           onClickCapture={(event) => {
-            if ((event.target as Element).closest("summary,[aria-expanded]"))
-              updateFollowing(false);
+            if ((event.target as Element).closest(DISCLOSURE)) updateFollowing(false);
           }}
         >
           <div ref={content} className="flex min-w-0 flex-col gap-3">

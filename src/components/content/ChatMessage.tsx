@@ -52,7 +52,7 @@ export function ChatMessage({
   return (
     <div className="min-w-0 px-4 py-px">
       <article
-        aria-labelledby={authorId}
+        aria-labelledby={hasContent(author) ? authorId : undefined}
         data-speaker={speaker}
         data-state={state}
         data-group-position={groupPosition}
@@ -64,9 +64,11 @@ export function ChatMessage({
         )}
       >
         <header className="text-fg-2 mb-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm [overflow-wrap:anywhere]">
-          <span id={authorId} className="text-fg-0 min-w-0 font-semibold">
-            {author}
-          </span>
+          {hasContent(author) && (
+            <span id={authorId} className="text-fg-0 min-w-0 font-semibold">
+              {author}
+            </span>
+          )}
           {hasContent(timestamp) &&
             (dateTime ? <time dateTime={dateTime}>{timestamp}</time> : <span>{timestamp}</span>)}
           {inputMethod && (

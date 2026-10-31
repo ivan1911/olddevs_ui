@@ -53,8 +53,11 @@ behavior, not domain response state. Growth and available-height changes are
 observed: an expanding voice panel changes the viewport independently of the
 content. Following uses immediate scroll movement, without animated scrolling.
 
-Scrolling upward pauses following. Activating a `summary` or an element with
-`aria-expanded` also pauses it before disclosure changes height. Enter and Space
+Scrolling upward pauses following. Upward intent where the viewport cannot move,
+such as a wheel or swipe in content that fits, does not. Activating a `summary`
+or an element with `aria-expanded` also pauses it before disclosure changes height.
+A popup trigger with `aria-haspopup` does not, because its overlay leaves the
+transcript's height alone. Enter and Space
 are captured before a React Aria disclosure handles the key, so keyboard expansion
 does not race with following. The Return to
 latest button explicitly resumes following; manually reaching the bottom also
