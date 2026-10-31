@@ -24,6 +24,8 @@ page.
 
 ## Input fields
 
+- [PromptInput](inputs/prompt-input.md): `PromptInput` — a controlled message draft with Enter/Shift+Enter/IME handling, Send and consumer action slots
+
 - [TextControl](inputs/text-control.md): `TextControl` — the base text field: a single line or multi-line text, with an icon and a placeholder inside; the other input fields are built on it
 - [RichTextEditor](inputs/rich-text-editor.md): `RichTextEditor`, the `useRichTextEditorState` and `useRichTextToolState` hooks, the `tool` and `defineTool` helpers, the `RICH_TEXT_PRESETS` Presets, a custom Tool (`CustomTool`) — a rich text editor: headings, lists, links, inline formatting (bold, italic, color). Suitable for long articles and descriptions, and the value is stored as HTML. A separate entry point `@olddevs/ui/editor`; the consumer installs the Tiptap engine with the command from that page
 - [Editor extension API](../api/editor-extension.md) — a reference for those who extend the Editor with custom Tools, buttons and Loaders: what can be plugged in and what will not change between versions
@@ -126,6 +128,9 @@ Components built from primitives: the page frame, its navigation and header.
 - [Section header](navigation/section-header.md): `SectionHeader` — a title for a block inside a page or a card, with a counter, a link or a small button on the right; for the title of the page itself there is `PageHeader`
 
 ## Content
+
+- [ChatMessage](content/chat-message.md): `ChatMessage` — one user or assistant message with accessible metadata, body and action slots
+- [ChatTranscript](content/chat-transcript.md): `ChatTranscript` — a reading viewport that follows growth, pauses for manual reading and returns explicitly to the latest message
 
 - [Typography](content/typography.md): `Text`, `Heading`, `Link` — page text: headings of the right level, paragraphs and captions, links that navigate to a URL
 - [Card](content/card.md): `Card` — a panel with a background, a border and padding that sets a self-contained block apart from the page background; you put the content into it yourself

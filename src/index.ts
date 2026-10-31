@@ -1,6 +1,12 @@
 // The ".js" extension is required: NodeNext needs it at compile time, and it also ends up in dist,
 // where Node ESM expects it.
 export { cn } from "./lib/cn.js";
+export { PromptInput } from "./components/inputs/PromptInput.js";
+export type { PromptInputProps } from "./components/inputs/PromptInput.js";
+export { ChatMessage } from "./components/content/ChatMessage.js";
+export type { ChatMessageProps } from "./components/content/ChatMessage.js";
+export { ChatTranscript } from "./components/content/ChatTranscript.js";
+export type { ChatTranscriptProps } from "./components/content/ChatTranscript.js";
 export { useScrollLock } from "./hooks/useScrollLock.js";
 export { useTableState } from "./hooks/useTableState.js";
 export type { TableStateApi } from "./hooks/useTableState.js";

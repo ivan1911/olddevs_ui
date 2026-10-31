@@ -15,6 +15,7 @@ behavior claims on the pages.
 7. [Palette](palette.md): the palette primitive values and the roles by theme, in one table.
 8. [Localization](i18n.md): the provider, the message catalog and how to connect to the consumer's `I18nProvider`.
 9. [Component catalog](components/index.md): the full index of the public components.
+10. [Text chat recipe](recipes/chat.md): compose controlled drafts, messages and a reading viewport with consumer-owned history.
 
 ## Rules for AI
 

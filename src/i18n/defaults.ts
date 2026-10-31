@@ -15,6 +15,15 @@ import type { UiMessages } from "./messages.js";
  * product; outside that product the reason fell away.
  */
 export const DEFAULT_MESSAGES: UiMessages = {
+  promptInput: { send: "Send" },
+  chatTranscript: { returnToLatest: "Return to latest" },
+  chatMessage: {
+    textInput: "Text input",
+    voiceInput: "Voice input",
+    streaming: "Responding",
+    provisional: "Interim transcript",
+    interrupted: "Response interrupted",
+  },
   common: {
     close: "Close",
     clear: "Clear",
