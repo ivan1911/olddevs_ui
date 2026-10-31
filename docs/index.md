@@ -18,8 +18,8 @@ behavior claims on the pages.
 9. [Component catalog](components/index.md): the full index of the public components.
 10. [Text chat recipe](recipes/chat.md): compose controlled drafts, messages and a reading viewport with consumer-owned history.
 
-Recipe: [Voice and text conversation](recipes/voice-chat.md) demonstrates
-controlled voice status and a shared conversation without media dependencies.
+11. [Tools and sources recipe](recipes/tools-and-sources.md): compose local operation details and optional references beneath the matching reply.
+12. [Voice and text conversation](recipes/voice-chat.md): controlled voice status and a shared conversation without media dependencies.
 
 ## Rules for AI
 

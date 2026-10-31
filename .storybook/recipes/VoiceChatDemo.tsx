@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../src/index.js";
 import { ChatDemoFrame } from "./ChatDemoFrame.js";
 import {
@@ -43,18 +43,24 @@ export function VoiceChatDemo({
   const partialCount = useRef(0);
   const response = useRef<DemoResponseControls | null>(null);
   const responseMode = useRef<"text" | "voice">("text");
+  // Acceptance is guarded synchronously, before React updates the composer availability.
+  const textSendPending = useRef(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const changeConnection = (next: VoiceConnectionState) => {
     connectionRef.current = next;
     setConnection(next);
   };
   const receiveRequest: DemoResponseHandler = (_text, next) => {
+    textSendPending.current = false;
     response.current = next;
     responseMode.current = connectionRef.current === "ready" ? "voice" : "text";
     if (responseMode.current === "voice") setAgent("processing");
   };
   const chat = useChatDemo({ initialMessages, onStart: receiveRequest, onRetry: receiveRequest });
   const focusComposer = () => composerRef.current?.focus({ preventScroll: true });
+  useEffect(() => {
+    if (chat.phase === "idle") textSendPending.current = false;
+  }, [chat.phase]);
   const removeInterim = () => {
     const id = interimId.current;
     if (id) chat.updateMessages((items) => items.filter((message) => message.id !== id));
@@ -130,7 +136,10 @@ export function VoiceChatDemo({
     setAgent("listening");
   };
   const sendText = (text: string) => {
+    if (!text.trim() || textSendPending.current || chat.phase === "accepting") return;
+    if (chat.phase !== "idle" && connectionRef.current !== "ready") return;
     if (connectionRef.current === "ready") chat.stop();
+    textSendPending.current = true;
     chat.send(text);
   };
   const endVoice = () => {
@@ -141,6 +150,7 @@ export function VoiceChatDemo({
     setAgent("idle");
   };
   const reset = () => {
+    textSendPending.current = false;
     chat.reset();
     interimId.current = null;
     response.current = null;
@@ -226,7 +236,7 @@ export function VoiceChatDemo({
         composerRef={composerRef}
         onReset={reset}
         onSubmit={sendText}
-        canSubmit={chat.phase === "idle" || connection === "ready"}
+        canSubmit={chat.phase !== "accepting" && (chat.phase === "idle" || connection === "ready")}
         controls={
           chat.phase === "responding" &&
           responseMode.current === "text" && (
