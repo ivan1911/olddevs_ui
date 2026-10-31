@@ -81,7 +81,7 @@
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
     "test:a11y": "playwright test tests-visual/a11y.spec.ts",
-    "test:interactions": "playwright test tests-visual/interactions.spec.ts tests-visual/chat.spec.ts tests-visual/chat-stream.spec.ts tests-visual/markdown.spec.ts",
+    "test:interactions": "playwright test tests-visual/interactions.spec.ts tests-visual/chat.spec.ts tests-visual/chat-stream.spec.ts tests-visual/markdown.spec.ts tests-visual/chat.voice.spec.ts",
     "check:markdown": "node scripts/check-markdown.mjs"
   },
   "dependencies": {
