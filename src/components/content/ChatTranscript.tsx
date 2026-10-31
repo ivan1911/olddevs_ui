@@ -84,6 +84,14 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
             )
               updateFollowing(false);
           }}
+          onKeyDownCapture={(event) => {
+            // React Aria can expand on keydown before a synthesized click reaches capture.
+            if (
+              ["Enter", " "].includes(event.key) &&
+              (event.target as Element).closest("summary,[aria-expanded]")
+            )
+              updateFollowing(false);
+          }}
           onClickCapture={(event) => {
             if ((event.target as Element).closest("summary,[aria-expanded]"))
               updateFollowing(false);

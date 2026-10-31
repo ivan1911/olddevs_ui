@@ -54,7 +54,9 @@ observed: an expanding voice panel changes the viewport independently of the
 content. Following uses immediate scroll movement, without animated scrolling.
 
 Scrolling upward pauses following. Activating a `summary` or an element with
-`aria-expanded` also pauses it before disclosure changes height. The Return to
+`aria-expanded` also pauses it before disclosure changes height. Enter and Space
+are captured before a React Aria disclosure handles the key, so keyboard expansion
+does not race with following. The Return to
 latest button explicitly resumes following; manually reaching the bottom also
 resumes it. The button label is `messages.chatTranscript.returnToLatest`.
 
@@ -91,5 +93,5 @@ the consumer; large code blocks and tables can dominate DOM and layout work.
 
 Source: `src/components/content/ChatTranscript.tsx`. Semantics:
 `tests/chat.test.tsx`; real scrolling, resizing and focus:
-`tests-visual/chat.spec.ts`. Storybook: `Content/ChatTranscript`,
+`tests-visual/chat.spec.ts` and `tests-visual/chat.tools.spec.ts`. Storybook: `Content/ChatTranscript`,
 `ReadingHistory`. See ADR-0085 and the [chat recipe](../../recipes/chat.md).
