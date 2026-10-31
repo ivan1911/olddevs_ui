@@ -188,7 +188,8 @@ alias is allowed only in a major version, with an entry in
 
 ## Commits
 
-Conventional Commits, one line, in English. A maintainer's commit message ends
+Use English Conventional Commit subjects and body text, even when the linked
+issue title is Russian. Keep subjects on one line. A maintainer's commit message ends
 with the key of the internal issue tracker in parentheses:
 `fix(keyboard): keep the caret after a layout switch (OLDSUI-<number>)`. The key
 is required: the private repository links a commit to its task only through the
