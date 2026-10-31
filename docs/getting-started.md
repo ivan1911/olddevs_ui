@@ -121,7 +121,8 @@ not needed.
 
 The package ships its source, and unused code is dropped by tree shaking: only what the
 consumer imported ends up in its bundle. Measured with `npm run size` on 2026-10-31
-against the unreleased integration at `5c543e3`; these are not published-release figures.
+against the unreleased integration runtime at `5c543e3`, confirmed after the consumer
+build; these are not published-release figures.
 The figures are the contribution of **the package itself**;
 React and the kit's third-party libraries are treated as external, and the metric is gzip:
 
@@ -132,8 +133,8 @@ React and the kit's third-party libraries are treated as external, and the metri
 | `DataTable`                                                                                              | 9.9 kB   |
 | the whole kit (`import *`)                                                                               | 79.6 kB  |
 | `RichTextEditor` from `@olddevs/ui/editor`, without the engine, "start"                                  | 98.8 kB  |
-| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 332.5 kB |
-| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 501.7 kB |
+| `RichTextEditor` with the Tiptap engine, "start" (static graph, `basic`)                                 | 331.7 kB |
+| `RichTextEditor` with the Tiptap engine, "full" (with all lazy chunks, `full`)                           | 500.5 kB |
 | `RichTextView` from `@olddevs/ui/editor`, Tiptap engine included in the measurement                      | 16.3 kB  |
 | `sanitizeRichText` and `richTextSanitizeConfig` from `@olddevs/ui/editor/schema`, Tiptap engine included | 6.4 kB   |
 | `highlightCodeBlocks` from `@olddevs/ui/editor/highlight`, with lowlight                                 | 22.6 kB  |
