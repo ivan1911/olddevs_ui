@@ -1,3 +1,4 @@
+import { MarkdownView } from "../src/markdown.js";
 import { createElement as h, Fragment, type ReactElement } from "react";
 import { parseDate } from "@internationalized/date";
 import { Alert } from "../src/components/actions/Alert.js";
@@ -134,6 +135,13 @@ const BUTTON_SIZES: ButtonSize[] = ["xs", "sm", "md", "lg"];
  */
 export function renderMatrix(): ReactElement {
   const els: ReactElement[] = [];
+  els.push(
+    h(MarkdownView, {
+      key: "markdown",
+      content:
+        "Text with `inline code`, [link](/guide).\n\n> Quote\n\n- Item\n\n1. Item\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n```js\nconst x=1;\n```\n\n---",
+    })
+  );
 
   els.push(
     h(

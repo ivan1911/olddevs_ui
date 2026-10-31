@@ -5,7 +5,7 @@ English · [Русский](README.ru.md)
 [![npm version](https://img.shields.io/npm/v/@olddevs/ui)](https://www.npmjs.com/package/@olddevs/ui)
 [![license](https://img.shields.io/npm/l/@olddevs/ui)](LICENSE)
 
-Olddevs UI is a design system for React: design tokens, themes and 122 accessible components, built for admin interfaces and other data-heavy products. Behavior comes from [React Aria Components](https://react-aria.adobe.com/) and [Radix UI](https://www.radix-ui.com/); styling is [Tailwind CSS](https://tailwindcss.com/) 4. Your app's Tailwind build compiles the component classes.
+Olddevs UI is a design system for React: design tokens, themes and 123 accessible components, built for admin interfaces and other data-heavy products. Behavior comes from [React Aria Components](https://react-aria.adobe.com/) and [Radix UI](https://www.radix-ui.com/); styling is [Tailwind CSS](https://tailwindcss.com/) 4. Your app's Tailwind build compiles the component classes.
 
 Documentation: **[ui.olddevs.ru](https://ui.olddevs.ru)** · Showcase: **[Storybook](https://ivan1911.github.io/olddevs_ui/)**
 
@@ -28,6 +28,7 @@ itself, so you don't list these packages in your `package.json`:
 | `react-aria-components`                                                    | Behavior and accessibility of most controls                    |
 | `@radix-ui/react-dialog`, `-popover`, `-tooltip`, `-context-menu`, `-slot` | Dialogs, drawers, popovers, tooltips, context menus, `asChild` |
 | `lucide-react`                                                             | The icon set behind `@olddevs/ui/icons`                        |
+| `react-markdown`, `remark-gfm`                                             | MarkdownView through the separate `@olddevs/ui/markdown` entry |
 | `sonner`                                                                   | `Toaster` and `toast`                                          |
 | `clsx`, `tailwind-merge`                                                   | Class composition                                              |
 | `@internationalized/date`                                                  | Types for the date and time components                         |

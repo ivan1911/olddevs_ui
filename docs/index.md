@@ -1,7 +1,8 @@
 # `@olddevs/ui` Reference
 
 This Reference is the contract for developers and AI agents who use the package's public API. The source of
-truth for the exports is [`src/index.ts`](../src/index.ts). Component sources, tests and Storybook confirm the
+truth for public entry points is the `exports` map in [`package.json`](../package.json);
+[`src/index.ts`](../src/index.ts) defines the root exports. Component sources, tests and Storybook confirm the
 behavior claims on the pages.
 
 ## Start here

@@ -31,6 +31,10 @@ const SRC = resolve(import.meta.dirname, "..", "src");
 /** Files that must not have the directive, and why. */
 const SERVER_SAFE = [
   {
+    file: "markdown.ts",
+    why: "The Markdown entry only re-exports its client component and types; the component owns the client boundary, like the color entry.",
+  },
+  {
     file: "index.ts",
     why:
       "The root barrel. It runs no code of its own, it only re-exports; " +
