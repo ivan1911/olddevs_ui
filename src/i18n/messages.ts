@@ -34,6 +34,20 @@ export interface CommonMessages {
 }
 
 export interface UiMessages {
+  markdownView: {
+    image: (vars: { alt: string }) => string;
+    imageWithoutAlt: string;
+    table: string;
+  };
+  promptInput: { send: string };
+  chatTranscript: { returnToLatest: string };
+  chatMessage: {
+    textInput: string;
+    voiceInput: string;
+    streaming: string;
+    provisional: string;
+    interrupted: string;
+  };
   common: CommonMessages;
 
   alert: {

@@ -1,7 +1,8 @@
 # `@olddevs/ui` Reference
 
 This Reference is the contract for developers and AI agents who use the package's public API. The source of
-truth for the exports is [`src/index.ts`](../src/index.ts). Component sources, tests and Storybook confirm the
+truth for public entry points is the `exports` map in [`package.json`](../package.json);
+[`src/index.ts`](../src/index.ts) defines the root exports. Component sources, tests and Storybook confirm the
 behavior claims on the pages.
 
 ## Start here
@@ -15,6 +16,11 @@ behavior claims on the pages.
 7. [Palette](palette.md): the palette primitive values and the roles by theme, in one table.
 8. [Localization](i18n.md): the provider, the message catalog and how to connect to the consumer's `I18nProvider`.
 9. [Component catalog](components/index.md): the full index of the public components.
+10. [Text chat recipe](recipes/chat.md): compose controlled drafts, messages and a reading viewport with consumer-owned history.
+
+11. [Tools and sources recipe](recipes/tools-and-sources.md): compose local operation details and optional references beneath the matching reply.
+12. [Voice and text conversation](recipes/voice-chat.md): controlled voice status and a shared conversation without media dependencies.
+13. [Text, voice and references in one conversation](recipes/integrated-chat.md): combine streaming Markdown, local operations and a voice panel in one resettable history.
 
 ## Rules for AI
 

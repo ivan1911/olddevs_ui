@@ -49,6 +49,17 @@ same meaning takes the name from here, and does not invent its own.
   that. `SectionHeader` already had a prop called `level`. A second name for the same concept would silently
   drift from it.
 
+ChatMessage `groupPosition` (`single|first|middle|last`) is consumer-computed
+from adjacency, stable author identity and actual valid timestamps (0–5 minutes
+inclusive). It controls bubble shape; neither display labels nor DOM neighbors
+are used to infer it. Unknown time or identity leaves the message single.
+
+Chat presentation uses the ADR-0085 vocabulary: `speaker` (`user|assistant`),
+`inputMethod` (`text|voice`) and `state`
+(`complete|streaming|provisional|interrupted`) belong to `ChatMessage`.
+`PromptInput.canSubmit` controls sending independently of editing. These names
+describe specific semantic contracts, not alternative styling axes.
+
 ## Accessible name
 
 The rule comes from `Toolbar`, `Carousel`, `MobileTabBar` and `TagGroup`. Before it, these components handled the
@@ -187,18 +198,19 @@ A component's section is its category: the folder of its page in the Reference a
 story `src/components/overlays/Dialog.stories.tsx` is named `Overlays/Dialog`. Editor stories take their section
 from the folder of their own page: `Inputs/RichTextEditor`, `Content/RichTextView`.
 
-| Section          | What is inside                                              |
-| ---------------- | ----------------------------------------------------------- |
-| `Actions/`       | Actions and feedback: `Actions/Button`, `Actions/Alert`     |
-| `Inputs/`        | Fields and choice: `Inputs/Select`, `Inputs/RichTextEditor` |
-| `Date and time/` | Calendars and date and time pickers                         |
-| `Overlays/`      | Dialogs, drawers, popovers, menus, tooltips                 |
-| `Navigation/`    | Tabs, breadcrumbs, page and section headers                 |
-| `Content/`       | Typography, cards, data, states, layout                     |
-| `Table/`         | The data table and its panels                               |
-| `App shell/`     | App shell: `AppShell`, `SideNav`, `TopBar`                  |
-| `Foundations/`   | Basics: icons, motion                                       |
-| `Screens/`       | Assembled screens                                           |
+| Section          | What is inside                                                    |
+| ---------------- | ----------------------------------------------------------------- |
+| `Actions/`       | Actions and feedback: `Actions/Button`, `Actions/Alert`           |
+| `Inputs/`        | Fields and choice: `Inputs/Select`, `Inputs/RichTextEditor`       |
+| `Date and time/` | Calendars and date and time pickers                               |
+| `Overlays/`      | Dialogs, drawers, popovers, menus, tooltips                       |
+| `Navigation/`    | Tabs, breadcrumbs, page and section headers                       |
+| `Content/`       | Typography, cards, data, states, layout                           |
+| `Table/`         | The data table and its panels                                     |
+| `App shell/`     | App shell: `AppShell`, `SideNav`, `TopBar`                        |
+| `Foundations/`   | Basics: icons, motion                                             |
+| `Recipes/`       | Consumer compositions with simulated events and external handlers |
+| `Screens/`       | Assembled screens                                                 |
 
 **Dictionary of repeated names.** A name that appears a second time must be added here. Otherwise the same case
 gets two different names in two files, and they drift apart silently.
