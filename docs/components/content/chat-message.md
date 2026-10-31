@@ -70,6 +70,9 @@ reserves a gutter on both sides so decorative tails remain inside a transcript;
 `className` still styles the article. Do not remove that gutter by negatively
 positioning the entire message outside its reading viewport.
 
+The compact decorative tail continues the body outline without an inner seam;
+its geometry does not change the bubble's intrinsic width.
+
 The main corners use the kit's radius tokens and follow the nearest `data-radius`
 preset. Only the tail side changes within a group:
 
@@ -124,6 +127,7 @@ answer must not implicitly repeat side-effecting tools.
 Source: `src/components/content/ChatMessage.tsx`. Tests: `tests/chat.test.tsx` and
 `tests-visual/chat.spec.ts`. Storybook: `Content/ChatMessage`, `MessageStates`.
 Bubble behavior: `tests/chat-message-bubbles.test.tsx` and
-`tests-visual/chat-message-bubbles.spec.ts`; stories:
+`tests-visual/chat-message-bubbles.spec.ts`. Focused native-pixel/crop regressions:
+`tests-visual/chat-message-tail.spec.ts` (both device scales, all themes and radius presets); stories:
 `Content/ChatMessage/Bubbles` (SingleBubbles, GroupedBubbles, TimeBoundaries,
 NarrowContent and RadiusPresets). The responsibility boundary is ADR-0085.
